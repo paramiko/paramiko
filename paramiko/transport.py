@@ -381,15 +381,23 @@ class BaseTransport (threading.Thread):
         """
         return self.open_channel('session')
 
-    def open_channel(self, kind):
+    def open_channel(self, kind, dest_addr=None, src_addr=None):
         """
         Request a new channel to the server.  L{Channel}s are socket-like
         objects used for the actual transfer of data across the session.
         You may only request a channel after negotiating encryption (using
         L{connect} or L{start_client} and authenticating.
 
-        @param kind: the kind of channel requested (usually C{"session"}).
-        @type kind: string
+        @param kind: the kind of channel requested (usually C{"session"},
+        C{"forwarded-tcpip"} or C{"direct-tcpip"}).
+        @type kind: str
+        @param dest_addr: the destination address of this port forwarding,
+        if C{kind} is C{"forwarded-tcpip"} or C{"direct-tcpip"} (ignored
+        for other channel types).
+        @type dest_addr: (str, int)
+        @param src_addr: the source address of this port forwarding, if
+        C{kind} is C{"forwarded-tcpip"} or C{"direct-tcpip"}.
+        @type src_addr: (str, int)
         @return: a new L{Channel} on success, or C{None} if the request is
         rejected or the session ends prematurely.
         @rtype: L{Channel}
@@ -405,6 +413,11 @@ class BaseTransport (threading.Thread):
             m.add_int(chanid)
             m.add_int(self.window_size)
             m.add_int(self.max_packet_size)
+            if (kind == 'forwarded-tcpip') or (kind == 'direct-tcpip'):
+                m.add_string(dest_addr[0])
+                m.add_int(dest_addr[1])
+                m.add_string(src_addr[0])
+                m.add_int(src_addr[1])
             self.channels[chanid] = chan = Channel(chanid)
             self.channel_events[chanid] = event = threading.Event()
             chan._set_transport(self)
@@ -660,11 +673,11 @@ class BaseTransport (threading.Thread):
 
         # check host key if we were given one
         if (hostkeytype is not None) and (hostkey is not None):
-            keytype, key = self.get_remote_server_key()
-            if (keytype != hostkeytype) or (key != hostkey):
+            key = self.get_remote_server_key()
+            if (key.get_name() != hostkeytype) or (str(key) != hostkey):
                 self._log(DEBUG, 'Bad host key from server')
-                self._log(DEBUG, 'Expected: %s: %s' % (repr(hostkeytype), repr(hostkey)))
-                self._log(DEBUG, 'Got     : %s: %s' % (repr(keytype), repr(key)))
+                self._log(DEBUG, 'Expected: %s: %s' % (hostkeytype, repr(hostkey)))
+                self._log(DEBUG, 'Got     : %s: %s' % (key.get_name(), repr(str(key))))
                 raise SSHException('Bad host key from server')
             self._log(DEBUG, 'Host key verified (%s)' % hostkeytype)
 
@@ -759,7 +772,7 @@ class BaseTransport (threading.Thread):
         self.keepalive_last = time.time()
         while len(out) > 0:
             n = self.sock.send(out)
-            if n <= 0:
+            if n < 0:
                 raise EOFError()
             if n == len(out):
                 return
