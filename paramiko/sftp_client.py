@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# Copyright (C) 2003-2004 Robey Pointer <robey@lag.net>
+# Copyright (C) 2003-2005 Robey Pointer <robey@lag.net>
 #
 # This file is part of paramiko.
 #
@@ -52,7 +52,7 @@ class SFTPClient (BaseSFTP):
             # override default logger
             transport = self.sock.get_transport()
             self.logger = util.get_logger(transport.get_log_channel() + '.' +
-                                            self.sock.get_name() + '.sftp')
+                                          self.sock.get_name() + '.sftp')
             self.ultra_debug = transport.ultra_debug
         self._send_version()
 
@@ -145,7 +145,7 @@ class SFTPClient (BaseSFTP):
         @param mode: mode (python-style) to open in.
         @type mode: string
         @param bufsize: desired buffering (-1 = default buffer size, 0 =
-        unbuffered, 1 = line buffered, >1 = requested buffer size).
+            unbuffered, 1 = line buffered, >1 = requested buffer size).
         @type bufsize: int
         @return: a file object representing the open file.
         @rtype: SFTPFile
@@ -176,7 +176,7 @@ class SFTPClient (BaseSFTP):
         @type path: string
 
         @raise IOError: if the path refers to a folder (directory).  Use
-        L{rmdir} to remove a folder.
+            L{rmdir} to remove a folder.
         """
         self._request(CMD_REMOVE, path)
 
@@ -192,7 +192,7 @@ class SFTPClient (BaseSFTP):
         @type newpath: string
         
         @raise IOError: if C{newpath} is a folder, or something else goes
-        wrong.
+            wrong.
         """
         self._request(CMD_RENAME, oldpath, newpath)
 
@@ -317,7 +317,7 @@ class SFTPClient (BaseSFTP):
         @param path: path of the file to modify.
         @type path: string
         @param times: C{None} or a tuple of (access time, modified time) in
-        standard internet epoch time (seconds since 01 January 1970 GMT).
+            standard internet epoch time (seconds since 01 January 1970 GMT).
         @type times: tuple of int
         """
         if times is None:

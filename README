@@ -1,7 +1,7 @@
 paramiko 1.2
-"lapras" release, 26 feb 2005
+"lapras" release, 28 feb 2005
 
-Copyright (c) 2003-2004 Robey Pointer <robey@lag.net>
+Copyright (c) 2003-2005 Robey Pointer <robey@lag.net>
 
 http://www.lag.net/paramiko/
 
@@ -158,7 +158,9 @@ v1.2 LAPRAS
 * moved check_global_request into ServerInterface, where it should've been
   all along (oops)
 * SFTPHandle's default implementations are fleshed out more
-* made logging a bit more consistent
+* made logging a bit more consistent, and started logging thread ids
+* fixed a few race conditions, one of which would sometimes cause a Transport
+  to fail to start on slow machines
 * more unit tests
 
 v1.1 KABUTO

@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# Copyright (C) 2003-2004 Robey Pointer <robey@lag.net>
+# Copyright (C) 2003-2005 Robey Pointer <robey@lag.net>
 #
 # This file is part of paramiko.
 #
@@ -61,7 +61,7 @@ if sys.version_info < (2, 2):
 
 
 __author__ = "Robey Pointer <robey@lag.net>"
-__date__ = "26 Feb 2005"
+__date__ = "28 Feb 2005"
 __version__ = "1.2 (lapras)"
 __license__ = "GNU Lesser General Public License (LGPL)"
 

@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# Copyright (C) 2003-2004 Robey Pointer <robey@lag.net>
+# Copyright (C) 2003-2005 Robey Pointer <robey@lag.net>
 #
 # This file is part of paramiko.
 #
@@ -438,16 +438,16 @@ class SFTPTest (unittest.TestCase):
         finally:
             sftp.remove('%s/hongry.txt' % FOLDER)
 
-    def test_E_big_file_no_buffer(self):
+    def test_E_big_file_big_buffer(self):
         """
-        write a 1MB file, with no linefeeds, and no buffering.
+        write a 1MB file, with no linefeeds, and a big buffer.
         """
         global g_big_file_test
         if not g_big_file_test:
             return
         kblob = (1024 * 1024 * 'x')
         try:
-            f = sftp.open('%s/hongry.txt' % FOLDER, 'w')
+            f = sftp.open('%s/hongry.txt' % FOLDER, 'w', 128 * 1024)
             f.write(kblob)
             f.close()
 

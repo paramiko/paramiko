@@ -10,7 +10,7 @@
 # ivysaur (22oct04)
 # jigglypuff (6nov04) - 1.0
 # kabuto (12dec04) - 1.1
-# lapras (26feb05) - 1.2
+# lapras (28feb05) - 1.2
 
 release:
 	python ./setup.py sdist --formats=zip

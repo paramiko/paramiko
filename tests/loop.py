@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# Copyright (C) 2003-2004 Robey Pointer <robey@lag.net>
+# Copyright (C) 2003-2005 Robey Pointer <robey@lag.net>
 #
 # This file is part of paramiko.
 #
