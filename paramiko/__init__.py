@@ -66,7 +66,8 @@ __version__ = "0.9-horsea"
 __license__ = "GNU Lesser General Public License (LGPL)"
 
 
-import transport, auth_transport, channel, rsakey, dsskey, message, ssh_exception, sftp
+import transport, auth_transport, channel, rsakey, dsskey, message, ssh_exception
+import sftp, sftp_client
 
 Transport = auth_transport.Transport
 Channel = channel.Channel
@@ -75,9 +76,12 @@ DSSKey = dsskey.DSSKey
 SSHException = ssh_exception.SSHException
 Message = message.Message
 PasswordRequiredException = ssh_exception.PasswordRequiredException
-SFTP = sftp.SFTP
+SFTP = sftp_client.SFTP
+SFTPError = sftp_client.SFTPError
+SFTPAttributes = sftp_client.SFTPAttributes
 ServerInterface = server.ServerInterface
 SecurityOptions = transport.SecurityOptions
+SubsystemHandler = transport.SubsystemHandler
 
 from common import AUTH_SUCCESSFUL, AUTH_PARTIALLY_SUCCESSFUL, AUTH_FAILED, \
      OPEN_SUCCEEDED, OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED,  OPEN_FAILED_CONNECT_FAILED, \
@@ -85,6 +89,7 @@ from common import AUTH_SUCCESSFUL, AUTH_PARTIALLY_SUCCESSFUL, AUTH_FAILED, \
 
 __all__ = [ 'Transport',
             'SecurityOptions',
+            'SubsystemHandler',
             'Channel',
             'RSAKey',
             'DSSKey',
@@ -92,6 +97,9 @@ __all__ = [ 'Transport',
             'SSHException',
             'PasswordRequiredException',
             'SFTP',
+            'SFTPClient',
+            'SFTPError',
+            'SFTPAttributes',
             'ServerInterface',
             'transport',
             'auth_transport',
@@ -101,6 +109,6 @@ __all__ = [ 'Transport',
             'pkey',
             'message',
             'ssh_exception',
-            'sftp',
+            'sftp_client',
             'server',
             'util' ]

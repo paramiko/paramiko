@@ -27,7 +27,7 @@ should have come with this archive.
 ***  REQUIREMENTS
 
 python 2.3	<http://www.python.org/>
-    (python 2.2 may work with some pain)
+    (python 2.2 is also supported, but not recommended)
 pyCrypt		<http://www.amk.ca/python/code/crypto.html>
 
 PyCrypt compiled for Win32 can be downloaded from the HashTar homepage:
