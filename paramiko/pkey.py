@@ -150,8 +150,7 @@ class PKey (object):
         @raise IOError: if there was an error reading the file.
         @raise PasswordRequiredException: if the private key file is
         encrypted, and C{password} is C{None}.
-        @raise SSHException: if the key file is invalid
-        @raise binascii.Error: on base64 decoding error
+        @raise SSHException: if the key file is invalid.
         """
         pass
 
@@ -177,7 +176,6 @@ class PKey (object):
         @raise PasswordRequiredException: if the private key file is
         encrypted, and C{password} is C{None}.
         @raise SSHException: if the key file is invalid.
-        @raise binascii.Error: on base64 decoding error.
         """
         f = open(filename, 'r')
         lines = f.readlines()
@@ -201,7 +199,10 @@ class PKey (object):
         while (lines[end].strip() != '-----END ' + tag + ' PRIVATE KEY-----') and (end < len(lines)):
             end += 1
         # if we trudged to the end of the file, just try to cope.
-        data = base64.decodestring(''.join(lines[start:end]))
+        try:
+            data = base64.decodestring(''.join(lines[start:end]))
+        except binascii.Error, e:
+            raise SSHException('base64 decoding error: ' + str(e))
         if not headers.has_key('proc-type'):
             # unencryped: done
             return data
