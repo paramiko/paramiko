@@ -39,7 +39,7 @@ class RSAKey (PKey):
     data.
     """
 
-    def __init__(self, msg=None, data='', filename=None, password=None, vals=None):
+    def __init__(self, msg=None, data=None, filename=None, password=None, vals=None):
         if filename is not None:
             self._from_private_key_file(filename, password)
             return
@@ -48,7 +48,9 @@ class RSAKey (PKey):
         if vals is not None:
             self.e, self.n = vals
         else:
-            if (msg is None) or (msg.get_string() != 'ssh-rsa'):
+            if msg is None:
+                raise SSHException('Key object may not be empty')
+            if msg.get_string() != 'ssh-rsa':
                 raise SSHException('Invalid key')
             self.e = msg.get_mpint()
             self.n = msg.get_mpint()

@@ -47,7 +47,9 @@ class DSSKey (PKey):
         if vals is not None:
             self.p, self.q, self.g, self.y = vals
         else:
-            if (msg is None) or (msg.get_string() != 'ssh-dss'):
+            if msg is None:
+                raise SSHException('Key object may not be empty')
+            if msg.get_string() != 'ssh-dss':
                 raise SSHException('Invalid key')
             self.p = msg.get_mpint()
             self.q = msg.get_mpint()

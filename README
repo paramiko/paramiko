@@ -221,4 +221,3 @@ v0.9 FEAROW
 
 * ctr forms of ciphers are missing (blowfish-ctr, aes128-ctr, aes256-ctr)
 * server mode needs better documentation
-* the error message from this is confusing as hell:  DSSKey()

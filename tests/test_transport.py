@@ -311,3 +311,37 @@ class TransportTest (unittest.TestCase):
         self.assertEquals('communist j. cat\n', f.readline())
         chan.close()
         self.assertEquals('', f.readline())
+
+    def test_9_exit_status(self):
+        """
+        verify that get_exit_status() works.
+        """
+        host_key = RSAKey.from_private_key_file('tests/test_rsa.key')
+        public_host_key = RSAKey(data=str(host_key))
+        self.ts.add_server_key(host_key)
+        event = threading.Event()
+        server = NullServer()
+        self.assert_(not event.isSet())
+        self.ts.start_server(event, server)
+        self.tc.ultra_debug = True
+        self.tc.connect(hostkey=public_host_key)
+        self.tc.auth_password(username='slowdive', password='pygmalion')
+        event.wait(1.0)
+        self.assert_(event.isSet())
+        self.assert_(self.ts.is_active())
+
+        chan = self.tc.open_session()
+        schan = self.ts.accept(1.0)
+        self.assert_(chan.exec_command('yes'))
+        schan.send('Hello there.\n')
+        # trigger an EOF
+        schan.shutdown_read()
+        schan.shutdown_write()
+        schan.send_exit_status(23)
+        schan.close()
+        
+        f = chan.makefile()
+        self.assertEquals('Hello there.\n', f.readline())
+        self.assertEquals('', f.readline())
+        self.assertEquals(23, chan.recv_exit_status())
+        chan.close()
