@@ -53,7 +53,7 @@ class Transport (BaseTransport):
         self.auth_fail_count = 0
 
     def __repr__(self):
-        out = '<paramiko.Transport at %s' % hex(id(self))
+        out = '<paramiko.Transport at %s' % hex(long(id(self)) & 0xffffffffL)
         if not self.active:
             out += ' (unconnected)'
         else:

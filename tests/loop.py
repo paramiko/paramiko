@@ -28,7 +28,7 @@ import threading, socket
 class LoopSocket (object):
     """
     A LoopSocket looks like a normal socket, but all data written to it is
-    delivered on the read-end of another LoopSocket, and vice versa,  It's
+    delivered on the read-end of another LoopSocket, and vice versa.  It's
     like a software "socketpair".
     """
     
