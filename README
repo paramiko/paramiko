@@ -1,5 +1,5 @@
-paramiko 0.9
-"ivysaur" release, 22 oct 2004
+paramiko 1.0
+"jigglypuff" release, 6 nov 2004
 
 Copyright (c) 2003-2004 Robey Pointer <robey@lag.net>
 
@@ -139,6 +139,14 @@ the best and easiest examples of how to use the SFTP class.
 ***  WHAT'S NEW
 
 highlights of what's new in each release:
+
+v1.0 JIGGLYPUFF
+* fixed bug that broke server-mode authentication by private key
+* fixed bug where closing a Channel could end up killing the entire Transport
+* actually include demo_windows.py this time (oops!)
+* fixed recently-introduced bug in group-exchange key negotiation that would
+  generate the wrong hash (and therefore fail the initial handshake)
+* server-mode subsystem handler is a bit more flexible
 
 v0.9 IVYSAUR
 * new ServerInterface class for implementing server policy, so it's no longer

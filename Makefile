@@ -8,6 +8,7 @@
 # gyarados (31may04)
 # horsea (27jun04)
 # ivysaur (22oct04)
+# jigglypuff (6nov04) - 1.0
 
 release:
 	python ./setup.py sdist --formats=zip
@@ -21,3 +22,4 @@ always:
 # setup.py
 # __init__.py
 # README
+# transport.py

@@ -48,7 +48,7 @@ released under the GNU Lesser General Public License (LGPL).
 
 Website: U{http://www.lag.net/~robey/paramiko/}
 
-@version: 0.9 (ivysaur)
+@version: 1.0 (jigglypuff)
 @author: Robey Pointer
 @contact: robey@lag.net
 @license: GNU Lesser General Public License (LGPL)
@@ -61,8 +61,8 @@ if sys.version_info < (2, 2):
 
 
 __author__ = "Robey Pointer <robey@lag.net>"
-__date__ = "22 Oct 2004"
-__version__ = "0.9-ivysaur"
+__date__ = "6 Nov 2004"
+__version__ = "1.0 (jigglypuff)"
 __license__ = "GNU Lesser General Public License (LGPL)"
 
 
