@@ -1,9 +1,9 @@
-paramiko 1.0
-"jigglypuff" release, 6 nov 2004
+paramiko 1.1
+"kabuto" release, 12 dec 2004
 
 Copyright (c) 2003-2004 Robey Pointer <robey@lag.net>
 
-http://www.lag.net/~robey/paramiko/
+http://www.lag.net/paramiko/
 
 
 ***  WHAT
@@ -149,6 +149,14 @@ the best and easiest examples of how to use the SFTP class.
 
 highlights of what's new in each release:
 
+v1.1 KABUTO
+* server-side SFTP support
+* added support for stderr streams on client & server channels
+* added a new distinct exception for failed client authentication
+  when caused by the server rejecting that *type* of auth
+* added support for multi-part authentication
+* fixed bug where get_username() wasn't working in server mode
+
 v1.0 JIGGLYPUFF
 * fixed bug that broke server-mode authentication by private key
 * fixed bug where closing a Channel could end up killing the entire
@@ -212,10 +220,5 @@ v0.9 FEAROW
 ***  MISSING LINKS
 
 * ctr forms of ciphers are missing (blowfish-ctr, aes128-ctr, aes256-ctr)
-* multi-part auth not supported (ie, need username AND pk)
 * server mode needs better documentation
-* sftp server mode
-* figure out if there's a way to put stdout/stderr on different channels?
 * add method to block until a channel's "exit-status" is set
-* if password auth is forbidden (only key auth allowed), error isn't very
-  informative -- improve that.

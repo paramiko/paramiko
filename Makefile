@@ -9,6 +9,7 @@
 # horsea (27jun04)
 # ivysaur (22oct04)
 # jigglypuff (6nov04) - 1.0
+# kabuto (12dec04) - 1.1
 
 release:
 	python ./setup.py sdist --formats=zip

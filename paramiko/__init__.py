@@ -46,9 +46,9 @@ receive data over the encrypted session.
 Paramiko is written entirely in python (no C or platform-dependent code) and is
 released under the GNU Lesser General Public License (LGPL).
 
-Website: U{http://www.lag.net/~robey/paramiko/}
+Website: U{http://www.lag.net/paramiko/}
 
-@version: 1.0 (jigglypuff)
+@version: 1.1 (kabuto)
 @author: Robey Pointer
 @contact: robey@lag.net
 @license: GNU Lesser General Public License (LGPL)
@@ -61,8 +61,8 @@ if sys.version_info < (2, 2):
 
 
 __author__ = "Robey Pointer <robey@lag.net>"
-__date__ = "6 Nov 2004"
-__version__ = "1.0 (jigglypuff)"
+__date__ = "12 Dec 2004"
+__version__ = "1.1 (kabuto)"
 __license__ = "GNU Lesser General Public License (LGPL)"
 
 
