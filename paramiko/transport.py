@@ -453,7 +453,25 @@ class BaseTransport (threading.Thread):
         finally:
             self.lock.release()
         return chan
-    
+
+    def send_ignore(self, bytes=None):
+        """
+        Send a junk packet across the encrypted link.  This is sometimes used
+        to add "noise" to a connection to confuse would-be attackers.  It can
+        also be used as a keep-alive for long lived connections traversing
+        firewalls.
+
+        @param bytes: the number of random bytes to send in the payload of the
+        ignored packet -- defaults to a random number from 10 to 41.
+        @type bytes: int
+        """
+        m = Message()
+        m.add_byte(chr(_MSG_IGNORE))
+        if bytes is None:
+            bytes = (ord(randpool.get_bytes(1)) % 32) + 10
+        m.add_bytes(randpool.get_bytes(bytes))
+        self._send_message(m)
+
     def renegotiate_keys(self):
         """
         Force this session to switch to new keys.  Normally this is done
@@ -595,7 +613,7 @@ class BaseTransport (threading.Thread):
                 self._log(DEBUG, 'Attempting password auth...')
                 self.auth_password(username, password, event)
             else:
-                self._log(DEBUG, 'Attempting password auth...')
+                self._log(DEBUG, 'Attempting pkey auth...')
                 self.auth_publickey(username, pkey, event)
             while 1:
                 event.wait(0.1)
