@@ -136,9 +136,9 @@ class RSAKey (PKey):
         generate a new host key or authentication key.
 
         @param bits: number of bits the generated key should be.
-        @type bites: int
+        @type bits: int
         @param progress_func: an optional function to call at key points in
-        key generation (used by L{pyCrypto.PublicKey}).
+        key generation (used by C{pyCrypto.PublicKey}).
         @type progress_func: function
         @return: new private key
         @rtype: L{RSAKey}

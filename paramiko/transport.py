@@ -348,13 +348,14 @@ class BaseTransport (threading.Thread):
         Return the host key of the server (in client mode).
 
         @note: Previously this call returned a tuple of (key type, key string).
-        You can get the same effect by calling L{PKey.get_name} for the key
-        type, and C{str(key)} for the key string.
+        You can get the same effect by calling
+        L{PKey.get_name <pkey.PKey.get_name>} for the key type, and C{str(key)}
+        for the key string.
 
         @raise SSHException: if no session is currently active.
         
         @return: public key of the remote server.
-        @rtype: L{PKey}
+        @rtype: L{PKey <pkey.PKey>}
         """
         if (not self.active) or (not self.initial_kex_done):
             raise SSHException('No existing session')
