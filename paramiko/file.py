@@ -96,7 +96,7 @@ class BufferedFile (object):
         @raise StopIteration: when the end of the file is reached.
 
         @return: a line read from the file.
-        @rtype: string
+        @rtype: str
         """
         line = self.readline()
         if not line:
@@ -113,7 +113,7 @@ class BufferedFile (object):
         @type size: int
         @return: data read from the file, or an empty string if EOF was
         encountered immediately.
-        @rtype: string
+        @rtype: str
         """
         if self._closed:
             raise IOError('File is closed')
@@ -170,7 +170,7 @@ class BufferedFile (object):
         @type size: int
         @return: next line of the file, or an empty string if the end of the
         file has been reached.
-        @rtype: string
+        @rtype: str
         """
         # it's almost silly how complex this function is.
         if self._closed:
@@ -294,7 +294,7 @@ class BufferedFile (object):
         written out.)
 
         @param data: data to write.
-        @type data: string
+        @type data: str
         """
         if self._closed:
             raise IOError('File is closed')
