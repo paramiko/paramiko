@@ -1,14 +1,15 @@
-secsh 0.1
+paramiko 0.1
 "charmander" release, 10 nov 2003
 
 (c) 2003 Robey Pointer <robey@lag.net>
 
-http://www.lag.net/~robey/secsh/
+http://www.lag.net/~robey/paramiko/
 
 
 ***  WHAT
 
-secsh is a module for python 2.3 that implements the SSH2 protocol for secure
+"paramiko" is a combination of the esperanto words for "paranoid" and "friend".
+it's a module for python 2.3 that implements the SSH2 protocol for secure
 (encrypted and authenticated) connections to remote machines. unlike SSL (aka
 TLS), SSH2 protocol does not require heirarchical certificates signed by a
 powerful central authority. you may know SSH2 as the protocol that replaced
@@ -22,7 +23,7 @@ key), and opening flow-controled "channels" to the server, which are returned
 as socket-like objects. you are responsible for verifying that the server's
 host key is the one you expected to see, and you have control over which kinds
 of encryption or hashing you prefer (if you care), but all of the heavy lifting
-is done by the secsh module.
+is done by the paramiko module.
 
 it is written entirely in python (no C or platform-dependent code) and is
 released under the GNU LGPL (lesser GPL). 
@@ -55,7 +56,7 @@ know these screwy steps.  i just don't understand windows enough.])
 ***  DEMO
 
 the demo client (demo.py) is a raw implementation of the normal 'ssh' CLI tool.
-while the secsh library should work on all platforms, the demo app will only
+while the paramiko library should work on all platforms, the demo app will only
 run on posix, because it uses select.
 
 you can run demo.py with no arguments, or you can give a hostname (or
@@ -65,9 +66,9 @@ the host keys from there, though it's easily confused.  you can choose to
 authenticate with a password, or with an RSA or DSS key, but it can only
 read your private key file(s) if they're not password-protected.
 
-the demo app leaves a logfile called "demo.log" so you can see what secsh
+the demo app leaves a logfile called "demo.log" so you can see what paramiko
 logs as it works.  but the most interesting part is probably the code itself,
-which hopefully demonstrates how you can use the secsh library.
+which hopefully demonstrates how you can use the paramiko library.
 
 there's also now a demo server (demo_server.py) which listens on port 2200
 and accepts a login (robey/foo) and pretends to be a BBS, just to demonstrate

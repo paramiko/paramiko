@@ -1,18 +1,11 @@
 # releases:
 # aerodactyl (13sep03)
 # bulbasaur
-# charmander
+# charmander (10nov03)
 
-RELEASE=bulbasaur
+RELEASE=charmander
 
 release:
-	mkdir ../secsh-$(RELEASE)
-	cp README ../secsh-$(RELEASE)
-	cp *.py ../secsh-$(RELEASE)
-	cd .. && zip -r secsh-$(RELEASE).zip secsh-$(RELEASE)
-	echo rm -rf ../secsh-$(RELEASE)
-
-py:
 	python ./setup.py sdist --formats=zip
 
 # places where the version number is stored:

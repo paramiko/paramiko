@@ -1,5 +1,5 @@
 from message import Message
-from secsh import SecshException
+from paramiko import SSHException
 from transport import MSG_CHANNEL_REQUEST, MSG_CHANNEL_CLOSE, MSG_CHANNEL_WINDOW_ADJUST, MSG_CHANNEL_DATA, \
 	MSG_CHANNEL_EOF, MSG_CHANNEL_SUCCESS, MSG_CHANNEL_FAILURE
 
@@ -15,7 +15,7 @@ def set_nonblocking(fd):
 
 class Channel(object):
     """
-    Abstraction for a secsh channel.
+    Abstraction for an SSH2 channel.
     """
     
     def __init__(self, chanid):
@@ -31,11 +31,11 @@ class Channel(object):
         self.in_buffer_cv = threading.Condition(self.lock)
         self.out_buffer_cv = threading.Condition(self.lock)
         self.name = str(chanid)
-        self.logger = logging.getLogger('secsh.chan.' + str(chanid))
+        self.logger = logging.getLogger('paramiko.chan.' + str(chanid))
         self.pipe_rfd = self.pipe_wfd = None
 
     def __repr__(self):
-        out = '<secsh.Channel %d' % self.chanid
+        out = '<paramiko.Channel %d' % self.chanid
         if self.closed:
             out += ' (closed)'
         elif self.active:
@@ -186,7 +186,7 @@ class Channel(object):
 
     def get_pty(self, term='vt100', width=80, height=24):
         if self.closed or self.eof_received or self.eof_sent or not self.active:
-            raise SecshException('Channel is not open')
+            raise SSHException('Channel is not open')
         m = Message()
         m.add_byte(chr(MSG_CHANNEL_REQUEST))
         m.add_int(self.remote_chanid)
@@ -202,7 +202,7 @@ class Channel(object):
 
     def invoke_shell(self):
         if self.closed or self.eof_received or self.eof_sent or not self.active:
-            raise SecshException('Channel is not open')
+            raise SSHException('Channel is not open')
         m = Message()
         m.add_byte(chr(MSG_CHANNEL_REQUEST))
         m.add_int(self.remote_chanid)
@@ -212,7 +212,7 @@ class Channel(object):
 
     def exec_command(self, command):
         if self.closed or self.eof_received or self.eof_sent or not self.active:
-            raise SecshException('Channel is not open')
+            raise SSHException('Channel is not open')
         m = Message()
         m.add_byte(chr(MSG_CHANNEL_REQUEST))
         m.add_int(self.remote_chanid)
@@ -223,7 +223,7 @@ class Channel(object):
 
     def invoke_subsystem(self, subsystem):
         if self.closed or self.eof_received or self.eof_sent or not self.active:
-            raise SecshException('Channel is not open')
+            raise SSHException('Channel is not open')
         m = Message()
         m.add_byte(chr(MSG_CHANNEL_REQUEST))
         m.add_int(self.remote_chanid)
@@ -234,7 +234,7 @@ class Channel(object):
 
     def resize_pty(self, width=80, height=24):
         if self.closed or self.eof_received or self.eof_sent or not self.active:
-            raise SecshException('Channel is not open')
+            raise SSHException('Channel is not open')
         m = Message()
         m.add_byte(chr(MSG_CHANNEL_REQUEST))
         m.add_int(self.remote_chanid)
@@ -250,7 +250,7 @@ class Channel(object):
 
     def set_name(self, name):
         self.name = name
-        self.logger = logging.getLogger('secsh.chan.' + name)
+        self.logger = logging.getLogger('paramiko.chan.' + name)
 
     def get_name(self):
         return self.name
@@ -557,7 +557,7 @@ class ChannelFile(object):
         self.softspace = False
 
     def __repr__(self):
-        return '<secsh.ChannelFile from ' + repr(self.channel) + '>'
+        return '<paramiko.ChannelFile from ' + repr(self.channel) + '>'
 
     def __iter__(self):
         return self

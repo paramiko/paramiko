@@ -14,7 +14,7 @@ MSG_CHANNEL_OPEN, MSG_CHANNEL_OPEN_SUCCESS, MSG_CHANNEL_OPEN_FAILURE, \
 import sys, os, string, threading, socket, logging, struct
 from message import Message
 from channel import Channel
-from secsh import SecshException
+from paramiko import SSHException
 from util import format_binary, safe_string, inflate_long, deflate_long, tb_strings
 from rsakey import RSAKey
 from dsskey import DSSKey
@@ -131,7 +131,7 @@ class BaseTransport(threading.Thread):
         self.channels = { }			# (id -> Channel)
         self.channel_events = { }		# (id -> Event)
         self.channel_counter = 1
-        self.logger = logging.getLogger('secsh.transport')
+        self.logger = logging.getLogger('paramiko.transport')
         self.window_size = 65536
         self.max_packet_size = 2048
         self.ultra_debug = 0
@@ -167,7 +167,7 @@ class BaseTransport(threading.Thread):
 
     def __repr__(self):
         if not self.active:
-            return '<secsh.Transport (unconnected)>'
+            return '<paramiko.Transport (unconnected)>'
         out = '<sesch.Transport'
         #if self.remote_version != '':
         #    out += ' (server version "%s")' % self.remote_version
@@ -202,7 +202,7 @@ class BaseTransport(threading.Thread):
     def get_remote_server_key(self):
         'returns (type, key) where type is like "ssh-rsa" and key is an opaque string'
         if (not self.active) or (not self.initial_kex_done):
-            raise SecshException('No existing session')
+            raise SSHException('No existing session')
         key_msg = Message(self.host_key)
         key_type = key_msg.get_string()
         return key_type, self.host_key
@@ -323,7 +323,7 @@ class BaseTransport(threading.Thread):
         # leftover contains decrypted bytes from the first block (after the length field)
         leftover = header[4:]
         if (packet_size - len(leftover)) % self.block_size_in != 0:
-            raise SecshException('Invalid packet blocking')
+            raise SSHException('Invalid packet blocking')
         buffer = self.read_all(packet_size + self.remote_mac_len - len(leftover))
         packet = buffer[:packet_size - len(leftover)]
         post_packet = buffer[packet_size - len(leftover):]
@@ -337,7 +337,7 @@ class BaseTransport(threading.Thread):
             mac_payload = struct.pack('>II', self.sequence_number_in, packet_size) + packet
             my_mac = HMAC.HMAC(self.mac_key_in, mac_payload, self.remote_mac_engine).digest()[:self.remote_mac_len]
             if my_mac != mac:
-                raise SecshException('Mismatched MAC')
+                raise SSHException('Mismatched MAC')
         padding = ord(packet[0])
         payload = packet[1:packet_size - padding + 1]
         randpool.add_event(packet[packet_size - padding + 1])
@@ -360,7 +360,7 @@ class BaseTransport(threading.Thread):
                 # comply, then just drop the connection
                 self.received_packets_overflow += 1
                 if self.received_packets_overflow >= 20:
-                    raise SecshException('Remote transport is ignoring rekey requests')
+                    raise SSHException('Remote transport is ignoring rekey requests')
                 
         return ord(payload[0]), msg
 
@@ -379,9 +379,9 @@ class BaseTransport(threading.Thread):
         else:
             key = None
         if (key == None) or not key.valid:
-            raise SecshException('Unknown host key type')
+            raise SSHException('Unknown host key type')
         if not key.verify_ssh_sig(self.H, Message(sig)):
-            raise SecshException('Signature verification (%s) failed.  Boo.  Robey should debug this.' % self.host_key_type)
+            raise SSHException('Signature verification (%s) failed.  Boo.  Robey should debug this.' % self.host_key_type)
         self.host_key = host_key
 
     def compute_key(self, id, nbytes):
@@ -404,7 +404,7 @@ class BaseTransport(threading.Thread):
 
     def get_cipher(self, name, key, iv):
         if not self.cipher_info.has_key(name):
-            raise SecshException('Unknown client cipher ' + name)
+            raise SSHException('Unknown client cipher ' + name)
         return self.cipher_info[name]['class'].new(key, self.cipher_info[name]['mode'], iv)
 
     def run(self):
@@ -429,7 +429,7 @@ class BaseTransport(threading.Thread):
                     continue
                 if self.expected_packet != 0:
                     if ptype != self.expected_packet:
-                        raise SecshException('Expecting packet %d, got %d' % (self.expected_packet, ptype))
+                        raise SSHException('Expecting packet %d, got %d' % (self.expected_packet, ptype))
                     self.expected_packet = 0
                     if (ptype >= 30) and (ptype <= 39):
                         self.kex_engine.parse_next(ptype, m)
@@ -447,7 +447,7 @@ class BaseTransport(threading.Thread):
                     msg.add_byte(chr(MSG_UNIMPLEMENTED))
                     msg.add_int(m.seqno)
                     self.send_message(msg)
-        except SecshException, e:
+        except SSHException, e:
             self.log(DEBUG, 'Exception: ' + str(e))
             self.log(DEBUG, tb_strings())
         except EOFError, e:
@@ -479,7 +479,7 @@ class BaseTransport(threading.Thread):
         return 1
 
     def negotiate_keys(self, m):
-        # throws SecshException on anything unusual
+        # throws SSHException on anything unusual
         if self.local_kex_init == None:
             # remote side wants to renegotiate
             self.send_kex_init()
@@ -499,7 +499,7 @@ class BaseTransport(threading.Thread):
                 break
             self.log(DEBUG, 'Banner: ' + buffer)
         if buffer[:4] != 'SSH-':
-            raise SecshException('Indecipherable protocol version "' + buffer + '"')
+            raise SSHException('Indecipherable protocol version "' + buffer + '"')
         # save this server version string for later
         self.remote_version = buffer
         # pull off any attached comment
@@ -511,11 +511,11 @@ class BaseTransport(threading.Thread):
         # parse out version string and make sure it matches
         segs = buffer.split('-', 2)
         if len(segs) < 3:
-            raise SecshException('Invalid SSH banner')
+            raise SSHException('Invalid SSH banner')
         version = segs[1]
         client = segs[2]
         if version != '1.99' and version != '2.0':
-            raise SecshException('Incompatible version (%s instead of 2.0)' % (version,))
+            raise SSHException('Incompatible version (%s instead of 2.0)' % (version,))
         self.log(INFO, 'Connected (version %s, client %s)' % (version, client))
 
     def send_kex_init(self):
@@ -566,7 +566,7 @@ class BaseTransport(threading.Thread):
         # no compression support (yet?)
         if (not('none' in client_compress_algo_list) or
             not('none' in server_compress_algo_list)):
-            raise SecshException('Incompatible ssh peer.')
+            raise SSHException('Incompatible ssh peer.')
 
         # as a server, we pick the first item in the client's list that we support.
         # as a client, we pick the first item in our list that the server supports.
@@ -575,7 +575,7 @@ class BaseTransport(threading.Thread):
         else:
             agreed_kex = filter(kex_algo_list.__contains__, self.preferred_kex)
         if len(agreed_kex) == 0:
-            raise SecshException('Incompatible ssh peer (no acceptable kex algorithm)')
+            raise SSHException('Incompatible ssh peer (no acceptable kex algorithm)')
         self.kex_engine = self.kex_info[agreed_kex[0]](self)
 
         if self.server_mode:
@@ -583,10 +583,10 @@ class BaseTransport(threading.Thread):
         else:
             agreed_keys = filter(server_key_algo_list.__contains__, self.preferred_keys)
         if len(agreed_keys) == 0:
-            raise SecshException('Incompatible ssh peer (no acceptable host key)')
+            raise SSHException('Incompatible ssh peer (no acceptable host key)')
         self.host_key_type = agreed_keys[0]
         if self.server_mode and (self.get_server_key() is None):
-            raise SecshException('Incompatible ssh peer (can\'t match requested host key type)')
+            raise SSHException('Incompatible ssh peer (can\'t match requested host key type)')
 
         if self.server_mode:
             agreed_local_ciphers = filter(self.preferred_ciphers.__contains__,
@@ -599,7 +599,7 @@ class BaseTransport(threading.Thread):
             agreed_remote_ciphers = filter(server_encrypt_algo_list.__contains__,
                                            self.preferred_ciphers)
         if (len(agreed_local_ciphers) == 0) or (len(agreed_remote_ciphers) == 0):
-            raise SecshException('Incompatible ssh server (no acceptable ciphers)')
+            raise SSHException('Incompatible ssh server (no acceptable ciphers)')
         self.local_cipher = agreed_local_ciphers[0]
         self.remote_cipher = agreed_remote_ciphers[0]
         self.log(DEBUG, 'Ciphers agreed: local=%s, remote=%s' % (self.local_cipher, self.remote_cipher))
@@ -611,7 +611,7 @@ class BaseTransport(threading.Thread):
             agreed_local_macs = filter(client_mac_algo_list.__contains__, self.preferred_macs)
             agreed_remote_macs = filter(server_mac_algo_list.__contains__, self.preferred_macs)
         if (len(agreed_local_macs) == 0) or (len(agreed_remote_macs) == 0):
-            raise SecshException('Incompatible ssh server (no acceptable macs)')
+            raise SSHException('Incompatible ssh server (no acceptable macs)')
         self.local_mac = agreed_local_macs[0]
         self.remote_mac = agreed_remote_macs[0]
 

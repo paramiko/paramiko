@@ -1,11 +1,11 @@
-# implementation of a secsh "message"
+# implementation of an SSH2 "message"
 
 import string, types, struct
 from util import inflate_long, deflate_long
 
 
 class Message(object):
-    "represents the encoding of a secsh message"
+    "represents the encoding of an SSH2 message"
 
     def __init__(self, content=''):
         self.packet = content

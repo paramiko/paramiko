@@ -1,6 +1,6 @@
 
                          +-------------------+       +-----------------+
-(Socket)InputStream ---> |  secsh transport  | <===> |  secsh channel  |
+(Socket)InputStream ---> |  ssh2 transport   | <===> |  ssh2 channel   |
 (Socket)OutputStream --> |  (auth, pipe)     |   N   |  (buffer)       |
                          +-------------------+       +-----------------+
                           @  feeder thread             | |
@@ -8,8 +8,8 @@
                              - feed into channel       +---> OutputStream
                                buffers
 
-SIS <-- @ --> (parse, find chan) --> secsh chan: buffer <-- SSHInputStream
-SSHOutputStream --> secsh chan --> secsh transport --> SOS   [no thread]
+SIS <-- @ --> (parse, find chan) --> ssh2 chan: buffer <-- SSHInputStream
+SSHOutputStream --> ssh2 chan --> ssh2 transport --> SOS   [no thread]
 
 
 

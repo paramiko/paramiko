@@ -5,7 +5,7 @@ import sys
 if (sys.version_info[0] < 2) or ((sys.version_info[0] == 2) and (sys.version_info[1] < 3)):
     raise RuntimeError('You need python 2.3 for this module.')
 
-class SecshException(Exception):
+class SSHException(Exception):
     pass
 
 

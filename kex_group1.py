@@ -5,7 +5,7 @@
 # "g" generator.
 
 from message import Message, inflate_long
-from secsh import SecshException
+from paramiko import SSHException
 from transport import MSG_NEWKEYS
 from Crypto.Hash import SHA
 from logging import DEBUG, INFO, WARNING, ERROR, CRITICAL
@@ -59,14 +59,14 @@ class KexGroup1(object):
             return self.parse_kexdh_init(m)
         elif not self.transport.server_mode and (ptype == MSG_KEXDH_REPLY):
             return self.parse_kexdh_reply(m)
-        raise SecshException('KexGroup1 asked to handle packet type %d' % ptype)
+        raise SSHException('KexGroup1 asked to handle packet type %d' % ptype)
 
     def parse_kexdh_reply(self, m):
         # client mode
         host_key = m.get_string()
         self.f = m.get_mpint()
         if (self.f < 1) or (self.f > P - 1):
-            raise SecshException('Server kex "f" is out of range')
+            raise SSHException('Server kex "f" is out of range')
         sig = m.get_string()
         K = pow(self.f, self.x, P)
         # okay, build up the hash H of (V_C || V_S || I_C || I_S || K_S || e || f || K)
@@ -82,7 +82,7 @@ class KexGroup1(object):
         # server mode
         self.e = m.get_mpint()
         if (self.e < 1) or (self.e > P - 1):
-            raise SecshException('Client kex "e" is out of range')
+            raise SSHException('Client kex "e" is out of range')
         K = pow(self.e, self.x, P)
         key = str(self.transport.get_server_key())
         # okay, build up the hash H of (V_C || V_S || I_C || I_S || K_S || e || f || K)

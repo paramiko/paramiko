@@ -1,10 +1,10 @@
 #!/usr/bin/python
 
 import sys, os, socket, threading, logging, traceback
-import secsh
+import paramiko
 
 # setup logging
-l = logging.getLogger("secsh")
+l = logging.getLogger("paramiko")
 l.setLevel(logging.DEBUG)
 if len(l.handlers) == 0:
     f = open('demo_server.log', 'w')
@@ -12,11 +12,11 @@ if len(l.handlers) == 0:
     lh.setFormatter(logging.Formatter('%(levelname)-.3s [%(asctime)s] %(name)s: %(message)s', '%Y%m%d:%H%M%S'))
     l.addHandler(lh)
 
-host_key = secsh.RSAKey()
+host_key = paramiko.RSAKey()
 host_key.read_private_key_file('demo_host_key')
 
 
-class ServerTransport(secsh.Transport):
+class ServerTransport(paramiko.Transport):
     def check_channel_request(self, kind, chanid):
         if kind == 'session':
             return ServerChannel(chanid)
@@ -27,11 +27,11 @@ class ServerTransport(secsh.Transport):
             return self.AUTH_SUCCESSFUL
         return self.AUTH_FAILED
 
-class ServerChannel(secsh.Channel):
+class ServerChannel(paramiko.Channel):
     "Channel descendant that pretends to understand pty and shell requests"
 
     def __init__(self, chanid):
-        secsh.Channel.__init__(self, chanid)
+        paramiko.Channel.__init__(self, chanid)
         self.event = threading.Event()
 
     def check_pty_request(self, term, width, height, pixelwidth, pixelheight, modes):

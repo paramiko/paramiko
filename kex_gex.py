@@ -6,7 +6,7 @@
 
 from message import Message
 from util import inflate_long, deflate_long, generate_prime, bit_length
-from secsh import SecshException
+from paramiko import SSHException
 from transport import MSG_NEWKEYS
 from Crypto.Hash import SHA
 from Crypto.Util import number
@@ -49,7 +49,7 @@ class KexGex(object):
             return self.parse_kexdh_gex_init(m)
         elif ptype == MSG_KEXDH_GEX_REPLY:
             return self.parse_kexdh_gex_reply(m)
-        raise SecshException('KexGex asked to handle packet type %d' % ptype)
+        raise SSHException('KexGex asked to handle packet type %d' % ptype)
 
     def generate_x(self):
         # generate an "x" (1 < x < (p-1)/2).
@@ -108,7 +108,7 @@ class KexGex(object):
         # reject if p's bit length < 1024 or > 8192
         bitlen = bit_length(self.p)
         if (bitlen < 1024) or (bitlen > 8192):
-            raise SecshException('Server-generated gex p (don\'t ask) is out of range (%d bits)' % bitlen)
+            raise SSHException('Server-generated gex p (don\'t ask) is out of range (%d bits)' % bitlen)
         self.transport.log(DEBUG, 'Got server p (%d bits)' % bitlen)
         self.generate_x()
         # now compute e = g^x mod p
@@ -122,7 +122,7 @@ class KexGex(object):
     def parse_kexdh_gex_init(self, m):
         self.e = m.get_mpint()
         if (self.e < 1) or (self.e > self.p - 1):
-            raise SecshException('Client kex "e" is out of range')
+            raise SSHException('Client kex "e" is out of range')
         self.generate_x()
         K = pow(self.e, self.x, P)
         key = str(self.transport.get_server_key())
@@ -154,7 +154,7 @@ class KexGex(object):
         self.f = m.get_mpint()
         sig = m.get_string()
         if (self.f < 1) or (self.f > self.p - 1):
-            raise SecshException('Server kex "f" is out of range')
+            raise SSHException('Server kex "f" is out of range')
         K = pow(self.f, self.x, self.p)
         # okay, build up the hash H of (V_C || V_S || I_C || I_S || K_S || min || n || max || p || g || e || f || K)
         hm = Message().add(self.transport.local_version).add(self.transport.remote_version)

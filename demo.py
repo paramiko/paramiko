@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 import sys, os, socket, threading, getpass, logging, time, base64, select, termios, tty, traceback
-import secsh
+import paramiko
 
 
 #####   utility functions
@@ -31,7 +31,7 @@ def load_host_keys():
 #####   main demo
 
 # setup logging
-l = logging.getLogger("secsh")
+l = logging.getLogger("paramiko")
 l.setLevel(logging.DEBUG)
 if len(l.handlers) == 0:
     f = open('demo.log', 'w')
@@ -65,7 +65,7 @@ except Exception, e:
 
 try:
     event = threading.Event()
-    t = secsh.Transport(sock)
+    t = paramiko.Transport(sock)
     t.ultra_debug = 0
     t.start_client(event)
     # print repr(t)
@@ -103,7 +103,7 @@ try:
         auth = default_auth
 
     if auth == 'r':
-        key = secsh.RSAKey()
+        key = paramiko.RSAKey()
         default_path = os.environ['HOME'] + '/.ssh/id_rsa'
         path = raw_input('RSA key [%s]: ' % default_path)
         if len(path) == 0:
@@ -111,7 +111,7 @@ try:
         key.read_private_key_file(path)
         t.auth_key(username, key, event)
     elif auth == 'd':
-        key = secsh.DSSKey()
+        key = paramiko.DSSKey()
         default_path = os.environ['HOME'] + '/.ssh/id_dsa'
         path = raw_input('DSS key [%s]: ' % default_path)
         if len(path) == 0:
