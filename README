@@ -28,9 +28,10 @@ should have come with this archive.
 
 python 2.3	<http://www.python.org/>
     (python 2.2 is also supported, but not recommended)
-pyCrypt		<http://www.amk.ca/python/code/crypto.html>
+pycrypto 1.9+	<http://www.amk.ca/python/code/crypto.html>
+    (2.0 works too)
 
-PyCrypt compiled for Win32 can be downloaded from the HashTar homepage:
+pycrypto compiled for Win32 can be downloaded from the HashTar homepage:
     http://nitace.bsd.uchicago.edu:8080/hashtar
 you can also build it yourself using the free MinGW tools and this command
 line (thanks to Roger Binns for the info):
