@@ -23,6 +23,9 @@ Client-mode SFTP support.
 """
 
 from sftp import *
+from sftp_attr import SFTPAttributes
+from sftp_file import SFTPFile
+
 
 class SFTPClient (BaseSFTP):
     """
