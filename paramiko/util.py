@@ -24,7 +24,7 @@ from __future__ import generators
 Useful functions used by the rest of paramiko.
 """
 
-import sys, struct, traceback
+import sys, struct, traceback, threading
 from common import *
 
 # Change by RogerB - python < 2.3 doesn't have enumerate so we implement it
@@ -188,6 +188,23 @@ def mod_inverse(x, m):
         u2 += m
     return u2
 
+g_thread_ids = {}
+g_thread_counter = 0
+g_thread_lock = threading.Lock()
+def get_thread_id():
+    global g_thread_ids, g_thread_counter
+    tid = id(threading.currentThread())
+    try:
+        return g_thread_ids[tid]
+    except KeyError:
+        g_thread_lock.acquire()
+        try:
+            g_thread_counter += 1
+            ret = g_thread_ids[tid] = g_thread_counter
+        finally:
+            g_thread_lock.release()
+        return ret
+
 def log_to_file(filename, level=DEBUG):
     "send paramiko logs to a logfile, if they're not already going somewhere"
     l = logging.getLogger("paramiko")
@@ -196,6 +213,15 @@ def log_to_file(filename, level=DEBUG):
     l.setLevel(level)
     f = open(filename, 'w')
     lh = logging.StreamHandler(f)
-    lh.setFormatter(logging.Formatter('%(levelname)-.3s [%(asctime)s] %(name)s: %(message)s',
+    lh.setFormatter(logging.Formatter('%(levelname)-.3s [%(asctime)s] thr=%(_threadid)-3d %(name)s: %(message)s',
                                       '%Y%m%d-%H:%M:%S'))
     l.addHandler(lh)
+
+def get_logger(name):
+    l = logging.getLogger(name)
+    class PFilter (object):
+        def filter(self, record):
+            record._threadid = get_thread_id()
+            return True
+    l.addFilter(PFilter())
+    return l

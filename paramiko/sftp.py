@@ -93,7 +93,7 @@ class SFTPError (Exception):
 
 class BaseSFTP (object):
     def __init__(self):
-        self.logger = logging.getLogger('paramiko.sftp')
+        self.logger = util.get_logger('paramiko.sftp')
 
 
     ###  internals...

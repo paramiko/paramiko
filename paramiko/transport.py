@@ -243,7 +243,7 @@ class BaseTransport (threading.Thread):
         self.saved_exception = None
         self.clear_to_send = threading.Event()
         self.log_name = 'paramiko.transport'
-        self.logger = logging.getLogger(self.log_name)
+        self.logger = util.get_logger(self.log_name)
         # used for noticing when to re-key:
         self.received_bytes = 0
         self.received_packets = 0
@@ -793,7 +793,7 @@ class BaseTransport (threading.Thread):
         @since: 1.1
         """
         self.log_name = name
-        self.logger = logging.getLogger(name)
+        self.logger = util.get_logger(name)
 
     def get_log_channel(self):
         """

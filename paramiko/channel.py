@@ -82,7 +82,7 @@ class Channel (object):
         self.out_buffer_cv = threading.Condition(self.lock)
         self.status_event = threading.Event()
         self.name = str(chanid)
-        self.logger = logging.getLogger('paramiko.chan.' + str(chanid))
+        self.logger = util.get_logger('paramiko.chan.' + str(chanid))
         self.pipe_rfd = self.pipe_wfd = None
         self.event = threading.Event()
         self.combine_stderr = False
@@ -324,7 +324,7 @@ class Channel (object):
         @type name: str
         """
         self.name = name
-        self.logger = logging.getLogger(self.transport.get_log_channel() + '.' + self.name)
+        self.logger = util.get_logger(self.transport.get_log_channel() + '.' + self.name)
 
     def get_name(self):
         """
@@ -825,7 +825,7 @@ class Channel (object):
 
     def _set_transport(self, transport):
         self.transport = transport
-        self.logger = logging.getLogger(self.transport.get_log_channel() + '.' + self.name)
+        self.logger = util.get_logger(self.transport.get_log_channel() + '.' + self.name)
 
     def _set_window(self, window_size, max_packet_size):
         self.in_window_size = window_size

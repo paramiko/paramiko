@@ -58,7 +58,7 @@ class SFTPServer (BaseSFTP, SubsystemHandler):
         BaseSFTP.__init__(self)
         SubsystemHandler.__init__(self, channel, name)
         transport = channel.get_transport()
-        self.logger = logging.getLogger(transport.get_log_channel() + '.' +
+        self.logger = util.get_logger(transport.get_log_channel() + '.' +
                                         channel.get_name() + '.sftp')
         self.ultra_debug = transport.ultra_debug
         self.next_handle = 1

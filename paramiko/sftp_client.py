@@ -51,7 +51,7 @@ class SFTPClient (BaseSFTP):
         if type(sock) is Channel:
             # override default logger
             transport = self.sock.get_transport()
-            self.logger = logging.getLogger(transport.get_log_channel() + '.' +
+            self.logger = util.get_logger(transport.get_log_channel() + '.' +
                                             self.sock.get_name() + '.sftp')
             self.ultra_debug = transport.ultra_debug
         self._send_version()
