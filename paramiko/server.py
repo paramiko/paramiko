@@ -22,6 +22,7 @@
 L{ServerInterface} is an interface to override for server support.
 """
 
+import threading
 from common import *
 from transport import BaseTransport
 from auth_transport import Transport
@@ -276,3 +277,81 @@ class ServerInterface (object):
         @return: C{True} if the terminal was resized; C{False} if not.        
         """
         return False
+
+
+class SubsystemHandler (threading.Thread):
+    """
+    Handler for a subsytem in server mode.  If you create a subclass of this
+    class and pass it to
+    L{Transport.set_subsystem_handler <BaseTransport.set_subsystem_handler>},
+    an object of this
+    class will be created for each request for this subsystem.  Each new object
+    will be executed within its own new thread by calling L{start_subsystem}.
+    When that method completes, the channel is closed.
+
+    For example, if you made a subclass C{MP3Handler} and registered it as the
+    handler for subsystem C{"mp3"}, then whenever a client has successfully
+    authenticated and requests subsytem C{"mp3"}, an object of class
+    C{MP3Handler} will be created, and L{start_subsystem} will be called on
+    it from a new thread.
+
+    @since: ivysaur
+    """
+    def __init__(self, channel, name):
+        """
+        Create a new handler for a channel.  This is used by L{ServerInterface}
+        to start up a new handler when a channel requests this subsystem.  You
+        don't need to override this method, but if you do, be sure to pass the
+        C{channel} and C{name} parameters through to the original C{__init__}
+        method here.
+
+        @param channel: the channel associated with this subsystem request.
+        @type channel: L{Channel}
+        @param name: name of the requested subsystem.
+        @type name: str
+        """
+        threading.Thread.__init__(self, target=self._run)
+        self.__channel = channel
+        self.__transport = channel.get_transport()
+        self.__name = name
+
+    def _run(self):
+        try:
+            self.__transport._log(DEBUG, 'Starting handler for subsystem %s' % self.__name)
+            self.start_subsystem(self.__name, self.__transport, self.__channel)
+        except Exception, e:
+            self.__transport._log(ERROR, 'Exception in subsystem handler for "%s": %s' %
+                                  (self.__name, str(e)))
+            self.__transport._log(ERROR, util.tb_strings())
+        try:
+            self.__channel.close()
+        except:
+            pass
+
+    def start_subsystem(self, name, transport, channel):
+        """
+        Process an ssh subsystem in server mode.  This method is called on a
+        new object (and in a new thread) for each subsystem request.  It is
+        assumed that all subsystem logic will take place here, and when the
+        subsystem is finished, this method will return.  After this method
+        returns, the channel is closed.
+
+        The combination of C{transport} and C{channel} are unique; this handler
+        corresponds to exactly one L{Channel} on one L{Transport}.
+
+        @note: It is the responsibility of this method to exit if the
+        underlying L{Transport} is closed.  This can be done by checking
+        L{Transport.is_active <BaseTransport.is_active>} or noticing an EOF
+        on the L{Channel}.
+        If this method loops forever without checking for this case, your
+        python interpreter may refuse to exit because this thread will still
+        be running.
+
+        @param name: name of the requested subsystem.
+        @type name: str
+        @param transport: the server-mode L{Transport}.
+        @type transport: L{Transport}
+        @param channel: the channel associated with this subsystem request.
+        @type channel: L{Channel}
+        """
+        pass
