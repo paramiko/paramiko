@@ -104,7 +104,7 @@ class RSAKey (PKey):
             keylist = BER(data).decode()
         except BERException:
             raise SSHException('Unable to parse key file')
-        if (type(keylist) != type([])) or (len(keylist) < 4) or (keylist[0] != 0):
+        if (type(keylist) is not list) or (len(keylist) < 4) or (keylist[0] != 0):
             raise SSHException('Not a valid RSA private key file (bad ber encoding)')
         self.n = keylist[1]
         self.e = keylist[2]

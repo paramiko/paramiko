@@ -117,7 +117,7 @@ class DSSKey (PKey):
             keylist = BER(data).decode()
         except BERException:
             raise SSHException('Unable to parse key file')
-        if (type(keylist) != type([])) or (len(keylist) < 6) or (keylist[0] != 0):
+        if (type(keylist) is not list) or (len(keylist) < 6) or (keylist[0] != 0):
             raise SSHException('not a valid DSA private key file (bad ber encoding)')
         self.p = keylist[1]
         self.q = keylist[2]
