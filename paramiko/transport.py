@@ -56,37 +56,61 @@ atexit.register(_join_lingering_threads)
 class SecurityOptions (object):
     """
     Simple object containing the security preferences of an ssh transport.
-    These are lists of acceptable ciphers, digests, key types, and key
+    These are tuples of acceptable ciphers, digests, key types, and key
     exchange algorithms, listed in order of preference.
+
+    Changing the contents and/or order of these fields affects the underlying
+    L{Transport} (but only if you change them before starting the session).
+    If you try to add an algorithm that paramiko doesn't recognize,
+    C{ValueError} will be raised.  If you try to assign something besides a
+    tuple to one of the fields, L{TypeError} will be raised.
     """
     __slots__ = [ 'ciphers', 'digests', 'key_types', 'kex', '_transport' ]
 
     def __init__(self, transport):
         self._transport = transport
 
+    def __repr__(self):
+        """
+        Returns a string representation of this object, for debugging.
+
+        @rtype: string
+        """
+        return '<paramiko.SecurityOptions for %s>' % repr(self._transport)
+
     def _get_ciphers(self):
         return self._transport._preferred_ciphers
-
-    def _set_ciphers(self, x):
-        self._transport._preferred_ciphers = x
 
     def _get_digests(self):
         return self._transport._preferred_macs
 
-    def _set_digests(self, x):
-        self._transport._preferred_macs = x
-
     def _get_key_types(self):
         return self._transport._preferred_keys
-
-    def _set_key_types(self, x):
-        self._transport._preferred_keys = x
 
     def _get_kex(self):
         return self._transport._preferred_kex
 
+    def _set(self, name, orig, x):
+        if type(x) is list:
+            x = tuple(x)
+        if type(x) is not tuple:
+            raise TypeError('expected tuple or list')
+        possible = getattr(self._transport, orig).keys()
+        if len(filter(lambda n: n not in possible, x)) > 0:
+            raise ValueError('unknown cipher')
+        setattr(self._transport, name, x)
+
+    def _set_ciphers(self, x):
+        self._set('_preferred_ciphers', '_cipher_info', x)
+
+    def _set_digests(self, x):
+        self._set('_preferred_macs', '_mac_info', x)
+
+    def _set_key_types(self, x):
+        self._set('_preferred_keys', '_key_info', x)
+
     def _set_kex(self, x):
-        self._transport._preferred_kex = x
+        self._set('_preferred_kex', '_kex_info', x)
 
     ciphers = property(_get_ciphers, _set_ciphers, None,
                        "Symmetric encryption ciphers")
@@ -106,10 +130,10 @@ class BaseTransport (threading.Thread):
     _PROTO_ID = '2.0'
     _CLIENT_ID = 'pyssh_1.1'
 
-    _preferred_ciphers = [ 'aes128-cbc', 'blowfish-cbc', 'aes256-cbc', '3des-cbc' ]
-    _preferred_macs = [ 'hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96' ]
-    _preferred_keys = [ 'ssh-rsa', 'ssh-dss' ]
-    _preferred_kex = [ 'diffie-hellman-group1-sha1', 'diffie-hellman-group-exchange-sha1' ]
+    _preferred_ciphers = ( 'aes128-cbc', 'blowfish-cbc', 'aes256-cbc', '3des-cbc' )
+    _preferred_macs = ( 'hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96' )
+    _preferred_keys = ( 'ssh-rsa', 'ssh-dss' )
+    _preferred_kex = ( 'diffie-hellman-group1-sha1', 'diffie-hellman-group-exchange-sha1' )
 
     _cipher_info = {
         'blowfish-cbc': { 'class': Blowfish, 'mode': Blowfish.MODE_CBC, 'block-size': 8, 'key-size': 16 },
@@ -123,6 +147,11 @@ class BaseTransport (threading.Thread):
         'hmac-sha1-96': { 'class': SHA, 'size': 12 },
         'hmac-md5': { 'class': MD5, 'size': 16 },
         'hmac-md5-96': { 'class': MD5, 'size': 12 },
+        }
+
+    _key_info = {
+        'ssh-rsa': RSAKey,
+        'ssh-dss': DSSKey,
         }
 
     _kex_info = {
@@ -225,7 +254,7 @@ class BaseTransport (threading.Thread):
         self.keepalive_interval = 0
         self.keepalive_last = time.time()
         # server mode:
-        self.server_mode = 0
+        self.server_mode = False
         self.server_object = None
         self.server_key_dict = { }
         self.server_accepts = [ ]
@@ -321,7 +350,7 @@ class BaseTransport (threading.Thread):
         """
         if server is None:
             server = ServerInterface()
-        self.server_mode = 1
+        self.server_mode = True
         self.server_object = server
         self.completion_event = event
         self.start()
@@ -947,16 +976,8 @@ class BaseTransport (threading.Thread):
         "used by a kex object to register the next packet type it expects to see"
         self.expected_packet = type
 
-    def _key_from_blob(self, keytype, keyblob):
-        if keytype == 'ssh-rsa':
-            return RSAKey(Message(keyblob))
-        elif keytype == 'ssh-dss':
-            return DSSKey(Message(keyblob))
-        else:
-            return None
-
     def _verify_key(self, host_key, sig):
-        key = self._key_from_blob(self.host_key_type, host_key)
+        key = self._key_info[self.host_key_type](Message(host_key))
         if (key == None) or not key.valid:
             raise SSHException('Unknown host key type')
         if not key.verify_ssh_sig(self.H, Message(sig)):
