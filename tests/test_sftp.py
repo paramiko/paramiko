@@ -26,6 +26,7 @@ do test file operations in (so no existing files will be harmed).
 """
 
 import sys, os
+import random
 
 # need a host and private-key where we have acecss
 HOST = os.environ.get('TEST_HOST', 'localhost')
@@ -307,3 +308,32 @@ class SFTPTest (unittest.TestCase):
                 sftp.remove(FOLDER + '/original.txt')
             except:
                 pass
+
+    def test_A_lots_of_files(self):
+        """
+        create a bunch of files over the same session.
+        """
+        numfiles = 100
+        try:
+            for i in range(numfiles):
+                f = sftp.open('%s/file%d.txt' % (FOLDER, i), 'w', 1)
+                f.write('this is file #%d.\n' % i)
+                f.close()
+                sftp.chmod('%s/file%d.txt' % (FOLDER, i), 0660)
+
+            # now make sure every file is there, by creating a list of filenmes
+            # and reading them in random order.
+            numlist = range(numfiles)
+            while len(numlist) > 0:
+                r = numlist[random.randint(0, len(numlist) - 1)]
+                print r,
+                f = sftp.open('%s/file%d.txt' % (FOLDER, r))
+                self.assertEqual(f.readline(), 'this is file #%d.\n' % r)
+                f.close()
+                numlist.remove(r)
+        finally:
+            for i in range(numfiles):
+                try:
+                    sftp.remove('%s/file%d.txt' % (FOLDER, i))
+                except:
+                    pass
