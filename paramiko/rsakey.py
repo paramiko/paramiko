@@ -39,20 +39,22 @@ class RSAKey (PKey):
     data.
     """
 
-    def __init__(self, msg=None, data=''):
-        self.valid = False
+    def __init__(self, msg=None, data='', filename=None, password=None, vals=None):
+        if filename is not None:
+            self._from_private_key_file(filename, password)
+            return
         if (msg is None) and (data is not None):
             msg = Message(data)
-        if (msg is None) or (msg.get_string() != 'ssh-rsa'):
-            return
-        self.e = msg.get_mpint()
-        self.n = msg.get_mpint()
-        self.size = len(util.deflate_long(self.n, 0))
-        self.valid = True
+        if vals is not None:
+            self.e, self.n = vals
+        else:
+            if (msg is None) or (msg.get_string() != 'ssh-rsa'):
+                raise SSHException('Invalid key')
+            self.e = msg.get_mpint()
+            self.n = msg.get_mpint()
+        self.size = util.bit_length(self.n)
 
     def __str__(self):
-        if not self.valid:
-            return ''
         m = Message()
         m.add_string('ssh-rsa')
         m.add_mpint(self.e)
@@ -68,14 +70,11 @@ class RSAKey (PKey):
     def get_name(self):
         return 'ssh-rsa'
 
-    def _pkcs1imify(self, data):
-        """
-        turn a 20-byte SHA1 hash into a blob of data as large as the key's N,
-        using PKCS1's \"emsa-pkcs1-v1_5\" encoding.  totally bizarre.
-        """
-        SHA1_DIGESTINFO = '\x30\x21\x30\x09\x06\x05\x2b\x0e\x03\x02\x1a\x05\x00\x04\x14'
-        filler = '\xff' * (self.size - len(SHA1_DIGESTINFO) - len(data) - 3)
-        return '\x00\x01' + filler + '\x00' + SHA1_DIGESTINFO + data
+    def get_bits(self):
+        return self.size
+
+    def can_sign(self):
+        return hasattr(self, 'd')
 
     def sign_ssh_data(self, randpool, data):
         hash = SHA.new(data).digest()
@@ -87,7 +86,7 @@ class RSAKey (PKey):
         return m
 
     def verify_ssh_sig(self, data, msg):
-        if (not self.valid) or (msg.get_string() != 'ssh-rsa'):
+        if msg.get_string() != 'ssh-rsa':
             return False
         sig = util.inflate_long(msg.get_string(), 1)
         # verify the signature by SHA'ing the data and encrypting it using the
@@ -97,29 +96,7 @@ class RSAKey (PKey):
         rsa = RSA.construct((long(self.n), long(self.e)))
         return rsa.verify(hash, (sig,))
 
-    def read_private_key_file(self, filename, password=None):
-        # private key file contains:
-        # RSAPrivateKey = { version = 0, n, e, d, p, q, d mod p-1, d mod q-1, q**-1 mod p }
-        self.valid = False
-        data = self._read_private_key_file('RSA', filename, password)
-        try:
-            keylist = BER(data).decode()
-        except BERException:
-            raise SSHException('Unable to parse key file')
-        if (type(keylist) is not list) or (len(keylist) < 4) or (keylist[0] != 0):
-            raise SSHException('Not a valid RSA private key file (bad ber encoding)')
-        self.n = keylist[1]
-        self.e = keylist[2]
-        self.d = keylist[3]
-        # not really needed
-        self.p = keylist[4]
-        self.q = keylist[5]
-        self.size = len(util.deflate_long(self.n, 0))
-        self.valid = True
-
     def write_private_key_file(self, filename, password=None):
-        if not self.valid:
-            raise SSHException('Invalid key')
         keylist = [ 0, self.n, self.e, self.d, self.p, self.q,
                     self.d % (self.p - 1), self.d % (self.q - 1),
                     util.mod_inverse(self.q, self.p) ]
@@ -146,12 +123,42 @@ class RSAKey (PKey):
         @since: fearow
         """
         rsa = RSA.generate(bits, randpool.get_bytes, progress_func)
-        key = RSAKey()
-        key.n = rsa.n
-        key.e = rsa.e
+        key = RSAKey(vals=(rsa.e, rsa.n))
         key.d = rsa.d
         key.p = rsa.p
         key.q = rsa.q
-        key.valid = True
         return key
     generate = staticmethod(generate)
+
+
+    ###  internals...
+
+
+    def _pkcs1imify(self, data):
+        """
+        turn a 20-byte SHA1 hash into a blob of data as large as the key's N,
+        using PKCS1's \"emsa-pkcs1-v1_5\" encoding.  totally bizarre.
+        """
+        SHA1_DIGESTINFO = '\x30\x21\x30\x09\x06\x05\x2b\x0e\x03\x02\x1a\x05\x00\x04\x14'
+        size = len(util.deflate_long(self.n, 0))
+        filler = '\xff' * (size - len(SHA1_DIGESTINFO) - len(data) - 3)
+        return '\x00\x01' + filler + '\x00' + SHA1_DIGESTINFO + data
+
+    def _from_private_key_file(self, filename, password):
+        # private key file contains:
+        # RSAPrivateKey = { version = 0, n, e, d, p, q, d mod p-1, d mod q-1, q**-1 mod p }
+        data = self._read_private_key_file('RSA', filename, password)
+        try:
+            keylist = BER(data).decode()
+        except BERException:
+            raise SSHException('Unable to parse key file')
+        if (type(keylist) is not list) or (len(keylist) < 4) or (keylist[0] != 0):
+            raise SSHException('Not a valid RSA private key file (bad ber encoding)')
+        self.n = keylist[1]
+        self.e = keylist[2]
+        self.d = keylist[3]
+        # not really needed
+        self.p = keylist[4]
+        self.q = keylist[5]
+        self.size = util.bit_length(self.n)
+

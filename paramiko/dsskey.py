@@ -38,22 +38,24 @@ class DSSKey (PKey):
     data.
     """
 
-    def __init__(self, msg=None, data=None):
-        self.valid = False
+    def __init__(self, msg=None, data=None, filename=None, password=None, vals=None):
+        if filename is not None:
+            self._from_private_key_file(filename, password)
+            return
         if (msg is None) and (data is not None):
             msg = Message(data)
-        if (msg is None) or (msg.get_string() != 'ssh-dss'):
-            return
-        self.p = msg.get_mpint()
-        self.q = msg.get_mpint()
-        self.g = msg.get_mpint()
-        self.y = msg.get_mpint()
-        self.size = len(util.deflate_long(self.p, 0))
-        self.valid = True
+        if vals is not None:
+            self.p, self.q, self.g, self.y = vals
+        else:
+            if (msg is None) or (msg.get_string() != 'ssh-dss'):
+                raise SSHException('Invalid key')
+            self.p = msg.get_mpint()
+            self.q = msg.get_mpint()
+            self.g = msg.get_mpint()
+            self.y = msg.get_mpint()
+        self.size = util.bit_length(self.p)
 
     def __str__(self):
-        if not self.valid:
-            return ''
         m = Message()
         m.add_string('ssh-dss')
         m.add_mpint(self.p)
@@ -74,6 +76,12 @@ class DSSKey (PKey):
     def get_name(self):
         return 'ssh-dss'
 
+    def get_bits(self):
+        return self.size
+        
+    def can_sign(self):
+        return hasattr(self, 'x')
+
     def sign_ssh_data(self, randpool, data):
         hash = SHA.new(data).digest()
         dss = DSA.construct((long(self.y), long(self.g), long(self.p), long(self.q), long(self.x)))
@@ -90,8 +98,6 @@ class DSSKey (PKey):
         return m
 
     def verify_ssh_sig(self, data, msg):
-        if not self.valid:
-            return 0
         if len(str(msg)) == 40:
             # spies.com bug: signature has no header
             sig = str(msg)
@@ -109,28 +115,7 @@ class DSSKey (PKey):
         dss = DSA.construct((long(self.y), long(self.g), long(self.p), long(self.q)))
         return dss.verify(sigM, (sigR, sigS))
 
-    def read_private_key_file(self, filename, password=None):
-        # private key file contains:
-        # DSAPrivateKey = { version = 0, p, q, g, y, x }
-        self.valid = False
-        data = self._read_private_key_file('DSA', filename, password)
-        try:
-            keylist = BER(data).decode()
-        except BERException, x:
-            raise SSHException('Unable to parse key file: ' + str(x))
-        if (type(keylist) is not list) or (len(keylist) < 6) or (keylist[0] != 0):
-            raise SSHException('not a valid DSA private key file (bad ber encoding)')
-        self.p = keylist[1]
-        self.q = keylist[2]
-        self.g = keylist[3]
-        self.y = keylist[4]
-        self.x = keylist[5]
-        self.size = len(util.deflate_long(self.p, 0))
-        self.valid = True
-
     def write_private_key_file(self, filename, password=None):
-        if not self.valid:
-            raise SSHException('Invalid key')
         keylist = [ 0, self.p, self.q, self.g, self.y, self.x ]
         try:
             b = BER()
@@ -155,12 +140,29 @@ class DSSKey (PKey):
         @since: fearow
         """
         dsa = DSA.generate(bits, randpool.get_bytes, progress_func)
-        key = DSSKey()
-        key.p = dsa.p
-        key.q = dsa.q
-        key.g = dsa.g
-        key.y = dsa.y
+        key = DSSKey(vals=(dsa.p, dsa.q, dsa.g, dsa.y))
         key.x = dsa.x
-        key.valid = True
         return key
     generate = staticmethod(generate)
+
+
+    ###  internals...
+
+
+    def _from_private_key_file(self, filename, password):
+        # private key file contains:
+        # DSAPrivateKey = { version = 0, p, q, g, y, x }
+        data = self._read_private_key_file('DSA', filename, password)
+        try:
+            keylist = BER(data).decode()
+        except BERException, x:
+            raise SSHException('Unable to parse key file: ' + str(x))
+        if (type(keylist) is not list) or (len(keylist) < 6) or (keylist[0] != 0):
+            raise SSHException('not a valid DSA private key file (bad ber encoding)')
+        self.p = keylist[1]
+        self.q = keylist[2]
+        self.g = keylist[3]
+        self.y = keylist[4]
+        self.x = keylist[5]
+        self.size = util.bit_length(self.p)
+

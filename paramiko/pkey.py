@@ -55,7 +55,10 @@ class PKey (object):
         type.
         @type msg: L{Message}
         @param data: an optional string containing a public key of this type
-        @type data: string
+        @type data: str
+
+        @raise SSHException: if a key cannot be created from the C{data} or
+        C{msg} given, or no key was passed in.
         """
         pass
 
@@ -66,7 +69,7 @@ class PKey (object):
         re-create the key object later.
 
         @return: string representation of an SSH key message.
-        @rtype: string
+        @rtype: str
         """
         return ''
 
@@ -94,9 +97,29 @@ class PKey (object):
 
         @return: name of this private key type, in SSH terminology (for
         example, C{"ssh-rsa"}).
-        @rtype: string
+        @rtype: str
         """
         return ''
+
+    def get_bits(self):
+        """
+        Return the number of significant bits in this key.  This is useful
+        for judging the relative security of a key.
+
+        @return: bits in the key.
+        @rtype: int
+        """
+        return 0
+
+    def can_sign(self):
+        """
+        Return C{True} if this key has the private part necessary for signing
+        data.
+
+        @return: C{True} if this is a private key.
+        @rtype: bool
+        """
+        return False
 
     def get_fingerprint(self):
         """
@@ -105,7 +128,7 @@ class PKey (object):
 
         @return: a 16-byte string (binary) of the MD5 fingerprint, in SSH
         format.
-        @rtype: string
+        @rtype: str
         """
         return MD5.new(str(self)).digest()
 
@@ -116,7 +139,7 @@ class PKey (object):
         public key files or recognized host keys.
 
         @return: a base64 string containing the public part of the key.
-        @rtype: string
+        @rtype: str
 
         @since: fearow
         """
@@ -130,7 +153,7 @@ class PKey (object):
         @param randpool: a secure random number generator.
         @type randpool: L{Crypto.Util.randpool.RandomPool}
         @param data: the data to sign.
-        @type data: string
+        @type data: str
         @return: an SSH signature message.
         @rtype: L{Message}
         """
@@ -142,7 +165,7 @@ class PKey (object):
         that data, verify that it was signed with this key.
 
         @param data: the data that was signed.
-        @type data: string
+        @type data: str
         @param msg: an SSH signature message
         @type msg: L{Message}
         @return: C{True} if the signature verifies correctly; C{False}
@@ -150,40 +173,21 @@ class PKey (object):
         @rtype: boolean
         """
         return False
-    
-    def read_private_key_file(self, filename, password=None):
-        """
-        Read private key contents from a file into this object.  If the private
-        key is encrypted and C{password} is not C{None}, the given password
-        will be used to decrypt the key (otherwise L{PasswordRequiredException}
-        is thrown).
-
-        @param filename: name of the file to read.
-        @type filename: string
-        @param password: an optional password to use to decrypt the key file,
-        if it's encrypted.
-        @type password: string
-
-        @raise IOError: if there was an error reading the file.
-        @raise PasswordRequiredException: if the private key file is
-        encrypted, and C{password} is C{None}.
-        @raise SSHException: if the key file is invalid.
-        """
-        raise exception('Not implemented in PKey')
-
+   
     def from_private_key_file(cl, filename, password=None):
         """
-        Create a key object by reading a private key file.  This is roughly
-        equivalent to creating a new key object and then calling
-        L{read_private_key_file} on it.  Through the magic of python, this
-        factory method will exist in all subclasses of PKey (such as L{RSAKey}
-        or L{DSSKey}), but is useless on the abstract PKey class.
+        Create a key object by reading a private key file.  If the private
+        key is encrypted and C{password} is not C{None}, the given password
+        will be used to decrypt the key (otherwise L{PasswordRequiredException}
+        is thrown).  Through the magic of python, this factory method will
+        exist in all subclasses of PKey (such as L{RSAKey} or L{DSSKey}), but
+        is useless on the abstract PKey class.
 
         @param filename: name of the file to read.
-        @type filename: string
+        @type filename: str
         @param password: an optional password to use to decrypt the key file,
         if it's encrypted
-        @type password: string
+        @type password: str
         @return: a new key object based on the given private key.
         @rtype: L{PKey}
 
@@ -194,8 +198,7 @@ class PKey (object):
 
         @since: fearow
         """
-        key = cl()
-        key.read_private_key_file(filename, password)
+        key = cl(filename=filename, password=password)
         return key
     from_private_key_file = classmethod(from_private_key_file)
 
@@ -205,9 +208,9 @@ class PKey (object):
         C{None}, the key is encrypted before writing.
 
         @param filename: name of the file to write.
-        @type filename: string
+        @type filename: str
         @param password: an optional password to use to encrypt the key file.
-        @type password: string
+        @type password: str
 
         @raise IOError: if there was an error writing the file.
         @raise SSHException: if the key is invalid.
@@ -225,14 +228,14 @@ class PKey (object):
         the key (otherwise L{PasswordRequiredException} is thrown).
 
         @param tag: C{"RSA"} or C{"DSA"}, the tag used to mark the data block.
-        @type tag: string
+        @type tag: str
         @param filename: name of the file to read.
-        @type filename: string
+        @type filename: str
         @param password: an optional password to use to decrypt the key file,
         if it's encrypted.
-        @type password: string
+        @type password: str
         @return: data blob that makes up the private key.
-        @rtype: string
+        @rtype: str
 
         @raise IOError: if there was an error reading the file.
         @raise PasswordRequiredException: if the private key file is
@@ -296,13 +299,13 @@ class PKey (object):
         a password is given, DES-EDE3-CBC is used.
 
         @param tag: C{"RSA"} or C{"DSA"}, the tag used to mark the data block.
-        @type tag: string
+        @type tag: str
         @param filename: name of the file to write.
-        @type filename: string
+        @type filename: str
         @param data: data blob that makes up the private key.
-        @type data: string
+        @type data: str
         @param password: an optional password to use to encrypt the file.
-        @type password: string
+        @type password: str
 
         @raise IOError: if there was an error writing the file.
         """
