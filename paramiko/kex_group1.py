@@ -6,11 +6,11 @@
 
 from message import Message, inflate_long
 from ssh_exception import SSHException
-from transport import MSG_NEWKEYS
+from transport import _MSG_NEWKEYS
 from Crypto.Hash import SHA
 from logging import DEBUG, INFO, WARNING, ERROR, CRITICAL
 
-MSG_KEXDH_INIT, MSG_KEXDH_REPLY = range(30, 32)
+_MSG_KEXDH_INIT, _MSG_KEXDH_REPLY = range(30, 32)
 
 # draft-ietf-secsh-transport-09.txt, page 17
 P = 0xFFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD129024E088A67CC74020BBEA63B139B22514A08798E3404DDEF9519B3CD3A431B302B0A6DF25F14374FE1356D6D51C245E485B576625E7EC6F44C42E9A637ED6B0BFF5CB6F406B7EDEE386BFB5A899FA5AE9F24117C4B1FE649286651ECE65381FFFFFFFFFFFFFFFFL
@@ -44,20 +44,20 @@ class KexGroup1(object):
         if self.transport.server_mode:
             # compute f = g^x mod p, but don't send it yet
             self.f = pow(G, self.x, P)
-            self.transport._expect_packet(MSG_KEXDH_INIT)
+            self.transport._expect_packet(_MSG_KEXDH_INIT)
             return
         # compute e = g^x mod p (where g=2), and send it
         self.e = pow(G, self.x, P)
         m = Message()
-        m.add_byte(chr(MSG_KEXDH_INIT))
+        m.add_byte(chr(_MSG_KEXDH_INIT))
         m.add_mpint(self.e)
         self.transport._send_message(m)
-        self.transport._expect_packet(MSG_KEXDH_REPLY)
+        self.transport._expect_packet(_MSG_KEXDH_REPLY)
 
     def parse_next(self, ptype, m):
-        if self.transport.server_mode and (ptype == MSG_KEXDH_INIT):
+        if self.transport.server_mode and (ptype == _MSG_KEXDH_INIT):
             return self.parse_kexdh_init(m)
-        elif not self.transport.server_mode and (ptype == MSG_KEXDH_REPLY):
+        elif not self.transport.server_mode and (ptype == _MSG_KEXDH_REPLY):
             return self.parse_kexdh_reply(m)
         raise SSHException('KexGroup1 asked to handle packet type %d' % ptype)
 
@@ -94,7 +94,7 @@ class KexGroup1(object):
         sig = self.transport.get_server_key().sign_ssh_data(self.transport.randpool, H)
         # send reply
         m = Message()
-        m.add_byte(chr(MSG_KEXDH_REPLY))
+        m.add_byte(chr(_MSG_KEXDH_REPLY))
         m.add_string(key)
         m.add_mpint(self.f)
         m.add_string(sig)

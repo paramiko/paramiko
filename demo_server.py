@@ -13,10 +13,11 @@ if len(l.handlers) == 0:
     l.addHandler(lh)
 
 #host_key = paramiko.RSAKey()
-#host_key.read_private_key_file('demo_host_key')
+#host_key.read_private_key_file('demo_rsa_key')
 
 host_key = paramiko.DSSKey()
 host_key.read_private_key_file('demo_dss_key')
+
 print 'Read key: ' + paramiko.hexify(host_key.get_fingerprint())
 
 

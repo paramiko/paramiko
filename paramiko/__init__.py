@@ -11,10 +11,35 @@ __version__ = "0.1-charmander"
 __credits__ = "Huzzah!"
 
 
-from auth_transport import Transport
-from channel import Channel
-from rsakey import RSAKey
-from dsskey import DSSKey
-from util import hexify
+import ssh_exception, transport, auth_transport, channel, rsakey, dsskey, util
 
-#__all__ = [ 'Transport', 'Channel', 'RSAKey', 'DSSKey', 'hexify' ]
+class SSHException (ssh_exception.SSHException):
+    pass
+
+class Transport (auth_transport.Transport):
+    """
+    An SSH Transport attaches to a stream (usually a socket), negotiates an
+    encrypted session, authenticates, and then creates stream tunnels, called
+    L{Channel}s, across the session.  Multiple channels can be multiplexed
+    across a single session (and often are, in the case of port forwardings).
+    """
+    pass
+
+class Channel (channel.Channel):
+    """
+    A secure tunnel across an SSH L{Transport}.  A Channel is meant to behave
+    like a socket, and has an API that should be indistinguishable from the
+    python socket API.
+    """
+    pass
+
+class RSAKey (rsakey.RSAKey):
+    pass
+
+class DSSKey (dsskey.DSSKey):
+    pass
+
+
+__all__ = [ 'Transport', 'Channel', 'RSAKey', 'DSSKey', 'transport',
+            'auth_transport', 'channel', 'rsakey', 'ddskey', 'util',
+            'SSHException' ]

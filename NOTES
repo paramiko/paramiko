@@ -15,19 +15,6 @@ SSHOutputStream --> ssh2 chan --> ssh2 transport --> SOS   [no thread]
 
 exported API...
 
-from BaseTransport:
-    start_client
-    start_server
-    add_server_key
-    get_server_key
-    close
-    get_remote_server_key
-*   is_active
-    open_session
-    open_channel
-    renegotiate_keys
-    check_channel_request
-
 from Transport:
 *   is_authenticated
     auth_key

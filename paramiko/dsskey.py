@@ -3,16 +3,16 @@
 import base64
 from ssh_exception import SSHException
 from message import Message
-from transport import MSG_USERAUTH_REQUEST
+from transport import _MSG_USERAUTH_REQUEST
 from util import inflate_long, deflate_long
 from Crypto.PublicKey import DSA
-from Crypto.Hash import SHA, MD5
+from Crypto.Hash import SHA
 from ber import BER
+from pkey import PKey
 
 from util import format_binary
 
-
-class DSSKey(object):
+class DSSKey (PKey):
 
     def __init__(self, msg=None):
         self.valid = 0
@@ -39,9 +39,6 @@ class DSSKey(object):
     def get_name(self):
         return 'ssh-dss'
 
-    def get_fingerprint(self):
-        return MD5.new(str(self)).digest()
-        
     def verify_ssh_sig(self, data, msg):
         if not self.valid:
             return 0
@@ -78,7 +75,6 @@ class DSSKey(object):
         return str(m)
 
     def read_private_key_file(self, filename):
-        "throws a file exception, or SSHException (on invalid key, or base64 decoding exception"
         # private key file contains:
         # DSAPrivateKey = { version = 0, p, q, g, y, x }
         self.valid = 0
@@ -102,7 +98,7 @@ class DSSKey(object):
     def sign_ssh_session(self, randpool, sid, username):
         m = Message()
         m.add_string(sid)
-        m.add_byte(chr(MSG_USERAUTH_REQUEST))
+        m.add_byte(chr(_MSG_USERAUTH_REQUEST))
         m.add_string(username)
         m.add_string('ssh-connection')
         m.add_string('publickey')

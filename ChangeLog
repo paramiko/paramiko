@@ -1,0 +1,42 @@
+
+2003-08-24:
+    * implemented the other hashes: all 4 from the draft are working now
+    * added 'aes128-cbc' and '3des-cbc' cipher support
+    * fixed channel eof/close semantics
+2003-09-12:	version "aerodactyl"
+    * implemented group-exchange kex ("kex-gex")
+    * implemented RSA/DSA private key auth
+2003-09-13:
+    * fixed inflate_long and deflate_long to handle negatives, even though
+      they're never used in the current ssh protocol
+2003-09-14:
+    * fixed session_id handling: re-keying works now
+    * added the ability for a Channel to have a fileno() for select/poll
+      purposes, although this will cause worse window performance if the
+      client app isn't careful
+2003-09-16:	version "bulbasaur"
+    * fixed pipe (fileno) method to be nonblocking and it seems to work now
+    * fixed silly bug that caused large blocks to be truncated
+2003-10-08:
+    * patch to fix Channel.invoke_subsystem and add Channel.exec_command
+      [vaclav dvorak]
+    * patch to add Channel.sendall [vaclav dvorak]
+    * patch to add Channel.shutdown [vaclav dvorak]
+    * patch to add Channel.makefile and a ChannelFile class which emulates
+      a python file object [vaclav dvorak]
+2003-10-26:
+    * thread creation no longer happens during construction -- use the new
+      method "start_client(event)" to get things rolling
+    * re-keying now takes place after 1GB of data or 1 billion packets
+      (these limits can be easily changed per-session if needed)
+2003-11-06:
+    * added a demo server and host key
+2003-11-09:
+    * lots of changes to server mode
+    * ChannelFile supports universal newline mode; fixed readline
+    * fixed a bug with parsing the remote banner
+2003-11-10:    version "charmander"
+    * renamed SSHException -> SecshException
+    * cleaned up server mode and the demo server
+
+***  for all subsequent changes, please see 'tla changelog'.

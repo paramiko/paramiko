@@ -7,12 +7,12 @@
 from message import Message
 from util import inflate_long, deflate_long, bit_length
 from ssh_exception import SSHException
-from transport import MSG_NEWKEYS
+from transport import _MSG_NEWKEYS
 from Crypto.Hash import SHA
 from Crypto.Util import number
 from logging import DEBUG
 
-MSG_KEXDH_GEX_GROUP, MSG_KEXDH_GEX_INIT, MSG_KEXDH_GEX_REPLY, MSG_KEXDH_GEX_REQUEST = range(31, 35)
+_MSG_KEXDH_GEX_GROUP, _MSG_KEXDH_GEX_INIT, _MSG_KEXDH_GEX_REPLY, _MSG_KEXDH_GEX_REQUEST = range(31, 35)
 
 
 class KexGex(object):
@@ -27,27 +27,27 @@ class KexGex(object):
 
     def start_kex(self):
         if self.transport.server_mode:
-            self.transport._expect_packet(MSG_KEXDH_GEX_REQUEST)
+            self.transport._expect_packet(_MSG_KEXDH_GEX_REQUEST)
             return
         # request a bit range: we accept (min_bits) to (max_bits), but prefer
         # (preferred_bits).  according to the spec, we shouldn't pull the
         # minimum up above 1024.
         m = Message()
-        m.add_byte(chr(MSG_KEXDH_GEX_REQUEST))
+        m.add_byte(chr(_MSG_KEXDH_GEX_REQUEST))
         m.add_int(self.min_bits)
         m.add_int(self.preferred_bits)
         m.add_int(self.max_bits)
         self.transport._send_message(m)
-        self.transport._expect_packet(MSG_KEXDH_GEX_GROUP)
+        self.transport._expect_packet(_MSG_KEXDH_GEX_GROUP)
 
     def parse_next(self, ptype, m):
-        if ptype == MSG_KEXDH_GEX_REQUEST:
+        if ptype == _MSG_KEXDH_GEX_REQUEST:
             return self._parse_kexdh_gex_request(m)
-        elif ptype == MSG_KEXDH_GEX_GROUP:
+        elif ptype == _MSG_KEXDH_GEX_GROUP:
             return self._parse_kexdh_gex_group(m)
-        elif ptype == MSG_KEXDH_GEX_INIT:
+        elif ptype == _MSG_KEXDH_GEX_INIT:
             return self._parse_kexdh_gex_init(m)
-        elif ptype == MSG_KEXDH_GEX_REPLY:
+        elif ptype == _MSG_KEXDH_GEX_REPLY:
             return self._parse_kexdh_gex_reply(m)
         raise SSHException('KexGex asked to handle packet type %d' % ptype)
 
@@ -96,11 +96,11 @@ class KexGex(object):
             raise SSHException('Can\'t do server-side gex with no modulus pack')
         self.g, self.p = pack.get_modulus(min, preferred, max)
         m = Message()
-        m.add_byte(chr(MSG_KEXDH_GEX_GROUP))
+        m.add_byte(chr(_MSG_KEXDH_GEX_GROUP))
         m.add_mpint(self.p)
         m.add_mpint(self.g)
         self.transport._send_message(m)
-        self.transport._expect_packet(MSG_KEXDH_GEX_INIT)
+        self.transport._expect_packet(_MSG_KEXDH_GEX_INIT)
 
     def _parse_kexdh_gex_group(self, m):
         self.p = m.get_mpint()
@@ -114,10 +114,10 @@ class KexGex(object):
         # now compute e = g^x mod p
         self.e = pow(self.g, self.x, self.p)
         m = Message()
-        m.add_byte(chr(MSG_KEXDH_GEX_INIT))
+        m.add_byte(chr(_MSG_KEXDH_GEX_INIT))
         m.add_mpint(self.e)
         self.transport._send_message(m)
-        self.transport._expect_packet(MSG_KEXDH_GEX_REPLY)
+        self.transport._expect_packet(_MSG_KEXDH_GEX_REPLY)
 
     def _parse_kexdh_gex_init(self, m):
         self.e = m.get_mpint()
@@ -142,7 +142,7 @@ class KexGex(object):
         sig = self.transport.get_server_key().sign_ssh_data(self.transport.randpool, H)
         # send reply
         m = Message()
-        m.add_byte(chr(MSG_KEXDH_GEX_REPLY))
+        m.add_byte(chr(_MSG_KEXDH_GEX_REPLY))
         m.add_string(key)
         m.add_mpint(self.f)
         m.add_string(sig)

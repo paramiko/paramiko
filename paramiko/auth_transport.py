@@ -1,18 +1,18 @@
 #!/usr/bin/python
 
 from transport import BaseTransport
-from transport import MSG_SERVICE_REQUEST, MSG_SERVICE_ACCEPT, MSG_USERAUTH_REQUEST, MSG_USERAUTH_FAILURE, \
-     MSG_USERAUTH_SUCCESS, MSG_USERAUTH_BANNER
+from transport import _MSG_SERVICE_REQUEST, _MSG_SERVICE_ACCEPT, _MSG_USERAUTH_REQUEST, _MSG_USERAUTH_FAILURE, \
+     _MSG_USERAUTH_SUCCESS, _MSG_USERAUTH_BANNER
 from message import Message
 from ssh_exception import SSHException
 from logging import DEBUG, INFO, WARNING, ERROR, CRITICAL
 
-DISCONNECT_SERVICE_NOT_AVAILABLE, DISCONNECT_AUTH_CANCELLED_BY_USER, \
-    DISCONNECT_NO_MORE_AUTH_METHODS_AVAILABLE = 7, 13, 14
+_DISCONNECT_SERVICE_NOT_AVAILABLE, _DISCONNECT_AUTH_CANCELLED_BY_USER, \
+    _DISCONNECT_NO_MORE_AUTH_METHODS_AVAILABLE = 7, 13, 14
 
 
 
-class Transport(BaseTransport):
+class Transport (BaseTransport):
     "BaseTransport with the auth framework hooked up"
     
     AUTH_SUCCESSFUL, AUTH_PARTIALLY_SUCCESSFUL, AUTH_FAILED = range(3)
@@ -55,7 +55,7 @@ class Transport(BaseTransport):
 
     def _request_auth(self):
         m = Message()
-        m.add_byte(chr(MSG_SERVICE_REQUEST))
+        m.add_byte(chr(_MSG_SERVICE_REQUEST))
         m.add_string('ssh-userauth')
         self._send_message(m)
 
@@ -90,8 +90,8 @@ class Transport(BaseTransport):
 
     def disconnect_service_not_available(self):
         m = Message()
-        m.add_byte(chr(MSG_DISCONNECT))
-        m.add_int(DISCONNECT_SERVICE_NOT_AVAILABLE)
+        m.add_byte(chr(_MSG_DISCONNECT))
+        m.add_int(_DISCONNECT_SERVICE_NOT_AVAILABLE)
         m.add_string('Service not available')
         m.add_string('en')
         self._send_message(m)
@@ -99,8 +99,8 @@ class Transport(BaseTransport):
 
     def disconnect_no_more_auth(self):
         m = Message()
-        m.add_byte(chr(MSG_DISCONNECT))
-        m.add_int(DISCONNECT_NO_MORE_AUTH_METHODS_AVAILABLE)
+        m.add_byte(chr(_MSG_DISCONNECT))
+        m.add_int(_DISCONNECT_NO_MORE_AUTH_METHODS_AVAILABLE)
         m.add_string('No more auth methods available')
         m.add_string('en')
         self._send_message(m)
@@ -111,7 +111,7 @@ class Transport(BaseTransport):
         if self.server_mode and (service == 'ssh-userauth'):
             # accepted
             m = Message()
-            m.add_byte(chr(MSG_SERVICE_ACCEPT))
+            m.add_byte(chr(_MSG_SERVICE_ACCEPT))
             m.add_string(service)
             self._send_message(m)
             return
@@ -123,7 +123,7 @@ class Transport(BaseTransport):
         if service == 'ssh-userauth':
             self._log(DEBUG, 'userauth is OK')
             m = Message()
-            m.add_byte(chr(MSG_USERAUTH_REQUEST))
+            m.add_byte(chr(_MSG_USERAUTH_REQUEST))
             m.add_string(self.username)
             m.add_string('ssh-connection')
             m.add_string(self.auth_method)
@@ -161,7 +161,7 @@ class Transport(BaseTransport):
         if not self.server_mode:
             # er, uh... what?
             m = Message()
-            m.add_byte(chr(MSG_USERAUTH_FAILURE))
+            m.add_byte(chr(_MSG_USERAUTH_FAILURE))
             m.add_string('none')
             m.add_boolean(0)
             self._send_message(m)
@@ -202,11 +202,11 @@ class Transport(BaseTransport):
         m = Message()
         if result == self.AUTH_SUCCESSFUL:
             self._log(DEBUG, 'Auth granted.')
-            m.add_byte(chr(MSG_USERAUTH_SUCCESS))
+            m.add_byte(chr(_MSG_USERAUTH_SUCCESS))
             self.auth_complete = 1
         else:
             self._log(DEBUG, 'Auth rejected.')
-            m.add_byte(chr(MSG_USERAUTH_FAILURE))
+            m.add_byte(chr(_MSG_USERAUTH_FAILURE))
             m.add_string(self.get_allowed_auths(username))
             if result == self.AUTH_PARTIALLY_SUCCESSFUL:
                 m.add_boolean(1)
@@ -245,11 +245,11 @@ class Transport(BaseTransport):
 
     _handler_table = BaseTransport._handler_table.copy()
     _handler_table.update({
-        MSG_SERVICE_REQUEST: parse_service_request,
-        MSG_SERVICE_ACCEPT: parse_service_accept,
-        MSG_USERAUTH_REQUEST: parse_userauth_request,
-        MSG_USERAUTH_SUCCESS: parse_userauth_success,
-        MSG_USERAUTH_FAILURE: parse_userauth_failure,
-        MSG_USERAUTH_BANNER: parse_userauth_banner,
+        _MSG_SERVICE_REQUEST: parse_service_request,
+        _MSG_SERVICE_ACCEPT: parse_service_accept,
+        _MSG_USERAUTH_REQUEST: parse_userauth_request,
+        _MSG_USERAUTH_SUCCESS: parse_userauth_success,
+        _MSG_USERAUTH_FAILURE: parse_userauth_failure,
+        _MSG_USERAUTH_BANNER: parse_userauth_banner,
         })
 

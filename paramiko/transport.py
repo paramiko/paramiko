@@ -1,15 +1,15 @@
 #!/usr/bin/python
 
-MSG_DISCONNECT, MSG_IGNORE, MSG_UNIMPLEMENTED, MSG_DEBUG, MSG_SERVICE_REQUEST, \
-	MSG_SERVICE_ACCEPT = range(1, 7)
-MSG_KEXINIT, MSG_NEWKEYS = range(20, 22)
-MSG_USERAUTH_REQUEST, MSG_USERAUTH_FAILURE, MSG_USERAUTH_SUCCESS, \
-        MSG_USERAUTH_BANNER = range(50, 54)
-MSG_USERAUTH_PK_OK = 60
-MSG_CHANNEL_OPEN, MSG_CHANNEL_OPEN_SUCCESS, MSG_CHANNEL_OPEN_FAILURE, \
-	MSG_CHANNEL_WINDOW_ADJUST, MSG_CHANNEL_DATA, MSG_CHANNEL_EXTENDED_DATA, \
-	MSG_CHANNEL_EOF, MSG_CHANNEL_CLOSE, MSG_CHANNEL_REQUEST, \
-	MSG_CHANNEL_SUCCESS, MSG_CHANNEL_FAILURE = range(90, 101)
+_MSG_DISCONNECT, _MSG_IGNORE, _MSG_UNIMPLEMENTED, _MSG_DEBUG, _MSG_SERVICE_REQUEST, \
+	_MSG_SERVICE_ACCEPT = range(1, 7)
+_MSG_KEXINIT, _MSG_NEWKEYS = range(20, 22)
+_MSG_USERAUTH_REQUEST, _MSG_USERAUTH_FAILURE, _MSG_USERAUTH_SUCCESS, \
+        _MSG_USERAUTH_BANNER = range(50, 54)
+_MSG_USERAUTH_PK_OK = 60
+_MSG_CHANNEL_OPEN, _MSG_CHANNEL_OPEN_SUCCESS, _MSG_CHANNEL_OPEN_FAILURE, \
+	_MSG_CHANNEL_WINDOW_ADJUST, _MSG_CHANNEL_DATA, _MSG_CHANNEL_EXTENDED_DATA, \
+	_MSG_CHANNEL_EOF, _MSG_CHANNEL_CLOSE, _MSG_CHANNEL_REQUEST, \
+	_MSG_CHANNEL_SUCCESS, _MSG_CHANNEL_FAILURE = range(90, 101)
 
 import sys, os, string, threading, socket, logging, struct
 from ssh_exception import SSHException
@@ -36,7 +36,7 @@ from logging import DEBUG, INFO, WARNING, ERROR, CRITICAL
 
 
 # channel request failed reasons:
-CONNECTION_FAILED_CODE = {
+_CONNECTION_FAILED_CODE = {
     1: 'Administratively prohibited',
     2: 'Connect failed',
     3: 'Unknown channel type',
@@ -54,29 +54,14 @@ except:
 randpool.randomize()
 
 
-
-class BaseTransport(threading.Thread):
-    '''
-    An SSH Transport attaches to a stream (usually a socket), negotiates an
-    encrypted session, authenticates, and then creates stream tunnels, called
-    "channels", across the session.  Multiple channels can be multiplexed
-    across a single session (and often are, in the case of port forwardings).
-
-    Transport expects to receive a "socket-like object" to talk to the SSH
-    server.  This means it has a method "settimeout" which sets a timeout for
-    read/write calls, and a method "send()" to write bytes and "recv()" to
-    read bytes.  "recv" returns from 1 to n bytes, or 0 if the stream has been
-    closed.  EOFError may also be raised on a closed stream.  (A return value
-    of 0 is converted to an EOFError internally.)  "send(s)" writes from 1 to
-    len(s) bytes, and returns the number of bytes written, or returns 0 if the
-    stream has been closed.  As with instream, EOFError may be raised instead
-    of returning 0.
-
-    FIXME: Describe events here.
-    '''
-
-    PROTO_ID = '2.0'
-    CLIENT_ID = 'pyssh_1.1'
+class BaseTransport (threading.Thread):
+    """
+    Handles protocol negotiation, key exchange, encryption, and the creation
+    of channels across an SSH session.  Basically everything but authentication
+    is done here.
+    """
+    _PROTO_ID = '2.0'
+    _CLIENT_ID = 'pyssh_1.1'
 
     preferred_ciphers = [ 'aes128-cbc', 'blowfish-cbc', 'aes256-cbc', '3des-cbc' ]
     preferred_macs = [ 'hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96' ]
@@ -108,13 +93,34 @@ class BaseTransport(threading.Thread):
     OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED, OPEN_FAILED_CONNECT_FAILED, OPEN_FAILED_UNKNOWN_CHANNEL_TYPE, \
 	OPEN_FAILED_RESOURCE_SHORTAGE = range(1, 5)
 
+    _modulus_pack = None
+
     def __init__(self, sock):
+        """
+        Create a new SSH session over an existing socket, or socket-like
+        object.  This only creates the Transport object; it doesn't begin the
+        SSH session yet.  Use L{connect} or L{start_client} to begin a client
+        session, or L{start_server} to begin a server session.
+
+        If the object is not actually a socket, it must have the following
+        methods:
+            - C{settimeout(float)}: Sets a timeout for read & write calls.
+            - C{send(string)}: Writes from 1 to C{len(string)} bytes, and
+              returns an int representing the number of bytes written.  Returns
+              0 or raises C{EOFError} if the stream has been closed.
+            - C{recv(int)}: Reads from 1 to C{int} bytes and returns them as a
+              string.  Returns 0 or raises C{EOFError} if the stream has been
+              closed.
+
+        @param sock: a socket or socket-like object to create the session over.
+        @type sock: socket
+    	"""
         threading.Thread.__init__(self, target=self._run)
         self.randpool = randpool
         self.sock = sock
         self.sock.settimeout(0.1)
         # negotiated crypto parameters
-        self.local_version = 'SSH-' + self.PROTO_ID + '-' + self.CLIENT_ID
+        self.local_version = 'SSH-' + self._PROTO_ID + '-' + self._CLIENT_ID
         self.remote_version = ''
         self.block_size_out = self.block_size_in = 8
         self.local_mac_len = self.remote_mac_len = 0
@@ -136,7 +142,7 @@ class BaseTransport(threading.Thread):
         self.window_size = 65536
         self.max_packet_size = 2048
         self.ultra_debug = 0
-        self.modulus_pack = None
+        self.saved_exception = None
         # used for noticing when to re-key:
         self.received_bytes = 0
         self.received_packets = 0
@@ -159,6 +165,17 @@ class BaseTransport(threading.Thread):
         self.start()
 
     def add_server_key(self, key):
+        """
+        Add a host key to the list of keys used for server mode.  When behaving
+        as a server, the host key is used to sign certain packets during the
+        SSH2 negotiation, so that the client can trust that we are who we say
+        we are.  Because this is used for signing, the key must contain private
+        key info, not just the public half.
+        
+        @param key: the host key to add, usually an L{RSAKey <rsakey.RSAKey>} or
+        L{DSSKey <dsskey.DSSKey>}.
+        @type key: L{PKey <pkey.PKey>}
+        """
         self.server_key_dict[key.get_name()] = key
 
     def get_server_key(self):
@@ -167,7 +184,7 @@ class BaseTransport(threading.Thread):
         except KeyError:
             return None
 
-    def load_server_moduli(self, filename=None):
+    def load_server_moduli(filename=None):
         """
         I{(optional)}
         Load a file of prime moduli for use in doing group-exchange key
@@ -195,26 +212,32 @@ class BaseTransport(threading.Thread):
         
         @note: This has no effect when used in client mode.
         """
-        self.modulus_pack = ModulusPack(self.randpool)
+        BaseTransport._modulus_pack = ModulusPack(randpool)
         # places to look for the openssh "moduli" file
         file_list = [ '/etc/ssh/moduli', '/usr/local/etc/moduli' ]
         if filename is not None:
             file_list.insert(0, filename)
         for fn in file_list:
             try:
-                self.modulus_pack.read_file(fn)
+                BaseTransport._modulus_pack.read_file(fn)
                 return True
             except IOError:
                 pass
         # none succeeded
-        self.modulus_pack = None
+        BaseTransport._modulus_pack = None
         return False
+    load_server_moduli = staticmethod(load_server_moduli)
 
     def _get_modulus_pack(self):
         "used by KexGex to find primes for group exchange"
-        return self.modulus_pack
+        return self._modulus_pack
 
     def __repr__(self):
+        """
+        Returns a string representation of this object, for debugging.
+
+        @rtype: string
+        """
         if not self.active:
             return '<paramiko.BaseTransport (unconnected)>'
         out = '<paramiko.BaseTransport'
@@ -285,7 +308,7 @@ class BaseTransport(threading.Thread):
             chanid = self.channel_counter
             self.channel_counter += 1
             m = Message()
-            m.add_byte(chr(MSG_CHANNEL_OPEN))
+            m.add_byte(chr(_MSG_CHANNEL_OPEN))
             m.add_string(kind)
             m.add_int(chanid)
             m.add_int(self.window_size)
@@ -293,7 +316,7 @@ class BaseTransport(threading.Thread):
             self.channels[chanid] = chan = Channel(chanid)
             self.channel_events[chanid] = event = threading.Event()
             chan._set_transport(self)
-            chan.set_window(self.window_size, self.max_packet_size)
+            chan._set_window(self.window_size, self.max_packet_size)
             self._send_message(m)
         finally:
             self.lock.release()
@@ -310,7 +333,141 @@ class BaseTransport(threading.Thread):
         finally:
             self.lock.release()
         return chan
+    
+    def renegotiate_keys(self):
+        """
+        Force this session to switch to new keys.  Normally this is done
+        automatically after the session hits a certain number of packets or
+        bytes sent or received, but this method gives you the option of forcing
+        new keys whenever you want.  Negotiating new keys causes a pause in
+        traffic both ways as the two sides swap keys and do computations.  This
+        method returns when the session has switched to new keys, or the
+        session has died mid-negotiation.
 
+        @return: True if the renegotiation was successful, and the link is
+        using new keys; False if the session dropped during renegotiation.
+        @rtype: boolean
+        """
+        self.completion_event = threading.Event()
+        self._send_kex_init()
+        while 1:
+            self.completion_event.wait(0.1);
+            if not self.active:
+                return False
+            if self.completion_event.isSet():
+                break
+        return True
+
+    def check_channel_request(self, kind, chanid):
+        "override me!  return object descended from Channel to allow, or None to reject"
+        return None
+
+    def accept(self, timeout=None):
+        try:
+            self.lock.acquire()
+            if len(self.server_accepts) > 0:
+                chan = self.server_accepts.pop(0)
+            else:
+                self.server_accept_cv.wait(timeout)
+                if len(self.server_accepts) > 0:
+                    chan = self.server_accepts.pop(0)
+                else:
+                    # timeout
+                    chan = None
+        finally:
+            self.lock.release()
+        return chan
+
+    def connect(self, hostkeytype=None, hostkey=None, username='', password=None, pkey=None):
+        """
+        Negotiate an SSH2 session, and optionally verify the server's host key
+        and authenticate using a password or private key.  This is a shortcut
+        for L{start_client}, L{get_remote_server_key}, and
+        L{Transport.auth_password} or L{Transport.auth_key}.  Use those methods
+        if you want more control.
+
+        You can use this method immediately after creating a Transport to
+        negotiate encryption with a server.  If it fails, an exception will be
+        thrown.  On success, the method will return cleanly, and an encrypted
+        session exists.  You may immediately call L{open_channel} or
+        L{open_session} to get a L{Channel} object, which is used for data
+        transfer.
+
+        @note: If you fail to supply a password or private key, this method may
+        succeed, but a subsequent L{open_channel} or L{open_session} call may
+        fail because you haven't authenticated yet.
+
+        @param hostkeytype: the type of host key expected from the server
+        (usually C{"ssh-rsa"} or C{"ssh-dss"}), or C{None} if you don't want
+        to do host key verification.
+        @type hostkeytype: string
+        @param hostkey: the host key expected from the server, or C{None} if
+        you don't want to do host key verification.
+        @type hostkey: string
+        @param username: the username to authenticate as.
+        @type username: string
+        @param password: a password to use for authentication, if you want to
+        use password authentication; otherwise C{None}.
+        @type password: string
+        @param pkey: a private key to use for authentication, if you want to
+        use private key authentication; otherwise C{None}.
+        @type pkey: L{PKey<pkey.PKey>}
+        
+        @raise SSHException: if the SSH2 negotiation fails, the host key
+        supplied by the server is incorrect, or authentication fails.
+        """
+        if hostkeytype is not None:
+            self.preferred_keys = [ hostkeytype ]
+
+        event = threading.Event()
+        self.start_client(event)
+        while 1:
+            event.wait(0.1)
+            if not self.active:
+                e = self.saved_exception
+                self.saved_exception = None
+                if e is not None:
+                    raise e
+                raise SSHException('Negotiation failed.')
+            if event.isSet():
+                break
+
+        # check host key if we were given one
+        if (hostkeytype is not None) and (hostkey is not None):
+            type, key = self.get_remote_server_key()
+            if (type != hostkeytype) or (key != hostkey):
+                print repr(type) + ' - ' + repr(hostkeytype)
+                print repr(key) + ' - ' + repr(hostkey)
+                raise SSHException('Bad host key from server')
+            self._log(DEBUG, 'Host key verified (%s)' % hostkeytype)
+
+        if (pkey is not None) or (password is not None):
+            event.clear()
+            if password is not None:
+                self._log(DEBUG, 'Attempting password auth...')
+                self.auth_password(username, password, event)
+            else:
+                self._log(DEBUG, 'Attempting password auth...')
+                self.auth_key(username, pkey, event)
+            while 1:
+                event.wait(0.1)
+                if not self.active:
+                    e = self.saved_exception
+                    self.saved_exception = None
+                    if e is not None:
+                        raise e
+                    raise SSHException('Authentication failed.')
+                if event.isSet():
+                    break
+            if not self.is_authenticated():
+                raise SSHException('Authentication failed.')
+
+        return
+
+
+    ###  internals...
+
+    
     def _unlink_channel(self, chanid):
         "used by a Channel to remove itself from the active channel list"
         try:
@@ -405,7 +562,8 @@ class BaseTransport(threading.Thread):
         padding = ord(packet[0])
         payload = packet[1:packet_size - padding + 1]
         randpool.add_event(packet[packet_size - padding + 1])
-        #self._log(DEBUG, 'Got payload (%d bytes, %d padding)' % (packet_size, padding))
+        if self.ultra_debug:
+            self._log(DEBUG, 'Got payload (%d bytes, %d padding)' % (packet_size, padding))
         msg = Message(payload[1:])
         msg.seqno = self.sequence_number_in
         self.sequence_number_in = (self.sequence_number_in + 1) & 0xffffffffL
@@ -482,17 +640,17 @@ class BaseTransport(threading.Thread):
             self._write_all(self.local_version + '\r\n')
             self._check_banner()
             self._send_kex_init()
-            self.expected_packet = MSG_KEXINIT
+            self.expected_packet = _MSG_KEXINIT
 
             while self.active:
                 ptype, m = self._read_message()
-                if ptype == MSG_IGNORE:
+                if ptype == _MSG_IGNORE:
                     continue
-                elif ptype == MSG_DISCONNECT:
+                elif ptype == _MSG_DISCONNECT:
                     self._parse_disconnect(m)
                     self.active = False
                     break
-                elif ptype == MSG_DEBUG:
+                elif ptype == _MSG_DEBUG:
                     self._parse_debug(m)
                     continue
                 if self.expected_packet != 0:
@@ -512,53 +670,34 @@ class BaseTransport(threading.Thread):
                 else:
                     self._log(WARNING, 'Oops, unhandled type %d' % ptype)
                     msg = Message()
-                    msg.add_byte(chr(MSG_UNIMPLEMENTED))
+                    msg.add_byte(chr(_MSG_UNIMPLEMENTED))
                     msg.add_int(m.seqno)
                     self._send_message(msg)
         except SSHException, e:
             self._log(DEBUG, 'Exception: ' + str(e))
             self._log(DEBUG, tb_strings())
+            self.saved_exception = e
         except EOFError, e:
             self._log(DEBUG, 'EOF')
             self._log(DEBUG, tb_strings())
+            self.saved_exception = e
         except Exception, e:
             self._log(DEBUG, 'Unknown exception: ' + str(e))
             self._log(DEBUG, tb_strings())
+            self.saved_exception = e
         if self.active:
             self.active = False
             if self.completion_event != None:
                 self.completion_event.set()
             if self.auth_event != None:
                 self.auth_event.set()
-            for e in self.channel_events.values():
-                e.set()
+            for event in self.channel_events.values():
+                event.set()
         self.sock.close()
+
 
     ###  protocol stages
 
-    def renegotiate_keys(self):
-        """
-        Force this session to switch to new keys.  Normally this is done
-        automatically after the session hits a certain number of packets or
-        bytes sent or received, but this method gives you the option of forcing
-        new keys whenever you want.  Negotiating new keys causes a pause in
-        traffic both ways as the two sides swap keys and do computations.  This
-        method returns when the session has switched to new keys, or the
-        session has died mid-negotiation.
-
-        @return: True if the renegotiation was successful, and the link is
-        using new keys; False if the session dropped during renegotiation.
-        @rtype: boolean
-        """
-        self.completion_event = threading.Event()
-        self._send_kex_init()
-        while 1:
-            self.completion_event.wait(0.1);
-            if not self.active:
-                return False
-            if self.completion_event.isSet():
-                break
-        return True
 
     def _negotiate_keys(self, m):
         # throws SSHException on anything unusual
@@ -615,7 +754,7 @@ class BaseTransport(threading.Thread):
             available_server_keys = self.preferred_keys
 
         m = Message()
-        m.add_byte(chr(MSG_KEXINIT))
+        m.add_byte(chr(_MSG_KEXINIT))
         m.add_bytes(randpool.get_bytes(16))
         m.add(','.join(self.preferred_kex))
         m.add(','.join(available_server_keys))
@@ -726,7 +865,7 @@ class BaseTransport(threading.Thread):
         # actually some extra bytes (one NUL byte in openssh's case) added to
         # the end of the packet but not parsed.  turns out we need to throw
         # away those bytes because they aren't part of the hash.
-        self.remote_kex_init = chr(MSG_KEXINIT) + m.get_so_far()
+        self.remote_kex_init = chr(_MSG_KEXINIT) + m.get_so_far()
 
     def _activate_inbound(self):
         "switch on newly negotiated encryption parameters for inbound traffic"
@@ -750,7 +889,7 @@ class BaseTransport(threading.Thread):
     def _activate_outbound(self):
         "switch on newly negotiated encryption parameters for outbound traffic"
         m = Message()
-        m.add_byte(chr(MSG_NEWKEYS))
+        m.add_byte(chr(_MSG_NEWKEYS))
         self._send_message(m)
         self.block_size_out = self._cipher_info[self.local_cipher]['block-size']
         if self.server_mode:
@@ -769,7 +908,7 @@ class BaseTransport(threading.Thread):
         else:
             self.mac_key_out = self._compute_key('E', self.local_mac_engine.digest_size)
         # we always expect to receive NEWKEYS now
-        self.expected_packet = MSG_NEWKEYS
+        self.expected_packet = _MSG_NEWKEYS
 
     def _parse_newkeys(self, m):
         self._log(DEBUG, 'Switch to new keys ...')
@@ -801,7 +940,7 @@ class BaseTransport(threading.Thread):
         try:
             self.lock.acquire()
             chan = self.channels[chanid]
-            chan.set_remote_channel(server_chanid, server_window_size, server_max_packet_size)
+            chan._set_remote_channel(server_chanid, server_window_size, server_max_packet_size)
             self._log(INFO, 'Secsh channel %d opened.' % chanid)
             if self.channel_events.has_key(chanid):
                 self.channel_events[chanid].set()
@@ -815,8 +954,8 @@ class BaseTransport(threading.Thread):
         reason = m.get_int()
         reason_str = m.get_string()
         lang = m.get_string()
-        if CONNECTION_FAILED_CODE.has_key(reason):
-            reason_text = CONNECTION_FAILED_CODE[reason]
+        if _CONNECTION_FAILED_CODE.has_key(reason):
+            reason_text = _CONNECTION_FAILED_CODE[reason]
         else:
             reason_text = '(unknown code)'
         self._log(INFO, 'Secsh channel %d open FAILED: %s: %s' % (chanid, reason_str, reason_text))
@@ -830,10 +969,6 @@ class BaseTransport(threading.Thread):
         finally:
             self.lock.release()
         return
-
-    def check_channel_request(self, kind, chanid):
-        "override me!  return object descended from Channel to allow, or None to reject"
-        return None
 
     def _parse_channel_open(self, m):
         kind = m.get_string()
@@ -862,7 +997,7 @@ class BaseTransport(threading.Thread):
                     reason = self.OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED
         if reject:
             msg = Message()
-            msg.add_byte(chr(MSG_CHANNEL_OPEN_FAILURE))
+            msg.add_byte(chr(_MSG_CHANNEL_OPEN_FAILURE))
             msg.add_int(chanid)
             msg.add_int(reason)
             msg.add_string('')
@@ -873,12 +1008,12 @@ class BaseTransport(threading.Thread):
             self.lock.acquire()
             self.channels[my_chanid] = chan
             chan._set_transport(self)
-            chan.set_window(self.window_size, self.max_packet_size)
-            chan.set_remote_channel(chanid, initial_window_size, max_packet_size)
+            chan._set_window(self.window_size, self.max_packet_size)
+            chan._set_remote_channel(chanid, initial_window_size, max_packet_size)
         finally:
             self.lock.release()
         m = Message()
-        m.add_byte(chr(MSG_CHANNEL_OPEN_SUCCESS))
+        m.add_byte(chr(_MSG_CHANNEL_OPEN_SUCCESS))
         m.add_int(chanid)
         m.add_int(my_chanid)
         m.add_int(self.window_size)
@@ -892,22 +1027,6 @@ class BaseTransport(threading.Thread):
         finally:
             self.lock.release()
 
-    def accept(self, timeout=None):
-        try:
-            self.lock.acquire()
-            if len(self.server_accepts) > 0:
-                chan = self.server_accepts.pop(0)
-            else:
-                self.server_accept_cv.wait(timeout)
-                if len(self.server_accepts) > 0:
-                    chan = self.server_accepts.pop(0)
-                else:
-                    # timeout
-                    chan = None
-        finally:
-            self.lock.release()
-        return chan
-
     def _parse_debug(self, m):
         always_display = m.get_boolean()
         msg = m.get_string()
@@ -915,19 +1034,19 @@ class BaseTransport(threading.Thread):
         self._log(DEBUG, 'Debug msg: ' + safe_string(msg))
 
     _handler_table = {
-        MSG_NEWKEYS: _parse_newkeys,
-        MSG_CHANNEL_OPEN_SUCCESS: _parse_channel_open_success,
-        MSG_CHANNEL_OPEN_FAILURE: _parse_channel_open_failure,
-        MSG_CHANNEL_OPEN: _parse_channel_open,
-        MSG_KEXINIT: _negotiate_keys,
+        _MSG_NEWKEYS: _parse_newkeys,
+        _MSG_CHANNEL_OPEN_SUCCESS: _parse_channel_open_success,
+        _MSG_CHANNEL_OPEN_FAILURE: _parse_channel_open_failure,
+        _MSG_CHANNEL_OPEN: _parse_channel_open,
+        _MSG_KEXINIT: _negotiate_keys,
         }
 
     _channel_handler_table = {
-        MSG_CHANNEL_SUCCESS: Channel.request_success,
-        MSG_CHANNEL_FAILURE: Channel.request_failed,
-        MSG_CHANNEL_DATA: Channel.feed,
-        MSG_CHANNEL_WINDOW_ADJUST: Channel.window_adjust,
-        MSG_CHANNEL_REQUEST: Channel.handle_request,
-        MSG_CHANNEL_EOF: Channel.handle_eof,
-        MSG_CHANNEL_CLOSE: Channel.handle_close,
+        _MSG_CHANNEL_SUCCESS: Channel._request_success,
+        _MSG_CHANNEL_FAILURE: Channel._request_failed,
+        _MSG_CHANNEL_DATA: Channel._feed,
+        _MSG_CHANNEL_WINDOW_ADJUST: Channel._window_adjust,
+        _MSG_CHANNEL_REQUEST: Channel._handle_request,
+        _MSG_CHANNEL_EOF: Channel._handle_eof,
+        _MSG_CHANNEL_CLOSE: Channel._handle_close,
         }

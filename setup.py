@@ -3,7 +3,7 @@ from distutils.core import setup
 longdesc = '''
 This is a library for making SSH2 connections (client or server).
 Emphasis is on using SSH2 as an alternative to SSL for making secure
-connections between pyton scripts.  All major ciphers and hash methods
+connections between python scripts.  All major ciphers and hash methods
 are supported.
 
 (Previous name: secsh)

@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import sys, os, socket, threading, getpass, logging, time, base64, select, termios, tty, traceback
+import sys, os, base64, getpass, socket, logging, traceback, termios, tty, select
 import paramiko
 
 
@@ -28,8 +28,6 @@ def load_host_keys():
     return keys
 
 
-#####   main demo
-
 # setup logging
 l = logging.getLogger("paramiko")
 l.setLevel(logging.DEBUG)
@@ -39,6 +37,7 @@ if len(l.handlers) == 0:
     lh.setFormatter(logging.Formatter('%(levelname)-.3s [%(asctime)s] %(name)s: %(message)s', '%Y%m%d:%H%M%S'))
     l.addHandler(lh)
 
+# get hostname
 username = ''
 if len(sys.argv) > 1:
     hostname = sys.argv[1]
@@ -54,6 +53,26 @@ if hostname.find(':') >= 0:
     hostname, portstr = hostname.split(':')
     port = int(portstr)
 
+
+# get username
+if username == '':
+    default_username = getpass.getuser()
+    username = raw_input('Username [%s]: ' % default_username)
+    if len(username) == 0:
+        username = default_username
+password = getpass.getpass('Password for %s@%s: ' % (username, hostname))
+
+
+# get host key, if we know one
+hostkeytype = None
+hostkey = None
+hkeys = load_host_keys()
+if hkeys.has_key(hostname):
+    hostkeytype = hkeys[hostname].keys()[0]
+    hostkey = hkeys[hostname][hostkeytype]
+    print 'Using host key of type %s' % hostkeytype
+
+
 # now connect
 try:
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -63,71 +82,11 @@ except Exception, e:
     traceback.print_exc()
     sys.exit(1)
 
+
+# finally, use paramiko Transport to negotiate SSH2 across the connection
 try:
-    event = threading.Event()
     t = paramiko.Transport(sock)
-    t.start_client(event)
-    # print repr(t)
-    event.wait(15)
-    if not t.is_active():
-        print '*** SSH negotiation failed.'
-        sys.exit(1)
-    # print repr(t)
-
-    keys = load_host_keys()
-    keytype, hostkey = t.get_remote_server_key()
-    if not keys.has_key(hostname):
-        print '*** WARNING: Unknown host key!'
-    elif not keys[hostname].has_key(keytype):
-        print '*** WARNING: Unknown host key!'
-    elif keys[hostname][keytype] != hostkey:
-        print '*** WARNING: Host key has changed!!!'
-        sys.exit(1)
-    else:
-        print '*** Host key OK.'
-
-    event.clear()
-
-    # get username
-    if username == '':
-        default_username = getpass.getuser()
-        username = raw_input('Username [%s]: ' % default_username)
-        if len(username) == 0:
-            username = default_username
-
-    # ask for what kind of authentication to try
-    default_auth = 'p'
-    auth = raw_input('Auth by (p)assword, (r)sa key, or (d)ss key? [%s] ' % default_auth)
-    if len(auth) == 0:
-        auth = default_auth
-
-    if auth == 'r':
-        key = paramiko.RSAKey()
-        default_path = os.environ['HOME'] + '/.ssh/id_rsa'
-        path = raw_input('RSA key [%s]: ' % default_path)
-        if len(path) == 0:
-            path = default_path
-        key.read_private_key_file(path)
-        t.auth_key(username, key, event)
-    elif auth == 'd':
-        key = paramiko.DSSKey()
-        default_path = os.environ['HOME'] + '/.ssh/id_dsa'
-        path = raw_input('DSS key [%s]: ' % default_path)
-        if len(path) == 0:
-            path = default_path
-        key.read_private_key_file(path)
-        t.auth_key(username, key, event)
-    else:
-        pw = getpass.getpass('Password for %s@%s: ' % (username, hostname))
-        t.auth_password(username, pw, event)
-
-    event.wait(10)
-    # print repr(t)
-    if not t.is_authenticated():
-        print '*** Authentication failed. :('
-        t.close()
-        sys.exit(1)
-
+    t.connect(username=username, password=password, hostkeytype=hostkeytype, hostkey=hostkey)
     chan = t.open_session()
     chan.get_pty()
     chan.invoke_shell()
@@ -146,8 +105,7 @@ try:
                 try:
                     x = chan.recv(1024)
                     if len(x) == 0:
-                        print
-                        print '*** EOF\r\n',
+                        print '\r\n*** EOF\r\n',
                         break
                     sys.stdout.write(x)
                     sys.stdout.flush()
@@ -176,4 +134,3 @@ except Exception, e:
     except:
         pass
     sys.exit(1)
-
