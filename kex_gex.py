@@ -94,10 +94,11 @@ class KexGex(object):
         self.max_bits = max
         # generate prime
         while 1:
+            # does not work FIXME
             self.transport.log(DEBUG, 'stir...')
             self.transport.randpool.stir()
             self.transport.log(DEBUG, 'get-prime %d...' % preferred)
-            self.p = number.getRandomNumber(preferred, self.transport.randpool.get_bytes)
+            self.p = number.getPrime(preferred, self.transport.randpool.get_bytes)
             self.transport.log(DEBUG, 'got ' + repr(self.p))
             if number.isPrime((self.p - 1) // 2):
                 break
