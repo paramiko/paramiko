@@ -72,20 +72,23 @@ class Channel (object):
         self.eof_received = 0
         self.eof_sent = 0
         self.in_buffer = ''
+        self.in_stderr_buffer = ''
         self.timeout = None
         self.closed = False
         self.ultra_debug = False
         self.lock = threading.Lock()
         self.in_buffer_cv = threading.Condition(self.lock)
+        self.in_stderr_buffer_cv = threading.Condition(self.lock)
         self.out_buffer_cv = threading.Condition(self.lock)
         self.name = str(chanid)
         self.logger = logging.getLogger('paramiko.chan.' + str(chanid))
         self.pipe_rfd = self.pipe_wfd = None
         self.event = threading.Event()
+        self.combine_stderr = False
 
     def __repr__(self):
         """
-        Returns a string representation of this object, for debugging.
+        Return a string representation of this object, for debugging.
 
         @rtype: str
         """
@@ -108,7 +111,9 @@ class Channel (object):
         """
         Request a pseudo-terminal from the server.  This is usually used right
         after creating a client channel, to ask the server to provide some
-        basic terminal semantics for the next command you execute.
+        basic terminal semantics for a shell invoked with L{invoke_shell}.
+        It isn't necessary (or desirable) to call this method if you're going
+        to exectue a single command with L{exec_command}.
 
         @param term: the terminal type to emulate (for example, C{'vt100'}).
         @type term: str
@@ -144,8 +149,12 @@ class Channel (object):
     def invoke_shell(self):
         """
         Request an interactive shell session on this channel.  If the server
-        allows it, the channel will then be directly connected to the stdin
-        and stdout of the shell.
+        allows it, the channel will then be directly connected to the stdin,
+        stdout, and stderr of the shell.
+        
+        Normally you would call L{get_pty} before this, in which case the
+        shell will operate through the pty, and the channel will be connected
+        to the stdin and stdout of the pty.
         
         @return: C{True} if the operation succeeded; C{False} if not.
         @rtype: bool
@@ -169,8 +178,8 @@ class Channel (object):
     def exec_command(self, command):
         """
         Execute a command on the server.  If the server allows it, the channel
-        will then be directly connected to the stdin and stdout of the command
-        being executed.
+        will then be directly connected to the stdin, stdout, and stderr of
+        the command being executed.
 
         @param command: a shell command to execute.
         @type command: str
@@ -296,6 +305,32 @@ class Channel (object):
         @since: ivysaur
         """
         return self.chanid
+    
+    def set_combine_stderr(self, combine):
+        """
+        Set whether stderr should be combined into stdout on this channel.
+        The default is C{False}, but in some cases it may be convenient to
+        have both streams combined.
+        
+        If this is C{False}, and L{exec_command} is called (or C{invoke_shell}
+        with no pty), output to stderr will not show up through the L{recv}
+        and L{recv_ready} calls.  You will have to use L{recv_stderr} and
+        L{recv_stderr_ready} to get stderr output.
+        
+        If this is C{True}, data will never show up via L{recv_stderr} or
+        L{recv_stderr_ready}.
+        
+        @param combine: C{True} if stderr output should be combined into
+            stdout on this channel.
+        @type combine: bool
+        @return: previous setting.
+        @rtype: bool
+        
+        @since: 1.1
+        """
+        old = self.combine_stderr
+        self.combine_stderr = combine
+        return old
 
     
     ###  socket API
@@ -389,8 +424,8 @@ class Channel (object):
         
         @note: This method doesn't work if you've called L{fileno}.
         """
+        self.lock.acquire()
         try:
-            self.lock.acquire()
             if len(self.in_buffer) == 0:
                 return False
             return True
@@ -413,8 +448,8 @@ class Channel (object):
         L{settimeout}.
         """
         out = ''
+        self.lock.acquire()
         try:
-            self.lock.acquire()
             if self.pipe_rfd != None:
                 # use the pipe
                 return self._read_pipe(nbytes)
@@ -440,6 +475,72 @@ class Channel (object):
             else:
                 out = self.in_buffer[:nbytes]
                 self.in_buffer = self.in_buffer[nbytes:]
+            self._check_add_window(len(out))
+        finally:
+            self.lock.release()
+        return out
+
+    def recv_stderr_ready(self):
+        """
+        Returns true if data is buffered and ready to be read from this
+        channel's stderr stream.  Only channels using L{exec_command} or
+        L{invoke_shell} without a pty will ever have data on the stderr
+        stream.
+        
+        @return: C{True} if a L{recv_stderr} call on this channel would
+            immediately return at least one byte; C{False} otherwise.
+        @rtype: boolean
+        """
+        self.lock.acquire()
+        try:
+            if len(self.in_stderr_buffer) == 0:
+                return False
+            return True
+        finally:
+            self.lock.release()
+
+    def recv_stderr(self, nbytes):
+        """
+        Receive data from the channel's stderr stream.  Only channels using
+        L{exec_command} or L{invoke_shell} without a pty will ever have data
+        on the stderr stream.  The return value is a string representing the
+        data received.  The maximum amount of data to be received at once is
+        specified by C{nbytes}.  If a string of length zero is returned, the
+        channel stream has closed.
+
+        @param nbytes: maximum number of bytes to read.
+        @type nbytes: int
+        @return: data.
+        @rtype: str
+        
+        @raise socket.timeout: if no data is ready before the timeout set by
+        L{settimeout}.
+        """
+        out = ''
+        self.lock.acquire()
+        try:
+            if len(self.in_stderr_buffer) == 0:
+                if self.closed or self.eof_received:
+                    return out
+                # should we block?
+                if self.timeout == 0.0:
+                    raise socket.timeout()
+                # loop here in case we get woken up but a different thread has grabbed everything in the buffer
+                timeout = self.timeout
+                while (len(self.in_stderr_buffer) == 0) and not self.closed and not self.eof_received:
+                    then = time.time()
+                    self.in_stderr_buffer_cv.wait(timeout)
+                    if timeout != None:
+                        timeout -= time.time() - then
+                        if timeout <= 0.0:
+                            raise socket.timeout()
+            # something in the buffer and we have the lock
+            if len(self.in_stderr_buffer) <= nbytes:
+                out = self.in_stderr_buffer
+                self.in_stderr_buffer = ''
+            else:
+                out = self.in_stderr_buffer[:nbytes]
+                self.in_stderr_buffer = self.in_stderr_buffer[nbytes:]
             self._check_add_window(len(out))
         finally:
             self.lock.release()
@@ -539,6 +640,22 @@ class Channel (object):
         """
         return ChannelFile(*([self] + list(params)))
 
+    def makefile_stderr(self, *params):
+        """
+        Return a file-like object associated with this channel's stderr
+        stream.   Only channels using L{exec_command} or L{invoke_shell}
+        without a pty will ever have data on the stderr stream.
+        
+        The optional C{mode} and C{bufsize} arguments are interpreted the
+        same way as by the built-in C{file()} function in python, except that
+        of course it makes no sense to open this file in any mode other than
+        for reading.
+        
+        @return: object which can be used for python file I/O.
+        @rtype: L{ChannelFile}
+        """
+        return ChannelStderrFile(*([self] + list(params)))
+        
     def fileno(self):
         """
         Returns an OS-level file descriptor which can be used for polling and
@@ -624,9 +741,13 @@ class Channel (object):
         self.close()
 
     def _feed(self, m):
-        s = m.get_string()
+        if type(m) is str:
+            # passed from _feed_extended
+            s = m
+        else:
+            s = m.get_string()
+        self.lock.acquire()
         try:
-            self.lock.acquire()
             if self.ultra_debug:
                 self._log(DEBUG, 'fed %d bytes' % len(s))
             if self.pipe_wfd != None:
@@ -634,11 +755,26 @@ class Channel (object):
             else:
                 self.in_buffer += s
                 self.in_buffer_cv.notifyAll()
-            if self.ultra_debug:
-                self._log(DEBUG, '(out from feed)')
         finally:
             self.lock.release()
 
+    def _feed_extended(self, m):
+        code = m.get_int()
+        s = m.get_string()
+        if code != 1:
+            self._log(ERROR, 'unknown extended_data type %d; discarding' % code)
+            return
+        if self.combine_stderr:
+            return self._feed(s)
+        self.lock.acquire()
+        try:
+            if self.ultra_debug:
+                self._log(DEBUG, 'fed %d stderr bytes' % len(s))
+            self.in_stderr_buffer += s
+            self.in_stderr_buffer_cv.notifyAll()
+        finally:
+            self.lock.release()
+        
     def _window_adjust(self, m):
         nbytes = m.get_int()
         try:
@@ -707,11 +843,12 @@ class Channel (object):
             self.transport._send_user_message(m)
 
     def _handle_eof(self, m):
+        self.lock.acquire()
         try:
-            self.lock.acquire()
             if not self.eof_received:
                 self.eof_received = 1
                 self.in_buffer_cv.notifyAll()
+                self.in_stderr_buffer_cv.notifyAll()
                 if self.pipe_wfd != None:
                     os.close(self.pipe_wfd)
                     self.pipe_wfd = None
@@ -741,6 +878,7 @@ class Channel (object):
         # you are holding the lock.
         self.closed = True
         self.in_buffer_cv.notifyAll()
+        self.in_stderr_buffer_cv.notifyAll()
         self.out_buffer_cv.notifyAll()
 
     def _send_eof(self):
@@ -891,6 +1029,14 @@ class ChannelFile (BufferedFile):
     def _write(self, data):
         self.channel.sendall(data)
         return len(data)
+
+
+class ChannelStderrFile (ChannelFile):
+    def __init__(self, channel, mode = 'r', bufsize = -1):
+        ChannelFile.__init__(self, channel, mode, bufsize)
+
+    def _read(self, size):
+        return self.channel.recv_stderr(size)
 
 
 # vim: set shiftwidth=4 expandtab :
