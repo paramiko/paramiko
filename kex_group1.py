@@ -92,7 +92,7 @@ class KexGroup1(object):
         H = SHA.new(str(hm)).digest()
         self.transport.set_K_H(K, H)
         # sign it
-        sig = self.transport.get_server_key().sign_ssh_data(H)
+        sig = self.transport.get_server_key().sign_ssh_data(self.transport.randpool, H)
         # send reply
         m = Message()
         m.add_byte(chr(MSG_KEXDH_REPLY))

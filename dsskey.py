@@ -1,11 +1,12 @@
 #!/usr/bin/python
 
 import base64
+from paramiko import SSHException
 from message import Message
 from transport import MSG_USERAUTH_REQUEST
 from util import inflate_long, deflate_long
 from Crypto.PublicKey import DSA
-from Crypto.Hash import SHA
+from Crypto.Hash import SHA, MD5
 from ber import BER
 
 from util import format_binary
@@ -38,6 +39,9 @@ class DSSKey(object):
     def get_name(self):
         return 'ssh-dss'
 
+    def get_fingerprint(self):
+        return MD5.new(str(self)).digest()
+        
     def verify_ssh_sig(self, data, msg):
         if not self.valid:
             return 0
@@ -58,7 +62,7 @@ class DSSKey(object):
         dss = DSA.construct((long(self.y), long(self.g), long(self.p), long(self.q)))
         return dss.verify(sigM, (sigR, sigS))
 
-    def sign_ssh_data(self, data):
+    def sign_ssh_data(self, randpool, data):
         hash = SHA.new(data).digest()
         dss = DSA.construct((long(self.y), long(self.g), long(self.p), long(self.q), long(self.x)))
         # generate a suitable k
@@ -74,24 +78,19 @@ class DSSKey(object):
         return str(m)
 
     def read_private_key_file(self, filename):
+        "throws a file exception, or SSHException (on invalid key, or base64 decoding exception"
         # private key file contains:
         # DSAPrivateKey = { version = 0, p, q, g, y, x }
         self.valid = 0
-        try:
-            f = open(filename, 'r')
-            lines = f.readlines()
-            f.close()
-        except:
-            return
+        f = open(filename, 'r')
+        lines = f.readlines()
+        f.close()
         if lines[0].strip() != '-----BEGIN DSA PRIVATE KEY-----':
-            return
-        try:
-            data = base64.decodestring(''.join(lines[1:-1]))
-        except:
-            return
+            raise SSHException('not a valid DSA private key file')
+        data = base64.decodestring(''.join(lines[1:-1]))
         keylist = BER(data).decode()
         if (type(keylist) != type([])) or (len(keylist) < 6) or (keylist[0] != 0):
-            return
+            raise SSHException('not a valid DSA private key file (bad ber encoding)')
         self.p = keylist[1]
         self.q = keylist[2]
         self.g = keylist[3]
@@ -110,4 +109,4 @@ class DSSKey(object):
         m.add_boolean(1)
         m.add_string('ssh-dss')
         m.add_string(str(self))
-        return self.sign_ssh_data(str(m))
+        return self.sign_ssh_data(randpool, str(m))

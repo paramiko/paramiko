@@ -12,8 +12,12 @@ if len(l.handlers) == 0:
     lh.setFormatter(logging.Formatter('%(levelname)-.3s [%(asctime)s] %(name)s: %(message)s', '%Y%m%d:%H%M%S'))
     l.addHandler(lh)
 
-host_key = paramiko.RSAKey()
-host_key.read_private_key_file('demo_host_key')
+#host_key = paramiko.RSAKey()
+#host_key.read_private_key_file('demo_host_key')
+
+host_key = paramiko.DSSKey()
+host_key.read_private_key_file('demo_dss_key')
+print 'Read key: ' + paramiko.hexify(host_key.get_fingerprint())
 
 
 class ServerTransport(paramiko.Transport):
@@ -54,11 +58,14 @@ except Exception, e:
 
 try:
     sock.listen(100)
+    print 'Listening for connection ...'
     client, addr = sock.accept()
 except Exception, e:
     print '*** Listen/accept failed: ' + str(e)
     traceback.print_exc()
     sys.exit(1)
+
+print 'Got a connection!'
 
 try:
     event = threading.Event()

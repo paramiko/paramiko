@@ -31,6 +31,9 @@ class RSAKey(object):
     def get_name(self):
         return 'ssh-rsa'
 
+    def get_fingerprint(self):
+        return MD5.new(str(self)).digest()
+
     def pkcs1imify(self, data):
         """
         turn a 20-byte SHA1 hash into a blob of data as large as the key's N,
@@ -51,7 +54,7 @@ class RSAKey(object):
         rsa = RSA.construct((long(self.n), long(self.e)))
         return rsa.verify(hash, (sig,))
 
-    def sign_ssh_data(self, data):
+    def sign_ssh_data(self, randpool, data):
         hash = SHA.new(data).digest()
         rsa = RSA.construct((long(self.n), long(self.e), long(self.d)))
         sig = deflate_long(rsa.sign(self.pkcs1imify(hash), '')[0], 0)
@@ -61,24 +64,19 @@ class RSAKey(object):
         return str(m)
 
     def read_private_key_file(self, filename):
+        "throws a file exception, or SSHException (on invalid key), or base64 decoding exception"
         # private key file contains:
         # RSAPrivateKey = { version = 0, n, e, d, p, q, d mod p-1, d mod q-1, q**-1 mod p }
         self.valid = 0
-        try:
-            f = open(filename, 'r')
-            lines = f.readlines()
-            f.close()
-        except:
-            return
+        f = open(filename, 'r')
+        lines = f.readlines()
+        f.close()
         if lines[0].strip() != '-----BEGIN RSA PRIVATE KEY-----':
-            return
-        try:
-            data = base64.decodestring(''.join(lines[1:-1]))
-        except:
-            return
+            raise SSHException('not a valid DSA private key file')
+        data = base64.decodestring(''.join(lines[1:-1]))
         keylist = BER(data).decode()
         if (type(keylist) != type([])) or (len(keylist) < 4) or (keylist[0] != 0):
-            return
+            raise SSHException('not a valid DSA private key file (bad ber encoding)')
         self.n = keylist[1]
         self.e = keylist[2]
         self.d = keylist[3]
@@ -98,5 +96,5 @@ class RSAKey(object):
         m.add_boolean(1)
         m.add_string('ssh-rsa')
         m.add_string(str(self))
-        return self.sign_ssh_data(str(m))
+        return self.sign_ssh_data(randpool, str(m))
 

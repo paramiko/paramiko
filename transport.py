@@ -532,7 +532,7 @@ class BaseTransport(threading.Thread):
         m.add_byte(chr(MSG_KEXINIT))
         m.add_bytes(randpool.get_bytes(16))
         m.add(','.join(self.preferred_kex))
-        m.add(','.join(self.available_server_keys))
+        m.add(','.join(available_server_keys))
         m.add(','.join(self.preferred_ciphers))
         m.add(','.join(self.preferred_ciphers))
         m.add(','.join(self.preferred_macs))

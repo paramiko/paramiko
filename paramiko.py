@@ -14,6 +14,8 @@ from channel import Channel
 from rsakey import RSAKey
 from dsskey import DSSKey
 
+from util import hexify
+
 
 __author__ = "Robey Pointer <robey@lag.net>"
 __date__ = "10 Nov 2003"
