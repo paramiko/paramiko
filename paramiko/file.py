@@ -35,7 +35,7 @@ _FLAG_UNIVERSAL_NEWLINE = 0x80
 class BufferedFile (object):
     """
     Reusable base class to implement python-style file buffering around a
-    simpler stream
+    simpler stream.
     """
 
     _DEFAULT_BUFSIZE = 8192
@@ -112,7 +112,7 @@ class BufferedFile (object):
         @param size: maximum number of bytes to read.
         @type size: int
         @return: data read from the file, or an empty string if EOF was
-        encountered immediately.
+            encountered immediately.
         @rtype: str
         """
         if self._closed:
@@ -124,7 +124,7 @@ class BufferedFile (object):
             result = self._rbuffer
             self._rbuffer = ''
             self._pos += len(result)
-            while 1:
+            while True:
                 try:
                     new_data = self._read(self._DEFAULT_BUFSIZE)
                 except EOFError:
@@ -169,14 +169,16 @@ class BufferedFile (object):
         @param size: maximum length of returned string.
         @type size: int
         @return: next line of the file, or an empty string if the end of the
-        file has been reached.
+            file has been reached.
         @rtype: str
         """
         # it's almost silly how complex this function is.
         if self._closed:
             raise IOError('File is closed')
+        if not (self._flags & _FLAG_READ):
+            raise IOError('File not open for reading')
         line = self._rbuffer
-        while 1:
+        while True:
             if self._at_trailing_cr and (self._flags & _FLAG_UNIVERSAL_NEWLINE) and (len(line) > 0):
                 # edge case: the newline may be '\r\n' and we may have read
                 # only the first '\r' last time.
@@ -261,14 +263,14 @@ class BufferedFile (object):
         objects support seeking.
 
         @note: If a file is opened in append mode (C{'a'} or C{'a+'}), any seek
-        operations will be undone at the next write (as the file position will
-        move back to the end of the file).
+            operations will be undone at the next write (as the file position
+            will move back to the end of the file).
         
         @param offset: position to move to within the file, relative to
-        C{whence}.
+            C{whence}.
         @type offset: int
         @param whence: type of movement: 0 = absolute; 1 = relative to the
-        current position; 2 = relative to the end of the file.
+            current position; 2 = relative to the end of the file.
         @type whence: int
 
         @raise IOError: if the file doesn't support random access.
