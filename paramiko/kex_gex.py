@@ -149,14 +149,11 @@ class KexGex (object):
         K = pow(self.e, self.x, self.p)
         key = str(self.transport.get_server_key())
         # okay, build up the hash H of (V_C || V_S || I_C || I_S || K_S || min || n || max || p || g || e || f || K)
-        hm = Message().add(self.transport.remote_version).add(self.transport.local_version)
-        hm.add(self.transport.remote_kex_init).add(self.transport.local_kex_init).add(key)
-        hm.add_int(self.min_bits)
-        hm.add_int(self.preferred_bits)
-        hm.add_int(self.max_bits)
-        hm.add_mpint(self.p)
-        hm.add_mpint(self.g)
-        hm.add(self.e).add(self.f).add(K)
+        hm = Message()
+        hm.add(self.transport.remote_version, self.transport.local_version,
+               self.transport.remote_kex_init, self.transport.local_kex_init,
+               key, self.min_bits, self.preferred_bits, self.max_bits,
+               self.p, self.g, self.e, self.f, K)
         H = SHA.new(str(hm)).digest()
         self.transport._set_K_H(K, H)
         # sign it
@@ -178,14 +175,11 @@ class KexGex (object):
             raise SSHException('Server kex "f" is out of range')
         K = pow(self.f, self.x, self.p)
         # okay, build up the hash H of (V_C || V_S || I_C || I_S || K_S || min || n || max || p || g || e || f || K)
-        hm = Message().add(self.transport.local_version).add(self.transport.remote_version)
-        hm.add(self.transport.local_kex_init).add(self.transport.remote_kex_init).add(host_key)
-        hm.add_int(self.min_bits)
-        hm.add_int(self.preferred_bits)
-        hm.add_int(self.max_bits)
-        hm.add_mpint(self.p)
-        hm.add_mpint(self.g)
-        hm.add(self.e).add(self.f).add(K)
+        hm = Message()
+        hm.add(self.transport.local_version, self.transport.remote_version,
+               self.transport.local_kex_init, self.transport.remote_kex_init,
+               host_key, self.min_bits, self.preferred_bits, self.max_bits,
+               self.p, self.g, self.e, self.f, K)
         self.transport._set_K_H(K, SHA.new(str(hm)).digest())
         self.transport._verify_key(host_key, sig)
         self.transport._activate_outbound()
