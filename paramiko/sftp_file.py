@@ -73,7 +73,7 @@ class SFTPFile (BufferedFile):
         before raising C{socket.timeout}, or C{None} for no timeout
         @type timeout: float
         """
-        self.sock.settimeout(timeout)
+        self.sftp.sock.settimeout(timeout)
 
     def gettimeout(self):
         """
@@ -83,7 +83,7 @@ class SFTPFile (BufferedFile):
         @see: L{Channel.gettimeout}
         @rtype: float
         """
-        return self.sock.gettimeout()
+        return self.sftp.sock.gettimeout()
 
     def setblocking(self, blocking):
         """
@@ -95,7 +95,7 @@ class SFTPFile (BufferedFile):
         mode.
         @type blocking: int
         """
-        self.sock.setblocking(blocking)
+        self.sftp.sock.setblocking(blocking)
 
     def seek(self, offset, whence=0):
         self.flush()
@@ -127,11 +127,7 @@ class SFTPFile (BufferedFile):
 
 
     def _get_size(self):
-        t, msg = self.sftp._request(CMD_FSTAT, self.handle)
-        if t != CMD_ATTRS:
-            raise SFTPError('Expected attrs')
-        attr = SFTPAttributes._from_msg(msg)
         try:
-            return attr.st_size
+            return self.stat().st_size
         except:
             return 0
