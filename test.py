@@ -31,7 +31,7 @@ sys.path.append('tests/')
 from test_message import MessageTest
 from test_file import BufferedFileTest
 from test_pkey import KeyTest
-#from test_transport import TransportTest
+from test_transport import TransportTest
 from test_sftp import SFTPTest
 
 default_host = 'localhost'
@@ -54,6 +54,8 @@ parser.add_option('-K', '--sftp-key', dest='keyfile', type='string', default=def
 parser.add_option('-P', '--sftp-passwd', dest='password', type='string', default=default_passwd,
                   metavar='<password>',
                   help='(optional) password to unlock the private key for sftp tests')
+parser.add_option('--no-pkey', action='store_false', dest='use_pkey', default=True,
+                  help='skip RSA/DSS private key tests (which can take a while)')
 
 options, args = parser.parse_args()
 if len(args) > 0:
@@ -68,8 +70,9 @@ paramiko.util.log_to_file('test.log')
 suite = unittest.TestSuite()
 suite.addTest(unittest.makeSuite(MessageTest))
 suite.addTest(unittest.makeSuite(BufferedFileTest))
-suite.addTest(unittest.makeSuite(KeyTest))
-#suite.addTest(unittest.makeSuite(TransportTest))
+if options.use_pkey:
+    suite.addTest(unittest.makeSuite(KeyTest))
+suite.addTest(unittest.makeSuite(TransportTest))
 if options.use_sftp:
     suite.addTest(unittest.makeSuite(SFTPTest))
 unittest.TextTestRunner(verbosity=2).run(suite)

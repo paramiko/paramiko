@@ -48,7 +48,7 @@ released under the GNU Lesser General Public License (LGPL).
 
 Website: U{http://www.lag.net/~robey/paramiko/}
 
-@version: 0.9 (horsea)
+@version: 0.9 (ivysaur)
 @author: Robey Pointer
 @contact: robey@lag.net
 @license: GNU Lesser General Public License (LGPL)
@@ -61,8 +61,8 @@ if sys.version_info < (2, 2):
 
 
 __author__ = "Robey Pointer <robey@lag.net>"
-__date__ = "31 May 2004"
-__version__ = "0.9-horsea"
+__date__ = "20 Oct 2004"
+__version__ = "0.9-ivysaur"
 __license__ = "GNU Lesser General Public License (LGPL)"
 
 

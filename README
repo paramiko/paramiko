@@ -1,5 +1,5 @@
 paramiko 0.9
-"horsea" release, 27 jun 2004
+"ivysaur" release, 20 oct 2004
 
 Copyright (c) 2003-2004 Robey Pointer <robey@lag.net>
 
@@ -93,6 +93,10 @@ which hopefully demonstrates how you can use the paramiko library.
 a simpler example is in demo_simple.py, which is a copy of the demo client
 that uses the simpler "connect" method call (new with 0.9-doduo).
 
+a demo for windows is in demo_windows.py.  it executes 'ls' on the remote
+server and prints the results, avoiding terminal i/o and select() (which
+are missing in windows).
+
 there's also now a demo server (demo_server.py) which listens on port 2200
 and accepts a login (robey/foo) and pretends to be a BBS, just to demonstrate
 how to perform the server side of things.
@@ -100,12 +104,12 @@ how to perform the server side of things.
 
 ***  USE
 
-the demo clients (demo.py & demo_simple.py) and the demo server
-(demo_server.py) are probably the best example of how to use this package.
-there is also a lot of documentation, generated with epydoc, in the doc/
-folder.  point your browser there.  seriously, do it.  mad props to epydoc,
-which actually motivated me to write more documentation than i ever would
-have before.
+the demo clients (demo.py, demo_simple.py, and demo_windows.py) and the demo
+server (demo_server.py) are probably the best example of how to use this
+package.  there is also a lot of documentation, generated with epydoc, in the
+doc/ folder.  point your browser there.  seriously, do it.  mad props to
+epydoc, which actually motivated me to write more documentation than i ever
+would have before.
 
 there are also unit tests here:
     $ python ./test.py
@@ -117,6 +121,16 @@ the best and easiest examples of how to use the SFTP class.
 ***  WHAT'S NEW
 
 highlights of what's new in each release:
+
+v0.9 IVYSAUR
+* new ServerInterface class for implementing server policy, so it's no longer
+  necessary to subclass Transport
+* some bugfixes for re-keying an active session
+* Transport.get_security_options() allows fine-tuned control over the crypto
+  negotiation on a new session
+
+* .......?
+
 
 v0.9 HORSEA
 * fixed a lockup that could happen if the channel was closed while the send
@@ -157,4 +171,3 @@ v0.9 FEAROW
 * server mode needs better documentation
 * sftp server mode
 
-ivysaur?
