@@ -31,13 +31,7 @@ def load_host_keys():
 #####   main demo
 
 # setup logging
-l = logging.getLogger("paramiko")
-l.setLevel(logging.DEBUG)
-if len(l.handlers) == 0:
-    f = open('demo.log', 'w')
-    lh = logging.StreamHandler(f)
-    lh.setFormatter(logging.Formatter('%(levelname)-.3s [%(asctime)s] %(name)s: %(message)s', '%Y%m%d:%H%M%S'))
-    l.addHandler(lh)
+paramiko.util.log_to_file('demo.log')
 
 
 username = ''
@@ -103,29 +97,27 @@ try:
         auth = default_auth
 
     if auth == 'r':
-        key = paramiko.RSAKey()
         default_path = os.environ['HOME'] + '/.ssh/id_rsa'
         path = raw_input('RSA key [%s]: ' % default_path)
         if len(path) == 0:
             path = default_path
         try:
-            key.read_private_key_file(path)
+            key = paramiko.RSAKey.from_private_key_file(path)
         except paramiko.PasswordRequiredException:
             password = getpass.getpass('RSA key password: ')
-            key.read_private_key_file(path, password)
+            key = paramiko.RSAKey.from_private_key_file(path, password)
         t.auth_publickey(username, key, event)
     elif auth == 'd':
-        key = paramiko.DSSKey()
         default_path = os.environ['HOME'] + '/.ssh/id_dsa'
         path = raw_input('DSS key [%s]: ' % default_path)
         if len(path) == 0:
             path = default_path
         try:
-            key.read_private_key_file(path)
+            key = paramiko.DSSKey.from_private_key_file(path)
         except paramiko.PasswordRequiredException:
             password = getpass.getpass('DSS key password: ')
-            key.read_private_key_file(path, password)
-        t.auth_key(username, key, event)
+            key = paramiko.DSSKey.from_private_key_file(path, password)
+        t.auth_publickey(username, key, event)
     else:
         pw = getpass.getpass('Password for %s@%s: ' % (username, hostname))
         t.auth_password(username, pw, event)

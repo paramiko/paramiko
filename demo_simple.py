@@ -29,13 +29,7 @@ def load_host_keys():
 
 
 # setup logging
-l = logging.getLogger("paramiko")
-l.setLevel(logging.DEBUG)
-if len(l.handlers) == 0:
-    f = open('demo.log', 'w')
-    lh = logging.StreamHandler(f)
-    lh.setFormatter(logging.Formatter('%(levelname)-.3s [%(asctime)s] %(name)s: %(message)s', '%Y%m%d:%H%M%S'))
-    l.addHandler(lh)
+paramiko.util.log_to_file('demo.log')
 
 # get hostname
 username = ''
@@ -73,19 +67,9 @@ if hkeys.has_key(hostname):
     print 'Using host key of type %s' % hostkeytype
 
 
-# now connect
+# now, connect and use paramiko Transport to negotiate SSH2 across the connection
 try:
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.connect((hostname, port))
-except Exception, e:
-    print '*** Connect failed: ' + str(e)
-    traceback.print_exc()
-    sys.exit(1)
-
-
-# finally, use paramiko Transport to negotiate SSH2 across the connection
-try:
-    t = paramiko.Transport(sock)
+    t = paramiko.Transport((hostname, port))
     t.connect(username=username, password=password, hostkeytype=hostkeytype, hostkey=hostkey)
     chan = t.open_session()
     chan.get_pty()

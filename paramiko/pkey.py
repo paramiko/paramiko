@@ -40,7 +40,7 @@ class PKey (object):
 
     # known encryption types for private key files:
     _CIPHER_TABLE = {
-        'DES-EDE3-CBC': { 'cipher': DES3, 'keysize': 24, 'mode': DES3.MODE_CBC }
+        'DES-EDE3-CBC': { 'cipher': DES3, 'keysize': 24, 'blocksize': 8, 'mode': DES3.MODE_CBC }
     }
 
 
@@ -307,9 +307,13 @@ class PKey (object):
             cipher_name = self._CIPHER_TABLE.keys()[0]
             cipher = self._CIPHER_TABLE[cipher_name]['cipher']
             keysize = self._CIPHER_TABLE[cipher_name]['keysize']
+            blocksize = self._CIPHER_TABLE[cipher_name]['blocksize']
             mode = self._CIPHER_TABLE[cipher_name]['mode']
             salt = randpool.get_bytes(8)
             key = util.generate_key_bytes(MD5, salt, password, keysize)
+            if len(data) % blocksize != 0:
+                n = blocksize - len(data) % blocksize
+                data += randpool.get_bytes(n)
             data = cipher.new(key, mode, salt).encrypt(data)
             f.write('Proc-Type: 4,ENCRYPTED\n')
             f.write('DEK-Info: %s,%s\n' % (cipher_name, util.hexify(salt)))

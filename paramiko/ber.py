@@ -67,7 +67,7 @@ class BER(object):
             t = size & 0x7f
             if self.idx + t > len(self.content):
                 return None
-            size = self.inflate_long(self.content[self.idx : self.idx + t], True)
+            size = util.inflate_long(self.content[self.idx : self.idx + t], True)
             self.idx += t
         if self.idx + size > len(self.content):
             # can't fit
@@ -116,7 +116,7 @@ class BER(object):
         elif type(x) is str:
             self.encode_tlv(4, x)
         elif (type(x) is list) or (type(x) is tuple):
-            self.encode_tlv(30, self.encode_sequence(x))
+            self.encode_tlv(0x30, self.encode_sequence(x))
         else:
             raise BERException('Unknown type for encoding: %s' % repr(type(x)))
 

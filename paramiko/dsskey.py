@@ -22,14 +22,15 @@
 L{DSSKey}
 """
 
-from ssh_exception import SSHException
-from message import Message
-from util import inflate_long, deflate_long
 from Crypto.PublicKey import DSA
 from Crypto.Hash import SHA
+
+from common import *
+import util
+from ssh_exception import SSHException
+from message import Message
 from ber import BER, BERException
 from pkey import PKey
-from ssh_exception import SSHException
 
 class DSSKey (PKey):
     """
@@ -38,7 +39,7 @@ class DSSKey (PKey):
     """
 
     def __init__(self, msg=None, data=None):
-        self.valid = 0
+        self.valid = False
         if (msg is None) and (data is not None):
             msg = Message(data)
         if (msg is None) or (msg.get_string() != 'ssh-dss'):
@@ -47,8 +48,8 @@ class DSSKey (PKey):
         self.q = msg.get_mpint()
         self.g = msg.get_mpint()
         self.y = msg.get_mpint()
-        self.size = len(deflate_long(self.p, 0))
-        self.valid = 1
+        self.size = len(util.deflate_long(self.p, 0))
+        self.valid = True
 
     def __str__(self):
         if not self.valid:
@@ -77,15 +78,15 @@ class DSSKey (PKey):
         hash = SHA.new(data).digest()
         dss = DSA.construct((long(self.y), long(self.g), long(self.p), long(self.q), long(self.x)))
         # generate a suitable k
-        qsize = len(deflate_long(self.q, 0))
+        qsize = len(util.deflate_long(self.q, 0))
         while 1:
-            k = inflate_long(randpool.get_bytes(qsize), 1)
+            k = util.inflate_long(randpool.get_bytes(qsize), 1)
             if (k > 2) and (k < self.q):
                 break
-        r, s = dss.sign(inflate_long(hash, 1), k)
+        r, s = dss.sign(util.inflate_long(hash, 1), k)
         m = Message()
         m.add_string('ssh-dss')
-        m.add_string(deflate_long(r, 0) + deflate_long(s, 0))
+        m.add_string(util.deflate_long(r, 0) + util.deflate_long(s, 0))
         return m
 
     def verify_ssh_sig(self, data, msg):
@@ -101,9 +102,9 @@ class DSSKey (PKey):
             sig = msg.get_string()
 
         # pull out (r, s) which are NOT encoded as mpints
-        sigR = inflate_long(sig[:20], 1)
-        sigS = inflate_long(sig[20:], 1)
-        sigM = inflate_long(SHA.new(data).digest(), 1)
+        sigR = util.inflate_long(sig[:20], 1)
+        sigS = util.inflate_long(sig[20:], 1)
+        sigM = util.inflate_long(SHA.new(data).digest(), 1)
 
         dss = DSA.construct((long(self.y), long(self.g), long(self.p), long(self.q)))
         return dss.verify(sigM, (sigR, sigS))
@@ -111,12 +112,12 @@ class DSSKey (PKey):
     def read_private_key_file(self, filename, password=None):
         # private key file contains:
         # DSAPrivateKey = { version = 0, p, q, g, y, x }
-        self.valid = 0
+        self.valid = False
         data = self._read_private_key_file('DSA', filename, password)
         try:
             keylist = BER(data).decode()
-        except BERException:
-            raise SSHException('Unable to parse key file')
+        except BERException, x:
+            raise SSHException('Unable to parse key file: ' + str(x))
         if (type(keylist) is not list) or (len(keylist) < 6) or (keylist[0] != 0):
             raise SSHException('not a valid DSA private key file (bad ber encoding)')
         self.p = keylist[1]
@@ -124,5 +125,40 @@ class DSSKey (PKey):
         self.g = keylist[3]
         self.y = keylist[4]
         self.x = keylist[5]
-        self.size = len(deflate_long(self.p, 0))
-        self.valid = 1
+        self.size = len(util.deflate_long(self.p, 0))
+        self.valid = True
+
+    def write_private_key_file(self, filename, password=None):
+        if not self.valid:
+            raise SSHException('Invalid key')
+        keylist = [ 0, self.p, self.q, self.g, self.y, self.x ]
+        try:
+            b = BER()
+            b.encode(keylist)
+        except BERException:
+            raise SSHException('Unable to create ber encoding of key')
+        self._write_private_key_file('DSA', filename, str(b), password)
+
+    def generate(bits=1024, progress_func=None):
+        """
+        Generate a new private DSS key.  This factory function can be used to
+        generate a new host key or authentication key.
+
+        @param bits: number of bits the generated key should be.
+        @type bites: int
+        @param progress_func: an optional function to call at key points in
+        key generation (used by L{pyCrypto.PublicKey}).
+        @type progress_func: function
+        @return: new private key
+        @rtype: L{DSSKey}
+        """
+        dsa = DSA.generate(bits, randpool.get_bytes, progress_func)
+        key = DSSKey()
+        key.p = dsa.p
+        key.q = dsa.q
+        key.g = dsa.g
+        key.y = dsa.y
+        key.x = dsa.x
+        key.valid = True
+        return key
+    generate = staticmethod(generate)

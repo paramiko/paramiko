@@ -22,7 +22,7 @@
 Useful functions used by the rest of paramiko.
 """
 
-import sys, struct, traceback
+import sys, struct, traceback, logging
 
 def inflate_long(s, always_positive=False):
     "turns a normalized byte string into a long-int (adapted from Crypto.Util.number)"
@@ -173,3 +173,15 @@ def mod_inverse(x, m):
     if u2 < 0:
         u2 += m
     return u2
+
+def log_to_file(filename, level=logging.DEBUG):
+    "send paramiko logs to a logfile, if they're not already going somewhere"
+    l = logging.getLogger("paramiko")
+    if len(l.handlers) > 0:
+        return
+    l.setLevel(level)
+    f = open(filename, 'w')
+    lh = logging.StreamHandler(f)
+    lh.setFormatter(logging.Formatter('%(levelname)-.3s [%(asctime)s] %(name)s: %(message)s',
+                                      '%Y%m%d-%H:%M:%S'))
+    l.addHandler(lh)
