@@ -524,11 +524,15 @@ class BaseTransport(threading.Thread):
             # FIXME: can't do group-exchange (gex) yet -- too slow
             if 'diffie-hellman-group-exchange-sha1' in self.preferred_kex:
                 self.preferred_kex.remove('diffie-hellman-group-exchange-sha1')
+
+        available_server_keys = filter(self.server_key_dict.keys().__contains__,
+                                       self.preferred_keys)
+
         m = Message()
         m.add_byte(chr(MSG_KEXINIT))
         m.add_bytes(randpool.get_bytes(16))
         m.add(','.join(self.preferred_kex))
-        m.add(','.join(self.preferred_keys))
+        m.add(','.join(self.available_server_keys))
         m.add(','.join(self.preferred_ciphers))
         m.add(','.join(self.preferred_ciphers))
         m.add(','.join(self.preferred_macs))
@@ -579,7 +583,9 @@ class BaseTransport(threading.Thread):
         self.kex_engine = self.kex_info[agreed_kex[0]](self)
 
         if self.server_mode:
-            agreed_keys = filter(self.preferred_keys.__contains__, server_key_algo_list)
+            available_server_keys = filter(self.server_key_dict.keys().__contains__,
+                                           self.preferred_keys)
+            agreed_keys = filter(available_server_keys.__contains__, server_key_algo_list)
         else:
             agreed_keys = filter(server_key_algo_list.__contains__, self.preferred_keys)
         if len(agreed_keys) == 0:
