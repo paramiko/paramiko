@@ -371,8 +371,19 @@ class Channel (object):
         
         @since: 1.1
         """
-        old = self.combine_stderr
-        self.combine_stderr = combine
+        data = ''
+        self.lock.acquire()
+        try:
+            old = self.combine_stderr
+            self.combine_stderr = combine
+            if combine and not old:
+                # copy old stderr buffer into primary buffer
+                data = self.in_stderr_buffer
+                self.in_stderr_buffer = ''
+        finally:
+            self.lock.release()
+        if len(data) > 0:
+            self._feed(data)
         return old
 
     
@@ -762,8 +773,8 @@ class Channel (object):
         used to simulate an open FD, but I haven't figured out how to make
         pipes enter non-blocking mode on Windows yet.
         """
+        self.lock.acquire()
         try:
-            self.lock.acquire()
             if self.pipe_rfd != None:
                 return self.pipe_rfd
             # create the pipe and feed in any existing data
@@ -793,7 +804,11 @@ class Channel (object):
             # feign "read" shutdown
             self.eof_received = 1
         if (how == 1) or (how == 2):
-            self._send_eof()
+            self.lock.acquire()
+            try:
+                self._send_eof()
+            finally:
+                self.lock.release()
     
     def shutdown_read(self):
         """
@@ -963,7 +978,7 @@ class Channel (object):
         self.lock.acquire()
         try:
             if not self.eof_received:
-                self.eof_received = 1
+                self.eof_received = True
                 self.in_buffer_cv.notifyAll()
                 self.in_stderr_buffer_cv.notifyAll()
                 if self.pipe_wfd != None:
@@ -999,13 +1014,14 @@ class Channel (object):
         self.out_buffer_cv.notifyAll()
 
     def _send_eof(self):
+        # you are holding the lock.
         if self.eof_sent:
             return
         m = Message()
         m.add_byte(chr(MSG_CHANNEL_EOF))
         m.add_int(self.remote_chanid)
         self.transport._send_user_message(m)
-        self.eof_sent = 1
+        self.eof_sent = True
         self._log(DEBUG, 'EOF sent')
         return
 
