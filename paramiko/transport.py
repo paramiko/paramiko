@@ -76,6 +76,15 @@ except:
 randpool.randomize()
 
 
+# for thread cleanup
+_active_threads = []
+def _join_lingering_threads():
+    for thr in _active_threads:
+        thr.active = False
+import atexit
+atexit.register(_join_lingering_threads)
+
+
 class BaseTransport (threading.Thread):
     """
     Handles protocol negotiation, key exchange, encryption, and the creation
@@ -788,6 +797,7 @@ class BaseTransport (threading.Thread):
 
     def _run(self):
         self.active = True
+        _active_threads.append(self)
         try:
             # SSH-1.99-OpenSSH_2.9p2
             self._write_all(self.local_version + '\r\n')
@@ -838,6 +848,7 @@ class BaseTransport (threading.Thread):
             self._log(DEBUG, 'Unknown exception: ' + str(e))
             self._log(DEBUG, tb_strings())
             self.saved_exception = e
+        _active_threads.remove(self)
         if self.active:
             self.active = False
             if self.completion_event != None:
