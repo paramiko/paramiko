@@ -176,7 +176,7 @@ if options.use_key:
         if not READPASS:
             print '*** Password needed for keyfile (use -P): %s' % options.keyfile
             sys.exit(1)
-        key_password = raw_input()
+        key_password = getpass.getpass('Enter password for key: ')
         try:
             key = paramiko.RSAKey.from_private_key_file(options.keyfile, key_password)
         except:
@@ -190,7 +190,7 @@ if key is None:
     if not READPASS:
         print '*** Either a valid private key or password is required (use -K or -P).'
         sys.exit(1)
-    password = raw_input()
+    password = getpass.getpass('Enter password: ')
 
 verbose('Connecting to ssh host %s:%d ...' % (options.ssh_host, options.ssh_port))
 
