@@ -50,7 +50,9 @@ class SFTPClient (BaseSFTP):
         self.request_number = 1
         if type(sock) is Channel:
             # override default logger
-            self.logger = logging.getLogger('paramiko.chan.' + sock.get_name() + '.sftp')
+            transport = self.sock.get_transport()
+            self.logger = logging.getLogger(transport.get_log_channel() + '.' +
+                                            self.sock.get_name() + '.sftp')
         self._send_version()
 
     def from_transport(selfclass, t):

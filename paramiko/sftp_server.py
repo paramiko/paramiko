@@ -58,7 +58,9 @@ class SFTPServer (BaseSFTP, SubsystemHandler):
         BaseSFTP.__init__(self)
         SubsystemHandler.__init__(self, channel, name)
         self.ultra_debug = True
-        self.logger = logging.getLogger('paramiko.chan.' + channel.get_name() + '.sftp')
+        transport = channel.get_transport()
+        self.logger = logging.getLogger(transport.get_log_channel() + '.' +
+                                        channel.get_name() + '.sftp')
         self.next_handle = 1
         # map of handle-string to SFTPHandle for files & folders:
         self.file_table = { }
@@ -88,6 +90,13 @@ class SFTPServer (BaseSFTP, SubsystemHandler):
 
     def finish_subsystem(self):
         self.server.session_ended()
+        # close any file handles that were left open (so we can return them to the OS quickly)
+        for f in self.file_table.itervalues():
+            f.close()
+        for f in self.folder_table.itervalues():
+            f.close()
+        self.file_table = {}
+        self.folder_table = {}
 
     def convert_errno(e):
         """
@@ -121,7 +130,7 @@ class SFTPServer (BaseSFTP, SubsystemHandler):
         requests into local file operations.
         
         @param filename: name of the file to alter (should usually be an
-        absolute path).
+            absolute path).
         @type filename: str
         @param attr: attributes to change.
         @type attr: L{SFTPAttributes}

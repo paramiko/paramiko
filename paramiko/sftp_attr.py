@@ -78,6 +78,9 @@ class SFTPAttributes (object):
         return attr
     from_stat = classmethod(from_stat)
 
+    def __repr__(self):
+        return '<SFTPAttributes: %s>' % self._debug_str()
+
 
     ###  internals...
 
@@ -137,6 +140,22 @@ class SFTPAttributes (object):
                 msg.add_string(key)
                 msg.add_string(val)
         return
+
+    def _debug_str(self):
+        out = '[ '
+        if hasattr(self, 'st_size'):
+            out += 'size=%d ' % self.st_size
+        if hasattr(self, 'st_uid') or hasattr(self, 'st_gid'):
+            out += 'uid=%d gid=%d ' % (getattr(self, 'st_uid', 0), getattr(self, 'st_gid', 0))
+        if hasattr(self, 'st_mode'):
+            out += 'mode=%d ' % self.st_mode
+        if hasattr(self, 'st_atime') or hasattr(self, 'st_mtime'):
+            out += 'atime=%d mtime=%d ' % (getattr(self, 'st_atime', 0),
+                                           getattr(self, 'st_mtime', 0))
+        for k, v in self.attr.iteritems():
+            out += '"%s"=%s ' % (str(k), repr(v))
+        out += ']'
+        return out
 
     def _rwx(n, suid, sticky=False):
         if suid:

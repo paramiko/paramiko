@@ -29,9 +29,9 @@ from sftp import *
 
 class SFTPHandle (object):
     """
-    Abstract object representing a handle to an open file (or folder) on
-    the server.  Each handle has a string representation used by the client
-    to refer to the underlying file.
+    Abstract object representing a handle to an open file (or folder) in an
+    SFTP server implementation.  Each handle has a string representation used
+    by the client to refer to the underlying file.
     
     Server implementations can (and should) subclass SFTPHandle to implement
     features of a file handle, like L{stat} or L{chattr}.
@@ -138,7 +138,7 @@ class SFTPHandle (object):
         it's called on an open file instead of a path.
 
         @return: an attributes object for the given file, or an SFTP error
-        code (like L{SFTP_PERMISSION_DENIED}).
+            code (like L{SFTP_PERMISSION_DENIED}).
         @rtype: L{SFTPAttributes} I{or error code}
         """
         return SFTP_OP_UNSUPPORTED

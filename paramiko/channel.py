@@ -281,7 +281,7 @@ class Channel (object):
         @type name: str
         """
         self.name = name
-        self.logger = logging.getLogger('paramiko.chan.' + name)
+        self.logger = logging.getLogger(self.transport.get_log_channel() + '.' + self.name)
 
     def get_name(self):
         """
@@ -758,6 +758,7 @@ class Channel (object):
 
     def _set_transport(self, transport):
         self.transport = transport
+        self.logger = logging.getLogger(self.transport.get_log_channel() + '.' + self.name)
 
     def _set_window(self, window_size, max_packet_size):
         self.in_window_size = window_size

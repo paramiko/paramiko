@@ -237,12 +237,13 @@ class BaseTransport (threading.Thread):
         self.channels = { }			# (id -> Channel)
         self.channel_events = { }		# (id -> Event)
         self.channel_counter = 1
-        self.logger = logging.getLogger('paramiko.transport')
         self.window_size = 65536
         self.max_packet_size = 32768
         self.ultra_debug = False
         self.saved_exception = None
         self.clear_to_send = threading.Event()
+        self.log_name = 'paramiko.transport'
+        self.logger = logging.getLogger(self.log_name)
         # used for noticing when to re-key:
         self.received_bytes = 0
         self.received_packets = 0
@@ -783,14 +784,27 @@ class BaseTransport (threading.Thread):
         """
         Set the channel for this transport's logging.  The default is
         C{"paramiko.transport"} but it can be set to anything you want.
-        (See the C{logging} module for more info.)
+        (See the C{logging} module for more info.)  SSH Channels will log
+        to a sub-channel of the one specified.
 
         @param name: new channel name for logging.
         @type name: str
 
         @since: 1.1
         """
+        self.log_name = name
         self.logger = logging.getLogger(name)
+
+    def get_log_channel(self):
+        """
+        Return the channel name used for this transport's logging.
+
+        @return: channel name.
+        @rtype: str
+
+        @since: 1.2
+        """
+        return self.log_name
 
 
     ###  internals...
