@@ -97,7 +97,10 @@ class Transport (BaseTransport):
 
         @since: fearow
         """
-        return self.username
+        if self.server_mode:
+            return self.auth_username
+        else:
+            return self.username
 
     def auth_publickey(self, username, key, event):
         """
