@@ -61,6 +61,17 @@ out for:
 
 you really should upgrade to python 2.3.  laziness is no excuse! :)
 
+some python distributions don't include the utf-8 string encodings, for reasons
+of space (misdirected as that is).  if your distribution is missing encodings,
+you'll see an error like this:
+
+LookupError: no codec search functions registered: can't find encoding
+
+this means you need to copy string encodings over from a working system.
+(it probably only happens on embedded systems, not normal python installls.)
+Valeriy Pogrebitskiy says the best place to look is
+'.../lib/python*/encodings/__init__.py'.
+
 
 ***  DEMO
 
@@ -127,3 +138,4 @@ v0.9 FEAROW
 * multi-part auth not supported (ie, need username AND pk)
 * server mode needs better documentation
 * sftp server mode
+* make invoke_subsystem, etc wait for a reply
