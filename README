@@ -222,3 +222,4 @@ v0.9 FEAROW
 * ctr forms of ciphers are missing (blowfish-ctr, aes128-ctr, aes256-ctr)
 * server mode needs better documentation
 * add method to block until a channel's "exit-status" is set
+* the error message from this is confusing as hell:  DSSKey()

@@ -148,7 +148,7 @@ class SFTPAttributes (object):
         if hasattr(self, 'st_uid') or hasattr(self, 'st_gid'):
             out += 'uid=%d gid=%d ' % (getattr(self, 'st_uid', 0), getattr(self, 'st_gid', 0))
         if hasattr(self, 'st_mode'):
-            out += 'mode=%d ' % self.st_mode
+            out += 'mode=' + oct(self.st_mode)
         if hasattr(self, 'st_atime') or hasattr(self, 'st_mtime'):
             out += 'atime=%d mtime=%d ' % (getattr(self, 'st_atime', 0),
                                            getattr(self, 'st_mtime', 0))
