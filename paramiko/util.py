@@ -92,7 +92,7 @@ def format_binary(data, prefix=''):
 
 def format_binary_line(data):
     left = ' '.join(['%02X' % ord(c) for c in data])
-    right = ''.join([('.%c..' % c)[(ord(c)+61)//94] for c in data])
+    right = ''.join([('.%c..' % c)[(ord(c)+63)//95] for c in data])
     return '%-50s %s' % (left, right)
 
 def hexify(s):

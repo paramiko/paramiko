@@ -26,6 +26,7 @@ from message import Message
 from ssh_exception import SSHException
 from transport import _MSG_CHANNEL_REQUEST, _MSG_CHANNEL_CLOSE, _MSG_CHANNEL_WINDOW_ADJUST, _MSG_CHANNEL_DATA, \
 	_MSG_CHANNEL_EOF, _MSG_CHANNEL_SUCCESS, _MSG_CHANNEL_FAILURE
+from file import BufferedFile
 
 import time, threading, logging, socket, os
 from logging import DEBUG
@@ -334,7 +335,7 @@ class Channel (object):
 
         @param nbytes: maximum number of bytes to read.
         @type nbytes: int
-        @return: data
+        @return: data.
         @rtype: string
         
         @raise socket.timeout: if no data is ready before the timeout set by
@@ -834,7 +835,7 @@ class Channel (object):
             self.in_window_sofar = 0
 
 
-class ChannelFile (object):
+class ChannelFile (BufferedFile):
     """
     A file-like wrapper around L{Channel}.  A ChannelFile is created by calling
     L{Channel.makefile} and doesn't have the non-portable side effect of
@@ -846,28 +847,10 @@ class ChannelFile (object):
     C{ChannelFile} does nothing but flush the buffer.
     """
 
-    def __init__(self, channel, mode = "r", buf_size = -1):
+    def __init__(self, channel, mode = 'r', bufsize = -1):
         self.channel = channel
-        self.mode = mode
-        if buf_size <= 0:
-            self.buf_size = 1024
-            self.line_buffered = 0
-        elif buf_size == 1:
-            self.buf_size = 1
-            self.line_buffered = 1
-        else:
-            self.buf_size = buf_size
-            self.line_buffered = 0
-        self.wbuffer = ""
-        self.rbuffer = ""
-        self.readable = ("r" in mode)
-        self.writable = ("w" in mode) or ("+" in mode) or ("a" in mode)
-        self.universal_newlines = ('U' in mode)
-        self.binary = ("b" in mode)
-        self.at_trailing_cr = False
-        self.name = '<file from ' + repr(self.channel) + '>'
-        self.newlines = None
-        self.softspace = False
+        BufferedFile.__init__(self)
+        self._set_mode(mode, bufsize)
 
     def __repr__(self):
         """
@@ -877,134 +860,12 @@ class ChannelFile (object):
         """
         return '<paramiko.ChannelFile from ' + repr(self.channel) + '>'
 
-    def __iter__(self):
-        return self
+    def _read(self, size):
+        return self.channel.recv(size)
 
-    def next(self):
-        line = self.readline()
-        if not line:
-            raise StopIteration
-        return line
+    def _write(self, data):
+        self.channel.sendall(data)
+        return len(data)
 
-    def write(self, str):
-        if not self.writable:
-            raise IOError("file not open for writing")
-        if self.buf_size == 0 and not self.line_buffered:
-            self.channel.sendall(str)
-            return
-        self.wbuffer += str
-        if self.line_buffered:
-            last_newline_pos = self.wbuffer.rfind("\n")
-            if last_newline_pos >= 0:
-                self.channel.sendall(self.wbuffer[:last_newline_pos+1])
-                self.wbuffer = self.wbuffer[last_newline_pos+1:]
-        else:
-            if len(self.wbuffer) >= self.buf_size:
-                self.channel.sendall(self.wbuffer)
-                self.wbuffer = ""
-        return
-
-    def writelines(self, sequence):
-        for s in sequence:
-            self.write(s)
-            return
-
-    def flush(self):
-        self.channel.sendall(self.wbuffer)
-        self.wbuffer = ""
-        return
-
-    def read(self, size = None):
-        if not self.readable:
-            raise IOError("file not open for reading")
-        if size is None or size < 0:
-            result = self.rbuffer
-            self.rbuffer = ""
-            while not self.channel.eof_received:
-                new_data = self.channel.recv(65536)
-                if not new_data:
-                    break
-                result += new_data
-            return result
-        if size <= len(self.rbuffer):
-            result = self.rbuffer[:size]
-            self.rbuffer = self.rbuffer[size:]
-            return result
-        while len(self.rbuffer) < size and not self.channel.eof_received:
-            new_data = self.channel.recv(max(self.buf_size, size-len(self.rbuffer)))
-            if not new_data:
-                break
-            self.rbuffer += new_data
-        result = self.rbuffer[:size]
-        self.rbuffer[size:]
-        return result
-
-    def readline(self, size=None):
-        line = self.rbuffer
-        while 1:
-            if self.at_trailing_cr and (len(line) > 0):
-                if line[0] == '\n':
-                    line = line[1:]
-                self.at_trailing_cr = False
-            if self.universal_newlines:
-                if ('\n' in line) or ('\r' in line):
-                    break
-            else:
-                if '\n' in line:
-                    break
-            if size >= 0:
-                if len(line) >= size:
-                    # truncate line and return
-                    self.rbuffer = line[size:]
-                    line = line[:size]
-                    return line
-                n = size - len(line)
-            else:
-                n = 64
-            new_data = self.channel.recv(n)
-            if not new_data:
-                self.rbuffer = ''
-                return line
-            line += new_data
-        # find the newline
-        pos = line.find('\n')
-        if self.universal_newlines:
-            rpos = line.find('\r')
-            if (rpos >= 0) and ((rpos < pos) or (pos < 0)):
-                pos = rpos
-        xpos = pos + 1
-        if (line[pos] == '\r') and (xpos < len(line)) and (line[xpos] == '\n'):
-            xpos += 1
-        self.rbuffer = line[xpos:]
-        lf = line[pos:xpos]
-        line = line[:xpos]
-        if (len(self.rbuffer) == 0) and (lf == '\r'):
-            # we could read the line up to a '\r' and there could still be a
-            # '\n' following that we read next time.  note that and eat it.
-            self.at_trailing_cr = True
-        # silliness about tracking what kinds of newlines we've seen
-        if self.newlines is None:
-            self.newlines = lf
-        elif (type(self.newlines) is str) and (self.newlines != lf):
-            self.newlines = (self.newlines, lf)
-        elif lf not in self.newlines:
-            self.newlines += (lf,)
-        return line
-
-    def readlines(self, sizehint = None):
-        lines = []
-        while 1:
-            line = self.readline()
-            if not line:
-                break
-            lines.append(line)
-        return lines
-
-    def xreadlines(self):
-        return self
-
-    def close(self):
-        self.flush()
-        return
 
 # vim: set shiftwidth=4 expandtab :

@@ -67,27 +67,33 @@ __version__ = "0.9-doduo"
 __license__ = "GNU Lesser General Public License (LGPL)"
 
 
-import transport, auth_transport, channel, rsakey, dsskey, ssh_exception
+import transport, auth_transport, channel, rsakey, dsskey, message, ssh_exception, sftp
 
 Transport = auth_transport.Transport
 Channel = channel.Channel
 RSAKey = rsakey.RSAKey
 DSSKey = dsskey.DSSKey
 SSHException = ssh_exception.SSHException
+Message = message.Message
 PasswordRequiredException = ssh_exception.PasswordRequiredException
+SFTP = sftp.SFTP
 
 
 __all__ = [ 'Transport',
             'Channel',
             'RSAKey',
             'DSSKey',
+            'Message',
             'SSHException',
             'PasswordRequiredException',
+            'SFTP',
             'transport',
             'auth_transport',
             'channel',
             'rsakey',
             'dsskey',
             'pkey',
+            'message',
             'ssh_exception',
+            'sftp',
             'util' ]

@@ -207,6 +207,16 @@ class Message (object):
         self.packet = self.packet + struct.pack('>I', n)
         return self
 
+    def add_int64(self, n):
+        """
+        Add a 64-bit int to the stream.
+
+        @param n: long int to add.
+        @type n: long
+        """
+        self.packet = self.packet + struct.pack('>Q', n)
+        return self
+
     def add_mpint(self, z):
         "this only works on positive numbers"
         self.add_string(deflate_long(z))
