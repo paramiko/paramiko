@@ -60,7 +60,14 @@ class Message (object):
         @rtype: string
         """
         return 'paramiko.Message(' + repr(self.packet) + ')'
-    
+
+    def rewind(self):
+        """
+        Rewind the message to the beginning as if no items had been parsed
+        out of it yet.
+        """
+        self.idx = 0
+
     def get_remainder(self):
         """
         Return the bytes of this Message that haven't already been parsed and

@@ -95,4 +95,8 @@ class MessageTest (unittest.TestCase):
         self.assertEquals(msg.get_mpint(), 0x1122334455L)
         self.assertEquals(msg.get_so_far(), self.__d[:13])
         self.assertEquals(msg.get_remainder(), self.__d[13:])
+        msg.rewind()
+        self.assertEquals(msg.get_int(), 5)
+        self.assertEquals(msg.get_so_far(), self.__d[:4])
+        self.assertEquals(msg.get_remainder(), self.__d[4:])
 
