@@ -47,17 +47,10 @@ also think it will work on Windows, though i've never tested it there.  if
 you run into Windows problems, send me a patch: portability is important
 to me.
 
-the Channel object supports a "fileno()" call so that it can be passed
-into select or poll, for polling on posix.  once you call "fileno()" on a
-Channel, it changes behavior in some fundamental ways, and these ways
-require posix.  so don't call "fileno()" on a Channel on Windows.  this is
-detailed in the documentation for the "fileno" method.
-
 python 2.2 may work, thanks to some patches from Roger Binns.  things to
 watch out for:
 * sockets in 2.2 don't support timeouts, so the 'select' module is
-  imported to do polling.  this may not work on windows.  (works fine on
-  osx.)
+  imported to do polling.  
 * logging is mostly stubbed out.  it works just enough to let paramiko
   create log files for debugging, if you want them.  to get real logging,
   you can backport python 2.3's logging package.  Roger has done that
@@ -102,32 +95,23 @@ connection is not secure!)
 
 the following example scripts get progressively more detailed:
 
-demo_windows.py
-    executes 'ls' on any remote server, loading the host key from your
-    openssh key file.  (this script works on windows because it avoids
-    using terminal i/o or the 'select' module.)  it also creates a logfile
-    'demo_windows.log'.
-
 demo_simple.py
     calls invoke_shell() and emulates a terminal/tty through which you can
     execute commands interactively on a remote server.  think of it as a
-    poor man's ssh command-line client.  (works only on posix [unix or
-    macosx].)
+    poor man's ssh command-line client.
 
 demo.py
     same as demo_simple.py, but allows you to authenticiate using a
-    private key, and uses the long form of some of the API calls.  (posix
-    only.)
+    private key, and uses the long form of some of the API calls.
 
 forward.py
     command-line script to set up port-forwarding across an ssh transport.
-    (requires python 2.3 and posix.)
+    (requires python 2.3.)
 
 demo_server.py
     an ssh server that listens on port 2200 and accepts a login for
     'robey' (password 'foo'), and pretends to be a BBS.  meant to be a
-    very simple demo of writing an ssh server.  (should work on all
-    platforms.)
+    very simple demo of writing an ssh server.
 
 
 ***  USE
@@ -235,3 +219,4 @@ v0.9 FEAROW
 
 * ctr forms of ciphers are missing (blowfish-ctr, aes128-ctr, aes256-ctr)
 * server mode needs better documentation
+* why are big files so slow to transfer?  profiling needed...

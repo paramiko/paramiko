@@ -31,12 +31,6 @@ from ssh_exception import SSHException
 from file import BufferedFile
 
 
-# this is ugly, and won't work on windows
-def _set_nonblocking(fd):
-    import fcntl
-    fcntl.fcntl(fd, fcntl.F_SETFL, os.O_NONBLOCK)
-
-
 class Channel (object):
     """
     A secure tunnel across an SSH L{Transport}.  A Channel is meant to behave
@@ -63,7 +57,7 @@ class Channel (object):
         subclass of L{Channel}.
 
         @param chanid: the ID of this channel, as passed by an existing
-        L{Transport}.
+            L{Transport}.
         @type chanid: int
         """
         self.chanid = chanid
@@ -84,6 +78,7 @@ class Channel (object):
         self.name = str(chanid)
         self.logger = util.get_logger('paramiko.chan.' + str(chanid))
         self.pipe_rfd = self.pipe_wfd = None
+	self.pipe_set = False
         self.event = threading.Event()
         self.combine_stderr = False
         self.exit_status = -1
@@ -504,9 +499,6 @@ class Channel (object):
         out = ''
         self.lock.acquire()
         try:
-            if self.pipe_rfd != None:
-                # use the pipe
-                return self._read_pipe(nbytes)
             if len(self.in_buffer) == 0:
                 if self.closed or self.eof_received:
                     return out
@@ -526,6 +518,9 @@ class Channel (object):
             if len(self.in_buffer) <= nbytes:
                 out = self.in_buffer
                 self.in_buffer = ''
+		if self.pipe_rfd != None:
+		    # clear the pipe, since no more data is buffered
+		    self._clear_pipe()
             else:
                 out = self.in_buffer[:nbytes]
                 self.in_buffer = self.in_buffer[nbytes:]
@@ -754,24 +749,21 @@ class Channel (object):
         
     def fileno(self):
         """
-        Returns an OS-level file descriptor which can be used for polling and
-        reading (but I{not} for writing).  This is primaily to allow python's
+        Returns an OS-level file descriptor which can be used for polling, but
+        but I{not} for reading or writing).  This is primaily to allow python's
         C{select} module to work.
 
         The first time C{fileno} is called on a channel, a pipe is created to
         simulate real OS-level file descriptor (FD) behavior.  Because of this,
-        two actual FDs are created -- this may be inefficient if you plan to
-        use many channels.
+        two OS-level FDs are created, which will use up FDs faster than normal.
+	You won't notice this effect unless you open hundreds or thousands of
+	channels simultaneously, but it's still notable.
 
-        @return: a small integer file descriptor
+        @return: an OS-level file descriptor
         @rtype: int
         
-        @warning: This method causes several aspects of the channel to change
-        behavior.  It is always more efficient to avoid using this method.
-
-        @bug: This does not work on Windows.  The problem is that pipes are
-        used to simulate an open FD, but I haven't figured out how to make
-        pipes enter non-blocking mode on Windows yet.
+        @warning: This method causes channel reads to be slightly less
+	    efficient.
         """
         self.lock.acquire()
         try:
@@ -779,12 +771,8 @@ class Channel (object):
                 return self.pipe_rfd
             # create the pipe and feed in any existing data
             self.pipe_rfd, self.pipe_wfd = os.pipe()
-            _set_nonblocking(self.pipe_wfd)
-            _set_nonblocking(self.pipe_rfd)
             if len(self.in_buffer) > 0:
-                x = self.in_buffer
-                self.in_buffer = ''
-                self._feed_pipe(x)
+		self._set_pipe()
             return self.pipe_rfd
         finally:
             self.lock.release()
@@ -876,10 +864,9 @@ class Channel (object):
             if self.ultra_debug:
                 self._log(DEBUG, 'fed %d bytes' % len(s))
             if self.pipe_wfd != None:
-                self._feed_pipe(s)
-            else:
-                self.in_buffer += s
-                self.in_buffer_cv.notifyAll()
+                self._set_pipe()
+            self.in_buffer += s
+	    self.in_buffer_cv.notifyAll()
         finally:
             self.lock.release()
 
@@ -1025,83 +1012,19 @@ class Channel (object):
         self._log(DEBUG, 'EOF sent')
         return
 
-    def _feed_pipe(self, data):
+    def _set_pipe(self):
         "you are already holding the lock"
-        if len(self.in_buffer) > 0:
-            self.in_buffer += data
-            return
-        try:
-            n = os.write(self.pipe_wfd, data)
-            if n < len(data):
-                # at least on linux, this will never happen, as the writes are
-                # considered atomic... but just in case.
-                self.in_buffer = data[n:]
-            self._check_add_window(n)
-            self.in_buffer_cv.notifyAll()
-            return
-        except OSError, e:
-            pass
-        if len(data) > 1:
-            # try writing just one byte then
-            x = data[0]
-            data = data[1:]
-            try:
-                os.write(self.pipe_wfd, x)
-                self.in_buffer = data
-                self._check_add_window(1)
-                self.in_buffer_cv.notifyAll()
-                return
-            except OSError, e:
-                data = x + data
-        # pipe is very full
-        self.in_buffer = data
-        self.in_buffer_cv.notifyAll()
+	if self.pipe_set:
+	    return
+	self.pipe_set = True
+	os.write(self.pipe_wfd, '*')
 
-    def _read_pipe(self, nbytes):
+    def _clear_pipe(self):
         "you are already holding the lock"
-        try:
-            x = os.read(self.pipe_rfd, nbytes)
-            if len(x) > 0:
-                self._push_pipe(len(x))
-                return x
-        except OSError, e:
-            pass
-        # nothing in the pipe
-        if self.closed or self.eof_received:
-            return ''
-        # should we block?
-        if self.timeout == 0.0:
-            raise socket.timeout()
-        # loop here in case we get woken up but a different thread has grabbed everything in the buffer
-        timeout = self.timeout
-        while not self.closed and not self.eof_received:
-            then = time.time()
-            self.in_buffer_cv.wait(timeout)
-            if timeout != None:
-                timeout -= time.time() - then
-                if timeout <= 0.0:
-                    raise socket.timeout()
-            try:
-                x = os.read(self.pipe_rfd, nbytes)
-                if len(x) > 0:
-                    self._push_pipe(len(x))
-                    return x
-            except OSError, e:
-                pass
-        pass
-
-    def _push_pipe(self, nbytes):
-        # successfully read N bytes from the pipe, now re-feed the pipe if necessary
-        # (assumption: the pipe can hold as many bytes as were read out)
-        if len(self.in_buffer) == 0:
-            return
-        if len(self.in_buffer) <= nbytes:
-            os.write(self.pipe_wfd, self.in_buffer)
-            self.in_buffer = ''
-            return
-        x = self.in_buffer[:nbytes]
-        self.in_buffer = self.in_buffer[nbytes:]
-        os.write(self.pipe_wfd, x)
+	if not self.pipe_set:
+	    return
+	os.read(self.pipe_rfd, 1)
+	self.pipe_set = False
 
     def _unlink(self):
         if self.closed or not self.active:
