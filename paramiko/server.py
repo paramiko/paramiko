@@ -23,6 +23,7 @@ L{ServerInterface} is an interface to override for server support.
 """
 
 from common import *
+from transport import BaseTransport
 from auth_transport import Transport
 
 class ServerInterface (object):
@@ -229,7 +230,14 @@ class ServerInterface (object):
         through this channel will be assumed to be connected to the requested
         subsystem.  An example of a subsystem is C{sftp}.
 
-        The default implementation always returns C{False}.
+        The default implementation checks for a subsystem handler assigned via
+        L{Transport.set_subsystem_handler <BaseTransport.set_subsystem_handler>}.
+        If one has been set, the handler is invoked and this method returns
+        C{True}.  Otherwise it returns C{False}.
+
+        @note: Because the default implementation uses the L{Transport} to
+        identify valid subsystems, you probably won't need to override this
+        method.
 
         @param channel: the L{Channel} the pty request arrived on.
         @type channel: L{Channel}
@@ -239,7 +247,12 @@ class ServerInterface (object):
         subsystem; C{False} if that subsystem can't or won't be provided.
         @rtype: boolean
         """
-        return False
+        handler_class = channel.get_transport()._get_subsystem_handler(name)
+        if handler_class is None:
+            return False
+        handler = handler_class(channel, name)
+        handler.start()
+        return True
 
     def check_channel_window_change_request(self, channel, width, height, pixelwidth, pixelheight):
         """
