@@ -1,3 +1,3 @@
-include ChangeLog LICENSE test.py demo.py demo_simple.py demo_server.py demo_dss_key demo_rsa_key forward.py
+include ChangeLog LICENSE test.py demo.py demo_simple.py demo_server.py demo_windows.py forward.py
 recursive-include docs *
-recursive-include tests *.py
+recursive-include tests *.py *.key

@@ -32,7 +32,7 @@ def load_host_keys():
 
 
 # setup logging
-paramiko.util.log_to_file('demo.log')
+paramiko.util.log_to_file('demo_simple.log')
 
 # get hostname
 username = ''

@@ -38,7 +38,7 @@ def load_host_keys():
 
 
 # setup logging
-paramiko.util.log_to_file('demo.log')
+paramiko.util.log_to_file('demo_windows.log')
 
 # get hostname
 username = ''
@@ -81,16 +81,15 @@ try:
     t = paramiko.Transport((hostname, port))
     t.connect(username=username, password=password, hostkey=hostkey)
     chan = t.open_session()
-    chan.get_pty()
     print '*** Here we go!'
     print
 
     print '>>> ls'
-    chan.exec_command('ps auxww')
+    chan.exec_command('ls')
     f = chan.makefile('r+')
     for line in f:
         print line.strip('\n')
-        
+
     chan.close()
     t.close()
 

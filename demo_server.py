@@ -6,11 +6,8 @@ import paramiko
 # setup logging
 paramiko.util.log_to_file('demo_server.log')
 
-#host_key = paramiko.RSAKey()
-#host_key.read_private_key_file('demo_rsa_key')
-
-host_key = paramiko.DSSKey()
-host_key.read_private_key_file('demo_dss_key')
+#host_key = paramiko.RSAKey(filename='tests/test_rsa.key')
+host_key = paramiko.DSSKey(filename='tests/test_dss.key')
 
 print 'Read key: ' + paramiko.util.hexify(host_key.get_fingerprint())
 

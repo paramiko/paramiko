@@ -76,40 +76,58 @@ Valeriy Pogrebitskiy says the best place to look is
 
 ***  DEMO
 
-the demo client (demo.py) is a raw implementation of the normal 'ssh' CLI tool.
-while the paramiko library should work on all platforms, the demo app will only
-run on posix, because it uses select.
+several demo scripts come with paramiko to demonstrate how to use it.  probably
+the simplest demo of all is this:
 
-you can run demo.py with no arguments, or you can give a hostname (or
-username@hostname) on the command line.  if you don't, it'll prompt you for
-a hostname and username.  if you have an ".ssh/" folder, it will try to read
-the host keys from there, though it's easily confused.  you can choose to
-authenticate with a password, or with an RSA or DSS key.
+    import paramiko, base64
+    key = paramiko.RSAKey(data=base64.decodestring('AAA...'))
+    t = paramiko.Transport('ssh.example.com')
+    t.connect(username='strongbad', password='thecheat', hostkey=key)
+    chan = t.open_session()
+    chan.exec_command('ls')
+    for line in chan.makefile('r+'):
+        print '... ' + line.strip('\n')
+    chan.close()
+    t.close()
 
-the demo app leaves a logfile called "demo.log" so you can see what paramiko
-logs as it works.  but the most interesting part is probably the code itself,
-which hopefully demonstrates how you can use the paramiko library.
+...which prints out the results of executing 'ls' on a remote server.  (the
+host key 'AAA...' should of course be replaced by the actual base64 encoding
+of the host key.  if you skip host key verification, the connection is not
+secure!)
 
-a simpler example is in demo_simple.py, which is a copy of the demo client
-that uses the simpler "connect" method call (new with 0.9-doduo).
+the following example scripts get progressively more detailed:
 
-a demo for windows is in demo_windows.py.  it executes 'ls' on the remote
-server and prints the results, avoiding terminal i/o and select() (which
-are missing in windows).
+demo_windows.py
+    executes 'ls' on any remote server, loading the host key from your openssh
+    key file.  (this script works on windows because it avoids using terminal
+    i/o or the 'select' module.)  it also creates a logfile 'demo_windows.log'.
 
-there's also now a demo server (demo_server.py) which listens on port 2200
-and accepts a login (robey/foo) and pretends to be a BBS, just to demonstrate
-how to perform the server side of things.
+demo_simple.py
+    calls invoke_shell() and emulates a terminal/tty through which you can
+    execute commands interactively on a remote server.  think of it as a poor
+    man's ssh command-line client.  (works only on posix [unix or macosx].)
+
+demo.py
+    same as demo_simple.py, but allows you to authenticiate using a private
+    key, and uses the long form of some of the API calls.  (posix only.)
+
+forward.py
+    command-line script to set up port-forwarding across an ssh transport.
+    (requires python 2.3 and posix.)
+
+demo_server.py
+    an ssh server that listens on port 2200 and accepts a login for 'robey'
+    (password 'foo'), and pretends to be a BBS.  meant to be a very simple
+    demo of writing an ssh server.  (should work on all platforms.)
 
 
 ***  USE
 
-the demo clients (demo.py, demo_simple.py, and demo_windows.py) and the demo
-server (demo_server.py) are probably the best example of how to use this
-package.  there is also a lot of documentation, generated with epydoc, in the
-doc/ folder.  point your browser there.  seriously, do it.  mad props to
-epydoc, which actually motivated me to write more documentation than i ever
-would have before.
+the demo scripts are probably the best example of how to use this package.
+there is also a lot of documentation, generated with epydoc, in the doc/
+folder.  point your browser there.  seriously, do it.  mad props to epydoc,
+which actually motivated me to write more documentation than i ever would have
+before.
 
 there are also unit tests here:
     $ python ./test.py
