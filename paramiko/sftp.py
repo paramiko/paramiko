@@ -36,7 +36,7 @@ _FX_OK = 0
 _FX_EOF, _FX_NO_SUCH_FILE, _FX_PERMISSION_DENIED, _FX_FAILURE, _FX_BAD_MESSAGE, \
          _FX_NO_CONNECTION, _FX_CONNECTION_LOST, _FX_OP_UNSUPPORTED = range(1, 9)
 
-VERSION = 3
+_VERSION = 3
 
 
 class SFTPAttributes (object):
@@ -238,12 +238,12 @@ class SFTP (object):
         else:
             self.logger = logging.getLogger('paramiko.sftp')
         # protocol:  (maybe should move to a different method)
-        self._send_packet(_CMD_INIT, struct.pack('>I', VERSION))
+        self._send_packet(_CMD_INIT, struct.pack('>I', _VERSION))
         t, data = self._read_packet()
         if t != _CMD_VERSION:
             raise SFTPError('Incompatible sftp protocol')
         version = struct.unpack('>I', data[:4])[0]
-#        if version != VERSION:
+#        if version != _VERSION:
 #            raise SFTPError('Incompatible sftp protocol')
 
     def from_transport(selfclass, t):

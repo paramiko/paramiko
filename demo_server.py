@@ -20,38 +20,34 @@ class Server (paramiko.ServerInterface):
     data = 'AAAAB3NzaC1yc2EAAAABIwAAAIEAyO4it3fHlmGZWJaGrfeHOVY7RWO3P9M7hpfAu7jJ2d7eothvfeuoRFtJwhUmZDluRdFyhFY/hFAh76PJKGAusIqIQKlkJxMCKDqIexkgHAfID/6mqvmnSJf0b5W8v5h2pI/stOSwTQ+pxVhwJ9ctYDhRSlF0iTUWT10hcuO4Ks8='
     good_pub_key = paramiko.RSAKey(data=base64.decodestring(data))
 
+    def __init__(self):
+        self.event = threading.Event()
+
     def check_channel_request(self, kind, chanid):
         if kind == 'session':
-            return ServerChannel(chanid)
-        return paramiko.Transport.OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED
+            return paramiko.OPEN_SUCCEEDED
+        return paramiko.OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED
 
     def check_auth_password(self, username, password):
         if (username == 'robey') and (password == 'foo'):
-            return paramiko.Transport.AUTH_SUCCESSFUL
-        return paramiko.Transport.AUTH_FAILED
+            return paramiko.AUTH_SUCCESSFUL
+        return paramiko.AUTH_FAILED
 
     def check_auth_publickey(self, username, key):
         print 'Auth attempt with key: ' + paramiko.util.hexify(key.get_fingerprint())
         if (username == 'robey') and (key == self.good_pub_key):
-            return paramiko.Transport.AUTH_SUCCESSFUL
-        return paramiko.Transport.AUTH_FAILED
+            return paramiko.AUTH_SUCCESSFUL
+        return paramiko.AUTH_FAILED
 
     def get_allowed_auths(self, username):
         return 'password,publickey'
 
-
-class ServerChannel (paramiko.Channel):
-    "Channel descendant that pretends to understand pty and shell requests"
-
-    def __init__(self, chanid):
-        paramiko.Channel.__init__(self, chanid)
-        self.event = threading.Event()
-
-    def check_pty_request(self, term, width, height, pixelwidth, pixelheight, modes):
+    def check_channel_shell_request(self, channel):
+        self.event.set()
         return True
 
-    def check_shell_request(self):
-        self.event.set()
+    def check_channel_pty_request(self, channel, term, width, height, pixelwidth,
+                                  pixelheight, modes):
         return True
 
 
@@ -85,7 +81,8 @@ try:
         print '(Failed to load moduli -- gex will be unsupported.)'
         raise
     t.add_server_key(host_key)
-    t.start_server(event, Server())
+    server = Server()
+    t.start_server(event, server)
     while 1:
         event.wait(0.1)
         if not t.is_active():
@@ -101,8 +98,8 @@ try:
         print '*** No channel.'
         sys.exit(1)
     print 'Authenticated!'
-    chan.event.wait(10)
-    if not chan.event.isSet():
+    server.event.wait(10)
+    if not server.event.isSet():
         print '*** Client never asked for a shell.'
         sys.exit(1)
 

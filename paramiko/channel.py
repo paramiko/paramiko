@@ -87,7 +87,7 @@ class Channel (object):
         """
         Returns a string representation of this object, for debugging.
 
-        @rtype: string
+        @rtype: str
         """
         out = '<paramiko.Channel %d' % self.chanid
         if self.closed:
@@ -111,7 +111,7 @@ class Channel (object):
         basic terminal semantics for the next command you execute.
 
         @param term: the terminal type to emulate (for example, C{'vt100'}).
-        @type term: string
+        @type term: str
         @param width: width (in characters) of the terminal screen
         @type width: int
         @param height: height (in characters) of the terminal screen
@@ -173,7 +173,7 @@ class Channel (object):
         being executed.
 
         @param command: a shell command to execute.
-        @type command: string
+        @type command: str
         @return: C{True} if the operation succeeded; C{False} if not.
         @rtype: bool
         """
@@ -201,7 +201,7 @@ class Channel (object):
         requested subsystem.
 
         @param subsystem: name of the subsystem being requested.
-        @type subsystem: string
+        @type subsystem: str
         @return: C{True} if the operation succeeded; C{False} if not.
         @rtype: bool
         """
@@ -268,8 +268,8 @@ class Channel (object):
         of the log level used for debugging.  The name can be fetched with the
         L{get_name} method.
 
-        @param name: new channel name
-        @type name: string
+        @param name: new channel name.
+        @type name: str
         """
         self.name = name
         self.logger = logging.getLogger('paramiko.chan.' + name)
@@ -278,10 +278,24 @@ class Channel (object):
         """
         Get the name of this channel that was previously set by L{set_name}.
 
-        @return: the name of this channel
-        @rtype: string
+        @return: the name of this channel.
+        @rtype: str
         """
         return self.name
+
+    def get_id(self):
+        """
+        Return the ID # for this channel.  The channel ID is unique across
+        a L{Transport} and usually a small number.  It's also the number
+        passed to L{ServerInterface.check_channel_request} when determining
+        whether to accept a channel request in server mode.
+
+        @return: the ID of this channel.
+        @rtype: int
+
+        @since: ivysaur
+        """
+        return self.chanid
 
     
     ###  socket API
@@ -389,7 +403,7 @@ class Channel (object):
         @param nbytes: maximum number of bytes to read.
         @type nbytes: int
         @return: data.
-        @rtype: string
+        @rtype: str
         
         @raise socket.timeout: if no data is ready before the timeout set by
         L{settimeout}.
@@ -436,7 +450,7 @@ class Channel (object):
         data.
 
         @param s: data to send.
-        @type s: string
+        @type s: str
         @return: number of bytes actually sent.
         @rtype: int
 
@@ -490,7 +504,7 @@ class Channel (object):
         either all data has been sent or an error occurs.  Nothing is returned.
 
         @param s: data to send.
-        @type s: string
+        @type s: str
 
         @raise socket.timeout: if sending stalled for longer than the timeout
         set by L{settimeout}.
@@ -579,83 +593,6 @@ class Channel (object):
     ###  overrides
 
 
-    def check_pty_request(self, term, width, height, pixelwidth, pixelheight, modes):
-        """
-        I{(subclass override)}
-        Determine if a pseudo-terminal of the given dimensions (usually
-        requested for shell access) can be provided.
-
-        The default implementation always returns C{False}.
-        
-        @param term: type of terminal requested (for example, C{"vt100"}).
-        @type term: string
-        @param width: width of screen in characters.
-        @type width: int
-        @param height: height of screen in characters.
-        @type height: int
-        @param pixelwidth: width of screen in pixels, if known (may be C{0} if
-        unknown).
-        @type pixelwidth: int
-        @param pixelheight: height of screen in pixels, if known (may be C{0}
-        if unknown).
-        @type pixelheight: int
-        @return: C{True} if the psuedo-terminal has been allocated; C{False}
-        otherwise.
-        @rtype: boolean
-        """
-        return False
-
-    def check_shell_request(self):
-        """
-        I{(subclass override)}
-        Determine if a shell will be provided to the client.  If this method
-        returns C{True}, this channel should be connected to the stdin/stdout
-        of a shell.
-
-        The default implementation always returns C{False}.
-
-        @return: C{True} if this channel is now hooked up to a shell; C{False}
-        if a shell can't or won't be provided.
-        @rtype: boolean
-        """
-        return False
-
-    def check_subsystem_request(self, name):
-        """
-        I{(subclass override)}
-        Determine if a requested subsystem will be provided to the client.  If
-        this method returns C{True}, all future I/O through this channel will
-        be assumed to be connected to the requested subsystem.  An example of
-        a subsystem is C{sftp}.
-
-        The default implementation always returns C{False}.
-
-        @return: C{True} if this channel is now hooked up to the requested
-        subsystem; C{False} if that subsystem can't or won't be provided.
-        @rtype: boolean
-        """
-        return False
-
-    def check_window_change_request(self, width, height, pixelwidth, pixelheight):
-        """
-        I{(subclass override)}
-        Determine if the pseudo-terminal can be resized.
-
-        The default implementation always returns C{False}.
-
-        @param width: width of screen in characters.
-        @type width: int
-        @param height: height of screen in characters.
-        @type height: int
-        @param pixelwidth: width of screen in pixels, if known (may be C{0} if
-        unknown).
-        @type pixelwidth: int
-        @param pixelheight: height of screen in pixels, if known (may be C{0}
-        if unknown).
-        @type pixelheight: int
-        @return: C{True} if the terminal was resized; C{False} if not.        
-        """
-        return False
 
 
     ###  calls from Transport
@@ -717,6 +654,7 @@ class Channel (object):
     def _handle_request(self, m):
         key = m.get_string()
         want_reply = m.get_boolean()
+        server = self.transport.server_object
         ok = False
         if key == 'exit-status':
             self.exit_status = m.get_int()
@@ -731,18 +669,32 @@ class Channel (object):
             pixelwidth = m.get_int()
             pixelheight = m.get_int()
             modes = m.get_string()
-            ok = self.check_pty_request(term, width, height, pixelwidth, pixelheight, modes)
+            if server is None:
+                ok = False
+            else:
+                ok = server.check_channel_pty_request(self, term, width, height, pixelwidth,
+                                                      pixelheight, modes)
         elif key == 'shell':
-            ok = self.check_shell_request()
+            if server is None:
+                ok = False
+            else:
+                ok = server.check_channel_shell_request(self)
         elif key == 'subsystem':
             name = m.get_string()
-            ok = self.check_subsystem_request(name)
+            if server is None:
+                ok = False
+            else:
+                ok = server.check_channel_subsystem_request(self, name)
         elif key == 'window-change':
             width = m.get_int()
             height = m.get_int()
             pixelwidth = m.get_int()
             pixelheight = m.get_int()
-            ok = self.check_window_change_request(width, height, pixelwidth, pixelheight)
+            if server is None:
+                ok = False
+            else:
+                ok = server.check_channel_window_change_request(self, width, height, pixelwidth,
+                                                                pixelheight)
         else:
             self._log(DEBUG, 'Unhandled channel request "%s"' % key)
             ok = False
@@ -931,7 +883,7 @@ class ChannelFile (BufferedFile):
         """
         Returns a string representation of this object, for debugging.
 
-        @rtype: string
+        @rtype: str
         """
         return '<paramiko.ChannelFile from ' + repr(self.channel) + '>'
 

@@ -64,6 +64,8 @@ class SecurityOptions (object):
     If you try to add an algorithm that paramiko doesn't recognize,
     C{ValueError} will be raised.  If you try to assign something besides a
     tuple to one of the fields, L{TypeError} will be raised.
+
+    @since: ivysaur
     """
     __slots__ = [ 'ciphers', 'digests', 'key_types', 'kex', '_transport' ]
 
@@ -74,7 +76,7 @@ class SecurityOptions (object):
         """
         Returns a string representation of this object, for debugging.
 
-        @rtype: string
+        @rtype: str
         """
         return '<paramiko.SecurityOptions for %s>' % repr(self._transport)
 
@@ -162,9 +164,6 @@ class BaseTransport (threading.Thread):
     REKEY_PACKETS = pow(2, 30)
     REKEY_BYTES = pow(2, 30)
 
-    OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED, OPEN_FAILED_CONNECT_FAILED, OPEN_FAILED_UNKNOWN_CHANNEL_TYPE, \
-	OPEN_FAILED_RESOURCE_SHORTAGE = range(1, 5)
-
     _modulus_pack = None
 
     def __init__(self, sock):
@@ -176,7 +175,7 @@ class BaseTransport (threading.Thread):
 
         If the object is not actually a socket, it must have the following
         methods:
-            - C{send(string)}: Writes from 1 to C{len(string)} bytes, and
+            - C{send(str)}: Writes from 1 to C{len(str)} bytes, and
               returns an int representing the number of bytes written.  Returns
               0 or raises C{EOFError} if the stream has been closed.
             - C{recv(int)}: Reads from 1 to C{int} bytes and returns them as a
@@ -264,17 +263,19 @@ class BaseTransport (threading.Thread):
         """
         Returns a string representation of this object, for debugging.
 
-        @rtype: string
+        @rtype: str
         """
+        out = '<paramiko.BaseTransport at %s' % hex(id(self))
         if not self.active:
-            return '<paramiko.BaseTransport (unconnected)>'
-        out = '<paramiko.BaseTransport'
-        if self.local_cipher != '':
-            out += ' (cipher %s, %d bits)' % (self.local_cipher, self._cipher_info[self.local_cipher]['key-size'] * 8)
-        if len(self.channels) == 1:
-            out += ' (active; 1 open channel)'
+            out += ' (unconnected)'
         else:
-            out += ' (active; %d open channels)' % len(self.channels)
+            if self.local_cipher != '':
+                out += ' (cipher %s, %d bits)' % (self.local_cipher,
+                                                  self._cipher_info[self.local_cipher]['key-size'] * 8)
+            if len(self.channels) == 1:
+                out += ' (active; 1 open channel)'
+            else:
+                out += ' (active; %d open channels)' % len(self.channels)
         out += '>'
         return out
 
@@ -287,6 +288,8 @@ class BaseTransport (threading.Thread):
         @return: an object that can be used to change the preferred algorithms
         for encryption, digest (hash), public key, and key exchange.
         @rtype: L{SecurityOptions}
+
+        @since: ivysaur
         """
         return SecurityOptions(self)
 
@@ -407,7 +410,7 @@ class BaseTransport (threading.Thread):
 
         @param filename: optional path to the moduli file, if you happen to
         know that it's not in a standard location.
-        @type filename: string
+        @type filename: str
         @return: True if a moduli file was successfully loaded; False
         otherwise.
         @rtype: bool
@@ -502,6 +505,9 @@ class BaseTransport (threading.Thread):
         @rtype: L{Channel}
         """
         chan = None
+        if not self.active:
+            # don't bother trying to allocate a channel
+            return None
         try:
             self.lock.acquire()
             chanid = self.channel_counter
@@ -603,7 +609,7 @@ class BaseTransport (threading.Thread):
         extensions to the SSH2 protocol.
 
         @param kind: name of the request.
-        @type kind: string
+        @type kind: str
         @param data: an optional tuple containing additional data to attach
         to the request.
         @type data: tuple
@@ -659,7 +665,7 @@ class BaseTransport (threading.Thread):
         does not support any global requests.
 
         @param kind: the kind of global request being made.
-        @type kind: string
+        @type kind: str
         @param msg: any extra arguments to the request.
         @type msg: L{Message}
         @return: C{True} or a tuple of data if the request was granted;
@@ -706,15 +712,15 @@ class BaseTransport (threading.Thread):
         @param hostkeytype: the type of host key expected from the server
         (usually C{"ssh-rsa"} or C{"ssh-dss"}), or C{None} if you don't want
         to do host key verification.
-        @type hostkeytype: string
+        @type hostkeytype: str
         @param hostkey: the host key expected from the server, or C{None} if
         you don't want to do host key verification.
-        @type hostkey: string
+        @type hostkey: str
         @param username: the username to authenticate as.
-        @type username: string
+        @type username: str
         @param password: a password to use for authentication, if you want to
         use password authentication; otherwise C{None}.
-        @type password: string
+        @type password: str
         @param pkey: a private key to use for authentication, if you want to
         use private key authentication; otherwise C{None}.
         @type pkey: L{PKey<pkey.PKey>}
@@ -1042,6 +1048,9 @@ class BaseTransport (threading.Thread):
                     chanid = m.get_int()
                     if self.channels.has_key(chanid):
                         self._channel_handler_table[ptype](self.channels[chanid], m)
+                    else:
+                        self._log(ERROR, 'Channel request for unknown channel %d' % chanid)
+                        self.active = False
                 else:
                     self._log(WARNING, 'Oops, unhandled type %d' % ptype)
                     msg = Message()
@@ -1127,7 +1136,9 @@ class BaseTransport (threading.Thread):
         if self.server_mode:
             if (self._modulus_pack is None) and ('diffie-hellman-group-exchange-sha1' in self._preferred_kex):
                 # can't do group-exchange if we don't have a pack of potential primes
-                self._preferred_kex.remove('diffie-hellman-group-exchange-sha1')
+                pkex = list(self.get_security_options().kex)
+                pkex.remove('diffie-hellman-group-exchange-sha1')
+                self.get_security_options().kex = pkex
             available_server_keys = filter(self.server_key_dict.keys().__contains__,
                                            self._preferred_keys)
         else:
@@ -1394,7 +1405,7 @@ class BaseTransport (threading.Thread):
         if not self.server_mode:
             self._log(DEBUG, 'Rejecting "%s" channel request from server.' % kind)
             reject = True
-            reason = self.OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED
+            reason = OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED
         else:
             try:
                 self.lock.acquire()
@@ -1402,14 +1413,10 @@ class BaseTransport (threading.Thread):
                 self.channel_counter += 1
             finally:
                 self.lock.release()
-            chan = self.server_object.check_channel_request(kind, my_chanid)
-            if (chan is None) or (type(chan) is int):
+            reason = self.server_object.check_channel_request(kind, my_chanid) 
+            if reason != OPEN_SUCCEEDED:
                 self._log(DEBUG, 'Rejecting "%s" channel request from client.' % kind)
                 reject = True
-                if type(chan) is int:
-                    reason = chan
-                else:
-                    reason = self.OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED
         if reject:
             msg = Message()
             msg.add_byte(chr(MSG_CHANNEL_OPEN_FAILURE))
@@ -1419,6 +1426,7 @@ class BaseTransport (threading.Thread):
             msg.add_string('en')
             self._send_message(msg)
             return
+        chan = Channel(my_chanid)
         try:
             self.lock.acquire()
             self.channels[my_chanid] = chan

@@ -22,6 +22,7 @@
 L{ServerInterface} is an interface to override for server support.
 """
 
+from common import *
 from auth_transport import Transport
 
 class ServerInterface (object):
@@ -37,31 +38,46 @@ class ServerInterface (object):
     def check_channel_request(self, kind, chanid):
         """
         Determine if a channel request of a given type will be granted, and
-        return a suitable L{Channel} object.  This method is called in server
-        mode when the client requests a channel, after authentication is
-        complete.
+        return C{OPEN_SUCCEEDED} or an error code.  This method is
+        called in server mode when the client requests a channel, after
+        authentication is complete.
 
-        You will generally want to subclass L{Channel} to override some of the
-        methods for handling client requests (such as connecting to a subsystem
-        opening a shell) to determine what you want to allow or disallow.  For
-        this reason, L{check_channel_request} must return a new object of that
-        type.  The C{chanid} parameter is passed so that you can use it in
-        L{Channel}'s constructor.
+        If you allow channel requests (and an ssh server that didn't would be
+        useless), you should also override some of the channel request methods
+        below, which are used to determine which services will be allowed on
+        a given channel:
+            - L{check_channel_pty_request}
+            - L{check_channel_shell_request}
+            - L{check_channel_subsystem_request}
+            - L{check_channel_window_change_request}
 
-        The default implementation always returns C{None}, rejecting any
-        channel requests.  A useful server must override this method.
+        The C{chanid} parameter is a small number that uniquely identifies the
+        channel within a L{Transport}.  A L{Channel} object is not created
+        unless this method returns C{OPEN_SUCCEEDED} -- once a
+        L{Channel} object is created, you can call L{Channel.get_id} to
+        retrieve the channel ID.
+
+        The return value should either be C{OPEN_SUCCEEDED} (or
+        C{0}) to allow the channel request, or one of the following error
+        codes to reject it:
+            - C{OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED}
+            - C{OPEN_FAILED_CONNECT_FAILED}
+            - C{OPEN_FAILED_UNKNOWN_CHANNEL_TYPE}
+            - C{OPEN_FAILED_RESOURCE_SHORTAGE}
+        
+        The default implementation always returns
+        C{OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED}.
 
         @param kind: the kind of channel the client would like to open
         (usually C{"session"}).
-        @type kind: string
+        @type kind: str
         @param chanid: ID of the channel, required to create a new L{Channel}
         object.
         @type chanid: int
-        @return: a new L{Channel} object (or subclass thereof), or C{None} to
-        refuse the request.
-        @rtype: L{Channel}
+        @return: a success or failure code (listed above).
+        @rtype: int
         """
-        return None
+        return OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED
 
     def get_allowed_auths(self, username):
         """
@@ -76,9 +92,9 @@ class ServerInterface (object):
         The default implementation always returns C{"password"}.
 
         @param username: the username requesting authentication.
-        @type username: string
+        @type username: str
         @return: a comma-separated list of authentication types
-        @rtype: string
+        @rtype: str
         """
         return 'password'
 
@@ -87,46 +103,46 @@ class ServerInterface (object):
         Determine if a client may open channels with no (further)
         authentication.
 
-        Return L{Transport.AUTH_FAILED} if the client must authenticate, or
-        L{Transport.AUTH_SUCCESSFUL} if it's okay for the client to not
+        Return L{AUTH_FAILED} if the client must authenticate, or
+        L{AUTH_SUCCESSFUL} if it's okay for the client to not
         authenticate.
 
-        The default implementation always returns L{Transport.AUTH_FAILED}.
+        The default implementation always returns L{AUTH_FAILED}.
 
         @param username: the username of the client.
-        @type username: string
-        @return: L{Transport.AUTH_FAILED} if the authentication fails;
-        L{Transport.AUTH_SUCCESSFUL} if it succeeds.
+        @type username: str
+        @return: L{AUTH_FAILED} if the authentication fails;
+        L{AUTH_SUCCESSFUL} if it succeeds.
         @rtype: int
         """
-        return Transport.AUTH_FAILED
+        return AUTH_FAILED
 
     def check_auth_password(self, username, password):
         """
         Determine if a given username and password supplied by the client is
         acceptable for use in authentication.
 
-        Return L{Transport.AUTH_FAILED} if the password is not accepted,
-        L{Transport.AUTH_SUCCESSFUL} if the password is accepted and completes
-        the authentication, or L{Transport.AUTH_PARTIALLY_SUCCESSFUL} if your
+        Return L{AUTH_FAILED} if the password is not accepted,
+        L{AUTH_SUCCESSFUL} if the password is accepted and completes
+        the authentication, or L{AUTH_PARTIALLY_SUCCESSFUL} if your
         authentication is stateful, and this key is accepted for
         authentication, but more authentication is required.  (In this latter
         case, L{get_allowed_auths} will be called to report to the client what
         options it has for continuing the authentication.)
 
-        The default implementation always returns L{Transport.AUTH_FAILED}.
+        The default implementation always returns L{AUTH_FAILED}.
 
         @param username: the username of the authenticating client.
-        @type username: string
+        @type username: str
         @param password: the password given by the client.
-        @type password: string
-        @return: L{Transport.AUTH_FAILED} if the authentication fails;
-        L{Transport.AUTH_SUCCESSFUL} if it succeeds;
-        L{Transport.AUTH_PARTIALLY_SUCCESSFUL} if the password auth is
+        @type password: str
+        @return: L{AUTH_FAILED} if the authentication fails;
+        L{AUTH_SUCCESSFUL} if it succeeds;
+        L{AUTH_PARTIALLY_SUCCESSFUL} if the password auth is
         successful, but authentication must continue.
         @rtype: int
         """
-        return Transport.AUTH_FAILED
+        return AUTH_FAILED
 
     def check_auth_publickey(self, username, key):
         """
@@ -135,24 +151,115 @@ class ServerInterface (object):
         check the username and key and decide if you would accept a signature
         made using this key.
 
-        Return L{Transport.AUTH_FAILED} if the key is not accepted,
-        L{Transport.AUTH_SUCCESSFUL} if the key is accepted and completes the
-        authentication, or L{Transport.AUTH_PARTIALLY_SUCCESSFUL} if your
+        Return L{AUTH_FAILED} if the key is not accepted,
+        L{AUTH_SUCCESSFUL} if the key is accepted and completes the
+        authentication, or L{AUTH_PARTIALLY_SUCCESSFUL} if your
         authentication is stateful, and this key is accepted for
         authentication, but more authentication is required.  (In this latter
         case, L{get_allowed_auths} will be called to report to the client what
         options it has for continuing the authentication.)
 
-        The default implementation always returns L{Transport.AUTH_FAILED}.
+        The default implementation always returns L{AUTH_FAILED}.
 
         @param username: the username of the authenticating client.
-        @type username: string
+        @type username: str
         @param key: the key object provided by the client.
         @type key: L{PKey <pkey.PKey>}
-        @return: L{Transport.AUTH_FAILED} if the client can't authenticate
-        with this key; L{Transport.AUTH_SUCCESSFUL} if it can;
-        L{Transport.AUTH_PARTIALLY_SUCCESSFUL} if it can authenticate with
+        @return: L{AUTH_FAILED} if the client can't authenticate
+        with this key; L{AUTH_SUCCESSFUL} if it can;
+        L{AUTH_PARTIALLY_SUCCESSFUL} if it can authenticate with
         this key but must continue with authentication.
         @rtype: int
         """
-        return Transport.AUTH_FAILED
+        return AUTH_FAILED
+
+
+    ###  Channel requests
+
+
+    def check_channel_pty_request(self, channel, term, width, height, pixelwidth, pixelheight,
+                                  modes):
+        """
+        Determine if a pseudo-terminal of the given dimensions (usually
+        requested for shell access) can be provided on the given channel.
+
+        The default implementation always returns C{False}.
+
+        @param channel: the L{Channel} the pty request arrived on.
+        @type channel: L{Channel}
+        @param term: type of terminal requested (for example, C{"vt100"}).
+        @type term: str
+        @param width: width of screen in characters.
+        @type width: int
+        @param height: height of screen in characters.
+        @type height: int
+        @param pixelwidth: width of screen in pixels, if known (may be C{0} if
+        unknown).
+        @type pixelwidth: int
+        @param pixelheight: height of screen in pixels, if known (may be C{0}
+        if unknown).
+        @type pixelheight: int
+        @return: C{True} if the psuedo-terminal has been allocated; C{False}
+        otherwise.
+        @rtype: boolean
+        """
+        return False
+
+    def check_channel_shell_request(self, channel):
+        """
+        Determine if a shell will be provided to the client on the given
+        channel.  If this method returns C{True}, the channel should be
+        connected to the stdin/stdout of a shell (or something that acts like
+        a shell).
+
+        The default implementation always returns C{False}.
+
+        @param channel: the L{Channel} the pty request arrived on.
+        @type channel: L{Channel}
+        @return: C{True} if this channel is now hooked up to a shell; C{False}
+        if a shell can't or won't be provided.
+        @rtype: boolean
+        """
+        return False
+
+    def check_channel_subsystem_request(self, channel, name):
+        """
+        Determine if a requested subsystem will be provided to the client on
+        the given channel.  If this method returns C{True}, all future I/O
+        through this channel will be assumed to be connected to the requested
+        subsystem.  An example of a subsystem is C{sftp}.
+
+        The default implementation always returns C{False}.
+
+        @param channel: the L{Channel} the pty request arrived on.
+        @type channel: L{Channel}
+        @param name: name of the requested subsystem.
+        @type name: str
+        @return: C{True} if this channel is now hooked up to the requested
+        subsystem; C{False} if that subsystem can't or won't be provided.
+        @rtype: boolean
+        """
+        return False
+
+    def check_channel_window_change_request(self, channel, width, height, pixelwidth, pixelheight):
+        """
+        Determine if the pseudo-terminal on the given channel can be resized.
+        This only makes sense if a pty was previously allocated on it.
+
+        The default implementation always returns C{False}.
+
+        @param channel: the L{Channel} the pty request arrived on.
+        @type channel: L{Channel}
+        @param width: width of screen in characters.
+        @type width: int
+        @param height: height of screen in characters.
+        @type height: int
+        @param pixelwidth: width of screen in pixels, if known (may be C{0} if
+        unknown).
+        @type pixelwidth: int
+        @param pixelheight: height of screen in pixels, if known (may be C{0}
+        if unknown).
+        @type pixelheight: int
+        @return: C{True} if the terminal was resized; C{False} if not.        
+        """
+        return False

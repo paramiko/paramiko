@@ -79,6 +79,9 @@ SFTP = sftp.SFTP
 ServerInterface = server.ServerInterface
 SecurityOptions = transport.SecurityOptions
 
+from common import AUTH_SUCCESSFUL, AUTH_PARTIALLY_SUCCESSFUL, AUTH_FAILED, \
+     OPEN_SUCCEEDED, OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED,  OPEN_FAILED_CONNECT_FAILED, \
+     OPEN_FAILED_UNKNOWN_CHANNEL_TYPE, OPEN_FAILED_RESOURCE_SHORTAGE
 
 __all__ = [ 'Transport',
             'SecurityOptions',

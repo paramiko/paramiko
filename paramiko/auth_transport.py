@@ -47,8 +47,6 @@ class Transport (BaseTransport):
     another shell window).
     """
     
-    AUTH_SUCCESSFUL, AUTH_PARTIALLY_SUCCESSFUL, AUTH_FAILED = range(3)
-
     def __init__(self, sock):
         BaseTransport.__init__(self, sock)
         self.username = None
@@ -60,20 +58,22 @@ class Transport (BaseTransport):
         self.auth_complete = 0
 
     def __repr__(self):
+        out = '<paramiko.Transport at %s' % hex(id(self))
         if not self.active:
-            return '<paramiko.Transport (unconnected)>'
-        out = '<paramiko.Transport'
-        if self.local_cipher != '':
-            out += ' (cipher %s, %d bits)' % (self.local_cipher, self._cipher_info[self.local_cipher]['key-size'] * 8)
-        if self.authenticated:
-            if len(self.channels) == 1:
-                out += ' (active; 1 open channel)'
-            else:
-                out += ' (active; %d open channels)' % len(self.channels)
-        elif self.initial_kex_done:
-            out += ' (connected; awaiting auth)'
+            out += ' (unconnected)'
         else:
-            out += ' (connecting)'
+            if self.local_cipher != '':
+                out += ' (cipher %s, %d bits)' % (self.local_cipher,
+                                                  self._cipher_info[self.local_cipher]['key-size'] * 8)
+            if self.authenticated:
+                if len(self.channels) == 1:
+                    out += ' (active; 1 open channel)'
+                else:
+                    out += ' (active; %d open channels)' % len(self.channels)
+            elif self.initial_kex_done:
+                out += ' (connected; awaiting auth)'
+            else:
+                out += ' (connecting)'
         out += '>'
         return out
 
@@ -268,21 +268,24 @@ class Transport (BaseTransport):
                 # the list of valid auth types from the callback anyway
                 self._log(DEBUG, 'Auth request to change passwords (rejected)')
                 newpassword = m.get_string().decode('UTF-8')
-                result = self.AUTH_FAILED
+                result = AUTH_FAILED
             else:
                 result = self.server_object.check_auth_password(username, password)
         elif method == 'publickey':
             sig_attached = m.get_boolean()
             keytype = m.get_string()
             keyblob = m.get_string()
-            key = self._key_from_blob(keytype, keyblob)
+            try:
+                key = self._key_info[keytype](Message(keyblob))
+            except:
+                key = None
             if (key is None) or (not key.valid):
                 self._log(DEBUG, 'Auth rejected: unsupported or mangled public key')
                 self._disconnect_no_more_auth()
                 return
             # first check if this key is okay... if not, we can skip the verify
             result = self.server_object.check_auth_publickey(username, key)
-            if result != self.AUTH_FAILED:
+            if result != AUTH_FAILED:
                 # key is okay, verify it
                 if not sig_attached:
                     # client wants to know if this key is acceptable, before it
@@ -297,12 +300,12 @@ class Transport (BaseTransport):
                 blob = self._get_session_blob(key, service, username)
                 if not key.verify_ssh_sig(blob, sig):
                     self._log(DEBUG, 'Auth rejected: invalid signature')
-                    result = self.AUTH_FAILED
+                    result = AUTH_FAILED
         else:
             result = self.server_object.check_auth_none(username)
         # okay, send result
         m = Message()
-        if result == self.AUTH_SUCCESSFUL:
+        if result == AUTH_SUCCESSFUL:
             self._log(DEBUG, 'Auth granted.')
             m.add_byte(chr(MSG_USERAUTH_SUCCESS))
             self.auth_complete = 1
@@ -310,7 +313,7 @@ class Transport (BaseTransport):
             self._log(DEBUG, 'Auth rejected.')
             m.add_byte(chr(MSG_USERAUTH_FAILURE))
             m.add_string(self.server_object.get_allowed_auths(username))
-            if result == self.AUTH_PARTIALLY_SUCCESSFUL:
+            if result == AUTH_PARTIALLY_SUCCESSFUL:
                 m.add_boolean(1)
             else:
                 m.add_boolean(0)
