@@ -325,7 +325,7 @@ class SubsystemHandler (threading.Thread):
                                   (self.__name, str(e)))
             self.__transport._log(ERROR, util.tb_strings())
         try:
-            self.__channel.close()
+            self.finish_subsystem()
         except:
             pass
 
@@ -356,3 +356,12 @@ class SubsystemHandler (threading.Thread):
         @type channel: L{Channel}
         """
         pass
+
+    def finish_subsystem(self):
+        """
+        Perform any cleanup at the end of a subsystem.  The default
+        implementation just closes the channel.
+
+        @since: 1.1
+        """
+        self.__channel.close()
