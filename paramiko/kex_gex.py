@@ -19,9 +19,9 @@
 # 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
 
 """
-Variant on L{KexGroup1} where the prime "p" and generator "g" are provided by
-the server.  A bit more work is required on the client side, and a U{lot} more
-on the server side.
+Variant on L{KexGroup1 <paramiko.kex_group1.KexGroup1>} where the prime "p" and
+generator "g" are provided by the server.  A bit more work is required on the
+client side, and a B{lot} more on the server side.
 """
 
 from message import Message
@@ -35,7 +35,7 @@ from logging import DEBUG
 _MSG_KEXDH_GEX_GROUP, _MSG_KEXDH_GEX_INIT, _MSG_KEXDH_GEX_REPLY, _MSG_KEXDH_GEX_REQUEST = range(31, 35)
 
 
-class KexGex(object):
+class KexGex (object):
 
     name = 'diffie-hellman-group-exchange-sha1'
     min_bits = 1024
