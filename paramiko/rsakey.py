@@ -22,12 +22,16 @@
 L{RSAKey}
 """
 
-from message import Message
+import base64
+
 from Crypto.PublicKey import RSA
 from Crypto.Hash import SHA, MD5
 from Crypto.Cipher import DES3
+
+from common import *
+from message import Message
 from ber import BER, BERException
-from util import format_binary, inflate_long, deflate_long
+import util
 from pkey import PKey
 from ssh_exception import SSHException
 
@@ -38,15 +42,15 @@ class RSAKey (PKey):
     """
 
     def __init__(self, msg=None, data=''):
-        self.valid = 0
+        self.valid = False
         if (msg is None) and (data is not None):
             msg = Message(data)
         if (msg is None) or (msg.get_string() != 'ssh-rsa'):
             return
         self.e = msg.get_mpint()
         self.n = msg.get_mpint()
-        self.size = len(deflate_long(self.n, 0))
-        self.valid = 1
+        self.size = len(util.deflate_long(self.n, 0))
+        self.valid = True
 
     def __str__(self):
         if not self.valid:
@@ -78,7 +82,7 @@ class RSAKey (PKey):
     def sign_ssh_data(self, randpool, data):
         hash = SHA.new(data).digest()
         rsa = RSA.construct((long(self.n), long(self.e), long(self.d)))
-        sig = deflate_long(rsa.sign(self._pkcs1imify(hash), '')[0], 0)
+        sig = util.deflate_long(rsa.sign(self._pkcs1imify(hash), '')[0], 0)
         m = Message()
         m.add_string('ssh-rsa')
         m.add_string(sig)
@@ -87,18 +91,18 @@ class RSAKey (PKey):
     def verify_ssh_sig(self, data, msg):
         if (not self.valid) or (msg.get_string() != 'ssh-rsa'):
             return False
-        sig = inflate_long(msg.get_string(), 1)
+        sig = util.inflate_long(msg.get_string(), 1)
         # verify the signature by SHA'ing the data and encrypting it using the
         # public key.  some wackiness ensues where we "pkcs1imify" the 20-byte
         # hash into a string as long as the RSA key.
-        hash = inflate_long(self._pkcs1imify(SHA.new(data).digest()), 1)
+        hash = util.inflate_long(self._pkcs1imify(SHA.new(data).digest()), 1)
         rsa = RSA.construct((long(self.n), long(self.e)))
         return rsa.verify(hash, (sig,))
 
     def read_private_key_file(self, filename, password=None):
         # private key file contains:
         # RSAPrivateKey = { version = 0, n, e, d, p, q, d mod p-1, d mod q-1, q**-1 mod p }
-        self.valid = 0
+        self.valid = False
         data = self._read_private_key_file('RSA', filename, password)
         try:
             keylist = BER(data).decode()
@@ -112,5 +116,30 @@ class RSAKey (PKey):
         # not really needed
         self.p = keylist[4]
         self.q = keylist[5]
-        self.size = len(deflate_long(self.n, 0))
-        self.valid = 1
+        self.size = len(util.deflate_long(self.n, 0))
+        self.valid = True
+
+    def write_private_key_file(self, filename, password=None):
+        if not self.valid:
+            raise SSHException('Invalid key')
+        keylist = [ 0, self.n, self.e, self.d, self.p, self.q,
+                    self.d % (self.p - 1), self.d % (self.q - 1),
+                    util.mod_inverse(self.q, self.p) ]
+        try:
+            b = BER()
+            b.encode(keylist)
+        except BERException:
+            raise SSHException('Unable to create ber encoding of key')
+        self._write_private_key_file('RSA', filename, str(b), password)
+
+    def generate(bits, progress_func=None):
+        rsa = RSA.generate(bits, randpool.get_bytes, progress_func)
+        key = RSAKey()
+        key.n = rsa.n
+        key.e = rsa.e
+        key.d = rsa.d
+        key.p = rsa.p
+        key.q = rsa.q
+        key.valid = True
+        return key
+    generate = staticmethod(generate)

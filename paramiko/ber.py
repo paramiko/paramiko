@@ -37,7 +37,7 @@ class BER(object):
         return self.content
 
     def __repr__(self):
-        return 'BER(' + repr(self.content) + ')'
+        return 'BER(\'' + repr(self.content) + '\')'
 
     def decode(self):
         return self.decode_next()
@@ -52,10 +52,10 @@ class BER(object):
             id = 0
             while self.idx < len(self.content):
                 t = ord(self.content[self.idx])
+                self.idx += 1
+                id = (id << 7) | (t & 0x7f)
                 if not (t & 0x80):
                     break
-                id = (id << 7) | (t & 0x7f)
-                self.idx += 1
         if self.idx >= len(self.content):
             return None
         # now fetch length
@@ -67,11 +67,8 @@ class BER(object):
             t = size & 0x7f
             if self.idx + t > len(self.content):
                 return None
-            size = 0
-            while t > 0:
-                size = (size << 8) | ord(self.content[self.idx])
-                self.idx += 1
-                t -= 1
+            size = self.inflate_long(self.content[self.idx : self.idx + t], True)
+            self.idx += t
         if self.idx + size > len(self.content):
             # can't fit
             return None
@@ -98,3 +95,34 @@ class BER(object):
             out.append(x)
     decode_sequence = staticmethod(decode_sequence)
 
+    def encode_tlv(self, id, val):
+        # FIXME: support id > 31 someday
+        self.content += chr(id)
+        if len(val) > 0x7f:
+            lenstr = util.deflate_long(len(val))
+            self.content += chr(0x80 + len(lenstr)) + lenstr
+        else:
+            self.content += chr(len(val))
+        self.content += val
+
+    def encode(self, x):
+        if type(x) is bool:
+            if x:
+                self.encode_tlv(1, '\xff')
+            else:
+                self.encode_tlv(1, '\x00')
+        elif (type(x) is int) or (type(x) is long):
+            self.encode_tlv(2, util.deflate_long(x))
+        elif type(x) is str:
+            self.encode_tlv(4, x)
+        elif (type(x) is list) or (type(x) is tuple):
+            self.encode_tlv(30, self.encode_sequence(x))
+        else:
+            raise BERException('Unknown type for encoding: %s' % repr(type(x)))
+
+    def encode_sequence(data):
+        b = BER()
+        for item in data:
+            b.encode(item)
+        return str(b)
+    encode_sequence = staticmethod(encode_sequence)

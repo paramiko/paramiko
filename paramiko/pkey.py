@@ -22,12 +22,16 @@
 Common API for all public keys.
 """
 
+import base64
+
 from Crypto.Hash import MD5
 from Crypto.Cipher import DES3
+
+from common import *
 from message import Message
 from ssh_exception import SSHException, PasswordRequiredException
 import util
-import base64
+
 
 class PKey (object):
     """
@@ -105,6 +109,17 @@ class PKey (object):
         """
         return MD5.new(str(self)).digest()
 
+    def get_base64(self):
+        """
+        Return a base64 string containing the public part of this key.  Nothing
+        secret is revealed.  This format is compatible with that used to store
+        public key files or recognized host keys.
+
+        @return: a base64 string containing the public part of the key.
+        @rtype: string
+        """
+        return ''.join(base64.encodestring(str(self)).split('\n'))
+
     def sign_ssh_data(self, randpool, data):
         """
         Sign a blob of data with this private key, and return a L{Message}
@@ -152,7 +167,48 @@ class PKey (object):
         encrypted, and C{password} is C{None}.
         @raise SSHException: if the key file is invalid.
         """
-        pass
+        raise exception('Not implemented in PKey')
+
+    def from_private_key_file(cl, filename, password=None):
+        """
+        Create a key object by reading a private key file.  This is roughly
+        equivalent to creating a new key object and then calling
+        L{read_private_key_file} on it.  Through the magic of python, this
+        factory method will exist in all subclasses of PKey (such as L{RSAKey}
+        or L{DSSKey}), but is useless on the abstract PKey class.
+
+        @param filename: name of the file to read.
+        @type filename: string
+        @param password: an optional password to use to decrypt the key file,
+        if it's encrypted
+        @type password: string
+        @return: a new key object based on the given private key.
+        @rtype: L{PKey}
+
+        @raise IOError: if there was an error reading the file.
+        @raise PasswordRequiredException: if the private key file is
+        encrypted, and C{password} is C{None}.
+        @raise SSHException: if the key file is invalid.
+        """
+        key = cl()
+        key.read_private_key_file(filename, password)
+        return key
+    from_private_key_file = classmethod(from_private_key_file)
+
+    def write_private_key_file(self, filename, password=None):
+        """
+        Write private key contents into a file.  If the password is not
+        C{None}, the key is encrypted before writing.
+
+        @param filename: name of the file to write.
+        @type filename: string
+        @param password: an optional password to use to encrypt the key file.
+        @type password: string
+
+        @raise IOError: if there was an error writing the file.
+        @raise SSHException: if the key is invalid.
+        """
+        raise exception('Not implemented in PKey')
 
     def _read_private_key_file(self, tag, filename, password=None):
         """
@@ -222,6 +278,47 @@ class PKey (object):
         keysize = self._CIPHER_TABLE[encryption_type]['keysize']
         mode = self._CIPHER_TABLE[encryption_type]['mode']
         # this confusing line turns something like '2F91' into '/\x91' (sorry, was feeling clever)
-        salt = ''.join([chr(int(saltstr[i:i+2], 16)) for i in range(0, len(saltstr), 2)])
+        salt = util.unhexify(saltstr)
         key = util.generate_key_bytes(MD5, salt, password, keysize)
         return cipher.new(key, mode, salt).decrypt(data)
+
+    def _write_private_key_file(self, tag, filename, data, password=None):
+        """
+        Write an SSH2-format private key file in a form that can be read by
+        paramiko or openssh.  If no password is given, the key is written in
+        a trivially-encoded format (base64) which is completely insecure.  If
+        a password is given, DES-EDE3-CBC is used.
+
+        @param tag: C{"RSA"} or C{"DSA"}, the tag used to mark the data block.
+        @type tag: string
+        @param filename: name of the file to write.
+        @type filename: string
+        @param data: data blob that makes up the private key.
+        @type data: string
+        @param password: an optional password to use to encrypt the file.
+        @type password: string
+
+        @raise IOError: if there was an error writing the file.
+        """
+        f = open(filename, 'w', 0600)
+        f.write('-----BEGIN %s PRIVATE KEY-----\n' % tag)
+        if password is not None:
+            # since we only support one cipher here, use it
+            cipher_name = self._CIPHER_TABLE.keys()[0]
+            cipher = self._CIPHER_TABLE[cipher_name]['cipher']
+            keysize = self._CIPHER_TABLE[cipher_name]['keysize']
+            mode = self._CIPHER_TABLE[cipher_name]['mode']
+            salt = randpool.get_bytes(8)
+            key = util.generate_key_bytes(MD5, salt, password, keysize)
+            data = cipher.new(key, mode, salt).encrypt(data)
+            f.write('Proc-Type: 4,ENCRYPTED\n')
+            f.write('DEK-Info: %s,%s\n' % (cipher_name, util.hexify(salt)))
+            f.write('\n')
+        s = base64.encodestring(data)
+        # re-wrap to 64-char lines
+        s = ''.join(s.split('\n'))
+        s = '\n'.join([s[i : i+64] for i in range(0, len(s), 64)])
+        f.write(s)
+        f.write('\n')
+        f.write('-----END %s PRIVATE KEY-----\n' % tag)
+        f.close()
