@@ -54,13 +54,15 @@ class SFTPAttributes (object):
         self._flags = 0
         self.attr = {}
 
-    def from_stat(cls, obj):
+    def from_stat(cls, obj, filename=None):
         """
         Create an SFTPAttributes object from an existing C{stat} object (an
         object returned by C{os.stat}).
 
         @param obj: an object returned by C{os.stat} (or equivalent).
         @type obj: object
+        @param filename: the filename associated with this file.
+        @type filename: str
         @return: new L{SFTPAttributes} object with the same attribute fields.
         @rtype: L{SFTPAttributes}
         """
@@ -71,6 +73,8 @@ class SFTPAttributes (object):
         attr.st_mode = obj.st_mode
         attr.st_atime = obj.st_atime
         attr.st_mtime = obj.st_mtime
+        if filename is not None:
+            attr.filename = filename
         return attr
     from_stat = classmethod(from_stat)
 
