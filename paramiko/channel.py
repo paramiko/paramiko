@@ -566,42 +566,54 @@ class Channel (object):
         @raise socket.timeout: if no data could be sent before the timeout set
         by L{settimeout}.
         """
-        size = 0
+        size = len(s)
+        self.lock.acquire()
         try:
-            self.lock.acquire()
-            if self.closed or self.eof_sent:
+            size = self._wait_for_send_window(size)
+            if size == 0:
+                # eof or similar
                 return 0
-            if self.out_window_size == 0:
-                # should we block?
-                if self.timeout == 0.0:
-                    raise socket.timeout()
-                # loop here in case we get woken up but a different thread has filled the buffer
-                timeout = self.timeout
-                while self.out_window_size == 0:
-                    if self.closed or self.eof_sent:
-                        return 0
-                    then = time.time()
-                    self.out_buffer_cv.wait(timeout)
-                    if timeout != None:
-                        timeout -= time.time() - then
-                        if timeout <= 0.0:
-                            raise socket.timeout()
-            # we have some window to squeeze into
-            if self.closed:
-                return 0
-            size = len(s)
-            if self.out_window_size < size:
-                size = self.out_window_size
-            if self.out_max_packet_size - 64 < size:
-                size = self.out_max_packet_size - 64
             m = Message()
             m.add_byte(chr(MSG_CHANNEL_DATA))
             m.add_int(self.remote_chanid)
             m.add_string(s[:size])
             self.transport._send_user_message(m)
-            self.out_window_size -= size
-            if self.ultra_debug:
-                self._log(DEBUG, 'window down to %d' % self.out_window_size)
+        finally:
+            self.lock.release()
+        return size
+
+    def send_stderr(self, s):
+        """
+        Send data to the channel on the "stderr" stream.  This is normally
+        only used by servers to send output from shell commands -- clients
+        won't use this.  Returns the number of bytes sent, or 0 if the channel
+        stream is closed.  Applications are responsible for checking that all
+        data has been sent: if only some of the data was transmitted, the
+        application needs to attempt delivery of the remaining data.
+        
+        @param s: data to send.
+        @type s: str
+        @return: number of bytes actually sent.
+        @rtype: int
+        
+        @raise socket.timeout: if no data could be sent before the timeout set
+        by L{settimeout}.
+        
+        @since: 1.1
+        """
+        size = len(s)
+        self.lock.acquire()
+        try:
+            size = self._wait_for_send_window(size)
+            if size == 0:
+                # eof or similar
+                return 0
+            m = Message()
+            m.add_byte(chr(MSG_CHANNEL_EXTENDED_DATA))
+            m.add_int(self.remote_chanid)
+            m.add_int(1)
+            m.add_string(s[:size])
+            self.transport._send_user_message(m)
         finally:
             self.lock.release()
         return size
@@ -616,9 +628,9 @@ class Channel (object):
         @type s: str
 
         @raise socket.timeout: if sending stalled for longer than the timeout
-        set by L{settimeout}.
+            set by L{settimeout}.
         @raise socket.error: if an error occured before the entire string was
-        sent.
+            sent.
         
         @note: If the channel is closed while only part of the data hase been
         sent, there is no way to determine how much data (if any) was sent.
@@ -629,6 +641,30 @@ class Channel (object):
                 # this doesn't seem useful, but it is the documented behavior of Socket
                 raise socket.error('Socket is closed')
             sent = self.send(s)
+            s = s[sent:]
+        return None
+
+    def sendall_stderr(self, s):
+        """
+        Send data to the channel's "stderr" stream, without allowing partial
+        results.  Unlike L{send_stderr}, this method continues to send data
+        from the given string until all data has been sent or an error occurs.
+        Nothing is returned.
+        
+        @param s: data to send to the client as "stderr" output.
+        @type s: str
+        
+        @raise socket.timeout: if sending stalled for longer than the timeout
+            set by L{settimeout}.
+        @raise socket.error: if an error occured before the entire string was
+            sent.
+            
+        @since: 1.1
+        """
+        while s:
+            if self.closed:
+                raise socket.error('Socket is closed')
+            sent = self.send_stderr(s)
             s = s[sent:]
         return None
 
@@ -651,9 +687,9 @@ class Channel (object):
         without a pty will ever have data on the stderr stream.
         
         The optional C{mode} and C{bufsize} arguments are interpreted the
-        same way as by the built-in C{file()} function in python, except that
-        of course it makes no sense to open this file in any mode other than
-        for reading.
+        same way as by the built-in C{file()} function in python.  For a
+        client, it only makes sense to open this file for reading.  For a
+        server, it only makes sense to open this file for writing.
         
         @return: object which can be used for python file I/O.
         @rtype: L{ChannelFile}
@@ -746,6 +782,44 @@ class Channel (object):
     def _request_failed(self, m):
         self.close()
 
+    def _wait_for_send_window(self, size):
+        """
+        (You are already holding the lock.)
+        Wait for the send window to open up, and allocate up to C{size} bytes
+        for transmission.  If no space opens up before the timeout, a timeout
+        exception is raised.  Returns the number of bytes available to send
+        (may be less than requested).
+        """
+        # you are already holding the lock
+        if self.closed or self.eof_sent:
+            return 0
+        if self.out_window_size == 0:
+            # should we block?
+            if self.timeout == 0.0:
+                raise socket.timeout()
+            # loop here in case we get woken up but a different thread has filled the buffer
+            timeout = self.timeout
+            while self.out_window_size == 0:
+                if self.closed or self.eof_sent:
+                    return 0
+                then = time.time()
+                self.out_buffer_cv.wait(timeout)
+                if timeout != None:
+                    timeout -= time.time() - then
+                    if timeout <= 0.0:
+                        raise socket.timeout()
+        # we have some window to squeeze into
+        if self.closed:
+            return 0
+        if self.out_window_size < size:
+            size = self.out_window_size
+        if self.out_max_packet_size - 64 < size:
+            size = self.out_max_packet_size - 64
+        self.out_window_size -= size
+        if self.ultra_debug:
+            self._log(DEBUG, 'window down to %d' % self.out_window_size)
+        return size
+        
     def _feed(self, m):
         if type(m) is str:
             # passed from _feed_extended
@@ -820,6 +894,12 @@ class Channel (object):
                 ok = False
             else:
                 ok = server.check_channel_shell_request(self)
+        elif key == 'exec':
+            cmd = m.get_string()
+            if server is None:
+                ok = False
+            else:
+                ok = server.check_channel_exec_request(self, cmd)
         elif key == 'subsystem':
             name = m.get_string()
             if server is None:
@@ -1043,6 +1123,11 @@ class ChannelStderrFile (ChannelFile):
 
     def _read(self, size):
         return self.channel.recv_stderr(size)
+    
+    def _write(self, data):
+        self.channel.sendall_stderr(data)
+        return len(data)
+
 
 
 # vim: set shiftwidth=4 expandtab :

@@ -162,6 +162,10 @@ class ServerInterface (object):
         case, L{get_allowed_auths} will be called to report to the client what
         options it has for continuing the authentication.)
 
+        Note that you don't have to actually verify any key signtature here.
+        If you're willing to accept the key, paramiko will do the work of
+        verifying the client's signature.
+        
         The default implementation always returns L{AUTH_FAILED}.
 
         @param username: the username of the authenticating client.
@@ -204,7 +208,7 @@ class ServerInterface (object):
         @type pixelheight: int
         @return: C{True} if the psuedo-terminal has been allocated; C{False}
         otherwise.
-        @rtype: boolean
+        @rtype: bool
         """
         return False
 
@@ -221,10 +225,31 @@ class ServerInterface (object):
         @type channel: L{Channel}
         @return: C{True} if this channel is now hooked up to a shell; C{False}
         if a shell can't or won't be provided.
-        @rtype: boolean
+        @rtype: bool
         """
         return False
 
+    def check_channel_exec_request(self, channel, command):
+        """
+        Determine if a shell command will be executed for the client.  If this
+        method returns C{True}, the channel should be connected to the stdin,
+        stdout, and stderr of the shell command.
+        
+        The default implementation always returns C{False}.
+        
+        @param channel: the L{Channel} the request arrived on.
+        @type channel: L{Channel}
+        @param command: the command to execute.
+        @type command: str
+        @return: C{True} if this channel is now hooked up to the stdin,
+            stdout, and stderr of the executing command; C{False} if the
+            command will not be executed.
+        @rtype: bool
+        
+        @since: 1.1
+        """
+        return False
+        
     def check_channel_subsystem_request(self, channel, name):
         """
         Determine if a requested subsystem will be provided to the client on
@@ -247,7 +272,7 @@ class ServerInterface (object):
         @type name: str
         @return: C{True} if this channel is now hooked up to the requested
         subsystem; C{False} if that subsystem can't or won't be provided.
-        @rtype: boolean
+        @rtype: bool
         """
         handler_class, larg, kwarg = channel.get_transport()._get_subsystem_handler(name)
         if handler_class is None:
@@ -275,7 +300,8 @@ class ServerInterface (object):
         @param pixelheight: height of screen in pixels, if known (may be C{0}
         if unknown).
         @type pixelheight: int
-        @return: C{True} if the terminal was resized; C{False} if not.        
+        @return: C{True} if the terminal was resized; C{False} if not.
+        @rtype: bool
         """
         return False
 
