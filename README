@@ -205,3 +205,4 @@ v0.9 FEAROW
 * server mode needs better documentation
 * sftp server mode
 * figure out if there's a way to put stdout/stderr on different channels?
+* add method to block until a channel's "exit-status" is set

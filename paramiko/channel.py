@@ -379,7 +379,9 @@ class Channel (object):
 
     def recv_ready(self):
         """
-        Returns true if data is ready to be read from this channel.
+        Returns true if data is buffered and ready to be read from this
+        channel.  A C{False} result does not mean that the channel has closed;
+        it means you may need to wait before more data arrives.
         
         @return: C{True} if a L{recv} call on this channel would immediately
         return at least one byte; C{False} otherwise.
