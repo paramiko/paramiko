@@ -100,7 +100,22 @@ class SFTPAttributes (object):
                 msg.add_string(val)
         return
 
-        
+    def _pythonize(self):
+        "create attributes named the way python's os.stat does it"
+        if hasattr(self, 'size'):
+            self.st_size = self.size
+        if hasattr(self, 'uid'):
+            self.st_uid = self.uid
+        if hasattr(self, 'gid'):
+            self.st_gid = self.gid
+        if hasattr(self, 'permissions'):
+            self.st_mode = self.permissions
+        if hasattr(self, 'atime'):
+            self.st_atime = self.atime
+        if hasattr(self, 'mtime'):
+            self.st_mtime = self.mtime
+
+
 class SFTPError (Exception):
     pass
 
@@ -147,11 +162,27 @@ class SFTPFile (BufferedFile):
             self._realpos = self._pos = self._get_size() + offset
         self._rbuffer = self._wbuffer = ''
 
+    def stat(self):
+        """
+        Retrieve information about this file from the remote system.  This is
+        exactly like L{SFTP.stat}, except that it operates on an already-open
+        file.
+
+        @return: an object containing attributes about this file.
+        @rtype: SFTPAttributes
+        """
+        t, msg = self.sftp._request(CMD_FSTAT, self.handle)
+        if t != CMD_ATTRS:
+            raise SFTPError('Expected attributes')
+        attr = SFTPAttributes(msg)
+        attr._pythonize()
+        return attr
+
 
 class SFTP (object):
     def __init__(self, sock):
         self.sock = sock
-        self.ultra_debug = 1
+        self.ultra_debug = False
         self.request_number = 1
         if type(sock) is Channel:
             self.logger = logging.getLogger('paramiko.chan.' + sock.get_name() + '.sftp')
@@ -175,6 +206,16 @@ class SFTP (object):
     from_transport = classmethod(from_transport)
 
     def listdir(self, path):
+        """
+        Return a list containing the names of the entries in the given C{path}.
+        The list is in arbitrary order.  It does not include the special
+        entries C{'.'} and C{'..'} even if they are present in the folder.
+
+        @param path: path to list.
+        @type path: string
+        @return: list of filenames.
+        @rtype: list of string
+        """
         t, msg = self._request(CMD_OPENDIR, path)
         if t != CMD_HANDLE:
             raise SFTPError('Expected handle')
@@ -200,6 +241,31 @@ class SFTP (object):
         return filelist
 
     def open(self, filename, mode='r', bufsize=-1):
+        """
+        Open a file on the remote server.  The arguments are the same as for
+        python's built-in C{open} (aka C{file}).  A file-like object is
+        returned, which closely mimics the behavior of a normal python file
+        object.
+
+        The mode indicates how the file is to be opened: C{'r'} for reading,
+        C{'w'} for writing (truncating an existing file), C{'a'} for appending,
+        C{'r+'} for reading/writing, C{'w+'} for reading/writing (truncating an
+        existing file), C{'a+'} for reading/appending.  The python C{'b'} flag
+        is ignored, since SSH treats all files as binary.  The C{'U'} flag is
+        supported in a compatible way.
+
+        @param filename: name of the file to open.
+        @type filename: string
+        @param mode: mode (python-style) to open in.
+        @type mode: string
+        @param bufsize: desired buffering (-1 = default buffer size, 0 =
+        unbuffered, 1 = line buffered, >1 = requested buffer size).
+        @type bufsize: int
+        @return: a file object representing the open file.
+        @rtype: SFTPFile
+
+        @raise IOError: if the file could not be opened.
+        """
         imode = 0
         if ('r' in mode) or ('+' in mode):
             imode |= self._FXF_READ
@@ -258,6 +324,146 @@ class SFTP (object):
         attr = SFTPAttributes()
         attr.permissions = mode
         self._request(CMD_MKDIR, path, attr)
+
+    def rmdir(self, path):
+        """
+        Remove the folder named C{path}.
+
+        @param path: name of the folder to remove.
+        @type path: string
+        """
+        self._request(CMD_RMDIR, path)
+
+    def stat(self, path):
+        """
+        Retrieve information about a file on the remote system.  The return
+        value is an object whose attributes correspond to the attributes of
+        python's C{stat} structure as returned by C{os.stat}, except that it
+        contains fewer fields.  An SFTP server may return as much or as little
+        info as it wants, so the results may vary from server to server.
+
+        Unlike a python C{stat} object, the result may not be accessed as a
+        tuple.  This is mostly due to the author's slack factor.
+
+        The fields supported are: C{st_mode}, C{st_size}, C{st_uid}, C{st_gid},
+        C{st_atime}, and C{st_mtime}.
+
+        @param path: the filename to stat.
+        @type path: string
+        @return: an object containing attributes about the given file.
+        @rtype: SFTPAttributes
+        """
+        t, msg = self._request(CMD_STAT, path)
+        if t != CMD_ATTRS:
+            raise SFTPError('Expected attributes')
+        attr = SFTPAttributes(msg)
+        attr._pythonize()
+        return attr
+
+    def lstat(self, path):
+        """
+        Retrieve information about a file on the remote system, without
+        following symbolic links (shortcuts).  This otherwise behaves exactly
+        the same as L{stat}.
+
+        @param path: the filename to stat.
+        @type path: string
+        @return: an object containing attributes about the given file.
+        @rtype: SFTPAttributes
+        """
+        t, msg = self._request(CMD_LSTAT, path)
+        if t != CMD_ATTRS:
+            raise SFTPError('Expected attributes')
+        attr = SFTPAttributes(msg)
+        attr._pythonize()
+        return attr
+
+    def symlink(self, source, dest):
+        """
+        Create a symbolic link (shortcut) of the C{source} path at
+        C{destination}.
+
+        @param source: path of the original file.
+        @type source: string
+        @param dest: path of the newly created symlink.
+        @type dest: string
+        """
+        self._request(CMD_SYMLINK, source, dest)
+
+    def chmod(self, path, mode):
+        """
+        Change the mode (permissions) of a file.  The permissions are
+        unix-style and identical to those used by python's C{os.chmod}
+        function.
+
+        @param path: path of the file to change the permissions of.
+        @type path: string
+        @param mode: new permissions.
+        @type mode: int
+        """
+        attr = SFTPAttributes()
+        attr.permissions = mode
+        self._request(CMD_SETSTAT, path, attr)
+        
+    def chown(self, path, uid, gid):
+        """
+        Change the owner (C{uid}) and group (C{gid}) of a file.  As with
+        python's C{os.chown} function, you must pass both arguments, so if you
+        only want to change one, use L{stat} first to retrieve the current
+        owner and group.
+
+        @param path: path of the file to change the owner and group of.
+        @type path: string
+        @param uid: new owner's uid
+        @type uid: int
+        @param gid: new group id
+        @type gid: int
+        """
+        attr = SFTPAttributes()
+        attr.uid, attr.gid = uid, gid
+        self._request(CMD_SETSTAT, path, attr)
+
+    def utime(self, path, times):
+        """
+        Set the access and modified times of the file specified by C{path}.  If
+        C{times} is C{None}, then the file's access and modified times are set
+        to the current time.  Otherwise, C{times} must be a 2-tuple of numbers,
+        of the form C{(atime, mtime)}, which is used to set the access and
+        modified times, respectively.  This bizarre API is mimicked from python
+        for the sake of consistency -- I apologize.
+
+        @param path: path of the file to modify.
+        @type path: string
+        @param times: C{None} or a tuple of (access time, modified time) in
+        standard internet epoch time (seconds since 01 January 1970 GMT).
+        @type times: tuple of int
+        """
+        if times is None:
+            times = (time.time(), time.time())
+        attr = SFTPAttributes()
+        attr.atime, attr.mtime = times
+        self._request(CMD_SETSTAT, path, attr)
+
+    def readlink(self, path):
+        """
+        Return the target of a symbolic link (shortcut).  You can use
+        L{symlink} to create these.  The result may be either an absolute or
+        relative pathname.
+
+        @param path: path of the symbolic link file.
+        @type path: string
+        @return: target path.
+        @rtype: string
+        """
+        t, msg = self._request(CMD_READLINK, path)
+        if t != CMD_NAME:
+            raise SFTPError('Expected name response')
+        count = msg.get_int()
+        if count == 0:
+            return None
+        if count != 1:
+            raise SFTPError('Readlink returned %d results' % count)
+        return msg.get_string()
 
 
     ###  internals...
