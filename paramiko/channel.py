@@ -81,7 +81,6 @@ class Channel (object):
         self.name = str(chanid)
         self.logger = logging.getLogger('paramiko.chan.' + str(chanid))
         self.pipe_rfd = self.pipe_wfd = None
-        self.event = threading.Event()
 
     def __repr__(self):
         """
@@ -123,21 +122,14 @@ class Channel (object):
         m.add_byte(chr(MSG_CHANNEL_REQUEST))
         m.add_int(self.remote_chanid)
         m.add_string('pty-req')
-        m.add_boolean(True)
+        m.add_boolean(0)
         m.add_string(term)
         m.add_int(width)
         m.add_int(height)
         # pixel height, width (usually useless)
         m.add_int(0).add_int(0)
         m.add_string('')
-        self.event.clear()
-        self.transport._send_user_message(m)
-        while 1:
-            self.event.wait(0.1)
-            if self.closed:
-                return False
-            if self.event.isSet():
-                return True
+        self.transport._send_message(m)
 
     def invoke_shell(self):
         """
@@ -152,14 +144,7 @@ class Channel (object):
         m.add_int(self.remote_chanid)
         m.add_string('shell')
         m.add_boolean(1)
-        self.event.clear()
-        self.transport._send_user_message(m)
-        while 1:
-            self.event.wait(0.1)
-            if self.closed:
-                return False
-            if self.event.isSet():
-                return True
+        self.transport._send_message(m)
 
     def exec_command(self, command):
         """
@@ -178,14 +163,7 @@ class Channel (object):
         m.add_string('exec')
         m.add_boolean(1)
         m.add_string(command)
-        self.event.clear()
-        self.transport._send_user_message(m)
-        while 1:
-            self.event.wait(0.1)
-            if self.closed:
-                return False
-            if self.event.isSet():
-                return True
+        self.transport._send_message(m)
 
     def invoke_subsystem(self, subsystem):
         """
@@ -204,14 +182,7 @@ class Channel (object):
         m.add_string('subsystem')
         m.add_boolean(1)
         m.add_string(subsystem)
-        self.event.clear()
-        self.transport._send_user_message(m)
-        while 1:
-            self.event.wait(0.1)
-            if self.closed:
-                return False
-            if self.event.isSet():
-                return True
+        self.transport._send_message(m)
 
     def resize_pty(self, width=80, height=24):
         """
@@ -233,14 +204,7 @@ class Channel (object):
         m.add_int(width)
         m.add_int(height)
         m.add_int(0).add_int(0)
-        self.event.clear()
-        self.transport._send_user_message(m)
-        while 1:
-            self.event.wait(0.1)
-            if self.closed:
-                return False
-            if self.event.isSet():
-                return True
+        self.transport._send_message(m)
 
     def get_transport(self):
         """
@@ -337,14 +301,11 @@ class Channel (object):
         try:
             self.lock.acquire()
             if self.active and not self.closed:
-                try:
-                    self._send_eof()
-                    m = Message()
-                    m.add_byte(chr(MSG_CHANNEL_CLOSE))
-                    m.add_int(self.remote_chanid)
-                    self.transport._send_user_message(m)
-                except EOFError:
-                    pass
+                self._send_eof()
+                m = Message()
+                m.add_byte(chr(MSG_CHANNEL_CLOSE))
+                m.add_int(self.remote_chanid)
+                self.transport._send_message(m)
                 self._set_closed()
                 self.transport._unlink_channel(self.chanid)
         finally:
@@ -464,7 +425,7 @@ class Channel (object):
             m.add_byte(chr(MSG_CHANNEL_DATA))
             m.add_int(self.remote_chanid)
             m.add_string(s[:size])
-            self.transport._send_user_message(m)
+            self.transport._send_message(m)
             self.out_window_size -= size
             if self.ultra_debug:
                 self._log(DEBUG, 'window down to %d' % self.out_window_size)
@@ -670,7 +631,6 @@ class Channel (object):
 
     def _request_success(self, m):
         self._log(DEBUG, 'Sesch channel %d request ok' % self.chanid)
-        self.event.set()
         return
 
     def _request_failed(self, m):
@@ -742,7 +702,7 @@ class Channel (object):
             else:
                 m.add_byte(chr(MSG_CHANNEL_FAILURE))
             m.add_int(self.remote_chanid)
-            self.transport._send_user_message(m)
+            self.transport._send_message(m)
 
     def _handle_eof(self, m):
         try:
@@ -788,7 +748,7 @@ class Channel (object):
         m = Message()
         m.add_byte(chr(MSG_CHANNEL_EOF))
         m.add_int(self.remote_chanid)
-        self.transport._send_user_message(m)
+        self.transport._send_message(m)
         self.eof_sent = 1
         self._log(DEBUG, 'EOF sent')
         return
@@ -895,7 +855,7 @@ class Channel (object):
             m.add_byte(chr(MSG_CHANNEL_WINDOW_ADJUST))
             m.add_int(self.remote_chanid)
             m.add_int(self.in_window_sofar)
-            self.transport._send_user_message(m)
+            self.transport._send_message(m)
             self.in_window_sofar = 0
 
 
