@@ -59,7 +59,7 @@ class Message (object):
 
         @rtype: string
         """
-        return 'Message(' + repr(self.packet) + ')'
+        return 'paramiko.Message(' + repr(self.packet) + ')'
     
     def get_remainder(self):
         """
@@ -116,10 +116,7 @@ class Message (object):
         @rtype: bool
         """
         b = self.get_bytes(1)
-        if b == '\x00':
-            return False
-        else:
-            return True
+        return b != '\x00'
 
     def get_int(self):
         """
@@ -233,19 +230,23 @@ class Message (object):
         self.packet = self.packet + out
         return self
         
-    def add(self, i):
-        if type(i) == types.StringType:
+    def _add(self, i):
+        if type(i) is str:
             return self.add_string(i)
-        elif type(i) == types.IntType:
+        elif type(i) is int:
             return self.add_int(i)
-        elif type(i) == types.LongType:
+        elif type(i) is long:
             if i > 0xffffffffL:
                 return self.add_mpint(i)
             else:
                 return self.add_int(i)
         elif type(i) is bool:
             return self.add_boolean(i)
-        elif type(i) == types.ListType:
+        elif type(i) is list:
             return self.add_list(i)
         else:
             raise exception('Unknown type')
+
+    def add(self, *seq):
+        for item in seq:
+            self._add(item)
