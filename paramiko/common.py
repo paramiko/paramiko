@@ -52,7 +52,7 @@ from Crypto.Util.randpool import PersistentRandomPool, RandomPool
 
 # keep a crypto-strong PRNG nearby
 try:
-    randpool = PersistentRandomPool(os.getenv('HOME') + '/.randpool')
+    randpool = PersistentRandomPool(os.path.join(os.path.expanduser('~'), '/.randpool'))
 except:
     # the above will likely fail on Windows - fall back to non-persistent random pool
     randpool = RandomPool()

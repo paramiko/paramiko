@@ -725,8 +725,12 @@ class Channel (object):
 
     def _set_closed(self):
         self.closed = True
-        self.in_buffer_cv.notifyAll()
-        self.out_buffer_cv.notifyAll()
+        try:
+            self.lock.acquire()
+            self.in_buffer_cv.notifyAll()
+            self.out_buffer_cv.notifyAll()
+        finally:
+            self.lock.release()
 
     def _send_eof(self):
         if self.eof_sent:

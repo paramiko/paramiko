@@ -4,7 +4,7 @@
 # charmander (10nov03)
 # doduo (04jan04) - 0.9
 # eevee (08mar04)
-# fearow (???)
+# fearow (23apr04)
 
 release:
 	python ./setup.py sdist --formats=zip

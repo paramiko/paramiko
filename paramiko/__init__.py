@@ -61,7 +61,7 @@ if sys.version_info < (2, 2):
 
 
 __author__ = "Robey Pointer <robey@lag.net>"
-__date__ = "10 Apr 2004"
+__date__ = "23 Apr 2004"
 __version__ = "0.9-fearow"
 #__credits__ = "Huzzah!"
 __license__ = "GNU Lesser General Public License (LGPL)"
