@@ -782,44 +782,6 @@ class Channel (object):
     def _request_failed(self, m):
         self.close()
 
-    def _wait_for_send_window(self, size):
-        """
-        (You are already holding the lock.)
-        Wait for the send window to open up, and allocate up to C{size} bytes
-        for transmission.  If no space opens up before the timeout, a timeout
-        exception is raised.  Returns the number of bytes available to send
-        (may be less than requested).
-        """
-        # you are already holding the lock
-        if self.closed or self.eof_sent:
-            return 0
-        if self.out_window_size == 0:
-            # should we block?
-            if self.timeout == 0.0:
-                raise socket.timeout()
-            # loop here in case we get woken up but a different thread has filled the buffer
-            timeout = self.timeout
-            while self.out_window_size == 0:
-                if self.closed or self.eof_sent:
-                    return 0
-                then = time.time()
-                self.out_buffer_cv.wait(timeout)
-                if timeout != None:
-                    timeout -= time.time() - then
-                    if timeout <= 0.0:
-                        raise socket.timeout()
-        # we have some window to squeeze into
-        if self.closed:
-            return 0
-        if self.out_window_size < size:
-            size = self.out_window_size
-        if self.out_max_packet_size - 64 < size:
-            size = self.out_max_packet_size - 64
-        self.out_window_size -= size
-        if self.ultra_debug:
-            self._log(DEBUG, 'window down to %d' % self.out_window_size)
-        return size
-        
     def _feed(self, m):
         if type(m) is str:
             # passed from _feed_extended
@@ -1083,6 +1045,44 @@ class Channel (object):
             self.transport._send_user_message(m)
             self.in_window_sofar = 0
 
+    def _wait_for_send_window(self, size):
+        """
+        (You are already holding the lock.)
+        Wait for the send window to open up, and allocate up to C{size} bytes
+        for transmission.  If no space opens up before the timeout, a timeout
+        exception is raised.  Returns the number of bytes available to send
+        (may be less than requested).
+        """
+        # you are already holding the lock
+        if self.closed or self.eof_sent:
+            return 0
+        if self.out_window_size == 0:
+            # should we block?
+            if self.timeout == 0.0:
+                raise socket.timeout()
+            # loop here in case we get woken up but a different thread has filled the buffer
+            timeout = self.timeout
+            while self.out_window_size == 0:
+                if self.closed or self.eof_sent:
+                    return 0
+                then = time.time()
+                self.out_buffer_cv.wait(timeout)
+                if timeout != None:
+                    timeout -= time.time() - then
+                    if timeout <= 0.0:
+                        raise socket.timeout()
+        # we have some window to squeeze into
+        if self.closed:
+            return 0
+        if self.out_window_size < size:
+            size = self.out_window_size
+        if self.out_max_packet_size - 64 < size:
+            size = self.out_max_packet_size - 64
+        self.out_window_size -= size
+        if self.ultra_debug:
+            self._log(DEBUG, 'window down to %d' % self.out_window_size)
+        return size
+        
 
 class ChannelFile (BufferedFile):
     """

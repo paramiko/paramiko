@@ -41,12 +41,6 @@ class Transport (BaseTransport):
     encrypted session, authenticates, and then creates stream tunnels, called
     L{Channel}s, across the session.  Multiple channels can be multiplexed
     across a single session (and often are, in the case of port forwardings).
-
-    @note: Because each Transport has a worker thread running in the
-    background, you must call L{close} on the Transport to kill this thread.
-    On many platforms, the python interpreter will refuse to exit cleanly if
-    any of these threads are still running (and you'll have to C{kill -9} from
-    another shell window).
     """
     
     def __init__(self, sock):
