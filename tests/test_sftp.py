@@ -385,3 +385,28 @@ class SFTPTest (unittest.TestCase):
         f = sftp.normalize('./' + FOLDER)
         self.assert_(len(f) > 0)
         self.assert_(f == pwd + '/' + FOLDER)
+
+    def test_E_mkdir(self):
+        """
+        verify that mkdir/rmdir work.
+        """
+        try:
+            sftp.mkdir(FOLDER + '/subfolder')
+        except:
+            self.assert_(False, 'exception creating subfolder')
+        try:
+            sftp.mkdir(FOLDER + '/subfolder')
+            self.assert_(False, 'no exception overwriting subfolder')
+        except:
+            pass
+        try:
+            sftp.rmdir(FOLDER + '/subfolder')
+        except:
+            self.assert_(False, 'exception removing subfolder')
+        try:
+            sftp.rmdir(FOLDER + '/subfolder')
+            self.assert_(False, 'no exception removing nonexistent subfolder')
+        except:
+            pass
+
+        
