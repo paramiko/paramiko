@@ -182,7 +182,7 @@ class Message (object):
         as comma-separated values in a string.
 
         @return: a list of strings.
-        @type: list of strings
+        @rtype: list of strings
         """
         str = self.get_string()
         l = string.split(str, ',')

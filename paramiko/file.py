@@ -59,7 +59,7 @@ class BufferedFile (object):
         file.  This iterator happens to return the file itself, since a file is
         its own iterator.
 
-        @raise: ValueError if the file is closed.
+        @raise ValueError: if the file is closed.
         
         @return: an interator.
         @rtype: iterator
@@ -90,7 +90,7 @@ class BufferedFile (object):
         EOF is hit.  Unlike python file objects, it's okay to mix calls to
         C{next} and L{readline}.
 
-        @raise: StopIteration when the end of the file is reached.
+        @raise StopIteration: when the end of the file is reached.
 
         @return: a line read from the file.
         @rtype: string
@@ -161,7 +161,7 @@ class BufferedFile (object):
         EOF is encountered immediately.
 
         @note: Unlike stdio's C{fgets()}, the returned string contains null
-        characters (C{'\0'}) if they occurred in the input.
+        characters (C{'\\0'}) if they occurred in the input.
 
         @param size: maximum length of returned string.
         @type size: int
@@ -218,7 +218,7 @@ class BufferedFile (object):
             xpos += 1
         self._rbuffer = line[xpos:]
         lf = line[pos:xpos]
-        line = line[:xpos]
+        line = line[:pos] + '\n'
         if (len(self._rbuffer) == 0) and (lf == '\r'):
             # we could read the line up to a '\r' and there could still be a
             # '\n' following that we read next time.  note that and eat it.
@@ -286,7 +286,7 @@ class BufferedFile (object):
     def write(self, data):
         """
         Write data to the file.  If write buffering is on (C{bufsize} was
-        specified and non-zero, some or all of the data may not actually be
+        specified and non-zero), some or all of the data may not actually be
         written yet.  (Use L{flush} or L{close} to force buffered data to be
         written out.)
 
