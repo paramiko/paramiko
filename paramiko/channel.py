@@ -724,13 +724,10 @@ class Channel (object):
         self.logger.log(level, msg)
 
     def _set_closed(self):
+        # you are holding the lock.
         self.closed = True
-        try:
-            self.lock.acquire()
-            self.in_buffer_cv.notifyAll()
-            self.out_buffer_cv.notifyAll()
-        finally:
-            self.lock.release()
+        self.in_buffer_cv.notifyAll()
+        self.out_buffer_cv.notifyAll()
 
     def _send_eof(self):
         if self.eof_sent:
@@ -824,8 +821,12 @@ class Channel (object):
     def _unlink(self):
         if self.closed or not self.active:
             return
-        self._set_closed()
-        self.transport._unlink_channel(self.chanid)
+        try:
+            self.lock.acquire()
+            self._set_closed()
+            self.transport._unlink_channel(self.chanid)
+        finally:
+            self.lock.release()
 
     def _check_add_window(self, n):
         # already holding the lock!
