@@ -44,23 +44,8 @@ class KexGroup1(object):
     def __init__(self, transport):
         self.transport = transport
 
-    def generate_x(self):
-        # generate an "x" (1 < x < q), where q is (p-1)/2.
-        # p is a 128-byte (1024-bit) number, where the first 64 bits are 1. 
-        # therefore q can be approximated as a 2^1023.  we drop the subset of
-        # potential x where the first 63 bits are 1, because some of those will be
-        # larger than q (but this is a tiny tiny subset of potential x).
-        while 1:
-            self.transport.randpool.stir()
-            x_bytes = self.transport.randpool.get_bytes(128)
-            x_bytes = chr(ord(x_bytes[0]) & 0x7f) + x_bytes[1:]
-            if (x_bytes[:8] != '\x7F\xFF\xFF\xFF\xFF\xFF\xFF\xFF') and \
-                   (x_bytes[:8] != '\x00\x00\x00\x00\x00\x00\x00\x00'):
-                break
-        self.x = util.inflate_long(x_bytes)
-
     def start_kex(self):
-        self.generate_x()
+        self._generate_x()
         if self.transport.server_mode:
             # compute f = g^x mod p, but don't send it yet
             self.f = pow(G, self.x, P)
@@ -76,12 +61,31 @@ class KexGroup1(object):
 
     def parse_next(self, ptype, m):
         if self.transport.server_mode and (ptype == _MSG_KEXDH_INIT):
-            return self.parse_kexdh_init(m)
+            return self._parse_kexdh_init(m)
         elif not self.transport.server_mode and (ptype == _MSG_KEXDH_REPLY):
-            return self.parse_kexdh_reply(m)
+            return self._parse_kexdh_reply(m)
         raise SSHException('KexGroup1 asked to handle packet type %d' % ptype)
+    
 
-    def parse_kexdh_reply(self, m):
+    ###  internals...
+
+
+    def _generate_x(self):
+        # generate an "x" (1 < x < q), where q is (p-1)/2.
+        # p is a 128-byte (1024-bit) number, where the first 64 bits are 1. 
+        # therefore q can be approximated as a 2^1023.  we drop the subset of
+        # potential x where the first 63 bits are 1, because some of those will be
+        # larger than q (but this is a tiny tiny subset of potential x).
+        while 1:
+            self.transport.randpool.stir()
+            x_bytes = self.transport.randpool.get_bytes(128)
+            x_bytes = chr(ord(x_bytes[0]) & 0x7f) + x_bytes[1:]
+            if (x_bytes[:8] != '\x7F\xFF\xFF\xFF\xFF\xFF\xFF\xFF') and \
+                   (x_bytes[:8] != '\x00\x00\x00\x00\x00\x00\x00\x00'):
+                break
+        self.x = util.inflate_long(x_bytes)
+
+    def _parse_kexdh_reply(self, m):
         # client mode
         host_key = m.get_string()
         self.f = m.get_mpint()
@@ -98,7 +102,7 @@ class KexGroup1(object):
         self.transport._verify_key(host_key, sig)
         self.transport._activate_outbound()
 
-    def parse_kexdh_init(self, m):
+    def _parse_kexdh_init(self, m):
         # server mode
         self.e = m.get_mpint()
         if (self.e < 1) or (self.e > P - 1):

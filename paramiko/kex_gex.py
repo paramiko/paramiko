@@ -72,6 +72,10 @@ class KexGex (object):
             return self._parse_kexdh_gex_reply(m)
         raise SSHException('KexGex asked to handle packet type %d' % ptype)
 
+
+    ###  internals...
+
+    
     def _generate_x(self):
         # generate an "x" (1 < x < (p-1)/2).
         q = (self.p - 1) // 2
@@ -82,7 +86,7 @@ class KexGex (object):
         while not (qhbyte & 0x80):
             qhbyte <<= 1
             qmask >>= 1
-        while 1:
+        while True:
             self.transport.randpool.stir()
             x_bytes = self.transport.randpool.get_bytes(bytes)
             x_bytes = chr(ord(x_bytes[0]) & qmask) + x_bytes[1:]
@@ -152,8 +156,15 @@ class KexGex (object):
         hm = Message()
         hm.add(self.transport.remote_version, self.transport.local_version,
                self.transport.remote_kex_init, self.transport.local_kex_init,
-               key, self.min_bits, self.preferred_bits, self.max_bits,
-               self.p, self.g, self.e, self.f, K)
+               key)
+        hm.add_int(self.min_bits)
+        hm.add_int(self.preferred_bits)
+        hm.add_int(self.max_bits)
+        hm.add_mpint(self.p)
+        hm.add_mpint(self.g)
+        hm.add_mpint(self.e)
+        hm.add_mpint(self.f)
+        hm.add_mpint(K)
         H = SHA.new(str(hm)).digest()
         self.transport._set_K_H(K, H)
         # sign it
@@ -178,8 +189,15 @@ class KexGex (object):
         hm = Message()
         hm.add(self.transport.local_version, self.transport.remote_version,
                self.transport.local_kex_init, self.transport.remote_kex_init,
-               host_key, self.min_bits, self.preferred_bits, self.max_bits,
-               self.p, self.g, self.e, self.f, K)
+               host_key)
+        hm.add_int(self.min_bits)
+        hm.add_int(self.preferred_bits)
+        hm.add_int(self.max_bits)
+        hm.add_mpint(self.p)
+        hm.add_mpint(self.g)
+        hm.add_mpint(self.e)
+        hm.add_mpint(self.f)
+        hm.add_mpint(K)
         self.transport._set_K_H(K, SHA.new(str(hm)).digest())
         self.transport._verify_key(host_key, sig)
         self.transport._activate_outbound()
