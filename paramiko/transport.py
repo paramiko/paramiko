@@ -193,7 +193,7 @@ class BaseTransport (threading.Thread):
 
         @param sock: a socket or socket-like object to create the session over.
         @type sock: socket
-    	"""
+        """
         if type(sock) is str:
             # convert "host:port" into (host, port)
             hl = sock.split(':', 1)
@@ -491,7 +491,7 @@ class BaseTransport (threading.Thread):
         Request a new channel to the server.  L{Channel}s are socket-like
         objects used for the actual transfer of data across the session.
         You may only request a channel after negotiating encryption (using
-        L{connect} or L{start_client} and authenticating.
+        L{connect} or L{start_client}) and authenticating.
 
         @param kind: the kind of channel requested (usually C{"session"},
         C{"forwarded-tcpip"} or C{"direct-tcpip"}).
@@ -649,36 +649,6 @@ class BaseTransport (threading.Thread):
             if self.completion_event.isSet():
                 break
         return self.global_response
-
-    def check_global_request(self, kind, msg):
-        """
-        I{(subclass override)}
-        Handle a global request of the given C{kind}.  This method is called
-        in server mode and client mode, whenever the remote host makes a global
-        request.  If there are any arguments to the request, they will be in
-        C{msg}.
-
-        There aren't any useful global requests defined, aside from port
-        forwarding, so usually this type of request is an extension to the
-        protocol.
-
-        If the request was successful and you would like to return contextual
-        data to the remote host, return a tuple.  Items in the tuple will be
-        sent back with the successful result.  (Note that the items in the
-        tuple can only be strings, ints, longs, or bools.)
-
-        The default implementation always returns C{False}, indicating that it
-        does not support any global requests.
-
-        @param kind: the kind of global request being made.
-        @type kind: str
-        @param msg: any extra arguments to the request.
-        @type msg: L{Message}
-        @return: C{True} or a tuple of data if the request was granted;
-        C{False} otherwise.
-        @rtype: bool
-        """
-        return False
 
     def accept(self, timeout=None):
         self.lock.acquire()
@@ -1380,7 +1350,7 @@ class BaseTransport (threading.Thread):
         kind = m.get_string()
         self._log(DEBUG, 'Received global request "%s"' % kind)
         want_reply = m.get_boolean()
-        ok = self.check_global_request(kind, m)
+        ok = self.server_object.check_global_request(kind, m)
         extra = ()
         if type(ok) is tuple:
             extra = ok
