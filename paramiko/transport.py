@@ -1529,6 +1529,7 @@ class BaseTransport (threading.Thread):
         MSG_CHANNEL_SUCCESS: Channel._request_success,
         MSG_CHANNEL_FAILURE: Channel._request_failed,
         MSG_CHANNEL_DATA: Channel._feed,
+        MSG_CHANNEL_EXTENDED_DATA: Channel._feed_extended,
         MSG_CHANNEL_WINDOW_ADJUST: Channel._window_adjust,
         MSG_CHANNEL_REQUEST: Channel._handle_request,
         MSG_CHANNEL_EOF: Channel._handle_eof,
