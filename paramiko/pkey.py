@@ -7,27 +7,49 @@ class PKey (object):
     Base class for public keys.
     """
 
-    def __init__(self, msg=None):
+    def __init__(self, msg=None, data=None):
         """
-        Create a new instance of this public key type.  If C{msg} is not
-        C{None}, the key's public part(s) will be filled in from the
-        message.
+        Create a new instance of this public key type.  If C{msg} is given,
+        the key's public part(s) will be filled in from the message.  If
+        C{data} is given, the key's public part(s) will be filled in from
+        the string.
 
         @param msg: an optional SSH L{Message} containing a public key of this
         type.
         @type msg: L{Message}
+        @param data: an optional string containing a public key of this type
+        @type data: string
         """
         pass
 
     def __str__(self):
         """
         Return a string of an SSH L{Message} made up of the public part(s) of
-        this key.
+        this key.  This string is suitable for passing to L{__init__} to
+        re-create the key object later.
 
         @return: string representation of an SSH key message.
         @rtype: string
         """
         return ''
+
+    def __cmp__(self, other):
+        """
+        Compare this key to another.  Returns 0 if this key is equivalent to
+        the given key, or non-0 if they are different.  Only the public parts
+        of the key are compared, so a public key will compare equal to its
+        corresponding private key.
+
+        @param other: key to compare to.
+        @type other: L{PKey}
+        @return: 0 if the two keys are equivalent, non-0 otherwise.
+        @rtype: int
+        """
+        hs = hash(self)
+        ho = hash(other)
+        if hs != ho:
+            return cmp(hs, ho)
+        return cmp(str(self), str(other))
 
     def get_name(self):
         """
@@ -50,6 +72,20 @@ class PKey (object):
         """
         return MD5.new(str(self)).digest()
 
+    def sign_ssh_data(self, randpool, data):
+        """
+        Sign a blob of data with this private key, and return a L{Message}
+        representing an SSH signature message.
+
+        @param randpool: a secure random number generator.
+        @type randpool: L{Crypto.Util.randpool.RandomPool}
+        @param data: the data to sign.
+        @type data: string
+        @return: an SSH signature message.
+        @rtype: L{Message}
+        """
+        return ''
+
     def verify_ssh_sig(self, data, msg):
         """
         Given a blob of data, and an SSH message representing a signature of
@@ -65,23 +101,6 @@ class PKey (object):
         """
         return False
     
-    def sign_ssh_data(self, randpool, data):
-        """
-        Sign a blob of data with this private key, and return a string
-        representing an SSH signature message.
-
-        @bug: It would be cleaner for this method to return a L{Message}
-        object, so it would be complementary to L{verify_ssh_sig}.  FIXME.
-        
-        @param randpool: a secure random number generator.
-        @type randpool: L{Crypto.Util.randpool.RandomPool}
-        @param data: the data to sign.
-        @type data: string
-        @return: string representation of an SSH signature message.
-        @rtype: string
-        """
-        return ''
-    
     def read_private_key_file(self, filename):
         """
         Read private key contents from a file into this object.
@@ -94,19 +113,3 @@ class PKey (object):
         @raise binascii.Error: on base64 decoding error
         """
         pass
-
-    def sign_ssh_session(self, randpool, sid, username):
-        """
-        Sign an SSH authentication request.
-
-        @bug: Same as L{sign_ssh_data}
-        
-        @param randpool: a secure random number generator.
-        @type randpool: L{Crypto.Util.randpool.RandomPool}
-        @param sid: the session ID given by the server
-        @type sid: string
-        @param username: the username to use in the authentication request
-        @type username: string
-        @return: string representation of an SSH signature message.
-        @rtype: string
-        """

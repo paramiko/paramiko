@@ -1,7 +1,6 @@
 #!/usr/bin/python
 
 from message import Message
-from transport import _MSG_USERAUTH_REQUEST
 from Crypto.PublicKey import RSA
 from Crypto.Hash import SHA
 from ber import BER
@@ -11,9 +10,11 @@ import base64
 
 class RSAKey (PKey):
 
-    def __init__(self, msg=None):
+    def __init__(self, msg=None, data=''):
         self.valid = 0
-        if (msg == None) or (msg.get_string() != 'ssh-rsa'):
+        if (msg is None) and (data is not None):
+            msg = Message(data)
+        if (msg is None) or (msg.get_string() != 'ssh-rsa'):
             return
         self.e = msg.get_mpint()
         self.n = msg.get_mpint()
@@ -29,6 +30,12 @@ class RSAKey (PKey):
         m.add_mpint(self.n)
         return str(m)
 
+    def __hash__(self):
+        h = hash(self.get_name())
+        h = h * 37 + hash(self.e)
+        h = h * 37 + hash(self.n)
+        return hash(h)
+
     def get_name(self):
         return 'ssh-rsa'
 
@@ -41,6 +48,15 @@ class RSAKey (PKey):
         filler = '\xff' * (self.size - len(SHA1_DIGESTINFO) - len(data) - 3)
         return '\x00\x01' + filler + '\x00' + SHA1_DIGESTINFO + data
 
+    def sign_ssh_data(self, randpool, data):
+        hash = SHA.new(data).digest()
+        rsa = RSA.construct((long(self.n), long(self.e), long(self.d)))
+        sig = deflate_long(rsa.sign(self._pkcs1imify(hash), '')[0], 0)
+        m = Message()
+        m.add_string('ssh-rsa')
+        m.add_string(sig)
+        return m
+
     def verify_ssh_sig(self, data, msg):
         if (not self.valid) or (msg.get_string() != 'ssh-rsa'):
             return False
@@ -51,15 +67,6 @@ class RSAKey (PKey):
         hash = inflate_long(self._pkcs1imify(SHA.new(data).digest()), 1)
         rsa = RSA.construct((long(self.n), long(self.e)))
         return rsa.verify(hash, (sig,))
-
-    def sign_ssh_data(self, randpool, data):
-        hash = SHA.new(data).digest()
-        rsa = RSA.construct((long(self.n), long(self.e), long(self.d)))
-        sig = deflate_long(rsa.sign(self._pkcs1imify(hash), '')[0], 0)
-        m = Message()
-        m.add_string('ssh-rsa')
-        m.add_string(sig)
-        return str(m)
 
     def read_private_key_file(self, filename):
         # private key file contains:
@@ -82,16 +89,3 @@ class RSAKey (PKey):
         self.q = keylist[5]
         self.size = len(deflate_long(self.n, 0))
         self.valid = 1
-
-    def sign_ssh_session(self, randpool, sid, username):
-        m = Message()
-        m.add_string(sid)
-        m.add_byte(chr(_MSG_USERAUTH_REQUEST))
-        m.add_string(username)
-        m.add_string('ssh-connection')
-        m.add_string('publickey')
-        m.add_boolean(1)
-        m.add_string('ssh-rsa')
-        m.add_string(str(self))
-        return self.sign_ssh_data(randpool, str(m))
-

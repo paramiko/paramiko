@@ -41,5 +41,5 @@ class DSSKey (dsskey.DSSKey):
 
 
 __all__ = [ 'Transport', 'Channel', 'RSAKey', 'DSSKey', 'transport',
-            'auth_transport', 'channel', 'rsakey', 'ddskey', 'util',
+            'auth_transport', 'channel', 'rsakey', 'dsskey', 'util',
             'SSHException' ]

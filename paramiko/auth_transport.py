@@ -13,7 +13,10 @@ _DISCONNECT_SERVICE_NOT_AVAILABLE, _DISCONNECT_AUTH_CANCELLED_BY_USER, \
 
 
 class Transport (BaseTransport):
-    "BaseTransport with the auth framework hooked up"
+    """
+    Subclass of L{BaseTransport} that handles authentication.  This separation
+    keeps either class file from being too unwieldy.
+    """
     
     AUTH_SUCCESSFUL, AUTH_PARTIALLY_SUCCESSFUL, AUTH_FAILED = range(3)
 
@@ -53,15 +56,23 @@ class Transport (BaseTransport):
         """
         return self.authenticated and self.active
 
-    def _request_auth(self):
-        m = Message()
-        m.add_byte(chr(_MSG_SERVICE_REQUEST))
-        m.add_string('ssh-userauth')
-        self._send_message(m)
-
     def auth_key(self, username, key, event):
+        """
+        Authenticate to the server using a private key.  The key is used to
+        sign data from the server, so it must include the private part.  The
+        given L{event} is triggered on success or failure.  On success,
+        L{is_authenticated} will return C{True}.
+
+        @param username: the username to authenticate as.
+        @type username: string
+        @param key: the private key to authenticate with.
+        @type key: L{PKey <pkey.PKey>}
+        @param event: an event to trigger when the authentication attempt is
+        complete (whether it was successful or not)
+        @type event: threading.Event
+        """
         if (not self.active) or (not self.initial_kex_done):
-            # we should never try to send the password unless we're on a secure link
+            # we should never try to authenticate unless we're on a secure link
             raise SSHException('No existing session')
         try:
             self.lock.acquire()
@@ -74,7 +85,20 @@ class Transport (BaseTransport):
             self.lock.release()
 
     def auth_password(self, username, password, event):
-        'authenticate using a password; event is triggered on success or fail'
+        """
+        Authenticate to the server using a password.  The username and password
+        are sent over an encrypted link, and the given L{event} is triggered on
+        success or failure.  On success, L{is_authenticated} will return
+        C{True}.
+
+        @param username: the username to authenticate as.
+        @type username: string
+        @param password: the password to authenticate with.
+        @type password: string
+        @param event: an event to trigger when the authentication attempt is
+        complete (whether it was successful or not)
+        @type event: threading.Event
+        """
         if (not self.active) or (not self.initial_kex_done):
             # we should never try to send the password unless we're on a secure link
             raise SSHException('No existing session')
@@ -88,7 +112,58 @@ class Transport (BaseTransport):
         finally:
             self.lock.release()
 
-    def disconnect_service_not_available(self):
+    def get_allowed_auths(self, username):
+        "override me!"
+        return 'password'
+
+    def check_auth_none(self, username):
+        "override me!  return int ==> auth status"
+        return self.AUTH_FAILED
+
+    def check_auth_password(self, username, password):
+        "override me!  return int ==> auth status"
+        return self.AUTH_FAILED
+
+    def check_auth_publickey(self, username, key):
+        """
+        I{(subclass override)}
+        Determine if a given key supplied by the client is acceptable for use
+        in authentication.  You should override this method in server mode to
+        check the username and key and decide if you would accept a signature
+        made using this key.
+
+        Return C{AUTH_FAILED} if the key is not accepted, C{AUTH_SUCCESSFUL}
+        if the key is accepted and completes the authentication, or
+        C{AUTH_PARTIALLY_SUCCESSFUL} if your authentication is stateful, and
+        this key is accepted for authentication, but more authentication is
+        required.  (In this latter case, L{get_allowed_auths} will be called
+        to report to the client what options it has for continuing the
+        authentication.)
+
+        The default implementation always returns C{AUTH_FAILED}.
+
+        @param username: the username of the authenticating client.
+        @type username: string
+        @param key: the key object provided by the client.
+        @type key: L{PKey <pkey.PKey>}
+        @return: C{AUTH_FAILED} if the client can't authenticate with this key;
+        C{AUTH_SUCCESSFUL} if it can; C{AUTH_PARTIALLY_SUCCESSFUL} if it can
+        authenticate with this key but must continue with authentication.
+        @rtype: int
+        """
+        return self.AUTH_FAILED
+
+
+    ###  internals...
+
+
+    def _request_auth(self):
+        m = Message()
+        m.add_byte(chr(_MSG_SERVICE_REQUEST))
+        m.add_string('ssh-userauth')
+        self._send_message(m)
+
+    def _disconnect_service_not_available(self):
         m = Message()
         m.add_byte(chr(_MSG_DISCONNECT))
         m.add_int(_DISCONNECT_SERVICE_NOT_AVAILABLE)
@@ -97,7 +172,7 @@ class Transport (BaseTransport):
         self._send_message(m)
         self.close()
 
-    def disconnect_no_more_auth(self):
+    def _disconnect_no_more_auth(self):
         m = Message()
         m.add_byte(chr(_MSG_DISCONNECT))
         m.add_int(_DISCONNECT_NO_MORE_AUTH_METHODS_AVAILABLE)
@@ -106,7 +181,19 @@ class Transport (BaseTransport):
         self._send_message(m)
         self.close()
 
-    def parse_service_request(self, m):
+    def _get_session_blob(self, key, service, username):
+        m = Message()
+        m.add_string(self.session_id)
+        m.add_byte(chr(_MSG_USERAUTH_REQUEST))
+        m.add_string(username)
+        m.add_string(service)
+        m.add_string('publickey')
+        m.add_boolean(1)
+        m.add_string(key.get_name())
+        m.add_string(str(key))
+        return str(m)
+
+    def _parse_service_request(self, m):
         service = m.get_string()
         if self.server_mode and (service == 'ssh-userauth'):
             # accepted
@@ -116,9 +203,9 @@ class Transport (BaseTransport):
             self._send_message(m)
             return
         # dunno this one
-        self.disconnect_service_not_available()
+        self._disconnect_service_not_available()
 
-    def parse_service_accept(self, m):
+    def _parse_service_accept(self, m):
         service = m.get_string()
         if service == 'ssh-userauth':
             self._log(DEBUG, 'userauth is OK')
@@ -134,30 +221,16 @@ class Transport (BaseTransport):
                 m.add_boolean(1)
                 m.add_string(self.private_key.get_name())
                 m.add_string(str(self.private_key))
-                m.add_string(self.private_key.sign_ssh_session(self.randpool, self.H, self.username))
+                blob = self._get_session_blob(self.private_key, 'ssh-connection', self.username)
+                sig = self.private_key.sign_ssh_data(self.randpool, blob)
+                m.add_string(str(sig))
             else:
                 raise SSHException('Unknown auth method "%s"' % self.auth_method)
             self._send_message(m)
         else:
             self._log(DEBUG, 'Service request "%s" accepted (?)' % service)
 
-    def get_allowed_auths(self, username):
-        "override me!"
-        return 'password'
-
-    def check_auth_none(self, username):
-        "override me!  return int ==> auth status"
-        return self.AUTH_FAILED
-
-    def check_auth_password(self, username, password):
-        "override me!  return int ==> auth status"
-        return self.AUTH_FAILED
-
-    def check_auth_publickey(self, username, key):
-        "override me!  return int ==> auth status"
-        return self.AUTH_FAILED
-
-    def parse_userauth_request(self, m):
+    def _parse_userauth_request(self, m):
         if not self.server_mode:
             # er, uh... what?
             m = Message()
@@ -174,11 +247,11 @@ class Transport (BaseTransport):
         method = m.get_string()
         self._log(DEBUG, 'Auth request (type=%s) service=%s, username=%s' % (method, service, username))
         if service != 'ssh-connection':
-            self.disconnect_service_not_available()
+            self._disconnect_service_not_available()
             return
         if (self.auth_username is not None) and (self.auth_username != username):
             self._log(DEBUG, 'Auth rejected because the client attempted to change username in mid-flight')
-            self.disconnect_no_more_auth()
+            self._disconnect_no_more_auth()
             return
         if method == 'none':
             result = self.check_auth_none(username)
@@ -194,8 +267,32 @@ class Transport (BaseTransport):
             else:
                 result = self.check_auth_password(username, password)
         elif method == 'publickey':
-            # FIXME
-            result = self.check_auth_none(username)
+            sig_attached = m.get_boolean()
+            keytype = m.get_string()
+            keyblob = m.get_string()
+            key = self._key_from_blob(keytype, keyblob)
+            if (key is None) or (not key.valid):
+                self._log(DEBUG, 'Auth rejected: unsupported or mangled public key')
+                self._disconnect_no_more_auth()
+                return
+            # first check if this key is okay... if not, we can skip the verify
+            result = self.check_auth_publickey(username, key)
+            if result != self.AUTH_FAILED:
+                # key is okay, verify it
+                if not sig_attached:
+                    # client wants to know if this key is acceptable, before it
+                    # signs anything...  send special "ok" message
+                    m = Message()
+                    m.add_byte(chr(_MSG_USERAUTH_PK_OK))
+                    m.add_string(keytype)
+                    m.add_string(keyblob)
+                    self._send_message(m)
+                    return
+                sig = Message(m.get_string())
+                blob = self._get_session_blob(key, service, username)
+                if not key.verify_ssh_sig(blob, sig):
+                    self._log(DEBUG, 'Auth rejected: invalid signature')
+                    result = self.AUTH_FAILED
         else:
             result = self.check_auth_none(username)
         # okay, send result
@@ -215,15 +312,15 @@ class Transport (BaseTransport):
             self.auth_fail_count += 1
         self._send_message(m)
         if self.auth_fail_count >= 10:
-            self.disconnect_no_more_auth()
+            self._disconnect_no_more_auth()
 
-    def parse_userauth_success(self, m):
+    def _parse_userauth_success(self, m):
         self._log(INFO, 'Authentication successful!')
         self.authenticated = True
         if self.auth_event != None:
             self.auth_event.set()
 
-    def parse_userauth_failure(self, m):
+    def _parse_userauth_failure(self, m):
         authlist = m.get_list()
         partial = m.get_boolean()
         if partial:
@@ -237,7 +334,7 @@ class Transport (BaseTransport):
         if self.auth_event != None:
             self.auth_event.set()
 
-    def parse_userauth_banner(self, m):
+    def _parse_userauth_banner(self, m):
         banner = m.get_string()
         lang = m.get_string()
         self._log(INFO, 'Auth banner: ' + banner)
@@ -245,11 +342,11 @@ class Transport (BaseTransport):
 
     _handler_table = BaseTransport._handler_table.copy()
     _handler_table.update({
-        _MSG_SERVICE_REQUEST: parse_service_request,
-        _MSG_SERVICE_ACCEPT: parse_service_accept,
-        _MSG_USERAUTH_REQUEST: parse_userauth_request,
-        _MSG_USERAUTH_SUCCESS: parse_userauth_success,
-        _MSG_USERAUTH_FAILURE: parse_userauth_failure,
-        _MSG_USERAUTH_BANNER: parse_userauth_banner,
+        _MSG_SERVICE_REQUEST: _parse_service_request,
+        _MSG_SERVICE_ACCEPT: _parse_service_accept,
+        _MSG_USERAUTH_REQUEST: _parse_userauth_request,
+        _MSG_USERAUTH_SUCCESS: _parse_userauth_success,
+        _MSG_USERAUTH_FAILURE: _parse_userauth_failure,
+        _MSG_USERAUTH_BANNER: _parse_userauth_banner,
         })
 

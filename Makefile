@@ -8,8 +8,9 @@ RELEASE=charmander
 release:
 	python ./setup.py sdist --formats=zip
 
-docs:
+docs: always
 	epydoc -o docs/ paramiko
+always:
 
 # places where the version number is stored:
 #

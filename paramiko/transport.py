@@ -155,6 +155,26 @@ class BaseTransport (threading.Thread):
         self.server_accepts = [ ]
         self.server_accept_cv = threading.Condition(self.lock)
 
+    def __repr__(self):
+        """
+        Returns a string representation of this object, for debugging.
+
+        @rtype: string
+        """
+        if not self.active:
+            return '<paramiko.BaseTransport (unconnected)>'
+        out = '<paramiko.BaseTransport'
+        #if self.remote_version != '':
+        #    out += ' (server version "%s")' % self.remote_version
+        if self.local_cipher != '':
+            out += ' (cipher %s)' % self.local_cipher
+        if len(self.channels) == 1:
+            out += ' (active; 1 open channel)'
+        else:
+            out += ' (active; %d open channels)' % len(self.channels)
+        out += '>'
+        return out
+
     def start_client(self, event=None):
         self.completion_event = event
         self.start()
@@ -179,6 +199,19 @@ class BaseTransport (threading.Thread):
         self.server_key_dict[key.get_name()] = key
 
     def get_server_key(self):
+        """
+        Return the active host key, in server mode.  After negotiating with the
+        client, this method will return the negotiated host key.  If only one
+        type of host key was set with L{add_server_key}, that's the only key
+        that will ever be returned.  But in cases where you have set more than
+        one type of host key (for example, an RSA key and a DSS key), the key
+        type will be negotiated by the client, and this method will return the
+        key of the type agreed on.  If the host key has not been negotiated
+        yet, C{None} is returned.  In client mode, the behavior is undefined.
+
+        @return: host key of the type negotiated by the client, or C{None}.
+        @rtype: L{PKey <pkey.PKey>}
+        """
         try:
             return self.server_key_dict[self.host_key_type]
         except KeyError:
@@ -227,37 +260,6 @@ class BaseTransport (threading.Thread):
         BaseTransport._modulus_pack = None
         return False
     load_server_moduli = staticmethod(load_server_moduli)
-
-    def _get_modulus_pack(self):
-        "used by KexGex to find primes for group exchange"
-        return self._modulus_pack
-
-    def __repr__(self):
-        """
-        Returns a string representation of this object, for debugging.
-
-        @rtype: string
-        """
-        if not self.active:
-            return '<paramiko.BaseTransport (unconnected)>'
-        out = '<paramiko.BaseTransport'
-        #if self.remote_version != '':
-        #    out += ' (server version "%s")' % self.remote_version
-        if self.local_cipher != '':
-            out += ' (cipher %s)' % self.local_cipher
-        if len(self.channels) == 1:
-            out += ' (active; 1 open channel)'
-        else:
-            out += ' (active; %d open channels)' % len(self.channels)
-        out += '>'
-        return out
-
-    def _log(self, level, msg):
-        if type(msg) == type([]):
-            for m in msg:
-                self.logger.log(level, m)
-        else:
-            self.logger.log(level, msg)
 
     def close(self):
         """
@@ -468,6 +470,17 @@ class BaseTransport (threading.Thread):
     ###  internals...
 
     
+    def _log(self, level, msg):
+        if type(msg) == type([]):
+            for m in msg:
+                self.logger.log(level, m)
+        else:
+            self.logger.log(level, msg)
+
+    def _get_modulus_pack(self):
+        "used by KexGex to find primes for group exchange"
+        return self._modulus_pack
+
     def _unlink_channel(self, chanid):
         "used by a Channel to remove itself from the active channel list"
         try:
@@ -597,13 +610,16 @@ class BaseTransport (threading.Thread):
         "used by a kex object to register the next packet type it expects to see"
         self.expected_packet = type
 
-    def _verify_key(self, host_key, sig):
-        if self.host_key_type == 'ssh-rsa':
-            key = RSAKey(Message(host_key))
-        elif self.host_key_type == 'ssh-dss':
-            key = DSSKey(Message(host_key))
+    def _key_from_blob(self, keytype, keyblob):
+        if keytype == 'ssh-rsa':
+            return RSAKey(Message(keyblob))
+        elif keytype == 'ssh-dss':
+            return DSSKey(Message(keyblob))
         else:
-            key = None
+            return None
+
+    def _verify_key(self, host_key, sig):
+        key = self._key_from_blob(self.host_key_type, host_key)
         if (key == None) or not key.valid:
             raise SSHException('Unknown host key type')
         if not key.verify_ssh_sig(self.H, Message(sig)):
@@ -745,7 +761,7 @@ class BaseTransport (threading.Thread):
         kind of key negotiation we support.
         """
         if self.server_mode:
-            if (self.modulus_pack is None) and ('diffie-hellman-group-exchange-sha1' in self.preferred_kex):
+            if (self._modulus_pack is None) and ('diffie-hellman-group-exchange-sha1' in self.preferred_kex):
                 # can't do group-exchange if we don't have a pack of potential primes
                 self.preferred_kex.remove('diffie-hellman-group-exchange-sha1')
             available_server_keys = filter(self.server_key_dict.keys().__contains__,

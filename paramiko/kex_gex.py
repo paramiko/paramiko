@@ -145,7 +145,7 @@ class KexGex(object):
         m.add_byte(chr(_MSG_KEXDH_GEX_REPLY))
         m.add_string(key)
         m.add_mpint(self.f)
-        m.add_string(sig)
+        m.add_string(str(sig))
         self.transport._send_message(m)
         self.transport._activate_outbound()
         

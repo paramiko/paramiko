@@ -3,7 +3,6 @@
 import base64
 from ssh_exception import SSHException
 from message import Message
-from transport import _MSG_USERAUTH_REQUEST
 from util import inflate_long, deflate_long
 from Crypto.PublicKey import DSA
 from Crypto.Hash import SHA
@@ -14,9 +13,11 @@ from util import format_binary
 
 class DSSKey (PKey):
 
-    def __init__(self, msg=None):
+    def __init__(self, msg=None, data=None):
         self.valid = 0
-        if (msg == None) or (msg.get_string() != 'ssh-dss'):
+        if (msg is None) and (data is not None):
+            msg = Message(data)
+        if (msg is None) or (msg.get_string() != 'ssh-dss'):
             return
         self.p = msg.get_mpint()
         self.q = msg.get_mpint()
@@ -36,8 +37,32 @@ class DSSKey (PKey):
         m.add_mpint(self.y)
         return str(m)
 
+    def __hash__(self):
+        h = hash(self.get_name())
+        h = h * 37 + hash(self.p)
+        h = h * 37 + hash(self.q)
+        h = h * 37 + hash(self.g)
+        h = h * 37 + hash(self.y)
+        # h might be a long by now...
+        return hash(h)
+
     def get_name(self):
         return 'ssh-dss'
+
+    def sign_ssh_data(self, randpool, data):
+        hash = SHA.new(data).digest()
+        dss = DSA.construct((long(self.y), long(self.g), long(self.p), long(self.q), long(self.x)))
+        # generate a suitable k
+        qsize = len(deflate_long(self.q, 0))
+        while 1:
+            k = inflate_long(randpool.get_bytes(qsize), 1)
+            if (k > 2) and (k < self.q):
+                break
+        r, s = dss.sign(inflate_long(hash, 1), k)
+        m = Message()
+        m.add_string('ssh-dss')
+        m.add_string(deflate_long(r, 0) + deflate_long(s, 0))
+        return m
 
     def verify_ssh_sig(self, data, msg):
         if not self.valid:
@@ -59,21 +84,6 @@ class DSSKey (PKey):
         dss = DSA.construct((long(self.y), long(self.g), long(self.p), long(self.q)))
         return dss.verify(sigM, (sigR, sigS))
 
-    def sign_ssh_data(self, randpool, data):
-        hash = SHA.new(data).digest()
-        dss = DSA.construct((long(self.y), long(self.g), long(self.p), long(self.q), long(self.x)))
-        # generate a suitable k
-        qsize = len(deflate_long(self.q, 0))
-        while 1:
-            k = inflate_long(randpool.get_bytes(qsize), 1)
-            if (k > 2) and (k < self.q):
-                break
-        r, s = dss.sign(inflate_long(hash, 1), k)
-        m = Message()
-        m.add_string('ssh-dss')
-        m.add_string(deflate_long(r, 0) + deflate_long(s, 0))
-        return str(m)
-
     def read_private_key_file(self, filename):
         # private key file contains:
         # DSAPrivateKey = { version = 0, p, q, g, y, x }
@@ -94,15 +104,3 @@ class DSSKey (PKey):
         self.x = keylist[5]
         self.size = len(deflate_long(self.p, 0))
         self.valid = 1
-
-    def sign_ssh_session(self, randpool, sid, username):
-        m = Message()
-        m.add_string(sid)
-        m.add_byte(chr(_MSG_USERAUTH_REQUEST))
-        m.add_string(username)
-        m.add_string('ssh-connection')
-        m.add_string('publickey')
-        m.add_boolean(1)
-        m.add_string('ssh-dss')
-        m.add_string(str(self))
-        return self.sign_ssh_data(randpool, str(m))
