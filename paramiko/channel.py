@@ -490,6 +490,8 @@ class Channel (object):
         @return: C{True} if a L{recv_stderr} call on this channel would
             immediately return at least one byte; C{False} otherwise.
         @rtype: boolean
+        
+        @since: 1.1
         """
         self.lock.acquire()
         try:
@@ -515,6 +517,8 @@ class Channel (object):
         
         @raise socket.timeout: if no data is ready before the timeout set by
         L{settimeout}.
+        
+        @since: 1.1
         """
         out = ''
         self.lock.acquire()
@@ -653,6 +657,8 @@ class Channel (object):
         
         @return: object which can be used for python file I/O.
         @rtype: L{ChannelFile}
+
+        @since: 1.1
         """
         return ChannelStderrFile(*([self] + list(params)))
         

@@ -97,7 +97,7 @@ class SFTPServer (BaseSFTP, SubsystemHandler):
 
         @param e: an errno code, as from C{OSError.errno}.
         @type e: int
-        @return: an SFTP error code like L{SFTP_NO_SUCH_fILE}.
+        @return: an SFTP error code like L{SFTP_NO_SUCH_FILE}.
         @rtype: int
         """
         if e == errno.EACCES:
