@@ -68,6 +68,12 @@ if sys.version_info < (2, 3):
         import logging22 as logging
     import select
     PY22 = True
+
+    import socket
+    if not hasattr(socket, 'timeout'):
+        class timeout(socket.error): pass
+        socket.timeout = timeout
+        del timeout
 else:
     import logging
     PY22 = False
