@@ -73,7 +73,11 @@ try:
         sys.exit(1)
     # print repr(t)
 
-    chan = t.accept()
+    # wait for auth
+    chan = t.accept(10)
+    if chan is None:
+        print '*** No channel.'
+        sys.exit(1)
     chan.event.wait(10)
     if not chan.event.isSet():
         print '*** Client never asked for a shell.'

@@ -1,5 +1,5 @@
 secsh 0.1
-"bulbasaur" release, 18 sep 2003
+"charmander" release, 10 nov 2003
 
 (c) 2003 Robey Pointer <robey@lag.net>
 
@@ -54,7 +54,7 @@ know these screwy steps.  i just don't understand windows enough.])
 
 ***  DEMO
 
-the demo app (demo.py) is a raw implementation of the normal 'ssh' CLI tool.
+the demo client (demo.py) is a raw implementation of the normal 'ssh' CLI tool.
 while the secsh library should work on all platforms, the demo app will only
 run on posix, because it uses select.
 
@@ -68,6 +68,10 @@ read your private key file(s) if they're not password-protected.
 the demo app leaves a logfile called "demo.log" so you can see what secsh
 logs as it works.  but the most interesting part is probably the code itself,
 which hopefully demonstrates how you can use the secsh library.
+
+there's also now a demo server (demo_server.py) which listens on port 2200
+and accepts a login (robey/foo) and pretends to be a BBS, just to demonstrate
+how to perform the server side of things.
 
 
 ***  USE
@@ -122,6 +126,8 @@ must call "close()" on the Transport to kill this thread.  on many platforms,
 the python interpreter will refuse to exit cleanly if any of these threads
 are still running (and you'll have to kill -9 from another shell window).
 
+[fixme: add info about server mode]
+
 
 ***  CHANGELOG
 
@@ -155,6 +161,15 @@ are still running (and you'll have to kill -9 from another shell window).
       method "start_client(event)" to get things rolling
     * re-keying now takes place after 1GB of data or 1 billion packets
       (these limits can be easily changed per-session if needed)
+2003-11-06:
+    * added a demo server and host key
+2003-11-09:
+    * lots of changes to server mode
+    * ChannelFile supports universal newline mode; fixed readline
+    * fixed a bug with parsing the remote banner
+2003-11-10:    version "charmander"
+    * renamed SSHException -> SecshException
+    * cleaned up server mode and the demo server
 
 
 ***  MISSING LINKS
@@ -164,3 +179,5 @@ are still running (and you'll have to kill -9 from another shell window).
 * multi-part auth not supported (ie, need username AND pk)
 * should have a simple synchronous method that handles all auth & events,
   by pre-seeding the password or key info, and the expected key
+* server mode needs better doc
+

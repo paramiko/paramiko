@@ -16,7 +16,7 @@ from dsskey import DSSKey
 
 
 __author__ = "Robey Pointer <robey@lag.net>"
-__date__ = "9 Nov 2003"
+__date__ = "10 Nov 2003"
 __version__ = "0.1-charmander"
 __credits__ = "Huzzah!"
 
