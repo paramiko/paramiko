@@ -1,5 +1,23 @@
 #!/usr/bin/python
 
+# Copyright (C) 2003-2004 Robey Pointer <robey@lag.net>
+#
+# This file is part of paramiko.
+#
+# Paramiko is free software; you can redistribute it and/or modify it under the
+# terms of the GNU Lesser General Public License as published by the Free
+# Software Foundation; either version 2.1 of the License, or (at your option)
+# any later version.
+#
+# Paramiko is distrubuted in the hope that it will be useful, but WITHOUT ANY
+# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
+# A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more
+# details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# along with Foobar; if not, write to the Free Software Foundation, Inc.,
+# 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
+
 """
 I{Paramiko} (a combination of the esperanto words for "paranoid" and "friend")
 is a module for python 2.3 or greater that implements the SSH2 protocol for
@@ -43,8 +61,8 @@ if (sys.version_info[0] < 2) or ((sys.version_info[0] == 2) and (sys.version_inf
 
 
 __author__ = "Robey Pointer <robey@lag.net>"
-__date__ = "10 Nov 2003"
-__version__ = "0.1-charmander"
+__date__ = "04 Jan 2004"
+__version__ = "0.9-doduo"
 #__credits__ = "Huzzah!"
 __license__ = "GNU Lesser General Public License (LGPL)"
 

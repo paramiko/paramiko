@@ -2,8 +2,7 @@
 # aerodactyl (13sep03)
 # bulbasaur (18sep03)
 # charmander (10nov03)
-
-RELEASE=charmander
+# doduo (04jan04) - 0.9
 
 release:
 	python ./setup.py sdist --formats=zip

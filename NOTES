@@ -15,40 +15,6 @@ SSHOutputStream --> ssh2 chan --> ssh2 transport --> SOS   [no thread]
 
 exported API...
 
-from Transport:
-*   is_authenticated
-    auth_key
-    auth_password
-    get_allowed_auths
-    check_auth_none
-    check_auth_password
-    check_auth_publickey
-    accept
-
-from Channel:
-    set_name
-    get_name
-    send_eof
-    settimeout
-    gettimeout
-    setblocking
-    close
-    recv
-    send
-    sendall
-    makefile
-    fileno
-    shutdown
-  [client:]
-    get_pty
-    invoke_shell
-    exec_command
-    invoke_subsystem
-    resize_pty
-  [server:]
-    check_pty_request
-    check_shell_request
-
 from ChannelFile:
     next
     write

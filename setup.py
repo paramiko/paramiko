@@ -9,17 +9,17 @@ are supported.
 (Previous name: secsh)
 
 Required packages:
-    pyCrypto
+    pyCrypt
 '''
 
 setup(name = "paramiko",
-      version = "0.1-charmander",
+      version = "0.9-doduo",
       description = "SSH2 protocol library",
       author = "Robey Pointer",
       author_email = "robey@lag.net",
       url = "http://www.lag.net/~robey/paramiko/",
       packages = [ 'paramiko' ],
-      download_url = 'http://www.lag.net/~robey/paramiko/paramiko-0.1-charmander.zip',
+      download_url = 'http://www.lag.net/~robey/paramiko/paramiko-0.9-doduo.zip',
       license = 'LGPL',
       platforms = 'Posix; MacOS X; Windows',
       classifiers = [ 'Development Status :: 3 - Alpha',

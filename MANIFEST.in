@@ -1,1 +1,2 @@
+include ChangeLog LICENSE demo.py demo_simple.py demo_server.py demo_dss_key demo_rsa_key
 recursive-include docs *

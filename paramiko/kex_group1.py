@@ -1,8 +1,27 @@
 #!/usr/bin/python
 
-# standard SSH key exchange ("kex" if you wanna sound cool):
-# diffie-hellman of 1024 bit key halves, using a known "p" prime and
-# "g" generator.
+# Copyright (C) 2003-2004 Robey Pointer <robey@lag.net>
+#
+# This file is part of paramiko.
+#
+# Paramiko is free software; you can redistribute it and/or modify it under the
+# terms of the GNU Lesser General Public License as published by the Free
+# Software Foundation; either version 2.1 of the License, or (at your option)
+# any later version.
+#
+# Paramiko is distrubuted in the hope that it will be useful, but WITHOUT ANY
+# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
+# A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more
+# details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# along with Foobar; if not, write to the Free Software Foundation, Inc.,
+# 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
+
+"""
+Standard SSH key exchange ("kex" if you wanna sound cool).  Diffie-Hellman of
+1024 bit key halves, using a known "p" prime and "g" generator.
+"""
 
 from message import Message, inflate_long
 from ssh_exception import SSHException
