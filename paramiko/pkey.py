@@ -22,7 +22,7 @@
 Common API for all public keys.
 """
 
-import base64
+import os, base64
 
 from Crypto.Hash import MD5
 from Crypto.Cipher import DES3
@@ -301,6 +301,8 @@ class PKey (object):
         @raise IOError: if there was an error writing the file.
         """
         f = open(filename, 'w', 0600)
+        # grrr... the mode doesn't always take hold
+        os.chmod(filename, 0600)
         f.write('-----BEGIN %s PRIVATE KEY-----\n' % tag)
         if password is not None:
             # since we only support one cipher here, use it
@@ -313,7 +315,9 @@ class PKey (object):
             key = util.generate_key_bytes(MD5, salt, password, keysize)
             if len(data) % blocksize != 0:
                 n = blocksize - len(data) % blocksize
-                data += randpool.get_bytes(n)
+                #data += randpool.get_bytes(n)
+                # that would make more sense ^, but it confuses openssh.
+                data += '\0' * n
             data = cipher.new(key, mode, salt).encrypt(data)
             f.write('Proc-Type: 4,ENCRYPTED\n')
             f.write('DEK-Info: %s,%s\n' % (cipher_name, util.hexify(salt)))
