@@ -27,6 +27,7 @@ do test file operations in (so no existing files will be harmed).
 
 import sys, os
 import random
+import logging
 
 # need a host and private-key where we have acecss
 HOST = os.environ.get('TEST_HOST', 'localhost')
@@ -309,7 +310,29 @@ class SFTPTest (unittest.TestCase):
             except:
                 pass
 
-    def test_A_lots_of_files(self):
+    def test_A_flush_seek(self):
+        """
+        verify that buffered writes are automatically flushed on seek.
+        """
+        f = sftp.open(FOLDER + '/happy.txt', 'w', 1)
+        try:
+            f.write('full line.\n')
+            f.write('partial')
+            f.seek(9, f.SEEK_SET)
+            f.write('?\n')
+            f.close()
+
+            f = sftp.open(FOLDER + '/happy.txt', 'r')
+            self.assertEqual(f.readline(), 'full line?\n')
+            self.assertEqual(f.read(7), 'partial')
+            f.close()
+        finally:
+            try:
+                sftp.remove(FOLDER + '/happy.txt')
+            except:
+                pass
+
+    def test_B_lots_of_files(self):
         """
         create a bunch of files over the same session.
         """
@@ -326,7 +349,6 @@ class SFTPTest (unittest.TestCase):
             numlist = range(numfiles)
             while len(numlist) > 0:
                 r = numlist[random.randint(0, len(numlist) - 1)]
-                print r,
                 f = sftp.open('%s/file%d.txt' % (FOLDER, r))
                 self.assertEqual(f.readline(), 'this is file #%d.\n' % r)
                 f.close()
@@ -337,3 +359,22 @@ class SFTPTest (unittest.TestCase):
                     sftp.remove('%s/file%d.txt' % (FOLDER, i))
                 except:
                     pass
+
+    def test_C_big_file(self):
+        """
+        write a 1MB file, with no linefeeds, using line buffering.
+        FIXME: this is slow!  what causes the slowness?
+        """
+        kblob = (1024 * 'x')
+        try:
+            f = sftp.open('%s/hongry.txt' % FOLDER, 'w', 1)
+            for n in range(1024):
+                f.write(kblob)
+                if n % 128 == 0:
+                    sys.stderr.write('.')
+            f.close()
+            sys.stderr.write(' ')
+
+            self.assertEqual(sftp.stat('%s/hongry.txt' % FOLDER).st_size, 1024 * 1024)
+        finally:
+            sftp.remove('%s/hongry.txt' % FOLDER)

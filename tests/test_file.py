@@ -136,4 +136,3 @@ class BufferedFileTest (unittest.TestCase):
         f.write('Enough.')
         self.assertEqual(f.read(20), 'Too small.  Enough.')
         f.close()
-
