@@ -1426,8 +1426,8 @@ class BaseTransport (threading.Thread):
         reason = m.get_int()
         reason_str = m.get_string()
         lang = m.get_string()
-        if _CONNECTION_FAILED_CODE.has_key(reason):
-            reason_text = _CONNECTION_FAILED_CODE[reason]
+        if CONNECTION_FAILED_CODE.has_key(reason):
+            reason_text = CONNECTION_FAILED_CODE[reason]
         else:
             reason_text = '(unknown code)'
         self._log(INFO, 'Secsh channel %d open FAILED: %s: %s' % (chanid, reason_str, reason_text))
