@@ -158,13 +158,14 @@ class Channel(object):
             self.transport.send_message(m)
 
     def handle_eof(self, m):
-        self.eof_received = 1
         try:
             self.lock.acquire()
-            self.in_buffer_cv.notifyAll()
-            if self.pipe_wfd != None:
-                os.close(self.pipe_wfd)
-                self.pipe_wfd = None
+            if not self.eof_received:
+                self.eof_received = 1
+                self.in_buffer_cv.notifyAll()
+                if self.pipe_wfd != None:
+                    os.close(self.pipe_wfd)
+                    self.pipe_wfd = None
         finally:
             self.lock.release()
         self.log(DEBUG, 'EOF received')
@@ -282,15 +283,18 @@ class Channel(object):
             self.settimeout(0.0)
 
     def close(self):
-        if self.closed or not self.active:
-            return
-        self.send_eof()
-        m = Message()
-        m.add_byte(chr(MSG_CHANNEL_CLOSE))
-        m.add_int(self.remote_chanid)
-        self.transport.send_message(m)
-        self.closed = 1
-        self.transport.unlink_channel(self.chanid)
+        try:
+            self.lock.acquire()
+            if self.active and not self.closed:
+                self.send_eof()
+                m = Message()
+                m.add_byte(chr(MSG_CHANNEL_CLOSE))
+                m.add_int(self.remote_chanid)
+                self.transport.send_message(m)
+                self.closed = 1
+                self.transport.unlink_channel(self.chanid)
+        finally:
+            self.lock.release()
 
     def recv_ready(self):
         "doesn't work if you've called fileno()"
