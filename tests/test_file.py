@@ -15,7 +15,7 @@
 # details.
 #
 # You should have received a copy of the GNU Lesser General Public License
-# along with Foobar; if not, write to the Free Software Foundation, Inc.,
+# along with Paramiko; if not, write to the Free Software Foundation, Inc.,
 # 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
 
 """
@@ -70,10 +70,13 @@ class BufferedFileTest (unittest.TestCase):
 
     def test_2_readline(self):
         f = LoopbackFile('r+U')
-        f.write('First line.\nSecond line.\r\nFinal line non-terminated.')
+        f.write('First line.\nSecond line.\r\nThird line.\nFinal line non-terminated.')
         self.assertEqual(f.readline(), 'First line.\n')
         # universal newline mode should convert this linefeed:
         self.assertEqual(f.readline(), 'Second line.\n')
+        # truncated line:
+        self.assertEqual(f.readline(7), 'Third l')
+        self.assertEqual(f.readline(), 'ine.\n')
         self.assertEqual(f.readline(), 'Final line non-terminated.')
         self.assertEqual(f.readline(), '')
         f.close()
@@ -135,4 +138,16 @@ class BufferedFileTest (unittest.TestCase):
         self.assertEqual(f.read(4), '')
         f.write('Enough.')
         self.assertEqual(f.read(20), 'Too small.  Enough.')
+        f.close()
+
+    def test_7_read_all(self):
+        """
+        verify that read(-1) returns everything left in the file.
+        """
+        f = LoopbackFile('r+', 16)
+        f.write('The first thing you need to do is open your eyes. ')
+        f.write('Then, you need to close them again.\n')
+        s = f.read(-1)
+        self.assertEqual(s, 'The first thing you need to do is open your eyes. Then, you ' +
+                         'need to close them again.\n')
         f.close()
