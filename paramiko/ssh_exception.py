@@ -25,12 +25,31 @@ Exceptions defined by paramiko.
 
 class SSHException (Exception):
     """
-    Exception thrown by failures in SSH2 protocol negotiation or logic errors.
+    Exception raised by failures in SSH2 protocol negotiation or logic errors.
     """
     pass
 
 class PasswordRequiredException (SSHException):
     """
-    Exception thrown when a password is needed to unlock a private key file.
+    Exception raised when a password is needed to unlock a private key file.
     """
     pass
+
+class BadAuthenticationType (SSHException):
+    """
+    Exception raised when an authentication type (like password) is used, but
+    the server isn't allowing that type.  (It may only allow public-key, for
+    example.)
+    
+    @ivar allowed_types: list of allowed authentication types provided by the
+        server (possible values are: C{"none"}, C{"password"}, and
+        C{"publickey"}).
+    @type allowed_types: list
+    
+    @since: 1.1
+    """
+    allowed_types = []
+    
+    def __init__(self, explanation, types):
+        SSHException.__init__(self, explanation)
+        self.allowed_types = types

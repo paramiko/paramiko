@@ -23,6 +23,8 @@ L{Transport} is a subclass of L{BaseTransport} that handles authentication.
 This separation keeps either class file from being too unwieldy.
 """
 
+import threading
+
 # this helps freezing utils
 import encodings.utf_8
 
@@ -30,7 +32,7 @@ from common import *
 import util
 from transport import BaseTransport
 from message import Message
-from ssh_exception import SSHException
+from ssh_exception import SSHException, BadAuthenticationType
 
 
 class Transport (BaseTransport):
@@ -102,12 +104,19 @@ class Transport (BaseTransport):
         else:
             return self.username
 
-    def auth_publickey(self, username, key, event):
+    def auth_publickey(self, username, key, event=None):
         """
         Authenticate to the server using a private key.  The key is used to
-        sign data from the server, so it must include the private part.  The
-        given L{event} is triggered on success or failure.  On success,
-        L{is_authenticated} will return C{True}.
+        sign data from the server, so it must include the private part.
+        
+        If an C{event} is passed in, this method will return immediately, and
+        the event will be triggered once authentication succeeds or fails.  On
+        success, L{is_authenticated} will return C{True}.  On failure, you may
+        use L{get_exception} to get more detailed error information.
+        
+        Since 1.1, if no event is passed, this method will block until the
+        authentication succeeds or fails.  On failure, an exception is raised.
+        Otherwise, the method simply returns.
 
         @param username: the username to authenticate as.
         @type username: string
@@ -116,26 +125,46 @@ class Transport (BaseTransport):
         @param event: an event to trigger when the authentication attempt is
         complete (whether it was successful or not)
         @type event: threading.Event
+        
+        @raise BadAuthenticationType: if public-key authentication isn't
+            allowed by the server for this user (and no event was passed in).
+        @raise SSHException: if the authentication failed (and no event was
+            passed in).
         """
         if (not self.active) or (not self.initial_kex_done):
             # we should never try to authenticate unless we're on a secure link
             raise SSHException('No existing session')
+        if event is None:
+            my_event = threading.Event()
+        else:
+            my_event = event
+        self.lock.acquire()
         try:
-            self.lock.acquire()
-            self.auth_event = event
+            self.auth_event = my_event
             self.auth_method = 'publickey'
             self.username = username
             self.private_key = key
             self._request_auth()
         finally:
             self.lock.release()
+        if event is not None:
+            # caller wants to wait for event themselves
+            return
+        self._wait_for_response(my_event)
 
-    def auth_password(self, username, password, event):
+    def auth_password(self, username, password, event=None):
         """
         Authenticate to the server using a password.  The username and password
-        are sent over an encrypted link, and the given L{event} is triggered on
-        success or failure.  On success, L{is_authenticated} will return
-        C{True}.
+        are sent over an encrypted link.
+        
+        If an C{event} is passed in, this method will return immediately, and
+        the event will be triggered once authentication succeeds or fails.  On
+        success, L{is_authenticated} will return C{True}.  On failure, you may
+        use L{get_exception} to get more detailed error information.
+
+        Since 1.1, if no event is passed, this method will block until the
+        authentication succeeds or fails.  On failure, an exception is raised.
+        Otherwise, the method simply returns.
 
         @param username: the username to authenticate as.
         @type username: string
@@ -144,19 +173,32 @@ class Transport (BaseTransport):
         @param event: an event to trigger when the authentication attempt is
         complete (whether it was successful or not)
         @type event: threading.Event
+        
+        @raise BadAuthenticationType: if password authentication isn't
+            allowed by the server for this user (and no event was passed in).
+        @raise SSHException: if the authentication failed (and no event was
+            passed in).
         """
         if (not self.active) or (not self.initial_kex_done):
             # we should never try to send the password unless we're on a secure link
             raise SSHException('No existing session')
+        if event is None:
+            my_event = threading.Event()
+        else:
+            my_event = event
+        self.lock.acquire()
         try:
-            self.lock.acquire()
-            self.auth_event = event
+            self.auth_event = my_event
             self.auth_method = 'password'
             self.username = username
             self.password = password
             self._request_auth()
         finally:
             self.lock.release()
+        if event is not None:
+            # caller wants to wait for event themselves
+            return
+        self._wait_for_response(my_event)
 
 
     ###  internals...
@@ -198,6 +240,22 @@ class Transport (BaseTransport):
         m.add_string(str(key))
         return str(m)
 
+    def _wait_for_response(self, event):
+        while True:
+            event.wait(0.1)
+            if not self.active:
+                e = self.get_exception()
+                if e is None:
+                    e = SSHException('Authentication failed.')
+                raise e
+            if event.isSet():
+                break
+        if not self.is_authenticated():
+            e = self.get_exception()
+            if e is None:
+                e = SSHException('Authentication failed.')
+            raise e
+        
     def _parse_service_request(self, m):
         service = m.get_string()
         if self.server_mode and (service == 'ssh-userauth'):
@@ -264,12 +322,12 @@ class Transport (BaseTransport):
             result = self.server_object.check_auth_none(username)
         elif method == 'password':
             changereq = m.get_boolean()
-            password = m.get_string().decode('UTF-8')
+            password = m.get_string().decode('UTF-8', 'replace')
             if changereq:
                 # always treated as failure, since we don't support changing passwords, but collect
                 # the list of valid auth types from the callback anyway
                 self._log(DEBUG, 'Auth request to change passwords (rejected)')
-                newpassword = m.get_string().decode('UTF-8')
+                newpassword = m.get_string().decode('UTF-8', 'replace')
                 result = AUTH_FAILED
             else:
                 result = self.server_object.check_auth_password(username, password)
@@ -339,13 +397,13 @@ class Transport (BaseTransport):
         if partial:
             self._log(INFO, 'Authentication continues...')
             self._log(DEBUG, 'Methods: ' + str(partial))
-            # FIXME - do something
+            # FIXME: multi-part auth not supported
             pass
+        if self.auth_method not in authlist:
+            self.saved_exception = BadAuthenticationType('Bad authentication type', authlist)
         self._log(INFO, 'Authentication failed.')
         self.authenticated = False
-        # FIXME: i don't think we need to close() necessarily here
         self.username = None
-        self.close()
         if self.auth_event != None:
             self.auth_event.set()
 

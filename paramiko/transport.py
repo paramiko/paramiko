@@ -681,8 +681,8 @@ class BaseTransport (threading.Thread):
         return False
 
     def accept(self, timeout=None):
+        self.lock.acquire()
         try:
-            self.lock.acquire()
             if len(self.server_accepts) > 0:
                 chan = self.server_accepts.pop(0)
             else:
@@ -740,8 +740,7 @@ class BaseTransport (threading.Thread):
         while 1:
             event.wait(0.1)
             if not self.active:
-                e = self.saved_exception
-                self.saved_exception = None
+                e = self.get_exception()
                 if e is not None:
                     raise e
                 raise SSHException('Negotiation failed.')
@@ -759,27 +758,34 @@ class BaseTransport (threading.Thread):
             self._log(DEBUG, 'Host key verified (%s)' % hostkey.get_name())
 
         if (pkey is not None) or (password is not None):
-            event.clear()
             if password is not None:
                 self._log(DEBUG, 'Attempting password auth...')
-                self.auth_password(username, password, event)
+                self.auth_password(username, password)
             else:
-                self._log(DEBUG, 'Attempting pkey auth...')
-                self.auth_publickey(username, pkey, event)
-            while 1:
-                event.wait(0.1)
-                if not self.active:
-                    e = self.saved_exception
-                    self.saved_exception = None
-                    if e is not None:
-                        raise e
-                    raise SSHException('Authentication failed.')
-                if event.isSet():
-                    break
-            if not self.is_authenticated():
-                raise SSHException('Authentication failed.')
+                self._log(DEBUG, 'Attempting public-key auth...')
+                self.auth_publickey(username, pkey)
 
         return
+        
+    def get_exception(self):
+        """
+        Return any exception that happened during the last server request.
+        This can be used to fetch more specific error information after using
+        calls like L{start_client}.  The exception (if any) is cleared after
+        this call.
+        
+        @return: an exception, or C{None} if there is no stored exception.
+        @rtype: Exception
+        
+        @since: 1.1
+        """
+        self.lock.acquire()
+        try:
+            e = self.saved_exception
+            self.saved_exception = None
+            return e
+        finally:
+            self.lock.release()
 
     def set_subsystem_handler(self, name, handler, *larg, **kwarg):
         """

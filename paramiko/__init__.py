@@ -77,6 +77,7 @@ DSSKey = dsskey.DSSKey
 SSHException = ssh_exception.SSHException
 Message = message.Message
 PasswordRequiredException = ssh_exception.PasswordRequiredException
+BadAuthenticationType = ssh_exception.BadAuthenticationType
 SFTP = sftp_client.SFTP
 SFTPClient = sftp_client.SFTPClient
 SFTPServer = sftp_server.SFTPServer
@@ -105,6 +106,7 @@ __all__ = [ 'Transport',
             'Message',
             'SSHException',
             'PasswordRequiredException',
+            'BadAuthenticationType',
             'SFTP',
             'SFTPHandle',
             'SFTPClient',

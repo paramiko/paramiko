@@ -22,14 +22,17 @@
 Some unit tests for the ssh2 protocol in Transport.
 """
 
-import unittest, threading
-from paramiko import Transport, SecurityOptions, ServerInterface, RSAKey, DSSKey
+import sys, unittest, threading
+from paramiko import Transport, SecurityOptions, ServerInterface, RSAKey, DSSKey, \
+    SSHException, BadAuthenticationType
 from paramiko import AUTH_FAILED, AUTH_SUCCESSFUL
 from loop import LoopSocket
 
 
 class NullServer (ServerInterface):
     def get_allowed_auths(self, username):
+        if username == 'slowdive':
+            return 'publickey,password'
         return 'publickey'
 
     def check_auth_password(self, username, password):
@@ -90,4 +93,51 @@ class TransportTest (unittest.TestCase):
         self.assert_(event.isSet())
         self.assert_(self.ts.is_active())
 
-    
+    def test_3_bad_auth_type(self):
+        """
+        verify that we get the right exception when an unsupported auth
+        type is requested.
+        """
+        host_key = RSAKey.from_private_key_file('tests/test_rsa.key')
+        public_host_key = RSAKey(data=str(host_key))
+        self.ts.add_server_key(host_key)
+        event = threading.Event()
+        server = NullServer()
+        self.assert_(not event.isSet())
+        self.ts.start_server(event, server)
+        self.tc.ultra_debug = True
+        try:
+            self.tc.connect(hostkey=public_host_key,
+                            username='unknown', password='error')
+            self.assert_(False)
+        except:
+            etype, evalue, etb = sys.exc_info()
+            self.assertEquals(BadAuthenticationType, etype)
+            self.assertEquals(['publickey'], evalue.allowed_types)
+
+    def test_4_bad_password(self):
+        """
+        verify that a bad password gets the right exception, and that a retry
+        with the right password works.
+        """
+        host_key = RSAKey.from_private_key_file('tests/test_rsa.key')
+        public_host_key = RSAKey(data=str(host_key))
+        self.ts.add_server_key(host_key)
+        event = threading.Event()
+        server = NullServer()
+        self.assert_(not event.isSet())
+        self.ts.start_server(event, server)
+        self.tc.ultra_debug = True
+        self.tc.connect(hostkey=public_host_key)
+        try:
+            self.tc.auth_password(username='slowdive', password='error')
+            self.assert_(False)
+        except:
+            etype, evalue, etb = sys.exc_info()
+            self.assertEquals(SSHException, etype)
+        self.tc.auth_password(username='slowdive', password='pygmalion')
+        event.wait(1.0)
+        self.assert_(event.isSet())
+        self.assert_(self.ts.is_active())
+     
+     
