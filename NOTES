@@ -11,3 +11,61 @@
 SIS <-- @ --> (parse, find chan) --> secsh chan: buffer <-- SSHInputStream
 SSHOutputStream --> secsh chan --> secsh transport --> SOS   [no thread]
 
+
+
+exported API...
+
+from BaseTransport:
+    start_client
+    start_server
+    add_server_key
+    get_server_key
+    close
+    get_remote_server_key
+    is_active
+    is_authenticated
+    open_session
+    open_channel
+    renegotiate_keys
+    check_channel_request
+
+from Transport:
+    auth_key
+    auth_password
+    get_allowed_auths
+    check_auth_none
+    check_auth_password
+    check_auth_publickey
+    accept
+
+from Channel:
+    set_name
+    get_name
+    send_eof
+    settimeout
+    gettimeout
+    setblocking
+    close
+    recv
+    send
+    sendall
+    makefile
+    fileno
+    shutdown
+  [client:]
+    get_pty
+    invoke_shell
+    exec_command
+    invoke_subsystem
+    resize_pty
+
+from ChannelFile:
+    next
+    write
+    writelines
+    flush
+    read
+    readline
+    readlines
+    xreadlines
+    close
