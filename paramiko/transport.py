@@ -889,6 +889,10 @@ class BaseTransport (threading.Thread):
         while len(out) > 0:
             try:
                 n = self.sock.send(out)
+            except socket.timeout:
+                n = 0
+                if not self.active:
+                    n = -1
             except Exception, x:
                 # could be: (32, 'Broken pipe')
                 n = -1
