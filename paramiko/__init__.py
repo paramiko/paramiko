@@ -48,7 +48,7 @@ released under the GNU Lesser General Public License (LGPL).
 
 Website: U{http://www.lag.net/~robey/paramiko/}
 
-@version: 0.9 (fearow)
+@version: 0.9 (gyarados)
 @author: Robey Pointer
 @contact: robey@lag.net
 @license: GNU Lesser General Public License (LGPL)
@@ -61,9 +61,8 @@ if sys.version_info < (2, 2):
 
 
 __author__ = "Robey Pointer <robey@lag.net>"
-__date__ = "23 Apr 2004"
-__version__ = "0.9-fearow"
-#__credits__ = "Huzzah!"
+__date__ = "31 May 2004"
+__version__ = "0.9-gyarados"
 __license__ = "GNU Lesser General Public License (LGPL)"
 
 

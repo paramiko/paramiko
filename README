@@ -1,5 +1,5 @@
 paramiko 0.9
-"fearow" release, 23 apr 2004
+"gyarados" release, 31 may 2004
 
 Copyright (c) 2003-2004 Robey Pointer <robey@lag.net>
 
@@ -116,6 +116,15 @@ the best and easiest examples of how to use the SFTP class.
 ***  WHAT'S NEW
 
 highlights of what's new in each release:
+
+v0.9 GYARADOS
+* Transport.open_channel() -- supports local & remote port forwarding now
+* now imports UTF-8 encodings explicitly as a hint to "freeze" utilities
+* no longer rejects older SFTP servers
+* default packet size bumped to 8kB
+* fixed deadlock in closing a channel
+* Transport.connect() -- fixed bug where it would always fail when given a
+  host key to verify
 
 v0.9 FEAROW
 * Transport.send_ignore() -- send random ignored bytes

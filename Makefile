@@ -5,6 +5,7 @@
 # doduo (04jan04) - 0.9
 # eevee (08mar04)
 # fearow (23apr04)
+# gyarados (31may04)
 
 release:
 	python ./setup.py sdist --formats=zip
