@@ -56,7 +56,7 @@ class StubSFTPServer (SFTPServerInterface):
     # assume current folder is a fine root
     # (the tests always create and eventualy delete a subfolder, so there shouldn't be any mess)
     ROOT = os.getcwd()
-    
+        
     def _realpath(self, path):
         return self.ROOT + self.canonicalize(path)
 

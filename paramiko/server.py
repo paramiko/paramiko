@@ -72,10 +72,10 @@ class ServerInterface (object):
         C{OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED}.
 
         @param kind: the kind of channel the client would like to open
-        (usually C{"session"}).
+            (usually C{"session"}).
         @type kind: str
         @param chanid: ID of the channel, required to create a new L{Channel}
-        object.
+            object.
         @type chanid: int
         @return: a success or failure code (listed above).
         @rtype: int
@@ -115,7 +115,7 @@ class ServerInterface (object):
         @param username: the username of the client.
         @type username: str
         @return: L{AUTH_FAILED} if the authentication fails;
-        L{AUTH_SUCCESSFUL} if it succeeds.
+            L{AUTH_SUCCESSFUL} if it succeeds.
         @rtype: int
         """
         return AUTH_FAILED
@@ -140,9 +140,9 @@ class ServerInterface (object):
         @param password: the password given by the client.
         @type password: str
         @return: L{AUTH_FAILED} if the authentication fails;
-        L{AUTH_SUCCESSFUL} if it succeeds;
-        L{AUTH_PARTIALLY_SUCCESSFUL} if the password auth is
-        successful, but authentication must continue.
+            L{AUTH_SUCCESSFUL} if it succeeds;
+            L{AUTH_PARTIALLY_SUCCESSFUL} if the password auth is
+            successful, but authentication must continue.
         @rtype: int
         """
         return AUTH_FAILED
@@ -173,9 +173,9 @@ class ServerInterface (object):
         @param key: the key object provided by the client.
         @type key: L{PKey <pkey.PKey>}
         @return: L{AUTH_FAILED} if the client can't authenticate
-        with this key; L{AUTH_SUCCESSFUL} if it can;
-        L{AUTH_PARTIALLY_SUCCESSFUL} if it can authenticate with
-        this key but must continue with authentication.
+            with this key; L{AUTH_SUCCESSFUL} if it can;
+            L{AUTH_PARTIALLY_SUCCESSFUL} if it can authenticate with
+            this key but must continue with authentication.
         @rtype: int
         """
         return AUTH_FAILED
@@ -230,13 +230,13 @@ class ServerInterface (object):
         @param height: height of screen in characters.
         @type height: int
         @param pixelwidth: width of screen in pixels, if known (may be C{0} if
-        unknown).
+            unknown).
         @type pixelwidth: int
         @param pixelheight: height of screen in pixels, if known (may be C{0}
-        if unknown).
+            if unknown).
         @type pixelheight: int
         @return: C{True} if the psuedo-terminal has been allocated; C{False}
-        otherwise.
+            otherwise.
         @rtype: bool
         """
         return False
@@ -253,7 +253,7 @@ class ServerInterface (object):
         @param channel: the L{Channel} the pty request arrived on.
         @type channel: L{Channel}
         @return: C{True} if this channel is now hooked up to a shell; C{False}
-        if a shell can't or won't be provided.
+            if a shell can't or won't be provided.
         @rtype: bool
         """
         return False
@@ -292,21 +292,21 @@ class ServerInterface (object):
         C{True}.  Otherwise it returns C{False}.
 
         @note: Because the default implementation uses the L{Transport} to
-        identify valid subsystems, you probably won't need to override this
-        method.
+            identify valid subsystems, you probably won't need to override this
+            method.
 
         @param channel: the L{Channel} the pty request arrived on.
         @type channel: L{Channel}
         @param name: name of the requested subsystem.
         @type name: str
         @return: C{True} if this channel is now hooked up to the requested
-        subsystem; C{False} if that subsystem can't or won't be provided.
+            subsystem; C{False} if that subsystem can't or won't be provided.
         @rtype: bool
         """
         handler_class, larg, kwarg = channel.get_transport()._get_subsystem_handler(name)
         if handler_class is None:
             return False
-        handler = handler_class(channel, name, *larg, **kwarg)
+        handler = handler_class(channel, name, self, *larg, **kwarg)
         handler.start()
         return True
 
@@ -324,10 +324,10 @@ class ServerInterface (object):
         @param height: height of screen in characters.
         @type height: int
         @param pixelwidth: width of screen in pixels, if known (may be C{0} if
-        unknown).
+            unknown).
         @type pixelwidth: int
         @param pixelheight: height of screen in pixels, if known (may be C{0}
-        if unknown).
+            if unknown).
         @type pixelheight: int
         @return: C{True} if the terminal was resized; C{False} if not.
         @rtype: bool
@@ -353,7 +353,7 @@ class SubsystemHandler (threading.Thread):
 
     @since: ivysaur
     """
-    def __init__(self, channel, name):
+    def __init__(self, channel, name, server):
         """
         Create a new handler for a channel.  This is used by L{ServerInterface}
         to start up a new handler when a channel requests this subsystem.  You
@@ -365,11 +365,24 @@ class SubsystemHandler (threading.Thread):
         @type channel: L{Channel}
         @param name: name of the requested subsystem.
         @type name: str
+        @param server: the server object for the session that started this
+            subsystem
+        @rtype server: L{ServerInterface}
         """
         threading.Thread.__init__(self, target=self._run)
         self.__channel = channel
         self.__transport = channel.get_transport()
         self.__name = name
+        self.__server = server
+        
+    def get_server(self):
+        """
+        Return the L{ServerInterface} object associated with this channel and
+        subsystem.
+        
+        @rtype: L{ServerInterface}
+        """
+        return self.__server
 
     def _run(self):
         try:
@@ -396,12 +409,11 @@ class SubsystemHandler (threading.Thread):
         corresponds to exactly one L{Channel} on one L{Transport}.
 
         @note: It is the responsibility of this method to exit if the
-        underlying L{Transport} is closed.  This can be done by checking
-        L{Transport.is_active <BaseTransport.is_active>} or noticing an EOF
-        on the L{Channel}.
-        If this method loops forever without checking for this case, your
-        python interpreter may refuse to exit because this thread will still
-        be running.
+            underlying L{Transport} is closed.  This can be done by checking
+            L{Transport.is_active <BaseTransport.is_active>} or noticing an EOF
+            on the L{Channel}.  If this method loops forever without checking
+            for this case, your python interpreter may refuse to exit because
+            this thread will still be running.
 
         @param name: name of the requested subsystem.
         @type name: str

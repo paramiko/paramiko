@@ -762,7 +762,7 @@ class BaseTransport (threading.Thread):
 
     def set_subsystem_handler(self, name, handler, *larg, **kwarg):
         """
-        Set the handler class for a subsystem in server mode.  If a reqeuest
+        Set the handler class for a subsystem in server mode.  If a request
         for this subsystem is made on an open ssh channel later, this handler
         will be constructed and called -- see L{SubsystemHandler} for more
         detailed documentation.
@@ -773,7 +773,7 @@ class BaseTransport (threading.Thread):
         @param name: name of the subsystem.
         @type name: str
         @param handler: subclass of L{SubsystemHandler} that handles this
-        subsystem.
+            subsystem.
         @type handler: class
         """
         try:

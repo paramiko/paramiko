@@ -37,6 +37,17 @@ class SFTPServerInterface (object):
     session to abruptly end, so you will usually want to catch exceptions and
     return an appropriate error code.
     """
+    
+    def __init__ (self, server, *largs, **kwargs):
+        """
+        Create a new SFTPServerInterface object.  This method does nothing by
+        default and is meant to be overridden by subclasses.
+        
+        @param server: the server object associated with this channel and
+            SFTP subsystem
+        @type server: L{ServerInterface}
+        """
+        super(SFTPServerInterface, self).__init__(*largs, **kwargs)
 
     def session_started(self):
         """
@@ -80,13 +91,13 @@ class SFTPServerInterface (object):
         the client didn't specify them.
         
         @note: The SFTP protocol defines all files to be in "binary" mode.
-        There is no equivalent to python's "text" mode.
+            There is no equivalent to python's "text" mode.
 
         @param path: the requested path (relative or absolute) of the file
-        to be opened.
+            to be opened.
         @type path: str
         @param flags: flags or'd together from the C{os} module indicating the
-        requested mode for opening the file.
+            requested mode for opening the file.
         @type flags: int
         @param attr: requested attributes of the file if it is newly created.
         @type attr: L{SFTPAttributes}
@@ -114,7 +125,7 @@ class SFTPServerInterface (object):
         @param path: the requested path (relative or absolute) to be listed.
         @type path: str
         @return: a list of the files in the given folder, using
-        L{SFTPAttributes} objects.
+            L{SFTPAttributes} objects.
         @rtype: list of L{SFTPAttributes} I{or error code}
         
         @note: You should normalize the given C{path} first (see the
@@ -133,10 +144,10 @@ class SFTPServerInterface (object):
         call that doesn't follow symlinks/aliases.)
 
         @param path: the requested path (relative or absolute) to fetch
-        file statistics for.
+            file statistics for.
         @type path: str
         @return: an attributes object for the given file, or an SFTP error
-        code (like L{SFTP_PERMISSION_DENIED}).
+            code (like L{SFTP_PERMISSION_DENIED}).
         @rtype: L{SFTPAttributes} I{or error code}
         """
         return SFTP_OP_UNSUPPORTED
@@ -150,10 +161,10 @@ class SFTPServerInterface (object):
         corresponding call that follows symlinks/aliases.)
 
         @param path: the requested path (relative or absolute) to fetch
-        file statistics for.
+            file statistics for.
         @type path: str
         @return: an attributes object for the given file, or an SFTP error
-        code (like L{SFTP_PERMISSION_DENIED}).
+            code (like L{SFTP_PERMISSION_DENIED}).
         @rtype: L{SFTPAttributes} I{or error code}
         """
         return SFTP_OP_UNSUPPORTED
@@ -163,7 +174,7 @@ class SFTPServerInterface (object):
         Delete a file, if possible.
 
         @param path: the requested path (relative or absolute) of the file
-        to delete.
+            to delete.
         @type path: str
         @return: an SFTP error code like L{SFTP_OK}.
         @rtype: int
@@ -179,11 +190,11 @@ class SFTPServerInterface (object):
         files that cross disk partition boundaries, if at all possible.
         
         @note: You should return an error if a file with the same name as
-        C{newpath} already exists.  (The rename operation should be
-        non-desctructive.)
+            C{newpath} already exists.  (The rename operation should be
+            non-desctructive.)
 
         @param oldpath: the requested path (relative or absolute) of the
-        existing file.
+            existing file.
         @type oldpath: str
         @param newpath: the requested new path of the file.
         @type newpath: str
@@ -203,7 +214,7 @@ class SFTPServerInterface (object):
         object may be completely empty.
 
         @param path: requested path (relative or absolute) of the new
-        folder.
+            folder.
         @type path: str
         @param attr: requested attributes of the new folder.
         @type attr: L{SFTPAttributes}
@@ -219,7 +230,7 @@ class SFTPServerInterface (object):
         error.
 
         @param path: requested path (relative or absolute) of the folder
-        to remove.
+            to remove.
         @type path: str
         @return: an SFTP error code like L{SFTP_OK}.
         @rtype: int
@@ -233,7 +244,7 @@ class SFTPServerInterface (object):
         should check for the presence of fields before using them.
 
         @param path: requested path (relative or absolute) of the file to
-        change.
+            change.
         @type path: str
         @param attr: requested attributes to change on the file.
         @type attr: L{SFTPAttributes}

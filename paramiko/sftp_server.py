@@ -37,37 +37,35 @@ class SFTPServer (BaseSFTP, SubsystemHandler):
     Use L{Transport.set_subsystem_handler} to activate this class.
     """
 
-    def __init__(self, channel, name, server=SFTPServerInterface, server_args=None):
+    def __init__(self, channel, name, server, sftp_si=SFTPServerInterface, *largs, **kwargs):
         """
         The constructor for SFTPServer is meant to be called from within the
-        L{Transport} as a subsystem handler.  The C{server} and C{server_args}
-        parameters are passed from the original call to
+        L{Transport} as a subsystem handler.  C{server} and any additional
+        parameters or keyword parameters are passed from the original call to
         L{Transport.set_subsystem_handler}.
 
         @param channel: channel passed from the L{Transport}.
         @type channel: L{Channel}
         @param name: name of the requested subsystem.
         @type name: str
-        @param server: a subclass of L{SFTPServerInterface} to use for handling
-        individual requests.
-        @type server: class
-        @param server_args: keyword parameters to pass to C{server} when it's
-        constructed.
-        @type server_args: dict
-        """        
+        @param server: the server object associated with this channel and
+            subsystem
+        @type server: L{ServerInterface}
+        @param sftp_si: a subclass of L{SFTPServerInterface} to use for handling
+            individual requests.
+        @type sftp_si: class
+        """
         BaseSFTP.__init__(self)
-        SubsystemHandler.__init__(self, channel, name)
+        SubsystemHandler.__init__(self, channel, name, server)
         transport = channel.get_transport()
         self.logger = util.get_logger(transport.get_log_channel() + '.' +
-                                        channel.get_name() + '.sftp')
+                                      channel.get_name() + '.sftp')
         self.ultra_debug = transport.ultra_debug
         self.next_handle = 1
         # map of handle-string to SFTPHandle for files & folders:
         self.file_table = { }
         self.folder_table = { }
-        if server_args is None:
-            server_args = {}
-        self.server = server(**server_args)
+        self.server = sftp_si(server, *largs, **kwargs)
 
     def start_subsystem(self, name, transport, channel):
         self.sock = channel
