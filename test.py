@@ -23,13 +23,53 @@ do the unit tests!
 """
 
 import sys, os, unittest
+from optparse import OptionParser
+import paramiko
+
 sys.path.append('tests/')
 
+from test_message import MessageTest
 from test_file import BufferedFileTest
+from test_pkey import KeyTest
+#from test_transport import TransportTest
 from test_sftp import SFTPTest
 
-suite = unittest.TestSuite()
-suite.addTest(unittest.makeSuite(BufferedFileTest))
-suite.addTest(unittest.makeSuite(SFTPTest))
-unittest.TextTestRunner(verbosity=2).run(suite)
+default_host = 'localhost'
+default_user = os.environ.get('USER', 'nobody')
+default_keyfile = os.path.join(os.environ.get('HOME', '/'), '.ssh/id_rsa')
+default_passwd = None
 
+parser = OptionParser('usage: %prog [options]')
+parser.add_option('--sftp', action='store_true', dest='use_sftp', default=False,
+                  help='run sftp tests (currently require an external sftp server)')
+parser.add_option('-H', '--sftp-host', dest='hostname', type='string', default=default_host,
+                  metavar='<host>',
+                  help='remote host for sftp tests (default: %s)' % default_host)
+parser.add_option('-U', '--sftp-user', dest='username', type='string', default=default_user,
+                  metavar='<username>',
+                  help='username for sftp tests (default: %s)' % default_user)
+parser.add_option('-K', '--sftp-key', dest='keyfile', type='string', default=default_keyfile,
+                  metavar='<keyfile>',
+                  help='location of private key for sftp tests (default: %s)' % default_keyfile)
+parser.add_option('-P', '--sftp-passwd', dest='password', type='string', default=default_passwd,
+                  metavar='<password>',
+                  help='(optional) password to unlock the private key for sftp tests')
+
+options, args = parser.parse_args()
+if len(args) > 0:
+    parser.error('unknown argument(s)')
+
+if options.use_sftp:
+    SFTPTest.init(options.hostname, options.username, options.keyfile, options.password)
+
+# setup logging
+paramiko.util.log_to_file('test.log')
+    
+suite = unittest.TestSuite()
+suite.addTest(unittest.makeSuite(MessageTest))
+suite.addTest(unittest.makeSuite(BufferedFileTest))
+suite.addTest(unittest.makeSuite(KeyTest))
+#suite.addTest(unittest.makeSuite(TransportTest))
+if options.use_sftp:
+    suite.addTest(unittest.makeSuite(SFTPTest))
+unittest.TextTestRunner(verbosity=2).run(suite)

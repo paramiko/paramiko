@@ -29,13 +29,6 @@ import sys, os
 import random
 import logging
 
-# need a host and private-key where we have acecss
-HOST = os.environ.get('TEST_HOST', 'localhost')
-USER = os.environ.get('TEST_USER', os.environ.get('USER', 'nobody'))
-PKEY = os.environ.get('TEST_PKEY', os.path.join(os.environ.get('HOME', '/'), '.ssh/id_rsa'))
-PKEY_PASSWD = os.environ.get('TEST_PKEY_PASSWD', None)
-FOLDER = os.environ.get('TEST_FOLDER', 'temp-testing')
-
 import paramiko, unittest
 
 ARTICLE = '''
@@ -65,41 +58,44 @@ liver insulin receptors. Their sensitivity to insulin is, however, similarly
 decreased compared with chicken.
 '''
 
+FOLDER = os.environ.get('TEST_FOLDER', 'temp-testing')
 
-# setup logging
-paramiko.util.log_to_file('test.log')
-
-t = paramiko.Transport(HOST)
-try:
-    key = paramiko.RSAKey.from_private_key_file(PKEY, PKEY_PASSWD)
-except paramiko.PasswordRequiredException:
-    sys.stderr.write('\n\nparamiko.RSAKey.from_private_key_file REQUIRES PASSWORD.\n')
-    sys.stderr.write('You have two options:\n')
-    sys.stderr.write('* Change environment variable TEST_PKEY to point to a different\n')
-    sys.stderr.write('  (non-password-protected) private key file.\n')
-    sys.stderr.write('* Set environment variable TEST_PKEY_PASSWD to the password needed\n')
-    sys.stderr.write('  to unlock this private key.\n')
-    sys.stderr.write('\n')
-    sys.exit(1)
-
-try:
-    t.connect(username=USER, pkey=key)
-except paramiko.SSHException:
-    t.close()
-    sys.stderr.write('\n\nparamiko.Transport.connect FAILED.\n')
-    sys.stderr.write('There are several possible reasons why it might fail so quickly:\n\n')
-    sys.stderr.write('* The host to connect to (%s) is not a valid SSH server.\n' % HOST)
-    sys.stderr.write('  (Override the SSH host with environment variable TEST_HOST.)\n')
-    sys.stderr.write('* The username to auth as (%s) is invalid.\n' % USER)
-    sys.stderr.write('  (Override the auth user with environment variable TEST_USER.)\n')
-    sys.stderr.write('* The private key given (%s) is not accepted by the server.\n' % PKEY)
-    sys.stderr.write('  (Override the private key location with environment variable TEST_PKEY.)\n')
-    sys.stderr.write('\n')
-    sys.exit(1)
-sftp = paramiko.SFTP.from_transport(t)
+sftp = None
 
 
 class SFTPTest (unittest.TestCase):
+
+    def init(hostname, username, keyfile, passwd):
+        global sftp
+        
+        t = paramiko.Transport(hostname)
+        try:
+            key = paramiko.RSAKey.from_private_key_file(keyfile, passwd)
+        except paramiko.PasswordRequiredException:
+            sys.stderr.write('\n\nparamiko.RSAKey.from_private_key_file REQUIRES PASSWORD.\n')
+            sys.stderr.write('You have two options:\n')
+            sys.stderr.write('* Use the "-K" option to point to a different (non-password-protected)\n')
+            sys.stderr.write('  private key file.\n')
+            sys.stderr.write('* Use the "-P" option to provide the password needed to unlock this private\n')
+            sys.stderr.write('  key.\n')
+            sys.stderr.write('\n')
+            sys.exit(1)
+        try:
+            t.connect(username=username, pkey=key)
+        except paramiko.SSHException:
+            t.close()
+            sys.stderr.write('\n\nparamiko.Transport.connect FAILED.\n')
+            sys.stderr.write('There are several possible reasons why it might fail so quickly:\n\n')
+            sys.stderr.write('* The host to connect to (%s) is not a valid SSH server.\n' % hostname)
+            sys.stderr.write('  (Use the "-H" option to change the host.)\n')
+            sys.stderr.write('* The username to auth as (%s) is invalid.\n' % username)
+            sys.stderr.write('  (Use the "-U" option to change the username.)\n')
+            sys.stderr.write('* The private key given (%s) is not accepted by the server.\n' % keyfile)
+            sys.stderr.write('  (Use the "-K" option to provide a different key file.)\n')
+            sys.stderr.write('\n')
+            sys.exit(1)
+        sftp = paramiko.SFTP.from_transport(t)
+    init = staticmethod(init)
 
     def setUp(self):
         sftp.mkdir(FOLDER)
