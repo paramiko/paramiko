@@ -142,6 +142,18 @@ class SubsystemHandler (threading.Thread):
     @since: ivysaur
     """
     def __init__(self, channel, name):
+        """
+        Create a new handler for a channel.  This is used by L{ServerInterface}
+        to start up a new handler when a channel requests this subsystem.  You
+        don't need to override this method, but if you do, be sure to pass the
+        C{channel} and C{name} parameters through to the original C{__init__}
+        method here.
+
+        @param channel: the channel associated with this subsystem request.
+        @type channel: L{Channel}
+        @param name: name of the requested subsystem.
+        @type name: str
+        """
         threading.Thread.__init__(self, target=self._run)
         self.__channel = channel
         self.__transport = channel.get_transport()
