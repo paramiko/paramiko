@@ -1,0 +1,166 @@
+secsh 0.1
+"bulbasaur" release, 18 sep 2003
+
+(c) 2003 Robey Pointer <robey@lag.net>
+
+http://www.lag.net/~robey/secsh/
+
+
+***  WHAT
+
+secsh is a module for python 2.3 that implements the SSH2 protocol for secure
+(encrypted and authenticated) connections to remote machines. unlike SSL (aka
+TLS), SSH2 protocol does not require heirarchical certificates signed by a
+powerful central authority. you may know SSH2 as the protocol that replaced
+telnet and rsh for secure access to remote shells, but the protocol also
+includes the ability to open arbitrary channels to remote services across the
+encrypted tunnel (this is how sftp works, for example).
+
+the module works by taking a socket-like object that you pass in, negotiating
+with the remote server, authenticating (using a password or a given private
+key), and opening flow-controled "channels" to the server, which are returned
+as socket-like objects. you are responsible for verifying that the server's
+host key is the one you expected to see, and you have control over which kinds
+of encryption or hashing you prefer (if you care), but all of the heavy lifting
+is done by the secsh module.
+
+it is written entirely in python (no C or platform-dependent code) and is
+released under the GNU LGPL (lesser GPL). 
+
+
+***  REQUIREMENTS
+
+python 2.3	<http://www.python.org/>
+pyCrypto	<http://www.amk.ca/python/code/crypto.html>
+
+
+***  PORTABILITY
+
+i code and test this library on Linux and MacOS X.  for that reason, i'm
+pretty sure that it works for all posix platforms, including MacOS.  i also
+think it will work on Windows, though i've never tested it there.  if you
+run into Windows problems, send me a patch: portability is important to me.
+
+the Channel object supports a "fileno()" call so that it can be passed into
+select or poll, for polling on posix.  once you call "fileno()" on a Channel,
+it changes behavior in some fundamental ways, and these ways require posix.
+so don't call "fileno()" on a Channel on Windows.  (the problem is that pipes
+are used to simulate an open socket, so that the ssh "socket" has an OS-level
+file descriptor.  i haven't figured out how to make pipes on Windows go into
+non-blocking mode yet.  [if you don't understand this last sentence, don't
+be afraid.  the point is to make the API simple enough that you don't HAVE to
+know these screwy steps.  i just don't understand windows enough.])
+
+
+***  DEMO
+
+the demo app (demo.py) is a raw implementation of the normal 'ssh' CLI tool.
+while the secsh library should work on all platforms, the demo app will only
+run on posix, because it uses select.
+
+you can run demo.py with no arguments, or you can give a hostname (or
+username@hostname) on the command line.  if you don't, it'll prompt you for
+a hostname and username.  if you have an ".ssh/" folder, it will try to read
+the host keys from there, though it's easily confused.  you can choose to
+authenticate with a password, or with an RSA or DSS key, but it can only
+read your private key file(s) if they're not password-protected.
+
+the demo app leaves a logfile called "demo.log" so you can see what secsh
+logs as it works.  but the most interesting part is probably the code itself,
+which hopefully demonstrates how you can use the secsh library.
+
+
+***  USE
+
+(this section could probably be improved a lot.)
+
+first, create a Transport by passing in an existing socket (connected to the
+desired server).  call "start_client(event)", passing in an event which will
+be triggered when the negotiation is finished (either successfully or not).
+the event is required because each new Transport creates a new worker thread
+to handle incoming data asynchronously.
+
+after the event triggers, use "is_active()" to determine if the Transport was
+successfully connected.  if so, you should check the server's host key to make
+sure it's what you expected.  don't worry, i don't mean "check" in any crypto
+sense:  i mean compare the key, byte for byte, with what you saw last time, to
+make sure it's the same key.  Transport will handle verifying that the server's
+key works.
+
+next, authenticate, using either "auth_key" or "auth_password".  in the future,
+this API may change to accomodate servers that require both forms of auth.
+pass another event in so you can determine when the authentication dance is
+over.  if it was successful, "is_authenticated()" will return true.
+
+once authentication is successful, the Transport is ready to use.  call
+"open_channel" or "open_session" to create new channels over the Transport
+(SSH2 supports many different channels over the same connection). these calls
+block until they succeed or fail, and return a Channel object on success, or
+None on failure.  Channel objects can be treated as "socket-like objects": they
+implement:
+	recv(nbytes)
+	send(data)
+	settimeout(timeout_in_seconds)
+	close()
+	fileno()	[* see note below]
+because SSH2 has a windowing kind of flow control, if you stop reading data
+from a Channel and its buffer fills up, the server will be unable to send you
+any more data until you read some of it.  (this won't affect other channels on
+the Transport, though.)
+
+* NOTE that if you use "fileno()", the behavior of the Channel will change
+slightly, underneath.  this shouldn't be noticable outside the library, but
+this alternate implementation will not work on non-posix systems.  so don't
+try calling "fileno()" on Windows!  this has the side effect that you can't
+pass a Channel to "select" or "poll" on Windows (which should be fine, since
+those calls don't exist on Windows).  calling "fileno()" creates an OS-level
+pipe and generates a real file descriptor which can be used for polling, BUT
+should not be used for reading data from the channel: use "recv" instead.
+
+because each Transport has a worker thread running in the background, you
+must call "close()" on the Transport to kill this thread.  on many platforms,
+the python interpreter will refuse to exit cleanly if any of these threads
+are still running (and you'll have to kill -9 from another shell window).
+
+
+***  CHANGELOG
+
+2003-08-24:
+    * implemented the other hashes: all 4 from the draft are working now
+    * added 'aes128-cbc' and '3des-cbc' cipher support
+    * fixed channel eof/close semantics
+2003-09-12:	version "aerodactyl"
+    * implemented group-exchange kex ("kex-gex")
+    * implemented RSA/DSA private key auth
+2003-09-13:
+    * fixed inflate_long and deflate_long to handle negatives, even though
+      they're never used in the current ssh protocol
+2003-09-14:
+    * fixed session_id handling: re-keying works now
+    * added the ability for a Channel to have a fileno() for select/poll
+      purposes, although this will cause worse window performance if the
+      client app isn't careful
+2003-09-16:	version "bulbasaur"
+    * fixed pipe (fileno) method to be nonblocking and it seems to work now
+    * fixed silly bug that caused large blocks to be truncated
+2003-10-08:
+    * patch to fix Channel.invoke_subsystem and add Channel.exec_command
+      [vaclav dvorak]
+    * patch to add Channel.sendall [vaclav dvorak]
+    * patch to add Channel.shutdown [vaclav dvorak]
+    * patch to add Channel.makefile and a ChannelFile class which emulates
+      a python file object [vaclav dvorak]
+2003-10-26:
+    * thread creation no longer happens during construction -- use the new
+      method "start_client(event)" to get things rolling
+    * re-keying now takes place after 1GB of data or 1 billion packets
+      (these limits can be easily changed per-session if needed)
+
+
+***  MISSING LINKS
+
+* ctr forms of ciphers are missing (blowfish-ctr, aes128-ctr, aes256-ctr)
+* can't handle password-protected private key files
+* multi-part auth not supported (ie, need username AND pk)
+* should have a simple synchronous method that handles all auth & events,
+  by pre-seeding the password or key info, and the expected key
