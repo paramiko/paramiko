@@ -76,7 +76,7 @@ try:
     # print repr(t)
 
     keys = load_host_keys()
-    keytype, hostkey = t.get_host_key()
+    keytype, hostkey = t.get_remote_server_key()
     if not keys.has_key(hostname):
         print '*** WARNING: Unknown host key!'
     elif not keys[hostname].has_key(keytype):

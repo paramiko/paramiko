@@ -1,7 +1,7 @@
 from message import Message
 from secsh import SSHException
 from transport import MSG_CHANNEL_REQUEST, MSG_CHANNEL_CLOSE, MSG_CHANNEL_WINDOW_ADJUST, MSG_CHANNEL_DATA, \
-	MSG_CHANNEL_EOF
+	MSG_CHANNEL_EOF, MSG_CHANNEL_SUCCESS, MSG_CHANNEL_FAILURE
 
 import time, threading, logging, socket, os
 from logging import DEBUG
@@ -18,9 +18,9 @@ class Channel(object):
     Abstraction for a secsh channel.
     """
     
-    def __init__(self, chanid, transport):
+    def __init__(self, chanid):
         self.chanid = chanid
-        self.transport = transport
+        self.transport = None
         self.active = 0
         self.eof_received = 0
         self.eof_sent = 0
@@ -50,6 +50,9 @@ class Channel(object):
         out += '>'
         return out
 
+    def set_transport(self, transport):
+        self.transport = transport
+
     def log(self, level, msg):
         self.logger.log(level, msg)
 
@@ -60,8 +63,8 @@ class Channel(object):
         self.in_window_threshold = window_size // 10
         self.in_window_sofar = 0
         
-    def set_server_channel(self, chanid, window_size, max_packet_size):
-        self.server_chanid = chanid
+    def set_remote_channel(self, chanid, window_size, max_packet_size):
+        self.remote_chanid = chanid
         self.out_window_size = window_size
         self.out_max_packet_size = max_packet_size
         self.active = 1
@@ -99,14 +102,29 @@ class Channel(object):
 
     def handle_request(self, m):
         key = m.get_string()
+        want_reply = m.get_boolean()
+        ok = False
         if key == 'exit-status':
             self.exit_status = m.get_int()
-            return
+            ok = True
         elif key == 'xon-xoff':
             # ignore
-            return
+            ok = True
+        elif (key == 'pty-req') or (key == 'shell'):
+            if self.transport.server_mode:
+                # humor them
+                ok = True
         else:
             self.log(DEBUG, 'Unhandled channel request "%s"' % key)
+            ok = False
+        if want_reply:
+            m = Message()
+            if ok:
+                m.add_byte(chr(MSG_CHANNEL_SUCCESS))
+            else:
+                m.add_byte(chr(MSG_CHANNEL_FAILURE))
+            m.add_int(self.remote_chanid)
+            self.transport.send_message(m)
 
     def handle_eof(self, m):
         self.eof_received = 1
@@ -140,7 +158,7 @@ class Channel(object):
             raise SSHException('Channel is not open')
         m = Message()
         m.add_byte(chr(MSG_CHANNEL_REQUEST))
-        m.add_int(self.server_chanid)
+        m.add_int(self.remote_chanid)
         m.add_string('pty-req')
         m.add_boolean(0)
         m.add_string(term)
@@ -156,7 +174,7 @@ class Channel(object):
             raise SSHException('Channel is not open')
         m = Message()
         m.add_byte(chr(MSG_CHANNEL_REQUEST))
-        m.add_int(self.server_chanid)
+        m.add_int(self.remote_chanid)
         m.add_string('shell')
         m.add_boolean(1)
         self.transport.send_message(m)
@@ -166,7 +184,7 @@ class Channel(object):
             raise SSHException('Channel is not open')
         m = Message()
         m.add_byte(chr(MSG_CHANNEL_REQUEST))
-        m.add_int(self.server_chanid)
+        m.add_int(self.remote_chanid)
         m.add_string('exec')
         m.add_boolean(1)
         m.add_string(command)
@@ -177,7 +195,7 @@ class Channel(object):
             raise SSHException('Channel is not open')
         m = Message()
         m.add_byte(chr(MSG_CHANNEL_REQUEST))
-        m.add_int(self.server_chanid)
+        m.add_int(self.remote_chanid)
         m.add_string('subsystem')
         m.add_boolean(1)
         m.add_string(subsystem)
@@ -188,7 +206,7 @@ class Channel(object):
             raise SSHException('Channel is not open')
         m = Message()
         m.add_byte(chr(MSG_CHANNEL_REQUEST))
-        m.add_int(self.server_chanid)
+        m.add_int(self.remote_chanid)
         m.add_string('window-change')
         m.add_boolean(0)
         m.add_int(width)
@@ -211,7 +229,7 @@ class Channel(object):
             return
         m = Message()
         m.add_byte(chr(MSG_CHANNEL_EOF))
-        m.add_int(self.server_chanid)
+        m.add_int(self.remote_chanid)
         self.transport.send_message(m)
         self.eof_sent = 1
         self.log(DEBUG, 'EOF sent')
@@ -238,7 +256,7 @@ class Channel(object):
         self.send_eof()
         m = Message()
         m.add_byte(chr(MSG_CHANNEL_CLOSE))
-        m.add_int(self.server_chanid)
+        m.add_int(self.remote_chanid)
         self.transport.send_message(m)
         self.closed = 1
         self.transport.unlink_channel(self.chanid)
@@ -316,7 +334,7 @@ class Channel(object):
                 size = self.out_max_packet_size
             m = Message()
             m.add_byte(chr(MSG_CHANNEL_DATA))
-            m.add_int(self.server_chanid)
+            m.add_int(self.remote_chanid)
             m.add_string(s[:size])
             self.transport.send_message(m)
             self.out_window_size -= size
@@ -469,7 +487,7 @@ class Channel(object):
             self.log(DEBUG, 'addwindow send %d' % self.in_window_sofar)
             m = Message()
             m.add_byte(chr(MSG_CHANNEL_WINDOW_ADJUST))
-            m.add_int(self.server_chanid)
+            m.add_int(self.remote_chanid)
             m.add_int(self.in_window_sofar)
             self.transport.send_message(m)
             self.in_window_sofar = 0
@@ -490,7 +508,7 @@ class ChannelFile(object):
     def __init__(self, channel, mode = "r", buf_size = -1):
         self.channel = channel
         self.mode = mode
-        if buf_size < 0:
+        if buf_size <= 0:
             self.buf_size = 1024
             self.line_buffered = 0
         elif buf_size == 1:
@@ -503,10 +521,12 @@ class ChannelFile(object):
         self.rbuffer = ""
         self.readable = ("r" in mode)
         self.writable = ("w" in mode) or ("+" in mode) or ("a" in mode)
+        self.universal_newlines = ('U' in mode)
         self.binary = ("b" in mode)
-        if not self.binary:
-            raise NotImplementedError("text mode not supported")
-        self.softspace = 0
+        self.at_trailing_cr = False
+        self.name = '<file from ' + repr(self.channel) + '>'
+        self.newlines = None
+        self.softspace = False
 
     def __iter__(self):
         return self
@@ -570,23 +590,56 @@ class ChannelFile(object):
         self.rbuffer[size:]
         return result
 
-    def readline(self, size = None):
-        line = ""
-        while "\n" not in line:
-            if size >= 0:
-                new_data = self.read(size - len(line))
+    def readline(self, size=None):
+        line = self.rbuffer
+        while 1:
+            if self.at_trailing_cr and (len(line) > 0):
+                if line[0] == '\n':
+                    line = line[1:]
+                self.at_trailing_cr = False
+            if self.universal_newlines:
+                if ('\n' in line) or ('\r' in line):
+                    break
             else:
-                new_data = self.read(64)
+                if '\n' in line:
+                    break
+            if size >= 0:
+                if len(line) >= size:
+                    # truncate line and return
+                    self.rbuffer = line[size:]
+                    line = line[:size]
+                    return line
+                n = size - len(line)
+            else:
+                n = 64
+            new_data = self.channel.recv(n)
             if not new_data:
-                break
+                self.rbuffer = ''
+                return line
             line += new_data
-        newline_pos = line.find("\n")
-        if newline_pos >= 0:
-            self.rbuffer = line[newline_pos+1:] + self.rbuffer
-            return line[:newline_pos+1]
-        elif len(line) > size:
-            self.rbuffer = line[size:] + self.rbuffer
-            return line[:size]
+        # find the newline
+        pos = line.find('\n')
+        if self.universal_newlines:
+            rpos = line.find('\r')
+            if (rpos >= 0) and ((rpos < pos) or (pos < 0)):
+                pos = rpos
+        xpos = pos + 1
+        if (line[pos] == '\r') and (xpos < len(line)) and (line[xpos] == '\n'):
+            xpos += 1
+        self.rbuffer = line[xpos:]
+        lf = line[pos:xpos]
+        line = line[:xpos]
+        if (len(self.rbuffer) == 0) and (lf == '\r'):
+            # we could read the line up to a '\r' and there could still be a
+            # '\n' following that we read next time.  note that and eat it.
+            self.at_trailing_cr = True
+        # silliness about tracking what kinds of newlines we've seen
+        if self.newlines is None:
+            self.newlines = lf
+        elif (type(self.newlines) is str) and (self.newlines != lf):
+            self.newlines = (self.newlines, lf)
+        elif lf not in self.newlines:
+            self.newlines += (lf,)
         return line
 
     def readlines(self, sizehint = None):
