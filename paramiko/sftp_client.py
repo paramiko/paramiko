@@ -393,6 +393,3 @@ class SFTPClient (BaseSFTP):
 class SFTP (SFTPClient):
     "an alias for L{SFTPClient} for backwards compatability"
     pass
-
-class SFTPError (SFTPError):
-    pass
