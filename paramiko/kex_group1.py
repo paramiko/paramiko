@@ -44,15 +44,15 @@ class KexGroup1(object):
         if self.transport.server_mode:
             # compute f = g^x mod p, but don't send it yet
             self.f = pow(G, self.x, P)
-            self.transport.expected_packet = MSG_KEXDH_INIT
+            self.transport._expect_packet(MSG_KEXDH_INIT)
             return
         # compute e = g^x mod p (where g=2), and send it
         self.e = pow(G, self.x, P)
         m = Message()
         m.add_byte(chr(MSG_KEXDH_INIT))
         m.add_mpint(self.e)
-        self.transport.send_message(m)
-        self.transport.expected_packet = MSG_KEXDH_REPLY
+        self.transport._send_message(m)
+        self.transport._expect_packet(MSG_KEXDH_REPLY)
 
     def parse_next(self, ptype, m):
         if self.transport.server_mode and (ptype == MSG_KEXDH_INIT):
@@ -73,10 +73,9 @@ class KexGroup1(object):
         hm = Message().add(self.transport.local_version).add(self.transport.remote_version)
         hm.add(self.transport.local_kex_init).add(self.transport.remote_kex_init).add(host_key)
         hm.add(self.e).add(self.f).add(K)
-        self.transport.set_K_H(K, SHA.new(str(hm)).digest())
-        self.transport.verify_key(host_key, sig)
-        self.transport.activate_outbound()
-        self.transport.expected_packet = MSG_NEWKEYS
+        self.transport._set_K_H(K, SHA.new(str(hm)).digest())
+        self.transport._verify_key(host_key, sig)
+        self.transport._activate_outbound()
 
     def parse_kexdh_init(self, m):
         # server mode
@@ -90,7 +89,7 @@ class KexGroup1(object):
         hm.add(self.transport.remote_kex_init).add(self.transport.local_kex_init).add(key)
         hm.add(self.e).add(self.f).add(K)
         H = SHA.new(str(hm)).digest()
-        self.transport.set_K_H(K, H)
+        self.transport._set_K_H(K, H)
         # sign it
         sig = self.transport.get_server_key().sign_ssh_data(self.transport.randpool, H)
         # send reply
@@ -99,6 +98,5 @@ class KexGroup1(object):
         m.add_string(key)
         m.add_mpint(self.f)
         m.add_string(sig)
-        self.transport.send_message(m)
-        self.transport.activate_outbound()
-        self.transport.expected_packet = MSG_NEWKEYS
+        self.transport._send_message(m)
+        self.transport._activate_outbound()

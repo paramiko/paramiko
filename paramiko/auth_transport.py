@@ -19,17 +19,45 @@ class Transport(BaseTransport):
 
     def __init__(self, sock):
         BaseTransport.__init__(self, sock)
+        self.authenticated = False
         self.auth_event = None
         # for server mode:
         self.auth_username = None
         self.auth_fail_count = 0
         self.auth_complete = 0
 
-    def request_auth(self):
+    def __repr__(self):
+        if not self.active:
+            return '<paramiko.Transport (unconnected)>'
+        out = '<paramiko.Transport'
+        if self.local_cipher != '':
+            out += ' (cipher %s)' % self.local_cipher
+        if self.authenticated:
+            if len(self.channels) == 1:
+                out += ' (active; 1 open channel)'
+            else:
+                out += ' (active; %d open channels)' % len(self.channels)
+        elif self.initial_kex_done:
+            out += ' (connected; awaiting auth)'
+        else:
+            out += ' (connecting)'
+        out += '>'
+        return out
+
+    def is_authenticated(self):
+        """
+        Return true if this session is active and authenticated.
+
+        @return: True if the session is still open and has been authenticated successfully;
+        False if authentication failed and/or the session is closed.
+        """
+        return self.authenticated and self.active
+
+    def _request_auth(self):
         m = Message()
         m.add_byte(chr(MSG_SERVICE_REQUEST))
         m.add_string('ssh-userauth')
-        self.send_message(m)
+        self._send_message(m)
 
     def auth_key(self, username, key, event):
         if (not self.active) or (not self.initial_kex_done):
@@ -41,7 +69,7 @@ class Transport(BaseTransport):
             self.auth_method = 'publickey'
             self.username = username
             self.private_key = key
-            self.request_auth()
+            self._request_auth()
         finally:
             self.lock.release()
 
@@ -56,7 +84,7 @@ class Transport(BaseTransport):
             self.auth_method = 'password'
             self.username = username
             self.password = password
-            self.request_auth()
+            self._request_auth()
         finally:
             self.lock.release()
 
@@ -66,7 +94,7 @@ class Transport(BaseTransport):
         m.add_int(DISCONNECT_SERVICE_NOT_AVAILABLE)
         m.add_string('Service not available')
         m.add_string('en')
-        self.send_message(m)
+        self._send_message(m)
         self.close()
 
     def disconnect_no_more_auth(self):
@@ -75,7 +103,7 @@ class Transport(BaseTransport):
         m.add_int(DISCONNECT_NO_MORE_AUTH_METHODS_AVAILABLE)
         m.add_string('No more auth methods available')
         m.add_string('en')
-        self.send_message(m)
+        self._send_message(m)
         self.close()
 
     def parse_service_request(self, m):
@@ -85,7 +113,7 @@ class Transport(BaseTransport):
             m = Message()
             m.add_byte(chr(MSG_SERVICE_ACCEPT))
             m.add_string(service)
-            self.send_message(m)
+            self._send_message(m)
             return
         # dunno this one
         self.disconnect_service_not_available()
@@ -93,7 +121,7 @@ class Transport(BaseTransport):
     def parse_service_accept(self, m):
         service = m.get_string()
         if service == 'ssh-userauth':
-            self.log(DEBUG, 'userauth is OK')
+            self._log(DEBUG, 'userauth is OK')
             m = Message()
             m.add_byte(chr(MSG_USERAUTH_REQUEST))
             m.add_string(self.username)
@@ -109,9 +137,9 @@ class Transport(BaseTransport):
                 m.add_string(self.private_key.sign_ssh_session(self.randpool, self.H, self.username))
             else:
                 raise SSHException('Unknown auth method "%s"' % self.auth_method)
-            self.send_message(m)
+            self._send_message(m)
         else:
-            self.log(DEBUG, 'Service request "%s" accepted (?)' % service)
+            self._log(DEBUG, 'Service request "%s" accepted (?)' % service)
 
     def get_allowed_auths(self, username):
         "override me!"
@@ -136,7 +164,7 @@ class Transport(BaseTransport):
             m.add_byte(chr(MSG_USERAUTH_FAILURE))
             m.add_string('none')
             m.add_boolean(0)
-            self.send_message(m)
+            self._send_message(m)
             return
         if self.auth_complete:
             # ignore
@@ -144,12 +172,12 @@ class Transport(BaseTransport):
         username = m.get_string()
         service = m.get_string()
         method = m.get_string()
-        self.log(DEBUG, 'Auth request (type=%s) service=%s, username=%s' % (method, service, username))
+        self._log(DEBUG, 'Auth request (type=%s) service=%s, username=%s' % (method, service, username))
         if service != 'ssh-connection':
             self.disconnect_service_not_available()
             return
         if (self.auth_username is not None) and (self.auth_username != username):
-            self.log(DEBUG, 'Auth rejected because the client attempted to change username in mid-flight')
+            self._log(DEBUG, 'Auth rejected because the client attempted to change username in mid-flight')
             self.disconnect_no_more_auth()
             return
         if method == 'none':
@@ -160,7 +188,7 @@ class Transport(BaseTransport):
             if changereq:
                 # always treated as failure, since we don't support changing passwords, but collect
                 # the list of valid auth types from the callback anyway
-                self.log(DEBUG, 'Auth request to change passwords (rejected)')
+                self._log(DEBUG, 'Auth request to change passwords (rejected)')
                 newpassword = m.get_string().decode('UTF-8')
                 result = self.AUTH_FAILED
             else:
@@ -173,11 +201,11 @@ class Transport(BaseTransport):
         # okay, send result
         m = Message()
         if result == self.AUTH_SUCCESSFUL:
-            self.log(DEBUG, 'Auth granted.')
+            self._log(DEBUG, 'Auth granted.')
             m.add_byte(chr(MSG_USERAUTH_SUCCESS))
             self.auth_complete = 1
         else:
-            self.log(DEBUG, 'Auth rejected.')
+            self._log(DEBUG, 'Auth rejected.')
             m.add_byte(chr(MSG_USERAUTH_FAILURE))
             m.add_string(self.get_allowed_auths(username))
             if result == self.AUTH_PARTIALLY_SUCCESSFUL:
@@ -185,13 +213,13 @@ class Transport(BaseTransport):
             else:
                 m.add_boolean(0)
             self.auth_fail_count += 1
-        self.send_message(m)
+        self._send_message(m)
         if self.auth_fail_count >= 10:
             self.disconnect_no_more_auth()
 
     def parse_userauth_success(self, m):
-        self.log(INFO, 'Authentication successful!')
-        self.authenticated = 1
+        self._log(INFO, 'Authentication successful!')
+        self.authenticated = True
         if self.auth_event != None:
             self.auth_event.set()
 
@@ -199,12 +227,12 @@ class Transport(BaseTransport):
         authlist = m.get_list()
         partial = m.get_boolean()
         if partial:
-            self.log(INFO, 'Authentication continues...')
-            self.log(DEBUG, 'Methods: ' + str(partial))
+            self._log(INFO, 'Authentication continues...')
+            self._log(DEBUG, 'Methods: ' + str(partial))
             # FIXME - do something
             pass
-        self.log(INFO, 'Authentication failed.')
-        self.authenticated = 0
+        self._log(INFO, 'Authentication failed.')
+        self.authenticated = False
         self.close()
         if self.auth_event != None:
             self.auth_event.set()
@@ -212,11 +240,11 @@ class Transport(BaseTransport):
     def parse_userauth_banner(self, m):
         banner = m.get_string()
         lang = m.get_string()
-        self.log(INFO, 'Auth banner: ' + banner)
+        self._log(INFO, 'Auth banner: ' + banner)
         # who cares.
 
-    handler_table = BaseTransport.handler_table.copy()
-    handler_table.update({
+    _handler_table = BaseTransport._handler_table.copy()
+    _handler_table.update({
         MSG_SERVICE_REQUEST: parse_service_request,
         MSG_SERVICE_ACCEPT: parse_service_accept,
         MSG_USERAUTH_REQUEST: parse_userauth_request,

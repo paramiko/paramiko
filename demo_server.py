@@ -70,6 +70,11 @@ print 'Got a connection!'
 try:
     event = threading.Event()
     t = ServerTransport(client)
+    try:
+        t.load_server_moduli()
+    except:
+        print '(Failed to load moduli -- gex will be unsupported.)'
+        raise
     t.add_server_key(host_key)
     t.ultra_debug = 0
     t.start_server(event)
@@ -81,10 +86,11 @@ try:
     # print repr(t)
 
     # wait for auth
-    chan = t.accept(10)
+    chan = t.accept(20)
     if chan is None:
         print '*** No channel.'
         sys.exit(1)
+    print 'Authenticated!'
     chan.event.wait(10)
     if not chan.event.isSet():
         print '*** Client never asked for a shell.'

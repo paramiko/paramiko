@@ -22,14 +22,14 @@ from BaseTransport:
     get_server_key
     close
     get_remote_server_key
-    is_active
-    is_authenticated
+*   is_active
     open_session
     open_channel
     renegotiate_keys
     check_channel_request
 
 from Transport:
+*   is_authenticated
     auth_key
     auth_password
     get_allowed_auths

@@ -1,7 +1,6 @@
 #!/usr/bin/python
 
 import sys, struct, traceback
-from Crypto.Util import number
 
 def inflate_long(s, always_positive=0):
     "turns a normalized byte string into a long-int (adapted from Crypto.Util.number)"
@@ -97,21 +96,6 @@ def bit_length(n):
         hbyte <<= 1
         bitlen -= 1
     return bitlen
-
-def generate_prime(bits, randpool):
-    hbyte_mask = pow(2, bits % 8) - 1
-    x = randpool.get_bytes((bits+7) // 8)
-    if hbyte_mask > 0:
-        x = chr(ord(x[0]) & hbyte_mask) + x[1:]
-    n = inflate_long(x, 1)
-    n |= 1
-    n |= (1 << (bits - 1))
-    while 1:
-        # loop catches the case where we increment n into a higher bit-range
-        while not number.isPrime(n):
-            n += 2
-        if bit_length(n) == bits:
-            return n
 
 def tb_strings():
     return ''.join(traceback.format_exception(*sys.exc_info())).split('\n')

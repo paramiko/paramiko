@@ -50,10 +50,10 @@ class Channel(object):
         out += '>'
         return out
 
-    def set_transport(self, transport):
+    def _set_transport(self, transport):
         self.transport = transport
 
-    def log(self, level, msg):
+    def _log(self, level, msg):
         self.logger.log(level, msg)
 
     def set_window(self, window_size, max_packet_size):
@@ -70,7 +70,7 @@ class Channel(object):
         self.active = 1
 
     def request_success(self, m):
-        self.log(DEBUG, 'Sesch channel %d request ok' % self.chanid)
+        self._log(DEBUG, 'Sesch channel %d request ok' % self.chanid)
         return
 
     def request_failed(self, m):
@@ -80,13 +80,13 @@ class Channel(object):
         s = m.get_string()
         try:
             self.lock.acquire()
-            self.log(DEBUG, 'fed %d bytes' % len(s))
+            self._log(DEBUG, 'fed %d bytes' % len(s))
             if self.pipe_wfd != None:
                 self.feed_pipe(s)
             else:
                 self.in_buffer += s
                 self.in_buffer_cv.notifyAll()
-            self.log(DEBUG, '(out from feed)')
+            self._log(DEBUG, '(out from feed)')
         finally:
             self.lock.release()
 
@@ -94,7 +94,7 @@ class Channel(object):
         nbytes = m.get_int()
         try:
             self.lock.acquire()
-            self.log(DEBUG, 'window up %d' % nbytes)
+            self._log(DEBUG, 'window up %d' % nbytes)
             self.out_window_size += nbytes
             self.out_buffer_cv.notifyAll()
         finally:
@@ -146,7 +146,7 @@ class Channel(object):
             pixelheight = m.get_int()
             ok = self.check_window_change_request(width, height, pixelwidth, pixelheight)
         else:
-            self.log(DEBUG, 'Unhandled channel request "%s"' % key)
+            self._log(DEBUG, 'Unhandled channel request "%s"' % key)
             ok = False
         if want_reply:
             m = Message()
@@ -155,7 +155,7 @@ class Channel(object):
             else:
                 m.add_byte(chr(MSG_CHANNEL_FAILURE))
             m.add_int(self.remote_chanid)
-            self.transport.send_message(m)
+            self.transport._send_message(m)
 
     def handle_eof(self, m):
         try:
@@ -168,7 +168,7 @@ class Channel(object):
                     self.pipe_wfd = None
         finally:
             self.lock.release()
-        self.log(DEBUG, 'EOF received')
+        self._log(DEBUG, 'EOF received')
 
     def handle_close(self, m):
         self.close()
@@ -199,7 +199,7 @@ class Channel(object):
         # pixel height, width (usually useless)
         m.add_int(0).add_int(0)
         m.add_string('')
-        self.transport.send_message(m)
+        self.transport._send_message(m)
 
     def invoke_shell(self):
         if self.closed or self.eof_received or self.eof_sent or not self.active:
@@ -209,7 +209,7 @@ class Channel(object):
         m.add_int(self.remote_chanid)
         m.add_string('shell')
         m.add_boolean(1)
-        self.transport.send_message(m)
+        self.transport._send_message(m)
 
     def exec_command(self, command):
         if self.closed or self.eof_received or self.eof_sent or not self.active:
@@ -220,7 +220,7 @@ class Channel(object):
         m.add_string('exec')
         m.add_boolean(1)
         m.add_string(command)
-        self.transport.send_message(m)
+        self.transport._send_message(m)
 
     def invoke_subsystem(self, subsystem):
         if self.closed or self.eof_received or self.eof_sent or not self.active:
@@ -231,7 +231,7 @@ class Channel(object):
         m.add_string('subsystem')
         m.add_boolean(1)
         m.add_string(subsystem)
-        self.transport.send_message(m)
+        self.transport._send_message(m)
 
     def resize_pty(self, width=80, height=24):
         if self.closed or self.eof_received or self.eof_sent or not self.active:
@@ -244,7 +244,7 @@ class Channel(object):
         m.add_int(width)
         m.add_int(height)
         m.add_int(0).add_int(0)
-        self.transport.send_message(m)
+        self.transport._send_message(m)
 
     def get_transport(self):
         return self.transport
@@ -262,9 +262,9 @@ class Channel(object):
         m = Message()
         m.add_byte(chr(MSG_CHANNEL_EOF))
         m.add_int(self.remote_chanid)
-        self.transport.send_message(m)
+        self.transport._send_message(m)
         self.eof_sent = 1
-        self.log(DEBUG, 'EOF sent')
+        self._log(DEBUG, 'EOF sent')
         return
 
 
@@ -290,9 +290,9 @@ class Channel(object):
                 m = Message()
                 m.add_byte(chr(MSG_CHANNEL_CLOSE))
                 m.add_int(self.remote_chanid)
-                self.transport.send_message(m)
+                self.transport._send_message(m)
                 self.closed = 1
-                self.transport.unlink_channel(self.chanid)
+                self.transport._unlink_channel(self.chanid)
         finally:
             self.lock.release()
 
@@ -371,7 +371,7 @@ class Channel(object):
             m.add_byte(chr(MSG_CHANNEL_DATA))
             m.add_int(self.remote_chanid)
             m.add_string(s[:size])
-            self.transport.send_message(m)
+            self.transport._send_message(m)
             self.out_window_size -= size
         finally:
             self.lock.release()
@@ -506,25 +506,25 @@ class Channel(object):
         self.in_buffer = self.in_buffer[nbytes:]
         os.write(self.pipd_wfd, x)
 
-    def unlink(self):
+    def _unlink(self):
         if self.closed or not self.active:
             return
         self.closed = 1
-        self.transport.unlink_channel(self.chanid)
+        self.transport._unlink_channel(self.chanid)
 
     def check_add_window(self, n):
         # already holding the lock!
         if self.closed or self.eof_received or not self.active:
             return
-        self.log(DEBUG, 'addwindow %d' % n)
+        self._log(DEBUG, 'addwindow %d' % n)
         self.in_window_sofar += n
         if self.in_window_sofar > self.in_window_threshold:
-            self.log(DEBUG, 'addwindow send %d' % self.in_window_sofar)
+            self._log(DEBUG, 'addwindow send %d' % self.in_window_sofar)
             m = Message()
             m.add_byte(chr(MSG_CHANNEL_WINDOW_ADJUST))
             m.add_int(self.remote_chanid)
             m.add_int(self.in_window_sofar)
-            self.transport.send_message(m)
+            self.transport._send_message(m)
             self.in_window_sofar = 0
 
 

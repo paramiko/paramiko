@@ -69,7 +69,7 @@ try:
     t.ultra_debug = 0
     t.start_client(event)
     # print repr(t)
-    event.wait(10)
+    event.wait(15)
     if not t.is_active():
         print '*** SSH negotiation failed.'
         sys.exit(1)
