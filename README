@@ -1,5 +1,5 @@
 paramiko 0.9
-"doduo" release, 04 jan 2004
+"eevee" release, 08 mar 2004
 
 Copyright (c) 2003-2004 Robey Pointer <robey@lag.net>
 
@@ -80,10 +80,16 @@ folder.  point your browser there.  seriously, do it.  mad props to epydoc,
 which actually motivated me to write more documentation than i ever would
 have before.
 
+there are also unit tests here:
+    $ python2 ./test.py
+which will verify that some of the core components are working correctly.
+not much is tested yet, but it's a start.  the tests for SFTP are probably
+the best and easiest examples of how to use the SFTP class.
+
 
 ***  MISSING LINKS
 
 * ctr forms of ciphers are missing (blowfish-ctr, aes128-ctr, aes256-ctr)
 * multi-part auth not supported (ie, need username AND pk)
 * server mode needs better documentation
-* sftp?
+* sftp server mode

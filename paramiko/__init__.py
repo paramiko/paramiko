@@ -48,7 +48,7 @@ released under the GNU Lesser General Public License (LGPL).
 
 Website: U{http://www.lag.net/~robey/paramiko/}
 
-@version: 0.9 (doduo)
+@version: 0.9 (eevee)
 @author: Robey Pointer
 @contact: robey@lag.net
 @license: GNU Lesser General Public License (LGPL)
@@ -61,8 +61,8 @@ if (sys.version_info[0] < 2) or ((sys.version_info[0] == 2) and (sys.version_inf
 
 
 __author__ = "Robey Pointer <robey@lag.net>"
-__date__ = "04 Jan 2004"
-__version__ = "0.9-doduo"
+__date__ = "08 Mar 2004"
+__version__ = "0.9-eevee"
 #__credits__ = "Huzzah!"
 __license__ = "GNU Lesser General Public License (LGPL)"
 

@@ -6,20 +6,20 @@ Emphasis is on using SSH2 as an alternative to SSL for making secure
 connections between python scripts.  All major ciphers and hash methods
 are supported.
 
-(Previous name: secsh)
+SFTP client mode is now supported too.
 
 Required packages:
     pyCrypt
 '''
 
 setup(name = "paramiko",
-      version = "0.9-doduo",
+      version = "0.9-eevee",
       description = "SSH2 protocol library",
       author = "Robey Pointer",
       author_email = "robey@lag.net",
       url = "http://www.lag.net/~robey/paramiko/",
       packages = [ 'paramiko' ],
-      download_url = 'http://www.lag.net/~robey/paramiko/paramiko-0.9-doduo.zip',
+      download_url = 'http://www.lag.net/~robey/paramiko/paramiko-0.9-eevee.zip',
       license = 'LGPL',
       platforms = 'Posix; MacOS X; Windows',
       classifiers = [ 'Development Status :: 3 - Alpha',
