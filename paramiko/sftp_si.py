@@ -261,3 +261,33 @@ class SFTPServerInterface (object):
         else:
             return os.path.normpath('/' + path)
     
+    def readlink(self, path):
+        """
+        Return the target of a symbolic link (or shortcut) on the server.
+        If the specified path doesn't refer to a symbolic link, an error
+        should be returned.
+        
+        @param path: path (relative or absolute) of the symbolic link.
+        @type path: str
+        @return: the target path of the symbolic link, or an error code like
+            L{SFTP_NO_SUCH_FILE}.
+        @rtype: str I{or error code}
+        """
+        return SFTP_OP_UNSUPPORTED
+    
+    def symlink(self, path, target_path):
+        """
+        Create a symbolic link on the server, as new pathname C{path},
+        with C{target_path} as the target of the link.
+        
+        @param path: path (relative or absolute) of the symbolic link to
+            create.
+        @type path: str
+        @param target_path: path (relative or absolute) of the target for
+            this new symbolic link.
+        @type target_path: str
+        @return: an error code like C{SFTP_OK}.
+        @rtype: int
+        """
+        return SFTP_OP_UNSUPPORTED
+

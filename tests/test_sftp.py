@@ -295,6 +295,7 @@ class SFTPTest (unittest.TestCase):
             self.assertEqual(f.readlines(), [ 'original\n' ])
             f.close()
             self.assertEqual(sftp.lstat(FOLDER + '/link.txt').st_size, 12)
+            self.assertEqual(sftp.stat(FOLDER + '/link.txt').st_size, 9)
             self.assertEqual(sftp.stat(FOLDER + '/original.txt').st_size, 9)
         finally:
             try:
