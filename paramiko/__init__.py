@@ -68,7 +68,6 @@ __license__ = "GNU Lesser General Public License (LGPL)"
 
 import transport, auth_transport, channel, rsakey, dsskey, message, ssh_exception, file
 import sftp, sftp_client, sftp_attr, sftp_file
-# import sftp_server, sftp_si
 
 randpool = transport.randpool
 Transport = auth_transport.Transport
@@ -80,10 +79,8 @@ Message = message.Message
 PasswordRequiredException = ssh_exception.PasswordRequiredException
 SFTP = sftp_client.SFTP
 SFTPClient = sftp_client.SFTPClient
-# SFTPServer = sftp_server.SFTPServer
 SFTPError = sftp_client.SFTPError
 SFTPAttributes = sftp_attr.SFTPAttributes
-# SFTPServerInterface = sftp_si.SFTPServerInterface
 ServerInterface = server.ServerInterface
 SubsystemHandler = server.SubsystemHandler
 SecurityOptions = transport.SecurityOptions
@@ -93,8 +90,8 @@ from common import AUTH_SUCCESSFUL, AUTH_PARTIALLY_SUCCESSFUL, AUTH_FAILED, \
      OPEN_SUCCEEDED, OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED,  OPEN_FAILED_CONNECT_FAILED, \
      OPEN_FAILED_UNKNOWN_CHANNEL_TYPE, OPEN_FAILED_RESOURCE_SHORTAGE
 
-from sftp import FX_OK, FX_EOF, FX_NO_SUCH_FILE, FX_PERMISSION_DENIED, FX_FAILURE, \
-     FX_BAD_MESSAGE, FX_NO_CONNECTION, FX_CONNECTION_LOST, FX_OP_UNSUPPORTED
+from sftp import SFTP_OK, SFTP_EOF, SFTP_NO_SUCH_FILE, SFTP_PERMISSION_DENIED, SFTP_FAILURE, \
+     SFTP_BAD_MESSAGE, SFTP_NO_CONNECTION, SFTP_CONNECTION_LOST, SFTP_OP_UNSUPPORTED
 
 __all__ = [ 'Transport',
             'SecurityOptions',
@@ -107,10 +104,8 @@ __all__ = [ 'Transport',
             'PasswordRequiredException',
             'SFTP',
             'SFTPClient',
-#            'SFTPServer',
             'SFTPError',
             'SFTPAttributes',
-#            'SFTPServerInterface',
             'ServerInterface',
             'BufferedFile',
             'transport',
@@ -122,10 +117,8 @@ __all__ = [ 'Transport',
             'message',
             'ssh_exception',
             'sftp_client',
-#            'sftp_server',
             'sftp_attr',
             'sftp_file',
-#            'sftp_si',
             'server',
             'file',
             'util' ]

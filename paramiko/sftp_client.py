@@ -134,13 +134,13 @@ class SFTPClient (BaseSFTP):
         """
         imode = 0
         if ('r' in mode) or ('+' in mode):
-            imode |= FXF_READ
+            imode |= SFTP_FLAG_READ
         if ('w' in mode) or ('+' in mode):
-            imode |= FXF_WRITE
+            imode |= SFTP_FLAG_WRITE
         if ('w' in mode):
-            imode |= FXF_CREATE | FXF_TRUNC
+            imode |= SFTP_FLAG_CREATE | SFTP_FLAG_TRUNC
         if ('a' in mode):
-            imode |= FXF_APPEND
+            imode |= SFTP_FLAG_APPEND
         attrblock = SFTPAttributes()
         t, msg = self._request(CMD_OPEN, filename, imode, attrblock)
         if t != CMD_HANDLE:
@@ -382,9 +382,9 @@ class SFTPClient (BaseSFTP):
         """
         code = msg.get_int()
         text = msg.get_string()
-        if code == FX_OK:
+        if code == SFTP_OK:
             return
-        elif code == FX_EOF:
+        elif code == SFTP_EOF:
             raise EOFError(text)
         else:
             raise IOError(text)

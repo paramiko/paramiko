@@ -31,28 +31,60 @@ CMD_INIT, CMD_VERSION, CMD_OPEN, CMD_CLOSE, CMD_READ, CMD_WRITE, CMD_LSTAT, CMD_
 CMD_STATUS, CMD_HANDLE, CMD_DATA, CMD_NAME, CMD_ATTRS = range(101, 106)
 CMD_EXTENDED, CMD_EXTENDED_REPLY = range(200, 202)
 
-FX_OK = 0
-FX_EOF, FX_NO_SUCH_FILE, FX_PERMISSION_DENIED, FX_FAILURE, FX_BAD_MESSAGE, \
-         FX_NO_CONNECTION, FX_CONNECTION_LOST, FX_OP_UNSUPPORTED = range(1, 9)
+SFTP_OK = 0
+SFTP_EOF, SFTP_NO_SUCH_FILE, SFTP_PERMISSION_DENIED, SFTP_FAILURE, SFTP_BAD_MESSAGE, \
+         SFTP_NO_CONNECTION, SFTP_CONNECTION_LOST, SFTP_OP_UNSUPPORTED = range(1, 9)
 
-FX_DESC = [ 'Success',
-            'End of file',
-            'No such file',
-            'Permission denied',
-            'Failure',
-            'Bad message',
-            'No connection',
-            'Connection lost',
-            'Operation unsupported' ]
+SFTP_DESC = [ 'Success',
+              'End of file',
+              'No such file',
+              'Permission denied',
+              'Failure',
+              'Bad message',
+              'No connection',
+              'Connection lost',
+              'Operation unsupported' ]
 
-FXF_READ = 0x1
-FXF_WRITE = 0x2
-FXF_APPEND = 0x4
-FXF_CREATE = 0x8
-FXF_TRUNC = 0x10
-FXF_EXCL = 0x20
+SFTP_FLAG_READ = 0x1
+SFTP_FLAG_WRITE = 0x2
+SFTP_FLAG_APPEND = 0x4
+SFTP_FLAG_CREATE = 0x8
+SFTP_FLAG_TRUNC = 0x10
+SFTP_FLAG_EXCL = 0x20
 
 _VERSION = 3
+
+
+# for debugging
+CMD_NAMES = {
+    CMD_INIT: 'init',
+    CMD_VERSION: 'version',
+    CMD_OPEN: 'open',
+    CMD_CLOSE: 'close',
+    CMD_READ: 'read',
+    CMD_WRITE: 'write',
+    CMD_LSTAT: 'lstat',
+    CMD_FSTAT: 'fstat',
+    CMD_SETSTAT: 'setstat',
+    CMD_FSETSTAT: 'fsetstat',
+    CMD_OPENDIR: 'opendir',
+    CMD_READDIR: 'readdir',
+    CMD_REMOVE: 'remove',
+    CMD_MKDIR: 'mkdir',
+    CMD_RMDIR: 'rmdir',
+    CMD_REALPATH: 'realpath',
+    CMD_STAT: 'stat',
+    CMD_RENAME: 'rename',
+    CMD_READLINK: 'readlink',
+    CMD_SYMLINK: 'symlink',
+    CMD_STATUS: 'status',
+    CMD_HANDLE: 'handle',
+    CMD_DATA: 'data',
+    CMD_NAME: 'name',
+    CMD_ATTRS: 'attrs',
+    CMD_EXTENDED: 'extended',
+    CMD_EXTENDED_REPLY: 'extended_reply'
+    }
 
 
 class SFTPError (Exception):
