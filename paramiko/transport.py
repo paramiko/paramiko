@@ -511,10 +511,13 @@ class BaseTransport (threading.Thread):
         if not self.active:
             # don't bother trying to allocate a channel
             return None
+        self.lock.acquire()
         try:
-            self.lock.acquire()
             chanid = self.channel_counter
-            self.channel_counter += 1
+            while self.channels.has_key(chanid):
+                self.channel_counter = (self.channel_counter + 1) & 0xffffff
+                chanid = self.channel_counter
+            self.channel_counter = (self.channel_counter + 1) & 0xffffff
             m = Message()
             m.add_byte(chr(MSG_CHANNEL_OPEN))
             m.add_string(kind)
@@ -799,6 +802,19 @@ class BaseTransport (threading.Thread):
             self.subsystem_table[name] = (handler, larg, kwarg)
         finally:
             self.lock.release()
+
+    def set_log_channel(self, name):
+        """
+        Set the channel for this transport's logging.  The default is
+        C{"paramiko.transport"} but it can be set to anything you want.
+        (See the C{logging} module for more info.)
+
+        @param name: new channel name for logging.
+        @type name: str
+
+        @since: 1.1
+        """
+        self.logger = logging.getLogger(name)
 
 
     ###  internals...
@@ -1437,10 +1453,13 @@ class BaseTransport (threading.Thread):
             reject = True
             reason = OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED
         else:
+            self.lock.acquire()
             try:
-                self.lock.acquire()
                 my_chanid = self.channel_counter
-                self.channel_counter += 1
+                while self.channels.has_key(my_chanid):
+                    self.channel_counter = (self.channel_counter + 1) & 0xffffff
+                    my_chanid = self.channel_counter
+                self.channel_counter = (self.channel_counter + 1) & 0xffffff
             finally:
                 self.lock.release()
             reason = self.server_object.check_channel_request(kind, my_chanid) 

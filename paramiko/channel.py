@@ -592,11 +592,6 @@ class Channel (object):
             self._send_eof()
 
 
-    ###  overrides
-
-
-
-
     ###  calls from Transport
 
 
