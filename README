@@ -8,20 +8,21 @@ http://www.lag.net/~robey/paramiko/
 
 ***  WHAT
 
-"paramiko" is a combination of the esperanto words for "paranoid" and "friend".
-it's a module for python 2.2+ that implements the SSH2 protocol for secure
-(encrypted and authenticated) connections to remote machines. unlike SSL (aka
-TLS), SSH2 protocol does not require heirarchical certificates signed by a
-powerful central authority. you may know SSH2 as the protocol that replaced
-telnet and rsh for secure access to remote shells, but the protocol also
-includes the ability to open arbitrary channels to remote services across the
-encrypted tunnel (this is how sftp works, for example).
+"paramiko" is a combination of the esperanto words for "paranoid" and
+"friend".  it's a module for python 2.2+ that implements the SSH2 protocol
+for secure (encrypted and authenticated) connections to remote machines.
+unlike SSL (aka TLS), SSH2 protocol does not require heirarchical
+certificates signed by a powerful central authority. you may know SSH2 as
+the protocol that replaced telnet and rsh for secure access to remote
+shells, but the protocol also includes the ability to open arbitrary
+channels to remote services across the encrypted tunnel (this is how sftp
+works, for example).
 
 it is written entirely in python (no C or platform-dependent code) and is
 released under the GNU LGPL (lesser GPL). 
 
-the package and its API is fairly well documented in the "doc/" folder that
-should have come with this archive.
+the package and its API is fairly well documented in the "doc/" folder
+that should have come with this archive.
 
 
 ***  REQUIREMENTS
@@ -41,43 +42,47 @@ line (thanks to Roger Binns for the info):
 ***  PORTABILITY
 
 i code and test this library on Linux and MacOS X.  for that reason, i'm
-pretty sure that it works for all posix platforms, including MacOS.  i also
-think it will work on Windows, though i've never tested it there.  if you
-run into Windows problems, send me a patch: portability is important to me.
+pretty sure that it works for all posix platforms, including MacOS.  i
+also think it will work on Windows, though i've never tested it there.  if
+you run into Windows problems, send me a patch: portability is important
+to me.
 
-the Channel object supports a "fileno()" call so that it can be passed into
-select or poll, for polling on posix.  once you call "fileno()" on a Channel,
-it changes behavior in some fundamental ways, and these ways require posix.
-so don't call "fileno()" on a Channel on Windows.  this is detailed in the
-documentation for the "fileno" method.
+the Channel object supports a "fileno()" call so that it can be passed
+into select or poll, for polling on posix.  once you call "fileno()" on a
+Channel, it changes behavior in some fundamental ways, and these ways
+require posix.  so don't call "fileno()" on a Channel on Windows.  this is
+detailed in the documentation for the "fileno" method.
 
-python 2.2 may work, thanks to some patches from Roger Binns.  things to watch
-out for:
-* sockets in 2.2 don't support timeouts, so the 'select' module is imported
-  to do polling.  this may not work on windows.  (works fine on osx.)
-* logging is mostly stubbed out.  it works just enough to let paramiko create
-  log files for debugging, if you want them.  to get real logging, you can
-  backport python 2.3's logging package.  Roger has done that already:
+python 2.2 may work, thanks to some patches from Roger Binns.  things to
+watch out for:
+* sockets in 2.2 don't support timeouts, so the 'select' module is
+  imported to do polling.  this may not work on windows.  (works fine on
+  osx.)
+* logging is mostly stubbed out.  it works just enough to let paramiko
+  create log files for debugging, if you want them.  to get real logging,
+  you can backport python 2.3's logging package.  Roger has done that
+  already:
   http://sourceforge.net/project/showfiles.php?group_id=75211&package_id=113804
 
 you really should upgrade to python 2.3.  laziness is no excuse! :)
 
-some python distributions don't include the utf-8 string encodings, for reasons
-of space (misdirected as that is).  if your distribution is missing encodings,
-you'll see an error like this:
+some python distributions don't include the utf-8 string encodings, for
+reasons of space (misdirected as that is).  if your distribution is
+missing encodings, you'll see an error like this:
 
 LookupError: no codec search functions registered: can't find encoding
 
 this means you need to copy string encodings over from a working system.
-(it probably only happens on embedded systems, not normal python installls.)
+(it probably only happens on embedded systems, not normal python
+installls.)
 Valeriy Pogrebitskiy says the best place to look is
 '.../lib/python*/encodings/__init__.py'.
 
 
 ***  DEMO
 
-several demo scripts come with paramiko to demonstrate how to use it.  probably
-the simplest demo of all is this:
+several demo scripts come with paramiko to demonstrate how to use it.
+probably the simplest demo of all is this:
 
     import paramiko, base64
     key = paramiko.RSAKey(data=base64.decodestring('AAA...'))
@@ -90,44 +95,48 @@ the simplest demo of all is this:
     chan.close()
     t.close()
 
-...which prints out the results of executing 'ls' on a remote server.  (the
-host key 'AAA...' should of course be replaced by the actual base64 encoding
-of the host key.  if you skip host key verification, the connection is not
-secure!)
+...which prints out the results of executing 'ls' on a remote server.
+(the host key 'AAA...' should of course be replaced by the actual base64
+encoding of the host key.  if you skip host key verification, the
+connection is not secure!)
 
 the following example scripts get progressively more detailed:
 
 demo_windows.py
-    executes 'ls' on any remote server, loading the host key from your openssh
-    key file.  (this script works on windows because it avoids using terminal
-    i/o or the 'select' module.)  it also creates a logfile 'demo_windows.log'.
+    executes 'ls' on any remote server, loading the host key from your
+    openssh key file.  (this script works on windows because it avoids
+    using terminal i/o or the 'select' module.)  it also creates a logfile
+    'demo_windows.log'.
 
 demo_simple.py
     calls invoke_shell() and emulates a terminal/tty through which you can
-    execute commands interactively on a remote server.  think of it as a poor
-    man's ssh command-line client.  (works only on posix [unix or macosx].)
+    execute commands interactively on a remote server.  think of it as a
+    poor man's ssh command-line client.  (works only on posix [unix or
+    macosx].)
 
 demo.py
-    same as demo_simple.py, but allows you to authenticiate using a private
-    key, and uses the long form of some of the API calls.  (posix only.)
+    same as demo_simple.py, but allows you to authenticiate using a
+    private key, and uses the long form of some of the API calls.  (posix
+    only.)
 
 forward.py
     command-line script to set up port-forwarding across an ssh transport.
     (requires python 2.3 and posix.)
 
 demo_server.py
-    an ssh server that listens on port 2200 and accepts a login for 'robey'
-    (password 'foo'), and pretends to be a BBS.  meant to be a very simple
-    demo of writing an ssh server.  (should work on all platforms.)
+    an ssh server that listens on port 2200 and accepts a login for
+    'robey' (password 'foo'), and pretends to be a BBS.  meant to be a
+    very simple demo of writing an ssh server.  (should work on all
+    platforms.)
 
 
 ***  USE
 
 the demo scripts are probably the best example of how to use this package.
 there is also a lot of documentation, generated with epydoc, in the doc/
-folder.  point your browser there.  seriously, do it.  mad props to epydoc,
-which actually motivated me to write more documentation than i ever would have
-before.
+folder.  point your browser there.  seriously, do it.  mad props to
+epydoc, which actually motivated me to write more documentation than i
+ever would have before.
 
 there are also unit tests here:
     $ python ./test.py
@@ -142,33 +151,34 @@ highlights of what's new in each release:
 
 v1.0 JIGGLYPUFF
 * fixed bug that broke server-mode authentication by private key
-* fixed bug where closing a Channel could end up killing the entire Transport
+* fixed bug where closing a Channel could end up killing the entire
+  Transport
 * actually include demo_windows.py this time (oops!)
-* fixed recently-introduced bug in group-exchange key negotiation that would
-  generate the wrong hash (and therefore fail the initial handshake)
+* fixed recently-introduced bug in group-exchange key negotiation that
+  would generate the wrong hash (and therefore fail the initial handshake)
 * server-mode subsystem handler is a bit more flexible
 
 v0.9 IVYSAUR
-* new ServerInterface class for implementing server policy, so it's no longer
-  necessary to subclass Transport or Channel -- server code will need to be
-  updated to follow this new API!  (see demo_server.py)
+* new ServerInterface class for implementing server policy, so it's no
+  longer necessary to subclass Transport or Channel -- server code will
+  need to be updated to follow this new API!  (see demo_server.py)
 * some bugfixes for re-keying an active session
-* Transport.get_security_options() allows fine-tuned control over the crypto
-  negotiation on a new session
-* Transport.connect() takes a single hostkey object now instead of two string
-  parameters
-* the Channel request methods (like 'exec_command') now return True on success
-  or False on failure
-* added a mechanism for providing subsystems in server mode (and a new class
-  to be subclassed: SubsystemHandler)
+* Transport.get_security_options() allows fine-tuned control over the
+  crypto negotiation on a new session
+* Transport.connect() takes a single hostkey object now instead of two
+  string parameters
+* the Channel request methods (like 'exec_command') now return True on
+  success or False on failure
+* added a mechanism for providing subsystems in server mode (and a new
+  class to be subclassed: SubsystemHandler)
 * renamed SFTP -> SFTPClient (but left an alias for existing code)
 * added SFTPClient.normalize() to resolve paths on the server
 * fleshed out the API a bit more for SFTPClient and private keys
 * a bunch of new unit tests!
 
 v0.9 HORSEA
-* fixed a lockup that could happen if the channel was closed while the send
-  window was full
+* fixed a lockup that could happen if the channel was closed while the
+  send window was full
 * better checking of maximum packet sizes
 * better line buffering for file objects
 * now chops sftp requests into smaller packets for some older servers
@@ -188,12 +198,13 @@ v0.9 FEAROW
 * RSAKey/DSSKey added from_private_key_file() as a factory constructor;
   write_private_key_file() & generate() to create and save ssh2 keys;
   get_base64() to retrieve the exported public key
-* Transport added global_request() [client] and check_global_request() [server]
+* Transport added global_request() [client] and check_global_request()
+  [server]
 * Transport.get_remove_server_key() now returns a PKey object instead of a
   tuple of strings
 * Transport.get_username() -- return the username you auth'd as [client]
-* Transport.set_keepalive() -- makes paramiko send periodic junk packets to the
-  remote host, to keep the session active
+* Transport.set_keepalive() -- makes paramiko send periodic junk packets
+  to the remote host, to keep the session active
 * python 2.2 support (thanks to Roger Binns)
 * misc. bug fixes
 
