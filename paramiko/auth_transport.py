@@ -48,6 +48,7 @@ class Transport (BaseTransport):
 
     def __init__(self, sock):
         BaseTransport.__init__(self, sock)
+        self.username = None
         self.authenticated = False
         self.auth_event = None
         # for server mode:
@@ -79,8 +80,20 @@ class Transport (BaseTransport):
 
         @return: True if the session is still open and has been authenticated successfully;
         False if authentication failed and/or the session is closed.
+        @rtype: bool
         """
         return self.authenticated and self.active
+
+    def get_username(self):
+        """
+        Return the username this connection is authenticated for.  If the
+        session is not authenticated (or authentication failed), this method
+        returns C{None}.
+
+        @return: username that was authenticated, or C{None}.
+        @rtype: string
+        """
+        return self.username
 
     def auth_publickey(self, username, key, event):
         """
@@ -334,6 +347,8 @@ class Transport (BaseTransport):
             self._log(DEBUG, 'Auth rejected because the client attempted to change username in mid-flight')
             self._disconnect_no_more_auth()
             return
+        self.auth_username = username
+
         if method == 'none':
             result = self.check_auth_none(username)
         elif method == 'password':
@@ -390,7 +405,7 @@ class Transport (BaseTransport):
                 m.add_boolean(1)
             else:
                 m.add_boolean(0)
-            self.auth_fail_count += 1
+                self.auth_fail_count += 1
         self._send_message(m)
         if self.auth_fail_count >= 10:
             self._disconnect_no_more_auth()
@@ -411,6 +426,8 @@ class Transport (BaseTransport):
             pass
         self._log(INFO, 'Authentication failed.')
         self.authenticated = False
+        # FIXME: i don't think we need to close() necessarily here
+        self.username = None
         self.close()
         if self.auth_event != None:
             self.auth_event.set()

@@ -237,7 +237,7 @@ class PKey (object):
         lines = f.readlines()
         f.close()
         start = 0
-        while (lines[start].strip() != '-----BEGIN ' + tag + ' PRIVATE KEY-----') and (start < len(lines)):
+        while (start < len(lines)) and (lines[start].strip() != '-----BEGIN ' + tag + ' PRIVATE KEY-----'):
             start += 1
         if start >= len(lines):
             raise SSHException('not a valid ' + tag + ' private key file')

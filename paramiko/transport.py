@@ -636,10 +636,11 @@ class BaseTransport (threading.Thread):
 
         # check host key if we were given one
         if (hostkeytype is not None) and (hostkey is not None):
-            type, key = self.get_remote_server_key()
-            if (type != hostkeytype) or (key != hostkey):
-                print repr(type) + ' - ' + repr(hostkeytype)
-                print repr(key) + ' - ' + repr(hostkey)
+            keytype, key = self.get_remote_server_key()
+            if (keytype != hostkeytype) or (key != hostkey):
+                self._log(DEBUG, 'Bad host key from server')
+                self._log(DEBUG, 'Expected: %s: %s' % (repr(hostkeytype), repr(hostkey)))
+                self._log(DEBUG, 'Got     : %s: %s' % (repr(keytype), repr(key)))
                 raise SSHException('Bad host key from server')
             self._log(DEBUG, 'Host key verified (%s)' % hostkeytype)
 
@@ -920,6 +921,8 @@ class BaseTransport (threading.Thread):
             self._log(DEBUG, util.tb_strings())
             self.saved_exception = e
         _active_threads.remove(self)
+        for chan in self.channels.values():
+            chan._unlink()
         if self.active:
             self.active = False
             if self.completion_event != None:

@@ -70,7 +70,7 @@ class Channel (object):
         self.eof_sent = 0
         self.in_buffer = ''
         self.timeout = None
-        self.closed = 0
+        self.closed = False
         self.lock = threading.Lock()
         self.in_buffer_cv = threading.Condition(self.lock)
         self.out_buffer_cv = threading.Condition(self.lock)
@@ -302,7 +302,7 @@ class Channel (object):
                 m.add_byte(chr(MSG_CHANNEL_CLOSE))
                 m.add_int(self.remote_chanid)
                 self.transport._send_message(m)
-                self.closed = 1
+                self._set_closed()
                 self.transport._unlink_channel(self.chanid)
         finally:
             self.lock.release()
@@ -723,6 +723,11 @@ class Channel (object):
     def _log(self, level, msg):
         self.logger.log(level, msg)
 
+    def _set_closed(self):
+        self.closed = True
+        self.in_buffer_cv.notifyAll()
+        self.out_buffer_cv.notifyAll()
+
     def _send_eof(self):
         if self.eof_sent:
             return
@@ -815,7 +820,7 @@ class Channel (object):
     def _unlink(self):
         if self.closed or not self.active:
             return
-        self.closed = 1
+        self._set_closed()
         self.transport._unlink_channel(self.chanid)
 
     def _check_add_window(self, n):

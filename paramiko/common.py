@@ -62,7 +62,10 @@ randpool.randomize()
 
 import sys
 if sys.version_info < (2, 3):
-    import logging22 as logging
+    try:
+        import logging
+    except:
+        import logging22 as logging
     import select
     PY22 = True
 else:
