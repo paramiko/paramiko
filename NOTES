@@ -11,17 +11,3 @@
 SIS <-- @ --> (parse, find chan) --> ssh2 chan: buffer <-- SSHInputStream
 SSHOutputStream --> ssh2 chan --> ssh2 transport --> SOS   [no thread]
 
-
-
-exported API...
-
-from ChannelFile:
-    next
-    write
-    writelines
-    flush
-    read
-    readline
-    readlines
-    xreadlines
-    close
