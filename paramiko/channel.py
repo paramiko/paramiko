@@ -822,7 +822,7 @@ class Channel (object):
         nbytes = m.get_int()
         try:
             self.lock.acquire()
-            if self.ultra_debug or True:
+            if self.ultra_debug:
                 self._log(DEBUG, 'window up %d' % nbytes)
             self.out_window_size += nbytes
             self.out_buffer_cv.notifyAll()

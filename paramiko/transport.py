@@ -806,12 +806,24 @@ class BaseTransport (threading.Thread):
         """
         return self.log_name
 
+    def set_hexdump(self, hexdump):
+        """
+        Turn on/off logging a hex dump of protocol traffic at DEBUG level in
+        the logs.  Normally you would want this off (which is the default),
+        but if you are debugging something, it may be useful.
+
+        @param hexdump: C{True} to log protocol traffix (in hex) to the log;
+            C{False} otherwise.
+        @type hexdump: bool
+        """
+        self.ultra_debug = hexdump
+
 
     ###  internals...
 
     
     def _log(self, level, msg):
-        if type(msg) == type([]):
+        if issubclass(type(msg), list):
             for m in msg:
                 self.logger.log(level, m)
         else:

@@ -326,7 +326,7 @@ class Transport (BaseTransport):
             self._disconnect_service_not_available()
             return
         if (self.auth_username is not None) and (self.auth_username != username):
-            self._log(DEBUG, 'Auth rejected because the client attempted to change username in mid-flight')
+            self._log(WARNING, 'Auth rejected because the client attempted to change username in mid-flight')
             self._disconnect_no_more_auth()
             return
         self.auth_username = username
@@ -351,10 +351,10 @@ class Transport (BaseTransport):
             try:
                 key = self._key_info[keytype](Message(keyblob))
             except SSHException, e:
-                self._log(DEBUG, 'Auth rejected: public key: %s' % str(e))
+                self._log(INFO, 'Auth rejected: public key: %s' % str(e))
                 key = None
             except:
-                self._log(DEBUG, 'Auth rejected: unsupported or mangled public key')
+                self._log(INFO, 'Auth rejected: unsupported or mangled public key')
                 key = None
             if key is None:
                 self._disconnect_no_more_auth()
@@ -375,18 +375,18 @@ class Transport (BaseTransport):
                 sig = Message(m.get_string())
                 blob = self._get_session_blob(key, service, username)
                 if not key.verify_ssh_sig(blob, sig):
-                    self._log(DEBUG, 'Auth rejected: invalid signature')
+                    self._log(INFO, 'Auth rejected: invalid signature')
                     result = AUTH_FAILED
         else:
             result = self.server_object.check_auth_none(username)
         # okay, send result
         m = Message()
         if result == AUTH_SUCCESSFUL:
-            self._log(DEBUG, 'Auth granted.')
+            self._log(INFO, 'Auth granted (%s).' % method)
             m.add_byte(chr(MSG_USERAUTH_SUCCESS))
             self.authenticated = True
         else:
-            self._log(DEBUG, 'Auth rejected.')
+            self._log(INFO, 'Auth rejected (%s).' % method)
             m.add_byte(chr(MSG_USERAUTH_FAILURE))
             m.add_string(self.server_object.get_allowed_auths(username))
             if result == AUTH_PARTIALLY_SUCCESSFUL:

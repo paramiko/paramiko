@@ -118,7 +118,7 @@ class BaseSFTP (object):
         return version
         
     def _log(self, level, msg):
-        if type(msg) == type([]):
+        if issubclass(type(msg), list):
             for m in msg:
                 self.logger.log(level, m)
         else:
