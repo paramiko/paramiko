@@ -276,10 +276,13 @@ class Transport (BaseTransport):
             keyblob = m.get_string()
             try:
                 key = self._key_info[keytype](Message(keyblob))
-            except:
+            except SSHException, e:
+                self._log(DEBUG, 'Auth rejected: public key: %s' % str(e))
                 key = None
-            if (key is None) or (not key.valid):
+            except:
                 self._log(DEBUG, 'Auth rejected: unsupported or mangled public key')
+                key = None
+            if key is None:
                 self._disconnect_no_more_auth()
                 return
             # first check if this key is okay... if not, we can skip the verify
