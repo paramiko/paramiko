@@ -73,14 +73,6 @@ class DSSKey(object):
         m.add_string(deflate_long(r, 0) + deflate_long(s, 0))
         return str(m)
 
-
-        rsa = RSA.construct((long(self.n), long(self.e), long(self.d)))
-        sig = deflate_long(rsa.sign(self.pkcs1imify(hash), '')[0], 0)
-        m = Message()
-        m.add_string('ssh-rsa')
-        m.add_string(sig)
-        return str(m)
-
     def read_private_key_file(self, filename):
         # private key file contains:
         # DSAPrivateKey = { version = 0, p, q, g, y, x }
