@@ -80,11 +80,13 @@ class Channel (object):
         self.in_buffer_cv = threading.Condition(self.lock)
         self.in_stderr_buffer_cv = threading.Condition(self.lock)
         self.out_buffer_cv = threading.Condition(self.lock)
+        self.status_event = threading.Event()
         self.name = str(chanid)
         self.logger = logging.getLogger('paramiko.chan.' + str(chanid))
         self.pipe_rfd = self.pipe_wfd = None
         self.event = threading.Event()
         self.combine_stderr = False
+        self.exit_status = -1
 
     def __repr__(self):
         """
@@ -249,19 +251,60 @@ class Channel (object):
         m.add_byte(chr(MSG_CHANNEL_REQUEST))
         m.add_int(self.remote_chanid)
         m.add_string('window-change')
-        m.add_boolean(0)
+        m.add_boolean(1)
         m.add_int(width)
         m.add_int(height)
         m.add_int(0).add_int(0)
         self.event.clear()
         self.transport._send_user_message(m)
-        while 1:
+        while True:
             self.event.wait(0.1)
             if self.closed:
                 return False
             if self.event.isSet():
                 return True
 
+    def recv_exit_status(self):
+        """
+        Return the exit status from the process on the server.  This is
+        mostly useful for retrieving the reults of an L{exec_command}.
+        If the command hasn't finished yet, this method will wait until
+        it does, or until the channel is closed.  If no exit status is
+        provided by the server, -1 is returned.
+        
+        @return: the exit code of the process on the server.
+        @rtype: int
+        
+        @since: 1.2
+        """
+        while True:
+            if self.closed or self.status_event.isSet():
+                return self.exit_status
+            self.status_event.wait(0.1)
+
+    def send_exit_status(self, status):
+        """
+        Send the exit status of an executed command to the client.  (This
+        really only makes sense in server mode.)  Many clients expect to
+        get some sort of status code back from an executed command after
+        it completes.
+        
+        @param status: the exit code of the process
+        @type status: int
+        
+        @since: 1.2
+        """
+        # in many cases, the channel will not still be open here.
+        # that's fine.
+        m = Message()
+        m.add_byte(chr(MSG_CHANNEL_REQUEST))
+        m.add_int(self.remote_chanid)
+        m.add_string('exit-status')
+        m.add_boolean(0)
+        m.add_int(status)
+        self.transport._send_user_message(m)
+        self._log(DEBUG, 'EXIT-STATUS')
+        
     def get_transport(self):
         """
         Return the L{Transport} associated with this channel.
@@ -743,7 +786,7 @@ class Channel (object):
         disallowed.  This closes the stream in one or both directions.
 
         @param how: 0 (stop receiving), 1 (stop sending), or 2 (stop
-        receiving and sending).
+            receiving and sending).
         @type how: int
         """
         if (how == 0) or (how == 2):
@@ -751,6 +794,30 @@ class Channel (object):
             self.eof_received = 1
         if (how == 1) or (how == 2):
             self._send_eof()
+    
+    def shutdown_read(self):
+        """
+        Shutdown the receiving side of this socket, closing the stream in
+        the incoming direction.  After this call, future reads on this
+        channel will fail instantly.  This is a convenience method, equivalent
+        to C{shutdown(0)}, for people who don't make it a habit to
+        memorize unix constants from the 1970s.
+        
+        @since: 1.2
+        """
+        self.shutdown(0)
+    
+    def shutdown_write(self):
+        """
+        Shutdown the sending side of this socket, closing the stream in
+        the outgoing direction.  After this call, future writes on this
+        channel will fail instantly.  This is a convenience method, equivalent
+        to C{shutdown(1)}, for people who don't make it a habit to
+        memorize unix constants from the 1970s.
+        
+        @since: 1.2
+        """
+        self.shutdown(1)
 
 
     ###  calls from Transport
@@ -820,8 +887,8 @@ class Channel (object):
         
     def _window_adjust(self, m):
         nbytes = m.get_int()
+        self.lock.acquire()
         try:
-            self.lock.acquire()
             if self.ultra_debug:
                 self._log(DEBUG, 'window up %d' % nbytes)
             self.out_window_size += nbytes
@@ -836,6 +903,7 @@ class Channel (object):
         ok = False
         if key == 'exit-status':
             self.exit_status = m.get_int()
+            self.status_event.set()
             ok = True
         elif key == 'xon-xoff':
             # ignore
@@ -1128,7 +1196,6 @@ class ChannelStderrFile (ChannelFile):
     def _write(self, data):
         self.channel.sendall_stderr(data)
         return len(data)
-
 
 
 # vim: set shiftwidth=4 expandtab :

@@ -951,7 +951,7 @@ class BaseTransport (threading.Thread):
         send a message, but block if we're in key negotiation.  this is used
         for user-initiated requests.
         """
-        while 1:
+        while True:
             self.clear_to_send.wait(0.1)
             if not self.active:
                 self._log(DEBUG, 'Dropping user packet because connection is dead.')
