@@ -162,7 +162,7 @@ class BaseTransport (threading.Thread):
         self.channel_counter = 1
         self.logger = logging.getLogger('paramiko.transport')
         self.window_size = 65536
-        self.max_packet_size = 2048
+        self.max_packet_size = 8192
         self.ultra_debug = 0
         self.saved_exception = None
         # used for noticing when to re-key:
@@ -943,16 +943,16 @@ class BaseTransport (threading.Thread):
                     msg.add_int(m.seqno)
                     self._send_message(msg)
         except SSHException, e:
-            self._log(DEBUG, 'Exception: ' + str(e))
-            self._log(DEBUG, util.tb_strings())
+            self._log(ERROR, 'Exception: ' + str(e))
+            self._log(ERROR, util.tb_strings())
             self.saved_exception = e
         except EOFError, e:
             self._log(DEBUG, 'EOF')
             self._log(DEBUG, util.tb_strings())
             self.saved_exception = e
         except Exception, e:
-            self._log(DEBUG, 'Unknown exception: ' + str(e))
-            self._log(DEBUG, util.tb_strings())
+            self._log(ERROR, 'Unknown exception: ' + str(e))
+            self._log(ERROR, util.tb_strings())
             self.saved_exception = e
         _active_threads.remove(self)
         for chan in self.channels.values():

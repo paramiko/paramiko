@@ -23,6 +23,9 @@ L{Transport} is a subclass of L{BaseTransport} that handles authentication.
 This separation keeps either class file from being too unwieldy.
 """
 
+# this helps freezing utils
+import encodings.utf_8
+
 from common import *
 import util
 from transport import BaseTransport

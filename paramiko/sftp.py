@@ -194,8 +194,8 @@ class SFTP (object):
         if t != CMD_VERSION:
             raise SFTPError('Incompatible sftp protocol')
         version = struct.unpack('>I', data[:4])[0]
-        if version != VERSION:
-            raise SFTPError('Incompatible sftp protocol')
+#        if version != VERSION:
+#            raise SFTPError('Incompatible sftp protocol')
 
     def from_transport(selfclass, t):
         chan = t.open_session()
