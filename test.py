@@ -57,6 +57,11 @@ parser.add_option('-P', '--sftp-passwd', dest='password', type='string', default
                   help='(optional) password to unlock the private key for sftp tests')
 parser.add_option('--no-pkey', action='store_false', dest='use_pkey', default=True,
                   help='skip RSA/DSS private key tests (which can take a while)')
+parser.add_option('--no-transport', action='store_false', dest='use_transport', default=True,
+                  help='skip transport tests (which can take a while)')
+parser.add_option('--no-big-file', action='store_false', dest='use_big_file', default=True,
+                  help='skip big file SFTP tests, which are slow as molasses')
+parser.add_option('-X', action='store_true', dest='use_loopback_sftp', default=False)
 
 options, args = parser.parse_args()
 if len(args) > 0:
@@ -64,6 +69,10 @@ if len(args) > 0:
 
 if options.use_sftp:
     SFTPTest.init(options.hostname, options.username, options.keyfile, options.password)
+if options.use_loopback_sftp:
+    SFTPTest.init_loopback()
+if not options.use_big_file:
+    SFTPTest.set_big_file_test(False)
 
 # setup logging
 paramiko.util.log_to_file('test.log')
@@ -74,7 +83,8 @@ suite.addTest(unittest.makeSuite(BufferedFileTest))
 if options.use_pkey:
     suite.addTest(unittest.makeSuite(KeyTest))
 suite.addTest(unittest.makeSuite(KexTest))
-suite.addTest(unittest.makeSuite(TransportTest))
-if options.use_sftp:
+if options.use_transport:
+    suite.addTest(unittest.makeSuite(TransportTest))
+if options.use_sftp or options.use_loopback_sftp:
     suite.addTest(unittest.makeSuite(SFTPTest))
 unittest.TextTestRunner(verbosity=2).run(suite)
