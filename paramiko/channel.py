@@ -359,19 +359,21 @@ class Channel (object):
         is flushed).  Channels are automatically closed when they are garbage-
         collected, or when their L{Transport} is closed.
         """
+        self.lock.acquire()
         try:
-            self.lock.acquire()
-            if self.active and not self.closed:
-                try:
-                    self._send_eof()
-                    m = Message()
-                    m.add_byte(chr(MSG_CHANNEL_CLOSE))
-                    m.add_int(self.remote_chanid)
-                    self.transport._send_user_message(m)
-                except EOFError:
-                    pass
-                self._set_closed()
-                self.transport._unlink_channel(self.chanid)
+            if not self.active or self.closed:
+                return
+            try:
+                self._send_eof()
+                m = Message()
+                m.add_byte(chr(MSG_CHANNEL_CLOSE))
+                m.add_int(self.remote_chanid)
+                self.transport._send_user_message(m)
+            except EOFError:
+                pass
+            self._set_closed()
+            # can't unlink from the Transport yet -- the remote side may still
+            # try to send meta-data (exit-status, etc)
         finally:
             self.lock.release()
 
@@ -722,10 +724,9 @@ class Channel (object):
 
     def _handle_close(self, m):
         self.close()
+        self.lock.acquire()
         try:
-            self.lock.acquire()
-            self.in_buffer_cv.notifyAll()
-            self.out_buffer_cv.notifyAll()
+            self.transport._unlink_channel(self.chanid)
             if self.pipe_wfd != None:
                 os.close(self.pipe_wfd)
                 self.pipe_wfd = None
