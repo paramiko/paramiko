@@ -37,6 +37,7 @@ class ServerTransport(paramiko.Transport):
         return self.AUTH_FAILED
 
     def check_auth_publickey(self, username, key):
+        print 'Auth attempt with key: ' + paramiko.util.hexify(key.get_fingerprint())
         if (username == 'robey') and (key == self.good_pub_key):
             return self.AUTH_SUCCESSFUL
         return self.AUTH_FAILED
@@ -66,6 +67,7 @@ try:
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     sock.bind(('', 2200))
 except Exception, e:
+
     print '*** Bind failed: ' + str(e)
     traceback.print_exc()
     sys.exit(1)

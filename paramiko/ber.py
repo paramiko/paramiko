@@ -1,45 +1,15 @@
 #!/usr/bin/python
 
-import struct
+import struct, util
 
-def inflate_long(s, always_positive=0):
-    "turns a normalized byte string into a long-int (adapted from Crypto.Util.number)"
-    out = 0L
-    if len(s) % 4:
-        filler = '\x00'
-        if not always_positive and (ord(s[0]) >= 0x80):
-            # negative
-            filler = '\xff'
-        s = filler * (4 - len(s) % 4) + s
-    # FIXME: this doesn't actually handle negative.
-    # luckily ssh never uses negative bignums.
-    for i in range(0, len(s), 4):
-        out = (out << 32) + struct.unpack('>I', s[i:i+4])[0]
-    return out
 
-def deflate_long(n, add_sign_padding=1):
-    "turns a long-int into a normalized byte string (adapted from Crypto.Util.number)"
-    # after much testing, this algorithm was deemed to be the fastest
-    s = ''
-    n = long(n)
-    while n > 0:
-        s = struct.pack('>I', n & 0xffffffffL) + s
-        n = n >> 32
-    # strip off leading zeros
-    for i in enumerate(s):
-        if i[1] != '\000':
-            break
-    else:
-        # only happens when n == 0
-        s = '\000'
-        i = (0,)
-    s = s[i[0]:]
-    if (ord(s[0]) >= 0x80) and add_sign_padding:
-        s = '\x00' + s
-    return s
-
+class BERException (Exception):
+    pass
 
 class BER(object):
+    """
+    Robey's tiny little attempt at a BER decoder.
+    """
 
     def __init__(self, content=''):
         self.content = content
@@ -95,10 +65,10 @@ class BER(object):
             return self.decode_sequence(data)
         elif id == 2:
             # int
-            return inflate_long(data)
+            return util.inflate_long(data)
         else:
             # 1: boolean (00 false, otherwise true)
-            raise Exception('Unknown ber encoding type %d (robey is lazy)' % id)
+            raise BERException('Unknown ber encoding type %d (robey is lazy)' % id)
 
     def decode_sequence(data):
         out = []

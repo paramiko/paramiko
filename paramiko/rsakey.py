@@ -1,14 +1,23 @@
 #!/usr/bin/python
 
+"""
+L{RSAKey}
+"""
+
 from message import Message
 from Crypto.PublicKey import RSA
-from Crypto.Hash import SHA
-from ber import BER
+from Crypto.Hash import SHA, MD5
+from Crypto.Cipher import DES3
+from ber import BER, BERException
 from util import format_binary, inflate_long, deflate_long
 from pkey import PKey
-import base64
+from ssh_exception import SSHException
 
 class RSAKey (PKey):
+    """
+    Representation of an RSA key which can be used to sign and verify SSH2
+    data.
+    """
 
     def __init__(self, msg=None, data=''):
         self.valid = 0
@@ -68,19 +77,17 @@ class RSAKey (PKey):
         rsa = RSA.construct((long(self.n), long(self.e)))
         return rsa.verify(hash, (sig,))
 
-    def read_private_key_file(self, filename):
+    def read_private_key_file(self, filename, password=None):
         # private key file contains:
         # RSAPrivateKey = { version = 0, n, e, d, p, q, d mod p-1, d mod q-1, q**-1 mod p }
         self.valid = 0
-        f = open(filename, 'r')
-        lines = f.readlines()
-        f.close()
-        if lines[0].strip() != '-----BEGIN RSA PRIVATE KEY-----':
-            raise SSHException('not a valid RSA private key file')
-        data = base64.decodestring(''.join(lines[1:-1]))
-        keylist = BER(data).decode()
+        data = self._read_private_key_file('RSA', filename, password)
+        try:
+            keylist = BER(data).decode()
+        except BERException:
+            raise SSHException('Unable to parse key file')
         if (type(keylist) != type([])) or (len(keylist) < 4) or (keylist[0] != 0):
-            raise SSHException('not a valid RSA private key file (bad ber encoding)')
+            raise SSHException('Not a valid RSA private key file (bad ber encoding)')
         self.n = keylist[1]
         self.e = keylist[2]
         self.d = keylist[3]

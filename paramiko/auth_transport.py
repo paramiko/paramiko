@@ -1,5 +1,10 @@
 #!/usr/bin/python
 
+"""
+L{Transport} is a subclass of L{BaseTransport} that handles authentication.
+This separation keeps either class file from being too unwieldy.
+"""
+
 from transport import BaseTransport
 from transport import _MSG_SERVICE_REQUEST, _MSG_SERVICE_ACCEPT, _MSG_USERAUTH_REQUEST, _MSG_USERAUTH_FAILURE, \
      _MSG_USERAUTH_SUCCESS, _MSG_USERAUTH_BANNER
@@ -11,11 +16,18 @@ _DISCONNECT_SERVICE_NOT_AVAILABLE, _DISCONNECT_AUTH_CANCELLED_BY_USER, \
     _DISCONNECT_NO_MORE_AUTH_METHODS_AVAILABLE = 7, 13, 14
 
 
-
 class Transport (BaseTransport):
     """
-    Subclass of L{BaseTransport} that handles authentication.  This separation
-    keeps either class file from being too unwieldy.
+    An SSH Transport attaches to a stream (usually a socket), negotiates an
+    encrypted session, authenticates, and then creates stream tunnels, called
+    L{Channel}s, across the session.  Multiple channels can be multiplexed
+    across a single session (and often are, in the case of port forwardings).
+
+    @note: Because each Transport has a worker thread running in the
+    background, you must call L{close} on the Transport to kill this thread.
+    On many platforms, the python interpreter will refuse to exit cleanly if
+    any of these threads are still running (and you'll have to C{kill -9} from
+    another shell window).
     """
     
     AUTH_SUCCESSFUL, AUTH_PARTIALLY_SUCCESSFUL, AUTH_FAILED = range(3)
@@ -34,7 +46,7 @@ class Transport (BaseTransport):
             return '<paramiko.Transport (unconnected)>'
         out = '<paramiko.Transport'
         if self.local_cipher != '':
-            out += ' (cipher %s)' % self.local_cipher
+            out += ' (cipher %s, %d bits)' % (self.local_cipher, self._cipher_info[self.local_cipher]['key-size'] * 8)
         if self.authenticated:
             if len(self.channels) == 1:
                 out += ' (active; 1 open channel)'

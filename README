@@ -17,22 +17,20 @@ telnet and rsh for secure access to remote shells, but the protocol also
 includes the ability to open arbitrary channels to remote services across the
 encrypted tunnel (this is how sftp works, for example).
 
-the module works by taking a socket-like object that you pass in, negotiating
-with the remote server, authenticating (using a password or a given private
-key), and opening flow-controled "channels" to the server, which are returned
-as socket-like objects. you are responsible for verifying that the server's
-host key is the one you expected to see, and you have control over which kinds
-of encryption or hashing you prefer (if you care), but all of the heavy lifting
-is done by the paramiko module.
-
 it is written entirely in python (no C or platform-dependent code) and is
 released under the GNU LGPL (lesser GPL). 
+
+the package and its API is fairly well documented in the "doc/" folder that
+should have come with this archive.
 
 
 ***  REQUIREMENTS
 
 python 2.3	<http://www.python.org/>
-pyCrypto	<http://www.amk.ca/python/code/crypto.html>
+pyCrypt		<http://www.amk.ca/python/code/crypto.html>
+
+PyCrypt compiled for Win32 can be downloaded from the HashTar homepage:
+    http://nitace.bsd.uchicago.edu:8080/hashtar
 
 
 ***  PORTABILITY
@@ -45,12 +43,8 @@ run into Windows problems, send me a patch: portability is important to me.
 the Channel object supports a "fileno()" call so that it can be passed into
 select or poll, for polling on posix.  once you call "fileno()" on a Channel,
 it changes behavior in some fundamental ways, and these ways require posix.
-so don't call "fileno()" on a Channel on Windows.  (the problem is that pipes
-are used to simulate an open socket, so that the ssh "socket" has an OS-level
-file descriptor.  i haven't figured out how to make pipes on Windows go into
-non-blocking mode yet.  [if you don't understand this last sentence, don't
-be afraid.  the point is to make the API simple enough that you don't HAVE to
-know these screwy steps.  i just don't understand windows enough.])
+so don't call "fileno()" on a Channel on Windows.  this is detailed in the
+documentation for the "fileno" method.
 
 
 ***  DEMO
@@ -63,12 +57,14 @@ you can run demo.py with no arguments, or you can give a hostname (or
 username@hostname) on the command line.  if you don't, it'll prompt you for
 a hostname and username.  if you have an ".ssh/" folder, it will try to read
 the host keys from there, though it's easily confused.  you can choose to
-authenticate with a password, or with an RSA or DSS key, but it can only
-read your private key file(s) if they're not password-protected.
+authenticate with a password, or with an RSA or DSS key.
 
 the demo app leaves a logfile called "demo.log" so you can see what paramiko
 logs as it works.  but the most interesting part is probably the code itself,
 which hopefully demonstrates how you can use the paramiko library.
+
+a simpler example is in demo_simple.py, which is a copy of the demo client
+that uses the simpler "connect" method call (new with 0.9-doduo).
 
 there's also now a demo server (demo_server.py) which listens on port 2200
 and accepts a login (robey/foo) and pretends to be a BBS, just to demonstrate
@@ -77,63 +73,17 @@ how to perform the server side of things.
 
 ***  USE
 
-(this section could probably be improved a lot.)
-
-first, create a Transport by passing in an existing socket (connected to the
-desired server).  call "start_client(event)", passing in an event which will
-be triggered when the negotiation is finished (either successfully or not).
-the event is required because each new Transport creates a new worker thread
-to handle incoming data asynchronously.
-
-after the event triggers, use "is_active()" to determine if the Transport was
-successfully connected.  if so, you should check the server's host key to make
-sure it's what you expected.  don't worry, i don't mean "check" in any crypto
-sense:  i mean compare the key, byte for byte, with what you saw last time, to
-make sure it's the same key.  Transport will handle verifying that the server's
-key works.
-
-next, authenticate, using either "auth_key" or "auth_password".  in the future,
-this API may change to accomodate servers that require both forms of auth.
-pass another event in so you can determine when the authentication dance is
-over.  if it was successful, "is_authenticated()" will return true.
-
-once authentication is successful, the Transport is ready to use.  call
-"open_channel" or "open_session" to create new channels over the Transport
-(SSH2 supports many different channels over the same connection). these calls
-block until they succeed or fail, and return a Channel object on success, or
-None on failure.  Channel objects can be treated as "socket-like objects": they
-implement:
-	recv(nbytes)
-	send(data)
-	settimeout(timeout_in_seconds)
-	close()
-	fileno()	[* see note below]
-because SSH2 has a windowing kind of flow control, if you stop reading data
-from a Channel and its buffer fills up, the server will be unable to send you
-any more data until you read some of it.  (this won't affect other channels on
-the Transport, though.)
-
-* NOTE that if you use "fileno()", the behavior of the Channel will change
-slightly, underneath.  this shouldn't be noticable outside the library, but
-this alternate implementation will not work on non-posix systems.  so don't
-try calling "fileno()" on Windows!  this has the side effect that you can't
-pass a Channel to "select" or "poll" on Windows (which should be fine, since
-those calls don't exist on Windows).  calling "fileno()" creates an OS-level
-pipe and generates a real file descriptor which can be used for polling, BUT
-should not be used for reading data from the channel: use "recv" instead.
-
-because each Transport has a worker thread running in the background, you
-must call "close()" on the Transport to kill this thread.  on many platforms,
-the python interpreter will refuse to exit cleanly if any of these threads
-are still running (and you'll have to kill -9 from another shell window).
-
-[fixme: add info about server mode]
+the demo clients (demo.py & demo_simple.py) and the demo server
+(demo_server.py) are probably the best example of how to use this package.
+there is also a lot of documentation, generated with epydoc, in the doc/
+folder.  point your browser there.  seriously, do it.  mad props to epydoc,
+which actually motivated me to write more documentation than i ever would
+have before.
 
 
 ***  MISSING LINKS
 
 * ctr forms of ciphers are missing (blowfish-ctr, aes128-ctr, aes256-ctr)
-* can't handle password-protected private key files
 * multi-part auth not supported (ie, need username AND pk)
-* server mode needs better doc
-
+* server mode needs better documentation
+* sftp?

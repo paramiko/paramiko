@@ -1,5 +1,9 @@
 #!/usr/bin/python
 
+"""
+L{BaseTransport} handles the core SSH2 protocol.
+"""
+
 _MSG_DISCONNECT, _MSG_IGNORE, _MSG_UNIMPLEMENTED, _MSG_DEBUG, _MSG_SERVICE_REQUEST, \
 	_MSG_SERVICE_ACCEPT = range(1, 7)
 _MSG_KEXINIT, _MSG_NEWKEYS = range(20, 22)
@@ -164,10 +168,8 @@ class BaseTransport (threading.Thread):
         if not self.active:
             return '<paramiko.BaseTransport (unconnected)>'
         out = '<paramiko.BaseTransport'
-        #if self.remote_version != '':
-        #    out += ' (server version "%s")' % self.remote_version
         if self.local_cipher != '':
-            out += ' (cipher %s)' % self.local_cipher
+            out += ' (cipher %s, %d bits)' % (self.local_cipher, self._cipher_info[self.local_cipher]['key-size'] * 8)
         if len(self.channels) == 1:
             out += ' (active; 1 open channel)'
         else:
@@ -512,6 +514,8 @@ class BaseTransport (threading.Thread):
         
         @raise SSHException: if the SSH2 negotiation fails, the host key
         supplied by the server is incorrect, or authentication fails.
+
+        @since: doduo
         """
         if hostkeytype is not None:
             self.preferred_keys = [ hostkeytype ]

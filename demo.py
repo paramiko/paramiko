@@ -39,6 +39,7 @@ if len(l.handlers) == 0:
     lh.setFormatter(logging.Formatter('%(levelname)-.3s [%(asctime)s] %(name)s: %(message)s', '%Y%m%d:%H%M%S'))
     l.addHandler(lh)
 
+
 username = ''
 if len(sys.argv) > 1:
     hostname = sys.argv[1]
@@ -107,7 +108,11 @@ try:
         path = raw_input('RSA key [%s]: ' % default_path)
         if len(path) == 0:
             path = default_path
-        key.read_private_key_file(path)
+        try:
+            key.read_private_key_file(path)
+        except paramiko.PasswordRequiredException:
+            password = getpass.getpass('RSA key password: ')
+            key.read_private_key_file(path, password)
         t.auth_publickey(username, key, event)
     elif auth == 'd':
         key = paramiko.DSSKey()
@@ -115,7 +120,11 @@ try:
         path = raw_input('DSS key [%s]: ' % default_path)
         if len(path) == 0:
             path = default_path
-        key.read_private_key_file(path)
+        try:
+            key.read_private_key_file(path)
+        except paramiko.PasswordRequiredException:
+            password = getpass.getpass('DSS key password: ')
+            key.read_private_key_file(path, password)
         t.auth_key(username, key, event)
     else:
         pw = getpass.getpass('Password for %s@%s: ' % (username, hostname))

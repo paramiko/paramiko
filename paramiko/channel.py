@@ -1,3 +1,9 @@
+#!/usr/bin/python
+
+"""
+Abstraction for an SSH2 channel.
+"""
+
 from message import Message
 from ssh_exception import SSHException
 from transport import _MSG_CHANNEL_REQUEST, _MSG_CHANNEL_CLOSE, _MSG_CHANNEL_WINDOW_ADJUST, _MSG_CHANNEL_DATA, \
@@ -13,12 +19,32 @@ def _set_nonblocking(fd):
     fcntl.fcntl(fd, fcntl.F_SETFL, os.O_NONBLOCK)
 
 
-class Channel(object):
+class Channel (object):
     """
-    Abstraction for an SSH2 channel.
+    A secure tunnel across an SSH L{Transport}.  A Channel is meant to behave
+    like a socket, and has an API that should be indistinguishable from the
+    python socket API.
+
+    Because SSH2 has a windowing kind of flow control, if you stop reading data
+    from a Channel and its buffer fills up, the server will be unable to send
+    you any more data until you read some of it.  (This won't affect other
+    channels on the same transport -- all channels on a single transport are
+    flow-controlled independently.)  Similarly, if the server isn't reading
+    data you send, calls to L{send} may block, unless you set a timeout.  This
+    is exactly like a normal network socket, so it shouldn't be too surprising.
     """
 
     def __init__(self, chanid):
+        """
+        Create a new channel.  The channel is not associated with any
+        particular session or L{Transport} until the Transport attaches it.
+        Normally you would only call this method from the constructor of a
+        subclass of L{Channel}.
+
+        @param chanid: the ID of this channel, as passed by an existing
+        L{Transport}.
+        @type chanid: int
+        """
         self.chanid = chanid
         self.transport = None
         self.active = 0
@@ -84,6 +110,11 @@ class Channel(object):
         self.transport._send_message(m)
 
     def invoke_shell(self):
+        """
+        Request an interactive shell session on this channel.  If the server
+        allows it, the channel will then be directly connected to the stdin
+        and stdout of the shell.
+        """
         if self.closed or self.eof_received or self.eof_sent or not self.active:
             raise SSHException('Channel is not open')
         m = Message()
@@ -94,6 +125,14 @@ class Channel(object):
         self.transport._send_message(m)
 
     def exec_command(self, command):
+        """
+        Execute a command on the server.  If the server allows it, the channel
+        will then be directly connected to the stdin and stdout of the command
+        being executed.
+
+        @param command: a shell command to execute.
+        @type command: string
+        """
         if self.closed or self.eof_received or self.eof_sent or not self.active:
             raise SSHException('Channel is not open')
         m = Message()
@@ -105,6 +144,14 @@ class Channel(object):
         self.transport._send_message(m)
 
     def invoke_subsystem(self, subsystem):
+        """
+        Request a subsystem on the server (for example, C{sftp}).  If the
+        server allows it, the channel will then be directly connected to the
+        requested subsystem.
+
+        @param subsystem: name of the subsystem being requested.
+        @type subsystem: string
+        """
         if self.closed or self.eof_received or self.eof_sent or not self.active:
             raise SSHException('Channel is not open')
         m = Message()
@@ -457,19 +504,81 @@ class Channel(object):
 
 
     def check_pty_request(self, term, width, height, pixelwidth, pixelheight, modes):
-        "override me!  return True if a pty of the given dimensions (for shell access, usually) can be provided"
+        """
+        I{(subclass override)}
+        Determine if a pseudo-terminal of the given dimensions (usually
+        requested for shell access) can be provided.
+
+        The default implementation always returns C{False}.
+        
+        @param term: type of terminal requested (for example, C{"vt100"}).
+        @type term: string
+        @param width: width of screen in characters.
+        @type width: int
+        @param height: height of screen in characters.
+        @type height: int
+        @param pixelwidth: width of screen in pixels, if known (may be C{0} if
+        unknown).
+        @type pixelwidth: int
+        @param pixelheight: height of screen in pixels, if known (may be C{0}
+        if unknown).
+        @type pixelheight: int
+        @return: C{True} if the psuedo-terminal has been allocated; C{False}
+        otherwise.
+        @rtype: boolean
+        """
         return False
 
     def check_shell_request(self):
-        "override me!  return True if shell access will be provided"
+        """
+        I{(subclass override)}
+        Determine if a shell will be provided to the client.  If this method
+        returns C{True}, this channel should be connected to the stdin/stdout
+        of a shell.
+
+        The default implementation always returns C{False}.
+
+        @return: C{True} if this channel is now hooked up to a shell; C{False}
+        if a shell can't or won't be provided.
+        @rtype: boolean
+        """
         return False
 
     def check_subsystem_request(self, name):
-        "override me!  return True if the given subsystem can be provided"
+        """
+        I{(subclass override)}
+        Determine if a requested subsystem will be provided to the client.  If
+        this method returns C{True}, all future I/O through this channel will
+        be assumed to be connected to the requested subsystem.  An example of
+        a subsystem is C{sftp}.
+
+        The default implementation always returns C{False}.
+
+        @return: C{True} if this channel is now hooked up to the requested
+        subsystem; C{False} if that subsystem can't or won't be provided.
+        @rtype: boolean
+        """
         return False
 
     def check_window_change_request(self, width, height, pixelwidth, pixelheight):
-        "override me!  return True if the pty was resized"
+        """
+        I{(subclass override)}
+        Determine if the pseudo-terminal can be resized.
+
+        The default implementation always returns C{False}.
+
+        @param width: width of screen in characters.
+        @type width: int
+        @param height: height of screen in characters.
+        @type height: int
+        @param pixelwidth: width of screen in pixels, if known (may be C{0} if
+        unknown).
+        @type pixelwidth: int
+        @param pixelheight: height of screen in pixels, if known (may be C{0}
+        if unknown).
+        @type pixelheight: int
+        @return: C{True} if the terminal was resized; C{False} if not.        
+        """
         return False
 
 
@@ -707,13 +816,16 @@ class Channel(object):
             self.in_window_sofar = 0
 
 
-class ChannelFile(object):
+class ChannelFile (object):
     """
-    A file-like wrapper around Channel.
-    Doesn't have the non-portable side effect of Channel.fileno().
-    XXX Todo: the channel and its file-wrappers should be able to be closed or
-    garbage-collected independently, for compatibility with real sockets and
-    their file-wrappers. Currently, closing does nothing but flush the buffer.
+    A file-like wrapper around L{Channel}.  A ChannelFile is created by calling
+    L{Channel.makefile} and doesn't have the non-portable side effect of
+    L{Channel.fileno}.
+
+    @bug: To correctly emulate the file object created from a socket's
+    C{makefile} method, a L{Channel} and its C{ChannelFile} should be able to
+    be closed or garbage-collected independently.  Currently, closing the
+    C{ChannelFile} does nothing but flush the buffer.
     """
 
     def __init__(self, channel, mode = "r", buf_size = -1):
@@ -740,6 +852,11 @@ class ChannelFile(object):
         self.softspace = False
 
     def __repr__(self):
+        """
+        Returns a string representation of this object, for debugging.
+
+        @rtype: string
+        """
         return '<paramiko.ChannelFile from ' + repr(self.channel) + '>'
 
     def __iter__(self):

@@ -1,17 +1,23 @@
 #!/usr/bin/python
 
-import base64
+"""
+L{DSSKey}
+"""
+
 from ssh_exception import SSHException
 from message import Message
 from util import inflate_long, deflate_long
 from Crypto.PublicKey import DSA
 from Crypto.Hash import SHA
-from ber import BER
+from ber import BER, BERException
 from pkey import PKey
-
-from util import format_binary
+from ssh_exception import SSHException
 
 class DSSKey (PKey):
+    """
+    Representation of a DSS key which can be used to sign an verify SSH2
+    data.
+    """
 
     def __init__(self, msg=None, data=None):
         self.valid = 0
@@ -84,17 +90,15 @@ class DSSKey (PKey):
         dss = DSA.construct((long(self.y), long(self.g), long(self.p), long(self.q)))
         return dss.verify(sigM, (sigR, sigS))
 
-    def read_private_key_file(self, filename):
+    def read_private_key_file(self, filename, password=None):
         # private key file contains:
         # DSAPrivateKey = { version = 0, p, q, g, y, x }
         self.valid = 0
-        f = open(filename, 'r')
-        lines = f.readlines()
-        f.close()
-        if lines[0].strip() != '-----BEGIN DSA PRIVATE KEY-----':
-            raise SSHException('not a valid DSA private key file')
-        data = base64.decodestring(''.join(lines[1:-1]))
-        keylist = BER(data).decode()
+        data = self._read_private_key_file('DSA', filename, password)
+        try:
+            keylist = BER(data).decode()
+        except BERException:
+            raise SSHException('Unable to parse key file')
         if (type(keylist) != type([])) or (len(keylist) < 6) or (keylist[0] != 0):
             raise SSHException('not a valid DSA private key file (bad ber encoding)')
         self.p = keylist[1]

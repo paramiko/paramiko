@@ -1,28 +1,32 @@
+#!/usr/bin/python
 
-# utility functions for dealing with primes
+"""
+Utility functions for dealing with primes.
+"""
 
 from Crypto.Util import number
-from util import bit_length, inflate_long
+import util
 
 
-def generate_prime(bits, randpool):
+def _generate_prime(bits, randpool):
+    "primtive attempt at prime generation"
     hbyte_mask = pow(2, bits % 8) - 1
     while 1:
         # loop catches the case where we increment n into a higher bit-range
         x = randpool.get_bytes((bits+7) // 8)
         if hbyte_mask > 0:
             x = chr(ord(x[0]) & hbyte_mask) + x[1:]
-        n = inflate_long(x, 1)
+        n = util.inflate_long(x, 1)
         n |= 1
         n |= (1 << (bits - 1))
         while not number.isPrime(n):
             n += 2
-        if bit_length(n) == bits:
+        if util.bit_length(n) == bits:
             return n
 
-def roll_random(randpool, n):
+def _roll_random(randpool, n):
     "returns a random # from 0 to N-1"
-    bits = bit_length(n-1)
+    bits = util.bit_length(n-1)
     bytes = (bits + 7) // 8
     hbyte_mask = pow(2, bits % 8) - 1
 
@@ -36,7 +40,7 @@ def roll_random(randpool, n):
         x = randpool.get_bytes(bytes)
         if hbyte_mask > 0:
             x = chr(ord(x[0]) & hbyte_mask) + x[1:]
-        num = inflate_long(x, 1)
+        num = util.inflate_long(x, 1)
         if num < n:
             return num
 
@@ -75,7 +79,7 @@ class ModulusPack (object):
         # there's a bug in the ssh "moduli" file (yeah, i know: shock! dismay!
         # call cnn!) where it understates the bit lengths of these primes by 1.
         # this is okay.
-        bl = bit_length(modulus)
+        bl = util.bit_length(modulus)
         if (bl != size) and (bl != size + 1):
             self.discarded.append((modulus, 'incorrectly reported bit length %d' % size))
             return
@@ -123,6 +127,6 @@ class ModulusPack (object):
             if min > good:
                 good = bitsizes[-1]
         # now pick a random modulus of this bitsize
-        n = roll_random(self.randpool, len(self.pack[good]))
+        n = _roll_random(self.randpool, len(self.pack[good]))
         return self.pack[good][n]
 
