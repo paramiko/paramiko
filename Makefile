@@ -6,6 +6,7 @@
 # eevee (08mar04)
 # fearow (23apr04)
 # gyarados (31may04)
+# horsea (27jun04)
 
 release:
 	python ./setup.py sdist --formats=zip

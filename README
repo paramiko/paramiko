@@ -1,5 +1,5 @@
 paramiko 0.9
-"gyarados" release, 31 may 2004
+"horsea" release, 27 jun 2004
 
 Copyright (c) 2003-2004 Robey Pointer <robey@lag.net>
 
@@ -116,6 +116,14 @@ the best and easiest examples of how to use the SFTP class.
 ***  WHAT'S NEW
 
 highlights of what's new in each release:
+
+v0.9 HORSEA
+* fixed a lockup that could happen if the channel was closed while the send
+  window was full
+* better checking of maximum packet sizes
+* better line buffering for file objects
+* now chops sftp requests into smaller packets for some older servers
+* more sftp unit tests
 
 v0.9 GYARADOS
 * Transport.open_channel() -- supports local & remote port forwarding now
