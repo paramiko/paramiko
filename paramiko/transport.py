@@ -342,22 +342,19 @@ class BaseTransport (threading.Thread):
     def get_remote_server_key(self):
         """
         Return the host key of the server (in client mode).
-        The type string is usually either C{"ssh-rsa"} or C{"ssh-dss"} and the
-        key is an opaque string, which may be saved or used for comparison with
-        previously-seen keys.  (In other words, you don't need to worry about
-        the content of the key, only that it compares equal to the key you
-        expected to see.)
+
+        @note: Previously this call returned a tuple of (key type, key string).
+        You can get the same effect by calling L{PKey.get_name} for the key
+        type, and C{str(key)} for the key string.
 
         @raise SSHException: if no session is currently active.
         
-        @return: tuple of (key type, key)
-        @rtype: (string, string)
+        @return: public key of the remote server.
+        @rtype: L{PKey}
         """
         if (not self.active) or (not self.initial_kex_done):
             raise SSHException('No existing session')
-        key_msg = Message(self.host_key)
-        key_type = key_msg.get_string()
-        return key_type, self.host_key
+        return self.host_key
 
     def is_active(self):
         """
@@ -826,7 +823,7 @@ class BaseTransport (threading.Thread):
             raise SSHException('Unknown host key type')
         if not key.verify_ssh_sig(self.H, Message(sig)):
             raise SSHException('Signature verification (%s) failed.  Boo.  Robey should debug this.' % self.host_key_type)
-        self.host_key = host_key
+        self.host_key = key
 
     def _compute_key(self, id, nbytes):
         "id is 'A' - 'F' for the various keys used by ssh"

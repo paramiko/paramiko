@@ -70,12 +70,12 @@ try:
     # print repr(t)
 
     keys = load_host_keys()
-    keytype, hostkey = t.get_remote_server_key()
+    key = t.get_remote_server_key()
     if not keys.has_key(hostname):
         print '*** WARNING: Unknown host key!'
-    elif not keys[hostname].has_key(keytype):
+    elif not keys[hostname].has_key(key.get_name()):
         print '*** WARNING: Unknown host key!'
-    elif keys[hostname][keytype] != hostkey:
+    elif keys[hostname][key.get_name()] != str(key):
         print '*** WARNING: Host key has changed!!!'
         sys.exit(1)
     else:
