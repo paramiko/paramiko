@@ -82,9 +82,11 @@ class SFTPAttributes (object):
     ###  internals...
 
     
-    def _from_msg(cls, msg):
+    def _from_msg(cls, msg, filename=None):
         attr = cls()
         attr._unpack(msg)
+        if filename is not None:
+            attr.filename = filename
         return attr
     _from_msg = classmethod(_from_msg)
 

@@ -76,11 +76,29 @@ class SFTPClient (BaseSFTP):
         Return a list containing the names of the entries in the given C{path}.
         The list is in arbitrary order.  It does not include the special
         entries C{'.'} and C{'..'} even if they are present in the folder.
+        This method is meant to mirror C{os.listdir} as closely as possible.
+        For a list of full L{SFTPAttributes} objects, see L{listdir_attr}.
 
         @param path: path to list.
-        @type path: string
+        @type path: str
         @return: list of filenames.
-        @rtype: list of string
+        @rtype: list of str
+        """
+        return [f.filename for f in self.listdir_attr(path)]
+        
+    def listdir_attr(self, path):
+        """
+        Return a list containing L{SFTPAttributes} objects corresponding to
+        files in the given C{path}.  The list is in arbitrary order.  It does
+        not include the special entries C{'.'} and C{'..'} even if they are
+        present in the folder.
+
+        @param path: path to list.
+        @type path: str
+        @return: list of attributes.
+        @rtype: list of L{SFTPAttributes}
+        
+        @since: 1.2
         """
         t, msg = self._request(CMD_OPENDIR, path)
         if t != CMD_HANDLE:
@@ -99,10 +117,9 @@ class SFTPClient (BaseSFTP):
             for i in range(count):
                 filename = msg.get_string()
                 longname = msg.get_string()
-                attr = SFTPAttributes._from_msg(msg)
+                attr = SFTPAttributes._from_msg(msg, filename)
                 if (filename != '.') and (filename != '..'):
-                    filelist.append(filename)
-                # currently we ignore the rest
+                    filelist.append(attr)
         self._request(CMD_CLOSE, handle)
         return filelist
 
