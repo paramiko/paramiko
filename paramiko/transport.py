@@ -22,18 +22,9 @@
 L{BaseTransport} handles the core SSH2 protocol.
 """
 
-_MSG_DISCONNECT, _MSG_IGNORE, _MSG_UNIMPLEMENTED, _MSG_DEBUG, _MSG_SERVICE_REQUEST, \
-	_MSG_SERVICE_ACCEPT = range(1, 7)
-_MSG_KEXINIT, _MSG_NEWKEYS = range(20, 22)
-_MSG_USERAUTH_REQUEST, _MSG_USERAUTH_FAILURE, _MSG_USERAUTH_SUCCESS, \
-        _MSG_USERAUTH_BANNER = range(50, 54)
-_MSG_USERAUTH_PK_OK = 60
-_MSG_CHANNEL_OPEN, _MSG_CHANNEL_OPEN_SUCCESS, _MSG_CHANNEL_OPEN_FAILURE, \
-	_MSG_CHANNEL_WINDOW_ADJUST, _MSG_CHANNEL_DATA, _MSG_CHANNEL_EXTENDED_DATA, \
-	_MSG_CHANNEL_EOF, _MSG_CHANNEL_CLOSE, _MSG_CHANNEL_REQUEST, \
-	_MSG_CHANNEL_SUCCESS, _MSG_CHANNEL_FAILURE = range(90, 101)
-
 import sys, os, string, threading, socket, logging, struct
+
+from common import *
 from ssh_exception import SSHException
 from message import Message
 from channel import Channel
@@ -49,31 +40,10 @@ from primes import ModulusPack
 # i believe this on the standards track.
 # PyCrypt compiled for Win32 can be downloaded from the HashTar homepage:
 #     http://nitace.bsd.uchicago.edu:8080/hashtar
-from Crypto.Util.randpool import PersistentRandomPool, RandomPool
 from Crypto.Cipher import Blowfish, AES, DES3
 from Crypto.Hash import SHA, MD5, HMAC
-from Crypto.PublicKey import RSA
 
 from logging import DEBUG, INFO, WARNING, ERROR, CRITICAL
-
-
-# channel request failed reasons:
-_CONNECTION_FAILED_CODE = {
-    1: 'Administratively prohibited',
-    2: 'Connect failed',
-    3: 'Unknown channel type',
-    4: 'Resource shortage'
-}
-
-
-# keep a crypto-strong PRNG nearby
-try:
-    randpool = PersistentRandomPool(os.getenv('HOME') + '/.randpool')
-except:
-    # the above will likely fail on Windows - fall back to non-persistent random pool
-    randpool = RandomPool()
-
-randpool.randomize()
 
 
 # for thread cleanup
@@ -428,7 +398,7 @@ class BaseTransport (threading.Thread):
             chanid = self.channel_counter
             self.channel_counter += 1
             m = Message()
-            m.add_byte(chr(_MSG_CHANNEL_OPEN))
+            m.add_byte(chr(MSG_CHANNEL_OPEN))
             m.add_string(kind)
             m.add_int(chanid)
             m.add_int(self.window_size)
@@ -466,7 +436,7 @@ class BaseTransport (threading.Thread):
         @type bytes: int
         """
         m = Message()
-        m.add_byte(chr(_MSG_IGNORE))
+        m.add_byte(chr(MSG_IGNORE))
         if bytes is None:
             bytes = (ord(randpool.get_bytes(1)) % 32) + 10
         m.add_bytes(randpool.get_bytes(bytes))
@@ -821,17 +791,17 @@ class BaseTransport (threading.Thread):
             self._write_all(self.local_version + '\r\n')
             self._check_banner()
             self._send_kex_init()
-            self.expected_packet = _MSG_KEXINIT
+            self.expected_packet = MSG_KEXINIT
 
             while self.active:
                 ptype, m = self._read_message()
-                if ptype == _MSG_IGNORE:
+                if ptype == MSG_IGNORE:
                     continue
-                elif ptype == _MSG_DISCONNECT:
+                elif ptype == MSG_DISCONNECT:
                     self._parse_disconnect(m)
                     self.active = False
                     break
-                elif ptype == _MSG_DEBUG:
+                elif ptype == MSG_DEBUG:
                     self._parse_debug(m)
                     continue
                 if self.expected_packet != 0:
@@ -851,7 +821,7 @@ class BaseTransport (threading.Thread):
                 else:
                     self._log(WARNING, 'Oops, unhandled type %d' % ptype)
                     msg = Message()
-                    msg.add_byte(chr(_MSG_UNIMPLEMENTED))
+                    msg.add_byte(chr(MSG_UNIMPLEMENTED))
                     msg.add_int(m.seqno)
                     self._send_message(msg)
         except SSHException, e:
@@ -936,7 +906,7 @@ class BaseTransport (threading.Thread):
             available_server_keys = self.preferred_keys
 
         m = Message()
-        m.add_byte(chr(_MSG_KEXINIT))
+        m.add_byte(chr(MSG_KEXINIT))
         m.add_bytes(randpool.get_bytes(16))
         m.add(','.join(self.preferred_kex))
         m.add(','.join(available_server_keys))
@@ -1047,7 +1017,7 @@ class BaseTransport (threading.Thread):
         # actually some extra bytes (one NUL byte in openssh's case) added to
         # the end of the packet but not parsed.  turns out we need to throw
         # away those bytes because they aren't part of the hash.
-        self.remote_kex_init = chr(_MSG_KEXINIT) + m.get_so_far()
+        self.remote_kex_init = chr(MSG_KEXINIT) + m.get_so_far()
 
     def _activate_inbound(self):
         "switch on newly negotiated encryption parameters for inbound traffic"
@@ -1071,7 +1041,7 @@ class BaseTransport (threading.Thread):
     def _activate_outbound(self):
         "switch on newly negotiated encryption parameters for outbound traffic"
         m = Message()
-        m.add_byte(chr(_MSG_NEWKEYS))
+        m.add_byte(chr(MSG_NEWKEYS))
         self._send_message(m)
         self.block_size_out = self._cipher_info[self.local_cipher]['block-size']
         if self.server_mode:
@@ -1090,7 +1060,7 @@ class BaseTransport (threading.Thread):
         else:
             self.mac_key_out = self._compute_key('E', self.local_mac_engine.digest_size)
         # we always expect to receive NEWKEYS now
-        self.expected_packet = _MSG_NEWKEYS
+        self.expected_packet = MSG_NEWKEYS
 
     def _parse_newkeys(self, m):
         self._log(DEBUG, 'Switch to new keys ...')
@@ -1179,7 +1149,7 @@ class BaseTransport (threading.Thread):
                     reason = self.OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED
         if reject:
             msg = Message()
-            msg.add_byte(chr(_MSG_CHANNEL_OPEN_FAILURE))
+            msg.add_byte(chr(MSG_CHANNEL_OPEN_FAILURE))
             msg.add_int(chanid)
             msg.add_int(reason)
             msg.add_string('')
@@ -1195,7 +1165,7 @@ class BaseTransport (threading.Thread):
         finally:
             self.lock.release()
         m = Message()
-        m.add_byte(chr(_MSG_CHANNEL_OPEN_SUCCESS))
+        m.add_byte(chr(MSG_CHANNEL_OPEN_SUCCESS))
         m.add_int(chanid)
         m.add_int(my_chanid)
         m.add_int(self.window_size)
@@ -1216,19 +1186,19 @@ class BaseTransport (threading.Thread):
         self._log(DEBUG, 'Debug msg: ' + safe_string(msg))
 
     _handler_table = {
-        _MSG_NEWKEYS: _parse_newkeys,
-        _MSG_CHANNEL_OPEN_SUCCESS: _parse_channel_open_success,
-        _MSG_CHANNEL_OPEN_FAILURE: _parse_channel_open_failure,
-        _MSG_CHANNEL_OPEN: _parse_channel_open,
-        _MSG_KEXINIT: _negotiate_keys,
+        MSG_NEWKEYS: _parse_newkeys,
+        MSG_CHANNEL_OPEN_SUCCESS: _parse_channel_open_success,
+        MSG_CHANNEL_OPEN_FAILURE: _parse_channel_open_failure,
+        MSG_CHANNEL_OPEN: _parse_channel_open,
+        MSG_KEXINIT: _negotiate_keys,
         }
 
     _channel_handler_table = {
-        _MSG_CHANNEL_SUCCESS: Channel._request_success,
-        _MSG_CHANNEL_FAILURE: Channel._request_failed,
-        _MSG_CHANNEL_DATA: Channel._feed,
-        _MSG_CHANNEL_WINDOW_ADJUST: Channel._window_adjust,
-        _MSG_CHANNEL_REQUEST: Channel._handle_request,
-        _MSG_CHANNEL_EOF: Channel._handle_eof,
-        _MSG_CHANNEL_CLOSE: Channel._handle_close,
+        MSG_CHANNEL_SUCCESS: Channel._request_success,
+        MSG_CHANNEL_FAILURE: Channel._request_failed,
+        MSG_CHANNEL_DATA: Channel._feed,
+        MSG_CHANNEL_WINDOW_ADJUST: Channel._window_adjust,
+        MSG_CHANNEL_REQUEST: Channel._handle_request,
+        MSG_CHANNEL_EOF: Channel._handle_eof,
+        MSG_CHANNEL_CLOSE: Channel._handle_close,
         }

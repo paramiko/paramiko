@@ -23,11 +23,12 @@ Standard SSH key exchange ("kex" if you wanna sound cool).  Diffie-Hellman of
 1024 bit key halves, using a known "p" prime and "g" generator.
 """
 
-from message import Message, inflate_long
-from ssh_exception import SSHException
-from transport import _MSG_NEWKEYS
 from Crypto.Hash import SHA
 from logging import DEBUG, INFO, WARNING, ERROR, CRITICAL
+
+from common import *
+from message import Message, inflate_long
+from ssh_exception import SSHException
 
 _MSG_KEXDH_INIT, _MSG_KEXDH_REPLY = range(30, 32)
 

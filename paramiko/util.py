@@ -24,7 +24,7 @@ Useful functions used by the rest of paramiko.
 
 import sys, struct, traceback
 
-def inflate_long(s, always_positive=0):
+def inflate_long(s, always_positive=False):
     "turns a normalized byte string into a long-int (adapted from Crypto.Util.number)"
     out = 0L
     negative = 0
@@ -41,7 +41,7 @@ def inflate_long(s, always_positive=0):
         out -= (1L << (8 * len(s)))
     return out
 
-def deflate_long(n, add_sign_padding=1):
+def deflate_long(n, add_sign_padding=True):
     "turns a long-int into a normalized byte string (adapted from Crypto.Util.number)"
     # after much testing, this algorithm was deemed to be the fastest
     s = ''
@@ -99,6 +99,10 @@ def hexify(s):
     "turn a string into a hex sequence"
     return ''.join(['%02X' % ord(c) for c in s])
 
+def unhexify(s):
+    "turn a hex sequence back into a string"
+    return ''.join([chr(int(s[i:i+2], 16)) for i in range(0, len(s), 2)])
+
 def safe_string(s):
     out = ''
     for c in s:
@@ -155,3 +159,17 @@ def generate_key_bytes(hashclass, salt, key, nbytes):
         keydata += digest[:size]
         nbytes -= size
     return keydata
+
+def mod_inverse(x, m):
+    # it's crazy how small python can make this function.
+    u1, u2, u3 = 1, 0, m
+    v1, v2, v3 = 0, 1, x
+
+    while v3 > 0:
+        q = u3 // v3
+        u1, v1 = v1, u1 - v1 * q
+        u2, v2 = v2, u2 - v2 * q
+        u3, v3 = v3, u3 - v3 * q
+    if u2 < 0:
+        u2 += m
+    return u2

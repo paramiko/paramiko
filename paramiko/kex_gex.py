@@ -24,13 +24,15 @@ generator "g" are provided by the server.  A bit more work is required on the
 client side, and a B{lot} more on the server side.
 """
 
-from message import Message
-from util import inflate_long, deflate_long, bit_length
-from ssh_exception import SSHException
-from transport import _MSG_NEWKEYS
 from Crypto.Hash import SHA
 from Crypto.Util import number
 from logging import DEBUG
+
+from common import *
+from message import Message
+from util import inflate_long, deflate_long, bit_length
+from ssh_exception import SSHException
+
 
 _MSG_KEXDH_GEX_GROUP, _MSG_KEXDH_GEX_INIT, _MSG_KEXDH_GEX_REPLY, _MSG_KEXDH_GEX_REQUEST = range(31, 35)
 

@@ -22,10 +22,9 @@
 Abstraction for an SSH2 channel.
 """
 
+from common import *
 from message import Message
 from ssh_exception import SSHException
-from transport import _MSG_CHANNEL_REQUEST, _MSG_CHANNEL_CLOSE, _MSG_CHANNEL_WINDOW_ADJUST, _MSG_CHANNEL_DATA, \
-	_MSG_CHANNEL_EOF, _MSG_CHANNEL_SUCCESS, _MSG_CHANNEL_FAILURE
 from file import BufferedFile
 
 import time, threading, logging, socket, os
@@ -116,7 +115,7 @@ class Channel (object):
         if self.closed or self.eof_received or self.eof_sent or not self.active:
             raise SSHException('Channel is not open')
         m = Message()
-        m.add_byte(chr(_MSG_CHANNEL_REQUEST))
+        m.add_byte(chr(MSG_CHANNEL_REQUEST))
         m.add_int(self.remote_chanid)
         m.add_string('pty-req')
         m.add_boolean(0)
@@ -137,7 +136,7 @@ class Channel (object):
         if self.closed or self.eof_received or self.eof_sent or not self.active:
             raise SSHException('Channel is not open')
         m = Message()
-        m.add_byte(chr(_MSG_CHANNEL_REQUEST))
+        m.add_byte(chr(MSG_CHANNEL_REQUEST))
         m.add_int(self.remote_chanid)
         m.add_string('shell')
         m.add_boolean(1)
@@ -155,7 +154,7 @@ class Channel (object):
         if self.closed or self.eof_received or self.eof_sent or not self.active:
             raise SSHException('Channel is not open')
         m = Message()
-        m.add_byte(chr(_MSG_CHANNEL_REQUEST))
+        m.add_byte(chr(MSG_CHANNEL_REQUEST))
         m.add_int(self.remote_chanid)
         m.add_string('exec')
         m.add_boolean(1)
@@ -174,7 +173,7 @@ class Channel (object):
         if self.closed or self.eof_received or self.eof_sent or not self.active:
             raise SSHException('Channel is not open')
         m = Message()
-        m.add_byte(chr(_MSG_CHANNEL_REQUEST))
+        m.add_byte(chr(MSG_CHANNEL_REQUEST))
         m.add_int(self.remote_chanid)
         m.add_string('subsystem')
         m.add_boolean(1)
@@ -194,7 +193,7 @@ class Channel (object):
         if self.closed or self.eof_received or self.eof_sent or not self.active:
             raise SSHException('Channel is not open')
         m = Message()
-        m.add_byte(chr(_MSG_CHANNEL_REQUEST))
+        m.add_byte(chr(MSG_CHANNEL_REQUEST))
         m.add_int(self.remote_chanid)
         m.add_string('window-change')
         m.add_boolean(0)
@@ -300,7 +299,7 @@ class Channel (object):
             if self.active and not self.closed:
                 self._send_eof()
                 m = Message()
-                m.add_byte(chr(_MSG_CHANNEL_CLOSE))
+                m.add_byte(chr(MSG_CHANNEL_CLOSE))
                 m.add_int(self.remote_chanid)
                 self.transport._send_message(m)
                 self.closed = 1
@@ -417,7 +416,7 @@ class Channel (object):
             if self.out_max_packet_size < size:
                 size = self.out_max_packet_size
             m = Message()
-            m.add_byte(chr(_MSG_CHANNEL_DATA))
+            m.add_byte(chr(MSG_CHANNEL_DATA))
             m.add_int(self.remote_chanid)
             m.add_string(s[:size])
             self.transport._send_message(m)
@@ -686,9 +685,9 @@ class Channel (object):
         if want_reply:
             m = Message()
             if ok:
-                m.add_byte(chr(_MSG_CHANNEL_SUCCESS))
+                m.add_byte(chr(MSG_CHANNEL_SUCCESS))
             else:
-                m.add_byte(chr(_MSG_CHANNEL_FAILURE))
+                m.add_byte(chr(MSG_CHANNEL_FAILURE))
             m.add_int(self.remote_chanid)
             self.transport._send_message(m)
 
@@ -728,7 +727,7 @@ class Channel (object):
         if self.eof_sent:
             return
         m = Message()
-        m.add_byte(chr(_MSG_CHANNEL_EOF))
+        m.add_byte(chr(MSG_CHANNEL_EOF))
         m.add_int(self.remote_chanid)
         self.transport._send_message(m)
         self.eof_sent = 1
@@ -828,7 +827,7 @@ class Channel (object):
         if self.in_window_sofar > self.in_window_threshold:
             self._log(DEBUG, 'addwindow send %d' % self.in_window_sofar)
             m = Message()
-            m.add_byte(chr(_MSG_CHANNEL_WINDOW_ADJUST))
+            m.add_byte(chr(MSG_CHANNEL_WINDOW_ADJUST))
             m.add_int(self.remote_chanid)
             m.add_int(self.in_window_sofar)
             self.transport._send_message(m)
