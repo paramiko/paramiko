@@ -53,6 +53,50 @@ import atexit
 atexit.register(_join_lingering_threads)
 
 
+class SecurityOptions (object):
+    """
+    Simple object containing the security preferences of an ssh transport.
+    These are lists of acceptable ciphers, digests, key types, and key
+    exchange algorithms, listed in order of preference.
+    """
+    __slots__ = [ 'ciphers', 'digests', 'key_types', 'kex', '_transport' ]
+
+    def __init__(self, transport):
+        self._transport = transport
+
+    def _get_ciphers(self):
+        return self._transport._preferred_ciphers
+
+    def _set_ciphers(self, x):
+        self._transport._preferred_ciphers = x
+
+    def _get_digests(self):
+        return self._transport._preferred_macs
+
+    def _set_digests(self, x):
+        self._transport._preferred_macs = x
+
+    def _get_key_types(self):
+        return self._transport._preferred_keys
+
+    def _set_key_types(self, x):
+        self._transport._preferred_keys = x
+
+    def _get_kex(self):
+        return self._transport._preferred_kex
+
+    def _set_kex(self, x):
+        self._transport._preferred_kex = x
+
+    ciphers = property(_get_ciphers, _set_ciphers, None,
+                       "Symmetric encryption ciphers")
+    digests = property(_get_digests, _set_digests, None,
+                       "Digest (one-way hash) algorithms")
+    key_types = property(_get_key_types, _set_key_types, None,
+                         "Public-key algorithms")
+    kex = property(_get_kex, _set_kex, None, "Key exchange algorithms")
+
+
 class BaseTransport (threading.Thread):
     """
     Handles protocol negotiation, key exchange, encryption, and the creation
@@ -62,10 +106,10 @@ class BaseTransport (threading.Thread):
     _PROTO_ID = '2.0'
     _CLIENT_ID = 'pyssh_1.1'
 
-    preferred_ciphers = [ 'aes128-cbc', 'blowfish-cbc', 'aes256-cbc', '3des-cbc' ]
-    preferred_macs = [ 'hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96' ]
-    preferred_keys = [ 'ssh-rsa', 'ssh-dss' ]
-    preferred_kex = [ 'diffie-hellman-group1-sha1', 'diffie-hellman-group-exchange-sha1' ]
+    _preferred_ciphers = [ 'aes128-cbc', 'blowfish-cbc', 'aes256-cbc', '3des-cbc' ]
+    _preferred_macs = [ 'hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96' ]
+    _preferred_keys = [ 'ssh-rsa', 'ssh-dss' ]
+    _preferred_kex = [ 'diffie-hellman-group1-sha1', 'diffie-hellman-group-exchange-sha1' ]
 
     _cipher_info = {
         'blowfish-cbc': { 'class': Blowfish, 'mode': Blowfish.MODE_CBC, 'block-size': 8, 'key-size': 16 },
@@ -204,6 +248,18 @@ class BaseTransport (threading.Thread):
             out += ' (active; %d open channels)' % len(self.channels)
         out += '>'
         return out
+
+    def get_security_options(self):
+        """
+        Return a L{SecurityOptions} object which can be used to tweak the
+        encryption algorithms this transport will permit, and the order of
+        preference for them.
+
+        @return: an object that can be used to change the preferred algorithms
+        for encryption, digest (hash), public key, and key exchange.
+        @rtype: L{SecurityOptions}
+        """
+        return SecurityOptions(self)
 
     def start_client(self, event=None):
         """
@@ -640,7 +696,7 @@ class BaseTransport (threading.Thread):
         @since: doduo
         """
         if hostkeytype is not None:
-            self.preferred_keys = [ hostkeytype ]
+            self._preferred_keys = [ hostkeytype ]
 
         event = threading.Event()
         self.start_client(event)
@@ -1048,23 +1104,23 @@ class BaseTransport (threading.Thread):
         """
         self.clear_to_send.clear()
         if self.server_mode:
-            if (self._modulus_pack is None) and ('diffie-hellman-group-exchange-sha1' in self.preferred_kex):
+            if (self._modulus_pack is None) and ('diffie-hellman-group-exchange-sha1' in self._preferred_kex):
                 # can't do group-exchange if we don't have a pack of potential primes
-                self.preferred_kex.remove('diffie-hellman-group-exchange-sha1')
+                self._preferred_kex.remove('diffie-hellman-group-exchange-sha1')
             available_server_keys = filter(self.server_key_dict.keys().__contains__,
-                                           self.preferred_keys)
+                                           self._preferred_keys)
         else:
-            available_server_keys = self.preferred_keys
+            available_server_keys = self._preferred_keys
 
         m = Message()
         m.add_byte(chr(MSG_KEXINIT))
         m.add_bytes(randpool.get_bytes(16))
-        m.add(','.join(self.preferred_kex))
+        m.add(','.join(self._preferred_kex))
         m.add(','.join(available_server_keys))
-        m.add(','.join(self.preferred_ciphers))
-        m.add(','.join(self.preferred_ciphers))
-        m.add(','.join(self.preferred_macs))
-        m.add(','.join(self.preferred_macs))
+        m.add(','.join(self._preferred_ciphers))
+        m.add(','.join(self._preferred_ciphers))
+        m.add(','.join(self._preferred_macs))
+        m.add(','.join(self._preferred_macs))
         m.add('none')
         m.add('none')
         m.add('')
@@ -1105,19 +1161,19 @@ class BaseTransport (threading.Thread):
         # as a server, we pick the first item in the client's list that we support.
         # as a client, we pick the first item in our list that the server supports.
         if self.server_mode:
-            agreed_kex = filter(self.preferred_kex.__contains__, kex_algo_list)
+            agreed_kex = filter(self._preferred_kex.__contains__, kex_algo_list)
         else:
-            agreed_kex = filter(kex_algo_list.__contains__, self.preferred_kex)
+            agreed_kex = filter(kex_algo_list.__contains__, self._preferred_kex)
         if len(agreed_kex) == 0:
             raise SSHException('Incompatible ssh peer (no acceptable kex algorithm)')
         self.kex_engine = self._kex_info[agreed_kex[0]](self)
 
         if self.server_mode:
             available_server_keys = filter(self.server_key_dict.keys().__contains__,
-                                           self.preferred_keys)
+                                           self._preferred_keys)
             agreed_keys = filter(available_server_keys.__contains__, server_key_algo_list)
         else:
-            agreed_keys = filter(server_key_algo_list.__contains__, self.preferred_keys)
+            agreed_keys = filter(server_key_algo_list.__contains__, self._preferred_keys)
         if len(agreed_keys) == 0:
             raise SSHException('Incompatible ssh peer (no acceptable host key)')
         self.host_key_type = agreed_keys[0]
@@ -1125,15 +1181,15 @@ class BaseTransport (threading.Thread):
             raise SSHException('Incompatible ssh peer (can\'t match requested host key type)')
 
         if self.server_mode:
-            agreed_local_ciphers = filter(self.preferred_ciphers.__contains__,
+            agreed_local_ciphers = filter(self._preferred_ciphers.__contains__,
                                            server_encrypt_algo_list)
-            agreed_remote_ciphers = filter(self.preferred_ciphers.__contains__,
+            agreed_remote_ciphers = filter(self._preferred_ciphers.__contains__,
                                           client_encrypt_algo_list)
         else:
             agreed_local_ciphers = filter(client_encrypt_algo_list.__contains__,
-                                          self.preferred_ciphers)
+                                          self._preferred_ciphers)
             agreed_remote_ciphers = filter(server_encrypt_algo_list.__contains__,
-                                           self.preferred_ciphers)
+                                           self._preferred_ciphers)
         if (len(agreed_local_ciphers) == 0) or (len(agreed_remote_ciphers) == 0):
             raise SSHException('Incompatible ssh server (no acceptable ciphers)')
         self.local_cipher = agreed_local_ciphers[0]
@@ -1141,11 +1197,11 @@ class BaseTransport (threading.Thread):
         self._log(DEBUG, 'Ciphers agreed: local=%s, remote=%s' % (self.local_cipher, self.remote_cipher))
 
         if self.server_mode:
-            agreed_remote_macs = filter(self.preferred_macs.__contains__, client_mac_algo_list)
-            agreed_local_macs = filter(self.preferred_macs.__contains__, server_mac_algo_list)
+            agreed_remote_macs = filter(self._preferred_macs.__contains__, client_mac_algo_list)
+            agreed_local_macs = filter(self._preferred_macs.__contains__, server_mac_algo_list)
         else:
-            agreed_local_macs = filter(client_mac_algo_list.__contains__, self.preferred_macs)
-            agreed_remote_macs = filter(server_mac_algo_list.__contains__, self.preferred_macs)
+            agreed_local_macs = filter(client_mac_algo_list.__contains__, self._preferred_macs)
+            agreed_remote_macs = filter(server_mac_algo_list.__contains__, self._preferred_macs)
         if (len(agreed_local_macs) == 0) or (len(agreed_remote_macs) == 0):
             raise SSHException('Incompatible ssh server (no acceptable macs)')
         self.local_mac = agreed_local_macs[0]

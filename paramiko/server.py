@@ -28,6 +28,10 @@ class ServerInterface (object):
     """
     This class defines an interface for controlling the behavior of paramiko
     in server mode.
+
+    Methods on this class are called from paramiko's primary thread, so you
+    shouldn't do too much work in them.  (Certainly nothing that blocks or
+    sleeps.)
     """
 
     def check_channel_request(self, kind, chanid):

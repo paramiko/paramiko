@@ -77,9 +77,11 @@ Message = message.Message
 PasswordRequiredException = ssh_exception.PasswordRequiredException
 SFTP = sftp.SFTP
 ServerInterface = server.ServerInterface
+SecurityOptions = transport.SecurityOptions
 
 
 __all__ = [ 'Transport',
+            'SecurityOptions',
             'Channel',
             'RSAKey',
             'DSSKey',

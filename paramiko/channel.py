@@ -116,6 +116,8 @@ class Channel (object):
         @type width: int
         @param height: height (in characters) of the terminal screen
         @type height: int
+        @return: C{True} if the operation succeeded; C{False} if not.
+        @rtype: bool
         """
         if self.closed or self.eof_received or self.eof_sent or not self.active:
             raise SSHException('Channel is not open')
@@ -144,6 +146,9 @@ class Channel (object):
         Request an interactive shell session on this channel.  If the server
         allows it, the channel will then be directly connected to the stdin
         and stdout of the shell.
+        
+        @return: C{True} if the operation succeeded; C{False} if not.
+        @rtype: bool
         """
         if self.closed or self.eof_received or self.eof_sent or not self.active:
             raise SSHException('Channel is not open')
@@ -169,6 +174,8 @@ class Channel (object):
 
         @param command: a shell command to execute.
         @type command: string
+        @return: C{True} if the operation succeeded; C{False} if not.
+        @rtype: bool
         """
         if self.closed or self.eof_received or self.eof_sent or not self.active:
             raise SSHException('Channel is not open')
@@ -195,6 +202,8 @@ class Channel (object):
 
         @param subsystem: name of the subsystem being requested.
         @type subsystem: string
+        @return: C{True} if the operation succeeded; C{False} if not.
+        @rtype: bool
         """
         if self.closed or self.eof_received or self.eof_sent or not self.active:
             raise SSHException('Channel is not open')
@@ -222,6 +231,8 @@ class Channel (object):
         @type width: int
         @param height: new height (in characters) of the terminal screen
         @type height: int
+        @return: C{True} if the operation succeeded; C{False} if not.
+        @rtype: bool
         """
         if self.closed or self.eof_received or self.eof_sent or not self.active:
             raise SSHException('Channel is not open')

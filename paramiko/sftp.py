@@ -123,8 +123,10 @@ class SFTPError (Exception):
 
 class SFTPFile (BufferedFile):
 
-    # some sftp servers will choke if you send read/write requests larger than
-    # this size.
+    """
+    Some sftp servers will choke if you send read/write requests larger than
+    this size.
+    """
     MAX_REQUEST_SIZE = 32768
 
     def __init__(self, sftp, handle, mode='r', bufsize=-1):
@@ -245,10 +247,20 @@ class SFTP (object):
 #            raise SFTPError('Incompatible sftp protocol')
 
     def from_transport(selfclass, t):
+        """
+        Create an SFTP client channel from an open L{Transport}.
+
+        @param t: an open L{Transport} which is already authenticated.
+        @type t: L{Transport}
+        @return: a new L{SFTP} object, referring to an sftp session (channel)
+            across the transport.
+        @rtype: L{SFTP}
+        """
         chan = t.open_session()
         if chan is None:
             return None
-        chan.invoke_subsystem('sftp')
+        if not chan.invoke_subsystem('sftp'):
+            raise SFTPError('Failed to invoke sftp subsystem')
         return selfclass(chan)
     from_transport = classmethod(from_transport)
 
