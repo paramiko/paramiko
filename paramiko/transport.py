@@ -15,7 +15,7 @@
 # details.
 #
 # You should have received a copy of the GNU Lesser General Public License
-# along with Foobar; if not, write to the Free Software Foundation, Inc.,
+# along with Paramiko; if not, write to the Free Software Foundation, Inc.,
 # 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
 
 """
@@ -162,8 +162,8 @@ class BaseTransport (threading.Thread):
         self.channel_counter = 1
         self.logger = logging.getLogger('paramiko.transport')
         self.window_size = 65536
-        self.max_packet_size = 8192
-        self.ultra_debug = 0
+        self.max_packet_size = 32768
+        self.ultra_debug = False
         self.saved_exception = None
         # used for noticing when to re-key:
         self.received_bytes = 0
@@ -792,7 +792,9 @@ class BaseTransport (threading.Thread):
     def _send_message(self, data):
         # FIXME: should we check for rekeying here too?
         # encrypt this sucka
-        packet = self._build_packet(str(data))
+        data = str(data)
+        self._log(DEBUG, 'Write packet $%x, length %d' % (ord(data[0]), len(data)))
+        packet = self._build_packet(data)
         if self.ultra_debug:
             self._log(DEBUG, util.format_binary(packet, 'OUT: '))
         if self.engine_out != None:
@@ -861,8 +863,10 @@ class BaseTransport (threading.Thread):
                 self.received_packets_overflow += 1
                 if self.received_packets_overflow >= 20:
                     raise SSHException('Remote transport is ignoring rekey requests')
-                
-        return ord(payload[0]), msg
+
+        cmd = ord(payload[0])
+        self._log(DEBUG, 'Read packet $%x, length %d' % (cmd, len(payload)))
+        return cmd, msg
 
     def _set_K_H(self, k, h):
         "used by a kex object to set the K (root key) and H (exchange hash)"

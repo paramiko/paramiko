@@ -15,7 +15,7 @@
 # details.
 #
 # You should have received a copy of the GNU Lesser General Public License
-# along with Foobar; if not, write to the Free Software Foundation, Inc.,
+# along with Paramiko; if not, write to the Free Software Foundation, Inc.,
 # 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
 
 import struct, socket
@@ -121,6 +121,11 @@ class SFTPError (Exception):
 
 
 class SFTPFile (BufferedFile):
+
+    # some sftp servers will choke if you send read/write requests larger than
+    # this size.
+    MAX_REQUEST_SIZE = 32768
+
     def __init__(self, sftp, handle, mode='r', bufsize=-1):
         BufferedFile.__init__(self)
         self.sftp = sftp
@@ -143,16 +148,23 @@ class SFTPFile (BufferedFile):
         self.sftp._request(CMD_CLOSE, self.handle)
 
     def _read(self, size):
+        size = min(size, self.MAX_REQUEST_SIZE)
         t, msg = self.sftp._request(CMD_READ, self.handle, long(self._realpos), int(size))
         if t != CMD_DATA:
             raise SFTPError('Expected data')
         return msg.get_string()
 
     def _write(self, data):
-        t, msg = self.sftp._request(CMD_WRITE, self.handle, long(self._realpos), str(data))
+        offset = 0
+        while offset < len(data):
+            chunk = min(len(data) - offset, self.MAX_REQUEST_SIZE)
+            t, msg = self.sftp._request(CMD_WRITE, self.handle, long(self._realpos + offset),
+                                        str(data[offset : offset + chunk]))
+            offset += chunk
         return len(data)
 
     def seek(self, offset, whence=0):
+        self.flush()
         if whence == self.SEEK_SET:
             self._realpos = self._pos = offset
         elif whence == self.SEEK_CUR:
@@ -160,7 +172,7 @@ class SFTPFile (BufferedFile):
             self._pos += offset
         else:
             self._realpos = self._pos = self._get_size() + offset
-        self._rbuffer = self._wbuffer = ''
+        self._rbuffer = ''
 
     def stat(self):
         """
