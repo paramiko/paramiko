@@ -134,9 +134,29 @@ class BaseTransport (threading.Thread):
               string.  Returns 0 or raises C{EOFError} if the stream has been
               closed.
 
+        For ease of use, you may also pass in an address (as a tuple) or a host
+        string as the C{sock} argument.  (A host string is a hostname with an
+        optional port (separated by C{":"}) which will be converted into a
+        tuple of C{(hostname, port)}.)  A socket will be connected to this
+        address and used for communication.  Exceptions from the C{socket} call
+        may be thrown in this case.
+
         @param sock: a socket or socket-like object to create the session over.
         @type sock: socket
     	"""
+        if type(sock) is str:
+            # convert "host:port" into (host, port)
+            hl = sock.split(':', 1)
+            if len(hl) == 1:
+                sock = (hl[0], 22)
+            else:
+                sock = (hl[0], int(hl[1]))
+        if type(sock) is tuple:
+            # connect to the given (host, port)
+            hostname, port = sock
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.connect((hostname, port))
+        # okay, normal socket-ish flow here...
         threading.Thread.__init__(self, target=self._run)
         self.randpool = randpool
         self.sock = sock
