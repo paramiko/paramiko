@@ -108,7 +108,7 @@ try:
         if len(path) == 0:
             path = default_path
         key.read_private_key_file(path)
-        t.auth_key(username, key, event)
+        t.auth_publickey(username, key, event)
     elif auth == 'd':
         key = paramiko.DSSKey()
         default_path = os.environ['HOME'] + '/.ssh/id_dsa'

@@ -41,6 +41,10 @@ class ServerTransport(paramiko.Transport):
             return self.AUTH_SUCCESSFUL
         return self.AUTH_FAILED
 
+    def get_allowed_auths(self, username):
+        return 'password,publickey'
+
+
 class ServerChannel(paramiko.Channel):
     "Channel descendant that pretends to understand pty and shell requests"
 
@@ -86,7 +90,6 @@ try:
         print '(Failed to load moduli -- gex will be unsupported.)'
         raise
     t.add_server_key(host_key)
-    t.ultra_debug = 0
     t.start_server(event)
     while 1:
         event.wait(0.1)

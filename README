@@ -135,7 +135,5 @@ are still running (and you'll have to kill -9 from another shell window).
 * ctr forms of ciphers are missing (blowfish-ctr, aes128-ctr, aes256-ctr)
 * can't handle password-protected private key files
 * multi-part auth not supported (ie, need username AND pk)
-* should have a simple synchronous method that handles all auth & events,
-  by pre-seeding the password or key info, and the expected key
 * server mode needs better doc
 

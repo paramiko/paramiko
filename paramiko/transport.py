@@ -176,10 +176,59 @@ class BaseTransport (threading.Thread):
         return out
 
     def start_client(self, event=None):
+        """
+        Negotiate a new SSH2 session as a client.  This is the first step after
+        creating a new L{Transport}.  A separate thread is created for protocol
+        negotiation, so this method returns immediately.
+        
+        When negotiation is done (successful or not), the given C{Event} will
+        be triggered.  On failure, L{is_active} will return C{False}.
+
+        After a successful negotiation, you will usually want to authenticate,
+        calling L{auth_password <Transport.auth_password>} or
+        L{auth_publickey <Transport.auth_publickey>}.
+
+        @note: L{connect} is a simpler method for connecting as a client.
+        
+        @note: After calling this method (or L{start_server} or L{connect}),
+        you should no longer directly read from or write to the original socket
+        object.
+
+        @param event: an event to trigger when negotiation is complete.
+        @type event: threading.Event
+        """
         self.completion_event = event
         self.start()
 
     def start_server(self, event=None):
+        """
+        Negotiate a new SSH2 session as a server.  This is the first step after
+        creating a new L{Transport} and setting up your server host key(s).  A
+        separate thread is created for protocol negotiation, so this method
+        returns immediately.
+
+        When negotiation is done (successful or not), the given C{Event} will
+        be triggered.  On failure, L{is_active} will return C{False}.
+
+        After a successful negotiation, the client will need to authenticate.
+        Override the methods
+        L{get_allowed_auths <Transport.get_allowed_auths>},
+        L{check_auth_none <Transport.check_auth_none>},
+        L{check_auth_password <Transport.check_auth_password>}, and
+        L{check_auth_publickey <Transport.check_auth_publickey>} to control the
+        authentication process.
+
+        After a successful authentication, the client should request to open
+        a channel.  Override L{check_channel_request} to allow channels to
+        be opened.
+
+        @note: After calling this method (or L{start_client} or L{connect}),
+        you should no longer directly read from or write to the original socket
+        object.
+
+        @param event: an event to trigger when negotiation is complete.
+        @type event: threading.Event
+        """
         self.server_mode = 1
         self.completion_event = event
         self.start()
@@ -301,9 +350,29 @@ class BaseTransport (threading.Thread):
         return self.active
 
     def open_session(self):
+        """
+        Request a new channel to the server, of type C{"session"}.  This
+        is just an alias for C{open_channel('session')}.
+
+        @return: a new L{Channel} on success, or C{None} if the request is
+        rejected or the session ends prematurely.
+        @rtype: L{Channel}
+        """
         return self.open_channel('session')
 
     def open_channel(self, kind):
+        """
+        Request a new channel to the server.  L{Channel}s are socket-like
+        objects used for the actual transfer of data across the session.
+        You may only request a channel after negotiating encryption (using
+        L{connect} or L{start_client} and authenticating.
+
+        @param kind: the kind of channel requested (usually C{"session"}).
+        @type kind: string
+        @return: a new L{Channel} on success, or C{None} if the request is
+        rejected or the session ends prematurely.
+        @rtype: L{Channel}
+        """
         chan = None
         try:
             self.lock.acquire()
@@ -361,7 +430,33 @@ class BaseTransport (threading.Thread):
         return True
 
     def check_channel_request(self, kind, chanid):
-        "override me!  return object descended from Channel to allow, or None to reject"
+        """
+        I{(subclass override)}
+        Determine if a channel request of a given type will be granted, and
+        return a suitable L{Channel} object.  This method is called in server
+        mode when the client requests a channel, after authentication is
+        complete.
+
+        In server mode, you will generally want to subclass L{Channel} to
+        override some of the methods for handling client requests (such as
+        connecting to a subsystem or opening a shell) to determine what you
+        want to allow or disallow.  For this reason, L{check_channel_request}
+        must return a new object of that type.  The C{chanid} parameter is
+        passed so that you can use it in L{Channel}'s constructor.
+
+        The default implementation always returns C{None}, rejecting any
+        channel requests.  A useful server must override this method.
+
+        @param kind: the kind of channel the client would like to open
+        (usually C{"session"}).
+        @type kind: string
+        @param chanid: ID of the channel, required to create a new L{Channel}
+        object.
+        @type chanid: int
+        @return: a new L{Channel} object (or subclass thereof), or C{None} to
+        refuse the request.
+        @rtype: L{Channel}
+        """
         return None
 
     def accept(self, timeout=None):
@@ -385,8 +480,8 @@ class BaseTransport (threading.Thread):
         Negotiate an SSH2 session, and optionally verify the server's host key
         and authenticate using a password or private key.  This is a shortcut
         for L{start_client}, L{get_remote_server_key}, and
-        L{Transport.auth_password} or L{Transport.auth_key}.  Use those methods
-        if you want more control.
+        L{Transport.auth_password} or L{Transport.auth_publickey}.  Use those
+        methods if you want more control.
 
         You can use this method immediately after creating a Transport to
         negotiate encryption with a server.  If it fails, an exception will be
@@ -450,7 +545,7 @@ class BaseTransport (threading.Thread):
                 self.auth_password(username, password, event)
             else:
                 self._log(DEBUG, 'Attempting password auth...')
-                self.auth_key(username, pkey, event)
+                self.auth_publickey(username, pkey, event)
             while 1:
                 event.wait(0.1)
                 if not self.active:

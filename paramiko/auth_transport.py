@@ -56,7 +56,7 @@ class Transport (BaseTransport):
         """
         return self.authenticated and self.active
 
-    def auth_key(self, username, key, event):
+    def auth_publickey(self, username, key, event):
         """
         Authenticate to the server using a private key.  The key is used to
         sign data from the server, so it must include the private part.  The
@@ -113,15 +113,70 @@ class Transport (BaseTransport):
             self.lock.release()
 
     def get_allowed_auths(self, username):
-        "override me!"
+        """
+        I{(subclass override)}
+        Return a list of authentication methods supported by the server.
+        This list is sent to clients attempting to authenticate, to inform them
+        of authentication methods that might be successful.
+
+        The "list" is actually a string of comma-separated names of types of
+        authentication.  Possible values are C{"password"}, C{"publickey"},
+        and C{"none"}.
+
+        The default implementation always returns C{"password"}.
+
+        @param username: the username requesting authentication.
+        @type username: string
+        @return: a comma-separated list of authentication types
+        @rtype: string
+        """
         return 'password'
 
     def check_auth_none(self, username):
-        "override me!  return int ==> auth status"
+        """
+        I{(subclass override)}
+        Determine if a client may open channels with no (further)
+        authentication.  You should override this method in server mode.
+
+        Return C{AUTH_FAILED} if the client must authenticate, or
+        C{AUTH_SUCCESSFUL} if it's okay for the client to not authenticate.
+
+        The default implementation always returns C{AUTH_FAILED}.
+
+        @param username: the username of the client.
+        @type username: string
+        @return: C{AUTH_FAILED} if the authentication fails; C{AUTH_SUCCESSFUL}
+        if it succeeds.
+        @rtype: int
+        """
         return self.AUTH_FAILED
 
     def check_auth_password(self, username, password):
-        "override me!  return int ==> auth status"
+        """
+        I{(subclass override)}
+        Determine if a given username and password supplied by the client is
+        acceptable for use in authentication.  You should override this method
+        in server mode.
+
+        Return C{AUTH_FAILED} if the password is not accepted,
+        C{AUTH_SUCCESSFUL} if the password is accepted and completes the
+        authentication, or C{AUTH_PARTIALLY_SUCCESSFUL} if your authentication
+        is stateful, and this key is accepted for authentication, but more
+        authentication is required.  (In this latter case, L{get_allowed_auths}
+        will be called to report to the client what options it has for
+        continuing the authentication.)
+
+        The default implementation always returns C{AUTH_FAILED}.
+
+        @param username: the username of the authenticating client.
+        @type username: string
+        @param password: the password given by the client.
+        @type password: string
+        @return: C{AUTH_FAILED} if the authentication fails; C{AUTH_SUCCESSFUL}
+        if it succeeds; C{AUTH_PARTIALLY_SUCCESSFUL} if the password auth is
+        successful, but authentication must continue.
+        @rtype: int
+        """
         return self.AUTH_FAILED
 
     def check_auth_publickey(self, username, key):

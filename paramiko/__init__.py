@@ -9,11 +9,15 @@ __author__ = "Robey Pointer <robey@lag.net>"
 __date__ = "10 Nov 2003"
 __version__ = "0.1-charmander"
 __credits__ = "Huzzah!"
+__license__ = "Lesser GNU Public License (LGPL)"
 
 
-import ssh_exception, transport, auth_transport, channel, rsakey, dsskey, util
+import ssh_exception, transport, auth_transport, channel, rsakey, dsskey
 
 class SSHException (ssh_exception.SSHException):
+    """
+    Exception thrown by failures in SSH2 protocol negotiation or logic errors.
+    """
     pass
 
 class Transport (auth_transport.Transport):
@@ -34,9 +38,17 @@ class Channel (channel.Channel):
     pass
 
 class RSAKey (rsakey.RSAKey):
+    """
+    Representation of an RSA key which can be used to sign and verify SSH2
+    data.
+    """
     pass
 
 class DSSKey (dsskey.DSSKey):
+    """
+    Representation of a DSS key which can be used to sign an verify SSH2
+    data.
+    """
     pass
 
 
