@@ -24,6 +24,7 @@ L{ServerInterface} is an interface to override for server support.
 
 import threading
 from common import *
+import util
 from transport import BaseTransport
 from auth_transport import Transport
 
@@ -248,10 +249,10 @@ class ServerInterface (object):
         subsystem; C{False} if that subsystem can't or won't be provided.
         @rtype: boolean
         """
-        handler_class = channel.get_transport()._get_subsystem_handler(name)
+        handler_class, larg, kwarg = channel.get_transport()._get_subsystem_handler(name)
         if handler_class is None:
             return False
-        handler = handler_class(channel, name)
+        handler = handler_class(channel, name, *larg, **kwarg)
         handler.start()
         return True
 

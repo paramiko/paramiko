@@ -34,6 +34,36 @@ MSG_CHANNEL_OPEN, MSG_CHANNEL_OPEN_SUCCESS, MSG_CHANNEL_OPEN_FAILURE, \
 	MSG_CHANNEL_EOF, MSG_CHANNEL_CLOSE, MSG_CHANNEL_REQUEST, \
 	MSG_CHANNEL_SUCCESS, MSG_CHANNEL_FAILURE = range(90, 101)
 
+# for debugging:
+MSG_NAMES = {
+    MSG_DISCONNECT: 'disconnect',
+    MSG_IGNORE: 'ignore',
+    MSG_UNIMPLEMENTED: 'unimplemented',
+    MSG_DEBUG: 'debug',
+    MSG_SERVICE_REQUEST: 'service-request',
+    MSG_SERVICE_ACCEPT: 'service-accept',
+    MSG_KEXINIT: 'kexinit',
+    MSG_NEWKEYS: 'newkeys',
+    MSG_USERAUTH_REQUEST: 'userauth-request',
+    MSG_USERAUTH_FAILURE: 'userauth-failure',
+    MSG_USERAUTH_SUCCESS: 'userauth-success',
+    MSG_USERAUTH_BANNER: 'userauth--banner',
+    MSG_USERAUTH_PK_OK: 'userauth-pk-ok',
+    MSG_GLOBAL_REQUEST: 'global-request',
+    MSG_REQUEST_SUCCESS: 'request-success',
+    MSG_REQUEST_FAILURE: 'request-failure',
+    MSG_CHANNEL_OPEN: 'channel-open',
+    MSG_CHANNEL_OPEN_SUCCESS: 'channel-open-success',
+    MSG_CHANNEL_OPEN_FAILURE: 'channel-open-failure',
+    MSG_CHANNEL_WINDOW_ADJUST: 'channel-window-adjust',
+    MSG_CHANNEL_DATA: 'channel-data',
+    MSG_CHANNEL_EXTENDED_DATA: 'channel-extended-data',
+    MSG_CHANNEL_EOF: 'channel-eof',
+    MSG_CHANNEL_CLOSE: 'channel-close',
+    MSG_CHANNEL_REQUEST: 'channel-request',
+    MSG_CHANNEL_SUCCESS: 'channel-success',
+    MSG_CHANNEL_FAILURE: 'channel-failure'
+    }
 
 # authentication request return codes:
 

@@ -778,9 +778,15 @@ class BaseTransport (threading.Thread):
 
         return
 
-    def set_subsystem_handler(self, name, handler):
+    def set_subsystem_handler(self, name, handler, *larg, **kwarg):
         """
-        Set the handler class for a subsystem in server mode.
+        Set the handler class for a subsystem in server mode.  If a reqeuest
+        for this subsystem is made on an open ssh channel later, this handler
+        will be constructed and called -- see L{SubsystemHandler} for more
+        detailed documentation.
+
+        Any extra parameters (including keyword arguments) are saved and
+        passed to the L{SubsystemHandler} constructor later.
 
         @param name: name of the subsystem.
         @type name: str
@@ -790,7 +796,7 @@ class BaseTransport (threading.Thread):
         """
         try:
             self.lock.acquire()
-            self.subsystem_table[name] = handler
+            self.subsystem_table[name] = (handler, larg, kwarg)
         finally:
             self.lock.release()
 
@@ -884,10 +890,14 @@ class BaseTransport (threading.Thread):
         return packet
 
     def _send_message(self, data):
-        # FIXME: should we check for rekeying here too?
         # encrypt this sucka
         data = str(data)
-        self._log(DEBUG, 'Write packet $%x, length %d' % (ord(data[0]), len(data)))
+        cmd = ord(data[0])
+        if cmd in MSG_NAMES:
+            cmd_name = MSG_NAMES[cmd]
+        else:
+            cmd_name = '$%x' % cmd
+        self._log(DEBUG, 'Write packet <%s>, length %d' % (cmd_name, len(data)))
         packet = self._build_packet(data)
         if self.ultra_debug:
             self._log(DEBUG, util.format_binary(packet, 'OUT: '))
@@ -913,6 +923,7 @@ class BaseTransport (threading.Thread):
                 self._log(DEBUG, 'Rekeying (hit %d packets, %d bytes sent)' %
                           (self.sent_packets, self.sent_bytes))
                 self.received_packets_overflow = 0
+                # this may do a recursive lock, but that's okay:
                 self._send_kex_init()
         finally:
             self.write_lock.release()
@@ -983,7 +994,11 @@ class BaseTransport (threading.Thread):
             self._send_kex_init()
 
         cmd = ord(payload[0])
-        self._log(DEBUG, 'Read packet $%x, length %d' % (cmd, len(payload)))
+        if cmd in MSG_NAMES:
+            cmd_name = MSG_NAMES[cmd]
+        else:
+            cmd_name = '$%x' % cmd
+        self._log(DEBUG, 'Read packet <%s>, length %d' % (cmd_name, len(payload)))
         return cmd, msg
 
     def _set_K_H(self, k, h):
@@ -1475,7 +1490,7 @@ class BaseTransport (threading.Thread):
         try:
             self.lock.acquire()
             if not self.subsystem_table.has_key(name):
-                return None
+                return (None, [], {})
             return self.subsystem_table[name]
         finally:
             self.lock.release()
