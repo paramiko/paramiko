@@ -63,7 +63,7 @@ class SecurityOptions (object):
     L{Transport} (but only if you change them before starting the session).
     If you try to add an algorithm that paramiko doesn't recognize,
     C{ValueError} will be raised.  If you try to assign something besides a
-    tuple to one of the fields, L{TypeError} will be raised.
+    tuple to one of the fields, C{TypeError} will be raised.
 
     @since: ivysaur
     """
@@ -181,6 +181,8 @@ class BaseTransport (threading.Thread):
             - C{recv(int)}: Reads from 1 to C{int} bytes and returns them as a
               string.  Returns 0 or raises C{EOFError} if the stream has been
               closed.
+            - C{close()}: Closes the socket.
+            - C{settimeout(n)}: Sets a (float) timeout on I/O operations.
 
         For ease of use, you may also pass in an address (as a tuple) or a host
         string as the C{sock} argument.  (A host string is a hostname with an
