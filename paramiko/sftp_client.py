@@ -310,9 +310,9 @@ class SFTPClient (BaseSFTP):
         relative pathname.
 
         @param path: path of the symbolic link file.
-        @type path: string
+        @type path: str
         @return: target path.
-        @rtype: string
+        @rtype: str
         """
         t, msg = self._request(CMD_READLINK, path)
         if t != CMD_NAME:
@@ -322,6 +322,26 @@ class SFTPClient (BaseSFTP):
             return None
         if count != 1:
             raise SFTPError('Readlink returned %d results' % count)
+        return msg.get_string()
+
+    def normalize(self, path):
+        """
+        Return the normalized path (on the server) of a given path.  This
+        can be used to quickly resolve symbolic links or determine what the
+        server is considering to be the "current folder" (by passing C{'.'}
+        as C{path}).
+
+        @param path: path to be normalized.
+        @type path: str
+        @return: normalized form of the given path.
+        @rtype: str
+        """
+        t, msg = self._request(CMD_REALPATH, path)
+        if t != CMD_NAME:
+            raise SFTPError('Expected name response')
+        count = msg.get_int()
+        if count != 1:
+            raise SFTPError('Realpath returned %d results' % count)
         return msg.get_string()
 
 
