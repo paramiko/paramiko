@@ -55,7 +55,6 @@ class Transport (BaseTransport):
         # for server mode:
         self.auth_username = None
         self.auth_fail_count = 0
-        self.auth_complete = 0
 
     def __repr__(self):
         out = '<paramiko.Transport at %s' % hex(id(self))
@@ -242,7 +241,7 @@ class Transport (BaseTransport):
             m.add_boolean(0)
             self._send_message(m)
             return
-        if self.auth_complete:
+        if self.authenticated:
             # ignore
             return
         username = m.get_string()
@@ -308,7 +307,7 @@ class Transport (BaseTransport):
         if result == AUTH_SUCCESSFUL:
             self._log(DEBUG, 'Auth granted.')
             m.add_byte(chr(MSG_USERAUTH_SUCCESS))
-            self.auth_complete = 1
+            self.authenticated = True
         else:
             self._log(DEBUG, 'Auth rejected.')
             m.add_byte(chr(MSG_USERAUTH_FAILURE))
