@@ -13,7 +13,7 @@ if len(l.handlers) == 0:
     l.addHandler(lh)
 
 host_key = secsh.RSAKey()
-host_key.read_private_key_file('/home/robey/sshkey/ssh_host_rsa_key')
+host_key.read_private_key_file('demo-host-key')
 
 # now connect
 try:

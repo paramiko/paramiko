@@ -80,7 +80,8 @@ class BaseTransport(threading.Thread):
     preferred_ciphers = [ 'aes128-cbc', 'blowfish-cbc', 'aes256-cbc', '3des-cbc' ]
     preferred_macs = [ 'hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96' ]
     preferred_keys = [ 'ssh-rsa', 'ssh-dss' ]
-    preferred_kex = [ 'diffie-hellman-group1-sha1', 'diffie-hellman-group-exchange-sha1' ]
+    preferred_kex = [ 'diffie-hellman-group1-sha1' ]
+#    preferred_kex = [ 'diffie-hellman-group1-sha1', 'diffie-hellman-group-exchange-sha1' ]
 
     cipher_info = {
         'blowfish-cbc': { 'class': Blowfish, 'mode': Blowfish.MODE_CBC, 'block-size': 8, 'key-size': 16 },
