@@ -1,5 +1,5 @@
 paramiko 0.9
-"ivysaur" release, 20 oct 2004
+"ivysaur" release, 22 oct 2004
 
 Copyright (c) 2003-2004 Robey Pointer <robey@lag.net>
 
@@ -124,13 +124,21 @@ highlights of what's new in each release:
 
 v0.9 IVYSAUR
 * new ServerInterface class for implementing server policy, so it's no longer
-  necessary to subclass Transport
+  necessary to subclass Transport or Channel -- server code will need to be
+  updated to follow this new API!  (see demo_server.py)
 * some bugfixes for re-keying an active session
 * Transport.get_security_options() allows fine-tuned control over the crypto
   negotiation on a new session
-
-* .......?
-
+* Transport.connect() takes a single hostkey object now instead of two string
+  parameters
+* the Channel request methods (like 'exec_command') now return True on success
+  or False on failure
+* added a mechanism for providing subsystems in server mode (and a new class
+  to be subclassed: SubsystemHandler)
+* renamed SFTP -> SFTPClient (but left an alias for existing code)
+* added SFTPClient.normalize() to resolve paths on the server
+* fleshed out the API a bit more for SFTPClient and private keys
+* a bunch of new unit tests!
 
 v0.9 HORSEA
 * fixed a lockup that could happen if the channel was closed while the send

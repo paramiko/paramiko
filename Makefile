@@ -7,7 +7,7 @@
 # fearow (23apr04)
 # gyarados (31may04)
 # horsea (27jun04)
-# ivysaur (20oct04)
+# ivysaur (22oct04)
 
 release:
 	python ./setup.py sdist --formats=zip
