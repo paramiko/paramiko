@@ -438,7 +438,24 @@ class SFTPTest (unittest.TestCase):
         finally:
             sftp.remove('%s/hongry.txt' % FOLDER)
 
-    def test_E_realpath(self):
+    def test_E_big_file_no_buffer(self):
+        """
+        write a 1MB file, with no linefeeds, and no buffering.
+        """
+        global g_big_file_test
+        if not g_big_file_test:
+            return
+        kblob = (1024 * 1024 * 'x')
+        try:
+            f = sftp.open('%s/hongry.txt' % FOLDER, 'w')
+            f.write(kblob)
+            f.close()
+
+            self.assertEqual(sftp.stat('%s/hongry.txt' % FOLDER).st_size, 1024 * 1024)
+        finally:
+            sftp.remove('%s/hongry.txt' % FOLDER)
+            
+    def test_F_realpath(self):
         """
         test that realpath is returning something non-empty and not an
         error.
@@ -449,7 +466,7 @@ class SFTPTest (unittest.TestCase):
         self.assert_(len(f) > 0)
         self.assertEquals(os.path.join(pwd, FOLDER), f)
 
-    def test_F_mkdir(self):
+    def test_G_mkdir(self):
         """
         verify that mkdir/rmdir work.
         """

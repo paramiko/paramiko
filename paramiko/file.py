@@ -314,7 +314,7 @@ class BufferedFile (object):
                 last_newline_pos += len(wbuf) - len(data)
                 self._write_all(wbuf[:last_newline_pos + 1])
                 self._wbuffer = StringIO()
-                self._wbuffer.write(wbuf[last_newline_pos+1:])
+                self._wbuffer.write(wbuf[last_newline_pos + 1:])
             return
         # even if we're line buffering, if the buffer has grown past the
         # buffer size, force a flush.
@@ -412,16 +412,15 @@ class BufferedFile (object):
     def _write_all(self, data):
         # the underlying stream may be something that does partial writes (like
         # a socket).
-        total = len(data)
-        while data:
+        while len(data) > 0:
             count = self._write(data)
             data = data[count:]
-        if self._flags & _FLAG_APPEND:
-            self._size += total
-            self._pos = self._realpos = self._size
-        else:
-            self._pos += total
-            self._realpos += total
+            if self._flags & _FLAG_APPEND:
+                self._size += count
+                self._pos = self._realpos = self._size
+            else:
+                self._pos += count
+                self._realpos += count
         return None
 
     def _record_newline(self, newline):

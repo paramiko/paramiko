@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# Copyright (C) 2003-2004 Robey Pointer <robey@lag.net>
+# Copyright (C) 2003-2005 Robey Pointer <robey@lag.net>
 #
 # This file is part of paramiko.
 #
@@ -55,13 +55,14 @@ class SFTPFile (BufferedFile):
         return msg.get_string()
 
     def _write(self, data):
-        offset = 0
-        while offset < len(data):
-            chunk = min(len(data) - offset, self.MAX_REQUEST_SIZE)
-            t, msg = self.sftp._request(CMD_WRITE, self.handle, long(self._realpos + offset),
-                                        str(data[offset : offset + chunk]))
-            offset += chunk
-        return len(data)
+        # may write less than requested if it would exceed max packet size
+        chunk = min(len(data), self.MAX_REQUEST_SIZE)
+        t, msg = self.sftp._request(CMD_WRITE, self.handle, long(self._realpos),
+                                    str(data[:chunk]))
+        if t != CMD_STATUS:
+            raise SFTPError('Expected status')
+        self.sftp._convert_status(msg)
+        return chunk
 
     def settimeout(self, timeout):
         """
