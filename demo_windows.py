@@ -9,11 +9,18 @@
 import sys, os, base64, getpass, socket, traceback
 import paramiko
 
+if os.environ.has_key('HOME'):
+    # unix
+    HOME = os.environ['HOME']
+else:
+    # windows
+    HOME = os.environ['HOMEDRIVE'] + os.environ['HOMEPATH']
+
 
 #####   utility functions
 
 def load_host_keys():
-    filename = os.environ['HOME'] + '/.ssh/known_hosts'
+    filename = HOME + '/.ssh/known_hosts'
     keys = {}
     try:
         f = open(filename, 'r')
