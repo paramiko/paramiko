@@ -15,12 +15,14 @@
 # details.
 #
 # You should have received a copy of the GNU Lesser General Public License
-# along with Foobar; if not, write to the Free Software Foundation, Inc.,
+# along with Paramiko; if not, write to the Free Software Foundation, Inc.,
 # 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
 
 """
 BufferedFile.
 """
+
+from cStringIO import StringIO
 
 _FLAG_READ = 0x1
 _FLAG_WRITE = 0x2
@@ -36,7 +38,7 @@ class BufferedFile (object):
     simpler stream
     """
 
-    _DEFAULT_BUFSIZE = 1024
+    _DEFAULT_BUFSIZE = 8192
 
     SEEK_SET = 0
     SEEK_CUR = 1
@@ -45,7 +47,8 @@ class BufferedFile (object):
     def __init__(self):
         self._flags = 0
         self._bufsize = self._DEFAULT_BUFSIZE
-        self._wbuffer = self._rbuffer = ''
+        self._wbuffer = StringIO()
+        self._rbuffer = ''
         self._at_trailing_cr = False
         self._closed = False
         # pos - position within the file, according to the user
@@ -80,8 +83,8 @@ class BufferedFile (object):
         Write out any data in the write buffer.  This may do nothing if write
         buffering is not turned on.
         """
-        self._write_all(self._wbuffer)
-        self._wbuffer = ''
+        self._write_all(self._wbuffer.getvalue())
+        self._wbuffer = StringIO()
         return
 
     def next(self):
@@ -300,16 +303,21 @@ class BufferedFile (object):
         if not (self._flags & _FLAG_BUFFERED):
             self._write_all(data)
             return
-        self._wbuffer += data
+        self._wbuffer.write(data)
         if self._flags & _FLAG_LINE_BUFFERED:
-            last_newline_pos = self._wbuffer.rfind('\n')
+            # only scan the new data for linefeed, to avoid wasting time.
+            last_newline_pos = data.rfind('\n')
             if last_newline_pos >= 0:
-                self._write_all(self._wbuffer[:last_newline_pos + 1])
-                self._wbuffer = self._wbuffer[last_newline_pos+1:]
-        else:
-            if len(self._wbuffer) >= self._bufsize:
-                self._write_all(self._wbuffer)
-                self._wbuffer = ''
+                wbuf = self._wbuffer.getvalue()
+                last_newline_pos += len(wbuf) - len(data)
+                self._write_all(wbuf[:last_newline_pos + 1])
+                self._wbuffer = StringIO()
+                self._wbuffer.write(wbuf[last_newline_pos+1:])
+            return
+        # even if we're line buffering, if the buffer has grown past the
+        # buffer size, force a flush.
+        if len(self._wbuffer.getvalue()) >= self._bufsize:
+            self.flush()
         return
 
     def writelines(self, sequence):
