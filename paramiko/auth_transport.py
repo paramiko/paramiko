@@ -32,7 +32,7 @@ from common import *
 import util
 from transport import BaseTransport
 from message import Message
-from ssh_exception import SSHException, BadAuthenticationType
+from ssh_exception import SSHException, BadAuthenticationType, PartialAuthentication
 
 
 class Transport (BaseTransport):
@@ -118,6 +118,10 @@ class Transport (BaseTransport):
         authentication succeeds or fails.  On failure, an exception is raised.
         Otherwise, the method simply returns.
 
+        If the server requires multi-step authentication (which is very rare),
+        this method will return a list of auth types permissible for the next
+        step.  Otherwise, in the normal case, an empty list is returned.
+
         @param username: the username to authenticate as.
         @type username: string
         @param key: the private key to authenticate with.
@@ -125,6 +129,9 @@ class Transport (BaseTransport):
         @param event: an event to trigger when the authentication attempt is
         complete (whether it was successful or not)
         @type event: threading.Event
+        @return: list of auth types permissible for the next stage of
+            authentication (normally empty).
+        @rtype: list
         
         @raise BadAuthenticationType: if public-key authentication isn't
             allowed by the server for this user (and no event was passed in).
@@ -149,8 +156,8 @@ class Transport (BaseTransport):
             self.lock.release()
         if event is not None:
             # caller wants to wait for event themselves
-            return
-        self._wait_for_response(my_event)
+            return []
+        return self._wait_for_response(my_event)
 
     def auth_password(self, username, password, event=None):
         """
@@ -165,7 +172,11 @@ class Transport (BaseTransport):
         Since 1.1, if no event is passed, this method will block until the
         authentication succeeds or fails.  On failure, an exception is raised.
         Otherwise, the method simply returns.
-
+        
+        If the server requires multi-step authentication (which is very rare),
+        this method will return a list of auth types permissible for the next
+        step.  Otherwise, in the normal case, an empty list is returned.
+        
         @param username: the username to authenticate as.
         @type username: string
         @param password: the password to authenticate with.
@@ -173,6 +184,9 @@ class Transport (BaseTransport):
         @param event: an event to trigger when the authentication attempt is
         complete (whether it was successful or not)
         @type event: threading.Event
+        @return: list of auth types permissible for the next stage of
+            authentication (normally empty).
+        @rtype: list
         
         @raise BadAuthenticationType: if password authentication isn't
             allowed by the server for this user (and no event was passed in).
@@ -197,8 +211,8 @@ class Transport (BaseTransport):
             self.lock.release()
         if event is not None:
             # caller wants to wait for event themselves
-            return
-        self._wait_for_response(my_event)
+            return []
+        return self._wait_for_response(my_event)
 
 
     ###  internals...
@@ -254,8 +268,13 @@ class Transport (BaseTransport):
             e = self.get_exception()
             if e is None:
                 e = SSHException('Authentication failed.')
+            # this is horrible.  python Exception isn't yet descended from
+            # object, so type(e) won't work. :(
+            if issubclass(e.__class__, PartialAuthentication):
+                return e.allowed_types
             raise e
-        
+        return []
+
     def _parse_service_request(self, m):
         service = m.get_string()
         if self.server_mode and (service == 'ssh-userauth'):
@@ -396,12 +415,13 @@ class Transport (BaseTransport):
         partial = m.get_boolean()
         if partial:
             self._log(INFO, 'Authentication continues...')
-            self._log(DEBUG, 'Methods: ' + str(partial))
-            # FIXME: multi-part auth not supported
-            pass
-        if self.auth_method not in authlist:
+            self._log(DEBUG, 'Methods: ' + str(authlist))
+            self.saved_exception = PartialAuthentication(authlist)
+        elif self.auth_method not in authlist:
+            self._log(INFO, 'Authentication type not permitted.')
             self.saved_exception = BadAuthenticationType('Bad authentication type', authlist)
-        self._log(INFO, 'Authentication failed.')
+        else:
+            self._log(INFO, 'Authentication failed.')
         self.authenticated = False
         self.username = None
         if self.auth_event != None:
