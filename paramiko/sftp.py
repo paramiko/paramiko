@@ -25,15 +25,16 @@ from channel import Channel
 from message import Message
 from file import BufferedFile
 
-CMD_INIT, CMD_VERSION, CMD_OPEN, CMD_CLOSE, CMD_READ, CMD_WRITE, CMD_LSTAT, CMD_FSTAT, CMD_SETSTAT, \
-          CMD_FSETSTAT, CMD_OPENDIR, CMD_READDIR, CMD_REMOVE, CMD_MKDIR, CMD_RMDIR, CMD_REALPATH, \
-          CMD_STAT, CMD_RENAME, CMD_READLINK, CMD_SYMLINK = range(1, 21)
-CMD_STATUS, CMD_HANDLE, CMD_DATA, CMD_NAME, CMD_ATTRS = range(101, 106)
-CMD_EXTENDED, CMD_EXTENDED_REPLY = range(200, 202)
+_CMD_INIT, _CMD_VERSION, _CMD_OPEN, _CMD_CLOSE, _CMD_READ, _CMD_WRITE, _CMD_LSTAT, _CMD_FSTAT, \
+           _CMD_SETSTAT, _CMD_FSETSTAT, _CMD_OPENDIR, _CMD_READDIR, _CMD_REMOVE, _CMD_MKDIR, \
+           _CMD_RMDIR, _CMD_REALPATH, _CMD_STAT, _CMD_RENAME, _CMD_READLINK, _CMD_SYMLINK \
+           = range(1, 21)
+_CMD_STATUS, _CMD_HANDLE, _CMD_DATA, _CMD_NAME, _CMD_ATTRS = range(101, 106)
+_CMD_EXTENDED, _CMD_EXTENDED_REPLY = range(200, 202)
 
-FX_OK = 0
-FX_EOF, FX_NO_SUCH_FILE, FX_PERMISSION_DENIED, FX_FAILURE, FX_BAD_MESSAGE, FX_NO_CONNECTION, \
-        FX_CONNECTION_LOST, FX_OP_UNSUPPORTED = range(1, 9)
+_FX_OK = 0
+_FX_EOF, _FX_NO_SUCH_FILE, _FX_PERMISSION_DENIED, _FX_FAILURE, _FX_BAD_MESSAGE, \
+         _FX_NO_CONNECTION, _FX_CONNECTION_LOST, _FX_OP_UNSUPPORTED = range(1, 9)
 
 VERSION = 3
 
@@ -133,8 +134,8 @@ class SFTPFile (BufferedFile):
         BufferedFile._set_mode(self, mode, bufsize)
 
     def _get_size(self):
-        t, msg = self.sftp._request(CMD_FSTAT, self.handle)
-        if t != CMD_ATTRS:
+        t, msg = self.sftp._request(_CMD_FSTAT, self.handle)
+        if t != _CMD_ATTRS:
             raise SFTPError('Expected attrs')
         attr = SFTPAttributes()
         attr.unpack(msg)
@@ -145,12 +146,12 @@ class SFTPFile (BufferedFile):
 
     def close(self):
         BufferedFile.close(self)
-        self.sftp._request(CMD_CLOSE, self.handle)
+        self.sftp._request(_CMD_CLOSE, self.handle)
 
     def _read(self, size):
         size = min(size, self.MAX_REQUEST_SIZE)
-        t, msg = self.sftp._request(CMD_READ, self.handle, long(self._realpos), int(size))
-        if t != CMD_DATA:
+        t, msg = self.sftp._request(_CMD_READ, self.handle, long(self._realpos), int(size))
+        if t != _CMD_DATA:
             raise SFTPError('Expected data')
         return msg.get_string()
 
@@ -158,10 +159,44 @@ class SFTPFile (BufferedFile):
         offset = 0
         while offset < len(data):
             chunk = min(len(data) - offset, self.MAX_REQUEST_SIZE)
-            t, msg = self.sftp._request(CMD_WRITE, self.handle, long(self._realpos + offset),
+            t, msg = self.sftp._request(_CMD_WRITE, self.handle, long(self._realpos + offset),
                                         str(data[offset : offset + chunk]))
             offset += chunk
         return len(data)
+
+    def settimeout(self, timeout):
+        """
+        Set a timeout on read/write operations on the underlying socket or
+        ssh L{Channel}.
+
+        @see: L{Channel.settimeout}
+        @param timeout: seconds to wait for a pending read/write operation
+        before raising C{socket.timeout}, or C{None} for no timeout
+        @type timeout: float
+        """
+        self.sock.settimeout(timeout)
+
+    def gettimeout(self):
+        """
+        Returns the timeout in seconds (as a float) associated with the socket
+        or ssh L{Channel} used for this file.
+
+        @see: L{Channel.gettimeout}
+        @rtype: float
+        """
+        return self.sock.gettimeout()
+
+    def setblocking(self, blocking):
+        """
+        Set blocking or non-blocking mode on the underiying socket or ssh
+        L{Channel}.
+
+        @see: L{Channel.setblocking}
+        @param blocking: 0 to set non-blocking mode; non-0 to set blocking
+        mode.
+        @type blocking: int
+        """
+        self.sock.setblocking(blocking)
 
     def seek(self, offset, whence=0):
         self.flush()
@@ -183,8 +218,8 @@ class SFTPFile (BufferedFile):
         @return: an object containing attributes about this file.
         @rtype: SFTPAttributes
         """
-        t, msg = self.sftp._request(CMD_FSTAT, self.handle)
-        if t != CMD_ATTRS:
+        t, msg = self.sftp._request(_CMD_FSTAT, self.handle)
+        if t != _CMD_ATTRS:
             raise SFTPError('Expected attributes')
         attr = SFTPAttributes(msg)
         attr._pythonize()
@@ -201,9 +236,9 @@ class SFTP (object):
         else:
             self.logger = logging.getLogger('paramiko.sftp')
         # protocol:  (maybe should move to a different method)
-        self._send_packet(CMD_INIT, struct.pack('>I', VERSION))
+        self._send_packet(_CMD_INIT, struct.pack('>I', VERSION))
         t, data = self._read_packet()
-        if t != CMD_VERSION:
+        if t != _CMD_VERSION:
             raise SFTPError('Incompatible sftp protocol')
         version = struct.unpack('>I', data[:4])[0]
 #        if version != VERSION:
@@ -228,18 +263,18 @@ class SFTP (object):
         @return: list of filenames.
         @rtype: list of string
         """
-        t, msg = self._request(CMD_OPENDIR, path)
-        if t != CMD_HANDLE:
+        t, msg = self._request(_CMD_OPENDIR, path)
+        if t != _CMD_HANDLE:
             raise SFTPError('Expected handle')
         handle = msg.get_string()
         filelist = []
         while 1:
             try:
-                t, msg = self._request(CMD_READDIR, handle)
+                t, msg = self._request(_CMD_READDIR, handle)
             except EOFError, e:
                 # done with handle
                 break
-            if t != CMD_NAME:
+            if t != _CMD_NAME:
                 raise SFTPError('Expected name response')
             count = msg.get_int()
             for i in range(count):
@@ -249,7 +284,7 @@ class SFTP (object):
                 if (filename != '.') and (filename != '..'):
                     filelist.append(filename)
                 # currently we ignore the rest
-        self._request(CMD_CLOSE, handle)
+        self._request(_CMD_CLOSE, handle)
         return filelist
 
     def open(self, filename, mode='r', bufsize=-1):
@@ -288,8 +323,8 @@ class SFTP (object):
         if ('a' in mode):
             imode |= self._FXF_APPEND
         attrblock = SFTPAttributes()
-        t, msg = self._request(CMD_OPEN, filename, imode, attrblock)
-        if t != CMD_HANDLE:
+        t, msg = self._request(_CMD_OPEN, filename, imode, attrblock)
+        if t != _CMD_HANDLE:
             raise SFTPError('Expected handle')
         handle = msg.get_string()
         return SFTPFile(self, handle, mode, bufsize)
@@ -304,7 +339,7 @@ class SFTP (object):
         @raise IOError: if the path refers to a folder (directory).  Use
         L{rmdir} to remove a folder.
         """
-        self._request(CMD_REMOVE, path)
+        self._request(_CMD_REMOVE, path)
 
     unlink = remove
 
@@ -320,7 +355,7 @@ class SFTP (object):
         @raise IOError: if C{newpath} is a folder, or something else goes
         wrong.
         """
-        self._request(CMD_RENAME, oldpath, newpath)
+        self._request(_CMD_RENAME, oldpath, newpath)
 
     def mkdir(self, path, mode=0777):
         """
@@ -335,7 +370,7 @@ class SFTP (object):
         """
         attr = SFTPAttributes()
         attr.permissions = mode
-        self._request(CMD_MKDIR, path, attr)
+        self._request(_CMD_MKDIR, path, attr)
 
     def rmdir(self, path):
         """
@@ -344,7 +379,7 @@ class SFTP (object):
         @param path: name of the folder to remove.
         @type path: string
         """
-        self._request(CMD_RMDIR, path)
+        self._request(_CMD_RMDIR, path)
 
     def stat(self, path):
         """
@@ -365,8 +400,8 @@ class SFTP (object):
         @return: an object containing attributes about the given file.
         @rtype: SFTPAttributes
         """
-        t, msg = self._request(CMD_STAT, path)
-        if t != CMD_ATTRS:
+        t, msg = self._request(_CMD_STAT, path)
+        if t != _CMD_ATTRS:
             raise SFTPError('Expected attributes')
         attr = SFTPAttributes(msg)
         attr._pythonize()
@@ -383,8 +418,8 @@ class SFTP (object):
         @return: an object containing attributes about the given file.
         @rtype: SFTPAttributes
         """
-        t, msg = self._request(CMD_LSTAT, path)
-        if t != CMD_ATTRS:
+        t, msg = self._request(_CMD_LSTAT, path)
+        if t != _CMD_ATTRS:
             raise SFTPError('Expected attributes')
         attr = SFTPAttributes(msg)
         attr._pythonize()
@@ -400,7 +435,7 @@ class SFTP (object):
         @param dest: path of the newly created symlink.
         @type dest: string
         """
-        self._request(CMD_SYMLINK, source, dest)
+        self._request(_CMD_SYMLINK, source, dest)
 
     def chmod(self, path, mode):
         """
@@ -415,7 +450,7 @@ class SFTP (object):
         """
         attr = SFTPAttributes()
         attr.permissions = mode
-        self._request(CMD_SETSTAT, path, attr)
+        self._request(_CMD_SETSTAT, path, attr)
         
     def chown(self, path, uid, gid):
         """
@@ -433,7 +468,7 @@ class SFTP (object):
         """
         attr = SFTPAttributes()
         attr.uid, attr.gid = uid, gid
-        self._request(CMD_SETSTAT, path, attr)
+        self._request(_CMD_SETSTAT, path, attr)
 
     def utime(self, path, times):
         """
@@ -454,7 +489,7 @@ class SFTP (object):
             times = (time.time(), time.time())
         attr = SFTPAttributes()
         attr.atime, attr.mtime = times
-        self._request(CMD_SETSTAT, path, attr)
+        self._request(_CMD_SETSTAT, path, attr)
 
     def readlink(self, path):
         """
@@ -467,8 +502,8 @@ class SFTP (object):
         @return: target path.
         @rtype: string
         """
-        t, msg = self._request(CMD_READLINK, path)
-        if t != CMD_NAME:
+        t, msg = self._request(_CMD_READLINK, path)
+        if t != _CMD_NAME:
             raise SFTPError('Expected name response')
         count = msg.get_int()
         if count == 0:
@@ -509,15 +544,11 @@ class SFTP (object):
     def _read_all(self, n):
         out = ''
         while n > 0:
-            try:
-                x = self.sock.recv(n)
-                if len(x) == 0:
-                    raise EOFError()
-                out += x
-                n -= len(x)
-            except socket.timeout:
-                if not self.active:
-                    raise EOFError()
+            x = self.sock.recv(n)
+            if len(x) == 0:
+                raise EOFError()
+            out += x
+            n -= len(x)
         return out
 
     def _send_packet(self, t, packet):
@@ -556,7 +587,7 @@ class SFTP (object):
         if num != self.request_number:
             raise SFTPError('Expected response #%d, got response #%d' % (self.request_number, num))
         self.request_number += 1
-        if t == CMD_STATUS:
+        if t == _CMD_STATUS:
             self._convert_status(msg)
         return t, msg
 
@@ -566,11 +597,10 @@ class SFTP (object):
         """
         code = msg.get_int()
         text = msg.get_string()
-        if code == FX_OK:
+        if code == _FX_OK:
             return
-        elif code == FX_EOF:
+        elif code == _FX_EOF:
             raise EOFError(text)
         else:
             raise IOError(text)
-
 
