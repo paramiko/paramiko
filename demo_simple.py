@@ -23,7 +23,10 @@ def load_host_keys():
         for host in hosts:
             if not keys.has_key(host):
                 keys[host] = {}
-            keys[host][keytype] = base64.decodestring(key)
+            if keytype == 'ssh-rsa':
+                keys[host][keytype] = paramiko.RSAKey(data=base64.decodestring(key))
+            elif keytype == 'ssh-dss':
+                keys[host][keytype] = paramiko.DSSKey(data=base64.decodestring(key))
     f.close()
     return keys
 
@@ -70,7 +73,7 @@ if hkeys.has_key(hostname):
 # now, connect and use paramiko Transport to negotiate SSH2 across the connection
 try:
     t = paramiko.Transport((hostname, port))
-    t.connect(username=username, password=password, hostkeytype=hostkeytype, hostkey=hostkey)
+    t.connect(username=username, password=password, hostkey=hostkey)
     chan = t.open_session()
     chan.get_pty()
     chan.invoke_shell()

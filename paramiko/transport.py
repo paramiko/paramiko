@@ -693,7 +693,7 @@ class BaseTransport (threading.Thread):
             self.lock.release()
         return chan
 
-    def connect(self, hostkeytype=None, hostkey=None, username='', password=None, pkey=None):
+    def connect(self, hostkey=None, username='', password=None, pkey=None):
         """
         Negotiate an SSH2 session, and optionally verify the server's host key
         and authenticate using a password or private key.  This is a shortcut
@@ -712,13 +712,9 @@ class BaseTransport (threading.Thread):
         succeed, but a subsequent L{open_channel} or L{open_session} call may
         fail because you haven't authenticated yet.
 
-        @param hostkeytype: the type of host key expected from the server
-        (usually C{"ssh-rsa"} or C{"ssh-dss"}), or C{None} if you don't want
-        to do host key verification.
-        @type hostkeytype: str
         @param hostkey: the host key expected from the server, or C{None} if
         you don't want to do host key verification.
-        @type hostkey: str
+        @type hostkey: L{PKey<pkey.PKey>}
         @param username: the username to authenticate as.
         @type username: str
         @param password: a password to use for authentication, if you want to
@@ -733,8 +729,8 @@ class BaseTransport (threading.Thread):
 
         @since: doduo
         """
-        if hostkeytype is not None:
-            self._preferred_keys = [ hostkeytype ]
+        if hostkey is not None:
+            self._preferred_keys = [ hostkey.get_name() ]
 
         event = threading.Event()
         self.start_client(event)
@@ -750,14 +746,14 @@ class BaseTransport (threading.Thread):
                 break
 
         # check host key if we were given one
-        if (hostkeytype is not None) and (hostkey is not None):
+        if (hostkey is not None):
             key = self.get_remote_server_key()
-            if (key.get_name() != hostkeytype) or (str(key) != hostkey):
+            if (key.get_name() != hostkey.get_name()) or (str(key) != str(hostkey)):
                 self._log(DEBUG, 'Bad host key from server')
-                self._log(DEBUG, 'Expected: %s: %s' % (hostkeytype, repr(hostkey)))
+                self._log(DEBUG, 'Expected: %s: %s' % (hostkey.get_name(), repr(str(hostkey))))
                 self._log(DEBUG, 'Got     : %s: %s' % (key.get_name(), repr(str(key))))
                 raise SSHException('Bad host key from server')
-            self._log(DEBUG, 'Host key verified (%s)' % hostkeytype)
+            self._log(DEBUG, 'Host key verified (%s)' % hostkey.get_name())
 
         if (pkey is not None) or (password is not None):
             event.clear()
@@ -1003,7 +999,7 @@ class BaseTransport (threading.Thread):
 
     def _verify_key(self, host_key, sig):
         key = self._key_info[self.host_key_type](Message(host_key))
-        if (key == None) or not key.valid:
+        if key is None:
             raise SSHException('Unknown host key type')
         if not key.verify_ssh_sig(self.H, Message(sig)):
             raise SSHException('Signature verification (%s) failed.  Boo.  Robey should debug this.' % self.host_key_type)

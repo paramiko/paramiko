@@ -23,7 +23,10 @@ def load_host_keys():
         for host in hosts:
             if not keys.has_key(host):
                 keys[host] = {}
-            keys[host][keytype] = base64.decodestring(key)
+            if keytype == 'ssh-rsa':
+                keys[host][keytype] = paramiko.RSAKey(data=base64.decodestring(key))
+            elif keytype == 'ssh-dss':
+                keys[host][keytype] = paramiko.DSSKey(data=base64.decodestring(key))
     f.close()
     return keys
 
@@ -75,7 +78,7 @@ try:
         print '*** WARNING: Unknown host key!'
     elif not keys[hostname].has_key(key.get_name()):
         print '*** WARNING: Unknown host key!'
-    elif keys[hostname][key.get_name()] != str(key):
+    elif keys[hostname][key.get_name()] != key:
         print '*** WARNING: Host key has changed!!!'
         sys.exit(1)
     else:

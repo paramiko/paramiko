@@ -143,7 +143,7 @@ class PKey (object):
 
         @since: fearow
         """
-        return ''.join(base64.encodestring(str(self)).split('\n'))
+        return base64.encodestring(str(self)).replace('\n', '')
 
     def sign_ssh_data(self, randpool, data):
         """
