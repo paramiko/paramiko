@@ -828,7 +828,7 @@ class Channel (object):
             return
         x = self.in_buffer[:nbytes]
         self.in_buffer = self.in_buffer[nbytes:]
-        os.write(self.pipd_wfd, x)
+        os.write(self.pipe_wfd, x)
 
     def _unlink(self):
         if self.closed or not self.active:
