@@ -4,7 +4,8 @@
 # are provided by the server.  a bit more work is required on our side (and a
 # LOT more on the server side).
 
-from message import Message, inflate_long, deflate_long
+from message import Message
+from util import inflate_long, deflate_long, generate_prime
 from secsh import SSHException
 from transport import MSG_NEWKEYS
 from Crypto.Hash import SHA
@@ -95,10 +96,11 @@ class KexGex(object):
         # generate prime
         while 1:
             # does not work FIXME
+            # the problem is that it's too fscking SLOW
             self.transport.log(DEBUG, 'stir...')
             self.transport.randpool.stir()
             self.transport.log(DEBUG, 'get-prime %d...' % preferred)
-            self.p = number.getPrime(preferred, self.transport.randpool.get_bytes)
+            self.p = generate_prime(preferred, self.transport.randpool)
             self.transport.log(DEBUG, 'got ' + repr(self.p))
             if number.isPrime((self.p - 1) // 2):
                 break
