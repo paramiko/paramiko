@@ -269,7 +269,7 @@ class BaseTransport (threading.Thread):
 
         @rtype: str
         """
-        out = '<paramiko.BaseTransport at %s' % hex(id(self))
+        out = '<paramiko.BaseTransport at %s' % hex(long(id(self)) & 0xffffffffL)
         if not self.active:
             out += ' (unconnected)'
         else:
@@ -320,6 +320,7 @@ class BaseTransport (threading.Thread):
         @type event: threading.Event
         """
         self.completion_event = event
+        self.active = True
         self.start()
 
     def start_server(self, event=None, server=None):
@@ -360,6 +361,7 @@ class BaseTransport (threading.Thread):
         self.server_mode = True
         self.server_object = server
         self.completion_event = event
+        self.active = True
         self.start()
 
     def add_server_key(self, key):
@@ -708,7 +710,7 @@ class BaseTransport (threading.Thread):
 
         event = threading.Event()
         self.start_client(event)
-        while 1:
+        while True:
             event.wait(0.1)
             if not self.active:
                 e = self.get_exception()
@@ -887,7 +889,7 @@ class BaseTransport (threading.Thread):
         while len(out) > 0:
             try:
                 n = self.sock.send(out)
-            except:
+            except Exception, x:
                 # could be: (32, 'Broken pipe')
                 n = -1
             if n < 0:
@@ -1062,10 +1064,13 @@ class BaseTransport (threading.Thread):
         return self._cipher_info[name]['class'].new(key, self._cipher_info[name]['mode'], iv)
 
     def _run(self):
-        self.active = True
+        # active=True occurs before the thread is launched, to avoid a race
         _active_threads.append(self)
+        if self.server_mode:
+            self._log(DEBUG, 'starting thread (server mode): %s' % hex(long(id(self)) & 0xffffffffL))
+        else:
+            self._log(DEBUG, 'starting thread (client mode): %s' % hex(long(id(self)) & 0xffffffffL))
         try:
-            # SSH-1.99-OpenSSH_2.9p2
             self._write_all(self.local_version + '\r\n')
             self._check_banner()
             self._send_kex_init()
