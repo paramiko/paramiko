@@ -479,6 +479,8 @@ class BaseTransport (threading.Thread):
         @param interval: seconds to wait before sending a keepalive packet (or
         0 to disable keepalives).
         @type interval: int
+
+        @since: fearow
         """
         self.keepalive_interval = interval
 

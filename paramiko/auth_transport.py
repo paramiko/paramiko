@@ -92,6 +92,8 @@ class Transport (BaseTransport):
 
         @return: username that was authenticated, or C{None}.
         @rtype: string
+
+        @since: fearow
         """
         return self.username
 

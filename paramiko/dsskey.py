@@ -151,6 +151,8 @@ class DSSKey (PKey):
         @type progress_func: function
         @return: new private key
         @rtype: L{DSSKey}
+
+        @since: fearow
         """
         dsa = DSA.generate(bits, randpool.get_bytes, progress_func)
         key = DSSKey()

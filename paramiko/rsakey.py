@@ -142,6 +142,8 @@ class RSAKey (PKey):
         @type progress_func: function
         @return: new private key
         @rtype: L{RSAKey}
+
+        @since: fearow
         """
         rsa = RSA.generate(bits, randpool.get_bytes, progress_func)
         key = RSAKey()

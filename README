@@ -1,5 +1,5 @@
 paramiko 0.9
-"eevee" release, 08 mar 2004
+"fearow" release, 06 apr 2004
 
 Copyright (c) 2003-2004 Robey Pointer <robey@lag.net>
 
@@ -51,8 +51,12 @@ python 2.2 may work, thanks to some patches from Roger Binns.  things to watch
 out for:
 * sockets in 2.2 don't support timeouts, so the 'select' module is imported
   to do polling.  this may not work on windows.  (works fine on osx.)
-* there is no logging, period.
-you really should upgrade to python 2.3.  laziness is no excuse!
+* logging is mostly stubbed out.  it works just enough to let paramiko create
+  log files for debugging, if you want them.  to get real logging, you can
+  backport python 2.3's logging package.  Roger has done that already:
+  http://sourceforge.net/project/showfiles.php?group_id=75211&package_id=113804
+
+you really should upgrade to python 2.3.  laziness is no excuse! :)
 
 
 ***  DEMO
@@ -93,6 +97,25 @@ there are also unit tests here:
 which will verify that some of the core components are working correctly.
 not much is tested yet, but it's a start.  the tests for SFTP are probably
 the best and easiest examples of how to use the SFTP class.
+
+
+***  WHAT'S NEW
+
+highlights of what's new in each release:
+
+v0.9 FEAROW
+* Transport.send_ignore() -- send random ignored bytes
+* RSAKey/DSSKey added from_private_key_file() as a factory constructor;
+  write_private_key_file() & generate() to create and save ssh2 keys;
+  get_base64() to retrieve the exported public key
+* Transport added global_request() [client] and check_global_request() [server]
+* Transport.get_remove_server_key() now returns a PKey object instead of a
+  tuple of strings
+* Transport.get_username() -- return the username you auth'd as [client]
+* Transport.set_keepalive() -- makes paramiko send periodic junk packets to the
+  remote host, to keep the session active
+* python 2.2 support (thanks to Roger Binns)
+* misc. bug fixes
 
 
 ***  MISSING LINKS
