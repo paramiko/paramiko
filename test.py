@@ -41,38 +41,42 @@ default_keyfile = os.path.join(os.environ.get('HOME', '/'), '.ssh/id_rsa')
 default_passwd = None
 
 parser = OptionParser('usage: %prog [options]')
-parser.add_option('--sftp', action='store_true', dest='use_sftp', default=False,
-                  help='run sftp tests (currently require an external sftp server)')
-parser.add_option('-H', '--sftp-host', dest='hostname', type='string', default=default_host,
-                  metavar='<host>',
-                  help='remote host for sftp tests (default: %s)' % default_host)
-parser.add_option('-U', '--sftp-user', dest='username', type='string', default=default_user,
-                  metavar='<username>',
-                  help='username for sftp tests (default: %s)' % default_user)
-parser.add_option('-K', '--sftp-key', dest='keyfile', type='string', default=default_keyfile,
-                  metavar='<keyfile>',
-                  help='location of private key for sftp tests (default: %s)' % default_keyfile)
-parser.add_option('-P', '--sftp-passwd', dest='password', type='string', default=default_passwd,
-                  metavar='<password>',
-                  help='(optional) password to unlock the private key for sftp tests')
 parser.add_option('--no-pkey', action='store_false', dest='use_pkey', default=True,
                   help='skip RSA/DSS private key tests (which can take a while)')
 parser.add_option('--no-transport', action='store_false', dest='use_transport', default=True,
                   help='skip transport tests (which can take a while)')
+parser.add_option('--no-sftp', action='store_false', dest='use_sftp', default=True,
+                  help='skip SFTP client/server tests, which can be slow')
 parser.add_option('--no-big-file', action='store_false', dest='use_big_file', default=True,
                   help='skip big file SFTP tests, which are slow as molasses')
-parser.add_option('-X', action='store_true', dest='use_loopback_sftp', default=False)
+parser.add_option('-R', action='store_false', dest='use_loopback_sftp', default=True,
+                  help='perform SFTP tests against a remote server (by default, SFTP tests ' +
+                  'are done through a loopback socket)')
+parser.add_option('-H', '--sftp-host', dest='hostname', type='string', default=default_host,
+                  metavar='<host>',
+                  help='[with -R] host for remote sftp tests (default: %s)' % default_host)
+parser.add_option('-U', '--sftp-user', dest='username', type='string', default=default_user,
+                  metavar='<username>',
+                  help='[with -R] username for remote sftp tests (default: %s)' % default_user)
+parser.add_option('-K', '--sftp-key', dest='keyfile', type='string', default=default_keyfile,
+                  metavar='<keyfile>',
+                  help='[with -R] location of private key for remote sftp tests (default: %s)' %
+                  default_keyfile)
+parser.add_option('-P', '--sftp-passwd', dest='password', type='string', default=default_passwd,
+                  metavar='<password>',
+                  help='[with -R] (optional) password to unlock the private key for remote sftp tests')
 
 options, args = parser.parse_args()
 if len(args) > 0:
     parser.error('unknown argument(s)')
 
 if options.use_sftp:
-    SFTPTest.init(options.hostname, options.username, options.keyfile, options.password)
-if options.use_loopback_sftp:
-    SFTPTest.init_loopback()
-if not options.use_big_file:
-    SFTPTest.set_big_file_test(False)
+    if options.use_loopback_sftp:
+        SFTPTest.init_loopback()
+    else:
+        SFTPTest.init(options.hostname, options.username, options.keyfile, options.password)
+    if not options.use_big_file:
+        SFTPTest.set_big_file_test(False)
 
 # setup logging
 paramiko.util.log_to_file('test.log')
@@ -85,6 +89,6 @@ if options.use_pkey:
 suite.addTest(unittest.makeSuite(KexTest))
 if options.use_transport:
     suite.addTest(unittest.makeSuite(TransportTest))
-if options.use_sftp or options.use_loopback_sftp:
+if options.use_sftp:
     suite.addTest(unittest.makeSuite(SFTPTest))
 unittest.TextTestRunner(verbosity=2).run(suite)
