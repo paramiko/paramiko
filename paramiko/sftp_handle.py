@@ -32,6 +32,9 @@ class SFTPHandle (object):
     Abstract object representing a handle to an open file (or folder) on
     the server.  Each handle has a string representation used by the client
     to refer to the underlying file.
+    
+    Server implementations can (and should) subclass SFTPHandle to implement
+    features of a file handle, like L{stat} or L{chattr}.
     """
     def __init__(self):
         self.__name = None
@@ -44,8 +47,17 @@ class SFTPHandle (object):
         When a client closes a file, this method is called on the handle.
         Normally you would use this method to close the underlying OS level
         file object(s).
+        
+        The default implementation checks for attributes on C{self} named
+        C{readfile} and/or C{writefile}, and if either or both are present,
+        their C{close()} methods are called.  This means that if you are
+        using the default implementations of L{read} and L{write}, this
+        method's default implementation should be fine also.
         """
-        pass
+        if hasattr(self, 'readfile') and (self.readfile is not None):
+            self.readfile.close()
+        if hasattr(self, 'writefile') and (self.writefile is not None):
+            self.writefile.close()
 
     def read(self, offset, length):
         """
@@ -112,6 +124,7 @@ class SFTPHandle (object):
                 self.writefile.seek(offset)
                 self.__tell = offset
             self.writefile.write(data)
+            self.writefile.flush()
         except IOError, e:
             self.__tell = None
             return SFTPServer.convert_errno(e.errno)

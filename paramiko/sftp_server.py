@@ -325,9 +325,10 @@ class SFTPServer (BaseSFTP, SubsystemHandler):
             else:
                 self._send_status(request_number, resp)
         elif t == CMD_SYMLINK:
-            path = msg.get_string()
+            # the sftp 2 draft is incorrect here!  path always follows target_path
             target_path = msg.get_string()
-            self._send_status(request_number, self.server.symlink(path, target_path))
+            path = msg.get_string()
+            self._send_status(request_number, self.server.symlink(target_path, path))
         elif t == CMD_REALPATH:
             path = msg.get_string()
             rpath = self.server.canonicalize(path)
