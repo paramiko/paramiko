@@ -15,7 +15,7 @@ host_key.read_private_key_file('demo_dss_key')
 print 'Read key: ' + paramiko.util.hexify(host_key.get_fingerprint())
 
 
-class ServerTransport(paramiko.Transport):
+class Server (paramiko.ServerInterface):
     # 'data' is the output of base64.encodestring(str(key))
     data = 'AAAAB3NzaC1yc2EAAAABIwAAAIEAyO4it3fHlmGZWJaGrfeHOVY7RWO3P9M7hpfAu7jJ2d7eothvfeuoRFtJwhUmZDluRdFyhFY/hFAh76PJKGAusIqIQKlkJxMCKDqIexkgHAfID/6mqvmnSJf0b5W8v5h2pI/stOSwTQ+pxVhwJ9ctYDhRSlF0iTUWT10hcuO4Ks8='
     good_pub_key = paramiko.RSAKey(data=base64.decodestring(data))
@@ -23,24 +23,24 @@ class ServerTransport(paramiko.Transport):
     def check_channel_request(self, kind, chanid):
         if kind == 'session':
             return ServerChannel(chanid)
-        return self.OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED
+        return paramiko.Transport.OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED
 
     def check_auth_password(self, username, password):
         if (username == 'robey') and (password == 'foo'):
-            return self.AUTH_SUCCESSFUL
-        return self.AUTH_FAILED
+            return paramiko.Transport.AUTH_SUCCESSFUL
+        return paramiko.Transport.AUTH_FAILED
 
     def check_auth_publickey(self, username, key):
         print 'Auth attempt with key: ' + paramiko.util.hexify(key.get_fingerprint())
         if (username == 'robey') and (key == self.good_pub_key):
-            return self.AUTH_SUCCESSFUL
-        return self.AUTH_FAILED
+            return paramiko.Transport.AUTH_SUCCESSFUL
+        return paramiko.Transport.AUTH_FAILED
 
     def get_allowed_auths(self, username):
         return 'password,publickey'
 
 
-class ServerChannel(paramiko.Channel):
+class ServerChannel (paramiko.Channel):
     "Channel descendant that pretends to understand pty and shell requests"
 
     def __init__(self, chanid):
@@ -61,7 +61,6 @@ try:
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     sock.bind(('', 2200))
 except Exception, e:
-
     print '*** Bind failed: ' + str(e)
     traceback.print_exc()
     sys.exit(1)
@@ -79,14 +78,14 @@ print 'Got a connection!'
 
 try:
     event = threading.Event()
-    t = ServerTransport(client)
+    t = paramiko.Transport(client)
     try:
         t.load_server_moduli()
     except:
         print '(Failed to load moduli -- gex will be unsupported.)'
         raise
     t.add_server_key(host_key)
-    t.start_server(event)
+    t.start_server(event, Server())
     while 1:
         event.wait(0.1)
         if not t.is_active():

@@ -155,4 +155,3 @@ v0.9 FEAROW
 * multi-part auth not supported (ie, need username AND pk)
 * server mode needs better documentation
 * sftp server mode
-* make invoke_subsystem, etc wait for a reply

@@ -156,102 +156,6 @@ class Transport (BaseTransport):
         finally:
             self.lock.release()
 
-    def get_allowed_auths(self, username):
-        """
-        I{(subclass override)}
-        Return a list of authentication methods supported by the server.
-        This list is sent to clients attempting to authenticate, to inform them
-        of authentication methods that might be successful.
-
-        The "list" is actually a string of comma-separated names of types of
-        authentication.  Possible values are C{"password"}, C{"publickey"},
-        and C{"none"}.
-
-        The default implementation always returns C{"password"}.
-
-        @param username: the username requesting authentication.
-        @type username: string
-        @return: a comma-separated list of authentication types
-        @rtype: string
-        """
-        return 'password'
-
-    def check_auth_none(self, username):
-        """
-        I{(subclass override)}
-        Determine if a client may open channels with no (further)
-        authentication.  You should override this method in server mode.
-
-        Return C{AUTH_FAILED} if the client must authenticate, or
-        C{AUTH_SUCCESSFUL} if it's okay for the client to not authenticate.
-
-        The default implementation always returns C{AUTH_FAILED}.
-
-        @param username: the username of the client.
-        @type username: string
-        @return: C{AUTH_FAILED} if the authentication fails; C{AUTH_SUCCESSFUL}
-        if it succeeds.
-        @rtype: int
-        """
-        return self.AUTH_FAILED
-
-    def check_auth_password(self, username, password):
-        """
-        I{(subclass override)}
-        Determine if a given username and password supplied by the client is
-        acceptable for use in authentication.  You should override this method
-        in server mode.
-
-        Return C{AUTH_FAILED} if the password is not accepted,
-        C{AUTH_SUCCESSFUL} if the password is accepted and completes the
-        authentication, or C{AUTH_PARTIALLY_SUCCESSFUL} if your authentication
-        is stateful, and this key is accepted for authentication, but more
-        authentication is required.  (In this latter case, L{get_allowed_auths}
-        will be called to report to the client what options it has for
-        continuing the authentication.)
-
-        The default implementation always returns C{AUTH_FAILED}.
-
-        @param username: the username of the authenticating client.
-        @type username: string
-        @param password: the password given by the client.
-        @type password: string
-        @return: C{AUTH_FAILED} if the authentication fails; C{AUTH_SUCCESSFUL}
-        if it succeeds; C{AUTH_PARTIALLY_SUCCESSFUL} if the password auth is
-        successful, but authentication must continue.
-        @rtype: int
-        """
-        return self.AUTH_FAILED
-
-    def check_auth_publickey(self, username, key):
-        """
-        I{(subclass override)}
-        Determine if a given key supplied by the client is acceptable for use
-        in authentication.  You should override this method in server mode to
-        check the username and key and decide if you would accept a signature
-        made using this key.
-
-        Return C{AUTH_FAILED} if the key is not accepted, C{AUTH_SUCCESSFUL}
-        if the key is accepted and completes the authentication, or
-        C{AUTH_PARTIALLY_SUCCESSFUL} if your authentication is stateful, and
-        this key is accepted for authentication, but more authentication is
-        required.  (In this latter case, L{get_allowed_auths} will be called
-        to report to the client what options it has for continuing the
-        authentication.)
-
-        The default implementation always returns C{AUTH_FAILED}.
-
-        @param username: the username of the authenticating client.
-        @type username: string
-        @param key: the key object provided by the client.
-        @type key: L{PKey <pkey.PKey>}
-        @return: C{AUTH_FAILED} if the client can't authenticate with this key;
-        C{AUTH_SUCCESSFUL} if it can; C{AUTH_PARTIALLY_SUCCESSFUL} if it can
-        authenticate with this key but must continue with authentication.
-        @rtype: int
-        """
-        return self.AUTH_FAILED
-
 
     ###  internals...
 
@@ -355,7 +259,7 @@ class Transport (BaseTransport):
         self.auth_username = username
 
         if method == 'none':
-            result = self.check_auth_none(username)
+            result = self.server_object.check_auth_none(username)
         elif method == 'password':
             changereq = m.get_boolean()
             password = m.get_string().decode('UTF-8')
@@ -366,7 +270,7 @@ class Transport (BaseTransport):
                 newpassword = m.get_string().decode('UTF-8')
                 result = self.AUTH_FAILED
             else:
-                result = self.check_auth_password(username, password)
+                result = self.server_object.check_auth_password(username, password)
         elif method == 'publickey':
             sig_attached = m.get_boolean()
             keytype = m.get_string()
@@ -377,7 +281,7 @@ class Transport (BaseTransport):
                 self._disconnect_no_more_auth()
                 return
             # first check if this key is okay... if not, we can skip the verify
-            result = self.check_auth_publickey(username, key)
+            result = self.server_object.check_auth_publickey(username, key)
             if result != self.AUTH_FAILED:
                 # key is okay, verify it
                 if not sig_attached:
@@ -395,7 +299,7 @@ class Transport (BaseTransport):
                     self._log(DEBUG, 'Auth rejected: invalid signature')
                     result = self.AUTH_FAILED
         else:
-            result = self.check_auth_none(username)
+            result = self.server_object.check_auth_none(username)
         # okay, send result
         m = Message()
         if result == self.AUTH_SUCCESSFUL:
@@ -405,7 +309,7 @@ class Transport (BaseTransport):
         else:
             self._log(DEBUG, 'Auth rejected.')
             m.add_byte(chr(MSG_USERAUTH_FAILURE))
-            m.add_string(self.get_allowed_auths(username))
+            m.add_string(self.server_object.get_allowed_auths(username))
             if result == self.AUTH_PARTIALLY_SUCCESSFUL:
                 m.add_boolean(1)
             else:

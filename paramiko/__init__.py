@@ -76,6 +76,7 @@ SSHException = ssh_exception.SSHException
 Message = message.Message
 PasswordRequiredException = ssh_exception.PasswordRequiredException
 SFTP = sftp.SFTP
+ServerInterface = server.ServerInterface
 
 
 __all__ = [ 'Transport',
@@ -86,6 +87,7 @@ __all__ = [ 'Transport',
             'SSHException',
             'PasswordRequiredException',
             'SFTP',
+            'ServerInterface',
             'transport',
             'auth_transport',
             'channel',
@@ -95,4 +97,5 @@ __all__ = [ 'Transport',
             'message',
             'ssh_exception',
             'sftp',
+            'server',
             'util' ]
