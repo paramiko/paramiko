@@ -243,6 +243,8 @@ class Message (object):
                 return self.add_mpint(i)
             else:
                 return self.add_int(i)
+        elif type(i) is bool:
+            return self.add_boolean(i)
         elif type(i) == types.ListType:
             return self.add_list(i)
         else:

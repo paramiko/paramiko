@@ -307,7 +307,7 @@ class BaseTransport (threading.Thread):
         @type filename: string
         @return: True if a moduli file was successfully loaded; False
         otherwise.
-        @rtype: boolean
+        @rtype: bool
 
         @since: doduo
         
@@ -364,7 +364,7 @@ class BaseTransport (threading.Thread):
         Return true if this session is active (open).
 
         @return: True if the session is still active (open); False if the session is closed.
-        @rtype: boolean
+        @rtype: bool
         """
         return self.active
 
@@ -454,7 +454,7 @@ class BaseTransport (threading.Thread):
 
         @return: True if the renegotiation was successful, and the link is
         using new keys; False if the session dropped during renegotiation.
-        @rtype: boolean
+        @rtype: bool
         """
         self.completion_event = threading.Event()
         self._send_kex_init()
@@ -465,6 +465,44 @@ class BaseTransport (threading.Thread):
             if self.completion_event.isSet():
                 break
         return True
+
+    def global_request(self, kind, data=None, wait=True):
+        """
+        Make a global request to the remote host.  These are normally
+        extensions to the SSH2 protocol.
+
+        @param kind: name of the request.
+        @type kind: string
+        @param data: an optional tuple containing additional data to attach
+        to the request.
+        @type data: tuple
+        @param wait: C{True} if this method should not return until a response
+        is received; C{False} otherwise.
+        @type wait: bool
+        @return: a L{Message} containing possible additional data if the
+        request was successful (or an empty L{Message} if C{wait} was
+        C{False}); C{None} if the request was denied.
+        @rtype: L{Message}
+        """
+        if wait:
+            self.completion_event = threading.Event()
+        m = Message()
+        m.add_byte(chr(MSG_GLOBAL_REQUEST))
+        m.add_string(kind)
+        m.add_boolean(wait)
+        if data is not None:
+            for item in data:
+                m.add(item)
+        self._send_message(m)
+        if not wait:
+            return True
+        while True:
+            self.completion_event.wait(0.1)
+            if not self.active:
+                return False
+            if self.completion_event.isSet():
+                break
+        return self.global_response
 
     def check_channel_request(self, kind, chanid):
         """
@@ -495,6 +533,36 @@ class BaseTransport (threading.Thread):
         @rtype: L{Channel}
         """
         return None
+
+    def check_global_request(self, kind, msg):
+        """
+        I{(subclass override)}
+        Handle a global request of the given C{kind}.  This method is called
+        in server mode and client mode, whenever the remote host makes a global
+        request.  If there are any arguments to the request, they will be in
+        C{msg}.
+
+        There aren't any useful global requests defined, aside from port
+        forwarding, so usually this type of request is an extension to the
+        protocol.
+
+        If the request was successful and you would like to return contextual
+        data to the remote host, return a tuple.  Items in the tuple will be
+        sent back with the successful result.  (Note that the items in the
+        tuple can only be strings, ints, longs, or bools.)
+
+        The default implementation always returns C{False}, indicating that it
+        does not support any global requests.
+
+        @param kind: the kind of global request being made.
+        @type kind: string
+        @param msg: any extra arguments to the request.
+        @type msg: L{Message}
+        @return: C{True} or a tuple of data if the request was granted;
+        C{False} otherwise.
+        @rtype: bool
+        """
+        return False
 
     def accept(self, timeout=None):
         try:
@@ -1081,6 +1149,34 @@ class BaseTransport (threading.Thread):
         desc = m.get_string()
         self._log(INFO, 'Disconnect (code %d): %s' % (code, desc))
 
+    def _parse_global_request(self, m):
+        kind = m.get_string()
+        want_reply = m.get_boolean()
+        ok = self.check_global_request(kind, m)
+        extra = ()
+        if type(ok) is tuple:
+            extra = ok
+            ok = True
+        if want_reply:
+            msg = Message()
+            if ok:
+                msg.add_byte(chr(MSG_REQUEST_SUCCESS))
+                for item in extra:
+                    msg.add(item)
+            else:
+                msg.add_byte(chr(MSG_REQUEST_FAILURE))
+            self._send_message(msg)
+
+    def _parse_request_success(self, m):
+        self.global_response = m
+        if self.completion_event is not None:
+            self.completion_event.set()
+        
+    def _parse_request_failure(self, m):
+        self.global_response = None
+        if self.completion_event is not None:
+            self.completion_event.set()
+
     def _parse_channel_open_success(self, m):
         chanid = m.get_int()
         server_chanid = m.get_int()
@@ -1187,6 +1283,9 @@ class BaseTransport (threading.Thread):
 
     _handler_table = {
         MSG_NEWKEYS: _parse_newkeys,
+        MSG_GLOBAL_REQUEST: _parse_global_request,
+        MSG_REQUEST_SUCCESS: _parse_request_success,
+        MSG_REQUEST_FAILURE: _parse_request_failure,
         MSG_CHANNEL_OPEN_SUCCESS: _parse_channel_open_success,
         MSG_CHANNEL_OPEN_FAILURE: _parse_channel_open_failure,
         MSG_CHANNEL_OPEN: _parse_channel_open,
