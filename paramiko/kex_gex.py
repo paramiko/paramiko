@@ -26,11 +26,10 @@ client side, and a B{lot} more on the server side.
 
 from Crypto.Hash import SHA
 from Crypto.Util import number
-from logging import DEBUG
 
 from common import *
 from message import Message
-from util import inflate_long, deflate_long, bit_length
+import util
 from ssh_exception import SSHException
 
 
@@ -76,7 +75,7 @@ class KexGex (object):
     def _generate_x(self):
         # generate an "x" (1 < x < (p-1)/2).
         q = (self.p - 1) // 2
-        qnorm = deflate_long(q, 0)
+        qnorm = util.deflate_long(q, 0)
         qhbyte = ord(qnorm[0])
         bytes = len(qnorm)
         qmask = 0xff
@@ -87,7 +86,7 @@ class KexGex (object):
             self.transport.randpool.stir()
             x_bytes = self.transport.randpool.get_bytes(bytes)
             x_bytes = chr(ord(x_bytes[0]) & qmask) + x_bytes[1:]
-            x = inflate_long(x_bytes, 1)
+            x = util.inflate_long(x_bytes, 1)
             if (x > 1) and (x < q):
                 break
         self.x = x
@@ -128,7 +127,7 @@ class KexGex (object):
         self.p = m.get_mpint()
         self.g = m.get_mpint()
         # reject if p's bit length < 1024 or > 8192
-        bitlen = bit_length(self.p)
+        bitlen = util.bit_length(self.p)
         if (bitlen < 1024) or (bitlen > 8192):
             raise SSHException('Server-generated gex p (don\'t ask) is out of range (%d bits)' % bitlen)
         self.transport._log(DEBUG, 'Got server p (%d bits)' % bitlen)

@@ -31,9 +31,10 @@ import sys, os
 HOST = os.environ.get('TEST_HOST', 'localhost')
 USER = os.environ.get('TEST_USER', os.environ.get('USER', 'nobody'))
 PKEY = os.environ.get('TEST_PKEY', os.path.join(os.environ.get('HOME', '/'), '.ssh/id_rsa'))
+PKEY_PASSWD = os.environ.get('TEST_PKEY_PASSWD', None)
 FOLDER = os.environ.get('TEST_FOLDER', 'temp-testing')
 
-import paramiko, logging, unittest
+import paramiko, unittest
 
 ARTICLE = '''
 Insulin sensitivity and liver insulin receptor structure in ducks from two
@@ -64,16 +65,21 @@ decreased compared with chicken.
 
 
 # setup logging
-l = logging.getLogger('paramiko')
-l.setLevel(logging.DEBUG)
-if len(l.handlers) == 0:
-    f = open('test.log', 'w')
-    lh = logging.StreamHandler(f)
-    lh.setFormatter(logging.Formatter('%(levelname)-.3s [%(asctime)s] %(name)s: %(message)s', '%Y%m%d:%H%M%S'))
-    l.addHandler(lh)
+paramiko.util.log_to_file('test.log')
+
 t = paramiko.Transport(HOST)
-key = paramiko.RSAKey()
-key.read_private_key_file(PKEY)
+try:
+    key = paramiko.RSAKey.from_private_key_file(PKEY, PKEY_PASSWD)
+except paramiko.PasswordRequiredException:
+    sys.stderr.write('\n\nparamiko.RSAKey.from_private_key_file REQUIRES PASSWORD.\n')
+    sys.stderr.write('You have two options:\n')
+    sys.stderr.write('* Change environment variable TEST_PKEY to point to a different\n')
+    sys.stderr.write('  (non-password-protected) private key file.\n')
+    sys.stderr.write('* Set environment variable TEST_PKEY_PASSWD to the password needed\n')
+    sys.stderr.write('  to unlock this private key.\n')
+    sys.stderr.write('\n')
+    sys.exit(1)
+
 try:
     t.connect(username=USER, pkey=key)
 except paramiko.SSHException:

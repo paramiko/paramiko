@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import sys, os, base64, getpass, socket, logging, traceback, termios, tty, select
+import sys, os, base64, getpass, socket, traceback, termios, tty, select
 import paramiko
 
 

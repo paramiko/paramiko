@@ -22,13 +22,13 @@
 Abstraction for an SSH2 channel.
 """
 
+import time, threading, socket, os
+
 from common import *
+import util
 from message import Message
 from ssh_exception import SSHException
 from file import BufferedFile
-
-import time, threading, logging, socket, os
-from logging import DEBUG
 
 
 # this is ugly, and won't work on windows

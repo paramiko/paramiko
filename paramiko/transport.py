@@ -22,13 +22,13 @@
 L{BaseTransport} handles the core SSH2 protocol.
 """
 
-import sys, os, string, threading, socket, logging, struct
+import sys, os, string, threading, socket, struct
 
 from common import *
 from ssh_exception import SSHException
 from message import Message
 from channel import Channel
-from util import format_binary, safe_string, inflate_long, deflate_long, tb_strings
+import util
 from rsakey import RSAKey
 from dsskey import DSSKey
 from kex_group1 import KexGroup1
@@ -42,8 +42,6 @@ from primes import ModulusPack
 #     http://nitace.bsd.uchicago.edu:8080/hashtar
 from Crypto.Cipher import Blowfish, AES, DES3
 from Crypto.Hash import SHA, MD5, HMAC
-
-from logging import DEBUG, INFO, WARNING, ERROR, CRITICAL
 
 
 # for thread cleanup
@@ -105,7 +103,6 @@ class BaseTransport (threading.Thread):
 
         If the object is not actually a socket, it must have the following
         methods:
-            - C{settimeout(float)}: Sets a timeout for read & write calls.
             - C{send(string)}: Writes from 1 to C{len(string)} bytes, and
               returns an int representing the number of bytes written.  Returns
               0 or raises C{EOFError} if the stream has been closed.
@@ -139,7 +136,11 @@ class BaseTransport (threading.Thread):
         threading.Thread.__init__(self, target=self._run)
         self.randpool = randpool
         self.sock = sock
-        self.sock.settimeout(0.1)
+        # Python < 2.3 doesn't have the settimeout method - RogerB
+        try:
+            self.sock.settimeout(0.1)
+        except AttributeError:
+            pass
         # negotiated crypto parameters
         self.local_version = 'SSH-' + self._PROTO_ID + '-' + self._CLIENT_ID
         self.remote_version = ''
@@ -689,7 +690,24 @@ class BaseTransport (threading.Thread):
         finally:
             self.lock.release()
 
+    def _py22_read_all(self, n):
+        out = ''
+        while n > 0:
+            r, w, e = select.select([self.sock], [], [], 0.1)
+            if self.sock not in r:
+                if not self.active:
+                    raise EOFError()
+            else:
+                x = self.sock.recv(n)
+                if len(x) == 0:
+                    raise EOFError()
+                out += x
+                n -= len(x)
+        return out
+        
     def _read_all(self, n):
+        if PY22:
+            return self._py22_read_all(n)
         out = ''
         while n > 0:
             try:
@@ -728,7 +746,7 @@ class BaseTransport (threading.Thread):
         # encrypt this sucka
         packet = self._build_packet(str(data))
         if self.ultra_debug:
-            self._log(DEBUG, format_binary(packet, 'OUT: '))
+            self._log(DEBUG, util.format_binary(packet, 'OUT: '))
         if self.engine_out != None:
             out = self.engine_out.encrypt(packet)
         else:
@@ -751,7 +769,7 @@ class BaseTransport (threading.Thread):
         if self.engine_in != None:
             header = self.engine_in.decrypt(header)
         if self.ultra_debug:
-            self._log(DEBUG, format_binary(header, 'IN: '));
+            self._log(DEBUG, util.format_binary(header, 'IN: '));
         packet_size = struct.unpack('>I', header[:4])[0]
         # leftover contains decrypted bytes from the first block (after the length field)
         leftover = header[4:]
@@ -763,7 +781,7 @@ class BaseTransport (threading.Thread):
         if self.engine_in != None:
             packet = self.engine_in.decrypt(packet)
         if self.ultra_debug:
-            self._log(DEBUG, format_binary(packet, 'IN: '));
+            self._log(DEBUG, util.format_binary(packet, 'IN: '));
         packet = leftover + packet
         if self.remote_mac_len > 0:
             mac = post_packet[:self.remote_mac_len]
@@ -891,15 +909,15 @@ class BaseTransport (threading.Thread):
                     self._send_message(msg)
         except SSHException, e:
             self._log(DEBUG, 'Exception: ' + str(e))
-            self._log(DEBUG, tb_strings())
+            self._log(DEBUG, util.tb_strings())
             self.saved_exception = e
         except EOFError, e:
             self._log(DEBUG, 'EOF')
-            self._log(DEBUG, tb_strings())
+            self._log(DEBUG, util.tb_strings())
             self.saved_exception = e
         except Exception, e:
             self._log(DEBUG, 'Unknown exception: ' + str(e))
-            self._log(DEBUG, tb_strings())
+            self._log(DEBUG, util.tb_strings())
             self.saved_exception = e
         _active_threads.remove(self)
         if self.active:
@@ -1276,7 +1294,7 @@ class BaseTransport (threading.Thread):
         always_display = m.get_boolean()
         msg = m.get_string()
         lang = m.get_string()
-        self._log(DEBUG, 'Debug msg: ' + safe_string(msg))
+        self._log(DEBUG, 'Debug msg: ' + util.safe_string(msg))
 
     _handler_table = {
         MSG_NEWKEYS: _parse_newkeys,

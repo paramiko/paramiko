@@ -23,7 +23,7 @@ Implementation of an SSH2 "message".
 """
 
 import string, types, struct
-from util import inflate_long, deflate_long
+import util
 
 
 class Message (object):
@@ -158,7 +158,7 @@ class Message (object):
         @return: an arbitrary-length integer.
         @rtype: long
         """
-        return inflate_long(self.get_string())
+        return util.inflate_long(self.get_string())
 
     def get_string(self):
         """
@@ -219,7 +219,7 @@ class Message (object):
 
     def add_mpint(self, z):
         "this only works on positive numbers"
-        self.add_string(deflate_long(z))
+        self.add_string(util.deflate_long(z))
         return self
 
     def add_string(self, s):

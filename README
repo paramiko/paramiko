@@ -9,7 +9,7 @@ http://www.lag.net/~robey/paramiko/
 ***  WHAT
 
 "paramiko" is a combination of the esperanto words for "paranoid" and "friend".
-it's a module for python 2.3 that implements the SSH2 protocol for secure
+it's a module for python 2.2+ that implements the SSH2 protocol for secure
 (encrypted and authenticated) connections to remote machines. unlike SSL (aka
 TLS), SSH2 protocol does not require heirarchical certificates signed by a
 powerful central authority. you may know SSH2 as the protocol that replaced
@@ -27,6 +27,7 @@ should have come with this archive.
 ***  REQUIREMENTS
 
 python 2.3	<http://www.python.org/>
+    (python 2.2 may work with some pain)
 pyCrypt		<http://www.amk.ca/python/code/crypto.html>
 
 PyCrypt compiled for Win32 can be downloaded from the HashTar homepage:
@@ -45,6 +46,13 @@ select or poll, for polling on posix.  once you call "fileno()" on a Channel,
 it changes behavior in some fundamental ways, and these ways require posix.
 so don't call "fileno()" on a Channel on Windows.  this is detailed in the
 documentation for the "fileno" method.
+
+python 2.2 may work, thanks to some patches from Roger Binns.  things to watch
+out for:
+* sockets in 2.2 don't support timeouts, so the 'select' module is imported
+  to do polling.  this may not work on windows.  (works fine on osx.)
+* there is no logging, period.
+you really should upgrade to python 2.3.  laziness is no excuse!
 
 
 ***  DEMO
@@ -81,7 +89,7 @@ which actually motivated me to write more documentation than i ever would
 have before.
 
 there are also unit tests here:
-    $ python2 ./test.py
+    $ python ./test.py
 which will verify that some of the core components are working correctly.
 not much is tested yet, but it's a start.  the tests for SFTP are probably
 the best and easiest examples of how to use the SFTP class.

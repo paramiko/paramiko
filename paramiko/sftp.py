@@ -18,11 +18,11 @@
 # along with Foobar; if not, write to the Free Software Foundation, Inc.,
 # 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
 
-import struct, logging, socket
-from util import format_binary, tb_strings
+import struct, socket
+from common import *
+import util
 from channel import Channel
 from message import Message
-from logging import DEBUG, INFO, WARNING, ERROR, CRITICAL
 from file import BufferedFile
 
 CMD_INIT, CMD_VERSION, CMD_OPEN, CMD_CLOSE, CMD_READ, CMD_WRITE, CMD_LSTAT, CMD_FSTAT, CMD_SETSTAT, \
@@ -511,14 +511,14 @@ class SFTP (object):
     def _send_packet(self, t, packet):
         out = struct.pack('>I', len(packet) + 1) + chr(t) + packet
         if self.ultra_debug:
-            self._log(DEBUG, format_binary(out, 'OUT: '))
+            self._log(DEBUG, util.format_binary(out, 'OUT: '))
         self._write_all(out)
 
     def _read_packet(self):
         size = struct.unpack('>I', self._read_all(4))[0]
         data = self._read_all(size)
         if self.ultra_debug:
-            self._log(DEBUG, format_binary(data, 'IN: '));
+            self._log(DEBUG, util.format_binary(data, 'IN: '));
         if size > 0:
             return ord(data[0]), data[1:]
         return 0, ''

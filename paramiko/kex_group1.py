@@ -24,10 +24,10 @@ Standard SSH key exchange ("kex" if you wanna sound cool).  Diffie-Hellman of
 """
 
 from Crypto.Hash import SHA
-from logging import DEBUG, INFO, WARNING, ERROR, CRITICAL
 
 from common import *
-from message import Message, inflate_long
+import util
+from message import Message
 from ssh_exception import SSHException
 
 _MSG_KEXDH_INIT, _MSG_KEXDH_REPLY = range(30, 32)
@@ -57,7 +57,7 @@ class KexGroup1(object):
             if (x_bytes[:8] != '\x7F\xFF\xFF\xFF\xFF\xFF\xFF\xFF') and \
                    (x_bytes[:8] != '\x00\x00\x00\x00\x00\x00\x00\x00'):
                 break
-        self.x = inflate_long(x_bytes)
+        self.x = util.inflate_long(x_bytes)
 
     def start_kex(self):
         self.generate_x()

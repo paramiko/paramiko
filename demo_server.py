@@ -1,16 +1,10 @@
 #!/usr/bin/python
 
-import sys, os, socket, threading, logging, traceback, base64
+import sys, os, socket, threading, traceback, base64
 import paramiko
 
 # setup logging
-l = logging.getLogger("paramiko")
-l.setLevel(logging.DEBUG)
-if len(l.handlers) == 0:
-    f = open('demo_server.log', 'w')
-    lh = logging.StreamHandler(f)
-    lh.setFormatter(logging.Formatter('%(levelname)-.3s [%(asctime)s] %(name)s: %(message)s', '%Y%m%d:%H%M%S'))
-    l.addHandler(lh)
+paramiko.util.log_to_file('demo_server.log')
 
 #host_key = paramiko.RSAKey()
 #host_key.read_private_key_file('demo_rsa_key')

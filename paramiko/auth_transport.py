@@ -24,10 +24,10 @@ This separation keeps either class file from being too unwieldy.
 """
 
 from common import *
+import util
 from transport import BaseTransport
 from message import Message
 from ssh_exception import SSHException
-from logging import DEBUG, INFO, WARNING, ERROR, CRITICAL
 
 
 class Transport (BaseTransport):

@@ -18,11 +18,25 @@
 # along with Foobar; if not, write to the Free Software Foundation, Inc.,
 # 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
 
+from __future__ import generators
+
 """
 Useful functions used by the rest of paramiko.
 """
 
-import sys, struct, traceback, logging
+import sys, struct, traceback
+from common import *
+
+# Change by RogerB - python < 2.3 doesn't have enumerate so we implement it
+if sys.version_info < (2,3):
+    class enumerate:
+        def __init__ (self, sequence):
+            self.sequence = sequence
+        def __iter__ (self):
+            count = 0
+            for item in self.sequence:
+                yield (count, item)
+                count += 1
 
 def inflate_long(s, always_positive=False):
     "turns a normalized byte string into a long-int (adapted from Crypto.Util.number)"
@@ -174,7 +188,7 @@ def mod_inverse(x, m):
         u2 += m
     return u2
 
-def log_to_file(filename, level=logging.DEBUG):
+def log_to_file(filename, level=DEBUG):
     "send paramiko logs to a logfile, if they're not already going somewhere"
     l = logging.getLogger("paramiko")
     if len(l.handlers) > 0:

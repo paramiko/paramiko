@@ -59,3 +59,18 @@ except:
 
 randpool.randomize()
 
+
+import sys
+if sys.version_info < (2, 3):
+    import logging22 as logging
+    import select
+    PY22 = True
+else:
+    import logging
+    PY22 = False
+
+DEBUG = logging.DEBUG
+INFO = logging.INFO
+WARNING = logging.WARNING
+ERROR = logging.ERROR
+CRITICAL = logging.CRITICAL
