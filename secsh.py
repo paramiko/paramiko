@@ -5,8 +5,7 @@ import sys
 if (sys.version_info[0] < 2) or ((sys.version_info[0] == 2) and (sys.version_info[1] < 3)):
     raise RuntimeError('You need python 2.3 for this module.')
 
-# FIXME rename
-class SSHException(Exception):
+class SecshException(Exception):
     pass
 
 
@@ -17,7 +16,7 @@ from dsskey import DSSKey
 
 
 __author__ = "Robey Pointer <robey@lag.net>"
-__date__ = "18 Sep 2003"
-__version__ = "0.1-bulbasaur"
+__date__ = "9 Nov 2003"
+__version__ = "0.1-charmander"
 __credits__ = "Huzzah!"
 

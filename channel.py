@@ -1,5 +1,5 @@
 from message import Message
-from secsh import SSHException
+from secsh import SecshException
 from transport import MSG_CHANNEL_REQUEST, MSG_CHANNEL_CLOSE, MSG_CHANNEL_WINDOW_ADJUST, MSG_CHANNEL_DATA, \
 	MSG_CHANNEL_EOF, MSG_CHANNEL_SUCCESS, MSG_CHANNEL_FAILURE
 
@@ -100,6 +100,22 @@ class Channel(object):
         finally:
             self.lock.release()
 
+    def check_pty_request(self, term, width, height, pixelwidth, pixelheight, modes):
+        "override me!  return True if a pty of the given dimensions (for shell access, usually) can be provided"
+        return False
+
+    def check_shell_request(self):
+        "override me!  return True if shell access will be provided"
+        return False
+
+    def check_subsystem_request(self, name):
+        "override me!  return True if the given subsystem can be provided"
+        return False
+
+    def check_window_change_request(self, width, height, pixelwidth, pixelheight):
+        "override me!  return True if the pty was resized"
+        return False
+
     def handle_request(self, m):
         key = m.get_string()
         want_reply = m.get_boolean()
@@ -110,10 +126,25 @@ class Channel(object):
         elif key == 'xon-xoff':
             # ignore
             ok = True
-        elif (key == 'pty-req') or (key == 'shell'):
-            if self.transport.server_mode:
-                # humor them
-                ok = True
+        elif key == 'pty-req':
+            term = m.get_string()
+            width = m.get_int()
+            height = m.get_int()
+            pixelwidth = m.get_int()
+            pixelheight = m.get_int()
+            modes = m.get_string()
+            ok = self.check_pty_request(term, width, height, pixelwidth, pixelheight, modes)
+        elif key == 'shell':
+            ok = self.check_shell_request()
+        elif key == 'subsystem':
+            name = m.get_string()
+            ok = self.check_subsystem_request(name)
+        elif key == 'window-change':
+            width = m.get_int()
+            height = m.get_int()
+            pixelwidth = m.get_int()
+            pixelheight = m.get_int()
+            ok = self.check_window_change_request(width, height, pixelwidth, pixelheight)
         else:
             self.log(DEBUG, 'Unhandled channel request "%s"' % key)
             ok = False
@@ -155,7 +186,7 @@ class Channel(object):
 
     def get_pty(self, term='vt100', width=80, height=24):
         if self.closed or self.eof_received or self.eof_sent or not self.active:
-            raise SSHException('Channel is not open')
+            raise SecshException('Channel is not open')
         m = Message()
         m.add_byte(chr(MSG_CHANNEL_REQUEST))
         m.add_int(self.remote_chanid)
@@ -171,7 +202,7 @@ class Channel(object):
 
     def invoke_shell(self):
         if self.closed or self.eof_received or self.eof_sent or not self.active:
-            raise SSHException('Channel is not open')
+            raise SecshException('Channel is not open')
         m = Message()
         m.add_byte(chr(MSG_CHANNEL_REQUEST))
         m.add_int(self.remote_chanid)
@@ -181,7 +212,7 @@ class Channel(object):
 
     def exec_command(self, command):
         if self.closed or self.eof_received or self.eof_sent or not self.active:
-            raise SSHException('Channel is not open')
+            raise SecshException('Channel is not open')
         m = Message()
         m.add_byte(chr(MSG_CHANNEL_REQUEST))
         m.add_int(self.remote_chanid)
@@ -192,7 +223,7 @@ class Channel(object):
 
     def invoke_subsystem(self, subsystem):
         if self.closed or self.eof_received or self.eof_sent or not self.active:
-            raise SSHException('Channel is not open')
+            raise SecshException('Channel is not open')
         m = Message()
         m.add_byte(chr(MSG_CHANNEL_REQUEST))
         m.add_int(self.remote_chanid)
@@ -203,7 +234,7 @@ class Channel(object):
 
     def resize_pty(self, width=80, height=24):
         if self.closed or self.eof_received or self.eof_sent or not self.active:
-            raise SSHException('Channel is not open')
+            raise SecshException('Channel is not open')
         m = Message()
         m.add_byte(chr(MSG_CHANNEL_REQUEST))
         m.add_int(self.remote_chanid)
@@ -500,9 +531,6 @@ class ChannelFile(object):
     XXX Todo: the channel and its file-wrappers should be able to be closed or
     garbage-collected independently, for compatibility with real sockets and
     their file-wrappers. Currently, closing does nothing but flush the buffer.
-    XXX Todo: translation of the various forms of newline is not implemented,
-    let alone the universal newline. Line buffering (for writing) is
-    implemented, though, which makes little sense without text mode support.
     """
 
     def __init__(self, channel, mode = "r", buf_size = -1):
@@ -527,6 +555,9 @@ class ChannelFile(object):
         self.name = '<file from ' + repr(self.channel) + '>'
         self.newlines = None
         self.softspace = False
+
+    def __repr__(self):
+        return '<secsh.ChannelFile from ' + repr(self.channel) + '>'
 
     def __iter__(self):
         return self

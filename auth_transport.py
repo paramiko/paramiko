@@ -4,7 +4,7 @@ from transport import BaseTransport
 from transport import MSG_SERVICE_REQUEST, MSG_SERVICE_ACCEPT, MSG_USERAUTH_REQUEST, MSG_USERAUTH_FAILURE, \
      MSG_USERAUTH_SUCCESS, MSG_USERAUTH_BANNER
 from message import Message
-from secsh import SSHException
+from secsh import SecshException
 from logging import DEBUG, INFO, WARNING, ERROR, CRITICAL
 
 DISCONNECT_SERVICE_NOT_AVAILABLE, DISCONNECT_AUTH_CANCELLED_BY_USER, \
@@ -34,7 +34,7 @@ class Transport(BaseTransport):
     def auth_key(self, username, key, event):
         if (not self.active) or (not self.initial_kex_done):
             # we should never try to send the password unless we're on a secure link
-            raise SSHException('No existing session')
+            raise SecshException('No existing session')
         try:
             self.lock.acquire()
             self.auth_event = event
@@ -49,7 +49,7 @@ class Transport(BaseTransport):
         'authenticate using a password; event is triggered on success or fail'
         if (not self.active) or (not self.initial_kex_done):
             # we should never try to send the password unless we're on a secure link
-            raise SSHException('No existing session')
+            raise SecshException('No existing session')
         try:
             self.lock.acquire()
             self.auth_event = event
@@ -108,7 +108,7 @@ class Transport(BaseTransport):
                 m.add_string(str(self.private_key))
                 m.add_string(self.private_key.sign_ssh_session(self.randpool, self.H, self.username))
             else:
-                raise SSHException('Unknown auth method "%s"' % self.auth_method)
+                raise SecshException('Unknown auth method "%s"' % self.auth_method)
             self.send_message(m)
         else:
             self.log(DEBUG, 'Service request "%s" accepted (?)' % service)

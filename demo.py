@@ -66,7 +66,7 @@ except Exception, e:
 try:
     event = threading.Event()
     t = secsh.Transport(sock)
-    t.ultra_debug = 1
+    t.ultra_debug = 0
     t.start_client(event)
     # print repr(t)
     event.wait(10)

@@ -58,6 +58,9 @@ from Channel:
     exec_command
     invoke_subsystem
     resize_pty
+  [server:]
+    check_pty_request
+    check_shell_request
 
 from ChannelFile:
     next

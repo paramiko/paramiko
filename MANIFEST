@@ -1,4 +1,5 @@
 README
+auth_transport.py
 ber.py
 channel.py
 dsskey.py
@@ -11,3 +12,5 @@ setup.py
 transport.py
 util.py
 demo.py
+demo_server.py
+demo_host_key
