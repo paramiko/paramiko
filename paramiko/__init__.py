@@ -48,7 +48,7 @@ released under the GNU Lesser General Public License (LGPL).
 
 Website: U{http://www.lag.net/paramiko/}
 
-@version: 1.1 (kabuto)
+@version: 1.2 (lapras)
 @author: Robey Pointer
 @contact: robey@lag.net
 @license: GNU Lesser General Public License (LGPL)
@@ -61,8 +61,8 @@ if sys.version_info < (2, 2):
 
 
 __author__ = "Robey Pointer <robey@lag.net>"
-__date__ = "12 Dec 2004"
-__version__ = "1.1 (kabuto)"
+__date__ = "26 Feb 2005"
+__version__ = "1.2 (lapras)"
 __license__ = "GNU Lesser General Public License (LGPL)"
 
 

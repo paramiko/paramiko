@@ -4,22 +4,20 @@ longdesc = '''
 This is a library for making SSH2 connections (client or server).
 Emphasis is on using SSH2 as an alternative to SSL for making secure
 connections between python scripts.  All major ciphers and hash methods
-are supported.
-
-SFTP client mode is now supported too.
+are supported.  SFTP client and server mode are both supported too.
 
 Required packages:
     pyCrypt
 '''
 
 setup(name = "paramiko",
-      version = "1.1",
+      version = "1.2",
       description = "SSH2 protocol library",
       author = "Robey Pointer",
       author_email = "robey@lag.net",
       url = "http://www.lag.net/paramiko/",
       packages = [ 'paramiko' ],
-      download_url = 'http://www.lag.net/paramiko/download/paramiko-1.1.zip',
+      download_url = 'http://www.lag.net/paramiko/download/paramiko-1.2.zip',
       license = 'LGPL',
       platforms = 'Posix; MacOS X; Windows',
       classifiers = [ 'Development Status :: 3 - Alpha',

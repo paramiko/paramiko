@@ -1,5 +1,5 @@
-paramiko 1.1
-"kabuto" release, 12 dec 2004
+paramiko 1.2
+"lapras" release, 26 feb 2005
 
 Copyright (c) 2003-2004 Robey Pointer <robey@lag.net>
 
@@ -148,6 +148,18 @@ the best and easiest examples of how to use the SFTP class.
 ***  WHAT'S NEW
 
 highlights of what's new in each release:
+
+v1.2 LAPRAS
+* added SFTPClient.listdir_attr() for fetching a list of files and their
+  attributes in one call
+* added Channel.recv_exit_status() and Channel.send_exit_status() for
+  manipulating the exit status of a command from either client or server
+  mode
+* moved check_global_request into ServerInterface, where it should've been
+  all along (oops)
+* SFTPHandle's default implementations are fleshed out more
+* made logging a bit more consistent
+* more unit tests
 
 v1.1 KABUTO
 * server-side SFTP support

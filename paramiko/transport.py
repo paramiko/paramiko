@@ -130,7 +130,7 @@ class BaseTransport (threading.Thread):
     is done here.
     """
     _PROTO_ID = '2.0'
-    _CLIENT_ID = 'paramiko_1.1'
+    _CLIENT_ID = 'paramiko_1.2'
 
     _preferred_ciphers = ( 'aes128-cbc', 'blowfish-cbc', 'aes256-cbc', '3des-cbc' )
     _preferred_macs = ( 'hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96' )
@@ -687,19 +687,19 @@ class BaseTransport (threading.Thread):
         fail because you haven't authenticated yet.
 
         @param hostkey: the host key expected from the server, or C{None} if
-        you don't want to do host key verification.
+            you don't want to do host key verification.
         @type hostkey: L{PKey<pkey.PKey>}
         @param username: the username to authenticate as.
         @type username: str
         @param password: a password to use for authentication, if you want to
-        use password authentication; otherwise C{None}.
+            use password authentication; otherwise C{None}.
         @type password: str
         @param pkey: a private key to use for authentication, if you want to
-        use private key authentication; otherwise C{None}.
+            use private key authentication; otherwise C{None}.
         @type pkey: L{PKey<pkey.PKey>}
         
         @raise SSHException: if the SSH2 negotiation fails, the host key
-        supplied by the server is incorrect, or authentication fails.
+            supplied by the server is incorrect, or authentication fails.
 
         @since: doduo
         """
