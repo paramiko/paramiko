@@ -121,8 +121,8 @@ class BufferedFile (object):
             raise IOError('File not open for reading')
         if (size is None) or (size < 0):
             # go for broke
-            result = self.rbuffer
-            self.rbuffer = ''
+            result = self._rbuffer
+            self._rbuffer = ''
             self._pos += len(result)
             while 1:
                 try:
@@ -191,7 +191,7 @@ class BufferedFile (object):
             if (size is not None) and (size >= 0):
                 if len(line) >= size:
                     # truncate line and return
-                    self.rbuffer = line[size:]
+                    self._rbuffer = line[size:]
                     line = line[:size]
                     self._pos += len(line)
                     return line
