@@ -1,5 +1,5 @@
 from message import Message
-from paramiko import SSHException
+from ssh_exception import SSHException
 from transport import MSG_CHANNEL_REQUEST, MSG_CHANNEL_CLOSE, MSG_CHANNEL_WINDOW_ADJUST, MSG_CHANNEL_DATA, \
 	MSG_CHANNEL_EOF, MSG_CHANNEL_SUCCESS, MSG_CHANNEL_FAILURE
 

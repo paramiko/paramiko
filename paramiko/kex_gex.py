@@ -6,7 +6,7 @@
 
 from message import Message
 from util import inflate_long, deflate_long, generate_prime, bit_length
-from paramiko import SSHException
+from ssh_exception import SSHException
 from transport import MSG_NEWKEYS
 from Crypto.Hash import SHA
 from Crypto.Util import number

@@ -14,7 +14,6 @@ MSG_CHANNEL_OPEN, MSG_CHANNEL_OPEN_SUCCESS, MSG_CHANNEL_OPEN_FAILURE, \
 import sys, os, string, threading, socket, logging, struct
 from message import Message
 from channel import Channel
-from paramiko import SSHException
 from util import format_binary, safe_string, inflate_long, deflate_long, tb_strings
 from rsakey import RSAKey
 from dsskey import DSSKey
@@ -51,6 +50,7 @@ except:
     randpool = RandomPool()
 
 randpool.randomize()
+
 
 
 class BaseTransport(threading.Thread):

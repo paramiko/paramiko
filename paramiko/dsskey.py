@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 import base64
-from paramiko import SSHException
+from ssh_exception import SSHException
 from message import Message
 from transport import MSG_USERAUTH_REQUEST
 from util import inflate_long, deflate_long

@@ -5,7 +5,7 @@
 # "g" generator.
 
 from message import Message, inflate_long
-from paramiko import SSHException
+from ssh_exception import SSHException
 from transport import MSG_NEWKEYS
 from Crypto.Hash import SHA
 from logging import DEBUG, INFO, WARNING, ERROR, CRITICAL

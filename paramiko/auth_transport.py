@@ -4,7 +4,7 @@ from transport import BaseTransport
 from transport import MSG_SERVICE_REQUEST, MSG_SERVICE_ACCEPT, MSG_USERAUTH_REQUEST, MSG_USERAUTH_FAILURE, \
      MSG_USERAUTH_SUCCESS, MSG_USERAUTH_BANNER
 from message import Message
-from paramiko import SSHException
+from ssh_exception import SSHException
 from logging import DEBUG, INFO, WARNING, ERROR, CRITICAL
 
 DISCONNECT_SERVICE_NOT_AVAILABLE, DISCONNECT_AUTH_CANCELLED_BY_USER, \
