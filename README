@@ -206,3 +206,5 @@ v0.9 FEAROW
 * sftp server mode
 * figure out if there's a way to put stdout/stderr on different channels?
 * add method to block until a channel's "exit-status" is set
+* if password auth is forbidden (only key auth allowed), error isn't very
+  informative -- improve that.
