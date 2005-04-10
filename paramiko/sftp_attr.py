@@ -81,6 +81,9 @@ class SFTPAttributes (object):
     def __repr__(self):
         return '<SFTPAttributes: %s>' % self._debug_str()
 
+    def __str__(self):
+        return self._debug_str()
+        
 
     ###  internals...
 
@@ -148,12 +151,12 @@ class SFTPAttributes (object):
         if hasattr(self, 'st_uid') or hasattr(self, 'st_gid'):
             out += 'uid=%d gid=%d ' % (getattr(self, 'st_uid', 0), getattr(self, 'st_gid', 0))
         if hasattr(self, 'st_mode'):
-            out += 'mode=' + oct(self.st_mode)
+            out += 'mode=' + oct(self.st_mode) + ' '
         if hasattr(self, 'st_atime') or hasattr(self, 'st_mtime'):
             out += 'atime=%d mtime=%d ' % (getattr(self, 'st_atime', 0),
                                            getattr(self, 'st_mtime', 0))
         for k, v in self.attr.iteritems():
-            out += '"%s"=%s ' % (str(k), repr(v))
+            out += '"%s"=%r ' % (str(k), v)
         out += ']'
         return out
 
