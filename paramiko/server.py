@@ -367,7 +367,7 @@ class SubsystemHandler (threading.Thread):
         @type name: str
         @param server: the server object for the session that started this
             subsystem
-        @rtype server: L{ServerInterface}
+        @type server: L{ServerInterface}
         """
         threading.Thread.__init__(self, target=self._run)
         self.__channel = channel
