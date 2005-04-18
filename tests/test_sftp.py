@@ -63,6 +63,7 @@ decreased compared with chicken.
 FOLDER = os.environ.get('TEST_FOLDER', 'temp-testing')
 
 sftp = None
+tc = None
 g_big_file_test = True
 
 
@@ -101,7 +102,7 @@ class SFTPTest (unittest.TestCase):
     init = staticmethod(init)
 
     def init_loopback():
-        global sftp
+        global sftp, tc
 
         socks = LoopSocket()
         sockc = LoopSocket()
@@ -143,6 +144,20 @@ class SFTPTest (unittest.TestCase):
             f.close()
         finally:
             sftp.remove(FOLDER + '/test')
+
+    def test_1a_close(self):
+        """
+        verify that closing the sftp session doesn't do anything bad, and that
+        a new one can be opened.
+        """
+        global sftp
+        sftp.close()
+        try:
+            sftp.open(FOLDER + '/test2', 'w')
+            self.fail('expected exception')
+        except:
+            pass
+        sftp = paramiko.SFTP.from_transport(tc)
 
     def test_2_write(self):
         """

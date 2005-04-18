@@ -74,6 +74,14 @@ class SFTPClient (BaseSFTP):
         return selfclass(chan)
     from_transport = classmethod(from_transport)
 
+    def close(self):
+        """
+        Close the SFTP session and its underlying channel.
+        
+        @since: 1.4
+        """
+        self.sock.close()
+
     def listdir(self, path):
         """
         Return a list containing the names of the entries in the given C{path}.
