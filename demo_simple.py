@@ -25,7 +25,9 @@ import paramiko
 #####   utility functions
 
 def load_host_keys():
-    filename = os.environ['HOME'] + '/.ssh/known_hosts'
+    # this file won't exist on windows, but windows doesn't have a standard
+    # location for this file anyway.
+    filename = os.path.expanduser('~/.ssh/known_hosts')
     keys = {}
     try:
         f = open(filename, 'r')
