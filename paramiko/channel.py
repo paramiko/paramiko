@@ -78,7 +78,7 @@ class Channel (object):
         self.name = str(chanid)
         self.logger = util.get_logger('paramiko.chan.' + str(chanid))
         self.pipe_rfd = self.pipe_wfd = None
-	self.pipe_set = False
+        self.pipe_set = False
         self.event = threading.Event()
         self.combine_stderr = False
         self.exit_status = -1
@@ -470,8 +470,6 @@ class Channel (object):
         @return: C{True} if a L{recv} call on this channel would immediately
         return at least one byte; C{False} otherwise.
         @rtype: boolean
-        
-        @note: This method doesn't work if you've called L{fileno}.
         """
         self.lock.acquire()
         try:
@@ -682,8 +680,8 @@ class Channel (object):
             sent.
         
         @note: If the channel is closed while only part of the data hase been
-        sent, there is no way to determine how much data (if any) was sent.
-        This is irritating, but identically follows python's API.
+            sent, there is no way to determine how much data (if any) was sent.
+            This is irritating, but identically follows python's API.
         """
         while s:
             if self.closed:
@@ -719,10 +717,9 @@ class Channel (object):
 
     def makefile(self, *params):
         """
-        Return a file-like object associated with this channel, without the
-        non-portable side effects of L{fileno}.  The optional C{mode} and
-        C{bufsize} arguments are interpreted the same way as by the built-in
-        C{file()} function in python.
+        Return a file-like object associated with this channel.  The optional
+        C{mode} and C{bufsize} arguments are interpreted the same way as by
+        the built-in C{file()} function in python.
 
         @return: object which can be used for python file I/O.
         @rtype: L{ChannelFile}
@@ -756,14 +753,14 @@ class Channel (object):
         The first time C{fileno} is called on a channel, a pipe is created to
         simulate real OS-level file descriptor (FD) behavior.  Because of this,
         two OS-level FDs are created, which will use up FDs faster than normal.
-	You won't notice this effect unless you open hundreds or thousands of
-	channels simultaneously, but it's still notable.
+        You won't notice this effect unless you open hundreds or thousands of
+        channels simultaneously, but it's still notable.
 
         @return: an OS-level file descriptor
         @rtype: int
         
         @warning: This method causes channel reads to be slightly less
-	    efficient.
+            efficient.
         """
         self.lock.acquire()
         try:
@@ -1095,13 +1092,12 @@ class Channel (object):
 class ChannelFile (BufferedFile):
     """
     A file-like wrapper around L{Channel}.  A ChannelFile is created by calling
-    L{Channel.makefile} and doesn't have the non-portable side effect of
-    L{Channel.fileno}.
+    L{Channel.makefile}.
 
     @bug: To correctly emulate the file object created from a socket's
-    C{makefile} method, a L{Channel} and its C{ChannelFile} should be able to
-    be closed or garbage-collected independently.  Currently, closing the
-    C{ChannelFile} does nothing but flush the buffer.
+        C{makefile} method, a L{Channel} and its C{ChannelFile} should be able
+        to be closed or garbage-collected independently.  Currently, closing
+        the C{ChannelFile} does nothing but flush the buffer.
     """
 
     def __init__(self, channel, mode = 'r', bufsize = -1):
