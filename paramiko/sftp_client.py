@@ -148,12 +148,16 @@ class SFTPClient (BaseSFTP):
         is ignored, since SSH treats all files as binary.  The C{'U'} flag is
         supported in a compatible way.
 
+        The file will be buffered in standard python style by default, but
+        can be altered with the C{bufsize} parameter.  C{0} turns off
+        buffering, C{1} uses line buffering, and any number greater than 1
+        (C{>1}) uses that specific buffer size.
+
         @param filename: name of the file to open.
         @type filename: string
         @param mode: mode (python-style) to open in.
         @type mode: string
-        @param bufsize: desired buffering (-1 = default buffer size, 0 =
-            unbuffered, 1 = line buffered, >1 = requested buffer size).
+        @param bufsize: desired buffering (-1 = default buffer size)
         @type bufsize: int
         @return: a file object representing the open file.
         @rtype: SFTPFile
@@ -175,6 +179,10 @@ class SFTPClient (BaseSFTP):
             raise SFTPError('Expected handle')
         handle = msg.get_string()
         return SFTPFile(self, handle, mode, bufsize)
+
+    # python has migrated toward file() instead of open().
+    # and really, that's more easily identifiable.
+    file = open
 
     def remove(self, path):
         """
