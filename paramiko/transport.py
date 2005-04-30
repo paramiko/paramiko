@@ -28,6 +28,7 @@ from common import *
 from ssh_exception import SSHException
 from message import Message
 from channel import Channel
+from sftp_client import SFTPClient
 import util
 from rsakey import RSAKey
 from dsskey import DSSKey
@@ -161,6 +162,8 @@ class BaseTransport (threading.Thread):
         'diffie-hellman-group-exchange-sha1': KexGex,
         }
 
+    # READ the secsh RFC's before raising these values.  if anything,
+    # they should probably be lower.
     REKEY_PACKETS = pow(2, 30)
     REKEY_BYTES = pow(2, 30)
 
@@ -552,6 +555,18 @@ class BaseTransport (threading.Thread):
         finally:
             self.lock.release()
         return chan
+
+    def open_sftp_client(self):
+        """
+        Create an SFTP client channel from an open transport.  On success,
+        an SFTP session will be opened with the remote host, and a new
+        SFTPClient object will be returned.
+
+        @return: a new L{SFTPClient} object, referring to an sftp session
+            (channel) across this transport
+        @rtype: L{SFTPClient}
+        """
+        return SFTPClient.from_transport(self)
 
     def send_ignore(self, bytes=None):
         """
