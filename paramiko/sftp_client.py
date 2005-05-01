@@ -53,7 +53,7 @@ class SFTPClient (BaseSFTP):
             transport = self.sock.get_transport()
             self.logger = util.get_logger(transport.get_log_channel() + '.' +
                                           self.sock.get_name() + '.sftp')
-            self.ultra_debug = transport.ultra_debug
+            self.ultra_debug = transport.get_hexdump()
         self._send_version()
 
     def from_transport(selfclass, t):

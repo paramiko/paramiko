@@ -70,6 +70,9 @@ options, args = parser.parse_args()
 if len(args) > 0:
     parser.error('unknown argument(s)')
 
+# setup logging
+paramiko.util.log_to_file('test.log')
+
 if options.use_sftp:
     if options.use_loopback_sftp:
         SFTPTest.init_loopback()
@@ -78,9 +81,6 @@ if options.use_sftp:
     if not options.use_big_file:
         SFTPTest.set_big_file_test(False)
 
-# setup logging
-paramiko.util.log_to_file('test.log')
-    
 suite = unittest.TestSuite()
 suite.addTest(unittest.makeSuite(MessageTest))
 suite.addTest(unittest.makeSuite(BufferedFileTest))

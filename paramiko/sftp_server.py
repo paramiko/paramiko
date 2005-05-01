@@ -60,7 +60,7 @@ class SFTPServer (BaseSFTP, SubsystemHandler):
         transport = channel.get_transport()
         self.logger = util.get_logger(transport.get_log_channel() + '.' +
                                       channel.get_name() + '.sftp')
-        self.ultra_debug = transport.ultra_debug
+        self.ultra_debug = transport.get_hexdump()
         self.next_handle = 1
         # map of handle-string to SFTPHandle for files & folders:
         self.file_table = { }

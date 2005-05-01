@@ -1,5 +1,3 @@
-#!/usr/bin/python
-
 # Copyright (C) 2003-2005 Robey Pointer <robey@lag.net>
 #
 # This file is part of paramiko.
@@ -145,7 +143,7 @@ class SFTPTest (unittest.TestCase):
         finally:
             sftp.remove(FOLDER + '/test')
 
-    def test_1a_close(self):
+    def test_2_close(self):
         """
         verify that closing the sftp session doesn't do anything bad, and that
         a new one can be opened.
@@ -159,7 +157,7 @@ class SFTPTest (unittest.TestCase):
             pass
         sftp = paramiko.SFTP.from_transport(tc)
 
-    def test_2_write(self):
+    def test_3_write(self):
         """
         verify that a file can be created and written, and the size is correct.
         """
@@ -171,7 +169,7 @@ class SFTPTest (unittest.TestCase):
         finally:
             sftp.remove(FOLDER + '/duck.txt')
 
-    def test_3_append(self):
+    def test_4_append(self):
         """
         verify that a file can be opened for append, and tell() still works.
         """
@@ -191,7 +189,7 @@ class SFTPTest (unittest.TestCase):
         finally:
             sftp.remove(FOLDER + '/append.txt')
         
-    def test_4_rename(self):
+    def test_5_rename(self):
         """
         verify that renaming a file works.
         """
@@ -219,7 +217,7 @@ class SFTPTest (unittest.TestCase):
             except:
                 pass
 
-    def test_5_folder(self):
+    def test_6_folder(self):
         """
         create a temporary folder, verify that we can create a file in it, then
         remove the folder and verify that we can't create a file in it anymore.
@@ -236,7 +234,7 @@ class SFTPTest (unittest.TestCase):
         except IOError:
             pass
 
-    def test_6_listdir(self):
+    def test_7_listdir(self):
         """
         verify that a folder can be created, a bunch of files can be placed in it,
         and those files show up in sftp.listdir.
@@ -262,7 +260,7 @@ class SFTPTest (unittest.TestCase):
             sftp.remove(FOLDER + '/fish.txt')
             sftp.remove(FOLDER + '/tertiary.py')
 
-    def test_7_setstat(self):
+    def test_8_setstat(self):
         """
         verify that the setstat functions (chown, chmod, utime) work.
         """
@@ -285,7 +283,7 @@ class SFTPTest (unittest.TestCase):
         finally:
             sftp.remove(FOLDER + '/special')
 
-    def test_8_readline_seek(self):
+    def test_9_readline_seek(self):
         """
         create a text file and write a bunch of text into it.  then count the lines
         in the file, and seek around to retreive particular lines.  this should
@@ -315,7 +313,7 @@ class SFTPTest (unittest.TestCase):
         finally:
             sftp.remove(FOLDER + '/duck.txt')
 
-    def test_9_write_seek(self):
+    def test_A_write_seek(self):
         """
         create a text file, seek back and change part of it, and verify that the
         changes worked.
@@ -335,7 +333,7 @@ class SFTPTest (unittest.TestCase):
         finally:
             sftp.remove(FOLDER + '/testing.txt')
 
-    def test_A_symlink(self):
+    def test_B_symlink(self):
         """
         create a symlink and then check that lstat doesn't follow it.
         """
@@ -378,7 +376,7 @@ class SFTPTest (unittest.TestCase):
             except:
                 pass
 
-    def test_B_flush_seek(self):
+    def test_C_flush_seek(self):
         """
         verify that buffered writes are automatically flushed on seek.
         """
@@ -400,7 +398,7 @@ class SFTPTest (unittest.TestCase):
             except:
                 pass
 
-    def test_C_lots_of_files(self):
+    def test_D_lots_of_files(self):
         """
         create a bunch of files over the same session.
         """
@@ -431,7 +429,7 @@ class SFTPTest (unittest.TestCase):
                 except:
                     pass
 
-    def test_D_big_file(self):
+    def test_E_big_file(self):
         """
         write a 1MB file, with no linefeeds, using line buffering.
         FIXME: this is slow!  what causes the slowness?
@@ -453,7 +451,7 @@ class SFTPTest (unittest.TestCase):
         finally:
             sftp.remove('%s/hongry.txt' % FOLDER)
 
-    def test_E_big_file_big_buffer(self):
+    def test_F_big_file_big_buffer(self):
         """
         write a 1MB file, with no linefeeds, and a big buffer.
         """
@@ -470,7 +468,7 @@ class SFTPTest (unittest.TestCase):
         finally:
             sftp.remove('%s/hongry.txt' % FOLDER)
             
-    def test_F_realpath(self):
+    def test_G_realpath(self):
         """
         test that realpath is returning something non-empty and not an
         error.
@@ -481,7 +479,7 @@ class SFTPTest (unittest.TestCase):
         self.assert_(len(f) > 0)
         self.assertEquals(os.path.join(pwd, FOLDER), f)
 
-    def test_G_mkdir(self):
+    def test_H_mkdir(self):
         """
         verify that mkdir/rmdir work.
         """

@@ -298,7 +298,6 @@ class Channel (object):
         m.add_boolean(0)
         m.add_int(status)
         self.transport._send_user_message(m)
-        self._log(DEBUG, 'EXIT-STATUS')
         
     def get_transport(self):
         """
@@ -468,7 +467,7 @@ class Channel (object):
         it means you may need to wait before more data arrives.
         
         @return: C{True} if a L{recv} call on this channel would immediately
-        return at least one byte; C{False} otherwise.
+            return at least one byte; C{False} otherwise.
         @rtype: boolean
         """
         self.lock.acquire()
@@ -492,7 +491,7 @@ class Channel (object):
         @rtype: str
         
         @raise socket.timeout: if no data is ready before the timeout set by
-        L{settimeout}.
+            L{settimeout}.
         """
         out = ''
         self.lock.acquire()
