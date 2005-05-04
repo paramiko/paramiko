@@ -25,6 +25,7 @@ Packetizer.
 import select, socket, struct, threading, time
 from Crypto.Hash import HMAC
 from common import *
+from ssh_exception import SSHException
 from message import Message
 import util
 
@@ -75,6 +76,12 @@ class Packetizer (object):
         self.__keepalive_last = time.time()
         self.__keepalive_callback = None
         
+    def __del__(self):
+        # this is not guaranteed to be called, but we should try.
+        try:
+            self.__socket.close()
+        except:
+            pass
 
     def set_log(self, log):
         """
@@ -108,13 +115,10 @@ class Packetizer (object):
         self.__received_packets = 0
         self.__received_packets_overflow = 0
         self.__need_rekey = False
-        
+    
     def close(self):
         self.__closed = True
-        self.__block_engine_in = None
-        self.__block_engine_out = None
-        self.__socket.close()
-    
+
     def set_hexdump(self, hexdump):
         self.__dump_packets = hexdump
         
@@ -146,7 +150,6 @@ class Packetizer (object):
         self.__keepalive_interval = interval
         self.__keepalive_callback = callback
         self.__keepalive_last = time.time()
-        self._log(DEBUG, 'SET KEEPALIVE %r' % interval)
     
     def read_all(self, n):
         """
