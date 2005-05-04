@@ -1,5 +1,3 @@
-#!/usr/bin/python
-
 # Copyright (C) 2003-2005 Robey Pointer <robey@lag.net>
 #
 # This file is part of paramiko.
@@ -171,21 +169,21 @@ class Transport (BaseTransport):
         this method will return a list of auth types permissible for the next
         step.  Otherwise, in the normal case, an empty list is returned.
         
-        @param username: the username to authenticate as.
+        @param username: the username to authenticate as
         @type username: string
-        @param password: the password to authenticate with.
+        @param password: the password to authenticate with
         @type password: string
         @param event: an event to trigger when the authentication attempt is
-        complete (whether it was successful or not)
+            complete (whether it was successful or not)
         @type event: threading.Event
         @return: list of auth types permissible for the next stage of
-            authentication (normally empty).
+            authentication (normally empty)
         @rtype: list
         
         @raise BadAuthenticationType: if password authentication isn't
-            allowed by the server for this user (and no event was passed in).
+            allowed by the server for this user (and no event was passed in)
         @raise SSHException: if the authentication failed (and no event was
-            passed in).
+            passed in)
         """
         if (not self.active) or (not self.initial_kex_done):
             # we should never try to send the password unless we're on a secure link
@@ -291,10 +289,10 @@ class Transport (BaseTransport):
             m.add_string('ssh-connection')
             m.add_string(self.auth_method)
             if self.auth_method == 'password':
-                m.add_boolean(0)
+                m.add_boolean(False)
                 m.add_string(self.password.encode('UTF-8'))
             elif self.auth_method == 'publickey':
-                m.add_boolean(1)
+                m.add_boolean(True)
                 m.add_string(self.private_key.get_name())
                 m.add_string(str(self.private_key))
                 blob = self._get_session_blob(self.private_key, 'ssh-connection', self.username)
@@ -413,6 +411,7 @@ class Transport (BaseTransport):
             self.saved_exception = PartialAuthentication(authlist)
         elif self.auth_method not in authlist:
             self._log(INFO, 'Authentication type not permitted.')
+            self._log(DEBUG, 'Allowed methods: ' + str(authlist))
             self.saved_exception = BadAuthenticationType('Bad authentication type', authlist)
         else:
             self._log(INFO, 'Authentication failed.')
