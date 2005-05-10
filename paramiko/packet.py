@@ -226,13 +226,13 @@ class Packetizer (object):
         packet = self._build_packet(data)
         if self.__dump_packets:
             self._log(DEBUG, util.format_binary(packet, 'OUT: '))
-        if self.__block_engine_out != None:
-            out = self.__block_engine_out.encrypt(packet)
-        else:
-            out = packet
-        # + mac
         self.__write_lock.acquire()
         try:
+            if self.__block_engine_out != None:
+                out = self.__block_engine_out.encrypt(packet)
+            else:
+                out = packet
+            # + mac
             if self.__block_engine_out != None:
                 payload = struct.pack('>I', self.__sequence_number_out) + packet
                 out += HMAC.HMAC(self.__mac_key_out, payload, self.__mac_engine_out).digest()[:self.__mac_size_out]

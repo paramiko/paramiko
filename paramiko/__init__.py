@@ -66,7 +66,8 @@ __version__ = "1.3 (marowak)"
 __license__ = "GNU Lesser General Public License (LGPL)"
 
 
-import transport, auth_transport, channel, rsakey, dsskey, message, ssh_exception, file
+import transport, auth_transport, channel, rsakey, dsskey, message
+import ssh_exception, file, packet
 import sftp, sftp_client, sftp_attr, sftp_file, sftp_handle, sftp_server, sftp_si
 
 randpool = transport.randpool
@@ -89,6 +90,7 @@ ServerInterface = server.ServerInterface
 SubsystemHandler = server.SubsystemHandler
 SecurityOptions = transport.SecurityOptions
 BufferedFile = file.BufferedFile
+Packetizer = packet.Packetizer
 
 from common import AUTH_SUCCESSFUL, AUTH_PARTIALLY_SUCCESSFUL, AUTH_FAILED, \
      OPEN_SUCCEEDED, OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED,  OPEN_FAILED_CONNECT_FAILED, \

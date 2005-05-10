@@ -226,10 +226,10 @@ v0.9 FEAROW
 ***  MISSING LINKS
 
 * ctr forms of ciphers are missing (blowfish-ctr, aes128-ctr, aes256-ctr)
-* server mode needs better documentation
-* why are big files so slow to transfer?  profiling needed...
 
 * would be nice to have an ftp-like interface to sftp (put, get, chdir...)
 
+* why are big files so slow to transfer?  profiling needed...
 * speed up file transfers!
 * what is psyco?
+* make a simple example demonstrating use of SocketServer

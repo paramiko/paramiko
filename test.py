@@ -32,6 +32,7 @@ from test_message import MessageTest
 from test_file import BufferedFileTest
 from test_pkey import KeyTest
 from test_kex import KexTest
+from test_packetizer import PacketizerTest
 from test_transport import TransportTest
 from test_sftp import SFTPTest
 
@@ -87,6 +88,7 @@ suite.addTest(unittest.makeSuite(BufferedFileTest))
 if options.use_pkey:
     suite.addTest(unittest.makeSuite(KeyTest))
 suite.addTest(unittest.makeSuite(KexTest))
+suite.addTest(unittest.makeSuite(PacketizerTest))
 if options.use_transport:
     suite.addTest(unittest.makeSuite(TransportTest))
 if options.use_sftp:
