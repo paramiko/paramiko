@@ -46,6 +46,7 @@ class Packetizer (object):
         self.__closed = False
         self.__dump_packets = False
         self.__need_rekey = False
+        self.__init_count = 0
         
         # used for noticing when to re-key:
         self.__sent_bytes = 0
@@ -100,7 +101,11 @@ class Packetizer (object):
         self.__mac_key_out = mac_key
         self.__sent_bytes = 0
         self.__sent_packets = 0
-        self.__need_rekey = False
+        # wait until the reset happens in both directions before clearing rekey flag
+        self.__init_count |= 1
+        if self.__init_count == 3:
+            self.__init_count = 0
+            self.__need_rekey = False
     
     def set_inbound_cipher(self, block_engine, block_size, mac_engine, mac_size, mac_key):
         """
@@ -114,7 +119,11 @@ class Packetizer (object):
         self.__received_bytes = 0
         self.__received_packets = 0
         self.__received_packets_overflow = 0
-        self.__need_rekey = False
+        # wait until the reset happens in both directions before clearing rekey flag
+        self.__init_count |= 2
+        if self.__init_count == 3:
+            self.__init_count = 0
+            self.__need_rekey = False
     
     def close(self):
         self.__closed = True

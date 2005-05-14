@@ -227,6 +227,7 @@ class BaseTransport (threading.Thread):
         self.expected_packet = 0
         self.active = False
         self.initial_kex_done = False
+        self.in_kex = False
         self.lock = threading.Lock()    # synchronization (always higher level than write_lock)
         self.channels = { }             # (id -> Channel)
         self.channel_events = { }       # (id -> Event)
@@ -860,7 +861,7 @@ class BaseTransport (threading.Thread):
 
     def _send_message(self, data):
         self.packetizer.send_message(data)
-        if self.packetizer.need_rekey():
+        if self.packetizer.need_rekey() and not self.in_kex:
             self._send_kex_init()
 
     def _send_user_message(self, data):
@@ -933,7 +934,7 @@ class BaseTransport (threading.Thread):
             self.expected_packet = MSG_KEXINIT
 
             while self.active:
-                if self.packetizer.need_rekey():
+                if self.packetizer.need_rekey() and not self.in_kex:
                     self._send_kex_init()
                 ptype, m = self.packetizer.read_message()
                 if ptype == MSG_IGNORE:
@@ -1050,6 +1051,7 @@ class BaseTransport (threading.Thread):
         kind of key negotiation we support.
         """
         self.clear_to_send.clear()
+        self.in_kex = True
         if self.server_mode:
             if (self._modulus_pack is None) and ('diffie-hellman-group-exchange-sha1' in self._preferred_kex):
                 # can't do group-exchange if we don't have a pack of potential primes
@@ -1074,7 +1076,7 @@ class BaseTransport (threading.Thread):
         m.add('none')
         m.add('')
         m.add('')
-        m.add_boolean(0)
+        m.add_boolean(False)
         m.add_int(0)
         # save a copy for later (needed to compute a hash)
         self.local_kex_init = str(m)
@@ -1212,6 +1214,8 @@ class BaseTransport (threading.Thread):
         else:
             mac_key = self._compute_key('E', mac_engine.digest_size)
         self.packetizer.set_outbound_cipher(engine, block_size, mac_engine, mac_size, mac_key)
+        if not self.packetizer.need_rekey():
+            self.in_kex = False
         # we always expect to receive NEWKEYS now
         self.expected_packet = MSG_NEWKEYS
 
@@ -1228,6 +1232,8 @@ class BaseTransport (threading.Thread):
         if self.completion_event != None:
             self.completion_event.set()
         # it's now okay to send data again (if this was a re-key)
+        if not self.packetizer.need_rekey():
+            self.in_kex = False
         self.clear_to_send.set()
         return
 
