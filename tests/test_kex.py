@@ -98,7 +98,7 @@ class KexTest (unittest.TestCase):
         msg.add_mpint(69)
         msg.add_string('fake-sig')
         kex.parse_next(paramiko.kex_group1._MSG_KEXDH_REPLY, msg)
-        H = '0C39EDB98E9853B85D4527DA940EB03301925329'
+        H = '03079780F3D3AD0B3C6DB30C8D21685F367A86D2'
         self.assertEquals(self.K, transport._K)
         self.assertEquals(H, paramiko.util.hexify(transport._H))
         self.assertEquals(('fake-host-key', 'fake-sig'), transport._verify)
@@ -114,7 +114,7 @@ class KexTest (unittest.TestCase):
         msg = Message()
         msg.add_mpint(69)
         kex.parse_next(paramiko.kex_group1._MSG_KEXDH_INIT, msg)
-        H = '77FE6F0094FB8DB3270106A77F88D66E09EEF8AF'
+        H = 'B16BF34DD10945EDE84E9C1EF24A14BFDC843389'
         x = '1F0000000866616B652D6B6579000000807E2DDB1743F3487D6545F04F1C8476092FB912B013626AB5BCEB764257D88BBA64243B9F348DF7B41B8C814A995E00299913503456983FFB9178D3CD79EB6D55522418A8ABF65375872E55938AB99A84A0B5FC8A1ECC66A7C3766E7E0F80B7CE2C9225FC2DD683F4764244B72963BBB383F529DCF0C5D17740B8A2ADBE9208D40000000866616B652D736967'
         self.assertEquals(self.K, transport._K)
         self.assertEquals(H, paramiko.util.hexify(transport._H))

@@ -232,14 +232,14 @@ class PKey (object):
         @param filename: name of the file to read.
         @type filename: str
         @param password: an optional password to use to decrypt the key file,
-        if it's encrypted.
+            if it's encrypted.
         @type password: str
         @return: data blob that makes up the private key.
         @rtype: str
 
         @raise IOError: if there was an error reading the file.
         @raise PasswordRequiredException: if the private key file is
-        encrypted, and C{password} is C{None}.
+            encrypted, and C{password} is C{None}.
         @raise SSHException: if the key file is invalid.
         """
         f = open(filename, 'r')

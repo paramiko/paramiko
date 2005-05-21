@@ -1,5 +1,3 @@
-#!/usr/bin/python
-
 # Copyright (C) 2003-2005 Robey Pointer <robey@lag.net>
 #
 # This file is part of paramiko.
@@ -96,8 +94,11 @@ class KexGroup1(object):
         # okay, build up the hash H of (V_C || V_S || I_C || I_S || K_S || e || f || K)
         hm = Message()
         hm.add(self.transport.local_version, self.transport.remote_version,
-               self.transport.local_kex_init, self.transport.remote_kex_init,
-               host_key, self.e, self.f, K)
+               self.transport.local_kex_init, self.transport.remote_kex_init)
+        hm.add_string(host_key)
+        hm.add_mpint(self.e)
+        hm.add_mpint(self.f)
+        hm.add_mpint(K)
         self.transport._set_K_H(K, SHA.new(str(hm)).digest())
         self.transport._verify_key(host_key, sig)
         self.transport._activate_outbound()
@@ -112,8 +113,11 @@ class KexGroup1(object):
         # okay, build up the hash H of (V_C || V_S || I_C || I_S || K_S || e || f || K)
         hm = Message()
         hm.add(self.transport.remote_version, self.transport.local_version,
-               self.transport.remote_kex_init, self.transport.local_kex_init,
-               key, self.e, self.f, K)
+               self.transport.remote_kex_init, self.transport.local_kex_init)
+        hm.add_string(key)
+        hm.add_mpint(self.e)
+        hm.add_mpint(self.f)
+        hm.add_mpint(K)
         H = SHA.new(str(hm)).digest()
         self.transport._set_K_H(K, H)
         # sign it
