@@ -1,5 +1,3 @@
-#!/usr/bin/python
-
 # Copyright (C) 2003-2005 Robey Pointer <robey@lag.net>
 #
 # This file is part of paramiko.
@@ -147,7 +145,7 @@ def generate_key_bytes(hashclass, salt, key, nbytes):
     is used for encrypting/decrypting private key files.
 
     @param hashclass: class from L{Crypto.Hash} that can be used as a secure
-    hashing function (like C{MD5} or C{SHA}).
+        hashing function (like C{MD5} or C{SHA}).
     @type hashclass: L{Crypto.Hash}
     @param salt: data to salt the hash with.
     @type salt: string

@@ -250,7 +250,7 @@ class ServerInterface (object):
 
         The default implementation always returns C{False}.
 
-        @param channel: the L{Channel} the pty request arrived on.
+        @param channel: the L{Channel} the request arrived on.
         @type channel: L{Channel}
         @return: C{True} if this channel is now hooked up to a shell; C{False}
             if a shell can't or won't be provided.

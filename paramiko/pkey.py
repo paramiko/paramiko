@@ -1,5 +1,3 @@
-#!/usr/bin/python
-
 # Copyright (C) 2003-2005 Robey Pointer <robey@lag.net>
 #
 # This file is part of paramiko.
@@ -127,7 +125,7 @@ class PKey (object):
         secret is revealed.
 
         @return: a 16-byte string (binary) of the MD5 fingerprint, in SSH
-        format.
+            format.
         @rtype: str
         """
         return MD5.new(str(self)).digest()
@@ -286,7 +284,6 @@ class PKey (object):
         cipher = self._CIPHER_TABLE[encryption_type]['cipher']
         keysize = self._CIPHER_TABLE[encryption_type]['keysize']
         mode = self._CIPHER_TABLE[encryption_type]['mode']
-        # this confusing line turns something like '2F91' into '/\x91' (sorry, was feeling clever)
         salt = util.unhexify(saltstr)
         key = util.generate_key_bytes(MD5, salt, password, keysize)
         return cipher.new(key, mode, salt).decrypt(data)

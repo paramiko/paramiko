@@ -1,5 +1,3 @@
-#!/usr/bin/python
-
 # Copyright (C) 2003-2005 Robey Pointer <robey@lag.net>
 #
 # This file is part of paramiko.
@@ -90,11 +88,11 @@ class RSAKey (PKey):
     def verify_ssh_sig(self, data, msg):
         if msg.get_string() != 'ssh-rsa':
             return False
-        sig = util.inflate_long(msg.get_string(), 1)
-        # verify the signature by SHA'ing the data and encrypting it using the
+        sig = util.inflate_long(msg.get_string(), True)
+        # verify the signature by SHA'ing the data and encrypting it using theå
         # public key.  some wackiness ensues where we "pkcs1imify" the 20-byte
         # hash into a string as long as the RSA key.
-        hash = util.inflate_long(self._pkcs1imify(SHA.new(data).digest()), 1)
+        hash = util.inflate_long(self._pkcs1imify(SHA.new(data).digest()), True)
         rsa = RSA.construct((long(self.n), long(self.e)))
         return rsa.verify(hash, (sig,))
 
@@ -117,7 +115,7 @@ class RSAKey (PKey):
         @param bits: number of bits the generated key should be.
         @type bits: int
         @param progress_func: an optional function to call at key points in
-        key generation (used by C{pyCrypto.PublicKey}).
+            key generation (used by C{pyCrypto.PublicKey}).
         @type progress_func: function
         @return: new private key
         @rtype: L{RSAKey}
