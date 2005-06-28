@@ -1,5 +1,3 @@
-#!/usr/bin/python
-
 # Copyright (C) 2003-2005 Robey Pointer <robey@lag.net>
 #
 # This file is part of paramiko.
@@ -23,8 +21,9 @@ Some unit tests for the ssh2 protocol in Transport.
 """
 
 import sys, time, threading, unittest
+import select
 from paramiko import Transport, SecurityOptions, ServerInterface, RSAKey, DSSKey, \
-    SSHException, BadAuthenticationType
+    SSHException, BadAuthenticationType, util
 from paramiko import AUTH_FAILED, AUTH_PARTIALLY_SUCCESSFUL, AUTH_SUCCESSFUL
 from paramiko import OPEN_SUCCEEDED
 from loop import LoopSocket
@@ -114,8 +113,16 @@ class TransportTest (unittest.TestCase):
             self.assert_(False)
         except TypeError:
             pass
+            
+    def test_2_compute_key(self):
+        self.tc.K = 123281095979686581523377256114209720774539068973101330872763622971399429481072519713536292772709507296759612401802191955568143056534122385270077606457721553469730659233569339356140085284052436697480759510519672848743794433460113118986816826624865291116513647975790797391795651716378444844877749505443714557929L
+        self.tc.H = util.unhexify('0C8307CDE6856FF30BA93684EB0F04C2520E9ED3')
+        self.tc.session_id = self.tc.H
+        key = self.tc._compute_key('C', 32)
+        self.assertEquals('207E66594CA87C44ECCBA3B3CD39FDDB378E6FDB0F97C54B2AA0CFBF900CD995',
+            util.hexify(key))
 
-    def test_2_simple(self):
+    def test_3_simple(self):
         """
         verify that we can establish an ssh link with ourselves across the
         loopback sockets.  this is hardly "simple" but it's simpler than the
@@ -142,7 +149,7 @@ class TransportTest (unittest.TestCase):
         self.assertEquals(True, self.tc.is_authenticated())
         self.assertEquals(True, self.ts.is_authenticated())
 
-    def test_3_special(self):
+    def test_4_special(self):
         """
         verify that the client can demand odd handshake settings, and can
         renegotiate keys in mid-stream.
@@ -171,7 +178,7 @@ class TransportTest (unittest.TestCase):
         self.assert_(self.tc.renegotiate_keys())
         self.ts.send_ignore(1024)
 
-    def test_4_keepalive(self):
+    def test_5_keepalive(self):
         """
         verify that the keepalive will be sent.
         """
@@ -195,7 +202,7 @@ class TransportTest (unittest.TestCase):
         time.sleep(2)
         self.assertEquals('keepalive@lag.net', server._global_request)
         
-    def test_5_bad_auth_type(self):
+    def test_6_bad_auth_type(self):
         """
         verify that we get the right exception when an unsupported auth
         type is requested.
@@ -216,7 +223,7 @@ class TransportTest (unittest.TestCase):
             self.assertEquals(BadAuthenticationType, etype)
             self.assertEquals(['publickey'], evalue.allowed_types)
 
-    def test_6_bad_password(self):
+    def test_7_bad_password(self):
         """
         verify that a bad password gets the right exception, and that a retry
         with the right password works.
@@ -241,7 +248,7 @@ class TransportTest (unittest.TestCase):
         self.assert_(event.isSet())
         self.assert_(self.ts.is_active())
     
-    def test_7_multipart_auth(self):
+    def test_8_multipart_auth(self):
         """
         verify that multipart auth works.
         """
@@ -263,7 +270,7 @@ class TransportTest (unittest.TestCase):
         self.assert_(event.isSet())
         self.assert_(self.ts.is_active())
 
-    def test_8_exec_command(self):
+    def test_9_exec_command(self):
         """
         verify that exec_command() does something reasonable.
         """
@@ -313,7 +320,7 @@ class TransportTest (unittest.TestCase):
         self.assertEquals('This is on stderr.\n', f.readline())
         self.assertEquals('', f.readline())
 
-    def test_9_invoke_shell(self):
+    def test_A_invoke_shell(self):
         """
         verify that invoke_shell() does something reasonable.
         """
@@ -340,7 +347,7 @@ class TransportTest (unittest.TestCase):
         chan.close()
         self.assertEquals('', f.readline())
 
-    def test_A_exit_status(self):
+    def test_B_exit_status(self):
         """
         verify that get_exit_status() works.
         """
@@ -373,3 +380,51 @@ class TransportTest (unittest.TestCase):
         self.assertEquals('', f.readline())
         self.assertEquals(23, chan.recv_exit_status())
         chan.close()
+
+    def test_C_select(self):
+        """
+        verify that select() on a channel works.
+        """
+        host_key = RSAKey.from_private_key_file('tests/test_rsa.key')
+        public_host_key = RSAKey(data=str(host_key))
+        self.ts.add_server_key(host_key)
+        event = threading.Event()
+        server = NullServer()
+        self.assert_(not event.isSet())
+        self.ts.start_server(event, server)
+        self.tc.ultra_debug = True
+        self.tc.connect(hostkey=public_host_key)
+        self.tc.auth_password(username='slowdive', password='pygmalion')
+        event.wait(1.0)
+        self.assert_(event.isSet())
+        self.assert_(self.ts.is_active())
+
+        chan = self.tc.open_session()
+        self.assert_(chan.invoke_shell())
+        schan = self.ts.accept(1.0)
+
+        # nothing should be ready        
+        r, w, e = select.select([chan], [], [], 0.1)
+        self.assertEquals([], r)
+        self.assertEquals([], w)
+        self.assertEquals([], e)
+        
+        schan.send('hello\n')
+        
+        # something should be ready now
+        r, w, e = select.select([chan], [], [], 0.1)
+        self.assertEquals([chan], r)
+        self.assertEquals([], w)
+        self.assertEquals([], e)
+
+        self.assertEquals('hello\n', chan.recv(6))
+        
+        # and, should be dead again now
+        r, w, e = select.select([chan], [], [], 0.1)
+        self.assertEquals([], r)
+        self.assertEquals([], w)
+        self.assertEquals([], e)
+
+        chan.close()
+        schan.close()
+        

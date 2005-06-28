@@ -39,7 +39,13 @@ class KeyTest (unittest.TestCase):
     def tearDown(self):
         pass
 
-    def test_1_load_rsa(self):
+    def test_1_generate_key_bytes(self):
+        from Crypto.Hash import MD5
+        key = util.generate_key_bytes(MD5, '\x01\x02\x03\x04', 'happy birthday', 30)
+        exp = util.unhexify('61E1F272F4C1C4561586BD322498C0E924672780F47BB37DDA7D54019E64')
+        self.assertEquals(exp, key)
+
+    def test_2_load_rsa(self):
         key = RSAKey.from_private_key_file('tests/test_rsa.key')
         self.assertEquals('ssh-rsa', key.get_name())
         exp_rsa = FINGER_RSA.split()[1].replace(':', '')
@@ -48,7 +54,16 @@ class KeyTest (unittest.TestCase):
         self.assertEquals(PUB_RSA.split()[1], key.get_base64())
         self.assertEquals(1024, key.get_bits())
 
-    def test_2_load_dss(self):
+    def test_3_load_rsa_password(self):
+        key = RSAKey.from_private_key_file('tests/test_rsa_password.key', 'television')
+        self.assertEquals('ssh-rsa', key.get_name())
+        exp_rsa = FINGER_RSA.split()[1].replace(':', '')
+        my_rsa = util.hexify(key.get_fingerprint()).lower()
+        self.assertEquals(exp_rsa, my_rsa)
+        self.assertEquals(PUB_RSA.split()[1], key.get_base64())
+        self.assertEquals(1024, key.get_bits())
+        
+    def test_4_load_dss(self):
         key = DSSKey.from_private_key_file('tests/test_dss.key')
         self.assertEquals('ssh-dss', key.get_name())
         exp_dss = FINGER_DSS.split()[1].replace(':', '')
@@ -57,7 +72,16 @@ class KeyTest (unittest.TestCase):
         self.assertEquals(PUB_DSS.split()[1], key.get_base64())
         self.assertEquals(1024, key.get_bits())
 
-    def test_3_compare_rsa(self):
+    def test_5_load_dss_password(self):
+        key = DSSKey.from_private_key_file('tests/test_dss_password.key', 'television')
+        self.assertEquals('ssh-dss', key.get_name())
+        exp_dss = FINGER_DSS.split()[1].replace(':', '')
+        my_dss = util.hexify(key.get_fingerprint()).lower()
+        self.assertEquals(exp_dss, my_dss)
+        self.assertEquals(PUB_DSS.split()[1], key.get_base64())
+        self.assertEquals(1024, key.get_bits())
+
+    def test_6_compare_rsa(self):
         # verify that the private & public keys compare equal
         key = RSAKey.from_private_key_file('tests/test_rsa.key')
         self.assertEquals(key, key)
@@ -66,7 +90,7 @@ class KeyTest (unittest.TestCase):
         self.assert_(not pub.can_sign())
         self.assertEquals(key, pub)
 
-    def test_4_compare_dss(self):
+    def test_7_compare_dss(self):
         # verify that the private & public keys compare equal
         key = DSSKey.from_private_key_file('tests/test_dss.key')
         self.assertEquals(key, key)
@@ -75,7 +99,7 @@ class KeyTest (unittest.TestCase):
         self.assert_(not pub.can_sign())
         self.assertEquals(key, pub)
 
-    def test_5_sign_rsa(self):
+    def test_8_sign_rsa(self):
         # verify that the rsa private key can sign and verify
         key = RSAKey.from_private_key_file('tests/test_rsa.key')
         msg = key.sign_ssh_data(randpool, 'ice weasels')
@@ -87,7 +111,7 @@ class KeyTest (unittest.TestCase):
         pub = RSAKey(data=str(key))
         self.assert_(pub.verify_ssh_sig('ice weasels', msg))
 
-    def test_6_sign_dss(self):
+    def test_9_sign_dss(self):
         # verify that the dss private key can sign and verify
         key = DSSKey.from_private_key_file('tests/test_dss.key')
         msg = key.sign_ssh_data(randpool, 'ice weasels')
@@ -101,12 +125,12 @@ class KeyTest (unittest.TestCase):
         pub = DSSKey(data=str(key))
         self.assert_(pub.verify_ssh_sig('ice weasels', msg))
     
-    def test_7_generate_rsa(self):
+    def test_A_generate_rsa(self):
         key = RSAKey.generate(1024)
         msg = key.sign_ssh_data(randpool, 'jerri blank')
         self.assert_(key.verify_ssh_sig('jerri blank', msg))
 
-    def test_8_generate_dss(self):
+    def test_B_generate_dss(self):
         key = DSSKey.generate(1024)
         msg = key.sign_ssh_data(randpool, 'jerri blank')
         self.assert_(key.verify_ssh_sig('jerri blank', msg))

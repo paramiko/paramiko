@@ -68,9 +68,10 @@ g_big_file_test = True
 class SFTPTest (unittest.TestCase):
 
     def init(hostname, username, keyfile, passwd):
-        global sftp
+        global sftp, tc
         
         t = paramiko.Transport(hostname)
+        tc = t
         try:
             key = paramiko.RSAKey.from_private_key_file(keyfile, passwd)
         except paramiko.PasswordRequiredException:
