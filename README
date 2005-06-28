@@ -133,6 +133,15 @@ the best and easiest examples of how to use the SFTP class.
 
 highlights of what's new in each release:
 
+v1.3.1
+* added SFTPClient.close()
+* fixed up some outdated documentation
+* made SFTPClient.file() an alias for open()
+* added Transport.open_sftp_client() for convenience
+* refactored packetizing out of Transport
+* fixed bug (reported by alain s.) where connecting to a non-SSH host could
+  cause paramiko to freeze up
+
 v1.3 MAROWAK
 * fixed a bug where packets larger than about 12KB would cause the session
   to die on all platforms except osx
@@ -228,8 +237,11 @@ v0.9 FEAROW
 * ctr forms of ciphers are missing (blowfish-ctr, aes128-ctr, aes256-ctr)
 
 * would be nice to have an ftp-like interface to sftp (put, get, chdir...)
+* cool sftp extension: retreive MD5 or SHA1 of section of a file
+* SFTPClient.from_url('sftp://robey@arch.lag.net/folder/filename', 'r+')
+    keep cache of opened sftp clients by (host, port, username)
+    how to auth?  how to check host key?
 
 * why are big files so slow to transfer?  profiling needed...
-* speed up file transfers!
 * what is psyco?
 * make a simple example demonstrating use of SocketServer
