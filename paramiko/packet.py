@@ -1,5 +1,3 @@
-#!/usr/bin/python
-
 # Copyright (C) 2003-2005 Robey Pointer <robey@lag.net>
 #
 # This file is part of paramiko.
@@ -405,7 +403,12 @@ class Packetizer (object):
         padding = 3 + bsize - ((len(payload) + 8) % bsize)
         packet = struct.pack('>IB', len(payload) + padding + 1, padding)
         packet += payload
-        packet += randpool.get_bytes(padding)
+        if self.__block_engine_out is not None:
+            packet += randpool.get_bytes(padding)
+        else:
+            # cute trick i caught openssh doing: if we're not encrypting,
+            # don't waste random bytes for the padding
+            packet += (chr(0) * padding)
         return packet
 
     def _trigger_rekey(self):
