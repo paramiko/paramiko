@@ -1096,7 +1096,7 @@ class Channel (object):
         an actual OS-level "WinSock", because on Windows, only a "WinSock" may be
         selected on.  Sigh.
     
-        @return (read_end, write_end) tuple
+        @return: (read_end, write_end) tuple
         """
         if sys.platform[:3] != 'win':
             return os.pipe()

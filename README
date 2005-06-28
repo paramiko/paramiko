@@ -133,7 +133,7 @@ the best and easiest examples of how to use the SFTP class.
 
 highlights of what's new in each release:
 
-v1.3.1
+v1.3.1 NIDORAN
 * added SFTPClient.close()
 * fixed up some outdated documentation
 * made SFTPClient.file() an alias for open()
@@ -141,6 +141,8 @@ v1.3.1
 * refactored packetizing out of Transport
 * fixed bug (reported by alain s.) where connecting to a non-SSH host could
   cause paramiko to freeze up
+* fixed Channel.fileno() for Windows (again)
+* some more unit tests
 
 v1.3 MAROWAK
 * fixed a bug where packets larger than about 12KB would cause the session

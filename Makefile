@@ -12,6 +12,7 @@
 # kabuto (12dec04) - 1.1
 # lapras (28feb05) - 1.2
 # marowak (9apr05) - 1.3
+# nidoran (28jun05) - 1.3.1
 
 release:
 	python ./setup.py sdist --formats=zip

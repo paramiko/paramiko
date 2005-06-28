@@ -1,5 +1,3 @@
-#!/usr/bin/python
-
 # Copyright (C) 2003-2005 Robey Pointer <robey@lag.net>
 #
 # This file is part of paramiko.
@@ -48,7 +46,7 @@ released under the GNU Lesser General Public License (LGPL).
 
 Website: U{http://www.lag.net/paramiko/}
 
-@version: 1.3 (marowak)
+@version: 1.3.1 (marowak)
 @author: Robey Pointer
 @contact: robey@lag.net
 @license: GNU Lesser General Public License (LGPL)
@@ -61,8 +59,8 @@ if sys.version_info < (2, 2):
 
 
 __author__ = "Robey Pointer <robey@lag.net>"
-__date__ = "9 Apr 2005"
-__version__ = "1.3 (marowak)"
+__date__ = "28 Jun 2005"
+__version__ = "1.3.1 (nidoran)"
 __license__ = "GNU Lesser General Public License (LGPL)"
 
 

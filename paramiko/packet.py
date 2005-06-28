@@ -166,7 +166,7 @@ class Packetizer (object):
         @type n: int
         @return: the data read
         @rtype: str
-        @throw EOFError: if the socket was closed before all the bytes could
+        @raise EOFError: if the socket was closed before all the bytes could
             be read
         """
         if PY22:
@@ -263,7 +263,7 @@ class Packetizer (object):
         Only one thread should ever be in this function (no other locking is
         done).
         
-        @throw SSHException: if the packet is mangled
+        @raise SSHException: if the packet is mangled
         """
         header = self.read_all(self.__block_size_in)
         if self.__block_engine_in != None:

@@ -130,7 +130,7 @@ class BaseTransport (threading.Thread):
     is done here.
     """
     _PROTO_ID = '2.0'
-    _CLIENT_ID = 'paramiko_1.3'
+    _CLIENT_ID = 'paramiko_1.3.1'
 
     _preferred_ciphers = ( 'aes128-cbc', 'blowfish-cbc', 'aes256-cbc', '3des-cbc' )
     _preferred_macs = ( 'hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96' )
