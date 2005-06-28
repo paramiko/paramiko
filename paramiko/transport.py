@@ -643,11 +643,11 @@ class BaseTransport (threading.Thread):
         self._log(DEBUG, 'Sending global request "%s"' % kind)
         self._send_user_message(m)
         if not wait:
-            return True
+            return None
         while True:
             self.completion_event.wait(0.1)
             if not self.active:
-                return False
+                return None
             if self.completion_event.isSet():
                 break
         return self.global_response
@@ -1224,7 +1224,7 @@ class BaseTransport (threading.Thread):
         self._activate_inbound()
         # can also free a bunch of stuff here
         self.local_kex_init = self.remote_kex_init = None
-        self.e = self.f = self.K = self.x = None
+        self.K = None
         if not self.initial_kex_done:
             # this was the first key exchange
             self.initial_kex_done = True
@@ -1281,8 +1281,8 @@ class BaseTransport (threading.Thread):
         if not self.channels.has_key(chanid):
             self._log(WARNING, 'Success for unrequested channel! [??]')
             return
+        self.lock.acquire()
         try:
-            self.lock.acquire()
             chan = self.channels[chanid]
             chan._set_remote_channel(server_chanid, server_window_size, server_max_packet_size)
             self._log(INFO, 'Secsh channel %d opened.' % chanid)
