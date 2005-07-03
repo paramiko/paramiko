@@ -74,10 +74,9 @@ class ServerInterface (object):
         @param kind: the kind of channel the client would like to open
             (usually C{"session"}).
         @type kind: str
-        @param chanid: ID of the channel, required to create a new L{Channel}
-            object.
+        @param chanid: ID of the channel
         @type chanid: int
-        @return: a success or failure code (listed above).
+        @return: a success or failure code (listed above)
         @rtype: int
         """
         return OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED
