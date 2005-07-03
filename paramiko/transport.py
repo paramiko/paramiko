@@ -356,7 +356,8 @@ class BaseTransport (threading.Thread):
         as a server, the host key is used to sign certain packets during the
         SSH2 negotiation, so that the client can trust that we are who we say
         we are.  Because this is used for signing, the key must contain private
-        key info, not just the public half.
+        key info, not just the public half.  Only one key of each type (RSA or
+        DSS) is kept.
         
         @param key: the host key to add, usually an L{RSAKey <rsakey.RSAKey>} or
             L{DSSKey <dsskey.DSSKey>}.
@@ -559,7 +560,7 @@ class BaseTransport (threading.Thread):
         firewalls.
 
         @param bytes: the number of random bytes to send in the payload of the
-        ignored packet -- defaults to a random number from 10 to 41.
+            ignored packet -- defaults to a random number from 10 to 41.
         @type bytes: int
 
         @since: fearow
@@ -653,6 +654,17 @@ class BaseTransport (threading.Thread):
         return self.global_response
 
     def accept(self, timeout=None):
+        """
+        Return the next channel opened by the client over this transport, in
+        server mode.  If no channel is opened before the given timeout, C{None}
+        is returned.
+        
+        @param timeout: seconds to wait for a channel, or C{None} to wait
+            forever
+        @type timeout: int
+        @return: a new Channel opened by the client
+        @rtype: L{Channel}
+        """
         self.lock.acquire()
         try:
             if len(self.server_accepts) > 0:
@@ -978,6 +990,13 @@ class BaseTransport (threading.Thread):
         except EOFError, e:
             self._log(DEBUG, 'EOF in transport thread')
             #self._log(DEBUG, util.tb_strings())
+            self.saved_exception = e
+        except socket.error, e:
+            if type(e.args) is tuple:
+                emsg = '%s (%d)' % (e.args[1], e.args[0])
+            else:
+                emsg = e.args
+            self._log(ERROR, 'Socket exception: ' + emsg)
             self.saved_exception = e
         except Exception, e:
             self._log(ERROR, 'Unknown exception: ' + str(e))
