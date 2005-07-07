@@ -27,6 +27,7 @@ import util
 from message import Message
 from ssh_exception import SSHException
 from file import BufferedFile
+import pipe
 
 
 class Channel (object):
@@ -75,10 +76,7 @@ class Channel (object):
         self.status_event = threading.Event()
         self.name = str(chanid)
         self.logger = util.get_logger('paramiko.chan.' + str(chanid))
-        self.pipe_rfd = self.pipe_wfd = None
-        # for windows:
-        self.pipe_rsock = self.pipe_wsock = None
-        self.pipe_set = False
+        self.pipe = None
         self.event = threading.Event()
         self.combine_stderr = False
         self.exit_status = -1
@@ -153,6 +151,9 @@ class Channel (object):
         shell will operate through the pty, and the channel will be connected
         to the stdin and stdout of the pty.
         
+        When the shell exits, the channel will be closed and can't be reused.
+        You must open a new channel if you wish to open another shell.
+        
         @return: C{True} if the operation succeeded; C{False} if not.
         @rtype: bool
         """
@@ -165,7 +166,7 @@ class Channel (object):
         m.add_boolean(1)
         self.event.clear()
         self.transport._send_user_message(m)
-        while 1:
+        while True:
             self.event.wait(0.1)
             if self.closed:
                 return False
@@ -177,6 +178,10 @@ class Channel (object):
         Execute a command on the server.  If the server allows it, the channel
         will then be directly connected to the stdin, stdout, and stderr of
         the command being executed.
+        
+        When the command finishes executing, the channel will be closed and
+        can't be reused.  You must open a new channel if you wish to execute
+        another command.
 
         @param command: a shell command to execute.
         @type command: str
@@ -193,7 +198,7 @@ class Channel (object):
         m.add_string(command)
         self.event.clear()
         self.transport._send_user_message(m)
-        while 1:
+        while True:
             self.event.wait(0.1)
             if self.closed:
                 return False
@@ -205,6 +210,9 @@ class Channel (object):
         Request a subsystem on the server (for example, C{sftp}).  If the
         server allows it, the channel will then be directly connected to the
         requested subsystem.
+        
+        When the subsystem finishes, the channel will be closed and can't be
+        reused.
 
         @param subsystem: name of the subsystem being requested.
         @type subsystem: str
@@ -515,9 +523,9 @@ class Channel (object):
             if len(self.in_buffer) <= nbytes:
                 out = self.in_buffer
                 self.in_buffer = ''
-                if self.pipe_rfd != None:
+                if self.pipe is not None:
                     # clear the pipe, since no more data is buffered
-                    self._clear_pipe()
+                    self.pipe.clear()
             else:
                 out = self.in_buffer[:nbytes]
                 self.in_buffer = self.in_buffer[nbytes:]
@@ -763,13 +771,13 @@ class Channel (object):
         """
         self.lock.acquire()
         try:
-            if self.pipe_rfd != None:
-                return self.pipe_rfd
+            if self.pipe is not None:
+                return self.pipe.fileno()
             # create the pipe and feed in any existing data
-            self.pipe_rfd, self.pipe_wfd = self._make_pipe()
+            self.pipe = pipe.make_pipe()
             if len(self.in_buffer) > 0:
-                self._set_pipe()
-            return self.pipe_rfd
+                self.pipe.set()
+            return self.pipe.fileno()
         finally:
             self.lock.release()
 
@@ -859,8 +867,8 @@ class Channel (object):
         try:
             if self.ultra_debug:
                 self._log(DEBUG, 'fed %d bytes' % len(s))
-            if self.pipe_wfd != None:
-                self._set_pipe()
+            if self.pipe is not None:
+                self.pipe.set()
             self.in_buffer += s
 	    self.in_buffer_cv.notifyAll()
         finally:
@@ -964,9 +972,9 @@ class Channel (object):
                 self.eof_received = True
                 self.in_buffer_cv.notifyAll()
                 self.in_stderr_buffer_cv.notifyAll()
-                if self.pipe_wfd != None:
-                    os.close(self.pipe_wfd)
-                    self.pipe_wfd = None
+                if self.pipe is not None:
+                    self.pipe.close()
+                    self.pipe = None
         finally:
             self.lock.release()
         self._log(DEBUG, 'EOF received')
@@ -976,9 +984,9 @@ class Channel (object):
         self.lock.acquire()
         try:
             self.transport._unlink_channel(self.chanid)
-            if self.pipe_wfd != None:
-                os.close(self.pipe_wfd)
-                self.pipe_wfd = None
+            if self.pipe is not None:
+                self.pipe.close()
+                self.pipe = None
         finally:
             self.lock.release()
 
@@ -1007,20 +1015,6 @@ class Channel (object):
         self.eof_sent = True
         self._log(DEBUG, 'EOF sent')
         return
-
-    def _set_pipe(self):
-        "you are already holding the lock"
-        if self.pipe_set:
-            return
-        self.pipe_set = True
-        os.write(self.pipe_wfd, '*')
-
-    def _clear_pipe(self):
-        "you are already holding the lock"
-        if not self.pipe_set:
-            return
-        os.read(self.pipe_rfd, 1)
-        self.pipe_set = False
 
     def _unlink(self):
         # server connection could die before we become active: still signal the close!
@@ -1088,29 +1082,6 @@ class Channel (object):
             self._log(DEBUG, 'window down to %d' % self.out_window_size)
         return size
         
-    def _make_pipe (self):
-        """
-        Create a pipe in such a way that the readable end may be used in select()
-        on the host OS.  For posix (Linux, MacOS, etc) this means just returning
-        an OS-level pipe.  For Windows, we need to do some convolutions to create
-        an actual OS-level "WinSock", because on Windows, only a "WinSock" may be
-        selected on.  Sigh.
-    
-        @return: (read_end, write_end) tuple
-        """
-        if sys.platform[:3] != 'win':
-            return os.pipe()
-        serv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        serv.bind(('127.0.0.1', 0))
-        serv.listen(1)
-    
-        # need to save sockets in pipe_rsock/pipe_wsock so they don't get closed
-        self.pipe_rsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.pipe_rsock.connect(('127.0.0.1', serv.getsockname()[1]))
-    
-        self.pipe_wsock, addr = serv.accept()
-        serv.close()
-        return self.pipe_rsock.fileno(), self.pipe_wsock.fileno()
 
         
 
