@@ -104,6 +104,7 @@ class KeyTest (unittest.TestCase):
         key = RSAKey.from_private_key_file('tests/test_rsa.key')
         msg = key.sign_ssh_data(randpool, 'ice weasels')
         self.assert_(type(msg) is Message)
+        msg.rewind()
         self.assertEquals('ssh-rsa', msg.get_string())
         sig = ''.join([chr(int(x, 16)) for x in SIGNED_RSA.split(':')])
         self.assertEquals(sig, msg.get_string())
@@ -116,6 +117,7 @@ class KeyTest (unittest.TestCase):
         key = DSSKey.from_private_key_file('tests/test_dss.key')
         msg = key.sign_ssh_data(randpool, 'ice weasels')
         self.assert_(type(msg) is Message)
+        msg.rewind()
         self.assertEquals('ssh-dss', msg.get_string())
         # can't do the same test as we do for RSA, because DSS signatures
         # are usually different each time.  but we can test verification
@@ -128,9 +130,11 @@ class KeyTest (unittest.TestCase):
     def test_A_generate_rsa(self):
         key = RSAKey.generate(1024)
         msg = key.sign_ssh_data(randpool, 'jerri blank')
+        msg.rewind()
         self.assert_(key.verify_ssh_sig('jerri blank', msg))
 
     def test_B_generate_dss(self):
         key = DSSKey.generate(1024)
         msg = key.sign_ssh_data(randpool, 'jerri blank')
+        msg.rewind()
         self.assert_(key.verify_ssh_sig('jerri blank', msg))

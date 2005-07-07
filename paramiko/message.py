@@ -20,7 +20,7 @@
 Implementation of an SSH2 "message".
 """
 
-import string, types, struct
+import struct, cStringIO
 import util
 
 
@@ -31,16 +31,18 @@ class Message (object):
     as I{long}s).  This class builds or breaks down such a byte stream.
     """
 
-    def __init__(self, content=''):
+    def __init__(self, content=None):
         """
         Create a new SSH2 Message.
 
-        @param content: the byte stream to use as the Message content (usually
-        passed in only when decomposing a Message).
+        @param content: the byte stream to use as the Message content (passed
+            in only when decomposing a Message).
         @type content: string
         """
-        self.packet = content
-        self.idx = 0
+        if content != None:
+            self.packet = cStringIO.StringIO(content)
+        else:
+            self.packet = cStringIO.StringIO()
 
     def __str__(self):
         """
@@ -49,7 +51,7 @@ class Message (object):
         @return: the contents of this Message.
         @rtype: string
         """
-        return self.packet
+        return self.packet.getvalue()
 
     def __repr__(self):
         """
@@ -57,14 +59,14 @@ class Message (object):
 
         @rtype: string
         """
-        return 'paramiko.Message(' + repr(self.packet) + ')'
+        return 'paramiko.Message(' + repr(self.packet.getvalue()) + ')'
 
     def rewind(self):
         """
         Rewind the message to the beginning as if no items had been parsed
         out of it yet.
         """
-        self.idx = 0
+        self.packet.seek(0)
 
     def get_remainder(self):
         """
@@ -74,7 +76,10 @@ class Message (object):
         @return: a string of the bytes not parsed yet.
         @rtype: string
         """
-        return self.packet[self.idx:]
+        position = self.packet.tell()
+        remainder = self.packet.read()
+        self.packet.seek(position)
+        return remainder
 
     def get_so_far(self):
         """
@@ -85,7 +90,9 @@ class Message (object):
         @return: a string of the bytes parsed so far.
         @rtype: string
         """
-        return self.packet[:self.idx]
+        position = self.packet.tell()
+        self.rewind()
+        return self.packet.read(position)
 
     def get_bytes(self, n):
         """
@@ -96,10 +103,9 @@ class Message (object):
         of C{n} zero bytes, if there aren't C{n} bytes remaining.
         @rtype: string
         """
-        if self.idx + n > len(self.packet):
+        b = self.packet.read(n)
+        if len(b) < n:
             return '\x00'*n
-        b = self.packet[self.idx:self.idx+n]
-        self.idx = self.idx + n
         return b
 
     def get_byte(self):
@@ -130,13 +136,7 @@ class Message (object):
         @return: a 32-bit unsigned integer.
         @rtype: int
         """
-        x = self.packet
-        i = self.idx
-        if i + 4 > len(x):
-            return 0
-        n = struct.unpack('>I', x[i:i+4])[0]
-        self.idx = i+4
-        return n
+        return struct.unpack('>I', self.get_bytes(4))[0]
 
     def get_int64(self):
         """
@@ -145,13 +145,7 @@ class Message (object):
         @return: a 64-bit unsigned integer.
         @rtype: long
         """
-        x = self.packet
-        i = self.idx
-        if i + 8 > len(x):
-            return 0L
-        n = struct.unpack('>Q', x[i:i+8])[0]
-        self.idx += 8
-        return n
+        return struct.unpack('>Q', self.get_bytes(8))[0]
 
     def get_mpint(self):
         """
@@ -171,12 +165,7 @@ class Message (object):
         @return: a string.
         @rtype: string
         """
-        l = self.get_int()
-        if self.idx + l > len(self.packet):
-            return ''
-        str = self.packet[self.idx:self.idx+l]
-        self.idx = self.idx + l
-        return str
+        return self.get_bytes(self.get_int())
 
     def get_list(self):
         """
@@ -186,16 +175,14 @@ class Message (object):
         @return: a list of strings.
         @rtype: list of strings
         """
-        str = self.get_string()
-        l = string.split(str, ',')
-        return l
+        return self.get_string().split(',')
 
     def add_bytes(self, b):
-        self.packet = self.packet + b
+        self.packet.write(b)
         return self
 
     def add_byte(self, b):
-        self.packet = self.packet + b
+        self.packet.write(b)
         return self
 
     def add_boolean(self, b):
@@ -206,7 +193,7 @@ class Message (object):
         return self
             
     def add_int(self, n):
-        self.packet = self.packet + struct.pack('>I', n)
+        self.packet.write(struct.pack('>I', n))
         return self
 
     def add_int64(self, n):
@@ -216,7 +203,7 @@ class Message (object):
         @param n: long int to add.
         @type n: long
         """
-        self.packet = self.packet + struct.pack('>Q', n)
+        self.packet.write(struct.pack('>Q', n))
         return self
 
     def add_mpint(self, z):
@@ -226,13 +213,11 @@ class Message (object):
 
     def add_string(self, s):
         self.add_int(len(s))
-        self.packet = self.packet + s
+        self.packet.write(s)
         return self
 
     def add_list(self, l):
-        out = string.join(l, ',')
-        self.add_int(len(out))
-        self.packet = self.packet + out
+        self.add_string(','.join(l))
         return self
         
     def _add(self, i):

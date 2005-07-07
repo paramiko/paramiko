@@ -639,8 +639,7 @@ class BaseTransport (threading.Thread):
         m.add_string(kind)
         m.add_boolean(wait)
         if data is not None:
-            for item in data:
-                m.add(item)
+            m.add(*data)
         self._log(DEBUG, 'Sending global request "%s"' % kind)
         self._send_user_message(m)
         if not wait:
@@ -1085,16 +1084,16 @@ class BaseTransport (threading.Thread):
         m = Message()
         m.add_byte(chr(MSG_KEXINIT))
         m.add_bytes(randpool.get_bytes(16))
-        m.add(','.join(self._preferred_kex))
-        m.add(','.join(available_server_keys))
-        m.add(','.join(self._preferred_ciphers))
-        m.add(','.join(self._preferred_ciphers))
-        m.add(','.join(self._preferred_macs))
-        m.add(','.join(self._preferred_macs))
-        m.add('none')
-        m.add('none')
-        m.add('')
-        m.add('')
+        m.add_list(self._preferred_kex)
+        m.add_list(available_server_keys)
+        m.add_list(self._preferred_ciphers)
+        m.add_list(self._preferred_ciphers)
+        m.add_list(self._preferred_macs)
+        m.add_list(self._preferred_macs)
+        m.add_string('none')
+        m.add_string('none')
+        m.add_string('')
+        m.add_string('')
         m.add_boolean(False)
         m.add_int(0)
         # save a copy for later (needed to compute a hash)
@@ -1274,8 +1273,7 @@ class BaseTransport (threading.Thread):
             msg = Message()
             if ok:
                 msg.add_byte(chr(MSG_REQUEST_SUCCESS))
-                for item in extra:
-                    msg.add(item)
+                msg.add(*extra)
             else:
                 msg.add_byte(chr(MSG_REQUEST_FAILURE))
             self._send_message(msg)
