@@ -65,7 +65,7 @@ __license__ = "GNU Lesser General Public License (LGPL)"
 
 
 import transport, auth_transport, channel, rsakey, dsskey, message
-import ssh_exception, file, packet
+import ssh_exception, file, packet, agent
 import sftp, sftp_client, sftp_attr, sftp_file, sftp_handle, sftp_server, sftp_si
 
 randpool = transport.randpool
@@ -89,6 +89,7 @@ SubsystemHandler = server.SubsystemHandler
 SecurityOptions = transport.SecurityOptions
 BufferedFile = file.BufferedFile
 Packetizer = packet.Packetizer
+Agent = agent.Agent
 
 from common import AUTH_SUCCESSFUL, AUTH_PARTIALLY_SUCCESSFUL, AUTH_FAILED, \
      OPEN_SUCCEEDED, OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED,  OPEN_FAILED_CONNECT_FAILED, \
@@ -103,6 +104,7 @@ __all__ = [ 'Transport',
             'Channel',
             'RSAKey',
             'DSSKey',
+            'Agent',
             'Message',
             'SSHException',
             'PasswordRequiredException',

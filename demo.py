@@ -50,6 +50,51 @@ def load_host_keys():
     f.close()
     return keys
 
+def agent_auth(username, t, event):
+    agent = paramiko.Agent()
+    agent_keys = agent.get_keys()
+    if len(agent_keys) > 0:
+        for key in agent_keys:
+            print 'Trying ssh-agent key %s' % paramiko.util.hexify(key.get_fingerprint()),
+            t.auth_publickey(username, key, event)
+            event.wait(10)
+            if t.is_authenticated():
+                print '... success!'
+                return
+            print '... nope.'
+
+def manual_auth(username, hostname, event):
+    default_auth = 'p'
+    auth = raw_input('Auth by (p)assword, (r)sa key, or (d)ss key? [%s] ' % default_auth)
+    if len(auth) == 0:
+        auth = default_auth
+
+    if auth == 'r':
+        default_path = os.environ['HOME'] + '/.ssh/id_rsa'
+        path = raw_input('RSA key [%s]: ' % default_path)
+        if len(path) == 0:
+            path = default_path
+        try:
+            key = paramiko.RSAKey.from_private_key_file(path)
+        except paramiko.PasswordRequiredException:
+            password = getpass.getpass('RSA key password: ')
+            key = paramiko.RSAKey.from_private_key_file(path, password)
+        t.auth_publickey(username, key, event)
+    elif auth == 'd':
+        default_path = os.environ['HOME'] + '/.ssh/id_dsa'
+        path = raw_input('DSS key [%s]: ' % default_path)
+        if len(path) == 0:
+            path = default_path
+        try:
+            key = paramiko.DSSKey.from_private_key_file(path)
+        except paramiko.PasswordRequiredException:
+            password = getpass.getpass('DSS key password: ')
+            key = paramiko.DSSKey.from_private_key_file(path, password)
+        t.auth_publickey(username, key, event)
+    else:
+        pw = getpass.getpass('Password for %s@%s: ' % (username, hostname))
+        t.auth_password(username, pw, event)
+
 
 #####   main demo
 
@@ -113,37 +158,11 @@ try:
         if len(username) == 0:
             username = default_username
 
+    agent_auth(username, t, event)
+    
     # ask for what kind of authentication to try
-    default_auth = 'p'
-    auth = raw_input('Auth by (p)assword, (r)sa key, or (d)ss key? [%s] ' % default_auth)
-    if len(auth) == 0:
-        auth = default_auth
-
-    if auth == 'r':
-        default_path = os.environ['HOME'] + '/.ssh/id_rsa'
-        path = raw_input('RSA key [%s]: ' % default_path)
-        if len(path) == 0:
-            path = default_path
-        try:
-            key = paramiko.RSAKey.from_private_key_file(path)
-        except paramiko.PasswordRequiredException:
-            password = getpass.getpass('RSA key password: ')
-            key = paramiko.RSAKey.from_private_key_file(path, password)
-        t.auth_publickey(username, key, event)
-    elif auth == 'd':
-        default_path = os.environ['HOME'] + '/.ssh/id_dsa'
-        path = raw_input('DSS key [%s]: ' % default_path)
-        if len(path) == 0:
-            path = default_path
-        try:
-            key = paramiko.DSSKey.from_private_key_file(path)
-        except paramiko.PasswordRequiredException:
-            password = getpass.getpass('DSS key password: ')
-            key = paramiko.DSSKey.from_private_key_file(path, password)
-        t.auth_publickey(username, key, event)
-    else:
-        pw = getpass.getpass('Password for %s@%s: ' % (username, hostname))
-        t.auth_password(username, pw, event)
+    if not t.is_authenticated():
+        manual_auth(username, hostname, event)
 
     event.wait(10)
     # print repr(t)

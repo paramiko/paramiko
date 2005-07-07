@@ -114,7 +114,7 @@ class SFTPClient (BaseSFTP):
             raise SFTPError('Expected handle')
         handle = msg.get_string()
         filelist = []
-        while 1:
+        while True:
             try:
                 t, msg = self._request(CMD_READDIR, handle)
             except EOFError, e:
