@@ -66,7 +66,7 @@ __license__ = "GNU Lesser General Public License (LGPL)"
 
 import transport, auth_transport, channel, rsakey, dsskey, message
 import ssh_exception, file, packet, agent, server
-import sftp, sftp_client, sftp_attr, sftp_file, sftp_handle, sftp_server, sftp_si
+import sftp_client, sftp_attr, sftp_handle, sftp_server, sftp_si
 
 randpool = transport.randpool
 Transport = auth_transport.Transport
@@ -80,7 +80,7 @@ BadAuthenticationType = ssh_exception.BadAuthenticationType
 SFTP = sftp_client.SFTP
 SFTPClient = sftp_client.SFTPClient
 SFTPServer = sftp_server.SFTPServer
-SFTPError = sftp.SFTPError
+from sftp import SFTPError
 SFTPAttributes = sftp_attr.SFTPAttributes
 SFTPHandle = sftp_handle.SFTPHandle
 SFTPServerInterface = sftp_si.SFTPServerInterface

@@ -194,7 +194,7 @@ class Packetizer (object):
                 n = 0
                 if self.__closed:
                     n = -1
-            except Exception, x:
+            except Exception:
                 # could be: (32, 'Broken pipe')
                 n = -1
             if n < 0:
@@ -210,14 +210,14 @@ class Packetizer (object):
         way, but is only used for initial banner negotiation so it's not worth
         optimising.
         """
-        buffer = ''
-        while not '\n' in buffer:
-            buffer += self._read_timeout(timeout)
-        buffer = buffer[:-1]
-        if (len(buffer) > 0) and (buffer[-1] == '\r'):
-            buffer = buffer[:-1]
-        return buffer
-
+        buf = ''
+        while not '\n' in buf:
+            buf += self._read_timeout(timeout)
+        buf = buf[:-1]
+        if (len(buf) > 0) and (buf[-1] == '\r'):
+            buf = buf[:-1]
+        return buf
+        
     def send_message(self, data):
         """
         Write a block of data using the current cipher, as an SSH block.
@@ -275,9 +275,9 @@ class Packetizer (object):
         leftover = header[4:]
         if (packet_size - len(leftover)) % self.__block_size_in != 0:
             raise SSHException('Invalid packet blocking')
-        buffer = self.read_all(packet_size + self.__mac_size_in - len(leftover))
-        packet = buffer[:packet_size - len(leftover)]
-        post_packet = buffer[packet_size - len(leftover):]
+        buf = self.read_all(packet_size + self.__mac_size_in - len(leftover))
+        packet = buf[:packet_size - len(leftover)]
+        post_packet = buf[packet_size - len(leftover):]
         if self.__block_engine_in != None:
             packet = self.__block_engine_in.decrypt(packet)
         if self.__dump_packets:

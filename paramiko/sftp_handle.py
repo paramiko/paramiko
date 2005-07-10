@@ -1,5 +1,3 @@
-#!/usr/bin/python
-
 # Copyright (C) 2003-2005 Robey Pointer <robey@lag.net>
 #
 # This file is part of paramiko.
@@ -54,10 +52,12 @@ class SFTPHandle (object):
         using the default implementations of L{read} and L{write}, this
         method's default implementation should be fine also.
         """
-        if hasattr(self, 'readfile') and (self.readfile is not None):
-            self.readfile.close()
-        if hasattr(self, 'writefile') and (self.writefile is not None):
-            self.writefile.close()
+        readfile = getattr(self, 'readfile', None)
+        if readfile is not None:
+            readfile.close()
+        writefile = getattr(self, 'writefile', None)
+        if writefile is not None:
+            writefile.close()
 
     def read(self, offset, length):
         """

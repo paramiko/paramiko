@@ -1,5 +1,3 @@
-#!/usr/bin/python
-
 # Copyright (C) 2003-2005 Robey Pointer <robey@lag.net>
 #
 # This file is part of paramiko.
@@ -42,7 +40,7 @@ def _generate_prime(bits, randpool):
         if util.bit_length(n) == bits:
             return n
 
-def _roll_random(randpool, n):
+def _roll_random(rpool, n):
     "returns a random # from 0 to N-1"
     bits = util.bit_length(n-1)
     bytes = (bits + 7) // 8
@@ -55,7 +53,7 @@ def _roll_random(randpool, n):
     # fits, so i can't guarantee that this loop will ever finish, but the odds
     # of it looping forever should be infinitesimal.
     while True:
-        x = randpool.get_bytes(bytes)
+        x = rpool.get_bytes(bytes)
         if hbyte_mask > 0:
             x = chr(ord(x[0]) & hbyte_mask) + x[1:]
         num = util.inflate_long(x, 1)
@@ -69,11 +67,11 @@ class ModulusPack (object):
     on systems that have such a file.
     """
 
-    def __init__(self, randpool):
+    def __init__(self, rpool):
         # pack is a hash of: bits -> [ (generator, modulus) ... ]
         self.pack = {}
         self.discarded = []
-        self.randpool = randpool
+        self.randpool = rpool
 
     def _parse_modulus(self, line):
         timestamp, type, tests, tries, size, generator, modulus = line.split()

@@ -46,6 +46,9 @@ class Transport (BaseTransport):
         self.username = None
         self.authenticated = False
         self.auth_event = None
+        self.auth_method = ''
+        self.password = None
+        self.private_key = None
         # for server mode:
         self.auth_username = None
         self.auth_fail_count = 0

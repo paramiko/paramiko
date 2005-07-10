@@ -45,15 +45,15 @@ class BER(object):
     def decode_next(self):
         if self.idx >= len(self.content):
             return None
-        id = ord(self.content[self.idx])
+        ident = ord(self.content[self.idx])
         self.idx += 1
-        if (id & 31) == 31:
+        if (ident & 31) == 31:
             # identifier > 30
-            id = 0
+            ident = 0
             while self.idx < len(self.content):
                 t = ord(self.content[self.idx])
                 self.idx += 1
-                id = (id << 7) | (t & 0x7f)
+                ident = (ident << 7) | (t & 0x7f)
                 if not (t & 0x80):
                     break
         if self.idx >= len(self.content):
@@ -75,29 +75,29 @@ class BER(object):
         data = self.content[self.idx : self.idx + size]
         self.idx += size
         # now switch on id
-        if id == 0x30:
+        if ident == 0x30:
             # sequence
             return self.decode_sequence(data)
-        elif id == 2:
+        elif ident == 2:
             # int
             return util.inflate_long(data)
         else:
             # 1: boolean (00 false, otherwise true)
-            raise BERException('Unknown ber encoding type %d (robey is lazy)' % id)
+            raise BERException('Unknown ber encoding type %d (robey is lazy)' % ident)
 
     def decode_sequence(data):
         out = []
         b = BER(data)
-        while 1:
+        while True:
             x = b.decode_next()
-            if x == None:
+            if x is None:
                 return out
             out.append(x)
     decode_sequence = staticmethod(decode_sequence)
 
-    def encode_tlv(self, id, val):
-        # FIXME: support id > 31 someday
-        self.content += chr(id)
+    def encode_tlv(self, ident, val):
+        # no need to support ident > 31 here
+        self.content += chr(ident)
         if len(val) > 0x7f:
             lenstr = util.deflate_long(len(val))
             self.content += chr(0x80 + len(lenstr)) + lenstr

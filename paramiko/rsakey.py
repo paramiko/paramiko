@@ -76,10 +76,10 @@ class RSAKey (PKey):
     def can_sign(self):
         return hasattr(self, 'd')
 
-    def sign_ssh_data(self, randpool, data):
-        hash = SHA.new(data).digest()
+    def sign_ssh_data(self, rpool, data):
+        digest = SHA.new(data).digest()
         rsa = RSA.construct((long(self.n), long(self.e), long(self.d)))
-        sig = util.deflate_long(rsa.sign(self._pkcs1imify(hash), '')[0], 0)
+        sig = util.deflate_long(rsa.sign(self._pkcs1imify(digest), '')[0], 0)
         m = Message()
         m.add_string('ssh-rsa')
         m.add_string(sig)

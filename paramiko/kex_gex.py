@@ -96,30 +96,30 @@ class KexGex (object):
         self.x = x
 
     def _parse_kexdh_gex_request(self, m):
-        min = m.get_int()
-        preferred = m.get_int()
-        max = m.get_int()
+        minbits = m.get_int()
+        preferredbits = m.get_int()
+        maxbits = m.get_int()
         # smoosh the user's preferred size into our own limits
-        if preferred > self.max_bits:
-            preferred = self.max_bits
-        if preferred < self.min_bits:
-            preferred = self.min_bits
+        if preferredbits > self.max_bits:
+            preferredbits = self.max_bits
+        if preferredbits < self.min_bits:
+            preferredbits = self.min_bits
         # fix min/max if they're inconsistent.  technically, we could just pout
         # and hang up, but there's no harm in giving them the benefit of the
         # doubt and just picking a bitsize for them.
-        if min > preferred:
-            min = preferred
-        if max < preferred:
-            max = preferred
+        if minbits > preferredbits:
+            minbits = preferredbits
+        if maxbits < preferredbits:
+            maxbits = preferredbits
         # now save a copy
-        self.min_bits = min
-        self.preferred_bits = preferred
-        self.max_bits = max
+        self.min_bits = minbits
+        self.preferred_bits = preferredbits
+        self.max_bits = maxbits
         # generate prime
         pack = self.transport._get_modulus_pack()
         if pack is None:
             raise SSHException('Can\'t do server-side gex with no modulus pack')
-        self.g, self.p = pack.get_modulus(min, preferred, max)
+        self.g, self.p = pack.get_modulus(minbits, preferredbits, maxbits)
         m = Message()
         m.add_byte(chr(_MSG_KEXDH_GEX_GROUP))
         m.add_mpint(self.p)

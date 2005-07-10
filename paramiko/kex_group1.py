@@ -41,6 +41,9 @@ class KexGroup1(object):
 
     def __init__(self, transport):
         self.transport = transport
+        self.x = 0L
+        self.e = 0L
+        self.f = 0L
 
     def start_kex(self):
         self._generate_x()

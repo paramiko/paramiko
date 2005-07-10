@@ -56,6 +56,7 @@ class DSSKey (PKey):
             self.g = msg.get_mpint()
             self.y = msg.get_mpint()
         self.size = util.bit_length(self.p)
+        self.x = 0L
 
     def __str__(self):
         m = Message()
@@ -84,16 +85,16 @@ class DSSKey (PKey):
     def can_sign(self):
         return hasattr(self, 'x')
 
-    def sign_ssh_data(self, randpool, data):
-        hash = SHA.new(data).digest()
+    def sign_ssh_data(self, rpool, data):
+        digest = SHA.new(data).digest()
         dss = DSA.construct((long(self.y), long(self.g), long(self.p), long(self.q), long(self.x)))
         # generate a suitable k
         qsize = len(util.deflate_long(self.q, 0))
         while 1:
-            k = util.inflate_long(randpool.get_bytes(qsize), 1)
+            k = util.inflate_long(rpool.get_bytes(qsize), 1)
             if (k > 2) and (k < self.q):
                 break
-        r, s = dss.sign(util.inflate_long(hash, 1), k)
+        r, s = dss.sign(util.inflate_long(digest, 1), k)
         m = Message()
         m.add_string('ssh-dss')
         m.add_string(util.deflate_long(r, 0) + util.deflate_long(s, 0))

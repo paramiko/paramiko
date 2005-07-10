@@ -60,6 +60,7 @@ class Channel (object):
         @type chanid: int
         """
         self.chanid = chanid
+        self.remote_chanid = 0
         self.transport = None
         self.active = False
         self.eof_received = 0
@@ -73,6 +74,12 @@ class Channel (object):
         self.in_buffer_cv = threading.Condition(self.lock)
         self.in_stderr_buffer_cv = threading.Condition(self.lock)
         self.out_buffer_cv = threading.Condition(self.lock)
+        self.in_window_size = 0
+        self.out_window_size = 0
+        self.in_max_packet_size = 0
+        self.out_max_packet_size = 0
+        self.in_window_threshold = 0
+        self.in_window_sofar = 0
         self.status_event = threading.Event()
         self.name = str(chanid)
         self.logger = util.get_logger('paramiko.chan.' + str(chanid))
@@ -1115,6 +1122,8 @@ class ChannelFile (BufferedFile):
     def _write(self, data):
         self.channel.sendall(data)
         return len(data)
+    
+    seek = BufferedFile.seek
 
 
 class ChannelStderrFile (ChannelFile):
