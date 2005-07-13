@@ -56,7 +56,6 @@ class DSSKey (PKey):
             self.g = msg.get_mpint()
             self.y = msg.get_mpint()
         self.size = util.bit_length(self.p)
-        self.x = 0L
 
     def __str__(self):
         m = Message()
