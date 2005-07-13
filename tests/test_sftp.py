@@ -502,3 +502,41 @@ class SFTPTest (unittest.TestCase):
             self.assert_(False, 'no exception removing nonexistent subfolder')
         except IOError:
             pass
+    
+    def test_I_chdir(self):
+        """
+        verify that chdir/getcwd work.
+        """
+        root = sftp.normalize('.')
+        if root[-1] != '/':
+            root += '/'
+        try:
+            sftp.mkdir(FOLDER + '/alpha')
+            sftp.chdir(FOLDER + '/alpha')
+            sftp.mkdir('beta')
+            self.assertEquals(root + FOLDER + '/alpha', sftp.getcwd())
+            self.assertEquals(['beta'], sftp.listdir('.'))
+        
+            sftp.chdir('beta')
+            f = sftp.open('fish', 'w')
+            f.write('hello\n')
+            f.close()
+            sftp.chdir('..')
+            self.assertEquals(['fish'], sftp.listdir('beta'))
+            sftp.chdir('..')
+            self.assertEquals(['fish'], sftp.listdir('alpha/beta'))
+        finally:
+            sftp.chdir(root)
+            try:
+                sftp.unlink(FOLDER + '/alpha/beta/fish')
+            except:
+                pass
+            try:
+                sftp.rmdir(FOLDER + '/alpha/beta')
+            except:
+                pass
+            try:
+                sftp.rmdir(FOLDER + '/alpha')
+            except:
+                pass
+

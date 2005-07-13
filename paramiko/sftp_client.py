@@ -46,6 +46,7 @@ class SFTPClient (BaseSFTP):
         self.sock = sock
         self.ultra_debug = False
         self.request_number = 1
+        self._cwd = None
         if type(sock) is Channel:
             # override default logger
             transport = self.sock.get_transport()
@@ -80,7 +81,7 @@ class SFTPClient (BaseSFTP):
         """
         self.sock.close()
 
-    def listdir(self, path):
+    def listdir(self, path='.'):
         """
         Return a list containing the names of the entries in the given C{path}.
         The list is in arbitrary order.  It does not include the special
@@ -88,27 +89,28 @@ class SFTPClient (BaseSFTP):
         This method is meant to mirror C{os.listdir} as closely as possible.
         For a list of full L{SFTPAttributes} objects, see L{listdir_attr}.
 
-        @param path: path to list.
+        @param path: path to list (defaults to C{'.'})
         @type path: str
-        @return: list of filenames.
+        @return: list of filenames
         @rtype: list of str
         """
         return [f.filename for f in self.listdir_attr(path)]
         
-    def listdir_attr(self, path):
+    def listdir_attr(self, path='.'):
         """
         Return a list containing L{SFTPAttributes} objects corresponding to
         files in the given C{path}.  The list is in arbitrary order.  It does
         not include the special entries C{'.'} and C{'..'} even if they are
         present in the folder.
 
-        @param path: path to list.
+        @param path: path to list (defaults to C{'.'})
         @type path: str
-        @return: list of attributes.
+        @return: list of attributes
         @rtype: list of L{SFTPAttributes}
         
         @since: 1.2
         """
+        path = self._adjust_cwd(path)
         t, msg = self._request(CMD_OPENDIR, path)
         if t != CMD_HANDLE:
             raise SFTPError('Expected handle')
@@ -162,6 +164,7 @@ class SFTPClient (BaseSFTP):
 
         @raise IOError: if the file could not be opened.
         """
+        filename = self._adjust_cwd(filename)
         imode = 0
         if ('r' in mode) or ('+' in mode):
             imode |= SFTP_FLAG_READ
@@ -192,6 +195,7 @@ class SFTPClient (BaseSFTP):
         @raise IOError: if the path refers to a folder (directory).  Use
             L{rmdir} to remove a folder.
         """
+        path = self._adjust_cwd(path)
         self._request(CMD_REMOVE, path)
 
     unlink = remove
@@ -208,6 +212,8 @@ class SFTPClient (BaseSFTP):
         @raise IOError: if C{newpath} is a folder, or something else goes
             wrong.
         """
+        oldpath = self._adjust_cwd(oldpath)
+        newpath = self._adjust_cwd(newpath)
         self._request(CMD_RENAME, oldpath, newpath)
 
     def mkdir(self, path, mode=0777):
@@ -221,6 +227,7 @@ class SFTPClient (BaseSFTP):
         @param mode: permissions (posix-style) for the newly-created folder.
         @type mode: int
         """
+        path = self._adjust_cwd(path)
         attr = SFTPAttributes()
         attr.st_mode = mode
         self._request(CMD_MKDIR, path, attr)
@@ -232,6 +239,7 @@ class SFTPClient (BaseSFTP):
         @param path: name of the folder to remove.
         @type path: string
         """
+        path = self._adjust_cwd(path)
         self._request(CMD_RMDIR, path)
 
     def stat(self, path):
@@ -253,6 +261,7 @@ class SFTPClient (BaseSFTP):
         @return: an object containing attributes about the given file.
         @rtype: SFTPAttributes
         """
+        path = self._adjust_cwd(path)
         t, msg = self._request(CMD_STAT, path)
         if t != CMD_ATTRS:
             raise SFTPError('Expected attributes')
@@ -269,6 +278,7 @@ class SFTPClient (BaseSFTP):
         @return: an object containing attributes about the given file.
         @rtype: SFTPAttributes
         """
+        path = self._adjust_cwd(path)
         t, msg = self._request(CMD_LSTAT, path)
         if t != CMD_ATTRS:
             raise SFTPError('Expected attributes')
@@ -284,6 +294,7 @@ class SFTPClient (BaseSFTP):
         @param dest: path of the newly created symlink.
         @type dest: string
         """
+        dest = self._adjust_cwd(dest)
         self._request(CMD_SYMLINK, source, dest)
 
     def chmod(self, path, mode):
@@ -297,6 +308,7 @@ class SFTPClient (BaseSFTP):
         @param mode: new permissions.
         @type mode: int
         """
+        path = self._adjust_cwd(path)
         attr = SFTPAttributes()
         attr.st_mode = mode
         self._request(CMD_SETSTAT, path, attr)
@@ -315,6 +327,7 @@ class SFTPClient (BaseSFTP):
         @param gid: new group id
         @type gid: int
         """
+        path = self._adjust_cwd(path)
         attr = SFTPAttributes()
         attr.st_uid, attr.st_gid = uid, gid
         self._request(CMD_SETSTAT, path, attr)
@@ -334,6 +347,7 @@ class SFTPClient (BaseSFTP):
             standard internet epoch time (seconds since 01 January 1970 GMT).
         @type times: tuple of int
         """
+        path = self._adjust_cwd(path)
         if times is None:
             times = (time.time(), time.time())
         attr = SFTPAttributes()
@@ -351,6 +365,7 @@ class SFTPClient (BaseSFTP):
         @return: target path.
         @rtype: str
         """
+        path = self._adjust_cwd(path)
         t, msg = self._request(CMD_READLINK, path)
         if t != CMD_NAME:
             raise SFTPError('Expected name response')
@@ -372,7 +387,10 @@ class SFTPClient (BaseSFTP):
         @type path: str
         @return: normalized form of the given path.
         @rtype: str
+        
+        @raise IOError: if the path can't be resolved on the server
         """
+        path = self._adjust_cwd(path)
         t, msg = self._request(CMD_REALPATH, path)
         if t != CMD_NAME:
             raise SFTPError('Expected name response')
@@ -380,6 +398,36 @@ class SFTPClient (BaseSFTP):
         if count != 1:
             raise SFTPError('Realpath returned %d results' % count)
         return msg.get_string()
+    
+    def chdir(self, path):
+        """
+        Change the "current directory" of this SFTP session.  Since SFTP
+        doesn't really have the concept of a current working directory, this
+        is emulated by paramiko.  Once you use this method to set a working
+        directory, all operations on this SFTPClient object will be relative
+        to that path.
+        
+        @param path: new current working directory
+        @type path: str
+        
+        @raise IOError: if the requested path doesn't exist on the server
+        
+        @since: 1.4
+        """
+        self._cwd = self.normalize(path)
+    
+    def getcwd(self):
+        """
+        Return the "current working directory" for this SFTP session, as
+        emulated by paramiko.  If no directory has been set with L{chdir},
+        this method will return C{None}.
+        
+        @return: the current working directory on the server, or C{None}
+        @rtype: str
+        
+        @since: 1.4
+        """
+        return self._cwd
 
 
     ###  internals...
@@ -422,6 +470,18 @@ class SFTPClient (BaseSFTP):
             raise EOFError(text)
         else:
             raise IOError(text)
+    
+    def _adjust_cwd(self, path):
+        """
+        Return an adjusted path if we're emulating a "current working
+        directory" for the server.
+        """
+        if self._cwd is None:
+            return path
+        if (len(path) > 0) and (path[0] == '/'):
+            # absolute path
+            return path
+        return self._cwd + '/' + path
 
 
 class SFTP (SFTPClient):
