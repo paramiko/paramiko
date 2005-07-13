@@ -132,7 +132,7 @@ class ModulusPack (object):
         # if that failed, find greatest bitsize >= min
         if good == -1:
             for b in bitsizes:
-                if (b >= min) and (b < max) and  (b > good):
+                if (b >= min) and (b < max) and (b > good):
                     good = b
         if good == -1:
             # their entire (min, max) range has no intersection with our range.
