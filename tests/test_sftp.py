@@ -540,3 +540,32 @@ class SFTPTest (unittest.TestCase):
             except:
                 pass
 
+    def test_J_get_put(self):
+        """
+        verify that get/put work.
+        """
+        import os, warnings
+        warnings.filterwarnings('ignore', 'tempnam.*')
+        
+        localname = os.tempnam()
+        text = 'All I wanted was a plastic bunny rabbit.\n'
+        f = open(localname, 'w')
+        f.write(text)
+        f.close()
+        sftp.put(localname, FOLDER + '/bunny.txt')
+        
+        f = sftp.open(FOLDER + '/bunny.txt', 'r')
+        self.assertEquals(text, f.read(128))
+        f.close()
+        
+        os.unlink(localname)
+        localname = os.tempnam()
+        sftp.get(FOLDER + '/bunny.txt', localname)
+        
+        f = open(localname, 'r')
+        self.assertEquals(text, f.read(128))
+        f.close()
+        
+        os.unlink(localname)
+        sftp.unlink(FOLDER + '/bunny.txt')
+        

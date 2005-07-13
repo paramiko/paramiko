@@ -56,6 +56,9 @@ class BufferedFile (object):
         # (these may be different because we buffer for line reading)
         self._pos = self._realpos = 0
 
+    def __del__(self):
+        self.close()
+        
     def __iter__(self):
         """
         Returns an iterator that can be used to iterate over the lines in this

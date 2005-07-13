@@ -20,6 +20,7 @@
 Client-mode SFTP support.
 """
 
+import os
 from sftp import *
 from sftp_attr import SFTPAttributes
 from sftp_file import SFTPFile
@@ -428,6 +429,62 @@ class SFTPClient (BaseSFTP):
         @since: 1.4
         """
         return self._cwd
+    
+    def put(self, localpath, remotepath):
+        """
+        Copy a local file (C{localpath}) to the SFTP server as C{remotepath}.
+        Any exception raised by operations will be passed through.  This
+        method is primarily provided as a convenience.
+        
+        @param localpath: the local file to copy
+        @type localpath: str
+        @param remotepath: the destination path on the SFTP server
+        @type remotepath: str
+        
+        @since: 1.4
+        """
+        fl = file(localpath, 'rb')
+        fr = self.file(remotepath, 'wb')
+        size = 0
+        while True:
+            data = fl.read(16384)
+            if len(data) == 0:
+                break
+            fr.write(data)
+            size += len(data)
+        fl.close()
+        fr.close()
+        s = self.stat(remotepath)
+        if s.st_size != size:
+            raise IOError('size mismatch in put!  %d != %d' % (s.st_size, size))
+    
+    def get(self, remotepath, localpath):
+        """
+        Copy a remote file (C{remotepath}) from the SFTP server to the local
+        host as C{localpath}.  Any exception raised by operations will be
+        passed through.  This method is primarily provided as a convenience.
+        
+        @param remotepath: the remote file to copy
+        @type remotepath: str
+        @param localpath: the destination path on the local host
+        @type localpath: str
+        
+        @since: 1.4
+        """
+        fr = self.file(remotepath, 'rb')
+        fl = file(localpath, 'wb')
+        size = 0
+        while True:
+            data = fr.read(16384)
+            if len(data) == 0:
+                break
+            fl.write(data)
+            size += len(data)
+        fl.close()
+        fr.close()
+        s = os.stat(localpath)
+        if s.st_size != size:
+            raise IOError('size mismatch in get!  %d != %d' % (s.st_size, size))
 
 
     ###  internals...

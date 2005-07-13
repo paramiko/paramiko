@@ -43,7 +43,14 @@ class SFTPFile (BufferedFile):
 
     def close(self):
         BufferedFile.close(self)
-        self.sftp._request(CMD_CLOSE, self.handle)
+        try:
+            self.sftp._request(CMD_CLOSE, self.handle)
+        except EOFError:
+            # may have outlived the Transport connection
+            pass
+        except IOError:
+            # may have outlived the Transport connection
+            pass
 
     def _read(self, size):
         size = min(size, self.MAX_REQUEST_SIZE)
