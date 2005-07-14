@@ -411,8 +411,12 @@ class TransportTest (unittest.TestCase):
         
         schan.send('hello\n')
         
-        # something should be ready now
-        r, w, e = select.select([chan], [], [], 0.1)
+        # something should be ready now (give it 1 second to appear)
+        for i in range(10):
+            r, w, e = select.select([chan], [], [], 0.1)
+            if chan in r:
+                break
+            time.sleep(0.1)
         self.assertEquals([chan], r)
         self.assertEquals([], w)
         self.assertEquals([], e)
@@ -425,6 +429,17 @@ class TransportTest (unittest.TestCase):
         self.assertEquals([], w)
         self.assertEquals([], e)
 
-        chan.close()
         schan.close()
         
+        # detect eof?
+        for i in range(10):
+            r, w, e = select.select([chan], [], [], 0.1)
+            if chan in r:
+                break
+            time.sleep(0.1)
+        self.assertEquals([chan], r)
+        self.assertEquals([], w)
+        self.assertEquals([], e)
+        self.assertEquals('', chan.recv(16))
+        
+        chan.close()
