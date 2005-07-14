@@ -175,9 +175,9 @@ def generate_key_bytes(hashclass, salt, key, nbytes):
 def load_host_keys(filename):
     """
     Read a file of known SSH host keys, in the format used by openssh, and
-    return a compound dict of C{hostname -> keytype ->} L{PKey}.  The hostname
-    may be an IP address or DNS name.  The keytype will be either C{"ssh-rsa"}
-    or C{"ssh-dss"}.
+    return a compound dict of C{hostname -> keytype ->} L{PKey <paramiko.pkey.PKey>}.
+    The hostname may be an IP address or DNS name.  The keytype will be either
+    C{"ssh-rsa"} or C{"ssh-dss"}.
     
     This type of file unfortunately doesn't exist on Windows, but on posix,
     it will usually be stored in C{os.path.expanduser("~/.ssh/known_hosts")}.
@@ -185,7 +185,7 @@ def load_host_keys(filename):
     @param filename: name of the file to read host keys from
     @type filename: str
     @return: dict of host keys, indexed by hostname and then keytype
-    @rtype: dict(hostname, dict(keytype, L{PKey}))
+    @rtype: dict(hostname, dict(keytype, L{PKey <paramiko.pkey.PKey>}))
     """
     import base64
     from rsakey import RSAKey
