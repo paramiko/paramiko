@@ -76,7 +76,7 @@ class SFTPFile (BufferedFile):
 
         @see: L{Channel.settimeout}
         @param timeout: seconds to wait for a pending read/write operation
-        before raising C{socket.timeout}, or C{None} for no timeout
+            before raising C{socket.timeout}, or C{None} for no timeout
         @type timeout: float
         """
         self.sftp.sock.settimeout(timeout)
@@ -98,7 +98,7 @@ class SFTPFile (BufferedFile):
 
         @see: L{Channel.setblocking}
         @param blocking: 0 to set non-blocking mode; non-0 to set blocking
-        mode.
+            mode.
         @type blocking: int
         """
         self.sftp.sock.setblocking(blocking)
