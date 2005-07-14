@@ -100,7 +100,7 @@ class Message (object):
         an int, string, etc.  Just the raw bytes are returned.
 
         @return: a string of the next C{n} bytes of the Message, or a string
-        of C{n} zero bytes, if there aren't C{n} bytes remaining.
+            of C{n} zero bytes, if there aren't C{n} bytes remaining.
         @rtype: string
         """
         b = self.packet.read(n)
@@ -114,7 +114,7 @@ class Message (object):
         is equivalent to L{get_bytes(1)<get_bytes>}.
 
         @return: the next byte of the Message, or C{'\000'} if there aren't
-        any bytes remaining.
+            any bytes remaining.
         @rtype: string
         """
         return self.get_bytes(1)
