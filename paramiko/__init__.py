@@ -65,7 +65,7 @@ __license__ = "GNU Lesser General Public License (LGPL)"
 
 
 import transport, auth_transport, channel, rsakey, dsskey, message
-import ssh_exception, file, packet, agent, server
+import ssh_exception, file, packet, agent, server, util
 import sftp_client, sftp_attr, sftp_handle, sftp_server, sftp_si
 
 randpool = transport.randpool
@@ -126,6 +126,7 @@ __all__ = [ 'Transport',
             'pkey',
             'message',
             'ssh_exception',
+            'sftp',
             'sftp_client',
             'sftp_server',
             'sftp_attr',

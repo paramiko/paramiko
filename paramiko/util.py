@@ -172,6 +172,46 @@ def generate_key_bytes(hashclass, salt, key, nbytes):
         nbytes -= size
     return keydata
 
+def load_host_keys(filename):
+    """
+    Read a file of known SSH host keys, in the format used by openssh, and
+    return a compound dict of C{hostname -> keytype ->} L{PKey}.  The hostname
+    may be an IP address or DNS name.  The keytype will be either C{"ssh-rsa"}
+    or C{"ssh-dss"}.
+    
+    This type of file unfortunately doesn't exist on Windows, but on posix,
+    it will usually be stored in C{os.path.expanduser("~/.ssh/known_hosts")}.
+    
+    @param filename: name of the file to read host keys from
+    @type filename: str
+    @return: dict of host keys, indexed by hostname and then keytype
+    @rtype: dict(hostname, dict(keytype, L{PKey}))
+    """
+    import base64
+    from rsakey import RSAKey
+    from dsskey import DSSKey
+    
+    keys = {}
+    f = file(filename, 'r')
+    for line in f:
+        line = line.strip()
+        if (len(line) == 0) or (line[0] == '#'):
+            continue
+        keylist = line.split(' ')
+        if len(keylist) != 3:
+            continue
+        hostlist, keytype, key = keylist
+        hosts = hostlist.split(',')
+        for host in hosts:
+            if not keys.has_key(host):
+                keys[host] = {}
+            if keytype == 'ssh-rsa':
+                keys[host][keytype] = RSAKey(data=base64.decodestring(key))
+            elif keytype == 'ssh-dss':
+                keys[host][keytype] = DSSKey(data=base64.decodestring(key))
+    f.close()
+    return keys
+
 def mod_inverse(x, m):
     # it's crazy how small python can make this function.
     u1, u2, u3 = 1, 0, m

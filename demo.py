@@ -24,32 +24,6 @@ import paramiko
 
 #####   utility functions
 
-def load_host_keys():
-    # this file won't exist on windows, but windows doesn't have a standard
-    # location for this file anyway.
-    filename = os.path.expanduser('~/.ssh/known_hosts')
-    keys = {}
-    try:
-        f = open(filename, 'r')
-    except Exception, e:
-        print '*** Unable to open host keys file (%s)' % filename
-        return
-    for line in f:
-        keylist = line.split(' ')
-        if len(keylist) != 3:
-            continue
-        hostlist, keytype, key = keylist
-        hosts = hostlist.split(',')
-        for host in hosts:
-            if not keys.has_key(host):
-                keys[host] = {}
-            if keytype == 'ssh-rsa':
-                keys[host][keytype] = paramiko.RSAKey(data=base64.decodestring(key))
-            elif keytype == 'ssh-dss':
-                keys[host][keytype] = paramiko.DSSKey(data=base64.decodestring(key))
-    f.close()
-    return keys
-
 def agent_auth(username, t, event):
     agent = paramiko.Agent()
     agent_keys = agent.get_keys()
@@ -137,7 +111,12 @@ try:
         sys.exit(1)
     # print repr(t)
 
-    keys = load_host_keys()
+    try:
+        keys = paramiko.util.load_host_keys(os.path.expanduser('~/.ssh/known_hosts'))
+    except IOError:
+        print '*** Unable to open host keys file'
+        keys = {}
+
     key = t.get_remote_server_key()
     if not keys.has_key(hostname):
         print '*** WARNING: Unknown host key!'
