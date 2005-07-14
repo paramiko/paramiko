@@ -87,7 +87,7 @@ class Channel (object):
         self.event = threading.Event()
         self.combine_stderr = False
         self.exit_status = -1
-
+    
     def __repr__(self):
         """
         Return a string representation of this object, for debugging.
@@ -454,24 +454,25 @@ class Channel (object):
         """
         Close the channel.  All future read/write operations on the channel
         will fail.  The remote end will receive no more data (after queued data
-        is flushed).  Channels are automatically closed when they are garbage-
-        collected, or when their L{Transport} is closed.
+        is flushed).  Channels are automatically closed when their L{Transport}
+        is closed.
+        
+        Note that because of peculiarities with the way python's garbage
+        collection works on cycles, channels will B{not} be automatically
+        closed by the garbage collector.
         """
         self.lock.acquire()
         try:
             if not self.active or self.closed:
                 return
-            try:
-                self._send_eof()
-                m = Message()
-                m.add_byte(chr(MSG_CHANNEL_CLOSE))
-                m.add_int(self.remote_chanid)
-                self.transport._send_user_message(m)
-            except EOFError:
-                pass
-            self._set_closed()
-            # can't unlink from the Transport yet -- the remote side may still
-            # try to send meta-data (exit-status, etc)
+            self._close_internal()
+
+            # only close the pipe when the user explicitly closes the channel.
+            # otherwise they will get unpleasant surprises.
+            if self.pipe is not None:
+                print 'closing pipe!'
+                self.pipe.close()
+                self.pipe = None
         finally:
             self.lock.release()
 
@@ -862,7 +863,11 @@ class Channel (object):
         return
 
     def _request_failed(self, m):
-        self.close()
+        self.lock.acquire()
+        try:
+            self._close_internal()
+        finally:
+            self.lock.release()
 
     def _feed(self, m):
         if type(m) is str:
@@ -980,20 +985,16 @@ class Channel (object):
                 self.in_buffer_cv.notifyAll()
                 self.in_stderr_buffer_cv.notifyAll()
                 if self.pipe is not None:
-                    self.pipe.close()
-                    self.pipe = None
+                    self.pipe.set()
         finally:
             self.lock.release()
         self._log(DEBUG, 'EOF received')
 
     def _handle_close(self, m):
-        self.close()
         self.lock.acquire()
         try:
+            self._close_internal()
             self.transport._unlink_channel(self.chanid)
-            if self.pipe is not None:
-                self.pipe.close()
-                self.pipe = None
         finally:
             self.lock.release()
 
@@ -1022,6 +1023,22 @@ class Channel (object):
         self.eof_sent = True
         self._log(DEBUG, 'EOF sent')
         return
+
+    def _close_internal(self):
+        # you are holding the lock.
+        if not self.active or self.closed:
+            return
+        try:
+            self._send_eof()
+            m = Message()
+            m.add_byte(chr(MSG_CHANNEL_CLOSE))
+            m.add_int(self.remote_chanid)
+            self.transport._send_user_message(m)
+        except EOFError:
+            pass
+        self._set_closed()
+        # can't unlink from the Transport yet -- the remote side may still
+        # try to send meta-data (exit-status, etc)
 
     def _unlink(self):
         # server connection could die before we become active: still signal the close!
