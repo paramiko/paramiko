@@ -27,8 +27,8 @@ import socket
 
 
 def make_pipe ():
-#    if sys.platform[:3] != 'win':
-#        return PosixPipe()
+    if sys.platform[:3] != 'win':
+        return PosixPipe()
     return WindowsPipe()
 
 
