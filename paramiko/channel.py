@@ -470,7 +470,6 @@ class Channel (object):
             # only close the pipe when the user explicitly closes the channel.
             # otherwise they will get unpleasant surprises.
             if self.pipe is not None:
-                print 'closing pipe!'
                 self.pipe.close()
                 self.pipe = None
         finally:
