@@ -118,6 +118,7 @@ __all__ = [ 'Transport',
             'SFTPServerInterface'
             'ServerInterface',
             'BufferedFile',
+            'Agent',
             'transport',
             'auth_transport',
             'channel',
@@ -135,4 +136,5 @@ __all__ = [ 'Transport',
             'sftp_handle',
             'server',
             'file',
+            'agent',
             'util' ]
