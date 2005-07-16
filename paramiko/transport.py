@@ -287,10 +287,15 @@ class BaseTransport (threading.Thread):
         """
         Negotiate a new SSH2 session as a client.  This is the first step after
         creating a new L{Transport}.  A separate thread is created for protocol
-        negotiation, so this method returns immediately.
+        negotiation.
         
-        When negotiation is done (successful or not), the given C{Event} will
+        If an event is passed in, this method returns immediately.  When
+        negotiation is done (successful or not), the given C{Event} will
         be triggered.  On failure, L{is_active} will return C{False}.
+        
+        (Since 1.4) If C{event} is C{None}, this method will not return until
+        negotation is done.  On success, the method returns normally.
+        Otherwise an SSHException is raised.
 
         After a successful negotiation, you will usually want to authenticate,
         calling L{auth_password <Transport.auth_password>} or
@@ -302,22 +307,46 @@ class BaseTransport (threading.Thread):
             you should no longer directly read from or write to the original
             socket object.
 
-        @param event: an event to trigger when negotiation is complete.
+        @param event: an event to trigger when negotiation is complete
+            (optional)
         @type event: threading.Event
+
+        @raise SSHException: if negotiation fails (and no C{event} was passed
+            in)
         """
-        self.completion_event = event
         self.active = True
+        if event is not None:
+            # async, return immediately and let the app poll for completion
+            self.completion_event = event
+            self.start()
+            return
+
+        # synchronous, wait for a result
+        self.completion_event = event = threading.Event()
         self.start()
+        while True:
+            event.wait(0.1)
+            if not self.active:
+                e = self.get_exception()
+                if e is not None:
+                    raise e
+                raise SSHException('Negotiation failed.')
+            if event.isSet():
+                break
 
     def start_server(self, event=None, server=None):
         """
         Negotiate a new SSH2 session as a server.  This is the first step after
         creating a new L{Transport} and setting up your server host key(s).  A
-        separate thread is created for protocol negotiation, so this method
-        returns immediately.
-
-        When negotiation is done (successful or not), the given C{Event} will
+        separate thread is created for protocol negotiation.
+        
+        If an event is passed in, this method returns immediately.  When
+        negotiation is done (successful or not), the given C{Event} will
         be triggered.  On failure, L{is_active} will return C{False}.
+        
+        (Since 1.4) If C{event} is C{None}, this method will not return until
+        negotation is done.  On success, the method returns normally.
+        Otherwise an SSHException is raised.
 
         After a successful negotiation, the client will need to authenticate.
         Override the methods
@@ -341,14 +370,33 @@ class BaseTransport (threading.Thread):
         @param server: an object used to perform authentication and create
             L{Channel}s.
         @type server: L{server.ServerInterface}
+
+        @raise SSHException: if negotiation fails (and no C{event} was passed
+            in)
         """
         if server is None:
             server = ServerInterface()
         self.server_mode = True
         self.server_object = server
-        self.completion_event = event
         self.active = True
+        if event is not None:
+            # async, return immediately and let the app poll for completion
+            self.completion_event = event
+            self.start()
+            return
+
+        # synchronous, wait for a result
+        self.completion_event = event = threading.Event()
         self.start()
+        while True:
+            event.wait(0.1)
+            if not self.active:
+                e = self.get_exception()
+                if e is not None:
+                    raise e
+                raise SSHException('Negotiation failed.')
+            if event.isSet():
+                break
 
     def add_server_key(self, key):
         """
@@ -718,17 +766,7 @@ class BaseTransport (threading.Thread):
         if hostkey is not None:
             self._preferred_keys = [ hostkey.get_name() ]
 
-        event = threading.Event()
-        self.start_client(event)
-        while True:
-            event.wait(0.1)
-            if not self.active:
-                e = self.get_exception()
-                if e is not None:
-                    raise e
-                raise SSHException('Negotiation failed.')
-            if event.isSet():
-                break
+        self.start_client()
 
         # check host key if we were given one
         if (hostkey is not None):
