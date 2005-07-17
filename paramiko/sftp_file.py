@@ -41,6 +41,9 @@ class SFTPFile (BufferedFile):
         self.handle = handle
         BufferedFile._set_mode(self, mode, bufsize)
 
+    def __del__(self):
+        self.close()
+        
     def close(self):
         BufferedFile.close(self)
         try:

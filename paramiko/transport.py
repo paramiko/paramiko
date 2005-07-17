@@ -21,6 +21,7 @@ L{BaseTransport} handles the core SSH2 protocol.
 """
 
 import sys, os, string, threading, socket, struct, time
+import weakref
 
 from common import *
 from ssh_exception import SSHException
@@ -205,7 +206,7 @@ class BaseTransport (threading.Thread):
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.connect((hostname, port))
         # okay, normal socket-ish flow here...
-        threading.Thread.__init__(self, target=self._run)
+        threading.Thread.__init__(self)
         self.randpool = randpool
         self.sock = sock
         # Python < 2.3 doesn't have the settimeout method - RogerB
@@ -229,7 +230,7 @@ class BaseTransport (threading.Thread):
         self.initial_kex_done = False
         self.in_kex = False
         self.lock = threading.Lock()    # synchronization (always higher level than write_lock)
-        self.channels = { }             # (id -> Channel)
+        self.channels = weakref.WeakValueDictionary()   # (id -> Channel)
         self.channel_events = { }       # (id -> Event)
         self.channel_counter = 1
         self.window_size = 65536
@@ -248,6 +249,9 @@ class BaseTransport (threading.Thread):
         self.server_accepts = [ ]
         self.server_accept_cv = threading.Condition(self.lock)
         self.subsystem_table = { }
+
+    def __del__(self):
+        self.close()
 
     def __repr__(self):
         """
@@ -969,7 +973,12 @@ class BaseTransport (threading.Thread):
             raise SSHException('Unknown client cipher ' + name)
         return self._cipher_info[name]['class'].new(key, self._cipher_info[name]['mode'], iv)
 
-    def _run(self):
+    def run(self):
+        # (use the exposed "run" method, because if we specify a thread target
+        # of a private method, threading.Thread will keep a reference to it
+        # indefinitely, creating a GC cycle and not letting Transport ever be
+        # GC'd.  it's a bug in Thread.)
+        
         # active=True occurs before the thread is launched, to avoid a race
         _active_threads.append(self)
         if self.server_mode:
@@ -1281,6 +1290,7 @@ class BaseTransport (threading.Thread):
         # can also free a bunch of stuff here
         self.local_kex_init = self.remote_kex_init = None
         self.K = None
+        self.kex_engine = None
         if not self.initial_kex_done:
             # this was the first key exchange
             self.initial_kex_done = True

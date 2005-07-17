@@ -88,6 +88,9 @@ class Channel (object):
         self.combine_stderr = False
         self.exit_status = -1
     
+    def __del__(self):
+        self.close()
+        
     def __repr__(self):
         """
         Return a string representation of this object, for debugging.
@@ -455,11 +458,7 @@ class Channel (object):
         Close the channel.  All future read/write operations on the channel
         will fail.  The remote end will receive no more data (after queued data
         is flushed).  Channels are automatically closed when their L{Transport}
-        is closed.
-        
-        Note that because of peculiarities with the way python's garbage
-        collection works on cycles, channels will B{not} be automatically
-        closed by the garbage collector.
+        is closed or when they are garbage collected.
         """
         self.lock.acquire()
         try:
