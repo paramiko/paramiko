@@ -26,6 +26,14 @@ from sftp_attr import SFTPAttributes
 from sftp_file import SFTPFile
 
 
+def _to_unicode(s):
+    "if a str is not ascii, decode its utf8 into unicode"
+    try:
+        return s.encode('ascii')
+    except:
+        return s.decode('utf-8')
+
+
 class SFTPClient (BaseSFTP):
     """
     SFTP client object.  C{SFTPClient} is used to open an sftp session across
@@ -127,8 +135,8 @@ class SFTPClient (BaseSFTP):
                 raise SFTPError('Expected name response')
             count = msg.get_int()
             for i in range(count):
-                filename = msg.get_string()
-                longname = msg.get_string()
+                filename = _to_unicode(msg.get_string())
+                longname = _to_unicode(msg.get_string())
                 attr = SFTPAttributes._from_msg(msg, filename)
                 if (filename != '.') and (filename != '..'):
                     filelist.append(attr)
@@ -296,6 +304,8 @@ class SFTPClient (BaseSFTP):
         @type dest: string
         """
         dest = self._adjust_cwd(dest)
+        if type(source) is unicode:
+            source = source.encode('utf-8')
         self._request(CMD_SYMLINK, source, dest)
 
     def chmod(self, path, mode):
@@ -375,7 +385,7 @@ class SFTPClient (BaseSFTP):
             return None
         if count != 1:
             raise SFTPError('Readlink returned %d results' % count)
-        return msg.get_string()
+        return _to_unicode(msg.get_string())
 
     def normalize(self, path):
         """
@@ -398,7 +408,7 @@ class SFTPClient (BaseSFTP):
         count = msg.get_int()
         if count != 1:
             raise SFTPError('Realpath returned %d results' % count)
-        return msg.get_string()
+        return _to_unicode(msg.get_string())
     
     def chdir(self, path):
         """
@@ -533,6 +543,8 @@ class SFTPClient (BaseSFTP):
         Return an adjusted path if we're emulating a "current working
         directory" for the server.
         """
+        if type(path) is unicode:
+            path = path.encode('utf-8')
         if self._cwd is None:
             return path
         if (len(path) > 0) and (path[0] == '/'):
