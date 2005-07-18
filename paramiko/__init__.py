@@ -46,7 +46,7 @@ released under the GNU Lesser General Public License (LGPL).
 
 Website: U{http://www.lag.net/paramiko/}
 
-@version: 1.3.1 (nidoran)
+@version: 1.4 (oddish)
 @author: Robey Pointer
 @contact: robey@lag.net
 @license: GNU Lesser General Public License (LGPL)
@@ -59,8 +59,8 @@ if sys.version_info < (2, 2):
 
 
 __author__ = "Robey Pointer <robey@lag.net>"
-__date__ = "28 Jun 2005"
-__version__ = "1.3.1 (nidoran)"
+__date__ = "18 Jul 2005"
+__version__ = "1.4 (oddish)"
 __license__ = "GNU Lesser General Public License (LGPL)"
 
 
