@@ -130,6 +130,60 @@ class SFTPFile (BufferedFile):
         if t != CMD_ATTRS:
             raise SFTPError('Expected attributes')
         return SFTPAttributes._from_msg(msg)
+    
+    def check(self, hash_algorithm, offset=0, length=0, block_size=0):
+        """
+        Ask the server for a hash of a section of this file.  This can be used
+        to verify a successful upload or download, or for various rsync-like
+        operations.
+        
+        The file is hashed from C{offset}, for C{length} bytes.  If C{length}
+        is 0, the remainder of the file is hashed.  Thus, if both C{offset}
+        and C{length} are zero, the entire file is hashed.
+        
+        Normally, C{block_size} will be 0 (the default), and this method will
+        return a byte string representing the requested hash (for example, a
+        string of length 16 for MD5, or 20 for SHA-1).  If a non-zero
+        C{block_size} is given, each chunk of the file (from C{offset} to
+        C{offset + length}) of C{block_size} bytes is computed as a separate
+        hash.  The hash results are all concatenated and returned as a single
+        string.
+        
+        For example, C{check('sha1', 0, 1024, 512)} will return a string of
+        length 40.  The first 20 bytes will be the SHA-1 of the first 512 bytes
+        of the file, and the last 20 bytes will be the SHA-1 of the next 512
+        bytes.
+        
+        @param hash_algorithm: the name of the hash algorithm to use (normally
+            C{"sha1"} or C{"md5"})
+        @type hash_algorithm: str
+        @param offset: offset into the file to begin hashing (0 means to start
+            from the beginning)
+        @type offset: int or long
+        @param length: number of bytes to hash (0 means continue to the end of
+            the file)
+        @type length: int or long
+        @param block_size: number of bytes to hash per result (must not be less
+            than 256; 0 means to compute only one hash of the entire segment)
+        @type block_size: int
+        @return: string of bytes representing the hash of each block,
+            concatenated together
+        @rtype: str
+        
+        @note: Many (most?) servers don't support this extension yet.
+        
+        @raise IOError: if the server doesn't support the "check-file"
+            extension, or possibly doesn't support the hash algorithm
+            requested
+            
+        @since: 1.4
+        """
+        t, msg = self.sftp._request(CMD_EXTENDED, 'check-file', self.handle,
+                                    hash_algorithm, long(offset), long(length), block_size)
+        ext = msg.get_string()
+        alg = msg.get_string()
+        data = msg.get_remainder()
+        return data
 
 
     ###  internals...

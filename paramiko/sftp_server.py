@@ -23,11 +23,19 @@ Server-mode SFTP support.
 """
 
 import os, errno
+from Crypto.Hash import MD5, SHA
 from common import *
 from server import SubsystemHandler
 from sftp import *
 from sftp_si import *
 from sftp_attr import *
+
+
+# known hash algorithms for the "check-file" extension
+_hash_class = {
+    'sha1': SHA,
+    'md5': MD5,
+}
 
 
 class SFTPServer (BaseSFTP, SubsystemHandler):
@@ -204,6 +212,65 @@ class SFTPServer (BaseSFTP, SubsystemHandler):
             attr._pack(msg)
         self._send_packet(CMD_NAME, str(msg))
 
+    def _check_file(self, request_number, msg):
+        # this extension actually comes from v6 protocol, but since it's an
+        # extension, i feel like we can reasonably support it backported.
+        # it's very useful for verifying uploaded files or checking for
+        # rsync-like differences between local and remote files.
+        handle = msg.get_string()
+        alg_list = msg.get_list()
+        start = msg.get_int64()
+        length = msg.get_int64()
+        block_size = msg.get_int()
+        if not self.file_table.has_key(handle):
+            self._send_status(request_number, SFTP_BAD_MESSAGE, 'Invalid handle')
+            return
+        f = self.file_table[handle]
+        for x in alg_list:
+            if x in _hash_class:
+                algname = x
+                alg = _hash_class[x]
+                break
+        else:
+            self._send_status(request_number, SFTP_FAILURE, 'No supported hash types found')
+            return
+        if length == 0:
+            st = f.stat()
+            if not issubclass(type(st), SFTPAttributes):
+                self._send_status(request_number, st, 'Unable to stat file')
+                return
+            length = st.st_size - start
+        if block_size == 0:
+            block_size = length
+        if block_size < 256:
+            self._send_status(request_number, SFTP_FAILURE, 'Block size too small')
+            return
+
+        sum = ''
+        offset = start
+        while offset < start + length:
+            blocklen = min(block_size, start + length - offset)
+            # don't try to read more than about 64KB at a time
+            chunklen = min(blocklen, 65536)
+            count = 0
+            hash = alg.new()
+            while count < blocklen:
+                data = f.read(offset, chunklen)
+                if not type(data) is str:
+                    self._send_status(request_number, data, 'Unable to hash file')
+                    return
+                hash.update(data)
+                count += len(data)
+                offset += count
+            sum += hash.digest()
+
+        msg = Message()
+        msg.add_int(request_number)
+        msg.add_string('check-file')
+        msg.add_string(algname)
+        msg.add_bytes(sum)
+        self._send_packet(CMD_EXTENDED_REPLY, str(msg))
+    
     def _convert_pflags(self, pflags):
         "convert SFTP-style open() flags to python's os.open() flags"
         if (pflags & SFTP_FLAG_READ) and (pflags & SFTP_FLAG_WRITE):
@@ -340,6 +407,12 @@ class SFTPServer (BaseSFTP, SubsystemHandler):
             path = msg.get_string()
             rpath = self.server.canonicalize(path)
             self._response(request_number, CMD_NAME, 1, rpath, '', SFTPAttributes())
+        elif t == CMD_EXTENDED:
+            tag = msg.get_string()
+            if tag == 'check-file':
+                self._check_file(request_number, msg)
+            else:
+                send._send_status(request_number, SFTP_OP_UNSUPPORTED)
         else:
             self._send_status(request_number, SFTP_OP_UNSUPPORTED)
 

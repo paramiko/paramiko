@@ -238,12 +238,11 @@ v0.9 FEAROW
 
 * ctr forms of ciphers are missing (blowfish-ctr, aes128-ctr, aes256-ctr)
 
-* could channels have a __del__ if i used weak pointers?
-
-* cool sftp extension: retreive MD5 or SHA1 of section of a file
 * SFTPClient.from_url('sftp://robey@arch.lag.net/folder/filename', 'r+')
     keep cache of opened sftp clients by (host, port, username)
     how to auth?  how to check host key?
+    ... maybe just a util function that parses the url and returns components
+* sftp protocol 6 support (ugh....) -- once it settles down more
 
 * why are big files so slow to transfer?  profiling needed...
 * what is psyco?

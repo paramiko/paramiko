@@ -565,7 +565,28 @@ class SFTPTest (unittest.TestCase):
         f = open(localname, 'r')
         self.assertEquals(text, f.read(128))
         f.close()
-        
+    
         os.unlink(localname)
         sftp.unlink(FOLDER + '/bunny.txt')
+
+    def test_K_check(self):
+        """
+        verify that file.check() works against our own server.
+        (it's an sftp extension that we support, and may be the only ones who
+        support it.)
+        """
+        f = sftp.open(FOLDER + '/kitty.txt', 'w')
+        f.write('here kitty kitty' * 64)
+        f.close()
         
+        try:
+            f = sftp.open(FOLDER + '/kitty.txt', 'r')
+            sum = f.check('sha1')
+            self.assertEquals('91059CFC6615941378D413CB5ADAF4C5EB293402', paramiko.util.hexify(sum))
+            sum = f.check('md5', 0, 512)
+            self.assertEquals('93DE4788FCA28D471516963A1FE3856A', paramiko.util.hexify(sum))
+            sum = f.check('md5', 0, 0, 510)
+            self.assertEquals('EB3B45B8CD55A0707D99B177544A319F373183D241432BB2157AB9E46358C4AC90370B5CADE5D90336FC1716F90B36D6',
+                              paramiko.util.hexify(sum))
+        finally:
+            sftp.unlink(FOLDER + '/kitty.txt')

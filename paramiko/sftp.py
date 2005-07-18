@@ -110,7 +110,12 @@ class BaseSFTP (object):
         return version
 
     def _send_server_version(self):
-        self._send_packet(CMD_VERSION, struct.pack('>I', _VERSION))
+        # advertise that we support "check-file"
+        extension_pairs = [ 'check-file', 'md5,sha1' ]
+        msg = Message()
+        msg.add_int(_VERSION)
+        msg.add(*extension_pairs)
+        self._send_packet(CMD_VERSION, str(msg))
         t, data = self._read_packet()
         if t != CMD_INIT:
             raise SFTPError('Incompatible sftp protocol')
