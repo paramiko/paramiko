@@ -433,14 +433,13 @@ class SFTPTest (unittest.TestCase):
     def test_E_big_file(self):
         """
         write a 1MB file, with no linefeeds, using line buffering.
-        FIXME: this is slow!  what causes the slowness?
         """
         global g_big_file_test
         if not g_big_file_test:
             return
         kblob = (1024 * 'x')
         try:
-            f = sftp.open('%s/hongry.txt' % FOLDER, 'w', 1)
+            f = sftp.open('%s/hongry.txt' % FOLDER, 'w')
             for n in range(1024):
                 f.write(kblob)
                 if n % 128 == 0:

@@ -119,6 +119,7 @@ class KexGex (object):
         pack = self.transport._get_modulus_pack()
         if pack is None:
             raise SSHException('Can\'t do server-side gex with no modulus pack')
+        self.transport._log(DEBUG, 'Picking p (%d <= %d <= %d bits)' % (minbits, preferredbits, maxbits))
         self.g, self.p = pack.get_modulus(minbits, preferredbits, maxbits)
         m = Message()
         m.add_byte(chr(_MSG_KEXDH_GEX_GROUP))
@@ -201,6 +202,3 @@ class KexGex (object):
         self.transport._set_K_H(K, SHA.new(str(hm)).digest())
         self.transport._verify_key(host_key, sig)
         self.transport._activate_outbound()
-
-
-    

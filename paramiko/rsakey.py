@@ -89,7 +89,7 @@ class RSAKey (PKey):
         if msg.get_string() != 'ssh-rsa':
             return False
         sig = util.inflate_long(msg.get_string(), True)
-        # verify the signature by SHA'ing the data and encrypting it using theå
+        # verify the signature by SHA'ing the data and encrypting it using the
         # public key.  some wackiness ensues where we "pkcs1imify" the 20-byte
         # hash into a string as long as the RSA key.
         hash = util.inflate_long(self._pkcs1imify(SHA.new(data).digest()), True)

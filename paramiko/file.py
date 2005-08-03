@@ -321,7 +321,7 @@ class BufferedFile (object):
             return
         # even if we're line buffering, if the buffer has grown past the
         # buffer size, force a flush.
-        if len(self._wbuffer.getvalue()) >= self._bufsize:
+        if self._wbuffer.tell() >= self._bufsize:
             self.flush()
         return
 
