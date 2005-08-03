@@ -460,7 +460,7 @@ class SFTPClient (BaseSFTP):
         fr = self.file(remotepath, 'wb')
         size = 0
         while True:
-            data = fl.read(16384)
+            data = fl.read(32768)
             if len(data) == 0:
                 break
             fr.write(data)
@@ -488,7 +488,7 @@ class SFTPClient (BaseSFTP):
         fl = file(localpath, 'wb')
         size = 0
         while True:
-            data = fr.read(16384)
+            data = fr.read(32768)
             if len(data) == 0:
                 break
             fl.write(data)
