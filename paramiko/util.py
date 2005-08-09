@@ -226,21 +226,21 @@ def mod_inverse(x, m):
         u2 += m
     return u2
 
-g_thread_ids = {}
-g_thread_counter = 0
-g_thread_lock = threading.Lock()
+_g_thread_ids = {}
+_g_thread_counter = 0
+_g_thread_lock = threading.Lock()
 def get_thread_id():
-    global g_thread_ids, g_thread_counter
+    global _g_thread_ids, _g_thread_counter, _g_thread_lock
     tid = id(threading.currentThread())
     try:
-        return g_thread_ids[tid]
+        return _g_thread_ids[tid]
     except KeyError:
-        g_thread_lock.acquire()
+        _g_thread_lock.acquire()
         try:
-            g_thread_counter += 1
-            ret = g_thread_ids[tid] = g_thread_counter
+            _g_thread_counter += 1
+            ret = _g_thread_ids[tid] = _g_thread_counter
         finally:
-            g_thread_lock.release()
+            _g_thread_lock.release()
         return ret
 
 def log_to_file(filename, level=DEBUG):
