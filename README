@@ -248,6 +248,13 @@ v0.9 FEAROW
 
 ***  MISSING LINKS
 
+* keyboard-interactive auth
+* host-based auth (yuck!)
+* move auth_transport to be a side plugin like in jaramiko
+* support compression
+* SFTP pipelining
+* SFTP implicit file locking?
+
 * ctr forms of ciphers are missing (blowfish-ctr, aes128-ctr, aes256-ctr)
 * SFTP url parsing function to return (user, pass, host, port, path)
   components
