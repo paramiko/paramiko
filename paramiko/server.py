@@ -25,8 +25,6 @@ L{ServerInterface} is an interface to override for server support.
 import threading
 from common import *
 import util
-from transport import BaseTransport
-from auth_transport import Transport
 
 class ServerInterface (object):
     """
@@ -286,7 +284,7 @@ class ServerInterface (object):
         subsystem.  An example of a subsystem is C{sftp}.
 
         The default implementation checks for a subsystem handler assigned via
-        L{Transport.set_subsystem_handler <BaseTransport.set_subsystem_handler>}.
+        L{Transport.set_subsystem_handler}.
         If one has been set, the handler is invoked and this method returns
         C{True}.  Otherwise it returns C{False}.
 
@@ -338,7 +336,7 @@ class SubsystemHandler (threading.Thread):
     """
     Handler for a subsytem in server mode.  If you create a subclass of this
     class and pass it to
-    L{Transport.set_subsystem_handler <BaseTransport.set_subsystem_handler>},
+    L{Transport.set_subsystem_handler},
     an object of this
     class will be created for each request for this subsystem.  Each new object
     will be executed within its own new thread by calling L{start_subsystem}.
@@ -409,7 +407,7 @@ class SubsystemHandler (threading.Thread):
 
         @note: It is the responsibility of this method to exit if the
             underlying L{Transport} is closed.  This can be done by checking
-            L{Transport.is_active <BaseTransport.is_active>} or noticing an EOF
+            L{Transport.is_active} or noticing an EOF
             on the L{Channel}.  If this method loops forever without checking
             for this case, your python interpreter may refuse to exit because
             this thread will still be running.

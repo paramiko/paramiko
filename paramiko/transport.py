@@ -17,7 +17,7 @@
 # 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
 
 """
-L{BaseTransport} handles the core SSH2 protocol.
+L{Transport} handles the core SSH2 protocol.
 """
 
 import sys, os, string, threading, socket, struct, time
@@ -35,6 +35,7 @@ from dsskey import DSSKey
 from kex_group1 import KexGroup1
 from kex_gex import KexGex
 from primes import ModulusPack
+from auth_handler import AuthHandler
 
 # these come from PyCrypt
 #     http://www.amk.ca/python/writing/pycrypt/
@@ -124,12 +125,14 @@ class SecurityOptions (object):
     kex = property(_get_kex, _set_kex, None, "Key exchange algorithms")
 
 
-class BaseTransport (threading.Thread):
+class Transport (threading.Thread):
     """
-    Handles protocol negotiation, key exchange, encryption, and the creation
-    of channels across an SSH session.  Basically everything but authentication
-    is done here.
+    An SSH Transport attaches to a stream (usually a socket), negotiates an
+    encrypted session, authenticates, and then creates stream tunnels, called
+    L{Channel}s, across the session.  Multiple channels can be multiplexed
+    across a single session (and often are, in the case of port forwardings).
     """
+
     _PROTO_ID = '2.0'
     _CLIENT_ID = 'paramiko_1.4'
 
@@ -240,6 +243,7 @@ class BaseTransport (threading.Thread):
         self.log_name = 'paramiko.transport'
         self.logger = util.get_logger(self.log_name)
         self.packetizer.set_log(self.logger)
+        self.auth_handler = None
         # user-defined event callbacks:
         self.completion_event = None
         # server mode:
@@ -259,17 +263,22 @@ class BaseTransport (threading.Thread):
 
         @rtype: str
         """
-        out = '<paramiko.BaseTransport at %s' % hex(long(id(self)) & 0xffffffffL)
+        out = '<paramiko.Transport at %s' % hex(long(id(self)) & 0xffffffffL)
         if not self.active:
             out += ' (unconnected)'
         else:
             if self.local_cipher != '':
                 out += ' (cipher %s, %d bits)' % (self.local_cipher,
                                                   self._cipher_info[self.local_cipher]['key-size'] * 8)
-            if len(self.channels) == 1:
-                out += ' (active; 1 open channel)'
+            if self.is_authenticated():
+                if len(self.channels) == 1:
+                    out += ' (active; 1 open channel)'
+                else:
+                    out += ' (active; %d open channels)' % len(self.channels)
+            elif self.initial_kex_done:
+                out += ' (connected; awaiting auth)'
             else:
-                out += ' (active; %d open channels)' % len(self.channels)
+                out += ' (connecting)'
         out += '>'
         return out
 
@@ -464,19 +473,19 @@ class BaseTransport (threading.Thread):
         
         @note: This has no effect when used in client mode.
         """
-        BaseTransport._modulus_pack = ModulusPack(randpool)
+        Transport._modulus_pack = ModulusPack(randpool)
         # places to look for the openssh "moduli" file
         file_list = [ '/etc/ssh/moduli', '/usr/local/etc/moduli' ]
         if filename is not None:
             file_list.insert(0, filename)
         for fn in file_list:
             try:
-                BaseTransport._modulus_pack.read_file(fn)
+                Transport._modulus_pack.read_file(fn)
                 return True
             except IOError:
                 pass
         # none succeeded
-        BaseTransport._modulus_pack = None
+        Transport._modulus_pack = None
         return False
     load_server_moduli = staticmethod(load_server_moduli)
 
@@ -833,6 +842,128 @@ class BaseTransport (threading.Thread):
             self.subsystem_table[name] = (handler, larg, kwarg)
         finally:
             self.lock.release()
+    
+    def is_authenticated(self):
+        """
+        Return true if this session is active and authenticated.
+
+        @return: True if the session is still open and has been authenticated
+            successfully; False if authentication failed and/or the session is
+            closed.
+        @rtype: bool
+        """
+        return self.active and (self.auth_handler is not None) and self.auth_handler.is_authenticated()
+    
+    def get_username(self):
+        """
+        Return the username this connection is authenticated for.  If the
+        session is not authenticated (or authentication failed), this method
+        returns C{None}.
+
+        @return: username that was authenticated, or C{None}.
+        @rtype: string
+
+        @since: fearow
+        """
+        if not self.active or (self.auth_handler is None):
+            return None
+        return self.auth_handler.get_username()
+
+    def auth_password(self, username, password, event=None):
+        """
+        Authenticate to the server using a password.  The username and password
+        are sent over an encrypted link.
+        
+        If an C{event} is passed in, this method will return immediately, and
+        the event will be triggered once authentication succeeds or fails.  On
+        success, L{is_authenticated} will return C{True}.  On failure, you may
+        use L{get_exception} to get more detailed error information.
+
+        Since 1.1, if no event is passed, this method will block until the
+        authentication succeeds or fails.  On failure, an exception is raised.
+        Otherwise, the method simply returns.
+        
+        If the server requires multi-step authentication (which is very rare),
+        this method will return a list of auth types permissible for the next
+        step.  Otherwise, in the normal case, an empty list is returned.
+        
+        @param username: the username to authenticate as
+        @type username: string
+        @param password: the password to authenticate with
+        @type password: string
+        @param event: an event to trigger when the authentication attempt is
+            complete (whether it was successful or not)
+        @type event: threading.Event
+        @return: list of auth types permissible for the next stage of
+            authentication (normally empty)
+        @rtype: list
+        
+        @raise BadAuthenticationType: if password authentication isn't
+            allowed by the server for this user (and no event was passed in)
+        @raise SSHException: if the authentication failed (and no event was
+            passed in)
+        """
+        if (not self.active) or (not self.initial_kex_done):
+            # we should never try to send the password unless we're on a secure link
+            raise SSHException('No existing session')
+        if event is None:
+            my_event = threading.Event()
+        else:
+            my_event = event
+        self.auth_handler = AuthHandler(self)
+        self.auth_handler.auth_password(username, password, my_event)
+        if event is not None:
+            # caller wants to wait for event themselves
+            return []
+        return self.auth_handler.wait_for_response(my_event)
+
+    def auth_publickey(self, username, key, event=None):
+        """
+        Authenticate to the server using a private key.  The key is used to
+        sign data from the server, so it must include the private part.
+        
+        If an C{event} is passed in, this method will return immediately, and
+        the event will be triggered once authentication succeeds or fails.  On
+        success, L{is_authenticated} will return C{True}.  On failure, you may
+        use L{get_exception} to get more detailed error information.
+        
+        Since 1.1, if no event is passed, this method will block until the
+        authentication succeeds or fails.  On failure, an exception is raised.
+        Otherwise, the method simply returns.
+
+        If the server requires multi-step authentication (which is very rare),
+        this method will return a list of auth types permissible for the next
+        step.  Otherwise, in the normal case, an empty list is returned.
+
+        @param username: the username to authenticate as.
+        @type username: string
+        @param key: the private key to authenticate with.
+        @type key: L{PKey <pkey.PKey>}
+        @param event: an event to trigger when the authentication attempt is
+            complete (whether it was successful or not)
+        @type event: threading.Event
+        @return: list of auth types permissible for the next stage of
+            authentication (normally empty).
+        @rtype: list
+        
+        @raise BadAuthenticationType: if public-key authentication isn't
+            allowed by the server for this user (and no event was passed in).
+        @raise SSHException: if the authentication failed (and no event was
+            passed in).
+        """
+        if (not self.active) or (not self.initial_kex_done):
+            # we should never try to authenticate unless we're on a secure link
+            raise SSHException('No existing session')
+        if event is None:
+            my_event = threading.Event()
+        else:
+            my_event = event
+        self.auth_handler = AuthHandler(self)
+        self.auth_handler.auth_publickey(username, key, my_event)
+        if event is not None:
+            # caller wants to wait for event themselves
+            return []
+        return self.auth_handler.wait_for_response(my_event)
 
     def set_log_channel(self, name):
         """
@@ -1023,6 +1154,8 @@ class BaseTransport (threading.Thread):
                         self._log(ERROR, 'Channel request for unknown channel %d' % chanid)
                         self.active = False
                         self.packetizer.close()
+                elif (self.auth_handler is not None) and self.auth_handler._handler_table.has_key(ptype):
+                    self.auth_handler._handler_table[ptype](self.auth_handler, m)
                 else:
                     self._log(WARNING, 'Oops, unhandled type %d' % ptype)
                     msg = Message()
@@ -1056,8 +1189,8 @@ class BaseTransport (threading.Thread):
             self.packetizer.close()
             if self.completion_event != None:
                 self.completion_event.set()
-            if self.auth_event != None:
-                self.auth_event.set()
+            if self.auth_handler is not None:
+                self.auth_handler.abort()
             for event in self.channel_events.values():
                 event.set()
         self.sock.close()
@@ -1291,6 +1424,9 @@ class BaseTransport (threading.Thread):
         self.local_kex_init = self.remote_kex_init = None
         self.K = None
         self.kex_engine = None
+        if self.server_mode and (self.auth_handler is None):
+            # create auth handler for server mode
+            self.auth_handler = AuthHandler(self)
         if not self.initial_kex_done:
             # this was the first key exchange
             self.initial_kex_done = True
@@ -1472,5 +1608,3 @@ class BaseTransport (threading.Thread):
         MSG_CHANNEL_EOF: Channel._handle_eof,
         MSG_CHANNEL_CLOSE: Channel._handle_close,
         }
-
-from server import ServerInterface

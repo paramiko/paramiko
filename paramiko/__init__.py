@@ -27,8 +27,8 @@ protocol also includes the ability to open arbitrary channels to remote
 services across an encrypted tunnel.  (This is how C{sftp} works, for example.)
 
 To use this package, pass a socket (or socket-like object) to a L{Transport},
-and use L{start_server <paramiko.transport.BaseTransport.start_server>} or
-L{start_client <paramiko.transport.BaseTransport.start_client>} to negoatite
+and use L{start_server <Transport.start_server>} or
+L{start_client <Transport.start_client>} to negoatite
 with the remote host as either a server or client.  As a client, you are
 responsible for authenticating using a password or private key, and checking
 the server's host key.  I{(Key signature and verification is done by paramiko,
@@ -64,12 +64,12 @@ __version__ = "1.4 (oddish)"
 __license__ = "GNU Lesser General Public License (LGPL)"
 
 
-import transport, auth_transport, channel, rsakey, dsskey, message
+import transport, auth_handler, channel, rsakey, dsskey, message
 import ssh_exception, file, packet, agent, server, util
 import sftp_client, sftp_attr, sftp_handle, sftp_server, sftp_si
 
-from transport import randpool, SecurityOptions, BaseTransport
-from auth_transport import Transport
+from transport import randpool, SecurityOptions, Transport
+from auth_handler import AuthHandler
 from channel import Channel, ChannelFile
 from ssh_exception import SSHException, PasswordRequiredException, BadAuthenticationType
 from server import ServerInterface, SubsystemHandler
@@ -91,7 +91,7 @@ from pkey import PKey
 # fix module names for epydoc
 for x in [Transport, SecurityOptions, Channel, SFTPServer, SSHException, \
           PasswordRequiredException, BadAuthenticationType, ChannelFile, \
-          SubsystemHandler, BaseTransport, RSAKey, DSSKey, SFTPError, \
+          SubsystemHandler, AuthHandler, RSAKey, DSSKey, SFTPError, \
           SFTP, SFTPClient, SFTPServer, Message, Packetizer, SFTPAttributes, \
           SFTPHandle, SFTPServerInterface, BufferedFile, Agent, AgentKey, \
           PKey, BaseSFTP, SFTPFile, ServerInterface]:
