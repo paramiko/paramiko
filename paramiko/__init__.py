@@ -68,28 +68,34 @@ import transport, auth_transport, channel, rsakey, dsskey, message
 import ssh_exception, file, packet, agent, server, util
 import sftp_client, sftp_attr, sftp_handle, sftp_server, sftp_si
 
-randpool = transport.randpool
-Transport = auth_transport.Transport
-Channel = channel.Channel
-RSAKey = rsakey.RSAKey
-DSSKey = dsskey.DSSKey
-SSHException = ssh_exception.SSHException
-Message = message.Message
-PasswordRequiredException = ssh_exception.PasswordRequiredException
-BadAuthenticationType = ssh_exception.BadAuthenticationType
-SFTP = sftp_client.SFTP
-SFTPClient = sftp_client.SFTPClient
-SFTPServer = sftp_server.SFTPServer
-from sftp import SFTPError
-SFTPAttributes = sftp_attr.SFTPAttributes
-SFTPHandle = sftp_handle.SFTPHandle
-SFTPServerInterface = sftp_si.SFTPServerInterface
-ServerInterface = server.ServerInterface
-SubsystemHandler = server.SubsystemHandler
-SecurityOptions = transport.SecurityOptions
-BufferedFile = file.BufferedFile
-Packetizer = packet.Packetizer
-Agent = agent.Agent
+from transport import randpool, SecurityOptions, BaseTransport
+from auth_transport import Transport
+from channel import Channel, ChannelFile
+from ssh_exception import SSHException, PasswordRequiredException, BadAuthenticationType
+from server import ServerInterface, SubsystemHandler
+from rsakey import RSAKey
+from dsskey import DSSKey
+from sftp import SFTPError, BaseSFTP
+from sftp_client import SFTP, SFTPClient
+from sftp_server import SFTPServer
+from sftp_attr import SFTPAttributes
+from sftp_handle import SFTPHandle
+from sftp_si import SFTPServerInterface
+from sftp_file import SFTPFile
+from message import Message
+from packet import Packetizer
+from file import BufferedFile
+from agent import Agent, AgentKey
+from pkey import PKey
+
+# fix module names for epydoc
+for x in [Transport, SecurityOptions, Channel, SFTPServer, SSHException, \
+          PasswordRequiredException, BadAuthenticationType, ChannelFile, \
+          SubsystemHandler, BaseTransport, RSAKey, DSSKey, SFTPError, \
+          SFTP, SFTPClient, SFTPServer, Message, Packetizer, SFTPAttributes, \
+          SFTPHandle, SFTPServerInterface, BufferedFile, Agent, AgentKey, \
+          PKey, BaseSFTP, SFTPFile, ServerInterface]:
+    x.__module__ = 'paramiko'
 
 from common import AUTH_SUCCESSFUL, AUTH_PARTIALLY_SUCCESSFUL, AUTH_FAILED, \
      OPEN_SUCCEEDED, OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED,  OPEN_FAILED_CONNECT_FAILED, \
@@ -119,14 +125,12 @@ __all__ = [ 'Transport',
             'ServerInterface',
             'BufferedFile',
             'Agent',
-            'transport',
-            'auth_transport',
-            'channel',
+            'AgentKey',
             'rsakey',
             'dsskey',
             'pkey',
             'message',
-            'ssh_exception',
+            'transport',
             'sftp',
             'sftp_client',
             'sftp_server',
