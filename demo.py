@@ -114,8 +114,11 @@ try:
     try:
         keys = paramiko.util.load_host_keys(os.path.expanduser('~/.ssh/known_hosts'))
     except IOError:
-        print '*** Unable to open host keys file'
-        keys = {}
+        try:
+            keys = paramiko.util.load_host_keys(os.path.expanduser('~/ssh/known_hosts'))
+        except IOError:
+            print '*** Unable to open host keys file'
+            keys = {}
 
     key = t.get_remote_server_key()
     if not keys.has_key(hostname):

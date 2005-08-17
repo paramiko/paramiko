@@ -89,32 +89,17 @@ def forward_tunnel(local_port, remote_host, remote_port, transport):
         ssh_transport = transport
     ForwardServer(('', local_port), SubHander).serve_forever()
 
-def load_host_keys():
-    filename = os.path.expanduser('~/.ssh/known_hosts')
-    keys = {}
-    try:
-        f = open(filename, 'r')
-    except Exception, e:
-        print '*** Unable to open host keys file (%s)' % filename
-        return
-    for line in f:
-        keylist = line.split(' ')
-        if len(keylist) != 3:
-            continue
-        hostlist, keytype, key = keylist
-        hosts = hostlist.split(',')
-        for host in hosts:
-            if not keys.has_key(host):
-                keys[host] = {}
-            keys[host][keytype] = base64.decodestring(key)
-    f.close()
-    return keys
-
 def find_default_key_file():
     filename = os.path.expanduser('~/.ssh/id_rsa')
     if os.access(filename, os.R_OK):
         return filename
+    filename = os.path.expanduser('~/ssh/id_rsa')
+    if os.access(filename, os.R_OK):
+        return filename
     filename = os.path.expanduser('~/.ssh/id_dsa')
+    if os.access(filename, os.R_OK):
+        return filename
+    filename = os.path.expanduser('~/ssh/id_dsa')
     if os.access(filename, os.R_OK):
         return filename
     return ''
@@ -174,7 +159,15 @@ if ':' in options.ssh_host:
     except:
         parser.error('SSH port must be a number.')
 
-host_keys = load_host_keys()
+try:
+    host_keys = paramiko.util.load_host_keys(os.path.expanduser('~/.ssh/known_hosts'))
+except IOError:
+    try:
+        host_keys = paramiko.util.load_host_keys(os.path.expanduser('~/ssh/known_hosts'))
+    except IOError:
+        print '*** Unable to open host keys file'
+        host_keys = {}
+
 if not host_keys.has_key(options.ssh_host):
     print '*** Warning: no host key for %s' % options.ssh_host
     expected_host_key_type = None

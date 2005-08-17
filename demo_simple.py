@@ -22,35 +22,6 @@ import sys, os, base64, getpass, socket, traceback, termios, tty, select
 import paramiko
 
 
-#####   utility functions
-
-def load_host_keys():
-    # this file won't exist on windows, but windows doesn't have a standard
-    # location for this file anyway.
-    filename = os.path.expanduser('~/.ssh/known_hosts')
-    keys = {}
-    try:
-        f = open(filename, 'r')
-    except Exception, e:
-        print '*** Unable to open host keys file (%s)' % filename
-        return
-    for line in f:
-        keylist = line.split(' ')
-        if len(keylist) != 3:
-            continue
-        hostlist, keytype, key = keylist
-        hosts = hostlist.split(',')
-        for host in hosts:
-            if not keys.has_key(host):
-                keys[host] = {}
-            if keytype == 'ssh-rsa':
-                keys[host][keytype] = paramiko.RSAKey(data=base64.decodestring(key))
-            elif keytype == 'ssh-dss':
-                keys[host][keytype] = paramiko.DSSKey(data=base64.decodestring(key))
-    f.close()
-    return keys
-
-
 # setup logging
 paramiko.util.log_to_file('demo_simple.log')
 
@@ -83,7 +54,15 @@ password = getpass.getpass('Password for %s@%s: ' % (username, hostname))
 # get host key, if we know one
 hostkeytype = None
 hostkey = None
-hkeys = load_host_keys()
+try:
+    hkeys = paramiko.util.load_host_keys(os.path.expanduser('~/.ssh/known_hosts'))
+except IOError:
+    try:
+        hkeys = paramiko.util.load_host_keys(os.path.expanduser('~/ssh/known_hosts'))
+    except IOError:
+        print '*** Unable to open host keys file'
+        hkeys = {}
+
 if hkeys.has_key(hostname):
     hostkeytype = hkeys[hostname].keys()[0]
     hostkey = hkeys[hostname][hostkeytype]
