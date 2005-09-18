@@ -185,7 +185,7 @@ class SFTPClient (BaseSFTP):
         if ('w' in mode):
             imode |= SFTP_FLAG_CREATE | SFTP_FLAG_TRUNC
         if ('a' in mode):
-            imode |= SFTP_FLAG_APPEND
+            imode |= SFTP_FLAG_APPEND | SFTP_FLAG_CREATE | SFTP_FLAG_WRITE
         attrblock = SFTPAttributes()
         t, msg = self._request(CMD_OPEN, filename, imode, attrblock)
         if t != CMD_HANDLE:

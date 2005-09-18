@@ -45,6 +45,15 @@ class SFTPFile (BufferedFile):
         self.close()
         
     def close(self):
+        # We allow double-close without signaling an error, because real
+        # Python file objects do.  However, we must protect against actually
+        # sending multiple CMD_CLOSE packets, because after we close our
+        # handle, the same handle may be re-allocated by the server, and we
+        # may end up mysteriously closing some random other file.  (This is
+        # especially important because we unconditionally call close() from
+        # __del__.)
+        if self._closed:
+            return
         BufferedFile.close(self)
         try:
             self.sftp._request(CMD_CLOSE, self.handle)
