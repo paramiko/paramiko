@@ -24,7 +24,7 @@ import sys, os, string, threading, socket, struct, time
 import weakref
 
 from common import *
-from ssh_exception import SSHException
+from ssh_exception import SSHException, BadAuthenticationType
 from message import Message
 from channel import Channel
 from sftp_client import SFTPClient
@@ -869,7 +869,34 @@ class Transport (threading.Thread):
             return None
         return self.auth_handler.get_username()
 
-    def auth_password(self, username, password, event=None):
+    def auth_none(self, username):
+        """
+        Try to authenticate to the server using no authentication at all.
+        This will almost always fail.  It may be useful for determining the
+        list of authentication types supported by the server, by catching the
+        L{BadAuthenticationType} exception raised.
+        
+        @param username: the username to authenticate as
+        @type username: string
+        @return: list of auth types permissible for the next stage of
+            authentication (normally empty)
+        @rtype: list
+
+        @raise BadAuthenticationType: if "none" authentication isn't allowed
+            by the server for this user
+        @raise SSHException: if the authentication failed due to a network
+            error
+            
+        @since: 1.5
+        """
+        if (not self.active) or (not self.initial_kex_done):
+            raise SSHException('No existing session')
+        my_event = threading.Event()
+        self.auth_handler = AuthHandler(self)
+        self.auth_handler.auth_none(username, my_event)
+        return self.auth_handler.wait_for_response(my_event)
+
+    def auth_password(self, username, password, event=None, fallback=True):
         """
         Authenticate to the server using a password.  The username and password
         are sent over an encrypted link.
@@ -883,6 +910,15 @@ class Transport (threading.Thread):
         authentication succeeds or fails.  On failure, an exception is raised.
         Otherwise, the method simply returns.
         
+        Since 1.5, if no event is passed and C{fallback} is C{True} (the
+        default), if the server doesn't support plain password authentication
+        but does support so-called "keyboard-interactive" mode, an attempt
+        will be made to authenticate using this interactive mode.  If it fails,
+        the normal exception will be thrown as if the attempt had never been
+        made.  This is useful for some recent Gentoo and Debian distributions,
+        which turn off plain password authentication in a misguided belief
+        that interactive authentication is "more secure".  (It's not.)
+        
         If the server requires multi-step authentication (which is very rare),
         this method will return a list of auth types permissible for the next
         step.  Otherwise, in the normal case, an empty list is returned.
@@ -894,6 +930,10 @@ class Transport (threading.Thread):
         @param event: an event to trigger when the authentication attempt is
             complete (whether it was successful or not)
         @type event: threading.Event
+        @param fallback: C{True} if an attempt at an automated "interactive"
+            password auth should be made if the server doesn't support normal
+            password auth
+        @type fallback: bool
         @return: list of auth types permissible for the next stage of
             authentication (normally empty)
         @rtype: list
@@ -915,7 +955,28 @@ class Transport (threading.Thread):
         if event is not None:
             # caller wants to wait for event themselves
             return []
-        return self.auth_handler.wait_for_response(my_event)
+        try:
+            return self.auth_handler.wait_for_response(my_event)
+        except BadAuthenticationType, x:
+            # if password auth isn't allowed, but keyboard-interactive *is*, try to fudge it
+            if not fallback or not 'keyboard-interactive' in x.allowed_types:
+                raise
+            try:
+                def handler(title, instructions, fields):
+                    self._log(DEBUG, 'title=%r, instructions=%r, fields=%r' % (title, instructions, fields))
+                    if len(fields) > 1:
+                        raise SSHException('Fallback authentication failed.')
+                    if len(fields) == 0:
+                        # for some reason, at least on os x, a 2nd request will
+                        # be made with zero fields requested.  maybe it's just
+                        # to try to fake out automated scripting of the exact
+                        # type we're doing here.  *shrug* :)
+                        return []
+                    return [ password ]
+                return self.auth_interactive(username, handler)
+            except SSHException, ignored:
+                # attempt failed; just raise the original exception
+                raise x
 
     def auth_publickey(self, username, key, event=None):
         """
@@ -935,9 +996,9 @@ class Transport (threading.Thread):
         this method will return a list of auth types permissible for the next
         step.  Otherwise, in the normal case, an empty list is returned.
 
-        @param username: the username to authenticate as.
+        @param username: the username to authenticate as
         @type username: string
-        @param key: the private key to authenticate with.
+        @param key: the private key to authenticate with
         @type key: L{PKey <pkey.PKey>}
         @param event: an event to trigger when the authentication attempt is
             complete (whether it was successful or not)
@@ -963,6 +1024,59 @@ class Transport (threading.Thread):
         if event is not None:
             # caller wants to wait for event themselves
             return []
+        return self.auth_handler.wait_for_response(my_event)
+    
+    def auth_interactive(self, username, handler, submethods=''):
+        """
+        Authenticate to the server interactively.  A handler is used to answer
+        arbitrary questions from the server.  On many servers, this is just a
+        dumb wrapper around PAM.
+        
+        This method will block until the authentication succeeds or fails,
+        peroidically calling the handler asynchronously to get answers to
+        authentication questions.  The handler may be called more than once
+        if the server continues to ask questions.
+        
+        The handler is expected to be a callable that will handle calls of the
+        form: C{handler(title, instructions, prompt_list)}.  The C{title} is
+        meant to be a dialog-window title, and the C{instructions} are user
+        instructions (both are strings).  C{prompt_list} will be a list of
+        prompts, each prompt being a tuple of C{(str, bool)}.  The string is
+        the prompt and the boolean indicates whether the user text should be
+        echoed.
+        
+        A sample call would thus be:
+        C{handler('title', 'instructions', [('Password:', False)])}.
+        
+        The handler should return a list or tuple of answers to the server's
+        questions.
+        
+        If the server requires multi-step authentication (which is very rare),
+        this method will return a list of auth types permissible for the next
+        step.  Otherwise, in the normal case, an empty list is returned.
+
+        @param username: the username to authenticate as
+        @type username: string
+        @param handler: a handler for responding to server questions
+        @type handler: callable
+        @param submethods: a string list of desired submethods (optional)
+        @type submethods: str
+        @return: list of auth types permissible for the next stage of
+            authentication (normally empty).
+        @rtype: list
+        
+        @raise BadAuthenticationType: if public-key authentication isn't
+            allowed by the server for this user
+        @raise SSHException: if the authentication failed
+        
+        @since: 1.5
+        """
+        if (not self.active) or (not self.initial_kex_done):
+            # we should never try to authenticate unless we're on a secure link
+            raise SSHException('No existing session')
+        my_event = threading.Event()
+        self.auth_handler = AuthHandler(self)
+        self.auth_handler.auth_interactive(username, handler, my_event, submethods)
         return self.auth_handler.wait_for_response(my_event)
 
     def set_log_channel(self, name):

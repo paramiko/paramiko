@@ -57,6 +57,16 @@ class AuthHandler (object):
         else:
             return self.username
 
+    def auth_none(self, username, event):
+        self.transport.lock.acquire()
+        try:
+            self.auth_event = event
+            self.auth_method = 'none'
+            self.username = username
+            self._request_auth()
+        finally:
+            self.transport.lock.release()
+
     def auth_publickey(self, username, key, event):
         self.transport.lock.acquire()
         try:
@@ -75,6 +85,21 @@ class AuthHandler (object):
             self.auth_method = 'password'
             self.username = username
             self.password = password
+            self._request_auth()
+        finally:
+            self.transport.lock.release()
+    
+    def auth_interactive(self, username, handler, event, submethods=''):
+        """
+        response_list = handler(title, instructions, prompt_list)
+        """
+        self.transport.lock.acquire()
+        try:
+            self.auth_event = event
+            self.auth_method = 'keyboard-interactive'
+            self.username = username
+            self.interactive_handler = handler
+            self.submethods = submethods
             self._request_auth()
         finally:
             self.transport.lock.release()
@@ -175,6 +200,11 @@ class AuthHandler (object):
                 blob = self._get_session_blob(self.private_key, 'ssh-connection', self.username)
                 sig = self.private_key.sign_ssh_data(self.transport.randpool, blob)
                 m.add_string(str(sig))
+            elif self.auth_method == 'keyboard-interactive':
+                m.add_string('')
+                m.add_string(self.submethods)
+            elif self.auth_method == 'none':
+                pass
             else:
                 raise SSHException('Unknown auth method "%s"' % self.auth_method)
             self.transport._send_message(m)
@@ -302,6 +332,25 @@ class AuthHandler (object):
         lang = m.get_string()
         self.transport._log(INFO, 'Auth banner: ' + banner)
         # who cares.
+    
+    def _parse_userauth_info_request(self, m):
+        if self.auth_method != 'keyboard-interactive':
+            raise SSHException('Illegal info request from server')
+        title = m.get_string()
+        instructions = m.get_string()
+        m.get_string()  # lang
+        prompts = m.get_int()
+        prompt_list = []
+        for i in range(prompts):
+            prompt_list.append((m.get_string(), m.get_boolean()))
+        response_list = self.interactive_handler(title, instructions, prompt_list)
+        
+        m = Message()
+        m.add_byte(chr(MSG_USERAUTH_INFO_RESPONSE))
+        m.add_int(len(response_list))
+        for r in response_list:
+            m.add_string(r)
+        self.transport._send_message(m)
 
     _handler_table = {
         MSG_SERVICE_REQUEST: _parse_service_request,
@@ -310,6 +359,7 @@ class AuthHandler (object):
         MSG_USERAUTH_SUCCESS: _parse_userauth_success,
         MSG_USERAUTH_FAILURE: _parse_userauth_failure,
         MSG_USERAUTH_BANNER: _parse_userauth_banner,
+        MSG_USERAUTH_INFO_REQUEST: _parse_userauth_info_request,
     }
 
 
