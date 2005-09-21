@@ -113,7 +113,7 @@ try:
     t.close()
 
 except Exception, e:
-    print '*** Caught exception: ' + str(e.__class__) + ': ' + str(e)
+    print '*** Caught exception: %s: %s' % (e.__class__, e)
     traceback.print_exc()
     try:
         t.close()
