@@ -56,6 +56,7 @@ class SFTPClient (BaseSFTP):
         self.ultra_debug = False
         self.request_number = 1
         self._cwd = None
+        self._expecting = []
         if type(sock) is Channel:
             # override default logger
             transport = self.sock.get_transport()
@@ -449,6 +450,8 @@ class SFTPClient (BaseSFTP):
         Any exception raised by operations will be passed through.  This
         method is primarily provided as a convenience.
         
+        The SFTP operations use pipelining for speed.
+        
         @param localpath: the local file to copy
         @type localpath: str
         @param remotepath: the destination path on the SFTP server
@@ -458,6 +461,7 @@ class SFTPClient (BaseSFTP):
         """
         fl = file(localpath, 'rb')
         fr = self.file(remotepath, 'wb')
+        fr.set_pipelined(True)
         size = 0
         while True:
             data = fl.read(32768)
@@ -504,6 +508,10 @@ class SFTPClient (BaseSFTP):
 
 
     def _request(self, t, *arg):
+        num = self._async_request(t, *arg)
+        return self._read_response(num)
+    
+    def _async_request(self, t, *arg):
         msg = Message()
         msg.add_int(self.request_number)
         for item in arg:
@@ -516,17 +524,31 @@ class SFTPClient (BaseSFTP):
             elif type(item) is SFTPAttributes:
                 item._pack(msg)
             else:
-                raise Exception('unknown type for ' + repr(item) + ' type ' + repr(type(item)))
+                raise Exception('unknown type for %r type %r' % (item, type(item)))
         self._send_packet(t, str(msg))
-        t, data = self._read_packet()
-        msg = Message(data)
-        num = msg.get_int()
-        if num != self.request_number:
-            raise SFTPError('Expected response #%d, got response #%d' % (self.request_number, num))
+        num = self.request_number
         self.request_number += 1
-        if t == CMD_STATUS:
-            self._convert_status(msg)
+        self._expecting.append(num)
+        return num
+
+    def _read_response(self, waitfor=None):
+        while True:
+            t, data = self._read_packet()
+            msg = Message(data)
+            num = msg.get_int()
+            if num not in self._expecting:
+                raise SFTPError('Expected response from %r, got response #%d' %
+                    (self._expected, num))
+            self._expecting.remove(num)
+            if t == CMD_STATUS:
+                self._convert_status(msg)
+            if (waitfor is None) or (num == waitfor):
+                break
         return t, msg
+
+    def _finish_responses(self):
+        while len(self._expecting) > 0:
+            self._read_response()
 
     def _convert_status(self, msg):
         """

@@ -134,6 +134,20 @@ the best and easiest examples of how to use the SFTP class.
 
 highlights of what's new in each release:
 
+v1.5 P...
+* added support for "keyboard-interactive" authentication
+* added mode (on by default) where password authentication will try to
+  fallback to "keyboard-interactive" if it's supported
+* added pipelining to SFTPFile.write and SFTPClient.put
+* fixed bug with SFTPFile.close() not guarding against being called more
+  than once (thanks to Nathaniel Smith)
+* fixed broken 'a' flag in SFTPClient.file() (thanks to Nathaniel Smith)
+* fixed up epydocs to look nicer
+* reorganized auth_transport into auth_handler, which seems to be a cleaner
+  separation
+* demo scripts fixed to have a better chance of loading the host keys
+  correctly on windows/cygwin
+  
 v1.4 ODDISH
 * added SSH-agent support (for posix) from john rochester
 * added chdir() and getcwd() to SFTPClient, to emulate a "working directory"
@@ -248,18 +262,19 @@ v0.9 FEAROW
 
 ***  MISSING LINKS
 
-* keyboard-interactive auth
+* add comments to demo & demo_simple about how they don't work on windows
 * host-based auth (yuck!)
-* move auth_transport to be a side plugin like in jaramiko
 * support compression
 * SFTP pipelining
+    - basically, just don't wait synchronously for server responses.  queue
+    up "expected" responses and wait for them on close().
 * SFTP implicit file locking?
+* server-side keyboard-interactive
 
 * ctr forms of ciphers are missing (blowfish-ctr, aes128-ctr, aes256-ctr)
 * SFTP url parsing function to return (user, pass, host, port, path)
   components
 * sftp protocol 6 support (ugh....) -- once it settles down more
 
-* why are big files so slow to transfer?  profiling needed...
 * what is psyco?
-* make a simple example demonstrating use of SocketServer
+* make a simple example demonstrating use of SocketServer (besides forward.py?)

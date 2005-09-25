@@ -451,7 +451,29 @@ class SFTPTest (unittest.TestCase):
         finally:
             sftp.remove('%s/hongry.txt' % FOLDER)
 
-    def test_F_big_file_big_buffer(self):
+    def test_F_big_file_pipelined(self):
+        """
+        write a 1MB file, with no linefeeds, using pipelining.
+        """
+        global g_big_file_test
+        if not g_big_file_test:
+            return
+        kblob = (1024 * 'x')
+        try:
+            f = sftp.open('%s/hongry.txt' % FOLDER, 'w')
+            f.set_pipelined(True)
+            for n in range(1024):
+                f.write(kblob)
+                if n % 128 == 0:
+                    sys.stderr.write('.')
+            f.close()
+            sys.stderr.write(' ')
+
+            self.assertEqual(sftp.stat('%s/hongry.txt' % FOLDER).st_size, 1024 * 1024)
+        finally:
+            sftp.remove('%s/hongry.txt' % FOLDER)
+        
+    def test_G_big_file_big_buffer(self):
         """
         write a 1MB file, with no linefeeds, and a big buffer.
         """
@@ -468,7 +490,7 @@ class SFTPTest (unittest.TestCase):
         finally:
             sftp.remove('%s/hongry.txt' % FOLDER)
             
-    def test_G_realpath(self):
+    def test_H_realpath(self):
         """
         test that realpath is returning something non-empty and not an
         error.
@@ -479,7 +501,7 @@ class SFTPTest (unittest.TestCase):
         self.assert_(len(f) > 0)
         self.assertEquals(os.path.join(pwd, FOLDER), f)
 
-    def test_H_mkdir(self):
+    def test_I_mkdir(self):
         """
         verify that mkdir/rmdir work.
         """
@@ -502,7 +524,7 @@ class SFTPTest (unittest.TestCase):
         except IOError:
             pass
     
-    def test_I_chdir(self):
+    def test_J_chdir(self):
         """
         verify that chdir/getcwd work.
         """
@@ -539,7 +561,7 @@ class SFTPTest (unittest.TestCase):
             except:
                 pass
 
-    def test_J_get_put(self):
+    def test_K_get_put(self):
         """
         verify that get/put work.
         """
@@ -568,7 +590,7 @@ class SFTPTest (unittest.TestCase):
         os.unlink(localname)
         sftp.unlink(FOLDER + '/bunny.txt')
 
-    def test_K_check(self):
+    def test_L_check(self):
         """
         verify that file.check() works against our own server.
         (it's an sftp extension that we support, and may be the only ones who

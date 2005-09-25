@@ -40,6 +40,7 @@ class SFTPFile (BufferedFile):
         self.sftp = sftp
         self.handle = handle
         BufferedFile._set_mode(self, mode, bufsize)
+        self.pipelined = False
 
     def __del__(self):
         self.close()
@@ -54,6 +55,8 @@ class SFTPFile (BufferedFile):
         # __del__.)
         if self._closed:
             return
+        if self.pipelined:
+            self.sftp._finish_responses()
         BufferedFile.close(self)
         try:
             self.sftp._request(CMD_CLOSE, self.handle)
@@ -74,11 +77,12 @@ class SFTPFile (BufferedFile):
     def _write(self, data):
         # may write less than requested if it would exceed max packet size
         chunk = min(len(data), self.MAX_REQUEST_SIZE)
-        t, msg = self.sftp._request(CMD_WRITE, self.handle, long(self._realpos),
-                                    str(data[:chunk]))
-        if t != CMD_STATUS:
-            raise SFTPError('Expected status')
-        self.sftp._convert_status(msg)
+        self.sftp._async_request(CMD_WRITE, self.handle, long(self._realpos), str(data[:chunk]))
+        if not self.pipelined or self.sftp.sock.recv_ready():
+            t, msg = self.sftp._read_response()
+            if t != CMD_STATUS:
+                raise SFTPError('Expected status')
+            self.sftp._convert_status(msg)
         return chunk
 
     def settimeout(self, timeout):
@@ -193,6 +197,26 @@ class SFTPFile (BufferedFile):
         alg = msg.get_string()
         data = msg.get_remainder()
         return data
+    
+    def set_pipelined(self, pipelined=True):
+        """
+        Turn on/off the pipelining of write operations to this file.  When
+        pipelining is on, paramiko won't wait for the server response after
+        each write operation.  Instead, they're collected as they come in.
+        At the first non-write operation (including L{close}), all remaining
+        server responses are collected.  This means that if there was an error
+        with one of your later writes, an exception might be thrown from
+        within L{close} instead of L{write}.
+        
+        By default, files are I{not} pipelined.
+        
+        @param pipelined: C{True} if pipelining should be turned on for this
+            file; C{False} otherwise
+        #type pipelined: bool
+        
+        @since: 1.5
+        """
+        self.pipelined = pipelined
 
 
     ###  internals...
