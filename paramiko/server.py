@@ -26,6 +26,47 @@ import threading
 from common import *
 import util
 
+
+class InteractiveQuery (object):
+    """
+    A query (set of prompts) for a user during interactive authentication.
+    """
+    
+    def __init__(self, name='', instructions='', *prompts):
+        """
+        Create a new interactive query to send to the client.  The name and
+        instructions are optional, but are generally displayed to the end
+        user.  A list of prompts may be included, or they may be added via
+        the L{add_prompt} method.
+        
+        @param name: name of this query
+        @type name: str
+        @param instructions: user instructions (usually short) about this query
+        @type instructions: str
+        """
+        self.name = name
+        self.instructions = instructions
+        self.prompts = []
+        for x in prompts:
+            if (type(x) is str) or (type(x) is unicode):
+                self.add_prompt(x)
+            else:
+                self.add_prompt(x[0], x[1])
+    
+    def add_prompt(self, prompt, echo=True):
+        """
+        Add a prompt to this query.  The prompt should be a (reasonably short)
+        string.  Multiple prompts can be added to the same query.
+        
+        @param prompt: the user prompt
+        @type prompt: str
+        @param echo: C{True} (default) if the user's response should be echoed;
+            C{False} if not (for a password or similar)
+        @type echo: bool
+        """
+        self.prompts.append((prompt, echo))
+
+
 class ServerInterface (object):
     """
     This class defines an interface for controlling the behavior of paramiko
@@ -154,7 +195,7 @@ class ServerInterface (object):
         Return L{AUTH_FAILED} if the key is not accepted,
         L{AUTH_SUCCESSFUL} if the key is accepted and completes the
         authentication, or L{AUTH_PARTIALLY_SUCCESSFUL} if your
-        authentication is stateful, and this key is accepted for
+        authentication is stateful, and this password is accepted for
         authentication, but more authentication is required.  (In this latter
         case, L{get_allowed_auths} will be called to report to the client what
         options it has for continuing the authentication.)
@@ -165,15 +206,72 @@ class ServerInterface (object):
         
         The default implementation always returns L{AUTH_FAILED}.
 
-        @param username: the username of the authenticating client.
+        @param username: the username of the authenticating client
         @type username: str
-        @param key: the key object provided by the client.
+        @param key: the key object provided by the client
         @type key: L{PKey <pkey.PKey>}
         @return: L{AUTH_FAILED} if the client can't authenticate
             with this key; L{AUTH_SUCCESSFUL} if it can;
             L{AUTH_PARTIALLY_SUCCESSFUL} if it can authenticate with
-            this key but must continue with authentication.
+            this key but must continue with authentication
         @rtype: int
+        """
+        return AUTH_FAILED
+    
+    def check_auth_interactive(self, username, submethods):
+        """
+        Begin an interactive authentication challenge, if supported.  You
+        should override this method in server mode if you want to support the
+        C{"keyboard-interactive"} auth type, which requires you to send a
+        series of questions for the client to answer.
+        
+        Return L{AUTH_FAILED} if this auth method isn't supported.  Otherwise,
+        you should return an L{InteractiveQuery} object containing the prompts
+        and instructions for the user.  The response will be sent via a call
+        to L{check_auth_interactive_response}.
+        
+        The default implementation always returns L{AUTH_FAILED}.
+        
+        @param username: the username of the authenticating client
+        @type username: str
+        @param submethods: a comma-separated list of methods preferred by the
+            client (usually empty)
+        @type submethods: str
+        @return: L{AUTH_FAILED} if this auth method isn't supported; otherwise
+            an object containing queries for the user
+        @rtype: int or L{InteractiveQuery}
+        """
+        return AUTH_FAILED
+    
+    def check_auth_interactive_response(self, responses):
+        """
+        Continue or finish an interactive authentication challenge, if
+        supported.  You should override this method in server mode if you want
+        to support the C{"keyboard-interactive"} auth type.
+        
+        Return L{AUTH_FAILED} if the responses are not accepted,
+        L{AUTH_SUCCESSFUL} if the responses are accepted and complete
+        the authentication, or L{AUTH_PARTIALLY_SUCCESSFUL} if your
+        authentication is stateful, and this set of responses is accepted for
+        authentication, but more authentication is required.  (In this latter
+        case, L{get_allowed_auths} will be called to report to the client what
+        options it has for continuing the authentication.)
+
+        If you wish to continue interactive authentication with more questions,
+        you may return an L{InteractiveQuery} object, which should cause the
+        client to respond with more answers, calling this method again.  This
+        cycle can continue indefinitely.
+
+        The default implementation always returns L{AUTH_FAILED}.
+
+        @param responses: list of responses from the client
+        @type responses: list(str)
+        @return: L{AUTH_FAILED} if the authentication fails;
+            L{AUTH_SUCCESSFUL} if it succeeds;
+            L{AUTH_PARTIALLY_SUCCESSFUL} if the interactive auth is
+            successful, but authentication must continue; otherwise an object
+            containing queries for the user
+        @rtype: int or L{InteractiveQuery}
         """
         return AUTH_FAILED
         

@@ -72,7 +72,7 @@ from transport import randpool, SecurityOptions, Transport
 from auth_handler import AuthHandler
 from channel import Channel, ChannelFile
 from ssh_exception import SSHException, PasswordRequiredException, BadAuthenticationType
-from server import ServerInterface, SubsystemHandler
+from server import ServerInterface, SubsystemHandler, InteractiveQuery
 from rsakey import RSAKey
 from dsskey import DSSKey
 from sftp import SFTPError, BaseSFTP

@@ -29,6 +29,7 @@ from common import *
 import util
 from message import Message
 from ssh_exception import SSHException, BadAuthenticationType, PartialAuthentication
+from server import InteractiveQuery
 
 
 class AuthHandler (object):
@@ -211,6 +212,39 @@ class AuthHandler (object):
         else:
             self.transport._log(DEBUG, 'Service request "%s" accepted (?)' % service)
 
+    def _send_auth_result(self, username, method, result):
+        # okay, send result
+        m = Message()
+        if result == AUTH_SUCCESSFUL:
+            self.transport._log(INFO, 'Auth granted (%s).' % method)
+            m.add_byte(chr(MSG_USERAUTH_SUCCESS))
+            self.authenticated = True
+        else:
+            self.transport._log(INFO, 'Auth rejected (%s).' % method)
+            m.add_byte(chr(MSG_USERAUTH_FAILURE))
+            m.add_string(self.transport.server_object.get_allowed_auths(username))
+            if result == AUTH_PARTIALLY_SUCCESSFUL:
+                m.add_boolean(1)
+            else:
+                m.add_boolean(0)
+                self.auth_fail_count += 1
+        self.transport._send_message(m)
+        if self.auth_fail_count >= 10:
+            self._disconnect_no_more_auth()
+
+    def _interactive_query(self, q):
+        # make interactive query instead of response
+        m = Message()
+        m.add_byte(chr(MSG_USERAUTH_INFO_REQUEST))
+        m.add_string(q.name)
+        m.add_string(q.instructions)
+        m.add_string('')
+        m.add_int(len(q.prompts))
+        for p in q.prompts:
+            m.add_string(p[0])
+            m.add_boolean(p[1])
+        self.transport._send_message(m)
+ 
     def _parse_userauth_request(self, m):
         if not self.transport.server_mode:
             # er, uh... what?
@@ -282,26 +316,18 @@ class AuthHandler (object):
                 if not key.verify_ssh_sig(blob, sig):
                     self.transport._log(INFO, 'Auth rejected: invalid signature')
                     result = AUTH_FAILED
+        elif method == 'keyboard-interactive':
+            lang = m.get_string()
+            submethods = m.get_string()
+            result = self.transport.server_object.check_auth_interactive(username, submethods)
+            if isinstance(result, InteractiveQuery):
+                # make interactive query instead of response
+                self._interactive_query(result)
+                return
         else:
             result = self.transport.server_object.check_auth_none(username)
         # okay, send result
-        m = Message()
-        if result == AUTH_SUCCESSFUL:
-            self.transport._log(INFO, 'Auth granted (%s).' % method)
-            m.add_byte(chr(MSG_USERAUTH_SUCCESS))
-            self.authenticated = True
-        else:
-            self.transport._log(INFO, 'Auth rejected (%s).' % method)
-            m.add_byte(chr(MSG_USERAUTH_FAILURE))
-            m.add_string(self.transport.server_object.get_allowed_auths(username))
-            if result == AUTH_PARTIALLY_SUCCESSFUL:
-                m.add_boolean(1)
-            else:
-                m.add_boolean(0)
-                self.auth_fail_count += 1
-        self.transport._send_message(m)
-        if self.auth_fail_count >= 10:
-            self._disconnect_no_more_auth()
+        self._send_auth_result(username, method, result)
 
     def _parse_userauth_success(self, m):
         self.transport._log(INFO, 'Authentication successful!')
@@ -351,6 +377,21 @@ class AuthHandler (object):
         for r in response_list:
             m.add_string(r)
         self.transport._send_message(m)
+    
+    def _parse_userauth_info_response(self, m):
+        if not self.transport.server_mode:
+            raise SSHException('Illegal info response from server')
+        n = m.get_int()
+        responses = []
+        for i in range(n):
+            responses.append(m.get_string())
+        result = self.transport.server_object.check_auth_interactive_response(responses)
+        if isinstance(type(result), InteractiveQuery):
+            # make interactive query instead of response
+            self._interactive_query(result)
+            return
+        self._send_auth_result(self.auth_username, 'keyboard-interactive', result)
+        
 
     _handler_table = {
         MSG_SERVICE_REQUEST: _parse_service_request,
@@ -360,6 +401,7 @@ class AuthHandler (object):
         MSG_USERAUTH_FAILURE: _parse_userauth_failure,
         MSG_USERAUTH_BANNER: _parse_userauth_banner,
         MSG_USERAUTH_INFO_REQUEST: _parse_userauth_info_request,
+        MSG_USERAUTH_INFO_RESPONSE: _parse_userauth_info_response,
     }
 
 
