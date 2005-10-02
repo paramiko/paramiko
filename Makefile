@@ -14,6 +14,7 @@
 # marowak (9apr05) - 1.3
 # nidoran (28jun05) - 1.3.1
 # oddish (17jul05) - 1.4
+# paras (2oct05) - 1.5
 
 release:
 	python ./setup.py sdist --formats=zip
