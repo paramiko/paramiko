@@ -212,7 +212,7 @@ class SFTPFile (BufferedFile):
         
         @param pipelined: C{True} if pipelining should be turned on for this
             file; C{False} otherwise
-        #type pipelined: bool
+        @type pipelined: bool
         
         @since: 1.5
         """
