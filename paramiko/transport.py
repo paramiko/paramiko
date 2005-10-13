@@ -20,22 +20,28 @@
 L{Transport} handles the core SSH2 protocol.
 """
 
-import sys, os, string, threading, socket, struct, time
+import os
+import socket
+import string
+import struct
+import sys
+import threading
+import time
 import weakref
 
-from common import *
-from ssh_exception import SSHException, BadAuthenticationType
-from message import Message
-from channel import Channel
-from sftp_client import SFTPClient
-import util
-from packet import Packetizer
-from rsakey import RSAKey
-from dsskey import DSSKey
-from kex_group1 import KexGroup1
-from kex_gex import KexGex
-from primes import ModulusPack
-from auth_handler import AuthHandler
+from paramiko.common import *
+from paramiko import util
+from paramiko.ssh_exception import SSHException, BadAuthenticationType
+from paramiko.message import Message
+from paramiko.channel import Channel
+from paramiko.sftp_client import SFTPClient
+from paramiko.packet import Packetizer
+from paramiko.rsakey import RSAKey
+from paramiko.dsskey import DSSKey
+from paramiko.kex_group1 import KexGroup1
+from paramiko.kex_gex import KexGex
+from paramiko.primes import ModulusPack
+from paramiko.auth_handler import AuthHandler
 
 # these come from PyCrypt
 #     http://www.amk.ca/python/writing/pycrypt/
@@ -235,6 +241,7 @@ class Transport (threading.Thread):
         self.lock = threading.Lock()    # synchronization (always higher level than write_lock)
         self.channels = weakref.WeakValueDictionary()   # (id -> Channel)
         self.channel_events = { }       # (id -> Event)
+        self.channels_seen = { }        # (id -> True)
         self.channel_counter = 1
         self.window_size = 65536
         self.max_packet_size = 32768
@@ -582,6 +589,7 @@ class Transport (threading.Thread):
                 m.add_int(src_addr[1])
             self.channels[chanid] = chan = Channel(chanid)
             self.channel_events[chanid] = event = threading.Event()
+            self.channels_seen[chanid] = True
             chan._set_transport(self)
             chan._set_window(self.window_size, self.max_packet_size)
             self._send_user_message(m)
@@ -963,7 +971,6 @@ class Transport (threading.Thread):
                 raise
             try:
                 def handler(title, instructions, fields):
-                    self._log(DEBUG, 'title=%r, instructions=%r, fields=%r' % (title, instructions, fields))
                     if len(fields) > 1:
                         raise SSHException('Fallback authentication failed.')
                     if len(fields) == 0:
@@ -1264,6 +1271,8 @@ class Transport (threading.Thread):
                     chanid = m.get_int()
                     if self.channels.has_key(chanid):
                         self._channel_handler_table[ptype](self.channels[chanid], m)
+                    elif self.channels_seen.has_key(chanid):
+                        self._log(DEBUG, 'Ignoring message for dead channel %d' % chanid)
                     else:
                         self._log(ERROR, 'Channel request for unknown channel %d' % chanid)
                         self.active = False
@@ -1666,6 +1675,7 @@ class Transport (threading.Thread):
         try:
             self.lock.acquire()
             self.channels[my_chanid] = chan
+            self.channels_seen[my_chanid] = True
             chan._set_transport(self)
             chan._set_window(self.window_size, self.max_packet_size)
             chan._set_remote_channel(chanid, initial_window_size, max_packet_size)
