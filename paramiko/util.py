@@ -16,14 +16,19 @@
 # along with Paramiko; if not, write to the Free Software Foundation, Inc.,
 # 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
 
-from __future__ import generators
-
 """
 Useful functions used by the rest of paramiko.
 """
 
-import sys, struct, traceback, threading
-from common import *
+from __future__ import generators
+
+import sys
+import struct
+import traceback
+import threading
+
+from paramiko.common import *
+
 
 # Change by RogerB - python < 2.3 doesn't have enumerate so we implement it
 if sys.version_info < (2,3):
@@ -35,6 +40,7 @@ if sys.version_info < (2,3):
             for item in self.sequence:
                 yield (count, item)
                 count += 1
+
 
 def inflate_long(s, always_positive=False):
     "turns a normalized byte string into a long-int (adapted from Crypto.Util.number)"

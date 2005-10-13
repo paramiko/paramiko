@@ -21,9 +21,9 @@ Client-mode SFTP support.
 """
 
 import os
-from sftp import *
-from sftp_attr import SFTPAttributes
-from sftp_file import SFTPFile
+from paramiko.sftp import *
+from paramiko.sftp_attr import SFTPAttributes
+from paramiko.sftp_file import SFTPFile
 
 
 def _to_unicode(s):

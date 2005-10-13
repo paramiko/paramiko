@@ -16,11 +16,14 @@
 # along with Paramiko; if not, write to the Free Software Foundation, Inc.,
 # 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
 
-import struct, socket
-from common import *
-import util
-from channel import Channel
-from message import Message
+import socket
+import struct
+
+from paramiko.common import *
+from paramiko import util
+from paramiko.channel import Channel
+from paramiko.message import Message
+
 
 CMD_INIT, CMD_VERSION, CMD_OPEN, CMD_CLOSE, CMD_READ, CMD_WRITE, CMD_LSTAT, CMD_FSTAT, \
            CMD_SETSTAT, CMD_FSETSTAT, CMD_OPENDIR, CMD_READDIR, CMD_REMOVE, CMD_MKDIR, \

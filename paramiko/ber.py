@@ -1,5 +1,3 @@
-#!/usr/bin/python
-
 # Copyright (C) 2003-2005 Robey Pointer <robey@lag.net>
 #
 # This file is part of paramiko.
@@ -18,11 +16,13 @@
 # along with Paramiko; if not, write to the Free Software Foundation, Inc.,
 # 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
 
-import struct, util
+import struct
+import util
 
 
 class BERException (Exception):
     pass
+
 
 class BER(object):
     """

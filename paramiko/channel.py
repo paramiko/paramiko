@@ -20,14 +20,18 @@
 Abstraction for an SSH2 channel.
 """
 
-import sys, time, threading, socket, os
+import sys
+import time
+import threading
+import socket
+import os
 
-from common import *
-import util
-from message import Message
-from ssh_exception import SSHException
-from file import BufferedFile
-import pipe
+from paramiko.common import *
+from paramiko import util
+from paramiko.message import Message
+from paramiko.ssh_exception import SSHException
+from paramiko.file import BufferedFile
+from paramiko import pipe
 
 
 class Channel (object):
@@ -1103,8 +1107,6 @@ class Channel (object):
         if self.ultra_debug:
             self._log(DEBUG, 'window down to %d' % self.out_window_size)
         return size
-        
-
         
 
 class ChannelFile (BufferedFile):

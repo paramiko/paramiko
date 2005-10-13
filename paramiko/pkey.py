@@ -20,15 +20,16 @@
 Common API for all public keys.
 """
 
-import os, base64
+import base64
+import os
 
 from Crypto.Hash import MD5
 from Crypto.Cipher import DES3
 
-from common import *
-from message import Message
-from ssh_exception import SSHException, PasswordRequiredException
-import util
+from paramiko.common import *
+from paramiko import util
+from paramiko.message import Message
+from paramiko.ssh_exception import SSHException, PasswordRequiredException
 
 
 class PKey (object):

@@ -20,8 +20,10 @@
 Implementation of an SSH2 "message".
 """
 
-import struct, cStringIO
-import util
+import struct
+import cStringIO
+
+from paramiko import util
 
 
 class Message (object):

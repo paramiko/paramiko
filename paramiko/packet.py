@@ -20,12 +20,17 @@
 Packetizer.
 """
 
-import select, socket, struct, threading, time
+import select
+import socket
+import struct
+import threading
+import time
 from Crypto.Hash import HMAC
-from common import *
-from ssh_exception import SSHException
-from message import Message
-import util
+
+from paramiko.common import *
+from paramiko import util
+from paramiko.ssh_exception import SSHException
+from paramiko.message import Message
 
 
 class Packetizer (object):

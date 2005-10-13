@@ -21,8 +21,9 @@ Abstraction of an SFTP file handle (for server mode).
 """
 
 import os
-from common import *
-from sftp import *
+
+from paramiko.common import *
+from paramiko.sftp import *
 
 
 class SFTPHandle (object):
@@ -184,4 +185,4 @@ class SFTPHandle (object):
         self.__name = name
 
 
-from sftp_server import SFTPServer
+from paramiko.sftp_server import SFTPServer

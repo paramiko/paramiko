@@ -1,5 +1,3 @@
-#!/usr/bin/python
-
 # Copyright (C) 2003-2005 Robey Pointer <robey@lag.net>
 #
 # This file is part of paramiko.
@@ -23,8 +21,8 @@ L{ServerInterface} is an interface to override for server support.
 """
 
 import threading
-from common import *
-import util
+from paramiko.common import *
+from paramiko import util
 
 
 class InteractiveQuery (object):

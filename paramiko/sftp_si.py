@@ -1,5 +1,3 @@
-#!/usr/bin/python
-
 # Copyright (C) 2003-2005 Robey Pointer <robey@lag.net>
 #
 # This file is part of paramiko.
@@ -23,8 +21,10 @@ L{SFTPServerInterface} is an interface to override for SFTP server support.
 """
 
 import os
-from common import *
-from sftp import *
+
+from paramiko.common import *
+from paramiko.sftp import *
+
 
 class SFTPServerInterface (object):
     """
@@ -301,4 +301,3 @@ class SFTPServerInterface (object):
         @rtype: int
         """
         return SFTP_OP_UNSUPPORTED
-

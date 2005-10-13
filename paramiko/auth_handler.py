@@ -25,11 +25,11 @@ import threading
 # this helps freezing utils
 import encodings.utf_8
 
-from common import *
-import util
-from message import Message
-from ssh_exception import SSHException, BadAuthenticationType, PartialAuthentication
-from server import InteractiveQuery
+from paramiko.common import *
+from paramiko import util
+from paramiko.message import Message
+from paramiko.ssh_exception import SSHException, BadAuthenticationType, PartialAuthentication
+from paramiko.server import InteractiveQuery
 
 
 class AuthHandler (object):

@@ -67,7 +67,7 @@ class WindowsPipe (object):
         serv.bind(('127.0.0.1', 0))
         serv.listen(1)
     
-        # need to save sockets in pipe_rsock/pipe_wsock so they don't get closed
+        # need to save sockets in _rsock/_wsock so they don't get closed
         self._rsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._rsock.connect(('127.0.0.1', serv.getsockname()[1]))
     

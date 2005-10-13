@@ -1,5 +1,3 @@
-#!/usr/bin/python
-
 # Copyright (C) 2003-2005 Robey Pointer <robey@lag.net>
 #
 # This file is part of paramiko.
@@ -24,6 +22,7 @@ BufferedFile.
 
 from cStringIO import StringIO
 
+
 _FLAG_READ = 0x1
 _FLAG_WRITE = 0x2
 _FLAG_APPEND = 0x4
@@ -31,6 +30,7 @@ _FLAG_BINARY = 0x10
 _FLAG_BUFFERED = 0x20
 _FLAG_LINE_BUFFERED = 0x40
 _FLAG_UNIVERSAL_NEWLINE = 0x80
+
 
 class BufferedFile (object):
     """

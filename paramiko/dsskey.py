@@ -1,5 +1,3 @@
-#!/usr/bin/python
-
 # Copyright (C) 2003-2005 Robey Pointer <robey@lag.net>
 #
 # This file is part of paramiko.
@@ -25,12 +23,13 @@ L{DSSKey}
 from Crypto.PublicKey import DSA
 from Crypto.Hash import SHA
 
-from common import *
-import util
-from ssh_exception import SSHException
-from message import Message
-from ber import BER, BERException
-from pkey import PKey
+from paramiko.common import *
+from paramiko import util
+from paramiko.ssh_exception import SSHException
+from paramiko.message import Message
+from paramiko.ber import BER, BERException
+from paramiko.pkey import PKey
+
 
 class DSSKey (PKey):
     """
@@ -167,4 +166,3 @@ class DSSKey (PKey):
         self.y = keylist[4]
         self.x = keylist[5]
         self.size = util.bit_length(self.p)
-

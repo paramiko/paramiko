@@ -20,10 +20,10 @@
 L{SFTPFile}
 """
 
-from common import *
-from sftp import *
-from file import BufferedFile
-from sftp_attr import SFTPAttributes
+from paramiko.common import *
+from paramiko.sftp import *
+from paramiko.file import BufferedFile
+from paramiko.sftp_attr import SFTPAttributes
 
 
 class SFTPFile (BufferedFile):

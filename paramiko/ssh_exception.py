@@ -1,5 +1,3 @@
-#!/usr/bin/python
-
 # Copyright (C) 2003-2005 Robey Pointer <robey@lag.net>
 #
 # This file is part of paramiko.
@@ -29,11 +27,13 @@ class SSHException (Exception):
     """
     pass
 
+
 class PasswordRequiredException (SSHException):
     """
     Exception raised when a password is needed to unlock a private key file.
     """
     pass
+
 
 class BadAuthenticationType (SSHException):
     """
@@ -56,6 +56,7 @@ class BadAuthenticationType (SSHException):
      
     def __str__(self):
         return SSHException.__str__(self) + ' (allowed_types=%r)' % self.allowed_types
+
 
 class PartialAuthentication (SSHException):
     """

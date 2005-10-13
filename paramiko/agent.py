@@ -20,14 +20,18 @@
 SSH Agent interface for Unix clients.
 """
 
-import os, socket, struct
+import os
+import socket
+import struct
 
-from ssh_exception import SSHException
-from message import Message
-from pkey import PKey
+from paramiko.ssh_exception import SSHException
+from paramiko.message import Message
+from paramiko.pkey import PKey
+
 
 SSH2_AGENTC_REQUEST_IDENTITIES, SSH2_AGENT_IDENTITIES_ANSWER, \
     SSH2_AGENTC_SIGN_REQUEST, SSH2_AGENT_SIGN_RESPONSE = range(11, 15)
+
 
 class Agent:
     """

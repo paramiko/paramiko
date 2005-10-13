@@ -1,5 +1,3 @@
-#!/usr/bin/python
-
 # Copyright (C) 2003-2005 Robey Pointer <robey@lag.net>
 #
 # This file is part of paramiko.
@@ -22,13 +20,15 @@
 Server-mode SFTP support.
 """
 
-import os, errno
+import os
+import errno
+
 from Crypto.Hash import MD5, SHA
-from common import *
-from server import SubsystemHandler
-from sftp import *
-from sftp_si import *
-from sftp_attr import *
+from paramiko.common import *
+from paramiko.server import SubsystemHandler
+from paramiko.sftp import *
+from paramiko.sftp_si import *
+from paramiko.sftp_attr import *
 
 
 # known hash algorithms for the "check-file" extension
@@ -417,4 +417,4 @@ class SFTPServer (BaseSFTP, SubsystemHandler):
             self._send_status(request_number, SFTP_OP_UNSUPPORTED)
 
 
-from sftp_handle import SFTPHandle
+from paramiko.sftp_handle import SFTPHandle

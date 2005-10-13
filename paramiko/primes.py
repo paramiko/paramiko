@@ -21,7 +21,8 @@ Utility functions for dealing with primes.
 """
 
 from Crypto.Util import number
-import util
+
+from paramiko import util
 
 
 def _generate_prime(bits, randpool):
@@ -145,4 +146,3 @@ class ModulusPack (object):
         # now pick a random modulus of this bitsize
         n = _roll_random(self.randpool, len(self.pack[good]))
         return self.pack[good][n]
-

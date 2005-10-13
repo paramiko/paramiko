@@ -1,5 +1,3 @@
-#!/usr/bin/python
-
 # Copyright (C) 2003-2005 Robey Pointer <robey@lag.net>
 #
 # This file is part of paramiko.
@@ -22,14 +20,17 @@
 Stub out logging on python < 2.3.
 """
 
+
 DEBUG = 10
 INFO = 20
 WARNING = 30
 ERROR = 40
 CRITICAL = 50
 
+
 def getLogger(name):
     return _logger
+
 
 class logger (object):
     def __init__(self):

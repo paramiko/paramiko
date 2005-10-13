@@ -24,12 +24,13 @@ from Crypto.PublicKey import RSA
 from Crypto.Hash import SHA, MD5
 from Crypto.Cipher import DES3
 
-from common import *
-from message import Message
-from ber import BER, BERException
-import util
-from pkey import PKey
-from ssh_exception import SSHException
+from paramiko.common import *
+from paramiko import util
+from paramiko.message import Message
+from paramiko.ber import BER, BERException
+from paramiko.pkey import PKey
+from paramiko.ssh_exception import SSHException
+
 
 class RSAKey (PKey):
     """
@@ -161,4 +162,3 @@ class RSAKey (PKey):
         self.p = keylist[4]
         self.q = keylist[5]
         self.size = util.bit_length(self.n)
-
