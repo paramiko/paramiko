@@ -88,14 +88,21 @@ class DSSKey (PKey):
         dss = DSA.construct((long(self.y), long(self.g), long(self.p), long(self.q), long(self.x)))
         # generate a suitable k
         qsize = len(util.deflate_long(self.q, 0))
-        while 1:
+        while True:
             k = util.inflate_long(rpool.get_bytes(qsize), 1)
             if (k > 2) and (k < self.q):
                 break
         r, s = dss.sign(util.inflate_long(digest, 1), k)
         m = Message()
         m.add_string('ssh-dss')
-        m.add_string(util.deflate_long(r, 0) + util.deflate_long(s, 0))
+        # apparently, in rare cases, r or s may be shorter than 20 bytes!
+        rstr = util.deflate_long(r, 0)
+        sstr = util.deflate_long(s, 0)
+        if len(rstr) < 20:
+            rstr = '\x00' * (20 - len(rstr)) + rstr
+        if len(sstr) < 20:
+            sstr = '\x00' * (20 - len(sstr)) + sstr
+        m.add_string(rstr + sstr)
         return m
 
     def verify_ssh_sig(self, data, msg):
