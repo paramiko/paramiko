@@ -124,8 +124,8 @@ class SFTPFile (BufferedFile):
         if whence == self.SEEK_SET:
             self._realpos = self._pos = offset
         elif whence == self.SEEK_CUR:
-            self._realpos += offset
             self._pos += offset
+            self._realpos = self._pos
         else:
             self._realpos = self._pos = self._get_size() + offset
         self._rbuffer = ''
