@@ -20,6 +20,7 @@
 Client-mode SFTP support.
 """
 
+import errno
 import os
 from paramiko.sftp import *
 from paramiko.sftp_attr import SFTPAttributes
@@ -56,6 +57,7 @@ class SFTPClient (BaseSFTP):
         self.ultra_debug = False
         self.request_number = 1
         self._cwd = None
+        # FIXME: after we require python 2.4, use set :)
         self._expecting = []
         if type(sock) is Channel:
             # override default logger
@@ -560,6 +562,11 @@ class SFTPClient (BaseSFTP):
             return
         elif code == SFTP_EOF:
             raise EOFError(text)
+        elif code == SFTP_NO_SUCH_FILE:
+            # clever idea from john a. meinel: map the error codes to errno
+            raise IOError(errno.ENOENT, text)
+        elif code == SFTP_PERMISSION_DENIED:
+            raise IOError(errno.EACCES, text)
         else:
             raise IOError(text)
     
