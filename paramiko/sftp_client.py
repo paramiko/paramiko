@@ -22,6 +22,7 @@ Client-mode SFTP support.
 
 import errno
 import os
+import weakref
 from paramiko.sftp import *
 from paramiko.sftp_attr import SFTPAttributes
 from paramiko.sftp_file import SFTPFile
@@ -57,8 +58,8 @@ class SFTPClient (BaseSFTP):
         self.ultra_debug = False
         self.request_number = 1
         self._cwd = None
-        # FIXME: after we require python 2.4, use set :)
-        self._expecting = []
+        # request # -> SFTPFile
+        self._expecting = weakref.WeakValueDictionary()
         if type(sock) is Channel:
             # override default logger
             transport = self.sock.get_transport()
@@ -491,6 +492,7 @@ class SFTPClient (BaseSFTP):
         @since: 1.4
         """
         fr = self.file(remotepath, 'rb')
+        fr.prefetch()
         fl = file(localpath, 'wb')
         size = 0
         while True:
@@ -510,10 +512,10 @@ class SFTPClient (BaseSFTP):
 
 
     def _request(self, t, *arg):
-        num = self._async_request(t, *arg)
+        num = self._async_request(type(None), t, *arg)
         return self._read_response(num)
     
-    def _async_request(self, t, *arg):
+    def _async_request(self, fileobj, t, *arg):
         msg = Message()
         msg.add_int(self.request_number)
         for item in arg:
@@ -529,8 +531,8 @@ class SFTPClient (BaseSFTP):
                 raise Exception('unknown type for %r type %r' % (item, type(item)))
         self._send_packet(t, str(msg))
         num = self.request_number
+        self._expecting[num] = fileobj
         self.request_number += 1
-        self._expecting.append(num)
         return num
 
     def _read_response(self, waitfor=None):
@@ -539,18 +541,26 @@ class SFTPClient (BaseSFTP):
             msg = Message(data)
             num = msg.get_int()
             if num not in self._expecting:
-                raise SFTPError('Expected response from %r, got response #%d' %
-                    (self._expected, num))
-            self._expecting.remove(num)
-            if t == CMD_STATUS:
-                self._convert_status(msg)
-            if (waitfor is None) or (num == waitfor):
-                break
-        return t, msg
+                # might be response for a file that was closed before responses came back
+                self._log(DEBUG, 'Unexpected response #%d' % (num,))
+                continue
+            fileobj = self._expecting[num]
+            del self._expecting[num]
+            if num == waitfor:
+                # synchronous
+                if t == CMD_STATUS:
+                    self._convert_status(msg)
+                return t, msg
+            if fileobj is not type(None):
+                fileobj._async_response(t, msg)
+            if waitfor is None:
+                # just doing a single check
+                return
 
-    def _finish_responses(self):
-        while len(self._expecting) > 0:
+    def _finish_responses(self, fileobj):
+        while fileobj in self._expecting.values():
             self._read_response()
+            fileobj._check_exception()
 
     def _convert_status(self, msg):
         """

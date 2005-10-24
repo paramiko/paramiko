@@ -23,11 +23,15 @@ a real actual sftp server is contacted, and a new folder is created there to
 do test file operations in (so no existing files will be harmed).
 """
 
-import sys, os
+import logging
+import os
 import random
-import logging, threading
+import sys
+import threading
+import time
+import unittest
 
-import paramiko, unittest
+import paramiko
 from stub_sftp import StubServer, StubSFTPServer
 from loop import LoopSocket
 
@@ -432,12 +436,13 @@ class SFTPTest (unittest.TestCase):
 
     def test_E_big_file(self):
         """
-        write a 1MB file, with no linefeeds, using line buffering.
+        write a 1MB file with no buffering.
         """
         global g_big_file_test
         if not g_big_file_test:
             return
         kblob = (1024 * 'x')
+        start = time.time()
         try:
             f = sftp.open('%s/hongry.txt' % FOLDER, 'w')
             for n in range(1024):
@@ -448,6 +453,18 @@ class SFTPTest (unittest.TestCase):
             sys.stderr.write(' ')
 
             self.assertEqual(sftp.stat('%s/hongry.txt' % FOLDER).st_size, 1024 * 1024)
+            end = time.time()
+            sys.stderr.write('%ds ' % round(end - start))
+            
+            start = time.time()
+            f = sftp.open('%s/hongry.txt' % FOLDER, 'r')
+            for n in range(1024):
+                data = f.read(1024)
+                self.assertEqual(data, kblob)
+            f.close()
+
+            end = time.time()
+            sys.stderr.write('%ds ' % round(end - start))
         finally:
             sftp.remove('%s/hongry.txt' % FOLDER)
 
@@ -459,6 +476,7 @@ class SFTPTest (unittest.TestCase):
         if not g_big_file_test:
             return
         kblob = (1024 * 'x')
+        start = time.time()
         try:
             f = sftp.open('%s/hongry.txt' % FOLDER, 'w')
             f.set_pipelined(True)
@@ -470,6 +488,19 @@ class SFTPTest (unittest.TestCase):
             sys.stderr.write(' ')
 
             self.assertEqual(sftp.stat('%s/hongry.txt' % FOLDER).st_size, 1024 * 1024)
+            end = time.time()
+            sys.stderr.write('%ds ' % round(end - start))
+            
+            start = time.time()
+            f = sftp.open('%s/hongry.txt' % FOLDER, 'r')
+            f.prefetch()
+            for n in range(1024):
+                data = f.read(1024)
+                self.assertEqual(data, kblob)
+            f.close()
+
+            end = time.time()
+            sys.stderr.write('%ds ' % round(end - start))
         finally:
             sftp.remove('%s/hongry.txt' % FOLDER)
         
