@@ -35,7 +35,7 @@ from paramiko.ssh_exception import SSHException, BadAuthenticationType
 from paramiko.message import Message
 from paramiko.channel import Channel
 from paramiko.sftp_client import SFTPClient
-from paramiko.packet import Packetizer
+from paramiko.packet import Packetizer, NeedRekeyException
 from paramiko.rsakey import RSAKey
 from paramiko.dsskey import DSSKey
 from paramiko.kex_group1 import KexGroup1
@@ -247,6 +247,7 @@ class Transport (threading.Thread):
         self.max_packet_size = 32768
         self.saved_exception = None
         self.clear_to_send = threading.Event()
+        self.clear_to_send_lock = threading.Lock()
         self.log_name = 'paramiko.transport'
         self.logger = util.get_logger(self.log_name)
         self.packetizer.set_log(self.logger)
@@ -592,9 +593,9 @@ class Transport (threading.Thread):
             self.channels_seen[chanid] = True
             chan._set_transport(self)
             chan._set_window(self.window_size, self.max_packet_size)
-            self._send_user_message(m)
         finally:
             self.lock.release()
+        self._send_user_message(m)
         while 1:
             event.wait(0.1);
             if not self.active:
@@ -1166,8 +1167,6 @@ class Transport (threading.Thread):
 
     def _send_message(self, data):
         self.packetizer.send_message(data)
-        if self.packetizer.need_rekey() and not self.in_kex:
-            self._send_kex_init()
 
     def _send_user_message(self, data):
         """
@@ -1179,9 +1178,14 @@ class Transport (threading.Thread):
             if not self.active:
                 self._log(DEBUG, 'Dropping user packet because connection is dead.')
                 return
+            self.clear_to_send_lock.acquire()
             if self.clear_to_send.isSet():
                 break
-        self._send_message(data)
+            self.clear_to_send_lock.release()
+        try:
+            self._send_message(data)
+        finally:
+            self.clear_to_send_lock.release()
 
     def _set_K_H(self, k, h):
         "used by a kex object to set the K (root key) and H (exchange hash)"
@@ -1246,7 +1250,10 @@ class Transport (threading.Thread):
             while self.active:
                 if self.packetizer.need_rekey() and not self.in_kex:
                     self._send_kex_init()
-                ptype, m = self.packetizer.read_message()
+                try:
+                    ptype, m = self.packetizer.read_message()
+                except NeedRekeyException:
+                    continue
                 if ptype == MSG_IGNORE:
                     continue
                 elif ptype == MSG_DISCONNECT:
@@ -1324,7 +1331,11 @@ class Transport (threading.Thread):
 
     def _negotiate_keys(self, m):
         # throws SSHException on anything unusual
-        self.clear_to_send.clear()
+        self.clear_to_send_lock.acquire()
+        try:
+            self.clear_to_send.clear()
+        finally:
+            self.clear_to_send_lock.release()
         if self.local_kex_init == None:
             # remote side wants to renegotiate
             self._send_kex_init()
@@ -1371,7 +1382,11 @@ class Transport (threading.Thread):
         announce to the other side that we'd like to negotiate keys, and what
         kind of key negotiation we support.
         """
-        self.clear_to_send.clear()
+        self.clear_to_send_lock.acquire()
+        try:
+            self.clear_to_send.clear()
+        finally:
+            self.clear_to_send_lock.release()
         self.in_kex = True
         if self.server_mode:
             if (self._modulus_pack is None) and ('diffie-hellman-group-exchange-sha1' in self._preferred_kex):
@@ -1559,7 +1574,12 @@ class Transport (threading.Thread):
         # it's now okay to send data again (if this was a re-key)
         if not self.packetizer.need_rekey():
             self.in_kex = False
-        self.clear_to_send.set()
+        self._log(DEBUG, 'clear to send')
+        self.clear_to_send_lock.acquire()
+        try:
+            self.clear_to_send.set()
+        finally:
+            self.clear_to_send_lock.release()
         return
 
     def _parse_disconnect(self, m):

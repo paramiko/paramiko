@@ -504,3 +504,39 @@ class TransportTest (unittest.TestCase):
         self.assertEquals('', chan.recv(16))
         
         chan.close()
+   
+    def test_F_renegotiate(self):
+        """
+        verify that a transport can correctly renegotiate mid-stream.
+        """
+        host_key = RSAKey.from_private_key_file('tests/test_rsa.key')
+        public_host_key = RSAKey(data=str(host_key))
+        self.ts.add_server_key(host_key)
+        event = threading.Event()
+        server = NullServer()
+        self.ts.start_server(event, server)
+        self.tc.connect(hostkey=public_host_key,
+                        username='slowdive', password='pygmalion')
+        event.wait(1.0)
+        self.assert_(event.isSet())
+        self.assert_(self.ts.is_active())
+
+        self.tc.packetizer.REKEY_BYTES = 16384
+        
+        chan = self.tc.open_session()
+        self.assert_(chan.exec_command('yes'))
+        schan = self.ts.accept(1.0)
+
+        self.assertEquals(self.tc.H, self.tc.session_id)
+        for i in range(20):
+            chan.send('x' * 1024)
+        chan.close()
+        
+        # allow a few seconds for the rekeying to complete
+        for i in xrange(50):
+            if self.tc.H != self.tc.session_id:
+                break
+            time.sleep(0.1)
+        self.assertNotEquals(self.tc.H, self.tc.session_id)
+
+        schan.close()

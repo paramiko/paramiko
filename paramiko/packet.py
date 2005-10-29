@@ -33,6 +33,10 @@ from paramiko.ssh_exception import SSHException
 from paramiko.message import Message
 
 
+class NeedRekeyException (Exception):
+    pass
+
+
 class Packetizer (object):
     """
     Implementation of the base SSH packet protocol.
@@ -187,6 +191,8 @@ class Packetizer (object):
             except socket.timeout:
                 if self.__closed:
                     raise EOFError()
+                if self.__need_rekey:
+                    raise NeedRekeyException()
                 self._check_keepalive()
         return out
 
@@ -269,6 +275,7 @@ class Packetizer (object):
         done).
         
         @raise SSHException: if the packet is mangled
+        @raise NeedRekeyException: if the transport should rekey
         """
         header = self.read_all(self.__block_size_in)
         if self.__block_engine_in != None:
