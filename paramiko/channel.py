@@ -539,9 +539,18 @@ class Channel (object):
             else:
                 out = self.in_buffer[:nbytes]
                 self.in_buffer = self.in_buffer[nbytes:]
-            self._check_add_window(len(out))
+            ack = self._check_add_window(len(out))
         finally:
             self.lock.release()
+
+        # no need to hold the channel lock when sending this
+        if ack > 0:
+            m = Message()
+            m.add_byte(chr(MSG_CHANNEL_WINDOW_ADJUST))
+            m.add_int(self.remote_chanid)
+            m.add_int(ack)
+            self.transport._send_user_message(m)
+
         return out
 
     def recv_stderr_ready(self):
@@ -1056,19 +1065,17 @@ class Channel (object):
     def _check_add_window(self, n):
         # already holding the lock!
         if self.closed or self.eof_received or not self.active:
-            return
+            return 0
         if self.ultra_debug:
             self._log(DEBUG, 'addwindow %d' % n)
         self.in_window_sofar += n
-        if self.in_window_sofar > self.in_window_threshold:
-            if self.ultra_debug:
-                self._log(DEBUG, 'addwindow send %d' % self.in_window_sofar)
-            m = Message()
-            m.add_byte(chr(MSG_CHANNEL_WINDOW_ADJUST))
-            m.add_int(self.remote_chanid)
-            m.add_int(self.in_window_sofar)
-            self.transport._send_user_message(m)
-            self.in_window_sofar = 0
+        if self.in_window_sofar <= self.in_window_threshold:
+            return 0
+        if self.ultra_debug:
+            self._log(DEBUG, 'addwindow send %d' % self.in_window_sofar)
+        out = self.in_window_sofar
+        self.in_window_sofar = 0
+        return out
 
     def _wait_for_send_window(self, size):
         """
