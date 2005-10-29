@@ -303,8 +303,8 @@ class Packetizer (object):
             if my_mac != mac:
                 raise SSHException('Mismatched MAC')
         padding = ord(packet[0])
-        payload = packet[1:packet_size - padding + 1]
-        randpool.add_event(packet[packet_size - padding + 1])
+        payload = packet[1:packet_size - padding]
+        randpool.add_event(packet[packet_size - padding])
         if self.__dump_packets:
             self._log(DEBUG, 'Got payload (%d bytes, %d padding)' % (packet_size, padding))
 
