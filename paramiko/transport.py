@@ -244,7 +244,7 @@ class Transport (threading.Thread):
         self.channels_seen = { }        # (id -> True)
         self.channel_counter = 1
         self.window_size = 65536
-        self.max_packet_size = 32768
+        self.max_packet_size = 34816
         self.saved_exception = None
         self.clear_to_send = threading.Event()
         self.clear_to_send_lock = threading.Lock()
