@@ -1,5 +1,5 @@
-paramiko 1.4
-"oddish" release, 17 jul 2005
+paramiko 1.5.1
+"quilava" release, 31 oct 2005
 
 Copyright (c) 2003-2005 Robey Pointer <robey@lag.net>
 
@@ -134,6 +134,16 @@ the best and easiest examples of how to use the SFTP class.
 
 highlights of what's new in each release:
 
+v1.5.1 QUILAVA
+* SFTPFile.prefetch() added to dramatically speed up downloads (automatically
+  turned on in SFTPClient.get())
+* fixed bug where garbage-collected Channels could trigger the Transport to
+  close the session (reported by gordon good)
+* fixed a deadlock in rekeying (reported by wendell wood)
+* fixed some windows bugs and SFTPAttributes.__str__() (reported by grzegorz
+  makarewicz)
+* better sftp error reporting by adding fake "errno" info to IOErrors
+
 v1.5 PARAS
 * added support for "keyboard-interactive" authentication
 * added mode (on by default) where password authentication will try to
@@ -265,9 +275,6 @@ v0.9 FEAROW
 * add comments to demo & demo_simple about how they don't work on windows
 * host-based auth (yuck!)
 * support compression
-* SFTP pipelining
-    - basically, just don't wait synchronously for server responses.  queue
-    up "expected" responses and wait for them on close().
 * SFTP implicit file locking?
 * ChannelException like the java version has
 
@@ -276,5 +283,4 @@ v0.9 FEAROW
   components
 * sftp protocol 6 support (ugh....) -- once it settles down more
 
-* what is psyco?
 * make a simple example demonstrating use of SocketServer (besides forward.py?)

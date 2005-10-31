@@ -15,6 +15,7 @@
 # nidoran (28jun05) - 1.3.1
 # oddish (17jul05) - 1.4
 # paras (2oct05) - 1.5
+# quilava (31oct05) - 1.5.1
 
 release:
 	python ./setup.py sdist --formats=zip
