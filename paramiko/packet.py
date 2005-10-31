@@ -234,6 +234,7 @@ class Packetizer (object):
         Write a block of data using the current cipher, as an SSH block.
         """
         # encrypt this sucka
+        randpool.stir()
         data = str(data)
         cmd = ord(data[0])
         if cmd in MSG_NAMES:
