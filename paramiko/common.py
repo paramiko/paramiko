@@ -105,8 +105,11 @@ except:
     # the above will likely fail on Windows - fall back to non-persistent random pool
     randpool = RandomPool()
 
-randpool.randomize()
-
+try:
+    randpool.randomize()
+except:
+    # earlier versions of pyCrypto (pre-2.0) don't have randomize()
+    pass
 
 import sys
 if sys.version_info < (2, 3):

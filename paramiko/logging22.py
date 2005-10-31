@@ -43,6 +43,9 @@ class logger (object):
     def addHandler(self, h):
         self.handlers.append(h)
 
+    def addFilter(self, filter):
+        pass
+        
     def log(self, level, text):
         if level >= self.level:
             for h in self.handlers:

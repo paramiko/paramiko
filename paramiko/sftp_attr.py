@@ -171,8 +171,8 @@ class SFTPAttributes (object):
 
     def __str__(self):
         "create a unix-style long description of the file (like ls -l)"
-        if hasattr(self, 'permissions'):
-            kind = self.permissions & stat.S_IFMT
+        if hasattr(self, 'st_mode'):
+            kind = stat.S_IFMT(self.st_mode)
             if kind == stat.S_IFIFO:
                 ks = 'p'
             elif kind == stat.S_IFCHR:
@@ -189,15 +189,15 @@ class SFTPAttributes (object):
                 ks = 's'
             else:
                 ks = '?'
-            ks += _rwx((self.permissions & 0700) >> 6, self.permissions & stat.S_ISUID)
-            ks += _rwx((self.permissions & 070) >> 3, self.permissions & stat.S_ISGID)
-            ks += _rwx(self.permissions & 7, self.permissions & stat.S_ISVTX, True)
+            ks += self._rwx((self.st_mode & 0700) >> 6, self.st_mode & stat.S_ISUID)
+            ks += self._rwx((self.st_mode & 070) >> 3, self.st_mode & stat.S_ISGID)
+            ks += self._rwx(self.st_mode & 7, self.st_mode & stat.S_ISVTX, True)
         else:
             ks = '?---------'
-        uid = getattr(self, 'uid', -1)
-        gid = getattr(self, 'gid', -1)
-        size = getattr(self, 'size', -1)
-        mtime = getattr(self, 'mtime', 0)
+        uid = getattr(self, 'st_uid', -1)
+        gid = getattr(self, 'st_gid', -1)
+        size = getattr(self, 'st_size', -1)
+        mtime = getattr(self, 'st_mtime', 0)
         # compute display date
         if abs(time.time() - mtime) > 15552000:
             # (15552000 = 6 months)
