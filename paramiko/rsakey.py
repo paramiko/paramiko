@@ -123,6 +123,7 @@ class RSAKey (PKey):
 
         @since: fearow
         """
+        randpool.stir()
         rsa = RSA.generate(bits, randpool.get_bytes, progress_func)
         key = RSAKey(vals=(rsa.e, rsa.n))
         key.d = rsa.d

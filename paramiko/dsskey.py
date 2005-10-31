@@ -140,13 +140,14 @@ class DSSKey (PKey):
         @param bits: number of bits the generated key should be.
         @type bits: int
         @param progress_func: an optional function to call at key points in
-        key generation (used by C{pyCrypto.PublicKey}).
+            key generation (used by C{pyCrypto.PublicKey}).
         @type progress_func: function
         @return: new private key
         @rtype: L{DSSKey}
 
         @since: fearow
         """
+        randpool.stir()
         dsa = DSA.generate(bits, randpool.get_bytes, progress_func)
         key = DSSKey(vals=(dsa.p, dsa.q, dsa.g, dsa.y))
         key.x = dsa.x

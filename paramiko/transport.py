@@ -140,7 +140,7 @@ class Transport (threading.Thread):
     """
 
     _PROTO_ID = '2.0'
-    _CLIENT_ID = 'paramiko_1.5'
+    _CLIENT_ID = 'paramiko_1.5.1'
 
     _preferred_ciphers = ( 'aes128-cbc', 'blowfish-cbc', 'aes256-cbc', '3des-cbc' )
     _preferred_macs = ( 'hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96' )
@@ -637,6 +637,7 @@ class Transport (threading.Thread):
         """
         m = Message()
         m.add_byte(chr(MSG_IGNORE))
+        randpool.stir()
         if bytes is None:
             bytes = (ord(randpool.get_bytes(1)) % 32) + 10
         m.add_bytes(randpool.get_bytes(bytes))
@@ -1399,6 +1400,7 @@ class Transport (threading.Thread):
         else:
             available_server_keys = self._preferred_keys
 
+        randpool.stir()
         m = Message()
         m.add_byte(chr(MSG_KEXINIT))
         m.add_bytes(randpool.get_bytes(16))
