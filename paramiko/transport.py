@@ -502,9 +502,13 @@ class Transport (threading.Thread):
         Close this session, and any open channels that are tied to it.
         """
         self.active = False
-        self.packetizer.close()
-        for chan in self.channels.values():
-            chan._unlink()
+        # since this may be called from __del__, can't assume any attributes exist
+        try:
+            self.packetizer.close()
+            for chan in self.channels.values():
+                chan._unlink()
+        except AttributeError:
+            pass
 
     def get_remote_server_key(self):
         """
@@ -1576,7 +1580,6 @@ class Transport (threading.Thread):
         # it's now okay to send data again (if this was a re-key)
         if not self.packetizer.need_rekey():
             self.in_kex = False
-        self._log(DEBUG, 'clear to send')
         self.clear_to_send_lock.acquire()
         try:
             self.clear_to_send.set()
