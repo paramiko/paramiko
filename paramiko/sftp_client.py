@@ -150,10 +150,10 @@ class SFTPClient (BaseSFTP):
         self._request(CMD_CLOSE, handle)
         return filelist
 
-    def open(self, filename, mode='r', bufsize=-1):
+    def file(self, filename, mode='r', bufsize=-1):
         """
         Open a file on the remote server.  The arguments are the same as for
-        python's built-in C{open} (aka C{file}).  A file-like object is
+        python's built-in C{file} (aka C{open}).  A file-like object is
         returned, which closely mimics the behavior of a normal python file
         object.
 
@@ -163,6 +163,11 @@ class SFTPClient (BaseSFTP):
         existing file), C{'a+'} for reading/appending.  The python C{'b'} flag
         is ignored, since SSH treats all files as binary.  The C{'U'} flag is
         supported in a compatible way.
+        
+        Since 1.5.2, an C{'x'} flag indicates that the operation should only
+        succeed if the file was created and did not previously exist.  This has
+        no direct mapping to python's file flags, but is commonly known as the
+        C{O_EXCL} flag in posix.
 
         The file will be buffered in standard python style by default, but
         can be altered with the C{bufsize} parameter.  C{0} turns off
@@ -184,12 +189,14 @@ class SFTPClient (BaseSFTP):
         imode = 0
         if ('r' in mode) or ('+' in mode):
             imode |= SFTP_FLAG_READ
-        if ('w' in mode) or ('+' in mode):
+        if ('w' in mode) or ('+' in mode) or ('a' in mode):
             imode |= SFTP_FLAG_WRITE
         if ('w' in mode):
             imode |= SFTP_FLAG_CREATE | SFTP_FLAG_TRUNC
         if ('a' in mode):
-            imode |= SFTP_FLAG_APPEND | SFTP_FLAG_CREATE | SFTP_FLAG_WRITE
+            imode |= SFTP_FLAG_CREATE | SFTP_FLAG_APPEND
+        if ('x' in mode):
+            imode |= SFTP_FLAG_CREATE | SFTP_FLAG_EXCL
         attrblock = SFTPAttributes()
         t, msg = self._request(CMD_OPEN, filename, imode, attrblock)
         if t != CMD_HANDLE:
@@ -199,7 +206,7 @@ class SFTPClient (BaseSFTP):
 
     # python has migrated toward file() instead of open().
     # and really, that's more easily identifiable.
-    file = open
+    open = file
 
     def remove(self, path):
         """

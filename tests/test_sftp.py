@@ -670,3 +670,19 @@ class SFTPTest (unittest.TestCase):
                               paramiko.util.hexify(sum))
         finally:
             sftp.unlink(FOLDER + '/kitty.txt')
+
+    def test_N_x_flag(self):
+        """
+        verify that the 'x' flag works when opening a file.
+        """
+        f = sftp.open(FOLDER + '/unusual.txt', 'wx')
+        f.close()
+        
+        try:
+            try:
+                f = sftp.open(FOLDER + '/unusual.txt', 'wx')
+                self.fail('expected exception')
+            except IOError, x:
+                pass
+        finally:
+            sftp.unlink(FOLDER + '/unusual.txt')
