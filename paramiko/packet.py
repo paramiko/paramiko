@@ -167,7 +167,7 @@ class Packetizer (object):
         self.__keepalive_callback = callback
         self.__keepalive_last = time.time()
     
-    def read_all(self, n):
+    def read_all(self, n, check_rekey=False):
         """
         Read as close to N bytes as possible, blocking as long as necessary.
         
@@ -191,7 +191,7 @@ class Packetizer (object):
             except socket.timeout:
                 if self.__closed:
                     raise EOFError()
-                if self.__need_rekey:
+                if check_rekey and (len(out) == 0) and self.__need_rekey:
                     raise NeedRekeyException()
                 self._check_keepalive()
         return out
@@ -278,7 +278,7 @@ class Packetizer (object):
         @raise SSHException: if the packet is mangled
         @raise NeedRekeyException: if the transport should rekey
         """
-        header = self.read_all(self.__block_size_in)
+        header = self.read_all(self.__block_size_in, check_rekey=True)
         if self.__block_engine_in != None:
             header = self.__block_engine_in.decrypt(header)
         if self.__dump_packets:
