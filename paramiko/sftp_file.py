@@ -107,7 +107,7 @@ class SFTPFile (BufferedFile):
             t, msg = self.sftp._read_response(req)
             if t != CMD_STATUS:
                 raise SFTPError('Expected status')
-            self.sftp._convert_status(msg)
+            # convert_status already called
         return chunk
 
     def settimeout(self, timeout):
