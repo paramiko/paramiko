@@ -29,8 +29,9 @@ import threading
 import time
 import weakref
 
-from paramiko.common import *
 from paramiko import util
+from paramiko.common import *
+from paramiko.compress import ZlibCompressor, ZlibDecompressor
 from paramiko.ssh_exception import SSHException, BadAuthenticationType
 from paramiko.message import Message
 from paramiko.channel import Channel
@@ -75,7 +76,7 @@ class SecurityOptions (object):
 
     @since: ivysaur
     """
-    __slots__ = [ 'ciphers', 'digests', 'key_types', 'kex', '_transport' ]
+    __slots__ = [ 'ciphers', 'digests', 'key_types', 'kex', 'compression', '_transport' ]
 
     def __init__(self, transport):
         self._transport = transport
@@ -99,6 +100,9 @@ class SecurityOptions (object):
 
     def _get_kex(self):
         return self._transport._preferred_kex
+        
+    def _get_compression(self):
+        return self._transport._preferred_compression
 
     def _set(self, name, orig, x):
         if type(x) is list:
@@ -121,6 +125,9 @@ class SecurityOptions (object):
 
     def _set_kex(self, x):
         self._set('_preferred_kex', '_kex_info', x)
+    
+    def _set_compression(self, x):
+        self._set('_preferred_compression', '_compression_info', x)
 
     ciphers = property(_get_ciphers, _set_ciphers, None,
                        "Symmetric encryption ciphers")
@@ -129,6 +136,8 @@ class SecurityOptions (object):
     key_types = property(_get_key_types, _set_key_types, None,
                          "Public-key algorithms")
     kex = property(_get_kex, _set_kex, None, "Key exchange algorithms")
+    compression = property(_get_compression, _set_compression, None,
+                           "Compression algorithms")
 
 
 class Transport (threading.Thread):
@@ -146,7 +155,8 @@ class Transport (threading.Thread):
     _preferred_macs = ( 'hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96' )
     _preferred_keys = ( 'ssh-rsa', 'ssh-dss' )
     _preferred_kex = ( 'diffie-hellman-group1-sha1', 'diffie-hellman-group-exchange-sha1' )
-
+    _preferred_compression = ( 'none', )
+    
     _cipher_info = {
         'blowfish-cbc': { 'class': Blowfish, 'mode': Blowfish.MODE_CBC, 'block-size': 8, 'key-size': 16 },
         'aes128-cbc': { 'class': AES, 'mode': AES.MODE_CBC, 'block-size': 16, 'key-size': 16 },
@@ -170,6 +180,15 @@ class Transport (threading.Thread):
         'diffie-hellman-group1-sha1': KexGroup1,
         'diffie-hellman-group-exchange-sha1': KexGex,
         }
+    
+    _compression_info = {
+        # zlib@openssh.com is just zlib, but only turned on after a successful
+        # authentication.  openssh servers may only offer this type because
+        # they've had troubles with security holes in zlib in the past.
+        'zlib@openssh.com': ( ZlibCompressor, ZlibDecompressor ),
+        'zlib': ( ZlibCompressor, ZlibDecompressor ),
+        'none': ( None, None ),
+    }
 
 
     _modulus_pack = None
@@ -1141,6 +1160,24 @@ class Transport (threading.Thread):
         @since: 1.4
         """
         return self.packetizer.get_hexdump()
+    
+    def use_compression(self, compress=True):
+        """
+        Turn on/off compression.  This will only have an affect before starting
+        the transport (ie before calling L{connect}, etc).  By default,
+        compression is off since it negatively affects interactive sessions
+        and is not fully tested.
+        
+        @param compress: C{True} to ask the remote client/server to compress
+            traffic; C{False} to refuse compression
+        @type compress: bool
+        
+        @since: 1.5.2
+        """
+        if compress:
+            self._preferred_compression = ( 'zlib@openssh.com', 'zlib', 'none' )
+        else:
+            self._preferred_compression = ( 'none', )
 
     def stop_thread(self):
         self.active = False
@@ -1414,8 +1451,8 @@ class Transport (threading.Thread):
         m.add_list(self._preferred_ciphers)
         m.add_list(self._preferred_macs)
         m.add_list(self._preferred_macs)
-        m.add_string('none')
-        m.add_string('none')
+        m.add_list(self._preferred_compression)
+        m.add_list(self._preferred_compression)
         m.add_string('')
         m.add_string('')
         m.add_boolean(False)
@@ -1439,10 +1476,16 @@ class Transport (threading.Thread):
         kex_follows = m.get_boolean()
         unused = m.get_int()
 
-        # no compression support (yet?)
-        if (not('none' in client_compress_algo_list) or
-            not('none' in server_compress_algo_list)):
-            raise SSHException('Incompatible ssh peer.')
+        self._log(DEBUG, 'kex algos:' + str(kex_algo_list) + ' server key:' + str(server_key_algo_list) + \
+                  ' client encrypt:' + str(client_encrypt_algo_list) + \
+                  ' server encrypt:' + str(server_encrypt_algo_list) + \
+                  ' client mac:' + str(client_mac_algo_list) + \
+                  ' server mac:' + str(server_mac_algo_list) + \
+                  ' client compress:' + str(client_compress_algo_list) + \
+                  ' server compress:' + str(server_compress_algo_list) + \
+                  ' client lang:' + str(client_lang_list) + \
+                  ' server lang:' + str(server_lang_list) + \
+                  ' kex follows?' + str(kex_follows))
 
         # as a server, we pick the first item in the client's list that we support.
         # as a client, we pick the first item in our list that the server supports.
@@ -1493,19 +1536,20 @@ class Transport (threading.Thread):
         self.local_mac = agreed_local_macs[0]
         self.remote_mac = agreed_remote_macs[0]
 
-        self._log(DEBUG, 'kex algos:' + str(kex_algo_list) + ' server key:' + str(server_key_algo_list) + \
-                  ' client encrypt:' + str(client_encrypt_algo_list) + \
-                  ' server encrypt:' + str(server_encrypt_algo_list) + \
-                  ' client mac:' + str(client_mac_algo_list) + \
-                  ' server mac:' + str(server_mac_algo_list) + \
-                  ' client compress:' + str(client_compress_algo_list) + \
-                  ' server compress:' + str(server_compress_algo_list) + \
-                  ' client lang:' + str(client_lang_list) + \
-                  ' server lang:' + str(server_lang_list) + \
-                  ' kex follows?' + str(kex_follows))
-        self._log(DEBUG, 'using kex %s; server key type %s; cipher: local %s, remote %s; mac: local %s, remote %s' %
+        if self.server_mode:
+            agreed_remote_compression = filter(self._preferred_compression.__contains__, client_compress_algo_list)
+            agreed_local_compression = filter(self._preferred_compression.__contains__, server_compress_algo_list)
+        else:
+            agreed_local_compression = filter(client_compress_algo_list.__contains__, self._preferred_compression)
+            agreed_remote_compression = filter(server_compress_algo_list.__contains__, self._preferred_compression)
+        if (len(agreed_local_compression) == 0) or (len(agreed_remote_compression) == 0):
+            raise SSHException('Incompatible ssh server (no acceptable compression) %r %r %r' % (agreed_local_compression, agreed_remote_compression, self._preferred_compression))
+        self.local_compression = agreed_local_compression[0]
+        self.remote_compression = agreed_remote_compression[0]
+
+        self._log(DEBUG, 'using kex %s; server key type %s; cipher: local %s, remote %s; mac: local %s, remote %s; compression: local %s, remote %s' %
                   (agreed_kex[0], self.host_key_type, self.local_cipher, self.remote_cipher, self.local_mac,
-                   self.remote_mac))
+                   self.remote_mac, self.local_compression, self.remote_compression))
 
         # save for computing hash later...
         # now wait!  openssh has a bug (and others might too) where there are
@@ -1533,6 +1577,10 @@ class Transport (threading.Thread):
         else:
             mac_key = self._compute_key('F', mac_engine.digest_size)
         self.packetizer.set_inbound_cipher(engine, block_size, mac_engine, mac_size, mac_key)
+        compress_in = self._compression_info[self.remote_compression][1]
+        if (compress_in is not None) and (self.remote_compression != 'zlib@openssh.com'):
+            self._log(DEBUG, 'Switching on inbound compression ...')
+            self.packetizer.set_inbound_compressor(compress_in())
 
     def _activate_outbound(self):
         "switch on newly negotiated encryption parameters for outbound traffic"
@@ -1556,10 +1604,25 @@ class Transport (threading.Thread):
         else:
             mac_key = self._compute_key('E', mac_engine.digest_size)
         self.packetizer.set_outbound_cipher(engine, block_size, mac_engine, mac_size, mac_key)
+        compress_out = self._compression_info[self.local_compression][0]
+        if (compress_out is not None) and (self.local_compression != 'zlib@openssh.com'):
+            self._log(DEBUG, 'Switching on outbound compression ...')
+            self.packetizer.set_outbound_compressor(compress_out())
         if not self.packetizer.need_rekey():
             self.in_kex = False
         # we always expect to receive NEWKEYS now
         self.expected_packet = MSG_NEWKEYS
+
+    def _auth_trigger(self):
+        # delayed initiation of compression
+        if self.local_compression == 'zlib@openssh.com':
+            compress_out = self._compression_info[self.local_compression][0]
+            self._log(DEBUG, 'Switching on outbound compression ...')
+            self.packetizer.set_outbound_compressor(compress_out())
+        if self.remote_compression == 'zlib@openssh.com':
+            compress_in = self._compression_info[self.remote_compression][1]
+            self._log(DEBUG, 'Switching on inbound compression ...')
+            self.packetizer.set_inbound_compressor(compress_in())
 
     def _parse_newkeys(self, m):
         self._log(DEBUG, 'Switch to new keys ...')

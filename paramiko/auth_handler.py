@@ -231,6 +231,8 @@ class AuthHandler (object):
         self.transport._send_message(m)
         if self.auth_fail_count >= 10:
             self._disconnect_no_more_auth()
+        if result == AUTH_SUCCESSFUL:
+            self.transport._auth_trigger()
 
     def _interactive_query(self, q):
         # make interactive query instead of response
@@ -332,6 +334,7 @@ class AuthHandler (object):
     def _parse_userauth_success(self, m):
         self.transport._log(INFO, 'Authentication successful!')
         self.authenticated = True
+        self.transport._auth_trigger()
         if self.auth_event != None:
             self.auth_event.set()
 

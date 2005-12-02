@@ -61,7 +61,7 @@ class Packetizer (object):
         self.__received_bytes = 0
         self.__received_packets = 0
         self.__received_packets_overflow = 0
-
+        
         # current inbound/outbound ciphering:
         self.__block_size_out = 8
         self.__block_size_in = 8
@@ -73,6 +73,8 @@ class Packetizer (object):
         self.__mac_engine_in = None
         self.__mac_key_out = ''
         self.__mac_key_in = ''
+        self.__compress_engine_out = None
+        self.__compress_engine_in = None
         self.__sequence_number_out = 0L
         self.__sequence_number_in = 0L
 
@@ -132,6 +134,12 @@ class Packetizer (object):
             self.__init_count = 0
             self.__need_rekey = False
     
+    def set_outbound_compressor(self, compressor):
+        self.__compress_engine_out = compressor
+    
+    def set_inbound_compressor(self, compressor):
+        self.__compress_engine_in = compressor
+        
     def close(self):
         self.__closed = True
 
@@ -242,6 +250,8 @@ class Packetizer (object):
         else:
             cmd_name = '$%x' % cmd
         self._log(DEBUG, 'Write packet <%s>, length %d' % (cmd_name, len(data)))
+        if self.__compress_engine_out is not None:
+            data = self.__compress_engine_out(data)
         packet = self._build_packet(data)
         if self.__dump_packets:
             self._log(DEBUG, util.format_binary(packet, 'OUT: '))
@@ -308,6 +318,9 @@ class Packetizer (object):
         randpool.add_event(packet[packet_size - padding])
         if self.__dump_packets:
             self._log(DEBUG, 'Got payload (%d bytes, %d padding)' % (packet_size, padding))
+
+        if self.__compress_engine_in is not None:
+            payload = self.__compress_engine_in(payload)
 
         msg = Message(payload[1:])
         msg.seqno = self.__sequence_number_in

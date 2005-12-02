@@ -274,9 +274,11 @@ v0.9 FEAROW
 
 * add comments to demo & demo_simple about how they don't work on windows
 * host-based auth (yuck!)
-* support compression
 * SFTP implicit file locking?
 * ChannelException like the java version has
+* would be nice to have windows putty "pagent" support -- looks very hard
+* unit tests for compression
+* zlib@openssh.com compression probably doesn't work after rekey
 
 * ctr forms of ciphers are missing (blowfish-ctr, aes128-ctr, aes256-ctr)
 * SFTP url parsing function to return (user, pass, host, port, path)
@@ -284,3 +286,8 @@ v0.9 FEAROW
 * sftp protocol 6 support (ugh....) -- once it settles down more
 
 * make a simple example demonstrating use of SocketServer (besides forward.py?)
+
+* make a function to parse .ssh/config files:
+	User, Hostname, Port, ProxyCommand, IdentityFile
+
+* weird prefetch bug with bzr?
