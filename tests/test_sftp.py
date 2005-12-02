@@ -686,3 +686,19 @@ class SFTPTest (unittest.TestCase):
                 pass
         finally:
             sftp.unlink(FOLDER + '/unusual.txt')
+    
+    def test_O_utf8(self):
+        """
+        verify that unicode strings are encoded into utf8 correctly.
+        """
+        f = sftp.open(FOLDER + '/something', 'w')
+        f.write('okay')
+        f.close()
+        
+        try:
+            sftp.rename(FOLDER + '/something', FOLDER + u'/\u00fcnic\u00f8de')
+            sftp.open(FOLDER + '/\xc3\xbcnic\xc3\xb8\x64\x65', 'r')
+        except Exception, e:
+            self.fail('exception ' + e)
+        sftp.unlink(FOLDER + '/\xc3\xbcnic\xc3\xb8\x64\x65')
+
