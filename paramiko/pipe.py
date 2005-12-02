@@ -36,6 +36,7 @@ class PosixPipe (object):
     def __init__ (self):
         self._rfd, self._wfd = os.pipe()
         self._set = False
+        self._forever = False
     
     def close (self):
         os.close(self._rfd)
@@ -45,7 +46,7 @@ class PosixPipe (object):
         return self._rfd
 
     def clear (self):
-        if not self._set:
+        if not self._set or self._forever:
             return
         os.read(self._rfd, 1)
         self._set = False
@@ -55,6 +56,10 @@ class PosixPipe (object):
             return
         self._set = True
         os.write(self._wfd, '*')
+    
+    def set_forever (self):
+        self._forever = True
+        self.set()
 
 
 class WindowsPipe (object):
@@ -74,6 +79,7 @@ class WindowsPipe (object):
         self._wsock, addr = serv.accept()
         serv.close()
         self._set = False
+        self._forever = False
     
     def close (self):
         self._rsock.close()
@@ -83,7 +89,7 @@ class WindowsPipe (object):
         return self._rsock.fileno()
 
     def clear (self):
-        if not self._set:
+        if not self._set or self._forever:
             return
         self._rsock.recv(1)
         self._set = False
@@ -93,3 +99,7 @@ class WindowsPipe (object):
             return
         self._set = True
         self._wsock.send('*')
+
+    def set_forever (self):
+        self._forever = True
+        self.set()

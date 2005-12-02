@@ -996,7 +996,7 @@ class Channel (object):
                 self.in_buffer_cv.notifyAll()
                 self.in_stderr_buffer_cv.notifyAll()
                 if self.pipe is not None:
-                    self.pipe.set()
+                    self.pipe.set_forever()
         finally:
             self.lock.release()
         self._log(DEBUG, 'EOF received')
@@ -1022,6 +1022,8 @@ class Channel (object):
         self.in_buffer_cv.notifyAll()
         self.in_stderr_buffer_cv.notifyAll()
         self.out_buffer_cv.notifyAll()
+        if self.pipe is not None:
+            self.pipe.set_forever()
 
     def _send_eof(self):
         # you are holding the lock.
