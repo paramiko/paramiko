@@ -261,11 +261,14 @@ def log_to_file(filename, level=DEBUG):
                                       '%Y%m%d-%H:%M:%S'))
     l.addHandler(lh)
 
+# make only one filter object, so it doesn't get applied more than once
+class PFilter (object):
+    def filter(self, record):
+        record._threadid = get_thread_id()
+        return True
+_pfilter = PFilter()
+
 def get_logger(name):
     l = logging.getLogger(name)
-    class PFilter (object):
-        def filter(self, record):
-            record._threadid = get_thread_id()
-            return True
-    l.addFilter(PFilter())
+    l.addFilter(_pfilter)
     return l
