@@ -22,6 +22,7 @@ Client-mode SFTP support.
 
 import errno
 import os
+import threading
 import weakref
 from paramiko.sftp import *
 from paramiko.sftp_attr import SFTPAttributes
@@ -57,6 +58,8 @@ class SFTPClient (BaseSFTP):
         self.sock = sock
         self.ultra_debug = False
         self.request_number = 1
+        # lock for request_number
+        self._lock = threading.Lock()
         self._cwd = None
         # request # -> SFTPFile
         self._expecting = weakref.WeakValueDictionary()
@@ -523,23 +526,28 @@ class SFTPClient (BaseSFTP):
         return self._read_response(num)
     
     def _async_request(self, fileobj, t, *arg):
-        msg = Message()
-        msg.add_int(self.request_number)
-        for item in arg:
-            if type(item) is int:
-                msg.add_int(item)
-            elif type(item) is long:
-                msg.add_int64(item)
-            elif type(item) is str:
-                msg.add_string(item)
-            elif type(item) is SFTPAttributes:
-                item._pack(msg)
-            else:
-                raise Exception('unknown type for %r type %r' % (item, type(item)))
-        self._send_packet(t, str(msg))
-        num = self.request_number
-        self._expecting[num] = fileobj
-        self.request_number += 1
+        # this method may be called from other threads (prefetch)
+        self._lock.acquire()
+        try:
+            msg = Message()
+            msg.add_int(self.request_number)
+            for item in arg:
+                if type(item) is int:
+                    msg.add_int(item)
+                elif type(item) is long:
+                    msg.add_int64(item)
+                elif type(item) is str:
+                    msg.add_string(item)
+                elif type(item) is SFTPAttributes:
+                    item._pack(msg)
+                else:
+                    raise Exception('unknown type for %r type %r' % (item, type(item)))
+            num = self.request_number
+            self._expecting[num] = fileobj
+            self._send_packet(t, str(msg))
+            self.request_number += 1
+        finally:
+            self._lock.release()
         return num
 
     def _read_response(self, waitfor=None):
@@ -550,6 +558,9 @@ class SFTPClient (BaseSFTP):
             if num not in self._expecting:
                 # might be response for a file that was closed before responses came back
                 self._log(DEBUG, 'Unexpected response #%d' % (num,))
+                if waitfor is None:
+                    # just doing a single check
+                    return
                 continue
             fileobj = self._expecting[num]
             del self._expecting[num]
