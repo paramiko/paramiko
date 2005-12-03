@@ -42,6 +42,8 @@ default_keyfile = os.path.join(os.environ.get('HOME', '/'), '.ssh/id_rsa')
 default_passwd = None
 
 parser = OptionParser('usage: %prog [options]')
+parser.add_option('--verbose', action='store_true', dest='verbose', default=False,
+                  help='verbose display (one line per test)')
 parser.add_option('--no-pkey', action='store_false', dest='use_pkey', default=True,
                   help='skip RSA/DSS private key tests (which can take a while)')
 parser.add_option('--no-transport', action='store_false', dest='use_transport', default=True,
@@ -93,4 +95,7 @@ if options.use_transport:
     suite.addTest(unittest.makeSuite(TransportTest))
 if options.use_sftp:
     suite.addTest(unittest.makeSuite(SFTPTest))
-unittest.TextTestRunner(verbosity=2).run(suite)
+verbosity = 1
+if options.verbose:
+    verbosity = 2
+unittest.TextTestRunner(verbosity=verbosity).run(suite)
