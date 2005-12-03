@@ -46,9 +46,9 @@ class SFTPFile (BufferedFile):
         self._saved_exception = None
 
     def __del__(self):
-        self.close()
+        self.close(_async=True)
         
-    def close(self):
+    def close(self, _async=False):
         # We allow double-close without signaling an error, because real
         # Python file objects do.  However, we must protect against actually
         # sending multiple CMD_CLOSE packets, because after we close our
@@ -62,7 +62,11 @@ class SFTPFile (BufferedFile):
             self.sftp._finish_responses(self)
         BufferedFile.close(self)
         try:
-            self.sftp._request(CMD_CLOSE, self.handle)
+            if _async:
+                # GC'd file handle could be called from an arbitrary thread -- don't wait for a response
+                self.sftp._async_request(type(None), CMD_CLOSE, self.handle)
+            else:
+                self.sftp._request(CMD_CLOSE, self.handle)
         except EOFError:
             # may have outlived the Transport connection
             pass
@@ -71,6 +75,7 @@ class SFTPFile (BufferedFile):
             pass
 
     def _read_prefetch(self, size):
+        # while not closed, and haven't fetched past the current position, and haven't reached EOF...
         while (self._prefetch_so_far <= self._realpos) and \
             (self._prefetch_so_far < self._prefetch_size) and not self._closed:
             self.sftp._read_response()
