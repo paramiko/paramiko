@@ -509,8 +509,44 @@ class SFTPTest (unittest.TestCase):
             sys.stderr.write('%ds ' % round(end - start))
         finally:
             sftp.remove('%s/hongry.txt' % FOLDER)
+
+    def test_G_lots_of_prefetching(self):
+        """
+        prefetch a 1MB file a bunch of times, discarding the file object
+        without using it, to verify that paramiko doesn't get confused.
+        """
+        global g_big_file_test
+        if not g_big_file_test:
+            return
+        kblob = (1024 * 'x')
+        try:
+            f = sftp.open('%s/hongry.txt' % FOLDER, 'w')
+            f.set_pipelined(True)
+            for n in range(1024):
+                f.write(kblob)
+                if n % 128 == 0:
+                    sys.stderr.write('.')
+            f.close()
+            sys.stderr.write(' ')
+
+            self.assertEqual(sftp.stat('%s/hongry.txt' % FOLDER).st_size, 1024 * 1024)
+
+            for i in range(10):
+                f = sftp.open('%s/hongry.txt' % FOLDER, 'r')
+                f.prefetch()
+            f = sftp.open('%s/hongry.txt' % FOLDER, 'r')
+            f.prefetch()
+            for n in range(1024):
+                data = f.read(1024)
+                self.assertEqual(data, kblob)
+                if n % 128 == 0:
+                    sys.stderr.write('.')
+            f.close()
+            sys.stderr.write(' ')
+        finally:
+            sftp.remove('%s/hongry.txt' % FOLDER)
         
-    def test_G_big_file_big_buffer(self):
+    def test_H_big_file_big_buffer(self):
         """
         write a 1MB file, with no linefeeds, and a big buffer.
         """
@@ -527,7 +563,7 @@ class SFTPTest (unittest.TestCase):
         finally:
             sftp.remove('%s/hongry.txt' % FOLDER)
     
-    def test_H_big_file_renegotiate(self):
+    def test_I_big_file_renegotiate(self):
         """
         write a 1MB file, forcing key renegotiation in the middle.
         """
@@ -549,7 +585,7 @@ class SFTPTest (unittest.TestCase):
             sftp.remove('%s/hongry.txt' % FOLDER)
             t.packetizer.REKEY_BYTES = pow(2, 30)
 
-    def test_I_realpath(self):
+    def test_J_realpath(self):
         """
         test that realpath is returning something non-empty and not an
         error.
@@ -560,7 +596,7 @@ class SFTPTest (unittest.TestCase):
         self.assert_(len(f) > 0)
         self.assertEquals(os.path.join(pwd, FOLDER), f)
 
-    def test_J_mkdir(self):
+    def test_K_mkdir(self):
         """
         verify that mkdir/rmdir work.
         """
@@ -583,7 +619,7 @@ class SFTPTest (unittest.TestCase):
         except IOError:
             pass
     
-    def test_K_chdir(self):
+    def test_L_chdir(self):
         """
         verify that chdir/getcwd work.
         """
@@ -620,7 +656,7 @@ class SFTPTest (unittest.TestCase):
             except:
                 pass
 
-    def test_L_get_put(self):
+    def test_M_get_put(self):
         """
         verify that get/put work.
         """
@@ -649,7 +685,7 @@ class SFTPTest (unittest.TestCase):
         os.unlink(localname)
         sftp.unlink(FOLDER + '/bunny.txt')
 
-    def test_M_check(self):
+    def test_N_check(self):
         """
         verify that file.check() works against our own server.
         (it's an sftp extension that we support, and may be the only ones who
@@ -671,7 +707,7 @@ class SFTPTest (unittest.TestCase):
         finally:
             sftp.unlink(FOLDER + '/kitty.txt')
 
-    def test_N_x_flag(self):
+    def test_O_x_flag(self):
         """
         verify that the 'x' flag works when opening a file.
         """
@@ -687,7 +723,7 @@ class SFTPTest (unittest.TestCase):
         finally:
             sftp.unlink(FOLDER + '/unusual.txt')
     
-    def test_O_utf8(self):
+    def test_P_utf8(self):
         """
         verify that unicode strings are encoded into utf8 correctly.
         """
