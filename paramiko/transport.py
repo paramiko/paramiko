@@ -271,6 +271,7 @@ class Transport (threading.Thread):
         self.logger = util.get_logger(self.log_name)
         self.packetizer.set_log(self.logger)
         self.auth_handler = None
+        self.authenticated = False
         # user-defined event callbacks:
         self.completion_event = None
         # server mode:
@@ -1578,7 +1579,7 @@ class Transport (threading.Thread):
             mac_key = self._compute_key('F', mac_engine.digest_size)
         self.packetizer.set_inbound_cipher(engine, block_size, mac_engine, mac_size, mac_key)
         compress_in = self._compression_info[self.remote_compression][1]
-        if (compress_in is not None) and (self.remote_compression != 'zlib@openssh.com'):
+        if (compress_in is not None) and ((self.remote_compression != 'zlib@openssh.com') or self.authenticated):
             self._log(DEBUG, 'Switching on inbound compression ...')
             self.packetizer.set_inbound_compressor(compress_in())
 
@@ -1605,7 +1606,7 @@ class Transport (threading.Thread):
             mac_key = self._compute_key('E', mac_engine.digest_size)
         self.packetizer.set_outbound_cipher(engine, block_size, mac_engine, mac_size, mac_key)
         compress_out = self._compression_info[self.local_compression][0]
-        if (compress_out is not None) and (self.local_compression != 'zlib@openssh.com'):
+        if (compress_out is not None) and ((self.local_compression != 'zlib@openssh.com') or self.authenticated):
             self._log(DEBUG, 'Switching on outbound compression ...')
             self.packetizer.set_outbound_compressor(compress_out())
         if not self.packetizer.need_rekey():
@@ -1614,6 +1615,7 @@ class Transport (threading.Thread):
         self.expected_packet = MSG_NEWKEYS
 
     def _auth_trigger(self):
+        self.authenticated = True
         # delayed initiation of compression
         if self.local_compression == 'zlib@openssh.com':
             compress_out = self._compression_info[self.local_compression][0]
