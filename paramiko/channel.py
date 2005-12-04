@@ -468,7 +468,7 @@ class Channel (object):
         try:
             if not self.active or self.closed:
                 return
-            self._close_internal()
+            msgs = self._close_internal()
 
             # only close the pipe when the user explicitly closes the channel.
             # otherwise they will get unpleasant surprises.
@@ -477,6 +477,9 @@ class Channel (object):
                 self.pipe = None
         finally:
             self.lock.release()
+        for m in msgs:
+            if m is not None:
+                self.transport._send_user_message(m)
 
     def recv_ready(self):
         """
@@ -589,7 +592,7 @@ class Channel (object):
         @rtype: str
         
         @raise socket.timeout: if no data is ready before the timeout set by
-        L{settimeout}.
+            L{settimeout}.
         
         @since: 1.1
         """
@@ -637,7 +640,7 @@ class Channel (object):
         @rtype: int
 
         @raise socket.timeout: if no data could be sent before the timeout set
-        by L{settimeout}.
+            by L{settimeout}.
         """
         size = len(s)
         self.lock.acquire()
@@ -670,7 +673,7 @@ class Channel (object):
         @rtype: int
         
         @raise socket.timeout: if no data could be sent before the timeout set
-        by L{settimeout}.
+            by L{settimeout}.
         
         @since: 1.1
         """
@@ -817,9 +820,11 @@ class Channel (object):
         if (how == 1) or (how == 2):
             self.lock.acquire()
             try:
-                self._send_eof()
+                m = self._send_eof()
             finally:
                 self.lock.release()
+            if m is not None:
+                self.transport._send_user_message(m)
     
     def shutdown_read(self):
         """
@@ -876,9 +881,12 @@ class Channel (object):
     def _request_failed(self, m):
         self.lock.acquire()
         try:
-            self._close_internal()
+            msgs = self._close_internal()
         finally:
             self.lock.release()
+        for m in msgs:
+            if m is not None:
+                self.transport._send_user_message(m)
 
     def _feed(self, m):
         if type(m) is str:
@@ -1004,10 +1012,13 @@ class Channel (object):
     def _handle_close(self, m):
         self.lock.acquire()
         try:
-            self._close_internal()
+            msgs = self._close_internal()
             self.transport._unlink_channel(self.chanid)
         finally:
             self.lock.release()
+        for m in msgs:
+            if m is not None:
+                self.transport._send_user_message(m)
 
 
     ###  internals...
@@ -1028,30 +1039,26 @@ class Channel (object):
     def _send_eof(self):
         # you are holding the lock.
         if self.eof_sent:
-            return
+            return None
         m = Message()
         m.add_byte(chr(MSG_CHANNEL_EOF))
         m.add_int(self.remote_chanid)
-        self.transport._send_user_message(m)
         self.eof_sent = True
         self._log(DEBUG, 'EOF sent')
-        return
+        return m
 
     def _close_internal(self):
         # you are holding the lock.
         if not self.active or self.closed:
-            return
-        try:
-            self._send_eof()
-            m = Message()
-            m.add_byte(chr(MSG_CHANNEL_CLOSE))
-            m.add_int(self.remote_chanid)
-            self.transport._send_user_message(m)
-        except EOFError:
-            pass
+            return None, None
+        m1 = self._send_eof()
+        m2 = Message()
+        m2.add_byte(chr(MSG_CHANNEL_CLOSE))
+        m2.add_int(self.remote_chanid)
         self._set_closed()
         # can't unlink from the Transport yet -- the remote side may still
         # try to send meta-data (exit-status, etc)
+        return m1, m2
 
     def _unlink(self):
         # server connection could die before we become active: still signal the close!
