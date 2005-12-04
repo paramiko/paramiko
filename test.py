@@ -30,6 +30,7 @@ sys.path.append('tests/')
 
 from test_message import MessageTest
 from test_file import BufferedFileTest
+from test_util import UtilTest
 from test_pkey import KeyTest
 from test_kex import KexTest
 from test_packetizer import PacketizerTest
@@ -87,6 +88,7 @@ if options.use_sftp:
 suite = unittest.TestSuite()
 suite.addTest(unittest.makeSuite(MessageTest))
 suite.addTest(unittest.makeSuite(BufferedFileTest))
+suite.addTest(unittest.makeSuite(UtilTest))
 if options.use_pkey:
     suite.addTest(unittest.makeSuite(KeyTest))
 suite.addTest(unittest.makeSuite(KexTest))
