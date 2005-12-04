@@ -46,7 +46,7 @@ released under the GNU Lesser General Public License (LGPL).
 
 Website: U{http://www.lag.net/paramiko/}
 
-@version: 1.5.1 (quilava)
+@version: 1.5.2 (rhydon)
 @author: Robey Pointer
 @contact: robey@lag.net
 @license: GNU Lesser General Public License (LGPL)
@@ -59,8 +59,9 @@ if sys.version_info < (2, 2):
 
 
 __author__ = "Robey Pointer <robey@lag.net>"
-__date__ = "31 Oct 2005"
-__version__ = "1.5.1 (quilava)"
+__date__ = "04 Dec 2005"
+__version__ = "1.5.2 (rhydon)"
+__version_info__ = (1, 5, 2)
 __license__ = "GNU Lesser General Public License (LGPL)"
 
 

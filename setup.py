@@ -30,13 +30,13 @@ Required packages:
 '''
 
 setup(name = "paramiko",
-      version = "1.5.1",
+      version = "1.5.2",
       description = "SSH2 protocol library",
       author = "Robey Pointer",
       author_email = "robey@lag.net",
       url = "http://www.lag.net/paramiko/",
       packages = [ 'paramiko' ],
-      download_url = 'http://www.lag.net/paramiko/download/paramiko-1.5.1.zip',
+      download_url = 'http://www.lag.net/paramiko/download/paramiko-1.5.2.zip',
       license = 'LGPL',
       platforms = 'Posix; MacOS X; Windows',
       classifiers = [ 'Development Status :: 5 - Production/Stable',

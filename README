@@ -1,5 +1,5 @@
-paramiko 1.5.1
-"quilava" release, 31 oct 2005
+paramiko 1.5.2
+"rhydon" release, 04 dec 2005
 
 Copyright (c) 2003-2005 Robey Pointer <robey@lag.net>
 
@@ -134,6 +134,17 @@ the best and easiest examples of how to use the SFTP class.
 
 highlights of what's new in each release:
 
+v1.5.2 RHYDON
+* compression support (opt-in via Transport.use_compression)
+* sftp files may be opened with mode flag 'x' for O_EXCL (exclusive-open)
+  behavior, which has no direct python equivalent
+* added experimental util functions for parsing openssh config files
+* fixed a few bugs (and potential deadlocks) with key renegotiation
+* fixed a bug that caused SFTPFile.prefetch to occasionally lock up
+* fixed an sftp bug which affected van dyke sftp servers
+* fixed the behavior of select()ing on a closed channel, such that it will
+  always trigger as readable
+
 v1.5.1 QUILAVA
 * SFTPFile.prefetch() added to dramatically speed up downloads (automatically
   turned on in SFTPClient.get())
@@ -222,10 +233,6 @@ v1.0 JIGGLYPUFF
 
 ***  MISSING LINKS
 
-R-blockers:
-* unit tests for compression
-* zlib@openssh.com compression probably doesn't work after rekey
-
 * host-based auth (yuck!)
 * SFTP implicit file locking?
 * ChannelException like the java version has
@@ -237,4 +244,5 @@ R-blockers:
 * make a simple example demonstrating use of SocketServer (besides forward.py?)
 
 * make a function to parse .ssh/config files:
-	User, Hostname, Port, ProxyCommand, IdentityFile
+	User, Hostname, Port, ProxyCommand, IdentityFile, HostKeyAlias
+	ProxyCommand: %h = host, %p = port, "none" = disable
