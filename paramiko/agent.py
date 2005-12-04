@@ -23,6 +23,7 @@ SSH Agent interface for Unix clients.
 import os
 import socket
 import struct
+import sys
 
 from paramiko.ssh_exception import SSHException
 from paramiko.message import Message
@@ -54,7 +55,7 @@ class Agent:
         @raise SSHException: if an SSH agent is found, but speaks an
             incompatible protocol
         """
-        if 'SSH_AUTH_SOCK' in os.environ:
+        if ('SSH_AUTH_SOCK' in os.environ) and (sys.platform != 'win32'):
             conn = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
             conn.connect(os.environ['SSH_AUTH_SOCK'])
             self.conn = conn
