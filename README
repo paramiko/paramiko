@@ -219,69 +219,19 @@ v1.0 JIGGLYPUFF
   would generate the wrong hash (and therefore fail the initial handshake)
 * server-mode subsystem handler is a bit more flexible
 
-v0.9 IVYSAUR
-* new ServerInterface class for implementing server policy, so it's no
-  longer necessary to subclass Transport or Channel -- server code will
-  need to be updated to follow this new API!  (see demo_server.py)
-* some bugfixes for re-keying an active session
-* Transport.get_security_options() allows fine-tuned control over the
-  crypto negotiation on a new session
-* Transport.connect() takes a single hostkey object now instead of two
-  string parameters
-* the Channel request methods (like 'exec_command') now return True on
-  success or False on failure
-* added a mechanism for providing subsystems in server mode (and a new
-  class to be subclassed: SubsystemHandler)
-* renamed SFTP -> SFTPClient (but left an alias for existing code)
-* added SFTPClient.normalize() to resolve paths on the server
-* fleshed out the API a bit more for SFTPClient and private keys
-* a bunch of new unit tests!
-
-v0.9 HORSEA
-* fixed a lockup that could happen if the channel was closed while the
-  send window was full
-* better checking of maximum packet sizes
-* better line buffering for file objects
-* now chops sftp requests into smaller packets for some older servers
-* more sftp unit tests
-
-v0.9 GYARADOS
-* Transport.open_channel() -- supports local & remote port forwarding now
-* now imports UTF-8 encodings explicitly as a hint to "freeze" utilities
-* no longer rejects older SFTP servers
-* default packet size bumped to 8kB
-* fixed deadlock in closing a channel
-* Transport.connect() -- fixed bug where it would always fail when given a
-  host key to verify
-
-v0.9 FEAROW
-* Transport.send_ignore() -- send random ignored bytes
-* RSAKey/DSSKey added from_private_key_file() as a factory constructor;
-  write_private_key_file() & generate() to create and save ssh2 keys;
-  get_base64() to retrieve the exported public key
-* Transport added global_request() [client] and check_global_request()
-  [server]
-* Transport.get_remove_server_key() now returns a PKey object instead of a
-  tuple of strings
-* Transport.get_username() -- return the username you auth'd as [client]
-* Transport.set_keepalive() -- makes paramiko send periodic junk packets
-  to the remote host, to keep the session active
-* python 2.2 support (thanks to Roger Binns)
-* misc. bug fixes
-
 
 ***  MISSING LINKS
+
+R-blockers:
+* unit tests for compression
+* zlib@openssh.com compression probably doesn't work after rekey
 
 * host-based auth (yuck!)
 * SFTP implicit file locking?
 * ChannelException like the java version has
 * would be nice to have windows putty "pagent" support -- looks very hard
-* unit tests for compression
-* zlib@openssh.com compression probably doesn't work after rekey
 
 * ctr forms of ciphers are missing (blowfish-ctr, aes128-ctr, aes256-ctr)
-* SFTP url parsing function to return (user, pass, host, port, path)
-  components
 * sftp protocol 6 support (ugh....) -- once it settles down more
 
 * make a simple example demonstrating use of SocketServer (besides forward.py?)
