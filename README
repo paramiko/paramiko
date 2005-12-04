@@ -272,7 +272,6 @@ v0.9 FEAROW
 
 ***  MISSING LINKS
 
-* add comments to demo & demo_simple about how they don't work on windows
 * host-based auth (yuck!)
 * SFTP implicit file locking?
 * ChannelException like the java version has
@@ -289,5 +288,3 @@ v0.9 FEAROW
 
 * make a function to parse .ssh/config files:
 	User, Hostname, Port, ProxyCommand, IdentityFile
-
-* weird prefetch bug with bzr?

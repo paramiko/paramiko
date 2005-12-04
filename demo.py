@@ -18,6 +18,12 @@
 # along with Paramiko; if not, write to the Free Software Foundation, Inc.,
 # 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
 
+
+# ----- WINDOWS USERS PLEASE NOTE -----
+# This demo won't work on Windows because it uses pseudo-terminals, which
+# are a posix-only feature.  check out the README file for a simpler demo.
+
+
 import sys, os, socket, threading, getpass, time, base64, select, termios, tty, traceback
 import paramiko
 

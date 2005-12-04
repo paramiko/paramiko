@@ -18,6 +18,12 @@
 # along with Paramiko; if not, write to the Free Software Foundation, Inc.,
 # 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
 
+
+# ----- WINDOWS USERS PLEASE NOTE -----
+# This demo won't work on Windows because it uses pseudo-terminals, which
+# are a posix-only feature.  check out the README file for a simpler demo.
+
+
 import sys, os, base64, getpass, socket, traceback, termios, tty, select
 import paramiko
 
@@ -85,7 +91,7 @@ try:
         tty.setcbreak(sys.stdin.fileno())
         chan.settimeout(0.0)
 
-        while 1:
+        while True:
             r, w, e = select.select([chan, sys.stdin], [], [])
             if chan in r:
                 try:
