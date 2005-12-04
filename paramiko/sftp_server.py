@@ -106,7 +106,7 @@ class SFTPServer (BaseSFTP, SubsystemHandler):
 
     def convert_errno(e):
         """
-        Convert an errno value (as from an C{OSError} or C{IOError} into a
+        Convert an errno value (as from an C{OSError} or C{IOError}) into a
         standard SFTP result code.  This is a convenience function for trapping
         exceptions in server code and returning an appropriate result.
 
