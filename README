@@ -38,6 +38,10 @@ you can also build it yourself using the free MinGW tools and this command
 line (thanks to Roger Binns for the info):
     python setup.py build --compiler=mingw32 bdist_wininst
 
+If you have setuptools, you can build and install paramiko and all its
+dependencies with this command (as root):
+    easy_install ./
+
 
 ***  PORTABILITY
 
@@ -246,3 +250,8 @@ v1.0 JIGGLYPUFF
 * make a function to parse .ssh/config files:
 	User, Hostname, Port, ProxyCommand, IdentityFile, HostKeyAlias
 	ProxyCommand: %h = host, %p = port, "none" = disable
+* introduce higher-level abstraction (SSHConnection ?) that handles host key
+  checking, etc, using openssh defaults or optional configuration (2ndary host
+  key files, etc)
+    local and remote port forwarding
+* SFTPClient.set_size

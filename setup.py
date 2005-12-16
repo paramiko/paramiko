@@ -1,5 +1,3 @@
-from distutils.core import setup
-
 # Copyright (C) 2003-2005 Robey Pointer <robey@lag.net>
 #
 # This file is part of paramiko.
@@ -26,8 +24,22 @@ connections between python scripts.  All major ciphers and hash methods
 are supported.  SFTP client and server mode are both supported too.
 
 Required packages:
-    pyCrypt
+    pyCrypto
 '''
+
+# if someday we want to *require* setuptools, uncomment this:
+# (it will cause setuptools to be automatically downloaded)
+#import ez_setup
+#ez_setup.use_setuptools()
+
+try:
+    from setuptools import setup
+    kw = {
+        'install_requires': 'pycrypto >= 1.9',
+    }
+except ImportError:
+    from distutils.core import setup
+    kw = {}
 
 setup(name = "paramiko",
       version = "1.5.2",
@@ -46,4 +58,5 @@ setup(name = "paramiko",
                       'Topic :: Internet',
                       'Topic :: Security :: Cryptography' ],
       long_description = longdesc,
+      **kw
       )
