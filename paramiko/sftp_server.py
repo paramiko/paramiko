@@ -118,7 +118,7 @@ class SFTPServer (BaseSFTP, SubsystemHandler):
         if e == errno.EACCES:
             # permission denied
             return SFTP_PERMISSION_DENIED
-        elif e == errno.ENOENT:
+        elif (e == errno.ENOENT) or (e == errno.ENOTDIR):
             # no such file
             return SFTP_NO_SUCH_FILE
         else:
