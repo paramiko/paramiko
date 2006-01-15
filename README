@@ -255,3 +255,6 @@ v1.0 JIGGLYPUFF
   key files, etc)
     local and remote port forwarding
 * SFTPClient.set_size
+* remove @since that predate 1.0
+* put examples in examples/ folder
+

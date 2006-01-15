@@ -173,7 +173,7 @@ class PKey (object):
         """
         return False
    
-    def from_private_key_file(cl, filename, password=None):
+    def from_private_key_file(cls, filename, password=None):
         """
         Create a key object by reading a private key file.  If the private
         key is encrypted and C{password} is not C{None}, the given password
@@ -197,7 +197,7 @@ class PKey (object):
 
         @since: fearow
         """
-        key = cl(filename=filename, password=password)
+        key = cls(filename=filename, password=password)
         return key
     from_private_key_file = classmethod(from_private_key_file)
 
@@ -216,7 +216,7 @@ class PKey (object):
 
         @since: fearow
         """
-        raise exception('Not implemented in PKey')
+        raise Exception('Not implemented in PKey')
 
     def _read_private_key_file(self, tag, filename, password=None):
         """
@@ -265,7 +265,7 @@ class PKey (object):
         # if we trudged to the end of the file, just try to cope.
         try:
             data = base64.decodestring(''.join(lines[start:end]))
-        except binascii.Error, e:
+        except base64.binascii.Error, e:
             raise SSHException('base64 decoding error: ' + str(e))
         if not headers.has_key('proc-type'):
             # unencryped: done

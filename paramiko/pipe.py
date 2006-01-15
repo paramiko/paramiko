@@ -28,8 +28,10 @@ import socket
 
 def make_pipe ():
     if sys.platform[:3] != 'win':
-        return PosixPipe()
-    return WindowsPipe()
+        p = PosixPipe()
+    else:
+        p = WindowsPipe()
+    return p
 
 
 class PosixPipe (object):

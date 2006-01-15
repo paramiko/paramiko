@@ -16,7 +16,7 @@
 # along with Paramiko; if not, write to the Free Software Foundation, Inc.,
 # 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
 
-import struct
+
 import util
 
 
@@ -91,8 +91,9 @@ class BER(object):
         while True:
             x = b.decode_next()
             if x is None:
-                return out
+                break
             out.append(x)
+        return out
     decode_sequence = staticmethod(decode_sequence)
 
     def encode_tlv(self, ident, val):

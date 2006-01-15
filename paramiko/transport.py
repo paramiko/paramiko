@@ -30,19 +30,20 @@ import time
 import weakref
 
 from paramiko import util
+from paramiko.auth_handler import AuthHandler
+from paramiko.channel import Channel
 from paramiko.common import *
 from paramiko.compress import ZlibCompressor, ZlibDecompressor
-from paramiko.ssh_exception import SSHException, BadAuthenticationType
-from paramiko.message import Message
-from paramiko.channel import Channel
-from paramiko.sftp_client import SFTPClient
-from paramiko.packet import Packetizer, NeedRekeyException
-from paramiko.rsakey import RSAKey
 from paramiko.dsskey import DSSKey
-from paramiko.kex_group1 import KexGroup1
 from paramiko.kex_gex import KexGex
+from paramiko.kex_group1 import KexGroup1
+from paramiko.message import Message
+from paramiko.packet import Packetizer, NeedRekeyException
 from paramiko.primes import ModulusPack
-from paramiko.auth_handler import AuthHandler
+from paramiko.rsakey import RSAKey
+from paramiko.server import ServerInterface
+from paramiko.sftp_client import SFTPClient
+from paramiko.ssh_exception import SSHException, BadAuthenticationType
 
 # these come from PyCrypt
 #     http://www.amk.ca/python/writing/pycrypt/
@@ -110,7 +111,8 @@ class SecurityOptions (object):
         if type(x) is not tuple:
             raise TypeError('expected tuple or list')
         possible = getattr(self._transport, orig).keys()
-        if len(filter(lambda n: n not in possible, x)) > 0:
+        forbidden = filter(lambda n: n not in possible, x)
+        if len(forbidden) > 0:
             raise ValueError('unknown cipher')
         setattr(self._transport, name, x)
 
@@ -245,25 +247,39 @@ class Transport (threading.Thread):
             self.sock.settimeout(0.1)
         except AttributeError:
             pass
+
         # negotiated crypto parameters
         self.packetizer = Packetizer(sock)
         self.local_version = 'SSH-' + self._PROTO_ID + '-' + self._CLIENT_ID
         self.remote_version = ''
         self.local_cipher = self.remote_cipher = ''
         self.local_kex_init = self.remote_kex_init = None
+        self.local_mac = self.remote_mac = None
+        self.local_compression = self.remote_compression = None
         self.session_id = None
-        # /negotiated crypto parameters
-        self.expected_packet = 0
+        self.host_key_type = None
+        self.host_key = None
+        
+        # state used during negotiation
+        self.kex_engine = None
+        self.H = None
+        self.K = None
+
         self.active = False
         self.initial_kex_done = False
         self.in_kex = False
+        self.authenticated = False
+        self.expected_packet = 0
         self.lock = threading.Lock()    # synchronization (always higher level than write_lock)
+
+        # tracking open channels
         self.channels = weakref.WeakValueDictionary()   # (id -> Channel)
         self.channel_events = { }       # (id -> Event)
         self.channels_seen = { }        # (id -> True)
         self.channel_counter = 1
         self.window_size = 65536
         self.max_packet_size = 34816
+
         self.saved_exception = None
         self.clear_to_send = threading.Event()
         self.clear_to_send_lock = threading.Lock()
@@ -271,9 +287,9 @@ class Transport (threading.Thread):
         self.logger = util.get_logger(self.log_name)
         self.packetizer.set_log(self.logger)
         self.auth_handler = None
-        self.authenticated = False
-        # user-defined event callbacks:
-        self.completion_event = None
+        self.global_response = None     # response Message from an arbitrary global request
+        self.completion_event = None    # user-defined event callbacks
+        
         # server mode:
         self.server_mode = False
         self.server_object = None
@@ -993,7 +1009,7 @@ class Transport (threading.Thread):
             return self.auth_handler.wait_for_response(my_event)
         except BadAuthenticationType, x:
             # if password auth isn't allowed, but keyboard-interactive *is*, try to fudge it
-            if not fallback or not 'keyboard-interactive' in x.allowed_types:
+            if not fallback or ('keyboard-interactive' not in x.allowed_types):
                 raise
             try:
                 def handler(title, instructions, fields):
@@ -1010,6 +1026,7 @@ class Transport (threading.Thread):
             except SSHException, ignored:
                 # attempt failed; just raise the original exception
                 raise x
+                return None
 
     def auth_publickey(self, username, key, event=None):
         """
@@ -1262,9 +1279,9 @@ class Transport (threading.Thread):
             m.add_mpint(self.K)
             m.add_bytes(self.H)
             m.add_bytes(sofar)
-            hash = SHA.new(str(m)).digest()
-            out += hash
-            sofar += hash
+            digest = SHA.new(str(m)).digest()
+            out += digest
+            sofar += digest
         return out[:nbytes]
 
     def _get_cipher(self, name, key, iv):
@@ -1394,24 +1411,24 @@ class Transport (threading.Thread):
             else:
                 timeout = 2
             try:
-                buffer = self.packetizer.readline(timeout)
+                buf = self.packetizer.readline(timeout)
             except Exception, x:
                 raise SSHException('Error reading SSH protocol banner' + str(x))
-            if buffer[:4] == 'SSH-':
+            if buf[:4] == 'SSH-':
                 break
-            self._log(DEBUG, 'Banner: ' + buffer)
-        if buffer[:4] != 'SSH-':
-            raise SSHException('Indecipherable protocol version "' + buffer + '"')
+            self._log(DEBUG, 'Banner: ' + buf)
+        if buf[:4] != 'SSH-':
+            raise SSHException('Indecipherable protocol version "' + buf + '"')
         # save this server version string for later
-        self.remote_version = buffer
+        self.remote_version = buf
         # pull off any attached comment
         comment = ''
-        i = string.find(buffer, ' ')
+        i = string.find(buf, ' ')
         if i >= 0:
-            comment = buffer[i+1:]
-            buffer = buffer[:i]
+            comment = buf[i+1:]
+            buf = buf[:i]
         # parse out version string and make sure it matches
-        segs = buffer.split('-', 2)
+        segs = buf.split('-', 2)
         if len(segs) < 3:
             raise SSHException('Invalid SSH banner')
         version = segs[1]

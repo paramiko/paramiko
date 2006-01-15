@@ -168,12 +168,12 @@ def generate_key_bytes(hashclass, salt, key, nbytes):
     if len(salt) > 8:
         salt = salt[:8]
     while nbytes > 0:
-        hash = hashclass.new()
+        hash_obj = hashclass.new()
         if len(digest) > 0:
-            hash.update(digest)
-        hash.update(key)
-        hash.update(salt)
-        digest = hash.digest()
+            hash_obj.update(digest)
+        hash_obj.update(key)
+        hash_obj.update(salt)
+        digest = hash_obj.digest()
         size = min(nbytes, len(digest))
         keydata += digest[:size]
         nbytes -= size

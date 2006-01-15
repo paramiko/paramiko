@@ -148,12 +148,7 @@ class Channel (object):
         m.add_string('')
         self.event.clear()
         self.transport._send_user_message(m)
-        while True:
-            self.event.wait(0.1)
-            if self.closed:
-                return False
-            if self.event.isSet():
-                return True
+        return self._wait_for_event()
 
     def invoke_shell(self):
         """
@@ -180,12 +175,7 @@ class Channel (object):
         m.add_boolean(1)
         self.event.clear()
         self.transport._send_user_message(m)
-        while True:
-            self.event.wait(0.1)
-            if self.closed:
-                return False
-            if self.event.isSet():
-                return True
+        return self._wait_for_event()
 
     def exec_command(self, command):
         """
@@ -212,12 +202,7 @@ class Channel (object):
         m.add_string(command)
         self.event.clear()
         self.transport._send_user_message(m)
-        while True:
-            self.event.wait(0.1)
-            if self.closed:
-                return False
-            if self.event.isSet():
-                return True
+        return self._wait_for_event()
 
     def invoke_subsystem(self, subsystem):
         """
@@ -243,12 +228,7 @@ class Channel (object):
         m.add_string(subsystem)
         self.event.clear()
         self.transport._send_user_message(m)
-        while True:
-            self.event.wait(0.1)
-            if self.closed:
-                return False
-            if self.event.isSet():
-                return True
+        return self._wait_for_event()
 
     def resize_pty(self, width=80, height=24):
         """
@@ -274,12 +254,7 @@ class Channel (object):
         m.add_int(0).add_int(0)
         self.event.clear()
         self.transport._send_user_message(m)
-        while True:
-            self.event.wait(0.1)
-            if self.closed:
-                return False
-            if self.event.isSet():
-                return True
+        self._wait_for_event()
 
     def recv_exit_status(self):
         """
@@ -296,8 +271,9 @@ class Channel (object):
         """
         while True:
             if self.closed or self.status_event.isSet():
-                return self.exit_status
+                break
             self.status_event.wait(0.1)
+        return self.exit_status
 
     def send_exit_status(self, status):
         """
@@ -1027,6 +1003,15 @@ class Channel (object):
     def _log(self, level, msg):
         self.logger.log(level, msg)
 
+    def _wait_for_event(self):
+        while True:
+            self.event.wait(0.1)
+            if self.closed:
+                return False
+            if self.event.isSet():
+                break
+        return True
+
     def _set_closed(self):
         # you are holding the lock.
         self.closed = True
@@ -1155,8 +1140,6 @@ class ChannelFile (BufferedFile):
     def _write(self, data):
         self.channel.sendall(data)
         return len(data)
-    
-    seek = BufferedFile.seek
 
 
 class ChannelStderrFile (ChannelFile):

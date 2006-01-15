@@ -51,6 +51,12 @@ class SFTPAttributes (object):
         Create a new (empty) SFTPAttributes object.  All fields will be empty.
         """
         self._flags = 0
+        self.st_size = -1
+        self.st_uid = -1
+        self.st_gid = -1
+        self.st_mode = 0
+        self.st_atime = 0
+        self.st_mtime = 0
         self.attr = {}
 
     def from_stat(cls, obj, filename=None):
@@ -114,13 +120,13 @@ class SFTPAttributes (object):
 
     def _pack(self, msg):
         self._flags = 0
-        if hasattr(self, 'st_size'):
+        if self.st_size >= 0:
             self._flags |= self.FLAG_SIZE
-        if hasattr(self, 'st_uid') or hasattr(self, 'st_gid'):
+        if (self.st_uid >= 0) or (self.st_gid >= 0):
             self._flags |= self.FLAG_UIDGID
-        if hasattr(self, 'st_mode'):
+        if self.st_mode != 0:
             self._flags |= self.FLAG_PERMISSIONS
-        if hasattr(self, 'st_atime') or hasattr(self, 'st_mtime'):
+        if (self.st_atime > 0) or (self.st_mtime > 0):
             self._flags |= self.FLAG_AMTIME
         if len(self.attr) > 0:
             self._flags |= self.FLAG_EXTENDED
@@ -128,13 +134,13 @@ class SFTPAttributes (object):
         if self._flags & self.FLAG_SIZE:
             msg.add_int64(self.st_size)
         if self._flags & self.FLAG_UIDGID:
-            msg.add_int(getattr(self, 'st_uid', 0))
-            msg.add_int(getattr(self, 'st_gid', 0))
+            msg.add_int(self.st_uid)
+            msg.add_int(self.st_gid)
         if self._flags & self.FLAG_PERMISSIONS:
             msg.add_int(self.st_mode)
         if self._flags & self.FLAG_AMTIME:
-            msg.add_int(getattr(self, 'st_atime', 0))
-            msg.add_int(getattr(self, 'st_mtime', 0))
+            msg.add_int(self.st_atime)
+            msg.add_int(self.st_mtime)
         if self._flags & self.FLAG_EXTENDED:
             msg.add_int(len(self.attr))
             for key, val in self.attr.iteritems():
@@ -144,15 +150,14 @@ class SFTPAttributes (object):
 
     def _debug_str(self):
         out = '[ '
-        if hasattr(self, 'st_size'):
+        if self.st_size >= 0:
             out += 'size=%d ' % self.st_size
-        if hasattr(self, 'st_uid') or hasattr(self, 'st_gid'):
-            out += 'uid=%d gid=%d ' % (getattr(self, 'st_uid', 0), getattr(self, 'st_gid', 0))
-        if hasattr(self, 'st_mode'):
+        if (self.st_uid >= 0) or (self.st_gid >= 0):
+            out += 'uid=%d gid=%d ' % (self.st_uid, self.st_gid)
+        if self.st_mode != 0:
             out += 'mode=' + oct(self.st_mode) + ' '
-        if hasattr(self, 'st_atime') or hasattr(self, 'st_mtime'):
-            out += 'atime=%d mtime=%d ' % (getattr(self, 'st_atime', 0),
-                                           getattr(self, 'st_mtime', 0))
+        if (self.st_atime > 0) or (self.st_mtime > 0):
+            out += 'atime=%d mtime=%d ' % (self.st_atime, self.st_mtime)
         for k, v in self.attr.iteritems():
             out += '"%s"=%r ' % (str(k), v)
         out += ']'
@@ -171,7 +176,7 @@ class SFTPAttributes (object):
 
     def __str__(self):
         "create a unix-style long description of the file (like ls -l)"
-        if hasattr(self, 'st_mode'):
+        if self.st_mode != 0:
             kind = stat.S_IFMT(self.st_mode)
             if kind == stat.S_IFIFO:
                 ks = 'p'
@@ -194,15 +199,12 @@ class SFTPAttributes (object):
             ks += self._rwx(self.st_mode & 7, self.st_mode & stat.S_ISVTX, True)
         else:
             ks = '?---------'
-        uid = getattr(self, 'st_uid', -1)
-        gid = getattr(self, 'st_gid', -1)
-        size = getattr(self, 'st_size', -1)
-        mtime = getattr(self, 'st_mtime', 0)
         # compute display date
-        if abs(time.time() - mtime) > 15552000:
+        if abs(time.time() - self.st_mtime) > 15552000:
             # (15552000 = 6 months)
-            datestr = time.strftime('%d %b %Y', time.localtime(mtime))
+            datestr = time.strftime('%d %b %Y', time.localtime(self.st_mtime))
         else:
-            datestr = time.strftime('%d %b %H:%M', time.localtime(mtime))
+            datestr = time.strftime('%d %b %H:%M', time.localtime(self.st_mtime))
         filename = getattr(self, 'filename', '?')
-        return '%s   1 %-8d %-8d %8d %-12s %s' % (ks, uid, gid, size, datestr, filename)
+        return '%s   1 %-8d %-8d %8d %-12s %s' % (ks, self.st_uid, self.st_gid,
+            self.st_size, datestr, filename)

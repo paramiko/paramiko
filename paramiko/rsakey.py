@@ -38,6 +38,12 @@ class RSAKey (PKey):
     data.
     """
 
+    n = None
+    e = None
+    d = None
+    p = None
+    q = None
+    
     def __init__(self, msg=None, data=None, filename=None, password=None, vals=None):
         if filename is not None:
             self._from_private_key_file(filename, password)
@@ -75,7 +81,7 @@ class RSAKey (PKey):
         return self.size
 
     def can_sign(self):
-        return hasattr(self, 'd')
+        return self.d is not None
 
     def sign_ssh_data(self, rpool, data):
         digest = SHA.new(data).digest()
@@ -93,11 +99,13 @@ class RSAKey (PKey):
         # verify the signature by SHA'ing the data and encrypting it using the
         # public key.  some wackiness ensues where we "pkcs1imify" the 20-byte
         # hash into a string as long as the RSA key.
-        hash = util.inflate_long(self._pkcs1imify(SHA.new(data).digest()), True)
+        hash_obj = util.inflate_long(self._pkcs1imify(SHA.new(data).digest()), True)
         rsa = RSA.construct((long(self.n), long(self.e)))
-        return rsa.verify(hash, (sig,))
+        return rsa.verify(hash_obj, (sig,))
 
     def write_private_key_file(self, filename, password=None):
+        if (self.p is None) or (self.q is None):
+            raise SSHException('Not enough key info to write private key file')
         keylist = [ 0, self.n, self.e, self.d, self.p, self.q,
                     self.d % (self.p - 1), self.d % (self.q - 1),
                     util.mod_inverse(self.q, self.p) ]

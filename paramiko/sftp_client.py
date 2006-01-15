@@ -23,6 +23,7 @@ Client-mode SFTP support.
 import errno
 import os
 import threading
+import time
 import weakref
 from paramiko.sftp import *
 from paramiko.sftp_attr import SFTPAttributes
@@ -74,7 +75,7 @@ class SFTPClient (BaseSFTP):
     def __del__(self):
         self.close()
 
-    def from_transport(selfclass, t):
+    def from_transport(cls, t):
         """
         Create an SFTP client channel from an open L{Transport}.
 
@@ -89,7 +90,7 @@ class SFTPClient (BaseSFTP):
             return None
         if not chan.invoke_subsystem('sftp'):
             raise SFTPError('Failed to invoke sftp subsystem')
-        return selfclass(chan)
+        return cls(chan)
     from_transport = classmethod(from_transport)
 
     def close(self):
@@ -560,7 +561,7 @@ class SFTPClient (BaseSFTP):
                 self._log(DEBUG, 'Unexpected response #%d' % (num,))
                 if waitfor is None:
                     # just doing a single check
-                    return
+                    break
                 continue
             fileobj = self._expecting[num]
             del self._expecting[num]
@@ -573,7 +574,8 @@ class SFTPClient (BaseSFTP):
                 fileobj._async_response(t, msg)
             if waitfor is None:
                 # just doing a single check
-                return
+                break
+        return (None, None)
 
     def _finish_responses(self, fileobj):
         while fileobj in self._expecting.values():

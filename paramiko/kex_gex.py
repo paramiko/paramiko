@@ -43,6 +43,12 @@ class KexGex (object):
 
     def __init__(self, transport):
         self.transport = transport
+        self.p = None
+        self.q = None
+        self.g = None
+        self.x = None
+        self.e = None
+        self.f = None
 
     def start_kex(self):
         if self.transport.server_mode:

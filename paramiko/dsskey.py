@@ -36,6 +36,12 @@ class DSSKey (PKey):
     Representation of a DSS key which can be used to sign an verify SSH2
     data.
     """
+    
+    p = None
+    q = None
+    g = None
+    y = None
+    x = None
 
     def __init__(self, msg=None, data=None, filename=None, password=None, vals=None):
         if filename is not None:
@@ -81,7 +87,7 @@ class DSSKey (PKey):
         return self.size
         
     def can_sign(self):
-        return hasattr(self, 'x')
+        return self.x is not None
 
     def sign_ssh_data(self, rpool, data):
         digest = SHA.new(data).digest()
@@ -124,6 +130,8 @@ class DSSKey (PKey):
         return dss.verify(sigM, (sigR, sigS))
 
     def write_private_key_file(self, filename, password=None):
+        if self.x is None:
+            raise SSHException('Not enough key information')
         keylist = [ 0, self.p, self.q, self.g, self.y, self.x ]
         try:
             b = BER()

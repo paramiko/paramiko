@@ -45,6 +45,7 @@ class BufferedFile (object):
     SEEK_END = 2
 
     def __init__(self):
+        self.newlines = None
         self._flags = 0
         self._bufsize = self._DEFAULT_BUFSIZE
         self._wbuffer = StringIO()
@@ -55,6 +56,8 @@ class BufferedFile (object):
         # realpos - position according the OS
         # (these may be different because we buffer for line reading)
         self._pos = self._realpos = 0
+        # size only matters for seekable files
+        self._size = 0
 
     def __del__(self):
         self.close()

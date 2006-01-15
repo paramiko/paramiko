@@ -81,15 +81,16 @@ class SFTPHandle (object):
         @return: data read from the file, or an SFTP error code.
         @rtype: str
         """
-        if not hasattr(self, 'readfile') or (self.readfile is None):
+        readfile = getattr(self, 'readfile', None)
+        if readfile is None:
             return SFTP_OP_UNSUPPORTED
         try:
             if self.__tell is None:
-                self.__tell = self.readfile.tell()
+                self.__tell = readfile.tell()
             if offset != self.__tell:
-                self.readfile.seek(offset)
+                readfile.seek(offset)
                 self.__tell = offset
-            data = self.readfile.read(length)
+            data = readfile.read(length)
         except IOError, e:
             self.__tell = None
             return SFTPServer.convert_errno(e.errno)
@@ -116,16 +117,17 @@ class SFTPHandle (object):
         @type data: str
         @return: an SFTP error code like L{SFTP_OK}.
         """
-        if not hasattr(self, 'writefile') or (self.writefile is None):
+        writefile = getattr(self, 'writefile', None)
+        if writefile is None:
             return SFTP_OP_UNSUPPORTED
         try:
             if self.__tell is None:
-                self.__tell = self.writefile.tell()
+                self.__tell = writefile.tell()
             if offset != self.__tell:
-                self.writefile.seek(offset)
+                writefile.seek(offset)
                 self.__tell = offset
-            self.writefile.write(data)
-            self.writefile.flush()
+            writefile.write(data)
+            writefile.flush()
         except IOError, e:
             self.__tell = None
             return SFTPServer.convert_errno(e.errno)

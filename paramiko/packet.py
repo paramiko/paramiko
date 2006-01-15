@@ -219,7 +219,7 @@ class Packetizer (object):
             if n < 0:
                 raise EOFError()
             if n == len(out):
-                return
+                break
             out = out[n:]
         return
         
@@ -398,23 +398,24 @@ class Packetizer (object):
                 x = self.__socket.recv(1)
                 if len(x) == 0:
                     raise EOFError()
-                return x
+                break
             if self.__closed:
                 raise EOFError()
             now = time.time()
             if now - start >= timeout:
                 raise socket.timeout()
+        return x
 
     def _read_timeout(self, timeout):
         if PY22:
-            return self._py22_read_timeout(n)
+            return self._py22_read_timeout(timeout)
         start = time.time()
         while True:
             try:
                 x = self.__socket.recv(1)
                 if len(x) == 0:
                     raise EOFError()
-                return x
+                break
             except socket.timeout:
                 pass
             if self.__closed:
@@ -422,6 +423,7 @@ class Packetizer (object):
             now = time.time()
             if now - start >= timeout:
                 raise socket.timeout()
+        return x
 
     def _build_packet(self, payload):
         # pad up at least 4 bytes, to nearest block-size (usually 8)
