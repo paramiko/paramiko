@@ -294,7 +294,7 @@ def lookup_ssh_host_config(hostname, config):
     """
     matches = [x for x in config if fnmatch.fnmatch(hostname, x['host'])]
     # sort in order of shortest match (usually '*') to longest
-    matches.sort(lambda x,y: cmp(len(x['host']), len(x['host'])))
+    matches.sort(lambda x,y: cmp(len(x['host']), len(y['host'])))
     ret = {}
     for m in matches:
         ret.update(m)
