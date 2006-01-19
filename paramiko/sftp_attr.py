@@ -51,12 +51,12 @@ class SFTPAttributes (object):
         Create a new (empty) SFTPAttributes object.  All fields will be empty.
         """
         self._flags = 0
-        self.st_size = -1
-        self.st_uid = -1
-        self.st_gid = -1
-        self.st_mode = 0
-        self.st_atime = 0
-        self.st_mtime = 0
+        self.st_size = None
+        self.st_uid = None
+        self.st_gid = None
+        self.st_mode = None
+        self.st_atime = None
+        self.st_mtime = None
         self.attr = {}
 
     def from_stat(cls, obj, filename=None):
@@ -120,13 +120,13 @@ class SFTPAttributes (object):
 
     def _pack(self, msg):
         self._flags = 0
-        if self.st_size >= 0:
+        if self.st_size is not None:
             self._flags |= self.FLAG_SIZE
-        if (self.st_uid >= 0) or (self.st_gid >= 0):
+        if (self.st_uid is not None) and (self.st_gid is not None):
             self._flags |= self.FLAG_UIDGID
-        if self.st_mode != 0:
+        if self.st_mode is not None:
             self._flags |= self.FLAG_PERMISSIONS
-        if (self.st_atime > 0) or (self.st_mtime > 0):
+        if (self.st_atime is not None) and (self.st_mtime is not None):
             self._flags |= self.FLAG_AMTIME
         if len(self.attr) > 0:
             self._flags |= self.FLAG_EXTENDED
@@ -150,13 +150,13 @@ class SFTPAttributes (object):
 
     def _debug_str(self):
         out = '[ '
-        if self.st_size >= 0:
+        if self.st_size is not None:
             out += 'size=%d ' % self.st_size
-        if (self.st_uid >= 0) or (self.st_gid >= 0):
+        if (self.st_uid is not None) and (self.st_gid is not None):
             out += 'uid=%d gid=%d ' % (self.st_uid, self.st_gid)
-        if self.st_mode != 0:
+        if self.st_mode is not None:
             out += 'mode=' + oct(self.st_mode) + ' '
-        if (self.st_atime > 0) or (self.st_mtime > 0):
+        if (self.st_atime is not None) and (self.st_mtime is not None):
             out += 'atime=%d mtime=%d ' % (self.st_atime, self.st_mtime)
         for k, v in self.attr.iteritems():
             out += '"%s"=%r ' % (str(k), v)
@@ -176,7 +176,7 @@ class SFTPAttributes (object):
 
     def __str__(self):
         "create a unix-style long description of the file (like ls -l)"
-        if self.st_mode != 0:
+        if self.st_mode is not None:
             kind = stat.S_IFMT(self.st_mode)
             if kind == stat.S_IFIFO:
                 ks = 'p'
@@ -200,11 +200,15 @@ class SFTPAttributes (object):
         else:
             ks = '?---------'
         # compute display date
-        if abs(time.time() - self.st_mtime) > 15552000:
-            # (15552000 = 6 months)
-            datestr = time.strftime('%d %b %Y', time.localtime(self.st_mtime))
+        if self.st_mtime is None:
+            # shouldn't really happen
+            datestr = '(unknown date)'
         else:
-            datestr = time.strftime('%d %b %H:%M', time.localtime(self.st_mtime))
+            if abs(time.time() - self.st_mtime) > 15552000:
+                # (15552000 = 6 months)
+                datestr = time.strftime('%d %b %Y', time.localtime(self.st_mtime))
+            else:
+                datestr = time.strftime('%d %b %H:%M', time.localtime(self.st_mtime))
         filename = getattr(self, 'filename', '?')
         return '%s   1 %-8d %-8d %8d %-12s %s' % (ks, self.st_uid, self.st_gid,
             self.st_size, datestr, filename)
