@@ -325,6 +325,19 @@ class Transport (threading.Thread):
                 out += ' (connecting)'
         out += '>'
         return out
+    
+    def atfork(self):
+        """
+        Terminate this Transport without closing the session.  On posix
+        systems, if a Transport is open during process forking, both parent
+        and child will share the underlying socket, but only one process can
+        use the connection (without corrupting the session).  Use this method
+        to clean up a Transport object without disrupting the other process.
+        
+        @since: 1.6
+        """
+        self.sock.close()
+        self.close()
 
     def get_security_options(self):
         """
