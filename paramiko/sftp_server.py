@@ -184,7 +184,10 @@ class SFTPServer (BaseSFTP, SubsystemHandler):
 
     def _send_status(self, request_number, code, desc=None):
         if desc is None:
-            desc = SFTP_DESC[code]
+            try:
+                desc = SFTP_DESC[code]
+            except IndexError:
+                desc = 'Unknown'
         self._response(request_number, CMD_STATUS, code, desc)
 
     def _open_folder(self, request_number, path):
