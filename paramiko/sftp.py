@@ -113,16 +113,18 @@ class BaseSFTP (object):
         return version
 
     def _send_server_version(self):
+        # winscp will freak out if the server sends version info before the
+        # client finishes sending INIT.
+        t, data = self._read_packet()
+        if t != CMD_INIT:
+            raise SFTPError('Incompatible sftp protocol')
+        version = struct.unpack('>I', data[:4])[0]
         # advertise that we support "check-file"
         extension_pairs = [ 'check-file', 'md5,sha1' ]
         msg = Message()
         msg.add_int(_VERSION)
         msg.add(*extension_pairs)
         self._send_packet(CMD_VERSION, str(msg))
-        t, data = self._read_packet()
-        if t != CMD_INIT:
-            raise SFTPError('Incompatible sftp protocol')
-        version = struct.unpack('>I', data[:4])[0]
         return version
         
     def _log(self, level, msg):
