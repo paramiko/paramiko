@@ -1156,6 +1156,7 @@ class Transport (threading.Thread):
         """
         self.log_name = name
         self.logger = util.get_logger(name)
+        self.packetizer.set_log(self.logger)
 
     def get_log_channel(self):
         """
