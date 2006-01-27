@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 # Copyright (C) 2003-2005 Robey Pointer <robey@lag.net>
 #
@@ -19,13 +19,15 @@
 # 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
 
 
-# ----- WINDOWS USERS PLEASE NOTE -----
-# This demo won't work on Windows because it uses pseudo-terminals, which
-# are a posix-only feature.  check out the README file for a simpler demo.
+import base64
+import getpass
+import os
+import socket
+import sys
+import traceback
 
-
-import sys, os, base64, getpass, socket, traceback, termios, tty, select
 import paramiko
+import interactive
 
 
 # setup logging
@@ -61,17 +63,17 @@ password = getpass.getpass('Password for %s@%s: ' % (username, hostname))
 hostkeytype = None
 hostkey = None
 try:
-    hkeys = paramiko.util.load_host_keys(os.path.expanduser('~/.ssh/known_hosts'))
+    host_keys = paramiko.util.load_host_keys(os.path.expanduser('~/.ssh/known_hosts'))
 except IOError:
     try:
-        hkeys = paramiko.util.load_host_keys(os.path.expanduser('~/ssh/known_hosts'))
+        host_keys = paramiko.util.load_host_keys(os.path.expanduser('~/ssh/known_hosts'))
     except IOError:
         print '*** Unable to open host keys file'
-        hkeys = {}
+        host_keys = {}
 
-if hkeys.has_key(hostname):
-    hostkeytype = hkeys[hostname].keys()[0]
-    hostkey = hkeys[hostname][hostkeytype]
+if host_keys.has_key(hostname):
+    hostkeytype = host_keys[hostname].keys()[0]
+    hostkey = host_keys[hostname][hostkeytype]
     print 'Using host key of type %s' % hostkeytype
 
 
@@ -84,37 +86,7 @@ try:
     chan.invoke_shell()
     print '*** Here we go!'
     print
-
-    try:
-        oldtty = termios.tcgetattr(sys.stdin)
-        tty.setraw(sys.stdin.fileno())
-        tty.setcbreak(sys.stdin.fileno())
-        chan.settimeout(0.0)
-
-        while True:
-            r, w, e = select.select([chan, sys.stdin], [], [])
-            if chan in r:
-                try:
-                    x = chan.recv(1024)
-                    if len(x) == 0:
-                        print '\r\n*** EOF\r\n',
-                        break
-                    sys.stdout.write(x)
-                    sys.stdout.flush()
-                except socket.timeout:
-                    pass
-            if sys.stdin in r:
-                # FIXME: reading 1 byte at a time is incredibly dumb.
-                x = sys.stdin.read(1)
-                if len(x) == 0:
-                    print
-                    print '*** Bye.\r\n',
-                    break
-                chan.send(x)
-
-    finally:
-        termios.tcsetattr(sys.stdin, termios.TCSADRAIN, oldtty)
-
+    interactive.interactive_shell(chan)
     chan.close()
     t.close()
 

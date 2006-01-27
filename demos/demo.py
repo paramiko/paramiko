@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 # Copyright (C) 2003-2005 Robey Pointer <robey@lag.net>
 #
@@ -19,38 +19,49 @@
 # 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
 
 
-# ----- WINDOWS USERS PLEASE NOTE -----
-# This demo won't work on Windows because it uses pseudo-terminals, which
-# are a posix-only feature.  check out the README file for a simpler demo.
+import base64
+import getpass
+import os
+import select
+import socket
+import sys
+import threading
+import time
+import traceback
 
-
-import sys, os, socket, threading, getpass, time, base64, select, termios, tty, traceback
 import paramiko
+import interactive
 
 
-#####   utility functions
-
-def agent_auth(username, t, event):
+def agent_auth(transport, username):
+    """
+    Attempt to authenticate to the given transport using any of the private
+    keys available from an SSH agent.
+    """
+    
     agent = paramiko.Agent()
     agent_keys = agent.get_keys()
-    if len(agent_keys) > 0:
-        for key in agent_keys:
-            print 'Trying ssh-agent key %s' % paramiko.util.hexify(key.get_fingerprint()),
-            t.auth_publickey(username, key, event)
-            event.wait(10)
-            if t.is_authenticated():
-                print '... success!'
-                return
+    if len(agent_keys) == 0:
+        return
+        
+    for key in agent_keys:
+        print 'Trying ssh-agent key %s' % paramiko.util.hexify(key.get_fingerprint()),
+        try:
+            transport.auth_publickey(username, key)
+            print '... success!'
+            return
+        except SSHException:
             print '... nope.'
 
-def manual_auth(username, hostname, event):
+
+def manual_auth(username, hostname):
     default_auth = 'p'
     auth = raw_input('Auth by (p)assword, (r)sa key, or (d)ss key? [%s] ' % default_auth)
     if len(auth) == 0:
         auth = default_auth
 
     if auth == 'r':
-        default_path = os.environ['HOME'] + '/.ssh/id_rsa'
+        default_path = os.path.join(os.environ['HOME'], '.ssh', 'id_rsa')
         path = raw_input('RSA key [%s]: ' % default_path)
         if len(path) == 0:
             path = default_path
@@ -59,9 +70,9 @@ def manual_auth(username, hostname, event):
         except paramiko.PasswordRequiredException:
             password = getpass.getpass('RSA key password: ')
             key = paramiko.RSAKey.from_private_key_file(path, password)
-        t.auth_publickey(username, key, event)
+        t.auth_publickey(username, key)
     elif auth == 'd':
-        default_path = os.environ['HOME'] + '/.ssh/id_dsa'
+        default_path = os.path.join(os.environ['HOME'], '.ssh', 'id_dsa')
         path = raw_input('DSS key [%s]: ' % default_path)
         if len(path) == 0:
             path = default_path
@@ -70,17 +81,14 @@ def manual_auth(username, hostname, event):
         except paramiko.PasswordRequiredException:
             password = getpass.getpass('DSS key password: ')
             key = paramiko.DSSKey.from_private_key_file(path, password)
-        t.auth_publickey(username, key, event)
+        t.auth_publickey(username, key)
     else:
         pw = getpass.getpass('Password for %s@%s: ' % (username, hostname))
-        t.auth_password(username, pw, event)
+        t.auth_password(username, pw)
 
-
-#####   main demo
 
 # setup logging
 paramiko.util.log_to_file('demo.log')
-
 
 username = ''
 if len(sys.argv) > 1:
@@ -107,15 +115,11 @@ except Exception, e:
     sys.exit(1)
 
 try:
-    event = threading.Event()
     t = paramiko.Transport(sock)
-    t.start_client(event)
-    # print repr(t)
-    event.wait(15)
+    t.start_client()
     if not t.is_active():
         print '*** SSH negotiation failed.'
         sys.exit(1)
-    # print repr(t)
 
     try:
         keys = paramiko.util.load_host_keys(os.path.expanduser('~/.ssh/known_hosts'))
@@ -137,8 +141,6 @@ try:
     else:
         print '*** Host key OK.'
 
-    event.clear()
-
     # get username
     if username == '':
         default_username = getpass.getuser()
@@ -146,14 +148,9 @@ try:
         if len(username) == 0:
             username = default_username
 
-    agent_auth(username, t, event)
-    
-    # ask for what kind of authentication to try
+    agent_auth(t, username)
     if not t.is_authenticated():
-        manual_auth(username, hostname, event)
-
-    event.wait(10)
-    # print repr(t)
+        manual_auth(username, hostname)
     if not t.is_authenticated():
         print '*** Authentication failed. :('
         t.close()
@@ -164,38 +161,7 @@ try:
     chan.invoke_shell()
     print '*** Here we go!'
     print
-
-    try:
-        oldtty = termios.tcgetattr(sys.stdin)
-        tty.setraw(sys.stdin.fileno())
-        tty.setcbreak(sys.stdin.fileno())
-        chan.settimeout(0.0)
-
-        while 1:
-            r, w, e = select.select([chan, sys.stdin], [], [])
-            if chan in r:
-                try:
-                    x = chan.recv(1024)
-                    if len(x) == 0:
-                        print
-                        print '*** EOF\r\n',
-                        break
-                    sys.stdout.write(x)
-                    sys.stdout.flush()
-                except socket.timeout:
-                    pass
-            if sys.stdin in r:
-                # FIXME: reading 1 byte at a time is incredibly dumb.
-                x = sys.stdin.read(1)
-                if len(x) == 0:
-                    print
-                    print '*** Bye.\r\n',
-                    break
-                chan.send(x)
-
-    finally:
-        termios.tcsetattr(sys.stdin, termios.TCSADRAIN, oldtty)
-
+    interactive.interactive_shell(chan)
     chan.close()
     t.close()
 
@@ -207,4 +173,5 @@ except Exception, e:
     except:
         pass
     sys.exit(1)
+
 
