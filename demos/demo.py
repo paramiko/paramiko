@@ -116,8 +116,9 @@ except Exception, e:
 
 try:
     t = paramiko.Transport(sock)
-    t.start_client()
-    if not t.is_active():
+    try:
+        t.start_client()
+    except SSHException:
         print '*** SSH negotiation failed.'
         sys.exit(1)
 

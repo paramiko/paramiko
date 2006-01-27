@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 # Copyright (C) 2003-2005 Robey Pointer <robey@lag.net>
 #
@@ -18,21 +18,32 @@
 # along with Paramiko; if not, write to the Free Software Foundation, Inc.,
 # 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
 
-import sys, os, socket, threading, traceback, base64
+import base64
+import os
+import socket
+import sys
+import threading
+import traceback
+
 import paramiko
+
 
 # setup logging
 paramiko.util.log_to_file('demo_server.log')
 
-#host_key = paramiko.RSAKey(filename='tests/test_rsa.key')
-host_key = paramiko.DSSKey(filename='tests/test_dss.key')
+host_key = paramiko.RSAKey(filename='test_rsa.key')
+#host_key = paramiko.DSSKey(filename='test_dss.key')
 
 print 'Read key: ' + paramiko.util.hexify(host_key.get_fingerprint())
 
 
 class Server (paramiko.ServerInterface):
     # 'data' is the output of base64.encodestring(str(key))
-    data = 'AAAAB3NzaC1yc2EAAAABIwAAAIEAyO4it3fHlmGZWJaGrfeHOVY7RWO3P9M7hpfAu7jJ2d7eothvfeuoRFtJwhUmZDluRdFyhFY/hFAh76PJKGAusIqIQKlkJxMCKDqIexkgHAfID/6mqvmnSJf0b5W8v5h2pI/stOSwTQ+pxVhwJ9ctYDhRSlF0iTUWT10hcuO4Ks8='
+    # (using the "user_rsa_key" files)
+    data = 'AAAAB3NzaC1yc2EAAAABIwAAAIEAyO4it3fHlmGZWJaGrfeHOVY7RWO3P9M7hp' + \
+           'fAu7jJ2d7eothvfeuoRFtJwhUmZDluRdFyhFY/hFAh76PJKGAusIqIQKlkJxMC' + \
+           'KDqIexkgHAfID/6mqvmnSJf0b5W8v5h2pI/stOSwTQ+pxVhwJ9ctYDhRSlF0iT' + \
+           'UWT10hcuO4Ks8='
     good_pub_key = paramiko.RSAKey(data=base64.decodestring(data))
 
     def __init__(self):
@@ -88,7 +99,6 @@ except Exception, e:
 print 'Got a connection!'
 
 try:
-    event = threading.Event()
     t = paramiko.Transport(client)
     try:
         t.load_server_moduli()
@@ -97,15 +107,11 @@ try:
         raise
     t.add_server_key(host_key)
     server = Server()
-    t.start_server(event, server)
-    while 1:
-        event.wait(0.1)
-        if not t.is_active():
-            print '*** SSH negotiation failed.'
-            sys.exit(1)
-        if event.isSet():
-            break
-    # print repr(t)
+    try:
+        t.start_server(server=server)
+    except SSHException, x:
+        print '*** SSH negotiation failed.'
+        sys.exit(1)
 
     # wait for auth
     chan = t.accept(20)
@@ -113,6 +119,7 @@ try:
         print '*** No channel.'
         sys.exit(1)
     print 'Authenticated!'
+
     server.event.wait(10)
     if not server.event.isSet():
         print '*** Client never asked for a shell.'
