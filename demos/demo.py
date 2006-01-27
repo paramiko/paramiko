@@ -131,6 +131,7 @@ try:
             print '*** Unable to open host keys file'
             keys = {}
 
+    # check server's host key -- this is important.
     key = t.get_remote_server_key()
     if not keys.has_key(hostname):
         print '*** WARNING: Unknown host key!'
