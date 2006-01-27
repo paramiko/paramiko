@@ -45,6 +45,8 @@ class AuthHandler (object):
         self.auth_method = ''
         self.password = None
         self.private_key = None
+        self.interactive_handler = None
+        self.submethods = None
         # for server mode:
         self.auth_username = None
         self.auth_fail_count = 0

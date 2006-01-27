@@ -27,7 +27,7 @@ always:
 
 clean:
 	rm -rf build dist
-	rm -f MANIFEST *.log
+	rm -f MANIFEST *.log demos/*.log
 
 # places where the version number is stored:
 #

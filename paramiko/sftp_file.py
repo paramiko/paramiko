@@ -20,6 +20,7 @@
 L{SFTPFile}
 """
 
+import socket
 import threading
 from paramiko.common import *
 from paramiko.sftp import *
@@ -76,7 +77,7 @@ class SFTPFile (BufferedFile):
         except EOFError:
             # may have outlived the Transport connection
             pass
-        except IOError:
+        except (IOError, socket.error):
             # may have outlived the Transport connection
             pass
 

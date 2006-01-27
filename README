@@ -257,4 +257,6 @@ v1.0 JIGGLYPUFF
 * SFTPClient.set_size
 * remove @since that predate 1.0
 * put examples in examples/ folder
+* support .ssh/known_hosts files made with HashKnownHosts
+* sftp server mode should convert all paths to unicode before calling into sftp_si
 

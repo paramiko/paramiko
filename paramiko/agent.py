@@ -59,8 +59,8 @@ class Agent:
             conn = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
             conn.connect(os.environ['SSH_AUTH_SOCK'])
             self.conn = conn
-            type, result = self._send_message(chr(SSH2_AGENTC_REQUEST_IDENTITIES))
-            if type != SSH2_AGENT_IDENTITIES_ANSWER:
+            ptype, result = self._send_message(chr(SSH2_AGENTC_REQUEST_IDENTITIES))
+            if ptype != SSH2_AGENT_IDENTITIES_ANSWER:
                 raise SSHException('could not get keys from ssh-agent')
             keys = []
             for i in range(result.get_int()):
@@ -132,7 +132,7 @@ class AgentKey(PKey):
         msg.add_string(self.blob)
         msg.add_string(data)
         msg.add_int(0)
-        type, result = self.agent._send_message(msg)
-        if type != SSH2_AGENT_SIGN_RESPONSE:
+        ptype, result = self.agent._send_message(msg)
+        if ptype != SSH2_AGENT_SIGN_RESPONSE:
             raise SSHException('key cannot be used for signing')
         return result.get_string()
