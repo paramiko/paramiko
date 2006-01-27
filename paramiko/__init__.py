@@ -65,10 +65,6 @@ __version_info__ = (1, 5, 2)
 __license__ = "GNU Lesser General Public License (LGPL)"
 
 
-import transport, auth_handler, channel, rsakey, dsskey, message
-import ssh_exception, file, packet, agent, server, util
-import sftp_client, sftp_attr, sftp_handle, sftp_server, sftp_si
-
 from transport import randpool, SecurityOptions, Transport
 from auth_handler import AuthHandler
 from channel import Channel, ChannelFile
@@ -128,19 +124,4 @@ __all__ = [ 'Transport',
             'BufferedFile',
             'Agent',
             'AgentKey',
-            'rsakey',
-            'dsskey',
-            'pkey',
-            'message',
-            'transport',
-            'sftp',
-            'sftp_client',
-            'sftp_server',
-            'sftp_attr',
-            'sftp_file',
-            'sftp_si',
-            'sftp_handle',
-            'server',
-            'file',
-            'agent',
             'util' ]
