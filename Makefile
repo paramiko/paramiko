@@ -25,6 +25,10 @@ docs: always
 	epydoc -o docs/ paramiko
 always:
 
+clean:
+	rm -rf build dist
+	rm -f MANIFEST *.log
+
 # places where the version number is stored:
 #
 # setup.py
