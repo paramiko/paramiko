@@ -334,7 +334,7 @@ class AuthHandler (object):
         self._send_auth_result(username, method, result)
 
     def _parse_userauth_success(self, m):
-        self.transport._log(INFO, 'Authentication successful!')
+        self.transport._log(INFO, 'Authentication (%s) successful!' % self.auth_method)
         self.authenticated = True
         self.transport._auth_trigger()
         if self.auth_event != None:
@@ -348,11 +348,11 @@ class AuthHandler (object):
             self.transport._log(DEBUG, 'Methods: ' + str(authlist))
             self.transport.saved_exception = PartialAuthentication(authlist)
         elif self.auth_method not in authlist:
-            self.transport._log(INFO, 'Authentication type not permitted.')
+            self.transport._log(INFO, 'Authentication type (%s) not permitted.' % self.auth_method)
             self.transport._log(DEBUG, 'Allowed methods: ' + str(authlist))
             self.transport.saved_exception = BadAuthenticationType('Bad authentication type', authlist)
         else:
-            self.transport._log(INFO, 'Authentication failed.')
+            self.transport._log(INFO, 'Authentication (%s) failed.' % self.auth_method)
         self.authenticated = False
         self.username = None
         if self.auth_event != None:
