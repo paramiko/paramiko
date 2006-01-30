@@ -267,11 +267,12 @@ class Packetizer (object):
             cmd_name = MSG_NAMES[cmd]
         else:
             cmd_name = '$%x' % cmd
-        self._log(DEBUG, 'Write packet <%s>, length %d' % (cmd_name, len(data)))
+        orig_len = len(data)
         if self.__compress_engine_out is not None:
             data = self.__compress_engine_out(data)
         packet = self._build_packet(data)
         if self.__dump_packets:
+            self._log(DEBUG, 'Write packet <%s>, length %d' % (cmd_name, orig_len))
             self._log(DEBUG, util.format_binary(packet, 'OUT: '))
         self.__write_lock.acquire()
         try:
@@ -369,7 +370,8 @@ class Packetizer (object):
             cmd_name = MSG_NAMES[cmd]
         else:
             cmd_name = '$%x' % cmd
-        self._log(DEBUG, 'Read packet <%s>, length %d' % (cmd_name, len(payload)))
+        if self.__dump_packets:
+            self._log(DEBUG, 'Read packet <%s>, length %d' % (cmd_name, len(payload)))
         return cmd, msg
 
 
