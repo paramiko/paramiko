@@ -70,7 +70,8 @@ class SFTPClient (BaseSFTP):
             self.logger = util.get_logger(transport.get_log_channel() + '.' +
                                           self.sock.get_name() + '.sftp')
             self.ultra_debug = transport.get_hexdump()
-        self._send_version()
+        server_version = self._send_version()
+        self._log(INFO, 'Opened sftp connection (server version %d)' % server_version)
     
     def __del__(self):
         self.close()
@@ -99,6 +100,7 @@ class SFTPClient (BaseSFTP):
         
         @since: 1.4
         """
+        self._log(INFO, 'sftp session closed.')
         self.sock.close()
 
     def listdir(self, path='.'):
@@ -131,6 +133,7 @@ class SFTPClient (BaseSFTP):
         @since: 1.2
         """
         path = self._adjust_cwd(path)
+        self._log(DEBUG, 'listdir(%r)' % path)
         t, msg = self._request(CMD_OPENDIR, path)
         if t != CMD_HANDLE:
             raise SFTPError('Expected handle')
@@ -190,6 +193,7 @@ class SFTPClient (BaseSFTP):
         @raise IOError: if the file could not be opened.
         """
         filename = self._adjust_cwd(filename)
+        self._log(DEBUG, 'open(%r, %r)' % (filename, mode))
         imode = 0
         if ('r' in mode) or ('+' in mode):
             imode |= SFTP_FLAG_READ
@@ -206,6 +210,7 @@ class SFTPClient (BaseSFTP):
         if t != CMD_HANDLE:
             raise SFTPError('Expected handle')
         handle = msg.get_string()
+        self._log(DEBUG, 'open(%r, %r) -> %s' % (filename, mode, util.hexify(handle)))
         return SFTPFile(self, handle, mode, bufsize)
 
     # python has migrated toward file() instead of open().
@@ -223,6 +228,7 @@ class SFTPClient (BaseSFTP):
             L{rmdir} to remove a folder.
         """
         path = self._adjust_cwd(path)
+        self._log(DEBUG, 'remove(%r)' % path)
         self._request(CMD_REMOVE, path)
 
     unlink = remove
@@ -241,6 +247,7 @@ class SFTPClient (BaseSFTP):
         """
         oldpath = self._adjust_cwd(oldpath)
         newpath = self._adjust_cwd(newpath)
+        self._log(DEBUG, 'rename(%r, %r)' % (oldpath, newpath))
         self._request(CMD_RENAME, oldpath, newpath)
 
     def mkdir(self, path, mode=0777):
@@ -255,6 +262,7 @@ class SFTPClient (BaseSFTP):
         @type mode: int
         """
         path = self._adjust_cwd(path)
+        self._log(DEBUG, 'mkdir(%r)' % path)
         attr = SFTPAttributes()
         attr.st_mode = mode
         self._request(CMD_MKDIR, path, attr)
@@ -267,6 +275,7 @@ class SFTPClient (BaseSFTP):
         @type path: string
         """
         path = self._adjust_cwd(path)
+        self._log(DEBUG, 'rmdir(%r)' % path)
         self._request(CMD_RMDIR, path)
 
     def stat(self, path):
@@ -289,6 +298,7 @@ class SFTPClient (BaseSFTP):
         @rtype: SFTPAttributes
         """
         path = self._adjust_cwd(path)
+        self._log(DEBUG, 'stat(%r)' % path)
         t, msg = self._request(CMD_STAT, path)
         if t != CMD_ATTRS:
             raise SFTPError('Expected attributes')
@@ -306,6 +316,7 @@ class SFTPClient (BaseSFTP):
         @rtype: SFTPAttributes
         """
         path = self._adjust_cwd(path)
+        self._log(DEBUG, 'lstat(%r)' % path)
         t, msg = self._request(CMD_LSTAT, path)
         if t != CMD_ATTRS:
             raise SFTPError('Expected attributes')
@@ -322,6 +333,7 @@ class SFTPClient (BaseSFTP):
         @type dest: string
         """
         dest = self._adjust_cwd(dest)
+        self._log(DEBUG, 'symlink(%r, %r)' % (source, dest))
         if type(source) is unicode:
             source = source.encode('utf-8')
         self._request(CMD_SYMLINK, source, dest)
@@ -338,6 +350,7 @@ class SFTPClient (BaseSFTP):
         @type mode: int
         """
         path = self._adjust_cwd(path)
+        self._log(DEBUG, 'chmod(%r, %r)' % (path, mode))
         attr = SFTPAttributes()
         attr.st_mode = mode
         self._request(CMD_SETSTAT, path, attr)
@@ -357,6 +370,7 @@ class SFTPClient (BaseSFTP):
         @type gid: int
         """
         path = self._adjust_cwd(path)
+        self._log(DEBUG, 'chown(%r, %r, %r)' % (path, uid, gid))
         attr = SFTPAttributes()
         attr.st_uid, attr.st_gid = uid, gid
         self._request(CMD_SETSTAT, path, attr)
@@ -379,6 +393,7 @@ class SFTPClient (BaseSFTP):
         path = self._adjust_cwd(path)
         if times is None:
             times = (time.time(), time.time())
+        self._log(DEBUG, 'utime(%r, %r)' % (path, times))
         attr = SFTPAttributes()
         attr.st_atime, attr.st_mtime = times
         self._request(CMD_SETSTAT, path, attr)
@@ -395,6 +410,7 @@ class SFTPClient (BaseSFTP):
         @rtype: str
         """
         path = self._adjust_cwd(path)
+        self._log(DEBUG, 'readlink(%r)' % path)
         t, msg = self._request(CMD_READLINK, path)
         if t != CMD_NAME:
             raise SFTPError('Expected name response')
@@ -420,6 +436,7 @@ class SFTPClient (BaseSFTP):
         @raise IOError: if the path can't be resolved on the server
         """
         path = self._adjust_cwd(path)
+        self._log(DEBUG, 'normalize(%r)' % path)
         t, msg = self._request(CMD_REALPATH, path)
         if t != CMD_NAME:
             raise SFTPError('Expected name response')

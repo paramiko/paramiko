@@ -65,6 +65,7 @@ class SFTPFile (BufferedFile):
         # __del__.)
         if self._closed:
             return
+        self.sftp._log(DEBUG, 'close(%s)' % util.hexify(self.handle))
         if self.pipelined:
             self.sftp._finish_responses(self)
         BufferedFile.close(self)

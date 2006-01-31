@@ -129,6 +129,7 @@ else:
     import logging
     PY22 = False
 
+
 DEBUG = logging.DEBUG
 INFO = logging.INFO
 WARNING = logging.WARNING
