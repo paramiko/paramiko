@@ -512,7 +512,7 @@ class Channel (object):
             if len(self.in_buffer) <= nbytes:
                 out = self.in_buffer
                 self.in_buffer = ''
-                if self.pipe is not None:
+                if (self.pipe is not None) and not (self.closed or self.eof_received):
                     # clear the pipe, since no more data is buffered
                     self.pipe.clear()
             else:
