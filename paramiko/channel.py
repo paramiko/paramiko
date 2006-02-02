@@ -1006,10 +1006,10 @@ class Channel (object):
     def _wait_for_event(self):
         while True:
             self.event.wait(0.1)
-            if self.closed:
-                return False
             if self.event.isSet():
                 break
+            if self.closed:
+                return False
         return True
 
     def _set_closed(self):
