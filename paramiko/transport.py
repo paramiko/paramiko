@@ -51,7 +51,7 @@ from paramiko.ssh_exception import SSHException, BadAuthenticationType
 # PyCrypt compiled for Win32 can be downloaded from the HashTar homepage:
 #     http://nitace.bsd.uchicago.edu:8080/hashtar
 from Crypto.Cipher import Blowfish, AES, DES3
-from Crypto.Hash import SHA, MD5, HMAC
+from Crypto.Hash import SHA, MD5
 
 
 # for thread cleanup
