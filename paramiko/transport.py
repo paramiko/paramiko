@@ -1210,6 +1210,21 @@ class Transport (threading.Thread):
             self._preferred_compression = ( 'zlib@openssh.com', 'zlib', 'none' )
         else:
             self._preferred_compression = ( 'none', )
+    
+    def getpeername(self):
+        """
+        Return the address of the remote side of this Transport, if possible.
+        This is effectively a wrapper around C{'getpeername'} on the underlying
+        socket.  If the socket-like object has no C{'getpeername'} method,
+        then C{("unknown", 0)} is returned.
+        
+        @return: the address if the remote host, if known
+        @rtype: tuple(str, int)
+        """
+        gp = getattr(self.sock, 'getpeername', None)
+        if gp is None:
+            return ('unknown', 0)
+        return gp()
 
     def stop_thread(self):
         self.active = False

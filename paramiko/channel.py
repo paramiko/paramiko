@@ -433,6 +433,18 @@ class Channel (object):
         else:
             self.settimeout(0.0)
 
+    def getpeername(self):
+        """
+        Return the address of the remote side of this Channel, if possible.
+        This is just a wrapper around C{'getpeername'} on the Transport, used
+        to provide enough of a socket-like interface to allow asyncore to work.
+        (asyncore likes to call C{'getpeername'}.)
+
+        @return: the address if the remote host, if known
+        @rtype: tuple(str, int)
+        """
+        return self.transport.getpeername()
+
     def close(self):
         """
         Close the channel.  All future read/write operations on the channel
