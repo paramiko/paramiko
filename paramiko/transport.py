@@ -298,9 +298,6 @@ class Transport (threading.Thread):
         self.server_accept_cv = threading.Condition(self.lock)
         self.subsystem_table = { }
 
-    def __del__(self):
-        self.close()
-
     def __repr__(self):
         """
         Returns a string representation of this object, for debugging.
@@ -551,13 +548,9 @@ class Transport (threading.Thread):
         Close this session, and any open channels that are tied to it.
         """
         self.active = False
-        # since this may be called from __del__, can't assume any attributes exist
-        try:
-            self.packetizer.close()
-            for chan in self.channels.values():
-                chan._unlink()
-        except AttributeError:
-            pass
+        self.packetizer.close()
+        for chan in self.channels.values():
+            chan._unlink()
 
     def get_remote_server_key(self):
         """
