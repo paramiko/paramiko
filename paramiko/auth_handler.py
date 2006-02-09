@@ -21,6 +21,7 @@ L{AuthHandler}
 """
 
 import threading
+import weakref
 
 # this helps freezing utils
 import encodings.utf_8
@@ -38,7 +39,7 @@ class AuthHandler (object):
     """
     
     def __init__(self, transport):
-        self.transport = transport
+        self.transport = weakref.proxy(transport)
         self.username = None
         self.authenticated = False
         self.auth_event = None
