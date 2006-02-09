@@ -99,13 +99,6 @@ class Packetizer (object):
         self.__keepalive_last = time.time()
         self.__keepalive_callback = None
         
-    def __del__(self):
-        # this is not guaranteed to be called, but we should try.
-        try:
-            self.__socket.close()
-        except:
-            pass
-
     def set_log(self, log):
         """
         Set the python log object to use for logging.

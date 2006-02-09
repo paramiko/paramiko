@@ -727,7 +727,7 @@ class Transport (threading.Thread):
         @since: fearow
         """
         self.packetizer.set_keepalive(interval,
-            lambda x=self: x.global_request('keepalive@lag.net', wait=False))
+            lambda x=weakref.proxy(self): x.global_request('keepalive@lag.net', wait=False))
 
     def global_request(self, kind, data=None, wait=True):
         """
