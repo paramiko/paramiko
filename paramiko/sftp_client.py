@@ -72,9 +72,6 @@ class SFTPClient (BaseSFTP):
             self.ultra_debug = transport.get_hexdump()
         server_version = self._send_version()
         self._log(INFO, 'Opened sftp connection (server version %d)' % server_version)
-    
-    def __del__(self):
-        self.close()
 
     def from_transport(cls, t):
         """
