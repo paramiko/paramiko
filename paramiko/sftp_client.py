@@ -31,11 +31,18 @@ from paramiko.sftp_file import SFTPFile
 
 
 def _to_unicode(s):
-    "if a str is not ascii, decode its utf8 into unicode"
+    """
+    decode a string as ascii or utf8 if possible (as required by the sftp
+    protocol).  if neither works, just return a byte string because the server
+    probably doesn't know the filename's encoding.
+    """
     try:
         return s.encode('ascii')
-    except:
-        return s.decode('utf-8')
+    except UnicodeError:
+        try:
+            return s.decode('utf-8')
+        except UnicodeError:
+            return s
 
 
 class SFTPClient (BaseSFTP):
