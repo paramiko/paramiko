@@ -74,8 +74,6 @@ class SecurityOptions (object):
     If you try to add an algorithm that paramiko doesn't recognize,
     C{ValueError} will be raised.  If you try to assign something besides a
     tuple to one of the fields, C{TypeError} will be raised.
-
-    @since: ivysaur
     """
     __slots__ = [ 'ciphers', 'digests', 'key_types', 'kex', 'compression', '_transport' ]
 
@@ -331,7 +329,7 @@ class Transport (threading.Thread):
         use the connection (without corrupting the session).  Use this method
         to clean up a Transport object without disrupting the other process.
         
-        @since: 1.6
+        @since: 1.5.3
         """
         self.sock.close()
         self.close()
@@ -345,8 +343,6 @@ class Transport (threading.Thread):
         @return: an object that can be used to change the preferred algorithms
             for encryption, digest (hash), public key, and key exchange.
         @rtype: L{SecurityOptions}
-
-        @since: ivysaur
         """
         return SecurityOptions(self)
 
@@ -522,8 +518,6 @@ class Transport (threading.Thread):
         @return: True if a moduli file was successfully loaded; False
             otherwise.
         @rtype: bool
-
-        @since: doduo
         
         @note: This has no effect when used in client mode.
         """
@@ -678,8 +672,6 @@ class Transport (threading.Thread):
         @param bytes: the number of random bytes to send in the payload of the
             ignored packet -- defaults to a random number from 10 to 41.
         @type bytes: int
-
-        @since: fearow
         """
         m = Message()
         m.add_byte(chr(MSG_IGNORE))
@@ -723,8 +715,6 @@ class Transport (threading.Thread):
         @param interval: seconds to wait before sending a keepalive packet (or
             0 to disable keepalives).
         @type interval: int
-
-        @since: fearow
         """
         self.packetizer.set_keepalive(interval,
             lambda x=weakref.proxy(self): x.global_request('keepalive@lag.net', wait=False))
@@ -746,8 +736,6 @@ class Transport (threading.Thread):
             request was successful (or an empty L{Message} if C{wait} was
             C{False}); C{None} if the request was denied.
         @rtype: L{Message}
-
-        @since: fearow
         """
         if wait:
             self.completion_event = threading.Event()
@@ -829,8 +817,6 @@ class Transport (threading.Thread):
         
         @raise SSHException: if the SSH2 negotiation fails, the host key
             supplied by the server is incorrect, or authentication fails.
-
-        @since: doduo
         """
         if hostkey is not None:
             self._preferred_keys = [ hostkey.get_name() ]
@@ -918,8 +904,6 @@ class Transport (threading.Thread):
 
         @return: username that was authenticated, or C{None}.
         @rtype: string
-
-        @since: fearow
         """
         if not self.active or (self.auth_handler is None):
             return None

@@ -443,8 +443,6 @@ class SubsystemHandler (threading.Thread):
     authenticated and requests subsytem C{"mp3"}, an object of class
     C{MP3Handler} will be created, and L{start_subsystem} will be called on
     it from a new thread.
-
-    @since: ivysaur
     """
     def __init__(self, channel, name, server):
         """

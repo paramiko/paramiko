@@ -336,8 +336,6 @@ class Channel (object):
 
         @return: the ID of this channel.
         @rtype: int
-
-        @since: ivysaur
         """
         return self.chanid
     

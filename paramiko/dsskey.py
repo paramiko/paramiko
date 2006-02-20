@@ -152,8 +152,6 @@ class DSSKey (PKey):
         @type progress_func: function
         @return: new private key
         @rtype: L{DSSKey}
-
-        @since: fearow
         """
         randpool.stir()
         dsa = DSA.generate(bits, randpool.get_bytes, progress_func)

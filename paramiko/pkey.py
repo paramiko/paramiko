@@ -139,8 +139,6 @@ class PKey (object):
 
         @return: a base64 string containing the public part of the key.
         @rtype: str
-
-        @since: fearow
         """
         return base64.encodestring(str(self)).replace('\n', '')
 
@@ -194,8 +192,6 @@ class PKey (object):
         @raise PasswordRequiredException: if the private key file is
             encrypted, and C{password} is C{None}.
         @raise SSHException: if the key file is invalid.
-
-        @since: fearow
         """
         key = cls(filename=filename, password=password)
         return key
@@ -213,8 +209,6 @@ class PKey (object):
 
         @raise IOError: if there was an error writing the file.
         @raise SSHException: if the key is invalid.
-
-        @since: fearow
         """
         raise Exception('Not implemented in PKey')
 
