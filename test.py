@@ -31,6 +31,7 @@ sys.path.append('tests/')
 from test_message import MessageTest
 from test_file import BufferedFileTest
 from test_util import UtilTest
+from test_hostkeys import HostKeysTest
 from test_pkey import KeyTest
 from test_kex import KexTest
 from test_packetizer import PacketizerTest
@@ -89,6 +90,7 @@ suite = unittest.TestSuite()
 suite.addTest(unittest.makeSuite(MessageTest))
 suite.addTest(unittest.makeSuite(BufferedFileTest))
 suite.addTest(unittest.makeSuite(UtilTest))
+suite.addTest(unittest.makeSuite(HostKeysTest))
 if options.use_pkey:
     suite.addTest(unittest.makeSuite(KeyTest))
 suite.addTest(unittest.makeSuite(KexTest))

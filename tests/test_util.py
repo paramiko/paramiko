@@ -23,6 +23,7 @@ Some unit tests for utility functions.
 """
 
 import cStringIO
+import os
 import unittest
 from Crypto.Hash import SHA
 import paramiko.util
@@ -43,10 +44,17 @@ Host spoo.example.com
 Crazy something else
 """
 
+test_hosts_file = """\
+secure.example.com ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAIEA1PD6U2/TVxET6lkpKhOk5r\
+9q/kAYG6sP9f5zuUYP8i7FOFp/6ncCEbbtg/lB+A3iidyxoSWl+9jtoyyDOOVX4UIDV9G11Ml8om3\
+D+jrpI9cycZHqilK0HmxDeCuxbwyMuaCygU9gS2qoRvNLWZk70OpIKSSpBo0Wl3/XUmz9uhc=
+happy.example.com ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAIEA8bP1ZA7DCZDB9J0s50l31M\
+BGQ3GQ/Fc7SX6gkpXkwcZryoi4kNFhHu5LvHcZPdxXV1D+uTMfGS1eyd2Yz/DoNWXNAl8TI0cAsW\
+5ymME3bQ4J/k1IKxCtz/bAlAqFgKoc+EolMziDYqWIATtW0rYTJvzGAzTmMj80/QpsFH+Pc2M=
+"""
+
 
 class UtilTest (unittest.TestCase):
-
-    K = 14730343317708716439807310032871972459448364195094179797249681733965528989482751523943515690110179031004049109375612685505881911274101441415545039654102474376472240501616988799699744135291070488314748284283496055223852115360852283821334858541043710301057312858051901453919067023103730011648890038847384890504L
 
     def setUp(self):
         pass
@@ -78,3 +86,19 @@ class UtilTest (unittest.TestCase):
         x = paramiko.util.generate_key_bytes(SHA, 'ABCDEFGH', 'This is my secret passphrase.', 64)
         hex = ''.join(['%02x' % ord(c) for c in x])
         self.assertEquals(hex, '9110e2f6793b69363e58173e9436b13a5a4b339005741d5c680e505f57d871347b4239f14fb5c46e857d5e100424873ba849ac699cea98d729e57b3e84378e8b')
+
+    def test_4_host_keys(self):
+        f = open('hostfile.temp', 'w')
+        f.write(test_hosts_file)
+        f.close()
+        try:
+            hostdict = paramiko.util.load_host_keys('hostfile.temp')
+            self.assertEquals(2, len(hostdict))
+            self.assertEquals(1, len(hostdict.values()[0]))
+            self.assertEquals(1, len(hostdict.values()[1]))
+            fp = paramiko.util.hexify(hostdict['secure.example.com']['ssh-rsa'].get_fingerprint())
+            self.assertEquals('E6684DB30E109B67B70FF1DC5C7F1363', fp)
+        finally:
+            os.unlink('hostfile.temp')
+
+        

@@ -1,4 +1,4 @@
-# Copyright (C) 2003-2005 Robey Pointer <robey@lag.net>
+# Copyright (C) 2003-2006 Robey Pointer <robey@lag.net>
 #
 # This file is part of paramiko.
 #
@@ -84,6 +84,7 @@ from packet import Packetizer
 from file import BufferedFile
 from agent import Agent, AgentKey
 from pkey import PKey
+from hostkeys import HostKeys
 
 # fix module names for epydoc
 for x in [Transport, SecurityOptions, Channel, SFTPServer, SSHException, \
@@ -91,7 +92,7 @@ for x in [Transport, SecurityOptions, Channel, SFTPServer, SSHException, \
           SubsystemHandler, AuthHandler, RSAKey, DSSKey, SFTPError, \
           SFTP, SFTPClient, SFTPServer, Message, Packetizer, SFTPAttributes, \
           SFTPHandle, SFTPServerInterface, BufferedFile, Agent, AgentKey, \
-          PKey, BaseSFTP, SFTPFile, ServerInterface]:
+          PKey, BaseSFTP, SFTPFile, ServerInterface, HostKeys]:
     x.__module__ = 'paramiko'
 
 from common import AUTH_SUCCESSFUL, AUTH_PARTIALLY_SUCCESSFUL, AUTH_FAILED, \
@@ -124,4 +125,5 @@ __all__ = [ 'Transport',
             'BufferedFile',
             'Agent',
             'AgentKey',
+            'HostKeys',
             'util' ]
