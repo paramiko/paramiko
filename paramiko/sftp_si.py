@@ -36,6 +36,9 @@ class SFTPServerInterface (object):
     SFTP sessions).  However, raising an exception will usually cause the SFTP
     session to abruptly end, so you will usually want to catch exceptions and
     return an appropriate error code.
+    
+    All paths are in string form instead of unicode because not all SFTP
+    clients & servers obey the requirement that paths be encoded in UTF-8.
     """
     
     def __init__ (self, server, *largs, **kwargs):
