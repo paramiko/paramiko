@@ -1,7 +1,7 @@
-paramiko 1.5.2
-"rhydon" release, 04 dec 2005
+paramiko 1.5.3
+"squirtle" release, 19 feb 2006
 
-Copyright (c) 2003-2005 Robey Pointer <robey@lag.net>
+Copyright (c) 2003-2006 Robey Pointer <robey@lag.net>
 
 http://www.lag.net/paramiko/
 
@@ -113,6 +113,9 @@ forward.py
     command-line script to set up port-forwarding across an ssh transport.
     (requires python 2.3.)
 
+demo_sftp.py
+    opens an sftp session and does a few simple file operations.
+
 demo_server.py
     an ssh server that listens on port 2200 and accepts a login for
     'robey' (password 'foo'), and pretends to be a BBS.  meant to be a
@@ -137,6 +140,24 @@ the best and easiest examples of how to use the SFTP class.
 ***  WHAT'S NEW
 
 highlights of what's new in each release:
+
+v1.5.3 SQUIRTLE
+* a few performance enhancements
+* added HostKeys, for dealing with openssh style "known_hosts" files, and
+  added support for hashed hostnames
+* added Transport.atfork() for dealing with forked children
+* added SFTPClient.truncate, SFTPFile.chmod, SFTPFile.chown, SFTPFile.utime,
+  and SFTPFile.truncate
+* improved windows demos [patch from mike looijmans], added an sftp demo, and
+  moved demos to the demos/ folder
+* fixed a few interoperability bugs
+* cleaned up logging a bit
+* fixed a bug where EOF on a Channel might not be detected by select [found
+  by thomas steinacher]
+* fixed python 2.4-ism that crept in [patch by jan hudec]
+* fixed a few reference loops that could have interacted badly with the python
+  garbage collector
+* fixed a bunch of pychecker warnings, some of which were bugs
 
 v1.5.2 RHYDON
 * compression support (opt-in via Transport.use_compression)
@@ -254,7 +275,3 @@ v1.0 JIGGLYPUFF
   checking, etc, using openssh defaults or optional configuration (2ndary host
   key files, etc)
     local and remote port forwarding
-* SFTPClient.set_size
-* remove @since that predate 1.0
-* put examples in examples/ folder
-* sftp server mode should convert all paths to unicode before calling into sftp_si

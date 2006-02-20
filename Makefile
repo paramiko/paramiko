@@ -17,6 +17,7 @@
 # paras (2oct05) - 1.5
 # quilava (31oct05) - 1.5.1
 # rhydon (04dec05) - 1.5.2
+# squirtle (19feb05) - 1.5.3
 
 release:
 	python ./setup.py sdist --formats=zip
