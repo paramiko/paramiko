@@ -48,6 +48,7 @@ class StubSFTPHandle (SFTPHandle):
         # use the stored filename
         try:
             SFTPServer.set_file_attr(self.filename, attr)
+            return SFTP_OK
         except OSError, e:
             return SFTPServer.convert_errno(e.errno)
 

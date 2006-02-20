@@ -59,7 +59,7 @@ class SFTPClient (BaseSFTP):
         An alternate way to create an SFTP client context is by using
         L{from_transport}.
 
-        @param sock: an open L{Channel} using the C{"sftp"} subsystem.
+        @param sock: an open L{Channel} using the C{"sftp"} subsystem
         @type sock: L{Channel}
         """
         BaseSFTP.__init__(self)
@@ -84,10 +84,10 @@ class SFTPClient (BaseSFTP):
         """
         Create an SFTP client channel from an open L{Transport}.
 
-        @param t: an open L{Transport} which is already authenticated.
+        @param t: an open L{Transport} which is already authenticated
         @type t: L{Transport}
         @return: a new L{SFTPClient} object, referring to an sftp session
-            (channel) across the transport.
+            (channel) across the transport
         @rtype: L{SFTPClient}
         """
         chan = t.open_session()
@@ -185,13 +185,13 @@ class SFTPClient (BaseSFTP):
         buffering, C{1} uses line buffering, and any number greater than 1
         (C{>1}) uses that specific buffer size.
 
-        @param filename: name of the file to open.
-        @type filename: string
-        @param mode: mode (python-style) to open in.
-        @type mode: string
+        @param filename: name of the file to open
+        @type filename: str
+        @param mode: mode (python-style) to open in
+        @type mode: str
         @param bufsize: desired buffering (-1 = default buffer size)
         @type bufsize: int
-        @return: a file object representing the open file.
+        @return: a file object representing the open file
         @rtype: SFTPFile
 
         @raise IOError: if the file could not be opened.
@@ -223,13 +223,13 @@ class SFTPClient (BaseSFTP):
 
     def remove(self, path):
         """
-        Remove the file at the given path.
+        Remove the file at the given path.  This only works on files; for
+        removing folders (directories), use L{rmdir}.
 
-        @param path: path (absolute or relative) of the file to remove.
-        @type path: string
+        @param path: path (absolute or relative) of the file to remove
+        @type path: str
 
-        @raise IOError: if the path refers to a folder (directory).  Use
-            L{rmdir} to remove a folder.
+        @raise IOError: if the path refers to a folder (directory)
         """
         path = self._adjust_cwd(path)
         self._log(DEBUG, 'remove(%r)' % path)
@@ -241,13 +241,13 @@ class SFTPClient (BaseSFTP):
         """
         Rename a file or folder from C{oldpath} to C{newpath}.
 
-        @param oldpath: existing name of the file or folder.
-        @type oldpath: string
-        @param newpath: new name for the file or folder.
-        @type newpath: string
+        @param oldpath: existing name of the file or folder
+        @type oldpath: str
+        @param newpath: new name for the file or folder
+        @type newpath: str
         
         @raise IOError: if C{newpath} is a folder, or something else goes
-            wrong.
+            wrong
         """
         oldpath = self._adjust_cwd(oldpath)
         newpath = self._adjust_cwd(newpath)
@@ -260,9 +260,9 @@ class SFTPClient (BaseSFTP):
         The default mode is 0777 (octal).  On some systems, mode is ignored.
         Where it is used, the current umask value is first masked out.
 
-        @param path: name of the folder to create.
-        @type path: string
-        @param mode: permissions (posix-style) for the newly-created folder.
+        @param path: name of the folder to create
+        @type path: str
+        @param mode: permissions (posix-style) for the newly-created folder
         @type mode: int
         """
         path = self._adjust_cwd(path)
@@ -275,8 +275,8 @@ class SFTPClient (BaseSFTP):
         """
         Remove the folder named C{path}.
 
-        @param path: name of the folder to remove.
-        @type path: string
+        @param path: name of the folder to remove
+        @type path: str
         """
         path = self._adjust_cwd(path)
         self._log(DEBUG, 'rmdir(%r)' % path)
@@ -296,9 +296,9 @@ class SFTPClient (BaseSFTP):
         The fields supported are: C{st_mode}, C{st_size}, C{st_uid}, C{st_gid},
         C{st_atime}, and C{st_mtime}.
 
-        @param path: the filename to stat.
-        @type path: string
-        @return: an object containing attributes about the given file.
+        @param path: the filename to stat
+        @type path: str
+        @return: an object containing attributes about the given file
         @rtype: SFTPAttributes
         """
         path = self._adjust_cwd(path)
@@ -314,9 +314,9 @@ class SFTPClient (BaseSFTP):
         following symbolic links (shortcuts).  This otherwise behaves exactly
         the same as L{stat}.
 
-        @param path: the filename to stat.
-        @type path: string
-        @return: an object containing attributes about the given file.
+        @param path: the filename to stat
+        @type path: str
+        @return: an object containing attributes about the given file
         @rtype: SFTPAttributes
         """
         path = self._adjust_cwd(path)
@@ -331,10 +331,10 @@ class SFTPClient (BaseSFTP):
         Create a symbolic link (shortcut) of the C{source} path at
         C{destination}.
 
-        @param source: path of the original file.
-        @type source: string
-        @param dest: path of the newly created symlink.
-        @type dest: string
+        @param source: path of the original file
+        @type source: str
+        @param dest: path of the newly created symlink
+        @type dest: str
         """
         dest = self._adjust_cwd(dest)
         self._log(DEBUG, 'symlink(%r, %r)' % (source, dest))
@@ -348,9 +348,9 @@ class SFTPClient (BaseSFTP):
         unix-style and identical to those used by python's C{os.chmod}
         function.
 
-        @param path: path of the file to change the permissions of.
-        @type path: string
-        @param mode: new permissions.
+        @param path: path of the file to change the permissions of
+        @type path: str
+        @param mode: new permissions
         @type mode: int
         """
         path = self._adjust_cwd(path)
@@ -366,8 +366,8 @@ class SFTPClient (BaseSFTP):
         only want to change one, use L{stat} first to retrieve the current
         owner and group.
 
-        @param path: path of the file to change the owner and group of.
-        @type path: string
+        @param path: path of the file to change the owner and group of
+        @type path: str
         @param uid: new owner's uid
         @type uid: int
         @param gid: new group id
@@ -388,11 +388,11 @@ class SFTPClient (BaseSFTP):
         modified times, respectively.  This bizarre API is mimicked from python
         for the sake of consistency -- I apologize.
 
-        @param path: path of the file to modify.
-        @type path: string
+        @param path: path of the file to modify
+        @type path: str
         @param times: C{None} or a tuple of (access time, modified time) in
-            standard internet epoch time (seconds since 01 January 1970 GMT).
-        @type times: tuple of int
+            standard internet epoch time (seconds since 01 January 1970 GMT)
+        @type times: tuple(int)
         """
         path = self._adjust_cwd(path)
         if times is None:
@@ -402,15 +402,32 @@ class SFTPClient (BaseSFTP):
         attr.st_atime, attr.st_mtime = times
         self._request(CMD_SETSTAT, path, attr)
 
+    def truncate(self, path, size):
+        """
+        Change the size of the file specified by C{path}.  This usually extends
+        or shrinks the size of the file, just like the C{truncate()} method on
+        python file objects.
+        
+        @param path: path of the file to modify
+        @type path: str
+        @param size: the new size of the file
+        @type size: int or long
+        """
+        path = self._adjust_cwd(path)
+        self._log(DEBUG, 'truncate(%r, %r)' % (path, size))
+        attr = SFTPAttributes()
+        attr.st_size = size
+        self._request(CMD_SETSTAT, path, attr)
+
     def readlink(self, path):
         """
         Return the target of a symbolic link (shortcut).  You can use
         L{symlink} to create these.  The result may be either an absolute or
         relative pathname.
 
-        @param path: path of the symbolic link file.
+        @param path: path of the symbolic link file
         @type path: str
-        @return: target path.
+        @return: target path
         @rtype: str
         """
         path = self._adjust_cwd(path)
@@ -432,9 +449,9 @@ class SFTPClient (BaseSFTP):
         server is considering to be the "current folder" (by passing C{'.'}
         as C{path}).
 
-        @param path: path to be normalized.
+        @param path: path to be normalized
         @type path: str
-        @return: normalized form of the given path.
+        @return: normalized form of the given path
         @rtype: str
         
         @raise IOError: if the path can't be resolved on the server

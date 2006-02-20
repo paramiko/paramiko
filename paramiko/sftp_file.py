@@ -181,6 +181,71 @@ class SFTPFile (BufferedFile):
         if t != CMD_ATTRS:
             raise SFTPError('Expected attributes')
         return SFTPAttributes._from_msg(msg)
+
+    def chmod(self, mode):
+        """
+        Change the mode (permissions) of this file.  The permissions are
+        unix-style and identical to those used by python's C{os.chmod}
+        function.
+
+        @param mode: new permissions
+        @type mode: int
+        """
+        self.sftp._log(DEBUG, 'chmod(%s, %r)' % (util.hexify(self.handle), mode))
+        attr = SFTPAttributes()
+        attr.st_mode = mode
+        self.sftp._request(CMD_FSETSTAT, self.handle, attr)
+        
+    def chown(self, uid, gid):
+        """
+        Change the owner (C{uid}) and group (C{gid}) of this file.  As with
+        python's C{os.chown} function, you must pass both arguments, so if you
+        only want to change one, use L{stat} first to retrieve the current
+        owner and group.
+
+        @param uid: new owner's uid
+        @type uid: int
+        @param gid: new group id
+        @type gid: int
+        """
+        self.sftp._log(DEBUG, 'chown(%s, %r, %r)' % (util.hexify(self.handle), uid, gid))
+        attr = SFTPAttributes()
+        attr.st_uid, attr.st_gid = uid, gid
+        self.sftp._request(CMD_FSETSTAT, self.handle, attr)
+
+    def utime(self, times):
+        """
+        Set the access and modified times of this file.  If
+        C{times} is C{None}, then the file's access and modified times are set
+        to the current time.  Otherwise, C{times} must be a 2-tuple of numbers,
+        of the form C{(atime, mtime)}, which is used to set the access and
+        modified times, respectively.  This bizarre API is mimicked from python
+        for the sake of consistency -- I apologize.
+
+        @param times: C{None} or a tuple of (access time, modified time) in
+            standard internet epoch time (seconds since 01 January 1970 GMT)
+        @type times: tuple(int)
+        """
+        if times is None:
+            times = (time.time(), time.time())
+        self.sftp._log(DEBUG, 'utime(%s, %r)' % (util.hexify(self.handle), times))
+        attr = SFTPAttributes()
+        attr.st_atime, attr.st_mtime = times
+        self.sftp._request(CMD_FSETSTAT, self.handle, attr)
+
+    def truncate(self, size):
+        """
+        Change the size of this file.  This usually extends
+        or shrinks the size of the file, just like the C{truncate()} method on
+        python file objects.
+        
+        @param size: the new size of the file
+        @type size: int or long
+        """
+        self.sftp._log(DEBUG, 'truncate(%s, %r)' % (util.hexify(self.handle), size))
+        attr = SFTPAttributes()
+        attr.st_size = size
+        self.sftp._request(CMD_FSETSTAT, self.handle, attr)
     
     def check(self, hash_algorithm, offset=0, length=0, block_size=0):
         """

@@ -273,28 +273,68 @@ class SFTPTest (unittest.TestCase):
 
     def test_8_setstat(self):
         """
-        verify that the setstat functions (chown, chmod, utime) work.
+        verify that the setstat functions (chown, chmod, utime, truncate) work.
         """
         f = sftp.open(FOLDER + '/special', 'w')
         try:
+            f.write('x' * 1024)
             f.close()
 
             stat = sftp.stat(FOLDER + '/special')
             sftp.chmod(FOLDER + '/special', (stat.st_mode & ~0777) | 0600)
-            self.assertEqual(sftp.stat(FOLDER + '/special').st_mode & 0777, 0600)
+            stat = sftp.stat(FOLDER + '/special')
+            self.assertEqual(stat.st_mode & 0777, 0600)
+            self.assertEqual(stat.st_size, 1024)
 
             mtime = stat.st_mtime - 3600
             atime = stat.st_atime - 1800
             sftp.utime(FOLDER + '/special', (atime, mtime))
-            nstat = sftp.stat(FOLDER + '/special')
-            self.assertEqual(nstat.st_mtime, mtime)
-            self.assertEqual(nstat.st_atime, atime)
+            stat = sftp.stat(FOLDER + '/special')
+            self.assertEqual(stat.st_mtime, mtime)
+            self.assertEqual(stat.st_atime, atime)
 
             # can't really test chown, since we'd have to know a valid uid.
+            
+            sftp.truncate(FOLDER + '/special', 512)
+            stat = sftp.stat(FOLDER + '/special')
+            self.assertEqual(stat.st_size, 512)
         finally:
             sftp.remove(FOLDER + '/special')
 
-    def test_9_readline_seek(self):
+    def test_9_fsetstat(self):
+        """
+        verify that the fsetstat functions (chown, chmod, utime, truncate)
+        work on open files.
+        """
+        f = sftp.open(FOLDER + '/special', 'w')
+        try:
+            f.write('x' * 1024)
+            f.close()
+        
+            f = sftp.open(FOLDER + '/special', 'r+')
+            stat = f.stat()
+            f.chmod((stat.st_mode & ~0777) | 0600)
+            stat = f.stat()
+            self.assertEqual(stat.st_mode & 0777, 0600)
+            self.assertEqual(stat.st_size, 1024)
+
+            mtime = stat.st_mtime - 3600
+            atime = stat.st_atime - 1800
+            f.utime((atime, mtime))
+            stat = f.stat()
+            self.assertEqual(stat.st_mtime, mtime)
+            self.assertEqual(stat.st_atime, atime)
+            
+            # can't really test chown, since we'd have to know a valid uid.
+            
+            f.truncate(512)
+            stat = f.stat()
+            self.assertEqual(stat.st_size, 512)
+            f.close()
+        finally:
+            sftp.remove(FOLDER + '/special')
+            
+    def test_A_readline_seek(self):
         """
         create a text file and write a bunch of text into it.  then count the lines
         in the file, and seek around to retreive particular lines.  this should
@@ -324,7 +364,7 @@ class SFTPTest (unittest.TestCase):
         finally:
             sftp.remove(FOLDER + '/duck.txt')
 
-    def test_A_write_seek(self):
+    def test_B_write_seek(self):
         """
         create a text file, seek back and change part of it, and verify that the
         changes worked.
@@ -344,7 +384,7 @@ class SFTPTest (unittest.TestCase):
         finally:
             sftp.remove(FOLDER + '/testing.txt')
 
-    def test_B_symlink(self):
+    def test_C_symlink(self):
         """
         create a symlink and then check that lstat doesn't follow it.
         """
@@ -387,7 +427,7 @@ class SFTPTest (unittest.TestCase):
             except:
                 pass
 
-    def test_C_flush_seek(self):
+    def test_D_flush_seek(self):
         """
         verify that buffered writes are automatically flushed on seek.
         """
@@ -409,7 +449,7 @@ class SFTPTest (unittest.TestCase):
             except:
                 pass
 
-    def test_D_lots_of_files(self):
+    def test_E_lots_of_files(self):
         """
         create a bunch of files over the same session.
         """
@@ -440,7 +480,7 @@ class SFTPTest (unittest.TestCase):
                 except:
                     pass
 
-    def test_E_big_file(self):
+    def test_F_big_file(self):
         """
         write a 1MB file with no buffering.
         """
@@ -474,7 +514,7 @@ class SFTPTest (unittest.TestCase):
         finally:
             sftp.remove('%s/hongry.txt' % FOLDER)
 
-    def test_F_big_file_pipelined(self):
+    def test_G_big_file_pipelined(self):
         """
         write a 1MB file, with no linefeeds, using pipelining.
         """
@@ -510,7 +550,7 @@ class SFTPTest (unittest.TestCase):
         finally:
             sftp.remove('%s/hongry.txt' % FOLDER)
 
-    def test_G_lots_of_prefetching(self):
+    def test_H_lots_of_prefetching(self):
         """
         prefetch a 1MB file a bunch of times, discarding the file object
         without using it, to verify that paramiko doesn't get confused.
@@ -546,7 +586,7 @@ class SFTPTest (unittest.TestCase):
         finally:
             sftp.remove('%s/hongry.txt' % FOLDER)
         
-    def test_H_big_file_big_buffer(self):
+    def test_I_big_file_big_buffer(self):
         """
         write a 1MB file, with no linefeeds, and a big buffer.
         """
@@ -563,7 +603,7 @@ class SFTPTest (unittest.TestCase):
         finally:
             sftp.remove('%s/hongry.txt' % FOLDER)
     
-    def test_I_big_file_renegotiate(self):
+    def test_J_big_file_renegotiate(self):
         """
         write a 1MB file, forcing key renegotiation in the middle.
         """
@@ -585,7 +625,7 @@ class SFTPTest (unittest.TestCase):
             sftp.remove('%s/hongry.txt' % FOLDER)
             t.packetizer.REKEY_BYTES = pow(2, 30)
 
-    def test_J_realpath(self):
+    def test_K_realpath(self):
         """
         test that realpath is returning something non-empty and not an
         error.
@@ -596,7 +636,7 @@ class SFTPTest (unittest.TestCase):
         self.assert_(len(f) > 0)
         self.assertEquals(os.path.join(pwd, FOLDER), f)
 
-    def test_K_mkdir(self):
+    def test_L_mkdir(self):
         """
         verify that mkdir/rmdir work.
         """
@@ -619,7 +659,7 @@ class SFTPTest (unittest.TestCase):
         except IOError:
             pass
     
-    def test_L_chdir(self):
+    def test_M_chdir(self):
         """
         verify that chdir/getcwd work.
         """
@@ -656,7 +696,7 @@ class SFTPTest (unittest.TestCase):
             except:
                 pass
 
-    def test_M_get_put(self):
+    def test_N_get_put(self):
         """
         verify that get/put work.
         """
@@ -685,7 +725,7 @@ class SFTPTest (unittest.TestCase):
         os.unlink(localname)
         sftp.unlink(FOLDER + '/bunny.txt')
 
-    def test_N_check(self):
+    def test_O_check(self):
         """
         verify that file.check() works against our own server.
         (it's an sftp extension that we support, and may be the only ones who
@@ -707,7 +747,7 @@ class SFTPTest (unittest.TestCase):
         finally:
             sftp.unlink(FOLDER + '/kitty.txt')
 
-    def test_O_x_flag(self):
+    def test_P_x_flag(self):
         """
         verify that the 'x' flag works when opening a file.
         """
@@ -723,7 +763,7 @@ class SFTPTest (unittest.TestCase):
         finally:
             sftp.unlink(FOLDER + '/unusual.txt')
     
-    def test_P_utf8(self):
+    def test_Q_utf8(self):
         """
         verify that unicode strings are encoded into utf8 correctly.
         """
