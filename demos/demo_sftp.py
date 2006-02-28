@@ -28,7 +28,6 @@ import sys
 import traceback
 
 import paramiko
-import interactive
 
 
 # setup logging
