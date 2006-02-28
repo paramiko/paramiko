@@ -99,6 +99,7 @@ DISCONNECT_SERVICE_NOT_AVAILABLE, DISCONNECT_AUTH_CANCELLED_BY_USER, \
 from Crypto.Util.randpool import PersistentRandomPool, RandomPool
 
 # keep a crypto-strong PRNG nearby
+import os
 try:
     randpool = PersistentRandomPool(os.path.join(os.path.expanduser('~'), '/.randpool'))
 except:
