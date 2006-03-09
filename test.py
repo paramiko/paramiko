@@ -37,6 +37,7 @@ from test_kex import KexTest
 from test_packetizer import PacketizerTest
 from test_transport import TransportTest
 from test_sftp import SFTPTest
+from test_sftp_big import BigSFTPTest
 
 default_host = 'localhost'
 default_user = os.environ.get('USER', 'nobody')
@@ -99,6 +100,8 @@ if options.use_transport:
     suite.addTest(unittest.makeSuite(TransportTest))
 if options.use_sftp:
     suite.addTest(unittest.makeSuite(SFTPTest))
+if options.use_big_file:
+    suite.addTest(unittest.makeSuite(BigSFTPTest))
 verbosity = 1
 if options.verbose:
     verbosity = 2
