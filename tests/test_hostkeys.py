@@ -71,3 +71,14 @@ class HostKeysTest (unittest.TestCase):
         fp = paramiko.util.hexify(x['ssh-rsa'].get_fingerprint())
         self.assertEquals('7EC91BB336CB6D810B124B1353C32396', fp)
         self.assertTrue(hostdict.check('foo.example.com', key))
+
+    def test_3_dict(self):
+        hostdict = paramiko.HostKeys('hostfile.temp')
+        self.assert_('secure.example.com' in hostdict)
+        self.assert_('not.example.com' not in hostdict)
+        self.assert_(hostdict.has_key('secure.example.com'))
+        self.assert_(not hostdict.has_key('not.example.com'))
+        x = hostdict.get('secure.example.com', None)
+        self.assertTrue(x is not None)
+        fp = paramiko.util.hexify(x['ssh-rsa'].get_fingerprint())
+        self.assertEquals('E6684DB30E109B67B70FF1DC5C7F1363', fp)
