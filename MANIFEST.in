@@ -1,3 +1,4 @@
-include LICENSE test.py demo.py demo_simple.py demo_server.py forward.py
+include LICENSE test.py
 recursive-include docs *
 recursive-include tests *.py *.key
+recursive-include demos *.py *.key user_rsa_key user_rsa_key.pub
