@@ -147,8 +147,11 @@ class BufferedFile (object):
             self._pos += len(result)
             return result
         while len(self._rbuffer) < size:
+            read_size = size - len(self._rbuffer)
+            if self._flags & _FLAG_BUFFERED:
+                read_size = max(self._bufsize, read_size)
             try:
-                new_data = self._read(max(self._bufsize, size - len(self._rbuffer)))
+                new_data = self._read(read_size)
             except EOFError:
                 new_data = None
             if (new_data is None) or (len(new_data) == 0):
@@ -205,7 +208,7 @@ class BufferedFile (object):
                     return line
                 n = size - len(line)
             else:
-                n = self._DEFAULT_BUFSIZE
+                n = self._bufsize
             if ('\n' in line) or ((self._flags & _FLAG_UNIVERSAL_NEWLINE) and ('\r' in line)):
                 break
             try:
