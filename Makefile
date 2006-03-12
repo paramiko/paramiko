@@ -22,7 +22,7 @@
 
 release:
 	python ./setup.py sdist --formats=zip
-	python ./setup.py bdist_egg --formats=zip
+	python ./setup.py bdist_egg
 
 docs: always
 	epydoc -o docs/ paramiko
