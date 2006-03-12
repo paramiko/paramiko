@@ -1,5 +1,5 @@
-paramiko 1.5.3
-"squirtle" release, 19 feb 2006
+paramiko 1.5.4
+"tentacool" release, 11 mar 2006
 
 Copyright (c) 2003-2006 Robey Pointer <robey@lag.net>
 
@@ -140,6 +140,14 @@ the best and easiest examples of how to use the SFTP class.
 ***  WHAT'S NEW
 
 highlights of what's new in each release:
+
+v1.5.4 TENTACOOL
+* fixed HostKeys to more correctly emulate a python dict
+* fixed a bug where file read buffering was too aggressive
+* improved prefetching so that out-of-order reads still use the prefetch
+  buffer
+* added experimental SFTPFile.readv() call
+* more unit tests
 
 v1.5.3 SQUIRTLE
 * a few performance enhancements

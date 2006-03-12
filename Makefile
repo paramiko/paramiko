@@ -17,10 +17,12 @@
 # paras (2oct05) - 1.5
 # quilava (31oct05) - 1.5.1
 # rhydon (04dec05) - 1.5.2
-# squirtle (19feb05) - 1.5.3
+# squirtle (19feb06) - 1.5.3
+# tentacool (11mar06) - 1.5.4
 
 release:
 	python ./setup.py sdist --formats=zip
+	python ./setup.py bdist_egg --formats=zip
 
 docs: always
 	epydoc -o docs/ paramiko

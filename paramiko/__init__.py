@@ -46,7 +46,7 @@ released under the GNU Lesser General Public License (LGPL).
 
 Website: U{http://www.lag.net/paramiko/}
 
-@version: 1.5.3 (squirtle)
+@version: 1.5.4 (tentacool)
 @author: Robey Pointer
 @contact: robey@lag.net
 @license: GNU Lesser General Public License (LGPL)
@@ -59,9 +59,9 @@ if sys.version_info < (2, 2):
 
 
 __author__ = "Robey Pointer <robey@lag.net>"
-__date__ = "19 Feb 2005"
-__version__ = "1.5.3 (squirtle)"
-__version_info__ = (1, 5, 3)
+__date__ = "11 Mar 2005"
+__version__ = "1.5.4 (tentacool)"
+__version_info__ = (1, 5, 4)
 __license__ = "GNU Lesser General Public License (LGPL)"
 
 
