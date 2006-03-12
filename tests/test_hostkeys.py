@@ -82,3 +82,8 @@ class HostKeysTest (unittest.TestCase):
         self.assertTrue(x is not None)
         fp = paramiko.util.hexify(x['ssh-rsa'].get_fingerprint())
         self.assertEquals('E6684DB30E109B67B70FF1DC5C7F1363', fp)
+        i = 0
+        for key in hostdict:
+            i += 1
+        self.assertEquals(2, i)
+        
