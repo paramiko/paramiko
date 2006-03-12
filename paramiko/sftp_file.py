@@ -364,6 +364,20 @@ class SFTPFile (BufferedFile):
         self._start_prefetch(chunks)
     
     def readv(self, chunks):
+        """
+        Read a set of blocks from the file by (offset, length).  This is more
+        efficient than doing a series of L{seek} and L{read} calls, since the
+        prefetch machinery is used to retrieve all the requested blocks at
+        once.
+        
+        @param chunks: a list of (offset, length) tuples indicating which
+            sections of the file to read
+        @ptype chunks: list(tuple(long, int))
+        @return: a list of blocks read, in the same order as in C{chunks}
+        @rtype: list(str)
+        
+        @since: 1.5.4
+        """
         # put the offsets in order, since we depend on that for determining
         # when the reads have finished.
         ordered_chunks = chunks[:]
@@ -391,16 +405,16 @@ class SFTPFile (BufferedFile):
         self._prefetch_done = False
         self._prefetch_so_far = chunks[0][0]
         self._prefetch_data = {}
-        self._prefetch_reads = chunks
+        self._prefetch_reads = chunks[:]
 
-        t = threading.Thread(target=self._prefetch_thread)
+        t = threading.Thread(target=self._prefetch_thread, args=(chunks,))
         t.setDaemon(True)
         t.start()
         
-    def _prefetch_thread(self):
+    def _prefetch_thread(self, chunks):
         # do these read requests in a temporary thread because there may be
         # a lot of them, so it may block.
-        for offset, length in self._prefetch_reads:
+        for offset, length in chunks:
             self.sftp._async_request(self, CMD_READ, self.handle, long(offset), int(length))
 
     def _async_response(self, t, msg):

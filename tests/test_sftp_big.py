@@ -177,6 +177,7 @@ class BigSFTPTest (unittest.TestCase):
             
             self.assertEqual(sftp.stat('%s/hongry.txt' % FOLDER).st_size, 1024 * 1024)
             
+            start = time.time()
             k2blob = kblob + kblob
             chunk = 793
             for i in xrange(10):
@@ -194,10 +195,51 @@ class BigSFTPTest (unittest.TestCase):
                     self.assertEqual(data, k2blob[n_offset:n_offset + chunk])
                     offset += chunk
                 f.close()
+            end = time.time()
+            sys.stderr.write('%ds ' % round(end - start))
         finally:
             sftp.remove('%s/hongry.txt' % FOLDER)
-                
-    def test_5_lots_of_prefetching(self):
+
+    def test_5_readv_seek(self):
+        sftp = get_sftp()
+        kblob = ''.join([struct.pack('>H', n) for n in xrange(512)])
+        try:
+            f = sftp.open('%s/hongry.txt' % FOLDER, 'w')
+            f.set_pipelined(True)
+            for n in range(1024):
+                f.write(kblob)
+                if n % 128 == 0:
+                    sys.stderr.write('.')
+            f.close()
+            sys.stderr.write(' ')
+
+            self.assertEqual(sftp.stat('%s/hongry.txt' % FOLDER).st_size, 1024 * 1024)
+
+            start = time.time()
+            k2blob = kblob + kblob
+            chunk = 793
+            for i in xrange(10):
+                f = sftp.open('%s/hongry.txt' % FOLDER, 'r')
+                base_offset = (512 * 1024) + 17 * random.randint(1000, 2000)
+                # make a bunch of offsets and put them in random order
+                offsets = [base_offset + j * chunk for j in xrange(100)]
+                readv_list = []
+                for j in xrange(100):
+                    o = offsets[random.randint(0, len(offsets) - 1)]
+                    offsets.remove(o)
+                    readv_list.append((o, chunk))
+                ret = f.readv(readv_list)
+                for i in xrange(len(readv_list)):
+                    offset = readv_list[i][0]
+                    n_offset = offset % 1024
+                    self.assertEqual(ret[i], k2blob[n_offset:n_offset + chunk])
+                f.close()
+            end = time.time()
+            sys.stderr.write('%ds ' % round(end - start))
+        finally:
+            sftp.remove('%s/hongry.txt' % FOLDER)
+
+    def test_6_lots_of_prefetching(self):
         """
         prefetch a 1MB file a bunch of times, discarding the file object
         without using it, to verify that paramiko doesn't get confused.
@@ -231,7 +273,7 @@ class BigSFTPTest (unittest.TestCase):
         finally:
             sftp.remove('%s/hongry.txt' % FOLDER)
         
-    def test_6_big_file_big_buffer(self):
+    def test_7_big_file_big_buffer(self):
         """
         write a 1MB file, with no linefeeds, and a big buffer.
         """
@@ -246,7 +288,7 @@ class BigSFTPTest (unittest.TestCase):
         finally:
             sftp.remove('%s/hongry.txt' % FOLDER)
     
-    def test_7_big_file_renegotiate(self):
+    def test_8_big_file_renegotiate(self):
         """
         write a 1MB file, forcing key renegotiation in the middle.
         """
