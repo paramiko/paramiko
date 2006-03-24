@@ -55,20 +55,27 @@ class Agent:
         @raise SSHException: if an SSH agent is found, but speaks an
             incompatible protocol
         """
+        self.keys = ()
         if ('SSH_AUTH_SOCK' in os.environ) and (sys.platform != 'win32'):
             conn = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
             conn.connect(os.environ['SSH_AUTH_SOCK'])
             self.conn = conn
-            ptype, result = self._send_message(chr(SSH2_AGENTC_REQUEST_IDENTITIES))
-            if ptype != SSH2_AGENT_IDENTITIES_ANSWER:
-                raise SSHException('could not get keys from ssh-agent')
-            keys = []
-            for i in range(result.get_int()):
-                keys.append(AgentKey(self, result.get_string()))
-                result.get_string()
-            self.keys = tuple(keys)
+        elif sys.platform == 'win32':
+            import win_pageant
+            if win_pageant.can_talk_to_agent():
+                self.conn = win_pageant.PageantConnection()
         else:
-            self.keys = ()
+            # no agent support
+            return
+            
+        ptype, result = self._send_message(chr(SSH2_AGENTC_REQUEST_IDENTITIES))
+        if ptype != SSH2_AGENT_IDENTITIES_ANSWER:
+            raise SSHException('could not get keys from ssh-agent')
+        keys = []
+        for i in range(result.get_int()):
+            keys.append(AgentKey(self, result.get_string()))
+            result.get_string()
+        self.keys = tuple(keys)
 
     def close(self):
         """
