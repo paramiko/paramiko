@@ -172,7 +172,7 @@ class StubSFTPServer (SFTPServerInterface):
                 target_path = '<error>'
         try:
             os.symlink(target_path, path)
-        except:
+        except OSError, e:
             return SFTPServer.convert_errno(e.errno)
         return SFTP_OK
 
