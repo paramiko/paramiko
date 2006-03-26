@@ -80,8 +80,14 @@ class HostKeys (UserDict.DictMixin):
         posix, it will usually be stored in
         C{os.path.expanduser("~/.ssh/known_hosts")}.
         
+        If this method is called multiple times, the host keys are merged,
+        not cleared.  So multiple calls to C{load} will just call L{add},
+        replacing any existing entries and adding new ones.
+        
         @param filename: name of the file to read host keys from
         @type filename: str
+        
+        @raise IOError: if there was an error reading the file
         """
         f = file(filename, 'r')
         for line in f:
