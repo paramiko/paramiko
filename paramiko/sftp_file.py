@@ -47,6 +47,7 @@ class SFTPFile (BufferedFile):
         self._prefetch_done = False
         self._prefetch_so_far = 0
         self._prefetch_data = {}
+        self._prefetch_reads = []
         self._saved_exception = None
 
     def __del__(self):
@@ -380,6 +381,7 @@ class SFTPFile (BufferedFile):
         """
         # put the offsets in order, since we depend on that for determining
         # when the reads have finished.
+        self.sftp._log(DEBUG, 'readv(%s, %r)' % (util.hexify(self.handle), chunks))
         ordered_chunks = chunks[:]
         ordered_chunks.sort(lambda x, y: cmp(x[0], y[0]))
         self._start_prefetch(ordered_chunks)
@@ -405,7 +407,7 @@ class SFTPFile (BufferedFile):
         self._prefetch_done = False
         self._prefetch_so_far = chunks[0][0]
         self._prefetch_data = {}
-        self._prefetch_reads = chunks[:]
+        self._prefetch_reads.extend(chunks[:])
 
         t = threading.Thread(target=self._prefetch_thread, args=(chunks,))
         t.setDaemon(True)
