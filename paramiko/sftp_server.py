@@ -96,6 +96,7 @@ class SFTPServer (BaseSFTP, SubsystemHandler):
 
     def finish_subsystem(self):
         self.server.session_ended()
+        super(SFTPServer, self).finish_subsystem()
         # close any file handles that were left open (so we can return them to the OS quickly)
         for f in self.file_table.itervalues():
             f.close()
@@ -141,10 +142,12 @@ class SFTPServer (BaseSFTP, SubsystemHandler):
         @param attr: attributes to change.
         @type attr: L{SFTPAttributes}
         """
-        if attr._flags & attr.FLAG_PERMISSIONS:
-            os.chmod(filename, attr.st_mode)
-        if attr._flags & attr.FLAG_UIDGID:
-            os.chown(filename, attr.st_uid, attr.st_gid)
+        if sys.platform != 'win32':
+            # mode operations are meaningless on win32
+            if attr._flags & attr.FLAG_PERMISSIONS:
+                os.chmod(filename, attr.st_mode)
+            if attr._flags & attr.FLAG_UIDGID:
+                os.chown(filename, attr.st_uid, attr.st_gid)
         if attr._flags & attr.FLAG_AMTIME:
             os.utime(filename, (attr.st_atime, attr.st_mtime))
         if attr._flags & attr.FLAG_SIZE:

@@ -289,7 +289,11 @@ class SFTPTest (unittest.TestCase):
             stat = sftp.stat(FOLDER + '/special')
             sftp.chmod(FOLDER + '/special', (stat.st_mode & ~0777) | 0600)
             stat = sftp.stat(FOLDER + '/special')
-            self.assertEqual(stat.st_mode & 0777, 0600)
+            expected_mode = 0600
+            if sys.platform == 'win32':
+                # chmod not really functional on windows
+                expected_mode = 0666
+            self.assertEqual(stat.st_mode & 0777, expected_mode)
             self.assertEqual(stat.st_size, 1024)
 
             mtime = stat.st_mtime - 3600
@@ -321,7 +325,12 @@ class SFTPTest (unittest.TestCase):
             stat = f.stat()
             f.chmod((stat.st_mode & ~0777) | 0600)
             stat = f.stat()
-            self.assertEqual(stat.st_mode & 0777, 0600)
+
+            expected_mode = 0600
+            if sys.platform == 'win32':
+                # chmod not really functional on windows
+                expected_mode = 0666
+            self.assertEqual(stat.st_mode & 0777, expected_mode)
             self.assertEqual(stat.st_size, 1024)
 
             mtime = stat.st_mtime - 3600
@@ -394,6 +403,10 @@ class SFTPTest (unittest.TestCase):
         """
         create a symlink and then check that lstat doesn't follow it.
         """
+        if not hasattr(os, "symlink"):
+            # skip symlink tests on windows
+            return
+
         f = sftp.open(FOLDER + '/original.txt', 'w')
         try:
             f.write('original\n')
@@ -535,7 +548,7 @@ class SFTPTest (unittest.TestCase):
         
         localname = os.tempnam()
         text = 'All I wanted was a plastic bunny rabbit.\n'
-        f = open(localname, 'w')
+        f = open(localname, 'wb')
         f.write(text)
         f.close()
         sftp.put(localname, FOLDER + '/bunny.txt')
@@ -548,7 +561,7 @@ class SFTPTest (unittest.TestCase):
         localname = os.tempnam()
         sftp.get(FOLDER + '/bunny.txt', localname)
         
-        f = open(localname, 'r')
+        f = open(localname, 'rb')
         self.assertEquals(text, f.read(128))
         f.close()
     
@@ -574,6 +587,7 @@ class SFTPTest (unittest.TestCase):
             sum = f.check('md5', 0, 0, 510)
             self.assertEquals('EB3B45B8CD55A0707D99B177544A319F373183D241432BB2157AB9E46358C4AC90370B5CADE5D90336FC1716F90B36D6',
                               paramiko.util.hexify(sum))
+            f.close()
         finally:
             sftp.unlink(FOLDER + '/kitty.txt')
 

@@ -271,9 +271,13 @@ class SFTPServerInterface (object):
         The default implementation returns C{os.path.normpath('/' + path)}.
         """
         if os.path.isabs(path):
-            return os.path.normpath(path)
+            out = os.path.normpath(path)
         else:
-            return os.path.normpath('/' + path)
+            out = os.path.normpath('/' + path)
+        if sys.platform == 'win32':
+            # on windows, normalize backslashes to sftp/posix format
+            out = out.replace('\\', '/')
+        return out
     
     def readlink(self, path):
         """
