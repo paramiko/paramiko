@@ -64,6 +64,8 @@ class Agent:
             import win_pageant
             if win_pageant.can_talk_to_agent():
                 self.conn = win_pageant.PageantConnection()
+            else:
+                return
         else:
             # no agent support
             return

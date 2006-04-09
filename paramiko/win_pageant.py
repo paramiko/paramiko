@@ -1,4 +1,5 @@
 # Copyright (C) 2005 John Arbash-Meinel <john@arbash-meinel.com>
+# Modified up by: Todd Whiteman <ToddW@ActiveState.com>
 #
 # This file is part of paramiko.
 #
@@ -22,41 +23,31 @@ Functions for communicating with Pageant, the basic windows ssh agent program.
 
 import os
 import struct
+import tempfile
+import mmap
+import array
 
 # if you're on windows, you should have these, i guess?
 try:
     import win32ui
-    import win32api
-    import win32con
-    import mmapfile
     _has_win32all = True
 except ImportError:
     _has_win32all = False
 
 
-try:
-    import ctypes
-    _has_ctypes = True
-except ImportError:
-    _has_ctypes = False
-else:
-    class _COPYDATASTRUCT(ctypes.Structure):
-        """This is a mapping to the Win32 COPYDATASTRUCT.
-
-        typedef struct tagCOPYDATASTRUCT {
-            ULONG_PTR dwData;
-            DWORD cbData;
-            PVOID lpData;
-        } COPYDATASTRUCT, *PCOPYDATASTRUCT;
-        """
-        _fields_ = [ ('dwData', ctypes.c_ulong) #I think this is right
-                   , ('cbData', ctypes.c_ulong)
-                   , ('lpData', ctypes.c_void_p)
-                   ]
-
-
 _AGENT_COPYDATA_ID = 0x804e50ba
 _AGENT_MAX_MSGLEN = 8192
+# Note: The WM_COPYDATA value is pulled from win32con, as a workaround
+# so we do not have to import this huge library just for this one variable.
+win32con_WM_COPYDATA = 74
+
+
+def _get_pageant_window_object():
+    try:
+        hwnd = win32ui.FindWindow('Pageant', 'Pageant')
+        return hwnd
+    except win32ui.error:
+        return None
 
 
 def can_talk_to_agent():
@@ -66,39 +57,45 @@ def can_talk_to_agent():
     This checks both if we have the required libraries (win32all)
     and if there is a Pageant currently running.
     """
-    if not _has_win32all or not _has_ctypes:
-        return False
-    hwnd = win32ui.FindWindow('Pageant', 'Pageant')
-    if not hwnd:
+    if not _has_win32all or not _get_pageant_window_object():
         return False
     return True
 
 
 def _query_pageant(msg):
-    hwnd = win32ui.FindWindow('Pageant', 'Pageant')
+    hwnd = _get_pageant_window_object()
     if not hwnd:
-        # Raise a failure to connect exception
+        # Raise a failure to connect exception, pageant isn't running anymore!
         return None
 
-    # I have a feeling that GetCurrentThreadId is just a
-    # way to ensure that we have a unique map name
-    mapname = 'PageantRequest%08x' % (win32api.GetCurrentThreadId())
-    # Created a named memory map
-    map = mmapfile.mmapfile('', mapname, _AGENT_MAX_MSGLEN)
+    # Write our pageant request string into the file (pageant will read this to determine what to do)
+    filename = tempfile.mktemp('.pag')
+    map_filename = os.path.basename(filename)
+
+    f = open(filename, 'w+b')
+    f.write(msg )
+    # Ensure the rest of the file is empty, otherwise pageant will read this
+    f.write('\0' * (_AGENT_MAX_MSGLEN - len(msg)))
+    # Create the shared file map that pageant will use to read from
+    pymap = mmap.mmap(f.fileno(), _AGENT_MAX_MSGLEN, tagname=map_filename, access=mmap.ACCESS_WRITE)
     try:
-        map.write(msg)
+        # Create an array buffer containing the mapped filename
+        char_buffer = array.array("c", map_filename + '\0')
+        char_buffer_address, char_buffer_size = char_buffer.buffer_info()
+        # Create a string to use for the SendMessage function call
+        cds = struct.pack("LLP", _AGENT_COPYDATA_ID, char_buffer_size, char_buffer_address)
 
-        cds = _COPYDATASTRUCT(_AGENT_COPYDATA_ID, 1 + len(mapname), ctypes.c_char_p(mapname))
-
-        response = hwnd.SendMessage(win32con.WM_COPYDATA, None, ctypes.byref(cds))
+        response = hwnd.SendMessage(win32con_WM_COPYDATA, cds)
         if response > 0:
-            retlen = 4 + struct.unpack('i', map.read(4))
-            return map.read(retlen)
-
+            datalen = pymap.read(4)
+            retlen = struct.unpack('>I', datalen)[0]
+            return datalen + pymap.read(retlen)
         return None
     finally:
-        # This may be done automatically.
-        map.close()
+        pymap.close()
+        f.close()
+        # Remove the file, it was temporary only
+        os.unlink(filename)
 
 
 class PageantConnection (object):
