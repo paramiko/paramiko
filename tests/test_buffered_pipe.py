@@ -1,0 +1,71 @@
+# Copyright (C) 2006 Robey Pointer <robey@lag.net>
+#
+# This file is part of paramiko.
+#
+# Paramiko is free software; you can redistribute it and/or modify it under the
+# terms of the GNU Lesser General Public License as published by the Free
+# Software Foundation; either version 2.1 of the License, or (at your option)
+# any later version.
+#
+# Paramiko is distrubuted in the hope that it will be useful, but WITHOUT ANY
+# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
+# A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more
+# details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# along with Paramiko; if not, write to the Free Software Foundation, Inc.,
+# 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
+
+"""
+Some unit tests for BufferedPipe.
+"""
+
+import threading
+import time
+import unittest
+from paramiko.buffered_pipe import BufferedPipe, PipeTimeout
+
+
+def delay_thread(pipe):
+    pipe.feed('a')
+    time.sleep(0.5)
+    pipe.feed('b')
+    pipe.close()
+
+
+def close_thread(pipe):
+    time.sleep(0.2)
+    pipe.close()
+
+
+class BufferedPipeTest (unittest.TestCase):
+
+    def test_1_buffered_pipe(self):
+        p = BufferedPipe()
+        self.assert_(not p.read_ready())
+        p.feed('hello.')
+        self.assert_(p.read_ready())
+        data = p.read(6)
+        self.assertEquals('hello.', data)
+        p.close()
+        self.assert_(not p.read_ready())
+        self.assertEquals('', p.read(1))
+
+    def test_2_delay(self):
+        p = BufferedPipe()
+        self.assert_(not p.read_ready())
+        threading.Thread(target=delay_thread, args=(p,)).start()
+        self.assertEquals('a', p.read(1, 0.1))
+        try:
+            p.read(1, 0.1)
+            self.assert_(False)
+        except PipeTimeout:
+            pass
+        self.assertEquals('b', p.read(1, 0.5))
+        self.assertEquals('', p.read(1))
+
+    def test_3_close_while_reading(self):
+        p = BufferedPipe()
+        threading.Thread(target=close_thread, args=(p,)).start()
+        data = p.read(1, 1.0)
+        self.assertEquals('', data)
