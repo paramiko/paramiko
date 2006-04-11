@@ -47,6 +47,12 @@ class BufferedPipeTest (unittest.TestCase):
         self.assert_(p.read_ready())
         data = p.read(6)
         self.assertEquals('hello.', data)
+        
+        p.feed('plus/minus')
+        self.assertEquals('plu', p.read(3))
+        self.assertEquals('s/m', p.read(3))
+        self.assertEquals('inus', p.read(4))
+        
         p.close()
         self.assert_(not p.read_ready())
         self.assertEquals('', p.read(1))
