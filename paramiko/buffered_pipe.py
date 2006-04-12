@@ -154,6 +154,23 @@ class BufferedPipe (object):
 
         return out
     
+    def empty(self):
+        """
+        Clear out the buffer and return all data that was in it.
+        
+        @return: any data that was in the buffer prior to clearing it out
+        @rtype: str
+        """
+        self._lock.acquire()
+        try:
+            out = self._buffer.tostring()
+            del self._buffer[:]
+            if (self._event is not None) and not self._closed:
+                self._event.clear()
+            return out
+        finally:
+            self._lock.release()
+    
     def close(self):
         """
         Close this pipe object.  Future calls to L{read} after the buffer
