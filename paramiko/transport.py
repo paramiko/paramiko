@@ -287,7 +287,8 @@ class Transport (threading.Thread):
         self.auth_handler = None
         self.global_response = None     # response Message from an arbitrary global request
         self.completion_event = None    # user-defined event callbacks
-        
+        self.banner_timeout = 15        # how long (seconds) to wait for the SSH banner
+
         # server mode:
         self.server_mode = False
         self.server_object = None
@@ -1411,9 +1412,10 @@ class Transport (threading.Thread):
     def _check_banner(self):
         # this is slow, but we only have to do it once
         for i in range(5):
-            # give them 5 seconds for the first line, then just 2 seconds each additional line
+            # give them 15 seconds for the first line, then just 2 seconds
+            # each additional line.  (some sites have very high latency.)
             if i == 0:
-                timeout = 5
+                timeout = self.banner_timeout
             else:
                 timeout = 2
             try:
