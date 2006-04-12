@@ -373,7 +373,7 @@ class SFTPFile (BufferedFile):
         
         @param chunks: a list of (offset, length) tuples indicating which
             sections of the file to read
-        @ptype chunks: list(tuple(long, int))
+        @type chunks: list(tuple(long, int))
         @return: a list of blocks read, in the same order as in C{chunks}
         @rtype: list(str)
         
