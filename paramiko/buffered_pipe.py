@@ -118,8 +118,8 @@ class BufferedPipe (object):
         @return: data
         @rtype: str
         
-        @raise PipeTimeout: if a timeout was set via L{settimeout} and no
-            data was ready before that timeout
+        @raise PipeTimeout: if a timeout was specified and no data was ready
+            before that timeout
         """
         out = ''
         self._lock.acquire()
