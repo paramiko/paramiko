@@ -67,7 +67,7 @@ class BufferedPipeTest (unittest.TestCase):
             self.assert_(False)
         except PipeTimeout:
             pass
-        self.assertEquals('b', p.read(1, 0.5))
+        self.assertEquals('b', p.read(1, 1.0))
         self.assertEquals('', p.read(1))
 
     def test_3_close_while_reading(self):
