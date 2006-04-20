@@ -622,3 +622,20 @@ class SFTPTest (unittest.TestCase):
             self.fail('exception ' + e)
         sftp.unlink(FOLDER + '/\xc3\xbcnic\xc3\xb8\x64\x65')
 
+    def test_L_bad_readv(self):
+        """
+        verify that readv at the end of the file doesn't essplode.
+        """
+        f = sftp.open(FOLDER + '/zero', 'w')
+        f.close()
+        try:
+            f = sftp.open(FOLDER + '/zero', 'r')
+            data = f.readv([(0, 12)])
+            f.close()
+            
+            f = sftp.open(FOLDER + '/zero', 'r')
+            f.prefetch()
+            data = f.read(100)
+            f.close()
+        finally:
+            sftp.unlink(FOLDER + '/zero')
