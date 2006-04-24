@@ -66,6 +66,7 @@ __license__ = "GNU Lesser General Public License (LGPL)"
 
 
 from transport import randpool, SecurityOptions, Transport
+from client import SSHClient, MissingHostKeyPolicy, AutoAddPolicy, RejectPolicy
 from auth_handler import AuthHandler
 from channel import Channel, ChannelFile
 from ssh_exception import SSHException, PasswordRequiredException, BadAuthenticationType
@@ -87,12 +88,13 @@ from pkey import PKey
 from hostkeys import HostKeys
 
 # fix module names for epydoc
-for x in [Transport, SecurityOptions, Channel, SFTPServer, SSHException, \
-          PasswordRequiredException, BadAuthenticationType, ChannelFile, \
-          SubsystemHandler, AuthHandler, RSAKey, DSSKey, SFTPError, \
-          SFTP, SFTPClient, SFTPServer, Message, Packetizer, SFTPAttributes, \
-          SFTPHandle, SFTPServerInterface, BufferedFile, Agent, AgentKey, \
-          PKey, BaseSFTP, SFTPFile, ServerInterface, HostKeys]:
+for x in (Transport, SecurityOptions, Channel, SFTPServer, SSHException,
+          PasswordRequiredException, BadAuthenticationType, ChannelFile,
+          SubsystemHandler, AuthHandler, RSAKey, DSSKey, SFTPError,
+          SFTP, SFTPClient, SFTPServer, Message, Packetizer, SFTPAttributes,
+          SFTPHandle, SFTPServerInterface, BufferedFile, Agent, AgentKey,
+          PKey, BaseSFTP, SFTPFile, ServerInterface, HostKeys, SSHClient,
+          MissingHostKeyPolicy, AutoAddPolicy, RejectPolicy):
     x.__module__ = 'paramiko'
 
 from common import AUTH_SUCCESSFUL, AUTH_PARTIALLY_SUCCESSFUL, AUTH_FAILED, \
@@ -103,6 +105,10 @@ from sftp import SFTP_OK, SFTP_EOF, SFTP_NO_SUCH_FILE, SFTP_PERMISSION_DENIED, S
      SFTP_BAD_MESSAGE, SFTP_NO_CONNECTION, SFTP_CONNECTION_LOST, SFTP_OP_UNSUPPORTED
 
 __all__ = [ 'Transport',
+            'SSHClient',
+            'MissingHostKeyPolicy',
+            'AutoAddPolicy',
+            'RejectPolicy'
             'SecurityOptions',
             'SubsystemHandler',
             'Channel',
