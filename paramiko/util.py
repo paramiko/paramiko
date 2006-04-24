@@ -216,6 +216,8 @@ def parse_ssh_config(file_obj):
     @type file_obj: file
     @return: opaque configuration object
     @rtype: object
+    
+    @since: 1.5.2
     """
     ret = []
     config = { 'host': '*' }
@@ -271,6 +273,8 @@ def lookup_ssh_host_config(hostname, config):
     @type hostname: str
     @param config: the config object to search
     @type config: object
+    
+    @since: 1.5.2
     """
     matches = [x for x in config if fnmatch.fnmatch(hostname, x['host'])]
     # sort in order of shortest match (usually '*') to longest
