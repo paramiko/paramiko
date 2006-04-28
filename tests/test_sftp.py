@@ -301,7 +301,8 @@ class SFTPTest (unittest.TestCase):
             sftp.utime(FOLDER + '/special', (atime, mtime))
             stat = sftp.stat(FOLDER + '/special')
             self.assertEqual(stat.st_mtime, mtime)
-            self.assertEqual(stat.st_atime, atime)
+            if sys.platform != 'win32':
+                self.assertEqual(stat.st_atime, atime)
 
             # can't really test chown, since we'd have to know a valid uid.
             
@@ -338,7 +339,8 @@ class SFTPTest (unittest.TestCase):
             f.utime((atime, mtime))
             stat = f.stat()
             self.assertEqual(stat.st_mtime, mtime)
-            self.assertEqual(stat.st_atime, atime)
+            if sys.platform != 'win32':
+                self.assertEqual(stat.st_atime, atime)
             
             # can't really test chown, since we'd have to know a valid uid.
             
