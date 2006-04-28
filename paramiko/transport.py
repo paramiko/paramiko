@@ -1686,7 +1686,11 @@ class Transport (threading.Thread):
         kind = m.get_string()
         self._log(DEBUG, 'Received global request "%s"' % kind)
         want_reply = m.get_boolean()
-        ok = self.server_object.check_global_request(kind, m)
+        if not self.server_mode:
+            self._log(DEBUG, 'Rejecting "%s" channel request from server.' % kind)
+            ok = False
+        else:
+            ok = self.server_object.check_global_request(kind, m)
         extra = ()
         if type(ok) is tuple:
             extra = ok
