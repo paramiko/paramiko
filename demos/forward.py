@@ -60,6 +60,10 @@ class Handler (SocketServer.BaseRequestHandler):
                                                               self.chain_port,
                                                               repr(e)))
             return
+        if chan is None:
+            verbose('Incoming request to %s:%d was rejected by the SSH server.' %
+                    (self.chain_host, self.chain_port))
+            return
 
         verbose('Connected!  Tunnel open.')
         while True:
