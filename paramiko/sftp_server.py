@@ -92,7 +92,13 @@ class SFTPServer (BaseSFTP, SubsystemHandler):
                 return
             msg = Message(data)
             request_number = msg.get_int()
-            self._process(t, request_number, msg)
+            try:
+                self._process(t, request_number, msg)
+            except Exception, e:
+                self._log(DEBUG, 'Exception in server processing: ' + str(e))
+                self._log(DEBUG, util.tb_strings())
+                # send some kind of failure message, at least
+                self._send_status(request_number, SFTP_FAILURE)
 
     def finish_subsystem(self):
         self.server.session_ended()
