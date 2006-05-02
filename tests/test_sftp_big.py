@@ -232,7 +232,7 @@ class BigSFTPTest (unittest.TestCase):
                 for i in xrange(len(readv_list)):
                     offset = readv_list[i][0]
                     n_offset = offset % 1024
-                    self.assertEqual(ret[i], k2blob[n_offset:n_offset + chunk])
+                    self.assertEqual(ret.next(), k2blob[n_offset:n_offset + chunk])
                 f.close()
             end = time.time()
             sys.stderr.write('%ds ' % round(end - start))

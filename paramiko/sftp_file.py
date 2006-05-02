@@ -388,11 +388,9 @@ class SFTPFile (BufferedFile):
         ordered_chunks.sort(lambda x, y: cmp(x[0], y[0]))
         self._start_prefetch(ordered_chunks)
         # now we can just devolve to a bunch of read()s :)
-        out = []
         for x in chunks:
             self.seek(x[0])
-            out.append(self.read(x[1]))
-        return out
+            yield self.read(x[1])
     
 
     ###  internals...
