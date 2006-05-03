@@ -293,6 +293,9 @@ class SFTPTest (unittest.TestCase):
             if sys.platform == 'win32':
                 # chmod not really functional on windows
                 expected_mode = 0666
+            if sys.platform == 'cygwin':
+                # even worse.
+                expected_mode = 0644
             self.assertEqual(stat.st_mode & 0777, expected_mode)
             self.assertEqual(stat.st_size, 1024)
 
@@ -331,6 +334,9 @@ class SFTPTest (unittest.TestCase):
             if sys.platform == 'win32':
                 # chmod not really functional on windows
                 expected_mode = 0666
+            if sys.platform == 'cygwin':
+                # even worse.
+                expected_mode = 0644
             self.assertEqual(stat.st_mode & 0777, expected_mode)
             self.assertEqual(stat.st_size, 1024)
 
