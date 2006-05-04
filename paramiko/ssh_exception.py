@@ -67,3 +67,14 @@ class PartialAuthentication (SSHException):
     def __init__(self, types):
         SSHException.__init__(self, 'partial authentication')
         self.allowed_types = types
+
+
+class ChannelException (SSHException):
+    """
+    Exception raised when an attempt to open a new L{Channel} fails.
+    
+    @since: 1.6
+    """
+    def __init__(self, code, text):
+        SSHException.__init__(self, text)
+        self.code = code

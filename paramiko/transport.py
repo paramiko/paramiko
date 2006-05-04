@@ -43,7 +43,7 @@ from paramiko.primes import ModulusPack
 from paramiko.rsakey import RSAKey
 from paramiko.server import ServerInterface
 from paramiko.sftp_client import SFTPClient
-from paramiko.ssh_exception import SSHException, BadAuthenticationType
+from paramiko.ssh_exception import SSHException, BadAuthenticationType, ChannelException
 
 # these come from PyCrypt
 #     http://www.amk.ca/python/writing/pycrypt/
@@ -558,7 +558,7 @@ class Transport (threading.Thread):
 
         @raise SSHException: if no session is currently active.
         
-        @return: public key of the remote server.
+        @return: public key of the remote server
         @rtype: L{PKey <pkey.PKey>}
         """
         if (not self.active) or (not self.initial_kex_done):
@@ -570,7 +570,7 @@ class Transport (threading.Thread):
         Return true if this session is active (open).
 
         @return: True if the session is still active (open); False if the
-            session is closed.
+            session is closed
         @rtype: bool
         """
         return self.active
@@ -580,9 +580,11 @@ class Transport (threading.Thread):
         Request a new channel to the server, of type C{"session"}.  This
         is just an alias for C{open_channel('session')}.
 
-        @return: a new L{Channel} on success, or C{None} if the request is
-            rejected or the session ends prematurely.
+        @return: a new L{Channel}
         @rtype: L{Channel}
+        
+        @raise SSHException: if the request is rejected or the session ends
+            prematurely
         """
         return self.open_channel('session')
 
@@ -594,18 +596,20 @@ class Transport (threading.Thread):
         L{connect} or L{start_client}) and authenticating.
 
         @param kind: the kind of channel requested (usually C{"session"},
-            C{"forwarded-tcpip"} or C{"direct-tcpip"}).
+            C{"forwarded-tcpip"} or C{"direct-tcpip"})
         @type kind: str
         @param dest_addr: the destination address of this port forwarding,
             if C{kind} is C{"forwarded-tcpip"} or C{"direct-tcpip"} (ignored
-            for other channel types).
+            for other channel types)
         @type dest_addr: (str, int)
         @param src_addr: the source address of this port forwarding, if
-            C{kind} is C{"forwarded-tcpip"} or C{"direct-tcpip"}.
+            C{kind} is C{"forwarded-tcpip"} or C{"direct-tcpip"}
         @type src_addr: (str, int)
-        @return: a new L{Channel} on success, or C{None} if the request is
-            rejected or the session ends prematurely.
+        @return: a new L{Channel} on success
         @rtype: L{Channel}
+
+        @raise SSHException: if the request is rejected or the session ends
+            prematurely
         """
         chan = None
         if not self.active:
@@ -637,19 +641,25 @@ class Transport (threading.Thread):
         finally:
             self.lock.release()
         self._send_user_message(m)
-        while 1:
+        while True:
             event.wait(0.1);
             if not self.active:
-                return None
+                e = self.get_exception()
+                if e is None:
+                    e = SSHException('Unable to open channel.')
+                raise e
             if event.isSet():
                 break
+        self.lock.acquire()
         try:
-            self.lock.acquire()
-            if not self.channels.has_key(chanid):
-                chan = None
+            if self.channels.has_key(chanid):
+                return chan
         finally:
             self.lock.release()
-        return chan
+        e = self.get_exception()
+        if e is None:
+            e = SSHException('Unable to open channel.')
+        raise e
 
     def open_sftp_client(self):
         """
@@ -689,22 +699,23 @@ class Transport (threading.Thread):
         bytes sent or received, but this method gives you the option of forcing
         new keys whenever you want.  Negotiating new keys causes a pause in
         traffic both ways as the two sides swap keys and do computations.  This
-        method returns when the session has switched to new keys, or the
-        session has died mid-negotiation.
+        method returns when the session has switched to new keys.
 
-        @return: True if the renegotiation was successful, and the link is
-            using new keys; False if the session dropped during renegotiation.
-        @rtype: bool
+        @raise SSHException: if the key renegotiation failed (which causes the
+            session to end)
         """
         self.completion_event = threading.Event()
         self._send_kex_init()
-        while 1:
-            self.completion_event.wait(0.1);
+        while True:
+            self.completion_event.wait(0.1)
             if not self.active:
-                return False
+                e = self.get_exception()
+                if e is not None:
+                    raise e
+                raise SSHException('Negotiation failed.')
             if self.completion_event.isSet():
                 break
-        return True
+        return
 
     def set_keepalive(self, interval):
         """
@@ -1017,7 +1028,7 @@ class Transport (threading.Thread):
             except SSHException, ignored:
                 # attempt failed; just raise the original exception
                 raise x
-                return None
+        return None
 
     def auth_publickey(self, username, key, event=None):
         """
@@ -1741,14 +1752,12 @@ class Transport (threading.Thread):
         reason = m.get_int()
         reason_str = m.get_string()
         lang = m.get_string()
-        if CONNECTION_FAILED_CODE.has_key(reason):
-            reason_text = CONNECTION_FAILED_CODE[reason]
-        else:
-            reason_text = '(unknown code)'
+        reason_text = CONNECTION_FAILED_CODE.get(reason, '(unknown code)')
         self._log(INFO, 'Secsh channel %d open FAILED: %s: %s' % (chanid, reason_str, reason_text))
+        self.lock.acquire()
         try:
-            self.lock.aquire()
-            if self.channels.has_key(chanid):
+            self.saved_exception = ChannelException(reason, reason_text)
+            if self.channel_events.has_key(chanid):
                 del self.channels[chanid]
                 if self.channel_events.has_key(chanid):
                     self.channel_events[chanid].set()

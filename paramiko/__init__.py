@@ -69,7 +69,7 @@ from transport import randpool, SecurityOptions, Transport
 from client import SSHClient, MissingHostKeyPolicy, AutoAddPolicy, RejectPolicy
 from auth_handler import AuthHandler
 from channel import Channel, ChannelFile
-from ssh_exception import SSHException, PasswordRequiredException, BadAuthenticationType
+from ssh_exception import SSHException, PasswordRequiredException, BadAuthenticationType, ChannelException
 from server import ServerInterface, SubsystemHandler, InteractiveQuery
 from rsakey import RSAKey
 from dsskey import DSSKey
@@ -94,7 +94,7 @@ for x in (Transport, SecurityOptions, Channel, SFTPServer, SSHException,
           SFTP, SFTPClient, SFTPServer, Message, Packetizer, SFTPAttributes,
           SFTPHandle, SFTPServerInterface, BufferedFile, Agent, AgentKey,
           PKey, BaseSFTP, SFTPFile, ServerInterface, HostKeys, SSHClient,
-          MissingHostKeyPolicy, AutoAddPolicy, RejectPolicy):
+          MissingHostKeyPolicy, AutoAddPolicy, RejectPolicy, ChannelException):
     x.__module__ = 'paramiko'
 
 from common import AUTH_SUCCESSFUL, AUTH_PARTIALLY_SUCCESSFUL, AUTH_FAILED, \
@@ -119,6 +119,7 @@ __all__ = [ 'Transport',
             'SSHException',
             'PasswordRequiredException',
             'BadAuthenticationType',
+            'ChannelException',
             'SFTP',
             'SFTPFile',
             'SFTPHandle',
