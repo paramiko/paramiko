@@ -353,10 +353,14 @@ class TransportTest (unittest.TestCase):
 
         chan = self.tc.open_session()
         schan = self.ts.accept(1.0)
-        self.assert_(not chan.exec_command('no'))
+        try:
+            chan.exec_command('no')
+            self.assert_(False)
+        except SSHException, x:
+            pass
         
         chan = self.tc.open_session()
-        self.assert_(chan.exec_command('yes'))
+        chan.exec_command('yes')
         schan = self.ts.accept(1.0)
         schan.send('Hello there.\n')
         schan.send_stderr('This is on stderr.\n')
@@ -371,7 +375,7 @@ class TransportTest (unittest.TestCase):
         
         # now try it with combined stdout/stderr
         chan = self.tc.open_session()
-        self.assert_(chan.exec_command('yes'))
+        chan.exec_command('yes')
         schan = self.ts.accept(1.0)
         schan.send('Hello there.\n')
         schan.send_stderr('This is on stderr.\n')
@@ -402,7 +406,7 @@ class TransportTest (unittest.TestCase):
         self.assert_(self.ts.is_active())
 
         chan = self.tc.open_session()
-        self.assert_(chan.invoke_shell())
+        chan.invoke_shell()
         schan = self.ts.accept(1.0)
         chan.send('communist j. cat\n')
         f = schan.makefile()
@@ -454,7 +458,7 @@ class TransportTest (unittest.TestCase):
 
         chan = self.tc.open_session()
         schan = self.ts.accept(1.0)
-        self.assert_(chan.exec_command('yes'))
+        chan.exec_command('yes')
         schan.send('Hello there.\n')
         # trigger an EOF
         schan.shutdown_read()
@@ -487,7 +491,7 @@ class TransportTest (unittest.TestCase):
         self.assert_(self.ts.is_active())
 
         chan = self.tc.open_session()
-        self.assert_(chan.invoke_shell())
+        chan.invoke_shell()
         schan = self.ts.accept(1.0)
 
         # nothing should be ready        
@@ -550,7 +554,7 @@ class TransportTest (unittest.TestCase):
         self.tc.packetizer.REKEY_BYTES = 16384
         
         chan = self.tc.open_session()
-        self.assert_(chan.exec_command('yes'))
+        chan.exec_command('yes')
         schan = self.ts.accept(1.0)
 
         self.assertEquals(self.tc.H, self.tc.session_id)
@@ -586,7 +590,7 @@ class TransportTest (unittest.TestCase):
         self.assert_(self.ts.is_active())
 
         chan = self.tc.open_session()
-        self.assert_(chan.exec_command('yes'))
+        chan.exec_command('yes')
         schan = self.ts.accept(1.0)
 
         bytes = self.tc.packetizer._Packetizer__sent_bytes

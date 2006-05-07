@@ -129,8 +129,9 @@ class Channel (object):
         @type width: int
         @param height: height (in characters) of the terminal screen
         @type height: int
-        @return: C{True} if the operation succeeded; C{False} if not.
-        @rtype: bool
+        
+        @raise SSHException: if the request was rejected or the channel was
+            closed
         """
         if self.closed or self.eof_received or self.eof_sent or not self.active:
             raise SSHException('Channel is not open')
@@ -147,7 +148,7 @@ class Channel (object):
         m.add_string('')
         self.event.clear()
         self.transport._send_user_message(m)
-        return self._wait_for_event()
+        self._wait_for_event()
 
     def invoke_shell(self):
         """
@@ -162,8 +163,8 @@ class Channel (object):
         When the shell exits, the channel will be closed and can't be reused.
         You must open a new channel if you wish to open another shell.
         
-        @return: C{True} if the operation succeeded; C{False} if not.
-        @rtype: bool
+        @raise SSHException: if the request was rejected or the channel was
+            closed
         """
         if self.closed or self.eof_received or self.eof_sent or not self.active:
             raise SSHException('Channel is not open')
@@ -174,7 +175,7 @@ class Channel (object):
         m.add_boolean(1)
         self.event.clear()
         self.transport._send_user_message(m)
-        return self._wait_for_event()
+        self._wait_for_event()
 
     def exec_command(self, command):
         """
@@ -188,8 +189,9 @@ class Channel (object):
 
         @param command: a shell command to execute.
         @type command: str
-        @return: C{True} if the operation succeeded; C{False} if not.
-        @rtype: bool
+
+        @raise SSHException: if the request was rejected or the channel was
+            closed
         """
         if self.closed or self.eof_received or self.eof_sent or not self.active:
             raise SSHException('Channel is not open')
@@ -201,7 +203,7 @@ class Channel (object):
         m.add_string(command)
         self.event.clear()
         self.transport._send_user_message(m)
-        return self._wait_for_event()
+        self._wait_for_event()
 
     def invoke_subsystem(self, subsystem):
         """
@@ -214,8 +216,9 @@ class Channel (object):
 
         @param subsystem: name of the subsystem being requested.
         @type subsystem: str
-        @return: C{True} if the operation succeeded; C{False} if not.
-        @rtype: bool
+
+        @raise SSHException: if the request was rejected or the channel was
+            closed
         """
         if self.closed or self.eof_received or self.eof_sent or not self.active:
             raise SSHException('Channel is not open')
@@ -227,7 +230,7 @@ class Channel (object):
         m.add_string(subsystem)
         self.event.clear()
         self.transport._send_user_message(m)
-        return self._wait_for_event()
+        self._wait_for_event()
 
     def resize_pty(self, width=80, height=24):
         """
@@ -238,8 +241,9 @@ class Channel (object):
         @type width: int
         @param height: new height (in characters) of the terminal screen
         @type height: int
-        @return: C{True} if the operation succeeded; C{False} if not.
-        @rtype: bool
+
+        @raise SSHException: if the request was rejected or the channel was
+            closed
         """
         if self.closed or self.eof_received or self.eof_sent or not self.active:
             raise SSHException('Channel is not open')
@@ -946,10 +950,13 @@ class Channel (object):
         while True:
             self.event.wait(0.1)
             if self.event.isSet():
-                break
+                return
             if self.closed:
-                return False
-        return True
+                e = self.transport.get_exception()
+                if e is None:
+                    e = SSHException('Channel closed.')
+                raise e
+        return
 
     def _set_closed(self):
         # you are holding the lock.

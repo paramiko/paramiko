@@ -93,8 +93,7 @@ class SFTPClient (BaseSFTP):
         chan = t.open_session()
         if chan is None:
             return None
-        if not chan.invoke_subsystem('sftp'):
-            raise SFTPError('Failed to invoke sftp subsystem')
+        chan.invoke_subsystem('sftp')
         return cls(chan)
     from_transport = classmethod(from_transport)
 
