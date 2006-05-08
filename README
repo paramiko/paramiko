@@ -269,10 +269,8 @@ v1.0 JIGGLYPUFF
 * [sigh] release a fork of pycrypto with the speed improvements
 
 --- BEFORE 1.6: ---
-* is it possible to poll on a set of events at once?
-* SSHClient needs unit tests
-* ChannelException like the java version has
 * pull out util.parse_* (2 funcs) into a separate class
+* try making bzr use SSHClient
 
 * host-based auth (yuck!)
 * ctr forms of ciphers are missing (blowfish-ctr, aes128-ctr, aes256-ctr)
@@ -280,3 +278,5 @@ v1.0 JIGGLYPUFF
 * make a simple example demonstrating use of SocketServer (besides forward.py?)
 * should SSHClient try to use openssh config files?
 * figure out how to parse ssh.com encrypted key files?
+
+* is it possible to poll on a set of events at once?
