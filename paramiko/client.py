@@ -61,10 +61,7 @@ class AutoAddPolicy (MissingHostKeyPolicy):
     """
     
     def missing_host_key(self, client, hostname, key):
-        if not client._host_keys.has_key(hostname):
-            client._host_keys[hostname] = {}
-        client._host_keys[hostname][key.get_name()] = key
-        our_server_key = server_key
+        client._host_keys.add(hostname, key.get_name(), key)
         if client._host_keys_filename is not None:
             client.save_host_keys(client._host_keys_filename)
         client._log(DEBUG, 'Adding %s host key for %s: %s' %
@@ -97,6 +94,8 @@ class SSHClient (object):
     You may pass in explicit overrides for authentication and server host key
     checking.  The default mechanism is to try to use local key files or an
     SSH agent (if one is running).
+    
+    @since: 1.6
     """
 
     def __init__(self):
@@ -177,7 +176,24 @@ class SSHClient (object):
                 f.write('%s %s %s\n' % (hostname, keytype, key.get_base64()))
         f.close()
     
+    def get_host_keys(self):
+        """
+        Get the local L{HostKeys} object.  This can be used to examine the
+        local host keys or change them.
+        
+        @return: the local host keys
+        @rtype: L{HostKeys}
+        """
+        return self._host_keys
+    
     def set_log_channel(self, channel):
+        """
+        Set the channel for logging.  The default is C{"paramiko.transport"}
+        but it can be set to anything you want.
+
+        @param name: new channel name for logging
+        @type name: str
+        """
         self._log_channel = channel
         
     def set_missing_host_key_policy(self, policy):
@@ -232,7 +248,7 @@ class SSHClient (object):
         @raise SSHException: if there was an error authenticating or verifying
             the server's host key
         """
-        t = Transport((hostname, port))
+        t = self._transport = Transport((hostname, port))
         if self._log_channel is not None:
             t.set_log_channel(self._log_channel)
         t.start_client()
@@ -247,6 +263,8 @@ class SSHClient (object):
         if our_server_key is None:
             # will raise exception if the key is rejected; let that fall out
             self._policy.missing_host_key(self, hostname, server_key)
+            # if this continues, assume the key is ok
+            our_server_key = server_key
 
         our_server_key_hex = hexify(our_server_key.get_fingerprint())
         
@@ -254,7 +272,6 @@ class SSHClient (object):
             raise SSHException('Host key for server %s does not match!  (%s != %s)' %
                                (hostname, our_server_key_kex, server_key_hex))
 
-        self._transport = t
         if username is None:
             username = getpass.getuser()
         self._auth(username, password, pkey, key_filename)
@@ -281,20 +298,42 @@ class SSHClient (object):
         @raise SSHException: if the server fails to execute the command
         """
         chan = self._transport.open_session()
-        if not chan.exec_command(command):
-            raise SSHException('Command execution failed.')
+        chan.exec_command(command)
         stdin = chan.makefile('wb')
         stdout = chan.makefile('rb')
         stderr = chan.makefile_stderr('rb')
         return stdin, stdout, stderr
 
-    def invoke_shell(self):
-        pass
-        #FIXME
+    def invoke_shell(self, term='vt100', width=80, height=24):
+        """
+        Start an interactive shell session on the SSH server.  A new L{Channel}
+        is opened and connected to a pseudo-terminal using the requested
+        terminal type and size.
+        
+        @param term: the terminal type to emulate (for example, C{"vt100"})
+        @type term: str
+        @param width: the width (in characters) of the terminal window
+        @type width: int
+        @param height: the height (in characters) of the terminal window
+        @type height: int
+        @return: a new channel connected to the remote shell
+        @rtype: L{Channel}
+        
+        @raise SSHException: if the server fails to invoke a shell
+        """
+        chan = self._transport.open_session()
+        chan.get_pty(term, width, height)
+        chan.invoke_shell()
+        return chan
         
     def open_sftp(self):
-        pass
-        # FIXME
+        """
+        Open an SFTP session on the SSH server.
+        
+        @return: a new SFTP session object
+        @rtype: L{SFTPClient}
+        """
+        return self._transport.open_sftp_client()
         
     def _auth(self, username, password, pkey, key_filename):
         """
@@ -318,7 +357,7 @@ class SSHClient (object):
                 saved_exception = e
 
         if key_filename is not None:
-            for pkey_class in (paramiko.RSAKey, paramiko.DSSKey):
+            for pkey_class in (RSAKey, DSSKey):
                 try:
                     key = pkey_class.from_private_key_file(key_filename, password)
                     self._log(DEBUG, 'Trying key %s from %s' % (hexify(key.get_fingerprint()), key_filename))
@@ -335,8 +374,8 @@ class SSHClient (object):
             except SSHException, e:
                 saved_exception = e
 
-        for pkey_class, filename in ((paramiko.RSAKey, 'id_rsa'),
-                                     (paramiko.DSSKey, 'id_dsa')):
+        for pkey_class, filename in ((RSAKey, 'id_rsa'),
+                                     (DSSKey, 'id_dsa')):
             filename = os.path.expanduser('~/.ssh/' + filename)
             try:
                 key = pkey_class.from_private_key_file(filename, password)
@@ -345,10 +384,12 @@ class SSHClient (object):
                 return
             except SSHException, e:
                 saved_exception = e
+            except IOError, e:
+                saved_exception = e
         
         if password is not None:
             try:
-                transport.auth_password(username, password)
+                self._transport.auth_password(username, password)
                 return
             except SSHException, e:
                 saved_exception = e

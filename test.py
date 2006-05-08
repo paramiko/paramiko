@@ -39,6 +39,7 @@ from test_packetizer import PacketizerTest
 from test_transport import TransportTest
 from test_sftp import SFTPTest
 from test_sftp_big import BigSFTPTest
+from test_client import SSHClientTest
 
 default_host = 'localhost'
 default_user = os.environ.get('USER', 'nobody')
@@ -100,6 +101,7 @@ suite.addTest(unittest.makeSuite(KexTest))
 suite.addTest(unittest.makeSuite(PacketizerTest))
 if options.use_transport:
     suite.addTest(unittest.makeSuite(TransportTest))
+suite.addTest(unittest.makeSuite(SSHClientTest))
 if options.use_sftp:
     suite.addTest(unittest.makeSuite(SFTPTest))
 if options.use_big_file:
