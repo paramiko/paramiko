@@ -66,10 +66,11 @@ class UtilTest (unittest.TestCase):
         global test_config_file
         f = cStringIO.StringIO(test_config_file)
         config = paramiko.util.parse_ssh_config(f)
-        self.assertEquals(config, [ {'identityfile': '~/.ssh/id_rsa', 'host': '*', 'user': 'robey',
-                                     'crazy': 'something dumb  '},
-                                    {'host': '*.example.com', 'user': 'bjork', 'port': '3333'},
-                                    {'host': 'spoo.example.com', 'crazy': 'something else'}])
+        self.assertEquals(config._config,
+                          [ {'identityfile': '~/.ssh/id_rsa', 'host': '*', 'user': 'robey',
+                             'crazy': 'something dumb  '},
+                            {'host': '*.example.com', 'user': 'bjork', 'port': '3333'},
+                            {'host': 'spoo.example.com', 'crazy': 'something else'}])
 
     def test_2_host_config(self):
         global test_config_file

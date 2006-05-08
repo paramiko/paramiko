@@ -86,6 +86,7 @@ from file import BufferedFile
 from agent import Agent, AgentKey
 from pkey import PKey
 from hostkeys import HostKeys
+from config import SSHConfig
 
 # fix module names for epydoc
 for x in (Transport, SecurityOptions, Channel, SFTPServer, SSHException,
@@ -94,7 +95,8 @@ for x in (Transport, SecurityOptions, Channel, SFTPServer, SSHException,
           SFTP, SFTPClient, SFTPServer, Message, Packetizer, SFTPAttributes,
           SFTPHandle, SFTPServerInterface, BufferedFile, Agent, AgentKey,
           PKey, BaseSFTP, SFTPFile, ServerInterface, HostKeys, SSHClient,
-          MissingHostKeyPolicy, AutoAddPolicy, RejectPolicy, ChannelException):
+          MissingHostKeyPolicy, AutoAddPolicy, RejectPolicy, ChannelException,
+          SSHConfig):
     x.__module__ = 'paramiko'
 
 from common import AUTH_SUCCESSFUL, AUTH_PARTIALLY_SUCCESSFUL, AUTH_FAILED, \
@@ -133,4 +135,5 @@ __all__ = [ 'Transport',
             'Agent',
             'AgentKey',
             'HostKeys',
+            'SSHConfig',
             'util' ]

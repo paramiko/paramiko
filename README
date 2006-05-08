@@ -269,7 +269,6 @@ v1.0 JIGGLYPUFF
 * [sigh] release a fork of pycrypto with the speed improvements
 
 --- BEFORE 1.6: ---
-* pull out util.parse_* (2 funcs) into a separate class
 * try making bzr use SSHClient
 
 * host-based auth (yuck!)
