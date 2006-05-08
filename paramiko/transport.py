@@ -1138,7 +1138,7 @@ class Transport (threading.Thread):
         (See the C{logging} module for more info.)  SSH Channels will log
         to a sub-channel of the one specified.
 
-        @param name: new channel name for logging.
+        @param name: new channel name for logging
         @type name: str
 
         @since: 1.1

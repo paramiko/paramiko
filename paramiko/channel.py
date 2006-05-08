@@ -123,7 +123,7 @@ class Channel (object):
         It isn't necessary (or desirable) to call this method if you're going
         to exectue a single command with L{exec_command}.
 
-        @param term: the terminal type to emulate (for example, C{'vt100'}).
+        @param term: the terminal type to emulate (for example, C{'vt100'})
         @type term: str
         @param width: width (in characters) of the terminal screen
         @type width: int
