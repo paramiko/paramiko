@@ -258,7 +258,7 @@ class TransportTest (unittest.TestCase):
             self.assert_(False)
         except:
             etype, evalue, etb = sys.exc_info()
-            self.assertEquals(SSHException, etype)
+            self.assert_(issubclass(etype, SSHException))
         self.tc.auth_password(username='slowdive', password='pygmalion')
         event.wait(1.0)
         self.assert_(event.isSet())

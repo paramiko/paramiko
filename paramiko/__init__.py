@@ -60,8 +60,8 @@ if sys.version_info < (2, 2):
 
 __author__ = "Robey Pointer <robey@lag.net>"
 __date__ = "11 Mar 2005"
-__version__ = "1.5.4 (tentacool)"
-__version_info__ = (1, 5, 4)
+__version__ = "1.6 (u?)"
+__version_info__ = (1, 6, 0)
 __license__ = "GNU Lesser General Public License (LGPL)"
 
 
@@ -69,7 +69,9 @@ from transport import randpool, SecurityOptions, Transport
 from client import SSHClient, MissingHostKeyPolicy, AutoAddPolicy, RejectPolicy
 from auth_handler import AuthHandler
 from channel import Channel, ChannelFile
-from ssh_exception import SSHException, PasswordRequiredException, BadAuthenticationType, ChannelException
+from ssh_exception import SSHException, PasswordRequiredException, \
+    BadAuthenticationType, ChannelException, BadHostKeyException, \
+    AuthenticationException
 from server import ServerInterface, SubsystemHandler, InteractiveQuery
 from rsakey import RSAKey
 from dsskey import DSSKey
@@ -96,7 +98,7 @@ for x in (Transport, SecurityOptions, Channel, SFTPServer, SSHException,
           SFTPHandle, SFTPServerInterface, BufferedFile, Agent, AgentKey,
           PKey, BaseSFTP, SFTPFile, ServerInterface, HostKeys, SSHClient,
           MissingHostKeyPolicy, AutoAddPolicy, RejectPolicy, ChannelException,
-          SSHConfig):
+          SSHConfig, BadHostKeyException, AuthenticationException):
     x.__module__ = 'paramiko'
 
 from common import AUTH_SUCCESSFUL, AUTH_PARTIALLY_SUCCESSFUL, AUTH_FAILED, \
@@ -119,9 +121,11 @@ __all__ = [ 'Transport',
             'Agent',
             'Message',
             'SSHException',
+            'AuthenticationException',
             'PasswordRequiredException',
             'BadAuthenticationType',
             'ChannelException',
+            'BadHostKeyException',
             'SFTP',
             'SFTPFile',
             'SFTPHandle',

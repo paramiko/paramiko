@@ -992,8 +992,9 @@ class Transport (threading.Thread):
         
         @raise BadAuthenticationType: if password authentication isn't
             allowed by the server for this user (and no event was passed in)
-        @raise SSHException: if the authentication failed (and no event was
-            passed in)
+        @raise AuthenticationException: if the authentication failed (and no
+            event was passed in)
+        @raise SSHException: if there was a network error
         """
         if (not self.active) or (not self.initial_kex_done):
             # we should never try to send the password unless we're on a secure link
@@ -1056,13 +1057,14 @@ class Transport (threading.Thread):
             complete (whether it was successful or not)
         @type event: threading.Event
         @return: list of auth types permissible for the next stage of
-            authentication (normally empty).
+            authentication (normally empty)
         @rtype: list
         
         @raise BadAuthenticationType: if public-key authentication isn't
-            allowed by the server for this user (and no event was passed in).
-        @raise SSHException: if the authentication failed (and no event was
-            passed in).
+            allowed by the server for this user (and no event was passed in)
+        @raise AuthenticationException: if the authentication failed (and no
+            event was passed in)
+        @raise SSHException: if there was a network error
         """
         if (not self.active) or (not self.initial_kex_done):
             # we should never try to authenticate unless we're on a secure link
@@ -1119,7 +1121,8 @@ class Transport (threading.Thread):
         
         @raise BadAuthenticationType: if public-key authentication isn't
             allowed by the server for this user
-        @raise SSHException: if the authentication failed
+        @raise AuthenticationException: if the authentication failed
+        @raise SSHException: if there was a network error
         
         @since: 1.5
         """

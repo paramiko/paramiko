@@ -186,7 +186,7 @@ class SSHClient (object):
         """
         return self._host_keys
     
-    def set_log_channel(self, channel):
+    def set_log_channel(self, name):
         """
         Set the channel for logging.  The default is C{"paramiko.transport"}
         but it can be set to anything you want.
@@ -194,7 +194,7 @@ class SSHClient (object):
         @param name: new channel name for logging
         @type name: str
         """
-        self._log_channel = channel
+        self._log_channel = name
         
     def set_missing_host_key_policy(self, policy):
         """
@@ -245,8 +245,11 @@ class SSHClient (object):
             for authentication
         @type key_filename: str
         
-        @raise SSHException: if there was an error authenticating or verifying
-            the server's host key
+        @raise BadHostKeyException: if the server's host key could not be
+            verified
+        @raise AuthenticationException: if authentication failed
+        @raise SSHException: if there was any other error connecting or
+            establishing an SSH session
         """
         t = self._transport = Transport((hostname, port))
         if self._log_channel is not None:
@@ -254,7 +257,6 @@ class SSHClient (object):
         t.start_client()
         
         server_key = t.get_remote_server_key()
-        server_key_hex = hexify(server_key.get_fingerprint())
         keytype = server_key.get_name()
         
         our_server_key = self._system_host_keys.get(hostname, {}).get(keytype, None)
@@ -263,14 +265,11 @@ class SSHClient (object):
         if our_server_key is None:
             # will raise exception if the key is rejected; let that fall out
             self._policy.missing_host_key(self, hostname, server_key)
-            # if this continues, assume the key is ok
+            # if the callback returns, assume the key is ok
             our_server_key = server_key
-
-        our_server_key_hex = hexify(our_server_key.get_fingerprint())
         
         if server_key != our_server_key:
-            raise SSHException('Host key for server %s does not match!  (%s != %s)' %
-                               (hostname, our_server_key_kex, server_key_hex))
+            raise BadHostKeyException(hostname, server_key, our_server_key)
 
         if username is None:
             username = getpass.getuser()

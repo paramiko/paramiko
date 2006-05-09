@@ -29,7 +29,8 @@ import encodings.utf_8
 from paramiko.common import *
 from paramiko import util
 from paramiko.message import Message
-from paramiko.ssh_exception import SSHException, BadAuthenticationType, PartialAuthentication
+from paramiko.ssh_exception import SSHException, AuthenticationException, \
+    BadAuthenticationType, PartialAuthentication
 from paramiko.server import InteractiveQuery
 
 
@@ -158,14 +159,14 @@ class AuthHandler (object):
             if not self.transport.is_active():
                 e = self.transport.get_exception()
                 if e is None:
-                    e = SSHException('Authentication failed.')
+                    e = AuthenticationException('Authentication failed.')
                 raise e
             if event.isSet():
                 break
         if not self.is_authenticated():
             e = self.transport.get_exception()
             if e is None:
-                e = SSHException('Authentication failed.')
+                e = AuthenticationException('Authentication failed.')
             # this is horrible.  python Exception isn't yet descended from
             # object, so type(e) won't work. :(
             if issubclass(e.__class__, PartialAuthentication):
@@ -409,5 +410,4 @@ class AuthHandler (object):
         MSG_USERAUTH_INFO_REQUEST: _parse_userauth_info_request,
         MSG_USERAUTH_INFO_RESPONSE: _parse_userauth_info_response,
     }
-
 

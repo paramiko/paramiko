@@ -28,14 +28,25 @@ class SSHException (Exception):
     pass
 
 
-class PasswordRequiredException (SSHException):
+class AuthenticationException (SSHException):
+    """
+    Exception raised when authentication failed for some reason.  It may be
+    possible to retry with different credentials.  (Other classes specify more
+    specific reasons.)
+    
+    @since: 1.6
+    """
+    pass
+    
+
+class PasswordRequiredException (AuthenticationException):
     """
     Exception raised when a password is needed to unlock a private key file.
     """
     pass
 
 
-class BadAuthenticationType (SSHException):
+class BadAuthenticationType (AuthenticationException):
     """
     Exception raised when an authentication type (like password) is used, but
     the server isn't allowing that type.  (It may only allow public-key, for
@@ -58,7 +69,7 @@ class BadAuthenticationType (SSHException):
         return SSHException.__str__(self) + ' (allowed_types=%r)' % self.allowed_types
 
 
-class PartialAuthentication (SSHException):
+class PartialAuthentication (AuthenticationException):
     """
     An internal exception thrown in the case of partial authentication.
     """
@@ -73,8 +84,32 @@ class ChannelException (SSHException):
     """
     Exception raised when an attempt to open a new L{Channel} fails.
     
+    @ivar code: the error code returned by the server
+    @type code: int
+    
     @since: 1.6
     """
     def __init__(self, code, text):
         SSHException.__init__(self, text)
         self.code = code
+
+
+class BadHostKeyException (SSHException):
+    """
+    The host key given by the SSH server did not match what we were expecting.
+    
+    @ivar hostname: the hostname of the SSH server
+    @type hostname: str
+    @ivar key: the host key presented by the server
+    @type key: L{PKey}
+    @ivar expected_key: the host key expected
+    @type expected_key: L{PKey}
+    
+    @since: 1.6
+    """
+    def __init__(self, hostname, got_key, expected_key):
+        SSHException.__init__(self, 'Host key for server %s does not match!' % hostname)
+        self.hostname = hostname
+        self.key = got_key
+        self.expected_key = expected_key
+
