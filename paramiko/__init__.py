@@ -26,8 +26,9 @@ replaced C{telnet} and C{rsh} for secure access to remote shells, but the
 protocol also includes the ability to open arbitrary channels to remote
 services across an encrypted tunnel.  (This is how C{sftp} works, for example.)
 
-To use this package, pass a socket (or socket-like object) to a L{Transport},
-and use L{start_server <Transport.start_server>} or
+The high-level client API starts with creation of an L{SSHClient} object.
+For more direct control, pass a socket (or socket-like object) to a
+L{Transport}, and use L{start_server <Transport.start_server>} or
 L{start_client <Transport.start_client>} to negoatite
 with the remote host as either a server or client.  As a client, you are
 responsible for authenticating using a password or private key, and checking
@@ -46,7 +47,7 @@ released under the GNU Lesser General Public License (LGPL).
 
 Website: U{http://www.lag.net/paramiko/}
 
-@version: 1.5.4 (tentacool)
+@version: 1.6 (umbreon)
 @author: Robey Pointer
 @contact: robey@lag.net
 @license: GNU Lesser General Public License (LGPL)
@@ -59,8 +60,8 @@ if sys.version_info < (2, 2):
 
 
 __author__ = "Robey Pointer <robey@lag.net>"
-__date__ = "11 Mar 2005"
-__version__ = "1.6 (u?)"
+__date__ = "10 May 2006"
+__version__ = "1.6 (umbreon)"
 __version_info__ = (1, 6, 0)
 __license__ = "GNU Lesser General Public License (LGPL)"
 

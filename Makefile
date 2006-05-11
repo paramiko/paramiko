@@ -19,6 +19,8 @@
 # rhydon (04dec05) - 1.5.2
 # squirtle (19feb06) - 1.5.3
 # tentacool (11mar06) - 1.5.4
+# umbreon (10may06) - 1.6
+
 
 release:
 	python ./setup.py sdist --formats=zip

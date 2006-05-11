@@ -1,5 +1,5 @@
-paramiko 1.5.4
-"tentacool" release, 11 mar 2006
+paramiko 1.6
+"umbreon" release, 10 may 2006
 
 Copyright (c) 2003-2006 Robey Pointer <robey@lag.net>
 
@@ -83,21 +83,20 @@ probably the simplest demo of all is this:
 
     import paramiko, base64
     key = paramiko.RSAKey(data=base64.decodestring('AAA...'))
-    t = paramiko.Transport('ssh.example.com')
-    t.connect(username='strongbad', password='thecheat', hostkey=key)
-    chan = t.open_session()
-    chan.exec_command('ls')
-    for line in chan.makefile('r+'):
+    client = paramiko.SSHClient()
+    client.get_host_keys().add('ssh.example.com', 'ssh-rsa', key)
+    client.connect('ssh.example.com', username='strongbad', password='thecheat')
+    stdin, stdout, stderr = client.exec_command('ls')
+    for line in stdout:
         print '... ' + line.strip('\n')
-    chan.close()
-    t.close()
+    client.close()
 
 ...which prints out the results of executing 'ls' on a remote server.
 (the host key 'AAA...' should of course be replaced by the actual base64
 encoding of the host key.  if you skip host key verification, the
 connection is not secure!)
 
-the following example scripts get progressively more detailed:
+the following example scripts (in demos/) get progressively more detailed:
 
 demo_simple.py
     calls invoke_shell() and emulates a terminal/tty through which you can
@@ -132,14 +131,21 @@ ever would have before.
 
 there are also unit tests here:
     $ python ./test.py
-which will verify that some of the core components are working correctly.
-not much is tested yet, but it's a start.  the tests for SFTP are probably
-the best and easiest examples of how to use the SFTP class.
+which will verify that most of the core components are working correctly.
 
 
 ***  WHAT'S NEW
 
 highlights of what's new in each release:
+
+v1.6 UMBREON
+* pageant support on Windows thanks to john arbash meinel and todd whiteman
+* fixed unit tests to work under windows and cygwin (thanks to alexander
+  belchenko for debugging)
+* various bugfixes/tweaks to SFTP file prefetch
+* added SSHClient for a higher-level API
+* SFTP readv() now yields results as it gets them
+* several APIs changed to throw an exception instead of "False" on failure
 
 v1.5.4 TENTACOOL
 * fixed HostKeys to more correctly emulate a python dict
@@ -267,15 +273,11 @@ v1.0 JIGGLYPUFF
 ***  MISSING LINKS
 
 * [sigh] release a fork of pycrypto with the speed improvements
-
---- BEFORE 1.6: ---
-* try making bzr use SSHClient
-
 * host-based auth (yuck!)
 * ctr forms of ciphers are missing (blowfish-ctr, aes128-ctr, aes256-ctr)
 * sftp protocol 6 support (ugh....) -- once it settles down more
 * make a simple example demonstrating use of SocketServer (besides forward.py?)
 * should SSHClient try to use openssh config files?
 * figure out how to parse ssh.com encrypted key files?
-
 * is it possible to poll on a set of events at once?
+* potentially create only one thread shared by all Transports
