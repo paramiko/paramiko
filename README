@@ -207,67 +207,6 @@ v1.5 PARAS
   separation
 * demo scripts fixed to have a better chance of loading the host keys
   correctly on windows/cygwin
-  
-v1.4 ODDISH
-* added SSH-agent support (for posix) from john rochester
-* added chdir() and getcwd() to SFTPClient, to emulate a "working directory"
-* added get() and put() to SFTPClient, to emulate ftp whole-file transfers
-* added check() to SFTPFile (a file hashing protocol extension)
-* fixed Channels and SFTPFiles (among others) to auto-close when GC'd
-* fixed Channel.fileno() for Windows, this time really
-* don't log socket errors as "unknown exception"
-* some misc. backward-compatible API improvements (like allowing
-  Transport.start_client() and start_server() to be called in a blocking way)
-
-v1.3.1 NIDORAN
-* added SFTPClient.close()
-* fixed up some outdated documentation
-* made SFTPClient.file() an alias for open()
-* added Transport.open_sftp_client() for convenience
-* refactored packetizing out of Transport
-* fixed bug (reported by alain s.) where connecting to a non-SSH host could
-  cause paramiko to freeze up
-* fixed Channel.fileno() for Windows (again)
-* some more unit tests
-
-v1.3 MAROWAK
-* fixed a bug where packets larger than about 12KB would cause the session
-  to die on all platforms except osx
-* added a potential workaround for windows to let Channel.fileno() (and
-  therefore the select module) work!
-* changed API for subsystem handlers (sorry!) to pass more info and make it
-  easier to write a functional SFTP server
-
-v1.2 LAPRAS
-* added SFTPClient.listdir_attr() for fetching a list of files and their
-  attributes in one call
-* added Channel.recv_exit_status() and Channel.send_exit_status() for
-  manipulating the exit status of a command from either client or server
-  mode
-* moved check_global_request into ServerInterface, where it should've been
-  all along (oops)
-* SFTPHandle's default implementations are fleshed out more
-* made logging a bit more consistent, and started logging thread ids
-* fixed a few race conditions, one of which would sometimes cause a Transport
-  to fail to start on slow machines
-* more unit tests
-
-v1.1 KABUTO
-* server-side SFTP support
-* added support for stderr streams on client & server channels
-* added a new distinct exception for failed client authentication
-  when caused by the server rejecting that *type* of auth
-* added support for multi-part authentication
-* fixed bug where get_username() wasn't working in server mode
-
-v1.0 JIGGLYPUFF
-* fixed bug that broke server-mode authentication by private key
-* fixed bug where closing a Channel could end up killing the entire
-  Transport
-* actually include demo_windows.py this time (oops!)
-* fixed recently-introduced bug in group-exchange key negotiation that
-  would generate the wrong hash (and therefore fail the initial handshake)
-* server-mode subsystem handler is a bit more flexible
 
 
 ***  MISSING LINKS
