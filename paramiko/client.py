@@ -28,7 +28,7 @@ from paramiko.common import *
 from paramiko.dsskey import DSSKey
 from paramiko.hostkeys import HostKeys
 from paramiko.rsakey import RSAKey
-from paramiko.ssh_exception import SSHException
+from paramiko.ssh_exception import SSHException, BadHostKeyException
 from paramiko.transport import Transport
 from paramiko.util import hexify
 
@@ -107,6 +107,7 @@ class SSHClient (object):
         self._host_keys_filename = None
         self._log_channel = None
         self._policy = RejectPolicy()
+        self._transport = None
     
     def load_system_host_keys(self, filename=None):
         """
@@ -378,7 +379,7 @@ class SSHClient (object):
             filename = os.path.expanduser('~/.ssh/' + filename)
             try:
                 key = pkey_class.from_private_key_file(filename, password)
-                self._log(DEBUG, 'Trying discovered key %s in %s' % (hexify(key.get_fingerprint(), filename)))
+                self._log(DEBUG, 'Trying discovered key %s in %s' % (hexify(key.get_fingerprint()), filename))
                 self._transport.auth_publickey(username, key)
                 return
             except SSHException, e:

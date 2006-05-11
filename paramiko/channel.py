@@ -838,8 +838,9 @@ class Channel (object):
             self._log(ERROR, 'unknown extended_data type %d; discarding' % code)
             return
         if self.combine_stderr:
-            return self._feed(s)
-        self.in_stderr_buffer.feed(s)
+            self._feed(s)
+        else:
+            self.in_stderr_buffer.feed(s)
         
     def _window_adjust(self, m):
         nbytes = m.get_int()

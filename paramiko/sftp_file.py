@@ -22,6 +22,7 @@ L{SFTPFile}
 
 import socket
 import threading
+import time
 from paramiko.common import *
 from paramiko.sftp import *
 from paramiko.file import BufferedFile

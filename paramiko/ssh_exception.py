@@ -62,7 +62,7 @@ class BadAuthenticationType (AuthenticationException):
     allowed_types = []
     
     def __init__(self, explanation, types):
-        SSHException.__init__(self, explanation)
+        AuthenticationException.__init__(self, explanation)
         self.allowed_types = types
      
     def __str__(self):
@@ -76,7 +76,7 @@ class PartialAuthentication (AuthenticationException):
     allowed_types = []
     
     def __init__(self, types):
-        SSHException.__init__(self, 'partial authentication')
+        AuthenticationException.__init__(self, 'partial authentication')
         self.allowed_types = types
 
 
