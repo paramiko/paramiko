@@ -162,6 +162,10 @@ class HostKeys (UserDict.DictMixin):
             raise KeyError(key)
         return ret
     
+    def __setitem__(self, key, value):
+        # don't use this please.
+        self._keys[key] = value
+    
     def keys(self):
         return self._keys.keys()
 
