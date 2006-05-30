@@ -61,6 +61,9 @@ class SFTPClient (BaseSFTP):
 
         @param sock: an open L{Channel} using the C{"sftp"} subsystem
         @type sock: L{Channel}
+
+        @raise SSHException: if there's an exception while negotiating
+            sftp
         """
         BaseSFTP.__init__(self)
         self.sock = sock
@@ -77,7 +80,10 @@ class SFTPClient (BaseSFTP):
             self.logger = util.get_logger(transport.get_log_channel() + '.' +
                                           self.sock.get_name() + '.sftp')
             self.ultra_debug = transport.get_hexdump()
-        server_version = self._send_version()
+        try:
+            server_version = self._send_version()
+        except EOFError, x:
+            raise SSHException('EOF during negotiation')
         self._log(INFO, 'Opened sftp connection (server version %d)' % server_version)
 
     def from_transport(cls, t):
