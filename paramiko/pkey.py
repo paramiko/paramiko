@@ -180,18 +180,18 @@ class PKey (object):
         exist in all subclasses of PKey (such as L{RSAKey} or L{DSSKey}), but
         is useless on the abstract PKey class.
 
-        @param filename: name of the file to read.
+        @param filename: name of the file to read
         @type filename: str
         @param password: an optional password to use to decrypt the key file,
             if it's encrypted
         @type password: str
-        @return: a new key object based on the given private key.
+        @return: a new key object based on the given private key
         @rtype: L{PKey}
 
-        @raise IOError: if there was an error reading the file.
+        @raise IOError: if there was an error reading the file
         @raise PasswordRequiredException: if the private key file is
-            encrypted, and C{password} is C{None}.
-        @raise SSHException: if the key file is invalid.
+            encrypted, and C{password} is C{None}
+        @raise SSHException: if the key file is invalid
         """
         key = cls(filename=filename, password=password)
         return key
@@ -202,13 +202,28 @@ class PKey (object):
         Write private key contents into a file.  If the password is not
         C{None}, the key is encrypted before writing.
 
-        @param filename: name of the file to write.
+        @param filename: name of the file to write
         @type filename: str
-        @param password: an optional password to use to encrypt the key file.
+        @param password: an optional password to use to encrypt the key file
         @type password: str
 
-        @raise IOError: if there was an error writing the file.
-        @raise SSHException: if the key is invalid.
+        @raise IOError: if there was an error writing the file
+        @raise SSHException: if the key is invalid
+        """
+        raise Exception('Not implemented in PKey')
+    
+    def write_private_key(self, file_obj, password=None):
+        """
+        Write private key contents into a file (or file-like) object.  If the
+        password is not C{None}, the key is encrypted before writing.
+        
+        @param file_obj: the file object to write into
+        @type file_obj: file
+        @param password: an optional password to use to encrypt the key
+        @type password: str
+        
+        @raise IOError: if there was an error writing to the file
+        @raise SSHException: if the key is invalid
         """
         raise Exception('Not implemented in PKey')
 
@@ -304,6 +319,10 @@ class PKey (object):
         f = open(filename, 'w', 0600)
         # grrr... the mode doesn't always take hold
         os.chmod(filename, 0600)
+        self._write_private_key(tag, f, data, password)
+        f.close()
+    
+    def _write_private_key(self, tag, f, data, password=None):
         f.write('-----BEGIN %s PRIVATE KEY-----\n' % tag)
         if password is not None:
             # since we only support one cipher here, use it
@@ -330,4 +349,3 @@ class PKey (object):
         f.write(s)
         f.write('\n')
         f.write('-----END %s PRIVATE KEY-----\n' % tag)
-        f.close()

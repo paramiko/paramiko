@@ -129,7 +129,7 @@ class DSSKey (PKey):
         dss = DSA.construct((long(self.y), long(self.g), long(self.p), long(self.q)))
         return dss.verify(sigM, (sigR, sigS))
 
-    def write_private_key_file(self, filename, password=None):
+    def _encode_key(self):
         if self.x is None:
             raise SSHException('Not enough key information')
         keylist = [ 0, self.p, self.q, self.g, self.y, self.x ]
@@ -138,7 +138,13 @@ class DSSKey (PKey):
             b.encode(keylist)
         except BERException:
             raise SSHException('Unable to create ber encoding of key')
-        self._write_private_key_file('DSA', filename, str(b), password)
+        return str(b)
+
+    def write_private_key_file(self, filename, password=None):
+        self._write_private_key_file('DSA', filename, self._encode_key(), password)
+
+    def write_private_key(self, file_obj, password=None):
+        self._write_private_key('DSA', file_obj, self._encode_key(), password)
 
     def generate(bits=1024, progress_func=None):
         """
