@@ -98,7 +98,10 @@ class SFTPServer (BaseSFTP, SubsystemHandler):
                 self._log(DEBUG, 'Exception in server processing: ' + str(e))
                 self._log(DEBUG, util.tb_strings())
                 # send some kind of failure message, at least
-                self._send_status(request_number, SFTP_FAILURE)
+                try:
+                    self._send_status(request_number, SFTP_FAILURE)
+                except:
+                    pass
 
     def finish_subsystem(self):
         self.server.session_ended()
