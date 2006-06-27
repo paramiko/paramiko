@@ -36,14 +36,16 @@ class DSSKey (PKey):
     Representation of a DSS key which can be used to sign an verify SSH2
     data.
     """
-    
-    p = None
-    q = None
-    g = None
-    y = None
-    x = None
 
-    def __init__(self, msg=None, data=None, filename=None, password=None, vals=None):
+    def __init__(self, msg=None, data=None, filename=None, password=None, vals=None, file_obj=None):
+        self.p = None
+        self.q = None
+        self.g = None
+        self.y = None
+        self.x = None
+        if file_obj is not None:
+            self._from_private_key(file_obj, password)
+            return
         if filename is not None:
             self._from_private_key_file(filename, password)
             return
@@ -171,9 +173,16 @@ class DSSKey (PKey):
 
 
     def _from_private_key_file(self, filename, password):
+        data = self._read_private_key_file('DSA', filename, password)
+        self._decode_key(data)
+    
+    def _from_private_key(self, file_obj, password):
+        data = self._read_private_key('DSA', file_obj, password)
+        self._decode_key(data)
+    
+    def _decode_key(self, data):
         # private key file contains:
         # DSAPrivateKey = { version = 0, p, q, g, y, x }
-        data = self._read_private_key_file('DSA', filename, password)
         try:
             keylist = BER(data).decode()
         except BERException, x:

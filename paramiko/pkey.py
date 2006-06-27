@@ -197,6 +197,30 @@ class PKey (object):
         return key
     from_private_key_file = classmethod(from_private_key_file)
 
+    def from_private_key(cls, file_obj, password=None):
+        """
+        Create a key object by reading a private key from a file (or file-like)
+        object.  If the private key is encrypted and C{password} is not C{None},
+        the given password will be used to decrypt the key (otherwise
+        L{PasswordRequiredException} is thrown).
+        
+        @param file_obj: the file to read from
+        @type file_obj: file
+        @param password: an optional password to use to decrypt the key, if it's
+            encrypted
+        @type password: str
+        @return: a new key object based on the given private key
+        @rtype: L{PKey}
+        
+        @raise IOError: if there was an error reading the key
+        @raise PasswordRequiredException: if the private key file is encrypted,
+            and C{password} is C{None}
+        @raise SSHException: if the key file is invalid
+        """
+        key = cls(file_obj=file_obj, password=password)
+        return key
+    from_private_key = classmethod(from_private_key)
+
     def write_private_key_file(self, filename, password=None):
         """
         Write private key contents into a file.  If the password is not
@@ -251,8 +275,12 @@ class PKey (object):
         @raise SSHException: if the key file is invalid.
         """
         f = open(filename, 'r')
-        lines = f.readlines()
+        data = self._read_private_key(tag, f, password)
         f.close()
+        return data
+    
+    def _read_private_key(self, tag, f, password=None):
+        lines = f.readlines()
         start = 0
         while (start < len(lines)) and (lines[start].strip() != '-----BEGIN ' + tag + ' PRIVATE KEY-----'):
             start += 1

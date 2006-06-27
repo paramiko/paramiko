@@ -91,6 +91,9 @@ class KeyTest (unittest.TestCase):
         s = StringIO.StringIO()
         key.write_private_key(s)
         self.assertEquals(RSA_PRIVATE_OUT, s.getvalue()) 
+        s.seek(0)
+        key2 = RSAKey.from_private_key(s)
+        self.assertEquals(key, key2)
 
     def test_3_load_rsa_password(self):
         key = RSAKey.from_private_key_file('tests/test_rsa_password.key', 'television')
@@ -113,6 +116,9 @@ class KeyTest (unittest.TestCase):
         s = StringIO.StringIO()
         key.write_private_key(s)
         self.assertEquals(DSS_PRIVATE_OUT, s.getvalue())
+        s.seek(0)
+        key2 = DSSKey.from_private_key(s)
+        self.assertEquals(key, key2)
 
     def test_5_load_dss_password(self):
         key = DSSKey.from_private_key_file('tests/test_dss_password.key', 'television')

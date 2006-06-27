@@ -38,13 +38,15 @@ class RSAKey (PKey):
     data.
     """
 
-    n = None
-    e = None
-    d = None
-    p = None
-    q = None
-    
-    def __init__(self, msg=None, data=None, filename=None, password=None, vals=None):
+    def __init__(self, msg=None, data=None, filename=None, password=None, vals=None, file_obj=None):
+        self.n = None
+        self.e = None
+        self.d = None
+        self.p = None
+        self.q = None
+        if file_obj is not None:
+            self._from_private_key(file_obj, password)
+            return
         if filename is not None:
             self._from_private_key_file(filename, password)
             return
@@ -159,9 +161,16 @@ class RSAKey (PKey):
         return '\x00\x01' + filler + '\x00' + SHA1_DIGESTINFO + data
 
     def _from_private_key_file(self, filename, password):
+        data = self._read_private_key_file('RSA', filename, password)
+        self._decode_key(data)
+    
+    def _from_private_key(self, file_obj, password):
+        data = self._read_private_key('RSA', file_obj, password)
+        self._decode_key(data)
+    
+    def _decode_key(self, data):
         # private key file contains:
         # RSAPrivateKey = { version = 0, n, e, d, p, q, d mod p-1, d mod q-1, q**-1 mod p }
-        data = self._read_private_key_file('RSA', filename, password)
         try:
             keylist = BER(data).decode()
         except BERException:
