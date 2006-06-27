@@ -271,7 +271,7 @@ class SFTPClient (BaseSFTP):
         @type mode: int
         """
         path = self._adjust_cwd(path)
-        self._log(DEBUG, 'mkdir(%r)' % path)
+        self._log(DEBUG, 'mkdir(%r, %r)' % (path, mode))
         attr = SFTPAttributes()
         attr.st_mode = mode
         self._request(CMD_MKDIR, path, attr)
