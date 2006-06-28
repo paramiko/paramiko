@@ -256,7 +256,7 @@ class BufferedFile (object):
         """
         lines = []
         bytes = 0
-        while 1:
+        while True:
             line = self.readline()
             if len(line) == 0:
                 break
