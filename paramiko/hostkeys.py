@@ -26,6 +26,7 @@ import UserDict
 
 from paramiko.common import *
 from paramiko.dsskey import DSSKey
+from paramiko.odict import odict
 from paramiko.rsakey import RSAKey
 
 
@@ -50,7 +51,7 @@ class HostKeys (UserDict.DictMixin):
         @type filename: str
         """
         # hostname -> keytype -> PKey
-        self._keys = {}
+        self._keys = odict()
         self.contains_hashes = False
         if filename is not None:
             self.load(filename)
@@ -68,7 +69,7 @@ class HostKeys (UserDict.DictMixin):
         @type key: L{PKey}
         """
         if not hostname in self._keys:
-            self._keys[hostname] = {}
+            self._keys[hostname] = odict()
         if hostname.startswith('|1|'):
             self.contains_hashes = True
         self._keys[hostname][keytype] = key
@@ -89,7 +90,7 @@ class HostKeys (UserDict.DictMixin):
         
         @raise IOError: if there was an error reading the file
         """
-        f = file(filename, 'r')
+        f = open(filename, 'r')
         for line in f:
             line = line.strip()
             if (len(line) == 0) or (line[0] == '#'):
@@ -104,6 +105,26 @@ class HostKeys (UserDict.DictMixin):
                     self.add(host, keytype, RSAKey(data=base64.decodestring(key)))
                 elif keytype == 'ssh-dss':
                     self.add(host, keytype, DSSKey(data=base64.decodestring(key)))
+        f.close()
+    
+    def save(self, filename):
+        """
+        Save host keys into a file, in the format used by openssh.  The order of
+        keys in the file will be preserved when possible (if these keys were
+        loaded from a file originally).  The single exception is that combined
+        lines will be split into individual key lines, which is arguably a bug.
+        
+        @param filename: name of the file to write
+        @type filename: str
+        
+        @raise IOError: if there was an error writing the file
+        
+        @since: 1.6.1
+        """
+        f = open(filename, 'w')
+        for hostname, d in self._keys.iteritems():
+            for keytype, key in d.iteritems():
+                f.write('%s %s %s\n' % (hostname, keytype, key.get_base64()))
         f.close()
 
     def lookup(self, hostname):
