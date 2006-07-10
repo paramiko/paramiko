@@ -200,7 +200,7 @@ class SFTPAttributes (object):
         else:
             ks = '?---------'
         # compute display date
-        if self.st_mtime is None:
+        if (self.st_mtime is None) or (self.st_mtime == 0xffffffff):
             # shouldn't really happen
             datestr = '(unknown date)'
         else:
