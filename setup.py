@@ -42,13 +42,13 @@ except ImportError:
     kw = {}
 
 setup(name = "paramiko",
-      version = "1.6",
+      version = "1.6.1",
       description = "SSH2 protocol library",
       author = "Robey Pointer",
       author_email = "robey@lag.net",
       url = "http://www.lag.net/paramiko/",
       packages = [ 'paramiko' ],
-      download_url = 'http://www.lag.net/paramiko/download/paramiko-1.6.zip',
+      download_url = 'http://www.lag.net/paramiko/download/paramiko-1.6.1.zip',
       license = 'LGPL',
       platforms = 'Posix; MacOS X; Windows',
       classifiers = [ 'Development Status :: 5 - Production/Stable',

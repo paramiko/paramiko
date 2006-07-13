@@ -47,7 +47,7 @@ released under the GNU Lesser General Public License (LGPL).
 
 Website: U{http://www.lag.net/paramiko/}
 
-@version: 1.6 (umbreon)
+@version: 1.6.1 (vulpix)
 @author: Robey Pointer
 @contact: robey@lag.net
 @license: GNU Lesser General Public License (LGPL)
@@ -60,9 +60,9 @@ if sys.version_info < (2, 2):
 
 
 __author__ = "Robey Pointer <robey@lag.net>"
-__date__ = "10 May 2006"
-__version__ = "1.6 (umbreon)"
-__version_info__ = (1, 6, 0)
+__date__ = "10 Jul 2006"
+__version__ = "1.6.1 (vulpix)"
+__version_info__ = (1, 6, 1)
 __license__ = "GNU Lesser General Public License (LGPL)"
 
 

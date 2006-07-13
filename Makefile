@@ -20,6 +20,7 @@
 # squirtle (19feb06) - 1.5.3
 # tentacool (11mar06) - 1.5.4
 # umbreon (10may06) - 1.6
+# vulpix (10jul06) - 1.6.1
 
 
 release:
@@ -33,6 +34,9 @@ always:
 clean:
 	rm -rf build dist
 	rm -f MANIFEST *.log demos/*.log
+
+test:
+	python ./test.py
 
 # places where the version number is stored:
 #

@@ -1,5 +1,5 @@
-paramiko 1.6
-"umbreon" release, 10 may 2006
+paramiko 1.6.1
+"vulpix" release, 10 jul 2006
 
 Copyright (c) 2003-2006 Robey Pointer <robey@lag.net>
 
@@ -138,6 +138,13 @@ which will verify that most of the core components are working correctly.
 
 highlights of what's new in each release:
 
+v1.6.1 VULPIX
+* more unit tests fixed for windows/cygwin (thanks to alexander belchenko)
+* a couple of fixes related to exceptions leaking out of SFTPClient
+* added ability to set items in HostKeys via __setitem__
+* HostKeys now retains order and has a save() method
+* added PKey.write_private_key and PKey.from_private_key
+
 v1.6 UMBREON
 * pageant support on Windows thanks to john arbash meinel and todd whiteman
 * fixed unit tests to work under windows and cygwin (thanks to alexander
@@ -211,7 +218,6 @@ v1.5 PARAS
 
 ***  MISSING LINKS
 
-* [sigh] release a fork of pycrypto with the speed improvements
 * host-based auth (yuck!)
 * ctr forms of ciphers are missing (blowfish-ctr, aes128-ctr, aes256-ctr)
 * sftp protocol 6 support (ugh....) -- once it settles down more
