@@ -109,7 +109,7 @@ try:
     server = Server()
     try:
         t.start_server(server=server)
-    except SSHException, x:
+    except paramiko.SSHException, x:
         print '*** SSH negotiation failed.'
         sys.exit(1)
 

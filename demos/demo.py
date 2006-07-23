@@ -50,7 +50,7 @@ def agent_auth(transport, username):
             transport.auth_publickey(username, key)
             print '... success!'
             return
-        except SSHException:
+        except paramiko.SSHException:
             print '... nope.'
 
 
@@ -118,7 +118,7 @@ try:
     t = paramiko.Transport(sock)
     try:
         t.start_client()
-    except SSHException:
+    except paramiko.SSHException:
         print '*** SSH negotiation failed.'
         sys.exit(1)
 
