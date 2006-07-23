@@ -34,6 +34,7 @@ always:
 clean:
 	rm -rf build dist
 	rm -f MANIFEST *.log demos/*.log
+	rm -f paramiko/*.pyc
 
 test:
 	python ./test.py
