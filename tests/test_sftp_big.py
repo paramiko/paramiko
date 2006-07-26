@@ -272,8 +272,76 @@ class BigSFTPTest (unittest.TestCase):
             sys.stderr.write(' ')
         finally:
             sftp.remove('%s/hongry.txt' % FOLDER)
-        
-    def test_7_big_file_big_buffer(self):
+    
+    def test_7_prefetch_readv(self):
+        """
+        verify that prefetch and readv don't conflict with each other.
+        """
+        sftp = get_sftp()
+        kblob = ''.join([struct.pack('>H', n) for n in xrange(512)])
+        try:
+            f = sftp.open('%s/hongry.txt' % FOLDER, 'w')
+            f.set_pipelined(True)
+            for n in range(1024):
+                f.write(kblob)
+                if n % 128 == 0:
+                    sys.stderr.write('.')
+            f.close()
+            sys.stderr.write(' ')
+            
+            self.assertEqual(sftp.stat('%s/hongry.txt' % FOLDER).st_size, 1024 * 1024)
+
+            f = sftp.open('%s/hongry.txt' % FOLDER, 'r')
+            f.prefetch()
+            data = f.read(1024)
+            self.assertEqual(data, kblob)
+            
+            chunk_size = 793
+            base_offset = 512 * 1024
+            k2blob = kblob + kblob
+            chunks = [(base_offset + (chunk_size * i), chunk_size) for i in range(20)]
+            for data in f.readv(chunks):
+                offset = base_offset % 1024
+                self.assertEqual(chunk_size, len(data))
+                self.assertEqual(k2blob[offset:offset + chunk_size], data)
+                base_offset += chunk_size
+
+            f.close()
+            sys.stderr.write(' ')
+        finally:
+            sftp.remove('%s/hongry.txt' % FOLDER)
+    
+    def test_8_large_readv(self):
+        """
+        verify that a very large readv is broken up correctly and still
+        returned as a single blob.
+        """
+        sftp = get_sftp()
+        kblob = ''.join([struct.pack('>H', n) for n in xrange(512)])
+        try:
+            f = sftp.open('%s/hongry.txt' % FOLDER, 'w')
+            f.set_pipelined(True)
+            for n in range(1024):
+                f.write(kblob)
+                if n % 128 == 0:
+                    sys.stderr.write('.')
+            f.close()
+            sys.stderr.write(' ')
+
+            self.assertEqual(sftp.stat('%s/hongry.txt' % FOLDER).st_size, 1024 * 1024)
+            
+            f = sftp.open('%s/hongry.txt' % FOLDER, 'r')
+            data = list(f.readv([(23 * 1024, 128 * 1024)]))
+            self.assertEqual(1, len(data))
+            data = data[0]
+            self.assertEqual(128 * 1024, len(data))
+            
+            f.close()
+            sys.stderr.write(' ')
+        finally:
+            sftp.remove('%s/hongry.txt' % FOLDER)
+    
+    def test_9_big_file_big_buffer(self):
         """
         write a 1MB file, with no linefeeds, and a big buffer.
         """
@@ -288,7 +356,7 @@ class BigSFTPTest (unittest.TestCase):
         finally:
             sftp.remove('%s/hongry.txt' % FOLDER)
     
-    def test_8_big_file_renegotiate(self):
+    def test_A_big_file_renegotiate(self):
         """
         write a 1MB file, forcing key renegotiation in the middle.
         """
