@@ -83,6 +83,20 @@ class SFTPFile (BufferedFile):
             # may have outlived the Transport connection
             pass
 
+    def _data_in_prefetch_requests(self, offset, size):
+        k = [i for i in self._prefetch_reads if i[0] <= offset]
+        if len(k) == 0:
+            return False
+        k.sort(cmp=lambda x, y: cmp(x[0], y[0]))
+        buf_offset, buf_size = k[-1]
+        if buf_offset + buf_size <= offset:
+            return True
+        if buf_offset + buf_size >= offset + size:
+            # inclusive
+            return True
+        # well, we have part of the request.  see if another chunk has the rest.
+        return self._data_in_prefetch_requests(buf_offset + buf_size, offset + size - buf_offset - buf_size)
+    
     def _data_in_prefetch_buffers(self, offset):
         """
         if a block of data is present in the prefetch buffers, at the given
@@ -393,7 +407,7 @@ class SFTPFile (BufferedFile):
         read_chunks = []
         for offset, size in chunks:
             # don't fetch data that's already in the prefetch buffer
-            if self._data_in_prefetch_buffers(offset):
+            if self._data_in_prefetch_buffers(offset) or self._data_in_prefetch_requests(offset, size):
                 continue
 
             # break up anything larger than the max read size
