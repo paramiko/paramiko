@@ -388,23 +388,20 @@ class SFTPFile (BufferedFile):
         
         @since: 1.5.4
         """
-        # put the offsets in order, since we depend on that for determining
-        # when the reads have finished.
         self.sftp._log(DEBUG, 'readv(%s, %r)' % (util.hexify(self.handle), chunks))
-        ordered_chunks = list(chunks)
-        ordered_chunks.sort(lambda x, y: cmp(x[0], y[0]))
 
-        # break up anything larger than the max read size
-        if len([size for offset, size in ordered_chunks if size > self.MAX_REQUEST_SIZE]) > 0:
-            read_chunks = []
-            for offset, size in ordered_chunks:
-                while size > 0:
-                    chunk_size = min(size, self.MAX_REQUEST_SIZE)
-                    read_chunks.append((offset, chunk_size))
-                    offset += chunk_size
-                    size -= chunk_size
-        else:
-            read_chunks = ordered_chunks
+        read_chunks = []
+        for offset, size in chunks:
+            # don't fetch data that's already in the prefetch buffer
+            if self._data_in_prefetch_buffers(offset):
+                continue
+
+            # break up anything larger than the max read size
+            while size > 0:
+                chunk_size = min(size, self.MAX_REQUEST_SIZE)
+                read_chunks.append((offset, chunk_size))
+                offset += chunk_size
+                size -= chunk_size
 
         self._start_prefetch(read_chunks)
         # now we can just devolve to a bunch of read()s :)
