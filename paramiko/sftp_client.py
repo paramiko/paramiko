@@ -27,6 +27,7 @@ import time
 import weakref
 from paramiko.sftp import *
 from paramiko.sftp_attr import SFTPAttributes
+from paramiko.ssh_exception import SSHException
 from paramiko.sftp_file import SFTPFile
 
 
