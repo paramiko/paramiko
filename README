@@ -76,6 +76,19 @@ Valeriy Pogrebitskiy says the best place to look is
 '.../lib/python*/encodings/__init__.py'.
 
 
+***  BUGS & SUPPORT
+
+there's a launchpage page for paramiko, with a bug tracker:
+
+    http://www.launchpad.net/products/paramiko/
+    
+this is the primary place to file and browse bug reports.
+
+there's also a low-traffic mailing list for support and discussions:
+
+    http://www.lag.net/mailman/listinfo/paramiko
+
+
 ***  DEMO
 
 several demo scripts come with paramiko to demonstrate how to use it.
