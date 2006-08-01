@@ -20,6 +20,7 @@
 
 
 import base64
+from binascii import hexlify
 import getpass
 import os
 import select
@@ -45,7 +46,7 @@ def agent_auth(transport, username):
         return
         
     for key in agent_keys:
-        print 'Trying ssh-agent key %s' % paramiko.util.hexify(key.get_fingerprint()),
+        print 'Trying ssh-agent key %s' % hexlify(key.get_fingerprint()),
         try:
             transport.auth_publickey(username, key)
             print '... success!'

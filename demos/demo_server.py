@@ -19,6 +19,7 @@
 # 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
 
 import base64
+from binascii import hexlify
 import os
 import socket
 import sys
@@ -34,7 +35,7 @@ paramiko.util.log_to_file('demo_server.log')
 host_key = paramiko.RSAKey(filename='test_rsa.key')
 #host_key = paramiko.DSSKey(filename='test_dss.key')
 
-print 'Read key: ' + paramiko.util.hexify(host_key.get_fingerprint())
+print 'Read key: ' + hexlify(host_key.get_fingerprint())
 
 
 class Server (paramiko.ServerInterface):
@@ -60,7 +61,7 @@ class Server (paramiko.ServerInterface):
         return paramiko.AUTH_FAILED
 
     def check_auth_publickey(self, username, key):
-        print 'Auth attempt with key: ' + paramiko.util.hexify(key.get_fingerprint())
+        print 'Auth attempt with key: ' + hexlify(key.get_fingerprint())
         if (username == 'robey') and (key == self.good_pub_key):
             return paramiko.AUTH_SUCCESSFUL
         return paramiko.AUTH_FAILED
