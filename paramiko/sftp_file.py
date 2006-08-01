@@ -122,9 +122,11 @@ class SFTPFile (BufferedFile):
         in the buffer, return None.  otherwise, behaves like a normal read.
         """
         # while not closed, and haven't fetched past the current position, and haven't reached EOF...
-        while not self._prefetch_done and not self._closed:
+        while True:
             offset = self._data_in_prefetch_buffers(self._realpos)
             if offset is not None:
+                break
+            if self._prefetch_done or self._closed:
                 break
             self.sftp._read_response()
             self._check_exception()
