@@ -20,6 +20,7 @@
 Some unit tests for public/private key objects.
 """
 
+from binascii import hexlify, unhexlify
 import StringIO
 import unittest
 from paramiko import RSAKey, DSSKey, Message, util, randpool
@@ -76,14 +77,14 @@ class KeyTest (unittest.TestCase):
     def test_1_generate_key_bytes(self):
         from Crypto.Hash import MD5
         key = util.generate_key_bytes(MD5, '\x01\x02\x03\x04', 'happy birthday', 30)
-        exp = util.unhexify('61E1F272F4C1C4561586BD322498C0E924672780F47BB37DDA7D54019E64')
+        exp = unhexlify('61E1F272F4C1C4561586BD322498C0E924672780F47BB37DDA7D54019E64')
         self.assertEquals(exp, key)
 
     def test_2_load_rsa(self):
         key = RSAKey.from_private_key_file('tests/test_rsa.key')
         self.assertEquals('ssh-rsa', key.get_name())
         exp_rsa = FINGER_RSA.split()[1].replace(':', '')
-        my_rsa = util.hexify(key.get_fingerprint()).lower()
+        my_rsa = hexlify(key.get_fingerprint())
         self.assertEquals(exp_rsa, my_rsa)
         self.assertEquals(PUB_RSA.split()[1], key.get_base64())
         self.assertEquals(1024, key.get_bits())
@@ -99,7 +100,7 @@ class KeyTest (unittest.TestCase):
         key = RSAKey.from_private_key_file('tests/test_rsa_password.key', 'television')
         self.assertEquals('ssh-rsa', key.get_name())
         exp_rsa = FINGER_RSA.split()[1].replace(':', '')
-        my_rsa = util.hexify(key.get_fingerprint()).lower()
+        my_rsa = hexlify(key.get_fingerprint())
         self.assertEquals(exp_rsa, my_rsa)
         self.assertEquals(PUB_RSA.split()[1], key.get_base64())
         self.assertEquals(1024, key.get_bits())
@@ -108,7 +109,7 @@ class KeyTest (unittest.TestCase):
         key = DSSKey.from_private_key_file('tests/test_dss.key')
         self.assertEquals('ssh-dss', key.get_name())
         exp_dss = FINGER_DSS.split()[1].replace(':', '')
-        my_dss = util.hexify(key.get_fingerprint()).lower()
+        my_dss = hexlify(key.get_fingerprint())
         self.assertEquals(exp_dss, my_dss)
         self.assertEquals(PUB_DSS.split()[1], key.get_base64())
         self.assertEquals(1024, key.get_bits())
@@ -124,7 +125,7 @@ class KeyTest (unittest.TestCase):
         key = DSSKey.from_private_key_file('tests/test_dss_password.key', 'television')
         self.assertEquals('ssh-dss', key.get_name())
         exp_dss = FINGER_DSS.split()[1].replace(':', '')
-        my_dss = util.hexify(key.get_fingerprint()).lower()
+        my_dss = hexlify(key.get_fingerprint())
         self.assertEquals(exp_dss, my_dss)
         self.assertEquals(PUB_DSS.split()[1], key.get_base64())
         self.assertEquals(1024, key.get_bits())

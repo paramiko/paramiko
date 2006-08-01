@@ -21,6 +21,7 @@ Some unit tests for HostKeys.
 """
 
 import base64
+from binascii import hexlify
 import os
 import unittest
 import paramiko
@@ -56,7 +57,7 @@ class HostKeysTest (unittest.TestCase):
         self.assertEquals(2, len(hostdict))
         self.assertEquals(1, len(hostdict.values()[0]))
         self.assertEquals(1, len(hostdict.values()[1]))
-        fp = paramiko.util.hexify(hostdict['secure.example.com']['ssh-rsa'].get_fingerprint())
+        fp = hexlify(hostdict['secure.example.com']['ssh-rsa'].get_fingerprint()).upper()
         self.assertEquals('E6684DB30E109B67B70FF1DC5C7F1363', fp)
 
     def test_2_add(self):
@@ -66,7 +67,7 @@ class HostKeysTest (unittest.TestCase):
         hostdict.add(hh, 'ssh-rsa', key)
         self.assertEquals(3, len(hostdict))
         x = hostdict['foo.example.com']
-        fp = paramiko.util.hexify(x['ssh-rsa'].get_fingerprint())
+        fp = hexlify(x['ssh-rsa'].get_fingerprint()).upper()
         self.assertEquals('7EC91BB336CB6D810B124B1353C32396', fp)
         self.assert_(hostdict.check('foo.example.com', key))
 
@@ -78,7 +79,7 @@ class HostKeysTest (unittest.TestCase):
         self.assert_(not hostdict.has_key('not.example.com'))
         x = hostdict.get('secure.example.com', None)
         self.assert_(x is not None)
-        fp = paramiko.util.hexify(x['ssh-rsa'].get_fingerprint())
+        fp = hexlify(x['ssh-rsa'].get_fingerprint()).upper()
         self.assertEquals('E6684DB30E109B67B70FF1DC5C7F1363', fp)
         i = 0
         for key in hostdict:

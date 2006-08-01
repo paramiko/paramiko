@@ -22,6 +22,7 @@
 Some unit tests for the key exchange protocols.
 """
 
+from binascii import hexlify
 import unittest
 import paramiko.util
 from paramiko.kex_group1 import KexGroup1
@@ -92,7 +93,7 @@ class KexTest (unittest.TestCase):
         kex = KexGroup1(transport)
         kex.start_kex()
         x = '1E000000807E2DDB1743F3487D6545F04F1C8476092FB912B013626AB5BCEB764257D88BBA64243B9F348DF7B41B8C814A995E00299913503456983FFB9178D3CD79EB6D55522418A8ABF65375872E55938AB99A84A0B5FC8A1ECC66A7C3766E7E0F80B7CE2C9225FC2DD683F4764244B72963BBB383F529DCF0C5D17740B8A2ADBE9208D4'
-        self.assertEquals(x, paramiko.util.hexify(str(transport._message)))
+        self.assertEquals(x, hexlify(str(transport._message)).upper())
         self.assertEquals((paramiko.kex_group1._MSG_KEXDH_REPLY,), transport._expect)
 
         # fake "reply"
@@ -104,7 +105,7 @@ class KexTest (unittest.TestCase):
         kex.parse_next(paramiko.kex_group1._MSG_KEXDH_REPLY, msg)
         H = '03079780F3D3AD0B3C6DB30C8D21685F367A86D2'
         self.assertEquals(self.K, transport._K)
-        self.assertEquals(H, paramiko.util.hexify(transport._H))
+        self.assertEquals(H, hexlify(transport._H).upper())
         self.assertEquals(('fake-host-key', 'fake-sig'), transport._verify)
         self.assert_(transport._activated)
 
@@ -122,8 +123,8 @@ class KexTest (unittest.TestCase):
         H = 'B16BF34DD10945EDE84E9C1EF24A14BFDC843389'
         x = '1F0000000866616B652D6B6579000000807E2DDB1743F3487D6545F04F1C8476092FB912B013626AB5BCEB764257D88BBA64243B9F348DF7B41B8C814A995E00299913503456983FFB9178D3CD79EB6D55522418A8ABF65375872E55938AB99A84A0B5FC8A1ECC66A7C3766E7E0F80B7CE2C9225FC2DD683F4764244B72963BBB383F529DCF0C5D17740B8A2ADBE9208D40000000866616B652D736967'
         self.assertEquals(self.K, transport._K)
-        self.assertEquals(H, paramiko.util.hexify(transport._H))
-        self.assertEquals(x, paramiko.util.hexify(str(transport._message)))
+        self.assertEquals(H, hexlify(transport._H).upper())
+        self.assertEquals(x, hexlify(str(transport._message)).upper())
         self.assert_(transport._activated)
 
     def test_3_gex_client(self):
@@ -132,7 +133,7 @@ class KexTest (unittest.TestCase):
         kex = KexGex(transport)
         kex.start_kex()
         x = '22000004000000080000002000'
-        self.assertEquals(x, paramiko.util.hexify(str(transport._message)))
+        self.assertEquals(x, hexlify(str(transport._message)).upper())
         self.assertEquals((paramiko.kex_gex._MSG_KEXDH_GEX_GROUP,), transport._expect)
 
         msg = Message()
@@ -141,7 +142,7 @@ class KexTest (unittest.TestCase):
         msg.rewind()
         kex.parse_next(paramiko.kex_gex._MSG_KEXDH_GEX_GROUP, msg)
         x = '20000000807E2DDB1743F3487D6545F04F1C8476092FB912B013626AB5BCEB764257D88BBA64243B9F348DF7B41B8C814A995E00299913503456983FFB9178D3CD79EB6D55522418A8ABF65375872E55938AB99A84A0B5FC8A1ECC66A7C3766E7E0F80B7CE2C9225FC2DD683F4764244B72963BBB383F529DCF0C5D17740B8A2ADBE9208D4'
-        self.assertEquals(x, paramiko.util.hexify(str(transport._message)))
+        self.assertEquals(x, hexlify(str(transport._message)).upper())
         self.assertEquals((paramiko.kex_gex._MSG_KEXDH_GEX_REPLY,), transport._expect)
 
         msg = Message()
@@ -152,7 +153,7 @@ class KexTest (unittest.TestCase):
         kex.parse_next(paramiko.kex_gex._MSG_KEXDH_GEX_REPLY, msg)
         H = 'A265563F2FA87F1A89BF007EE90D58BE2E4A4BD0'
         self.assertEquals(self.K, transport._K)
-        self.assertEquals(H, paramiko.util.hexify(transport._H))
+        self.assertEquals(H, hexlify(transport._H).upper())
         self.assertEquals(('fake-host-key', 'fake-sig'), transport._verify)
         self.assert_(transport._activated)
 
@@ -162,7 +163,7 @@ class KexTest (unittest.TestCase):
         kex = KexGex(transport)
         kex.start_kex(_test_old_style=True)
         x = '1E00000800'
-        self.assertEquals(x, paramiko.util.hexify(str(transport._message)))
+        self.assertEquals(x, hexlify(str(transport._message)).upper())
         self.assertEquals((paramiko.kex_gex._MSG_KEXDH_GEX_GROUP,), transport._expect)
 
         msg = Message()
@@ -171,7 +172,7 @@ class KexTest (unittest.TestCase):
         msg.rewind()
         kex.parse_next(paramiko.kex_gex._MSG_KEXDH_GEX_GROUP, msg)
         x = '20000000807E2DDB1743F3487D6545F04F1C8476092FB912B013626AB5BCEB764257D88BBA64243B9F348DF7B41B8C814A995E00299913503456983FFB9178D3CD79EB6D55522418A8ABF65375872E55938AB99A84A0B5FC8A1ECC66A7C3766E7E0F80B7CE2C9225FC2DD683F4764244B72963BBB383F529DCF0C5D17740B8A2ADBE9208D4'
-        self.assertEquals(x, paramiko.util.hexify(str(transport._message)))
+        self.assertEquals(x, hexlify(str(transport._message)).upper())
         self.assertEquals((paramiko.kex_gex._MSG_KEXDH_GEX_REPLY,), transport._expect)
 
         msg = Message()
@@ -182,7 +183,7 @@ class KexTest (unittest.TestCase):
         kex.parse_next(paramiko.kex_gex._MSG_KEXDH_GEX_REPLY, msg)
         H = 'A265563F2FA87F1A89BF007EE90D58BE2E4A4BD0'
         self.assertEquals(self.K, transport._K)
-        self.assertEquals(H, paramiko.util.hexify(transport._H))
+        self.assertEquals(H, hexlify(transport._H).upper())
         self.assertEquals(('fake-host-key', 'fake-sig'), transport._verify)
         self.assert_(transport._activated)
         
@@ -200,7 +201,7 @@ class KexTest (unittest.TestCase):
         msg.rewind()
         kex.parse_next(paramiko.kex_gex._MSG_KEXDH_GEX_REQUEST, msg)
         x = '1F0000008100FFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD129024E088A67CC74020BBEA63B139B22514A08798E3404DDEF9519B3CD3A431B302B0A6DF25F14374FE1356D6D51C245E485B576625E7EC6F44C42E9A637ED6B0BFF5CB6F406B7EDEE386BFB5A899FA5AE9F24117C4B1FE649286651ECE65381FFFFFFFFFFFFFFFF0000000102'
-        self.assertEquals(x, paramiko.util.hexify(str(transport._message)))
+        self.assertEquals(x, hexlify(str(transport._message)).upper())
         self.assertEquals((paramiko.kex_gex._MSG_KEXDH_GEX_INIT,), transport._expect)
 
         msg = Message()
@@ -211,8 +212,8 @@ class KexTest (unittest.TestCase):
         H = 'CE754197C21BF3452863B4F44D0B3951F12516EF'
         x = '210000000866616B652D6B6579000000807E2DDB1743F3487D6545F04F1C8476092FB912B013626AB5BCEB764257D88BBA64243B9F348DF7B41B8C814A995E00299913503456983FFB9178D3CD79EB6D55522418A8ABF65375872E55938AB99A84A0B5FC8A1ECC66A7C3766E7E0F80B7CE2C9225FC2DD683F4764244B72963BBB383F529DCF0C5D17740B8A2ADBE9208D40000000866616B652D736967'
         self.assertEquals(K, transport._K)
-        self.assertEquals(H, paramiko.util.hexify(transport._H))
-        self.assertEquals(x, paramiko.util.hexify(str(transport._message)))
+        self.assertEquals(H, hexlify(transport._H).upper())
+        self.assertEquals(x, hexlify(str(transport._message)).upper())
         self.assert_(transport._activated)
 
     def test_6_gex_server_with_old_client(self):
@@ -227,7 +228,7 @@ class KexTest (unittest.TestCase):
         msg.rewind()
         kex.parse_next(paramiko.kex_gex._MSG_KEXDH_GEX_REQUEST_OLD, msg)
         x = '1F0000008100FFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD129024E088A67CC74020BBEA63B139B22514A08798E3404DDEF9519B3CD3A431B302B0A6DF25F14374FE1356D6D51C245E485B576625E7EC6F44C42E9A637ED6B0BFF5CB6F406B7EDEE386BFB5A899FA5AE9F24117C4B1FE649286651ECE65381FFFFFFFFFFFFFFFF0000000102'
-        self.assertEquals(x, paramiko.util.hexify(str(transport._message)))
+        self.assertEquals(x, hexlify(str(transport._message)).upper())
         self.assertEquals((paramiko.kex_gex._MSG_KEXDH_GEX_INIT,), transport._expect)
 
         msg = Message()
@@ -238,6 +239,6 @@ class KexTest (unittest.TestCase):
         H = 'B41A06B2E59043CEFC1AE16EC31F1E2D12EC455B'
         x = '210000000866616B652D6B6579000000807E2DDB1743F3487D6545F04F1C8476092FB912B013626AB5BCEB764257D88BBA64243B9F348DF7B41B8C814A995E00299913503456983FFB9178D3CD79EB6D55522418A8ABF65375872E55938AB99A84A0B5FC8A1ECC66A7C3766E7E0F80B7CE2C9225FC2DD683F4764244B72963BBB383F529DCF0C5D17740B8A2ADBE9208D40000000866616B652D736967'
         self.assertEquals(K, transport._K)
-        self.assertEquals(H, paramiko.util.hexify(transport._H))
-        self.assertEquals(x, paramiko.util.hexify(str(transport._message)))
+        self.assertEquals(H, hexlify(transport._H).upper())
+        self.assertEquals(x, hexlify(str(transport._message)).upper())
         self.assert_(transport._activated)

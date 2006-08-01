@@ -22,6 +22,7 @@
 Some unit tests for utility functions.
 """
 
+from binascii import hexlify
 import cStringIO
 import os
 import unittest
@@ -97,7 +98,7 @@ class UtilTest (unittest.TestCase):
             self.assertEquals(2, len(hostdict))
             self.assertEquals(1, len(hostdict.values()[0]))
             self.assertEquals(1, len(hostdict.values()[1]))
-            fp = paramiko.util.hexify(hostdict['secure.example.com']['ssh-rsa'].get_fingerprint())
+            fp = hexlify(hostdict['secure.example.com']['ssh-rsa'].get_fingerprint()).upper()
             self.assertEquals('E6684DB30E109B67B70FF1DC5C7F1363', fp)
         finally:
             os.unlink('hostfile.temp')

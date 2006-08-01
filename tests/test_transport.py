@@ -20,10 +20,15 @@
 Some unit tests for the ssh2 protocol in Transport.
 """
 
-import sys, time, threading, unittest
+from binascii import hexlify, unhexlify
 import select
+import sys
+import time
+import threading
+import unittest
+
 from paramiko import Transport, SecurityOptions, ServerInterface, RSAKey, DSSKey, \
-    SSHException, BadAuthenticationType, InteractiveQuery, util, ChannelException
+    SSHException, BadAuthenticationType, InteractiveQuery, ChannelException
 from paramiko import AUTH_FAILED, AUTH_PARTIALLY_SUCCESSFUL, AUTH_SUCCESSFUL
 from paramiko import OPEN_SUCCEEDED, OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED
 from loop import LoopSocket
@@ -132,11 +137,11 @@ class TransportTest (unittest.TestCase):
             
     def test_2_compute_key(self):
         self.tc.K = 123281095979686581523377256114209720774539068973101330872763622971399429481072519713536292772709507296759612401802191955568143056534122385270077606457721553469730659233569339356140085284052436697480759510519672848743794433460113118986816826624865291116513647975790797391795651716378444844877749505443714557929L
-        self.tc.H = util.unhexify('0C8307CDE6856FF30BA93684EB0F04C2520E9ED3')
+        self.tc.H = unhexlify('0C8307CDE6856FF30BA93684EB0F04C2520E9ED3')
         self.tc.session_id = self.tc.H
         key = self.tc._compute_key('C', 32)
         self.assertEquals('207E66594CA87C44ECCBA3B3CD39FDDB378E6FDB0F97C54B2AA0CFBF900CD995',
-            util.hexify(key))
+                          hexlify(key).upper())
 
     def test_3_simple(self):
         """
