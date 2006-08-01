@@ -20,11 +20,13 @@
 Client-mode SFTP support.
 """
 
+from binascii import hexlify
 import errno
 import os
 import threading
 import time
 import weakref
+
 from paramiko.sftp import *
 from paramiko.sftp_attr import SFTPAttributes
 from paramiko.ssh_exception import SSHException
@@ -220,7 +222,7 @@ class SFTPClient (BaseSFTP):
         if t != CMD_HANDLE:
             raise SFTPError('Expected handle')
         handle = msg.get_string()
-        self._log(DEBUG, 'open(%r, %r) -> %s' % (filename, mode, util.hexify(handle)))
+        self._log(DEBUG, 'open(%r, %r) -> %s' % (filename, mode, hexlify(handle)))
         return SFTPFile(self, handle, mode, bufsize)
 
     # python has migrated toward file() instead of open().

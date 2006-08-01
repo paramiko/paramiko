@@ -20,6 +20,7 @@
 L{SSHClient}.
 """
 
+from binascii import hexlify
 import getpass
 import os
 
@@ -30,7 +31,6 @@ from paramiko.hostkeys import HostKeys
 from paramiko.rsakey import RSAKey
 from paramiko.ssh_exception import SSHException, BadHostKeyException
 from paramiko.transport import Transport
-from paramiko.util import hexify
 
 
 class MissingHostKeyPolicy (object):
@@ -65,7 +65,7 @@ class AutoAddPolicy (MissingHostKeyPolicy):
         if client._host_keys_filename is not None:
             client.save_host_keys(client._host_keys_filename)
         client._log(DEBUG, 'Adding %s host key for %s: %s' %
-                    (key.get_name(), hostname, hexify(key.get_fingerprint())))
+                    (key.get_name(), hostname, hexlify(key.get_fingerprint())))
 
 
 class RejectPolicy (MissingHostKeyPolicy):
@@ -76,7 +76,7 @@ class RejectPolicy (MissingHostKeyPolicy):
     
     def missing_host_key(self, client, hostname, key):
         client._log(DEBUG, 'Rejecting %s host key for %s: %s' %
-                    (key.get_name(), hostname, hexify(key.get_fingerprint())))
+                    (key.get_name(), hostname, hexlify(key.get_fingerprint())))
         raise SSHException('Unknown server %s' % hostname)
 
         
@@ -350,7 +350,7 @@ class SSHClient (object):
         
         if pkey is not None:
             try:
-                self._log(DEBUG, 'Trying SSH key %s' % hexify(pkey.get_fingerprint()))
+                self._log(DEBUG, 'Trying SSH key %s' % hexlify(pkey.get_fingerprint()))
                 self._transport.auth_publickey(username, pkey)
                 return
             except SSHException, e:
@@ -360,7 +360,7 @@ class SSHClient (object):
             for pkey_class in (RSAKey, DSSKey):
                 try:
                     key = pkey_class.from_private_key_file(key_filename, password)
-                    self._log(DEBUG, 'Trying key %s from %s' % (hexify(key.get_fingerprint()), key_filename))
+                    self._log(DEBUG, 'Trying key %s from %s' % (hexlify(key.get_fingerprint()), key_filename))
                     self._transport.auth_publickey(username, key)
                     return
                 except SSHException, e:
@@ -368,7 +368,7 @@ class SSHClient (object):
 
         for key in Agent().get_keys():
             try:
-                self._log(DEBUG, 'Trying SSH agent key %s' % hexify(key.get_fingerprint()))
+                self._log(DEBUG, 'Trying SSH agent key %s' % hexlify(key.get_fingerprint()))
                 self._transport.auth_publickey(username, key)
                 return
             except SSHException, e:
@@ -379,7 +379,7 @@ class SSHClient (object):
             filename = os.path.expanduser('~/.ssh/' + filename)
             try:
                 key = pkey_class.from_private_key_file(filename, password)
-                self._log(DEBUG, 'Trying discovered key %s in %s' % (hexify(key.get_fingerprint()), filename))
+                self._log(DEBUG, 'Trying discovered key %s in %s' % (hexlify(key.get_fingerprint()), filename))
                 self._transport.auth_publickey(username, key)
                 return
             except SSHException, e:

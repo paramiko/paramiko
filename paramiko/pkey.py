@@ -21,6 +21,7 @@ Common API for all public keys.
 """
 
 import base64
+from binascii import hexlify, unhexlify
 import os
 
 from Crypto.Hash import MD5
@@ -322,7 +323,7 @@ class PKey (object):
         cipher = self._CIPHER_TABLE[encryption_type]['cipher']
         keysize = self._CIPHER_TABLE[encryption_type]['keysize']
         mode = self._CIPHER_TABLE[encryption_type]['mode']
-        salt = util.unhexify(saltstr)
+        salt = unhexlify(saltstr)
         key = util.generate_key_bytes(MD5, salt, password, keysize)
         return cipher.new(key, mode, salt).decrypt(data)
 
@@ -368,7 +369,7 @@ class PKey (object):
                 data += '\0' * n
             data = cipher.new(key, mode, salt).encrypt(data)
             f.write('Proc-Type: 4,ENCRYPTED\n')
-            f.write('DEK-Info: %s,%s\n' % (cipher_name, util.hexify(salt)))
+            f.write('DEK-Info: %s,%s\n' % (cipher_name, hexlify(salt).upper()))
             f.write('\n')
         s = base64.encodestring(data)
         # re-wrap to 64-char lines

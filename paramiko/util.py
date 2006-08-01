@@ -22,6 +22,7 @@ Useful functions used by the rest of paramiko.
 
 from __future__ import generators
 
+from binascii import hexlify, unhexlify
 import sys
 import struct
 import traceback
@@ -115,12 +116,10 @@ def format_binary_line(data):
     return '%-50s %s' % (left, right)
 
 def hexify(s):
-    "turn a string into a hex sequence"
-    return ''.join(['%02X' % ord(c) for c in s])
+    return hexlify(s).upper()
 
 def unhexify(s):
-    "turn a hex sequence back into a string"
-    return ''.join([chr(int(s[i:i+2], 16)) for i in range(0, len(s), 2)])
+    return unhexlify(s)
 
 def safe_string(s):
     out = ''

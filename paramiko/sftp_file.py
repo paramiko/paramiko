@@ -20,9 +20,11 @@
 L{SFTPFile}
 """
 
+from binascii import hexlify
 import socket
 import threading
 import time
+
 from paramiko.common import *
 from paramiko.sftp import *
 from paramiko.file import BufferedFile
@@ -66,7 +68,7 @@ class SFTPFile (BufferedFile):
         # __del__.)
         if self._closed:
             return
-        self.sftp._log(DEBUG, 'close(%s)' % util.hexify(self.handle))
+        self.sftp._log(DEBUG, 'close(%s)' % hexlify(self.handle))
         if self.pipelined:
             self.sftp._finish_responses(self)
         BufferedFile.close(self)
@@ -232,7 +234,7 @@ class SFTPFile (BufferedFile):
         @param mode: new permissions
         @type mode: int
         """
-        self.sftp._log(DEBUG, 'chmod(%s, %r)' % (util.hexify(self.handle), mode))
+        self.sftp._log(DEBUG, 'chmod(%s, %r)' % (hexlify(self.handle), mode))
         attr = SFTPAttributes()
         attr.st_mode = mode
         self.sftp._request(CMD_FSETSTAT, self.handle, attr)
@@ -249,7 +251,7 @@ class SFTPFile (BufferedFile):
         @param gid: new group id
         @type gid: int
         """
-        self.sftp._log(DEBUG, 'chown(%s, %r, %r)' % (util.hexify(self.handle), uid, gid))
+        self.sftp._log(DEBUG, 'chown(%s, %r, %r)' % (hexlify(self.handle), uid, gid))
         attr = SFTPAttributes()
         attr.st_uid, attr.st_gid = uid, gid
         self.sftp._request(CMD_FSETSTAT, self.handle, attr)
@@ -269,7 +271,7 @@ class SFTPFile (BufferedFile):
         """
         if times is None:
             times = (time.time(), time.time())
-        self.sftp._log(DEBUG, 'utime(%s, %r)' % (util.hexify(self.handle), times))
+        self.sftp._log(DEBUG, 'utime(%s, %r)' % (hexlify(self.handle), times))
         attr = SFTPAttributes()
         attr.st_atime, attr.st_mtime = times
         self.sftp._request(CMD_FSETSTAT, self.handle, attr)
@@ -283,7 +285,7 @@ class SFTPFile (BufferedFile):
         @param size: the new size of the file
         @type size: int or long
         """
-        self.sftp._log(DEBUG, 'truncate(%s, %r)' % (util.hexify(self.handle), size))
+        self.sftp._log(DEBUG, 'truncate(%s, %r)' % (hexlify(self.handle), size))
         attr = SFTPAttributes()
         attr.st_size = size
         self.sftp._request(CMD_FSETSTAT, self.handle, attr)
@@ -402,7 +404,7 @@ class SFTPFile (BufferedFile):
         
         @since: 1.5.4
         """
-        self.sftp._log(DEBUG, 'readv(%s, %r)' % (util.hexify(self.handle), chunks))
+        self.sftp._log(DEBUG, 'readv(%s, %r)' % (hexlify(self.handle), chunks))
 
         read_chunks = []
         for offset, size in chunks:
