@@ -55,6 +55,10 @@ BGQ3GQ/Fc7SX6gkpXkwcZryoi4kNFhHu5LvHcZPdxXV1D+uTMfGS1eyd2Yz/DoNWXNAl8TI0cAsW\
 """
 
 
+# for test 1:
+from paramiko import *
+
+
 class UtilTest (unittest.TestCase):
 
     def setUp(self):
@@ -62,8 +66,45 @@ class UtilTest (unittest.TestCase):
 
     def tearDown(self):
         pass
+    
+    def test_1_import(self):
+        """
+        verify that all the classes can be imported from paramiko.
+        """
+        symbols = globals().keys()
+        self.assertTrue('Transport' in symbols)
+        self.assertTrue('SSHClient' in symbols)
+        self.assertTrue('MissingHostKeyPolicy' in symbols)
+        self.assertTrue('AutoAddPolicy' in symbols)
+        self.assertTrue('RejectPolicy' in symbols)
+        self.assertTrue('SecurityOptions' in symbols)
+        self.assertTrue('SubsystemHandler' in symbols)
+        self.assertTrue('Channel' in symbols)
+        self.assertTrue('RSAKey' in symbols)
+        self.assertTrue('DSSKey' in symbols)
+        self.assertTrue('Message' in symbols)
+        self.assertTrue('SSHException' in symbols)
+        self.assertTrue('AuthenticationException' in symbols)
+        self.assertTrue('PasswordRequiredException' in symbols)
+        self.assertTrue('BadAuthenticationType' in symbols)
+        self.assertTrue('ChannelException' in symbols)
+        self.assertTrue('SFTP' in symbols)
+        self.assertTrue('SFTPFile' in symbols)
+        self.assertTrue('SFTPHandle' in symbols)
+        self.assertTrue('SFTPClient' in symbols)
+        self.assertTrue('SFTPServer' in symbols)
+        self.assertTrue('SFTPError' in symbols)
+        self.assertTrue('SFTPAttributes' in symbols)
+        self.assertTrue('SFTPServerInterface' in symbols)
+        self.assertTrue('ServerInterface' in symbols)
+        self.assertTrue('BufferedFile' in symbols)
+        self.assertTrue('Agent' in symbols)
+        self.assertTrue('AgentKey' in symbols)
+        self.assertTrue('HostKeys' in symbols)
+        self.assertTrue('SSHConfig' in symbols)
+        self.assertTrue('util' in symbols)
 
-    def test_1_parse_config(self):
+    def test_2_parse_config(self):
         global test_config_file
         f = cStringIO.StringIO(test_config_file)
         config = paramiko.util.parse_ssh_config(f)
@@ -73,7 +114,7 @@ class UtilTest (unittest.TestCase):
                             {'host': '*.example.com', 'user': 'bjork', 'port': '3333'},
                             {'host': 'spoo.example.com', 'crazy': 'something else'}])
 
-    def test_2_host_config(self):
+    def test_3_host_config(self):
         global test_config_file
         f = cStringIO.StringIO(test_config_file)
         config = paramiko.util.parse_ssh_config(f)
@@ -84,12 +125,12 @@ class UtilTest (unittest.TestCase):
         c = paramiko.util.lookup_ssh_host_config('spoo.example.com', config)
         self.assertEquals(c, {'identityfile': '~/.ssh/id_rsa', 'user': 'bjork', 'crazy': 'something else', 'port': '3333'})
 
-    def test_3_generate_key_bytes(self):
+    def test_4_generate_key_bytes(self):
         x = paramiko.util.generate_key_bytes(SHA, 'ABCDEFGH', 'This is my secret passphrase.', 64)
         hex = ''.join(['%02x' % ord(c) for c in x])
         self.assertEquals(hex, '9110e2f6793b69363e58173e9436b13a5a4b339005741d5c680e505f57d871347b4239f14fb5c46e857d5e100424873ba849ac699cea98d729e57b3e84378e8b')
 
-    def test_4_host_keys(self):
+    def test_5_host_keys(self):
         f = open('hostfile.temp', 'w')
         f.write(test_hosts_file)
         f.close()
@@ -103,4 +144,3 @@ class UtilTest (unittest.TestCase):
         finally:
             os.unlink('hostfile.temp')
 
-        
