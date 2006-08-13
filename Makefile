@@ -25,6 +25,7 @@
 
 release:
 	python ./setup.py sdist --formats=zip
+	python ./setup.py sdist --formats=gztar
 	python ./setup.py bdist_egg
 
 docs: always
