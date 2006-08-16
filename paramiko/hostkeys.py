@@ -26,7 +26,6 @@ import UserDict
 
 from paramiko.common import *
 from paramiko.dsskey import DSSKey
-from paramiko.odict import odict
 from paramiko.rsakey import RSAKey
 
 
