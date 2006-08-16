@@ -1,5 +1,5 @@
-paramiko 1.6.1
-"vulpix" release, 10 jul 2006
+paramiko 1.6.2
+"weedle" release, 16 aug 2006
 
 Copyright (c) 2003-2006 Robey Pointer <robey@lag.net>
 
@@ -150,6 +150,14 @@ which will verify that most of the core components are working correctly.
 ***  WHAT'S NEW
 
 highlights of what's new in each release:
+
+v1.6.2 WEEDLE
+* added support for "old" group-exchange server mode, for compatibility
+  with the windows putty client
+* fixed some more interactions with SFTP file readv() and prefetch()
+* when saving the known_hosts file, preserve the original order [patch from
+  warren young]
+* fix a couple of broken lines when exporting classes (bug 55946)
 
 v1.6.1 VULPIX
 * more unit tests fixed for windows/cygwin (thanks to alexander belchenko)

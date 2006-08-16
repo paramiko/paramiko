@@ -21,12 +21,16 @@
 # tentacool (11mar06) - 1.5.4
 # umbreon (10may06) - 1.6
 # vulpix (10jul06) - 1.6.1
+# weedle (16aug06) - 1.6.2
 
 
-release:
+release: docs
 	python ./setup.py sdist --formats=zip
 	python ./setup.py sdist --formats=gztar
 	python ./setup.py bdist_egg
+	zip -r dist/docs.zip docs && rm -rf docs
+	md5 dist/*.zip dist/*.gz > md5-sums
+	
 
 docs: always
 	epydoc -o docs/ paramiko
@@ -36,6 +40,7 @@ clean:
 	rm -rf build dist
 	rm -f MANIFEST *.log demos/*.log
 	rm -f paramiko/*.pyc
+	rm -f test.log
 
 test:
 	python ./test.py
@@ -46,3 +51,5 @@ test:
 # __init__.py
 # README
 # transport.py
+#
+# POST md5sum on website!
