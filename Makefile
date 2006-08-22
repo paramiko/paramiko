@@ -29,11 +29,11 @@ release: docs
 	python ./setup.py sdist --formats=gztar
 	python ./setup.py bdist_egg
 	zip -r dist/docs.zip docs && rm -rf docs
-	md5 dist/*.zip dist/*.gz > md5-sums
+	cd dist && md5 paramiko*.zip *.gz > md5-sums
 	
 
 docs: always
-	epydoc -o docs/ paramiko
+	epydoc --no-private -o docs/ paramiko
 always:
 
 clean:
