@@ -35,7 +35,16 @@ class SFTPHandle (object):
     Server implementations can (and should) subclass SFTPHandle to implement
     features of a file handle, like L{stat} or L{chattr}.
     """
-    def __init__(self):
+    def __init__(self, flags=0):
+        """
+        Create a new file handle representing a local file being served over
+        SFTP.  If C{flags} is passed in, it's used to determine if the file
+        is open in append mode.
+        
+        @param flags: optional flags as passed to L{SFTPServerInterface.open}
+        @type flags: int
+        """
+        self.__flags = flags
         self.__name = None
         # only for handles to folders:
         self.__files = { }
@@ -121,17 +130,20 @@ class SFTPHandle (object):
         if writefile is None:
             return SFTP_OP_UNSUPPORTED
         try:
-            if self.__tell is None:
-                self.__tell = writefile.tell()
-            if offset != self.__tell:
-                writefile.seek(offset)
-                self.__tell = offset
+            # in append mode, don't care about seeking
+            if (self.__flags & os.O_APPEND) == 0:
+                if self.__tell is None:
+                    self.__tell = writefile.tell()
+                if offset != self.__tell:
+                    writefile.seek(offset)
+                    self.__tell = offset
             writefile.write(data)
             writefile.flush()
         except IOError, e:
             self.__tell = None
             return SFTPServer.convert_errno(e.errno)
-        self.__tell += len(data)
+        if self.__tell is not None:
+            self.__tell += len(data)
         return SFTP_OK
 
     def stat(self):

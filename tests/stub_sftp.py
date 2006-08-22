@@ -104,9 +104,15 @@ class StubSFTPServer (SFTPServerInterface):
             attr._flags &= ~attr.FLAG_PERMISSIONS
             SFTPServer.set_file_attr(path, attr)
         if flags & os.O_WRONLY:
-            fstr = 'wb'
+            if flags & os.O_APPEND:
+                fstr = 'ab'
+            else:
+                fstr = 'wb'
         elif flags & os.O_RDWR:
-            fstr = 'r+b'
+            if flags & os.O_APPEND:
+                fstr = 'a+b'
+            else:
+                fstr = 'r+b'
         else:
             # O_RDONLY (== 0)
             fstr = 'rb'
@@ -114,7 +120,7 @@ class StubSFTPServer (SFTPServerInterface):
             f = os.fdopen(fd, fstr)
         except OSError, e:
             return SFTPServer.convert_errno(e.errno)
-        fobj = StubSFTPHandle()
+        fobj = StubSFTPHandle(flags)
         fobj.filename = path
         fobj.readfile = f
         fobj.writefile = f
