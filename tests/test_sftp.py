@@ -648,3 +648,24 @@ class SFTPTest (unittest.TestCase):
             f.close()
         finally:
             sftp.unlink(FOLDER + '/zero')
+
+    def test_M_seek_append(self):
+        """
+        verify that seek does't affect writes during append.
+        """
+        f = sftp.open(FOLDER + '/append.txt', 'a')
+        try:
+            f.write('first line\nsecond line\n')
+            f.seek(11, f.SEEK_SET)
+            f.write('third line\n')
+            f.close()
+
+            f = sftp.open(FOLDER + '/append.txt', 'r')
+            self.assertEqual(f.stat().st_size, 34)
+            self.assertEqual(f.readline(), 'first line\n')
+            self.assertEqual(f.readline(), 'second line\n')
+            self.assertEqual(f.readline(), 'third line\n')
+            f.close()
+        finally:
+            sftp.remove(FOLDER + '/append.txt')
+
