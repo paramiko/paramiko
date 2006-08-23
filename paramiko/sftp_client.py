@@ -169,7 +169,7 @@ class SFTPClient (BaseSFTP):
         self._request(CMD_CLOSE, handle)
         return filelist
 
-    def file(self, filename, mode='r', bufsize=-1):
+    def open(self, filename, mode='r', bufsize=-1):
         """
         Open a file on the remote server.  The arguments are the same as for
         python's built-in C{file} (aka C{open}).  A file-like object is
@@ -225,9 +225,8 @@ class SFTPClient (BaseSFTP):
         self._log(DEBUG, 'open(%r, %r) -> %s' % (filename, mode, hexlify(handle)))
         return SFTPFile(self, handle, mode, bufsize)
 
-    # python has migrated toward file() instead of open().
-    # and really, that's more easily identifiable.
-    open = file
+    # python continues to vacillate about "open" vs "file"...
+    file = open
 
     def remove(self, path):
         """
