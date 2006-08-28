@@ -81,8 +81,7 @@ class HostKeyEntry:
         if self.valid:
             return '%s %s %s\n' % (','.join(self.hostnames), self.key.get_name(),
                    self.key.get_base64())
-        else:
-            return None
+        return None
 
 
 class HostKeys (UserDict.DictMixin):
@@ -230,21 +229,30 @@ class HostKeys (UserDict.DictMixin):
             raise KeyError(key)
         return ret
     
-    def __setitem__(self, key, value):
+    def __setitem__(self, hostname, entry):
         # don't use this please.
-        self._keys[key] = value
+        for key_type in entry.keys():
+            found = False
+            for e in self._entries:
+                if (hostname in e.hostnames) and (e.key.get_name() == key_type):
+                    # replace
+                    e.key = entry[key_type]
+                    found = True
+            if not found:
+                self._entries.append(HostKeyEntry([hostname], entry[key_type]))
     
     def keys(self):
         ret = []
         for e in self._entries:
             for h in e.hostnames:
-                ret.append(h)
+                if h not in ret:
+                    ret.append(h)
         return ret
 
     def values(self):
         ret = []
-        for e in self._entries:
-            ret.append({e.key.get_name() : e.key})
+        for k in self.keys():
+            ret.append(self.lookup(k))
         return ret
 
     def hash_host(hostname, salt=None):
