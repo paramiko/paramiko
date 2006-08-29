@@ -239,6 +239,7 @@ v1.5 PARAS
 
 ***  MISSING LINKS
 
+* allow setting chmod bits on SFTPClient.open() for create
 * host-based auth (yuck!)
 * ctr forms of ciphers are missing (blowfish-ctr, aes128-ctr, aes256-ctr)
 * sftp protocol 6 support (ugh....) -- once it settles down more

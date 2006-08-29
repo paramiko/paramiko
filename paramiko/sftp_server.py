@@ -239,7 +239,7 @@ class SFTPServer (BaseSFTP, SubsystemHandler):
         start = msg.get_int64()
         length = msg.get_int64()
         block_size = msg.get_int()
-        if not self.file_table.has_key(handle):
+        if handle not in self.file_table:
             self._send_status(request_number, SFTP_BAD_MESSAGE, 'Invalid handle')
             return
         f = self.file_table[handle]
@@ -315,11 +315,11 @@ class SFTPServer (BaseSFTP, SubsystemHandler):
             self._send_handle_response(request_number, self.server.open(path, flags, attr))
         elif t == CMD_CLOSE:
             handle = msg.get_string()
-            if self.folder_table.has_key(handle):
+            if handle in self.folder_table:
                 del self.folder_table[handle]
                 self._send_status(request_number, SFTP_OK)
                 return
-            if self.file_table.has_key(handle):
+            if handle in self.file_table:
                 self.file_table[handle].close()
                 del self.file_table[handle]
                 self._send_status(request_number, SFTP_OK)
@@ -329,7 +329,7 @@ class SFTPServer (BaseSFTP, SubsystemHandler):
             handle = msg.get_string()
             offset = msg.get_int64()
             length = msg.get_int()
-            if not self.file_table.has_key(handle):
+            if handle not in self.file_table:
                 self._send_status(request_number, SFTP_BAD_MESSAGE, 'Invalid handle')
                 return
             data = self.file_table[handle].read(offset, length)
@@ -344,7 +344,7 @@ class SFTPServer (BaseSFTP, SubsystemHandler):
             handle = msg.get_string()
             offset = msg.get_int64()
             data = msg.get_string()
-            if not self.file_table.has_key(handle):
+            if handle not in self.file_table:
                 self._send_status(request_number, SFTP_BAD_MESSAGE, 'Invalid handle')
                 return
             self._send_status(request_number, self.file_table[handle].write(offset, data))
@@ -368,7 +368,7 @@ class SFTPServer (BaseSFTP, SubsystemHandler):
             return
         elif t == CMD_READDIR:
             handle = msg.get_string()
-            if not self.folder_table.has_key(handle):
+            if handle not in self.folder_table:
                 self._send_status(request_number, SFTP_BAD_MESSAGE, 'Invalid handle')
                 return
             folder = self.folder_table[handle]
@@ -389,7 +389,7 @@ class SFTPServer (BaseSFTP, SubsystemHandler):
                 self._send_status(request_number, resp)
         elif t == CMD_FSTAT:
             handle = msg.get_string()
-            if not self.file_table.has_key(handle):
+            if handle not in self.file_table:
                 self._send_status(request_number, SFTP_BAD_MESSAGE, 'Invalid handle')
                 return
             resp = self.file_table[handle].stat()
@@ -404,7 +404,7 @@ class SFTPServer (BaseSFTP, SubsystemHandler):
         elif t == CMD_FSETSTAT:
             handle = msg.get_string()
             attr = SFTPAttributes._from_msg(msg)
-            if not self.file_table.has_key(handle):
+            if handle not in self.file_table:
                 self._response(request_number, SFTP_BAD_MESSAGE, 'Invalid handle')
                 return
             self._send_status(request_number, self.file_table[handle].chattr(attr))

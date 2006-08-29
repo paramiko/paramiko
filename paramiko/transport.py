@@ -619,7 +619,7 @@ class Transport (threading.Thread):
         self.lock.acquire()
         try:
             chanid = self.channel_counter
-            while self.channels.has_key(chanid):
+            while chanid in self.channels:
                 self.channel_counter = (self.channel_counter + 1) & 0xffffff
                 chanid = self.channel_counter
             self.channel_counter = (self.channel_counter + 1) & 0xffffff
@@ -653,7 +653,7 @@ class Transport (threading.Thread):
                 break
         self.lock.acquire()
         try:
-            if self.channels.has_key(chanid):
+            if chanid in self.channels:
                 return chan
         finally:
             self.lock.release()
@@ -1242,7 +1242,7 @@ class Transport (threading.Thread):
         "used by a Channel to remove itself from the active channel list"
         try:
             self.lock.acquire()
-            if self.channels.has_key(chanid):
+            if chanid in self.channels:
                 del self.channels[chanid]
         finally:
             self.lock.release()
@@ -1307,7 +1307,7 @@ class Transport (threading.Thread):
         return out[:nbytes]
 
     def _get_cipher(self, name, key, iv):
-        if not self._cipher_info.has_key(name):
+        if name not in self._cipher_info:
             raise SSHException('Unknown client cipher ' + name)
         return self._cipher_info[name]['class'].new(key, self._cipher_info[name]['mode'], iv)
 
@@ -1354,19 +1354,19 @@ class Transport (threading.Thread):
                         self.kex_engine.parse_next(ptype, m)
                         continue
 
-                if self._handler_table.has_key(ptype):
+                if ptype in self._handler_table:
                     self._handler_table[ptype](self, m)
-                elif self._channel_handler_table.has_key(ptype):
+                elif ptype in self._channel_handler_table:
                     chanid = m.get_int()
-                    if self.channels.has_key(chanid):
+                    if chanid in self.channels:
                         self._channel_handler_table[ptype](self.channels[chanid], m)
-                    elif self.channels_seen.has_key(chanid):
+                    elif chanid in self.channels_seen:
                         self._log(DEBUG, 'Ignoring message for dead channel %d' % chanid)
                     else:
                         self._log(ERROR, 'Channel request for unknown channel %d' % chanid)
                         self.active = False
                         self.packetizer.close()
-                elif (self.auth_handler is not None) and self.auth_handler._handler_table.has_key(ptype):
+                elif (self.auth_handler is not None) and (ptype in self.auth_handler._handler_table):
                     self.auth_handler._handler_table[ptype](self.auth_handler, m)
                 else:
                     self._log(WARNING, 'Oops, unhandled type %d' % ptype)
@@ -1736,7 +1736,7 @@ class Transport (threading.Thread):
         server_chanid = m.get_int()
         server_window_size = m.get_int()
         server_max_packet_size = m.get_int()
-        if not self.channels.has_key(chanid):
+        if chanid not in self.channels:
             self._log(WARNING, 'Success for unrequested channel! [??]')
             return
         self.lock.acquire()
@@ -1744,7 +1744,7 @@ class Transport (threading.Thread):
             chan = self.channels[chanid]
             chan._set_remote_channel(server_chanid, server_window_size, server_max_packet_size)
             self._log(INFO, 'Secsh channel %d opened.' % chanid)
-            if self.channel_events.has_key(chanid):
+            if chanid in self.channel_events:
                 self.channel_events[chanid].set()
                 del self.channel_events[chanid]
         finally:
@@ -1761,9 +1761,9 @@ class Transport (threading.Thread):
         self.lock.acquire()
         try:
             self.saved_exception = ChannelException(reason, reason_text)
-            if self.channel_events.has_key(chanid):
+            if chanid in self.channel_events:
                 del self.channels[chanid]
-                if self.channel_events.has_key(chanid):
+                if chanid in self.channel_events:
                     self.channel_events[chanid].set()
                     del self.channel_events[chanid]
         finally:
@@ -1784,7 +1784,7 @@ class Transport (threading.Thread):
             self.lock.acquire()
             try:
                 my_chanid = self.channel_counter
-                while self.channels.has_key(my_chanid):
+                while my_chanid in self.channels:
                     self.channel_counter = (self.channel_counter + 1) & 0xffffff
                     my_chanid = self.channel_counter
                 self.channel_counter = (self.channel_counter + 1) & 0xffffff
@@ -1837,7 +1837,7 @@ class Transport (threading.Thread):
     def _get_subsystem_handler(self, name):
         try:
             self.lock.acquire()
-            if not self.subsystem_table.has_key(name):
+            if name not in self.subsystem_table:
                 return (None, [], {})
             return self.subsystem_table[name]
         finally:

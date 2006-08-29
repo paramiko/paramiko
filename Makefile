@@ -41,6 +41,7 @@ clean:
 	rm -f MANIFEST *.log demos/*.log
 	rm -f paramiko/*.pyc
 	rm -f test.log
+	rm -rf paramiko.egg-info
 
 test:
 	python ./test.py

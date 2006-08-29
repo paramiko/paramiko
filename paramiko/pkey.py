@@ -305,7 +305,7 @@ class PKey (object):
             data = base64.decodestring(''.join(lines[start:end]))
         except base64.binascii.Error, e:
             raise SSHException('base64 decoding error: ' + str(e))
-        if not headers.has_key('proc-type'):
+        if 'proc-type' not in headers:
             # unencryped: done
             return data
         # encrypted keyfile: will need a password
@@ -315,7 +315,7 @@ class PKey (object):
             encryption_type, saltstr = headers['dek-info'].split(',')
         except:
             raise SSHException('Can\'t parse DEK-info in private key file')
-        if not self._CIPHER_TABLE.has_key(encryption_type):
+        if encryption_type not in self._CIPHER_TABLE:
             raise SSHException('Unknown private key cipher "%s"' % encryption_type)
         # if no password was passed in, raise an exception pointing out that we need one
         if password is None:

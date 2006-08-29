@@ -103,7 +103,7 @@ class ModulusPack (object):
         if (bl != size) and (bl != size + 1):
             self.discarded.append((modulus, 'incorrectly reported bit length %d' % size))
             return
-        if not self.pack.has_key(bl):
+        if bl not in self.pack:
             self.pack[bl] = []
         self.pack[bl].append((generator, modulus))
 
