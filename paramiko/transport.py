@@ -494,7 +494,8 @@ class Transport (threading.Thread):
         try:
             return self.server_key_dict[self.host_key_type]
         except KeyError:
-            return None
+            pass
+        return None
 
     def load_server_moduli(filename=None):
         """

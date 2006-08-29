@@ -47,7 +47,8 @@ def _get_pageant_window_object():
         hwnd = win32ui.FindWindow('Pageant', 'Pageant')
         return hwnd
     except win32ui.error:
-        return None
+        pass
+    return None
 
 
 def can_talk_to_agent():
