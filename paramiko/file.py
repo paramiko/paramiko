@@ -296,8 +296,6 @@ class BufferedFile (object):
         @return: file position (in bytes).
         @rtype: int
         """
-        if self._flags & self.FLAG_APPEND:
-            return self._get_size()
         return self._pos
 
     def write(self, data):
@@ -410,7 +408,8 @@ class BufferedFile (object):
             self._flags |= self.FLAG_WRITE
         if ('a' in mode):
             self._flags |= self.FLAG_WRITE | self.FLAG_APPEND
-            self._pos = self._realpos = -1
+            self._size = self._get_size()
+            self._pos = self._realpos = self._size
         if ('b' in mode):
             self._flags |= self.FLAG_BINARY
         if ('U' in mode):
@@ -427,8 +426,8 @@ class BufferedFile (object):
             count = self._write(data)
             data = data[count:]
             if self._flags & self.FLAG_APPEND:
-                # even if we used to know our seek position, we don't now.
-                self._pos = self._realpos = -1
+                self._size += count
+                self._pos = self._realpos = self._size
             else:
                 self._pos += count
                 self._realpos += count

@@ -159,11 +159,7 @@ class SFTPFile (BufferedFile):
     def _write(self, data):
         # may write less than requested if it would exceed max packet size
         chunk = min(len(data), self.MAX_REQUEST_SIZE)
-        if self._flags & self.FLAG_APPEND:
-            pos = 0
-        else:
-            pos = self._realpos
-        req = self.sftp._async_request(type(None), CMD_WRITE, self.handle, long(pos), str(data[:chunk]))
+        req = self.sftp._async_request(type(None), CMD_WRITE, self.handle, long(self._realpos), str(data[:chunk]))
         if not self.pipelined or self.sftp.sock.recv_ready():
             t, msg = self.sftp._read_response(req)
             if t != CMD_STATUS:
@@ -207,10 +203,6 @@ class SFTPFile (BufferedFile):
 
     def seek(self, offset, whence=0):
         self.flush()
-        if (self._flags & self.FLAG_APPEND) and (self._realpos == -1) and (whence != self.SEEK_END):
-            # this is still legal for O_RDWR ('a+'), but we need to figure out
-            # where we are -- we lost track of it during writes.
-            self._realpos = self._pos = self._get_size()
         if whence == self.SEEK_SET:
             self._realpos = self._pos = offset
         elif whence == self.SEEK_CUR:
