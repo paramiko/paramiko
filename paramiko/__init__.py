@@ -92,15 +92,10 @@ from hostkeys import HostKeys
 from config import SSHConfig
 
 # fix module names for epydoc
-for x in (Transport, SecurityOptions, Channel, SFTPServer, SSHException,
-          PasswordRequiredException, BadAuthenticationType, ChannelFile,
-          SubsystemHandler, AuthHandler, RSAKey, DSSKey, SFTPError,
-          SFTP, SFTPClient, SFTPServer, Message, Packetizer, SFTPAttributes,
-          SFTPHandle, SFTPServerInterface, BufferedFile, Agent, AgentKey,
-          PKey, BaseSFTP, SFTPFile, ServerInterface, HostKeys, SSHClient,
-          MissingHostKeyPolicy, AutoAddPolicy, RejectPolicy, ChannelException,
-          SSHConfig, BadHostKeyException, AuthenticationException):
-    x.__module__ = 'paramiko'
+for c in locals().values():
+    if issubclass(type(c), type) or type(c).__name__ == 'classobj':
+        # classobj for exceptions :/
+        c.__module__ = __name__
 
 from common import AUTH_SUCCESSFUL, AUTH_PARTIALLY_SUCCESSFUL, AUTH_FAILED, \
      OPEN_SUCCEEDED, OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED,  OPEN_FAILED_CONNECT_FAILED, \
