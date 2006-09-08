@@ -86,9 +86,6 @@ class SFTPAttributes (object):
     def __repr__(self):
         return '<SFTPAttributes: %s>' % self._debug_str()
 
-    def __str__(self):
-        return self._debug_str()
-        
 
     ###  internals...
 
@@ -210,5 +207,14 @@ class SFTPAttributes (object):
             else:
                 datestr = time.strftime('%d %b %H:%M', time.localtime(self.st_mtime))
         filename = getattr(self, 'filename', '?')
-        return '%s   1 %-8d %-8d %8d %-12s %s' % (ks, self.st_uid, self.st_gid,
-            self.st_size, datestr, filename)
+        
+        # not all servers support uid/gid
+        uid = self.st_uid
+        gid = self.st_gid
+        if uid is None:
+            uid = 0
+        if gid is None:
+            gid = 0
+            
+        return '%s   1 %-8d %-8d %8d %-12s %s' % (ks, uid, gid, self.st_size, datestr, filename)
+

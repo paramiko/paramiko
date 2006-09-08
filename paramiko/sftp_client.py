@@ -657,6 +657,8 @@ class SFTPClient (BaseSFTP):
         if (len(path) > 0) and (path[0] == '/'):
             # absolute path
             return path
+        if self._cwd == '/':
+            return self._cwd + path
         return self._cwd + '/' + path
 
 
