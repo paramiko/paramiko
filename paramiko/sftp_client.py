@@ -598,7 +598,10 @@ class SFTPClient (BaseSFTP):
 
     def _read_response(self, waitfor=None):
         while True:
-            t, data = self._read_packet()
+            try:
+                t, data = self._read_packet()
+            except EOFError, e:
+                raise SSHException('Server connection dropped: %s' % (str(e),))
             msg = Message(data)
             num = msg.get_int()
             if num not in self._expecting:
