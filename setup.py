@@ -32,6 +32,7 @@ Required packages:
 #import ez_setup
 #ez_setup.use_setuptools()
 
+import sys
 try:
     from setuptools import setup
     kw = {
@@ -40,6 +41,11 @@ try:
 except ImportError:
     from distutils.core import setup
     kw = {}
+    
+if sys.platform == 'darwin':
+	import setup_helper
+	setup_helper.install_custom_make_tarball()
+
 
 setup(name = "paramiko",
       version = "1.6.2",

@@ -24,12 +24,19 @@
 # weedle (16aug06) - 1.6.2
 
 
+ifeq ($(wildcard /sbin/md5),/sbin/md5)
+# os x
+MD5SUM := /sbin/md5
+else
+MD5SUM := md5sum
+endif
+
 release: docs
 	python ./setup.py sdist --formats=zip
 	python ./setup.py sdist --formats=gztar
 	python ./setup.py bdist_egg
 	zip -r dist/docs.zip docs && rm -rf docs
-	cd dist && md5 paramiko*.zip *.gz > md5-sums
+	cd dist && $(MD5SUM) paramiko*.zip *.gz > md5-sums
 	
 
 docs: always
