@@ -37,7 +37,7 @@ docs: always
 always:
 
 clean:
-	rm -rf build dist
+	rm -rf build dist docs
 	rm -f MANIFEST *.log demos/*.log
 	rm -f paramiko/*.pyc
 	rm -f test.log
