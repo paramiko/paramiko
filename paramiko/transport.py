@@ -1405,6 +1405,11 @@ class Transport (threading.Thread):
                 self.auth_handler.abort()
             for event in self.channel_events.values():
                 event.set()
+            try:
+                self.lock.acquire()
+                self.server_accept_cv.notify()
+            finally:
+                self.lock.release()
         self.sock.close()
 
 
