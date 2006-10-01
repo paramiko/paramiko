@@ -23,8 +23,6 @@ BufferedFile.
 from cStringIO import StringIO
 
 
-
-
 class BufferedFile (object):
     """
     Reusable base class to implement python-style file buffering around a
@@ -116,16 +114,16 @@ class BufferedFile (object):
         file first).  If the C{size} argument is negative or omitted, read all
         the remaining data in the file.
 
-        @param size: maximum number of bytes to read.
+        @param size: maximum number of bytes to read
         @type size: int
         @return: data read from the file, or an empty string if EOF was
-            encountered immediately.
+            encountered immediately
         @rtype: str
         """
         if self._closed:
             raise IOError('File is closed')
         if not (self._flags & self.FLAG_READ):
-            raise IOError('File not open for reading')
+            raise IOError('File is not open for reading')
         if (size is None) or (size < 0):
             # go for broke
             result = self._rbuffer
