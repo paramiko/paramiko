@@ -261,14 +261,14 @@ class Packetizer (object):
         else:
             cmd_name = '$%x' % cmd
         orig_len = len(data)
-        if self.__compress_engine_out is not None:
-            data = self.__compress_engine_out(data)
-        packet = self._build_packet(data)
-        if self.__dump_packets:
-            self._log(DEBUG, 'Write packet <%s>, length %d' % (cmd_name, orig_len))
-            self._log(DEBUG, util.format_binary(packet, 'OUT: '))
         self.__write_lock.acquire()
         try:
+            if self.__compress_engine_out is not None:
+                data = self.__compress_engine_out(data)
+            packet = self._build_packet(data)
+            if self.__dump_packets:
+                self._log(DEBUG, 'Write packet <%s>, length %d' % (cmd_name, orig_len))
+                self._log(DEBUG, util.format_binary(packet, 'OUT: '))
             if self.__block_engine_out != None:
                 out = self.__block_engine_out.encrypt(packet)
             else:
