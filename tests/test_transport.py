@@ -603,6 +603,7 @@ class TransportTest (unittest.TestCase):
         bytes2 = self.tc.packetizer._Packetizer__sent_bytes
         # tests show this is actually compressed to *52 bytes*!  including packet overhead!  nice!! :)
         self.assert_(bytes2 - bytes < 1024)
+        self.assertEquals(52, bytes2 - bytes)
 
         chan.close()
         schan.close()
