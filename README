@@ -1,5 +1,5 @@
-paramiko 1.6.2
-"weedle" release, 16 aug 2006
+paramiko 1.6.3
+"xatu" release, 14 oct 2006
 
 Copyright (c) 2003-2006 Robey Pointer <robey@lag.net>
 
@@ -150,6 +150,14 @@ which will verify that most of the core components are working correctly.
 ***  WHAT'S NEW
 
 highlights of what's new in each release:
+
+v1.6.3 XATU
+* fixed bug where HostKeys.__setitem__ wouldn't always do the right thing
+* fixed bug in SFTPClient.chdir and SFTPAttributes.__str__ [patch from
+  mike barber]
+* try harder not to raise EOFError from within SFTPClient
+* fixed bug where a thread waiting in accept() could block forever if the
+  transport dies [patch from mike looijmans]
 
 v1.6.2 WEEDLE
 * added support for "old" group-exchange server mode, for compatibility
