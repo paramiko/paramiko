@@ -374,8 +374,14 @@ class SSHClient (object):
             except SSHException, e:
                 saved_exception = e
 
-        for pkey_class, filename in ((RSAKey, 'id_rsa'),
-                                     (DSSKey, 'id_dsa')):
+        keyfiles = []
+        rsa_key = os.path.expanduser('~/.ssh/id_rsa')
+        dsa_key = os.path.expanduser('~/.ssh/is_dsa')
+        if os.path.isfile(rsa_key):
+            keyfiles.append((RSAKey, rsa_key))
+        if os.path.isfile(dsa_key):
+            keyfiles.append((DSSKey, dss_key))
+        for pkey_class, filename in keyfiles:
             filename = os.path.expanduser('~/.ssh/' + filename)
             try:
                 key = pkey_class.from_private_key_file(filename, password)
