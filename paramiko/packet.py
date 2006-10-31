@@ -20,6 +20,7 @@
 Packetizer.
 """
 
+import errno
 import select
 import socket
 import struct
@@ -201,6 +202,7 @@ class Packetizer (object):
         if PY22:
             return self._py22_read_all(n, out)
         while n > 0:
+            got_timeout = False
             try:
                 x = self.__socket.recv(n)
                 if len(x) == 0:
@@ -208,6 +210,16 @@ class Packetizer (object):
                 out += x
                 n -= len(x)
             except socket.timeout:
+                got_timeout = True
+            except socket.error, e:
+                # on Linux, sometimes instead of socket.timeout, we get
+                # EAGAIN.  this is a bug in recent (> 2.6.9) kernels but
+                # we need to work around it.
+                if (type(e.args) is tuple) and (len(e.args) > 0) and (e.args[0] == errno.EAGAIN):
+                    got_timeout = True
+                else:
+                    raise
+            if got_timeout:
                 if self.__closed:
                     raise EOFError()
                 if check_rekey and (len(out) == 0) and self.__need_rekey:
@@ -218,15 +230,23 @@ class Packetizer (object):
     def write_all(self, out):
         self.__keepalive_last = time.time()
         while len(out) > 0:
+            got_timeout = False
             try:
                 n = self.__socket.send(out)
             except socket.timeout:
-                n = 0
-                if self.__closed:
+                got_timeout = True
+            except socket.error, e:
+                if (type(e.args) is tuple) and (len(e.args) > 0) and (e.args[0] == errno.EAGAIN):
+                    got_timeout = True
+                else:
                     n = -1
             except Exception:
                 # could be: (32, 'Broken pipe')
                 n = -1
+            if got_timeout:
+                n = 0
+                if self.__closed:
+                    n = -1
             if n < 0:
                 raise EOFError()
             if n == len(out):
