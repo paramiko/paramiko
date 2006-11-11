@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 # Copyright (C) 2003-2005 Robey Pointer <robey@lag.net>
 #
