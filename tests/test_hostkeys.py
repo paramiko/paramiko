@@ -104,9 +104,14 @@ class HostKeysTest (unittest.TestCase):
             'ssh-rsa': key,
             'ssh-dss': key_dss
         }
-        self.assertEquals(2, len(hostdict))
+        hostdict['fake.example.com'] = {}
+        # this line will have no effect, but at least shouldn't crash:
+        hostdict['fake.example.com']['ssh-rsa'] = key
+        
+        self.assertEquals(3, len(hostdict))
         self.assertEquals(2, len(hostdict.values()[0]))
         self.assertEquals(1, len(hostdict.values()[1]))
+        self.assertEquals(0, len(hostdict.values()[2]))
         fp = hexlify(hostdict['secure.example.com']['ssh-rsa'].get_fingerprint()).upper()
         self.assertEquals('7EC91BB336CB6D810B124B1353C32396', fp)
         fp = hexlify(hostdict['secure.example.com']['ssh-dss'].get_fingerprint()).upper()
