@@ -188,18 +188,43 @@ class HostKeys (UserDict.DictMixin):
         @return: keys associated with this host (or C{None})
         @rtype: dict(str, L{PKey})
         """
-        ret = {}
-        valid = False
+        class SubDict (UserDict.DictMixin):
+            def __init__(self, hostname, entries, hostkeys):
+                self._hostname = hostname
+                self._entries = entries
+                self._hostkeys = hostkeys
+            
+            def __getitem__(self, key):
+                for e in self._entries:
+                    if e.key.get_name() == key:
+                        return e.key
+                raise KeyError(key)
+            
+            def __setitem__(self, key, val):
+                for e in self._entries:
+                    if e.key is None:
+                        continue
+                    if e.key.get_name() == key:
+                        # replace
+                        e.key = val
+                        break
+                else:
+                    # add a new one
+                    e = HostKeyEntry([hostname], val)
+                    self._entries.append(e)
+                    self._hostkeys._entries.append(e)
+            
+            def keys(self):
+                return [e.key.get_name() for e in self._entries if e.key is not None]
+
+        entries = []
         for e in self._entries:
             for h in e.hostnames:
                 if (h.startswith('|1|') and (self.hash_host(hostname, h) == h)) or (h == hostname):
-                    valid = True
-                    if e.key is None:
-                        continue
-                    ret[e.key.get_name()] = e.key
-        if not valid:
+                    entries.append(e)
+        if len(entries) == 0:
             return None
-        return ret
+        return SubDict(hostname, entries, self)
     
     def check(self, hostname, key):
         """
