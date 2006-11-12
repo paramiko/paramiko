@@ -543,10 +543,13 @@ class Transport (threading.Thread):
         """
         Close this session, and any open channels that are tied to it.
         """
+        if not self.active:
+            return
         self.active = False
         self.packetizer.close()
         for chan in self.channels.values():
             chan._unlink()
+        self.join()
 
     def get_remote_server_key(self):
         """

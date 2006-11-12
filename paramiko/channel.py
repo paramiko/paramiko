@@ -92,7 +92,10 @@ class Channel (object):
         self.exit_status = -1
     
     def __del__(self):
-        self.close()
+        try:
+            self.close()
+        except:
+            pass
         
     def __repr__(self):
         """
