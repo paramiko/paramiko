@@ -47,7 +47,7 @@ released under the GNU Lesser General Public License (LGPL).
 
 Website: U{http://www.lag.net/paramiko/}
 
-@version: 1.6.3 (xatu)
+@version: 1.6.4 (yanma)
 @author: Robey Pointer
 @contact: robey@lag.net
 @license: GNU Lesser General Public License (LGPL)
@@ -60,9 +60,9 @@ if sys.version_info < (2, 2):
 
 
 __author__ = "Robey Pointer <robey@lag.net>"
-__date__ = "14 Oct 2006"
-__version__ = "1.6.3 (xatu)"
-__version_info__ = (1, 6, 3)
+__date__ = "19 Nov 2006"
+__version__ = "1.6.4 (yanma)"
+__version_info__ = (1, 6, 4)
 __license__ = "GNU Lesser General Public License (LGPL)"
 
 

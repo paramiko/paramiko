@@ -1,5 +1,5 @@
-paramiko 1.6.3
-"xatu" release, 14 oct 2006
+paramiko 1.6.4
+"yanma" release, 19 nov 2006
 
 Copyright (c) 2003-2006 Robey Pointer <robey@lag.net>
 
@@ -151,6 +151,15 @@ which will verify that most of the core components are working correctly.
 
 highlights of what's new in each release:
 
+v1.6.4 YANMA
+* fix setup.py on osx (oops!)
+* (bug 69330) check for the existence of RSA/DSA keys before trying to open
+  them in SFTPClient
+* (bug 69222) catch EAGAIN in socket code to workaround a bug in recent
+  Linux 2.6 kernels
+* (bug 70398) improve dict emulation in HostKeys objects
+* try harder to make sure all worker threads are joined on Transport.close()
+
 v1.6.3 XATU
 * fixed bug where HostKeys.__setitem__ wouldn't always do the right thing
 * fixed bug in SFTPClient.chdir and SFTPAttributes.__str__ [patch from
@@ -182,67 +191,6 @@ v1.6 UMBREON
 * added SSHClient for a higher-level API
 * SFTP readv() now yields results as it gets them
 * several APIs changed to throw an exception instead of "False" on failure
-
-v1.5.4 TENTACOOL
-* fixed HostKeys to more correctly emulate a python dict
-* fixed a bug where file read buffering was too aggressive
-* improved prefetching so that out-of-order reads still use the prefetch
-  buffer
-* added experimental SFTPFile.readv() call
-* more unit tests
-
-v1.5.3 SQUIRTLE
-* a few performance enhancements
-* added HostKeys, for dealing with openssh style "known_hosts" files, and
-  added support for hashed hostnames
-* added Transport.atfork() for dealing with forked children
-* added SFTPClient.truncate, SFTPFile.chmod, SFTPFile.chown, SFTPFile.utime,
-  and SFTPFile.truncate
-* improved windows demos [patch from mike looijmans], added an sftp demo, and
-  moved demos to the demos/ folder
-* fixed a few interoperability bugs
-* cleaned up logging a bit
-* fixed a bug where EOF on a Channel might not be detected by select [found
-  by thomas steinacher]
-* fixed python 2.4-ism that crept in [patch by jan hudec]
-* fixed a few reference loops that could have interacted badly with the python
-  garbage collector
-* fixed a bunch of pychecker warnings, some of which were bugs
-
-v1.5.2 RHYDON
-* compression support (opt-in via Transport.use_compression)
-* sftp files may be opened with mode flag 'x' for O_EXCL (exclusive-open)
-  behavior, which has no direct python equivalent
-* added experimental util functions for parsing openssh config files
-* fixed a few bugs (and potential deadlocks) with key renegotiation
-* fixed a bug that caused SFTPFile.prefetch to occasionally lock up
-* fixed an sftp bug which affected van dyke sftp servers
-* fixed the behavior of select()ing on a closed channel, such that it will
-  always trigger as readable
-
-v1.5.1 QUILAVA
-* SFTPFile.prefetch() added to dramatically speed up downloads (automatically
-  turned on in SFTPClient.get())
-* fixed bug where garbage-collected Channels could trigger the Transport to
-  close the session (reported by gordon good)
-* fixed a deadlock in rekeying (reported by wendell wood)
-* fixed some windows bugs and SFTPAttributes.__str__() (reported by grzegorz
-  makarewicz)
-* better sftp error reporting by adding fake "errno" info to IOErrors
-
-v1.5 PARAS
-* added support for "keyboard-interactive" authentication
-* added mode (on by default) where password authentication will try to
-  fallback to "keyboard-interactive" if it's supported
-* added pipelining to SFTPFile.write and SFTPClient.put
-* fixed bug with SFTPFile.close() not guarding against being called more
-  than once (thanks to Nathaniel Smith)
-* fixed broken 'a' flag in SFTPClient.file() (thanks to Nathaniel Smith)
-* fixed up epydocs to look nicer
-* reorganized auth_transport into auth_handler, which seems to be a cleaner
-  separation
-* demo scripts fixed to have a better chance of loading the host keys
-  correctly on windows/cygwin
 
 
 ***  MISSING LINKS
