@@ -86,7 +86,7 @@ class Channel (object):
         self.status_event = threading.Event()
         self.name = str(chanid)
         self.logger = util.get_logger('paramiko.chan.' + str(chanid))
-        self.pipe = None
+        self._pipe = None
         self.event = threading.Event()
         self.combine_stderr = False
         self.exit_status = -1
@@ -457,15 +457,17 @@ class Channel (object):
         """
         self.lock.acquire()
         try:
+            # only close the pipe when the user explicitly closes the channel.
+            # otherwise they will get unpleasant surprises.  (and do it before
+            # checking self.closed, since the remote host may have already
+            # closed the connection.)
+            if self._pipe is not None:
+                self._pipe.close()
+                self._pipe = None
+
             if not self.active or self.closed:
                 return
             msgs = self._close_internal()
-
-            # only close the pipe when the user explicitly closes the channel.
-            # otherwise they will get unpleasant surprises.
-            if self.pipe is not None:
-                self.pipe.close()
-                self.pipe = None
         finally:
             self.lock.release()
         for m in msgs:
@@ -732,12 +734,12 @@ class Channel (object):
         """
         self.lock.acquire()
         try:
-            if self.pipe is not None:
-                return self.pipe.fileno()
+            if self._pipe is not None:
+                return self._pipe.fileno()
             # create the pipe and feed in any existing data
-            self.pipe = pipe.make_pipe()
-            self.in_buffer.set_event(self.pipe)
-            return self.pipe.fileno()
+            self._pipe = pipe.make_pipe()
+            self.in_buffer.set_event(self._pipe)
+            return self._pipe.fileno()
         finally:
             self.lock.release()
 
@@ -926,8 +928,8 @@ class Channel (object):
                 self.eof_received = True
                 self.in_buffer.close()
                 self.in_stderr_buffer.close()
-                if self.pipe is not None:
-                    self.pipe.set_forever()
+                if self._pipe is not None:
+                    self._pipe.set_forever()
         finally:
             self.lock.release()
         self._log(DEBUG, 'EOF received')
@@ -968,8 +970,8 @@ class Channel (object):
         self.in_buffer.close()
         self.in_stderr_buffer.close()
         self.out_buffer_cv.notifyAll()
-        if self.pipe is not None:
-            self.pipe.set_forever()
+        if self._pipe is not None:
+            self._pipe.set_forever()
 
     def _send_eof(self):
         # you are holding the lock.

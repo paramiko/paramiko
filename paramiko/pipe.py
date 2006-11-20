@@ -39,10 +39,13 @@ class PosixPipe (object):
         self._rfd, self._wfd = os.pipe()
         self._set = False
         self._forever = False
+        self._closed = False
     
     def close (self):
         os.close(self._rfd)
         os.close(self._wfd)
+        # used for unit tests:
+        self._closed = True
     
     def fileno (self):
         return self._rfd
@@ -82,10 +85,13 @@ class WindowsPipe (object):
         serv.close()
         self._set = False
         self._forever = False
+        self._closed = False
     
     def close (self):
         self._rsock.close()
         self._wsock.close()
+        # used for unit tests:
+        self._closed = True
     
     def fileno (self):
         return self._rsock.fileno()

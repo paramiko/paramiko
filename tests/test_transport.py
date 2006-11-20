@@ -538,7 +538,12 @@ class TransportTest (unittest.TestCase):
         self.assertEquals([], e)
         self.assertEquals('', chan.recv(16))
         
+        # make sure the pipe is still open for now...
+        p = chan._pipe
+        self.assertEquals(False, p._closed)
         chan.close()
+        # ...and now is closed.
+        self.assertEquals(True, p._closed)
    
     def test_G_renegotiate(self):
         """
