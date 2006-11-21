@@ -101,6 +101,13 @@ class NullServer (ServerInterface):
     def check_global_request(self, kind, msg):
         self._global_request = kind
         return False
+    
+    def check_channel_x11_request(self, channel, single_connection, auth_protocol, auth_cookie, screen_number):
+        self._x11_single_connection = single_connection
+        self._x11_auth_protocol = auth_protocol
+        self._x11_auth_cookie = auth_cookie
+        self._x11_screen_number = screen_number
+        return True
 
 
 class TransportTest (unittest.TestCase):
@@ -117,6 +124,20 @@ class TransportTest (unittest.TestCase):
         self.ts.close()
         self.socks.close()
         self.sockc.close()
+
+    def setup_test_server(self):
+        host_key = RSAKey.from_private_key_file('tests/test_rsa.key')
+        public_host_key = RSAKey(data=str(host_key))
+        self.ts.add_server_key(host_key)
+        event = threading.Event()
+        self.server = NullServer()
+        self.assert_(not event.isSet())
+        self.ts.start_server(event, self.server)
+        self.tc.connect(hostkey=public_host_key)
+        self.tc.auth_password(username='slowdive', password='pygmalion')
+        event.wait(1.0)
+        self.assert_(event.isSet())
+        self.assert_(self.ts.is_active())
 
     def test_1_security_options(self):
         o = self.tc.get_security_options()
@@ -342,19 +363,7 @@ class TransportTest (unittest.TestCase):
         """
         verify that exec_command() does something reasonable.
         """
-        host_key = RSAKey.from_private_key_file('tests/test_rsa.key')
-        public_host_key = RSAKey(data=str(host_key))
-        self.ts.add_server_key(host_key)
-        event = threading.Event()
-        server = NullServer()
-        self.assert_(not event.isSet())
-        self.ts.start_server(event, server)
-        self.tc.ultra_debug = True
-        self.tc.connect(hostkey=public_host_key)
-        self.tc.auth_password(username='slowdive', password='pygmalion')
-        event.wait(1.0)
-        self.assert_(event.isSet())
-        self.assert_(self.ts.is_active())
+        self.setup_test_server()
 
         chan = self.tc.open_session()
         schan = self.ts.accept(1.0)
@@ -396,20 +405,7 @@ class TransportTest (unittest.TestCase):
         """
         verify that invoke_shell() does something reasonable.
         """
-        host_key = RSAKey.from_private_key_file('tests/test_rsa.key')
-        public_host_key = RSAKey(data=str(host_key))
-        self.ts.add_server_key(host_key)
-        event = threading.Event()
-        server = NullServer()
-        self.assert_(not event.isSet())
-        self.ts.start_server(event, server)
-        self.tc.ultra_debug = True
-        self.tc.connect(hostkey=public_host_key)
-        self.tc.auth_password(username='slowdive', password='pygmalion')
-        event.wait(1.0)
-        self.assert_(event.isSet())
-        self.assert_(self.ts.is_active())
-
+        self.setup_test_server()
         chan = self.tc.open_session()
         chan.invoke_shell()
         schan = self.ts.accept(1.0)
@@ -423,20 +419,7 @@ class TransportTest (unittest.TestCase):
         """
         verify that ChannelException is thrown for a bad open-channel request.
         """
-        host_key = RSAKey.from_private_key_file('tests/test_rsa.key')
-        public_host_key = RSAKey(data=str(host_key))
-        self.ts.add_server_key(host_key)
-        event = threading.Event()
-        server = NullServer()
-        self.assert_(not event.isSet())
-        self.ts.start_server(event, server)
-        self.tc.ultra_debug = True
-        self.tc.connect(hostkey=public_host_key)
-        self.tc.auth_password(username='slowdive', password='pygmalion')
-        event.wait(1.0)
-        self.assert_(event.isSet())
-        self.assert_(self.ts.is_active())
-
+        self.setup_test_server()
         try:
             chan = self.tc.open_channel('bogus')
             self.fail('expected exception')
@@ -447,19 +430,7 @@ class TransportTest (unittest.TestCase):
         """
         verify that get_exit_status() works.
         """
-        host_key = RSAKey.from_private_key_file('tests/test_rsa.key')
-        public_host_key = RSAKey(data=str(host_key))
-        self.ts.add_server_key(host_key)
-        event = threading.Event()
-        server = NullServer()
-        self.assert_(not event.isSet())
-        self.ts.start_server(event, server)
-        self.tc.ultra_debug = True
-        self.tc.connect(hostkey=public_host_key)
-        self.tc.auth_password(username='slowdive', password='pygmalion')
-        event.wait(1.0)
-        self.assert_(event.isSet())
-        self.assert_(self.ts.is_active())
+        self.setup_test_server()
 
         chan = self.tc.open_session()
         schan = self.ts.accept(1.0)
@@ -481,20 +452,7 @@ class TransportTest (unittest.TestCase):
         """
         verify that select() on a channel works.
         """
-        host_key = RSAKey.from_private_key_file('tests/test_rsa.key')
-        public_host_key = RSAKey(data=str(host_key))
-        self.ts.add_server_key(host_key)
-        event = threading.Event()
-        server = NullServer()
-        self.assert_(not event.isSet())
-        self.ts.start_server(event, server)
-        self.tc.ultra_debug = True
-        self.tc.connect(hostkey=public_host_key)
-        self.tc.auth_password(username='slowdive', password='pygmalion')
-        event.wait(1.0)
-        self.assert_(event.isSet())
-        self.assert_(self.ts.is_active())
-
+        self.setup_test_server()
         chan = self.tc.open_session()
         chan.invoke_shell()
         schan = self.ts.accept(1.0)
@@ -549,20 +507,8 @@ class TransportTest (unittest.TestCase):
         """
         verify that a transport can correctly renegotiate mid-stream.
         """
-        host_key = RSAKey.from_private_key_file('tests/test_rsa.key')
-        public_host_key = RSAKey(data=str(host_key))
-        self.ts.add_server_key(host_key)
-        event = threading.Event()
-        server = NullServer()
-        self.ts.start_server(event, server)
-        self.tc.connect(hostkey=public_host_key,
-                        username='slowdive', password='pygmalion')
-        event.wait(1.0)
-        self.assert_(event.isSet())
-        self.assert_(self.ts.is_active())
-
+        self.setup_test_server()
         self.tc.packetizer.REKEY_BYTES = 16384
-        
         chan = self.tc.open_session()
         chan.exec_command('yes')
         schan = self.ts.accept(1.0)
@@ -612,3 +558,32 @@ class TransportTest (unittest.TestCase):
 
         chan.close()
         schan.close()
+
+    def test_I_x11(self):
+        """
+        verify that an x11 port can be requested and opened.
+        """
+        self.setup_test_server()
+        chan = self.tc.open_session()
+        chan.exec_command('yes')
+        schan = self.ts.accept(1.0)
+        
+        self.assertEquals(None, getattr(self.server, '_x11_screen_number', None))
+        cookie = chan.request_x11(0, single_connection=True)
+        self.assertEquals(0, self.server._x11_screen_number)
+        self.assertEquals('MIT-MAGIC-COOKIE-1', self.server._x11_auth_protocol)
+        self.assertEquals(cookie, self.server._x11_auth_cookie)
+        self.assertEquals(True, self.server._x11_single_connection)
+        
+        x11_server = self.ts.open_x11_channel(('localhost', 6093))
+        x11_client = self.tc.accept()
+        
+        x11_server.send('hello')
+        self.assertEquals('hello', x11_client.recv(5))
+        
+        x11_server.close()
+        x11_client.close()
+        chan.close()
+        schan.close()
+
+        

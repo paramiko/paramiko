@@ -20,6 +20,7 @@
 Abstraction for an SSH2 channel.
 """
 
+import binascii
 import sys
 import time
 import threading
@@ -33,6 +34,10 @@ from paramiko.ssh_exception import SSHException
 from paramiko.file import BufferedFile
 from paramiko.buffered_pipe import BufferedPipe, PipeTimeout
 from paramiko import pipe
+
+
+# lower bound on the max packet size we'll accept from the remote host
+MIN_PACKET_SIZE = 1024
 
 
 class Channel (object):
@@ -49,9 +54,6 @@ class Channel (object):
     data you send, calls to L{send} may block, unless you set a timeout.  This
     is exactly like a normal network socket, so it shouldn't be too surprising.
     """
-
-    # lower bound on the max packet size we'll accept from the remote host
-    MIN_PACKET_SIZE = 1024
 
     def __init__(self, chanid):
         """
@@ -84,7 +86,7 @@ class Channel (object):
         self.in_window_threshold = 0
         self.in_window_sofar = 0
         self.status_event = threading.Event()
-        self.name = str(chanid)
+        self._name = str(chanid)
         self.logger = util.get_logger('paramiko.chan.' + str(chanid))
         self._pipe = None
         self.event = threading.Event()
@@ -202,7 +204,7 @@ class Channel (object):
         m.add_byte(chr(MSG_CHANNEL_REQUEST))
         m.add_int(self.remote_chanid)
         m.add_string('exec')
-        m.add_boolean(1)
+        m.add_boolean(True)
         m.add_string(command)
         self.event.clear()
         self.transport._send_user_message(m)
@@ -229,7 +231,7 @@ class Channel (object):
         m.add_byte(chr(MSG_CHANNEL_REQUEST))
         m.add_int(self.remote_chanid)
         m.add_string('subsystem')
-        m.add_boolean(1)
+        m.add_boolean(True)
         m.add_string(subsystem)
         self.event.clear()
         self.transport._send_user_message(m)
@@ -254,7 +256,7 @@ class Channel (object):
         m.add_byte(chr(MSG_CHANNEL_REQUEST))
         m.add_int(self.remote_chanid)
         m.add_string('window-change')
-        m.add_boolean(1)
+        m.add_boolean(True)
         m.add_int(width)
         m.add_int(height)
         m.add_int(0).add_int(0)
@@ -299,10 +301,73 @@ class Channel (object):
         m.add_byte(chr(MSG_CHANNEL_REQUEST))
         m.add_int(self.remote_chanid)
         m.add_string('exit-status')
-        m.add_boolean(0)
+        m.add_boolean(False)
         m.add_int(status)
         self.transport._send_user_message(m)
+    
+    def request_x11(self, screen_number=0, auth_protocol=None, auth_cookie=None,
+                    single_connection=False, handler=None):
+        """
+        Request an x11 session on this channel.  If the server allows it,
+        further x11 requests can be made from the server to the client,
+        when an x11 application is run in a shell session.
         
+        From RFC4254::
+
+            It is RECOMMENDED that the 'x11 authentication cookie' that is
+            sent be a fake, random cookie, and that the cookie be checked and
+            replaced by the real cookie when a connection request is received.
+        
+        If you omit the auth_cookie, a new secure random 128-bit value will be
+        generated, used, and returned.  You will need to use this value to
+        verify incoming x11 requests and replace them with the actual local
+        x11 cookie (which requires some knoweldge of the x11 protocol).
+        
+        If a handler is passed in, the handler is called from another thread
+        whenever a new x11 connection arrives.  The default handler queues up
+        incoming x11 connections, which may be retrieved using
+        L{Transport.accept}.  The handler's calling signature is::
+        
+            handler(channel: Channel, (address: str, port: int))
+        
+        @param screen_number: the x11 screen number (0, 10, etc)
+        @type screen_number: int
+        @param auth_protocol: the name of the X11 authentication method used;
+            if none is given, C{"MIT-MAGIC-COOKIE-1"} is used
+        @type auth_proto: str
+        @param auth_cookie: hexadecimal string containing the x11 auth cookie;
+            if none is given, a secure random 128-bit value is generated
+        @type auth_cookie: str
+        @param single_connection: if True, only a single x11 connection will be
+            forwarded (by default, any number of x11 connections can arrive
+            over this session)
+        @type single_connection: bool
+        @param handler: an optional handler to use for incoming X11 connections
+        @type handler: function
+        @return: the auth_cookie used
+        """
+        if self.closed or self.eof_received or self.eof_sent or not self.active:
+            raise SSHException('Channel is not open')
+        if auth_protocol is None:
+            auth_protocol = 'MIT-MAGIC-COOKIE-1'
+        if auth_cookie is None:
+            auth_cookie = binascii.hexlify(self.transport.randpool.get_bytes(16))
+
+        m = Message()
+        m.add_byte(chr(MSG_CHANNEL_REQUEST))
+        m.add_int(self.remote_chanid)
+        m.add_string('x11-req')
+        m.add_boolean(True)
+        m.add_boolean(single_connection)
+        m.add_string(auth_protocol)
+        m.add_string(auth_cookie)
+        m.add_int(screen_number)
+        self.event.clear()
+        self.transport._send_user_message(m)
+        self._wait_for_event()
+        self.transport._set_x11_handler(handler)
+        return auth_cookie
+
     def get_transport(self):
         """
         Return the L{Transport} associated with this channel.
@@ -321,8 +386,8 @@ class Channel (object):
         @param name: new channel name.
         @type name: str
         """
-        self.name = name
-        self.logger = util.get_logger(self.transport.get_log_channel() + '.' + self.name)
+        self._name = name
+        self.logger = util.get_logger(self.transport.get_log_channel() + '.' + self._name)
 
     def get_name(self):
         """
@@ -331,7 +396,7 @@ class Channel (object):
         @return: the name of this channel.
         @rtype: str
         """
-        return self.name
+        return self._name
 
     def get_id(self):
         """
@@ -796,7 +861,7 @@ class Channel (object):
 
     def _set_transport(self, transport):
         self.transport = transport
-        self.logger = util.get_logger(self.transport.get_log_channel() + '.' + self.name)
+        self.logger = util.get_logger(self.transport.get_log_channel() + '.' + self._name)
 
     def _set_window(self, window_size, max_packet_size):
         self.in_window_size = window_size
@@ -809,7 +874,7 @@ class Channel (object):
     def _set_remote_channel(self, chanid, window_size, max_packet_size):
         self.remote_chanid = chanid
         self.out_window_size = window_size
-        self.out_max_packet_size = max(max_packet_size, self.MIN_PACKET_SIZE)
+        self.out_max_packet_size = max(max_packet_size, MIN_PACKET_SIZE)
         self.active = 1
         self._log(DEBUG, 'Max packet out: %d bytes' % max_packet_size)
 
@@ -909,6 +974,16 @@ class Channel (object):
             else:
                 ok = server.check_channel_window_change_request(self, width, height, pixelwidth,
                                                                 pixelheight)
+        elif key == 'x11-req':
+            single_connection = m.get_boolean()
+            auth_proto = m.get_string()
+            auth_cookie = m.get_string()
+            screen_number = m.get_int()
+            if server is None:
+                ok = False
+            else:
+                ok = server.check_channel_x11_request(self, single_connection,
+                                                      auth_proto, auth_cookie, screen_number)
         else:
             self._log(DEBUG, 'Unhandled channel request "%s"' % key)
             ok = False
@@ -932,7 +1007,7 @@ class Channel (object):
                     self._pipe.set_forever()
         finally:
             self.lock.release()
-        self._log(DEBUG, 'EOF received')
+        self._log(DEBUG, 'EOF received (%s)', self._name)
 
     def _handle_close(self, m):
         self.lock.acquire()
@@ -949,8 +1024,8 @@ class Channel (object):
     ###  internals...
 
 
-    def _log(self, level, msg):
-        self.logger.log(level, msg)
+    def _log(self, level, msg, *args):
+        self.logger.log(level, msg, *args)
 
     def _wait_for_event(self):
         while True:
@@ -981,7 +1056,7 @@ class Channel (object):
         m.add_byte(chr(MSG_CHANNEL_EOF))
         m.add_int(self.remote_chanid)
         self.eof_sent = True
-        self._log(DEBUG, 'EOF sent')
+        self._log(DEBUG, 'EOF sent (%s)', self._name)
         return m
 
     def _close_internal(self):

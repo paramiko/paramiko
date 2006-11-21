@@ -426,6 +426,30 @@ class ServerInterface (object):
         @rtype: bool
         """
         return False
+    
+    def check_channel_x11_request(self, channel, single_connection, auth_protocol, auth_cookie, screen_number):
+        """
+        Determine if the client will be provided with an X11 session.  If this
+        method returns C{True}, X11 applications should be routed through new
+        SSH channels, using L{Transport.open_x11_channel}.
+        
+        The default implementation always returns C{False}.
+        
+        @param channel: the L{Channel} the X11 request arrived on
+        @type channel: L{Channel}
+        @param single_connection: C{True} if only a single X11 channel should
+            be opened
+        @type single_connection: bool
+        @param auth_protocol: the protocol used for X11 authentication
+        @type auth_protocol: str
+        @param auth_cookie: the cookie used to authenticate to X11
+        @type auth_cookie: str
+        @param screen_number: the number of the X11 screen to connect to
+        @type screen_number: int
+        @return: C{True} if the X11 session was opened; C{False} if not
+        @rtype: bool
+        """
+        return False
 
 
 class SubsystemHandler (threading.Thread):
