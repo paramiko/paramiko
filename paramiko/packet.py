@@ -218,6 +218,8 @@ class Packetizer (object):
                 # we need to work around it.
                 if (type(e.args) is tuple) and (len(e.args) > 0) and (e.args[0] == errno.EAGAIN):
                     got_timeout = True
+                elif self.__closed:
+                    raise EOFError()
                 else:
                     raise
             if got_timeout:
