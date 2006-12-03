@@ -41,6 +41,8 @@ class InteractiveQuery (object):
         @type name: str
         @param instructions: user instructions (usually short) about this query
         @type instructions: str
+        @param prompts: one or more authentication prompts
+        @type prompts: str
         """
         self.name = name
         self.instructions = instructions
@@ -273,6 +275,41 @@ class ServerInterface (object):
         """
         return AUTH_FAILED
         
+    def check_port_forward_request(self, address, port):
+        """
+        Handle a request for port forwarding.  The client is asking that
+        connections to the given address and port be forwarded back across
+        this ssh connection.  An address of C{"0.0.0.0"} indicates a global
+        address (any address associated with this server) and a port of C{0}
+        indicates any port.
+        
+        The default implementation always returns C{False}, rejecting the
+        port forwarding request.  If the request is accepted, you should return
+        the port opened for listening.
+        
+        @param address: the requested address
+        @type address: str
+        @param port: the requested port
+        @type port: int
+        @return: the port number that was opened for listening, or C{False} to
+            reject
+        @rtype: int
+        """
+        return False
+    
+    def cancel_port_forward_request(self, address, port):
+        """
+        The client would like to cancel a previous port-forwarding request.
+        If the given address and port is being forwarded across this ssh
+        connection, the port should be closed.
+        
+        @param address: the forwarded address
+        @type address: str
+        @param port: the forwarded port
+        @type port: int
+        """
+        pass
+        
     def check_global_request(self, kind, msg):
         """
         Handle a global request of the given C{kind}.  This method is called
@@ -291,6 +328,9 @@ class ServerInterface (object):
 
         The default implementation always returns C{False}, indicating that it
         does not support any global requests.
+        
+        @note: Port forwarding requests are handled separately, in
+            L{check_port_forward_request}.
 
         @param kind: the kind of global request being made.
         @type kind: str

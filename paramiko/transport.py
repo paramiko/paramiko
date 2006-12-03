@@ -278,6 +278,7 @@ class Transport (threading.Thread):
         self.window_size = 65536
         self.max_packet_size = 34816
         self._x11_handler = None
+        self._tcp_handler = None
 
         self.saved_exception = None
         self.clear_to_send = threading.Event()
@@ -548,9 +549,9 @@ class Transport (threading.Thread):
             return
         self.active = False
         self.packetizer.close()
+        self.join()
         for chan in self.channels.values():
             chan._unlink()
-        self.join()
 
     def get_remote_server_key(self):
         """
@@ -617,14 +618,14 @@ class Transport (threading.Thread):
         L{connect} or L{start_client}) and authenticating.
 
         @param kind: the kind of channel requested (usually C{"session"},
-            C{"forwarded-tcpip"} or C{"direct-tcpip"})
+            C{"forwarded-tcpip"}, C{"direct-tcpip"}, or C{"x11"})
         @type kind: str
         @param dest_addr: the destination address of this port forwarding,
             if C{kind} is C{"forwarded-tcpip"} or C{"direct-tcpip"} (ignored
             for other channel types)
         @type dest_addr: (str, int)
         @param src_addr: the source address of this port forwarding, if
-            C{kind} is C{"forwarded-tcpip"} or C{"direct-tcpip"}
+            C{kind} is C{"forwarded-tcpip"}, C{"direct-tcpip"}, or C{"x11"}
         @type src_addr: (str, int)
         @return: a new L{Channel} on success
         @rtype: L{Channel}
@@ -681,6 +682,67 @@ class Transport (threading.Thread):
             e = SSHException('Unable to open channel.')
         raise e
 
+    def request_port_forward(self, address, port, handler=None):
+        """
+        Ask the server to forward TCP connections from a listening port on
+        the server, across this SSH session.
+        
+        If a handler is given, that handler is called from a different thread
+        whenever a forwarded connection arrives.  The handler parameters are::
+        
+            handler(channel, (origin_addr, origin_port), (server_addr, server_port))
+            
+        where C{server_addr} and C{server_port} are the address and port that
+        the server was listening on.
+        
+        If no handler is set, the default behavior is to send new incoming
+        forwarded connections into the accept queue, to be picked up via
+        L{accept}.
+        
+        @param address: the address to bind when forwarding
+        @type address: str
+        @param port: the port to forward, or 0 to ask the server to allocate
+            any port
+        @type port: int
+        @param handler: optional handler for incoming forwarded connections
+        @type handler: function(Channel, (str, int), (str, int))
+        @return: the port # allocated by the server
+        @rtype: int
+        
+        @raise SSHException: if the server refused the TCP forward request
+        """
+        if not self.active:
+            raise SSHException('SSH session not active')
+        address = str(address)
+        port = int(port)
+        response = self.global_request('tcpip-forward', (address, port), wait=True)
+        if response is None:
+            raise SSHException('TCP forwarding request denied')
+        if port == 0:
+            port = response.get_int()
+        if handler is None:
+            def default_handler(channel, (src_addr, src_port), (dest_addr, dest_port)):
+                self._queue_incoming_channel(channel)
+            handler = default_handler
+        self._tcp_handler = handler
+        return port
+
+    def cancel_port_forward(self, address, port):
+        """
+        Ask the server to cancel a previous port-forwarding request.  No more
+        connections to the given address & port will be forwarded across this
+        ssh connection.
+        
+        @param address: the address to stop forwarding
+        @type address: str
+        @param port: the port to stop forwarding
+        @type port: int
+        """
+        if not self.active:
+            return
+        self._tcp_handler = None
+        self.global_request('cancel-tcpip-forward', (address, port), wait=False)
+        
     def open_sftp_client(self):
         """
         Create an SFTP client channel from an open transport.  On success,
@@ -1343,12 +1405,11 @@ class Transport (threading.Thread):
         # only called if a channel has turned on x11 forwarding
         if handler is None:
             # by default, use the same mechanism as accept()
-            self._x11_handler = self._default_x11_handler
+            def default_handler(channel, (src_addr, src_port)):
+                self._queue_incoming_channel(channel)
+            self._x11_handler = default_handler
         else:
-            self._x11_hanlder = handler
-    
-    def _default_x11_handler(self, channel, (src_addr, src_port)):
-        self._queue_incoming_channel(channel)
+            self._x11_handler = handler
 
     def _queue_incoming_channel(self, channel):
         self.lock.acquire()
@@ -1756,6 +1817,17 @@ class Transport (threading.Thread):
         if not self.server_mode:
             self._log(DEBUG, 'Rejecting "%s" global request from server.' % kind)
             ok = False
+        elif kind == 'tcpip-forward':
+            address = m.get_string()
+            port = m.get_int()
+            ok = self.server_object.check_port_forward_request(address, port)
+            if ok != False:
+                ok = (ok,)
+        elif kind == 'cancel-tcpip-forward':
+            address = m.get_string()
+            port = m.get_int()
+            self.server_object.cancel_port_forward_request(address, port)
+            ok = True
         else:
             ok = self.server_object.check_global_request(kind, m)
         extra = ()
@@ -1837,6 +1909,17 @@ class Transport (threading.Thread):
                 my_chanid = self._next_channel()
             finally:
                 self.lock.release()
+        elif (kind == 'forwarded-tcpip') and (self._tcp_handler is not None):
+            server_addr = m.get_string()
+            server_port = m.get_int()
+            origin_addr = m.get_string()
+            origin_port = m.get_int()
+            self._log(DEBUG, 'Incoming tcp forwarded connection from %s:%d' % (origin_addr, origin_port))
+            self.lock.acquire()
+            try:
+                my_chanid = self._next_channel()
+            finally:
+                self.lock.release()
         elif not self.server_mode:
             self._log(DEBUG, 'Rejecting "%s" channel request from server.' % kind)
             reject = True
@@ -1881,6 +1964,8 @@ class Transport (threading.Thread):
         self._log(INFO, 'Secsh channel %d (%s) opened.', my_chanid, kind)
         if kind == 'x11':
             self._x11_handler(chan, (origin_addr, origin_port))
+        elif kind == 'forwarded-tcpip':
+            self._tcp_handler(chan, (origin_addr, origin_port), (server_addr, server_port))
         else:
             self._queue_incoming_channel(chan)
 
