@@ -23,6 +23,8 @@ Some unit tests for SSHClient.
 import socket
 import threading
 import unittest
+import weakref
+
 import paramiko
 
 
@@ -59,7 +61,8 @@ class SSHClientTest (unittest.TestCase):
         thread.start()
 
     def tearDown(self):
-        self.tc.close()
+        if hasattr(self, 'tc'):
+            self.tc.close()
         self.ts.close()
         self.socks.close()
         self.sockl.close()
@@ -125,3 +128,26 @@ class SSHClientTest (unittest.TestCase):
         self.assertEquals(True, self.ts.is_authenticated())
         self.assertEquals(1, len(self.tc.get_host_keys()))
         self.assertEquals(public_host_key, self.tc.get_host_keys()[self.addr]['ssh-rsa'])
+
+    def test_3_cleanup(self):
+        """
+        verify that when an SSHClient is collected, its transport (and the
+        transport's packetizer) is closed.
+        """
+        host_key = paramiko.RSAKey.from_private_key_file('tests/test_rsa.key')
+        public_host_key = paramiko.RSAKey(data=str(host_key))
+        
+        self.tc = paramiko.SSHClient()
+        self.tc.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        self.assertEquals(0, len(self.tc.get_host_keys()))
+        self.tc.connect(self.addr, self.port, username='slowdive', password='pygmalion')
+
+        self.event.wait(1.0)
+        self.assert_(self.event.isSet())
+        self.assert_(self.ts.is_active())
+        
+        p = weakref.ref(self.tc._transport.packetizer)
+        self.assert_(p() is not None)
+        del self.tc
+        self.assert_(p() is None)
+        

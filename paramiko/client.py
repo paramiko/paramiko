@@ -28,6 +28,7 @@ from paramiko.agent import Agent
 from paramiko.common import *
 from paramiko.dsskey import DSSKey
 from paramiko.hostkeys import HostKeys
+from paramiko.resource import ResourceManager
 from paramiko.rsakey import RSAKey
 from paramiko.ssh_exception import SSHException, BadHostKeyException
 from paramiko.transport import Transport
@@ -256,6 +257,7 @@ class SSHClient (object):
         if self._log_channel is not None:
             t.set_log_channel(self._log_channel)
         t.start_client()
+        ResourceManager.register(self, t)
         
         server_key = t.get_remote_server_key()
         keytype = server_key.get_name()
