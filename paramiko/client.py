@@ -384,7 +384,6 @@ class SSHClient (object):
         if os.path.isfile(dsa_key):
             keyfiles.append((DSSKey, dss_key))
         for pkey_class, filename in keyfiles:
-            filename = os.path.expanduser('~/.ssh/' + filename)
             try:
                 key = pkey_class.from_private_key_file(filename, password)
                 self._log(DEBUG, 'Trying discovered key %s in %s' % (hexlify(key.get_fingerprint()), filename))
