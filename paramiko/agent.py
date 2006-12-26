@@ -58,7 +58,11 @@ class Agent:
         self.keys = ()
         if ('SSH_AUTH_SOCK' in os.environ) and (sys.platform != 'win32'):
             conn = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-            conn.connect(os.environ['SSH_AUTH_SOCK'])
+            try:
+                conn.connect(os.environ['SSH_AUTH_SOCK'])
+            except:
+                # probably a dangling env var: the ssh agent is gone
+                return
             self.conn = conn
         elif sys.platform == 'win32':
             import win_pageant
