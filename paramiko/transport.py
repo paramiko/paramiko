@@ -1271,8 +1271,7 @@ class Transport (threading.Thread):
         """
         Turn on/off compression.  This will only have an affect before starting
         the transport (ie before calling L{connect}, etc).  By default,
-        compression is off since it negatively affects interactive sessions
-        and is not fully tested.
+        compression is off since it negatively affects interactive sessions.
         
         @param compress: C{True} to ask the remote client/server to compress
             traffic; C{False} to refuse compression
