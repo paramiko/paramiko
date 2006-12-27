@@ -22,6 +22,7 @@ Some unit tests for SSHClient.
 
 import socket
 import threading
+import time
 import unittest
 import weakref
 
@@ -149,5 +150,9 @@ class SSHClientTest (unittest.TestCase):
         p = weakref.ref(self.tc._transport.packetizer)
         self.assert_(p() is not None)
         del self.tc
+        # hrm, sometimes p isn't cleared right away.  why is that?
+        st = time.time()
+        while (time.time() - st < 5.0) and (p() is not None):
+            time.sleep(0.1)
         self.assert_(p() is None)
         
