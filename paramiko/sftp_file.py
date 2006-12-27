@@ -464,7 +464,6 @@ class SFTPFile (BufferedFile):
             raise SFTPError('Expected data')
         data = msg.get_string()
         offset, length = self._prefetch_reads.pop(0)
-        assert length == len(data)
         self._prefetch_data[offset] = data
         if len(self._prefetch_reads) == 0:
             self._prefetch_done = True
