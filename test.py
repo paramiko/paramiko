@@ -29,7 +29,7 @@ import unittest
 from optparse import OptionParser
 import paramiko
 
-sys.path.append('tests/')
+sys.path.append('tests')
 
 from test_message import MessageTest
 from test_file import BufferedFileTest
