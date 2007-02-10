@@ -136,8 +136,9 @@ class SFTPAttributes (object):
         if self._flags & self.FLAG_PERMISSIONS:
             msg.add_int(self.st_mode)
         if self._flags & self.FLAG_AMTIME:
-            msg.add_int(self.st_atime)
-            msg.add_int(self.st_mtime)
+            # throw away any fractional seconds
+            msg.add_int(long(self.st_atime))
+            msg.add_int(long(self.st_mtime))
         if self._flags & self.FLAG_EXTENDED:
             msg.add_int(len(self.attr))
             for key, val in self.attr.iteritems():
