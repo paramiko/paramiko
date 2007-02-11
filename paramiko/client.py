@@ -378,11 +378,11 @@ class SSHClient (object):
 
         keyfiles = []
         rsa_key = os.path.expanduser('~/.ssh/id_rsa')
-        dsa_key = os.path.expanduser('~/.ssh/is_dsa')
+        dsa_key = os.path.expanduser('~/.ssh/id_dsa')
         if os.path.isfile(rsa_key):
             keyfiles.append((RSAKey, rsa_key))
         if os.path.isfile(dsa_key):
-            keyfiles.append((DSSKey, dss_key))
+            keyfiles.append((DSSKey, dsa_key))
         for pkey_class, filename in keyfiles:
             try:
                 key = pkey_class.from_private_key_file(filename, password)
