@@ -92,6 +92,7 @@ class ServerInterface (object):
             - L{check_channel_shell_request}
             - L{check_channel_subsystem_request}
             - L{check_channel_window_change_request}
+            - L{check_channel_x11_request}
 
         The C{chanid} parameter is a small number that uniquely identifies the
         channel within a L{Transport}.  A L{Channel} object is not created
@@ -281,7 +282,8 @@ class ServerInterface (object):
         connections to the given address and port be forwarded back across
         this ssh connection.  An address of C{"0.0.0.0"} indicates a global
         address (any address associated with this server) and a port of C{0}
-        indicates any port.
+        indicates that no specific port is requested (usually the OS will pick
+        a port).
         
         The default implementation always returns C{False}, rejecting the
         port forwarding request.  If the request is accepted, you should return
