@@ -610,6 +610,19 @@ class Transport (threading.Thread):
         """
         return self.open_channel('x11', src_addr=src_addr)
     
+    def open_forwarded_tcpip_channel(self, (src_addr, src_port), (dest_addr, dest_port)):
+        """
+        Request a new channel back to the client, of type C{"forwarded-tcpip"}.
+        This is used after a client has requested port forwarding, for sending
+        incoming connections back to the client.
+        
+        @param src_addr: originator's address
+        @param src_port: originator's port
+        @param dest_addr: local (server) connected address
+        @param dest_port: local (server) connected port
+        """
+        return self.open_channel('forwarded-tcpip', (dest_addr, dest_port), (src_addr, src_port))
+    
     def open_channel(self, kind, dest_addr=None, src_addr=None):
         """
         Request a new channel to the server.  L{Channel}s are socket-like
@@ -741,7 +754,7 @@ class Transport (threading.Thread):
         if not self.active:
             return
         self._tcp_handler = None
-        self.global_request('cancel-tcpip-forward', (address, port), wait=False)
+        self.global_request('cancel-tcpip-forward', (address, port), wait=True)
         
     def open_sftp_client(self):
         """
