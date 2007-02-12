@@ -22,6 +22,7 @@ Some unit tests for the ssh2 protocol in Transport.
 
 from binascii import hexlify, unhexlify
 import select
+import socket
 import sys
 import time
 import threading
@@ -108,6 +109,15 @@ class NullServer (ServerInterface):
         self._x11_auth_cookie = auth_cookie
         self._x11_screen_number = screen_number
         return True
+    
+    def check_port_forward_request(self, addr, port):
+        self._listen = socket.socket()
+        self._listen.listen(1)
+        return self._listen.getsockname()[1]
+    
+    def cancel_port_forward_request(self, addr, port):
+        self._listen.close()
+        self._listen = None
 
 
 class TransportTest (unittest.TestCase):
@@ -568,8 +578,13 @@ class TransportTest (unittest.TestCase):
         chan.exec_command('yes')
         schan = self.ts.accept(1.0)
         
+        requested = []
+        def handler(c, (addr, port)):
+            requested.append((addr, port))
+            self.tc._queue_incoming_channel(c)
+            
         self.assertEquals(None, getattr(self.server, '_x11_screen_number', None))
-        cookie = chan.request_x11(0, single_connection=True)
+        cookie = chan.request_x11(0, single_connection=True, handler=handler)
         self.assertEquals(0, self.server._x11_screen_number)
         self.assertEquals('MIT-MAGIC-COOKIE-1', self.server._x11_auth_protocol)
         self.assertEquals(cookie, self.server._x11_auth_cookie)
@@ -577,6 +592,8 @@ class TransportTest (unittest.TestCase):
         
         x11_server = self.ts.open_x11_channel(('localhost', 6093))
         x11_client = self.tc.accept()
+        self.assertEquals('localhost', requested[0][0])
+        self.assertEquals(6093, requested[0][1])
         
         x11_server.send('hello')
         self.assertEquals('hello', x11_client.recv(5))
@@ -586,4 +603,39 @@ class TransportTest (unittest.TestCase):
         chan.close()
         schan.close()
 
+    def test_J_reverse_port_forwarding(self):
+        """
+        verify that a client can ask the server to open a reverse port for
+        forwarding.
+        """
+        self.setup_test_server()
+        chan = self.tc.open_session()
+        chan.exec_command('yes')
+        schan = self.ts.accept(1.0)
         
+        requested = []
+        def handler(c, (origin_addr, origin_port), (server_addr, server_port)):
+            requested.append((origin_addr, origin_port))
+            requested.append((server_addr, server_port))
+            self.tc._queue_incoming_channel(c)
+            
+        port = self.tc.request_port_forward('', 0, handler)
+        self.assertEquals(port, self.server._listen.getsockname()[1])
+
+        cs = socket.socket()
+        cs.connect(('', port))
+        ss, _ = self.server._listen.accept()
+        sch = self.ts.open_forwarded_tcpip_channel(ss.getpeername(), ss.getsockname())
+        cch = self.tc.accept()
+        
+        sch.send('hello')
+        self.assertEquals('hello', cch.recv(5))
+        sch.close()
+        cch.close()
+        ss.close()
+        cs.close()
+        
+        # now cancel it.
+        self.tc.cancel_port_forward('', port)
+        self.assertTrue(self.server._listen is None)
+
