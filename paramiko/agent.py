@@ -1,4 +1,4 @@
-# Copyright (C) 2003-2006 John Rochester <john@jrochester.org>
+# Copyright (C) 2003-2007  John Rochester <john@jrochester.org>
 #
 # This file is part of paramiko.
 #

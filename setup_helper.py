@@ -1,4 +1,4 @@
-# Copyright (C) 2003-2006 Robey Pointer <robey@lag.net>
+# Copyright (C) 2003-2007  Robey Pointer <robey@lag.net>
 #
 # This file is part of paramiko.
 #
@@ -15,6 +15,10 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with Paramiko; if not, write to the Free Software Foundation, Inc.,
 # 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
+
+# Note: Despite the copyright notice, this was submitted by John
+# Arbash Meinel.  Thanks John!
+
 
 """A small set of helper functions for dealing with setup issues"""
 
