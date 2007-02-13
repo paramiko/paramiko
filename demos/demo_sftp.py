@@ -101,6 +101,10 @@ try:
     data = sftp.open('demo_sftp_folder/README', 'r').read()
     open('README_demo_sftp', 'w').write(data)
     print 'copied README back here'
+    
+    # BETTER: use the get() and put() methods
+    sftp.put('demo_sftp.py', 'demo_sftp_folder/demo_sftp.py')
+    sftp.get('demo_sftp_folder/README', 'README_demo_sftp')
 
     t.close()
 
