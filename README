@@ -1,5 +1,5 @@
-paramiko 1.6.4
-"yanma" release, 19 nov 2006
+paramiko 1.7
+"zubat" release, 18 feb 2007
 
 Copyright (c) 2003-2007  Robey Pointer <robey@lag.net>
 
@@ -150,6 +150,17 @@ which will verify that most of the core components are working correctly.
 ***  WHAT'S NEW
 
 highlights of what's new in each release:
+
+v1.7 ZUBAT
+* added x11 channel support (patch from david guerizec)
+* added reverse port forwarding support
+* (bug 75370) raise an exception when contacting a broken SFTP server
+* (bug 80295) SSHClient shouldn't expand the user directory twice when reading
+  RSA/DSS keys
+* (bug 82383) typo in DSS key in SSHClient
+* (bug 83523) python 2.5 warning when encoding a file's modification time
+* if connecting to an SSH agent fails, silently fallback instead of raising
+  an exception
 
 v1.6.4 YANMA
 * fix setup.py on osx (oops!)

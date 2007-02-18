@@ -24,6 +24,7 @@
 # weedle (16aug06) - 1.6.2
 # xatu (14oct06) - 1.6.3
 # yanma (19nov06) - 1.6.4
+# zubat (18feb07) - 1.7
 
 
 ifeq ($(wildcard /sbin/md5),/sbin/md5)
