@@ -334,7 +334,7 @@ class Channel (object):
         @type screen_number: int
         @param auth_protocol: the name of the X11 authentication method used;
             if none is given, C{"MIT-MAGIC-COOKIE-1"} is used
-        @type auth_proto: str
+        @type auth_protocol: str
         @param auth_cookie: hexadecimal string containing the x11 auth cookie;
             if none is given, a secure random 128-bit value is generated
         @type auth_cookie: str
