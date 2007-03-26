@@ -215,3 +215,5 @@ v1.6 UMBREON
 * figure out how to parse ssh.com encrypted key files?
 * is it possible to poll on a set of events at once?
 * potentially create only one thread shared by all Transports
+* SSHClient: flag to turn off agent detection? flag to turn off keyfile discovery?
+

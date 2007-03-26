@@ -96,6 +96,7 @@ for c in locals().values():
     if issubclass(type(c), type) or type(c).__name__ == 'classobj':
         # classobj for exceptions :/
         c.__module__ = __name__
+del c
 
 from common import AUTH_SUCCESSFUL, AUTH_PARTIALLY_SUCCESSFUL, AUTH_FAILED, \
      OPEN_SUCCEEDED, OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED,  OPEN_FAILED_CONNECT_FAILED, \
@@ -112,6 +113,7 @@ __all__ = [ 'Transport',
             'SecurityOptions',
             'SubsystemHandler',
             'Channel',
+            'PKey',
             'RSAKey',
             'DSSKey',
             'Message',
