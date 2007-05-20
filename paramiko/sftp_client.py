@@ -114,7 +114,7 @@ class SFTPClient (BaseSFTP):
         """
         self._log(INFO, 'sftp session closed.')
         self.sock.close()
-
+    
     def listdir(self, path='.'):
         """
         Return a list containing the names of the entries in the given C{path}.
@@ -136,6 +136,11 @@ class SFTPClient (BaseSFTP):
         files in the given C{path}.  The list is in arbitrary order.  It does
         not include the special entries C{'.'} and C{'..'} even if they are
         present in the folder.
+        
+        The returned L{SFTPAttributes} objects will each have an additional
+        field: C{longname}, which may contain a formatted string of the file's
+        attributes, in unix format.  The content of this string will probably
+        depend on the SFTP server implementation.
 
         @param path: path to list (defaults to C{'.'})
         @type path: str
@@ -163,7 +168,7 @@ class SFTPClient (BaseSFTP):
             for i in range(count):
                 filename = _to_unicode(msg.get_string())
                 longname = _to_unicode(msg.get_string())
-                attr = SFTPAttributes._from_msg(msg, filename)
+                attr = SFTPAttributes._from_msg(msg, filename, longname)
                 if (filename != '.') and (filename != '..'):
                     filelist.append(attr)
         self._request(CMD_CLOSE, handle)
