@@ -115,6 +115,18 @@ class SFTPClient (BaseSFTP):
         self._log(INFO, 'sftp session closed.')
         self.sock.close()
     
+    def get_channel(self):
+        """
+        Return the underlying L{Channel} object for this SFTP session.  This
+        might be useful for doing things like setting a timeout on the channel.
+        
+        @return: the SSH channel
+        @rtype: L{Channel}
+        
+        @since: 1.7.1
+        """
+        return self.sock
+
     def listdir(self, path='.'):
         """
         Return a list containing the names of the entries in the given C{path}.
