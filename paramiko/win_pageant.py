@@ -27,12 +27,19 @@ import tempfile
 import mmap
 import array
 
-# if you're on windows, you should have these, i guess?
+# if you're on windows, you should have one of these, i guess?
+# ctypes is part of standard library since Python 2.5
+_has_win32all = False
+_has_ctypes = False
 try:
     import win32ui
     _has_win32all = True
 except ImportError:
-    _has_win32all = False
+    try:
+        import ctypes
+        _has_ctypes = True
+    except ImportError:
+        pass
 
 
 _AGENT_COPYDATA_ID = 0x804e50ba
@@ -43,11 +50,15 @@ win32con_WM_COPYDATA = 74
 
 
 def _get_pageant_window_object():
-    try:
-        hwnd = win32ui.FindWindow('Pageant', 'Pageant')
-        return hwnd
-    except win32ui.error:
-        pass
+    if _has_win32all:
+        try:
+            hwnd = win32ui.FindWindow('Pageant', 'Pageant')
+            return hwnd
+        except win32ui.error:
+            pass
+    elif _has_ctypes:
+        # Return 0 if there is no Pageant window.
+        return ctypes.windll.user32.FindWindowA('Pageant', 'Pageant')
     return None
 
 
@@ -55,12 +66,12 @@ def can_talk_to_agent():
     """
     Check to see if there is a "Pageant" agent we can talk to.
 
-    This checks both if we have the required libraries (win32all)
+    This checks both if we have the required libraries (win32all or ctypes)
     and if there is a Pageant currently running.
     """
-    if not _has_win32all or not _get_pageant_window_object():
-        return False
-    return True
+    if (_has_win32all or _has_ctypes) and _get_pageant_window_object():
+        return True
+    return False
 
 
 def _query_pageant(msg):
@@ -86,7 +97,15 @@ def _query_pageant(msg):
         # Create a string to use for the SendMessage function call
         cds = struct.pack("LLP", _AGENT_COPYDATA_ID, char_buffer_size, char_buffer_address)
 
-        response = hwnd.SendMessage(win32con_WM_COPYDATA, cds)
+        if _has_win32all:
+            response = hwnd.SendMessage(win32con_WM_COPYDATA, cds)
+        elif _has_ctypes:
+            _buf = array.array('B', cds)
+            _addr, _size = _buf.buffer_info()
+            response = ctypes.windll.user32.SendMessageA(hwnd, win32con_WM_COPYDATA, _size, _addr)
+        else:
+            response = 0
+ 
         if response > 0:
             datalen = pymap.read(4)
             retlen = struct.unpack('>I', datalen)[0]
