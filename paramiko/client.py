@@ -23,6 +23,7 @@ L{SSHClient}.
 from binascii import hexlify
 import getpass
 import os
+import socket
 
 from paramiko.agent import Agent
 from paramiko.common import *
@@ -212,7 +213,7 @@ class SSHClient (object):
         self._policy = policy
 
     def connect(self, hostname, port=22, username=None, password=None, pkey=None,
-                key_filename=None):
+                key_filename=None, timeout=None):
         """
         Connect to an SSH server and authenticate to it.  The server's host key
         is checked against the system host keys (see L{load_system_host_keys})
@@ -246,6 +247,8 @@ class SSHClient (object):
         @param key_filename: the filename of an optional private key to use
             for authentication
         @type key_filename: str
+        @param timeout: an optional timeout (in seconds) for the TCP connect
+        @type timeout: float
         
         @raise BadHostKeyException: if the server's host key could not be
             verified
@@ -253,7 +256,16 @@ class SSHClient (object):
         @raise SSHException: if there was any other error connecting or
             establishing an SSH session
         """
-        t = self._transport = Transport((hostname, port))
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        if timeout is not None:
+            try:
+                sock.settimeout(timeout)
+            except:
+                pass
+
+        sock.connect((hostname, port))
+        t = self._transport = Transport(sock)
+
         if self._log_channel is not None:
             t.set_log_channel(self._log_channel)
         t.start_client()
