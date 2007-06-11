@@ -1,0 +1,14 @@
+
+TO-DO
+=====
+
+* allow setting chmod bits on SFTPClient.open() for create
+* host-based auth (yuck!)
+* ctr forms of ciphers are missing (blowfish-ctr, aes128-ctr, aes256-ctr)
+* sftp protocol 6 support (ugh....) -- once it settles down more
+* make a simple example demonstrating use of SocketServer (besides forward.py?)
+* should SSHClient try to use openssh config files?
+* figure out how to parse ssh.com encrypted key files?
+* is it possible to poll on a set of events at once?
+* potentially create only one thread shared by all Transports
+* SSHClient: flag to turn off agent detection? flag to turn off keyfile discovery?
