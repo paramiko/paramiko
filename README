@@ -1,12 +1,23 @@
-paramiko 1.7
-"zubat" release, 18 feb 2007
 
-Copyright (c) 2003-2007  Robey Pointer <robey@lag.net>
+========
+paramiko
+========
 
-http://www.lag.net/paramiko/
+:Paramiko: Python SSH module
+:Copyright: Copyright (c) 2003-2007  Robey Pointer <robey@lag.net>
+:License: LGPL
+:Homepage: http://www.lag.net/paramiko/
 
 
-***  WHAT
+paramiko 1.7.1
+==============
+
+"Amy" release, 10 june 2007
+
+
+
+What
+----
 
 "paramiko" is a combination of the esperanto words for "paranoid" and
 "friend".  it's a module for python 2.2+ that implements the SSH2 protocol
@@ -25,62 +36,68 @@ the package and its API is fairly well documented in the "doc/" folder
 that should have come with this archive.
 
 
-***  REQUIREMENTS
+Requirements
+------------
 
-python 2.3	<http://www.python.org/>
+  - python 2.3	<http://www.python.org/>
     (python 2.2 is also supported, but not recommended)
-pycrypto 1.9+	<http://www.amk.ca/python/code/crypto.html>
+  - pycrypto 1.9+	<http://www.amk.ca/python/code/crypto.html>
     (2.0 works too)
 
 pycrypto compiled for Win32 can be downloaded from the HashTar homepage:
     http://nitace.bsd.uchicago.edu:8080/hashtar
+
 you can also build it yourself using the free MinGW tools and this command
-line (thanks to Roger Binns for the info):
+line (thanks to Roger Binns for the info)::
+
     python setup.py build --compiler=mingw32 bdist_wininst
 
 If you have setuptools, you can build and install paramiko and all its
-dependencies with this command (as root):
+dependencies with this command (as root)::
+
     easy_install ./
 
 
-***  PORTABILITY
+Portability
+-----------
 
 i code and test this library on Linux and MacOS X.  for that reason, i'm
-pretty sure that it works for all posix platforms, including MacOS.  i
-also think it will work on Windows, though i've never tested it there.  if
-you run into Windows problems, send me a patch: portability is important
+pretty sure that it works for all posix platforms, including MacOS.  it
+should also work on Windows, though i don't test it as frequently there.
+if you run into Windows problems, send me a patch: portability is important
 to me.
 
 python 2.2 may work, thanks to some patches from Roger Binns.  things to
 watch out for:
-* sockets in 2.2 don't support timeouts, so the 'select' module is
-  imported to do polling.  
-* logging is mostly stubbed out.  it works just enough to let paramiko
-  create log files for debugging, if you want them.  to get real logging,
-  you can backport python 2.3's logging package.  Roger has done that
-  already:
-  http://sourceforge.net/project/showfiles.php?group_id=75211&package_id=113804
+
+    * sockets in 2.2 don't support timeouts, so the 'select' module is
+      imported to do polling.  
+    * logging is mostly stubbed out.  it works just enough to let paramiko
+      create log files for debugging, if you want them.  to get real logging,
+      you can backport python 2.3's logging package.  Roger has done that
+      already:
+      http://sourceforge.net/project/showfiles.php?group_id=75211&package_id=113804
 
 you really should upgrade to python 2.3.  laziness is no excuse! :)
 
 some python distributions don't include the utf-8 string encodings, for
 reasons of space (misdirected as that is).  if your distribution is
-missing encodings, you'll see an error like this:
+missing encodings, you'll see an error like this::
 
-LookupError: no codec search functions registered: can't find encoding
+    LookupError: no codec search functions registered: can't find encoding
 
 this means you need to copy string encodings over from a working system.
 (it probably only happens on embedded systems, not normal python
-installls.)
-Valeriy Pogrebitskiy says the best place to look is
-'.../lib/python*/encodings/__init__.py'.
+installls.)  Valeriy Pogrebitskiy says the best place to look is
+``.../lib/python*/encodings/__init__.py``.
 
 
-***  BUGS & SUPPORT
+Bugs & Support
+--------------
 
 there's a launchpage page for paramiko, with a bug tracker:
 
-    http://www.launchpad.net/products/paramiko/
+    https://launchpad.net/paramiko/
     
 this is the primary place to file and browse bug reports.
 
@@ -89,10 +106,11 @@ there's also a low-traffic mailing list for support and discussions:
     http://www.lag.net/mailman/listinfo/paramiko
 
 
-***  DEMO
+Demo
+----
 
 several demo scripts come with paramiko to demonstrate how to use it.
-probably the simplest demo of all is this:
+probably the simplest demo of all is this::
 
     import paramiko, base64
     key = paramiko.RSAKey(data=base64.decodestring('AAA...'))
@@ -104,37 +122,38 @@ probably the simplest demo of all is this:
         print '... ' + line.strip('\n')
     client.close()
 
-...which prints out the results of executing 'ls' on a remote server.
+...which prints out the results of executing ``ls`` on a remote server.
 (the host key 'AAA...' should of course be replaced by the actual base64
 encoding of the host key.  if you skip host key verification, the
 connection is not secure!)
 
 the following example scripts (in demos/) get progressively more detailed:
 
-demo_simple.py
+:demo_simple.py:
     calls invoke_shell() and emulates a terminal/tty through which you can
     execute commands interactively on a remote server.  think of it as a
     poor man's ssh command-line client.
 
-demo.py
+:demo.py:
     same as demo_simple.py, but allows you to authenticiate using a
     private key, attempts to use an SSH-agent if present, and uses the long
     form of some of the API calls.
 
-forward.py
+:forward.py:
     command-line script to set up port-forwarding across an ssh transport.
     (requires python 2.3.)
 
-demo_sftp.py
+:demo_sftp.py:
     opens an sftp session and does a few simple file operations.
 
-demo_server.py
+:demo_server.py:
     an ssh server that listens on port 2200 and accepts a login for
     'robey' (password 'foo'), and pretends to be a BBS.  meant to be a
     very simple demo of writing an ssh server.
 
 
-***  USE
+Use
+---
 
 the demo scripts are probably the best example of how to use this package.
 there is also a lot of documentation, generated with epydoc, in the doc/
@@ -142,78 +161,8 @@ folder.  point your browser there.  seriously, do it.  mad props to
 epydoc, which actually motivated me to write more documentation than i
 ever would have before.
 
-there are also unit tests here:
+there are also unit tests here::
+
     $ python ./test.py
+
 which will verify that most of the core components are working correctly.
-
-
-***  WHAT'S NEW
-
-highlights of what's new in each release:
-
-v1.7 ZUBAT
-* added x11 channel support (patch from david guerizec)
-* added reverse port forwarding support
-* (bug 75370) raise an exception when contacting a broken SFTP server
-* (bug 80295) SSHClient shouldn't expand the user directory twice when reading
-  RSA/DSS keys
-* (bug 82383) typo in DSS key in SSHClient
-* (bug 83523) python 2.5 warning when encoding a file's modification time
-* if connecting to an SSH agent fails, silently fallback instead of raising
-  an exception
-
-v1.6.4 YANMA
-* fix setup.py on osx (oops!)
-* (bug 69330) check for the existence of RSA/DSA keys before trying to open
-  them in SFTPClient
-* (bug 69222) catch EAGAIN in socket code to workaround a bug in recent
-  Linux 2.6 kernels
-* (bug 70398) improve dict emulation in HostKeys objects
-* try harder to make sure all worker threads are joined on Transport.close()
-
-v1.6.3 XATU
-* fixed bug where HostKeys.__setitem__ wouldn't always do the right thing
-* fixed bug in SFTPClient.chdir and SFTPAttributes.__str__ [patch from
-  mike barber]
-* try harder not to raise EOFError from within SFTPClient
-* fixed bug where a thread waiting in accept() could block forever if the
-  transport dies [patch from mike looijmans]
-
-v1.6.2 WEEDLE
-* added support for "old" group-exchange server mode, for compatibility
-  with the windows putty client
-* fixed some more interactions with SFTP file readv() and prefetch()
-* when saving the known_hosts file, preserve the original order [patch from
-  warren young]
-* fix a couple of broken lines when exporting classes (bug 55946)
-
-v1.6.1 VULPIX
-* more unit tests fixed for windows/cygwin (thanks to alexander belchenko)
-* a couple of fixes related to exceptions leaking out of SFTPClient
-* added ability to set items in HostKeys via __setitem__
-* HostKeys now retains order and has a save() method
-* added PKey.write_private_key and PKey.from_private_key
-
-v1.6 UMBREON
-* pageant support on Windows thanks to john arbash meinel and todd whiteman
-* fixed unit tests to work under windows and cygwin (thanks to alexander
-  belchenko for debugging)
-* various bugfixes/tweaks to SFTP file prefetch
-* added SSHClient for a higher-level API
-* SFTP readv() now yields results as it gets them
-* several APIs changed to throw an exception instead of "False" on failure
-
-
-***  MISSING LINKS
-
-* allow setting chmod bits on SFTPClient.open() for create
-* host-based auth (yuck!)
-* ctr forms of ciphers are missing (blowfish-ctr, aes128-ctr, aes256-ctr)
-* sftp protocol 6 support (ugh....) -- once it settles down more
-* make a simple example demonstrating use of SocketServer (besides forward.py?)
-* should SSHClient try to use openssh config files?
-* figure out how to parse ssh.com encrypted key files?
-* is it possible to poll on a set of events at once?
-* potentially create only one thread shared by all Transports
-* SSHClient: flag to turn off agent detection? flag to turn off keyfile discovery?
-
