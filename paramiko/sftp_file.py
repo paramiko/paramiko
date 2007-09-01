@@ -89,7 +89,7 @@ class SFTPFile (BufferedFile):
         k = [i for i in self._prefetch_reads if i[0] <= offset]
         if len(k) == 0:
             return False
-        k.sort(cmp=lambda x, y: cmp(x[0], y[0]))
+        k.sort(lambda x, y: cmp(x[0], y[0]))
         buf_offset, buf_size = k[-1]
         if buf_offset + buf_size <= offset:
             # prefetch request ends before this one begins
