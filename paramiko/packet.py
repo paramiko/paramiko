@@ -218,6 +218,9 @@ class Packetizer (object):
                 # we need to work around it.
                 if (type(e.args) is tuple) and (len(e.args) > 0) and (e.args[0] == errno.EAGAIN):
                     got_timeout = True
+                elif (type(e.args) is tuple) and (len(e.args) > 0) and (e.args[0] == errno.EINTR):
+                    # syscall interrupted; try again
+                    pass
                 elif self.__closed:
                     raise EOFError()
                 else:
@@ -241,6 +244,9 @@ class Packetizer (object):
             except socket.error, e:
                 if (type(e.args) is tuple) and (len(e.args) > 0) and (e.args[0] == errno.EAGAIN):
                     got_timeout = True
+                elif (type(e.args) is tuple) and (len(e.args) > 0) and (e.args[0] == errno.EINTR):
+                    # syscall interrupted; try again
+                    pass
                 else:
                     n = -1
             except Exception:
