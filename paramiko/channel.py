@@ -782,14 +782,14 @@ class Channel (object):
     def fileno(self):
         """
         Returns an OS-level file descriptor which can be used for polling, but
-        but I{not} for reading or writing).  This is primaily to allow python's
+        but I{not} for reading or writing.  This is primaily to allow python's
         C{select} module to work.
 
         The first time C{fileno} is called on a channel, a pipe is created to
         simulate real OS-level file descriptor (FD) behavior.  Because of this,
         two OS-level FDs are created, which will use up FDs faster than normal.
-        You won't notice this effect unless you open hundreds or thousands of
-        channels simultaneously, but it's still notable.
+        (You won't notice this effect unless you have hundreds of channels
+        open at the same time.)
 
         @return: an OS-level file descriptor
         @rtype: int
@@ -803,7 +803,9 @@ class Channel (object):
                 return self._pipe.fileno()
             # create the pipe and feed in any existing data
             self._pipe = pipe.make_pipe()
-            self.in_buffer.set_event(self._pipe)
+            p1, p2 = pipe.make_or_pipe(self._pipe)
+            self.in_buffer.set_event(p1)
+            self.in_stderr_buffer.set_event(p2)
             return self._pipe.fileno()
         finally:
             self.lock.release()

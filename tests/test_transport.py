@@ -639,3 +639,41 @@ class TransportTest (unittest.TestCase):
         self.tc.cancel_port_forward('', port)
         self.assertTrue(self.server._listen is None)
 
+    def test_K_stderr_select(self):
+        """
+        verify that select() on a channel works even if only stderr is
+        receiving data.
+        """
+        self.setup_test_server()
+        chan = self.tc.open_session()
+        chan.invoke_shell()
+        schan = self.ts.accept(1.0)
+
+        # nothing should be ready        
+        r, w, e = select.select([chan], [], [], 0.1)
+        self.assertEquals([], r)
+        self.assertEquals([], w)
+        self.assertEquals([], e)
+        
+        schan.send_stderr('hello\n')
+        
+        # something should be ready now (give it 1 second to appear)
+        for i in range(10):
+            r, w, e = select.select([chan], [], [], 0.1)
+            if chan in r:
+                break
+            time.sleep(0.1)
+        self.assertEquals([chan], r)
+        self.assertEquals([], w)
+        self.assertEquals([], e)
+
+        self.assertEquals('hello\n', chan.recv_stderr(6))
+        
+        # and, should be dead again now
+        r, w, e = select.select([chan], [], [], 0.1)
+        self.assertEquals([], r)
+        self.assertEquals([], w)
+        self.assertEquals([], e)
+
+        schan.close()
+        chan.close()
