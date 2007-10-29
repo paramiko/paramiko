@@ -65,3 +65,4 @@ test:
 # transport.py
 #
 # POST md5sum on website!
+# RUN setup.py 

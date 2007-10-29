@@ -64,6 +64,7 @@ class KexGex (object):
             # only used for unit tests: we shouldn't ever send this
             m.add_byte(chr(_MSG_KEXDH_GEX_REQUEST_OLD))
             m.add_int(self.preferred_bits)
+            self.old_style = True
         else:
             m.add_byte(chr(_MSG_KEXDH_GEX_REQUEST))
             m.add_int(self.min_bits)
@@ -228,9 +229,11 @@ class KexGex (object):
         hm.add(self.transport.local_version, self.transport.remote_version,
                self.transport.local_kex_init, self.transport.remote_kex_init,
                host_key)
-        hm.add_int(self.min_bits)
+        if not self.old_style:
+            hm.add_int(self.min_bits)
         hm.add_int(self.preferred_bits)
-        hm.add_int(self.max_bits)
+        if not self.old_style:
+            hm.add_int(self.max_bits)
         hm.add_mpint(self.p)
         hm.add_mpint(self.g)
         hm.add_mpint(self.e)
