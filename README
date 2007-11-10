@@ -88,7 +88,7 @@ missing encodings, you'll see an error like this::
 
 this means you need to copy string encodings over from a working system.
 (it probably only happens on embedded systems, not normal python
-installls.)  Valeriy Pogrebitskiy says the best place to look is
+installs.)  Valeriy Pogrebitskiy says the best place to look is
 ``.../lib/python*/encodings/__init__.py``.
 
 

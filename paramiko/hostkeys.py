@@ -42,10 +42,10 @@ class HostKeyEntry:
     def from_line(cls, line):
         """
         Parses the given line of text to find the names for the host,
-        the type of key given on this line in the known_hosts file, and
-        the key data.
+        the type of key, and the key data. The line is expected to be in the
+        format used by the openssh known_hosts file.
 
-        Lines are expected to not have leading or training whitespace.
+        Lines are expected to not have leading or trailing whitespace.
         We don't bother to check for comments or empty lines.  All of
         that should be taken care of before sending the line to us.
 
