@@ -348,6 +348,17 @@ class SSHClient (object):
         @rtype: L{SFTPClient}
         """
         return self._transport.open_sftp_client()
+    
+    def get_transport(self):
+        """
+        Return the underlying L{Transport} object for this SSH connection.
+        This can be used to perform lower-level tasks, like opening specific
+        kinds of channels.
+        
+        @return: the Transport for this connection
+        @rtype: L{Transport}
+        """
+        return self._transport
         
     def _auth(self, username, password, pkey, key_filename):
         """
