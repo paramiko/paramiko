@@ -294,6 +294,8 @@ class SSHClient (object):
         """
         Close this SSHClient and its underlying L{Transport}.
         """
+        if self._transport is None:
+            return
         self._transport.close()
         self._transport = None
 
