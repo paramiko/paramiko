@@ -76,7 +76,7 @@ class BufferedPipe (object):
             if self._event is not None:
                 self._event.set()
             self._buffer.fromstring(data)
-    	    self._cv.notifyAll()
+            self._cv.notifyAll()
         finally:
             self._lock.release()
 
