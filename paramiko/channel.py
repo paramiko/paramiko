@@ -632,6 +632,27 @@ class Channel (object):
 
         return out
 
+    def send_ready(self):
+        """
+        Returns true if data can be written to this channel without blocking.
+        This means the channel is either closed (so any write attempt would
+        return immediately) or there is at least one byte of space in the 
+        outbound buffer. If there is at least one byte of space in the
+        outbound buffer, a L{send} call will succeed immediately and return
+        the number of bytes actually written.
+        
+        @return: C{True} if a L{send} call on this channel would immediately
+            succeed or fail
+        @rtype: boolean
+        """
+        self.lock.acquire()
+        try:
+            if self.closed or self.eof_sent:
+                return True
+            return self.out_window_size > 0
+        finally:
+            self.lock.release()
+    
     def send(self, s):
         """
         Send data to the channel.  Returns the number of bytes sent, or 0 if
@@ -640,9 +661,9 @@ class Channel (object):
         transmitted, the application needs to attempt delivery of the remaining
         data.
 
-        @param s: data to send.
+        @param s: data to send
         @type s: str
-        @return: number of bytes actually sent.
+        @return: number of bytes actually sent
         @rtype: int
 
         @raise socket.timeout: if no data could be sent before the timeout set

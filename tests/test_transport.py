@@ -677,3 +677,26 @@ class TransportTest (unittest.TestCase):
 
         schan.close()
         chan.close()
+
+    def test_L_send_ready(self):
+        """
+        verify that send_ready() indicates when a send would not block.
+        """
+        self.setup_test_server()
+        chan = self.tc.open_session()
+        chan.invoke_shell()
+        schan = self.ts.accept(1.0)
+
+        self.assertEquals(chan.send_ready(), True)
+        total = 0
+        K = '*' * 1024
+        while total < 1024 * 1024:
+            chan.send(K)
+            total += len(K)
+            if not chan.send_ready():
+                break
+        self.assert_(total < 1024 * 1024)
+
+        schan.close()
+        chan.close()
+        self.assertEquals(chan.send_read(), True)
