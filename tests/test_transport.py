@@ -699,4 +699,4 @@ class TransportTest (unittest.TestCase):
 
         schan.close()
         chan.close()
-        self.assertEquals(chan.send_read(), True)
+        self.assertEquals(chan.send_ready(), True)
