@@ -392,6 +392,12 @@ class BufferedFile (object):
         """
         Subclasses call this method to initialize the BufferedFile.
         """
+        # set bufsize in any event, because it's used for readline().
+        self._bufsize = self._DEFAULT_BUFSIZE
+        if bufsize < 0:
+            # do no buffering by default, because otherwise writes will get
+            # buffered in a way that will probably confuse people.
+            bufsize = 0
         if bufsize == 1:
             # apparently, line buffering only affects writes.  reads are only
             # buffered if you call readline (directly or indirectly: iterating
@@ -400,6 +406,11 @@ class BufferedFile (object):
         elif bufsize > 1:
             self._bufsize = bufsize
             self._flags |= self.FLAG_BUFFERED
+            self._flags &= ~self.FLAG_LINE_BUFFERED
+        elif bufsize == 0:
+            # unbuffered
+            self._flags &= ~(self.FLAG_BUFFERED | self.FLAG_LINE_BUFFERED)
+
         if ('r' in mode) or ('+' in mode):
             self._flags |= self.FLAG_READ
         if ('w' in mode) or ('+' in mode):
