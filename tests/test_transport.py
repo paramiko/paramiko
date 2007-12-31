@@ -119,6 +119,10 @@ class NullServer (ServerInterface):
         self._listen.close()
         self._listen = None
 
+    def check_channel_direct_tcpip_request(self, chanid, origin, destination):
+        self._tcpip_dest = destination
+        return OPEN_SUCCEEDED
+
 
 class TransportTest (unittest.TestCase):
 
@@ -625,7 +629,7 @@ class TransportTest (unittest.TestCase):
         cs = socket.socket()
         cs.connect(('', port))
         ss, _ = self.server._listen.accept()
-        sch = self.ts.open_forwarded_tcpip_channel(ss.getpeername(), ss.getsockname())
+        sch = self.ts.open_forwarded_tcpip_channel(ss.getsockname(), ss.getpeername())
         cch = self.tc.accept()
         
         sch.send('hello')
@@ -639,7 +643,36 @@ class TransportTest (unittest.TestCase):
         self.tc.cancel_port_forward('', port)
         self.assertTrue(self.server._listen is None)
 
-    def test_K_stderr_select(self):
+    def test_K_port_forwarding(self):
+        """
+        verify that a client can forward new connections from a locally-
+        forwarded port.
+        """
+        self.setup_test_server()
+        chan = self.tc.open_session()
+        chan.exec_command('yes')
+        schan = self.ts.accept(1.0)
+        
+        # open a port on the "server" that the client will ask to forward to.
+        greeting_server = socket.socket()
+        greeting_server.listen(1)
+        greeting_port = greeting_server.getsockname()[1]
+
+        cs = self.tc.open_channel('direct-tcpip', ('', greeting_port), ('', 9000))
+        sch = self.ts.accept(1.0)
+        cch = socket.socket()
+        cch.connect(self.server._tcpip_dest)
+        
+        ss, _ = greeting_server.accept()
+        ss.send('Hello!\n')
+        ss.close()
+        sch.send(cch.recv(8192))
+        sch.close()
+        
+        self.assertEquals('Hello!\n', cs.recv(7))
+        cs.close()
+
+    def test_L_stderr_select(self):
         """
         verify that select() on a channel works even if only stderr is
         receiving data.
@@ -678,7 +711,7 @@ class TransportTest (unittest.TestCase):
         schan.close()
         chan.close()
 
-    def test_L_send_ready(self):
+    def test_M_send_ready(self):
         """
         verify that send_ready() indicates when a send would not block.
         """

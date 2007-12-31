@@ -492,6 +492,47 @@ class ServerInterface (object):
         @rtype: bool
         """
         return False
+    
+    def check_channel_direct_tcpip_request(self, chanid, origin, destination):
+        """
+        Determine if a local port forwarding channel will be granted, and
+        return C{OPEN_SUCCEEDED} or an error code.  This method is
+        called in server mode when the client requests a channel, after
+        authentication is complete.
+
+        The C{chanid} parameter is a small number that uniquely identifies the
+        channel within a L{Transport}.  A L{Channel} object is not created
+        unless this method returns C{OPEN_SUCCEEDED} -- once a
+        L{Channel} object is created, you can call L{Channel.get_id} to
+        retrieve the channel ID.
+
+        The origin and destination parameters are (ip_address, port) tuples
+        that correspond to both ends of the TCP connection in the forwarding
+        tunnel.
+
+        The return value should either be C{OPEN_SUCCEEDED} (or
+        C{0}) to allow the channel request, or one of the following error
+        codes to reject it:
+            - C{OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED}
+            - C{OPEN_FAILED_CONNECT_FAILED}
+            - C{OPEN_FAILED_UNKNOWN_CHANNEL_TYPE}
+            - C{OPEN_FAILED_RESOURCE_SHORTAGE}
+        
+        The default implementation always returns
+        C{OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED}.
+
+        @param chanid: ID of the channel
+        @type chanid: int
+        @param origin: 2-tuple containing the IP address and port of the
+            originator (client side)
+        @type origin: tuple
+        @param destination: 2-tuple containing the IP address and port of the
+            destination (server side)
+        @type destination: tuple
+        @return: a success or failure code (listed above)
+        @rtype: int
+        """
+        return OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED
 
 
 class SubsystemHandler (threading.Thread):

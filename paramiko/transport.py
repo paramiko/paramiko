@@ -1942,7 +1942,17 @@ class Transport (threading.Thread):
                 my_chanid = self._next_channel()
             finally:
                 self.lock.release()
-            reason = self.server_object.check_channel_request(kind, my_chanid) 
+            if kind == 'direct-tcpip':
+                # handle direct-tcpip requests comming from the client
+                dest_addr = m.get_string()
+                dest_port = m.get_int()
+                origin_addr = m.get_string()
+                origin_port = m.get_int()
+                reason = self.server_object.check_channel_direct_tcpip_request(
+                                my_chanid, (origin_addr, origin_port), 
+                                           (dest_addr, dest_port))
+            else:
+                reason = self.server_object.check_channel_request(kind, my_chanid)
             if reason != OPEN_SUCCEEDED:
                 self._log(DEBUG, 'Rejecting "%s" channel request from client.' % kind)
                 reject = True
