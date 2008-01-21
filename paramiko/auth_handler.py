@@ -197,6 +197,9 @@ class AuthHandler (object):
             m.add_string(self.auth_method)
             if self.auth_method == 'password':
                 m.add_boolean(False)
+                password = self.password
+                if isinstance(password, unicode):
+                    password = password.encode('UTF-8')
                 m.add_string(self.password.encode('UTF-8'))
             elif self.auth_method == 'publickey':
                 m.add_boolean(True)
