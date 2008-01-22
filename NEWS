@@ -8,6 +8,16 @@ Highlights of what's new in each release:
 Releases
 ========
 
+v1.7.2 (Basil) 21jan08
+----------------------
+  * (bug 137219) catch EINTR and handle correctly
+  * (bug 157205) fix select() to trigger on stderr for a channel too
+  * added SSHClient.get_transport()
+  * added Channel.send_ready()
+  * added direct-tcpip forwarding [patch from david guerizec]
+  * fixed the PRNG to be more secure on windows and in cases where fork() is
+    called [patch from dwayne litzenberger]
+
 v1.7.1 (Amy) 10jun07
 --------------------
   * windows SSH agent support can use the 'ctypes' module now if 'win32all' is

@@ -26,6 +26,7 @@
 # yanma (19nov06) - 1.6.4
 # zubat (18feb07) - 1.7
 # amy (10jun07) - 1.7.1
+# basil (21jan08) - 1.7.2
 
 
 ifeq ($(wildcard /sbin/md5),/sbin/md5)
