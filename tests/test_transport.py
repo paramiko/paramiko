@@ -43,49 +43,11 @@ class NullServer (ServerInterface):
     def get_allowed_auths(self, username):
         if username == 'slowdive':
             return 'publickey,password'
-        if username == 'paranoid':
-            if not self.paranoid_did_password and not self.paranoid_did_public_key:
-                return 'publickey,password'
-            elif self.paranoid_did_password:
-                return 'publickey'
-            else:
-                return 'password'
-        if username == 'commie':
-            return 'keyboard-interactive'
         return 'publickey'
 
     def check_auth_password(self, username, password):
         if (username == 'slowdive') and (password == 'pygmalion'):
             return AUTH_SUCCESSFUL
-        if (username == 'paranoid') and (password == 'paranoid'):
-            # 2-part auth (even openssh doesn't support this)
-            self.paranoid_did_password = True
-            if self.paranoid_did_public_key:
-                return AUTH_SUCCESSFUL
-            return AUTH_PARTIALLY_SUCCESSFUL
-        if (username == 'utf8') and (password == u'\u2022'.encode('utf-8')):
-            return AUTH_SUCCESSFUL
-        return AUTH_FAILED
-
-    def check_auth_publickey(self, username, key):
-        if (username == 'paranoid') and (key == self.paranoid_key):
-            # 2-part auth
-            self.paranoid_did_public_key = True
-            if self.paranoid_did_password:
-                return AUTH_SUCCESSFUL
-            return AUTH_PARTIALLY_SUCCESSFUL
-        return AUTH_FAILED
-    
-    def check_auth_interactive(self, username, submethods):
-        if username == 'commie':
-            self.username = username
-            return InteractiveQuery('password', 'Please enter a password.', ('Password', False))
-        return AUTH_FAILED
-    
-    def check_auth_interactive_response(self, responses):
-        if self.username == 'commie':
-            if (len(responses) == 1) and (responses[0] == 'cat'):
-                return AUTH_SUCCESSFUL
         return AUTH_FAILED
 
     def check_channel_request(self, kind, chanid):
