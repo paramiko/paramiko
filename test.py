@@ -39,6 +39,7 @@ from test_hostkeys import HostKeysTest
 from test_pkey import KeyTest
 from test_kex import KexTest
 from test_packetizer import PacketizerTest
+from test_auth import AuthTest
 from test_transport import TransportTest
 from test_sftp import SFTPTest
 from test_sftp_big import BigSFTPTest
@@ -125,6 +126,7 @@ def main():
     suite.addTest(unittest.makeSuite(KexTest))
     suite.addTest(unittest.makeSuite(PacketizerTest))
     if options.use_transport:
+        suite.addTest(unittest.makeSuite(AuthTest))
         suite.addTest(unittest.makeSuite(TransportTest))
     suite.addTest(unittest.makeSuite(SSHClientTest))
     if options.use_sftp:
