@@ -1071,9 +1071,9 @@ class Transport (threading.Thread):
         step.  Otherwise, in the normal case, an empty list is returned.
         
         @param username: the username to authenticate as
-        @type username: string
+        @type username: str
         @param password: the password to authenticate with
-        @type password: string
+        @type password: str or unicode
         @param event: an event to trigger when the authentication attempt is
             complete (whether it was successful or not)
         @type event: threading.Event

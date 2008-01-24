@@ -200,7 +200,7 @@ class AuthHandler (object):
                 password = self.password
                 if isinstance(password, unicode):
                     password = password.encode('UTF-8')
-                m.add_string(self.password.encode('UTF-8'))
+                m.add_string(password)
             elif self.auth_method == 'publickey':
                 m.add_boolean(True)
                 m.add_string(self.private_key.get_name())
@@ -283,12 +283,22 @@ class AuthHandler (object):
             result = self.transport.server_object.check_auth_none(username)
         elif method == 'password':
             changereq = m.get_boolean()
-            password = m.get_string().decode('UTF-8', 'replace')
+            password = m.get_string()
+            try:
+                password = password.decode('UTF-8')
+            except UnicodeError:
+                # some clients/servers expect non-utf-8 passwords!
+                # in this case, just return the raw byte string.
+                pass
             if changereq:
                 # always treated as failure, since we don't support changing passwords, but collect
                 # the list of valid auth types from the callback anyway
                 self.transport._log(DEBUG, 'Auth request to change passwords (rejected)')
-                newpassword = m.get_string().decode('UTF-8', 'replace')
+                newpassword = m.get_string()
+                try:
+                    newpassword = newpassword.decode('UTF-8', 'replace')
+                except UnicodeError:
+                    pass
                 result = AUTH_FAILED
             else:
                 result = self.transport.server_object.check_auth_password(username, password)
