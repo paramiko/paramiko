@@ -213,7 +213,7 @@ class SSHClient (object):
         self._policy = policy
 
     def connect(self, hostname, port=22, username=None, password=None, pkey=None,
-                key_filename=None, timeout=None):
+                key_filename=None, timeout=None, allow_agent=True):
         """
         Connect to an SSH server and authenticate to it.  The server's host key
         is checked against the system host keys (see L{load_system_host_keys})
@@ -249,7 +249,9 @@ class SSHClient (object):
         @type key_filename: str
         @param timeout: an optional timeout (in seconds) for the TCP connect
         @type timeout: float
-        
+        @param allow_agent: set to False to disable connecting to the SSH agent
+        @type allow_agent: bool
+
         @raise BadHostKeyException: if the server's host key could not be
             verified
         @raise AuthenticationException: if authentication failed
@@ -288,7 +290,8 @@ class SSHClient (object):
 
         if username is None:
             username = getpass.getuser()
-        self._auth(username, password, pkey, key_filename)
+        
+        self._auth(username, password, pkey, key_filename, allow_agent)
     
     def close(self):
         """
@@ -364,7 +367,7 @@ class SSHClient (object):
         """
         return self._transport
         
-    def _auth(self, username, password, pkey, key_filename):
+    def _auth(self, username, password, pkey, key_filename, allow_agent):
         """
         Try, in order:
         
@@ -394,14 +397,15 @@ class SSHClient (object):
                     return
                 except SSHException, e:
                     saved_exception = e
-
-        for key in Agent().get_keys():
-            try:
-                self._log(DEBUG, 'Trying SSH agent key %s' % hexlify(key.get_fingerprint()))
-                self._transport.auth_publickey(username, key)
-                return
-            except SSHException, e:
-                saved_exception = e
+        
+        if allow_agent:
+            for key in Agent().get_keys():
+                try:
+                    self._log(DEBUG, 'Trying SSH agent key %s' % hexlify(key.get_fingerprint()))
+                    self._transport.auth_publickey(username, key)
+                    return
+                except SSHException, e:
+                    saved_exception = e
 
         keyfiles = []
         rsa_key = os.path.expanduser('~/.ssh/id_rsa')
