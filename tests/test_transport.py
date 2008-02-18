@@ -90,6 +90,9 @@ class NullServer (ServerInterface):
 
 class TransportTest (unittest.TestCase):
 
+    assertTrue = unittest.TestCase.failUnless   # for Python 2.3 and below
+    assertFalse = unittest.TestCase.failIf      # for Python 2.3 and below
+
     def setUp(self):
         self.socks = LoopSocket()
         self.sockc = LoopSocket()

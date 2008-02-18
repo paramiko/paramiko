@@ -41,6 +41,9 @@ def close_thread(pipe):
 
 class BufferedPipeTest (unittest.TestCase):
 
+    assertTrue = unittest.TestCase.failUnless   # for Python 2.3 and below
+    assertFalse = unittest.TestCase.failIf      # for Python 2.3 and below
+
     def test_1_buffered_pipe(self):
         p = BufferedPipe()
         self.assert_(not p.read_ready())
