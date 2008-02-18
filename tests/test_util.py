@@ -142,3 +142,9 @@ class UtilTest (unittest.TestCase):
         finally:
             os.unlink('hostfile.temp')
 
+    def test_6_random(self):
+        from paramiko.common import randpool
+        # just verify that we can pull out 32 bytes and not get an exception.
+        x = randpool.get_bytes(32)
+        self.assertEquals(len(x), 32)
+        

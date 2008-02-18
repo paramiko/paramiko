@@ -44,7 +44,7 @@ if osrandom_source is None:
     try:
         _dev_urandom = open("/dev/urandom", "rb", 0)
         def urandom(bytes):
-            return _def_urandom.read(bytes)
+            return _dev_urandom.read(bytes)
         osrandom_source = "/dev/urandom"
     except (OSError, IOError):
         pass
