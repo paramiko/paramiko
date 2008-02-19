@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 # Copyright (C) 2003-2007  Robey Pointer <robey@lag.net>
 #
@@ -37,10 +37,10 @@ from optparse import OptionParser
 
 import paramiko
 
-DEFAULT_PORT = 4000
 SSH_PORT = 22
-VERBOSE = True
-READPASS = False
+DEFAULT_PORT = 4000
+
+g_verbose = True
 
 
 class ForwardServer (SocketServer.ThreadingTCPServer):
@@ -65,7 +65,8 @@ class Handler (SocketServer.BaseRequestHandler):
                     (self.chain_host, self.chain_port))
             return
 
-        verbose('Connected!  Tunnel open.')
+        verbose('Connected!  Tunnel open %r -> %r -> %r' % (self.request.getpeername(),
+                                                            chan.getpeername(), (self.chain_host, self.chain_port)))
         while True:
             r, w, x = select.select([self.request, chan], [], [])
             if self.request in r:
@@ -80,7 +81,7 @@ class Handler (SocketServer.BaseRequestHandler):
                 self.request.send(data)
         chan.close()
         self.request.close()
-        verbose('Tunnel closed.')
+        verbose('Tunnel closed from %r' % (self.request.getpeername(),))
 
 
 def forward_tunnel(local_port, remote_host, remote_port, transport):
@@ -93,131 +94,88 @@ def forward_tunnel(local_port, remote_host, remote_port, transport):
         ssh_transport = transport
     ForwardServer(('', local_port), SubHander).serve_forever()
 
-def find_default_key_file():
-    filename = os.path.expanduser('~/.ssh/id_rsa')
-    if os.access(filename, os.R_OK):
-        return filename
-    filename = os.path.expanduser('~/ssh/id_rsa')
-    if os.access(filename, os.R_OK):
-        return filename
-    filename = os.path.expanduser('~/.ssh/id_dsa')
-    if os.access(filename, os.R_OK):
-        return filename
-    filename = os.path.expanduser('~/ssh/id_dsa')
-    if os.access(filename, os.R_OK):
-        return filename
-    return ''
 
 def verbose(s):
-    if VERBOSE:
+    if g_verbose:
         print s
 
 
-#####
+HELP = """\
+Set up a forward tunnel across an SSH server, using paramiko. A local port
+(given with -l) is forwarded across an SSH session to an address:port from
+the SSH server. This is similar to the openssh -L option.
+"""
 
 
-parser = OptionParser(usage='usage: %prog [options] <remote-addr>:<remote-port>',
-                      version='%prog 1.0')
-parser.add_option('-q', '--quiet', action='store_false', dest='verbose', default=VERBOSE,
-                  help='squelch all informational output')
-parser.add_option('-l', '--local-port', action='store', type='int', dest='port',
-                  default=DEFAULT_PORT,
-                  help='local port to forward (default: %d)' % DEFAULT_PORT)
-parser.add_option('-r', '--host', action='store', type='string', dest='ssh_host',
-                  help='SSH host to tunnel through (required)')
-parser.add_option('-p', '--port', action='store', type='int', dest='ssh_port', default=SSH_PORT,
-                  help='SSH port to tunnel through (default: %d)' % SSH_PORT)
-parser.add_option('-u', '--user', action='store', type='string', dest='user',
-                  default=getpass.getuser(),
-                  help='username for SSH authentication (default: %s)' % getpass.getuser())
-parser.add_option('-K', '--key', action='store', type='string', dest='keyfile',
-                  default=find_default_key_file(),
-                  help='private key file to use for SSH authentication')
-parser.add_option('', '--no-key', action='store_false', dest='use_key', default=True,
-                  help='don\'t look for or use a private key file')
-parser.add_option('-P', '--password', action='store_true', dest='readpass', default=READPASS,
-                  help='read password (for key or password auth) from stdin')
-options, args = parser.parse_args()
-
-VERBOSE = options.verbose
-READPASS = options.readpass
+def get_host_port(spec, default_port):
+    "parse 'hostname:22' into a host and port, with the port optional"
+    args = (spec.split(':', 1) + [default_port])[:2]
+    args[1] = int(args[1])
+    return args[0], args[1]
 
 
-if len(args) != 1:
-    parser.error('Incorrect number of arguments.')
-remote_host = args[0]
-if ':' not in remote_host:
-    parser.error('Remote port missing.')
-remote_host, remote_port = remote_host.split(':', 1)
-try:
-    remote_port = int(remote_port)
-except:
-    parser.error('Remote port must be a number.')
+def parse_options():
+    global g_verbose
+    
+    parser = OptionParser(usage='usage: %prog [options] <ssh-server>[:<server-port>]',
+                          version='%prog 1.0', description=HELP)
+    parser.add_option('-q', '--quiet', action='store_false', dest='verbose', default=True,
+                      help='squelch all informational output')
+    parser.add_option('-l', '--local-port', action='store', type='int', dest='port',
+                      default=DEFAULT_PORT,
+                      help='local port to forward (default: %d)' % DEFAULT_PORT)
+    parser.add_option('-u', '--user', action='store', type='string', dest='user',
+                      default=getpass.getuser(),
+                      help='username for SSH authentication (default: %s)' % getpass.getuser())
+    parser.add_option('-K', '--key', action='store', type='string', dest='keyfile',
+                      default=None,
+                      help='private key file to use for SSH authentication')
+    parser.add_option('', '--no-key', action='store_false', dest='look_for_keys', default=True,
+                      help='don\'t look for or use a private key file')
+    parser.add_option('-P', '--password', action='store_true', dest='readpass', default=False,
+                      help='read password (for key or password auth) from stdin')
+    parser.add_option('-r', '--remote', action='store', type='string', dest='remote', default=None, metavar='host:port',
+                      help='remote host and port to forward to')
+    options, args = parser.parse_args()
 
-if not options.ssh_host:
-    parser.error('SSH host is required.')
-if ':' in options.ssh_host:
-    options.ssh_host, options.ssh_port = options.ssh_host.split(':', 1)
+    if len(args) != 1:
+        parser.error('Incorrect number of arguments.')
+    if options.remote is None:
+        parser.error('Remote address required (-r).')
+    
+    g_verbose = options.verbose
+    server_host, server_port = get_host_port(args[0], SSH_PORT)
+    remote_host, remote_port = get_host_port(options.remote, SSH_PORT)
+    return options, (server_host, server_port), (remote_host, remote_port)
+
+
+def main():
+    options, server, remote = parse_options()
+    
+    password = None
+    if options.readpass:
+        password = getpass.getpass('Enter SSH password: ')
+    
+    client = paramiko.SSHClient()
+    client.load_system_host_keys()
+    client.set_missing_host_key_policy(paramiko.WarningPolicy())
+
+    verbose('Connecting to ssh host %s:%d ...' % (server[0], server[1]))
     try:
-        options.ssh_port = int(options.ssh_port)
-    except:
-        parser.error('SSH port must be a number.')
-
-try:
-    host_keys = paramiko.util.load_host_keys(os.path.expanduser('~/.ssh/known_hosts'))
-except IOError:
-    try:
-        host_keys = paramiko.util.load_host_keys(os.path.expanduser('~/ssh/known_hosts'))
-    except IOError:
-        print '*** Unable to open host keys file'
-        host_keys = {}
-
-if not host_keys.has_key(options.ssh_host):
-    print '*** Warning: no host key for %s' % options.ssh_host
-    expected_host_key_type = None
-    expected_host_key = None
-else:
-    expected_host_key_type = host_keys[options.ssh_host].keys()[0]
-    expected_host_key = host_keys[options.ssh_host][expected_host_key_type]
-
-key = None
-password = None
-if options.use_key:
-    try:
-        key = paramiko.RSAKey.from_private_key_file(options.keyfile)
-    except paramiko.PasswordRequiredException:
-        if not READPASS:
-            print '*** Password needed for keyfile (use -P): %s' % options.keyfile
-            sys.exit(1)
-        key_password = getpass.getpass('Enter password for key: ')
-        try:
-            key = paramiko.RSAKey.from_private_key_file(options.keyfile, key_password)
-        except:
-            print '*** Unable to read keyfile: %s' % options.keyfile
-            sys.exit(1)
-    except:
-        pass
-
-if key is None:
-    # try reading a password then
-    if not READPASS:
-        print '*** Either a valid private key or password is required (use -K or -P).'
+        client.connect(server[0], server[1], username=options.user, key_filename=options.keyfile,
+                       look_for_keys=options.look_for_keys, password=password)
+    except Exception, e:
+        print '*** Failed to connect to %s:%d: %r' % (server[0], server[1], e)
         sys.exit(1)
-    password = getpass.getpass('Enter password: ')
 
-verbose('Connecting to ssh host %s:%d ...' % (options.ssh_host, options.ssh_port))
+    verbose('Now forwarding port %d to %s:%d ...' % (options.port, remote[0], remote[1]))
 
-transport = paramiko.Transport((options.ssh_host, options.ssh_port))
-transport.connect(hostkeytype=expected_host_key_type,
-                  hostkey=expected_host_key,
-                  username=options.user,
-                  password=password,
-                  pkey=key)
+    try:
+        forward_tunnel(options.port, remote[0], remote[1], client.get_transport())
+    except KeyboardInterrupt:
+        print 'C-c: Port forwarding stopped.'
+        sys.exit(0)
 
-verbose('Now forwarding port %d to %s:%d ...' % (options.port, remote_host, remote_port))
 
-try:
-    forward_tunnel(options.port, remote_host, remote_port, transport)
-except KeyboardInterrupt:
-    print 'Port forwarding stopped.'
-    sys.exit(0)
+if __name__ == '__main__':
+    main()
