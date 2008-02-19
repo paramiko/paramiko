@@ -61,13 +61,13 @@ if sys.version_info < (2, 2):
 
 __author__ = "Robey Pointer <robey@lag.net>"
 __date__ = "21 Jan 2008"
-__version__ = "1.7.2 (Basil)"
+__version__ = "1.7.3 (C...)"
 __version_info__ = (1, 7, 2)
 __license__ = "GNU Lesser General Public License (LGPL)"
 
 
 from transport import randpool, SecurityOptions, Transport
-from client import SSHClient, MissingHostKeyPolicy, AutoAddPolicy, RejectPolicy
+from client import SSHClient, MissingHostKeyPolicy, AutoAddPolicy, RejectPolicy, WarningPolicy
 from auth_handler import AuthHandler
 from channel import Channel, ChannelFile
 from ssh_exception import SSHException, PasswordRequiredException, \
@@ -110,6 +110,7 @@ __all__ = [ 'Transport',
             'MissingHostKeyPolicy',
             'AutoAddPolicy',
             'RejectPolicy',
+            'WarningPolicy',
             'SecurityOptions',
             'SubsystemHandler',
             'Channel',

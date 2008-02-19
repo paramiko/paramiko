@@ -24,6 +24,7 @@ from binascii import hexlify
 import getpass
 import os
 import socket
+import warnings
 
 from paramiko.agent import Agent
 from paramiko.common import *
@@ -81,7 +82,17 @@ class RejectPolicy (MissingHostKeyPolicy):
                     (key.get_name(), hostname, hexlify(key.get_fingerprint())))
         raise SSHException('Unknown server %s' % hostname)
 
-        
+
+class WarningPolicy (MissingHostKeyPolicy):
+    """
+    Policy for logging a python-style warning for an unknown host key, but
+    accepting it. This is used by L{SSHClient}.
+    """
+    def missing_host_key(self, client, hostname, key):
+        warnings.warn('Unknown %s host key for %s: %s' %
+                      (key.get_name(), hostname, hexlify(key.get_fingerprint())))
+
+
 class SSHClient (object):
     """
     A high-level representation of a session with an SSH server.  This class
@@ -213,7 +224,7 @@ class SSHClient (object):
         self._policy = policy
 
     def connect(self, hostname, port=22, username=None, password=None, pkey=None,
-                key_filename=None, timeout=None, allow_agent=True):
+                key_filename=None, timeout=None, allow_agent=True, look_for_keys=True):
         """
         Connect to an SSH server and authenticate to it.  The server's host key
         is checked against the system host keys (see L{load_system_host_keys})
@@ -251,6 +262,9 @@ class SSHClient (object):
         @type timeout: float
         @param allow_agent: set to False to disable connecting to the SSH agent
         @type allow_agent: bool
+        @param look_for_keys: set to False to disable searching for discoverable
+            private key files in C{~/.ssh/}
+        @type look_for_keys: bool
 
         @raise BadHostKeyException: if the server's host key could not be
             verified
@@ -291,7 +305,7 @@ class SSHClient (object):
         if username is None:
             username = getpass.getuser()
         
-        self._auth(username, password, pkey, key_filename, allow_agent)
+        self._auth(username, password, pkey, key_filename, allow_agent, look_for_keys)
     
     def close(self):
         """
@@ -367,13 +381,13 @@ class SSHClient (object):
         """
         return self._transport
         
-    def _auth(self, username, password, pkey, key_filename, allow_agent):
+    def _auth(self, username, password, pkey, key_filename, allow_agent, look_for_keys):
         """
         Try, in order:
         
             - The key passed in, if one was passed in.
-            - Any key we can find through an SSH agent.
-            - Any "id_rsa" or "id_dsa" key discoverable in ~/.ssh/.
+            - Any key we can find through an SSH agent (if allowed).
+            - Any "id_rsa" or "id_dsa" key discoverable in ~/.ssh/ (if allowed).
             - Plain username/password auth, if a password was given.
         
         (The password might be needed to unlock a private key.)
@@ -414,6 +428,17 @@ class SSHClient (object):
             keyfiles.append((RSAKey, rsa_key))
         if os.path.isfile(dsa_key):
             keyfiles.append((DSSKey, dsa_key))
+        # look in ~/ssh/ for windows users:
+        rsa_key = os.path.expanduser('~/ssh/id_rsa')
+        dsa_key = os.path.expanduser('~/ssh/id_dsa')
+        if os.path.isfile(rsa_key):
+            keyfiles.append((RSAKey, rsa_key))
+        if os.path.isfile(dsa_key):
+            keyfiles.append((DSSKey, dsa_key))
+        
+        if not look_for_keys:
+            keyfiles = []
+
         for pkey_class, filename in keyfiles:
             try:
                 key = pkey_class.from_private_key_file(filename, password)
