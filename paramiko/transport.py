@@ -1987,6 +1987,7 @@ class Transport (threading.Thread):
         if kind == 'x11':
             self._x11_handler(chan, (origin_addr, origin_port))
         elif kind == 'forwarded-tcpip':
+            chan.origin_addr = (origin_addr, origin_port)
             self._tcp_handler(chan, (origin_addr, origin_port), (server_addr, server_port))
         else:
             self._queue_incoming_channel(chan)

@@ -92,6 +92,7 @@ class Channel (object):
         self.event = threading.Event()
         self.combine_stderr = False
         self.exit_status = -1
+        self.origin_addr = None
     
     def __del__(self):
         try:
