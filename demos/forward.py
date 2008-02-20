@@ -26,13 +26,12 @@ forwarding (the openssh -L option) from a local port through a tunneled
 connection to a destination reachable from the SSH server machine.
 """
 
-import sys
+import getpass
 import os
 import socket
 import select
 import SocketServer
-import getpass
-import base64
+import sys
 from optparse import OptionParser
 
 import paramiko
@@ -102,7 +101,7 @@ def verbose(s):
 
 HELP = """\
 Set up a forward tunnel across an SSH server, using paramiko. A local port
-(given with -l) is forwarded across an SSH session to an address:port from
+(given with -p) is forwarded across an SSH session to an address:port from
 the SSH server. This is similar to the openssh -L option.
 """
 
@@ -121,7 +120,7 @@ def parse_options():
                           version='%prog 1.0', description=HELP)
     parser.add_option('-q', '--quiet', action='store_false', dest='verbose', default=True,
                       help='squelch all informational output')
-    parser.add_option('-l', '--local-port', action='store', type='int', dest='port',
+    parser.add_option('-p', '--local-port', action='store', type='int', dest='port',
                       default=DEFAULT_PORT,
                       help='local port to forward (default: %d)' % DEFAULT_PORT)
     parser.add_option('-u', '--user', action='store', type='string', dest='user',
