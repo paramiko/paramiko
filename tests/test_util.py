@@ -78,6 +78,7 @@ class UtilTest (unittest.TestCase):
         self.assertTrue('MissingHostKeyPolicy' in symbols)
         self.assertTrue('AutoAddPolicy' in symbols)
         self.assertTrue('RejectPolicy' in symbols)
+        self.assertTrue('WarningPolicy' in symbols)
         self.assertTrue('SecurityOptions' in symbols)
         self.assertTrue('SubsystemHandler' in symbols)
         self.assertTrue('Channel' in symbols)
