@@ -65,5 +65,7 @@ test:
 # README
 # transport.py
 #
+# TRY on windows vm
+# POST gpg sig on website!
 # POST md5sum on website!
 # RUN setup.py 

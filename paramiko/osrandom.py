@@ -20,51 +20,43 @@
 
 import sys
 
-# Detect an OS random number source
-osrandom_source = None
+##
+## Find potential random number sources
+##
 
-# Try os.urandom
-if osrandom_source is None:
-    try:
-        from os import urandom
-        osrandom_source = "os.urandom"
-    except ImportError:
-        pass
+# Try to open /dev/urandom now so that paramiko will be able to access
+# it even if os.chroot() is invoked later.
+try:
+    _dev_urandom = open("/dev/urandom", "rb", 0)
+except EnvironmentError:
+    _dev_urandom = None
 
-# Try winrandom
-if osrandom_source is None:
-    try:
-        from Crypto.Util import winrandom
-        osrandom_source = "winrandom"
-    except ImportError:
-        pass
+# Try to import the "winrandom" module
+try:
+    from Crypto.Util import winrandom
+except ImportError:
+    winrandom = None
 
-# Try /dev/urandom
-if osrandom_source is None:
-    try:
-        _dev_urandom = open("/dev/urandom", "rb", 0)
-        def urandom(bytes):
-            return _dev_urandom.read(bytes)
-        osrandom_source = "/dev/urandom"
-    except (OSError, IOError):
-        pass
 
-# Give up
-if osrandom_source is None:
-    raise ImportError("Cannot find OS entropy source")
+##
+## Define RandomPool classes
+##
+
+def _workaround_windows_cryptgenrandom_bug(self):
+    # According to "Cryptanalysis of the Random Number Generator of the
+    # Windows Operating System", by Leo Dorrendorf and Zvi Gutterman
+    # and Benny Pinkas <http://eprint.iacr.org/2007/419>,
+    # CryptGenRandom only updates its internal state using kernel-provided
+    # random data every 128KiB of output.
+    self.get_bytes(128*1024)    # discard 128 KiB of output
+
 
 class BaseOSRandomPool(object):
     def __init__(self, numbytes=160, cipher=None, hash=None):
         pass
 
     def stir(self, s=''):
-        # According to "Cryptanalysis of the Random Number Generator of the
-        # Windows Operating System", by Leo Dorrendorf and Zvi Gutterman
-        # and Benny Pinkas <http://eprint.iacr.org/2007/419>,
-        # CryptGenRandom only updates its internal state using kernel-provided
-        # random data every 128KiB of output.
-        if osrandom_source == 'winrandom' or sys.platform == 'win32':
-            self.get_bytes(128*1024)    # discard 128 KiB of output
+        pass
 
     def randomize(self, N=0):
         self.stir()
@@ -72,22 +64,75 @@ class BaseOSRandomPool(object):
     def add_event(self, s=None):
         pass
 
-class WinrandomOSRandomPool(BaseOSRandomPool):
+
+class WinRandomPool(BaseOSRandomPool):
+    """RandomPool that uses the C{winrandom} module for input"""
     def __init__(self, numbytes=160, cipher=None, hash=None):
         self._wr = winrandom.new()
         self.get_bytes = self._wr.get_bytes
         self.randomize()
 
-class UrandomOSRandomPool(BaseOSRandomPool):
+    def stir(self, s=''):
+        _workaround_windows_cryptgenrandom_bug(self)
+
+
+class DevUrandomPool(BaseOSRandomPool):
+    """RandomPool that uses the C{/dev/urandom} special device node for input"""
     def __init__(self, numbytes=160, cipher=None, hash=None):
-        self.get_bytes = urandom
         self.randomize()
 
-if osrandom_source in ("/dev/urandom", "os.urandom"):
-    OSRandomPool = UrandomOSRandomPool
-elif osrandom_source == "winrandom":
-    OSRandomPool = WinrandomOSRandomPool
-else:
-    raise AssertionError("Unrecognized osrandom_source %r" % (osrandom_source,))
+    def get_bytes(self, n):
+        bytes = ""
+        while len(bytes) < n:
+            bytes += _dev_urandom.read(n - len(bytes))
+        return bytes
+
+
+##
+## Detect default random number source
+##
+osrandom_source = None
+
+# Try /dev/urandom
+if osrandom_source is None and _dev_urandom is not None:
+    osrandom_source = "/dev/urandom"
+    DefaultRandomPoolClass = DevUrandomPool
+
+# Try winrandom
+if osrandom_source is None and winrandom is not None:
+    osrandom_source = "winrandom"
+    DefaultRandomPoolClass = WinRandomPool
+
+# Give up
+if osrandom_source is None:
+    raise ImportError("Cannot find OS entropy source")
+
+
+##
+## Define wrapper class
+##
+
+class OSRandomPool(object):
+    """RandomPool wrapper.
+
+    The C{randpool} attribute of this object may be modified by users of this class at runtime.
+    """
+
+    def __init__(self, instance=None):
+        if instance is None:
+            instance = DefaultRandomPoolClass()
+        self.randpool = instance
+
+    def stir(self, s=''):
+        self.randpool.stir(s)
+
+    def randomize(self, N=0):
+        self.randpool.randomize(N)
+
+    def add_event(self, s=None):
+        self.randpool.add_event(s)
+
+    def get_bytes(self, N):
+        return self.randpool.get_bytes(N)
 
 # vim:set ts=4 sw=4 sts=4 expandtab:
