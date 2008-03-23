@@ -87,7 +87,7 @@ class Channel (object):
         self.in_window_sofar = 0
         self.status_event = threading.Event()
         self._name = str(chanid)
-        self.logger = util.get_logger('paramiko.chan.' + str(chanid))
+        self.logger = util.get_logger('paramiko.transport')
         self._pipe = None
         self.event = threading.Event()
         self.combine_stderr = False
@@ -394,14 +394,13 @@ class Channel (object):
     def set_name(self, name):
         """
         Set a name for this channel.  Currently it's only used to set the name
-        of the log level used for debugging.  The name can be fetched with the
+        of the channel in logfile entries.  The name can be fetched with the
         L{get_name} method.
 
-        @param name: new channel name.
+        @param name: new channel name
         @type name: str
         """
         self._name = name
-        self.logger = util.get_logger(self.transport.get_log_channel() + '.' + self._name)
 
     def get_name(self):
         """
@@ -898,7 +897,7 @@ class Channel (object):
 
     def _set_transport(self, transport):
         self.transport = transport
-        self.logger = util.get_logger(self.transport.get_log_channel() + '.' + self._name)
+        self.logger = util.get_logger(self.transport.get_log_channel())
 
     def _set_window(self, window_size, max_packet_size):
         self.in_window_size = window_size
@@ -1062,7 +1061,7 @@ class Channel (object):
 
 
     def _log(self, level, msg, *args):
-        self.logger.log(level, msg, *args)
+        self.logger.log(level, "[chan " + self._name + "] " + msg, *args)
 
     def _wait_for_event(self):
         while True:

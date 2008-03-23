@@ -66,15 +66,17 @@ class SFTPServer (BaseSFTP, SubsystemHandler):
         BaseSFTP.__init__(self)
         SubsystemHandler.__init__(self, channel, name, server)
         transport = channel.get_transport()
-        self.logger = util.get_logger(transport.get_log_channel() + '.' +
-                                      channel.get_name() + '.sftp')
+        self.logger = util.get_logger(transport.get_log_channel() + '.sftp')
         self.ultra_debug = transport.get_hexdump()
         self.next_handle = 1
         # map of handle-string to SFTPHandle for files & folders:
         self.file_table = { }
         self.folder_table = { }
         self.server = sftp_si(server, *largs, **kwargs)
-
+        
+    def _log(self, level, msg):
+        super(SFTPServer, self)._log(level, "[chan " + self.sock.get_name() + "] " + msg)
+        
     def start_subsystem(self, name, transport, channel):
         self.sock = channel
         self._log(DEBUG, 'Started sftp server on channel %s' % repr(channel))
