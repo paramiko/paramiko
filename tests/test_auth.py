@@ -25,7 +25,8 @@ import threading
 import unittest
 
 from paramiko import Transport, ServerInterface, RSAKey, DSSKey, \
-    SSHException, BadAuthenticationType, InteractiveQuery, ChannelException
+    SSHException, BadAuthenticationType, InteractiveQuery, ChannelException, \
+    AuthenticationException
 from paramiko import AUTH_FAILED, AUTH_PARTIALLY_SUCCESSFUL, AUTH_SUCCESSFUL
 from paramiko import OPEN_SUCCEEDED, OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED
 from loop import LoopSocket
@@ -67,6 +68,8 @@ class NullServer (ServerInterface):
             return AUTH_SUCCESSFUL
         if (username == 'non-utf8') and (password == '\xff'):
             return AUTH_SUCCESSFUL
+        if username == 'bad-server':
+            raise Exception("Ack!")
         return AUTH_FAILED
 
     def check_auth_publickey(self, username, key):
@@ -147,7 +150,7 @@ class AuthTest (unittest.TestCase):
             self.assert_(False)
         except:
             etype, evalue, etb = sys.exc_info()
-            self.assert_(issubclass(etype, SSHException))
+            self.assert_(issubclass(etype, AuthenticationException))
         self.tc.auth_password(username='slowdive', password='pygmalion')
         self.verify_finished()
     
@@ -213,3 +216,16 @@ class AuthTest (unittest.TestCase):
         remain = self.tc.auth_password('non-utf8', '\xff')
         self.assertEquals([], remain)
         self.verify_finished()
+
+    def test_8_auth_gets_disconnected(self):
+        """
+        verify that we catch a server disconnecting during auth, and report
+        it as an auth failure.
+        """
+        self.start_server()
+        self.tc.connect(hostkey=self.public_host_key)
+        try:
+            remain = self.tc.auth_password('bad-server', 'hello')
+        except:
+            etype, evalue, etb = sys.exc_info()
+            self.assert_(issubclass(etype, AuthenticationException))
