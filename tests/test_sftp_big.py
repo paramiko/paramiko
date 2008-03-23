@@ -376,8 +376,9 @@ class BigSFTPTest (unittest.TestCase):
             # try to read it too.
             f = sftp.open('%s/hongry.txt' % FOLDER, 'r', 128 * 1024)
             f.prefetch()
-            for i in xrange(32):
-                f.read(32 * 1024)
+            total = 0
+            while total < 1024 * 1024:
+                total += len(f.read(32 * 1024))
             f.close()
         finally:
             sftp.remove('%s/hongry.txt' % FOLDER)
