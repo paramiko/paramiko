@@ -271,6 +271,7 @@ class SSHClient (object):
         @raise AuthenticationException: if authentication failed
         @raise SSHException: if there was any other error connecting or
             establishing an SSH session
+        @raise socket.error: if a socket error occurred while connecting
         """
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         if timeout is not None:
