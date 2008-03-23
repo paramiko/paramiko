@@ -283,6 +283,7 @@ class TransportTest (unittest.TestCase):
         schan = self.ts.accept(1.0)
         chan.exec_command('yes')
         schan.send('Hello there.\n')
+        self.assert_(not chan.exit_status_ready())
         # trigger an EOF
         schan.shutdown_read()
         schan.shutdown_write()
@@ -292,6 +293,12 @@ class TransportTest (unittest.TestCase):
         f = chan.makefile()
         self.assertEquals('Hello there.\n', f.readline())
         self.assertEquals('', f.readline())
+        count = 0
+        while not chan.exit_status_ready():
+            time.sleep(0.1)
+            count += 1
+            if count > 50:
+                raise Exception("timeout")
         self.assertEquals(23, chan.recv_exit_status())
         chan.close()
 

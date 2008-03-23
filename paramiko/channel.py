@@ -265,6 +265,19 @@ class Channel (object):
         self.transport._send_user_message(m)
         self._wait_for_event()
 
+    def exit_status_ready(self):
+        """
+        Return true if the remote process has exited and returned an exit
+        status. You may use this to poll the process status if you don't
+        want to block in L{recv_exit_status}. Note that the server may not
+        return an exit status in some cases (like bad servers).
+        
+        @return: True if L{recv_exit_status} will return immediately
+        @rtype: bool
+        @since: 1.7.3
+        """
+        return self.closed or self.status_event.isSet()
+        
     def recv_exit_status(self):
         """
         Return the exit status from the process on the server.  This is
