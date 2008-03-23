@@ -372,6 +372,13 @@ class BigSFTPTest (unittest.TestCase):
             
             self.assertEqual(sftp.stat('%s/hongry.txt' % FOLDER).st_size, 1024 * 1024)
             self.assertNotEquals(t.H, t.session_id)
+            
+            # try to read it too.
+            f = sftp.open('%s/hongry.txt' % FOLDER, 'r', 128 * 1024)
+            f.prefetch()
+            for i in xrange(32):
+                f.read(32 * 1024)
+            f.close()
         finally:
             sftp.remove('%s/hongry.txt' % FOLDER)
             t.packetizer.REKEY_BYTES = pow(2, 30)
