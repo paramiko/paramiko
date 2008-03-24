@@ -37,6 +37,13 @@ try:
 except ImportError:
     winrandom = None
 
+# Lastly, try to get the plain "RandomPool"
+# (sometimes windows doesn't even have winrandom!)
+try:
+    from Crypto.Util.randpool import RandomPool
+except ImportError:
+    RandomPool = None
+
 
 ##
 ## Define RandomPool classes
@@ -88,6 +95,15 @@ class DevUrandomPool(BaseOSRandomPool):
         return bytes
 
 
+class FallbackRandomPool (BaseOSRandomPool):
+    def __init__(self):
+        self._wr = RandomPool()
+        self.randomize()
+
+    def get_bytes(self, n):
+        return self._wr.get_bytes(n)
+
+
 ##
 ## Detect default random number source
 ##
@@ -102,6 +118,11 @@ if osrandom_source is None and _dev_urandom is not None:
 if osrandom_source is None and winrandom is not None:
     osrandom_source = "winrandom"
     DefaultRandomPoolClass = WinRandomPool
+
+# Try final fallback
+if osrandom_source is None and RandomPool is not None:
+    osrandom_source = "randompool"
+    DefaultRandomPoolClass = FallbackRandomPool
 
 # Give up
 if osrandom_source is None:
