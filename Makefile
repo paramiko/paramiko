@@ -27,6 +27,7 @@
 # zubat (18feb07) - 1.7
 # amy (10jun07) - 1.7.1
 # basil (21jan08) - 1.7.2
+# clara (23mar08) - 1.7.3
 
 
 ifeq ($(wildcard /sbin/md5),/sbin/md5)
@@ -42,6 +43,8 @@ release: docs
 	python ./setup.py bdist_egg
 	zip -r dist/docs.zip docs && rm -rf docs
 	cd dist && $(MD5SUM) paramiko*.zip *.gz > md5-sums
+	cd dist && gpg -ba paramiko*.zip
+	cd dist && gpg -ba paramiko*.gz
 	
 
 docs: always

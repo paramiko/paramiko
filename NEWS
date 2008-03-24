@@ -8,6 +8,22 @@ Highlights of what's new in each release:
 Releases
 ========
 
+v1.7.3 (Clara) 23mar08
+----------------------
+  * SSHClient can be asked not to use an SSH agent now, and not to search
+    for private keys
+  * added WarningPolicy option for SSHClient (warn, but allow, on unknown
+    server keys)
+  * added Channel.exit_status_ready to poll if a channel has received an
+    exit status yet
+  * new demo for reverse port forwarding
+  * (bug 177117) fix UTF-8 passwords
+  * (bug 189466) fix typo in osrandom.py
+  * (bug 191657) potentially fix a race at channel shutdown
+  * (bug 192749) document that SSHClient.connect may raise socket.error
+  * (bug 193779) translate EOFError into AuthException during authentication
+  * (bug 200416) don't create a new logger object for each channel
+
 v1.7.2 (Basil) 21jan08
 ----------------------
   * (bug 137219) catch EINTR and handle correctly
