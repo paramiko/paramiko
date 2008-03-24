@@ -76,6 +76,7 @@ class NullServer (ServerInterface):
     
     def check_port_forward_request(self, addr, port):
         self._listen = socket.socket()
+        self._listen.bind(('127.0.0.1', 0))
         self._listen.listen(1)
         return self._listen.getsockname()[1]
     
@@ -452,11 +453,11 @@ class TransportTest (unittest.TestCase):
             requested.append((server_addr, server_port))
             self.tc._queue_incoming_channel(c)
             
-        port = self.tc.request_port_forward('', 0, handler)
+        port = self.tc.request_port_forward('127.0.0.1', 0, handler)
         self.assertEquals(port, self.server._listen.getsockname()[1])
 
         cs = socket.socket()
-        cs.connect(('', port))
+        cs.connect(('127.0.0.1', port))
         ss, _ = self.server._listen.accept()
         sch = self.ts.open_forwarded_tcpip_channel(ss.getsockname(), ss.getpeername())
         cch = self.tc.accept()
@@ -469,7 +470,7 @@ class TransportTest (unittest.TestCase):
         cs.close()
         
         # now cancel it.
-        self.tc.cancel_port_forward('', port)
+        self.tc.cancel_port_forward('127.0.0.1', port)
         self.assertTrue(self.server._listen is None)
 
     def test_F_port_forwarding(self):
@@ -484,10 +485,11 @@ class TransportTest (unittest.TestCase):
         
         # open a port on the "server" that the client will ask to forward to.
         greeting_server = socket.socket()
+        greeting_server.bind(('127.0.0.1', 0))
         greeting_server.listen(1)
         greeting_port = greeting_server.getsockname()[1]
 
-        cs = self.tc.open_channel('direct-tcpip', ('', greeting_port), ('', 9000))
+        cs = self.tc.open_channel('direct-tcpip', ('127.0.0.1', greeting_port), ('', 9000))
         sch = self.ts.accept(1.0)
         cch = socket.socket()
         cch.connect(self.server._tcpip_dest)
