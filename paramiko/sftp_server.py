@@ -204,7 +204,8 @@ class SFTPServer (BaseSFTP, SubsystemHandler):
                 desc = SFTP_DESC[code]
             except IndexError:
                 desc = 'Unknown'
-        self._response(request_number, CMD_STATUS, code, desc)
+        # some clients expect a "langauge" tag at the end (but don't mind it being blank)
+        self._response(request_number, CMD_STATUS, code, desc, '')
 
     def _open_folder(self, request_number, path):
         resp = self.server.list_folder(path)
