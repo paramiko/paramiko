@@ -95,10 +95,10 @@ CONNECTION_FAILED_CODE = {
 DISCONNECT_SERVICE_NOT_AVAILABLE, DISCONNECT_AUTH_CANCELLED_BY_USER, \
     DISCONNECT_NO_MORE_AUTH_METHODS_AVAILABLE = 7, 13, 14
 
-from osrandom import OSRandomPool
+from rng import StrongLockingRandomPool
 
 # keep a crypto-strong PRNG nearby
-randpool = OSRandomPool()
+randpool = StrongLockingRandomPool()
 
 import sys
 if sys.version_info < (2, 3):
