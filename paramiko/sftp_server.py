@@ -75,7 +75,11 @@ class SFTPServer (BaseSFTP, SubsystemHandler):
         self.server = sftp_si(server, *largs, **kwargs)
         
     def _log(self, level, msg):
-        super(SFTPServer, self)._log(level, "[chan " + self.sock.get_name() + "] " + msg)
+        if issubclass(type(msg), list):
+            for m in msg:
+                super(SFTPServer, self)._log(level, "[chan " + self.sock.get_name() + "] " + m)
+        else:
+            super(SFTPServer, self)._log(level, "[chan " + self.sock.get_name() + "] " + msg)
         
     def start_subsystem(self, name, transport, channel):
         self.sock = channel

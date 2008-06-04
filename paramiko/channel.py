@@ -693,9 +693,11 @@ class Channel (object):
             m.add_byte(chr(MSG_CHANNEL_DATA))
             m.add_int(self.remote_chanid)
             m.add_string(s[:size])
-            self.transport._send_user_message(m)
         finally:
             self.lock.release()
+        # Note: We release self.lock before calling _send_user_message.
+        # Otherwise, we can deadlock during re-keying.
+        self.transport._send_user_message(m)
         return size
 
     def send_stderr(self, s):
@@ -729,9 +731,11 @@ class Channel (object):
             m.add_int(self.remote_chanid)
             m.add_int(1)
             m.add_string(s[:size])
-            self.transport._send_user_message(m)
         finally:
             self.lock.release()
+        # Note: We release self.lock before calling _send_user_message.
+        # Otherwise, we can deadlock during re-keying.
+        self.transport._send_user_message(m)
         return size
 
     def sendall(self, s):
