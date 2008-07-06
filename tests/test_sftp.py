@@ -560,19 +560,25 @@ class SFTPTest (unittest.TestCase):
         f = open(localname, 'wb')
         f.write(text)
         f.close()
-        sftp.put(localname, FOLDER + '/bunny.txt')
+        saved_progress = []
+        def progress_callback(x, y):
+            saved_progress.append((x, y))
+        sftp.put(localname, FOLDER + '/bunny.txt', progress_callback)
         
         f = sftp.open(FOLDER + '/bunny.txt', 'r')
         self.assertEquals(text, f.read(128))
         f.close()
+        self.assertEquals((41, 41), saved_progress[-1])
         
         os.unlink(localname)
         localname = os.tempnam()
-        sftp.get(FOLDER + '/bunny.txt', localname)
+        saved_progress = []
+        sftp.get(FOLDER + '/bunny.txt', localname, progress_callback)
         
         f = open(localname, 'rb')
         self.assertEquals(text, f.read(128))
         f.close()
+        self.assertEquals((41, 41), saved_progress[-1])
     
         os.unlink(localname)
         sftp.unlink(FOLDER + '/bunny.txt')
