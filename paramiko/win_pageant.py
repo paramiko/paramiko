@@ -32,7 +32,8 @@ import array
 _has_win32all = False
 _has_ctypes = False
 try:
-    import win32ui
+    # win32gui is preferred over win32ui to avoid MFC dependencies
+    import win32gui
     _has_win32all = True
 except ImportError:
     try:
@@ -52,9 +53,9 @@ win32con_WM_COPYDATA = 74
 def _get_pageant_window_object():
     if _has_win32all:
         try:
-            hwnd = win32ui.FindWindow('Pageant', 'Pageant')
+            hwnd = win32gui.FindWindow('Pageant', 'Pageant')
             return hwnd
-        except win32ui.error:
+        except win32gui.error:
             pass
     elif _has_ctypes:
         # Return 0 if there is no Pageant window.
@@ -98,7 +99,9 @@ def _query_pageant(msg):
         cds = struct.pack("LLP", _AGENT_COPYDATA_ID, char_buffer_size, char_buffer_address)
 
         if _has_win32all:
-            response = hwnd.SendMessage(win32con_WM_COPYDATA, cds)
+            # win32gui.SendMessage should also allow the same pattern as
+            # ctypes, but let's keep it like this for now...
+            response = win32gui.SendMessage(hwnd, win32con_WM_COPYDATA, len(cds), cds)
         elif _has_ctypes:
             _buf = array.array('B', cds)
             _addr, _size = _buf.buffer_info()
