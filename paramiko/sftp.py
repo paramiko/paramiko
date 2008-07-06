@@ -128,8 +128,8 @@ class BaseSFTP (object):
         self._send_packet(CMD_VERSION, str(msg))
         return version
         
-    def _log(self, level, msg):
-        self.logger.log(level, msg)
+    def _log(self, level, msg, *args):
+        self.logger.log(level, msg, *args)
 
     def _write_all(self, out):
         while len(out) > 0:
