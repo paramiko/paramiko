@@ -28,6 +28,7 @@
 # amy (10jun07) - 1.7.1
 # basil (21jan08) - 1.7.2
 # clara (23mar08) - 1.7.3
+# desmond (06jul08) - 1.7.4
 
 
 ifeq ($(wildcard /sbin/md5),/sbin/md5)

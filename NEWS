@@ -8,6 +8,14 @@ Highlights of what's new in each release:
 Releases
 ========
 
+v1.7.4 (Desmond) 06jul08
+------------------------
+  * more randpool fixes for windows, from Dwayne Litzenberger
+    (NOTE: this may require a pycrypto upgrade on windows)
+  * fix potential deadlock during key exchange (Dwayne Litzenberger)
+  * remove MFC dependency from windows (Mark Hammond)
+  * added some optional API improvements for SFTPClient get() and put()
+
 v1.7.3 (Clara) 23mar08
 ----------------------
   * SSHClient can be asked not to use an SSH agent now, and not to search
