@@ -536,6 +536,7 @@ class SFTPClient (BaseSFTP):
         @type remotepath: str
         @param callback: optional callback function that accepts the bytes
             transferred so far and the total bytes to be transferred
+            (since 1.7.4)
         @type callback: function(int, int)
         @return: an object containing attributes about the given file
             (since 1.7.4)
@@ -575,6 +576,7 @@ class SFTPClient (BaseSFTP):
         @type localpath: str
         @param callback: optional callback function that accepts the bytes
             transferred so far and the total bytes to be transferred
+            (since 1.7.4)
         @type callback: function(int, int)
         
         @since: 1.4
