@@ -496,17 +496,19 @@ class Channel (object):
         """
         Set blocking or non-blocking mode of the channel: if C{blocking} is 0,
         the channel is set to non-blocking mode; otherwise it's set to blocking
-        mode.  Initially all channels are in blocking mode.
+        mode. Initially all channels are in blocking mode.
 
         In non-blocking mode, if a L{recv} call doesn't find any data, or if a
         L{send} call can't immediately dispose of the data, an error exception
-        is raised.  In blocking mode, the calls block until they can proceed.
+        is raised. In blocking mode, the calls block until they can proceed. An
+        EOF condition is considered "immediate data" for L{recv}, so if the
+        channel is closed in the read direction, it will never block.
 
         C{chan.setblocking(0)} is equivalent to C{chan.settimeout(0)};
         C{chan.setblocking(1)} is equivalent to C{chan.settimeout(None)}.
 
         @param blocking: 0 to set non-blocking mode; non-0 to set blocking
-        mode.
+            mode.
         @type blocking: int
         """
         if blocking:
