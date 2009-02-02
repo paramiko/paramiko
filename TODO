@@ -2,6 +2,8 @@
 TO-DO
 =====
 
+* FIXME: use the locking scheme from java for channel.py
+
 * allow setting chmod bits on SFTPClient.open() for create
 * host-based auth (yuck!)
 * ctr forms of ciphers are missing (blowfish-ctr, aes128-ctr, aes256-ctr)
@@ -12,3 +14,9 @@ TO-DO
 * is it possible to poll on a set of events at once?
 * potentially create only one thread shared by all Transports
 * SSHClient: flag to turn off agent detection? flag to turn off keyfile discovery?
+
+* vault: sftp server + bazaar
+  - single person can open file for writing at one time
+  - atomic rename @ file close
+  - bzr commit after close
+
