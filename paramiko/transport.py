@@ -266,7 +266,7 @@ class Transport (threading.Thread):
         @param sock: a socket or socket-like object to create the session over.
         @type sock: socket
         """
-        if type(sock) is str:
+        if isinstance(sock, (str, unicode)):
             # convert "host:port" into (host, port)
             hl = sock.split(':', 1)
             if len(hl) == 1:
@@ -280,6 +280,7 @@ class Transport (threading.Thread):
             sock.connect((hostname, port))
         # okay, normal socket-ish flow here...
         threading.Thread.__init__(self)
+        self.setDaemon(True)
         self.randpool = randpool
         self.sock = sock
         # Python < 2.3 doesn't have the settimeout method - RogerB
