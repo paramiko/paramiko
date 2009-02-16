@@ -1423,7 +1423,7 @@ class Transport (threading.Thread):
         if key is None:
             raise SSHException('Unknown host key type')
         if not key.verify_ssh_sig(self.H, Message(sig)):
-            raise SSHException('Signature verification (%s) failed.  Boo.  Robey should debug this.' % self.host_key_type)
+            raise SSHException('Signature verification (%s) failed.' % self.host_key_type)
         self.host_key = key
 
     def _compute_key(self, id, nbytes):

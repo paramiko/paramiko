@@ -4,7 +4,7 @@ paramiko
 ========
 
 :Paramiko: Python SSH module
-:Copyright: Copyright (c) 2003-2008  Robey Pointer <robey@lag.net>
+:Copyright: Copyright (c) 2003-2009  Robey Pointer <robey@lag.net>
 :License: LGPL
 :Homepage: http://www.lag.net/paramiko/
 
