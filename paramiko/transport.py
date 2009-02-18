@@ -1471,7 +1471,7 @@ class Transport (threading.Thread):
         # (use the exposed "run" method, because if we specify a thread target
         # of a private method, threading.Thread will keep a reference to it
         # indefinitely, creating a GC cycle and not letting Transport ever be
-        # GC'd.  it's a bug in Thread.)
+        # GC'd. it's a bug in Thread.)
         
         # active=True occurs before the thread is launched, to avoid a race
         _active_threads.append(self)
@@ -1588,7 +1588,7 @@ class Transport (threading.Thread):
 
     def _check_banner(self):
         # this is slow, but we only have to do it once
-        for i in range(5):
+        for i in range(100):
             # give them 15 seconds for the first line, then just 2 seconds
             # each additional line.  (some sites have very high latency.)
             if i == 0:

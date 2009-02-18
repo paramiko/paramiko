@@ -38,6 +38,19 @@ from paramiko.message import Message
 from loop import LoopSocket
 
 
+LONG_BANNER = """\
+Welcome to the super-fun-land BBS, where our MOTD is the primary thing we
+provide. All rights reserved. Offer void in Tennessee. Stunt drivers were
+used. Do not attempt at home. Some restrictions apply.
+
+Happy birthday to Commie the cat!
+
+Note: An SSH banner may eventually appear.
+
+Maybe.
+"""
+
+
 class NullServer (ServerInterface):
     paranoid_did_password = False
     paranoid_did_public_key = False
@@ -182,6 +195,24 @@ class TransportTest (unittest.TestCase):
         self.assertEquals(True, self.tc.is_authenticated())
         self.assertEquals(True, self.ts.is_authenticated())
 
+    def test_3a_long_banner(self):
+        """
+        verify that a long banner doesn't mess up the handshake.
+        """
+        host_key = RSAKey.from_private_key_file('tests/test_rsa.key')
+        public_host_key = RSAKey(data=str(host_key))
+        self.ts.add_server_key(host_key)
+        event = threading.Event()
+        server = NullServer()
+        self.assert_(not event.isSet())
+        self.socks.send(LONG_BANNER)
+        self.ts.start_server(event, server)
+        self.tc.connect(hostkey=public_host_key,
+                        username='slowdive', password='pygmalion')
+        event.wait(1.0)
+        self.assert_(event.isSet())
+        self.assert_(self.ts.is_active())
+        
     def test_4_special(self):
         """
         verify that the client can demand odd handshake settings, and can
