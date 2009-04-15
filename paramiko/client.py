@@ -273,7 +273,10 @@ class SSHClient (object):
             establishing an SSH session
         @raise socket.error: if a socket error occurred while connecting
         """
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        if len(hostname.split(':')) > 1:
+            sock = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
+        else:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         if timeout is not None:
             try:
                 sock.settimeout(timeout)
