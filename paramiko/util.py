@@ -135,6 +135,8 @@ def safe_string(s):
 def bit_length(n):
     norm = deflate_long(n, 0)
     hbyte = ord(norm[0])
+    if hbyte == 0:
+        return 1
     bitlen = len(norm) * 8
     while not (hbyte & 0x80):
         hbyte <<= 1

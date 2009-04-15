@@ -111,7 +111,7 @@ class Message (object):
         """
         b = self.packet.read(n)
         if len(b) < n:
-            return '\x00'*n
+            return b + '\x00' * (n - len(b))
         return b
 
     def get_byte(self):
