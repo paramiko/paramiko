@@ -273,17 +273,21 @@ class SSHClient (object):
             establishing an SSH session
         @raise socket.error: if a socket error occurred while connecting
         """
-        if len(hostname.split(':')) > 1:
-            sock = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
+        for (family, socktype, proto, canonname, sockaddr) in \
+        socket.getaddrinfo(hostname, port):
+            if socktype==socket.SOCK_STREAM:
+                af = family
+                ADDR = sockaddr
+                break
         else:
-            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            raise SSHException('No suitable address family for %s' % hostname)
+        sock = socket.socket(af, socket.SOCK_STREAM)
         if timeout is not None:
             try:
                 sock.settimeout(timeout)
             except:
                 pass
-
-        sock.connect((hostname, port))
+        sock.connect(addr)
         t = self._transport = Transport(sock)
 
         if self._log_channel is not None:
@@ -316,6 +320,8 @@ class SSHClient (object):
         else:
             key_filenames = key_filename
         self._auth(username, password, pkey, key_filenames, allow_agent, look_for_keys)
+        if agent_forwarding:
+            self._forward_agent()
     
     def close(self):
         """
@@ -474,4 +480,4 @@ class SSHClient (object):
 
     def _log(self, level, msg):
         self._transport._log(level, msg)
-
+        
