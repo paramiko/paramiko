@@ -277,7 +277,7 @@ class SSHClient (object):
         socket.getaddrinfo(hostname, port):
             if socktype==socket.SOCK_STREAM:
                 af = family
-                ADDR = sockaddr
+                addr = sockaddr
                 break
         else:
             raise SSHException('No suitable address family for %s' % hostname)
