@@ -320,8 +320,6 @@ class SSHClient (object):
         else:
             key_filenames = key_filename
         self._auth(username, password, pkey, key_filenames, allow_agent, look_for_keys)
-        if agent_forwarding:
-            self._forward_agent()
     
     def close(self):
         """
