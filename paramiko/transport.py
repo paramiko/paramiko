@@ -338,6 +338,7 @@ class Transport (threading.Thread):
         self.saved_exception = None
         self.clear_to_send = threading.Event()
         self.clear_to_send_lock = threading.Lock()
+        self.clear_to_send_timeout = 30.0
         self.log_name = 'paramiko.transport'
         self.logger = util.get_logger(self.log_name)
         self.packetizer.set_log(self.logger)
@@ -1402,6 +1403,7 @@ class Transport (threading.Thread):
         send a message, but block if we're in key negotiation.  this is used
         for user-initiated requests.
         """
+        start = time.time()
         while True:
             self.clear_to_send.wait(0.1)
             if not self.active:
@@ -1411,6 +1413,8 @@ class Transport (threading.Thread):
             if self.clear_to_send.isSet():
                 break
             self.clear_to_send_lock.release()
+            if time.time() > start + self.clear_to_send_timeout:
+              raise SSHException('Key-exchange timed out waiting for key negotiation')
         try:
             self._send_message(data)
         finally:
