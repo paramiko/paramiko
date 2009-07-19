@@ -22,6 +22,7 @@ Useful functions used by the rest of paramiko.
 
 from __future__ import generators
 
+import array
 from binascii import hexlify, unhexlify
 import sys
 import struct
@@ -186,10 +187,10 @@ def load_host_keys(filename):
     return a compound dict of C{hostname -> keytype ->} L{PKey <paramiko.pkey.PKey>}.
     The hostname may be an IP address or DNS name.  The keytype will be either
     C{"ssh-rsa"} or C{"ssh-dss"}.
-    
+
     This type of file unfortunately doesn't exist on Windows, but on posix,
     it will usually be stored in C{os.path.expanduser("~/.ssh/known_hosts")}.
-    
+
     Since 1.5.3, this is just a wrapper around L{HostKeys}.
 
     @param filename: name of the file to read host keys from
@@ -270,3 +271,32 @@ def get_logger(name):
     return l
 
 
+class Counter (object):
+    """Stateful counter for CTR mode crypto"""
+    def __init__(self, nbits, initial_value=1L, overflow=0L):
+        self.blocksize = nbits / 8
+        self.overflow = overflow
+        # start with value - 1 so we don't have to store intermediate values when counting
+        # could the iv be 0?
+        if initial_value == 0:
+            self.value = array.array('c', '\xFF' * self.blocksize)
+        else:
+            x = deflate_long(initial_value - 1, add_sign_padding=False)
+            self.value = array.array('c', '\x00' * (self.blocksize - len(x)) + x)
+
+    def __call__(self):
+        """Increament the counter and return the new value"""
+        i = self.blocksize - 1
+        while i > -1:
+            c = self.value[i] = chr((ord(self.value[i]) + 1) % 256)
+            if c != '\x00':
+                return self.value.tostring()
+            i -= 1
+        # counter reset
+        x = deflate_long(self.overflow, add_sign_padding=False)
+        self.value = array.array('c', '\x00' * (self.blocksize - len(x)) + x)
+        return self.value.tostring()
+
+    def new(cls, nbits, initial_value=1L, overflow=0L):
+        return cls(nbits, initial_value=initial_value, overflow=overflow)
+    new = classmethod(new)
