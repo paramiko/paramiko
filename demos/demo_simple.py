@@ -59,43 +59,26 @@ if username == '':
 password = getpass.getpass('Password for %s@%s: ' % (username, hostname))
 
 
-# get host key, if we know one
-hostkeytype = None
-hostkey = None
+# now, connect and use paramiko Client to negotiate SSH2 across the connection
 try:
-    host_keys = paramiko.util.load_host_keys(os.path.expanduser('~/.ssh/known_hosts'))
-except IOError:
-    try:
-        # try ~/ssh/ too, because windows can't have a folder named ~/.ssh/
-        host_keys = paramiko.util.load_host_keys(os.path.expanduser('~/ssh/known_hosts'))
-    except IOError:
-        print '*** Unable to open host keys file'
-        host_keys = {}
-
-if host_keys.has_key(hostname):
-    hostkeytype = host_keys[hostname].keys()[0]
-    hostkey = host_keys[hostname][hostkeytype]
-    print 'Using host key of type %s' % hostkeytype
-
-
-# now, connect and use paramiko Transport to negotiate SSH2 across the connection
-try:
-    t = paramiko.Transport((hostname, port))
-    t.connect(username=username, password=password, hostkey=hostkey)
-    chan = t.open_session()
-    chan.get_pty()
-    chan.invoke_shell()
+    client = paramiko.SSHClient()
+    client.load_system_host_keys()
+    client.set_missing_host_key_policy(paramiko.WarningPolicy)
+    print '*** Connecting...'
+    client.connect(hostname, port, username, password)
+    chan = client.invoke_shell()
+    print repr(client.get_transport())
     print '*** Here we go!'
     print
     interactive.interactive_shell(chan)
     chan.close()
-    t.close()
+    client.close()
 
 except Exception, e:
     print '*** Caught exception: %s: %s' % (e.__class__, e)
     traceback.print_exc()
     try:
-        t.close()
+        client.close()
     except:
         pass
     sys.exit(1)
