@@ -546,19 +546,23 @@ class SFTPClient (BaseSFTP):
         """
         file_size = os.stat(localpath).st_size
         fl = file(localpath, 'rb')
-        fr = self.file(remotepath, 'wb')
-        fr.set_pipelined(True)
-        size = 0
-        while True:
-            data = fl.read(32768)
-            if len(data) == 0:
-                break
-            fr.write(data)
-            size += len(data)
-            if callback is not None:
-                callback(size, file_size)
-        fl.close()
-        fr.close()
+        try:
+            fr = self.file(remotepath, 'wb')
+            fr.set_pipelined(True)
+            size = 0
+            try:
+                while True:
+                    data = fl.read(32768)
+                    if len(data) == 0:
+                        break
+                    fr.write(data)
+                    size += len(data)
+                    if callback is not None:
+                        callback(size, file_size)
+            finally:
+                fr.close()
+        finally:
+            fl.close()
         s = self.stat(remotepath)
         if s.st_size != size:
             raise IOError('size mismatch in put!  %d != %d' % (s.st_size, size))
@@ -584,18 +588,22 @@ class SFTPClient (BaseSFTP):
         fr = self.file(remotepath, 'rb')
         file_size = self.stat(remotepath).st_size
         fr.prefetch()
-        fl = file(localpath, 'wb')
-        size = 0
-        while True:
-            data = fr.read(32768)
-            if len(data) == 0:
-                break
-            fl.write(data)
-            size += len(data)
-            if callback is not None:
-                callback(size, file_size)
-        fl.close()
-        fr.close()
+        try:
+            fl = file(localpath, 'wb')
+            try:
+                size = 0
+                while True:
+                    data = fr.read(32768)
+                    if len(data) == 0:
+                        break
+                    fl.write(data)
+                    size += len(data)
+                    if callback is not None:
+                        callback(size, file_size)
+            finally:
+                fl.close()
+        finally:
+            fr.close()
         s = os.stat(localpath)
         if s.st_size != size:
             raise IOError('size mismatch in get!  %d != %d' % (s.st_size, size))
