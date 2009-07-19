@@ -26,28 +26,28 @@ import fnmatch
 class SSHConfig (object):
     """
     Representation of config information as stored in the format used by
-    OpenSSH.  Queries can be made via L{lookup}.  The format is described in
-    OpenSSH's C{ssh_config} man page.  This class is provided primarily as a
-    convenience to posix users (since the OpenSSH format is a de-facto 
+    OpenSSH. Queries can be made via L{lookup}. The format is described in
+    OpenSSH's C{ssh_config} man page. This class is provided primarily as a
+    convenience to posix users (since the OpenSSH format is a de-facto
     standard on posix) but should work fine on Windows too.
-    
+
     @since: 1.6
     """
-    
+
     def __init__(self):
         """
         Create a new OpenSSH config object.
         """
         self._config = [ { 'host': '*' } ]
-        
+
     def parse(self, file_obj):
         """
         Read an OpenSSH config from the given file object.
-        
+
         @param file_obj: a file-like object to read the config file from
         @type file_obj: file
         """
-        config = self._config[0]
+        configs = [self._config[0]]
         for line in file_obj:
             line = line.rstrip('\n').lstrip()
             if (line == '') or (line[0] == '#'):
@@ -66,15 +66,20 @@ class SSHConfig (object):
                 value = line[i:].lstrip()
 
             if key == 'host':
-                # do we have a pre-existing host config to append to?
-                matches = [c for c in self._config if c['host'] == value]
-                if len(matches) > 0:
-                    config = matches[0]
-                else:
-                    config = { 'host': value }
-                    self._config.append(config)
+                del configs[:]
+                # the value may be multiple hosts, space-delimited
+                for host in value.split():
+                    # do we have a pre-existing host config to append to?
+                    matches = [c for c in self._config if c['host'] == host]
+                    if len(matches) > 0:
+                        configs.append(matches[0])
+                    else:
+                        config = { 'host': host }
+                        self._config.append(config)
+                        configs.append(config)
             else:
-                config[key] = value
+                for config in configs:
+                    config[key] = value
 
     def lookup(self, hostname):
         """
@@ -83,13 +88,13 @@ class SSHConfig (object):
         The host-matching rules of OpenSSH's C{ssh_config} man page are used,
         which means that all configuration options from matching host
         specifications are merged, with more specific hostmasks taking
-        precedence.  In other words, if C{"Port"} is set under C{"Host *"}
+        precedence. In other words, if C{"Port"} is set under C{"Host *"}
         and also C{"Host *.example.com"}, and the lookup is for
         C{"ssh.example.com"}, then the port entry for C{"Host *.example.com"}
         will win out.
 
         The keys in the returned dict are all normalized to lowercase (look for
-        C{"port"}, not C{"Port"}.  No other processing is done to the keys or
+        C{"port"}, not C{"Port"}. No other processing is done to the keys or
         values.
 
         @param hostname: the hostname to lookup
