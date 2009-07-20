@@ -23,6 +23,7 @@ Client-mode SFTP support.
 from binascii import hexlify
 import errno
 import os
+import stat
 import threading
 import time
 import weakref
@@ -507,6 +508,8 @@ class SFTPClient (BaseSFTP):
         
         @since: 1.4
         """
+        if not S_ISDIR(self.stat(path).st_mode):
+            raise SFTPError(errno.ENOTDIR, "%s: %s" % (os.strerror(errno.ENOTDIR), path))
         self._cwd = self.normalize(path)
     
     def getcwd(self):
