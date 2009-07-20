@@ -363,7 +363,7 @@ class AuthHandler (object):
             self.transport._log(DEBUG, 'Methods: ' + str(authlist))
             self.transport.saved_exception = PartialAuthentication(authlist)
         elif self.auth_method not in authlist:
-            self.transport._log(INFO, 'Authentication type (%s) not permitted.' % self.auth_method)
+            self.transport._log(DEBUG, 'Authentication type (%s) not permitted.' % self.auth_method)
             self.transport._log(DEBUG, 'Allowed methods: ' + str(authlist))
             self.transport.saved_exception = BadAuthenticationType('Bad authentication type', authlist)
         else:
