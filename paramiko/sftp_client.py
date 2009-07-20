@@ -512,7 +512,7 @@ class SFTPClient (BaseSFTP):
         
         @since: 1.4
         """
-        if not S_ISDIR(self.stat(path).st_mode):
+        if not stat.S_ISDIR(self.stat(path).st_mode):
             raise SFTPError(errno.ENOTDIR, "%s: %s" % (os.strerror(errno.ENOTDIR), path))
         self._cwd = self.normalize(path)
     
