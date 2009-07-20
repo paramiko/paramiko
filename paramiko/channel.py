@@ -291,10 +291,8 @@ class Channel (object):
         
         @since: 1.2
         """
-        while True:
-            if self.closed or self.status_event.isSet():
-                break
-            self.status_event.wait(0.1)
+        self.status_event.wait()
+        assert self.status_event.isSet()
         return self.exit_status
 
     def send_exit_status(self, status):
@@ -1070,16 +1068,13 @@ class Channel (object):
         self.logger.log(level, "[chan " + self._name + "] " + msg, *args)
 
     def _wait_for_event(self):
-        while True:
-            self.event.wait(0.1)
-            if self.event.isSet():
-                return
-            if self.closed:
-                e = self.transport.get_exception()
-                if e is None:
-                    e = SSHException('Channel closed.')
-                raise e
-        return
+        self.event.wait()
+        assert self.event.isSet()
+        if self.closed:
+            e = self.transport.get_exception()
+            if e is None:
+                e = SSHException('Channel closed.')
+            raise e
 
     def _set_closed(self):
         # you are holding the lock.
@@ -1087,6 +1082,9 @@ class Channel (object):
         self.in_buffer.close()
         self.in_stderr_buffer.close()
         self.out_buffer_cv.notifyAll()
+        # Notify any waiters that we are closed
+        self.event.set()
+        self.status_event.set()
         if self._pipe is not None:
             self._pipe.set_forever()
 
