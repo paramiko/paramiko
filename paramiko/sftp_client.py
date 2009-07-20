@@ -107,7 +107,11 @@ class SFTPClient (BaseSFTP):
     from_transport = classmethod(from_transport)
     
     def _log(self, level, msg, *args):
-        super(SFTPClient, self)._log(level, "[chan %s] " + msg, *([ self.sock.get_name() ] + list(args)))
+        if isinstance(msg, list):
+            for m in msg:
+                super(SFTPClient, self)._log(level, "[chan %s] " + m, *([ self.sock.get_name() ] + list(args)))
+        else:
+            super(SFTPClient, self)._log(level, "[chan %s] " + msg, *([ self.sock.get_name() ] + list(args)))
 
     def close(self):
         """
