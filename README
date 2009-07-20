@@ -4,15 +4,15 @@ paramiko
 ========
 
 :Paramiko: Python SSH module
-:Copyright: Copyright (c) 2003-2009  Robey Pointer <robey@lag.net>
+:Copyright: Copyright (c) 2003-2009  Robey Pointer <robeypointer@gmail.com>
 :License: LGPL
 :Homepage: http://www.lag.net/paramiko/
 
 
-paramiko 1.7.4
+paramiko 1.7.5
 ==============
 
-"Desmond" release, 06 july 2008
+"Ernest" release, 19 july 2009
 
 
 What

@@ -8,6 +8,14 @@ Highlights of what's new in each release:
 Releases
 ========
 
+v1.7.5 (Ernest) 19jul09
+-----------------------
+  * added support for ARC4 cipher and CTR block chaining (Denis Bernard)
+  * made transport threads daemonize, to fix python 2.6 atexit behavior
+  * support unicode hostnames, and IP6 addresses (Maxime Ripard, Shikhar
+    Bhushan)
+  * various small bug fixes
+
 v1.7.4 (Desmond) 06jul08
 ------------------------
   * more randpool fixes for windows, from Dwayne Litzenberger
