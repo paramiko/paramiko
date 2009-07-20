@@ -53,9 +53,10 @@ class HostKeyEntry:
         @type line: str
         """
         fields = line.split(' ')
-        if len(fields) != 3:
+        if len(fields) < 3:
             # Bad number of fields
             return None
+        fields = fields[:3]
 
         names, keytype, key = fields
         names = names.split(',')
