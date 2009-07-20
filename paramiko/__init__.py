@@ -1,4 +1,4 @@
-# Copyright (C) 2003-2008  Robey Pointer <robey@lag.net>
+# Copyright (C) 2003-2008  Robey Pointer <robeypointer@gmail.com>
 #
 # This file is part of paramiko.
 #
@@ -47,9 +47,9 @@ released under the GNU Lesser General Public License (LGPL).
 
 Website: U{http://www.lag.net/paramiko/}
 
-@version: 1.7.4 (Desmond)
+@version: 1.7.5 (Ernest)
 @author: Robey Pointer
-@contact: robey@lag.net
+@contact: robeypointer@gmail.com
 @license: GNU Lesser General Public License (LGPL)
 """
 
@@ -59,10 +59,10 @@ if sys.version_info < (2, 2):
     raise RuntimeError('You need python 2.2 for this module.')
 
 
-__author__ = "Robey Pointer <robey@lag.net>"
-__date__ = "06 Jul 2008"
-__version__ = "1.7.4 (Desmond)"
-__version_info__ = (1, 7, 4)
+__author__ = "Robey Pointer <robeypointer@gmail.com>"
+__date__ = "19 Jul 2009"
+__version__ = "1.7.5 (Ernest)"
+__version_info__ = (1, 7, 5)
 __license__ = "GNU Lesser General Public License (LGPL)"
 
 

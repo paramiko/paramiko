@@ -1,4 +1,4 @@
-# Copyright (C) 2003-2007  Robey Pointer <robey@lag.net>
+# Copyright (C) 2003-2007  Robey Pointer <robeypointer@gmail.com>
 #
 # This file is part of paramiko.
 #
@@ -198,7 +198,7 @@ class Transport (threading.Thread):
     """
 
     _PROTO_ID = '2.0'
-    _CLIENT_ID = 'paramiko_1.7.4'
+    _CLIENT_ID = 'paramiko_1.7.5'
 
     _preferred_ciphers = ( 'aes128-ctr', 'aes256-ctr', 'aes128-cbc', 'blowfish-cbc', 'aes256-cbc', '3des-cbc',
         'arcfour128', 'arcfour256' )

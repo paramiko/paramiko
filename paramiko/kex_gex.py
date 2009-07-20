@@ -1,4 +1,4 @@
-# Copyright (C) 2003-2007  Robey Pointer <robey@lag.net>
+# Copyright (C) 2003-2007  Robey Pointer <robeypointer@gmail.com>
 #
 # This file is part of paramiko.
 #
