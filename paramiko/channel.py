@@ -90,6 +90,7 @@ class Channel (object):
         self.logger = util.get_logger('paramiko.transport')
         self._pipe = None
         self.event = threading.Event()
+        self.event_ready = False
         self.combine_stderr = False
         self.exit_status = -1
         self.origin_addr = None
@@ -152,7 +153,7 @@ class Channel (object):
         # pixel height, width (usually useless)
         m.add_int(0).add_int(0)
         m.add_string('')
-        self.event.clear()
+        self._event_pending()
         self.transport._send_user_message(m)
         self._wait_for_event()
 
@@ -179,7 +180,7 @@ class Channel (object):
         m.add_int(self.remote_chanid)
         m.add_string('shell')
         m.add_boolean(1)
-        self.event.clear()
+        self._event_pending()
         self.transport._send_user_message(m)
         self._wait_for_event()
 
@@ -207,7 +208,7 @@ class Channel (object):
         m.add_string('exec')
         m.add_boolean(True)
         m.add_string(command)
-        self.event.clear()
+        self._event_pending()
         self.transport._send_user_message(m)
         self._wait_for_event()
 
@@ -234,7 +235,7 @@ class Channel (object):
         m.add_string('subsystem')
         m.add_boolean(True)
         m.add_string(subsystem)
-        self.event.clear()
+        self._event_pending()
         self.transport._send_user_message(m)
         self._wait_for_event()
 
@@ -261,7 +262,7 @@ class Channel (object):
         m.add_int(width)
         m.add_int(height)
         m.add_int(0).add_int(0)
-        self.event.clear()
+        self._event_pending()
         self.transport._send_user_message(m)
         self._wait_for_event()
 
@@ -374,7 +375,7 @@ class Channel (object):
         m.add_string(auth_protocol)
         m.add_string(auth_cookie)
         m.add_int(screen_number)
-        self.event.clear()
+        self._event_pending()
         self.transport._send_user_message(m)
         self._wait_for_event()
         self.transport._set_x11_handler(handler)
@@ -917,9 +918,10 @@ class Channel (object):
         self.out_max_packet_size = max(max_packet_size, MIN_PACKET_SIZE)
         self.active = 1
         self._log(DEBUG, 'Max packet out: %d bytes' % max_packet_size)
-
+        
     def _request_success(self, m):
         self._log(DEBUG, 'Sesch channel %d request ok' % self.chanid)
+        self.event_ready = True
         self.event.set()
         return
 
@@ -1067,14 +1069,19 @@ class Channel (object):
     def _log(self, level, msg, *args):
         self.logger.log(level, "[chan " + self._name + "] " + msg, *args)
 
+    def _event_pending(self):
+        self.event.clear()
+        self.event_ready = False
+
     def _wait_for_event(self):
         self.event.wait()
         assert self.event.isSet()
-        if self.closed:
-            e = self.transport.get_exception()
-            if e is None:
-                e = SSHException('Channel closed.')
-            raise e
+        if self.event_ready:
+            return
+        e = self.transport.get_exception()
+        if e is None:
+            e = SSHException('Channel closed.')
+        raise e
 
     def _set_closed(self):
         # you are holding the lock.
