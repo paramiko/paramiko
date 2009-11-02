@@ -8,6 +8,12 @@ Highlights of what's new in each release:
 Releases
 ========
 
+v1.7.6 (Fanny) 1nov09
+---------------------
+  * fixed bugs 411099 (sftp chdir isn't unicode-safe), 363163 & 411910 (more
+    IPv6 problems on windows), 413850 (race when server closes the channel),
+    426925 (support port numbers in host keys)
+
 v1.7.5 (Ernest) 19jul09
 -----------------------
   * added support for ARC4 cipher and CTR block chaining (Denis Bernard)

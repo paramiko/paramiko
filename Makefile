@@ -30,6 +30,7 @@
 # clara (23mar08) - 1.7.3
 # desmond (06jul08) - 1.7.4
 # ernest (19jul09) - 1.7.5
+# fanny (1nov09) - 1.7.6
 
 
 ifeq ($(wildcard /sbin/md5),/sbin/md5)

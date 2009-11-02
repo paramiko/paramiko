@@ -9,10 +9,10 @@ paramiko
 :Homepage: http://www.lag.net/paramiko/
 
 
-paramiko 1.7.5
+paramiko 1.7.6
 ==============
 
-"Ernest" release, 19 july 2009
+"Fanny" release, 1 november 2009
 
 
 What
