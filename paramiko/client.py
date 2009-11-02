@@ -36,6 +36,8 @@ from paramiko.ssh_exception import SSHException, BadHostKeyException
 from paramiko.transport import Transport
 
 
+SSH_PORT = 22
+
 class MissingHostKeyPolicy (object):
     """
     Interface for defining the policy that L{SSHClient} should use when the
@@ -223,7 +225,7 @@ class SSHClient (object):
         """
         self._policy = policy
 
-    def connect(self, hostname, port=22, username=None, password=None, pkey=None,
+    def connect(self, hostname, port=SSH_PORT, username=None, password=None, pkey=None,
                 key_filename=None, timeout=None, allow_agent=True, look_for_keys=True):
         """
         Connect to an SSH server and authenticate to it.  The server's host key
@@ -297,12 +299,16 @@ class SSHClient (object):
         server_key = t.get_remote_server_key()
         keytype = server_key.get_name()
 
-        our_server_key = self._system_host_keys.get(hostname, {}).get(keytype, None)
+        if port == SSH_PORT:
+            server_hostkey_name = hostname
+        else:
+            server_hostkey_name = "[%s]:%d" % (hostname, port)
+        our_server_key = self._system_host_keys.get(server_hostkey_name, {}).get(keytype, None)
         if our_server_key is None:
-            our_server_key = self._host_keys.get(hostname, {}).get(keytype, None)
+            our_server_key = self._host_keys.get(server_hostkey_name, {}).get(keytype, None)
         if our_server_key is None:
             # will raise exception if the key is rejected; let that fall out
-            self._policy.missing_host_key(self, hostname, server_key)
+            self._policy.missing_host_key(self, server_hostkey_name, server_key)
             # if the callback returns, assume the key is ok
             our_server_key = server_key
 
