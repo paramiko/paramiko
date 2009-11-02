@@ -33,7 +33,7 @@ class HostKeyEntry:
     """
     Representation of a line in an OpenSSH-style "known hosts" file.
     """
-    
+
     def __init__(self, hostnames=None, key=None):
         self.valid = (hostnames is not None) and (key is not None)
         self.hostnames = hostnames
@@ -83,7 +83,7 @@ class HostKeyEntry:
             return '%s %s %s\n' % (','.join(self.hostnames), self.key.get_name(),
                    self.key.get_base64())
         return None
-    
+
     def __repr__(self):
         return '<HostKeyEntry %r: %r>' % (self.hostnames, self.key)
 
@@ -93,18 +93,18 @@ class HostKeys (UserDict.DictMixin):
     Representation of an openssh-style "known hosts" file.  Host keys can be
     read from one or more files, and then individual hosts can be looked up to
     verify server keys during SSH negotiation.
-    
+
     A HostKeys object can be treated like a dict; any dict lookup is equivalent
     to calling L{lookup}.
-    
+
     @since: 1.5.3
     """
-    
+
     def __init__(self, filename=None):
         """
         Create a new HostKeys object, optionally loading keys from an openssh
         style host-key file.
-        
+
         @param filename: filename to load host keys from, or C{None}
         @type filename: str
         """
@@ -112,12 +112,12 @@ class HostKeys (UserDict.DictMixin):
         self._entries = []
         if filename is not None:
             self.load(filename)
-    
+
     def add(self, hostname, keytype, key):
         """
         Add a host key entry to the table.  Any existing entry for a
         C{(hostname, keytype)} pair will be replaced.
-        
+
         @param hostname: the hostname (or IP) to add
         @type hostname: str
         @param keytype: key type (C{"ssh-rsa"} or C{"ssh-dss"})
@@ -130,21 +130,21 @@ class HostKeys (UserDict.DictMixin):
                 e.key = key
                 return
         self._entries.append(HostKeyEntry([hostname], key))
-            
+
     def load(self, filename):
         """
         Read a file of known SSH host keys, in the format used by openssh.
         This type of file unfortunately doesn't exist on Windows, but on
         posix, it will usually be stored in
         C{os.path.expanduser("~/.ssh/known_hosts")}.
-        
+
         If this method is called multiple times, the host keys are merged,
         not cleared.  So multiple calls to C{load} will just call L{add},
         replacing any existing entries and adding new ones.
-        
+
         @param filename: name of the file to read host keys from
         @type filename: str
-        
+
         @raise IOError: if there was an error reading the file
         """
         f = open(filename, 'r')
@@ -156,19 +156,19 @@ class HostKeys (UserDict.DictMixin):
             if e is not None:
                 self._entries.append(e)
         f.close()
-    
+
     def save(self, filename):
         """
         Save host keys into a file, in the format used by openssh.  The order of
         keys in the file will be preserved when possible (if these keys were
         loaded from a file originally).  The single exception is that combined
         lines will be split into individual key lines, which is arguably a bug.
-        
+
         @param filename: name of the file to write
         @type filename: str
-        
+
         @raise IOError: if there was an error writing the file
-        
+
         @since: 1.6.1
         """
         f = open(filename, 'w')
@@ -183,7 +183,7 @@ class HostKeys (UserDict.DictMixin):
         Find a hostkey entry for a given hostname or IP.  If no entry is found,
         C{None} is returned.  Otherwise a dictionary of keytype to key is
         returned.  The keytype will be either C{"ssh-rsa"} or C{"ssh-dss"}.
-        
+
         @param hostname: the hostname (or IP) to lookup
         @type hostname: str
         @return: keys associated with this host (or C{None})
@@ -194,13 +194,13 @@ class HostKeys (UserDict.DictMixin):
                 self._hostname = hostname
                 self._entries = entries
                 self._hostkeys = hostkeys
-            
+
             def __getitem__(self, key):
                 for e in self._entries:
                     if e.key.get_name() == key:
                         return e.key
                 raise KeyError(key)
-            
+
             def __setitem__(self, key, val):
                 for e in self._entries:
                     if e.key is None:
@@ -214,7 +214,7 @@ class HostKeys (UserDict.DictMixin):
                     e = HostKeyEntry([hostname], val)
                     self._entries.append(e)
                     self._hostkeys._entries.append(e)
-            
+
             def keys(self):
                 return [e.key.get_name() for e in self._entries if e.key is not None]
 
@@ -226,12 +226,12 @@ class HostKeys (UserDict.DictMixin):
         if len(entries) == 0:
             return None
         return SubDict(hostname, entries, self)
-    
+
     def check(self, hostname, key):
         """
         Return True if the given key is associated with the given hostname
         in this dictionary.
-        
+
         @param hostname: hostname (or IP) of the SSH server
         @type hostname: str
         @param key: the key to check
@@ -253,13 +253,13 @@ class HostKeys (UserDict.DictMixin):
         Remove all host keys from the dictionary.
         """
         self._entries = []
-    
+
     def __getitem__(self, key):
         ret = self.lookup(key)
         if ret is None:
             raise KeyError(key)
         return ret
-    
+
     def __setitem__(self, hostname, entry):
         # don't use this please.
         if len(entry) == 0:
@@ -274,7 +274,7 @@ class HostKeys (UserDict.DictMixin):
                     found = True
             if not found:
                 self._entries.append(HostKeyEntry([hostname], entry[key_type]))
-    
+
     def keys(self):
         # python 2.4 sets would be nice here.
         ret = []
@@ -294,7 +294,7 @@ class HostKeys (UserDict.DictMixin):
         """
         Return a "hashed" form of the hostname, as used by openssh when storing
         hashed hostnames in the known_hosts file.
-        
+
         @param hostname: the hostname to hash
         @type hostname: str
         @param salt: optional salt to use when hashing (must be 20 bytes long)

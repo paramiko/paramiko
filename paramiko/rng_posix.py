@@ -43,7 +43,7 @@ def open_rng_device(device_path=None):
 
     f = None
     g = None
-    
+
     if device_path is None:
         device_path = "/dev/urandom"
 
@@ -54,7 +54,7 @@ def open_rng_device(device_path=None):
             f = open(device_path, "rb", 0)
         except EnvironmentError:
             raise error("Unable to open /dev/urandom")
-        
+
         # Open a second file descriptor for sanity checking later.
         try:
             g = open(device_path, "rb", 0)
@@ -65,17 +65,17 @@ def open_rng_device(device_path=None):
         st = os.fstat(f.fileno())   # f
         if stat.S_ISREG(st.st_mode) or not stat.S_ISCHR(st.st_mode):
             raise error("/dev/urandom is not a character special device")
-        
+
         st = os.fstat(g.fileno())   # g
         if stat.S_ISREG(st.st_mode) or not stat.S_ISCHR(st.st_mode):
             raise error("/dev/urandom is not a character special device")
-        
+
         # Check that /dev/urandom always returns the number of bytes requested
         x = f.read(20)
         y = g.read(20)
         if len(x) != 20 or len(y) != 20:
             raise error("Error reading from /dev/urandom: input truncated")
-    
+
         # Check that different reads return different data
         if x == y:
             raise error("/dev/urandom is broken; returning identical data: %r == %r" % (x, y))
