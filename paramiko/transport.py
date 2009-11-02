@@ -285,7 +285,7 @@ class Transport (threading.Thread):
         if type(sock) is tuple:
             # connect to the given (host, port)
             hostname, port = sock
-            for (family, socktype, proto, canonname, sockaddr) in socket.getaddrinfo(hostname, port):
+            for (family, socktype, proto, canonname, sockaddr) in socket.getaddrinfo(hostname, port, socket.AF_UNSPEC, socket.SOCK_STREAM):
                 if socktype == socket.SOCK_STREAM:
                     af = family
                     addr = sockaddr

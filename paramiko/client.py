@@ -273,7 +273,7 @@ class SSHClient (object):
             establishing an SSH session
         @raise socket.error: if a socket error occurred while connecting
         """
-        for (family, socktype, proto, canonname, sockaddr) in socket.getaddrinfo(hostname, port):
+        for (family, socktype, proto, canonname, sockaddr) in socket.getaddrinfo(hostname, port, socket.AF_UNSPEC, socket.SOCK_STREAM):
             if socktype == socket.SOCK_STREAM:
                 af = family
                 addr = sockaddr
