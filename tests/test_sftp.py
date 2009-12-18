@@ -36,6 +36,7 @@ import unittest
 import paramiko
 from stub_sftp import StubServer, StubSFTPServer
 from loop import LoopSocket
+from paramiko.sftp_attr import SFTPAttributes
 
 ARTICLE = '''
 Insulin sensitivity and liver insulin receptor structure in ducks from two
@@ -666,6 +667,33 @@ class SFTPTest (unittest.TestCase):
             f.close()
         finally:
             sftp.unlink(FOLDER + '/zero')
+    def test_N_put_without_confirm(self):
+        """
+        verify that get/put work.
+        """
+        import os, warnings
+        warnings.filterwarnings('ignore', 'tempnam.*')
+
+        localname = os.tempnam()
+        text = 'All I wanted was a plastic bunny rabbit.\n'
+        f = open(localname, 'wb')
+        f.write(text)
+        f.close()
+        saved_progress = []
+        def progress_callback(x, y):
+            saved_progress.append((x, y))
+        res = sftp.put(localname, FOLDER + '/bunny.txt', progress_callback, false)
+        
+        self.assertEquals(SFTPAttributes(), res)
+        
+
+        f = sftp.open(FOLDER + '/bunny.txt', 'r')
+        self.assertEquals(text, f.read(128))
+        f.close()
+        self.assertEquals((41, 41), saved_progress[-1])
+
+        os.unlink(localname)
+        sftp.unlink(FOLDER + '/bunny.txt')
 
     def XXX_test_M_seek_append(self):
         """

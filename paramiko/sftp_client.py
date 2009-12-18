@@ -533,7 +533,7 @@ class SFTPClient (BaseSFTP):
         """
         return self._cwd
 
-    def put(self, localpath, remotepath, callback=None):
+    def put(self, localpath, remotepath, callback=None, confirm = True):
         """
         Copy a local file (C{localpath}) to the SFTP server as C{remotepath}.
         Any exception raised by operations will be passed through.  This
@@ -574,9 +574,12 @@ class SFTPClient (BaseSFTP):
                 fr.close()
         finally:
             fl.close()
-        s = self.stat(remotepath)
-        if s.st_size != size:
-            raise IOError('size mismatch in put!  %d != %d' % (s.st_size, size))
+        if confirm:
+            s = self.stat(remotepath)
+            if s.st_size != size:
+                raise IOError('size mismatch in put!  %d != %d' % (s.st_size, size))
+        else:
+            s = SFTPAttributes()
         return s
 
     def get(self, remotepath, localpath, callback=None):
