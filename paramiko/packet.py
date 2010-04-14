@@ -59,7 +59,7 @@ class Packetizer (object):
     # they should probably be lower.
     REKEY_PACKETS = pow(2, 30)
     REKEY_BYTES = pow(2, 30)
-    
+
     def __init__(self, socket):
         self.__socket = socket
         self.__logger = None
@@ -68,14 +68,14 @@ class Packetizer (object):
         self.__need_rekey = False
         self.__init_count = 0
         self.__remainder = ''
-        
+
         # used for noticing when to re-key:
         self.__sent_bytes = 0
         self.__sent_packets = 0
         self.__received_bytes = 0
         self.__received_packets = 0
         self.__received_packets_overflow = 0
-        
+
         # current inbound/outbound ciphering:
         self.__block_size_out = 8
         self.__block_size_in = 8
@@ -99,13 +99,13 @@ class Packetizer (object):
         self.__keepalive_interval = 0
         self.__keepalive_last = time.time()
         self.__keepalive_callback = None
-        
+
     def set_log(self, log):
         """
         Set the python log object to use for logging.
         """
         self.__logger = log
-    
+
     def set_outbound_cipher(self, block_engine, block_size, mac_engine, mac_size, mac_key):
         """
         Switch outbound data cipher.
@@ -122,7 +122,7 @@ class Packetizer (object):
         if self.__init_count == 3:
             self.__init_count = 0
             self.__need_rekey = False
-    
+
     def set_inbound_cipher(self, block_engine, block_size, mac_engine, mac_size, mac_key):
         """
         Switch inbound data cipher.
@@ -140,26 +140,26 @@ class Packetizer (object):
         if self.__init_count == 3:
             self.__init_count = 0
             self.__need_rekey = False
-    
+
     def set_outbound_compressor(self, compressor):
         self.__compress_engine_out = compressor
-    
+
     def set_inbound_compressor(self, compressor):
         self.__compress_engine_in = compressor
-        
+
     def close(self):
         self.__closed = True
         self.__socket.close()
 
     def set_hexdump(self, hexdump):
         self.__dump_packets = hexdump
-        
+
     def get_hexdump(self):
         return self.__dump_packets
-    
+
     def get_mac_size_in(self):
         return self.__mac_size_in
-    
+
     def get_mac_size_out(self):
         return self.__mac_size_out
 
@@ -168,11 +168,11 @@ class Packetizer (object):
         Returns C{True} if a new set of keys needs to be negotiated.  This
         will be triggered during a packet read or write, so it should be
         checked after every read or write, or at least after every few.
-        
+
         @return: C{True} if a new set of keys needs to be negotiated
         """
         return self.__need_rekey
-    
+
     def set_keepalive(self, interval, callback):
         """
         Turn on/off the callback keepalive.  If C{interval} seconds pass with
@@ -182,11 +182,11 @@ class Packetizer (object):
         self.__keepalive_interval = interval
         self.__keepalive_callback = callback
         self.__keepalive_last = time.time()
-    
+
     def read_all(self, n, check_rekey=False):
         """
         Read as close to N bytes as possible, blocking as long as necessary.
-        
+
         @param n: number of bytes to read
         @type n: int
         @return: the data read
@@ -262,7 +262,7 @@ class Packetizer (object):
                 break
             out = out[n:]
         return
-        
+
     def readline(self, timeout):
         """
         Read a line from the socket.  We assume no data is pending after the
@@ -277,7 +277,7 @@ class Packetizer (object):
         if (len(buf) > 0) and (buf[-1] == '\r'):
             buf = buf[:-1]
         return buf
-        
+
     def send_message(self, data):
         """
         Write a block of data using the current cipher, as an SSH block.
@@ -328,7 +328,7 @@ class Packetizer (object):
         """
         Only one thread should ever be in this function (no other locking is
         done).
-        
+
         @raise SSHException: if the packet is mangled
         @raise NeedRekeyException: if the transport should rekey
         """
@@ -369,7 +369,7 @@ class Packetizer (object):
         msg = Message(payload[1:])
         msg.seqno = self.__sequence_number_in
         self.__sequence_number_in = (self.__sequence_number_in + 1) & 0xffffffffL
-        
+
         # check for rekey
         self.__received_bytes += packet_size + self.__mac_size_in + 4
         self.__received_packets += 1
@@ -398,8 +398,8 @@ class Packetizer (object):
 
 
     ##########  protected
-    
-    
+
+
     def _log(self, level, msg):
         if self.__logger is None:
             return
@@ -418,7 +418,7 @@ class Packetizer (object):
         if now > self.__keepalive_last + self.__keepalive_interval:
             self.__keepalive_callback()
             self.__keepalive_last = now
-    
+
     def _py22_read_all(self, n, out):
         while n > 0:
             r, w, e = select.select([self.__socket], [], [], 0.1)
