@@ -667,9 +667,10 @@ class SFTPTest (unittest.TestCase):
             f.close()
         finally:
             sftp.unlink(FOLDER + '/zero')
+
     def test_N_put_without_confirm(self):
         """
-        verify that get/put work.
+        verify that get/put work without confirmation.
         """
         import os, warnings
         warnings.filterwarnings('ignore', 'tempnam.*')
@@ -682,10 +683,9 @@ class SFTPTest (unittest.TestCase):
         saved_progress = []
         def progress_callback(x, y):
             saved_progress.append((x, y))
-        res = sftp.put(localname, FOLDER + '/bunny.txt', progress_callback, false)
+        res = sftp.put(localname, FOLDER + '/bunny.txt', progress_callback, False)
         
-        self.assertEquals(SFTPAttributes(), res)
-        
+        self.assertEquals(SFTPAttributes().attr, res.attr)
 
         f = sftp.open(FOLDER + '/bunny.txt', 'r')
         self.assertEquals(text, f.read(128))

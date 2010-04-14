@@ -533,7 +533,7 @@ class SFTPClient (BaseSFTP):
         """
         return self._cwd
 
-    def put(self, localpath, remotepath, callback=None, confirm = True):
+    def put(self, localpath, remotepath, callback=None, confirm=True):
         """
         Copy a local file (C{localpath}) to the SFTP server as C{remotepath}.
         Any exception raised by operations will be passed through.  This
@@ -549,6 +549,10 @@ class SFTPClient (BaseSFTP):
             transferred so far and the total bytes to be transferred
             (since 1.7.4)
         @type callback: function(int, int)
+        @param confirm: whether to do a stat() on the file afterwards to
+            confirm the file size (since 1.7.7)
+        @type confirm: bool
+
         @return: an object containing attributes about the given file
             (since 1.7.4)
         @rtype: SFTPAttributes
