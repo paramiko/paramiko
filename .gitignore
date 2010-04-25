@@ -1,3 +1,4 @@
 *.pyc
-build
-dist
+build/
+dist/
+paramiko.egg-info/
