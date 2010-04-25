@@ -39,7 +39,7 @@ class SFTPAttributes (object):
     are stored in a dict named C{attr}.  Occasionally, the filename is also
     stored, in C{filename}.
     """
-    
+
     FLAG_SIZE = 1
     FLAG_UIDGID = 2
     FLAG_PERMISSIONS = 4
@@ -89,7 +89,7 @@ class SFTPAttributes (object):
 
     ###  internals...
 
-    
+
     def _from_msg(cls, msg, filename=None, longname=None):
         attr = cls()
         attr._unpack(msg)
@@ -200,7 +200,7 @@ class SFTPAttributes (object):
         else:
             ks = '?---------'
         # compute display date
-        if (self.st_mtime is None) or (self.st_mtime == 0xffffffff):
+        if (self.st_mtime is None) or (self.st_mtime == 0xffffffffL):
             # shouldn't really happen
             datestr = '(unknown date)'
         else:
@@ -210,7 +210,7 @@ class SFTPAttributes (object):
             else:
                 datestr = time.strftime('%d %b %H:%M', time.localtime(self.st_mtime))
         filename = getattr(self, 'filename', '?')
-        
+
         # not all servers support uid/gid
         uid = self.st_uid
         gid = self.st_gid
@@ -218,6 +218,6 @@ class SFTPAttributes (object):
             uid = 0
         if gid is None:
             gid = 0
-            
+
         return '%s   1 %-8d %-8d %8d %-12s %s' % (ks, uid, gid, self.st_size, datestr, filename)
 

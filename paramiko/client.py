@@ -281,7 +281,8 @@ class SSHClient (object):
                 addr = sockaddr
                 break
         else:
-            raise SSHException('No suitable address family for %s' % hostname)
+            # some OS like AIX don't indicate SOCK_STREAM support, so just guess. :(
+            af, _, _, _, addr = socket.getaddrinfo(hostname, port, socket.AF_UNSPEC, socket.SOCK_STREAM)
         sock = socket.socket(af, socket.SOCK_STREAM)
         if timeout is not None:
             try:
