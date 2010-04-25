@@ -226,7 +226,8 @@ class SSHClient (object):
         self._policy = policy
 
     def connect(self, hostname, port=SSH_PORT, username=None, password=None, pkey=None,
-                key_filename=None, timeout=None, allow_agent=True, look_for_keys=True):
+                key_filename=None, timeout=None, allow_agent=True, look_for_keys=True,
+                compress=False):
         """
         Connect to an SSH server and authenticate to it.  The server's host key
         is checked against the system host keys (see L{load_system_host_keys})
@@ -267,6 +268,8 @@ class SSHClient (object):
         @param look_for_keys: set to False to disable searching for discoverable
             private key files in C{~/.ssh/}
         @type look_for_keys: bool
+        @param compress: set to True to turn on compression
+        @type compress: bool
 
         @raise BadHostKeyException: if the server's host key could not be
             verified
@@ -291,7 +294,7 @@ class SSHClient (object):
                 pass
         sock.connect(addr)
         t = self._transport = Transport(sock)
-
+        t.use_compression(compress=compress)
         if self._log_channel is not None:
             t.set_log_channel(self._log_channel)
         t.start_client()
