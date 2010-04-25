@@ -706,10 +706,8 @@ class Transport (threading.Thread):
         @raise SSHException: if the request is rejected or the session ends
             prematurely
         """
-        chan = None
         if not self.active:
-            # don't bother trying to allocate a channel
-            return None
+            raise SSHException('SSH session not active')
         self.lock.acquire()
         try:
             chanid = self._next_channel()
