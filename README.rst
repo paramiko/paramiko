@@ -21,7 +21,7 @@ What
 "paramiko" is a combination of the esperanto words for "paranoid" and
 "friend".  it's a module for python 2.2+ that implements the SSH2 protocol
 for secure (encrypted and authenticated) connections to remote machines.
-unlike SSL (aka TLS), SSH2 protocol does not require heirarchical
+unlike SSL (aka TLS), SSH2 protocol does not require hierarchical
 certificates signed by a powerful central authority. you may know SSH2 as
 the protocol that replaced telnet and rsh for secure access to remote
 shells, but the protocol also includes the ability to open arbitrary

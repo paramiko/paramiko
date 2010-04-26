@@ -20,7 +20,7 @@
 I{Paramiko} (a combination of the esperanto words for "paranoid" and "friend")
 is a module for python 2.3 or greater that implements the SSH2 protocol for
 secure (encrypted and authenticated) connections to remote machines.  Unlike
-SSL (aka TLS), the SSH2 protocol does not require heirarchical certificates
+SSL (aka TLS), the SSH2 protocol does not require hierarchical certificates
 signed by a powerful central authority.  You may know SSH2 as the protocol that
 replaced C{telnet} and C{rsh} for secure access to remote shells, but the
 protocol also includes the ability to open arbitrary channels to remote
