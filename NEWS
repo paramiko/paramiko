@@ -8,6 +8,11 @@ Highlights of what's new in each release:
 Releases
 ========
 
+Unreleased
+----------
+  * Use Crypto.Random rather than Crypto.Util.RandomPool.
+    (Gary van der Merwe, #271791)
+
 v1.7.6 (Fanny) 1nov09
 ---------------------
   * fixed bugs 411099 (sftp chdir isn't unicode-safe), 363163 & 411910 (more

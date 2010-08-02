@@ -139,7 +139,7 @@ class AgentKey(PKey):
     def get_name(self):
         return self.name
 
-    def sign_ssh_data(self, randpool, data):
+    def sign_ssh_data(self, rng, data):
         msg = Message()
         msg.add_byte(chr(SSH2_AGENTC_SIGN_REQUEST))
         msg.add_string(self.blob)

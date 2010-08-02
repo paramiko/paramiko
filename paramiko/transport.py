@@ -297,7 +297,7 @@ class Transport (threading.Thread):
         # okay, normal socket-ish flow here...
         threading.Thread.__init__(self)
         self.setDaemon(True)
-        self.randpool = randpool
+        self.rng = rng
         self.sock = sock
         # Python < 2.3 doesn't have the settimeout method - RogerB
         try:
@@ -585,7 +585,7 @@ class Transport (threading.Thread):
 
         @note: This has no effect when used in client mode.
         """
-        Transport._modulus_pack = ModulusPack(randpool)
+        Transport._modulus_pack = ModulusPack(rng)
         # places to look for the openssh "moduli" file
         file_list = [ '/etc/ssh/moduli', '/usr/local/etc/moduli' ]
         if filename is not None:
@@ -837,10 +837,9 @@ class Transport (threading.Thread):
         """
         m = Message()
         m.add_byte(chr(MSG_IGNORE))
-        randpool.stir()
         if bytes is None:
-            bytes = (ord(randpool.get_bytes(1)) % 32) + 10
-        m.add_bytes(randpool.get_bytes(bytes))
+            bytes = (ord(rng.read(1)) % 32) + 10
+        m.add_bytes(rng.read(bytes))
         self._send_user_message(m)
 
     def renegotiate_keys(self):
@@ -1674,10 +1673,9 @@ class Transport (threading.Thread):
         else:
             available_server_keys = self._preferred_keys
 
-        randpool.stir()
         m = Message()
         m.add_byte(chr(MSG_KEXINIT))
-        m.add_bytes(randpool.get_bytes(16))
+        m.add_bytes(rng.read(16))
         m.add_list(self._preferred_kex)
         m.add_list(available_server_keys)
         m.add_list(self._preferred_ciphers)

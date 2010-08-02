@@ -101,8 +101,7 @@ class KexGex (object):
             qhbyte <<= 1
             qmask >>= 1
         while True:
-            self.transport.randpool.stir()
-            x_bytes = self.transport.randpool.get_bytes(bytes)
+            x_bytes = self.transport.rng.read(bytes)
             x_bytes = chr(ord(x_bytes[0]) & qmask) + x_bytes[1:]
             x = util.inflate_long(x_bytes, 1)
             if (x > 1) and (x < q):
@@ -207,7 +206,7 @@ class KexGex (object):
         H = SHA.new(str(hm)).digest()
         self.transport._set_K_H(K, H)
         # sign it
-        sig = self.transport.get_server_key().sign_ssh_data(self.transport.randpool, H)
+        sig = self.transport.get_server_key().sign_ssh_data(self.transport.rng, H)
         # send reply
         m = Message()
         m.add_byte(chr(_MSG_KEXDH_GEX_REPLY))
