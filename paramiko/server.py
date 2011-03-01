@@ -93,6 +93,7 @@ class ServerInterface (object):
             - L{check_channel_subsystem_request}
             - L{check_channel_window_change_request}
             - L{check_channel_x11_request}
+            - L{check_channel_forward_agent_request}
 
         The C{chanid} parameter is a small number that uniquely identifies the
         channel within a L{Transport}.  A L{Channel} object is not created
@@ -492,7 +493,21 @@ class ServerInterface (object):
         @rtype: bool
         """
         return False
-    
+
+    def check_channel_forward_agent_request(self, channel):
+        """
+	Determine if the client will be provided with an forward agent session. If this
+	method returns C{True}, the server will allow SSH Agent forwarding.
+
+	The default implementation always returns C{False}.
+
+	@param channel: the L{Channel} the request arrived on
+	@type channel: L{Channel}
+	@return: C{True} if the AgentForward was loaded; C{False} if not
+	@rtype: bool
+	"""
+	return False
+
     def check_channel_direct_tcpip_request(self, chanid, origin, destination):
         """
         Determine if a local port forwarding channel will be granted, and
