@@ -38,18 +38,9 @@ that should have come with this archive.
 Requirements
 ------------
 
-  - python 2.3	<http://www.python.org/>
+  - python 2.3 or better <http://www.python.org/>
     (python 2.2 is also supported, but not recommended)
-  - pycrypto 1.9+	<http://www.amk.ca/python/code/crypto.html>
-    (2.0 works too)
-
-pycrypto compiled for Win32 can be downloaded from the HashTar homepage:
-    http://nitace.bsd.uchicago.edu:8080/hashtar
-
-you can also build it yourself using the free MinGW tools and this command
-line (thanks to Roger Binns for the info)::
-
-    python setup.py build --compiler=mingw32 bdist_wininst
+  - pycrypto 2.1 or better <https://www.dlitz.net/software/pycrypto/>
 
 If you have setuptools, you can build and install paramiko and all its
 dependencies with this command (as root)::
@@ -60,34 +51,34 @@ dependencies with this command (as root)::
 Portability
 -----------
 
-i code and test this library on Linux and MacOS X.  for that reason, i'm
-pretty sure that it works for all posix platforms, including MacOS.  it
+i code and test this library on Linux and MacOS X. for that reason, i'm
+pretty sure that it works for all posix platforms, including MacOS. it
 should also work on Windows, though i don't test it as frequently there.
 if you run into Windows problems, send me a patch: portability is important
 to me.
 
-python 2.2 may work, thanks to some patches from Roger Binns.  things to
+python 2.2 may work, thanks to some patches from Roger Binns. things to
 watch out for:
 
     * sockets in 2.2 don't support timeouts, so the 'select' module is
       imported to do polling.  
-    * logging is mostly stubbed out.  it works just enough to let paramiko
-      create log files for debugging, if you want them.  to get real logging,
-      you can backport python 2.3's logging package.  Roger has done that
+    * logging is mostly stubbed out. it works just enough to let paramiko
+      create log files for debugging, if you want them. to get real logging,
+      you can backport python 2.3's logging package. Roger has done that
       already:
       http://sourceforge.net/project/showfiles.php?group_id=75211&package_id=113804
 
-you really should upgrade to python 2.3.  laziness is no excuse! :)
+you really should upgrade to python 2.3. laziness is no excuse! :)
 
 some python distributions don't include the utf-8 string encodings, for
-reasons of space (misdirected as that is).  if your distribution is
+reasons of space (misdirected as that is). if your distribution is
 missing encodings, you'll see an error like this::
 
     LookupError: no codec search functions registered: can't find encoding
 
 this means you need to copy string encodings over from a working system.
 (it probably only happens on embedded systems, not normal python
-installs.)  Valeriy Pogrebitskiy says the best place to look is
+installs.) Valeriy Pogrebitskiy says the best place to look is
 ``.../lib/python*/encodings/__init__.py``.
 
 
