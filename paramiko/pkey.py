@@ -25,7 +25,7 @@ from binascii import hexlify, unhexlify
 import os
 
 from Crypto.Hash import MD5
-from Crypto.Cipher import DES3
+from Crypto.Cipher import DES3, AES
 
 from paramiko.common import *
 from paramiko import util
@@ -40,7 +40,8 @@ class PKey (object):
 
     # known encryption types for private key files:
     _CIPHER_TABLE = {
-        'DES-EDE3-CBC': { 'cipher': DES3, 'keysize': 24, 'blocksize': 8, 'mode': DES3.MODE_CBC }
+        'AES-128-CBC': { 'cipher': AES, 'keysize': 16, 'blocksize': 16, 'mode': AES.MODE_CBC },
+        'DES-EDE3-CBC': { 'cipher': DES3, 'keysize': 24, 'blocksize': 8, 'mode': DES3.MODE_CBC },
     }
 
 
@@ -171,7 +172,7 @@ class PKey (object):
         @rtype: boolean
         """
         return False
-   
+
     def from_private_key_file(cls, filename, password=None):
         """
         Create a key object by reading a private key file.  If the private
@@ -204,7 +205,7 @@ class PKey (object):
         object.  If the private key is encrypted and C{password} is not C{None},
         the given password will be used to decrypt the key (otherwise
         L{PasswordRequiredException} is thrown).
-        
+
         @param file_obj: the file to read from
         @type file_obj: file
         @param password: an optional password to use to decrypt the key, if it's
@@ -212,7 +213,7 @@ class PKey (object):
         @type password: str
         @return: a new key object based on the given private key
         @rtype: L{PKey}
-        
+
         @raise IOError: if there was an error reading the key
         @raise PasswordRequiredException: if the private key file is encrypted,
             and C{password} is C{None}
@@ -236,17 +237,17 @@ class PKey (object):
         @raise SSHException: if the key is invalid
         """
         raise Exception('Not implemented in PKey')
-    
+
     def write_private_key(self, file_obj, password=None):
         """
         Write private key contents into a file (or file-like) object.  If the
         password is not C{None}, the key is encrypted before writing.
-        
+
         @param file_obj: the file object to write into
         @type file_obj: file
         @param password: an optional password to use to encrypt the key
         @type password: str
-        
+
         @raise IOError: if there was an error writing to the file
         @raise SSHException: if the key is invalid
         """
@@ -279,7 +280,7 @@ class PKey (object):
         data = self._read_private_key(tag, f, password)
         f.close()
         return data
-    
+
     def _read_private_key(self, tag, f, password=None):
         lines = f.readlines()
         start = 0
@@ -350,7 +351,7 @@ class PKey (object):
         os.chmod(filename, 0600)
         self._write_private_key(tag, f, data, password)
         f.close()
-    
+
     def _write_private_key(self, tag, f, data, password=None):
         f.write('-----BEGIN %s PRIVATE KEY-----\n' % tag)
         if password is not None:
