@@ -45,11 +45,7 @@ from paramiko.server import ServerInterface
 from paramiko.sftp_client import SFTPClient
 from paramiko.ssh_exception import SSHException, BadAuthenticationType, ChannelException
 
-# these come from PyCrypt
-#     http://www.amk.ca/python/writing/pycrypt/
-# i believe this on the standards track.
-# PyCrypt compiled for Win32 can be downloaded from the HashTar homepage:
-#     http://nitace.bsd.uchicago.edu:8080/hashtar
+from Crypto import Random
 from Crypto.Cipher import Blowfish, AES, DES3, ARC4
 from Crypto.Hash import SHA, MD5
 try:
@@ -456,6 +452,7 @@ class Transport (threading.Thread):
         # synchronous, wait for a result
         self.completion_event = event = threading.Event()
         self.start()
+        Random.atfork()
         while True:
             event.wait(0.1)
             if not self.active:
