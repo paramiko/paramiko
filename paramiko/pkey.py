@@ -143,13 +143,13 @@ class PKey (object):
         """
         return base64.encodestring(str(self)).replace('\n', '')
 
-    def sign_ssh_data(self, randpool, data):
+    def sign_ssh_data(self, rng, data):
         """
         Sign a blob of data with this private key, and return a L{Message}
         representing an SSH signature message.
 
-        @param randpool: a secure random number generator.
-        @type randpool: L{Crypto.Util.randpool.RandomPool}
+        @param rng: a secure random number generator.
+        @type rng: L{Crypto.Util.rng.RandomPool}
         @param data: the data to sign.
         @type data: str
         @return: an SSH signature message.
@@ -360,11 +360,11 @@ class PKey (object):
             keysize = self._CIPHER_TABLE[cipher_name]['keysize']
             blocksize = self._CIPHER_TABLE[cipher_name]['blocksize']
             mode = self._CIPHER_TABLE[cipher_name]['mode']
-            salt = randpool.get_bytes(8)
+            salt = rng.read(8)
             key = util.generate_key_bytes(MD5, salt, password, keysize)
             if len(data) % blocksize != 0:
                 n = blocksize - len(data) % blocksize
-                #data += randpool.get_bytes(n)
+                #data += rng.read(n)
                 # that would make more sense ^, but it confuses openssh.
                 data += '\0' * n
             data = cipher.new(key, mode, salt).encrypt(data)

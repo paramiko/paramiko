@@ -66,7 +66,7 @@ __version_info__ = (1, 7, 6)
 __license__ = "GNU Lesser General Public License (LGPL)"
 
 
-from transport import randpool, SecurityOptions, Transport
+from transport import SecurityOptions, Transport
 from client import SSHClient, MissingHostKeyPolicy, AutoAddPolicy, RejectPolicy, WarningPolicy
 from auth_handler import AuthHandler
 from channel import Channel, ChannelFile
