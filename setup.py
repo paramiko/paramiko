@@ -36,7 +36,7 @@ import sys
 try:
     from setuptools import setup
     kw = {
-        'install_requires': 'pycrypto >= 1.9',
+        'install_requires': 'pycrypto >= 2.1',
     }
 except ImportError:
     from distutils.core import setup
