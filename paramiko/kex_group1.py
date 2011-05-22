@@ -79,8 +79,7 @@ class KexGroup1(object):
         # potential x where the first 63 bits are 1, because some of those will be
         # larger than q (but this is a tiny tiny subset of potential x).
         while 1:
-            self.transport.randpool.stir()
-            x_bytes = self.transport.randpool.get_bytes(128)
+            x_bytes = self.transport.rng.read(128)
             x_bytes = chr(ord(x_bytes[0]) & 0x7f) + x_bytes[1:]
             if (x_bytes[:8] != '\x7F\xFF\xFF\xFF\xFF\xFF\xFF\xFF') and \
                    (x_bytes[:8] != '\x00\x00\x00\x00\x00\x00\x00\x00'):
@@ -125,7 +124,7 @@ class KexGroup1(object):
         H = SHA.new(str(hm)).digest()
         self.transport._set_K_H(K, H)
         # sign it
-        sig = self.transport.get_server_key().sign_ssh_data(self.transport.randpool, H)
+        sig = self.transport.get_server_key().sign_ssh_data(self.transport.rng, H)
         # send reply
         m = Message()
         m.add_byte(chr(_MSG_KEXDH_REPLY))

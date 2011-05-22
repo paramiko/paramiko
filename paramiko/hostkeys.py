@@ -303,7 +303,7 @@ class HostKeys (UserDict.DictMixin):
         @rtype: str
         """
         if salt is None:
-            salt = randpool.get_bytes(SHA.digest_size)
+            salt = rng.read(SHA.digest_size)
         else:
             if salt.startswith('|1|'):
                 salt = salt.split('|')[2]

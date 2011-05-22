@@ -28,17 +28,15 @@ from paramiko.kex_gex import KexGex
 from paramiko import Message
 
 
-class FakeRandpool (object):
-    def stir(self):
-        pass
-    def get_bytes(self, n):
+class FakeRng (object):
+    def read(self, n):
         return chr(0xcc) * n
 
 
 class FakeKey (object):
     def __str__(self):
         return 'fake-key'
-    def sign_ssh_data(self, randpool, H):
+    def sign_ssh_data(self, rng, H):
         return 'fake-sig'
 
 
@@ -50,7 +48,7 @@ class FakeModulusPack (object):
 
 
 class FakeTransport (object):
-    randpool = FakeRandpool()
+    rng = FakeRng()
     local_version = 'SSH-2.0-paramiko_1.0'
     remote_version = 'SSH-2.0-lame'
     local_kex_init = 'local-kex-init'

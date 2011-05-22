@@ -91,13 +91,13 @@ class DSSKey (PKey):
     def can_sign(self):
         return self.x is not None
 
-    def sign_ssh_data(self, rpool, data):
+    def sign_ssh_data(self, rng, data):
         digest = SHA.new(data).digest()
         dss = DSA.construct((long(self.y), long(self.g), long(self.p), long(self.q), long(self.x)))
         # generate a suitable k
         qsize = len(util.deflate_long(self.q, 0))
         while True:
-            k = util.inflate_long(rpool.get_bytes(qsize), 1)
+            k = util.inflate_long(rng.read(qsize), 1)
             if (k > 2) and (k < self.q):
                 break
         r, s = dss.sign(util.inflate_long(digest, 1), k)
@@ -161,8 +161,7 @@ class DSSKey (PKey):
         @return: new private key
         @rtype: L{DSSKey}
         """
-        randpool.stir()
-        dsa = DSA.generate(bits, randpool.get_bytes, progress_func)
+        dsa = DSA.generate(bits, rng.read, progress_func)
         key = DSSKey(vals=(dsa.p, dsa.q, dsa.g, dsa.y))
         key.x = dsa.x
         return key
