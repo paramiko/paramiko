@@ -31,7 +31,7 @@
 # desmond (06jul08) - 1.7.4
 # ernest (19jul09) - 1.7.5
 # fanny (1nov09) - 1.7.6
-# george (21may11) - 1.7.7
+# george (21may11) - 1.7.7.1
 
 
 ifeq ($(wildcard /sbin/md5),/sbin/md5)
