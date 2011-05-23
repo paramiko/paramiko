@@ -1,4 +1,4 @@
-# Copyright (C) 2003-2009  Robey Pointer <robeypointer@gmail.com>
+# Copyright (C) 2003-2011  Robey Pointer <robeypointer@gmail.com>
 #
 # This file is part of paramiko.
 #
@@ -47,7 +47,7 @@ released under the GNU Lesser General Public License (LGPL).
 
 Website: U{http://www.lag.net/paramiko/}
 
-@version: 1.7.6 (Fanny)
+@version: 1.7.7 (George)
 @author: Robey Pointer
 @contact: robeypointer@gmail.com
 @license: GNU Lesser General Public License (LGPL)
@@ -60,9 +60,9 @@ if sys.version_info < (2, 2):
 
 
 __author__ = "Robey Pointer <robeypointer@gmail.com>"
-__date__ = "1 Nov 2009"
-__version__ = "1.7.6 (Fanny)"
-__version_info__ = (1, 7, 6)
+__date__ = "21 May 2011"
+__version__ = "1.7.7 (George)"
+__version_info__ = (1, 7, 7)
 __license__ = "GNU Lesser General Public License (LGPL)"
 
 
