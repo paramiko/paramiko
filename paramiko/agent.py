@@ -221,8 +221,9 @@ class AgentClientProxy:
         Close the current connection and terminate the agent
         Should be called manually
         """
-        self.thread._exit = True
-        self.thread.join(1000)
+        if hasattr(self, "thread"):
+            self.thread._exit = True
+            self.thread.join(1000)
         self._conn.close()
 
     def _forward_agent_handler(self, chanRemote):
