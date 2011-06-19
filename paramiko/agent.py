@@ -188,6 +188,7 @@ class AgentClientProxy:
        -> Communication occurs ...
     """
     def __init__(self, chanClient):
+        self._conn = None
         self.__chanC = chanClient
         chanClient.request_forward_agent(self._forward_agent_handler)
 
@@ -224,7 +225,8 @@ class AgentClientProxy:
         if hasattr(self, "thread"):
             self.thread._exit = True
             self.thread.join(1000)
-        self._conn.close()
+        if self._conn is not None:
+            self._conn.close()
 
     def _forward_agent_handler(self, chanRemote):
         self.thread = AgentRemoteProxy(self, chanRemote)
