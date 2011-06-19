@@ -26,12 +26,12 @@ from paramiko import util
 from paramiko.ssh_exception import SSHException
 
 
-def _generate_prime(bits, randpool):
+def _generate_prime(bits, rng):
     "primtive attempt at prime generation"
     hbyte_mask = pow(2, bits % 8) - 1
     while True:
         # loop catches the case where we increment n into a higher bit-range
-        x = randpool.get_bytes((bits+7) // 8)
+        x = rng.read((bits+7) // 8)
         if hbyte_mask > 0:
             x = chr(ord(x[0]) & hbyte_mask) + x[1:]
         n = util.inflate_long(x, 1)
@@ -43,7 +43,7 @@ def _generate_prime(bits, randpool):
             break
     return n
 
-def _roll_random(rpool, n):
+def _roll_random(rng, n):
     "returns a random # from 0 to N-1"
     bits = util.bit_length(n-1)
     bytes = (bits + 7) // 8
@@ -56,7 +56,7 @@ def _roll_random(rpool, n):
     # fits, so i can't guarantee that this loop will ever finish, but the odds
     # of it looping forever should be infinitesimal.
     while True:
-        x = rpool.get_bytes(bytes)
+        x = rng.read(bytes)
         if hbyte_mask > 0:
             x = chr(ord(x[0]) & hbyte_mask) + x[1:]
         num = util.inflate_long(x, 1)
@@ -75,7 +75,7 @@ class ModulusPack (object):
         # pack is a hash of: bits -> [ (generator, modulus) ... ]
         self.pack = {}
         self.discarded = []
-        self.randpool = rpool
+        self.rng = rpool
 
     def _parse_modulus(self, line):
         timestamp, mod_type, tests, tries, size, generator, modulus = line.split()
@@ -147,5 +147,5 @@ class ModulusPack (object):
             if min > good:
                 good = bitsizes[-1]
         # now pick a random modulus of this bitsize
-        n = _roll_random(self.randpool, len(self.pack[good]))
+        n = _roll_random(self.rng, len(self.pack[good]))
         return self.pack[good][n]

@@ -311,9 +311,6 @@ class Packetizer (object):
 
             self.__sent_bytes += len(out)
             self.__sent_packets += 1
-            if (self.__sent_packets % 100) == 0:
-                # stirring the randpool takes 30ms on my ibook!!
-                randpool.stir()
             if ((self.__sent_packets >= self.REKEY_PACKETS) or (self.__sent_bytes >= self.REKEY_BYTES)) \
                    and not self.__need_rekey:
                 # only ask once for rekeying
@@ -359,7 +356,7 @@ class Packetizer (object):
                 raise SSHException('Mismatched MAC')
         padding = ord(packet[0])
         payload = packet[1:packet_size - padding]
-        randpool.add_event()
+        
         if self.__dump_packets:
             self._log(DEBUG, 'Got payload (%d bytes, %d padding)' % (packet_size, padding))
 
@@ -476,7 +473,7 @@ class Packetizer (object):
         packet = struct.pack('>IB', len(payload) + padding + 1, padding)
         packet += payload
         if self.__block_engine_out is not None:
-            packet += randpool.get_bytes(padding)
+            packet += rng.read(padding)
         else:
             # cute trick i caught openssh doing: if we're not encrypting,
             # don't waste random bytes for the padding

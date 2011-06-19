@@ -76,8 +76,8 @@ class AgentSSH:
         self._keys = tuple(keys)
 
     def _close(self):
-        #self._conn.close()
-        self._conn = None
+        if self._conn is not None:
+            self._conn.close()
         self._keys = ()
 
     def _send_message(self, msg):
@@ -300,8 +300,7 @@ class Agent(AgentSSH):
         @raise SSHException: if an SSH agent is found, but speaks an
             incompatible protocol
         """
-        AgentSSH.__init__(self)
-
+        self.conn = None
         if ('SSH_AUTH_SOCK' in os.environ) and (sys.platform != 'win32'):
             conn = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
             try:
@@ -344,7 +343,7 @@ class AgentKey(PKey):
     def get_name(self):
         return self.name
 
-    def sign_ssh_data(self, randpool, data):
+    def sign_ssh_data(self, rng, data):
         msg = Message()
         msg.add_byte(chr(SSH2_AGENTC_SIGN_REQUEST))
         msg.add_string(self.blob)

@@ -364,7 +364,7 @@ class Channel (object):
         if auth_protocol is None:
             auth_protocol = 'MIT-MAGIC-COOKIE-1'
         if auth_cookie is None:
-            auth_cookie = binascii.hexlify(self.transport.randpool.get_bytes(16))
+            auth_cookie = binascii.hexlify(self.transport.rng.read(16))
 
         m = Message()
         m.add_byte(chr(MSG_CHANNEL_REQUEST))

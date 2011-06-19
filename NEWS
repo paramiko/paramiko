@@ -8,6 +8,21 @@ Highlights of what's new in each release:
 Releases
 ========
 
+v1.7.7.1 (George) 21may11
+-------------------------
+  * Make the verification phase of SFTP.put optional (Larry Wright)
+  * Patches to fix AIX support (anonymous)
+  * Patch from Michele Bertoldi to allow compression to be turned on in the
+    client constructor.
+  * Patch from Shad Sharma to raise an exception if the transport isn't active
+    when you try to open a new channel.
+  * Stop leaking file descriptors in the SSH agent (John Adams)
+  * More fixes for Windows address family support (Andrew Bennetts)
+  * Use Crypto.Random rather than Crypto.Util.RandomPool
+    (Gary van der Merwe, #271791)
+  * Support for openssl keys (tehfink)
+  * Fix multi-process support by calling Random.atfork (sugarc0de)
+
 v1.7.6 (Fanny) 1nov09
 ---------------------
   * fixed bugs 411099 (sftp chdir isn't unicode-safe), 363163 & 411910 (more

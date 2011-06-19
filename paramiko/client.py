@@ -123,6 +123,7 @@ class SSHClient (object):
         self._log_channel = None
         self._policy = RejectPolicy()
         self._transport = None
+        self._agent = None
 
     def load_system_host_keys(self, filename=None):
         """
@@ -339,6 +340,10 @@ class SSHClient (object):
         self._transport.close()
         self._transport = None
 
+        if self._agent != None:
+            self._agent.close()
+            self._agent = None
+
     def exec_command(self, command, bufsize=-1):
         """
         Execute a command on the SSH server.  A new L{Channel} is opened and
@@ -436,7 +441,10 @@ class SSHClient (object):
                     saved_exception = e
 
         if allow_agent:
-            for key in Agent().get_keys():
+            if self._agent == None:
+                self._agent = Agent()
+
+            for key in self._agent.get_keys():
                 try:
                     self._log(DEBUG, 'Trying SSH agent key %s' % hexlify(key.get_fingerprint()))
                     self._transport.auth_publickey(username, key)

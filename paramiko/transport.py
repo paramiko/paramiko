@@ -45,11 +45,7 @@ from paramiko.server import ServerInterface
 from paramiko.sftp_client import SFTPClient
 from paramiko.ssh_exception import SSHException, BadAuthenticationType, ChannelException
 
-# these come from PyCrypt
-#     http://www.amk.ca/python/writing/pycrypt/
-# i believe this on the standards track.
-# PyCrypt compiled for Win32 can be downloaded from the HashTar homepage:
-#     http://nitace.bsd.uchicago.edu:8080/hashtar
+from Crypto import Random
 from Crypto.Cipher import Blowfish, AES, DES3, ARC4
 from Crypto.Hash import SHA, MD5
 try:
@@ -198,7 +194,7 @@ class Transport (threading.Thread):
     """
 
     _PROTO_ID = '2.0'
-    _CLIENT_ID = 'paramiko_1.7.6'
+    _CLIENT_ID = 'paramiko_1.7.7.1'
 
     _preferred_ciphers = ( 'aes128-ctr', 'aes256-ctr', 'aes128-cbc', 'blowfish-cbc', 'aes256-cbc', '3des-cbc',
         'arcfour128', 'arcfour256' )
@@ -285,19 +281,25 @@ class Transport (threading.Thread):
         if type(sock) is tuple:
             # connect to the given (host, port)
             hostname, port = sock
+            reason = 'No suitable address family'
             for (family, socktype, proto, canonname, sockaddr) in socket.getaddrinfo(hostname, port, socket.AF_UNSPEC, socket.SOCK_STREAM):
                 if socktype == socket.SOCK_STREAM:
                     af = family
                     addr = sockaddr
-                    break
+                    sock = socket.socket(af, socket.SOCK_STREAM)
+                    try:
+                        sock.connect((hostname, port))
+                    except socket.error, e:
+                        reason = str(e)
+                    else:
+                        break
             else:
-                raise SSHException('No suitable address family for %s' % hostname)
-            sock = socket.socket(af, socket.SOCK_STREAM)
-            sock.connect((hostname, port))
+                raise SSHException(
+                    'Unable to connect to %s: %s' % (hostname, reason))
         # okay, normal socket-ish flow here...
         threading.Thread.__init__(self)
         self.setDaemon(True)
-        self.randpool = randpool
+        self.rng = rng
         self.sock = sock
         # Python < 2.3 doesn't have the settimeout method - RogerB
         try:
@@ -451,6 +453,7 @@ class Transport (threading.Thread):
         # synchronous, wait for a result
         self.completion_event = event = threading.Event()
         self.start()
+        Random.atfork()
         while True:
             event.wait(0.1)
             if not self.active:
@@ -586,7 +589,7 @@ class Transport (threading.Thread):
 
         @note: This has no effect when used in client mode.
         """
-        Transport._modulus_pack = ModulusPack(randpool)
+        Transport._modulus_pack = ModulusPack(rng)
         # places to look for the openssh "moduli" file
         file_list = [ '/etc/ssh/moduli', '/usr/local/etc/moduli' ]
         if filename is not None:
@@ -850,10 +853,9 @@ class Transport (threading.Thread):
         """
         m = Message()
         m.add_byte(chr(MSG_IGNORE))
-        randpool.stir()
         if bytes is None:
-            bytes = (ord(randpool.get_bytes(1)) % 32) + 10
-        m.add_bytes(randpool.get_bytes(bytes))
+            bytes = (ord(rng.read(1)) % 32) + 10
+        m.add_bytes(rng.read(bytes))
         self._send_user_message(m)
 
     def renegotiate_keys(self):
@@ -1695,10 +1697,9 @@ class Transport (threading.Thread):
         else:
             available_server_keys = self._preferred_keys
 
-        randpool.stir()
         m = Message()
         m.add_byte(chr(MSG_KEXINIT))
-        m.add_bytes(randpool.get_bytes(16))
+        m.add_bytes(rng.read(16))
         m.add_list(self._preferred_kex)
         m.add_list(available_server_keys)
         m.add_list(self._preferred_ciphers)

@@ -36,7 +36,7 @@ import sys
 try:
     from setuptools import setup
     kw = {
-        'install_requires': 'pycrypto >= 1.9',
+        'install_requires': 'pycrypto >= 2.1',
     }
 except ImportError:
     from distutils.core import setup
@@ -48,13 +48,12 @@ if sys.platform == 'darwin':
 
 
 setup(name = "paramiko",
-      version = "1.7.6",
+      version = "1.7.7.1",
       description = "SSH2 protocol library",
       author = "Robey Pointer",
       author_email = "robeypointer@gmail.com",
       url = "http://www.lag.net/paramiko/",
       packages = [ 'paramiko' ],
-      download_url = 'http://www.lag.net/paramiko/download/paramiko-1.7.6.zip',
       license = 'LGPL',
       platforms = 'Posix; MacOS X; Windows',
       classifiers = [ 'Development Status :: 5 - Production/Stable',

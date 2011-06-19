@@ -23,7 +23,8 @@ Some unit tests for public/private key objects.
 from binascii import hexlify, unhexlify
 import StringIO
 import unittest
-from paramiko import RSAKey, DSSKey, Message, util, randpool
+from paramiko import RSAKey, DSSKey, Message, util
+from paramiko.common import rng
 
 # from openssh's ssh-keygen
 PUB_RSA = 'ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAIEA049W6geFpmsljTwfvI1UmKWWJPNFI74+vNKTk4dmzkQY2yAMs6FhlvhlI8ysU4oj71ZsRYMecHbBbxdN79+JRFVYTKaLqjwGENeTd+yv4q+V2PvZv3fLnzApI3l7EJCqhWwJUHJ1jAkZzqDx0tyOL4uoZpww3nmE0kb3y21tH4c='
@@ -151,7 +152,7 @@ class KeyTest (unittest.TestCase):
     def test_8_sign_rsa(self):
         # verify that the rsa private key can sign and verify
         key = RSAKey.from_private_key_file('tests/test_rsa.key')
-        msg = key.sign_ssh_data(randpool, 'ice weasels')
+        msg = key.sign_ssh_data(rng, 'ice weasels')
         self.assert_(type(msg) is Message)
         msg.rewind()
         self.assertEquals('ssh-rsa', msg.get_string())
@@ -164,7 +165,7 @@ class KeyTest (unittest.TestCase):
     def test_9_sign_dss(self):
         # verify that the dss private key can sign and verify
         key = DSSKey.from_private_key_file('tests/test_dss.key')
-        msg = key.sign_ssh_data(randpool, 'ice weasels')
+        msg = key.sign_ssh_data(rng, 'ice weasels')
         self.assert_(type(msg) is Message)
         msg.rewind()
         self.assertEquals('ssh-dss', msg.get_string())
@@ -178,12 +179,12 @@ class KeyTest (unittest.TestCase):
     
     def test_A_generate_rsa(self):
         key = RSAKey.generate(1024)
-        msg = key.sign_ssh_data(randpool, 'jerri blank')
+        msg = key.sign_ssh_data(rng, 'jerri blank')
         msg.rewind()
         self.assert_(key.verify_ssh_sig('jerri blank', msg))
 
     def test_B_generate_dss(self):
         key = DSSKey.generate(1024)
-        msg = key.sign_ssh_data(randpool, 'jerri blank')
+        msg = key.sign_ssh_data(rng, 'jerri blank')
         msg.rewind()
         self.assert_(key.verify_ssh_sig('jerri blank', msg))

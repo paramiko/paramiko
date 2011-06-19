@@ -137,8 +137,7 @@ class RSAKey (PKey):
         @return: new private key
         @rtype: L{RSAKey}
         """
-        randpool.stir()
-        rsa = RSA.generate(bits, randpool.get_bytes, progress_func)
+        rsa = RSA.generate(bits, rng.read, progress_func)
         key = RSAKey(vals=(rsa.e, rsa.n))
         key.d = rsa.d
         key.p = rsa.p
