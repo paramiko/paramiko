@@ -60,6 +60,7 @@ class AuthHandler (object):
         self.private_key = None
         self.interactive_handler = None
         self.submethods = None
+        self.userauth_service_accepted = False
         # for server mode:
         self.auth_username = None
         self.auth_fail_count = 0
@@ -152,78 +153,11 @@ class AuthHandler (object):
     ###  internals...
 
     def _request_auth(self):
-        m = Message()
-        m.add_byte(cMSG_SERVICE_REQUEST)
-        m.add_string('ssh-userauth')
-        self.transport._send_message(m)
-
-    def _disconnect_service_not_available(self):
-        m = Message()
-        m.add_byte(cMSG_DISCONNECT)
-        m.add_int(DISCONNECT_SERVICE_NOT_AVAILABLE)
-        m.add_string('Service not available')
-        m.add_string('en')
-        self.transport._send_message(m)
-        self.transport.close()
-
-    def _disconnect_no_more_auth(self):
-        m = Message()
-        m.add_byte(cMSG_DISCONNECT)
-        m.add_int(DISCONNECT_NO_MORE_AUTH_METHODS_AVAILABLE)
-        m.add_string('No more auth methods available')
-        m.add_string('en')
-        self.transport._send_message(m)
-        self.transport.close()
-
-    def _get_session_blob(self, key, service, username):
-        m = Message()
-        m.add_string(self.transport.session_id)
-        m.add_byte(cMSG_USERAUTH_REQUEST)
-        m.add_string(username)
-        m.add_string(service)
-        m.add_string('publickey')
-        m.add_boolean(True)
-        m.add_string(key.get_name())
-        m.add_string(key)
-        return m.asbytes()
-
-    def wait_for_response(self, event):
-        while True:
-            event.wait(0.1)
-            if not self.transport.is_active():
-                e = self.transport.get_exception()
-                if (e is None) or issubclass(e.__class__, EOFError):
-                    e = AuthenticationException('Authentication failed.')
-                raise e
-            if event.is_set():
-                break
-        if not self.is_authenticated():
-            e = self.transport.get_exception()
-            if e is None:
-                e = AuthenticationException('Authentication failed.')
-            # this is horrible.  Python Exception isn't yet descended from
-            # object, so type(e) won't work. :(
-            if issubclass(e.__class__, PartialAuthentication):
-                return e.allowed_types
-            raise e
-        return []
-
-    def _parse_service_request(self, m):
-        service = m.get_text()
-        if self.transport.server_mode and (service == 'ssh-userauth'):
-            # accepted
-            m = Message()
-            m.add_byte(cMSG_SERVICE_ACCEPT)
-            m.add_string(service)
+        if not self.userauth_service_accepted:
+            m.add_byte(cMSG_SERVICE_REQUEST)
+            m.add_string('ssh-userauth')
             self.transport._send_message(m)
-            return
-        # dunno this one
-        self._disconnect_service_not_available()
-
-    def _parse_service_accept(self, m):
-        service = m.get_text()
-        if service == 'ssh-userauth':
-            self.transport._log(DEBUG, 'userauth is OK')
+        else:
             m = Message()
             m.add_byte(cMSG_USERAUTH_REQUEST)
             m.add_string(self.username)
@@ -319,6 +253,75 @@ class AuthHandler (object):
             else:
                 raise SSHException('Unknown auth method "%s"' % self.auth_method)
             self.transport._send_message(m)
+
+    def _disconnect_service_not_available(self):
+        m = Message()
+        m.add_byte(cMSG_DISCONNECT)
+        m.add_int(DISCONNECT_SERVICE_NOT_AVAILABLE)
+        m.add_string('Service not available')
+        m.add_string('en')
+        self.transport._send_message(m)
+        self.transport.close()
+
+    def _disconnect_no_more_auth(self):
+        m = Message()
+        m.add_byte(cMSG_DISCONNECT)
+        m.add_int(DISCONNECT_NO_MORE_AUTH_METHODS_AVAILABLE)
+        m.add_string('No more auth methods available')
+        m.add_string('en')
+        self.transport._send_message(m)
+        self.transport.close()
+
+    def _get_session_blob(self, key, service, username):
+        m = Message()
+        m.add_string(self.transport.session_id)
+        m.add_byte(cMSG_USERAUTH_REQUEST)
+        m.add_string(username)
+        m.add_string(service)
+        m.add_string('publickey')
+        m.add_boolean(True)
+        m.add_string(key.get_name())
+        m.add_string(key)
+        return m.asbytes()
+
+    def wait_for_response(self, event):
+        while True:
+            event.wait(0.1)
+            if not self.transport.is_active():
+                e = self.transport.get_exception()
+                if (e is None) or issubclass(e.__class__, EOFError):
+                    e = AuthenticationException('Authentication failed.')
+                raise e
+            if event.is_set():
+                break
+        if not self.is_authenticated():
+            e = self.transport.get_exception()
+            if e is None:
+                e = AuthenticationException('Authentication failed.')
+            # this is horrible.  Python Exception isn't yet descended from
+            # object, so type(e) won't work. :(
+            if issubclass(e.__class__, PartialAuthentication):
+                return e.allowed_types
+            raise e
+        return []
+
+    def _parse_service_request(self, m):
+        service = m.get_text()
+        if self.transport.server_mode and (service == 'ssh-userauth'):
+            # accepted
+            m = Message()
+            m.add_byte(cMSG_SERVICE_ACCEPT)
+            m.add_string(service)
+            self.transport._send_message(m)
+            return
+        # dunno this one
+        self._disconnect_service_not_available()
+
+    def _parse_service_accept(self, m):
+        service = m.get_text()
+        if service == 'ssh-userauth':
+            self.userauth_service_accepted = True
+            self._request_auth()
         else:
             self.transport._log(DEBUG, 'Service request "%s" accepted (?)' % service)
 
