@@ -49,6 +49,7 @@ class AuthHandler (object):
         self.private_key = None
         self.interactive_handler = None
         self.submethods = None
+        self.userauth_service_accepted = False
         # for server mode:
         self.auth_username = None
         self.auth_fail_count = 0
@@ -118,10 +119,38 @@ class AuthHandler (object):
 
 
     def _request_auth(self):
-        m = Message()
-        m.add_byte(chr(MSG_SERVICE_REQUEST))
-        m.add_string('ssh-userauth')
-        self.transport._send_message(m)
+        if not self.userauth_service_accepted:
+            m = Message()
+            m.add_byte(chr(MSG_SERVICE_REQUEST))
+            m.add_string('ssh-userauth')
+            self.transport._send_message(m)
+        else:
+            m = Message()
+            m.add_byte(chr(MSG_USERAUTH_REQUEST))
+            m.add_string(self.username)
+            m.add_string('ssh-connection')
+            m.add_string(self.auth_method)
+            if self.auth_method == 'password':
+                m.add_boolean(False)
+                password = self.password
+                if isinstance(password, unicode):
+                    password = password.encode('UTF-8')
+                m.add_string(password)
+            elif self.auth_method == 'publickey':
+                m.add_boolean(True)
+                m.add_string(self.private_key.get_name())
+                m.add_string(str(self.private_key))
+                blob = self._get_session_blob(self.private_key, 'ssh-connection', self.username)
+                sig = self.private_key.sign_ssh_data(self.transport.rng, blob)
+                m.add_string(str(sig))
+            elif self.auth_method == 'keyboard-interactive':
+                m.add_string('')
+                m.add_string(self.submethods)
+            elif self.auth_method == 'none':
+                pass
+            else:
+                raise SSHException('Unknown auth method "%s"' % self.auth_method)
+            self.transport._send_message(m)
 
     def _disconnect_service_not_available(self):
         m = Message()
@@ -189,33 +218,8 @@ class AuthHandler (object):
     def _parse_service_accept(self, m):
         service = m.get_string()
         if service == 'ssh-userauth':
-            self.transport._log(DEBUG, 'userauth is OK')
-            m = Message()
-            m.add_byte(chr(MSG_USERAUTH_REQUEST))
-            m.add_string(self.username)
-            m.add_string('ssh-connection')
-            m.add_string(self.auth_method)
-            if self.auth_method == 'password':
-                m.add_boolean(False)
-                password = self.password
-                if isinstance(password, unicode):
-                    password = password.encode('UTF-8')
-                m.add_string(password)
-            elif self.auth_method == 'publickey':
-                m.add_boolean(True)
-                m.add_string(self.private_key.get_name())
-                m.add_string(str(self.private_key))
-                blob = self._get_session_blob(self.private_key, 'ssh-connection', self.username)
-                sig = self.private_key.sign_ssh_data(self.transport.rng, blob)
-                m.add_string(str(sig))
-            elif self.auth_method == 'keyboard-interactive':
-                m.add_string('')
-                m.add_string(self.submethods)
-            elif self.auth_method == 'none':
-                pass
-            else:
-                raise SSHException('Unknown auth method "%s"' % self.auth_method)
-            self.transport._send_message(m)
+            self.userauth_service_accepted = True
+            self._request_auth()
         else:
             self.transport._log(DEBUG, 'Service request "%s" accepted (?)' % service)
 
