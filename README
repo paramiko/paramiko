@@ -141,6 +141,9 @@ the following example scripts (in demos/) get progressively more detailed:
     'robey' (password 'foo'), and pretends to be a BBS.  meant to be a
     very simple demo of writing an ssh server.
 
+:demo_keygen.py:
+    an key generator similar to openssh ssh-keygen(1) program with
+    paramiko keys generation and progress functions.
 
 Use
 ---
