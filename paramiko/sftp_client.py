@@ -682,7 +682,7 @@ class SFTPClient (BaseSFTP):
                     self._convert_status(msg)
                 return t, msg
             if fileobj is not type(None):
-                fileobj._async_response(t, msg)
+                fileobj._async_response(t, msg, num)
             if waitfor is None:
                 # just doing a single check
                 break
