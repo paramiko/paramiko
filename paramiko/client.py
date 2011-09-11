@@ -294,6 +294,48 @@ class SSHClient (object):
             except:
                 pass
         sock.connect(addr)
+        return self.connect_socket(sock, username, password, pkey, key_filename,
+                                   allow_agent, look_for_keys, compress, hostname, port)
+
+    def connect_socket(self, sock, username=None, password=None, pkey=None,
+                       key_filename=None, allow_agent=True, look_for_keys=True,
+                       compress=False, hostname=None, port=SSH_PORT):
+        """
+        Create a SSH connection on an already connected socket and
+        authenticate to it.  If the optional C{hostname} and C{port}
+        arguments are given the server's host key is checked.
+
+        @param socket: the socket to wrap
+        @type socket: object
+        @param username: the username to authenticate as (defaults to the
+            current local username)
+        @type username: str
+        @param password: a password to use for authentication or for unlocking
+            a private key
+        @type password: str
+        @param pkey: an optional private key to use for authentication
+        @type pkey: L{PKey}
+        @param key_filename: the filename, or list of filenames, of optional
+            private key(s) to try for authentication
+        @type key_filename: str or list(str)
+        @param allow_agent: set to False to disable connecting to the SSH agent
+        @type allow_agent: bool
+        @param look_for_keys: set to False to disable searching for discoverable
+            private key files in C{~/.ssh/}
+        @type look_for_keys: bool
+        @param compress: set to True to turn on compression
+        @type compress: bool
+        @param hostname: optional hostname to use for hostkey checking
+        @type hostname: str
+        @param port: optional port to use for hostkey checking
+        @type port: int
+
+        @raise BadHostKeyException: if the server's host key could not be
+            verified
+        @raise AuthenticationException: if authentication failed
+        @raise SSHException: if there was any other error connecting or
+            establishing an SSH session
+        """
         t = self._transport = Transport(sock)
         t.use_compression(compress=compress)
         if self._log_channel is not None:
@@ -301,24 +343,25 @@ class SSHClient (object):
         t.start_client()
         ResourceManager.register(self, t)
 
-        server_key = t.get_remote_server_key()
-        keytype = server_key.get_name()
+        if hostname:
+            server_key = t.get_remote_server_key()
+            keytype = server_key.get_name()
 
-        if port == SSH_PORT:
-            server_hostkey_name = hostname
-        else:
-            server_hostkey_name = "[%s]:%d" % (hostname, port)
-        our_server_key = self._system_host_keys.get(server_hostkey_name, {}).get(keytype, None)
-        if our_server_key is None:
-            our_server_key = self._host_keys.get(server_hostkey_name, {}).get(keytype, None)
-        if our_server_key is None:
-            # will raise exception if the key is rejected; let that fall out
-            self._policy.missing_host_key(self, server_hostkey_name, server_key)
-            # if the callback returns, assume the key is ok
-            our_server_key = server_key
+            if port == SSH_PORT:
+                server_hostkey_name = hostname
+            else:
+                server_hostkey_name = "[%s]:%d" % (hostname, port)
+            our_server_key = self._system_host_keys.get(server_hostkey_name, {}).get(keytype, None)
+            if our_server_key is None:
+                our_server_key = self._host_keys.get(server_hostkey_name, {}).get(keytype, None)
+            if our_server_key is None:
+                # will raise exception if the key is rejected; let that fall out
+                self._policy.missing_host_key(self, server_hostkey_name, server_key)
+                # if the callback returns, assume the key is ok
+                our_server_key = server_key
 
-        if server_key != our_server_key:
-            raise BadHostKeyException(hostname, server_key, our_server_key)
+            if server_key != our_server_key:
+                raise BadHostKeyException(hostname, server_key, our_server_key)
 
         if username is None:
             username = getpass.getuser()
