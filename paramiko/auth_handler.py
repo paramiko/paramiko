@@ -45,6 +45,7 @@ class AuthHandler (object):
         self.authenticated = False
         self.auth_event = None
         self.auth_method = ''
+        self.banner = None
         self.password = None
         self.private_key = None
         self.interactive_handler = None
@@ -61,6 +62,9 @@ class AuthHandler (object):
             return self.auth_username
         else:
             return self.username
+
+    def get_banner(self):
+        return self.banner
 
     def auth_none(self, username, event):
         self.transport.lock.acquire()
@@ -375,6 +379,7 @@ class AuthHandler (object):
 
     def _parse_userauth_banner(self, m):
         banner = m.get_string()
+        self.banner = banner
         lang = m.get_string()
         self.transport._log(INFO, 'Auth banner: ' + banner)
         # who cares.
