@@ -193,7 +193,7 @@ class SFTPClient (BaseSFTP):
         self._request(CMD_CLOSE, handle)
         return filelist
 
-    def open(self, filename, mode='r', bufsize=-1):
+    def open(self, filename, mode='r', bufsize=-1, filemode=0644):
         """
         Open a file on the remote server.  The arguments are the same as for
         python's built-in C{file} (aka C{open}).  A file-like object is
@@ -242,6 +242,7 @@ class SFTPClient (BaseSFTP):
         if ('x' in mode):
             imode |= SFTP_FLAG_CREATE | SFTP_FLAG_EXCL
         attrblock = SFTPAttributes()
+        attrblock.st_mode = filemode
         t, msg = self._request(CMD_OPEN, filename, imode, attrblock)
         if t != CMD_HANDLE:
             raise SFTPError('Expected handle')
