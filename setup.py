@@ -48,11 +48,10 @@ if sys.platform == 'darwin':
 
 
 setup(name = "ssh",
-      version = "1.7.7.1",
+      version = "1.7.7.2",
       description = "SSH2 protocol library",
-      author = "Robey Pointer",
-      author_email = "robeypointer@gmail.com",
-      url = "http://www.lag.net/ssh/",
+      author = "Jeff Forcier",
+      author_email = "jeff@bitprophet.org",
       packages = [ 'ssh' ],
       license = 'LGPL',
       platforms = 'Posix; MacOS X; Windows',
