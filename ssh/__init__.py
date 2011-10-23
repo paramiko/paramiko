@@ -17,7 +17,7 @@
 # 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
 
 """
-I{'ssh'} (a combination of the esperanto words for "paranoid" and "friend")
+I{'ssh'} 
 is a module for python 2.3 or greater that implements the SSH2 protocol for
 secure (encrypted and authenticated) connections to remote machines.  Unlike
 SSL (aka TLS), the SSH2 protocol does not require hierarchical certificates
