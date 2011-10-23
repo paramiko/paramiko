@@ -12,7 +12,7 @@
     remove some epydoc comments about fileno() being non-portable.
 
     modified files:
-     paramiko/channel.py
+     ssh/channel.py
 
 
 2005-04-18 00:30:52 GMT	Robey Pointer <robey@lag.net>	patch-163
@@ -26,7 +26,7 @@
     
 
     modified files:
-     paramiko/sftp_client.py tests/test_sftp.py
+     ssh/sftp_client.py tests/test_sftp.py
 
 
 2005-04-18 00:11:34 GMT	Robey Pointer <robey@lag.net>	patch-162
@@ -38,7 +38,7 @@
 
     avoid using os.environ['HOME'], which will never work on windows, and
     use os.path.expanduser() instead.  it's semi-moot because windows doesn't
-    have a standard location for ssh files, but i think paramiko should set a
+    have a standard location for ssh files, but i think ssh should set a
     good example anyway.
 
     modified files:
@@ -68,7 +68,7 @@
     
 
     modified files:
-     README paramiko/server.py
+     README ssh/server.py
 
     new patches:
      robey@lag.net--2003-public-master-shake/secsh--dev--1.0--base-0
@@ -85,7 +85,7 @@
     bump version to 1.3 / marowak
 
     modified files:
-     Makefile README paramiko/__init__.py paramiko/transport.py
+     Makefile README ssh/__init__.py ssh/transport.py
      setup.py
 
 
@@ -99,7 +99,7 @@
     clean up SFTPAttributes repr() a bit.
 
     modified files:
-     paramiko/sftp_attr.py
+     ssh/sftp_attr.py
 
 
 2005-04-10 00:13:54 GMT	Robey Pointer <robey@lag.net>	patch-158
@@ -129,8 +129,8 @@
     lots of little doc fixups (mostly indenting).
 
     modified files:
-     paramiko/server.py paramiko/sftp_server.py paramiko/sftp_si.py
-     paramiko/transport.py tests/stub_sftp.py
+     ssh/server.py ssh/sftp_server.py ssh/sftp_si.py
+     ssh/transport.py tests/stub_sftp.py
 
 
 2005-03-26 05:53:00 GMT	Robey Pointer <robey@lag.net>	patch-156
@@ -158,7 +158,7 @@
      .arch-ids/demo_windows.py.id demo_windows.py
 
     modified files:
-     MANIFEST.in README paramiko/channel.py
+     MANIFEST.in README ssh/channel.py
 
 
 2005-03-25 20:06:56 GMT	Robey Pointer <robey@lag.net>	patch-155
@@ -171,7 +171,7 @@
     fix a bug where packets larger than about 12KB would cause the session to
     die on platforms other than osx.  turns out that on most platforms, setting a
     socket timeout also causes timeouts to occur on writes (but not on osx).  so
-    on a huge write, once the os buffers were full, paramiko would get a
+    on a huge write, once the os buffers were full, ssh would get a
     socket.timeout exception when writing, and bail.
     
     since the timeout is primarily so we can periodically poll to see if the
@@ -179,7 +179,7 @@
     continue trying to write.  large packet sizes (in sftp) should now work.
 
     modified files:
-     paramiko/transport.py
+     ssh/transport.py
 
 
 2005-02-28 08:06:08 GMT	Robey Pointer <robey@lag.net>	patch-154
@@ -195,16 +195,16 @@
 
     modified files:
      Makefile README demo.py demo_server.py demo_simple.py
-     demo_windows.py forward.py paramiko/__init__.py
-     paramiko/auth_transport.py paramiko/ber.py paramiko/channel.py
-     paramiko/common.py paramiko/dsskey.py paramiko/file.py
-     paramiko/kex_gex.py paramiko/kex_group1.py
-     paramiko/logging22.py paramiko/message.py paramiko/pkey.py
-     paramiko/primes.py paramiko/rsakey.py paramiko/server.py
-     paramiko/sftp.py paramiko/sftp_attr.py paramiko/sftp_client.py
-     paramiko/sftp_handle.py paramiko/sftp_server.py
-     paramiko/sftp_si.py paramiko/ssh_exception.py
-     paramiko/transport.py paramiko/util.py setup.py test.py
+     demo_windows.py forward.py ssh/__init__.py
+     ssh/auth_transport.py ssh/ber.py ssh/channel.py
+     ssh/common.py ssh/dsskey.py ssh/file.py
+     ssh/kex_gex.py ssh/kex_group1.py
+     ssh/logging22.py ssh/message.py ssh/pkey.py
+     ssh/primes.py ssh/rsakey.py ssh/server.py
+     ssh/sftp.py ssh/sftp_attr.py ssh/sftp_client.py
+     ssh/sftp_handle.py ssh/sftp_server.py
+     ssh/sftp_si.py ssh/ssh_exception.py
+     ssh/transport.py ssh/util.py setup.py test.py
      tests/loop.py tests/stub_sftp.py tests/test_file.py
      tests/test_kex.py tests/test_message.py tests/test_pkey.py
      tests/test_sftp.py tests/test_transport.py
@@ -225,7 +225,7 @@
     
 
     modified files:
-     paramiko/file.py paramiko/sftp_file.py tests/test_sftp.py
+     ssh/file.py ssh/sftp_file.py tests/test_sftp.py
 
 
 2005-02-28 07:17:21 GMT	Robey Pointer <robey@lag.net>	patch-152
@@ -238,7 +238,7 @@
     stupid little doc fixups that didn't fit with the other patches.
 
     modified files:
-     paramiko/auth_transport.py tests/loop.py
+     ssh/auth_transport.py tests/loop.py
 
 
 2005-02-28 07:16:22 GMT	Robey Pointer <robey@lag.net>	patch-151
@@ -257,7 +257,7 @@
     
 
     modified files:
-     paramiko/transport.py
+     ssh/transport.py
 
 
 2005-02-28 07:14:11 GMT	Robey Pointer <robey@lag.net>	patch-150
@@ -276,7 +276,7 @@
     anything.  it just makes me feel better.
 
     modified files:
-     paramiko/channel.py
+     ssh/channel.py
 
 
 2005-02-28 07:09:02 GMT	Robey Pointer <robey@lag.net>	patch-149
@@ -287,14 +287,14 @@
       secsh--dev--1.0--patch-149
 
     add a logging filter that reports the thread-id of the logger, and use
-    that for all paramiko logging.  since thread-local stuff didn't appear
+    that for all ssh logging.  since thread-local stuff didn't appear
     until python 2.4, i hacked up my own little version to assign incrementing
     numbers to threads as they log.
     
 
     modified files:
-     paramiko/channel.py paramiko/sftp.py paramiko/sftp_client.py
-     paramiko/sftp_server.py paramiko/transport.py paramiko/util.py
+     ssh/channel.py ssh/sftp.py ssh/sftp_client.py
+     ssh/sftp_server.py ssh/transport.py ssh/util.py
 
 
 2005-02-26 21:12:43 GMT	Robey Pointer <robey@lag.net>	patch-148
@@ -320,7 +320,7 @@
     bump version stuff to 1.2 / lapras.
 
     modified files:
-     Makefile README paramiko/__init__.py paramiko/transport.py
+     Makefile README ssh/__init__.py ssh/transport.py
      setup.py
 
 
@@ -335,7 +335,7 @@
     
 
     modified files:
-     README paramiko/dsskey.py paramiko/rsakey.py
+     README ssh/dsskey.py ssh/rsakey.py
      tests/test_transport.py
 
 
@@ -353,7 +353,7 @@
     
 
     modified files:
-     README paramiko/channel.py paramiko/transport.py
+     README ssh/channel.py ssh/transport.py
 
 
 2005-02-06 23:32:22 GMT	Robey Pointer <robey@lag.net>	patch-144
@@ -367,7 +367,7 @@
     
 
     modified files:
-     README paramiko/pkey.py paramiko/sftp_attr.py
+     README ssh/pkey.py ssh/sftp_attr.py
 
 
 2005-02-06 23:30:40 GMT	Robey Pointer <robey@lag.net>	patch-143
@@ -411,9 +411,9 @@
     
 
     modified files:
-     paramiko/auth_transport.py paramiko/channel.py
-     paramiko/sftp.py paramiko/sftp_client.py
-     paramiko/sftp_server.py paramiko/transport.py
+     ssh/auth_transport.py ssh/channel.py
+     ssh/sftp.py ssh/sftp_client.py
+     ssh/sftp_server.py ssh/transport.py
 
 
 2005-01-17 10:09:09 GMT	Robey Pointer <robey@lag.net>	patch-140
@@ -424,16 +424,16 @@
       secsh--dev--1.0--patch-140
 
     some tweaks to make channels etc follow the logger setting of their parent
-    transport, so that setting the log channel for a paramiko transport will
+    transport, so that setting the log channel for a ssh transport will
     cause all sub-logging to branch out from that channel.
     
     also, close all open file handles when the sftp server ends.
     
 
     modified files:
-     paramiko/channel.py paramiko/sftp_attr.py
-     paramiko/sftp_client.py paramiko/sftp_handle.py
-     paramiko/sftp_server.py paramiko/transport.py
+     ssh/channel.py ssh/sftp_attr.py
+     ssh/sftp_client.py ssh/sftp_handle.py
+     ssh/sftp_server.py ssh/transport.py
 
 
 2005-01-16 21:03:15 GMT	Robey Pointer <robey@lag.net>	patch-139
@@ -447,7 +447,7 @@
     and make a -R option to force the tests to run against a remote server.
     the tests seem to work fine locally, and it helps test out server mode,
     even though there's a danger that they could get isolated from reality
-    and only test that paramiko can talk to itself.
+    and only test that ssh can talk to itself.
     
 
     modified files:
@@ -464,7 +464,7 @@
     little doc fixups that i did obsessively on the train one morning.
 
     modified files:
-     paramiko/file.py
+     ssh/file.py
 
 
 2005-01-09 05:27:07 GMT	Robey Pointer <robey@lag.net>	patch-137
@@ -479,7 +479,7 @@
     
 
     modified files:
-     paramiko/sftp_attr.py paramiko/sftp_client.py
+     ssh/sftp_attr.py ssh/sftp_client.py
 
 
 2004-12-19 19:56:48 GMT	Robey Pointer <robey@lag.net>	patch-136
@@ -509,7 +509,7 @@
     
 
     modified files:
-     paramiko/sftp_si.py
+     ssh/sftp_si.py
 
 
 2004-12-19 19:43:27 GMT	Robey Pointer <robey@lag.net>	patch-134
@@ -526,7 +526,7 @@
     
 
     modified files:
-     paramiko/sftp_handle.py paramiko/sftp_server.py
+     ssh/sftp_handle.py ssh/sftp_server.py
 
 
 2004-12-13 07:32:14 GMT	Robey Pointer <robey@lag.net>	patch-133
@@ -554,7 +554,7 @@
     
 
     modified files:
-     paramiko/server.py
+     ssh/server.py
 
 
 2004-12-13 07:29:38 GMT	Robey Pointer <robey@lag.net>	patch-131
@@ -569,7 +569,7 @@
     
 
     modified files:
-     paramiko/transport.py
+     ssh/transport.py
 
 
 2004-12-13 07:27:39 GMT	Robey Pointer <robey@lag.net>	patch-130
@@ -585,7 +585,7 @@
     
 
     modified files:
-     paramiko/auth_transport.py paramiko/channel.py setup.py
+     ssh/auth_transport.py ssh/channel.py setup.py
 
 
 2004-12-12 09:58:40 GMT	Robey Pointer <robey@lag.net>	patch-129
@@ -600,7 +600,7 @@
     
 
     modified files:
-     Makefile README paramiko/__init__.py paramiko/transport.py
+     Makefile README ssh/__init__.py ssh/transport.py
      setup.py
 
 
@@ -629,7 +629,7 @@
     
 
     modified files:
-     paramiko/sftp_client.py
+     ssh/sftp_client.py
 
 
 2004-12-12 09:25:15 GMT	Robey Pointer <robey@lag.net>	patch-126
@@ -647,7 +647,7 @@
     
 
     modified files:
-     paramiko/channel.py paramiko/server.py
+     ssh/channel.py ssh/server.py
 
 
 2004-12-12 09:16:03 GMT	Robey Pointer <robey@lag.net>	patch-125
@@ -663,7 +663,7 @@
     
 
     modified files:
-     paramiko/auth_transport.py paramiko/ssh_exception.py
+     ssh/auth_transport.py ssh/ssh_exception.py
 
 
 2004-12-11 03:44:33 GMT	Robey Pointer <robey@lag.net>	patch-124
@@ -677,7 +677,7 @@
     
 
     modified files:
-     paramiko/channel.py paramiko/sftp_server.py
+     ssh/channel.py ssh/sftp_server.py
 
 
 2004-12-11 03:43:18 GMT	Robey Pointer <robey@lag.net>	patch-123
@@ -701,8 +701,8 @@
     
 
     modified files:
-     paramiko/__init__.py paramiko/auth_transport.py
-     paramiko/ssh_exception.py paramiko/transport.py
+     ssh/__init__.py ssh/auth_transport.py
+     ssh/ssh_exception.py ssh/transport.py
      tests/test_transport.py
 
 
@@ -719,7 +719,7 @@
     
 
     modified files:
-     paramiko/sftp_server.py paramiko/sftp_si.py tests/test_sftp.py
+     ssh/sftp_server.py ssh/sftp_si.py tests/test_sftp.py
 
 
 2004-12-10 08:27:43 GMT	Robey Pointer <robey@lag.net>	patch-121
@@ -732,7 +732,7 @@
     oops, forgot this part.
 
     modified files:
-     paramiko/transport.py
+     ssh/transport.py
 
 
 2004-12-10 08:25:28 GMT	Robey Pointer <robey@lag.net>	patch-120
@@ -743,7 +743,7 @@
       secsh--dev--1.0--patch-120
 
     big embarrassment: i didn't read the ssh2 docs close enough, and all this
-    time paramiko wasn't handling "extended_data" packets, which contain stderr
+    time ssh wasn't handling "extended_data" packets, which contain stderr
     output.
     
     so now, several new functions: recv_stderr_ready() and recv_stderr() to
@@ -753,7 +753,7 @@
     
 
     modified files:
-     paramiko/channel.py
+     ssh/channel.py
 
 
 2004-12-10 07:55:33 GMT	Robey Pointer <robey@lag.net>	patch-119
@@ -783,7 +783,7 @@
     
 
     modified files:
-     paramiko/sftp_file.py
+     ssh/sftp_file.py
 
 
 2004-12-09 02:42:36 GMT	Robey Pointer <robey@lag.net>	patch-117
@@ -810,7 +810,7 @@
     
 
     modified files:
-     README paramiko/channel.py paramiko/common.py
+     README ssh/channel.py ssh/common.py
 
 
 2004-11-25 19:39:34 GMT	Robey Pointer <robey@lag.net>	patch-115
@@ -823,7 +823,7 @@
     oops, fix typo in channel request failed.
 
     modified files:
-     paramiko/transport.py
+     ssh/transport.py
 
 
 2004-11-22 07:40:39 GMT	Robey Pointer <robey@lag.net>	patch-114
@@ -837,7 +837,7 @@
     
 
     modified files:
-     paramiko/channel.py
+     ssh/channel.py
 
 
 2004-11-22 07:27:21 GMT	Robey Pointer <robey@lag.net>	patch-113
@@ -854,13 +854,13 @@
     
 
     new files:
-     paramiko/.arch-ids/sftp_handle.py.id
-     paramiko/.arch-ids/sftp_server.py.id
-     paramiko/.arch-ids/sftp_si.py.id paramiko/sftp_handle.py
-     paramiko/sftp_server.py paramiko/sftp_si.py
+     ssh/.arch-ids/sftp_handle.py.id
+     ssh/.arch-ids/sftp_server.py.id
+     ssh/.arch-ids/sftp_si.py.id ssh/sftp_handle.py
+     ssh/sftp_server.py ssh/sftp_si.py
 
     modified files:
-     README demo_windows.py paramiko/__init__.py
+     README demo_windows.py ssh/__init__.py
 
 
 2004-11-22 07:07:08 GMT	Robey Pointer <robey@lag.net>	patch-112
@@ -876,7 +876,7 @@
     
 
     modified files:
-     paramiko/server.py
+     ssh/server.py
 
 
 2004-11-22 07:04:31 GMT	Robey Pointer <robey@lag.net>	patch-111
@@ -892,7 +892,7 @@
     
 
     modified files:
-     paramiko/channel.py paramiko/primes.py paramiko/transport.py
+     ssh/channel.py ssh/primes.py ssh/transport.py
 
 
 2004-11-22 07:01:43 GMT	Robey Pointer <robey@lag.net>	patch-110
@@ -907,7 +907,7 @@
     username was stored in a different field).  this should fix it.
 
     modified files:
-     paramiko/auth_transport.py
+     ssh/auth_transport.py
 
 
 2004-11-07 03:10:53 GMT	Robey Pointer <robey@lag.net>	patch-109
@@ -920,7 +920,7 @@
     bump all the version numbers up to 1.0 (jigglypuff).
 
     modified files:
-     Makefile README paramiko/__init__.py paramiko/transport.py
+     Makefile README ssh/__init__.py ssh/transport.py
      setup.py
 
 
@@ -934,7 +934,7 @@
     add filename to the attributes stored in an SFTPAttributes object.
 
     modified files:
-     paramiko/sftp_attr.py
+     ssh/sftp_attr.py
 
 
 2004-11-07 02:31:48 GMT	Robey Pointer <robey@lag.net>	patch-107
@@ -948,7 +948,7 @@
     layout kex_group1 a little more sanely.
 
     modified files:
-     paramiko/kex_gex.py paramiko/kex_group1.py
+     ssh/kex_gex.py ssh/kex_group1.py
 
 
 2004-11-07 02:29:54 GMT	Robey Pointer <robey@lag.net>	patch-106
@@ -989,7 +989,7 @@
     fix location of SFTPError.
 
     modified files:
-     paramiko/__init__.py paramiko/sftp_client.py
+     ssh/__init__.py ssh/sftp_client.py
 
 
 2004-11-07 02:17:18 GMT	Robey Pointer <robey@lag.net>	patch-103
@@ -1003,7 +1003,7 @@
     a bit more sense when sober (SFTP_OK).
 
     modified files:
-     paramiko/__init__.py paramiko/sftp.py paramiko/sftp_client.py
+     ssh/__init__.py ssh/sftp.py ssh/sftp_client.py
 
 
 2004-11-07 02:08:11 GMT	Robey Pointer <robey@lag.net>	patch-102
@@ -1089,7 +1089,7 @@
     
 
     modified files:
-     paramiko/channel.py
+     ssh/channel.py
 
 
 2004-11-01 03:43:28 GMT	Robey Pointer <robey@lag.net>	patch-97
@@ -1106,7 +1106,7 @@
     
 
     modified files:
-     paramiko/common.py paramiko/server.py paramiko/transport.py
+     ssh/common.py ssh/server.py ssh/transport.py
 
 
 2004-11-01 03:37:42 GMT	Robey Pointer <robey@lag.net>	patch-96
@@ -1121,7 +1121,7 @@
     
 
     modified files:
-     paramiko/auth_transport.py
+     ssh/auth_transport.py
 
 
 2004-10-23 07:36:23 GMT	Robey Pointer <robey@lag.net>	patch-95
@@ -1136,7 +1136,7 @@
     
 
     modified files:
-     Makefile README paramiko/__init__.py
+     Makefile README ssh/__init__.py
 
 
 2004-10-20 16:52:51 GMT	Robey Pointer <robey@lag.net>	patch-94
@@ -1158,7 +1158,7 @@
      tests/test_transport.py
 
     modified files:
-     Makefile README paramiko/__init__.py setup.py test.py
+     Makefile README ssh/__init__.py setup.py test.py
 
 
 2004-10-18 04:54:27 GMT	Robey Pointer <robey@lag.net>	patch-93
@@ -1178,7 +1178,7 @@
     
 
     modified files:
-     demo.py demo_simple.py paramiko/pkey.py paramiko/transport.py
+     demo.py demo_simple.py ssh/pkey.py ssh/transport.py
 
 
 2004-09-25 22:07:59 GMT	Robey Pointer <robey@lag.net>	patch-92
@@ -1224,7 +1224,7 @@
     changes from a week or 2 ago where sftp_attr & friends were split off.
 
     modified files:
-     paramiko/__init__.py
+     ssh/__init__.py
 
 
 2004-09-25 21:47:19 GMT	Robey Pointer <robey@lag.net>	patch-89
@@ -1238,7 +1238,7 @@
     on the socket-like object passed to the constructor.
 
     modified files:
-     paramiko/transport.py
+     ssh/transport.py
 
 
 2004-09-25 21:32:53 GMT	Robey Pointer <robey@lag.net>	patch-88
@@ -1252,7 +1252,7 @@
     start reading from the beginning again.  this is useful for some tests.
 
     modified files:
-     paramiko/message.py tests/test_message.py
+     ssh/message.py tests/test_message.py
 
 
 2004-09-25 21:28:23 GMT	Robey Pointer <robey@lag.net>	patch-87
@@ -1268,7 +1268,7 @@
     and whether it can sign things (contains the "private parts") respectively.
 
     modified files:
-     paramiko/dsskey.py paramiko/pkey.py paramiko/rsakey.py
+     ssh/dsskey.py ssh/pkey.py ssh/rsakey.py
 
 
 2004-09-11 21:01:32 GMT	Robey Pointer <robey@lag.net>	patch-86
@@ -1279,7 +1279,7 @@
       secsh--dev--1.0--patch-86
 
     spanking new unit tests for Message.  i'm trying to fix the embarrassment
-    of having so little of paramiko testable.  next up is Transport!
+    of having so little of ssh testable.  next up is Transport!
 
     new files:
      tests/.arch-ids/test_message.py.id tests/test_message.py
@@ -1295,12 +1295,12 @@
     move SFTPFile and SFTPAttributes into their own files.
 
     new files:
-     paramiko/.arch-ids/sftp_attr.py.id
-     paramiko/.arch-ids/sftp_file.py.id paramiko/sftp_attr.py
-     paramiko/sftp_file.py
+     ssh/.arch-ids/sftp_attr.py.id
+     ssh/.arch-ids/sftp_file.py.id ssh/sftp_attr.py
+     ssh/sftp_file.py
 
     modified files:
-     paramiko/sftp.py paramiko/sftp_client.py
+     ssh/sftp.py ssh/sftp_client.py
 
 
 2004-09-11 20:50:39 GMT	Robey Pointer <robey@lag.net>	patch-84
@@ -1315,7 +1315,7 @@
     (normalize) directly maps to REALPATH.
 
     modified files:
-     paramiko/sftp_client.py
+     ssh/sftp_client.py
 
 
 2004-09-11 20:43:09 GMT	Robey Pointer <robey@lag.net>	patch-83
@@ -1329,7 +1329,7 @@
     to read.
 
     modified files:
-     paramiko/kex_gex.py paramiko/kex_group1.py
+     ssh/kex_gex.py ssh/kex_group1.py
 
 
 2004-09-11 20:40:08 GMT	Robey Pointer <robey@lag.net>	patch-82
@@ -1342,7 +1342,7 @@
     fix "string" -> "str" in types when documenting BufferedFile.
 
     modified files:
-     paramiko/file.py
+     ssh/file.py
 
 
 2004-09-11 20:37:59 GMT	Robey Pointer <robey@lag.net>	patch-81
@@ -1368,11 +1368,11 @@
     move SubsystemHandler into server.py where it makes more sense (it's part of
     the server interface).
     
-    also fix up paramiko's "version string" used in ssh2 negotiation to stop
-    saying "pyssh" and start saying "paramiko". :)
+    also fix up ssh's "version string" used in ssh2 negotiation to stop
+    saying "pyssh" and start saying "ssh". :)
 
     modified files:
-     paramiko/server.py paramiko/transport.py
+     ssh/server.py ssh/transport.py
 
 
 2004-09-11 20:35:19 GMT	Robey Pointer <robey@lag.net>	patch-79
@@ -1386,7 +1386,7 @@
     will add them all in order (using type guessing).
 
     modified files:
-     paramiko/message.py
+     ssh/message.py
 
 
 2004-09-09 01:36:45 GMT	Robey Pointer <robey@lag.net>	patch-78
@@ -1400,7 +1400,7 @@
     kevin c. dorff for the bug report.
 
     modified files:
-     paramiko/file.py
+     ssh/file.py
 
 
 2004-09-07 06:56:49 GMT	Robey Pointer <robey@lag.net>	patch-77
@@ -1413,7 +1413,7 @@
     add documentation to constructor for SubsystemHandler.
 
     modified files:
-     paramiko/transport.py
+     ssh/transport.py
 
 
 2004-09-07 06:54:31 GMT	Robey Pointer <robey@lag.net>	patch-76
@@ -1428,7 +1428,7 @@
     improved SFTPAttributes object API.
 
     new files:
-     paramiko/.arch-ids/sftp_client.py.id paramiko/sftp_client.py
+     ssh/.arch-ids/sftp_client.py.id ssh/sftp_client.py
 
 
 2004-09-07 06:51:03 GMT	Robey Pointer <robey@lag.net>	patch-75
@@ -1447,7 +1447,7 @@
     for use in ls (used in an obscure way in sftp servers).
 
     modified files:
-     paramiko/sftp.py
+     ssh/sftp.py
 
 
 2004-09-07 06:45:53 GMT	Robey Pointer <robey@lag.net>	patch-74
@@ -1479,7 +1479,7 @@
     renamed a bunch of sftp constants now that they're better hidden from epydoc.
 
     modified files:
-     README paramiko/__init__.py paramiko/sftp.py
+     README ssh/__init__.py ssh/sftp.py
 
 
 2004-09-05 07:41:45 GMT	Robey Pointer <robey@lag.net>	patch-72
@@ -1497,7 +1497,7 @@
     (to be subclassed).
 
     modified files:
-     paramiko/server.py paramiko/transport.py
+     ssh/server.py ssh/transport.py
 
 
 2004-09-05 07:37:40 GMT	Robey Pointer <robey@lag.net>	patch-71
@@ -1512,7 +1512,7 @@
     server mode instead of always claiming that the transport is un-auth'd.
 
     modified files:
-     paramiko/auth_transport.py
+     ssh/auth_transport.py
 
 
 2004-09-03 22:39:20 GMT	Robey Pointer <robey@lag.net>	patch-70
@@ -1522,8 +1522,8 @@
     Revision:
       secsh--dev--1.0--patch-70
 
-    - export AUTH_*, OPEN_FAILED_*, and the new OPEN_SUCCEEDED into the paramiko
-      namespace instead of making people dig into paramiko.Transport.AUTH_* etc.
+    - export AUTH_*, OPEN_FAILED_*, and the new OPEN_SUCCEEDED into the ssh
+      namespace instead of making people dig into ssh.Transport.AUTH_* etc.
     - move all of the check_* methods from Channel to ServerInterface so apps
       don't need to subclass Channel anymore just to run an ssh server
     - ServerInterface.check_channel_request() returns an error code now, not a
@@ -1533,10 +1533,10 @@
     - added Channel.get_id()
 
     modified files:
-     README demo_server.py paramiko/__init__.py
-     paramiko/auth_transport.py paramiko/channel.py
-     paramiko/common.py paramiko/server.py paramiko/sftp.py
-     paramiko/transport.py
+     README demo_server.py ssh/__init__.py
+     ssh/auth_transport.py ssh/channel.py
+     ssh/common.py ssh/server.py ssh/sftp.py
+     ssh/transport.py
 
 
 2004-08-31 02:44:56 GMT	Robey Pointer <robey@lag.net>	patch-69
@@ -1552,7 +1552,7 @@
     to validate the fields.
 
     modified files:
-     paramiko/transport.py
+     ssh/transport.py
 
 
 2004-08-30 20:22:10 GMT	Robey Pointer <robey@lag.net>	patch-68
@@ -1572,8 +1572,8 @@
     True/False, and fixed up docs in a few other places.
 
     modified files:
-     paramiko/__init__.py paramiko/channel.py paramiko/server.py
-     paramiko/sftp.py paramiko/transport.py
+     ssh/__init__.py ssh/channel.py ssh/server.py
+     ssh/sftp.py ssh/transport.py
 
 
 2004-08-28 04:21:12 GMT	Robey Pointer <robey@lag.net>	patch-67
@@ -1589,7 +1589,7 @@
     apparently when i reversed it, i lost it entirely.
 
     modified files:
-     paramiko/channel.py
+     ssh/channel.py
 
 
 2004-08-27 00:57:40 GMT	Robey Pointer <robey@lag.net>	patch-66
@@ -1602,7 +1602,7 @@
     a bunch of changes that i'm too lazy to split out into individual patches:
     * all the server overrides from transport.py have been moved into a separate
       class ServerInterface, so server code doesn't have to subclass the whole
-      paramiko library
+      ssh library
     * updated demo_server to subclass ServerInterface
     * when re-keying during a session, block other messages until the new keys
       are activated (openssh doensn't like any other traffic during a rekey)
@@ -1612,11 +1612,11 @@
     
 
     new files:
-     paramiko/.arch-ids/server.py.id paramiko/server.py
+     ssh/.arch-ids/server.py.id ssh/server.py
 
     modified files:
-     README demo_server.py paramiko/__init__.py
-     paramiko/auth_transport.py paramiko/transport.py
+     README demo_server.py ssh/__init__.py
+     ssh/auth_transport.py ssh/transport.py
 
 
 2004-08-27 00:28:33 GMT	Robey Pointer <robey@lag.net>	patch-65
@@ -1632,7 +1632,7 @@
     
 
     modified files:
-     paramiko/sftp.py
+     ssh/sftp.py
 
 
 2004-08-27 00:26:35 GMT	Robey Pointer <robey@lag.net>	patch-64
@@ -1652,7 +1652,7 @@
     
 
     modified files:
-     paramiko/channel.py {arch}/=tagging-method
+     ssh/channel.py {arch}/=tagging-method
 
 
 2004-08-27 00:06:42 GMT	Robey Pointer <robey@lag.net>	patch-63
@@ -1667,7 +1667,7 @@
     socket or channel.  fix _read_all to not catch timeout exceptions.
 
     modified files:
-     paramiko/channel.py
+     ssh/channel.py
 
 
 2004-06-27 20:14:15 GMT	Robey Pointer <robey@lag.net>	patch-62
@@ -1680,7 +1680,7 @@
     up version to horsea.
 
     modified files:
-     Makefile README paramiko/__init__.py setup.py
+     Makefile README ssh/__init__.py setup.py
      {arch}/secsh/secsh--dev/secsh--dev--1.0/robey@lag.net--2003-public/patch-log/patch-1
 
 
@@ -1691,16 +1691,16 @@
     Revision:
       secsh--dev--1.0--patch-61
 
-    fix "Foobar" to be "Paramiko" in the one place i missed it in all the gpl
+    fix "Foobar" to be "'ssh'" in the one place i missed it in all the gpl
     headers.  sigh. :)
 
     modified files:
-     paramiko/__init__.py paramiko/auth_transport.py
-     paramiko/ber.py paramiko/common.py paramiko/dsskey.py
-     paramiko/kex_gex.py paramiko/kex_group1.py
-     paramiko/logging22.py paramiko/message.py paramiko/pkey.py
-     paramiko/primes.py paramiko/rsakey.py
-     paramiko/ssh_exception.py paramiko/util.py test.py
+     ssh/__init__.py ssh/auth_transport.py
+     ssh/ber.py ssh/common.py ssh/dsskey.py
+     ssh/kex_gex.py ssh/kex_group1.py
+     ssh/logging22.py ssh/message.py ssh/pkey.py
+     ssh/primes.py ssh/rsakey.py
+     ssh/ssh_exception.py ssh/util.py test.py
 
 
 2004-06-10 18:08:50 GMT	Robey Pointer <robey@lag.net>	patch-60
@@ -1723,7 +1723,7 @@
     flushed on seek.
 
     modified files:
-     paramiko/sftp.py paramiko/transport.py
+     ssh/sftp.py ssh/transport.py
 
 
 2004-06-10 18:02:13 GMT	Robey Pointer <robey@lag.net>	patch-59
@@ -1745,7 +1745,7 @@
     buffer size is.  there's no reason to buffer 1MB waiting for a linefeed.
 
     modified files:
-     paramiko/file.py
+     ssh/file.py
 
 
 2004-06-10 17:55:17 GMT	Robey Pointer <robey@lag.net>	patch-58
@@ -1768,7 +1768,7 @@
     
 
     modified files:
-     paramiko/channel.py
+     ssh/channel.py
 
 
 2004-06-10 17:35:30 GMT	Robey Pointer <robey@lag.net>	patch-57
@@ -1801,7 +1801,7 @@
      .arch-ids/forward.py.id forward.py
 
     modified files:
-     MANIFEST.in Makefile README paramiko/__init__.py setup.py
+     MANIFEST.in Makefile README ssh/__init__.py setup.py
 
 
 2004-05-29 18:58:11 GMT	Robey Pointer <robey@lag.net>	patch-55
@@ -1838,7 +1838,7 @@
     be an EOF error.
 
     modified files:
-     paramiko/transport.py
+     ssh/transport.py
 
 
 2004-05-29 18:48:23 GMT	Robey Pointer <robey@lag.net>	patch-53
@@ -1869,7 +1869,7 @@
     notice that you must be holding the lock before calling.
 
     modified files:
-     paramiko/channel.py
+     ssh/channel.py
 
 
 2004-05-17 00:43:43 GMT	Robey Pointer <robey@lag.net>	patch-51
@@ -1885,8 +1885,8 @@
     level.  and don't reject older sftp servers.
 
     modified files:
-     paramiko/auth_transport.py paramiko/sftp.py
-     paramiko/transport.py
+     ssh/auth_transport.py ssh/sftp.py
+     ssh/transport.py
 
 
 2004-04-23 22:55:16 GMT	Robey Pointer <robey@lag.net>	patch-50
@@ -1901,8 +1901,8 @@
     try roger's trick for finding the home folder on windows.
 
     modified files:
-     Makefile README paramiko/__init__.py paramiko/channel.py
-     paramiko/common.py
+     Makefile README ssh/__init__.py ssh/channel.py
+     ssh/common.py
 
 
 2004-04-08 06:31:08 GMT	Robey Pointer <robey@lag.net>	patch-49
@@ -1914,7 +1914,7 @@
 
 
     modified files:
-     paramiko/dsskey.py paramiko/rsakey.py paramiko/transport.py
+     ssh/dsskey.py ssh/rsakey.py ssh/transport.py
 
 
 2004-04-08 05:48:16 GMT	Robey Pointer <robey@lag.net>	patch-48
@@ -1927,7 +1927,7 @@
     set version number to fearow.
 
     modified files:
-     Makefile README paramiko/__init__.py setup.py
+     Makefile README ssh/__init__.py setup.py
 
 
 2004-04-08 05:12:20 GMT	Robey Pointer <robey@lag.net>	patch-47
@@ -1941,7 +1941,7 @@
     code patch that included this snip.
 
     modified files:
-     paramiko/common.py
+     ssh/common.py
 
 
 2004-04-07 16:05:48 GMT	Robey Pointer <robey@lag.net>	patch-46
@@ -1955,8 +1955,8 @@
     fearow" to all the relevant API calls that are new.
 
     modified files:
-     README paramiko/auth_transport.py paramiko/dsskey.py
-     paramiko/pkey.py paramiko/rsakey.py paramiko/transport.py
+     README ssh/auth_transport.py ssh/dsskey.py
+     ssh/pkey.py ssh/rsakey.py ssh/transport.py
 
 
 2004-04-07 15:52:07 GMT	Robey Pointer <robey@lag.net>	patch-45
@@ -1971,7 +1971,7 @@
     keepalive packet.)
 
     modified files:
-     paramiko/transport.py
+     ssh/transport.py
 
 
 2004-04-07 06:07:29 GMT	Robey Pointer <robey@lag.net>	patch-44
@@ -1991,8 +1991,8 @@
     * tell channels to close when the transport dies
 
     modified files:
-     paramiko/auth_transport.py paramiko/channel.py
-     paramiko/common.py paramiko/pkey.py paramiko/transport.py
+     ssh/auth_transport.py ssh/channel.py
+     ssh/common.py ssh/pkey.py ssh/transport.py
 
 
 2004-04-06 22:03:21 GMT	Robey Pointer <robey@lag.net>	patch-43
@@ -2009,7 +2009,7 @@
     mode normally.)
 
     modified files:
-     paramiko/pkey.py
+     ssh/pkey.py
 
 
 2004-04-06 08:16:02 GMT	Robey Pointer <robey@lag.net>	patch-42
@@ -2030,14 +2030,14 @@
     also fixed the sftp unit tests to cope with a password-protected private key.
 
     new files:
-     paramiko/.arch-ids/logging22.py.id paramiko/logging22.py
+     ssh/.arch-ids/logging22.py.id ssh/logging22.py
 
     modified files:
      README demo.py demo_server.py demo_simple.py
-     paramiko/__init__.py paramiko/auth_transport.py
-     paramiko/channel.py paramiko/common.py paramiko/kex_gex.py
-     paramiko/kex_group1.py paramiko/message.py paramiko/sftp.py
-     paramiko/transport.py paramiko/util.py tests/test_sftp.py
+     ssh/__init__.py ssh/auth_transport.py
+     ssh/channel.py ssh/common.py ssh/kex_gex.py
+     ssh/kex_group1.py ssh/message.py ssh/sftp.py
+     ssh/transport.py ssh/util.py tests/test_sftp.py
 
 
 2004-04-05 22:32:03 GMT	Robey Pointer <robey@lag.net>	patch-41
@@ -2052,7 +2052,7 @@
     from the pkey object, as well as other potentially useful things.
 
     modified files:
-     demo.py paramiko/transport.py
+     demo.py ssh/transport.py
 
 
 2004-04-05 19:36:40 GMT	Robey Pointer <robey@lag.net>	patch-40
@@ -2076,8 +2076,8 @@
     call that one.
 
     modified files:
-     demo.py demo_simple.py paramiko/ber.py paramiko/dsskey.py
-     paramiko/pkey.py paramiko/rsakey.py paramiko/util.py
+     demo.py demo_simple.py ssh/ber.py ssh/dsskey.py
+     ssh/pkey.py ssh/rsakey.py ssh/util.py
 
 
 2004-04-05 10:37:18 GMT	Robey Pointer <robey@lag.net>	patch-39
@@ -2094,7 +2094,7 @@
     ignore them, which was wrong.)
 
     modified files:
-     paramiko/common.py paramiko/message.py paramiko/transport.py
+     ssh/common.py ssh/message.py ssh/transport.py
 
 
 2004-04-05 10:24:33 GMT	Robey Pointer <robey@lag.net>	patch-38
@@ -2109,7 +2109,7 @@
     
 
     new files:
-     paramiko/.arch-ids/common.py.id paramiko/common.py
+     ssh/.arch-ids/common.py.id ssh/common.py
 
 
 2004-04-05 10:16:31 GMT	Robey Pointer <robey@lag.net>	patch-37
@@ -2129,7 +2129,7 @@
     
 
     modified files:
-     paramiko/ber.py paramiko/pkey.py paramiko/rsakey.py
+     ssh/ber.py ssh/pkey.py ssh/rsakey.py
 
 
 2004-04-05 10:12:59 GMT	Robey Pointer <robey@lag.net>	patch-36
@@ -2143,9 +2143,9 @@
     lots of renaming because of this.
 
     modified files:
-     paramiko/auth_transport.py paramiko/channel.py
-     paramiko/kex_gex.py paramiko/kex_group1.py
-     paramiko/transport.py paramiko/util.py
+     ssh/auth_transport.py ssh/channel.py
+     ssh/kex_gex.py ssh/kex_group1.py
+     ssh/transport.py ssh/util.py
 
 
 2004-04-02 02:41:43 GMT	Robey Pointer <robey@lag.net>	patch-35
@@ -2159,7 +2159,7 @@
     remote side.
 
     modified files:
-     paramiko/transport.py
+     ssh/transport.py
 
 
 2004-03-16 07:33:09 GMT	Robey Pointer <robey@lag.net>	patch-34
@@ -2175,7 +2175,7 @@
     (mostly this is a test to make sure tla is working okay on my laptop.)
 
     modified files:
-     paramiko/dsskey.py paramiko/rsakey.py
+     ssh/dsskey.py ssh/rsakey.py
 
 
 2004-03-09 01:09:17 GMT	Robey Pointer <robey@lag.net>	patch-33
@@ -2227,7 +2227,7 @@
     tests.
 
     modified files:
-     Makefile README paramiko/__init__.py setup.py
+     Makefile README ssh/__init__.py setup.py
 
 
 2004-03-08 17:50:49 GMT	Robey Pointer <robey@lag.net>	patch-30
@@ -2243,7 +2243,7 @@
     turned off ultra debugging now that the unit tests are all working.
 
     modified files:
-     paramiko/sftp.py
+     ssh/sftp.py
 
 
 2004-03-08 17:45:44 GMT	Robey Pointer <robey@lag.net>	patch-29
@@ -2259,7 +2259,7 @@
     support that i somehow missed before.)
 
     modified files:
-     paramiko/file.py paramiko/message.py
+     ssh/file.py ssh/message.py
 
 
 2004-03-08 09:47:47 GMT	Robey Pointer <robey@lag.net>	patch-28
@@ -2283,7 +2283,7 @@
     kill -9 python!  yeah!!
 
     modified files:
-     paramiko/transport.py
+     ssh/transport.py
 
 
 2004-03-04 08:21:45 GMT	Robey Pointer <robey@lag.net>	patch-27
@@ -2307,12 +2307,12 @@
 
     new files:
      .arch-ids/demo_sftp.py.id demo_sftp.py
-     paramiko/.arch-ids/file.py.id paramiko/.arch-ids/sftp.py.id
-     paramiko/file.py paramiko/sftp.py
+     ssh/.arch-ids/file.py.id ssh/.arch-ids/sftp.py.id
+     ssh/file.py ssh/sftp.py
 
     modified files:
-     paramiko/__init__.py paramiko/channel.py paramiko/message.py
-     paramiko/util.py
+     ssh/__init__.py ssh/channel.py ssh/message.py
+     ssh/util.py
 
 
 2004-01-27 02:04:59 GMT	Robey Pointer <robey@lag.net>	patch-26
@@ -2336,7 +2336,7 @@
     the right thing.
 
     modified files:
-     paramiko/transport.py
+     ssh/transport.py
 
 
 2004-01-27 02:00:19 GMT	Robey Pointer <robey@lag.net>	patch-25
@@ -2352,7 +2352,7 @@
     a corrupt key file.
 
     modified files:
-     paramiko/pkey.py
+     ssh/pkey.py
 
 
 2004-01-27 01:45:44 GMT	Robey Pointer <robey@lag.net>	patch-24
@@ -2366,7 +2366,7 @@
     get_int64 added for eventual sftp support.
 
     modified files:
-     paramiko/message.py
+     ssh/message.py
 
 
 2004-01-04 10:33:05 GMT	Robey Pointer <robey@lag.net>	patch-23
@@ -2379,7 +2379,7 @@
     fix broken cross-link in kex_gex docs.
 
     modified files:
-     paramiko/kex_gex.py
+     ssh/kex_gex.py
 
 
 2004-01-04 10:26:00 GMT	Robey Pointer <robey@lag.net>	patch-22
@@ -2396,12 +2396,12 @@
     python file.
 
     modified files:
-     MANIFEST.in Makefile NOTES README paramiko/__init__.py
-     paramiko/auth_transport.py paramiko/ber.py paramiko/channel.py
-     paramiko/dsskey.py paramiko/kex_gex.py paramiko/kex_group1.py
-     paramiko/message.py paramiko/pkey.py paramiko/primes.py
-     paramiko/rsakey.py paramiko/ssh_exception.py
-     paramiko/transport.py paramiko/util.py setup.py
+     MANIFEST.in Makefile NOTES README ssh/__init__.py
+     ssh/auth_transport.py ssh/ber.py ssh/channel.py
+     ssh/dsskey.py ssh/kex_gex.py ssh/kex_group1.py
+     ssh/message.py ssh/pkey.py ssh/primes.py
+     ssh/rsakey.py ssh/ssh_exception.py
+     ssh/transport.py ssh/util.py setup.py
 
 
 2004-01-04 10:07:35 GMT	Robey Pointer <robey@lag.net>	patch-21
@@ -2447,11 +2447,11 @@
     and try again.
 
     modified files:
-     README demo.py demo_server.py paramiko/__init__.py
-     paramiko/auth_transport.py paramiko/ber.py paramiko/channel.py
-     paramiko/dsskey.py paramiko/pkey.py paramiko/primes.py
-     paramiko/rsakey.py paramiko/ssh_exception.py
-     paramiko/transport.py paramiko/util.py
+     README demo.py demo_server.py ssh/__init__.py
+     ssh/auth_transport.py ssh/ber.py ssh/channel.py
+     ssh/dsskey.py ssh/pkey.py ssh/primes.py
+     ssh/rsakey.py ssh/ssh_exception.py
+     ssh/transport.py ssh/util.py
 
 
 2003-12-31 06:31:43 GMT	Robey Pointer <robey@lag.net>	patch-19
@@ -2465,8 +2465,8 @@
     documentation.
 
     modified files:
-     README demo.py demo_server.py paramiko/__init__.py
-     paramiko/auth_transport.py paramiko/transport.py
+     README demo.py demo_server.py ssh/__init__.py
+     ssh/auth_transport.py ssh/transport.py
 
 
 2003-12-30 22:24:21 GMT	Robey Pointer <robey@lag.net>	patch-18
@@ -2490,10 +2490,10 @@
      user_rsa_key user_rsa_key.pub
 
     modified files:
-     Makefile demo_server.py paramiko/__init__.py
-     paramiko/auth_transport.py paramiko/dsskey.py
-     paramiko/kex_gex.py paramiko/kex_group1.py paramiko/pkey.py
-     paramiko/rsakey.py paramiko/transport.py
+     Makefile demo_server.py ssh/__init__.py
+     ssh/auth_transport.py ssh/dsskey.py
+     ssh/kex_gex.py ssh/kex_group1.py ssh/pkey.py
+     ssh/rsakey.py ssh/transport.py
 
 
 2003-12-30 07:18:20 GMT	Robey Pointer <robey@lag.net>	patch-17
@@ -2519,17 +2519,17 @@
 
     new files:
      .arch-ids/ChangeLog.id .arch-ids/demo_simple.py.id ChangeLog
-     demo_simple.py paramiko/.arch-ids/pkey.py.id paramiko/pkey.py
+     demo_simple.py ssh/.arch-ids/pkey.py.id ssh/pkey.py
 
     removed files:
-     .arch-ids/paramiko.py.id paramiko.py
+     .arch-ids/ssh.py.id ssh.py
 
     modified files:
      Makefile NOTES README demo.py demo_server.py
-     paramiko/__init__.py paramiko/auth_transport.py
-     paramiko/channel.py paramiko/dsskey.py paramiko/kex_gex.py
-     paramiko/kex_group1.py paramiko/rsakey.py
-     paramiko/transport.py setup.py {arch}/=tagging-method
+     ssh/__init__.py ssh/auth_transport.py
+     ssh/channel.py ssh/dsskey.py ssh/kex_gex.py
+     ssh/kex_group1.py ssh/rsakey.py
+     ssh/transport.py setup.py {arch}/=tagging-method
 
     renamed files:
      .arch-ids/demo_host_key.id
@@ -2557,94 +2557,94 @@
     methods were made private finally.
 
     new files:
-     paramiko/.arch-ids/primes.py.id paramiko/primes.py
+     ssh/.arch-ids/primes.py.id ssh/primes.py
 
     modified files:
-     NOTES demo.py demo_server.py paramiko/__init__.py
-     paramiko/auth_transport.py paramiko/channel.py
-     paramiko/kex_gex.py paramiko/kex_group1.py
-     paramiko/transport.py paramiko/util.py
+     NOTES demo.py demo_server.py ssh/__init__.py
+     ssh/auth_transport.py ssh/channel.py
+     ssh/kex_gex.py ssh/kex_group1.py
+     ssh/transport.py ssh/util.py
 
 
 2003-12-27 02:03:44 GMT	Robey Pointer <robey@lag.net>	patch-15
 
     Summary:
-      fix up new paramiko/ folder.
+      fix up new ssh/ folder.
     Revision:
       secsh--dev--1.0--patch-15
 
-    moved SSHException to a new file (ssh_exception.py) and turned paramiko.py
+    moved SSHException to a new file (ssh_exception.py) and turned ssh.py
     into an __init__.py file.  i'm still not entirely sure how this normally
     works, so i may have done something wrong, but it's supposed to work the
     same as before.
 
     new files:
-     paramiko/.arch-ids/__init__.py.id
-     paramiko/.arch-ids/ssh_exception.py.id paramiko/__init__.py
-     paramiko/ssh_exception.py
+     ssh/.arch-ids/__init__.py.id
+     ssh/.arch-ids/ssh_exception.py.id ssh/__init__.py
+     ssh/ssh_exception.py
 
     modified files:
-     paramiko/auth_transport.py paramiko/channel.py
-     paramiko/dsskey.py paramiko/kex_gex.py paramiko/kex_group1.py
-     paramiko/transport.py
+     ssh/auth_transport.py ssh/channel.py
+     ssh/dsskey.py ssh/kex_gex.py ssh/kex_group1.py
+     ssh/transport.py
 
 
 2003-12-27 01:49:19 GMT	Robey Pointer <robey@lag.net>	patch-14
 
     Summary:
-      move the paramiko files into a paramiko/ folder.
+      move the ssh files into a ssh/ folder.
     Revision:
       secsh--dev--1.0--patch-14
 
     just moving the files into a folder.  it won't build this way yet.
 
     new files:
-     paramiko/.arch-ids/=id
+     ssh/.arch-ids/=id
 
     renamed files:
      .arch-ids/auth_transport.py.id
-       ==> paramiko/.arch-ids/auth_transport.py.id
+       ==> ssh/.arch-ids/auth_transport.py.id
      .arch-ids/ber.py.id
-       ==> paramiko/.arch-ids/ber.py.id
+       ==> ssh/.arch-ids/ber.py.id
      .arch-ids/channel.py.id
-       ==> paramiko/.arch-ids/channel.py.id
+       ==> ssh/.arch-ids/channel.py.id
      .arch-ids/dsskey.py.id
-       ==> paramiko/.arch-ids/dsskey.py.id
+       ==> ssh/.arch-ids/dsskey.py.id
      .arch-ids/kex_gex.py.id
-       ==> paramiko/.arch-ids/kex_gex.py.id
+       ==> ssh/.arch-ids/kex_gex.py.id
      .arch-ids/kex_group1.py.id
-       ==> paramiko/.arch-ids/kex_group1.py.id
+       ==> ssh/.arch-ids/kex_group1.py.id
      .arch-ids/message.py.id
-       ==> paramiko/.arch-ids/message.py.id
+       ==> ssh/.arch-ids/message.py.id
      .arch-ids/rsakey.py.id
-       ==> paramiko/.arch-ids/rsakey.py.id
+       ==> ssh/.arch-ids/rsakey.py.id
      .arch-ids/transport.py.id
-       ==> paramiko/.arch-ids/transport.py.id
+       ==> ssh/.arch-ids/transport.py.id
      .arch-ids/util.py.id
-       ==> paramiko/.arch-ids/util.py.id
+       ==> ssh/.arch-ids/util.py.id
      auth_transport.py
-       ==> paramiko/auth_transport.py
+       ==> ssh/auth_transport.py
      ber.py
-       ==> paramiko/ber.py
+       ==> ssh/ber.py
      channel.py
-       ==> paramiko/channel.py
+       ==> ssh/channel.py
      dsskey.py
-       ==> paramiko/dsskey.py
+       ==> ssh/dsskey.py
      kex_gex.py
-       ==> paramiko/kex_gex.py
+       ==> ssh/kex_gex.py
      kex_group1.py
-       ==> paramiko/kex_group1.py
+       ==> ssh/kex_group1.py
      message.py
-       ==> paramiko/message.py
+       ==> ssh/message.py
      rsakey.py
-       ==> paramiko/rsakey.py
+       ==> ssh/rsakey.py
      transport.py
-       ==> paramiko/transport.py
+       ==> ssh/transport.py
      util.py
-       ==> paramiko/util.py
+       ==> ssh/util.py
 
     new directories:
-     paramiko paramiko/.arch-ids
+     ssh ssh/.arch-ids
 
 
 2003-12-24 22:09:43 GMT	Robey Pointer <robey@lag.net>	patch-13
@@ -2680,7 +2680,7 @@
      .arch-ids/demo_dss_key.id demo_dss_key
 
     modified files:
-     demo_server.py dsskey.py kex_gex.py kex_group1.py paramiko.py
+     demo_server.py dsskey.py kex_gex.py kex_group1.py ssh.py
      rsakey.py transport.py
 
 
@@ -2714,7 +2714,7 @@
 2003-11-10 08:49:50 GMT	Robey Pointer <robey@lag.net>	patch-9
 
     Summary:
-      rename secsh -> paramiko
+      rename secsh -> ssh
     Revision:
       secsh--dev--1.0--patch-9
 
@@ -2723,14 +2723,14 @@
     modified files:
      ./MANIFEST ./Makefile ./NOTES ./README ./auth_transport.py
      ./channel.py ./demo.py ./demo_server.py ./kex_gex.py
-     ./kex_group1.py ./message.py ./paramiko.py ./setup.py
+     ./kex_group1.py ./message.py ./ssh.py ./setup.py
      ./transport.py
 
     renamed files:
      ./.arch-ids/secsh.py.id
-       ==> ./.arch-ids/paramiko.py.id
+       ==> ./.arch-ids/ssh.py.id
      ./secsh.py
-       ==> ./paramiko.py
+       ==> ./ssh.py
 
 
 2003-11-10 06:52:35 GMT	Robey Pointer <robey@lag.net>	patch-8

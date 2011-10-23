@@ -1,19 +1,19 @@
 # Copyright (C) 2003-2009  Robey Pointer <robeypointer@gmail.com>
 #
-# This file is part of paramiko.
+# This file is part of ssh.
 #
-# Paramiko is free software; you can redistribute it and/or modify it under the
+# 'ssh' is free software; you can redistribute it and/or modify it under the
 # terms of the GNU Lesser General Public License as published by the Free
 # Software Foundation; either version 2.1 of the License, or (at your option)
 # any later version.
 #
-# Paramiko is distrubuted in the hope that it will be useful, but WITHOUT ANY
+# 'ssh' is distrubuted in the hope that it will be useful, but WITHOUT ANY
 # WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
 # A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more
 # details.
 #
 # You should have received a copy of the GNU Lesser General Public License
-# along with Paramiko; if not, write to the Free Software Foundation, Inc.,
+# along with 'ssh'; if not, write to the Free Software Foundation, Inc.,
 # 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
 
 """
@@ -24,7 +24,7 @@ import unittest
 from loop import LoopSocket
 from Crypto.Cipher import AES
 from Crypto.Hash import SHA, HMAC
-from paramiko import Message, Packetizer, util
+from ssh import Message, Packetizer, util
 
 class PacketizerTest (unittest.TestCase):
 
@@ -33,7 +33,7 @@ class PacketizerTest (unittest.TestCase):
         wsock = LoopSocket()
         rsock.link(wsock)
         p = Packetizer(wsock)
-        p.set_log(util.get_logger('paramiko.transport'))
+        p.set_log(util.get_logger('ssh.transport'))
         p.set_hexdump(True)
         cipher = AES.new('\x00' * 16, AES.MODE_CBC, '\x55' * 16)
         p.set_outbound_cipher(cipher, 16, SHA, 12, '\x1f' * 20)
@@ -56,7 +56,7 @@ class PacketizerTest (unittest.TestCase):
         wsock = LoopSocket()
         rsock.link(wsock)
         p = Packetizer(rsock)
-        p.set_log(util.get_logger('paramiko.transport'))
+        p.set_log(util.get_logger('ssh.transport'))
         p.set_hexdump(True)
         cipher = AES.new('\x00' * 16, AES.MODE_CBC, '\x55' * 16)
         p.set_inbound_cipher(cipher, 16, SHA, 12, '\x1f' * 20)

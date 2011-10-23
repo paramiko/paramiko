@@ -1,4 +1,4 @@
 *.pyc
 build/
 dist/
-paramiko.egg-info/
+ssh.egg-info/

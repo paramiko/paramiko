@@ -1,15 +1,15 @@
 
 ========
-paramiko
+ssh
 ========
 
-:Paramiko: Python SSH module
+:'ssh': Python SSH module
 :Copyright: Copyright (c) 2003-2009  Robey Pointer <robeypointer@gmail.com>
 :License: LGPL
 :Homepage: http://www.lag.net/paramiko/
 
 
-paramiko 1.7.7.1
+ssh 1.7.7.1
 ================
 
 "George" release, 21 may 2011
@@ -18,8 +18,7 @@ paramiko 1.7.7.1
 What
 ----
 
-"paramiko" is a combination of the esperanto words for "paranoid" and
-"friend".  it's a module for python 2.2+ that implements the SSH2 protocol
+"ssh" is a module for python 2.2+ that implements the SSH2 protocol
 for secure (encrypted and authenticated) connections to remote machines.
 unlike SSL (aka TLS), SSH2 protocol does not require hierarchical
 certificates signed by a powerful central authority. you may know SSH2 as
@@ -42,7 +41,7 @@ Requirements
     (python 2.2 is also supported, but not recommended)
   - pycrypto 2.1 or better <https://www.dlitz.net/software/pycrypto/>
 
-If you have setuptools, you can build and install paramiko and all its
+If you have setuptools, you can build and install ssh and all its
 dependencies with this command (as root)::
 
     easy_install ./
@@ -62,7 +61,7 @@ watch out for:
 
     * sockets in 2.2 don't support timeouts, so the 'select' module is
       imported to do polling.  
-    * logging is mostly stubbed out. it works just enough to let paramiko
+    * logging is mostly stubbed out. it works just enough to let ssh
       create log files for debugging, if you want them. to get real logging,
       you can backport python 2.3's logging package. Roger has done that
       already:
@@ -99,12 +98,12 @@ there's also a low-traffic mailing list for support and discussions:
 Demo
 ----
 
-several demo scripts come with paramiko to demonstrate how to use it.
+several demo scripts come with ssh to demonstrate how to use it.
 probably the simplest demo of all is this::
 
-    import paramiko, base64
-    key = paramiko.RSAKey(data=base64.decodestring('AAA...'))
-    client = paramiko.SSHClient()
+    import ssh, base64
+    key = ssh.RSAKey(data=base64.decodestring('AAA...'))
+    client = ssh.SSHClient()
     client.get_host_keys().add('ssh.example.com', 'ssh-rsa', key)
     client.connect('ssh.example.com', username='strongbad', password='thecheat')
     stdin, stdout, stderr = client.exec_command('ls')

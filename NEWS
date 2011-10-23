@@ -225,7 +225,7 @@ v1.3.1 (nidoran) 28jun05
   * added Transport.open_sftp_client() for convenience
   * refactored packetizing out of Transport
   * fixed bug (reported by alain s.) where connecting to a non-SSH host could
-    cause paramiko to freeze up
+    cause ssh to freeze up
   * fixed Channel.fileno() for Windows (again)
   * some more unit tests
 
@@ -321,7 +321,7 @@ v0.9 (fearow) 23apr04
   * Transport.get_remove_server_key() now returns a PKey object instead of a
     tuple of strings
   * Transport.get_username() -- return the username you auth'd as [client]
-  * Transport.set_keepalive() -- makes paramiko send periodic junk packets
+  * Transport.set_keepalive() -- makes ssh send periodic junk packets
     to the remote host, to keep the session active
   * python 2.2 support (thanks to Roger Binns)
   * misc. bug fixes

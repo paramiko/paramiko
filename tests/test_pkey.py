@@ -1,19 +1,19 @@
 # Copyright (C) 2003-2009  Robey Pointer <robeypointer@gmail.com>
 #
-# This file is part of paramiko.
+# This file is part of ssh.
 #
-# Paramiko is free software; you can redistribute it and/or modify it under the
+# 'ssh' is free software; you can redistribute it and/or modify it under the
 # terms of the GNU Lesser General Public License as published by the Free
 # Software Foundation; either version 2.1 of the License, or (at your option)
 # any later version.
 #
-# Paramiko is distrubuted in the hope that it will be useful, but WITHOUT ANY
+# 'ssh' is distrubuted in the hope that it will be useful, but WITHOUT ANY
 # WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
 # A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more
 # details.
 #
 # You should have received a copy of the GNU Lesser General Public License
-# along with Paramiko; if not, write to the Free Software Foundation, Inc.,
+# along with 'ssh'; if not, write to the Free Software Foundation, Inc.,
 # 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
 
 """
@@ -23,8 +23,8 @@ Some unit tests for public/private key objects.
 from binascii import hexlify, unhexlify
 import StringIO
 import unittest
-from paramiko import RSAKey, DSSKey, Message, util
-from paramiko.common import rng
+from ssh import RSAKey, DSSKey, Message, util
+from ssh.common import rng
 
 # from openssh's ssh-keygen
 PUB_RSA = 'ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAIEA049W6geFpmsljTwfvI1UmKWWJPNFI74+vNKTk4dmzkQY2yAMs6FhlvhlI8ysU4oj71ZsRYMecHbBbxdN79+JRFVYTKaLqjwGENeTd+yv4q+V2PvZv3fLnzApI3l7EJCqhWwJUHJ1jAkZzqDx0tyOL4uoZpww3nmE0kb3y21tH4c='

@@ -2,20 +2,20 @@
 
 # Copyright (C) 2003-2007  Robey Pointer <robeypointer@gmail.com>
 #
-# This file is part of paramiko.
+# This file is part of ssh.
 #
-# Paramiko is free software; you can redistribute it and/or modify it under the
+# 'ssh' is free software; you can redistribute it and/or modify it under the
 # terms of the GNU Lesser General Public License as published by the Free
 # Software Foundation; either version 2.1 of the License, or (at your option)
 # any later version.
 #
-# Paramiko is distrubuted in the hope that it will be useful, but WITHOUT ANY
+# 'ssh' is distrubuted in the hope that it will be useful, but WITHOUT ANY
 # WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
 # A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more
 # details.
 #
 # You should have received a copy of the GNU Lesser General Public License
-# along with Paramiko; if not, write to the Free Software Foundation, Inc.,
+# along with 'ssh'; if not, write to the Free Software Foundation, Inc.,
 # 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
 
 """
@@ -27,7 +27,7 @@ import re
 import sys
 import unittest
 from optparse import OptionParser
-import paramiko
+import ssh
 
 sys.path.append('tests')
 
@@ -105,7 +105,7 @@ def main():
     options, args = parser.parse_args()
     
     # setup logging
-    paramiko.util.log_to_file('test.log')
+    ssh.util.log_to_file('test.log')
     
     if options.use_sftp:
         if options.use_loopback_sftp:

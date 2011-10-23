@@ -1,19 +1,19 @@
 # Copyright (C) 2003-2009  Robey Pointer <robeypointer@gmail.com>
 #
-# This file is part of paramiko.
+# This file is part of ssh.
 #
-# Paramiko is free software; you can redistribute it and/or modify it under the
+# 'ssh' is free software; you can redistribute it and/or modify it under the
 # terms of the GNU Lesser General Public License as published by the Free
 # Software Foundation; either version 2.1 of the License, or (at your option)
 # any later version.
 #
-# Paramiko is distrubuted in the hope that it will be useful, but WITHOUT ANY
+# 'ssh' is distrubuted in the hope that it will be useful, but WITHOUT ANY
 # WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
 # A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more
 # details.
 #
 # You should have received a copy of the GNU Lesser General Public License
-# along with Paramiko; if not, write to the Free Software Foundation, Inc.,
+# along with 'ssh'; if not, write to the Free Software Foundation, Inc.,
 # 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
 
 """
@@ -33,10 +33,10 @@ import threading
 import time
 import unittest
 
-import paramiko
+import ssh
 from stub_sftp import StubServer, StubSFTPServer
 from loop import LoopSocket
-from paramiko.sftp_attr import SFTPAttributes
+from ssh.sftp_attr import SFTPAttributes
 
 ARTICLE = '''
 Insulin sensitivity and liver insulin receptor structure in ducks from two
@@ -82,12 +82,12 @@ class SFTPTest (unittest.TestCase):
     def init(hostname, username, keyfile, passwd):
         global sftp, tc
 
-        t = paramiko.Transport(hostname)
+        t = ssh.Transport(hostname)
         tc = t
         try:
-            key = paramiko.RSAKey.from_private_key_file(keyfile, passwd)
-        except paramiko.PasswordRequiredException:
-            sys.stderr.write('\n\nparamiko.RSAKey.from_private_key_file REQUIRES PASSWORD.\n')
+            key = ssh.RSAKey.from_private_key_file(keyfile, passwd)
+        except ssh.PasswordRequiredException:
+            sys.stderr.write('\n\nssh.RSAKey.from_private_key_file REQUIRES PASSWORD.\n')
             sys.stderr.write('You have two options:\n')
             sys.stderr.write('* Use the "-K" option to point to a different (non-password-protected)\n')
             sys.stderr.write('  private key file.\n')
@@ -97,9 +97,9 @@ class SFTPTest (unittest.TestCase):
             sys.exit(1)
         try:
             t.connect(username=username, pkey=key)
-        except paramiko.SSHException:
+        except ssh.SSHException:
             t.close()
-            sys.stderr.write('\n\nparamiko.Transport.connect FAILED.\n')
+            sys.stderr.write('\n\nssh.Transport.connect FAILED.\n')
             sys.stderr.write('There are several possible reasons why it might fail so quickly:\n\n')
             sys.stderr.write('* The host to connect to (%s) is not a valid SSH server.\n' % hostname)
             sys.stderr.write('  (Use the "-H" option to change the host.)\n')
@@ -109,7 +109,7 @@ class SFTPTest (unittest.TestCase):
             sys.stderr.write('  (Use the "-K" option to provide a different key file.)\n')
             sys.stderr.write('\n')
             sys.exit(1)
-        sftp = paramiko.SFTP.from_transport(t)
+        sftp = ssh.SFTP.from_transport(t)
     init = staticmethod(init)
 
     def init_loopback():
@@ -118,19 +118,19 @@ class SFTPTest (unittest.TestCase):
         socks = LoopSocket()
         sockc = LoopSocket()
         sockc.link(socks)
-        tc = paramiko.Transport(sockc)
-        ts = paramiko.Transport(socks)
+        tc = ssh.Transport(sockc)
+        ts = ssh.Transport(socks)
 
-        host_key = paramiko.RSAKey.from_private_key_file('tests/test_rsa.key')
+        host_key = ssh.RSAKey.from_private_key_file('tests/test_rsa.key')
         ts.add_server_key(host_key)
         event = threading.Event()
         server = StubServer()
-        ts.set_subsystem_handler('sftp', paramiko.SFTPServer, StubSFTPServer)
+        ts.set_subsystem_handler('sftp', ssh.SFTPServer, StubSFTPServer)
         ts.start_server(event, server)
         tc.connect(username='slowdive', password='pygmalion')
         event.wait(1.0)
 
-        sftp = paramiko.SFTP.from_transport(tc)
+        sftp = ssh.SFTP.from_transport(tc)
     init_loopback = staticmethod(init_loopback)
 
     def set_big_file_test(onoff):
@@ -174,7 +174,7 @@ class SFTPTest (unittest.TestCase):
             self.fail('expected exception')
         except:
             pass
-        sftp = paramiko.SFTP.from_transport(tc)
+        sftp = ssh.SFTP.from_transport(tc)
 
     def test_3_write(self):
         """
@@ -699,7 +699,7 @@ class SFTPTest (unittest.TestCase):
         """
         verify that seek does't affect writes during append.
 
-        does not work except through paramiko.  :(  openssh fails.
+        does not work except through ssh.  :(  openssh fails.
         """
         f = sftp.open(FOLDER + '/append.txt', 'a')
         try:

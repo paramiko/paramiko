@@ -2,20 +2,20 @@
 
 # Copyright (C) 2003-2007  Robey Pointer <robeypointer@gmail.com>
 #
-# This file is part of paramiko.
+# This file is part of ssh.
 #
-# Paramiko is free software; you can redistribute it and/or modify it under the
+# 'ssh' is free software; you can redistribute it and/or modify it under the
 # terms of the GNU Lesser General Public License as published by the Free
 # Software Foundation; either version 2.1 of the License, or (at your option)
 # any later version.
 #
-# Paramiko is distrubuted in the hope that it will be useful, but WITHOUT ANY
+# 'ssh' is distrubuted in the hope that it will be useful, but WITHOUT ANY
 # WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
 # A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more
 # details.
 #
 # You should have received a copy of the GNU Lesser General Public License
-# along with Paramiko; if not, write to the Free Software Foundation, Inc.,
+# along with 'ssh'; if not, write to the Free Software Foundation, Inc.,
 # 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
 
 
@@ -30,7 +30,7 @@ import threading
 import time
 import traceback
 
-import paramiko
+import ssh
 import interactive
 
 
@@ -40,7 +40,7 @@ def agent_auth(transport, username):
     keys available from an SSH agent.
     """
     
-    agent = paramiko.Agent()
+    agent = ssh.Agent()
     agent_keys = agent.get_keys()
     if len(agent_keys) == 0:
         return
@@ -51,7 +51,7 @@ def agent_auth(transport, username):
             transport.auth_publickey(username, key)
             print '... success!'
             return
-        except paramiko.SSHException:
+        except ssh.SSHException:
             print '... nope.'
 
 
@@ -67,10 +67,10 @@ def manual_auth(username, hostname):
         if len(path) == 0:
             path = default_path
         try:
-            key = paramiko.RSAKey.from_private_key_file(path)
-        except paramiko.PasswordRequiredException:
+            key = ssh.RSAKey.from_private_key_file(path)
+        except ssh.PasswordRequiredException:
             password = getpass.getpass('RSA key password: ')
-            key = paramiko.RSAKey.from_private_key_file(path, password)
+            key = ssh.RSAKey.from_private_key_file(path, password)
         t.auth_publickey(username, key)
     elif auth == 'd':
         default_path = os.path.join(os.environ['HOME'], '.ssh', 'id_dsa')
@@ -78,10 +78,10 @@ def manual_auth(username, hostname):
         if len(path) == 0:
             path = default_path
         try:
-            key = paramiko.DSSKey.from_private_key_file(path)
-        except paramiko.PasswordRequiredException:
+            key = ssh.DSSKey.from_private_key_file(path)
+        except ssh.PasswordRequiredException:
             password = getpass.getpass('DSS key password: ')
-            key = paramiko.DSSKey.from_private_key_file(path, password)
+            key = ssh.DSSKey.from_private_key_file(path, password)
         t.auth_publickey(username, key)
     else:
         pw = getpass.getpass('Password for %s@%s: ' % (username, hostname))
@@ -89,7 +89,7 @@ def manual_auth(username, hostname):
 
 
 # setup logging
-paramiko.util.log_to_file('demo.log')
+ssh.util.log_to_file('demo.log')
 
 username = ''
 if len(sys.argv) > 1:
@@ -116,18 +116,18 @@ except Exception, e:
     sys.exit(1)
 
 try:
-    t = paramiko.Transport(sock)
+    t = ssh.Transport(sock)
     try:
         t.start_client()
-    except paramiko.SSHException:
+    except ssh.SSHException:
         print '*** SSH negotiation failed.'
         sys.exit(1)
 
     try:
-        keys = paramiko.util.load_host_keys(os.path.expanduser('~/.ssh/known_hosts'))
+        keys = ssh.util.load_host_keys(os.path.expanduser('~/.ssh/known_hosts'))
     except IOError:
         try:
-            keys = paramiko.util.load_host_keys(os.path.expanduser('~/ssh/known_hosts'))
+            keys = ssh.util.load_host_keys(os.path.expanduser('~/ssh/known_hosts'))
         except IOError:
             print '*** Unable to open host keys file'
             keys = {}

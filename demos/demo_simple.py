@@ -2,20 +2,20 @@
 
 # Copyright (C) 2003-2007  Robey Pointer <robeypointer@gmail.com>
 #
-# This file is part of paramiko.
+# This file is part of ssh.
 #
-# Paramiko is free software; you can redistribute it and/or modify it under the
+# 'ssh' is free software; you can redistribute it and/or modify it under the
 # terms of the GNU Lesser General Public License as published by the Free
 # Software Foundation; either version 2.1 of the License, or (at your option)
 # any later version.
 #
-# Paramiko is distrubuted in the hope that it will be useful, but WITHOUT ANY
+# 'ssh' is distrubuted in the hope that it will be useful, but WITHOUT ANY
 # WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
 # A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more
 # details.
 #
 # You should have received a copy of the GNU Lesser General Public License
-# along with Paramiko; if not, write to the Free Software Foundation, Inc.,
+# along with 'ssh'; if not, write to the Free Software Foundation, Inc.,
 # 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
 
 
@@ -26,12 +26,12 @@ import socket
 import sys
 import traceback
 
-import paramiko
+import ssh
 import interactive
 
 
 # setup logging
-paramiko.util.log_to_file('demo_simple.log')
+ssh.util.log_to_file('demo_simple.log')
 
 # get hostname
 username = ''
@@ -59,11 +59,11 @@ if username == '':
 password = getpass.getpass('Password for %s@%s: ' % (username, hostname))
 
 
-# now, connect and use paramiko Client to negotiate SSH2 across the connection
+# now, connect and use ssh Client to negotiate SSH2 across the connection
 try:
-    client = paramiko.SSHClient()
+    client = ssh.SSHClient()
     client.load_system_host_keys()
-    client.set_missing_host_key_policy(paramiko.WarningPolicy)
+    client.set_missing_host_key_policy(ssh.WarningPolicy)
     print '*** Connecting...'
     client.connect(hostname, port, username, password)
     chan = client.invoke_shell()

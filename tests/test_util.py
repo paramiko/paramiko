@@ -1,19 +1,19 @@
 # Copyright (C) 2003-2009  Robey Pointer <robeypointer@gmail.com>
 #
-# This file is part of paramiko.
+# This file is part of ssh.
 #
-# Paramiko is free software; you can redistribute it and/or modify it under the
+# 'ssh' is free software; you can redistribute it and/or modify it under the
 # terms of the GNU Lesser General Public License as published by the Free
 # Software Foundation; either version 2.1 of the License, or (at your option)
 # any later version.
 #
-# Paramiko is distrubuted in the hope that it will be useful, but WITHOUT ANY
+# 'ssh' is distrubuted in the hope that it will be useful, but WITHOUT ANY
 # WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
 # A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more
 # details.
 #
 # You should have received a copy of the GNU Lesser General Public License
-# along with Paramiko; if not, write to the Free Software Foundation, Inc.,
+# along with 'ssh'; if not, write to the Free Software Foundation, Inc.,
 # 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
 
 """
@@ -25,7 +25,7 @@ import cStringIO
 import os
 import unittest
 from Crypto.Hash import SHA
-import paramiko.util
+import ssh.util
 
 
 test_config_file = """\
@@ -54,7 +54,7 @@ BGQ3GQ/Fc7SX6gkpXkwcZryoi4kNFhHu5LvHcZPdxXV1D+uTMfGS1eyd2Yz/DoNWXNAl8TI0cAsW\
 
 
 # for test 1:
-from paramiko import *
+from ssh import *
 
 
 class UtilTest (unittest.TestCase):
@@ -70,7 +70,7 @@ class UtilTest (unittest.TestCase):
     
     def test_1_import(self):
         """
-        verify that all the classes can be imported from paramiko.
+        verify that all the classes can be imported from ssh.
         """
         symbols = globals().keys()
         self.assertTrue('Transport' in symbols)
@@ -109,7 +109,7 @@ class UtilTest (unittest.TestCase):
     def test_2_parse_config(self):
         global test_config_file
         f = cStringIO.StringIO(test_config_file)
-        config = paramiko.util.parse_ssh_config(f)
+        config = ssh.util.parse_ssh_config(f)
         self.assertEquals(config._config,
                           [ {'identityfile': '~/.ssh/id_rsa', 'host': '*', 'user': 'robey',
                              'crazy': 'something dumb  '},
@@ -119,16 +119,16 @@ class UtilTest (unittest.TestCase):
     def test_3_host_config(self):
         global test_config_file
         f = cStringIO.StringIO(test_config_file)
-        config = paramiko.util.parse_ssh_config(f)
-        c = paramiko.util.lookup_ssh_host_config('irc.danger.com', config)
+        config = ssh.util.parse_ssh_config(f)
+        c = ssh.util.lookup_ssh_host_config('irc.danger.com', config)
         self.assertEquals(c, {'identityfile': '~/.ssh/id_rsa', 'user': 'robey', 'crazy': 'something dumb  '})
-        c = paramiko.util.lookup_ssh_host_config('irc.example.com', config)
+        c = ssh.util.lookup_ssh_host_config('irc.example.com', config)
         self.assertEquals(c, {'identityfile': '~/.ssh/id_rsa', 'user': 'bjork', 'crazy': 'something dumb  ', 'port': '3333'})
-        c = paramiko.util.lookup_ssh_host_config('spoo.example.com', config)
+        c = ssh.util.lookup_ssh_host_config('spoo.example.com', config)
         self.assertEquals(c, {'identityfile': '~/.ssh/id_rsa', 'user': 'bjork', 'crazy': 'something else', 'port': '3333'})
 
     def test_4_generate_key_bytes(self):
-        x = paramiko.util.generate_key_bytes(SHA, 'ABCDEFGH', 'This is my secret passphrase.', 64)
+        x = ssh.util.generate_key_bytes(SHA, 'ABCDEFGH', 'This is my secret passphrase.', 64)
         hex = ''.join(['%02x' % ord(c) for c in x])
         self.assertEquals(hex, '9110e2f6793b69363e58173e9436b13a5a4b339005741d5c680e505f57d871347b4239f14fb5c46e857d5e100424873ba849ac699cea98d729e57b3e84378e8b')
 
@@ -137,7 +137,7 @@ class UtilTest (unittest.TestCase):
         f.write(test_hosts_file)
         f.close()
         try:
-            hostdict = paramiko.util.load_host_keys('hostfile.temp')
+            hostdict = ssh.util.load_host_keys('hostfile.temp')
             self.assertEquals(2, len(hostdict))
             self.assertEquals(1, len(hostdict.values()[0]))
             self.assertEquals(1, len(hostdict.values()[1]))
@@ -147,7 +147,7 @@ class UtilTest (unittest.TestCase):
             os.unlink('hostfile.temp')
 
     def test_6_random(self):
-        from paramiko.common import rng
+        from ssh.common import rng
         # just verify that we can pull out 32 bytes and not get an exception.
         x = rng.read(32)
         self.assertEquals(len(x), 32)

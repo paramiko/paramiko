@@ -2,24 +2,24 @@
 
 # Copyright (C) 2008  Robey Pointer <robeypointer@gmail.com>
 #
-# This file is part of paramiko.
+# This file is part of ssh.
 #
-# Paramiko is free software; you can redistribute it and/or modify it under the
+# 'ssh' is free software; you can redistribute it and/or modify it under the
 # terms of the GNU Lesser General Public License as published by the Free
 # Software Foundation; either version 2.1 of the License, or (at your option)
 # any later version.
 #
-# Paramiko is distrubuted in the hope that it will be useful, but WITHOUT ANY
+# 'ssh' is distrubuted in the hope that it will be useful, but WITHOUT ANY
 # WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
 # A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more
 # details.
 #
 # You should have received a copy of the GNU Lesser General Public License
-# along with Paramiko; if not, write to the Free Software Foundation, Inc.,
+# along with 'ssh'; if not, write to the Free Software Foundation, Inc.,
 # 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
 
 """
-Sample script showing how to do remote port forwarding over paramiko.
+Sample script showing how to do remote port forwarding over ssh.
 
 This script connects to the requested SSH server and sets up remote port
 forwarding (the openssh -R option) from a remote port through a tunneled
@@ -34,7 +34,7 @@ import sys
 import threading
 from optparse import OptionParser
 
-import paramiko
+import ssh
 
 SSH_PORT = 22
 DEFAULT_PORT = 4000
@@ -86,7 +86,7 @@ def verbose(s):
 
 
 HELP = """\
-Set up a reverse forwarding tunnel across an SSH server, using paramiko. A
+Set up a reverse forwarding tunnel across an SSH server, using ssh. A
 port on the SSH server (given with -p) is forwarded across an SSH session
 back to the local machine, and out to a remote site reachable from this
 network. This is similar to the openssh -R option.
@@ -142,9 +142,9 @@ def main():
     if options.readpass:
         password = getpass.getpass('Enter SSH password: ')
     
-    client = paramiko.SSHClient()
+    client = ssh.SSHClient()
     client.load_system_host_keys()
-    client.set_missing_host_key_policy(paramiko.WarningPolicy())
+    client.set_missing_host_key_policy(ssh.WarningPolicy())
 
     verbose('Connecting to ssh host %s:%d ...' % (server[0], server[1]))
     try:

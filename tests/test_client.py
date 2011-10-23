@@ -1,19 +1,19 @@
 # Copyright (C) 2003-2009  Robey Pointer <robeypointer@gmail.com>
 #
-# This file is part of paramiko.
+# This file is part of ssh.
 #
-# Paramiko is free software; you can redistribute it and/or modify it under the
+# 'ssh' is free software; you can redistribute it and/or modify it under the
 # terms of the GNU Lesser General Public License as published by the Free
 # Software Foundation; either version 2.1 of the License, or (at your option)
 # any later version.
 #
-# Paramiko is distrubuted in the hope that it will be useful, but WITHOUT ANY
+# 'ssh' is distrubuted in the hope that it will be useful, but WITHOUT ANY
 # WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
 # A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more
 # details.
 #
 # You should have received a copy of the GNU Lesser General Public License
-# along with Paramiko; if not, write to the Free Software Foundation, Inc.,
+# along with 'ssh'; if not, write to the Free Software Foundation, Inc.,
 # 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
 
 """
@@ -27,10 +27,10 @@ import unittest
 import weakref
 from binascii import hexlify
 
-import paramiko
+import ssh
 
 
-class NullServer (paramiko.ServerInterface):
+class NullServer (ssh.ServerInterface):
 
     def get_allowed_auths(self, username):
         if username == 'slowdive':
@@ -39,16 +39,16 @@ class NullServer (paramiko.ServerInterface):
 
     def check_auth_password(self, username, password):
         if (username == 'slowdive') and (password == 'pygmalion'):
-            return paramiko.AUTH_SUCCESSFUL
-        return paramiko.AUTH_FAILED
+            return ssh.AUTH_SUCCESSFUL
+        return ssh.AUTH_FAILED
 
     def check_auth_publickey(self, username, key):
         if (key.get_name() == 'ssh-dss') and (hexlify(key.get_fingerprint()) == '4478f0b9a23cc5182009ff755bc1d26c'):
-            return paramiko.AUTH_SUCCESSFUL
-        return paramiko.AUTH_FAILED
+            return ssh.AUTH_SUCCESSFUL
+        return ssh.AUTH_FAILED
 
     def check_channel_request(self, kind, chanid):
-        return paramiko.OPEN_SUCCEEDED
+        return ssh.OPEN_SUCCEEDED
 
     def check_channel_exec_request(self, channel, command):
         if command != 'yes':
@@ -76,8 +76,8 @@ class SSHClientTest (unittest.TestCase):
 
     def _run(self):
         self.socks, addr = self.sockl.accept()
-        self.ts = paramiko.Transport(self.socks)
-        host_key = paramiko.RSAKey.from_private_key_file('tests/test_rsa.key')
+        self.ts = ssh.Transport(self.socks)
+        host_key = ssh.RSAKey.from_private_key_file('tests/test_rsa.key')
         self.ts.add_server_key(host_key)
         server = NullServer()
         self.ts.start_server(self.event, server)
@@ -87,10 +87,10 @@ class SSHClientTest (unittest.TestCase):
         """
         verify that the SSHClient stuff works too.
         """
-        host_key = paramiko.RSAKey.from_private_key_file('tests/test_rsa.key')
-        public_host_key = paramiko.RSAKey(data=str(host_key))
+        host_key = ssh.RSAKey.from_private_key_file('tests/test_rsa.key')
+        public_host_key = ssh.RSAKey(data=str(host_key))
 
-        self.tc = paramiko.SSHClient()
+        self.tc = ssh.SSHClient()
         self.tc.get_host_keys().add('[%s]:%d' % (self.addr, self.port), 'ssh-rsa', public_host_key)
         self.tc.connect(self.addr, self.port, username='slowdive', password='pygmalion')
 
@@ -120,10 +120,10 @@ class SSHClientTest (unittest.TestCase):
         """
         verify that SSHClient works with a DSA key.
         """
-        host_key = paramiko.RSAKey.from_private_key_file('tests/test_rsa.key')
-        public_host_key = paramiko.RSAKey(data=str(host_key))
+        host_key = ssh.RSAKey.from_private_key_file('tests/test_rsa.key')
+        public_host_key = ssh.RSAKey(data=str(host_key))
 
-        self.tc = paramiko.SSHClient()
+        self.tc = ssh.SSHClient()
         self.tc.get_host_keys().add('[%s]:%d' % (self.addr, self.port), 'ssh-rsa', public_host_key)
         self.tc.connect(self.addr, self.port, username='slowdive', key_filename='tests/test_dss.key')
 
@@ -153,10 +153,10 @@ class SSHClientTest (unittest.TestCase):
         """
         verify that SSHClient accepts and tries multiple key files.
         """
-        host_key = paramiko.RSAKey.from_private_key_file('tests/test_rsa.key')
-        public_host_key = paramiko.RSAKey(data=str(host_key))
+        host_key = ssh.RSAKey.from_private_key_file('tests/test_rsa.key')
+        public_host_key = ssh.RSAKey(data=str(host_key))
 
-        self.tc = paramiko.SSHClient()
+        self.tc = ssh.SSHClient()
         self.tc.get_host_keys().add('[%s]:%d' % (self.addr, self.port), 'ssh-rsa', public_host_key)
         self.tc.connect(self.addr, self.port, username='slowdive', key_filename=[ 'tests/test_rsa.key', 'tests/test_dss.key' ])
 
@@ -170,11 +170,11 @@ class SSHClientTest (unittest.TestCase):
         """
         verify that SSHClient's AutoAddPolicy works.
         """
-        host_key = paramiko.RSAKey.from_private_key_file('tests/test_rsa.key')
-        public_host_key = paramiko.RSAKey(data=str(host_key))
+        host_key = ssh.RSAKey.from_private_key_file('tests/test_rsa.key')
+        public_host_key = ssh.RSAKey(data=str(host_key))
 
-        self.tc = paramiko.SSHClient()
-        self.tc.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        self.tc = ssh.SSHClient()
+        self.tc.set_missing_host_key_policy(ssh.AutoAddPolicy())
         self.assertEquals(0, len(self.tc.get_host_keys()))
         self.tc.connect(self.addr, self.port, username='slowdive', password='pygmalion')
 
@@ -191,11 +191,11 @@ class SSHClientTest (unittest.TestCase):
         verify that when an SSHClient is collected, its transport (and the
         transport's packetizer) is closed.
         """
-        host_key = paramiko.RSAKey.from_private_key_file('tests/test_rsa.key')
-        public_host_key = paramiko.RSAKey(data=str(host_key))
+        host_key = ssh.RSAKey.from_private_key_file('tests/test_rsa.key')
+        public_host_key = ssh.RSAKey(data=str(host_key))
 
-        self.tc = paramiko.SSHClient()
-        self.tc.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        self.tc = ssh.SSHClient()
+        self.tc.set_missing_host_key_policy(ssh.AutoAddPolicy())
         self.assertEquals(0, len(self.tc.get_host_keys()))
         self.tc.connect(self.addr, self.port, username='slowdive', password='pygmalion')
 

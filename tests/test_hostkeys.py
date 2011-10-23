@@ -1,19 +1,19 @@
 # Copyright (C) 2006-2007  Robey Pointer <robeypointer@gmail.com>
 #
-# This file is part of paramiko.
+# This file is part of ssh.
 #
-# Paramiko is free software; you can redistribute it and/or modify it under the
+# 'ssh' is free software; you can redistribute it and/or modify it under the
 # terms of the GNU Lesser General Public License as published by the Free
 # Software Foundation; either version 2.1 of the License, or (at your option)
 # any later version.
 #
-# Paramiko is distrubuted in the hope that it will be useful, but WITHOUT ANY
+# 'ssh' is distrubuted in the hope that it will be useful, but WITHOUT ANY
 # WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
 # A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more
 # details.
 #
 # You should have received a copy of the GNU Lesser General Public License
-# along with Paramiko; if not, write to the Free Software Foundation, Inc.,
+# along with 'ssh'; if not, write to the Free Software Foundation, Inc.,
 # 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
 
 """
@@ -24,7 +24,7 @@ import base64
 from binascii import hexlify
 import os
 import unittest
-import paramiko
+import ssh
 
 
 test_hosts_file = """\
@@ -63,7 +63,7 @@ class HostKeysTest (unittest.TestCase):
         os.unlink('hostfile.temp')
 
     def test_1_load(self):
-        hostdict = paramiko.HostKeys('hostfile.temp')
+        hostdict = ssh.HostKeys('hostfile.temp')
         self.assertEquals(2, len(hostdict))
         self.assertEquals(1, len(hostdict.values()[0]))
         self.assertEquals(1, len(hostdict.values()[1]))
@@ -71,9 +71,9 @@ class HostKeysTest (unittest.TestCase):
         self.assertEquals('E6684DB30E109B67B70FF1DC5C7F1363', fp)
 
     def test_2_add(self):
-        hostdict = paramiko.HostKeys('hostfile.temp')
+        hostdict = ssh.HostKeys('hostfile.temp')
         hh = '|1|BMsIC6cUIP2zBuXR3t2LRcJYjzM=|hpkJMysjTk/+zzUUzxQEa2ieq6c='
-        key = paramiko.RSAKey(data=base64.decodestring(keyblob))
+        key = ssh.RSAKey(data=base64.decodestring(keyblob))
         hostdict.add(hh, 'ssh-rsa', key)
         self.assertEquals(3, len(hostdict))
         x = hostdict['foo.example.com']
@@ -82,7 +82,7 @@ class HostKeysTest (unittest.TestCase):
         self.assert_(hostdict.check('foo.example.com', key))
 
     def test_3_dict(self):
-        hostdict = paramiko.HostKeys('hostfile.temp')
+        hostdict = ssh.HostKeys('hostfile.temp')
         self.assert_('secure.example.com' in hostdict)
         self.assert_('not.example.com' not in hostdict)
         self.assert_(hostdict.has_key('secure.example.com'))
@@ -97,9 +97,9 @@ class HostKeysTest (unittest.TestCase):
         self.assertEquals(2, i)
         
     def test_4_dict_set(self):
-        hostdict = paramiko.HostKeys('hostfile.temp')
-        key = paramiko.RSAKey(data=base64.decodestring(keyblob))
-        key_dss = paramiko.DSSKey(data=base64.decodestring(keyblob_dss))
+        hostdict = ssh.HostKeys('hostfile.temp')
+        key = ssh.RSAKey(data=base64.decodestring(keyblob))
+        key_dss = ssh.DSSKey(data=base64.decodestring(keyblob_dss))
         hostdict['secure.example.com'] = {
             'ssh-rsa': key,
             'ssh-dss': key_dss

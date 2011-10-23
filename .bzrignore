@@ -1,7 +1,7 @@
 *.pyc
 ./build
-./paramiko.egg-info
+./ssh.egg-info
 ./dist
 ./.project
-./paramiko.tmproj
+./ssh.tmproj
 ./test.log

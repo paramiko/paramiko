@@ -2,20 +2,20 @@
 
 # Copyright (C) 2003-2007  Robey Pointer <robeypointer@gmail.com>
 #
-# This file is part of paramiko.
+# This file is part of ssh.
 #
-# Paramiko is free software; you can redistribute it and/or modify it under the
+# 'ssh' is free software; you can redistribute it and/or modify it under the
 # terms of the GNU Lesser General Public License as published by the Free
 # Software Foundation; either version 2.1 of the License, or (at your option)
 # any later version.
 #
-# Paramiko is distrubuted in the hope that it will be useful, but WITHOUT ANY
+# 'ssh' is distrubuted in the hope that it will be useful, but WITHOUT ANY
 # WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
 # A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more
 # details.
 #
 # You should have received a copy of the GNU Lesser General Public License
-# along with Paramiko; if not, write to the Free Software Foundation, Inc.,
+# along with 'ssh'; if not, write to the Free Software Foundation, Inc.,
 # 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
 
 import base64
@@ -26,45 +26,45 @@ import sys
 import threading
 import traceback
 
-import paramiko
+import ssh
 
 
 # setup logging
-paramiko.util.log_to_file('demo_server.log')
+ssh.util.log_to_file('demo_server.log')
 
-host_key = paramiko.RSAKey(filename='test_rsa.key')
-#host_key = paramiko.DSSKey(filename='test_dss.key')
+host_key = ssh.RSAKey(filename='test_rsa.key')
+#host_key = ssh.DSSKey(filename='test_dss.key')
 
 print 'Read key: ' + hexlify(host_key.get_fingerprint())
 
 
-class Server (paramiko.ServerInterface):
+class Server (ssh.ServerInterface):
     # 'data' is the output of base64.encodestring(str(key))
     # (using the "user_rsa_key" files)
     data = 'AAAAB3NzaC1yc2EAAAABIwAAAIEAyO4it3fHlmGZWJaGrfeHOVY7RWO3P9M7hp' + \
            'fAu7jJ2d7eothvfeuoRFtJwhUmZDluRdFyhFY/hFAh76PJKGAusIqIQKlkJxMC' + \
            'KDqIexkgHAfID/6mqvmnSJf0b5W8v5h2pI/stOSwTQ+pxVhwJ9ctYDhRSlF0iT' + \
            'UWT10hcuO4Ks8='
-    good_pub_key = paramiko.RSAKey(data=base64.decodestring(data))
+    good_pub_key = ssh.RSAKey(data=base64.decodestring(data))
 
     def __init__(self):
         self.event = threading.Event()
 
     def check_channel_request(self, kind, chanid):
         if kind == 'session':
-            return paramiko.OPEN_SUCCEEDED
-        return paramiko.OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED
+            return ssh.OPEN_SUCCEEDED
+        return ssh.OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED
 
     def check_auth_password(self, username, password):
         if (username == 'robey') and (password == 'foo'):
-            return paramiko.AUTH_SUCCESSFUL
-        return paramiko.AUTH_FAILED
+            return ssh.AUTH_SUCCESSFUL
+        return ssh.AUTH_FAILED
 
     def check_auth_publickey(self, username, key):
         print 'Auth attempt with key: ' + hexlify(key.get_fingerprint())
         if (username == 'robey') and (key == self.good_pub_key):
-            return paramiko.AUTH_SUCCESSFUL
-        return paramiko.AUTH_FAILED
+            return ssh.AUTH_SUCCESSFUL
+        return ssh.AUTH_FAILED
 
     def get_allowed_auths(self, username):
         return 'password,publickey'
@@ -100,7 +100,7 @@ except Exception, e:
 print 'Got a connection!'
 
 try:
-    t = paramiko.Transport(client)
+    t = ssh.Transport(client)
     try:
         t.load_server_moduli()
     except:
@@ -110,7 +110,7 @@ try:
     server = Server()
     try:
         t.start_server(server=server)
-    except paramiko.SSHException, x:
+    except ssh.SSHException, x:
         print '*** SSH negotiation failed.'
         sys.exit(1)
 

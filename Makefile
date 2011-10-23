@@ -46,21 +46,21 @@ release: docs
 	python ./setup.py sdist --formats=gztar
 	python ./setup.py bdist_egg
 	zip -r dist/docs.zip docs && rm -rf docs
-	cd dist && $(MD5SUM) paramiko*.zip *.gz > md5-sums
-	cd dist && gpg -ba paramiko*.zip
-	cd dist && gpg -ba paramiko*.gz
+	cd dist && $(MD5SUM) ssh*.zip *.gz > md5-sums
+	cd dist && gpg -ba ssh*.zip
+	cd dist && gpg -ba ssh*.gz
 
 
 docs: always
-	epydoc --no-private -o docs/ paramiko
+	epydoc --no-private -o docs/ ssh
 always:
 
 clean:
 	rm -rf build dist docs
 	rm -f MANIFEST *.log demos/*.log
-	rm -f paramiko/*.pyc
+	rm -f ssh/*.pyc
 	rm -f test.log
-	rm -rf paramiko.egg-info
+	rm -rf ssh.egg-info
 
 test:
 	python ./test.py
