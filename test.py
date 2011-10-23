@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# Copyright (C) 2003-2007  Robey Pointer <robeypointer@gmail.com>
+# Copyright (C) 2011  Jeff Forcier <jeff@bitprophet.org>
 #
 # This file is part of ssh.
 #

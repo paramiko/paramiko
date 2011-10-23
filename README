@@ -4,7 +4,7 @@ ssh
 
 :'ssh': Python SSH module
 :Copyright: Copyright (c) 2011 Jeff Forcier <jeff@bitprophet.org>
-:Copyright: Based on the Paramiko module, Copyright (c) 2003-2009 Robey Pointer <robeypointer@gmail.com>
+:Copyright: Based on the Paramiko module, Copyright (c) 2011 Jeff Forcier <jeff@bitprophet.org>
 :License: LGPL
 :Homepage: http://pypi.python.org/pypi/ssh/
 

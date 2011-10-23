@@ -1,4 +1,4 @@
-# Copyright (C) 2003-2011  Robey Pointer <robeypointer@gmail.com>
+# Copyright (C) 2003-2011  Jeff Forcier <jeff@bitprophet.org>
 #
 # This file is part of ssh.
 #
@@ -48,8 +48,8 @@ released under the GNU Lesser General Public License (LGPL).
 Website: U{http://www.lag.net/ssh/}
 
 @version: 1.7.8
-@author: Robey Pointer
-@contact: robeypointer@gmail.com
+@author: Jeff Forcier
+@contact: jeff@bitprophet.org
 @license: GNU Lesser General Public License (LGPL)
 """
 
@@ -59,8 +59,8 @@ if sys.version_info < (2, 2):
     raise RuntimeError('You need python 2.2 for this module.')
 
 
-__author__ = "Robey Pointer <robeypointer@gmail.com>"
-__date__ = "21 May 2011"
+__author__ = "Jeff Forcier <jeff@bitprophet.org>"
+__date__ = "23 October 2011"
 __version__ = "1.7.8"
 __version_info__ = (1, 7, 8)
 __license__ = "GNU Lesser General Public License (LGPL)"

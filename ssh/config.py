@@ -1,4 +1,4 @@
-# Copyright (C) 2006-2007  Robey Pointer <robeypointer@gmail.com>
+# Copyright (C) 2006-2007  Jeff Forcier <jeff@bitprophet.org>
 #
 # This file is part of ssh.
 #
