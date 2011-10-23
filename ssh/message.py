@@ -65,7 +65,7 @@ class Message (object):
 
         @rtype: string
         """
-        return 'paramiko.Message(' + repr(self.packet.getvalue()) + ')'
+        return 'ssh.Message(' + repr(self.packet.getvalue()) + ')'
 
     def rewind(self):
         """
