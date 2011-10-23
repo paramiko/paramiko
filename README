@@ -1,18 +1,18 @@
-
 ========
 ssh
 ========
 
 :'ssh': Python SSH module
-:Copyright: Copyright (c) 2003-2009  Robey Pointer <robeypointer@gmail.com>
+:Copyright: Copyright (c) 2011 Jeff Forcier <jeff@bitprophet.org>
+:Copyright: Based on the Paramiko module, Copyright (c) 2003-2009 Robey Pointer <robeypointer@gmail.com>
 :License: LGPL
-:Homepage: http://www.lag.net/paramiko/
+:Homepage: http://pypi.python.org/pypi/ssh/
 
 
-ssh 1.7.7.1
+ssh 1.7.7.2
 ================
 
-"George" release, 21 may 2011
+Released October 23, 2011.
 
 
 What
@@ -84,15 +84,8 @@ installs.) Valeriy Pogrebitskiy says the best place to look is
 Bugs & Support
 --------------
 
-there's a launchpage page for paramiko, with a bug tracker:
-
-    https://launchpad.net/paramiko/
-    
-this is the primary place to file and browse bug reports.
-
-there's also a low-traffic mailing list for support and discussions:
-
-    http://www.lag.net/mailman/listinfo/paramiko
+This package is in transition and no explicit support is provided at this time.
+Watch this space for updates.
 
 
 Demo
