@@ -341,6 +341,7 @@ class Transport (threading.Thread):
         self._channel_counter = 1
         self.window_size = 65536
         self.max_packet_size = 34816
+        self._forward_agent_handler = None
         self._x11_handler = None
         self._tcp_handler = None
 
@@ -672,6 +673,18 @@ class Transport (threading.Thread):
             prematurely
         """
         return self.open_channel('x11', src_addr=src_addr)
+ 
+    def open_forward_agent_channel(self):
+         """
+	 Request a new channel to the client, of type C{"auth-agent@openssh.com"}.
+	 This is just an alias for C{open_channel('auth-agent@openssh.com')}.
+	 @return: a new L{Channel}
+	 @rtype: L{Channel}
+
+	 @raise SSHException: if the request is rejected or the session ends
+	     prematurely
+	 """
+         return self.open_channel('auth-agent@openssh.com')
 
     def open_forwarded_tcpip_channel(self, (src_addr, src_port), (dest_addr, dest_port)):
         """
@@ -1481,6 +1494,14 @@ class Transport (threading.Thread):
         else:
             return self._cipher_info[name]['class'].new(key, self._cipher_info[name]['mode'], iv)
 
+    def _set_forward_agent_handler(self, handler):
+        if handler is None:
+            def default_handler(channel):
+                self._queue_incoming_channel(channel)
+            self._forward_agent_handler = default_handler
+        else:
+            self._forward_agent_handler = handler
+
     def _set_x11_handler(self, handler):
         # only called if a channel has turned on x11 forwarding
         if handler is None:
@@ -1996,7 +2017,14 @@ class Transport (threading.Thread):
         initial_window_size = m.get_int()
         max_packet_size = m.get_int()
         reject = False
-        if (kind == 'x11') and (self._x11_handler is not None):
+	if (kind == 'auth-agent@openssh.com') and (self._forward_agent_handler is not None):
+	    self._log(DEBUG, 'Incoming forward agent connection')
+            self.lock.acquire()
+            try:
+                my_chanid = self._next_channel()
+            finally:
+                self.lock.release()
+        elif (kind == 'x11') and (self._x11_handler is not None):
             origin_addr = m.get_string()
             origin_port = m.get_int()
             self._log(DEBUG, 'Incoming x11 connection from %s:%d' % (origin_addr, origin_port))
@@ -2068,7 +2096,9 @@ class Transport (threading.Thread):
         m.add_int(self.max_packet_size)
         self._send_message(m)
         self._log(INFO, 'Secsh channel %d (%s) opened.', my_chanid, kind)
-        if kind == 'x11':
+	if kind == 'auth-agent@openssh.com':
+            self._forward_agent_handler(chan)
+        elif kind == 'x11':
             self._x11_handler(chan, (origin_addr, origin_port))
         elif kind == 'forwarded-tcpip':
             chan.origin_addr = (origin_addr, origin_port)
