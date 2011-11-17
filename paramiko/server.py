@@ -496,17 +496,18 @@ class ServerInterface (object):
 
     def check_channel_forward_agent_request(self, channel):
         """
-	Determine if the client will be provided with an forward agent session. If this
-	method returns C{True}, the server will allow SSH Agent forwarding.
+        Determine if the client will be provided with an forward agent session.
+        If this method returns C{True}, the server will allow SSH Agent
+        forwarding.
 
-	The default implementation always returns C{False}.
+        The default implementation always returns C{False}.
 
-	@param channel: the L{Channel} the request arrived on
-	@type channel: L{Channel}
-	@return: C{True} if the AgentForward was loaded; C{False} if not
-	@rtype: bool
-	"""
-	return False
+        @param channel: the L{Channel} the request arrived on
+        @type channel: L{Channel}
+        @return: C{True} if the AgentForward was loaded; C{False} if not
+        @rtype: bool
+        """
+        return False
 
     def check_channel_direct_tcpip_request(self, chanid, origin, destination):
         """
