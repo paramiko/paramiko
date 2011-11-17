@@ -673,18 +673,20 @@ class Transport (threading.Thread):
             prematurely
         """
         return self.open_channel('x11', src_addr=src_addr)
- 
-    def open_forward_agent_channel(self):
-         """
-	 Request a new channel to the client, of type C{"auth-agent@openssh.com"}.
-	 This is just an alias for C{open_channel('auth-agent@openssh.com')}.
-	 @return: a new L{Channel}
-	 @rtype: L{Channel}
 
-	 @raise SSHException: if the request is rejected or the session ends
-	     prematurely
-	 """
-         return self.open_channel('auth-agent@openssh.com')
+    def open_forward_agent_channel(self):
+        """
+        Request a new channel to the client, of type
+        C{"auth-agent@openssh.com"}.
+
+        This is just an alias for C{open_channel('auth-agent@openssh.com')}.
+        @return: a new L{Channel}
+        @rtype: L{Channel}
+
+        @raise SSHException: if the request is rejected or the session ends
+            prematurely
+        """
+        return self.open_channel('auth-agent@openssh.com')
 
     def open_forwarded_tcpip_channel(self, (src_addr, src_port), (dest_addr, dest_port)):
         """
