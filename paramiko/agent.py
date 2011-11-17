@@ -38,7 +38,7 @@ from paramiko.channel import Channel
 SSH2_AGENTC_REQUEST_IDENTITIES, SSH2_AGENT_IDENTITIES_ANSWER, \
     SSH2_AGENTC_SIGN_REQUEST, SSH2_AGENT_SIGN_RESPONSE = range(11, 15)
 
-class AgentSSH:
+class AgentSSH(object):
     """
     Client interface for using private keys from an SSH agent running on the
     local machine.  If an SSH agent is running, this class can be used to
@@ -172,7 +172,7 @@ class AgentRemoteProxy(AgentProxyThread):
         """
         return (self.__chan, None)
 
-class AgentClientProxy:
+class AgentClientProxy(object):
     """
     Class proxying request as a client:
        -> client ask for a request_forward_agent()
