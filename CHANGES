@@ -1,5 +1,9 @@
 Temporary, post-Paramiko changelog while we get our sh!t together.
 
+## ssh 1.7.10 (2011-11-17)
+
+* Updated `setup.py` with `==dev` install URL for `pip` users.
+
 
 ## ssh 1.7.9 (2011-11-08)
 
