@@ -1,0 +1,16 @@
+Temporary, post-Paramiko changelog while we get our sh!t together.
+
+
+## ssh 1.7.9 (2011-11-08)
+
+* Updated `setup.py` to account for packaging problems in PyCrypto 2.4.0
+
+
+## ssh 1.7.8 (2011-10-24)
+
+* Initial fork of Paramiko 1.7.7.1
+* Renamed package to 'ssh'
+* Added an extra `atfork()` call to help prevent spurious RNG errors when
+  running under high parallel (multiprocess) load.
+
+<!-- vim:set ft=markdown : -->
