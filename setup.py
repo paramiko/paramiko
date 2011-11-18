@@ -48,10 +48,10 @@ if sys.platform == 'darwin':
 	import setup_helper
 	setup_helper.install_custom_make_tarball()
 
+import paramiko
 
 setup(name = "paramiko",
-      version = "1.7.9",
-      version = "1.7.8",
+      version = paramiko.__version__,
       description = "SSH2 protocol library",
       author = "Jeff Forcier",
       author_email = "jeff@bitprophet.org",
