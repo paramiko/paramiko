@@ -45,16 +45,12 @@ receive data over the encrypted session.
 Paramiko is written entirely in python (no C or platform-dependent code) and is
 released under the GNU Lesser General Public License (LGPL).
 
-<<<<<<< HEAD:paramiko/__init__.py
 Website: U{http://www.lag.net/paramiko/}
 
-@version: 1.7.8
+@version: 1.7.11
 @author: Robey Pointer
 @contact: robeypointer@gmail.com
 @license: GNU Lesser General Public License (LGPL)
-=======
-Website: U{http://www.lag.net/ssh/}
->>>>>>> 01eea33... Let's not have 5 different freakin version strings:ssh/__init__.py
 """
 
 import sys
@@ -64,7 +60,7 @@ if sys.version_info < (2, 2):
 
 
 __author__ = "Jeff Forcier <jeff@bitprophet.org>"
-__version__ = "1.8.0a0"
+__version__ = "1.7.11"
 __license__ = "GNU Lesser General Public License (LGPL)"
 
 
