@@ -46,11 +46,6 @@ receive data over the encrypted session.
 released under the GNU Lesser General Public License (LGPL).
 
 Website: U{http://www.lag.net/ssh/}
-
-@version: 1.7.8
-@author: Jeff Forcier
-@contact: jeff@bitprophet.org
-@license: GNU Lesser General Public License (LGPL)
 """
 
 import sys
@@ -60,9 +55,7 @@ if sys.version_info < (2, 2):
 
 
 __author__ = "Jeff Forcier <jeff@bitprophet.org>"
-__date__ = "23 October 2011"
-__version__ = "1.7.8"
-__version_info__ = (1, 7, 8)
+__version__ = "1.7.10"
 __license__ = "GNU Lesser General Public License (LGPL)"
 
 

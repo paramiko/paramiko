@@ -47,8 +47,10 @@ if sys.platform == 'darwin':
 	setup_helper.install_custom_make_tarball()
 
 
+import ssh
+
 setup(name = "ssh",
-      version = "1.7.9",
+      version = ssh.__version__,
       description = "SSH2 protocol library",
       author = "Jeff Forcier",
       author_email = "jeff@bitprophet.org",
