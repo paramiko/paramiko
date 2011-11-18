@@ -25,6 +25,8 @@ are supported.  SFTP client and server mode are both supported too.
 
 Required packages:
     pyCrypto
+
+To install the `in-development version <https://github.com/bitprophet/ssh/tarball/master#egg=ssh-dev>`, use `pip install ssh==dev`.
 '''
 
 # if someday we want to *require* setuptools, uncomment this:
