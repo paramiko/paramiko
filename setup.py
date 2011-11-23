@@ -50,7 +50,7 @@ if sys.platform == 'darwin':
 
 
 setup(name = "paramiko",
-      version = "1.7.11"
+      version = "dev",
       description = "SSH2 protocol library",
       author = "Jeff Forcier",
       author_email = "jeff@bitprophet.org",
