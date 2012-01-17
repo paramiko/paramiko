@@ -124,3 +124,6 @@ INFO = logging.INFO
 WARNING = logging.WARNING
 ERROR = logging.ERROR
 CRITICAL = logging.CRITICAL
+
+# Common IO/select/etc sleep period, in seconds
+io_sleep = 0.01

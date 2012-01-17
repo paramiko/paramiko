@@ -34,6 +34,7 @@ from ssh.ssh_exception import SSHException
 from ssh.message import Message
 from ssh.pkey import PKey
 from ssh.channel import Channel
+from ssh.common import io_sleep
 
 SSH2_AGENTC_REQUEST_IDENTITIES, SSH2_AGENT_IDENTITIES_ANSWER, \
     SSH2_AGENTC_SIGN_REQUEST, SSH2_AGENT_SIGN_RESPONSE = range(11, 15)
@@ -134,6 +135,7 @@ class AgentProxyThread(threading.Thread):
                         self._agent._conn.send(data)
                     else:
                         break
+            time.sleep(io_sleep)
 
 class AgentLocalProxy(AgentProxyThread):
     """
