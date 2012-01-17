@@ -103,6 +103,8 @@ from common import AUTH_SUCCESSFUL, AUTH_PARTIALLY_SUCCESSFUL, AUTH_FAILED, \
 from sftp import SFTP_OK, SFTP_EOF, SFTP_NO_SUCH_FILE, SFTP_PERMISSION_DENIED, SFTP_FAILURE, \
      SFTP_BAD_MESSAGE, SFTP_NO_CONNECTION, SFTP_CONNECTION_LOST, SFTP_OP_UNSUPPORTED
 
+from common import io_sleep
+
 __all__ = [ 'Transport',
             'SSHClient',
             'MissingHostKeyPolicy',
@@ -136,4 +138,5 @@ __all__ = [ 'Transport',
             'AgentKey',
             'HostKeys',
             'SSHConfig',
-            'util' ]
+            'util',
+            'io_sleep' ]
