@@ -1,5 +1,10 @@
 Temporary, post-Paramiko changelog while we get our sh!t together.
 
+## ssh 1.7.11 (2011-11-18)
+
+* Handful of internal tweaks to version number storage.
+
+
 ## ssh 1.7.10 (2011-11-17)
 
 * Updated `setup.py` with `==dev` install URL for `pip` users.
