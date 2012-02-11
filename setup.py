@@ -50,7 +50,7 @@ if sys.platform == 'darwin':
 
 
 setup(name = "ssh",
-      version = "dev",
+      version = "1.7.12",
       description = "SSH2 protocol library",
       author = "Jeff Forcier",
       author_email = "jeff@bitprophet.org",

@@ -1,6 +1,6 @@
 Temporary, post-Paramiko changelog while we get our sh!t together.
 
-## ssh 1.7.12 (2012-MM-DD)
+## ssh 1.7.12 (2012-02-10)
 
 * Added an IO loop sleep() call to avoid needless CPU usage when agent
   forwarding is in use.
