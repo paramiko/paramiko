@@ -28,7 +28,6 @@ import threading
 import time
 import tempfile
 import stat
-import fcntl
 from select import select
 
 from paramiko.ssh_exception import SSHException
@@ -119,6 +118,7 @@ class AgentProxyThread(threading.Thread):
             raise
 
     def _communicate(self):
+        import fcntl
         oldflags = fcntl.fcntl(self.__inr, fcntl.F_GETFL)
         fcntl.fcntl(self.__inr, fcntl.F_SETFL, oldflags | os.O_NONBLOCK)
         while not self._exit:
