@@ -2,9 +2,11 @@ Temporary, post-Paramiko changelog while we get our sh!t together.
 
 ## ssh 1.7.13 (2012-MM-DD)
 
-* Moved a `fcntl` import closer to where it's used to help avoid `ImportError`
-  problems on Windows platforms. Thanks to Jason Coombs for the catch +
-  suggested fix.
+* #5: Moved a `fcntl` import closer to where it's used to help avoid
+  `ImportError` problems on Windows platforms. Thanks to Jason Coombs for the
+  catch + suggested fix.
+* #4: Updated implementation of WinPageant integration to work on 64-bit
+  Windows. Thanks again to Jason Coombs for the patch.
 
 ## ssh 1.7.12 (2012-02-10)
 
