@@ -42,7 +42,6 @@ except ImportError:
     except ImportError:
         pass
 
-
 _AGENT_COPYDATA_ID = 0x804e50ba
 _AGENT_MAX_MSGLEN = 8192
 # Note: The WM_COPYDATA value is pulled from win32con, as a workaround
@@ -108,7 +107,7 @@ def _query_pageant(msg):
             response = ctypes.windll.user32.SendMessageA(hwnd, win32con_WM_COPYDATA, _size, _addr)
         else:
             response = 0
- 
+
         if response > 0:
             datalen = pymap.read(4)
             retlen = struct.unpack('>I', datalen)[0]
@@ -131,10 +130,10 @@ class PageantConnection (object):
 
     def __init__(self):
         self._response = None
-    
+
     def send(self, data):
         self._response = _query_pageant(data)
-    
+
     def recv(self, n):
         if self._response is None:
             return ''

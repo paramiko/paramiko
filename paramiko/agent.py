@@ -45,7 +45,7 @@ class AgentSSH(object):
     local machine.  If an SSH agent is running, this class can be used to
     connect to it and retreive L{PKey} objects which can be used when
     attempting to authenticate to remote SSH servers.
-    
+
     Because the SSH agent protocol uses environment variables and unix-domain
     sockets, this probably doesn't work on Windows.  It does work on most
     posix platforms though (Linux and MacOS X, for example).
@@ -59,7 +59,7 @@ class AgentSSH(object):
         Return the list of keys available through the SSH agent, if any.  If
         no SSH agent was running (or it couldn't be contacted), an empty list
         will be returned.
-        
+
         @return: a list of keys available on the SSH agent
         @rtype: tuple of L{AgentKey}
         """
@@ -195,7 +195,7 @@ class AgentClientProxy(object):
         self.close()
 
     def connect(self):
-        """ 
+        """
         Method automatically called by the run() method of the AgentProxyThread
         """
         if ('SSH_AUTH_SOCK' in os.environ) and (sys.platform != 'win32'):
@@ -274,7 +274,7 @@ class AgentServerProxy(AgentSSH):
         @return: the SSH_AUTH_SOCK Environnement variables
         @rtype: dict
         """
-        env = {} 
+        env = {}
         env['SSH_AUTH_SOCK'] = self._get_filename()
         return env
 
@@ -287,18 +287,18 @@ class Agent(AgentSSH):
     local machine.  If an SSH agent is running, this class can be used to
     connect to it and retreive L{PKey} objects which can be used when
     attempting to authenticate to remote SSH servers.
-    
+
     Because the SSH agent protocol uses environment variables and unix-domain
     sockets, this probably doesn't work on Windows.  It does work on most
     posix platforms though (Linux and MacOS X, for example).
     """
-    
+
     def __init__(self):
         """
         Open a session with the local machine's SSH agent, if one is running.
         If no agent is running, initialization will succeed, but L{get_keys}
         will return an empty tuple.
-        
+
         @raise SSHException: if an SSH agent is found, but speaks an
             incompatible protocol
         """
@@ -320,7 +320,7 @@ class Agent(AgentSSH):
         else:
             # no agent support
             return
-        self._connect(conn)            
+        self._connect(conn)
 
     def close(self):
         """
@@ -334,7 +334,7 @@ class AgentKey(PKey):
     authenticating to a remote server (signing).  Most other key operations
     work as expected.
     """
-    
+
     def __init__(self, agent, blob):
         self.agent = agent
         self.blob = blob
