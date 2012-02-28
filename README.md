@@ -6,7 +6,7 @@ the developers of the [Fabric](http://fabfile.org) library as a way to ensure
 timely updates and bugfixes for critical issues.
 
 `ssh` is currently in a transitional state and other than a rename and a
-handful of small but crucial source changes, the code and the documentation
+handful of small but crucial fixes/tweaks, the code and the documentation
 remain unchanged from the original.
 
 We hope to clean up the presentation and documentation in the near future, as
