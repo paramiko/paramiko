@@ -11,6 +11,6 @@ remain unchanged from the original.
 
 We hope to clean up the presentation and documentation in the near future, as
 more bugfixes and API additions are rolled out. We also plan to absorb some of
-the higher profile bugs/issues from the Paramiko Github repository as well.
+the higher profile bugs/issues from the Paramiko Github repository.
 
 Thank you for your patience!
