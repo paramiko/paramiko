@@ -2020,8 +2020,8 @@ class Transport (threading.Thread):
         initial_window_size = m.get_int()
         max_packet_size = m.get_int()
         reject = False
-	if (kind == 'auth-agent@openssh.com') and (self._forward_agent_handler is not None):
-	    self._log(DEBUG, 'Incoming forward agent connection')
+        if (kind == 'auth-agent@openssh.com') and (self._forward_agent_handler is not None):
+            self._log(DEBUG, 'Incoming forward agent connection')
             self.lock.acquire()
             try:
                 my_chanid = self._next_channel()
@@ -2099,7 +2099,7 @@ class Transport (threading.Thread):
         m.add_int(self.max_packet_size)
         self._send_message(m)
         self._log(INFO, 'Secsh channel %d (%s) opened.', my_chanid, kind)
-	if kind == 'auth-agent@openssh.com':
+        if kind == 'auth-agent@openssh.com':
             self._forward_agent_handler(chan)
         elif kind == 'x11':
             self._x11_handler(chan, (origin_addr, origin_port))

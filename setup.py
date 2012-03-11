@@ -45,8 +45,8 @@ except ImportError:
     kw = {}
 
 if sys.platform == 'darwin':
-	import setup_helper
-	setup_helper.install_custom_make_tarball()
+    import setup_helper
+    setup_helper.install_custom_make_tarball()
 
 
 setup(name = "paramiko",
