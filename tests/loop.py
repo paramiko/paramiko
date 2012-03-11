@@ -62,12 +62,8 @@ class LoopSocket (object):
                 self.__cv.wait(self.__timeout)
             if len(self.__in_buffer) == 0:
                 raise socket.timeout
-            if n < self.__in_buffer:
-                out = self.__in_buffer[:n]
-                self.__in_buffer = self.__in_buffer[n:]
-            else:
-                out = self.__in_buffer
-                self.__in_buffer = ''
+            out = self.__in_buffer[:n]
+            self.__in_buffer = self.__in_buffer[n:]
             return out
         finally:
             self.__lock.release()
