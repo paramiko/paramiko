@@ -2,3 +2,4 @@
 build/
 dist/
 ssh.egg-info/
+test.log
