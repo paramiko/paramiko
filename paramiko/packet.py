@@ -100,6 +100,10 @@ class Packetizer (object):
         self.__keepalive_last = time.time()
         self.__keepalive_callback = None
 
+        # timer related to SSH timeout
+        self.__handshake_complete = False
+        self.__timer_expired = False
+
     def set_log(self, log):
         """
         Set the python log object to use for logging.
@@ -183,6 +187,12 @@ class Packetizer (object):
         self.__keepalive_callback = callback
         self.__keepalive_last = time.time()
 
+    def set_handshake_complete(self):
+        self.__handshake_complete = True
+
+    def read_timer(self):
+        self.__timer_expired = True
+
     def read_all(self, n, check_rekey=False):
         """
         Read as close to N bytes as possible, blocking as long as necessary.
@@ -202,14 +212,35 @@ class Packetizer (object):
             n -= len(out)
         if PY22:
             return self._py22_read_all(n, out)
+        
+        # Create our timer thread that will raise an EOFError
+        # after 25 seconds (more than the time we are supposed
+        # to wait for the ssh banner in transport.py).
+        timer = threading.Timer(25.0, self.read_timer)
+        timer_started = False
         while n > 0:
             got_timeout = False
+
+            # If handshake is not completed, start the timer.
+            if not timer_started and not self.__handshake_complete and not self.__timer_expired:
+                timer_started = True
+                timer.start()
+
+            # Check if our timer has expired and if so, raise an exeception
+            if self.__timer_expired:
+                raise EOFError()
+
             try:
                 x = self.__socket.recv(n)
                 if len(x) == 0:
                     raise EOFError()
                 out += x
                 n -= len(x)
+
+                # We have data, turn off the timer.
+                timer.cancel()
+                timer_started = False
+                self.__timer_expired = False
             except socket.timeout:
                 got_timeout = True
             except socket.error, e:

@@ -1563,6 +1563,9 @@ class Transport (threading.Thread):
                     msg.add_byte(chr(MSG_UNIMPLEMENTED))
                     msg.add_int(m.seqno)
                     self._send_message(msg)
+                # Let our packetizer know the handshake is complete
+                self.packetizer.set_handshake_complete()
+
         except SSHException, e:
             self._log(ERROR, 'Exception: ' + str(e))
             self._log(ERROR, util.tb_strings())
