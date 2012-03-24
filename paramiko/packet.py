@@ -57,8 +57,11 @@ class Packetizer (object):
 
     # READ the secsh RFC's before raising these values.  if anything,
     # they should probably be lower.
-    REKEY_PACKETS = pow(2, 30)
-    REKEY_BYTES = pow(2, 30)
+    REKEY_PACKETS = pow(2, 29)
+    REKEY_BYTES = pow(2, 29)
+
+    REKEY_PACKETS_OVERFLOW_MAX = pow(2,29)      # Allow receiving this many packets after a re-key request before terminating
+    REKEY_BYTES_OVERFLOW_MAX = pow(2,29)        # Allow receiving this many bytes after a re-key request before terminating
 
     def __init__(self, socket):
         self.__socket = socket
@@ -74,6 +77,7 @@ class Packetizer (object):
         self.__sent_packets = 0
         self.__received_bytes = 0
         self.__received_packets = 0
+        self.__received_bytes_overflow = 0
         self.__received_packets_overflow = 0
 
         # current inbound/outbound ciphering:
@@ -134,6 +138,7 @@ class Packetizer (object):
         self.__mac_key_in = mac_key
         self.__received_bytes = 0
         self.__received_packets = 0
+        self.__received_bytes_overflow = 0
         self.__received_packets_overflow = 0
         # wait until the reset happens in both directions before clearing rekey flag
         self.__init_count |= 2
@@ -316,6 +321,7 @@ class Packetizer (object):
                 # only ask once for rekeying
                 self._log(DEBUG, 'Rekeying (hit %d packets, %d bytes sent)' %
                           (self.__sent_packets, self.__sent_bytes))
+                self.__received_bytes_overflow = 0
                 self.__received_packets_overflow = 0
                 self._trigger_rekey()
         finally:
@@ -368,19 +374,23 @@ class Packetizer (object):
         self.__sequence_number_in = (self.__sequence_number_in + 1) & 0xffffffffL
 
         # check for rekey
-        self.__received_bytes += packet_size + self.__mac_size_in + 4
+        raw_packet_size = packet_size + self.__mac_size_in + 4
+        self.__received_bytes += raw_packet_size
         self.__received_packets += 1
         if self.__need_rekey:
-            # we've asked to rekey -- give them 20 packets to comply before
+            # we've asked to rekey -- give them some packets to comply before
             # dropping the connection
+            self.__received_bytes_overflow += raw_packet_size
             self.__received_packets_overflow += 1
-            if self.__received_packets_overflow >= 20:
+            if (self.__received_packets_overflow >= self.REKEY_PACKETS_OVERFLOW_MAX) or \
+               (self.__received_bytes_overflow >= self.REKEY_BYTES_OVERFLOW_MAX):
                 raise SSHException('Remote transport is ignoring rekey requests')
         elif (self.__received_packets >= self.REKEY_PACKETS) or \
              (self.__received_bytes >= self.REKEY_BYTES):
             # only ask once for rekeying
             self._log(DEBUG, 'Rekeying (hit %d packets, %d bytes received)' %
                       (self.__received_packets, self.__received_bytes))
+            self.__received_bytes_overflow = 0
             self.__received_packets_overflow = 0
             self._trigger_rekey()
 
