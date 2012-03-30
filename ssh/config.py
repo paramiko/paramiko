@@ -106,5 +106,27 @@ class SSHConfig (object):
         ret = {}
         for m in matches:
             ret.update(m)
+        ret = self._expand_variables(ret, hostname)
         del ret['host']
         return ret
+
+    def _expand_variables(self, config, hostname ):
+        """
+        Return a dict of config options with expanded substitutions
+        for a given hostname.
+
+        For the moment only expansion of the %h substitution in the 
+        hostname config is supported.
+
+        @param config: the config for the hostname
+        @type hostname: dict
+        @param hostname: the hostname that the config belongs to
+        @type hostname: str
+        """
+        #TODO: Add support for expansion of all substitution parameters
+        #TODO: see man ssh_config(5)
+        if 'hostname' in config:
+            config['hostname'] = config['hostname'].replace('%h',hostname)
+        else:
+            config['hostname'] = hostname
+        return config
