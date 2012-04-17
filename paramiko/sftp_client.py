@@ -285,6 +285,14 @@ class SFTPClient (BaseSFTP):
         self._log(DEBUG, 'rename(%r, %r)' % (oldpath, newpath))
         self._request(CMD_RENAME, oldpath, newpath)
 
+    def posix_rename(self, oldpath, newpath):
+        oldpath = self._adjust_cwd(oldpath)
+        newpath = self._adjust_cwd(newpath)
+        self._log(DEBUG, 'rename(%r, %r)' % (oldpath, newpath))
+        self._request(CMD_EXTENDED, 'posix-rename@openssh.com', oldpath,
+                newpath)
+
+
     def mkdir(self, path, mode=0777):
         """
         Create a folder (directory) named C{path} with numeric mode C{mode}.
