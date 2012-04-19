@@ -641,13 +641,13 @@ class SFTPClient (BaseSFTP):
             msg = Message()
             msg.add_int(self.request_number)
             for item in arg:
-                if type(item) is int:
+                if isinstance(item, int):
                     msg.add_int(item)
-                elif type(item) is long:
+                elif isinstance(item, long):
                     msg.add_int64(item)
-                elif type(item) is str:
+                elif isinstance(item, str):
                     msg.add_string(item)
-                elif type(item) is SFTPAttributes:
+                elif isinstance(item, SFTPAttributes):
                     item._pack(msg)
                 else:
                     raise Exception('unknown type for %r type %r' % (item, type(item)))
