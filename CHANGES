@@ -4,6 +4,9 @@ Temporary, post-Paramiko changelog while we get our sh!t together.
 
 * #15: Implemented parameter substitution in SSHConfig, matching the
   implementation of `ssh_config(5)`. Thanks to Olle Lundberg for the patch.
+* #24: Switch some internal type checking to use `isinstance` to help prevent
+  problems with client libraries using subclasses of builtin types. Thanks to
+  Alex Morega for the patch.
 
 ## ssh 1.7.13 (2012-02-13)
 
