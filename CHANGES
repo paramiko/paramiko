@@ -7,6 +7,12 @@ Temporary, post-Paramiko changelog while we get our sh!t together.
 * #24: Switch some internal type checking to use `isinstance` to help prevent
   problems with client libraries using subclasses of builtin types. Thanks to
   Alex Morega for the patch.
+* [Fabric #562](https://github.com/fabric/fabric/issues/562): Agent forwarding
+  would error out (with `Authentication response too long`) or freeze, when more
+  than one remote connection to the local agent was active at the same time.
+  This has been fixed. Thanks to Steven McDonald for assisting in
+  troubleshooting/patching, and to GitHub user `@lynxis` for providing the
+  final version of the patch.
 
 ## ssh 1.7.13 (2012-02-13)
 
