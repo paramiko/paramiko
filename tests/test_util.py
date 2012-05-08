@@ -120,12 +120,19 @@ class UtilTest (unittest.TestCase):
         global test_config_file
         f = cStringIO.StringIO(test_config_file)
         config = paramiko.util.parse_ssh_config(f)
-        c = paramiko.util.lookup_ssh_host_config('irc.danger.com', config)
-        self.assertEquals(c, {'identityfile': '~/.ssh/id_rsa', 'user': 'robey', 'crazy': 'something dumb  '})
-        c = paramiko.util.lookup_ssh_host_config('irc.example.com', config)
-        self.assertEquals(c, {'identityfile': '~/.ssh/id_rsa', 'user': 'bjork', 'crazy': 'something dumb  ', 'port': '3333'})
-        c = paramiko.util.lookup_ssh_host_config('spoo.example.com', config)
-        self.assertEquals(c, {'identityfile': '~/.ssh/id_rsa', 'user': 'bjork', 'crazy': 'something else', 'port': '3333'})
+        for host, values in {
+            'irc.danger.com': {'user': 'robey', 'crazy': 'something dumb  '},
+            'irc.example.com': {'user': 'bjork', 'crazy': 'something dumb  ', 'port': '3333'},
+            'spoo.example.com': {'user': 'bjork', 'crazy': 'something else', 'port': '3333'}
+        }.items():
+            values = dict(values,
+                hostname=host,
+                identityfile=os.path.expanduser("~/.ssh/id_rsa")
+            )
+            self.assertEquals(
+                paramiko.util.lookup_ssh_host_config(host, config),
+                values
+            )
 
     def test_4_generate_key_bytes(self):
         x = paramiko.util.generate_key_bytes(SHA, 'ABCDEFGH', 'This is my secret passphrase.', 64)
