@@ -1,6 +1,6 @@
 Temporary, post-Paramiko changelog while we get our sh!t together.
 
-## ssh 1.7.14 (2012-MM-DD)
+## ssh 1.7.14 (2012-05-07)
 
 * #15: Implemented parameter substitution in SSHConfig, matching the
   implementation of `ssh_config(5)`. Thanks to Olle Lundberg for the patch.
