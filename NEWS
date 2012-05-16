@@ -8,6 +8,11 @@ Highlights of what's new in each release:
 Releases
 ========
 
+v1.7.7.2 16may12
+----------------
+  * Merge pull request #63: https://github.com/paramiko/paramiko/pull/63 which
+    fixes exceptions that occur when re-keying over fast connections.
+
 v1.7.7.1 (George) 21may11
 -------------------------
   * Make the verification phase of SFTP.put optional (Larry Wright)
