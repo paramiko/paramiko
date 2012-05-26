@@ -2,7 +2,8 @@ Temporary, post-Paramiko changelog while we get our sh!t together.
 
 ## ssh 1.7.15 (2012-MM-DD)
 
-* Ported over https://github.com/paramiko/paramiko/pull/63
+* Ported over https://github.com/paramiko/paramiko/pull/63. Thanks to Dwayne
+  Litzenberger for catch & patch.
 
 ## ssh 1.7.14 (2012-05-07)
 
