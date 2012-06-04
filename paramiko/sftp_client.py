@@ -533,6 +533,56 @@ class SFTPClient (BaseSFTP):
         """
         return self._cwd
 
+    def putfo(self, fl, remotepath, file_size=0, callback=None, confirm=True):
+        """
+        Copy the contents of an open file object (C{fl}) to the SFTP server as
+        C{remotepath}. Any exception raised by operations will be passed through.
+
+        The SFTP operations use pipelining for speed.
+
+        @param fl: opened file or file-like object to copy
+        @type localpath: object
+        @param remotepath: the destination path on the SFTP server
+        @type remotepath: str
+        @param file_size: optional size parameter passed to callback. If none is
+            specified, size defaults to 0
+        @type file_size: int
+        @param callback: optional callback function that accepts the bytes
+            transferred so far and the total bytes to be transferred
+            (since 1.7.4)
+        @type callback: function(int, int)
+        @param confirm: whether to do a stat() on the file afterwards to
+            confirm the file size (since 1.7.7)
+        @type confirm: bool
+
+        @return: an object containing attributes about the given file
+            (since 1.7.4)
+        @rtype: SFTPAttributes
+
+        @since: 1.4
+        """
+        fr = self.file(remotepath, 'wb')
+        fr.set_pipelined(True)
+        size = 0
+        try:
+            while True:
+                data = fl.read(32768)
+                if len(data) == 0:
+                    break
+                fr.write(data)
+                size += len(data)
+                if callback is not None:
+                    callback(size, file_size)
+        finally:
+            fr.close()
+        if confirm and file_size:
+            s = self.stat(remotepath)
+            if s.st_size != size:
+                raise IOError('size mismatch in put!  %d != %d' % (s.st_size, size))
+        else:
+            s = SFTPAttributes()
+        return s
+
     def put(self, localpath, remotepath, callback=None, confirm=True):
         """
         Copy a local file (C{localpath}) to the SFTP server as C{remotepath}.
@@ -562,29 +612,46 @@ class SFTPClient (BaseSFTP):
         file_size = os.stat(localpath).st_size
         fl = file(localpath, 'rb')
         try:
-            fr = self.file(remotepath, 'wb')
-            fr.set_pipelined(True)
-            size = 0
-            try:
-                while True:
-                    data = fl.read(32768)
-                    if len(data) == 0:
-                        break
-                    fr.write(data)
-                    size += len(data)
-                    if callback is not None:
-                        callback(size, file_size)
-            finally:
-                fr.close()
+            return self.putfo(fl, remotepath, os.stat(localpath).st_size, callback, confirm)
         finally:
             fl.close()
-        if confirm:
-            s = self.stat(remotepath)
-            if s.st_size != size:
-                raise IOError('size mismatch in put!  %d != %d' % (s.st_size, size))
-        else:
-            s = SFTPAttributes()
-        return s
+
+    def getfo(self, remotepath, fl, callback=None):
+        """
+        Copy a remote file (C{remotepath}) from the SFTP server and write to
+        an open file or file-like object, C{fl}.  Any exception raised by
+        operations will be passed through.  This method is primarily provided
+        as a convenience.
+
+        @param remotepath: opened file or file-like object to copy to
+        @type remotepath: object
+        @param fl: the destination path on the local host or open file
+            object
+        @type localpath: str
+        @param callback: optional callback function that accepts the bytes
+            transferred so far and the total bytes to be transferred
+            (since 1.7.4)
+        @type callback: function(int, int)
+        @return: the number of bytes written to the opened file object
+
+        @since: 1.4
+        """
+        fr = self.file(remotepath, 'rb')
+        file_size = self.stat(remotepath).st_size
+        fr.prefetch()
+        try:
+            size = 0
+            while True:
+                data = fr.read(32768)
+                fl.write(data)
+                size += len(data)
+                if callback is not None:
+                    callback(size, file_size)
+                if len(data) == 0:
+                    break
+        finally:
+            fr.close()
+        return size
 
     def get(self, remotepath, localpath, callback=None):
         """
@@ -603,25 +670,12 @@ class SFTPClient (BaseSFTP):
 
         @since: 1.4
         """
-        fr = self.file(remotepath, 'rb')
         file_size = self.stat(remotepath).st_size
-        fr.prefetch()
+        fl = file(localpath, 'wb')
         try:
-            fl = file(localpath, 'wb')
-            try:
-                size = 0
-                while True:
-                    data = fr.read(32768)
-                    fl.write(data)
-                    size += len(data)
-                    if callback is not None:
-                        callback(size, file_size)
-                    if len(data) == 0:
-                        break
-            finally:
-                fl.close()
+            size = self.getfo(remotepath, fl, callback)
         finally:
-            fr.close()
+            fl.close()
         s = os.stat(localpath)
         if s.st_size != size:
             raise IOError('size mismatch in get!  %d != %d' % (s.st_size, size))
