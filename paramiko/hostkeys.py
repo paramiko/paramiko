@@ -21,12 +21,21 @@ L{HostKeys}
 """
 
 import base64
+import binascii
 from Crypto.Hash import SHA, HMAC
 import UserDict
 
 from paramiko.common import *
 from paramiko.dsskey import DSSKey
 from paramiko.rsakey import RSAKey
+
+
+class InvalidHostKey(Exception):
+
+    def __init__(self, line, exc):
+        self.line = line
+        self.exc = exc
+        self.args = (line, exc)
 
 
 class HostKeyEntry:
@@ -63,12 +72,15 @@ class HostKeyEntry:
 
         # Decide what kind of key we're looking at and create an object
         # to hold it accordingly.
-        if keytype == 'ssh-rsa':
-            key = RSAKey(data=base64.decodestring(key))
-        elif keytype == 'ssh-dss':
-            key = DSSKey(data=base64.decodestring(key))
-        else:
-            return None
+        try:
+            if keytype == 'ssh-rsa':
+                key = RSAKey(data=base64.decodestring(key))
+            elif keytype == 'ssh-dss':
+                key = DSSKey(data=base64.decodestring(key))
+            else:
+                return None
+        except binascii.Error, e:
+            raise InvalidHostKey(line, e)
 
         return cls(names, key)
     from_line = classmethod(from_line)
