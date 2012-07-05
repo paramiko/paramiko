@@ -65,8 +65,8 @@ if __name__ == '__main__':
     pfunc=None
 
     parser = OptionParser(usage=usage)
-    parser.add_option("-t", "--type", type="string", dest="ktype", 
-        help="Specify type of key to create (dsa or rsa)", 
+    parser.add_option("-t", "--type", type="string", dest="ktype",
+        help="Specify type of key to create (dsa or rsa)",
         metavar="ktype", default=default_values["ktype"])
     parser.add_option("-b", "--bits", type="int", dest="bits",
         help="Number of bits in the key to create", metavar="bits",
@@ -94,7 +94,7 @@ if __name__ == '__main__':
 
     for o in default_values.keys():
         globals()[o] = getattr(options, o, default_values[string.lower(o)])
-  
+
     if options.newphrase:
         phrase = getattr(options, 'newphrase')
 
