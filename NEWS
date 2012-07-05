@@ -8,6 +8,12 @@ Highlights of what's new in each release:
 Releases
 ========
 
+v1.7.7.3 <DATE>
+---------------
+
+ * Merge PR #28: https://github.com/paramiko/paramiko/pull/28 which adds a
+   ssh-keygen like demo module. (Sofian Brabez)
+
 v1.7.7.2 16may12
 ----------------
   * Merge pull request #63: https://github.com/paramiko/paramiko/pull/63 which
