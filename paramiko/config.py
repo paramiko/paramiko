@@ -104,11 +104,16 @@ class SSHConfig (object):
         @type hostname: str
         """
         matches = [x for x in self._config if fnmatch.fnmatch(hostname, x['host'])]
-        # sort in order of shortest match (usually '*') to longest
-        matches.sort(lambda x,y: cmp(len(x['host']), len(y['host'])))
+        # Move * to the end
+        _star = matches[0]
+        del matches[0]
+        matches.append(_star)
+        ret = {}
         ret = {}
         for m in matches:
-            ret.update(m)
+            for k,v in m.iteritems():
+                if not k in ret:
+                    ret[k] = v
         ret = self._expand_variables(ret, hostname)
         del ret['host']
         return ret

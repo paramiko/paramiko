@@ -159,3 +159,21 @@ class UtilTest (unittest.TestCase):
         x = rng.read(32)
         self.assertEquals(len(x), 32)
         
+    def test_7_host_config_expose_issue_33(self):
+        test_config_file = """
+Host www13.*
+    Port 22
+
+Host *.example.com
+    Port 2222
+
+Host *
+    Port 3333
+    """
+        f = cStringIO.StringIO(test_config_file)
+        config = ssh.util.parse_ssh_config(f)
+        host = 'www13.example.com'
+        self.assertEquals(
+            ssh.util.lookup_ssh_host_config(host, config),
+            {'hostname': host, 'port': '22'}
+        )
