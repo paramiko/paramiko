@@ -105,10 +105,8 @@ class SSHConfig (object):
         """
         matches = [x for x in self._config if fnmatch.fnmatch(hostname, x['host'])]
         # Move * to the end
-        _star = matches[0]
-        del matches[0]
+        _star = matches.pop(0)
         matches.append(_star)
-        ret = {}
         ret = {}
         for m in matches:
             for k,v in m.iteritems():
