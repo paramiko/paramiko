@@ -7,6 +7,11 @@ Temporary, post-Paramiko changelog while we get our sh!t together.
 * #32: Raise a more useful error explaining which `known_hosts` key line was
   problematic, when encountering `binascii` issues decoding known host keys.
   Thanks to `@thomasvs` for catch & patch.
+* #33: Bring `ssh_config` parsing more in line with OpenSSH spec, re: order of
+  setting overrides by `Host` specifiers. Specifically, the overrides now go by
+  file order instead of automatically sorting by `Host` value length. In
+  addition, the first value found per config key (e.g. `Port`, `User` etc)
+  wins, instead of the last. Thanks to Jan Brauer for the contribution.
 
 ## ssh 1.7.14 (2012-05-07)
 
