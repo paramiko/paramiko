@@ -4,6 +4,9 @@ Temporary, post-Paramiko changelog while we get our sh!t together.
 
 * Ported over https://github.com/paramiko/paramiko/pull/63. Thanks to Dwayne
   Litzenberger for catch & patch.
+* #32: Raise a more useful error explaining which `known_hosts` key line was
+  problematic, when encountering `binascii` issues decoding known host keys.
+  Thanks to `@thomasvs` for catch & patch.
 
 ## ssh 1.7.14 (2012-05-07)
 
