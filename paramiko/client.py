@@ -455,6 +455,7 @@ class SSHClient (object):
                     if not remaining_auth_types:
                         return
                     two_factor = True
+                    break
                 except SSHException, e:
                     saved_exception = e
         else:
@@ -485,6 +486,7 @@ class SSHClient (object):
                     if not remaining_auth_types:
                         return
                     two_factor = True
+                    break
                 except SSHException, e:
                     saved_exception = e
                 except IOError, e:
