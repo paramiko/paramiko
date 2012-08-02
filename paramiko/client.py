@@ -419,6 +419,8 @@ class SSHClient (object):
             - Plain username/password auth, if a password was given.
 
         (The password might be needed to unlock a private key.)
+        
+        The password is required for two-factor authentication.
         """
         saved_exception = None
 
@@ -440,6 +442,7 @@ class SSHClient (object):
                 except SSHException, e:
                     saved_exception = e
 
+        two_factor = False
         if allow_agent:
             if self._agent == None:
                 self._agent = Agent()
@@ -447,39 +450,45 @@ class SSHClient (object):
             for key in self._agent.get_keys():
                 try:
                     self._log(DEBUG, 'Trying SSH agent key %s' % hexlify(key.get_fingerprint()))
-                    self._transport.auth_publickey(username, key)
-                    return
+                    # for 2-factor auth a successfully auth'd key will result in ['password']
+                    remaining_auth_types = self._transport.auth_publickey(username, key)
+                    if not remaining_auth_types:
+                        return
+                    two_factor = True
                 except SSHException, e:
                     saved_exception = e
-
-        keyfiles = []
-        rsa_key = os.path.expanduser('~/.ssh/id_rsa')
-        dsa_key = os.path.expanduser('~/.ssh/id_dsa')
-        if os.path.isfile(rsa_key):
-            keyfiles.append((RSAKey, rsa_key))
-        if os.path.isfile(dsa_key):
-            keyfiles.append((DSSKey, dsa_key))
-        # look in ~/ssh/ for windows users:
-        rsa_key = os.path.expanduser('~/ssh/id_rsa')
-        dsa_key = os.path.expanduser('~/ssh/id_dsa')
-        if os.path.isfile(rsa_key):
-            keyfiles.append((RSAKey, rsa_key))
-        if os.path.isfile(dsa_key):
-            keyfiles.append((DSSKey, dsa_key))
-
-        if not look_for_keys:
+        else:
             keyfiles = []
-
-        for pkey_class, filename in keyfiles:
-            try:
-                key = pkey_class.from_private_key_file(filename, password)
-                self._log(DEBUG, 'Trying discovered key %s in %s' % (hexlify(key.get_fingerprint()), filename))
-                self._transport.auth_publickey(username, key)
-                return
-            except SSHException, e:
-                saved_exception = e
-            except IOError, e:
-                saved_exception = e
+            rsa_key = os.path.expanduser('~/.ssh/id_rsa')
+            dsa_key = os.path.expanduser('~/.ssh/id_dsa')
+            if os.path.isfile(rsa_key):
+                keyfiles.append((RSAKey, rsa_key))
+            if os.path.isfile(dsa_key):
+                keyfiles.append((DSSKey, dsa_key))
+            # look in ~/ssh/ for windows users:
+            rsa_key = os.path.expanduser('~/ssh/id_rsa')
+            dsa_key = os.path.expanduser('~/ssh/id_dsa')
+            if os.path.isfile(rsa_key):
+                keyfiles.append((RSAKey, rsa_key))
+            if os.path.isfile(dsa_key):
+                keyfiles.append((DSSKey, dsa_key))
+    
+            if not look_for_keys:
+                keyfiles = []
+    
+            for pkey_class, filename in keyfiles:
+                try:
+                    key = pkey_class.from_private_key_file(filename, password)
+                    self._log(DEBUG, 'Trying discovered key %s in %s' % (hexlify(key.get_fingerprint()), filename))
+                    # for 2-factor auth a successfully auth'd key will result in ['password']
+                    remaining_auth_types = self._transport.auth_publickey(username, key)
+                    if not remaining_auth_types:
+                        return
+                    two_factor = True
+                except SSHException, e:
+                    saved_exception = e
+                except IOError, e:
+                    saved_exception = e
 
         if password is not None:
             try:
@@ -487,6 +496,9 @@ class SSHClient (object):
                 return
             except SSHException, e:
                 saved_exception = e
+        elif two_factor:
+            # for 2-factor auth requires a password
+            raise SSHException('Two-factor authentication requires a password')
 
         # if we got an auth-failed exception earlier, re-raise it
         if saved_exception is not None:
