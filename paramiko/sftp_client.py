@@ -603,8 +603,8 @@ class SFTPClient (BaseSFTP):
 
         @since: 1.4
         """
-        fr = self.file(remotepath, 'rb')
         file_size = self.stat(remotepath).st_size
+        fr = self.file(remotepath, 'rb')
         fr.prefetch()
         try:
             fl = file(localpath, 'wb')
