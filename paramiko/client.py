@@ -423,27 +423,33 @@ class SSHClient (object):
         The password is required for two-factor authentication.
         """
         saved_exception = None
+        two_factor = False
 
         if pkey is not None:
             try:
                 self._log(DEBUG, 'Trying SSH key %s' % hexlify(pkey.get_fingerprint()))
-                self._transport.auth_publickey(username, pkey)
-                return
+                allowed_types = self._transport.auth_publickey(username, pkey)
+                two_factor = (allowed_types == ['password'])
+                if not two_factor:
+                    return
             except SSHException, e:
                 saved_exception = e
 
-        for key_filename in key_filenames:
-            for pkey_class in (RSAKey, DSSKey):
-                try:
-                    key = pkey_class.from_private_key_file(key_filename, password)
-                    self._log(DEBUG, 'Trying key %s from %s' % (hexlify(key.get_fingerprint()), key_filename))
-                    self._transport.auth_publickey(username, key)
-                    return
-                except SSHException, e:
-                    saved_exception = e
+        if not two_factor:
+            for key_filename in key_filenames:
+                for pkey_class in (RSAKey, DSSKey):
+                    try:
+                        key = pkey_class.from_private_key_file(key_filename, password)
+                        self._log(DEBUG, 'Trying key %s from %s' % (hexlify(key.get_fingerprint()), key_filename))
+                        self._transport.auth_publickey(username, key)
+                        two_factor = (allowed_types == ['password'])
+                        if not two_factor:
+                            return
+                        break
+                    except SSHException, e:
+                        saved_exception = e
 
-        two_factor = False
-        if allow_agent:
+        if not two_factor and allow_agent:
             if self._agent == None:
                 self._agent = Agent()
 
@@ -451,14 +457,15 @@ class SSHClient (object):
                 try:
                     self._log(DEBUG, 'Trying SSH agent key %s' % hexlify(key.get_fingerprint()))
                     # for 2-factor auth a successfully auth'd key will result in ['password']
-                    remaining_auth_types = self._transport.auth_publickey(username, key)
-                    if not remaining_auth_types:
+                    allowed_types = self._transport.auth_publickey(username, key)
+                    two_factor = (allowed_types == ['password'])
+                    if not two_factor:
                         return
-                    two_factor = True
                     break
                 except SSHException, e:
                     saved_exception = e
-        else:
+
+        if not two_factor:
             keyfiles = []
             rsa_key = os.path.expanduser('~/.ssh/id_rsa')
             dsa_key = os.path.expanduser('~/.ssh/id_dsa')
@@ -482,10 +489,10 @@ class SSHClient (object):
                     key = pkey_class.from_private_key_file(filename, password)
                     self._log(DEBUG, 'Trying discovered key %s in %s' % (hexlify(key.get_fingerprint()), filename))
                     # for 2-factor auth a successfully auth'd key will result in ['password']
-                    remaining_auth_types = self._transport.auth_publickey(username, key)
-                    if not remaining_auth_types:
+                    allowed_types = self._transport.auth_publickey(username, key)
+                    two_factor = (allowed_types == ['password'])
+                    if not two_factor:
                         return
-                    two_factor = True
                     break
                 except SSHException, e:
                     saved_exception = e
@@ -499,7 +506,6 @@ class SSHClient (object):
             except SSHException, e:
                 saved_exception = e
         elif two_factor:
-            # for 2-factor auth requires a password
             raise SSHException('Two-factor authentication requires a password')
 
         # if we got an auth-failed exception earlier, re-raise it
