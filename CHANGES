@@ -12,6 +12,9 @@ Temporary, post-Paramiko changelog while we get our sh!t together.
   file order instead of automatically sorting by `Host` value length. In
   addition, the first value found per config key (e.g. `Port`, `User` etc)
   wins, instead of the last. Thanks to Jan Brauer for the contribution.
+* #36: Support new server two-factor authentication option
+  (`RequiredAuthentications2`), at least re: combining key-based & password
+  auth. Thanks to Github user `bninja`.
 
 ## ssh 1.7.14 (2012-05-07)
 
