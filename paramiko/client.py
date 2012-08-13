@@ -424,6 +424,7 @@ class SSHClient (object):
         """
         saved_exception = None
         two_factor = False
+        allowed_types = []
 
         if pkey is not None:
             try:
