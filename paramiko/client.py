@@ -226,9 +226,9 @@ class SSHClient (object):
         """
         self._policy = policy
 
-    def connect(self, hostname, port=SSH_PORT, username=None, password=None, pkey=None,
-                key_filename=None, timeout=None, allow_agent=True, look_for_keys=True,
-                compress=False):
+    def connect(self, hostname, sock=None, port=SSH_PORT, username=None,
+                password=None, pkey=None, key_filename=None, timeout=None,
+                allow_agent=True, look_for_keys=True, compress=False):
         """
         Connect to an SSH server and authenticate to it.  The server's host key
         is checked against the system host keys (see L{load_system_host_keys})
@@ -247,8 +247,14 @@ class SSHClient (object):
         If a private key requires a password to unlock it, and a password is
         passed in, that password will be used to attempt to unlock the key.
 
+        If C{sock} is provided, connect to C{hostname} on C{sock} rather than
+        openning a new socket.
+
         @param hostname: the server to connect to
         @type hostname: str
+        @param sock: opened connection either directly to hostname or to a
+            lander
+        @type sock: socket
         @param port: the server port to connect to
         @type port: int
         @param username: the username to authenticate as (defaults to the
@@ -279,21 +285,23 @@ class SSHClient (object):
             establishing an SSH session
         @raise socket.error: if a socket error occurred while connecting
         """
-        for (family, socktype, proto, canonname, sockaddr) in socket.getaddrinfo(hostname, port, socket.AF_UNSPEC, socket.SOCK_STREAM):
-            if socktype == socket.SOCK_STREAM:
-                af = family
-                addr = sockaddr
-                break
-        else:
-            # some OS like AIX don't indicate SOCK_STREAM support, so just guess. :(
-            af, _, _, _, addr = socket.getaddrinfo(hostname, port, socket.AF_UNSPEC, socket.SOCK_STREAM)
-        sock = socket.socket(af, socket.SOCK_STREAM)
-        if timeout is not None:
-            try:
-                sock.settimeout(timeout)
-            except:
-                pass
-        sock.connect(addr)
+        if not sock:
+            for (family, socktype, proto, canonname, sockaddr) in socket.getaddrinfo(hostname, port, socket.AF_UNSPEC, socket.SOCK_STREAM):
+                if socktype == socket.SOCK_STREAM:
+                    af = family
+                    addr = sockaddr
+                    break
+            else:
+                # some OS like AIX don't indicate SOCK_STREAM support, so just guess. :(
+                af, _, _, _, addr = socket.getaddrinfo(hostname, port, socket.AF_UNSPEC, socket.SOCK_STREAM)
+            sock = socket.socket(af, socket.SOCK_STREAM)
+            if timeout is not None:
+                try:
+                    sock.settimeout(timeout)
+                except:
+                    pass
+            sock.connect(addr)
+
         t = self._transport = Transport(sock)
         t.use_compression(compress=compress)
         if self._log_channel is not None:
