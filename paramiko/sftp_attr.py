@@ -201,8 +201,9 @@ class SFTPAttributes (object):
             ks = '?---------'
         # compute display date
         if (self.st_mtime is None) or (self.st_mtime == 0xffffffffL):
-            # shouldn't really happen
-            datestr = '(unknown date)'
+            # shouldn't really happen, but if it does, just use an empty space.
+            # otherwise any value placed here is prepended to the file name.
+            datestr = ' '
         else:
             if abs(time.time() - self.st_mtime) > 15552000:
                 # (15552000 = 6 months)
