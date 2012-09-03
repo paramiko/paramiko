@@ -24,6 +24,7 @@ from __future__ import generators
 
 import array
 from binascii import hexlify, unhexlify
+import errno
 import sys
 import struct
 import traceback
@@ -270,6 +271,14 @@ def get_logger(name):
     l.addFilter(_pfilter)
     return l
 
+def retry_on_signal(function):
+    """Retries function until it doesn't raise an EINTR error"""
+    while True:
+        try:
+            return function()
+        except EnvironmentError, e:
+            if e.errno != errno.EINTR:
+                raise
 
 class Counter (object):
     """Stateful counter for CTR mode crypto"""

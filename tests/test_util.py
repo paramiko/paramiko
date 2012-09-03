@@ -22,6 +22,7 @@ Some unit tests for utility functions.
 
 from binascii import hexlify
 import cStringIO
+import errno
 import os
 import unittest
 from Crypto.Hash import SHA
@@ -177,3 +178,28 @@ Host *
             ssh.util.lookup_ssh_host_config(host, config),
             {'hostname': host, 'port': '22'}
         )
+
+    def test_8_eintr_retry(self):
+        self.assertEquals('foo', ssh.util.retry_on_signal(lambda: 'foo'))
+
+        # Variables that are set by raises_intr
+        intr_errors_remaining = [3]
+        call_count = [0]
+        def raises_intr():
+            call_count[0] += 1
+            if intr_errors_remaining[0] > 0:
+                intr_errors_remaining[0] -= 1
+                raise IOError(errno.EINTR, 'file', 'interrupted system call')
+        self.assertTrue(ssh.util.retry_on_signal(raises_intr) is None)
+        self.assertEquals(0, intr_errors_remaining[0])
+        self.assertEquals(4, call_count[0])
+
+        def raises_ioerror_not_eintr():
+            raise IOError(errno.ENOENT, 'file', 'file not found')
+        self.assertRaises(IOError,
+                          lambda: ssh.util.retry_on_signal(raises_ioerror_not_eintr))
+
+        def raises_other_exception():
+            raise AssertionError('foo')
+        self.assertRaises(AssertionError,
+                          lambda: ssh.util.retry_on_signal(raises_other_exception))
