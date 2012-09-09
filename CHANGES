@@ -15,6 +15,10 @@ Temporary, post-Paramiko changelog while we get our sh!t together.
 * #36: Support new server two-factor authentication option
   (`RequiredAuthentications2`), at least re: combining key-based & password
   auth. Thanks to Github user `bninja`.
+* #11: When raising an exception for hosts not listed in
+  `known_hosts` (when `RejectPolicy` is in effect) the exception message was
+  confusing/vague. This has been improved somewhat. Thanks to Cal Leeming for
+  highlighting the issue.
 
 ## ssh 1.7.14 (2012-05-07)
 
