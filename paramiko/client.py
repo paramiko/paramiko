@@ -83,7 +83,7 @@ class RejectPolicy (MissingHostKeyPolicy):
     def missing_host_key(self, client, hostname, key):
         client._log(DEBUG, 'Rejecting %s host key for %s: %s' %
                     (key.get_name(), hostname, hexlify(key.get_fingerprint())))
-        raise SSHException('Unknown server %s' % hostname)
+        raise SSHException('Server %r not found in known_hosts' % hostname)
 
 
 class WarningPolicy (MissingHostKeyPolicy):
