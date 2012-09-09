@@ -20,6 +20,7 @@ Temporary, post-Paramiko changelog while we get our sh!t together.
   confusing/vague. This has been improved somewhat. Thanks to Cal Leeming for
   highlighting the issue.
 
+
 ## ssh 1.7.14 (2012-05-07)
 
 * #15: Implemented parameter substitution in SSHConfig, matching the
@@ -34,6 +35,7 @@ Temporary, post-Paramiko changelog while we get our sh!t together.
   troubleshooting/patching, and to GitHub user `@lynxis` for providing the
   final version of the patch.
 
+
 ## ssh 1.7.13 (2012-02-13)
 
 * #5: Moved a `fcntl` import closer to where it's used to help avoid
@@ -41,6 +43,7 @@ Temporary, post-Paramiko changelog while we get our sh!t together.
   catch + suggested fix.
 * #4: Updated implementation of WinPageant integration to work on 64-bit
   Windows. Thanks again to Jason Coombs for the patch.
+
 
 ## ssh 1.7.12 (2012-02-10)
 
