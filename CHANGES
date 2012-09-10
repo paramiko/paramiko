@@ -19,6 +19,7 @@ Temporary, post-Paramiko changelog while we get our sh!t together.
   `known_hosts` (when `RejectPolicy` is in effect) the exception message was
   confusing/vague. This has been improved somewhat. Thanks to Cal Leeming for
   highlighting the issue.
+* #40: Fixed up & expanded EINTR signal handling. Thanks to Douglas Turk.
 
 
 ## ssh 1.7.14 (2012-05-07)
