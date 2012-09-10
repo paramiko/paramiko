@@ -148,6 +148,9 @@ def main():
     for thread in threading.enumerate():
         if thread is not threading.currentThread():
             thread._Thread__stop()
+    # Exit correctly
+    if not result.wasSuccessful():
+        sys.exit(1)
 
 
 if __name__ == '__main__':
