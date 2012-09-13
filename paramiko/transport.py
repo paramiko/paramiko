@@ -1530,6 +1530,10 @@ class Transport (threading.Thread):
         # indefinitely, creating a GC cycle and not letting Transport ever be
         # GC'd. it's a bug in Thread.)
 
+        # Hold reference to 'sys' so we can test sys.modules to detect
+        # interpreter shutdown.
+        self.sys = sys
+
         # Required to prevent RNG errors when running inside many subprocess
         # containers.
         Random.atfork()
