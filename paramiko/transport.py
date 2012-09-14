@@ -1505,6 +1505,10 @@ class Transport (threading.Thread):
         # indefinitely, creating a GC cycle and not letting Transport ever be
         # GC'd. it's a bug in Thread.)
 
+        # Hold reference to 'sys' so we can test sys.modules to detect
+        # interpreter shutdown.
+        self.sys = sys
+
         # active=True occurs before the thread is launched, to avoid a race
         _active_threads.append(self)
         if self.server_mode:
@@ -1512,94 +1516,102 @@ class Transport (threading.Thread):
         else:
             self._log(DEBUG, 'starting thread (client mode): %s' % hex(long(id(self)) & 0xffffffffL))
         try:
-            self.packetizer.write_all(self.local_version + '\r\n')
-            self._check_banner()
-            self._send_kex_init()
-            self._expect_packet(MSG_KEXINIT)
+            try:
+                self.packetizer.write_all(self.local_version + '\r\n')
+                self._check_banner()
+                self._send_kex_init()
+                self._expect_packet(MSG_KEXINIT)
 
-            while self.active:
-                if self.packetizer.need_rekey() and not self.in_kex:
-                    self._send_kex_init()
-                try:
-                    ptype, m = self.packetizer.read_message()
-                except NeedRekeyException:
-                    continue
-                if ptype == MSG_IGNORE:
-                    continue
-                elif ptype == MSG_DISCONNECT:
-                    self._parse_disconnect(m)
-                    self.active = False
-                    self.packetizer.close()
-                    break
-                elif ptype == MSG_DEBUG:
-                    self._parse_debug(m)
-                    continue
-                if len(self._expected_packet) > 0:
-                    if ptype not in self._expected_packet:
-                        raise SSHException('Expecting packet from %r, got %d' % (self._expected_packet, ptype))
-                    self._expected_packet = tuple()
-                    if (ptype >= 30) and (ptype <= 39):
-                        self.kex_engine.parse_next(ptype, m)
+                while self.active:
+                    if self.packetizer.need_rekey() and not self.in_kex:
+                        self._send_kex_init()
+                    try:
+                        ptype, m = self.packetizer.read_message()
+                    except NeedRekeyException:
                         continue
-
-                if ptype in self._handler_table:
-                    self._handler_table[ptype](self, m)
-                elif ptype in self._channel_handler_table:
-                    chanid = m.get_int()
-                    chan = self._channels.get(chanid)
-                    if chan is not None:
-                        self._channel_handler_table[ptype](chan, m)
-                    elif chanid in self.channels_seen:
-                        self._log(DEBUG, 'Ignoring message for dead channel %d' % chanid)
-                    else:
-                        self._log(ERROR, 'Channel request for unknown channel %d' % chanid)
+                    if ptype == MSG_IGNORE:
+                        continue
+                    elif ptype == MSG_DISCONNECT:
+                        self._parse_disconnect(m)
                         self.active = False
                         self.packetizer.close()
-                elif (self.auth_handler is not None) and (ptype in self.auth_handler._handler_table):
-                    self.auth_handler._handler_table[ptype](self.auth_handler, m)
+                        break
+                    elif ptype == MSG_DEBUG:
+                        self._parse_debug(m)
+                        continue
+                    if len(self._expected_packet) > 0:
+                        if ptype not in self._expected_packet:
+                            raise SSHException('Expecting packet from %r, got %d' % (self._expected_packet, ptype))
+                        self._expected_packet = tuple()
+                        if (ptype >= 30) and (ptype <= 39):
+                            self.kex_engine.parse_next(ptype, m)
+                            continue
+
+                    if ptype in self._handler_table:
+                        self._handler_table[ptype](self, m)
+                    elif ptype in self._channel_handler_table:
+                        chanid = m.get_int()
+                        chan = self._channels.get(chanid)
+                        if chan is not None:
+                            self._channel_handler_table[ptype](chan, m)
+                        elif chanid in self.channels_seen:
+                            self._log(DEBUG, 'Ignoring message for dead channel %d' % chanid)
+                        else:
+                            self._log(ERROR, 'Channel request for unknown channel %d' % chanid)
+                            self.active = False
+                            self.packetizer.close()
+                    elif (self.auth_handler is not None) and (ptype in self.auth_handler._handler_table):
+                        self.auth_handler._handler_table[ptype](self.auth_handler, m)
+                    else:
+                        self._log(WARNING, 'Oops, unhandled type %d' % ptype)
+                        msg = Message()
+                        msg.add_byte(chr(MSG_UNIMPLEMENTED))
+                        msg.add_int(m.seqno)
+                        self._send_message(msg)
+            except SSHException, e:
+                self._log(ERROR, 'Exception: ' + str(e))
+                self._log(ERROR, util.tb_strings())
+                self.saved_exception = e
+            except EOFError, e:
+                self._log(DEBUG, 'EOF in transport thread')
+                #self._log(DEBUG, util.tb_strings())
+                self.saved_exception = e
+            except socket.error, e:
+                if type(e.args) is tuple:
+                    emsg = '%s (%d)' % (e.args[1], e.args[0])
                 else:
-                    self._log(WARNING, 'Oops, unhandled type %d' % ptype)
-                    msg = Message()
-                    msg.add_byte(chr(MSG_UNIMPLEMENTED))
-                    msg.add_int(m.seqno)
-                    self._send_message(msg)
-        except SSHException, e:
-            self._log(ERROR, 'Exception: ' + str(e))
-            self._log(ERROR, util.tb_strings())
-            self.saved_exception = e
-        except EOFError, e:
-            self._log(DEBUG, 'EOF in transport thread')
-            #self._log(DEBUG, util.tb_strings())
-            self.saved_exception = e
-        except socket.error, e:
-            if type(e.args) is tuple:
-                emsg = '%s (%d)' % (e.args[1], e.args[0])
-            else:
-                emsg = e.args
-            self._log(ERROR, 'Socket exception: ' + emsg)
-            self.saved_exception = e
-        except Exception, e:
-            self._log(ERROR, 'Unknown exception: ' + str(e))
-            self._log(ERROR, util.tb_strings())
-            self.saved_exception = e
-        _active_threads.remove(self)
-        for chan in self._channels.values():
-            chan._unlink()
-        if self.active:
-            self.active = False
-            self.packetizer.close()
-            if self.completion_event != None:
-                self.completion_event.set()
-            if self.auth_handler is not None:
-                self.auth_handler.abort()
-            for event in self.channel_events.values():
-                event.set()
-            try:
-                self.lock.acquire()
-                self.server_accept_cv.notify()
-            finally:
-                self.lock.release()
-        self.sock.close()
+                    emsg = e.args
+                self._log(ERROR, 'Socket exception: ' + emsg)
+                self.saved_exception = e
+            except Exception, e:
+                self._log(ERROR, 'Unknown exception: ' + str(e))
+                self._log(ERROR, util.tb_strings())
+                self.saved_exception = e
+            _active_threads.remove(self)
+            for chan in self._channels.values():
+                chan._unlink()
+            if self.active:
+                self.active = False
+                self.packetizer.close()
+                if self.completion_event != None:
+                    self.completion_event.set()
+                if self.auth_handler is not None:
+                    self.auth_handler.abort()
+                for event in self.channel_events.values():
+                    event.set()
+                try:
+                    self.lock.acquire()
+                    self.server_accept_cv.notify()
+                finally:
+                    self.lock.release()
+            self.sock.close()
+        except:
+            # Don't raise spurious 'NoneType has no attribute X' errors when we
+            # wake up during interpreter shutdown. Or rather -- raise
+            # everything *if* sys.modules (used as a convenient sentinel)
+            # appears to still exist.
+            if self.sys.modules is not None:
+                raise
 
 
     ###  protocol stages
