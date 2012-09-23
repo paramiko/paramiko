@@ -1,10 +1,10 @@
-
 ========
 paramiko
 ========
 
 :Paramiko: Python SSH module
-:Copyright: Copyright (c) 2003-2009  Robey Pointer <robeypointer@gmail.com>
+:Copyright: Copyright (c) 2003-2011  Robey Pointer <robeypointer@gmail.com>
+:Copyright: Copyright (c) 2012 Jeff Forcier <jeff@bitprophet.org>
 :License: LGPL
 :Homepage: http://www.lag.net/paramiko/
 
