@@ -8,11 +8,52 @@ Highlights of what's new in each release:
 Releases
 ========
 
-v1.7.7.3 <DATE>
+v1.8.0 <DATE>
 ---------------
 
- * Merge PR #28: https://github.com/paramiko/paramiko/pull/28 which adds a
-   ssh-keygen like demo module. (Sofian Brabez)
+* #32: Raise a more useful error explaining which `known_hosts` key line was
+  problematic, when encountering `binascii` issues decoding known host keys.
+  Thanks to `@thomasvs` for catch & patch.
+* #33: Bring `ssh_config` parsing more in line with OpenSSH spec, re: order of
+  setting overrides by `Host` specifiers. Specifically, the overrides now go by
+  file order instead of automatically sorting by `Host` value length. In
+  addition, the first value found per config key (e.g. `Port`, `User` etc)
+  wins, instead of the last. Thanks to Jan Brauer for the contribution.
+* #36: Support new server two-factor authentication option
+  (`RequiredAuthentications2`), at least re: combining key-based & password
+  auth. Thanks to Github user `bninja`.
+* #11: When raising an exception for hosts not listed in
+  `known_hosts` (when `RejectPolicy` is in effect) the exception message was
+  confusing/vague. This has been improved somewhat. Thanks to Cal Leeming for
+  highlighting the issue.
+* #40: Fixed up & expanded EINTR signal handling. Thanks to Douglas Turk.
+* #15: Implemented parameter substitution in SSHConfig, matching the
+  implementation of `ssh_config(5)`. Thanks to Olle Lundberg for the patch.
+* #24: Switch some internal type checking to use `isinstance` to help prevent
+  problems with client libraries using subclasses of builtin types. Thanks to
+  Alex Morega for the patch.
+* [Fabric #562](https://github.com/fabric/fabric/issues/562): Agent forwarding
+  would error out (with `Authentication response too long`) or freeze, when more
+  than one remote connection to the local agent was active at the same time.
+  This has been fixed. Thanks to Steven McDonald for assisting in
+  troubleshooting/patching, and to GitHub user `@lynxis` for providing the
+  final version of the patch.
+* #5: Moved a `fcntl` import closer to where it's used to help avoid
+  `ImportError` problems on Windows platforms. Thanks to Jason Coombs for the
+  catch + suggested fix.
+* #4: Updated implementation of WinPageant integration to work on 64-bit
+  Windows. Thanks again to Jason Coombs for the patch.
+* Added an IO loop sleep() call to avoid needless CPU usage when agent
+  forwarding is in use.
+* Handful of internal tweaks to version number storage.
+* Updated `setup.py` with `==dev` install URL for `pip` users.
+* Updated `setup.py` to account for packaging problems in PyCrypto 2.4.0
+* Initial fork of Paramiko 1.7.7.1
+* Renamed package to 'ssh'
+* Added an extra `atfork()` call to help prevent spurious RNG errors when
+  running under high parallel (multiprocess) load.
+* Merge PR #28: https://github.com/paramiko/paramiko/pull/28 which adds a
+  ssh-keygen like demo module. (Sofian Brabez)
 
 v1.7.7.2 16may12
 ----------------
