@@ -51,8 +51,6 @@ v1.8.0 <DATE>
 * Handful of internal tweaks to version number storage.
 * Updated `setup.py` with `==dev` install URL for `pip` users.
 * Updated `setup.py` to account for packaging problems in PyCrypto 2.4.0
-* Initial fork of Paramiko 1.7.7.1
-* Renamed package to 'ssh'
 * Added an extra `atfork()` call to help prevent spurious RNG errors when
   running under high parallel (multiprocess) load.
 * Merge PR #28: https://github.com/paramiko/paramiko/pull/28 which adds a
