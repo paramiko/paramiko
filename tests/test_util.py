@@ -172,15 +172,15 @@ Host *
     Port 3333
     """
         f = cStringIO.StringIO(test_config_file)
-        config = ssh.util.parse_ssh_config(f)
+        config = paramiko.util.parse_ssh_config(f)
         host = 'www13.example.com'
         self.assertEquals(
-            ssh.util.lookup_ssh_host_config(host, config),
+            paramiko.util.lookup_ssh_host_config(host, config),
             {'hostname': host, 'port': '22'}
         )
 
     def test_8_eintr_retry(self):
-        self.assertEquals('foo', ssh.util.retry_on_signal(lambda: 'foo'))
+        self.assertEquals('foo', paramiko.util.retry_on_signal(lambda: 'foo'))
 
         # Variables that are set by raises_intr
         intr_errors_remaining = [3]
@@ -190,16 +190,16 @@ Host *
             if intr_errors_remaining[0] > 0:
                 intr_errors_remaining[0] -= 1
                 raise IOError(errno.EINTR, 'file', 'interrupted system call')
-        self.assertTrue(ssh.util.retry_on_signal(raises_intr) is None)
+        self.assertTrue(paramiko.util.retry_on_signal(raises_intr) is None)
         self.assertEquals(0, intr_errors_remaining[0])
         self.assertEquals(4, call_count[0])
 
         def raises_ioerror_not_eintr():
             raise IOError(errno.ENOENT, 'file', 'file not found')
         self.assertRaises(IOError,
-                          lambda: ssh.util.retry_on_signal(raises_ioerror_not_eintr))
+                          lambda: paramiko.util.retry_on_signal(raises_ioerror_not_eintr))
 
         def raises_other_exception():
             raise AssertionError('foo')
         self.assertRaises(AssertionError,
-                          lambda: ssh.util.retry_on_signal(raises_other_exception))
+                          lambda: paramiko.util.retry_on_signal(raises_other_exception))
