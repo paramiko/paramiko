@@ -419,9 +419,8 @@ class SSHClient (object):
             - Any "id_rsa" or "id_dsa" key discoverable in ~/.ssh/ (if allowed).
             - Plain username/password auth, if a password was given.
 
-        (The password might be needed to unlock a private key.)
-        
-        The password is required for two-factor authentication.
+        (The password might be needed to unlock a private key, or for
+        two-factor authentication [for which it is required].)
         """
         saved_exception = None
         two_factor = False
@@ -482,10 +481,10 @@ class SSHClient (object):
                 keyfiles.append((RSAKey, rsa_key))
             if os.path.isfile(dsa_key):
                 keyfiles.append((DSSKey, dsa_key))
-    
+
             if not look_for_keys:
                 keyfiles = []
-    
+
             for pkey_class, filename in keyfiles:
                 try:
                     key = pkey_class.from_private_key_file(filename, password)
