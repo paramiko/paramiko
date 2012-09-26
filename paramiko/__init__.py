@@ -45,12 +45,7 @@ receive data over the encrypted session.
 Paramiko is written entirely in python (no C or platform-dependent code) and is
 released under the GNU Lesser General Public License (LGPL).
 
-Website: U{http://www.lag.net/paramiko/}
-
-@version: 1.7.11
-@author: Robey Pointer
-@contact: robeypointer@gmail.com
-@license: GNU Lesser General Public License (LGPL)
+Website: U{https://github.com/paramiko/paramiko/}
 """
 
 import sys
