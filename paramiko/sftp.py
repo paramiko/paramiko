@@ -134,7 +134,7 @@ class BaseSFTP (object):
     def _write_all(self, out):
         while len(out) > 0:
             n = self.sock.send(out)
-            if n <= 0:
+            if n < 0:
                 raise EOFError()
             if n == len(out):
                 return
