@@ -168,7 +168,12 @@ class HostKeys (UserDict.DictMixin):
                 continue
             e = HostKeyEntry.from_line(line)
             if e is not None:
-                self._entries.append(e)
+                _hostnames = e.hostnames
+                for h in _hostnames:
+                    if self.check(h, e.key):
+                        e.hostnames.remove(h)
+                if len(e.hostnames):
+                    self._entries.append(e)
         f.close()
 
     def save(self, filename):
