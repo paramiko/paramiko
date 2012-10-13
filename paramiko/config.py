@@ -41,7 +41,7 @@ class SSHConfig (object):
         """
         Create a new OpenSSH config object.
         """
-        self._config = [ { 'host': '*' } ]
+        self._matches = {}
 
     def parse(self, file_obj):
         """
@@ -50,7 +50,7 @@ class SSHConfig (object):
         @param file_obj: a file-like object to read the config file from
         @type file_obj: file
         """
-        configs = [self._config[0]]
+        host = Host('*')
         for line in file_obj:
             line = line.rstrip('\n').lstrip()
             if (line == '') or (line[0] == '#'):
@@ -69,20 +69,26 @@ class SSHConfig (object):
                 value = line[i:].lstrip()
 
             if key == 'host':
-                del configs[:]
-                # the value may be multiple hosts, space-delimited
-                for host in value.split():
-                    # do we have a pre-existing host config to append to?
-                    matches = [c for c in self._config if c['host'] == host]
-                    if len(matches) > 0:
-                        configs.append(matches[0])
-                    else:
-                        config = { 'host': host }
-                        self._config.append(config)
-                        configs.append(config)
+                host.register(self) #Register the previous host entry.
+                host = Host(value)
             else:
-                for config in configs:
-                    config[key] = value
+                host[key] = value
+
+    def register(self, hostname, host):
+        """
+        Registers a host configuration to a given hostname.
+
+        There can exist multiple host configuraions for a single hostname.
+
+        @param hostname: the hostname to register
+        @type hostname: str
+        @param host: the host configuration to register
+        @type host: object
+        """
+        if hostname in self._matches:
+            self._matches[hostname].append(host)
+        else:
+            self._matches[hostname] = [host]
 
     def lookup(self, hostname):
         """
@@ -97,31 +103,32 @@ class SSHConfig (object):
         will win out.
 
         The keys in the returned dict are all normalized to lowercase (look for
-        C{"port"}, not C{"Port"}. No other processing is done to the keys or
-        values.
+        C{"port"}, not C{"Port"}. The values are processed according to the
+        rules for substitution variable expansion in C{ssh_config}.
 
         @param hostname: the hostname to lookup
         @type hostname: str
         """
-        matches = [x for x in self._config if fnmatch.fnmatch(hostname, x['host'])]
-        # Move * to the end
-        _star = matches.pop(0)
-        matches.append(_star)
+        matches = [self._matches[x] for x in self._matches if
+                  fnmatch.fnmatch(hostname,x)]
+
+        # sort in order of shortest match (usually '*') to longest
+        matches.sort(lambda x,y: cmp(len(x), len(y)))
+
         ret = {}
-        for m in matches:
-            for k,v in m.iteritems():
-                if not k in ret:
-                    ret[k] = v
+        for match in matches:
+            for config in match:
+                if config.allowed(hostname):
+                    ret.update(config)
         ret = self._expand_variables(ret, hostname)
-        del ret['host']
         return ret
 
-    def _expand_variables(self, config, hostname ):
+    def _expand_variables(self, config, hostname):
         """
         Return a dict of config options with expanded substitutions
         for a given hostname.
 
-        Please refer to man ssh_config(5) for the parameters that
+        Please refer to man C{ssh_config} for the parameters that
         are replaced.
 
         @param config: the config for the hostname
@@ -174,3 +181,55 @@ class SSHConfig (object):
                 for find, replace in replacements[k]:
                         config[k] = config[k].replace(find, str(replace))
         return config
+
+class Host(dict):
+    """
+    Representation of a host configuration in a smart dictionary.
+    This is an internal class subject to change. Consider it an
+    implementation detail.
+    """
+
+    def __init__(self, hosts):
+        """
+        Create a new Host config object.
+
+        @param hosts: a space separated string of hosts.
+        @type hosts: str
+        """
+        super(Host, self).__init__()
+        self._matches = []
+        self._negations = []
+        for host in hosts.split():
+            if host.startswith("!"):
+                self._negations.append(host[1:])
+            else:
+                self._matches.append(host)
+
+    def __setitem__(self, key, value):
+        super(Host, self).__setitem__(key, value)
+
+    def __getitem__(self, key):
+        return super(Host, self).__getitem__(key)
+
+    def register(self, sshconfig):
+        """
+        Register this hosts matches in another object.
+
+        @param sshconfig: an object that has a register method.
+        @type sshconfig: object
+        """
+        for match in self._matches:
+            sshconfig.register(match, self)
+
+    def allowed(self, hostname):
+        """
+        Checks if the hostname matches a negation in the ssh_config
+        for this host object.
+
+        @param hostname: the hostname to match against negations.
+        @type hosname: str
+        """
+        for negation in self._negations:
+            if fnmatch.fnmatch(hostname, negation):
+                return False
+        return True
