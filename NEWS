@@ -18,6 +18,11 @@ v1.8.1 (DD MM YYYY)
 * #90: Ensure that callbacks handed to `SFTPClient.get()` always fire at least
   once, even for zero-length files downloaded. Thanks to Github user `@enB` for
   the catch.
+* #85: Paramiko's test suite overrides
+  `unittest.TestCase.assertTrue/assertFalse` to provide these modern assertions
+  to Python 2.2/2.3, which lacked them. However on newer Pythons such as 2.7,
+  this now causes deprecation warnings. The overrides have been patched to only
+  execute when necessary. Thanks to `@Arfrever` for catch & patch.
 
 
 v1.8.0 (3rd Oct 2012)
