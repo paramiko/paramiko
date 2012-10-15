@@ -18,6 +18,8 @@ v1.8.1 (DD MM YYYY)
 * #90: Ensure that callbacks handed to `SFTPClient.get()` always fire at least
   once, even for zero-length files downloaded. Thanks to Github user `@enB` for
   the catch.
+* #84: Make `BaseSFTP._write_all()` correctly handle all possible return values
+  from `send()`.  Thanks to Github user `@gmacon` for the patch.
 
 
 v1.8.0 (3rd Oct 2012)
