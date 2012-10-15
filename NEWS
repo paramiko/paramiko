@@ -12,8 +12,8 @@ Issues noted as "Fabric #NN" can be found at https://github.com/fabric/fabric/.
 Releases
 ========
 
-v1.8.0 <DATE>
----------------
+v1.8.0 (3rd Oct 2012)
+---------------------
 
 * 'ssh' 32: Raise a more useful error explaining which `known_hosts` key line was
   problematic, when encountering `binascii` issues decoding known host keys.
