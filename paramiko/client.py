@@ -229,7 +229,7 @@ class SSHClient (object):
 
     def connect(self, hostname, port=SSH_PORT, username=None, password=None, pkey=None,
                 key_filename=None, timeout=None, allow_agent=True, look_for_keys=True,
-                compress=False):
+                compress=False, sock=None):
         """
         Connect to an SSH server and authenticate to it.  The server's host key
         is checked against the system host keys (see L{load_system_host_keys})
@@ -272,6 +272,9 @@ class SSHClient (object):
         @type look_for_keys: bool
         @param compress: set to True to turn on compression
         @type compress: bool
+        @param sock: an open socket or direct-tcpip channel from another
+            SSHClient class to use for communication with the target host.
+        @type channel: socket
 
         @raise BadHostKeyException: if the server's host key could not be
             verified
@@ -280,21 +283,23 @@ class SSHClient (object):
             establishing an SSH session
         @raise socket.error: if a socket error occurred while connecting
         """
-        for (family, socktype, proto, canonname, sockaddr) in socket.getaddrinfo(hostname, port, socket.AF_UNSPEC, socket.SOCK_STREAM):
-            if socktype == socket.SOCK_STREAM:
-                af = family
-                addr = sockaddr
-                break
-        else:
-            # some OS like AIX don't indicate SOCK_STREAM support, so just guess. :(
-            af, _, _, _, addr = socket.getaddrinfo(hostname, port, socket.AF_UNSPEC, socket.SOCK_STREAM)
-        sock = socket.socket(af, socket.SOCK_STREAM)
-        if timeout is not None:
-            try:
-                sock.settimeout(timeout)
-            except:
-                pass
-        retry_on_signal(lambda: sock.connect(addr))
+        if not sock:
+            for (family, socktype, proto, canonname, sockaddr) in socket.getaddrinfo(hostname, port, socket.AF_UNSPEC, socket.SOCK_STREAM):
+                if socktype == socket.SOCK_STREAM:
+                    af = family
+                    addr = sockaddr
+                    break
+            else:
+                # some OS like AIX don't indicate SOCK_STREAM support, so just guess. :(
+                af, _, _, _, addr = socket.getaddrinfo(hostname, port, socket.AF_UNSPEC, socket.SOCK_STREAM)
+            sock = socket.socket(af, socket.SOCK_STREAM)
+            if timeout is not None:
+                try:
+                    sock.settimeout(timeout)
+                except:
+                    pass
+            retry_on_signal(lambda: sock.connect(addr))
+
         t = self._transport = Transport(sock)
         t.use_compression(compress=compress)
         if self._log_channel is not None:
