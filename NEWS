@@ -15,6 +15,10 @@ Releases
 v1.8.1 (DD MM YYYY)
 -------------------
 
+* #90: Ensure that callbacks handed to `SFTPClient.get()` always fire at least
+  once, even for zero-length files downloaded. Thanks to Github user `@enB` for
+  the catch.
+
 
 v1.8.0 (3rd Oct 2012)
 ---------------------
