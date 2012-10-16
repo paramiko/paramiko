@@ -23,6 +23,7 @@ L{SSHConfig}.
 
 import fnmatch
 import os
+import re
 import socket
 
 SSH_PORT = 22
@@ -43,6 +44,7 @@ class SSHConfig (object):
         """
         Create a new OpenSSH config object.
         """
+        self._proxyregex = re.compile(r"^(proxycommand)\s*=*\s*(.*)", re.I)
         self._config = []
 
     def parse(self, file_obj):
@@ -58,8 +60,15 @@ class SSHConfig (object):
             if (line == '') or (line[0] == '#'):
                 continue
             if '=' in line:
-                key, value = line.split('=', 1)
-                key = key.strip().lower()
+                if not line.lower().startswith('proxycommand'):
+                    key, value = line.split('=', 1)
+                    key = key.strip().lower()
+                else:
+                    #ProxyCommand have been specified with an equal
+                    # sign. Eat that and split in two groups.
+                    match = self._proxyregex.match(line)
+                    key = match.group(1).lower()
+                    value = match.group(2)
             else:
                 # find first whitespace, and split there
                 i = 0
@@ -183,7 +192,14 @@ class SSHConfig (object):
                             ('%l', fqdn),
                             ('%u', user),
                             ('%r', remoteuser)
-                        ]}
+                        ],
+                        'proxycommand':
+                        [
+                            ('%h', config['hostname']),
+                            ('%p', port),
+                            ('%r', remoteuser)
+                        ]
+                        }
         for k in config:
             if k in replacements:
                 for find, replace in replacements[k]:
