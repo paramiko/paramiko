@@ -25,7 +25,8 @@ import fnmatch
 import os
 import socket
 
-SSH_PORT=22
+SSH_PORT = 22
+
 
 class SSHConfig (object):
     """
@@ -44,7 +45,6 @@ class SSHConfig (object):
         """
         self._config = []
 
-
     def parse(self, file_obj):
         """
         Read an OpenSSH config from the given file object.
@@ -52,7 +52,7 @@ class SSHConfig (object):
         @param file_obj: a file-like object to read the config file from
         @type file_obj: file
         """
-        host = {"host":['*'],"config":{}}
+        host = {"host": ['*'], "config": {}}
         for line in file_obj:
             line = line.rstrip('\n').lstrip()
             if (line == '') or (line[0] == '#'):
@@ -73,7 +73,7 @@ class SSHConfig (object):
             if key == 'host':
                 self._config.append(host)
                 value = value.split()
-                host = {key:value,'config':{}}
+                host = {key: value, 'config': {}}
             #identityfile is a special case, since it is allowed to be
             # specified multiple times and they should be tried in order
             # of specification.
@@ -83,7 +83,7 @@ class SSHConfig (object):
                 else:
                     host['config']['identityfile'] = [value]
             elif key not in host['config']:
-                    host['config'].update({key:value})
+                    host['config'].update({key: value})
         self._config.append(host)
 
     def lookup(self, hostname):
@@ -106,8 +106,8 @@ class SSHConfig (object):
         @type hostname: str
         """
 
-        matches = [ config for config in self._config if
-                self._allowed(hostname,config['host']) ]
+        matches = [config for config in self._config if
+                   self._allowed(hostname, config['host'])]
 
         ret = {}
         for match in matches:
@@ -147,7 +147,7 @@ class SSHConfig (object):
         """
 
         if 'hostname' in config:
-            config['hostname'] = config['hostname'].replace('%h',hostname)
+            config['hostname'] = config['hostname'].replace('%h', hostname)
         else:
             config['hostname'] = hostname
 
@@ -165,32 +165,32 @@ class SSHConfig (object):
         host = socket.gethostname().split('.')[0]
         fqdn = socket.getfqdn()
         homedir = os.path.expanduser('~')
-        replacements = {'controlpath' :
-                [
-                    ('%h', config['hostname']),
-                    ('%l', fqdn),
-                    ('%L', host),
-                    ('%n', hostname),
-                    ('%p', port),
-                    ('%r', remoteuser),
-                    ('%u', user)
-                ],
-                'identityfile' :
-                [
-                    ('~', homedir),
-                    ('%d', homedir),
-                    ('%h', config['hostname']),
-                    ('%l', fqdn),
-                    ('%u', user),
-                    ('%r', remoteuser)
-                ]
-                }
+        replacements = {'controlpath':
+                        [
+                            ('%h', config['hostname']),
+                            ('%l', fqdn),
+                            ('%L', host),
+                            ('%n', hostname),
+                            ('%p', port),
+                            ('%r', remoteuser),
+                            ('%u', user)
+                        ],
+                        'identityfile':
+                        [
+                            ('~', homedir),
+                            ('%d', homedir),
+                            ('%h', config['hostname']),
+                            ('%l', fqdn),
+                            ('%u', user),
+                            ('%r', remoteuser)
+                        ]}
         for k in config:
             if k in replacements:
                 for find, replace in replacements[k]:
-                    if isinstance(config[k],list):
+                    if isinstance(config[k], list):
                         for item in range(len(config[k])):
-                            config[k][item] = config[k][item].replace(find, str(replace))
+                            config[k][item] = config[k][item].\
+                                replace(find, str(replace))
                     else:
                             config[k] = config[k].replace(find, str(replace))
         return config
