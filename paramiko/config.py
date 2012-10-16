@@ -82,7 +82,6 @@ class SSHConfig (object):
         """
         Create a new OpenSSH config object.
         """
-        self._proxyregex = re.compile(r"^(proxycommand)\s*=*\s*(.*)", re.I)
         self._config = []
 
     def parse(self, file_obj):
@@ -98,7 +97,6 @@ class SSHConfig (object):
             if (line == '') or (line[0] == '#'):
                 continue
             if '=' in line:
-<<<<<<< HEAD
                 # Ensure ProxyCommand gets properly split
                 if line.lower().strip().startswith('proxycommand'):
                     match = proxy_re.match(line)
@@ -106,20 +104,6 @@ class SSHConfig (object):
                 else:
                     key, value = line.split('=', 1)
                     key = key.strip().lower()
-||||||| merged common ancestors
-                key, value = line.split('=', 1)
-                key = key.strip().lower()
-=======
-                if not line.lower().startswith('proxycommand'):
-                    key, value = line.split('=', 1)
-                    key = key.strip().lower()
-                else:
-                    #ProxyCommand have been specified with an equal
-                    # sign. Eat that and split in two groups.
-                    match = self._proxyregex.match(line)
-                    key = match.group(1).lower()
-                    value = match.group(2)
->>>>>>> Implement support for parsing proxycommand.
             else:
                 # find first whitespace, and split there
                 i = 0
