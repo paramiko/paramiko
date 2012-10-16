@@ -120,8 +120,7 @@ class SSHConfig (object):
 
         ret = {}
         for match in matches:
-            for key in match['config']:
-                value = match['config'][key]
+            for key, value in match['config'].iteritems():
                 if key == 'identityfile':
                     if key in ret:
                         ret['identityfile'].extend(value)
