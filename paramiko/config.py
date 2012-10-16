@@ -1,4 +1,5 @@
 # Copyright (C) 2006-2007  Robey Pointer <robeypointer@gmail.com>
+# Copyright (C) 2012  Olle Lundberg <geek@nerd.sh>
 #
 # This file is part of paramiko.
 #
@@ -82,7 +83,8 @@ class SSHConfig (object):
         """
         Create a new OpenSSH config object.
         """
-        self._config = [ { 'host': '*' } ]
+        self._config = []
+
 
     def parse(self, file_obj):
         """
@@ -91,7 +93,7 @@ class SSHConfig (object):
         @param file_obj: a file-like object to read the config file from
         @type file_obj: file
         """
-        configs = [self._config[0]]
+        host = {"host":['*'],"config":{}}
         for line in file_obj:
             line = line.rstrip('\n').lstrip()
             if (line == '') or (line[0] == '#'):
@@ -115,20 +117,20 @@ class SSHConfig (object):
                 value = line[i:].lstrip()
 
             if key == 'host':
-                del configs[:]
-                # the value may be multiple hosts, space-delimited
-                for host in value.split():
-                    # do we have a pre-existing host config to append to?
-                    matches = [c for c in self._config if c['host'] == host]
-                    if len(matches) > 0:
-                        configs.append(matches[0])
-                    else:
-                        config = { 'host': host }
-                        self._config.append(config)
-                        configs.append(config)
-            else:
-                for config in configs:
-                    config[key] = value
+                self._config.append(host)
+                value = value.split()
+                host = {key:value,'config':{}}
+            #identitifile is a special case, since it is allowed to be
+            # specified multiple times and they should be tried in order
+            # of specification.
+            elif key == 'identityfile':
+                if key in host['config']:
+                    host['config']['identityfile'].append(value)
+                else:
+                    host['config']['identityfile'] = [value]
+            elif key not in host['config']:
+                    host['config'].update({key:value})
+        self._config.append(host)
 
     def lookup(self, hostname):
         """
@@ -143,31 +145,45 @@ class SSHConfig (object):
         will win out.
 
         The keys in the returned dict are all normalized to lowercase (look for
-        C{"port"}, not C{"Port"}. No other processing is done to the keys or
-        values.
+        C{"port"}, not C{"Port"}. The values are processed according to the
+        rules for substitution variable expansion in C{ssh_config}.
 
         @param hostname: the hostname to lookup
         @type hostname: str
         """
-        matches = [x for x in self._config if fnmatch.fnmatch(hostname, x['host'])]
-        # Move * to the end
-        _star = matches.pop(0)
-        matches.append(_star)
+
+        matches = [ config for config in self._config if
+                self._allowed(hostname,config['host']) ]
+
         ret = {}
-        for m in matches:
-            for k,v in m.iteritems():
-                if not k in ret:
-                    ret[k] = v
+        for match in matches:
+            for key in match['config']:
+                value = match['config'][key]
+                if key == 'identityfile':
+                    if key in ret:
+                        ret['identityfile'].extend(value)
+                    else:
+                        ret['identityfile'] = value
+                elif key not in ret:
+                    ret[key] = value
         ret = self._expand_variables(ret, hostname)
-        del ret['host']
         return ret
 
-    def _expand_variables(self, config, hostname ):
+    def _allowed(self, hostname, hosts):
+        match = False
+        for host in hosts:
+            if host.startswith('!') and fnmatch.fnmatch(hostname, host[1:]):
+                return False
+            elif fnmatch.fnmatch(hostname, host):
+                match = True
+        return match
+
+    def _expand_variables(self, config, hostname):
         """
         Return a dict of config options with expanded substitutions
         for a given hostname.
 
-        Please refer to man ssh_config(5) for the parameters that
+        Please refer to man C{ssh_config} for the parameters that
         are replaced.
 
         @param config: the config for the hostname
@@ -222,6 +238,9 @@ class SSHConfig (object):
         for k in config:
             if k in replacements:
                 for find, replace in replacements[k]:
-                    if find in config[k]:
-                        config[k] = config[k].replace(find, str(replace))
+                    if isinstance(config[k],list):
+                        for item in range(len(config[k])):
+                            config[k][item] = config[k][item].replace(find, str(replace))
+                    else:
+                            config[k] = config[k].replace(find, str(replace))
         return config
