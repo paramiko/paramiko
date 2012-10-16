@@ -112,23 +112,32 @@ class UtilTest (unittest.TestCase):
         f = cStringIO.StringIO(test_config_file)
         config = paramiko.util.parse_ssh_config(f)
         self.assertEquals(config._config,
-                          [ {'identityfile': '~/.ssh/id_rsa', 'host': '*', 'user': 'robey',
-                             'crazy': 'something dumb  '},
-                            {'host': '*.example.com', 'user': 'bjork', 'port': '3333'},
-                            {'host': 'spoo.example.com', 'crazy': 'something else'}])
+            [{'host': ['*'], 'config': {}}, {'host': ['*'], 'config': {'identityfile': ['~/.ssh/id_rsa'], 'user': 'robey'}},
+            {'host': ['*.example.com'], 'config': {'user': 'bjork', 'port': '3333'}},
+            {'host': ['*'], 'config': {'crazy': 'something dumb  '}},
+            {'host': ['spoo.example.com'], 'config': {'crazy': 'something else'}}])
 
     def test_3_host_config(self):
         global test_config_file
         f = cStringIO.StringIO(test_config_file)
         config = paramiko.util.parse_ssh_config(f)
+
         for host, values in {
-            'irc.danger.com': {'user': 'robey', 'crazy': 'something dumb  '},
-            'irc.example.com': {'user': 'bjork', 'crazy': 'something dumb  ', 'port': '3333'},
-            'spoo.example.com': {'user': 'bjork', 'crazy': 'something else', 'port': '3333'}
+            'irc.danger.com':   {'crazy': 'something dumb  ',
+                                'hostname': 'irc.danger.com',
+                                'user': 'robey'},
+            'irc.example.com':  {'crazy': 'something dumb  ',
+                                'hostname': 'irc.example.com',
+                                'user': 'robey',
+                                'port': '3333'},
+            'spoo.example.com': {'crazy': 'something dumb  ',
+                                'hostname': 'spoo.example.com',
+                                'user': 'robey',
+                                'port': '3333'}
         }.items():
             values = dict(values,
                 hostname=host,
-                identityfile=os.path.expanduser("~/.ssh/id_rsa")
+                identityfile=[os.path.expanduser("~/.ssh/id_rsa")]
             )
             self.assertEquals(
                 paramiko.util.lookup_ssh_host_config(host, config),
@@ -159,7 +168,7 @@ class UtilTest (unittest.TestCase):
         # just verify that we can pull out 32 bytes and not get an exception.
         x = rng.read(32)
         self.assertEquals(len(x), 32)
-        
+
     def test_7_host_config_expose_issue_33(self):
         test_config_file = """
 Host www13.*
