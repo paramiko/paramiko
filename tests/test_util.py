@@ -249,3 +249,25 @@ Host portonly
                 host_config(host, config)['proxycommand'],
                 val
             )
+
+    def test_11_host_config_test_negation(self):
+        test_config_file = """
+Host www13.* !*.example.com
+    Port 22
+
+Host *.example.com !www13.*
+    Port 2222
+
+Host www13.*
+    Port 8080
+
+Host *
+    Port 3333
+    """
+        f = cStringIO.StringIO(test_config_file)
+        config = paramiko.util.parse_ssh_config(f)
+        host = 'www13.example.com'
+        self.assertEquals(
+            paramiko.util.lookup_ssh_host_config(host, config),
+            {'hostname': host, 'port': '8080'}
+        )
