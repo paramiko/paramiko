@@ -271,3 +271,30 @@ Host *
             paramiko.util.lookup_ssh_host_config(host, config),
             {'hostname': host, 'port': '8080'}
         )
+    def test_10_host_config_test_proxycommand(self):
+        test_config_file = """
+Host proxy-with-equal-divisor-and-space
+ProxyCommand = foo=bar
+
+Host proxy-with-equal-divisor-and-no-space
+ProxyCommand=foo=bar
+
+Host proxy-without-equal-divisor
+ProxyCommand foo=bar:%h-%p
+    """
+        for host, values in {
+            'proxy-with-equal-divisor-and-space'   :{'hostname': 'proxy-with-equal-divisor-and-space',
+                                                     'proxycommand': 'foo=bar'},
+            'proxy-with-equal-divisor-and-no-space':{'hostname': 'proxy-with-equal-divisor-and-no-space',
+                                                     'proxycommand': 'foo=bar'},
+            'proxy-without-equal-divisor'          :{'hostname': 'proxy-without-equal-divisor',
+                                                     'proxycommand':
+                                                     'foo=bar:proxy-without-equal-divisor-22'}
+        }.items():
+
+            f = cStringIO.StringIO(test_config_file)
+            config = paramiko.util.parse_ssh_config(f)
+            self.assertEquals(
+                paramiko.util.lookup_ssh_host_config(host, config),
+                values
+            )
