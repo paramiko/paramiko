@@ -213,7 +213,6 @@ Host *
         self.assertRaises(AssertionError,
                           lambda: paramiko.util.retry_on_signal(raises_other_exception))
 
-
     def test_9_host_config_test_negation(self):
         test_config_file = """
 Host www13.* !*.example.com
@@ -235,6 +234,7 @@ Host *
             paramiko.util.lookup_ssh_host_config(host, config),
             {'hostname': host, 'port': '8080'}
         )
+
     def test_10_host_config_test_proxycommand(self):
         test_config_file = """
 Host proxy-with-equal-divisor-and-space
