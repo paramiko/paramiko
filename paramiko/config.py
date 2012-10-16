@@ -120,7 +120,7 @@ class SSHConfig (object):
                 self._config.append(host)
                 value = value.split()
                 host = {key:value,'config':{}}
-            #identitifile is a special case, since it is allowed to be
+            #identityfile is a special case, since it is allowed to be
             # specified multiple times and they should be tried in order
             # of specification.
             elif key == 'identityfile':
