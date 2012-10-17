@@ -354,6 +354,10 @@ class BufferedFile (object):
         """
         return self
 
+    @property
+    def closed(self):
+        return self._closed
+
 
     ###  overrides...
 
