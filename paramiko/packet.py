@@ -29,7 +29,7 @@ import time
 
 from paramiko.common import *
 from paramiko import util
-from paramiko.ssh_exception import SSHException
+from paramiko.ssh_exception import SSHException, BadProxyCommand
 from paramiko.message import Message
 
 
@@ -254,6 +254,8 @@ class Packetizer (object):
                     retry_write = True
                 else:
                     n = -1
+            except BadProxyCommand:
+                raise
             except Exception:
                 # could be: (32, 'Broken pipe')
                 n = -1
