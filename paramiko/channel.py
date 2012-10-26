@@ -25,6 +25,7 @@ import sys
 import time
 import threading
 import socket
+import errno
 import os
 
 from paramiko.common import *
