@@ -29,15 +29,6 @@ import array
 import platform
 import ctypes.wintypes
 
-# if pywin32 is available, use it
-_has_win32all = False
-try:
-    # win32gui is preferred over win32ui to avoid MFC dependencies
-    import win32gui
-    _has_win32all = True
-except ImportError:
-    pass
-
 _AGENT_COPYDATA_ID = 0x804e50ba
 _AGENT_MAX_MSGLEN = 8192
 # Note: The WM_COPYDATA value is pulled from win32con, as a workaround
@@ -46,16 +37,7 @@ win32con_WM_COPYDATA = 74
 
 
 def _get_pageant_window_object():
-    if _has_win32all:
-        try:
-            hwnd = win32gui.FindWindow('Pageant', 'Pageant')
-            return hwnd
-        except win32gui.error:
-            pass
-    else:
-        # Return 0 if there is no Pageant window.
-        return ctypes.windll.user32.FindWindowA('Pageant', 'Pageant')
-    return None
+    return ctypes.windll.user32.FindWindowA('Pageant', 'Pageant')
 
 
 def can_talk_to_agent():
@@ -102,12 +84,7 @@ def _query_pageant(msg):
         # Create a string to use for the SendMessage function call
         cds = COPYDATASTRUCT(_AGENT_COPYDATA_ID, char_buffer_size, char_buffer_address)
 
-        if _has_win32all:
-            # win32gui.SendMessage should also allow the same pattern as
-            # ctypes, but let's keep it like this for now...
-            response = win32gui.SendMessage(hwnd, win32con_WM_COPYDATA, ctypes.sizeof(cds), ctypes.addressof(cds))
-        else:
-            response = ctypes.windll.user32.SendMessageA(hwnd, win32con_WM_COPYDATA, ctypes.sizeof(cds), ctypes.byref(cds))
+        response = ctypes.windll.user32.SendMessageA(hwnd, win32con_WM_COPYDATA, ctypes.sizeof(cds), ctypes.byref(cds))
 
         if response > 0:
             datalen = pymap.read(4)
