@@ -36,6 +36,7 @@ from paramiko import OPEN_SUCCEEDED, OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED
 from paramiko.common import MSG_KEXINIT, MSG_CHANNEL_WINDOW_ADJUST
 from paramiko.message import Message
 from loop import LoopSocket
+from util import ParamikoTest
 
 
 LONG_BANNER = """\
@@ -105,11 +106,7 @@ class NullServer (ServerInterface):
         return OPEN_SUCCEEDED
 
 
-class TransportTest (unittest.TestCase):
-
-    assertTrue = unittest.TestCase.failUnless   # for Python 2.3 and below
-    assertFalse = unittest.TestCase.failIf      # for Python 2.3 and below
-
+class TransportTest(ParamikoTest):
     def setUp(self):
         self.socks = LoopSocket()
         self.sockc = LoopSocket()

@@ -26,6 +26,8 @@ import unittest
 from paramiko.buffered_pipe import BufferedPipe, PipeTimeout
 from paramiko import pipe
 
+from util import ParamikoTest
+
 
 def delay_thread(pipe):
     pipe.feed('a')
@@ -39,11 +41,7 @@ def close_thread(pipe):
     pipe.close()
 
 
-class BufferedPipeTest (unittest.TestCase):
-
-    assertTrue = unittest.TestCase.failUnless   # for Python 2.3 and below
-    assertFalse = unittest.TestCase.failIf      # for Python 2.3 and below
-
+class BufferedPipeTest(ParamikoTest):
     def test_1_buffered_pipe(self):
         p = BufferedPipe()
         self.assert_(not p.read_ready())
