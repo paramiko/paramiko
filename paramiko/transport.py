@@ -1885,7 +1885,8 @@ class Transport (threading.Thread):
             mac_key = self._compute_key('F', mac_engine.digest_size)
         else:
             mac_key = self._compute_key('E', mac_engine.digest_size)
-        self.packetizer.set_outbound_cipher(engine, block_size, mac_engine, mac_size, mac_key)
+        sdctr = self.local_cipher.endswith('-ctr')
+        self.packetizer.set_outbound_cipher(engine, block_size, mac_engine, mac_size, mac_key, sdctr)
         compress_out = self._compression_info[self.local_compression][0]
         if (compress_out is not None) and ((self.local_compression != 'zlib@openssh.com') or self.authenticated):
             self._log(DEBUG, 'Switching on outbound compression ...')
