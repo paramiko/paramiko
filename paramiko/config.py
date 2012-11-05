@@ -55,7 +55,15 @@ class SSHConfig (object):
             line = line.rstrip('\n').lstrip()
             if (line == '') or (line[0] == '#'):
                 continue
-            if '=' in line:
+
+            # This is not actually true for some params, like
+            # ProxyCommand that should be split in the first space but
+            # it may contain an arbitrary string value with the `=' on
+            # it. So, let's treat it as a special case.
+            #
+            # Example that ilustrates this problem:
+            #   ssh -q -o StrictHostKeyChecking=no localhost nc %h 22
+            if '=' in line and not line.startswith('ProxyCommand'):
                 key, value = line.split('=', 1)
                 key = key.strip().lower()
             else:
@@ -167,7 +175,13 @@ class SSHConfig (object):
                     ('%l', fqdn),
                     ('%u', user),
                     ('%r', remoteuser)
-                ]
+                ],
+                'proxycommand' :
+                [
+                    ('%h', config['hostname']),
+                    ('%p', port),
+                    ('%r', remoteuser),
+                ],
                 }
         for k in config:
             if k in replacements:
