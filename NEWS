@@ -32,6 +32,8 @@ v1.8.1 (DD MM YYYY)
 v1.8.0 (3rd Oct 2012)
 ---------------------
 
+* #17 ('ssh' 28): Fix spurious `NoneType has no attribute 'error'` and similar
+  exceptions that crop up on interpreter exit.
 * 'ssh' 32: Raise a more useful error explaining which `known_hosts` key line was
   problematic, when encountering `binascii` issues decoding known host keys.
   Thanks to `@thomasvs` for catch & patch.
