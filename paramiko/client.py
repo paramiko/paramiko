@@ -272,9 +272,9 @@ class SSHClient (object):
         @type look_for_keys: bool
         @param compress: set to True to turn on compression
         @type compress: bool
-        @param sock: an open socket or direct-tcpip channel from another
-            SSHClient class to use for communication with the target host.
-        @type channel: socket
+        @param sock: an open socket or socket-like object (such as a
+            L{Channel}) to use for communication to the target host
+        @type sock: socket
 
         @raise BadHostKeyException: if the server's host key could not be
             verified
