@@ -65,7 +65,7 @@ from auth_handler import AuthHandler
 from channel import Channel, ChannelFile
 from ssh_exception import SSHException, PasswordRequiredException, \
     BadAuthenticationType, ChannelException, BadHostKeyException, \
-    AuthenticationException
+    AuthenticationException, ProxyCommandFailure
 from server import ServerInterface, SubsystemHandler, InteractiveQuery
 from rsakey import RSAKey
 from dsskey import DSSKey
@@ -83,6 +83,7 @@ from agent import Agent, AgentKey
 from pkey import PKey
 from hostkeys import HostKeys
 from config import SSHConfig
+from proxy import ProxyCommand
 
 # fix module names for epydoc
 for c in locals().values():
@@ -119,6 +120,8 @@ __all__ = [ 'Transport',
             'BadAuthenticationType',
             'ChannelException',
             'BadHostKeyException',
+            'ProxyCommand',
+            'ProxyCommandFailure',
             'SFTP',
             'SFTPFile',
             'SFTPHandle',
