@@ -157,26 +157,25 @@ class SSHConfig (object):
         host = socket.gethostname().split('.')[0]
         fqdn = socket.getfqdn()
         homedir = os.path.expanduser('~')
-        replacements = {'controlpath' :
-                [
-                    ('%h', config['hostname']),
-                    ('%l', fqdn),
-                    ('%L', host),
-                    ('%n', hostname),
-                    ('%p', port),
-                    ('%r', remoteuser),
-                    ('%u', user)
-                ],
-                'identityfile' :
-                [
-                    ('~', homedir),
-                    ('%d', homedir),
-                    ('%h', config['hostname']),
-                    ('%l', fqdn),
-                    ('%u', user),
-                    ('%r', remoteuser)
-                ]
-                }
+        replacements = {
+            'controlpath': [
+                ('%h', config['hostname']),
+                ('%l', fqdn),
+                ('%L', host),
+                ('%n', hostname),
+                ('%p', port),
+                ('%r', remoteuser),
+                ('%u', user)
+            ],
+            'identityfile': [
+                ('~', homedir),
+                ('%d', homedir),
+                ('%h', config['hostname']),
+                ('%l', fqdn),
+                ('%u', user),
+                ('%r', remoteuser)
+            ]
+        }
         for k in config:
             if k in replacements:
                 for find, replace in replacements[k]:
