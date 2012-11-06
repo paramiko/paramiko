@@ -24,7 +24,7 @@ import os
 from shlex import split as shlsplit
 from subprocess import Popen, PIPE
 
-from ssh.ssh_exception import ProxyCommandFailure
+from paramiko.ssh_exception import ProxyCommandFailure
 
 
 class ProxyCommand(object):
