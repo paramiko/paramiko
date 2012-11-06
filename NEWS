@@ -15,6 +15,9 @@ Releases
 v1.9.0 (DD MM YYYY)
 -------------------
 
+* #97 (with a little #93): Improve config parsing of `ProxyCommand` directives
+  and provide a wrapper class to allow subprocess-driven proxy commands to be
+  used as `sock=` arguments for `SSHClient.connect`.
 * #77: Allow `SSHClient.connect()` to take an explicit `sock` parameter
   overriding creation of an internal, implicit socket object.
 * Thanks in no particular order to Erwin Bolwidt, Oskari Saarenmaa, Steven
