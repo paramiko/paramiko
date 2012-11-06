@@ -1,5 +1,6 @@
 *.pyc
 build/
 dist/
+.tox/
 paramiko.egg-info/
 test.log
