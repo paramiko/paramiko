@@ -22,6 +22,7 @@ L{ProxyCommand}.
 
 import os
 from shlex import split as shlsplit
+import signal
 from subprocess import Popen, PIPE
 
 from paramiko.ssh_exception import ProxyCommandFailure
@@ -82,7 +83,7 @@ class ProxyCommand(object):
             raise BadProxyCommand(' '.join(self.cmd), e.strerror)
 
     def close(self):
-        self.process.terminate()
+        os.kill(self.process.pid, signal.SIGTERM)
 
     def settimeout(self, timeout):
         # Timeouts are meaningless for this implementation, but are part of the
