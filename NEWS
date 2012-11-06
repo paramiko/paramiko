@@ -12,8 +12,8 @@ Issues noted as "Fabric #NN" can be found at https://github.com/fabric/fabric/.
 Releases
 ========
 
-v1.8.1 (DD MM YYYY)
--------------------
+v1.8.1 (6th Nov 2012)
+---------------------
 
 * #90: Ensure that callbacks handed to `SFTPClient.get()` always fire at least
   once, even for zero-length files downloaded. Thanks to Github user `@enB` for
