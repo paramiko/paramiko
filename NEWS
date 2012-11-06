@@ -18,9 +18,9 @@ v1.9.0 (DD MM YYYY)
 * #77: Allow `SSHClient.connect()` to take an explicit `sock` parameter
   overriding creation of an internal, implicit socket object.
 * Thanks in no particular order to Erwin Bolwidt, Oskari Saarenmaa, Steven
-  Noonan, Vladimir Lazarenko, Lincoln de Sousa, Valentino Volonghi and Github
-  user `@acrish` for the various and sundry patches leading to the above
-  changes.
+  Noonan, Vladimir Lazarenko, Lincoln de Sousa, Valentino Volonghi, Olle
+  Lundberg, and Github user `@acrish` for the various and sundry patches
+  leading to the above changes.
 
 v1.8.1 (DD MM YYYY)
 -------------------
