@@ -8,6 +8,8 @@ install:
   - pip install -e .
 script: python test.py
 notifications:
+  email:
+    on_failure: change
   irc:
     channels: "irc.freenode.org#fabric"
     on_success: change
