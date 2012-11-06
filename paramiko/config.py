@@ -22,9 +22,12 @@ L{SSHConfig}.
 
 import fnmatch
 import os
+import re
 import socket
 
 SSH_PORT=22
+proxy_re = re.compile(r"^(proxycommand)\s*=*\s*(.*)", re.I)
+
 
 class SSHConfig (object):
     """
@@ -56,8 +59,13 @@ class SSHConfig (object):
             if (line == '') or (line[0] == '#'):
                 continue
             if '=' in line:
-                key, value = line.split('=', 1)
-                key = key.strip().lower()
+                # Ensure ProxyCommand gets properly split
+                if line.lower().strip().startswith('proxycommand'):
+                    match = proxy_re.match(line)
+                    key, value = match.group(1).lower(), match.group(2)
+                else:
+                    key, value = line.split('=', 1)
+                    key = key.strip().lower()
             else:
                 # find first whitespace, and split there
                 i = 0
