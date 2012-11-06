@@ -25,8 +25,8 @@ v1.9.0 (DD MM YYYY)
   Lundberg, and Github user `@acrish` for the various and sundry patches
   leading to the above changes.
 
-v1.8.1 (DD MM YYYY)
--------------------
+v1.8.1 (6th Nov 2012)
+---------------------
 
 * #90: Ensure that callbacks handed to `SFTPClient.get()` always fire at least
   once, even for zero-length files downloaded. Thanks to Github user `@enB` for
