@@ -196,7 +196,7 @@ Host *
         self.assertRaises(AssertionError,
                           lambda: paramiko.util.retry_on_signal(raises_other_exception))
 
-    def test_9_proxycommand_config_parsing(self):
+    def test_9_proxycommand_config_equals_parsing(self):
         """
         ProxyCommand should not split on equals signs within the value.
         """
@@ -213,4 +213,30 @@ Host equals-delimited
             self.assertEquals(
                 host_config(host, config)['proxycommand'],
                 'foo bar=biz baz'
+            )
+
+    def test_10_proxycommand_interpolation(self):
+        """
+        ProxyCommand should perform interpolation on the value
+        """
+        config = paramiko.util.parse_ssh_config(cStringIO.StringIO("""
+Host *
+    Port 25
+    ProxyCommand host %h port %p
+
+Host specific
+    Port 37
+    ProxyCommand host %h port %p lol
+
+Host portonly
+    Port 155
+"""))
+        for host, val in (
+            ('foo.com', "host foo.com port 25"),
+            ('specific', "host specific port 37 lol"),
+            ('portonly', "host portonly port 155"),
+        ):
+            self.assertEquals(
+                host_config(host, config)['proxycommand'],
+                val
             )

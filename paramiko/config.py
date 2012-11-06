@@ -174,7 +174,12 @@ class SSHConfig (object):
                 ('%l', fqdn),
                 ('%u', user),
                 ('%r', remoteuser)
-            ]
+            ],
+            'proxycommand': [
+                ('%h', config['hostname']),
+                ('%p', port),
+                ('%r', remoteuser),
+            ],
         }
         for k in config:
             if k in replacements:
