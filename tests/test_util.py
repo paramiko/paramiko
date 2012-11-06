@@ -27,6 +27,7 @@ import os
 import unittest
 from Crypto.Hash import SHA
 import paramiko.util
+from paramiko.util import lookup_ssh_host_config as host_config
 
 from util import ParamikoTest
 
@@ -151,7 +152,7 @@ class UtilTest(ParamikoTest):
         x = rng.read(32)
         self.assertEquals(len(x), 32)
         
-    def test_7_host_config_expose_issue_33(self):
+    def test_7_host_config_expose_ssh_issue_33(self):
         test_config_file = """
 Host www13.*
     Port 22
@@ -194,3 +195,22 @@ Host *
             raise AssertionError('foo')
         self.assertRaises(AssertionError,
                           lambda: paramiko.util.retry_on_signal(raises_other_exception))
+
+    def test_9_proxycommand_config_parsing(self):
+        """
+        ProxyCommand should not split on equals signs within the value.
+        """
+        conf = """
+Host space-delimited
+    ProxyCommand foo bar=biz baz
+
+Host equals-delimited
+    ProxyCommand=foo bar=biz baz
+"""
+        f = cStringIO.StringIO(conf)
+        config = paramiko.util.parse_ssh_config(f)
+        for host in ('space-delimited', 'equals-delimited'):
+            self.assertEquals(
+                host_config(host, config)['proxycommand'],
+                'foo bar=biz baz'
+            )
