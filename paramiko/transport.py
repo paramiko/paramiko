@@ -44,7 +44,8 @@ from paramiko.primes import ModulusPack
 from paramiko.rsakey import RSAKey
 from paramiko.server import ServerInterface
 from paramiko.sftp_client import SFTPClient
-from paramiko.ssh_exception import SSHException, BadAuthenticationType, ChannelException
+from paramiko.ssh_exception import (SSHException, BadAuthenticationType,
+    ChannelException, ProxyCommandFailure)
 from paramiko.util import retry_on_signal
 
 from Crypto import Random
@@ -1674,6 +1675,8 @@ class Transport (threading.Thread):
                 timeout = 2
             try:
                 buf = self.packetizer.readline(timeout)
+            except ProxyCommandFailure:
+                raise
             except Exception, x:
                 raise SSHException('Error reading SSH protocol banner' + str(x))
             if buf[:4] == 'SSH-':
