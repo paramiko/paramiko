@@ -155,7 +155,11 @@ class SSHConfig (object):
             remoteuser = user
 
         host = socket.gethostname().split('.')[0]
-        fqdn = socket.getfqdn()
+        fqdn = socket.getfqdn(
+            socket.gethostbyname(
+                socket.gethostname()
+            )
+        )
         homedir = os.path.expanduser('~')
         replacements = {
             'controlpath': [
