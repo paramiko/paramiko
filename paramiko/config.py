@@ -154,19 +154,20 @@ class SSHConfig (object):
         else:
             remoteuser = user
 
-        fqdn = None
         host = socket.gethostname().split('.')[0]
+        fqdn = None
+        address_family = config.get('addressfamily', 'any').lower()
 
-        ipv4_results = socket.getaddrinfo(host, None, socket.AF_INET,
-                                          socket.SOCK_DGRAM, socket.IPPROTO_IP,
-                                          socket.AI_CANONNAME)
-        for res in ipv4_results:
-            af, socktype, proto, canonname, sa = res
-            if canonname and '.' in canonname:
-                fqdn = canonname
-                break
-
-        if fqdn is None and socket.has_ipv6:
+        if address_family == 'inet':
+            ipv4_results = socket.getaddrinfo(host, None, socket.AF_INET,
+                                              socket.SOCK_DGRAM, socket.IPPROTO_IP,
+                                              socket.AI_CANONNAME)
+            for res in ipv4_results:
+                af, socktype, proto, canonname, sa = res
+                if canonname and '.' in canonname:
+                    fqdn = canonname
+                    break
+        elif address_family == 'inet6':
             ipv6_results = socket.getaddrinfo(host, None, socket.AF_INET6,
                                               socket.SOCK_DGRAM,
                                               socket.IPPROTO_IP,
@@ -176,6 +177,9 @@ class SSHConfig (object):
                 if canonname and '.' in canonname:
                     fqdn = canonname
                     break
+
+        if fqdn is None:
+            fqdn = socket.getfqdn()
 
         homedir = os.path.expanduser('~')
         replacements = {
