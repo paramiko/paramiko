@@ -121,13 +121,10 @@ class SSHConfig (object):
         ret = {}
         for match in matches:
             for key, value in match['config'].iteritems():
-                if key == 'identityfile':
-                    if key in ret:
-                        ret['identityfile'].extend(value)
-                    else:
-                        ret['identityfile'] = value
-                elif key not in ret:
+                if key not in ret:
                     ret[key] = value
+                elif key == 'identityfile':
+                    ret[key].extend(value)
         ret = self._expand_variables(ret, hostname)
         return ret
 
