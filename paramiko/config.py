@@ -33,12 +33,46 @@ class LazyFqdn(object):
     Returns the host's fqdn on request as string.
     """
 
-    def __init__(self):
+    def __init__(self, config):
         self.fqdn = None
+        self.config = config
 
     def __str__(self):
         if self.fqdn is None:
-            self.fqdn = socket.getfqdn()
+            #
+            # If the SSH config contains AddressFamily, use that when determining
+            # the local host's FQDN. Using socket.getfqdn() from the standard
+            # library is the most general solution, but can result in noticeable
+            # delays on some platforms when IPv6 is misconfigured or not available,
+            # as it calls getaddrinfo with no address family specified, so both
+            # IPv4 and IPv6 are checked.
+            #
+
+            address_family = self.config.get('addressfamily', 'any').lower()
+
+            if address_family == 'inet':
+                ipv4_results = socket.getaddrinfo(host, None, socket.AF_INET,
+                                                  socket.SOCK_DGRAM, socket.IPPROTO_IP,
+                                                  socket.AI_CANONNAME)
+                for res in ipv4_results:
+                    af, socktype, proto, canonname, sa = res
+                    if canonname and '.' in canonname:
+                        fqdn = canonname
+                        break
+            elif address_family == 'inet6':
+                ipv6_results = socket.getaddrinfo(host, None, socket.AF_INET6,
+                                                  socket.SOCK_DGRAM,
+                                                  socket.IPPROTO_IP,
+                                                  socket.AI_CANONNAME)
+                for res in ipv6_results:
+                    af, socktype, proto, canonname, sa = res
+                    if canonname and '.' in canonname:
+                        fqdn = canonname
+                        break
+
+            if fqdn is None:
+                fqdn = socket.getfqdn()
+            self.fqdn = fqdn
         return self.fqdn
 
 class SSHConfig (object):
@@ -167,7 +201,7 @@ class SSHConfig (object):
             remoteuser = user
 
         host = socket.gethostname().split('.')[0]
-        fqdn = LazyFqdn()
+        fqdn = LazyFqdn(self)
         homedir = os.path.expanduser('~')
         replacements = {
             'controlpath': [
