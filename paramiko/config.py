@@ -156,6 +156,16 @@ class SSHConfig (object):
 
         host = socket.gethostname().split('.')[0]
         fqdn = None
+
+        #
+        # If the SSH config contains AddressFamily, use that when determining
+        # the local host's FQDN. Using socket.getfqdn() from the standard
+        # library is the most general solution, but can result in noticeable
+        # delays on some platforms when IPv6 is misconfigured or not available,
+        # as it calls getaddrinfo with no address family specified, so both
+        # IPv4 and IPv6 are checked.
+        #
+
         address_family = config.get('addressfamily', 'any').lower()
 
         if address_family == 'inet':
