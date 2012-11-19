@@ -154,12 +154,29 @@ class SSHConfig (object):
         else:
             remoteuser = user
 
+        fqdn = None
         host = socket.gethostname().split('.')[0]
-        fqdn = socket.getfqdn(
-            socket.gethostbyname(
-                socket.gethostname()
-            )
-        )
+
+        ipv4_results = socket.getaddrinfo(host, None, socket.AF_INET,
+                                          socket.SOCK_DGRAM, socket.IPPROTO_IP,
+                                          socket.AI_CANONNAME)
+        for res in ipv4_results:
+            af, socktype, proto, canonname, sa = res
+            if canonname and '.' in canonname:
+                fqdn = canonname
+                break
+
+        if fqdn is None and socket.has_ipv6:
+            ipv6_results = socket.getaddrinfo(host, None, socket.AF_INET6,
+                                              socket.SOCK_DGRAM,
+                                              socket.IPPROTO_IP,
+                                              socket.AI_CANONNAME)
+            for res in ipv6_results:
+                af, socktype, proto, canonname, sa = res
+                if canonname and '.' in canonname:
+                    fqdn = canonname
+                    break
+
         homedir = os.path.expanduser('~')
         replacements = {
             'controlpath': [
