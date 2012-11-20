@@ -377,7 +377,8 @@ class SSHClient (object):
         stderr = chan.makefile_stderr('rb', bufsize)
         return stdin, stdout, stderr
 
-    def invoke_shell(self, term='vt100', width=80, height=24):
+    def invoke_shell(self, term='vt100', width=80, height=24, width_pixels=0,
+                height_pixels=0):
         """
         Start an interactive shell session on the SSH server.  A new L{Channel}
         is opened and connected to a pseudo-terminal using the requested
@@ -389,13 +390,17 @@ class SSHClient (object):
         @type width: int
         @param height: the height (in characters) of the terminal window
         @type height: int
+        @param width_pixels: the width (in pixels) of the terminal window
+        @type width_pixels: int
+        @param height_pixels: the height (in pixels) of the terminal window
+        @type height_pixels: int
         @return: a new channel connected to the remote shell
         @rtype: L{Channel}
 
         @raise SSHException: if the server fails to invoke a shell
         """
         chan = self._transport.open_session()
-        chan.get_pty(term, width, height)
+        chan.get_pty(term, width, height, width_pixels, height_pixels)
         chan.invoke_shell()
         return chan
 
