@@ -262,3 +262,33 @@ ProxyCommand foo=bar:%h-%p
                 paramiko.util.lookup_ssh_host_config(host, config),
                 values
             )
+
+    def test_11_host_config_test_identityfile(self):
+        test_config_file = """
+
+IdentityFile id_dsa0
+
+Host *
+IdentityFile id_dsa1
+
+Host dsa2
+IdentityFile id_dsa2
+
+Host dsa2*
+IdentityFile id_dsa22
+    """
+        for host, values in {
+            'foo'   :{'hostname': 'foo',
+                      'identityfile': ['id_dsa0', 'id_dsa1']},
+            'dsa2'  :{'hostname': 'dsa2',
+                      'identityfile': ['id_dsa0', 'id_dsa1', 'id_dsa2', 'id_dsa22']},
+            'dsa22' :{'hostname': 'dsa22',
+                      'identityfile': ['id_dsa0', 'id_dsa1', 'id_dsa22']}
+        }.items():
+
+            f = cStringIO.StringIO(test_config_file)
+            config = paramiko.util.parse_ssh_config(f)
+            self.assertEquals(
+                paramiko.util.lookup_ssh_host_config(host, config),
+                values
+            )
