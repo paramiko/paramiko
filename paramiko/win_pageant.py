@@ -23,10 +23,11 @@ Functions for communicating with Pageant, the basic windows ssh agent program.
 
 import struct
 import threading
-import mmap
 import array
 import platform
 import ctypes.wintypes
+
+import jaraco.windows.mmap as mmap
 
 _AGENT_COPYDATA_ID = 0x804e50ba
 _AGENT_MAX_MSGLEN = 8192
@@ -61,19 +62,21 @@ class COPYDATASTRUCT(ctypes.Structure):
         ]
 
 def _query_pageant(msg):
+    """
+    Communication with the Pageant process is done through a shared
+    memory-mapped file.
+    """
     hwnd = _get_pageant_window_object()
     if not hwnd:
         # Raise a failure to connect exception, pageant isn't running anymore!
         return None
 
+    # create a name for the mmap
     map_name = 'PageantRequest%08x' % threading.current_thread().ident
 
-    # Create the shared memory from which Pageant will read the request
-    pymap = mmap.mmap(-1, _AGENT_MAX_MSGLEN, tagname=map_name,
-        access=mmap.ACCESS_WRITE)
-    try:
+    pymap = mmap.MemoryMap(map_name, _AGENT_MAX_MSGLEN)
+    with pymap:
         pymap.write(msg)
-
         # Create an array buffer containing the mapped filename
         char_buffer = array.array("c", map_name + '\0')
         char_buffer_address, char_buffer_size = char_buffer.buffer_info()
@@ -90,9 +93,6 @@ def _query_pageant(msg):
             retlen = struct.unpack('>I', datalen)[0]
             return datalen + pymap.read(retlen)
         return None
-    finally:
-        pymap.close()
-
 
 class PageantConnection (object):
     """
