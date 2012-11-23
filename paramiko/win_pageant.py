@@ -27,6 +27,7 @@ import array
 import platform
 import ctypes.wintypes
 
+import jaraco.windows.security as security
 import jaraco.windows.mmap as mmap
 
 _AGENT_COPYDATA_ID = 0x804e50ba
@@ -74,7 +75,9 @@ def _query_pageant(msg):
     # create a name for the mmap
     map_name = 'PageantRequest%08x' % threading.current_thread().ident
 
-    pymap = mmap.MemoryMap(map_name, _AGENT_MAX_MSGLEN)
+    pymap = mmap.MemoryMap(map_name, _AGENT_MAX_MSGLEN,
+        security.get_security_attributes_for_user(),
+        )
     with pymap:
         pymap.write(msg)
         # Create an array buffer containing the mapped filename
