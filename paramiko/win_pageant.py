@@ -21,9 +21,8 @@
 Functions for communicating with Pageant, the basic windows ssh agent program.
 """
 
-import os
 import struct
-import tempfile
+import threading
 import mmap
 import array
 import platform
@@ -67,35 +66,32 @@ def _query_pageant(msg):
         # Raise a failure to connect exception, pageant isn't running anymore!
         return None
 
-    # Write our pageant request string into the file (pageant will read this to determine what to do)
-    filename = tempfile.mktemp('.pag')
-    map_filename = os.path.basename(filename)
+    map_name = 'PageantRequest%08x' % threading.current_thread().ident
 
-    f = open(filename, 'w+b')
-    f.write(msg )
-    # Ensure the rest of the file is empty, otherwise pageant will read this
-    f.write('\0' * (_AGENT_MAX_MSGLEN - len(msg)))
-    # Create the shared file map that pageant will use to read from
-    pymap = mmap.mmap(f.fileno(), _AGENT_MAX_MSGLEN, tagname=map_filename, access=mmap.ACCESS_WRITE)
+    # Create the shared memory from which Pageant will read the request
+    pymap = mmap.mmap(-1, _AGENT_MAX_MSGLEN, tagname=map_name,
+        access=mmap.ACCESS_WRITE)
     try:
+        pymap.write(msg)
+
         # Create an array buffer containing the mapped filename
-        char_buffer = array.array("c", map_filename + '\0')
+        char_buffer = array.array("c", map_name + '\0')
         char_buffer_address, char_buffer_size = char_buffer.buffer_info()
         # Create a string to use for the SendMessage function call
-        cds = COPYDATASTRUCT(_AGENT_COPYDATA_ID, char_buffer_size, char_buffer_address)
+        cds = COPYDATASTRUCT(_AGENT_COPYDATA_ID, char_buffer_size,
+            char_buffer_address)
 
-        response = ctypes.windll.user32.SendMessageA(hwnd, win32con_WM_COPYDATA, ctypes.sizeof(cds), ctypes.byref(cds))
+        response = ctypes.windll.user32.SendMessageA(hwnd,
+            win32con_WM_COPYDATA, ctypes.sizeof(cds), ctypes.byref(cds))
 
         if response > 0:
+            pymap.seek(0)
             datalen = pymap.read(4)
             retlen = struct.unpack('>I', datalen)[0]
             return datalen + pymap.read(retlen)
         return None
     finally:
         pymap.close()
-        f.close()
-        # Remove the file, it was temporary only
-        os.unlink(filename)
 
 
 class PageantConnection (object):
