@@ -28,6 +28,7 @@ import warnings
 
 from paramiko.agent import Agent
 from paramiko.common import *
+from paramiko.config import SSH_PORT
 from paramiko.dsskey import DSSKey
 from paramiko.hostkeys import HostKeys
 from paramiko.resource import ResourceManager
@@ -36,8 +37,6 @@ from paramiko.ssh_exception import SSHException, BadHostKeyException
 from paramiko.transport import Transport
 from paramiko.util import retry_on_signal
 
-
-SSH_PORT = 22
 
 class MissingHostKeyPolicy (object):
     """

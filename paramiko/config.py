@@ -25,7 +25,7 @@ import os
 import re
 import socket
 
-SSH_PORT=22
+SSH_PORT = 22
 proxy_re = re.compile(r"^(proxycommand)\s*=*\s*(.*)", re.I)
 
 

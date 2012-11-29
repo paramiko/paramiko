@@ -18,6 +18,8 @@ v1.10.0 (DD MM YYYY)
 * #113: Add `timeout` parameter to `SSHClient.exec_command` for easier setting
   of the command's internal channel object's timeout. Thanks to Cernov Vladimir
   for the patch.
+* #94: Remove duplication of SSH port constant. Thanks to Olle Lundberg for the
+  catch.
 
 v1.9.0 (6th Nov 2012)
 ---------------------
