@@ -12,6 +12,13 @@ Issues noted as "Fabric #NN" can be found at https://github.com/fabric/fabric/.
 Releases
 ========
 
+v1.10.0 (DD MM YYYY)
+--------------------
+
+* #113: Add `timeout` parameter to `SSHClient.exec_command` for easier setting
+  of the command's internal channel object's timeout. Thanks to Cernov Vladimir
+  for the patch.
+
 v1.9.0 (6th Nov 2012)
 ---------------------
 

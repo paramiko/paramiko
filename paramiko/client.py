@@ -350,7 +350,7 @@ class SSHClient (object):
             self._agent.close()
             self._agent = None
 
-    def exec_command(self, command, bufsize=-1):
+    def exec_command(self, command, bufsize=-1, timeout=None):
         """
         Execute a command on the SSH server.  A new L{Channel} is opened and
         the requested command is executed.  The command's input and output
@@ -361,12 +361,15 @@ class SSHClient (object):
         @type command: str
         @param bufsize: interpreted the same way as by the built-in C{file()} function in python
         @type bufsize: int
+        @param timeout: set command's channel timeout. See L{Channel.settimeout}.settimeout
+        @type timeout: int
         @return: the stdin, stdout, and stderr of the executing command
         @rtype: tuple(L{ChannelFile}, L{ChannelFile}, L{ChannelFile})
 
         @raise SSHException: if the server fails to execute the command
         """
         chan = self._transport.open_session()
+        chan.settimeout(timeout)
         chan.exec_command(command)
         stdin = chan.makefile('wb', bufsize)
         stdout = chan.makefile('rb', bufsize)
