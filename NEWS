@@ -20,6 +20,9 @@ v1.10.0 (DD MM YYYY)
   for the patch.
 * #94: Remove duplication of SSH port constant. Thanks to Olle Lundberg for the
   catch.
+* #80: Expose the internal "is closed" property of the file transfer class
+  `BufferedFile` as `.closed`, better conforming to Python's file interface.
+  Thanks to `@smunaut` and James Hiscock for catch & patch.
 
 v1.9.0 (6th Nov 2012)
 ---------------------
