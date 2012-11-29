@@ -605,10 +605,6 @@ class Channel (object):
         @raise socket.timeout: if no data is ready before the timeout set by
             L{settimeout}.
         """
-        if self.closed:
-            # this doesn't seem useful, but it is the documented behavior of Socket
-            raise socket.error(errno.EBADF, 'Socket is closed')
-
         try:
             out = self.in_buffer.read(nbytes, self.timeout)
         except PipeTimeout, e:
@@ -659,10 +655,6 @@ class Channel (object):
         
         @since: 1.1
         """
-        if self.closed:
-            # this doesn't seem useful, but it is the documented behavior of Socket
-            raise socket.error(errno.EBADF, 'Socket is closed')
-
         try:
             out = self.in_stderr_buffer.read(nbytes, self.timeout)
         except PipeTimeout, e:
@@ -716,10 +708,6 @@ class Channel (object):
         @raise socket.timeout: if no data could be sent before the timeout set
             by L{settimeout}.
         """
-        if self.closed:
-            # this doesn't seem useful, but it is the documented behavior of Socket
-            raise socket.error(errno.EBADF, 'Socket is closed')
-
         size = len(s)
         self.lock.acquire()
         try:
@@ -757,10 +745,6 @@ class Channel (object):
         
         @since: 1.1
         """
-        if self.closed:
-            # this doesn't seem useful, but it is the documented behavior of Socket
-            raise socket.error(errno.EBADF, 'Socket is closed')
-
         size = len(s)
         self.lock.acquire()
         try:
@@ -799,6 +783,9 @@ class Channel (object):
             This is irritating, but identically follows python's API.
         """
         while s:
+            if self.closed:
+                # this doesn't seem useful, but it is the documented behavior of Socket
+                raise socket.error('Socket is closed')
             sent = self.send(s)
             s = s[sent:]
         return None
