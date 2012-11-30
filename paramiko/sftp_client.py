@@ -567,12 +567,12 @@ class SFTPClient (BaseSFTP):
         try:
             while True:
                 data = fl.read(32768)
-                if len(data) == 0:
-                    break
                 fr.write(data)
                 size += len(data)
                 if callback is not None:
                     callback(size, file_size)
+                if len(data) == 0:
+                    break
         finally:
             fr.close()
         if confirm and file_size:
