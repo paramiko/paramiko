@@ -349,7 +349,7 @@ class SSHClient (object):
             self._agent.close()
             self._agent = None
 
-    def exec_command(self, command, bufsize=-1, timeout=None):
+    def exec_command(self, command, bufsize=-1, timeout=None, get_pty=False):
         """
         Execute a command on the SSH server.  A new L{Channel} is opened and
         the requested command is executed.  The command's input and output
@@ -368,6 +368,8 @@ class SSHClient (object):
         @raise SSHException: if the server fails to execute the command
         """
         chan = self._transport.open_session()
+        if(get_pty):
+            chan.get_pty()
         chan.settimeout(timeout)
         chan.exec_command(command)
         stdin = chan.makefile('wb', bufsize)
