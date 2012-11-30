@@ -15,6 +15,9 @@ Releases
 v1.10.0 (DD MM YYYY)
 --------------------
 
+* #71: Add `SFTPClient.putfo` and `.getfo` methods to allow direct
+  uploading/downloading of file-like objects. Thanks to Eric Buehl for the
+  patch.
 * #113: Add `timeout` parameter to `SSHClient.exec_command` for easier setting
   of the command's internal channel object's timeout. Thanks to Cernov Vladimir
   for the patch.
