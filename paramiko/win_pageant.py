@@ -21,6 +21,8 @@
 Functions for communicating with Pageant, the basic windows ssh agent program.
 """
 
+from __future__ import with_statement
+
 import struct
 import threading
 import array
