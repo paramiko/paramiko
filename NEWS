@@ -30,6 +30,12 @@ v1.10.0 (DD MM YYYY)
   dependent on ctypes for constructing appropriate structures and had ctypes
   implementations of all functionality. Thanks to Jason R. Coombs for the
   patch.
+* #98: On Windows, when interacting with the PuTTY PAgeant, Paramiko now
+  creates the shared memory map with explicit Security Attributes of the user,
+  which is the same technique employed by the canonical PuTTY library to
+  avoid permissions issues when Paramiko is running under a different UAC
+  context than the PuTTY Ageant process. Thanks to Jason R. Coombs for the
+  patch.
 
 v1.9.0 (6th Nov 2012)
 ---------------------
