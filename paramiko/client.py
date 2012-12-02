@@ -28,6 +28,7 @@ import warnings
 
 from paramiko.agent import Agent
 from paramiko.common import *
+from paramiko.config import SSH_PORT
 from paramiko.dsskey import DSSKey
 from paramiko.hostkeys import HostKeys
 from paramiko.resource import ResourceManager
@@ -36,8 +37,6 @@ from paramiko.ssh_exception import SSHException, BadHostKeyException
 from paramiko.transport import Transport
 from paramiko.util import retry_on_signal
 
-
-SSH_PORT = 22
 
 class MissingHostKeyPolicy (object):
     """
@@ -229,7 +228,7 @@ class SSHClient (object):
 
     def connect(self, hostname, port=SSH_PORT, username=None, password=None, pkey=None,
                 key_filename=None, timeout=None, allow_agent=True, look_for_keys=True,
-                compress=False):
+                compress=False, sock=None):
         """
         Connect to an SSH server and authenticate to it.  The server's host key
         is checked against the system host keys (see L{load_system_host_keys})
@@ -272,6 +271,9 @@ class SSHClient (object):
         @type look_for_keys: bool
         @param compress: set to True to turn on compression
         @type compress: bool
+        @param sock: an open socket or socket-like object (such as a
+            L{Channel}) to use for communication to the target host
+        @type sock: socket
 
         @raise BadHostKeyException: if the server's host key could not be
             verified
@@ -280,21 +282,23 @@ class SSHClient (object):
             establishing an SSH session
         @raise socket.error: if a socket error occurred while connecting
         """
-        for (family, socktype, proto, canonname, sockaddr) in socket.getaddrinfo(hostname, port, socket.AF_UNSPEC, socket.SOCK_STREAM):
-            if socktype == socket.SOCK_STREAM:
-                af = family
-                addr = sockaddr
-                break
-        else:
-            # some OS like AIX don't indicate SOCK_STREAM support, so just guess. :(
-            af, _, _, _, addr = socket.getaddrinfo(hostname, port, socket.AF_UNSPEC, socket.SOCK_STREAM)
-        sock = socket.socket(af, socket.SOCK_STREAM)
-        if timeout is not None:
-            try:
-                sock.settimeout(timeout)
-            except:
-                pass
-        retry_on_signal(lambda: sock.connect(addr))
+        if not sock:
+            for (family, socktype, proto, canonname, sockaddr) in socket.getaddrinfo(hostname, port, socket.AF_UNSPEC, socket.SOCK_STREAM):
+                if socktype == socket.SOCK_STREAM:
+                    af = family
+                    addr = sockaddr
+                    break
+            else:
+                # some OS like AIX don't indicate SOCK_STREAM support, so just guess. :(
+                af, _, _, _, addr = socket.getaddrinfo(hostname, port, socket.AF_UNSPEC, socket.SOCK_STREAM)
+            sock = socket.socket(af, socket.SOCK_STREAM)
+            if timeout is not None:
+                try:
+                    sock.settimeout(timeout)
+                except:
+                    pass
+            retry_on_signal(lambda: sock.connect(addr))
+
         t = self._transport = Transport(sock)
         t.use_compression(compress=compress)
         if self._log_channel is not None:
@@ -345,7 +349,7 @@ class SSHClient (object):
             self._agent.close()
             self._agent = None
 
-    def exec_command(self, command, bufsize=-1):
+    def exec_command(self, command, bufsize=-1, timeout=None):
         """
         Execute a command on the SSH server.  A new L{Channel} is opened and
         the requested command is executed.  The command's input and output
@@ -356,12 +360,15 @@ class SSHClient (object):
         @type command: str
         @param bufsize: interpreted the same way as by the built-in C{file()} function in python
         @type bufsize: int
+        @param timeout: set command's channel timeout. See L{Channel.settimeout}.settimeout
+        @type timeout: int
         @return: the stdin, stdout, and stderr of the executing command
         @rtype: tuple(L{ChannelFile}, L{ChannelFile}, L{ChannelFile})
 
         @raise SSHException: if the server fails to execute the command
         """
         chan = self._transport.open_session()
+        chan.settimeout(timeout)
         chan.exec_command(command)
         stdin = chan.makefile('wb', bufsize)
         stdout = chan.makefile('rb', bufsize)

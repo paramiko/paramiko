@@ -1,7 +1,7 @@
 release: docs
 	python setup.py sdist register upload
 
-docs:
+docs: paramiko/*
 	epydoc --no-private -o docs/ paramiko
 
 clean:
