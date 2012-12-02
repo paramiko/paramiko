@@ -113,3 +113,20 @@ class BadHostKeyException (SSHException):
         self.key = got_key
         self.expected_key = expected_key
 
+
+class ProxyCommandFailure (SSHException):
+    """
+    The "ProxyCommand" found in the .ssh/config file returned an error.
+
+    @ivar command: The command line that is generating this exception.
+    @type command: str
+    @ivar error: The error captured from the proxy command output.
+    @type error: str
+    """
+    def __init__(self, command, error):
+        SSHException.__init__(self,
+            '"ProxyCommand (%s)" returned non-zero exit status: %s' % (
+                command, error
+            )
+        )
+        self.error = error

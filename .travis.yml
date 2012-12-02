@@ -9,6 +9,6 @@ install:
 script: python test.py
 notifications:
   irc:
-    channels: "irc.freenode.org#fabric"
+    channels: "irc.freenode.org#paramiko"
     on_success: change
     on_failure: change

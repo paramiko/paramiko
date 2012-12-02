@@ -22,9 +22,12 @@ L{SSHConfig}.
 
 import fnmatch
 import os
+import re
 import socket
 
-SSH_PORT=22
+SSH_PORT = 22
+proxy_re = re.compile(r"^(proxycommand)\s*=*\s*(.*)", re.I)
+
 
 class SSHConfig (object):
     """
@@ -56,8 +59,13 @@ class SSHConfig (object):
             if (line == '') or (line[0] == '#'):
                 continue
             if '=' in line:
-                key, value = line.split('=', 1)
-                key = key.strip().lower()
+                # Ensure ProxyCommand gets properly split
+                if line.lower().strip().startswith('proxycommand'):
+                    match = proxy_re.match(line)
+                    key, value = match.group(1).lower(), match.group(2)
+                else:
+                    key, value = line.split('=', 1)
+                    key = key.strip().lower()
             else:
                 # find first whitespace, and split there
                 i = 0
@@ -149,26 +157,30 @@ class SSHConfig (object):
         host = socket.gethostname().split('.')[0]
         fqdn = socket.getfqdn()
         homedir = os.path.expanduser('~')
-        replacements = {'controlpath' :
-                [
-                    ('%h', config['hostname']),
-                    ('%l', fqdn),
-                    ('%L', host),
-                    ('%n', hostname),
-                    ('%p', port),
-                    ('%r', remoteuser),
-                    ('%u', user)
-                ],
-                'identityfile' :
-                [
-                    ('~', homedir),
-                    ('%d', homedir),
-                    ('%h', config['hostname']),
-                    ('%l', fqdn),
-                    ('%u', user),
-                    ('%r', remoteuser)
-                ]
-                }
+        replacements = {
+            'controlpath': [
+                ('%h', config['hostname']),
+                ('%l', fqdn),
+                ('%L', host),
+                ('%n', hostname),
+                ('%p', port),
+                ('%r', remoteuser),
+                ('%u', user)
+            ],
+            'identityfile': [
+                ('~', homedir),
+                ('%d', homedir),
+                ('%h', config['hostname']),
+                ('%l', fqdn),
+                ('%u', user),
+                ('%r', remoteuser)
+            ],
+            'proxycommand': [
+                ('%h', config['hostname']),
+                ('%p', port),
+                ('%r', remoteuser),
+            ],
+        }
         for k in config:
             if k in replacements:
                 for find, replace in replacements[k]:
