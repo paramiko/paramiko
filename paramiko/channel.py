@@ -25,6 +25,7 @@ import sys
 import time
 import threading
 import socket
+import errno
 import os
 
 from paramiko.common import *
@@ -590,7 +591,7 @@ class Channel (object):
         """
         return self.in_buffer.read_ready()
 
-    def recv(self, nbytes):
+    def recv(self, nbytes, ignore_closed = False):
         """
         Receive data from the channel.  The return value is a string
         representing the data received.  The maximum amount of data to be
@@ -599,12 +600,17 @@ class Channel (object):
 
         @param nbytes: maximum number of bytes to read.
         @type nbytes: int
+        @param ignore_closed: whether to ignore failing when the channel has been closed 
+                              (for backwards compatibility)
+        @type ignore_closed: bool 
         @return: data.
         @rtype: str
         
         @raise socket.timeout: if no data is ready before the timeout set by
             L{settimeout}.
+        @raise socket.error: if the channel has been closed (EBADF)
         """
+        self._assert_not_closed(ignore_closed)
         try:
             out = self.in_buffer.read(nbytes, self.timeout)
         except PipeTimeout, e:
@@ -636,7 +642,7 @@ class Channel (object):
         """
         return self.in_stderr_buffer.read_ready()
 
-    def recv_stderr(self, nbytes):
+    def recv_stderr(self, nbytes, ignore_closed = False):
         """
         Receive data from the channel's stderr stream.  Only channels using
         L{exec_command} or L{invoke_shell} without a pty will ever have data
@@ -647,14 +653,19 @@ class Channel (object):
 
         @param nbytes: maximum number of bytes to read.
         @type nbytes: int
+        @param ignore_closed: whether to ignore failing when the channel has been closed 
+                              (for backwards compatibility)
+        @type ignore_closed: bool 
         @return: data.
         @rtype: str
         
         @raise socket.timeout: if no data is ready before the timeout set by
             L{settimeout}.
+        @raise socket.error: if the channel has been closed (EBADF)
         
         @since: 1.1
         """
+        self._assert_not_closed(ignore_closed)
         try:
             out = self.in_stderr_buffer.read(nbytes, self.timeout)
         except PipeTimeout, e:
@@ -691,8 +702,12 @@ class Channel (object):
             return self.out_window_size > 0
         finally:
             self.lock.release()
-    
-    def send(self, s):
+
+    def _assert_not_closed(self, ignore_closed = False):
+        if self.closed and not ignore_closed:
+            raise socket.error(errno.EBADF, 'Socket is closed')
+
+    def send(self, s, ignore_closed = False):
         """
         Send data to the channel.  Returns the number of bytes sent, or 0 if
         the channel stream is closed.  Applications are responsible for
@@ -702,12 +717,17 @@ class Channel (object):
 
         @param s: data to send
         @type s: str
+        @param ignore_closed: whether to ignore failing when the channel has been closed 
+                              (for backwards compatibility)
+        @type ignore_closed: bool 
         @return: number of bytes actually sent
         @rtype: int
 
         @raise socket.timeout: if no data could be sent before the timeout set
             by L{settimeout}.
+        @raise socket.error: if the channel has been closed (EBADF)
         """
+        self._assert_not_closed(ignore_closed)
         size = len(s)
         self.lock.acquire()
         try:
@@ -726,7 +746,7 @@ class Channel (object):
         self.transport._send_user_message(m)
         return size
 
-    def send_stderr(self, s):
+    def send_stderr(self, s, ignore_closed = False):
         """
         Send data to the channel on the "stderr" stream.  This is normally
         only used by servers to send output from shell commands -- clients
@@ -737,14 +757,19 @@ class Channel (object):
         
         @param s: data to send.
         @type s: str
+        @param ignore_closed: whether to ignore failing when the channel has been closed 
+                              (for backwards compatibility)
+        @type ignore_closed: bool 
         @return: number of bytes actually sent.
         @rtype: int
         
         @raise socket.timeout: if no data could be sent before the timeout set
             by L{settimeout}.
-        
+        @raise socket.error: if the channel has been closed (EBADF)
+
         @since: 1.1
         """
+        self._assert_not_closed(ignore_closed)
         size = len(s)
         self.lock.acquire()
         try:
@@ -783,9 +808,7 @@ class Channel (object):
             This is irritating, but identically follows python's API.
         """
         while s:
-            if self.closed:
-                # this doesn't seem useful, but it is the documented behavior of Socket
-                raise socket.error('Socket is closed')
+            self._assert_not_closed()
             sent = self.send(s)
             s = s[sent:]
         return None
@@ -808,8 +831,7 @@ class Channel (object):
         @since: 1.1
         """
         while s:
-            if self.closed:
-                raise socket.error('Socket is closed')
+            self._assert_not_closed()
             sent = self.send_stderr(s)
             s = s[sent:]
         return None
@@ -1242,7 +1264,7 @@ class ChannelFile (BufferedFile):
         return '<paramiko.ChannelFile from ' + repr(self.channel) + '>'
 
     def _read(self, size):
-        return self.channel.recv(size)
+        return self.channel.recv(size, ignore_closed = True)
 
     def _write(self, data):
         self.channel.sendall(data)
@@ -1254,7 +1276,7 @@ class ChannelStderrFile (ChannelFile):
         ChannelFile.__init__(self, channel, mode, bufsize)
 
     def _read(self, size):
-        return self.channel.recv_stderr(size)
+        return self.channel.recv_stderr(size, ignore_closed = True)
     
     def _write(self, data):
         self.channel.sendall_stderr(data)
