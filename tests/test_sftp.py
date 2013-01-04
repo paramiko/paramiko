@@ -188,6 +188,17 @@ class SFTPTest (unittest.TestCase):
         finally:
             sftp.remove(FOLDER + '/duck.txt')
 
+    def test_3_sftp_file_can_be_used_as_context_manager(self):
+        """
+        verify that an opened file can be used as a context manager
+        """
+        try:
+            with sftp.open(FOLDER + '/duck.txt', 'w') as f:
+                f.write(ARTICLE)
+            self.assertEqual(sftp.stat(FOLDER + '/duck.txt').st_size, 1483)
+        finally:
+            sftp.remove(FOLDER + '/duck.txt')
+
     def test_4_append(self):
         """
         verify that a file can be opened for append, and tell() still works.
