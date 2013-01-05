@@ -192,6 +192,10 @@ class SFTPTest (unittest.TestCase):
         """
         verify that an opened file can be used as a context manager
         """
+        major, minor, micro, releaselevel, serial = sys.version_info
+        if (major, minor) <= (2, 5):
+            return
+
         try:
             with sftp.open(FOLDER + '/duck.txt', 'w') as f:
                 f.write(ARTICLE)
