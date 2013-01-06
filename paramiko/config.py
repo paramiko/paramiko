@@ -28,6 +28,18 @@ import socket
 SSH_PORT = 22
 proxy_re = re.compile(r"^(proxycommand)\s*=*\s*(.*)", re.I)
 
+class LazyFqdn(object):
+    """
+    Returns the host's fqdn on request as string.
+    """
+
+    def __init__(self):
+        self.fqdn = None
+
+    def __str__(self):
+        if self.fqdn is None:
+            self.fqdn = socket.getfqdn()
+        return self.fqdn
 
 class SSHConfig (object):
     """
@@ -155,7 +167,7 @@ class SSHConfig (object):
             remoteuser = user
 
         host = socket.gethostname().split('.')[0]
-        fqdn = socket.getfqdn()
+        fqdn = LazyFqdn()
         homedir = os.path.expanduser('~')
         replacements = {
             'controlpath': [
@@ -184,5 +196,6 @@ class SSHConfig (object):
         for k in config:
             if k in replacements:
                 for find, replace in replacements[k]:
+                    if find in config[k]:
                         config[k] = config[k].replace(find, str(replace))
         return config
