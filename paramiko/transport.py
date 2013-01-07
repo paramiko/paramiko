@@ -704,7 +704,8 @@ class Transport (threading.Thread):
         """
         return self.open_channel('forwarded-tcpip', (dest_addr, dest_port), (src_addr, src_port))
 
-    def open_channel(self, kind, dest_addr=None, src_addr=None):
+    def open_channel(self, kind, dest_addr=None, src_addr=None, \
+            tun_mode = 1, tun_device = 0x7fffffff):
         """
         Request a new channel to the server.  L{Channel}s are socket-like
         objects used for the actual transfer of data across the session.
@@ -721,6 +722,11 @@ class Transport (threading.Thread):
         @param src_addr: the source address of this port forwarding, if
             C{kind} is C{"forwarded-tcpip"}, C{"direct-tcpip"}, or C{"x11"}
         @type src_addr: (str, int)
+        @param tun_mode: the tunneling mode, if C{kind} is C{"tun@openssh.com"}
+        @type tun_mode: int
+        @param tun_device: the tunnel device number on the server to open (C{0x7fffffff} for any),
+            if C{kind} is C{"tun@openssh.com"}
+        @type tun_device: int
         @return: a new L{Channel} on success
         @rtype: L{Channel}
 
@@ -746,6 +752,9 @@ class Transport (threading.Thread):
             elif kind == 'x11':
                 m.add_string(src_addr[0])
                 m.add_int(src_addr[1])
+            elif kind == 'tun@openssh.com':
+                m.add_int(tun_mode)
+                m.add_int(tun_device)
             chan = Channel(chanid)
             self._channels.put(chanid, chan)
             self.channel_events[chanid] = event = threading.Event()
