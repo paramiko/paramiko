@@ -193,6 +193,75 @@ class SFTPClient (BaseSFTP):
         self._request(CMD_CLOSE, handle)
         return filelist
 
+    def listdir_iter(self, path='.', read_ahead_requests=50):
+        """
+        Generator yielding L{SFTPAttributes} objects corresponding to
+        files in the given C{path}.  Files are yielded in arbitrary order.  It does
+        not include the special entries C{'.'} and C{'..'} even if they are
+        present in the folder.
+
+        The returned L{SFTPAttributes} objects will each have an additional
+        field: C{longname}, which may contain a formatted string of the file's
+        attributes, in unix format.  The content of this string will probably
+        depend on the SFTP server implementation.
+
+        @param path: path to list (defaults to C{'.'})
+        @type path: str
+        @return: Yields L{SFTPAttributes}
+        @rtype: L{SFTPAttributes}
+
+        @since: 1.9
+        """
+        path = self._adjust_cwd(path)
+        self._log(DEBUG, 'listdir(%r)' % path)
+        t, msg = self._request(CMD_OPENDIR, path)
+
+        if t != CMD_HANDLE:
+            raise SFTPError('Expected handle')
+
+        handle = msg.get_string()
+
+        nums = list()
+        while True:
+            try:
+                # Assume the handle IDs we're getting will be in sequence...
+                # Send out a bunch of readdir requests so that we can read the responses later on
+                # Section 6.7 of the SSH file transfer RFC explains this
+                # http://filezilla-project.org/specs/draft-ietf-secsh-filexfer-02.txt
+                for i in range(read_ahead_requests):
+                    num = self._async_request(type(None), CMD_READDIR, handle)
+                    nums.append(num)
+
+
+                # For each of our sent requests
+                # Read and parse the corresponding packets
+                # If we're at the end of our queued requests, then fire off some more requests
+                # Exit the loop when we've reached the end of the directory handle
+                for num in nums:
+                    # Avoid using self._request as it does a bunch of shit we don't care about in scanning directories
+                    t, pkt_data = self._read_packet()
+                    msg = Message(pkt_data)
+                    new_num = msg.get_int()
+                    if num == new_num:
+                        if t == CMD_STATUS:
+                            self._convert_status(msg)
+                    count = msg.get_int()
+                    for i in range(count):
+                        filename = msg.get_string()
+                        longname = msg.get_string()
+                        attr = SFTPAttributes._from_msg(msg, filename, longname)
+                        if (filename != '.') and (filename != '..'):
+                            now = datetime.datetime.now()
+                            yield attr
+
+                # If we've hit the end of our queued requests, reset nums.
+                nums = list()
+
+            except EOFError as e:
+                self._request(CMD_CLOSE, handle)
+                return
+
+
     def open(self, filename, mode='r', bufsize=-1):
         """
         Open a file on the remote server.  The arguments are the same as for
