@@ -254,7 +254,7 @@ class SFTPClient (BaseSFTP):
                 # If we've hit the end of our queued requests, reset nums.
                 nums = list()
 
-            except EOFError as e:
+            except EOFError:
                 self._request(CMD_CLOSE, handle)
                 return
 
