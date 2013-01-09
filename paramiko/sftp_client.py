@@ -224,7 +224,6 @@ class SFTPClient (BaseSFTP):
         nums = list()
         while True:
             try:
-                # Assume the handle IDs we're getting will be in sequence...
                 # Send out a bunch of readdir requests so that we can read the responses later on
                 # Section 6.7 of the SSH file transfer RFC explains this
                 # http://filezilla-project.org/specs/draft-ietf-secsh-filexfer-02.txt
@@ -238,7 +237,6 @@ class SFTPClient (BaseSFTP):
                 # If we're at the end of our queued requests, then fire off some more requests
                 # Exit the loop when we've reached the end of the directory handle
                 for num in nums:
-                    # Avoid using self._request as it does a bunch of shit we don't care about in scanning directories
                     t, pkt_data = self._read_packet()
                     msg = Message(pkt_data)
                     new_num = msg.get_int()
@@ -251,7 +249,6 @@ class SFTPClient (BaseSFTP):
                         longname = msg.get_string()
                         attr = SFTPAttributes._from_msg(msg, filename, longname)
                         if (filename != '.') and (filename != '..'):
-                            now = datetime.datetime.now()
                             yield attr
 
                 # If we've hit the end of our queued requests, reset nums.
