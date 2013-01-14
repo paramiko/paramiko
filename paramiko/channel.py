@@ -726,6 +726,36 @@ class Channel (object):
         self.transport._send_user_message(m)
         return size
 
+    def send_datagram(self, s):
+        """
+        Send all data to the channel in one message.  Returns the number of bytes sent,
+        or 0 if the channel stream is closed.
+
+        @param s: data to send
+        @type s: str
+        @return: number of bytes actually sent (C{len(s)} or C{0})
+        @rtype: int
+
+        @raise socket.timeout: if no data could be sent before the timeout set
+            by L{settimeout}.
+        """
+        self.lock.acquire()
+        size = 0
+        try:
+            while size < len(s):
+                size = self._wait_for_send_window(len(s), account = False)
+            self.out_window_size -= len(s)
+            m = Message()
+            m.add_byte(chr(MSG_CHANNEL_DATA))
+            m.add_int(self.remote_chanid)
+            m.add_string(s)
+        finally:
+            self.lock.release()
+        # Note: We release self.lock before calling _send_user_message.
+        # Otherwise, we can deadlock during re-keying.
+        self.transport._send_user_message(m)
+        return size
+
     def send_stderr(self, s):
         """
         Send data to the channel on the "stderr" stream.  This is normally
@@ -1178,7 +1208,7 @@ class Channel (object):
         finally:
             self.lock.release()
 
-    def _wait_for_send_window(self, size):
+    def _wait_for_send_window(self, size, account = True):
         """
         (You are already holding the lock.)
         Wait for the send window to open up, and allocate up to C{size} bytes
@@ -1211,7 +1241,8 @@ class Channel (object):
             size = self.out_window_size
         if self.out_max_packet_size - 64 < size:
             size = self.out_max_packet_size - 64
-        self.out_window_size -= size
+        if account:
+            self.out_window_size -= size
         if self.ultra_debug:
             self._log(DEBUG, 'window down to %d' % self.out_window_size)
         return size
