@@ -381,6 +381,31 @@ class Channel (object):
         self.transport._set_x11_handler(handler)
         return auth_cookie
 
+    def request_forward_agent(self, handler):
+        """
+        Request for a forward SSH Agent on this channel.
+        This is only valid for an ssh-agent from openssh !!!
+
+        @param handler: a required handler to use for incoming SSH Agent connections
+        @type handler: function
+
+        @return: if we are ok or not (at that time we always return ok)
+        @rtype: boolean
+
+        @raise: SSHException in case of channel problem.
+        """
+        if self.closed or self.eof_received or self.eof_sent or not self.active:
+            raise SSHException('Channel is not open')
+
+        m = Message()
+        m.add_byte(chr(MSG_CHANNEL_REQUEST))
+        m.add_int(self.remote_chanid)
+        m.add_string('auth-agent-req@openssh.com')
+        m.add_boolean(False)
+        self.transport._send_user_message(m)
+        self.transport._set_forward_agent_handler(handler)
+        return True
+
     def get_transport(self):
         """
         Return the L{Transport} associated with this channel.
@@ -1026,6 +1051,11 @@ class Channel (object):
             else:
                 ok = server.check_channel_x11_request(self, single_connection,
                                                       auth_proto, auth_cookie, screen_number)
+        elif key == 'auth-agent-req@openssh.com':
+            if server is None:
+                ok = False
+            else:
+                ok = server.check_channel_forward_agent_request(self)
         else:
             self._log(DEBUG, 'Unhandled channel request "%s"' % key)
             ok = False

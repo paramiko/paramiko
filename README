@@ -5,14 +5,15 @@ paramiko
 
 :Paramiko: Python SSH module
 :Copyright: Copyright (c) 2003-2009  Robey Pointer <robeypointer@gmail.com>
+:Copyright: Copyright (c) 2013  Jeff Forcier <jeff@bitprophet.org>
 :License: LGPL
-:Homepage: http://www.lag.net/paramiko/
+:Homepage: https://github.com/paramiko/paramiko/
 
 
-paramiko 1.7.7.2
-================
+paramiko 1.8.0
+==============
 
-Release of 16 May 2012
+Release of MM.YY.DD
 
 
 What
@@ -85,15 +86,7 @@ installs.) Valeriy Pogrebitskiy says the best place to look is
 Bugs & Support
 --------------
 
-there's a launchpage page for paramiko, with a bug tracker:
-
-    https://launchpad.net/paramiko/
-    
-this is the primary place to file and browse bug reports.
-
-there's also a low-traffic mailing list for support and discussions:
-
-    http://www.lag.net/mailman/listinfo/paramiko
+Please file bug reports at https://github.com/paramiko/paramiko/. There is currently no mailing list but we plan to create a new one ASAP.
 
 
 Demo

@@ -21,6 +21,12 @@ L{SSHConfig}.
 """
 
 import fnmatch
+import os
+import re
+import socket
+
+SSH_PORT = 22
+proxy_re = re.compile(r"^(proxycommand)\s*=*\s*(.*)", re.I)
 
 
 class SSHConfig (object):
@@ -53,8 +59,13 @@ class SSHConfig (object):
             if (line == '') or (line[0] == '#'):
                 continue
             if '=' in line:
-                key, value = line.split('=', 1)
-                key = key.strip().lower()
+                # Ensure ProxyCommand gets properly split
+                if line.lower().strip().startswith('proxycommand'):
+                    match = proxy_re.match(line)
+                    key, value = match.group(1).lower(), match.group(2)
+                else:
+                    key, value = line.split('=', 1)
+                    key = key.strip().lower()
             else:
                 # find first whitespace, and split there
                 i = 0
@@ -101,10 +112,77 @@ class SSHConfig (object):
         @type hostname: str
         """
         matches = [x for x in self._config if fnmatch.fnmatch(hostname, x['host'])]
-        # sort in order of shortest match (usually '*') to longest
-        matches.sort(lambda x,y: cmp(len(x['host']), len(y['host'])))
+        # Move * to the end
+        _star = matches.pop(0)
+        matches.append(_star)
         ret = {}
         for m in matches:
-            ret.update(m)
+            for k,v in m.iteritems():
+                if not k in ret:
+                    ret[k] = v
+        ret = self._expand_variables(ret, hostname)
         del ret['host']
         return ret
+
+    def _expand_variables(self, config, hostname ):
+        """
+        Return a dict of config options with expanded substitutions
+        for a given hostname.
+
+        Please refer to man ssh_config(5) for the parameters that
+        are replaced.
+
+        @param config: the config for the hostname
+        @type hostname: dict
+        @param hostname: the hostname that the config belongs to
+        @type hostname: str
+        """
+
+        if 'hostname' in config:
+            config['hostname'] = config['hostname'].replace('%h',hostname)
+        else:
+            config['hostname'] = hostname
+
+        if 'port' in config:
+            port = config['port']
+        else:
+            port = SSH_PORT
+
+        user = os.getenv('USER')
+        if 'user' in config:
+            remoteuser = config['user']
+        else:
+            remoteuser = user
+
+        host = socket.gethostname().split('.')[0]
+        fqdn = socket.getfqdn()
+        homedir = os.path.expanduser('~')
+        replacements = {
+            'controlpath': [
+                ('%h', config['hostname']),
+                ('%l', fqdn),
+                ('%L', host),
+                ('%n', hostname),
+                ('%p', port),
+                ('%r', remoteuser),
+                ('%u', user)
+            ],
+            'identityfile': [
+                ('~', homedir),
+                ('%d', homedir),
+                ('%h', config['hostname']),
+                ('%l', fqdn),
+                ('%u', user),
+                ('%r', remoteuser)
+            ],
+            'proxycommand': [
+                ('%h', config['hostname']),
+                ('%p', port),
+                ('%r', remoteuser),
+            ],
+        }
+        for k in config:
+            if k in replacements:
+                for find, replace in replacements[k]:
+                        config[k] = config[k].replace(find, str(replace))
+        return config

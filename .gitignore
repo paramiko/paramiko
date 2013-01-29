@@ -2,3 +2,5 @@
 build/
 dist/
 paramiko.egg-info/
+test.log
+docs/

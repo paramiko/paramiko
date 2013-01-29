@@ -28,6 +28,7 @@ import sys
 import unittest
 from optparse import OptionParser
 import paramiko
+import threading
 
 sys.path.append('tests')
 
@@ -141,7 +142,15 @@ def main():
     if len(args) > 0:
         filter = '|'.join(args)
         suite = filter_suite_by_re(suite, filter)
-    runner.run(suite)
+    result = runner.run(suite)
+    # Clean up stale threads from poorly cleaned-up tests.
+    # TODO: make that not a problem, jeez
+    for thread in threading.enumerate():
+        if thread is not threading.currentThread():
+            thread._Thread__stop()
+    # Exit correctly
+    if not result.wasSuccessful():
+        sys.exit(1)
 
 
 if __name__ == '__main__':

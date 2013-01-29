@@ -1,0 +1,14 @@
+language: python
+python:
+  - "2.5"
+  - "2.6"
+  - "2.7"
+install:
+  # Self-install for setup.py-driven deps
+  - pip install -e .
+script: python test.py
+notifications:
+  irc:
+    channels: "irc.freenode.org#paramiko"
+    on_success: change
+    on_failure: change

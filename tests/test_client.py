@@ -68,11 +68,9 @@ class SSHClientTest (unittest.TestCase):
         thread.start()
 
     def tearDown(self):
-        if hasattr(self, 'tc'):
-            self.tc.close()
-        self.ts.close()
-        self.socks.close()
-        self.sockl.close()
+        for attr in "tc ts socks sockl".split():
+            if hasattr(self, attr):
+                getattr(self, attr).close()
 
     def _run(self):
         self.socks, addr = self.sockl.accept()

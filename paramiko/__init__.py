@@ -45,12 +45,7 @@ receive data over the encrypted session.
 Paramiko is written entirely in python (no C or platform-dependent code) and is
 released under the GNU Lesser General Public License (LGPL).
 
-Website: U{http://www.lag.net/paramiko/}
-
-@version: 1.7.7.2
-@author: Robey Pointer
-@contact: robeypointer@gmail.com
-@license: GNU Lesser General Public License (LGPL)
+Website: U{https://github.com/paramiko/paramiko/}
 """
 
 import sys
@@ -59,10 +54,8 @@ if sys.version_info < (2, 2):
     raise RuntimeError('You need python 2.2 for this module.')
 
 
-__author__ = "Robey Pointer <robeypointer@gmail.com>"
-__date__ = "16 May 2012"
-__version__ = "1.7.7.2"
-__version_info__ = (1, 7, 7, 1)
+__author__ = "Jeff Forcier <jeff@bitprophet.org>"
+__version__ = "1.10.0"
 __license__ = "GNU Lesser General Public License (LGPL)"
 
 
@@ -72,7 +65,7 @@ from auth_handler import AuthHandler
 from channel import Channel, ChannelFile
 from ssh_exception import SSHException, PasswordRequiredException, \
     BadAuthenticationType, ChannelException, BadHostKeyException, \
-    AuthenticationException
+    AuthenticationException, ProxyCommandFailure
 from server import ServerInterface, SubsystemHandler, InteractiveQuery
 from rsakey import RSAKey
 from dsskey import DSSKey
@@ -90,6 +83,7 @@ from agent import Agent, AgentKey
 from pkey import PKey
 from hostkeys import HostKeys
 from config import SSHConfig
+from proxy import ProxyCommand
 
 # fix module names for epydoc
 for c in locals().values():
@@ -104,6 +98,8 @@ from common import AUTH_SUCCESSFUL, AUTH_PARTIALLY_SUCCESSFUL, AUTH_FAILED, \
 
 from sftp import SFTP_OK, SFTP_EOF, SFTP_NO_SUCH_FILE, SFTP_PERMISSION_DENIED, SFTP_FAILURE, \
      SFTP_BAD_MESSAGE, SFTP_NO_CONNECTION, SFTP_CONNECTION_LOST, SFTP_OP_UNSUPPORTED
+
+from common import io_sleep
 
 __all__ = [ 'Transport',
             'SSHClient',
@@ -124,6 +120,8 @@ __all__ = [ 'Transport',
             'BadAuthenticationType',
             'ChannelException',
             'BadHostKeyException',
+            'ProxyCommand',
+            'ProxyCommandFailure',
             'SFTP',
             'SFTPFile',
             'SFTPHandle',
@@ -138,4 +136,5 @@ __all__ = [ 'Transport',
             'AgentKey',
             'HostKeys',
             'SSHConfig',
-            'util' ]
+            'util',
+            'io_sleep' ]

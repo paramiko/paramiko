@@ -1,22 +1,3 @@
-
-TO-DO
-=====
-
-* FIXME: use the locking scheme from java for channel.py
-
-* allow setting chmod bits on SFTPClient.open() for create
-* host-based auth (yuck!)
-* ctr forms of ciphers are missing (blowfish-ctr, aes128-ctr, aes256-ctr)
-* sftp protocol 6 support (ugh....) -- once it settles down more
-* make a simple example demonstrating use of SocketServer (besides forward.py?)
-* should SSHClient try to use openssh config files?
-* figure out how to parse ssh.com encrypted key files?
-* is it possible to poll on a set of events at once?
-* potentially create only one thread shared by all Transports
-* SSHClient: flag to turn off agent detection? flag to turn off keyfile discovery?
-
-* vault: sftp server + bazaar
-  - single person can open file for writing at one time
-  - atomic rename @ file close
-  - bzr commit after close
-
+* Change license to BSD for v1.8 (obtain permission from Robey)
+* Pending that, remove preamble from all files, ensure LICENSE is still correct
+* Update version stuff: use an execfile'd paramiko/_version.py

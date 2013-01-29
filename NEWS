@@ -3,16 +3,101 @@
 NEWS
 ====
 
-Highlights of what's new in each release:
+Highlights of what's new in each release.
+
+Issues noted as "'ssh' #NN" can be found at https://github.com/bitprophet/ssh/.
+
+Issues noted as "Fabric #NN" can be found at https://github.com/fabric/fabric/.
 
 Releases
 ========
 
-v1.7.7.3 <DATE>
----------------
+v1.10.0 (DD MM YYYY)
+--------------------
 
- * Merge PR #28: https://github.com/paramiko/paramiko/pull/28 which adds a
-   ssh-keygen like demo module. (Sofian Brabez)
+* #71: Add `SFTPClient.putfo` and `.getfo` methods to allow direct
+  uploading/downloading of file-like objects. Thanks to Eric Buehl for the
+  patch.
+* #113: Add `timeout` parameter to `SSHClient.exec_command` for easier setting
+  of the command's internal channel object's timeout. Thanks to Cernov Vladimir
+  for the patch.
+* #94: Remove duplication of SSH port constant. Thanks to Olle Lundberg for the
+  catch.
+* #80: Expose the internal "is closed" property of the file transfer class
+  `BufferedFile` as `.closed`, better conforming to Python's file interface.
+  Thanks to `@smunaut` and James Hiscock for catch & patch.
+
+v1.9.0 (6th Nov 2012)
+---------------------
+
+* #97 (with a little #93): Improve config parsing of `ProxyCommand` directives
+  and provide a wrapper class to allow subprocess-driven proxy commands to be
+  used as `sock=` arguments for `SSHClient.connect`.
+* #77: Allow `SSHClient.connect()` to take an explicit `sock` parameter
+  overriding creation of an internal, implicit socket object.
+* Thanks in no particular order to Erwin Bolwidt, Oskari Saarenmaa, Steven
+  Noonan, Vladimir Lazarenko, Lincoln de Sousa, Valentino Volonghi, Olle
+  Lundberg, and Github user `@acrish` for the various and sundry patches
+  leading to the above changes.
+
+v1.8.1 (6th Nov 2012)
+---------------------
+
+* #90: Ensure that callbacks handed to `SFTPClient.get()` always fire at least
+  once, even for zero-length files downloaded. Thanks to Github user `@enB` for
+  the catch.
+* #85: Paramiko's test suite overrides
+  `unittest.TestCase.assertTrue/assertFalse` to provide these modern assertions
+  to Python 2.2/2.3, which lacked them. However on newer Pythons such as 2.7,
+  this now causes deprecation warnings. The overrides have been patched to only
+  execute when necessary. Thanks to `@Arfrever` for catch & patch.
+
+
+v1.8.0 (3rd Oct 2012)
+---------------------
+
+* #17 ('ssh' 28): Fix spurious `NoneType has no attribute 'error'` and similar
+  exceptions that crop up on interpreter exit.
+* 'ssh' 32: Raise a more useful error explaining which `known_hosts` key line was
+  problematic, when encountering `binascii` issues decoding known host keys.
+  Thanks to `@thomasvs` for catch & patch.
+* 'ssh' 33: Bring `ssh_config` parsing more in line with OpenSSH spec, re: order of
+  setting overrides by `Host` specifiers. Specifically, the overrides now go by
+  file order instead of automatically sorting by `Host` value length. In
+  addition, the first value found per config key (e.g. `Port`, `User` etc)
+  wins, instead of the last. Thanks to Jan Brauer for the contribution.
+* 'ssh' 36: Support new server two-factor authentication option
+  (`RequiredAuthentications2`), at least re: combining key-based & password
+  auth. Thanks to Github user `bninja`.
+* 'ssh' 11: When raising an exception for hosts not listed in
+  `known_hosts` (when `RejectPolicy` is in effect) the exception message was
+  confusing/vague. This has been improved somewhat. Thanks to Cal Leeming for
+  highlighting the issue.
+* 'ssh' 40: Fixed up & expanded EINTR signal handling. Thanks to Douglas Turk.
+* 'ssh' 15: Implemented parameter substitution in SSHConfig, matching the
+  implementation of `ssh_config(5)`. Thanks to Olle Lundberg for the patch.
+* 'ssh' 24: Switch some internal type checking to use `isinstance` to help prevent
+  problems with client libraries using subclasses of builtin types. Thanks to
+  Alex Morega for the patch.
+* Fabric #562: Agent forwarding would error out (with `Authentication response
+  too long`) or freeze, when more than one remote connection to the local agent
+  was active at the same time.  This has been fixed. Thanks to Steven McDonald
+  for assisting in troubleshooting/patching, and to GitHub user `@lynxis` for
+  providing the final version of the patch.
+* 'ssh' 5: Moved a `fcntl` import closer to where it's used to help avoid
+  `ImportError` problems on Windows platforms. Thanks to Jason Coombs for the
+  catch + suggested fix.
+* 'ssh' 4: Updated implementation of WinPageant integration to work on 64-bit
+  Windows. Thanks again to Jason Coombs for the patch.
+* Added an IO loop sleep() call to avoid needless CPU usage when agent
+  forwarding is in use.
+* Handful of internal tweaks to version number storage.
+* Updated `setup.py` with `==dev` install URL for `pip` users.
+* Updated `setup.py` to account for packaging problems in PyCrypto 2.4.0
+* Added an extra `atfork()` call to help prevent spurious RNG errors when
+  running under high parallel (multiprocess) load.
+* Merge PR #28: https://github.com/paramiko/paramiko/pull/28 which adds a
+  ssh-keygen like demo module. (Sofian Brabez)
 
 v1.7.7.2 16may12
 ----------------

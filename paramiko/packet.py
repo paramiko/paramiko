@@ -29,7 +29,7 @@ import time
 
 from paramiko.common import *
 from paramiko import util
-from paramiko.ssh_exception import SSHException
+from paramiko.ssh_exception import SSHException, ProxyCommandFailure
 from paramiko.message import Message
 
 
@@ -241,23 +241,25 @@ class Packetizer (object):
     def write_all(self, out):
         self.__keepalive_last = time.time()
         while len(out) > 0:
-            got_timeout = False
+            retry_write = False
             try:
                 n = self.__socket.send(out)
             except socket.timeout:
-                got_timeout = True
+                retry_write = True
             except socket.error, e:
                 if (type(e.args) is tuple) and (len(e.args) > 0) and (e.args[0] == errno.EAGAIN):
-                    got_timeout = True
+                    retry_write = True
                 elif (type(e.args) is tuple) and (len(e.args) > 0) and (e.args[0] == errno.EINTR):
                     # syscall interrupted; try again
-                    pass
+                    retry_write = True
                 else:
                     n = -1
+            except ProxyCommandFailure:
+                raise # so it doesn't get swallowed by the below catchall
             except Exception:
                 # could be: (32, 'Broken pipe')
                 n = -1
-            if got_timeout:
+            if retry_write:
                 n = 0
                 if self.__closed:
                     n = -1
@@ -469,6 +471,12 @@ class Packetizer (object):
                 break
             except socket.timeout:
                 pass
+            except EnvironmentError, e:
+                if ((type(e.args) is tuple) and (len(e.args) > 0) and
+                    (e.args[0] == errno.EINTR)):
+                    pass
+                else:
+                    raise
             if self.__closed:
                 raise EOFError()
             now = time.time()
