@@ -15,6 +15,9 @@ Releases
 v1.10.0 (DD MM YYYY)
 --------------------
 
+* #115: Add convenience `get_pty` kwarg to `Client.exec_command` so users not
+  manually controlling a channel object can still toggle PTY creation. Thanks
+  to Michael van der Kolff for the patch.
 * #71: Add `SFTPClient.putfo` and `.getfo` methods to allow direct
   uploading/downloading of file-like objects. Thanks to Eric Buehl for the
   patch.
