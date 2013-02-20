@@ -1027,6 +1027,13 @@ class Channel (object):
                 ok = False
             else:
                 ok = server.check_channel_shell_request(self)
+        elif key == 'env':
+            name = m.get_string()
+            value = m.get_string()
+            if server is None:
+                ok = False
+            else:
+                ok = server.check_channel_env_request(self, name, value)
         elif key == 'exec':
             cmd = m.get_string()
             if server is None:
