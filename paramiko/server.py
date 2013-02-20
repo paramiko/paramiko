@@ -550,6 +550,27 @@ class ServerInterface (object):
         """
         return OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED
 
+    def check_channel_env_request(self, channel, name, value):
+        """
+        Check whether a given environment variable can be specified for the
+        given channel.  This method should return C{True} if the server
+        is willing to set the specified environment variable.  Note that
+        some environment variables (e.g., PATH) can be exceedingly
+        dangerous, so blindly allowing the client to set the environment
+        is almost certainly not a good idea.
+
+        The default implementation always returns C{False}.
+
+        @param channel: the L{Channel} the env request arrived on
+        @type channel: L{Channel}
+        @param name: foo bar baz
+        @type name: str
+        @param value: flklj
+        @type value: str
+        @rtype: bool
+        """
+        return False
+
 
 class SubsystemHandler (threading.Thread):
     """
