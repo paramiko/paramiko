@@ -474,3 +474,9 @@ class SFTPFile (BufferedFile):
             x = self._saved_exception
             self._saved_exception = None
             raise x
+            
+    def __enter__(self):
+        return self
+
+    def __exit__(self, type, value, traceback):
+        self.close()

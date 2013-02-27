@@ -23,6 +23,8 @@ a real actual sftp server is contacted, and a new folder is created there to
 do test file operations in (so no existing files will be harmed).
 """
 
+from __future__ import with_statement
+
 from binascii import hexlify
 import logging
 import os
@@ -184,6 +186,17 @@ class SFTPTest (unittest.TestCase):
         try:
             f.write(ARTICLE)
             f.close()
+            self.assertEqual(sftp.stat(FOLDER + '/duck.txt').st_size, 1483)
+        finally:
+            sftp.remove(FOLDER + '/duck.txt')
+
+    def test_3_sftp_file_can_be_used_as_context_manager(self):
+        """
+        verify that an opened file can be used as a context manager
+        """
+        try:
+            with sftp.open(FOLDER + '/duck.txt', 'w') as f:
+                f.write(ARTICLE)
             self.assertEqual(sftp.stat(FOLDER + '/duck.txt').st_size, 1483)
         finally:
             sftp.remove(FOLDER + '/duck.txt')
