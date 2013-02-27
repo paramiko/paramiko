@@ -34,6 +34,9 @@ from paramiko.sftp_attr import SFTPAttributes
 class SFTPFile (BufferedFile):
     """
     Proxy object for a file on the remote server, in client mode SFTP.
+
+    Instances of this class may be used as context managers in the same way
+    that built-in Python file objects are.
     """
 
     # Some sftp servers will choke if you send read/write requests larger than

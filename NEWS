@@ -15,6 +15,8 @@ Releases
 v1.10.0 (DD MM YYYY)
 --------------------
 
+* #127: Turn `SFTPFile` into a context manager. Thanks to Michael Williamson
+* for the patch.
 * #116: Limit `Message.get_bytes` to an upper bound of 1MB to protect against
   potential DoS vectors. Thanks to `@mvschaik` for catch & patch.
 * #115: Add convenience `get_pty` kwarg to `Client.exec_command` so users not
