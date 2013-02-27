@@ -110,7 +110,8 @@ class Message (object):
         @rtype: string
         """
         b = self.packet.read(n)
-        if len(b) < n:
+        max_pad_size = 1<<20  # Limit padding to 1 MB
+        if len(b) < n and n < max_pad_size:
             return b + '\x00' * (n - len(b))
         return b
 
