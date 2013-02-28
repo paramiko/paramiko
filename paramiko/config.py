@@ -50,6 +50,7 @@ class LazyFqdn(object):
             #
 
             # Handle specific option
+            fqdn = None
             address_family = self.config.get('addressfamily', 'any').lower()
             if address_family != 'any':
                 family = socket.AF_INET if address_family == 'inet' else socket.AF_INET6
@@ -207,7 +208,7 @@ class SSHConfig (object):
             remoteuser = user
 
         host = socket.gethostname().split('.')[0]
-        fqdn = LazyFqdn(self)
+        fqdn = LazyFqdn(config)
         homedir = os.path.expanduser('~')
         replacements = {'controlpath':
                         [
