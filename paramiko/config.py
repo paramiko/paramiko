@@ -29,6 +29,7 @@ import socket
 SSH_PORT = 22
 proxy_re = re.compile(r"^(proxycommand)\s*=*\s*(.*)", re.I)
 
+
 class LazyFqdn(object):
     """
     Returns the host's fqdn on request as string.
@@ -41,21 +42,26 @@ class LazyFqdn(object):
     def __str__(self):
         if self.fqdn is None:
             #
-            # If the SSH config contains AddressFamily, use that when determining
-            # the local host's FQDN. Using socket.getfqdn() from the standard
-            # library is the most general solution, but can result in noticeable
-            # delays on some platforms when IPv6 is misconfigured or not available,
-            # as it calls getaddrinfo with no address family specified, so both
-            # IPv4 and IPv6 are checked.
+            # If the SSH config contains AddressFamily, use that when
+            # determining  the local host's FQDN. Using socket.getfqdn() from
+            # the standard library is the most general solution, but can
+            # result in noticeable delays on some platforms when IPv6 is
+            # misconfigured or not available, as it calls getaddrinfo with no
+            # address family specified, so both IPv4 and IPv6 are checked.
             #
 
             # Handle specific option
             fqdn = None
             address_family = self.config.get('addressfamily', 'any').lower()
             if address_family != 'any':
-                family = socket.AF_INET if address_family == 'inet' else socket.AF_INET6
-                results = socket.getaddrinfo(host, None, family,
-                    socket.SOCK_DGRAM, socket.IPPROTO_IP, socket.AI_CANONNAME)
+                family = socket.AF_INET if address_family == 'inet' \
+                    else socket.AF_INET6
+                results = socket.getaddrinfo(host,
+                                             None,
+                                             family,
+                                             socket.SOCK_DGRAM,
+                                             socket.IPPROTO_IP,
+                                             socket.AI_CANONNAME)
                 for res in results:
                     af, socktype, proto, canonname, sa = res
                     if canonname and '.' in canonname:
@@ -67,6 +73,7 @@ class LazyFqdn(object):
             # Cache
             self.fqdn = fqdn
         return self.fqdn
+
 
 class SSHConfig (object):
     """
