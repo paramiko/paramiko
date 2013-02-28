@@ -15,6 +15,9 @@ Releases
 v1.10.0 (DD MM YYYY)
 --------------------
 
+* #128: Defer FQDN resolution until needed, when parsing SSH config files. This
+  will speed up some operations on systems whose local hostnames are not in
+  DNS. Thanks to Parantapa Bhattacharya for catch & patch.
 * #102: Forego random padding for packets when running under `*-ctr` ciphers.
   This corrects some slowdowns on platforms where random byte generation is
   inefficient (e.g. Windows). Thanks to  `@warthog618` for catch & patch, and
