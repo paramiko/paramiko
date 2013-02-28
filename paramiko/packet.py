@@ -111,7 +111,7 @@ class Packetizer (object):
         """
         self.__logger = log
 
-    def set_outbound_cipher(self, block_engine, block_size, mac_engine, mac_size, mac_key, sdctr):
+    def set_outbound_cipher(self, block_engine, block_size, mac_engine, mac_size, mac_key, sdctr=False):
         """
         Switch outbound data cipher.
         """
