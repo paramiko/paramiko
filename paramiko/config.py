@@ -74,7 +74,6 @@ class LazyFqdn(object):
             self.fqdn = fqdn
         return self.fqdn
 
-
 class SSHConfig (object):
     """
     Representation of config information as stored in the format used by
