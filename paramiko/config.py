@@ -25,6 +25,7 @@ import os
 import re
 import socket
 
+
 SSH_PORT = 22
 proxy_re = re.compile(r"^(proxycommand)\s*=*\s*(.*)", re.I)
 
@@ -48,30 +49,21 @@ class LazyFqdn(object):
             # IPv4 and IPv6 are checked.
             #
 
+            # Handle specific option
             address_family = self.config.get('addressfamily', 'any').lower()
-
-            if address_family == 'inet':
-                ipv4_results = socket.getaddrinfo(host, None, socket.AF_INET,
-                                                  socket.SOCK_DGRAM, socket.IPPROTO_IP,
-                                                  socket.AI_CANONNAME)
-                for res in ipv4_results:
+            if address_family != 'any':
+                family = socket.AF_INET if address_family == 'inet' else socket.AF_INET6
+                results = socket.getaddrinfo(host, None, family,
+                    socket.SOCK_DGRAM, socket.IPPROTO_IP, socket.AI_CANONNAME)
+                for res in results:
                     af, socktype, proto, canonname, sa = res
                     if canonname and '.' in canonname:
                         fqdn = canonname
                         break
-            elif address_family == 'inet6':
-                ipv6_results = socket.getaddrinfo(host, None, socket.AF_INET6,
-                                                  socket.SOCK_DGRAM,
-                                                  socket.IPPROTO_IP,
-                                                  socket.AI_CANONNAME)
-                for res in ipv6_results:
-                    af, socktype, proto, canonname, sa = res
-                    if canonname and '.' in canonname:
-                        fqdn = canonname
-                        break
-
+            # Handle 'any' / unspecified
             if fqdn is None:
                 fqdn = socket.getfqdn()
+            # Cache
             self.fqdn = fqdn
         return self.fqdn
 
