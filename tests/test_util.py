@@ -229,16 +229,16 @@ Host equals-delimited
         ProxyCommand should perform interpolation on the value
         """
         config = paramiko.util.parse_ssh_config(cStringIO.StringIO("""
-Host *
-    Port 25
-    ProxyCommand host %h port %p
-
 Host specific
     Port 37
     ProxyCommand host %h port %p lol
 
 Host portonly
     Port 155
+
+Host *
+    Port 25
+    ProxyCommand host %h port %p
 """))
         for host, val in (
             ('foo.com', "host foo.com port 25"),
