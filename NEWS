@@ -15,6 +15,9 @@ Releases
 v1.10.0 (DD MM YYYY)
 --------------------
 
+* #93: Overhaul SSH config parsing to be in line with `man ssh_config` (& the
+  behavior of `ssh` itself), including addition of parameter expansion within
+  config values. Thanks to Olle Lundberg for the patch.
 * #110: Honor SSH config `AddressFamily` setting when looking up local
   host's FQDN. Thanks to John Hensley for the patch.
 * #128: Defer FQDN resolution until needed, when parsing SSH config files.
@@ -24,7 +27,7 @@ v1.10.0 (DD MM YYYY)
   inefficient (e.g. Windows). Thanks to  `@warthog618` for catch & patch, and
   Michael van der Kolff for code/technique review.
 * #127: Turn `SFTPFile` into a context manager. Thanks to Michael Williamson
-* for the patch.
+  for the patch.
 * #116: Limit `Message.get_bytes` to an upper bound of 1MB to protect against
   potential DoS vectors. Thanks to `@mvschaik` for catch & patch.
 * #115: Add convenience `get_pty` kwarg to `Client.exec_command` so users not
