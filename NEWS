@@ -12,9 +12,13 @@ Issues noted as "Fabric #NN" can be found at https://github.com/fabric/fabric/.
 Releases
 ========
 
-v1.10.0 (DD MM YYYY)
+v1.10.0 (1st Mar 2013)
 --------------------
 
+* #133: Fix handling of window-change events to be on-spec and not
+  attempt to wait for a response from the remote sshd; this fixes problems with
+  less common targets such as some Cisco devices. Thanks to Phillip Heller for
+  catch & patch.
 * #93: Overhaul SSH config parsing to be in line with `man ssh_config` (& the
   behavior of `ssh` itself), including addition of parameter expansion within
   config values. Thanks to Olle Lundberg for the patch.
