@@ -21,6 +21,7 @@ L{SFTPFile}
 """
 
 from binascii import hexlify
+from collections import deque
 import socket
 import threading
 import time
@@ -54,6 +55,7 @@ class SFTPFile (BufferedFile):
         self._prefetch_data = {}
         self._prefetch_reads = []
         self._saved_exception = None
+        self._reqs = deque()
 
     def __del__(self):
         self._close(async=True)
@@ -163,12 +165,14 @@ class SFTPFile (BufferedFile):
     def _write(self, data):
         # may write less than requested if it would exceed max packet size
         chunk = min(len(data), self.MAX_REQUEST_SIZE)
-        req = self.sftp._async_request(type(None), CMD_WRITE, self.handle, long(self._realpos), str(data[:chunk]))
-        if not self.pipelined or self.sftp.sock.recv_ready():
-            t, msg = self.sftp._read_response(req)
-            if t != CMD_STATUS:
-                raise SFTPError('Expected status')
-            # convert_status already called
+        self._reqs.append(self.sftp._async_request(type(None), CMD_WRITE, self.handle, long(self._realpos), str(data[:chunk])))
+        if not self.pipelined or (len(self._reqs) > 100 and self.sftp.sock.recv_ready()):
+            while len(self._reqs):
+                req = self._reqs.popleft()
+                t, msg = self.sftp._read_response(req)
+                if t != CMD_STATUS:
+                    raise SFTPError('Expected status')
+                # convert_status already called
         return chunk
 
     def settimeout(self, timeout):
