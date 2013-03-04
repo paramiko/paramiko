@@ -26,14 +26,12 @@ do test file operations in (so no existing files will be harmed).
 from __future__ import with_statement
 
 from binascii import hexlify
-import logging
 import os
-import random
-import struct
+import warnings
 import sys
 import threading
-import time
 import unittest
+import StringIO
 
 import paramiko
 from stub_sftp import StubServer, StubSFTPServer
@@ -227,7 +225,7 @@ class SFTPTest (unittest.TestCase):
         """
         f = sftp.open(FOLDER + '/first.txt', 'w')
         try:
-            f.write('content!\n');
+            f.write('content!\n')
             f.close()
             sftp.rename(FOLDER + '/first.txt', FOLDER + '/second.txt')
             try:
@@ -438,7 +436,7 @@ class SFTPTest (unittest.TestCase):
             self.assertEqual(sftp.readlink(FOLDER + '/link.txt'), 'original.txt')
 
             f = sftp.open(FOLDER + '/link.txt', 'r')
-            self.assertEqual(f.readlines(), [ 'original\n' ])
+            self.assertEqual(f.readlines(), ['original\n'])
             f.close()
 
             cwd = sftp.normalize('.')
@@ -566,7 +564,6 @@ class SFTPTest (unittest.TestCase):
         """
         verify that get/put work.
         """
-        import os, warnings
         warnings.filterwarnings('ignore', 'tempnam.*')
 
         localname = os.tempnam()
@@ -631,7 +628,7 @@ class SFTPTest (unittest.TestCase):
             try:
                 f = sftp.open(FOLDER + '/unusual.txt', 'wx')
                 self.fail('expected exception')
-            except IOError, x:
+            except IOError:
                 pass
         finally:
             sftp.unlink(FOLDER + '/unusual.txt')
@@ -671,12 +668,12 @@ class SFTPTest (unittest.TestCase):
         f.close()
         try:
             f = sftp.open(FOLDER + '/zero', 'r')
-            data = f.readv([(0, 12)])
+            f.readv([(0, 12)])
             f.close()
 
             f = sftp.open(FOLDER + '/zero', 'r')
             f.prefetch()
-            data = f.read(100)
+            f.read(100)
             f.close()
         finally:
             sftp.unlink(FOLDER + '/zero')
@@ -685,7 +682,6 @@ class SFTPTest (unittest.TestCase):
         """
         verify that get/put work without confirmation.
         """
-        import os, warnings
         warnings.filterwarnings('ignore', 'tempnam.*')
 
         localname = os.tempnam()
@@ -697,7 +693,7 @@ class SFTPTest (unittest.TestCase):
         def progress_callback(x, y):
             saved_progress.append((x, y))
         res = sftp.put(localname, FOLDER + '/bunny.txt', progress_callback, False)
-        
+
         self.assertEquals(SFTPAttributes().attr, res.attr)
 
         f = sftp.open(FOLDER + '/bunny.txt', 'r')
@@ -730,3 +726,15 @@ class SFTPTest (unittest.TestCase):
         finally:
             sftp.remove(FOLDER + '/append.txt')
 
+    def test_putfo_empty_file(self):
+        """
+        Send an empty file and confirm it is sent.
+        """
+        target = FOLDER + '/empty file.txt'
+        stream = StringIO.StringIO()
+        try:
+            attrs = sftp.putfo(stream, target)
+            # the returned attributes should not be null
+            self.assertNotEqual(attrs, None)
+        finally:
+            sftp.remove(target)
