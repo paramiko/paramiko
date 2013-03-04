@@ -31,6 +31,7 @@ import warnings
 import sys
 import threading
 import unittest
+import StringIO
 
 import paramiko
 from stub_sftp import StubServer, StubSFTPServer
@@ -724,3 +725,16 @@ class SFTPTest (unittest.TestCase):
             f.close()
         finally:
             sftp.remove(FOLDER + '/append.txt')
+
+    def test_putfo_empty_file(self):
+        """
+        Send an empty file and confirm it is sent.
+        """
+        target = FOLDER + '/empty file.txt'
+        stream = StringIO.StringIO()
+        try:
+            attrs = sftp.putfo(stream, target)
+            # the returned attributes should not be null
+            self.assertNotEqual(attrs, None)
+        finally:
+            sftp.remove(target)
