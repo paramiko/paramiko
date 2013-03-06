@@ -878,6 +878,8 @@ class Channel (object):
             p1, p2 = pipe.make_or_pipe(self._pipe)
             self.in_buffer.set_event(p1)
             self.in_stderr_buffer.set_event(p2)
+            if self.eof_received or self.closed:
+                self._pipe.set_forever()
             return self._pipe.fileno()
         finally:
             self.lock.release()
