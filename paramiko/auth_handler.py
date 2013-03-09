@@ -308,7 +308,7 @@ class AuthHandler (object):
             keyblob = m.get_string()
             try:
                 key = self.transport._key_info[keytype](Message(keyblob))
-            except SSHException, e:
+            except SSHException as e:
                 self.transport._log(INFO, 'Auth rejected: public key: %s' % str(e))
                 key = None
             except:

@@ -85,7 +85,7 @@ class SFTPClient (BaseSFTP):
             self.ultra_debug = transport.get_hexdump()
         try:
             server_version = self._send_version()
-        except EOFError, x:
+        except EOFError as x:
             raise SSHException('EOF during negotiation')
         self._log(INFO, 'Opened sftp connection (server version %d)' % server_version)
 
@@ -178,7 +178,7 @@ class SFTPClient (BaseSFTP):
         while True:
             try:
                 t, msg = self._request(CMD_READDIR, handle)
-            except EOFError, e:
+            except EOFError as e:
                 # done with handle
                 break
             if t != CMD_NAME:
@@ -717,7 +717,7 @@ class SFTPClient (BaseSFTP):
         while True:
             try:
                 t, data = self._read_packet()
-            except EOFError, e:
+            except EOFError as e:
                 raise SSHException('Server connection dropped: %s' % (str(e),))
             msg = Message(data)
             num = msg.get_int()
