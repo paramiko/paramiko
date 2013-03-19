@@ -87,6 +87,7 @@ class Packetizer (object):
         self.__mac_size_in = 0
         self.__block_engine_out = None
         self.__block_engine_in = None
+        self.__sdctr_out = False
         self.__mac_engine_out = None
         self.__mac_engine_in = None
         self.__mac_key_out = ''
@@ -110,11 +111,12 @@ class Packetizer (object):
         """
         self.__logger = log
 
-    def set_outbound_cipher(self, block_engine, block_size, mac_engine, mac_size, mac_key):
+    def set_outbound_cipher(self, block_engine, block_size, mac_engine, mac_size, mac_key, sdctr=False):
         """
         Switch outbound data cipher.
         """
         self.__block_engine_out = block_engine
+        self.__sdctr_out = sdctr
         self.__block_size_out = block_size
         self.__mac_engine_out = mac_engine
         self.__mac_size_out = mac_size
@@ -490,12 +492,12 @@ class Packetizer (object):
         padding = 3 + bsize - ((len(payload) + 8) % bsize)
         packet = struct.pack('>IB', len(payload) + padding + 1, padding)
         packet += payload
-        if self.__block_engine_out is not None:
-            packet += rng.read(padding)
-        else:
-            # cute trick i caught openssh doing: if we're not encrypting,
+        if self.__sdctr_out or self.__block_engine_out is None:
+            # cute trick i caught openssh doing: if we're not encrypting or SDCTR mode (RFC4344),
             # don't waste random bytes for the padding
             packet += (chr(0) * padding)
+        else:
+            packet += rng.read(padding)
         return packet
 
     def _trigger_rekey(self):

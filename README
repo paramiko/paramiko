@@ -5,7 +5,7 @@ paramiko
 
 :Paramiko: Python SSH module
 :Copyright: Copyright (c) 2003-2009  Robey Pointer <robeypointer@gmail.com>
-:Copyright: Copyright (c) 2012  Jeff Forcier <jeff@bitprophet.org>
+:Copyright: Copyright (c) 2013  Jeff Forcier <jeff@bitprophet.org>
 :License: LGPL
 :Homepage: https://github.com/paramiko/paramiko/
 
@@ -20,7 +20,7 @@ What
 ----
 
 "paramiko" is a combination of the esperanto words for "paranoid" and
-"friend".  it's a module for python 2.2+ that implements the SSH2 protocol
+"friend".  it's a module for python 2.5+ that implements the SSH2 protocol
 for secure (encrypted and authenticated) connections to remote machines.
 unlike SSL (aka TLS), SSH2 protocol does not require hierarchical
 certificates signed by a powerful central authority. you may know SSH2 as
@@ -39,8 +39,7 @@ that should have come with this archive.
 Requirements
 ------------
 
-  - python 2.3 or better <http://www.python.org/>
-    (python 2.2 is also supported, but not recommended)
+  - python 2.5 or better <http://www.python.org/>
   - pycrypto 2.1 or better <https://www.dlitz.net/software/pycrypto/>
 
 If you have setuptools, you can build and install paramiko and all its
@@ -57,19 +56,6 @@ pretty sure that it works for all posix platforms, including MacOS. it
 should also work on Windows, though i don't test it as frequently there.
 if you run into Windows problems, send me a patch: portability is important
 to me.
-
-python 2.2 may work, thanks to some patches from Roger Binns. things to
-watch out for:
-
-    * sockets in 2.2 don't support timeouts, so the 'select' module is
-      imported to do polling.  
-    * logging is mostly stubbed out. it works just enough to let paramiko
-      create log files for debugging, if you want them. to get real logging,
-      you can backport python 2.3's logging package. Roger has done that
-      already:
-      http://sourceforge.net/project/showfiles.php?group_id=75211&package_id=113804
-
-you really should upgrade to python 2.3. laziness is no excuse! :)
 
 some python distributions don't include the utf-8 string encodings, for
 reasons of space (misdirected as that is). if your distribution is
