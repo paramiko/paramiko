@@ -28,6 +28,7 @@ import UserDict
 from paramiko.common import *
 from paramiko.dsskey import DSSKey
 from paramiko.rsakey import RSAKey
+from paramiko.util import get_logger
 
 
 class InvalidHostKey(Exception):
@@ -48,7 +49,7 @@ class HostKeyEntry:
         self.hostnames = hostnames
         self.key = key
 
-    def from_line(cls, line):
+    def from_line(cls, line, lineno=None):
         """
         Parses the given line of text to find the names for the host,
         the type of key, and the key data. The line is expected to be in the
@@ -61,9 +62,12 @@ class HostKeyEntry:
         @param line: a line from an OpenSSH known_hosts file
         @type line: str
         """
+        log = get_logger('paramiko.hostkeys')
         fields = line.split(' ')
         if len(fields) < 3:
             # Bad number of fields
+            log.warn("Not enough fields found in known_hosts in line %s (%r)" %
+                     (lineno, line))
             return None
         fields = fields[:3]
 
@@ -78,6 +82,7 @@ class HostKeyEntry:
             elif keytype == 'ssh-dss':
                 key = DSSKey(data=base64.decodestring(key))
             else:
+                log.warn("Unable to handle key of type %s" % (keytype,))
                 return None
         except binascii.Error, e:
             raise InvalidHostKey(line, e)
@@ -160,11 +165,11 @@ class HostKeys (UserDict.DictMixin):
         @raise IOError: if there was an error reading the file
         """
         f = open(filename, 'r')
-        for line in f:
+        for lineno, line in enumerate(f):
             line = line.strip()
             if (len(line) == 0) or (line[0] == '#'):
                 continue
-            e = HostKeyEntry.from_line(line)
+            e = HostKeyEntry.from_line(line, lineno)
             if e is not None:
                 self._entries.append(e)
         f.close()
