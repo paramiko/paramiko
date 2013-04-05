@@ -25,6 +25,12 @@ v1.11.0 (DD MM YYYY)
   implementations of all functionality. Thanks to Jason R. Coombs for the
   patch.
 
+v1.10.1 (DD MM YYYY)
+--------------------
+
+* #142: (Fabric #811) SFTP put of empty file will still return the attributes
+  of the put file. Thanks to Jason R. Coombs for the patch.
+
 v1.10.0 (1st Mar 2013)
 --------------------
 

@@ -575,7 +575,7 @@ class SFTPClient (BaseSFTP):
                     break
         finally:
             fr.close()
-        if confirm and file_size:
+        if confirm:
             s = self.stat(remotepath)
             if s.st_size != size:
                 raise IOError('size mismatch in put!  %d != %d' % (s.st_size, size))
