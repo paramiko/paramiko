@@ -17,6 +17,10 @@ v1.10.1 (DD MM YYYY)
 
 * #142: (Fabric #811) SFTP put of empty file will still return the attributes
   of the put file. Thanks to Jason R. Coombs for the patch.
+* #154: (Fabric #876) Forwarded SSH agent connections left stale local pipes
+  lying around, which could cause local (and sometimes remote or network)
+  resource starvation when running many agent-using remote commands. Thanks to
+  Kevin Tegtmeier for catch & patch.
 
 v1.10.0 (1st Mar 2013)
 --------------------
