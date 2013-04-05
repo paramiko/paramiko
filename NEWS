@@ -12,8 +12,8 @@ Issues noted as "Fabric #NN" can be found at https://github.com/fabric/fabric/.
 Releases
 ========
 
-v1.10.1 (DD MM YYYY)
---------------------
+v1.10.1 (5th Apr 2013)
+----------------------
 
 * #142: (Fabric #811) SFTP put of empty file will still return the attributes
   of the put file. Thanks to Jason R. Coombs for the patch.
