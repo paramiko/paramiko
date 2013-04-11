@@ -400,7 +400,6 @@ class Transport (threading.Thread):
 
         @since: 1.5.3
         """
-        self.sock.close()
         self.close()
 
     def get_security_options(self):
@@ -614,11 +613,10 @@ class Transport (threading.Thread):
         """
         if not self.active:
             return
-        self.active = False
-        self.packetizer.close()
-        self.join()
+        self.stop_thread()
         for chan in self._channels.values():
             chan._unlink()
+        self.sock.close()
 
     def get_remote_server_key(self):
         """
@@ -1391,6 +1389,8 @@ class Transport (threading.Thread):
     def stop_thread(self):
         self.active = False
         self.packetizer.close()
+        while self.is_alive():
+            self.join(10)
 
 
     ###  internals...
