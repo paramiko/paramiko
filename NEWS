@@ -24,6 +24,10 @@ v1.11.0 (DD MM YYYY)
   dependent on ctypes for constructing appropriate structures and had ctypes
   implementations of all functionality. Thanks to Jason R. Coombs for the
   patch.
+* #87: Ensure updates to `known_hosts` files account for any updates to said
+  files after Paramiko initially read them. (Includes related fix to guard
+  against duplicate entries during subsequent `known_hosts` loads.) Thanks to
+  `@sunweaver` for the contribution.
 
 v1.10.1 (5th Apr 2013)
 ----------------------
