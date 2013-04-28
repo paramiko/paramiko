@@ -32,6 +32,8 @@ v1.11.0 (DD MM YYYY)
 v1.10.2 (DD MM 2013)
 --------------------
 
+* #153, #67: Warn on parse failure when reading known_hosts
+  file. Thanks to `@glasserc` for patch.
 * #146: Indentation fixes for readability. Thanks to Abhinav Upadhyay for catch
   & patch.
 
