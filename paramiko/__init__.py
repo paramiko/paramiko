@@ -69,6 +69,7 @@ from ssh_exception import SSHException, PasswordRequiredException, \
 from server import ServerInterface, SubsystemHandler, InteractiveQuery
 from rsakey import RSAKey
 from dsskey import DSSKey
+from ecdsakey import ECDSAKey
 from sftp import SFTPError, BaseSFTP
 from sftp_client import SFTP, SFTPClient
 from sftp_server import SFTPServer
