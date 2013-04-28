@@ -141,6 +141,8 @@ class HostKeys (UserDict.DictMixin):
             if (hostname in e.hostnames) and (e.key.get_name() == keytype):
                 e.key = key
                 return
+        if not hostname.startswith('|1|') and hash_hostname:
+            hostname = self.hash_host(hostname)
         self._entries.append(HostKeyEntry([hostname], key))
 
     def load(self, filename):
