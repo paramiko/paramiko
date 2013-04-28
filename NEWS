@@ -29,6 +29,12 @@ v1.11.0 (DD MM YYYY)
   against duplicate entries during subsequent `known_hosts` loads.) Thanks to
   `@sunweaver` for the contribution.
 
+v1.10.2 (DD MM 2013)
+--------------------
+
+* #146: Indentation fixes for readability. Thanks to Abhinav Upadhyay for catch
+  & patch.
+
 v1.10.1 (5th Apr 2013)
 ----------------------
 

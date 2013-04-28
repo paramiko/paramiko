@@ -135,7 +135,7 @@ class SSHConfig (object):
                 else:
                     host['config']['identityfile'] = [value]
             elif key not in host['config']:
-                    host['config'].update({key: value})
+                host['config'].update({key: value})
         self._config.append(host)
 
     def lookup(self, hostname):
@@ -252,5 +252,5 @@ class SSHConfig (object):
                             config[k][item] = config[k][item].\
                                 replace(find, str(replace))
                     else:
-                            config[k] = config[k].replace(find, str(replace))
+                        config[k] = config[k].replace(find, str(replace))
         return config
