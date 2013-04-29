@@ -8,6 +8,7 @@ paramiko
 :Copyright: Copyright (c) 2013  Jeff Forcier <jeff@bitprophet.org>
 :License: LGPL
 :Homepage: https://github.com/paramiko/paramiko/
+:API docs: http://docs.paramiko.org
 
 
 What
