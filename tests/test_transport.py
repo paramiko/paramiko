@@ -418,6 +418,7 @@ class TransportTest(ParamikoTest):
         verify that zlib compression is basically working.
         """
         def force_compression(o):
+            o.digests = ('hmac-sha1',) # Bytecount assertion below relies on this
             o.compression = ('zlib',)
         self.setup_test_server(force_compression, force_compression)
         chan = self.tc.open_session()
@@ -752,3 +753,44 @@ class TransportTest(ParamikoTest):
         # Close the channels
         schan.close()
         chan.close()
+
+    def _test_hmac_sha2(self, hmac, hmac_size):
+        """
+        verify that the client and the server can use SHA2-something hashes
+        """
+        def force_hmac_sha2(options):
+            options.digests = (hmac,)
+        self.setup_test_server(client_options=force_hmac_sha2, server_options=force_hmac_sha2)
+        for hmac_used in (self.tc.local_mac, self.tc.remote_mac,
+                          self.ts.local_mac, self.ts.remote_mac):
+            self.assertEquals(hmac, hmac_used)
+        for hmac_size_used in (self.tc.packetizer.get_mac_size_in(), self.tc.packetizer.get_mac_size_out(),
+                               self.ts.packetizer.get_mac_size_in(), self.ts.packetizer.get_mac_size_out()):
+            self.assertEquals(hmac_size, hmac_size_used)
+        self.tc.send_ignore(1024)
+        self.tc.renegotiate_keys()
+        self.ts.send_ignore(1024)
+
+    def test_J_hmac_sha2_512(self):
+        """
+        verify that the client and the server can use SHA2-512 hashes
+        """
+        self._test_hmac_sha2('hmac-sha2-512', 64)
+
+    def test_K_hmac_sha2_256(self):
+        """
+        verify that the client and the server can use SHA2-256 hashes
+        """
+        self._test_hmac_sha2('hmac-sha2-256', 32)
+
+    def test_L_hmac_sha2_512_96(self):
+        """
+        verify that the client and the server can use truncated SHA2-512 hashes
+        """
+        self._test_hmac_sha2('hmac-sha2-512-96', 12)
+
+    def test_M_hmac_sha2_512_96(self):
+        """
+        verify that the client and the server can use truncated SHA2-256 hashes
+        """
+        self._test_hmac_sha2('hmac-sha2-256-96', 12)

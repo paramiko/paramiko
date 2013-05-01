@@ -50,7 +50,7 @@ from paramiko.util import retry_on_signal
 
 from Crypto import Random
 from Crypto.Cipher import Blowfish, AES, DES3, ARC4
-from Crypto.Hash import SHA, MD5
+from Crypto.Hash import MD5, SHA, SHA256, SHA512
 try:
     from Crypto.Util import Counter
 except ImportError:
@@ -201,7 +201,8 @@ class Transport (threading.Thread):
 
     _preferred_ciphers = ( 'aes128-ctr', 'aes256-ctr', 'aes128-cbc', 'blowfish-cbc', 'aes256-cbc', '3des-cbc',
         'arcfour128', 'arcfour256' )
-    _preferred_macs = ( 'hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96' )
+    _preferred_macs = ( 'hmac-sha2-512', 'hmac-sha2-256', 'hmac-sha1', 'hmac-md5',
+                        'hmac-sha2-512-96', 'hmac-sha2-256-96', 'hmac-sha1-96', 'hmac-md5-96' )
     _preferred_keys = ( 'ssh-rsa', 'ssh-dss' )
     _preferred_kex = ( 'diffie-hellman-group1-sha1', 'diffie-hellman-group-exchange-sha1' )
     _preferred_compression = ( 'none', )
@@ -218,6 +219,10 @@ class Transport (threading.Thread):
         }
 
     _mac_info = {
+        'hmac-sha2-512': { 'class': SHA512, 'size': 64 },
+        'hmac-sha2-512-96': { 'class': SHA512, 'size': 12 },
+        'hmac-sha2-256': { 'class': SHA256, 'size': 32 },
+        'hmac-sha2-256-96': { 'class': SHA256, 'size': 12 },
         'hmac-sha1': { 'class': SHA, 'size': 20 },
         'hmac-sha1-96': { 'class': SHA, 'size': 12 },
         'hmac-md5': { 'class': MD5, 'size': 16 },
