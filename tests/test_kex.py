@@ -24,7 +24,7 @@ from binascii import hexlify
 import unittest
 import paramiko.util
 from paramiko.kex_group1 import KexGroup1
-from paramiko.kex_gex import KexGex
+from paramiko.kex_gex import KexGex_SHA1, KexGex_SHA2_256
 from paramiko import Message
 
 
@@ -73,9 +73,11 @@ class FakeTransport (object):
         return FakeModulusPack()
 
 
-class KexTest (unittest.TestCase):
+class KexTestBase (unittest.TestCase):
 
     K = 14730343317708716439807310032871972459448364195094179797249681733965528989482751523943515690110179031004049109375612685505881911274101441415545039654102474376472240501616988799699744135291070488314748284283496055223852115360852283821334858541043710301057312858051901453919067023103730011648890038847384890504L
+
+    KexGex = None
 
     def setUp(self):
         pass
@@ -123,10 +125,11 @@ class KexTest (unittest.TestCase):
         self.assertEquals(x, hexlify(str(transport._message)).upper())
         self.assert_(transport._activated)
 
+    _test_3_H = None
     def test_3_gex_client(self):
         transport = FakeTransport()
         transport.server_mode = False
-        kex = KexGex(transport)
+        kex = self.KexGex(transport)
         kex.start_kex()
         x = '22000004000000080000002000'
         self.assertEquals(x, hexlify(str(transport._message)).upper())
@@ -147,16 +150,17 @@ class KexTest (unittest.TestCase):
         msg.add_string('fake-sig')
         msg.rewind()
         kex.parse_next(paramiko.kex_gex._MSG_KEXDH_GEX_REPLY, msg)
-        H = 'A265563F2FA87F1A89BF007EE90D58BE2E4A4BD0'
+        H = self._test_3_H
         self.assertEquals(self.K, transport._K)
         self.assertEquals(H, hexlify(transport._H).upper())
         self.assertEquals(('fake-host-key', 'fake-sig'), transport._verify)
         self.assert_(transport._activated)
 
+    _test_4_H = None
     def test_4_gex_old_client(self):
         transport = FakeTransport()
         transport.server_mode = False
-        kex = KexGex(transport)
+        kex = self.KexGex(transport)
         kex.start_kex(_test_old_style=True)
         x = '1E00000800'
         self.assertEquals(x, hexlify(str(transport._message)).upper())
@@ -177,16 +181,17 @@ class KexTest (unittest.TestCase):
         msg.add_string('fake-sig')
         msg.rewind()
         kex.parse_next(paramiko.kex_gex._MSG_KEXDH_GEX_REPLY, msg)
-        H = '807F87B269EF7AC5EC7E75676808776A27D5864C'
+        H = self._test_4_H
         self.assertEquals(self.K, transport._K)
         self.assertEquals(H, hexlify(transport._H).upper())
         self.assertEquals(('fake-host-key', 'fake-sig'), transport._verify)
         self.assert_(transport._activated)
-        
+
+    _test_5_H = None
     def test_5_gex_server(self):
         transport = FakeTransport()
         transport.server_mode = True
-        kex = KexGex(transport)
+        kex = self.KexGex(transport)
         kex.start_kex()
         self.assertEquals((paramiko.kex_gex._MSG_KEXDH_GEX_REQUEST, paramiko.kex_gex._MSG_KEXDH_GEX_REQUEST_OLD), transport._expect)
 
@@ -205,17 +210,18 @@ class KexTest (unittest.TestCase):
         msg.rewind()
         kex.parse_next(paramiko.kex_gex._MSG_KEXDH_GEX_INIT, msg)
         K = 67592995013596137876033460028393339951879041140378510871612128162185209509220726296697886624612526735888348020498716482757677848959420073720160491114319163078862905400020959196386947926388406687288901564192071077389283980347784184487280885335302632305026248574716290537036069329724382811853044654824945750581L
-        H = 'CE754197C21BF3452863B4F44D0B3951F12516EF'
+        H = self._test_5_H
         x = '210000000866616B652D6B6579000000807E2DDB1743F3487D6545F04F1C8476092FB912B013626AB5BCEB764257D88BBA64243B9F348DF7B41B8C814A995E00299913503456983FFB9178D3CD79EB6D55522418A8ABF65375872E55938AB99A84A0B5FC8A1ECC66A7C3766E7E0F80B7CE2C9225FC2DD683F4764244B72963BBB383F529DCF0C5D17740B8A2ADBE9208D40000000866616B652D736967'
         self.assertEquals(K, transport._K)
         self.assertEquals(H, hexlify(transport._H).upper())
         self.assertEquals(x, hexlify(str(transport._message)).upper())
         self.assert_(transport._activated)
 
+    _test_6_H = None
     def test_6_gex_server_with_old_client(self):
         transport = FakeTransport()
         transport.server_mode = True
-        kex = KexGex(transport)
+        kex = self.KexGex(transport)
         kex.start_kex()
         self.assertEquals((paramiko.kex_gex._MSG_KEXDH_GEX_REQUEST, paramiko.kex_gex._MSG_KEXDH_GEX_REQUEST_OLD), transport._expect)
 
@@ -232,9 +238,25 @@ class KexTest (unittest.TestCase):
         msg.rewind()
         kex.parse_next(paramiko.kex_gex._MSG_KEXDH_GEX_INIT, msg)
         K = 67592995013596137876033460028393339951879041140378510871612128162185209509220726296697886624612526735888348020498716482757677848959420073720160491114319163078862905400020959196386947926388406687288901564192071077389283980347784184487280885335302632305026248574716290537036069329724382811853044654824945750581L
-        H = 'B41A06B2E59043CEFC1AE16EC31F1E2D12EC455B'
+        H = self._test_6_H
         x = '210000000866616B652D6B6579000000807E2DDB1743F3487D6545F04F1C8476092FB912B013626AB5BCEB764257D88BBA64243B9F348DF7B41B8C814A995E00299913503456983FFB9178D3CD79EB6D55522418A8ABF65375872E55938AB99A84A0B5FC8A1ECC66A7C3766E7E0F80B7CE2C9225FC2DD683F4764244B72963BBB383F529DCF0C5D17740B8A2ADBE9208D40000000866616B652D736967'
         self.assertEquals(K, transport._K)
         self.assertEquals(H, hexlify(transport._H).upper())
         self.assertEquals(x, hexlify(str(transport._message)).upper())
         self.assert_(transport._activated)
+
+
+class KexTest_SHA1(KexTestBase):
+    KexGex = KexGex_SHA1
+    _test_3_H = 'A265563F2FA87F1A89BF007EE90D58BE2E4A4BD0'
+    _test_4_H = '807F87B269EF7AC5EC7E75676808776A27D5864C'
+    _test_5_H = 'CE754197C21BF3452863B4F44D0B3951F12516EF'
+    _test_6_H = 'B41A06B2E59043CEFC1AE16EC31F1E2D12EC455B'
+
+
+class KexTest_SHA2_256(KexTestBase):
+    KexGex = KexGex_SHA2_256
+    _test_3_H = 'AD1A9365A67B4496F05594AD1BF656E3CDA0851289A4C1AFF549FEAE50896DF4'
+    _test_4_H = '518386608B15891AE5237DEE08DCADDE76A0BCEFCE7F6DB3AD66BC41D256DFE5'
+    _test_5_H = 'CCAC0497CF0ABA1DBF55E1A3995D17F4CC31824B0E8D95CDF8A06F169D050D80'
+    _test_6_H = '3DDD2AD840AD095E397BA4D0573972DC60F6461FD38A187CACA6615A5BC8ADBB'
