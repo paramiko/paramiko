@@ -22,7 +22,7 @@ generator "g" are provided by the server.  A bit more work is required on the
 client side, and a B{lot} more on the server side.
 """
 
-from Crypto.Hash import SHA
+from Crypto.Hash import SHA, SHA256
 from Crypto.Util import number
 
 from paramiko.common import *
@@ -35,9 +35,10 @@ _MSG_KEXDH_GEX_REQUEST_OLD, _MSG_KEXDH_GEX_GROUP, _MSG_KEXDH_GEX_INIT, \
     _MSG_KEXDH_GEX_REPLY, _MSG_KEXDH_GEX_REQUEST = range(30, 35)
 
 
-class KexGex (object):
+class KexGexBase (object):
 
-    name = 'diffie-hellman-group-exchange-sha1'
+    name = None           # Defined in subclasses
+    hash_algorithm = None # Defined in subclasses
     min_bits = 1024
     max_bits = 8192
     preferred_bits = 2048
@@ -203,7 +204,7 @@ class KexGex (object):
         hm.add_mpint(self.e)
         hm.add_mpint(self.f)
         hm.add_mpint(K)
-        H = SHA.new(str(hm)).digest()
+        H = self.hash_algorithm.new(str(hm)).digest()
         self.transport._set_K_H(K, H)
         # sign it
         sig = self.transport.get_server_key().sign_ssh_data(self.transport.rng, H)
@@ -238,6 +239,14 @@ class KexGex (object):
         hm.add_mpint(self.e)
         hm.add_mpint(self.f)
         hm.add_mpint(K)
-        self.transport._set_K_H(K, SHA.new(str(hm)).digest())
+        self.transport._set_K_H(K, self.hash_algorithm.new(str(hm)).digest())
         self.transport._verify_key(host_key, sig)
         self.transport._activate_outbound()
+
+class KexGex_SHA1(KexGexBase):
+    name = 'diffie-hellman-group-exchange-sha1'
+    hash_algorithm = SHA
+
+class KexGex_SHA2_256(KexGexBase):
+    name = 'diffie-hellman-group-exchange-sha256'
+    hash_algorithm = SHA256

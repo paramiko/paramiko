@@ -36,7 +36,7 @@ from paramiko.channel import Channel
 from paramiko.common import *
 from paramiko.compress import ZlibCompressor, ZlibDecompressor
 from paramiko.dsskey import DSSKey
-from paramiko.kex_gex import KexGex
+from paramiko.kex_gex import KexGex_SHA1, KexGex_SHA2_256
 from paramiko.kex_group1 import KexGroup1
 from paramiko.message import Message
 from paramiko.packet import Packetizer, NeedRekeyException
@@ -204,7 +204,7 @@ class Transport (threading.Thread):
     _preferred_macs = ( 'hmac-sha2-512', 'hmac-sha2-256', 'hmac-sha1', 'hmac-md5',
                         'hmac-sha2-512-96', 'hmac-sha2-256-96', 'hmac-sha1-96', 'hmac-md5-96' )
     _preferred_keys = ( 'ssh-rsa', 'ssh-dss' )
-    _preferred_kex = ( 'diffie-hellman-group1-sha1', 'diffie-hellman-group-exchange-sha1' )
+    _preferred_kex = ( 'diffie-hellman-group-exchange-sha256', 'diffie-hellman-group-exchange-sha1', 'diffie-hellman-group1-sha1' )
     _preferred_compression = ( 'none', )
 
     _cipher_info = {
@@ -236,7 +236,8 @@ class Transport (threading.Thread):
 
     _kex_info = {
         'diffie-hellman-group1-sha1': KexGroup1,
-        'diffie-hellman-group-exchange-sha1': KexGex,
+        'diffie-hellman-group-exchange-sha1': KexGex_SHA1,
+        'diffie-hellman-group-exchange-sha256': KexGex_SHA2_256,
         }
 
     _compression_info = {
@@ -1719,10 +1720,9 @@ class Transport (threading.Thread):
             self.clear_to_send_lock.release()
         self.in_kex = True
         if self.server_mode:
-            if (self._modulus_pack is None) and ('diffie-hellman-group-exchange-sha1' in self._preferred_kex):
+            if (self._modulus_pack is None):
                 # can't do group-exchange if we don't have a pack of potential primes
-                pkex = list(self.get_security_options().kex)
-                pkex.remove('diffie-hellman-group-exchange-sha1')
+                pkex = filter(lambda x: not x.startswith('diffie-hellman-group-exchange-'), self.get_security_options().kex)
                 self.get_security_options().kex = pkex
             available_server_keys = filter(self.server_key_dict.keys().__contains__,
                                            self._preferred_keys)
