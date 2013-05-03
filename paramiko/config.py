@@ -60,18 +60,19 @@ class LazyFqdn(object):
                 address_family = self._config.get('addressfamily', 'any')
                 address_family = address_family.lower()
                 if address_family in ('inet', 'inet6'):
-                    family = socket.AF_INET if address_family == 'inet' \
-                        else socket.AF_INET6
-
                     results = socket.getaddrinfo(thishost,
                                                  None,
-                                                 family,
+                                                 socket.AF_UNSPEC,
                                                  socket.SOCK_STREAM,
                                                  socket.IPPROTO_IP,
                                                  socket.AI_CANONNAME)
+
+                    family = socket.AF_INET if address_family == 'inet' \
+                        else socket.AF_INET6
+
                     for res in results:
                         af, socktype, proto, canonname, sa = res
-                        if canonname and '.' in canonname:
+                        if af == family and '.' in canonname:
                             self._fqdn = canonname
                             break
 
