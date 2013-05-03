@@ -118,7 +118,6 @@ class UtilTest(ParamikoTest):
 
         addressfamily_config = config.lookup('af.example.com')
 
-        import socket
         from paramiko.config import LazyFqdn
 
         fqdn = LazyFqdn(addressfamily_config)
