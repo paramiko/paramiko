@@ -49,31 +49,35 @@ class LazyFqdn(object):
         self._config = config
 
     def __str__(self):
-        if self._fqdn is None and self._config is not None:
-            address_family = self._config.get('addressfamily', 'any').lower()
-            if address_family != 'any':
-                family = socket.AF_INET if address_family == 'inet' \
-                    else socket.AF_INET6
+        thishost = ''
+        if self._fqdn is None:
+            if self._config is not None:
+                thishost = self._config.get(
+                    'bindaddress',
+                    socket.gethostname()
+                )
 
-                host = self._config.get('bindaddress')
-                if host is None:
-                    host = socket.gethostname().split('.')[0]
+                address_family = self._config.get('addressfamily', 'any')
+                address_family = address_family.lower()
+                if address_family in ('inet', 'inet6'):
+                    family = socket.AF_INET if address_family == 'inet' \
+                        else socket.AF_INET6
 
-                results = socket.getaddrinfo(host,
-                                             None,
-                                             family,
-                                             socket.SOCK_DGRAM,
-                                             socket.IPPROTO_IP,
-                                             socket.AI_CANONNAME)
-                for res in results:
-                    af, socktype, proto, canonname, sa = res
-                    if canonname and '.' in canonname:
-                        self._fqdn = canonname
-                        break
+                    results = socket.getaddrinfo(thishost,
+                                                 None,
+                                                 family,
+                                                 socket.SOCK_STREAM,
+                                                 socket.IPPROTO_IP,
+                                                 socket.AI_CANONNAME)
+                    for res in results:
+                        af, socktype, proto, canonname, sa = res
+                        if canonname and '.' in canonname:
+                            self._fqdn = canonname
+                            break
 
         # Handle 'any' / unspecified
         if self._fqdn is None:
-            self._fqdn = socket.getfqdn()
+            self._fqdn = socket.getfqdn(thishost)
 
         return self._fqdn
 
