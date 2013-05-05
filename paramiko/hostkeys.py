@@ -66,7 +66,7 @@ class HostKeyEntry:
         fields = line.split(' ')
         if len(fields) < 3:
             # Bad number of fields
-            log.warn("Not enough fields found in known_hosts in line %s (%r)" %
+            log.info("Not enough fields found in known_hosts in line %s (%r)" %
                      (lineno, line))
             return None
         fields = fields[:3]
@@ -82,7 +82,7 @@ class HostKeyEntry:
             elif keytype == 'ssh-dss':
                 key = DSSKey(data=base64.decodestring(key))
             else:
-                log.warn("Unable to handle key of type %s" % (keytype,))
+                log.info("Unable to handle key of type %s" % (keytype,))
                 return None
         except binascii.Error, e:
             raise InvalidHostKey(line, e)
