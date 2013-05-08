@@ -130,9 +130,9 @@ class HostKeys (UserDict.DictMixin):
         if filename is not None:
             self.load(filename)
 
-    def add(self, hostname, keytype, key):
+    def add(self, hostname, keytype, key, hash_hostname=True):
         """
-        Add a host key entry to the table.  Any existing entry for a
+        Add a host key entry to the table. Any existing entry for a
         C{(hostname, keytype)} pair will be replaced.
 
         @param hostname: the hostname (or IP) to add
@@ -141,11 +141,14 @@ class HostKeys (UserDict.DictMixin):
         @type keytype: str
         @param key: the key to add
         @type key: L{PKey}
+
         """
         for e in self._entries:
             if (hostname in e.hostnames) and (e.key.get_name() == keytype):
                 e.key = key
                 return
+        if not hostname.startswith('|1|') and hash_hostname:
+            hostname = self.hash_host(hostname)
         self._entries.append(HostKeyEntry([hostname], key))
 
     def load(self, filename):
