@@ -79,8 +79,8 @@ class Handler (SocketServer.BaseRequestHandler):
                     break
                 self.request.send(data)
         chan.close()
-        self.request.close()
         verbose('Tunnel closed from %r' % (self.request.getpeername(),))
+        self.request.close()
 
 
 def forward_tunnel(local_port, remote_host, remote_port, transport):
