@@ -1,9 +1,10 @@
-from fabric.api import task, sudo, env, local
+from fabric.api import task, sudo, env, local, hosts
 from fabric.contrib.project import rsync_project
 from fabric.contrib.console import confirm
 
 
 @task
+@hosts("paramiko.org")
 def upload_docs():
     target = "/var/www/paramiko.org"
     staging = "/tmp/paramiko_docs"
