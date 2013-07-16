@@ -53,6 +53,27 @@ class SSHConfig (object):
 
         :param file file_obj: a file-like object to read the config file from
         """
+        def get_hosts(val):
+            i, length = 0, len(val)
+            hosts = []
+            while i < length:
+                if val[i] == '"':
+                    end = val.find('"', i + 1)
+                    if end < 0:
+                        raise Exception("Unparsable host %s" % val)
+                    hosts.append(val[i + 1:end])
+                    i = end + 1
+                elif not val[i].isspace():
+                    end = i + 1
+                    while end < length and not val[end].isspace():
+                        end += 1
+                    hosts.append(val[i:end])
+                    i = end + 1
+                else:
+                    i += 1
+
+            return hosts
+
         host = {"host": ['*'], "config": {}}
         for line in file_obj:
             line = line.rstrip('\n').lstrip()
@@ -75,22 +96,27 @@ class SSHConfig (object):
                     raise Exception('Unparsable line: %r' % line)
                 key = line[:i].lower()
                 value = line[i:].lstrip()
-
+            
             if key == 'host':
                 self._config.append(host)
-                value = value.split()
-                host = {key: value, 'config': {}}
-            #identityfile, localforward, remoteforward keys are special cases, since they are allowed to be
-            # specified multiple times and they should be tried in order
-            # of specification.
-            
-            elif key in ['identityfile', 'localforward', 'remoteforward']:
-                if key in host['config']:
-                    host['config'][key].append(value)
-                else:
-                    host['config'][key] = [value]
-            elif key not in host['config']:
-                host['config'].update({key: value})
+                host = {
+                    'host': get_hosts(value),
+                    'config': {}
+                }
+            else:
+                if value.startswith('"') and value.endswith('"'):
+                    value = value[1:-1]
+
+                #identityfile, localforward, remoteforward keys are special cases, since they are allowed to be
+                # specified multiple times and they should be tried in order
+                # of specification.
+                if key in ['identityfile', 'localforward', 'remoteforward']:
+                    if key in host['config']:
+                        host['config'][key].append(value)
+                    else:
+                        host['config'][key] = [value]
+                elif key not in host['config']:
+                    host['config'][key] = value
         self._config.append(host)
 
     def lookup(self, hostname):

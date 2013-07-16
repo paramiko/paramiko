@@ -333,3 +333,71 @@ IdentityFile something_%l_using_fqdn
 """
         config = paramiko.util.parse_ssh_config(StringIO(test_config))
         assert config.lookup('meh')  # will die during lookup() if bug regresses
+
+    def test_quoted_host_names(self):
+        test_config_file = """\
+Host "param pam" param "pam"
+    Port 1111
+
+Host "param2"
+    Port 2222
+
+Host param3 parara
+    Port 3333
+
+Host param4 "p a r" "p" "par" para
+    Port 4444
+"""
+        res = {
+            'param pam': {'hostname': 'param pam', 'port': '1111'},
+            'param': {'hostname': 'param', 'port': '1111'},
+            'pam': {'hostname': 'pam', 'port': '1111'},
+
+            'param2': {'hostname': 'param2', 'port': '2222'},
+
+            'param3': {'hostname': 'param3', 'port': '3333'},
+            'parara': {'hostname': 'parara', 'port': '3333'},
+
+            'param4': {'hostname': 'param4', 'port': '4444'},
+            'p a r': {'hostname': 'p a r', 'port': '4444'},
+            'p': {'hostname': 'p', 'port': '4444'},
+            'par': {'hostname': 'par', 'port': '4444'},
+            'para': {'hostname': 'para', 'port': '4444'},
+        }
+        f = StringIO(test_config_file)
+        config = paramiko.util.parse_ssh_config(f)
+        for host, values in res.items():
+            self.assertEquals(
+                paramiko.util.lookup_ssh_host_config(host, config),
+                values
+            )
+
+    def test_quoted_params_in_config(self):
+        test_config_file = """\
+Host "param pam" param "pam"
+    IdentityFile id_rsa
+
+Host "param2"
+    IdentityFile "test rsa key"
+
+Host param3 parara
+    IdentityFile id_rsa
+    IdentityFile "test rsa key"
+"""
+        res = {
+            'param pam': {'hostname': 'param pam', 'identityfile': ['id_rsa']},
+            'param': {'hostname': 'param', 'identityfile': ['id_rsa']},
+            'pam': {'hostname': 'pam', 'identityfile': ['id_rsa']},
+
+            'param2': {'hostname': 'param2', 'identityfile': ['test rsa key']},
+
+            'param3': {'hostname': 'param3', 'identityfile': ['id_rsa', 'test rsa key']},
+            'parara': {'hostname': 'parara', 'identityfile': ['id_rsa', 'test rsa key']},
+        }
+        f = StringIO(test_config_file)
+        config = paramiko.util.parse_ssh_config(f)
+        for host, values in res.items():
+            self.assertEquals(
+                paramiko.util.lookup_ssh_host_config(host, config),
+                values
+            )
