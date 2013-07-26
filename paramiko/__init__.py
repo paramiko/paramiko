@@ -57,7 +57,7 @@ if sys.version_info < (2, 5):
 
 
 __author__ = "Jeff Forcier <jeff@bitprophet.org>"
-__version__ = "1.10.2"
+__version__ = "1.11.0"
 __license__ = "GNU Lesser General Public License (LGPL)"
 
 
