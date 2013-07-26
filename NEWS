@@ -12,11 +12,11 @@ Issues noted as "Fabric #NN" can be found at https://github.com/fabric/fabric/.
 Releases
 ========
 
-v1.10.2 (DD MM 2013)
---------------------
+v1.10.2 (26th Jul 2013)
+-----------------------
 
-* #153, #67: Warn on parse failure when reading known_hosts
-  file. Thanks to `@glasserc` for patch.
+* #153, #67: Warn on parse failure when reading known_hosts file. Thanks to
+  `@glasserc` for patch.
 * #146: Indentation fixes for readability. Thanks to Abhinav Upadhyay for catch
   & patch.
 
