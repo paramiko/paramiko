@@ -12,8 +12,8 @@ Issues noted as "Fabric #NN" can be found at https://github.com/fabric/fabric/.
 Releases
 ========
 
-v1.11.0 (DD MM YYYY)
---------------------
+v1.11.0 (26th Jul 2013)
+-----------------------
 
 * #98: On Windows, when interacting with the PuTTY PAgeant, Paramiko now
   creates the shared memory map with explicit Security Attributes of the user,
@@ -29,11 +29,11 @@ v1.11.0 (DD MM YYYY)
   against duplicate entries during subsequent `known_hosts` loads.) Thanks to
   `@sunweaver` for the contribution.
 
-v1.10.2 (DD MM 2013)
---------------------
+v1.10.2 (26th Jul 2013)
+-----------------------
 
-* #153, #67: Warn on parse failure when reading known_hosts
-  file. Thanks to `@glasserc` for patch.
+* #153, #67: Warn on parse failure when reading known_hosts file. Thanks to
+  `@glasserc` for patch.
 * #146: Indentation fixes for readability. Thanks to Abhinav Upadhyay for catch
   & patch.
 
