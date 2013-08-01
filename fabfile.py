@@ -33,6 +33,7 @@ def test():
 @task
 def release():
     confirm("Only hit Enter if you remembered to update the version!")
+    confirm("Also, did you remember to tag your release?")
     build_docs()
     local("python setup.py sdist register upload")
     upload_docs()
