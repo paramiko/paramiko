@@ -264,8 +264,8 @@ class Packetizer (object):
             if retry_write:
                 n = 0
                 if self.__closed:
-                    n = -1
-            if n < 0:
+                    raise EOFError()
+            elif n <= 0:
                 raise EOFError()
             if n == len(out):
                 break
