@@ -56,6 +56,7 @@ class LazyFqdn(object):
             if address_family != 'any':
                 family = socket.AF_INET if address_family == 'inet' \
                     else socket.AF_INET6
+                host = socket.gethostname()
                 results = socket.getaddrinfo(host,
                                              None,
                                              family,
