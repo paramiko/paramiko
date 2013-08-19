@@ -1,0 +1,18 @@
+Host *
+ControlPath ~/.ssh/master-%r-%l@%h:%p
+ControlMaster auto
+AddressFamily inet
+ForwardAgent yes
+
+Host example1.com
+User foo1
+IdentityFile ~/.ssh/id_rsa_example1
+
+Host example2.com
+Port 5656
+User foo2
+IdentityFile ~/.ssh/id_rsa_example2
+
+Host example3.com
+User foo3
+IdentityFile ~/.ssh/id_rsa_example3
