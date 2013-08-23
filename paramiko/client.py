@@ -412,22 +412,18 @@ class SSHClient (object):
 
         if not two_factor:
             keyfiles = []
-            rsa_key = os.path.expanduser('~/.ssh/id_rsa')
-            dsa_key = os.path.expanduser('~/.ssh/id_dsa')
-            if os.path.isfile(rsa_key):
-                keyfiles.append((RSAKey, rsa_key))
-            if os.path.isfile(dsa_key):
-                keyfiles.append((DSSKey, dsa_key))
-            # look in ~/ssh/ for windows users:
-            rsa_key = os.path.expanduser('~/ssh/id_rsa')
-            dsa_key = os.path.expanduser('~/ssh/id_dsa')
-            if os.path.isfile(rsa_key):
-                keyfiles.append((RSAKey, rsa_key))
-            if os.path.isfile(dsa_key):
-                keyfiles.append((DSSKey, dsa_key))
 
-            if not look_for_keys:
-                keyfiles = []
+            if look_for_keys:
+                potential_keyfiles = (
+                    (RSAKey, os.path.expanduser('~/.ssh/id_rsa')),
+                    (DSSKey, os.path.expanduser('~/.ssh/id_dsa')),
+                    # look in ~/ssh/ for windows users:
+                    (RSAKey, os.path.expanduser('~/ssh/id_rsa')),
+                    (DSSKey, os.path.expanduser('~/ssh/id_dsa')),
+                )
+                for potential in potential_keyfiles:
+                    if os.path.isfile(potential[1]):
+                        keyfiles.append(potential)
 
             for pkey_class, filename in keyfiles:
                 try:
