@@ -33,7 +33,7 @@ from paramiko.dsskey import DSSKey
 from paramiko.hostkeys import HostKeys
 from paramiko.resource import ResourceManager
 from paramiko.rsakey import RSAKey
-from paramiko.ssh_exception import SSHException, BadHostKeyException
+from paramiko.ssh_exception import PasswordRequiredException, SSHException, BadHostKeyException
 from paramiko.transport import Transport
 from paramiko.util import retry_on_signal
 
@@ -465,6 +465,9 @@ class SSHClient (object):
                         two_factor = (allowed_types == ['password'])
                         if not two_factor:
                             return
+                        break
+                    except PasswordRequiredException, e:
+                        saved_exception = e
                         break
                     except SSHException, e:
                         saved_exception = e
