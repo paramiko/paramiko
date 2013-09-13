@@ -231,8 +231,8 @@ class SSHClient (object):
         """
         self._policy = policy
 
-    def connect(self, hostname, port=SSH_PORT, username=None, password=None, pkey=None,
-                key_filename=None, timeout=None, allow_agent=True, look_for_keys=True,
+    def connect(self, hostname, port=SSH_PORT, username=None, password=None, passphrase=None,
+                pkey=None, key_filename=None, timeout=None, allow_agent=True, look_for_keys=True,
                 compress=False, sock=None):
         """
         Connect to an SSH server and authenticate to it.  The server's host key
@@ -262,6 +262,10 @@ class SSHClient (object):
         @param password: a password to use for authentication or for unlocking
             a private key
         @type password: str
+        @param passphrase: a passphrase to use for unlocking
+            a private key in case the password is already needed for two-factor
+            authentication
+        @type passphrase: str
         @param pkey: an optional private key to use for authentication
         @type pkey: L{PKey}
         @param key_filename: the filename, or list of filenames, of optional
@@ -339,7 +343,7 @@ class SSHClient (object):
             key_filenames = [ key_filename ]
         else:
             key_filenames = key_filename
-        self._auth(username, password, pkey, key_filenames, allow_agent, look_for_keys)
+        self._auth(username, password, passphrase, pkey, key_filenames, allow_agent, look_for_keys)
 
     def close(self):
         """
@@ -429,7 +433,7 @@ class SSHClient (object):
         """
         return self._transport
 
-    def _auth(self, username, password, pkey, key_filenames, allow_agent, look_for_keys):
+    def _auth(self, username, password, passphrase, pkey, key_filenames, allow_agent, look_for_keys):
         """
         Try, in order:
 
@@ -438,12 +442,17 @@ class SSHClient (object):
             - Any "id_rsa" or "id_dsa" key discoverable in ~/.ssh/ (if allowed).
             - Plain username/password auth, if a password was given.
 
-        (The password might be needed to unlock a private key, or for
-        two-factor authentication [for which it is required].)
+        The password might be needed to unlock a private key, or for
+        two-factor authentication [for which it is required].
+
+        If the SSH key needs unlocking via passphrase and two-factor
+        auth requires a password, the passphrase is unused for unlocking
+        the key whereas the password is used for server authentication.
         """
         saved_exception = None
         two_factor = False
         allowed_types = []
+        if passphrase is None: passphrase = password
 
         if pkey is not None:
             try:
@@ -459,7 +468,7 @@ class SSHClient (object):
             for key_filename in key_filenames:
                 for pkey_class in (RSAKey, DSSKey):
                     try:
-                        key = pkey_class.from_private_key_file(key_filename, password)
+                        key = pkey_class.from_private_key_file(key_filename, passphrase)
                         self._log(DEBUG, 'Trying key %s from %s' % (hexlify(key.get_fingerprint()), key_filename))
                         self._transport.auth_publickey(username, key)
                         two_factor = (allowed_types == ['password'])
@@ -506,7 +515,7 @@ class SSHClient (object):
 
             for pkey_class, filename in keyfiles:
                 try:
-                    key = pkey_class.from_private_key_file(filename, password)
+                    key = pkey_class.from_private_key_file(filename, passphrase)
                     self._log(DEBUG, 'Trying discovered key %s in %s' % (hexlify(key.get_fingerprint()), filename))
                     # for 2-factor auth a successfully auth'd key will result in ['password']
                     allowed_types = self._transport.auth_publickey(username, key)
