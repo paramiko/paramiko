@@ -446,7 +446,7 @@ class SSHClient (object):
         two-factor authentication [for which it is required].
 
         If the SSH key needs unlocking via passphrase and two-factor
-        auth requires a password, the passphrase is unused for unlocking
+        auth requires a password, the passphrase is used for unlocking
         the key whereas the password is used for server authentication.
         """
         saved_exception = None
