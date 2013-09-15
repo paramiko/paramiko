@@ -455,20 +455,6 @@ class SSHClient (object):
             except SSHException, e:
                 saved_exception = e
 
-        if not two_factor:
-            for key_filename in key_filenames:
-                for pkey_class in (RSAKey, DSSKey):
-                    try:
-                        key = pkey_class.from_private_key_file(key_filename, password)
-                        self._log(DEBUG, 'Trying key %s from %s' % (hexlify(key.get_fingerprint()), key_filename))
-                        self._transport.auth_publickey(username, key)
-                        two_factor = (allowed_types == ['password'])
-                        if not two_factor:
-                            return
-                        break
-                    except SSHException, e:
-                        saved_exception = e
-
         if not two_factor and allow_agent:
             if self._agent == None:
                 self._agent = Agent()
@@ -486,6 +472,20 @@ class SSHClient (object):
                     saved_exception = e
 
         if not two_factor:
+            for key_filename in key_filenames:
+                for pkey_class in (RSAKey, DSSKey):
+                    try:
+                        key = pkey_class.from_private_key_file(key_filename, password)
+                        self._log(DEBUG, 'Trying key %s from %s' % (hexlify(key.get_fingerprint()), key_filename))
+                        self._transport.auth_publickey(username, key)
+                        two_factor = (allowed_types == ['password'])
+                        if not two_factor:
+                            return
+                        break
+                    except SSHException, e:
+                        saved_exception = e
+
+       if not two_factor:
             keyfiles = []
             rsa_key = os.path.expanduser('~/.ssh/id_rsa')
             dsa_key = os.path.expanduser('~/.ssh/id_dsa')
