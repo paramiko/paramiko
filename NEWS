@@ -12,6 +12,13 @@ Issues noted as "Fabric #NN" can be found at https://github.com/fabric/fabric/.
 Releases
 ========
 
+v1.10.3 (20th Sep 2013)
+-----------------------
+
+* #162: Clean up HMAC module import to avoid deadlocks in certain uses of
+  SSHClient. Thanks to Gernot Hillier for the catch & suggested
+  fix.
+
 v1.11.0 (26th Jul 2013)
 -----------------------
 
