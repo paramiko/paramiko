@@ -20,6 +20,8 @@ v1.10.3 (20th Sep 2013)
   fix.
 * #36: Fix the port-forwarding demo to avoid file descriptor errors. Thanks to
   Jonathan Halcrow for catch & patch.
+* #168: Update config handling to properly handle multiple 'localforward' and
+  'remoteforward' keys. Thanks to Emre Yılmaz for the patch.
 
 v1.10.2 (26th Jul 2013)
 -----------------------
