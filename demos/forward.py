@@ -78,9 +78,11 @@ class Handler (SocketServer.BaseRequestHandler):
                 if len(data) == 0:
                     break
                 self.request.send(data)
+                
+        peername = self.request.getpeername()
         chan.close()
         self.request.close()
-        verbose('Tunnel closed from %r' % (self.request.getpeername(),))
+        verbose('Tunnel closed from %r' % (peername,))
 
 
 def forward_tunnel(local_port, remote_host, remote_port, transport):
