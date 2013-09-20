@@ -181,6 +181,8 @@ class SFTPServer (BaseSFTP, SubsystemHandler):
                 msg.add_int(item)
             elif type(item) is long:
                 msg.add_int64(item)
+            elif type(item) is unicode:
+                msg.add_string(item.encode('utf-8'))
             elif type(item) is str:
                 msg.add_string(item)
             elif type(item) is SFTPAttributes:
