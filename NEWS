@@ -18,6 +18,8 @@ v1.10.3 (20th Sep 2013)
 * #162: Clean up HMAC module import to avoid deadlocks in certain uses of
   SSHClient. Thanks to Gernot Hillier for the catch & suggested
   fix.
+* #36: Fix the port-forwarding demo to avoid file descriptor errors. Thanks to
+  Jonathan Halcrow for catch & patch.
 
 v1.10.2 (26th Jul 2013)
 -----------------------
