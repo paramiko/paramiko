@@ -18,10 +18,10 @@ v1.11.1 (20th Sep 2013)
 * #162: Clean up HMAC module import to avoid deadlocks in certain uses of
   SSHClient. Thanks to Gernot Hillier for the catch & suggested
   fix.
-* #168: Update config handling to properly handle multiple 'localforward' and
-  'remoteforward' keys. Thanks to Emre Yılmaz for the patch.
 * #36: Fix the port-forwarding demo to avoid file descriptor errors. Thanks to
   Jonathan Halcrow for catch & patch.
+* #168: Update config handling to properly handle multiple 'localforward' and
+  'remoteforward' keys. Thanks to Emre Yılmaz for the patch.
 
 v1.10.3 (20th Sep 2013)
 -----------------------
