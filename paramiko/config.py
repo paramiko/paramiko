@@ -32,47 +32,55 @@ proxy_re = re.compile(r"^(proxycommand)\s*=*\s*(.*)", re.I)
 
 class LazyFqdn(object):
     """
-    Returns the host's fqdn on request as string.
+    Returns the FQDN of the local host.
+
+    If a host stanza from an SSH config file is supplied, it will be checked
+    for hints as to which IP address family should be used to obtain the FQDN.
+    If it specifies BindAddress, or an AddressFamily other than 'any', those
+    will be used in the call to socket.getaddrinfo.
+
+    To improve performance, the FQDN is not determined until it's needed (when
+    the instance is being evaluated as a str), and the result is cached.
+
     """
 
-    def __init__(self, config):
-        self.fqdn = None
-        self.config = config
+    def __init__(self, config=None):
+        self._fqdn = None
+        self._config = config
 
     def __str__(self):
-        if self.fqdn is None:
-            #
-            # If the SSH config contains AddressFamily, use that when
-            # determining  the local host's FQDN. Using socket.getfqdn() from
-            # the standard library is the most general solution, but can
-            # result in noticeable delays on some platforms when IPv6 is
-            # misconfigured or not available, as it calls getaddrinfo with no
-            # address family specified, so both IPv4 and IPv6 are checked.
-            #
+        thishost = ''
+        if self._fqdn is None:
+            if self._config is not None:
+                thishost = self._config.get(
+                    'bindaddress',
+                    socket.gethostname()
+                )
 
-            # Handle specific option
-            fqdn = None
-            address_family = self.config.get('addressfamily', 'any').lower()
-            if address_family != 'any':
-                family = socket.AF_INET if address_family == 'inet' \
-                    else socket.AF_INET6
-                results = socket.getaddrinfo(host,
-                                             None,
-                                             family,
-                                             socket.SOCK_DGRAM,
-                                             socket.IPPROTO_IP,
-                                             socket.AI_CANONNAME)
-                for res in results:
-                    af, socktype, proto, canonname, sa = res
-                    if canonname and '.' in canonname:
-                        fqdn = canonname
-                        break
-            # Handle 'any' / unspecified
-            if fqdn is None:
-                fqdn = socket.getfqdn()
-            # Cache
-            self.fqdn = fqdn
-        return self.fqdn
+                address_family = self._config.get('addressfamily', 'any')
+                address_family = address_family.lower()
+                if address_family in ('inet', 'inet6'):
+                    results = socket.getaddrinfo(thishost,
+                                                 None,
+                                                 socket.AF_UNSPEC,
+                                                 socket.SOCK_STREAM,
+                                                 socket.IPPROTO_IP,
+                                                 socket.AI_CANONNAME)
+
+                    family = socket.AF_INET if address_family == 'inet' \
+                        else socket.AF_INET6
+
+                    for res in results:
+                        af, socktype, proto, canonname, sa = res
+                        if af == family and '.' in canonname:
+                            self._fqdn = canonname
+                            break
+
+        # Handle 'any' / unspecified
+        if self._fqdn is None:
+            self._fqdn = socket.getfqdn(thishost)
+
+        return self._fqdn
 
 
 class SSHConfig (object):

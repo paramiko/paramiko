@@ -44,6 +44,9 @@ Host *
  \t  \t Crazy something dumb  
 Host spoo.example.com
 Crazy something else
+Host af.example.com
+    AddressFamily inet
+    IdentityFile ~/.ssh/%l/id_rsa
 """
 
 test_hosts_file = """\
@@ -104,10 +107,29 @@ class UtilTest(ParamikoTest):
         f = cStringIO.StringIO(test_config_file)
         config = paramiko.util.parse_ssh_config(f)
         self.assertEquals(config._config,
-            [{'host': ['*'], 'config': {}}, {'host': ['*'], 'config': {'identityfile': ['~/.ssh/id_rsa'], 'user': 'robey'}},
-            {'host': ['*.example.com'], 'config': {'user': 'bjork', 'port': '3333'}},
-            {'host': ['*'], 'config': {'crazy': 'something dumb  '}},
-            {'host': ['spoo.example.com'], 'config': {'crazy': 'something else'}}])
+            [
+                {'host': ['*'], 'config': {}}, {'host': ['*'], 'config': {'identityfile': ['~/.ssh/id_rsa'], 'user': 'robey'}},
+                {'host': ['*.example.com'], 'config': {'user': 'bjork', 'port': '3333'}},
+                {'host': ['*'], 'config': {'crazy': 'something dumb  '}},
+                {'host': ['spoo.example.com'], 'config': {'crazy': 'something else'}},
+                {'host': ['af.example.com'], 'config': {'addressfamily': 'inet', 'identityfile': ['~/.ssh/%l/id_rsa']}}
+            ]
+        )
+
+        addressfamily_config = config.lookup('af.example.com')
+
+        from paramiko.config import LazyFqdn
+
+        fqdn = LazyFqdn(addressfamily_config)
+        home = os.path.expanduser('~')
+
+        self.assertEquals(
+            addressfamily_config['identityfile'],
+            [
+                '%s/.ssh/id_rsa' % home,
+                '%s/.ssh/%s/id_rsa' % (home, fqdn)
+            ]
+        )
 
     def test_3_host_config(self):
         global test_config_file
