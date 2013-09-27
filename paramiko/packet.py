@@ -152,7 +152,6 @@ class Packetizer (object):
 
     def close(self):
         self.__closed = True
-        self.__socket.close()
 
     def set_hexdump(self, hexdump):
         self.__dump_packets = hexdump
