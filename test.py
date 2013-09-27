@@ -45,6 +45,7 @@ from test_transport import TransportTest
 from test_sftp import SFTPTest
 from test_sftp_big import BigSFTPTest
 from test_client import SSHClientTest
+from test_config import SSHConfigTestCase
 
 default_host = 'localhost'
 default_user = os.environ.get('USER', 'nobody')
@@ -130,6 +131,7 @@ def main():
         suite.addTest(unittest.makeSuite(AuthTest))
         suite.addTest(unittest.makeSuite(TransportTest))
     suite.addTest(unittest.makeSuite(SSHClientTest))
+    suite.addTest(unittest.makeSuite(SSHConfigTestCase))
     if options.use_sftp:
         suite.addTest(unittest.makeSuite(SFTPTest))
     if options.use_big_file:
