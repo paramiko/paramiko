@@ -12,6 +12,13 @@ Issues noted as "Fabric #NN" can be found at https://github.com/fabric/fabric/.
 Releases
 ========
 
+v1.10.4 (27th Sep 2013)
+-----------------------
+
+* #179: Fix a missing variable causing errors when an ssh_config file has a
+  non-default AddressFamily set. Thanks to Ed Marshall & Tomaz Muraus for catch
+  & patch.
+
 v1.11.1 (20th Sep 2013)
 -----------------------
 

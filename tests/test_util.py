@@ -329,3 +329,14 @@ IdentityFile id_dsa22
                 paramiko.util.lookup_ssh_host_config(host, config),
                 values
             )
+
+    def test_12_config_addressfamily_and_lazy_fqdn(self):
+        """
+        Ensure the code path honoring non-'all' AddressFamily doesn't asplode
+        """
+        test_config = """
+AddressFamily inet
+IdentityFile something_%l_using_fqdn
+"""
+        config = paramiko.util.parse_ssh_config(cStringIO.StringIO(test_config))
+        assert config.lookup('meh') # will die during lookup() if bug regresses
