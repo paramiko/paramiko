@@ -255,11 +255,11 @@ class AgentServerProxy(AgentSSH):
         self.close()
 
     def connect(self):
-         conn_sock = self.__t.open_forward_agent_channel()
-         if conn_sock is None:
-             raise SSHException('lost ssh-agent')
-         conn_sock.set_name('auth-agent')
-         self._connect(conn_sock)
+        conn_sock = self.__t.open_forward_agent_channel()
+        if conn_sock is None:
+            raise SSHException('lost ssh-agent')
+        conn_sock.set_name('auth-agent')
+        self._connect(conn_sock)
 
     def close(self):
         """

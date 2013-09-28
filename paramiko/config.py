@@ -35,9 +35,10 @@ class LazyFqdn(object):
     Returns the host's fqdn on request as string.
     """
 
-    def __init__(self, config):
+    def __init__(self, config, host=None):
         self.fqdn = None
         self.config = config
+        self.host = host
 
     def __str__(self):
         if self.fqdn is None:
@@ -54,19 +55,27 @@ class LazyFqdn(object):
             fqdn = None
             address_family = self.config.get('addressfamily', 'any').lower()
             if address_family != 'any':
-                family = socket.AF_INET if address_family == 'inet' \
-                    else socket.AF_INET6
-                results = socket.getaddrinfo(host,
-                                             None,
-                                             family,
-                                             socket.SOCK_DGRAM,
-                                             socket.IPPROTO_IP,
-                                             socket.AI_CANONNAME)
-                for res in results:
-                    af, socktype, proto, canonname, sa = res
-                    if canonname and '.' in canonname:
-                        fqdn = canonname
-                        break
+                try:
+                    family = socket.AF_INET if address_family == 'inet' \
+                        else socket.AF_INET6
+                    results = socket.getaddrinfo(
+                        self.host,
+                        None,
+                        family,
+                        socket.SOCK_DGRAM,
+                        socket.IPPROTO_IP,
+                        socket.AI_CANONNAME
+                    )
+                    for res in results:
+                        af, socktype, proto, canonname, sa = res
+                        if canonname and '.' in canonname:
+                            fqdn = canonname
+                            break
+                # giaerror -> socket.getaddrinfo() can't resolve self.host
+                # (which is from socket.gethostname()). Fall back to the
+                # getfqdn() call below.
+                except socket.gaierror:
+                    pass
             # Handle 'any' / unspecified
             if fqdn is None:
                 fqdn = socket.getfqdn()
@@ -126,16 +135,17 @@ class SSHConfig (object):
                 self._config.append(host)
                 value = value.split()
                 host = {key: value, 'config': {}}
-            #identityfile is a special case, since it is allowed to be
+            #identityfile, localforward, remoteforward keys are special cases, since they are allowed to be
             # specified multiple times and they should be tried in order
             # of specification.
-            elif key == 'identityfile':
+            
+            elif key in ['identityfile', 'localforward', 'remoteforward']:
                 if key in host['config']:
-                    host['config']['identityfile'].append(value)
+                    host['config'][key].append(value)
                 else:
-                    host['config']['identityfile'] = [value]
+                    host['config'][key] = [value]
             elif key not in host['config']:
-                    host['config'].update({key: value})
+                host['config'].update({key: value})
         self._config.append(host)
 
     def lookup(self, hostname):
@@ -215,7 +225,7 @@ class SSHConfig (object):
             remoteuser = user
 
         host = socket.gethostname().split('.')[0]
-        fqdn = LazyFqdn(config)
+        fqdn = LazyFqdn(config, host)
         homedir = os.path.expanduser('~')
         replacements = {'controlpath':
                         [
@@ -252,5 +262,5 @@ class SSHConfig (object):
                             config[k][item] = config[k][item].\
                                 replace(find, str(replace))
                     else:
-                            config[k] = config[k].replace(find, str(replace))
+                        config[k] = config[k].replace(find, str(replace))
         return config

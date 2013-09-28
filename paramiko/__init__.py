@@ -46,6 +46,8 @@ Paramiko is written entirely in python (no C or platform-dependent code) and is
 released under the GNU Lesser General Public License (LGPL).
 
 Website: U{https://github.com/paramiko/paramiko/}
+
+Mailing list: U{paramiko@librelist.com<mailto:paramiko@librelist.com>}
 """
 
 import sys
@@ -55,7 +57,7 @@ if sys.version_info < (2, 5):
 
 
 __author__ = "Jeff Forcier <jeff@bitprophet.org>"
-__version__ = "1.10.1"
+__version__ = "1.11.1"
 __license__ = "GNU Lesser General Public License (LGPL)"
 
 

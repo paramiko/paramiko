@@ -33,17 +33,13 @@ from paramiko.ssh_exception import SSHException, ProxyCommandFailure
 from paramiko.message import Message
 
 
-got_r_hmac = False
 try:
-    import r_hmac
-    got_r_hmac = True
+    from r_hmac import HMAC
 except ImportError:
-    pass
+    from Crypto.Hash.HMAC import HMAC
+
 def compute_hmac(key, message, digest_class):
-    if got_r_hmac:
-        return r_hmac.HMAC(key, message, digest_class).digest()
-    from Crypto.Hash import HMAC
-    return HMAC.HMAC(key, message, digest_class).digest()
+    return HMAC(key, message, digest_class).digest()
 
 
 class NeedRekeyException (Exception):
