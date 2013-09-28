@@ -23,6 +23,8 @@ v1.12.0 (27th Sep 2013)
       Paramiko picks the first key that the server offers, which might not be
       what you have in your known_hosts file.
     * Mega thanks to Ethan Glasser-Camp for the patch.
+* #136: Add server-side support for the SSH protocol's 'env' command. Thanks to
+  Benjamin Pollack for the patch.
 
 v1.11.2 (27th Sep 2013)
 -----------------------
