@@ -6,7 +6,7 @@ python:
 install:
   # Self-install for setup.py-driven deps
   - pip install -e .
-script: python test.py
+script: python test.py --verbose
 notifications:
   irc:
     channels: "irc.freenode.org#paramiko"
