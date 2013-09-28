@@ -18,6 +18,13 @@ v1.11.2 (27th Sep 2013)
 * #156: Fix potential deadlock condition when using Channel objects as sockets
   (e.g. when using SSH gatewaying). Thanks to Steven Noonan and Frank Arnold
   for catch & patch.
+* #179: Fix a missing variable causing errors when an ssh_config file has a
+  non-default AddressFamily set. Thanks to Ed Marshall & Tomaz Muraus for catch
+  & patch.
+* #200: Fix an exception-causing typo in `demo_simple.py`. Thanks to Alex
+  Buchanan for catch & Dave Foster for patch.
+* #199: Typo fix in the license header cross-project. Thanks to Armin Ronacher
+  for catch & patch.
 
 v1.10.4 (27th Sep 2013)
 -----------------------
