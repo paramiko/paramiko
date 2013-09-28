@@ -27,6 +27,8 @@ v1.10.4 (27th Sep 2013)
   & patch.
 * #200: Fix an exception-causing typo in `demo_simple.py`. Thanks to Alex
   Buchanan for catch & Dave Foster for patch.
+* #199: Typo fix in the license header cross-project. Thanks to Armin Ronacher
+  for catch & patch.
 
 v1.11.1 (20th Sep 2013)
 -----------------------
