@@ -34,9 +34,10 @@ from paramiko.py3compat import long
 from paramiko.sftp import CMD_CLOSE, CMD_READ, CMD_DATA, SFTPError, CMD_WRITE, \
     CMD_STATUS, CMD_FSTAT, CMD_ATTRS, CMD_FSETSTAT, CMD_EXTENDED
 from paramiko.sftp_attr import SFTPAttributes
+from paramiko.util import ClosingContextManager
 
 
-class SFTPFile (BufferedFile):
+class SFTPFile (BufferedFile, ClosingContextManager):
     """
     Proxy object for a file on the remote server, in client mode SFTP.
 
@@ -488,9 +489,3 @@ class SFTPFile (BufferedFile):
             x = self._saved_exception
             self._saved_exception = None
             raise x
-            
-    def __enter__(self):
-        return self
-
-    def __exit__(self, type, value, traceback):
-        self.close()

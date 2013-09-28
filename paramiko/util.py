@@ -320,3 +320,11 @@ def constant_time_bytes_eq(a, b):
     for i in (xrange if PY2 else range)(len(a)):
         res |= byte_ord(a[i]) ^ byte_ord(b[i])
     return res == 0
+
+
+class ClosingContextManager(object):
+    def __enter__(self):
+        return self
+
+    def __exit__(self, type, value, traceback):
+        self.close()
