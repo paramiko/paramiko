@@ -42,6 +42,7 @@ from paramiko.message import Message
 from paramiko.packet import Packetizer, NeedRekeyException
 from paramiko.primes import ModulusPack
 from paramiko.rsakey import RSAKey
+from paramiko.ecdsakey import ECDSAKey
 from paramiko.server import ServerInterface
 from paramiko.sftp_client import SFTPClient
 from paramiko.ssh_exception import (SSHException, BadAuthenticationType,
@@ -202,7 +203,7 @@ class Transport (threading.Thread):
     _preferred_ciphers = ( 'aes128-ctr', 'aes256-ctr', 'aes128-cbc', 'blowfish-cbc', 'aes256-cbc', '3des-cbc',
         'arcfour128', 'arcfour256' )
     _preferred_macs = ( 'hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96' )
-    _preferred_keys = ( 'ssh-rsa', 'ssh-dss' )
+    _preferred_keys = ( 'ssh-rsa', 'ssh-dss', 'ecdsa-sha2-nistp256' )
     _preferred_kex = ( 'diffie-hellman-group1-sha1', 'diffie-hellman-group-exchange-sha1' )
     _preferred_compression = ( 'none', )
 
@@ -227,6 +228,7 @@ class Transport (threading.Thread):
     _key_info = {
         'ssh-rsa': RSAKey,
         'ssh-dss': DSSKey,
+        'ecdsa-sha2-nistp256': ECDSAKey,
         }
 
     _kex_info = {

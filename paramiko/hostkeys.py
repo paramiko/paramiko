@@ -29,6 +29,7 @@ from paramiko.common import *
 from paramiko.dsskey import DSSKey
 from paramiko.rsakey import RSAKey
 from paramiko.util import get_logger
+from paramiko.ecdsakey import ECDSAKey
 
 
 class InvalidHostKey(Exception):
@@ -81,9 +82,12 @@ class HostKeyEntry:
                 key = RSAKey(data=base64.decodestring(key))
             elif keytype == 'ssh-dss':
                 key = DSSKey(data=base64.decodestring(key))
+            elif keytype == 'ecdsa-sha2-nistp256':
+                key = ECDSAKey(data=base64.decodestring(key))
             else:
                 log.info("Unable to handle key of type %s" % (keytype,))
                 return None
+
         except binascii.Error, e:
             raise InvalidHostKey(line, e)
 

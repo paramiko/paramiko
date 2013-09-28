@@ -51,6 +51,14 @@ v1.10.3 (20th Sep 2013)
 v1.11.0 (26th Jul 2013)
 -----------------------
 
+* #152: Add tentative support for ECDSA keys. *This adds the ecdsa
+  module as a dependency of Paramiko.* The module is available at
+  `warner/python-ecdsa on Github
+  <https://github.com/warner/python-ecdsa>`_ and `ecdsa on PyPI
+  <https://pypi.python.org/pypi/ecdsa>`_. Note that you might still
+  run into problems with key negotiation -- Paramiko picks the first
+  key that the server offers, which might not be what you have in your
+  known_hosts file.
 * #98: On Windows, when interacting with the PuTTY PAgeant, Paramiko now
   creates the shared memory map with explicit Security Attributes of the user,
   which is the same technique employed by the canonical PuTTY library to avoid
