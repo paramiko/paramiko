@@ -12,6 +12,13 @@ Issues noted as "Fabric #NN" can be found at https://github.com/fabric/fabric/.
 Releases
 ========
 
+v1.11.2 (27th Sep 2013)
+-----------------------
+
+* #156: Fix potential deadlock condition when using Channel objects as sockets
+  (e.g. when using SSH gatewaying). Thanks to Steven Noonan and Frank Arnold
+  for catch & patch.
+
 v1.10.4 (27th Sep 2013)
 -----------------------
 
