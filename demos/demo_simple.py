@@ -63,7 +63,7 @@ password = getpass.getpass('Password for %s@%s: ' % (username, hostname))
 try:
     client = paramiko.SSHClient()
     client.load_system_host_keys()
-    client.set_missing_host_key_policy(paramiko.WarningPolicy)
+    client.set_missing_host_key_policy(paramiko.WarningPolicy())
     print '*** Connecting...'
     client.connect(hostname, port, username, password)
     chan = client.invoke_shell()
