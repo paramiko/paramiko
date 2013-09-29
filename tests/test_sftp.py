@@ -813,7 +813,7 @@ class SFTPTest (unittest.TestCase):
             sftp.open(FOLDER + '/test2', 'w')
             self.fail('expected exception')
         # TODO: extract failing command (the open) to share with a passing assertion
-        except EOFError as error:
+        except EOFError:
             pass
 
 
