@@ -39,6 +39,7 @@ from paramiko.sftp import BaseSFTP, CMD_OPENDIR, CMD_HANDLE, SFTPError, CMD_READ
 from paramiko.sftp_attr import SFTPAttributes
 from paramiko.ssh_exception import SSHException
 from paramiko.sftp_file import SFTPFile
+from paramiko.util import ClosingContextManager
 
 
 def _to_unicode(s):
@@ -58,7 +59,7 @@ def _to_unicode(s):
 b_slash = b'/'
 
 
-class SFTPClient(BaseSFTP):
+class SFTPClient(BaseSFTP, ClosingContextManager):
     """
     SFTP client object.
     

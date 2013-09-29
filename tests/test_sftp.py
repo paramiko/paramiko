@@ -195,6 +195,18 @@ class SFTPTest (unittest.TestCase):
             pass
         sftp = paramiko.SFTP.from_transport(tc)
 
+    def test_2_sftp_can_be_used_as_context_manager(self):
+        """
+        verify that the sftp session is closed when exiting the context manager
+        """
+        global sftp
+        with sftp:
+            pass
+        try:
+            self._assert_opening_file_raises_error(sftp)
+        finally:
+            sftp = paramiko.SFTP.from_transport(tc)
+
     def test_3_write(self):
         """
         verify that a file can be created and written, and the size is correct.
@@ -794,6 +806,15 @@ class SFTPTest (unittest.TestCase):
             self.assertEqual(data, NON_UTF8_DATA)
         finally:
             sftp.remove('%s/nonutf8data' % FOLDER)
+
+
+    def _assert_opening_file_raises_error(self, sftp):
+        try:
+            sftp.open(FOLDER + '/test2', 'w')
+            self.fail('expected exception')
+        # TODO: extract failing command (the open) to share with a passing assertion
+        except EOFError as error:
+            pass
 
 
 if __name__ == '__main__':
