@@ -37,13 +37,14 @@ from paramiko.ssh_exception import SSHException
 from paramiko.file import BufferedFile
 from paramiko.buffered_pipe import BufferedPipe, PipeTimeout
 from paramiko import pipe
+from paramiko.util import ClosingContextManager
 
 
 # lower bound on the max packet size we'll accept from the remote host
 MIN_PACKET_SIZE = 1024
 
 
-class Channel (object):
+class Channel (ClosingContextManager):
     """
     A secure tunnel across an SSH `.Transport`.  A Channel is meant to behave
     like a socket, and has an API that should be indistinguishable from the
