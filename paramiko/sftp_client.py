@@ -65,6 +65,8 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
     
     Used to open an SFTP session across an open SSH `.Transport` and perform
     remote file operations.
+    
+    Instances of this class may be used as context managers.
     """
     def __init__(self, sock):
         """

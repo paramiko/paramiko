@@ -57,6 +57,8 @@ class Channel (ClosingContextManager):
     flow-controlled independently.)  Similarly, if the server isn't reading
     data you send, calls to `send` may block, unless you set a timeout.  This
     is exactly like a normal network socket, so it shouldn't be too surprising.
+    
+    Instances of this class may be used as context managers.
     """
 
     def __init__(self, chanid):
