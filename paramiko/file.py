@@ -19,8 +19,10 @@ from paramiko.common import linefeed_byte_value, crlf, cr_byte, linefeed_byte, \
     cr_byte_value
 from paramiko.py3compat import BytesIO, PY2, u, b, bytes_types
 
+from paramiko.util import ClosingContextManager
 
-class BufferedFile (object):
+
+class BufferedFile (ClosingContextManager):
     """
     Reusable base class to implement Python-style file buffering around a
     simpler stream.
