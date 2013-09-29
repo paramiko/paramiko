@@ -22,9 +22,10 @@ Abstraction of an SFTP file handle (for server mode).
 
 import os
 from paramiko.sftp import SFTP_OP_UNSUPPORTED, SFTP_OK
+from paramiko.util import ClosingContextManager
 
 
-class SFTPHandle (object):
+class SFTPHandle (ClosingContextManager):
     """
     Abstract object representing a handle to an open file (or folder) in an
     SFTP server implementation.  Each handle has a string representation used
@@ -32,6 +33,8 @@ class SFTPHandle (object):
     
     Server implementations can (and should) subclass SFTPHandle to implement
     features of a file handle, like `stat` or `chattr`.
+    
+    Instances of this class may be used as context managers.
     """
     def __init__(self, flags=0):
         """
