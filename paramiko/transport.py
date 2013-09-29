@@ -57,7 +57,7 @@ from paramiko.server import ServerInterface
 from paramiko.sftp_client import SFTPClient
 from paramiko.ssh_exception import (SSHException, BadAuthenticationType,
                                     ChannelException, ProxyCommandFailure)
-from paramiko.util import retry_on_signal
+from paramiko.util import retry_on_signal, ClosingContextManager
 
 from Crypto.Cipher import Blowfish, AES, DES3, ARC4
 try:
@@ -77,7 +77,7 @@ import atexit
 atexit.register(_join_lingering_threads)
 
 
-class Transport (threading.Thread):
+class Transport (threading.Thread, ClosingContextManager):
     """
     An SSH Transport attaches to a stream (usually a socket), negotiates an
     encrypted session, authenticates, and then creates stream tunnels, called
