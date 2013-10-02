@@ -30,6 +30,7 @@ from paramiko.agent import Agent
 from paramiko.common import *
 from paramiko.config import SSH_PORT
 from paramiko.dsskey import DSSKey
+from paramiko.ecdsakey import ECDSAKey
 from paramiko.hostkeys import HostKeys
 from paramiko.resource import ResourceManager
 from paramiko.rsakey import RSAKey
@@ -457,7 +458,7 @@ class SSHClient (object):
 
         if not two_factor:
             for key_filename in key_filenames:
-                for pkey_class in (RSAKey, DSSKey):
+                for pkey_class in (RSAKey, DSSKey, ECDSAKey):
                     try:
                         key = pkey_class.from_private_key_file(key_filename, password)
                         self._log(DEBUG, 'Trying key %s from %s' % (hexlify(key.get_fingerprint()), key_filename))
