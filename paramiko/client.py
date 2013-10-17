@@ -354,7 +354,8 @@ class SSHClient (object):
             self._agent.close()
             self._agent = None
 
-    def exec_command(self, command, bufsize=-1, timeout=None, get_pty=False):
+    def exec_command(self, command, bufsize=-1, timeout=None, get_pty=False,
+                     return_exit_status=False):
         """
         Execute a command on the SSH server.  A new L{Channel} is opened and
         the requested command is executed.  The command's input and output
@@ -367,7 +368,11 @@ class SSHClient (object):
         @type bufsize: int
         @param timeout: set command's channel timeout. See L{Channel.settimeout}.settimeout
         @type timeout: int
-        @return: the stdin, stdout, and stderr of the executing command
+        @param return_exit_status: include the exit code of the comamnd in the
+            in the return tuple
+        @type return_exit_statu: bool
+        @return: the stdin, stdout, and stderr of the executing command.  If
+            return_exit_code=True, exit_code is included in return tuple.
         @rtype: tuple(L{ChannelFile}, L{ChannelFile}, L{ChannelFile})
 
         @raise SSHException: if the server fails to execute the command
@@ -380,6 +385,9 @@ class SSHClient (object):
         stdin = chan.makefile('wb', bufsize)
         stdout = chan.makefile('rb', bufsize)
         stderr = chan.makefile_stderr('rb', bufsize)
+        if return_exit_status:
+            exit_status = chan.recv_exit_status()
+            return stdin, stdout, stderr, exit_status
         return stdin, stdout, stderr
 
     def invoke_shell(self, term='vt100', width=80, height=24, width_pixels=0,
