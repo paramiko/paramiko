@@ -34,9 +34,9 @@ MSG_CHANNEL_OPEN, MSG_CHANNEL_OPEN_SUCCESS, MSG_CHANNEL_OPEN_FAILURE, \
     MSG_CHANNEL_EOF, MSG_CHANNEL_CLOSE, MSG_CHANNEL_REQUEST, \
     MSG_CHANNEL_SUCCESS, MSG_CHANNEL_FAILURE = range(90, 101)
 
-for key in list(globals().keys()):
+for key in list(locals().keys()):
     if key.startswith('MSG_'):
-        globals()['c' + key] = byte_chr(globals()[key])
+        locals()['c' + key] = byte_chr(locals()[key])
 del key
 
 # for debugging:
