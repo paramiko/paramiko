@@ -100,7 +100,8 @@ class SFTPHandle (object):
                 readfile.seek(offset)
                 self.__tell = offset
             data = readfile.read(length)
-        except IOError, e:
+        except IOError:
+            e = sys.exc_info()[1]
             self.__tell = None
             return SFTPServer.convert_errno(e.errno)
         self.__tell += len(data)
@@ -139,7 +140,8 @@ class SFTPHandle (object):
                     self.__tell = offset
             writefile.write(data)
             writefile.flush()
-        except IOError, e:
+        except IOError:
+            e = sys.exc_info()[1]
             self.__tell = None
             return SFTPServer.convert_errno(e.errno)
         if self.__tell is not None:

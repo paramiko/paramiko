@@ -254,14 +254,14 @@ class BufferedFile (object):
         @rtype: list
         """
         lines = []
-        bytes = 0
+        byte_count = 0
         while True:
             line = self.readline()
             if len(line) == 0:
                 break
             lines.append(line)
-            bytes += len(line)
-            if (sizehint is not None) and (bytes >= sizehint):
+            byte_count += len(line)
+            if (sizehint is not None) and (byte_count >= sizehint):
                 break
         return lines
 

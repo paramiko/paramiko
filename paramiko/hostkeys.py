@@ -91,8 +91,8 @@ class HostKeyEntry:
                 log.info("Unable to handle key of type %s" % (keytype,))
                 return None
 
-        except binascii.Error, e:
-            raise InvalidHostKey(line, e)
+        except binascii.Error:
+            raise InvalidHostKey(line, sys.exc_info()[1])
 
         return cls(names, key)
     from_line = classmethod(from_line)

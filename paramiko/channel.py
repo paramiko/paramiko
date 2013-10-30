@@ -615,7 +615,7 @@ class Channel (object):
         """
         try:
             out = self.in_buffer.read(nbytes, self.timeout)
-        except PipeTimeout, e:
+        except PipeTimeout:
             raise socket.timeout()
 
         ack = self._check_add_window(len(out))
@@ -665,7 +665,7 @@ class Channel (object):
         """
         try:
             out = self.in_stderr_buffer.read(nbytes, self.timeout)
-        except PipeTimeout, e:
+        except PipeTimeout:
             raise socket.timeout()
             
         ack = self._check_add_window(len(out))

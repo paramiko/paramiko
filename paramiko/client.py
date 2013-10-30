@@ -193,8 +193,8 @@ class SSHClient (object):
             self.load_host_keys(self.known_hosts)
 
         f = open(filename, 'w')
-        for hostname, keys in self._host_keys.iteritems():
-            for keytype, key in keys.iteritems():
+        for hostname, keys in self._host_keys.items():
+            for keytype, key in keys.items():
                 f.write('%s %s %s\n' % (hostname, keytype, key.get_base64()))
         f.close()
 
@@ -452,8 +452,8 @@ class SSHClient (object):
                 two_factor = (allowed_types == ['password'])
                 if not two_factor:
                     return
-            except SSHException, e:
-                saved_exception = e
+            except SSHException:
+                saved_exception = sys.exc_info()[1]
 
         if not two_factor:
             for key_filename in key_filenames:
@@ -466,8 +466,8 @@ class SSHClient (object):
                         if not two_factor:
                             return
                         break
-                    except SSHException, e:
-                        saved_exception = e
+                    except SSHException:
+                        saved_exception = sys.exc_info()[1]
 
         if not two_factor and allow_agent:
             if self._agent == None:
@@ -482,8 +482,8 @@ class SSHClient (object):
                     if not two_factor:
                         return
                     break
-                except SSHException, e:
-                    saved_exception = e
+                except SSHException:
+                    saved_exception = sys.exc_info()[1]
 
         if not two_factor:
             keyfiles = []
@@ -514,17 +514,15 @@ class SSHClient (object):
                     if not two_factor:
                         return
                     break
-                except SSHException, e:
-                    saved_exception = e
-                except IOError, e:
-                    saved_exception = e
+                except (SSHException, IOError):
+                    saved_exception = sys.exc_info()[1]
 
         if password is not None:
             try:
                 self._transport.auth_password(username, password)
                 return
-            except SSHException, e:
-                saved_exception = e
+            except SSHException:
+                saved_exception = sys.exc_info()[1]
         elif two_factor:
             raise SSHException('Two-factor authentication requires a password')
 

@@ -94,7 +94,7 @@ class SFTPFile (BufferedFile):
         k = [i for i in self._prefetch_reads if i[0] <= offset]
         if len(k) == 0:
             return False
-        k.sort(lambda x, y: cmp(x[0], y[0]))
+        k.sort(key=hash)
         buf_offset, buf_size = k[-1]
         if buf_offset + buf_size <= offset:
             # prefetch request ends before this one begins
@@ -464,8 +464,8 @@ class SFTPFile (BufferedFile):
             # save exception and re-raise it on next file operation
             try:
                 self.sftp._convert_status(msg)
-            except Exception, x:
-                self._saved_exception = x
+            except Exception:
+                self._saved_exception = sys.exc_info()[1]
             return
         if t != CMD_DATA:
             raise SFTPError('Expected data')

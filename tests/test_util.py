@@ -65,7 +65,7 @@ class UtilTest(ParamikoTest):
         """
         verify that all the classes can be imported from paramiko.
         """
-        symbols = globals().keys()
+        symbols = list(globals().keys())
         self.assertTrue('Transport' in symbols)
         self.assertTrue('SSHClient' in symbols)
         self.assertTrue('MissingHostKeyPolicy' in symbols)
@@ -148,8 +148,8 @@ class UtilTest(ParamikoTest):
         try:
             hostdict = paramiko.util.load_host_keys('hostfile.temp')
             self.assertEquals(2, len(hostdict))
-            self.assertEquals(1, len(hostdict.values()[0]))
-            self.assertEquals(1, len(hostdict.values()[1]))
+            self.assertEquals(1, len(list(hostdict.values())[0]))
+            self.assertEquals(1, len(list(hostdict.values())[1]))
             fp = hexlify(hostdict['secure.example.com']['ssh-rsa'].get_fingerprint()).upper()
             self.assertEquals('E6684DB30E109B67B70FF1DC5C7F1363', fp)
         finally:

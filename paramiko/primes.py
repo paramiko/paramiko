@@ -47,7 +47,7 @@ def _generate_prime(bits, rng):
 def _roll_random(rng, n):
     "returns a random # from 0 to N-1"
     bits = util.bit_length(n-1)
-    bytes = (bits + 7) // 8
+    byte_count = (bits + 7) // 8
     hbyte_mask = pow(2, bits % 8) - 1
 
     # so here's the plan:
@@ -57,7 +57,7 @@ def _roll_random(rng, n):
     # fits, so i can't guarantee that this loop will ever finish, but the odds
     # of it looping forever should be infinitesimal.
     while True:
-        x = rng.read(bytes)
+        x = rng.read(byte_count)
         if hbyte_mask > 0:
             x = chr(ord(x[0]) & hbyte_mask) + x[1:]
         num = util.inflate_long(x, 1)
@@ -125,8 +125,7 @@ class ModulusPack (object):
         f.close()
 
     def get_modulus(self, min, prefer, max):
-        bitsizes = self.pack.keys()
-        bitsizes.sort()
+        bitsizes = sorted(self.pack.keys(), key=hash)
         if len(bitsizes) == 0:
             raise SSHException('no moduli available')
         good = -1

@@ -143,7 +143,7 @@ class SFTPAttributes (object):
             msg.add_int(long(self.st_mtime))
         if self._flags & self.FLAG_EXTENDED:
             msg.add_int(len(self.attr))
-            for key, val in self.attr.iteritems():
+            for key, val in self.attr.items():
                 msg.add_string(key)
                 msg.add_string(val)
         return
@@ -158,7 +158,7 @@ class SFTPAttributes (object):
             out += 'mode=' + oct(self.st_mode) + ' '
         if (self.st_atime is not None) and (self.st_mtime is not None):
             out += 'atime=%d mtime=%d ' % (self.st_atime, self.st_mtime)
-        for k, v in self.attr.iteritems():
+        for k, v in self.attr.items():
             out += '"%s"=%r ' % (str(k), v)
         out += ']'
         return out

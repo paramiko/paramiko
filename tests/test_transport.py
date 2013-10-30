@@ -249,7 +249,7 @@ class TransportTest(ParamikoTest):
         try:
             chan.exec_command('no')
             self.assert_(False)
-        except SSHException, x:
+        except SSHException:
             pass
         
         chan = self.tc.open_session()
@@ -302,7 +302,8 @@ class TransportTest(ParamikoTest):
         try:
             chan = self.tc.open_channel('bogus')
             self.fail('expected exception')
-        except ChannelException, x:
+        except ChannelException:
+            x = sys.exc_info()[1]
             self.assert_(x.code == OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED)
 
     def test_9_exit_status(self):
@@ -444,7 +445,8 @@ class TransportTest(ParamikoTest):
         schan = self.ts.accept(1.0)
         
         requested = []
-        def handler(c, (addr, port)):
+        def handler(c, addr_port):
+            addr, port = addr_port
             requested.append((addr, port))
             self.tc._queue_incoming_channel(c)
             
@@ -479,9 +481,9 @@ class TransportTest(ParamikoTest):
         schan = self.ts.accept(1.0)
         
         requested = []
-        def handler(c, (origin_addr, origin_port), (server_addr, server_port)):
-            requested.append((origin_addr, origin_port))
-            requested.append((server_addr, server_port))
+        def handler(c, origin_addr_port, server_addr_port):
+            requested.append(origin_addr_port)
+            requested.append(server_addr_port)
             self.tc._queue_incoming_channel(c)
             
         port = self.tc.request_port_forward('127.0.0.1', 0, handler)

@@ -276,13 +276,14 @@ def retry_on_signal(function):
     while True:
         try:
             return function()
-        except EnvironmentError, e:
+        except EnvironmentError:
+            e = sys.exc_info()[1]
             if e.errno != errno.EINTR:
                 raise
 
 class Counter (object):
     """Stateful counter for CTR mode crypto"""
-    def __init__(self, nbits, initial_value=1L, overflow=0L):
+    def __init__(self, nbits, initial_value=long_one, overflow=long_zero):
         self.blocksize = nbits / 8
         self.overflow = overflow
         # start with value - 1 so we don't have to store intermediate values when counting

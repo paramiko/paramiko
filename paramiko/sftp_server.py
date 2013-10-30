@@ -92,7 +92,8 @@ class SFTPServer (BaseSFTP, SubsystemHandler):
             except EOFError:
                 self._log(DEBUG, 'EOF -- end of session')
                 return
-            except Exception, e:
+            except Exception:
+                e = sys.exc_info()[1]
                 self._log(DEBUG, 'Exception on channel: ' + str(e))
                 self._log(DEBUG, util.tb_strings())
                 return
@@ -100,7 +101,8 @@ class SFTPServer (BaseSFTP, SubsystemHandler):
             request_number = msg.get_int()
             try:
                 self._process(t, request_number, msg)
-            except Exception, e:
+            except Exception:
+                e = sys.exc_info()[1]
                 self._log(DEBUG, 'Exception in server processing: ' + str(e))
                 self._log(DEBUG, util.tb_strings())
                 # send some kind of failure message, at least
@@ -113,9 +115,9 @@ class SFTPServer (BaseSFTP, SubsystemHandler):
         self.server.session_ended()
         super(SFTPServer, self).finish_subsystem()
         # close any file handles that were left open (so we can return them to the OS quickly)
-        for f in self.file_table.itervalues():
+        for f in self.file_table.values():
             f.close()
-        for f in self.folder_table.itervalues():
+        for f in self.folder_table.values():
             f.close()
         self.file_table = {}
         self.folder_table = {}

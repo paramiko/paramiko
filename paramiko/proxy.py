@@ -60,12 +60,13 @@ class ProxyCommand(object):
         """
         try:
             self.process.stdin.write(content)
-        except IOError, e:
+        except IOError:
+            e = sys.exc_info()[1]
             # There was a problem with the child process. It probably
             # died and we can't proceed. The best option here is to
             # raise an exception informing the user that the informed
             # ProxyCommand is not working.
-            raise BadProxyCommand(' '.join(self.cmd), e.strerror)
+            raise ProxyCommandFailure(' '.join(self.cmd), e.strerror)
         return len(content)
 
     def recv(self, size):
@@ -80,8 +81,9 @@ class ProxyCommand(object):
         """
         try:
             return os.read(self.process.stdout.fileno(), size)
-        except IOError, e:
-            raise BadProxyCommand(' '.join(self.cmd), e.strerror)
+        except IOError:
+            e = sys.exc_info()[1]
+            raise ProxyCommandFailure(' '.join(self.cmd), e.strerror)
 
     def close(self):
         os.kill(self.process.pid, signal.SIGTERM)
