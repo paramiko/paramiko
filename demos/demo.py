@@ -45,13 +45,13 @@ def agent_auth(transport, username):
         return
         
     for key in agent_keys:
-        print 'Trying ssh-agent key %s' % hexlify(key.get_fingerprint()),
+        print('Trying ssh-agent key %s' % hexlify(key.get_fingerprint()))
         try:
             transport.auth_publickey(username, key)
-            print '... success!'
+            print('... success!')
             return
         except paramiko.SSHException:
-            print '... nope.'
+            print('... nope.')
 
 
 def manual_auth(username, hostname):
@@ -98,7 +98,7 @@ if len(sys.argv) > 1:
 else:
     hostname = raw_input('Hostname: ')
 if len(hostname) == 0:
-    print '*** Hostname required.'
+    print('*** Hostname required.')
     sys.exit(1)
 port = 22
 if hostname.find(':') >= 0:
@@ -111,6 +111,7 @@ try:
     sock.connect((hostname, port))
 except Exception, e:
     print '*** Connect failed: ' + str(e)
+    print('*** Connect failed: ' + str(e))
     traceback.print_exc()
     sys.exit(1)
 
@@ -119,7 +120,7 @@ try:
     try:
         t.start_client()
     except paramiko.SSHException:
-        print '*** SSH negotiation failed.'
+        print('*** SSH negotiation failed.')
         sys.exit(1)
 
     try:
@@ -128,20 +129,20 @@ try:
         try:
             keys = paramiko.util.load_host_keys(os.path.expanduser('~/ssh/known_hosts'))
         except IOError:
-            print '*** Unable to open host keys file'
+            print('*** Unable to open host keys file')
             keys = {}
 
     # check server's host key -- this is important.
     key = t.get_remote_server_key()
-    if not keys.has_key(hostname):
-        print '*** WARNING: Unknown host key!'
-    elif not keys[hostname].has_key(key.get_name()):
-        print '*** WARNING: Unknown host key!'
+    if hostname not in keys:
+        print('*** WARNING: Unknown host key!')
+    elif key.get_name() not in keys[hostname]:
+        print('*** WARNING: Unknown host key!')
     elif keys[hostname][key.get_name()] != key:
-        print '*** WARNING: Host key has changed!!!'
+        print('*** WARNING: Host key has changed!!!')
         sys.exit(1)
     else:
-        print '*** Host key OK.'
+        print('*** Host key OK.')
 
     # get username
     if username == '':
@@ -154,21 +155,21 @@ try:
     if not t.is_authenticated():
         manual_auth(username, hostname)
     if not t.is_authenticated():
-        print '*** Authentication failed. :('
+        print('*** Authentication failed. :(')
         t.close()
         sys.exit(1)
 
     chan = t.open_session()
     chan.get_pty()
     chan.invoke_shell()
-    print '*** Here we go!'
-    print
+    print('*** Here we go!\n')
     interactive.interactive_shell(chan)
     chan.close()
     t.close()
 
-except Exception, e:
-    print '*** Caught exception: ' + str(e.__class__) + ': ' + str(e)
+except Exception:
+    e = sys.exc_info()[1]
+    print('*** Caught exception: ' + str(e.__class__) + ': ' + str(e))
     traceback.print_exc()
     try:
         t.close()
