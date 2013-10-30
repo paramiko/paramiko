@@ -215,7 +215,7 @@ class AgentClientProxy(object):
                 # probably a dangling env var: the ssh agent is gone
                 return
         elif sys.platform == 'win32':
-            import win_pageant
+            from . import win_pageant
             if win_pageant.can_talk_to_agent():
                 conn = win_pageant.PageantConnection()
             else:
@@ -334,7 +334,7 @@ class Agent(AgentSSH):
                 # probably a dangling env var: the ssh agent is gone
                 return
         elif sys.platform == 'win32':
-            import win_pageant
+            from . import win_pageant
             if win_pageant.can_talk_to_agent():
                 conn = win_pageant.PageantConnection()
             else:
