@@ -36,8 +36,8 @@ from tests.util import test_path
 class NullServer (ServerInterface):
     paranoid_did_password = False
     paranoid_did_public_key = False
-    paranoid_key = DSSKey.from_private_key_file('tests/test_dss.key')
-    
+    paranoid_key = DSSKey.from_private_key_file(test_path('test_dss.key'))
+
     def get_allowed_auths(self, username):
         if username == 'slowdive':
             return 'publickey,password'
@@ -111,8 +111,8 @@ class AuthTest (unittest.TestCase):
         self.sockc.close()
     
     def start_server(self):
-        host_key = RSAKey.from_private_key_file('tests/test_rsa.key')
         self.public_host_key = RSAKey(data=str(host_key))
+        host_key = RSAKey.from_private_key_file(test_path('test_rsa.key'))
         self.ts.add_server_key(host_key)
         self.event = threading.Event()
         self.server = NullServer()
@@ -163,7 +163,7 @@ class AuthTest (unittest.TestCase):
         self.tc.connect(hostkey=self.public_host_key)
         remain = self.tc.auth_password(username='paranoid', password='paranoid')
         self.assertEquals(['publickey'], remain)
-        key = DSSKey.from_private_key_file('tests/test_dss.key')
+        key = DSSKey.from_private_key_file(test_path('test_dss.key'))
         remain = self.tc.auth_publickey(username='paranoid', key=key)
         self.assertEquals([], remain)
         self.verify_finished()

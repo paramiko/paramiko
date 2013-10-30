@@ -122,7 +122,7 @@ class SFTPTest (unittest.TestCase):
         tc = paramiko.Transport(sockc)
         ts = paramiko.Transport(socks)
 
-        host_key = paramiko.RSAKey.from_private_key_file('tests/test_rsa.key')
+        host_key = paramiko.RSAKey.from_private_key_file(test_path('test_rsa.key'))
         ts.add_server_key(host_key)
         event = threading.Event()
         server = StubServer()
