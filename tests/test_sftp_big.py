@@ -33,9 +33,10 @@ import time
 import unittest
 
 import paramiko
-from stub_sftp import StubServer, StubSFTPServer
-from loop import LoopSocket
-from test_sftp import get_sftp
+from paramiko.common import *
+from tests.stub_sftp import StubServer, StubSFTPServer
+from tests.loop import LoopSocket
+from tests.test_sftp import get_sftp
 
 FOLDER = os.environ.get('TEST_FOLDER', 'temp-testing000')
 

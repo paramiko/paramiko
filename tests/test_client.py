@@ -20,13 +20,14 @@
 Some unit tests for SSHClient.
 """
 
+import os
 import socket
 import threading
 import time
 import unittest
 import weakref
 from binascii import hexlify
-
+from tests.util import test_path
 import paramiko
 
 

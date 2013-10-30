@@ -21,6 +21,7 @@ L{ProxyCommand}.
 """
 
 import os
+import sys
 from shlex import split as shlsplit
 import signal
 from subprocess import Popen, PIPE

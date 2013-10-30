@@ -30,7 +30,10 @@ import time
 import traceback
 
 import paramiko
-import interactive
+try:
+    import interactive
+except ImportError:
+    from . import interactive
 
 
 def agent_auth(transport, username):

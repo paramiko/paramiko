@@ -27,6 +27,7 @@ will trigger as readable in select().
 import sys
 import os
 import socket
+from paramiko.py3compat import b
 
 
 def make_pipe ():

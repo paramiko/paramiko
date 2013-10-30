@@ -21,10 +21,11 @@ Some unit tests for the ssh2 protocol in Transport.
 """
 
 import unittest
-from loop import LoopSocket
+from tests.loop import LoopSocket
 from Crypto.Cipher import AES
 from Crypto.Hash import SHA, HMAC
 from paramiko import Message, Packetizer, util
+from paramiko.py3compat import byte_chr
 
 class PacketizerTest (unittest.TestCase):
 

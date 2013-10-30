@@ -21,15 +21,15 @@ Some unit tests for utility functions.
 """
 
 from binascii import hexlify
-import cStringIO
 import errno
 import os
 import unittest
 from Crypto.Hash import SHA
 import paramiko.util
 from paramiko.util import lookup_ssh_host_config as host_config
+from paramiko.py3compat import StringIO, byte_ord
 
-from util import ParamikoTest
+from tests.util import ParamikoTest
 
 test_config_file = """\
 Host *

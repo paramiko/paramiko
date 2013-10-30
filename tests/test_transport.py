@@ -35,8 +35,8 @@ from paramiko import AUTH_FAILED, AUTH_PARTIALLY_SUCCESSFUL, AUTH_SUCCESSFUL
 from paramiko import OPEN_SUCCEEDED, OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED
 from paramiko.common import MSG_KEXINIT, MSG_CHANNEL_WINDOW_ADJUST
 from paramiko.message import Message
-from loop import LoopSocket
-from util import ParamikoTest
+from tests.loop import LoopSocket
+from tests.util import ParamikoTest, test_path
 
 
 LONG_BANNER = """\

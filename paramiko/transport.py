@@ -79,7 +79,7 @@ class SecurityOptions (object):
     C{ValueError} will be raised.  If you try to assign something besides a
     tuple to one of the fields, C{TypeError} will be raised.
     """
-    __slots__ = [ 'ciphers', 'digests', 'key_types', 'kex', 'compression', '_transport' ]
+    #__slots__ = [ 'ciphers', 'digests', 'key_types', 'kex', 'compression', '_transport' ]
 
     def __init__(self, transport):
         self._transport = transport

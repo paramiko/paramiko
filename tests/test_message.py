@@ -22,6 +22,7 @@ Some unit tests for ssh protocol message blocks.
 
 import unittest
 from paramiko.message import Message
+from paramiko.common import *
 
 
 class MessageTest (unittest.TestCase):

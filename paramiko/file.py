@@ -20,7 +20,7 @@
 BufferedFile.
 """
 
-from cStringIO import StringIO
+from paramiko.common import *
 
 
 class BufferedFile (object):

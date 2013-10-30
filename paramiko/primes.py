@@ -24,6 +24,7 @@ from Crypto.Util import number
 
 from paramiko import util
 from paramiko.ssh_exception import SSHException
+from paramiko.common import *
 
 
 def _generate_prime(bits, rng):

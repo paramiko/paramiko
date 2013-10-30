@@ -21,10 +21,9 @@ Some unit tests for public/private key objects.
 """
 
 from binascii import hexlify, unhexlify
-import StringIO
 import unittest
 from paramiko import RSAKey, DSSKey, ECDSAKey, Message, util
-from paramiko.common import rng
+from paramiko.common import rng, StringIO, byte_chr
 
 # from openssh's ssh-keygen
 PUB_RSA = 'ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAIEA049W6geFpmsljTwfvI1UmKWWJPNFI74+vNKTk4dmzkQY2yAMs6FhlvhlI8ysU4oj71ZsRYMecHbBbxdN79+JRFVYTKaLqjwGENeTd+yv4q+V2PvZv3fLnzApI3l7EJCqhWwJUHJ1jAkZzqDx0tyOL4uoZpww3nmE0kb3y21tH4c='

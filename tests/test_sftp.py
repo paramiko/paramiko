@@ -31,11 +31,12 @@ import warnings
 import sys
 import threading
 import unittest
-import StringIO
 
 import paramiko
-from stub_sftp import StubServer, StubSFTPServer
-from loop import LoopSocket
+from paramiko.common import *
+from tests.stub_sftp import StubServer, StubSFTPServer
+from tests.loop import LoopSocket
+from tests.util import test_path
 from paramiko.sftp_attr import SFTPAttributes
 
 ARTICLE = '''

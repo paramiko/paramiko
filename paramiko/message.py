@@ -21,9 +21,9 @@ Implementation of an SSH2 "message".
 """
 
 import struct
-import cStringIO
 
 from paramiko import util
+from paramiko.common import *
 
 
 class Message (object):

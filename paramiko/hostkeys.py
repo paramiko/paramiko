@@ -23,7 +23,10 @@ L{HostKeys}
 import base64
 import binascii
 from Crypto.Hash import SHA, HMAC
-import UserDict
+try:
+    from collections import MutableMapping
+except ImportError:
+    from UserDict import DictMixin as MutableMapping
 
 from paramiko.common import *
 from paramiko.dsskey import DSSKey
@@ -109,7 +112,7 @@ class HostKeyEntry:
         return '<HostKeyEntry %r: %r>' % (self.hostnames, self.key)
 
 
-class HostKeys (UserDict.DictMixin):
+class HostKeys (MutableMapping):
     """
     Representation of an openssh-style "known hosts" file.  Host keys can be
     read from one or more files, and then individual hosts can be looked up to
@@ -215,11 +218,25 @@ class HostKeys (UserDict.DictMixin):
         @return: keys associated with this host (or C{None})
         @rtype: dict(str, L{PKey})
         """
-        class SubDict (UserDict.DictMixin):
+        class SubDict (MutableMapping):
             def __init__(self, hostname, entries, hostkeys):
                 self._hostname = hostname
                 self._entries = entries
                 self._hostkeys = hostkeys
+
+            def __iter__(self):
+                for k in self.keys():
+                    yield k
+
+            def __len__(self):
+                return len(self.keys())
+
+            def __delitem__(self, key):
+                for e in list(self._entries):
+                    if e.key.get_name() == key:
+                        self._entries.remove(e)
+                else:
+                    raise KeyError(key)
 
             def __getitem__(self, key):
                 for e in self._entries:
@@ -279,6 +296,17 @@ class HostKeys (UserDict.DictMixin):
         Remove all host keys from the dictionary.
         """
         self._entries = []
+
+    def __iter__(self):
+        for k in self.keys():
+            yield k
+
+    def __len__(self):
+        return len(self.keys())
+
+    def __delitem__(self, key):
+        k = self[key]
+        pass
 
     def __getitem__(self, key):
         ret = self.lookup(key)

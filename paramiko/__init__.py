@@ -62,32 +62,32 @@ __version_info__ = tuple([ int(d) for d in __version__.split(".") ])
 __license__ = "GNU Lesser General Public License (LGPL)"
 
 
-from transport import SecurityOptions, Transport
-from client import SSHClient, MissingHostKeyPolicy, AutoAddPolicy, RejectPolicy, WarningPolicy
-from auth_handler import AuthHandler
-from channel import Channel, ChannelFile
-from ssh_exception import SSHException, PasswordRequiredException, \
+from paramiko.transport import SecurityOptions, Transport
+from paramiko.client import SSHClient, MissingHostKeyPolicy, AutoAddPolicy, RejectPolicy, WarningPolicy
+from paramiko.auth_handler import AuthHandler
+from paramiko.channel import Channel, ChannelFile
+from paramiko.ssh_exception import SSHException, PasswordRequiredException, \
     BadAuthenticationType, ChannelException, BadHostKeyException, \
     AuthenticationException, ProxyCommandFailure
-from server import ServerInterface, SubsystemHandler, InteractiveQuery
-from rsakey import RSAKey
-from dsskey import DSSKey
-from ecdsakey import ECDSAKey
-from sftp import SFTPError, BaseSFTP
-from sftp_client import SFTP, SFTPClient
-from sftp_server import SFTPServer
-from sftp_attr import SFTPAttributes
-from sftp_handle import SFTPHandle
-from sftp_si import SFTPServerInterface
-from sftp_file import SFTPFile
-from message import Message
-from packet import Packetizer
-from file import BufferedFile
-from agent import Agent, AgentKey
-from pkey import PKey
-from hostkeys import HostKeys
-from config import SSHConfig
-from proxy import ProxyCommand
+from paramiko.server import ServerInterface, SubsystemHandler, InteractiveQuery
+from paramiko.rsakey import RSAKey
+from paramiko.dsskey import DSSKey
+from paramiko.ecdsakey import ECDSAKey
+from paramiko.sftp import SFTPError, BaseSFTP
+from paramiko.sftp_client import SFTP, SFTPClient
+from paramiko.sftp_server import SFTPServer
+from paramiko.sftp_attr import SFTPAttributes
+from paramiko.sftp_handle import SFTPHandle
+from paramiko.sftp_si import SFTPServerInterface
+from paramiko.sftp_file import SFTPFile
+from paramiko.message import Message
+from paramiko.packet import Packetizer
+from paramiko.file import BufferedFile
+from paramiko.agent import Agent, AgentKey
+from paramiko.pkey import PKey
+from paramiko.hostkeys import HostKeys
+from paramiko.config import SSHConfig
+from paramiko.proxy import ProxyCommand
 
 # fix module names for epydoc
 for c in locals().values():

@@ -8,7 +8,11 @@ in jaraco.windows and asking the author to port the fixes back here.
 
 import ctypes
 import ctypes.wintypes
-import __builtin__
+from paramiko.py3compat import u
+try:
+    import builtins
+except ImportError:
+    import __builtin__ as builtins
 
 ######################
 # jaraco.windows.error

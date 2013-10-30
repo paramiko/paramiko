@@ -34,7 +34,7 @@ from paramiko.ssh_exception import SSHException
 from paramiko.message import Message
 from paramiko.pkey import PKey
 from paramiko.channel import Channel
-from paramiko.common import io_sleep
+from paramiko.common import *
 from paramiko.util import retry_on_signal
 
 SSH2_AGENTC_REQUEST_IDENTITIES, SSH2_AGENT_IDENTITIES_ANSWER, \

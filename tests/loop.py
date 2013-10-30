@@ -21,6 +21,7 @@
 """
 
 import threading, socket
+from paramiko.py3compat import *
 
 
 class LoopSocket (object):

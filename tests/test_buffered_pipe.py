@@ -26,7 +26,7 @@ import unittest
 from paramiko.buffered_pipe import BufferedPipe, PipeTimeout
 from paramiko import pipe
 
-from util import ParamikoTest
+from tests.util import ParamikoTest
 
 
 def delay_thread(pipe):
