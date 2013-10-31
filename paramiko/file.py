@@ -92,21 +92,38 @@ class BufferedFile (object):
         self._wbuffer = StringIO()
         return
 
-    def next(self):
-        """
-        Returns the next line from the input, or raises L{StopIteration} when
-        EOF is hit.  Unlike python file objects, it's okay to mix calls to
-        C{next} and L{readline}.
+    if PY3:
+        def __next__(self):
+            """
+            Returns the next line from the input, or raises L{StopIteration} when
+            EOF is hit.  Unlike python file objects, it's okay to mix calls to
+            C{next} and L{readline}.
 
-        @raise StopIteration: when the end of the file is reached.
+            @raise StopIteration: when the end of the file is reached.
 
-        @return: a line read from the file.
-        @rtype: str
-        """
-        line = self.readline()
-        if not line:
-            raise StopIteration
-        return line
+            @return: a line read from the file.
+            @rtype: str
+            """
+            line = self.readline()
+            if not line:
+                raise StopIteration
+            return line
+    else:
+        def next(self):
+            """
+            Returns the next line from the input, or raises L{StopIteration} when
+            EOF is hit.  Unlike python file objects, it's okay to mix calls to
+            C{next} and L{readline}.
+
+            @raise StopIteration: when the end of the file is reached.
+
+            @return: a line read from the file.
+            @rtype: str
+            """
+            line = self.readline()
+            if not line:
+                raise StopIteration
+            return line
 
     def read(self, size=None):
         """
