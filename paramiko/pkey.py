@@ -63,7 +63,7 @@ class PKey (object):
         """
         pass
 
-    def __str__(self):
+    def asbytes(self):
         """
         Return a string of an SSH L{Message} made up of the public part(s) of
         this key.  This string is suitable for passing to L{__init__} to
@@ -72,7 +72,10 @@ class PKey (object):
         @return: string representation of an SSH key message.
         @rtype: str
         """
-        return ''
+        return bytes()
+
+    def __str__(self):
+        return self.asbytes()
 
     def __cmp__(self, other):
         """
@@ -90,7 +93,10 @@ class PKey (object):
         ho = hash(other)
         if hs != ho:
             return cmp(hs, ho)
-        return cmp(str(self), str(other))
+        return cmp(self.asbytes(), other.asbytes())
+
+    def __eq__(self, other):
+        return hash(self) == hash(other)
 
     def get_name(self):
         """
@@ -131,7 +137,7 @@ class PKey (object):
             format.
         @rtype: str
         """
-        return MD5.new(str(self)).digest()
+        return MD5.new(self.asbytes()).digest()
 
     def get_base64(self):
         """
@@ -142,7 +148,7 @@ class PKey (object):
         @return: a base64 string containing the public part of the key.
         @rtype: str
         """
-        return base64.encodestring(str(self)).replace('\n', '')
+        return base64.encodestring(self.asbytes()).replace('\n', '')
 
     def sign_ssh_data(self, rng, data):
         """
@@ -156,7 +162,7 @@ class PKey (object):
         @return: an SSH signature message.
         @rtype: L{Message}
         """
-        return ''
+        return bytes()
 
     def verify_ssh_sig(self, data, msg):
         """
@@ -303,7 +309,7 @@ class PKey (object):
             end += 1
         # if we trudged to the end of the file, just try to cope.
         try:
-            data = base64.decodestring(''.join(lines[start:end]))
+            data = base64.decodestring(b(''.join(lines[start:end])))
         except base64.binascii.Error:
             raise SSHException('base64 decoding error: ' + str(sys.exc_info()[1]))
         if 'proc-type' not in headers:
@@ -356,7 +362,7 @@ class PKey (object):
         f.write('-----BEGIN %s PRIVATE KEY-----\n' % tag)
         if password is not None:
             # since we only support one cipher here, use it
-            cipher_name = self._CIPHER_TABLE.keys()[0]
+            cipher_name = list(self._CIPHER_TABLE.keys())[0]
             cipher = self._CIPHER_TABLE[cipher_name]['cipher']
             keysize = self._CIPHER_TABLE[cipher_name]['keysize']
             blocksize = self._CIPHER_TABLE[cipher_name]['blocksize']

@@ -37,8 +37,11 @@ from paramiko.channel import Channel
 from paramiko.common import *
 from paramiko.util import retry_on_signal
 
-SSH2_AGENTC_REQUEST_IDENTITIES, SSH2_AGENT_IDENTITIES_ANSWER, \
-    SSH2_AGENTC_SIGN_REQUEST, SSH2_AGENT_SIGN_RESPONSE = range(11, 15)
+cSSH2_AGENTC_REQUEST_IDENTITIES = byte_chr(11)
+SSH2_AGENT_IDENTITIES_ANSWER = 12
+cSSH2_AGENTC_SIGN_REQUEST = byte_chr(13)
+SSH2_AGENT_SIGN_RESPONSE = 14
+
 
 class AgentSSH(object):
     """
@@ -68,12 +71,12 @@ class AgentSSH(object):
 
     def _connect(self, conn):
         self._conn = conn
-        ptype, result = self._send_message(chr(SSH2_AGENTC_REQUEST_IDENTITIES))
+        ptype, result = self._send_message(cSSH2_AGENTC_REQUEST_IDENTITIES)
         if ptype != SSH2_AGENT_IDENTITIES_ANSWER:
             raise SSHException('could not get keys from ssh-agent')
         keys = []
         for i in range(result.get_int()):
-            keys.append(AgentKey(self, result.get_string()))
+            keys.append(AgentKey(self, result.get_binary()))
             result.get_string()
         self._keys = tuple(keys)
 
@@ -83,7 +86,7 @@ class AgentSSH(object):
         self._keys = ()
 
     def _send_message(self, msg):
-        msg = str(msg)
+        msg = asbytes(msg)
         self._conn.send(struct.pack('>I', len(msg)) + msg)
         l = self._read_all(4)
         msg = Message(self._read_all(struct.unpack('>I', l)[0]))
@@ -360,21 +363,24 @@ class AgentKey(PKey):
     def __init__(self, agent, blob):
         self.agent = agent
         self.blob = blob
-        self.name = Message(blob).get_string()
+        self.name = Message(blob).get_text()
+
+    def asbytes(self):
+        return self.blob
 
     def __str__(self):
-        return self.blob
+        return self.asbytes()
 
     def get_name(self):
         return self.name
 
     def sign_ssh_data(self, rng, data):
         msg = Message()
-        msg.add_byte(chr(SSH2_AGENTC_SIGN_REQUEST))
+        msg.add_byte(cSSH2_AGENTC_SIGN_REQUEST)
         msg.add_string(self.blob)
         msg.add_string(data)
         msg.add_int(0)
         ptype, result = self.agent._send_message(msg)
         if ptype != SSH2_AGENT_SIGN_RESPONSE:
             raise SSHException('key cannot be used for signing')
-        return result.get_string()
+        return result.get_binary()

@@ -121,8 +121,8 @@ class TransportTest(ParamikoTest):
         self.sockc.close()
 
     def setup_test_server(self, client_options=None, server_options=None):
-        public_host_key = RSAKey(data=str(host_key))
         host_key = RSAKey.from_private_key_file(test_path('test_rsa.key'))
+        public_host_key = RSAKey(data=host_key.asbytes())
         self.ts.add_server_key(host_key)
         
         if client_options is not None:
@@ -171,8 +171,8 @@ class TransportTest(ParamikoTest):
         loopback sockets.  this is hardly "simple" but it's simpler than the
         later tests. :)
         """
-        public_host_key = RSAKey(data=str(host_key))
         host_key = RSAKey.from_private_key_file(test_path('test_rsa.key'))
+        public_host_key = RSAKey(data=host_key.asbytes())
         self.ts.add_server_key(host_key)
         event = threading.Event()
         server = NullServer()
@@ -196,8 +196,8 @@ class TransportTest(ParamikoTest):
         """
         verify that a long banner doesn't mess up the handshake.
         """
-        public_host_key = RSAKey(data=str(host_key))
         host_key = RSAKey.from_private_key_file(test_path('test_rsa.key'))
+        public_host_key = RSAKey(data=host_key.asbytes())
         self.ts.add_server_key(host_key)
         event = threading.Event()
         server = NullServer()
@@ -708,7 +708,7 @@ class TransportTest(ParamikoTest):
                 # Simulate in-transit MSG_CHANNEL_WINDOW_ADJUST by sending it
                 # before responding to the incoming MSG_KEXINIT.
                 m2 = Message()
-                m2.add_byte(chr(MSG_CHANNEL_WINDOW_ADJUST))
+                m2.add_byte(cMSG_CHANNEL_WINDOW_ADJUST)
                 m2.add_int(chan.remote_chanid)
                 m2.add_int(1)    # bytes to add
                 self._send_message(m2)

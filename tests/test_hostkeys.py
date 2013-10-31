@@ -65,8 +65,8 @@ class HostKeysTest (unittest.TestCase):
     def test_1_load(self):
         hostdict = paramiko.HostKeys('hostfile.temp')
         self.assertEquals(2, len(hostdict))
-        self.assertEquals(1, len(hostdict.values()[0]))
-        self.assertEquals(1, len(hostdict.values()[1]))
+        self.assertEquals(1, len(list(hostdict.values())[0]))
+        self.assertEquals(1, len(list(hostdict.values())[1]))
         fp = hexlify(hostdict['secure.example.com']['ssh-rsa'].get_fingerprint()).upper()
         self.assertEquals('E6684DB30E109B67B70FF1DC5C7F1363', fp)
 
@@ -75,7 +75,7 @@ class HostKeysTest (unittest.TestCase):
         hh = '|1|BMsIC6cUIP2zBuXR3t2LRcJYjzM=|hpkJMysjTk/+zzUUzxQEa2ieq6c='
         key = paramiko.RSAKey(data=base64.decodestring(keyblob))
         hostdict.add(hh, 'ssh-rsa', key)
-        self.assertEquals(3, len(hostdict))
+        self.assertEquals(3, len(list(hostdict)))
         x = hostdict['foo.example.com']
         fp = hexlify(x['ssh-rsa'].get_fingerprint()).upper()
         self.assertEquals('7EC91BB336CB6D810B124B1353C32396', fp)
@@ -85,8 +85,8 @@ class HostKeysTest (unittest.TestCase):
         hostdict = paramiko.HostKeys('hostfile.temp')
         self.assert_('secure.example.com' in hostdict)
         self.assert_('not.example.com' not in hostdict)
-        self.assert_(hostdict.has_key('secure.example.com'))
-        self.assert_(not hostdict.has_key('not.example.com'))
+        self.assert_('secure.example.com' in hostdict)
+        self.assert_('not.example.com' not in hostdict)
         x = hostdict.get('secure.example.com', None)
         self.assert_(x is not None)
         fp = hexlify(x['ssh-rsa'].get_fingerprint()).upper()
@@ -108,9 +108,9 @@ class HostKeysTest (unittest.TestCase):
         hostdict['fake.example.com']['ssh-rsa'] = key
         
         self.assertEquals(3, len(hostdict))
-        self.assertEquals(2, len(hostdict.values()[0]))
-        self.assertEquals(1, len(hostdict.values()[1]))
-        self.assertEquals(1, len(hostdict.values()[2]))
+        self.assertEquals(2, len(list(hostdict.values())[0]))
+        self.assertEquals(1, len(list(hostdict.values())[1]))
+        self.assertEquals(1, len(list(hostdict.values())[2]))
         fp = hexlify(hostdict['secure.example.com']['ssh-rsa'].get_fingerprint()).upper()
         self.assertEquals('7EC91BB336CB6D810B124B1353C32396', fp)
         fp = hexlify(hostdict['secure.example.com']['ssh-dss'].get_fingerprint()).upper()

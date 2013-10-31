@@ -33,6 +33,8 @@ from paramiko.ssh_exception import SSHException
 
 _MSG_KEXDH_GEX_REQUEST_OLD, _MSG_KEXDH_GEX_GROUP, _MSG_KEXDH_GEX_INIT, \
     _MSG_KEXDH_GEX_REPLY, _MSG_KEXDH_GEX_REQUEST = range(30, 35)
+c_MSG_KEXDH_GEX_REQUEST_OLD, c_MSG_KEXDH_GEX_GROUP, c_MSG_KEXDH_GEX_INIT, \
+    c_MSG_KEXDH_GEX_REPLY, c_MSG_KEXDH_GEX_REQUEST = [byte_chr(c) for c in range(30, 35)]
 
 
 class KexGex (object):
@@ -62,11 +64,11 @@ class KexGex (object):
         m = Message()
         if _test_old_style:
             # only used for unit tests: we shouldn't ever send this
-            m.add_byte(chr(_MSG_KEXDH_GEX_REQUEST_OLD))
+            m.add_byte(c_MSG_KEXDH_GEX_REQUEST_OLD)
             m.add_int(self.preferred_bits)
             self.old_style = True
         else:
-            m.add_byte(chr(_MSG_KEXDH_GEX_REQUEST))
+            m.add_byte(c_MSG_KEXDH_GEX_REQUEST)
             m.add_int(self.min_bits)
             m.add_int(self.preferred_bits)
             m.add_int(self.max_bits)
@@ -135,7 +137,7 @@ class KexGex (object):
         self.transport._log(DEBUG, 'Picking p (%d <= %d <= %d bits)' % (minbits, preferredbits, maxbits))
         self.g, self.p = pack.get_modulus(minbits, preferredbits, maxbits)
         m = Message()
-        m.add_byte(chr(_MSG_KEXDH_GEX_GROUP))
+        m.add_byte(c_MSG_KEXDH_GEX_GROUP)
         m.add_mpint(self.p)
         m.add_mpint(self.g)
         self.transport._send_message(m)
@@ -156,7 +158,7 @@ class KexGex (object):
         self.transport._log(DEBUG, 'Picking p (~ %d bits)' % (self.preferred_bits,))
         self.g, self.p = pack.get_modulus(self.min_bits, self.preferred_bits, self.max_bits)
         m = Message()
-        m.add_byte(chr(_MSG_KEXDH_GEX_GROUP))
+        m.add_byte(c_MSG_KEXDH_GEX_GROUP)
         m.add_mpint(self.p)
         m.add_mpint(self.g)
         self.transport._send_message(m)
@@ -175,7 +177,7 @@ class KexGex (object):
         # now compute e = g^x mod p
         self.e = pow(self.g, self.x, self.p)
         m = Message()
-        m.add_byte(chr(_MSG_KEXDH_GEX_INIT))
+        m.add_byte(c_MSG_KEXDH_GEX_INIT)
         m.add_mpint(self.e)
         self.transport._send_message(m)
         self.transport._expect_packet(_MSG_KEXDH_GEX_REPLY)
@@ -187,7 +189,7 @@ class KexGex (object):
         self._generate_x()
         self.f = pow(self.g, self.x, self.p)
         K = pow(self.e, self.x, self.p)
-        key = str(self.transport.get_server_key())
+        key = self.transport.get_server_key().asbytes()
         # okay, build up the hash H of (V_C || V_S || I_C || I_S || K_S || min || n || max || p || g || e || f || K)
         hm = Message()
         hm.add(self.transport.remote_version, self.transport.local_version,
@@ -203,16 +205,16 @@ class KexGex (object):
         hm.add_mpint(self.e)
         hm.add_mpint(self.f)
         hm.add_mpint(K)
-        H = SHA.new(str(hm)).digest()
+        H = SHA.new(hm.asbytes()).digest()
         self.transport._set_K_H(K, H)
         # sign it
         sig = self.transport.get_server_key().sign_ssh_data(self.transport.rng, H)
         # send reply
         m = Message()
-        m.add_byte(chr(_MSG_KEXDH_GEX_REPLY))
+        m.add_byte(c_MSG_KEXDH_GEX_REPLY)
         m.add_string(key)
         m.add_mpint(self.f)
-        m.add_string(str(sig))
+        m.add_string(sig)
         self.transport._send_message(m)
         self.transport._activate_outbound()
         
@@ -238,6 +240,6 @@ class KexGex (object):
         hm.add_mpint(self.e)
         hm.add_mpint(self.f)
         hm.add_mpint(K)
-        self.transport._set_K_H(K, SHA.new(str(hm)).digest())
+        self.transport._set_K_H(K, SHA.new(hm.asbytes()).digest())
         self.transport._verify_key(host_key, sig)
         self.transport._activate_outbound()

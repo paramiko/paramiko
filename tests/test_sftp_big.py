@@ -73,7 +73,7 @@ class BigSFTPTest (unittest.TestCase):
 
             # now make sure every file is there, by creating a list of filenmes
             # and reading them in random order.
-            numlist = range(numfiles)
+            numlist = list(range(numfiles))
             while len(numlist) > 0:
                 r = numlist[random.randint(0, len(numlist) - 1)]
                 f = sftp.open('%s/file%d.txt' % (FOLDER, r))

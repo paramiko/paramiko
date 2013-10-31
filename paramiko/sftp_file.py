@@ -348,8 +348,8 @@ class SFTPFile (BufferedFile):
         """
         t, msg = self.sftp._request(CMD_EXTENDED, 'check-file', self.handle,
                                     hash_algorithm, long(offset), long(length), block_size)
-        ext = msg.get_string()
-        alg = msg.get_string()
+        ext = msg.get_text()
+        alg = msg.get_text()
         data = msg.get_remainder()
         return data
     

@@ -111,8 +111,8 @@ class AuthTest (unittest.TestCase):
         self.sockc.close()
     
     def start_server(self):
-        self.public_host_key = RSAKey(data=str(host_key))
         host_key = RSAKey.from_private_key_file(test_path('test_rsa.key'))
+        self.public_host_key = RSAKey(data=host_key.asbytes())
         self.ts.add_server_key(host_key)
         self.event = threading.Event()
         self.server = NullServer()

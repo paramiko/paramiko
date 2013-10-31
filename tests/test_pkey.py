@@ -144,7 +144,7 @@ class KeyTest (unittest.TestCase):
         # verify that the private & public keys compare equal
         key = RSAKey.from_private_key_file('tests/test_rsa.key')
         self.assertEquals(key, key)
-        pub = RSAKey(data=str(key))
+        pub = RSAKey(data=key.asbytes())
         self.assert_(key.can_sign())
         self.assert_(not pub.can_sign())
         self.assertEquals(key, pub)
@@ -153,7 +153,7 @@ class KeyTest (unittest.TestCase):
         # verify that the private & public keys compare equal
         key = DSSKey.from_private_key_file('tests/test_dss.key')
         self.assertEquals(key, key)
-        pub = DSSKey(data=str(key))
+        pub = DSSKey(data=key.asbytes())
         self.assert_(key.can_sign())
         self.assert_(not pub.can_sign())
         self.assertEquals(key, pub)
@@ -164,11 +164,11 @@ class KeyTest (unittest.TestCase):
         msg = key.sign_ssh_data(rng, 'ice weasels')
         self.assert_(type(msg) is Message)
         msg.rewind()
-        self.assertEquals('ssh-rsa', msg.get_string())
-        sig = ''.join([chr(int(x, 16)) for x in SIGNED_RSA.split(':')])
-        self.assertEquals(sig, msg.get_string())
+        self.assertEquals('ssh-rsa', msg.get_text())
+        sig = bytes().join([byte_chr(int(x, 16)) for x in SIGNED_RSA.split(':')])
+        self.assertEquals(sig, msg.get_binary())
         msg.rewind()
-        pub = RSAKey(data=str(key))
+        pub = RSAKey(data=key.asbytes())
         self.assert_(pub.verify_ssh_sig('ice weasels', msg))
 
     def test_9_sign_dss(self):
@@ -177,13 +177,13 @@ class KeyTest (unittest.TestCase):
         msg = key.sign_ssh_data(rng, 'ice weasels')
         self.assert_(type(msg) is Message)
         msg.rewind()
-        self.assertEquals('ssh-dss', msg.get_string())
+        self.assertEquals('ssh-dss', msg.get_text())
         # can't do the same test as we do for RSA, because DSS signatures
         # are usually different each time.  but we can test verification
         # anyway so it's ok.
-        self.assertEquals(40, len(msg.get_string()))
+        self.assertEquals(40, len(msg.get_binary()))
         msg.rewind()
-        pub = DSSKey(data=str(key))
+        pub = DSSKey(data=key.asbytes())
         self.assert_(pub.verify_ssh_sig('ice weasels', msg))
 
     def test_A_generate_rsa(self):
@@ -227,7 +227,7 @@ class KeyTest (unittest.TestCase):
         # verify that the private & public keys compare equal
         key = ECDSAKey.from_private_key_file('tests/test_ecdsa.key')
         self.assertEquals(key, key)
-        pub = ECDSAKey(data=str(key))
+        pub = ECDSAKey(data=key.asbytes())
         self.assert_(key.can_sign())
         self.assert_(not pub.can_sign())
         self.assertEquals(key, pub)
@@ -238,12 +238,12 @@ class KeyTest (unittest.TestCase):
         msg = key.sign_ssh_data(rng, 'ice weasels')
         self.assert_(type(msg) is Message)
         msg.rewind()
-        self.assertEquals('ecdsa-sha2-nistp256', msg.get_string())
+        self.assertEquals('ecdsa-sha2-nistp256', msg.get_text())
         # ECDSA signatures, like DSS signatures, tend to be different
         # each time, so we can't compare against a "known correct"
         # signature.
         # Even the length of the signature can change.
 
         msg.rewind()
-        pub = ECDSAKey(data=str(key))
+        pub = ECDSAKey(data=key.asbytes())
         self.assert_(pub.verify_ssh_sig('ice weasels', msg))

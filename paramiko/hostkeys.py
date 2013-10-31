@@ -289,7 +289,7 @@ class HostKeys (MutableMapping):
         host_key = k.get(key.get_name(), None)
         if host_key is None:
             return False
-        return str(host_key) == str(key)
+        return host_key.asbytes() == key.asbytes()
 
     def clear(self):
         """

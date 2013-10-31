@@ -56,30 +56,33 @@ class ECDSAKey (PKey):
         else:
             if msg is None:
                 raise SSHException('Key object may not be empty')
-            if msg.get_string() != 'ecdsa-sha2-nistp256':
+            if msg.get_text() != 'ecdsa-sha2-nistp256':
                 raise SSHException('Invalid key')
-            curvename = msg.get_string()
+            curvename = msg.get_text()
             if curvename != 'nistp256':
                 raise SSHException("Can't handle curve of type %s" % curvename)
 
-            pointinfo = msg.get_string()
-            if pointinfo[0] != "\x04":
-                raise SSHException('Point compression is being used: %s'%
+            pointinfo = msg.get_binary()
+            if pointinfo[0] != four_byte:
+                raise SSHException('Point compression is being used: %s' %
                                    binascii.hexlify(pointinfo))
             self.verifying_key = VerifyingKey.from_string(pointinfo[1:],
-                curve=curves.NIST256p)
+                                                          curve=curves.NIST256p)
         self.size = 256
 
-    def __str__(self):
+    def asbytes(self):
         key = self.verifying_key
         m = Message()
         m.add_string('ecdsa-sha2-nistp256')
         m.add_string('nistp256')
 
-        point_str = "\x04" + key.to_string()
+        point_str = four_byte + key.to_string()
 
         m.add_string(point_str)
-        return str(m)
+        return m.asbytes()
+
+    def __str__(self):
+        return self.asbytes()
 
     def __hash__(self):
         h = hash(self.get_name())
@@ -106,9 +109,9 @@ class ECDSAKey (PKey):
         return m
 
     def verify_ssh_sig(self, data, msg):
-        if msg.get_string() != 'ecdsa-sha2-nistp256':
+        if msg.get_text() != 'ecdsa-sha2-nistp256':
             return False
-        sig = msg.get_string()
+        sig = msg.get_binary()
 
         # verify the signature by SHA'ing the data and encrypting it
         # using the public key.
@@ -161,7 +164,7 @@ class ECDSAKey (PKey):
         s, padding = der.remove_sequence(data)
         if padding:
             if padding not in self.ALLOWED_PADDINGS:
-                raise ValueError, "weird padding: %s" % (binascii.hexlify(empty))
+                raise ValueError("weird padding: %s" % (binascii.hexlify(empty)))
             data = data[:-len(padding)]
         key = SigningKey.from_der(data)
         self.signing_key = key
@@ -172,7 +175,7 @@ class ECDSAKey (PKey):
         msg = Message()
         msg.add_mpint(r)
         msg.add_mpint(s)
-        return str(msg)
+        return msg.asbytes()
 
     def _sigdecode(self, sig, order):
         msg = Message(sig)

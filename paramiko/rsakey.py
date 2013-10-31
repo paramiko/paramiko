@@ -57,18 +57,21 @@ class RSAKey (PKey):
         else:
             if msg is None:
                 raise SSHException('Key object may not be empty')
-            if msg.get_string() != 'ssh-rsa':
+            if msg.get_text() != 'ssh-rsa':
                 raise SSHException('Invalid key')
             self.e = msg.get_mpint()
             self.n = msg.get_mpint()
         self.size = util.bit_length(self.n)
 
-    def __str__(self):
+    def asbytes(self):
         m = Message()
         m.add_string('ssh-rsa')
         m.add_mpint(self.e)
         m.add_mpint(self.n)
-        return str(m)
+        return m.asbytes()
+
+    def __str__(self):
+        return self.asbytes()
 
     def __hash__(self):
         h = hash(self.get_name())
@@ -95,9 +98,9 @@ class RSAKey (PKey):
         return m
 
     def verify_ssh_sig(self, data, msg):
-        if msg.get_string() != 'ssh-rsa':
+        if msg.get_text() != 'ssh-rsa':
             return False
-        sig = util.inflate_long(msg.get_string(), True)
+        sig = util.inflate_long(msg.get_binary(), True)
         # verify the signature by SHA'ing the data and encrypting it using the
         # public key.  some wackiness ensues where we "pkcs1imify" the 20-byte
         # hash into a string as long as the RSA key.
@@ -116,7 +119,7 @@ class RSAKey (PKey):
             b.encode(keylist)
         except BERException:
             raise SSHException('Unable to create ber encoding of key')
-        return str(b)
+        return b.asbytes()
 
     def write_private_key_file(self, filename, password=None):
         self._write_private_key_file('RSA', filename, self._encode_key(), password)

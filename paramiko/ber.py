@@ -30,12 +30,15 @@ class BER(object):
     Robey's tiny little attempt at a BER decoder.
     """
 
-    def __init__(self, content=''):
-        self.content = content
+    def __init__(self, content=bytes()):
+        self.content = b(content)
         self.idx = 0
 
-    def __str__(self):
+    def asbytes(self):
         return self.content
+
+    def __str__(self):
+        return self.asbytes()
 
     def __repr__(self):
         return 'BER(\'' + repr(self.content) + '\')'
@@ -126,5 +129,5 @@ class BER(object):
         b = BER()
         for item in data:
             b.encode(item)
-        return str(b)
+        return b.asbytes()
     encode_sequence = staticmethod(encode_sequence)
