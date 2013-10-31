@@ -1059,7 +1059,7 @@ class Channel (object):
         elif key == 'x11-req':
             single_connection = m.get_boolean()
             auth_proto = m.get_text()
-            auth_cookie = m.get_text()
+            auth_cookie = m.get_binary()
             screen_number = m.get_int()
             if server is None:
                 ok = False

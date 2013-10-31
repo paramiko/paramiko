@@ -129,7 +129,7 @@ if PY3:
     four_byte = b'\x04'
     max_byte = b'\xff'
     newline_byte = b'\n'
-    cr_byte = b'\r'
+    cr_byte = 13
 else:
     zero_byte = '\x00'
     one_byte = '\x01'

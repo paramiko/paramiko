@@ -29,6 +29,7 @@ import weakref
 from binascii import hexlify
 from tests.util import test_path
 import paramiko
+from paramiko.py3compat import b
 
 
 class NullServer (paramiko.ServerInterface):
@@ -44,7 +45,7 @@ class NullServer (paramiko.ServerInterface):
         return paramiko.AUTH_FAILED
 
     def check_auth_publickey(self, username, key):
-        if (key.get_name() == 'ssh-dss') and (hexlify(key.get_fingerprint()) == '4478f0b9a23cc5182009ff755bc1d26c'):
+        if (key.get_name() == 'ssh-dss') and (hexlify(key.get_fingerprint()) == b('4478f0b9a23cc5182009ff755bc1d26c')):
             return paramiko.AUTH_SUCCESSFUL
         return paramiko.AUTH_FAILED
 

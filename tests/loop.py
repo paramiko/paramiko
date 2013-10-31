@@ -21,7 +21,7 @@
 """
 
 import threading, socket
-from paramiko.py3compat import *
+from paramiko.common import *
 
 
 class LoopSocket (object):
@@ -47,6 +47,7 @@ class LoopSocket (object):
             self.__lock.release()
 
     def send(self, data):
+        data = asbytes(data)
         if self.__mate is None:
             # EOF
             raise EOFError()

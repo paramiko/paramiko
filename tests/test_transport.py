@@ -362,7 +362,7 @@ class TransportTest(ParamikoTest):
         self.assertEquals([], w)
         self.assertEquals([], e)
 
-        self.assertEquals('hello\n', chan.recv(6))
+        self.assertEquals(b('hello\n'), chan.recv(6))
         
         # and, should be dead again now
         r, w, e = select.select([chan], [], [], 0.1)
@@ -381,7 +381,7 @@ class TransportTest(ParamikoTest):
         self.assertEquals([chan], r)
         self.assertEquals([], w)
         self.assertEquals([], e)
-        self.assertEquals('', chan.recv(16))
+        self.assertEquals(bytes(), chan.recv(16))
         
         # make sure the pipe is still open for now...
         p = chan._pipe
@@ -463,7 +463,7 @@ class TransportTest(ParamikoTest):
         self.assertEquals(6093, requested[0][1])
         
         x11_server.send('hello')
-        self.assertEquals('hello', x11_client.recv(5))
+        self.assertEquals(b('hello'), x11_client.recv(5))
         
         x11_server.close()
         x11_client.close()
@@ -496,7 +496,7 @@ class TransportTest(ParamikoTest):
         cch = self.tc.accept()
         
         sch.send('hello')
-        self.assertEquals('hello', cch.recv(5))
+        self.assertEquals(b('hello'), cch.recv(5))
         sch.close()
         cch.close()
         ss.close()
@@ -528,12 +528,12 @@ class TransportTest(ParamikoTest):
         cch.connect(self.server._tcpip_dest)
         
         ss, _ = greeting_server.accept()
-        ss.send('Hello!\n')
+        ss.send(b('Hello!\n'))
         ss.close()
         sch.send(cch.recv(8192))
         sch.close()
         
-        self.assertEquals('Hello!\n', cs.recv(7))
+        self.assertEquals(b('Hello!\n'), cs.recv(7))
         cs.close()
 
     def test_G_stderr_select(self):
@@ -564,7 +564,7 @@ class TransportTest(ParamikoTest):
         self.assertEquals([], w)
         self.assertEquals([], e)
 
-        self.assertEquals('hello\n', chan.recv_stderr(6))
+        self.assertEquals(b('hello\n'), chan.recv_stderr(6))
         
         # and, should be dead again now
         r, w, e = select.select([chan], [], [], 0.1)

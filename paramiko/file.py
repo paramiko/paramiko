@@ -235,7 +235,7 @@ class BufferedFile (object):
                 self._rbuffer = ''
                 self._pos += len(line)
                 return line
-            line += new_data
+            line += b2s(new_data)
             self._realpos += len(new_data)
         # find the newline
         pos = line.find('\n')

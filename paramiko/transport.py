@@ -805,7 +805,7 @@ class Transport (threading.Thread):
         """
         if not self.active:
             raise SSHException('SSH session not active')
-        address = str(address)
+        address = address
         port = int(port)
         response = self.global_request('tcpip-forward', (address, port), wait=True)
         if response is None:

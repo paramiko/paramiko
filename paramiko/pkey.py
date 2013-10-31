@@ -321,7 +321,7 @@ class PKey (object):
         try:
             encryption_type, saltstr = headers['dek-info'].split(',')
         except:
-            raise SSHException('Can\'t parse DEK-info in private key file')
+            raise SSHException("Can't parse DEK-info in private key file")
         if encryption_type not in self._CIPHER_TABLE:
             raise SSHException('Unknown private key cipher "%s"' % encryption_type)
         # if no password was passed in, raise an exception pointing out that we need one
@@ -373,10 +373,10 @@ class PKey (object):
                 n = blocksize - len(data) % blocksize
                 #data += rng.read(n)
                 # that would make more sense ^, but it confuses openssh.
-                data += '\0' * n
+                data += zero_byte * n
             data = cipher.new(key, mode, salt).encrypt(data)
             f.write('Proc-Type: 4,ENCRYPTED\n')
-            f.write('DEK-Info: %s,%s\n' % (cipher_name, hexlify(salt).upper()))
+            f.write('DEK-Info: %s,%s\n' % (cipher_name, u(hexlify(salt)).upper()))
             f.write('\n')
         s = u(base64.encodestring(data))
         # re-wrap to 64-char lines

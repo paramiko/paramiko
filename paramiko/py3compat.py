@@ -1,6 +1,6 @@
 import sys
 
-__all__ = ['PY3', 'string_types', 'integer_types', 'text_type', 'bytes_type', 'long', 'input', 'bytestring', 'byte_ord', 'byte_chr', 'byte_mask', 'b', 'u', 'StringIO', 'BytesIO', 'is_callable', 'MAXSIZE', 'next']
+__all__ = ['PY3', 'string_types', 'integer_types', 'text_type', 'bytes_type', 'long', 'input', 'bytestring', 'byte_ord', 'byte_chr', 'byte_mask', 'b', 'u', 'b2s', 'StringIO', 'BytesIO', 'is_callable', 'MAXSIZE', 'next']
 
 PY3 = sys.version_info[0] >= 3
 
@@ -46,6 +46,9 @@ if PY3:
             return s
         else:
             raise TypeError("Expected unicode or bytes, got %r" % s)
+
+    def b2s(s):
+        return s.decode() if isinstance(s, bytes) else s
 
     import io
     StringIO = io.StringIO      # NOQA
@@ -96,6 +99,9 @@ else:
             return s
         else:
             raise TypeError("Expected unicode or bytes, got %r" % s)
+
+    def b2s(s):
+        return s
 
     try:
         import cStringIO
