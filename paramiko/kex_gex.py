@@ -23,7 +23,6 @@ client side, and a B{lot} more on the server side.
 """
 
 from Crypto.Hash import SHA
-from Crypto.Util import number
 
 from paramiko.common import *
 from paramiko import util
