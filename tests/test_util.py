@@ -27,7 +27,7 @@ import unittest
 from Crypto.Hash import SHA
 import paramiko.util
 from paramiko.util import lookup_ssh_host_config as host_config
-from paramiko.py3compat import StringIO, byte_ord
+from paramiko.py3compat import StringIO, byte_ord, b
 
 from tests.util import ParamikoTest
 
@@ -137,7 +137,7 @@ class UtilTest(ParamikoTest):
             )
 
     def test_4_generate_key_bytes(self):
-        x = paramiko.util.generate_key_bytes(SHA, 'ABCDEFGH', 'This is my secret passphrase.', 64)
+        x = paramiko.util.generate_key_bytes(SHA, b('ABCDEFGH'), 'This is my secret passphrase.', 64)
         hex = ''.join(['%02x' % byte_ord(c) for c in x])
         self.assertEquals(hex, '9110e2f6793b69363e58173e9436b13a5a4b339005741d5c680e505f57d871347b4239f14fb5c46e857d5e100424873ba849ac699cea98d729e57b3e84378e8b')
 
@@ -151,7 +151,7 @@ class UtilTest(ParamikoTest):
             self.assertEquals(1, len(list(hostdict.values())[0]))
             self.assertEquals(1, len(list(hostdict.values())[1]))
             fp = hexlify(hostdict['secure.example.com']['ssh-rsa'].get_fingerprint()).upper()
-            self.assertEquals('E6684DB30E109B67B70FF1DC5C7F1363', fp)
+            self.assertEquals(b('E6684DB30E109B67B70FF1DC5C7F1363'), fp)
         finally:
             os.unlink('hostfile.temp')
 

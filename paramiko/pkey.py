@@ -148,7 +148,7 @@ class PKey (object):
         @return: a base64 string containing the public part of the key.
         @rtype: str
         """
-        return base64.encodestring(self.asbytes()).replace('\n', '')
+        return u(base64.encodestring(self.asbytes())).replace('\n', '')
 
     def sign_ssh_data(self, rng, data):
         """
@@ -378,7 +378,7 @@ class PKey (object):
             f.write('Proc-Type: 4,ENCRYPTED\n')
             f.write('DEK-Info: %s,%s\n' % (cipher_name, hexlify(salt).upper()))
             f.write('\n')
-        s = base64.encodestring(data)
+        s = u(base64.encodestring(data))
         # re-wrap to 64-char lines
         s = ''.join(s.split('\n'))
         s = '\n'.join([s[i : i+64] for i in range(0, len(s), 64)])

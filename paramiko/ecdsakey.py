@@ -63,7 +63,7 @@ class ECDSAKey (PKey):
                 raise SSHException("Can't handle curve of type %s" % curvename)
 
             pointinfo = msg.get_binary()
-            if pointinfo[0] != four_byte:
+            if pointinfo[0:1] != four_byte:
                 raise SSHException('Point compression is being used: %s' %
                                    binascii.hexlify(pointinfo))
             self.verifying_key = VerifyingKey.from_string(pointinfo[1:],
@@ -157,14 +157,19 @@ class ECDSAKey (PKey):
         data = self._read_private_key('EC', file_obj, password)
         self._decode_key(data)
 
-    ALLOWED_PADDINGS = ['\x01', '\x02\x02', '\x03\x03\x03', '\x04\x04\x04\x04',
-                        '\x05\x05\x05\x05\x05', '\x06\x06\x06\x06\x06\x06',
-                        '\x07\x07\x07\x07\x07\x07\x07']
+    if PY3:
+        ALLOWED_PADDINGS = [b'\x01', b'\x02\x02', b'\x03\x03\x03', b'\x04\x04\x04\x04',
+                            b'\x05\x05\x05\x05\x05', b'\x06\x06\x06\x06\x06\x06',
+                            b'\x07\x07\x07\x07\x07\x07\x07']
+    else:
+        ALLOWED_PADDINGS = ['\x01', '\x02\x02', '\x03\x03\x03', '\x04\x04\x04\x04',
+                            '\x05\x05\x05\x05\x05', '\x06\x06\x06\x06\x06\x06',
+                            '\x07\x07\x07\x07\x07\x07\x07']
     def _decode_key(self, data):
         s, padding = der.remove_sequence(data)
         if padding:
             if padding not in self.ALLOWED_PADDINGS:
-                raise ValueError("weird padding: %s" % (binascii.hexlify(empty)))
+                raise ValueError("weird padding: %s" % (binascii.hexlify(data)))
             data = data[:-len(padding)]
         key = SigningKey.from_der(data)
         self.signing_key = key

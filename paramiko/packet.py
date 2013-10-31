@@ -87,8 +87,8 @@ class Packetizer (object):
         self.__sdctr_out = False
         self.__mac_engine_out = None
         self.__mac_engine_in = None
-        self.__mac_key_out = ''
-        self.__mac_key_in = ''
+        self.__mac_key_out = bytes()
+        self.__mac_key_in = bytes()
         self.__compress_engine_out = None
         self.__compress_engine_in = None
         self.__sequence_number_out = long_zero
