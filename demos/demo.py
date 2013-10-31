@@ -28,6 +28,7 @@ import socket
 import sys
 import time
 import traceback
+from paramiko.py3compat import input
 
 import paramiko
 try:

@@ -28,6 +28,7 @@ import sys
 import traceback
 
 import paramiko
+from paramiko.py3compat import input
 
 
 # setup logging
@@ -40,9 +41,9 @@ if len(sys.argv) > 1:
     if hostname.find('@') >= 0:
         username, hostname = hostname.split('@')
 else:
-    hostname = raw_input('Hostname: ')
+    hostname = input('Hostname: ')
 if len(hostname) == 0:
-    print '*** Hostname required.'
+    print('*** Hostname required.')
     sys.exit(1)
 port = 22
 if hostname.find(':') >= 0:
@@ -53,7 +54,7 @@ if hostname.find(':') >= 0:
 # get username
 if username == '':
     default_username = getpass.getuser()
-    username = raw_input('Username [%s]: ' % default_username)
+    username = input('Username [%s]: ' % default_username)
     if len(username) == 0:
         username = default_username
 password = getpass.getpass('Password for %s@%s: ' % (username, hostname))
@@ -69,13 +70,13 @@ except IOError:
         # try ~/ssh/ too, because windows can't have a folder named ~/.ssh/
         host_keys = paramiko.util.load_host_keys(os.path.expanduser('~/ssh/known_hosts'))
     except IOError:
-        print '*** Unable to open host keys file'
+        print('*** Unable to open host keys file')
         host_keys = {}
 
-if host_keys.has_key(hostname):
+if hostname in host_keys:
     hostkeytype = host_keys[hostname].keys()[0]
     hostkey = host_keys[hostname][hostkeytype]
-    print 'Using host key of type %s' % hostkeytype
+    print('Using host key of type %s' % hostkeytype)
 
 
 # now, connect and use paramiko Transport to negotiate SSH2 across the connection
@@ -86,22 +87,22 @@ try:
 
     # dirlist on remote host
     dirlist = sftp.listdir('.')
-    print "Dirlist:", dirlist
+    print("Dirlist: %s" % dirlist)
 
     # copy this demo onto the server
     try:
         sftp.mkdir("demo_sftp_folder")
     except IOError:
-        print '(assuming demo_sftp_folder/ already exists)'
+        print('(assuming demo_sftp_folder/ already exists)')
     sftp.open('demo_sftp_folder/README', 'w').write('This was created by demo_sftp.py.\n')
     data = open('demo_sftp.py', 'r').read()
     sftp.open('demo_sftp_folder/demo_sftp.py', 'w').write(data)
-    print 'created demo_sftp_folder/ on the server'
+    print('created demo_sftp_folder/ on the server')
     
     # copy the README back here
     data = sftp.open('demo_sftp_folder/README', 'r').read()
     open('README_demo_sftp', 'w').write(data)
-    print 'copied README back here'
+    print('copied README back here')
     
     # BETTER: use the get() and put() methods
     sftp.put('demo_sftp.py', 'demo_sftp_folder/demo_sftp.py')
@@ -109,8 +110,9 @@ try:
 
     t.close()
 
-except Exception, e:
-    print '*** Caught exception: %s: %s' % (e.__class__, e)
+except Exception:
+    e = sys.exc_info()[1]
+    print('*** Caught exception: %s: %s' % (e.__class__, e))
     traceback.print_exc()
     try:
         t.close()
