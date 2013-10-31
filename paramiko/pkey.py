@@ -367,7 +367,7 @@ class PKey (object):
             keysize = self._CIPHER_TABLE[cipher_name]['keysize']
             blocksize = self._CIPHER_TABLE[cipher_name]['blocksize']
             mode = self._CIPHER_TABLE[cipher_name]['mode']
-            salt = rng.read(8)
+            salt = rng.read(16)
             key = util.generate_key_bytes(MD5, salt, password, keysize)
             if len(data) % blocksize != 0:
                 n = blocksize - len(data) % blocksize
