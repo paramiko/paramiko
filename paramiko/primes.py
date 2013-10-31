@@ -34,7 +34,7 @@ def _generate_prime(bits, rng):
         # loop catches the case where we increment n into a higher bit-range
         x = rng.read((bits+7) // 8)
         if hbyte_mask > 0:
-            x = chr(ord(x[0]) & hbyte_mask) + x[1:]
+            x = byte_mask(x[0], hbyte_mask) + x[1:]
         n = util.inflate_long(x, 1)
         n |= 1
         n |= (1 << (bits - 1))
@@ -59,7 +59,7 @@ def _roll_random(rng, n):
     while True:
         x = rng.read(byte_count)
         if hbyte_mask > 0:
-            x = chr(ord(x[0]) & hbyte_mask) + x[1:]
+            x = byte_mask(x[0], hbyte_mask) + x[1:]
         num = util.inflate_long(x, 1)
         if num < n:
             break

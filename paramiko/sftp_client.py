@@ -285,7 +285,7 @@ class SFTPClient (BaseSFTP):
         self._log(DEBUG, 'rename(%r, %r)' % (oldpath, newpath))
         self._request(CMD_RENAME, oldpath, newpath)
 
-    def mkdir(self, path, mode=0777):
+    def mkdir(self, path, mode=o777):
         """
         Create a folder (directory) named C{path} with numeric mode C{mode}.
         The default mode is 0777 (octal).  On some systems, mode is ignored.
@@ -698,7 +698,7 @@ class SFTPClient (BaseSFTP):
                     msg.add_int(item)
                 elif isinstance(item, long):
                     msg.add_int64(item)
-                elif isinstance(item, str):
+                elif isinstance(item, string_types):
                     msg.add_string(item)
                 elif isinstance(item, SFTPAttributes):
                     item._pack(msg)

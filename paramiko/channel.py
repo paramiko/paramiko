@@ -969,7 +969,7 @@ class Channel (object):
                 self.transport._send_user_message(m)
 
     def _feed(self, m):
-        if type(m) is str:
+        if isinstance(m, bytes_type):
             # passed from _feed_extended
             s = m
         else:

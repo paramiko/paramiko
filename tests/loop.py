@@ -32,7 +32,7 @@ class LoopSocket (object):
     """
     
     def __init__(self):
-        self.__in_buffer = ''
+        self.__in_buffer = bytes()
         self.__lock = threading.Lock()
         self.__cv = threading.Condition(self.__lock)
         self.__timeout = None
@@ -42,7 +42,7 @@ class LoopSocket (object):
         self.__unlink()
         try:
             self.__lock.acquire()
-            self.__in_buffer = ''
+            self.__in_buffer = bytes()
         finally:
             self.__lock.release()
 

@@ -91,20 +91,20 @@ class KexGex (object):
 
     ###  internals...
 
-    
+
     def _generate_x(self):
         # generate an "x" (1 < x < (p-1)/2).
         q = (self.p - 1) // 2
         qnorm = util.deflate_long(q, 0)
-        qhbyte = ord(qnorm[0])
+        qhbyte = byte_ord(qnorm[0])
         byte_count = len(qnorm)
         qmask = 0xff
         while not (qhbyte & 0x80):
             qhbyte <<= 1
             qmask >>= 1
         while True:
-            x_bytes = chr(ord(x_bytes[0]) & qmask) + x_bytes[1:]
             x_bytes = self.transport.rng.read(byte_count)
+            x_bytes = byte_mask(x_bytes[0], qmask) + x_bytes[1:]
             x = util.inflate_long(x_bytes, 1)
             if (x > 1) and (x < q):
                 break

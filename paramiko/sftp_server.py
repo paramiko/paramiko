@@ -183,7 +183,7 @@ class SFTPServer (BaseSFTP, SubsystemHandler):
                 msg.add_int(item)
             elif type(item) is long:
                 msg.add_int64(item)
-            elif type(item) is str:
+            elif isinstance(item, string_types):
                 msg.add_string(item)
             elif type(item) is SFTPAttributes:
                 item._pack(msg)
@@ -420,7 +420,7 @@ class SFTPServer (BaseSFTP, SubsystemHandler):
         elif t == CMD_READLINK:
             path = msg.get_text()
             resp = self.server.readlink(path)
-            if type(resp) is str:
+            if isinstance(resp, string_types):
                 self._response(request_number, CMD_NAME, 1, resp, '', SFTPAttributes())
             else:
                 self._send_status(request_number, resp)

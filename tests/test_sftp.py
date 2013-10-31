@@ -71,7 +71,10 @@ FOLDER = os.environ.get('TEST_FOLDER', 'temp-testing000')
 sftp = None
 tc = None
 g_big_file_test = True
-
+try:
+    unicode_folder = u'\u00fcnic\u00f8de'
+except SyntaxError:
+    unicode_folder = '\u00fcnic\u00f8de'
 
 def get_sftp():
     global sftp
@@ -141,7 +144,7 @@ class SFTPTest (unittest.TestCase):
 
     def setUp(self):
         global FOLDER
-        for i in xrange(1000):
+        for i in range(1000):
             FOLDER = FOLDER[:-3] + '%03d' % i
             try:
                 sftp.mkdir(FOLDER)
@@ -236,7 +239,7 @@ class SFTPTest (unittest.TestCase):
                 pass
             f = sftp.open(FOLDER + '/second.txt', 'r')
             f.seek(-6, f.SEEK_END)
-            self.assertEqual(f.read(4), 'tent')
+            self.assertEqual(u(f.read(4)), 'tent')
             f.close()
         finally:
             try:
@@ -301,16 +304,16 @@ class SFTPTest (unittest.TestCase):
             f.close()
 
             stat = sftp.stat(FOLDER + '/special')
-            sftp.chmod(FOLDER + '/special', (stat.st_mode & ~0777) | 0600)
+            sftp.chmod(FOLDER + '/special', (stat.st_mode & ~o777) | o600)
             stat = sftp.stat(FOLDER + '/special')
-            expected_mode = 0600
+            expected_mode = o600
             if sys.platform == 'win32':
                 # chmod not really functional on windows
-                expected_mode = 0666
+                expected_mode = o666
             if sys.platform == 'cygwin':
                 # even worse.
-                expected_mode = 0644
-            self.assertEqual(stat.st_mode & 0777, expected_mode)
+                expected_mode = o644
+            self.assertEqual(stat.st_mode & o777, expected_mode)
             self.assertEqual(stat.st_size, 1024)
 
             mtime = stat.st_mtime - 3600
@@ -341,17 +344,17 @@ class SFTPTest (unittest.TestCase):
 
             f = sftp.open(FOLDER + '/special', 'r+')
             stat = f.stat()
-            f.chmod((stat.st_mode & ~0777) | 0600)
+            f.chmod((stat.st_mode & ~o777) | o600)
             stat = f.stat()
 
-            expected_mode = 0600
+            expected_mode = o600
             if sys.platform == 'win32':
                 # chmod not really functional on windows
-                expected_mode = 0666
+                expected_mode = o666
             if sys.platform == 'cygwin':
                 # even worse.
-                expected_mode = 0644
-            self.assertEqual(stat.st_mode & 0777, expected_mode)
+                expected_mode = o644
+            self.assertEqual(stat.st_mode & o777, expected_mode)
             self.assertEqual(stat.st_size, 1024)
 
             mtime = stat.st_mtime - 3600
@@ -643,7 +646,7 @@ class SFTPTest (unittest.TestCase):
         f.close()
 
         try:
-            sftp.rename(FOLDER + '/something', FOLDER + u'/\u00fcnic\u00f8de')
+            sftp.rename(FOLDER + '/something', FOLDER + '/' + unicode_folder)
             sftp.open(FOLDER + '/\xc3\xbcnic\xc3\xb8\x64\x65', 'r')
         except Exception:
             e = sys.exc_info()[1]
@@ -651,16 +654,16 @@ class SFTPTest (unittest.TestCase):
         sftp.unlink(FOLDER + '/\xc3\xbcnic\xc3\xb8\x64\x65')
 
     def test_L_utf8_chdir(self):
-        sftp.mkdir(FOLDER + u'\u00fcnic\u00f8de')
+        sftp.mkdir(FOLDER + '/' + unicode_folder)
         try:
-            sftp.chdir(FOLDER + u'\u00fcnic\u00f8de')
+            sftp.chdir(FOLDER + '/' + unicode_folder)
             f = sftp.open('something', 'w')
             f.write('okay')
             f.close()
             sftp.unlink('something')
         finally:
             sftp.chdir(None)
-            sftp.rmdir(FOLDER + u'\u00fcnic\u00f8de')
+            sftp.rmdir(FOLDER + '/' + unicode_folder)
 
     def test_M_bad_readv(self):
         """
@@ -733,10 +736,16 @@ class SFTPTest (unittest.TestCase):
         Send an empty file and confirm it is sent.
         """
         target = FOLDER + '/empty file.txt'
-        stream = StringIO.StringIO()
+        stream = StringIO()
         try:
             attrs = sftp.putfo(stream, target)
             # the returned attributes should not be null
             self.assertNotEqual(attrs, None)
         finally:
             sftp.remove(target)
+
+
+if __name__ == '__main__':
+    SFTPTest.init_loopback()
+    from unittest import main
+    main()

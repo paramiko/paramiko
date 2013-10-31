@@ -352,9 +352,9 @@ class PKey (object):
 
         @raise IOError: if there was an error writing the file.
         """
-        f = open(filename, 'w', 0600)
+        f = open(filename, 'w', o600)
         # grrr... the mode doesn't always take hold
-        os.chmod(filename, 0600)
+        os.chmod(filename, o600)
         self._write_private_key(tag, f, data, password)
         f.close()
 

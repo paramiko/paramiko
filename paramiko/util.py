@@ -48,59 +48,52 @@ if sys.version_info < (2,3):
 
 def inflate_long(s, always_positive=False):
     "turns a normalized byte string into a long-int (adapted from Crypto.Util.number)"
-    out = 0L
+    out = long_zero
     negative = 0
-    if not always_positive and (len(s) > 0) and (ord(s[0]) >= 0x80):
+    if not always_positive and (len(s) > 0) and (byte_ord(s[0]) >= 0x80):
         negative = 1
     if len(s) % 4:
-        filler = '\x00'
+        filler = zero_byte
         if negative:
-            filler = '\xff'
+            filler = max_byte
         s = filler * (4 - len(s) % 4) + s
     for i in range(0, len(s), 4):
         out = (out << 32) + struct.unpack('>I', s[i:i+4])[0]
     if negative:
-        out -= (1L << (8 * len(s)))
+        out -= (long_one << (8 * len(s)))
     return out
+
+deflate_zero = 0 if PY3 else zero_byte
+deflate_ff = 0xff if PY3 else max_byte
 
 def deflate_long(n, add_sign_padding=True):
     "turns a long-int into a normalized byte string (adapted from Crypto.Util.number)"
     # after much testing, this algorithm was deemed to be the fastest
-    s = ''
+    s = bytes()
     n = long(n)
     while (n != 0) and (n != -1):
-        s = struct.pack('>I', n & 0xffffffffL) + s
+        s = struct.pack('>I', n & xffffffff) + s
         n = n >> 32
     # strip off leading zeros, FFs
     for i in enumerate(s):
-        if (n == 0) and (i[1] != '\000'):
+        if (n == 0) and (i[1] != deflate_zero):
             break
-        if (n == -1) and (i[1] != '\xff'):
+        if (n == -1) and (i[1] != deflate_ff):
             break
     else:
         # degenerate case, n was either 0 or -1
         i = (0,)
         if n == 0:
-            s = '\000'
+            s = zero_byte
         else:
-            s = '\xff'
+            s = max_byte
     s = s[i[0]:]
     if add_sign_padding:
-        if (n == 0) and (ord(s[0]) >= 0x80):
-            s = '\x00' + s
-        if (n == -1) and (ord(s[0]) < 0x80):
-            s = '\xff' + s
+        if (n == 0) and (byte_ord(s[0]) >= 0x80):
+            s = zero_byte + s
+        if (n == -1) and (byte_ord(s[0]) < 0x80):
+            s = max_byte + s
     return s
-
-def format_binary_weird(data):
-    out = ''
-    for i in enumerate(data):
-        out += '%02X' % ord(i[1])
-        if i[0] % 2:
-            out += ' '
-        if i[0] % 16 == 15:
-            out += '\n'
-    return out
 
 def format_binary(data, prefix=''):
     x = 0
@@ -113,8 +106,8 @@ def format_binary(data, prefix=''):
     return [prefix + x for x in out]
 
 def format_binary_line(data):
-    left = ' '.join(['%02X' % ord(c) for c in data])
-    right = ''.join([('.%c..' % c)[(ord(c)+63)//95] for c in data])
+    left = ' '.join(['%02X' % byte_ord(c) for c in data])
+    right = ''.join([('.%c..' % c)[(byte_ord(c)+63)//95] for c in data])
     return '%-50s %s' % (left, right)
 
 def hexify(s):
@@ -126,17 +119,17 @@ def unhexify(s):
 def safe_string(s):
     out = ''
     for c in s:
-        if (ord(c) >= 32) and (ord(c) <= 127):
+        if (byte_ord(c) >= 32) and (byte_ord(c) <= 127):
             out += c
         else:
-            out += '%%%02X' % ord(c)
+            out += '%%%02X' % byte_ord(c)
     return out
 
 # ''.join([['%%%02X' % ord(c), c][(ord(c) >= 32) and (ord(c) <= 127)] for c in s])
 
 def bit_length(n):
     norm = deflate_long(n, 0)
-    hbyte = ord(norm[0])
+    hbyte = byte_ord(norm[0])
     if hbyte == 0:
         return 1
     bitlen = len(norm) * 8
@@ -298,15 +291,15 @@ class Counter (object):
         """Increament the counter and return the new value"""
         i = self.blocksize - 1
         while i > -1:
-            c = self.value[i] = chr((ord(self.value[i]) + 1) % 256)
-            if c != '\x00':
+            c = self.value[i] = byte_chr((byte_ord(self.value[i]) + 1) % 256)
+            if c != zero_byte:
                 return self.value.tostring()
             i -= 1
         # counter reset
         x = deflate_long(self.overflow, add_sign_padding=False)
-        self.value = array.array('c', '\x00' * (self.blocksize - len(x)) + x)
+        self.value = array.array('c', zero_byte * (self.blocksize - len(x)) + x)
         return self.value.tostring()
 
-    def new(cls, nbits, initial_value=1L, overflow=0L):
+    def new(cls, nbits, initial_value=long_one, overflow=long_zero):
         return cls(nbits, initial_value=initial_value, overflow=overflow)
     new = classmethod(new)

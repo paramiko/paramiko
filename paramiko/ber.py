@@ -49,13 +49,13 @@ class BER(object):
     def decode_next(self):
         if self.idx >= len(self.content):
             return None
-        ident = ord(self.content[self.idx])
+        ident = byte_ord(self.content[self.idx])
         self.idx += 1
         if (ident & 31) == 31:
             # identifier > 30
             ident = 0
             while self.idx < len(self.content):
-                t = ord(self.content[self.idx])
+                t = byte_ord(self.content[self.idx])
                 self.idx += 1
                 ident = (ident << 7) | (t & 0x7f)
                 if not (t & 0x80):
@@ -63,7 +63,7 @@ class BER(object):
         if self.idx >= len(self.content):
             return None
         # now fetch length
-        size = ord(self.content[self.idx])
+        size = byte_ord(self.content[self.idx])
         self.idx += 1
         if size & 0x80:
             # more complimicated...
@@ -102,12 +102,12 @@ class BER(object):
 
     def encode_tlv(self, ident, val):
         # no need to support ident > 31 here
-        self.content += chr(ident)
+        self.content += byte_chr(ident)
         if len(val) > 0x7f:
             lenstr = util.deflate_long(len(val))
-            self.content += chr(0x80 + len(lenstr)) + lenstr
+            self.content += byte_chr(0x80 + len(lenstr)) + lenstr
         else:
-            self.content += chr(len(val))
+            self.content += byte_chr(len(val))
         self.content += val
 
     def encode(self, x):

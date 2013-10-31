@@ -64,7 +64,7 @@ class PosixPipe (object):
         if self._set or self._closed:
             return
         self._set = True
-        os.write(self._wfd, '*')
+        os.write(self._wfd, b('*'))
     
     def set_forever (self):
         self._forever = True
@@ -110,7 +110,7 @@ class WindowsPipe (object):
         if self._set or self._closed:
             return
         self._set = True
-        self._wsock.send('*')
+        self._wsock.send(b('*'))
 
     def set_forever (self):
         self._forever = True

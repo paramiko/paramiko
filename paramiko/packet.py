@@ -38,6 +38,7 @@ try:
 except ImportError:
     from Crypto.Hash.HMAC import HMAC
 
+
 def compute_hmac(key, message, digest_class):
     return HMAC(key, message, digest_class).digest()
 
@@ -66,7 +67,7 @@ class Packetizer (object):
         self.__dump_packets = False
         self.__need_rekey = False
         self.__init_count = 0
-        self.__remainder = ''
+        self.__remainder = bytes()
 
         # used for noticing when to re-key:
         self.__sent_bytes = 0
@@ -90,8 +91,8 @@ class Packetizer (object):
         self.__mac_key_in = ''
         self.__compress_engine_out = None
         self.__compress_engine_in = None
-        self.__sequence_number_out = 0L
-        self.__sequence_number_in = 0L
+        self.__sequence_number_out = long_zero
+        self.__sequence_number_in = long_zero
 
         # lock around outbound writes (packet computation)
         self.__write_lock = threading.RLock()
@@ -196,7 +197,7 @@ class Packetizer (object):
         @raise EOFError: if the socket was closed before all the bytes could
             be read
         """
-        out = ''
+        out = bytes()
         # handle over-reading from reading the banner line
         if len(self.__remainder) > 0:
             out = self.__remainder[:n]
@@ -275,22 +276,22 @@ class Packetizer (object):
         line, so it's okay to attempt large reads.
         """
         buf = self.__remainder
-        while not '\n' in buf:
+        while not newline_byte in buf:
             buf += self._read_timeout(timeout)
-        n = buf.index('\n')
+        n = buf.index(newline_byte)
         self.__remainder = buf[n+1:]
         buf = buf[:n]
-        if (len(buf) > 0) and (buf[-1] == '\r'):
+        if (len(buf) > 0) and (buf[-1] == cr_byte):
             buf = buf[:-1]
-        return buf
+        return u(buf)
 
     def send_message(self, data):
         """
         Write a block of data using the current cipher, as an SSH block.
         """
         # encrypt this sucka
-        data = str(data)
-        cmd = ord(data[0])
+        data = asbytes(data)
+        cmd = byte_ord(data[0])
         if cmd in MSG_NAMES:
             cmd_name = MSG_NAMES[cmd]
         else:
@@ -312,7 +313,7 @@ class Packetizer (object):
             if self.__block_engine_out != None:
                 payload = struct.pack('>I', self.__sequence_number_out) + packet
                 out += compute_hmac(self.__mac_key_out, payload, self.__mac_engine_out)[:self.__mac_size_out]
-            self.__sequence_number_out = (self.__sequence_number_out + 1) & 0xffffffffL
+            self.__sequence_number_out = (self.__sequence_number_out + 1) & xffffffff
             self.write_all(out)
 
             self.__sent_bytes += len(out)
@@ -361,7 +362,7 @@ class Packetizer (object):
             my_mac = compute_hmac(self.__mac_key_in, mac_payload, self.__mac_engine_in)[:self.__mac_size_in]
             if my_mac != mac:
                 raise SSHException('Mismatched MAC')
-        padding = ord(packet[0])
+        padding = byte_ord(packet[0])
         payload = packet[1:packet_size - padding]
         
         if self.__dump_packets:
@@ -372,7 +373,7 @@ class Packetizer (object):
 
         msg = Message(payload[1:])
         msg.seqno = self.__sequence_number_in
-        self.__sequence_number_in = (self.__sequence_number_in + 1) & 0xffffffffL
+        self.__sequence_number_in = (self.__sequence_number_in + 1) & xffffffff
 
         # check for rekey
         raw_packet_size = packet_size + self.__mac_size_in + 4
@@ -395,7 +396,7 @@ class Packetizer (object):
             self.__received_packets_overflow = 0
             self._trigger_rekey()
 
-        cmd = ord(payload[0])
+        cmd = byte_ord(payload[0])
         if cmd in MSG_NAMES:
             cmd_name = MSG_NAMES[cmd]
         else:
@@ -493,7 +494,7 @@ class Packetizer (object):
         if self.__sdctr_out or self.__block_engine_out is None:
             # cute trick i caught openssh doing: if we're not encrypting or SDCTR mode (RFC4344),
             # don't waste random bytes for the padding
-            packet += (chr(0) * padding)
+            packet += (zero_byte * padding)
         else:
             packet += rng.read(padding)
         return packet

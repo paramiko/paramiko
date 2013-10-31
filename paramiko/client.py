@@ -335,7 +335,7 @@ class SSHClient (object):
 
         if key_filename is None:
             key_filenames = []
-        elif isinstance(key_filename, (str, unicode)):
+        elif isinstance(key_filename, string_types):
             key_filenames = [ key_filename ]
         else:
             key_filenames = key_filename
@@ -383,7 +383,7 @@ class SSHClient (object):
         return stdin, stdout, stderr
 
     def invoke_shell(self, term='vt100', width=80, height=24, width_pixels=0,
-                height_pixels=0):
+                     height_pixels=0):
         """
         Start an interactive shell session on the SSH server.  A new L{Channel}
         is opened and connected to a pseudo-terminal using the requested

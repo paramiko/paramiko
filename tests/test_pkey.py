@@ -99,7 +99,7 @@ class KeyTest (unittest.TestCase):
         self.assertEquals(PUB_RSA.split()[1], key.get_base64())
         self.assertEquals(1024, key.get_bits())
 
-        s = StringIO.StringIO()
+        s = StringIO()
         key.write_private_key(s)
         self.assertEquals(RSA_PRIVATE_OUT, s.getvalue()) 
         s.seek(0)
@@ -124,7 +124,7 @@ class KeyTest (unittest.TestCase):
         self.assertEquals(PUB_DSS.split()[1], key.get_base64())
         self.assertEquals(1024, key.get_bits())
 
-        s = StringIO.StringIO()
+        s = StringIO()
         key.write_private_key(s)
         self.assertEquals(DSS_PRIVATE_OUT, s.getvalue())
         s.seek(0)
@@ -207,7 +207,7 @@ class KeyTest (unittest.TestCase):
         self.assertEquals(PUB_ECDSA.split()[1], key.get_base64())
         self.assertEquals(256, key.get_bits())
 
-        s = StringIO.StringIO()
+        s = StringIO()
         key.write_private_key(s)
         self.assertEquals(ECDSA_PRIVATE_OUT, s.getvalue())
         s.seek(0)

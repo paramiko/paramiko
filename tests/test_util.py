@@ -101,7 +101,7 @@ class UtilTest(ParamikoTest):
 
     def test_2_parse_config(self):
         global test_config_file
-        f = cStringIO.StringIO(test_config_file)
+        f = StringIO(test_config_file)
         config = paramiko.util.parse_ssh_config(f)
         self.assertEquals(config._config,
             [{'host': ['*'], 'config': {}}, {'host': ['*'], 'config': {'identityfile': ['~/.ssh/id_rsa'], 'user': 'robey'}},
@@ -111,7 +111,7 @@ class UtilTest(ParamikoTest):
 
     def test_3_host_config(self):
         global test_config_file
-        f = cStringIO.StringIO(test_config_file)
+        f = StringIO(test_config_file)
         config = paramiko.util.parse_ssh_config(f)
 
         for host, values in {
@@ -138,7 +138,7 @@ class UtilTest(ParamikoTest):
 
     def test_4_generate_key_bytes(self):
         x = paramiko.util.generate_key_bytes(SHA, 'ABCDEFGH', 'This is my secret passphrase.', 64)
-        hex = ''.join(['%02x' % ord(c) for c in x])
+        hex = ''.join(['%02x' % byte_ord(c) for c in x])
         self.assertEquals(hex, '9110e2f6793b69363e58173e9436b13a5a4b339005741d5c680e505f57d871347b4239f14fb5c46e857d5e100424873ba849ac699cea98d729e57b3e84378e8b')
 
     def test_5_host_keys(self):
@@ -172,7 +172,7 @@ Host *.example.com
 Host *
     Port 3333
     """
-        f = cStringIO.StringIO(test_config_file)
+        f = StringIO(test_config_file)
         config = paramiko.util.parse_ssh_config(f)
         host = 'www13.example.com'
         self.assertEquals(
@@ -216,7 +216,7 @@ Host space-delimited
 Host equals-delimited
     ProxyCommand=foo bar=biz baz
 """
-        f = cStringIO.StringIO(conf)
+        f = StringIO(conf)
         config = paramiko.util.parse_ssh_config(f)
         for host in ('space-delimited', 'equals-delimited'):
             self.assertEquals(
@@ -228,7 +228,7 @@ Host equals-delimited
         """
         ProxyCommand should perform interpolation on the value
         """
-        config = paramiko.util.parse_ssh_config(cStringIO.StringIO("""
+        config = paramiko.util.parse_ssh_config(StringIO("""
 Host specific
     Port 37
     ProxyCommand host %h port %p lol
@@ -264,7 +264,7 @@ Host www13.*
 Host *
     Port 3333
     """
-        f = cStringIO.StringIO(test_config_file)
+        f = StringIO(test_config_file)
         config = paramiko.util.parse_ssh_config(f)
         host = 'www13.example.com'
         self.assertEquals(
@@ -293,7 +293,7 @@ ProxyCommand foo=bar:%h-%p
                                                      'foo=bar:proxy-without-equal-divisor-22'}
         }.items():
 
-            f = cStringIO.StringIO(test_config_file)
+            f = StringIO(test_config_file)
             config = paramiko.util.parse_ssh_config(f)
             self.assertEquals(
                 paramiko.util.lookup_ssh_host_config(host, config),
@@ -323,7 +323,7 @@ IdentityFile id_dsa22
                       'identityfile': ['id_dsa0', 'id_dsa1', 'id_dsa22']}
         }.items():
 
-            f = cStringIO.StringIO(test_config_file)
+            f = StringIO(test_config_file)
             config = paramiko.util.parse_ssh_config(f)
             self.assertEquals(
                 paramiko.util.lookup_ssh_host_config(host, config),
@@ -338,5 +338,5 @@ IdentityFile id_dsa22
 AddressFamily inet
 IdentityFile something_%l_using_fqdn
 """
-        config = paramiko.util.parse_ssh_config(cStringIO.StringIO(test_config))
+        config = paramiko.util.parse_ssh_config(StringIO(test_config))
         assert config.lookup('meh') # will die during lookup() if bug regresses
