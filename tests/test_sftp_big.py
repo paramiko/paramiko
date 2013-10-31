@@ -384,3 +384,10 @@ class BigSFTPTest (unittest.TestCase):
         finally:
             sftp.remove('%s/hongry.txt' % FOLDER)
             t.packetizer.REKEY_BYTES = pow(2, 30)
+
+
+if __name__ == '__main__':
+    from tests.test_sftp import SFTPTest
+    SFTPTest.init_loopback()
+    from unittest import main
+    main()
