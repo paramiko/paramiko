@@ -978,7 +978,7 @@ class Channel (object):
 
     def _feed_extended(self, m):
         code = m.get_int()
-        s = m.get_text()
+        s = m.get_binary()
         if code != 1:
             self._log(ERROR, 'unknown extended_data type %d; discarding' % code)
             return
