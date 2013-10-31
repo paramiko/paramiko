@@ -33,7 +33,7 @@ from paramiko import Transport, SecurityOptions, ServerInterface, RSAKey, DSSKey
     SSHException, BadAuthenticationType, InteractiveQuery, ChannelException
 from paramiko import AUTH_FAILED, AUTH_PARTIALLY_SUCCESSFUL, AUTH_SUCCESSFUL
 from paramiko import OPEN_SUCCEEDED, OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED
-from paramiko.common import MSG_KEXINIT, MSG_CHANNEL_WINDOW_ADJUST
+from paramiko.common import MSG_KEXINIT, MSG_CHANNEL_WINDOW_ADJUST, b
 from paramiko.message import Message
 from tests.loop import LoopSocket
 from tests.util import ParamikoTest, test_path
@@ -162,7 +162,7 @@ class TransportTest(ParamikoTest):
         self.tc.H = unhexlify('0C8307CDE6856FF30BA93684EB0F04C2520E9ED3')
         self.tc.session_id = self.tc.H
         key = self.tc._compute_key('C', 32)
-        self.assertEquals('207E66594CA87C44ECCBA3B3CD39FDDB378E6FDB0F97C54B2AA0CFBF900CD995',
+        self.assertEquals(b('207E66594CA87C44ECCBA3B3CD39FDDB378E6FDB0F97C54B2AA0CFBF900CD995'),
                           hexlify(key).upper())
 
     def test_3_simple(self):

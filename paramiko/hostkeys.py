@@ -365,7 +365,7 @@ class HostKeys (MutableMapping):
             salt = base64.decodestring(b(salt))
         assert len(salt) == SHA.digest_size
         hmac = HMAC.HMAC(salt, b(hostname), SHA).digest()
-        hostkey = '|1|%s|%s' % (base64.encodestring(salt), base64.encodestring(hmac))
+        hostkey = '|1|%s|%s' % (u(base64.encodestring(salt)), u(base64.encodestring(hmac)))
         return hostkey.replace('\n', '')
     hash_host = staticmethod(hash_host)
 

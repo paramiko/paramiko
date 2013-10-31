@@ -1747,8 +1747,8 @@ class Transport (threading.Thread):
         m.add_list(self._preferred_macs)
         m.add_list(self._preferred_compression)
         m.add_list(self._preferred_compression)
-        m.add_string('')
-        m.add_string('')
+        m.add_string(bytes())
+        m.add_string(bytes())
         m.add_boolean(False)
         m.add_int(0)
         # save a copy for later (needed to compute a hash)
@@ -1948,7 +1948,7 @@ class Transport (threading.Thread):
 
     def _parse_disconnect(self, m):
         code = m.get_int()
-        desc = m.get_string()
+        desc = m.get_text()
         self._log(INFO, 'Disconnect (code %d): %s' % (code, desc))
 
     def _parse_global_request(self, m):
