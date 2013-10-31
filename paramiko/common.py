@@ -140,7 +140,7 @@ else:
 
 
 def asbytes(s):
-    if not isinstance(s, bytes_type):
+    if not isinstance(s, bytes_types):
         if isinstance(s, string_types):
             s = b(s)
         else:

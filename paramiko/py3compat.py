@@ -1,6 +1,6 @@
 import sys
 
-__all__ = ['PY3', 'string_types', 'integer_types', 'text_type', 'bytes_type', 'long', 'input', 'bytestring', 'byte_ord', 'byte_chr', 'byte_mask', 'b', 'u', 'b2s', 'StringIO', 'BytesIO', 'is_callable', 'MAXSIZE', 'next']
+__all__ = ['PY3', 'string_types', 'integer_types', 'text_type', 'bytes_types', 'long', 'input', 'bytestring', 'byte_ord', 'byte_chr', 'byte_mask', 'b', 'u', 'b2s', 'StringIO', 'BytesIO', 'is_callable', 'MAXSIZE', 'next']
 
 PY3 = sys.version_info[0] >= 3
 
@@ -8,9 +8,9 @@ if PY3:
     import collections
     import struct
     string_types = str
-    integer_types = int
     text_type = str
-    bytes_type = bytes
+    bytes_types = bytes
+    integer_types = int
     long = int
     input = input
 
@@ -65,9 +65,9 @@ if PY3:
     MAXSIZE = sys.maxsize       # NOQA
 else:
     string_types = basestring
-    integer_types = (int, long)
     text_type = unicode
-    bytes_type = str
+    bytes_types = str
+    integer_types = (int, long)
     long = long
     input = raw_input
 

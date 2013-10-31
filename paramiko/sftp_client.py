@@ -42,7 +42,7 @@ def _to_unicode(s):
     """
     try:
         return s.encode('ascii')
-    except UnicodeError:
+    except (UnicodeError, AttributeError):
         try:
             return s.decode('utf-8')
         except UnicodeError:
@@ -698,7 +698,7 @@ class SFTPClient (BaseSFTP):
                     msg.add_int(item)
                 elif isinstance(item, long):
                     msg.add_int64(item)
-                elif isinstance(item, string_types):
+                elif isinstance(item, (string_types, bytes_types)):
                     msg.add_string(item)
                 elif isinstance(item, SFTPAttributes):
                     item._pack(msg)

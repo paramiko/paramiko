@@ -142,7 +142,7 @@ class BaseSFTP (object):
         return
 
     def _read_all(self, n):
-        out = ''
+        out = bytes()
         while n > 0:
             if isinstance(self.sock, socket.socket):
                 # sometimes sftp is used directly over a socket instead of
@@ -176,7 +176,7 @@ class BaseSFTP (object):
         x = self._read_all(4)
         # most sftp servers won't accept packets larger than about 32k, so
         # anything with the high byte set (> 16MB) is just garbage.
-        if x[0] != '\x00':
+        if byte_ord(x[0]):
             raise SFTPError('Garbage packet received')
         size = struct.unpack('>I', x)[0]
         data = self._read_all(size)
