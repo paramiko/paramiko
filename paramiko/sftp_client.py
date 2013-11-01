@@ -48,6 +48,7 @@ def _to_unicode(s):
         except UnicodeError:
             return s
 
+b_slash = b('/')
 
 class SFTPClient (BaseSFTP):
     """
@@ -185,8 +186,8 @@ class SFTPClient (BaseSFTP):
                 raise SFTPError('Expected name response')
             count = msg.get_int()
             for i in range(count):
-                filename = _to_unicode(msg.get_string())
-                longname = _to_unicode(msg.get_string())
+                filename = msg.get_text()
+                longname = msg.get_text()
                 attr = SFTPAttributes._from_msg(msg, filename, longname)
                 if (filename != '.') and (filename != '..'):
                     filelist.append(attr)
@@ -494,7 +495,7 @@ class SFTPClient (BaseSFTP):
         count = msg.get_int()
         if count != 1:
             raise SFTPError('Realpath returned %d results' % count)
-        return _to_unicode(msg.get_string())
+        return msg.get_text()
 
     def chdir(self, path):
         """
@@ -517,7 +518,7 @@ class SFTPClient (BaseSFTP):
             return
         if not stat.S_ISDIR(self.stat(path).st_mode):
             raise SFTPError(errno.ENOTDIR, "%s: %s" % (os.strerror(errno.ENOTDIR), path))
-        self._cwd = self.normalize(path).encode('utf-8')
+        self._cwd = b(self.normalize(path))
 
     def getcwd(self):
         """
@@ -530,7 +531,7 @@ class SFTPClient (BaseSFTP):
 
         @since: 1.4
         """
-        return self._cwd
+        return u(self._cwd)
 
     def putfo(self, fl, remotepath, file_size=0, callback=None, confirm=True):
         """
@@ -769,15 +770,15 @@ class SFTPClient (BaseSFTP):
         Return an adjusted path if we're emulating a "current working
         directory" for the server.
         """
-        path = bytestring(path)
+        path = b(path)
         if self._cwd is None:
             return path
         if (len(path) > 0) and (path[0] == '/'):
             # absolute path
             return path
-        if self._cwd == '/':
+        if self._cwd == b_slash:
             return self._cwd + path
-        return self._cwd + '/' + path
+        return self._cwd + b_slash + path
 
 
 class SFTP (SFTPClient):

@@ -183,7 +183,7 @@ class SFTPServer (BaseSFTP, SubsystemHandler):
                 msg.add_int(item)
             elif type(item) is long:
                 msg.add_int64(item)
-            elif isinstance(item, string_types):
+            elif isinstance(item, (string_types, bytes_types)):
                 msg.add_string(item)
             elif type(item) is SFTPAttributes:
                 item._pack(msg)
@@ -196,7 +196,7 @@ class SFTPServer (BaseSFTP, SubsystemHandler):
             # must be error code
             self._send_status(request_number, handle)
             return
-        handle._set_name('hx%d' % self.next_handle)
+        handle._set_name(b('hx%d' % self.next_handle))
         self.next_handle += 1
         if folder:
             self.folder_table[handle._get_name()] = handle
