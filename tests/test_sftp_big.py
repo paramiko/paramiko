@@ -124,7 +124,7 @@ class BigSFTPTest (unittest.TestCase):
         write a 1MB file, with no linefeeds, using pipelining.
         """
         sftp = get_sftp()
-        kblob = ''.join([struct.pack('>H', n) for n in range(512)])
+        kblob = bytes().join([struct.pack('>H', n) for n in range(512)])
         start = time.time()
         try:
             f = sftp.open('%s/hongry.txt' % FOLDER, 'w')
@@ -165,7 +165,7 @@ class BigSFTPTest (unittest.TestCase):
 
     def test_4_prefetch_seek(self):
         sftp = get_sftp()
-        kblob = ''.join([struct.pack('>H', n) for n in range(512)])
+        kblob = bytes().join([struct.pack('>H', n) for n in range(512)])
         try:
             f = sftp.open('%s/hongry.txt' % FOLDER, 'w')
             f.set_pipelined(True)
@@ -203,7 +203,7 @@ class BigSFTPTest (unittest.TestCase):
 
     def test_5_readv_seek(self):
         sftp = get_sftp()
-        kblob = ''.join([struct.pack('>H', n) for n in range(512)])
+        kblob = bytes().join([struct.pack('>H', n) for n in range(512)])
         try:
             f = sftp.open('%s/hongry.txt' % FOLDER, 'w')
             f.set_pipelined(True)
@@ -279,7 +279,7 @@ class BigSFTPTest (unittest.TestCase):
         verify that prefetch and readv don't conflict with each other.
         """
         sftp = get_sftp()
-        kblob = ''.join([struct.pack('>H', n) for n in range(512)])
+        kblob = bytes().join([struct.pack('>H', n) for n in range(512)])
         try:
             f = sftp.open('%s/hongry.txt' % FOLDER, 'w')
             f.set_pipelined(True)
@@ -318,7 +318,7 @@ class BigSFTPTest (unittest.TestCase):
         returned as a single blob.
         """
         sftp = get_sftp()
-        kblob = ''.join([struct.pack('>H', n) for n in range(512)])
+        kblob = bytes().join([struct.pack('>H', n) for n in range(512)])
         try:
             f = sftp.open('%s/hongry.txt' % FOLDER, 'w')
             f.set_pipelined(True)
@@ -372,7 +372,7 @@ class BigSFTPTest (unittest.TestCase):
             f.close()
             
             self.assertEqual(sftp.stat('%s/hongry.txt' % FOLDER).st_size, 1024 * 1024)
-            self.assertNotEquals(t.H, t.session_id)
+            self.assertNotEqual(t.H, t.session_id)
             
             # try to read it too.
             f = sftp.open('%s/hongry.txt' % FOLDER, 'r', 128 * 1024)
