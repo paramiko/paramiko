@@ -23,7 +23,7 @@ Some unit tests for public/private key objects.
 from binascii import hexlify, unhexlify
 import unittest
 from paramiko import RSAKey, DSSKey, ECDSAKey, Message, util
-from paramiko.common import rng, StringIO, byte_chr, b, PY3
+from paramiko.common import rng, StringIO, byte_chr, b, PY3, bytes
 from tests.util import test_path
 
 # from openssh's ssh-keygen
@@ -77,10 +77,7 @@ ADRvOqQ5R98Sxst765CAqXmRtz8vwoD96g==
 -----END EC PRIVATE KEY-----
 """
 
-if PY3:
-    x1234 = b'\x01\x02\x03\x04'
-else:
-    x1234 = '\x01\x02\x03\x04'
+x1234 = unhexlify('01020304')
 
 
 class KeyTest (unittest.TestCase):

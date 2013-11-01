@@ -123,19 +123,15 @@ else:
     import logging
     PY22 = False
 
+zero_byte = byte_chr(0)
+one_byte = byte_chr(1)
+four_byte = byte_chr(4)
+max_byte = byte_chr(0xff)
+newline_byte = byte_chr(10)
+
 if PY3:
-    zero_byte = b'\x00'
-    one_byte = b'\x01'
-    four_byte = b'\x04'
-    max_byte = b'\xff'
-    newline_byte = b'\n'
     cr_byte = 13
 else:
-    zero_byte = '\x00'
-    one_byte = '\x01'
-    four_byte = '\x04'
-    max_byte = '\xff'
-    newline_byte = '\n'
     cr_byte = '\r'
 
 

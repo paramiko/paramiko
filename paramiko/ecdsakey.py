@@ -21,6 +21,7 @@ L{ECDSAKey}
 """
 
 import binascii
+from binascii import unhexlify
 from ecdsa import SigningKey, VerifyingKey, der, curves
 from ecdsa.util import number_to_string, sigencode_string, sigencode_strings, sigdecode_strings
 from Crypto.Hash import SHA256, MD5
@@ -157,14 +158,8 @@ class ECDSAKey (PKey):
         data = self._read_private_key('EC', file_obj, password)
         self._decode_key(data)
 
-    if PY3:
-        ALLOWED_PADDINGS = [b'\x01', b'\x02\x02', b'\x03\x03\x03', b'\x04\x04\x04\x04',
-                            b'\x05\x05\x05\x05\x05', b'\x06\x06\x06\x06\x06\x06',
-                            b'\x07\x07\x07\x07\x07\x07\x07']
-    else:
-        ALLOWED_PADDINGS = ['\x01', '\x02\x02', '\x03\x03\x03', '\x04\x04\x04\x04',
-                            '\x05\x05\x05\x05\x05', '\x06\x06\x06\x06\x06\x06',
-                            '\x07\x07\x07\x07\x07\x07\x07']
+    ALLOWED_PADDINGS = [one_byte, byte_chr(2) * 2, byte_chr(3) * 3, byte_chr(4) * 4,
+                        byte_chr(5) * 5, byte_chr(6) * 6, byte_chr(7) * 7]
     def _decode_key(self, data):
         s, padding = der.remove_sequence(data)
         if padding:

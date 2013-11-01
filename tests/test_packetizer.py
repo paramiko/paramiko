@@ -21,18 +21,15 @@ Some unit tests for the ssh2 protocol in Transport.
 """
 
 import unittest
+from binascii import unhexlify
 from tests.loop import LoopSocket
 from Crypto.Cipher import AES
 from Crypto.Hash import SHA, HMAC
 from paramiko import Message, Packetizer, util
 from paramiko.common import *
 
-if PY3:
-    x55 = b'\x55'
-    x1f = b'\x1f'
-else:
-    x55 = '\x55'
-    x1f = '\x1f'
+x55 = byte_chr(0x55)
+x1f = byte_chr(0x1f)
 
 
 class PacketizerTest (unittest.TestCase):
@@ -58,10 +55,7 @@ class PacketizerTest (unittest.TestCase):
         data = rsock.recv(100)
         # 32 + 12 bytes of MAC = 44
         self.assertEquals(44, len(data))
-        if PY3:
-            self.assertEquals(b'\x43\x91\x97\xbd\x5b\x50\xac\x25\x87\xc2\xc4\x6b\xc7\xe9\x38\xc0', data[:16])
-        else:
-            self.assertEquals('\x43\x91\x97\xbd\x5b\x50\xac\x25\x87\xc2\xc4\x6b\xc7\xe9\x38\xc0', data[:16])
+        self.assertEquals(unhexlify('439197bd5b50ac2587c2c46bc7e938c0'), data[:16])
 
     def test_2_read (self):
         rsock = LoopSocket()
@@ -72,12 +66,7 @@ class PacketizerTest (unittest.TestCase):
         p.set_hexdump(True)
         cipher = AES.new(zero_byte * 16, AES.MODE_CBC, x55 * 16)
         p.set_inbound_cipher(cipher, 16, SHA, 12, x1f * 20)
-        if PY3:
-            wsock.send(b'C\x91\x97\xbd[P\xac%\x87\xc2\xc4k\xc7\xe98\xc0' + \
-                       b'\x90\xd2\x16V\rqsa8|L=\xfb\x97}\xe2n\x03\xb1\xa0\xc2\x1c\xd6AAL\xb4Y')
-        else:
-            wsock.send('C\x91\x97\xbd[P\xac%\x87\xc2\xc4k\xc7\xe98\xc0' + \
-                       '\x90\xd2\x16V\rqsa8|L=\xfb\x97}\xe2n\x03\xb1\xa0\xc2\x1c\xd6AAL\xb4Y')
+        wsock.send(unhexlify('439197bd5b50ac2587c2c46bc7e938c090d216560d717361387c4c3dfb977de26e03b1a0c21cd641414cb459'))
         cmd, m = p.read_message()
         self.assertEquals(100, cmd)
         self.assertEquals(100, m.get_int())
