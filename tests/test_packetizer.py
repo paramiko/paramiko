@@ -55,7 +55,7 @@ class PacketizerTest (unittest.TestCase):
         data = rsock.recv(100)
         # 32 + 12 bytes of MAC = 44
         self.assertEquals(44, len(data))
-        self.assertEquals(unhexlify('439197bd5b50ac2587c2c46bc7e938c0'), data[:16])
+        self.assertEquals(unhexlify(b('439197bd5b50ac2587c2c46bc7e938c0')), data[:16])
 
     def test_2_read (self):
         rsock = LoopSocket()
@@ -66,7 +66,7 @@ class PacketizerTest (unittest.TestCase):
         p.set_hexdump(True)
         cipher = AES.new(zero_byte * 16, AES.MODE_CBC, x55 * 16)
         p.set_inbound_cipher(cipher, 16, SHA, 12, x1f * 20)
-        wsock.send(unhexlify('439197bd5b50ac2587c2c46bc7e938c090d216560d717361387c4c3dfb977de26e03b1a0c21cd641414cb459'))
+        wsock.send(unhexlify(b('439197bd5b50ac2587c2c46bc7e938c090d216560d717361387c4c3dfb977de26e03b1a0c21cd641414cb459')))
         cmd, m = p.read_message()
         self.assertEquals(100, cmd)
         self.assertEquals(100, m.get_int())

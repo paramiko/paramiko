@@ -158,7 +158,7 @@ class RSAKey (PKey):
         turn a 20-byte SHA1 hash into a blob of data as large as the key's N,
         using PKCS1's \"emsa-pkcs1-v1_5\" encoding.  totally bizarre.
         """
-        SHA1_DIGESTINFO = unhexlify('3021300906052b0e03021a05000414')
+        SHA1_DIGESTINFO = unhexlify(b('3021300906052b0e03021a05000414'))
         size = len(util.deflate_long(self.n, 0))
         filler = max_byte * (size - len(SHA1_DIGESTINFO) - len(data) - 3)
         return zero_byte + one_byte + filler + zero_byte + SHA1_DIGESTINFO + data

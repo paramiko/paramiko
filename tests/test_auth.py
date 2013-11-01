@@ -29,13 +29,11 @@ from paramiko import Transport, ServerInterface, RSAKey, DSSKey, \
     AuthenticationException
 from paramiko import AUTH_FAILED, AUTH_PARTIALLY_SUCCESSFUL, AUTH_SUCCESSFUL
 from paramiko import OPEN_SUCCEEDED, OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED
+from paramiko.py3compat import u
 from tests.loop import LoopSocket
 from tests.util import test_path
 
-try:
-    _pwd = u'\u2022'
-except Exception:
-    _pwd = '\u2022'
+_pwd = u('\u2022')
 
 
 class NullServer (ServerInterface):
