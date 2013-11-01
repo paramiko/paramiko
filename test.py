@@ -42,8 +42,6 @@ from tests.test_kex import KexTest
 from tests.test_packetizer import PacketizerTest
 from tests.test_auth import AuthTest
 from tests.test_transport import TransportTest
-from tests.test_sftp import SFTPTest
-from tests.test_sftp_big import BigSFTPTest
 from tests.test_client import SSHClientTest
 
 default_host = 'localhost'
@@ -109,13 +107,16 @@ def main():
     paramiko.util.log_to_file('test.log')
     
     if options.use_sftp:
+        from tests.test_sftp import SFTPTest
         if options.use_loopback_sftp:
             SFTPTest.init_loopback()
         else:
             SFTPTest.init(options.hostname, options.username, options.keyfile, options.password)
         if not options.use_big_file:
             SFTPTest.set_big_file_test(False)
-    
+    if options.use_big_file:
+        from tests.test_sftp_big import BigSFTPTest
+
     suite = unittest.TestSuite()
     suite.addTest(unittest.makeSuite(MessageTest))
     suite.addTest(unittest.makeSuite(BufferedFileTest))
