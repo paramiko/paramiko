@@ -72,7 +72,7 @@ FOLDER = os.environ.get('TEST_FOLDER', 'temp-testing000')
 sftp = None
 tc = None
 g_big_file_test = True
-unicode_folder = u('\u00fcnic\u00f8de')
+unicode_folder = u'\u00fcnic\u00f8de'
 
 def get_sftp():
     global sftp
