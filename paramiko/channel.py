@@ -157,7 +157,7 @@ class Channel (object):
         m.add_int(height)
         m.add_int(width_pixels)
         m.add_int(height_pixels)
-        m.add_string('')
+        m.add_string(bytes())
         self._event_pending()
         self.transport._send_user_message(m)
         self._wait_for_event()
@@ -477,7 +477,7 @@ class Channel (object):
         
         @since: 1.1
         """
-        data = ''
+        data = bytes()
         self.lock.acquire()
         try:
             old = self.combine_stderr

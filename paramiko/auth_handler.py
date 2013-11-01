@@ -245,7 +245,7 @@ class AuthHandler (object):
         m.add_byte(cMSG_USERAUTH_INFO_REQUEST)
         m.add_string(q.name)
         m.add_string(q.instructions)
-        m.add_string('')
+        m.add_string(bytes())
         m.add_int(len(q.prompts))
         for p in q.prompts:
             m.add_string(p[0])
@@ -375,7 +375,7 @@ class AuthHandler (object):
     def _parse_userauth_banner(self, m):
         banner = m.get_string()
         lang = m.get_string()
-        self.transport._log(INFO, 'Auth banner: ' + banner)
+        self.transport._log(INFO, 'Auth banner: %s' % banner)
         # who cares.
     
     def _parse_userauth_info_request(self, m):

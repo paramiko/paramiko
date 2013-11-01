@@ -186,4 +186,4 @@ class BaseSFTP (object):
             t = byte_ord(data[0])
             #self._log(DEBUG2, 'read: %s (len=%d)' % (CMD_NAMES.get(t), '0x%02x' % t, len(data)-1))
             return t, data[1:]
-        return 0, ''
+        return 0, bytes()

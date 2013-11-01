@@ -164,7 +164,7 @@ class ECDSAKey (PKey):
         s, padding = der.remove_sequence(data)
         if padding:
             if padding not in self.ALLOWED_PADDINGS:
-                raise ValueError("weird padding: %s" % (binascii.hexlify(data)))
+                raise ValueError("weird padding: %s" % u(binascii.hexlify(data)))
             data = data[:-len(padding)]
         key = SigningKey.from_der(data)
         self.signing_key = key

@@ -36,6 +36,8 @@ c_MSG_KEXDH_INIT, c_MSG_KEXDH_REPLY = [byte_chr(c) for c in range(30, 32)]
 P = 0xFFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD129024E088A67CC74020BBEA63B139B22514A08798E3404DDEF9519B3CD3A431B302B0A6DF25F14374FE1356D6D51C245E485B576625E7EC6F44C42E9A637ED6B0BFF5CB6F406B7EDEE386BFB5A899FA5AE9F24117C4B1FE649286651ECE65381FFFFFFFFFFFFFFFF
 G = 2
 
+b7fffffffffffffff = byte_chr(0x7f) + max_byte * 7
+b0000000000000000 = zero_byte * 8
 
 class KexGroup1(object):
 
@@ -43,9 +45,9 @@ class KexGroup1(object):
 
     def __init__(self, transport):
         self.transport = transport
-        self.x = long_zero
-        self.e = long_zero
-        self.f = long_zero
+        self.x = long(0)
+        self.e = long(0)
+        self.f = long(0)
 
     def start_kex(self):
         self._generate_x()
@@ -82,8 +84,8 @@ class KexGroup1(object):
         while 1:
             x_bytes = self.transport.rng.read(128)
             x_bytes = byte_mask(x_bytes[0], 0x7f) + x_bytes[1:]
-            if (x_bytes[:8] != '\x7F\xFF\xFF\xFF\xFF\xFF\xFF\xFF') and \
-                   (x_bytes[:8] != '\x00\x00\x00\x00\x00\x00\x00\x00'):
+            if (x_bytes[:8] != b7fffffffffffffff) and \
+                   (x_bytes[:8] != b0000000000000000):
                 break
         self.x = util.inflate_long(x_bytes)
 

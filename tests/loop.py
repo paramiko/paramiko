@@ -59,7 +59,7 @@ class LoopSocket (object):
         try:
             if self.__mate is None:
                 # EOF
-                return ''
+                return bytes()
             if len(self.__in_buffer) == 0:
                 self.__cv.wait(self.__timeout)
             if len(self.__in_buffer) == 0:

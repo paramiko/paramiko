@@ -32,6 +32,8 @@ from paramiko.ber import BER, BERException
 from paramiko.pkey import PKey
 from paramiko.ssh_exception import SSHException
 
+SHA1_DIGESTINFO = unhexlify(b('3021300906052b0e03021a05000414'))
+
 
 class RSAKey (PKey):
     """
@@ -92,7 +94,7 @@ class RSAKey (PKey):
     def sign_ssh_data(self, rpool, data):
         digest = SHA.new(data).digest()
         rsa = RSA.construct((long(self.n), long(self.e), long(self.d)))
-        sig = util.deflate_long(rsa.sign(self._pkcs1imify(digest), '')[0], 0)
+        sig = util.deflate_long(rsa.sign(self._pkcs1imify(digest), bytes())[0], 0)
         m = Message()
         m.add_string('ssh-rsa')
         m.add_string(sig)
@@ -158,7 +160,6 @@ class RSAKey (PKey):
         turn a 20-byte SHA1 hash into a blob of data as large as the key's N,
         using PKCS1's \"emsa-pkcs1-v1_5\" encoding.  totally bizarre.
         """
-        SHA1_DIGESTINFO = unhexlify(b('3021300906052b0e03021a05000414'))
         size = len(util.deflate_long(self.n, 0))
         filler = max_byte * (size - len(SHA1_DIGESTINFO) - len(data) - 3)
         return zero_byte + one_byte + filler + zero_byte + SHA1_DIGESTINFO + data

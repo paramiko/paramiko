@@ -113,9 +113,9 @@ class BER(object):
     def encode(self, x):
         if type(x) is bool:
             if x:
-                self.encode_tlv(1, '\xff')
+                self.encode_tlv(1, max_byte)
             else:
-                self.encode_tlv(1, '\x00')
+                self.encode_tlv(1, zero_byte)
         elif (type(x) is int) or (type(x) is long):
             self.encode_tlv(2, util.deflate_long(x))
         elif type(x) is str:

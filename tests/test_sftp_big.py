@@ -92,7 +92,7 @@ class BigSFTPTest (unittest.TestCase):
         write a 1MB file with no buffering.
         """
         sftp = get_sftp()
-        kblob = (1024 * 'x')
+        kblob = (1024 * b('x'))
         start = time.time()
         try:
             f = sftp.open('%s/hongry.txt' % FOLDER, 'w')
@@ -246,7 +246,7 @@ class BigSFTPTest (unittest.TestCase):
         without using it, to verify that paramiko doesn't get confused.
         """
         sftp = get_sftp()
-        kblob = (1024 * 'x')
+        kblob = (1024 * b('x'))
         try:
             f = sftp.open('%s/hongry.txt' % FOLDER, 'w')
             f.set_pipelined(True)
@@ -347,7 +347,7 @@ class BigSFTPTest (unittest.TestCase):
         write a 1MB file, with no linefeeds, and a big buffer.
         """
         sftp = get_sftp()
-        mblob = (1024 * 1024 * 'x')
+        mblob = (1024 * 1024 * b('x'))
         try:
             f = sftp.open('%s/hongry.txt' % FOLDER, 'w', 128 * 1024)
             f.write(mblob)
@@ -364,7 +364,7 @@ class BigSFTPTest (unittest.TestCase):
         sftp = get_sftp()
         t = sftp.sock.get_transport()
         t.packetizer.REKEY_BYTES = 512 * 1024
-        k32blob = (32 * 1024 * 'x')
+        k32blob = (32 * 1024 * b('x'))
         try:
             f = sftp.open('%s/hongry.txt' % FOLDER, 'w', 128 * 1024)
             for i in range(32):

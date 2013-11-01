@@ -272,7 +272,7 @@ class SFTPServer (BaseSFTP, SubsystemHandler):
             self._send_status(request_number, SFTP_FAILURE, 'Block size too small')
             return
 
-        sum_out = ''
+        sum_out = bytes()
         offset = start
         while offset < start + length:
             blocklen = min(block_size, start + length - offset)
@@ -342,7 +342,7 @@ class SFTPServer (BaseSFTP, SubsystemHandler):
                 self._send_status(request_number, SFTP_BAD_MESSAGE, 'Invalid handle')
                 return
             data = self.file_table[handle].read(offset, length)
-            if type(data) is str:
+            if isinstance(data, (bytes_types, string_types)):
                 if len(data) == 0:
                     self._send_status(request_number, SFTP_EOF)
                 else:
@@ -420,7 +420,7 @@ class SFTPServer (BaseSFTP, SubsystemHandler):
         elif t == CMD_READLINK:
             path = msg.get_text()
             resp = self.server.readlink(path)
-            if isinstance(resp, string_types):
+            if isinstance(resp, (bytes_types, string_types)):
                 self._response(request_number, CMD_NAME, 1, resp, '', SFTPAttributes())
             else:
                 self._send_status(request_number, resp)

@@ -148,8 +148,6 @@ def asbytes(s):
 
 xffffffff = long(0xffffffff)
 x80000000 = long(0x80000000)
-long_zero = long(0)
-long_one = long(1)
 o666 = 438
 o660 = 432
 o644 = 420

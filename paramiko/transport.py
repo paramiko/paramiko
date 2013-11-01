@@ -80,6 +80,7 @@ class SecurityOptions (object):
     tuple to one of the fields, C{TypeError} will be raised.
     """
     #__slots__ = [ 'ciphers', 'digests', 'key_types', 'kex', 'compression', '_transport' ]
+    __slots__ = '_transport'
 
     def __init__(self, transport):
         self._transport = transport
@@ -402,6 +403,7 @@ class Transport (threading.Thread):
 
         @since: 1.5.3
         """
+        self.sock.close()
         self.close()
 
     def get_security_options(self):
@@ -691,7 +693,7 @@ class Transport (threading.Thread):
         """
         return self.open_channel('auth-agent@openssh.com')
 
-    def open_forwarded_tcpip_channel(self, src_addr_port, dest_addr_port):
+    def open_forwarded_tcpip_channel(self, src_addr, dest_addr):
         """
         Request a new channel back to the client, of type C{"forwarded-tcpip"}.
         This is used after a client has requested port forwarding, for sending
@@ -702,9 +704,7 @@ class Transport (threading.Thread):
         @param dest_addr: local (server) connected address
         @param dest_port: local (server) connected port
         """
-        src_addr, src_port = src_addr_port
-        dest_addr, dest_port = dest_addr_port
-        return self.open_channel('forwarded-tcpip', (dest_addr, dest_port), (src_addr, src_port))
+        return self.open_channel('forwarded-tcpip', dest_addr, src_addr)
 
     def open_channel(self, kind, dest_addr=None, src_addr=None):
         """
@@ -805,7 +805,6 @@ class Transport (threading.Thread):
         """
         if not self.active:
             raise SSHException('SSH session not active')
-        address = address
         port = int(port)
         response = self.global_request('tcpip-forward', (address, port), wait=True)
         if response is None:
@@ -1642,7 +1641,7 @@ class Transport (threading.Thread):
                     self.completion_event.set()
                 if self.auth_handler is not None:
                     self.auth_handler.abort()
-                for event in list(self.channel_events.values()):
+                for event in self.channel_events.values():
                     event.set()
                 try:
                     self.lock.acquire()

@@ -125,7 +125,7 @@ class ModulusPack (object):
         f.close()
 
     def get_modulus(self, min, prefer, max):
-        bitsizes = sorted(self.pack.keys(), key=hash)
+        bitsizes = sorted(self.pack.keys())
         if len(bitsizes) == 0:
             raise SSHException('no moduli available')
         good = -1

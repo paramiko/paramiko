@@ -91,8 +91,8 @@ class Packetizer (object):
         self.__mac_key_in = bytes()
         self.__compress_engine_out = None
         self.__compress_engine_in = None
-        self.__sequence_number_out = long_zero
-        self.__sequence_number_in = long_zero
+        self.__sequence_number_out = 0
+        self.__sequence_number_in = 0
 
         # lock around outbound writes (packet computation)
         self.__write_lock = threading.RLock()
@@ -153,6 +153,7 @@ class Packetizer (object):
 
     def close(self):
         self.__closed = True
+        self.__socket.close()
 
     def set_hexdump(self, hexdump):
         self.__dump_packets = hexdump
