@@ -378,8 +378,8 @@ class SSHClient (object):
         chan.settimeout(timeout)
         chan.exec_command(command)
         stdin = chan.makefile('wb', bufsize)
-        stdout = chan.makefile('rb', bufsize)
-        stderr = chan.makefile_stderr('rb', bufsize)
+        stdout = chan.makefile('r', bufsize)
+        stderr = chan.makefile_stderr('r', bufsize)
         return stdin, stdout, stderr
 
     def invoke_shell(self, term='vt100', width=80, height=24, width_pixels=0,

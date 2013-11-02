@@ -277,12 +277,12 @@ class Packetizer (object):
         line, so it's okay to attempt large reads.
         """
         buf = self.__remainder
-        while not newline_byte in buf:
+        while not linefeed_byte in buf:
             buf += self._read_timeout(timeout)
-        n = buf.index(newline_byte)
+        n = buf.index(linefeed_byte)
         self.__remainder = buf[n+1:]
         buf = buf[:n]
-        if (len(buf) > 0) and (buf[-1] == cr_byte):
+        if (len(buf) > 0) and (buf[-1] == cr_byte_value):
             buf = buf[:-1]
         return u(buf)
 

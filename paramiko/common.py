@@ -127,12 +127,16 @@ zero_byte = byte_chr(0)
 one_byte = byte_chr(1)
 four_byte = byte_chr(4)
 max_byte = byte_chr(0xff)
-newline_byte = byte_chr(10)
+cr_byte = byte_chr(13)
+linefeed_byte = byte_chr(10)
+crlf = cr_byte + linefeed_byte
 
 if PY3:
-    cr_byte = 13
+    cr_byte_value = 13
+    linefeed_byte_value = 10
 else:
-    cr_byte = '\r'
+    cr_byte_value = cr_byte
+    linefeed_byte_value = linefeed_byte
 
 
 def asbytes(s):

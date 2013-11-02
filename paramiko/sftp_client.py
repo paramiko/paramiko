@@ -497,7 +497,7 @@ class SFTPClient (BaseSFTP):
             raise SFTPError('Realpath returned %d results' % count)
         return msg.get_text()
 
-    def chdir(self, path):
+    def chdir(self, path=None):
         """
         Change the "current directory" of this SFTP session.  Since SFTP
         doesn't really have the concept of a current working directory, this
@@ -773,7 +773,7 @@ class SFTPClient (BaseSFTP):
         path = b(path)
         if self._cwd is None:
             return path
-        if (len(path) > 0) and (path[0] == '/'):
+        if len(path) and path[0:1] == b_slash:
             # absolute path
             return path
         if self._cwd == b_slash:

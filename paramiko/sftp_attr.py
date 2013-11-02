@@ -221,3 +221,5 @@ class SFTPAttributes (object):
 
         return '%s   1 %-8d %-8d %8d %-12s %s' % (ks, uid, gid, self.st_size, datestr, filename)
 
+    def asbytes(self):
+        return b(str(self))

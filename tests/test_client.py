@@ -204,8 +204,10 @@ class SSHClientTest (unittest.TestCase):
         self.assert_(self.ts.is_active())
 
         p = weakref.ref(self.tc._transport.packetizer)
-        self.assert_(p() is not None)
+        self.assertTrue(p() is not None)
+        self.tc.close()
         del self.tc
+
         # hrm, sometimes p isn't cleared right away.  why is that?
         #st = time.time()
         #while (time.time() - st < 5.0) and (p() is not None):
@@ -216,5 +218,4 @@ class SSHClientTest (unittest.TestCase):
         import gc
         gc.collect()
 
-        self.assert_(p() is None)
-
+        self.assertTrue(p() is None)

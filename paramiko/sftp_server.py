@@ -168,7 +168,11 @@ class SFTPServer (BaseSFTP, SubsystemHandler):
         if attr._flags & attr.FLAG_AMTIME:
             os.utime(filename, (attr.st_atime, attr.st_mtime))
         if attr._flags & attr.FLAG_SIZE:
-            open(filename, 'w+').truncate(attr.st_size)
+            f = open(filename, 'w+')
+            try:
+                f.truncate(attr.st_size)
+            finally:
+                f.close()
     set_file_attr = staticmethod(set_file_attr)
 
 
@@ -234,7 +238,7 @@ class SFTPServer (BaseSFTP, SubsystemHandler):
         msg.add_int(len(flist))
         for attr in flist:
             msg.add_string(attr.filename)
-            msg.add_string(str(attr))
+            msg.add_string(attr)
             attr._pack(msg)
         self._send_packet(CMD_NAME, msg)
 
@@ -282,7 +286,7 @@ class SFTPServer (BaseSFTP, SubsystemHandler):
             hash_obj = alg.new()
             while count < blocklen:
                 data = f.read(offset, chunklen)
-                if not type(data) is str:
+                if not isinstance(data, bytes_types):
                     self._send_status(request_number, data, 'Unable to hash file')
                     return
                 hash_obj.update(data)

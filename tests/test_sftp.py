@@ -72,7 +72,8 @@ FOLDER = os.environ.get('TEST_FOLDER', 'temp-testing000')
 sftp = None
 tc = None
 g_big_file_test = True
-unicode_folder = u'\u00fcnic\u00f8de'
+unicode_folder = eval(compile(r"'\u00fcnic\u00f8de'" if PY3 else r"u'\u00fcnic\u00f8de'", 'test_sftp.py', 'eval'))
+utf8_folder = eval(compile(r"b'/\xc3\xbcnic\xc3\xb8\x64\x65'" if PY3 else r"'/\xc3\xbcnic\xc3\xb8\x64\x65'", 'test_sftp.py', 'eval'))
 
 def get_sftp():
     global sftp
@@ -151,6 +152,7 @@ class SFTPTest (unittest.TestCase):
                 pass
 
     def tearDown(self):
+        #sftp.chdir()
         sftp.rmdir(FOLDER)
 
     def test_1_file(self):
@@ -579,7 +581,7 @@ class SFTPTest (unittest.TestCase):
             saved_progress.append((x, y))
         sftp.put(localname, FOLDER + '/bunny.txt', progress_callback)
 
-        f = sftp.open(FOLDER + '/bunny.txt', 'r')
+        f = sftp.open(FOLDER + '/bunny.txt', 'rb')
         self.assertEqual(text, f.read(128))
         f.close()
         self.assertEqual((41, 41), saved_progress[-1])
@@ -647,11 +649,11 @@ class SFTPTest (unittest.TestCase):
 
         try:
             sftp.rename(FOLDER + '/something', FOLDER + '/' + unicode_folder)
-            sftp.open(FOLDER + '/\xc3\xbcnic\xc3\xb8\x64\x65', 'r')
+            sftp.open(b(FOLDER) + utf8_folder, 'r')
         except Exception:
             e = sys.exc_info()[1]
             self.fail('exception ' + str(e))
-        sftp.unlink(FOLDER + '/\xc3\xbcnic\xc3\xb8\x64\x65')
+        sftp.unlink(b(FOLDER) + utf8_folder)
 
     def test_L_utf8_chdir(self):
         sftp.mkdir(FOLDER + '/' + unicode_folder)
@@ -662,7 +664,7 @@ class SFTPTest (unittest.TestCase):
             f.close()
             sftp.unlink('something')
         finally:
-            sftp.chdir(None)
+            sftp.chdir()
             sftp.rmdir(FOLDER + '/' + unicode_folder)
 
     def test_M_bad_readv(self):
@@ -691,8 +693,8 @@ class SFTPTest (unittest.TestCase):
 
         fd, localname = mkstemp()
         os.close(fd)
-        text = b('All I wanted was a plastic bunny rabbit.\n')
-        f = open(localname, 'wb')
+        text = 'All I wanted was a plastic bunny rabbit.\n'
+        f = open(localname, 'w')
         f.write(text)
         f.close()
         saved_progress = []
