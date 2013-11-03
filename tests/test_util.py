@@ -103,7 +103,7 @@ class UtilTest(ParamikoTest):
         global test_config_file
         f = StringIO(test_config_file)
         config = paramiko.util.parse_ssh_config(f)
-        self.assertEquals(config._config,
+        self.assertEqual(config._config,
             [{'host': ['*'], 'config': {}}, {'host': ['*'], 'config': {'identityfile': ['~/.ssh/id_rsa'], 'user': 'robey'}},
             {'host': ['*.example.com'], 'config': {'user': 'bjork', 'port': '3333'}},
             {'host': ['*'], 'config': {'crazy': 'something dumb  '}},
@@ -131,7 +131,7 @@ class UtilTest(ParamikoTest):
                 hostname=host,
                 identityfile=[os.path.expanduser("~/.ssh/id_rsa")]
             )
-            self.assertEquals(
+            self.assertEqual(
                 paramiko.util.lookup_ssh_host_config(host, config),
                 values
             )
@@ -139,7 +139,7 @@ class UtilTest(ParamikoTest):
     def test_4_generate_key_bytes(self):
         x = paramiko.util.generate_key_bytes(SHA, b('ABCDEFGH'), 'This is my secret passphrase.', 64)
         hex = ''.join(['%02x' % byte_ord(c) for c in x])
-        self.assertEquals(hex, '9110e2f6793b69363e58173e9436b13a5a4b339005741d5c680e505f57d871347b4239f14fb5c46e857d5e100424873ba849ac699cea98d729e57b3e84378e8b')
+        self.assertEqual(hex, '9110e2f6793b69363e58173e9436b13a5a4b339005741d5c680e505f57d871347b4239f14fb5c46e857d5e100424873ba849ac699cea98d729e57b3e84378e8b')
 
     def test_5_host_keys(self):
         f = open('hostfile.temp', 'w')
@@ -147,11 +147,11 @@ class UtilTest(ParamikoTest):
         f.close()
         try:
             hostdict = paramiko.util.load_host_keys('hostfile.temp')
-            self.assertEquals(2, len(hostdict))
-            self.assertEquals(1, len(list(hostdict.values())[0]))
-            self.assertEquals(1, len(list(hostdict.values())[1]))
+            self.assertEqual(2, len(hostdict))
+            self.assertEqual(1, len(list(hostdict.values())[0]))
+            self.assertEqual(1, len(list(hostdict.values())[1]))
             fp = hexlify(hostdict['secure.example.com']['ssh-rsa'].get_fingerprint()).upper()
-            self.assertEquals(b('E6684DB30E109B67B70FF1DC5C7F1363'), fp)
+            self.assertEqual(b('E6684DB30E109B67B70FF1DC5C7F1363'), fp)
         finally:
             os.unlink('hostfile.temp')
 
@@ -159,7 +159,7 @@ class UtilTest(ParamikoTest):
         from paramiko.common import rng
         # just verify that we can pull out 32 bytes and not get an exception.
         x = rng.read(32)
-        self.assertEquals(len(x), 32)
+        self.assertEqual(len(x), 32)
 
     def test_7_host_config_expose_issue_33(self):
         test_config_file = """
@@ -175,13 +175,13 @@ Host *
         f = StringIO(test_config_file)
         config = paramiko.util.parse_ssh_config(f)
         host = 'www13.example.com'
-        self.assertEquals(
+        self.assertEqual(
             paramiko.util.lookup_ssh_host_config(host, config),
             {'hostname': host, 'port': '22'}
         )
 
     def test_8_eintr_retry(self):
-        self.assertEquals('foo', paramiko.util.retry_on_signal(lambda: 'foo'))
+        self.assertEqual('foo', paramiko.util.retry_on_signal(lambda: 'foo'))
 
         # Variables that are set by raises_intr
         intr_errors_remaining = [3]
@@ -192,8 +192,8 @@ Host *
                 intr_errors_remaining[0] -= 1
                 raise IOError(errno.EINTR, 'file', 'interrupted system call')
         self.assertTrue(paramiko.util.retry_on_signal(raises_intr) is None)
-        self.assertEquals(0, intr_errors_remaining[0])
-        self.assertEquals(4, call_count[0])
+        self.assertEqual(0, intr_errors_remaining[0])
+        self.assertEqual(4, call_count[0])
 
         def raises_ioerror_not_eintr():
             raise IOError(errno.ENOENT, 'file', 'file not found')
@@ -219,7 +219,7 @@ Host equals-delimited
         f = StringIO(conf)
         config = paramiko.util.parse_ssh_config(f)
         for host in ('space-delimited', 'equals-delimited'):
-            self.assertEquals(
+            self.assertEqual(
                 host_config(host, config)['proxycommand'],
                 'foo bar=biz baz'
             )
@@ -245,7 +245,7 @@ Host *
             ('specific', "host specific port 37 lol"),
             ('portonly', "host portonly port 155"),
         ):
-            self.assertEquals(
+            self.assertEqual(
                 host_config(host, config)['proxycommand'],
                 val
             )
@@ -267,7 +267,7 @@ Host *
         f = StringIO(test_config_file)
         config = paramiko.util.parse_ssh_config(f)
         host = 'www13.example.com'
-        self.assertEquals(
+        self.assertEqual(
             paramiko.util.lookup_ssh_host_config(host, config),
             {'hostname': host, 'port': '8080'}
         )
@@ -295,7 +295,7 @@ ProxyCommand foo=bar:%h-%p
 
             f = StringIO(test_config_file)
             config = paramiko.util.parse_ssh_config(f)
-            self.assertEquals(
+            self.assertEqual(
                 paramiko.util.lookup_ssh_host_config(host, config),
                 values
             )
@@ -325,7 +325,7 @@ IdentityFile id_dsa22
 
             f = StringIO(test_config_file)
             config = paramiko.util.parse_ssh_config(f)
-            self.assertEquals(
+            self.assertEqual(
                 paramiko.util.lookup_ssh_host_config(host, config),
                 values
             )

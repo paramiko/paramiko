@@ -1,6 +1,9 @@
 import sys
+import base64
 
-__all__ = ['PY3', 'string_types', 'integer_types', 'text_type', 'bytes_types', 'bytes', 'long', 'input', 'bytestring', 'byte_ord', 'byte_chr', 'byte_mask', 'b', 'u', 'b2s', 'StringIO', 'BytesIO', 'is_callable', 'MAXSIZE', 'next']
+__all__ = ['PY3', 'string_types', 'integer_types', 'text_type', 'bytes_types', 'bytes', 'long', 'input',
+           'decodebytes', 'encodebytes', 'bytestring', 'byte_ord', 'byte_chr', 'byte_mask',
+           'b', 'u', 'b2s', 'StringIO', 'BytesIO', 'is_callable', 'MAXSIZE', 'next']
 
 PY3 = sys.version_info[0] >= 3
 
@@ -12,8 +15,11 @@ if PY3:
     bytes = bytes
     bytes_types = bytes
     integer_types = int
-    long = int
+    class long(int):
+        pass
     input = input
+    decodebytes = base64.decodebytes
+    encodebytes = base64.encodebytes
 
     def bytestring(s):
         return s
@@ -72,6 +78,8 @@ else:
     integer_types = (int, long)
     long = long
     input = raw_input
+    decodebytes = base64.decodestring
+    encodebytes = base64.encodestring
 
     def bytestring(s):  # NOQA
         if isinstance(s, unicode):

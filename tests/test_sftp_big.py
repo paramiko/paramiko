@@ -262,6 +262,7 @@ class BigSFTPTest (unittest.TestCase):
             for i in range(10):
                 f = sftp.open('%s/hongry.txt' % FOLDER, 'r')
                 f.prefetch()
+                f.close()
             f = sftp.open('%s/hongry.txt' % FOLDER, 'r')
             f.prefetch()
             for n in range(1024):

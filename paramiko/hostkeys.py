@@ -83,11 +83,11 @@ class HostKeyEntry:
         try:
             key = b(key)
             if keytype == 'ssh-rsa':
-                key = RSAKey(data=base64.decodestring(key))
+                key = RSAKey(data=decodebytes(key))
             elif keytype == 'ssh-dss':
-                key = DSSKey(data=base64.decodestring(key))
+                key = DSSKey(data=decodebytes(key))
             elif keytype == 'ecdsa-sha2-nistp256':
-                key = ECDSAKey(data=base64.decodestring(key))
+                key = ECDSAKey(data=decodebytes(key))
             else:
                 log.info("Unable to handle key of type %s" % (keytype,))
                 return None
@@ -173,19 +173,21 @@ class HostKeys (MutableMapping):
         @raise IOError: if there was an error reading the file
         """
         f = open(filename, 'r')
-        for lineno, line in enumerate(f):
-            line = line.strip()
-            if (len(line) == 0) or (line[0] == '#'):
-                continue
-            e = HostKeyEntry.from_line(line, lineno)
-            if e is not None:
-                _hostnames = e.hostnames
-                for h in _hostnames:
-                    if self.check(h, e.key):
-                        e.hostnames.remove(h)
-                if len(e.hostnames):
-                    self._entries.append(e)
-        f.close()
+        try:
+            for lineno, line in enumerate(f):
+                line = line.strip()
+                if (len(line) == 0) or (line[0] == '#'):
+                    continue
+                e = HostKeyEntry.from_line(line, lineno)
+                if e is not None:
+                    _hostnames = e.hostnames
+                    for h in _hostnames:
+                        if self.check(h, e.key):
+                            e.hostnames.remove(h)
+                    if len(e.hostnames):
+                        self._entries.append(e)
+        finally:
+            f.close()
 
     def save(self, filename):
         """
@@ -202,11 +204,13 @@ class HostKeys (MutableMapping):
         @since: 1.6.1
         """
         f = open(filename, 'w')
-        for e in self._entries:
-            line = e.to_line()
-            if line:
-                f.write(line)
-        f.close()
+        try:
+            for e in self._entries:
+                line = e.to_line()
+                if line:
+                    f.write(line)
+        finally:
+            f.close()
 
     def lookup(self, hostname):
         """
@@ -362,10 +366,10 @@ class HostKeys (MutableMapping):
         else:
             if salt.startswith('|1|'):
                 salt = salt.split('|')[2]
-            salt = base64.decodestring(b(salt))
+            salt = decodebytes(b(salt))
         assert len(salt) == SHA.digest_size
         hmac = HMAC.HMAC(salt, b(hostname), SHA).digest()
-        hostkey = '|1|%s|%s' % (u(base64.encodestring(salt)), u(base64.encodestring(hmac)))
+        hostkey = '|1|%s|%s' % (u(encodebytes(salt)), u(encodebytes(hmac)))
         return hostkey.replace('\n', '')
     hash_host = staticmethod(hash_host)
 

@@ -54,7 +54,7 @@ class BufferedFileTest (unittest.TestCase):
         f = LoopbackFile('r')
         try:
             f.write('hi')
-            self.assert_(False, 'no exception on write to read-only file')
+            self.assertTrue(False, 'no exception on write to read-only file')
         except:
             pass
         f.close()
@@ -62,7 +62,7 @@ class BufferedFileTest (unittest.TestCase):
         f = LoopbackFile('w')
         try:
             f.read(1)
-            self.assert_(False, 'no exception to read from write-only file')
+            self.assertTrue(False, 'no exception to read from write-only file')
         except:
             pass
         f.close()
@@ -81,12 +81,12 @@ class BufferedFileTest (unittest.TestCase):
         f.close()
         try:
             f.readline()
-            self.assert_(False, 'no exception on readline of closed file')
+            self.assertTrue(False, 'no exception on readline of closed file')
         except IOError:
             pass
-        self.assert_(linefeed_byte in f.newlines)
-        self.assert_(crlf in f.newlines)
-        self.assert_(cr_byte not in f.newlines)
+        self.assertTrue(linefeed_byte in f.newlines)
+        self.assertTrue(crlf in f.newlines)
+        self.assertTrue(cr_byte not in f.newlines)
 
     def test_3_lf(self):
         """

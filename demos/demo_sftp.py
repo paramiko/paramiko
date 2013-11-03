@@ -20,6 +20,8 @@
 
 # based on code provided by raymond mosteller (thanks!)
 
+from __future__ import with_statement
+
 import base64
 import getpass
 import os
@@ -95,13 +97,15 @@ try:
     except IOError:
         print('(assuming demo_sftp_folder/ already exists)')
     sftp.open('demo_sftp_folder/README', 'w').write('This was created by demo_sftp.py.\n')
-    data = open('demo_sftp.py', 'r').read()
+    with open('demo_sftp.py', 'r') as f:
+        data = f.read()
     sftp.open('demo_sftp_folder/demo_sftp.py', 'w').write(data)
     print('created demo_sftp_folder/ on the server')
     
     # copy the README back here
     data = sftp.open('demo_sftp_folder/README', 'r').read()
-    open('README_demo_sftp', 'w').write(data)
+    with open('README_demo_sftp', 'w') as f:
+        f.write(data)
     print('copied README back here')
     
     # BETTER: use the get() and put() methods

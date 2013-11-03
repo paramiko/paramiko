@@ -54,8 +54,8 @@ class PacketizerTest (unittest.TestCase):
         p.send_message(m)
         data = rsock.recv(100)
         # 32 + 12 bytes of MAC = 44
-        self.assertEquals(44, len(data))
-        self.assertEquals(unhexlify(b('439197bd5b50ac2587c2c46bc7e938c0')), data[:16])
+        self.assertEqual(44, len(data))
+        self.assertEqual(unhexlify(b('439197bd5b50ac2587c2c46bc7e938c0')), data[:16])
 
     def test_2_read (self):
         rsock = LoopSocket()
@@ -68,7 +68,7 @@ class PacketizerTest (unittest.TestCase):
         p.set_inbound_cipher(cipher, 16, SHA, 12, x1f * 20)
         wsock.send(unhexlify(b('439197bd5b50ac2587c2c46bc7e938c090d216560d717361387c4c3dfb977de26e03b1a0c21cd641414cb459')))
         cmd, m = p.read_message()
-        self.assertEquals(100, cmd)
-        self.assertEquals(100, m.get_int())
-        self.assertEquals(1, m.get_int())
-        self.assertEquals(900, m.get_int())
+        self.assertEqual(100, cmd)
+        self.assertEqual(100, m.get_int())
+        self.assertEqual(1, m.get_int())
+        self.assertEqual(900, m.get_int())

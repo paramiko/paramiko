@@ -148,7 +148,7 @@ class PKey (object):
         @return: a base64 string containing the public part of the key.
         @rtype: str
         """
-        return u(base64.encodestring(self.asbytes())).replace('\n', '')
+        return u(encodebytes(self.asbytes())).replace('\n', '')
 
     def sign_ssh_data(self, rng, data):
         """
@@ -283,8 +283,10 @@ class PKey (object):
         @raise SSHException: if the key file is invalid.
         """
         f = open(filename, 'r')
-        data = self._read_private_key(tag, f, password)
-        f.close()
+        try:
+            data = self._read_private_key(tag, f, password)
+        finally:
+            f.close()
         return data
 
     def _read_private_key(self, tag, f, password=None):
@@ -309,7 +311,7 @@ class PKey (object):
             end += 1
         # if we trudged to the end of the file, just try to cope.
         try:
-            data = base64.decodestring(b(''.join(lines[start:end])))
+            data = decodebytes(b(''.join(lines[start:end])))
         except base64.binascii.Error:
             raise SSHException('base64 decoding error: ' + str(sys.exc_info()[1]))
         if 'proc-type' not in headers:
@@ -353,10 +355,12 @@ class PKey (object):
         @raise IOError: if there was an error writing the file.
         """
         f = open(filename, 'w', o600)
-        # grrr... the mode doesn't always take hold
-        os.chmod(filename, o600)
-        self._write_private_key(tag, f, data, password)
-        f.close()
+        try:
+            # grrr... the mode doesn't always take hold
+            os.chmod(filename, o600)
+            self._write_private_key(tag, f, data, password)
+        finally:
+            f.close()
 
     def _write_private_key(self, tag, f, data, password=None):
         f.write('-----BEGIN %s PRIVATE KEY-----\n' % tag)
@@ -378,7 +382,7 @@ class PKey (object):
             f.write('Proc-Type: 4,ENCRYPTED\n')
             f.write('DEK-Info: %s,%s\n' % (cipher_name, u(hexlify(salt)).upper()))
             f.write('\n')
-        s = u(base64.encodestring(data))
+        s = u(encodebytes(data))
         # re-wrap to 64-char lines
         s = ''.join(s.split('\n'))
         s = '\n'.join([s[i : i+64] for i in range(0, len(s), 64)])

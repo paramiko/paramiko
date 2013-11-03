@@ -25,7 +25,7 @@ from binascii import hexlify
 import os
 import unittest
 import paramiko
-from paramiko.py3compat import b
+from paramiko.py3compat import b, decodebytes
 
 
 test_hosts_file = """\
@@ -65,42 +65,42 @@ class HostKeysTest (unittest.TestCase):
 
     def test_1_load(self):
         hostdict = paramiko.HostKeys('hostfile.temp')
-        self.assertEquals(2, len(hostdict))
-        self.assertEquals(1, len(list(hostdict.values())[0]))
-        self.assertEquals(1, len(list(hostdict.values())[1]))
+        self.assertEqual(2, len(hostdict))
+        self.assertEqual(1, len(list(hostdict.values())[0]))
+        self.assertEqual(1, len(list(hostdict.values())[1]))
         fp = hexlify(hostdict['secure.example.com']['ssh-rsa'].get_fingerprint()).upper()
-        self.assertEquals(b('E6684DB30E109B67B70FF1DC5C7F1363'), fp)
+        self.assertEqual(b('E6684DB30E109B67B70FF1DC5C7F1363'), fp)
 
     def test_2_add(self):
         hostdict = paramiko.HostKeys('hostfile.temp')
         hh = '|1|BMsIC6cUIP2zBuXR3t2LRcJYjzM=|hpkJMysjTk/+zzUUzxQEa2ieq6c='
-        key = paramiko.RSAKey(data=base64.decodestring(keyblob))
+        key = paramiko.RSAKey(data=decodebytes(keyblob))
         hostdict.add(hh, 'ssh-rsa', key)
-        self.assertEquals(3, len(list(hostdict)))
+        self.assertEqual(3, len(list(hostdict)))
         x = hostdict['foo.example.com']
         fp = hexlify(x['ssh-rsa'].get_fingerprint()).upper()
-        self.assertEquals(b('7EC91BB336CB6D810B124B1353C32396'), fp)
-        self.assert_(hostdict.check('foo.example.com', key))
+        self.assertEqual(b('7EC91BB336CB6D810B124B1353C32396'), fp)
+        self.assertTrue(hostdict.check('foo.example.com', key))
 
     def test_3_dict(self):
         hostdict = paramiko.HostKeys('hostfile.temp')
-        self.assert_('secure.example.com' in hostdict)
-        self.assert_('not.example.com' not in hostdict)
-        self.assert_('secure.example.com' in hostdict)
-        self.assert_('not.example.com' not in hostdict)
+        self.assertTrue('secure.example.com' in hostdict)
+        self.assertTrue('not.example.com' not in hostdict)
+        self.assertTrue('secure.example.com' in hostdict)
+        self.assertTrue('not.example.com' not in hostdict)
         x = hostdict.get('secure.example.com', None)
-        self.assert_(x is not None)
+        self.assertTrue(x is not None)
         fp = hexlify(x['ssh-rsa'].get_fingerprint()).upper()
-        self.assertEquals(b('E6684DB30E109B67B70FF1DC5C7F1363'), fp)
+        self.assertEqual(b('E6684DB30E109B67B70FF1DC5C7F1363'), fp)
         i = 0
         for key in hostdict:
             i += 1
-        self.assertEquals(2, i)
+        self.assertEqual(2, i)
         
     def test_4_dict_set(self):
         hostdict = paramiko.HostKeys('hostfile.temp')
-        key = paramiko.RSAKey(data=base64.decodestring(keyblob))
-        key_dss = paramiko.DSSKey(data=base64.decodestring(keyblob_dss))
+        key = paramiko.RSAKey(data=decodebytes(keyblob))
+        key_dss = paramiko.DSSKey(data=decodebytes(keyblob_dss))
         hostdict['secure.example.com'] = {
             'ssh-rsa': key,
             'ssh-dss': key_dss
@@ -108,11 +108,11 @@ class HostKeysTest (unittest.TestCase):
         hostdict['fake.example.com'] = {}
         hostdict['fake.example.com']['ssh-rsa'] = key
         
-        self.assertEquals(3, len(hostdict))
-        self.assertEquals(2, len(list(hostdict.values())[0]))
-        self.assertEquals(1, len(list(hostdict.values())[1]))
-        self.assertEquals(1, len(list(hostdict.values())[2]))
+        self.assertEqual(3, len(hostdict))
+        self.assertEqual(2, len(list(hostdict.values())[0]))
+        self.assertEqual(1, len(list(hostdict.values())[1]))
+        self.assertEqual(1, len(list(hostdict.values())[2]))
         fp = hexlify(hostdict['secure.example.com']['ssh-rsa'].get_fingerprint()).upper()
-        self.assertEquals(b('7EC91BB336CB6D810B124B1353C32396'), fp)
+        self.assertEqual(b('7EC91BB336CB6D810B124B1353C32396'), fp)
         fp = hexlify(hostdict['secure.example.com']['ssh-dss'].get_fingerprint()).upper()
-        self.assertEquals(b('4478F0B9A23CC5182009FF755BC1D26C'), fp)
+        self.assertEqual(b('4478F0B9A23CC5182009FF755BC1D26C'), fp)

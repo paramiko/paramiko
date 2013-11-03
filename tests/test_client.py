@@ -95,10 +95,10 @@ class SSHClientTest (unittest.TestCase):
         self.tc.connect(self.addr, self.port, username='slowdive', password='pygmalion')
 
         self.event.wait(1.0)
-        self.assert_(self.event.isSet())
-        self.assert_(self.ts.is_active())
-        self.assertEquals('slowdive', self.ts.get_username())
-        self.assertEquals(True, self.ts.is_authenticated())
+        self.assertTrue(self.event.isSet())
+        self.assertTrue(self.ts.is_active())
+        self.assertEqual('slowdive', self.ts.get_username())
+        self.assertEqual(True, self.ts.is_authenticated())
 
         stdin, stdout, stderr = self.tc.exec_command('yes')
         schan = self.ts.accept(1.0)
@@ -107,10 +107,10 @@ class SSHClientTest (unittest.TestCase):
         schan.send_stderr('This is on stderr.\n')
         schan.close()
 
-        self.assertEquals('Hello there.\n', stdout.readline())
-        self.assertEquals('', stdout.readline())
-        self.assertEquals('This is on stderr.\n', stderr.readline())
-        self.assertEquals('', stderr.readline())
+        self.assertEqual('Hello there.\n', stdout.readline())
+        self.assertEqual('', stdout.readline())
+        self.assertEqual('This is on stderr.\n', stderr.readline())
+        self.assertEqual('', stderr.readline())
 
         stdin.close()
         stdout.close()
@@ -128,10 +128,10 @@ class SSHClientTest (unittest.TestCase):
         self.tc.connect(self.addr, self.port, username='slowdive', key_filename=test_path('test_dss.key'))
 
         self.event.wait(1.0)
-        self.assert_(self.event.isSet())
-        self.assert_(self.ts.is_active())
-        self.assertEquals('slowdive', self.ts.get_username())
-        self.assertEquals(True, self.ts.is_authenticated())
+        self.assertTrue(self.event.isSet())
+        self.assertTrue(self.ts.is_active())
+        self.assertEqual('slowdive', self.ts.get_username())
+        self.assertEqual(True, self.ts.is_authenticated())
 
         stdin, stdout, stderr = self.tc.exec_command('yes')
         schan = self.ts.accept(1.0)
@@ -140,10 +140,10 @@ class SSHClientTest (unittest.TestCase):
         schan.send_stderr('This is on stderr.\n')
         schan.close()
 
-        self.assertEquals('Hello there.\n', stdout.readline())
-        self.assertEquals('', stdout.readline())
-        self.assertEquals('This is on stderr.\n', stderr.readline())
-        self.assertEquals('', stderr.readline())
+        self.assertEqual('Hello there.\n', stdout.readline())
+        self.assertEqual('', stdout.readline())
+        self.assertEqual('This is on stderr.\n', stderr.readline())
+        self.assertEqual('', stderr.readline())
 
         stdin.close()
         stdout.close()
@@ -161,10 +161,10 @@ class SSHClientTest (unittest.TestCase):
         self.tc.connect(self.addr, self.port, username='slowdive', key_filename=[ test_path('test_rsa.key'), test_path('test_dss.key') ])
 
         self.event.wait(1.0)
-        self.assert_(self.event.isSet())
-        self.assert_(self.ts.is_active())
-        self.assertEquals('slowdive', self.ts.get_username())
-        self.assertEquals(True, self.ts.is_authenticated())
+        self.assertTrue(self.event.isSet())
+        self.assertTrue(self.ts.is_active())
+        self.assertEqual('slowdive', self.ts.get_username())
+        self.assertEqual(True, self.ts.is_authenticated())
 
     def test_4_auto_add_policy(self):
         """
@@ -175,16 +175,16 @@ class SSHClientTest (unittest.TestCase):
 
         self.tc = paramiko.SSHClient()
         self.tc.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        self.assertEquals(0, len(self.tc.get_host_keys()))
+        self.assertEqual(0, len(self.tc.get_host_keys()))
         self.tc.connect(self.addr, self.port, username='slowdive', password='pygmalion')
 
         self.event.wait(1.0)
-        self.assert_(self.event.isSet())
-        self.assert_(self.ts.is_active())
-        self.assertEquals('slowdive', self.ts.get_username())
-        self.assertEquals(True, self.ts.is_authenticated())
-        self.assertEquals(1, len(self.tc.get_host_keys()))
-        self.assertEquals(public_host_key, self.tc.get_host_keys()['[%s]:%d' % (self.addr, self.port)]['ssh-rsa'])
+        self.assertTrue(self.event.isSet())
+        self.assertTrue(self.ts.is_active())
+        self.assertEqual('slowdive', self.ts.get_username())
+        self.assertEqual(True, self.ts.is_authenticated())
+        self.assertEqual(1, len(self.tc.get_host_keys()))
+        self.assertEqual(public_host_key, self.tc.get_host_keys()['[%s]:%d' % (self.addr, self.port)]['ssh-rsa'])
 
     def test_5_cleanup(self):
         """
@@ -196,12 +196,12 @@ class SSHClientTest (unittest.TestCase):
 
         self.tc = paramiko.SSHClient()
         self.tc.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        self.assertEquals(0, len(self.tc.get_host_keys()))
+        self.assertEqual(0, len(self.tc.get_host_keys()))
         self.tc.connect(self.addr, self.port, username='slowdive', password='pygmalion')
 
         self.event.wait(1.0)
-        self.assert_(self.event.isSet())
-        self.assert_(self.ts.is_active())
+        self.assertTrue(self.event.isSet())
+        self.assertTrue(self.ts.is_active())
 
         p = weakref.ref(self.tc._transport.packetizer)
         self.assertTrue(p() is not None)

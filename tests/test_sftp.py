@@ -162,8 +162,8 @@ class SFTPTest (unittest.TestCase):
         f = sftp.open(FOLDER + '/test', 'w')
         try:
             self.assertEqual(f.stat().st_size, 0)
-            f.close()
         finally:
+            f.close()
             sftp.remove(FOLDER + '/test')
 
     def test_2_close(self):
@@ -219,8 +219,8 @@ class SFTPTest (unittest.TestCase):
             self.assertEqual(f.stat().st_size, 37)
             f.seek(-26, f.SEEK_CUR)
             self.assertEqual(f.readline(), 'second line\n')
-            f.close()
         finally:
+            f.close()
             sftp.remove(FOLDER + '/append.txt')
 
     def test_5_rename(self):
