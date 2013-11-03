@@ -170,7 +170,7 @@ class Message (object):
         @return: a 64-bit unsigned integer.
         @rtype: long
         """
-        return self.get_int()
+        return struct.unpack('>Q', self.get_bytes(8))[0]
 
     def get_mpint(self):
         """
@@ -289,7 +289,8 @@ class Message (object):
         @param n: long int to add
         @type n: long
         """
-        return self.add_int(n)
+        self.packet.write(struct.pack('>Q', n))
+        return self
 
     def add_mpint(self, z):
         """
