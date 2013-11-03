@@ -285,10 +285,10 @@ class Counter (object):
         # start with value - 1 so we don't have to store intermediate values when counting
         # could the iv be 0?
         if initial_value == 0:
-            self.value = array.array('c', '\xFF' * self.blocksize)
+            self.value = array.array('c', max_byte * self.blocksize)
         else:
             x = deflate_long(initial_value - 1, add_sign_padding=False)
-            self.value = array.array('c', '\x00' * (self.blocksize - len(x)) + x)
+            self.value = array.array('c', zero_byte * (self.blocksize - len(x)) + x)
 
     def __call__(self):
         """Increament the counter and return the new value"""
