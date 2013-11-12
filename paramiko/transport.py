@@ -7,7 +7,7 @@
 # Software Foundation; either version 2.1 of the License, or (at your option)
 # any later version.
 #
-# Paramiko is distrubuted in the hope that it will be useful, but WITHOUT ANY
+# Paramiko is distributed in the hope that it will be useful, but WITHOUT ANY
 # WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
 # A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more
 # details.
@@ -42,6 +42,7 @@ from paramiko.message import Message
 from paramiko.packet import Packetizer, NeedRekeyException
 from paramiko.primes import ModulusPack
 from paramiko.rsakey import RSAKey
+from paramiko.ecdsakey import ECDSAKey
 from paramiko.server import ServerInterface
 from paramiko.sftp_client import SFTPClient
 from paramiko.ssh_exception import (SSHException, BadAuthenticationType,
@@ -202,7 +203,7 @@ class Transport (threading.Thread):
     _preferred_ciphers = ( 'aes128-ctr', 'aes256-ctr', 'aes128-cbc', 'blowfish-cbc', 'aes256-cbc', '3des-cbc',
         'arcfour128', 'arcfour256' )
     _preferred_macs = ( 'hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96' )
-    _preferred_keys = ( 'ssh-rsa', 'ssh-dss' )
+    _preferred_keys = ( 'ssh-rsa', 'ssh-dss', 'ecdsa-sha2-nistp256' )
     _preferred_kex = ( 'diffie-hellman-group1-sha1', 'diffie-hellman-group-exchange-sha1' )
     _preferred_compression = ( 'none', )
 
@@ -227,6 +228,7 @@ class Transport (threading.Thread):
     _key_info = {
         'ssh-rsa': RSAKey,
         'ssh-dss': DSSKey,
+        'ecdsa-sha2-nistp256': ECDSAKey,
         }
 
     _kex_info = {
@@ -400,7 +402,6 @@ class Transport (threading.Thread):
 
         @since: 1.5.3
         """
-        self.sock.close()
         self.close()
 
     def get_security_options(self):
@@ -614,11 +615,10 @@ class Transport (threading.Thread):
         """
         if not self.active:
             return
-        self.active = False
-        self.packetizer.close()
-        self.join()
+        self.stop_thread()
         for chan in self._channels.values():
             chan._unlink()
+        self.sock.close()
 
     def get_remote_server_key(self):
         """
@@ -1391,6 +1391,8 @@ class Transport (threading.Thread):
     def stop_thread(self):
         self.active = False
         self.packetizer.close()
+        while self.isAlive():
+            self.join(10)
 
 
     ###  internals...
@@ -1439,7 +1441,7 @@ class Transport (threading.Thread):
                 break
             self.clear_to_send_lock.release()
             if time.time() > start + self.clear_to_send_timeout:
-              raise SSHException('Key-exchange timed out waiting for key negotiation')
+                raise SSHException('Key-exchange timed out waiting for key negotiation')
         try:
             self._send_message(data)
         finally:
@@ -1885,7 +1887,8 @@ class Transport (threading.Thread):
             mac_key = self._compute_key('F', mac_engine.digest_size)
         else:
             mac_key = self._compute_key('E', mac_engine.digest_size)
-        self.packetizer.set_outbound_cipher(engine, block_size, mac_engine, mac_size, mac_key)
+        sdctr = self.local_cipher.endswith('-ctr')
+        self.packetizer.set_outbound_cipher(engine, block_size, mac_engine, mac_size, mac_key, sdctr)
         compress_out = self._compression_info[self.local_compression][0]
         if (compress_out is not None) and ((self.local_compression != 'zlib@openssh.com') or self.authenticated):
             self._log(DEBUG, 'Switching on outbound compression ...')

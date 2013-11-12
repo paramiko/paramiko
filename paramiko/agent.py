@@ -7,7 +7,7 @@
 # Software Foundation; either version 2.1 of the License, or (at your option)
 # any later version.
 #
-# Paramiko is distrubuted in the hope that it will be useful, but WITHOUT ANY
+# Paramiko is distributed in the hope that it will be useful, but WITHOUT ANY
 # WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
 # A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more
 # details.
@@ -130,14 +130,21 @@ class AgentProxyThread(threading.Thread):
                     if len(data) != 0:
                         self.__inr.send(data)
                     else:
+                        self._close()
                         break
                 elif self.__inr == fd:
                     data = self.__inr.recv(512)
                     if len(data) != 0:
                         self._agent._conn.send(data)
                     else:
+                        self._close()
                         break
             time.sleep(io_sleep)
+
+    def _close(self):
+        self._exit = True
+        self.__inr.close()
+        self._agent._conn.close()
 
 class AgentLocalProxy(AgentProxyThread):
     """
@@ -248,11 +255,11 @@ class AgentServerProxy(AgentSSH):
         self.close()
 
     def connect(self):
-         conn_sock = self.__t.open_forward_agent_channel()
-         if conn_sock is None:
-             raise SSHException('lost ssh-agent')
-         conn_sock.set_name('auth-agent')
-         self._connect(conn_sock)
+        conn_sock = self.__t.open_forward_agent_channel()
+        if conn_sock is None:
+            raise SSHException('lost ssh-agent')
+        conn_sock.set_name('auth-agent')
+        self._connect(conn_sock)
 
     def close(self):
         """

@@ -7,7 +7,7 @@
 # Software Foundation; either version 2.1 of the License, or (at your option)
 # any later version.
 #
-# Paramiko is distrubuted in the hope that it will be useful, but WITHOUT ANY
+# Paramiko is distributed in the hope that it will be useful, but WITHOUT ANY
 # WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
 # A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more
 # details.
@@ -28,6 +28,8 @@ import UserDict
 from paramiko.common import *
 from paramiko.dsskey import DSSKey
 from paramiko.rsakey import RSAKey
+from paramiko.util import get_logger
+from paramiko.ecdsakey import ECDSAKey
 
 
 class InvalidHostKey(Exception):
@@ -48,7 +50,7 @@ class HostKeyEntry:
         self.hostnames = hostnames
         self.key = key
 
-    def from_line(cls, line):
+    def from_line(cls, line, lineno=None):
         """
         Parses the given line of text to find the names for the host,
         the type of key, and the key data. The line is expected to be in the
@@ -61,9 +63,12 @@ class HostKeyEntry:
         @param line: a line from an OpenSSH known_hosts file
         @type line: str
         """
+        log = get_logger('paramiko.hostkeys')
         fields = line.split(' ')
         if len(fields) < 3:
             # Bad number of fields
+            log.info("Not enough fields found in known_hosts in line %s (%r)" %
+                     (lineno, line))
             return None
         fields = fields[:3]
 
@@ -77,8 +82,12 @@ class HostKeyEntry:
                 key = RSAKey(data=base64.decodestring(key))
             elif keytype == 'ssh-dss':
                 key = DSSKey(data=base64.decodestring(key))
+            elif keytype == 'ecdsa-sha2-nistp256':
+                key = ECDSAKey(data=base64.decodestring(key))
             else:
+                log.info("Unable to handle key of type %s" % (keytype,))
                 return None
+
         except binascii.Error, e:
             raise InvalidHostKey(line, e)
 
@@ -160,13 +169,18 @@ class HostKeys (UserDict.DictMixin):
         @raise IOError: if there was an error reading the file
         """
         f = open(filename, 'r')
-        for line in f:
+        for lineno, line in enumerate(f):
             line = line.strip()
             if (len(line) == 0) or (line[0] == '#'):
                 continue
-            e = HostKeyEntry.from_line(line)
+            e = HostKeyEntry.from_line(line, lineno)
             if e is not None:
-                self._entries.append(e)
+                _hostnames = e.hostnames
+                for h in _hostnames:
+                    if self.check(h, e.key):
+                        e.hostnames.remove(h)
+                if len(e.hostnames):
+                    self._entries.append(e)
         f.close()
 
     def save(self, filename):

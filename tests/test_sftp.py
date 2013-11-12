@@ -7,7 +7,7 @@
 # Software Foundation; either version 2.1 of the License, or (at your option)
 # any later version.
 #
-# Paramiko is distrubuted in the hope that it will be useful, but WITHOUT ANY
+# Paramiko is distributed in the hope that it will be useful, but WITHOUT ANY
 # WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
 # A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more
 # details.
@@ -23,15 +23,15 @@ a real actual sftp server is contacted, and a new folder is created there to
 do test file operations in (so no existing files will be harmed).
 """
 
+from __future__ import with_statement
+
 from binascii import hexlify
-import logging
 import os
-import random
-import struct
+import warnings
 import sys
 import threading
-import time
 import unittest
+import StringIO
 
 import paramiko
 from stub_sftp import StubServer, StubSFTPServer
@@ -188,6 +188,17 @@ class SFTPTest (unittest.TestCase):
         finally:
             sftp.remove(FOLDER + '/duck.txt')
 
+    def test_3_sftp_file_can_be_used_as_context_manager(self):
+        """
+        verify that an opened file can be used as a context manager
+        """
+        try:
+            with sftp.open(FOLDER + '/duck.txt', 'w') as f:
+                f.write(ARTICLE)
+            self.assertEqual(sftp.stat(FOLDER + '/duck.txt').st_size, 1483)
+        finally:
+            sftp.remove(FOLDER + '/duck.txt')
+
     def test_4_append(self):
         """
         verify that a file can be opened for append, and tell() still works.
@@ -214,7 +225,7 @@ class SFTPTest (unittest.TestCase):
         """
         f = sftp.open(FOLDER + '/first.txt', 'w')
         try:
-            f.write('content!\n');
+            f.write('content!\n')
             f.close()
             sftp.rename(FOLDER + '/first.txt', FOLDER + '/second.txt')
             try:
@@ -425,7 +436,7 @@ class SFTPTest (unittest.TestCase):
             self.assertEqual(sftp.readlink(FOLDER + '/link.txt'), 'original.txt')
 
             f = sftp.open(FOLDER + '/link.txt', 'r')
-            self.assertEqual(f.readlines(), [ 'original\n' ])
+            self.assertEqual(f.readlines(), ['original\n'])
             f.close()
 
             cwd = sftp.normalize('.')
@@ -553,7 +564,6 @@ class SFTPTest (unittest.TestCase):
         """
         verify that get/put work.
         """
-        import os, warnings
         warnings.filterwarnings('ignore', 'tempnam.*')
 
         localname = os.tempnam()
@@ -618,7 +628,7 @@ class SFTPTest (unittest.TestCase):
             try:
                 f = sftp.open(FOLDER + '/unusual.txt', 'wx')
                 self.fail('expected exception')
-            except IOError, x:
+            except IOError:
                 pass
         finally:
             sftp.unlink(FOLDER + '/unusual.txt')
@@ -658,12 +668,12 @@ class SFTPTest (unittest.TestCase):
         f.close()
         try:
             f = sftp.open(FOLDER + '/zero', 'r')
-            data = f.readv([(0, 12)])
+            f.readv([(0, 12)])
             f.close()
 
             f = sftp.open(FOLDER + '/zero', 'r')
             f.prefetch()
-            data = f.read(100)
+            f.read(100)
             f.close()
         finally:
             sftp.unlink(FOLDER + '/zero')
@@ -672,7 +682,6 @@ class SFTPTest (unittest.TestCase):
         """
         verify that get/put work without confirmation.
         """
-        import os, warnings
         warnings.filterwarnings('ignore', 'tempnam.*')
 
         localname = os.tempnam()
@@ -684,7 +693,7 @@ class SFTPTest (unittest.TestCase):
         def progress_callback(x, y):
             saved_progress.append((x, y))
         res = sftp.put(localname, FOLDER + '/bunny.txt', progress_callback, False)
-        
+
         self.assertEquals(SFTPAttributes().attr, res.attr)
 
         f = sftp.open(FOLDER + '/bunny.txt', 'r')
@@ -717,3 +726,15 @@ class SFTPTest (unittest.TestCase):
         finally:
             sftp.remove(FOLDER + '/append.txt')
 
+    def test_putfo_empty_file(self):
+        """
+        Send an empty file and confirm it is sent.
+        """
+        target = FOLDER + '/empty file.txt'
+        stream = StringIO.StringIO()
+        try:
+            attrs = sftp.putfo(stream, target)
+            # the returned attributes should not be null
+            self.assertNotEqual(attrs, None)
+        finally:
+            sftp.remove(target)

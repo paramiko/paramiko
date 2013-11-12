@@ -7,7 +7,7 @@
 # Software Foundation; either version 2.1 of the License, or (at your option)
 # any later version.
 #
-# Paramiko is distrubuted in the hope that it will be useful, but WITHOUT ANY
+# Paramiko is distributed in the hope that it will be useful, but WITHOUT ANY
 # WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
 # A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more
 # details.
@@ -1027,6 +1027,13 @@ class Channel (object):
                 ok = False
             else:
                 ok = server.check_channel_shell_request(self)
+        elif key == 'env':
+            name = m.get_string()
+            value = m.get_string()
+            if server is None:
+                ok = False
+            else:
+                ok = server.check_channel_env_request(self, name, value)
         elif key == 'exec':
             cmd = m.get_string()
             if server is None:

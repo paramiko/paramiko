@@ -7,7 +7,7 @@
 # Software Foundation; either version 2.1 of the License, or (at your option)
 # any later version.
 #
-# Paramiko is distrubuted in the hope that it will be useful, but WITHOUT ANY
+# Paramiko is distributed in the hope that it will be useful, but WITHOUT ANY
 # WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
 # A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more
 # details.
@@ -110,7 +110,8 @@ class Message (object):
         @rtype: string
         """
         b = self.packet.read(n)
-        if len(b) < n:
+        max_pad_size = 1<<20  # Limit padding to 1 MB
+        if len(b) < n and n < max_pad_size:
             return b + '\x00' * (n - len(b))
         return b
 

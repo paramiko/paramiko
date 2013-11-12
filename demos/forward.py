@@ -9,7 +9,7 @@
 # Software Foundation; either version 2.1 of the License, or (at your option)
 # any later version.
 #
-# Paramiko is distrubuted in the hope that it will be useful, but WITHOUT ANY
+# Paramiko is distributed in the hope that it will be useful, but WITHOUT ANY
 # WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
 # A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more
 # details.
@@ -78,9 +78,11 @@ class Handler (SocketServer.BaseRequestHandler):
                 if len(data) == 0:
                     break
                 self.request.send(data)
+                
+        peername = self.request.getpeername()
         chan.close()
         self.request.close()
-        verbose('Tunnel closed from %r' % (self.request.getpeername(),))
+        verbose('Tunnel closed from %r' % (peername,))
 
 
 def forward_tunnel(local_port, remote_host, remote_port, transport):

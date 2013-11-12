@@ -9,7 +9,7 @@
 # Software Foundation; either version 2.1 of the License, or (at your option)
 # any later version.
 #
-# Paramiko is distrubuted in the hope that it will be useful, but WITHOUT ANY
+# Paramiko is distributed in the hope that it will be useful, but WITHOUT ANY
 # WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
 # A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more
 # details.
@@ -63,7 +63,7 @@ password = getpass.getpass('Password for %s@%s: ' % (username, hostname))
 try:
     client = paramiko.SSHClient()
     client.load_system_host_keys()
-    client.set_missing_host_key_policy(paramiko.WarningPolicy)
+    client.set_missing_host_key_policy(paramiko.WarningPolicy())
     print '*** Connecting...'
     client.connect(hostname, port, username, password)
     chan = client.invoke_shell()

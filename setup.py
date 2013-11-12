@@ -7,7 +7,7 @@
 # Software Foundation; either version 2.1 of the License, or (at your option)
 # any later version.
 #
-# Paramiko is distrubuted in the hope that it will be useful, but WITHOUT ANY
+# Paramiko is distributed in the hope that it will be useful, but WITHOUT ANY
 # WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
 # A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more
 # details.
@@ -40,7 +40,9 @@ import sys
 try:
     from setuptools import setup
     kw = {
-        'install_requires': 'pycrypto >= 2.1, != 2.4',
+        'install_requires': ['pycrypto >= 2.1, != 2.4',
+                             'ecdsa',
+                             ],
     }
 except ImportError:
     from distutils.core import setup
@@ -52,7 +54,7 @@ if sys.platform == 'darwin':
 
 
 setup(name = "paramiko",
-      version = "1.9.0",
+      version = "1.12.0",
       description = "SSH2 protocol library",
       author = "Jeff Forcier",
       author_email = "jeff@bitprophet.org",
