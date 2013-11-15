@@ -1998,7 +1998,7 @@ class Transport (threading.Thread):
         self.lock.acquire()
         try:
             chan._set_remote_channel(server_chanid, server_window_size, server_max_packet_size)
-            self._log(INFO, 'Secsh channel %d opened.' % chanid)
+            self._log(DEBUG, 'Secsh channel %d opened.' % chanid)
             if chanid in self.channel_events:
                 self.channel_events[chanid].set()
                 del self.channel_events[chanid]
@@ -2012,7 +2012,7 @@ class Transport (threading.Thread):
         reason_str = m.get_string()
         lang = m.get_string()
         reason_text = CONNECTION_FAILED_CODE.get(reason, '(unknown code)')
-        self._log(INFO, 'Secsh channel %d open FAILED: %s: %s' % (chanid, reason_str, reason_text))
+        self._log(ERROR, 'Secsh channel %d open FAILED: %s: %s' % (chanid, reason_str, reason_text))
         self.lock.acquire()
         try:
             self.saved_exception = ChannelException(reason, reason_text)
@@ -2109,7 +2109,7 @@ class Transport (threading.Thread):
         m.add_int(self.window_size)
         m.add_int(self.max_packet_size)
         self._send_message(m)
-        self._log(INFO, 'Secsh channel %d (%s) opened.', my_chanid, kind)
+        self._log(DEBUG, 'Secsh channel %d (%s) opened.', my_chanid, kind)
         if kind == 'auth-agent@openssh.com':
             self._forward_agent_handler(chan)
         elif kind == 'x11':
