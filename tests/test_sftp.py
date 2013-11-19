@@ -231,7 +231,7 @@ class SFTPTest (unittest.TestCase):
                 f.write('content!\n')
             sftp.rename(FOLDER + '/first.txt', FOLDER + '/second.txt')
             try:
-                f = sftp.open(FOLDER + '/first.txt', 'r')
+                sftp.open(FOLDER + '/first.txt', 'r')
                 self.assertTrue(False, 'no exception on reading nonexistent file')
             except IOError:
                 pass
@@ -254,12 +254,11 @@ class SFTPTest (unittest.TestCase):
         remove the folder and verify that we can't create a file in it anymore.
         """
         sftp.mkdir(FOLDER + '/subfolder')
-        f = sftp.open(FOLDER + '/subfolder/test', 'w')
-        f.close()
+        sftp.open(FOLDER + '/subfolder/test', 'w').close()
         sftp.remove(FOLDER + '/subfolder/test')
         sftp.rmdir(FOLDER + '/subfolder')
         try:
-            f = sftp.open(FOLDER + '/subfolder/test')
+            sftp.open(FOLDER + '/subfolder/test')
             # shouldn't be able to create that file
             self.assertTrue(False, 'no exception at dummy file creation')
         except IOError:
@@ -271,14 +270,9 @@ class SFTPTest (unittest.TestCase):
         and those files show up in sftp.listdir.
         """
         try:
-            f = sftp.open(FOLDER + '/duck.txt', 'w')
-            f.close()
-
-            f = sftp.open(FOLDER + '/fish.txt', 'w')
-            f.close()
-
-            f = sftp.open(FOLDER + '/tertiary.py', 'w')
-            f.close()
+            sftp.open(FOLDER + '/duck.txt', 'w').close()
+            sftp.open(FOLDER + '/fish.txt', 'w').close()
+            sftp.open(FOLDER + '/tertiary.py', 'w').close()
 
             x = sftp.listdir(FOLDER)
             self.assertEqual(len(x), 3)
@@ -607,12 +601,11 @@ class SFTPTest (unittest.TestCase):
         """
         verify that the 'x' flag works when opening a file.
         """
-        f = sftp.open(FOLDER + '/unusual.txt', 'wx')
-        f.close()
+        sftp.open(FOLDER + '/unusual.txt', 'wx').close()
 
         try:
             try:
-                f = sftp.open(FOLDER + '/unusual.txt', 'wx')
+                sftp.open(FOLDER + '/unusual.txt', 'wx')
                 self.fail('expected exception')
             except IOError:
                 pass
@@ -648,8 +641,7 @@ class SFTPTest (unittest.TestCase):
         """
         verify that readv at the end of the file doesn't essplode.
         """
-        f = sftp.open(FOLDER + '/zero', 'w')
-        f.close()
+        sftp.open(FOLDER + '/zero', 'w').close()
         try:
             with sftp.open(FOLDER + '/zero', 'r') as f:
                 f.readv([(0, 12)])
