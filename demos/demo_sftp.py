@@ -20,8 +20,6 @@
 
 # based on code provided by raymond mosteller (thanks!)
 
-from __future__ import with_statement
-
 import base64
 import getpass
 import os

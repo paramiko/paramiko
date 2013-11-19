@@ -23,8 +23,6 @@ a real actual sftp server is contacted, and a new folder is created there to
 do test file operations in (so no existing files will be harmed).
 """
 
-from __future__ import with_statement
-
 from binascii import hexlify
 import os
 import warnings
