@@ -25,6 +25,7 @@ read operations are blocking and can have a timeout set.
 import array
 import threading
 import time
+from paramiko.common import *
 
 
 class PipeTimeout (IOError):
@@ -121,7 +122,7 @@ class BufferedPipe (object):
         @raise PipeTimeout: if a timeout was specified and no data was ready
             before that timeout
         """
-        out = ''
+        out = bytes()
         self._lock.acquire()
         try:
             if len(self._buffer) == 0:

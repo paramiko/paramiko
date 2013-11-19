@@ -46,7 +46,8 @@ def handler(chan, host, port):
     sock = socket.socket()
     try:
         sock.connect((host, port))
-    except Exception, e:
+    except Exception:
+        e = sys.exc_info()[1]
         verbose('Forwarding request to %s:%d failed: %r' % (host, port, e))
         return
     
@@ -82,7 +83,7 @@ def reverse_forward_tunnel(server_port, remote_host, remote_port, transport):
 
 def verbose(s):
     if g_verbose:
-        print s
+        print(s)
 
 
 HELP = """\
@@ -150,8 +151,9 @@ def main():
     try:
         client.connect(server[0], server[1], username=options.user, key_filename=options.keyfile,
                        look_for_keys=options.look_for_keys, password=password)
-    except Exception, e:
-        print '*** Failed to connect to %s:%d: %r' % (server[0], server[1], e)
+    except Exception:
+        e = sys.exc_info()[1]
+        print('*** Failed to connect to %s:%d: %r' % (server[0], server[1], e))
         sys.exit(1)
 
     verbose('Now forwarding remote port %d to %s:%d ...' % (options.port, remote[0], remote[1]))
@@ -159,7 +161,7 @@ def main():
     try:
         reverse_forward_tunnel(options.port, remote[0], remote[1], client.get_transport())
     except KeyboardInterrupt:
-        print 'C-c: Port forwarding stopped.'
+        print('C-c: Port forwarding stopped.')
         sys.exit(0)
 
 

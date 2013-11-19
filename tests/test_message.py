@@ -21,15 +21,17 @@ Some unit tests for ssh protocol message blocks.
 """
 
 import unittest
+from binascii import unhexlify
 from paramiko.message import Message
+from paramiko.common import *
 
 
 class MessageTest (unittest.TestCase):
 
-    __a = '\x00\x00\x00\x17\x07\x60\xe0\x90\x00\x00\x00\x01q\x00\x00\x00\x05hello\x00\x00\x03\xe8' + ('x' * 1000)
-    __b = '\x01\x00\xf3\x00\x3f\x00\x00\x00\x10huey,dewey,louie'
-    __c = '\x00\x00\x00\x00\x00\x00\x00\x05\x00\x00\xf5\xe4\xd3\xc2\xb1\x09\x00\x00\x00\x01\x11\x00\x00\x00\x07\x00\xf5\xe4\xd3\xc2\xb1\x09\x00\x00\x00\x06\x9a\x1b\x2c\x3d\x4e\xf7'
-    __d = '\x00\x00\x00\x05\x00\x00\x00\x05\x11\x22\x33\x44\x55\x01\x00\x00\x00\x03cat\x00\x00\x00\x03a,b'
+    __a = unhexlify(b('000000170760e09000000001710000000568656c6c6f000003e8')) + (b('x') * 1000)
+    __b = unhexlify(b('0100f3003f00000010687565792c64657765792c6c6f756965'))
+    __c = unhexlify(b('00000000000000050000f5e4d3c2b10900000001110000000700f5e4d3c2b109000000069a1b2c3d4ef7'))
+    __d = unhexlify(b('00000005ff000000051122334455ff0000000a00f00000000000000000010000000363617400000003612c62'))
 
     def test_1_encode(self):
         msg = Message()
@@ -38,63 +40,65 @@ class MessageTest (unittest.TestCase):
         msg.add_string('q')
         msg.add_string('hello')
         msg.add_string('x' * 1000)
-        self.assertEquals(str(msg), self.__a)
+        self.assertEqual(msg.asbytes(), self.__a)
 
         msg = Message()
         msg.add_boolean(True)
         msg.add_boolean(False)
-        msg.add_byte('\xf3')
-        msg.add_bytes('\x00\x3f')
+        msg.add_byte(byte_chr(0xf3))
+
+        msg.add_bytes(zero_byte + byte_chr(0x3f))
         msg.add_list(['huey', 'dewey', 'louie'])
-        self.assertEquals(str(msg), self.__b)
+        self.assertEqual(msg.asbytes(), self.__b)
 
         msg = Message()
         msg.add_int64(5)
-        msg.add_int64(0xf5e4d3c2b109L)
+        msg.add_int64(0xf5e4d3c2b109)
         msg.add_mpint(17)
-        msg.add_mpint(0xf5e4d3c2b109L)
-        msg.add_mpint(-0x65e4d3c2b109L)
-        self.assertEquals(str(msg), self.__c)
+        msg.add_mpint(0xf5e4d3c2b109)
+        msg.add_mpint(-0x65e4d3c2b109)
+        self.assertEqual(msg.asbytes(), self.__c)
 
     def test_2_decode(self):
         msg = Message(self.__a)
-        self.assertEquals(msg.get_int(), 23)
-        self.assertEquals(msg.get_int(), 123789456)
-        self.assertEquals(msg.get_string(), 'q')
-        self.assertEquals(msg.get_string(), 'hello')
-        self.assertEquals(msg.get_string(), 'x' * 1000)
+        self.assertEqual(msg.get_int(), 23)
+        self.assertEqual(msg.get_int(), 123789456)
+        self.assertEqual(msg.get_text(), 'q')
+        self.assertEqual(msg.get_text(), 'hello')
+        self.assertEqual(msg.get_text(), 'x' * 1000)
 
         msg = Message(self.__b)
-        self.assertEquals(msg.get_boolean(), True)
-        self.assertEquals(msg.get_boolean(), False)
-        self.assertEquals(msg.get_byte(), '\xf3')
-        self.assertEquals(msg.get_bytes(2), '\x00\x3f')
-        self.assertEquals(msg.get_list(), ['huey', 'dewey', 'louie'])
+        self.assertEqual(msg.get_boolean(), True)
+        self.assertEqual(msg.get_boolean(), False)
+        self.assertEqual(msg.get_byte(), byte_chr(0xf3))
+        self.assertEqual(msg.get_bytes(2), zero_byte + byte_chr(0x3f))
+        self.assertEqual(msg.get_list(), ['huey', 'dewey', 'louie'])
 
         msg = Message(self.__c)
-        self.assertEquals(msg.get_int64(), 5)
-        self.assertEquals(msg.get_int64(), 0xf5e4d3c2b109L)
-        self.assertEquals(msg.get_mpint(), 17)
-        self.assertEquals(msg.get_mpint(), 0xf5e4d3c2b109L)
-        self.assertEquals(msg.get_mpint(), -0x65e4d3c2b109L)
+        self.assertEqual(msg.get_int64(), 5)
+        self.assertEqual(msg.get_int64(), 0xf5e4d3c2b109)
+        self.assertEqual(msg.get_mpint(), 17)
+        self.assertEqual(msg.get_mpint(), 0xf5e4d3c2b109)
+        self.assertEqual(msg.get_mpint(), -0x65e4d3c2b109)
 
     def test_3_add(self):
         msg = Message()
         msg.add(5)
-        msg.add(0x1122334455L)
+        msg.add(0x1122334455)
+        msg.add(0xf00000000000000000)
         msg.add(True)
         msg.add('cat')
         msg.add(['a', 'b'])
-        self.assertEquals(str(msg), self.__d)
+        self.assertEqual(msg.asbytes(), self.__d)
 
     def test_4_misc(self):
         msg = Message(self.__d)
-        self.assertEquals(msg.get_int(), 5)
-        self.assertEquals(msg.get_mpint(), 0x1122334455L)
-        self.assertEquals(msg.get_so_far(), self.__d[:13])
-        self.assertEquals(msg.get_remainder(), self.__d[13:])
+        self.assertEqual(msg.get_int(), 5)
+        self.assertEqual(msg.get_int(), 0x1122334455)
+        self.assertEqual(msg.get_int(), 0xf00000000000000000)
+        self.assertEqual(msg.get_so_far(), self.__d[:29])
+        self.assertEqual(msg.get_remainder(), self.__d[29:])
         msg.rewind()
-        self.assertEquals(msg.get_int(), 5)
-        self.assertEquals(msg.get_so_far(), self.__d[:4])
-        self.assertEquals(msg.get_remainder(), self.__d[4:])
-
+        self.assertEqual(msg.get_int(), 5)
+        self.assertEqual(msg.get_so_far(), self.__d[:4])
+        self.assertEqual(msg.get_remainder(), self.__d[4:])

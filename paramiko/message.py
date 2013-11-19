@@ -21,9 +21,9 @@ Implementation of an SSH2 "message".
 """
 
 import struct
-import cStringIO
 
 from paramiko import util
+from paramiko.common import *
 
 
 class Message (object):
@@ -37,6 +37,8 @@ class Message (object):
     paramiko doesn't support yet.
     """
 
+    big_int = long(0xff000000)
+
     def __init__(self, content=None):
         """
         Create a new SSH2 Message.
@@ -46,18 +48,12 @@ class Message (object):
         @type content: string
         """
         if content != None:
-            self.packet = cStringIO.StringIO(content)
+            self.packet = BytesIO(content)
         else:
-            self.packet = cStringIO.StringIO()
+            self.packet = BytesIO()
 
     def __str__(self):
-        """
-        Return the byte stream content of this Message, as a string.
-
-        @return: the contents of this Message.
-        @rtype: string
-        """
-        return self.packet.getvalue()
+        return self.asbytes()
 
     def __repr__(self):
         """
@@ -66,6 +62,15 @@ class Message (object):
         @rtype: string
         """
         return 'paramiko.Message(' + repr(self.packet.getvalue()) + ')'
+
+    def asbytes(self):
+        """
+        Return the byte stream content of this Message, as bytes.
+
+        @return: the contents of this Message.
+        @rtype: bytes
+        """
+        return self.packet.getvalue()
 
     def rewind(self):
         """
@@ -112,7 +117,7 @@ class Message (object):
         b = self.packet.read(n)
         max_pad_size = 1<<20  # Limit padding to 1 MB
         if len(b) < n and n < max_pad_size:
-            return b + '\x00' * (n - len(b))
+            return b + zero_byte * (n - len(b))
         return b
 
     def get_byte(self):
@@ -134,9 +139,22 @@ class Message (object):
         @rtype: bool
         """
         b = self.get_bytes(1)
-        return b != '\x00'
+        return b != zero_byte
 
     def get_int(self):
+        """
+        Fetch an int from the stream.
+
+        @return: a 32-bit unsigned integer.
+        @rtype: int
+        """
+        byte = self.get_bytes(1)
+        if byte == max_byte:
+            return util.inflate_long(self.get_binary())
+        byte += self.get_bytes(3)
+        return struct.unpack('>I', byte)[0]
+
+    def get_size(self):
         """
         Fetch an int from the stream.
 
@@ -161,7 +179,7 @@ class Message (object):
         @return: an arbitrary-length integer.
         @rtype: long
         """
-        return util.inflate_long(self.get_string())
+        return util.inflate_long(self.get_binary())
 
     def get_string(self):
         """
@@ -172,7 +190,30 @@ class Message (object):
         @return: a string.
         @rtype: string
         """
-        return self.get_bytes(self.get_int())
+        return self.get_bytes(self.get_size())
+
+    def get_text(self):
+        """
+        Fetch a string from the stream.  This could be a byte string and may
+        contain unprintable characters.  (It's not unheard of for a string to
+        contain another byte-stream Message.)
+
+        @return: a string.
+        @rtype: string
+        """
+        return u(self.get_bytes(self.get_size()))
+        #return self.get_bytes(self.get_size())
+
+    def get_binary(self):
+        """
+        Fetch a string from the stream.  This could be a byte string and may
+        contain unprintable characters.  (It's not unheard of for a string to
+        contain another byte-stream Message.)
+
+        @return: a string.
+        @rtype: string
+        """
+        return self.get_bytes(self.get_size())
 
     def get_list(self):
         """
@@ -182,7 +223,7 @@ class Message (object):
         @return: a list of strings.
         @rtype: list of strings
         """
-        return self.get_string().split(',')
+        return self.get_text().split(',')
 
     def add_bytes(self, b):
         """
@@ -212,12 +253,12 @@ class Message (object):
         @type b: bool
         """
         if b:
-            self.add_byte('\x01')
+            self.packet.write(one_byte)
         else:
-            self.add_byte('\x00')
+            self.packet.write(zero_byte)
         return self
             
-    def add_int(self, n):
+    def add_size(self, n):
         """
         Add an integer to the stream.
         
@@ -225,6 +266,20 @@ class Message (object):
         @type n: int
         """
         self.packet.write(struct.pack('>I', n))
+        return self
+
+    def add_int(self, n):
+        """
+        Add an integer to the stream.
+
+        @param n: integer to add
+        @type n: int
+        """
+        if n >= Message.big_int:
+            self.packet.write(max_byte)
+            self.add_string(util.deflate_long(n))
+        else:
+            self.packet.write(struct.pack('>I', n))
         return self
 
     def add_int64(self, n):
@@ -255,7 +310,8 @@ class Message (object):
         @param s: string to add
         @type s: str
         """
-        self.add_int(len(s))
+        s = asbytes(s)
+        self.add_size(len(s))
         self.packet.write(s)
         return self
 
@@ -272,21 +328,14 @@ class Message (object):
         return self
         
     def _add(self, i):
-        if type(i) is str:
-            return self.add_string(i)
-        elif type(i) is int:
-            return self.add_int(i)
-        elif type(i) is long:
-            if i > 0xffffffffL:
-                return self.add_mpint(i)
-            else:
-                return self.add_int(i)
-        elif type(i) is bool:
+        if type(i) is bool:
             return self.add_boolean(i)
+        elif isinstance(i, integer_types):
+            return self.add_int(i)
         elif type(i) is list:
             return self.add_list(i)
         else:
-            raise Exception('Unknown type')
+            return self.add_string(i)
 
     def add(self, *seq):
         """
