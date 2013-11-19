@@ -21,7 +21,6 @@ L{ECDSAKey}
 """
 
 import binascii
-from binascii import unhexlify
 from ecdsa import SigningKey, VerifyingKey, der, curves
 from ecdsa.util import number_to_string, sigencode_string, sigencode_strings, sigdecode_strings
 from Crypto.Hash import SHA256, MD5

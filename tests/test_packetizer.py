@@ -21,7 +21,6 @@ Some unit tests for the ssh2 protocol in Transport.
 """
 
 import unittest
-from binascii import unhexlify
 from tests.loop import LoopSocket
 from Crypto.Cipher import AES
 from Crypto.Hash import SHA, HMAC
@@ -55,7 +54,7 @@ class PacketizerTest (unittest.TestCase):
         data = rsock.recv(100)
         # 32 + 12 bytes of MAC = 44
         self.assertEqual(44, len(data))
-        self.assertEqual(unhexlify(b('439197bd5b50ac2587c2c46bc7e938c0')), data[:16])
+        self.assertEqual(b'\x43\x91\x97\xbd\x5b\x50\xac\x25\x87\xc2\xc4\x6b\xc7\xe9\x38\xc0', data[:16])
 
     def test_2_read (self):
         rsock = LoopSocket()
@@ -66,7 +65,7 @@ class PacketizerTest (unittest.TestCase):
         p.set_hexdump(True)
         cipher = AES.new(zero_byte * 16, AES.MODE_CBC, x55 * 16)
         p.set_inbound_cipher(cipher, 16, SHA, 12, x1f * 20)
-        wsock.send(unhexlify(b('439197bd5b50ac2587c2c46bc7e938c090d216560d717361387c4c3dfb977de26e03b1a0c21cd641414cb459')))
+        wsock.send(b'\x43\x91\x97\xbd\x5b\x50\xac\x25\x87\xc2\xc4\x6b\xc7\xe9\x38\xc0\x90\xd2\x16\x56\x0d\x71\x73\x61\x38\x7c\x4c\x3d\xfb\x97\x7d\xe2\x6e\x03\xb1\xa0\xc2\x1c\xd6\x41\x41\x4c\xb4\x59')
         cmd, m = p.read_message()
         self.assertEqual(100, cmd)
         self.assertEqual(100, m.get_int())

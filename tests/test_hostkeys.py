@@ -37,12 +37,12 @@ BGQ3GQ/Fc7SX6gkpXkwcZryoi4kNFhHu5LvHcZPdxXV1D+uTMfGS1eyd2Yz/DoNWXNAl8TI0cAsW\
 5ymME3bQ4J/k1IKxCtz/bAlAqFgKoc+EolMziDYqWIATtW0rYTJvzGAzTmMj80/QpsFH+Pc2M=
 """
 
-keyblob = b("""\
+keyblob = b"""\
 AAAAB3NzaC1yc2EAAAABIwAAAIEA8bP1ZA7DCZDB9J0s50l31MBGQ3GQ/Fc7SX6gkpXkwcZryoi4k\
 NFhHu5LvHcZPdxXV1D+uTMfGS1eyd2Yz/DoNWXNAl8TI0cAsW5ymME3bQ4J/k1IKxCtz/bAlAqFgK\
-oc+EolMziDYqWIATtW0rYTJvzGAzTmMj80/QpsFH+Pc2M=""")
+oc+EolMziDYqWIATtW0rYTJvzGAzTmMj80/QpsFH+Pc2M="""
 
-keyblob_dss = b("""\
+keyblob_dss = b"""\
 AAAAB3NzaC1kc3MAAACBAOeBpgNnfRzr/twmAQRu2XwWAp3CFtrVnug6s6fgwj/oLjYbVtjAy6pl/\
 h0EKCWx2rf1IetyNsTxWrniA9I6HeDj65X1FyDkg6g8tvCnaNB8Xp/UUhuzHuGsMIipRxBxw9LF60\
 8EqZcj1E3ytktoW5B5OcjrkEoz3xG7C+rpIjYvAAAAFQDwz4UnmsGiSNu5iqjn3uTzwUpshwAAAIE\
@@ -50,7 +50,7 @@ AkxfFeY8P2wZpDjX0MimZl5wkoFQDL25cPzGBuB4OnB8NoUk/yjAHIIpEShw8V+LzouMK5CTJQo5+\
 Ngw3qIch/WgRmMHy4kBq1SsXMjQCte1So6HBMvBPIW5SiMTmjCfZZiw4AYHK+B/JaOwaG9yRg2Ejg\
 4Ok10+XFDxlqZo8Y+wAAACARmR7CCPjodxASvRbIyzaVpZoJ/Z6x7dAumV+ysrV1BVYd0lYukmnjO\
 1kKBWApqpH1ve9XDQYN8zgxM4b16L21kpoWQnZtXrY3GZ4/it9kUgyB7+NwacIBlXa8cMDL7Q/69o\
-0d54U0X/NeX5QxuYR6OMJlrkQB7oiW/P/1mwjQgE=""")
+0d54U0X/NeX5QxuYR6OMJlrkQB7oiW/P/1mwjQgE="""
 
 
 class HostKeysTest (unittest.TestCase):
@@ -68,7 +68,7 @@ class HostKeysTest (unittest.TestCase):
         self.assertEqual(1, len(list(hostdict.values())[0]))
         self.assertEqual(1, len(list(hostdict.values())[1]))
         fp = hexlify(hostdict['secure.example.com']['ssh-rsa'].get_fingerprint()).upper()
-        self.assertEqual(b('E6684DB30E109B67B70FF1DC5C7F1363'), fp)
+        self.assertEqual(b'E6684DB30E109B67B70FF1DC5C7F1363', fp)
 
     def test_2_add(self):
         hostdict = paramiko.HostKeys('hostfile.temp')
@@ -78,7 +78,7 @@ class HostKeysTest (unittest.TestCase):
         self.assertEqual(3, len(list(hostdict)))
         x = hostdict['foo.example.com']
         fp = hexlify(x['ssh-rsa'].get_fingerprint()).upper()
-        self.assertEqual(b('7EC91BB336CB6D810B124B1353C32396'), fp)
+        self.assertEqual(b'7EC91BB336CB6D810B124B1353C32396', fp)
         self.assertTrue(hostdict.check('foo.example.com', key))
 
     def test_3_dict(self):
@@ -90,7 +90,7 @@ class HostKeysTest (unittest.TestCase):
         x = hostdict.get('secure.example.com', None)
         self.assertTrue(x is not None)
         fp = hexlify(x['ssh-rsa'].get_fingerprint()).upper()
-        self.assertEqual(b('E6684DB30E109B67B70FF1DC5C7F1363'), fp)
+        self.assertEqual(b'E6684DB30E109B67B70FF1DC5C7F1363', fp)
         i = 0
         for key in hostdict:
             i += 1
@@ -112,6 +112,6 @@ class HostKeysTest (unittest.TestCase):
         self.assertEqual(1, len(list(hostdict.values())[1]))
         self.assertEqual(1, len(list(hostdict.values())[2]))
         fp = hexlify(hostdict['secure.example.com']['ssh-rsa'].get_fingerprint()).upper()
-        self.assertEqual(b('7EC91BB336CB6D810B124B1353C32396'), fp)
+        self.assertEqual(b'7EC91BB336CB6D810B124B1353C32396', fp)
         fp = hexlify(hostdict['secure.example.com']['ssh-dss'].get_fingerprint()).upper()
-        self.assertEqual(b('4478F0B9A23CC5182009FF755BC1D26C'), fp)
+        self.assertEqual(b'4478F0B9A23CC5182009FF755BC1D26C', fp)

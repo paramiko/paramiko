@@ -20,7 +20,7 @@
 Some unit tests for public/private key objects.
 """
 
-from binascii import hexlify, unhexlify
+from binascii import hexlify
 import unittest
 from paramiko import RSAKey, DSSKey, ECDSAKey, Message, util
 from paramiko.common import rng, StringIO, byte_chr, b, bytes
@@ -77,7 +77,7 @@ ADRvOqQ5R98Sxst765CAqXmRtz8vwoD96g==
 -----END EC PRIVATE KEY-----
 """
 
-x1234 = unhexlify(b('01020304'))
+x1234 = b'\x01\x02\x03\x04'
 
 
 class KeyTest (unittest.TestCase):
@@ -91,7 +91,7 @@ class KeyTest (unittest.TestCase):
     def test_1_generate_key_bytes(self):
         from Crypto.Hash import MD5
         key = util.generate_key_bytes(MD5, x1234, 'happy birthday', 30)
-        exp = unhexlify(b('61E1F272F4C1C4561586BD322498C0E924672780F47BB37DDA7D54019E64'))
+        exp = b'\x61\xE1\xF2\x72\xF4\xC1\xC4\x56\x15\x86\xBD\x32\x24\x98\xC0\xE9\x24\x67\x27\x80\xF4\x7B\xB3\x7D\xDA\x7D\x54\x01\x9E\x64'
         self.assertEqual(exp, key)
 
     def test_2_load_rsa(self):
@@ -165,7 +165,7 @@ class KeyTest (unittest.TestCase):
     def test_8_sign_rsa(self):
         # verify that the rsa private key can sign and verify
         key = RSAKey.from_private_key_file(test_path('test_rsa.key'))
-        msg = key.sign_ssh_data(rng, b('ice weasels'))
+        msg = key.sign_ssh_data(rng, b'ice weasels')
         self.assertTrue(type(msg) is Message)
         msg.rewind()
         self.assertEqual('ssh-rsa', msg.get_text())
@@ -173,12 +173,12 @@ class KeyTest (unittest.TestCase):
         self.assertEqual(sig, msg.get_binary())
         msg.rewind()
         pub = RSAKey(data=key.asbytes())
-        self.assertTrue(pub.verify_ssh_sig(b('ice weasels'), msg))
+        self.assertTrue(pub.verify_ssh_sig(b'ice weasels', msg))
 
     def test_9_sign_dss(self):
         # verify that the dss private key can sign and verify
         key = DSSKey.from_private_key_file(test_path('test_dss.key'))
-        msg = key.sign_ssh_data(rng, b('ice weasels'))
+        msg = key.sign_ssh_data(rng, b'ice weasels')
         self.assertTrue(type(msg) is Message)
         msg.rewind()
         self.assertEqual('ssh-dss', msg.get_text())
@@ -188,19 +188,19 @@ class KeyTest (unittest.TestCase):
         self.assertEqual(40, len(msg.get_binary()))
         msg.rewind()
         pub = DSSKey(data=key.asbytes())
-        self.assertTrue(pub.verify_ssh_sig(b('ice weasels'), msg))
+        self.assertTrue(pub.verify_ssh_sig(b'ice weasels', msg))
 
     def test_A_generate_rsa(self):
         key = RSAKey.generate(1024)
-        msg = key.sign_ssh_data(rng, b('jerri blank'))
+        msg = key.sign_ssh_data(rng, b'jerri blank')
         msg.rewind()
-        self.assertTrue(key.verify_ssh_sig(b('jerri blank'), msg))
+        self.assertTrue(key.verify_ssh_sig(b'jerri blank', msg))
 
     def test_B_generate_dss(self):
         key = DSSKey.generate(1024)
-        msg = key.sign_ssh_data(rng, b('jerri blank'))
+        msg = key.sign_ssh_data(rng, b'jerri blank')
         msg.rewind()
-        self.assertTrue(key.verify_ssh_sig(b('jerri blank'), msg))
+        self.assertTrue(key.verify_ssh_sig(b'jerri blank', msg))
 
     def test_10_load_ecdsa(self):
         key = ECDSAKey.from_private_key_file(test_path('test_ecdsa.key'))
@@ -219,7 +219,7 @@ class KeyTest (unittest.TestCase):
         self.assertEqual(key, key2)
 
     def test_11_load_ecdsa_password(self):
-        key = ECDSAKey.from_private_key_file(test_path('test_ecdsa_password.key'), b('television'))
+        key = ECDSAKey.from_private_key_file(test_path('test_ecdsa_password.key'), b'television')
         self.assertEqual('ecdsa-sha2-nistp256', key.get_name())
         exp_ecdsa = b(FINGER_ECDSA.split()[1].replace(':', ''))
         my_ecdsa = hexlify(key.get_fingerprint())
@@ -239,7 +239,7 @@ class KeyTest (unittest.TestCase):
     def test_13_sign_ecdsa(self):
         # verify that the rsa private key can sign and verify
         key = ECDSAKey.from_private_key_file(test_path('test_ecdsa.key'))
-        msg = key.sign_ssh_data(rng, b('ice weasels'))
+        msg = key.sign_ssh_data(rng, b'ice weasels')
         self.assertTrue(type(msg) is Message)
         msg.rewind()
         self.assertEqual('ecdsa-sha2-nistp256', msg.get_text())
@@ -250,4 +250,4 @@ class KeyTest (unittest.TestCase):
 
         msg.rewind()
         pub = ECDSAKey(data=key.asbytes())
-        self.assertTrue(pub.verify_ssh_sig(b('ice weasels'), msg))
+        self.assertTrue(pub.verify_ssh_sig(b'ice weasels', msg))

@@ -137,7 +137,7 @@ class UtilTest(ParamikoTest):
             )
 
     def test_4_generate_key_bytes(self):
-        x = paramiko.util.generate_key_bytes(SHA, b('ABCDEFGH'), 'This is my secret passphrase.', 64)
+        x = paramiko.util.generate_key_bytes(SHA, b'ABCDEFGH', 'This is my secret passphrase.', 64)
         hex = ''.join(['%02x' % byte_ord(c) for c in x])
         self.assertEqual(hex, '9110e2f6793b69363e58173e9436b13a5a4b339005741d5c680e505f57d871347b4239f14fb5c46e857d5e100424873ba849ac699cea98d729e57b3e84378e8b')
 
@@ -150,7 +150,7 @@ class UtilTest(ParamikoTest):
             self.assertEqual(1, len(list(hostdict.values())[0]))
             self.assertEqual(1, len(list(hostdict.values())[1]))
             fp = hexlify(hostdict['secure.example.com']['ssh-rsa'].get_fingerprint()).upper()
-            self.assertEqual(b('E6684DB30E109B67B70FF1DC5C7F1363'), fp)
+            self.assertEqual(b'E6684DB30E109B67B70FF1DC5C7F1363', fp)
         finally:
             os.unlink('hostfile.temp')
 

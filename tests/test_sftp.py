@@ -549,7 +549,7 @@ class SFTPTest (unittest.TestCase):
 
         fd, localname = mkstemp()
         os.close(fd)
-        text = b('All I wanted was a plastic bunny rabbit.\n')
+        text = b'All I wanted was a plastic bunny rabbit.\n'
         with open(localname, 'wb') as f:
             f.write(text)
         saved_progress = []

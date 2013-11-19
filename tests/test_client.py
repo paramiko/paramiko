@@ -45,7 +45,7 @@ class NullServer (paramiko.ServerInterface):
         return paramiko.AUTH_FAILED
 
     def check_auth_publickey(self, username, key):
-        if (key.get_name() == 'ssh-dss') and (hexlify(key.get_fingerprint()) == b('4478f0b9a23cc5182009ff755bc1d26c')):
+        if (key.get_name() == 'ssh-dss') and key.get_fingerprint() == b'\x44\x78\xf0\xb9\xa2\x3c\xc5\x18\x20\x09\xff\x75\x5b\xc1\xd2\x6c':
             return paramiko.AUTH_SUCCESSFUL
         return paramiko.AUTH_FAILED
 

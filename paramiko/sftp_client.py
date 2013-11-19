@@ -48,7 +48,7 @@ def _to_unicode(s):
         except UnicodeError:
             return s
 
-b_slash = b('/')
+b_slash = b'/'
 
 class SFTPClient (BaseSFTP):
     """

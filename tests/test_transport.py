@@ -20,7 +20,7 @@
 Some unit tests for the ssh2 protocol in Transport.
 """
 
-from binascii import hexlify, unhexlify
+from binascii import hexlify
 import select
 import socket
 import sys
@@ -159,10 +159,10 @@ class TransportTest(ParamikoTest):
             
     def test_2_compute_key(self):
         self.tc.K = 123281095979686581523377256114209720774539068973101330872763622971399429481072519713536292772709507296759612401802191955568143056534122385270077606457721553469730659233569339356140085284052436697480759510519672848743794433460113118986816826624865291116513647975790797391795651716378444844877749505443714557929
-        self.tc.H = unhexlify(b('0C8307CDE6856FF30BA93684EB0F04C2520E9ED3'))
+        self.tc.H = b'\x0C\x83\x07\xCD\xE6\x85\x6F\xF3\x0B\xA9\x36\x84\xEB\x0F\x04\xC2\x52\x0E\x9E\xD3'
         self.tc.session_id = self.tc.H
         key = self.tc._compute_key('C', 32)
-        self.assertEqual(b('207E66594CA87C44ECCBA3B3CD39FDDB378E6FDB0F97C54B2AA0CFBF900CD995'),
+        self.assertEqual(b'207E66594CA87C44ECCBA3B3CD39FDDB378E6FDB0F97C54B2AA0CFBF900CD995',
                           hexlify(key).upper())
 
     def test_3_simple(self):
@@ -361,7 +361,7 @@ class TransportTest(ParamikoTest):
         self.assertEqual([], w)
         self.assertEqual([], e)
 
-        self.assertEqual(b('hello\n'), chan.recv(6))
+        self.assertEqual(b'hello\n', chan.recv(6))
         
         # and, should be dead again now
         r, w, e = select.select([chan], [], [], 0.1)
@@ -462,7 +462,7 @@ class TransportTest(ParamikoTest):
         self.assertEqual(6093, requested[0][1])
         
         x11_server.send('hello')
-        self.assertEqual(b('hello'), x11_client.recv(5))
+        self.assertEqual(b'hello', x11_client.recv(5))
         
         x11_server.close()
         x11_client.close()
@@ -495,7 +495,7 @@ class TransportTest(ParamikoTest):
         cch = self.tc.accept()
         
         sch.send('hello')
-        self.assertEqual(b('hello'), cch.recv(5))
+        self.assertEqual(b'hello', cch.recv(5))
         sch.close()
         cch.close()
         ss.close()
@@ -527,12 +527,12 @@ class TransportTest(ParamikoTest):
         cch.connect(self.server._tcpip_dest)
         
         ss, _ = greeting_server.accept()
-        ss.send(b('Hello!\n'))
+        ss.send(b'Hello!\n')
         ss.close()
         sch.send(cch.recv(8192))
         sch.close()
         
-        self.assertEqual(b('Hello!\n'), cs.recv(7))
+        self.assertEqual(b'Hello!\n', cs.recv(7))
         cs.close()
 
     def test_G_stderr_select(self):
@@ -563,7 +563,7 @@ class TransportTest(ParamikoTest):
         self.assertEqual([], w)
         self.assertEqual([], e)
 
-        self.assertEqual(b('hello\n'), chan.recv_stderr(6))
+        self.assertEqual(b'hello\n', chan.recv_stderr(6))
         
         # and, should be dead again now
         r, w, e = select.select([chan], [], [], 0.1)
