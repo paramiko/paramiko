@@ -15,7 +15,7 @@ What
 ----
 
 "paramiko" is a combination of the esperanto words for "paranoid" and
-"friend".  it's a module for python 2.5+ that implements the SSH2 protocol
+"friend".  it's a module for python 2.6+ that implements the SSH2 protocol
 for secure (encrypted and authenticated) connections to remote machines.
 unlike SSL (aka TLS), SSH2 protocol does not require hierarchical
 certificates signed by a powerful central authority. you may know SSH2 as
@@ -34,7 +34,7 @@ that should have come with this archive.
 Requirements
 ------------
 
-  - python 2.5 or better <http://www.python.org/>
+  - python 2.6 or better <http://www.python.org/>
   - pycrypto 2.1 or better <https://www.dlitz.net/software/pycrypto/>
 
 If you have setuptools, you can build and install paramiko and all its

@@ -18,7 +18,7 @@
 
 """
 I{Paramiko} (a combination of the esperanto words for "paranoid" and "friend")
-is a module for python 2.5 or greater that implements the SSH2 protocol for
+is a module for python 2.6 or greater that implements the SSH2 protocol for
 secure (encrypted and authenticated) connections to remote machines.  Unlike
 SSL (aka TLS), the SSH2 protocol does not require hierarchical certificates
 signed by a powerful central authority.  You may know SSH2 as the protocol that
@@ -52,8 +52,8 @@ Mailing list: U{paramiko@librelist.com<mailto:paramiko@librelist.com>}
 
 import sys
 
-if sys.version_info < (2, 5):
-    raise RuntimeError('You need python 2.5+ for this module.')
+if sys.version_info < (2, 6):
+    raise RuntimeError('You need python 2.6+ for this module.')
 
 
 __author__ = "Jeff Forcier <jeff@bitprophet.org>"
