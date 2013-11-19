@@ -312,8 +312,8 @@ class PKey (object):
         # if we trudged to the end of the file, just try to cope.
         try:
             data = decodebytes(b(''.join(lines[start:end])))
-        except base64.binascii.Error:
-            raise SSHException('base64 decoding error: ' + str(sys.exc_info()[1]))
+        except base64.binascii.Error as e:
+            raise SSHException('base64 decoding error: ' + str(e))
         if 'proc-type' not in headers:
             # unencryped: done
             return data

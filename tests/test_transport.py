@@ -302,9 +302,8 @@ class TransportTest(ParamikoTest):
         try:
             chan = self.tc.open_channel('bogus')
             self.fail('expected exception')
-        except ChannelException:
-            x = sys.exc_info()[1]
-            self.assertTrue(x.code == OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED)
+        except ChannelException as e:
+            self.assertTrue(e.code == OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED)
 
     def test_9_exit_status(self):
         """

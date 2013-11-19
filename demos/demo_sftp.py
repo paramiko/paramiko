@@ -114,8 +114,7 @@ try:
 
     t.close()
 
-except Exception:
-    e = sys.exc_info()[1]
+except Exception as e:
     print('*** Caught exception: %s: %s' % (e.__class__, e))
     traceback.print_exc()
     try:

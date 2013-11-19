@@ -650,8 +650,7 @@ class SFTPTest (unittest.TestCase):
         try:
             sftp.rename(FOLDER + '/something', FOLDER + '/' + unicode_folder)
             sftp.open(b(FOLDER) + utf8_folder, 'r')
-        except Exception:
-            e = sys.exc_info()[1]
+        except Exception as e:
             self.fail('exception ' + str(e))
         sftp.unlink(b(FOLDER) + utf8_folder)
 

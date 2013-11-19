@@ -46,8 +46,7 @@ def handler(chan, host, port):
     sock = socket.socket()
     try:
         sock.connect((host, port))
-    except Exception:
-        e = sys.exc_info()[1]
+    except Exception as e:
         verbose('Forwarding request to %s:%d failed: %r' % (host, port, e))
         return
     
@@ -151,8 +150,7 @@ def main():
     try:
         client.connect(server[0], server[1], username=options.user, key_filename=options.keyfile,
                        look_for_keys=options.look_for_keys, password=password)
-    except Exception:
-        e = sys.exc_info()[1]
+    except Exception as e:
         print('*** Failed to connect to %s:%d: %r' % (server[0], server[1], e))
         sys.exit(1)
 

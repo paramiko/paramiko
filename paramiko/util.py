@@ -272,8 +272,7 @@ def retry_on_signal(function):
     while True:
         try:
             return function()
-        except EnvironmentError:
-            e = sys.exc_info()[1]
+        except EnvironmentError as e:
             if e.errno != errno.EINTR:
                 raise
 

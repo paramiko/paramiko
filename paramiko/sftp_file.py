@@ -464,8 +464,8 @@ class SFTPFile (BufferedFile):
             # save exception and re-raise it on next file operation
             try:
                 self.sftp._convert_status(msg)
-            except Exception:
-                self._saved_exception = sys.exc_info()[1]
+            except Exception as e:
+                self._saved_exception = e
             return
         if t != CMD_DATA:
             raise SFTPError('Expected data')

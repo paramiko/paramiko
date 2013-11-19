@@ -717,8 +717,8 @@ class SFTPClient (BaseSFTP):
         while True:
             try:
                 t, data = self._read_packet()
-            except EOFError:
-                raise SSHException('Server connection dropped: %s' % str(sys.exc_info()[1]))
+            except EOFError as e:
+                raise SSHException('Server connection dropped: %s' % str(e))
             msg = Message(data)
             num = msg.get_int()
             if num not in self._expecting:

@@ -452,8 +452,8 @@ class SSHClient (object):
                 two_factor = (allowed_types == ['password'])
                 if not two_factor:
                     return
-            except SSHException:
-                saved_exception = sys.exc_info()[1]
+            except SSHException as e:
+                saved_exception = e
 
         if not two_factor:
             for key_filename in key_filenames:
@@ -466,8 +466,8 @@ class SSHClient (object):
                         if not two_factor:
                             return
                         break
-                    except SSHException:
-                        saved_exception = sys.exc_info()[1]
+                    except SSHException as e:
+                        saved_exception = e
 
         if not two_factor and allow_agent:
             if self._agent == None:
@@ -482,8 +482,8 @@ class SSHClient (object):
                     if not two_factor:
                         return
                     break
-                except SSHException:
-                    saved_exception = sys.exc_info()[1]
+                except SSHException as e:
+                    saved_exception = e
 
         if not two_factor:
             keyfiles = []
@@ -514,8 +514,8 @@ class SSHClient (object):
                     if not two_factor:
                         return
                     break
-                except (SSHException, IOError):
-                    saved_exception = sys.exc_info()[1]
+                except (SSHException, IOError) as e:
+                    saved_exception = e
 
         if password is not None:
             try:

@@ -216,8 +216,7 @@ class Packetizer (object):
                 n -= len(x)
             except socket.timeout:
                 got_timeout = True
-            except socket.error:
-                e = sys.exc_info()[1]
+            except socket.error as e:
                 # on Linux, sometimes instead of socket.timeout, we get
                 # EAGAIN.  this is a bug in recent (> 2.6.9) kernels but
                 # we need to work around it.
@@ -246,8 +245,7 @@ class Packetizer (object):
                 n = self.__socket.send(out)
             except socket.timeout:
                 retry_write = True
-            except socket.error:
-                e = sys.exc_info()[1]
+            except socket.error as e:
                 if (type(e.args) is tuple) and (len(e.args) > 0) and (e.args[0] == errno.EAGAIN):
                     retry_write = True
                 elif (type(e.args) is tuple) and (len(e.args) > 0) and (e.args[0] == errno.EINTR):
@@ -472,8 +470,7 @@ class Packetizer (object):
                 break
             except socket.timeout:
                 pass
-            except EnvironmentError:
-                e = sys.exc_info()[1]
+            except EnvironmentError as e:
                 if ((type(e.args) is tuple) and (len(e.args) > 0) and
                     (e.args[0] == errno.EINTR)):
                     pass

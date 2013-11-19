@@ -295,8 +295,8 @@ class Transport (threading.Thread):
                     sock = socket.socket(af, socket.SOCK_STREAM)
                     try:
                         retry_on_signal(lambda: sock.connect((hostname, port)))
-                    except socket.error:
-                        reason = str(sys.exc_info()[1])
+                    except socket.error as e:
+                        reason = str(e)
                     else:
                         break
             else:
@@ -1184,10 +1184,9 @@ class Transport (threading.Thread):
             return []
         try:
             return self.auth_handler.wait_for_response(my_event)
-        except BadAuthenticationType:
-            x = sys.exc_info()[1]
+        except BadAuthenticationType as e:
             # if password auth isn't allowed, but keyboard-interactive *is*, try to fudge it
-            if not fallback or ('keyboard-interactive' not in x.allowed_types):
+            if not fallback or ('keyboard-interactive' not in e.allowed_types):
                 raise
             try:
                 def handler(title, instructions, fields):
@@ -1203,7 +1202,7 @@ class Transport (threading.Thread):
                 return self.auth_interactive(username, handler)
             except SSHException:
                 # attempt failed; just raise the original exception
-                raise x
+                raise e
         return None
 
     def auth_publickey(self, username, key, event=None):
@@ -1608,26 +1607,22 @@ class Transport (threading.Thread):
                         msg.add_byte(cMSG_UNIMPLEMENTED)
                         msg.add_int(m.seqno)
                         self._send_message(msg)
-            except SSHException:
-                e = sys.exc_info()[1]
+            except SSHException as e:
                 self._log(ERROR, 'Exception: ' + str(e))
                 self._log(ERROR, util.tb_strings())
                 self.saved_exception = e
-            except EOFError:
-                e = sys.exc_info()[1]
+            except EOFError as e:
                 self._log(DEBUG, 'EOF in transport thread')
                 #self._log(DEBUG, util.tb_strings())
                 self.saved_exception = e
-            except socket.error:
-                e = sys.exc_info()[1]
+            except socket.error as e:
                 if type(e.args) is tuple:
                     emsg = '%s (%d)' % (e.args[1], e.args[0])
                 else:
                     emsg = e.args
                 self._log(ERROR, 'Socket exception: ' + emsg)
                 self.saved_exception = e
-            except Exception:
-                e = sys.exc_info()[1]
+            except Exception as e:
                 self._log(ERROR, 'Unknown exception: ' + str(e))
                 self._log(ERROR, util.tb_strings())
                 self.saved_exception = e
@@ -1687,9 +1682,8 @@ class Transport (threading.Thread):
                 buf = self.packetizer.readline(timeout)
             except ProxyCommandFailure:
                 raise
-            except Exception:
-                x = sys.exc_info()[1]
-                raise SSHException('Error reading SSH protocol banner' + str(x))
+            except Exception as e:
+                raise SSHException('Error reading SSH protocol banner' + str(e))
             if buf[:4] == 'SSH-':
                 break
             self._log(DEBUG, 'Banner: ' + buf)

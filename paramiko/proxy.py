@@ -60,8 +60,7 @@ class ProxyCommand(object):
         """
         try:
             self.process.stdin.write(content)
-        except IOError:
-            e = sys.exc_info()[1]
+        except IOError as e:
             # There was a problem with the child process. It probably
             # died and we can't proceed. The best option here is to
             # raise an exception informing the user that the informed
@@ -81,8 +80,7 @@ class ProxyCommand(object):
         """
         try:
             return os.read(self.process.stdout.fileno(), size)
-        except IOError:
-            e = sys.exc_info()[1]
+        except IOError as e:
             raise ProxyCommandFailure(' '.join(self.cmd), e.strerror)
 
     def close(self):
