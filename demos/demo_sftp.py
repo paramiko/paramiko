@@ -104,7 +104,8 @@ try:
     print('created demo_sftp_folder/ on the server')
     
     # copy the README back here
-    data = sftp.open('demo_sftp_folder/README', 'r').read()
+    with sftp.open('demo_sftp_folder/README', 'r') as f:
+        data = f.read()
     with open('README_demo_sftp', 'w') as f:
         f.write(data)
     print('copied README back here')
