@@ -63,8 +63,8 @@ def inflate_long(s, always_positive=False):
         out -= (long(1) << (8 * len(s)))
     return out
 
-deflate_zero = 0 if PY3 else zero_byte
-deflate_ff = 0xff if PY3 else max_byte
+deflate_zero = zero_byte if PY2 else 0
+deflate_ff = max_byte if PY2 else 0xff
 
 def deflate_long(n, add_sign_padding=True):
     "turns a long-int into a normalized byte string (adapted from Crypto.Util.number)"

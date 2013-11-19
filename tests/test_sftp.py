@@ -72,8 +72,8 @@ FOLDER = os.environ.get('TEST_FOLDER', 'temp-testing000')
 sftp = None
 tc = None
 g_big_file_test = True
-unicode_folder = eval(compile(r"'\u00fcnic\u00f8de'" if PY3 else r"u'\u00fcnic\u00f8de'", 'test_sftp.py', 'eval'))
-utf8_folder = eval(compile(r"b'/\xc3\xbcnic\xc3\xb8\x64\x65'" if PY3 else r"'/\xc3\xbcnic\xc3\xb8\x64\x65'", 'test_sftp.py', 'eval'))
+unicode_folder = eval(compile(r"u'\u00fcnic\u00f8de'" if PY2 else r"'\u00fcnic\u00f8de'", 'test_sftp.py', 'eval'))
+utf8_folder = eval(compile(r"'/\xc3\xbcnic\xc3\xb8\x64\x65'" if PY2 else r"b'/\xc3\xbcnic\xc3\xb8\x64\x65'", 'test_sftp.py', 'eval'))
 
 def get_sftp():
     global sftp

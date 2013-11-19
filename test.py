@@ -29,7 +29,7 @@ import unittest
 from optparse import OptionParser
 import paramiko
 import threading
-from paramiko.py3compat import PY3
+from paramiko.py3compat import PY2
 
 sys.path.append('tests')
 
@@ -149,10 +149,10 @@ def main():
     # TODO: make that not a problem, jeez
     for thread in threading.enumerate():
         if thread is not threading.currentThread():
-            if PY3:
-                thread._stop()
-            else:
+            if PY2:
                 thread._Thread__stop()
+            else:
+                thread._stop()
     # Exit correctly
     if not result.wasSuccessful():
         sys.exit(1)

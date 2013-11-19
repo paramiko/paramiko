@@ -23,7 +23,7 @@ Some unit tests for public/private key objects.
 from binascii import hexlify, unhexlify
 import unittest
 from paramiko import RSAKey, DSSKey, ECDSAKey, Message, util
-from paramiko.common import rng, StringIO, byte_chr, b, PY3, bytes
+from paramiko.common import rng, StringIO, byte_chr, b, bytes
 from tests.util import test_path
 
 # from openssh's ssh-keygen

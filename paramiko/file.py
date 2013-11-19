@@ -92,8 +92,8 @@ class BufferedFile (object):
         self._wbuffer = BytesIO()
         return
 
-    if PY3:
-        def __next__(self):
+    if PY2:
+        def next(self):
             """
             Returns the next line from the input, or raises L{StopIteration} when
             EOF is hit.  Unlike python file objects, it's okay to mix calls to
@@ -109,7 +109,7 @@ class BufferedFile (object):
                 raise StopIteration
             return line
     else:
-        def next(self):
+        def __next__(self):
             """
             Returns the next line from the input, or raises L{StopIteration} when
             EOF is hit.  Unlike python file objects, it's okay to mix calls to

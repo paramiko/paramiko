@@ -131,12 +131,12 @@ cr_byte = byte_chr(13)
 linefeed_byte = byte_chr(10)
 crlf = cr_byte + linefeed_byte
 
-if PY3:
-    cr_byte_value = 13
-    linefeed_byte_value = 10
-else:
+if PY2:
     cr_byte_value = cr_byte
     linefeed_byte_value = linefeed_byte
+else:
+    cr_byte_value = 13
+    linefeed_byte_value = 10
 
 
 def asbytes(s):
