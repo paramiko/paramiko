@@ -561,10 +561,9 @@ class SFTPClient (BaseSFTP):
 
         @since: 1.4
         """
-        fr = self.file(remotepath, 'wb')
-        fr.set_pipelined(True)
-        size = 0
-        try:
+        with self.file(remotepath, 'wb') as fr:
+            fr.set_pipelined(True)
+            size = 0
             while True:
                 data = fl.read(32768)
                 fr.write(data)
@@ -573,8 +572,6 @@ class SFTPClient (BaseSFTP):
                     callback(size, file_size)
                 if len(data) == 0:
                     break
-        finally:
-            fr.close()
         if confirm:
             s = self.stat(remotepath)
             if s.st_size != size:
@@ -610,11 +607,8 @@ class SFTPClient (BaseSFTP):
         @since: 1.4
         """
         file_size = os.stat(localpath).st_size
-        fl = open(localpath, 'rb')
-        try:
+        with open(localpath, 'rb') as fl:
             return self.putfo(fl, remotepath, os.stat(localpath).st_size, callback, confirm)
-        finally:
-            fl.close()
 
     def getfo(self, remotepath, fl, callback=None):
         """
@@ -636,10 +630,9 @@ class SFTPClient (BaseSFTP):
 
         @since: 1.4
         """
-        fr = self.open(remotepath, 'rb')
-        file_size = self.stat(remotepath).st_size
-        fr.prefetch()
-        try:
+        with self.open(remotepath, 'rb') as fr:
+            file_size = self.stat(remotepath).st_size
+            fr.prefetch()
             size = 0
             while True:
                 data = fr.read(32768)
@@ -649,8 +642,6 @@ class SFTPClient (BaseSFTP):
                     callback(size, file_size)
                 if len(data) == 0:
                     break
-        finally:
-            fr.close()
         return size
 
     def get(self, remotepath, localpath, callback=None):
@@ -671,11 +662,8 @@ class SFTPClient (BaseSFTP):
         @since: 1.4
         """
         file_size = self.stat(remotepath).st_size
-        fl = open(localpath, 'wb')
-        try:
+        with open(localpath, 'wb') as fl:
             size = self.getfo(remotepath, fl, callback)
-        finally:
-            fl.close()
         s = os.stat(localpath)
         if s.st_size != size:
             raise IOError('size mismatch in get!  %d != %d' % (s.st_size, size))

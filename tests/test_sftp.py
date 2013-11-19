@@ -186,10 +186,9 @@ class SFTPTest (unittest.TestCase):
         """
         verify that a file can be created and written, and the size is correct.
         """
-        f = sftp.open(FOLDER + '/duck.txt', 'w')
         try:
-            f.write(ARTICLE)
-            f.close()
+            with sftp.open(FOLDER + '/duck.txt', 'w') as f:
+                f.write(ARTICLE)
             self.assertEqual(sftp.stat(FOLDER + '/duck.txt').st_size, 1483)
         finally:
             sftp.remove(FOLDER + '/duck.txt')
@@ -209,40 +208,36 @@ class SFTPTest (unittest.TestCase):
         """
         verify that a file can be opened for append, and tell() still works.
         """
-        f = sftp.open(FOLDER + '/append.txt', 'w')
         try:
-            f.write('first line\nsecond line\n')
-            self.assertEqual(f.tell(), 23)
-            f.close()
+            with sftp.open(FOLDER + '/append.txt', 'w') as f:
+                f.write('first line\nsecond line\n')
+                self.assertEqual(f.tell(), 23)
 
-            f = sftp.open(FOLDER + '/append.txt', 'a+')
-            f.write('third line!!!\n')
-            self.assertEqual(f.tell(), 37)
-            self.assertEqual(f.stat().st_size, 37)
-            f.seek(-26, f.SEEK_CUR)
-            self.assertEqual(f.readline(), 'second line\n')
+            with sftp.open(FOLDER + '/append.txt', 'a+') as f:
+                f.write('third line!!!\n')
+                self.assertEqual(f.tell(), 37)
+                self.assertEqual(f.stat().st_size, 37)
+                f.seek(-26, f.SEEK_CUR)
+                self.assertEqual(f.readline(), 'second line\n')
         finally:
-            f.close()
             sftp.remove(FOLDER + '/append.txt')
 
     def test_5_rename(self):
         """
         verify that renaming a file works.
         """
-        f = sftp.open(FOLDER + '/first.txt', 'w')
         try:
-            f.write('content!\n')
-            f.close()
+            with sftp.open(FOLDER + '/first.txt', 'w') as f:
+                f.write('content!\n')
             sftp.rename(FOLDER + '/first.txt', FOLDER + '/second.txt')
             try:
                 f = sftp.open(FOLDER + '/first.txt', 'r')
                 self.assertTrue(False, 'no exception on reading nonexistent file')
             except IOError:
                 pass
-            f = sftp.open(FOLDER + '/second.txt', 'r')
-            f.seek(-6, f.SEEK_END)
-            self.assertEqual(u(f.read(4)), 'tent')
-            f.close()
+            with sftp.open(FOLDER + '/second.txt', 'r') as f:
+                f.seek(-6, f.SEEK_END)
+                self.assertEqual(u(f.read(4)), 'tent')
         finally:
             try:
                 sftp.remove(FOLDER + '/first.txt')
@@ -300,10 +295,9 @@ class SFTPTest (unittest.TestCase):
         """
         verify that the setstat functions (chown, chmod, utime, truncate) work.
         """
-        f = sftp.open(FOLDER + '/special', 'w')
         try:
-            f.write('x' * 1024)
-            f.close()
+            with sftp.open(FOLDER + '/special', 'w') as f:
+                f.write('x' * 1024)
 
             stat = sftp.stat(FOLDER + '/special')
             sftp.chmod(FOLDER + '/special', (stat.st_mode & ~o777) | o600)
@@ -339,40 +333,38 @@ class SFTPTest (unittest.TestCase):
         verify that the fsetstat functions (chown, chmod, utime, truncate)
         work on open files.
         """
-        f = sftp.open(FOLDER + '/special', 'w')
         try:
-            f.write('x' * 1024)
-            f.close()
+            with sftp.open(FOLDER + '/special', 'w') as f:
+                f.write('x' * 1024)
 
-            f = sftp.open(FOLDER + '/special', 'r+')
-            stat = f.stat()
-            f.chmod((stat.st_mode & ~o777) | o600)
-            stat = f.stat()
+            with sftp.open(FOLDER + '/special', 'r+') as f:
+                stat = f.stat()
+                f.chmod((stat.st_mode & ~o777) | o600)
+                stat = f.stat()
 
-            expected_mode = o600
-            if sys.platform == 'win32':
-                # chmod not really functional on windows
-                expected_mode = o666
-            if sys.platform == 'cygwin':
-                # even worse.
-                expected_mode = o644
-            self.assertEqual(stat.st_mode & o777, expected_mode)
-            self.assertEqual(stat.st_size, 1024)
+                expected_mode = o600
+                if sys.platform == 'win32':
+                    # chmod not really functional on windows
+                    expected_mode = o666
+                if sys.platform == 'cygwin':
+                    # even worse.
+                    expected_mode = o644
+                self.assertEqual(stat.st_mode & o777, expected_mode)
+                self.assertEqual(stat.st_size, 1024)
 
-            mtime = stat.st_mtime - 3600
-            atime = stat.st_atime - 1800
-            f.utime((atime, mtime))
-            stat = f.stat()
-            self.assertEqual(stat.st_mtime, mtime)
-            if sys.platform not in ('win32', 'cygwin'):
-                self.assertEqual(stat.st_atime, atime)
+                mtime = stat.st_mtime - 3600
+                atime = stat.st_atime - 1800
+                f.utime((atime, mtime))
+                stat = f.stat()
+                self.assertEqual(stat.st_mtime, mtime)
+                if sys.platform not in ('win32', 'cygwin'):
+                    self.assertEqual(stat.st_atime, atime)
 
-            # can't really test chown, since we'd have to know a valid uid.
+                # can't really test chown, since we'd have to know a valid uid.
 
-            f.truncate(512)
-            stat = f.stat()
-            self.assertEqual(stat.st_size, 512)
-            f.close()
+                f.truncate(512)
+                stat = f.stat()
+                self.assertEqual(stat.st_size, 512)
         finally:
             sftp.remove(FOLDER + '/special')
 
@@ -384,25 +376,23 @@ class SFTPTest (unittest.TestCase):
         buffering is reset on 'seek'.
         """
         try:
-            f = sftp.open(FOLDER + '/duck.txt', 'w')
-            f.write(ARTICLE)
-            f.close()
+            with sftp.open(FOLDER + '/duck.txt', 'w') as f:
+                f.write(ARTICLE)
 
-            f = sftp.open(FOLDER + '/duck.txt', 'r+')
-            line_number = 0
-            loc = 0
-            pos_list = []
-            for line in f:
-                line_number += 1
-                pos_list.append(loc)
-                loc = f.tell()
-            f.seek(pos_list[6], f.SEEK_SET)
-            self.assertEqual(f.readline(), 'Nouzilly, France.\n')
-            f.seek(pos_list[17], f.SEEK_SET)
-            self.assertEqual(f.readline()[:4], 'duck')
-            f.seek(pos_list[10], f.SEEK_SET)
-            self.assertEqual(f.readline(), 'duck types were equally resistant to exogenous insulin compared with chicken.\n')
-            f.close()
+            with sftp.open(FOLDER + '/duck.txt', 'r+') as f:
+                line_number = 0
+                loc = 0
+                pos_list = []
+                for line in f:
+                    line_number += 1
+                    pos_list.append(loc)
+                    loc = f.tell()
+                f.seek(pos_list[6], f.SEEK_SET)
+                self.assertEqual(f.readline(), 'Nouzilly, France.\n')
+                f.seek(pos_list[17], f.SEEK_SET)
+                self.assertEqual(f.readline()[:4], 'duck')
+                f.seek(pos_list[10], f.SEEK_SET)
+                self.assertEqual(f.readline(), 'duck types were equally resistant to exogenous insulin compared with chicken.\n')
         finally:
             sftp.remove(FOLDER + '/duck.txt')
 
@@ -411,17 +401,15 @@ class SFTPTest (unittest.TestCase):
         create a text file, seek back and change part of it, and verify that the
         changes worked.
         """
-        f = sftp.open(FOLDER + '/testing.txt', 'w')
         try:
-            f.write('hello kitty.\n')
-            f.seek(-5, f.SEEK_CUR)
-            f.write('dd')
-            f.close()
+            with sftp.open(FOLDER + '/testing.txt', 'w') as f:
+                f.write('hello kitty.\n')
+                f.seek(-5, f.SEEK_CUR)
+                f.write('dd')
 
             self.assertEqual(sftp.stat(FOLDER + '/testing.txt').st_size, 13)
-            f = sftp.open(FOLDER + '/testing.txt', 'r')
-            data = f.read(20)
-            f.close()
+            with sftp.open(FOLDER + '/testing.txt', 'r') as f:
+                data = f.read(20)
             self.assertEqual(data, 'hello kiddy.\n')
         finally:
             sftp.remove(FOLDER + '/testing.txt')
@@ -434,16 +422,14 @@ class SFTPTest (unittest.TestCase):
             # skip symlink tests on windows
             return
 
-        f = sftp.open(FOLDER + '/original.txt', 'w')
         try:
-            f.write('original\n')
-            f.close()
+            with sftp.open(FOLDER + '/original.txt', 'w') as f:
+                f.write('original\n')
             sftp.symlink('original.txt', FOLDER + '/link.txt')
             self.assertEqual(sftp.readlink(FOLDER + '/link.txt'), 'original.txt')
 
-            f = sftp.open(FOLDER + '/link.txt', 'r')
-            self.assertEqual(f.readlines(), ['original\n'])
-            f.close()
+            with sftp.open(FOLDER + '/link.txt', 'r') as f:
+                self.assertEqual(f.readlines(), ['original\n'])
 
             cwd = sftp.normalize('.')
             if cwd[-1] == '/':
@@ -477,18 +463,16 @@ class SFTPTest (unittest.TestCase):
         """
         verify that buffered writes are automatically flushed on seek.
         """
-        f = sftp.open(FOLDER + '/happy.txt', 'w', 1)
         try:
-            f.write('full line.\n')
-            f.write('partial')
-            f.seek(9, f.SEEK_SET)
-            f.write('?\n')
-            f.close()
+            with sftp.open(FOLDER + '/happy.txt', 'w', 1) as f:
+                f.write('full line.\n')
+                f.write('partial')
+                f.seek(9, f.SEEK_SET)
+                f.write('?\n')
 
-            f = sftp.open(FOLDER + '/happy.txt', 'r')
-            self.assertEqual(f.readline(), 'full line?\n')
-            self.assertEqual(f.read(7), 'partial')
-            f.close()
+            with sftp.open(FOLDER + '/happy.txt', 'r') as f:
+                self.assertEqual(f.readline(), 'full line?\n')
+                self.assertEqual(f.read(7), 'partial')
         finally:
             try:
                 sftp.remove(FOLDER + '/happy.txt')
@@ -544,9 +528,8 @@ class SFTPTest (unittest.TestCase):
             self.assertEqual(['beta'], sftp.listdir('.'))
 
             sftp.chdir('beta')
-            f = sftp.open('fish', 'w')
-            f.write('hello\n')
-            f.close()
+            with sftp.open('fish', 'w') as f:
+                f.write('hello\n')
             sftp.chdir('..')
             self.assertEqual(['fish'], sftp.listdir('beta'))
             sftp.chdir('..')
@@ -575,17 +558,15 @@ class SFTPTest (unittest.TestCase):
         fd, localname = mkstemp()
         os.close(fd)
         text = b('All I wanted was a plastic bunny rabbit.\n')
-        f = open(localname, 'wb')
-        f.write(text)
-        f.close()
+        with open(localname, 'wb') as f:
+            f.write(text)
         saved_progress = []
         def progress_callback(x, y):
             saved_progress.append((x, y))
         sftp.put(localname, FOLDER + '/bunny.txt', progress_callback)
 
-        f = sftp.open(FOLDER + '/bunny.txt', 'rb')
-        self.assertEqual(text, f.read(128))
-        f.close()
+        with sftp.open(FOLDER + '/bunny.txt', 'rb') as f:
+            self.assertEqual(text, f.read(128))
         self.assertEqual((41, 41), saved_progress[-1])
 
         os.unlink(localname)
@@ -594,9 +575,8 @@ class SFTPTest (unittest.TestCase):
         saved_progress = []
         sftp.get(FOLDER + '/bunny.txt', localname, progress_callback)
 
-        f = open(localname, 'rb')
-        self.assertEqual(text, f.read(128))
-        f.close()
+        with open(localname, 'rb') as f:
+            self.assertEqual(text, f.read(128))
         self.assertEqual((41, 41), saved_progress[-1])
 
         os.unlink(localname)
@@ -608,20 +588,18 @@ class SFTPTest (unittest.TestCase):
         (it's an sftp extension that we support, and may be the only ones who
         support it.)
         """
-        f = sftp.open(FOLDER + '/kitty.txt', 'w')
-        f.write('here kitty kitty' * 64)
-        f.close()
+        with sftp.open(FOLDER + '/kitty.txt', 'w') as f:
+            f.write('here kitty kitty' * 64)
 
         try:
-            f = sftp.open(FOLDER + '/kitty.txt', 'r')
-            sum = f.check('sha1')
-            self.assertEqual('91059CFC6615941378D413CB5ADAF4C5EB293402', u(hexlify(sum)).upper())
-            sum = f.check('md5', 0, 512)
-            self.assertEqual('93DE4788FCA28D471516963A1FE3856A', u(hexlify(sum)).upper())
-            sum = f.check('md5', 0, 0, 510)
-            self.assertEqual('EB3B45B8CD55A0707D99B177544A319F373183D241432BB2157AB9E46358C4AC90370B5CADE5D90336FC1716F90B36D6',
-                              u(hexlify(sum)).upper())
-            f.close()
+            with sftp.open(FOLDER + '/kitty.txt', 'r') as f:
+                sum = f.check('sha1')
+                self.assertEqual('91059CFC6615941378D413CB5ADAF4C5EB293402', u(hexlify(sum)).upper())
+                sum = f.check('md5', 0, 512)
+                self.assertEqual('93DE4788FCA28D471516963A1FE3856A', u(hexlify(sum)).upper())
+                sum = f.check('md5', 0, 0, 510)
+                self.assertEqual('EB3B45B8CD55A0707D99B177544A319F373183D241432BB2157AB9E46358C4AC90370B5CADE5D90336FC1716F90B36D6',
+                                  u(hexlify(sum)).upper())
         finally:
             sftp.unlink(FOLDER + '/kitty.txt')
 
@@ -645,9 +623,8 @@ class SFTPTest (unittest.TestCase):
         """
         verify that unicode strings are encoded into utf8 correctly.
         """
-        f = sftp.open(FOLDER + '/something', 'w')
-        f.write('okay')
-        f.close()
+        with sftp.open(FOLDER + '/something', 'w') as f:
+            f.write('okay')
 
         try:
             sftp.rename(FOLDER + '/something', FOLDER + '/' + unicode_folder)
@@ -660,9 +637,8 @@ class SFTPTest (unittest.TestCase):
         sftp.mkdir(FOLDER + '/' + unicode_folder)
         try:
             sftp.chdir(FOLDER + '/' + unicode_folder)
-            f = sftp.open('something', 'w')
-            f.write('okay')
-            f.close()
+            with sftp.open('something', 'w') as f:
+                f.write('okay')
             sftp.unlink('something')
         finally:
             sftp.chdir()
@@ -675,14 +651,12 @@ class SFTPTest (unittest.TestCase):
         f = sftp.open(FOLDER + '/zero', 'w')
         f.close()
         try:
-            f = sftp.open(FOLDER + '/zero', 'r')
-            f.readv([(0, 12)])
-            f.close()
+            with sftp.open(FOLDER + '/zero', 'r') as f:
+                f.readv([(0, 12)])
 
-            f = sftp.open(FOLDER + '/zero', 'r')
-            f.prefetch()
-            f.read(100)
-            f.close()
+            with sftp.open(FOLDER + '/zero', 'r') as f:
+                f.prefetch()
+                f.read(100)
         finally:
             sftp.unlink(FOLDER + '/zero')
 
@@ -695,9 +669,8 @@ class SFTPTest (unittest.TestCase):
         fd, localname = mkstemp()
         os.close(fd)
         text = 'All I wanted was a plastic bunny rabbit.\n'
-        f = open(localname, 'w')
-        f.write(text)
-        f.close()
+        with open(localname, 'w') as f:
+            f.write(text)
         saved_progress = []
         def progress_callback(x, y):
             saved_progress.append((x, y))
@@ -705,9 +678,8 @@ class SFTPTest (unittest.TestCase):
 
         self.assertEqual(SFTPAttributes().attr, res.attr)
 
-        f = sftp.open(FOLDER + '/bunny.txt', 'r')
-        self.assertEqual(text, f.read(128))
-        f.close()
+        with sftp.open(FOLDER + '/bunny.txt', 'r') as f:
+            self.assertEqual(text, f.read(128))
         self.assertEqual((41, 41), saved_progress[-1])
 
         os.unlink(localname)
@@ -719,19 +691,17 @@ class SFTPTest (unittest.TestCase):
 
         does not work except through paramiko.  :(  openssh fails.
         """
-        f = sftp.open(FOLDER + '/append.txt', 'a')
         try:
-            f.write('first line\nsecond line\n')
-            f.seek(11, f.SEEK_SET)
-            f.write('third line\n')
-            f.close()
+            with sftp.open(FOLDER + '/append.txt', 'a') as f:
+                f.write('first line\nsecond line\n')
+                f.seek(11, f.SEEK_SET)
+                f.write('third line\n')
 
-            f = sftp.open(FOLDER + '/append.txt', 'r')
-            self.assertEqual(f.stat().st_size, 34)
-            self.assertEqual(f.readline(), 'first line\n')
-            self.assertEqual(f.readline(), 'second line\n')
-            self.assertEqual(f.readline(), 'third line\n')
-            f.close()
+            with sftp.open(FOLDER + '/append.txt', 'r') as f:
+                self.assertEqual(f.stat().st_size, 34)
+                self.assertEqual(f.readline(), 'first line\n')
+                self.assertEqual(f.readline(), 'second line\n')
+                self.assertEqual(f.readline(), 'third line\n')
         finally:
             sftp.remove(FOLDER + '/append.txt')
 

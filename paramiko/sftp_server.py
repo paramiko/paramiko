@@ -166,11 +166,8 @@ class SFTPServer (BaseSFTP, SubsystemHandler):
         if attr._flags & attr.FLAG_AMTIME:
             os.utime(filename, (attr.st_atime, attr.st_mtime))
         if attr._flags & attr.FLAG_SIZE:
-            f = open(filename, 'w+')
-            try:
+            with open(filename, 'w+') as f:
                 f.truncate(attr.st_size)
-            finally:
-                f.close()
     set_file_attr = staticmethod(set_file_attr)
 
 

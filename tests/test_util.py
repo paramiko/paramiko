@@ -142,9 +142,8 @@ class UtilTest(ParamikoTest):
         self.assertEqual(hex, '9110e2f6793b69363e58173e9436b13a5a4b339005741d5c680e505f57d871347b4239f14fb5c46e857d5e100424873ba849ac699cea98d729e57b3e84378e8b')
 
     def test_5_host_keys(self):
-        f = open('hostfile.temp', 'w')
-        f.write(test_hosts_file)
-        f.close()
+        with open('hostfile.temp', 'w') as f:
+            f.write(test_hosts_file)
         try:
             hostdict = paramiko.util.load_host_keys('hostfile.temp')
             self.assertEqual(2, len(hostdict))

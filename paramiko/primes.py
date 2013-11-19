@@ -113,8 +113,7 @@ class ModulusPack (object):
         @raise IOError: passed from any file operations that fail.
         """
         self.pack = {}
-        f = open(filename, 'r')
-        try:
+        with open(filename, 'r') as f:
             for line in f:
                 line = line.strip()
                 if (len(line) == 0) or (line[0] == '#'):
@@ -123,8 +122,6 @@ class ModulusPack (object):
                     self._parse_modulus(line)
                 except:
                     continue
-        finally:
-            f.close()
 
     def get_modulus(self, min, prefer, max):
         bitsizes = sorted(self.pack.keys())

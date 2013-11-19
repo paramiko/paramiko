@@ -96,7 +96,8 @@ try:
         sftp.mkdir("demo_sftp_folder")
     except IOError:
         print('(assuming demo_sftp_folder/ already exists)')
-    sftp.open('demo_sftp_folder/README', 'w').write('This was created by demo_sftp.py.\n')
+    with sftp.open('demo_sftp_folder/README', 'w') as f:
+        f.write('This was created by demo_sftp.py.\n')
     with open('demo_sftp.py', 'r') as f:
         data = f.read()
     sftp.open('demo_sftp_folder/demo_sftp.py', 'w').write(data)

@@ -172,8 +172,7 @@ class HostKeys (MutableMapping):
 
         @raise IOError: if there was an error reading the file
         """
-        f = open(filename, 'r')
-        try:
+        with open(filename, 'r') as f:
             for lineno, line in enumerate(f):
                 line = line.strip()
                 if (len(line) == 0) or (line[0] == '#'):
@@ -186,8 +185,6 @@ class HostKeys (MutableMapping):
                             e.hostnames.remove(h)
                     if len(e.hostnames):
                         self._entries.append(e)
-        finally:
-            f.close()
 
     def save(self, filename):
         """
@@ -203,14 +200,11 @@ class HostKeys (MutableMapping):
 
         @since: 1.6.1
         """
-        f = open(filename, 'w')
-        try:
+        with open(filename, 'w') as f:
             for e in self._entries:
                 line = e.to_line()
                 if line:
                     f.write(line)
-        finally:
-            f.close()
 
     def lookup(self, hostname):
         """

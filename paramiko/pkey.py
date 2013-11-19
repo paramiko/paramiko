@@ -282,11 +282,8 @@ class PKey (object):
             encrypted, and C{password} is C{None}.
         @raise SSHException: if the key file is invalid.
         """
-        f = open(filename, 'r')
-        try:
+        with open(filename, 'r') as f:
             data = self._read_private_key(tag, f, password)
-        finally:
-            f.close()
         return data
 
     def _read_private_key(self, tag, f, password=None):
@@ -354,13 +351,10 @@ class PKey (object):
 
         @raise IOError: if there was an error writing the file.
         """
-        f = open(filename, 'w', o600)
-        try:
+        with open(filename, 'w', o600) as f:
             # grrr... the mode doesn't always take hold
             os.chmod(filename, o600)
             self._write_private_key(tag, f, data, password)
-        finally:
-            f.close()
 
     def _write_private_key(self, tag, f, data, password=None):
         f.write('-----BEGIN %s PRIVATE KEY-----\n' % tag)

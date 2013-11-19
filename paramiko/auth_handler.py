@@ -93,7 +93,7 @@ class AuthHandler (object):
             self._request_auth()
         finally:
             self.transport.lock.release()
-    
+
     def auth_interactive(self, username, handler, event, submethods=''):
         """
         response_list = handler(title, instructions, prompt_list)
@@ -108,7 +108,7 @@ class AuthHandler (object):
             self._request_auth()
         finally:
             self.transport.lock.release()
-    
+
     def abort(self):
         if self.auth_event is not None:
             self.auth_event.set()
