@@ -49,6 +49,20 @@ class BufferedPipe (object):
         self._buffer = array.array('B')
         self._closed = False
 
+    if PY2:
+        def _buffer_frombytes(self, data):
+            self._buffer.fromstring(data)
+
+        def _buffer_tobytes(self, limit=None):
+            return self._buffer[:limit].tostring()
+    else:
+        def _buffer_frombytes(self, data):
+            self._buffer.frombytes(data)
+
+        def _buffer_tobytes(self, limit=None):
+            return self._buffer[:limit].tobytes()
+
+
     def set_event(self, event):
         """
         Set an event on this buffer.  When data is ready to be read (or the
@@ -76,7 +90,7 @@ class BufferedPipe (object):
         try:
             if self._event is not None:
                 self._event.set()
-            self._buffer.fromstring(data)
+            self._buffer_frombytes(b(data))
             self._cv.notifyAll()
         finally:
             self._lock.release()
@@ -143,12 +157,12 @@ class BufferedPipe (object):
 
             # something's in the buffer and we have the lock!
             if len(self._buffer) <= nbytes:
-                out = self._buffer.tostring()
+                out = self._buffer_tobytes()
                 del self._buffer[:]
                 if (self._event is not None) and not self._closed:
                     self._event.clear()
             else:
-                out = self._buffer[:nbytes].tostring()
+                out = self._buffer_tobytes(nbytes)
                 del self._buffer[:nbytes]
         finally:
             self._lock.release()
@@ -164,7 +178,7 @@ class BufferedPipe (object):
         """
         self._lock.acquire()
         try:
-            out = self._buffer.tostring()
+            out = self._buffer_tobytes()
             del self._buffer[:]
             if (self._event is not None) and not self._closed:
                 self._event.clear()
