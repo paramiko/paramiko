@@ -218,7 +218,7 @@ class AgentClientProxy(object):
                 # probably a dangling env var: the ssh agent is gone
                 return
         elif sys.platform == 'win32':
-            from . import win_pageant
+            import paramiko.win_pageant as win_pageant
             if win_pageant.can_talk_to_agent():
                 conn = win_pageant.PageantConnection()
             else:
