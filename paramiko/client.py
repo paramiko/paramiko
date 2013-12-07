@@ -489,16 +489,16 @@ class SSHClient (object):
             keyfiles = []
 
             if look_for_keys:
-                potential_keyfiles = (
+                possible_keyfiles = (
                 	(RSAKey, os.path.expanduser('~/.ssh/id_rsa')),
                 	(DSSKey, os.path.expanduser('~/.ssh/id_dsa')),
                 	# look in ~/ssh/ for windows users:
                 	(RSAKey, os.path.expanduser('~/ssh/id_rsa')),
                 	(DSSKey, os.path.expanduser('~/ssh/id_dsa')),
                 )
-                for potential in potential_keyfiles:
-    	            if os.path.isfile(potential[1]):
-    	                keyfiles.append(potential)
+                for possible in possible_keyfiles:
+    	            if os.path.isfile(possible[1]):
+    	                keyfiles.append(possible)
 
             for pkey_class, filename in keyfiles:
                 try:
