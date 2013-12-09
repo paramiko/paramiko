@@ -244,7 +244,44 @@ class ServerInterface (object):
         @rtype: int or L{InteractiveQuery}
         """
         return AUTH_FAILED
-    
+
+    def check_auth_gssapi_with_mic(self, username,
+                                   gss_authenticated=AUTH_FAILED,
+                                   cc_file=None):
+        '''
+        Authenticate the given user to the server if he is a valid krb5
+        principal.
+
+        @param username: The username of the authenticating client
+        @type username: String
+        @param gss_authenticated: The result of the krb5 authentication
+        @type gss_authenticated: Integer
+        @param cc_filename: The krb5 client credentials cache filename
+        @type cc_filename: String
+        @return: L{AUTH_FAILED} if the user is not authenticated otherwise
+                 L{AUTH_SUCCESSFUL}
+        @rtype: Integer
+        @note: Kerberos credential delegation is not supported.
+        @see: ssh_gss
+        '''
+        if gss_authenticated == AUTH_SUCCESSFUL:
+            return AUTH_SUCCESSFUL
+        return AUTH_FAILED
+
+    def enable_auth_gssapi_with_mic(self):
+        '''
+        Overwrite this function in your SSH server to enable GSSAPI
+        authentication.
+        The default implementation always returns false.
+
+        @return: True if GSSAPI authentication is enabled otherwise false
+        @rtype: Boolean
+        @see: ssh_gss
+        '''
+        UseGSSAPI = False
+        GSSAPICleanupCredentials = False
+        return UseGSSAPI
+
     def check_auth_interactive_response(self, responses):
         """
         Continue or finish an interactive authentication challenge, if

@@ -576,7 +576,6 @@ class Channel (object):
             if self._pipe is not None:
                 self._pipe.close()
                 self._pipe = None
-
             if not self.active or self.closed:
                 return
             msgs = self._close_internal()

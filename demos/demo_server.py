@@ -65,9 +65,21 @@ class Server (paramiko.ServerInterface):
         if (username == 'robey') and (key == self.good_pub_key):
             return paramiko.AUTH_SUCCESSFUL
         return paramiko.AUTH_FAILED
+    
+    def check_auth_gssapi_with_mic(self, username,
+                                   gss_authenticated=paramiko.AUTH_FAILED,
+                                   cc_file=None):
+        if gss_authenticated == paramiko.AUTH_SUCCESSFUL:
+            return paramiko.AUTH_SUCCESSFUL
+        return paramiko.AUTH_FAILED
+
+    def enable_auth_gssapi_with_mic(self):
+        UseGSSAPI = True
+        GSSAPICleanupCredentials = True
+        return UseGSSAPI
 
     def get_allowed_auths(self, username):
-        return 'password,publickey'
+        return 'gssapi-with-mic, password,publickey'
 
     def check_channel_shell_request(self, channel):
         self.event.set()
