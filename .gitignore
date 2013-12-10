@@ -5,3 +5,6 @@ dist/
 paramiko.egg-info/
 test.log
 docs/
+demos/*.log
+.*
+/demo_simple.log
