@@ -25,7 +25,7 @@ Credential delegation is not supported in server mode,
 GSS-API key exchange is supported, but not implemented in Paramiko.
 To Use this module, you need the following additional python packages:
 U{pyasn1 >= 0.1.7 <https://pypi.python.org/pypi/pyasn1>},
-U{python-gssapi >= 0.3.0 (Unix) <https://pypi.python.org/pypi/python-gssapi>},
+U{python-gssapi >= 0.4.0 (Unix) <https://pypi.python.org/pypi/python-gssapi>},
 U{pywin32 2.1.8 (Windows) <sourceforge.net/projects/pywin32/>}.
 
 @summary: SSH2 GSS-API / SSPI authentication module
