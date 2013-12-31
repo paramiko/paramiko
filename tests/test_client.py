@@ -26,6 +26,7 @@ import time
 import unittest
 import weakref
 from binascii import hexlify
+from cStringIO import StringIO
 
 import paramiko
 
@@ -210,3 +211,41 @@ class SSHClientTest (unittest.TestCase):
             time.sleep(0.1)
         self.assert_(p() is None)
 
+    def test_6_run(self):
+        """Test client.run method."""
+
+        host_key = paramiko.RSAKey.from_private_key_file('tests/test_rsa.key')
+        public_host_key = paramiko.RSAKey(data=str(host_key))
+
+        self.tc = paramiko.SSHClient()
+        self.tc.get_host_keys().add('[%s]:%d' % (self.addr, self.port), 'ssh-rsa', public_host_key)
+        self.tc.connect(self.addr, self.port, username='slowdive', password='pygmalion')
+
+        self.event.wait(1.0)
+
+        stdin = StringIO('test stdin data')
+        stdout = StringIO()
+        stderr = StringIO()
+
+        client_thread = threading.Thread(target=self.tc.run,
+                                         args=('yes', ),
+                                         kwargs={'stdin': stdin,
+                                                 'stdout': stdout,
+                                                 'stderr': stderr})
+        client_thread.start()
+        schan = self.ts.accept(1.0)
+
+        stdin_data = schan.recv(1024)
+        schan.send('Stdout 1\n')
+        schan.send_stderr('Stderr 1\n')
+        schan.send('Stdout 2\n')
+        schan.send_stderr('Stderr 2\n')
+        schan.close()
+
+        client_thread.join()
+
+        stdout.seek(0)
+        stderr.seek(0)
+        self.assertEqual('Stdout 1\nStdout 2\n', stdout.read())
+        self.assertEqual('Stderr 1\nStderr 2\n', stderr.read())
+        self.assertEqual('test stdin data', stdin_data)
