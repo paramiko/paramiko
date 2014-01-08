@@ -20,6 +20,7 @@
 Some unit tests for SSHClient.
 """
 
+from __future__ import with_statement # Python 2.5 support
 import socket
 import threading
 import time
@@ -206,7 +207,9 @@ class SSHClientTest (unittest.TestCase):
         self.assertEquals(public_host_key, client.get_host_keys()[host_id]['ssh-rsa'])
 
         client.save_host_keys(localname)
-        self.assertEquals(len(host_id) + 210, os.path.getsize(localname))
+
+        with open(localname) as fd:
+            assert host_id in fd.read()
 
         os.unlink(localname)
 
