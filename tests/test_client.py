@@ -20,11 +20,14 @@
 Some unit tests for SSHClient.
 """
 
+from __future__ import with_statement # Python 2.5 support
 import socket
 import threading
 import time
 import unittest
 import weakref
+import warnings
+import os
 from binascii import hexlify
 
 import paramiko
@@ -184,7 +187,33 @@ class SSHClientTest (unittest.TestCase):
         self.assertEquals(1, len(self.tc.get_host_keys()))
         self.assertEquals(public_host_key, self.tc.get_host_keys()['[%s]:%d' % (self.addr, self.port)]['ssh-rsa'])
 
-    def test_5_cleanup(self):
+    def test_5_save_host_keys(self):
+        """
+        verify that SSHClient correctly saves a known_hosts file.
+        """
+        warnings.filterwarnings('ignore', 'tempnam.*')
+
+        host_key = paramiko.RSAKey.from_private_key_file('tests/test_rsa.key')
+        public_host_key = paramiko.RSAKey(data=str(host_key))
+        localname = os.tempnam()
+
+        client = paramiko.SSHClient()
+        self.assertEquals(0, len(client.get_host_keys()))
+
+        host_id = '[%s]:%d' % (self.addr, self.port)
+
+        client.get_host_keys().add(host_id, 'ssh-rsa', public_host_key)
+        self.assertEquals(1, len(client.get_host_keys()))
+        self.assertEquals(public_host_key, client.get_host_keys()[host_id]['ssh-rsa'])
+
+        client.save_host_keys(localname)
+
+        with open(localname) as fd:
+            assert host_id in fd.read()
+
+        os.unlink(localname)
+
+    def test_6_cleanup(self):
         """
         verify that when an SSHClient is collected, its transport (and the
         transport's packetizer) is closed.
