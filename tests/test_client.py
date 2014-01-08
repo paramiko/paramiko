@@ -199,12 +199,14 @@ class SSHClientTest (unittest.TestCase):
         client = paramiko.SSHClient()
         self.assertEquals(0, len(client.get_host_keys()))
 
-        client.get_host_keys().add('[%s]:%d' % (self.addr, self.port), 'ssh-rsa', public_host_key)
+        host_id = '[%s]:%d' % (self.addr, self.port)
+
+        client.get_host_keys().add(host_id, 'ssh-rsa', public_host_key)
         self.assertEquals(1, len(client.get_host_keys()))
-        self.assertEquals(public_host_key, client.get_host_keys()['[%s]:%d' % (self.addr, self.port)]['ssh-rsa'])
+        self.assertEquals(public_host_key, client.get_host_keys()[host_id]['ssh-rsa'])
 
         client.save_host_keys(localname)
-        self.assertEquals(len('[%s]:%d' % (self.addr, self.port)) + 210, os.path.getsize(localname))
+        self.assertEquals(len(host_id) + 210, os.path.getsize(localname))
 
         os.unlink(localname)
 
