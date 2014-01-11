@@ -5,7 +5,9 @@ python:
 install:
   # Self-install for setup.py-driven deps
   - pip install -e .
-  - pip install coveralls
+  # Dev (doc/test running) requirements
+  - pip install coveralls # For coveralls.io specifically
+  - pip install -r dev-requirements.txt
 script: coverage run --source=paramiko test.py --verbose
 notifications:
   irc:

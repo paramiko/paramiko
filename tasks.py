@@ -1,6 +1,7 @@
 from invoke import Collection
 from invocations import docs, testing
 
+
 # TODO: let from_module specify new name
 api = Collection.from_module(docs)
 # TODO: maybe allow rolling configuration into it too heh
