@@ -26,7 +26,7 @@ Unit Tests for the GSS-API / SSPI SSHv2 Authentication (gssapi-with-mic)
 @contact: U{https://github.com/SebastianDeiss/paramiko/issues}
 @organization: science + computing ag
                (U{EMail<mailto:a.kruis@science-computing.de>})
-@copyright: (C) 2003-2007  Robey Pointer, (C) 2013 U{science + computing ag
+@copyright: (C) 2003-2007  Robey Pointer, (C) 2013-2014 U{science + computing ag
             <https://www.science-computing.de>}
 @license: GNU Lesser General Public License (LGPL)
 

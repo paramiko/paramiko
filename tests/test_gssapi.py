@@ -25,7 +25,7 @@ Test the used APIs for GSS-API / SSPI authentication
 @contact: U{https://github.com/SebastianDeiss/paramiko/issues}
 @organization: science + computing ag
                (U{EMail<mailto:a.kruis@science-computing.de>})
-@copyright: (C) 2013 U{science + computing ag
+@copyright: (C) 2013-2014 U{science + computing ag
             <https://www.science-computing.de>}
 @license: GNU Lesser General Public License (LGPL)
 
