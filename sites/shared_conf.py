@@ -13,7 +13,8 @@ rss_description = 'Paramiko project news'
 
 # Alabaster theme
 html_theme_path = [alabaster.get_path()]
-html_static_path = ['_static']
+# Paths relative to invoking conf.py - not this shared file
+html_static_path = ['../_shared_static']
 html_theme = 'alabaster'
 html_theme_options = {
     'logo': 'logo.png',

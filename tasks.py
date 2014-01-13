@@ -6,15 +6,15 @@ from invocations import docs, testing
 api = Collection.from_module(docs)
 # TODO: maybe allow rolling configuration into it too heh
 api.configure({
-    'sphinx.source': 'api',
-    'sphinx.target': 'api/_build',
+    'sphinx.source': 'sites/docs',
+    'sphinx.target': 'sites/docs/_build',
 })
-api.name = 'api'
-site = Collection.from_module(docs)
-site.name = 'site'
-site.configure({
-    'sphinx.source': 'site',
-    'sphinx.target': 'site/_build',
+api.name = 'docs'
+main = Collection.from_module(docs)
+main.name = 'main'
+main.configure({
+    'sphinx.source': 'sites/main',
+    'sphinx.target': 'sites/main/_build',
 })
 
-ns = Collection(testing.test, api=api, site=site)
+ns = Collection(testing.test, docs=api, main=main)
