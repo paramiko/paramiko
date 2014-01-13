@@ -23,6 +23,7 @@ Common constants and global variables.
 MSG_DISCONNECT, MSG_IGNORE, MSG_UNIMPLEMENTED, MSG_DEBUG, MSG_SERVICE_REQUEST, \
     MSG_SERVICE_ACCEPT = range(1, 7)
 MSG_KEXINIT, MSG_NEWKEYS = range(20, 22)
+
 MSG_USERAUTH_REQUEST, MSG_USERAUTH_FAILURE, MSG_USERAUTH_SUCCESS, \
         MSG_USERAUTH_BANNER = range(50, 54)
 MSG_USERAUTH_PK_OK = 60
@@ -32,7 +33,9 @@ MSG_CHANNEL_OPEN, MSG_CHANNEL_OPEN_SUCCESS, MSG_CHANNEL_OPEN_FAILURE, \
     MSG_CHANNEL_WINDOW_ADJUST, MSG_CHANNEL_DATA, MSG_CHANNEL_EXTENDED_DATA, \
     MSG_CHANNEL_EOF, MSG_CHANNEL_CLOSE, MSG_CHANNEL_REQUEST, \
     MSG_CHANNEL_SUCCESS, MSG_CHANNEL_FAILURE = range(90, 101)
-
+MSG_USERAUTH_GSSAPI_RESPONSE, MSG_USERAUTH_GSSAPI_TOKEN = range(60, 62)
+MSG_USERAUTH_GSSAPI_EXCHANGE_COMPLETE, MSG_USERAUTH_GSSAPI_ERROR,\
+MSG_USERAUTH_GSSAPI_ERRTOK, MSG_USERAUTH_GSSAPI_MIC = range(63, 67)
 
 # for debugging:
 MSG_NAMES = {
@@ -49,6 +52,8 @@ MSG_NAMES = {
     32: 'kex32',
     33: 'kex33',
     34: 'kex34',
+    40: 'kex40',
+    41: 'kex41',
     MSG_USERAUTH_REQUEST: 'userauth-request',
     MSG_USERAUTH_FAILURE: 'userauth-failure',
     MSG_USERAUTH_SUCCESS: 'userauth-success',
@@ -68,7 +73,13 @@ MSG_NAMES = {
     MSG_CHANNEL_CLOSE: 'channel-close',
     MSG_CHANNEL_REQUEST: 'channel-request',
     MSG_CHANNEL_SUCCESS: 'channel-success',
-    MSG_CHANNEL_FAILURE: 'channel-failure'
+    MSG_CHANNEL_FAILURE: 'channel-failure',
+    MSG_USERAUTH_GSSAPI_RESPONSE: 'userauth-gssapi-response',
+    MSG_USERAUTH_GSSAPI_TOKEN: 'userauth-gssapi-token',
+    MSG_USERAUTH_GSSAPI_EXCHANGE_COMPLETE: 'userauth-gssapi-exchange-complete',
+    MSG_USERAUTH_GSSAPI_ERROR: 'userauth-gssapi-error',
+    MSG_USERAUTH_GSSAPI_ERRTOK: 'userauth-gssapi-error-token',
+    MSG_USERAUTH_GSSAPI_MIC: 'userauth-gssapi-mic'
     }
 
 

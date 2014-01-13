@@ -352,7 +352,6 @@ class Packetizer (object):
         if self.__dump_packets:
             self._log(DEBUG, util.format_binary(packet, 'IN: '));
         packet = leftover + packet
-
         if self.__mac_size_in > 0:
             mac = post_packet[:self.__mac_size_in]
             mac_payload = struct.pack('>II', self.__sequence_number_in, packet_size) + packet
