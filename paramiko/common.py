@@ -19,12 +19,13 @@
 """
 Common constants and global variables.
 """
+from paramiko.py3compat import *
 
 MSG_DISCONNECT, MSG_IGNORE, MSG_UNIMPLEMENTED, MSG_DEBUG, MSG_SERVICE_REQUEST, \
     MSG_SERVICE_ACCEPT = range(1, 7)
 MSG_KEXINIT, MSG_NEWKEYS = range(20, 22)
 MSG_USERAUTH_REQUEST, MSG_USERAUTH_FAILURE, MSG_USERAUTH_SUCCESS, \
-        MSG_USERAUTH_BANNER = range(50, 54)
+    MSG_USERAUTH_BANNER = range(50, 54)
 MSG_USERAUTH_PK_OK = 60
 MSG_USERAUTH_INFO_REQUEST, MSG_USERAUTH_INFO_RESPONSE = range(60, 62)
 MSG_GLOBAL_REQUEST, MSG_REQUEST_SUCCESS, MSG_REQUEST_FAILURE = range(80, 83)
@@ -33,6 +34,10 @@ MSG_CHANNEL_OPEN, MSG_CHANNEL_OPEN_SUCCESS, MSG_CHANNEL_OPEN_FAILURE, \
     MSG_CHANNEL_EOF, MSG_CHANNEL_CLOSE, MSG_CHANNEL_REQUEST, \
     MSG_CHANNEL_SUCCESS, MSG_CHANNEL_FAILURE = range(90, 101)
 
+for key in list(locals().keys()):
+    if key.startswith('MSG_'):
+        locals()['c' + key] = byte_chr(locals()[key])
+del key
 
 # for debugging:
 MSG_NAMES = {
@@ -69,7 +74,7 @@ MSG_NAMES = {
     MSG_CHANNEL_REQUEST: 'channel-request',
     MSG_CHANNEL_SUCCESS: 'channel-success',
     MSG_CHANNEL_FAILURE: 'channel-failure'
-    }
+}
 
 
 # authentication request return codes:
@@ -118,6 +123,42 @@ else:
     import logging
     PY22 = False
 
+zero_byte = byte_chr(0)
+one_byte = byte_chr(1)
+four_byte = byte_chr(4)
+max_byte = byte_chr(0xff)
+cr_byte = byte_chr(13)
+linefeed_byte = byte_chr(10)
+crlf = cr_byte + linefeed_byte
+
+if PY2:
+    cr_byte_value = cr_byte
+    linefeed_byte_value = linefeed_byte
+else:
+    cr_byte_value = 13
+    linefeed_byte_value = 10
+
+
+def asbytes(s):
+    if not isinstance(s, bytes_types):
+        if isinstance(s, string_types):
+            s = b(s)
+        else:
+            try:
+                s = s.asbytes()
+            except Exception:
+                raise Exception('Unknown type')
+    return s
+
+xffffffff = long(0xffffffff)
+x80000000 = long(0x80000000)
+o666 = 438
+o660 = 432
+o644 = 420
+o600 = 384
+o777 = 511
+o700 = 448
+o70 = 56
 
 DEBUG = logging.DEBUG
 INFO = logging.INFO

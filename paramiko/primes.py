@@ -24,6 +24,7 @@ from Crypto.Util import number
 
 from paramiko import util
 from paramiko.ssh_exception import SSHException
+from paramiko.common import *
 
 
 def _generate_prime(bits, rng):
@@ -33,7 +34,7 @@ def _generate_prime(bits, rng):
         # loop catches the case where we increment n into a higher bit-range
         x = rng.read((bits+7) // 8)
         if hbyte_mask > 0:
-            x = chr(ord(x[0]) & hbyte_mask) + x[1:]
+            x = byte_mask(x[0], hbyte_mask) + x[1:]
         n = util.inflate_long(x, 1)
         n |= 1
         n |= (1 << (bits - 1))
@@ -46,7 +47,7 @@ def _generate_prime(bits, rng):
 def _roll_random(rng, n):
     "returns a random # from 0 to N-1"
     bits = util.bit_length(n-1)
-    bytes = (bits + 7) // 8
+    byte_count = (bits + 7) // 8
     hbyte_mask = pow(2, bits % 8) - 1
 
     # so here's the plan:
@@ -56,9 +57,9 @@ def _roll_random(rng, n):
     # fits, so i can't guarantee that this loop will ever finish, but the odds
     # of it looping forever should be infinitesimal.
     while True:
-        x = rng.read(bytes)
+        x = rng.read(byte_count)
         if hbyte_mask > 0:
-            x = chr(ord(x[0]) & hbyte_mask) + x[1:]
+            x = byte_mask(x[0], hbyte_mask) + x[1:]
         num = util.inflate_long(x, 1)
         if num < n:
             break
@@ -112,20 +113,18 @@ class ModulusPack (object):
         @raise IOError: passed from any file operations that fail.
         """
         self.pack = {}
-        f = open(filename, 'r')
-        for line in f:
-            line = line.strip()
-            if (len(line) == 0) or (line[0] == '#'):
-                continue
-            try:
-                self._parse_modulus(line)
-            except:
-                continue
-        f.close()
+        with open(filename, 'r') as f:
+            for line in f:
+                line = line.strip()
+                if (len(line) == 0) or (line[0] == '#'):
+                    continue
+                try:
+                    self._parse_modulus(line)
+                except:
+                    continue
 
     def get_modulus(self, min, prefer, max):
-        bitsizes = self.pack.keys()
-        bitsizes.sort()
+        bitsizes = sorted(self.pack.keys())
         if len(bitsizes) == 0:
             raise SSHException('no moduli available')
         good = -1

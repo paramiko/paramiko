@@ -21,13 +21,12 @@
 Functions for communicating with Pageant, the basic windows ssh agent program.
 """
 
-from __future__ import with_statement
-
 import struct
 import threading
 import array
 import platform
 import ctypes.wintypes
+from paramiko.util import *
 
 from . import _winapi
 
@@ -82,7 +81,7 @@ def _query_pageant(msg):
     with pymap:
         pymap.write(msg)
         # Create an array buffer containing the mapped filename
-        char_buffer = array.array("c", map_name + '\0')
+        char_buffer = array.array("c", b(map_name) + zero_byte)
         char_buffer_address, char_buffer_size = char_buffer.buffer_info()
         # Create a string to use for the SendMessage function call
         cds = COPYDATASTRUCT(_AGENT_COPYDATA_ID, char_buffer_size,
