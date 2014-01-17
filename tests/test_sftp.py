@@ -26,7 +26,6 @@ do test file operations in (so no existing files will be harmed).
 from binascii import hexlify
 import os
 import warnings
-import sys
 import threading
 import unittest
 from tempfile import mkstemp
@@ -74,6 +73,7 @@ g_big_file_test = True
 # this test is the only line in the entire program that has to be treated specially to support Py3.2
 unicode_folder = eval(compile(r"u'\u00fcnic\u00f8de'" if PY2 else r"'\u00fcnic\u00f8de'", 'test_sftp.py', 'eval'))
 utf8_folder = b'/\xc3\xbcnic\xc3\xb8\x64\x65'
+
 
 def get_sftp():
     global sftp
@@ -591,7 +591,7 @@ class SFTPTest (unittest.TestCase):
                 self.assertEqual('93DE4788FCA28D471516963A1FE3856A', u(hexlify(sum)).upper())
                 sum = f.check('md5', 0, 0, 510)
                 self.assertEqual('EB3B45B8CD55A0707D99B177544A319F373183D241432BB2157AB9E46358C4AC90370B5CADE5D90336FC1716F90B36D6',
-                                  u(hexlify(sum)).upper())
+                                 u(hexlify(sum)).upper())
         finally:
             sftp.unlink(FOLDER + '/kitty.txt')
 
@@ -674,6 +674,25 @@ class SFTPTest (unittest.TestCase):
 
         os.unlink(localname)
         sftp.unlink(FOLDER + '/bunny.txt')
+
+    def test_O_getcwd(self):
+        """
+        verify that chdir/getcwd work.
+        """
+        self.assertEqual(None, sftp.getcwd())
+        root = sftp.normalize('.')
+        if root[-1] != '/':
+            root += '/'
+        try:
+            sftp.mkdir(FOLDER + '/alpha')
+            sftp.chdir(FOLDER + '/alpha')
+            self.assertEqual('/' + FOLDER + '/alpha', sftp.getcwd())
+        finally:
+            sftp.chdir(root)
+            try:
+                sftp.rmdir(FOLDER + '/alpha')
+            except:
+                pass
 
     def XXX_test_M_seek_append(self):
         """
