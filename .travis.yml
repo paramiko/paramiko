@@ -11,5 +11,9 @@ script: python test.py --verbose
 notifications:
   irc:
     channels: "irc.freenode.org#paramiko"
+    template:
+      - "%{repository}@%{branch}: %{message} (%{build_url})"
     on_success: change
     on_failure: change
+    use_notice: true
+  email: false

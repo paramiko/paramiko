@@ -12,6 +12,29 @@ Issues noted as "Fabric #NN" can be found at https://github.com/fabric/fabric/.
 Releases
 ========
 
+v1.12.1 (8th Jan 2014)
+----------------------
+
+* #176: Fix AttributeError bugs in known_hosts file (re)loading. Thanks to
+  Nathan Scowcroft for the patch & Martin Blumenstingl for the initial test
+  case.
+* #225: Note ecdsa requirement in README. Thanks to Amaury Rodriguez for the
+  catch.
+
+v1.11.3 (8th Jan 2014)
+----------------------
+
+* #176: Fix AttributeError bugs in known_hosts file (re)loading. Thanks to
+  Nathan Scowcroft for the patch & Martin Blumenstingl for the initial test
+  case.
+
+v1.10.5 (8th Jan 2014)
+----------------------
+
+* #176: Fix AttributeError bugs in known_hosts file (re)loading. Thanks to
+  Nathan Scowcroft for the patch & Martin Blumenstingl for the initial test
+  case.
+
 v1.12.0 (27th Sep 2013)
 -----------------------
 
