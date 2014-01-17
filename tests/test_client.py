@@ -21,16 +21,14 @@ Some unit tests for SSHClient.
 """
 
 import socket
+from tempfile import mkstemp
 import threading
-import time
 import unittest
 import weakref
 import warnings
 import os
-from binascii import hexlify
 from tests.util import test_path
 import paramiko
-from paramiko.py3compat import b
 
 
 class NullServer (paramiko.ServerInterface):
@@ -67,8 +65,6 @@ class SSHClientTest (unittest.TestCase):
         self.sockl.listen(1)
         self.addr, self.port = self.sockl.getsockname()
         self.event = threading.Event()
-        thread = threading.Thread(target=self._run)
-        thread.start()
 
     def tearDown(self):
         for attr in "tc ts socks sockl".split():
@@ -83,11 +79,11 @@ class SSHClientTest (unittest.TestCase):
         server = NullServer()
         self.ts.start_server(self.event, server)
 
-
     def test_1_client(self):
         """
         verify that the SSHClient stuff works too.
         """
+        threading.Thread(target=self._run).start()
         host_key = paramiko.RSAKey.from_private_key_file(test_path('test_rsa.key'))
         public_host_key = paramiko.RSAKey(data=host_key.asbytes())
 
@@ -121,6 +117,7 @@ class SSHClientTest (unittest.TestCase):
         """
         verify that SSHClient works with a DSA key.
         """
+        threading.Thread(target=self._run).start()
         host_key = paramiko.RSAKey.from_private_key_file(test_path('test_rsa.key'))
         public_host_key = paramiko.RSAKey(data=host_key.asbytes())
 
@@ -154,6 +151,7 @@ class SSHClientTest (unittest.TestCase):
         """
         verify that SSHClient accepts and tries multiple key files.
         """
+        threading.Thread(target=self._run).start()
         host_key = paramiko.RSAKey.from_private_key_file(test_path('test_rsa.key'))
         public_host_key = paramiko.RSAKey(data=host_key.asbytes())
 
@@ -171,6 +169,7 @@ class SSHClientTest (unittest.TestCase):
         """
         verify that SSHClient's AutoAddPolicy works.
         """
+        threading.Thread(target=self._run).start()
         host_key = paramiko.RSAKey.from_private_key_file(test_path('test_rsa.key'))
         public_host_key = paramiko.RSAKey(data=host_key.asbytes())
 
@@ -193,9 +192,10 @@ class SSHClientTest (unittest.TestCase):
         """
         warnings.filterwarnings('ignore', 'tempnam.*')
 
-        host_key = paramiko.RSAKey.from_private_key_file('tests/test_rsa.key')
-        public_host_key = paramiko.RSAKey(data=str(host_key))
-        localname = os.tempnam()
+        host_key = paramiko.RSAKey.from_private_key_file(test_path('test_rsa.key'))
+        public_host_key = paramiko.RSAKey(data=host_key.asbytes())
+        fd, localname = mkstemp()
+        os.close(fd)
 
         client = paramiko.SSHClient()
         self.assertEquals(0, len(client.get_host_keys()))
@@ -218,6 +218,7 @@ class SSHClientTest (unittest.TestCase):
         verify that when an SSHClient is collected, its transport (and the
         transport's packetizer) is closed.
         """
+        threading.Thread(target=self._run).start()
         host_key = paramiko.RSAKey.from_private_key_file(test_path('test_rsa.key'))
         public_host_key = paramiko.RSAKey(data=host_key.asbytes())
 
