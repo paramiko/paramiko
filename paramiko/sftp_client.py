@@ -531,7 +531,7 @@ class SFTPClient (BaseSFTP):
 
         @since: 1.4
         """
-        return u(self._cwd)
+        return self._cwd and u(self._cwd)
 
     def putfo(self, fl, remotepath, file_size=0, callback=None, confirm=True):
         """
