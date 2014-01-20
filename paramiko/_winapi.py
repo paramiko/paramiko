@@ -10,6 +10,11 @@ import ctypes
 import ctypes.wintypes
 import __builtin__
 
+try:
+        USHORT = ctypes.wintypes.USHORT
+except AttributeError:
+        USHORT = ctypes.c_ushort
+
 ######################
 # jaraco.windows.error
 
@@ -173,7 +178,7 @@ class SECURITY_DESCRIPTOR(ctypes.Structure):
 		PACL Dacl;
 		}   SECURITY_DESCRIPTOR;
 	"""
-	SECURITY_DESCRIPTOR_CONTROL = ctypes.wintypes.USHORT
+	SECURITY_DESCRIPTOR_CONTROL = USHORT
 	REVISION = 1
 
 	_fields_ = [

@@ -23,11 +23,11 @@ Functions for communicating with Pageant, the basic windows ssh agent program.
 
 from __future__ import with_statement
 
-import struct
-import threading
 import array
-import platform
 import ctypes.wintypes
+import platform
+import struct
+import thread
 
 from . import _winapi
 
@@ -74,7 +74,7 @@ def _query_pageant(msg):
         return None
 
     # create a name for the mmap
-    map_name = 'PageantRequest%08x' % threading.current_thread().ident
+    map_name = 'PageantRequest%08x' % thread.get_ident()
 
     pymap = _winapi.MemoryMap(map_name, _AGENT_MAX_MSGLEN,
         _winapi.get_security_attributes_for_user(),
