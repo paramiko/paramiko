@@ -19,7 +19,7 @@
 # along with Paramiko; if not, write to the Free Software Foundation, Inc.,
 # 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
 
-'''
+"""
 Unit Tests for the GSS-API / SSPI SSHv2 Authentication (gssapi-with-mic)
 
 @author: Sebastian Deiss
@@ -31,7 +31,7 @@ Unit Tests for the GSS-API / SSPI SSHv2 Authentication (gssapi-with-mic)
 @license: GNU Lesser General Public License (LGPL)
 
 Created on 04.12.2013
-'''
+"""
 
 import socket
 import threading
@@ -100,10 +100,10 @@ class GSSAuthTest(unittest.TestCase):
         self.ts.start_server(self.event, server)
 
     def test_1_gss_auth(self):
-        '''
+        """
         Verify that Paramiko can handle SSHv2 GSS-API / SSPI authentication
         (gssapi-with-mic) in client and server mode.
-        '''
+        """
         host_key = paramiko.RSAKey.from_private_key_file('tests/test_rsa.key')
         public_host_key = paramiko.RSAKey(data=str(host_key))
 

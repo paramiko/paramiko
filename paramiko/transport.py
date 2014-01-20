@@ -440,15 +440,15 @@ class Transport (threading.Thread):
         return SecurityOptions(self)
 
     def set_gss_host(self, gss_host):
-        '''
+        """
         Setter for C{gss_host} if GSS-API Key Exchange is performed.
 
         @param gss_host: The targets name in the kerberos database
                          Default: The name of the host to connect to
         @type gss_host: String
         @rtype: Void
-        '''
-        # We need the FQDN to get this working with SSPI:
+        """
+        # We need the FQDN to get this working with SSPI
         self.gss_host = socket.getfqdn(gss_host)
 
     def start_client(self, event=None):
@@ -1358,7 +1358,7 @@ class Transport (threading.Thread):
         return self.auth_handler.wait_for_response(my_event)
 
     def auth_gssapi_with_mic(self, username, gss_host, gss_deleg_creds):
-        '''
+        """
         Authenticate to the Server using GSS-API / SSPI.
 
         @param username: The username to authenticate as
@@ -1375,7 +1375,7 @@ class Transport (threading.Thread):
         @raise AuthenticationException: if the authentication failed (and no
             event was passed in)
         @raise SSHException: if there was a network error
-        '''
+        """
         if (not self.active) or (not self.initial_kex_done):
             # we should never try to authenticate unless we're on a secure link
             raise SSHException('No existing session')
@@ -1385,7 +1385,7 @@ class Transport (threading.Thread):
         return self.auth_handler.wait_for_response(my_event)
 
     def auth_gssapi_keyex(self, username):
-        '''
+        """
         Authenticate to the Server with GSS-API / SSPI if GSS-API Key Exchange
         was the used key exchange method.
 
@@ -1399,7 +1399,7 @@ class Transport (threading.Thread):
         @raise AuthenticationException: if the authentication failed (and no
             event was passed in)
         @raise SSHException: if there was a network error
-        '''
+        """
         if (not self.active) or (not self.initial_kex_done):
             # we should never try to authenticate unless we're on a secure link
             raise SSHException('No existing session')

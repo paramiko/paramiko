@@ -244,11 +244,11 @@ class AuthHandler (object):
                 self.transport._send_message(m)
                 ptype, m = self.transport.packetizer.read_message()
                 if ptype == MSG_USERAUTH_GSSAPI_RESPONSE:
-                    '''
+                    """
                     Read the mechanism selected by the server.
                     We send just the Kerberos V5 OID, so the server can only
                     respond with this OID.
-                    '''
+                    """
                     mech = m.get_string()
                     m = Message()
                     m.add_byte(chr(MSG_USERAUTH_GSSAPI_TOKEN))
@@ -264,11 +264,11 @@ class AuthHandler (object):
                                                                      mech,
                                                                      self.username,
                                                                      srv_token)
-                            '''
+                            """
                             After this step the GSSAPI should not return any token.
                             If it does, we keep sending the token to the server unitl
                             no more token is returned.
-                            '''
+                            """
                             if next_token is None:
                                 break
                             else:
@@ -283,11 +283,11 @@ class AuthHandler (object):
                     # send the MIC to the server
                     m.add_string(sshgss.ssh_get_mic(self.transport.session_id))
                 elif ptype == MSG_USERAUTH_GSSAPI_ERRTOK:
-                    '''
+                    """
                     RFC 4462 says we are not required to implement GSS-API error
                     messages.
                     @see: U{RFC 4462 Section 3.8<www.ietf.org/rfc/rfc4462.txt>}
-                    '''
+                    """
                     raise SSHException("Server returned an error token")
                 elif ptype == MSG_USERAUTH_GSSAPI_ERROR:
                     maj_status = m.get_int()
@@ -443,16 +443,16 @@ class AuthHandler (object):
                 return
         elif method == "gssapi-with-mic" and gss_auth:
             sshgss = GSSAuth(method)
-            '''
+            """
             OpenSSH sends just one OID. It's the Kerveros V5 OID and that's
             the only OID we support.
-            '''
+            """
             # read the number of OID mechanisms supported by the client
             mechs = m.get_int()
-            '''
+            """
             We can't accept more than one OID, so if the SSH client send more
             than one disconnect
-            '''
+            """
             if mechs > 1:
                 self.transport._log(INFO,
                                     'Disconnect: Received more than one GSS-API OID mechanism')
@@ -466,11 +466,11 @@ class AuthHandler (object):
                 self._disconnect_no_more_auth()
             # send the Kerberos V5 GSSAPI OID to the client
             supported_mech = sshgss.ssh_gss_oids("server")
-            '''
+            """
             RFC 4462 says we are not required to implement GSS-API error
             messages.
             @see: U{RFC 4462 Section 3.8 <www.ietf.org/rfc/rfc4462.txt>}
-            '''
+            """
             while True:
                 m = Message()
                 m.add_byte(chr(MSG_USERAUTH_GSSAPI_RESPONSE))
@@ -511,11 +511,11 @@ class AuthHandler (object):
                 self._send_auth_result(username, method, result)
                 raise
             if retval == 0:
-                '''
+                """
                  @todo: Implement client credential saving
                  The OpenSSH server is able to create a TGT with the delegated
                  client credentials, but this is not supported by GSS-API.
-                '''
+                """
                 result = AUTH_SUCCESSFUL
                 self.transport.server_object.check_auth_gssapi_with_mic(username,
                                                                         result)

@@ -335,11 +335,11 @@ class SSHClient (object):
         else:
             server_hostkey_name = "[%s]:%d" % (hostname, port)
 
-        '''
+        """
         If GSS-API Key Exchange is performed we are not required to check the
         host key, because the host is authenticated via GSS-API / SSPI as well
         as out client.
-        '''
+        """
         if not self._transport.use_gss_kex:
             our_server_key = self._system_host_keys.get(server_hostkey_name,
                                                          {}).get(keytype, None)
@@ -558,12 +558,12 @@ class SSHClient (object):
         elif two_factor:
             raise SSHException('Two-factor authentication requires a password')
 
-        '''
+        """
         Try GSS-API authentication (gssapi-with-mic) only if GSS-API Key
         Exchange is not performed, because if we use GSS-API for the key
         exchange, there is already a fully established GSS-API context, so
         why should we do that again?
-        '''
+        """
         if gss_auth and not gss_kex:
             try:
                 self._transport.auth_gssapi_with_mic(username, gss_host,
@@ -572,10 +572,10 @@ class SSHClient (object):
             except SSHException, e:
                 saved_exception = e
 
-        '''
+        """
         If GSS-API support and GSS-PI Key Exchange is enabled, we attempt
         authentication with gssapi-keyes.
-        '''
+        """
         if gss_auth and gss_kex:
             try:
                 self._transport.auth_gssapi_keyex(username)

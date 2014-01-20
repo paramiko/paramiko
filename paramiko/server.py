@@ -248,7 +248,7 @@ class ServerInterface (object):
     def check_auth_gssapi_with_mic(self, username,
                                    gss_authenticated=AUTH_FAILED,
                                    cc_file=None):
-        '''
+        """
         Authenticate the given user to the server if he is a valid krb5
         principal.
 
@@ -272,7 +272,7 @@ class ServerInterface (object):
                local kerberos library to make sure that the krb5_principal has
                an account on the server and is allowed to log in as a user.
         @see: U{http://www.unix.com/man-page/all/3/krb5_kuserok/}
-        '''
+        """
         if gss_authenticated == AUTH_SUCCESSFUL:
             return AUTH_SUCCESSFUL
         return AUTH_FAILED
@@ -280,7 +280,7 @@ class ServerInterface (object):
     def check_auth_gssapi_keyex(self, username,
                                 gss_authenticated=AUTH_FAILED,
                                 cc_file=None):
-        '''
+        """
         Authenticate the given user to the server if he is a valid krb5
         principal and GSS-API Key Exchange was performed.
         If GSS-API Key Exchange was not performed, this authentication method
@@ -306,13 +306,13 @@ class ServerInterface (object):
                local kerberos library to make sure that the krb5_principal has
                an account on the server and is allowed to log in as a user.
         @see: U{http://www.unix.com/man-page/all/3/krb5_kuserok/}
-        '''
+        """
         if gss_authenticated == AUTH_SUCCESSFUL:
             return AUTH_SUCCESSFUL
         return AUTH_FAILED
 
     def enable_auth_gssapi(self):
-        '''
+        """
         Overwrite this function in your SSH server to enable GSSAPI
         authentication.
         The default implementation always returns false.
@@ -320,7 +320,7 @@ class ServerInterface (object):
         @return: True if GSSAPI authentication is enabled otherwise false
         @rtype: Boolean
         @see: ssh_gss
-        '''
+        """
         UseGSSAPI = False
         GSSAPICleanupCredentials = False
         return UseGSSAPI

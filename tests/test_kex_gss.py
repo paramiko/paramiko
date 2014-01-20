@@ -19,7 +19,7 @@
 # along with Paramiko; if not, write to the Free Software Foundation, Inc.,
 # 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
 
-'''
+"""
 Unit Tests for the GSS-API / SSPI SSHv2 Diffie-Hellman Key Exchange and user
 authentication
 
@@ -32,7 +32,7 @@ authentication
 @license: GNU Lesser General Public License (LGPL)
 
 Created on 08.01.2014
-'''
+"""
 
 
 import socket
@@ -106,11 +106,11 @@ class GSSKexTest(unittest.TestCase):
         self.ts.start_server(self.event, server)
 
     def test_1_gsskex_and_auth(self):
-        '''
+        """
         Verify that Paramiko can handle SSHv2 GSS-API / SSPI authenticated
         Diffie-Hellman Key Exchange and user authentication with the GSS-API
         context created during key exchange.
-        '''
+        """
         host_key = paramiko.RSAKey.from_private_key_file('tests/test_rsa.key')
         public_host_key = paramiko.RSAKey(data=str(host_key))
 

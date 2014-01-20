@@ -18,7 +18,7 @@
 # along with Paramiko; if not, write to the Free Software Foundation, Inc.,
 # 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
 
-'''
+"""
 This module provides GSS-API / SSPI authentication for Paramiko as defined in
 RFC 4462 with the following restrictions:
 Credential delegation is not supported in server mode,
@@ -40,7 +40,7 @@ U{pywin32 2.1.8 (Windows) <sourceforge.net/projects/pywin32/>}.
 @see: L{kex_gss}
 
 Created on 07.11.2013
-'''
+"""
 
 import struct
 import os
@@ -59,10 +59,10 @@ except ImportError:
 from paramiko.common import MSG_USERAUTH_REQUEST
 from paramiko.ssh_exception import SSHException
 
-'''
+"""
 @var _API: constraint for the used API
 @type _API: String
-'''
+"""
 _API = "MIT"
 
 try:
@@ -77,7 +77,7 @@ except ImportError:
 
 
 def GSSAuth(auth_method, gss_deleg_creds=True):
-    '''
+    """
     Provide SSH2 GSS-API / SSPI authentication for Paramiko.
 
     @param auth_method: The name of the SSH authentication mechanism
@@ -96,7 +96,7 @@ def GSSAuth(auth_method, gss_deleg_creds=True):
            will be used and a L{_SSH_GSSAPI} object will be returned.
            If there is no supported API available,
            C{None} will be returned.
-    '''
+    """
     if _API == "MIT":
         return _SSH_GSSAPI(auth_method, gss_deleg_creds)
     elif _API == "SSPI" and os.name == "nt":
@@ -106,28 +106,28 @@ def GSSAuth(auth_method, gss_deleg_creds=True):
 
 
 class _SSH_GSSAuth(object):
-    '''
+    """
     Contains the shared variables and methods of L{_SSH_GSSAPI} and
     L{_SSH_SSPI}.
-    '''
+    """
     def __init__(self, auth_method, gss_deleg_creds):
-        '''
+        """
         @param auth_method: The name of the SSH authentication mechanism
                             (gssapi-with-mic or gss-keyex)
         @type auth_method: String
         @param gss_deleg_creds: Delegate client credentials or not
         @type gss_deleg_creds: Boolean
-        '''
+        """
         self._auth_method = auth_method
         self._gss_deleg_creds = gss_deleg_creds
         self._gss_host = None
         self._username = None
         self._session_id = None
         self._service = "ssh-connection"
-        '''
+        """
         OpenSSH supports Kerberos V5 mechanism only for GSS-API authentication,
         so we also support the krb5 mechanism only.
-        '''
+        """
         self._krb5_mech = "1.2.840.113554.1.2.2"
 
         # client mode
@@ -140,7 +140,7 @@ class _SSH_GSSAuth(object):
         self.cc_file = None
 
     def set_service(self, service):
-        '''
+        """
         This is just a setter to use a non default service.
         I added this method, because RFC 4462 doesn't specify "ssh-connection"
         as the only service value.
@@ -148,23 +148,23 @@ class _SSH_GSSAuth(object):
         @param service: The desired SSH service
         @type service: String
         @rtype: Void
-        '''
+        """
         if service.find("ssh-"):
             self._service = service
 
     def set_username(self, username):
-        '''
+        """
         Setter for C{username}. If GSS-API Key Exchange is performed, the
         username is not set by C{ssh_init_sec_context}.
 
         @param username: The name of the user who attempts to login
         @type username: String
         @rtype: Void
-        '''
+        """
         self._username = username
 
     def ssh_gss_oids(self, mode="client"):
-        '''
+        """
         This method returns a single OID, because we only support the
         Kerberos V5 mechanism.
 
@@ -176,7 +176,7 @@ class _SSH_GSSAuth(object):
         @note: In server mode we just return the OID length and the DER encoded
                OID.
         @rtype: Bytes
-        '''
+        """
         OIDs = self._make_uint32(1)
         krb5_OID = encoder.encode(ObjectIdentifier(self._krb5_mech))
         OID_len = self._make_uint32(len(krb5_OID))
@@ -185,14 +185,14 @@ class _SSH_GSSAuth(object):
         return OIDs + OID_len + krb5_OID
 
     def ssh_check_mech(self, desired_mech):
-        '''
+        """
         Check if the given OID is the Kerberos V5 OID (server mode).
 
         @param desired_mech: The desired GSS-API mechanism of the client
         @type desired_mech: String
         @return: C{True} if the given OID is supported, otherwise C{False}
         @rtype: Boolean
-        '''
+        """
         mech, __ = decoder.decode(desired_mech)
         if mech.__str__() != self._krb5_mech:
             return False
@@ -201,18 +201,18 @@ class _SSH_GSSAuth(object):
     # Internals
     #--------------------------------------------------------------------------
     def _make_uint32(self, integer):
-        '''
+        """
         Create a 32 bit unsigned integer (The byte sequence of an integer).
 
         @param integer: The integer value to convert
         @type integer: Integer
         @return: The byte sequence of an 32 bit integer
         @rtype: Bytes
-        '''
+        """
         return struct.pack("!I", integer)
 
     def _ssh_build_mic(self, session_id, username, service, auth_method):
-        '''
+        """
         Create the SSH2 MIC filed for gssapi-with-mic.
 
         @param session_id: The SSH session ID
@@ -231,7 +231,7 @@ class _SSH_GSSAuth(object):
                  string    service (ssh-connection),
                  string    authentication-method (gssapi-with-mic or gss-keyex)
         @rtype: Bytes
-        '''
+        """
         mic = self._make_uint32(len(session_id))
         mic += session_id
         mic += chr(MSG_USERAUTH_REQUEST)
@@ -245,20 +245,19 @@ class _SSH_GSSAuth(object):
 
 
 class _SSH_GSSAPI(_SSH_GSSAuth):
-    '''
+    """
     Implementation of the GSS-API MIT Kerberos Authentication for SSH2.
 
     @see: L{GSSAuth}
-    '''
+    """
     def __init__(self, auth_method, gss_deleg_creds):
-        '''
-
+        """
         @param auth_method: The name of the SSH authentication mechanism
                             (gssapi-with-mic or gss-keyex)
         @type auth_method: String
         @param gss_deleg_creds: Delegate client credentials or not
         @type gss_deleg_creds: Boolean
-        '''
+        """
         _SSH_GSSAuth.__init__(self, auth_method, gss_deleg_creds)
 
         if self._gss_deleg_creds:
@@ -273,7 +272,7 @@ class _SSH_GSSAPI(_SSH_GSSAuth):
 
     def ssh_init_sec_context(self, target, desired_mech=None,
                              username=None, recv_token=None):
-        '''
+        """
         Initialize a GSS-API context.
 
         @param username: The name of the user who attempts to login
@@ -291,7 +290,7 @@ class _SSH_GSSAPI(_SSH_GSSAuth):
         @return: A C{String} if the GSS-API has returned a token or C{None} if
                  no token was returned
         @rtype: String or None
-        '''
+        """
         self._username = username
         self._gss_host = target
         targ_name = gssapi.Name("host@" + self._gss_host,
@@ -318,7 +317,7 @@ class _SSH_GSSAPI(_SSH_GSSAuth):
         return token
 
     def ssh_get_mic(self, session_id, gss_kex=False):
-        '''
+        """
         Create the MIC token for a SSH2 message.
 
         @param session_id: The SSH session ID
@@ -333,7 +332,7 @@ class _SSH_GSSAPI(_SSH_GSSAuth):
                  message.
         @rtype: String
         @see: L{_ssh_build_mic}
-        '''
+        """
         self._session_id = session_id
         if not gss_kex:
             mic_field = self._ssh_build_mic(self._session_id,
@@ -347,7 +346,7 @@ class _SSH_GSSAPI(_SSH_GSSAuth):
         return mic_token
 
     def ssh_accept_sec_context(self, hostname, recv_token, username=None):
-        '''
+        """
         Accept a GSS-API context (server mode).
 
         @param hostname: The servers hostname
@@ -360,7 +359,7 @@ class _SSH_GSSAPI(_SSH_GSSAuth):
         @return: A C{String} if the GSS-API has returned a token or C{None} if
                  no token was returned
         @rtype: String or None
-        '''
+        """
         # hostname and username are not required for GSSAPI, but for SSPI
         self._gss_host = hostname
         self._username = username
@@ -371,7 +370,7 @@ class _SSH_GSSAPI(_SSH_GSSAuth):
         return token
 
     def ssh_check_mic(self, mic_token, session_id, username=None):
-        '''
+        """
         Verify the MIC token for a SSH2 message.
 
         @param mic_token: The MIC token received from the client
@@ -382,7 +381,7 @@ class _SSH_GSSAPI(_SSH_GSSAuth):
         @type username: String
         @return: 0 if the MIC check was successful and 1 if it fails
         @rtype: Integer
-        '''
+        """
         self._session_id = session_id
         self._username = username
         if self._username is not None:
@@ -402,18 +401,18 @@ class _SSH_GSSAPI(_SSH_GSSAuth):
 
     @property
     def credentials_delegated(self):
-        '''
+        """
         Checks if credentials are delegated (server mode).
 
         @return: C{True} if credentials are delegated, otherwise C{False}
         @rtype: Boolean
-        '''
+        """
         if self._gss_srv_ctxt.delegated_cred is not None:
             return True
         return False
 
     def save_client_creds(self, client_token):
-        '''
+        """
         Save the Client token in a file. This is used by the SSH server
         to store the client credentials if credentials are delegated
         (server mode).
@@ -422,24 +421,24 @@ class _SSH_GSSAPI(_SSH_GSSAuth):
         @type client_token: String
         @raise NotImplementedError: Credential delegation is currently not
                                     supported in server mode
-        '''
+        """
         raise NotImplementedError
 
 
 class _SSH_SSPI(_SSH_GSSAuth):
-    '''
+    """
     Implementation of the Microsoft SSPI Kerberos Authentication for SSH2.
 
     @see: L{GSSAuth}
-    '''
+    """
     def __init__(self, auth_method, gss_deleg_creds):
-        '''
+        """
         @param auth_method: The name of the SSH authentication mechanism
                             (gssapi-with-mic or gss-keyex)
         @type auth_method: String
         @param gss_deleg_creds: Delegate client credentials or not
         @type gss_deleg_creds: Boolean
-        '''
+        """
         _SSH_GSSAuth.__init__(self, auth_method, gss_deleg_creds)
 
         if self._gss_deleg_creds:
@@ -452,7 +451,7 @@ class _SSH_SSPI(_SSH_GSSAuth):
 
     def ssh_init_sec_context(self, target, desired_mech=None,
                              username=None, recv_token=None):
-        '''
+        """
         Initialize a SSPI context.
 
         @param username: The name of the user who attempts to login
@@ -470,7 +469,7 @@ class _SSH_SSPI(_SSH_GSSAuth):
         @return: A C{String} if the SSPI has returned a token or C{None} if
                  no token was returned
         @rtype: String or None
-        '''
+        """
         self._username = username
         self._gss_host = target
         targ_name = "host/" + self._gss_host
@@ -485,20 +484,20 @@ class _SSH_SSPI(_SSH_GSSAuth):
         error, token = self._gss_ctxt.authorize(recv_token)
         token = token[0].Buffer
         if error == 0:
-            '''
+            """
             if the status is GSS_COMPLETE (error = 0) the context is fully
             established an we can set _gss_ctxt_status to True.
-            '''
+            """
             self._gss_ctxt_status = True
             token = None
-            '''
+            """
             You won't get another token if the context is fully established,
             so i set token to None instead of ""
-            '''
+            """
         return token
 
     def ssh_get_mic(self, session_id, gss_kex=False):
-        '''
+        """
         Create the MIC token for a SSH2 message.
 
         @param session_id: The SSH session ID
@@ -513,7 +512,7 @@ class _SSH_SSPI(_SSH_GSSAuth):
                  message.
         @rtype: String
         @see: L{_ssh_build_mic}
-        '''
+        """
         self._session_id = session_id
         if not gss_kex:
             mic_field = self._ssh_build_mic(self._session_id,
@@ -527,7 +526,7 @@ class _SSH_SSPI(_SSH_GSSAuth):
         return mic_token
 
     def ssh_accept_sec_context(self, hostname, username, recv_token):
-        '''
+        """
         Accept a SSPI context (server mode).
 
         @param hostname: The servers FQDN
@@ -540,7 +539,7 @@ class _SSH_SSPI(_SSH_GSSAuth):
         @return: A C{String} if the SSPI has returned a token or C{None} if
                  no token was returned
         @rtype: String or None
-        '''
+        """
         self._gss_host = hostname
         self._username = username
         targ_name = "host/" + self._gss_host
@@ -553,7 +552,7 @@ class _SSH_SSPI(_SSH_GSSAuth):
         return token
 
     def ssh_check_mic(self, mic_token, session_id, username=None):
-        '''
+        """
         Verify the MIC token for a SSH2 message.
 
         @param mic_token: The MIC token received from the client
@@ -564,7 +563,7 @@ class _SSH_SSPI(_SSH_GSSAuth):
         @type username: String
         @return: 0 if the MIC check was successful
         @rtype: Integer
-        '''
+        """
         self._session_id = session_id
         self._username = username
         mic_status = 1
@@ -581,21 +580,21 @@ class _SSH_SSPI(_SSH_GSSAuth):
             # client mode
             mic_status = self._gss_ctxt.verify(self._session_id,
                                                mic_token)
-        '''
+        """
         The SSPI method C{verify} has no return value, so if no SSPI error
         is returned, set C{mic_status} to 0.
-        '''
+        """
         mic_status = 0
         return mic_status
 
     @property
     def credentials_delegated(self):
-        '''
+        """
         Checks if credentials are delegated (server mode).
 
         @return: C{True} if credentials are delegated, otherwise C{False}
         @rtype: Boolean
-        '''
+        """
         return (
                 self._gss_flags & sspicon.ISC_REQ_DELEGATE
                 ) and (
@@ -603,7 +602,7 @@ class _SSH_SSPI(_SSH_GSSAuth):
            )
 
     def save_client_creds(self, client_token):
-        '''
+        """
         Save the Client token in a file. This is used by the SSH server
         to store the client credentails if credentials are delegated
         (server mode).
@@ -612,5 +611,5 @@ class _SSH_SSPI(_SSH_GSSAuth):
         @type client_token: String
         @raise NotImplementedError: Credential delegation is currently not
                                     supported in server mode
-        '''
+        """
         raise NotImplementedError

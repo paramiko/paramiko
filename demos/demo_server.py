@@ -69,7 +69,7 @@ class Server (paramiko.ServerInterface):
     def check_auth_gssapi_with_mic(self, username,
                                    gss_authenticated=paramiko.AUTH_FAILED,
                                    cc_file=None):
-        '''
+        """
         @note: We are just checking in L{AuthHandler} that the given user is
                a valid krb5 principal!
                We don't check if the krb5 principal is allowed to log in on
@@ -79,7 +79,7 @@ class Server (paramiko.ServerInterface):
                local kerberos library to make sure that the krb5_principal has
                an account on the server and is allowed to log in as a user.
         @see: U{krb5_kuserok() man page <http://www.unix.com/man-page/all/3/krb5_kuserok/>}
-        '''
+        """
         if gss_authenticated == paramiko.AUTH_SUCCESSFUL:
             return paramiko.AUTH_SUCCESSFUL
         return paramiko.AUTH_FAILED
