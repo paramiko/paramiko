@@ -28,6 +28,7 @@ import ctypes.wintypes
 import platform
 import struct
 import thread
+import threading
 
 from . import _winapi
 
@@ -36,6 +37,13 @@ _AGENT_MAX_MSGLEN = 8192
 # Note: The WM_COPYDATA value is pulled from win32con, as a workaround
 # so we do not have to import this huge library just for this one variable.
 win32con_WM_COPYDATA = 74
+
+
+def get_thread_ident():
+    try:  # thread.get_ident() exists from Py2.5 to Py2.7.
+        return thread.get_ident()
+    except AttributeError:  # threading.current_thread().ident exists from Py2.6 up to Py3.4.
+        return threading.current_thread().ident
 
 
 def _get_pageant_window_object():
@@ -51,7 +59,10 @@ def can_talk_to_agent():
     """
     return bool(_get_pageant_window_object())
 
+
 ULONG_PTR = ctypes.c_uint64 if platform.architecture()[0] == '64bit' else ctypes.c_uint32
+
+
 class COPYDATASTRUCT(ctypes.Structure):
     """
     ctypes implementation of
@@ -61,7 +72,8 @@ class COPYDATASTRUCT(ctypes.Structure):
         ('num_data', ULONG_PTR),
         ('data_size', ctypes.wintypes.DWORD),
         ('data_loc', ctypes.c_void_p),
-        ]
+    ]
+
 
 def _query_pageant(msg):
     """
@@ -74,7 +86,7 @@ def _query_pageant(msg):
         return None
 
     # create a name for the mmap
-    map_name = 'PageantRequest%08x' % thread.get_ident()
+    map_name = 'PageantRequest%08x' % get_thread_ident()
 
     pymap = _winapi.MemoryMap(map_name, _AGENT_MAX_MSGLEN,
         _winapi.get_security_attributes_for_user(),
@@ -98,7 +110,8 @@ def _query_pageant(msg):
             return datalen + pymap.read(retlen)
         return None
 
-class PageantConnection (object):
+
+class PageantConnection(object):
     """
     Mock "connection" to an agent which roughly approximates the behavior of
     a unix local-domain socket (as used by Agent).  Requests are sent to the
