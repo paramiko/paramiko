@@ -40,10 +40,12 @@ win32con_WM_COPYDATA = 74
 
 
 def get_thread_ident():
-    try:  # thread.get_ident() exists from Py2.5 to Py2.7.
-        return thread.get_ident()
-    except AttributeError:  # threading.current_thread().ident exists from Py2.6 up to Py3.4.
+    # thread.get_ident() exists from Py2.5 to Py2.7.
+    # threading.current_thread().ident exists from Py2.6 up to Py3.4.
+    try:
         return threading.current_thread().ident
+    except AttributeError:
+        return thread.get_ident()
 
 
 def _get_pageant_window_object():
