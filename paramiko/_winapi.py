@@ -10,6 +10,11 @@ import ctypes
 import ctypes.wintypes
 import __builtin__
 
+try:
+        USHORT = ctypes.wintypes.USHORT
+except AttributeError:
+        USHORT = ctypes.c_ushort
+
 ######################
 # jaraco.windows.error
 
@@ -81,9 +86,6 @@ def handle_nonzero_success(result):
 		raise WindowsError()
 
 
-#####################
-# jaraco.windows.mmap
-
 CreateFileMapping = ctypes.windll.kernel32.CreateFileMappingW
 CreateFileMapping.argtypes = [
 	ctypes.wintypes.HANDLE,
@@ -130,15 +132,18 @@ class MemoryMap(object):
 		self.pos = pos
 
 	def write(self, msg):
-		ctypes.windll.msvcrt.memcpy(self.view + self.pos, msg, len(msg))
-		self.pos += len(msg)
+		n = len(msg)
+		if self.pos + n >= self.length:  # A little safety.
+			raise ValueError("Refusing to write %d bytes" % n)
+		ctypes.windll.kernel32.RtlMoveMemory(self.view + self.pos, msg, n)
+		self.pos += n
 
 	def read(self, n):
 		"""
 		Read n bytes from mapped view.
 		"""
 		out = ctypes.create_string_buffer(n)
-		ctypes.windll.msvcrt.memcpy(out, self.view + self.pos, n)
+		ctypes.windll.kernel32.RtlMoveMemory(out, self.view + self.pos, n)
 		self.pos += n
 		return out.raw
 
@@ -173,7 +178,7 @@ class SECURITY_DESCRIPTOR(ctypes.Structure):
 		PACL Dacl;
 		}   SECURITY_DESCRIPTOR;
 	"""
-	SECURITY_DESCRIPTOR_CONTROL = ctypes.wintypes.USHORT
+	SECURITY_DESCRIPTOR_CONTROL = USHORT
 	REVISION = 1
 
 	_fields_ = [

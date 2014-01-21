@@ -23,13 +23,18 @@ Functions for communicating with Pageant, the basic windows ssh agent program.
 
 from __future__ import with_statement
 
-import struct
-import threading
 import array
-import platform
 import ctypes.wintypes
+import platform
+import struct
+
+try:
+    import _thread as thread # Python 3.x
+except ImportError:
+    import thread # Python 2.5-2.7
 
 from . import _winapi
+
 
 _AGENT_COPYDATA_ID = 0x804e50ba
 _AGENT_MAX_MSGLEN = 8192
@@ -51,7 +56,10 @@ def can_talk_to_agent():
     """
     return bool(_get_pageant_window_object())
 
+
 ULONG_PTR = ctypes.c_uint64 if platform.architecture()[0] == '64bit' else ctypes.c_uint32
+
+
 class COPYDATASTRUCT(ctypes.Structure):
     """
     ctypes implementation of
@@ -61,7 +69,8 @@ class COPYDATASTRUCT(ctypes.Structure):
         ('num_data', ULONG_PTR),
         ('data_size', ctypes.wintypes.DWORD),
         ('data_loc', ctypes.c_void_p),
-        ]
+    ]
+
 
 def _query_pageant(msg):
     """
@@ -74,7 +83,7 @@ def _query_pageant(msg):
         return None
 
     # create a name for the mmap
-    map_name = 'PageantRequest%08x' % threading.current_thread().ident
+    map_name = 'PageantRequest%08x' % thread.get_ident()
 
     pymap = _winapi.MemoryMap(map_name, _AGENT_MAX_MSGLEN,
         _winapi.get_security_attributes_for_user(),
@@ -98,7 +107,8 @@ def _query_pageant(msg):
             return datalen + pymap.read(retlen)
         return None
 
-class PageantConnection (object):
+
+class PageantConnection(object):
     """
     Mock "connection" to an agent which roughly approximates the behavior of
     a unix local-domain socket (as used by Agent).  Requests are sent to the
