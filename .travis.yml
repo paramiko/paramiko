@@ -5,7 +5,8 @@ python:
 install:
   # Self-install for setup.py-driven deps
   - pip install -e .
-script: python test.py --verbose
+  - pip install coveralls
+script: coverage run --source=paramiko test.py --verbose
 notifications:
   irc:
     channels: "irc.freenode.org#paramiko"
@@ -15,3 +16,5 @@ notifications:
     on_failure: change
     use_notice: true
   email: false
+after_success:
+  - coveralls
