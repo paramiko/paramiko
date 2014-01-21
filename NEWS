@@ -12,6 +12,27 @@ Issues noted as "Fabric #NN" can be found at https://github.com/fabric/fabric/.
 Releases
 ========
 
+v1.12.2 (21st Jan 2014)
+-----------------------
+
+* #193 (and its attentant PRs #230 & #253): Fix SSH agent problems present on
+  Windows. Thanks to David Hobbs for initial report and to Aarni Koskela & Olle
+  Lundberg for the patches.
+
+v1.11.4 (21st Jan 2014)
+-----------------------
+
+* #193 (and its attentant PRs #230 & #253): Fix SSH agent problems present on
+  Windows. Thanks to David Hobbs for initial report and to Aarni Koskela & Olle
+  Lundberg for the patches.
+
+v1.10.6 (21st Jan 2014)
+-----------------------
+
+* #193 (and its attentant PRs #230 & #253): Fix SSH agent problems present on
+  Windows. Thanks to David Hobbs for initial report and to Aarni Koskela & Olle
+  Lundberg for the patches.
+
 v1.12.1 (8th Jan 2014)
 ----------------------
 
