@@ -27,25 +27,20 @@ import array
 import ctypes.wintypes
 import platform
 import struct
-import thread
-import threading
+
+try:
+    import _thread as thread # Python 3.x
+except ImportError:
+    import thread # Python 2.5-2.7
 
 from . import _winapi
+
 
 _AGENT_COPYDATA_ID = 0x804e50ba
 _AGENT_MAX_MSGLEN = 8192
 # Note: The WM_COPYDATA value is pulled from win32con, as a workaround
 # so we do not have to import this huge library just for this one variable.
 win32con_WM_COPYDATA = 74
-
-
-def get_thread_ident():
-    # thread.get_ident() exists from Py2.5 to Py2.7.
-    # threading.current_thread().ident exists from Py2.6 up to Py3.4.
-    try:
-        return threading.current_thread().ident
-    except AttributeError:
-        return thread.get_ident()
 
 
 def _get_pageant_window_object():
@@ -88,7 +83,7 @@ def _query_pageant(msg):
         return None
 
     # create a name for the mmap
-    map_name = 'PageantRequest%08x' % get_thread_ident()
+    map_name = 'PageantRequest%08x' % thread.get_ident()
 
     pymap = _winapi.MemoryMap(map_name, _AGENT_MAX_MSGLEN,
         _winapi.get_security_attributes_for_user(),
