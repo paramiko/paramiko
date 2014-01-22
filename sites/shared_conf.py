@@ -5,12 +5,6 @@ import sys
 import alabaster
 
 
-# Add local blog extension
-sys.path.append(os.path.abspath('.'))
-extensions = ['blog']
-rss_link = 'http://paramiko.org'
-rss_description = 'Paramiko project news'
-
 # Alabaster theme
 html_theme_path = [alabaster.get_path()]
 # Paths relative to invoking conf.py - not this shared file
