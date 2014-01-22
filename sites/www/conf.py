@@ -9,3 +9,7 @@ extensions = ['blog']
 rss_link = 'http://paramiko.org'
 rss_description = 'Paramiko project news'
 
+# Add Releases changelog extension
+extensions.append('releases')
+releases_release_uri = "https://github.com/paramiko/paramiko/tree/%s"
+releases_issue_uri = "https://github.com/paramiko/paramiko/issues/%s"

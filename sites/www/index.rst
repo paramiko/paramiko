@@ -6,13 +6,14 @@ providing both client and server functionality. While it leverages a Python C
 extension for low level cryptography (`PyCrypto <http://pycrypto.org>`_),
 Paramiko itself is a pure Python interface around SSH networking concepts.
 
-This website covers project information for Paramiko such as contribution
-guidelines, development roadmap, news/blog, and so forth. Detailed
+This website covers project information for Paramiko such as the changelog,
+contribution guidelines, development roadmap, news/blog, and so forth. Detailed
 usage and API documentation can be found at our code documentation site,
 `docs.paramiko.org <http://docs.paramiko.org>`_.
 
 .. toctree::
     blog
+    changelog
     installing
     contributing
     contact
