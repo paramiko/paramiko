@@ -27,7 +27,6 @@ import re
 import socket
 
 SSH_PORT = 22
-proxy_re = re.compile(r"^(proxycommand)\s*=*\s*(.*)", re.I)
 
 
 class SSHConfig (object):
@@ -40,6 +39,8 @@ class SSHConfig (object):
 
     .. versionadded:: 1.6
     """
+
+    SETTINGS_REGEX = re.compile(r'(\w+)(?:\s*=\s*|\s+)(.+)')
 
     def __init__(self):
         """
@@ -79,23 +80,12 @@ class SSHConfig (object):
             line = line.rstrip('\n').lstrip()
             if (line == '') or (line[0] == '#'):
                 continue
-            if '=' in line:
-                # Ensure ProxyCommand gets properly split
-                if line.lower().strip().startswith('proxycommand'):
-                    match = proxy_re.match(line)
-                    key, value = match.group(1).lower(), match.group(2)
-                else:
-                    key, value = line.split('=', 1)
-                    key = key.strip().lower()
-            else:
-                # find first whitespace, and split there
-                i = 0
-                while (i < len(line)) and not line[i].isspace():
-                    i += 1
-                if i == len(line):
-                    raise Exception('Unparsable line: %r' % line)
-                key = line[:i].lower()
-                value = line[i:].lstrip()
+
+            match = re.match(self.SETTINGS_REGEX, line)
+            if not match:
+                raise Exception("Unparsable line %s" % line)
+            key = match.group(1).lower()
+            value = match.group(2)
             
             if key == 'host':
                 self._config.append(host)
