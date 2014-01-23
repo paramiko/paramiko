@@ -17,7 +17,7 @@
 # 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
 
 """
-L{SSHClient}.
+:class:`SSHClient`.
 """
 
 from binascii import hexlify
@@ -40,19 +40,19 @@ from paramiko.util import retry_on_signal
 
 class MissingHostKeyPolicy (object):
     """
-    Interface for defining the policy that L{SSHClient} should use when the
+    Interface for defining the policy that :class:`SSHClient` should use when the
     SSH server's hostname is not in either the system host keys or the
     application's keys.  Pre-made classes implement policies for automatically
-    adding the key to the application's L{HostKeys} object (L{AutoAddPolicy}),
-    and for automatically rejecting the key (L{RejectPolicy}).
+    adding the key to the application's :class:`HostKeys` object (:class:`AutoAddPolicy`),
+    and for automatically rejecting the key (:class:`RejectPolicy`).
 
     This function may be used to ask the user to verify the key, for example.
     """
 
     def missing_host_key(self, client, hostname, key):
         """
-        Called when an L{SSHClient} receives a server key for a server that
-        isn't in either the system or local L{HostKeys} object.  To accept
+        Called when an :class:`SSHClient` receives a server key for a server that
+        isn't in either the system or local :class:`HostKeys` object.  To accept
         the key, simply return.  To reject, raised an exception (which will
         be passed to the calling application).
         """
@@ -62,7 +62,7 @@ class MissingHostKeyPolicy (object):
 class AutoAddPolicy (MissingHostKeyPolicy):
     """
     Policy for automatically adding the hostname and new host key to the
-    local L{HostKeys} object, and saving it.  This is used by L{SSHClient}.
+    local :class:`HostKeys` object, and saving it.  This is used by :class:`SSHClient`.
     """
 
     def missing_host_key(self, client, hostname, key):
@@ -76,7 +76,7 @@ class AutoAddPolicy (MissingHostKeyPolicy):
 class RejectPolicy (MissingHostKeyPolicy):
     """
     Policy for automatically rejecting the unknown hostname & key.  This is
-    used by L{SSHClient}.
+    used by :class:`SSHClient`.
     """
 
     def missing_host_key(self, client, hostname, key):
@@ -88,7 +88,7 @@ class RejectPolicy (MissingHostKeyPolicy):
 class WarningPolicy (MissingHostKeyPolicy):
     """
     Policy for logging a python-style warning for an unknown host key, but
-    accepting it. This is used by L{SSHClient}.
+    accepting it. This is used by :class:`SSHClient`.
     """
     def missing_host_key(self, client, hostname, key):
         warnings.warn('Unknown %s host key for %s: %s' %
@@ -98,7 +98,7 @@ class WarningPolicy (MissingHostKeyPolicy):
 class SSHClient (object):
     """
     A high-level representation of a session with an SSH server.  This class
-    wraps L{Transport}, L{Channel}, and L{SFTPClient} to take care of most
+    wraps :class:`Transport`, :class:`Channel`, and :class:`SFTPClient` to take care of most
     aspects of authenticating and opening channels.  A typical use case is::
 
         client = SSHClient()
@@ -110,7 +110,7 @@ class SSHClient (object):
     checking.  The default mechanism is to try to use local key files or an
     SSH agent (if one is running).
 
-    @since: 1.6
+    .. versionadded:: 1.6
     """
 
     def __init__(self):
@@ -128,21 +128,21 @@ class SSHClient (object):
     def load_system_host_keys(self, filename=None):
         """
         Load host keys from a system (read-only) file.  Host keys read with
-        this method will not be saved back by L{save_host_keys}.
+        this method will not be saved back by :class:`save_host_keys`.
 
         This method can be called multiple times.  Each new set of host keys
         will be merged with the existing set (new replacing old if there are
         conflicts).
 
-        If C{filename} is left as C{None}, an attempt will be made to read
+        If ``filename`` is left as ``None``, an attempt will be made to read
         keys from the user's local "known hosts" file, as used by OpenSSH,
         and no exception will be raised if the file can't be read.  This is
         probably only useful on posix.
 
-        @param filename: the filename to read, or C{None}
-        @type filename: str
+        :param filename: the filename to read, or ``None``
+        :type filename: str
 
-        @raise IOError: if a filename was provided and the file could not be
+        :raises IOError: if a filename was provided and the file could not be
             read
         """
         if filename is None:
@@ -158,19 +158,19 @@ class SSHClient (object):
     def load_host_keys(self, filename):
         """
         Load host keys from a local host-key file.  Host keys read with this
-        method will be checked I{after} keys loaded via L{load_system_host_keys},
-        but will be saved back by L{save_host_keys} (so they can be modified).
-        The missing host key policy L{AutoAddPolicy} adds keys to this set and
+        method will be checked after keys loaded via :class:`load_system_host_keys`,
+        but will be saved back by :class:`save_host_keys` (so they can be modified).
+        The missing host key policy :class:`AutoAddPolicy` adds keys to this set and
         saves them, when connecting to a previously-unknown server.
 
         This method can be called multiple times.  Each new set of host keys
         will be merged with the existing set (new replacing old if there are
         conflicts).  When automatically saving, the last hostname is used.
 
-        @param filename: the filename to read
-        @type filename: str
+        :param filename: the filename to read
+        :type filename: str
 
-        @raise IOError: if the filename could not be read
+        :raises IOError: if the filename could not be read
         """
         self._host_keys_filename = filename
         self._host_keys.load(filename)
@@ -178,13 +178,13 @@ class SSHClient (object):
     def save_host_keys(self, filename):
         """
         Save the host keys back to a file.  Only the host keys loaded with
-        L{load_host_keys} (plus any added directly) will be saved -- not any
-        host keys loaded with L{load_system_host_keys}.
+        :class:`load_host_keys` (plus any added directly) will be saved -- not any
+        host keys loaded with :class:`load_system_host_keys`.
 
-        @param filename: the filename to save to
-        @type filename: str
+        :param filename: the filename to save to
+        :type filename: str
 
-        @raise IOError: if the file could not be written
+        :raises IOError: if the file could not be written
         """
 
         # update local host keys from file (in case other SSH clients
@@ -200,34 +200,34 @@ class SSHClient (object):
 
     def get_host_keys(self):
         """
-        Get the local L{HostKeys} object.  This can be used to examine the
+        Get the local :class:`HostKeys` object.  This can be used to examine the
         local host keys or change them.
 
-        @return: the local host keys
-        @rtype: L{HostKeys}
+        :return: the local host keys
+        :rtype: :class:`HostKeys`
         """
         return self._host_keys
 
     def set_log_channel(self, name):
         """
-        Set the channel for logging.  The default is C{"paramiko.transport"}
+        Set the channel for logging.  The default is ``"paramiko.transport"``
         but it can be set to anything you want.
 
-        @param name: new channel name for logging
-        @type name: str
+        :param name: new channel name for logging
+        :type name: str
         """
         self._log_channel = name
 
     def set_missing_host_key_policy(self, policy):
         """
         Set the policy to use when connecting to a server that doesn't have a
-        host key in either the system or local L{HostKeys} objects.  The
-        default policy is to reject all unknown servers (using L{RejectPolicy}).
-        You may substitute L{AutoAddPolicy} or write your own policy class.
+        host key in either the system or local :class:`HostKeys` objects.  The
+        default policy is to reject all unknown servers (using :class:`RejectPolicy`).
+        You may substitute :class:`AutoAddPolicy` or write your own policy class.
 
-        @param policy: the policy to use when receiving a host key from a
+        :param policy: the policy to use when receiving a host key from a
             previously-unknown server
-        @type policy: L{MissingHostKeyPolicy}
+        :type policy: :class:`MissingHostKeyPolicy`
         """
         self._policy = policy
 
@@ -236,56 +236,56 @@ class SSHClient (object):
                 compress=False, sock=None):
         """
         Connect to an SSH server and authenticate to it.  The server's host key
-        is checked against the system host keys (see L{load_system_host_keys})
-        and any local host keys (L{load_host_keys}).  If the server's hostname
+        is checked against the system host keys (see :class:`load_system_host_keys`)
+        and any local host keys (:class:`load_host_keys`).  If the server's hostname
         is not found in either set of host keys, the missing host key policy
-        is used (see L{set_missing_host_key_policy}).  The default policy is
-        to reject the key and raise an L{SSHException}.
+        is used (see :class:`set_missing_host_key_policy`).  The default policy is
+        to reject the key and raise an :class:`SSHException`.
 
         Authentication is attempted in the following order of priority:
 
-            - The C{pkey} or C{key_filename} passed in (if any)
+            - The ``pkey`` or ``key_filename`` passed in (if any)
             - Any key we can find through an SSH agent
-            - Any "id_rsa" or "id_dsa" key discoverable in C{~/.ssh/}
+            - Any "id_rsa" or "id_dsa" key discoverable in ``~/.ssh/``
             - Plain username/password auth, if a password was given
 
         If a private key requires a password to unlock it, and a password is
         passed in, that password will be used to attempt to unlock the key.
 
-        @param hostname: the server to connect to
-        @type hostname: str
-        @param port: the server port to connect to
-        @type port: int
-        @param username: the username to authenticate as (defaults to the
+        :param hostname: the server to connect to
+        :type hostname: str
+        :param port: the server port to connect to
+        :type port: int
+        :param username: the username to authenticate as (defaults to the
             current local username)
-        @type username: str
-        @param password: a password to use for authentication or for unlocking
+        :type username: str
+        :param password: a password to use for authentication or for unlocking
             a private key
-        @type password: str
-        @param pkey: an optional private key to use for authentication
-        @type pkey: L{PKey}
-        @param key_filename: the filename, or list of filenames, of optional
+        :type password: str
+        :param pkey: an optional private key to use for authentication
+        :type pkey: :class:`PKey`
+        :param key_filename: the filename, or list of filenames, of optional
             private key(s) to try for authentication
-        @type key_filename: str or list(str)
-        @param timeout: an optional timeout (in seconds) for the TCP connect
-        @type timeout: float
-        @param allow_agent: set to False to disable connecting to the SSH agent
-        @type allow_agent: bool
-        @param look_for_keys: set to False to disable searching for discoverable
-            private key files in C{~/.ssh/}
-        @type look_for_keys: bool
-        @param compress: set to True to turn on compression
-        @type compress: bool
-        @param sock: an open socket or socket-like object (such as a
-            L{Channel}) to use for communication to the target host
-        @type sock: socket
+        :type key_filename: str or list(str)
+        :param timeout: an optional timeout (in seconds) for the TCP connect
+        :type timeout: float
+        :param allow_agent: set to False to disable connecting to the SSH agent
+        :type allow_agent: bool
+        :param look_for_keys: set to False to disable searching for discoverable
+            private key files in ``~/.ssh/``
+        :type look_for_keys: bool
+        :param compress: set to True to turn on compression
+        :type compress: bool
+        :param sock: an open socket or socket-like object (such as a
+            :class:`Channel`) to use for communication to the target host
+        :type sock: socket
 
-        @raise BadHostKeyException: if the server's host key could not be
+        :raises BadHostKeyException: if the server's host key could not be
             verified
-        @raise AuthenticationException: if authentication failed
-        @raise SSHException: if there was any other error connecting or
+        :raises AuthenticationException: if authentication failed
+        :raises SSHException: if there was any other error connecting or
             establishing an SSH session
-        @raise socket.error: if a socket error occurred while connecting
+        :raises socket.error: if a socket error occurred while connecting
         """
         if not sock:
             for (family, socktype, proto, canonname, sockaddr) in socket.getaddrinfo(hostname, port, socket.AF_UNSPEC, socket.SOCK_STREAM):
@@ -343,7 +343,7 @@ class SSHClient (object):
 
     def close(self):
         """
-        Close this SSHClient and its underlying L{Transport}.
+        Close this SSHClient and its underlying :class:`Transport`.
         """
         if self._transport is None:
             return
@@ -356,21 +356,21 @@ class SSHClient (object):
 
     def exec_command(self, command, bufsize=-1, timeout=None, get_pty=False):
         """
-        Execute a command on the SSH server.  A new L{Channel} is opened and
+        Execute a command on the SSH server.  A new :class:`Channel` is opened and
         the requested command is executed.  The command's input and output
-        streams are returned as python C{file}-like objects representing
+        streams are returned as python ``file``-like objects representing
         stdin, stdout, and stderr.
 
-        @param command: the command to execute
-        @type command: str
-        @param bufsize: interpreted the same way as by the built-in C{file()} function in python
-        @type bufsize: int
-        @param timeout: set command's channel timeout. See L{Channel.settimeout}.settimeout
-        @type timeout: int
-        @return: the stdin, stdout, and stderr of the executing command
-        @rtype: tuple(L{ChannelFile}, L{ChannelFile}, L{ChannelFile})
+        :param command: the command to execute
+        :type command: str
+        :param bufsize: interpreted the same way as by the built-in ``file()`` function in python
+        :type bufsize: int
+        :param timeout: set command's channel timeout. See :class:`Channel.settimeout`.settimeout
+        :type timeout: int
+        :return: the stdin, stdout, and stderr of the executing command
+        :rtype: tuple(:class:`ChannelFile`, :class:`ChannelFile`, :class:`ChannelFile`)
 
-        @raise SSHException: if the server fails to execute the command
+        :raises SSHException: if the server fails to execute the command
         """
         chan = self._transport.open_session()
         if(get_pty):
@@ -385,24 +385,24 @@ class SSHClient (object):
     def invoke_shell(self, term='vt100', width=80, height=24, width_pixels=0,
                 height_pixels=0):
         """
-        Start an interactive shell session on the SSH server.  A new L{Channel}
+        Start an interactive shell session on the SSH server.  A new :class:`Channel`
         is opened and connected to a pseudo-terminal using the requested
         terminal type and size.
 
-        @param term: the terminal type to emulate (for example, C{"vt100"})
-        @type term: str
-        @param width: the width (in characters) of the terminal window
-        @type width: int
-        @param height: the height (in characters) of the terminal window
-        @type height: int
-        @param width_pixels: the width (in pixels) of the terminal window
-        @type width_pixels: int
-        @param height_pixels: the height (in pixels) of the terminal window
-        @type height_pixels: int
-        @return: a new channel connected to the remote shell
-        @rtype: L{Channel}
+        :param term: the terminal type to emulate (for example, ``"vt100"``)
+        :type term: str
+        :param width: the width (in characters) of the terminal window
+        :type width: int
+        :param height: the height (in characters) of the terminal window
+        :type height: int
+        :param width_pixels: the width (in pixels) of the terminal window
+        :type width_pixels: int
+        :param height_pixels: the height (in pixels) of the terminal window
+        :type height_pixels: int
+        :return: a new channel connected to the remote shell
+        :rtype: :class:`Channel`
 
-        @raise SSHException: if the server fails to invoke a shell
+        :raises SSHException: if the server fails to invoke a shell
         """
         chan = self._transport.open_session()
         chan.get_pty(term, width, height, width_pixels, height_pixels)
@@ -413,19 +413,19 @@ class SSHClient (object):
         """
         Open an SFTP session on the SSH server.
 
-        @return: a new SFTP session object
-        @rtype: L{SFTPClient}
+        :return: a new SFTP session object
+        :rtype: :class:`SFTPClient`
         """
         return self._transport.open_sftp_client()
 
     def get_transport(self):
         """
-        Return the underlying L{Transport} object for this SSH connection.
+        Return the underlying :class:`Transport` object for this SSH connection.
         This can be used to perform lower-level tasks, like opening specific
         kinds of channels.
 
-        @return: the Transport for this connection
-        @rtype: L{Transport}
+        :return: the Transport for this connection
+        :rtype: :class:`Transport`
         """
         return self._transport
 

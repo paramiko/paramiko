@@ -168,17 +168,17 @@ class Packetizer (object):
 
     def need_rekey(self):
         """
-        Returns C{True} if a new set of keys needs to be negotiated.  This
+        Returns ``True`` if a new set of keys needs to be negotiated.  This
         will be triggered during a packet read or write, so it should be
         checked after every read or write, or at least after every few.
 
-        @return: C{True} if a new set of keys needs to be negotiated
+        :return: ``True`` if a new set of keys needs to be negotiated
         """
         return self.__need_rekey
 
     def set_keepalive(self, interval, callback):
         """
-        Turn on/off the callback keepalive.  If C{interval} seconds pass with
+        Turn on/off the callback keepalive.  If ``interval`` seconds pass with
         no data read from or written to the socket, the callback will be
         executed and the timer will be reset.
         """
@@ -190,11 +190,11 @@ class Packetizer (object):
         """
         Read as close to N bytes as possible, blocking as long as necessary.
 
-        @param n: number of bytes to read
-        @type n: int
-        @return: the data read
-        @rtype: str
-        @raise EOFError: if the socket was closed before all the bytes could
+        :param n: number of bytes to read
+        :type n: int
+        :return: the data read
+        :rtype: str
+        :raises EOFError: if the socket was closed before all the bytes could
             be read
         """
         out = ''
@@ -332,8 +332,8 @@ class Packetizer (object):
         Only one thread should ever be in this function (no other locking is
         done).
 
-        @raise SSHException: if the packet is mangled
-        @raise NeedRekeyException: if the transport should rekey
+        :raises SSHException: if the packet is mangled
+        :raises NeedRekeyException: if the transport should rekey
         """
         header = self.read_all(self.__block_size_in, check_rekey=True)
         if self.__block_engine_in != None:

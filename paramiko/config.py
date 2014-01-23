@@ -18,7 +18,7 @@
 # 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
 
 """
-L{SSHConfig}.
+:class:`SSHConfig`.
 """
 
 import fnmatch
@@ -87,12 +87,12 @@ class LazyFqdn(object):
 class SSHConfig (object):
     """
     Representation of config information as stored in the format used by
-    OpenSSH. Queries can be made via L{lookup}. The format is described in
-    OpenSSH's C{ssh_config} man page. This class is provided primarily as a
+    OpenSSH. Queries can be made via :class:`lookup`. The format is described in
+    OpenSSH's ``ssh_config`` man page. This class is provided primarily as a
     convenience to posix users (since the OpenSSH format is a de-facto
     standard on posix) but should work fine on Windows too.
 
-    @since: 1.6
+    .. versionadded:: 1.6
     """
 
     def __init__(self):
@@ -105,8 +105,8 @@ class SSHConfig (object):
         """
         Read an OpenSSH config from the given file object.
 
-        @param file_obj: a file-like object to read the config file from
-        @type file_obj: file
+        :param file_obj: a file-like object to read the config file from
+        :type file_obj: file
         """
         host = {"host": ['*'], "config": {}}
         for line in file_obj:
@@ -152,20 +152,20 @@ class SSHConfig (object):
         """
         Return a dict of config options for a given hostname.
 
-        The host-matching rules of OpenSSH's C{ssh_config} man page are used,
+        The host-matching rules of OpenSSH's ``ssh_config`` man page are used,
         which means that all configuration options from matching host
         specifications are merged, with more specific hostmasks taking
-        precedence. In other words, if C{"Port"} is set under C{"Host *"}
-        and also C{"Host *.example.com"}, and the lookup is for
-        C{"ssh.example.com"}, then the port entry for C{"Host *.example.com"}
+        precedence. In other words, if ``"Port"`` is set under ``"Host *"``
+        and also ``"Host *.example.com"``, and the lookup is for
+        ``"ssh.example.com"``, then the port entry for ``"Host *.example.com"``
         will win out.
 
         The keys in the returned dict are all normalized to lowercase (look for
-        C{"port"}, not C{"Port"}. The values are processed according to the
-        rules for substitution variable expansion in C{ssh_config}.
+        ``"port"``, not ``"Port"``. The values are processed according to the
+        rules for substitution variable expansion in ``ssh_config``.
 
-        @param hostname: the hostname to lookup
-        @type hostname: str
+        :param hostname: the hostname to lookup
+        :type hostname: str
         """
 
         matches = [config for config in self._config if
@@ -199,13 +199,13 @@ class SSHConfig (object):
         Return a dict of config options with expanded substitutions
         for a given hostname.
 
-        Please refer to man C{ssh_config} for the parameters that
+        Please refer to man ``ssh_config`` for the parameters that
         are replaced.
 
-        @param config: the config for the hostname
-        @type hostname: dict
-        @param hostname: the hostname that the config belongs to
-        @type hostname: str
+        :param config: the config for the hostname
+        :type hostname: dict
+        :param hostname: the hostname that the config belongs to
+        :type hostname: str
         """
 
         if 'hostname' in config:

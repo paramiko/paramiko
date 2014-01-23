@@ -40,28 +40,28 @@ _hash_class = {
 
 class SFTPServer (BaseSFTP, SubsystemHandler):
     """
-    Server-side SFTP subsystem support.  Since this is a L{SubsystemHandler},
-    it can be (and is meant to be) set as the handler for C{"sftp"} requests.
-    Use L{Transport.set_subsystem_handler} to activate this class.
+    Server-side SFTP subsystem support.  Since this is a :class:`SubsystemHandler`,
+    it can be (and is meant to be) set as the handler for ``"sftp"`` requests.
+    Use :class:`Transport.set_subsystem_handler` to activate this class.
     """
 
     def __init__(self, channel, name, server, sftp_si=SFTPServerInterface, *largs, **kwargs):
         """
         The constructor for SFTPServer is meant to be called from within the
-        L{Transport} as a subsystem handler.  C{server} and any additional
+        :class:`Transport` as a subsystem handler.  ``server`` and any additional
         parameters or keyword parameters are passed from the original call to
-        L{Transport.set_subsystem_handler}.
+        :class:`Transport.set_subsystem_handler`.
 
-        @param channel: channel passed from the L{Transport}.
-        @type channel: L{Channel}
-        @param name: name of the requested subsystem.
-        @type name: str
-        @param server: the server object associated with this channel and
+        :param channel: channel passed from the :class:`Transport`.
+        :type channel: :class:`Channel`
+        :param name: name of the requested subsystem.
+        :type name: str
+        :param server: the server object associated with this channel and
             subsystem
-        @type server: L{ServerInterface}
-        @param sftp_si: a subclass of L{SFTPServerInterface} to use for handling
+        :type server: :class:`ServerInterface`
+        :param sftp_si: a subclass of :class:`SFTPServerInterface` to use for handling
             individual requests.
-        @type sftp_si: class
+        :type sftp_si: class
         """
         BaseSFTP.__init__(self)
         SubsystemHandler.__init__(self, channel, name, server)
@@ -122,14 +122,14 @@ class SFTPServer (BaseSFTP, SubsystemHandler):
 
     def convert_errno(e):
         """
-        Convert an errno value (as from an C{OSError} or C{IOError}) into a
+        Convert an errno value (as from an ``OSError`` or ``IOError``) into a
         standard SFTP result code.  This is a convenience function for trapping
         exceptions in server code and returning an appropriate result.
 
-        @param e: an errno code, as from C{OSError.errno}.
-        @type e: int
-        @return: an SFTP error code like L{SFTP_NO_SUCH_FILE}.
-        @rtype: int
+        :param e: an errno code, as from ``OSError.errno``.
+        :type e: int
+        :return: an SFTP error code like :class:`SFTP_NO_SUCH_FILE`.
+        :rtype: int
         """
         if e == errno.EACCES:
             # permission denied
@@ -144,18 +144,18 @@ class SFTPServer (BaseSFTP, SubsystemHandler):
     def set_file_attr(filename, attr):
         """
         Change a file's attributes on the local filesystem.  The contents of
-        C{attr} are used to change the permissions, owner, group ownership,
+        ``attr`` are used to change the permissions, owner, group ownership,
         and/or modification & access time of the file, depending on which
-        attributes are present in C{attr}.
+        attributes are present in ``attr``.
 
         This is meant to be a handy helper function for translating SFTP file
         requests into local file operations.
         
-        @param filename: name of the file to alter (should usually be an
+        :param filename: name of the file to alter (should usually be an
             absolute path).
-        @type filename: str
-        @param attr: attributes to change.
-        @type attr: L{SFTPAttributes}
+        :type filename: str
+        :param attr: attributes to change.
+        :type attr: :class:`SFTPAttributes`
         """
         if sys.platform != 'win32':
             # mode operations are meaningless on win32

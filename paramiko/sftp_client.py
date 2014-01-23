@@ -51,22 +51,22 @@ def _to_unicode(s):
 
 class SFTPClient (BaseSFTP):
     """
-    SFTP client object.  C{SFTPClient} is used to open an sftp session across
-    an open ssh L{Transport} and do remote file operations.
+    SFTP client object.  ``SFTPClient`` is used to open an sftp session across
+    an open ssh :class:`Transport` and do remote file operations.
     """
 
     def __init__(self, sock):
         """
-        Create an SFTP client from an existing L{Channel}.  The channel
-        should already have requested the C{"sftp"} subsystem.
+        Create an SFTP client from an existing :class:`Channel`.  The channel
+        should already have requested the ``"sftp"`` subsystem.
 
         An alternate way to create an SFTP client context is by using
-        L{from_transport}.
+        :class:`from_transport`.
 
-        @param sock: an open L{Channel} using the C{"sftp"} subsystem
-        @type sock: L{Channel}
+        :param sock: an open :class:`Channel` using the ``"sftp"`` subsystem
+        :type sock: :class:`Channel`
 
-        @raise SSHException: if there's an exception while negotiating
+        :raises SSHException: if there's an exception while negotiating
             sftp
         """
         BaseSFTP.__init__(self)
@@ -91,13 +91,13 @@ class SFTPClient (BaseSFTP):
 
     def from_transport(cls, t):
         """
-        Create an SFTP client channel from an open L{Transport}.
+        Create an SFTP client channel from an open :class:`Transport`.
 
-        @param t: an open L{Transport} which is already authenticated
-        @type t: L{Transport}
-        @return: a new L{SFTPClient} object, referring to an sftp session
+        :param t: an open :class:`Transport` which is already authenticated
+        :type t: :class:`Transport`
+        :return: a new :class:`SFTPClient` object, referring to an sftp session
             (channel) across the transport
-        @rtype: L{SFTPClient}
+        :rtype: :class:`SFTPClient`
         """
         chan = t.open_session()
         if chan is None:
@@ -117,56 +117,56 @@ class SFTPClient (BaseSFTP):
         """
         Close the SFTP session and its underlying channel.
 
-        @since: 1.4
+        .. versionadded:: 1.4
         """
         self._log(INFO, 'sftp session closed.')
         self.sock.close()
 
     def get_channel(self):
         """
-        Return the underlying L{Channel} object for this SFTP session.  This
+        Return the underlying :class:`Channel` object for this SFTP session.  This
         might be useful for doing things like setting a timeout on the channel.
 
-        @return: the SSH channel
-        @rtype: L{Channel}
+        :return: the SSH channel
+        :rtype: :class:`Channel`
 
-        @since: 1.7.1
+        .. versionadded:: 1.7.1
         """
         return self.sock
 
     def listdir(self, path='.'):
         """
-        Return a list containing the names of the entries in the given C{path}.
+        Return a list containing the names of the entries in the given ``path``.
         The list is in arbitrary order.  It does not include the special
-        entries C{'.'} and C{'..'} even if they are present in the folder.
-        This method is meant to mirror C{os.listdir} as closely as possible.
-        For a list of full L{SFTPAttributes} objects, see L{listdir_attr}.
+        entries ``'.'`` and ``'..'`` even if they are present in the folder.
+        This method is meant to mirror ``os.listdir`` as closely as possible.
+        For a list of full :class:`SFTPAttributes` objects, see :class:`listdir_attr`.
 
-        @param path: path to list (defaults to C{'.'})
-        @type path: str
-        @return: list of filenames
-        @rtype: list of str
+        :param path: path to list (defaults to ``'.'``)
+        :type path: str
+        :return: list of filenames
+        :rtype: list of str
         """
         return [f.filename for f in self.listdir_attr(path)]
 
     def listdir_attr(self, path='.'):
         """
-        Return a list containing L{SFTPAttributes} objects corresponding to
-        files in the given C{path}.  The list is in arbitrary order.  It does
-        not include the special entries C{'.'} and C{'..'} even if they are
+        Return a list containing :class:`SFTPAttributes` objects corresponding to
+        files in the given ``path``.  The list is in arbitrary order.  It does
+        not include the special entries ``'.'`` and ``'..'`` even if they are
         present in the folder.
 
-        The returned L{SFTPAttributes} objects will each have an additional
-        field: C{longname}, which may contain a formatted string of the file's
+        The returned :class:`SFTPAttributes` objects will each have an additional
+        field: ``longname``, which may contain a formatted string of the file's
         attributes, in unix format.  The content of this string will probably
         depend on the SFTP server implementation.
 
-        @param path: path to list (defaults to C{'.'})
-        @type path: str
-        @return: list of attributes
-        @rtype: list of L{SFTPAttributes}
+        :param path: path to list (defaults to ``'.'``)
+        :type path: str
+        :return: list of attributes
+        :rtype: list of :class:`SFTPAttributes`
 
-        @since: 1.2
+        .. versionadded:: 1.2
         """
         path = self._adjust_cwd(path)
         self._log(DEBUG, 'listdir(%r)' % path)
@@ -196,37 +196,37 @@ class SFTPClient (BaseSFTP):
     def open(self, filename, mode='r', bufsize=-1):
         """
         Open a file on the remote server.  The arguments are the same as for
-        python's built-in C{file} (aka C{open}).  A file-like object is
+        python's built-in ``file`` (aka ``open``).  A file-like object is
         returned, which closely mimics the behavior of a normal python file
         object, including the ability to be used as a context manager.
 
-        The mode indicates how the file is to be opened: C{'r'} for reading,
-        C{'w'} for writing (truncating an existing file), C{'a'} for appending,
-        C{'r+'} for reading/writing, C{'w+'} for reading/writing (truncating an
-        existing file), C{'a+'} for reading/appending.  The python C{'b'} flag
-        is ignored, since SSH treats all files as binary.  The C{'U'} flag is
+        The mode indicates how the file is to be opened: ``'r'`` for reading,
+        ``'w'`` for writing (truncating an existing file), ``'a'`` for appending,
+        ``'r+'`` for reading/writing, ``'w+'`` for reading/writing (truncating an
+        existing file), ``'a+'`` for reading/appending.  The python ``'b'`` flag
+        is ignored, since SSH treats all files as binary.  The ``'U'`` flag is
         supported in a compatible way.
 
-        Since 1.5.2, an C{'x'} flag indicates that the operation should only
+        Since 1.5.2, an ``'x'`` flag indicates that the operation should only
         succeed if the file was created and did not previously exist.  This has
         no direct mapping to python's file flags, but is commonly known as the
-        C{O_EXCL} flag in posix.
+        ``O_EXCL`` flag in posix.
 
         The file will be buffered in standard python style by default, but
-        can be altered with the C{bufsize} parameter.  C{0} turns off
-        buffering, C{1} uses line buffering, and any number greater than 1
-        (C{>1}) uses that specific buffer size.
+        can be altered with the ``bufsize`` parameter.  ``0`` turns off
+        buffering, ``1`` uses line buffering, and any number greater than 1
+        (``>1``) uses that specific buffer size.
 
-        @param filename: name of the file to open
-        @type filename: str
-        @param mode: mode (python-style) to open in
-        @type mode: str
-        @param bufsize: desired buffering (-1 = default buffer size)
-        @type bufsize: int
-        @return: a file object representing the open file
-        @rtype: SFTPFile
+        :param filename: name of the file to open
+        :type filename: str
+        :param mode: mode (python-style) to open in
+        :type mode: str
+        :param bufsize: desired buffering (-1 = default buffer size)
+        :type bufsize: int
+        :return: a file object representing the open file
+        :rtype: SFTPFile
 
-        @raise IOError: if the file could not be opened.
+        :raises IOError: if the file could not be opened.
         """
         filename = self._adjust_cwd(filename)
         self._log(DEBUG, 'open(%r, %r)' % (filename, mode))
@@ -255,12 +255,12 @@ class SFTPClient (BaseSFTP):
     def remove(self, path):
         """
         Remove the file at the given path.  This only works on files; for
-        removing folders (directories), use L{rmdir}.
+        removing folders (directories), use :class:`rmdir`.
 
-        @param path: path (absolute or relative) of the file to remove
-        @type path: str
+        :param path: path (absolute or relative) of the file to remove
+        :type path: str
 
-        @raise IOError: if the path refers to a folder (directory)
+        :raises IOError: if the path refers to a folder (directory)
         """
         path = self._adjust_cwd(path)
         self._log(DEBUG, 'remove(%r)' % path)
@@ -270,14 +270,14 @@ class SFTPClient (BaseSFTP):
 
     def rename(self, oldpath, newpath):
         """
-        Rename a file or folder from C{oldpath} to C{newpath}.
+        Rename a file or folder from ``oldpath`` to ``newpath``.
 
-        @param oldpath: existing name of the file or folder
-        @type oldpath: str
-        @param newpath: new name for the file or folder
-        @type newpath: str
+        :param oldpath: existing name of the file or folder
+        :type oldpath: str
+        :param newpath: new name for the file or folder
+        :type newpath: str
 
-        @raise IOError: if C{newpath} is a folder, or something else goes
+        :raises IOError: if ``newpath`` is a folder, or something else goes
             wrong
         """
         oldpath = self._adjust_cwd(oldpath)
@@ -287,14 +287,14 @@ class SFTPClient (BaseSFTP):
 
     def mkdir(self, path, mode=0777):
         """
-        Create a folder (directory) named C{path} with numeric mode C{mode}.
+        Create a folder (directory) named ``path`` with numeric mode ``mode``.
         The default mode is 0777 (octal).  On some systems, mode is ignored.
         Where it is used, the current umask value is first masked out.
 
-        @param path: name of the folder to create
-        @type path: str
-        @param mode: permissions (posix-style) for the newly-created folder
-        @type mode: int
+        :param path: name of the folder to create
+        :type path: str
+        :param mode: permissions (posix-style) for the newly-created folder
+        :type mode: int
         """
         path = self._adjust_cwd(path)
         self._log(DEBUG, 'mkdir(%r, %r)' % (path, mode))
@@ -304,10 +304,10 @@ class SFTPClient (BaseSFTP):
 
     def rmdir(self, path):
         """
-        Remove the folder named C{path}.
+        Remove the folder named ``path``.
 
-        @param path: name of the folder to remove
-        @type path: str
+        :param path: name of the folder to remove
+        :type path: str
         """
         path = self._adjust_cwd(path)
         self._log(DEBUG, 'rmdir(%r)' % path)
@@ -317,20 +317,20 @@ class SFTPClient (BaseSFTP):
         """
         Retrieve information about a file on the remote system.  The return
         value is an object whose attributes correspond to the attributes of
-        python's C{stat} structure as returned by C{os.stat}, except that it
+        python's ``stat`` structure as returned by ``os.stat``, except that it
         contains fewer fields.  An SFTP server may return as much or as little
         info as it wants, so the results may vary from server to server.
 
-        Unlike a python C{stat} object, the result may not be accessed as a
+        Unlike a python ``stat`` object, the result may not be accessed as a
         tuple.  This is mostly due to the author's slack factor.
 
-        The fields supported are: C{st_mode}, C{st_size}, C{st_uid}, C{st_gid},
-        C{st_atime}, and C{st_mtime}.
+        The fields supported are: ``st_mode``, ``st_size``, ``st_uid``, ``st_gid``,
+        ``st_atime``, and ``st_mtime``.
 
-        @param path: the filename to stat
-        @type path: str
-        @return: an object containing attributes about the given file
-        @rtype: SFTPAttributes
+        :param path: the filename to stat
+        :type path: str
+        :return: an object containing attributes about the given file
+        :rtype: SFTPAttributes
         """
         path = self._adjust_cwd(path)
         self._log(DEBUG, 'stat(%r)' % path)
@@ -343,12 +343,12 @@ class SFTPClient (BaseSFTP):
         """
         Retrieve information about a file on the remote system, without
         following symbolic links (shortcuts).  This otherwise behaves exactly
-        the same as L{stat}.
+        the same as :class:`stat`.
 
-        @param path: the filename to stat
-        @type path: str
-        @return: an object containing attributes about the given file
-        @rtype: SFTPAttributes
+        :param path: the filename to stat
+        :type path: str
+        :return: an object containing attributes about the given file
+        :rtype: SFTPAttributes
         """
         path = self._adjust_cwd(path)
         self._log(DEBUG, 'lstat(%r)' % path)
@@ -359,13 +359,13 @@ class SFTPClient (BaseSFTP):
 
     def symlink(self, source, dest):
         """
-        Create a symbolic link (shortcut) of the C{source} path at
-        C{destination}.
+        Create a symbolic link (shortcut) of the ``source`` path at
+        ``destination``.
 
-        @param source: path of the original file
-        @type source: str
-        @param dest: path of the newly created symlink
-        @type dest: str
+        :param source: path of the original file
+        :type source: str
+        :param dest: path of the newly created symlink
+        :type dest: str
         """
         dest = self._adjust_cwd(dest)
         self._log(DEBUG, 'symlink(%r, %r)' % (source, dest))
@@ -376,13 +376,13 @@ class SFTPClient (BaseSFTP):
     def chmod(self, path, mode):
         """
         Change the mode (permissions) of a file.  The permissions are
-        unix-style and identical to those used by python's C{os.chmod}
+        unix-style and identical to those used by python's ``os.chmod``
         function.
 
-        @param path: path of the file to change the permissions of
-        @type path: str
-        @param mode: new permissions
-        @type mode: int
+        :param path: path of the file to change the permissions of
+        :type path: str
+        :param mode: new permissions
+        :type mode: int
         """
         path = self._adjust_cwd(path)
         self._log(DEBUG, 'chmod(%r, %r)' % (path, mode))
@@ -392,17 +392,17 @@ class SFTPClient (BaseSFTP):
 
     def chown(self, path, uid, gid):
         """
-        Change the owner (C{uid}) and group (C{gid}) of a file.  As with
-        python's C{os.chown} function, you must pass both arguments, so if you
-        only want to change one, use L{stat} first to retrieve the current
+        Change the owner (``uid``) and group (``gid``) of a file.  As with
+        python's ``os.chown`` function, you must pass both arguments, so if you
+        only want to change one, use :class:`stat` first to retrieve the current
         owner and group.
 
-        @param path: path of the file to change the owner and group of
-        @type path: str
-        @param uid: new owner's uid
-        @type uid: int
-        @param gid: new group id
-        @type gid: int
+        :param path: path of the file to change the owner and group of
+        :type path: str
+        :param uid: new owner's uid
+        :type uid: int
+        :param gid: new group id
+        :type gid: int
         """
         path = self._adjust_cwd(path)
         self._log(DEBUG, 'chown(%r, %r, %r)' % (path, uid, gid))
@@ -412,18 +412,18 @@ class SFTPClient (BaseSFTP):
 
     def utime(self, path, times):
         """
-        Set the access and modified times of the file specified by C{path}.  If
-        C{times} is C{None}, then the file's access and modified times are set
-        to the current time.  Otherwise, C{times} must be a 2-tuple of numbers,
-        of the form C{(atime, mtime)}, which is used to set the access and
+        Set the access and modified times of the file specified by ``path``.  If
+        ``times`` is ``None``, then the file's access and modified times are set
+        to the current time.  Otherwise, ``times`` must be a 2-tuple of numbers,
+        of the form ``(atime, mtime)``, which is used to set the access and
         modified times, respectively.  This bizarre API is mimicked from python
         for the sake of consistency -- I apologize.
 
-        @param path: path of the file to modify
-        @type path: str
-        @param times: C{None} or a tuple of (access time, modified time) in
+        :param path: path of the file to modify
+        :type path: str
+        :param times: ``None`` or a tuple of (access time, modified time) in
             standard internet epoch time (seconds since 01 January 1970 GMT)
-        @type times: tuple(int)
+        :type times: tuple(int)
         """
         path = self._adjust_cwd(path)
         if times is None:
@@ -435,14 +435,14 @@ class SFTPClient (BaseSFTP):
 
     def truncate(self, path, size):
         """
-        Change the size of the file specified by C{path}.  This usually extends
-        or shrinks the size of the file, just like the C{truncate()} method on
+        Change the size of the file specified by ``path``.  This usually extends
+        or shrinks the size of the file, just like the ``truncate()`` method on
         python file objects.
 
-        @param path: path of the file to modify
-        @type path: str
-        @param size: the new size of the file
-        @type size: int or long
+        :param path: path of the file to modify
+        :type path: str
+        :param size: the new size of the file
+        :type size: int or long
         """
         path = self._adjust_cwd(path)
         self._log(DEBUG, 'truncate(%r, %r)' % (path, size))
@@ -453,13 +453,13 @@ class SFTPClient (BaseSFTP):
     def readlink(self, path):
         """
         Return the target of a symbolic link (shortcut).  You can use
-        L{symlink} to create these.  The result may be either an absolute or
+        :class:`symlink` to create these.  The result may be either an absolute or
         relative pathname.
 
-        @param path: path of the symbolic link file
-        @type path: str
-        @return: target path
-        @rtype: str
+        :param path: path of the symbolic link file
+        :type path: str
+        :return: target path
+        :rtype: str
         """
         path = self._adjust_cwd(path)
         self._log(DEBUG, 'readlink(%r)' % path)
@@ -477,15 +477,15 @@ class SFTPClient (BaseSFTP):
         """
         Return the normalized path (on the server) of a given path.  This
         can be used to quickly resolve symbolic links or determine what the
-        server is considering to be the "current folder" (by passing C{'.'}
-        as C{path}).
+        server is considering to be the "current folder" (by passing ``'.'``
+        as ``path``).
 
-        @param path: path to be normalized
-        @type path: str
-        @return: normalized form of the given path
-        @rtype: str
+        :param path: path to be normalized
+        :type path: str
+        :return: normalized form of the given path
+        :rtype: str
 
-        @raise IOError: if the path can't be resolved on the server
+        :raises IOError: if the path can't be resolved on the server
         """
         path = self._adjust_cwd(path)
         self._log(DEBUG, 'normalize(%r)' % path)
@@ -503,15 +503,15 @@ class SFTPClient (BaseSFTP):
         doesn't really have the concept of a current working directory, this
         is emulated by paramiko.  Once you use this method to set a working
         directory, all operations on this SFTPClient object will be relative
-        to that path. You can pass in C{None} to stop using a current working
+        to that path. You can pass in ``None`` to stop using a current working
         directory.
 
-        @param path: new current working directory
-        @type path: str
+        :param path: new current working directory
+        :type path: str
 
-        @raise IOError: if the requested path doesn't exist on the server
+        :raises IOError: if the requested path doesn't exist on the server
 
-        @since: 1.4
+        .. versionadded:: 1.4
         """
         if path is None:
             self._cwd = None
@@ -523,43 +523,43 @@ class SFTPClient (BaseSFTP):
     def getcwd(self):
         """
         Return the "current working directory" for this SFTP session, as
-        emulated by paramiko.  If no directory has been set with L{chdir},
-        this method will return C{None}.
+        emulated by paramiko.  If no directory has been set with :class:`chdir`,
+        this method will return ``None``.
 
-        @return: the current working directory on the server, or C{None}
-        @rtype: str
+        :return: the current working directory on the server, or ``None``
+        :rtype: str
 
-        @since: 1.4
+        .. versionadded:: 1.4
         """
         return self._cwd
 
     def putfo(self, fl, remotepath, file_size=0, callback=None, confirm=True):
         """
-        Copy the contents of an open file object (C{fl}) to the SFTP server as
-        C{remotepath}. Any exception raised by operations will be passed through.
+        Copy the contents of an open file object (``fl``) to the SFTP server as
+        ``remotepath``. Any exception raised by operations will be passed through.
 
         The SFTP operations use pipelining for speed.
 
-        @param fl: opened file or file-like object to copy
-        @type localpath: object
-        @param remotepath: the destination path on the SFTP server
-        @type remotepath: str
-        @param file_size: optional size parameter passed to callback. If none is
+        :param fl: opened file or file-like object to copy
+        :type localpath: object
+        :param remotepath: the destination path on the SFTP server
+        :type remotepath: str
+        :param file_size: optional size parameter passed to callback. If none is
             specified, size defaults to 0
-        @type file_size: int
-        @param callback: optional callback function that accepts the bytes
+        :type file_size: int
+        :param callback: optional callback function that accepts the bytes
             transferred so far and the total bytes to be transferred
             (since 1.7.4)
-        @type callback: function(int, int)
-        @param confirm: whether to do a stat() on the file afterwards to
+        :type callback: function(int, int)
+        :param confirm: whether to do a stat() on the file afterwards to
             confirm the file size (since 1.7.7)
-        @type confirm: bool
+        :type confirm: bool
 
-        @return: an object containing attributes about the given file
+        :return: an object containing attributes about the given file
             (since 1.7.4)
-        @rtype: SFTPAttributes
+        :rtype: SFTPAttributes
 
-        @since: 1.4
+        .. versionadded:: 1.4
         """
         fr = self.file(remotepath, 'wb')
         fr.set_pipelined(True)
@@ -585,29 +585,29 @@ class SFTPClient (BaseSFTP):
 
     def put(self, localpath, remotepath, callback=None, confirm=True):
         """
-        Copy a local file (C{localpath}) to the SFTP server as C{remotepath}.
+        Copy a local file (``localpath``) to the SFTP server as ``remotepath``.
         Any exception raised by operations will be passed through.  This
         method is primarily provided as a convenience.
 
         The SFTP operations use pipelining for speed.
 
-        @param localpath: the local file to copy
-        @type localpath: str
-        @param remotepath: the destination path on the SFTP server
-        @type remotepath: str
-        @param callback: optional callback function that accepts the bytes
+        :param localpath: the local file to copy
+        :type localpath: str
+        :param remotepath: the destination path on the SFTP server
+        :type remotepath: str
+        :param callback: optional callback function that accepts the bytes
             transferred so far and the total bytes to be transferred
             (since 1.7.4)
-        @type callback: function(int, int)
-        @param confirm: whether to do a stat() on the file afterwards to
+        :type callback: function(int, int)
+        :param confirm: whether to do a stat() on the file afterwards to
             confirm the file size (since 1.7.7)
-        @type confirm: bool
+        :type confirm: bool
 
-        @return: an object containing attributes about the given file
+        :return: an object containing attributes about the given file
             (since 1.7.4)
-        @rtype: SFTPAttributes
+        :rtype: SFTPAttributes
 
-        @since: 1.4
+        .. versionadded:: 1.4
         """
         file_size = os.stat(localpath).st_size
         fl = file(localpath, 'rb')
@@ -618,23 +618,23 @@ class SFTPClient (BaseSFTP):
 
     def getfo(self, remotepath, fl, callback=None):
         """
-        Copy a remote file (C{remotepath}) from the SFTP server and write to
-        an open file or file-like object, C{fl}.  Any exception raised by
+        Copy a remote file (``remotepath``) from the SFTP server and write to
+        an open file or file-like object, ``fl``.  Any exception raised by
         operations will be passed through.  This method is primarily provided
         as a convenience.
 
-        @param remotepath: opened file or file-like object to copy to
-        @type remotepath: object
-        @param fl: the destination path on the local host or open file
+        :param remotepath: opened file or file-like object to copy to
+        :type remotepath: object
+        :param fl: the destination path on the local host or open file
             object
-        @type localpath: str
-        @param callback: optional callback function that accepts the bytes
+        :type localpath: str
+        :param callback: optional callback function that accepts the bytes
             transferred so far and the total bytes to be transferred
             (since 1.7.4)
-        @type callback: function(int, int)
-        @return: the number of bytes written to the opened file object
+        :type callback: function(int, int)
+        :return: the number of bytes written to the opened file object
 
-        @since: 1.4
+        .. versionadded:: 1.4
         """
         fr = self.file(remotepath, 'rb')
         file_size = self.stat(remotepath).st_size
@@ -655,20 +655,20 @@ class SFTPClient (BaseSFTP):
 
     def get(self, remotepath, localpath, callback=None):
         """
-        Copy a remote file (C{remotepath}) from the SFTP server to the local
-        host as C{localpath}.  Any exception raised by operations will be
+        Copy a remote file (``remotepath``) from the SFTP server to the local
+        host as ``localpath``.  Any exception raised by operations will be
         passed through.  This method is primarily provided as a convenience.
 
-        @param remotepath: the remote file to copy
-        @type remotepath: str
-        @param localpath: the destination path on the local host
-        @type localpath: str
-        @param callback: optional callback function that accepts the bytes
+        :param remotepath: the remote file to copy
+        :type remotepath: str
+        :param localpath: the destination path on the local host
+        :type localpath: str
+        :param callback: optional callback function that accepts the bytes
             transferred so far and the total bytes to be transferred
             (since 1.7.4)
-        @type callback: function(int, int)
+        :type callback: function(int, int)
 
-        @since: 1.4
+        .. versionadded:: 1.4
         """
         file_size = self.stat(remotepath).st_size
         fl = file(localpath, 'wb')
@@ -783,5 +783,5 @@ class SFTPClient (BaseSFTP):
 
 
 class SFTP (SFTPClient):
-    "an alias for L{SFTPClient} for backwards compatability"
+    "an alias for :class:`SFTPClient` for backwards compatability"
     pass
