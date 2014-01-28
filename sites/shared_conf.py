@@ -17,21 +17,18 @@ html_theme_options = {
     'gittip_user': 'bitprophet',
     'analytics_id': 'UA-18486793-2',
 
+    'extra_nav_links': {
+        "API Docs": 'http://docs.paramiko.org',
+    },
+
     'link': '#3782BE',
     'link_hover': '#3782BE',
 
 }
 html_sidebars = {
-    # Landing page (no ToC)
-    'index': [
-        'about.html',
-        'searchbox.html',
-        'donate.html',
-    ],
-    # Inner pages get a ToC
     '**': [
         'about.html',
-        'localtoc.html',
+        'navigation.html',
         'searchbox.html',
         'donate.html',
     ]
