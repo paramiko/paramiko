@@ -8,7 +8,12 @@ install:
   # Dev (doc/test running) requirements
   - pip install coveralls # For coveralls.io specifically
   - pip install -r dev-requirements.txt
-script: coverage run --source=paramiko test.py --verbose
+script:
+  # Main tests, with coverage!
+  - coverage run --source=paramiko test.py --verbose
+  # Ensure documentation & invoke pipeline run OK
+  - invoke www
+  - invoke docs
 notifications:
   irc:
     channels: "irc.freenode.org#paramiko"
