@@ -11,8 +11,6 @@ html_theme_path = [alabaster.get_path()]
 html_static_path = ['../_shared_static']
 html_theme = 'alabaster'
 html_theme_options = {
-    'logo': 'logo.png',
-    'logo_name': 'true',
     'description': "A Python implementation of SSHv2.",
     'github_user': 'paramiko',
     'github_repo': 'paramiko',

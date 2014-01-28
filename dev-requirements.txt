@@ -3,5 +3,5 @@
 invoke>=0.6.1
 invocations>=0.4.4
 sphinx>=1.1.3
-alabaster>=0.1.0
+alabaster>=0.2.0
 releases>=0.2.4
