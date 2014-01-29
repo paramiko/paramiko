@@ -18,6 +18,7 @@ Changelog
   Buchanan for catch & Dave Foster for patch.
 * :bug:`199` Typo fix in the license header cross-project. Thanks to Armin
   Ronacher for catch & patch.
+* :release:`1.11.1 <2013-09-20>`
 * :release:`1.10.3 <2013-09-20>`
 * :bug:`162` Clean up HMAC module import to avoid deadlocks in certain uses of
   SSHClient. Thanks to Gernot Hillier for the catch & suggested fix.
