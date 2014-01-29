@@ -23,11 +23,11 @@ extensions.append('sphinx.ext.intersphinx')
 # under RTD.
 target = join(dirname(__file__), '..', 'docs', '_build')
 if os.environ.get('READTHEDOCS') == 'True':
-    # TODO: switch to docs.paramiko.org post go-live
+    # TODO: switch to docs.paramiko.org post go-live of sphinx API docs
     target = 'http://paramiko-docs.readthedocs.org/en/latest/'
-intersphinx_mapping = {
-    'docs': (target, None),
-}
+#intersphinx_mapping = {
+#    'docs': (target, None),
+#}
 
 # Sister-site links to API docs
 html_theme_options['extra_nav_links'] = {
