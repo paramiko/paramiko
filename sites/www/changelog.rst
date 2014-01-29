@@ -69,9 +69,9 @@ Changelog
 * :feature:`128` Defer FQDN resolution until needed, when parsing SSH config
   files.  Thanks to Parantapa Bhattacharya for catch & patch.
 * :bug:`102 major` Forego random padding for packets when running under
-  ``*-ctr`` ciphers.  This corrects some slowdowns on platforms where random byte
-  generation is inefficient (e.g. Windows). Thanks to  ``@warthog618` for catch
-  & patch, and Michael van der Kolff for code/technique review.
+  ``*-ctr`` ciphers.  This corrects some slowdowns on platforms where random
+  byte generation is inefficient (e.g. Windows). Thanks to  ``@warthog618`` for
+  catch & patch, and Michael van der Kolff for code/technique review.
 * :feature:`127` Turn ``SFTPFile`` into a context manager. Thanks to Michael
   Williamson for the patch.
 * :feature:`116` Limit ``Message.get_bytes`` to an upper bound of 1MB to protect
