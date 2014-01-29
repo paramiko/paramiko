@@ -25,7 +25,22 @@ Changelog
   Thanks to Jonathan Halcrow for catch & patch.
 * :bug:`168` Update config handling to properly handle multiple 'localforward'
   and 'remoteforward' keys. Thanks to Emre Yılmaz for the patch.
+* :release:`1.11.0 <2013-07-26>`
 * :release:`1.10.2 <2013-07-26>`
+* :bug:`98 major` On Windows, when interacting with the PuTTY PAgeant, Paramiko
+  now creates the shared memory map with explicit Security Attributes of the
+  user, which is the same technique employed by the canonical PuTTY library to
+  avoid permissions issues when Paramiko is running under a different UAC
+  context than the PuTTY Ageant process. Thanks to Jason R. Coombs for the
+  patch.
+* :support:`100` Remove use of PyWin32 in ``win_pageant`` module. Module was
+  already dependent on ctypes for constructing appropriate structures and had
+  ctypes implementations of all functionality. Thanks to Jason R. Coombs for
+  the patch.
+* :bug:`87 major` Ensure updates to ``known_hosts`` files account for any
+  updates to said files after Paramiko initially read them. (Includes related
+  fix to guard against duplicate entries during subsequent ``known_hosts``
+  loads.) Thanks to ``@sunweaver`` for the contribution.
 * :bug:`153` (also :issue:`67`) Warn on parse failure when reading known_hosts
   file.  Thanks to ``@glasserc`` for patch.
 * :bug:`146` Indentation fixes for readability. Thanks to Abhinav Upadhyay for
