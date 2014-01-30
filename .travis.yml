@@ -5,8 +5,18 @@ python:
 install:
   # Self-install for setup.py-driven deps
   - pip install -e .
-  - pip install coveralls
-script: coverage run --source=paramiko test.py --verbose
+  # Dev (doc/test running) requirements
+  - pip install coveralls # For coveralls.io specifically
+  - pip install -r dev-requirements.txt
+script:
+  # Main tests, with coverage!
+  - coverage run --source=paramiko test.py --verbose
+  # Ensure documentation & invoke pipeline run OK.
+  # Run 'docs' first since its objects.inv is referred to by 'www'.
+  # Also force warnings to be errors since most of them tend to be actual
+  # problems.
+  - invoke docs -o -W
+  - invoke www -o -W
 notifications:
   irc:
     channels: "irc.freenode.org#paramiko"
