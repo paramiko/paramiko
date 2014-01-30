@@ -2,18 +2,35 @@
 Changelog
 =========
 
+* :release:`1.12.2 <2014-01-21>`
 * :release:`1.11.4 <2014-01-21>`
 * :release:`1.10.6 <2014-01-21>`
 * :bug:`193` (and its attentant PRs :issue:`230` & :issue:`253`): Fix SSH agent
   problems present on Windows. Thanks to David Hobbs for initial report and to
   Aarni Koskela & Olle Lundberg for the patches.
-* :release:`1.11.3 <2014-01-08>`
-* :release:`1.10.5 <2014-01-08>`
+* :release:`1.12.1 <2014-01-08>`
+* :release:`1.11.3 <2014-01-08>` 176
+* :release:`1.10.5 <2014-01-08>` 176
+* :bug:`225` Note ecdsa requirement in README. Thanks to Amaury Rodriguez for
+  the catch.
 * :bug:`176` Fix AttributeError bugs in known_hosts file (re)loading. Thanks
   to Nathan Scowcroft for the patch & Martin Blumenstingl for the initial test
   case.
+* :release:`1.12.0 <2013-09-27>`
 * :release:`1.11.2 <2013-09-27>`
 * :release:`1.10.4 <2013-09-27>` 179, 200, 199
+* :feature:`152` Add tentative support for ECDSA keys. *This adds the ecdsa
+  module as a new dependency of Paramiko.* The module is available at
+  [warner/python-ecdsa on Github](https://github.com/warner/python-ecdsa) and
+  [ecdsa on PyPI](https://pypi.python.org/pypi/ecdsa).
+
+    * Note that you might still run into problems with key negotiation --
+      Paramiko picks the first key that the server offers, which might not be
+      what you have in your known_hosts file.
+    * Mega thanks to Ethan Glasser-Camp for the patch.
+
+* #136: Add server-side support for the SSH protocol's 'env' command. Thanks to
+  Benjamin Pollack for the patch.
 * :bug:`156` Fix potential deadlock condition when using Channel objects as
   sockets (e.g. when using SSH gatewaying). Thanks to Steven Noonan and Frank
   Arnold for catch & patch.
