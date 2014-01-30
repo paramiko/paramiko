@@ -2,8 +2,8 @@
 Changelog
 =========
 
-* :release:`1.11.4 <2014-01-21>`
-* :release:`1.10.6 <2014-01-21>`
+* :release:`1.11.4 <2014-01-21>` 193
+* :release:`1.10.6 <2014-01-21>` 193
 * :bug:`193` (and its attentant PRs :issue:`230` & :issue:`253`): Fix SSH agent
   problems present on Windows. Thanks to David Hobbs for initial report and to
   Aarni Koskela & Olle Lundberg for the patches.
@@ -13,7 +13,7 @@ Changelog
   to Nathan Scowcroft for the patch & Martin Blumenstingl for the initial test
   case.
 * :release:`1.11.2 <2013-09-27>`
-* :release:`1.10.4 <2013-09-27>` 179, 200, 199
+* :release:`1.10.4 <2013-09-27>` 199, 200, 179
 * :bug:`156` Fix potential deadlock condition when using Channel objects as
   sockets (e.g. when using SSH gatewaying). Thanks to Steven Noonan and Frank
   Arnold for catch & patch.
