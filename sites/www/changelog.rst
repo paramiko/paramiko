@@ -2,8 +2,6 @@
 Changelog
 =========
 
-* :release:`1.11.4 <2014-01-21>` 193
-* :release:`1.10.6 <2014-01-21>` 193
 * :bug:`193` (and its attentant PRs :issue:`230` & :issue:`253`): Fix SSH agent
   problems present on Windows. Thanks to David Hobbs for initial report and to
   Aarni Koskela & Olle Lundberg for the patches.
