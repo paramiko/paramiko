@@ -6,7 +6,7 @@ How to get the code
 ===================
 
 Our primary Git repository is on Github at `paramiko/paramiko
-<https://github.com/paramiko/paramiko>`; please follow their instruction for
+<https://github.com/paramiko/paramiko>`_; please follow their instructions for
 cloning to your local system. (If you intend to submit patches/pull requests,
 we recommend forking first, then cloning your fork. Github has excellent
 documentation for all this.)
