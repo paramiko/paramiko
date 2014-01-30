@@ -18,6 +18,11 @@ except AttributeError:
 ######################
 # jaraco.windows.error
 
+if not getattr(__builtins__, "WindowsError", None):
+    class WindowsError(OSError):
+        pass
+
+
 def format_system_message(errno):
 	"""
 	Call FormatMessage with a system error number to retrieve
@@ -123,7 +128,7 @@ class MemoryMap(object):
 			unicode(self.name))
 		handle_nonzero_success(filemap)
 		if filemap == INVALID_HANDLE_VALUE:
-			raise Exception("Failed to create file mapping")
+			raise WindowsError("Failed to create file mapping")
 		self.filemap = filemap
 		self.view = MapViewOfFile(filemap, FILE_MAP_WRITE, 0, 0, 0)
 		return self
