@@ -2,7 +2,7 @@
 Changelog
 =========
 
-* :release:`1.10.6 <2014-01-21>`
+* :release:`1.10.6 <2014-01-21>` 193
 * :bug:`193` (and its attentant PRs :issue:`230` & :issue:`253`): Fix SSH agent
   problems present on Windows. Thanks to David Hobbs for initial report and to
   Aarni Koskela & Olle Lundberg for the patches.
@@ -10,7 +10,7 @@ Changelog
 * :bug:`176` Fix AttributeError bugs in known_hosts file (re)loading. Thanks
   to Nathan Scowcroft for the patch & Martin Blumenstingl for the initial test
   case.
-* :release:`1.10.4 <2013-09-27>`
+* :release:`1.10.4 <2013-09-27>` 199, 200, 179
 * :bug:`179` Fix a missing variable causing errors when an ssh_config file has
   a non-default AddressFamily set. Thanks to Ed Marshall & Tomaz Muraus for
   catch & patch.
