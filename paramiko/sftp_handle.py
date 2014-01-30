@@ -33,16 +33,16 @@ class SFTPHandle (object):
     by the client to refer to the underlying file.
     
     Server implementations can (and should) subclass SFTPHandle to implement
-    features of a file handle, like L{stat} or L{chattr}.
+    features of a file handle, like :class:`stat` or :class:`chattr`.
     """
     def __init__(self, flags=0):
         """
         Create a new file handle representing a local file being served over
-        SFTP.  If C{flags} is passed in, it's used to determine if the file
+        SFTP.  If ``flags`` is passed in, it's used to determine if the file
         is open in append mode.
         
-        @param flags: optional flags as passed to L{SFTPServerInterface.open}
-        @type flags: int
+        :param flags: optional flags as passed to :class:`SFTPServerInterface.open`
+        :type flags: int
         """
         self.__flags = flags
         self.__name = None
@@ -56,10 +56,10 @@ class SFTPHandle (object):
         Normally you would use this method to close the underlying OS level
         file object(s).
         
-        The default implementation checks for attributes on C{self} named
-        C{readfile} and/or C{writefile}, and if either or both are present,
-        their C{close()} methods are called.  This means that if you are
-        using the default implementations of L{read} and L{write}, this
+        The default implementation checks for attributes on ``self`` named
+        ``readfile`` and/or ``writefile``, and if either or both are present,
+        their ``close()`` methods are called.  This means that if you are
+        using the default implementations of :class:`read` and :class:`write`, this
         method's default implementation should be fine also.
         """
         readfile = getattr(self, 'readfile', None)
@@ -71,24 +71,24 @@ class SFTPHandle (object):
 
     def read(self, offset, length):
         """
-        Read up to C{length} bytes from this file, starting at position
-        C{offset}.  The offset may be a python long, since SFTP allows it
+        Read up to ``length`` bytes from this file, starting at position
+        ``offset``.  The offset may be a python long, since SFTP allows it
         to be 64 bits.
 
         If the end of the file has been reached, this method may return an
-        empty string to signify EOF, or it may also return L{SFTP_EOF}.
+        empty string to signify EOF, or it may also return :class:`SFTP_EOF`.
 
-        The default implementation checks for an attribute on C{self} named
-        C{readfile}, and if present, performs the read operation on the python
+        The default implementation checks for an attribute on ``self`` named
+        ``readfile``, and if present, performs the read operation on the python
         file-like object found there.  (This is meant as a time saver for the
         common case where you are wrapping a python file object.)
 
-        @param offset: position in the file to start reading from.
-        @type offset: int or long
-        @param length: number of bytes to attempt to read.
-        @type length: int
-        @return: data read from the file, or an SFTP error code.
-        @rtype: str
+        :param offset: position in the file to start reading from.
+        :type offset: int or long
+        :param length: number of bytes to attempt to read.
+        :type length: int
+        :return: data read from the file, or an SFTP error code.
+        :rtype: str
         """
         readfile = getattr(self, 'readfile', None)
         if readfile is None:
@@ -108,23 +108,23 @@ class SFTPHandle (object):
 
     def write(self, offset, data):
         """
-        Write C{data} into this file at position C{offset}.  Extending the
+        Write ``data`` into this file at position ``offset``.  Extending the
         file past its original end is expected.  Unlike python's normal
-        C{write()} methods, this method cannot do a partial write: it must
-        write all of C{data} or else return an error.
+        ``write()`` methods, this method cannot do a partial write: it must
+        write all of ``data`` or else return an error.
 
-        The default implementation checks for an attribute on C{self} named
-        C{writefile}, and if present, performs the write operation on the
+        The default implementation checks for an attribute on ``self`` named
+        ``writefile``, and if present, performs the write operation on the
         python file-like object found there.  The attribute is named
-        differently from C{readfile} to make it easy to implement read-only
+        differently from ``readfile`` to make it easy to implement read-only
         (or write-only) files, but if both attributes are present, they should
         refer to the same file.
         
-        @param offset: position in the file to start reading from.
-        @type offset: int or long
-        @param data: data to write into the file.
-        @type data: str
-        @return: an SFTP error code like L{SFTP_OK}.
+        :param offset: position in the file to start reading from.
+        :type offset: int or long
+        :param data: data to write into the file.
+        :type data: str
+        :return: an SFTP error code like :class:`SFTP_OK`.
         """
         writefile = getattr(self, 'writefile', None)
         if writefile is None:
@@ -148,26 +148,26 @@ class SFTPHandle (object):
 
     def stat(self):
         """
-        Return an L{SFTPAttributes} object referring to this open file, or an
-        error code.  This is equivalent to L{SFTPServerInterface.stat}, except
+        Return an :class:`SFTPAttributes` object referring to this open file, or an
+        error code.  This is equivalent to :class:`SFTPServerInterface.stat`, except
         it's called on an open file instead of a path.
 
-        @return: an attributes object for the given file, or an SFTP error
-            code (like L{SFTP_PERMISSION_DENIED}).
-        @rtype: L{SFTPAttributes} I{or error code}
+        :return: an attributes object for the given file, or an SFTP error
+            code (like :class:`SFTP_PERMISSION_DENIED`).
+        :rtype: :class:`SFTPAttributes` or error code
         """
         return SFTP_OP_UNSUPPORTED
 
     def chattr(self, attr):
         """
-        Change the attributes of this file.  The C{attr} object will contain
+        Change the attributes of this file.  The ``attr`` object will contain
         only those fields provided by the client in its request, so you should
         check for the presence of fields before using them.
 
-        @param attr: the attributes to change on this file.
-        @type attr: L{SFTPAttributes}
-        @return: an error code like L{SFTP_OK}.
-        @rtype: int
+        :param attr: the attributes to change on this file.
+        :type attr: :class:`SFTPAttributes`
+        :return: an error code like :class:`SFTP_OK`.
+        :rtype: int
         """
         return SFTP_OP_UNSUPPORTED
 

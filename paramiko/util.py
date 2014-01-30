@@ -154,17 +154,17 @@ def generate_key_bytes(hashclass, salt, key, nbytes):
     through a secure hash into some keyworthy bytes.  This specific algorithm
     is used for encrypting/decrypting private key files.
 
-    @param hashclass: class from L{Crypto.Hash} that can be used as a secure
-        hashing function (like C{MD5} or C{SHA}).
-    @type hashclass: L{Crypto.Hash}
-    @param salt: data to salt the hash with.
-    @type salt: string
-    @param key: human-entered password or passphrase.
-    @type key: string
-    @param nbytes: number of bytes to generate.
-    @type nbytes: int
-    @return: key data
-    @rtype: string
+    :param hashclass: class from :class:`Crypto.Hash` that can be used as a secure
+        hashing function (like ``MD5`` or ``SHA``).
+    :type hashclass: :class:`Crypto.Hash`
+    :param salt: data to salt the hash with.
+    :type salt: string
+    :param key: human-entered password or passphrase.
+    :type key: string
+    :param nbytes: number of bytes to generate.
+    :type nbytes: int
+    :return: key data
+    :rtype: string
     """
     keydata = ''
     digest = ''
@@ -185,26 +185,26 @@ def generate_key_bytes(hashclass, salt, key, nbytes):
 def load_host_keys(filename):
     """
     Read a file of known SSH host keys, in the format used by openssh, and
-    return a compound dict of C{hostname -> keytype ->} L{PKey <paramiko.pkey.PKey>}.
+    return a compound dict of ``hostname -> keytype ->`` :class:`PKey <paramiko.pkey.PKey>`.
     The hostname may be an IP address or DNS name.  The keytype will be either
-    C{"ssh-rsa"} or C{"ssh-dss"}.
+    ``"ssh-rsa"`` or ``"ssh-dss"``.
 
     This type of file unfortunately doesn't exist on Windows, but on posix,
-    it will usually be stored in C{os.path.expanduser("~/.ssh/known_hosts")}.
+    it will usually be stored in ``os.path.expanduser("~/.ssh/known_hosts")``.
 
-    Since 1.5.3, this is just a wrapper around L{HostKeys}.
+    Since 1.5.3, this is just a wrapper around :class:`HostKeys`.
 
-    @param filename: name of the file to read host keys from
-    @type filename: str
-    @return: dict of host keys, indexed by hostname and then keytype
-    @rtype: dict(hostname, dict(keytype, L{PKey <paramiko.pkey.PKey>}))
+    :param filename: name of the file to read host keys from
+    :type filename: str
+    :return: dict of host keys, indexed by hostname and then keytype
+    :rtype: dict(hostname, dict(keytype, :class:`PKey <paramiko.pkey.PKey>`))
     """
     from paramiko.hostkeys import HostKeys
     return HostKeys(filename)
 
 def parse_ssh_config(file_obj):
     """
-    Provided only as a backward-compatible wrapper around L{SSHConfig}.
+    Provided only as a backward-compatible wrapper around :class:`SSHConfig`.
     """
     config = SSHConfig()
     config.parse(file_obj)
@@ -212,7 +212,7 @@ def parse_ssh_config(file_obj):
 
 def lookup_ssh_host_config(hostname, config):
     """
-    Provided only as a backward-compatible wrapper around L{SSHConfig}.
+    Provided only as a backward-compatible wrapper around :class:`SSHConfig`.
     """
     return config.lookup(hostname)
 

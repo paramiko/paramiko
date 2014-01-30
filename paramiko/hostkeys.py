@@ -17,7 +17,7 @@
 # 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
 
 """
-L{HostKeys}
+:class:`HostKeys`
 """
 
 import base64
@@ -59,8 +59,8 @@ class HostKeyEntry:
         We don't bother to check for comments or empty lines.  All of
         that should be taken care of before sending the line to us.
 
-        @param line: a line from an OpenSSH known_hosts file
-        @type line: str
+        :param line: a line from an OpenSSH known_hosts file
+        :type line: str
         """
         log = get_logger('paramiko.hostkeys')
         fields = line.split(' ')
@@ -112,9 +112,9 @@ class HostKeys (UserDict.DictMixin):
     verify server keys during SSH negotiation.
 
     A HostKeys object can be treated like a dict; any dict lookup is equivalent
-    to calling L{lookup}.
+    to calling :class:`lookup`.
 
-    @since: 1.5.3
+    .. versionadded:: 1.5.3
     """
 
     def __init__(self, filename=None):
@@ -122,8 +122,8 @@ class HostKeys (UserDict.DictMixin):
         Create a new HostKeys object, optionally loading keys from an openssh
         style host-key file.
 
-        @param filename: filename to load host keys from, or C{None}
-        @type filename: str
+        :param filename: filename to load host keys from, or ``None``
+        :type filename: str
         """
         # emulate a dict of { hostname: { keytype: PKey } }
         self._entries = []
@@ -133,14 +133,14 @@ class HostKeys (UserDict.DictMixin):
     def add(self, hostname, keytype, key):
         """
         Add a host key entry to the table.  Any existing entry for a
-        C{(hostname, keytype)} pair will be replaced.
+        ``(hostname, keytype)`` pair will be replaced.
 
-        @param hostname: the hostname (or IP) to add
-        @type hostname: str
-        @param keytype: key type (C{"ssh-rsa"} or C{"ssh-dss"})
-        @type keytype: str
-        @param key: the key to add
-        @type key: L{PKey}
+        :param hostname: the hostname (or IP) to add
+        :type hostname: str
+        :param keytype: key type (``"ssh-rsa"`` or ``"ssh-dss"``)
+        :type keytype: str
+        :param key: the key to add
+        :type key: :class:`PKey`
         """
         for e in self._entries:
             if (hostname in e.hostnames) and (e.key.get_name() == keytype):
@@ -153,16 +153,16 @@ class HostKeys (UserDict.DictMixin):
         Read a file of known SSH host keys, in the format used by openssh.
         This type of file unfortunately doesn't exist on Windows, but on
         posix, it will usually be stored in
-        C{os.path.expanduser("~/.ssh/known_hosts")}.
+        ``os.path.expanduser("~/.ssh/known_hosts")``.
 
         If this method is called multiple times, the host keys are merged,
-        not cleared.  So multiple calls to C{load} will just call L{add},
+        not cleared.  So multiple calls to ``load`` will just call :class:`add`,
         replacing any existing entries and adding new ones.
 
-        @param filename: name of the file to read host keys from
-        @type filename: str
+        :param filename: name of the file to read host keys from
+        :type filename: str
 
-        @raise IOError: if there was an error reading the file
+        :raises IOError: if there was an error reading the file
         """
         f = open(filename, 'r')
         for lineno, line in enumerate(f):
@@ -186,12 +186,12 @@ class HostKeys (UserDict.DictMixin):
         loaded from a file originally).  The single exception is that combined
         lines will be split into individual key lines, which is arguably a bug.
 
-        @param filename: name of the file to write
-        @type filename: str
+        :param filename: name of the file to write
+        :type filename: str
 
-        @raise IOError: if there was an error writing the file
+        :raises IOError: if there was an error writing the file
 
-        @since: 1.6.1
+        .. versionadded:: 1.6.1
         """
         f = open(filename, 'w')
         for e in self._entries:
@@ -203,13 +203,13 @@ class HostKeys (UserDict.DictMixin):
     def lookup(self, hostname):
         """
         Find a hostkey entry for a given hostname or IP.  If no entry is found,
-        C{None} is returned.  Otherwise a dictionary of keytype to key is
-        returned.  The keytype will be either C{"ssh-rsa"} or C{"ssh-dss"}.
+        ``None`` is returned.  Otherwise a dictionary of keytype to key is
+        returned.  The keytype will be either ``"ssh-rsa"`` or ``"ssh-dss"``.
 
-        @param hostname: the hostname (or IP) to lookup
-        @type hostname: str
-        @return: keys associated with this host (or C{None})
-        @rtype: dict(str, L{PKey})
+        :param hostname: the hostname (or IP) to lookup
+        :type hostname: str
+        :return: keys associated with this host (or ``None``)
+        :rtype: dict(str, :class:`PKey`)
         """
         class SubDict (UserDict.DictMixin):
             def __init__(self, hostname, entries, hostkeys):
@@ -254,13 +254,13 @@ class HostKeys (UserDict.DictMixin):
         Return True if the given key is associated with the given hostname
         in this dictionary.
 
-        @param hostname: hostname (or IP) of the SSH server
-        @type hostname: str
-        @param key: the key to check
-        @type key: L{PKey}
-        @return: C{True} if the key is associated with the hostname; C{False}
+        :param hostname: hostname (or IP) of the SSH server
+        :type hostname: str
+        :param key: the key to check
+        :type key: :class:`PKey`
+        :return: ``True`` if the key is associated with the hostname; ``False``
             if not
-        @rtype: bool
+        :rtype: bool
         """
         k = self.lookup(hostname)
         if k is None:
@@ -317,12 +317,12 @@ class HostKeys (UserDict.DictMixin):
         Return a "hashed" form of the hostname, as used by openssh when storing
         hashed hostnames in the known_hosts file.
 
-        @param hostname: the hostname to hash
-        @type hostname: str
-        @param salt: optional salt to use when hashing (must be 20 bytes long)
-        @type salt: str
-        @return: the hashed hostname
-        @rtype: str
+        :param hostname: the hostname to hash
+        :type hostname: str
+        :param salt: optional salt to use when hashing (must be 20 bytes long)
+        :type salt: str
+        :return: the hashed hostname
+        :rtype: str
         """
         if salt is None:
             salt = rng.read(SHA.digest_size)

@@ -47,30 +47,30 @@ class PKey (object):
 
     def __init__(self, msg=None, data=None):
         """
-        Create a new instance of this public key type.  If C{msg} is given,
+        Create a new instance of this public key type.  If ``msg`` is given,
         the key's public part(s) will be filled in from the message.  If
-        C{data} is given, the key's public part(s) will be filled in from
+        ``data`` is given, the key's public part(s) will be filled in from
         the string.
 
-        @param msg: an optional SSH L{Message} containing a public key of this
+        :param msg: an optional SSH :class:`Message` containing a public key of this
         type.
-        @type msg: L{Message}
-        @param data: an optional string containing a public key of this type
-        @type data: str
+        :type msg: :class:`Message`
+        :param data: an optional string containing a public key of this type
+        :type data: str
 
-        @raise SSHException: if a key cannot be created from the C{data} or
-        C{msg} given, or no key was passed in.
+        :raises SSHException: if a key cannot be created from the ``data`` or
+        ``msg`` given, or no key was passed in.
         """
         pass
 
     def __str__(self):
         """
-        Return a string of an SSH L{Message} made up of the public part(s) of
-        this key.  This string is suitable for passing to L{__init__} to
+        Return a string of an SSH :class:`Message` made up of the public part(s) of
+        this key.  This string is suitable for passing to :class:`__init__` to
         re-create the key object later.
 
-        @return: string representation of an SSH key message.
-        @rtype: str
+        :return: string representation of an SSH key message.
+        :rtype: str
         """
         return ''
 
@@ -81,10 +81,10 @@ class PKey (object):
         of the key are compared, so a public key will compare equal to its
         corresponding private key.
 
-        @param other: key to compare to.
-        @type other: L{PKey}
-        @return: 0 if the two keys are equivalent, non-0 otherwise.
-        @rtype: int
+        :param other: key to compare to.
+        :type other: :class:`PKey`
+        :return: 0 if the two keys are equivalent, non-0 otherwise.
+        :rtype: int
         """
         hs = hash(self)
         ho = hash(other)
@@ -96,9 +96,9 @@ class PKey (object):
         """
         Return the name of this private key implementation.
 
-        @return: name of this private key type, in SSH terminology (for
-        example, C{"ssh-rsa"}).
-        @rtype: str
+        :return: name of this private key type, in SSH terminology (for
+        example, ``"ssh-rsa"``).
+        :rtype: str
         """
         return ''
 
@@ -107,18 +107,18 @@ class PKey (object):
         Return the number of significant bits in this key.  This is useful
         for judging the relative security of a key.
 
-        @return: bits in the key.
-        @rtype: int
+        :return: bits in the key.
+        :rtype: int
         """
         return 0
 
     def can_sign(self):
         """
-        Return C{True} if this key has the private part necessary for signing
+        Return ``True`` if this key has the private part necessary for signing
         data.
 
-        @return: C{True} if this is a private key.
-        @rtype: bool
+        :return: ``True`` if this is a private key.
+        :rtype: bool
         """
         return False
 
@@ -127,9 +127,9 @@ class PKey (object):
         Return an MD5 fingerprint of the public part of this key.  Nothing
         secret is revealed.
 
-        @return: a 16-byte string (binary) of the MD5 fingerprint, in SSH
+        :return: a 16-byte string (binary) of the MD5 fingerprint, in SSH
             format.
-        @rtype: str
+        :rtype: str
         """
         return MD5.new(str(self)).digest()
 
@@ -139,22 +139,22 @@ class PKey (object):
         secret is revealed.  This format is compatible with that used to store
         public key files or recognized host keys.
 
-        @return: a base64 string containing the public part of the key.
-        @rtype: str
+        :return: a base64 string containing the public part of the key.
+        :rtype: str
         """
         return base64.encodestring(str(self)).replace('\n', '')
 
     def sign_ssh_data(self, rng, data):
         """
-        Sign a blob of data with this private key, and return a L{Message}
+        Sign a blob of data with this private key, and return a :class:`Message`
         representing an SSH signature message.
 
-        @param rng: a secure random number generator.
-        @type rng: L{Crypto.Util.rng.RandomPool}
-        @param data: the data to sign.
-        @type data: str
-        @return: an SSH signature message.
-        @rtype: L{Message}
+        :param rng: a secure random number generator.
+        :type rng: :class:`Crypto.Util.rng.RandomPool`
+        :param data: the data to sign.
+        :type data: str
+        :return: an SSH signature message.
+        :rtype: :class:`Message`
         """
         return ''
 
@@ -163,37 +163,37 @@ class PKey (object):
         Given a blob of data, and an SSH message representing a signature of
         that data, verify that it was signed with this key.
 
-        @param data: the data that was signed.
-        @type data: str
-        @param msg: an SSH signature message
-        @type msg: L{Message}
-        @return: C{True} if the signature verifies correctly; C{False}
+        :param data: the data that was signed.
+        :type data: str
+        :param msg: an SSH signature message
+        :type msg: :class:`Message`
+        :return: ``True`` if the signature verifies correctly; ``False``
             otherwise.
-        @rtype: boolean
+        :rtype: boolean
         """
         return False
 
     def from_private_key_file(cls, filename, password=None):
         """
         Create a key object by reading a private key file.  If the private
-        key is encrypted and C{password} is not C{None}, the given password
-        will be used to decrypt the key (otherwise L{PasswordRequiredException}
+        key is encrypted and ``password`` is not ``None``, the given password
+        will be used to decrypt the key (otherwise :class:`PasswordRequiredException`
         is thrown).  Through the magic of python, this factory method will
-        exist in all subclasses of PKey (such as L{RSAKey} or L{DSSKey}), but
+        exist in all subclasses of PKey (such as :class:`RSAKey` or :class:`DSSKey`), but
         is useless on the abstract PKey class.
 
-        @param filename: name of the file to read
-        @type filename: str
-        @param password: an optional password to use to decrypt the key file,
+        :param filename: name of the file to read
+        :type filename: str
+        :param password: an optional password to use to decrypt the key file,
             if it's encrypted
-        @type password: str
-        @return: a new key object based on the given private key
-        @rtype: L{PKey}
+        :type password: str
+        :return: a new key object based on the given private key
+        :rtype: :class:`PKey`
 
-        @raise IOError: if there was an error reading the file
-        @raise PasswordRequiredException: if the private key file is
-            encrypted, and C{password} is C{None}
-        @raise SSHException: if the key file is invalid
+        :raises IOError: if there was an error reading the file
+        :raises PasswordRequiredException: if the private key file is
+            encrypted, and ``password`` is ``None``
+        :raises SSHException: if the key file is invalid
         """
         key = cls(filename=filename, password=password)
         return key
@@ -202,22 +202,22 @@ class PKey (object):
     def from_private_key(cls, file_obj, password=None):
         """
         Create a key object by reading a private key from a file (or file-like)
-        object.  If the private key is encrypted and C{password} is not C{None},
+        object.  If the private key is encrypted and ``password`` is not ``None``,
         the given password will be used to decrypt the key (otherwise
-        L{PasswordRequiredException} is thrown).
+        :class:`PasswordRequiredException` is thrown).
 
-        @param file_obj: the file to read from
-        @type file_obj: file
-        @param password: an optional password to use to decrypt the key, if it's
+        :param file_obj: the file to read from
+        :type file_obj: file
+        :param password: an optional password to use to decrypt the key, if it's
             encrypted
-        @type password: str
-        @return: a new key object based on the given private key
-        @rtype: L{PKey}
+        :type password: str
+        :return: a new key object based on the given private key
+        :rtype: :class:`PKey`
 
-        @raise IOError: if there was an error reading the key
-        @raise PasswordRequiredException: if the private key file is encrypted,
-            and C{password} is C{None}
-        @raise SSHException: if the key file is invalid
+        :raises IOError: if there was an error reading the key
+        :raises PasswordRequiredException: if the private key file is encrypted,
+            and ``password`` is ``None``
+        :raises SSHException: if the key file is invalid
         """
         key = cls(file_obj=file_obj, password=password)
         return key
@@ -226,55 +226,55 @@ class PKey (object):
     def write_private_key_file(self, filename, password=None):
         """
         Write private key contents into a file.  If the password is not
-        C{None}, the key is encrypted before writing.
+        ``None``, the key is encrypted before writing.
 
-        @param filename: name of the file to write
-        @type filename: str
-        @param password: an optional password to use to encrypt the key file
-        @type password: str
+        :param filename: name of the file to write
+        :type filename: str
+        :param password: an optional password to use to encrypt the key file
+        :type password: str
 
-        @raise IOError: if there was an error writing the file
-        @raise SSHException: if the key is invalid
+        :raises IOError: if there was an error writing the file
+        :raises SSHException: if the key is invalid
         """
         raise Exception('Not implemented in PKey')
 
     def write_private_key(self, file_obj, password=None):
         """
         Write private key contents into a file (or file-like) object.  If the
-        password is not C{None}, the key is encrypted before writing.
+        password is not ``None``, the key is encrypted before writing.
 
-        @param file_obj: the file object to write into
-        @type file_obj: file
-        @param password: an optional password to use to encrypt the key
-        @type password: str
+        :param file_obj: the file object to write into
+        :type file_obj: file
+        :param password: an optional password to use to encrypt the key
+        :type password: str
 
-        @raise IOError: if there was an error writing to the file
-        @raise SSHException: if the key is invalid
+        :raises IOError: if there was an error writing to the file
+        :raises SSHException: if the key is invalid
         """
         raise Exception('Not implemented in PKey')
 
     def _read_private_key_file(self, tag, filename, password=None):
         """
         Read an SSH2-format private key file, looking for a string of the type
-        C{"BEGIN xxx PRIVATE KEY"} for some C{xxx}, base64-decode the text we
+        ``"BEGIN xxx PRIVATE KEY"`` for some ``xxx``, base64-decode the text we
         find, and return it as a string.  If the private key is encrypted and
-        C{password} is not C{None}, the given password will be used to decrypt
-        the key (otherwise L{PasswordRequiredException} is thrown).
+        ``password`` is not ``None``, the given password will be used to decrypt
+        the key (otherwise :class:`PasswordRequiredException` is thrown).
 
-        @param tag: C{"RSA"} or C{"DSA"}, the tag used to mark the data block.
-        @type tag: str
-        @param filename: name of the file to read.
-        @type filename: str
-        @param password: an optional password to use to decrypt the key file,
+        :param tag: ``"RSA"`` or ``"DSA"``, the tag used to mark the data block.
+        :type tag: str
+        :param filename: name of the file to read.
+        :type filename: str
+        :param password: an optional password to use to decrypt the key file,
             if it's encrypted.
-        @type password: str
-        @return: data blob that makes up the private key.
-        @rtype: str
+        :type password: str
+        :return: data blob that makes up the private key.
+        :rtype: str
 
-        @raise IOError: if there was an error reading the file.
-        @raise PasswordRequiredException: if the private key file is
-            encrypted, and C{password} is C{None}.
-        @raise SSHException: if the key file is invalid.
+        :raises IOError: if there was an error reading the file.
+        :raises PasswordRequiredException: if the private key file is
+            encrypted, and ``password`` is ``None``.
+        :raises SSHException: if the key file is invalid.
         """
         f = open(filename, 'r')
         data = self._read_private_key(tag, f, password)
@@ -335,16 +335,16 @@ class PKey (object):
         a trivially-encoded format (base64) which is completely insecure.  If
         a password is given, DES-EDE3-CBC is used.
 
-        @param tag: C{"RSA"} or C{"DSA"}, the tag used to mark the data block.
-        @type tag: str
-        @param filename: name of the file to write.
-        @type filename: str
-        @param data: data blob that makes up the private key.
-        @type data: str
-        @param password: an optional password to use to encrypt the file.
-        @type password: str
+        :param tag: ``"RSA"`` or ``"DSA"``, the tag used to mark the data block.
+        :type tag: str
+        :param filename: name of the file to write.
+        :type filename: str
+        :param data: data blob that makes up the private key.
+        :type data: str
+        :param password: an optional password to use to encrypt the file.
+        :type password: str
 
-        @raise IOError: if there was an error writing the file.
+        :raises IOError: if there was an error writing the file.
         """
         f = open(filename, 'w', 0600)
         # grrr... the mode doesn't always take hold

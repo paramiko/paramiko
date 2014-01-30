@@ -17,35 +17,35 @@
 # 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
 
 """
-I{Paramiko} (a combination of the esperanto words for "paranoid" and "friend")
+Paramiko (a combination of the esperanto words for "paranoid" and "friend")
 is a module for python 2.5 or greater that implements the SSH2 protocol for
 secure (encrypted and authenticated) connections to remote machines.  Unlike
 SSL (aka TLS), the SSH2 protocol does not require hierarchical certificates
 signed by a powerful central authority.  You may know SSH2 as the protocol that
-replaced C{telnet} and C{rsh} for secure access to remote shells, but the
+replaced ``telnet`` and ``rsh`` for secure access to remote shells, but the
 protocol also includes the ability to open arbitrary channels to remote
-services across an encrypted tunnel.  (This is how C{sftp} works, for example.)
+services across an encrypted tunnel.  (This is how ``sftp`` works, for example.)
 
-The high-level client API starts with creation of an L{SSHClient} object.
+The high-level client API starts with creation of an :class:`SSHClient` object.
 For more direct control, pass a socket (or socket-like object) to a
-L{Transport}, and use L{start_server <Transport.start_server>} or
-L{start_client <Transport.start_client>} to negoatite
+:class:`Transport`, and use :class:`start_server <Transport.start_server>` or
+:class:`start_client <Transport.start_client>` to negoatite
 with the remote host as either a server or client.  As a client, you are
 responsible for authenticating using a password or private key, and checking
-the server's host key.  I{(Key signature and verification is done by paramiko,
+the server's host key. (Key signature and verification is done by paramiko,
 but you will need to provide private keys and check that the content of a
-public key matches what you expected to see.)}  As a server, you are
+public key matches what you expected to see.) As a server, you are
 responsible for deciding which users, passwords, and keys to allow, and what
 kind of channels to allow.
 
-Once you have finished, either side may request flow-controlled L{Channel}s to
-the other side, which are python objects that act like sockets, but send and
+Once you have finished, either side may request flow-controlled :class:`channels <Channel>`
+to the other side, which are python objects that act like sockets, but send and
 receive data over the encrypted session.
 
 Paramiko is written entirely in python (no C or platform-dependent code) and is
 released under the GNU Lesser General Public License (LGPL).
 
-Website: U{https://github.com/paramiko/paramiko/}
+Website: https://github.com/paramiko/paramiko/
 """
 
 import sys

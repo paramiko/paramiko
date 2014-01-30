@@ -44,7 +44,7 @@ class AgentSSH(object):
     """
     Client interface for using private keys from an SSH agent running on the
     local machine.  If an SSH agent is running, this class can be used to
-    connect to it and retreive L{PKey} objects which can be used when
+    connect to it and retreive :class:`PKey` objects which can be used when
     attempting to authenticate to remote SSH servers.
 
     Because the SSH agent protocol uses environment variables and unix-domain
@@ -61,8 +61,8 @@ class AgentSSH(object):
         no SSH agent was running (or it couldn't be contacted), an empty list
         will be returned.
 
-        @return: a list of keys available on the SSH agent
-        @rtype: tuple of L{AgentKey}
+        :return: a list of keys available on the SSH agent
+        :rtype: tuple of :class:`AgentKey`
         """
         return self._keys
 
@@ -238,9 +238,9 @@ class AgentClientProxy(object):
 
 class AgentServerProxy(AgentSSH):
     """
-    @param t : transport used for the Forward for SSH Agent communication
+    :param t : transport used for the Forward for SSH Agent communication
 
-    @raise SSHException: mostly if we lost the agent
+    :raises SSHException: mostly if we lost the agent
     """
     def __init__(self, t):
         AgentSSH.__init__(self)
@@ -276,8 +276,8 @@ class AgentServerProxy(AgentSSH):
         """
         Helper for the environnement under unix
 
-        @return: the SSH_AUTH_SOCK Environnement variables
-        @rtype: dict
+        :return: the SSH_AUTH_SOCK Environnement variables
+        :rtype: dict
         """
         env = {}
         env['SSH_AUTH_SOCK'] = self._get_filename()
@@ -307,7 +307,7 @@ class Agent(AgentSSH):
     """
     Client interface for using private keys from an SSH agent running on the
     local machine.  If an SSH agent is running, this class can be used to
-    connect to it and retreive L{PKey} objects which can be used when
+    connect to it and retreive :class:`PKey` objects which can be used when
     attempting to authenticate to remote SSH servers.
 
     Because the SSH agent protocol uses environment variables and unix-domain
@@ -318,10 +318,10 @@ class Agent(AgentSSH):
     def __init__(self):
         """
         Open a session with the local machine's SSH agent, if one is running.
-        If no agent is running, initialization will succeed, but L{get_keys}
+        If no agent is running, initialization will succeed, but :class:`get_keys`
         will return an empty tuple.
 
-        @raise SSHException: if an SSH agent is found, but speaks an
+        :raises SSHException: if an SSH agent is found, but speaks an
             incompatible protocol
         """
         AgentSSH.__init__(self)

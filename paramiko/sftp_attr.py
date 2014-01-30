@@ -26,8 +26,8 @@ class SFTPAttributes (object):
     """
     Representation of the attributes of a file (or proxied file) for SFTP in
     client or server mode.  It attemps to mirror the object returned by
-    C{os.stat} as closely as possible, so it may have the following fields,
-    with the same meanings as those returned by an C{os.stat} object:
+    ``os.stat`` as closely as possible, so it may have the following fields,
+    with the same meanings as those returned by an ``os.stat`` object:
         - st_size
         - st_uid
         - st_gid
@@ -36,8 +36,8 @@ class SFTPAttributes (object):
         - st_mtime
 
     Because SFTP allows flags to have other arbitrary named attributes, these
-    are stored in a dict named C{attr}.  Occasionally, the filename is also
-    stored, in C{filename}.
+    are stored in a dict named ``attr``.  Occasionally, the filename is also
+    stored, in ``filename``.
     """
 
     FLAG_SIZE = 1
@@ -61,15 +61,15 @@ class SFTPAttributes (object):
 
     def from_stat(cls, obj, filename=None):
         """
-        Create an SFTPAttributes object from an existing C{stat} object (an
-        object returned by C{os.stat}).
+        Create an SFTPAttributes object from an existing ``stat`` object (an
+        object returned by ``os.stat``).
 
-        @param obj: an object returned by C{os.stat} (or equivalent).
-        @type obj: object
-        @param filename: the filename associated with this file.
-        @type filename: str
-        @return: new L{SFTPAttributes} object with the same attribute fields.
-        @rtype: L{SFTPAttributes}
+        :param obj: an object returned by ``os.stat`` (or equivalent).
+        :type obj: object
+        :param filename: the filename associated with this file.
+        :type filename: str
+        :return: new :class:`SFTPAttributes` object with the same attribute fields.
+        :rtype: :class:`SFTPAttributes`
         """
         attr = cls()
         attr.st_size = obj.st_size
