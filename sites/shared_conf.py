@@ -5,8 +5,9 @@ import sys
 import alabaster
 
 
-# Alabaster theme
+# Alabaster theme + mini-extension
 html_theme_path = [alabaster.get_path()]
+extensions = ['alabaster']
 # Paths relative to invoking conf.py - not this shared file
 html_static_path = ['../_shared_static']
 html_theme = 'alabaster'

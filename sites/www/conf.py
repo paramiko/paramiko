@@ -8,7 +8,7 @@ from shared_conf import *
 
 # Local blog extension
 sys.path.append(abspath('.'))
-extensions = ['blog']
+extensions.append('blog')
 rss_link = 'http://paramiko.org'
 rss_description = 'Paramiko project news'
 
