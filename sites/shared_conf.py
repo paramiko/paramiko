@@ -5,8 +5,9 @@ import sys
 import alabaster
 
 
-# Alabaster theme
+# Alabaster theme + mini-extension
 html_theme_path = [alabaster.get_path()]
+extensions = ['alabaster']
 # Paths relative to invoking conf.py - not this shared file
 html_static_path = ['../_shared_static']
 html_theme = 'alabaster'
@@ -32,7 +33,7 @@ html_sidebars = {
 # Regular settings
 project = u'Paramiko'
 year = datetime.now().year
-copyright = u'2013-%d Jeff Forcier, 2003-2012 Robey Pointer' % year
+copyright = u'%d Jeff Forcier' % year
 master_doc = 'index'
 templates_path = ['_templates']
 exclude_trees = ['_build']
