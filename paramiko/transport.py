@@ -1244,7 +1244,8 @@ class Transport (threading.Thread):
             my_event = threading.Event()
         else:
             my_event = event
-        self.auth_handler = AuthHandler(self)
+        if self.auth_handler is None:
+            self.auth_handler = AuthHandler(self)
         self.auth_handler.auth_publickey(username, key, my_event)
         if event is not None:
             # caller wants to wait for event themselves
