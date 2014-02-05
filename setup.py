@@ -48,13 +48,19 @@ except ImportError:
     from distutils.core import setup
     kw = {}
 
+def get_version(fname='paramiko/__init__.py'):
+    with open(fname) as f:
+        for line in f:
+            if line.startswith('__version__'):
+                return eval(line.split('=')[-1])
+
 if sys.platform == 'darwin':
     import setup_helper
     setup_helper.install_custom_make_tarball()
 
 
 setup(name = "paramiko",
-      version = "1.12.1",
+      version = get_version(),
       description = "SSH2 protocol library",
       author = "Jeff Forcier",
       author_email = "jeff@bitprophet.org",
