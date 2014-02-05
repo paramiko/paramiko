@@ -612,7 +612,7 @@ class SFTPClient (BaseSFTP):
         file_size = os.stat(localpath).st_size
         fl = file(localpath, 'rb')
         try:
-            return self.putfo(fl, remotepath, os.stat(localpath).st_size, callback, confirm)
+            return self.putfo(fl, remotepath, file_size, callback, confirm)
         finally:
             fl.close()
 
