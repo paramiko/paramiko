@@ -286,7 +286,7 @@ class Message (object):
         elif type(i) is list:
             return self.add_list(i)
         else:
-            raise Exception('Unknown type')
+            raise ValueError('Unknown type')
 
     def add(self, *seq):
         """

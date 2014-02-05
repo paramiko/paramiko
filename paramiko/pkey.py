@@ -236,7 +236,7 @@ class PKey (object):
         @raise IOError: if there was an error writing the file
         @raise SSHException: if the key is invalid
         """
-        raise Exception('Not implemented in PKey')
+        raise NotImplemented('Not implemented in PKey')
 
     def write_private_key(self, file_obj, password=None):
         """
@@ -251,7 +251,7 @@ class PKey (object):
         @raise IOError: if there was an error writing to the file
         @raise SSHException: if the key is invalid
         """
-        raise Exception('Not implemented in PKey')
+        raise NotImplemented('Not implemented in PKey')
 
     def _read_private_key_file(self, tag, filename, password=None):
         """

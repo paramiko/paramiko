@@ -30,6 +30,13 @@ SSH_PORT = 22
 proxy_re = re.compile(r"^(proxycommand)\s*=*\s*(.*)", re.I)
 
 
+class Error(Exception):
+    """
+    Errors raised within the paramiko.config module
+    """
+    pass
+
+
 class LazyFqdn(object):
     """
     Returns the host's fqdn on request as string.
@@ -127,7 +134,7 @@ class SSHConfig (object):
                 while (i < len(line)) and not line[i].isspace():
                     i += 1
                 if i == len(line):
-                    raise Exception('Unparsable line: %r' % line)
+                    raise Error('Unparsable line: %r' % line)
                 key = line[:i].lower()
                 value = line[i:].lstrip()
 
