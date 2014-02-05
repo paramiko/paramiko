@@ -247,7 +247,11 @@ class HostKeys (UserDict.DictMixin):
         entries = []
         for e in self._entries:
             for h in e.hostnames:
-                if (h.startswith('|1|') and (self.hash_host(hostname, h) == h)) or (h == hostname):
+                # h may be a hostname or a hash; the supplied hostname may also be a hash,
+                # in the case where lookup() is invoked from check(). There's no sense
+                # in trying to hash a hash, and hashing is expensive, so skip it.
+                if (h.startswith('|1|') and not hostname.startswith('|1|') and
+                        self.hash_host(hostname, h) == h) or (h == hostname):
                     entries.append(e)
         if len(entries) == 0:
             return None
