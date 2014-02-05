@@ -232,7 +232,7 @@ class SSHClient (object):
         self._policy = policy
 
     def connect(self, hostname, port=SSH_PORT, username=None, password=None, pkey=None,
-                key_filename=None, timeout=None, allow_agent=True, look_for_keys=True,
+                key_filename=None, key_password= None, timeout=None, allow_agent=True, look_for_keys=True,
                 compress=False, sock=None):
         """
         Connect to an SSH server and authenticate to it.  The server's host key
@@ -267,6 +267,8 @@ class SSHClient (object):
         @param key_filename: the filename, or list of filenames, of optional
             private key(s) to try for authentication
         @type key_filename: str or list(str)
+        @param key_password: the password to decrypt optional private keys
+        @type key_password: str
         @param timeout: an optional timeout (in seconds) for the TCP connect
         @type timeout: float
         @param allow_agent: set to False to disable connecting to the SSH agent
@@ -339,7 +341,7 @@ class SSHClient (object):
             key_filenames = [ key_filename ]
         else:
             key_filenames = key_filename
-        self._auth(username, password, pkey, key_filenames, allow_agent, look_for_keys)
+        self._auth(username, password, pkey, key_filenames, key_password, allow_agent, look_for_keys)
 
     def close(self):
         """
@@ -429,7 +431,18 @@ class SSHClient (object):
         """
         return self._transport
 
-    def _auth(self, username, password, pkey, key_filenames, allow_agent, look_for_keys):
+    def _create_pkeys(self, key_filenames, key_password):
+        pkeys = []
+        for key_filename in key_filenames:
+            for pkey_class in (RSAKey, DSSKey):
+                try:
+                    key = pkey_class.from_private_key_file(key_filename, key_password)
+                    pkeys.append(key)
+                except SSHException, e:
+                    saved_exception = e
+        return pkeys
+
+    def _auth(self, username, password, pkey, key_filenames, key_password, allow_agent, look_for_keys):
         """
         Try, in order:
 
@@ -444,8 +457,14 @@ class SSHClient (object):
         saved_exception = None
         two_factor = False
         allowed_types = []
+        pkeys = []
 
         if pkey is not None:
+            pkeys.append(pkey)
+
+        pkeys.extend(self._create_pkeys(key_filenames, key_password))
+
+        for pkey in pkeys:
             try:
                 self._log(DEBUG, 'Trying SSH key %s' % hexlify(pkey.get_fingerprint()))
                 allowed_types = self._transport.auth_publickey(username, pkey)
@@ -454,20 +473,6 @@ class SSHClient (object):
                     return
             except SSHException, e:
                 saved_exception = e
-
-        if not two_factor:
-            for key_filename in key_filenames:
-                for pkey_class in (RSAKey, DSSKey):
-                    try:
-                        key = pkey_class.from_private_key_file(key_filename, password)
-                        self._log(DEBUG, 'Trying key %s from %s' % (hexlify(key.get_fingerprint()), key_filename))
-                        self._transport.auth_publickey(username, key)
-                        two_factor = (allowed_types == ['password'])
-                        if not two_factor:
-                            return
-                        break
-                    except SSHException, e:
-                        saved_exception = e
 
         if not two_factor and allow_agent:
             if self._agent == None:
