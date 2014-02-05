@@ -559,7 +559,7 @@ class SFTPClient (BaseSFTP):
             (since 1.7.4)
         @rtype: SFTPAttributes
 
-        @since: 1.4
+        @since: 1.10
         """
         fr = self.file(remotepath, 'wb')
         fr.set_pipelined(True)
