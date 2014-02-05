@@ -24,6 +24,7 @@ from binascii import hexlify
 import getpass
 import os
 import socket
+import asyncore
 import warnings
 
 from paramiko.agent import Agent
@@ -535,4 +536,165 @@ class SSHClient (object):
 
     def _log(self, level, msg):
         self._transport._log(level, msg)
+
+
+class SSHClientAsync (asyncore.dispatcher, SSHClient):
+
+    def __init__(self):
+        self._system_host_keys = HostKeys()
+        self._host_keys = HostKeys()
+        self._host_keys_filename = None
+        self._log_channel = None
+        self._policy = RejectPolicy()
+        self._transport = None
+        self._agent = None
+        super(SSHClientAsync, self).__init__()
+
+
+    def connect(self, hostname, port=SSH_PORT, username=None, password=None, pkey=None,
+                key_filename=None, timeout=None, allow_agent=True, look_for_keys=True,
+                compress=False):
+        """
+        Start the connection procedure to the socket and exit immediately.
+        use asyncore.loop(count = 1000) to start the connection on as many
+        SSHClientAsync instances as you wish. Tested with 1000+ connections
+        with < 20mb RAM used.
+        The server's host key
+        is checked against the system host keys (see L{load_system_host_keys})
+        and any local host keys (L{load_host_keys}).  If the server's hostname
+        is not found in either set of host keys, the missing host key policy
+        is used (see L{set_missing_host_key_policy}).  The default policy is
+        to reject the key and raise an L{SSHException}.
+
+        Authentication is attempted in the following order of priority:
+
+            - The C{pkey} or C{key_filename} passed in (if any)
+            - Any key we can find through an SSH agent
+            - Any "id_rsa" or "id_dsa" key discoverable in C{~/.ssh/}
+            - Plain username/password auth, if a password was given
+
+        If a private key requires a password to unlock it, and a password is
+        passed in, that password will be used to attempt to unlock the key.
+
+        @param hostname: the server to connect to
+        @type hostname: str
+        @param port: the server port to connect to
+        @type port: int
+        @param username: the username to authenticate as (defaults to the
+            current local username)
+        @type username: str
+        @param password: a password to use for authentication or for unlocking
+            a private key
+        @type password: str
+        @param pkey: an optional private key to use for authentication
+        @type pkey: L{PKey}
+        @param key_filename: the filename, or list of filenames, of optional
+            private key(s) to try for authentication
+        @type key_filename: str or list(str)
+        @param timeout: an optional timeout (in seconds) for the TCP connect
+        @type timeout: float
+        @param allow_agent: set to False to disable connecting to the SSH agent
+        @type allow_agent: bool
+        @param look_for_keys: set to False to disable searching for discoverable
+            private key files in C{~/.ssh/}
+        @type look_for_keys: bool
+        @param compress: set to True to turn on compression
+        @type compress: bool
+
+        @raise BadHostKeyException: if the server's host key could not be
+            verified
+        @raise AuthenticationException: if authentication failed
+        @raise SSHException: if there was any other error connecting or
+            establishing an SSH session
+        @raise socket.error: if a socket error occurred while connecting
+        """
+        # do prepare first, then return on connect
+        
+        self._a_compress = compress
+        self._a_username = username
+        self._a_password = password
+        self._a_pkey = pkey
+        self._a_key_filename = key_filename
+        self._a_allow_agent = allow_agent
+        self._a_look_for_keys = look_for_keys
+        self._a_port = port
+        self._a_hostname = hostname
+
+
+        for (family, socktype, proto, canonname, sockaddr) in socket.getaddrinfo(hostname, port, socket.AF_UNSPEC, socket.SOCK_STREAM):
+            if socktype == socket.SOCK_STREAM:
+                af = family
+                addr = sockaddr
+                break
+        else:
+            # some OS like AIX don't indicate SOCK_STREAM support, so just guess. :(
+            af, _, _, _, addr = socket.getaddrinfo(hostname, port, socket.AF_UNSPEC, socket.SOCK_STREAM)
+        self.host = hostname
+        asyncore.dispatcher.__init__(self)
+
+        
+        self.create_socket(af, socket.SOCK_STREAM)
+        sock = self
+        if timeout is not None:
+            try:
+                sock.settimeout(timeout)
+            except:
+                pass
+        asyncore.dispatcher.connect(self, addr) # bad idea!
+    
+    def handle_connect(self):
+        # restore everything for original method
+        sock = self
+        compress = self._a_compress
+        username = self._a_username
+        password = self._a_password
+        pkey = self._a_pkey
+        key_filename = self._a_key_filename
+        allow_agent = self._a_allow_agent
+        look_for_keys = self._a_look_for_keys
+        port = self._a_port
+        hostname = self._a_hostname
+
+        # now call the rest as usual??
+        t = self._transport = Transport(sock)
+        t.use_compression(compress=compress)
+        if self._log_channel is not None:
+            t.set_log_channel(self._log_channel)
+        t.start_client()
+        ResourceManager.register(self, t)
+
+        server_key = t.get_remote_server_key()
+        keytype = server_key.get_name()
+
+        if port == SSH_PORT:
+            server_hostkey_name = hostname
+        else:
+            server_hostkey_name = "[%s]:%d" % (hostname, port)
+        our_server_key = self._system_host_keys.get(server_hostkey_name, {}).get(keytype, None)
+        if our_server_key is None:
+            our_server_key = self._host_keys.get(server_hostkey_name, {}).get(keytype, None)
+        if our_server_key is None:
+            # will raise exception if the key is rejected; let that fall out
+            self._policy.missing_host_key(self, server_hostkey_name, server_key)
+            # if the callback returns, assume the key is ok
+            our_server_key = server_key
+
+        if server_key != our_server_key:
+            raise BadHostKeyException(hostname, server_key, our_server_key)
+
+        if username is None:
+            username = getpass.getuser()
+
+        if key_filename is None:
+            key_filenames = []
+        elif isinstance(key_filename, (str, unicode)):
+            key_filenames = [ key_filename ]
+        else:
+            key_filenames = key_filename
+        self._auth(username, password, pkey, key_filenames, allow_agent, look_for_keys)  #      def handle_close(self):
+#      def handle_write(self):
+#            self.send('')
+#
+#      def handle_read(self):
+#            print ' ', self.recv(1024)
 

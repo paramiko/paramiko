@@ -63,7 +63,7 @@ __license__ = "GNU Lesser General Public License (LGPL)"
 
 
 from transport import SecurityOptions, Transport
-from client import SSHClient, MissingHostKeyPolicy, AutoAddPolicy, RejectPolicy, WarningPolicy
+from client import SSHClient, SSHClientAsync, MissingHostKeyPolicy, AutoAddPolicy, RejectPolicy, WarningPolicy
 from auth_handler import AuthHandler
 from channel import Channel, ChannelFile
 from ssh_exception import SSHException, PasswordRequiredException, \
@@ -107,6 +107,7 @@ from common import io_sleep
 
 __all__ = [ 'Transport',
             'SSHClient',
+            'SSHClientAsync',
             'MissingHostKeyPolicy',
             'AutoAddPolicy',
             'RejectPolicy',
