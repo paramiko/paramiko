@@ -23,6 +23,7 @@ L{SSHClient}.
 from binascii import hexlify
 import getpass
 import os
+import select
 import socket
 import warnings
 
@@ -381,6 +382,71 @@ class SSHClient (object):
         stdout = chan.makefile('rb', bufsize)
         stderr = chan.makefile_stderr('rb', bufsize)
         return stdin, stdout, stderr
+
+    def run(self, command, stdin=None, stdout=None, stderr=None, timeout=None):
+        """Run command on the SSH server. Return exit status.
+
+        The command's input and output streams are connected to given files
+        or file like objects.
+
+        @param command: the command to execute
+        @type command: str
+        @param stdin: file to connect to command's stdin
+        @type stdin: file like object
+        @param stdout: file to connect to command's stout
+        @type stdout: file like object
+        @param stderr: file to connect to command's stderr
+        @type stderr: file like object
+        @param timeout: set command's channel timeout. See L{Channel.settimeout}.settimeout
+        @type timeout: int
+        @return: exit status
+        @rtype: int
+
+        @raise SSHException: if the server fails to execute the command
+        """
+
+        chan = self._transport.open_session()
+        chan.settimeout(timeout)
+        chan.exec_command(command)
+        fileno = chan.fileno()
+
+        if stdin:
+            writes = [fileno]
+            data_to_send = ''
+        else:
+            writes = []
+
+        while True:
+            # do not call select if data is already available
+            if not (chan.recv_ready() or chan.recv_stderr_ready()):
+                r, w, e = select.select([fileno], writes, [fileno], 1)
+
+            if chan.recv_ready():
+                data = chan.recv(len(chan.in_buffer))
+                if stdout:
+                    stdout.write(data)
+
+            if chan.recv_stderr_ready():
+                data = chan.recv_stderr(len(chan.in_stderr_buffer))
+                if stderr:
+                    stderr.write(data)
+
+            if stdin and not stdin.closed and chan.send_ready():
+                if not data_to_send:
+                    data_to_send = stdin.read(4096)
+                    if not data_to_send:
+                        stdin.close()
+                        chan.shutdown_write()
+                        writes = []
+                        continue
+                sent_bytes = chan.send(data_to_send)
+                data_to_send = data_to_send[sent_bytes:]
+
+            if chan.exit_status_ready():
+                # check for last chunks of data
+                if chan.recv_ready() or chan.recv_stderr_ready():
+                    continue
+                return chan.recv_exit_status()
 
     def invoke_shell(self, term='vt100', width=80, height=24, width_pixels=0,
                 height_pixels=0):
