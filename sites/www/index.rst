@@ -12,11 +12,17 @@ usage and API documentation can be found at our code documentation site,
 `docs.paramiko.org <http://docs.paramiko.org>`_.
 
 .. toctree::
-    blog
     changelog
     installing
     contributing
     contact
+
+.. Hide blog in hidden toctree for now (to avoid warnings.)
+
+.. toctree::
+    :hidden:
+
+    blog
 
 
 .. rubric:: Footnotes
