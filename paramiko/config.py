@@ -154,11 +154,11 @@ class SSHConfig (object):
 
         The host-matching rules of OpenSSH's C{ssh_config} man page are used,
         which means that all configuration options from matching host
-        specifications are merged, with more specific hostmasks taking
-        precedence. In other words, if C{"Port"} is set under C{"Host *"}
-        and also C{"Host *.example.com"}, and the lookup is for
+        specifications are merged, with the first obtained value taking
+        precedence. In other words, if C{"Port"} is set under
+        C{"Host *.example.com"} and then C{"Host *"}, and the lookup is for
         C{"ssh.example.com"}, then the port entry for C{"Host *.example.com"}
-        will win out.
+        which comes first, will win out.
 
         The keys in the returned dict are all normalized to lowercase (look for
         C{"port"}, not C{"Port"}. The values are processed according to the
