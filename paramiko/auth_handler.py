@@ -20,14 +20,12 @@
 L{AuthHandler}
 """
 
-import threading
 import weakref
 
 # this helps freezing utils
 import encodings.utf_8
 
 from paramiko.common import *
-from paramiko import util
 from paramiko.message import Message
 from paramiko.ssh_exception import SSHException, AuthenticationException, \
     BadAuthenticationType, PartialAuthentication

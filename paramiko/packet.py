@@ -202,8 +202,6 @@ class Packetizer (object):
             out = self.__remainder[:n]
             self.__remainder = self.__remainder[n:]
             n -= len(out)
-        if PY22:
-            return self._py22_read_all(n, out)
         while n > 0:
             got_timeout = False
             try:
@@ -425,40 +423,7 @@ class Packetizer (object):
             self.__keepalive_callback()
             self.__keepalive_last = now
 
-    def _py22_read_all(self, n, out):
-        while n > 0:
-            r, w, e = select.select([self.__socket], [], [], 0.1)
-            if self.__socket not in r:
-                if self.__closed:
-                    raise EOFError()
-                self._check_keepalive()
-            else:
-                x = self.__socket.recv(n)
-                if len(x) == 0:
-                    raise EOFError()
-                out += x
-                n -= len(x)
-        return out
-
-    def _py22_read_timeout(self, timeout):
-        start = time.time()
-        while True:
-            r, w, e = select.select([self.__socket], [], [], 0.1)
-            if self.__socket in r:
-                x = self.__socket.recv(1)
-                if len(x) == 0:
-                    raise EOFError()
-                break
-            if self.__closed:
-                raise EOFError()
-            now = time.time()
-            if now - start >= timeout:
-                raise socket.timeout()
-        return x
-
     def _read_timeout(self, timeout):
-        if PY22:
-            return self._py22_read_timeout(timeout)
         start = time.time()
         while True:
             try:

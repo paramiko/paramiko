@@ -100,23 +100,7 @@ from Crypto import Random
 # keep a crypto-strong PRNG nearby
 rng = Random.new()
 
-import sys
-if sys.version_info < (2, 3):
-    try:
-        import logging
-    except:
-        import logging22 as logging
-    import select
-    PY22 = True
-
-    import socket
-    if not hasattr(socket, 'timeout'):
-        class timeout(socket.error): pass
-        socket.timeout = timeout
-        del timeout
-else:
-    import logging
-    PY22 = False
+import logging
 
 
 DEBUG = logging.DEBUG
