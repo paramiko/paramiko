@@ -34,18 +34,6 @@ from paramiko.common import *
 from paramiko.config import SSHConfig
 
 
-# Change by RogerB - python < 2.3 doesn't have enumerate so we implement it
-if sys.version_info < (2,3):
-    class enumerate:
-        def __init__ (self, sequence):
-            self.sequence = sequence
-        def __iter__ (self):
-            count = 0
-            for item in self.sequence:
-                yield (count, item)
-                count += 1
-
-
 def inflate_long(s, always_positive=False):
     "turns a normalized byte string into a long-int (adapted from Crypto.Util.number)"
     out = 0L
