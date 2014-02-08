@@ -157,7 +157,7 @@ class SSHConfig (object):
         specifications are merged, with the first obtained value taking
         precedence. In other words, if C{"Port"} is set under
         C{"Host *.example.com"} and then C{"Host *"}, and the lookup is for
-        C{"ssh.example.com"}, then the port entry for C{"Host *.example.com"}
+        C{"ssh.example.com"}, then the port entry for C{"Host *.example.com"},
         which comes first, will win out.
 
         The keys in the returned dict are all normalized to lowercase (look for
