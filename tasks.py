@@ -1,6 +1,6 @@
 from os.path import join
 
-from invoke import Collection, task
+from invoke import Collection, ctask as task
 from invocations import docs as _docs
 
 
