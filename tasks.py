@@ -1,7 +1,7 @@
 from os.path import join
 
-from invoke import Collection
-from invocations import docs as _docs, testing
+from invoke import Collection, ctask as task
+from invocations import docs as _docs
 
 
 d = 'sites'
@@ -20,4 +20,15 @@ www = Collection.from_module(_docs, name='www', config={
     'sphinx.target': join(path, '_build'),
 })
 
-ns = Collection(testing.test, docs=docs, www=www)
+
+# Until we move to spec-based testing
+@task
+def test(ctx):
+    ctx.run("python test.py --verbose")
+
+@task
+def coverage(ctx):
+    ctx.run("coverage run --source=paramiko test.py --verbose")
+
+
+ns = Collection(test, coverage, docs=docs, www=www)
