@@ -1092,6 +1092,18 @@ class Transport (threading.Thread):
             return None
         return self.auth_handler.get_username()
 
+    def get_banner(self):
+        """
+        Return the banner supplied by the server upon connect. If no banner is supplied,
+        this method returns C{None}.
+
+        @return: server supplied banner, or C{None}.
+        @rtype: string
+        """
+        if not self.active or (self.auth_handler is None):
+            return None
+        return self.auth_handler.get_banner()
+
     def auth_none(self, username):
         """
         Try to authenticate to the server using no authentication at all.
