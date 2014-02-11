@@ -1094,8 +1094,8 @@ class Transport (threading.Thread):
 
     def get_banner(self):
         """
-        Return the banner supplied by the server upon connect. If no banner is supplied,
-        this method returns C{None}.
+        Return the banner supplied by the server upon connect. If no banner is
+        supplied, this method returns C{None}.
 
         @return: server supplied banner, or C{None}.
         @rtype: string
