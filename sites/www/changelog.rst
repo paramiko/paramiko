@@ -14,10 +14,10 @@ Changelog
   to Nathan Scowcroft for the patch & Martin Blumenstingl for the initial test
   case.
 * :release:`1.11.2 <2013-09-27>`
-* :release:`1.10.4 <2013-09-27>` 199, 200, 179
-* :bug:`156` Fix potential deadlock condition when using Channel objects as
-  sockets (e.g. when using SSH gatewaying). Thanks to Steven Noonan and Frank
-  Arnold for catch & patch.
+* :release:`1.10.4 <2013-09-27>`
+* :bug:`156 (1.11+)` Fix potential deadlock condition when using Channel
+  objects as sockets (e.g. when using SSH gatewaying). Thanks to Steven Noonan
+  and Frank Arnold for catch & patch.
 * :bug:`179` Fix a missing variable causing errors when an ssh_config file has
   a non-default AddressFamily set. Thanks to Ed Marshall & Tomaz Muraus for
   catch & patch.
