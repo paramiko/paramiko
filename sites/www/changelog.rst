@@ -2,6 +2,8 @@
 Changelog
 =========
 
+* :feature:`58` Allow client code to access the stored SSH server banner via
+  ``Transport.get_banner()``. Thanks to ``@Jhoanor`` for the patch.
 * :bug:`34` (PR :issue:`35`) Fix SFTP prefetching incompatibility with some
   SFTP servers regarding request/response ordering. Thanks to Richard
   Kettlewell for catch & patch.
