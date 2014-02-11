@@ -94,7 +94,7 @@ class SFTPFile (BufferedFile):
             pass
 
     def _data_in_prefetch_requests(self, offset, size):
-        k = [self._prefetch_extents[i] for i in self._prefetch_extents if self._prefetch_extents[i][0] <= offset]
+        k = [x for x in self._prefetch_extents.values() if x[0] <= offset]
         if len(k) == 0:
             return False
         k.sort(lambda x, y: cmp(x[0], y[0]))
