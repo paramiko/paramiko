@@ -1102,7 +1102,7 @@ class Transport (threading.Thread):
         """
         if not self.active or (self.auth_handler is None):
             return None
-        return self.auth_handler.get_banner()
+        return self.auth_handler.banner
 
     def auth_none(self, username):
         """

@@ -63,9 +63,6 @@ class AuthHandler (object):
         else:
             return self.username
 
-    def get_banner(self):
-        return self.banner
-
     def auth_none(self, username, event):
         self.transport.lock.acquire()
         try:
