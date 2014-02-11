@@ -32,14 +32,15 @@ from paramiko.ssh_exception import SSHException
 _MSG_KEXDH_INIT, _MSG_KEXDH_REPLY = range(30, 32)
 c_MSG_KEXDH_INIT, c_MSG_KEXDH_REPLY = [byte_chr(c) for c in range(30, 32)]
 
-# draft-ietf-secsh-transport-09.txt, page 17
-P = 0xFFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD129024E088A67CC74020BBEA63B139B22514A08798E3404DDEF9519B3CD3A431B302B0A6DF25F14374FE1356D6D51C245E485B576625E7EC6F44C42E9A637ED6B0BFF5CB6F406B7EDEE386BFB5A899FA5AE9F24117C4B1FE649286651ECE65381FFFFFFFFFFFFFFFF
-G = 2
-
-b7fffffffffffffff = byte_chr(0x7f) + max_byte * 7
-b0000000000000000 = zero_byte * 8
 
 class KexGroup1(object):
+
+    # draft-ietf-secsh-transport-09.txt, page 17
+    P = 0xFFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD129024E088A67CC74020BBEA63B139B22514A08798E3404DDEF9519B3CD3A431B302B0A6DF25F14374FE1356D6D51C245E485B576625E7EC6F44C42E9A637ED6B0BFF5CB6F406B7EDEE386BFB5A899FA5AE9F24117C4B1FE649286651ECE65381FFFFFFFFFFFFFFFF
+    G = 2
+
+    b7fffffffffffffff = byte_chr(0x7f) + max_byte * 7
+    b0000000000000000 = zero_byte * 8
 
     name = 'diffie-hellman-group1-sha1'
 
@@ -53,11 +54,11 @@ class KexGroup1(object):
         self._generate_x()
         if self.transport.server_mode:
             # compute f = g^x mod p, but don't send it yet
-            self.f = pow(G, self.x, P)
+            self.f = pow(self.G, self.x, self.P)
             self.transport._expect_packet(_MSG_KEXDH_INIT)
             return
         # compute e = g^x mod p (where g=2), and send it
-        self.e = pow(G, self.x, P)
+        self.e = pow(self.G, self.x, self.P)
         m = Message()
         m.add_byte(c_MSG_KEXDH_INIT)
         m.add_mpint(self.e)
@@ -84,8 +85,8 @@ class KexGroup1(object):
         while 1:
             x_bytes = self.transport.rng.read(128)
             x_bytes = byte_mask(x_bytes[0], 0x7f) + x_bytes[1:]
-            if (x_bytes[:8] != b7fffffffffffffff) and \
-                   (x_bytes[:8] != b0000000000000000):
+            if (x_bytes[:8] != self.b7fffffffffffffff) and \
+                   (x_bytes[:8] != self.b0000000000000000):
                 break
         self.x = util.inflate_long(x_bytes)
 
@@ -93,10 +94,10 @@ class KexGroup1(object):
         # client mode
         host_key = m.get_string()
         self.f = m.get_mpint()
-        if (self.f < 1) or (self.f > P - 1):
+        if (self.f < 1) or (self.f > self.P - 1):
             raise SSHException('Server kex "f" is out of range')
         sig = m.get_binary()
-        K = pow(self.f, self.x, P)
+        K = pow(self.f, self.x, self.P)
         # okay, build up the hash H of (V_C || V_S || I_C || I_S || K_S || e || f || K)
         hm = Message()
         hm.add(self.transport.local_version, self.transport.remote_version,
@@ -112,9 +113,9 @@ class KexGroup1(object):
     def _parse_kexdh_init(self, m):
         # server mode
         self.e = m.get_mpint()
-        if (self.e < 1) or (self.e > P - 1):
+        if (self.e < 1) or (self.e > self.P - 1):
             raise SSHException('Client kex "e" is out of range')
-        K = pow(self.e, self.x, P)
+        K = pow(self.e, self.x, self.P)
         key = self.transport.get_server_key().asbytes()
         # okay, build up the hash H of (V_C || V_S || I_C || I_S || K_S || e || f || K)
         hm = Message()

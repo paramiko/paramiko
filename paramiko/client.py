@@ -232,7 +232,8 @@ class SSHClient (object):
 
     def connect(self, hostname, port=SSH_PORT, username=None, password=None, pkey=None,
                 key_filename=None, timeout=None, allow_agent=True, look_for_keys=True,
-                compress=False, sock=None):
+                compress=False, sock=None, gss_auth=False, gss_kex=False,
+                gss_deleg_creds=True, gss_host=None):
         """
         Connect to an SSH server and authenticate to it.  The server's host key
         is checked against the system host keys (see L{load_system_host_keys})
@@ -278,6 +279,14 @@ class SSHClient (object):
         @param sock: an open socket or socket-like object (such as a
             L{Channel}) to use for communication to the target host
         @type sock: socket
+        @param gss_auth: C{True} if you want to use GSS-API authentication
+        @type gss_auth: Boolean
+        @param gss_kex: Perform GSS-API Key Exchange and user authentication
+        @type gss_kex: Boolean
+        @param gss_deleg_creds: Delegate GSS-API client credentials or not
+        @type gss_deleg_creds: Boolean
+        @param gss_host: The targets name in the kerberos database. default: hostname
+        @type gss_host: String
 
         @raise BadHostKeyException: if the server's host key could not be
             verified
@@ -303,8 +312,14 @@ class SSHClient (object):
                     pass
             retry_on_signal(lambda: sock.connect(addr))
 
-        t = self._transport = Transport(sock)
+        t = self._transport = Transport(sock, gss_kex, gss_deleg_creds)
         t.use_compression(compress=compress)
+        if gss_kex and gss_host is None:
+            t.set_gss_host(hostname)
+        elif gss_kex and gss_host is not None:
+            t.set_gss_host(gss_host)
+        else:
+            pass
         if self._log_channel is not None:
             t.set_log_channel(self._log_channel)
         t.start_client()
@@ -317,17 +332,27 @@ class SSHClient (object):
             server_hostkey_name = hostname
         else:
             server_hostkey_name = "[%s]:%d" % (hostname, port)
-        our_server_key = self._system_host_keys.get(server_hostkey_name, {}).get(keytype, None)
-        if our_server_key is None:
-            our_server_key = self._host_keys.get(server_hostkey_name, {}).get(keytype, None)
-        if our_server_key is None:
-            # will raise exception if the key is rejected; let that fall out
-            self._policy.missing_host_key(self, server_hostkey_name, server_key)
-            # if the callback returns, assume the key is ok
-            our_server_key = server_key
 
-        if server_key != our_server_key:
-            raise BadHostKeyException(hostname, server_key, our_server_key)
+        """
+        If GSS-API Key Exchange is performed we are not required to check the
+        host key, because the host is authenticated via GSS-API / SSPI as well
+        as out client.
+        """
+        if not self._transport.use_gss_kex:
+            our_server_key = self._system_host_keys.get(server_hostkey_name,
+                                                         {}).get(keytype, None)
+            if our_server_key is None:
+                our_server_key = self._host_keys.get(server_hostkey_name,
+                                                     {}).get(keytype, None)
+            if our_server_key is None:
+                # will raise exception if the key is rejected; let that fall out
+                self._policy.missing_host_key(self, server_hostkey_name,
+                                              server_key)
+                # if the callback returns, assume the key is ok
+                our_server_key = server_key
+
+            if server_key != our_server_key:
+                raise BadHostKeyException(hostname, server_key, our_server_key)
 
         if username is None:
             username = getpass.getuser()
@@ -338,7 +363,10 @@ class SSHClient (object):
             key_filenames = [ key_filename ]
         else:
             key_filenames = key_filename
-        self._auth(username, password, pkey, key_filenames, allow_agent, look_for_keys)
+        if gss_host is None:
+            gss_host = hostname
+        self._auth(username, password, pkey, key_filenames, allow_agent,
+                   look_for_keys, gss_auth, gss_kex, gss_deleg_creds, gss_host)
 
     def close(self):
         """
@@ -428,7 +456,8 @@ class SSHClient (object):
         """
         return self._transport
 
-    def _auth(self, username, password, pkey, key_filenames, allow_agent, look_for_keys):
+    def _auth(self, username, password, pkey, key_filenames, allow_agent,
+              look_for_keys, gss_auth, gss_kex, gss_deleg_creds, gss_host):
         """
         Try, in order:
 
@@ -524,6 +553,31 @@ class SSHClient (object):
                 saved_exception = sys.exc_info()[1]
         elif two_factor:
             raise SSHException('Two-factor authentication requires a password')
+
+        """
+        Try GSS-API authentication (gssapi-with-mic) only if GSS-API Key
+        Exchange is not performed, because if we use GSS-API for the key
+        exchange, there is already a fully established GSS-API context, so
+        why should we do that again?
+        """
+        if gss_auth and not self._transport.gss_kex_used:
+            try:
+                self._transport.auth_gssapi_with_mic(username, gss_host,
+                                                     gss_deleg_creds)
+                return
+            except SSHException as e:
+                saved_exception = e
+
+        """
+        If GSS-API support and GSS-PI Key Exchange was performed, we attempt
+        authentication with gssapi-keyex.
+        """
+        if gss_auth and gss_kex and self._transport.gss_kex_used:
+            try:
+                self._transport.auth_gssapi_keyex(username)
+                return
+            except SSHException as e:
+                saved_exception = e
 
         # if we got an auth-failed exception earlier, re-raise it
         if saved_exception is not None:

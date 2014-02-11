@@ -36,6 +36,10 @@ except ImportError:
 
 # setup logging
 paramiko.util.log_to_file('demo_simple.log')
+# Paramiko client configuration
+UseGSSAPI = True             # enable GSS-API / SSPI authentication
+DoGSSAPIKeyExchange = True
+Port = 22
 
 # get hostname
 username = ''
@@ -48,10 +52,10 @@ else:
 if len(hostname) == 0:
     print('*** Hostname required.')
     sys.exit(1)
-port = 22
+
 if hostname.find(':') >= 0:
     hostname, portstr = hostname.split(':')
-    port = int(portstr)
+    Port = int(portstr)
 
 
 # get username
@@ -60,7 +64,8 @@ if username == '':
     username = input('Username [%s]: ' % default_username)
     if len(username) == 0:
         username = default_username
-password = getpass.getpass('Password for %s@%s: ' % (username, hostname))
+if not UseGSSAPI:
+    password = getpass.getpass('Password for %s@%s: ' % (username, hostname))
 
 
 # now, connect and use paramiko Client to negotiate SSH2 across the connection
@@ -69,7 +74,13 @@ try:
     client.load_system_host_keys()
     client.set_missing_host_key_policy(paramiko.WarningPolicy())
     print('*** Connecting...')
-    client.connect(hostname, port, username, password)
+    if not UseGSSAPI:
+        client.connect(hostname, Port, username, password)
+    else:
+        # SSPI works only with the FQDN of the target host
+        hostname = socket.getfqdn(hostname)
+        client.connect(hostname, Port, username, gss_auth=UseGSSAPI,
+                       gss_kex=DoGSSAPIKeyExchange)
     chan = client.invoke_shell()
     print(repr(client.get_transport()))
     print('*** Here we go!\n')

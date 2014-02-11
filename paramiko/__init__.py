@@ -65,6 +65,7 @@ __license__ = "GNU Lesser General Public License (LGPL)"
 from paramiko.transport import SecurityOptions, Transport
 from paramiko.client import SSHClient, MissingHostKeyPolicy, AutoAddPolicy, RejectPolicy, WarningPolicy
 from paramiko.auth_handler import AuthHandler
+from paramiko.ssh_gss import GSSAuth
 from paramiko.channel import Channel, ChannelFile
 from paramiko.ssh_exception import SSHException, PasswordRequiredException, \
     BadAuthenticationType, ChannelException, BadHostKeyException, \
