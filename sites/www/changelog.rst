@@ -12,7 +12,7 @@ Changelog
 * :bug:`176` Fix AttributeError bugs in known_hosts file (re)loading. Thanks
   to Nathan Scowcroft for the patch & Martin Blumenstingl for the initial test
   case.
-* :release:`1.10.4 <2013-09-27>` 199, 200, 179
+* :release:`1.10.4 <2013-09-27>`
 * :bug:`179` Fix a missing variable causing errors when an ssh_config file has
   a non-default AddressFamily set. Thanks to Ed Marshall & Tomaz Muraus for
   catch & patch.
