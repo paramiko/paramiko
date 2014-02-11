@@ -192,11 +192,10 @@ class SSHClient (object):
         if self._host_keys_filename is not None:
             self.load_host_keys(self._host_keys_filename)
 
-        f = open(filename, 'w')
-        for hostname, keys in self._host_keys.iteritems():
-            for keytype, key in keys.iteritems():
-                f.write('%s %s %s\n' % (hostname, keytype, key.get_base64()))
-        f.close()
+        with open(filename, 'w') as f:
+            for hostname, keys in self._host_keys.items():
+                for keytype, key in keys.items():
+                    f.write('%s %s %s\n' % (hostname, keytype, key.get_base64()))
 
     def get_host_keys(self):
         """
@@ -335,7 +334,7 @@ class SSHClient (object):
 
         if key_filename is None:
             key_filenames = []
-        elif isinstance(key_filename, (str, unicode)):
+        elif isinstance(key_filename, string_types):
             key_filenames = [ key_filename ]
         else:
             key_filenames = key_filename
@@ -378,12 +377,12 @@ class SSHClient (object):
         chan.settimeout(timeout)
         chan.exec_command(command)
         stdin = chan.makefile('wb', bufsize)
-        stdout = chan.makefile('rb', bufsize)
-        stderr = chan.makefile_stderr('rb', bufsize)
+        stdout = chan.makefile('r', bufsize)
+        stderr = chan.makefile_stderr('r', bufsize)
         return stdin, stdout, stderr
 
     def invoke_shell(self, term='vt100', width=80, height=24, width_pixels=0,
-                height_pixels=0):
+                     height_pixels=0):
         """
         Start an interactive shell session on the SSH server.  A new L{Channel}
         is opened and connected to a pseudo-terminal using the requested
@@ -452,7 +451,7 @@ class SSHClient (object):
                 two_factor = (allowed_types == ['password'])
                 if not two_factor:
                     return
-            except SSHException, e:
+            except SSHException as e:
                 saved_exception = e
 
         if not two_factor:
@@ -466,7 +465,7 @@ class SSHClient (object):
                         if not two_factor:
                             return
                         break
-                    except SSHException, e:
+                    except SSHException as e:
                         saved_exception = e
 
         if not two_factor and allow_agent:
@@ -482,7 +481,7 @@ class SSHClient (object):
                     if not two_factor:
                         return
                     break
-                except SSHException, e:
+                except SSHException as e:
                     saved_exception = e
 
         if not two_factor:
@@ -514,17 +513,15 @@ class SSHClient (object):
                     if not two_factor:
                         return
                     break
-                except SSHException, e:
-                    saved_exception = e
-                except IOError, e:
+                except (SSHException, IOError) as e:
                     saved_exception = e
 
         if password is not None:
             try:
                 self._transport.auth_password(username, password)
                 return
-            except SSHException, e:
-                saved_exception = e
+            except SSHException:
+                saved_exception = sys.exc_info()[1]
         elif two_factor:
             raise SSHException('Two-factor authentication requires a password')
 

@@ -23,7 +23,10 @@ L{HostKeys}
 import base64
 import binascii
 from Crypto.Hash import SHA, HMAC
-import UserDict
+try:
+    from collections import MutableMapping
+except ImportError:
+    from UserDict import DictMixin as MutableMapping
 
 from paramiko.common import *
 from paramiko.dsskey import DSSKey
@@ -78,18 +81,19 @@ class HostKeyEntry:
         # Decide what kind of key we're looking at and create an object
         # to hold it accordingly.
         try:
+            key = b(key)
             if keytype == 'ssh-rsa':
-                key = RSAKey(data=base64.decodestring(key))
+                key = RSAKey(data=decodebytes(key))
             elif keytype == 'ssh-dss':
-                key = DSSKey(data=base64.decodestring(key))
+                key = DSSKey(data=decodebytes(key))
             elif keytype == 'ecdsa-sha2-nistp256':
-                key = ECDSAKey(data=base64.decodestring(key))
+                key = ECDSAKey(data=decodebytes(key))
             else:
                 log.info("Unable to handle key of type %s" % (keytype,))
                 return None
 
-        except binascii.Error, e:
-            raise InvalidHostKey(line, e)
+        except binascii.Error as e:
+            raise InvalidHostKey(line, sys.exc_info()[1])
 
         return cls(names, key)
     from_line = classmethod(from_line)
@@ -109,7 +113,7 @@ class HostKeyEntry:
         return '<HostKeyEntry %r: %r>' % (self.hostnames, self.key)
 
 
-class HostKeys (UserDict.DictMixin):
+class HostKeys (MutableMapping):
     """
     Representation of an openssh-style "known hosts" file.  Host keys can be
     read from one or more files, and then individual hosts can be looked up to
@@ -168,20 +172,19 @@ class HostKeys (UserDict.DictMixin):
 
         @raise IOError: if there was an error reading the file
         """
-        f = open(filename, 'r')
-        for lineno, line in enumerate(f):
-            line = line.strip()
-            if (len(line) == 0) or (line[0] == '#'):
-                continue
-            e = HostKeyEntry.from_line(line, lineno)
-            if e is not None:
-                _hostnames = e.hostnames
-                for h in _hostnames:
-                    if self.check(h, e.key):
-                        e.hostnames.remove(h)
-                if len(e.hostnames):
-                    self._entries.append(e)
-        f.close()
+        with open(filename, 'r') as f:
+            for lineno, line in enumerate(f):
+                line = line.strip()
+                if (len(line) == 0) or (line[0] == '#'):
+                    continue
+                e = HostKeyEntry.from_line(line, lineno)
+                if e is not None:
+                    _hostnames = e.hostnames
+                    for h in _hostnames:
+                        if self.check(h, e.key):
+                            e.hostnames.remove(h)
+                    if len(e.hostnames):
+                        self._entries.append(e)
 
     def save(self, filename):
         """
@@ -197,12 +200,11 @@ class HostKeys (UserDict.DictMixin):
 
         @since: 1.6.1
         """
-        f = open(filename, 'w')
-        for e in self._entries:
-            line = e.to_line()
-            if line:
-                f.write(line)
-        f.close()
+        with open(filename, 'w') as f:
+            for e in self._entries:
+                line = e.to_line()
+                if line:
+                    f.write(line)
 
     def lookup(self, hostname):
         """
@@ -215,11 +217,25 @@ class HostKeys (UserDict.DictMixin):
         @return: keys associated with this host (or C{None})
         @rtype: dict(str, L{PKey})
         """
-        class SubDict (UserDict.DictMixin):
+        class SubDict (MutableMapping):
             def __init__(self, hostname, entries, hostkeys):
                 self._hostname = hostname
                 self._entries = entries
                 self._hostkeys = hostkeys
+
+            def __iter__(self):
+                for k in self.keys():
+                    yield k
+
+            def __len__(self):
+                return len(self.keys())
+
+            def __delitem__(self, key):
+                for e in list(self._entries):
+                    if e.key.get_name() == key:
+                        self._entries.remove(e)
+                else:
+                    raise KeyError(key)
 
             def __getitem__(self, key):
                 for e in self._entries:
@@ -272,13 +288,24 @@ class HostKeys (UserDict.DictMixin):
         host_key = k.get(key.get_name(), None)
         if host_key is None:
             return False
-        return str(host_key) == str(key)
+        return host_key.asbytes() == key.asbytes()
 
     def clear(self):
         """
         Remove all host keys from the dictionary.
         """
         self._entries = []
+
+    def __iter__(self):
+        for k in self.keys():
+            yield k
+
+    def __len__(self):
+        return len(self.keys())
+
+    def __delitem__(self, key):
+        k = self[key]
+        pass
 
     def __getitem__(self, key):
         ret = self.lookup(key)
@@ -333,10 +360,10 @@ class HostKeys (UserDict.DictMixin):
         else:
             if salt.startswith('|1|'):
                 salt = salt.split('|')[2]
-            salt = base64.decodestring(salt)
+            salt = decodebytes(b(salt))
         assert len(salt) == SHA.digest_size
-        hmac = HMAC.HMAC(salt, hostname, SHA).digest()
-        hostkey = '|1|%s|%s' % (base64.encodestring(salt), base64.encodestring(hmac))
+        hmac = HMAC.HMAC(salt, b(hostname), SHA).digest()
+        hostkey = '|1|%s|%s' % (u(encodebytes(salt)), u(encodebytes(hmac)))
         return hostkey.replace('\n', '')
     hash_host = staticmethod(hash_host)
 

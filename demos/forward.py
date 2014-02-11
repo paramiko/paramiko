@@ -30,7 +30,11 @@ import getpass
 import os
 import socket
 import select
-import SocketServer
+try:
+    import SocketServer
+except ImportError:
+    import socketserver as SocketServer
+
 import sys
 from optparse import OptionParser
 
@@ -54,7 +58,7 @@ class Handler (SocketServer.BaseRequestHandler):
             chan = self.ssh_transport.open_channel('direct-tcpip',
                                                    (self.chain_host, self.chain_port),
                                                    self.request.getpeername())
-        except Exception, e:
+        except Exception as e:
             verbose('Incoming request to %s:%d failed: %s' % (self.chain_host,
                                                               self.chain_port,
                                                               repr(e)))
@@ -98,7 +102,7 @@ def forward_tunnel(local_port, remote_host, remote_port, transport):
 
 def verbose(s):
     if g_verbose:
-        print s
+        print(s)
 
 
 HELP = """\
@@ -165,8 +169,8 @@ def main():
     try:
         client.connect(server[0], server[1], username=options.user, key_filename=options.keyfile,
                        look_for_keys=options.look_for_keys, password=password)
-    except Exception, e:
-        print '*** Failed to connect to %s:%d: %r' % (server[0], server[1], e)
+    except Exception as e:
+        print('*** Failed to connect to %s:%d: %r' % (server[0], server[1], e))
         sys.exit(1)
 
     verbose('Now forwarding port %d to %s:%d ...' % (options.port, remote[0], remote[1]))
@@ -174,7 +178,7 @@ def main():
     try:
         forward_tunnel(options.port, remote[0], remote[1], client.get_transport())
     except KeyboardInterrupt:
-        print 'C-c: Port forwarding stopped.'
+        print('C-c: Port forwarding stopped.')
         sys.exit(0)
 
 

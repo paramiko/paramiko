@@ -22,6 +22,7 @@ Some unit tests for the BufferedFile abstraction.
 
 import unittest
 from paramiko.file import BufferedFile
+from paramiko.common import *
 
 
 class LoopbackFile (BufferedFile):
@@ -31,7 +32,7 @@ class LoopbackFile (BufferedFile):
     def __init__(self, mode='r', bufsize=-1):
         BufferedFile.__init__(self)
         self._set_mode(mode, bufsize)
-        self.buffer = ''
+        self.buffer = bytes()
 
     def _read(self, size):
         if len(self.buffer) == 0:
@@ -53,7 +54,7 @@ class BufferedFileTest (unittest.TestCase):
         f = LoopbackFile('r')
         try:
             f.write('hi')
-            self.assert_(False, 'no exception on write to read-only file')
+            self.assertTrue(False, 'no exception on write to read-only file')
         except:
             pass
         f.close()
@@ -61,7 +62,7 @@ class BufferedFileTest (unittest.TestCase):
         f = LoopbackFile('w')
         try:
             f.read(1)
-            self.assert_(False, 'no exception to read from write-only file')
+            self.assertTrue(False, 'no exception to read from write-only file')
         except:
             pass
         f.close()
@@ -80,12 +81,12 @@ class BufferedFileTest (unittest.TestCase):
         f.close()
         try:
             f.readline()
-            self.assert_(False, 'no exception on readline of closed file')
+            self.assertTrue(False, 'no exception on readline of closed file')
         except IOError:
             pass
-        self.assert_('\n' in f.newlines)
-        self.assert_('\r\n' in f.newlines)
-        self.assert_('\r' not in f.newlines)
+        self.assertTrue(linefeed_byte in f.newlines)
+        self.assertTrue(crlf in f.newlines)
+        self.assertTrue(cr_byte not in f.newlines)
 
     def test_3_lf(self):
         """
@@ -97,7 +98,7 @@ class BufferedFileTest (unittest.TestCase):
         f.write('\nSecond.\r\n')
         self.assertEqual(f.readline(), 'Second.\n')
         f.close()
-        self.assertEqual(f.newlines, '\r\n')
+        self.assertEqual(f.newlines, crlf)
 
     def test_4_write(self):
         """
