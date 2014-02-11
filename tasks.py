@@ -26,5 +26,9 @@ www = Collection.from_module(_docs, name='www', config={
 def test(ctx):
     ctx.run("python test.py --verbose")
 
+@task
+def coverage(ctx):
+    ctx.run("coverage run --source=paramiko test.py --verbose")
 
-ns = Collection(test, docs=docs, www=www)
+
+ns = Collection(test, coverage, docs=docs, www=www)

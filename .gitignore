@@ -7,3 +7,4 @@ test.log
 docs/
 !sites/docs
 _build
+.coverage
