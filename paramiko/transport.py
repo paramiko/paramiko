@@ -1539,10 +1539,6 @@ class Transport (threading.Thread):
         # containers.
         Random.atfork()
 
-        # Hold reference to 'sys' so we can test sys.modules to detect
-        # interpreter shutdown.
-        self.sys = sys
-
         # active=True occurs before the thread is launched, to avoid a race
         _active_threads.append(self)
         if self.server_mode:
