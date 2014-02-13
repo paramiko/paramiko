@@ -20,10 +20,13 @@
 L{ProxyCommand}.
 """
 
+from datetime import datetime
 import os
 from shlex import split as shlsplit
 import signal
 from subprocess import Popen, PIPE
+from select import select
+import socket
 
 from paramiko.ssh_exception import ProxyCommandFailure
 
@@ -48,6 +51,7 @@ class ProxyCommand(object):
         """
         self.cmd = shlsplit(command_line)
         self.process = Popen(self.cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE)
+        self.timeout = None
 
     def send(self, content):
         """
@@ -78,7 +82,25 @@ class ProxyCommand(object):
         @rtype: int
         """
         try:
-            return os.read(self.process.stdout.fileno(), size)
+            start = datetime.now()
+            read = []
+            while len(read) < size:
+                if self.timeout is not None:
+                    elapsed = (datetime.now() - start).microseconds
+                    timeout = self.timeout * 1000 * 1000 # to microseconds
+                    # Unsure why the 'default' timeout is too short here -
+                    # causes us to raise before e.g. the SSH banner is read,
+                    # probably generally awful for slow connections.
+                    # Try inflating it some.
+                    timeout = timeout * 2
+                    if elapsed >= timeout:
+                        raise socket.timeout()
+                r, w, x = select([self.process.stdout], [], [], 0.0)
+                if r and r[0] == self.process.stdout:
+                    b = os.read(self.process.stdout.fileno(), 1)
+                    read.append(b)
+            result = ''.join(read)
+            return result
         except IOError, e:
             raise BadProxyCommand(' '.join(self.cmd), e.strerror)
 
@@ -86,6 +108,4 @@ class ProxyCommand(object):
         os.kill(self.process.pid, signal.SIGTERM)
 
     def settimeout(self, timeout):
-        # Timeouts are meaningless for this implementation, but are part of the
-        # spec, so must be present.
-        pass
+        self.timeout = timeout
