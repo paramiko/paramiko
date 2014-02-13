@@ -2,6 +2,8 @@
 Changelog
 =========
 
+* :bug:`268` Fix some missed renames of `ProxyCommand` related error classes.
+  Thanks to Marius Gedminas for catch & patch.
 * :bug:`34` (PR :issue:`35`) Fix SFTP prefetching incompatibility with some
   SFTP servers regarding request/response ordering. Thanks to Richard
   Kettlewell for catch & patch.
