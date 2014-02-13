@@ -52,6 +52,7 @@ class ProxyCommand(object):
         self.cmd = shlsplit(command_line)
         self.process = Popen(self.cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE)
         self.timeout = None
+        self.buffer = []
 
     def send(self, content):
         """
@@ -83,23 +84,21 @@ class ProxyCommand(object):
         """
         try:
             start = datetime.now()
-            read = []
-            while len(read) < size:
+            while len(self.buffer) < size:
                 if self.timeout is not None:
                     elapsed = (datetime.now() - start).microseconds
                     timeout = self.timeout * 1000 * 1000 # to microseconds
-                    # Unsure why the 'default' timeout is too short here -
-                    # causes us to raise before e.g. the SSH banner is read,
-                    # probably generally awful for slow connections.
-                    # Try inflating it some.
-                    timeout = timeout * 2
                     if elapsed >= timeout:
                         raise socket.timeout()
                 r, w, x = select([self.process.stdout], [], [], 0.0)
                 if r and r[0] == self.process.stdout:
                     b = os.read(self.process.stdout.fileno(), 1)
-                    read.append(b)
-            result = ''.join(read)
+                    # Store in class-level buffer for persistence across
+                    # timeouts; this makes us act more like a real socket
+                    # (where timeouts don't actually drop data.)
+                    self.buffer.append(b)
+            result = ''.join(self.buffer)
+            self.buffer = []
             return result
         except IOError, e:
             raise ProxyCommandFailure(' '.join(self.cmd), e.strerror)
