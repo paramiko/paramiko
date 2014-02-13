@@ -100,6 +100,8 @@ class ProxyCommand(object):
             result = ''.join(self.buffer)
             self.buffer = []
             return result
+        except socket.timeout:
+            raise # socket.timeout is a subclass of IOError
         except IOError, e:
             raise ProxyCommandFailure(' '.join(self.cmd), e.strerror)
 
