@@ -13,7 +13,7 @@ Changelog
   Thanks to Marius Gedminas for catch & patch.
 * :bug:`34` (PR :issue:`35`) Fix SFTP prefetching incompatibility with some
   SFTP servers regarding request/response ordering. Thanks to Richard
-  Kettlewell for catch & patch.
+  Kettlewell.
 * :bug:`193` (and its attentant PRs :issue:`230` & :issue:`253`) Fix SSH agent
   problems present on Windows. Thanks to David Hobbs for initial report and to
   Aarni Koskela & Olle Lundberg for the patches.
