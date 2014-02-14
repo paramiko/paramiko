@@ -4,4 +4,8 @@ sys.path.append(os.path.abspath('..'))
 sys.path.append(os.path.abspath('../..'))
 from shared_conf import *
 
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.intersphinx']
+# Enable autodoc, intersphinx
+extensions.extend(['sphinx.ext.autodoc', 'sphinx.ext.intersphinx'])
+
+# Autodoc settings
+autodoc_default_flags = ['members', 'special-members']
