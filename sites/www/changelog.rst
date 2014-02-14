@@ -2,6 +2,9 @@
 Changelog
 =========
 
+* :release:`1.12.2 <2014-02-14>`
+* :release:`1.11.4 <2014-02-14>`
+* :release:`1.10.6 <2014-02-14>`
 * :feature:`58` Allow client code to access the stored SSH server banner via
   ``Transport.get_banner()``. Thanks to ``@Jhoanor`` for the patch.
 * :bug:`252` (`Fabric #1020 <https://github.com/fabric/fabric/issues/1020>`_)
