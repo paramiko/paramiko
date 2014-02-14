@@ -20,10 +20,13 @@
 L{ProxyCommand}.
 """
 
+from datetime import datetime
 import os
 from shlex import split as shlsplit
 import signal
 from subprocess import Popen, PIPE
+from select import select
+import socket
 
 from paramiko.ssh_exception import ProxyCommandFailure
 
@@ -48,6 +51,8 @@ class ProxyCommand(object):
         """
         self.cmd = shlsplit(command_line)
         self.process = Popen(self.cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE)
+        self.timeout = None
+        self.buffer = []
 
     def send(self, content):
         """
@@ -64,7 +69,7 @@ class ProxyCommand(object):
             # died and we can't proceed. The best option here is to
             # raise an exception informing the user that the informed
             # ProxyCommand is not working.
-            raise BadProxyCommand(' '.join(self.cmd), e.strerror)
+            raise ProxyCommandFailure(' '.join(self.cmd), e.strerror)
         return len(content)
 
     def recv(self, size):
@@ -78,14 +83,30 @@ class ProxyCommand(object):
         @rtype: int
         """
         try:
-            return os.read(self.process.stdout.fileno(), size)
+            start = datetime.now()
+            while len(self.buffer) < size:
+                if self.timeout is not None:
+                    elapsed = (datetime.now() - start).microseconds
+                    timeout = self.timeout * 1000 * 1000 # to microseconds
+                    if elapsed >= timeout:
+                        raise socket.timeout()
+                r, w, x = select([self.process.stdout], [], [], 0.0)
+                if r and r[0] == self.process.stdout:
+                    b = os.read(self.process.stdout.fileno(), 1)
+                    # Store in class-level buffer for persistence across
+                    # timeouts; this makes us act more like a real socket
+                    # (where timeouts don't actually drop data.)
+                    self.buffer.append(b)
+            result = ''.join(self.buffer)
+            self.buffer = []
+            return result
+        except socket.timeout:
+            raise # socket.timeout is a subclass of IOError
         except IOError, e:
-            raise BadProxyCommand(' '.join(self.cmd), e.strerror)
+            raise ProxyCommandFailure(' '.join(self.cmd), e.strerror)
 
     def close(self):
         os.kill(self.process.pid, signal.SIGTERM)
 
     def settimeout(self, timeout):
-        # Timeouts are meaningless for this implementation, but are part of the
-        # spec, so must be present.
-        pass
+        self.timeout = timeout

@@ -1541,10 +1541,6 @@ class Transport (threading.Thread):
         # containers.
         Random.atfork()
 
-        # Hold reference to 'sys' so we can test sys.modules to detect
-        # interpreter shutdown.
-        self.sys = sys
-
         # active=True occurs before the thread is launched, to avoid a race
         _active_threads.append(self)
         if self.server_mode:
@@ -1614,7 +1610,10 @@ class Transport (threading.Thread):
                 self.saved_exception = e
             except socket.error, e:
                 if type(e.args) is tuple:
-                    emsg = '%s (%d)' % (e.args[1], e.args[0])
+                    if e.args:
+                        emsg = '%s (%d)' % (e.args[1], e.args[0])
+                    else: # empty tuple, e.g. socket.timeout
+                        emsg = str(e) or repr(e)
                 else:
                     emsg = e.args
                 self._log(ERROR, 'Socket exception: ' + emsg)
