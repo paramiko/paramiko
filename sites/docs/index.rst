@@ -6,4 +6,6 @@ Paramiko is, including its public changelog & how the project is maintained,
 please see `the main website <http://paramiko.org>`_.
 
 .. toctree::
-    api
+    :glob:
+
+    api/*
