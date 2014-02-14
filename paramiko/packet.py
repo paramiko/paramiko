@@ -357,7 +357,7 @@ class Packetizer (object):
             mac = post_packet[:self.__mac_size_in]
             mac_payload = struct.pack('>II', self.__sequence_number_in, packet_size) + packet
             my_mac = compute_hmac(self.__mac_key_in, mac_payload, self.__mac_engine_in)[:self.__mac_size_in]
-            if my_mac != mac:
+            if not util.constant_time_bytes_eq(my_mac, mac):
                 raise SSHException('Mismatched MAC')
         padding = ord(packet[0])
         payload = packet[1:packet_size - padding]
