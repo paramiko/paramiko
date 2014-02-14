@@ -2,6 +2,7 @@
 Changelog
 =========
 
+* :release:`1.10.6 <2014-02-14>`
 * :bug:`34` (PR :issue:`35`) Fix SFTP prefetching incompatibility with some
   SFTP servers regarding request/response ordering. Thanks to Richard
   Kettlewell for catch & patch.
