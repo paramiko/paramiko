@@ -3,11 +3,10 @@ Changelog
 =========
 
 * :bug:`252` (`Fabric #1020 <https://github.com/fabric/fabric/issues/1020>`_)
-  Tried enhancing the implementation of ``ProxyCommand`` to avoid a
-  deadlock/hang condition that frequently occurs at ``Transport`` shutdown
-  time. Thanks to Mateusz Kobos, Matthijs van der Vleuten and Guillaume Zitta
-  for the original reports and to Marius Gedminas for helping test nontrivial
-  use cases.
+  Enhanced the implementation of ``ProxyCommand`` to avoid a deadlock/hang
+  condition that frequently occurs at ``Transport`` shutdown time. Thanks to
+  Mateusz Kobos, Matthijs van der Vleuten and Guillaume Zitta for the original
+  reports and to Marius Gedminas for helping test nontrivial use cases.
 * :bug:`268` Fix some missed renames of ``ProxyCommand`` related error classes.
   Thanks to Marius Gedminas for catch & patch.
 * :bug:`34` (PR :issue:`35`) Fix SFTP prefetching incompatibility with some
