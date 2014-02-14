@@ -5,14 +5,13 @@ import sys
 import alabaster
 
 
-# Alabaster theme
+# Alabaster theme + mini-extension
 html_theme_path = [alabaster.get_path()]
+extensions = ['alabaster']
 # Paths relative to invoking conf.py - not this shared file
 html_static_path = ['../_shared_static']
 html_theme = 'alabaster'
 html_theme_options = {
-    'logo': 'logo.png',
-    'logo_name': 'true',
     'description': "A Python implementation of SSHv2.",
     'github_user': 'paramiko',
     'github_repo': 'paramiko',
@@ -21,19 +20,11 @@ html_theme_options = {
 
     'link': '#3782BE',
     'link_hover': '#3782BE',
-
 }
 html_sidebars = {
-    # Landing page (no ToC)
-    'index': [
-        'about.html',
-        'searchbox.html',
-        'donate.html',
-    ],
-    # Inner pages get a ToC
     '**': [
         'about.html',
-        'localtoc.html',
+        'navigation.html',
         'searchbox.html',
         'donate.html',
     ]
@@ -42,7 +33,7 @@ html_sidebars = {
 # Regular settings
 project = u'Paramiko'
 year = datetime.now().year
-copyright = u'%d Jeff Forcier, 2003-2012 Robey Pointer' % year
+copyright = u'%d Jeff Forcier' % year
 master_doc = 'index'
 templates_path = ['_templates']
 exclude_trees = ['_build']

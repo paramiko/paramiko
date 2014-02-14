@@ -309,3 +309,12 @@ class Counter (object):
     def new(cls, nbits, initial_value=1L, overflow=0L):
         return cls(nbits, initial_value=initial_value, overflow=overflow)
     new = classmethod(new)
+
+
+def constant_time_bytes_eq(a, b):
+    if len(a) != len(b):
+        return False
+    res = 0
+    for i in xrange(len(a)):
+        res |= ord(a[i]) ^ ord(b[i])
+    return res == 0

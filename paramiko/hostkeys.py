@@ -28,7 +28,7 @@ import UserDict
 from paramiko.common import *
 from paramiko.dsskey import DSSKey
 from paramiko.rsakey import RSAKey
-from paramiko.util import get_logger
+from paramiko.util import get_logger, constant_time_bytes_eq
 
 
 class InvalidHostKey(Exception):
@@ -243,7 +243,7 @@ class HostKeys (UserDict.DictMixin):
         entries = []
         for e in self._entries:
             for h in e.hostnames:
-                if (h.startswith('|1|') and (self.hash_host(hostname, h) == h)) or (h == hostname):
+                if h.startswith('|1|') and constant_time_bytes_eq(self.hash_host(hostname, h), h) or h == hostname:
                     entries.append(e)
         if len(entries) == 0:
             return None
