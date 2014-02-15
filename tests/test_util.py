@@ -401,3 +401,35 @@ Host param3 parara
                 paramiko.util.lookup_ssh_host_config(host, config),
                 values
             )
+
+    def test_quoted_host_in_config(self):
+        conf = SSHConfig()
+        correct_data = {
+            'param': ['param'],
+            '"param"': ['param'],
+
+            'param pam': ['param', 'pam'],
+            '"param" "pam"': ['param', 'pam'],
+            '"param" pam': ['param', 'pam'],
+            'param "pam"': ['param', 'pam'],
+
+            'param "pam" p': ['param', 'pam', 'p'],
+            '"param" pam "p"': ['param', 'pam', 'p'],
+
+            '"pa ram"': ['pa ram'],
+            '"pa ram" pam': ['pa ram', 'pam'],
+            'param "p a m"': ['param', 'p a m'],
+        }
+        incorrect_data = [
+            'param"',
+            '"param',
+            'param "pam',
+            'param "pam" "p a',
+        ]
+        for host, values in correct_data.items():
+            self.assertEquals(
+                conf._get_hosts(host),
+                values
+            )
+        for host in incorrect_data:
+            self.assertRaises(Exception, conf._get_hosts, host)

@@ -54,26 +54,6 @@ class SSHConfig (object):
 
         :param file file_obj: a file-like object to read the config file from
         """
-        def get_hosts(val):
-            i, length = 0, len(val)
-            hosts = []
-            while i < length:
-                if val[i] == '"':
-                    end = val.find('"', i + 1)
-                    if end < 0:
-                        raise Exception("Unparsable host %s" % val)
-                    hosts.append(val[i + 1:end])
-                    i = end + 1
-                elif not val[i].isspace():
-                    end = i + 1
-                    while end < length and not val[end].isspace():
-                        end += 1
-                    hosts.append(val[i:end])
-                    i = end + 1
-                else:
-                    i += 1
-
-            return hosts
 
         host = {"host": ['*'], "config": {}}
         for line in file_obj:
@@ -90,7 +70,7 @@ class SSHConfig (object):
             if key == 'host':
                 self._config.append(host)
                 host = {
-                    'host': get_hosts(value),
+                    'host': self._get_hosts(value),
                     'config': {}
                 }
             else:
@@ -221,6 +201,30 @@ class SSHConfig (object):
                     else:
                         config[k] = config[k].replace(find, str(replace))
         return config
+
+    def _get_hosts(self, host):
+        """
+        Return a list of host_names from host value.
+        """
+        i, length = 0, len(host)
+        hosts = []
+        while i < length:
+            if host[i] == '"':
+                end = host.find('"', i + 1)
+                if end < 0:
+                    raise Exception("Unparsable host %s" % host)
+                hosts.append(host[i + 1:end])
+                i = end + 1
+            elif not host[i].isspace():
+                end = i + 1
+                while end < length and not host[end].isspace() and host[end] != '"':
+                    end += 1
+                hosts.append(host[i:end])
+                i = end
+            else:
+                i += 1
+
+        return hosts
 
 
 class LazyFqdn(object):
