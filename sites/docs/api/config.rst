@@ -1,4 +1,4 @@
-paramiko.config module
+Configuration handling
 ======================
 
 .. automodule:: paramiko.config
