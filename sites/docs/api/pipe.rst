@@ -1,4 +1,4 @@
-paramiko.pipe module
-====================
+Cross-platform pipe implementations
+===================================
 
 .. automodule:: paramiko.pipe

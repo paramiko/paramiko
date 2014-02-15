@@ -1,4 +1,4 @@
-paramiko.message module
-=======================
+Protocol messages
+=================
 
 .. automodule:: paramiko.message

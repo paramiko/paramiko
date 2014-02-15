@@ -1,4 +1,4 @@
-paramiko.packet module
-======================
+Packet handling
+===============
 
 .. automodule:: paramiko.packet
