@@ -1,4 +1,4 @@
-paramiko.buffered_pipe module
-=============================
+Buffered pipes
+==============
 
 .. automodule:: paramiko.buffered_pipe
