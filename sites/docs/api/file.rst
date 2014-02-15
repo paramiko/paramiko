@@ -1,4 +1,4 @@
-paramiko.file module
-====================
+Buffered files
+==============
 
 .. automodule:: paramiko.file
