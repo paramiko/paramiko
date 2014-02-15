@@ -1,4 +1,4 @@
-paramiko.agent module
-=====================
+Agent
+=====
 
 .. automodule:: paramiko.agent
