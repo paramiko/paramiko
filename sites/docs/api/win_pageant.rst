@@ -1,4 +1,4 @@
-paramiko.win_pageant module
-===========================
+WinPageant support
+==================
 
 .. automodule:: paramiko.win_pageant

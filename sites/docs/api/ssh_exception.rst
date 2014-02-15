@@ -1,4 +1,4 @@
-paramiko.ssh_exception module
-=============================
+Exceptions
+==========
 
 .. automodule:: paramiko.ssh_exception

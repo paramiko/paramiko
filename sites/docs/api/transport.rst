@@ -1,4 +1,4 @@
-paramiko.transport module
+Transport (core protocol)
 =========================
 
 .. automodule:: paramiko.transport
