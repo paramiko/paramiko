@@ -86,13 +86,6 @@ from hostkeys import HostKeys
 from config import SSHConfig
 from proxy import ProxyCommand
 
-# fix module names for epydoc
-for c in locals().values():
-    if issubclass(type(c), type) or type(c).__name__ == 'classobj':
-        # classobj for exceptions :/
-        c.__module__ = __name__
-del c
-
 from common import AUTH_SUCCESSFUL, AUTH_PARTIALLY_SUCCESSFUL, AUTH_FAILED, \
      OPEN_SUCCEEDED, OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED,  OPEN_FAILED_CONNECT_FAILED, \
      OPEN_FAILED_UNKNOWN_CHANNEL_TYPE, OPEN_FAILED_RESOURCE_SHORTAGE
