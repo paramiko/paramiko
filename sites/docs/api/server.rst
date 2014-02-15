@@ -1,4 +1,4 @@
-paramiko.server module
-======================
+Server implementation
+=====================
 
 .. automodule:: paramiko.server
