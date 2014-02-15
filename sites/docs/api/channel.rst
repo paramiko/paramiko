@@ -1,4 +1,4 @@
-paramiko.channel module
-=======================
+Channels
+========
 
 .. automodule:: paramiko.channel
