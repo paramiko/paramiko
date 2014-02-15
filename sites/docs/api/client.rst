@@ -1,4 +1,4 @@
-paramiko.client module
-======================
+Clients
+=======
 
 .. automodule:: paramiko.client
