@@ -89,6 +89,9 @@ def GSSAuth(auth_method, gss_deleg_creds=True):
     @return: Either an L{_SSH_GSSAPI} (Unix) object or an
              L{_SSH_SSPI} (Windows) object
     @rtype: Object
+
+    @raise ImportError: If no GSS-API / SSPI module could be imported.
+
     @see: U{RFC 4462 <www.ietf.org/rfc/rfc4462.txt>}
     @note: Check for the available API and return either an L{_SSH_GSSAPI}
            (MIT GSSAPI) object or an L{_SSH_SSPI} (MS SSPI) object. If you
@@ -102,7 +105,7 @@ def GSSAuth(auth_method, gss_deleg_creds=True):
     elif _API == "SSPI" and os.name == "nt":
         return _SSH_SSPI(auth_method, gss_deleg_creds)
     else:
-        return None
+        raise ImportError("Unable to import a GSS-API / SSPI module!")
 
 
 class _SSH_GSSAuth(object):

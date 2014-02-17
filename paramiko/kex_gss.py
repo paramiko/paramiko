@@ -84,6 +84,7 @@ class KexGSSGroup1(object):
         """
         Start the GSS-API / SSPI Authenticated Diffie-Hellman Key Exchange.
         """
+        self.transport.gss_kex_used = True
         self._generate_x()
         if self.transport.server_mode:
             # compute f = g^x mod p, but don't send it yet
@@ -340,6 +341,7 @@ class KexGSSGex(object):
         """
         Start the GSS-API / SSPI Authenticated Diffie-Hellman Group Exchange
         """
+        self.transport.gss_kex_used = True
         if self.transport.server_mode:
             self.transport._expect_packet(MSG_KEXGSS_GROUPREQ)
             return
