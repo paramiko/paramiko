@@ -473,6 +473,31 @@ class SSHClient (object):
         two_factor = False
         allowed_types = []
 
+        """
+        If GSS-API support and GSS-PI Key Exchange was performed, we attempt
+        authentication with gssapi-keyex.
+        """
+        if gss_kex and self._transport.gss_kex_used:
+            try:
+                self._transport.auth_gssapi_keyex(username)
+                return
+            except Exception as e:
+                saved_exception = e
+
+        """
+        Try GSS-API authentication (gssapi-with-mic) only if GSS-API Key
+        Exchange is not performed, because if we use GSS-API for the key
+        exchange, there is already a fully established GSS-API context, so
+        why should we do that again?
+        """
+        if gss_auth:
+            try:
+                self._transport.auth_gssapi_with_mic(username, gss_host,
+                                                     gss_deleg_creds)
+                return
+            except Exception as e:
+                saved_exception = e
+
         if pkey is not None:
             try:
                 self._log(DEBUG, 'Trying SSH key %s' % hexlify(pkey.get_fingerprint()))
@@ -553,31 +578,6 @@ class SSHClient (object):
                 saved_exception = sys.exc_info()[1]
         elif two_factor:
             raise SSHException('Two-factor authentication requires a password')
-
-        """
-        Try GSS-API authentication (gssapi-with-mic) only if GSS-API Key
-        Exchange is not performed, because if we use GSS-API for the key
-        exchange, there is already a fully established GSS-API context, so
-        why should we do that again?
-        """
-        if gss_auth and not self._transport.gss_kex_used:
-            try:
-                self._transport.auth_gssapi_with_mic(username, gss_host,
-                                                     gss_deleg_creds)
-                return
-            except SSHException as e:
-                saved_exception = e
-
-        """
-        If GSS-API support and GSS-PI Key Exchange was performed, we attempt
-        authentication with gssapi-keyex.
-        """
-        if gss_auth and gss_kex and self._transport.gss_kex_used:
-            try:
-                self._transport.auth_gssapi_keyex(username)
-                return
-            except SSHException as e:
-                saved_exception = e
 
         # if we got an auth-failed exception earlier, re-raise it
         if saved_exception is not None:

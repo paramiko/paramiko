@@ -341,7 +341,7 @@ class Transport (threading.Thread):
         self.gss_kex_used = False
         self.kexgss_ctxt = None
         self.gss_host = None
-        if gss_kex:
+        if self.use_gss_kex:
             self.kexgss_ctxt = GSSAuth("gssapi-keyex", gss_deleg_creds)
             self._preferred_kex = ('gss-gex-sha1-toWM5Slw5Ew8Mqkay+al2g==',
                                    'gss-group1-sha1-toWM5Slw5Ew8Mqkay+al2g==',
@@ -1065,18 +1065,18 @@ class Transport (threading.Thread):
             self._log(DEBUG, 'Host key verified (%s)' % hostkey.get_name())
 
         if (pkey is not None) or (password is not None) or gss_auth or gss_kex:
-            if password is not None:
-                self._log(DEBUG, 'Attempting password auth...')
-                self.auth_password(username, password)
+            if gss_auth:
+                self._log(DEBUG, 'Attempting GSS-API auth... (gssapi-with-mic)')
+                self.auth_gssapi_with_mic(username, gss_host, gss_deleg_creds)
+            elif gss_kex:
+                self._log(DEBUG, 'Attempting GSS-API auth... (gssapi-keyex)')
+                self.auth_gssapi_keyex(username)
             elif pkey is not None:
                 self._log(DEBUG, 'Attempting public-key auth...')
                 self.auth_publickey(username, pkey)
-            elif gss_auth:
-                self._log(DEBUG, 'Attempting GSS-API auth... (gssapi-with-mic)')
-                self.auth_gssapi_with_mic(username, gss_host, gss_deleg_creds)
             else:
-                self._log(DEBUG, 'Attempting GSS-API auth... (gssapi-keyex)')
-                self.auth_gssapi_keyex(username)
+                self._log(DEBUG, 'Attempting password auth...')
+                self.auth_password(username, password)
 
         return
 

@@ -64,7 +64,7 @@ if username == '':
     username = input('Username [%s]: ' % default_username)
     if len(username) == 0:
         username = default_username
-if not UseGSSAPI:
+if not UseGSSAPI or (not UseGSSAPI and not DoGSSAPIKeyExchange):
     password = getpass.getpass('Password for %s@%s: ' % (username, hostname))
 
 
@@ -74,13 +74,17 @@ try:
     client.load_system_host_keys()
     client.set_missing_host_key_policy(paramiko.WarningPolicy())
     print('*** Connecting...')
-    if not UseGSSAPI:
+    if not UseGSSAPI or (not UseGSSAPI and not DoGSSAPIKeyExchange):
         client.connect(hostname, Port, username, password)
     else:
         # SSPI works only with the FQDN of the target host
         hostname = socket.getfqdn(hostname)
-        client.connect(hostname, Port, username, gss_auth=UseGSSAPI,
-                       gss_kex=DoGSSAPIKeyExchange)
+        try:
+            client.connect(hostname, Port, username, gss_auth=UseGSSAPI,
+                           gss_kex=DoGSSAPIKeyExchange)
+        except Exception:
+            password = getpass.getpass('Password for %s@%s: ' % (username, hostname))
+            client.connect(hostname, Port, username, password)
     chan = client.invoke_shell()
     print(repr(client.get_transport()))
     print('*** Here we go!\n')

@@ -297,6 +297,9 @@ class AuthHandler (object):
                                          %s\n") % (str(maj_status),
                                                    str(min_status),
                                                    err_msg)
+                elif ptype == MSG_USERAUTH_FAILURE:
+                    self._parse_userauth_failure(m)
+                    return
                 else:
                     raise SSHException("Received Package: %s" % MSG_NAMES[ptype])
             elif self.auth_method == 'gssapi-keyex' and\
