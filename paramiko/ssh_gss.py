@@ -44,6 +44,7 @@ Created on 07.11.2013
 
 import struct
 import os
+import sys
 try:
     from pyasn1.type.univ import ObjectIdentifier
     from pyasn1.codec.der import encoder, decoder
@@ -310,13 +311,17 @@ class _SSH_GSSAPI(_SSH_GSSAuth):
             else:
                 krb5_mech = gssapi.OID.mech_from_string(self._krb5_mech)
         token = None
-        if recv_token is None:
-            self._gss_ctxt = gssapi.InitContext(peer_name=targ_name,
-                                                mech_type=krb5_mech,
-                                                req_flags=ctx.flags)
-            token = self._gss_ctxt.step(token)
-        else:
-            token = self._gss_ctxt.step(recv_token)
+        try:
+            if recv_token is None:
+                self._gss_ctxt = gssapi.InitContext(peer_name=targ_name,
+                                                    mech_type=krb5_mech,
+                                                    req_flags=ctx.flags)
+                token = self._gss_ctxt.step(token)
+            else:
+                token = self._gss_ctxt.step(recv_token)
+        except gssapi.GSSException:
+            raise gssapi.GSSException("{0} Target: {1}".format(sys.exc_info()[1],
+                                                               self._gss_host))
         self._gss_ctxt_status = self._gss_ctxt.established
         return token
 
@@ -476,17 +481,22 @@ class _SSH_SSPI(_SSH_GSSAuth):
         """
         self._username = username
         self._gss_host = target
+        error = 0
         targ_name = "host/" + self._gss_host
         if desired_mech is not None:
             mech, __ = decoder.decode(desired_mech)
             if mech.__str__() != self._krb5_mech:
                 raise SSHException("Unsupported mechanism OID.")
-        if recv_token is None:
-            self._gss_ctxt = sspi.ClientAuth("Kerberos",
-                                             scflags=self._gss_flags,
-                                             targetspn=targ_name)
-        error, token = self._gss_ctxt.authorize(recv_token)
-        token = token[0].Buffer
+        try:
+            if recv_token is None:
+                self._gss_ctxt = sspi.ClientAuth("Kerberos",
+                                                 scflags=self._gss_flags,
+                                                 targetspn=targ_name)
+            error, token = self._gss_ctxt.authorize(recv_token)
+            token = token[0].Buffer
+        except:
+            raise Exception("{0}, Target: {1}".format(sys.exc_info()[1],
+                                                      self._gss_host))
         if error == 0:
             """
             if the status is GSS_COMPLETE (error = 0) the context is fully
