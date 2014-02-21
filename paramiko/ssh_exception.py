@@ -16,10 +16,6 @@
 # along with Paramiko; if not, write to the Free Software Foundation, Inc.,
 # 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
 
-"""
-Exceptions defined by paramiko.
-"""
-
 
 class SSHException (Exception):
     """
@@ -52,9 +48,9 @@ class BadAuthenticationType (AuthenticationException):
     the server isn't allowing that type.  (It may only allow public-key, for
     example.)
     
-    :ivar allowed_types: list of allowed authentication types provided by the
-        server (possible values are: ``"none"``, ``"password"``, and
-        ``"publickey"``).
+    :ivar allowed_types:
+        list of allowed authentication types provided by the server (possible
+        values are: ``"none"``, ``"password"``, and ``"publickey"``).
     :type allowed_types: list
     
     .. versionadded:: 1.1
