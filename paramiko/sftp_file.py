@@ -240,7 +240,7 @@ class SFTPFile (BufferedFile):
     def chmod(self, mode):
         """
         Change the mode (permissions) of this file.  The permissions are
-        unix-style and identical to those used by python's ``os.chmod``
+        unix-style and identical to those used by Python's ``os.chmod``
         function.
 
         :param mode: new permissions
@@ -254,7 +254,7 @@ class SFTPFile (BufferedFile):
     def chown(self, uid, gid):
         """
         Change the owner (``uid``) and group (``gid``) of this file.  As with
-        python's ``os.chown`` function, you must pass both arguments, so if you
+        Python's ``os.chown`` function, you must pass both arguments, so if you
         only want to change one, use `stat` first to retrieve the current
         owner and group.
 
@@ -274,7 +274,7 @@ class SFTPFile (BufferedFile):
         ``times`` is ``None``, then the file's access and modified times are set
         to the current time.  Otherwise, ``times`` must be a 2-tuple of numbers,
         of the form ``(atime, mtime)``, which is used to set the access and
-        modified times, respectively.  This bizarre API is mimicked from python
+        modified times, respectively.  This bizarre API is mimicked from Python
         for the sake of consistency -- I apologize.
 
         :param times: ``None`` or a tuple of (access time, modified time) in
@@ -292,7 +292,7 @@ class SFTPFile (BufferedFile):
         """
         Change the size of this file.  This usually extends
         or shrinks the size of the file, just like the ``truncate()`` method on
-        python file objects.
+        Python file objects.
         
         :param size: the new size of the file
         :type size: int or long

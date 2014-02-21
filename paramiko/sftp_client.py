@@ -196,30 +196,30 @@ class SFTPClient (BaseSFTP):
     def open(self, filename, mode='r', bufsize=-1):
         """
         Open a file on the remote server.  The arguments are the same as for
-        python's built-in ``file`` (aka ``open``).  A file-like object is
-        returned, which closely mimics the behavior of a normal python file
+        Python's built-in ``file`` (aka ``open``).  A file-like object is
+        returned, which closely mimics the behavior of a normal Python file
         object, including the ability to be used as a context manager.
 
         The mode indicates how the file is to be opened: ``'r'`` for reading,
         ``'w'`` for writing (truncating an existing file), ``'a'`` for appending,
         ``'r+'`` for reading/writing, ``'w+'`` for reading/writing (truncating an
-        existing file), ``'a+'`` for reading/appending.  The python ``'b'`` flag
+        existing file), ``'a+'`` for reading/appending.  The Python ``'b'`` flag
         is ignored, since SSH treats all files as binary.  The ``'U'`` flag is
         supported in a compatible way.
 
         Since 1.5.2, an ``'x'`` flag indicates that the operation should only
         succeed if the file was created and did not previously exist.  This has
-        no direct mapping to python's file flags, but is commonly known as the
+        no direct mapping to Python's file flags, but is commonly known as the
         ``O_EXCL`` flag in posix.
 
-        The file will be buffered in standard python style by default, but
+        The file will be buffered in standard Python style by default, but
         can be altered with the ``bufsize`` parameter.  ``0`` turns off
         buffering, ``1`` uses line buffering, and any number greater than 1
         (``>1``) uses that specific buffer size.
 
         :param filename: name of the file to open
         :type filename: str
-        :param mode: mode (python-style) to open in
+        :param mode: mode (Python-style) to open in
         :type mode: str
         :param bufsize: desired buffering (-1 = default buffer size)
         :type bufsize: int
@@ -249,7 +249,7 @@ class SFTPClient (BaseSFTP):
         self._log(DEBUG, 'open(%r, %r) -> %s' % (filename, mode, hexlify(handle)))
         return SFTPFile(self, handle, mode, bufsize)
 
-    # python continues to vacillate about "open" vs "file"...
+    # Python continues to vacillate about "open" vs "file"...
     file = open
 
     def remove(self, path):
@@ -317,11 +317,11 @@ class SFTPClient (BaseSFTP):
         """
         Retrieve information about a file on the remote system.  The return
         value is an object whose attributes correspond to the attributes of
-        python's ``stat`` structure as returned by ``os.stat``, except that it
+        Python's ``stat`` structure as returned by ``os.stat``, except that it
         contains fewer fields.  An SFTP server may return as much or as little
         info as it wants, so the results may vary from server to server.
 
-        Unlike a python ``stat`` object, the result may not be accessed as a
+        Unlike a Python ``stat`` object, the result may not be accessed as a
         tuple.  This is mostly due to the author's slack factor.
 
         The fields supported are: ``st_mode``, ``st_size``, ``st_uid``, ``st_gid``,
@@ -376,7 +376,7 @@ class SFTPClient (BaseSFTP):
     def chmod(self, path, mode):
         """
         Change the mode (permissions) of a file.  The permissions are
-        unix-style and identical to those used by python's ``os.chmod``
+        unix-style and identical to those used by Python's ``os.chmod``
         function.
 
         :param path: path of the file to change the permissions of
@@ -393,7 +393,7 @@ class SFTPClient (BaseSFTP):
     def chown(self, path, uid, gid):
         """
         Change the owner (``uid``) and group (``gid``) of a file.  As with
-        python's ``os.chown`` function, you must pass both arguments, so if you
+        Python's ``os.chown`` function, you must pass both arguments, so if you
         only want to change one, use `stat` first to retrieve the current
         owner and group.
 
@@ -416,7 +416,7 @@ class SFTPClient (BaseSFTP):
         ``times`` is ``None``, then the file's access and modified times are set
         to the current time.  Otherwise, ``times`` must be a 2-tuple of numbers,
         of the form ``(atime, mtime)``, which is used to set the access and
-        modified times, respectively.  This bizarre API is mimicked from python
+        modified times, respectively.  This bizarre API is mimicked from Python
         for the sake of consistency -- I apologize.
 
         :param path: path of the file to modify
@@ -437,7 +437,7 @@ class SFTPClient (BaseSFTP):
         """
         Change the size of the file specified by ``path``.  This usually extends
         or shrinks the size of the file, just like the ``truncate()`` method on
-        python file objects.
+        Python file objects.
 
         :param path: path of the file to modify
         :type path: str

@@ -94,7 +94,7 @@ class SFTPServerInterface (object):
         the client didn't specify them.
         
         .. note:: The SFTP protocol defines all files to be in "binary" mode.
-            There is no equivalent to python's "text" mode.
+            There is no equivalent to Python's "text" mode.
 
         :param path: the requested path (relative or absolute) of the file
             to be opened.
@@ -265,7 +265,7 @@ class SFTPServerInterface (object):
         specific folder, you probably don't want this method to reveal path
         names outside that folder.
 
-        You may find the python methods in ``os.path`` useful, especially
+        You may find the Python methods in ``os.path`` useful, especially
         ``os.path.normpath`` and ``os.path.realpath``.
 
         The default implementation returns ``os.path.normpath('/' + path)``.

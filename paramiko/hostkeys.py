@@ -298,7 +298,7 @@ class HostKeys (UserDict.DictMixin):
                 self._entries.append(HostKeyEntry([hostname], entry[key_type]))
 
     def keys(self):
-        # python 2.4 sets would be nice here.
+        # Python 2.4 sets would be nice here.
         ret = []
         for e in self._entries:
             for h in e.hostnames:

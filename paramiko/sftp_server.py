@@ -296,7 +296,7 @@ class SFTPServer (BaseSFTP, SubsystemHandler):
         self._send_packet(CMD_EXTENDED_REPLY, str(msg))
     
     def _convert_pflags(self, pflags):
-        "convert SFTP-style open() flags to python's os.open() flags"
+        "convert SFTP-style open() flags to Python's os.open() flags"
         if (pflags & SFTP_FLAG_READ) and (pflags & SFTP_FLAG_WRITE):
             flags = os.O_RDWR
         elif pflags & SFTP_FLAG_WRITE:

@@ -19,7 +19,7 @@
 import sys
 
 if sys.version_info < (2, 5):
-    raise RuntimeError('You need python 2.5+ for this module.')
+    raise RuntimeError('You need Python 2.5+ for this module.')
 
 
 __author__ = "Jeff Forcier <jeff@bitprophet.org>"

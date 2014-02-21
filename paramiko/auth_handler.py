@@ -167,7 +167,7 @@ class AuthHandler (object):
             e = self.transport.get_exception()
             if e is None:
                 e = AuthenticationException('Authentication failed.')
-            # this is horrible.  python Exception isn't yet descended from
+            # this is horrible.  Python Exception isn't yet descended from
             # object, so type(e) won't work. :(
             if issubclass(e.__class__, PartialAuthentication):
                 return e.allowed_types

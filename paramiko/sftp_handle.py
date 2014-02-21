@@ -72,16 +72,16 @@ class SFTPHandle (object):
     def read(self, offset, length):
         """
         Read up to ``length`` bytes from this file, starting at position
-        ``offset``.  The offset may be a python long, since SFTP allows it
+        ``offset``.  The offset may be a Python long, since SFTP allows it
         to be 64 bits.
 
         If the end of the file has been reached, this method may return an
         empty string to signify EOF, or it may also return `.SFTP_EOF`.
 
         The default implementation checks for an attribute on ``self`` named
-        ``readfile``, and if present, performs the read operation on the python
+        ``readfile``, and if present, performs the read operation on the Python
         file-like object found there.  (This is meant as a time saver for the
-        common case where you are wrapping a python file object.)
+        common case where you are wrapping a Python file object.)
 
         :param offset: position in the file to start reading from.
         :type offset: int or long
@@ -109,13 +109,13 @@ class SFTPHandle (object):
     def write(self, offset, data):
         """
         Write ``data`` into this file at position ``offset``.  Extending the
-        file past its original end is expected.  Unlike python's normal
+        file past its original end is expected.  Unlike Python's normal
         ``write()`` methods, this method cannot do a partial write: it must
         write all of ``data`` or else return an error.
 
         The default implementation checks for an attribute on ``self`` named
         ``writefile``, and if present, performs the write operation on the
-        python file-like object found there.  The attribute is named
+        Python file-like object found there.  The attribute is named
         differently from ``readfile`` to make it easy to implement read-only
         (or write-only) files, but if both attributes are present, they should
         refer to the same file.

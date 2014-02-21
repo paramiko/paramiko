@@ -21,7 +21,7 @@ from cStringIO import StringIO
 
 class BufferedFile (object):
     """
-    Reusable base class to implement python-style file buffering around a
+    Reusable base class to implement Python-style file buffering around a
     simpler stream.
     """
 
@@ -344,7 +344,7 @@ class BufferedFile (object):
     def xreadlines(self):
         """
         Identical to ``iter(f)``.  This is a deprecated file interface that
-        predates python iterator support.
+        predates Python iterator support.
 
         :return: an iterator.
         :rtype: iterator

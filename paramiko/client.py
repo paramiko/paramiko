@@ -301,12 +301,12 @@ class SSHClient (object):
         """
         Execute a command on the SSH server.  A new `.Channel` is opened and
         the requested command is executed.  The command's input and output
-        streams are returned as python ``file``-like objects representing
+        streams are returned as Python ``file``-like objects representing
         stdin, stdout, and stderr.
 
         :param command: the command to execute
         :type command: str
-        :param bufsize: interpreted the same way as by the built-in ``file()`` function in python
+        :param bufsize: interpreted the same way as by the built-in ``file()`` function in Python
         :type bufsize: int
         :param timeout: set command's channel timeout. See `Channel.settimeout`.settimeout
         :type timeout: int
@@ -529,7 +529,7 @@ class RejectPolicy (MissingHostKeyPolicy):
 
 class WarningPolicy (MissingHostKeyPolicy):
     """
-    Policy for logging a python-style warning for an unknown host key, but
+    Policy for logging a Python-style warning for an unknown host key, but
     accepting it. This is used by `.SSHClient`.
     """
     def missing_host_key(self, client, hostname, key):

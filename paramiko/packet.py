@@ -103,7 +103,7 @@ class Packetizer (object):
 
     def set_log(self, log):
         """
-        Set the python log object to use for logging.
+        Set the Python log object to use for logging.
         """
         self.__logger = log
 

@@ -44,7 +44,7 @@ class Channel (object):
     """
     A secure tunnel across an SSH `.Transport`.  A Channel is meant to behave
     like a socket, and has an API that should be indistinguishable from the
-    python socket API.
+    Python socket API.
 
     Because SSH2 has a windowing kind of flow control, if you stop reading data
     from a Channel and its buffer fills up, the server will be unable to send
@@ -788,7 +788,7 @@ class Channel (object):
         
         .. note:: If the channel is closed while only part of the data hase been
             sent, there is no way to determine how much data (if any) was sent.
-            This is irritating, but identically follows python's API.
+            This is irritating, but identically follows Python's API.
         """
         while s:
             if self.closed:
@@ -826,9 +826,9 @@ class Channel (object):
         """
         Return a file-like object associated with this channel.  The optional
         ``mode`` and ``bufsize`` arguments are interpreted the same way as by
-        the built-in ``file()`` function in python.
+        the built-in ``file()`` function in Python.
 
-        :return: object which can be used for python file I/O.
+        :return: object which can be used for Python file I/O.
         :rtype: `.ChannelFile`
         """
         return ChannelFile(*([self] + list(params)))
@@ -840,11 +840,11 @@ class Channel (object):
         without a pty will ever have data on the stderr stream.
         
         The optional ``mode`` and ``bufsize`` arguments are interpreted the
-        same way as by the built-in ``file()`` function in python.  For a
+        same way as by the built-in ``file()`` function in Python.  For a
         client, it only makes sense to open this file for reading.  For a
         server, it only makes sense to open this file for writing.
         
-        :return: object which can be used for python file I/O.
+        :return: object which can be used for Python file I/O.
         :rtype: `.ChannelFile`
 
         .. versionadded:: 1.1
@@ -854,7 +854,7 @@ class Channel (object):
     def fileno(self):
         """
         Returns an OS-level file descriptor which can be used for polling, but
-        but not for reading or writing.  This is primaily to allow python's
+        but not for reading or writing.  This is primaily to allow Python's
         ``select`` module to work.
 
         The first time ``fileno`` is called on a channel, a pipe is created to

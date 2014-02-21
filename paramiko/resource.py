@@ -28,7 +28,7 @@ class ResourceManager (object):
     A registry of objects and resources that should be closed when those
     objects are deleted.
     
-    This is meant to be a safer alternative to python's ``__del__`` method,
+    This is meant to be a safer alternative to Python's ``__del__`` method,
     which can cause reference cycles to never be collected.  Objects registered
     with the ResourceManager can be collected but still free resources when
     they die.
@@ -47,7 +47,7 @@ class ResourceManager (object):
         """
         Register a resource to be closed with an object is collected.
         
-        When the given ``obj`` is garbage-collected by the python interpreter,
+        When the given ``obj`` is garbage-collected by the Python interpreter,
         the ``resource`` will be closed by having its ``close()`` method called.
         Any exceptions are ignored.
         

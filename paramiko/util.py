@@ -34,7 +34,7 @@ from paramiko.common import *
 from paramiko.config import SSHConfig
 
 
-# Change by RogerB - python < 2.3 doesn't have enumerate so we implement it
+# Change by RogerB - Python < 2.3 doesn't have enumerate so we implement it
 if sys.version_info < (2,3):
     class enumerate:
         def __init__ (self, sequence):
@@ -217,7 +217,7 @@ def lookup_ssh_host_config(hostname, config):
     return config.lookup(hostname)
 
 def mod_inverse(x, m):
-    # it's crazy how small python can make this function.
+    # it's crazy how small Python can make this function.
     u1, u2, u3 = 1, 0, m
     v1, v2, v3 = 0, 1, x
 

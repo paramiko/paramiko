@@ -178,7 +178,7 @@ class PKey (object):
         Create a key object by reading a private key file.  If the private
         key is encrypted and ``password`` is not ``None``, the given password
         will be used to decrypt the key (otherwise `.PasswordRequiredException`
-        is thrown).  Through the magic of python, this factory method will
+        is thrown).  Through the magic of Python, this factory method will
         exist in all subclasses of PKey (such as `.RSAKey` or `.DSSKey`), but
         is useless on the abstract PKey class.
 

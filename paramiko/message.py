@@ -29,7 +29,7 @@ from paramiko import util
 class Message (object):
     """
     An SSH2 Message is a stream of bytes that encodes some combination of
-    strings, integers, bools, and infinite-precision integers (known in python
+    strings, integers, bools, and infinite-precision integers (known in Python
     as longs).  This class builds or breaks down such a byte stream.
     
     Normally you don't need to deal with anything this low-level, but it's

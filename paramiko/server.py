@@ -626,7 +626,7 @@ class SubsystemHandler (threading.Thread):
             underlying `.Transport` is closed.  This can be done by checking
             `Transport.is_active` or noticing an EOF
             on the `.Channel`.  If this method loops forever without checking
-            for this case, your python interpreter may refuse to exit because
+            for this case, your Python interpreter may refuse to exit because
             this thread will still be running.
 
         :param name: name of the requested subsystem.
