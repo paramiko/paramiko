@@ -9,3 +9,8 @@ extensions.extend(['sphinx.ext.autodoc', 'sphinx.ext.intersphinx'])
 
 # Autodoc settings
 autodoc_default_flags = ['members', 'special-members']
+
+# Intersphinx connection to stdlib
+intersphinx_mapping = {
+    'python': ('http://docs.python.org/2.6', None),
+}
