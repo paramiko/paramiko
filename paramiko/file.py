@@ -16,10 +16,6 @@
 # along with Paramiko; if not, write to the Free Software Foundation, Inc.,
 # 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
 
-"""
-BufferedFile.
-"""
-
 from cStringIO import StringIO
 
 
@@ -69,7 +65,6 @@ class BufferedFile (object):
 
         :raises ValueError: if the file is closed.
         
-        :return: an interator.
         :rtype: iterator
         """
         if self._closed:
@@ -94,9 +89,9 @@ class BufferedFile (object):
 
     def next(self):
         """
-        Returns the next line from the input, or raises `.StopIteration` when
-        EOF is hit.  Unlike python file objects, it's okay to mix calls to
-        `next` and `readline`.
+        Returns the next line from the input, or raises
+        `~exceptions.StopIteration` when EOF is hit.  Unlike Python file
+        objects, it's okay to mix calls to `next` and `readline`.
 
         :raises StopIteration: when the end of the file is reached.
 
@@ -171,13 +166,15 @@ class BufferedFile (object):
         incomplete line may be returned.  An empty string is returned only when
         EOF is encountered immediately.
 
-        .. note:: Unlike stdio's ``fgets()``, the returned string contains null
-        characters (``'\\0'``) if they occurred in the input.
+        .. note::
+            Unlike stdio's ``fgets``, the returned string contains null
+            characters (``'\\0'``) if they occurred in the input.
 
         :param size: maximum length of returned string.
         :type size: int
-        :return: next line of the file, or an empty string if the end of the
-            file has been reached.
+        :return:
+            next line of the file, or an empty string if the end of the file
+            has been reached.
         :rtype: str
         """
         # it's almost silly how complex this function is.
@@ -334,7 +331,7 @@ class BufferedFile (object):
         """
         Write a sequence of strings to the file.  The sequence can be any
         iterable object producing strings, typically a list of strings.  (The
-        name is intended to match `readlines`; ``writelines`` does not add line
+        name is intended to match `readlines`; `writelines` does not add line
         separators.)
 
         :param sequence: an iterable sequence of strings.
