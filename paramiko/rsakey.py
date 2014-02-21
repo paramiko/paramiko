@@ -17,7 +17,7 @@
 # 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
 
 """
-:class:`.RSAKey`
+`.RSAKey`
 """
 
 from Crypto.PublicKey import RSA
@@ -135,7 +135,7 @@ class RSAKey (PKey):
             key generation (used by ``pyCrypto.PublicKey``).
         :type progress_func: function
         :return: new private key
-        :rtype: :class:`.RSAKey`
+        :rtype: `.RSAKey`
         """
         rsa = RSA.generate(bits, rng.read, progress_func)
         key = RSAKey(vals=(rsa.e, rsa.n))

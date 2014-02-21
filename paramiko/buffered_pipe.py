@@ -29,7 +29,7 @@ import time
 
 class PipeTimeout (IOError):
     """
-    Indicates that a timeout was reached on a read from a :class:`.BufferedPipe`.
+    Indicates that a timeout was reached on a read from a `.BufferedPipe`.
     """
     pass
 
@@ -38,7 +38,7 @@ class BufferedPipe (object):
     """
     A buffer that obeys normal read (with timeout) & close semantics for a
     file or socket, but is fed data from another thread.  This is used by
-    :class:`.Channel`.
+    `.Channel`.
     """
     
     def __init__(self):

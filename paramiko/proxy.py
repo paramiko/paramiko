@@ -17,7 +17,7 @@
 # 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
 
 """
-:class:`.ProxyCommand`.
+`.ProxyCommand`.
 """
 
 import os
@@ -33,14 +33,14 @@ class ProxyCommand(object):
     Wraps a subprocess running ProxyCommand-driven programs.
 
     This class implements a the socket-like interface needed by the
-    :class:`.Transport` and :class:`.Packetizer` classes. Using this class instead of a
+    `.Transport` and `.Packetizer` classes. Using this class instead of a
     regular socket makes it possible to talk with a Popen'd command that will
     proxy traffic between the client and a server hosted in another machine.
     """
     def __init__(self, command_line):
         """
         Create a new CommandProxy instance. The instance created by this
-        class can be passed as an argument to the :class:`.Transport` class.
+        class can be passed as an argument to the `.Transport` class.
 
         :param command_line: the command that should be executed and
             used as the proxy.

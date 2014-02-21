@@ -17,7 +17,7 @@
 # 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
 
 """
-Variant on :class:`KexGroup1 <paramiko.kex_group1.KexGroup1>` where the prime "p" and
+Variant on `KexGroup1 <paramiko.kex_group1.KexGroup1>` where the prime "p" and
 generator "g" are provided by the server.  A bit more work is required on the
 client side, and a B{lot} more on the server side.
 """

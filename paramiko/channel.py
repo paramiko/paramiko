@@ -42,7 +42,7 @@ MIN_PACKET_SIZE = 1024
 
 class Channel (object):
     """
-    A secure tunnel across an SSH :class:`.Transport`.  A Channel is meant to behave
+    A secure tunnel across an SSH `.Transport`.  A Channel is meant to behave
     like a socket, and has an API that should be indistinguishable from the
     python socket API.
 
@@ -58,12 +58,12 @@ class Channel (object):
     def __init__(self, chanid):
         """
         Create a new channel.  The channel is not associated with any
-        particular session or :class:`.Transport` until the Transport attaches it.
+        particular session or `.Transport` until the Transport attaches it.
         Normally you would only call this method from the constructor of a
-        subclass of :class:`.Channel`.
+        subclass of `.Channel`.
 
         :param chanid: the ID of this channel, as passed by an existing
-            :class:`.Transport`.
+            `.Transport`.
         :type chanid: int
         """
         self.chanid = chanid
@@ -347,7 +347,7 @@ class Channel (object):
         If a handler is passed in, the handler is called from another thread
         whenever a new x11 connection arrives.  The default handler queues up
         incoming x11 connections, which may be retrieved using
-        :class:`Transport.accept`.  The handler's calling signature is::
+        `Transport.accept`.  The handler's calling signature is::
         
             handler(channel: Channel, (address: str, port: int))
         
@@ -416,10 +416,10 @@ class Channel (object):
 
     def get_transport(self):
         """
-        Return the :class:`.Transport` associated with this channel.
+        Return the `.Transport` associated with this channel.
 
-        :return: the :class:`.Transport` that was used to create this channel.
-        :rtype: :class:`.Transport`
+        :return: the `.Transport` that was used to create this channel.
+        :rtype: `.Transport`
         """
         return self.transport
 
@@ -446,8 +446,8 @@ class Channel (object):
     def get_id(self):
         """
         Return the ID # for this channel.  The channel ID is unique across
-        a :class:`.Transport` and usually a small number.  It's also the number
-        passed to :class:`ServerInterface.check_channel_request` when determining
+        a `.Transport` and usually a small number.  It's also the number
+        passed to `ServerInterface.check_channel_request` when determining
         whether to accept a channel request in server mode.
 
         :return: the ID of this channel.
@@ -564,7 +564,7 @@ class Channel (object):
         """
         Close the channel.  All future read/write operations on the channel
         will fail.  The remote end will receive no more data (after queued data
-        is flushed).  Channels are automatically closed when their :class:`.Transport`
+        is flushed).  Channels are automatically closed when their `.Transport`
         is closed or when they are garbage collected.
         """
         self.lock.acquire()
@@ -829,7 +829,7 @@ class Channel (object):
         the built-in ``file()`` function in python.
 
         :return: object which can be used for python file I/O.
-        :rtype: :class:`.ChannelFile`
+        :rtype: `.ChannelFile`
         """
         return ChannelFile(*([self] + list(params)))
 
@@ -845,7 +845,7 @@ class Channel (object):
         server, it only makes sense to open this file for writing.
         
         :return: object which can be used for python file I/O.
-        :rtype: :class:`.ChannelFile`
+        :rtype: `.ChannelFile`
 
         .. versionadded:: 1.1
         """
@@ -1227,11 +1227,11 @@ class Channel (object):
 
 class ChannelFile (BufferedFile):
     """
-    A file-like wrapper around :class:`.Channel`.  A ChannelFile is created by calling
-    :class:`Channel.makefile`.
+    A file-like wrapper around `.Channel`.  A ChannelFile is created by calling
+    `Channel.makefile`.
 
     @bug: To correctly emulate the file object created from a socket's
-        ``makefile`` method, a :class:`.Channel` and its ``ChannelFile`` should be able
+        ``makefile`` method, a `.Channel` and its ``ChannelFile`` should be able
         to be closed or garbage-collected independently.  Currently, closing
         the ``ChannelFile`` does nothing but flush the buffer.
     """

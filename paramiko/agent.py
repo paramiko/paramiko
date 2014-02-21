@@ -44,7 +44,7 @@ class AgentSSH(object):
     """
     Client interface for using private keys from an SSH agent running on the
     local machine.  If an SSH agent is running, this class can be used to
-    connect to it and retreive :class:`.PKey` objects which can be used when
+    connect to it and retreive `.PKey` objects which can be used when
     attempting to authenticate to remote SSH servers.
 
     Because the SSH agent protocol uses environment variables and unix-domain
@@ -62,7 +62,7 @@ class AgentSSH(object):
         will be returned.
 
         :return: a list of keys available on the SSH agent
-        :rtype: tuple of :class:`.AgentKey`
+        :rtype: tuple of `.AgentKey`
         """
         return self._keys
 
@@ -307,7 +307,7 @@ class Agent(AgentSSH):
     """
     Client interface for using private keys from an SSH agent running on the
     local machine.  If an SSH agent is running, this class can be used to
-    connect to it and retreive :class:`.PKey` objects which can be used when
+    connect to it and retreive `.PKey` objects which can be used when
     attempting to authenticate to remote SSH servers.
 
     Because the SSH agent protocol uses environment variables and unix-domain

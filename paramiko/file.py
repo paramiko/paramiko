@@ -94,7 +94,7 @@ class BufferedFile (object):
 
     def next(self):
         """
-        Returns the next line from the input, or raises :class:`.StopIteration` when
+        Returns the next line from the input, or raises `.StopIteration` when
         EOF is hit.  Unlike python file objects, it's okay to mix calls to
         `next` and `readline`.
 

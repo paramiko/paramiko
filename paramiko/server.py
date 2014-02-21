@@ -17,7 +17,7 @@
 # 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
 
 """
-:class:`.ServerInterface` is an interface to override for server support.
+`.ServerInterface` is an interface to override for server support.
 """
 
 import threading
@@ -96,9 +96,9 @@ class ServerInterface (object):
             - `check_channel_forward_agent_request`
 
         The ``chanid`` parameter is a small number that uniquely identifies the
-        channel within a :class:`.Transport`.  A :class:`.Channel` object is not created
+        channel within a `.Transport`.  A `.Channel` object is not created
         unless this method returns ``OPEN_SUCCEEDED`` -- once a
-        :class:`.Channel` object is created, you can call :class:`Channel.get_id` to
+        `.Channel` object is created, you can call `Channel.get_id` to
         retrieve the channel ID.
 
         The return value should either be ``OPEN_SUCCEEDED`` (or
@@ -146,16 +146,16 @@ class ServerInterface (object):
         Determine if a client may open channels with no (further)
         authentication.
 
-        Return :class:`.AUTH_FAILED` if the client must authenticate, or
-        :class:`.AUTH_SUCCESSFUL` if it's okay for the client to not
+        Return `.AUTH_FAILED` if the client must authenticate, or
+        `.AUTH_SUCCESSFUL` if it's okay for the client to not
         authenticate.
 
-        The default implementation always returns :class:`.AUTH_FAILED`.
+        The default implementation always returns `.AUTH_FAILED`.
 
         :param username: the username of the client.
         :type username: str
-        :return: :class:`.AUTH_FAILED` if the authentication fails;
-            :class:`.AUTH_SUCCESSFUL` if it succeeds.
+        :return: `.AUTH_FAILED` if the authentication fails;
+            `.AUTH_SUCCESSFUL` if it succeeds.
         :rtype: int
         """
         return AUTH_FAILED
@@ -165,23 +165,23 @@ class ServerInterface (object):
         Determine if a given username and password supplied by the client is
         acceptable for use in authentication.
 
-        Return :class:`.AUTH_FAILED` if the password is not accepted,
-        :class:`.AUTH_SUCCESSFUL` if the password is accepted and completes
-        the authentication, or :class:`.AUTH_PARTIALLY_SUCCESSFUL` if your
+        Return `.AUTH_FAILED` if the password is not accepted,
+        `.AUTH_SUCCESSFUL` if the password is accepted and completes
+        the authentication, or `.AUTH_PARTIALLY_SUCCESSFUL` if your
         authentication is stateful, and this key is accepted for
         authentication, but more authentication is required.  (In this latter
         case, `get_allowed_auths` will be called to report to the client what
         options it has for continuing the authentication.)
 
-        The default implementation always returns :class:`.AUTH_FAILED`.
+        The default implementation always returns `.AUTH_FAILED`.
 
         :param username: the username of the authenticating client.
         :type username: str
         :param password: the password given by the client.
         :type password: str
-        :return: :class:`.AUTH_FAILED` if the authentication fails;
-            :class:`.AUTH_SUCCESSFUL` if it succeeds;
-            :class:`.AUTH_PARTIALLY_SUCCESSFUL` if the password auth is
+        :return: `.AUTH_FAILED` if the authentication fails;
+            `.AUTH_SUCCESSFUL` if it succeeds;
+            `.AUTH_PARTIALLY_SUCCESSFUL` if the password auth is
             successful, but authentication must continue.
         :rtype: int
         """
@@ -194,9 +194,9 @@ class ServerInterface (object):
         check the username and key and decide if you would accept a signature
         made using this key.
 
-        Return :class:`.AUTH_FAILED` if the key is not accepted,
-        :class:`.AUTH_SUCCESSFUL` if the key is accepted and completes the
-        authentication, or :class:`.AUTH_PARTIALLY_SUCCESSFUL` if your
+        Return `.AUTH_FAILED` if the key is not accepted,
+        `.AUTH_SUCCESSFUL` if the key is accepted and completes the
+        authentication, or `.AUTH_PARTIALLY_SUCCESSFUL` if your
         authentication is stateful, and this password is accepted for
         authentication, but more authentication is required.  (In this latter
         case, `get_allowed_auths` will be called to report to the client what
@@ -206,15 +206,15 @@ class ServerInterface (object):
         If you're willing to accept the key, paramiko will do the work of
         verifying the client's signature.
         
-        The default implementation always returns :class:`.AUTH_FAILED`.
+        The default implementation always returns `.AUTH_FAILED`.
 
         :param username: the username of the authenticating client
         :type username: str
         :param key: the key object provided by the client
-        :type key: :class:`PKey <pkey.PKey>`
-        :return: :class:`.AUTH_FAILED` if the client can't authenticate
-            with this key; :class:`.AUTH_SUCCESSFUL` if it can;
-            :class:`.AUTH_PARTIALLY_SUCCESSFUL` if it can authenticate with
+        :type key: `PKey <pkey.PKey>`
+        :return: `.AUTH_FAILED` if the client can't authenticate
+            with this key; `.AUTH_SUCCESSFUL` if it can;
+            `.AUTH_PARTIALLY_SUCCESSFUL` if it can authenticate with
             this key but must continue with authentication
         :rtype: int
         """
@@ -227,21 +227,21 @@ class ServerInterface (object):
         ``"keyboard-interactive"`` auth type, which requires you to send a
         series of questions for the client to answer.
         
-        Return :class:`.AUTH_FAILED` if this auth method isn't supported.  Otherwise,
-        you should return an :class:`.InteractiveQuery` object containing the prompts
+        Return `.AUTH_FAILED` if this auth method isn't supported.  Otherwise,
+        you should return an `.InteractiveQuery` object containing the prompts
         and instructions for the user.  The response will be sent via a call
         to `check_auth_interactive_response`.
         
-        The default implementation always returns :class:`.AUTH_FAILED`.
+        The default implementation always returns `.AUTH_FAILED`.
         
         :param username: the username of the authenticating client
         :type username: str
         :param submethods: a comma-separated list of methods preferred by the
             client (usually empty)
         :type submethods: str
-        :return: :class:`.AUTH_FAILED` if this auth method isn't supported; otherwise
+        :return: `.AUTH_FAILED` if this auth method isn't supported; otherwise
             an object containing queries for the user
-        :rtype: int or :class:`.InteractiveQuery`
+        :rtype: int or `.InteractiveQuery`
         """
         return AUTH_FAILED
     
@@ -251,29 +251,29 @@ class ServerInterface (object):
         supported.  You should override this method in server mode if you want
         to support the ``"keyboard-interactive"`` auth type.
         
-        Return :class:`.AUTH_FAILED` if the responses are not accepted,
-        :class:`.AUTH_SUCCESSFUL` if the responses are accepted and complete
-        the authentication, or :class:`.AUTH_PARTIALLY_SUCCESSFUL` if your
+        Return `.AUTH_FAILED` if the responses are not accepted,
+        `.AUTH_SUCCESSFUL` if the responses are accepted and complete
+        the authentication, or `.AUTH_PARTIALLY_SUCCESSFUL` if your
         authentication is stateful, and this set of responses is accepted for
         authentication, but more authentication is required.  (In this latter
         case, `get_allowed_auths` will be called to report to the client what
         options it has for continuing the authentication.)
 
         If you wish to continue interactive authentication with more questions,
-        you may return an :class:`.InteractiveQuery` object, which should cause the
+        you may return an `.InteractiveQuery` object, which should cause the
         client to respond with more answers, calling this method again.  This
         cycle can continue indefinitely.
 
-        The default implementation always returns :class:`.AUTH_FAILED`.
+        The default implementation always returns `.AUTH_FAILED`.
 
         :param responses: list of responses from the client
         :type responses: list(str)
-        :return: :class:`.AUTH_FAILED` if the authentication fails;
-            :class:`.AUTH_SUCCESSFUL` if it succeeds;
-            :class:`.AUTH_PARTIALLY_SUCCESSFUL` if the interactive auth is
+        :return: `.AUTH_FAILED` if the authentication fails;
+            `.AUTH_SUCCESSFUL` if it succeeds;
+            `.AUTH_PARTIALLY_SUCCESSFUL` if the interactive auth is
             successful, but authentication must continue; otherwise an object
             containing queries for the user
-        :rtype: int or :class:`.InteractiveQuery`
+        :rtype: int or `.InteractiveQuery`
         """
         return AUTH_FAILED
         
@@ -338,7 +338,7 @@ class ServerInterface (object):
         :param kind: the kind of global request being made.
         :type kind: str
         :param msg: any extra arguments to the request.
-        :type msg: :class:`.Message`
+        :type msg: `.Message`
         :return: ``True`` or a tuple of data if the request was granted;
             ``False`` otherwise.
         :rtype: bool
@@ -357,8 +357,8 @@ class ServerInterface (object):
 
         The default implementation always returns ``False``.
 
-        :param channel: the :class:`.Channel` the pty request arrived on.
-        :type channel: :class:`.Channel`
+        :param channel: the `.Channel` the pty request arrived on.
+        :type channel: `.Channel`
         :param term: type of terminal requested (for example, ``"vt100"``).
         :type term: str
         :param width: width of screen in characters.
@@ -386,8 +386,8 @@ class ServerInterface (object):
 
         The default implementation always returns ``False``.
 
-        :param channel: the :class:`.Channel` the request arrived on.
-        :type channel: :class:`.Channel`
+        :param channel: the `.Channel` the request arrived on.
+        :type channel: `.Channel`
         :return: ``True`` if this channel is now hooked up to a shell; ``False``
             if a shell can't or won't be provided.
         :rtype: bool
@@ -402,8 +402,8 @@ class ServerInterface (object):
         
         The default implementation always returns ``False``.
         
-        :param channel: the :class:`.Channel` the request arrived on.
-        :type channel: :class:`.Channel`
+        :param channel: the `.Channel` the request arrived on.
+        :type channel: `.Channel`
         :param command: the command to execute.
         :type command: str
         :return: ``True`` if this channel is now hooked up to the stdin,
@@ -423,16 +423,16 @@ class ServerInterface (object):
         subsystem.  An example of a subsystem is ``sftp``.
 
         The default implementation checks for a subsystem handler assigned via
-        :class:`Transport.set_subsystem_handler`.
+        `Transport.set_subsystem_handler`.
         If one has been set, the handler is invoked and this method returns
         ``True``.  Otherwise it returns ``False``.
 
-        .. note:: Because the default implementation uses the :class:`.Transport` to
+        .. note:: Because the default implementation uses the `.Transport` to
             identify valid subsystems, you probably won't need to override this
             method.
 
-        :param channel: the :class:`.Channel` the pty request arrived on.
-        :type channel: :class:`.Channel`
+        :param channel: the `.Channel` the pty request arrived on.
+        :type channel: `.Channel`
         :param name: name of the requested subsystem.
         :type name: str
         :return: ``True`` if this channel is now hooked up to the requested
@@ -453,8 +453,8 @@ class ServerInterface (object):
 
         The default implementation always returns ``False``.
 
-        :param channel: the :class:`.Channel` the pty request arrived on.
-        :type channel: :class:`.Channel`
+        :param channel: the `.Channel` the pty request arrived on.
+        :type channel: `.Channel`
         :param width: width of screen in characters.
         :type width: int
         :param height: height of screen in characters.
@@ -474,12 +474,12 @@ class ServerInterface (object):
         """
         Determine if the client will be provided with an X11 session.  If this
         method returns ``True``, X11 applications should be routed through new
-        SSH channels, using :class:`Transport.open_x11_channel`.
+        SSH channels, using `Transport.open_x11_channel`.
         
         The default implementation always returns ``False``.
         
-        :param channel: the :class:`.Channel` the X11 request arrived on
-        :type channel: :class:`.Channel`
+        :param channel: the `.Channel` the X11 request arrived on
+        :type channel: `.Channel`
         :param single_connection: ``True`` if only a single X11 channel should
             be opened
         :type single_connection: bool
@@ -502,8 +502,8 @@ class ServerInterface (object):
 
         The default implementation always returns ``False``.
 
-        :param channel: the :class:`.Channel` the request arrived on
-        :type channel: :class:`.Channel`
+        :param channel: the `.Channel` the request arrived on
+        :type channel: `.Channel`
         :return: ``True`` if the AgentForward was loaded; ``False`` if not
         :rtype: bool
         """
@@ -517,9 +517,9 @@ class ServerInterface (object):
         authentication is complete.
 
         The ``chanid`` parameter is a small number that uniquely identifies the
-        channel within a :class:`.Transport`.  A :class:`.Channel` object is not created
+        channel within a `.Transport`.  A `.Channel` object is not created
         unless this method returns ``OPEN_SUCCEEDED`` -- once a
-        :class:`.Channel` object is created, you can call :class:`Channel.get_id` to
+        `.Channel` object is created, you can call `Channel.get_id` to
         retrieve the channel ID.
 
         The origin and destination parameters are (ip_address, port) tuples
@@ -555,7 +555,7 @@ class SubsystemHandler (threading.Thread):
     """
     Handler for a subsytem in server mode.  If you create a subclass of this
     class and pass it to
-    :class:`Transport.set_subsystem_handler`,
+    `Transport.set_subsystem_handler`,
     an object of this
     class will be created for each request for this subsystem.  Each new object
     will be executed within its own new thread by calling `start_subsystem`.
@@ -569,19 +569,19 @@ class SubsystemHandler (threading.Thread):
     """
     def __init__(self, channel, name, server):
         """
-        Create a new handler for a channel.  This is used by :class:`.ServerInterface`
+        Create a new handler for a channel.  This is used by `.ServerInterface`
         to start up a new handler when a channel requests this subsystem.  You
         don't need to override this method, but if you do, be sure to pass the
         ``channel`` and ``name`` parameters through to the original ``__init__``
         method here.
 
         :param channel: the channel associated with this subsystem request.
-        :type channel: :class:`.Channel`
+        :type channel: `.Channel`
         :param name: name of the requested subsystem.
         :type name: str
         :param server: the server object for the session that started this
             subsystem
-        :type server: :class:`.ServerInterface`
+        :type server: `.ServerInterface`
         """
         threading.Thread.__init__(self, target=self._run)
         self.__channel = channel
@@ -591,10 +591,10 @@ class SubsystemHandler (threading.Thread):
         
     def get_server(self):
         """
-        Return the :class:`.ServerInterface` object associated with this channel and
+        Return the `.ServerInterface` object associated with this channel and
         subsystem.
         
-        :rtype: :class:`.ServerInterface`
+        :rtype: `.ServerInterface`
         """
         return self.__server
 
@@ -620,21 +620,21 @@ class SubsystemHandler (threading.Thread):
         returns, the channel is closed.
 
         The combination of ``transport`` and ``channel`` are unique; this handler
-        corresponds to exactly one :class:`.Channel` on one :class:`.Transport`.
+        corresponds to exactly one `.Channel` on one `.Transport`.
 
         .. note:: It is the responsibility of this method to exit if the
-            underlying :class:`.Transport` is closed.  This can be done by checking
-            :class:`Transport.is_active` or noticing an EOF
-            on the :class:`.Channel`.  If this method loops forever without checking
+            underlying `.Transport` is closed.  This can be done by checking
+            `Transport.is_active` or noticing an EOF
+            on the `.Channel`.  If this method loops forever without checking
             for this case, your python interpreter may refuse to exit because
             this thread will still be running.
 
         :param name: name of the requested subsystem.
         :type name: str
-        :param transport: the server-mode :class:`.Transport`.
-        :type transport: :class:`.Transport`
+        :param transport: the server-mode `.Transport`.
+        :type transport: `.Transport`
         :param channel: the channel associated with this subsystem request.
-        :type channel: :class:`.Channel`
+        :type channel: `.Channel`
         """
         pass
 

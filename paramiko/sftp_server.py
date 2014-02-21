@@ -40,26 +40,26 @@ _hash_class = {
 
 class SFTPServer (BaseSFTP, SubsystemHandler):
     """
-    Server-side SFTP subsystem support.  Since this is a :class:`.SubsystemHandler`,
+    Server-side SFTP subsystem support.  Since this is a `.SubsystemHandler`,
     it can be (and is meant to be) set as the handler for ``"sftp"`` requests.
-    Use :class:`Transport.set_subsystem_handler` to activate this class.
+    Use `Transport.set_subsystem_handler` to activate this class.
     """
 
     def __init__(self, channel, name, server, sftp_si=SFTPServerInterface, *largs, **kwargs):
         """
         The constructor for SFTPServer is meant to be called from within the
-        :class:`.Transport` as a subsystem handler.  ``server`` and any additional
+        `.Transport` as a subsystem handler.  ``server`` and any additional
         parameters or keyword parameters are passed from the original call to
-        :class:`Transport.set_subsystem_handler`.
+        `Transport.set_subsystem_handler`.
 
-        :param channel: channel passed from the :class:`.Transport`.
-        :type channel: :class:`.Channel`
+        :param channel: channel passed from the `.Transport`.
+        :type channel: `.Channel`
         :param name: name of the requested subsystem.
         :type name: str
         :param server: the server object associated with this channel and
             subsystem
-        :type server: :class:`.ServerInterface`
-        :param sftp_si: a subclass of :class:`.SFTPServerInterface` to use for handling
+        :type server: `.ServerInterface`
+        :param sftp_si: a subclass of `.SFTPServerInterface` to use for handling
             individual requests.
         :type sftp_si: class
         """
@@ -128,7 +128,7 @@ class SFTPServer (BaseSFTP, SubsystemHandler):
 
         :param e: an errno code, as from ``OSError.errno``.
         :type e: int
-        :return: an SFTP error code like :class:`.SFTP_NO_SUCH_FILE`.
+        :return: an SFTP error code like `.SFTP_NO_SUCH_FILE`.
         :rtype: int
         """
         if e == errno.EACCES:
@@ -155,7 +155,7 @@ class SFTPServer (BaseSFTP, SubsystemHandler):
             absolute path).
         :type filename: str
         :param attr: attributes to change.
-        :type attr: :class:`.SFTPAttributes`
+        :type attr: `.SFTPAttributes`
         """
         if sys.platform != 'win32':
             # mode operations are meaningless on win32
