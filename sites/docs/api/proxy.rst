@@ -1,4 +1,4 @@
-ProxyCommand support
-====================
+``ProxyCommand`` support
+========================
 
 .. automodule:: paramiko.proxy
