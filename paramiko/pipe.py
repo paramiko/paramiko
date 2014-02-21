@@ -17,11 +17,12 @@
 # 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
 
 """
-Abstraction of a one-way pipe where the read end can be used in select().
-Normally this is trivial, but Windows makes it nearly impossible.
+Abstraction of a one-way pipe where the read end can be used in
+`select.select`. Normally this is trivial, but Windows makes it nearly
+impossible.
 
 The pipe acts like an Event, which can be set or cleared. When set, the pipe
-will trigger as readable in select().
+will trigger as readable in `select <select.select>`.
 """
 
 import sys
