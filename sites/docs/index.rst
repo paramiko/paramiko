@@ -21,8 +21,8 @@ Core SSH protocol classes
     api/transport
 
 
-Authentication & key handling
------------------------------
+Authentication & keys
+---------------------
 
 .. toctree::
     api/agent
