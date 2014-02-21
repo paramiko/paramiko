@@ -17,7 +17,7 @@
 # 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
 
 """
-:class:`SSHClient`.
+SSH client & key policies
 """
 
 from binascii import hexlify
@@ -36,63 +36,6 @@ from paramiko.rsakey import RSAKey
 from paramiko.ssh_exception import SSHException, BadHostKeyException
 from paramiko.transport import Transport
 from paramiko.util import retry_on_signal
-
-
-class MissingHostKeyPolicy (object):
-    """
-    Interface for defining the policy that :class:`SSHClient` should use when the
-    SSH server's hostname is not in either the system host keys or the
-    application's keys.  Pre-made classes implement policies for automatically
-    adding the key to the application's :class:`HostKeys` object (:class:`AutoAddPolicy`),
-    and for automatically rejecting the key (:class:`RejectPolicy`).
-
-    This function may be used to ask the user to verify the key, for example.
-    """
-
-    def missing_host_key(self, client, hostname, key):
-        """
-        Called when an :class:`SSHClient` receives a server key for a server that
-        isn't in either the system or local :class:`HostKeys` object.  To accept
-        the key, simply return.  To reject, raised an exception (which will
-        be passed to the calling application).
-        """
-        pass
-
-
-class AutoAddPolicy (MissingHostKeyPolicy):
-    """
-    Policy for automatically adding the hostname and new host key to the
-    local :class:`HostKeys` object, and saving it.  This is used by :class:`SSHClient`.
-    """
-
-    def missing_host_key(self, client, hostname, key):
-        client._host_keys.add(hostname, key.get_name(), key)
-        if client._host_keys_filename is not None:
-            client.save_host_keys(client._host_keys_filename)
-        client._log(DEBUG, 'Adding %s host key for %s: %s' %
-                    (key.get_name(), hostname, hexlify(key.get_fingerprint())))
-
-
-class RejectPolicy (MissingHostKeyPolicy):
-    """
-    Policy for automatically rejecting the unknown hostname & key.  This is
-    used by :class:`SSHClient`.
-    """
-
-    def missing_host_key(self, client, hostname, key):
-        client._log(DEBUG, 'Rejecting %s host key for %s: %s' %
-                    (key.get_name(), hostname, hexlify(key.get_fingerprint())))
-        raise SSHException('Server %r not found in known_hosts' % hostname)
-
-
-class WarningPolicy (MissingHostKeyPolicy):
-    """
-    Policy for logging a python-style warning for an unknown host key, but
-    accepting it. This is used by :class:`SSHClient`.
-    """
-    def missing_host_key(self, client, hostname, key):
-        warnings.warn('Unknown %s host key for %s: %s' %
-                      (key.get_name(), hostname, hexlify(key.get_fingerprint())))
 
 
 class SSHClient (object):
@@ -536,3 +479,59 @@ class SSHClient (object):
     def _log(self, level, msg):
         self._transport._log(level, msg)
 
+
+class MissingHostKeyPolicy (object):
+    """
+    Interface for defining the policy that :class:`SSHClient` should use when the
+    SSH server's hostname is not in either the system host keys or the
+    application's keys.  Pre-made classes implement policies for automatically
+    adding the key to the application's :class:`HostKeys` object (:class:`AutoAddPolicy`),
+    and for automatically rejecting the key (:class:`RejectPolicy`).
+
+    This function may be used to ask the user to verify the key, for example.
+    """
+
+    def missing_host_key(self, client, hostname, key):
+        """
+        Called when an :class:`SSHClient` receives a server key for a server that
+        isn't in either the system or local :class:`HostKeys` object.  To accept
+        the key, simply return.  To reject, raised an exception (which will
+        be passed to the calling application).
+        """
+        pass
+
+
+class AutoAddPolicy (MissingHostKeyPolicy):
+    """
+    Policy for automatically adding the hostname and new host key to the
+    local :class:`HostKeys` object, and saving it.  This is used by :class:`SSHClient`.
+    """
+
+    def missing_host_key(self, client, hostname, key):
+        client._host_keys.add(hostname, key.get_name(), key)
+        if client._host_keys_filename is not None:
+            client.save_host_keys(client._host_keys_filename)
+        client._log(DEBUG, 'Adding %s host key for %s: %s' %
+                    (key.get_name(), hostname, hexlify(key.get_fingerprint())))
+
+
+class RejectPolicy (MissingHostKeyPolicy):
+    """
+    Policy for automatically rejecting the unknown hostname & key.  This is
+    used by :class:`SSHClient`.
+    """
+
+    def missing_host_key(self, client, hostname, key):
+        client._log(DEBUG, 'Rejecting %s host key for %s: %s' %
+                    (key.get_name(), hostname, hexlify(key.get_fingerprint())))
+        raise SSHException('Server %r not found in known_hosts' % hostname)
+
+
+class WarningPolicy (MissingHostKeyPolicy):
+    """
+    Policy for logging a python-style warning for an unknown host key, but
+    accepting it. This is used by :class:`SSHClient`.
+    """
+    def missing_host_key(self, client, hostname, key):
+        warnings.warn('Unknown %s host key for %s: %s' %
+                      (key.get_name(), hostname, hexlify(key.get_fingerprint())))
