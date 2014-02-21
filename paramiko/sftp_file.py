@@ -17,7 +17,7 @@
 # 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
 
 """
-:class:`SFTPFile`
+:class:`.SFTPFile`
 """
 
 from __future__ import with_statement
@@ -181,7 +181,7 @@ class SFTPFile (BufferedFile):
     def settimeout(self, timeout):
         """
         Set a timeout on read/write operations on the underlying socket or
-        ssh :class:`Channel`.
+        ssh :class:`.Channel`.
 
         .. seealso:: :class:`Channel.settimeout`
         :param timeout: seconds to wait for a pending read/write operation
@@ -193,7 +193,7 @@ class SFTPFile (BufferedFile):
     def gettimeout(self):
         """
         Returns the timeout in seconds (as a float) associated with the socket
-        or ssh :class:`Channel` used for this file.
+        or ssh :class:`.Channel` used for this file.
 
         .. seealso:: :class:`Channel.gettimeout`
         :rtype: float
@@ -203,7 +203,7 @@ class SFTPFile (BufferedFile):
     def setblocking(self, blocking):
         """
         Set blocking or non-blocking mode on the underiying socket or ssh
-        :class:`Channel`.
+        :class:`.Channel`.
 
         .. seealso:: :class:`Channel.setblocking`
         :param blocking: 0 to set non-blocking mode; non-0 to set blocking

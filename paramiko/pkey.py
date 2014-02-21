@@ -52,9 +52,9 @@ class PKey (object):
         ``data`` is given, the key's public part(s) will be filled in from
         the string.
 
-        :param msg: an optional SSH :class:`Message` containing a public key of this
+        :param msg: an optional SSH :class:`.Message` containing a public key of this
         type.
-        :type msg: :class:`Message`
+        :type msg: :class:`.Message`
         :param data: an optional string containing a public key of this type
         :type data: str
 
@@ -65,7 +65,7 @@ class PKey (object):
 
     def __str__(self):
         """
-        Return a string of an SSH :class:`Message` made up of the public part(s) of
+        Return a string of an SSH :class:`.Message` made up of the public part(s) of
         this key.  This string is suitable for passing to :class:`__init__` to
         re-create the key object later.
 
@@ -82,7 +82,7 @@ class PKey (object):
         corresponding private key.
 
         :param other: key to compare to.
-        :type other: :class:`PKey`
+        :type other: :class:`.PKey`
         :return: 0 if the two keys are equivalent, non-0 otherwise.
         :rtype: int
         """
@@ -146,7 +146,7 @@ class PKey (object):
 
     def sign_ssh_data(self, rng, data):
         """
-        Sign a blob of data with this private key, and return a :class:`Message`
+        Sign a blob of data with this private key, and return a :class:`.Message`
         representing an SSH signature message.
 
         :param rng: a secure random number generator.
@@ -154,7 +154,7 @@ class PKey (object):
         :param data: the data to sign.
         :type data: str
         :return: an SSH signature message.
-        :rtype: :class:`Message`
+        :rtype: :class:`.Message`
         """
         return ''
 
@@ -166,7 +166,7 @@ class PKey (object):
         :param data: the data that was signed.
         :type data: str
         :param msg: an SSH signature message
-        :type msg: :class:`Message`
+        :type msg: :class:`.Message`
         :return: ``True`` if the signature verifies correctly; ``False``
             otherwise.
         :rtype: boolean
@@ -177,9 +177,9 @@ class PKey (object):
         """
         Create a key object by reading a private key file.  If the private
         key is encrypted and ``password`` is not ``None``, the given password
-        will be used to decrypt the key (otherwise :class:`PasswordRequiredException`
+        will be used to decrypt the key (otherwise :class:`.PasswordRequiredException`
         is thrown).  Through the magic of python, this factory method will
-        exist in all subclasses of PKey (such as :class:`RSAKey` or :class:`DSSKey`), but
+        exist in all subclasses of PKey (such as :class:`.RSAKey` or :class:`.DSSKey`), but
         is useless on the abstract PKey class.
 
         :param filename: name of the file to read
@@ -188,7 +188,7 @@ class PKey (object):
             if it's encrypted
         :type password: str
         :return: a new key object based on the given private key
-        :rtype: :class:`PKey`
+        :rtype: :class:`.PKey`
 
         :raises IOError: if there was an error reading the file
         :raises PasswordRequiredException: if the private key file is
@@ -204,7 +204,7 @@ class PKey (object):
         Create a key object by reading a private key from a file (or file-like)
         object.  If the private key is encrypted and ``password`` is not ``None``,
         the given password will be used to decrypt the key (otherwise
-        :class:`PasswordRequiredException` is thrown).
+        :class:`.PasswordRequiredException` is thrown).
 
         :param file_obj: the file to read from
         :type file_obj: file
@@ -212,7 +212,7 @@ class PKey (object):
             encrypted
         :type password: str
         :return: a new key object based on the given private key
-        :rtype: :class:`PKey`
+        :rtype: :class:`.PKey`
 
         :raises IOError: if there was an error reading the key
         :raises PasswordRequiredException: if the private key file is encrypted,
@@ -259,7 +259,7 @@ class PKey (object):
         ``"BEGIN xxx PRIVATE KEY"`` for some ``xxx``, base64-decode the text we
         find, and return it as a string.  If the private key is encrypted and
         ``password`` is not ``None``, the given password will be used to decrypt
-        the key (otherwise :class:`PasswordRequiredException` is thrown).
+        the key (otherwise :class:`.PasswordRequiredException` is thrown).
 
         :param tag: ``"RSA"`` or ``"DSA"``, the tag used to mark the data block.
         :type tag: str

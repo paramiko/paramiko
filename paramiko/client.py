@@ -41,7 +41,7 @@ from paramiko.util import retry_on_signal
 class SSHClient (object):
     """
     A high-level representation of a session with an SSH server.  This class
-    wraps :class:`Transport`, :class:`Channel`, and :class:`SFTPClient` to take care of most
+    wraps :class:`.Transport`, :class:`.Channel`, and :class:`.SFTPClient` to take care of most
     aspects of authenticating and opening channels.  A typical use case is::
 
         client = SSHClient()
@@ -103,7 +103,7 @@ class SSHClient (object):
         Load host keys from a local host-key file.  Host keys read with this
         method will be checked after keys loaded via :class:`load_system_host_keys`,
         but will be saved back by :class:`save_host_keys` (so they can be modified).
-        The missing host key policy :class:`AutoAddPolicy` adds keys to this set and
+        The missing host key policy :class:`.AutoAddPolicy` adds keys to this set and
         saves them, when connecting to a previously-unknown server.
 
         This method can be called multiple times.  Each new set of host keys
@@ -143,11 +143,11 @@ class SSHClient (object):
 
     def get_host_keys(self):
         """
-        Get the local :class:`HostKeys` object.  This can be used to examine the
+        Get the local :class:`.HostKeys` object.  This can be used to examine the
         local host keys or change them.
 
         :return: the local host keys
-        :rtype: :class:`HostKeys`
+        :rtype: :class:`.HostKeys`
         """
         return self._host_keys
 
@@ -164,13 +164,13 @@ class SSHClient (object):
     def set_missing_host_key_policy(self, policy):
         """
         Set the policy to use when connecting to a server that doesn't have a
-        host key in either the system or local :class:`HostKeys` objects.  The
-        default policy is to reject all unknown servers (using :class:`RejectPolicy`).
-        You may substitute :class:`AutoAddPolicy` or write your own policy class.
+        host key in either the system or local :class:`.HostKeys` objects.  The
+        default policy is to reject all unknown servers (using :class:`.RejectPolicy`).
+        You may substitute :class:`.AutoAddPolicy` or write your own policy class.
 
         :param policy: the policy to use when receiving a host key from a
             previously-unknown server
-        :type policy: :class:`MissingHostKeyPolicy`
+        :type policy: :class:`.MissingHostKeyPolicy`
         """
         self._policy = policy
 
@@ -183,7 +183,7 @@ class SSHClient (object):
         and any local host keys (:class:`load_host_keys`).  If the server's hostname
         is not found in either set of host keys, the missing host key policy
         is used (see :class:`set_missing_host_key_policy`).  The default policy is
-        to reject the key and raise an :class:`SSHException`.
+        to reject the key and raise an :class:`.SSHException`.
 
         Authentication is attempted in the following order of priority:
 
@@ -206,7 +206,7 @@ class SSHClient (object):
             a private key
         :type password: str
         :param pkey: an optional private key to use for authentication
-        :type pkey: :class:`PKey`
+        :type pkey: :class:`.PKey`
         :param key_filename: the filename, or list of filenames, of optional
             private key(s) to try for authentication
         :type key_filename: str or list(str)
@@ -220,7 +220,7 @@ class SSHClient (object):
         :param compress: set to True to turn on compression
         :type compress: bool
         :param sock: an open socket or socket-like object (such as a
-            :class:`Channel`) to use for communication to the target host
+            :class:`.Channel`) to use for communication to the target host
         :type sock: socket
 
         :raises BadHostKeyException: if the server's host key could not be
@@ -286,7 +286,7 @@ class SSHClient (object):
 
     def close(self):
         """
-        Close this SSHClient and its underlying :class:`Transport`.
+        Close this SSHClient and its underlying :class:`.Transport`.
         """
         if self._transport is None:
             return
@@ -299,7 +299,7 @@ class SSHClient (object):
 
     def exec_command(self, command, bufsize=-1, timeout=None, get_pty=False):
         """
-        Execute a command on the SSH server.  A new :class:`Channel` is opened and
+        Execute a command on the SSH server.  A new :class:`.Channel` is opened and
         the requested command is executed.  The command's input and output
         streams are returned as python ``file``-like objects representing
         stdin, stdout, and stderr.
@@ -311,7 +311,7 @@ class SSHClient (object):
         :param timeout: set command's channel timeout. See :class:`Channel.settimeout`.settimeout
         :type timeout: int
         :return: the stdin, stdout, and stderr of the executing command
-        :rtype: tuple(:class:`ChannelFile`, :class:`ChannelFile`, :class:`ChannelFile`)
+        :rtype: tuple(:class:`.ChannelFile`, :class:`.ChannelFile`, :class:`.ChannelFile`)
 
         :raises SSHException: if the server fails to execute the command
         """
@@ -328,7 +328,7 @@ class SSHClient (object):
     def invoke_shell(self, term='vt100', width=80, height=24, width_pixels=0,
                 height_pixels=0):
         """
-        Start an interactive shell session on the SSH server.  A new :class:`Channel`
+        Start an interactive shell session on the SSH server.  A new :class:`.Channel`
         is opened and connected to a pseudo-terminal using the requested
         terminal type and size.
 
@@ -343,7 +343,7 @@ class SSHClient (object):
         :param height_pixels: the height (in pixels) of the terminal window
         :type height_pixels: int
         :return: a new channel connected to the remote shell
-        :rtype: :class:`Channel`
+        :rtype: :class:`.Channel`
 
         :raises SSHException: if the server fails to invoke a shell
         """
@@ -357,18 +357,18 @@ class SSHClient (object):
         Open an SFTP session on the SSH server.
 
         :return: a new SFTP session object
-        :rtype: :class:`SFTPClient`
+        :rtype: :class:`.SFTPClient`
         """
         return self._transport.open_sftp_client()
 
     def get_transport(self):
         """
-        Return the underlying :class:`Transport` object for this SSH connection.
+        Return the underlying :class:`.Transport` object for this SSH connection.
         This can be used to perform lower-level tasks, like opening specific
         kinds of channels.
 
         :return: the Transport for this connection
-        :rtype: :class:`Transport`
+        :rtype: :class:`.Transport`
         """
         return self._transport
 
@@ -482,19 +482,19 @@ class SSHClient (object):
 
 class MissingHostKeyPolicy (object):
     """
-    Interface for defining the policy that :class:`SSHClient` should use when the
+    Interface for defining the policy that :class:`.SSHClient` should use when the
     SSH server's hostname is not in either the system host keys or the
     application's keys.  Pre-made classes implement policies for automatically
-    adding the key to the application's :class:`HostKeys` object (:class:`AutoAddPolicy`),
-    and for automatically rejecting the key (:class:`RejectPolicy`).
+    adding the key to the application's :class:`.HostKeys` object (:class:`.AutoAddPolicy`),
+    and for automatically rejecting the key (:class:`.RejectPolicy`).
 
     This function may be used to ask the user to verify the key, for example.
     """
 
     def missing_host_key(self, client, hostname, key):
         """
-        Called when an :class:`SSHClient` receives a server key for a server that
-        isn't in either the system or local :class:`HostKeys` object.  To accept
+        Called when an :class:`.SSHClient` receives a server key for a server that
+        isn't in either the system or local :class:`.HostKeys` object.  To accept
         the key, simply return.  To reject, raised an exception (which will
         be passed to the calling application).
         """
@@ -504,7 +504,7 @@ class MissingHostKeyPolicy (object):
 class AutoAddPolicy (MissingHostKeyPolicy):
     """
     Policy for automatically adding the hostname and new host key to the
-    local :class:`HostKeys` object, and saving it.  This is used by :class:`SSHClient`.
+    local :class:`.HostKeys` object, and saving it.  This is used by :class:`.SSHClient`.
     """
 
     def missing_host_key(self, client, hostname, key):
@@ -518,7 +518,7 @@ class AutoAddPolicy (MissingHostKeyPolicy):
 class RejectPolicy (MissingHostKeyPolicy):
     """
     Policy for automatically rejecting the unknown hostname & key.  This is
-    used by :class:`SSHClient`.
+    used by :class:`.SSHClient`.
     """
 
     def missing_host_key(self, client, hostname, key):
@@ -530,7 +530,7 @@ class RejectPolicy (MissingHostKeyPolicy):
 class WarningPolicy (MissingHostKeyPolicy):
     """
     Policy for logging a python-style warning for an unknown host key, but
-    accepting it. This is used by :class:`SSHClient`.
+    accepting it. This is used by :class:`.SSHClient`.
     """
     def missing_host_key(self, client, hostname, key):
         warnings.warn('Unknown %s host key for %s: %s' %

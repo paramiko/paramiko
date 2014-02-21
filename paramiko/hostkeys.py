@@ -17,7 +17,7 @@
 # 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
 
 """
-:class:`HostKeys`
+:class:`.HostKeys`
 """
 
 import base64
@@ -140,7 +140,7 @@ class HostKeys (UserDict.DictMixin):
         :param keytype: key type (``"ssh-rsa"`` or ``"ssh-dss"``)
         :type keytype: str
         :param key: the key to add
-        :type key: :class:`PKey`
+        :type key: :class:`.PKey`
         """
         for e in self._entries:
             if (hostname in e.hostnames) and (e.key.get_name() == keytype):
@@ -209,7 +209,7 @@ class HostKeys (UserDict.DictMixin):
         :param hostname: the hostname (or IP) to lookup
         :type hostname: str
         :return: keys associated with this host (or ``None``)
-        :rtype: dict(str, :class:`PKey`)
+        :rtype: dict(str, :class:`.PKey`)
         """
         class SubDict (UserDict.DictMixin):
             def __init__(self, hostname, entries, hostkeys):
@@ -257,7 +257,7 @@ class HostKeys (UserDict.DictMixin):
         :param hostname: hostname (or IP) of the SSH server
         :type hostname: str
         :param key: the key to check
-        :type key: :class:`PKey`
+        :type key: :class:`.PKey`
         :return: ``True`` if the key is associated with the hostname; ``False``
             if not
         :rtype: bool

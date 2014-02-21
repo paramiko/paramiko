@@ -192,7 +192,7 @@ def load_host_keys(filename):
     This type of file unfortunately doesn't exist on Windows, but on posix,
     it will usually be stored in ``os.path.expanduser("~/.ssh/known_hosts")``.
 
-    Since 1.5.3, this is just a wrapper around :class:`HostKeys`.
+    Since 1.5.3, this is just a wrapper around :class:`.HostKeys`.
 
     :param filename: name of the file to read host keys from
     :type filename: str
@@ -204,7 +204,7 @@ def load_host_keys(filename):
 
 def parse_ssh_config(file_obj):
     """
-    Provided only as a backward-compatible wrapper around :class:`SSHConfig`.
+    Provided only as a backward-compatible wrapper around :class:`.SSHConfig`.
     """
     config = SSHConfig()
     config.parse(file_obj)
@@ -212,7 +212,7 @@ def parse_ssh_config(file_obj):
 
 def lookup_ssh_host_config(hostname, config):
     """
-    Provided only as a backward-compatible wrapper around :class:`SSHConfig`.
+    Provided only as a backward-compatible wrapper around :class:`.SSHConfig`.
     """
     return config.lookup(hostname)
 

@@ -283,20 +283,20 @@ class Transport (threading.Thread):
 
     def get_security_options(self):
         """
-        Return a :class:`SecurityOptions` object which can be used to tweak the
+        Return a :class:`.SecurityOptions` object which can be used to tweak the
         encryption algorithms this transport will permit, and the order of
         preference for them.
 
         :return: an object that can be used to change the preferred algorithms
             for encryption, digest (hash), public key, and key exchange.
-        :rtype: :class:`SecurityOptions`
+        :rtype: :class:`.SecurityOptions`
         """
         return SecurityOptions(self)
 
     def start_client(self, event=None):
         """
         Negotiate a new SSH2 session as a client.  This is the first step after
-        creating a new :class:`Transport`.  A separate thread is created for protocol
+        creating a new :class:`.Transport`.  A separate thread is created for protocol
         negotiation.
 
         If an event is passed in, this method returns immediately.  When
@@ -348,7 +348,7 @@ class Transport (threading.Thread):
     def start_server(self, event=None, server=None):
         """
         Negotiate a new SSH2 session as a server.  This is the first step after
-        creating a new :class:`Transport` and setting up your server host key(s).  A
+        creating a new :class:`.Transport` and setting up your server host key(s).  A
         separate thread is created for protocol negotiation.
 
         If an event is passed in, this method returns immediately.  When
@@ -531,8 +531,8 @@ class Transport (threading.Thread):
         Request a new channel to the server, of type ``"session"``.  This
         is just an alias for ``open_channel('session')``.
 
-        :return: a new :class:`Channel`
-        :rtype: :class:`Channel`
+        :return: a new :class:`.Channel`
+        :rtype: :class:`.Channel`
 
         :raises SSHException: if the request is rejected or the session ends
             prematurely
@@ -547,8 +547,8 @@ class Transport (threading.Thread):
         :param src_addr: the source address of the x11 server (port is the
             x11 port, ie. 6010)
         :type src_addr: (str, int)
-        :return: a new :class:`Channel`
-        :rtype: :class:`Channel`
+        :return: a new :class:`.Channel`
+        :rtype: :class:`.Channel`
 
         :raises SSHException: if the request is rejected or the session ends
             prematurely
@@ -561,8 +561,8 @@ class Transport (threading.Thread):
         ``"auth-agent@openssh.com"``.
 
         This is just an alias for ``open_channel('auth-agent@openssh.com')``.
-        :return: a new :class:`Channel`
-        :rtype: :class:`Channel`
+        :return: a new :class:`.Channel`
+        :rtype: :class:`.Channel`
 
         :raises SSHException: if the request is rejected or the session ends
             prematurely
@@ -584,7 +584,7 @@ class Transport (threading.Thread):
 
     def open_channel(self, kind, dest_addr=None, src_addr=None):
         """
-        Request a new channel to the server. :class:`Channels <Channel>` are socket-like
+        Request a new channel to the server. :class:`.Channels <Channel>` are socket-like
         objects used for the actual transfer of data across the session.
         You may only request a channel after negotiating encryption (using
         :class:`connect` or :class:`start_client`) and authenticating.
@@ -599,8 +599,8 @@ class Transport (threading.Thread):
         :param src_addr: the source address of this port forwarding, if
             ``kind`` is ``"forwarded-tcpip"``, ``"direct-tcpip"``, or ``"x11"``
         :type src_addr: (str, int)
-        :return: a new :class:`Channel` on success
-        :rtype: :class:`Channel`
+        :return: a new :class:`.Channel` on success
+        :rtype: :class:`.Channel`
 
         :raises SSHException: if the request is rejected or the session ends
             prematurely
@@ -717,9 +717,9 @@ class Transport (threading.Thread):
         an SFTP session will be opened with the remote host, and a new
         SFTPClient object will be returned.
 
-        :return: a new :class:`SFTPClient` object, referring to an sftp session
+        :return: a new :class:`.SFTPClient` object, referring to an sftp session
             (channel) across this transport
-        :rtype: :class:`SFTPClient`
+        :rtype: :class:`.SFTPClient`
         """
         return SFTPClient.from_transport(self)
 
@@ -793,10 +793,10 @@ class Transport (threading.Thread):
         :param wait: ``True`` if this method should not return until a response
             is received; ``False`` otherwise.
         :type wait: bool
-        :return: a :class:`Message` containing possible additional data if the
-            request was successful (or an empty :class:`Message` if ``wait`` was
+        :return: a :class:`.Message` containing possible additional data if the
+            request was successful (or an empty :class:`.Message` if ``wait`` was
             ``False``); ``None`` if the request was denied.
-        :rtype: :class:`Message`
+        :rtype: :class:`.Message`
         """
         if wait:
             self.completion_event = threading.Event()
@@ -828,7 +828,7 @@ class Transport (threading.Thread):
             forever
         :type timeout: int
         :return: a new Channel opened by the client
-        :rtype: :class:`Channel`
+        :rtype: :class:`.Channel`
         """
         self.lock.acquire()
         try:
@@ -857,7 +857,7 @@ class Transport (threading.Thread):
         negotiate encryption with a server.  If it fails, an exception will be
         thrown.  On success, the method will return cleanly, and an encrypted
         session exists.  You may immediately call :class:`open_channel` or
-        :class:`open_session` to get a :class:`Channel` object, which is used for data
+        :class:`open_session` to get a :class:`.Channel` object, which is used for data
         transfer.
 
         .. note:: If you fail to supply a password or private key, this method may
@@ -928,15 +928,15 @@ class Transport (threading.Thread):
         """
         Set the handler class for a subsystem in server mode.  If a request
         for this subsystem is made on an open ssh channel later, this handler
-        will be constructed and called -- see :class:`SubsystemHandler` for more
+        will be constructed and called -- see :class:`.SubsystemHandler` for more
         detailed documentation.
 
         Any extra parameters (including keyword arguments) are saved and
-        passed to the :class:`SubsystemHandler` constructor later.
+        passed to the :class:`.SubsystemHandler` constructor later.
 
         :param name: name of the subsystem.
         :type name: str
-        :param handler: subclass of :class:`SubsystemHandler` that handles this
+        :param handler: subclass of :class:`.SubsystemHandler` that handles this
             subsystem.
         :type handler: class
         """
@@ -975,7 +975,7 @@ class Transport (threading.Thread):
         Try to authenticate to the server using no authentication at all.
         This will almost always fail.  It may be useful for determining the
         list of authentication types supported by the server, by catching the
-        :class:`BadAuthenticationType` exception raised.
+        :class:`.BadAuthenticationType` exception raised.
 
         :param username: the username to authenticate as
         :type username: string
@@ -2041,7 +2041,7 @@ class SecurityOptions (object):
     exchange algorithms, listed in order of preference.
 
     Changing the contents and/or order of these fields affects the underlying
-    :class:`Transport` (but only if you change them before starting the session).
+    :class:`.Transport` (but only if you change them before starting the session).
     If you try to add an algorithm that paramiko doesn't recognize,
     ``ValueError`` will be raised.  If you try to assign something besides a
     tuple to one of the fields, ``TypeError`` will be raised.

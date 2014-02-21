@@ -26,9 +26,9 @@ replaced ``telnet`` and ``rsh`` for secure access to remote shells, but the
 protocol also includes the ability to open arbitrary channels to remote
 services across an encrypted tunnel.  (This is how ``sftp`` works, for example.)
 
-The high-level client API starts with creation of an :class:`SSHClient` object.
+The high-level client API starts with creation of an :class:`.SSHClient` object.
 For more direct control, pass a socket (or socket-like object) to a
-:class:`Transport`, and use :class:`start_server <Transport.start_server>` or
+:class:`.Transport`, and use :class:`start_server <Transport.start_server>` or
 :class:`start_client <Transport.start_client>` to negoatite
 with the remote host as either a server or client.  As a client, you are
 responsible for authenticating using a password or private key, and checking

@@ -82,7 +82,7 @@ class PartialAuthentication (AuthenticationException):
 
 class ChannelException (SSHException):
     """
-    Exception raised when an attempt to open a new :class:`Channel` fails.
+    Exception raised when an attempt to open a new :class:`.Channel` fails.
     
     :ivar code: the error code returned by the server
     :type code: int
@@ -101,9 +101,9 @@ class BadHostKeyException (SSHException):
     :ivar hostname: the hostname of the SSH server
     :type hostname: str
     :ivar key: the host key presented by the server
-    :type key: :class:`PKey`
+    :type key: :class:`.PKey`
     :ivar expected_key: the host key expected
-    :type expected_key: :class:`PKey`
+    :type expected_key: :class:`.PKey`
     
     .. versionadded:: 1.6
     """

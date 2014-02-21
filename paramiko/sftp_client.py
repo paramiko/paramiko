@@ -52,19 +52,19 @@ def _to_unicode(s):
 class SFTPClient (BaseSFTP):
     """
     SFTP client object.  ``SFTPClient`` is used to open an sftp session across
-    an open ssh :class:`Transport` and do remote file operations.
+    an open ssh :class:`.Transport` and do remote file operations.
     """
 
     def __init__(self, sock):
         """
-        Create an SFTP client from an existing :class:`Channel`.  The channel
+        Create an SFTP client from an existing :class:`.Channel`.  The channel
         should already have requested the ``"sftp"`` subsystem.
 
         An alternate way to create an SFTP client context is by using
         :class:`from_transport`.
 
-        :param sock: an open :class:`Channel` using the ``"sftp"`` subsystem
-        :type sock: :class:`Channel`
+        :param sock: an open :class:`.Channel` using the ``"sftp"`` subsystem
+        :type sock: :class:`.Channel`
 
         :raises SSHException: if there's an exception while negotiating
             sftp
@@ -91,13 +91,13 @@ class SFTPClient (BaseSFTP):
 
     def from_transport(cls, t):
         """
-        Create an SFTP client channel from an open :class:`Transport`.
+        Create an SFTP client channel from an open :class:`.Transport`.
 
-        :param t: an open :class:`Transport` which is already authenticated
-        :type t: :class:`Transport`
-        :return: a new :class:`SFTPClient` object, referring to an sftp session
+        :param t: an open :class:`.Transport` which is already authenticated
+        :type t: :class:`.Transport`
+        :return: a new :class:`.SFTPClient` object, referring to an sftp session
             (channel) across the transport
-        :rtype: :class:`SFTPClient`
+        :rtype: :class:`.SFTPClient`
         """
         chan = t.open_session()
         if chan is None:
@@ -124,11 +124,11 @@ class SFTPClient (BaseSFTP):
 
     def get_channel(self):
         """
-        Return the underlying :class:`Channel` object for this SFTP session.  This
+        Return the underlying :class:`.Channel` object for this SFTP session.  This
         might be useful for doing things like setting a timeout on the channel.
 
         :return: the SSH channel
-        :rtype: :class:`Channel`
+        :rtype: :class:`.Channel`
 
         .. versionadded:: 1.7.1
         """
@@ -140,7 +140,7 @@ class SFTPClient (BaseSFTP):
         The list is in arbitrary order.  It does not include the special
         entries ``'.'`` and ``'..'`` even if they are present in the folder.
         This method is meant to mirror ``os.listdir`` as closely as possible.
-        For a list of full :class:`SFTPAttributes` objects, see :class:`listdir_attr`.
+        For a list of full :class:`.SFTPAttributes` objects, see :class:`listdir_attr`.
 
         :param path: path to list (defaults to ``'.'``)
         :type path: str
@@ -151,12 +151,12 @@ class SFTPClient (BaseSFTP):
 
     def listdir_attr(self, path='.'):
         """
-        Return a list containing :class:`SFTPAttributes` objects corresponding to
+        Return a list containing :class:`.SFTPAttributes` objects corresponding to
         files in the given ``path``.  The list is in arbitrary order.  It does
         not include the special entries ``'.'`` and ``'..'`` even if they are
         present in the folder.
 
-        The returned :class:`SFTPAttributes` objects will each have an additional
+        The returned :class:`.SFTPAttributes` objects will each have an additional
         field: ``longname``, which may contain a formatted string of the file's
         attributes, in unix format.  The content of this string will probably
         depend on the SFTP server implementation.
@@ -164,7 +164,7 @@ class SFTPClient (BaseSFTP):
         :param path: path to list (defaults to ``'.'``)
         :type path: str
         :return: list of attributes
-        :rtype: list of :class:`SFTPAttributes`
+        :rtype: list of :class:`.SFTPAttributes`
 
         .. versionadded:: 1.2
         """
@@ -783,5 +783,5 @@ class SFTPClient (BaseSFTP):
 
 
 class SFTP (SFTPClient):
-    "an alias for :class:`SFTPClient` for backwards compatability"
+    "an alias for :class:`.SFTPClient` for backwards compatability"
     pass

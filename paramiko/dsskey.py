@@ -17,7 +17,7 @@
 # 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
 
 """
-:class:`DSSKey`
+:class:`.DSSKey`
 """
 
 from Crypto.PublicKey import DSA
@@ -159,7 +159,7 @@ class DSSKey (PKey):
             key generation (used by ``pyCrypto.PublicKey``).
         :type progress_func: function
         :return: new private key
-        :rtype: :class:`DSSKey`
+        :rtype: :class:`.DSSKey`
         """
         dsa = DSA.generate(bits, rng.read, progress_func)
         key = DSSKey(vals=(dsa.p, dsa.q, dsa.g, dsa.y))

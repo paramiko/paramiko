@@ -17,7 +17,7 @@
 # 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
 
 """
-:class:`SFTPServerInterface` is an interface to override for SFTP server support.
+:class:`.SFTPServerInterface` is an interface to override for SFTP server support.
 """
 
 import os
@@ -29,7 +29,7 @@ from paramiko.sftp import *
 class SFTPServerInterface (object):
     """
     This class defines an interface for controlling the behavior of paramiko
-    when using the :class:`SFTPServer` subsystem to provide an SFTP server.
+    when using the :class:`.SFTPServer` subsystem to provide an SFTP server.
 
     Methods on this class are called from the SFTP session's thread, so you can
     block as long as necessary without affecting other sessions (even other
@@ -48,7 +48,7 @@ class SFTPServerInterface (object):
         
         :param server: the server object associated with this channel and
             SFTP subsystem
-        :type server: :class:`ServerInterface`
+        :type server: :class:`.ServerInterface`
         """
         super(SFTPServerInterface, self).__init__(*largs, **kwargs)
 
@@ -72,10 +72,10 @@ class SFTPServerInterface (object):
     def open(self, path, flags, attr):
         """
         Open a file on the server and create a handle for future operations
-        on that file.  On success, a new object subclassed from :class:`SFTPHandle`
+        on that file.  On success, a new object subclassed from :class:`.SFTPHandle`
         should be returned.  This handle will be used for future operations
         on the file (read, write, etc).  On failure, an error code such as
-        :class:`SFTP_PERMISSION_DENIED` should be returned.
+        :class:`.SFTP_PERMISSION_DENIED` should be returned.
 
         ``flags`` contains the requested mode for opening (read-only,
         write-append, etc) as a bitset of flags from the ``os`` module:
@@ -103,9 +103,9 @@ class SFTPServerInterface (object):
             requested mode for opening the file.
         :type flags: int
         :param attr: requested attributes of the file if it is newly created.
-        :type attr: :class:`SFTPAttributes`
-        :return: a new :class:`SFTPHandle` or error code.
-        :rtype :class:`SFTPHandle`
+        :type attr: :class:`.SFTPAttributes`
+        :return: a new :class:`.SFTPHandle` or error code.
+        :rtype :class:`.SFTPHandle`
         """
         return SFTP_OP_UNSUPPORTED
 
@@ -115,7 +115,7 @@ class SFTPServerInterface (object):
         posix notation (``"/"`` separates folder names) and may be an absolute
         or relative path.
 
-        The list of files is expected to be a list of :class:`SFTPAttributes`
+        The list of files is expected to be a list of :class:`.SFTPAttributes`
         objects, which are similar in structure to the objects returned by
         ``os.stat``.  In addition, each object should have its ``filename``
         field filled in, since this is important to a directory listing and
@@ -123,13 +123,13 @@ class SFTPServerInterface (object):
         :class:`SFTPAttributes.from_stat` will usually do what you want.
 
         In case of an error, you should return one of the ``SFTP_*`` error
-        codes, such as :class:`SFTP_PERMISSION_DENIED`.
+        codes, such as :class:`.SFTP_PERMISSION_DENIED`.
 
         :param path: the requested path (relative or absolute) to be listed.
         :type path: str
         :return: a list of the files in the given folder, using
-            :class:`SFTPAttributes` objects.
-        :rtype: list of :class:`SFTPAttributes` or error code
+            :class:`.SFTPAttributes` objects.
+        :rtype: list of :class:`.SFTPAttributes` or error code
         
         .. note:: You should normalize the given ``path`` first (see the
         ``os.path`` module) and check appropriate permissions before returning
@@ -141,7 +141,7 @@ class SFTPServerInterface (object):
 
     def stat(self, path):
         """
-        Return an :class:`SFTPAttributes` object for a path on the server, or an
+        Return an :class:`.SFTPAttributes` object for a path on the server, or an
         error code.  If your server supports symbolic links (also known as
         "aliases"), you should follow them.  (:class:`lstat` is the corresponding
         call that doesn't follow symlinks/aliases.)
@@ -150,14 +150,14 @@ class SFTPServerInterface (object):
             file statistics for.
         :type path: str
         :return: an attributes object for the given file, or an SFTP error
-            code (like :class:`SFTP_PERMISSION_DENIED`).
-        :rtype: :class:`SFTPAttributes` or error code
+            code (like :class:`.SFTP_PERMISSION_DENIED`).
+        :rtype: :class:`.SFTPAttributes` or error code
         """
         return SFTP_OP_UNSUPPORTED
 
     def lstat(self, path):
         """
-        Return an :class:`SFTPAttributes` object for a path on the server, or an
+        Return an :class:`.SFTPAttributes` object for a path on the server, or an
         error code.  If your server supports symbolic links (also known as
         "aliases"), you should not follow them -- instead, you should
         return data on the symlink or alias itself.  (:class:`stat` is the
@@ -167,8 +167,8 @@ class SFTPServerInterface (object):
             file statistics for.
         :type path: str
         :return: an attributes object for the given file, or an SFTP error
-            code (like :class:`SFTP_PERMISSION_DENIED`).
-        :rtype: :class:`SFTPAttributes` or error code
+            code (like :class:`.SFTP_PERMISSION_DENIED`).
+        :rtype: :class:`.SFTPAttributes` or error code
         """
         return SFTP_OP_UNSUPPORTED
 
@@ -179,7 +179,7 @@ class SFTPServerInterface (object):
         :param path: the requested path (relative or absolute) of the file
             to delete.
         :type path: str
-        :return: an SFTP error code like :class:`SFTP_OK`.
+        :return: an SFTP error code like :class:`.SFTP_OK`.
         :rtype: int
         """
         return SFTP_OP_UNSUPPORTED
@@ -201,7 +201,7 @@ class SFTPServerInterface (object):
         :type oldpath: str
         :param newpath: the requested new path of the file.
         :type newpath: str
-        :return: an SFTP error code like :class:`SFTP_OK`.
+        :return: an SFTP error code like :class:`.SFTP_OK`.
         :rtype: int
         """
         return SFTP_OP_UNSUPPORTED
@@ -220,8 +220,8 @@ class SFTPServerInterface (object):
             folder.
         :type path: str
         :param attr: requested attributes of the new folder.
-        :type attr: :class:`SFTPAttributes`
-        :return: an SFTP error code like :class:`SFTP_OK`.
+        :type attr: :class:`.SFTPAttributes`
+        :return: an SFTP error code like :class:`.SFTP_OK`.
         :rtype: int
         """
         return SFTP_OP_UNSUPPORTED
@@ -235,7 +235,7 @@ class SFTPServerInterface (object):
         :param path: requested path (relative or absolute) of the folder
             to remove.
         :type path: str
-        :return: an SFTP error code like :class:`SFTP_OK`.
+        :return: an SFTP error code like :class:`.SFTP_OK`.
         :rtype: int
         """
         return SFTP_OP_UNSUPPORTED
@@ -250,8 +250,8 @@ class SFTPServerInterface (object):
             change.
         :type path: str
         :param attr: requested attributes to change on the file.
-        :type attr: :class:`SFTPAttributes`
-        :return: an error code like :class:`SFTP_OK`.
+        :type attr: :class:`.SFTPAttributes`
+        :return: an error code like :class:`.SFTP_OK`.
         :rtype: int
         """
         return SFTP_OP_UNSUPPORTED
@@ -288,7 +288,7 @@ class SFTPServerInterface (object):
         :param path: path (relative or absolute) of the symbolic link.
         :type path: str
         :return: the target path of the symbolic link, or an error code like
-            :class:`SFTP_NO_SUCH_FILE`.
+            :class:`.SFTP_NO_SUCH_FILE`.
         :rtype: str or error code
         """
         return SFTP_OP_UNSUPPORTED

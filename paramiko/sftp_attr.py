@@ -68,8 +68,8 @@ class SFTPAttributes (object):
         :type obj: object
         :param filename: the filename associated with this file.
         :type filename: str
-        :return: new :class:`SFTPAttributes` object with the same attribute fields.
-        :rtype: :class:`SFTPAttributes`
+        :return: new :class:`.SFTPAttributes` object with the same attribute fields.
+        :rtype: :class:`.SFTPAttributes`
         """
         attr = cls()
         attr.st_size = obj.st_size

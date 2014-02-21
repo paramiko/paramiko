@@ -76,7 +76,7 @@ class SFTPHandle (object):
         to be 64 bits.
 
         If the end of the file has been reached, this method may return an
-        empty string to signify EOF, or it may also return :class:`SFTP_EOF`.
+        empty string to signify EOF, or it may also return :class:`.SFTP_EOF`.
 
         The default implementation checks for an attribute on ``self`` named
         ``readfile``, and if present, performs the read operation on the python
@@ -124,7 +124,7 @@ class SFTPHandle (object):
         :type offset: int or long
         :param data: data to write into the file.
         :type data: str
-        :return: an SFTP error code like :class:`SFTP_OK`.
+        :return: an SFTP error code like :class:`.SFTP_OK`.
         """
         writefile = getattr(self, 'writefile', None)
         if writefile is None:
@@ -148,13 +148,13 @@ class SFTPHandle (object):
 
     def stat(self):
         """
-        Return an :class:`SFTPAttributes` object referring to this open file, or an
+        Return an :class:`.SFTPAttributes` object referring to this open file, or an
         error code.  This is equivalent to :class:`SFTPServerInterface.stat`, except
         it's called on an open file instead of a path.
 
         :return: an attributes object for the given file, or an SFTP error
-            code (like :class:`SFTP_PERMISSION_DENIED`).
-        :rtype: :class:`SFTPAttributes` or error code
+            code (like :class:`.SFTP_PERMISSION_DENIED`).
+        :rtype: :class:`.SFTPAttributes` or error code
         """
         return SFTP_OP_UNSUPPORTED
 
@@ -165,8 +165,8 @@ class SFTPHandle (object):
         check for the presence of fields before using them.
 
         :param attr: the attributes to change on this file.
-        :type attr: :class:`SFTPAttributes`
-        :return: an error code like :class:`SFTP_OK`.
+        :type attr: :class:`.SFTPAttributes`
+        :return: an error code like :class:`.SFTP_OK`.
         :rtype: int
         """
         return SFTP_OP_UNSUPPORTED
