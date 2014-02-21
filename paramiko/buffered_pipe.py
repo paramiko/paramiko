@@ -86,7 +86,7 @@ class BufferedPipe (object):
         feeder.  A ``False`` result does not mean that the feeder has closed;
         it means you may need to wait before more data arrives.
         
-        :return: ``True`` if a :class:`read` call would immediately return at least
+        :return: ``True`` if a `read` call would immediately return at least
             one byte; ``False`` otherwise.
         :rtype: bool
         """
@@ -173,7 +173,7 @@ class BufferedPipe (object):
     
     def close(self):
         """
-        Close this pipe object.  Future calls to :class:`read` after the buffer
+        Close this pipe object.  Future calls to `read` after the buffer
         has been emptied will return immediately with an empty string.
         """
         self._lock.acquire()

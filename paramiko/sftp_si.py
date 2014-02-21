@@ -143,7 +143,7 @@ class SFTPServerInterface (object):
         """
         Return an :class:`.SFTPAttributes` object for a path on the server, or an
         error code.  If your server supports symbolic links (also known as
-        "aliases"), you should follow them.  (:class:`lstat` is the corresponding
+        "aliases"), you should follow them.  (`lstat` is the corresponding
         call that doesn't follow symlinks/aliases.)
 
         :param path: the requested path (relative or absolute) to fetch
@@ -160,7 +160,7 @@ class SFTPServerInterface (object):
         Return an :class:`.SFTPAttributes` object for a path on the server, or an
         error code.  If your server supports symbolic links (also known as
         "aliases"), you should not follow them -- instead, you should
-        return data on the symlink or alias itself.  (:class:`stat` is the
+        return data on the symlink or alias itself.  (`stat` is the
         corresponding call that follows symlinks/aliases.)
 
         :param path: the requested path (relative or absolute) to fetch

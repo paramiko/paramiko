@@ -33,7 +33,7 @@ class ResourceManager (object):
     with the ResourceManager can be collected but still free resources when
     they die.
     
-    Resources are registered using :class:`register`, and when an object is garbage
+    Resources are registered using `register`, and when an object is garbage
     collected, each registered resource is closed by having its ``close()``
     method called.  Multiple resources may be registered per object, but a
     resource will only be closed once, even if multiple objects register it.

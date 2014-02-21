@@ -318,7 +318,7 @@ class Agent(AgentSSH):
     def __init__(self):
         """
         Open a session with the local machine's SSH agent, if one is running.
-        If no agent is running, initialization will succeed, but :class:`get_keys`
+        If no agent is running, initialization will succeed, but `get_keys`
         will return an empty tuple.
 
         :raises SSHException: if an SSH agent is found, but speaks an

@@ -255,7 +255,7 @@ class SFTPFile (BufferedFile):
         """
         Change the owner (``uid``) and group (``gid``) of this file.  As with
         python's ``os.chown`` function, you must pass both arguments, so if you
-        only want to change one, use :class:`stat` first to retrieve the current
+        only want to change one, use `stat` first to retrieve the current
         owner and group.
 
         :param uid: new owner's uid
@@ -361,10 +361,10 @@ class SFTPFile (BufferedFile):
         Turn on/off the pipelining of write operations to this file.  When
         pipelining is on, paramiko won't wait for the server response after
         each write operation.  Instead, they're collected as they come in.
-        At the first non-write operation (including :class:`close`), all remaining
+        At the first non-write operation (including `close`), all remaining
         server responses are collected.  This means that if there was an error
         with one of your later writes, an exception might be thrown from
-        within :class:`close` instead of :class:`write`.
+        within `close` instead of `write`.
         
         By default, files are not pipelined.
         
@@ -379,13 +379,13 @@ class SFTPFile (BufferedFile):
     def prefetch(self):
         """
         Pre-fetch the remaining contents of this file in anticipation of
-        future :class:`read` calls.  If reading the entire file, pre-fetching can
+        future `read` calls.  If reading the entire file, pre-fetching can
         dramatically improve the download speed by avoiding roundtrip latency.
         The file's contents are incrementally buffered in a background thread.
         
-        The prefetched data is stored in a buffer until read via the :class:`read`
+        The prefetched data is stored in a buffer until read via the `read`
         method.  Once data has been read, it's removed from the buffer.  The
-        data may be read in a random order (using :class:`seek`); chunks of the
+        data may be read in a random order (using `seek`); chunks of the
         buffer that haven't been read will continue to be buffered.
 
         .. versionadded:: 1.5.1
@@ -404,7 +404,7 @@ class SFTPFile (BufferedFile):
     def readv(self, chunks):
         """
         Read a set of blocks from the file by (offset, length).  This is more
-        efficient than doing a series of :class:`seek` and :class:`read` calls, since the
+        efficient than doing a series of `seek` and `read` calls, since the
         prefetch machinery is used to retrieve all the requested blocks at
         once.
         

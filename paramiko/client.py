@@ -71,7 +71,7 @@ class SSHClient (object):
     def load_system_host_keys(self, filename=None):
         """
         Load host keys from a system (read-only) file.  Host keys read with
-        this method will not be saved back by :class:`save_host_keys`.
+        this method will not be saved back by `save_host_keys`.
 
         This method can be called multiple times.  Each new set of host keys
         will be merged with the existing set (new replacing old if there are
@@ -101,8 +101,8 @@ class SSHClient (object):
     def load_host_keys(self, filename):
         """
         Load host keys from a local host-key file.  Host keys read with this
-        method will be checked after keys loaded via :class:`load_system_host_keys`,
-        but will be saved back by :class:`save_host_keys` (so they can be modified).
+        method will be checked after keys loaded via `load_system_host_keys`,
+        but will be saved back by `save_host_keys` (so they can be modified).
         The missing host key policy :class:`.AutoAddPolicy` adds keys to this set and
         saves them, when connecting to a previously-unknown server.
 
@@ -121,8 +121,8 @@ class SSHClient (object):
     def save_host_keys(self, filename):
         """
         Save the host keys back to a file.  Only the host keys loaded with
-        :class:`load_host_keys` (plus any added directly) will be saved -- not any
-        host keys loaded with :class:`load_system_host_keys`.
+        `load_host_keys` (plus any added directly) will be saved -- not any
+        host keys loaded with `load_system_host_keys`.
 
         :param filename: the filename to save to
         :type filename: str
@@ -179,10 +179,10 @@ class SSHClient (object):
                 compress=False, sock=None):
         """
         Connect to an SSH server and authenticate to it.  The server's host key
-        is checked against the system host keys (see :class:`load_system_host_keys`)
-        and any local host keys (:class:`load_host_keys`).  If the server's hostname
+        is checked against the system host keys (see `load_system_host_keys`)
+        and any local host keys (`load_host_keys`).  If the server's hostname
         is not found in either set of host keys, the missing host key policy
-        is used (see :class:`set_missing_host_key_policy`).  The default policy is
+        is used (see `set_missing_host_key_policy`).  The default policy is
         to reject the key and raise an :class:`.SSHException`.
 
         Authentication is attempted in the following order of priority:

@@ -33,7 +33,7 @@ class SFTPHandle (object):
     by the client to refer to the underlying file.
     
     Server implementations can (and should) subclass SFTPHandle to implement
-    features of a file handle, like :class:`stat` or :class:`chattr`.
+    features of a file handle, like `stat` or `chattr`.
     """
     def __init__(self, flags=0):
         """
@@ -59,7 +59,7 @@ class SFTPHandle (object):
         The default implementation checks for attributes on ``self`` named
         ``readfile`` and/or ``writefile``, and if either or both are present,
         their ``close()`` methods are called.  This means that if you are
-        using the default implementations of :class:`read` and :class:`write`, this
+        using the default implementations of `read` and `write`, this
         method's default implementation should be fine also.
         """
         readfile = getattr(self, 'readfile', None)

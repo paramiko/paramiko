@@ -51,7 +51,7 @@ class Channel (object):
     you any more data until you read some of it.  (This won't affect other
     channels on the same transport -- all channels on a single transport are
     flow-controlled independently.)  Similarly, if the server isn't reading
-    data you send, calls to :class:`send` may block, unless you set a timeout.  This
+    data you send, calls to `send` may block, unless you set a timeout.  This
     is exactly like a normal network socket, so it shouldn't be too surprising.
     """
 
@@ -127,9 +127,9 @@ class Channel (object):
         """
         Request a pseudo-terminal from the server.  This is usually used right
         after creating a client channel, to ask the server to provide some
-        basic terminal semantics for a shell invoked with :class:`invoke_shell`.
+        basic terminal semantics for a shell invoked with `invoke_shell`.
         It isn't necessary (or desirable) to call this method if you're going
-        to exectue a single command with :class:`exec_command`.
+        to exectue a single command with `exec_command`.
 
         :param term: the terminal type to emulate (for example, ``'vt100'``)
         :type term: str
@@ -168,7 +168,7 @@ class Channel (object):
         allows it, the channel will then be directly connected to the stdin,
         stdout, and stderr of the shell.
         
-        Normally you would call :class:`get_pty` before this, in which case the
+        Normally you would call `get_pty` before this, in which case the
         shell will operate through the pty, and the channel will be connected
         to the stdin and stdout of the pty.
         
@@ -247,7 +247,7 @@ class Channel (object):
     def resize_pty(self, width=80, height=24, width_pixels=0, height_pixels=0):
         """
         Resize the pseudo-terminal.  This can be used to change the width and
-        height of the terminal emulation created in a previous :class:`get_pty` call.
+        height of the terminal emulation created in a previous `get_pty` call.
 
         :param width: new width (in characters) of the terminal screen
         :type width: int
@@ -278,10 +278,10 @@ class Channel (object):
         """
         Return true if the remote process has exited and returned an exit
         status. You may use this to poll the process status if you don't
-        want to block in :class:`recv_exit_status`. Note that the server may not
+        want to block in `recv_exit_status`. Note that the server may not
         return an exit status in some cases (like bad servers).
         
-        :return: True if :class:`recv_exit_status` will return immediately
+        :return: True if `recv_exit_status` will return immediately
         :rtype: bool
         .. versionadded:: 1.7.3
         """
@@ -290,7 +290,7 @@ class Channel (object):
     def recv_exit_status(self):
         """
         Return the exit status from the process on the server.  This is
-        mostly useful for retrieving the reults of an :class:`exec_command`.
+        mostly useful for retrieving the reults of an `exec_command`.
         If the command hasn't finished yet, this method will wait until
         it does, or until the channel is closed.  If no exit status is
         provided by the server, -1 is returned.
@@ -427,7 +427,7 @@ class Channel (object):
         """
         Set a name for this channel.  Currently it's only used to set the name
         of the channel in logfile entries.  The name can be fetched with the
-        :class:`get_name` method.
+        `get_name` method.
 
         :param name: new channel name
         :type name: str
@@ -436,7 +436,7 @@ class Channel (object):
 
     def get_name(self):
         """
-        Get the name of this channel that was previously set by :class:`set_name`.
+        Get the name of this channel that was previously set by `set_name`.
 
         :return: the name of this channel.
         :rtype: str
@@ -461,13 +461,13 @@ class Channel (object):
         The default is ``False``, but in some cases it may be convenient to
         have both streams combined.
         
-        If this is ``False``, and :class:`exec_command` is called (or ``invoke_shell``
-        with no pty), output to stderr will not show up through the :class:`recv`
-        and :class:`recv_ready` calls.  You will have to use :class:`recv_stderr` and
-        :class:`recv_stderr_ready` to get stderr output.
+        If this is ``False``, and `exec_command` is called (or ``invoke_shell``
+        with no pty), output to stderr will not show up through the `recv`
+        and `recv_ready` calls.  You will have to use `recv_stderr` and
+        `recv_stderr_ready` to get stderr output.
         
-        If this is ``True``, data will never show up via :class:`recv_stderr` or
-        :class:`recv_stderr_ready`.
+        If this is ``True``, data will never show up via `recv_stderr` or
+        `recv_stderr_ready`.
         
         :param combine: ``True`` if stderr output should be combined into
             stdout on this channel.
@@ -517,7 +517,7 @@ class Channel (object):
         """
         Returns the timeout in seconds (as a float) associated with socket
         operations, or ``None`` if no timeout is set.  This reflects the last
-        call to :class:`setblocking` or :class:`settimeout`.
+        call to `setblocking` or `settimeout`.
 
         :return: timeout in seconds, or ``None``.
         :rtype: float
@@ -530,10 +530,10 @@ class Channel (object):
         the channel is set to non-blocking mode; otherwise it's set to blocking
         mode. Initially all channels are in blocking mode.
 
-        In non-blocking mode, if a :class:`recv` call doesn't find any data, or if a
-        :class:`send` call can't immediately dispose of the data, an error exception
+        In non-blocking mode, if a `recv` call doesn't find any data, or if a
+        `send` call can't immediately dispose of the data, an error exception
         is raised. In blocking mode, the calls block until they can proceed. An
-        EOF condition is considered "immediate data" for :class:`recv`, so if the
+        EOF condition is considered "immediate data" for `recv`, so if the
         channel is closed in the read direction, it will never block.
 
         ``chan.setblocking(0)`` is equivalent to ``chan.settimeout(0)``;
@@ -592,7 +592,7 @@ class Channel (object):
         channel.  A ``False`` result does not mean that the channel has closed;
         it means you may need to wait before more data arrives.
         
-        :return: ``True`` if a :class:`recv` call on this channel would immediately
+        :return: ``True`` if a `recv` call on this channel would immediately
             return at least one byte; ``False`` otherwise.
         :rtype: boolean
         """
@@ -611,7 +611,7 @@ class Channel (object):
         :rtype: str
         
         :raises socket.timeout: if no data is ready before the timeout set by
-            :class:`settimeout`.
+            `settimeout`.
         """
         try:
             out = self.in_buffer.read(nbytes, self.timeout)
@@ -632,11 +632,11 @@ class Channel (object):
     def recv_stderr_ready(self):
         """
         Returns true if data is buffered and ready to be read from this
-        channel's stderr stream.  Only channels using :class:`exec_command` or
-        :class:`invoke_shell` without a pty will ever have data on the stderr
+        channel's stderr stream.  Only channels using `exec_command` or
+        `invoke_shell` without a pty will ever have data on the stderr
         stream.
         
-        :return: ``True`` if a :class:`recv_stderr` call on this channel would
+        :return: ``True`` if a `recv_stderr` call on this channel would
             immediately return at least one byte; ``False`` otherwise.
         :rtype: boolean
         
@@ -647,7 +647,7 @@ class Channel (object):
     def recv_stderr(self, nbytes):
         """
         Receive data from the channel's stderr stream.  Only channels using
-        :class:`exec_command` or :class:`invoke_shell` without a pty will ever have data
+        `exec_command` or `invoke_shell` without a pty will ever have data
         on the stderr stream.  The return value is a string representing the
         data received.  The maximum amount of data to be received at once is
         specified by ``nbytes``.  If a string of length zero is returned, the
@@ -659,7 +659,7 @@ class Channel (object):
         :rtype: str
         
         :raises socket.timeout: if no data is ready before the timeout set by
-            :class:`settimeout`.
+            `settimeout`.
         
         .. versionadded:: 1.1
         """
@@ -685,10 +685,10 @@ class Channel (object):
         This means the channel is either closed (so any write attempt would
         return immediately) or there is at least one byte of space in the 
         outbound buffer. If there is at least one byte of space in the
-        outbound buffer, a :class:`send` call will succeed immediately and return
+        outbound buffer, a `send` call will succeed immediately and return
         the number of bytes actually written.
         
-        :return: ``True`` if a :class:`send` call on this channel would immediately
+        :return: ``True`` if a `send` call on this channel would immediately
             succeed or fail
         :rtype: boolean
         """
@@ -714,7 +714,7 @@ class Channel (object):
         :rtype: int
 
         :raises socket.timeout: if no data could be sent before the timeout set
-            by :class:`settimeout`.
+            by `settimeout`.
         """
         size = len(s)
         self.lock.acquire()
@@ -749,7 +749,7 @@ class Channel (object):
         :rtype: int
         
         :raises socket.timeout: if no data could be sent before the timeout set
-            by :class:`settimeout`.
+            by `settimeout`.
         
         .. versionadded:: 1.1
         """
@@ -775,14 +775,14 @@ class Channel (object):
     def sendall(self, s):
         """
         Send data to the channel, without allowing partial results.  Unlike
-        :class:`send`, this method continues to send data from the given string until
+        `send`, this method continues to send data from the given string until
         either all data has been sent or an error occurs.  Nothing is returned.
 
         :param s: data to send.
         :type s: str
 
         :raises socket.timeout: if sending stalled for longer than the timeout
-            set by :class:`settimeout`.
+            set by `settimeout`.
         :raises socket.error: if an error occured before the entire string was
             sent.
         
@@ -801,7 +801,7 @@ class Channel (object):
     def sendall_stderr(self, s):
         """
         Send data to the channel's "stderr" stream, without allowing partial
-        results.  Unlike :class:`send_stderr`, this method continues to send data
+        results.  Unlike `send_stderr`, this method continues to send data
         from the given string until all data has been sent or an error occurs.
         Nothing is returned.
         
@@ -809,7 +809,7 @@ class Channel (object):
         :type s: str
         
         :raises socket.timeout: if sending stalled for longer than the timeout
-            set by :class:`settimeout`.
+            set by `settimeout`.
         :raises socket.error: if an error occured before the entire string was
             sent.
             
@@ -836,7 +836,7 @@ class Channel (object):
     def makefile_stderr(self, *params):
         """
         Return a file-like object associated with this channel's stderr
-        stream.   Only channels using :class:`exec_command` or :class:`invoke_shell`
+        stream.   Only channels using `exec_command` or `invoke_shell`
         without a pty will ever have data on the stderr stream.
         
         The optional ``mode`` and ``bufsize`` arguments are interpreted the

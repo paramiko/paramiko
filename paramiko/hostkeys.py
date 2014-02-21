@@ -112,7 +112,7 @@ class HostKeys (UserDict.DictMixin):
     verify server keys during SSH negotiation.
 
     A HostKeys object can be treated like a dict; any dict lookup is equivalent
-    to calling :class:`lookup`.
+    to calling `lookup`.
 
     .. versionadded:: 1.5.3
     """
@@ -156,7 +156,7 @@ class HostKeys (UserDict.DictMixin):
         ``os.path.expanduser("~/.ssh/known_hosts")``.
 
         If this method is called multiple times, the host keys are merged,
-        not cleared.  So multiple calls to ``load`` will just call :class:`add`,
+        not cleared.  So multiple calls to `load` will just call `add`,
         replacing any existing entries and adding new ones.
 
         :param filename: name of the file to read host keys from

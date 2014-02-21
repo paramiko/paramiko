@@ -128,8 +128,8 @@ class Transport (threading.Thread):
         """
         Create a new SSH session over an existing socket, or socket-like
         object.  This only creates the Transport object; it doesn't begin the
-        SSH session yet.  Use :class:`connect` or :class:`start_client` to begin a client
-        session, or :class:`start_server` to begin a server session.
+        SSH session yet.  Use `connect` or `start_client` to begin a client
+        session, or `start_server` to begin a server session.
 
         If the object is not actually a socket, it must have the following
         methods:
@@ -301,7 +301,7 @@ class Transport (threading.Thread):
 
         If an event is passed in, this method returns immediately.  When
         negotiation is done (successful or not), the given ``Event`` will
-        be triggered.  On failure, :class:`is_active` will return ``False``.
+        be triggered.  On failure, `is_active` will return ``False``.
 
         (Since 1.4) If ``event`` is ``None``, this method will not return until
         negotation is done.  On success, the method returns normally.
@@ -311,9 +311,9 @@ class Transport (threading.Thread):
         calling :class:`auth_password <Transport.auth_password>` or
         :class:`auth_publickey <Transport.auth_publickey>`.
 
-        .. note:: :class:`connect` is a simpler method for connecting as a client.
+        .. note:: `connect` is a simpler method for connecting as a client.
 
-        .. note:: After calling this method (or :class:`start_server` or :class:`connect`),
+        .. note:: After calling this method (or `start_server` or `connect`),
             you should no longer directly read from or write to the original
             socket object.
 
@@ -353,7 +353,7 @@ class Transport (threading.Thread):
 
         If an event is passed in, this method returns immediately.  When
         negotiation is done (successful or not), the given ``Event`` will
-        be triggered.  On failure, :class:`is_active` will return ``False``.
+        be triggered.  On failure, `is_active` will return ``False``.
 
         (Since 1.4) If ``event`` is ``None``, this method will not return until
         negotation is done.  On success, the method returns normally.
@@ -372,7 +372,7 @@ class Transport (threading.Thread):
         :class:`check_channel_request <ServerInterface.check_channel_request>` in the
         given ``server`` object to allow channels to be opened.
 
-        .. note:: After calling this method (or :class:`start_client` or :class:`connect`),
+        .. note:: After calling this method (or `start_client` or `connect`),
             you should no longer directly read from or write to the original
             socket object.
 
@@ -428,7 +428,7 @@ class Transport (threading.Thread):
         """
         Return the active host key, in server mode.  After negotiating with the
         client, this method will return the negotiated host key.  If only one
-        type of host key was set with :class:`add_server_key`, that's the only key
+        type of host key was set with `add_server_key`, that's the only key
         that will ever be returned.  But in cases where you have set more than
         one type of host key (for example, an RSA key and a DSS key), the key
         type will be negotiated by the client, and this method will return the
@@ -587,7 +587,7 @@ class Transport (threading.Thread):
         Request a new channel to the server. :class:`.Channels <Channel>` are socket-like
         objects used for the actual transfer of data across the session.
         You may only request a channel after negotiating encryption (using
-        :class:`connect` or :class:`start_client`) and authenticating.
+        `connect` or `start_client`) and authenticating.
 
         :param kind: the kind of channel requested (usually ``"session"``,
             ``"forwarded-tcpip"``, ``"direct-tcpip"``, or ``"x11"``)
@@ -665,7 +665,7 @@ class Transport (threading.Thread):
 
         If no handler is set, the default behavior is to send new incoming
         forwarded connections into the accept queue, to be picked up via
-        :class:`accept`.
+        `accept`.
 
         :param address: the address to bind when forwarding
         :type address: str
@@ -849,19 +849,19 @@ class Transport (threading.Thread):
         """
         Negotiate an SSH2 session, and optionally verify the server's host key
         and authenticate using a password or private key.  This is a shortcut
-        for :class:`start_client`, :class:`get_remote_server_key`, and
+        for `start_client`, `get_remote_server_key`, and
         :class:`Transport.auth_password` or :class:`Transport.auth_publickey`.  Use those
         methods if you want more control.
 
         You can use this method immediately after creating a Transport to
         negotiate encryption with a server.  If it fails, an exception will be
         thrown.  On success, the method will return cleanly, and an encrypted
-        session exists.  You may immediately call :class:`open_channel` or
-        :class:`open_session` to get a :class:`.Channel` object, which is used for data
+        session exists.  You may immediately call `open_channel` or
+        `open_session` to get a :class:`.Channel` object, which is used for data
         transfer.
 
         .. note:: If you fail to supply a password or private key, this method may
-        succeed, but a subsequent :class:`open_channel` or :class:`open_session` call may
+        succeed, but a subsequent `open_channel` or `open_session` call may
         fail because you haven't authenticated yet.
 
         :param hostkey: the host key expected from the server, or ``None`` if
@@ -908,7 +908,7 @@ class Transport (threading.Thread):
         """
         Return any exception that happened during the last server request.
         This can be used to fetch more specific error information after using
-        calls like :class:`start_client`.  The exception (if any) is cleared after
+        calls like `start_client`.  The exception (if any) is cleared after
         this call.
 
         :return: an exception, or ``None`` if there is no stored exception.
@@ -1004,8 +1004,8 @@ class Transport (threading.Thread):
 
         If an ``event`` is passed in, this method will return immediately, and
         the event will be triggered once authentication succeeds or fails.  On
-        success, :class:`is_authenticated` will return ``True``.  On failure, you may
-        use :class:`get_exception` to get more detailed error information.
+        success, `is_authenticated` will return ``True``.  On failure, you may
+        use `get_exception` to get more detailed error information.
 
         Since 1.1, if no event is passed, this method will block until the
         authentication succeeds or fails.  On failure, an exception is raised.
@@ -1087,8 +1087,8 @@ class Transport (threading.Thread):
 
         If an ``event`` is passed in, this method will return immediately, and
         the event will be triggered once authentication succeeds or fails.  On
-        success, :class:`is_authenticated` will return ``True``.  On failure, you may
-        use :class:`get_exception` to get more detailed error information.
+        success, `is_authenticated` will return ``True``.  On failure, you may
+        use `get_exception` to get more detailed error information.
 
         Since 1.1, if no event is passed, this method will block until the
         authentication succeeds or fails.  On failure, an exception is raised.
@@ -1237,7 +1237,7 @@ class Transport (threading.Thread):
     def use_compression(self, compress=True):
         """
         Turn on/off compression.  This will only have an affect before starting
-        the transport (ie before calling :class:`connect`, etc).  By default,
+        the transport (ie before calling `connect`, etc).  By default,
         compression is off since it negatively affects interactive sessions.
 
         :param compress: ``True`` to ask the remote client/server to compress

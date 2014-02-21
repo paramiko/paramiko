@@ -87,7 +87,7 @@ class LazyFqdn(object):
 class SSHConfig (object):
     """
     Representation of config information as stored in the format used by
-    OpenSSH. Queries can be made via :class:`lookup`. The format is described in
+    OpenSSH. Queries can be made via `lookup`. The format is described in
     OpenSSH's ``ssh_config`` man page. This class is provided primarily as a
     convenience to posix users (since the OpenSSH format is a de-facto
     standard on posix) but should work fine on Windows too.

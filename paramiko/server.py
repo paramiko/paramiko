@@ -35,7 +35,7 @@ class InteractiveQuery (object):
         Create a new interactive query to send to the client.  The name and
         instructions are optional, but are generally displayed to the end
         user.  A list of prompts may be included, or they may be added via
-        the :class:`add_prompt` method.
+        the `add_prompt` method.
         
         :param name: name of this query
         :type name: str
@@ -88,12 +88,12 @@ class ServerInterface (object):
         useless), you should also override some of the channel request methods
         below, which are used to determine which services will be allowed on
         a given channel:
-            - :class:`check_channel_pty_request`
-            - :class:`check_channel_shell_request`
-            - :class:`check_channel_subsystem_request`
-            - :class:`check_channel_window_change_request`
-            - :class:`check_channel_x11_request`
-            - :class:`check_channel_forward_agent_request`
+            - `check_channel_pty_request`
+            - `check_channel_shell_request`
+            - `check_channel_subsystem_request`
+            - `check_channel_window_change_request`
+            - `check_channel_x11_request`
+            - `check_channel_forward_agent_request`
 
         The ``chanid`` parameter is a small number that uniquely identifies the
         channel within a :class:`.Transport`.  A :class:`.Channel` object is not created
@@ -170,7 +170,7 @@ class ServerInterface (object):
         the authentication, or :class:`.AUTH_PARTIALLY_SUCCESSFUL` if your
         authentication is stateful, and this key is accepted for
         authentication, but more authentication is required.  (In this latter
-        case, :class:`get_allowed_auths` will be called to report to the client what
+        case, `get_allowed_auths` will be called to report to the client what
         options it has for continuing the authentication.)
 
         The default implementation always returns :class:`.AUTH_FAILED`.
@@ -199,7 +199,7 @@ class ServerInterface (object):
         authentication, or :class:`.AUTH_PARTIALLY_SUCCESSFUL` if your
         authentication is stateful, and this password is accepted for
         authentication, but more authentication is required.  (In this latter
-        case, :class:`get_allowed_auths` will be called to report to the client what
+        case, `get_allowed_auths` will be called to report to the client what
         options it has for continuing the authentication.)
 
         Note that you don't have to actually verify any key signtature here.
@@ -230,7 +230,7 @@ class ServerInterface (object):
         Return :class:`.AUTH_FAILED` if this auth method isn't supported.  Otherwise,
         you should return an :class:`.InteractiveQuery` object containing the prompts
         and instructions for the user.  The response will be sent via a call
-        to :class:`check_auth_interactive_response`.
+        to `check_auth_interactive_response`.
         
         The default implementation always returns :class:`.AUTH_FAILED`.
         
@@ -256,7 +256,7 @@ class ServerInterface (object):
         the authentication, or :class:`.AUTH_PARTIALLY_SUCCESSFUL` if your
         authentication is stateful, and this set of responses is accepted for
         authentication, but more authentication is required.  (In this latter
-        case, :class:`get_allowed_auths` will be called to report to the client what
+        case, `get_allowed_auths` will be called to report to the client what
         options it has for continuing the authentication.)
 
         If you wish to continue interactive authentication with more questions,
@@ -333,7 +333,7 @@ class ServerInterface (object):
         does not support any global requests.
         
         .. note:: Port forwarding requests are handled separately, in
-            :class:`check_port_forward_request`.
+            `check_port_forward_request`.
 
         :param kind: the kind of global request being made.
         :type kind: str
@@ -558,13 +558,13 @@ class SubsystemHandler (threading.Thread):
     :class:`Transport.set_subsystem_handler`,
     an object of this
     class will be created for each request for this subsystem.  Each new object
-    will be executed within its own new thread by calling :class:`start_subsystem`.
+    will be executed within its own new thread by calling `start_subsystem`.
     When that method completes, the channel is closed.
 
     For example, if you made a subclass ``MP3Handler`` and registered it as the
     handler for subsystem ``"mp3"``, then whenever a client has successfully
     authenticated and requests subsytem ``"mp3"``, an object of class
-    ``MP3Handler`` will be created, and :class:`start_subsystem` will be called on
+    ``MP3Handler`` will be created, and `start_subsystem` will be called on
     it from a new thread.
     """
     def __init__(self, channel, name, server):

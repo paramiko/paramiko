@@ -96,7 +96,7 @@ class BufferedFile (object):
         """
         Returns the next line from the input, or raises :class:`.StopIteration` when
         EOF is hit.  Unlike python file objects, it's okay to mix calls to
-        ``next`` and :class:`readline`.
+        `next` and `readline`.
 
         :raises StopIteration: when the end of the file is reached.
 
@@ -243,7 +243,7 @@ class BufferedFile (object):
 
     def readlines(self, sizehint=None):
         """
-        Read all remaining lines using :class:`readline` and return them as a list.
+        Read all remaining lines using `readline` and return them as a list.
         If the optional ``sizehint`` argument is present, instead of reading up
         to EOF, whole lines totalling approximately sizehint bytes (possibly
         after rounding up to an internal buffer size) are read.
@@ -300,7 +300,7 @@ class BufferedFile (object):
         """
         Write data to the file.  If write buffering is on (``bufsize`` was
         specified and non-zero), some or all of the data may not actually be
-        written yet.  (Use :class:`flush` or :class:`close` to force buffered data to be
+        written yet.  (Use `flush` or `close` to force buffered data to be
         written out.)
 
         :param data: data to write.
@@ -334,7 +334,7 @@ class BufferedFile (object):
         """
         Write a sequence of strings to the file.  The sequence can be any
         iterable object producing strings, typically a list of strings.  (The
-        name is intended to match :class:`readlines`; ``writelines`` does not add line
+        name is intended to match `readlines`; ``writelines`` does not add line
         separators.)
 
         :param sequence: an iterable sequence of strings.
@@ -380,9 +380,9 @@ class BufferedFile (object):
     def _get_size(self):
         """
         (subclass override)
-        Return the size of the file.  This is called from within :class:`_set_mode`
+        Return the size of the file.  This is called from within `_set_mode`
         if the file is opened in append mode, so the file position can be
-        tracked and :class:`seek` and :class:`tell` will work correctly.  If the file is
+        tracked and `seek` and `tell` will work correctly.  If the file is
         a stream that can't be randomly accessed, you don't need to override
         this method,
         """

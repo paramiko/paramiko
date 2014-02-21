@@ -61,7 +61,7 @@ class SFTPClient (BaseSFTP):
         should already have requested the ``"sftp"`` subsystem.
 
         An alternate way to create an SFTP client context is by using
-        :class:`from_transport`.
+        `from_transport`.
 
         :param sock: an open :class:`.Channel` using the ``"sftp"`` subsystem
         :type sock: :class:`.Channel`
@@ -140,7 +140,7 @@ class SFTPClient (BaseSFTP):
         The list is in arbitrary order.  It does not include the special
         entries ``'.'`` and ``'..'`` even if they are present in the folder.
         This method is meant to mirror ``os.listdir`` as closely as possible.
-        For a list of full :class:`.SFTPAttributes` objects, see :class:`listdir_attr`.
+        For a list of full :class:`.SFTPAttributes` objects, see `listdir_attr`.
 
         :param path: path to list (defaults to ``'.'``)
         :type path: str
@@ -255,7 +255,7 @@ class SFTPClient (BaseSFTP):
     def remove(self, path):
         """
         Remove the file at the given path.  This only works on files; for
-        removing folders (directories), use :class:`rmdir`.
+        removing folders (directories), use `rmdir`.
 
         :param path: path (absolute or relative) of the file to remove
         :type path: str
@@ -343,7 +343,7 @@ class SFTPClient (BaseSFTP):
         """
         Retrieve information about a file on the remote system, without
         following symbolic links (shortcuts).  This otherwise behaves exactly
-        the same as :class:`stat`.
+        the same as `stat`.
 
         :param path: the filename to stat
         :type path: str
@@ -394,7 +394,7 @@ class SFTPClient (BaseSFTP):
         """
         Change the owner (``uid``) and group (``gid``) of a file.  As with
         python's ``os.chown`` function, you must pass both arguments, so if you
-        only want to change one, use :class:`stat` first to retrieve the current
+        only want to change one, use `stat` first to retrieve the current
         owner and group.
 
         :param path: path of the file to change the owner and group of
@@ -453,7 +453,7 @@ class SFTPClient (BaseSFTP):
     def readlink(self, path):
         """
         Return the target of a symbolic link (shortcut).  You can use
-        :class:`symlink` to create these.  The result may be either an absolute or
+        `symlink` to create these.  The result may be either an absolute or
         relative pathname.
 
         :param path: path of the symbolic link file
@@ -523,7 +523,7 @@ class SFTPClient (BaseSFTP):
     def getcwd(self):
         """
         Return the "current working directory" for this SFTP session, as
-        emulated by paramiko.  If no directory has been set with :class:`chdir`,
+        emulated by paramiko.  If no directory has been set with `chdir`,
         this method will return ``None``.
 
         :return: the current working directory on the server, or ``None``

@@ -66,7 +66,7 @@ class PKey (object):
     def __str__(self):
         """
         Return a string of an SSH :class:`.Message` made up of the public part(s) of
-        this key.  This string is suitable for passing to :class:`__init__` to
+        this key.  This string is suitable for passing to `__init__` to
         re-create the key object later.
 
         :return: string representation of an SSH key message.
