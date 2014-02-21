@@ -17,7 +17,7 @@
 # 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
 
 """
-:class:`Transport` handles the core SSH2 protocol.
+Core protocol implementation
 """
 
 import os
@@ -64,128 +64,6 @@ def _join_lingering_threads():
         thr.stop_thread()
 import atexit
 atexit.register(_join_lingering_threads)
-
-
-class SecurityOptions (object):
-    """
-    Simple object containing the security preferences of an ssh transport.
-    These are tuples of acceptable ciphers, digests, key types, and key
-    exchange algorithms, listed in order of preference.
-
-    Changing the contents and/or order of these fields affects the underlying
-    :class:`Transport` (but only if you change them before starting the session).
-    If you try to add an algorithm that paramiko doesn't recognize,
-    ``ValueError`` will be raised.  If you try to assign something besides a
-    tuple to one of the fields, ``TypeError`` will be raised.
-    """
-    __slots__ = [ 'ciphers', 'digests', 'key_types', 'kex', 'compression', '_transport' ]
-
-    def __init__(self, transport):
-        self._transport = transport
-
-    def __repr__(self):
-        """
-        Returns a string representation of this object, for debugging.
-
-        :rtype: str
-        """
-        return '<paramiko.SecurityOptions for %s>' % repr(self._transport)
-
-    def _get_ciphers(self):
-        return self._transport._preferred_ciphers
-
-    def _get_digests(self):
-        return self._transport._preferred_macs
-
-    def _get_key_types(self):
-        return self._transport._preferred_keys
-
-    def _get_kex(self):
-        return self._transport._preferred_kex
-
-    def _get_compression(self):
-        return self._transport._preferred_compression
-
-    def _set(self, name, orig, x):
-        if type(x) is list:
-            x = tuple(x)
-        if type(x) is not tuple:
-            raise TypeError('expected tuple or list')
-        possible = getattr(self._transport, orig).keys()
-        forbidden = filter(lambda n: n not in possible, x)
-        if len(forbidden) > 0:
-            raise ValueError('unknown cipher')
-        setattr(self._transport, name, x)
-
-    def _set_ciphers(self, x):
-        self._set('_preferred_ciphers', '_cipher_info', x)
-
-    def _set_digests(self, x):
-        self._set('_preferred_macs', '_mac_info', x)
-
-    def _set_key_types(self, x):
-        self._set('_preferred_keys', '_key_info', x)
-
-    def _set_kex(self, x):
-        self._set('_preferred_kex', '_kex_info', x)
-
-    def _set_compression(self, x):
-        self._set('_preferred_compression', '_compression_info', x)
-
-    ciphers = property(_get_ciphers, _set_ciphers, None,
-                       "Symmetric encryption ciphers")
-    digests = property(_get_digests, _set_digests, None,
-                       "Digest (one-way hash) algorithms")
-    key_types = property(_get_key_types, _set_key_types, None,
-                         "Public-key algorithms")
-    kex = property(_get_kex, _set_kex, None, "Key exchange algorithms")
-    compression = property(_get_compression, _set_compression, None,
-                           "Compression algorithms")
-
-
-class ChannelMap (object):
-    def __init__(self):
-        # (id -> Channel)
-        self._map = weakref.WeakValueDictionary()
-        self._lock = threading.Lock()
-
-    def put(self, chanid, chan):
-        self._lock.acquire()
-        try:
-            self._map[chanid] = chan
-        finally:
-            self._lock.release()
-
-    def get(self, chanid):
-        self._lock.acquire()
-        try:
-            return self._map.get(chanid, None)
-        finally:
-            self._lock.release()
-
-    def delete(self, chanid):
-        self._lock.acquire()
-        try:
-            try:
-                del self._map[chanid]
-            except KeyError:
-                pass
-        finally:
-            self._lock.release()
-
-    def values(self):
-        self._lock.acquire()
-        try:
-            return self._map.values()
-        finally:
-            self._lock.release()
-
-    def __len__(self):
-        self._lock.acquire()
-        try:
-            return len(self._map)
-        finally:
-            self._lock.release()
 
 
 class Transport (threading.Thread):
@@ -2154,3 +2032,125 @@ class Transport (threading.Thread):
         MSG_CHANNEL_EOF: Channel._handle_eof,
         MSG_CHANNEL_CLOSE: Channel._handle_close,
         }
+
+
+class SecurityOptions (object):
+    """
+    Simple object containing the security preferences of an ssh transport.
+    These are tuples of acceptable ciphers, digests, key types, and key
+    exchange algorithms, listed in order of preference.
+
+    Changing the contents and/or order of these fields affects the underlying
+    :class:`Transport` (but only if you change them before starting the session).
+    If you try to add an algorithm that paramiko doesn't recognize,
+    ``ValueError`` will be raised.  If you try to assign something besides a
+    tuple to one of the fields, ``TypeError`` will be raised.
+    """
+    __slots__ = [ 'ciphers', 'digests', 'key_types', 'kex', 'compression', '_transport' ]
+
+    def __init__(self, transport):
+        self._transport = transport
+
+    def __repr__(self):
+        """
+        Returns a string representation of this object, for debugging.
+
+        :rtype: str
+        """
+        return '<paramiko.SecurityOptions for %s>' % repr(self._transport)
+
+    def _get_ciphers(self):
+        return self._transport._preferred_ciphers
+
+    def _get_digests(self):
+        return self._transport._preferred_macs
+
+    def _get_key_types(self):
+        return self._transport._preferred_keys
+
+    def _get_kex(self):
+        return self._transport._preferred_kex
+
+    def _get_compression(self):
+        return self._transport._preferred_compression
+
+    def _set(self, name, orig, x):
+        if type(x) is list:
+            x = tuple(x)
+        if type(x) is not tuple:
+            raise TypeError('expected tuple or list')
+        possible = getattr(self._transport, orig).keys()
+        forbidden = filter(lambda n: n not in possible, x)
+        if len(forbidden) > 0:
+            raise ValueError('unknown cipher')
+        setattr(self._transport, name, x)
+
+    def _set_ciphers(self, x):
+        self._set('_preferred_ciphers', '_cipher_info', x)
+
+    def _set_digests(self, x):
+        self._set('_preferred_macs', '_mac_info', x)
+
+    def _set_key_types(self, x):
+        self._set('_preferred_keys', '_key_info', x)
+
+    def _set_kex(self, x):
+        self._set('_preferred_kex', '_kex_info', x)
+
+    def _set_compression(self, x):
+        self._set('_preferred_compression', '_compression_info', x)
+
+    ciphers = property(_get_ciphers, _set_ciphers, None,
+                       "Symmetric encryption ciphers")
+    digests = property(_get_digests, _set_digests, None,
+                       "Digest (one-way hash) algorithms")
+    key_types = property(_get_key_types, _set_key_types, None,
+                         "Public-key algorithms")
+    kex = property(_get_kex, _set_kex, None, "Key exchange algorithms")
+    compression = property(_get_compression, _set_compression, None,
+                           "Compression algorithms")
+
+
+class ChannelMap (object):
+    def __init__(self):
+        # (id -> Channel)
+        self._map = weakref.WeakValueDictionary()
+        self._lock = threading.Lock()
+
+    def put(self, chanid, chan):
+        self._lock.acquire()
+        try:
+            self._map[chanid] = chan
+        finally:
+            self._lock.release()
+
+    def get(self, chanid):
+        self._lock.acquire()
+        try:
+            return self._map.get(chanid, None)
+        finally:
+            self._lock.release()
+
+    def delete(self, chanid):
+        self._lock.acquire()
+        try:
+            try:
+                del self._map[chanid]
+            except KeyError:
+                pass
+        finally:
+            self._lock.release()
+
+    def values(self):
+        self._lock.acquire()
+        try:
+            return self._map.values()
+        finally:
+            self._lock.release()
+
+    def __len__(self):
+        self._lock.acquire()
+        try:
+            return len(self._map)
+        finally:
+            self._lock.release()
