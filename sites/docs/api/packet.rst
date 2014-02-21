@@ -1,4 +1,4 @@
-Packet handling
-===============
+Packetizer
+==========
 
 .. automodule:: paramiko.packet
