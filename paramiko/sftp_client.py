@@ -16,9 +16,6 @@
 # along with Paramiko; if not, write to the Free Software Foundation, Inc.,
 # 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
 
-"""
-Client-mode SFTP support.
-"""
 
 from binascii import hexlify
 import errno
@@ -49,12 +46,13 @@ def _to_unicode(s):
             return s
 
 
-class SFTPClient (BaseSFTP):
+class SFTPClient(BaseSFTP):
     """
-    SFTP client object.  ``SFTPClient`` is used to open an sftp session across
-    an open ssh `.Transport` and do remote file operations.
+    SFTP client object.
+    
+    Used to open an SFTP session across an open SSH `.Transport` and perform
+    remote file operations.
     """
-
     def __init__(self, sock):
         """
         Create an SFTP client from an existing `.Channel`.  The channel
@@ -782,6 +780,8 @@ class SFTPClient (BaseSFTP):
         return self._cwd + '/' + path
 
 
-class SFTP (SFTPClient):
-    "an alias for `.SFTPClient` for backwards compatability"
+class SFTP(SFTPClient):
+    """
+    An alias for `.SFTPClient` for backwards compatability.
+    """
     pass

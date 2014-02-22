@@ -26,8 +26,8 @@ class SFTPAttributes (object):
     """
     Representation of the attributes of a file (or proxied file) for SFTP in
     client or server mode.  It attemps to mirror the object returned by
-    ``os.stat`` as closely as possible, so it may have the following fields,
-    with the same meanings as those returned by an ``os.stat`` object:
+    `os.stat` as closely as possible, so it may have the following fields,
+    with the same meanings as those returned by an `os.stat` object:
         - st_size
         - st_uid
         - st_gid
