@@ -50,7 +50,6 @@ Authentication & keys
     api/agent
     api/hostkeys
     api/keys
-    api/win_pageant
 
 
 Other primary functions
