@@ -17,7 +17,7 @@
 # 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
 
 """
-Attempt to generalize the "feeder" part of a Channel: an object which can be
+Attempt to generalize the "feeder" part of a `.Channel`: an object which can be
 read from and closed, but is reading from a buffer fed by another thread.  The
 read operations are blocking and can have a timeout set.
 """
@@ -107,19 +107,18 @@ class BufferedPipe (object):
 
         The optional ``timeout`` argument can be a nonnegative float expressing
         seconds, or ``None`` for no timeout.  If a float is given, a
-        ``PipeTimeout`` will be raised if the timeout period value has
-        elapsed before any data arrives.
+        `.PipeTimeout` will be raised if the timeout period value has elapsed
+        before any data arrives.
 
-        :param nbytes: maximum number of bytes to read
-        :type nbytes: int
-        :param timeout: maximum seconds to wait (or ``None``, the default, to
-            wait forever)
-        :type timeout: float
+        :param int nbytes: maximum number of bytes to read
+        :param float timeout:
+            maximum seconds to wait (or ``None``, the default, to wait forever)
         :return: data
         :rtype: str
         
-        :raises PipeTimeout: if a timeout was specified and no data was ready
-            before that timeout
+        :raises PipeTimeout:
+            if a timeout was specified and no data was ready before that
+            timeout
         """
         out = ''
         self._lock.acquire()
@@ -189,7 +188,7 @@ class BufferedPipe (object):
         """
         Return the number of bytes buffered.
         
-        :return: number of bytes bufferes
+        :return: number of bytes buffered
         :rtype: int
         """
         self._lock.acquire()
