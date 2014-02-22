@@ -17,7 +17,7 @@
 # 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
 
 """
-`.SFTPFile`
+SFTP file object
 """
 
 from __future__ import with_statement
@@ -64,6 +64,9 @@ class SFTPFile (BufferedFile):
         self._close(async=True)
     
     def close(self):
+        """
+        Close the file.
+        """
         self._close(async=False)
         
     def _close(self, async=False):
@@ -183,10 +186,11 @@ class SFTPFile (BufferedFile):
         Set a timeout on read/write operations on the underlying socket or
         ssh `.Channel`.
 
-        .. seealso:: `Channel.settimeout`
         :param timeout: seconds to wait for a pending read/write operation
             before raising ``socket.timeout``, or ``None`` for no timeout
         :type timeout: float
+
+        .. seealso:: `.Channel.settimeout`
         """
         self.sftp.sock.settimeout(timeout)
 
@@ -195,8 +199,9 @@ class SFTPFile (BufferedFile):
         Returns the timeout in seconds (as a float) associated with the socket
         or ssh `.Channel` used for this file.
 
-        .. seealso:: `Channel.gettimeout`
         :rtype: float
+
+        .. seealso:: `.Channel.gettimeout`
         """
         return self.sftp.sock.gettimeout()
 
@@ -205,10 +210,11 @@ class SFTPFile (BufferedFile):
         Set blocking or non-blocking mode on the underiying socket or ssh
         `.Channel`.
 
-        .. seealso:: `Channel.setblocking`
-        :param blocking: 0 to set non-blocking mode; non-0 to set blocking
-            mode.
+        :param blocking:
+            0 to set non-blocking mode; non-0 to set blocking mode.
         :type blocking: int
+
+        .. seealso:: `.Channel.setblocking`
         """
         self.sftp.sock.setblocking(blocking)
 
@@ -226,11 +232,11 @@ class SFTPFile (BufferedFile):
     def stat(self):
         """
         Retrieve information about this file from the remote system.  This is
-        exactly like `SFTP.stat`, except that it operates on an already-open
-        file.
+        exactly like `.SFTPClient.stat`, except that it operates on an
+        already-open file.
 
         :return: an object containing attributes about this file.
-        :rtype: SFTPAttributes
+        :rtype: `.SFTPAttributes`
         """
         t, msg = self.sftp._request(CMD_FSTAT, self.handle)
         if t != CMD_ATTRS:
@@ -240,7 +246,7 @@ class SFTPFile (BufferedFile):
     def chmod(self, mode):
         """
         Change the mode (permissions) of this file.  The permissions are
-        unix-style and identical to those used by Python's ``os.chmod``
+        unix-style and identical to those used by Python's `os.chmod`
         function.
 
         :param mode: new permissions
@@ -254,7 +260,7 @@ class SFTPFile (BufferedFile):
     def chown(self, uid, gid):
         """
         Change the owner (``uid``) and group (``gid``) of this file.  As with
-        Python's ``os.chown`` function, you must pass both arguments, so if you
+        Python's `os.chown` function, you must pass both arguments, so if you
         only want to change one, use `stat` first to retrieve the current
         owner and group.
 
@@ -341,12 +347,12 @@ class SFTPFile (BufferedFile):
             concatenated together
         :rtype: str
         
-        .. note:: Many (most?) servers don't support this extension yet.
-        
         :raises IOError: if the server doesn't support the "check-file"
             extension, or possibly doesn't support the hash algorithm
             requested
             
+        .. note:: Many (most?) servers don't support this extension yet.
+        
         .. versionadded:: 1.4
         """
         t, msg = self.sftp._request(CMD_EXTENDED, 'check-file', self.handle,
@@ -360,11 +366,11 @@ class SFTPFile (BufferedFile):
         """
         Turn on/off the pipelining of write operations to this file.  When
         pipelining is on, paramiko won't wait for the server response after
-        each write operation.  Instead, they're collected as they come in.
-        At the first non-write operation (including `close`), all remaining
+        each write operation.  Instead, they're collected as they come in. At
+        the first non-write operation (including `.close`), all remaining
         server responses are collected.  This means that if there was an error
-        with one of your later writes, an exception might be thrown from
-        within `close` instead of `write`.
+        with one of your later writes, an exception might be thrown from within
+        `.close` instead of `.write`.
         
         By default, files are not pipelined.
         
@@ -378,14 +384,14 @@ class SFTPFile (BufferedFile):
     
     def prefetch(self):
         """
-        Pre-fetch the remaining contents of this file in anticipation of
-        future `read` calls.  If reading the entire file, pre-fetching can
+        Pre-fetch the remaining contents of this file in anticipation of future
+        `.read` calls.  If reading the entire file, pre-fetching can
         dramatically improve the download speed by avoiding roundtrip latency.
         The file's contents are incrementally buffered in a background thread.
         
-        The prefetched data is stored in a buffer until read via the `read`
+        The prefetched data is stored in a buffer until read via the `.read`
         method.  Once data has been read, it's removed from the buffer.  The
-        data may be read in a random order (using `seek`); chunks of the
+        data may be read in a random order (using `.seek`); chunks of the
         buffer that haven't been read will continue to be buffered.
 
         .. versionadded:: 1.5.1
@@ -404,7 +410,7 @@ class SFTPFile (BufferedFile):
     def readv(self, chunks):
         """
         Read a set of blocks from the file by (offset, length).  This is more
-        efficient than doing a series of `seek` and `read` calls, since the
+        efficient than doing a series of `.seek` and `.read` calls, since the
         prefetch machinery is used to retrieve all the requested blocks at
         once.
         

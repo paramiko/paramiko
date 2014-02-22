@@ -1,6 +1,6 @@
 # Copyright (C) 2003-2007  Robey Pointer <robeypointer@gmail.com>
 #
-# This file is part of paramiko.
+# This file is part of Paramiko.
 #
 # Paramiko is free software; you can redistribute it and/or modify it under the
 # terms of the GNU Lesser General Public License as published by the Free
@@ -194,16 +194,17 @@ class SFTPClient(BaseSFTP):
     def open(self, filename, mode='r', bufsize=-1):
         """
         Open a file on the remote server.  The arguments are the same as for
-        Python's built-in ``file`` (aka ``open``).  A file-like object is
-        returned, which closely mimics the behavior of a normal Python file
-        object, including the ability to be used as a context manager.
+        Python's built-in `python:file` (aka `python:open`).  A file-like
+        object is returned, which closely mimics the behavior of a normal
+        Python file object, including the ability to be used as a context
+        manager.
 
         The mode indicates how the file is to be opened: ``'r'`` for reading,
-        ``'w'`` for writing (truncating an existing file), ``'a'`` for appending,
-        ``'r+'`` for reading/writing, ``'w+'`` for reading/writing (truncating an
-        existing file), ``'a+'`` for reading/appending.  The Python ``'b'`` flag
-        is ignored, since SSH treats all files as binary.  The ``'U'`` flag is
-        supported in a compatible way.
+        ``'w'`` for writing (truncating an existing file), ``'a'`` for
+        appending, ``'r+'`` for reading/writing, ``'w+'`` for reading/writing
+        (truncating an existing file), ``'a+'`` for reading/appending.  The
+        Python ``'b'`` flag is ignored, since SSH treats all files as binary.
+        The ``'U'`` flag is supported in a compatible way.
 
         Since 1.5.2, an ``'x'`` flag indicates that the operation should only
         succeed if the file was created and did not previously exist.  This has
@@ -222,7 +223,7 @@ class SFTPClient(BaseSFTP):
         :param bufsize: desired buffering (-1 = default buffer size)
         :type bufsize: int
         :return: a file object representing the open file
-        :rtype: SFTPFile
+        :rtype: `.SFTPFile`
 
         :raises IOError: if the file could not be opened.
         """
@@ -319,16 +320,16 @@ class SFTPClient(BaseSFTP):
         contains fewer fields.  An SFTP server may return as much or as little
         info as it wants, so the results may vary from server to server.
 
-        Unlike a Python ``stat`` object, the result may not be accessed as a
-        tuple.  This is mostly due to the author's slack factor.
+        Unlike a Python `python:stat` object, the result may not be accessed as
+        a tuple.  This is mostly due to the author's slack factor.
 
-        The fields supported are: ``st_mode``, ``st_size``, ``st_uid``, ``st_gid``,
-        ``st_atime``, and ``st_mtime``.
+        The fields supported are: ``st_mode``, ``st_size``, ``st_uid``,
+        ``st_gid``, ``st_atime``, and ``st_mtime``.
 
         :param path: the filename to stat
         :type path: str
         :return: an object containing attributes about the given file
-        :rtype: SFTPAttributes
+        :rtype: `.SFTPAttributes`
         """
         path = self._adjust_cwd(path)
         self._log(DEBUG, 'stat(%r)' % path)
@@ -346,7 +347,7 @@ class SFTPClient(BaseSFTP):
         :param path: the filename to stat
         :type path: str
         :return: an object containing attributes about the given file
-        :rtype: SFTPAttributes
+        :rtype: `.SFTPAttributes`
         """
         path = self._adjust_cwd(path)
         self._log(DEBUG, 'lstat(%r)' % path)
@@ -374,7 +375,7 @@ class SFTPClient(BaseSFTP):
     def chmod(self, path, mode):
         """
         Change the mode (permissions) of a file.  The permissions are
-        unix-style and identical to those used by Python's ``os.chmod``
+        unix-style and identical to those used by Python's `os.chmod`
         function.
 
         :param path: path of the file to change the permissions of
@@ -391,7 +392,7 @@ class SFTPClient(BaseSFTP):
     def chown(self, path, uid, gid):
         """
         Change the owner (``uid``) and group (``gid``) of a file.  As with
-        Python's ``os.chown`` function, you must pass both arguments, so if you
+        Python's `os.chown` function, you must pass both arguments, so if you
         only want to change one, use `stat` first to retrieve the current
         owner and group.
 
@@ -433,9 +434,9 @@ class SFTPClient(BaseSFTP):
 
     def truncate(self, path, size):
         """
-        Change the size of the file specified by ``path``.  This usually extends
-        or shrinks the size of the file, just like the ``truncate()`` method on
-        Python file objects.
+        Change the size of the file specified by ``path``.  This usually
+        extends or shrinks the size of the file, just like the `~file.truncate`
+        method on Python file objects.
 
         :param path: path of the file to modify
         :type path: str
@@ -498,9 +499,9 @@ class SFTPClient(BaseSFTP):
     def chdir(self, path):
         """
         Change the "current directory" of this SFTP session.  Since SFTP
-        doesn't really have the concept of a current working directory, this
-        is emulated by paramiko.  Once you use this method to set a working
-        directory, all operations on this SFTPClient object will be relative
+        doesn't really have the concept of a current working directory, this is
+        emulated by Paramiko.  Once you use this method to set a working
+        directory, all operations on this `.SFTPClient` object will be relative
         to that path. You can pass in ``None`` to stop using a current working
         directory.
 
@@ -521,7 +522,7 @@ class SFTPClient(BaseSFTP):
     def getcwd(self):
         """
         Return the "current working directory" for this SFTP session, as
-        emulated by paramiko.  If no directory has been set with `chdir`,
+        emulated by Paramiko.  If no directory has been set with `chdir`,
         this method will return ``None``.
 
         :return: the current working directory on the server, or ``None``
@@ -534,7 +535,8 @@ class SFTPClient(BaseSFTP):
     def putfo(self, fl, remotepath, file_size=0, callback=None, confirm=True):
         """
         Copy the contents of an open file object (``fl``) to the SFTP server as
-        ``remotepath``. Any exception raised by operations will be passed through.
+        ``remotepath``. Any exception raised by operations will be passed
+        through.
 
         The SFTP operations use pipelining for speed.
 
@@ -555,7 +557,7 @@ class SFTPClient(BaseSFTP):
 
         :return: an object containing attributes about the given file
             (since 1.7.4)
-        :rtype: SFTPAttributes
+        :rtype: `.SFTPAttributes`
 
         .. versionadded:: 1.4
         """
@@ -603,7 +605,7 @@ class SFTPClient(BaseSFTP):
 
         :return: an object containing attributes about the given file
             (since 1.7.4)
-        :rtype: SFTPAttributes
+        :rtype: `.SFTPAttributes`
 
         .. versionadded:: 1.4
         """

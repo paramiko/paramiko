@@ -28,12 +28,13 @@ class SFTPAttributes (object):
     client or server mode.  It attemps to mirror the object returned by
     `os.stat` as closely as possible, so it may have the following fields,
     with the same meanings as those returned by an `os.stat` object:
-        - st_size
-        - st_uid
-        - st_gid
-        - st_mode
-        - st_atime
-        - st_mtime
+
+        - ``st_size``
+        - ``st_uid``
+        - ``st_gid``
+        - ``st_mode``
+        - ``st_atime``
+        - ``st_mtime``
 
     Because SFTP allows flags to have other arbitrary named attributes, these
     are stored in a dict named ``attr``.  Occasionally, the filename is also
@@ -61,10 +62,10 @@ class SFTPAttributes (object):
 
     def from_stat(cls, obj, filename=None):
         """
-        Create an SFTPAttributes object from an existing ``stat`` object (an
-        object returned by ``os.stat``).
+        Create an `.SFTPAttributes` object from an existing ``stat`` object (an
+        object returned by `os.stat`).
 
-        :param obj: an object returned by ``os.stat`` (or equivalent).
+        :param obj: an object returned by `os.stat` (or equivalent).
         :type obj: object
         :param filename: the filename associated with this file.
         :type filename: str

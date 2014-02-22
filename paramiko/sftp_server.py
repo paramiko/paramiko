@@ -42,7 +42,7 @@ class SFTPServer (BaseSFTP, SubsystemHandler):
     """
     Server-side SFTP subsystem support.  Since this is a `.SubsystemHandler`,
     it can be (and is meant to be) set as the handler for ``"sftp"`` requests.
-    Use `Transport.set_subsystem_handler` to activate this class.
+    Use `.Transport.set_subsystem_handler` to activate this class.
     """
 
     def __init__(self, channel, name, server, sftp_si=SFTPServerInterface, *largs, **kwargs):
@@ -50,7 +50,7 @@ class SFTPServer (BaseSFTP, SubsystemHandler):
         The constructor for SFTPServer is meant to be called from within the
         `.Transport` as a subsystem handler.  ``server`` and any additional
         parameters or keyword parameters are passed from the original call to
-        `Transport.set_subsystem_handler`.
+        `.Transport.set_subsystem_handler`.
 
         :param channel: channel passed from the `.Transport`.
         :type channel: `.Channel`
@@ -128,7 +128,7 @@ class SFTPServer (BaseSFTP, SubsystemHandler):
 
         :param e: an errno code, as from ``OSError.errno``.
         :type e: int
-        :return: an SFTP error code like `.SFTP_NO_SUCH_FILE`.
+        :return: an SFTP error code like ``SFTP_NO_SUCH_FILE``.
         :rtype: int
         """
         if e == errno.EACCES:

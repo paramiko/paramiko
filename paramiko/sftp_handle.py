@@ -41,7 +41,7 @@ class SFTPHandle (object):
         SFTP.  If ``flags`` is passed in, it's used to determine if the file
         is open in append mode.
         
-        :param flags: optional flags as passed to `SFTPServerInterface.open`
+        :param flags: optional flags as passed to `.SFTPServerInterface.open`
         :type flags: int
         """
         self.__flags = flags
@@ -149,7 +149,7 @@ class SFTPHandle (object):
     def stat(self):
         """
         Return an `.SFTPAttributes` object referring to this open file, or an
-        error code.  This is equivalent to `SFTPServerInterface.stat`, except
+        error code.  This is equivalent to `.SFTPServerInterface.stat`, except
         it's called on an open file instead of a path.
 
         :return: an attributes object for the given file, or an SFTP error

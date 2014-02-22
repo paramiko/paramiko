@@ -17,7 +17,7 @@
 # 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
 
 """
-`.SFTPServerInterface` is an interface to override for SFTP server support.
+An interface to override for SFTP server support.
 """
 
 import os
@@ -64,7 +64,7 @@ class SFTPServerInterface (object):
         """
         The SFTP server session has just ended, either cleanly or via an
         exception.  This method is meant to be overridden to perform any
-        necessary cleanup before this ``SFTPServerInterface`` object is
+        necessary cleanup before this `.SFTPServerInterface` object is
         destroyed.
         """
         pass
@@ -105,7 +105,7 @@ class SFTPServerInterface (object):
         :param attr: requested attributes of the file if it is newly created.
         :type attr: `.SFTPAttributes`
         :return: a new `.SFTPHandle` or error code.
-        :rtype `.SFTPHandle`
+        :rtype: `.SFTPHandle`
         """
         return SFTP_OP_UNSUPPORTED
 
@@ -120,7 +120,7 @@ class SFTPServerInterface (object):
         ``os.stat``.  In addition, each object should have its ``filename``
         field filled in, since this is important to a directory listing and
         not normally present in ``os.stat`` results.  The method
-        `SFTPAttributes.from_stat` will usually do what you want.
+        `.SFTPAttributes.from_stat` will usually do what you want.
 
         In case of an error, you should return one of the ``SFTP_*`` error
         codes, such as `.SFTP_PERMISSION_DENIED`.
@@ -131,11 +131,13 @@ class SFTPServerInterface (object):
             `.SFTPAttributes` objects.
         :rtype: list of `.SFTPAttributes` or error code
         
-        .. note:: You should normalize the given ``path`` first (see the
-        ``os.path`` module) and check appropriate permissions before returning
-        the list of files.  Be careful of malicious clients attempting to use
-        relative paths to escape restricted folders, if you're doing a direct
-        translation from the SFTP server path to your local filesystem.
+        .. note::
+            You should normalize the given ``path`` first (see the `os.path`
+            module) and check appropriate permissions before returning the list
+            of files.  Be careful of malicious clients attempting to use
+            relative paths to escape restricted folders, if you're doing a
+            direct translation from the SFTP server path to your local
+            filesystem.
         """
         return SFTP_OP_UNSUPPORTED
 
