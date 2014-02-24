@@ -27,10 +27,10 @@ from paramiko import util
 
 class ServerInterface (object):
     """
-    This class defines an interface for controlling the behavior of paramiko
+    This class defines an interface for controlling the behavior of Paramiko
     in server mode.
 
-    Methods on this class are called from paramiko's primary thread, so you
+    Methods on this class are called from Paramiko's primary thread, so you
     shouldn't do too much work in them.  (Certainly nothing that blocks or
     sleeps.)
     """
@@ -161,7 +161,7 @@ class ServerInterface (object):
         options it has for continuing the authentication.)
 
         Note that you don't have to actually verify any key signtature here.
-        If you're willing to accept the key, paramiko will do the work of
+        If you're willing to accept the key, Paramiko will do the work of
         verifying the client's signature.
         
         The default implementation always returns `.AUTH_FAILED`.
