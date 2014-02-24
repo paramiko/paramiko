@@ -56,7 +56,7 @@ class ServerInterface (object):
         The ``chanid`` parameter is a small number that uniquely identifies the
         channel within a `.Transport`.  A `.Channel` object is not created
         unless this method returns ``OPEN_SUCCEEDED`` -- once a
-        `.Channel` object is created, you can call `Channel.get_id` to
+        `.Channel` object is created, you can call `.Channel.get_id` to
         retrieve the channel ID.
 
         The return value should either be ``OPEN_SUCCEEDED`` (or
@@ -169,7 +169,7 @@ class ServerInterface (object):
         :param username: the username of the authenticating client
         :type username: str
         :param key: the key object provided by the client
-        :type key: `PKey <pkey.PKey>`
+        :type key: `.PKey`
         :return: `.AUTH_FAILED` if the client can't authenticate
             with this key; `.AUTH_SUCCESSFUL` if it can;
             `.AUTH_PARTIALLY_SUCCESSFUL` if it can authenticate with
@@ -381,7 +381,7 @@ class ServerInterface (object):
         subsystem.  An example of a subsystem is ``sftp``.
 
         The default implementation checks for a subsystem handler assigned via
-        `Transport.set_subsystem_handler`.
+        `.Transport.set_subsystem_handler`.
         If one has been set, the handler is invoked and this method returns
         ``True``.  Otherwise it returns ``False``.
 
@@ -432,7 +432,7 @@ class ServerInterface (object):
         """
         Determine if the client will be provided with an X11 session.  If this
         method returns ``True``, X11 applications should be routed through new
-        SSH channels, using `Transport.open_x11_channel`.
+        SSH channels, using `.Transport.open_x11_channel`.
         
         The default implementation always returns ``False``.
         
@@ -477,7 +477,7 @@ class ServerInterface (object):
         The ``chanid`` parameter is a small number that uniquely identifies the
         channel within a `.Transport`.  A `.Channel` object is not created
         unless this method returns ``OPEN_SUCCEEDED`` -- once a
-        `.Channel` object is created, you can call `Channel.get_id` to
+        `.Channel` object is created, you can call `.Channel.get_id` to
         retrieve the channel ID.
 
         The origin and destination parameters are (ip_address, port) tuples
@@ -554,9 +554,7 @@ class InteractiveQuery (object):
 class SubsystemHandler (threading.Thread):
     """
     Handler for a subsytem in server mode.  If you create a subclass of this
-    class and pass it to
-    `Transport.set_subsystem_handler`,
-    an object of this
+    class and pass it to `.Transport.set_subsystem_handler`, an object of this
     class will be created for each request for this subsystem.  Each new object
     will be executed within its own new thread by calling `start_subsystem`.
     When that method completes, the channel is closed.
@@ -622,12 +620,13 @@ class SubsystemHandler (threading.Thread):
         The combination of ``transport`` and ``channel`` are unique; this handler
         corresponds to exactly one `.Channel` on one `.Transport`.
 
-        .. note:: It is the responsibility of this method to exit if the
-            underlying `.Transport` is closed.  This can be done by checking
-            `Transport.is_active` or noticing an EOF
-            on the `.Channel`.  If this method loops forever without checking
-            for this case, your Python interpreter may refuse to exit because
-            this thread will still be running.
+        .. note::
+            It is the responsibility of this method to exit if the underlying
+            `.Transport` is closed.  This can be done by checking
+            `.Transport.is_active` or noticing an EOF on the `.Channel`.  If
+            this method loops forever without checking for this case, your
+            Python interpreter may refuse to exit because this thread will
+            still be running.
 
         :param name: name of the requested subsystem.
         :type name: str
