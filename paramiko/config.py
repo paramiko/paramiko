@@ -18,7 +18,7 @@
 # 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
 
 """
-`.SSHConfig`.
+Configuration file (aka ``ssh_config``) support.
 """
 
 import fnmatch
@@ -28,60 +28,6 @@ import socket
 
 SSH_PORT = 22
 proxy_re = re.compile(r"^(proxycommand)\s*=*\s*(.*)", re.I)
-
-
-class LazyFqdn(object):
-    """
-    Returns the host's fqdn on request as string.
-    """
-
-    def __init__(self, config, host=None):
-        self.fqdn = None
-        self.config = config
-        self.host = host
-
-    def __str__(self):
-        if self.fqdn is None:
-            #
-            # If the SSH config contains AddressFamily, use that when
-            # determining  the local host's FQDN. Using socket.getfqdn() from
-            # the standard library is the most general solution, but can
-            # result in noticeable delays on some platforms when IPv6 is
-            # misconfigured or not available, as it calls getaddrinfo with no
-            # address family specified, so both IPv4 and IPv6 are checked.
-            #
-
-            # Handle specific option
-            fqdn = None
-            address_family = self.config.get('addressfamily', 'any').lower()
-            if address_family != 'any':
-                try:
-                    family = socket.AF_INET if address_family == 'inet' \
-                        else socket.AF_INET6
-                    results = socket.getaddrinfo(
-                        self.host,
-                        None,
-                        family,
-                        socket.SOCK_DGRAM,
-                        socket.IPPROTO_IP,
-                        socket.AI_CANONNAME
-                    )
-                    for res in results:
-                        af, socktype, proto, canonname, sa = res
-                        if canonname and '.' in canonname:
-                            fqdn = canonname
-                            break
-                # giaerror -> socket.getaddrinfo() can't resolve self.host
-                # (which is from socket.gethostname()). Fall back to the
-                # getfqdn() call below.
-                except socket.gaierror:
-                    pass
-            # Handle 'any' / unspecified
-            if fqdn is None:
-                fqdn = socket.getfqdn()
-            # Cache
-            self.fqdn = fqdn
-        return self.fqdn
 
 
 class SSHConfig (object):
@@ -264,3 +210,57 @@ class SSHConfig (object):
                     else:
                         config[k] = config[k].replace(find, str(replace))
         return config
+
+
+class LazyFqdn(object):
+    """
+    Returns the host's fqdn on request as string.
+    """
+
+    def __init__(self, config, host=None):
+        self.fqdn = None
+        self.config = config
+        self.host = host
+
+    def __str__(self):
+        if self.fqdn is None:
+            #
+            # If the SSH config contains AddressFamily, use that when
+            # determining  the local host's FQDN. Using socket.getfqdn() from
+            # the standard library is the most general solution, but can
+            # result in noticeable delays on some platforms when IPv6 is
+            # misconfigured or not available, as it calls getaddrinfo with no
+            # address family specified, so both IPv4 and IPv6 are checked.
+            #
+
+            # Handle specific option
+            fqdn = None
+            address_family = self.config.get('addressfamily', 'any').lower()
+            if address_family != 'any':
+                try:
+                    family = socket.AF_INET if address_family == 'inet' \
+                        else socket.AF_INET6
+                    results = socket.getaddrinfo(
+                        self.host,
+                        None,
+                        family,
+                        socket.SOCK_DGRAM,
+                        socket.IPPROTO_IP,
+                        socket.AI_CANONNAME
+                    )
+                    for res in results:
+                        af, socktype, proto, canonname, sa = res
+                        if canonname and '.' in canonname:
+                            fqdn = canonname
+                            break
+                # giaerror -> socket.getaddrinfo() can't resolve self.host
+                # (which is from socket.gethostname()). Fall back to the
+                # getfqdn() call below.
+                except socket.gaierror:
+                    pass
+            # Handle 'any' / unspecified
+            if fqdn is None:
+                fqdn = socket.getfqdn()
+            # Cache
+            self.fqdn = fqdn
+        return self.fqdn
