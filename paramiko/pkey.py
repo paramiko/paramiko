@@ -52,14 +52,14 @@ class PKey (object):
         ``data`` is given, the key's public part(s) will be filled in from
         the string.
 
-        :param msg: an optional SSH `.Message` containing a public key of this
-        type.
+        :param msg:
+            an optional SSH `.Message` containing a public key of this type.
         :type msg: `.Message`
-        :param data: an optional string containing a public key of this type
-        :type data: str
+        :param str data: an optional string containing a public key of this type
 
-        :raises SSHException: if a key cannot be created from the ``data`` or
-        ``msg`` given, or no key was passed in.
+        :raises SSHException:
+            if a key cannot be created from the ``data`` or ``msg`` given, or
+            no key was passed in.
         """
         pass
 
@@ -96,8 +96,9 @@ class PKey (object):
         """
         Return the name of this private key implementation.
 
-        :return: name of this private key type, in SSH terminology (for
-        example, ``"ssh-rsa"``).
+        :return:
+            name of this private key type, in SSH terminology (for example,
+            ``"ssh-rsa"``).
         :rtype: str
         """
         return ''
