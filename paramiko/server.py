@@ -25,48 +25,6 @@ from paramiko.common import *
 from paramiko import util
 
 
-class InteractiveQuery (object):
-    """
-    A query (set of prompts) for a user during interactive authentication.
-    """
-    
-    def __init__(self, name='', instructions='', *prompts):
-        """
-        Create a new interactive query to send to the client.  The name and
-        instructions are optional, but are generally displayed to the end
-        user.  A list of prompts may be included, or they may be added via
-        the `add_prompt` method.
-        
-        :param name: name of this query
-        :type name: str
-        :param instructions: user instructions (usually short) about this query
-        :type instructions: str
-        :param prompts: one or more authentication prompts
-        :type prompts: str
-        """
-        self.name = name
-        self.instructions = instructions
-        self.prompts = []
-        for x in prompts:
-            if (type(x) is str) or (type(x) is unicode):
-                self.add_prompt(x)
-            else:
-                self.add_prompt(x[0], x[1])
-    
-    def add_prompt(self, prompt, echo=True):
-        """
-        Add a prompt to this query.  The prompt should be a (reasonably short)
-        string.  Multiple prompts can be added to the same query.
-        
-        :param prompt: the user prompt
-        :type prompt: str
-        :param echo: ``True`` (default) if the user's response should be echoed;
-            ``False`` if not (for a password or similar)
-        :type echo: bool
-        """
-        self.prompts.append((prompt, echo))
-
-
 class ServerInterface (object):
     """
     This class defines an interface for controlling the behavior of paramiko
@@ -549,6 +507,48 @@ class ServerInterface (object):
         :rtype: int
         """
         return OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED
+
+
+class InteractiveQuery (object):
+    """
+    A query (set of prompts) for a user during interactive authentication.
+    """
+    
+    def __init__(self, name='', instructions='', *prompts):
+        """
+        Create a new interactive query to send to the client.  The name and
+        instructions are optional, but are generally displayed to the end
+        user.  A list of prompts may be included, or they may be added via
+        the `add_prompt` method.
+        
+        :param name: name of this query
+        :type name: str
+        :param instructions: user instructions (usually short) about this query
+        :type instructions: str
+        :param prompts: one or more authentication prompts
+        :type prompts: str
+        """
+        self.name = name
+        self.instructions = instructions
+        self.prompts = []
+        for x in prompts:
+            if (type(x) is str) or (type(x) is unicode):
+                self.add_prompt(x)
+            else:
+                self.add_prompt(x[0], x[1])
+    
+    def add_prompt(self, prompt, echo=True):
+        """
+        Add a prompt to this query.  The prompt should be a (reasonably short)
+        string.  Multiple prompts can be added to the same query.
+        
+        :param prompt: the user prompt
+        :type prompt: str
+        :param echo: ``True`` (default) if the user's response should be echoed;
+            ``False`` if not (for a password or similar)
+        :type echo: bool
+        """
+        self.prompts.append((prompt, echo))
 
 
 class SubsystemHandler (threading.Thread):
