@@ -40,6 +40,7 @@ from paramiko.util import retry_on_signal
 SSH2_AGENTC_REQUEST_IDENTITIES, SSH2_AGENT_IDENTITIES_ANSWER, \
     SSH2_AGENTC_SIGN_REQUEST, SSH2_AGENT_SIGN_RESPONSE = range(11, 15)
 
+
 class AgentSSH(object):
     """
     Client interface for using private keys from an SSH agent running on the
@@ -100,6 +101,7 @@ class AgentSSH(object):
             result += extra
         return result
 
+
 class AgentProxyThread(threading.Thread):
     """ Class in charge of communication between two chan """
     def __init__(self, agent):
@@ -146,6 +148,7 @@ class AgentProxyThread(threading.Thread):
         self.__inr.close()
         self._agent._conn.close()
 
+
 class AgentLocalProxy(AgentProxyThread):
     """
     Class to be used when wanting to ask a local SSH Agent being
@@ -168,6 +171,7 @@ class AgentLocalProxy(AgentProxyThread):
             raise
         return None
 
+
 class AgentRemoteProxy(AgentProxyThread):
     """
     Class to be used when wanting to ask a remote SSH Agent
@@ -182,6 +186,7 @@ class AgentRemoteProxy(AgentProxyThread):
         asked from a remote fake agent (so use a unix socket for ex.)
         """
         return (self.__chan, None)
+
 
 class AgentClientProxy(object):
     """
@@ -236,6 +241,7 @@ class AgentClientProxy(object):
         if self._conn is not None:
             self._conn.close()
 
+
 class AgentServerProxy(AgentSSH):
     """
     :param t : transport used for the Forward for SSH Agent communication
@@ -286,6 +292,7 @@ class AgentServerProxy(AgentSSH):
     def _get_filename(self):
         return self._file
 
+
 class AgentRequestHandler(object):
     def __init__(self, chanClient):
         self._conn = None
@@ -303,6 +310,7 @@ class AgentRequestHandler(object):
         for p in self.__clientProxys:
             p.close()
 
+
 class Agent(AgentSSH):
     """
     Client interface for using private keys from an SSH agent running on the
@@ -314,7 +322,6 @@ class Agent(AgentSSH):
     sockets, this probably doesn't work on Windows.  It does work on most
     posix platforms though (Linux and MacOS X, for example).
     """
-
     def __init__(self):
         """
         Open a session with the local machine's SSH agent, if one is running.
@@ -350,13 +357,13 @@ class Agent(AgentSSH):
         """
         self._close()
 
+
 class AgentKey(PKey):
     """
     Private key held in a local SSH agent.  This type of key can be used for
     authenticating to a remote server (signing).  Most other key operations
     work as expected.
     """
-
     def __init__(self, agent, blob):
         self.agent = agent
         self.blob = blob
