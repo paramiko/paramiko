@@ -70,8 +70,9 @@ class Transport (threading.Thread):
     """
     An SSH Transport attaches to a stream (usually a socket), negotiates an
     encrypted session, authenticates, and then creates stream tunnels, called
-    `channels <.Channel>`, across the session.  Multiple channels can be multiplexed
-    across a single session (and often are, in the case of port forwardings).
+    `channels <.Channel>`, across the session.  Multiple channels can be
+    multiplexed across a single session (and often are, in the case of port
+    forwardings).
     """
     _PROTO_ID = '2.0'
     _CLIENT_ID = 'paramiko_%s' % (paramiko.__version__)
