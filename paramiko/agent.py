@@ -171,10 +171,6 @@ class AgentRemoteProxy(AgentProxyThread):
         self.__chan = chan
 
     def get_connection(self):
-        """
-        Class to be used when wanting to ask a local SSH Agent being
-        asked from a remote fake agent (so use a unix socket for ex.)
-        """
         return (self.__chan, None)
 
 
