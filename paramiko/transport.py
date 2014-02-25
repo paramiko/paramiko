@@ -127,30 +127,30 @@ class Transport (threading.Thread):
     def __init__(self, sock):
         """
         Create a new SSH session over an existing socket, or socket-like
-        object.  This only creates the Transport object; it doesn't begin the
+        object.  This only creates the `.Transport` object; it doesn't begin the
         SSH session yet.  Use `connect` or `start_client` to begin a client
         session, or `start_server` to begin a server session.
 
         If the object is not actually a socket, it must have the following
         methods:
-            - ``send(str)``: Writes from 1 to ``len(str)`` bytes, and
-              returns an int representing the number of bytes written.  Returns
-              0 or raises ``EOFError`` if the stream has been closed.
-            - ``recv(int)``: Reads from 1 to ``int`` bytes and returns them as a
-              string.  Returns 0 or raises ``EOFError`` if the stream has been
-              closed.
-            - ``close()``: Closes the socket.
-            - ``settimeout(n)``: Sets a (float) timeout on I/O operations.
+
+        - ``send(str)``: Writes from 1 to ``len(str)`` bytes, and returns an
+          int representing the number of bytes written.  Returns
+          0 or raises ``EOFError`` if the stream has been closed.
+        - ``recv(int)``: Reads from 1 to ``int`` bytes and returns them as a
+          string.  Returns 0 or raises ``EOFError`` if the stream has been
+          closed.
+        - ``close()``: Closes the socket.
+        - ``settimeout(n)``: Sets a (float) timeout on I/O operations.
 
         For ease of use, you may also pass in an address (as a tuple) or a host
         string as the ``sock`` argument.  (A host string is a hostname with an
         optional port (separated by ``":"``) which will be converted into a
         tuple of ``(hostname, port)``.)  A socket will be connected to this
-        address and used for communication.  Exceptions from the ``socket`` call
-        may be thrown in this case.
+        address and used for communication.  Exceptions from the ``socket``
+        call may be thrown in this case.
 
-        :param sock: a socket or socket-like object to create the session over.
-        :type sock: socket
+        :param socket sock: a socket or socket-like object to create the session over.
         """
         if isinstance(sock, (str, unicode)):
             # convert "host:port" into (host, port)
