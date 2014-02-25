@@ -235,7 +235,7 @@ class AgentClientProxy(object):
 
 class AgentServerProxy(AgentSSH):
     """
-    :param t : transport used for the Forward for SSH Agent communication
+    :param t: transport used for SSH Agent communication forwarding
 
     :raises SSHException: mostly if we lost the agent
     """
