@@ -420,9 +420,8 @@ class Transport (threading.Thread):
         key info, not just the public half.  Only one key of each type (RSA or
         DSS) is kept.
 
-        :param key: the host key to add, usually an `RSAKey <rsakey.RSAKey>` or
-            `DSSKey <dsskey.DSSKey>`.
-        :type key: `PKey <pkey.PKey>`
+        :param key: the host key to add, usually an `.RSAKey` or `.DSSKey`.
+        :type key: `.PKey`
         """
         self.server_key_dict[key.get_name()] = key
 
@@ -438,7 +437,7 @@ class Transport (threading.Thread):
         yet, ``None`` is returned.  In client mode, the behavior is undefined.
 
         :return: host key of the type negotiated by the client, or ``None``.
-        :rtype: `PKey <pkey.PKey>`
+        :rtype: `.PKey`
         """
         try:
             return self.server_key_dict[self.host_key_type]
@@ -458,16 +457,16 @@ class Transport (threading.Thread):
         fits certain criteria.  These primes are pretty difficult to compute,
         so they can't be generated on demand.  But many systems contain a file
         of suitable primes (usually named something like ``/etc/ssh/moduli``).
-        If you call ``load_server_moduli`` and it returns ``True``, then this
+        If you call `load_server_moduli` and it returns ``True``, then this
         file of primes has been loaded and we will support "group-exchange" in
         server mode.  Otherwise server mode will just claim that it doesn't
         support that method of key negotiation.
 
-        :param filename: optional path to the moduli file, if you happen to
-            know that it's not in a standard location.
-        :type filename: str
-        :return: True if a moduli file was successfully loaded; False
-            otherwise.
+        :param str filename:
+            optional path to the moduli file, if you happen to know that it's
+            not in a standard location.
+        :return:
+            True if a moduli file was successfully loaded; False otherwise.
         :rtype: bool
 
         .. note:: This has no effect when used in client mode.
