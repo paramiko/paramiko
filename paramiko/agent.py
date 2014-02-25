@@ -17,7 +17,7 @@
 # 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
 
 """
-SSH Agent interface for Unix clients.
+SSH Agent interface
 """
 
 import os
@@ -42,16 +42,6 @@ SSH2_AGENTC_REQUEST_IDENTITIES, SSH2_AGENT_IDENTITIES_ANSWER, \
 
 
 class AgentSSH(object):
-    """
-    Client interface for using private keys from an SSH agent running on the
-    local machine.  If an SSH agent is running, this class can be used to
-    connect to it and retreive `.PKey` objects which can be used when
-    attempting to authenticate to remote SSH servers.
-
-    Because the SSH agent protocol uses environment variables and unix-domain
-    sockets, this probably doesn't work on Windows.  It does work on most
-    posix platforms though (Linux and MacOS X, for example).
-    """
     def __init__(self):
         self._conn = None
         self._keys = ()
@@ -318,19 +308,14 @@ class Agent(AgentSSH):
     connect to it and retreive `.PKey` objects which can be used when
     attempting to authenticate to remote SSH servers.
 
-    Because the SSH agent protocol uses environment variables and unix-domain
-    sockets, this probably doesn't work on Windows.  It does work on most
-    posix platforms though (Linux and MacOS X, for example).
+    Upon initialization, a session with the local machine's SSH agent is
+    opened, if one is running. If no agent is running, initialization will
+    succeed, but `get_keys` will return an empty tuple.
+
+    :raises SSHException:
+        if an SSH agent is found, but speaks an incompatible protocol
     """
     def __init__(self):
-        """
-        Open a session with the local machine's SSH agent, if one is running.
-        If no agent is running, initialization will succeed, but `get_keys`
-        will return an empty tuple.
-
-        :raises SSHException: if an SSH agent is found, but speaks an
-            incompatible protocol
-        """
         AgentSSH.__init__(self)
 
         if ('SSH_AUTH_SOCK' in os.environ) and (sys.platform != 'win32'):
