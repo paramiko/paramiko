@@ -201,7 +201,7 @@ class AgentClientProxy(object):
 
     def connect(self):
         """
-        Method automatically called by the run() method of the AgentProxyThread
+        Method automatically called by ``AgentProxyThread.run``.
         """
         if ('SSH_AUTH_SOCK' in os.environ) and (sys.platform != 'win32'):
             conn = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
