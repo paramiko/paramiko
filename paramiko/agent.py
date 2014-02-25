@@ -93,7 +93,9 @@ class AgentSSH(object):
 
 
 class AgentProxyThread(threading.Thread):
-    """ Class in charge of communication between two chan """
+    """
+    Class in charge of communication between two channels.
+    """
     def __init__(self, agent):
         threading.Thread.__init__(self, target=self.run)
         self._agent = agent
@@ -148,8 +150,10 @@ class AgentLocalProxy(AgentProxyThread):
         AgentProxyThread.__init__(self, agent)
 
     def get_connection(self):
-        """ Return a pair of socket object and string address
-        May Block !
+        """
+        Return a pair of socket object and string address.
+
+        May block!
         """
         conn = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         try:
@@ -177,13 +181,14 @@ class AgentRemoteProxy(AgentProxyThread):
 class AgentClientProxy(object):
     """
     Class proxying request as a client:
-       -> client ask for a request_forward_agent()
-       -> server creates a proxy and a fake SSH Agent
-       -> server ask for establishing a connection when needed,
+
+    #. client ask for a request_forward_agent()
+    #. server creates a proxy and a fake SSH Agent
+    #. server ask for establishing a connection when needed,
        calling the forward_agent_handler at client side.
-       -> the forward_agent_handler launch a thread for connecting
+    #. the forward_agent_handler launch a thread for connecting
        the remote fake agent and the local agent
-       -> Communication occurs ...
+    #. Communication occurs ...
     """
     def __init__(self, chanRemote):
         self._conn = None
