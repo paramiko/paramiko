@@ -360,27 +360,29 @@ class Transport (threading.Thread):
         Otherwise an SSHException is raised.
 
         After a successful negotiation, the client will need to authenticate.
-        Override the methods
-        `get_allowed_auths <ServerInterface.get_allowed_auths>`,
-        `check_auth_none <ServerInterface.check_auth_none>`,
-        `check_auth_password <ServerInterface.check_auth_password>`, and
-        `check_auth_publickey <ServerInterface.check_auth_publickey>` in the
-        given ``server`` object to control the authentication process.
+        Override the methods `get_allowed_auths
+        <.ServerInterface.get_allowed_auths>`, `check_auth_none
+        <.ServerInterface.check_auth_none>`, `check_auth_password
+        <.ServerInterface.check_auth_password>`, and `check_auth_publickey
+        <.ServerInterface.check_auth_publickey>` in the given ``server`` object
+        to control the authentication process.
 
-        After a successful authentication, the client should request to open
-        a channel.  Override
-        `check_channel_request <ServerInterface.check_channel_request>` in the
-        given ``server`` object to allow channels to be opened.
+        After a successful authentication, the client should request to open a
+        channel.  Override `check_channel_request
+        <.ServerInterface.check_channel_request>` in the given ``server``
+        object to allow channels to be opened.
 
-        .. note:: After calling this method (or `start_client` or `connect`),
-            you should no longer directly read from or write to the original
-            socket object.
+        .. note::
+            After calling this method (or `start_client` or `connect`), you
+            should no longer directly read from or write to the original socket
+            object.
 
         :param event: an event to trigger when negotiation is complete.
         :type event: threading.Event
-        :param server: an object used to perform authentication and create
-            `channels <Channel>`
-        :type server: `server.ServerInterface`
+        :param server:
+            an object used to perform authentication and create `channels
+            <.Channel>`
+        :type server: `.ServerInterface`
 
         :raises SSHException: if negotiation fails (and no ``event`` was passed
             in)
