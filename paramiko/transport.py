@@ -73,7 +73,6 @@ class Transport (threading.Thread):
     `channels <.Channel>`, across the session.  Multiple channels can be multiplexed
     across a single session (and often are, in the case of port forwardings).
     """
-
     _PROTO_ID = '2.0'
     _CLIENT_ID = 'paramiko_%s' % (paramiko.__version__)
 
