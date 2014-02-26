@@ -61,8 +61,7 @@ class SFTPClient(BaseSFTP):
         An alternate way to create an SFTP client context is by using
         `from_transport`.
 
-        :param sock: an open `.Channel` using the ``"sftp"`` subsystem
-        :type sock: `.Channel`
+        :param .Channel sock: an open `.Channel` using the ``"sftp"`` subsystem
 
         :raises SSHException: if there's an exception while negotiating
             sftp
@@ -91,11 +90,10 @@ class SFTPClient(BaseSFTP):
         """
         Create an SFTP client channel from an open `.Transport`.
 
-        :param t: an open `.Transport` which is already authenticated
-        :type t: `.Transport`
-        :return: a new `.SFTPClient` object, referring to an sftp session
-            (channel) across the transport
-        :rtype: `.SFTPClient`
+        :param .Transport t: an open `.Transport` which is already authenticated
+        :return:
+            a new `.SFTPClient` object, referring to an sftp session (channel)
+            across the transport
         """
         chan = t.open_session()
         if chan is None:
@@ -125,9 +123,6 @@ class SFTPClient(BaseSFTP):
         Return the underlying `.Channel` object for this SFTP session.  This
         might be useful for doing things like setting a timeout on the channel.
 
-        :return: the SSH channel
-        :rtype: `.Channel`
-
         .. versionadded:: 1.7.1
         """
         return self.sock
@@ -135,15 +130,13 @@ class SFTPClient(BaseSFTP):
     def listdir(self, path='.'):
         """
         Return a list containing the names of the entries in the given ``path``.
+
         The list is in arbitrary order.  It does not include the special
         entries ``'.'`` and ``'..'`` even if they are present in the folder.
         This method is meant to mirror ``os.listdir`` as closely as possible.
         For a list of full `.SFTPAttributes` objects, see `listdir_attr`.
 
-        :param path: path to list (defaults to ``'.'``)
-        :type path: str
-        :return: list of filenames
-        :rtype: list of str
+        :param str path: path to list (defaults to ``'.'``)
         """
         return [f.filename for f in self.listdir_attr(path)]
 
@@ -159,10 +152,8 @@ class SFTPClient(BaseSFTP):
         attributes, in unix format.  The content of this string will probably
         depend on the SFTP server implementation.
 
-        :param path: path to list (defaults to ``'.'``)
-        :type path: str
-        :return: list of attributes
-        :rtype: list of `.SFTPAttributes`
+        :param str path: path to list (defaults to ``'.'``)
+        :return: list of `.SFTPAttributes` objects
 
         .. versionadded:: 1.2
         """
@@ -216,14 +207,10 @@ class SFTPClient(BaseSFTP):
         buffering, ``1`` uses line buffering, and any number greater than 1
         (``>1``) uses that specific buffer size.
 
-        :param filename: name of the file to open
-        :type filename: str
-        :param mode: mode (Python-style) to open in
-        :type mode: str
-        :param bufsize: desired buffering (-1 = default buffer size)
-        :type bufsize: int
-        :return: a file object representing the open file
-        :rtype: `.SFTPFile`
+        :param str filename: name of the file to open
+        :param str mode: mode (Python-style) to open in
+        :param int bufsize: desired buffering (-1 = default buffer size)
+        :return: an `.SFTPFile` object representing the open file
 
         :raises IOError: if the file could not be opened.
         """
@@ -256,8 +243,7 @@ class SFTPClient(BaseSFTP):
         Remove the file at the given path.  This only works on files; for
         removing folders (directories), use `rmdir`.
 
-        :param path: path (absolute or relative) of the file to remove
-        :type path: str
+        :param str path: path (absolute or relative) of the file to remove
 
         :raises IOError: if the path refers to a folder (directory)
         """
@@ -271,10 +257,8 @@ class SFTPClient(BaseSFTP):
         """
         Rename a file or folder from ``oldpath`` to ``newpath``.
 
-        :param oldpath: existing name of the file or folder
-        :type oldpath: str
-        :param newpath: new name for the file or folder
-        :type newpath: str
+        :param str oldpath: existing name of the file or folder
+        :param str newpath: new name for the file or folder
 
         :raises IOError: if ``newpath`` is a folder, or something else goes
             wrong
@@ -290,10 +274,8 @@ class SFTPClient(BaseSFTP):
         The default mode is 0777 (octal).  On some systems, mode is ignored.
         Where it is used, the current umask value is first masked out.
 
-        :param path: name of the folder to create
-        :type path: str
-        :param mode: permissions (posix-style) for the newly-created folder
-        :type mode: int
+        :param str path: name of the folder to create
+        :param int mode: permissions (posix-style) for the newly-created folder
         """
         path = self._adjust_cwd(path)
         self._log(DEBUG, 'mkdir(%r, %r)' % (path, mode))
@@ -305,8 +287,7 @@ class SFTPClient(BaseSFTP):
         """
         Remove the folder named ``path``.
 
-        :param path: name of the folder to remove
-        :type path: str
+        :param str path: name of the folder to remove
         """
         path = self._adjust_cwd(path)
         self._log(DEBUG, 'rmdir(%r)' % path)
@@ -326,10 +307,10 @@ class SFTPClient(BaseSFTP):
         The fields supported are: ``st_mode``, ``st_size``, ``st_uid``,
         ``st_gid``, ``st_atime``, and ``st_mtime``.
 
-        :param path: the filename to stat
-        :type path: str
-        :return: an object containing attributes about the given file
-        :rtype: `.SFTPAttributes`
+        :param str path: the filename to stat
+        :return:
+            an `.SFTPAttributes` object containing attributes about the given
+            file
         """
         path = self._adjust_cwd(path)
         self._log(DEBUG, 'stat(%r)' % path)
@@ -344,10 +325,10 @@ class SFTPClient(BaseSFTP):
         following symbolic links (shortcuts).  This otherwise behaves exactly
         the same as `stat`.
 
-        :param path: the filename to stat
-        :type path: str
-        :return: an object containing attributes about the given file
-        :rtype: `.SFTPAttributes`
+        :param str path: the filename to stat
+        :return:
+            an `.SFTPAttributes` object containing attributes about the given
+            file
         """
         path = self._adjust_cwd(path)
         self._log(DEBUG, 'lstat(%r)' % path)
@@ -361,10 +342,8 @@ class SFTPClient(BaseSFTP):
         Create a symbolic link (shortcut) of the ``source`` path at
         ``destination``.
 
-        :param source: path of the original file
-        :type source: str
-        :param dest: path of the newly created symlink
-        :type dest: str
+        :param str source: path of the original file
+        :param str dest: path of the newly created symlink
         """
         dest = self._adjust_cwd(dest)
         self._log(DEBUG, 'symlink(%r, %r)' % (source, dest))
@@ -378,10 +357,8 @@ class SFTPClient(BaseSFTP):
         unix-style and identical to those used by Python's `os.chmod`
         function.
 
-        :param path: path of the file to change the permissions of
-        :type path: str
-        :param mode: new permissions
-        :type mode: int
+        :param str path: path of the file to change the permissions of
+        :param int mode: new permissions
         """
         path = self._adjust_cwd(path)
         self._log(DEBUG, 'chmod(%r, %r)' % (path, mode))
@@ -396,12 +373,9 @@ class SFTPClient(BaseSFTP):
         only want to change one, use `stat` first to retrieve the current
         owner and group.
 
-        :param path: path of the file to change the owner and group of
-        :type path: str
-        :param uid: new owner's uid
-        :type uid: int
-        :param gid: new group id
-        :type gid: int
+        :param str path: path of the file to change the owner and group of
+        :param int uid: new owner's uid
+        :param int gid: new group id
         """
         path = self._adjust_cwd(path)
         self._log(DEBUG, 'chown(%r, %r, %r)' % (path, uid, gid))
@@ -418,11 +392,10 @@ class SFTPClient(BaseSFTP):
         modified times, respectively.  This bizarre API is mimicked from Python
         for the sake of consistency -- I apologize.
 
-        :param path: path of the file to modify
-        :type path: str
-        :param times: ``None`` or a tuple of (access time, modified time) in
-            standard internet epoch time (seconds since 01 January 1970 GMT)
-        :type times: tuple(int)
+        :param str path: path of the file to modify
+        :param tuple times:
+            ``None`` or a tuple of (access time, modified time) in standard
+            internet epoch time (seconds since 01 January 1970 GMT)
         """
         path = self._adjust_cwd(path)
         if times is None:
@@ -438,8 +411,7 @@ class SFTPClient(BaseSFTP):
         extends or shrinks the size of the file, just like the `~file.truncate`
         method on Python file objects.
 
-        :param path: path of the file to modify
-        :type path: str
+        :param str path: path of the file to modify
         :param size: the new size of the file
         :type size: int or long
         """
@@ -455,10 +427,8 @@ class SFTPClient(BaseSFTP):
         `symlink` to create these.  The result may be either an absolute or
         relative pathname.
 
-        :param path: path of the symbolic link file
-        :type path: str
-        :return: target path
-        :rtype: str
+        :param str path: path of the symbolic link file
+        :return: target path, as a `str`
         """
         path = self._adjust_cwd(path)
         self._log(DEBUG, 'readlink(%r)' % path)
@@ -479,10 +449,8 @@ class SFTPClient(BaseSFTP):
         server is considering to be the "current folder" (by passing ``'.'``
         as ``path``).
 
-        :param path: path to be normalized
-        :type path: str
-        :return: normalized form of the given path
-        :rtype: str
+        :param str path: path to be normalized
+        :return: normalized form of the given path (as a `str`)
 
         :raises IOError: if the path can't be resolved on the server
         """
@@ -505,8 +473,7 @@ class SFTPClient(BaseSFTP):
         to that path. You can pass in ``None`` to stop using a current working
         directory.
 
-        :param path: new current working directory
-        :type path: str
+        :param str path: new current working directory
 
         :raises IOError: if the requested path doesn't exist on the server
 
@@ -525,9 +492,6 @@ class SFTPClient(BaseSFTP):
         emulated by Paramiko.  If no directory has been set with `chdir`,
         this method will return ``None``.
 
-        :return: the current working directory on the server, or ``None``
-        :rtype: str
-
         .. versionadded:: 1.4
         """
         return self._cwd
@@ -540,26 +504,26 @@ class SFTPClient(BaseSFTP):
 
         The SFTP operations use pipelining for speed.
 
-        :param fl: opened file or file-like object to copy
-        :type localpath: object
-        :param remotepath: the destination path on the SFTP server
-        :type remotepath: str
-        :param file_size: optional size parameter passed to callback. If none is
-            specified, size defaults to 0
-        :type file_size: int
-        :param callback: optional callback function that accepts the bytes
-            transferred so far and the total bytes to be transferred
+        :param file fl: opened file or file-like object to copy
+        :param str remotepath: the destination path on the SFTP server
+        :param int file_size:
+            optional size parameter passed to callback. If none is specified,
+            size defaults to 0
+        :param callable callback:
+            optional callback function (form: ``func(int, int)``) that accepts
+            the bytes transferred so far and the total bytes to be transferred
             (since 1.7.4)
-        :type callback: function(int, int)
-        :param confirm: whether to do a stat() on the file afterwards to
-            confirm the file size (since 1.7.7)
-        :type confirm: bool
+        :param bool confirm:
+            whether to do a stat() on the file afterwards to confirm the file
+            size (since 1.7.7)
 
-        :return: an object containing attributes about the given file
-            (since 1.7.4)
-        :rtype: `.SFTPAttributes`
+        :return:
+            an `.SFTPAttributes` object containing attributes about the given
+            file.
 
         .. versionadded:: 1.4
+        .. versionchanged:: 1.7.4
+            Began returning rich attribute objects.
         """
         fr = self.file(remotepath, 'wb')
         fr.set_pipelined(True)
@@ -591,23 +555,22 @@ class SFTPClient(BaseSFTP):
 
         The SFTP operations use pipelining for speed.
 
-        :param localpath: the local file to copy
-        :type localpath: str
-        :param remotepath: the destination path on the SFTP server
-        :type remotepath: str
-        :param callback: optional callback function that accepts the bytes
-            transferred so far and the total bytes to be transferred
-            (since 1.7.4)
-        :type callback: function(int, int)
-        :param confirm: whether to do a stat() on the file afterwards to
-            confirm the file size (since 1.7.7)
-        :type confirm: bool
+        :param str localpath: the local file to copy
+        :param str remotepath: the destination path on the SFTP server
+        :param callable callback:
+            optional callback function (form: ``func(int, int)``) that accepts
+            the bytes transferred so far and the total bytes to be transferred
+        :param bool confirm:
+            whether to do a stat() on the file afterwards to confirm the file
+            size
 
-        :return: an object containing attributes about the given file
-            (since 1.7.4)
-        :rtype: `.SFTPAttributes`
+        :return: an `.SFTPAttributes` object containing attributes about the given file
 
         .. versionadded:: 1.4
+        .. versionchanged:: 1.7.4
+            ``callback`` and rich attribute return value added.   
+        .. versionchanged:: 1.7.7
+            ``confirm`` param added.
         """
         file_size = os.stat(localpath).st_size
         fl = file(localpath, 'rb')
@@ -623,18 +586,17 @@ class SFTPClient(BaseSFTP):
         operations will be passed through.  This method is primarily provided
         as a convenience.
 
-        :param remotepath: opened file or file-like object to copy to
-        :type remotepath: object
-        :param fl: the destination path on the local host or open file
-            object
-        :type localpath: str
-        :param callback: optional callback function that accepts the bytes
-            transferred so far and the total bytes to be transferred
-            (since 1.7.4)
-        :type callback: function(int, int)
-        :return: the number of bytes written to the opened file object
+        :param object remotepath: opened file or file-like object to copy to
+        :param str fl:
+            the destination path on the local host or open file object
+        :param callable callback:
+            optional callback function (form: ``func(int, int)``) that accepts
+            the bytes transferred so far and the total bytes to be transferred
+        :return: the `number <int>` of bytes written to the opened file object
 
         .. versionadded:: 1.4
+        .. versionchanged:: 1.7.4
+            Added the ``callable`` param.
         """
         fr = self.file(remotepath, 'rb')
         file_size = self.stat(remotepath).st_size
@@ -659,16 +621,15 @@ class SFTPClient(BaseSFTP):
         host as ``localpath``.  Any exception raised by operations will be
         passed through.  This method is primarily provided as a convenience.
 
-        :param remotepath: the remote file to copy
-        :type remotepath: str
-        :param localpath: the destination path on the local host
-        :type localpath: str
-        :param callback: optional callback function that accepts the bytes
-            transferred so far and the total bytes to be transferred
-            (since 1.7.4)
-        :type callback: function(int, int)
+        :param str remotepath: the remote file to copy
+        :param str localpath: the destination path on the local host
+        :param callable callback:
+            optional callback function (form: ``func(int, int)``) that accepts
+            the bytes transferred so far and the total bytes to be transferred
 
         .. versionadded:: 1.4
+        .. versionchanged:: 1.7.4
+            Added the ``callback`` param
         """
         file_size = self.stat(remotepath).st_size
         fl = file(localpath, 'wb')

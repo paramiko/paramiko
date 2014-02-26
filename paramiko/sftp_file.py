@@ -186,9 +186,9 @@ class SFTPFile (BufferedFile):
         Set a timeout on read/write operations on the underlying socket or
         ssh `.Channel`.
 
-        :param timeout: seconds to wait for a pending read/write operation
-            before raising ``socket.timeout``, or ``None`` for no timeout
-        :type timeout: float
+        :param float timeout:
+            seconds to wait for a pending read/write operation before raising
+            ``socket.timeout``, or ``None`` for no timeout
 
         .. seealso:: `.Channel.settimeout`
         """
@@ -196,10 +196,8 @@ class SFTPFile (BufferedFile):
 
     def gettimeout(self):
         """
-        Returns the timeout in seconds (as a float) associated with the socket
-        or ssh `.Channel` used for this file.
-
-        :rtype: float
+        Returns the timeout in seconds (as a `float`) associated with the
+        socket or ssh `.Channel` used for this file.
 
         .. seealso:: `.Channel.gettimeout`
         """
@@ -210,9 +208,8 @@ class SFTPFile (BufferedFile):
         Set blocking or non-blocking mode on the underiying socket or ssh
         `.Channel`.
 
-        :param blocking:
+        :param int blocking:
             0 to set non-blocking mode; non-0 to set blocking mode.
-        :type blocking: int
 
         .. seealso:: `.Channel.setblocking`
         """
@@ -235,8 +232,7 @@ class SFTPFile (BufferedFile):
         exactly like `.SFTPClient.stat`, except that it operates on an
         already-open file.
 
-        :return: an object containing attributes about this file.
-        :rtype: `.SFTPAttributes`
+        :return: an `.SFTPAttributes` object containing attributes about this file.
         """
         t, msg = self.sftp._request(CMD_FSTAT, self.handle)
         if t != CMD_ATTRS:
@@ -249,8 +245,7 @@ class SFTPFile (BufferedFile):
         unix-style and identical to those used by Python's `os.chmod`
         function.
 
-        :param mode: new permissions
-        :type mode: int
+        :param int mode: new permissions
         """
         self.sftp._log(DEBUG, 'chmod(%s, %r)' % (hexlify(self.handle), mode))
         attr = SFTPAttributes()
@@ -264,10 +259,8 @@ class SFTPFile (BufferedFile):
         only want to change one, use `stat` first to retrieve the current
         owner and group.
 
-        :param uid: new owner's uid
-        :type uid: int
-        :param gid: new group id
-        :type gid: int
+        :param int uid: new owner's uid
+        :param int gid: new group id
         """
         self.sftp._log(DEBUG, 'chown(%s, %r, %r)' % (hexlify(self.handle), uid, gid))
         attr = SFTPAttributes()
@@ -283,9 +276,9 @@ class SFTPFile (BufferedFile):
         modified times, respectively.  This bizarre API is mimicked from Python
         for the sake of consistency -- I apologize.
 
-        :param times: ``None`` or a tuple of (access time, modified time) in
-            standard internet epoch time (seconds since 01 January 1970 GMT)
-        :type times: tuple(int)
+        :param tuple times:
+            ``None`` or a tuple of (access time, modified time) in standard
+            internet epoch time (seconds since 01 January 1970 GMT)
         """
         if times is None:
             times = (time.time(), time.time())
@@ -331,21 +324,23 @@ class SFTPFile (BufferedFile):
         of the file, and the last 20 bytes will be the SHA-1 of the next 512
         bytes.
         
-        :param hash_algorithm: the name of the hash algorithm to use (normally
-            ``"sha1"`` or ``"md5"``)
-        :type hash_algorithm: str
-        :param offset: offset into the file to begin hashing (0 means to start
-            from the beginning)
+        :param str hash_algorithm:
+            the name of the hash algorithm to use (normally ``"sha1"`` or
+            ``"md5"``)
+        :param offset:
+            offset into the file to begin hashing (0 means to start from the
+            beginning)
         :type offset: int or long
-        :param length: number of bytes to hash (0 means continue to the end of
-            the file)
+        :param length:
+            number of bytes to hash (0 means continue to the end of the file)
         :type length: int or long
-        :param block_size: number of bytes to hash per result (must not be less
-            than 256; 0 means to compute only one hash of the entire segment)
+        :param int block_size:
+            number of bytes to hash per result (must not be less than 256; 0
+            means to compute only one hash of the entire segment)
         :type block_size: int
-        :return: string of bytes representing the hash of each block,
-            concatenated together
-        :rtype: str
+        :return:
+            `str` of bytes representing the hash of each block, concatenated
+            together
         
         :raises IOError: if the server doesn't support the "check-file"
             extension, or possibly doesn't support the hash algorithm
@@ -374,9 +369,9 @@ class SFTPFile (BufferedFile):
         
         By default, files are not pipelined.
         
-        :param pipelined: ``True`` if pipelining should be turned on for this
-            file; ``False`` otherwise
-        :type pipelined: bool
+        :param bool pipelined:
+            ``True`` if pipelining should be turned on for this file; ``False``
+            otherwise
         
         .. versionadded:: 1.5
         """
@@ -414,11 +409,11 @@ class SFTPFile (BufferedFile):
         prefetch machinery is used to retrieve all the requested blocks at
         once.
         
-        :param chunks: a list of (offset, length) tuples indicating which
-            sections of the file to read
+        :param chunks:
+            a list of (offset, length) tuples indicating which sections of the
+            file to read
         :type chunks: list(tuple(long, int))
         :return: a list of blocks read, in the same order as in ``chunks``
-        :rtype: list(str)
         
         .. versionadded:: 1.5.4
         """

@@ -52,16 +52,13 @@ class SFTPServer (BaseSFTP, SubsystemHandler):
         parameters or keyword parameters are passed from the original call to
         `.Transport.set_subsystem_handler`.
 
-        :param channel: channel passed from the `.Transport`.
-        :type channel: `.Channel`
-        :param name: name of the requested subsystem.
-        :type name: str
-        :param server: the server object associated with this channel and
-            subsystem
-        :type server: `.ServerInterface`
-        :param sftp_si: a subclass of `.SFTPServerInterface` to use for handling
-            individual requests.
-        :type sftp_si: class
+        :param .Channel channel: channel passed from the `.Transport`.
+        :param str name: name of the requested subsystem.
+        :param .ServerInterface server:
+            the server object associated with this channel and subsystem
+        :param class sftp_si:
+            a subclass of `.SFTPServerInterface` to use for handling individual
+            requests.
         """
         BaseSFTP.__init__(self)
         SubsystemHandler.__init__(self, channel, name, server)
@@ -126,10 +123,8 @@ class SFTPServer (BaseSFTP, SubsystemHandler):
         standard SFTP result code.  This is a convenience function for trapping
         exceptions in server code and returning an appropriate result.
 
-        :param e: an errno code, as from ``OSError.errno``.
-        :type e: int
-        :return: an SFTP error code like ``SFTP_NO_SUCH_FILE``.
-        :rtype: int
+        :param int e: an errno code, as from ``OSError.errno``.
+        :return: an `int` SFTP error code like ``SFTP_NO_SUCH_FILE``.
         """
         if e == errno.EACCES:
             # permission denied
@@ -151,11 +146,9 @@ class SFTPServer (BaseSFTP, SubsystemHandler):
         This is meant to be a handy helper function for translating SFTP file
         requests into local file operations.
         
-        :param filename: name of the file to alter (should usually be an
-            absolute path).
-        :type filename: str
-        :param attr: attributes to change.
-        :type attr: `.SFTPAttributes`
+        :param str filename:
+            name of the file to alter (should usually be an absolute path).
+        :param .SFTPAttributes attr: attributes to change.
         """
         if sys.platform != 'win32':
             # mode operations are meaningless on win32

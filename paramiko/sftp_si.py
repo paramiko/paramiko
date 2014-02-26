@@ -46,9 +46,8 @@ class SFTPServerInterface (object):
         Create a new SFTPServerInterface object.  This method does nothing by
         default and is meant to be overridden by subclasses.
         
-        :param server: the server object associated with this channel and
-            SFTP subsystem
-        :type server: `.ServerInterface`
+        :param .ServerInterface server:
+            the server object associated with this channel and SFTP subsystem
         """
         super(SFTPServerInterface, self).__init__(*largs, **kwargs)
 
@@ -96,16 +95,14 @@ class SFTPServerInterface (object):
         .. note:: The SFTP protocol defines all files to be in "binary" mode.
             There is no equivalent to Python's "text" mode.
 
-        :param path: the requested path (relative or absolute) of the file
-            to be opened.
-        :type path: str
-        :param flags: flags or'd together from the ``os`` module indicating the
-            requested mode for opening the file.
-        :type flags: int
-        :param attr: requested attributes of the file if it is newly created.
-        :type attr: `.SFTPAttributes`
+        :param str path:
+            the requested path (relative or absolute) of the file to be opened.
+        :param int flags:
+            flags or'd together from the ``os`` module indicating the requested
+            mode for opening the file.
+        :param .SFTPAttributes attr:
+            requested attributes of the file if it is newly created.
         :return: a new `.SFTPHandle` or error code.
-        :rtype: `.SFTPHandle`
         """
         return SFTP_OP_UNSUPPORTED
 
@@ -125,11 +122,10 @@ class SFTPServerInterface (object):
         In case of an error, you should return one of the ``SFTP_*`` error
         codes, such as `.SFTP_PERMISSION_DENIED`.
 
-        :param path: the requested path (relative or absolute) to be listed.
-        :type path: str
-        :return: a list of the files in the given folder, using
-            `.SFTPAttributes` objects.
-        :rtype: list of `.SFTPAttributes` or error code
+        :param str path: the requested path (relative or absolute) to be listed.
+        :return:
+            a list of the files in the given folder, using `.SFTPAttributes`
+            objects.
         
         .. note::
             You should normalize the given ``path`` first (see the `os.path`
@@ -148,12 +144,12 @@ class SFTPServerInterface (object):
         "aliases"), you should follow them.  (`lstat` is the corresponding
         call that doesn't follow symlinks/aliases.)
 
-        :param path: the requested path (relative or absolute) to fetch
-            file statistics for.
-        :type path: str
-        :return: an attributes object for the given file, or an SFTP error
+        :param str path:
+            the requested path (relative or absolute) to fetch file statistics
+            for.
+        :return:
+            an `.SFTPAttributes` object for the given file, or an SFTP error
             code (like `.SFTP_PERMISSION_DENIED`).
-        :rtype: `.SFTPAttributes` or error code
         """
         return SFTP_OP_UNSUPPORTED
 
@@ -165,12 +161,13 @@ class SFTPServerInterface (object):
         return data on the symlink or alias itself.  (`stat` is the
         corresponding call that follows symlinks/aliases.)
 
-        :param path: the requested path (relative or absolute) to fetch
-            file statistics for.
+        :param str path:
+            the requested path (relative or absolute) to fetch file statistics
+            for.
         :type path: str
-        :return: an attributes object for the given file, or an SFTP error
+        :return:
+            an `.SFTPAttributes` object for the given file, or an SFTP error
             code (like `.SFTP_PERMISSION_DENIED`).
-        :rtype: `.SFTPAttributes` or error code
         """
         return SFTP_OP_UNSUPPORTED
 
@@ -178,11 +175,9 @@ class SFTPServerInterface (object):
         """
         Delete a file, if possible.
 
-        :param path: the requested path (relative or absolute) of the file
-            to delete.
-        :type path: str
-        :return: an SFTP error code like `.SFTP_OK`.
-        :rtype: int
+        :param str path:
+            the requested path (relative or absolute) of the file to delete.
+        :return: an SFTP error code `int` like `.SFTP_OK`.
         """
         return SFTP_OP_UNSUPPORTED
 
@@ -198,13 +193,10 @@ class SFTPServerInterface (object):
             ``newpath`` already exists.  (The rename operation should be
             non-desctructive.)
 
-        :param oldpath: the requested path (relative or absolute) of the
-            existing file.
-        :type oldpath: str
-        :param newpath: the requested new path of the file.
-        :type newpath: str
-        :return: an SFTP error code like `.SFTP_OK`.
-        :rtype: int
+        :param str oldpath:
+            the requested path (relative or absolute) of the existing file.
+        :param str newpath: the requested new path of the file.
+        :return: an SFTP error code `int` like `.SFTP_OK`.
         """
         return SFTP_OP_UNSUPPORTED
 
@@ -218,13 +210,10 @@ class SFTPServerInterface (object):
         the presense of fields before using them.  In some cases, the ``attr``
         object may be completely empty.
 
-        :param path: requested path (relative or absolute) of the new
-            folder.
-        :type path: str
-        :param attr: requested attributes of the new folder.
-        :type attr: `.SFTPAttributes`
-        :return: an SFTP error code like `.SFTP_OK`.
-        :rtype: int
+        :param str path:
+            requested path (relative or absolute) of the new folder.
+        :param .SFTPAttributes attr: requested attributes of the new folder.
+        :return: an SFTP error code `int` like `.SFTP_OK`.
         """
         return SFTP_OP_UNSUPPORTED
 
@@ -234,11 +223,9 @@ class SFTPServerInterface (object):
         existing, empty folder -- otherwise this method should return an
         error.
 
-        :param path: requested path (relative or absolute) of the folder
-            to remove.
-        :type path: str
-        :return: an SFTP error code like `.SFTP_OK`.
-        :rtype: int
+        :param str path:
+            requested path (relative or absolute) of the folder to remove.
+        :return: an SFTP error code `int` like `.SFTP_OK`.
         """
         return SFTP_OP_UNSUPPORTED
 
@@ -248,13 +235,12 @@ class SFTPServerInterface (object):
         only those fields provided by the client in its request, so you
         should check for the presence of fields before using them.
 
-        :param path: requested path (relative or absolute) of the file to
-            change.
-        :type path: str
-        :param attr: requested attributes to change on the file.
-        :type attr: `.SFTPAttributes`
-        :return: an error code like `.SFTP_OK`.
-        :rtype: int
+        :param str path:
+            requested path (relative or absolute) of the file to change.
+        :param attr:
+            requested attributes to change on the file (an `.SFTPAttributes`
+            object)
+        :return: an error code `int` like `.SFTP_OK`.
         """
         return SFTP_OP_UNSUPPORTED
 
@@ -287,11 +273,10 @@ class SFTPServerInterface (object):
         If the specified path doesn't refer to a symbolic link, an error
         should be returned.
         
-        :param path: path (relative or absolute) of the symbolic link.
-        :type path: str
-        :return: the target path of the symbolic link, or an error code like
+        :param str path: path (relative or absolute) of the symbolic link.
+        :return:
+            the target `str` path of the symbolic link, or an error code like
             `.SFTP_NO_SUCH_FILE`.
-        :rtype: str or error code
         """
         return SFTP_OP_UNSUPPORTED
     
@@ -300,13 +285,11 @@ class SFTPServerInterface (object):
         Create a symbolic link on the server, as new pathname ``path``,
         with ``target_path`` as the target of the link.
         
-        :param target_path: path (relative or absolute) of the target for
-            this new symbolic link.
-        :type target_path: str
-        :param path: path (relative or absolute) of the symbolic link to
-            create.
-        :type path: str
-        :return: an error code like ``SFTP_OK``.
-        :rtype: int
+        :param str target_path:
+            path (relative or absolute) of the target for this new symbolic
+            link.
+        :param str path:
+            path (relative or absolute) of the symbolic link to create.
+        :return: an error code `int` like ``SFTP_OK``.
         """
         return SFTP_OP_UNSUPPORTED

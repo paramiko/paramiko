@@ -65,12 +65,9 @@ class SFTPAttributes (object):
         Create an `.SFTPAttributes` object from an existing ``stat`` object (an
         object returned by `os.stat`).
 
-        :param obj: an object returned by `os.stat` (or equivalent).
-        :type obj: object
-        :param filename: the filename associated with this file.
-        :type filename: str
+        :param object obj: an object returned by `os.stat` (or equivalent).
+        :param str filename: the filename associated with this file.
         :return: new `.SFTPAttributes` object with the same attribute fields.
-        :rtype: `.SFTPAttributes`
         """
         attr = cls()
         attr.st_size = obj.st_size

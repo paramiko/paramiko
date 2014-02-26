@@ -41,8 +41,7 @@ class SFTPHandle (object):
         SFTP.  If ``flags`` is passed in, it's used to determine if the file
         is open in append mode.
         
-        :param flags: optional flags as passed to `.SFTPServerInterface.open`
-        :type flags: int
+        :param int flags: optional flags as passed to `.SFTPServerInterface.open`
         """
         self.__flags = flags
         self.__name = None
@@ -85,10 +84,8 @@ class SFTPHandle (object):
 
         :param offset: position in the file to start reading from.
         :type offset: int or long
-        :param length: number of bytes to attempt to read.
-        :type length: int
-        :return: data read from the file, or an SFTP error code.
-        :rtype: str
+        :param int length: number of bytes to attempt to read.
+        :return: data read from the file, or an SFTP error code, as a `str`.
         """
         readfile = getattr(self, 'readfile', None)
         if readfile is None:
@@ -122,8 +119,7 @@ class SFTPHandle (object):
         
         :param offset: position in the file to start reading from.
         :type offset: int or long
-        :param data: data to write into the file.
-        :type data: str
+        :param str data: data to write into the file.
         :return: an SFTP error code like `.SFTP_OK`.
         """
         writefile = getattr(self, 'writefile', None)
@@ -152,8 +148,9 @@ class SFTPHandle (object):
         error code.  This is equivalent to `.SFTPServerInterface.stat`, except
         it's called on an open file instead of a path.
 
-        :return: an attributes object for the given file, or an SFTP error
-            code (like `.SFTP_PERMISSION_DENIED`).
+        :return:
+            an attributes object for the given file, or an SFTP error code
+            (like `.SFTP_PERMISSION_DENIED`).
         :rtype: `.SFTPAttributes` or error code
         """
         return SFTP_OP_UNSUPPORTED
@@ -164,10 +161,8 @@ class SFTPHandle (object):
         only those fields provided by the client in its request, so you should
         check for the presence of fields before using them.
 
-        :param attr: the attributes to change on this file.
-        :type attr: `.SFTPAttributes`
-        :return: an error code like `.SFTP_OK`.
-        :rtype: int
+        :param .SFTPAttributes attr: the attributes to change on this file.
+        :return: an `int` error code like `.SFTP_OK`.
         """
         return SFTP_OP_UNSUPPORTED
 
