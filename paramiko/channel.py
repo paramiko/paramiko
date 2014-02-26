@@ -347,7 +347,7 @@ class Channel (object):
         If a handler is passed in, the handler is called from another thread
         whenever a new x11 connection arrives.  The default handler queues up
         incoming x11 connections, which may be retrieved using
-        `Transport.accept`.  The handler's calling signature is::
+        `.Transport.accept`.  The handler's calling signature is::
         
             handler(channel: Channel, (address: str, port: int))
         
@@ -392,7 +392,7 @@ class Channel (object):
     def request_forward_agent(self, handler):
         """
         Request for a forward SSH Agent on this channel.
-        This is only valid for an ssh-agent from openssh !!!
+        This is only valid for an ssh-agent from OpenSSH !!!
 
         :param handler: a required handler to use for incoming SSH Agent connections
         :type handler: function
@@ -447,7 +447,7 @@ class Channel (object):
         """
         Return the ID # for this channel.  The channel ID is unique across
         a `.Transport` and usually a small number.  It's also the number
-        passed to `ServerInterface.check_channel_request` when determining
+        passed to `.ServerInterface.check_channel_request` when determining
         whether to accept a channel request in server mode.
 
         :return: the ID of this channel.
@@ -1230,10 +1230,12 @@ class ChannelFile (BufferedFile):
     A file-like wrapper around `.Channel`.  A ChannelFile is created by calling
     `Channel.makefile`.
 
-    @bug: To correctly emulate the file object created from a socket's
-        ``makefile`` method, a `.Channel` and its ``ChannelFile`` should be able
-        to be closed or garbage-collected independently.  Currently, closing
-        the ``ChannelFile`` does nothing but flush the buffer.
+    .. warning::
+        To correctly emulate the file object created from a socket's `makefile
+        <python:socket.socket.makefile>` method, a `.Channel` and its
+        `.ChannelFile` should be able to be closed or garbage-collected
+        independently. Currently, closing the `ChannelFile` does nothing but
+        flush the buffer.
     """
 
     def __init__(self, channel, mode = 'r', bufsize = -1):
