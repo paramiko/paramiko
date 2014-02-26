@@ -142,8 +142,8 @@ class Channel (object):
         :param height_pixels: height (in pixels) of the terminal screen
         :type height_pixels: int
         
-        :raises SSHException: if the request was rejected or the channel was
-            closed
+        :raises SSHException:
+            if the request was rejected or the channel was closed
         """
         if self.closed or self.eof_received or self.eof_sent or not self.active:
             raise SSHException('Channel is not open')

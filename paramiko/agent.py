@@ -52,8 +52,9 @@ class AgentSSH(object):
         no SSH agent was running (or it couldn't be contacted), an empty list
         will be returned.
 
-        :return: a list of keys available on the SSH agent
-        :rtype: tuple of `.AgentKey`
+        :return:
+            a tuple of `.AgentKey` objects representing keys available on the
+            SSH agent
         """
         return self._keys
 
@@ -235,7 +236,7 @@ class AgentClientProxy(object):
 
 class AgentServerProxy(AgentSSH):
     """
-    :param t: transport used for SSH Agent communication forwarding
+    :param .Transport t: Transport used for SSH Agent communication forwarding
 
     :raises SSHException: mostly if we lost the agent
     """
@@ -273,8 +274,8 @@ class AgentServerProxy(AgentSSH):
         """
         Helper for the environnement under unix
 
-        :return: the SSH_AUTH_SOCK Environnement variables
-        :rtype: dict
+        :return:
+            a dict containing the ``SSH_AUTH_SOCK`` environnement variables
         """
         env = {}
         env['SSH_AUTH_SOCK'] = self._get_filename()

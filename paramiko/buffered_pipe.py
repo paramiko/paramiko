@@ -54,8 +54,7 @@ class BufferedPipe (object):
         buffer has been closed), the event will be set.  When no data is
         ready, the event will be cleared.
         
-        :param event: the event to set/clear
-        :type event: Event
+        :param threading.Event event: the event to set/clear
         """
         self._event = event
         if len(self._buffer) > 0:
@@ -68,8 +67,7 @@ class BufferedPipe (object):
         Feed new data into this pipe.  This method is assumed to be called
         from a separate thread, so synchronization is done.
         
-        :param data: the data to add
-        :type data: str
+        :param data: the data to add, as a `str`
         """
         self._lock.acquire()
         try:
@@ -86,9 +84,9 @@ class BufferedPipe (object):
         feeder.  A ``False`` result does not mean that the feeder has closed;
         it means you may need to wait before more data arrives.
         
-        :return: ``True`` if a `read` call would immediately return at least
-            one byte; ``False`` otherwise.
-        :rtype: bool
+        :return:
+            ``True`` if a `read` call would immediately return at least one
+            byte; ``False`` otherwise.
         """
         self._lock.acquire()
         try:
@@ -113,8 +111,7 @@ class BufferedPipe (object):
         :param int nbytes: maximum number of bytes to read
         :param float timeout:
             maximum seconds to wait (or ``None``, the default, to wait forever)
-        :return: data
-        :rtype: str
+        :return: the read data, as a `str`
         
         :raises PipeTimeout:
             if a timeout was specified and no data was ready before that
@@ -157,8 +154,9 @@ class BufferedPipe (object):
         """
         Clear out the buffer and return all data that was in it.
         
-        :return: any data that was in the buffer prior to clearing it out
-        :rtype: str
+        :return:
+            any data that was in the buffer prior to clearing it out, as a
+            `str`
         """
         self._lock.acquire()
         try:
@@ -188,8 +186,7 @@ class BufferedPipe (object):
         """
         Return the number of bytes buffered.
         
-        :return: number of bytes buffered
-        :rtype: int
+        :return: number (`int`) of bytes buffered
         """
         self._lock.acquire()
         try:
