@@ -62,9 +62,8 @@ class Channel (object):
         Normally you would only call this method from the constructor of a
         subclass of `.Channel`.
 
-        :param chanid: the ID of this channel, as passed by an existing
-            `.Transport`.
-        :type chanid: int
+        :param int chanid:
+            the ID of this channel, as passed by an existing `.Transport`.
         """
         self.chanid = chanid
         self.remote_chanid = 0
@@ -104,8 +103,6 @@ class Channel (object):
     def __repr__(self):
         """
         Return a string representation of this object, for debugging.
-
-        :rtype: str
         """
         out = '<paramiko.Channel %d' % self.chanid
         if self.closed:
@@ -131,16 +128,11 @@ class Channel (object):
         It isn't necessary (or desirable) to call this method if you're going
         to exectue a single command with `exec_command`.
 
-        :param term: the terminal type to emulate (for example, ``'vt100'``)
-        :type term: str
-        :param width: width (in characters) of the terminal screen
-        :type width: int
-        :param height: height (in characters) of the terminal screen
-        :type height: int
-        :param width_pixels: width (in pixels) of the terminal screen
-        :type width_pixels: int
-        :param height_pixels: height (in pixels) of the terminal screen
-        :type height_pixels: int
+        :param str term: the terminal type to emulate (for example, ``'vt100'``)
+        :param int width: width (in characters) of the terminal screen
+        :param int height: height (in characters) of the terminal screen
+        :param int width_pixels: width (in pixels) of the terminal screen
+        :param int height_pixels: height (in pixels) of the terminal screen
         
         :raises SSHException:
             if the request was rejected or the channel was closed
@@ -199,8 +191,7 @@ class Channel (object):
         can't be reused.  You must open a new channel if you wish to execute
         another command.
 
-        :param command: a shell command to execute.
-        :type command: str
+        :param str command: a shell command to execute.
 
         :raises SSHException: if the request was rejected or the channel was
             closed
@@ -226,11 +217,10 @@ class Channel (object):
         When the subsystem finishes, the channel will be closed and can't be
         reused.
 
-        :param subsystem: name of the subsystem being requested.
-        :type subsystem: str
+        :param str subsystem: name of the subsystem being requested.
 
-        :raises SSHException: if the request was rejected or the channel was
-            closed
+        :raises SSHException:
+            if the request was rejected or the channel was closed
         """
         if self.closed or self.eof_received or self.eof_sent or not self.active:
             raise SSHException('Channel is not open')
@@ -249,17 +239,13 @@ class Channel (object):
         Resize the pseudo-terminal.  This can be used to change the width and
         height of the terminal emulation created in a previous `get_pty` call.
 
-        :param width: new width (in characters) of the terminal screen
-        :type width: int
-        :param height: new height (in characters) of the terminal screen
-        :type height: int
-        :param width_pixels: new width (in pixels) of the terminal screen
-        :type width_pixels: int
-        :param height_pixels: new height (in pixels) of the terminal screen
-        :type height_pixels: int
+        :param int width: new width (in characters) of the terminal screen
+        :param int height: new height (in characters) of the terminal screen
+        :param int width_pixels: new width (in pixels) of the terminal screen
+        :param int height_pixels: new height (in pixels) of the terminal screen
 
-        :raises SSHException: if the request was rejected or the channel was
-            closed
+        :raises SSHException:
+            if the request was rejected or the channel was closed
         """
         if self.closed or self.eof_received or self.eof_sent or not self.active:
             raise SSHException('Channel is not open')
@@ -281,8 +267,9 @@ class Channel (object):
         want to block in `recv_exit_status`. Note that the server may not
         return an exit status in some cases (like bad servers).
         
-        :return: True if `recv_exit_status` will return immediately
-        :rtype: bool
+        :return:
+            ``True`` if `recv_exit_status` will return immediately, else ``False``.
+
         .. versionadded:: 1.7.3
         """
         return self.closed or self.status_event.isSet()
@@ -295,8 +282,7 @@ class Channel (object):
         it does, or until the channel is closed.  If no exit status is
         provided by the server, -1 is returned.
         
-        :return: the exit code of the process on the server.
-        :rtype: int
+        :return: the exit code (as an `int`) of the process on the server.
         
         .. versionadded:: 1.2
         """
@@ -311,8 +297,7 @@ class Channel (object):
         get some sort of status code back from an executed command after
         it completes.
         
-        :param status: the exit code of the process
-        :type status: int
+        :param int status: the exit code of the process
         
         .. versionadded:: 1.2
         """
@@ -351,20 +336,19 @@ class Channel (object):
         
             handler(channel: Channel, (address: str, port: int))
         
-        :param screen_number: the x11 screen number (0, 10, etc)
-        :type screen_number: int
-        :param auth_protocol: the name of the X11 authentication method used;
-            if none is given, ``"MIT-MAGIC-COOKIE-1"`` is used
-        :type auth_protocol: str
-        :param auth_cookie: hexadecimal string containing the x11 auth cookie;
-            if none is given, a secure random 128-bit value is generated
-        :type auth_cookie: str
-        :param single_connection: if True, only a single x11 connection will be
-            forwarded (by default, any number of x11 connections can arrive
-            over this session)
-        :type single_connection: bool
-        :param handler: an optional handler to use for incoming X11 connections
-        :type handler: function
+        :param int screen_number: the x11 screen number (0, 10, etc)
+        :param str auth_protocol:
+            the name of the X11 authentication method used; if none is given,
+            ``"MIT-MAGIC-COOKIE-1"`` is used
+        :param str auth_cookie:
+            hexadecimal string containing the x11 auth cookie; if none is
+            given, a secure random 128-bit value is generated
+        :param bool single_connection:
+            if True, only a single x11 connection will be forwarded (by
+            default, any number of x11 connections can arrive over this
+            session)
+        :param function handler:
+            an optional handler to use for incoming X11 connections
         :return: the auth_cookie used
         """
         if self.closed or self.eof_received or self.eof_sent or not self.active:
@@ -394,11 +378,10 @@ class Channel (object):
         Request for a forward SSH Agent on this channel.
         This is only valid for an ssh-agent from OpenSSH !!!
 
-        :param handler: a required handler to use for incoming SSH Agent connections
-        :type handler: function
+        :param function handler:
+            a required handler to use for incoming SSH Agent connections
 
-        :return: if we are ok or not (at that time we always return ok)
-        :rtype: boolean
+        :return: True if we are ok, else False (at that time we always return ok)
 
         :raises: SSHException in case of channel problem.
         """
@@ -417,9 +400,6 @@ class Channel (object):
     def get_transport(self):
         """
         Return the `.Transport` associated with this channel.
-
-        :return: the `.Transport` that was used to create this channel.
-        :rtype: `.Transport`
         """
         return self.transport
 
@@ -429,29 +409,24 @@ class Channel (object):
         of the channel in logfile entries.  The name can be fetched with the
         `get_name` method.
 
-        :param name: new channel name
-        :type name: str
+        :param str name: new channel name
         """
         self._name = name
 
     def get_name(self):
         """
         Get the name of this channel that was previously set by `set_name`.
-
-        :return: the name of this channel.
-        :rtype: str
         """
         return self._name
 
     def get_id(self):
         """
-        Return the ID # for this channel.  The channel ID is unique across
-        a `.Transport` and usually a small number.  It's also the number
-        passed to `.ServerInterface.check_channel_request` when determining
-        whether to accept a channel request in server mode.
-
-        :return: the ID of this channel.
-        :rtype: int
+        Return the `int` ID # for this channel.
+        
+        The channel ID is unique across a `.Transport` and usually a small
+        number.  It's also the number passed to
+        `.ServerInterface.check_channel_request` when determining whether to
+        accept a channel request in server mode.
         """
         return self.chanid
     
@@ -469,11 +444,10 @@ class Channel (object):
         If this is ``True``, data will never show up via `recv_stderr` or
         `recv_stderr_ready`.
         
-        :param combine: ``True`` if stderr output should be combined into
-            stdout on this channel.
-        :type combine: bool
-        :return: previous setting.
-        :rtype: bool
+        :param bool combine:
+            ``True`` if stderr output should be combined into stdout on this
+            channel.
+        :return: the previous setting (a `bool`).
         
         .. versionadded:: 1.1
         """
@@ -507,9 +481,9 @@ class Channel (object):
         ``chan.settimeout(0.0)`` is equivalent to ``chan.setblocking(0)``;
         ``chan.settimeout(None)`` is equivalent to ``chan.setblocking(1)``.
 
-        :param timeout: seconds to wait for a pending read/write operation
-            before raising ``socket.timeout``, or ``None`` for no timeout.
-        :type timeout: float
+        :param float timeout:
+            seconds to wait for a pending read/write operation before raising
+            ``socket.timeout``, or ``None`` for no timeout.
         """
         self.timeout = timeout
 
@@ -518,9 +492,6 @@ class Channel (object):
         Returns the timeout in seconds (as a float) associated with socket
         operations, or ``None`` if no timeout is set.  This reflects the last
         call to `setblocking` or `settimeout`.
-
-        :return: timeout in seconds, or ``None``.
-        :rtype: float
         """
         return self.timeout
 
@@ -539,9 +510,8 @@ class Channel (object):
         ``chan.setblocking(0)`` is equivalent to ``chan.settimeout(0)``;
         ``chan.setblocking(1)`` is equivalent to ``chan.settimeout(None)``.
 
-        :param blocking: 0 to set non-blocking mode; non-0 to set blocking
-            mode.
-        :type blocking: int
+        :param int blocking:
+            0 to set non-blocking mode; non-0 to set blocking mode.
         """
         if blocking:
             self.settimeout(None)
@@ -551,12 +521,10 @@ class Channel (object):
     def getpeername(self):
         """
         Return the address of the remote side of this Channel, if possible.
-        This is just a wrapper around ``'getpeername'`` on the Transport, used
-        to provide enough of a socket-like interface to allow asyncore to work.
-        (asyncore likes to call ``'getpeername'``.)
 
-        :return: the address if the remote host, if known
-        :rtype: tuple(str, int)
+        This simply wraps `.Transport.getpeername`, used to provide enough of a
+        socket-like interface to allow asyncore to work. (asyncore likes to
+        call ``'getpeername'``.)
         """
         return self.transport.getpeername()
 
@@ -592,9 +560,9 @@ class Channel (object):
         channel.  A ``False`` result does not mean that the channel has closed;
         it means you may need to wait before more data arrives.
         
-        :return: ``True`` if a `recv` call on this channel would immediately
-            return at least one byte; ``False`` otherwise.
-        :rtype: boolean
+        :return:
+            ``True`` if a `recv` call on this channel would immediately return
+            at least one byte; ``False`` otherwise.
         """
         return self.in_buffer.read_ready()
 
@@ -605,13 +573,11 @@ class Channel (object):
         received at once is specified by ``nbytes``.  If a string of length zero
         is returned, the channel stream has closed.
 
-        :param nbytes: maximum number of bytes to read.
-        :type nbytes: int
-        :return: data.
-        :rtype: str
+        :param int nbytes: maximum number of bytes to read.
+        :return: received data, as a `str`
         
-        :raises socket.timeout: if no data is ready before the timeout set by
-            `settimeout`.
+        :raises socket.timeout:
+            if no data is ready before the timeout set by `settimeout`.
         """
         try:
             out = self.in_buffer.read(nbytes, self.timeout)
@@ -636,9 +602,9 @@ class Channel (object):
         `invoke_shell` without a pty will ever have data on the stderr
         stream.
         
-        :return: ``True`` if a `recv_stderr` call on this channel would
-            immediately return at least one byte; ``False`` otherwise.
-        :rtype: boolean
+        :return:
+            ``True`` if a `recv_stderr` call on this channel would immediately
+            return at least one byte; ``False`` otherwise.
         
         .. versionadded:: 1.1
         """
@@ -653,10 +619,8 @@ class Channel (object):
         specified by ``nbytes``.  If a string of length zero is returned, the
         channel stream has closed.
 
-        :param nbytes: maximum number of bytes to read.
-        :type nbytes: int
-        :return: data.
-        :rtype: str
+        :param int nbytes: maximum number of bytes to read.
+        :return: received data as a `str`
         
         :raises socket.timeout: if no data is ready before the timeout set by
             `settimeout`.
@@ -688,9 +652,9 @@ class Channel (object):
         outbound buffer, a `send` call will succeed immediately and return
         the number of bytes actually written.
         
-        :return: ``True`` if a `send` call on this channel would immediately
-            succeed or fail
-        :rtype: boolean
+        :return:
+            ``True`` if a `send` call on this channel would immediately succeed
+            or fail
         """
         self.lock.acquire()
         try:
@@ -708,10 +672,8 @@ class Channel (object):
         transmitted, the application needs to attempt delivery of the remaining
         data.
 
-        :param s: data to send
-        :type s: str
-        :return: number of bytes actually sent
-        :rtype: int
+        :param str s: data to send
+        :return: number of bytes actually sent, as an `int`
 
         :raises socket.timeout: if no data could be sent before the timeout set
             by `settimeout`.
@@ -743,13 +705,11 @@ class Channel (object):
         data has been sent: if only some of the data was transmitted, the
         application needs to attempt delivery of the remaining data.
         
-        :param s: data to send.
-        :type s: str
-        :return: number of bytes actually sent.
-        :rtype: int
+        :param str s: data to send.
+        :return: number of bytes actually sent, as an `int`.
         
-        :raises socket.timeout: if no data could be sent before the timeout set
-            by `settimeout`.
+        :raises socket.timeout:
+            if no data could be sent before the timeout set by `settimeout`.
         
         .. versionadded:: 1.1
         """
@@ -778,15 +738,15 @@ class Channel (object):
         `send`, this method continues to send data from the given string until
         either all data has been sent or an error occurs.  Nothing is returned.
 
-        :param s: data to send.
-        :type s: str
+        :param str s: data to send.
 
-        :raises socket.timeout: if sending stalled for longer than the timeout
-            set by `settimeout`.
-        :raises socket.error: if an error occured before the entire string was
-            sent.
+        :raises socket.timeout:
+            if sending stalled for longer than the timeout set by `settimeout`.
+        :raises socket.error:
+            if an error occured before the entire string was sent.
         
-        .. note:: If the channel is closed while only part of the data hase been
+        .. note::
+            If the channel is closed while only part of the data hase been
             sent, there is no way to determine how much data (if any) was sent.
             This is irritating, but identically follows Python's API.
         """
@@ -805,13 +765,12 @@ class Channel (object):
         from the given string until all data has been sent or an error occurs.
         Nothing is returned.
         
-        :param s: data to send to the client as "stderr" output.
-        :type s: str
+        :param str s: data to send to the client as "stderr" output.
         
-        :raises socket.timeout: if sending stalled for longer than the timeout
-            set by `settimeout`.
-        :raises socket.error: if an error occured before the entire string was
-            sent.
+        :raises socket.timeout:
+            if sending stalled for longer than the timeout set by `settimeout`.
+        :raises socket.error:
+            if an error occured before the entire string was sent.
             
         .. versionadded:: 1.1
         """
@@ -828,8 +787,7 @@ class Channel (object):
         ``mode`` and ``bufsize`` arguments are interpreted the same way as by
         the built-in ``file()`` function in Python.
 
-        :return: object which can be used for Python file I/O.
-        :rtype: `.ChannelFile`
+        :return: `.ChannelFile` object which can be used for Python file I/O.
         """
         return ChannelFile(*([self] + list(params)))
 
@@ -844,8 +802,7 @@ class Channel (object):
         client, it only makes sense to open this file for reading.  For a
         server, it only makes sense to open this file for writing.
         
-        :return: object which can be used for Python file I/O.
-        :rtype: `.ChannelFile`
+        :return: `.ChannelFile` object which can be used for Python file I/O.
 
         .. versionadded:: 1.1
         """
@@ -863,11 +820,10 @@ class Channel (object):
         (You won't notice this effect unless you have hundreds of channels
         open at the same time.)
 
-        :return: an OS-level file descriptor
-        :rtype: int
+        :return: an OS-level file descriptor (`int`)
         
-        .. warning:: This method causes channel reads to be slightly less
-            efficient.
+        .. warning::
+            This method causes channel reads to be slightly less efficient.
         """
         self.lock.acquire()
         try:
@@ -889,9 +845,9 @@ class Channel (object):
         are disallowed.  If ``how`` is 2, further sends and receives are
         disallowed.  This closes the stream in one or both directions.
 
-        :param how: 0 (stop receiving), 1 (stop sending), or 2 (stop
-            receiving and sending).
-        :type how: int
+        :param int how:
+            0 (stop receiving), 1 (stop sending), or 2 (stop receiving and
+              sending).
         """
         if (how == 0) or (how == 2):
             # feign "read" shutdown
@@ -1246,8 +1202,6 @@ class ChannelFile (BufferedFile):
     def __repr__(self):
         """
         Returns a string representation of this object, for debugging.
-
-        :rtype: str
         """
         return '<paramiko.ChannelFile from ' + repr(self.channel) + '>'
 
