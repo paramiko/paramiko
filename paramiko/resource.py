@@ -51,10 +51,9 @@ class ResourceManager (object):
         the ``resource`` will be closed by having its ``close()`` method called.
         Any exceptions are ignored.
         
-        :param obj: the object to track
-        :type obj: object
-        :param resource: the resource to close when the object is collected
-        :type resource: object
+        :param object obj: the object to track
+        :param object resource:
+            the resource to close when the object is collected
         """
         def callback(ref):
             try:

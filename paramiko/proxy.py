@@ -39,9 +39,8 @@ class ProxyCommand(object):
         Create a new CommandProxy instance. The instance created by this
         class can be passed as an argument to the `.Transport` class.
 
-        :param command_line: the command that should be executed and
-            used as the proxy.
-        :type command_line: str
+        :param str command_line:
+            the command that should be executed and used as the proxy.
         """
         self.cmd = shlsplit(command_line)
         self.process = Popen(self.cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE)
@@ -51,8 +50,7 @@ class ProxyCommand(object):
         Write the content received from the SSH client to the standard
         input of the forked command.
 
-        :param content: string to be sent to the forked command
-        :type content: str
+        :param str content: string to be sent to the forked command
         """
         try:
             self.process.stdin.write(content)
@@ -68,11 +66,9 @@ class ProxyCommand(object):
         """
         Read from the standard output of the forked program.
 
-        :param size: how many chars should be read
-        :type size: int
+        :param int size: how many chars should be read
 
-        :return: the length of the read content
-        :rtype: int
+        :return: the length of the read content, as an `int`
         """
         try:
             return os.read(self.process.stdout.fileno(), size)

@@ -171,8 +171,6 @@ class Packetizer (object):
         Returns ``True`` if a new set of keys needs to be negotiated.  This
         will be triggered during a packet read or write, so it should be
         checked after every read or write, or at least after every few.
-
-        :return: ``True`` if a new set of keys needs to be negotiated
         """
         return self.__need_rekey
 
@@ -190,12 +188,11 @@ class Packetizer (object):
         """
         Read as close to N bytes as possible, blocking as long as necessary.
 
-        :param n: number of bytes to read
-        :type n: int
-        :return: the data read
-        :rtype: str
-        :raises EOFError: if the socket was closed before all the bytes could
-            be read
+        :param int n: number of bytes to read
+        :return: the data read, as a `str`
+
+        :raises EOFError:
+            if the socket was closed before all the bytes could be read
         """
         out = ''
         # handle over-reading from reading the banner line

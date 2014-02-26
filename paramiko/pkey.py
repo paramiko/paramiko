@@ -52,9 +52,8 @@ class PKey (object):
         ``data`` is given, the key's public part(s) will be filled in from
         the string.
 
-        :param msg:
+        :param .Message msg:
             an optional SSH `.Message` containing a public key of this type.
-        :type msg: `.Message`
         :param str data: an optional string containing a public key of this type
 
         :raises SSHException:
@@ -68,9 +67,6 @@ class PKey (object):
         Return a string of an SSH `.Message` made up of the public part(s) of
         this key.  This string is suitable for passing to `__init__` to
         re-create the key object later.
-
-        :return: string representation of an SSH key message.
-        :rtype: str
         """
         return ''
 
@@ -81,10 +77,7 @@ class PKey (object):
         of the key are compared, so a public key will compare equal to its
         corresponding private key.
 
-        :param other: key to compare to.
-        :type other: `.PKey`
-        :return: 0 if the two keys are equivalent, non-0 otherwise.
-        :rtype: int
+        :param .Pkey other: key to compare to.
         """
         hs = hash(self)
         ho = hash(other)
@@ -97,9 +90,8 @@ class PKey (object):
         Return the name of this private key implementation.
 
         :return:
-            name of this private key type, in SSH terminology (for example,
-            ``"ssh-rsa"``).
-        :rtype: str
+            name of this private key type, in SSH terminology, as a `str` (for
+            example, ``"ssh-rsa"``).
         """
         return ''
 
@@ -108,8 +100,7 @@ class PKey (object):
         Return the number of significant bits in this key.  This is useful
         for judging the relative security of a key.
 
-        :return: bits in the key.
-        :rtype: int
+        :return: bits in the key (as an `int`)
         """
         return 0
 
@@ -117,9 +108,6 @@ class PKey (object):
         """
         Return ``True`` if this key has the private part necessary for signing
         data.
-
-        :return: ``True`` if this is a private key.
-        :rtype: bool
         """
         return False
 
@@ -128,9 +116,9 @@ class PKey (object):
         Return an MD5 fingerprint of the public part of this key.  Nothing
         secret is revealed.
 
-        :return: a 16-byte string (binary) of the MD5 fingerprint, in SSH
+        :return:
+            a 16-byte `string <str>` (binary) of the MD5 fingerprint, in SSH
             format.
-        :rtype: str
         """
         return MD5.new(str(self)).digest()
 
@@ -140,8 +128,7 @@ class PKey (object):
         secret is revealed.  This format is compatible with that used to store
         public key files or recognized host keys.
 
-        :return: a base64 string containing the public part of the key.
-        :rtype: str
+        :return: a base64 `string <str>` containing the public part of the key.
         """
         return base64.encodestring(str(self)).replace('\n', '')
 
@@ -150,12 +137,9 @@ class PKey (object):
         Sign a blob of data with this private key, and return a `.Message`
         representing an SSH signature message.
 
-        :param rng: a secure random number generator.
-        :type rng: `Crypto.Util.rng.RandomPool`
-        :param data: the data to sign.
-        :type data: str
-        :return: an SSH signature message.
-        :rtype: `.Message`
+        :param .Crypto.Util.rng.RandomPool rng: a secure random number generator.
+        :param str data: the data to sign.
+        :return: an SSH signature `message <.Message>`.
         """
         return ''
 
@@ -164,13 +148,10 @@ class PKey (object):
         Given a blob of data, and an SSH message representing a signature of
         that data, verify that it was signed with this key.
 
-        :param data: the data that was signed.
-        :type data: str
-        :param msg: an SSH signature message
-        :type msg: `.Message`
-        :return: ``True`` if the signature verifies correctly; ``False``
-            otherwise.
-        :rtype: boolean
+        :param str data: the data that was signed.
+        :param .Message msg: an SSH signature message
+        :return:
+            ``True`` if the signature verifies correctly; ``False`` otherwise.
         """
         return False
 
@@ -183,13 +164,10 @@ class PKey (object):
         exist in all subclasses of PKey (such as `.RSAKey` or `.DSSKey`), but
         is useless on the abstract PKey class.
 
-        :param filename: name of the file to read
-        :type filename: str
-        :param password: an optional password to use to decrypt the key file,
+        :param str filename: name of the file to read
+        :param str password: an optional password to use to decrypt the key file,
             if it's encrypted
-        :type password: str
-        :return: a new key object based on the given private key
-        :rtype: `.PKey`
+        :return: a new `.PKey` based on the given private key
 
         :raises IOError: if there was an error reading the file
         :raises PasswordRequiredException: if the private key file is
@@ -207,13 +185,10 @@ class PKey (object):
         the given password will be used to decrypt the key (otherwise
         `.PasswordRequiredException` is thrown).
 
-        :param file_obj: the file to read from
-        :type file_obj: file
-        :param password: an optional password to use to decrypt the key, if it's
-            encrypted
-        :type password: str
-        :return: a new key object based on the given private key
-        :rtype: `.PKey`
+        :param file file_obj: the file to read from
+        :param str password:
+            an optional password to use to decrypt the key, if it's encrypted
+        :return: a new `.PKey` based on the given private key
 
         :raises IOError: if there was an error reading the key
         :raises PasswordRequiredException: if the private key file is encrypted,
@@ -229,10 +204,9 @@ class PKey (object):
         Write private key contents into a file.  If the password is not
         ``None``, the key is encrypted before writing.
 
-        :param filename: name of the file to write
-        :type filename: str
-        :param password: an optional password to use to encrypt the key file
-        :type password: str
+        :param str filename: name of the file to write
+        :param str password:
+            an optional password to use to encrypt the key file
 
         :raises IOError: if there was an error writing the file
         :raises SSHException: if the key is invalid
@@ -244,10 +218,8 @@ class PKey (object):
         Write private key contents into a file (or file-like) object.  If the
         password is not ``None``, the key is encrypted before writing.
 
-        :param file_obj: the file object to write into
-        :type file_obj: file
-        :param password: an optional password to use to encrypt the key
-        :type password: str
+        :param file file_obj: the file object to write into
+        :param str password: an optional password to use to encrypt the key
 
         :raises IOError: if there was an error writing to the file
         :raises SSHException: if the key is invalid
@@ -262,15 +234,12 @@ class PKey (object):
         ``password`` is not ``None``, the given password will be used to decrypt
         the key (otherwise `.PasswordRequiredException` is thrown).
 
-        :param tag: ``"RSA"`` or ``"DSA"``, the tag used to mark the data block.
-        :type tag: str
-        :param filename: name of the file to read.
-        :type filename: str
-        :param password: an optional password to use to decrypt the key file,
-            if it's encrypted.
-        :type password: str
-        :return: data blob that makes up the private key.
-        :rtype: str
+        :param str tag: ``"RSA"`` or ``"DSA"``, the tag used to mark the data block.
+        :param str filename: name of the file to read.
+        :param str password:
+            an optional password to use to decrypt the key file, if it's
+            encrypted.
+        :return: data blob (`str`) that makes up the private key.
 
         :raises IOError: if there was an error reading the file.
         :raises PasswordRequiredException: if the private key file is
@@ -336,14 +305,10 @@ class PKey (object):
         a trivially-encoded format (base64) which is completely insecure.  If
         a password is given, DES-EDE3-CBC is used.
 
-        :param tag: ``"RSA"`` or ``"DSA"``, the tag used to mark the data block.
-        :type tag: str
-        :param filename: name of the file to write.
-        :type filename: str
-        :param data: data blob that makes up the private key.
-        :type data: str
-        :param password: an optional password to use to encrypt the file.
-        :type password: str
+        :param str tag: ``"RSA"`` or ``"DSA"``, the tag used to mark the data block.
+        :param file filename: name of the file to write.
+        :param str data: data blob that makes up the private key.
+        :param str password: an optional password to use to encrypt the file.
 
         :raises IOError: if there was an error writing the file.
         """
