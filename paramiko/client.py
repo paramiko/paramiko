@@ -82,11 +82,10 @@ class SSHClient (object):
         and no exception will be raised if the file can't be read.  This is
         probably only useful on posix.
 
-        :param filename: the filename to read, or ``None``
-        :type filename: str
+        :param str filename: the filename to read, or ``None``
 
-        :raises IOError: if a filename was provided and the file could not be
-            read
+        :raises IOError:
+            if a filename was provided and the file could not be read
         """
         if filename is None:
             # try the user's .ssh key file, and mask exceptions
@@ -110,8 +109,7 @@ class SSHClient (object):
         will be merged with the existing set (new replacing old if there are
         conflicts).  When automatically saving, the last hostname is used.
 
-        :param filename: the filename to read
-        :type filename: str
+        :param str filename: the filename to read
 
         :raises IOError: if the filename could not be read
         """
@@ -124,8 +122,7 @@ class SSHClient (object):
         `load_host_keys` (plus any added directly) will be saved -- not any
         host keys loaded with `load_system_host_keys`.
 
-        :param filename: the filename to save to
-        :type filename: str
+        :param str filename: the filename to save to
 
         :raises IOError: if the file could not be written
         """
@@ -146,8 +143,7 @@ class SSHClient (object):
         Get the local `.HostKeys` object.  This can be used to examine the
         local host keys or change them.
 
-        :return: the local host keys
-        :rtype: `.HostKeys`
+        :return: the local host keys as a `.HostKeys` object.
         """
         return self._host_keys
 
@@ -156,8 +152,7 @@ class SSHClient (object):
         Set the channel for logging.  The default is ``"paramiko.transport"``
         but it can be set to anything you want.
 
-        :param name: new channel name for logging
-        :type name: str
+        :param str name: new channel name for logging
         """
         self._log_channel = name
 
@@ -168,9 +163,9 @@ class SSHClient (object):
         default policy is to reject all unknown servers (using `.RejectPolicy`).
         You may substitute `.AutoAddPolicy` or write your own policy class.
 
-        :param policy: the policy to use when receiving a host key from a
+        :param .MissingHostKeyPolicy policy:
+            the policy to use when receiving a host key from a
             previously-unknown server
-        :type policy: `.MissingHostKeyPolicy`
         """
         self._policy = policy
 
@@ -195,33 +190,26 @@ class SSHClient (object):
         If a private key requires a password to unlock it, and a password is
         passed in, that password will be used to attempt to unlock the key.
 
-        :param hostname: the server to connect to
-        :type hostname: str
-        :param port: the server port to connect to
-        :type port: int
-        :param username: the username to authenticate as (defaults to the
-            current local username)
-        :type username: str
-        :param password: a password to use for authentication or for unlocking
-            a private key
-        :type password: str
-        :param pkey: an optional private key to use for authentication
-        :type pkey: `.PKey`
-        :param key_filename: the filename, or list of filenames, of optional
-            private key(s) to try for authentication
-        :type key_filename: str or list(str)
-        :param timeout: an optional timeout (in seconds) for the TCP connect
-        :type timeout: float
-        :param allow_agent: set to False to disable connecting to the SSH agent
-        :type allow_agent: bool
-        :param look_for_keys: set to False to disable searching for discoverable
-            private key files in ``~/.ssh/``
-        :type look_for_keys: bool
-        :param compress: set to True to turn on compression
-        :type compress: bool
-        :param sock: an open socket or socket-like object (such as a
-            `.Channel`) to use for communication to the target host
-        :type sock: socket
+        :param str hostname: the server to connect to
+        :param int port: the server port to connect to
+        :param str username:
+            the username to authenticate as (defaults to the current local
+            username)
+        :param str password:
+            a password to use for authentication or for unlocking a private key
+        :param .PKey pkey: an optional private key to use for authentication
+        :param str key_filename:
+            the filename, or list of filenames, of optional private key(s) to
+            try for authentication
+        :param float timeout: an optional timeout (in seconds) for the TCP connect
+        :param bool allow_agent: set to False to disable connecting to the SSH agent
+        :param bool look_for_keys:
+            set to False to disable searching for discoverable private key
+            files in ``~/.ssh/``
+        :param bool compress: set to True to turn on compression
+        :param socket sock:
+            an open socket or socket-like object (such as a `.Channel`) to use
+            for communication to the target host
 
         :raises BadHostKeyException: if the server's host key could not be
             verified
@@ -304,14 +292,15 @@ class SSHClient (object):
         streams are returned as Python ``file``-like objects representing
         stdin, stdout, and stderr.
 
-        :param command: the command to execute
-        :type command: str
-        :param bufsize: interpreted the same way as by the built-in ``file()`` function in Python
-        :type bufsize: int
-        :param timeout: set command's channel timeout. See `Channel.settimeout`.settimeout
-        :type timeout: int
-        :return: the stdin, stdout, and stderr of the executing command
-        :rtype: tuple(`.ChannelFile`, `.ChannelFile`, `.ChannelFile`)
+        :param str command: the command to execute
+        :param int bufsize:
+            interpreted the same way as by the built-in ``file()`` function in
+            Python
+        :param int timeout:
+            set command's channel timeout. See `Channel.settimeout`.settimeout
+        :return:
+            the stdin, stdout, and stderr of the executing command, as a
+            3-tuple
 
         :raises SSHException: if the server fails to execute the command
         """
@@ -332,18 +321,13 @@ class SSHClient (object):
         is opened and connected to a pseudo-terminal using the requested
         terminal type and size.
 
-        :param term: the terminal type to emulate (for example, ``"vt100"``)
-        :type term: str
-        :param width: the width (in characters) of the terminal window
-        :type width: int
-        :param height: the height (in characters) of the terminal window
-        :type height: int
-        :param width_pixels: the width (in pixels) of the terminal window
-        :type width_pixels: int
-        :param height_pixels: the height (in pixels) of the terminal window
-        :type height_pixels: int
-        :return: a new channel connected to the remote shell
-        :rtype: `.Channel`
+        :param str term:
+            the terminal type to emulate (for example, ``"vt100"``)
+        :param int width: the width (in characters) of the terminal window
+        :param int height: the height (in characters) of the terminal window
+        :param int width_pixels: the width (in pixels) of the terminal window
+        :param int height_pixels: the height (in pixels) of the terminal window
+        :return: a new `.Channel` connected to the remote shell
 
         :raises SSHException: if the server fails to invoke a shell
         """
@@ -356,8 +340,7 @@ class SSHClient (object):
         """
         Open an SFTP session on the SSH server.
 
-        :return: a new SFTP session object
-        :rtype: `.SFTPClient`
+        :return: a new `.SFTPClient` session object
         """
         return self._transport.open_sftp_client()
 
@@ -367,8 +350,7 @@ class SSHClient (object):
         This can be used to perform lower-level tasks, like opening specific
         kinds of channels.
 
-        :return: the Transport for this connection
-        :rtype: `.Transport`
+        :return: the `.Transport` for this connection
         """
         return self._transport
 
