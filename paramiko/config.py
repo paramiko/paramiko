@@ -51,8 +51,7 @@ class SSHConfig (object):
         """
         Read an OpenSSH config from the given file object.
 
-        :param file_obj: a file-like object to read the config file from
-        :type file_obj: file
+        :param file file_obj: a file-like object to read the config file from
         """
         host = {"host": ['*'], "config": {}}
         for line in file_obj:
@@ -110,10 +109,8 @@ class SSHConfig (object):
         ``"port"``, not ``"Port"``. The values are processed according to the
         rules for substitution variable expansion in ``ssh_config``.
 
-        :param hostname: the hostname to lookup
-        :type hostname: str
+        :param str hostname: the hostname to lookup
         """
-
         matches = [config for config in self._config if
                    self._allowed(hostname, config['host'])]
 
@@ -148,10 +145,8 @@ class SSHConfig (object):
         Please refer to man ``ssh_config`` for the parameters that
         are replaced.
 
-        :param config: the config for the hostname
-        :type hostname: dict
-        :param hostname: the hostname that the config belongs to
-        :type hostname: str
+        :param dict config: the config for the hostname
+        :param str hostname: the hostname that the config belongs to
         """
 
         if 'hostname' in config:

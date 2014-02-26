@@ -64,8 +64,6 @@ class BufferedFile (object):
         its own iterator.
 
         :raises ValueError: if the file is closed.
-        
-        :rtype: iterator
         """
         if self._closed:
             raise ValueError('I/O operation on closed file')
@@ -95,8 +93,7 @@ class BufferedFile (object):
 
         :raises StopIteration: when the end of the file is reached.
 
-        :return: a line read from the file.
-        :rtype: str
+        :return: a line (`str`) read from the file.
         """
         line = self.readline()
         if not line:
@@ -109,11 +106,10 @@ class BufferedFile (object):
         file first).  If the ``size`` argument is negative or omitted, read all
         the remaining data in the file.
 
-        :param size: maximum number of bytes to read
-        :type size: int
-        :return: data read from the file, or an empty string if EOF was
+        :param int size: maximum number of bytes to read
+        :return:
+            data read from the file (as a `str`), or an empty string if EOF was
             encountered immediately
-        :rtype: str
         """
         if self._closed:
             raise IOError('File is closed')
@@ -170,12 +166,10 @@ class BufferedFile (object):
             Unlike stdio's ``fgets``, the returned string contains null
             characters (``'\\0'``) if they occurred in the input.
 
-        :param size: maximum length of returned string.
-        :type size: int
+        :param int size: maximum length of returned string.
         :return:
-            next line of the file, or an empty string if the end of the file
-            has been reached.
-        :rtype: str
+            next line of the file (`str`), or an empty string if the end of the
+            file has been reached.
         """
         # it's almost silly how complex this function is.
         if self._closed:
@@ -245,10 +239,8 @@ class BufferedFile (object):
         to EOF, whole lines totalling approximately sizehint bytes (possibly
         after rounding up to an internal buffer size) are read.
 
-        :param sizehint: desired maximum number of bytes to read.
-        :type sizehint: int
-        :return: list of lines read from the file.
-        :rtype: list
+        :param int sizehint: desired maximum number of bytes to read.
+        :return: `list` of lines read from the file.
         """
         lines = []
         bytes = 0
@@ -271,12 +263,11 @@ class BufferedFile (object):
             operations will be undone at the next write (as the file position
             will move back to the end of the file).
         
-        :param offset: position to move to within the file, relative to
-            ``whence``.
-        :type offset: int
-        :param whence: type of movement: 0 = absolute; 1 = relative to the
-            current position; 2 = relative to the end of the file.
-        :type whence: int
+        :param int offset:
+            position to move to within the file, relative to ``whence``.
+        :param int whence:
+            type of movement: 0 = absolute; 1 = relative to the current
+            position; 2 = relative to the end of the file.
 
         :raises IOError: if the file doesn't support random access.
         """
@@ -288,8 +279,7 @@ class BufferedFile (object):
         useful if the underlying file doesn't support random access, or was
         opened in append mode.
 
-        :return: file position (in bytes).
-        :rtype: int
+        :return: file position (`number <int>` of bytes).
         """
         return self._pos
 
@@ -300,8 +290,7 @@ class BufferedFile (object):
         written yet.  (Use `flush` or `close` to force buffered data to be
         written out.)
 
-        :param data: data to write.
-        :type data: str
+        :param str data: data to write
         """
         if self._closed:
             raise IOError('File is closed')
@@ -334,8 +323,7 @@ class BufferedFile (object):
         name is intended to match `readlines`; `writelines` does not add line
         separators.)
 
-        :param sequence: an iterable sequence of strings.
-        :type sequence: sequence
+        :param iterable sequence: an iterable sequence of strings.
         """
         for line in sequence:
             self.write(line)
@@ -345,9 +333,6 @@ class BufferedFile (object):
         """
         Identical to ``iter(f)``.  This is a deprecated file interface that
         predates Python iterator support.
-
-        :return: an iterator.
-        :rtype: iterator
         """
         return self
 
