@@ -70,13 +70,11 @@ class ServerInterface (object):
         The default implementation always returns
         ``OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED``.
 
-        :param kind: the kind of channel the client would like to open
-            (usually ``"session"``).
-        :type kind: str
-        :param chanid: ID of the channel
-        :type chanid: int
-        :return: a success or failure code (listed above)
-        :rtype: int
+        :param str kind:
+            the kind of channel the client would like to open (usually
+            ``"session"``).
+        :param int chanid: ID of the channel
+        :return: an `int` success or failure code (listed above)
         """
         return OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED
 
@@ -92,10 +90,8 @@ class ServerInterface (object):
 
         The default implementation always returns ``"password"``.
 
-        :param username: the username requesting authentication.
-        :type username: str
-        :return: a comma-separated list of authentication types
-        :rtype: str
+        :param str username: the username requesting authentication.
+        :return: a comma-separated `str` of authentication types
         """
         return 'password'
 
@@ -110,10 +106,10 @@ class ServerInterface (object):
 
         The default implementation always returns `.AUTH_FAILED`.
 
-        :param username: the username of the client.
-        :type username: str
-        :return: `.AUTH_FAILED` if the authentication fails;
-            `.AUTH_SUCCESSFUL` if it succeeds.
+        :param str username: the username of the client.
+        :return:
+            `.AUTH_FAILED` if the authentication fails; `.AUTH_SUCCESSFUL` if
+            it succeeds.
         :rtype: int
         """
         return AUTH_FAILED
@@ -133,13 +129,11 @@ class ServerInterface (object):
 
         The default implementation always returns `.AUTH_FAILED`.
 
-        :param username: the username of the authenticating client.
-        :type username: str
-        :param password: the password given by the client.
-        :type password: str
-        :return: `.AUTH_FAILED` if the authentication fails;
-            `.AUTH_SUCCESSFUL` if it succeeds;
-            `.AUTH_PARTIALLY_SUCCESSFUL` if the password auth is
+        :param str username: the username of the authenticating client.
+        :param str password: the password given by the client.
+        :return:
+            `.AUTH_FAILED` if the authentication fails; `.AUTH_SUCCESSFUL` if
+            it succeeds; `.AUTH_PARTIALLY_SUCCESSFUL` if the password auth is
             successful, but authentication must continue.
         :rtype: int
         """
@@ -166,14 +160,13 @@ class ServerInterface (object):
         
         The default implementation always returns `.AUTH_FAILED`.
 
-        :param username: the username of the authenticating client
-        :type username: str
-        :param key: the key object provided by the client
-        :type key: `.PKey`
-        :return: `.AUTH_FAILED` if the client can't authenticate
-            with this key; `.AUTH_SUCCESSFUL` if it can;
-            `.AUTH_PARTIALLY_SUCCESSFUL` if it can authenticate with
-            this key but must continue with authentication
+        :param str username: the username of the authenticating client
+        :param .PKey key: the key object provided by the client
+        :return:
+            `.AUTH_FAILED` if the client can't authenticate with this key;
+            `.AUTH_SUCCESSFUL` if it can; `.AUTH_PARTIALLY_SUCCESSFUL` if it
+            can authenticate with this key but must continue with
+            authentication
         :rtype: int
         """
         return AUTH_FAILED
@@ -192,13 +185,13 @@ class ServerInterface (object):
         
         The default implementation always returns `.AUTH_FAILED`.
         
-        :param username: the username of the authenticating client
-        :type username: str
-        :param submethods: a comma-separated list of methods preferred by the
-            client (usually empty)
-        :type submethods: str
-        :return: `.AUTH_FAILED` if this auth method isn't supported; otherwise
-            an object containing queries for the user
+        :param str username: the username of the authenticating client
+        :param str submethods:
+            a comma-separated list of methods preferred by the client (usually
+            empty)
+        :return:
+            `.AUTH_FAILED` if this auth method isn't supported; otherwise an
+            object containing queries for the user
         :rtype: int or `.InteractiveQuery`
         """
         return AUTH_FAILED
@@ -224,13 +217,12 @@ class ServerInterface (object):
 
         The default implementation always returns `.AUTH_FAILED`.
 
-        :param responses: list of responses from the client
-        :type responses: list(str)
-        :return: `.AUTH_FAILED` if the authentication fails;
-            `.AUTH_SUCCESSFUL` if it succeeds;
-            `.AUTH_PARTIALLY_SUCCESSFUL` if the interactive auth is
-            successful, but authentication must continue; otherwise an object
-            containing queries for the user
+        :param list responses: list of `str` responses from the client
+        :return:
+            `.AUTH_FAILED` if the authentication fails; `.AUTH_SUCCESSFUL` if
+            it succeeds; `.AUTH_PARTIALLY_SUCCESSFUL` if the interactive auth
+            is successful, but authentication must continue; otherwise an
+            object containing queries for the user
         :rtype: int or `.InteractiveQuery`
         """
         return AUTH_FAILED
@@ -248,13 +240,11 @@ class ServerInterface (object):
         port forwarding request.  If the request is accepted, you should return
         the port opened for listening.
         
-        :param address: the requested address
-        :type address: str
-        :param port: the requested port
-        :type port: int
-        :return: the port number that was opened for listening, or ``False`` to
-            reject
-        :rtype: int
+        :param str address: the requested address
+        :param int port: the requested port
+        :return:
+            the port number (`int`) that was opened for listening, or ``False``
+            to reject
         """
         return False
     
@@ -264,10 +254,8 @@ class ServerInterface (object):
         If the given address and port is being forwarded across this ssh
         connection, the port should be closed.
         
-        :param address: the forwarded address
-        :type address: str
-        :param port: the forwarded port
-        :type port: int
+        :param str address: the forwarded address
+        :param int port: the forwarded port
         """
         pass
         
@@ -293,13 +281,11 @@ class ServerInterface (object):
         .. note:: Port forwarding requests are handled separately, in
             `check_port_forward_request`.
 
-        :param kind: the kind of global request being made.
-        :type kind: str
-        :param msg: any extra arguments to the request.
-        :type msg: `.Message`
-        :return: ``True`` or a tuple of data if the request was granted;
-            ``False`` otherwise.
-        :rtype: bool
+        :param str kind: the kind of global request being made.
+        :param .Message msg: any extra arguments to the request.
+        :return:
+            ``True`` or a `tuple` of data if the request was granted; ``False``
+            otherwise.
         """
         return False
 
@@ -315,23 +301,17 @@ class ServerInterface (object):
 
         The default implementation always returns ``False``.
 
-        :param channel: the `.Channel` the pty request arrived on.
-        :type channel: `.Channel`
-        :param term: type of terminal requested (for example, ``"vt100"``).
-        :type term: str
-        :param width: width of screen in characters.
-        :type width: int
-        :param height: height of screen in characters.
-        :type height: int
-        :param pixelwidth: width of screen in pixels, if known (may be ``0`` if
-            unknown).
-        :type pixelwidth: int
-        :param pixelheight: height of screen in pixels, if known (may be ``0``
-            if unknown).
-        :type pixelheight: int
-        :return: ``True`` if the psuedo-terminal has been allocated; ``False``
+        :param .Channel channel: the `.Channel` the pty request arrived on.
+        :param str term: type of terminal requested (for example, ``"vt100"``).
+        :param int width: width of screen in characters.
+        :param int height: height of screen in characters.
+        :param int pixelwidth:
+            width of screen in pixels, if known (may be ``0`` if unknown).
+        :param int pixelheight:
+            height of screen in pixels, if known (may be ``0`` if unknown).
+        :return:
+            ``True`` if the psuedo-terminal has been allocated; ``False``
             otherwise.
-        :rtype: bool
         """
         return False
 
@@ -344,11 +324,10 @@ class ServerInterface (object):
 
         The default implementation always returns ``False``.
 
-        :param channel: the `.Channel` the request arrived on.
-        :type channel: `.Channel`
-        :return: ``True`` if this channel is now hooked up to a shell; ``False``
-            if a shell can't or won't be provided.
-        :rtype: bool
+        :param .Channel channel: the `.Channel` the request arrived on.
+        :return:
+            ``True`` if this channel is now hooked up to a shell; ``False`` if
+            a shell can't or won't be provided.
         """
         return False
 
@@ -360,14 +339,12 @@ class ServerInterface (object):
         
         The default implementation always returns ``False``.
         
-        :param channel: the `.Channel` the request arrived on.
-        :type channel: `.Channel`
-        :param command: the command to execute.
-        :type command: str
-        :return: ``True`` if this channel is now hooked up to the stdin,
-            stdout, and stderr of the executing command; ``False`` if the
-            command will not be executed.
-        :rtype: bool
+        :param .Channel channel: the `.Channel` the request arrived on.
+        :param str command: the command to execute.
+        :return:
+            ``True`` if this channel is now hooked up to the stdin, stdout, and
+            stderr of the executing command; ``False`` if the command will not
+            be executed.
         
         .. versionadded:: 1.1
         """
@@ -389,13 +366,11 @@ class ServerInterface (object):
             identify valid subsystems, you probably won't need to override this
             method.
 
-        :param channel: the `.Channel` the pty request arrived on.
-        :type channel: `.Channel`
-        :param name: name of the requested subsystem.
-        :type name: str
-        :return: ``True`` if this channel is now hooked up to the requested
+        :param .Channel channel: the `.Channel` the pty request arrived on.
+        :param str name: name of the requested subsystem.
+        :return:
+            ``True`` if this channel is now hooked up to the requested
             subsystem; ``False`` if that subsystem can't or won't be provided.
-        :rtype: bool
         """
         handler_class, larg, kwarg = channel.get_transport()._get_subsystem_handler(name)
         if handler_class is None:
@@ -411,20 +386,14 @@ class ServerInterface (object):
 
         The default implementation always returns ``False``.
 
-        :param channel: the `.Channel` the pty request arrived on.
-        :type channel: `.Channel`
-        :param width: width of screen in characters.
-        :type width: int
-        :param height: height of screen in characters.
-        :type height: int
-        :param pixelwidth: width of screen in pixels, if known (may be ``0`` if
-            unknown).
-        :type pixelwidth: int
-        :param pixelheight: height of screen in pixels, if known (may be ``0``
-            if unknown).
-        :type pixelheight: int
+        :param .Channel channel: the `.Channel` the pty request arrived on.
+        :param int width: width of screen in characters.
+        :param int height: height of screen in characters.
+        :param int pixelwidth:
+            width of screen in pixels, if known (may be ``0`` if unknown).
+        :param int pixelheight:
+            height of screen in pixels, if known (may be ``0`` if unknown).
         :return: ``True`` if the terminal was resized; ``False`` if not.
-        :rtype: bool
         """
         return False
     
@@ -436,19 +405,14 @@ class ServerInterface (object):
         
         The default implementation always returns ``False``.
         
-        :param channel: the `.Channel` the X11 request arrived on
-        :type channel: `.Channel`
-        :param single_connection: ``True`` if only a single X11 channel should
-            be opened
-        :type single_connection: bool
-        :param auth_protocol: the protocol used for X11 authentication
-        :type auth_protocol: str
-        :param auth_cookie: the cookie used to authenticate to X11
-        :type auth_cookie: str
-        :param screen_number: the number of the X11 screen to connect to
-        :type screen_number: int
+        :param .Channel channel: the `.Channel` the X11 request arrived on
+        :param bool single_connection:
+            ``True`` if only a single X11 channel should be opened, else
+            ``False``.
+        :param str auth_protocol: the protocol used for X11 authentication
+        :param str auth_cookie: the cookie used to authenticate to X11
+        :param int screen_number: the number of the X11 screen to connect to
         :return: ``True`` if the X11 session was opened; ``False`` if not
-        :rtype: bool
         """
         return False
 
@@ -460,10 +424,8 @@ class ServerInterface (object):
 
         The default implementation always returns ``False``.
 
-        :param channel: the `.Channel` the request arrived on
-        :type channel: `.Channel`
+        :param .Channel channel: the `.Channel` the request arrived on
         :return: ``True`` if the AgentForward was loaded; ``False`` if not
-        :rtype: bool
         """
         return False
 
@@ -495,16 +457,14 @@ class ServerInterface (object):
         The default implementation always returns
         ``OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED``.
 
-        :param chanid: ID of the channel
-        :type chanid: int
-        :param origin: 2-tuple containing the IP address and port of the
-            originator (client side)
-        :type origin: tuple
-        :param destination: 2-tuple containing the IP address and port of the
-            destination (server side)
-        :type destination: tuple
-        :return: a success or failure code (listed above)
-        :rtype: int
+        :param int chanid: ID of the channel
+        :param tuple origin:
+            2-tuple containing the IP address and port of the originator
+            (client side)
+        :param tuple destination:
+            2-tuple containing the IP address and port of the destination
+            (server side)
+        :return: an `int` success or failure code (listed above)
         """
         return OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED
 
@@ -521,12 +481,10 @@ class InteractiveQuery (object):
         user.  A list of prompts may be included, or they may be added via
         the `add_prompt` method.
         
-        :param name: name of this query
-        :type name: str
-        :param instructions: user instructions (usually short) about this query
-        :type instructions: str
-        :param prompts: one or more authentication prompts
-        :type prompts: str
+        :param str name: name of this query
+        :param str instructions:
+            user instructions (usually short) about this query
+        :param str prompts: one or more authentication prompts
         """
         self.name = name
         self.instructions = instructions
@@ -542,11 +500,10 @@ class InteractiveQuery (object):
         Add a prompt to this query.  The prompt should be a (reasonably short)
         string.  Multiple prompts can be added to the same query.
         
-        :param prompt: the user prompt
-        :type prompt: str
-        :param echo: ``True`` (default) if the user's response should be echoed;
+        :param str prompt: the user prompt
+        :param bool echo:
+            ``True`` (default) if the user's response should be echoed;
             ``False`` if not (for a password or similar)
-        :type echo: bool
         """
         self.prompts.append((prompt, echo))
 
@@ -573,13 +530,10 @@ class SubsystemHandler (threading.Thread):
         ``channel`` and ``name`` parameters through to the original ``__init__``
         method here.
 
-        :param channel: the channel associated with this subsystem request.
-        :type channel: `.Channel`
-        :param name: name of the requested subsystem.
-        :type name: str
-        :param server: the server object for the session that started this
-            subsystem
-        :type server: `.ServerInterface`
+        :param .Channel channel: the channel associated with this subsystem request.
+        :param str name: name of the requested subsystem.
+        :param .ServerInterface server:
+            the server object for the session that started this subsystem
         """
         threading.Thread.__init__(self, target=self._run)
         self.__channel = channel
@@ -591,8 +545,6 @@ class SubsystemHandler (threading.Thread):
         """
         Return the `.ServerInterface` object associated with this channel and
         subsystem.
-        
-        :rtype: `.ServerInterface`
         """
         return self.__server
 
@@ -628,12 +580,9 @@ class SubsystemHandler (threading.Thread):
             Python interpreter may refuse to exit because this thread will
             still be running.
 
-        :param name: name of the requested subsystem.
-        :type name: str
-        :param transport: the server-mode `.Transport`.
-        :type transport: `.Transport`
-        :param channel: the channel associated with this subsystem request.
-        :type channel: `.Channel`
+        :param str name: name of the requested subsystem.
+        :param .Transport transport: the server-mode `.Transport`.
+        :param .Channel channel: the channel associated with this subsystem request.
         """
         pass
 
