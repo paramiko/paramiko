@@ -503,15 +503,15 @@ class Transport (threading.Thread):
         """
         Return the host key of the server (in client mode).
 
-        .. note:: Previously this call returned a tuple of (key type, key string).
-            You can get the same effect by calling
-            `PKey.get_name <pkey.PKey.get_name>` for the key type, and
-            ``str(key)`` for the key string.
+        .. note::
+            Previously this call returned a tuple of ``(key type, key
+            string)``. You can get the same effect by calling `.PKey.get_name`
+            for the key type, and ``str(key)`` for the key string.
 
         :raises SSHException: if no session is currently active.
 
         :return: public key of the remote server
-        :rtype: `PKey <pkey.PKey>`
+        :rtype: `.PKey`
         """
         if (not self.active) or (not self.initial_kex_done):
             raise SSHException('No existing session')
@@ -529,11 +529,11 @@ class Transport (threading.Thread):
 
     def open_session(self):
         """
-        Request a new channel to the server, of type ``"session"``.  This
-        is just an alias for ``open_channel('session')``.
+        Request a new channel to the server, of type ``"session"``.  This is
+        just an alias for calling `open_channel` with an argument of
+        ``"session"``.
 
         :return: a new `.Channel`
-        :rtype: `.Channel`
 
         :raises SSHException: if the request is rejected or the session ends
             prematurely
@@ -562,11 +562,12 @@ class Transport (threading.Thread):
         ``"auth-agent@openssh.com"``.
 
         This is just an alias for ``open_channel('auth-agent@openssh.com')``.
+
         :return: a new `.Channel`
         :rtype: `.Channel`
 
-        :raises SSHException: if the request is rejected or the session ends
-            prematurely
+        :raises SSHException:
+            if the request is rejected or the session ends prematurely
         """
         return self.open_channel('auth-agent@openssh.com')
 
@@ -585,10 +586,10 @@ class Transport (threading.Thread):
 
     def open_channel(self, kind, dest_addr=None, src_addr=None):
         """
-        Request a new channel to the server. `.Channels <Channel>` are socket-like
-        objects used for the actual transfer of data across the session.
-        You may only request a channel after negotiating encryption (using
-        `connect` or `start_client`) and authenticating.
+        Request a new channel to the server. `Channels <.Channel>` are
+        socket-like objects used for the actual transfer of data across the
+        session. You may only request a channel after negotiating encryption
+        (using `connect` or `start_client`) and authenticating.
 
         :param kind: the kind of channel requested (usually ``"session"``,
             ``"forwarded-tcpip"``, ``"direct-tcpip"``, or ``"x11"``)
@@ -714,9 +715,9 @@ class Transport (threading.Thread):
 
     def open_sftp_client(self):
         """
-        Create an SFTP client channel from an open transport.  On success,
-        an SFTP session will be opened with the remote host, and a new
-        SFTPClient object will be returned.
+        Create an SFTP client channel from an open transport.  On success, an
+        SFTP session will be opened with the remote host, and a new
+        `.SFTPClient` object will be returned.
 
         :return: a new `.SFTPClient` object, referring to an sftp session
             (channel) across this transport
@@ -828,7 +829,7 @@ class Transport (threading.Thread):
         :param timeout: seconds to wait for a channel, or ``None`` to wait
             forever
         :type timeout: int
-        :return: a new Channel opened by the client
+        :return: a new `.Channel` opened by the client
         :rtype: `.Channel`
         """
         self.lock.acquire()
@@ -861,13 +862,14 @@ class Transport (threading.Thread):
         `open_session` to get a `.Channel` object, which is used for data
         transfer.
 
-        .. note:: If you fail to supply a password or private key, this method may
-        succeed, but a subsequent `open_channel` or `open_session` call may
-        fail because you haven't authenticated yet.
+        .. note::
+            If you fail to supply a password or private key, this method may
+            succeed, but a subsequent `open_channel` or `open_session` call may
+            fail because you haven't authenticated yet.
 
         :param hostkey: the host key expected from the server, or ``None`` if
             you don't want to do host key verification.
-        :type hostkey: `PKey<pkey.PKey>`
+        :type hostkey: `.PKey`
         :param username: the username to authenticate as.
         :type username: str
         :param password: a password to use for authentication, if you want to
@@ -875,7 +877,7 @@ class Transport (threading.Thread):
         :type password: str
         :param pkey: a private key to use for authentication, if you want to
             use private key authentication; otherwise ``None``.
-        :type pkey: `PKey<pkey.PKey>`
+        :type pkey: `.PKey`
 
         :raises SSHException: if the SSH2 negotiation fails, the host key
             supplied by the server is incorrect, or authentication fails.
@@ -1028,7 +1030,7 @@ class Transport (threading.Thread):
         :param username: the username to authenticate as
         :type username: str
         :param password: the password to authenticate with
-        :type password: str or unicode
+        :type password: basestring
         :param event: an event to trigger when the authentication attempt is
             complete (whether it was successful or not)
         :type event: threading.Event
@@ -1102,7 +1104,7 @@ class Transport (threading.Thread):
         :param username: the username to authenticate as
         :type username: string
         :param key: the private key to authenticate with
-        :type key: `PKey <pkey.PKey>`
+        :type key: `.PKey`
         :param event: an event to trigger when the authentication attempt is
             complete (whether it was successful or not)
         :type event: threading.Event
@@ -1187,9 +1189,9 @@ class Transport (threading.Thread):
     def set_log_channel(self, name):
         """
         Set the channel for this transport's logging.  The default is
-        ``"paramiko.transport"`` but it can be set to anything you want.
-        (See the ``logging`` module for more info.)  SSH Channels will log
-        to a sub-channel of the one specified.
+        ``"paramiko.transport"`` but it can be set to anything you want. (See
+        the `.logging` module for more info.)  SSH Channels will log to a
+        sub-channel of the one specified.
 
         :param name: new channel name for logging
         :type name: str
