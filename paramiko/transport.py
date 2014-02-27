@@ -150,7 +150,8 @@ class Transport (threading.Thread):
         address and used for communication.  Exceptions from the ``socket``
         call may be thrown in this case.
 
-        :param socket sock: a socket or socket-like object to create the session over.
+        :param socket sock:
+            a socket or socket-like object to create the session over.
         """
         if isinstance(sock, (str, unicode)):
             # convert "host:port" into (host, port)
@@ -249,8 +250,6 @@ class Transport (threading.Thread):
     def __repr__(self):
         """
         Returns a string representation of this object, for debugging.
-
-        :rtype: str
         """
         out = '<paramiko.Transport at %s' % hex(long(id(self)) & 0xffffffffL)
         if not self.active:
@@ -284,12 +283,9 @@ class Transport (threading.Thread):
     def get_security_options(self):
         """
         Return a `.SecurityOptions` object which can be used to tweak the
-        encryption algorithms this transport will permit, and the order of
-        preference for them.
-
-        :return: an object that can be used to change the preferred algorithms
-            for encryption, digest (hash), public key, and key exchange.
-        :rtype: `.SecurityOptions`
+        encryption algorithms this transport will permit (for encryption,
+        digest/hash operations, public keys, and key exchanges) and the order
+        of preference for them.
         """
         return SecurityOptions(self)
 
@@ -317,9 +313,8 @@ class Transport (threading.Thread):
             you should no longer directly read from or write to the original
             socket object.
 
-        :param event: an event to trigger when negotiation is complete
-            (optional)
-        :type event: threading.Event
+        :param .threading.Event event:
+            an event to trigger when negotiation is complete (optional)
 
         :raises SSHException: if negotiation fails (and no ``event`` was passed
             in)
@@ -377,12 +372,11 @@ class Transport (threading.Thread):
             should no longer directly read from or write to the original socket
             object.
 
-        :param event: an event to trigger when negotiation is complete.
-        :type event: threading.Event
-        :param server:
+        :param .threading.Event event:
+            an event to trigger when negotiation is complete.
+        :param .ServerInterface server:
             an object used to perform authentication and create `channels
             <.Channel>`
-        :type server: `.ServerInterface`
 
         :raises SSHException: if negotiation fails (and no ``event`` was passed
             in)
@@ -420,8 +414,8 @@ class Transport (threading.Thread):
         key info, not just the public half.  Only one key of each type (RSA or
         DSS) is kept.
 
-        :param key: the host key to add, usually an `.RSAKey` or `.DSSKey`.
-        :type key: `.PKey`
+        :param .PKey key:
+            the host key to add, usually an `.RSAKey` or `.DSSKey`.
         """
         self.server_key_dict[key.get_name()] = key
 
@@ -436,8 +430,9 @@ class Transport (threading.Thread):
         key of the type agreed on.  If the host key has not been negotiated
         yet, ``None`` is returned.  In client mode, the behavior is undefined.
 
-        :return: host key of the type negotiated by the client, or ``None``.
-        :rtype: `.PKey`
+        :return:
+            host key (`.PKey`) of the type negotiated by the client, or
+            ``None``.
         """
         try:
             return self.server_key_dict[self.host_key_type]
@@ -467,7 +462,6 @@ class Transport (threading.Thread):
             not in a standard location.
         :return:
             True if a moduli file was successfully loaded; False otherwise.
-        :rtype: bool
 
         .. note:: This has no effect when used in client mode.
         """
@@ -510,8 +504,7 @@ class Transport (threading.Thread):
 
         :raises SSHException: if no session is currently active.
 
-        :return: public key of the remote server
-        :rtype: `.PKey`
+        :return: public key (`.PKey`) of the remote server
         """
         if (not self.active) or (not self.initial_kex_done):
             raise SSHException('No existing session')
@@ -521,9 +514,9 @@ class Transport (threading.Thread):
         """
         Return true if this session is active (open).
 
-        :return: True if the session is still active (open); False if the
-            session is closed
-        :rtype: bool
+        :return:
+            True if the session is still active (open); False if the session is
+            closed
         """
         return self.active
 
@@ -545,11 +538,10 @@ class Transport (threading.Thread):
         Request a new channel to the client, of type ``"x11"``.  This
         is just an alias for ``open_channel('x11', src_addr=src_addr)``.
 
-        :param src_addr: the source address of the x11 server (port is the
+        :param tuple src_addr:
+            the source address (``(str, int)``) of the x11 server (port is the
             x11 port, ie. 6010)
-        :type src_addr: (str, int)
         :return: a new `.Channel`
-        :rtype: `.Channel`
 
         :raises SSHException: if the request is rejected or the session ends
             prematurely
@@ -564,7 +556,6 @@ class Transport (threading.Thread):
         This is just an alias for ``open_channel('auth-agent@openssh.com')``.
 
         :return: a new `.Channel`
-        :rtype: `.Channel`
 
         :raises SSHException:
             if the request is rejected or the session ends prematurely
@@ -591,18 +582,16 @@ class Transport (threading.Thread):
         session. You may only request a channel after negotiating encryption
         (using `connect` or `start_client`) and authenticating.
 
-        :param kind: the kind of channel requested (usually ``"session"``,
+        :param str kind:
+            the kind of channel requested (usually ``"session"``,
             ``"forwarded-tcpip"``, ``"direct-tcpip"``, or ``"x11"``)
-        :type kind: str
-        :param dest_addr: the destination address of this port forwarding,
-            if ``kind`` is ``"forwarded-tcpip"`` or ``"direct-tcpip"`` (ignored
-            for other channel types)
-        :type dest_addr: (str, int)
+        :param tuple dest_addr:
+            the destination address (address + port tuple) of this port
+            forwarding, if ``kind`` is ``"forwarded-tcpip"`` or
+            ``"direct-tcpip"`` (ignored for other channel types)
         :param src_addr: the source address of this port forwarding, if
             ``kind`` is ``"forwarded-tcpip"``, ``"direct-tcpip"``, or ``"x11"``
-        :type src_addr: (str, int)
         :return: a new `.Channel` on success
-        :rtype: `.Channel`
 
         :raises SSHException: if the request is rejected or the session ends
             prematurely
@@ -669,15 +658,13 @@ class Transport (threading.Thread):
         forwarded connections into the accept queue, to be picked up via
         `accept`.
 
-        :param address: the address to bind when forwarding
-        :type address: str
-        :param port: the port to forward, or 0 to ask the server to allocate
-            any port
-        :type port: int
-        :param handler: optional handler for incoming forwarded connections
-        :type handler: function(Channel, (str, int), (str, int))
-        :return: the port # allocated by the server
-        :rtype: int
+        :param str address: the address to bind when forwarding
+        :param int port:
+            the port to forward, or 0 to ask the server to allocate any port
+        :param callable handler:
+            optional handler for incoming forwarded connections, of the form
+            ``func(Channel, (str, int), (str, int))``.
+        :return: the port number (`int`) allocated by the server
 
         :raises SSHException: if the server refused the TCP forward request
         """
@@ -703,10 +690,8 @@ class Transport (threading.Thread):
         connections to the given address & port will be forwarded across this
         ssh connection.
 
-        :param address: the address to stop forwarding
-        :type address: str
-        :param port: the port to stop forwarding
-        :type port: int
+        :param str address: the address to stop forwarding
+        :param int port: the port to stop forwarding
         """
         if not self.active:
             return
@@ -719,9 +704,9 @@ class Transport (threading.Thread):
         SFTP session will be opened with the remote host, and a new
         `.SFTPClient` object will be returned.
 
-        :return: a new `.SFTPClient` object, referring to an sftp session
-            (channel) across this transport
-        :rtype: `.SFTPClient`
+        :return:
+            a new `.SFTPClient` referring to an sftp session (channel) across
+            this transport
         """
         return SFTPClient.from_transport(self)
 
@@ -732,9 +717,9 @@ class Transport (threading.Thread):
         also be used as a keep-alive for long lived connections traversing
         firewalls.
 
-        :param bytes: the number of random bytes to send in the payload of the
-            ignored packet -- defaults to a random number from 10 to 41.
-        :type bytes: int
+        :param int bytes:
+            the number of random bytes to send in the payload of the ignored
+            packet -- defaults to a random number from 10 to 41.
         """
         m = Message()
         m.add_byte(chr(MSG_IGNORE))
@@ -775,9 +760,9 @@ class Transport (threading.Thread):
         "keepalive" packet will be sent (and ignored by the remote host).  This
         can be useful to keep connections alive over a NAT, for example.
 
-        :param interval: seconds to wait before sending a keepalive packet (or
+        :param int interval:
+            seconds to wait before sending a keepalive packet (or
             0 to disable keepalives).
-        :type interval: int
         """
         self.packetizer.set_keepalive(interval,
             lambda x=weakref.proxy(self): x.global_request('keepalive@lag.net', wait=False))
@@ -787,18 +772,17 @@ class Transport (threading.Thread):
         Make a global request to the remote host.  These are normally
         extensions to the SSH2 protocol.
 
-        :param kind: name of the request.
-        :type kind: str
-        :param data: an optional tuple containing additional data to attach
-            to the request.
-        :type data: tuple
-        :param wait: ``True`` if this method should not return until a response
-            is received; ``False`` otherwise.
-        :type wait: bool
-        :return: a `.Message` containing possible additional data if the
-            request was successful (or an empty `.Message` if ``wait`` was
-            ``False``); ``None`` if the request was denied.
-        :rtype: `.Message`
+        :param str kind: name of the request.
+        :param tuple data:
+            an optional tuple containing additional data to attach to the
+            request.
+        :param bool wait:
+            ``True`` if this method should not return until a response is
+            received; ``False`` otherwise.
+        :return:
+            a `.Message` containing possible additional data if the request was
+            successful (or an empty `.Message` if ``wait`` was ``False``);
+            ``None`` if the request was denied.
         """
         if wait:
             self.completion_event = threading.Event()
@@ -826,11 +810,9 @@ class Transport (threading.Thread):
         server mode.  If no channel is opened before the given timeout, ``None``
         is returned.
 
-        :param timeout: seconds to wait for a channel, or ``None`` to wait
-            forever
-        :type timeout: int
+        :param int timeout:
+            seconds to wait for a channel, or ``None`` to wait forever
         :return: a new `.Channel` opened by the client
-        :rtype: `.Channel`
         """
         self.lock.acquire()
         try:
@@ -867,17 +849,16 @@ class Transport (threading.Thread):
             succeed, but a subsequent `open_channel` or `open_session` call may
             fail because you haven't authenticated yet.
 
-        :param hostkey: the host key expected from the server, or ``None`` if
-            you don't want to do host key verification.
-        :type hostkey: `.PKey`
-        :param username: the username to authenticate as.
-        :type username: str
-        :param password: a password to use for authentication, if you want to
-            use password authentication; otherwise ``None``.
-        :type password: str
-        :param pkey: a private key to use for authentication, if you want to
-            use private key authentication; otherwise ``None``.
-        :type pkey: `.PKey`
+        :param .PKey hostkey:
+            the host key expected from the server, or ``None`` if you don't
+            want to do host key verification.
+        :param str username: the username to authenticate as.
+        :param str password:
+            a password to use for authentication, if you want to use password
+            authentication; otherwise ``None``.
+        :param .PKey pkey:
+            a private key to use for authentication, if you want to use private
+            key authentication; otherwise ``None``.
 
         :raises SSHException: if the SSH2 negotiation fails, the host key
             supplied by the server is incorrect, or authentication fails.
@@ -914,8 +895,8 @@ class Transport (threading.Thread):
         calls like `start_client`.  The exception (if any) is cleared after
         this call.
 
-        :return: an exception, or ``None`` if there is no stored exception.
-        :rtype: Exception
+        :return:
+            an exception, or ``None`` if there is no stored exception.
 
         .. versionadded:: 1.1
         """
@@ -937,11 +918,9 @@ class Transport (threading.Thread):
         Any extra parameters (including keyword arguments) are saved and
         passed to the `.SubsystemHandler` constructor later.
 
-        :param name: name of the subsystem.
-        :type name: str
-        :param handler: subclass of `.SubsystemHandler` that handles this
-            subsystem.
-        :type handler: class
+        :param str name: name of the subsystem.
+        :param class handler:
+            subclass of `.SubsystemHandler` that handles this subsystem.
         """
         try:
             self.lock.acquire()
@@ -953,10 +932,10 @@ class Transport (threading.Thread):
         """
         Return true if this session is active and authenticated.
 
-        :return: True if the session is still open and has been authenticated
+        :return:
+            True if the session is still open and has been authenticated
             successfully; False if authentication failed and/or the session is
             closed.
-        :rtype: bool
         """
         return self.active and (self.auth_handler is not None) and self.auth_handler.is_authenticated()
 
@@ -966,8 +945,7 @@ class Transport (threading.Thread):
         session is not authenticated (or authentication failed), this method
         returns ``None``.
 
-        :return: username that was authenticated, or ``None``.
-        :rtype: string
+        :return: username that was authenticated (a `str`), or ``None``.
         """
         if not self.active or (self.auth_handler is None):
             return None
@@ -980,11 +958,10 @@ class Transport (threading.Thread):
         list of authentication types supported by the server, by catching the
         `.BadAuthenticationType` exception raised.
 
-        :param username: the username to authenticate as
-        :type username: string
-        :return: list of auth types permissible for the next stage of
+        :param str username: the username to authenticate as
+        :return:
+            `list` of auth types permissible for the next stage of
             authentication (normally empty)
-        :rtype: list
 
         :raises BadAuthenticationType: if "none" authentication isn't allowed
             by the server for this user
@@ -1027,20 +1004,17 @@ class Transport (threading.Thread):
         this method will return a list of auth types permissible for the next
         step.  Otherwise, in the normal case, an empty list is returned.
 
-        :param username: the username to authenticate as
-        :type username: str
-        :param password: the password to authenticate with
-        :type password: basestring
-        :param event: an event to trigger when the authentication attempt is
-            complete (whether it was successful or not)
-        :type event: threading.Event
-        :param fallback: ``True`` if an attempt at an automated "interactive"
-            password auth should be made if the server doesn't support normal
-            password auth
-        :type fallback: bool
-        :return: list of auth types permissible for the next stage of
+        :param str username: the username to authenticate as
+        :param basestring password: the password to authenticate with
+        :param .threading.Event event:
+            an event to trigger when the authentication attempt is complete
+            (whether it was successful or not)
+        :param bool fallback:
+            ``True`` if an attempt at an automated "interactive" password auth
+            should be made if the server doesn't support normal password auth
+        :return:
+            `list` of auth types permissible for the next stage of
             authentication (normally empty)
-        :rtype: list
 
         :raises BadAuthenticationType: if password authentication isn't
             allowed by the server for this user (and no event was passed in)
@@ -1101,16 +1075,14 @@ class Transport (threading.Thread):
         this method will return a list of auth types permissible for the next
         step.  Otherwise, in the normal case, an empty list is returned.
 
-        :param username: the username to authenticate as
-        :type username: string
-        :param key: the private key to authenticate with
-        :type key: `.PKey`
-        :param event: an event to trigger when the authentication attempt is
-            complete (whether it was successful or not)
-        :type event: threading.Event
-        :return: list of auth types permissible for the next stage of
+        :param str username: the username to authenticate as
+        :param .PKey key: the private key to authenticate with
+        :param .threading.Event event:
+            an event to trigger when the authentication attempt is complete
+            (whether it was successful or not)
+        :return:
+            `list` of auth types permissible for the next stage of
             authentication (normally empty)
-        :rtype: list
 
         :raises BadAuthenticationType: if public-key authentication isn't
             allowed by the server for this user (and no event was passed in)
@@ -1161,15 +1133,12 @@ class Transport (threading.Thread):
         this method will return a list of auth types permissible for the next
         step.  Otherwise, in the normal case, an empty list is returned.
 
-        :param username: the username to authenticate as
-        :type username: string
-        :param handler: a handler for responding to server questions
-        :type handler: callable
-        :param submethods: a string list of desired submethods (optional)
-        :type submethods: str
-        :return: list of auth types permissible for the next stage of
+        :param str username: the username to authenticate as
+        :param callable handler: a handler for responding to server questions
+        :param str submethods: a string list of desired submethods (optional)
+        :return:
+            `list` of auth types permissible for the next stage of
             authentication (normally empty).
-        :rtype: list
 
         :raises BadAuthenticationType: if public-key authentication isn't
             allowed by the server for this user
@@ -1193,8 +1162,7 @@ class Transport (threading.Thread):
         the `.logging` module for more info.)  SSH Channels will log to a
         sub-channel of the one specified.
 
-        :param name: new channel name for logging
-        :type name: str
+        :param str name: new channel name for logging
 
         .. versionadded:: 1.1
         """
@@ -1206,8 +1174,7 @@ class Transport (threading.Thread):
         """
         Return the channel name used for this transport's logging.
 
-        :return: channel name.
-        :rtype: str
+        :return: channel name as a `str`
 
         .. versionadded:: 1.2
         """
@@ -1219,9 +1186,9 @@ class Transport (threading.Thread):
         the logs.  Normally you would want this off (which is the default),
         but if you are debugging something, it may be useful.
 
-        :param hexdump: ``True`` to log protocol traffix (in hex) to the log;
-            ``False`` otherwise.
-        :type hexdump: bool
+        :param bool hexdump:
+            ``True`` to log protocol traffix (in hex) to the log; ``False``
+            otherwise.
         """
         self.packetizer.set_hexdump(hexdump)
 
@@ -1230,8 +1197,7 @@ class Transport (threading.Thread):
         Return ``True`` if the transport is currently logging hex dumps of
         protocol traffic.
 
-        :return: ``True`` if hex dumps are being logged
-        :rtype: bool
+        :return: ``True`` if hex dumps are being logged, else ``False``.
 
         .. versionadded:: 1.4
         """
@@ -1243,9 +1209,9 @@ class Transport (threading.Thread):
         the transport (ie before calling `connect`, etc).  By default,
         compression is off since it negatively affects interactive sessions.
 
-        :param compress: ``True`` to ask the remote client/server to compress
-            traffic; ``False`` to refuse compression
-        :type compress: bool
+        :param bool compress:
+            ``True`` to ask the remote client/server to compress traffic;
+            ``False`` to refuse compression
 
         .. versionadded:: 1.5.2
         """
@@ -1261,8 +1227,9 @@ class Transport (threading.Thread):
         socket.  If the socket-like object has no ``'getpeername'`` method,
         then ``("unknown", 0)`` is returned.
 
-        :return: the address if the remote host, if known
-        :rtype: tuple(str, int)
+        :return:
+            the address of the remote host, if known, as a ``(str, int)``
+            tuple.
         """
         gp = getattr(self.sock, 'getpeername', None)
         if gp is None:
@@ -2057,8 +2024,6 @@ class SecurityOptions (object):
     def __repr__(self):
         """
         Returns a string representation of this object, for debugging.
-
-        :rtype: str
         """
         return '<paramiko.SecurityOptions for %s>' % repr(self._transport)
 
