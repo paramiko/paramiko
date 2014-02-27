@@ -154,17 +154,13 @@ def generate_key_bytes(hashclass, salt, key, nbytes):
     through a secure hash into some keyworthy bytes.  This specific algorithm
     is used for encrypting/decrypting private key files.
 
-    :param hashclass: class from `Crypto.Hash` that can be used as a secure
-        hashing function (like ``MD5`` or ``SHA``).
-    :type hashclass: `Crypto.Hash`
-    :param salt: data to salt the hash with.
-    :type salt: string
-    :param key: human-entered password or passphrase.
-    :type key: string
-    :param nbytes: number of bytes to generate.
-    :type nbytes: int
-    :return: key data
-    :rtype: string
+    :param class hashclass:
+        class from `Crypto.Hash` that can be used as a secure hashing function
+        (like ``MD5`` or ``SHA``).
+    :param str salt: data to salt the hash with.
+    :param str key: human-entered password or passphrase.
+    :param int nbytes: number of bytes to generate.
+    :return: Key data `str`
     """
     keydata = ''
     digest = ''
@@ -185,19 +181,18 @@ def generate_key_bytes(hashclass, salt, key, nbytes):
 def load_host_keys(filename):
     """
     Read a file of known SSH host keys, in the format used by openssh, and
-    return a compound dict of ``hostname -> keytype ->`` `PKey <paramiko.pkey.PKey>`.
-    The hostname may be an IP address or DNS name.  The keytype will be either
-    ``"ssh-rsa"`` or ``"ssh-dss"``.
+    return a compound dict of ``hostname -> keytype ->`` `PKey
+    <paramiko.pkey.PKey>`. The hostname may be an IP address or DNS name.  The
+    keytype will be either ``"ssh-rsa"`` or ``"ssh-dss"``.
 
     This type of file unfortunately doesn't exist on Windows, but on posix,
     it will usually be stored in ``os.path.expanduser("~/.ssh/known_hosts")``.
 
     Since 1.5.3, this is just a wrapper around `.HostKeys`.
 
-    :param filename: name of the file to read host keys from
-    :type filename: str
-    :return: dict of host keys, indexed by hostname and then keytype
-    :rtype: dict(hostname, dict(keytype, `PKey <paramiko.pkey.PKey>`))
+    :param str filename: name of the file to read host keys from
+    :return:
+        nested dict of `.PKey` objects, indexed by hostname and then keytype
     """
     from paramiko.hostkeys import HostKeys
     return HostKeys(filename)
