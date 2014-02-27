@@ -241,6 +241,9 @@ class AuthHandler (object):
                 # send the supported GSSAPI OIDs to the server
                 self.transport._send_message(m)
                 ptype, m = self.transport.packetizer.read_message()
+                if ptype == MSG_USERAUTH_BANNER:
+                    self._parse_userauth_banner(m)
+                    ptype, m = self.transport.packetizer.read_message()
                 if ptype == MSG_USERAUTH_GSSAPI_RESPONSE:
                     """
                     Read the mechanism selected by the server.
