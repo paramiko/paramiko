@@ -48,10 +48,9 @@ class BadAuthenticationType (AuthenticationException):
     the server isn't allowing that type.  (It may only allow public-key, for
     example.)
     
-    :ivar allowed_types:
+    :ivar list allowed_types:
         list of allowed authentication types provided by the server (possible
         values are: ``"none"``, ``"password"``, and ``"publickey"``).
-    :type allowed_types: list
     
     .. versionadded:: 1.1
     """
@@ -80,8 +79,7 @@ class ChannelException (SSHException):
     """
     Exception raised when an attempt to open a new `.Channel` fails.
     
-    :ivar code: the error code returned by the server
-    :type code: int
+    :ivar int code: the error code returned by the server
     
     .. versionadded:: 1.6
     """
@@ -94,12 +92,9 @@ class BadHostKeyException (SSHException):
     """
     The host key given by the SSH server did not match what we were expecting.
     
-    :ivar hostname: the hostname of the SSH server
-    :type hostname: str
-    :ivar key: the host key presented by the server
-    :type key: `.PKey`
-    :ivar expected_key: the host key expected
-    :type expected_key: `.PKey`
+    :ivar str hostname: the hostname of the SSH server
+    :ivar PKey got_key: the host key presented by the server
+    :ivar PKey expected_key: the host key expected
     
     .. versionadded:: 1.6
     """
@@ -114,10 +109,8 @@ class ProxyCommandFailure (SSHException):
     """
     The "ProxyCommand" found in the .ssh/config file returned an error.
 
-    :ivar command: The command line that is generating this exception.
-    :type command: str
-    :ivar error: The error captured from the proxy command output.
-    :type error: str
+    :ivar str command: The command line that is generating this exception.
+    :ivar str error: The error captured from the proxy command output.
     """
     def __init__(self, command, error):
         SSHException.__init__(self,
