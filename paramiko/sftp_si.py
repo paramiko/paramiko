@@ -78,6 +78,7 @@ class SFTPServerInterface (object):
 
         ``flags`` contains the requested mode for opening (read-only,
         write-append, etc) as a bitset of flags from the ``os`` module:
+
             - ``os.O_RDONLY``
             - ``os.O_WRONLY``
             - ``os.O_RDWR``
@@ -85,6 +86,7 @@ class SFTPServerInterface (object):
             - ``os.O_CREAT``
             - ``os.O_TRUNC``
             - ``os.O_EXCL``
+
         (One of ``os.O_RDONLY``, ``os.O_WRONLY``, or ``os.O_RDWR`` will always
         be set.)
 

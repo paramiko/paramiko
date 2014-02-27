@@ -46,6 +46,7 @@ class ServerInterface (object):
         useless), you should also override some of the channel request methods
         below, which are used to determine which services will be allowed on
         a given channel:
+
             - `check_channel_pty_request`
             - `check_channel_shell_request`
             - `check_channel_subsystem_request`
@@ -62,6 +63,7 @@ class ServerInterface (object):
         The return value should either be ``OPEN_SUCCEEDED`` (or
         ``0``) to allow the channel request, or one of the following error
         codes to reject it:
+
             - ``OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED``
             - ``OPEN_FAILED_CONNECT_FAILED``
             - ``OPEN_FAILED_UNKNOWN_CHANNEL_TYPE``
@@ -449,6 +451,7 @@ class ServerInterface (object):
         The return value should either be ``OPEN_SUCCEEDED`` (or
         ``0``) to allow the channel request, or one of the following error
         codes to reject it:
+
             - ``OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED``
             - ``OPEN_FAILED_CONNECT_FAILED``
             - ``OPEN_FAILED_UNKNOWN_CHANNEL_TYPE``
