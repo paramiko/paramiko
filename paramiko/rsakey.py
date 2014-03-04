@@ -17,7 +17,7 @@
 # 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
 
 """
-L{RSAKey}
+RSA keys.
 """
 
 from Crypto.PublicKey import RSA
@@ -129,13 +129,11 @@ class RSAKey (PKey):
         Generate a new private RSA key.  This factory function can be used to
         generate a new host key or authentication key.
 
-        @param bits: number of bits the generated key should be.
-        @type bits: int
-        @param progress_func: an optional function to call at key points in
-            key generation (used by C{pyCrypto.PublicKey}).
-        @type progress_func: function
-        @return: new private key
-        @rtype: L{RSAKey}
+        :param int bits: number of bits the generated key should be.
+        :param function progress_func:
+            an optional function to call at key points in key generation (used
+            by ``pyCrypto.PublicKey``).
+        :return: new `.RSAKey` private key
         """
         rsa = RSA.generate(bits, rng.read, progress_func)
         key = RSAKey(vals=(rsa.e, rsa.n))

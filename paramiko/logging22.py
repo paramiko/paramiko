@@ -17,7 +17,7 @@
 # 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
 
 """
-Stub out logging on python < 2.3.
+Stub out logging on Python < 2.3.
 """
 
 
