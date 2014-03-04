@@ -109,7 +109,7 @@ class ModulusPack (object):
 
     def read_file(self, filename):
         """
-        @raise IOError: passed from any file operations that fail.
+        :raises IOError: passed from any file operations that fail.
         """
         self.pack = {}
         f = open(filename, 'r')
