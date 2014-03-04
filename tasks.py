@@ -1,5 +1,6 @@
+from os import mkdir
 from os.path import join
-from shutil import rmtree, move
+from shutil import rmtree, copytree
 
 from invoke import Collection, ctask as task
 from invocations import docs as _docs
@@ -38,8 +39,9 @@ def coverage(ctx):
 @task('docs') # Will invoke the API doc site build
 def release(ctx):
     # Move the built docs into where Epydocs used to live
-    rmtree('docs')
-    move(docs_build, 'docs')
+    target = 'docs'
+    rmtree(target, ignore_errors=True)
+    copytree(docs_build, target)
     # Publish
     publish(ctx)
 
