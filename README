@@ -124,10 +124,7 @@ Use
 ---
 
 the demo scripts are probably the best example of how to use this package.
-there is also a lot of documentation, generated with epydoc, in the doc/
-folder.  point your browser there.  seriously, do it.  mad props to
-epydoc, which actually motivated me to write more documentation than i
-ever would have before.
+there is also a lot of documentation, generated with Sphinx autodoc, in the doc/ folder.
 
 there are also unit tests here::
 
