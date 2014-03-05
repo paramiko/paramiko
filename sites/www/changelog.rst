@@ -2,9 +2,9 @@
 Changelog
 =========
 
-* :support:`256` Convert API documentation to Sphinx, yielding a new API
-  docs website to replace the old Epydoc one. Thanks to Olle Lundberg for the
-  initial conversion work.
+* :support:`256 backported` Convert API documentation to Sphinx, yielding a new
+  API docs website to replace the old Epydoc one. Thanks to Olle Lundberg for
+  the initial conversion work.
 * :bug:`-` Use constant-time hash comparison operations where possible, to
   protect against `timing-based attacks
   <http://codahale.com/a-lesson-in-timing-attacks/>`_. Thanks to Alex Gaynor
