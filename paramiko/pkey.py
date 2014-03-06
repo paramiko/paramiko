@@ -253,8 +253,8 @@ class PKey (object):
         :raises SSHException: if the key file is invalid.
         """
         with open(filename, 'r') as f:
-        data = self._read_private_key(tag, f, password)
-        return data
+            data = self._read_private_key(tag, f, password)
+            return data
 
     def _read_private_key(self, tag, f, password=None):
         lines = f.readlines()

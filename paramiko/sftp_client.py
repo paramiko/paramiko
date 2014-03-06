@@ -526,8 +526,8 @@ class SFTPClient(BaseSFTP):
             Began returning rich attribute objects.
         """
         with self.file(remotepath, 'wb') as fr:
-        fr.set_pipelined(True)
-        size = 0
+            fr.set_pipelined(True)
+            size = 0
             while True:
                 data = fl.read(32768)
                 fr.write(data)
@@ -593,8 +593,8 @@ class SFTPClient(BaseSFTP):
             Added the ``callable`` param.
         """
         with self.open(remotepath, 'rb') as fr:
-        file_size = self.stat(remotepath).st_size
-        fr.prefetch()
+            file_size = self.stat(remotepath).st_size
+            fr.prefetch()
             size = 0
             while True:
                 data = fr.read(32768)

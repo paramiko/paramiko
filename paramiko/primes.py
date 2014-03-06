@@ -114,14 +114,14 @@ class ModulusPack (object):
         """
         self.pack = {}
         with open(filename, 'r') as f:
-        for line in f:
-            line = line.strip()
-            if (len(line) == 0) or (line[0] == '#'):
-                continue
-            try:
-                self._parse_modulus(line)
-            except:
-                continue
+            for line in f:
+                line = line.strip()
+                if (len(line) == 0) or (line[0] == '#'):
+                    continue
+                try:
+                    self._parse_modulus(line)
+                except:
+                    continue
 
     def get_modulus(self, min, prefer, max):
         bitsizes = sorted(self.pack.keys())

@@ -131,7 +131,7 @@ def bit_length(n):
     try:
         return n.bitlength()
     except AttributeError:
-    norm = deflate_long(n, 0)
+        norm = deflate_long(n, 0)
         hbyte = byte_ord(norm[0])
     if hbyte == 0:
         return 1

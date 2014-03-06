@@ -135,7 +135,7 @@ class SSHClient (object):
         with open(filename, 'w') as f:
             for hostname, keys in self._host_keys.items():
                 for keytype, key in keys.items():
-                f.write('%s %s %s\n' % (hostname, keytype, key.get_base64()))
+                    f.write('%s %s %s\n' % (hostname, keytype, key.get_base64()))
 
     def get_host_keys(self):
         """

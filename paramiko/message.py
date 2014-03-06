@@ -257,7 +257,7 @@ class Message (object):
             self.packet.write(max_byte)
             self.add_string(util.deflate_long(n))
         else:
-        self.packet.write(struct.pack('>I', n))
+            self.packet.write(struct.pack('>I', n))
         return self
 
     def add_int64(self, n):

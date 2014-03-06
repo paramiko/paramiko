@@ -86,20 +86,20 @@ class BufferedFile (object):
         return
 
     if PY2:
-    def next(self):
-        """
-        Returns the next line from the input, or raises
-        `~exceptions.StopIteration` when EOF is hit.  Unlike Python file
-        objects, it's okay to mix calls to `next` and `readline`.
+        def next(self):
+            """
+            Returns the next line from the input, or raises
+            `~exceptions.StopIteration` when EOF is hit.  Unlike Python file
+            objects, it's okay to mix calls to `next` and `readline`.
 
-        :raises StopIteration: when the end of the file is reached.
+            :raises StopIteration: when the end of the file is reached.
 
-        :return: a line (`str`) read from the file.
-        """
-        line = self.readline()
-        if not line:
-            raise StopIteration
-        return line
+            :return: a line (`str`) read from the file.
+            """
+            line = self.readline()
+            if not line:
+                raise StopIteration
+            return line
     else:
         def __next__(self):
             """
