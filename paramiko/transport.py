@@ -1728,7 +1728,7 @@ class Transport (threading.Thread):
     def _activate_outbound(self):
         "switch on newly negotiated encryption parameters for outbound traffic"
         m = Message()
-        m.add_byte(MSG_NEWKEYS)
+        m.add_byte(cMSG_NEWKEYS)
         self._send_message(m)
         block_size = self._cipher_info[self.local_cipher]['block-size']
         if self.server_mode:
