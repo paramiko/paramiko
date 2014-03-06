@@ -8,7 +8,11 @@ in jaraco.windows and asking the author to port the fixes back here.
 
 import ctypes
 import ctypes.wintypes
-import __builtin__
+from paramiko.py3compat import u
+try:
+    import builtins
+except ImportError:
+    import __builtin__ as builtins
 
 try:
         USHORT = ctypes.wintypes.USHORT
@@ -40,7 +44,7 @@ def format_system_message(errno):
 	result_buffer = ctypes.wintypes.LPWSTR()
 	buffer_size = 0
 	arguments = None
-	bytes = ctypes.windll.kernel32.FormatMessageW(
+    format_bytes = ctypes.windll.kernel32.FormatMessageW(
 		flags,
 		source,
 		message_id,
@@ -52,13 +56,13 @@ def format_system_message(errno):
 	# note the following will cause an infinite loop if GetLastError
 	#  repeatedly returns an error that cannot be formatted, although
 	#  this should not happen.
-	handle_nonzero_success(bytes)
+    handle_nonzero_success(format_bytes)
 	message = result_buffer.value
 	ctypes.windll.kernel32.LocalFree(result_buffer)
 	return message
 
 
-class WindowsError(__builtin__.WindowsError):
+class WindowsError(builtins.WindowsError):
 	"more info about errors at http://msdn.microsoft.com/en-us/library/ms681381(VS.85).aspx"
 
 	def __init__(self, value=None):
@@ -120,7 +124,7 @@ class MemoryMap(object):
 		FILE_MAP_WRITE = 0x2
 		filemap = ctypes.windll.kernel32.CreateFileMappingW(
 			INVALID_HANDLE_VALUE, p_SA, PAGE_READWRITE, 0, self.length,
-			unicode(self.name))
+            u(self.name))
 		handle_nonzero_success(filemap)
 		if filemap == INVALID_HANDLE_VALUE:
 			raise Exception("Failed to create file mapping")

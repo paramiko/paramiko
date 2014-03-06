@@ -27,6 +27,7 @@ import array
 import ctypes.wintypes
 import platform
 import struct
+from paramiko.util import *
 
 try:
     import _thread as thread # Python 3.x
@@ -91,7 +92,7 @@ def _query_pageant(msg):
     with pymap:
         pymap.write(msg)
         # Create an array buffer containing the mapped filename
-        char_buffer = array.array("c", map_name + '\0')
+        char_buffer = array.array("c", b(map_name) + zero_byte)
         char_buffer_address, char_buffer_size = char_buffer.buffer_info()
         # Create a string to use for the SendMessage function call
         cds = COPYDATASTRUCT(_AGENT_COPYDATA_ID, char_buffer_size,

@@ -120,13 +120,13 @@ class AuthHandler (object):
 
     def _request_auth(self):
         m = Message()
-        m.add_byte(chr(MSG_SERVICE_REQUEST))
+        m.add_byte(cMSG_SERVICE_REQUEST)
         m.add_string('ssh-userauth')
         self.transport._send_message(m)
 
     def _disconnect_service_not_available(self):
         m = Message()
-        m.add_byte(chr(MSG_DISCONNECT))
+        m.add_byte(cMSG_DISCONNECT)
         m.add_int(DISCONNECT_SERVICE_NOT_AVAILABLE)
         m.add_string('Service not available')
         m.add_string('en')
@@ -135,7 +135,7 @@ class AuthHandler (object):
 
     def _disconnect_no_more_auth(self):
         m = Message()
-        m.add_byte(chr(MSG_DISCONNECT))
+        m.add_byte(cMSG_DISCONNECT)
         m.add_int(DISCONNECT_NO_MORE_AUTH_METHODS_AVAILABLE)
         m.add_string('No more auth methods available')
         m.add_string('en')
@@ -145,14 +145,14 @@ class AuthHandler (object):
     def _get_session_blob(self, key, service, username):
         m = Message()
         m.add_string(self.transport.session_id)
-        m.add_byte(chr(MSG_USERAUTH_REQUEST))
+        m.add_byte(cMSG_USERAUTH_REQUEST)
         m.add_string(username)
         m.add_string(service)
         m.add_string('publickey')
         m.add_boolean(1)
         m.add_string(key.get_name())
-        m.add_string(str(key))
-        return str(m)
+        m.add_string(key)
+        return m.asbytes()
 
     def wait_for_response(self, event):
         while True:
@@ -176,11 +176,11 @@ class AuthHandler (object):
         return []
 
     def _parse_service_request(self, m):
-        service = m.get_string()
+        service = m.get_text()
         if self.transport.server_mode and (service == 'ssh-userauth'):
             # accepted
             m = Message()
-            m.add_byte(chr(MSG_SERVICE_ACCEPT))
+            m.add_byte(cMSG_SERVICE_ACCEPT)
             m.add_string(service)
             self.transport._send_message(m)
             return
@@ -188,27 +188,25 @@ class AuthHandler (object):
         self._disconnect_service_not_available()
 
     def _parse_service_accept(self, m):
-        service = m.get_string()
+        service = m.get_text()
         if service == 'ssh-userauth':
             self.transport._log(DEBUG, 'userauth is OK')
             m = Message()
-            m.add_byte(chr(MSG_USERAUTH_REQUEST))
+            m.add_byte(cMSG_USERAUTH_REQUEST)
             m.add_string(self.username)
             m.add_string('ssh-connection')
             m.add_string(self.auth_method)
             if self.auth_method == 'password':
                 m.add_boolean(False)
-                password = self.password
-                if isinstance(password, unicode):
-                    password = password.encode('UTF-8')
+                password = bytestring(self.password)
                 m.add_string(password)
             elif self.auth_method == 'publickey':
                 m.add_boolean(True)
                 m.add_string(self.private_key.get_name())
-                m.add_string(str(self.private_key))
+                m.add_string(self.private_key)
                 blob = self._get_session_blob(self.private_key, 'ssh-connection', self.username)
                 sig = self.private_key.sign_ssh_data(self.transport.rng, blob)
-                m.add_string(str(sig))
+                m.add_string(sig)
             elif self.auth_method == 'keyboard-interactive':
                 m.add_string('')
                 m.add_string(self.submethods)
@@ -225,11 +223,11 @@ class AuthHandler (object):
         m = Message()
         if result == AUTH_SUCCESSFUL:
             self.transport._log(INFO, 'Auth granted (%s).' % method)
-            m.add_byte(chr(MSG_USERAUTH_SUCCESS))
+            m.add_byte(cMSG_USERAUTH_SUCCESS)
             self.authenticated = True
         else:
             self.transport._log(INFO, 'Auth rejected (%s).' % method)
-            m.add_byte(chr(MSG_USERAUTH_FAILURE))
+            m.add_byte(cMSG_USERAUTH_FAILURE)
             m.add_string(self.transport.server_object.get_allowed_auths(username))
             if result == AUTH_PARTIALLY_SUCCESSFUL:
                 m.add_boolean(1)
@@ -245,10 +243,10 @@ class AuthHandler (object):
     def _interactive_query(self, q):
         # make interactive query instead of response
         m = Message()
-        m.add_byte(chr(MSG_USERAUTH_INFO_REQUEST))
+        m.add_byte(cMSG_USERAUTH_INFO_REQUEST)
         m.add_string(q.name)
         m.add_string(q.instructions)
-        m.add_string('')
+        m.add_string(bytes())
         m.add_int(len(q.prompts))
         for p in q.prompts:
             m.add_string(p[0])
@@ -259,7 +257,7 @@ class AuthHandler (object):
         if not self.transport.server_mode:
             # er, uh... what?
             m = Message()
-            m.add_byte(chr(MSG_USERAUTH_FAILURE))
+            m.add_byte(cMSG_USERAUTH_FAILURE)
             m.add_string('none')
             m.add_boolean(0)
             self.transport._send_message(m)
@@ -267,9 +265,9 @@ class AuthHandler (object):
         if self.authenticated:
             # ignore
             return
-        username = m.get_string()
-        service = m.get_string()
-        method = m.get_string()
+        username = m.get_text()
+        service = m.get_text()
+        method = m.get_text()
         self.transport._log(DEBUG, 'Auth request (type=%s) service=%s, username=%s' % (method, service, username))
         if service != 'ssh-connection':
             self._disconnect_service_not_available()
@@ -284,7 +282,7 @@ class AuthHandler (object):
             result = self.transport.server_object.check_auth_none(username)
         elif method == 'password':
             changereq = m.get_boolean()
-            password = m.get_string()
+            password = m.get_binary()
             try:
                 password = password.decode('UTF-8')
             except UnicodeError:
@@ -295,7 +293,7 @@ class AuthHandler (object):
                 # always treated as failure, since we don't support changing passwords, but collect
                 # the list of valid auth types from the callback anyway
                 self.transport._log(DEBUG, 'Auth request to change passwords (rejected)')
-                newpassword = m.get_string()
+                newpassword = m.get_binary()
                 try:
                     newpassword = newpassword.decode('UTF-8', 'replace')
                 except UnicodeError:
@@ -305,11 +303,11 @@ class AuthHandler (object):
                 result = self.transport.server_object.check_auth_password(username, password)
         elif method == 'publickey':
             sig_attached = m.get_boolean()
-            keytype = m.get_string()
-            keyblob = m.get_string()
+            keytype = m.get_text()
+            keyblob = m.get_binary()
             try:
                 key = self.transport._key_info[keytype](Message(keyblob))
-            except SSHException, e:
+            except SSHException as e:
                 self.transport._log(INFO, 'Auth rejected: public key: %s' % str(e))
                 key = None
             except:
@@ -326,12 +324,12 @@ class AuthHandler (object):
                     # client wants to know if this key is acceptable, before it
                     # signs anything...  send special "ok" message
                     m = Message()
-                    m.add_byte(chr(MSG_USERAUTH_PK_OK))
+                    m.add_byte(cMSG_USERAUTH_PK_OK)
                     m.add_string(keytype)
                     m.add_string(keyblob)
                     self.transport._send_message(m)
                     return
-                sig = Message(m.get_string())
+                sig = Message(m.get_binary())
                 blob = self._get_session_blob(key, service, username)
                 if not key.verify_ssh_sig(blob, sig):
                     self.transport._log(INFO, 'Auth rejected: invalid signature')
@@ -378,23 +376,23 @@ class AuthHandler (object):
         banner = m.get_string()
         self.banner = banner
         lang = m.get_string()
-        self.transport._log(INFO, 'Auth banner: ' + banner)
+        self.transport._log(INFO, 'Auth banner: %s' % banner)
         # who cares.
     
     def _parse_userauth_info_request(self, m):
         if self.auth_method != 'keyboard-interactive':
             raise SSHException('Illegal info request from server')
-        title = m.get_string()
-        instructions = m.get_string()
-        m.get_string()  # lang
+        title = m.get_text()
+        instructions = m.get_text()
+        m.get_binary()  # lang
         prompts = m.get_int()
         prompt_list = []
         for i in range(prompts):
-            prompt_list.append((m.get_string(), m.get_boolean()))
+            prompt_list.append((m.get_text(), m.get_boolean()))
         response_list = self.interactive_handler(title, instructions, prompt_list)
         
         m = Message()
-        m.add_byte(chr(MSG_USERAUTH_INFO_RESPONSE))
+        m.add_byte(cMSG_USERAUTH_INFO_RESPONSE)
         m.add_int(len(response_list))
         for r in response_list:
             m.add_string(r)
@@ -406,7 +404,7 @@ class AuthHandler (object):
         n = m.get_int()
         responses = []
         for i in range(n):
-            responses.append(m.get_string())
+            responses.append(m.get_text())
         result = self.transport.server_object.check_auth_interactive_response(responses)
         if isinstance(type(result), InteractiveQuery):
             # make interactive query instead of response

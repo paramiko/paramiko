@@ -86,7 +86,7 @@ CMD_NAMES = {
     CMD_ATTRS: 'attrs',
     CMD_EXTENDED: 'extended',
     CMD_EXTENDED_REPLY: 'extended_reply'
-    }
+}
 
 
 class SFTPError (Exception):
@@ -125,7 +125,7 @@ class BaseSFTP (object):
         msg = Message()
         msg.add_int(_VERSION)
         msg.add(*extension_pairs)
-        self._send_packet(CMD_VERSION, str(msg))
+        self._send_packet(CMD_VERSION, msg)
         return version
         
     def _log(self, level, msg, *args):
@@ -142,7 +142,7 @@ class BaseSFTP (object):
         return
 
     def _read_all(self, n):
-        out = ''
+        out = bytes()
         while n > 0:
             if isinstance(self.sock, socket.socket):
                 # sometimes sftp is used directly over a socket instead of
@@ -166,7 +166,8 @@ class BaseSFTP (object):
 
     def _send_packet(self, t, packet):
         #self._log(DEBUG2, 'write: %s (len=%d)' % (CMD_NAMES.get(t, '0x%02x' % t), len(packet)))
-        out = struct.pack('>I', len(packet) + 1) + chr(t) + packet
+        packet = asbytes(packet)
+        out = struct.pack('>I', len(packet) + 1) + byte_chr(t) + packet
         if self.ultra_debug:
             self._log(DEBUG, util.format_binary(out, 'OUT: '))
         self._write_all(out)
@@ -175,14 +176,14 @@ class BaseSFTP (object):
         x = self._read_all(4)
         # most sftp servers won't accept packets larger than about 32k, so
         # anything with the high byte set (> 16MB) is just garbage.
-        if x[0] != '\x00':
+        if byte_ord(x[0]):
             raise SFTPError('Garbage packet received')
         size = struct.unpack('>I', x)[0]
         data = self._read_all(size)
         if self.ultra_debug:
             self._log(DEBUG, util.format_binary(data, 'IN: '));
         if size > 0:
-            t = ord(data[0])
+            t = byte_ord(data[0])
             #self._log(DEBUG2, 'read: %s (len=%d)' % (CMD_NAMES.get(t), '0x%02x' % t, len(data)-1))
             return t, data[1:]
-        return 0, ''
+        return 0, bytes()

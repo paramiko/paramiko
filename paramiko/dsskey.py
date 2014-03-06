@@ -56,7 +56,7 @@ class DSSKey (PKey):
         else:
             if msg is None:
                 raise SSHException('Key object may not be empty')
-            if msg.get_string() != 'ssh-dss':
+            if msg.get_text() != 'ssh-dss':
                 raise SSHException('Invalid key')
             self.p = msg.get_mpint()
             self.q = msg.get_mpint()
@@ -64,14 +64,17 @@ class DSSKey (PKey):
             self.y = msg.get_mpint()
         self.size = util.bit_length(self.p)
 
-    def __str__(self):
+    def asbytes(self):
         m = Message()
         m.add_string('ssh-dss')
         m.add_mpint(self.p)
         m.add_mpint(self.q)
         m.add_mpint(self.g)
         m.add_mpint(self.y)
-        return str(m)
+        return m.asbytes()
+
+    def __str__(self):
+        return self.asbytes()
 
     def __hash__(self):
         h = hash(self.get_name())
@@ -107,21 +110,21 @@ class DSSKey (PKey):
         rstr = util.deflate_long(r, 0)
         sstr = util.deflate_long(s, 0)
         if len(rstr) < 20:
-            rstr = '\x00' * (20 - len(rstr)) + rstr
+            rstr = zero_byte * (20 - len(rstr)) + rstr
         if len(sstr) < 20:
-            sstr = '\x00' * (20 - len(sstr)) + sstr
+            sstr = zero_byte * (20 - len(sstr)) + sstr
         m.add_string(rstr + sstr)
         return m
 
     def verify_ssh_sig(self, data, msg):
-        if len(str(msg)) == 40:
+        if len(msg.asbytes()) == 40:
             # spies.com bug: signature has no header
-            sig = str(msg)
+            sig = msg.asbytes()
         else:
-            kind = msg.get_string()
+            kind = msg.get_text()
             if kind != 'ssh-dss':
                 return 0
-            sig = msg.get_string()
+            sig = msg.get_binary()
 
         # pull out (r, s) which are NOT encoded as mpints
         sigR = util.inflate_long(sig[:20], 1)
@@ -140,7 +143,7 @@ class DSSKey (PKey):
             b.encode(keylist)
         except BERException:
             raise SSHException('Unable to create ber encoding of key')
-        return str(b)
+        return b.asbytes()
 
     def write_private_key_file(self, filename, password=None):
         self._write_private_key_file('DSA', filename, self._encode_key(), password)
@@ -182,8 +185,8 @@ class DSSKey (PKey):
         # DSAPrivateKey = { version = 0, p, q, g, y, x }
         try:
             keylist = BER(data).decode()
-        except BERException, x:
-            raise SSHException('Unable to parse key file: ' + str(x))
+        except BERException as e:
+            raise SSHException('Unable to parse key file: ' + str(e))
         if (type(keylist) is not list) or (len(keylist) < 6) or (keylist[0] != 0):
             raise SSHException('not a valid DSA private key file (bad ber encoding)')
         self.p = keylist[1]

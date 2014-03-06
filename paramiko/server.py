@@ -514,7 +514,7 @@ class InteractiveQuery (object):
         self.instructions = instructions
         self.prompts = []
         for x in prompts:
-            if (type(x) is str) or (type(x) is unicode):
+            if isinstance(x, string_types):
                 self.add_prompt(x)
             else:
                 self.add_prompt(x[0], x[1])
@@ -576,7 +576,7 @@ class SubsystemHandler (threading.Thread):
         try:
             self.__transport._log(DEBUG, 'Starting handler for subsystem %s' % self.__name)
             self.start_subsystem(self.__name, self.__transport, self.__channel)
-        except Exception, e:
+        except Exception as e:
             self.__transport._log(ERROR, 'Exception in subsystem handler for "%s": %s' %
                                   (self.__name, str(e)))
             self.__transport._log(ERROR, util.tb_strings())
