@@ -317,6 +317,7 @@ class HostKeyEntry:
         # Decide what kind of key we're looking at and create an object
         # to hold it accordingly.
         try:
+            key = b(key)
             if keytype == 'ssh-rsa':
                 key = RSAKey(data=decodebytes(key))
             elif keytype == 'ssh-dss':
