@@ -329,7 +329,7 @@ class HostKeyEntry:
                 return None
 
         except binascii.Error as e:
-            raise InvalidHostKey(line, sys.exc_info()[1])
+            raise InvalidHostKey(line, e)
 
         return cls(names, key)
     from_line = classmethod(from_line)
