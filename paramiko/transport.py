@@ -1814,7 +1814,7 @@ class Transport (threading.Thread):
             if ok != False:
                 ok = (ok,)
         elif kind == 'cancel-tcpip-forward':
-            address = m.get_test()
+            address = m.get_text()
             port = m.get_int()
             self.server_object.cancel_port_forward_request(address, port)
             ok = True
