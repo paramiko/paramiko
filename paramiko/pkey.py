@@ -318,9 +318,9 @@ class PKey (object):
         :raises IOError: if there was an error writing the file.
         """
         with open(filename, 'w', o600) as f:
-        # grrr... the mode doesn't always take hold
+            # grrr... the mode doesn't always take hold
             os.chmod(filename, o600)
-        self._write_private_key(tag, f, data, password)
+            self._write_private_key(tag, f, data, password)
 
     def _write_private_key(self, tag, f, data, password=None):
         f.write('-----BEGIN %s PRIVATE KEY-----\n' % tag)
