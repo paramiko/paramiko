@@ -724,7 +724,7 @@ class Transport (threading.Thread):
         m = Message()
         m.add_byte(cMSG_IGNORE)
         if byte_count is None:
-            byte_count = (ord(rng.read(1)) % 32) + 10
+            byte_count = (byte_ord(rng.read(1)) % 32) + 10
         m.add_bytes(rng.read(byte_count))
         self._send_user_message(m)
 
