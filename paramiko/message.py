@@ -67,9 +67,6 @@ class Message (object):
     def asbytes(self):
         """
         Return the byte stream content of this Message, as bytes.
-
-        @return: the contents of this Message.
-        @rtype: bytes
         """
         return self.packet.getvalue()
 
@@ -241,8 +238,7 @@ class Message (object):
         """
         Add an integer to the stream.
         
-        @param n: integer to add
-        @type n: int
+        :param int n: integer to add
         """
         self.packet.write(struct.pack('>I', n))
         return self
