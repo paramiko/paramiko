@@ -307,6 +307,6 @@ def constant_time_bytes_eq(a, b):
     if len(a) != len(b):
         return False
     res = 0
-    for i in xrange(len(a)):
-        res |= ord(a[i]) ^ ord(b[i])
+    for i in (xrange if PY2 else range)(len(a)):
+        res |= byte_ord(a[i]) ^ byte_ord(b[i])
     return res == 0
