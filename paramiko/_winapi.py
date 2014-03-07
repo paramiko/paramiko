@@ -15,9 +15,9 @@ except ImportError:
     import __builtin__ as builtins
 
 try:
-        USHORT = ctypes.wintypes.USHORT
+    USHORT = ctypes.wintypes.USHORT
 except AttributeError:
-        USHORT = ctypes.c_ushort
+    USHORT = ctypes.c_ushort
 
 ######################
 # jaraco.windows.error
