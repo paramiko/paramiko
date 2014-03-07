@@ -133,13 +133,13 @@ def bit_length(n):
     except AttributeError:
         norm = deflate_long(n, 0)
         hbyte = byte_ord(norm[0])
-    if hbyte == 0:
-        return 1
-    bitlen = len(norm) * 8
-    while not (hbyte & 0x80):
-        hbyte <<= 1
-        bitlen -= 1
-    return bitlen
+        if hbyte == 0:
+            return 1
+        bitlen = len(norm) * 8
+        while not (hbyte & 0x80):
+            hbyte <<= 1
+            bitlen -= 1
+        return bitlen
 
 def tb_strings():
     return ''.join(traceback.format_exception(*sys.exc_info())).split('\n')
