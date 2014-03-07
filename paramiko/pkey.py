@@ -254,7 +254,7 @@ class PKey (object):
         """
         with open(filename, 'r') as f:
             data = self._read_private_key(tag, f, password)
-            return data
+        return data
 
     def _read_private_key(self, tag, f, password=None):
         lines = f.readlines()
