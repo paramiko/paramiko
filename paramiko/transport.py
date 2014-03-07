@@ -676,7 +676,7 @@ class Transport (threading.Thread):
         if port == 0:
             port = response.get_int()
         if handler is None:
-            def default_handler(channel, src_addr, dest_addr):
+            def default_handler(channel, src_addr, dest_addr_port):
                 #src_addr, src_port = src_addr_port
                 #dest_addr, dest_port = dest_addr_port
                 self._queue_incoming_channel(channel)
