@@ -279,7 +279,6 @@ class Transport (threading.Thread):
 
         .. versionadded:: 1.5.3
         """
-        self.sock.close()
         self.close()
 
     def get_security_options(self):
