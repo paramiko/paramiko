@@ -22,15 +22,13 @@ L{ECDSAKey}
 
 import binascii
 from ecdsa import SigningKey, VerifyingKey, der, curves
-from ecdsa.util import number_to_string, sigencode_string, sigencode_strings, sigdecode_strings
-from Crypto.Hash import SHA256, MD5
-from Crypto.Cipher import DES3
+from Crypto.Hash import SHA256
+from ecdsa.test_pyecdsa import ECDSA
+from paramiko.common import four_byte, one_byte
 
-from paramiko.common import *
-from paramiko import util
 from paramiko.message import Message
-from paramiko.ber import BER, BERException
 from paramiko.pkey import PKey
+from paramiko.py3compat import byte_chr, u
 from paramiko.ssh_exception import SSHException
 
 
@@ -145,9 +143,7 @@ class ECDSAKey (PKey):
         return key
     generate = staticmethod(generate)
 
-
     ###  internals...
-
 
     def _from_private_key_file(self, filename, password):
         data = self._read_private_key_file('EC', filename, password)
@@ -159,6 +155,7 @@ class ECDSAKey (PKey):
 
     ALLOWED_PADDINGS = [one_byte, byte_chr(2) * 2, byte_chr(3) * 3, byte_chr(4) * 4,
                         byte_chr(5) * 5, byte_chr(6) * 6, byte_chr(7) * 7]
+
     def _decode_key(self, data):
         s, padding = der.remove_sequence(data)
         if padding:
@@ -180,4 +177,4 @@ class ECDSAKey (PKey):
         msg = Message(sig)
         r = msg.get_mpint()
         s = msg.get_mpint()
-        return (r, s)
+        return r, s

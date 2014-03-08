@@ -21,8 +21,9 @@
 """
 
 import threading
-from paramiko.common import *
 from paramiko import util
+from paramiko.common import DEBUG, ERROR, OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED, AUTH_FAILED
+from paramiko.py3compat import string_types
 
 
 class ServerInterface (object):
@@ -291,9 +292,7 @@ class ServerInterface (object):
         """
         return False
 
-
     ###  Channel requests
-
 
     def check_channel_pty_request(self, channel, term, width, height, pixelwidth, pixelheight,
                                   modes):

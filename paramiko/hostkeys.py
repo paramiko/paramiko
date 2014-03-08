@@ -17,15 +17,17 @@
 # 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
 
 
-import base64
 import binascii
 from Crypto.Hash import SHA, HMAC
+from paramiko.common import rng
+from paramiko.py3compat import b, u, encodebytes, decodebytes
+
 try:
     from collections import MutableMapping
 except ImportError:
+    # noinspection PyUnresolvedReferences
     from UserDict import DictMixin as MutableMapping
 
-from paramiko.common import *
 from paramiko.dsskey import DSSKey
 from paramiko.rsakey import RSAKey
 from paramiko.util import get_logger, constant_time_bytes_eq
@@ -213,7 +215,6 @@ class HostKeys (MutableMapping):
 
     def __delitem__(self, key):
         k = self[key]
-        pass
 
     def __getitem__(self, key):
         ret = self.lookup(key)

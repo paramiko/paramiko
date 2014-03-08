@@ -29,8 +29,10 @@ import sys
 import struct
 import traceback
 import threading
+import logging
 
-from paramiko.common import PY2, DEBUG, long, zero_byte, byte_ord, xffffffff, logging, b, max_byte
+from paramiko.common import DEBUG, zero_byte, xffffffff, max_byte
+from paramiko.py3compat import PY2, long, byte_ord, b, byte_chr
 from paramiko.config import SSHConfig
 
 
@@ -307,6 +309,7 @@ def constant_time_bytes_eq(a, b):
     if len(a) != len(b):
         return False
     res = 0
+    # noinspection PyUnresolvedReferences
     for i in (xrange if PY2 else range)(len(a)):
         res |= byte_ord(a[i]) ^ byte_ord(b[i])
     return res == 0

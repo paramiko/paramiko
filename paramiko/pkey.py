@@ -27,9 +27,9 @@ import os
 from Crypto.Hash import MD5
 from Crypto.Cipher import DES3, AES
 
-from paramiko.common import *
 from paramiko import util
-from paramiko.message import Message
+from paramiko.common import o600, rng, zero_byte
+from paramiko.py3compat import u, encodebytes, decodebytes, b
 from paramiko.ssh_exception import SSHException, PasswordRequiredException
 
 
@@ -40,10 +40,9 @@ class PKey (object):
 
     # known encryption types for private key files:
     _CIPHER_TABLE = {
-        'AES-128-CBC': { 'cipher': AES, 'keysize': 16, 'blocksize': 16, 'mode': AES.MODE_CBC },
-        'DES-EDE3-CBC': { 'cipher': DES3, 'keysize': 24, 'blocksize': 8, 'mode': DES3.MODE_CBC },
+        'AES-128-CBC': {'cipher': AES, 'keysize': 16, 'blocksize': 16, 'mode': AES.MODE_CBC},
+        'DES-EDE3-CBC': {'cipher': DES3, 'keysize': 24, 'blocksize': 8, 'mode': DES3.MODE_CBC},
     }
-
 
     def __init__(self, msg=None, data=None):
         """
@@ -73,6 +72,7 @@ class PKey (object):
     def __str__(self):
         return self.asbytes()
 
+    # noinspection PyUnresolvedReferences
     def __cmp__(self, other):
         """
         Compare this key to another.  Returns 0 if this key is equivalent to
@@ -345,7 +345,7 @@ class PKey (object):
         s = u(encodebytes(data))
         # re-wrap to 64-char lines
         s = ''.join(s.split('\n'))
-        s = '\n'.join([s[i : i+64] for i in range(0, len(s), 64)])
+        s = '\n'.join([s[i: i + 64] for i in range(0, len(s), 64)])
         f.write(s)
         f.write('\n')
         f.write('-----END %s PRIVATE KEY-----\n' % tag)

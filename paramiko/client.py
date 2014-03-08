@@ -27,10 +27,11 @@ import socket
 import warnings
 
 from paramiko.agent import Agent
-from paramiko.common import *
+from paramiko.common import DEBUG
 from paramiko.config import SSH_PORT
 from paramiko.dsskey import DSSKey
 from paramiko.hostkeys import HostKeys
+from paramiko.py3compat import string_types
 from paramiko.resource import ResourceManager
 from paramiko.rsakey import RSAKey
 from paramiko.ssh_exception import SSHException, BadHostKeyException
@@ -266,7 +267,7 @@ class SSHClient (object):
         if key_filename is None:
             key_filenames = []
         elif isinstance(key_filename, string_types):
-            key_filenames = [ key_filename ]
+            key_filenames = [key_filename]
         else:
             key_filenames = key_filename
         self._auth(username, password, pkey, key_filenames, allow_agent, look_for_keys)
@@ -280,7 +281,7 @@ class SSHClient (object):
         self._transport.close()
         self._transport = None
 
-        if self._agent != None:
+        if self._agent is not None:
             self._agent.close()
             self._agent = None
 
@@ -304,7 +305,7 @@ class SSHClient (object):
         :raises SSHException: if the server fails to execute the command
         """
         chan = self._transport.open_session()
-        if(get_pty):
+        if get_pty:
             chan.get_pty()
         chan.settimeout(timeout)
         chan.exec_command(command)
@@ -314,7 +315,7 @@ class SSHClient (object):
         return stdin, stdout, stderr
 
     def invoke_shell(self, term='vt100', width=80, height=24, width_pixels=0,
-        height_pixels=0):
+                     height_pixels=0):
         """
         Start an interactive shell session on the SSH server.  A new `.Channel`
         is opened and connected to a pseudo-terminal using the requested
@@ -394,7 +395,7 @@ class SSHClient (object):
                         saved_exception = e
 
         if not two_factor and allow_agent:
-            if self._agent == None:
+            if self._agent is None:
                 self._agent = Agent()
 
             for key in self._agent.get_keys():
@@ -445,8 +446,8 @@ class SSHClient (object):
             try:
                 self._transport.auth_password(username, password)
                 return
-            except SSHException:
-                saved_exception = sys.exc_info()[1]
+            except SSHException as e:
+                saved_exception = e
         elif two_factor:
             raise SSHException('Two-factor authentication requires a password')
 

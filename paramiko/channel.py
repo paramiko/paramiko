@@ -21,15 +21,17 @@ Abstraction for an SSH2 channel.
 """
 
 import binascii
-import sys
 import time
 import threading
 import socket
-import os
 
-from paramiko.common import *
 from paramiko import util
+from paramiko.common import cMSG_CHANNEL_REQUEST, cMSG_CHANNEL_WINDOW_ADJUST, \
+    cMSG_CHANNEL_DATA, cMSG_CHANNEL_EXTENDED_DATA, DEBUG, ERROR, \
+    cMSG_CHANNEL_SUCCESS, cMSG_CHANNEL_FAILURE, cMSG_CHANNEL_EOF, \
+    cMSG_CHANNEL_CLOSE
 from paramiko.message import Message
+from paramiko.py3compat import bytes_types
 from paramiko.ssh_exception import SSHException
 from paramiko.file import BufferedFile
 from paramiko.buffered_pipe import BufferedPipe, PipeTimeout
@@ -112,7 +114,7 @@ class Channel (object):
                 out += ' (EOF received)'
             if self.eof_sent:
                 out += ' (EOF sent)'
-            out += ' (open) window=%d' % (self.out_window_size)
+            out += ' (open) window=%d' % self.out_window_size
             if len(self.in_buffer) > 0:
                 out += ' in-buffer=%d' % (len(self.in_buffer),)
         out += ' -> ' + repr(self.transport)
@@ -176,7 +178,7 @@ class Channel (object):
         m.add_byte(cMSG_CHANNEL_REQUEST)
         m.add_int(self.remote_chanid)
         m.add_string('shell')
-        m.add_boolean(1)
+        m.add_boolean(True)
         self._event_pending()
         self.transport._send_user_message(m)
         self._wait_for_event()
@@ -465,9 +467,7 @@ class Channel (object):
             self._feed(data)
         return old
 
-    
     ###  socket API
-
 
     def settimeout(self, timeout):
         """
@@ -885,9 +885,7 @@ class Channel (object):
         """
         self.shutdown(1)
 
-
     ###  calls from Transport
-
 
     def _set_transport(self, transport):
         self.transport = transport
@@ -1063,9 +1061,7 @@ class Channel (object):
             if m is not None:
                 self.transport._send_user_message(m)
 
-
     ###  internals...
-
 
     def _log(self, level, msg, *args):
         self.logger.log(level, "[chan " + self._name + "] " + msg, *args)
@@ -1171,7 +1167,7 @@ class Channel (object):
                     return 0
                 then = time.time()
                 self.out_buffer_cv.wait(timeout)
-                if timeout != None:
+                if timeout is not None:
                     timeout -= time.time() - then
                     if timeout <= 0.0:
                         raise socket.timeout()
@@ -1201,7 +1197,7 @@ class ChannelFile (BufferedFile):
         flush the buffer.
     """
 
-    def __init__(self, channel, mode = 'r', bufsize = -1):
+    def __init__(self, channel, mode='r', bufsize=-1):
         self.channel = channel
         BufferedFile.__init__(self)
         self._set_mode(mode, bufsize)
@@ -1221,7 +1217,7 @@ class ChannelFile (BufferedFile):
 
 
 class ChannelStderrFile (ChannelFile):
-    def __init__(self, channel, mode = 'r', bufsize = -1):
+    def __init__(self, channel, mode='r', bufsize=-1):
         ChannelFile.__init__(self, channel, mode, bufsize)
 
     def _read(self, size):

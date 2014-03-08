@@ -32,7 +32,8 @@ import unittest
 from tempfile import mkstemp
 
 import paramiko
-from paramiko.common import PY2, b, u, StringIO, o777, o600
+from paramiko.py3compat import PY2, b, u, StringIO
+from paramiko.common import o777, o600, o666, o644
 from tests.stub_sftp import StubServer, StubSFTPServer
 from tests.loop import LoopSocket
 from tests.util import test_path
@@ -554,6 +555,7 @@ class SFTPTest (unittest.TestCase):
         with open(localname, 'wb') as f:
             f.write(text)
         saved_progress = []
+
         def progress_callback(x, y):
             saved_progress.append((x, y))
         sftp.put(localname, FOLDER + '/bunny.txt', progress_callback)
@@ -663,6 +665,7 @@ class SFTPTest (unittest.TestCase):
         with open(localname, 'w') as f:
             f.write(text)
         saved_progress = []
+
         def progress_callback(x, y):
             saved_progress.append((x, y))
         res = sftp.put(localname, FOLDER + '/bunny.txt', progress_callback, False)

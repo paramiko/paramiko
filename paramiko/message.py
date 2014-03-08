@@ -23,7 +23,8 @@ Implementation of an SSH2 "message".
 import struct
 
 from paramiko import util
-from paramiko.common import *
+from paramiko.common import zero_byte, max_byte, one_byte, asbytes
+from paramiko.py3compat import long, BytesIO, u, integer_types
 
 
 class Message (object):
@@ -47,7 +48,7 @@ class Message (object):
             the byte stream to use as the message content (passed in only when
             decomposing a message).
         """
-        if content != None:
+        if content is not None:
             self.packet = BytesIO(content)
         else:
             self.packet = BytesIO()
@@ -105,8 +106,8 @@ class Message (object):
         bytes remaining in the message.
         """
         b = self.packet.read(n)
-        max_pad_size = 1<<20  # Limit padding to 1 MB
-        if len(b) < n and n < max_pad_size:
+        max_pad_size = 1 << 20  # Limit padding to 1 MB
+        if len(b) < n < max_pad_size:
             return b + zero_byte * (n - len(b))
         return b
 

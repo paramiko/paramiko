@@ -23,11 +23,10 @@ Some unit tests for utility functions.
 from binascii import hexlify
 import errno
 import os
-import unittest
 from Crypto.Hash import SHA
 import paramiko.util
 from paramiko.util import lookup_ssh_host_config as host_config
-from paramiko.py3compat import StringIO, byte_ord, b
+from paramiko.py3compat import StringIO, byte_ord
 
 from tests.util import ParamikoTest
 
@@ -338,4 +337,4 @@ AddressFamily inet
 IdentityFile something_%l_using_fqdn
 """
         config = paramiko.util.parse_ssh_config(StringIO(test_config))
-        assert config.lookup('meh') # will die during lookup() if bug regresses
+        assert config.lookup('meh')  # will die during lookup() if bug regresses

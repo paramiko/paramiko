@@ -24,8 +24,18 @@ import stat
 import threading
 import time
 import weakref
+from paramiko import util
+from paramiko.channel import Channel
+from paramiko.message import Message
+from paramiko.common import INFO, DEBUG, o777
+from paramiko.py3compat import bytestring, b, u, long, string_types, bytes_types
+from paramiko.sftp import BaseSFTP, CMD_OPENDIR, CMD_HANDLE, SFTPError, CMD_READDIR, \
+    CMD_NAME, CMD_CLOSE, SFTP_FLAG_READ, SFTP_FLAG_WRITE, SFTP_FLAG_CREATE, \
+    SFTP_FLAG_TRUNC, SFTP_FLAG_APPEND, SFTP_FLAG_EXCL, CMD_OPEN, CMD_REMOVE, \
+    CMD_RENAME, CMD_MKDIR, CMD_RMDIR, CMD_STAT, CMD_ATTRS, CMD_LSTAT, \
+    CMD_SYMLINK, CMD_SETSTAT, CMD_READLINK, CMD_REALPATH, CMD_STATUS, SFTP_OK, \
+    SFTP_EOF, SFTP_NO_SUCH_FILE, SFTP_PERMISSION_DENIED
 
-from paramiko.sftp import *
 from paramiko.sftp_attr import SFTPAttributes
 from paramiko.ssh_exception import SSHException
 from paramiko.sftp_file import SFTPFile
@@ -46,6 +56,7 @@ def _to_unicode(s):
             return s
 
 b_slash = b'/'
+
 
 class SFTPClient(BaseSFTP):
     """
@@ -106,9 +117,9 @@ class SFTPClient(BaseSFTP):
     def _log(self, level, msg, *args):
         if isinstance(msg, list):
             for m in msg:
-                super(SFTPClient, self)._log(level, "[chan %s] " + m, *([ self.sock.get_name() ] + list(args)))
+                super(SFTPClient, self)._log(level, "[chan %s] " + m, *([self.sock.get_name()] + list(args)))
         else:
-            super(SFTPClient, self)._log(level, "[chan %s] " + msg, *([ self.sock.get_name() ] + list(args)))
+            super(SFTPClient, self)._log(level, "[chan %s] " + msg, *([self.sock.get_name()] + list(args)))
 
     def close(self):
         """
@@ -222,11 +233,11 @@ class SFTPClient(BaseSFTP):
             imode |= SFTP_FLAG_READ
         if ('w' in mode) or ('+' in mode) or ('a' in mode):
             imode |= SFTP_FLAG_WRITE
-        if ('w' in mode):
+        if 'w' in mode:
             imode |= SFTP_FLAG_CREATE | SFTP_FLAG_TRUNC
-        if ('a' in mode):
+        if 'a' in mode:
             imode |= SFTP_FLAG_CREATE | SFTP_FLAG_APPEND
-        if ('x' in mode):
+        if 'x' in mode:
             imode |= SFTP_FLAG_CREATE | SFTP_FLAG_EXCL
         attrblock = SFTPAttributes()
         t, msg = self._request(CMD_OPEN, filename, imode, attrblock)
@@ -629,9 +640,7 @@ class SFTPClient(BaseSFTP):
         if s.st_size != size:
             raise IOError('size mismatch in get!  %d != %d' % (s.st_size, size))
 
-
     ###  internals...
-
 
     def _request(self, t, *arg):
         num = self._async_request(type(None), t, *arg)
@@ -689,7 +698,7 @@ class SFTPClient(BaseSFTP):
             if waitfor is None:
                 # just doing a single check
                 break
-        return (None, None)
+        return None, None
 
     def _finish_responses(self, fileobj):
         while fileobj in self._expecting.values():

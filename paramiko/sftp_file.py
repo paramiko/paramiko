@@ -27,10 +27,12 @@ from collections import deque
 import socket
 import threading
 import time
+from paramiko.common import DEBUG
 
-from paramiko.common import *
-from paramiko.sftp import *
 from paramiko.file import BufferedFile
+from paramiko.py3compat import long
+from paramiko.sftp import CMD_CLOSE, CMD_READ, CMD_DATA, SFTPError, CMD_WRITE, \
+    CMD_STATUS, CMD_FSTAT, CMD_ATTRS, CMD_FSETSTAT, CMD_EXTENDED
 from paramiko.sftp_attr import SFTPAttributes
 
 
@@ -437,10 +439,8 @@ class SFTPFile (BufferedFile):
         for x in chunks:
             self.seek(x[0])
             yield self.read(x[1])
-    
 
     ###  internals...
-
 
     def _get_size(self):
         try:
@@ -483,7 +483,7 @@ class SFTPFile (BufferedFile):
                 self._prefetch_done = True
     
     def _check_exception(self):
-        "if there's a saved exception, raise & clear it"
+        """if there's a saved exception, raise & clear it"""
         if self._saved_exception is not None:
             x = self._saved_exception
             self._saved_exception = None
