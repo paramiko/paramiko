@@ -30,7 +30,7 @@ import struct
 import traceback
 import threading
 
-from paramiko.common import *
+from paramiko.common import PY2, DEBUG, long, zero_byte, byte_ord, xffffffff, logging, b, max_byte
 from paramiko.config import SSHConfig
 
 

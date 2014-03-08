@@ -22,7 +22,7 @@ Some unit tests for the BufferedFile abstraction.
 
 import unittest
 from paramiko.file import BufferedFile
-from paramiko.common import *
+from paramiko.common import linefeed_byte, crlf, cr_byte
 
 
 class LoopbackFile (BufferedFile):

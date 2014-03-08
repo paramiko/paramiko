@@ -26,7 +26,7 @@ import paramiko.util
 from paramiko.kex_group1 import KexGroup1
 from paramiko.kex_gex import KexGex
 from paramiko import Message
-from paramiko.common import *
+from paramiko.common import byte_chr
 
 
 class FakeRng (object):

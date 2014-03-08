@@ -33,7 +33,7 @@ import paramiko
 from paramiko import util
 from paramiko.auth_handler import AuthHandler
 from paramiko.channel import Channel
-from paramiko.common import *
+from paramiko.common import * # Legit, uses dozens of constants & funcs
 from paramiko.compress import ZlibCompressor, ZlibDecompressor
 from paramiko.dsskey import DSSKey
 from paramiko.kex_gex import KexGex

@@ -25,13 +25,14 @@ do test file operations in (so no existing files will be harmed).
 
 from binascii import hexlify
 import os
+import sys
 import warnings
 import threading
 import unittest
 from tempfile import mkstemp
 
 import paramiko
-from paramiko.common import *
+from paramiko.common import PY2, b, u, StringIO, o777, o600
 from tests.stub_sftp import StubServer, StubSFTPServer
 from tests.loop import LoopSocket
 from tests.util import test_path

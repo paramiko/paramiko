@@ -33,7 +33,7 @@ import time
 import unittest
 
 import paramiko
-from paramiko.common import *
+from paramiko.common import o660
 from tests.stub_sftp import StubServer, StubSFTPServer
 from tests.loop import LoopSocket
 from tests.test_sftp import get_sftp

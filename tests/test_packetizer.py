@@ -25,7 +25,7 @@ from tests.loop import LoopSocket
 from Crypto.Cipher import AES
 from Crypto.Hash import SHA, HMAC
 from paramiko import Message, Packetizer, util
-from paramiko.common import *
+from paramiko.common import byte_chr, zero_byte
 
 x55 = byte_chr(0x55)
 x1f = byte_chr(0x1f)
