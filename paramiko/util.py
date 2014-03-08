@@ -36,20 +36,8 @@ from paramiko.py3compat import PY2, long, byte_ord, b, byte_chr
 from paramiko.config import SSHConfig
 
 
-# Change by RogerB - Python < 2.3 doesn't have enumerate so we implement it
-if sys.version_info < (2,3):
-    class enumerate:
-        def __init__ (self, sequence):
-            self.sequence = sequence
-        def __iter__ (self):
-            count = 0
-            for item in self.sequence:
-                yield (count, item)
-                count += 1
-
-
 def inflate_long(s, always_positive=False):
-    "turns a normalized byte string into a long-int (adapted from Crypto.Util.number)"
+    """turns a normalized byte string into a long-int (adapted from Crypto.Util.number)"""
     out = long(0)
     negative = 0
     if not always_positive and (len(s) > 0) and (byte_ord(s[0]) >= 0x80):
@@ -58,6 +46,8 @@ def inflate_long(s, always_positive=False):
         filler = zero_byte
         if negative:
             filler = max_byte
+        # never convert this to ``s +=`` because this is a string, not a number
+        # noinspection PyAugmentAssignment
         s = filler * (4 - len(s) % 4) + s
     for i in range(0, len(s), 4):
         out = (out << 32) + struct.unpack('>I', s[i:i+4])[0]
@@ -68,14 +58,15 @@ def inflate_long(s, always_positive=False):
 deflate_zero = zero_byte if PY2 else 0
 deflate_ff = max_byte if PY2 else 0xff
 
+
 def deflate_long(n, add_sign_padding=True):
-    "turns a long-int into a normalized byte string (adapted from Crypto.Util.number)"
+    """turns a long-int into a normalized byte string (adapted from Crypto.Util.number)"""
     # after much testing, this algorithm was deemed to be the fastest
     s = bytes()
     n = long(n)
     while (n != 0) and (n != -1):
         s = struct.pack('>I', n & xffffffff) + s
-        n = n >> 32
+        n >>= 32
     # strip off leading zeros, FFs
     for i in enumerate(s):
         if (n == 0) and (i[1] != deflate_zero):
@@ -97,6 +88,7 @@ def deflate_long(n, add_sign_padding=True):
             s = max_byte + s
     return s
 
+
 def format_binary(data, prefix=''):
     x = 0
     out = []
@@ -107,16 +99,20 @@ def format_binary(data, prefix=''):
         out.append(format_binary_line(data[x:]))
     return [prefix + x for x in out]
 
+
 def format_binary_line(data):
     left = ' '.join(['%02X' % byte_ord(c) for c in data])
     right = ''.join([('.%c..' % c)[(byte_ord(c)+63)//95] for c in data])
     return '%-50s %s' % (left, right)
 
+
 def hexify(s):
     return hexlify(s).upper()
 
+
 def unhexify(s):
     return unhexlify(s)
+
 
 def safe_string(s):
     out = ''
@@ -127,13 +123,12 @@ def safe_string(s):
             out += '%%%02X' % byte_ord(c)
     return out
 
-# ''.join([['%%%02X' % ord(c), c][(ord(c) >= 32) and (ord(c) <= 127)] for c in s])
 
 def bit_length(n):
     try:
         return n.bitlength()
     except AttributeError:
-        norm = deflate_long(n, 0)
+        norm = deflate_long(n, False)
         hbyte = byte_ord(norm[0])
         if hbyte == 0:
             return 1
@@ -143,8 +138,10 @@ def bit_length(n):
             bitlen -= 1
         return bitlen
 
+
 def tb_strings():
     return ''.join(traceback.format_exception(*sys.exc_info())).split('\n')
+
 
 def generate_key_bytes(hashclass, salt, key, nbytes):
     """
@@ -177,6 +174,7 @@ def generate_key_bytes(hashclass, salt, key, nbytes):
         nbytes -= size
     return keydata
 
+
 def load_host_keys(filename):
     """
     Read a file of known SSH host keys, in the format used by openssh, and
@@ -196,6 +194,7 @@ def load_host_keys(filename):
     from paramiko.hostkeys import HostKeys
     return HostKeys(filename)
 
+
 def parse_ssh_config(file_obj):
     """
     Provided only as a backward-compatible wrapper around `.SSHConfig`.
@@ -204,11 +203,13 @@ def parse_ssh_config(file_obj):
     config.parse(file_obj)
     return config
 
+
 def lookup_ssh_host_config(hostname, config):
     """
     Provided only as a backward-compatible wrapper around `.SSHConfig`.
     """
     return config.lookup(hostname)
+
 
 def mod_inverse(x, m):
     # it's crazy how small Python can make this function.
@@ -227,6 +228,8 @@ def mod_inverse(x, m):
 _g_thread_ids = {}
 _g_thread_counter = 0
 _g_thread_lock = threading.Lock()
+
+
 def get_thread_id():
     global _g_thread_ids, _g_thread_counter, _g_thread_lock
     tid = id(threading.currentThread())
@@ -241,8 +244,9 @@ def get_thread_id():
             _g_thread_lock.release()
         return ret
 
+
 def log_to_file(filename, level=DEBUG):
-    "send paramiko logs to a logfile, if they're not already going somewhere"
+    """send paramiko logs to a logfile, if they're not already going somewhere"""
     l = logging.getLogger("paramiko")
     if len(l.handlers) > 0:
         return
@@ -253,6 +257,7 @@ def log_to_file(filename, level=DEBUG):
                                       '%Y%m%d-%H:%M:%S'))
     l.addHandler(lh)
 
+
 # make only one filter object, so it doesn't get applied more than once
 class PFilter (object):
     def filter(self, record):
@@ -260,10 +265,12 @@ class PFilter (object):
         return True
 _pfilter = PFilter()
 
+
 def get_logger(name):
     l = logging.getLogger(name)
     l.addFilter(_pfilter)
     return l
+
 
 def retry_on_signal(function):
     """Retries function until it doesn't raise an EINTR error"""
@@ -273,6 +280,7 @@ def retry_on_signal(function):
         except EnvironmentError as e:
             if e.errno != errno.EINTR:
                 raise
+
 
 class Counter (object):
     """Stateful counter for CTR mode crypto"""
