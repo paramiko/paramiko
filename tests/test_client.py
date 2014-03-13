@@ -158,7 +158,7 @@ class SSHClientTest (unittest.TestCase):
 
         self.tc = paramiko.SSHClient()
         self.tc.get_host_keys().add('[%s]:%d' % (self.addr, self.port), 'ssh-rsa', public_host_key)
-        self.tc.connect(self.addr, self.port, username='slowdive', key_filename=[ test_path('test_rsa.key'), test_path('test_dss.key') ])
+        self.tc.connect(self.addr, self.port, username='slowdive', key_filename=[test_path('test_rsa.key'), test_path('test_dss.key')])
 
         self.event.wait(1.0)
         self.assertTrue(self.event.isSet())

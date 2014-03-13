@@ -23,17 +23,16 @@ Some unit tests for the ssh2 protocol in Transport.
 from binascii import hexlify
 import select
 import socket
-import sys
 import time
 import threading
-import unittest
 import random
 
 from paramiko import Transport, SecurityOptions, ServerInterface, RSAKey, DSSKey, \
-    SSHException, BadAuthenticationType, InteractiveQuery, ChannelException
-from paramiko import AUTH_FAILED, AUTH_PARTIALLY_SUCCESSFUL, AUTH_SUCCESSFUL
+    SSHException, ChannelException
+from paramiko import AUTH_FAILED, AUTH_SUCCESSFUL
 from paramiko import OPEN_SUCCEEDED, OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED
-from paramiko.common import MSG_KEXINIT, MSG_CHANNEL_WINDOW_ADJUST, b, bytes
+from paramiko.common import MSG_KEXINIT, cMSG_CHANNEL_WINDOW_ADJUST
+from paramiko.py3compat import bytes
 from paramiko.message import Message
 from tests.loop import LoopSocket
 from tests.util import ParamikoTest, test_path

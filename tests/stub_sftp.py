@@ -21,7 +21,6 @@ A stub SFTP server for loopback SFTP testing.
 """
 
 import os
-import sys
 from paramiko import ServerInterface, SFTPServerInterface, SFTPServer, SFTPAttributes, \
     SFTPHandle, SFTP_OK, AUTH_SUCCESSFUL, OPEN_SUCCEEDED
 from paramiko.common import o666
@@ -64,7 +63,7 @@ class StubSFTPServer (SFTPServerInterface):
     def list_folder(self, path):
         path = self._realpath(path)
         try:
-            out = [ ]
+            out = []
             flist = os.listdir(path)
             for fname in flist:
                 attr = SFTPAttributes.from_stat(os.stat(os.path.join(path, fname)))
@@ -91,7 +90,7 @@ class StubSFTPServer (SFTPServerInterface):
     def open(self, path, flags, attr):
         path = self._realpath(path)
         try:
-            binary_flag = getattr(os, 'O_BINARY',  0)
+            binary_flag = getattr(os, 'O_BINARY', 0)
             flags |= binary_flag
             mode = getattr(attr, 'st_mode', None)
             if mode is not None:

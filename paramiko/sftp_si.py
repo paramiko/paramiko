@@ -21,9 +21,8 @@ An interface to override for SFTP server support.
 """
 
 import os
-
-from paramiko.common import *
-from paramiko.sftp import *
+import sys
+from paramiko.sftp import SFTP_OP_UNSUPPORTED
 
 
 class SFTPServerInterface (object):
@@ -41,7 +40,7 @@ class SFTPServerInterface (object):
     clients & servers obey the requirement that paths be encoded in UTF-8.
     """
     
-    def __init__ (self, server, *largs, **kwargs):
+    def __init__(self, server, *largs, **kwargs):
         """
         Create a new SFTPServerInterface object.  This method does nothing by
         default and is meant to be overridden by subclasses.

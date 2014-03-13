@@ -18,8 +18,8 @@
 
 import stat
 import time
-from paramiko.common import *
-from paramiko.sftp import *
+from paramiko.common import x80000000, o700, o70, xffffffff
+from paramiko.py3compat import long, b
 
 
 class SFTPAttributes (object):
@@ -84,9 +84,7 @@ class SFTPAttributes (object):
     def __repr__(self):
         return '<SFTPAttributes: %s>' % self._debug_str()
 
-
     ###  internals...
-
 
     def _from_msg(cls, msg, filename=None, longname=None):
         attr = cls()
@@ -173,7 +171,7 @@ class SFTPAttributes (object):
     _rwx = staticmethod(_rwx)
 
     def __str__(self):
-        "create a unix-style long description of the file (like ls -l)"
+        """create a unix-style long description of the file (like ls -l)"""
         if self.st_mode is not None:
             kind = stat.S_IFMT(self.st_mode)
             if kind == stat.S_IFIFO:

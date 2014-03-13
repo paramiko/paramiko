@@ -15,8 +15,9 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with Paramiko; if not, write to the Free Software Foundation, Inc.,
 # 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
-
-from paramiko.common import *
+from paramiko.common import linefeed_byte_value, crlf, cr_byte, linefeed_byte, \
+    cr_byte_value
+from paramiko.py3compat import BytesIO, PY2, u, b, bytes_types
 
 
 class BufferedFile (object):
@@ -232,7 +233,7 @@ class BufferedFile (object):
         pos = line.find(linefeed_byte)
         if self._flags & self.FLAG_UNIVERSAL_NEWLINE:
             rpos = line.find(cr_byte)
-            if (rpos >= 0) and ((rpos < pos) or (pos < 0)):
+            if (rpos >= 0) and (rpos < pos or pos < 0):
                 pos = rpos
         xpos = pos + 1
         if (line[pos] == cr_byte_value) and (xpos < len(line)) and (line[xpos] == linefeed_byte_value):
@@ -358,9 +359,7 @@ class BufferedFile (object):
     def closed(self):
         return self._closed
 
-
     ###  overrides...
-
 
     def _read(self, size):
         """
@@ -388,9 +387,7 @@ class BufferedFile (object):
         """
         return 0
 
-
     ###  internals...
-
 
     def _set_mode(self, mode='r', bufsize=-1):
         """
@@ -419,13 +416,13 @@ class BufferedFile (object):
             self._flags |= self.FLAG_READ
         if ('w' in mode) or ('+' in mode):
             self._flags |= self.FLAG_WRITE
-        if ('a' in mode):
+        if 'a' in mode:
             self._flags |= self.FLAG_WRITE | self.FLAG_APPEND
             self._size = self._get_size()
             self._pos = self._realpos = self._size
-        if ('b' in mode):
+        if 'b' in mode:
             self._flags |= self.FLAG_BINARY
-        if ('U' in mode):
+        if 'U' in mode:
             self._flags |= self.FLAG_UNIVERSAL_NEWLINE
             # built-in file objects have this attribute to store which kinds of
             # line terminations they've seen:

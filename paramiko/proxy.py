@@ -80,7 +80,7 @@ class ProxyCommand(object):
             while len(self.buffer) < size:
                 if self.timeout is not None:
                     elapsed = (datetime.now() - start).microseconds
-                    timeout = self.timeout * 1000 * 1000 # to microseconds
+                    timeout = self.timeout * 1000 * 1000  # to microseconds
                     if elapsed >= timeout:
                         raise socket.timeout()
                 r, w, x = select([self.process.stdout], [], [], 0.0)
@@ -94,7 +94,7 @@ class ProxyCommand(object):
             self.buffer = []
             return result
         except socket.timeout:
-            raise # socket.timeout is a subclass of IOError
+            raise  # socket.timeout is a subclass of IOError
         except IOError as e:
             raise ProxyCommandFailure(' '.join(self.cmd), e.strerror)
 

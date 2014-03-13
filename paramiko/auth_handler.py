@@ -20,15 +20,18 @@
 `.AuthHandler`
 """
 
-import threading
 import weakref
+from paramiko.common import cMSG_SERVICE_REQUEST, cMSG_DISCONNECT, \
+    DISCONNECT_SERVICE_NOT_AVAILABLE, DISCONNECT_NO_MORE_AUTH_METHODS_AVAILABLE, \
+    cMSG_USERAUTH_REQUEST, cMSG_SERVICE_ACCEPT, DEBUG, AUTH_SUCCESSFUL, INFO, \
+    cMSG_USERAUTH_SUCCESS, cMSG_USERAUTH_FAILURE, AUTH_PARTIALLY_SUCCESSFUL, \
+    cMSG_USERAUTH_INFO_REQUEST, WARNING, AUTH_FAILED, cMSG_USERAUTH_PK_OK, \
+    cMSG_USERAUTH_INFO_RESPONSE, MSG_SERVICE_REQUEST, MSG_SERVICE_ACCEPT, \
+    MSG_USERAUTH_REQUEST, MSG_USERAUTH_SUCCESS, MSG_USERAUTH_FAILURE, \
+    MSG_USERAUTH_BANNER, MSG_USERAUTH_INFO_REQUEST, MSG_USERAUTH_INFO_RESPONSE
 
-# this helps freezing utils
-import encodings.utf_8
-
-from paramiko.common import *
-from paramiko import util
 from paramiko.message import Message
+from paramiko.py3compat import bytestring
 from paramiko.ssh_exception import SSHException, AuthenticationException, \
     BadAuthenticationType, PartialAuthentication
 from paramiko.server import InteractiveQuery
@@ -114,9 +117,7 @@ class AuthHandler (object):
         if self.auth_event is not None:
             self.auth_event.set()
 
-
     ###  internals...
-
 
     def _request_auth(self):
         m = Message()
@@ -149,7 +150,7 @@ class AuthHandler (object):
         m.add_string(username)
         m.add_string(service)
         m.add_string('publickey')
-        m.add_boolean(1)
+        m.add_boolean(True)
         m.add_string(key.get_name())
         m.add_string(key)
         return m.asbytes()
@@ -230,9 +231,9 @@ class AuthHandler (object):
             m.add_byte(cMSG_USERAUTH_FAILURE)
             m.add_string(self.transport.server_object.get_allowed_auths(username))
             if result == AUTH_PARTIALLY_SUCCESSFUL:
-                m.add_boolean(1)
+                m.add_boolean(True)
             else:
-                m.add_boolean(0)
+                m.add_boolean(False)
                 self.auth_fail_count += 1
         self.transport._send_message(m)
         if self.auth_fail_count >= 10:
@@ -259,7 +260,7 @@ class AuthHandler (object):
             m = Message()
             m.add_byte(cMSG_USERAUTH_FAILURE)
             m.add_string('none')
-            m.add_boolean(0)
+            m.add_boolean(False)
             self.transport._send_message(m)
             return
         if self.authenticated:
@@ -351,7 +352,7 @@ class AuthHandler (object):
         self.transport._log(INFO, 'Authentication (%s) successful!' % self.auth_method)
         self.authenticated = True
         self.transport._auth_trigger()
-        if self.auth_event != None:
+        if self.auth_event is not None:
             self.auth_event.set()
 
     def _parse_userauth_failure(self, m):
@@ -369,7 +370,7 @@ class AuthHandler (object):
             self.transport._log(INFO, 'Authentication (%s) failed.' % self.auth_method)
         self.authenticated = False
         self.username = None
-        if self.auth_event != None:
+        if self.auth_event is not None:
             self.auth_event.set()
 
     def _parse_userauth_banner(self, m):
@@ -411,7 +412,6 @@ class AuthHandler (object):
             self._interactive_query(result)
             return
         self._send_auth_result(self.auth_username, 'keyboard-interactive', result)
-        
 
     _handler_table = {
         MSG_SERVICE_REQUEST: _parse_service_request,
@@ -423,4 +423,3 @@ class AuthHandler (object):
         MSG_USERAUTH_INFO_REQUEST: _parse_userauth_info_request,
         MSG_USERAUTH_INFO_RESPONSE: _parse_userauth_info_response,
     }
-

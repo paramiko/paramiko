@@ -23,9 +23,10 @@ Standard SSH key exchange ("kex" if you wanna sound cool).  Diffie-Hellman of
 
 from Crypto.Hash import SHA
 
-from paramiko.common import *
 from paramiko import util
+from paramiko.common import max_byte, zero_byte
 from paramiko.message import Message
+from paramiko.py3compat import byte_chr, long, byte_mask
 from paramiko.ssh_exception import SSHException
 
 
@@ -38,6 +39,7 @@ G = 2
 
 b7fffffffffffffff = byte_chr(0x7f) + max_byte * 7
 b0000000000000000 = zero_byte * 8
+
 
 class KexGroup1(object):
 
@@ -71,9 +73,7 @@ class KexGroup1(object):
             return self._parse_kexdh_reply(m)
         raise SSHException('KexGroup1 asked to handle packet type %d' % ptype)
 
-
     ###  internals...
-
 
     def _generate_x(self):
         # generate an "x" (1 < x < q), where q is (p-1)/2.
@@ -84,8 +84,8 @@ class KexGroup1(object):
         while 1:
             x_bytes = self.transport.rng.read(128)
             x_bytes = byte_mask(x_bytes[0], 0x7f) + x_bytes[1:]
-            if (x_bytes[:8] != b7fffffffffffffff) and \
-                   (x_bytes[:8] != b0000000000000000):
+            if (x_bytes[:8] != b7fffffffffffffff and
+                    x_bytes[:8] != b0000000000000000):
                 break
         self.x = util.inflate_long(x_bytes)
 

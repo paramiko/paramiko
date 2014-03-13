@@ -23,11 +23,11 @@ client side, and a B{lot} more on the server side.
 """
 
 from Crypto.Hash import SHA
-from Crypto.Util import number
 
-from paramiko.common import *
 from paramiko import util
+from paramiko.common import DEBUG
 from paramiko.message import Message
+from paramiko.py3compat import byte_chr, byte_ord, byte_mask
 from paramiko.ssh_exception import SSHException
 
 
@@ -88,10 +88,8 @@ class KexGex (object):
             return self._parse_kexdh_gex_request_old(m)
         raise SSHException('KexGex asked to handle packet type %d' % ptype)
 
-
     ###  internals...
 
-    
     def _generate_x(self):
         # generate an "x" (1 < x < (p-1)/2).
         q = (self.p - 1) // 2

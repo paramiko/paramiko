@@ -29,19 +29,18 @@ import time
 import tempfile
 import stat
 from select import select
+from paramiko.common import asbytes, io_sleep
+from paramiko.py3compat import byte_chr
 
 from paramiko.ssh_exception import SSHException
 from paramiko.message import Message
 from paramiko.pkey import PKey
-from paramiko.channel import Channel
-from paramiko.common import *
 from paramiko.util import retry_on_signal
 
 cSSH2_AGENTC_REQUEST_IDENTITIES = byte_chr(11)
 SSH2_AGENT_IDENTITIES_ANSWER = 12
 cSSH2_AGENTC_SIGN_REQUEST = byte_chr(13)
 SSH2_AGENT_SIGN_RESPONSE = 14
-
 
 
 class AgentSSH(object):
@@ -107,7 +106,7 @@ class AgentProxyThread(threading.Thread):
 
     def run(self):
         try:
-            (r,addr) = self.get_connection()
+            (r, addr) = self.get_connection()
             self.__inr = r
             self.__addr = addr
             self._agent.connect()
@@ -163,11 +162,10 @@ class AgentLocalProxy(AgentProxyThread):
         try:
             conn.bind(self._agent._get_filename())
             conn.listen(1)
-            (r,addr) = conn.accept()
-            return (r, addr)
+            (r, addr) = conn.accept()
+            return r, addr
         except:
             raise
-        return None
 
 
 class AgentRemoteProxy(AgentProxyThread):
@@ -179,7 +177,7 @@ class AgentRemoteProxy(AgentProxyThread):
         self.__chan = chan
 
     def get_connection(self):
-        return (self.__chan, None)
+        return self.__chan, None
 
 
 class AgentClientProxy(object):
@@ -280,9 +278,7 @@ class AgentServerProxy(AgentSSH):
         :return:
             a dict containing the ``SSH_AUTH_SOCK`` environnement variables
         """
-        env = {}
-        env['SSH_AUTH_SOCK'] = self._get_filename()
-        return env
+        return {'SSH_AUTH_SOCK': self._get_filename()}
 
     def _get_filename(self):
         return self._file

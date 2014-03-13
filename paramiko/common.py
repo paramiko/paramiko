@@ -19,7 +19,8 @@
 """
 Common constants and global variables.
 """
-from paramiko.py3compat import *
+import logging
+from paramiko.py3compat import byte_chr, PY2, bytes_types, string_types, b, long
 
 MSG_DISCONNECT, MSG_IGNORE, MSG_UNIMPLEMENTED, MSG_DEBUG, MSG_SERVICE_REQUEST, \
     MSG_SERVICE_ACCEPT = range(1, 7)
@@ -34,10 +35,35 @@ MSG_CHANNEL_OPEN, MSG_CHANNEL_OPEN_SUCCESS, MSG_CHANNEL_OPEN_FAILURE, \
     MSG_CHANNEL_EOF, MSG_CHANNEL_CLOSE, MSG_CHANNEL_REQUEST, \
     MSG_CHANNEL_SUCCESS, MSG_CHANNEL_FAILURE = range(90, 101)
 
-for key in list(locals().keys()):
-    if key.startswith('MSG_'):
-        locals()['c' + key] = byte_chr(locals()[key])
-del key
+cMSG_DISCONNECT = byte_chr(MSG_DISCONNECT)
+cMSG_IGNORE = byte_chr(MSG_IGNORE)
+cMSG_UNIMPLEMENTED = byte_chr(MSG_UNIMPLEMENTED)
+cMSG_DEBUG = byte_chr(MSG_DEBUG)
+cMSG_SERVICE_REQUEST = byte_chr(MSG_SERVICE_REQUEST)
+cMSG_SERVICE_ACCEPT = byte_chr(MSG_SERVICE_ACCEPT)
+cMSG_KEXINIT = byte_chr(MSG_KEXINIT)
+cMSG_NEWKEYS = byte_chr(MSG_NEWKEYS)
+cMSG_USERAUTH_REQUEST = byte_chr(MSG_USERAUTH_REQUEST)
+cMSG_USERAUTH_FAILURE = byte_chr(MSG_USERAUTH_FAILURE)
+cMSG_USERAUTH_SUCCESS = byte_chr(MSG_USERAUTH_SUCCESS)
+cMSG_USERAUTH_BANNER = byte_chr(MSG_USERAUTH_BANNER)
+cMSG_USERAUTH_PK_OK = byte_chr(MSG_USERAUTH_PK_OK)
+cMSG_USERAUTH_INFO_REQUEST = byte_chr(MSG_USERAUTH_INFO_REQUEST)
+cMSG_USERAUTH_INFO_RESPONSE = byte_chr(MSG_USERAUTH_INFO_RESPONSE)
+cMSG_GLOBAL_REQUEST = byte_chr(MSG_GLOBAL_REQUEST)
+cMSG_REQUEST_SUCCESS = byte_chr(MSG_REQUEST_SUCCESS)
+cMSG_REQUEST_FAILURE = byte_chr(MSG_REQUEST_FAILURE)
+cMSG_CHANNEL_OPEN = byte_chr(MSG_CHANNEL_OPEN)
+cMSG_CHANNEL_OPEN_SUCCESS = byte_chr(MSG_CHANNEL_OPEN_SUCCESS)
+cMSG_CHANNEL_OPEN_FAILURE = byte_chr(MSG_CHANNEL_OPEN_FAILURE)
+cMSG_CHANNEL_WINDOW_ADJUST = byte_chr(MSG_CHANNEL_WINDOW_ADJUST)
+cMSG_CHANNEL_DATA = byte_chr(MSG_CHANNEL_DATA)
+cMSG_CHANNEL_EXTENDED_DATA = byte_chr(MSG_CHANNEL_EXTENDED_DATA)
+cMSG_CHANNEL_EOF = byte_chr(MSG_CHANNEL_EOF)
+cMSG_CHANNEL_CLOSE = byte_chr(MSG_CHANNEL_CLOSE)
+cMSG_CHANNEL_REQUEST = byte_chr(MSG_CHANNEL_REQUEST)
+cMSG_CHANNEL_SUCCESS = byte_chr(MSG_CHANNEL_SUCCESS)
+cMSG_CHANNEL_FAILURE = byte_chr(MSG_CHANNEL_FAILURE)
 
 # for debugging:
 MSG_NAMES = {
@@ -104,24 +130,6 @@ from Crypto import Random
 
 # keep a crypto-strong PRNG nearby
 rng = Random.new()
-
-import sys
-if sys.version_info < (2, 3):
-    try:
-        import logging
-    except:
-        import logging22 as logging
-    import select
-    PY22 = True
-
-    import socket
-    if not hasattr(socket, 'timeout'):
-        class timeout(socket.error): pass
-        socket.timeout = timeout
-        del timeout
-else:
-    import logging
-    PY22 = False
 
 zero_byte = byte_chr(0)
 one_byte = byte_chr(1)

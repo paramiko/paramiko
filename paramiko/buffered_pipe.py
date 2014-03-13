@@ -25,7 +25,7 @@ read operations are blocking and can have a timeout set.
 import array
 import threading
 import time
-from paramiko.common import *
+from paramiko.py3compat import PY2, b
 
 
 class PipeTimeout (IOError):
@@ -61,7 +61,6 @@ class BufferedPipe (object):
 
         def _buffer_tobytes(self, limit=None):
             return self._buffer[:limit].tobytes()
-
 
     def set_event(self, event):
         """
@@ -208,4 +207,3 @@ class BufferedPipe (object):
             return len(self._buffer)
         finally:
             self._lock.release()
-

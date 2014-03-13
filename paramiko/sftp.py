@@ -20,32 +20,31 @@ import select
 import socket
 import struct
 
-from paramiko.common import *
 from paramiko import util
-from paramiko.channel import Channel
+from paramiko.common import asbytes, DEBUG
 from paramiko.message import Message
+from paramiko.py3compat import byte_chr, byte_ord
 
 
 CMD_INIT, CMD_VERSION, CMD_OPEN, CMD_CLOSE, CMD_READ, CMD_WRITE, CMD_LSTAT, CMD_FSTAT, \
-           CMD_SETSTAT, CMD_FSETSTAT, CMD_OPENDIR, CMD_READDIR, CMD_REMOVE, CMD_MKDIR, \
-           CMD_RMDIR, CMD_REALPATH, CMD_STAT, CMD_RENAME, CMD_READLINK, CMD_SYMLINK \
-           = range(1, 21)
+    CMD_SETSTAT, CMD_FSETSTAT, CMD_OPENDIR, CMD_READDIR, CMD_REMOVE, CMD_MKDIR, \
+    CMD_RMDIR, CMD_REALPATH, CMD_STAT, CMD_RENAME, CMD_READLINK, CMD_SYMLINK = range(1, 21)
 CMD_STATUS, CMD_HANDLE, CMD_DATA, CMD_NAME, CMD_ATTRS = range(101, 106)
 CMD_EXTENDED, CMD_EXTENDED_REPLY = range(200, 202)
 
 SFTP_OK = 0
 SFTP_EOF, SFTP_NO_SUCH_FILE, SFTP_PERMISSION_DENIED, SFTP_FAILURE, SFTP_BAD_MESSAGE, \
-         SFTP_NO_CONNECTION, SFTP_CONNECTION_LOST, SFTP_OP_UNSUPPORTED = range(1, 9)
+    SFTP_NO_CONNECTION, SFTP_CONNECTION_LOST, SFTP_OP_UNSUPPORTED = range(1, 9)
 
-SFTP_DESC = [ 'Success',
-              'End of file',
-              'No such file',
-              'Permission denied',
-              'Failure',
-              'Bad message',
-              'No connection',
-              'Connection lost',
-              'Operation unsupported' ]
+SFTP_DESC = ['Success',
+             'End of file',
+             'No such file',
+             'Permission denied',
+             'Failure',
+             'Bad message',
+             'No connection',
+             'Connection lost',
+             'Operation unsupported']
 
 SFTP_FLAG_READ = 0x1
 SFTP_FLAG_WRITE = 0x2
@@ -99,9 +98,7 @@ class BaseSFTP (object):
         self.sock = None
         self.ultra_debug = False
 
-
     ###  internals...
-
 
     def _send_version(self):
         self._send_packet(CMD_INIT, struct.pack('>I', _VERSION))
@@ -121,7 +118,7 @@ class BaseSFTP (object):
             raise SFTPError('Incompatible sftp protocol')
         version = struct.unpack('>I', data[:4])[0]
         # advertise that we support "check-file"
-        extension_pairs = [ 'check-file', 'md5,sha1' ]
+        extension_pairs = ['check-file', 'md5,sha1']
         msg = Message()
         msg.add_int(_VERSION)
         msg.add(*extension_pairs)
@@ -151,7 +148,7 @@ class BaseSFTP (object):
                 # return or raise an exception, but calling select on a closed
                 # socket will.)
                 while True:
-                    read, write, err = select.select([ self.sock ], [], [], 0.1)
+                    read, write, err = select.select([self.sock], [], [], 0.1)
                     if len(read) > 0:
                         x = self.sock.recv(n)
                         break
@@ -181,7 +178,7 @@ class BaseSFTP (object):
         size = struct.unpack('>I', x)[0]
         data = self._read_all(size)
         if self.ultra_debug:
-            self._log(DEBUG, util.format_binary(data, 'IN: '));
+            self._log(DEBUG, util.format_binary(data, 'IN: '))
         if size > 0:
             t = byte_ord(data[0])
             #self._log(DEBUG2, 'read: %s (len=%d)' % (CMD_NAMES.get(t), '0x%02x' % t, len(data)-1))
