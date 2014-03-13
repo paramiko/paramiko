@@ -46,10 +46,10 @@ Changelog
 * :release:`1.12.0 <2013-09-27>`
 * :release:`1.11.2 <2013-09-27>`
 * :release:`1.10.4 <2013-09-27>`
-* :feature:`152` Add tentative support for ECDSA keys. *This adds the ecdsa
-  module as a new dependency of Paramiko.* The module is available at
-  [warner/python-ecdsa on Github](https://github.com/warner/python-ecdsa) and
-  [ecdsa on PyPI](https://pypi.python.org/pypi/ecdsa).
+* :feature:`152` Add tentative support for ECDSA keys. **This adds the ecdsa
+  module as a new dependency of Paramiko.** The module is available at
+  `warner/python-ecdsa on Github <https://github.com/warner/python-ecdsa>`_ and
+  `ecdsa on PyPI <https://pypi.python.org/pypi/ecdsa>`_.
 
     * Note that you might still run into problems with key negotiation --
       Paramiko picks the first key that the server offers, which might not be
