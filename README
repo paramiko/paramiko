@@ -5,7 +5,7 @@ paramiko
 
 :Paramiko: Python SSH module
 :Copyright: Copyright (c) 2003-2009  Robey Pointer <robeypointer@gmail.com>
-:Copyright: Copyright (c) 2014  Jeff Forcier <jeff@bitprophet.org>
+:Copyright: Copyright (c) 2013-2014  Jeff Forcier <jeff@bitprophet.org>
 :License: LGPL
 :Homepage: https://github.com/paramiko/paramiko/
 :API docs: http://docs.paramiko.org
