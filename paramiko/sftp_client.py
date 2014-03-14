@@ -660,7 +660,7 @@ class SFTPClient(BaseSFTP):
                     msg.add_int(item)
                 elif isinstance(item, long):
                     msg.add_int64(item)
-                elif isinstance(item, str):
+                elif isinstance(item, basestring):
                     msg.add_string(item)
                 elif isinstance(item, SFTPAttributes):
                     item._pack(msg)
