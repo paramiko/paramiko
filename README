@@ -34,7 +34,8 @@ that should have come with this archive.
 Requirements
 ------------
 
-  - python 2.6 or better <http://www.python.org/>
+  - Python 2.6 or better <http://www.python.org/> - this includes Python
+    3.3 and higher as well.
   - pycrypto 2.1 or better <https://www.dlitz.net/software/pycrypto/>
   - ecdsa 0.9 or better <https://pypi.python.org/pypi/ecdsa>
 
