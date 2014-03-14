@@ -29,16 +29,18 @@ import time
 import tempfile
 import stat
 from select import select
+from paramiko.common import asbytes, io_sleep
+from paramiko.py3compat import byte_chr
 
 from paramiko.ssh_exception import SSHException
 from paramiko.message import Message
 from paramiko.pkey import PKey
-from paramiko.channel import Channel
-from paramiko.common import io_sleep
 from paramiko.util import retry_on_signal
 
-SSH2_AGENTC_REQUEST_IDENTITIES, SSH2_AGENT_IDENTITIES_ANSWER, \
-    SSH2_AGENTC_SIGN_REQUEST, SSH2_AGENT_SIGN_RESPONSE = range(11, 15)
+cSSH2_AGENTC_REQUEST_IDENTITIES = byte_chr(11)
+SSH2_AGENT_IDENTITIES_ANSWER = 12
+cSSH2_AGENTC_SIGN_REQUEST = byte_chr(13)
+SSH2_AGENT_SIGN_RESPONSE = 14
 
 
 class AgentSSH(object):
@@ -60,12 +62,12 @@ class AgentSSH(object):
 
     def _connect(self, conn):
         self._conn = conn
-        ptype, result = self._send_message(chr(SSH2_AGENTC_REQUEST_IDENTITIES))
+        ptype, result = self._send_message(cSSH2_AGENTC_REQUEST_IDENTITIES)
         if ptype != SSH2_AGENT_IDENTITIES_ANSWER:
             raise SSHException('could not get keys from ssh-agent')
         keys = []
         for i in range(result.get_int()):
-            keys.append(AgentKey(self, result.get_string()))
+            keys.append(AgentKey(self, result.get_binary()))
             result.get_string()
         self._keys = tuple(keys)
 
@@ -75,7 +77,7 @@ class AgentSSH(object):
         self._keys = ()
 
     def _send_message(self, msg):
-        msg = str(msg)
+        msg = asbytes(msg)
         self._conn.send(struct.pack('>I', len(msg)) + msg)
         l = self._read_all(4)
         msg = Message(self._read_all(struct.unpack('>I', l)[0]))
@@ -104,7 +106,7 @@ class AgentProxyThread(threading.Thread):
 
     def run(self):
         try:
-            (r,addr) = self.get_connection()
+            (r, addr) = self.get_connection()
             self.__inr = r
             self.__addr = addr
             self._agent.connect()
@@ -160,11 +162,10 @@ class AgentLocalProxy(AgentProxyThread):
         try:
             conn.bind(self._agent._get_filename())
             conn.listen(1)
-            (r,addr) = conn.accept()
-            return (r, addr)
+            (r, addr) = conn.accept()
+            return r, addr
         except:
             raise
-        return None
 
 
 class AgentRemoteProxy(AgentProxyThread):
@@ -176,7 +177,7 @@ class AgentRemoteProxy(AgentProxyThread):
         self.__chan = chan
 
     def get_connection(self):
-        return (self.__chan, None)
+        return self.__chan, None
 
 
 class AgentClientProxy(object):
@@ -212,7 +213,7 @@ class AgentClientProxy(object):
                 # probably a dangling env var: the ssh agent is gone
                 return
         elif sys.platform == 'win32':
-            import win_pageant
+            import paramiko.win_pageant as win_pageant
             if win_pageant.can_talk_to_agent():
                 conn = win_pageant.PageantConnection()
             else:
@@ -277,9 +278,7 @@ class AgentServerProxy(AgentSSH):
         :return:
             a dict containing the ``SSH_AUTH_SOCK`` environnement variables
         """
-        env = {}
-        env['SSH_AUTH_SOCK'] = self._get_filename()
-        return env
+        return {'SSH_AUTH_SOCK': self._get_filename()}
 
     def _get_filename(self):
         return self._file
@@ -328,7 +327,7 @@ class Agent(AgentSSH):
                 # probably a dangling env var: the ssh agent is gone
                 return
         elif sys.platform == 'win32':
-            import win_pageant
+            from . import win_pageant
             if win_pageant.can_talk_to_agent():
                 conn = win_pageant.PageantConnection()
             else:
@@ -354,21 +353,24 @@ class AgentKey(PKey):
     def __init__(self, agent, blob):
         self.agent = agent
         self.blob = blob
-        self.name = Message(blob).get_string()
+        self.name = Message(blob).get_text()
+
+    def asbytes(self):
+        return self.blob
 
     def __str__(self):
-        return self.blob
+        return self.asbytes()
 
     def get_name(self):
         return self.name
 
     def sign_ssh_data(self, rng, data):
         msg = Message()
-        msg.add_byte(chr(SSH2_AGENTC_SIGN_REQUEST))
+        msg.add_byte(cSSH2_AGENTC_SIGN_REQUEST)
         msg.add_string(self.blob)
         msg.add_string(data)
         msg.add_int(0)
         ptype, result = self.agent._send_message(msg)
         if ptype != SSH2_AGENT_SIGN_RESPONSE:
             raise SSHException('key cannot be used for signing')
-        return result.get_string()
+        return result.get_binary()

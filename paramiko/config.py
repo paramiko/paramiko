@@ -116,7 +116,7 @@ class SSHConfig (object):
 
         ret = {}
         for match in matches:
-            for key, value in match['config'].iteritems():
+            for key, value in match['config'].items():
                 if key not in ret:
                     # Create a copy of the original value,
                     # else it will reference the original list

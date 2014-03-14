@@ -19,6 +19,7 @@
 
 import socket
 import sys
+from paramiko.py3compat import u
 
 # windows does not have termios...
 try:
@@ -49,9 +50,9 @@ def posix_shell(chan):
             r, w, e = select.select([chan, sys.stdin], [], [])
             if chan in r:
                 try:
-                    x = chan.recv(1024)
+                    x = u(chan.recv(1024))
                     if len(x) == 0:
-                        print '\r\n*** EOF\r\n',
+                        sys.stdout.write('\r\n*** EOF\r\n')
                         break
                     sys.stdout.write(x)
                     sys.stdout.flush()

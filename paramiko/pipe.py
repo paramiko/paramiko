@@ -30,7 +30,7 @@ import os
 import socket
 
 
-def make_pipe ():
+def make_pipe():
     if sys.platform[:3] != 'win':
         p = PosixPipe()
     else:
@@ -39,34 +39,34 @@ def make_pipe ():
 
 
 class PosixPipe (object):
-    def __init__ (self):
+    def __init__(self):
         self._rfd, self._wfd = os.pipe()
         self._set = False
         self._forever = False
         self._closed = False
     
-    def close (self):
+    def close(self):
         os.close(self._rfd)
         os.close(self._wfd)
         # used for unit tests:
         self._closed = True
     
-    def fileno (self):
+    def fileno(self):
         return self._rfd
 
-    def clear (self):
+    def clear(self):
         if not self._set or self._forever:
             return
         os.read(self._rfd, 1)
         self._set = False
     
-    def set (self):
+    def set(self):
         if self._set or self._closed:
             return
         self._set = True
-        os.write(self._wfd, '*')
+        os.write(self._wfd, b'*')
     
-    def set_forever (self):
+    def set_forever(self):
         self._forever = True
         self.set()
 
@@ -76,7 +76,7 @@ class WindowsPipe (object):
     On Windows, only an OS-level "WinSock" may be used in select(), but reads
     and writes must be to the actual socket object.
     """
-    def __init__ (self):
+    def __init__(self):
         serv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         serv.bind(('127.0.0.1', 0))
         serv.listen(1)
@@ -91,13 +91,13 @@ class WindowsPipe (object):
         self._forever = False
         self._closed = False
     
-    def close (self):
+    def close(self):
         self._rsock.close()
         self._wsock.close()
         # used for unit tests:
         self._closed = True
     
-    def fileno (self):
+    def fileno(self):
         return self._rsock.fileno()
 
     def clear (self):
@@ -110,7 +110,7 @@ class WindowsPipe (object):
         if self._set or self._closed:
             return
         self._set = True
-        self._wsock.send('*')
+        self._wsock.send(b'*')
 
     def set_forever (self):
         self._forever = True

@@ -21,9 +21,7 @@ Abstraction of an SFTP file handle (for server mode).
 """
 
 import os
-
-from paramiko.common import *
-from paramiko.sftp import *
+from paramiko.sftp import SFTP_OP_UNSUPPORTED, SFTP_OK
 
 
 class SFTPHandle (object):
@@ -46,7 +44,7 @@ class SFTPHandle (object):
         self.__flags = flags
         self.__name = None
         # only for handles to folders:
-        self.__files = { }
+        self.__files = {}
         self.__tell = None
 
     def close(self):
@@ -97,7 +95,7 @@ class SFTPHandle (object):
                 readfile.seek(offset)
                 self.__tell = offset
             data = readfile.read(length)
-        except IOError, e:
+        except IOError as e:
             self.__tell = None
             return SFTPServer.convert_errno(e.errno)
         self.__tell += len(data)
@@ -135,7 +133,7 @@ class SFTPHandle (object):
                     self.__tell = offset
             writefile.write(data)
             writefile.flush()
-        except IOError, e:
+        except IOError as e:
             self.__tell = None
             return SFTPServer.convert_errno(e.errno)
         if self.__tell is not None:
@@ -166,10 +164,8 @@ class SFTPHandle (object):
         """
         return SFTP_OP_UNSUPPORTED
 
-
     ###  internals...
 
-    
     def _set_files(self, files):
         """
         Used by the SFTP server code to cache a directory listing.  (In

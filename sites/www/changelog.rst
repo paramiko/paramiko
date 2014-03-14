@@ -2,6 +2,13 @@
 Changelog
 =========
 
+* :feature:`16` **Python 3 support!** Our test suite passes under Python 3, and
+  it (& Fabric's test suite) continues to pass under Python 2.
+  
+  The merged code was built on many contributors' efforts, both code &
+  feedback. In no particular order, we thank Daniel Goertzen, Ivan Kolodyazhny,
+  Tomi Pieviläinen, Jason R. Coombs, Jan N. Schulze, ``@Lazik``, Dorian Pula,
+  Scott Maxwell, Tshepang Lekhonkhobe, Aaron Meurer, and Dave Halter.
 * :support:`256 backported` Convert API documentation to Sphinx, yielding a new
   API docs website to replace the old Epydoc one. Thanks to Olle Lundberg for
   the initial conversion work.
@@ -39,10 +46,10 @@ Changelog
 * :release:`1.12.0 <2013-09-27>`
 * :release:`1.11.2 <2013-09-27>`
 * :release:`1.10.4 <2013-09-27>`
-* :feature:`152` Add tentative support for ECDSA keys. *This adds the ecdsa
-  module as a new dependency of Paramiko.* The module is available at
-  [warner/python-ecdsa on Github](https://github.com/warner/python-ecdsa) and
-  [ecdsa on PyPI](https://pypi.python.org/pypi/ecdsa).
+* :feature:`152` Add tentative support for ECDSA keys. **This adds the ecdsa
+  module as a new dependency of Paramiko.** The module is available at
+  `warner/python-ecdsa on Github <https://github.com/warner/python-ecdsa>`_ and
+  `ecdsa on PyPI <https://pypi.python.org/pypi/ecdsa>`_.
 
     * Note that you might still run into problems with key negotiation --
       Paramiko picks the first key that the server offers, which might not be

@@ -31,9 +31,9 @@ html_sidebars = {
 }
 
 # Regular settings
-project = u'Paramiko'
+project = 'Paramiko'
 year = datetime.now().year
-copyright = u'%d Jeff Forcier' % year
+copyright = '%d Jeff Forcier' % year
 master_doc = 'index'
 templates_path = ['_templates']
 exclude_trees = ['_build']

@@ -59,7 +59,7 @@ class ProxyCommand(object):
         """
         try:
             self.process.stdin.write(content)
-        except IOError, e:
+        except IOError as e:
             # There was a problem with the child process. It probably
             # died and we can't proceed. The best option here is to
             # raise an exception informing the user that the informed
@@ -80,7 +80,7 @@ class ProxyCommand(object):
             while len(self.buffer) < size:
                 if self.timeout is not None:
                     elapsed = (datetime.now() - start).microseconds
-                    timeout = self.timeout * 1000 * 1000 # to microseconds
+                    timeout = self.timeout * 1000 * 1000  # to microseconds
                     if elapsed >= timeout:
                         raise socket.timeout()
                 r, w, x = select([self.process.stdout], [], [], 0.0)
@@ -94,8 +94,8 @@ class ProxyCommand(object):
             self.buffer = []
             return result
         except socket.timeout:
-            raise # socket.timeout is a subclass of IOError
-        except IOError, e:
+            raise  # socket.timeout is a subclass of IOError
+        except IOError as e:
             raise ProxyCommandFailure(' '.join(self.cmd), e.strerror)
 
     def close(self):
