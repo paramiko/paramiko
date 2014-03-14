@@ -2,6 +2,9 @@
 Changelog
 =========
 
+* :bug:`235` Improve string type testing in a handful of spots (e.g. ``s/if
+  type(x) is str/if isinstance(x, basestring)/g``.) Thanks to ``@ksamuel`` for
+  the report.
 * :release:`1.11.5 <2014-03-13>`
 * :release:`1.10.7 <2014-03-13>`
 * :support:`256 backported` Convert API documentation to Sphinx, yielding a new

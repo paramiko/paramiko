@@ -436,7 +436,7 @@ class BufferedFile (object):
             return
         if self.newlines is None:
             self.newlines = newline
-        elif (type(self.newlines) is str) and (self.newlines != newline):
+        elif isinstance(self.newlines, basestring) and (self.newlines != newline):
             self.newlines = (self.newlines, newline)
         elif newline not in self.newlines:
             self.newlines += (newline,)

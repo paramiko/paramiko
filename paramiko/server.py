@@ -493,7 +493,7 @@ class InteractiveQuery (object):
         self.instructions = instructions
         self.prompts = []
         for x in prompts:
-            if (type(x) is str) or (type(x) is unicode):
+            if isinstance(x, basestring):
                 self.add_prompt(x)
             else:
                 self.add_prompt(x[0], x[1])
