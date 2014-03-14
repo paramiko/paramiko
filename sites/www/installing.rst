@@ -14,9 +14,9 @@ via `pip <http://pip-installer.org>`_::
     Users who want the bleeding edge can install the development version via
     ``pip install paramiko==dev``.
 
-We currently support **Python 2.5/2.6/2.7**, with support for Python 3 coming
-soon. Users on Python 2.4 or older are urged to upgrade. Paramiko *may* work on
-Python 2.4 still, but there is no longer any support guarantee.
+We currently support **Python 2.6, 2.7 and 3.3** (Python **3.2** should also
+work but has a less-strong compatibility guarantee from us.) Users on Python
+2.5 or older are urged to upgrade.
 
 Paramiko has two dependencies: the pure-Python ECDSA module `ecdsa`, and the
 PyCrypto C extension. `ecdsa` is easily installable from wherever you
@@ -30,34 +30,6 @@ PyCrypto
 (C-based) encryption algorithms we need to implement the SSH protocol. There
 are a couple gotchas associated with installing PyCrypto: its compatibility
 with Python's package tools, and the fact that it is a C-based extension.
-
-.. _pycrypto-and-pip:
-
-Possible gotcha on older Python and/or pip versions
----------------------------------------------------
-
-We strongly recommend using ``pip`` to as it is newer and generally better than
-``easy_install``. However, a combination of bugs in specific (now rather old)
-versions of Python, ``pip`` and PyCrypto can prevent installation of PyCrypto.
-Specifically:
-
-* Python = 2.5.x
-* PyCrypto >= 2.1 (required for most modern versions of Paramiko)
-* ``pip`` < 0.8.1
-
-When all three criteria are met, you may encounter ``No such file or
-directory`` IOErrors when trying to ``pip install paramiko`` or ``pip install
-PyCrypto``.
-
-The fix is to make sure at least one of the above criteria is not met, by doing
-the following (in order of preference):
-
-* Upgrade to ``pip`` 0.8.1 or above, e.g. by running ``pip install -U pip``.
-* Upgrade to Python 2.6 or above.
-* Downgrade to Paramiko 1.7.6 or 1.7.7, which do not require PyCrypto >= 2.1,
-  and install PyCrypto 2.0.1 (the oldest version on PyPI which works with
-  Paramiko 1.7.6/1.7.7)
-
 
 C extension
 -----------
