@@ -2,6 +2,9 @@
 Changelog
 =========
 
+* :bug:`235` Improve string type testing in a handful of spots (e.g. ``s/if
+  type(x) is str/if isinstance(x, basestring)/g``.) Thanks to ``@ksamuel`` for
+  the report.
 * :release:`1.13.0 <2014-03-13>`
 * :release:`1.12.3 <2014-03-13>`
 * :release:`1.11.5 <2014-03-13>`
