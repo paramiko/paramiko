@@ -2,6 +2,7 @@
 Changelog
 =========
 
+* :release:`1.11.5 <2014-03-13>`
 * :release:`1.10.7 <2014-03-13>`
 * :support:`256 backported` Convert API documentation to Sphinx, yielding a new
   API docs website to replace the old Epydoc one. Thanks to Olle Lundberg for
