@@ -45,10 +45,19 @@ Created on 07.11.2013
 import struct
 import os
 import sys
+
+'''
+@var GSS_AUTH_AVAILABLE: Constraint that indicates if GSS-API / SSPI is
+                         Available.
+@type GSS_AUTH_AVAILABLE: Boolean
+'''
+GSS_AUTH_AVAILABLE = True
+
 try:
     from pyasn1.type.univ import ObjectIdentifier
     from pyasn1.codec.der import encoder, decoder
 except ImportError:
+    GSS_AUTH_AVAILABLE = False
     class ObjectIdentifier(object):
         def __init__(self, *args):
             raise NotImplementedError("Module pyasn1 not importable")
@@ -61,7 +70,7 @@ from paramiko.common import MSG_USERAUTH_REQUEST
 from paramiko.ssh_exception import SSHException
 
 """
-@var _API: constraint for the used API
+@var _API: Constraint for the used API
 @type _API: String
 """
 _API = "MIT"
@@ -74,6 +83,7 @@ except ImportError:
         import sspi
         _API = "SSPI"
     except ImportError:
+        GSS_AUTH_AVAILABLE = False
         _API = None
 
 
