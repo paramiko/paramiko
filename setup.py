@@ -53,21 +53,29 @@ if sys.platform == 'darwin':
     setup_helper.install_custom_make_tarball()
 
 
-setup(name = "paramiko",
-      version = "1.12.3",
-      description = "SSH2 protocol library",
-      author = "Jeff Forcier",
-      author_email = "jeff@bitprophet.org",
-      url = "https://github.com/paramiko/paramiko/",
-      packages = [ 'paramiko' ],
-      license = 'LGPL',
-      platforms = 'Posix; MacOS X; Windows',
-      classifiers = [ 'Development Status :: 5 - Production/Stable',
-                      'Intended Audience :: Developers',
-                      'License :: OSI Approved :: GNU Library or Lesser General Public License (LGPL)',
-                      'Operating System :: OS Independent',
-                      'Topic :: Internet',
-                      'Topic :: Security :: Cryptography' ],
-      long_description = longdesc,
-      **kw
-      )
+setup(
+    name = "paramiko",
+    version = "1.12.3",
+    description = "SSH2 protocol library",
+    long_description = longdesc,
+    author = "Jeff Forcier",
+    author_email = "jeff@bitprophet.org",
+    url = "https://github.com/paramiko/paramiko/",
+    packages = [ 'paramiko' ],
+    license = 'LGPL',
+    platforms = 'Posix; MacOS X; Windows',
+    classifiers = [
+        'Development Status :: 5 - Production/Stable',
+        'Intended Audience :: Developers',
+        'License :: OSI Approved :: GNU Library or Lesser General Public License (LGPL)',
+        'Operating System :: OS Independent',
+        'Topic :: Internet',
+        'Topic :: Security :: Cryptography',
+        'Programming Language :: Python',
+        'Programming Language :: Python :: 2',
+        'Programming Language :: Python :: 2.6',
+        'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 2 :: Only',
+    ],
+    **kw
+)
