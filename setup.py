@@ -65,7 +65,12 @@ setup(name = "paramiko",
                       'License :: OSI Approved :: GNU Library or Lesser General Public License (LGPL)',
                       'Operating System :: OS Independent',
                       'Topic :: Internet',
-                      'Topic :: Security :: Cryptography' ],
+                      'Topic :: Security :: Cryptography',
+                      'Programming Language :: Python',
+                      'Programming Language :: Python :: 2',
+                      'Programming Language :: Python :: 2.6',
+                      'Programming Language :: Python :: 2.7',
+                      'Programming Language :: Python :: 2 :: Only' ],
       long_description = longdesc,
       **kw
       )
