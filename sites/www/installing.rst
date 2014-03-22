@@ -5,7 +5,7 @@ Installing
 Paramiko itself
 ===============
 
-The recommended way to get Invoke is to **install the latest stable release**
+The recommended way to get Paramiko is to **install the latest stable release**
 via `pip <http://pip-installer.org>`_::
 
     $ pip install paramiko
