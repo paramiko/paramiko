@@ -13,7 +13,7 @@ usage and API documentation can be found at our code documentation site,
 
 .. toctree::
     changelog
-    faq
+    FAQs <faq>
     installing
     contributing
     contact
