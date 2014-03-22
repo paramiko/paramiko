@@ -2,6 +2,8 @@
 Installing
 ==========
 
+.. _paramiko-itself:
+
 Paramiko itself
 ===============
 
@@ -22,6 +24,28 @@ Paramiko has two dependencies: the pure-Python ECDSA module `ecdsa`, and the
 PyCrypto C extension. `ecdsa` is easily installable from wherever you
 obtained Paramiko's package; PyCrypto may require more work. Read on for
 details.
+
+.. _release-lines:
+
+Release lines
+-------------
+
+Users desiring stability may wish to pin themselves to a specific release line
+once they first start using Paramiko; to assist in this, we guarantee bugfixes
+for at least the last 2-3 releases including the latest stable one. This currently means Paramiko **1.11** through **1.13**.
+
+If you're unsure which version to install, we have suggestions:
+
+* **Completely new users** should always default to the **latest stable
+  release** (as above, whatever is newest / whatever shows up with ``pip
+  install paramiko``.)
+* **Users upgrading from a much older version** (e.g. the 1.7.x line) should
+  probably get the **oldest actively supported line** (see the paragraph above
+  this list for what that currently is.)
+* **Everybody else** is hopefully already "on" a given version and can
+  carefully upgrade to whichever version they care to, when their release line
+  stops being supported.
+
 
 PyCrypto
 ========
