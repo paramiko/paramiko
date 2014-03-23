@@ -2,8 +2,9 @@
 Changelog
 =========
 
-* :support:`290` Add a ``setup.cfg`` marking Paramiko as 'universal' when
-  generating wheel files. Courtesy of Alex Gaynor.
+* :support:`290` (also :issue:`292`) Add support for building universal
+  (Python 2+3 compatible) wheel files during the release process. Courtesy of
+  Alex Gaynor.
 * :support:`284` Add Python language trove identifiers to ``setup.py``. Thanks
   to Alex Gaynor for catch & patch.
 * :bug:`235` Improve string type testing in a handful of spots (e.g. ``s/if
