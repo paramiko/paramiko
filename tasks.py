@@ -43,7 +43,7 @@ def release(ctx):
     rmtree(target, ignore_errors=True)
     copytree(docs_build, target)
     # Publish
-    publish(ctx)
+    publish(ctx, wheel=True)
 
 
 ns = Collection(test, coverage, release, docs=docs, www=www)
