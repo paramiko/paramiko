@@ -27,7 +27,7 @@ from paramiko import util
 from paramiko.common import rng, max_byte, zero_byte, one_byte
 from paramiko.message import Message
 from paramiko.ber import BER, BERException
-from paramiko.pkey import PKey
+from paramiko.pkey import PKey, KeyFormatException
 from paramiko.py3compat import long
 from paramiko.ssh_exception import SSHException
 
@@ -60,7 +60,7 @@ class RSAKey (PKey):
             if msg is None:
                 raise SSHException('Key object may not be empty')
             if msg.get_text() != 'ssh-rsa':
-                raise SSHException('Invalid key')
+                raise KeyFormatException('Invalid key')
             self.e = msg.get_mpint()
             self.n = msg.get_mpint()
         self.size = util.bit_length(self.n)
@@ -173,9 +173,9 @@ class RSAKey (PKey):
         try:
             keylist = BER(data).decode()
         except BERException:
-            raise SSHException('Unable to parse key file')
+            raise KeyFormatException('Unable to parse key file')
         if (type(keylist) is not list) or (len(keylist) < 4) or (keylist[0] != 0):
-            raise SSHException('Not a valid RSA private key file (bad ber encoding)')
+            raise KeyFormatException('Not a valid RSA private key file (bad ber encoding)')
         self.n = keylist[1]
         self.e = keylist[2]
         self.d = keylist[3]
