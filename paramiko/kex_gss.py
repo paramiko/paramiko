@@ -48,6 +48,7 @@ from Crypto.Hash import SHA
 from paramiko.common import *
 from paramiko import util
 from paramiko.message import Message
+from paramiko.py3compat import byte_chr, long, byte_mask, byte_ord
 from paramiko.ssh_exception import SSHException
 
 

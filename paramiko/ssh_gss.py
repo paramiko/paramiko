@@ -66,6 +66,10 @@ except ImportError:
         def decode(self):
             raise NotImplementedError("Module pyasn1 not importable")
 
+    class encoder(object):
+        def encode(self):
+            raise NotImplementedError("Module pyasn1 not importable")
+
 from paramiko.common import MSG_USERAUTH_REQUEST
 from paramiko.ssh_exception import SSHException
 
@@ -251,11 +255,11 @@ class _SSH_GSSAuth(object):
         mic += session_id
         mic += struct.pack('B', MSG_USERAUTH_REQUEST)
         mic += self._make_uint32(len(username))
-        mic += str.encode(username)
+        mic += username.encode()
         mic += self._make_uint32(len(service))
-        mic += str.encode(service)
+        mic += service.encode()
         mic += self._make_uint32(len(auth_method))
-        mic += str.encode(auth_method)
+        mic += auth_method.encode()
         return mic
 
 
