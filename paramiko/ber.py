@@ -128,11 +128,6 @@ class BER(object):
     def encode_sequence(data):
         ber = BER()
         for item in data:
-<<<<<<< HEAD
-            b.encode(item)
-        return b.asbytes()
-=======
             ber.encode(item)
         return ber.asbytes()
->>>>>>> master
     encode_sequence = staticmethod(encode_sequence)
