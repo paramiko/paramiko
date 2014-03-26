@@ -113,7 +113,13 @@ else:
         return s
 
     def byte_ord(c):
+<<<<<<< HEAD
         assert isinstance(c, int)
+=======
+        # In case we're handed a string instead of an int.
+        if not isinstance(c, int):
+            c = ord(c)
+>>>>>>> master
         return c
 
     def byte_chr(c):

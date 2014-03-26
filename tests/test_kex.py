@@ -26,7 +26,7 @@ import paramiko.util
 from paramiko.kex_group1 import KexGroup1
 from paramiko.kex_gex import KexGex
 from paramiko import Message
-from paramiko.common import *
+from paramiko.common import byte_chr
 
 
 class FakeRng (object):
@@ -37,8 +37,10 @@ class FakeRng (object):
 class FakeKey (object):
     def __str__(self):
         return 'fake-key'
+
     def asbytes(self):
         return b'fake-key'
+
     def sign_ssh_data(self, rng, H):
         return b'fake-sig'
 
@@ -46,6 +48,7 @@ class FakeKey (object):
 class FakeModulusPack (object):
     P = 0xFFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD129024E088A67CC74020BBEA63B139B22514A08798E3404DDEF9519B3CD3A431B302B0A6DF25F14374FE1356D6D51C245E485B576625E7EC6F44C42E9A637ED6B0BFF5CB6F406B7EDEE386BFB5A899FA5AE9F24117C4B1FE649286651ECE65381FFFFFFFFFFFFFFFF
     G = 2
+
     def get_modulus(self, min, ask, max):
         return self.G, self.P
 
@@ -59,19 +62,26 @@ class FakeTransport (object):
 
     def _send_message(self, m):
         self._message = m
+
     def _expect_packet(self, *t):
         self._expect = t
+
     def _set_K_H(self, K, H):
         self._K = K
         self._H = H
+
     def _verify_key(self, host_key, sig):
         self._verify = (host_key, sig)
+
     def _activate_outbound(self):
         self._activated = True
+
     def _log(self, level, s):
         pass
+
     def get_server_key(self):
         return FakeKey()
+
     def _get_modulus_pack(self):
         return FakeModulusPack()
 

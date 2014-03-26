@@ -17,18 +17,18 @@
 # 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
 
 """
-L{RSAKey}
+RSA keys.
 """
 
 from Crypto.PublicKey import RSA
-from Crypto.Hash import SHA, MD5
-from Crypto.Cipher import DES3
+from Crypto.Hash import SHA
 
-from paramiko.common import *
 from paramiko import util
+from paramiko.common import rng, max_byte, zero_byte, one_byte
 from paramiko.message import Message
 from paramiko.ber import BER, BERException
 from paramiko.pkey import PKey
+from paramiko.py3compat import long
 from paramiko.ssh_exception import SSHException
 
 SHA1_DIGESTINFO = b'\x30\x21\x30\x09\x06\x05\x2b\x0e\x03\x02\x1a\x05\x00\x04\x14'
@@ -113,9 +113,9 @@ class RSAKey (PKey):
     def _encode_key(self):
         if (self.p is None) or (self.q is None):
             raise SSHException('Not enough key info to write private key file')
-        keylist = [ 0, self.n, self.e, self.d, self.p, self.q,
-                    self.d % (self.p - 1), self.d % (self.q - 1),
-                    util.mod_inverse(self.q, self.p) ]
+        keylist = [0, self.n, self.e, self.d, self.p, self.q,
+                   self.d % (self.p - 1), self.d % (self.q - 1),
+                   util.mod_inverse(self.q, self.p)]
         try:
             b = BER()
             b.encode(keylist)
@@ -134,13 +134,11 @@ class RSAKey (PKey):
         Generate a new private RSA key.  This factory function can be used to
         generate a new host key or authentication key.
 
-        @param bits: number of bits the generated key should be.
-        @type bits: int
-        @param progress_func: an optional function to call at key points in
-            key generation (used by C{pyCrypto.PublicKey}).
-        @type progress_func: function
-        @return: new private key
-        @rtype: L{RSAKey}
+        :param int bits: number of bits the generated key should be.
+        :param function progress_func:
+            an optional function to call at key points in key generation (used
+            by ``pyCrypto.PublicKey``).
+        :return: new `.RSAKey` private key
         """
         rsa = RSA.generate(bits, rng.read, progress_func)
         key = RSAKey(vals=(rsa.e, rsa.n))
@@ -150,9 +148,7 @@ class RSAKey (PKey):
         return key
     generate = staticmethod(generate)
 
-
     ###  internals...
-
 
     def _pkcs1imify(self, data):
         """

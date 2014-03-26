@@ -24,14 +24,26 @@ import os
 import errno
 
 from Crypto.Hash import MD5, SHA
-from paramiko.common import *
+import sys
+from paramiko import util
+from paramiko.sftp import BaseSFTP, Message, SFTP_FAILURE, \
+    SFTP_PERMISSION_DENIED, SFTP_NO_SUCH_FILE
+from paramiko.sftp_si import SFTPServerInterface
+from paramiko.sftp_attr import SFTPAttributes
+from paramiko.common import DEBUG
+from paramiko.py3compat import long, string_types, bytes_types, b
 from paramiko.server import SubsystemHandler
-from paramiko.sftp import *
-from paramiko.sftp_si import *
-from paramiko.sftp_attr import *
 
 
 # known hash algorithms for the "check-file" extension
+from paramiko.sftp import CMD_HANDLE, SFTP_DESC, CMD_STATUS, SFTP_EOF, CMD_NAME, \
+    SFTP_BAD_MESSAGE, CMD_EXTENDED_REPLY, SFTP_FLAG_READ, SFTP_FLAG_WRITE, \
+    SFTP_FLAG_APPEND, SFTP_FLAG_CREATE, SFTP_FLAG_TRUNC, SFTP_FLAG_EXCL, \
+    CMD_NAMES, CMD_OPEN, CMD_CLOSE, SFTP_OK, CMD_READ, CMD_DATA, CMD_WRITE, \
+    CMD_REMOVE, CMD_RENAME, CMD_MKDIR, CMD_RMDIR, CMD_OPENDIR, CMD_READDIR, \
+    CMD_STAT, CMD_ATTRS, CMD_LSTAT, CMD_FSTAT, CMD_SETSTAT, CMD_FSETSTAT, \
+    CMD_READLINK, CMD_SYMLINK, CMD_REALPATH, CMD_EXTENDED, SFTP_OP_UNSUPPORTED
+
 _hash_class = {
     'sha1': SHA,
     'md5': MD5,
@@ -40,28 +52,25 @@ _hash_class = {
 
 class SFTPServer (BaseSFTP, SubsystemHandler):
     """
-    Server-side SFTP subsystem support.  Since this is a L{SubsystemHandler},
-    it can be (and is meant to be) set as the handler for C{"sftp"} requests.
-    Use L{Transport.set_subsystem_handler} to activate this class.
+    Server-side SFTP subsystem support.  Since this is a `.SubsystemHandler`,
+    it can be (and is meant to be) set as the handler for ``"sftp"`` requests.
+    Use `.Transport.set_subsystem_handler` to activate this class.
     """
 
     def __init__(self, channel, name, server, sftp_si=SFTPServerInterface, *largs, **kwargs):
         """
         The constructor for SFTPServer is meant to be called from within the
-        L{Transport} as a subsystem handler.  C{server} and any additional
+        `.Transport` as a subsystem handler.  ``server`` and any additional
         parameters or keyword parameters are passed from the original call to
-        L{Transport.set_subsystem_handler}.
+        `.Transport.set_subsystem_handler`.
 
-        @param channel: channel passed from the L{Transport}.
-        @type channel: L{Channel}
-        @param name: name of the requested subsystem.
-        @type name: str
-        @param server: the server object associated with this channel and
-            subsystem
-        @type server: L{ServerInterface}
-        @param sftp_si: a subclass of L{SFTPServerInterface} to use for handling
-            individual requests.
-        @type sftp_si: class
+        :param .Channel channel: channel passed from the `.Transport`.
+        :param str name: name of the requested subsystem.
+        :param .ServerInterface server:
+            the server object associated with this channel and subsystem
+        :param class sftp_si:
+            a subclass of `.SFTPServerInterface` to use for handling individual
+            requests.
         """
         BaseSFTP.__init__(self)
         SubsystemHandler.__init__(self, channel, name, server)
@@ -70,8 +79,8 @@ class SFTPServer (BaseSFTP, SubsystemHandler):
         self.ultra_debug = transport.get_hexdump()
         self.next_handle = 1
         # map of handle-string to SFTPHandle for files & folders:
-        self.file_table = { }
-        self.folder_table = { }
+        self.file_table = {}
+        self.folder_table = {}
         self.server = sftp_si(server, *largs, **kwargs)
         
     def _log(self, level, msg):
@@ -122,14 +131,12 @@ class SFTPServer (BaseSFTP, SubsystemHandler):
 
     def convert_errno(e):
         """
-        Convert an errno value (as from an C{OSError} or C{IOError}) into a
+        Convert an errno value (as from an ``OSError`` or ``IOError``) into a
         standard SFTP result code.  This is a convenience function for trapping
         exceptions in server code and returning an appropriate result.
 
-        @param e: an errno code, as from C{OSError.errno}.
-        @type e: int
-        @return: an SFTP error code like L{SFTP_NO_SUCH_FILE}.
-        @rtype: int
+        :param int e: an errno code, as from ``OSError.errno``.
+        :return: an `int` SFTP error code like ``SFTP_NO_SUCH_FILE``.
         """
         if e == errno.EACCES:
             # permission denied
@@ -144,18 +151,16 @@ class SFTPServer (BaseSFTP, SubsystemHandler):
     def set_file_attr(filename, attr):
         """
         Change a file's attributes on the local filesystem.  The contents of
-        C{attr} are used to change the permissions, owner, group ownership,
+        ``attr`` are used to change the permissions, owner, group ownership,
         and/or modification & access time of the file, depending on which
-        attributes are present in C{attr}.
+        attributes are present in ``attr``.
 
         This is meant to be a handy helper function for translating SFTP file
         requests into local file operations.
         
-        @param filename: name of the file to alter (should usually be an
-            absolute path).
-        @type filename: str
-        @param attr: attributes to change.
-        @type attr: L{SFTPAttributes}
+        :param str filename:
+            name of the file to alter (should usually be an absolute path).
+        :param .SFTPAttributes attr: attributes to change.
         """
         if sys.platform != 'win32':
             # mode operations are meaningless on win32
@@ -170,9 +175,7 @@ class SFTPServer (BaseSFTP, SubsystemHandler):
                 f.truncate(attr.st_size)
     set_file_attr = staticmethod(set_file_attr)
 
-
     ###  internals...
-
 
     def _response(self, request_number, t, *arg):
         msg = Message()
@@ -297,7 +300,7 @@ class SFTPServer (BaseSFTP, SubsystemHandler):
         self._send_packet(CMD_EXTENDED_REPLY, msg)
     
     def _convert_pflags(self, pflags):
-        "convert SFTP-style open() flags to python's os.open() flags"
+        """convert SFTP-style open() flags to Python's os.open() flags"""
         if (pflags & SFTP_FLAG_READ) and (pflags & SFTP_FLAG_WRITE):
             flags = os.O_RDWR
         elif pflags & SFTP_FLAG_WRITE:

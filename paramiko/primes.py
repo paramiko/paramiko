@@ -23,16 +23,17 @@ Utility functions for dealing with primes.
 from Crypto.Util import number
 
 from paramiko import util
+from paramiko.py3compat import byte_mask, long
 from paramiko.ssh_exception import SSHException
 from paramiko.common import *
 
 
 def _generate_prime(bits, rng):
-    "primtive attempt at prime generation"
+    """primtive attempt at prime generation"""
     hbyte_mask = pow(2, bits % 8) - 1
     while True:
         # loop catches the case where we increment n into a higher bit-range
-        x = rng.read((bits+7) // 8)
+        x = rng.read((bits + 7) // 8)
         if hbyte_mask > 0:
             x = byte_mask(x[0], hbyte_mask) + x[1:]
         n = util.inflate_long(x, 1)
@@ -44,9 +45,10 @@ def _generate_prime(bits, rng):
             break
     return n
 
+
 def _roll_random(rng, n):
-    "returns a random # from 0 to N-1"
-    bits = util.bit_length(n-1)
+    """returns a random # from 0 to N-1"""
+    bits = util.bit_length(n - 1)
     byte_count = (bits + 7) // 8
     hbyte_mask = pow(2, bits % 8) - 1
 
@@ -110,7 +112,7 @@ class ModulusPack (object):
 
     def read_file(self, filename):
         """
-        @raise IOError: passed from any file operations that fail.
+        :raises IOError: passed from any file operations that fail.
         """
         self.pack = {}
         with open(filename, 'r') as f:
@@ -130,7 +132,7 @@ class ModulusPack (object):
         good = -1
         # find nearest bitsize >= preferred
         for b in bitsizes:
-            if (b >= prefer) and (b < max) and ((b < good) or (good == -1)):
+            if (b >= prefer) and (b < max) and (b < good or good == -1):
                 good = b
         # if that failed, find greatest bitsize >= min
         if good == -1:

@@ -85,6 +85,7 @@ try:
         except Exception:
             password = getpass.getpass('Password for %s@%s: ' % (username, hostname))
             client.connect(hostname, Port, username, password)
+
     chan = client.invoke_shell()
     print(repr(client.get_transport()))
     print('*** Here we go!\n')

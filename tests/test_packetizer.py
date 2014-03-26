@@ -23,9 +23,9 @@ Some unit tests for the ssh2 protocol in Transport.
 import unittest
 from tests.loop import LoopSocket
 from Crypto.Cipher import AES
-from Crypto.Hash import SHA, HMAC
+from Crypto.Hash import SHA
 from paramiko import Message, Packetizer, util
-from paramiko.common import *
+from paramiko.common import byte_chr, zero_byte
 
 x55 = byte_chr(0x55)
 x1f = byte_chr(0x1f)
@@ -33,7 +33,7 @@ x1f = byte_chr(0x1f)
 
 class PacketizerTest (unittest.TestCase):
 
-    def test_1_write (self):
+    def test_1_write(self):
         rsock = LoopSocket()
         wsock = LoopSocket()
         rsock.link(wsock)
@@ -56,7 +56,7 @@ class PacketizerTest (unittest.TestCase):
         self.assertEqual(44, len(data))
         self.assertEqual(b'\x43\x91\x97\xbd\x5b\x50\xac\x25\x87\xc2\xc4\x6b\xc7\xe9\x38\xc0', data[:16])
 
-    def test_2_read (self):
+    def test_2_read(self):
         rsock = LoopSocket()
         wsock = LoopSocket()
         rsock.link(wsock)

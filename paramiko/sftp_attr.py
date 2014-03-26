@@ -18,26 +18,27 @@
 
 import stat
 import time
-from paramiko.common import *
-from paramiko.sftp import *
+from paramiko.common import x80000000, o700, o70, xffffffff
+from paramiko.py3compat import long, b
 
 
 class SFTPAttributes (object):
     """
     Representation of the attributes of a file (or proxied file) for SFTP in
     client or server mode.  It attemps to mirror the object returned by
-    C{os.stat} as closely as possible, so it may have the following fields,
-    with the same meanings as those returned by an C{os.stat} object:
-        - st_size
-        - st_uid
-        - st_gid
-        - st_mode
-        - st_atime
-        - st_mtime
+    `os.stat` as closely as possible, so it may have the following fields,
+    with the same meanings as those returned by an `os.stat` object:
+
+        - ``st_size``
+        - ``st_uid``
+        - ``st_gid``
+        - ``st_mode``
+        - ``st_atime``
+        - ``st_mtime``
 
     Because SFTP allows flags to have other arbitrary named attributes, these
-    are stored in a dict named C{attr}.  Occasionally, the filename is also
-    stored, in C{filename}.
+    are stored in a dict named ``attr``.  Occasionally, the filename is also
+    stored, in ``filename``.
     """
 
     FLAG_SIZE = 1
@@ -61,15 +62,12 @@ class SFTPAttributes (object):
 
     def from_stat(cls, obj, filename=None):
         """
-        Create an SFTPAttributes object from an existing C{stat} object (an
-        object returned by C{os.stat}).
+        Create an `.SFTPAttributes` object from an existing ``stat`` object (an
+        object returned by `os.stat`).
 
-        @param obj: an object returned by C{os.stat} (or equivalent).
-        @type obj: object
-        @param filename: the filename associated with this file.
-        @type filename: str
-        @return: new L{SFTPAttributes} object with the same attribute fields.
-        @rtype: L{SFTPAttributes}
+        :param object obj: an object returned by `os.stat` (or equivalent).
+        :param str filename: the filename associated with this file.
+        :return: new `.SFTPAttributes` object with the same attribute fields.
         """
         attr = cls()
         attr.st_size = obj.st_size
@@ -86,9 +84,7 @@ class SFTPAttributes (object):
     def __repr__(self):
         return '<SFTPAttributes: %s>' % self._debug_str()
 
-
     ###  internals...
-
 
     def _from_msg(cls, msg, filename=None, longname=None):
         attr = cls()
@@ -175,7 +171,7 @@ class SFTPAttributes (object):
     _rwx = staticmethod(_rwx)
 
     def __str__(self):
-        "create a unix-style long description of the file (like ls -l)"
+        """create a unix-style long description of the file (like ls -l)"""
         if self.st_mode is not None:
             kind = stat.S_IFMT(self.st_mode)
             if kind == stat.S_IFIFO:

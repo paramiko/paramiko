@@ -23,19 +23,14 @@ a real actual sftp server is contacted, and a new folder is created there to
 do test file operations in (so no existing files will be harmed).
 """
 
-import logging
 import os
 import random
 import struct
 import sys
-import threading
 import time
 import unittest
 
-import paramiko
-from paramiko.common import *
-from tests.stub_sftp import StubServer, StubSFTPServer
-from tests.loop import LoopSocket
+from paramiko.common import o660
 from tests.test_sftp import get_sftp
 
 FOLDER = os.environ.get('TEST_FOLDER', 'temp-testing000')

@@ -17,18 +17,19 @@
 # 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
 
 """
-Packetizer.
+Packet handling
 """
 
 import errno
-import select
 import socket
 import struct
 import threading
 import time
 
-from paramiko.common import *
 from paramiko import util
+from paramiko.common import linefeed_byte, cr_byte_value, asbytes, MSG_NAMES, \
+    DEBUG, xffffffff, zero_byte, rng
+from paramiko.py3compat import u, byte_ord
 from paramiko.ssh_exception import SSHException, ProxyCommandFailure
 from paramiko.message import Message
 
@@ -57,8 +58,8 @@ class Packetizer (object):
     REKEY_PACKETS = pow(2, 29)
     REKEY_BYTES = pow(2, 29)
 
-    REKEY_PACKETS_OVERFLOW_MAX = pow(2,29)      # Allow receiving this many packets after a re-key request before terminating
-    REKEY_BYTES_OVERFLOW_MAX = pow(2,29)        # Allow receiving this many bytes after a re-key request before terminating
+    REKEY_PACKETS_OVERFLOW_MAX = pow(2, 29)     # Allow receiving this many packets after a re-key request before terminating
+    REKEY_BYTES_OVERFLOW_MAX = pow(2, 29)       # Allow receiving this many bytes after a re-key request before terminating
 
     def __init__(self, socket):
         self.__socket = socket
@@ -104,7 +105,7 @@ class Packetizer (object):
 
     def set_log(self, log):
         """
-        Set the python log object to use for logging.
+        Set the Python log object to use for logging.
         """
         self.__logger = log
 
@@ -169,17 +170,15 @@ class Packetizer (object):
 
     def need_rekey(self):
         """
-        Returns C{True} if a new set of keys needs to be negotiated.  This
+        Returns ``True`` if a new set of keys needs to be negotiated.  This
         will be triggered during a packet read or write, so it should be
         checked after every read or write, or at least after every few.
-
-        @return: C{True} if a new set of keys needs to be negotiated
         """
         return self.__need_rekey
 
     def set_keepalive(self, interval, callback):
         """
-        Turn on/off the callback keepalive.  If C{interval} seconds pass with
+        Turn on/off the callback keepalive.  If ``interval`` seconds pass with
         no data read from or written to the socket, the callback will be
         executed and the timer will be reset.
         """
@@ -191,12 +190,11 @@ class Packetizer (object):
         """
         Read as close to N bytes as possible, blocking as long as necessary.
 
-        @param n: number of bytes to read
-        @type n: int
-        @return: the data read
-        @rtype: str
-        @raise EOFError: if the socket was closed before all the bytes could
-            be read
+        :param int n: number of bytes to read
+        :return: the data read, as a `str`
+
+        :raises EOFError:
+            if the socket was closed before all the bytes could be read
         """
         out = bytes()
         # handle over-reading from reading the banner line
@@ -204,8 +202,6 @@ class Packetizer (object):
             out = self.__remainder[:n]
             self.__remainder = self.__remainder[n:]
             n -= len(out)
-        if PY22:
-            return self._py22_read_all(n, out)
         while n > 0:
             got_timeout = False
             try:
@@ -254,7 +250,7 @@ class Packetizer (object):
                 else:
                     n = -1
             except ProxyCommandFailure:
-                raise # so it doesn't get swallowed by the below catchall
+                raise  # so it doesn't get swallowed by the below catchall
             except Exception:
                 # could be: (32, 'Broken pipe')
                 n = -1
@@ -278,7 +274,7 @@ class Packetizer (object):
         while not linefeed_byte in buf:
             buf += self._read_timeout(timeout)
         n = buf.index(linefeed_byte)
-        self.__remainder = buf[n+1:]
+        self.__remainder = buf[n + 1:]
         buf = buf[:n]
         if (len(buf) > 0) and (buf[-1] == cr_byte_value):
             buf = buf[:-1]
@@ -304,12 +300,12 @@ class Packetizer (object):
             if self.__dump_packets:
                 self._log(DEBUG, 'Write packet <%s>, length %d' % (cmd_name, orig_len))
                 self._log(DEBUG, util.format_binary(packet, 'OUT: '))
-            if self.__block_engine_out != None:
+            if self.__block_engine_out is not None:
                 out = self.__block_engine_out.encrypt(packet)
             else:
                 out = packet
             # + mac
-            if self.__block_engine_out != None:
+            if self.__block_engine_out is not None:
                 payload = struct.pack('>I', self.__sequence_number_out) + packet
                 out += compute_hmac(self.__mac_key_out, payload, self.__mac_engine_out)[:self.__mac_size_out]
             self.__sequence_number_out = (self.__sequence_number_out + 1) & xffffffff
@@ -317,8 +313,8 @@ class Packetizer (object):
 
             self.__sent_bytes += len(out)
             self.__sent_packets += 1
-            if ((self.__sent_packets >= self.REKEY_PACKETS) or (self.__sent_bytes >= self.REKEY_BYTES)) \
-                   and not self.__need_rekey:
+            if (self.__sent_packets >= self.REKEY_PACKETS or self.__sent_bytes >= self.REKEY_BYTES)\
+                    and not self.__need_rekey:
                 # only ask once for rekeying
                 self._log(DEBUG, 'Rekeying (hit %d packets, %d bytes sent)' %
                           (self.__sent_packets, self.__sent_bytes))
@@ -333,14 +329,14 @@ class Packetizer (object):
         Only one thread should ever be in this function (no other locking is
         done).
 
-        @raise SSHException: if the packet is mangled
-        @raise NeedRekeyException: if the transport should rekey
+        :raises SSHException: if the packet is mangled
+        :raises NeedRekeyException: if the transport should rekey
         """
         header = self.read_all(self.__block_size_in, check_rekey=True)
-        if self.__block_engine_in != None:
+        if self.__block_engine_in is not None:
             header = self.__block_engine_in.decrypt(header)
         if self.__dump_packets:
-            self._log(DEBUG, util.format_binary(header, 'IN: '));
+            self._log(DEBUG, util.format_binary(header, 'IN: '))
         packet_size = struct.unpack('>I', header[:4])[0]
         # leftover contains decrypted bytes from the first block (after the length field)
         leftover = header[4:]
@@ -349,17 +345,17 @@ class Packetizer (object):
         buf = self.read_all(packet_size + self.__mac_size_in - len(leftover))
         packet = buf[:packet_size - len(leftover)]
         post_packet = buf[packet_size - len(leftover):]
-        if self.__block_engine_in != None:
+        if self.__block_engine_in is not None:
             packet = self.__block_engine_in.decrypt(packet)
         if self.__dump_packets:
-            self._log(DEBUG, util.format_binary(packet, 'IN: '));
+            self._log(DEBUG, util.format_binary(packet, 'IN: '))
         packet = leftover + packet
 
         if self.__mac_size_in > 0:
             mac = post_packet[:self.__mac_size_in]
             mac_payload = struct.pack('>II', self.__sequence_number_in, packet_size) + packet
             my_mac = compute_hmac(self.__mac_key_in, mac_payload, self.__mac_engine_in)[:self.__mac_size_in]
-            if my_mac != mac:
+            if not util.constant_time_bytes_eq(my_mac, mac):
                 raise SSHException('Mismatched MAC')
         padding = byte_ord(packet[0])
         payload = packet[1:packet_size - padding]
@@ -404,9 +400,7 @@ class Packetizer (object):
             self._log(DEBUG, 'Read packet <%s>, length %d' % (cmd_name, len(payload)))
         return cmd, msg
 
-
     ##########  protected
-
 
     def _log(self, level, msg):
         if self.__logger is None:
@@ -419,7 +413,7 @@ class Packetizer (object):
 
     def _check_keepalive(self):
         if (not self.__keepalive_interval) or (not self.__block_engine_out) or \
-            self.__need_rekey:
+                self.__need_rekey:
             # wait till we're encrypting, and not in the middle of rekeying
             return
         now = time.time()
@@ -427,40 +421,7 @@ class Packetizer (object):
             self.__keepalive_callback()
             self.__keepalive_last = now
 
-    def _py22_read_all(self, n, out):
-        while n > 0:
-            r, w, e = select.select([self.__socket], [], [], 0.1)
-            if self.__socket not in r:
-                if self.__closed:
-                    raise EOFError()
-                self._check_keepalive()
-            else:
-                x = self.__socket.recv(n)
-                if len(x) == 0:
-                    raise EOFError()
-                out += x
-                n -= len(x)
-        return out
-
-    def _py22_read_timeout(self, timeout):
-        start = time.time()
-        while True:
-            r, w, e = select.select([self.__socket], [], [], 0.1)
-            if self.__socket in r:
-                x = self.__socket.recv(1)
-                if len(x) == 0:
-                    raise EOFError()
-                break
-            if self.__closed:
-                raise EOFError()
-            now = time.time()
-            if now - start >= timeout:
-                raise socket.timeout()
-        return x
-
     def _read_timeout(self, timeout):
-        if PY22:
-            return self._py22_read_timeout(timeout)
         start = time.time()
         while True:
             try:
@@ -471,8 +432,8 @@ class Packetizer (object):
             except socket.timeout:
                 pass
             except EnvironmentError as e:
-                if ((type(e.args) is tuple) and (len(e.args) > 0) and
-                    (e.args[0] == errno.EINTR)):
+                if (type(e.args) is tuple and len(e.args) > 0 and
+                        e.args[0] == errno.EINTR):
                     pass
                 else:
                     raise

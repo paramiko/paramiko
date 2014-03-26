@@ -17,14 +17,15 @@
 # 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
 
 """
-L{DSSKey}
+DSS keys.
 """
 
 from Crypto.PublicKey import DSA
 from Crypto.Hash import SHA
 
-from paramiko.common import *
 from paramiko import util
+from paramiko.common import zero_byte, rng
+from paramiko.py3compat import long
 from paramiko.ssh_exception import SSHException
 from paramiko.message import Message
 from paramiko.ber import BER, BERException
@@ -110,9 +111,9 @@ class DSSKey (PKey):
         rstr = util.deflate_long(r, 0)
         sstr = util.deflate_long(s, 0)
         if len(rstr) < 20:
-            rstr = zero_byte * (20 - len(rstr)) + rstr
+            rstr += zero_byte * (20 - len(rstr))
         if len(sstr) < 20:
-            sstr = zero_byte * (20 - len(sstr)) + sstr
+            sstr += zero_byte * (20 - len(sstr))
         m.add_string(rstr + sstr)
         return m
 
@@ -137,7 +138,7 @@ class DSSKey (PKey):
     def _encode_key(self):
         if self.x is None:
             raise SSHException('Not enough key information')
-        keylist = [ 0, self.p, self.q, self.g, self.y, self.x ]
+        keylist = [0, self.p, self.q, self.g, self.y, self.x]
         try:
             b = BER()
             b.encode(keylist)
@@ -156,13 +157,11 @@ class DSSKey (PKey):
         Generate a new private DSS key.  This factory function can be used to
         generate a new host key or authentication key.
 
-        @param bits: number of bits the generated key should be.
-        @type bits: int
-        @param progress_func: an optional function to call at key points in
-            key generation (used by C{pyCrypto.PublicKey}).
-        @type progress_func: function
-        @return: new private key
-        @rtype: L{DSSKey}
+        :param int bits: number of bits the generated key should be.
+        :param function progress_func:
+            an optional function to call at key points in key generation (used
+            by ``pyCrypto.PublicKey``).
+        :return: new `.DSSKey` private key
         """
         dsa = DSA.generate(bits, rng.read, progress_func)
         key = DSSKey(vals=(dsa.p, dsa.q, dsa.g, dsa.y))
@@ -170,9 +169,7 @@ class DSSKey (PKey):
         return key
     generate = staticmethod(generate)
 
-
     ###  internals...
-
 
     def _from_private_key_file(self, filename, password):
         data = self._read_private_key_file('DSA', filename, password)

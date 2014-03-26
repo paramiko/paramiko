@@ -21,7 +21,7 @@
 """
 
 import threading, socket
-from paramiko.common import *
+from paramiko.common import asbytes
 
 
 class LoopSocket (object):

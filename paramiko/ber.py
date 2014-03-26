@@ -15,10 +15,10 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with Paramiko; if not, write to the Free Software Foundation, Inc.,
 # 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
-
+from paramiko.common import max_byte, zero_byte
+from paramiko.py3compat import b, byte_ord, byte_chr, long
 
 import paramiko.util as util
-from paramiko.common import *
 
 
 class BERException (Exception):
@@ -71,12 +71,12 @@ class BER(object):
             t = size & 0x7f
             if self.idx + t > len(self.content):
                 return None
-            size = util.inflate_long(self.content[self.idx : self.idx + t], True)
+            size = util.inflate_long(self.content[self.idx: self.idx + t], True)
             self.idx += t
         if self.idx + size > len(self.content):
             # can't fit
             return None
-        data = self.content[self.idx : self.idx + size]
+        data = self.content[self.idx: self.idx + size]
         self.idx += size
         # now switch on id
         if ident == 0x30:
@@ -91,9 +91,9 @@ class BER(object):
 
     def decode_sequence(data):
         out = []
-        b = BER(data)
+        ber = BER(data)
         while True:
-            x = b.decode_next()
+            x = ber.decode_next()
             if x is None:
                 break
             out.append(x)
@@ -126,8 +126,13 @@ class BER(object):
             raise BERException('Unknown type for encoding: %s' % repr(type(x)))
 
     def encode_sequence(data):
-        b = BER()
+        ber = BER()
         for item in data:
+<<<<<<< HEAD
             b.encode(item)
         return b.asbytes()
+=======
+            ber.encode(item)
+        return ber.asbytes()
+>>>>>>> master
     encode_sequence = staticmethod(encode_sequence)

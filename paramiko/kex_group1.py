@@ -23,14 +23,18 @@ Standard SSH key exchange ("kex" if you wanna sound cool).  Diffie-Hellman of
 
 from Crypto.Hash import SHA
 
-from paramiko.common import *
 from paramiko import util
+from paramiko.common import max_byte, zero_byte
 from paramiko.message import Message
+from paramiko.py3compat import byte_chr, long, byte_mask
 from paramiko.ssh_exception import SSHException
 
 
 _MSG_KEXDH_INIT, _MSG_KEXDH_REPLY = range(30, 32)
 c_MSG_KEXDH_INIT, c_MSG_KEXDH_REPLY = [byte_chr(c) for c in range(30, 32)]
+
+b7fffffffffffffff = byte_chr(0x7f) + max_byte * 7
+b0000000000000000 = zero_byte * 8
 
 
 class KexGroup1(object):
@@ -38,9 +42,6 @@ class KexGroup1(object):
     # draft-ietf-secsh-transport-09.txt, page 17
     P = 0xFFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD129024E088A67CC74020BBEA63B139B22514A08798E3404DDEF9519B3CD3A431B302B0A6DF25F14374FE1356D6D51C245E485B576625E7EC6F44C42E9A637ED6B0BFF5CB6F406B7EDEE386BFB5A899FA5AE9F24117C4B1FE649286651ECE65381FFFFFFFFFFFFFFFF
     G = 2
-
-    b7fffffffffffffff = byte_chr(0x7f) + max_byte * 7
-    b0000000000000000 = zero_byte * 8
 
     name = 'diffie-hellman-group1-sha1'
 
@@ -72,9 +73,7 @@ class KexGroup1(object):
             return self._parse_kexdh_reply(m)
         raise SSHException('KexGroup1 asked to handle packet type %d' % ptype)
 
-
     ###  internals...
-
 
     def _generate_x(self):
         # generate an "x" (1 < x < q), where q is (p-1)/2.
@@ -85,8 +84,8 @@ class KexGroup1(object):
         while 1:
             x_bytes = self.transport.rng.read(128)
             x_bytes = byte_mask(x_bytes[0], 0x7f) + x_bytes[1:]
-            if (x_bytes[:8] != self.b7fffffffffffffff) and \
-                   (x_bytes[:8] != self.b0000000000000000):
+            if (x_bytes[:8] != b7fffffffffffffff and
+                    x_bytes[:8] != b0000000000000000):
                 break
         self.x = util.inflate_long(x_bytes)
 

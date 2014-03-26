@@ -17,7 +17,7 @@
 # 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
 
 """
-SSH Agent interface for Unix clients.
+SSH Agent interface
 """
 
 import os
@@ -29,12 +29,12 @@ import time
 import tempfile
 import stat
 from select import select
+from paramiko.common import asbytes, io_sleep
+from paramiko.py3compat import byte_chr
 
 from paramiko.ssh_exception import SSHException
 from paramiko.message import Message
 from paramiko.pkey import PKey
-from paramiko.channel import Channel
-from paramiko.common import *
 from paramiko.util import retry_on_signal
 
 cSSH2_AGENTC_REQUEST_IDENTITIES = byte_chr(11)
@@ -43,17 +43,8 @@ cSSH2_AGENTC_SIGN_REQUEST = byte_chr(13)
 SSH2_AGENT_SIGN_RESPONSE = 14
 
 
-class AgentSSH(object):
-    """
-    Client interface for using private keys from an SSH agent running on the
-    local machine.  If an SSH agent is running, this class can be used to
-    connect to it and retreive L{PKey} objects which can be used when
-    attempting to authenticate to remote SSH servers.
 
-    Because the SSH agent protocol uses environment variables and unix-domain
-    sockets, this probably doesn't work on Windows.  It does work on most
-    posix platforms though (Linux and MacOS X, for example).
-    """
+class AgentSSH(object):
     def __init__(self):
         self._conn = None
         self._keys = ()
@@ -64,8 +55,9 @@ class AgentSSH(object):
         no SSH agent was running (or it couldn't be contacted), an empty list
         will be returned.
 
-        @return: a list of keys available on the SSH agent
-        @rtype: tuple of L{AgentKey}
+        :return:
+            a tuple of `.AgentKey` objects representing keys available on the
+            SSH agent
         """
         return self._keys
 
@@ -103,8 +95,11 @@ class AgentSSH(object):
             result += extra
         return result
 
+
 class AgentProxyThread(threading.Thread):
-    """ Class in charge of communication between two chan """
+    """
+    Class in charge of communication between two channels.
+    """
     def __init__(self, agent):
         threading.Thread.__init__(self, target=self.run)
         self._agent = agent
@@ -112,7 +107,7 @@ class AgentProxyThread(threading.Thread):
 
     def run(self):
         try:
-            (r,addr) = self.get_connection()
+            (r, addr) = self.get_connection()
             self.__inr = r
             self.__addr = addr
             self._agent.connect()
@@ -149,6 +144,7 @@ class AgentProxyThread(threading.Thread):
         self.__inr.close()
         self._agent._conn.close()
 
+
 class AgentLocalProxy(AgentProxyThread):
     """
     Class to be used when wanting to ask a local SSH Agent being
@@ -158,18 +154,20 @@ class AgentLocalProxy(AgentProxyThread):
         AgentProxyThread.__init__(self, agent)
 
     def get_connection(self):
-        """ Return a pair of socket object and string address
-        May Block !
+        """
+        Return a pair of socket object and string address.
+
+        May block!
         """
         conn = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         try:
             conn.bind(self._agent._get_filename())
             conn.listen(1)
-            (r,addr) = conn.accept()
-            return (r, addr)
+            (r, addr) = conn.accept()
+            return r, addr
         except:
             raise
-        return None
+
 
 class AgentRemoteProxy(AgentProxyThread):
     """
@@ -180,22 +178,20 @@ class AgentRemoteProxy(AgentProxyThread):
         self.__chan = chan
 
     def get_connection(self):
-        """
-        Class to be used when wanting to ask a local SSH Agent being
-        asked from a remote fake agent (so use a unix socket for ex.)
-        """
-        return (self.__chan, None)
+        return self.__chan, None
+
 
 class AgentClientProxy(object):
     """
     Class proxying request as a client:
-       -> client ask for a request_forward_agent()
-       -> server creates a proxy and a fake SSH Agent
-       -> server ask for establishing a connection when needed,
+
+    #. client ask for a request_forward_agent()
+    #. server creates a proxy and a fake SSH Agent
+    #. server ask for establishing a connection when needed,
        calling the forward_agent_handler at client side.
-       -> the forward_agent_handler launch a thread for connecting
+    #. the forward_agent_handler launch a thread for connecting
        the remote fake agent and the local agent
-       -> Communication occurs ...
+    #. Communication occurs ...
     """
     def __init__(self, chanRemote):
         self._conn = None
@@ -208,7 +204,7 @@ class AgentClientProxy(object):
 
     def connect(self):
         """
-        Method automatically called by the run() method of the AgentProxyThread
+        Method automatically called by ``AgentProxyThread.run``.
         """
         if ('SSH_AUTH_SOCK' in os.environ) and (sys.platform != 'win32'):
             conn = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
@@ -239,11 +235,12 @@ class AgentClientProxy(object):
         if self._conn is not None:
             self._conn.close()
 
+
 class AgentServerProxy(AgentSSH):
     """
-    @param t : transport used for the Forward for SSH Agent communication
+    :param .Transport t: Transport used for SSH Agent communication forwarding
 
-    @raise SSHException: mostly if we lost the agent
+    :raises SSHException: mostly if we lost the agent
     """
     def __init__(self, t):
         AgentSSH.__init__(self)
@@ -279,15 +276,14 @@ class AgentServerProxy(AgentSSH):
         """
         Helper for the environnement under unix
 
-        @return: the SSH_AUTH_SOCK Environnement variables
-        @rtype: dict
+        :return:
+            a dict containing the ``SSH_AUTH_SOCK`` environnement variables
         """
-        env = {}
-        env['SSH_AUTH_SOCK'] = self._get_filename()
-        return env
+        return {'SSH_AUTH_SOCK': self._get_filename()}
 
     def _get_filename(self):
         return self._file
+
 
 class AgentRequestHandler(object):
     def __init__(self, chanClient):
@@ -306,27 +302,22 @@ class AgentRequestHandler(object):
         for p in self.__clientProxys:
             p.close()
 
+
 class Agent(AgentSSH):
     """
     Client interface for using private keys from an SSH agent running on the
     local machine.  If an SSH agent is running, this class can be used to
-    connect to it and retreive L{PKey} objects which can be used when
+    connect to it and retreive `.PKey` objects which can be used when
     attempting to authenticate to remote SSH servers.
 
-    Because the SSH agent protocol uses environment variables and unix-domain
-    sockets, this probably doesn't work on Windows.  It does work on most
-    posix platforms though (Linux and MacOS X, for example).
+    Upon initialization, a session with the local machine's SSH agent is
+    opened, if one is running. If no agent is running, initialization will
+    succeed, but `get_keys` will return an empty tuple.
+
+    :raises SSHException:
+        if an SSH agent is found, but speaks an incompatible protocol
     """
-
     def __init__(self):
-        """
-        Open a session with the local machine's SSH agent, if one is running.
-        If no agent is running, initialization will succeed, but L{get_keys}
-        will return an empty tuple.
-
-        @raise SSHException: if an SSH agent is found, but speaks an
-            incompatible protocol
-        """
         AgentSSH.__init__(self)
 
         if ('SSH_AUTH_SOCK' in os.environ) and (sys.platform != 'win32'):
@@ -353,13 +344,13 @@ class Agent(AgentSSH):
         """
         self._close()
 
+
 class AgentKey(PKey):
     """
     Private key held in a local SSH agent.  This type of key can be used for
     authenticating to a remote server (signing).  Most other key operations
     work as expected.
     """
-
     def __init__(self, agent, blob):
         self.agent = agent
         self.blob = blob
