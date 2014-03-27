@@ -295,7 +295,7 @@ class AuthHandler (object):
                     """
                     RFC 4462 says we are not required to implement GSS-API error
                     messages.
-                    @see: U{RFC 4462 Section 3.8<www.ietf.org/rfc/rfc4462.txt>}
+                    :see: `RFC 4462 Section 3.8 <http://www.ietf.org/rfc/rfc4462.txt>`_
                     """
                     raise SSHException("Server returned an error token")
                 elif ptype == MSG_USERAUTH_GSSAPI_ERROR:
@@ -481,7 +481,7 @@ class AuthHandler (object):
             """
             RFC 4462 says we are not required to implement GSS-API error
             messages.
-            @see: U{RFC 4462 Section 3.8 <www.ietf.org/rfc/rfc4462.txt>}
+            :see: `RFC 4462 Section 3.8 <http://www.ietf.org/rfc/rfc4462.txt>`_
             """
             while True:
                 m = Message()
@@ -524,7 +524,7 @@ class AuthHandler (object):
                 raise
             if retval == 0:
                 """
-                 @todo: Implement client credential saving
+                 :todo: Implement client credential saving
                  The OpenSSH server is able to create a TGT with the delegated
                  client credentials, but this is not supported by GSS-API.
                 """

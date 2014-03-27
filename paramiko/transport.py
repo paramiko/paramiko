@@ -326,10 +326,9 @@ class Transport (threading.Thread):
         """
         Setter for C{gss_host} if GSS-API Key Exchange is performed.
 
-        @param gss_host: The targets name in the kerberos database
-                         Default: The name of the host to connect to
-        @type gss_host: String
-        @rtype: Void
+        :param str gss_host: The targets name in the kerberos database
+                             Default: The name of the host to connect to
+        :rtype: Void
         """
         # We need the FQDN to get this working with SSPI
         self.gss_host = socket.getfqdn(gss_host)
@@ -1226,20 +1225,17 @@ class Transport (threading.Thread):
         """
         Authenticate to the Server using GSS-API / SSPI.
 
-        @param username: The username to authenticate as
-        @type username: String
-        @param gss_host: The target host
-        @type gss_host: String
-        @param gss_deleg_creds: Delegate credentials or not
-        @type gss_deleg_creds: Boolean
-        @return: list of auth types permissible for the next stage of
+        :param str username: The username to authenticate as
+        :param str gss_host: The target host
+        :param bool gss_deleg_creds: Delegate credentials or not
+        :return: list of auth types permissible for the next stage of
                  authentication (normally empty)
-        @rtype: list
-        @raise BadAuthenticationType: if gssapi-with-mic isn't
+        :rtype: list
+        :raise BadAuthenticationType: if gssapi-with-mic isn't
             allowed by the server (and no event was passed in)
-        @raise AuthenticationException: if the authentication failed (and no
+        :raise AuthenticationException: if the authentication failed (and no
             event was passed in)
-        @raise SSHException: if there was a network error
+        :raise SSHException: if there was a network error
         """
         if (not self.active) or (not self.initial_kex_done):
             # we should never try to authenticate unless we're on a secure link
@@ -1254,16 +1250,17 @@ class Transport (threading.Thread):
         Authenticate to the Server with GSS-API / SSPI if GSS-API Key Exchange
         was the used key exchange method.
 
-        @param username: The username to authenticate as
-        @type username: String
-        @return: list of auth types permissible for the next stage of
-            authentication (normally empty)
-        @rtype: list
-        @raise BadAuthenticationType: if GSS-API Key Exchange was not performed
+        :param str username: The username to authenticate as
+        :param str gss_host: The target host
+        :param bool gss_deleg_creds: Delegate credentials or not
+        :return: list of auth types permissible for the next stage of
+                 authentication (normally empty)
+        :rtype: list
+        :raise BadAuthenticationType: if GSS-API Key Exchange was not performed
                                       (and no event was passed in)
-        @raise AuthenticationException: if the authentication failed (and no
+        :raise AuthenticationException: if the authentication failed (and no
             event was passed in)
-        @raise SSHException: if there was a network error
+        :raise SSHException: if there was a network error
         """
         if (not self.active) or (not self.initial_kex_done):
             # we should never try to authenticate unless we're on a secure link

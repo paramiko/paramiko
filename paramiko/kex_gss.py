@@ -25,20 +25,20 @@ This module provides GSS-API / SSPI Key Exchange for Paramiko as defined in
 RFC 4462 with the following restrictions:
 Credential delegation is not supported in server mode,
 To Use this module, you need the following additional python packages:
-U{pyasn1 >= 0.1.7 <https://pypi.python.org/pypi/pyasn1>},
-U{python-gssapi >= 0.4.0 (Unix) <https://pypi.python.org/pypi/python-gssapi>},
-U{pywin32 2.1.8 (Windows) <sourceforge.net/projects/pywin32/>}.
+`pyasn1 >= 0.1.7 <https://pypi.python.org/pypi/pyasn1>`_,
+`python-gssapi >= 0.4.0 (Unix) <https://pypi.python.org/pypi/python-gssapi>`_,
+`pywin32 2.1.8 (Windows) <http://sourceforge.net/projects/pywin32/>`_.
 
-@summary: SSH2 GSS-API / SSPI Authenticated Diffie-Hellman Key Exchange Module
-@version: 0.1
-@author: Sebastian Deiss
-@contact: U{https://github.com/SebastianDeiss/paramiko/issues}
-@organization: science + computing ag
-               (U{EMail<mailto:a.kruis@science-computing.de>})
-@copyright: (C) 2003-2007  Robey Pointer, (C) 2013-2014 U{science + computing ag
-            <https://www.science-computing.de>}
-@license: GNU Lesser General Public License (LGPL)
-@see: L{ssh_gss}
+:summary: SSH2 GSS-API / SSPI Authenticated Diffie-Hellman Key Exchange Module
+:version: 0.1
+:author: Sebastian Deiss
+:contact: https://github.com/SebastianDeiss/paramiko/issues
+:organization: science + computing ag
+               `EMail <mailto:a.kruis@science-computing.de>`_
+:copyright: (C) 2003-2007  Robey Pointer, (C) 2013-2014 `science + computing ag
+            <https://www.science-computing.de>`_
+:license: GNU Lesser General Public License (LGPL)
+:see: `.ssh_gss`
 
 Created on 12.12.2013
 """
@@ -63,13 +63,13 @@ c_MSG_KEXGSS_GROUPREQ, c_MSG_KEXGSS_GROUP = [byte_chr(c) for c in range(40, 42)]
 class KexGSSGroup1(object):
     """
     GSS-API / SSPI Authenticated Diffie-Hellman Key Exchange
-    as defined in U{RFC 4462 Section 2 <www.ietf.org/rfc/rfc4462.txt>}
+    as defined in `RFC 4462 Section 2 <http://www.ietf.org/rfc/rfc4462.txt>`_
 
-    @note: RFC 4462 says we are not required to implement GSS-API error
+    :note: RFC 4462 says we are not required to implement GSS-API error
            messages.
            If an error occurs an exception will be thrown and the connection
            will be terminated.
-    @see: U{RFC 4462 Section 2.2 <www.ietf.org/rfc/rfc4462.txt>}
+    :see: `RFC 4462 Section 2.2 <http://www.ietf.org/rfc/rfc4462.txt>`_
     """
     # draft-ietf-secsh-transport-09.txt, page 17
     P = 0xFFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD129024E088A67CC74020BBEA63B139B22514A08798E3404DDEF9519B3CD3A431B302B0A6DF25F14374FE1356D6D51C245E485B576625E7EC6F44C42E9A637ED6B0BFF5CB6F406B7EDEE386BFB5A899FA5AE9F24117C4B1FE649286651ECE65381FFFFFFFFFFFFFFFF
@@ -115,10 +115,8 @@ class KexGSSGroup1(object):
         """
         Parse the next packet.
 
-        @param ptype: The type of the incomming packet
-        @type ptype: Char
-        @param m: The paket content
-        @type m: L{Message}
+        :param char ptype: The type of the incomming packet
+        :param `.Message` m: The paket content
         """
         if self.transport.server_mode and (ptype == MSG_KEXGSS_INIT):
             return self._parse_kexgss_init(m)
@@ -155,8 +153,7 @@ class KexGSSGroup1(object):
         """
         Parse the SSH2_MSG_KEXGSS_HOSTKEY message (client mode).
 
-        @param m: The content of the SSH2_MSG_KEXGSS_HOSTKEY message
-        @type m: L{Message}
+        :param `.Message` m: The content of the SSH2_MSG_KEXGSS_HOSTKEY message
         """
         # client mode
         host_key = m.get_string()
@@ -170,8 +167,7 @@ class KexGSSGroup1(object):
         """
         Parse the SSH2_MSG_KEXGSS_CONTINUE message.
 
-        @param m: The content of the SSH2_MSG_KEXGSS_CONTINUE message
-        @type m: L{Message}
+        :param `.Message` m: The content of the SSH2_MSG_KEXGSS_CONTINUE message
         """
         if not self.transport.server_mode:
             srv_token = m.get_string()
@@ -190,8 +186,7 @@ class KexGSSGroup1(object):
         """
         Parse the SSH2_MSG_KEXGSS_COMPLETE message (client mode).
 
-        @param m: The content of the SSH2_MSG_KEXGSS_COMPLETE message
-        @type m: L{Message}
+        :param `.Message` m: The content of the SSH2_MSG_KEXGSS_COMPLETE message
         """
         # client mode
         if self.transport.host_key is None:
@@ -232,8 +227,7 @@ class KexGSSGroup1(object):
         """
         Parse the SSH2_MSG_KEXGSS_INIT message (server mode).
 
-        @param m: The content of the SSH2_MSG_KEXGSS_INIT message
-        @type m: L{Message}
+        :param `.Message` m: The content of the SSH2_MSG_KEXGSS_INIT message
         """
         # server mode
         client_token = m.get_string()
@@ -283,9 +277,8 @@ class KexGSSGroup1(object):
         The server may send a GSS-API error message. if it does, we display
         the error by throwing an exception (client mode).
 
-        @param m: The content of the SSH2_MSG_KEXGSS_ERROR message
-        @type m: L{Message}
-        @raise SSHException: Contains GSS-API major and minor status as well as
+        :param `.Message` m: The content of the SSH2_MSG_KEXGSS_ERROR message
+        :raise SSHException: Contains GSS-API major and minor status as well as
                              the error message and the language tag of the
                              message
         """
@@ -302,13 +295,13 @@ class KexGSSGroup1(object):
 class KexGSSGroup14(KexGSSGroup1):
     """
     GSS-API / SSPI Authenticated Diffie-Hellman Group14 Key Exchange
-    as defined in U{RFC 4462 Section 2 <www.ietf.org/rfc/rfc4462.txt>}
+    as defined in `RFC 4462 Section 2 <http://www.ietf.org/rfc/rfc4462.txt>`_
 
-    @note: RFC 4462 says we are not required to implement GSS-API error
+    :note: RFC 4462 says we are not required to implement GSS-API error
            messages.
            If an error occurs an exception will be thrown and the connection
            will be terminated.
-    @see: U{RFC 4462 Section 2.2 <www.ietf.org/rfc/rfc4462.txt>}
+    :see: `RFC 4462 Section 2.2 <http://www.ietf.org/rfc/rfc4462.txt>`_
     """
     P = 0xFFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD129024E088A67CC74020BBEA63B139B22514A08798E3404DDEF9519B3CD3A431B302B0A6DF25F14374FE1356D6D51C245E485B576625E7EC6F44C42E9A637ED6B0BFF5CB6F406B7EDEE386BFB5A899FA5AE9F24117C4B1FE649286651ECE45B3DC2007CB8A163BF0598DA48361C55D39A69163FA8FD24CF5F83655D23DCA3AD961C62F356208552BB9ED529077096966D670C354E4ABC9804F1746C08CA18217C32905E462E36CE3BE39E772C180E86039B2783A2EC07A28FB5C55DF06F4C52C9DE2BCBF6955817183995497CEA956AE515D2261898FA051015728E5A8AACAA68FFFFFFFFFFFFFFFF
     G = 2
@@ -318,13 +311,13 @@ class KexGSSGroup14(KexGSSGroup1):
 class KexGSSGex(object):
     """
     GSS-API / SSPI Authenticated Diffie-Hellman Group Exchange
-    as defined in U{RFC 4462 Section 2 <www.ietf.org/rfc/rfc4462.txt>}
+    as defined in `RFC 4462 Section 2 <http://www.ietf.org/rfc/rfc4462.txt>`_
 
-    @note: RFC 4462 says we are not required to implement GSS-API error
+    :note: RFC 4462 says we are not required to implement GSS-API error
            messages.
            If an error occurs an exception will be thrown and the connection
            will be terminated.
-    @see: U{RFC 4462 Section 2.2 <www.ietf.org/rfc/rfc4462.txt>}
+    :see: `RFC 4462 Section 2.2 <http://www.ietf.org/rfc/rfc4462.txt>`_
     """
     NAME = "gss-gex-sha1-toWM5Slw5Ew8Mqkay+al2g=="
     min_bits = 1024
@@ -367,10 +360,8 @@ class KexGSSGex(object):
         """
         Parse the next packet.
 
-        @param ptype: The type of the incomming packet
-        @type ptype: Char
-        @param m: The paket content
-        @type m: L{Message}
+        :param char ptype: The type of the incomming packet
+        :param `.Message` m: The paket content
         """
         if ptype == MSG_KEXGSS_GROUPREQ:
             return self._parse_kexgss_groupreq(m)
@@ -412,8 +403,7 @@ class KexGSSGex(object):
         """
         Parse the SSH2_MSG_KEXGSS_GROUPREQ message (server mode).
 
-        @param m: The content of the SSH2_MSG_KEXGSS_GROUPREQ message
-        @type m: L{Message}
+        :param `.Message` m: The content of the SSH2_MSG_KEXGSS_GROUPREQ message
         """
         minbits = m.get_int()
         preferredbits = m.get_int()
@@ -451,8 +441,7 @@ class KexGSSGex(object):
         """
         Parse the SSH2_MSG_KEXGSS_GROUP message (client mode).
 
-        @param m: The content of the SSH2_MSG_KEXGSS_GROUP message
-        @type m: L{Message}
+        :param `Message` m: The content of the SSH2_MSG_KEXGSS_GROUP message
         """
         self.p = m.get_mpint()
         self.g = m.get_mpint()
@@ -478,8 +467,7 @@ class KexGSSGex(object):
         """
         Parse the SSH2_MSG_KEXGSS_INIT message (server mode).
 
-        @param m: The content of the SSH2_MSG_KEXGSS_INIT message
-        @type m: L{Message}
+        :param `Message` m: The content of the SSH2_MSG_KEXGSS_INIT message
         """
         client_token = m.get_string()
         self.e = m.get_mpint()
@@ -533,8 +521,7 @@ class KexGSSGex(object):
         """
         Parse the SSH2_MSG_KEXGSS_HOSTKEY message (client mode).
 
-        @param m: The content of the SSH2_MSG_KEXGSS_HOSTKEY message
-        @type m: L{Message}
+        :param `Message` m: The content of the SSH2_MSG_KEXGSS_HOSTKEY message
         """
         # client mode
         host_key = m.get_string()
@@ -548,8 +535,7 @@ class KexGSSGex(object):
         """
         Parse the SSH2_MSG_KEXGSS_CONTINUE message.
 
-        @param m: The content of the SSH2_MSG_KEXGSS_CONTINUE message
-        @type m: L{Message}
+        :param `Message` m: The content of the SSH2_MSG_KEXGSS_CONTINUE message
         """
         if not self.transport.server_mode:
             srv_token = m.get_string()
@@ -568,8 +554,7 @@ class KexGSSGex(object):
         """
         Parse the SSH2_MSG_KEXGSS_COMPLETE message (client mode).
 
-        @param m: The content of the SSH2_MSG_KEXGSS_COMPLETE message
-        @type m: L{Message}
+        :param `Message` m: The content of the SSH2_MSG_KEXGSS_COMPLETE message
         """
         if self.transport.host_key is None:
             self.transport.host_key = NullHostKey()
@@ -619,9 +604,8 @@ class KexGSSGex(object):
         The server may send a GSS-API error message. if it does, we display
         the error by throwing an exception (client mode).
 
-        @param m: The content of the SSH2_MSG_KEXGSS_ERROR message
-        @type m: L{Message}
-        @raise SSHException: Contains GSS-API major and minor status as well as
+        :param `Message` m:  The content of the SSH2_MSG_KEXGSS_ERROR message
+        :raise SSHException: Contains GSS-API major and minor status as well as
                              the error message and the language tag of the
                              message
         """
@@ -638,7 +622,7 @@ class KexGSSGex(object):
 class NullHostKey(object):
     """
     This class represents the Null Host Key for GSS-API Key Exchange
-    as defined in U{RFC 4462 Section 5 <www.ietf.org/rfc/rfc4462.txt>}
+    as defined in `RFC 4462 Section 5 <http://www.ietf.org/rfc/rfc4462.txt>`_
     """
     def __init__(self):
         self.key = ""

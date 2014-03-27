@@ -237,26 +237,23 @@ class ServerInterface (object):
         Authenticate the given user to the server if he is a valid krb5
         principal.
 
-        @param username: The username of the authenticating client
-        @type username: String
-        @param gss_authenticated: The result of the krb5 authentication
-        @type gss_authenticated: Integer
-        @param cc_filename: The krb5 client credentials cache filename
-        @type cc_filename: String
-        @return: L{AUTH_FAILED} if the user is not authenticated otherwise
-                 L{AUTH_SUCCESSFUL}
-        @rtype: Integer
-        @note: Kerberos credential delegation is not supported.
-        @see: L{ssh_gss}
-        @note: We are just checking in L{AuthHandler} that the given user is
-               a valid krb5 principal!
-               We don't check if the krb5 principal is allowed to log in on
-               the server, because there is no way to do that in python. So
-               if you develop your own SSH server with paramiko for a cetain
-               plattform like Linux, you should call C{krb5_kuserok()} in your
-               local kerberos library to make sure that the krb5_principal has
-               an account on the server and is allowed to log in as a user.
-        @see: U{http://www.unix.com/man-page/all/3/krb5_kuserok/}
+        :param str username: The username of the authenticating client
+        :param int gss_authenticated: The result of the krb5 authentication
+        :param str cc_filename: The krb5 client credentials cache filename
+        :return: `.AUTH_FAILED` if the user is not authenticated otherwise
+                 `.AUTH_SUCCESSFUL`
+        :rtype: int
+        :note: Kerberos credential delegation is not supported.
+        :see: `.ssh_gss`
+        :note: : We are just checking in L{AuthHandler} that the given user is
+                 a valid krb5 principal!
+                 We don't check if the krb5 principal is allowed to log in on
+                 the server, because there is no way to do that in python. So
+                 if you develop your own SSH server with paramiko for a cetain
+                 plattform like Linux, you should call C{krb5_kuserok()} in your
+                 local kerberos library to make sure that the krb5_principal has
+                 an account on the server and is allowed to log in as a user.
+        :see: `http://www.unix.com/man-page/all/3/krb5_kuserok/`
         """
         if gss_authenticated == AUTH_SUCCESSFUL:
             return AUTH_SUCCESSFUL
@@ -271,26 +268,23 @@ class ServerInterface (object):
         If GSS-API Key Exchange was not performed, this authentication method
         won't be available.
 
-        @param username: The username of the authenticating client
-        @type username: String
-        @param gss_authenticated: The result of the krb5 authentication
-        @type gss_authenticated: Integer
-        @param cc_filename: The krb5 client credentials cache filename
-        @type cc_filename: String
-        @return: L{AUTH_FAILED} if the user is not authenticated otherwise
-                 L{AUTH_SUCCESSFUL}
-        @rtype: Integer
-        @note: Kerberos credential delegation is not supported.
-        @see: L{ssh_gss}, L{kex_gss}
-        @note: We are just checking in L{AuthHandler} that the given user is
-               a valid krb5 principal!
-               We don't check if the krb5 principal is allowed to log in on
-               the server, because there is no way to do that in python. So
-               if you develop your own SSH server with paramiko for a certain
-               platform like Linux, you should call C{krb5_kuserok()} in your
-               local kerberos library to make sure that the krb5_principal has
-               an account on the server and is allowed to log in as a user.
-        @see: U{http://www.unix.com/man-page/all/3/krb5_kuserok/}
+        :param str username: The username of the authenticating client
+        :param int gss_authenticated: The result of the krb5 authentication
+        :param str cc_filename: The krb5 client credentials cache filename
+        :return: `.AUTH_FAILED` if the user is not authenticated otherwise
+                 `.AUTH_SUCCESSFUL`
+        :rtype: int
+        :note: Kerberos credential delegation is not supported.
+        :see: `.ssh_gss` `.kex_gss` 
+        :note: : We are just checking in L{AuthHandler} that the given user is
+                 a valid krb5 principal!
+                 We don't check if the krb5 principal is allowed to log in on
+                 the server, because there is no way to do that in python. So
+                 if you develop your own SSH server with paramiko for a cetain
+                 plattform like Linux, you should call C{krb5_kuserok()} in your
+                 local kerberos library to make sure that the krb5_principal has
+                 an account on the server and is allowed to log in as a user.
+        :see: `http://www.unix.com/man-page/all/3/krb5_kuserok/`
         """
         if gss_authenticated == AUTH_SUCCESSFUL:
             return AUTH_SUCCESSFUL
@@ -302,9 +296,9 @@ class ServerInterface (object):
         authentication.
         The default implementation always returns false.
 
-        @return: True if GSSAPI authentication is enabled otherwise false
-        @rtype: Boolean
-        @see: ssh_gss
+        :return: True if GSSAPI authentication is enabled otherwise false
+        :rtype:  Boolean
+        :see: : `.ssh_gss`
         """
         UseGSSAPI = False
         GSSAPICleanupCredentials = False
