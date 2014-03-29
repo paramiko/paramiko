@@ -20,8 +20,9 @@
 DSS keys.
 """
 
+from hashlib import sha1
+
 from Crypto.PublicKey import DSA
-from Crypto.Hash import SHA
 
 from paramiko import util
 from paramiko.common import zero_byte, rng
@@ -96,7 +97,7 @@ class DSSKey (PKey):
         return self.x is not None
 
     def sign_ssh_data(self, rng, data):
-        digest = SHA.new(data).digest()
+        digest = sha1(data).digest()
         dss = DSA.construct((long(self.y), long(self.g), long(self.p), long(self.q), long(self.x)))
         # generate a suitable k
         qsize = len(util.deflate_long(self.q, 0))
@@ -130,7 +131,7 @@ class DSSKey (PKey):
         # pull out (r, s) which are NOT encoded as mpints
         sigR = util.inflate_long(sig[:20], 1)
         sigS = util.inflate_long(sig[20:], 1)
-        sigM = util.inflate_long(SHA.new(data).digest(), 1)
+        sigM = util.inflate_long(sha1(data).digest(), 1)
 
         dss = DSA.construct((long(self.y), long(self.g), long(self.p), long(self.q)))
         return dss.verify(sigM, (sigR, sigS))

@@ -20,8 +20,9 @@
 RSA keys.
 """
 
+from hashlib import sha1
+
 from Crypto.PublicKey import RSA
-from Crypto.Hash import SHA
 
 from paramiko import util
 from paramiko.common import rng, max_byte, zero_byte, one_byte
@@ -91,7 +92,7 @@ class RSAKey (PKey):
         return self.d is not None
 
     def sign_ssh_data(self, rpool, data):
-        digest = SHA.new(data).digest()
+        digest = sha1(data).digest()
         rsa = RSA.construct((long(self.n), long(self.e), long(self.d)))
         sig = util.deflate_long(rsa.sign(self._pkcs1imify(digest), bytes())[0], 0)
         m = Message()
@@ -106,7 +107,7 @@ class RSAKey (PKey):
         # verify the signature by SHA'ing the data and encrypting it using the
         # public key.  some wackiness ensues where we "pkcs1imify" the 20-byte
         # hash into a string as long as the RSA key.
-        hash_obj = util.inflate_long(self._pkcs1imify(SHA.new(data).digest()), True)
+        hash_obj = util.inflate_long(self._pkcs1imify(sha1(data).digest()), True)
         rsa = RSA.construct((long(self.n), long(self.e)))
         return rsa.verify(hash_obj, (sig,))
 
