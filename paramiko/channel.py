@@ -21,9 +21,10 @@ Abstraction for an SSH2 channel.
 """
 
 import binascii
+import os
+import socket
 import time
 import threading
-import socket
 
 from paramiko import util
 from paramiko.common import cMSG_CHANNEL_REQUEST, cMSG_CHANNEL_WINDOW_ADJUST, \
@@ -358,7 +359,7 @@ class Channel (object):
         if auth_protocol is None:
             auth_protocol = 'MIT-MAGIC-COOKIE-1'
         if auth_cookie is None:
-            auth_cookie = binascii.hexlify(self.transport.rng.read(16))
+            auth_cookie = binascii.hexlify(os.urandom(16))
 
         m = Message()
         m.add_byte(cMSG_CHANNEL_REQUEST)

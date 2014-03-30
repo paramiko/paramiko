@@ -22,6 +22,8 @@ generator "g" are provided by the server.  A bit more work is required on the
 client side, and a B{lot} more on the server side.
 """
 
+import os
+
 from Crypto.Hash import SHA
 
 from paramiko import util
@@ -101,7 +103,7 @@ class KexGex (object):
             qhbyte <<= 1
             qmask >>= 1
         while True:
-            x_bytes = self.transport.rng.read(byte_count)
+            x_bytes = os.urandom(byte_count)
             x_bytes = byte_mask(x_bytes[0], qmask) + x_bytes[1:]
             x = util.inflate_long(x_bytes, 1)
             if (x > 1) and (x < q):
@@ -206,7 +208,7 @@ class KexGex (object):
         H = SHA.new(hm.asbytes()).digest()
         self.transport._set_K_H(K, H)
         # sign it
-        sig = self.transport.get_server_key().sign_ssh_data(self.transport.rng, H)
+        sig = self.transport.get_server_key().sign_ssh_data(H)
         # send reply
         m = Message()
         m.add_byte(c_MSG_KEXDH_GEX_REPLY)
@@ -215,7 +217,7 @@ class KexGex (object):
         m.add_string(sig)
         self.transport._send_message(m)
         self.transport._activate_outbound()
-        
+
     def _parse_kexdh_gex_reply(self, m):
         host_key = m.get_string()
         self.f = m.get_mpint()

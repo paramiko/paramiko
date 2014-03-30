@@ -21,6 +21,7 @@ Packet handling
 """
 
 import errno
+import os
 import socket
 import struct
 import threading
@@ -28,7 +29,7 @@ import time
 
 from paramiko import util
 from paramiko.common import linefeed_byte, cr_byte_value, asbytes, MSG_NAMES, \
-    DEBUG, xffffffff, zero_byte, rng
+    DEBUG, xffffffff, zero_byte
 from paramiko.py3compat import u, byte_ord
 from paramiko.ssh_exception import SSHException, ProxyCommandFailure
 from paramiko.message import Message
@@ -455,7 +456,7 @@ class Packetizer (object):
             # don't waste random bytes for the padding
             packet += (zero_byte * padding)
         else:
-            packet += rng.read(padding)
+            packet += os.urandom(padding)
         return packet
 
     def _trigger_rekey(self):

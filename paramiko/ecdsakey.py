@@ -21,11 +21,14 @@ L{ECDSAKey}
 """
 
 import binascii
-from ecdsa import SigningKey, VerifyingKey, der, curves
-from Crypto.Hash import SHA256
-from ecdsa.test_pyecdsa import ECDSA
-from paramiko.common import four_byte, one_byte
+import os
 
+from ecdsa import SigningKey, VerifyingKey, der, curves
+from ecdsa.test_pyecdsa import ECDSA
+
+from Crypto.Hash import SHA256
+
+from paramiko.common import four_byte, one_byte
 from paramiko.message import Message
 from paramiko.pkey import PKey
 from paramiko.py3compat import byte_chr, u
@@ -97,9 +100,9 @@ class ECDSAKey (PKey):
     def can_sign(self):
         return self.signing_key is not None
 
-    def sign_ssh_data(self, rpool, data):
+    def sign_ssh_data(self, data):
         digest = SHA256.new(data).digest()
-        sig = self.signing_key.sign_digest(digest, entropy=rpool.read,
+        sig = self.signing_key.sign_digest(digest, entropy=os.urandom,
                                            sigencode=self._sigencode)
         m = Message()
         m.add_string('ecdsa-sha2-nistp256')

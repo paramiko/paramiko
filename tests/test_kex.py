@@ -21,7 +21,9 @@ Some unit tests for the key exchange protocols.
 """
 
 from binascii import hexlify
+import os
 import unittest
+
 import paramiko.util
 from paramiko.kex_group1 import KexGroup1
 from paramiko.kex_gex import KexGex
@@ -29,9 +31,8 @@ from paramiko import Message
 from paramiko.common import byte_chr
 
 
-class FakeRng (object):
-    def read(self, n):
-        return byte_chr(0xcc) * n
+def dummy_urandom(n):
+    return byte_chr(0xcc) * n
 
 
 class FakeKey (object):
@@ -41,7 +42,7 @@ class FakeKey (object):
     def asbytes(self):
         return b'fake-key'
 
-    def sign_ssh_data(self, rng, H):
+    def sign_ssh_data(self, H):
         return b'fake-sig'
 
 
@@ -53,8 +54,7 @@ class FakeModulusPack (object):
         return self.G, self.P
 
 
-class FakeTransport (object):
-    rng = FakeRng()
+class FakeTransport(object):
     local_version = 'SSH-2.0-paramiko_1.0'
     remote_version = 'SSH-2.0-lame'
     local_kex_init = 'local-kex-init'
@@ -91,10 +91,11 @@ class KexTest (unittest.TestCase):
     K = 14730343317708716439807310032871972459448364195094179797249681733965528989482751523943515690110179031004049109375612685505881911274101441415545039654102474376472240501616988799699744135291070488314748284283496055223852115360852283821334858541043710301057312858051901453919067023103730011648890038847384890504
 
     def setUp(self):
-        pass
+        self._original_urandom = os.urandom
+        os.urandom = dummy_urandom
 
     def tearDown(self):
-        pass
+        os.urandom = self._original_urandom
 
     def test_1_group1_client(self):
         transport = FakeTransport()
