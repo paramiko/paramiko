@@ -14,3 +14,8 @@ autodoc_default_flags = ['members', 'special-members']
 intersphinx_mapping = {
     'python': ('http://docs.python.org/2.6', None),
 }
+
+# Sister-site links to WWW
+html_theme_options['extra_nav_links'] = {
+    "Main website": 'http://www.paramiko.org',
+}
