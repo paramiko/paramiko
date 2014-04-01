@@ -21,6 +21,8 @@ L{ECDSAKey}
 """
 
 import binascii
+import hashlib
+
 from ecdsa import SigningKey, VerifyingKey, der, curves
 from Crypto.Hash import SHA256
 from ecdsa.test_pyecdsa import ECDSA
@@ -98,9 +100,8 @@ class ECDSAKey (PKey):
         return self.signing_key is not None
 
     def sign_ssh_data(self, rpool, data):
-        digest = SHA256.new(data).digest()
-        sig = self.signing_key.sign_digest(digest, entropy=rpool.read,
-                                           sigencode=self._sigencode)
+        sig = self.signing_key.sign_deterministic(
+            data, sigencode=self._sigencode, hashfunc=hashlib.sha256)
         m = Message()
         m.add_string('ecdsa-sha2-nistp256')
         m.add_string(sig)
