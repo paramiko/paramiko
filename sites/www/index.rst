@@ -12,6 +12,8 @@ usage and API documentation can be found at our code documentation site,
 `docs.paramiko.org <http://docs.paramiko.org>`_.
 
 .. toctree::
+    :hidden:
+
     changelog
     FAQs <faq>
     installing
