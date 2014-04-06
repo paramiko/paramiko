@@ -34,7 +34,8 @@ from paramiko.sftp import BaseSFTP, CMD_OPENDIR, CMD_HANDLE, SFTPError, CMD_READ
     SFTP_FLAG_TRUNC, SFTP_FLAG_APPEND, SFTP_FLAG_EXCL, CMD_OPEN, CMD_REMOVE, \
     CMD_RENAME, CMD_MKDIR, CMD_RMDIR, CMD_STAT, CMD_ATTRS, CMD_LSTAT, \
     CMD_SYMLINK, CMD_SETSTAT, CMD_READLINK, CMD_REALPATH, CMD_STATUS, SFTP_OK, \
-    SFTP_EOF, SFTP_NO_SUCH_FILE, SFTP_PERMISSION_DENIED
+    SFTP_EOF, SFTP_NO_SUCH_FILE, SFTP_PERMISSION_DENIED, SFTP_NO_SPACE_LEFT, \
+    SFTP_QUOTA_EXCEEDED
 
 from paramiko.sftp_attr import SFTPAttributes
 from paramiko.ssh_exception import SSHException
@@ -720,6 +721,10 @@ class SFTPClient(BaseSFTP):
             raise IOError(errno.ENOENT, text)
         elif code == SFTP_PERMISSION_DENIED:
             raise IOError(errno.EACCES, text)
+        elif code == SFTP_NO_SPACE_LEFT:
+            raise IOError(errno.ENOSPC, text)
+        elif code == SFTP_QUOTA_EXCEEDED:
+            raise IOError(errno.EDQUOT, text)
         else:
             raise IOError(text)
 
