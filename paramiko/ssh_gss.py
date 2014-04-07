@@ -79,7 +79,7 @@ _API = "MIT"
 
 try:
     import gssapi
-except ImportError:
+except (ImportError, OSError):
     try:
         import sspicon
         import sspi
