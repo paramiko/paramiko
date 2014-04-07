@@ -14,9 +14,6 @@ html_theme_options = {
     'github_repo': 'paramiko',
     'gittip_user': 'bitprophet',
     'analytics_id': 'UA-18486793-2',
-
-    'link': '#3782BE',
-    'link_hover': '#3782BE',
 }
 html_sidebars = {
     '**': [
