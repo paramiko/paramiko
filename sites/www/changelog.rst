@@ -16,7 +16,8 @@ Changelog
 * :release:`1.11.5 <2014-03-13>`
 * :release:`1.10.7 <2014-03-13>`
 * :feature:`16` **Python 3 support!** Our test suite passes under Python 3, and
-  it (& Fabric's test suite) continues to pass under Python 2.
+  it (& Fabric's test suite) continues to pass under Python 2. **Python 2.5 is
+  no longer supported with this change!**
   
   The merged code was built on many contributors' efforts, both code &
   feedback. In no particular order, we thank Daniel Goertzen, Ivan Kolodyazhny,

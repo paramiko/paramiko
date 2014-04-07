@@ -1,6 +1,4 @@
 from datetime import datetime
-import os
-import sys
 
 import alabaster
 
@@ -9,7 +7,6 @@ import alabaster
 html_theme_path = [alabaster.get_path()]
 extensions = ['alabaster']
 # Paths relative to invoking conf.py - not this shared file
-html_static_path = ['../_shared_static']
 html_theme = 'alabaster'
 html_theme_options = {
     'description': "A Python implementation of SSHv2.",
@@ -17,9 +14,6 @@ html_theme_options = {
     'github_repo': 'paramiko',
     'gittip_user': 'bitprophet',
     'analytics_id': 'UA-18486793-2',
-
-    'link': '#3782BE',
-    'link_hover': '#3782BE',
 }
 html_sidebars = {
     '**': [

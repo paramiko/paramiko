@@ -11,19 +11,16 @@ contribution guidelines, development roadmap, news/blog, and so forth. Detailed
 usage and API documentation can be found at our code documentation site,
 `docs.paramiko.org <http://docs.paramiko.org>`_.
 
+Please see the sidebar to the left to begin.
+
 .. toctree::
+    :hidden:
+
     changelog
     FAQs <faq>
     installing
     contributing
     contact
-
-.. Hide blog in hidden toctree for now (to avoid warnings.)
-
-.. toctree::
-    :hidden:
-
-    blog
 
 
 .. rubric:: Footnotes
