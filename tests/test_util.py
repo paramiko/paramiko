@@ -154,12 +154,6 @@ class UtilTest(ParamikoTest):
         finally:
             os.unlink('hostfile.temp')
 
-    def test_6_random(self):
-        from paramiko.common import rng
-        # just verify that we can pull out 32 bytes and not get an exception.
-        x = rng.read(32)
-        self.assertEqual(len(x), 32)
-
     def test_7_host_config_expose_issue_33(self):
         test_config_file = """
 Host www13.*

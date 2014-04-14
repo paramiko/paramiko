@@ -20,12 +20,13 @@
 RSA keys.
 """
 
+import os
 from hashlib import sha1
 
 from Crypto.PublicKey import RSA
 
 from paramiko import util
-from paramiko.common import rng, max_byte, zero_byte, one_byte
+from paramiko.common import max_byte, zero_byte, one_byte
 from paramiko.message import Message
 from paramiko.ber import BER, BERException
 from paramiko.pkey import PKey
@@ -91,7 +92,7 @@ class RSAKey (PKey):
     def can_sign(self):
         return self.d is not None
 
-    def sign_ssh_data(self, rpool, data):
+    def sign_ssh_data(self, data):
         digest = sha1(data).digest()
         rsa = RSA.construct((long(self.n), long(self.e), long(self.d)))
         sig = util.deflate_long(rsa.sign(self._pkcs1imify(digest), bytes())[0], 0)
@@ -126,7 +127,7 @@ class RSAKey (PKey):
 
     def write_private_key_file(self, filename, password=None):
         self._write_private_key_file('RSA', filename, self._encode_key(), password)
-        
+
     def write_private_key(self, file_obj, password=None):
         self._write_private_key('RSA', file_obj, self._encode_key(), password)
 
@@ -141,7 +142,7 @@ class RSAKey (PKey):
             by ``pyCrypto.PublicKey``).
         :return: new `.RSAKey` private key
         """
-        rsa = RSA.generate(bits, rng.read, progress_func)
+        rsa = RSA.generate(bits, os.urandom, progress_func)
         key = RSAKey(vals=(rsa.e, rsa.n))
         key.d = rsa.d
         key.p = rsa.p
@@ -163,11 +164,11 @@ class RSAKey (PKey):
     def _from_private_key_file(self, filename, password):
         data = self._read_private_key_file('RSA', filename, password)
         self._decode_key(data)
-    
+
     def _from_private_key(self, file_obj, password):
         data = self._read_private_key('RSA', file_obj, password)
         self._decode_key(data)
-    
+
     def _decode_key(self, data):
         # private key file contains:
         # RSAPrivateKey = { version = 0, n, e, d, p, q, d mod p-1, d mod q-1, q**-1 mod p }

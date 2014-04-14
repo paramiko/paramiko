@@ -98,7 +98,7 @@ class ECDSAKey (PKey):
     def can_sign(self):
         return self.signing_key is not None
 
-    def sign_ssh_data(self, rpool, data):
+    def sign_ssh_data(self, data):
         sig = self.signing_key.sign_deterministic(
             data, sigencode=self._sigencode, hashfunc=sha256)
         m = Message()

@@ -28,7 +28,7 @@ from hashlib import md5
 from Crypto.Cipher import DES3, AES
 
 from paramiko import util
-from paramiko.common import o600, rng, zero_byte
+from paramiko.common import o600, zero_byte
 from paramiko.py3compat import u, encodebytes, decodebytes, b
 from paramiko.ssh_exception import SSHException, PasswordRequiredException
 
@@ -138,12 +138,11 @@ class PKey (object):
         """
         return u(encodebytes(self.asbytes())).replace('\n', '')
 
-    def sign_ssh_data(self, rng, data):
+    def sign_ssh_data(self, data):
         """
         Sign a blob of data with this private key, and return a `.Message`
         representing an SSH signature message.
 
-        :param .Crypto.Util.rng.RandomPool rng: a secure random number generator.
         :param str data: the data to sign.
         :return: an SSH signature `message <.Message>`.
         """
@@ -331,11 +330,11 @@ class PKey (object):
             keysize = self._CIPHER_TABLE[cipher_name]['keysize']
             blocksize = self._CIPHER_TABLE[cipher_name]['blocksize']
             mode = self._CIPHER_TABLE[cipher_name]['mode']
-            salt = rng.read(16)
+            salt = os.urandom(16)
             key = util.generate_key_bytes(md5, salt, password, keysize)
             if len(data) % blocksize != 0:
                 n = blocksize - len(data) % blocksize
-                #data += rng.read(n)
+                #data += os.urandom(n)
                 # that would make more sense ^, but it confuses openssh.
                 data += zero_byte * n
             data = cipher.new(key, mode, salt).encrypt(data)

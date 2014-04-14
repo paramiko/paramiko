@@ -20,6 +20,7 @@
 Core protocol implementation
 """
 
+import os
 import socket
 import sys
 import threading
@@ -31,7 +32,7 @@ import paramiko
 from paramiko import util
 from paramiko.auth_handler import AuthHandler
 from paramiko.channel import Channel
-from paramiko.common import rng, xffffffff, cMSG_CHANNEL_OPEN, cMSG_IGNORE, \
+from paramiko.common import xffffffff, cMSG_CHANNEL_OPEN, cMSG_IGNORE, \
     cMSG_GLOBAL_REQUEST, DEBUG, MSG_KEXINIT, MSG_IGNORE, MSG_DISCONNECT, \
     MSG_DEBUG, ERROR, WARNING, cMSG_UNIMPLEMENTED, INFO, cMSG_KEXINIT, \
     cMSG_NEWKEYS, MSG_NEWKEYS, cMSG_REQUEST_SUCCESS, cMSG_REQUEST_FAILURE, \
@@ -58,7 +59,6 @@ from paramiko.ssh_exception import (SSHException, BadAuthenticationType,
                                     ChannelException, ProxyCommandFailure)
 from paramiko.util import retry_on_signal
 
-from Crypto import Random
 from Crypto.Cipher import Blowfish, AES, DES3, ARC4
 try:
     from Crypto.Util import Counter
@@ -192,7 +192,6 @@ class Transport (threading.Thread):
         # okay, normal socket-ish flow here...
         threading.Thread.__init__(self)
         self.setDaemon(True)
-        self.rng = rng
         self.sock = sock
         # Python < 2.3 doesn't have the settimeout method - RogerB
         try:
@@ -339,7 +338,6 @@ class Transport (threading.Thread):
         # synchronous, wait for a result
         self.completion_event = event = threading.Event()
         self.start()
-        Random.atfork()
         while True:
             event.wait(0.1)
             if not self.active:
@@ -475,7 +473,7 @@ class Transport (threading.Thread):
 
         .. note:: This has no effect when used in client mode.
         """
-        Transport._modulus_pack = ModulusPack(rng)
+        Transport._modulus_pack = ModulusPack()
         # places to look for the openssh "moduli" file
         file_list = ['/etc/ssh/moduli', '/usr/local/etc/moduli']
         if filename is not None:
@@ -732,8 +730,8 @@ class Transport (threading.Thread):
         m = Message()
         m.add_byte(cMSG_IGNORE)
         if byte_count is None:
-            byte_count = (byte_ord(rng.read(1)) % 32) + 10
-        m.add_bytes(rng.read(byte_count))
+            byte_count = (byte_ord(os.urandom(1)) % 32) + 10
+        m.add_bytes(os.urandom(byte_count))
         self._send_user_message(m)
 
     def renegotiate_keys(self):
@@ -1402,10 +1400,6 @@ class Transport (threading.Thread):
         # interpreter shutdown.
         self.sys = sys
 
-        # Required to prevent RNG errors when running inside many subprocess
-        # containers.
-        Random.atfork()
-
         # active=True occurs before the thread is launched, to avoid a race
         _active_threads.append(self)
         if self.server_mode:
@@ -1590,7 +1584,7 @@ class Transport (threading.Thread):
 
         m = Message()
         m.add_byte(cMSG_KEXINIT)
-        m.add_bytes(rng.read(16))
+        m.add_bytes(os.urandom(16))
         m.add_list(self._preferred_kex)
         m.add_list(available_server_keys)
         m.add_list(self._preferred_ciphers)
