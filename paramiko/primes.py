@@ -20,12 +20,14 @@
 Utility functions for dealing with primes.
 """
 
+import os
+
 from paramiko import util
 from paramiko.py3compat import byte_mask, long
 from paramiko.ssh_exception import SSHException
 
 
-def _roll_random(rng, n):
+def _roll_random(n):
     """returns a random # from 0 to N-1"""
     bits = util.bit_length(n - 1)
     byte_count = (bits + 7) // 8
@@ -38,7 +40,7 @@ def _roll_random(rng, n):
     # fits, so i can't guarantee that this loop will ever finish, but the odds
     # of it looping forever should be infinitesimal.
     while True:
-        x = rng.read(byte_count)
+        x = os.urandom(byte_count)
         if hbyte_mask > 0:
             x = byte_mask(x[0], hbyte_mask) + x[1:]
         num = util.inflate_long(x, 1)
@@ -53,11 +55,10 @@ class ModulusPack (object):
     on systems that have such a file.
     """
 
-    def __init__(self, rpool):
+    def __init__(self):
         # pack is a hash of: bits -> [ (generator, modulus) ... ]
         self.pack = {}
         self.discarded = []
-        self.rng = rpool
 
     def _parse_modulus(self, line):
         timestamp, mod_type, tests, tries, size, generator, modulus = line.split()
@@ -127,5 +128,5 @@ class ModulusPack (object):
             if min > good:
                 good = bitsizes[-1]
         # now pick a random modulus of this bitsize
-        n = _roll_random(self.rng, len(self.pack[good]))
+        n = _roll_random(len(self.pack[good]))
         return self.pack[good][n]

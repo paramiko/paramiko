@@ -18,10 +18,11 @@
 
 
 import binascii
+import os
+
 from hashlib import sha1
 from hmac import HMAC
 
-from paramiko.common import rng
 from paramiko.py3compat import b, u, encodebytes, decodebytes
 
 try:
@@ -264,7 +265,7 @@ class HostKeys (MutableMapping):
         :return: the hashed hostname as a `str`
         """
         if salt is None:
-            salt = rng.read(sha1().digest_size)
+            salt = os.urandom(sha1().digest_size)
         else:
             if salt.startswith('|1|'):
                 salt = salt.split('|')[2]

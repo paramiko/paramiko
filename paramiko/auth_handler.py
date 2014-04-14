@@ -206,7 +206,7 @@ class AuthHandler (object):
                 m.add_string(self.private_key.get_name())
                 m.add_string(self.private_key)
                 blob = self._get_session_blob(self.private_key, 'ssh-connection', self.username)
-                sig = self.private_key.sign_ssh_data(self.transport.rng, blob)
+                sig = self.private_key.sign_ssh_data(blob)
                 m.add_string(sig)
             elif self.auth_method == 'keyboard-interactive':
                 m.add_string('')

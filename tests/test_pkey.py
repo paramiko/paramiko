@@ -26,7 +26,6 @@ from hashlib import md5
 
 from paramiko import RSAKey, DSSKey, ECDSAKey, Message, util
 from paramiko.py3compat import StringIO, byte_chr, b, bytes
-from paramiko.common import rng
 
 from tests.util import test_path
 
@@ -168,7 +167,7 @@ class KeyTest (unittest.TestCase):
     def test_8_sign_rsa(self):
         # verify that the rsa private key can sign and verify
         key = RSAKey.from_private_key_file(test_path('test_rsa.key'))
-        msg = key.sign_ssh_data(rng, b'ice weasels')
+        msg = key.sign_ssh_data(b'ice weasels')
         self.assertTrue(type(msg) is Message)
         msg.rewind()
         self.assertEqual('ssh-rsa', msg.get_text())
@@ -181,7 +180,7 @@ class KeyTest (unittest.TestCase):
     def test_9_sign_dss(self):
         # verify that the dss private key can sign and verify
         key = DSSKey.from_private_key_file(test_path('test_dss.key'))
-        msg = key.sign_ssh_data(rng, b'ice weasels')
+        msg = key.sign_ssh_data(b'ice weasels')
         self.assertTrue(type(msg) is Message)
         msg.rewind()
         self.assertEqual('ssh-dss', msg.get_text())
@@ -195,13 +194,13 @@ class KeyTest (unittest.TestCase):
 
     def test_A_generate_rsa(self):
         key = RSAKey.generate(1024)
-        msg = key.sign_ssh_data(rng, b'jerri blank')
+        msg = key.sign_ssh_data(b'jerri blank')
         msg.rewind()
         self.assertTrue(key.verify_ssh_sig(b'jerri blank', msg))
 
     def test_B_generate_dss(self):
         key = DSSKey.generate(1024)
-        msg = key.sign_ssh_data(rng, b'jerri blank')
+        msg = key.sign_ssh_data(b'jerri blank')
         msg.rewind()
         self.assertTrue(key.verify_ssh_sig(b'jerri blank', msg))
 
@@ -242,7 +241,7 @@ class KeyTest (unittest.TestCase):
     def test_13_sign_ecdsa(self):
         # verify that the rsa private key can sign and verify
         key = ECDSAKey.from_private_key_file(test_path('test_ecdsa.key'))
-        msg = key.sign_ssh_data(rng, b'ice weasels')
+        msg = key.sign_ssh_data(b'ice weasels')
         self.assertTrue(type(msg) is Message)
         msg.rewind()
         self.assertEqual('ecdsa-sha2-nistp256', msg.get_text())

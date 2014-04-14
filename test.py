@@ -101,12 +101,12 @@ def main():
     parser.add_option('-P', '--sftp-passwd', dest='password', type='string', default=default_passwd,
                       metavar='<password>',
                       help='[with -R] (optional) password to unlock the private key for remote sftp tests')
-    
+
     options, args = parser.parse_args()
-    
+
     # setup logging
     paramiko.util.log_to_file('test.log')
-    
+
     if options.use_sftp:
         from tests.test_sftp import SFTPTest
         if options.use_loopback_sftp:
