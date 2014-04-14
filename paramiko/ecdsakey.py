@@ -99,8 +99,8 @@ class ECDSAKey (PKey):
         return self.signing_key is not None
 
     def sign_ssh_data(self, data):
-        digest = sha256(data).digest()
-        sig = self.signing_key.sign_digest(digest, sigencode=self._sigencode)
+        sig = self.signing_key.sign_deterministic(
+            data, sigencode=self._sigencode, hashfunc=sha256)
         m = Message()
         m.add_string('ecdsa-sha2-nistp256')
         m.add_string(sig)
