@@ -2,6 +2,8 @@
 Changelog
 =========
 
+* :support:`295` Swap out a bunch of PyCrypto hash functions with use of
+  `hashlib`
 * :support:`290` (also :issue:`292`) Add support for building universal
   (Python 2+3 compatible) wheel files during the release process. Courtesy of
   Alex Gaynor.
