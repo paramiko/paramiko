@@ -2,6 +2,8 @@
 Changelog
 =========
 
+* :support:`297` Replace PyCrypto's ``Random`` with `os.urandom` for improved
+  speed and security. Thanks again to Alex.
 * :support:`295` Swap out a bunch of PyCrypto hash functions with use of
   `hashlib`. Thanks to Alex Gaynor.
 * :support:`290` (also :issue:`292`) Add support for building universal
