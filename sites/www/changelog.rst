@@ -2,6 +2,8 @@
 Changelog
 =========
 
+* :bug:`308` Fix regression in dsskey.py that caused sporadic signature 
+  verification failures. Thanks to Chris Rose.
 * :support:`299` Use deterministic signatures for ECDSA keys for improved
   security. Thanks to Alex Gaynor.
 * :support:`297` Replace PyCrypto's ``Random`` with `os.urandom` for improved
