@@ -17,3 +17,6 @@ How to submit bug reports or new code
 
 Please see `this project-agnostic contribution guide
 <http://contribution-guide.org>`_ - we follow it explicitly.
+
+Our current changelog is located in ``sites/www/changelog.rst`` - the top
+level files like ``ChangeLog.*`` and ``NEWS`` are historical only.
