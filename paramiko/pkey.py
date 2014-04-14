@@ -23,8 +23,8 @@ Common API for all public keys.
 import base64
 from binascii import hexlify, unhexlify
 import os
+from hashlib import md5
 
-from Crypto.Hash import MD5
 from Crypto.Cipher import DES3, AES
 
 from paramiko import util
@@ -126,7 +126,7 @@ class PKey (object):
             a 16-byte `string <str>` (binary) of the MD5 fingerprint, in SSH
             format.
         """
-        return MD5.new(self.asbytes()).digest()
+        return md5(self.asbytes()).digest()
 
     def get_base64(self):
         """
@@ -299,7 +299,7 @@ class PKey (object):
         keysize = self._CIPHER_TABLE[encryption_type]['keysize']
         mode = self._CIPHER_TABLE[encryption_type]['mode']
         salt = unhexlify(b(saltstr))
-        key = util.generate_key_bytes(MD5, salt, password, keysize)
+        key = util.generate_key_bytes(md5, salt, password, keysize)
         return cipher.new(key, mode, salt).decrypt(data)
 
     def _write_private_key_file(self, tag, filename, data, password=None):
@@ -331,7 +331,7 @@ class PKey (object):
             blocksize = self._CIPHER_TABLE[cipher_name]['blocksize']
             mode = self._CIPHER_TABLE[cipher_name]['mode']
             salt = os.urandom(16)
-            key = util.generate_key_bytes(MD5, salt, password, keysize)
+            key = util.generate_key_bytes(md5, salt, password, keysize)
             if len(data) % blocksize != 0:
                 n = blocksize - len(data) % blocksize
                 #data += os.urandom(n)

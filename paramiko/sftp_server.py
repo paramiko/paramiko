@@ -22,9 +22,9 @@ Server-mode SFTP support.
 
 import os
 import errno
-
-from Crypto.Hash import MD5, SHA
 import sys
+from hashlib import md5, sha1
+
 from paramiko import util
 from paramiko.sftp import BaseSFTP, Message, SFTP_FAILURE, \
     SFTP_PERMISSION_DENIED, SFTP_NO_SUCH_FILE
@@ -45,8 +45,8 @@ from paramiko.sftp import CMD_HANDLE, SFTP_DESC, CMD_STATUS, SFTP_EOF, CMD_NAME,
     CMD_READLINK, CMD_SYMLINK, CMD_REALPATH, CMD_EXTENDED, SFTP_OP_UNSUPPORTED
 
 _hash_class = {
-    'sha1': SHA,
-    'md5': MD5,
+    'sha1': sha1,
+    'md5': md5,
 }
 
 
@@ -82,14 +82,14 @@ class SFTPServer (BaseSFTP, SubsystemHandler):
         self.file_table = {}
         self.folder_table = {}
         self.server = sftp_si(server, *largs, **kwargs)
-        
+
     def _log(self, level, msg):
         if issubclass(type(msg), list):
             for m in msg:
                 super(SFTPServer, self)._log(level, "[chan " + self.sock.get_name() + "] " + m)
         else:
             super(SFTPServer, self)._log(level, "[chan " + self.sock.get_name() + "] " + msg)
-        
+
     def start_subsystem(self, name, transport, channel):
         self.sock = channel
         self._log(DEBUG, 'Started sftp server on channel %s' % repr(channel))
@@ -157,7 +157,7 @@ class SFTPServer (BaseSFTP, SubsystemHandler):
 
         This is meant to be a handy helper function for translating SFTP file
         requests into local file operations.
-        
+
         :param str filename:
             name of the file to alter (should usually be an absolute path).
         :param .SFTPAttributes attr: attributes to change.
@@ -281,7 +281,7 @@ class SFTPServer (BaseSFTP, SubsystemHandler):
             # don't try to read more than about 64KB at a time
             chunklen = min(blocklen, 65536)
             count = 0
-            hash_obj = alg.new()
+            hash_obj = alg()
             while count < blocklen:
                 data = f.read(offset, chunklen)
                 if not isinstance(data, bytes_types):
@@ -298,7 +298,7 @@ class SFTPServer (BaseSFTP, SubsystemHandler):
         msg.add_string(algname)
         msg.add_bytes(sum_out)
         self._send_packet(CMD_EXTENDED_REPLY, msg)
-    
+
     def _convert_pflags(self, pflags):
         """convert SFTP-style open() flags to Python's os.open() flags"""
         if (pflags & SFTP_FLAG_READ) and (pflags & SFTP_FLAG_WRITE):

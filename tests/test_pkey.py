@@ -20,8 +20,9 @@
 Some unit tests for public/private key objects.
 """
 
-from binascii import hexlify
 import unittest
+from binascii import hexlify
+from hashlib import md5
 
 from paramiko import RSAKey, DSSKey, ECDSAKey, Message, util
 from paramiko.py3compat import StringIO, byte_chr, b, bytes
@@ -91,8 +92,7 @@ class KeyTest (unittest.TestCase):
         pass
 
     def test_1_generate_key_bytes(self):
-        from Crypto.Hash import MD5
-        key = util.generate_key_bytes(MD5, x1234, 'happy birthday', 30)
+        key = util.generate_key_bytes(md5, x1234, 'happy birthday', 30)
         exp = b'\x61\xE1\xF2\x72\xF4\xC1\xC4\x56\x15\x86\xBD\x32\x24\x98\xC0\xE9\x24\x67\x27\x80\xF4\x7B\xB3\x7D\xDA\x7D\x54\x01\x9E\x64'
         self.assertEqual(exp, key)
 

@@ -23,8 +23,7 @@ client side, and a B{lot} more on the server side.
 """
 
 import os
-
-from Crypto.Hash import SHA
+from hashlib import sha1
 
 from paramiko import util
 from paramiko.common import DEBUG
@@ -205,7 +204,7 @@ class KexGex (object):
         hm.add_mpint(self.e)
         hm.add_mpint(self.f)
         hm.add_mpint(K)
-        H = SHA.new(hm.asbytes()).digest()
+        H = sha1(hm.asbytes()).digest()
         self.transport._set_K_H(K, H)
         # sign it
         sig = self.transport.get_server_key().sign_ssh_data(H)
@@ -240,6 +239,6 @@ class KexGex (object):
         hm.add_mpint(self.e)
         hm.add_mpint(self.f)
         hm.add_mpint(K)
-        self.transport._set_K_H(K, SHA.new(hm.asbytes()).digest())
+        self.transport._set_K_H(K, sha1(hm.asbytes()).digest())
         self.transport._verify_key(host_key, sig)
         self.transport._activate_outbound()

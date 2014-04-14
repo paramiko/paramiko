@@ -26,6 +26,7 @@ import socket
 import struct
 import threading
 import time
+from hmac import HMAC
 
 from paramiko import util
 from paramiko.common import linefeed_byte, cr_byte_value, asbytes, MSG_NAMES, \
@@ -33,12 +34,6 @@ from paramiko.common import linefeed_byte, cr_byte_value, asbytes, MSG_NAMES, \
 from paramiko.py3compat import u, byte_ord
 from paramiko.ssh_exception import SSHException, ProxyCommandFailure
 from paramiko.message import Message
-
-
-try:
-    from r_hmac import HMAC
-except ImportError:
-    from Crypto.Hash.HMAC import HMAC
 
 
 def compute_hmac(key, message, digest_class):
@@ -360,7 +355,7 @@ class Packetizer (object):
                 raise SSHException('Mismatched MAC')
         padding = byte_ord(packet[0])
         payload = packet[1:packet_size - padding]
-        
+
         if self.__dump_packets:
             self._log(DEBUG, 'Got payload (%d bytes, %d padding)' % (packet_size, padding))
 

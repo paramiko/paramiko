@@ -21,12 +21,10 @@ L{ECDSAKey}
 """
 
 import binascii
-import os
+from hashlib import sha256
 
 from ecdsa import SigningKey, VerifyingKey, der, curves
 from ecdsa.test_pyecdsa import ECDSA
-
-from Crypto.Hash import SHA256
 
 from paramiko.common import four_byte, one_byte
 from paramiko.message import Message
@@ -101,7 +99,7 @@ class ECDSAKey (PKey):
         return self.signing_key is not None
 
     def sign_ssh_data(self, data):
-        digest = SHA256.new(data).digest()
+        digest = sha256(data).digest()
         sig = self.signing_key.sign_digest(digest, sigencode=self._sigencode)
         m = Message()
         m.add_string('ecdsa-sha2-nistp256')
@@ -115,7 +113,7 @@ class ECDSAKey (PKey):
 
         # verify the signature by SHA'ing the data and encrypting it
         # using the public key.
-        hash_obj = SHA256.new(data).digest()
+        hash_obj = sha256(data).digest()
         return self.verifying_key.verify_digest(sig, hash_obj,
                                                 sigdecode=self._sigdecode)
 
