@@ -5,7 +5,7 @@ import alabaster
 
 # Alabaster theme + mini-extension
 html_theme_path = [alabaster.get_path()]
-extensions = ['alabaster']
+extensions = ['alabaster', 'sphinx.ext.intersphinx']
 # Paths relative to invoking conf.py - not this shared file
 html_theme = 'alabaster'
 html_theme_options = {
@@ -22,6 +22,11 @@ html_sidebars = {
         'searchbox.html',
         'donate.html',
     ]
+}
+
+# Everything intersphinx's to Python
+intersphinx_mapping = {
+    'python': ('http://docs.python.org/2.6', None),
 }
 
 # Regular settings
