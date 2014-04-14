@@ -2,6 +2,8 @@
 Changelog
 =========
 
+* :bug:`308` Fix regression in dsskey.py that caused sporadic signature 
+  verification failures. Thanks to Chris Rose.
 * :support:`290` (also :issue:`292`) Add support for building universal
   (Python 2+3 compatible) wheel files during the release process. Courtesy of
   Alex Gaynor.
