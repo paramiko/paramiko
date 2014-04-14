@@ -113,9 +113,9 @@ class DSSKey (PKey):
         rstr = util.deflate_long(r, 0)
         sstr = util.deflate_long(s, 0)
         if len(rstr) < 20:
-            rstr += zero_byte * (20 - len(rstr))
+            rstr = zero_byte * (20 - len(rstr)) + rstr
         if len(sstr) < 20:
-            sstr += zero_byte * (20 - len(sstr))
+            sstr = zero_byte * (20 - len(sstr)) + sstr
         m.add_string(rstr + sstr)
         return m
 
