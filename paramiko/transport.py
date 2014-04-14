@@ -25,6 +25,7 @@ import sys
 import threading
 import time
 import weakref
+from hashlib import md5, sha1
 
 import paramiko
 from paramiko import util
@@ -59,7 +60,6 @@ from paramiko.util import retry_on_signal
 
 from Crypto import Random
 from Crypto.Cipher import Blowfish, AES, DES3, ARC4
-from Crypto.Hash import SHA, MD5
 try:
     from Crypto.Util import Counter
 except ImportError:
@@ -107,10 +107,10 @@ class Transport (threading.Thread):
     }
 
     _mac_info = {
-        'hmac-sha1': {'class': SHA, 'size': 20},
-        'hmac-sha1-96': {'class': SHA, 'size': 12},
-        'hmac-md5': {'class': MD5, 'size': 16},
-        'hmac-md5-96': {'class': MD5, 'size': 12},
+        'hmac-sha1': {'class': sha1, 'size': 20},
+        'hmac-sha1-96': {'class': sha1, 'size': 12},
+        'hmac-md5': {'class': md5, 'size': 16},
+        'hmac-md5-96': {'class': md5, 'size': 12},
     }
 
     _key_info = {
@@ -1338,13 +1338,13 @@ class Transport (threading.Thread):
         m.add_bytes(self.H)
         m.add_byte(b(id))
         m.add_bytes(self.session_id)
-        out = sofar = SHA.new(m.asbytes()).digest()
+        out = sofar = sha1(m.asbytes()).digest()
         while len(out) < nbytes:
             m = Message()
             m.add_mpint(self.K)
             m.add_bytes(self.H)
             m.add_bytes(sofar)
-            digest = SHA.new(m.asbytes()).digest()
+            digest = sha1(m.asbytes()).digest()
             out += digest
             sofar += digest
         return out[:nbytes]
@@ -1719,9 +1719,9 @@ class Transport (threading.Thread):
         # initial mac keys are done in the hash's natural size (not the potentially truncated
         # transmission size)
         if self.server_mode:
-            mac_key = self._compute_key('E', mac_engine.digest_size)
+            mac_key = self._compute_key('E', mac_engine().digest_size)
         else:
-            mac_key = self._compute_key('F', mac_engine.digest_size)
+            mac_key = self._compute_key('F', mac_engine().digest_size)
         self.packetizer.set_inbound_cipher(engine, block_size, mac_engine, mac_size, mac_key)
         compress_in = self._compression_info[self.remote_compression][1]
         if (compress_in is not None) and ((self.remote_compression != 'zlib@openssh.com') or self.authenticated):
@@ -1746,9 +1746,9 @@ class Transport (threading.Thread):
         # initial mac keys are done in the hash's natural size (not the potentially truncated
         # transmission size)
         if self.server_mode:
-            mac_key = self._compute_key('F', mac_engine.digest_size)
+            mac_key = self._compute_key('F', mac_engine().digest_size)
         else:
-            mac_key = self._compute_key('E', mac_engine.digest_size)
+            mac_key = self._compute_key('E', mac_engine().digest_size)
         sdctr = self.local_cipher.endswith('-ctr')
         self.packetizer.set_outbound_cipher(engine, block_size, mac_engine, mac_size, mac_key, sdctr)
         compress_out = self._compression_info[self.local_compression][0]
