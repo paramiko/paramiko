@@ -14,6 +14,7 @@ html_theme_options = {
     'github_repo': 'paramiko',
     'gittip_user': 'bitprophet',
     'analytics_id': 'UA-18486793-2',
+    'travis_button': True,
 }
 html_sidebars = {
     '**': [
