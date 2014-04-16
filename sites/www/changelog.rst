@@ -2,6 +2,8 @@
 Changelog
 =========
 
+* :bug:`-` Fix logging error in sftp_client for filenames containing the '%'
+  character. Thanks to Antoine Brenner.
 * :support:`284` Add Python language trove identifiers to ``setup.py``. Thanks
   to Alex Gaynor for catch & patch.
 * :bug:`235` Improve string type testing in a handful of spots (e.g. ``s/if
