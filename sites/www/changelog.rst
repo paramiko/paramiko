@@ -2,6 +2,8 @@
 Changelog
 =========
 
+* :bug: Fix logging error in sftp_client for filenames containing the
+  '%' character. Thanks to Antoine Brenner
 * :bug:`308` Fix regression in dsskey.py that caused sporadic signature 
   verification failures. Thanks to Chris Rose.
 * :support:`299` Use deterministic signatures for ECDSA keys for improved
