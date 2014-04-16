@@ -85,7 +85,7 @@ class BigSFTPTest (unittest.TestCase):
         write a 1MB file with no buffering.
         """
         sftp = get_sftp()
-        kblob = (1024 * 'x')
+        kblob = (1024 * b'x')
         start = time.time()
         try:
             with sftp.open('%s/hongry.txt' % FOLDER, 'w') as f:
@@ -231,7 +231,7 @@ class BigSFTPTest (unittest.TestCase):
         without using it, to verify that paramiko doesn't get confused.
         """
         sftp = get_sftp()
-        kblob = (1024 * 'x')
+        kblob = (1024 * b'x')
         try:
             with sftp.open('%s/hongry.txt' % FOLDER, 'w') as f:
                 f.set_pipelined(True)
