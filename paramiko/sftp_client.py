@@ -117,8 +117,10 @@ class SFTPClient(BaseSFTP):
     def _log(self, level, msg, *args):
         if isinstance(msg, list):
             for m in msg:
-                super(SFTPClient, self)._log(level, "[chan %s] " + m, *([self.sock.get_name()] + list(args)))
+                self._log(level, m, *args)
         else:
+            # escape '%' in msg (they could come from file or directory names) before logging
+            msg = msg.replace('%','%%')
             super(SFTPClient, self)._log(level, "[chan %s] " + msg, *([self.sock.get_name()] + list(args)))
 
     def close(self):
