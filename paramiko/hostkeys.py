@@ -18,8 +18,11 @@
 
 
 import binascii
-from Crypto.Hash import SHA, HMAC
-from paramiko.common import rng
+import os
+
+from hashlib import sha1
+from hmac import HMAC
+
 from paramiko.py3compat import b, u, encodebytes, decodebytes
 
 try:
@@ -262,13 +265,13 @@ class HostKeys (MutableMapping):
         :return: the hashed hostname as a `str`
         """
         if salt is None:
-            salt = rng.read(SHA.digest_size)
+            salt = os.urandom(sha1().digest_size)
         else:
             if salt.startswith('|1|'):
                 salt = salt.split('|')[2]
             salt = decodebytes(b(salt))
-        assert len(salt) == SHA.digest_size
-        hmac = HMAC.HMAC(salt, b(hostname), SHA).digest()
+        assert len(salt) == sha1().digest_size
+        hmac = HMAC(salt, b(hostname), sha1).digest()
         hostkey = '|1|%s|%s' % (u(encodebytes(salt)), u(encodebytes(hmac)))
         return hostkey.replace('\n', '')
     hash_host = staticmethod(hash_host)

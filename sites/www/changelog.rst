@@ -3,6 +3,20 @@ Changelog
 =========
 
 * :feature:`250` GSS-API / SSPI authenticated Diffie-Hellman Key Exchange and user authentication.
+* :bug:`-` Added self.args for exception classes. Used for unpickling. Related
+  to (`Fabric #986 <https://github.com/fabric/fabric/issues/986>`_, `Fabric
+  #714 <https://github.com/fabric/fabric/issues/714>`_). Thanks to Alex
+  Plugaru.
+* :bug:`-` Fix logging error in sftp_client for filenames containing the '%'
+  character. Thanks to Antoine Brenner.
+* :bug:`308` Fix regression in dsskey.py that caused sporadic signature 
+  verification failures. Thanks to Chris Rose.
+* :support:`299` Use deterministic signatures for ECDSA keys for improved
+  security. Thanks to Alex Gaynor.
+* :support:`297` Replace PyCrypto's ``Random`` with `os.urandom` for improved
+  speed and security. Thanks again to Alex.
+* :support:`295` Swap out a bunch of PyCrypto hash functions with use of
+  `hashlib`. Thanks to Alex Gaynor.
 * :support:`290` (also :issue:`292`) Add support for building universal
   (Python 2+3 compatible) wheel files during the release process. Courtesy of
   Alex Gaynor.

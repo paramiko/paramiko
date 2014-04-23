@@ -126,12 +126,12 @@ def main():
     parser.add_option('--server_mode', action='store_true', dest='server_mode', default=False,
                       help='Usage with --gssapi-test. Test the available GSS-API / SSPI server mode to.\
                       Note: you need to have access to the kerberos keytab file.')
-    
+
     options, args = parser.parse_args()
-    
+
     # setup logging
     paramiko.util.log_to_file('test.log')
-    
+
     if options.use_sftp:
         from tests.test_sftp import SFTPTest
         if options.use_loopback_sftp:

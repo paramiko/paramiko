@@ -23,12 +23,12 @@ Common API for all public keys.
 import base64
 from binascii import hexlify, unhexlify
 import os
+from hashlib import md5
 
-from Crypto.Hash import MD5
 from Crypto.Cipher import DES3, AES
 
 from paramiko import util
-from paramiko.common import o600, rng, zero_byte
+from paramiko.common import o600, zero_byte
 from paramiko.py3compat import u, encodebytes, decodebytes, b
 from paramiko.ssh_exception import SSHException, PasswordRequiredException
 
@@ -126,7 +126,7 @@ class PKey (object):
             a 16-byte `string <str>` (binary) of the MD5 fingerprint, in SSH
             format.
         """
-        return MD5.new(self.asbytes()).digest()
+        return md5(self.asbytes()).digest()
 
     def get_base64(self):
         """
@@ -138,12 +138,11 @@ class PKey (object):
         """
         return u(encodebytes(self.asbytes())).replace('\n', '')
 
-    def sign_ssh_data(self, rng, data):
+    def sign_ssh_data(self, data):
         """
         Sign a blob of data with this private key, and return a `.Message`
         representing an SSH signature message.
 
-        :param .Crypto.Util.rng.RandomPool rng: a secure random number generator.
         :param str data: the data to sign.
         :return: an SSH signature `message <.Message>`.
         """
@@ -300,7 +299,7 @@ class PKey (object):
         keysize = self._CIPHER_TABLE[encryption_type]['keysize']
         mode = self._CIPHER_TABLE[encryption_type]['mode']
         salt = unhexlify(b(saltstr))
-        key = util.generate_key_bytes(MD5, salt, password, keysize)
+        key = util.generate_key_bytes(md5, salt, password, keysize)
         return cipher.new(key, mode, salt).decrypt(data)
 
     def _write_private_key_file(self, tag, filename, data, password=None):
@@ -331,11 +330,11 @@ class PKey (object):
             keysize = self._CIPHER_TABLE[cipher_name]['keysize']
             blocksize = self._CIPHER_TABLE[cipher_name]['blocksize']
             mode = self._CIPHER_TABLE[cipher_name]['mode']
-            salt = rng.read(16)
-            key = util.generate_key_bytes(MD5, salt, password, keysize)
+            salt = os.urandom(16)
+            key = util.generate_key_bytes(md5, salt, password, keysize)
             if len(data) % blocksize != 0:
                 n = blocksize - len(data) % blocksize
-                #data += rng.read(n)
+                #data += os.urandom(n)
                 # that would make more sense ^, but it confuses openssh.
                 data += zero_byte * n
             data = cipher.new(key, mode, salt).encrypt(data)

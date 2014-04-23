@@ -37,6 +37,7 @@ from paramiko.common import o777, o600, o666, o644
 from tests.stub_sftp import StubServer, StubSFTPServer
 from tests.loop import LoopSocket
 from tests.util import test_path
+import paramiko.util
 from paramiko.sftp_attr import SFTPAttributes
 
 ARTICLE = '''
@@ -732,7 +733,23 @@ class SFTPTest (unittest.TestCase):
             sftp.remove(target)
 
 
+    def test_N_file_with_percent(self):
+        """
+        verify that we can create a file with a '%' in the filename.
+        ( it needs to be properly escaped by _log() )
+        """
+        self.assertTrue( paramiko.util.get_logger("paramiko").handlers, "This unit test requires logging to be enabled" )
+        f = sftp.open(FOLDER + '/test%file', 'w')
+        try:
+            self.assertEqual(f.stat().st_size, 0)
+        finally:
+            f.close()
+            sftp.remove(FOLDER + '/test%file')
+
+
 if __name__ == '__main__':
     SFTPTest.init_loopback()
+    # logging is required by test_N_file_with_percent
+    paramiko.util.log_to_file('test_sftp.log')
     from unittest import main
     main()

@@ -23,7 +23,8 @@ Some unit tests for utility functions.
 from binascii import hexlify
 import errno
 import os
-from Crypto.Hash import SHA
+from hashlib import sha1
+
 import paramiko.util
 from paramiko.util import lookup_ssh_host_config as host_config
 from paramiko.py3compat import StringIO, byte_ord
@@ -136,7 +137,7 @@ class UtilTest(ParamikoTest):
             )
 
     def test_4_generate_key_bytes(self):
-        x = paramiko.util.generate_key_bytes(SHA, b'ABCDEFGH', 'This is my secret passphrase.', 64)
+        x = paramiko.util.generate_key_bytes(sha1, b'ABCDEFGH', 'This is my secret passphrase.', 64)
         hex = ''.join(['%02x' % byte_ord(c) for c in x])
         self.assertEqual(hex, '9110e2f6793b69363e58173e9436b13a5a4b339005741d5c680e505f57d871347b4239f14fb5c46e857d5e100424873ba849ac699cea98d729e57b3e84378e8b')
 
@@ -152,12 +153,6 @@ class UtilTest(ParamikoTest):
             self.assertEqual(b'E6684DB30E109B67B70FF1DC5C7F1363', fp)
         finally:
             os.unlink('hostfile.temp')
-
-    def test_6_random(self):
-        from paramiko.common import rng
-        # just verify that we can pull out 32 bytes and not get an exception.
-        x = rng.read(32)
-        self.assertEqual(len(x), 32)
 
     def test_7_host_config_expose_issue_33(self):
         test_config_file = """

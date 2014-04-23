@@ -21,7 +21,8 @@ Standard SSH key exchange ("kex" if you wanna sound cool).  Diffie-Hellman of
 1024 bit key halves, using a known "p" prime and "g" generator.
 """
 
-from Crypto.Hash import SHA
+import os
+from hashlib import sha1
 
 from paramiko import util
 from paramiko.common import max_byte, zero_byte
@@ -82,7 +83,7 @@ class KexGroup1(object):
         # potential x where the first 63 bits are 1, because some of those will be
         # larger than q (but this is a tiny tiny subset of potential x).
         while 1:
-            x_bytes = self.transport.rng.read(128)
+            x_bytes = os.urandom(128)
             x_bytes = byte_mask(x_bytes[0], 0x7f) + x_bytes[1:]
             if (x_bytes[:8] != b7fffffffffffffff and
                     x_bytes[:8] != b0000000000000000):
@@ -105,7 +106,7 @@ class KexGroup1(object):
         hm.add_mpint(self.e)
         hm.add_mpint(self.f)
         hm.add_mpint(K)
-        self.transport._set_K_H(K, SHA.new(hm.asbytes()).digest())
+        self.transport._set_K_H(K, sha1(hm.asbytes()).digest())
         self.transport._verify_key(host_key, sig)
         self.transport._activate_outbound()
 
@@ -124,10 +125,10 @@ class KexGroup1(object):
         hm.add_mpint(self.e)
         hm.add_mpint(self.f)
         hm.add_mpint(K)
-        H = SHA.new(hm.asbytes()).digest()
+        H = sha1(hm.asbytes()).digest()
         self.transport._set_K_H(K, H)
         # sign it
-        sig = self.transport.get_server_key().sign_ssh_data(self.transport.rng, H)
+        sig = self.transport.get_server_key().sign_ssh_data(H)
         # send reply
         m = Message()
         m.add_byte(c_MSG_KEXDH_REPLY)
