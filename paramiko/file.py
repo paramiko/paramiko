@@ -287,7 +287,8 @@ class BufferedFile (object):
         Set the file's current position, like stdio's ``fseek``.  Not all file
         objects support seeking.
 
-        .. note:: If a file is opened in append mode (``'a'`` or ``'a+'``), any seek
+        .. note::
+            If a file is opened in append mode (``'a'`` or ``'a+'``), any seek
             operations will be undone at the next write (as the file position
             will move back to the end of the file).
         
