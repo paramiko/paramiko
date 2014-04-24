@@ -18,8 +18,8 @@ We currently support **Python 2.5/2.6/2.7**, with support for Python 3 coming
 soon. Users on Python 2.4 or older are urged to upgrade. Paramiko *may* work on
 Python 2.4 still, but there is no longer any support guarantee.
 
-Paramiko has two dependencies: the pure-Python ECDSA module `ecdsa`, and the
-PyCrypto C extension. `ecdsa` is easily installable from wherever you
+Paramiko has two dependencies: the pure-Python ECDSA module ``ecdsa``, and the
+PyCrypto C extension. ``ecdsa`` is easily installable from wherever you
 obtained Paramiko's package; PyCrypto may require more work. Read on for
 details.
 
