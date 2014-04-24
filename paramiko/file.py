@@ -124,9 +124,11 @@ class BufferedFile (object):
         file first).  If the ``size`` argument is negative or omitted, read all
         the remaining data in the file.
 
-        ``'b'`` mode flag is ignored (``self.FLAG_BINARY`` in ``self._flags``),
-        because SSH treats all files as binary, since we have no idea what
-        encoding the file is in, or even if the file is text data.
+        .. note::
+            ``'b'`` mode flag is ignored (``self.FLAG_BINARY`` in
+            ``self._flags``), because SSH treats all files as binary, since we
+            have no idea what encoding the file is in, or even if the file is
+            text data.
 
         :param int size: maximum number of bytes to read
         :return:
@@ -285,7 +287,8 @@ class BufferedFile (object):
         Set the file's current position, like stdio's ``fseek``.  Not all file
         objects support seeking.
 
-        .. note:: If a file is opened in append mode (``'a'`` or ``'a+'``), any seek
+        .. note::
+            If a file is opened in append mode (``'a'`` or ``'a+'``), any seek
             operations will be undone at the next write (as the file position
             will move back to the end of the file).
         
