@@ -124,15 +124,14 @@ class BufferedFile (object):
         file first).  If the ``size`` argument is negative or omitted, read all
         the remaining data in the file.
 
-        `'b' mode flag is ignored (self.FLAG_BINARY in self._flags), because
-        SSH treats all files as binary, since we have no idea what encoding
-        the file is in, or even if the file is text data.
-  
+        ``'b'`` mode flag is ignored (``self.FLAG_BINARY`` in ``self._flags``),
+        because SSH treats all files as binary, since we have no idea what
+        encoding the file is in, or even if the file is text data.
 
         :param int size: maximum number of bytes to read
         :return:
-            data read from the file (as bytes ), or an empty string
-            if EOF was encountered immediately
+            data read from the file (as bytes), or an empty string if EOF was
+            encountered immediately
         """
         if self._closed:
             raise IOError('File is closed')
@@ -193,10 +192,10 @@ class BufferedFile (object):
         :return:
             next line of the file, or an empty string if the end of the
             file has been reached.
-            If the file was opened in binary 'b' mode: bytes are returned
-            Else: the encoding of the file is assumed to be utf-8 (default
-            encoding used by paramiko.py3compat.u) and character strings
-           (`str`) are returned
+
+            If the file was opened in binary (``'b'``) mode: bytes are returned
+            Else: the encoding of the file is assumed to be UTF-8 and character
+            strings (`str`) are returned
         """
         # it's almost silly how complex this function is.
         if self._closed:

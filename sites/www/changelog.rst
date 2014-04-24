@@ -2,13 +2,19 @@
 Changelog
 =========
 
-* :bug: BufferedFile.read() now returns byte strings instead of text strings
-  It is the right thing to do since we have no idea what encoding the file 
-  is in, or even if the file is text data. BufferedFile.readline() is
-  unchanged and returns text strings assuming the file is utf-8 encoded.
-  This should fix the following issue:
-  http://comments.gmane.org/gmane.comp.sysutils.backup.obnam/252  
-  Thanks Antoine Brenner
+* :bug:`-` `paramiko.file.BufferedFile.read` incorrectly returned text strings
+  after the Python 3 migration, despite bytes being more appropriate for file
+  contents (which may be binary or of an unknown encoding.) This has been
+  addressed.
+
+  .. note::
+      `paramiko.file.BufferedFile.readline` continues to return strings, not
+      bytes, as "lines" only make sense for textual data. It assumes UTF-8 by
+      default.
+
+  This should fix `this issue raised on the Obnam mailing list
+  <http://comments.gmane.org/gmane.comp.sysutils.backup.obnam/252>`_.  Thanks
+  to Antoine Brenner for the patch.
 * :bug:`-` Added self.args for exception classes. Used for unpickling. Related
   to (`Fabric #986 <https://github.com/fabric/fabric/issues/986>`_, `Fabric
   #714 <https://github.com/fabric/fabric/issues/714>`_). Thanks to Alex
