@@ -69,8 +69,8 @@ decreased compared with chicken.
 
 
 # Here is how unicode characters are encoded over 1 to 6 bytes in utf-8
-# U-00000000 - U-0000007F: 0xxxxxxx  
-# U-00000080 - U-000007FF: 110xxxxx 10xxxxxx 
+# U-00000000 - U-0000007F: 0xxxxxxx
+# U-00000080 - U-000007FF: 110xxxxx 10xxxxxx
 # U-00000800 - U-0000FFFF: 1110xxxx 10xxxxxx 10xxxxxx
 # U-00010000 - U-001FFFFF: 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
 # U-00200000 - U-03FFFFFF: 111110xx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx

@@ -124,7 +124,7 @@ class BufferedFile (object):
         file first).  If the ``size`` argument is negative or omitted, read all
         the remaining data in the file.
 
-        .. note:: 
+        .. note::
             ``'b'`` mode flag is ignored (``self.FLAG_BINARY`` in
             ``self._flags``), because SSH treats all files as binary, since we
             have no idea what encoding the file is in, or even if the file is
