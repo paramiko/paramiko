@@ -405,7 +405,7 @@ class SFTPTest (unittest.TestCase):
             self.assertEqual(sftp.stat(FOLDER + '/testing.txt').st_size, 13)
             with sftp.open(FOLDER + '/testing.txt', 'r') as f:
                 data = f.read(20)
-            self.assertEqual(data, 'hello kiddy.\n')
+            self.assertEqual(data, b'hello kiddy.\n')
         finally:
             sftp.remove(FOLDER + '/testing.txt')
 
@@ -466,8 +466,8 @@ class SFTPTest (unittest.TestCase):
                 f.write('?\n')
 
             with sftp.open(FOLDER + '/happy.txt', 'r') as f:
-                self.assertEqual(f.readline(), 'full line?\n')
-                self.assertEqual(f.read(7), 'partial')
+                self.assertEqual(f.readline(), u'full line?\n')
+                self.assertEqual(f.read(7), b'partial')
         finally:
             try:
                 sftp.remove(FOLDER + '/happy.txt')
@@ -662,8 +662,8 @@ class SFTPTest (unittest.TestCase):
 
         fd, localname = mkstemp()
         os.close(fd)
-        text = 'All I wanted was a plastic bunny rabbit.\n'
-        with open(localname, 'w') as f:
+        text = b'All I wanted was a plastic bunny rabbit.\n'
+        with open(localname, 'wb') as f:
             f.write(text)
         saved_progress = []
 
