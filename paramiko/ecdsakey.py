@@ -24,7 +24,6 @@ import binascii
 from hashlib import sha256
 
 from ecdsa import SigningKey, VerifyingKey, der, curves
-from ecdsa.test_pyecdsa import ECDSA
 
 from paramiko.common import four_byte, one_byte
 from paramiko.message import Message
@@ -138,7 +137,7 @@ class ECDSAKey (PKey):
         @return: new private key
         @rtype: L{RSAKey}
         """
-        signing_key = ECDSA.generate()
+        signing_key = SigningKey.generate()
         key = ECDSAKey(vals=(signing_key, signing_key.get_verifying_key()))
         return key
     generate = staticmethod(generate)
