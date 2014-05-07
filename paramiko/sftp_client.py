@@ -549,6 +549,7 @@ class SFTPClient(BaseSFTP):
                     callback(size, file_size)
                 if len(data) == 0:
                     break
+            fr.flush()
             if confirm:
                 s = self.stat(remotepath)
                 if s.st_size != size:
