@@ -2,6 +2,9 @@
 Changelog
 =========
 
+* :release:`1.13.1 <2014-05-07>`
+* :release:`1.12.4 <2014-05-07>`
+* :release:`1.11.6 <2014-05-07>`
 * :bug:`-` `paramiko.file.BufferedFile.read` incorrectly returned text strings
   after the Python 3 migration, despite bytes being more appropriate for file
   contents (which may be binary or of an unknown encoding.) This has been
