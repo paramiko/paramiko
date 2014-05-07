@@ -549,12 +549,13 @@ class SFTPClient(BaseSFTP):
                     callback(size, file_size)
                 if len(data) == 0:
                     break
-        if confirm:
-            s = self.stat(remotepath)
-            if s.st_size != size:
-                raise IOError('size mismatch in put!  %d != %d' % (s.st_size, size))
-        else:
-            s = SFTPAttributes()
+            fr.flush()
+            if confirm:
+                s = self.stat(remotepath)
+                if s.st_size != size:
+                    raise IOError('size mismatch in put!  %d != %d' % (s.st_size, size))
+            else:
+                s = SFTPAttributes()
         return s
 
     def put(self, localpath, remotepath, callback=None, confirm=True):
