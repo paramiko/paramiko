@@ -23,7 +23,7 @@ if sys.version_info < (2, 6):
 
 
 __author__ = "Jeff Forcier <jeff@bitprophet.org>"
-__version__ = "1.13.0"
+__version__ = "1.14.0"
 __version_info__ = tuple([ int(d) for d in __version__.split(".") ])
 __license__ = "GNU Lesser General Public License (LGPL)"
 

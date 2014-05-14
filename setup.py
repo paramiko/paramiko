@@ -56,7 +56,7 @@ if sys.platform == 'darwin':
 
 setup(
     name = "paramiko",
-    version = "1.13.0",
+    version = "1.14.0",
     description = "SSH2 protocol library",
     long_description = longdesc,
     author = "Jeff Forcier",
