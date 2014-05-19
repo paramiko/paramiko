@@ -118,7 +118,7 @@ def safe_string(s):
     out = ''
     for c in s:
         if (byte_ord(c) >= 32) and (byte_ord(c) <= 127):
-            out += c
+            out += chr(c)
         else:
             out += '%%%02X' % byte_ord(c)
     return out
