@@ -228,6 +228,7 @@ class Transport (threading.Thread, ClosingContextManager):
     }
 
     _modulus_pack = None
+    _active_check_timeout = 0.1
 
     def __init__(self,
                  sock,
@@ -315,7 +316,7 @@ class Transport (threading.Thread, ClosingContextManager):
             # we set the timeout so we can check self.active periodically to
             # see if we should bail.  socket.timeout exception is never
             # propagated.
-            self.sock.settimeout(0.1)
+            self.sock.settimeout(self._active_check_timeout)
         except AttributeError:
             pass
 
