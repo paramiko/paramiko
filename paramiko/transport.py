@@ -277,6 +277,9 @@ class Transport (threading.Thread):
         out += '>'
         return out
 
+    def _create_auth_handler(self):
+        return AuthHandler(self)
+
     def atfork(self):
         """
         Terminate this Transport without closing the session.  On posix
@@ -991,7 +994,7 @@ class Transport (threading.Thread):
         if (not self.active) or (not self.initial_kex_done):
             raise SSHException('No existing session')
         my_event = threading.Event()
-        self.auth_handler = AuthHandler(self)
+        self.auth_handler = self._create_auth_handler()
         self.auth_handler.auth_none(username, my_event)
         return self.auth_handler.wait_for_response(my_event)
 
@@ -1047,7 +1050,7 @@ class Transport (threading.Thread):
             my_event = threading.Event()
         else:
             my_event = event
-        self.auth_handler = AuthHandler(self)
+        self.auth_handler = self._create_auth_handler()
         self.auth_handler.auth_password(username, password, my_event)
         if event is not None:
             # caller wants to wait for event themselves
@@ -1114,7 +1117,7 @@ class Transport (threading.Thread):
             my_event = threading.Event()
         else:
             my_event = event
-        self.auth_handler = AuthHandler(self)
+        self.auth_handler = self._create_auth_handler()
         self.auth_handler.auth_publickey(username, key, my_event)
         if event is not None:
             # caller wants to wait for event themselves
@@ -1168,7 +1171,7 @@ class Transport (threading.Thread):
             # we should never try to authenticate unless we're on a secure link
             raise SSHException('No existing session')
         my_event = threading.Event()
-        self.auth_handler = AuthHandler(self)
+        self.auth_handler = self._create_auth_handler()
         self.auth_handler.auth_interactive(username, handler, my_event, submethods)
         return self.auth_handler.wait_for_response(my_event)
 
@@ -1775,7 +1778,7 @@ class Transport (threading.Thread):
         self.kex_engine = None
         if self.server_mode and (self.auth_handler is None):
             # create auth handler for server mode
-            self.auth_handler = AuthHandler(self)
+            self.auth_handler = self._create_auth_handler()
         if not self.initial_kex_done:
             # this was the first key exchange
             self.initial_kex_done = True
