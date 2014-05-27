@@ -3,6 +3,23 @@ Changelog
 =========
 
 * :feature:`250` GSS-API / SSPI authenticated Diffie-Hellman Key Exchange and user authentication.
+* :release:`1.14.0 <2014-05-07>`
+* :release:`1.13.1 <2014-05-07>`
+* :release:`1.12.4 <2014-05-07>`
+* :release:`1.11.6 <2014-05-07>`
+* :bug:`-` `paramiko.file.BufferedFile.read` incorrectly returned text strings
+  after the Python 3 migration, despite bytes being more appropriate for file
+  contents (which may be binary or of an unknown encoding.) This has been
+  addressed.
+
+  .. note::
+      `paramiko.file.BufferedFile.readline` continues to return strings, not
+      bytes, as "lines" only make sense for textual data. It assumes UTF-8 by
+      default.
+
+  This should fix `this issue raised on the Obnam mailing list
+  <http://comments.gmane.org/gmane.comp.sysutils.backup.obnam/252>`_.  Thanks
+  to Antoine Brenner for the patch.
 * :bug:`-` Added self.args for exception classes. Used for unpickling. Related
   to (`Fabric #986 <https://github.com/fabric/fabric/issues/986>`_, `Fabric
   #714 <https://github.com/fabric/fabric/issues/714>`_). Thanks to Alex
