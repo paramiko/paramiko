@@ -392,7 +392,7 @@ class SSHClient (object):
                         if not two_factor:
                             return
                         break
-                    except AuthenticationException, e:
+                    except AuthenticationException as e:
                         # We want to propagate authentication failure exception
                         # instead of masking it with "invalid dss key type" when
                         # using valid RSA key but authentication failure occurs
