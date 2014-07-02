@@ -35,6 +35,7 @@ from paramiko.py3compat import string_types
 from paramiko.resource import ResourceManager
 from paramiko.rsakey import RSAKey
 from paramiko.ssh_exception import SSHException, BadHostKeyException
+from paramiko.ssh_exception import AuthenticationException
 from paramiko.transport import Transport
 from paramiko.util import retry_on_signal
 
@@ -390,6 +391,12 @@ class SSHClient (object):
                         two_factor = (allowed_types == ['password'])
                         if not two_factor:
                             return
+                        break
+                    except AuthenticationException, e:
+                        # We want to propagate authentication failure exception
+                        # instead of masking it with "invalid dss key type" when
+                        # using valid RSA key but authentication failure occurs
+                        saved_exception = e
                         break
                     except SSHException as e:
                         saved_exception = e
