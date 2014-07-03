@@ -30,6 +30,7 @@ import os
 from tests.util import test_path
 import paramiko
 from paramiko.common import PY2
+from paramiko.ssh_exception import AuthenticationException
 
 
 class NullServer (paramiko.ServerInterface):
@@ -252,3 +253,20 @@ class SSHClientTest (unittest.TestCase):
         gc.collect()
 
         self.assertTrue(p() is None)
+
+    def test_7_rsa_key_authentication_failure_invalid_exception_is_propagated(self):
+        # Regression test for https://github.com/paramiko/paramiko/pull/351
+        threading.Thread(target=self._run).start()
+
+        self.tc = paramiko.SSHClient()
+        self.tc.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+
+        try:
+            self.tc.connect(self.addr, self.port, username='slowdive',
+                            key_filename=test_path('test_rsa2.key'),
+                            allow_agent=False, look_for_keys=False)
+        except AuthenticationException:
+            # All good
+            pass
+        else:
+            self.fail('AuthenticationException was not thrown')
