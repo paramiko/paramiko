@@ -26,6 +26,7 @@ import socket
 import time
 import threading
 import random
+from hashlib import sha1
 
 from paramiko import Transport, SecurityOptions, ServerInterface, RSAKey, DSSKey, \
     SSHException, ChannelException
@@ -160,6 +161,7 @@ class TransportTest(ParamikoTest):
         self.tc.K = 123281095979686581523377256114209720774539068973101330872763622971399429481072519713536292772709507296759612401802191955568143056534122385270077606457721553469730659233569339356140085284052436697480759510519672848743794433460113118986816826624865291116513647975790797391795651716378444844877749505443714557929
         self.tc.H = b'\x0C\x83\x07\xCD\xE6\x85\x6F\xF3\x0B\xA9\x36\x84\xEB\x0F\x04\xC2\x52\x0E\x9E\xD3'
         self.tc.session_id = self.tc.H
+        self.tc.local_mac = 'hmac-sha1'
         key = self.tc._compute_key('C', 32)
         self.assertEqual(b'207E66594CA87C44ECCBA3B3CD39FDDB378E6FDB0F97C54B2AA0CFBF900CD995',
                           hexlify(key).upper())
@@ -426,9 +428,11 @@ class TransportTest(ParamikoTest):
         bytes = self.tc.packetizer._Packetizer__sent_bytes
         chan.send('x' * 1024)
         bytes2 = self.tc.packetizer._Packetizer__sent_bytes
+        block_size = self.tc._cipher_info[self.tc.local_cipher]['block-size']
+        mac_size = self.tc._mac_info[self.tc.local_mac]['size']
         # tests show this is actually compressed to *52 bytes*!  including packet overhead!  nice!! :)
         self.assertTrue(bytes2 - bytes < 1024)
-        self.assertEqual(52, bytes2 - bytes)
+        self.assertEqual(16 + block_size + mac_size, bytes2 - bytes)
 
         chan.close()
         schan.close()
