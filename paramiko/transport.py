@@ -26,7 +26,7 @@ import sys
 import threading
 import time
 import weakref
-from hashlib import md5, sha1
+from hashlib import md5, sha1, sha256
 
 import paramiko
 from paramiko import util
@@ -45,7 +45,7 @@ from paramiko.common import xffffffff, cMSG_CHANNEL_OPEN, cMSG_IGNORE, \
     MSG_CHANNEL_EOF, MSG_CHANNEL_CLOSE
 from paramiko.compress import ZlibCompressor, ZlibDecompressor
 from paramiko.dsskey import DSSKey
-from paramiko.kex_gex import KexGex
+from paramiko.kex_gex import KexGex, KexGexSHA256
 from paramiko.kex_group1 import KexGroup1
 from paramiko.message import Message
 from paramiko.packet import Packetizer, NeedRekeyException
@@ -90,9 +90,12 @@ class Transport (threading.Thread):
 
     _preferred_ciphers = ('aes128-ctr', 'aes256-ctr', 'aes128-cbc', 'blowfish-cbc',
                           'aes256-cbc', '3des-cbc', 'arcfour128', 'arcfour256')
-    _preferred_macs = ('hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96')
+    _preferred_macs = ('hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96',
+                       'hmac-sha2-256')
     _preferred_keys = ('ssh-rsa', 'ssh-dss', 'ecdsa-sha2-nistp256')
-    _preferred_kex = ('diffie-hellman-group1-sha1', 'diffie-hellman-group-exchange-sha1')
+    _preferred_kex = ('diffie-hellman-group1-sha1',
+                      'diffie-hellman-group-exchange-sha1',
+                      'diffie-hellman-group-exchange-sha256')
     _preferred_compression = ('none',)
 
     _cipher_info = {
@@ -109,6 +112,7 @@ class Transport (threading.Thread):
     _mac_info = {
         'hmac-sha1': {'class': sha1, 'size': 20},
         'hmac-sha1-96': {'class': sha1, 'size': 12},
+        'hmac-sha2-256': {'class': sha256, 'size': 32},
         'hmac-md5': {'class': md5, 'size': 16},
         'hmac-md5-96': {'class': md5, 'size': 12},
     }
@@ -122,6 +126,7 @@ class Transport (threading.Thread):
     _kex_info = {
         'diffie-hellman-group1-sha1': KexGroup1,
         'diffie-hellman-group-exchange-sha1': KexGex,
+        'diffie-hellman-group-exchange-sha256': KexGexSHA256,
     }
 
     _compression_info = {
@@ -1336,13 +1341,14 @@ class Transport (threading.Thread):
         m.add_bytes(self.H)
         m.add_byte(b(id))
         m.add_bytes(self.session_id)
-        out = sofar = sha1(m.asbytes()).digest()
+        hash_algo = self._mac_info[self.local_mac]['class']
+        out = sofar = hash_algo(m.asbytes()).digest()
         while len(out) < nbytes:
             m = Message()
             m.add_mpint(self.K)
             m.add_bytes(self.H)
             m.add_bytes(sofar)
-            digest = sha1(m.asbytes()).digest()
+            digest = hash_algo(m.asbytes()).digest()
             out += digest
             sofar += digest
         return out[:nbytes]
@@ -1572,10 +1578,12 @@ class Transport (threading.Thread):
             self.clear_to_send_lock.release()
         self.in_kex = True
         if self.server_mode:
-            if (self._modulus_pack is None) and ('diffie-hellman-group-exchange-sha1' in self._preferred_kex):
+            mp_required_prefix = 'diffie-hellman-group-exchange-sha'
+            kex_mp = [k for k in self._preferred_kex if k.startswith(mp_required_prefix)]
+            if (self._modulus_pack is None) and (len(kex_mp) > 0):
                 # can't do group-exchange if we don't have a pack of potential primes
-                pkex = list(self.get_security_options().kex)
-                pkex.remove('diffie-hellman-group-exchange-sha1')
+                pkex = [k for k in self.get_security_options().kex 
+                                if not k.startswith(mp_required_prefix)]
                 self.get_security_options().kex = pkex
             available_server_keys = list(filter(list(self.server_key_dict.keys()).__contains__,
                                                 self._preferred_keys))
