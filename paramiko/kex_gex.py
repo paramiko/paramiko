@@ -23,7 +23,7 @@ client side, and a B{lot} more on the server side.
 """
 
 import os
-from hashlib import sha1
+from hashlib import sha1, sha256
 
 from paramiko import util
 from paramiko.common import DEBUG
@@ -44,6 +44,7 @@ class KexGex (object):
     min_bits = 1024
     max_bits = 8192
     preferred_bits = 2048
+    hash_algo = sha1
 
     def __init__(self, transport):
         self.transport = transport
@@ -87,7 +88,7 @@ class KexGex (object):
             return self._parse_kexdh_gex_reply(m)
         elif ptype == _MSG_KEXDH_GEX_REQUEST_OLD:
             return self._parse_kexdh_gex_request_old(m)
-        raise SSHException('KexGex asked to handle packet type %d' % ptype)
+        raise SSHException('KexGex %s asked to handle packet type %d' % self.name, ptype)
 
     ###  internals...
 
@@ -204,7 +205,7 @@ class KexGex (object):
         hm.add_mpint(self.e)
         hm.add_mpint(self.f)
         hm.add_mpint(K)
-        H = sha1(hm.asbytes()).digest()
+        H = self.hash_algo(hm.asbytes()).digest()
         self.transport._set_K_H(K, H)
         # sign it
         sig = self.transport.get_server_key().sign_ssh_data(H)
@@ -239,6 +240,10 @@ class KexGex (object):
         hm.add_mpint(self.e)
         hm.add_mpint(self.f)
         hm.add_mpint(K)
-        self.transport._set_K_H(K, sha1(hm.asbytes()).digest())
+        self.transport._set_K_H(K, self.hash_algo(hm.asbytes()).digest())
         self.transport._verify_key(host_key, sig)
         self.transport._activate_outbound()
+
+class KexGexSHA256(KexGex):
+    name = 'diffie-hellman-group-exchange-sha256'
+    hash_algo = sha256
