@@ -515,9 +515,9 @@ class AuthHandler (object):
                     break
             mic_token = m.get_string()
             try:
-                retval = sshgss.ssh_check_mic(mic_token,
-                                              self.transport.session_id,
-                                              username)
+                sshgss.ssh_check_mic(mic_token,
+                                     self.transport.session_id,
+                                     username)
             except Exception:
                 result = AUTH_FAILED
                 self._send_auth_result(username, method, result)
@@ -541,9 +541,9 @@ class AuthHandler (object):
                 result = AUTH_FAILED
                 self._send_auth_result(username, method, result)
             try:
-                retval = sshgss.ssh_check_mic(mic_token,
-                                              self.transport.session_id,
-                                              self.auth_username)
+                sshgss.ssh_check_mic(mic_token,
+                                     self.transport.session_id,
+                                     self.auth_username)
             except Exception:
                 result = AUTH_FAILED
                 self._send_auth_result(username, method, result)

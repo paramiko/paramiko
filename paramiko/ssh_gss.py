@@ -384,14 +384,16 @@ class _SSH_GSSAPI(_SSH_GSSAuth):
                                         self._username,
                                         self._service,
                                         self._auth_method)
-            mic_status = self._gss_srv_ctxt.verify_mic(mic_field,
-                                                       mic_token)
+            try:
+                self._gss_srv_ctxt.verify_mic(mic_field,
+                                              mic_token)
+            except gssapi.BadSignature:
+                raise Exception("GSS-API MIC check failed.")
         else:
             # for key exchange with gssapi-keyex
             # client mode
-            mic_status = self._gss_ctxt.verify_mic(self._session_id,
-                                                   mic_token)
-        return mic_status
+            self._gss_ctxt.verify_mic(self._session_id,
+                                      mic_token)
 
     @property
     def credentials_delegated(self):
