@@ -1341,7 +1341,7 @@ class Transport (threading.Thread):
         m.add_bytes(self.H)
         m.add_byte(b(id))
         m.add_bytes(self.session_id)
-        hash_algo = self._mac_info[self.local_mac]['class']
+        hash_algo = self._mac_info[self.local_mac]['class'] if self.local_mac else sha1
         out = sofar = hash_algo(m.asbytes()).digest()
         while len(out) < nbytes:
             m = Message()
