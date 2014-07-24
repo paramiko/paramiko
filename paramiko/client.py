@@ -171,7 +171,7 @@ class SSHClient (object):
 
     def connect(self, hostname, port=SSH_PORT, username=None, password=None, pkey=None,
                 key_filename=None, timeout=None, allow_agent=True, look_for_keys=True,
-                compress=False, sock=None):
+                compress=False, sock=None, banner_timeout=None):
         """
         Connect to an SSH server and authenticate to it.  The server's host key
         is checked against the system host keys (see `load_system_host_keys`)
@@ -210,6 +210,8 @@ class SSHClient (object):
         :param socket sock:
             an open socket or socket-like object (such as a `.Channel`) to use
             for communication to the target host
+        :param float banner_timeout: an optional timeout (in seconds) to wait
+            for the SSH banner to be presented.
 
         :raises BadHostKeyException: if the server's host key could not be
             verified
@@ -239,6 +241,8 @@ class SSHClient (object):
         t.use_compression(compress=compress)
         if self._log_channel is not None:
             t.set_log_channel(self._log_channel)
+        if banner_timeout is not None:
+            t.banner_timeout = banner_timeout
         t.start_client()
         ResourceManager.register(self, t)
 
