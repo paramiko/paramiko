@@ -26,7 +26,7 @@ import sys
 import threading
 import time
 import weakref
-from hashlib import md5, sha1
+from hashlib import md5, sha1, sha256
 
 import paramiko
 from paramiko import util
@@ -90,7 +90,7 @@ class Transport (threading.Thread):
 
     _preferred_ciphers = ('aes128-ctr', 'aes256-ctr', 'aes128-cbc', 'blowfish-cbc',
                           'aes256-cbc', '3des-cbc', 'arcfour128', 'arcfour256')
-    _preferred_macs = ('hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96')
+    _preferred_macs = ('hmac-sha2-256', 'hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96')
     _preferred_keys = ('ssh-rsa', 'ssh-dss', 'ecdsa-sha2-nistp256')
     _preferred_kex = ('diffie-hellman-group1-sha1', 'diffie-hellman-group-exchange-sha1')
     _preferred_compression = ('none',)
@@ -107,6 +107,7 @@ class Transport (threading.Thread):
     }
 
     _mac_info = {
+        'hmac-sha2-256': { 'class': sha256, 'size': 32 },
         'hmac-sha1': {'class': sha1, 'size': 20},
         'hmac-sha1-96': {'class': sha1, 'size': 12},
         'hmac-md5': {'class': md5, 'size': 16},
