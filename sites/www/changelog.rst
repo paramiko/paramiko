@@ -3,6 +3,8 @@ Changelog
 =========
 
 * :release:`1.11.6 <2014-05-07>`
+* :bug:`-` Fixed a reference cycle with channel objects that was causing memory
+  leaks.  Thanks to Alex Philipp.
 * :bug:`-` Added self.args for exception classes. Used for unpickling. Related
   to (`Fabric #986 <https://github.com/fabric/fabric/issues/986>`_, `Fabric
   #714 <https://github.com/fabric/fabric/issues/714>`_). Thanks to Alex

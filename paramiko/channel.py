@@ -26,6 +26,7 @@ import time
 import threading
 import socket
 import os
+import weakref
 
 from paramiko.common import *
 from paramiko import util
@@ -890,7 +891,7 @@ class Channel (object):
 
 
     def _set_transport(self, transport):
-        self.transport = transport
+        self.transport = weakref.proxy(transport)
         self.logger = util.get_logger(self.transport.get_log_channel())
 
     def _set_window(self, window_size, max_packet_size):
