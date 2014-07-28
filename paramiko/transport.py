@@ -1287,16 +1287,12 @@ class Transport (threading.Thread):
             if not self.active:
                 self._log(DEBUG, 'Dropping user packet because connection is dead.')
                 return
-            self.clear_to_send_lock.acquire()
-            if self.clear_to_send.isSet():
-                break
-            self.clear_to_send_lock.release()
+            with self.clear_to_send_lock:
+                if self.clear_to_send.isSet():
+                    self._send_message(data)
+                    return
             if time.time() > start + self.clear_to_send_timeout:
                 raise SSHException('Key-exchange timed out waiting for key negotiation')
-        try:
-            self._send_message(data)
-        finally:
-            self.clear_to_send_lock.release()
 
     def _set_K_H(self, k, h):
         """used by a kex object to set the K (root key) and H (exchange hash)"""
