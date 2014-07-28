@@ -235,12 +235,9 @@ def get_thread_id():
     try:
         return _g_thread_ids[tid]
     except KeyError:
-        _g_thread_lock.acquire()
-        try:
+        with _g_thread_lock:
             _g_thread_counter += 1
             ret = _g_thread_ids[tid] = _g_thread_counter
-        finally:
-            _g_thread_lock.release()
         return ret
 
 
