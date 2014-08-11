@@ -18,7 +18,7 @@ implementations such as those found on the average Linux distribution (as well
 as on Mac OS X and \*BSD.)
 
 Because of this, **we typically close bug reports for nonstandard SSH
-implementations**.
+implementations or host systems**.
 
 However, **closed does not imply locked** - affected users can still post
 comments on such tickets - and **we will always consider actual patch
