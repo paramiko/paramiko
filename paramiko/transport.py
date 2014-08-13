@@ -135,7 +135,10 @@ class Transport (threading.Thread):
 
     _modulus_pack = None
 
-    def __init__(self, sock):
+    def __init__(self,
+                 sock,
+                 default_window_size=64 * 2 ** 15,
+                 default_max_packet_size=2 ** 15):
         """
         Create a new SSH session over an existing socket, or socket-like
         object.  This only creates the `.Transport` object; it doesn't begin the
@@ -163,6 +166,12 @@ class Transport (threading.Thread):
 
         :param socket sock:
             a socket or socket-like object to create the session over.
+        :param int default_window_size:
+            sets the default window size on the transport. (defaults to
+            2097152)
+        :param int default_max_packet_size:
+            sets the default max packet size on the transport. (defaults to
+            32768)
         """
         if isinstance(sock, string_types):
             # convert "host:port" into (host, port)
@@ -231,8 +240,8 @@ class Transport (threading.Thread):
         self.channel_events = {}       # (id -> Event)
         self.channels_seen = {}        # (id -> True)
         self._channel_counter = 1
-        self.default_max_packet_size = 2 ** 15
-        self.default_window_size = 64 * self.default_max_packet_size
+        self.default_max_packet_size = default_max_packet_size
+        self.default_window_size = default_window_size
         self._forward_agent_handler = None
         self._x11_handler = None
         self._tcp_handler = None
