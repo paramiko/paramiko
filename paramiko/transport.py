@@ -231,8 +231,8 @@ class Transport (threading.Thread):
         self.channel_events = {}       # (id -> Event)
         self.channels_seen = {}        # (id -> True)
         self._channel_counter = 1
-        self.window_size = 65536
-        self.max_packet_size = 34816
+        self.max_packet_size = 2 ** 15
+        self.window_size = 64 * self.max_packet_size
         self._forward_agent_handler = None
         self._x11_handler = None
         self._tcp_handler = None

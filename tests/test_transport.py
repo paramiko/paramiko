@@ -585,12 +585,13 @@ class TransportTest(ParamikoTest):
         self.assertEqual(chan.send_ready(), True)
         total = 0
         K = '*' * 1024
-        while total < 1024 * 1024:
+        limit = 1+(64 * 2 ** 15)
+        while total < limit:
             chan.send(K)
             total += len(K)
             if not chan.send_ready():
                 break
-        self.assertTrue(total < 1024 * 1024)
+        self.assertTrue(total < limit)
 
         schan.close()
         chan.close()
