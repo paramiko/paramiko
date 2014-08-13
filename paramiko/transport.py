@@ -231,8 +231,8 @@ class Transport (threading.Thread):
         self.channel_events = {}       # (id -> Event)
         self.channels_seen = {}        # (id -> True)
         self._channel_counter = 1
-        self.max_packet_size = 2 ** 15
-        self.window_size = 64 * self.max_packet_size
+        self.default_max_packet_size = 2 ** 15
+        self.default_window_size = 64 * self.default_max_packet_size
         self._forward_agent_handler = None
         self._x11_handler = None
         self._tcp_handler = None
@@ -610,8 +610,8 @@ class Transport (threading.Thread):
             m.add_byte(cMSG_CHANNEL_OPEN)
             m.add_string(kind)
             m.add_int(chanid)
-            m.add_int(self.window_size)
-            m.add_int(self.max_packet_size)
+            m.add_int(self.default_window_size)
+            m.add_int(self.default_max_packet_size)
             if (kind == 'forwarded-tcpip') or (kind == 'direct-tcpip'):
                 m.add_string(dest_addr[0])
                 m.add_int(dest_addr[1])
@@ -625,7 +625,7 @@ class Transport (threading.Thread):
             self.channel_events[chanid] = event = threading.Event()
             self.channels_seen[chanid] = True
             chan._set_transport(self)
-            chan._set_window(self.window_size, self.max_packet_size)
+            chan._set_window(self.default_window_size, self.default_max_packet_size)
         finally:
             self.lock.release()
         self._send_user_message(m)
@@ -1953,7 +1953,7 @@ class Transport (threading.Thread):
             self._channels.put(my_chanid, chan)
             self.channels_seen[my_chanid] = True
             chan._set_transport(self)
-            chan._set_window(self.window_size, self.max_packet_size)
+            chan._set_window(self.default_window_size, self.default_max_packet_size)
             chan._set_remote_channel(chanid, initial_window_size, max_packet_size)
         finally:
             self.lock.release()
@@ -1961,8 +1961,8 @@ class Transport (threading.Thread):
         m.add_byte(cMSG_CHANNEL_OPEN_SUCCESS)
         m.add_int(chanid)
         m.add_int(my_chanid)
-        m.add_int(self.window_size)
-        m.add_int(self.max_packet_size)
+        m.add_int(self.default_window_size)
+        m.add_int(self.default_max_packet_size)
         self._send_message(m)
         self._log(INFO, 'Secsh channel %d (%s) opened.', my_chanid, kind)
         if kind == 'auth-agent@openssh.com':
