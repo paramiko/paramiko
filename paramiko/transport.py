@@ -164,6 +164,11 @@ class Transport (threading.Thread):
         address and used for communication.  Exceptions from the ``socket``
         call may be thrown in this case.
 
+        .. note:: Modifying the the window and packet sizes might have adverse
+            effects on your channels created from this transport. The
+            default values are the same as in the OpenSSH code base and have
+            been battle tested.
+
         :param socket sock:
             a socket or socket-like object to create the session over.
         :param int default_window_size:
@@ -536,18 +541,29 @@ class Transport (threading.Thread):
         """
         return self.active
 
-    def open_session(self):
+    def open_session(self, window_size=None, max_packet_size=None):
         """
         Request a new channel to the server, of type ``"session"``.  This is
         just an alias for calling `open_channel` with an argument of
         ``"session"``.
+
+        .. note:: Modifying the the window and packet sizes might have adverse
+            effects on the session created. The default values are the same
+            as in the OpenSSH code base and have been battle tested.
+
+        :param int window_size:
+            optional window size for this session.
+        :param int max_packet_size:
+            optional max packet size for this session.
 
         :return: a new `.Channel`
 
         :raises SSHException: if the request is rejected or the session ends
             prematurely
         """
-        return self.open_channel('session')
+        return self.open_channel('session',
+                                 window_size=window_size,
+                                 max_packet_size=max_packet_size)
 
     def open_x11_channel(self, src_addr=None):
         """
@@ -589,12 +605,21 @@ class Transport (threading.Thread):
         """
         return self.open_channel('forwarded-tcpip', dest_addr, src_addr)
 
-    def open_channel(self, kind, dest_addr=None, src_addr=None):
+    def open_channel(self,
+                     kind,
+                     dest_addr=None,
+                     src_addr=None,
+                     window_size=None,
+                     max_packet_size=None):
         """
         Request a new channel to the server. `Channels <.Channel>` are
         socket-like objects used for the actual transfer of data across the
         session. You may only request a channel after negotiating encryption
         (using `connect` or `start_client`) and authenticating.
+
+        .. note:: Modifying the the window and packet sizes might have adverse
+            effects on the channel created. The default values are the same
+            as in the OpenSSH code base and have been battle tested.
 
         :param str kind:
             the kind of channel requested (usually ``"session"``,
@@ -605,6 +630,11 @@ class Transport (threading.Thread):
             ``"direct-tcpip"`` (ignored for other channel types)
         :param src_addr: the source address of this port forwarding, if
             ``kind`` is ``"forwarded-tcpip"``, ``"direct-tcpip"``, or ``"x11"``
+        :param int window_size:
+            optional window size for this session.
+        :param int max_packet_size:
+            optional max packet size for this session.
+
         :return: a new `.Channel` on success
 
         :raises SSHException: if the request is rejected or the session ends
@@ -614,13 +644,17 @@ class Transport (threading.Thread):
             raise SSHException('SSH session not active')
         self.lock.acquire()
         try:
+            if window_size is None:
+                window_size = self.default_window_size
+            if max_packet_size is None:
+                max_packet_size = self.default_max_packet_size
             chanid = self._next_channel()
             m = Message()
             m.add_byte(cMSG_CHANNEL_OPEN)
             m.add_string(kind)
             m.add_int(chanid)
-            m.add_int(self.default_window_size)
-            m.add_int(self.default_max_packet_size)
+            m.add_int(window_size)
+            m.add_int(max_packet_size)
             if (kind == 'forwarded-tcpip') or (kind == 'direct-tcpip'):
                 m.add_string(dest_addr[0])
                 m.add_int(dest_addr[1])
@@ -634,7 +668,7 @@ class Transport (threading.Thread):
             self.channel_events[chanid] = event = threading.Event()
             self.channels_seen[chanid] = True
             chan._set_transport(self)
-            chan._set_window(self.default_window_size, self.default_max_packet_size)
+            chan._set_window(window_size, max_packet_size)
         finally:
             self.lock.release()
         self._send_user_message(m)
@@ -678,6 +712,7 @@ class Transport (threading.Thread):
         :param callable handler:
             optional handler for incoming forwarded connections, of the form
             ``func(Channel, (str, int), (str, int))``.
+
         :return: the port number (`int`) allocated by the server
 
         :raises SSHException: if the server refused the TCP forward request
