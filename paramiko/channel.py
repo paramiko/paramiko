@@ -40,7 +40,9 @@ from paramiko import pipe
 
 
 # lower bound on the max packet size we'll accept from the remote host
-MIN_PACKET_SIZE = 1024
+# Minimum packet size is 32768 bytes according to
+# http://www.ietf.org/rfc/rfc4254.txt
+MIN_PACKET_SIZE = 2 ** 15
 
 
 class Channel (object):
