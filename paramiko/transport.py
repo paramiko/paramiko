@@ -31,7 +31,7 @@ from hashlib import md5, sha1
 import paramiko
 from paramiko import util
 from paramiko.auth_handler import AuthHandler
-from paramiko.channel import Channel
+from paramiko.channel import Channel, MIN_PACKET_SIZE, MAX_WINDOW_SIZE
 from paramiko.common import xffffffff, cMSG_CHANNEL_OPEN, cMSG_IGNORE, \
     cMSG_GLOBAL_REQUEST, DEBUG, MSG_KEXINIT, MSG_IGNORE, MSG_DISCONNECT, \
     MSG_DEBUG, ERROR, WARNING, cMSG_UNIMPLEMENTED, INFO, cMSG_KEXINIT, \
@@ -57,7 +57,7 @@ from paramiko.server import ServerInterface
 from paramiko.sftp_client import SFTPClient
 from paramiko.ssh_exception import (SSHException, BadAuthenticationType,
                                     ChannelException, ProxyCommandFailure)
-from paramiko.util import retry_on_signal
+from paramiko.util import retry_on_signal, clamp_value
 
 from Crypto.Cipher import Blowfish, AES, DES3, ARC4
 try:
@@ -644,10 +644,8 @@ class Transport (threading.Thread):
             raise SSHException('SSH session not active')
         self.lock.acquire()
         try:
-            if window_size is None:
-                window_size = self.default_window_size
-            if max_packet_size is None:
-                max_packet_size = self.default_max_packet_size
+            window_size = self._sanitize_window_size(window_size)
+            max_packet_size = self._sanitize_packet_size(max_packet_size)
             chanid = self._next_channel()
             m = Message()
             m.add_byte(cMSG_CHANNEL_OPEN)
@@ -1433,6 +1431,17 @@ class Transport (threading.Thread):
             self.server_accept_cv.notify()
         finally:
             self.lock.release()
+
+    def _sanitize_window_size(self, window_size):
+        if window_size is None:
+            window_size = self.default_window_size
+        return clamp_value(MIN_PACKET_SIZE, window_size, MAX_WINDOW_SIZE)
+
+    def _sanitize_packet_size(self, max_packet_size):
+        if max_packet_size is None:
+            max_packet_size = self.default_max_packet_size
+        return clamp_value(MIN_PACKET_SIZE, max_packet_size, MAX_WINDOW_SIZE)
+
 
     def run(self):
         # (use the exposed "run" method, because if we specify a thread target
