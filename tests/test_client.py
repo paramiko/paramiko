@@ -260,14 +260,14 @@ class SSHClientTest (unittest.TestCase):
         """
         verify that the SSHClient has a configurable banner timeout.
         """
-        # Start the thread with a 5 second wait.
-        threading.Thread(target=self._run, args=(5,)).start()
+        # Start the thread with a 1 second wait.
+        threading.Thread(target=self._run, args=(1,)).start()
         host_key = paramiko.RSAKey.from_private_key_file(test_path('test_rsa.key'))
         public_host_key = paramiko.RSAKey(data=host_key.asbytes())
 
         self.tc = paramiko.SSHClient()
         self.tc.get_host_keys().add('[%s]:%d' % (self.addr, self.port), 'ssh-rsa', public_host_key)
-        # Connect with a three second banner timeout.
+        # Connect with a half second banner timeout.
         self.assertRaises(
             paramiko.SSHException,
             self.tc.connect,
@@ -275,5 +275,5 @@ class SSHClientTest (unittest.TestCase):
             self.port,
             username='slowdive',
             password='pygmalion',
-            banner_timeout=3
+            banner_timeout=0.5
         )
