@@ -30,7 +30,7 @@ from paramiko import util
 from paramiko.common import cMSG_CHANNEL_REQUEST, cMSG_CHANNEL_WINDOW_ADJUST, \
     cMSG_CHANNEL_DATA, cMSG_CHANNEL_EXTENDED_DATA, DEBUG, ERROR, \
     cMSG_CHANNEL_SUCCESS, cMSG_CHANNEL_FAILURE, cMSG_CHANNEL_EOF, \
-    cMSG_CHANNEL_CLOSE
+    cMSG_CHANNEL_CLOSE, MIN_PACKET_SIZE
 from paramiko.message import Message
 from paramiko.py3compat import bytes_types
 from paramiko.ssh_exception import SSHException
@@ -38,14 +38,6 @@ from paramiko.file import BufferedFile
 from paramiko.buffered_pipe import BufferedPipe, PipeTimeout
 from paramiko import pipe
 
-
-# lower bound on the max packet size we'll accept from the remote host
-# Minimum packet size is 32768 bytes according to
-# http://www.ietf.org/rfc/rfc4254.txt
-MIN_PACKET_SIZE = 2 ** 15
-
-# Max windows size according to http://www.ietf.org/rfc/rfc4254.txt
-MAX_WINDOW_SIZE = 2**32 -1
 
 class Channel (object):
     """

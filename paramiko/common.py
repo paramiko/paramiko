@@ -171,3 +171,14 @@ CRITICAL = logging.CRITICAL
 
 # Common IO/select/etc sleep period, in seconds
 io_sleep = 0.01
+
+DEFAULT_WINDOW_SIZE = 64 * 2 ** 15
+DEFAULT_MAX_PACKET_SIZE = 2 ** 15
+
+# lower bound on the max packet size we'll accept from the remote host
+# Minimum packet size is 32768 bytes according to
+# http://www.ietf.org/rfc/rfc4254.txt
+MIN_PACKET_SIZE = 2 ** 15
+
+# Max windows size according to http://www.ietf.org/rfc/rfc4254.txt
+MAX_WINDOW_SIZE = 2**32 -1

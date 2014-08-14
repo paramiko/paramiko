@@ -31,7 +31,7 @@ from hashlib import md5, sha1
 import paramiko
 from paramiko import util
 from paramiko.auth_handler import AuthHandler
-from paramiko.channel import Channel, MIN_PACKET_SIZE, MAX_WINDOW_SIZE
+from paramiko.channel import Channel
 from paramiko.common import xffffffff, cMSG_CHANNEL_OPEN, cMSG_IGNORE, \
     cMSG_GLOBAL_REQUEST, DEBUG, MSG_KEXINIT, MSG_IGNORE, MSG_DISCONNECT, \
     MSG_DEBUG, ERROR, WARNING, cMSG_UNIMPLEMENTED, INFO, cMSG_KEXINIT, \
@@ -42,7 +42,8 @@ from paramiko.common import xffffffff, cMSG_CHANNEL_OPEN, cMSG_IGNORE, \
     MSG_CHANNEL_OPEN_SUCCESS, MSG_CHANNEL_OPEN_FAILURE, MSG_CHANNEL_OPEN, \
     MSG_CHANNEL_SUCCESS, MSG_CHANNEL_FAILURE, MSG_CHANNEL_DATA, \
     MSG_CHANNEL_EXTENDED_DATA, MSG_CHANNEL_WINDOW_ADJUST, MSG_CHANNEL_REQUEST, \
-    MSG_CHANNEL_EOF, MSG_CHANNEL_CLOSE
+    MSG_CHANNEL_EOF, MSG_CHANNEL_CLOSE, MIN_PACKET_SIZE, MAX_WINDOW_SIZE, \
+    DEFAULT_WINDOW_SIZE, DEFAULT_MAX_PACKET_SIZE
 from paramiko.compress import ZlibCompressor, ZlibDecompressor
 from paramiko.dsskey import DSSKey
 from paramiko.kex_gex import KexGex
@@ -137,8 +138,8 @@ class Transport (threading.Thread):
 
     def __init__(self,
                  sock,
-                 default_window_size=64 * 2 ** 15,
-                 default_max_packet_size=2 ** 15):
+                 default_window_size=DEFAULT_WINDOW_SIZE,
+                 default_max_packet_size=DEFAULT_MAX_PACKET_SIZE):
         """
         Create a new SSH session over an existing socket, or socket-like
         object.  This only creates the `.Transport` object; it doesn't begin the
