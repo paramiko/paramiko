@@ -27,6 +27,7 @@ import unittest
 import weakref
 import warnings
 import os
+import time
 from tests.util import test_path
 import paramiko
 from paramiko.common import PY2
@@ -72,12 +73,14 @@ class SSHClientTest (unittest.TestCase):
             if hasattr(self, attr):
                 getattr(self, attr).close()
 
-    def _run(self):
+    def _run(self, delay=0):
         self.socks, addr = self.sockl.accept()
         self.ts = paramiko.Transport(self.socks)
         host_key = paramiko.RSAKey.from_private_key_file(test_path('test_rsa.key'))
         self.ts.add_server_key(host_key)
         server = NullServer()
+        if delay:
+            time.sleep(delay)
         self.ts.start_server(self.event, server)
 
     def test_1_client(self):
@@ -252,3 +255,25 @@ class SSHClientTest (unittest.TestCase):
         gc.collect()
 
         self.assertTrue(p() is None)
+
+    def test_7_banner_timeout(self):
+        """
+        verify that the SSHClient has a configurable banner timeout.
+        """
+        # Start the thread with a 5 second wait.
+        threading.Thread(target=self._run, args=(5,)).start()
+        host_key = paramiko.RSAKey.from_private_key_file(test_path('test_rsa.key'))
+        public_host_key = paramiko.RSAKey(data=host_key.asbytes())
+
+        self.tc = paramiko.SSHClient()
+        self.tc.get_host_keys().add('[%s]:%d' % (self.addr, self.port), 'ssh-rsa', public_host_key)
+        # Connect with a three second banner timeout.
+        self.assertRaises(
+            paramiko.SSHException,
+            self.tc.connect,
+            self.addr,
+            self.port,
+            username='slowdive',
+            password='pygmalion',
+            banner_timeout=3
+        )
