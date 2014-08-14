@@ -333,3 +333,8 @@ IdentityFile something_%l_using_fqdn
 """
         config = paramiko.util.parse_ssh_config(StringIO(test_config))
         assert config.lookup('meh')  # will die during lookup() if bug regresses
+
+    def test_12_clamp_value(self):
+        self.assertEqual(32768, paramiko.util.clamp_value(32767, 32768, 32769))
+        self.assertEqual(32767, paramiko.util.clamp_value(32767, 32765, 32769))
+        self.assertEqual(32769, paramiko.util.clamp_value(32767, 32770, 32769))
