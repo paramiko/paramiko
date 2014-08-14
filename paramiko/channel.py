@@ -30,7 +30,7 @@ from paramiko import util
 from paramiko.common import cMSG_CHANNEL_REQUEST, cMSG_CHANNEL_WINDOW_ADJUST, \
     cMSG_CHANNEL_DATA, cMSG_CHANNEL_EXTENDED_DATA, DEBUG, ERROR, \
     cMSG_CHANNEL_SUCCESS, cMSG_CHANNEL_FAILURE, cMSG_CHANNEL_EOF, \
-    cMSG_CHANNEL_CLOSE, MIN_PACKET_SIZE
+    cMSG_CHANNEL_CLOSE
 from paramiko.message import Message
 from paramiko.py3compat import bytes_types
 from paramiko.ssh_exception import SSHException
@@ -899,7 +899,8 @@ class Channel (object):
     def _set_remote_channel(self, chanid, window_size, max_packet_size):
         self.remote_chanid = chanid
         self.out_window_size = window_size
-        self.out_max_packet_size = max(max_packet_size, MIN_PACKET_SIZE)
+        self.out_max_packet_size = self.transport. \
+            _sanitize_packet_size(max_packet_size)
         self.active = 1
         self._log(DEBUG, 'Max packet out: %d bytes' % max_packet_size)
 
