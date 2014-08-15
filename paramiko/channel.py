@@ -729,9 +729,6 @@ class Channel (object):
             This is irritating, but identically follows Python's API.
         """
         while s:
-            if self.closed:
-                # this doesn't seem useful, but it is the documented behavior of Socket
-                raise socket.error('Socket is closed')
             sent = self.send(s)
             s = s[sent:]
         return None
@@ -753,8 +750,6 @@ class Channel (object):
         .. versionadded:: 1.1
         """
         while s:
-            if self.closed:
-                raise socket.error('Socket is closed')
             sent = self.send_stderr(s)
             s = s[sent:]
         return None
