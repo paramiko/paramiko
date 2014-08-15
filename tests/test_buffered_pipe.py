@@ -22,10 +22,9 @@ Some unit tests for BufferedPipe.
 
 import threading
 import time
+import unittest
 from paramiko.buffered_pipe import BufferedPipe, PipeTimeout
 from paramiko import pipe
-
-from tests.util import ParamikoTest
 
 
 def delay_thread(p):
@@ -40,7 +39,7 @@ def close_thread(p):
     p.close()
 
 
-class BufferedPipeTest(ParamikoTest):
+class BufferedPipeTest(unittest.TestCase):
     def test_1_buffered_pipe(self):
         p = BufferedPipe()
         self.assertTrue(not p.read_ready())

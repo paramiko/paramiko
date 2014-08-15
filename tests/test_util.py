@@ -24,12 +24,11 @@ from binascii import hexlify
 import errno
 import os
 from hashlib import sha1
+import unittest
 
 import paramiko.util
 from paramiko.util import lookup_ssh_host_config as host_config
 from paramiko.py3compat import StringIO, byte_ord
-
-from tests.util import ParamikoTest
 
 test_config_file = """\
 Host *
@@ -60,7 +59,7 @@ BGQ3GQ/Fc7SX6gkpXkwcZryoi4kNFhHu5LvHcZPdxXV1D+uTMfGS1eyd2Yz/DoNWXNAl8TI0cAsW\
 from paramiko import *
 
 
-class UtilTest(ParamikoTest):
+class UtilTest(unittest.TestCase):
     def test_1_import(self):
         """
         verify that all the classes can be imported from paramiko.

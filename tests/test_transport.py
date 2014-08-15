@@ -26,6 +26,7 @@ import socket
 import time
 import threading
 import random
+import unittest
 
 from paramiko import Transport, SecurityOptions, ServerInterface, RSAKey, DSSKey, \
     SSHException, ChannelException
@@ -35,7 +36,7 @@ from paramiko.common import MSG_KEXINIT, cMSG_CHANNEL_WINDOW_ADJUST
 from paramiko.py3compat import bytes
 from paramiko.message import Message
 from tests.loop import LoopSocket
-from tests.util import ParamikoTest, test_path
+from tests.util import test_path
 
 
 LONG_BANNER = """\
@@ -105,7 +106,7 @@ class NullServer (ServerInterface):
         return OPEN_SUCCEEDED
 
 
-class TransportTest(ParamikoTest):
+class TransportTest(unittest.TestCase):
     def setUp(self):
         self.socks = LoopSocket()
         self.sockc = LoopSocket()
