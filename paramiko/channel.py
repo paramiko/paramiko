@@ -25,6 +25,7 @@ import os
 import socket
 import time
 import threading
+from functools import wraps
 
 from paramiko import util
 from paramiko.common import cMSG_CHANNEL_REQUEST, cMSG_CHANNEL_WINDOW_ADJUST, \
@@ -42,6 +43,15 @@ from paramiko import pipe
 # lower bound on the max packet size we'll accept from the remote host
 MIN_PACKET_SIZE = 1024
 
+def requires_open_channel(func):
+    """This decorator make sures that the channel is open else raises an
+    exception"""
+    @wraps(func)
+    def _check(self, *args, **kwds):
+        if self.closed or self.eof_received or self.eof_sent or not self.active:
+            raise SSHException('Channel is not open')
+        return func(self, *args, **kwds)
+    return _check
 
 class Channel (object):
     """
