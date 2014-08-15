@@ -683,6 +683,9 @@ class Channel (object):
         self.lock.acquire()
         try:
             size = self._wait_for_send_window(size)
+            # Instead of returning 0 here when the channel is closed, we might
+            # want to raise EOFError or similar. Should we just do as in the
+            # send_all method, raise a socket.error?
             if size == 0:
                 # eof or similar
                 return 0
@@ -718,6 +721,9 @@ class Channel (object):
         self.lock.acquire()
         try:
             size = self._wait_for_send_window(size)
+            # Instead of returning 0 here when the channel is closed, we might
+            # want to raise EOFError or similar. Should we just do as in the
+            # send_all method, raise a socket.error?
             if size == 0:
                 # eof or similar
                 return 0
