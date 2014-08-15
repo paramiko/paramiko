@@ -48,12 +48,12 @@ class BufferedPipeTest(ParamikoTest):
         self.assertTrue(p.read_ready())
         data = p.read(6)
         self.assertEqual(b'hello.', data)
-        
+
         p.feed('plus/minus')
         self.assertEqual(b'plu', p.read(3))
         self.assertEqual(b's/m', p.read(3))
         self.assertEqual(b'inus', p.read(4))
-        
+
         p.close()
         self.assertTrue(not p.read_ready())
         self.assertEqual(b'', p.read(1))
