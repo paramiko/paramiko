@@ -41,7 +41,12 @@ Host *.example.com
     \tUser bjork
 Port=3333
 Host *
- \t  \t Crazy something dumb  
+"""
+
+dont_strip_whitespace_please = "\t  \t Crazy something dumb  "
+
+test_config_file += dont_strip_whitespace_please
+test_config_file += """
 Host spoo.example.com
 Crazy something else
 """
