@@ -1256,7 +1256,7 @@ class Transport (threading.Thread):
     def stop_thread(self):
         self.active = False
         self.packetizer.close()
-        while self.isAlive():
+        while self.is_alive() and (self is not threading.current_thread()):
             self.join(10)
 
     ###  internals...
