@@ -679,26 +679,11 @@ class Channel (object):
         :raises socket.timeout: if no data could be sent before the timeout set
             by `settimeout`.
         """
-        size = len(s)
-        self.lock.acquire()
-        try:
-            size = self._wait_for_send_window(size)
-            # Instead of returning 0 here when the channel is closed, we might
-            # want to raise EOFError or similar. Should we just do as in the
-            # send_all method, raise a socket.error?
-            if size == 0:
-                # eof or similar
-                return 0
-            m = Message()
-            m.add_byte(cMSG_CHANNEL_DATA)
-            m.add_int(self.remote_chanid)
-            m.add_string(s[:size])
-        finally:
-            self.lock.release()
-        # Note: We release self.lock before calling _send_user_message.
-        # Otherwise, we can deadlock during re-keying.
-        self.transport._send_user_message(m)
-        return size
+
+        m = Message()
+        m.add_byte(cMSG_CHANNEL_DATA)
+        m.add_int(self.remote_chanid)
+        return self._send(s, m)
 
     def send_stderr(self, s):
         """
@@ -717,27 +702,13 @@ class Channel (object):
 
         .. versionadded:: 1.1
         """
-        size = len(s)
-        self.lock.acquire()
-        try:
-            size = self._wait_for_send_window(size)
-            # Instead of returning 0 here when the channel is closed, we might
-            # want to raise EOFError or similar. Should we just do as in the
-            # send_all method, raise a socket.error?
-            if size == 0:
-                # eof or similar
-                return 0
-            m = Message()
-            m.add_byte(cMSG_CHANNEL_EXTENDED_DATA)
-            m.add_int(self.remote_chanid)
-            m.add_int(1)
-            m.add_string(s[:size])
-        finally:
-            self.lock.release()
-        # Note: We release self.lock before calling _send_user_message.
-        # Otherwise, we can deadlock during re-keying.
-        self.transport._send_user_message(m)
-        return size
+
+        m = Message()
+        m.add_byte(cMSG_CHANNEL_EXTENDED_DATA)
+        m.add_int(self.remote_chanid)
+        m.add_int(1)
+        return self._send(s, m)
+
 
     def sendall(self, s):
         """
