@@ -1070,6 +1070,25 @@ class Channel (object):
 
     ###  internals...
 
+    def _send(self, s, m):
+        size = len(s)
+        self.lock.acquire()
+        try:
+            if self.closed:
+                # this doesn't seem useful, but it is the documented behavior of Socket
+                raise socket.error('Socket is closed')
+            size = self._wait_for_send_window(size)
+            if size == 0:
+                # eof or similar
+                return 0
+            m.add_string(s[:size])
+        finally:
+            self.lock.release()
+        # Note: We release self.lock before calling _send_user_message.
+        # Otherwise, we can deadlock during re-keying.
+        self.transport._send_user_message(m)
+        return size
+
     def _log(self, level, msg, *args):
         self.logger.log(level, "[chan " + self._name + "] " + msg, *args)
 
