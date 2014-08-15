@@ -44,8 +44,8 @@ from paramiko import pipe
 MIN_PACKET_SIZE = 1024
 
 def requires_open_channel(func):
-    """This decorator make sures that the channel is open else raises an
-    exception"""
+    """This decorator makes sure that the channel is open, else it raises an
+    SSHException."""
     @wraps(func)
     def _check(self, *args, **kwds):
         if self.closed or self.eof_received or self.eof_sent or not self.active:
@@ -132,6 +132,7 @@ class Channel (object):
         out += '>'
         return out
 
+    @requires_open_channel
     def get_pty(self, term='vt100', width=80, height=24, width_pixels=0,
                 height_pixels=0):
         """
@@ -150,8 +151,6 @@ class Channel (object):
         :raises SSHException:
             if the request was rejected or the channel was closed
         """
-        if self.closed or self.eof_received or self.eof_sent or not self.active:
-            raise SSHException('Channel is not open')
         m = Message()
         m.add_byte(cMSG_CHANNEL_REQUEST)
         m.add_int(self.remote_chanid)
@@ -167,6 +166,7 @@ class Channel (object):
         self.transport._send_user_message(m)
         self._wait_for_event()
 
+    @requires_open_channel
     def invoke_shell(self):
         """
         Request an interactive shell session on this channel.  If the server
@@ -183,8 +183,6 @@ class Channel (object):
         :raises SSHException: if the request was rejected or the channel was
             closed
         """
-        if self.closed or self.eof_received or self.eof_sent or not self.active:
-            raise SSHException('Channel is not open')
         m = Message()
         m.add_byte(cMSG_CHANNEL_REQUEST)
         m.add_int(self.remote_chanid)
@@ -194,6 +192,7 @@ class Channel (object):
         self.transport._send_user_message(m)
         self._wait_for_event()
 
+    @requires_open_channel
     def exec_command(self, command):
         """
         Execute a command on the server.  If the server allows it, the channel
@@ -209,8 +208,6 @@ class Channel (object):
         :raises SSHException: if the request was rejected or the channel was
             closed
         """
-        if self.closed or self.eof_received or self.eof_sent or not self.active:
-            raise SSHException('Channel is not open')
         m = Message()
         m.add_byte(cMSG_CHANNEL_REQUEST)
         m.add_int(self.remote_chanid)
@@ -221,6 +218,7 @@ class Channel (object):
         self.transport._send_user_message(m)
         self._wait_for_event()
 
+    @requires_open_channel
     def invoke_subsystem(self, subsystem):
         """
         Request a subsystem on the server (for example, ``sftp``).  If the
@@ -235,8 +233,6 @@ class Channel (object):
         :raises SSHException:
             if the request was rejected or the channel was closed
         """
-        if self.closed or self.eof_received or self.eof_sent or not self.active:
-            raise SSHException('Channel is not open')
         m = Message()
         m.add_byte(cMSG_CHANNEL_REQUEST)
         m.add_int(self.remote_chanid)
@@ -247,6 +243,7 @@ class Channel (object):
         self.transport._send_user_message(m)
         self._wait_for_event()
 
+    @requires_open_channel
     def resize_pty(self, width=80, height=24, width_pixels=0, height_pixels=0):
         """
         Resize the pseudo-terminal.  This can be used to change the width and
@@ -260,8 +257,6 @@ class Channel (object):
         :raises SSHException:
             if the request was rejected or the channel was closed
         """
-        if self.closed or self.eof_received or self.eof_sent or not self.active:
-            raise SSHException('Channel is not open')
         m = Message()
         m.add_byte(cMSG_CHANNEL_REQUEST)
         m.add_int(self.remote_chanid)
@@ -323,7 +318,8 @@ class Channel (object):
         m.add_boolean(False)
         m.add_int(status)
         self.transport._send_user_message(m)
-    
+
+    @requires_open_channel
     def request_x11(self, screen_number=0, auth_protocol=None, auth_cookie=None,
                     single_connection=False, handler=None):
         """
@@ -364,8 +360,6 @@ class Channel (object):
             an optional handler to use for incoming X11 connections
         :return: the auth_cookie used
         """
-        if self.closed or self.eof_received or self.eof_sent or not self.active:
-            raise SSHException('Channel is not open')
         if auth_protocol is None:
             auth_protocol = 'MIT-MAGIC-COOKIE-1'
         if auth_cookie is None:
@@ -386,6 +380,7 @@ class Channel (object):
         self.transport._set_x11_handler(handler)
         return auth_cookie
 
+    @requires_open_channel
     def request_forward_agent(self, handler):
         """
         Request for a forward SSH Agent on this channel.
@@ -398,9 +393,6 @@ class Channel (object):
 
         :raises: SSHException in case of channel problem.
         """
-        if self.closed or self.eof_received or self.eof_sent or not self.active:
-            raise SSHException('Channel is not open')
-
         m = Message()
         m.add_byte(cMSG_CHANNEL_REQUEST)
         m.add_int(self.remote_chanid)
