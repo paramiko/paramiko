@@ -221,6 +221,8 @@ class SSHClientTest (unittest.TestCase):
         """
         # Unclear why this is borked on Py3, but it is, and does not seem worth
         # pursuing at the moment.
+        # XXX: It's the release of the references to e.g packetizer that fails
+        # in py3...
         if not PY2:
             return
         threading.Thread(target=self._run).start()
