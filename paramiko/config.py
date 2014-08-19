@@ -112,7 +112,7 @@ class SSHConfig (object):
         :param str hostname: the hostname to lookup
         """
         matches = [config for config in self._config if
-                   self._allowed(hostname, config['host'])]
+                   self._allowed(config['host'], hostname)]
 
         ret = {}
         for match in matches:
@@ -128,7 +128,7 @@ class SSHConfig (object):
         ret = self._expand_variables(ret, hostname)
         return ret
 
-    def _allowed(self, hostname, hosts):
+    def _allowed(self, hosts, hostname):
         match = False
         for host in hosts:
             if host.startswith('!') and fnmatch.fnmatch(hostname, host[1:]):
