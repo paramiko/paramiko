@@ -83,14 +83,14 @@ class SSHConfig (object):
             #identityfile, localforward, remoteforward keys are special cases, since they are allowed to be
             # specified multiple times and they should be tried in order
             # of specification.
-            
+
             elif key in ['identityfile', 'localforward', 'remoteforward']:
                 if key in host['config']:
                     host['config'][key].append(value)
                 else:
                     host['config'][key] = [value]
             elif key not in host['config']:
-                host['config'].update({key: value})
+                host['config'][key] = value
         self._config.append(host)
 
     def lookup(self, hostname):
