@@ -32,7 +32,7 @@ Release lines
 
 Users desiring stability may wish to pin themselves to a specific release line
 once they first start using Paramiko; to assist in this, we guarantee bugfixes
-for at least the last 2-3 releases including the latest stable one.
+for the last 2-3 releases including the latest stable one.
 
 If you're unsure which version to install, we have suggestions:
 
