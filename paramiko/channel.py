@@ -289,7 +289,9 @@ class Channel (object):
         
         .. versionadded:: 1.2
         """
-        self.status_event.wait()
+        is_ready = self.status_event.wait(self.timeout)
+	if not is_ready:
+	    socket.timeout()
         assert self.status_event.isSet()
         return self.exit_status
 
