@@ -2,6 +2,8 @@
 Changelog
 =========
 
+* :support:`371` Add Travis support & docs update for Python 3.4. Thanks to
+  Olle Lundberg.
 * :release:`1.14.0 <2014-05-07>`
 * :release:`1.13.1 <2014-05-07>`
 * :release:`1.12.4 <2014-05-07>`
