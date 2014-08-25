@@ -56,7 +56,7 @@ class SSHConfig (object):
         host = {"host": ['*'], "config": {}}
         for line in file_obj:
             line = line.rstrip('\n').lstrip()
-            if (line == '') or (line[0] == '#'):
+            if not line or line.startswith('#'):
                 continue
             if '=' in line:
                 # Ensure ProxyCommand gets properly split
@@ -83,14 +83,14 @@ class SSHConfig (object):
             #identityfile, localforward, remoteforward keys are special cases, since they are allowed to be
             # specified multiple times and they should be tried in order
             # of specification.
-            
+
             elif key in ['identityfile', 'localforward', 'remoteforward']:
                 if key in host['config']:
                     host['config'][key].append(value)
                 else:
                     host['config'][key] = [value]
             elif key not in host['config']:
-                host['config'].update({key: value})
+                host['config'][key] = value
         self._config.append(host)
 
     def lookup(self, hostname):
@@ -112,7 +112,7 @@ class SSHConfig (object):
         :param str hostname: the hostname to lookup
         """
         matches = [config for config in self._config if
-                   self._allowed(hostname, config['host'])]
+                   self._allowed(config['host'], hostname)]
 
         ret = {}
         for match in matches:
@@ -128,7 +128,7 @@ class SSHConfig (object):
         ret = self._expand_variables(ret, hostname)
         return ret
 
-    def _allowed(self, hostname, hosts):
+    def _allowed(self, hosts, hostname):
         match = False
         for host in hosts:
             if host.startswith('!') and fnmatch.fnmatch(hostname, host[1:]):
