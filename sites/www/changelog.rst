@@ -2,6 +2,9 @@
 Changelog
 =========
 
+* :bug:`376` Be less aggressive about expanding variables in ``ssh_config``
+  files, which results in a speedup of SSH config parsing. Credit to Olle
+  Lundberg.
 * :support:`324 backported` A bevvy of documentation typo fixes, courtesy of Roy
   Wellington.
 * :bug:`312` `paramiko.transport.Transport` had a bug in its ``__repr__`` which
