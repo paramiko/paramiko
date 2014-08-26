@@ -16,7 +16,7 @@ via `pip <http://pip-installer.org>`_::
     Users who want the bleeding edge can install the development version via
     ``pip install paramiko==dev``.
 
-We currently support **Python 2.6, 2.7 and 3.3** (Python **3.2** should also
+We currently support **Python 2.6, 2.7 and 3.3+** (Python **3.2** should also
 work but has a less-strong compatibility guarantee from us.) Users on Python
 2.5 or older are urged to upgrade.
 
@@ -32,7 +32,7 @@ Release lines
 
 Users desiring stability may wish to pin themselves to a specific release line
 once they first start using Paramiko; to assist in this, we guarantee bugfixes
-for at least the last 2-3 releases including the latest stable one. This currently means Paramiko **1.11** through **1.13**.
+for the last 2-3 releases including the latest stable one.
 
 If you're unsure which version to install, we have suggestions:
 
