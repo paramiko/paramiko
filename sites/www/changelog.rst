@@ -2,6 +2,10 @@
 Changelog
 =========
 
+* :bug:`312` `paramiko.transport.Transport` had a bug in its ``__repr__`` which
+  surfaces during errors encountered within its ``__init__``, causing
+  problematic tracebacks in such situations. Thanks to Simon Percivall for
+  catch & patch.
 * :bug:`272` Fix a bug where ``known_hosts`` parsing hashed the input hostname
   as well as the hostnames from the ``known_hosts`` file, on every comparison.
   Thanks to ``@sigmunau`` for final patch and ``@ostacey`` for the original
