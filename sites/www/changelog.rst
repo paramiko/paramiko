@@ -2,6 +2,7 @@
 Changelog
 =========
 
+* :release:`1.13.2 <2014-08-25>`
 * :bug:`376` Be less aggressive about expanding variables in ``ssh_config``
   files, which results in a speedup of SSH config parsing. Credit to Olle
   Lundberg.
