@@ -338,3 +338,9 @@ IdentityFile something_%l_using_fqdn
 """
         config = paramiko.util.parse_ssh_config(StringIO(test_config))
         assert config.lookup('meh')  # will die during lookup() if bug regresses
+
+    def test_13_config_dos_crlf_succeeds(self):
+        config_file = StringIO("host abcqwerty\r\nHostName 127.0.0.1\r\n")
+        config = paramiko.SSHConfig()
+        config.parse(config_file)
+        self.assertEqual(config.lookup("abcqwerty")["hostname"], "127.0.0.1")
