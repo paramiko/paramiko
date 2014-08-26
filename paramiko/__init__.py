@@ -17,14 +17,13 @@
 # 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
 
 import sys
+from paramiko._version import __version__, __version_info__
 
 if sys.version_info < (2, 6):
     raise RuntimeError('You need Python 2.6+ for this module.')
 
 
 __author__ = "Jeff Forcier <jeff@bitprophet.org>"
-__version__ = "1.13.2"
-__version_info__ = tuple([ int(d) for d in __version__.split(".") ])
 __license__ = "GNU Lesser General Public License (LGPL)"
 
 
