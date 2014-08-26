@@ -18,7 +18,7 @@ Changelog
   report.
 * :bug:`239` Add Windows-style CRLF support to SSH config file parsing. Props
   to Christopher Swenson.
-* :support:`229` Fix a couple of incorrectly-copied docstrings' ``..
+* :support:`229 backported` Fix a couple of incorrectly-copied docstrings' ``..
   versionadded::`` RST directives. Thanks to Aarni Koskela for the catch.
 * :support:`169 backported` Minor refactor of
   `paramiko.sftp_client.SFTPClient.put` thanks to Abhinav Upadhyay.
