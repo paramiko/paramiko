@@ -2,6 +2,16 @@
 Changelog
 =========
 
+* :support:`324 backported` A bevvy of documentation typo fixes, courtesy of Roy
+  Wellington.
+* :bug:`312` `paramiko.transport.Transport` had a bug in its ``__repr__`` which
+  surfaces during errors encountered within its ``__init__``, causing
+  problematic tracebacks in such situations. Thanks to Simon Percivall for
+  catch & patch.
+* :bug:`272` Fix a bug where ``known_hosts`` parsing hashed the input hostname
+  as well as the hostnames from the ``known_hosts`` file, on every comparison.
+  Thanks to ``@sigmunau`` for final patch and ``@ostacey`` for the original
+  report.
 * :bug:`239` Add Windows-style CRLF support to SSH config file parsing. Props
   to Christopher Swenson.
 * :support:`229` Fix a couple of incorrectly-copied docstrings' ``..
