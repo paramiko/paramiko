@@ -2,6 +2,8 @@
 Changelog
 =========
 
+* :support:`378 backported` Minor code cleanup in the SSH config module
+  courtesy of Olle Lundberg.
 * :support:`249` Consolidate version information into one spot. Thanks to Gabi
   Davar for the reminder.
 * :release:`1.14.1 <2014-08-25>`
