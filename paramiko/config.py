@@ -55,7 +55,7 @@ class SSHConfig (object):
         """
         host = {"host": ['*'], "config": {}}
         for line in file_obj:
-            line = line.rstrip('\n').lstrip()
+            line = line.rstrip('\r\n').lstrip()
             if (line == '') or (line[0] == '#'):
                 continue
             if '=' in line:
