@@ -564,7 +564,9 @@ class SFTPClient(BaseSFTP):
         The SFTP operations use pipelining for speed.
 
         :param str localpath: the local file to copy
-        :param str remotepath: the destination path on the SFTP server
+        :param str remotepath: the destination path on the SFTP server. Note
+            that the filename should be included. Only specifying a directory
+            may result in an error.
         :param callable callback:
             optional callback function (form: ``func(int, int)``) that accepts
             the bytes transferred so far and the total bytes to be transferred
