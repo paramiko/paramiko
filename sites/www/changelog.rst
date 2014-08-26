@@ -2,6 +2,10 @@
 Changelog
 =========
 
+* :bug:`272` Fix a bug where ``known_hosts`` parsing hashed the input hostname
+  as well as the hostnames from the ``known_hosts`` file, on every comparison.
+  Thanks to ``@sigmunau`` for final patch and ``@ostacey`` for the original
+  report.
 * :bug:`239` Add Windows-style CRLF support to SSH config file parsing. Props
   to Christopher Swenson.
 * :support:`229` Fix a couple of incorrectly-copied docstrings' ``..
