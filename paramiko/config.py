@@ -83,7 +83,7 @@ class SSHConfig (object):
             #identityfile, localforward, remoteforward keys are special cases, since they are allowed to be
             # specified multiple times and they should be tried in order
             # of specification.
-            
+
             elif key in ['identityfile', 'localforward', 'remoteforward']:
                 if key in host['config']:
                     host['config'][key].append(value)
@@ -200,10 +200,12 @@ class SSHConfig (object):
                 for find, replace in replacements[k]:
                     if isinstance(config[k], list):
                         for item in range(len(config[k])):
-                            config[k][item] = config[k][item].\
-                                replace(find, str(replace))
+                            if find in config[k][item]:
+                                config[k][item] = config[k][item].\
+                                    replace(find, str(replace))
                     else:
-                        config[k] = config[k].replace(find, str(replace))
+                        if find in config[k]:
+                            config[k] = config[k].replace(find, str(replace))
         return config
 
 
