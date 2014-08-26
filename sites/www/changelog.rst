@@ -2,6 +2,12 @@
 Changelog
 =========
 
+* :bug:`285` (also :issue:`352`) Update our Python 3 ``b()`` compatibility shim
+  to handle ``buffer`` objects correctly; this fixes a frequently reported
+  issue affecting many users, including users of the ``bzr`` software suite.
+  Thanks to ``@basictheprogram`` for the initial report, Jelmer Vernooij for
+  the fix and Andrew Starr-Bochicchio & Jeremy T. Bouse (among others) for
+  discussion & feedback.
 * :support:`371` Add Travis support & docs update for Python 3.4. Thanks to
   Olle Lundberg.
 * :release:`1.14.0 <2014-05-07>`
