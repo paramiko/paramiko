@@ -2,6 +2,8 @@
 Changelog
 =========
 
+* :support:`324 backported` A bevvy of documentation typo fixes, courtesy of Roy
+  Wellington.
 * :bug:`312` `paramiko.transport.Transport` had a bug in its ``__repr__`` which
   surfaces during errors encountered within its ``__init__``, causing
   problematic tracebacks in such situations. Thanks to Simon Percivall for
