@@ -54,9 +54,16 @@ if sys.platform == 'darwin':
     setup_helper.install_custom_make_tarball()
 
 
+# Version info -- read without importing
+_locals = {}
+with open('paramiko/_version.py') as fp:
+    exec(fp.read(), None, _locals)
+version = _locals['__version__']
+
+
 setup(
     name = "paramiko",
-    version = "1.14.1",
+    version = version,
     description = "SSH2 protocol library",
     long_description = longdesc,
     author = "Jeff Forcier",
