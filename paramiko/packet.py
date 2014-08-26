@@ -254,7 +254,7 @@ class Packetizer (object):
                 n = 0
                 if self.__closed:
                     n = -1
-            if n < 0:
+            if n <= 0:
                 raise EOFError()
             if n == len(out):
                 break
