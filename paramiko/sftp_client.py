@@ -648,8 +648,7 @@ class SFTPClient(BaseSFTP):
 
     def _async_request(self, fileobj, t, *arg):
         # this method may be called from other threads (prefetch)
-        self._lock.acquire()
-        try:
+        with self._lock:
             msg = Message()
             msg.add_int(self.request_number)
             for item in arg:
@@ -667,8 +666,6 @@ class SFTPClient(BaseSFTP):
             self._expecting[num] = fileobj
             self._send_packet(t, msg)
             self.request_number += 1
-        finally:
-            self._lock.release()
         return num
 
     def _read_response(self, waitfor=None):
