@@ -133,6 +133,12 @@ class SSHClientTest (unittest.TestCase):
         """
         self._test_connection(key_filename=test_path('test_dss.key'))
 
+    def test_client_rsa(self):
+        """
+        verify that SSHClient works with an RSA key.
+        """
+        self._test_connection(key_filename=test_path('test_rsa.key'))
+
     def test_2_5_client_ecdsa(self):
         """
         verify that SSHClient works with an ECDSA key.
