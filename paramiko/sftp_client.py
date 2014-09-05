@@ -198,22 +198,17 @@ class SFTPClient(BaseSFTP):
 
     def listdir_iter(self, path='.', read_ahead_requests=50):
         """
-        Generator yielding L{SFTPAttributes} objects corresponding to
-        files in the given C{path}.  Files are yielded in arbitrary order.  It does
-        not include the special entries C{'.'} and C{'..'} even if they are
-        present in the folder.
+        Generator version of `.listdir_attr`.
 
-        The returned L{SFTPAttributes} objects will each have an additional
-        field: C{longname}, which may contain a formatted string of the file's
-        attributes, in unix format.  The content of this string will probably
-        depend on the SFTP server implementation.
+        See the API docs for `.listdir_attr` for overall details.
 
-        @param path: path to list (defaults to C{'.'})
-        @type path: str
-        @return: Yields L{SFTPAttributes}
-        @rtype: L{SFTPAttributes}
+        This function adds one more kwarg on top of `.listdir_attr`:
+        ``read_ahead_requests``, an integer controlling how many
+        ``SSH_FXP_READDIR`` requests are made to the server. The default of 50
+        should suffice for most file listings as each request/response cycle
+        may contain multiple files (dependant on server implementation.)
 
-        @since: 1.9
+        .. versionadded:: 1.15
         """
         path = self._adjust_cwd(path)
         self._log(DEBUG, 'listdir(%r)' % path)
