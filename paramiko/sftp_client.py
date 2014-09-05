@@ -222,8 +222,9 @@ class SFTPClient(BaseSFTP):
         nums = list()
         while True:
             try:
-                # Send out a bunch of readdir requests so that we can read the responses later on
-                # Section 6.7 of the SSH file transfer RFC explains this
+                # Send out a bunch of readdir requests so that we can read the
+                # responses later on Section 6.7 of the SSH file transfer RFC
+                # explains this
                 # http://filezilla-project.org/specs/draft-ietf-secsh-filexfer-02.txt
                 for i in range(read_ahead_requests):
                     num = self._async_request(type(None), CMD_READDIR, handle)
@@ -232,8 +233,10 @@ class SFTPClient(BaseSFTP):
 
                 # For each of our sent requests
                 # Read and parse the corresponding packets
-                # If we're at the end of our queued requests, then fire off some more requests
-                # Exit the loop when we've reached the end of the directory handle
+                # If we're at the end of our queued requests, then fire off
+                # some more requests
+                # Exit the loop when we've reached the end of the directory
+                # handle
                 for num in nums:
                     t, pkt_data = self._read_packet()
                     msg = Message(pkt_data)
@@ -245,7 +248,8 @@ class SFTPClient(BaseSFTP):
                     for i in range(count):
                         filename = msg.get_string()
                         longname = msg.get_string()
-                        attr = SFTPAttributes._from_msg(msg, filename, longname)
+                        attr = SFTPAttributes._from_msg(
+                            msg, filename, longname)
                         if (filename != '.') and (filename != '..'):
                             yield attr
 

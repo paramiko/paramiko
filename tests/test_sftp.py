@@ -279,8 +279,8 @@ class SFTPTest (unittest.TestCase):
 
     def test_7_listdir(self):
         """
-        verify that a folder can be created, a bunch of files can be placed in it,
-        and those files show up in sftp.listdir.
+        verify that a folder can be created, a bunch of files can be placed in
+        it, and those files show up in sftp.listdir.
         """
         try:
             sftp.open(FOLDER + '/duck.txt', 'w').close()
