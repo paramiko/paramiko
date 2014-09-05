@@ -164,6 +164,8 @@ class Transport (threading.Thread):
         :param socket sock:
             a socket or socket-like object to create the session over.
         """
+        self.active = False
+
         if isinstance(sock, string_types):
             # convert "host:port" into (host, port)
             hl = sock.split(':', 1)
@@ -219,7 +221,6 @@ class Transport (threading.Thread):
         self.H = None
         self.K = None
 
-        self.active = False
         self.initial_kex_done = False
         self.in_kex = False
         self.authenticated = False

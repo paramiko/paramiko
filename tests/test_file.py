@@ -23,6 +23,7 @@ Some unit tests for the BufferedFile abstraction.
 import unittest
 from paramiko.file import BufferedFile
 from paramiko.common import linefeed_byte, crlf, cr_byte
+import sys
 
 
 class LoopbackFile (BufferedFile):
@@ -150,6 +151,15 @@ class BufferedFileTest (unittest.TestCase):
         self.assertEqual(s, b'The first thing you need to do is open your eyes. Then, you ' +
                             b'need to close them again.\n')
         f.close()
+
+    def test_8_buffering(self):
+        """
+        verify that buffered objects can be written
+        """
+        if sys.version_info[0] == 2:
+            f = LoopbackFile('r+', 16)
+            f.write(buffer(b'Too small.'))
+            f.close()
 
 if __name__ == '__main__':
     from unittest import main
