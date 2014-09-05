@@ -298,6 +298,26 @@ class SFTPTest (unittest.TestCase):
             sftp.remove(FOLDER + '/fish.txt')
             sftp.remove(FOLDER + '/tertiary.py')
 
+    def test_7_5_listdir_iter(self):
+        """
+        listdir_iter version of above test
+        """
+        try:
+            sftp.open(FOLDER + '/duck.txt', 'w').close()
+            sftp.open(FOLDER + '/fish.txt', 'w').close()
+            sftp.open(FOLDER + '/tertiary.py', 'w').close()
+
+            x = [x.filename for x in sftp.listdir_iter(FOLDER)]
+            self.assertEqual(len(x), 3)
+            self.assertTrue('duck.txt' in x)
+            self.assertTrue('fish.txt' in x)
+            self.assertTrue('tertiary.py' in x)
+            self.assertTrue('random' not in x)
+        finally:
+            sftp.remove(FOLDER + '/duck.txt')
+            sftp.remove(FOLDER + '/fish.txt')
+            sftp.remove(FOLDER + '/tertiary.py')
+
     def test_8_setstat(self):
         """
         verify that the setstat functions (chown, chmod, utime, truncate) work.
