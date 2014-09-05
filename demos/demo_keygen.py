@@ -9,7 +9,7 @@
 # Software Foundation; either version 2.1 of the License, or (at your option)
 # any later version.
 #
-# Paramiko is distrubuted in the hope that it will be useful, but WITHOUT ANY
+# Paramiko is distributed in the hope that it will be useful, but WITHOUT ANY
 # WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
 # A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more
 # details.
@@ -17,9 +17,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with Paramiko; if not, write to the Free Software Foundation, Inc.,
 # 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
-from __future__ import with_statement
 
-import string
 import sys
 
 from binascii import hexlify
@@ -28,6 +26,7 @@ from optparse import OptionParser
 from paramiko import DSSKey
 from paramiko import RSAKey
 from paramiko.ssh_exception import SSHException
+from paramiko.py3compat import u
 
 usage="""
 %prog [-v] [-b bits] -t type [-N new_passphrase] [-f output_keyfile]"""
@@ -47,16 +46,16 @@ key_dispatch_table = {
 def progress(arg=None):
 
     if not arg:
-        print '0%\x08\x08\x08',
+        sys.stdout.write('0%\x08\x08\x08 ')
         sys.stdout.flush()
     elif arg[0] == 'p':
-        print '25%\x08\x08\x08\x08',
+        sys.stdout.write('25%\x08\x08\x08\x08 ')
         sys.stdout.flush()
     elif arg[0] == 'h':
-        print '50%\x08\x08\x08\x08',
+        sys.stdout.write('50%\x08\x08\x08\x08 ')
         sys.stdout.flush()
     elif arg[0] == 'x':
-        print '75%\x08\x08\x08\x08',
+        sys.stdout.write('75%\x08\x08\x08\x08 ')
         sys.stdout.flush()
 
 if __name__ == '__main__':
@@ -92,8 +91,8 @@ if __name__ == '__main__':
         parser.print_help()
         sys.exit(0)
 
-    for o in default_values.keys():
-        globals()[o] = getattr(options, o, default_values[string.lower(o)])
+    for o in list(default_values.keys()):
+        globals()[o] = getattr(options, o, default_values[o.lower()])
 
     if options.newphrase:
         phrase = getattr(options, 'newphrase')
@@ -106,7 +105,7 @@ if __name__ == '__main__':
     if ktype == 'dsa' and bits > 1024:
         raise SSHException("DSA Keys must be 1024 bits")
 
-    if not key_dispatch_table.has_key(ktype):
+    if ktype not in key_dispatch_table:
         raise SSHException("Unknown %s algorithm to generate keys pair" % ktype)
 
     # generating private key
@@ -121,7 +120,7 @@ if __name__ == '__main__':
             f.write(" %s" % comment)
 
     if options.verbose:
-        print "done."
+        print("done.")
 
-    hash = hexlify(pub.get_fingerprint())
-    print "Fingerprint: %d %s %s.pub (%s)" % (bits, ":".join([ hash[i:2+i] for i in range(0, len(hash), 2)]), filename, string.upper(ktype))
+    hash = u(hexlify(pub.get_fingerprint()))
+    print("Fingerprint: %d %s %s.pub (%s)" % (bits, ":".join([ hash[i:2+i] for i in range(0, len(hash), 2)]), filename, ktype.upper()))

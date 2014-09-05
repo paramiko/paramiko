@@ -1,0 +1,4 @@
+Packetizer
+==========
+
+.. automodule:: paramiko.packet

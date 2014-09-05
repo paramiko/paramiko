@@ -16,14 +16,14 @@
 # along with Paramiko; if not, write to the Free Software Foundation, Inc.,
 # 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
 
-"""
-L{ProxyCommand}.
-"""
 
+from datetime import datetime
 import os
 from shlex import split as shlsplit
 import signal
 from subprocess import Popen, PIPE
+from select import select
+import socket
 
 from paramiko.ssh_exception import ProxyCommandFailure
 
@@ -33,59 +33,73 @@ class ProxyCommand(object):
     Wraps a subprocess running ProxyCommand-driven programs.
 
     This class implements a the socket-like interface needed by the
-    L{Transport} and L{Packetizer} classes. Using this class instead of a
+    `.Transport` and `.Packetizer` classes. Using this class instead of a
     regular socket makes it possible to talk with a Popen'd command that will
     proxy traffic between the client and a server hosted in another machine.
     """
     def __init__(self, command_line):
         """
         Create a new CommandProxy instance. The instance created by this
-        class can be passed as an argument to the L{Transport} class.
+        class can be passed as an argument to the `.Transport` class.
 
-        @param command_line: the command that should be executed and
-            used as the proxy.
-        @type command_line: str
+        :param str command_line:
+            the command that should be executed and used as the proxy.
         """
         self.cmd = shlsplit(command_line)
         self.process = Popen(self.cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE)
+        self.timeout = None
+        self.buffer = []
 
     def send(self, content):
         """
         Write the content received from the SSH client to the standard
         input of the forked command.
 
-        @param content: string to be sent to the forked command
-        @type content: str
+        :param str content: string to be sent to the forked command
         """
         try:
             self.process.stdin.write(content)
-        except IOError, e:
+        except IOError as e:
             # There was a problem with the child process. It probably
             # died and we can't proceed. The best option here is to
             # raise an exception informing the user that the informed
             # ProxyCommand is not working.
-            raise BadProxyCommand(' '.join(self.cmd), e.strerror)
+            raise ProxyCommandFailure(' '.join(self.cmd), e.strerror)
         return len(content)
 
     def recv(self, size):
         """
         Read from the standard output of the forked program.
 
-        @param size: how many chars should be read
-        @type size: int
+        :param int size: how many chars should be read
 
-        @return: the length of the read content
-        @rtype: int
+        :return: the length of the read content, as an `int`
         """
         try:
-            return os.read(self.process.stdout.fileno(), size)
-        except IOError, e:
-            raise BadProxyCommand(' '.join(self.cmd), e.strerror)
+            start = datetime.now()
+            while len(self.buffer) < size:
+                if self.timeout is not None:
+                    elapsed = (datetime.now() - start).microseconds
+                    timeout = self.timeout * 1000 * 1000  # to microseconds
+                    if elapsed >= timeout:
+                        raise socket.timeout()
+                r, w, x = select([self.process.stdout], [], [], 0.0)
+                if r and r[0] == self.process.stdout:
+                    b = os.read(self.process.stdout.fileno(), 1)
+                    # Store in class-level buffer for persistence across
+                    # timeouts; this makes us act more like a real socket
+                    # (where timeouts don't actually drop data.)
+                    self.buffer.append(b)
+            result = ''.join(self.buffer)
+            self.buffer = []
+            return result
+        except socket.timeout:
+            raise  # socket.timeout is a subclass of IOError
+        except IOError as e:
+            raise ProxyCommandFailure(' '.join(self.cmd), e.strerror)
 
     def close(self):
         os.kill(self.process.pid, signal.SIGTERM)
 
     def settimeout(self, timeout):
-        # Timeouts are meaningless for this implementation, but are part of the
-        # spec, so must be present.
-        pass
+        self.timeout = timeout

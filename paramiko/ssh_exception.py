@@ -7,7 +7,7 @@
 # Software Foundation; either version 2.1 of the License, or (at your option)
 # any later version.
 #
-# Paramiko is distrubuted in the hope that it will be useful, but WITHOUT ANY
+# Paramiko is distributed in the hope that it will be useful, but WITHOUT ANY
 # WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
 # A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more
 # details.
@@ -15,10 +15,6 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with Paramiko; if not, write to the Free Software Foundation, Inc.,
 # 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
-
-"""
-Exceptions defined by paramiko.
-"""
 
 
 class SSHException (Exception):
@@ -34,7 +30,7 @@ class AuthenticationException (SSHException):
     possible to retry with different credentials.  (Other classes specify more
     specific reasons.)
     
-    @since: 1.6
+    .. versionadded:: 1.6
     """
     pass
     
@@ -52,19 +48,20 @@ class BadAuthenticationType (AuthenticationException):
     the server isn't allowing that type.  (It may only allow public-key, for
     example.)
     
-    @ivar allowed_types: list of allowed authentication types provided by the
-        server (possible values are: C{"none"}, C{"password"}, and
-        C{"publickey"}).
-    @type allowed_types: list
+    :ivar list allowed_types:
+        list of allowed authentication types provided by the server (possible
+        values are: ``"none"``, ``"password"``, and ``"publickey"``).
     
-    @since: 1.1
+    .. versionadded:: 1.1
     """
     allowed_types = []
     
     def __init__(self, explanation, types):
         AuthenticationException.__init__(self, explanation)
         self.allowed_types = types
-     
+        # for unpickling
+        self.args = (explanation, types, )
+
     def __str__(self):
         return SSHException.__str__(self) + ' (allowed_types=%r)' % self.allowed_types
 
@@ -78,50 +75,50 @@ class PartialAuthentication (AuthenticationException):
     def __init__(self, types):
         AuthenticationException.__init__(self, 'partial authentication')
         self.allowed_types = types
+        # for unpickling
+        self.args = (types, )
 
 
 class ChannelException (SSHException):
     """
-    Exception raised when an attempt to open a new L{Channel} fails.
+    Exception raised when an attempt to open a new `.Channel` fails.
     
-    @ivar code: the error code returned by the server
-    @type code: int
+    :ivar int code: the error code returned by the server
     
-    @since: 1.6
+    .. versionadded:: 1.6
     """
     def __init__(self, code, text):
         SSHException.__init__(self, text)
         self.code = code
+        # for unpickling
+        self.args = (code, text, )
 
 
 class BadHostKeyException (SSHException):
     """
     The host key given by the SSH server did not match what we were expecting.
     
-    @ivar hostname: the hostname of the SSH server
-    @type hostname: str
-    @ivar key: the host key presented by the server
-    @type key: L{PKey}
-    @ivar expected_key: the host key expected
-    @type expected_key: L{PKey}
+    :ivar str hostname: the hostname of the SSH server
+    :ivar PKey got_key: the host key presented by the server
+    :ivar PKey expected_key: the host key expected
     
-    @since: 1.6
+    .. versionadded:: 1.6
     """
     def __init__(self, hostname, got_key, expected_key):
         SSHException.__init__(self, 'Host key for server %s does not match!' % hostname)
         self.hostname = hostname
         self.key = got_key
         self.expected_key = expected_key
+        # for unpickling
+        self.args = (hostname, got_key, expected_key, )
 
 
 class ProxyCommandFailure (SSHException):
     """
     The "ProxyCommand" found in the .ssh/config file returned an error.
 
-    @ivar command: The command line that is generating this exception.
-    @type command: str
-    @ivar error: The error captured from the proxy command output.
-    @type error: str
+    :ivar str command: The command line that is generating this exception.
+    :ivar str error: The error captured from the proxy command output.
     """
     def __init__(self, command, error):
         SSHException.__init__(self,
@@ -130,3 +127,5 @@ class ProxyCommandFailure (SSHException):
             )
         )
         self.error = error
+        # for unpickling
+        self.args = (command, error, )

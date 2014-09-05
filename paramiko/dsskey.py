@@ -7,7 +7,7 @@
 # Software Foundation; either version 2.1 of the License, or (at your option)
 # any later version.
 #
-# Paramiko is distrubuted in the hope that it will be useful, but WITHOUT ANY
+# Paramiko is distributed in the hope that it will be useful, but WITHOUT ANY
 # WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
 # A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more
 # details.
@@ -17,14 +17,17 @@
 # 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
 
 """
-L{DSSKey}
+DSS keys.
 """
 
-from Crypto.PublicKey import DSA
-from Crypto.Hash import SHA
+import os
+from hashlib import sha1
 
-from paramiko.common import *
+from Crypto.PublicKey import DSA
+
 from paramiko import util
+from paramiko.common import zero_byte
+from paramiko.py3compat import long
 from paramiko.ssh_exception import SSHException
 from paramiko.message import Message
 from paramiko.ber import BER, BERException
@@ -56,7 +59,7 @@ class DSSKey (PKey):
         else:
             if msg is None:
                 raise SSHException('Key object may not be empty')
-            if msg.get_string() != 'ssh-dss':
+            if msg.get_text() != 'ssh-dss':
                 raise SSHException('Invalid key')
             self.p = msg.get_mpint()
             self.q = msg.get_mpint()
@@ -64,14 +67,17 @@ class DSSKey (PKey):
             self.y = msg.get_mpint()
         self.size = util.bit_length(self.p)
 
-    def __str__(self):
+    def asbytes(self):
         m = Message()
         m.add_string('ssh-dss')
         m.add_mpint(self.p)
         m.add_mpint(self.q)
         m.add_mpint(self.g)
         m.add_mpint(self.y)
-        return str(m)
+        return m.asbytes()
+
+    def __str__(self):
+        return self.asbytes()
 
     def __hash__(self):
         h = hash(self.get_name())
@@ -87,17 +93,17 @@ class DSSKey (PKey):
 
     def get_bits(self):
         return self.size
-        
+
     def can_sign(self):
         return self.x is not None
 
-    def sign_ssh_data(self, rng, data):
-        digest = SHA.new(data).digest()
+    def sign_ssh_data(self, data):
+        digest = sha1(data).digest()
         dss = DSA.construct((long(self.y), long(self.g), long(self.p), long(self.q), long(self.x)))
         # generate a suitable k
         qsize = len(util.deflate_long(self.q, 0))
         while True:
-            k = util.inflate_long(rng.read(qsize), 1)
+            k = util.inflate_long(os.urandom(qsize), 1)
             if (k > 2) and (k < self.q):
                 break
         r, s = dss.sign(util.inflate_long(digest, 1), k)
@@ -107,26 +113,26 @@ class DSSKey (PKey):
         rstr = util.deflate_long(r, 0)
         sstr = util.deflate_long(s, 0)
         if len(rstr) < 20:
-            rstr = '\x00' * (20 - len(rstr)) + rstr
+            rstr = zero_byte * (20 - len(rstr)) + rstr
         if len(sstr) < 20:
-            sstr = '\x00' * (20 - len(sstr)) + sstr
+            sstr = zero_byte * (20 - len(sstr)) + sstr
         m.add_string(rstr + sstr)
         return m
 
     def verify_ssh_sig(self, data, msg):
-        if len(str(msg)) == 40:
+        if len(msg.asbytes()) == 40:
             # spies.com bug: signature has no header
-            sig = str(msg)
+            sig = msg.asbytes()
         else:
-            kind = msg.get_string()
+            kind = msg.get_text()
             if kind != 'ssh-dss':
                 return 0
-            sig = msg.get_string()
+            sig = msg.get_binary()
 
         # pull out (r, s) which are NOT encoded as mpints
         sigR = util.inflate_long(sig[:20], 1)
         sigS = util.inflate_long(sig[20:], 1)
-        sigM = util.inflate_long(SHA.new(data).digest(), 1)
+        sigM = util.inflate_long(sha1(data).digest(), 1)
 
         dss = DSA.construct((long(self.y), long(self.g), long(self.p), long(self.q)))
         return dss.verify(sigM, (sigR, sigS))
@@ -134,13 +140,13 @@ class DSSKey (PKey):
     def _encode_key(self):
         if self.x is None:
             raise SSHException('Not enough key information')
-        keylist = [ 0, self.p, self.q, self.g, self.y, self.x ]
+        keylist = [0, self.p, self.q, self.g, self.y, self.x]
         try:
             b = BER()
             b.encode(keylist)
         except BERException:
             raise SSHException('Unable to create ber encoding of key')
-        return str(b)
+        return b.asbytes()
 
     def write_private_key_file(self, filename, password=None):
         self._write_private_key_file('DSA', filename, self._encode_key(), password)
@@ -153,39 +159,35 @@ class DSSKey (PKey):
         Generate a new private DSS key.  This factory function can be used to
         generate a new host key or authentication key.
 
-        @param bits: number of bits the generated key should be.
-        @type bits: int
-        @param progress_func: an optional function to call at key points in
-            key generation (used by C{pyCrypto.PublicKey}).
-        @type progress_func: function
-        @return: new private key
-        @rtype: L{DSSKey}
+        :param int bits: number of bits the generated key should be.
+        :param function progress_func:
+            an optional function to call at key points in key generation (used
+            by ``pyCrypto.PublicKey``).
+        :return: new `.DSSKey` private key
         """
-        dsa = DSA.generate(bits, rng.read, progress_func)
+        dsa = DSA.generate(bits, os.urandom, progress_func)
         key = DSSKey(vals=(dsa.p, dsa.q, dsa.g, dsa.y))
         key.x = dsa.x
         return key
     generate = staticmethod(generate)
 
-
     ###  internals...
-
 
     def _from_private_key_file(self, filename, password):
         data = self._read_private_key_file('DSA', filename, password)
         self._decode_key(data)
-    
+
     def _from_private_key(self, file_obj, password):
         data = self._read_private_key('DSA', file_obj, password)
         self._decode_key(data)
-    
+
     def _decode_key(self, data):
         # private key file contains:
         # DSAPrivateKey = { version = 0, p, q, g, y, x }
         try:
             keylist = BER(data).decode()
-        except BERException, x:
-            raise SSHException('Unable to parse key file: ' + str(x))
+        except BERException as e:
+            raise SSHException('Unable to parse key file: ' + str(e))
         if (type(keylist) is not list) or (len(keylist) < 6) or (keylist[0] != 0):
             raise SSHException('not a valid DSA private key file (bad ber encoding)')
         self.p = keylist[1]

@@ -9,7 +9,7 @@
 # Software Foundation; either version 2.1 of the License, or (at your option)
 # any later version.
 #
-# Paramiko is distrubuted in the hope that it will be useful, but WITHOUT ANY
+# Paramiko is distributed in the hope that it will be useful, but WITHOUT ANY
 # WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
 # A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more
 # details.
@@ -30,7 +30,11 @@ import getpass
 import os
 import socket
 import select
-import SocketServer
+try:
+    import SocketServer
+except ImportError:
+    import socketserver as SocketServer
+
 import sys
 from optparse import OptionParser
 
@@ -54,7 +58,7 @@ class Handler (SocketServer.BaseRequestHandler):
             chan = self.ssh_transport.open_channel('direct-tcpip',
                                                    (self.chain_host, self.chain_port),
                                                    self.request.getpeername())
-        except Exception, e:
+        except Exception as e:
             verbose('Incoming request to %s:%d failed: %s' % (self.chain_host,
                                                               self.chain_port,
                                                               repr(e)))
@@ -78,9 +82,11 @@ class Handler (SocketServer.BaseRequestHandler):
                 if len(data) == 0:
                     break
                 self.request.send(data)
+                
+        peername = self.request.getpeername()
         chan.close()
         self.request.close()
-        verbose('Tunnel closed from %r' % (self.request.getpeername(),))
+        verbose('Tunnel closed from %r' % (peername,))
 
 
 def forward_tunnel(local_port, remote_host, remote_port, transport):
@@ -96,7 +102,7 @@ def forward_tunnel(local_port, remote_host, remote_port, transport):
 
 def verbose(s):
     if g_verbose:
-        print s
+        print(s)
 
 
 HELP = """\
@@ -163,8 +169,8 @@ def main():
     try:
         client.connect(server[0], server[1], username=options.user, key_filename=options.keyfile,
                        look_for_keys=options.look_for_keys, password=password)
-    except Exception, e:
-        print '*** Failed to connect to %s:%d: %r' % (server[0], server[1], e)
+    except Exception as e:
+        print('*** Failed to connect to %s:%d: %r' % (server[0], server[1], e))
         sys.exit(1)
 
     verbose('Now forwarding port %d to %s:%d ...' % (options.port, remote[0], remote[1]))
@@ -172,7 +178,7 @@ def main():
     try:
         forward_tunnel(options.port, remote[0], remote[1], client.get_transport())
     except KeyboardInterrupt:
-        print 'C-c: Port forwarding stopped.'
+        print('C-c: Port forwarding stopped.')
         sys.exit(0)
 
 

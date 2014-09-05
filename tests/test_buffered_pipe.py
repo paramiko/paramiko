@@ -7,7 +7,7 @@
 # Software Foundation; either version 2.1 of the License, or (at your option)
 # any later version.
 #
-# Paramiko is distrubuted in the hope that it will be useful, but WITHOUT ANY
+# Paramiko is distributed in the hope that it will be useful, but WITHOUT ANY
 # WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
 # A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more
 # details.
@@ -22,61 +22,60 @@ Some unit tests for BufferedPipe.
 
 import threading
 import time
-import unittest
 from paramiko.buffered_pipe import BufferedPipe, PipeTimeout
 from paramiko import pipe
 
-from util import ParamikoTest
+from tests.util import ParamikoTest
 
 
-def delay_thread(pipe):
-    pipe.feed('a')
+def delay_thread(p):
+    p.feed('a')
     time.sleep(0.5)
-    pipe.feed('b')
-    pipe.close()
+    p.feed('b')
+    p.close()
 
 
-def close_thread(pipe):
+def close_thread(p):
     time.sleep(0.2)
-    pipe.close()
+    p.close()
 
 
 class BufferedPipeTest(ParamikoTest):
     def test_1_buffered_pipe(self):
         p = BufferedPipe()
-        self.assert_(not p.read_ready())
+        self.assertTrue(not p.read_ready())
         p.feed('hello.')
-        self.assert_(p.read_ready())
+        self.assertTrue(p.read_ready())
         data = p.read(6)
-        self.assertEquals('hello.', data)
+        self.assertEqual(b'hello.', data)
         
         p.feed('plus/minus')
-        self.assertEquals('plu', p.read(3))
-        self.assertEquals('s/m', p.read(3))
-        self.assertEquals('inus', p.read(4))
+        self.assertEqual(b'plu', p.read(3))
+        self.assertEqual(b's/m', p.read(3))
+        self.assertEqual(b'inus', p.read(4))
         
         p.close()
-        self.assert_(not p.read_ready())
-        self.assertEquals('', p.read(1))
+        self.assertTrue(not p.read_ready())
+        self.assertEqual(b'', p.read(1))
 
     def test_2_delay(self):
         p = BufferedPipe()
-        self.assert_(not p.read_ready())
+        self.assertTrue(not p.read_ready())
         threading.Thread(target=delay_thread, args=(p,)).start()
-        self.assertEquals('a', p.read(1, 0.1))
+        self.assertEqual(b'a', p.read(1, 0.1))
         try:
             p.read(1, 0.1)
-            self.assert_(False)
+            self.assertTrue(False)
         except PipeTimeout:
             pass
-        self.assertEquals('b', p.read(1, 1.0))
-        self.assertEquals('', p.read(1))
+        self.assertEqual(b'b', p.read(1, 1.0))
+        self.assertEqual(b'', p.read(1))
 
     def test_3_close_while_reading(self):
         p = BufferedPipe()
         threading.Thread(target=close_thread, args=(p,)).start()
         data = p.read(1, 1.0)
-        self.assertEquals('', data)
+        self.assertEqual(b'', data)
 
     def test_4_or_pipe(self):
         p = pipe.make_pipe()
@@ -90,4 +89,3 @@ class BufferedPipeTest(ParamikoTest):
         self.assertTrue(p._set)
         p2.clear()
         self.assertFalse(p._set)
-

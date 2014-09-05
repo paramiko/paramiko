@@ -9,23 +9,13 @@ Issues noted as "'ssh' #NN" can be found at https://github.com/bitprophet/ssh/.
 
 Issues noted as "Fabric #NN" can be found at https://github.com/fabric/fabric/.
 
+
+**PLEASE NOTE:** For changes in 1.10.x and newer releases, please see
+www.paramiko.org's changelog page, or the source file, sites/www/changelog.rst
+
+
 Releases
 ========
-
-v1.10.0 (DD MM YYYY)
---------------------
-
-* #71: Add `SFTPClient.putfo` and `.getfo` methods to allow direct
-  uploading/downloading of file-like objects. Thanks to Eric Buehl for the
-  patch.
-* #113: Add `timeout` parameter to `SSHClient.exec_command` for easier setting
-  of the command's internal channel object's timeout. Thanks to Cernov Vladimir
-  for the patch.
-* #94: Remove duplication of SSH port constant. Thanks to Olle Lundberg for the
-  catch.
-* #80: Expose the internal "is closed" property of the file transfer class
-  `BufferedFile` as `.closed`, better conforming to Python's file interface.
-  Thanks to `@smunaut` and James Hiscock for catch & patch.
 
 v1.9.0 (6th Nov 2012)
 ---------------------
@@ -301,7 +291,7 @@ v1.5 (paras) 02oct05
     separation
   * demo scripts fixed to have a better chance of loading the host keys
     correctly on windows/cygwin
-  
+
 v1.4 (oddish) 17jul05
 ---------------------
   * added SSH-agent support (for posix) from john rochester
