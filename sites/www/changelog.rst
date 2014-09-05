@@ -2,6 +2,9 @@
 Changelog
 =========
 
+* :feature:`131` Add a `~paramiko.sftp_client.SFTPClient.listdir_iter` method
+  to `~paramiko.sftp_client.SFTPClient` allowing for more efficient,
+  async/generator based file listings. Thanks to John Begeman.
 * :support:`378 backported` Minor code cleanup in the SSH config module
   courtesy of Olle Lundberg.
 * :support:`249` Consolidate version information into one spot. Thanks to Gabi
