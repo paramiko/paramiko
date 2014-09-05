@@ -67,6 +67,18 @@ liver insulin receptors. Their sensitivity to insulin is, however, similarly
 decreased compared with chicken.
 '''
 
+
+# Here is how unicode characters are encoded over 1 to 6 bytes in utf-8
+# U-00000000 - U-0000007F: 0xxxxxxx
+# U-00000080 - U-000007FF: 110xxxxx 10xxxxxx
+# U-00000800 - U-0000FFFF: 1110xxxx 10xxxxxx 10xxxxxx
+# U-00010000 - U-001FFFFF: 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
+# U-00200000 - U-03FFFFFF: 111110xx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
+# U-04000000 - U-7FFFFFFF: 1111110x 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
+# Note that: hex(int('11000011',2)) == '0xc3'
+# Thus, the following 2-bytes sequence is not valid utf8: "invalid continuation byte"
+NON_UTF8_DATA = b'\xC3\xC3'
+
 FOLDER = os.environ.get('TEST_FOLDER', 'temp-testing000')
 
 sftp = None
@@ -267,8 +279,8 @@ class SFTPTest (unittest.TestCase):
 
     def test_7_listdir(self):
         """
-        verify that a folder can be created, a bunch of files can be placed in it,
-        and those files show up in sftp.listdir.
+        verify that a folder can be created, a bunch of files can be placed in
+        it, and those files show up in sftp.listdir.
         """
         try:
             sftp.open(FOLDER + '/duck.txt', 'w').close()
@@ -276,6 +288,26 @@ class SFTPTest (unittest.TestCase):
             sftp.open(FOLDER + '/tertiary.py', 'w').close()
 
             x = sftp.listdir(FOLDER)
+            self.assertEqual(len(x), 3)
+            self.assertTrue('duck.txt' in x)
+            self.assertTrue('fish.txt' in x)
+            self.assertTrue('tertiary.py' in x)
+            self.assertTrue('random' not in x)
+        finally:
+            sftp.remove(FOLDER + '/duck.txt')
+            sftp.remove(FOLDER + '/fish.txt')
+            sftp.remove(FOLDER + '/tertiary.py')
+
+    def test_7_5_listdir_iter(self):
+        """
+        listdir_iter version of above test
+        """
+        try:
+            sftp.open(FOLDER + '/duck.txt', 'w').close()
+            sftp.open(FOLDER + '/fish.txt', 'w').close()
+            sftp.open(FOLDER + '/tertiary.py', 'w').close()
+
+            x = [x.filename for x in sftp.listdir_iter(FOLDER)]
             self.assertEqual(len(x), 3)
             self.assertTrue('duck.txt' in x)
             self.assertTrue('fish.txt' in x)
@@ -405,7 +437,7 @@ class SFTPTest (unittest.TestCase):
             self.assertEqual(sftp.stat(FOLDER + '/testing.txt').st_size, 13)
             with sftp.open(FOLDER + '/testing.txt', 'r') as f:
                 data = f.read(20)
-            self.assertEqual(data, 'hello kiddy.\n')
+            self.assertEqual(data, b'hello kiddy.\n')
         finally:
             sftp.remove(FOLDER + '/testing.txt')
 
@@ -466,8 +498,8 @@ class SFTPTest (unittest.TestCase):
                 f.write('?\n')
 
             with sftp.open(FOLDER + '/happy.txt', 'r') as f:
-                self.assertEqual(f.readline(), 'full line?\n')
-                self.assertEqual(f.read(7), 'partial')
+                self.assertEqual(f.readline(), u('full line?\n'))
+                self.assertEqual(f.read(7), b'partial')
         finally:
             try:
                 sftp.remove(FOLDER + '/happy.txt')
@@ -662,8 +694,8 @@ class SFTPTest (unittest.TestCase):
 
         fd, localname = mkstemp()
         os.close(fd)
-        text = 'All I wanted was a plastic bunny rabbit.\n'
-        with open(localname, 'w') as f:
+        text = b'All I wanted was a plastic bunny rabbit.\n'
+        with open(localname, 'wb') as f:
             f.write(text)
         saved_progress = []
 
@@ -745,6 +777,23 @@ class SFTPTest (unittest.TestCase):
         finally:
             f.close()
             sftp.remove(FOLDER + '/test%file')
+
+
+    def test_O_non_utf8_data(self):
+        """Test write() and read() of non utf8 data"""
+        try:
+            with sftp.open('%s/nonutf8data' % FOLDER, 'w') as f:
+                f.write(NON_UTF8_DATA)
+            with sftp.open('%s/nonutf8data' % FOLDER, 'r') as f:
+                data = f.read()
+            self.assertEqual(data, NON_UTF8_DATA)
+            with sftp.open('%s/nonutf8data' % FOLDER, 'wb') as f:
+                f.write(NON_UTF8_DATA)
+            with sftp.open('%s/nonutf8data' % FOLDER, 'rb') as f:
+                data = f.read()
+            self.assertEqual(data, NON_UTF8_DATA)
+        finally:
+            sftp.remove('%s/nonutf8data' % FOLDER)
 
 
 if __name__ == '__main__':

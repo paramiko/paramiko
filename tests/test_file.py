@@ -23,6 +23,7 @@ Some unit tests for the BufferedFile abstraction.
 import unittest
 from paramiko.file import BufferedFile
 from paramiko.common import linefeed_byte, crlf, cr_byte
+import sys
 
 
 class LoopbackFile (BufferedFile):
@@ -53,7 +54,7 @@ class BufferedFileTest (unittest.TestCase):
     def test_1_simple(self):
         f = LoopbackFile('r')
         try:
-            f.write('hi')
+            f.write(b'hi')
             self.assertTrue(False, 'no exception on write to read-only file')
         except:
             pass
@@ -69,7 +70,7 @@ class BufferedFileTest (unittest.TestCase):
 
     def test_2_readline(self):
         f = LoopbackFile('r+U')
-        f.write('First line.\nSecond line.\r\nThird line.\nFinal line non-terminated.')
+        f.write(b'First line.\nSecond line.\r\nThird line.\nFinal line non-terminated.')
         self.assertEqual(f.readline(), 'First line.\n')
         # universal newline mode should convert this linefeed:
         self.assertEqual(f.readline(), 'Second line.\n')
@@ -93,9 +94,9 @@ class BufferedFileTest (unittest.TestCase):
         try to trick the linefeed detector.
         """
         f = LoopbackFile('r+U')
-        f.write('First line.\r')
+        f.write(b'First line.\r')
         self.assertEqual(f.readline(), 'First line.\n')
-        f.write('\nSecond.\r\n')
+        f.write(b'\nSecond.\r\n')
         self.assertEqual(f.readline(), 'Second.\n')
         f.close()
         self.assertEqual(f.newlines, crlf)
@@ -105,7 +106,7 @@ class BufferedFileTest (unittest.TestCase):
         verify that write buffering is on.
         """
         f = LoopbackFile('r+', 1)
-        f.write('Complete line.\nIncomplete line.')
+        f.write(b'Complete line.\nIncomplete line.')
         self.assertEqual(f.readline(), 'Complete line.\n')
         self.assertEqual(f.readline(), '')
         f.write('..\n')
@@ -118,12 +119,12 @@ class BufferedFileTest (unittest.TestCase):
         """
         f = LoopbackFile('r+', 512)
         f.write('Not\nquite\n512 bytes.\n')
-        self.assertEqual(f.read(1), '')
+        self.assertEqual(f.read(1), b'')
         f.flush()
-        self.assertEqual(f.read(5), 'Not\nq')
-        self.assertEqual(f.read(10), 'uite\n512 b')
-        self.assertEqual(f.read(9), 'ytes.\n')
-        self.assertEqual(f.read(3), '')
+        self.assertEqual(f.read(5), b'Not\nq')
+        self.assertEqual(f.read(10), b'uite\n512 b')
+        self.assertEqual(f.read(9), b'ytes.\n')
+        self.assertEqual(f.read(3), b'')
         f.close()
 
     def test_6_buffering(self):
@@ -131,12 +132,12 @@ class BufferedFileTest (unittest.TestCase):
         verify that flushing happens automatically on buffer crossing.
         """
         f = LoopbackFile('r+', 16)
-        f.write('Too small.')
-        self.assertEqual(f.read(4), '')
-        f.write('  ')
-        self.assertEqual(f.read(4), '')
-        f.write('Enough.')
-        self.assertEqual(f.read(20), 'Too small.  Enough.')
+        f.write(b'Too small.')
+        self.assertEqual(f.read(4), b'')
+        f.write(b'  ')
+        self.assertEqual(f.read(4), b'')
+        f.write(b'Enough.')
+        self.assertEqual(f.read(20), b'Too small.  Enough.')
         f.close()
 
     def test_7_read_all(self):
@@ -144,9 +145,23 @@ class BufferedFileTest (unittest.TestCase):
         verify that read(-1) returns everything left in the file.
         """
         f = LoopbackFile('r+', 16)
-        f.write('The first thing you need to do is open your eyes. ')
-        f.write('Then, you need to close them again.\n')
+        f.write(b'The first thing you need to do is open your eyes. ')
+        f.write(b'Then, you need to close them again.\n')
         s = f.read(-1)
-        self.assertEqual(s, 'The first thing you need to do is open your eyes. Then, you ' +
-                         'need to close them again.\n')
+        self.assertEqual(s, b'The first thing you need to do is open your eyes. Then, you ' +
+                            b'need to close them again.\n')
         f.close()
+
+    def test_8_buffering(self):
+        """
+        verify that buffered objects can be written
+        """
+        if sys.version_info[0] == 2:
+            f = LoopbackFile('r+', 16)
+            f.write(buffer(b'Too small.'))
+            f.close()
+
+if __name__ == '__main__':
+    from unittest import main
+    main()
+

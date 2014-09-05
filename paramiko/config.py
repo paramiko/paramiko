@@ -57,8 +57,8 @@ class SSHConfig (object):
 
         host = {"host": ['*'], "config": {}}
         for line in file_obj:
-            line = line.rstrip('\n').lstrip()
-            if (line == '') or (line[0] == '#'):
+            line = line.rstrip('\r\n').lstrip()
+            if not line or line.startswith('#'):
                 continue
 
             match = re.match(self.SETTINGS_REGEX, line)
@@ -107,8 +107,10 @@ class SSHConfig (object):
 
         :param str hostname: the hostname to lookup
         """
-        matches = [config for config in self._config if
-                   self._allowed(hostname, config['host'])]
+        matches = [
+            config for config in self._config
+            if self._allowed(config['host'], hostname)
+        ]
 
         ret = {}
         for match in matches:
@@ -124,7 +126,7 @@ class SSHConfig (object):
         ret = self._expand_variables(ret, hostname)
         return ret
 
-    def _allowed(self, hostname, hosts):
+    def _allowed(self, hosts, hostname):
         match = False
         for host in hosts:
             if host.startswith('!') and fnmatch.fnmatch(hostname, host[1:]):
@@ -196,10 +198,12 @@ class SSHConfig (object):
                 for find, replace in replacements[k]:
                     if isinstance(config[k], list):
                         for item in range(len(config[k])):
-                            config[k][item] = config[k][item].\
-                                replace(find, str(replace))
+                            if find in config[k][item]:
+                                config[k][item] = config[k][item].\
+                                    replace(find, str(replace))
                     else:
-                        config[k] = config[k].replace(find, str(replace))
+                        if find in config[k]:
+                            config[k] = config[k].replace(find, str(replace))
         return config
 
     def _get_hosts(self, host):
