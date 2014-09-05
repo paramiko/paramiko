@@ -196,14 +196,14 @@ class SFTPClient(BaseSFTP):
         self._request(CMD_CLOSE, handle)
         return filelist
 
-    def listdir_iter(self, path='.', read_ahead_requests=50):
+    def listdir_iter(self, path='.', read_aheads=50):
         """
         Generator version of `.listdir_attr`.
 
         See the API docs for `.listdir_attr` for overall details.
 
         This function adds one more kwarg on top of `.listdir_attr`:
-        ``read_ahead_requests``, an integer controlling how many
+        ``read_aheads``, an integer controlling how many
         ``SSH_FXP_READDIR`` requests are made to the server. The default of 50
         should suffice for most file listings as each request/response cycle
         may contain multiple files (dependant on server implementation.)
@@ -226,7 +226,7 @@ class SFTPClient(BaseSFTP):
                 # responses later on Section 6.7 of the SSH file transfer RFC
                 # explains this
                 # http://filezilla-project.org/specs/draft-ietf-secsh-filexfer-02.txt
-                for i in range(read_ahead_requests):
+                for i in range(read_aheads):
                     num = self._async_request(type(None), CMD_READDIR, handle)
                     nums.append(num)
 
