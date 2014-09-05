@@ -185,7 +185,8 @@ class SSHClient (object):
 
             - The ``pkey`` or ``key_filename`` passed in (if any)
             - Any key we can find through an SSH agent
-            - Any "id_rsa" or "id_dsa" key discoverable in ``~/.ssh/``
+            - Any "id_rsa", "id_dsa" or "id_ecdsa" key discoverable in
+              ``~/.ssh/``
             - Plain username/password auth, if a password was given
 
         If a private key requires a password to unlock it, and a password is
@@ -361,7 +362,8 @@ class SSHClient (object):
 
             - The key passed in, if one was passed in.
             - Any key we can find through an SSH agent (if allowed).
-            - Any "id_rsa" or "id_dsa" key discoverable in ~/.ssh/ (if allowed).
+            - Any "id_rsa", "id_dsa" or "id_ecdsa" key discoverable in ~/.ssh/
+              (if allowed).
             - Plain username/password auth, if a password was given.
 
         (The password might be needed to unlock a private key, or for
