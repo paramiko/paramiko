@@ -246,8 +246,8 @@ class SFTPClient(BaseSFTP):
                             self._convert_status(msg)
                     count = msg.get_int()
                     for i in range(count):
-                        filename = msg.get_string()
-                        longname = msg.get_string()
+                        filename = msg.get_text()
+                        longname = msg.get_text()
                         attr = SFTPAttributes._from_msg(
                             msg, filename, longname)
                         if (filename != '.') and (filename != '..'):
