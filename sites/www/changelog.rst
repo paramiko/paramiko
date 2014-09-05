@@ -2,6 +2,8 @@
 Changelog
 =========
 
+* :feature:`184` Support quoted values in SSH config file parsing. Credit to
+  Yan Kalchevskiy.
 * :feature:`131` Add a `~paramiko.sftp_client.SFTPClient.listdir_iter` method
   to `~paramiko.sftp_client.SFTPClient` allowing for more efficient,
   async/generator based file listings. Thanks to John Begeman.
