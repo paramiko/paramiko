@@ -24,7 +24,6 @@ import binascii
 from hashlib import sha256
 
 from ecdsa import SigningKey, VerifyingKey, der, curves
-from ecdsa.test_pyecdsa import ECDSA
 
 from paramiko.common import four_byte, one_byte
 from paramiko.message import Message
@@ -51,7 +50,7 @@ class ECDSAKey (PKey):
         if (msg is None) and (data is not None):
             msg = Message(data)
         if vals is not None:
-            self.verifying_key, self.signing_key = vals
+            self.signing_key, self.verifying_key = vals
         else:
             if msg is None:
                 raise SSHException('Key object may not be empty')
@@ -125,7 +124,7 @@ class ECDSAKey (PKey):
         key = self.signing_key or self.verifying_key
         self._write_private_key('EC', file_obj, key.to_der(), password)
 
-    def generate(bits, progress_func=None):
+    def generate(curve=curves.NIST256p, progress_func=None):
         """
         Generate a new private RSA key.  This factory function can be used to
         generate a new host key or authentication key.
@@ -138,7 +137,7 @@ class ECDSAKey (PKey):
         @return: new private key
         @rtype: L{RSAKey}
         """
-        signing_key = ECDSA.generate()
+        signing_key = SigningKey.generate(curve)
         key = ECDSAKey(vals=(signing_key, signing_key.get_verifying_key()))
         return key
     generate = staticmethod(generate)

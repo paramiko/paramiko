@@ -2,6 +2,8 @@
 Changelog
 =========
 
+* :bug:`335 major` Fix ECDSA key generation (generation of brand new ECDSA keys
+  was broken previously). Thanks to ``@solarw`` for catch & patch.
 * :feature:`184` Support quoted values in SSH config file parsing. Credit to
   Yan Kalchevskiy.
 * :feature:`131` Add a `~paramiko.sftp_client.SFTPClient.listdir_iter` method
