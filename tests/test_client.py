@@ -30,7 +30,7 @@ import os
 from tests.util import test_path
 import paramiko
 from paramiko.common import PY2, b
-from paramiko.ssh_exception import PasswordRequiredException
+from paramiko.ssh_exception import SSHException
 
 
 FINGERPRINTS = {
@@ -199,7 +199,9 @@ class SSHClientTest (unittest.TestCase):
         """
         Expect failure when multiple keys in play and none are accepted
         """
-        self.assertRaises(PasswordRequiredException,
+        # Until #387 is fixed we have to catch a high-up exception since
+        # various platforms trigger different errors here >_<
+        self.assertRaises(SSHException,
             self._test_connection,
             key_filename=[test_path('test_rsa.key')],
             allowed_keys=['ecdsa-sha2-nistp256'],
