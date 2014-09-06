@@ -2,6 +2,9 @@
 Changelog
 =========
 
+* :bug:`234 major` Lower logging levels for a few overly-noisy log messages
+  about secure channels. Thanks to David Pursehouse for noticing & contributing
+  the fix.
 * :feature:`218` Add support for ECDSA private keys on the client side. Thanks
   to ``@aszlig`` for the patch.
 * :bug:`335 major` Fix ECDSA key generation (generation of brand new ECDSA keys
