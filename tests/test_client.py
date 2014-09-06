@@ -34,17 +34,10 @@ from paramiko.ssh_exception import PasswordRequiredException
 
 
 FINGERPRINTS = {
-    'ssh-dss': '44:78:f0:b9:a2:3c:c5:18:20:09:ff:75:5b:c1:d2:6c',
-    'ssh-rsa': '60:73:38:44:cb:51:86:65:7f:de:da:a2:2b:5a:57:d5',
-    'ecdsa-sha2-nistp256': '25:19:eb:55:e6:a1:47:ff:4f:38:d2:75:6f:a5:d5:60',
+    'ssh-dss': b'\x44\x78\xf0\xb9\xa2\x3c\xc5\x18\x20\x09\xff\x75\x5b\xc1\xd2\x6c',
+    'ssh-rsa': b'\x60\x73\x38\x44\xcb\x51\x86\x65\x7f\xde\xda\xa2\x2b\x5a\x57\xd5',
+    'ecdsa-sha2-nistp256': b'\x25\x19\xeb\x55\xe6\xa1\x47\xff\x4f\x38\xd2\x75\x6f\xa5\xd5\x60',
 }
-
-def _fingerprint_to_bytes(fingerprint):
-    """
-    Takes ssh-keygen style fingerprint, returns hex-y bytestring.
-    """
-    encoded = b(''.join([r'\x{0}'.format(x) for x in fingerprint.split(':')]))
-    return encoded.decode('string-escape' if PY2 else 'unicode_escape')
 
 
 class NullServer (paramiko.ServerInterface):
@@ -70,7 +63,7 @@ class NullServer (paramiko.ServerInterface):
             return paramiko.AUTH_FAILED
         if (
             key.get_name() in self.__allowed_keys and
-            key.get_fingerprint() == _fingerprint_to_bytes(expected)
+            key.get_fingerprint() == expected
         ):
             return paramiko.AUTH_SUCCESSFUL
         return paramiko.AUTH_FAILED
