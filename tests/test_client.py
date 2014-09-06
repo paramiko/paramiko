@@ -185,9 +185,12 @@ class SSHClientTest (unittest.TestCase):
             'ecdsa': 'ecdsa-sha2-nistp256',
         }
         # Various combos of attempted & valid keys
+        # TODO: try every possible combo using itertools functions
         for attempt, accept in (
             (['rsa', 'dss'], ['dss']), # Original test #3
             (['dss', 'rsa'], ['dss']), # Ordering matters sometimes, sadly
+            (['dss', 'rsa', 'ecdsa'], ['dss']), # Try ECDSA but fail
+            (['rsa', 'ecdsa'], ['ecdsa']), # ECDSA success
         ):
             self._test_connection(
                 key_filename=[
