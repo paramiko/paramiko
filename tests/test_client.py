@@ -30,6 +30,7 @@ import os
 from tests.util import test_path
 import paramiko
 from paramiko.common import PY2, b
+from paramiko.ssh_exception import PasswordRequiredException
 
 
 FINGERPRINTS = {
@@ -63,12 +64,14 @@ class NullServer (paramiko.ServerInterface):
         return paramiko.AUTH_FAILED
 
     def check_auth_publickey(self, username, key):
-        # TODO: honor allowed_keys
         try:
             expected = FINGERPRINTS[key.get_name()]
         except KeyError:
             return paramiko.AUTH_FAILED
-        if key.get_fingerprint() == _fingerprint_to_bytes(expected):
+        if (
+            key.get_name() in self.__allowed_keys and
+            key.get_fingerprint() == _fingerprint_to_bytes(expected)
+        ):
             return paramiko.AUTH_SUCCESSFUL
         return paramiko.AUTH_FAILED
 
@@ -198,6 +201,16 @@ class SSHClientTest (unittest.TestCase):
                 ],
                 allowed_keys=[types_[x] for x in accept],
             )
+
+    def test_multiple_key_files_failure(self):
+        """
+        Expect failure when multiple keys in play and none are accepted
+        """
+        self.assertRaises(PasswordRequiredException,
+            self._test_connection,
+            key_filename=[test_path('test_rsa.key')],
+            allowed_keys=['ecdsa-sha2-nistp256'],
+        )
 
     def test_4_auto_add_policy(self):
         """
