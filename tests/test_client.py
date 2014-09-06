@@ -44,7 +44,7 @@ def _fingerprint_to_bytes(fingerprint):
     Takes ssh-keygen style fingerprint, returns hex-y bytestring.
     """
     encoded = b(''.join([r'\x{0}'.format(x) for x in fingerprint.split(':')]))
-    return encoded.decode('string-escape')
+    return encoded.decode('string-escape' if PY2 else 'unicode_escape')
 
 
 class NullServer (paramiko.ServerInterface):
