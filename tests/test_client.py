@@ -95,20 +95,26 @@ class SSHClientTest (unittest.TestCase):
             if hasattr(self, attr):
                 getattr(self, attr).close()
 
-    def _run(self):
+    def _run(self, allowed_keys=None):
+        if allowed_keys is None:
+            allowed_keys = FINGERPRINTS.keys()
         self.socks, addr = self.sockl.accept()
         self.ts = paramiko.Transport(self.socks)
         host_key = paramiko.RSAKey.from_private_key_file(test_path('test_rsa.key'))
         self.ts.add_server_key(host_key)
-        server = NullServer()
+        server = NullServer(allowed_keys=allowed_keys)
         self.ts.start_server(self.event, server)
 
     def _test_connection(self, **kwargs):
         """
-        kwargs get passed directly into SSHClient.connect().
+        (Most) kwargs get passed directly into SSHClient.connect().
+
+        The exception is ``allowed_keys`` which is stripped and handed to the
+        ``NullServer`` used for testing.
         """
+        run_kwargs = {'allowed_keys': kwargs.pop('allowed_keys', None)}
         # Server setup
-        threading.Thread(target=self._run).start()
+        threading.Thread(target=self._run, kwargs=run_kwargs).start()
         host_key = paramiko.RSAKey.from_private_key_file(test_path('test_rsa.key'))
         public_host_key = paramiko.RSAKey(data=host_key.asbytes())
 
@@ -172,9 +178,23 @@ class SSHClientTest (unittest.TestCase):
         """
         verify that SSHClient accepts and tries multiple key files.
         """
-        self._test_connection(key_filename=[
-            test_path('test_rsa.key'), test_path('test_dss.key')
-        ])
+        # This is dumb :(
+        types_ = {
+            'rsa': 'ssh-rsa',
+            'dss': 'ssh-dss',
+            'ecdsa': 'ecdsa-sha2-nistp256',
+        }
+        # Various combos of attempted & valid keys
+        for attempt, accept in (
+            (['rsa', 'dss'], ['dss']), # Original test #3
+            (['dss', 'rsa'], ['dss']), # Ordering matters sometimes, sadly
+        ):
+            self._test_connection(
+                key_filename=[
+                    test_path('test_{0}.key'.format(x)) for x in attempt
+                ],
+                allowed_keys=[types_[x] for x in accept],
+            )
 
     def test_4_auto_add_policy(self):
         """
