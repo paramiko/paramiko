@@ -1,14 +1,33 @@
 language: python
 python:
-  - "2.5"
   - "2.6"
   - "2.7"
+  - "3.2"
+  - "3.3"
+  - "3.4"
 install:
   # Self-install for setup.py-driven deps
   - pip install -e .
-script: python test.py --verbose
+  # Dev (doc/test running) requirements
+  - pip install coveralls # For coveralls.io specifically
+  - pip install -r dev-requirements.txt
+script:
+  # Main tests, with coverage!
+  - invoke coverage
+  # Ensure documentation & invoke pipeline run OK.
+  # Run 'docs' first since its objects.inv is referred to by 'www'.
+  # Also force warnings to be errors since most of them tend to be actual
+  # problems.
+  # Finally, skip them under Python 3.2 due to sphinx shenanigans
+  - "[[ $TRAVIS_PYTHON_VERSION != 3.2 ]] && invoke docs -o -W || true"
+  - "[[ $TRAVIS_PYTHON_VERSION != 3.2 ]] && invoke www -o -W || true"
 notifications:
   irc:
     channels: "irc.freenode.org#paramiko"
+    template:
+      - "%{repository}@%{branch}: %{message} (%{build_url})"
     on_success: change
     on_failure: change
+  email: false
+after_success:
+  - coveralls

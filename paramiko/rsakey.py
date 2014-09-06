@@ -17,19 +17,23 @@
 # 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
 
 """
-L{RSAKey}
+RSA keys.
 """
 
-from Crypto.PublicKey import RSA
-from Crypto.Hash import SHA, MD5
-from Crypto.Cipher import DES3
+import os
+from hashlib import sha1
 
-from paramiko.common import *
+from Crypto.PublicKey import RSA
+
 from paramiko import util
+from paramiko.common import max_byte, zero_byte, one_byte
 from paramiko.message import Message
 from paramiko.ber import BER, BERException
 from paramiko.pkey import PKey
+from paramiko.py3compat import long
 from paramiko.ssh_exception import SSHException
+
+SHA1_DIGESTINFO = b'\x30\x21\x30\x09\x06\x05\x2b\x0e\x03\x02\x1a\x05\x00\x04\x14'
 
 
 class RSAKey (PKey):
@@ -57,18 +61,21 @@ class RSAKey (PKey):
         else:
             if msg is None:
                 raise SSHException('Key object may not be empty')
-            if msg.get_string() != 'ssh-rsa':
+            if msg.get_text() != 'ssh-rsa':
                 raise SSHException('Invalid key')
             self.e = msg.get_mpint()
             self.n = msg.get_mpint()
         self.size = util.bit_length(self.n)
 
-    def __str__(self):
+    def asbytes(self):
         m = Message()
         m.add_string('ssh-rsa')
         m.add_mpint(self.e)
         m.add_mpint(self.n)
-        return str(m)
+        return m.asbytes()
+
+    def __str__(self):
+        return self.asbytes()
 
     def __hash__(self):
         h = hash(self.get_name())
@@ -85,42 +92,42 @@ class RSAKey (PKey):
     def can_sign(self):
         return self.d is not None
 
-    def sign_ssh_data(self, rpool, data):
-        digest = SHA.new(data).digest()
+    def sign_ssh_data(self, data):
+        digest = sha1(data).digest()
         rsa = RSA.construct((long(self.n), long(self.e), long(self.d)))
-        sig = util.deflate_long(rsa.sign(self._pkcs1imify(digest), '')[0], 0)
+        sig = util.deflate_long(rsa.sign(self._pkcs1imify(digest), bytes())[0], 0)
         m = Message()
         m.add_string('ssh-rsa')
         m.add_string(sig)
         return m
 
     def verify_ssh_sig(self, data, msg):
-        if msg.get_string() != 'ssh-rsa':
+        if msg.get_text() != 'ssh-rsa':
             return False
-        sig = util.inflate_long(msg.get_string(), True)
+        sig = util.inflate_long(msg.get_binary(), True)
         # verify the signature by SHA'ing the data and encrypting it using the
         # public key.  some wackiness ensues where we "pkcs1imify" the 20-byte
         # hash into a string as long as the RSA key.
-        hash_obj = util.inflate_long(self._pkcs1imify(SHA.new(data).digest()), True)
+        hash_obj = util.inflate_long(self._pkcs1imify(sha1(data).digest()), True)
         rsa = RSA.construct((long(self.n), long(self.e)))
         return rsa.verify(hash_obj, (sig,))
 
     def _encode_key(self):
         if (self.p is None) or (self.q is None):
             raise SSHException('Not enough key info to write private key file')
-        keylist = [ 0, self.n, self.e, self.d, self.p, self.q,
-                    self.d % (self.p - 1), self.d % (self.q - 1),
-                    util.mod_inverse(self.q, self.p) ]
+        keylist = [0, self.n, self.e, self.d, self.p, self.q,
+                   self.d % (self.p - 1), self.d % (self.q - 1),
+                   util.mod_inverse(self.q, self.p)]
         try:
             b = BER()
             b.encode(keylist)
         except BERException:
             raise SSHException('Unable to create ber encoding of key')
-        return str(b)
+        return b.asbytes()
 
     def write_private_key_file(self, filename, password=None):
         self._write_private_key_file('RSA', filename, self._encode_key(), password)
-        
+
     def write_private_key(self, file_obj, password=None):
         self._write_private_key('RSA', file_obj, self._encode_key(), password)
 
@@ -129,15 +136,13 @@ class RSAKey (PKey):
         Generate a new private RSA key.  This factory function can be used to
         generate a new host key or authentication key.
 
-        @param bits: number of bits the generated key should be.
-        @type bits: int
-        @param progress_func: an optional function to call at key points in
-            key generation (used by C{pyCrypto.PublicKey}).
-        @type progress_func: function
-        @return: new private key
-        @rtype: L{RSAKey}
+        :param int bits: number of bits the generated key should be.
+        :param function progress_func:
+            an optional function to call at key points in key generation (used
+            by ``pyCrypto.PublicKey``).
+        :return: new `.RSAKey` private key
         """
-        rsa = RSA.generate(bits, rng.read, progress_func)
+        rsa = RSA.generate(bits, os.urandom, progress_func)
         key = RSAKey(vals=(rsa.e, rsa.n))
         key.d = rsa.d
         key.p = rsa.p
@@ -145,28 +150,25 @@ class RSAKey (PKey):
         return key
     generate = staticmethod(generate)
 
-
     ###  internals...
-
 
     def _pkcs1imify(self, data):
         """
         turn a 20-byte SHA1 hash into a blob of data as large as the key's N,
         using PKCS1's \"emsa-pkcs1-v1_5\" encoding.  totally bizarre.
         """
-        SHA1_DIGESTINFO = '\x30\x21\x30\x09\x06\x05\x2b\x0e\x03\x02\x1a\x05\x00\x04\x14'
         size = len(util.deflate_long(self.n, 0))
-        filler = '\xff' * (size - len(SHA1_DIGESTINFO) - len(data) - 3)
-        return '\x00\x01' + filler + '\x00' + SHA1_DIGESTINFO + data
+        filler = max_byte * (size - len(SHA1_DIGESTINFO) - len(data) - 3)
+        return zero_byte + one_byte + filler + zero_byte + SHA1_DIGESTINFO + data
 
     def _from_private_key_file(self, filename, password):
         data = self._read_private_key_file('RSA', filename, password)
         self._decode_key(data)
-    
+
     def _from_private_key(self, file_obj, password):
         data = self._read_private_key('RSA', file_obj, password)
         self._decode_key(data)
-    
+
     def _decode_key(self, data):
         # private key file contains:
         # RSAPrivateKey = { version = 0, n, e, d, p, q, d mod p-1, d mod q-1, q**-1 mod p }
