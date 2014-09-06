@@ -29,10 +29,25 @@ import warnings
 import os
 from tests.util import test_path
 import paramiko
-from paramiko.common import PY2
+from paramiko.common import PY2, b
+
+
+def _fingerprint_to_bytes(fingerprint):
+    """
+    Takes ssh-keygen style fingerprint, returns hex-y bytestring.
+    """
+    encoded = b(''.join([r'\x{0}'.format(x) for x in fingerprint.split(':')]))
+    return encoded.decode('string-escape')
 
 
 class NullServer (paramiko.ServerInterface):
+    def __init__(self, *args, **kwargs):
+        # Allow tests to enable/disable specific key types
+        self.__allowed_keys = kwargs.pop('allowed_keys', [])
+        self.__fingerprints = {
+            'dss': '44:78:f0:b9:a2:3c:c5:18:20:09:ff:75:5b:c1:d2:6c',
+        }
+        super(NullServer, self).__init__(*args, **kwargs)
 
     def get_allowed_auths(self, username):
         if username == 'slowdive':
@@ -45,7 +60,16 @@ class NullServer (paramiko.ServerInterface):
         return paramiko.AUTH_FAILED
 
     def check_auth_publickey(self, username, key):
-        if (key.get_name() == 'ssh-dss') and key.get_fingerprint() == b'\x44\x78\xf0\xb9\xa2\x3c\xc5\x18\x20\x09\xff\x75\x5b\xc1\xd2\x6c':
+        type_ = key.get_name()
+        fingerprint = key.get_fingerprint()
+        if not type_.startswith('ssh-'):
+            return paramiko.AUTH_FAILED
+        # TODO: honor allowed_keys
+        try:
+            expected = self.__fingerprints[type_[4:]]
+        except KeyError:
+            return paramiko.AUTH_FAILED
+        if fingerprint == _fingerprint_to_bytes(expected):
             return paramiko.AUTH_SUCCESSFUL
         return paramiko.AUTH_FAILED
 
