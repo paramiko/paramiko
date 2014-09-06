@@ -354,6 +354,14 @@ class SSHClient (object):
         """
         return self._transport
 
+    def _key_from_filename_and_password(self, key_filename, password):
+        for pkey_class in (RSAKey, DSSKey):
+            try:
+                return pkey_class.from_private_key_file(key_filename, password=password)
+            except:
+                pass
+        raise SSHException("Not a valid RSA or DSA private key file, or wrong password.")
+
     def _auth(self, username, password, pkey, key_filenames, allow_agent, look_for_keys):
         """
         Try, in order:
@@ -382,9 +390,8 @@ class SSHClient (object):
 
         if not two_factor:
             for key_filename in key_filenames:
-                for pkey_class in (RSAKey, DSSKey):
                     try:
-                        key = pkey_class.from_private_key_file(key_filename, password)
+                        key = self._key_from_filename_and_password(key_filename, password)
                         self._log(DEBUG, 'Trying key %s from %s' % (hexlify(key.get_fingerprint()), key_filename))
                         self._transport.auth_publickey(username, key)
                         two_factor = (allowed_types == ['password'])
