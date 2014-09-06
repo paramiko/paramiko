@@ -2,6 +2,8 @@
 Changelog
 =========
 
+* :feature:`218` Add support for ECDSA private keys on the client side. Thanks
+  to ``@aszlig`` for the patch.
 * :bug:`335 major` Fix ECDSA key generation (generation of brand new ECDSA keys
   was broken previously). Thanks to ``@solarw`` for catch & patch.
 * :feature:`184` Support quoted values in SSH config file parsing. Credit to
