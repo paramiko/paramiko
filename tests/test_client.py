@@ -46,6 +46,7 @@ class NullServer (paramiko.ServerInterface):
         self.__allowed_keys = kwargs.pop('allowed_keys', [])
         self.__fingerprints = {
             'dss': '44:78:f0:b9:a2:3c:c5:18:20:09:ff:75:5b:c1:d2:6c',
+            'rsa': '60:73:38:44:cb:51:86:65:7f:de:da:a2:2b:5a:57:d5',
         }
         super(NullServer, self).__init__(*args, **kwargs)
 
