@@ -45,8 +45,9 @@ class NullServer (paramiko.ServerInterface):
         # Allow tests to enable/disable specific key types
         self.__allowed_keys = kwargs.pop('allowed_keys', [])
         self.__fingerprints = {
-            'dss': '44:78:f0:b9:a2:3c:c5:18:20:09:ff:75:5b:c1:d2:6c',
-            'rsa': '60:73:38:44:cb:51:86:65:7f:de:da:a2:2b:5a:57:d5',
+            'ssh-dss': '44:78:f0:b9:a2:3c:c5:18:20:09:ff:75:5b:c1:d2:6c',
+            'ssh-rsa': '60:73:38:44:cb:51:86:65:7f:de:da:a2:2b:5a:57:d5',
+            'ecdsa-sha2-nistp256': '25:19:eb:55:e6:a1:47:ff:4f:38:d2:75:6f:a5:d5:60',
         }
         super(NullServer, self).__init__(*args, **kwargs)
 
@@ -61,16 +62,12 @@ class NullServer (paramiko.ServerInterface):
         return paramiko.AUTH_FAILED
 
     def check_auth_publickey(self, username, key):
-        type_ = key.get_name()
-        fingerprint = key.get_fingerprint()
-        if not type_.startswith('ssh-'):
-            return paramiko.AUTH_FAILED
         # TODO: honor allowed_keys
         try:
-            expected = self.__fingerprints[type_[4:]]
+            expected = self.__fingerprints[key.get_name()]
         except KeyError:
             return paramiko.AUTH_FAILED
-        if fingerprint == _fingerprint_to_bytes(expected):
+        if key.get_fingerprint() == _fingerprint_to_bytes(expected):
             return paramiko.AUTH_SUCCESSFUL
         return paramiko.AUTH_FAILED
 
