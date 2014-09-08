@@ -36,8 +36,10 @@ def coverage(ctx):
 
 
 # Until we stop bundling docs w/ releases. Need to discover use cases first.
-@task('docs') # Will invoke the API doc site build
+@task
 def release(ctx):
+    # Build docs first. Use terribad workaround pending invoke #146
+    ctx.run("inv docs")
     # Move the built docs into where Epydocs used to live
     target = 'docs'
     rmtree(target, ignore_errors=True)
