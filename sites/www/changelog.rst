@@ -2,6 +2,8 @@
 Changelog
 =========
 
+* :support:`374` (also :issue:`375`) Old code cleanup courtesy of Olle
+  Lundberg.
 * :support:`377` Factor `~paramiko.channel.Channel` openness sanity check into
   a decorator. Thanks to Olle Lundberg for original patch.
 * :bug:`298 major` Don't perform point validation on ECDSA keys in
