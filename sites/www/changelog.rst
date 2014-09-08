@@ -2,6 +2,10 @@
 Changelog
 =========
 
+* :feature:`372` Update default window & packet sizes to more closely adhere to
+  the pertinent RFC; also expose these settings in the public API so they may
+  be overridden by client code. This should address some general speed issues
+  such as :issue:`175`. Big thanks to Olle Lundberg for the update.
 * :bug:`373 major` Attempt to fix a handful of issues (such as :issue:`354`)
   related to infinite loops and threading deadlocks. Thanks to Olle Lundberg as
   well as a handful of community members who provided advice & feedback via
