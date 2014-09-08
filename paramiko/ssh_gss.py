@@ -76,7 +76,7 @@ except (ImportError, OSError):
 
 def GSSAuth(auth_method, gss_deleg_creds=True):
     """
-    Provide SSH2 GSS-API / SSPI authentication for Paramiko.
+    Provide SSH2 GSS-API / SSPI authentication.
 
     :param str auth_method: The name of the SSH authentication mechanism
                             (gssapi-with-mic or gss-keyex)
