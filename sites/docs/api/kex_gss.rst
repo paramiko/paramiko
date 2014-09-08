@@ -1,4 +1,4 @@
-GSS-API Key Exchange
+GSS-API key exchange
 ====================
 
 .. automodule:: paramiko.kex_gss
