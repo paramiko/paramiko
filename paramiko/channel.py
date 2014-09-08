@@ -25,6 +25,7 @@ import os
 import socket
 import time
 import threading
+from functools import wraps
 
 from paramiko import util
 from paramiko.common import cMSG_CHANNEL_REQUEST, cMSG_CHANNEL_WINDOW_ADJUST, \
@@ -41,6 +42,26 @@ from paramiko import pipe
 
 # lower bound on the max packet size we'll accept from the remote host
 MIN_PACKET_SIZE = 1024
+
+
+def open_only(func):
+    """
+    Decorator for `.Channel` methods which performs an openness check.
+
+    :raises SSHException:
+        If the wrapped method is called on an unopened `.Channel`.
+    """
+    @wraps(func)
+    def _check(self, *args, **kwds):
+        if (
+            self.closed
+            or self.eof_received
+            or self.eof_sent
+            or not self.active
+        ):
+            raise SSHException('Channel is not open')
+        return func(self, *args, **kwds)
+    return _check
 
 
 class Channel (object):
@@ -122,6 +143,7 @@ class Channel (object):
         out += '>'
         return out
 
+    @open_only
     def get_pty(self, term='vt100', width=80, height=24, width_pixels=0,
                 height_pixels=0):
         """
@@ -140,8 +162,6 @@ class Channel (object):
         :raises SSHException:
             if the request was rejected or the channel was closed
         """
-        if self.closed or self.eof_received or self.eof_sent or not self.active:
-            raise SSHException('Channel is not open')
         m = Message()
         m.add_byte(cMSG_CHANNEL_REQUEST)
         m.add_int(self.remote_chanid)
@@ -157,6 +177,7 @@ class Channel (object):
         self.transport._send_user_message(m)
         self._wait_for_event()
 
+    @open_only
     def invoke_shell(self):
         """
         Request an interactive shell session on this channel.  If the server
@@ -173,8 +194,6 @@ class Channel (object):
         :raises SSHException: if the request was rejected or the channel was
             closed
         """
-        if self.closed or self.eof_received or self.eof_sent or not self.active:
-            raise SSHException('Channel is not open')
         m = Message()
         m.add_byte(cMSG_CHANNEL_REQUEST)
         m.add_int(self.remote_chanid)
@@ -184,6 +203,7 @@ class Channel (object):
         self.transport._send_user_message(m)
         self._wait_for_event()
 
+    @open_only
     def exec_command(self, command):
         """
         Execute a command on the server.  If the server allows it, the channel
@@ -199,8 +219,6 @@ class Channel (object):
         :raises SSHException: if the request was rejected or the channel was
             closed
         """
-        if self.closed or self.eof_received or self.eof_sent or not self.active:
-            raise SSHException('Channel is not open')
         m = Message()
         m.add_byte(cMSG_CHANNEL_REQUEST)
         m.add_int(self.remote_chanid)
@@ -211,6 +229,7 @@ class Channel (object):
         self.transport._send_user_message(m)
         self._wait_for_event()
 
+    @open_only
     def invoke_subsystem(self, subsystem):
         """
         Request a subsystem on the server (for example, ``sftp``).  If the
@@ -225,8 +244,6 @@ class Channel (object):
         :raises SSHException:
             if the request was rejected or the channel was closed
         """
-        if self.closed or self.eof_received or self.eof_sent or not self.active:
-            raise SSHException('Channel is not open')
         m = Message()
         m.add_byte(cMSG_CHANNEL_REQUEST)
         m.add_int(self.remote_chanid)
@@ -237,6 +254,7 @@ class Channel (object):
         self.transport._send_user_message(m)
         self._wait_for_event()
 
+    @open_only
     def resize_pty(self, width=80, height=24, width_pixels=0, height_pixels=0):
         """
         Resize the pseudo-terminal.  This can be used to change the width and
@@ -250,8 +268,6 @@ class Channel (object):
         :raises SSHException:
             if the request was rejected or the channel was closed
         """
-        if self.closed or self.eof_received or self.eof_sent or not self.active:
-            raise SSHException('Channel is not open')
         m = Message()
         m.add_byte(cMSG_CHANNEL_REQUEST)
         m.add_int(self.remote_chanid)
@@ -280,7 +296,7 @@ class Channel (object):
     def recv_exit_status(self):
         """
         Return the exit status from the process on the server.  This is
-        mostly useful for retrieving the reults of an `exec_command`.
+        mostly useful for retrieving the results of an `exec_command`.
         If the command hasn't finished yet, this method will wait until
         it does, or until the channel is closed.  If no exit status is
         provided by the server, -1 is returned.
@@ -314,6 +330,7 @@ class Channel (object):
         m.add_int(status)
         self.transport._send_user_message(m)
 
+    @open_only
     def request_x11(self, screen_number=0, auth_protocol=None, auth_cookie=None,
                     single_connection=False, handler=None):
         """
@@ -330,16 +347,15 @@ class Channel (object):
         If you omit the auth_cookie, a new secure random 128-bit value will be
         generated, used, and returned.  You will need to use this value to
         verify incoming x11 requests and replace them with the actual local
-        x11 cookie (which requires some knoweldge of the x11 protocol).
-
+        x11 cookie (which requires some knowledge of the x11 protocol).
+        
         If a handler is passed in, the handler is called from another thread
         whenever a new x11 connection arrives.  The default handler queues up
         incoming x11 connections, which may be retrieved using
         `.Transport.accept`.  The handler's calling signature is::
 
             handler(channel: Channel, (address: str, port: int))
-
-        :param int screen_number: the x11 screen number (0, 10, etc)
+        :param int screen_number: the x11 screen number (0, 10, etc.)
         :param str auth_protocol:
             the name of the X11 authentication method used; if none is given,
             ``"MIT-MAGIC-COOKIE-1"`` is used
@@ -354,8 +370,6 @@ class Channel (object):
             an optional handler to use for incoming X11 connections
         :return: the auth_cookie used
         """
-        if self.closed or self.eof_received or self.eof_sent or not self.active:
-            raise SSHException('Channel is not open')
         if auth_protocol is None:
             auth_protocol = 'MIT-MAGIC-COOKIE-1'
         if auth_cookie is None:
@@ -376,6 +390,7 @@ class Channel (object):
         self.transport._set_x11_handler(handler)
         return auth_cookie
 
+    @open_only
     def request_forward_agent(self, handler):
         """
         Request for a forward SSH Agent on this channel.
@@ -388,9 +403,6 @@ class Channel (object):
 
         :raises: SSHException in case of channel problem.
         """
-        if self.closed or self.eof_received or self.eof_sent or not self.active:
-            raise SSHException('Channel is not open')
-
         m = Message()
         m.add_byte(cMSG_CHANNEL_REQUEST)
         m.add_int(self.remote_chanid)
@@ -721,10 +733,10 @@ class Channel (object):
         :raises socket.timeout:
             if sending stalled for longer than the timeout set by `settimeout`.
         :raises socket.error:
-            if an error occured before the entire string was sent.
-
+            if an error occurred before the entire string was sent.
+        
         .. note::
-            If the channel is closed while only part of the data hase been
+            If the channel is closed while only part of the data has been
             sent, there is no way to determine how much data (if any) was sent.
             This is irritating, but identically follows Python's API.
         """
@@ -745,8 +757,8 @@ class Channel (object):
         :raises socket.timeout:
             if sending stalled for longer than the timeout set by `settimeout`.
         :raises socket.error:
-            if an error occured before the entire string was sent.
-
+            if an error occurred before the entire string was sent.
+            
         .. versionadded:: 1.1
         """
         while s:
@@ -784,7 +796,7 @@ class Channel (object):
     def fileno(self):
         """
         Returns an OS-level file descriptor which can be used for polling, but
-        but not for reading or writing.  This is primaily to allow Python's
+        but not for reading or writing.  This is primarily to allow Python's
         ``select`` module to work.
 
         The first time ``fileno`` is called on a channel, a pipe is created to
