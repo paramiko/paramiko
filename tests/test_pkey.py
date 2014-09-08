@@ -267,7 +267,7 @@ class KeyTest (unittest.TestCase):
         try:
             key.write_private_key_file(newfile, password=newpassword)
             # Verify the inner key data still matches (when no ValueError)
-            key2 = RSAKey(newfile, password=newpassword)
+            key2 = RSAKey(filename=newfile, password=newpassword)
             self.assertEqual(key, key2)
         finally:
             os.remove(newfile)
