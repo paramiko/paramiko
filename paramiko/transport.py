@@ -43,7 +43,8 @@ from paramiko.common import xffffffff, cMSG_CHANNEL_OPEN, cMSG_IGNORE, \
     MSG_CHANNEL_OPEN_SUCCESS, MSG_CHANNEL_OPEN_FAILURE, MSG_CHANNEL_OPEN, \
     MSG_CHANNEL_SUCCESS, MSG_CHANNEL_FAILURE, MSG_CHANNEL_DATA, \
     MSG_CHANNEL_EXTENDED_DATA, MSG_CHANNEL_WINDOW_ADJUST, MSG_CHANNEL_REQUEST, \
-    MSG_CHANNEL_EOF, MSG_CHANNEL_CLOSE
+    MSG_CHANNEL_EOF, MSG_CHANNEL_CLOSE, MIN_PACKET_SIZE, MAX_WINDOW_SIZE, \
+    DEFAULT_WINDOW_SIZE, DEFAULT_MAX_PACKET_SIZE
 from paramiko.compress import ZlibCompressor, ZlibDecompressor
 from paramiko.dsskey import DSSKey
 from paramiko.kex_gex import KexGex
@@ -60,7 +61,7 @@ from paramiko.server import ServerInterface
 from paramiko.sftp_client import SFTPClient
 from paramiko.ssh_exception import (SSHException, BadAuthenticationType,
                                     ChannelException, ProxyCommandFailure)
-from paramiko.util import retry_on_signal
+from paramiko.util import retry_on_signal, clamp_value
 
 from Crypto.Cipher import Blowfish, AES, DES3, ARC4
 try:
@@ -142,7 +143,12 @@ class Transport (threading.Thread):
 
     _modulus_pack = None
 
-    def __init__(self, sock, gss_kex=False, gss_deleg_creds=True):
+    def __init__(self,
+                 sock,
+                 default_window_size=DEFAULT_WINDOW_SIZE,
+                 default_max_packet_size=DEFAULT_MAX_PACKET_SIZE,
+                 gss_kex=False,
+                 gss_deleg_creds=True):
         """
         Create a new SSH session over an existing socket, or socket-like
         object.  This only creates the `.Transport` object; it doesn't begin the
@@ -168,9 +174,27 @@ class Transport (threading.Thread):
         address and used for communication.  Exceptions from the ``socket``
         call may be thrown in this case.
 
+        .. note::
+            Modifying the the window and packet sizes might have adverse
+            effects on your channels created from this transport. The default
+            values are the same as in the OpenSSH code base and have been
+            battle tested.
+
         :param socket sock:
             a socket or socket-like object to create the session over.
+        :param int default_window_size:
+            sets the default window size on the transport. (defaults to
+            2097152)
+        :param int default_max_packet_size:
+            sets the default max packet size on the transport. (defaults to
+            32768)
+
+        .. versionchanged:: 1.15
+            Added the ``default_window_size`` and ``default_max_packet_size``
+            arguments.
         """
+        self.active = False
+
         if isinstance(sock, string_types):
             # convert "host:port" into (host, port)
             hl = sock.split(':', 1)
@@ -241,7 +265,6 @@ class Transport (threading.Thread):
         self.H = None
         self.K = None
 
-        self.active = False
         self.initial_kex_done = False
         self.in_kex = False
         self.authenticated = False
@@ -253,8 +276,8 @@ class Transport (threading.Thread):
         self.channel_events = {}       # (id -> Event)
         self.channels_seen = {}        # (id -> True)
         self._channel_counter = 1
-        self.window_size = 65536
-        self.max_packet_size = 34816
+        self.default_max_packet_size = default_max_packet_size
+        self.default_window_size = default_window_size
         self._forward_agent_handler = None
         self._x11_handler = None
         self._tcp_handler = None
@@ -352,9 +375,10 @@ class Transport (threading.Thread):
 
         .. note:: `connect` is a simpler method for connecting as a client.
 
-        .. note:: After calling this method (or `start_server` or `connect`),
-            you should no longer directly read from or write to the original
-            socket object.
+        .. note::
+            After calling this method (or `start_server` or `connect`), you
+            should no longer directly read from or write to the original socket
+            object.
 
         :param .threading.Event event:
             an event to trigger when negotiation is complete (optional)
@@ -561,18 +585,32 @@ class Transport (threading.Thread):
         """
         return self.active
 
-    def open_session(self):
+    def open_session(self, window_size=None, max_packet_size=None):
         """
         Request a new channel to the server, of type ``"session"``.  This is
         just an alias for calling `open_channel` with an argument of
         ``"session"``.
 
+        .. note:: Modifying the the window and packet sizes might have adverse
+            effects on the session created. The default values are the same
+            as in the OpenSSH code base and have been battle tested.
+
+        :param int window_size:
+            optional window size for this session.
+        :param int max_packet_size:
+            optional max packet size for this session.
+
         :return: a new `.Channel`
 
         :raises SSHException: if the request is rejected or the session ends
             prematurely
+
+        .. versionchanged:: 1.15
+            Added the ``window_size`` and ``max_packet_size`` arguments.
         """
-        return self.open_channel('session')
+        return self.open_channel('session',
+                                 window_size=window_size,
+                                 max_packet_size=max_packet_size)
 
     def open_x11_channel(self, src_addr=None):
         """
@@ -614,12 +652,21 @@ class Transport (threading.Thread):
         """
         return self.open_channel('forwarded-tcpip', dest_addr, src_addr)
 
-    def open_channel(self, kind, dest_addr=None, src_addr=None):
+    def open_channel(self,
+                     kind,
+                     dest_addr=None,
+                     src_addr=None,
+                     window_size=None,
+                     max_packet_size=None):
         """
         Request a new channel to the server. `Channels <.Channel>` are
         socket-like objects used for the actual transfer of data across the
         session. You may only request a channel after negotiating encryption
         (using `connect` or `start_client`) and authenticating.
+
+        .. note:: Modifying the the window and packet sizes might have adverse
+            effects on the channel created. The default values are the same
+            as in the OpenSSH code base and have been battle tested.
 
         :param str kind:
             the kind of channel requested (usually ``"session"``,
@@ -630,22 +677,32 @@ class Transport (threading.Thread):
             ``"direct-tcpip"`` (ignored for other channel types)
         :param src_addr: the source address of this port forwarding, if
             ``kind`` is ``"forwarded-tcpip"``, ``"direct-tcpip"``, or ``"x11"``
+        :param int window_size:
+            optional window size for this session.
+        :param int max_packet_size:
+            optional max packet size for this session.
+
         :return: a new `.Channel` on success
 
         :raises SSHException: if the request is rejected or the session ends
             prematurely
+
+        .. versionchanged:: 1.15
+            Added the ``window_size`` and ``max_packet_size`` arguments.
         """
         if not self.active:
             raise SSHException('SSH session not active')
         self.lock.acquire()
         try:
+            window_size = self._sanitize_window_size(window_size)
+            max_packet_size = self._sanitize_packet_size(max_packet_size)
             chanid = self._next_channel()
             m = Message()
             m.add_byte(cMSG_CHANNEL_OPEN)
             m.add_string(kind)
             m.add_int(chanid)
-            m.add_int(self.window_size)
-            m.add_int(self.max_packet_size)
+            m.add_int(window_size)
+            m.add_int(max_packet_size)
             if (kind == 'forwarded-tcpip') or (kind == 'direct-tcpip'):
                 m.add_string(dest_addr[0])
                 m.add_int(dest_addr[1])
@@ -659,7 +716,7 @@ class Transport (threading.Thread):
             self.channel_events[chanid] = event = threading.Event()
             self.channels_seen[chanid] = True
             chan._set_transport(self)
-            chan._set_window(self.window_size, self.max_packet_size)
+            chan._set_window(window_size, max_packet_size)
         finally:
             self.lock.release()
         self._send_user_message(m)
@@ -703,6 +760,7 @@ class Transport (threading.Thread):
         :param callable handler:
             optional handler for incoming forwarded connections, of the form
             ``func(Channel, (str, int), (str, int))``.
+
         :return: the port number (`int`) allocated by the server
 
         :raises SSHException: if the server refused the TCP forward request
@@ -1352,7 +1410,7 @@ class Transport (threading.Thread):
     def stop_thread(self):
         self.active = False
         self.packetizer.close()
-        while self.isAlive():
+        while self.is_alive() and (self is not threading.current_thread()):
             self.join(10)
 
     ###  internals...
@@ -1485,6 +1543,17 @@ class Transport (threading.Thread):
             self.server_accept_cv.notify()
         finally:
             self.lock.release()
+
+    def _sanitize_window_size(self, window_size):
+        if window_size is None:
+            window_size = self.default_window_size
+        return clamp_value(MIN_PACKET_SIZE, window_size, MAX_WINDOW_SIZE)
+
+    def _sanitize_packet_size(self, max_packet_size):
+        if max_packet_size is None:
+            max_packet_size = self.default_max_packet_size
+        return clamp_value(MIN_PACKET_SIZE, max_packet_size, MAX_WINDOW_SIZE)
+
 
     def run(self):
         # (use the exposed "run" method, because if we specify a thread target
@@ -1950,7 +2019,7 @@ class Transport (threading.Thread):
         self.lock.acquire()
         try:
             chan._set_remote_channel(server_chanid, server_window_size, server_max_packet_size)
-            self._log(INFO, 'Secsh channel %d opened.' % chanid)
+            self._log(DEBUG, 'Secsh channel %d opened.' % chanid)
             if chanid in self.channel_events:
                 self.channel_events[chanid].set()
                 del self.channel_events[chanid]
@@ -1964,7 +2033,7 @@ class Transport (threading.Thread):
         reason_str = m.get_text()
         lang = m.get_text()
         reason_text = CONNECTION_FAILED_CODE.get(reason, '(unknown code)')
-        self._log(INFO, 'Secsh channel %d open FAILED: %s: %s' % (chanid, reason_str, reason_text))
+        self._log(ERROR, 'Secsh channel %d open FAILED: %s: %s' % (chanid, reason_str, reason_text))
         self.lock.acquire()
         try:
             self.saved_exception = ChannelException(reason, reason_text)
@@ -2049,7 +2118,7 @@ class Transport (threading.Thread):
             self._channels.put(my_chanid, chan)
             self.channels_seen[my_chanid] = True
             chan._set_transport(self)
-            chan._set_window(self.window_size, self.max_packet_size)
+            chan._set_window(self.default_window_size, self.default_max_packet_size)
             chan._set_remote_channel(chanid, initial_window_size, max_packet_size)
         finally:
             self.lock.release()
@@ -2057,10 +2126,10 @@ class Transport (threading.Thread):
         m.add_byte(cMSG_CHANNEL_OPEN_SUCCESS)
         m.add_int(chanid)
         m.add_int(my_chanid)
-        m.add_int(self.window_size)
-        m.add_int(self.max_packet_size)
+        m.add_int(self.default_window_size)
+        m.add_int(self.default_max_packet_size)
         self._send_message(m)
-        self._log(INFO, 'Secsh channel %d (%s) opened.', my_chanid, kind)
+        self._log(DEBUG, 'Secsh channel %d (%s) opened.', my_chanid, kind)
         if kind == 'auth-agent@openssh.com':
             self._forward_agent_handler(chan)
         elif kind == 'x11':

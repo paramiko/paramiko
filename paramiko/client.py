@@ -30,6 +30,7 @@ from paramiko.agent import Agent
 from paramiko.common import DEBUG
 from paramiko.config import SSH_PORT
 from paramiko.dsskey import DSSKey
+from paramiko.ecdsakey import ECDSAKey
 from paramiko.hostkeys import HostKeys
 from paramiko.py3compat import string_types
 from paramiko.resource import ResourceManager
@@ -172,7 +173,7 @@ class SSHClient (object):
     def connect(self, hostname, port=SSH_PORT, username=None, password=None, pkey=None,
                 key_filename=None, timeout=None, allow_agent=True, look_for_keys=True,
                 compress=False, sock=None, gss_auth=False, gss_kex=False,
-                gss_deleg_creds=True, gss_host=None):
+                gss_deleg_creds=True, gss_host=None, banner_timeout=None):
         """
         Connect to an SSH server and authenticate to it.  The server's host key
         is checked against the system host keys (see `load_system_host_keys`)
@@ -185,7 +186,8 @@ class SSHClient (object):
 
             - The ``pkey`` or ``key_filename`` passed in (if any)
             - Any key we can find through an SSH agent
-            - Any "id_rsa" or "id_dsa" key discoverable in ``~/.ssh/``
+            - Any "id_rsa", "id_dsa" or "id_ecdsa" key discoverable in
+              ``~/.ssh/``
             - Plain username/password auth, if a password was given
 
         If a private key requires a password to unlock it, and a password is
@@ -215,6 +217,8 @@ class SSHClient (object):
         :param bool gss_kex: Perform GSS-API Key Exchange and user authentication
         :param bool gss_deleg_creds: Delegate GSS-API client credentials or not
         :param str gss_host: The targets name in the kerberos database. default: hostname
+        :param float banner_timeout: an optional timeout (in seconds) to wait
+            for the SSH banner to be presented.
 
         :raises BadHostKeyException: if the server's host key could not be
             verified
@@ -222,6 +226,9 @@ class SSHClient (object):
         :raises SSHException: if there was any other error connecting or
             establishing an SSH session
         :raises socket.error: if a socket error occurred while connecting
+
+        .. versionchanged:: 1.15
+            Added the ``banner_timeout`` argument.
         """
         if not sock:
             for (family, socktype, proto, canonname, sockaddr) in socket.getaddrinfo(hostname, port, socket.AF_UNSPEC, socket.SOCK_STREAM):
@@ -250,6 +257,8 @@ class SSHClient (object):
             pass
         if self._log_channel is not None:
             t.set_log_channel(self._log_channel)
+        if banner_timeout is not None:
+            t.banner_timeout = banner_timeout
         t.start_client()
         ResourceManager.register(self, t)
 
@@ -385,7 +394,8 @@ class SSHClient (object):
 
             - The key passed in, if one was passed in.
             - Any key we can find through an SSH agent (if allowed).
-            - Any "id_rsa" or "id_dsa" key discoverable in ~/.ssh/ (if allowed).
+            - Any "id_rsa", "id_dsa" or "id_ecdsa" key discoverable in ~/.ssh/
+              (if allowed).
             - Plain username/password auth, if a password was given.
 
         (The password might be needed to unlock a private key, or for
@@ -432,7 +442,7 @@ class SSHClient (object):
 
         if not two_factor:
             for key_filename in key_filenames:
-                for pkey_class in (RSAKey, DSSKey):
+                for pkey_class in (RSAKey, DSSKey, ECDSAKey):
                     try:
                         key = pkey_class.from_private_key_file(key_filename, password)
                         self._log(DEBUG, 'Trying key %s from %s' % (hexlify(key.get_fingerprint()), key_filename))
@@ -464,17 +474,23 @@ class SSHClient (object):
             keyfiles = []
             rsa_key = os.path.expanduser('~/.ssh/id_rsa')
             dsa_key = os.path.expanduser('~/.ssh/id_dsa')
+            ecdsa_key = os.path.expanduser('~/.ssh/id_ecdsa')
             if os.path.isfile(rsa_key):
                 keyfiles.append((RSAKey, rsa_key))
             if os.path.isfile(dsa_key):
                 keyfiles.append((DSSKey, dsa_key))
+            if os.path.isfile(ecdsa_key):
+                keyfiles.append((ECDSAKey, ecdsa_key))
             # look in ~/ssh/ for windows users:
             rsa_key = os.path.expanduser('~/ssh/id_rsa')
             dsa_key = os.path.expanduser('~/ssh/id_dsa')
+            ecdsa_key = os.path.expanduser('~/ssh/id_ecdsa')
             if os.path.isfile(rsa_key):
                 keyfiles.append((RSAKey, rsa_key))
             if os.path.isfile(dsa_key):
                 keyfiles.append((DSSKey, dsa_key))
+            if os.path.isfile(ecdsa_key):
+                keyfiles.append((ECDSAKey, ecdsa_key))
 
             if not look_for_keys:
                 keyfiles = []

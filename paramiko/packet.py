@@ -231,6 +231,7 @@ class Packetizer (object):
 
     def write_all(self, out):
         self.__keepalive_last = time.time()
+        iteration_with_zero_as_return_value = 0
         while len(out) > 0:
             retry_write = False
             try:
@@ -254,6 +255,15 @@ class Packetizer (object):
                 n = 0
                 if self.__closed:
                     n = -1
+            else:
+                if n == 0 and iteration_with_zero_as_return_value > 10:
+                # We shouldn't retry the write, but we didn't
+                # manage to send anything over the socket. This might be an
+                # indication that we have lost contact with the remote side,
+                # but are yet to receive an EOFError or other socket errors.
+                # Let's give it some iteration to try and catch up.
+                    n = -1
+                iteration_with_zero_as_return_value += 1
             if n < 0:
                 raise EOFError()
             if n == len(out):
