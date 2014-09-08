@@ -207,6 +207,71 @@ class SFTPClient(BaseSFTP):
         self._request(CMD_CLOSE, handle)
         return filelist
 
+    def listdir_iter(self, path='.', read_aheads=50):
+        """
+        Generator version of `.listdir_attr`.
+
+        See the API docs for `.listdir_attr` for overall details.
+
+        This function adds one more kwarg on top of `.listdir_attr`:
+        ``read_aheads``, an integer controlling how many
+        ``SSH_FXP_READDIR`` requests are made to the server. The default of 50
+        should suffice for most file listings as each request/response cycle
+        may contain multiple files (dependant on server implementation.)
+
+        .. versionadded:: 1.15
+        """
+        path = self._adjust_cwd(path)
+        self._log(DEBUG, 'listdir(%r)' % path)
+        t, msg = self._request(CMD_OPENDIR, path)
+
+        if t != CMD_HANDLE:
+            raise SFTPError('Expected handle')
+
+        handle = msg.get_string()
+
+        nums = list()
+        while True:
+            try:
+                # Send out a bunch of readdir requests so that we can read the
+                # responses later on Section 6.7 of the SSH file transfer RFC
+                # explains this
+                # http://filezilla-project.org/specs/draft-ietf-secsh-filexfer-02.txt
+                for i in range(read_aheads):
+                    num = self._async_request(type(None), CMD_READDIR, handle)
+                    nums.append(num)
+
+
+                # For each of our sent requests
+                # Read and parse the corresponding packets
+                # If we're at the end of our queued requests, then fire off
+                # some more requests
+                # Exit the loop when we've reached the end of the directory
+                # handle
+                for num in nums:
+                    t, pkt_data = self._read_packet()
+                    msg = Message(pkt_data)
+                    new_num = msg.get_int()
+                    if num == new_num:
+                        if t == CMD_STATUS:
+                            self._convert_status(msg)
+                    count = msg.get_int()
+                    for i in range(count):
+                        filename = msg.get_text()
+                        longname = msg.get_text()
+                        attr = SFTPAttributes._from_msg(
+                            msg, filename, longname)
+                        if (filename != '.') and (filename != '..'):
+                            yield attr
+
+                # If we've hit the end of our queued requests, reset nums.
+                nums = list()
+
+            except EOFError:
+                self._request(CMD_CLOSE, handle)
+                return
+
+
     def open(self, filename, mode='r', bufsize=-1):
         """
         Open a file on the remote server.  The arguments are the same as for
@@ -545,9 +610,7 @@ class SFTPClient(BaseSFTP):
             an `.SFTPAttributes` object containing attributes about the given
             file.
 
-        .. versionadded:: 1.4
-        .. versionchanged:: 1.7.4
-            Began returning rich attribute objects.
+        .. versionadded:: 1.10
         """
         with self.file(remotepath, 'wb') as fr:
             fr.set_pipelined(True)
@@ -577,7 +640,9 @@ class SFTPClient(BaseSFTP):
         The SFTP operations use pipelining for speed.
 
         :param str localpath: the local file to copy
-        :param str remotepath: the destination path on the SFTP server
+        :param str remotepath: the destination path on the SFTP server. Note
+            that the filename should be included. Only specifying a directory
+            may result in an error.
         :param callable callback:
             optional callback function (form: ``func(int, int)``) that accepts
             the bytes transferred so far and the total bytes to be transferred
@@ -595,7 +660,7 @@ class SFTPClient(BaseSFTP):
         """
         file_size = os.stat(localpath).st_size
         with open(localpath, 'rb') as fl:
-            return self.putfo(fl, remotepath, os.stat(localpath).st_size, callback, confirm)
+            return self.putfo(fl, remotepath, file_size, callback, confirm)
 
     def getfo(self, remotepath, fl, callback=None):
         """
@@ -612,9 +677,7 @@ class SFTPClient(BaseSFTP):
             the bytes transferred so far and the total bytes to be transferred
         :return: the `number <int>` of bytes written to the opened file object
 
-        .. versionadded:: 1.4
-        .. versionchanged:: 1.7.4
-            Added the ``callable`` param.
+        .. versionadded:: 1.10
         """
         with self.open(remotepath, 'rb') as fr:
             file_size = self.stat(remotepath).st_size

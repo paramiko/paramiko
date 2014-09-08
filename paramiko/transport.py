@@ -179,6 +179,8 @@ class Transport (threading.Thread):
             sets the default max packet size on the transport. (defaults to
             32768)
         """
+        self.active = False
+
         if isinstance(sock, string_types):
             # convert "host:port" into (host, port)
             hl = sock.split(':', 1)
@@ -234,7 +236,6 @@ class Transport (threading.Thread):
         self.H = None
         self.K = None
 
-        self.active = False
         self.initial_kex_done = False
         self.in_kex = False
         self.authenticated = False
@@ -1299,7 +1300,7 @@ class Transport (threading.Thread):
     def stop_thread(self):
         self.active = False
         self.packetizer.close()
-        while self.isAlive():
+        while self.is_alive() and (self is not threading.current_thread()):
             self.join(10)
 
     ###  internals...
@@ -1908,7 +1909,7 @@ class Transport (threading.Thread):
         self.lock.acquire()
         try:
             chan._set_remote_channel(server_chanid, server_window_size, server_max_packet_size)
-            self._log(INFO, 'Secsh channel %d opened.' % chanid)
+            self._log(DEBUG, 'Secsh channel %d opened.' % chanid)
             if chanid in self.channel_events:
                 self.channel_events[chanid].set()
                 del self.channel_events[chanid]
@@ -1922,7 +1923,7 @@ class Transport (threading.Thread):
         reason_str = m.get_text()
         lang = m.get_text()
         reason_text = CONNECTION_FAILED_CODE.get(reason, '(unknown code)')
-        self._log(INFO, 'Secsh channel %d open FAILED: %s: %s' % (chanid, reason_str, reason_text))
+        self._log(ERROR, 'Secsh channel %d open FAILED: %s: %s' % (chanid, reason_str, reason_text))
         self.lock.acquire()
         try:
             self.saved_exception = ChannelException(reason, reason_text)
@@ -2018,7 +2019,7 @@ class Transport (threading.Thread):
         m.add_int(self.default_window_size)
         m.add_int(self.default_max_packet_size)
         self._send_message(m)
-        self._log(INFO, 'Secsh channel %d (%s) opened.', my_chanid, kind)
+        self._log(DEBUG, 'Secsh channel %d (%s) opened.', my_chanid, kind)
         if kind == 'auth-agent@openssh.com':
             self._forward_agent_handler(chan)
         elif kind == 'x11':

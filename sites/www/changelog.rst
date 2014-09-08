@@ -2,6 +2,68 @@
 Changelog
 =========
 
+* :bug:`373 major` Attempt to fix a handful of issues (such as :issue:`354`)
+  related to infinite loops and threading deadlocks. Thanks to Olle Lundberg as
+  well as a handful of community members who provided advice & feedback via
+  IRC.
+* :support:`374` (also :issue:`375`) Old code cleanup courtesy of Olle
+  Lundberg.
+* :support:`377` Factor `~paramiko.channel.Channel` openness sanity check into
+  a decorator. Thanks to Olle Lundberg for original patch.
+* :bug:`298 major` Don't perform point validation on ECDSA keys in
+  ``known_hosts`` files, since a) this can cause significant slowdown when such
+  keys exist, and b) ``known_hosts`` files are implicitly trustworthy. Thanks
+  to Kieran Spear for catch & patch.
+
+  .. note::
+    This change bumps up the version requirement for the ``ecdsa`` library to
+    ``0.11``.
+
+* :bug:`234 major` Lower logging levels for a few overly-noisy log messages
+  about secure channels. Thanks to David Pursehouse for noticing & contributing
+  the fix.
+* :feature:`218` Add support for ECDSA private keys on the client side. Thanks
+  to ``@aszlig`` for the patch.
+* :bug:`335 major` Fix ECDSA key generation (generation of brand new ECDSA keys
+  was broken previously). Thanks to ``@solarw`` for catch & patch.
+* :feature:`184` Support quoted values in SSH config file parsing. Credit to
+  Yan Kalchevskiy.
+* :feature:`131` Add a `~paramiko.sftp_client.SFTPClient.listdir_iter` method
+  to `~paramiko.sftp_client.SFTPClient` allowing for more efficient,
+  async/generator based file listings. Thanks to John Begeman.
+* :support:`378 backported` Minor code cleanup in the SSH config module
+  courtesy of Olle Lundberg.
+* :support:`249` Consolidate version information into one spot. Thanks to Gabi
+  Davar for the reminder.
+* :release:`1.14.1 <2014-08-25>`
+* :release:`1.13.2 <2014-08-25>`
+* :bug:`376` Be less aggressive about expanding variables in ``ssh_config``
+  files, which results in a speedup of SSH config parsing. Credit to Olle
+  Lundberg.
+* :support:`324 backported` A bevvy of documentation typo fixes, courtesy of Roy
+  Wellington.
+* :bug:`312` `paramiko.transport.Transport` had a bug in its ``__repr__`` which
+  surfaces during errors encountered within its ``__init__``, causing
+  problematic tracebacks in such situations. Thanks to Simon Percivall for
+  catch & patch.
+* :bug:`272` Fix a bug where ``known_hosts`` parsing hashed the input hostname
+  as well as the hostnames from the ``known_hosts`` file, on every comparison.
+  Thanks to ``@sigmunau`` for final patch and ``@ostacey`` for the original
+  report.
+* :bug:`239` Add Windows-style CRLF support to SSH config file parsing. Props
+  to Christopher Swenson.
+* :support:`229 backported` Fix a couple of incorrectly-copied docstrings' ``..
+  versionadded::`` RST directives. Thanks to Aarni Koskela for the catch.
+* :support:`169 backported` Minor refactor of
+  `paramiko.sftp_client.SFTPClient.put` thanks to Abhinav Upadhyay.
+* :bug:`285` (also :issue:`352`) Update our Python 3 ``b()`` compatibility shim
+  to handle ``buffer`` objects correctly; this fixes a frequently reported
+  issue affecting many users, including users of the ``bzr`` software suite.
+  Thanks to ``@basictheprogram`` for the initial report, Jelmer Vernooij for
+  the fix and Andrew Starr-Bochicchio & Jeremy T. Bouse (among others) for
+  discussion & feedback.
+* :support:`371` Add Travis support & docs update for Python 3.4. Thanks to
+  Olle Lundberg.
 * :release:`1.14.0 <2014-05-07>`
 * :release:`1.13.1 <2014-05-07>`
 * :release:`1.12.4 <2014-05-07>`
