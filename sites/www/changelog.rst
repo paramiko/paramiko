@@ -2,8 +2,9 @@
 Changelog
 =========
 
-* :feature:`250` GSS-API / SSPI authenticated Diffie-Hellman Key Exchange and
-  user authentication.
+* :feature:`250` (also :issue:`267`) Add GSS-API / SSPI (e.g. Kerberos) key
+  exchange and authentication support. Mega thanks to Sebastian Deiß, with
+  assist by Torsten Landschoff.
 * :bug:`346 major` Fix an issue in private key files' encryption salts that
   could cause tracebacks and file corruption if keys were re-encrypted. Credit
   to Xavier Nunn.
