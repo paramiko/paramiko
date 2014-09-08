@@ -24,6 +24,8 @@
 This module provides GSS-API / SSPI Key Exchange as defined in RFC 4462.
 
 .. note:: Credential delegation is not supported in server mode.
+
+.. seealso:: :doc:`/api/ssh_gss`
 """
 
 

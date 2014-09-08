@@ -1,5 +1,5 @@
-GSS-API interface
-=================
+GSS-API authentication
+======================
 
 .. automodule:: paramiko.ssh_gss
     :member-order: bysource
