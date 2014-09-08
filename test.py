@@ -101,12 +101,12 @@ def main():
     parser.add_option('-P', '--sftp-passwd', dest='password', type='string', default=default_passwd,
                       metavar='<password>',
                       help='[with -R] (optional) password to unlock the private key for remote sftp tests')
-    
+
     options, args = parser.parse_args()
-    
+
     # setup logging
     paramiko.util.log_to_file('test.log')
-    
+
     if options.use_sftp:
         from tests.test_sftp import SFTPTest
         if options.use_loopback_sftp:
@@ -149,10 +149,7 @@ def main():
     # TODO: make that not a problem, jeez
     for thread in threading.enumerate():
         if thread is not threading.currentThread():
-            if PY2:
-                thread._Thread__stop()
-            else:
-                thread._stop()
+            thread.join(timeout=1)
     # Exit correctly
     if not result.wasSuccessful():
         sys.exit(1)

@@ -2,6 +2,82 @@
 Changelog
 =========
 
+* :bug:`234 major` Lower logging levels for a few overly-noisy log messages
+  about secure channels. Thanks to David Pursehouse for noticing & contributing
+  the fix.
+* :feature:`218` Add support for ECDSA private keys on the client side. Thanks
+  to ``@aszlig`` for the patch.
+* :bug:`335 major` Fix ECDSA key generation (generation of brand new ECDSA keys
+  was broken previously). Thanks to ``@solarw`` for catch & patch.
+* :feature:`184` Support quoted values in SSH config file parsing. Credit to
+  Yan Kalchevskiy.
+* :feature:`131` Add a `~paramiko.sftp_client.SFTPClient.listdir_iter` method
+  to `~paramiko.sftp_client.SFTPClient` allowing for more efficient,
+  async/generator based file listings. Thanks to John Begeman.
+* :support:`378 backported` Minor code cleanup in the SSH config module
+  courtesy of Olle Lundberg.
+* :support:`249` Consolidate version information into one spot. Thanks to Gabi
+  Davar for the reminder.
+* :release:`1.14.1 <2014-08-25>`
+* :release:`1.13.2 <2014-08-25>`
+* :bug:`376` Be less aggressive about expanding variables in ``ssh_config``
+  files, which results in a speedup of SSH config parsing. Credit to Olle
+  Lundberg.
+* :support:`324 backported` A bevvy of documentation typo fixes, courtesy of Roy
+  Wellington.
+* :bug:`312` `paramiko.transport.Transport` had a bug in its ``__repr__`` which
+  surfaces during errors encountered within its ``__init__``, causing
+  problematic tracebacks in such situations. Thanks to Simon Percivall for
+  catch & patch.
+* :bug:`272` Fix a bug where ``known_hosts`` parsing hashed the input hostname
+  as well as the hostnames from the ``known_hosts`` file, on every comparison.
+  Thanks to ``@sigmunau`` for final patch and ``@ostacey`` for the original
+  report.
+* :bug:`239` Add Windows-style CRLF support to SSH config file parsing. Props
+  to Christopher Swenson.
+* :support:`229 backported` Fix a couple of incorrectly-copied docstrings' ``..
+  versionadded::`` RST directives. Thanks to Aarni Koskela for the catch.
+* :support:`169 backported` Minor refactor of
+  `paramiko.sftp_client.SFTPClient.put` thanks to Abhinav Upadhyay.
+* :bug:`285` (also :issue:`352`) Update our Python 3 ``b()`` compatibility shim
+  to handle ``buffer`` objects correctly; this fixes a frequently reported
+  issue affecting many users, including users of the ``bzr`` software suite.
+  Thanks to ``@basictheprogram`` for the initial report, Jelmer Vernooij for
+  the fix and Andrew Starr-Bochicchio & Jeremy T. Bouse (among others) for
+  discussion & feedback.
+* :support:`371` Add Travis support & docs update for Python 3.4. Thanks to
+  Olle Lundberg.
+* :release:`1.14.0 <2014-05-07>`
+* :release:`1.13.1 <2014-05-07>`
+* :release:`1.12.4 <2014-05-07>`
+* :release:`1.11.6 <2014-05-07>`
+* :bug:`-` `paramiko.file.BufferedFile.read` incorrectly returned text strings
+  after the Python 3 migration, despite bytes being more appropriate for file
+  contents (which may be binary or of an unknown encoding.) This has been
+  addressed.
+
+  .. note::
+      `paramiko.file.BufferedFile.readline` continues to return strings, not
+      bytes, as "lines" only make sense for textual data. It assumes UTF-8 by
+      default.
+
+  This should fix `this issue raised on the Obnam mailing list
+  <http://comments.gmane.org/gmane.comp.sysutils.backup.obnam/252>`_.  Thanks
+  to Antoine Brenner for the patch.
+* :bug:`-` Added self.args for exception classes. Used for unpickling. Related
+  to (`Fabric #986 <https://github.com/fabric/fabric/issues/986>`_, `Fabric
+  #714 <https://github.com/fabric/fabric/issues/714>`_). Thanks to Alex
+  Plugaru.
+* :bug:`-` Fix logging error in sftp_client for filenames containing the '%'
+  character. Thanks to Antoine Brenner.
+* :bug:`308` Fix regression in dsskey.py that caused sporadic signature 
+  verification failures. Thanks to Chris Rose.
+* :support:`299` Use deterministic signatures for ECDSA keys for improved
+  security. Thanks to Alex Gaynor.
+* :support:`297` Replace PyCrypto's ``Random`` with `os.urandom` for improved
+  speed and security. Thanks again to Alex.
+* :support:`295` Swap out a bunch of PyCrypto hash functions with use of
+  `hashlib`. Thanks to Alex Gaynor.
 * :support:`290` (also :issue:`292`) Add support for building universal
   (Python 2+3 compatible) wheel files during the release process. Courtesy of
   Alex Gaynor.

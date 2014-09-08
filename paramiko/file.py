@@ -124,9 +124,15 @@ class BufferedFile (object):
         file first).  If the ``size`` argument is negative or omitted, read all
         the remaining data in the file.
 
+        .. note::
+            ``'b'`` mode flag is ignored (``self.FLAG_BINARY`` in
+            ``self._flags``), because SSH treats all files as binary, since we
+            have no idea what encoding the file is in, or even if the file is
+            text data.
+
         :param int size: maximum number of bytes to read
         :return:
-            data read from the file (as a `str`), or an empty string if EOF was
+            data read from the file (as bytes), or an empty string if EOF was
             encountered immediately
         """
         if self._closed:
@@ -148,12 +154,12 @@ class BufferedFile (object):
                 result += new_data
                 self._realpos += len(new_data)
                 self._pos += len(new_data)
-            return result if self._flags & self.FLAG_BINARY else u(result)
+            return result 
         if size <= len(self._rbuffer):
             result = self._rbuffer[:size]
             self._rbuffer = self._rbuffer[size:]
             self._pos += len(result)
-            return result if self._flags & self.FLAG_BINARY else u(result)
+            return result 
         while len(self._rbuffer) < size:
             read_size = size - len(self._rbuffer)
             if self._flags & self.FLAG_BUFFERED:
@@ -169,7 +175,7 @@ class BufferedFile (object):
         result = self._rbuffer[:size]
         self._rbuffer = self._rbuffer[size:]
         self._pos += len(result)
-        return result if self._flags & self.FLAG_BINARY else u(result)
+        return result 
 
     def readline(self, size=None):
         """
@@ -186,8 +192,12 @@ class BufferedFile (object):
 
         :param int size: maximum length of returned string.
         :return:
-            next line of the file (`str`), or an empty string if the end of the
+            next line of the file, or an empty string if the end of the
             file has been reached.
+
+            If the file was opened in binary (``'b'``) mode: bytes are returned
+            Else: the encoding of the file is assumed to be UTF-8 and character
+            strings (`str`) are returned
         """
         # it's almost silly how complex this function is.
         if self._closed:
@@ -277,7 +287,8 @@ class BufferedFile (object):
         Set the file's current position, like stdio's ``fseek``.  Not all file
         objects support seeking.
 
-        .. note:: If a file is opened in append mode (``'a'`` or ``'a+'``), any seek
+        .. note::
+            If a file is opened in append mode (``'a'`` or ``'a+'``), any seek
             operations will be undone at the next write (as the file position
             will move back to the end of the file).
         

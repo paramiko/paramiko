@@ -20,11 +20,13 @@
 DSS keys.
 """
 
+import os
+from hashlib import sha1
+
 from Crypto.PublicKey import DSA
-from Crypto.Hash import SHA
 
 from paramiko import util
-from paramiko.common import zero_byte, rng
+from paramiko.common import zero_byte
 from paramiko.py3compat import long
 from paramiko.ssh_exception import SSHException
 from paramiko.message import Message
@@ -91,17 +93,17 @@ class DSSKey (PKey):
 
     def get_bits(self):
         return self.size
-        
+
     def can_sign(self):
         return self.x is not None
 
-    def sign_ssh_data(self, rng, data):
-        digest = SHA.new(data).digest()
+    def sign_ssh_data(self, data):
+        digest = sha1(data).digest()
         dss = DSA.construct((long(self.y), long(self.g), long(self.p), long(self.q), long(self.x)))
         # generate a suitable k
         qsize = len(util.deflate_long(self.q, 0))
         while True:
-            k = util.inflate_long(rng.read(qsize), 1)
+            k = util.inflate_long(os.urandom(qsize), 1)
             if (k > 2) and (k < self.q):
                 break
         r, s = dss.sign(util.inflate_long(digest, 1), k)
@@ -111,9 +113,9 @@ class DSSKey (PKey):
         rstr = util.deflate_long(r, 0)
         sstr = util.deflate_long(s, 0)
         if len(rstr) < 20:
-            rstr += zero_byte * (20 - len(rstr))
+            rstr = zero_byte * (20 - len(rstr)) + rstr
         if len(sstr) < 20:
-            sstr += zero_byte * (20 - len(sstr))
+            sstr = zero_byte * (20 - len(sstr)) + sstr
         m.add_string(rstr + sstr)
         return m
 
@@ -130,7 +132,7 @@ class DSSKey (PKey):
         # pull out (r, s) which are NOT encoded as mpints
         sigR = util.inflate_long(sig[:20], 1)
         sigS = util.inflate_long(sig[20:], 1)
-        sigM = util.inflate_long(SHA.new(data).digest(), 1)
+        sigM = util.inflate_long(sha1(data).digest(), 1)
 
         dss = DSA.construct((long(self.y), long(self.g), long(self.p), long(self.q)))
         return dss.verify(sigM, (sigR, sigS))
@@ -163,7 +165,7 @@ class DSSKey (PKey):
             by ``pyCrypto.PublicKey``).
         :return: new `.DSSKey` private key
         """
-        dsa = DSA.generate(bits, rng.read, progress_func)
+        dsa = DSA.generate(bits, os.urandom, progress_func)
         key = DSSKey(vals=(dsa.p, dsa.q, dsa.g, dsa.y))
         key.x = dsa.x
         return key
@@ -174,11 +176,11 @@ class DSSKey (PKey):
     def _from_private_key_file(self, filename, password):
         data = self._read_private_key_file('DSA', filename, password)
         self._decode_key(data)
-    
+
     def _from_private_key(self, file_obj, password):
         data = self._read_private_key('DSA', file_obj, password)
         self._decode_key(data)
-    
+
     def _decode_key(self, data):
         # private key file contains:
         # DSAPrivateKey = { version = 0, p, q, g, y, x }

@@ -39,6 +39,8 @@ if PY2:
             return s
         elif isinstance(s, unicode):
             return s.encode(encoding)
+        elif isinstance(s, buffer):
+            return s
         else:
             raise TypeError("Expected unicode or bytes, got %r" % s)
 
@@ -49,6 +51,8 @@ if PY2:
             return s.decode(encoding)
         elif isinstance(s, unicode):
             return s
+        elif isinstance(s, buffer):
+            return s.decode(encoding)
         else:
             raise TypeError("Expected unicode or bytes, got %r" % s)
 

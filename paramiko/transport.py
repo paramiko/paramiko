@@ -20,17 +20,19 @@
 Core protocol implementation
 """
 
+import os
 import socket
 import sys
 import threading
 import time
 import weakref
+from hashlib import md5, sha1
 
 import paramiko
 from paramiko import util
 from paramiko.auth_handler import AuthHandler
 from paramiko.channel import Channel
-from paramiko.common import rng, xffffffff, cMSG_CHANNEL_OPEN, cMSG_IGNORE, \
+from paramiko.common import xffffffff, cMSG_CHANNEL_OPEN, cMSG_IGNORE, \
     cMSG_GLOBAL_REQUEST, DEBUG, MSG_KEXINIT, MSG_IGNORE, MSG_DISCONNECT, \
     MSG_DEBUG, ERROR, WARNING, cMSG_UNIMPLEMENTED, INFO, cMSG_KEXINIT, \
     cMSG_NEWKEYS, MSG_NEWKEYS, cMSG_REQUEST_SUCCESS, cMSG_REQUEST_FAILURE, \
@@ -57,9 +59,7 @@ from paramiko.ssh_exception import (SSHException, BadAuthenticationType,
                                     ChannelException, ProxyCommandFailure)
 from paramiko.util import retry_on_signal
 
-from Crypto import Random
 from Crypto.Cipher import Blowfish, AES, DES3, ARC4
-from Crypto.Hash import SHA, MD5
 try:
     from Crypto.Util import Counter
 except ImportError:
@@ -107,10 +107,10 @@ class Transport (threading.Thread):
     }
 
     _mac_info = {
-        'hmac-sha1': {'class': SHA, 'size': 20},
-        'hmac-sha1-96': {'class': SHA, 'size': 12},
-        'hmac-md5': {'class': MD5, 'size': 16},
-        'hmac-md5-96': {'class': MD5, 'size': 12},
+        'hmac-sha1': {'class': sha1, 'size': 20},
+        'hmac-sha1-96': {'class': sha1, 'size': 12},
+        'hmac-md5': {'class': md5, 'size': 16},
+        'hmac-md5-96': {'class': md5, 'size': 12},
     }
 
     _key_info = {
@@ -164,6 +164,8 @@ class Transport (threading.Thread):
         :param socket sock:
             a socket or socket-like object to create the session over.
         """
+        self.active = False
+
         if isinstance(sock, string_types):
             # convert "host:port" into (host, port)
             hl = sock.split(':', 1)
@@ -192,7 +194,6 @@ class Transport (threading.Thread):
         # okay, normal socket-ish flow here...
         threading.Thread.__init__(self)
         self.setDaemon(True)
-        self.rng = rng
         self.sock = sock
         # Python < 2.3 doesn't have the settimeout method - RogerB
         try:
@@ -220,7 +221,6 @@ class Transport (threading.Thread):
         self.H = None
         self.K = None
 
-        self.active = False
         self.initial_kex_done = False
         self.in_kex = False
         self.authenticated = False
@@ -339,7 +339,6 @@ class Transport (threading.Thread):
         # synchronous, wait for a result
         self.completion_event = event = threading.Event()
         self.start()
-        Random.atfork()
         while True:
             event.wait(0.1)
             if not self.active:
@@ -475,7 +474,7 @@ class Transport (threading.Thread):
 
         .. note:: This has no effect when used in client mode.
         """
-        Transport._modulus_pack = ModulusPack(rng)
+        Transport._modulus_pack = ModulusPack()
         # places to look for the openssh "moduli" file
         file_list = ['/etc/ssh/moduli', '/usr/local/etc/moduli']
         if filename is not None:
@@ -732,8 +731,8 @@ class Transport (threading.Thread):
         m = Message()
         m.add_byte(cMSG_IGNORE)
         if byte_count is None:
-            byte_count = (byte_ord(rng.read(1)) % 32) + 10
-        m.add_bytes(rng.read(byte_count))
+            byte_count = (byte_ord(os.urandom(1)) % 32) + 10
+        m.add_bytes(os.urandom(byte_count))
         self._send_user_message(m)
 
     def renegotiate_keys(self):
@@ -1338,13 +1337,13 @@ class Transport (threading.Thread):
         m.add_bytes(self.H)
         m.add_byte(b(id))
         m.add_bytes(self.session_id)
-        out = sofar = SHA.new(m.asbytes()).digest()
+        out = sofar = sha1(m.asbytes()).digest()
         while len(out) < nbytes:
             m = Message()
             m.add_mpint(self.K)
             m.add_bytes(self.H)
             m.add_bytes(sofar)
-            digest = SHA.new(m.asbytes()).digest()
+            digest = sha1(m.asbytes()).digest()
             out += digest
             sofar += digest
         return out[:nbytes]
@@ -1401,10 +1400,6 @@ class Transport (threading.Thread):
         # Hold reference to 'sys' so we can test sys.modules to detect
         # interpreter shutdown.
         self.sys = sys
-
-        # Required to prevent RNG errors when running inside many subprocess
-        # containers.
-        Random.atfork()
 
         # active=True occurs before the thread is launched, to avoid a race
         _active_threads.append(self)
@@ -1590,7 +1585,7 @@ class Transport (threading.Thread):
 
         m = Message()
         m.add_byte(cMSG_KEXINIT)
-        m.add_bytes(rng.read(16))
+        m.add_bytes(os.urandom(16))
         m.add_list(self._preferred_kex)
         m.add_list(available_server_keys)
         m.add_list(self._preferred_ciphers)
@@ -1719,9 +1714,9 @@ class Transport (threading.Thread):
         # initial mac keys are done in the hash's natural size (not the potentially truncated
         # transmission size)
         if self.server_mode:
-            mac_key = self._compute_key('E', mac_engine.digest_size)
+            mac_key = self._compute_key('E', mac_engine().digest_size)
         else:
-            mac_key = self._compute_key('F', mac_engine.digest_size)
+            mac_key = self._compute_key('F', mac_engine().digest_size)
         self.packetizer.set_inbound_cipher(engine, block_size, mac_engine, mac_size, mac_key)
         compress_in = self._compression_info[self.remote_compression][1]
         if (compress_in is not None) and ((self.remote_compression != 'zlib@openssh.com') or self.authenticated):
@@ -1746,9 +1741,9 @@ class Transport (threading.Thread):
         # initial mac keys are done in the hash's natural size (not the potentially truncated
         # transmission size)
         if self.server_mode:
-            mac_key = self._compute_key('F', mac_engine.digest_size)
+            mac_key = self._compute_key('F', mac_engine().digest_size)
         else:
-            mac_key = self._compute_key('E', mac_engine.digest_size)
+            mac_key = self._compute_key('E', mac_engine().digest_size)
         sdctr = self.local_cipher.endswith('-ctr')
         self.packetizer.set_outbound_cipher(engine, block_size, mac_engine, mac_size, mac_key, sdctr)
         compress_out = self._compression_info[self.local_compression][0]
@@ -1860,7 +1855,7 @@ class Transport (threading.Thread):
         self.lock.acquire()
         try:
             chan._set_remote_channel(server_chanid, server_window_size, server_max_packet_size)
-            self._log(INFO, 'Secsh channel %d opened.' % chanid)
+            self._log(DEBUG, 'Secsh channel %d opened.' % chanid)
             if chanid in self.channel_events:
                 self.channel_events[chanid].set()
                 del self.channel_events[chanid]
@@ -1874,7 +1869,7 @@ class Transport (threading.Thread):
         reason_str = m.get_text()
         lang = m.get_text()
         reason_text = CONNECTION_FAILED_CODE.get(reason, '(unknown code)')
-        self._log(INFO, 'Secsh channel %d open FAILED: %s: %s' % (chanid, reason_str, reason_text))
+        self._log(ERROR, 'Secsh channel %d open FAILED: %s: %s' % (chanid, reason_str, reason_text))
         self.lock.acquire()
         try:
             self.saved_exception = ChannelException(reason, reason_text)
@@ -1970,7 +1965,7 @@ class Transport (threading.Thread):
         m.add_int(self.window_size)
         m.add_int(self.max_packet_size)
         self._send_message(m)
-        self._log(INFO, 'Secsh channel %d (%s) opened.', my_chanid, kind)
+        self._log(DEBUG, 'Secsh channel %d (%s) opened.', my_chanid, kind)
         if kind == 'auth-agent@openssh.com':
             self._forward_agent_handler(chan)
         elif kind == 'x11':
