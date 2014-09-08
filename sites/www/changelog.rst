@@ -2,6 +2,15 @@
 Changelog
 =========
 
+* :bug:`298 major` Don't perform point validation on ECDSA keys in
+  ``known_hosts`` files, since a) this can cause significant slowdown when such
+  keys exist, and b) ``known_hosts`` files are implicitly trustworthy. Thanks
+  to Kieran Spear for catch & patch.
+
+  .. note::
+    This change bumps up the version requirement for the ``ecdsa`` library to
+    ``0.11``.
+
 * :bug:`234 major` Lower logging levels for a few overly-noisy log messages
   about secure channels. Thanks to David Pursehouse for noticing & contributing
   the fix.
