@@ -2,6 +2,8 @@
 Changelog
 =========
 
+* :feature:`362` Allow users to control the SSH banner timeout. Thanks to Cory
+  Benfield.
 * :feature:`372` Update default window & packet sizes to more closely adhere to
   the pertinent RFC; also expose these settings in the public API so they may
   be overridden by client code. This should address some general speed issues
