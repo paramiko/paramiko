@@ -2,9 +2,10 @@
 Changelog
 =========
 
-* :feature:`250` (also :issue:`267`) Add GSS-API / SSPI (e.g. Kerberos) key
-  exchange and authentication support (:ref:`installation docs here <gssapi>`).
-  Mega thanks to Sebastian Deiß, with assist by Torsten Landschoff.
+* :feature:`267` (also :issue:`250`, :issue:`241`, :issue:`228`) Add GSS-API /
+  SSPI (e.g. Kerberos) key exchange and authentication support
+  (:ref:`installation docs here <gssapi>`). Mega thanks to Sebastian Deiß, with
+  assist by Torsten Landschoff.
 * :bug:`346 major` Fix an issue in private key files' encryption salts that
   could cause tracebacks and file corruption if keys were re-encrypted. Credit
   to Xavier Nunn.
