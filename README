@@ -75,19 +75,9 @@ Please file bug reports at https://github.com/paramiko/paramiko/. There is curre
 Kerberos Support
 ----------------
 
-If you want paramiko to do kerberos authentication or key exchange using GSS-API or SSPI, you 
-need the following python packages:
-
-- pyasn1 0.1.7 or better
-- python-gssapi 0.6.1 or better (Unix)
-- pywin32 2.1.8 or better (Windows)
-
-So you have to install pyasn1 and python-gssapi on Unix or pywin32 on Windows.
-To enable GSS-API / SSPI authentication or key exchange see the demos or paramiko docs.
-Note: If you use Microsoft SSPI for kerberos authentication and credential 
-delegation in paramiko, make sure that the target host is trusted for 
-delegation in the active directory configuration. For details see:
-http://technet.microsoft.com/en-us/library/cc738491%28v=ws.10%29.aspx
+Paramiko ships with optional Kerberos/GSSAPI support; for info on the extra
+dependencies for this, see the 'GSS-API' section on the 'Installation' page of
+our main website, http://paramiko.org .
 
 
 Demo

@@ -20,10 +20,13 @@ We currently support **Python 2.6, 2.7 and 3.3+** (Python **3.2** should also
 work but has a less-strong compatibility guarantee from us.) Users on Python
 2.5 or older are urged to upgrade.
 
-Paramiko has two dependencies: the pure-Python ECDSA module ``ecdsa``, and the
+Paramiko has two hard dependencies: the pure-Python ECDSA module ``ecdsa``, and the
 PyCrypto C extension. ``ecdsa`` is easily installable from wherever you
 obtained Paramiko's package; PyCrypto may require more work. Read on for
 details.
+
+If you need GSS-API / SSPI support, see :ref:`the below subsection on it
+<gssapi>` for details on additional dependencies.
 
 .. _release-lines:
 
@@ -99,3 +102,26 @@ installation of Paramiko via ``pypm``::
     Installing paramiko-1.7.8
     Installing pycrypto-2.4
     C:\>
+
+
+.. _gssapi:
+
+Optional dependencies for GSS-API / SSPI / Kerberos
+===================================================
+
+In order to use Kerberos & related functionality, a couple of additional
+dependencies are required (these are not listed in our ``setup.py`` due to
+their infrequent utility & non-platform-agnostic requirements):
+
+* **All platforms** need `pyasn1 <https://pypi.python.org/pypi/pyasn1>`_
+  ``0.1.7`` or better.
+* **Unix** needs `python-gssapi <https://pypi.python.org/pypi/python-gssapi/>`_
+  ``0.6.1`` or better.
+* **Windows** needs `pywin32 <https://pypi.python.org/pypi/pywin32>`_ ``2.1.8``
+  or better.
+
+.. note::
+    If you use Microsoft SSPI for kerberos authentication and credential
+    delegation, make sure that the target host is trusted for delegation in the
+    active directory configuration. For details see:
+    http://technet.microsoft.com/en-us/library/cc738491%28v=ws.10%29.aspx
