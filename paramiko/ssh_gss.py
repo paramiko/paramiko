@@ -18,28 +18,11 @@
 # along with Paramiko; if not, write to the Free Software Foundation, Inc.,
 # 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
 
+
 """
-This module provides GSS-API / SSPI authentication for Paramiko as defined in
-RFC 4462 with the following restrictions:
-Credential delegation is not supported in server mode,
-GSS-API key exchange is supported, but not implemented in Paramiko.
-To Use this module, you need the following additional python packages:
-`pyasn1 >= 0.1.7 <https://pypi.python.org/pypi/pyasn1>`_,
-`python-gssapi >= 0.4.0 (Unix) <https://pypi.python.org/pypi/python-gssapi>`_,
-`pywin32 2.1.8 (Windows) <http://sourceforge.net/projects/pywin32/>`_.
+This module provides GSS-API / SSPI  authentication as defined in RFC 4462.
 
-:summary: SSH2 GSS-API / SSPI authentication module
-:version: 0.1
-:author: Sebastian Deiss
-:contact: https://github.com/SebastianDeiss/paramiko/issues
-:organization: science + computing ag
-               `EMail <mailto:a.kruis@science-computing.de>`_
-:copyright: (C) 2013-2014 `science + computing ag
-            <https://www.science-computing.de>`_
-:license: GNU Lesser General Public License (LGPL)
-:see: `.kex_gss`
-
-Created on 07.11.2013
+.. note:: Credential delegation is not supported in server mode.
 """
 
 import struct

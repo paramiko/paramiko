@@ -21,26 +21,9 @@
 
 
 """
-This module provides GSS-API / SSPI Key Exchange for Paramiko as defined in
-RFC 4462 with the following restrictions:
-Credential delegation is not supported in server mode,
-To Use this module, you need the following additional python packages:
-`pyasn1 >= 0.1.7 <https://pypi.python.org/pypi/pyasn1>`_,
-`python-gssapi >= 0.4.0 (Unix) <https://pypi.python.org/pypi/python-gssapi>`_,
-`pywin32 2.1.8 (Windows) <http://sourceforge.net/projects/pywin32/>`_.
+This module provides GSS-API / SSPI Key Exchange as defined in RFC 4462.
 
-:summary: SSH2 GSS-API / SSPI Authenticated Diffie-Hellman Key Exchange Module
-:version: 0.1
-:author: Sebastian Deiss
-:contact: https://github.com/SebastianDeiss/paramiko/issues
-:organization: science + computing ag
-               `EMail <mailto:a.kruis@science-computing.de>`_
-:copyright: (C) 2003-2007  Robey Pointer, (C) 2013-2014 `science + computing ag
-            <https://www.science-computing.de>`_
-:license: GNU Lesser General Public License (LGPL)
-:see: `.ssh_gss`
-
-Created on 12.12.2013
+.. note:: Credential delegation is not supported in server mode.
 """
 
 
