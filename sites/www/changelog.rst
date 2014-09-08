@@ -2,6 +2,9 @@
 Changelog
 =========
 
+* :bug:`346 major` Fix an issue in private key files' encryption salts that
+  could cause tracebacks and file corruption if keys were re-encrypted. Credit
+  to Xavier Nunn.
 * :feature:`362` Allow users to control the SSH banner timeout. Thanks to Cory
   Benfield.
 * :feature:`372` Update default window & packet sizes to more closely adhere to
