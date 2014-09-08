@@ -74,3 +74,49 @@ class PacketizerTest (unittest.TestCase):
         self.assertEqual(100, m.get_int())
         self.assertEqual(1, m.get_int())
         self.assertEqual(900, m.get_int())
+
+    def test_3_closed(self):
+        rsock = LoopSocket()
+        wsock = LoopSocket()
+        rsock.link(wsock)
+        p = Packetizer(wsock)
+        p.set_log(util.get_logger('paramiko.transport'))
+        p.set_hexdump(True)
+        cipher = AES.new(zero_byte * 16, AES.MODE_CBC, x55 * 16)
+        p.set_outbound_cipher(cipher, 16, sha1, 12, x1f * 20)
+
+        # message has to be at least 16 bytes long, so we'll have at least one
+        # block of data encrypted that contains zero random padding bytes
+        m = Message()
+        m.add_byte(byte_chr(100))
+        m.add_int(100)
+        m.add_int(1)
+        m.add_int(900)
+        wsock.send = lambda x: 0
+        from functools import wraps
+        import errno
+        import os
+        import signal
+
+        class TimeoutError(Exception):
+            pass
+
+        def timeout(seconds=1, error_message=os.strerror(errno.ETIME)):
+            def decorator(func):
+                def _handle_timeout(signum, frame):
+                    raise TimeoutError(error_message)
+
+                def wrapper(*args, **kwargs):
+                    signal.signal(signal.SIGALRM, _handle_timeout)
+                    signal.alarm(seconds)
+                    try:
+                        result = func(*args, **kwargs)
+                    finally:
+                        signal.alarm(0)
+                    return result
+
+                return wraps(func)(wrapper)
+
+            return decorator
+        send = timeout()(p.send_message)
+        self.assertRaises(EOFError, send, m)
