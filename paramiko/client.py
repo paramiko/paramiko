@@ -221,6 +221,9 @@ class SSHClient (object):
         :raises SSHException: if there was any other error connecting or
             establishing an SSH session
         :raises socket.error: if a socket error occurred while connecting
+
+        .. versionchanged:: 1.15
+            Added the ``banner_timeout`` argument.
         """
         if not sock:
             for (family, socktype, proto, canonname, sockaddr) in socket.getaddrinfo(hostname, port, socket.AF_UNSPEC, socket.SOCK_STREAM):
