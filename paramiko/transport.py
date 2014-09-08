@@ -165,10 +165,11 @@ class Transport (threading.Thread):
         address and used for communication.  Exceptions from the ``socket``
         call may be thrown in this case.
 
-        .. note:: Modifying the the window and packet sizes might have adverse
-            effects on your channels created from this transport. The
-            default values are the same as in the OpenSSH code base and have
-            been battle tested.
+        .. note::
+            Modifying the the window and packet sizes might have adverse
+            effects on your channels created from this transport. The default
+            values are the same as in the OpenSSH code base and have been
+            battle tested.
 
         :param socket sock:
             a socket or socket-like object to create the session over.
@@ -178,6 +179,10 @@ class Transport (threading.Thread):
         :param int default_max_packet_size:
             sets the default max packet size on the transport. (defaults to
             32768)
+
+        .. versionchanged:: 1.15
+            Added the ``default_window_size`` and ``default_max_packet_size``
+            arguments.
         """
         self.active = False
 
@@ -334,9 +339,10 @@ class Transport (threading.Thread):
 
         .. note:: `connect` is a simpler method for connecting as a client.
 
-        .. note:: After calling this method (or `start_server` or `connect`),
-            you should no longer directly read from or write to the original
-            socket object.
+        .. note::
+            After calling this method (or `start_server` or `connect`), you
+            should no longer directly read from or write to the original socket
+            object.
 
         :param .threading.Event event:
             an event to trigger when negotiation is complete (optional)
@@ -562,6 +568,9 @@ class Transport (threading.Thread):
 
         :raises SSHException: if the request is rejected or the session ends
             prematurely
+
+        .. versionchanged:: 1.15
+            Added the ``window_size`` and ``max_packet_size`` arguments.
         """
         return self.open_channel('session',
                                  window_size=window_size,
@@ -641,6 +650,9 @@ class Transport (threading.Thread):
 
         :raises SSHException: if the request is rejected or the session ends
             prematurely
+
+        .. versionchanged:: 1.15
+            Added the ``window_size`` and ``max_packet_size`` arguments.
         """
         if not self.active:
             raise SSHException('SSH session not active')

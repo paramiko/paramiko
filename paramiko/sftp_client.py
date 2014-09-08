@@ -116,6 +116,9 @@ class SFTPClient(BaseSFTP):
         :return:
             a new `.SFTPClient` object, referring to an sftp session (channel)
             across the transport
+
+        .. versionchanged:: 1.15
+            Added the ``window_size`` and ``max_packet_size`` arguments.
         """
         chan = t.open_session(window_size=window_size,
                               max_packet_size=max_packet_size)
