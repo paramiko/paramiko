@@ -2,6 +2,8 @@
 Changelog
 =========
 
+* :support:`377` Factor `~paramiko.channel.Channel` openness sanity check into
+  a decorator. Thanks to Olle Lundberg for original patch.
 * :bug:`298 major` Don't perform point validation on ECDSA keys in
   ``known_hosts`` files, since a) this can cause significant slowdown when such
   keys exist, and b) ``known_hosts`` files are implicitly trustworthy. Thanks
