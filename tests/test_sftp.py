@@ -279,8 +279,8 @@ class SFTPTest (unittest.TestCase):
 
     def test_7_listdir(self):
         """
-        verify that a folder can be created, a bunch of files can be placed in it,
-        and those files show up in sftp.listdir.
+        verify that a folder can be created, a bunch of files can be placed in
+        it, and those files show up in sftp.listdir.
         """
         try:
             sftp.open(FOLDER + '/duck.txt', 'w').close()
@@ -288,6 +288,26 @@ class SFTPTest (unittest.TestCase):
             sftp.open(FOLDER + '/tertiary.py', 'w').close()
 
             x = sftp.listdir(FOLDER)
+            self.assertEqual(len(x), 3)
+            self.assertTrue('duck.txt' in x)
+            self.assertTrue('fish.txt' in x)
+            self.assertTrue('tertiary.py' in x)
+            self.assertTrue('random' not in x)
+        finally:
+            sftp.remove(FOLDER + '/duck.txt')
+            sftp.remove(FOLDER + '/fish.txt')
+            sftp.remove(FOLDER + '/tertiary.py')
+
+    def test_7_5_listdir_iter(self):
+        """
+        listdir_iter version of above test
+        """
+        try:
+            sftp.open(FOLDER + '/duck.txt', 'w').close()
+            sftp.open(FOLDER + '/fish.txt', 'w').close()
+            sftp.open(FOLDER + '/tertiary.py', 'w').close()
+
+            x = [x.filename for x in sftp.listdir_iter(FOLDER)]
             self.assertEqual(len(x), 3)
             self.assertTrue('duck.txt' in x)
             self.assertTrue('fish.txt' in x)
