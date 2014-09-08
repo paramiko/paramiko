@@ -2,6 +2,10 @@
 Changelog
 =========
 
+* :bug:`373 major` Attempt to fix a handful of issues (such as :issue:`354`)
+  related to infinite loops and threading deadlocks. Thanks to Olle Lundberg as
+  well as a handful of community members who provided advice & feedback via
+  IRC.
 * :support:`374` (also :issue:`375`) Old code cleanup courtesy of Olle
   Lundberg.
 * :support:`377` Factor `~paramiko.channel.Channel` openness sanity check into
