@@ -32,6 +32,8 @@ This module provides GSS-API / SSPI Key Exchange as defined in RFC 4462.
     connection will be terminated.
 
 .. seealso:: :doc:`/api/ssh_gss`
+
+.. versionadded:: 1.15
 """
 
 

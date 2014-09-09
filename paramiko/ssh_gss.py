@@ -25,6 +25,8 @@ This module provides GSS-API / SSPI  authentication as defined in RFC 4462.
 .. note:: Credential delegation is not supported in server mode.
 
 .. seealso:: :doc:`/api/kex_gss`
+
+.. versionadded:: 1.15
 """
 
 import struct
