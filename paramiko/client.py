@@ -404,10 +404,8 @@ class SSHClient (object):
         two_factor = False
         allowed_types = []
 
-        """
-        If GSS-API support and GSS-PI Key Exchange was performed, we attempt
-        authentication with gssapi-keyex.
-        """
+        # If GSS-API support and GSS-PI Key Exchange was performed, we attempt
+        # authentication with gssapi-keyex.
         if gss_kex and self._transport.gss_kex_used:
             try:
                 self._transport.auth_gssapi_keyex(username)
@@ -415,12 +413,10 @@ class SSHClient (object):
             except Exception as e:
                 saved_exception = e
 
-        """
-        Try GSS-API authentication (gssapi-with-mic) only if GSS-API Key
-        Exchange is not performed, because if we use GSS-API for the key
-        exchange, there is already a fully established GSS-API context, so
-        why should we do that again?
-        """
+        # Try GSS-API authentication (gssapi-with-mic) only if GSS-API Key
+        # Exchange is not performed, because if we use GSS-API for the key
+        # exchange, there is already a fully established GSS-API context, so
+        # why should we do that again?
         if gss_auth:
             try:
                 self._transport.auth_gssapi_with_mic(username, gss_host,

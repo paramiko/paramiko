@@ -180,10 +180,7 @@ class KexGSSGroup1(object):
         if (self.f < 1) or (self.f > self.P - 1):
             raise SSHException('Server kex "f" is out of range')
         mic_token = m.get_string()
-        """
-        This must be TRUE, if there is a GSS-API token in this
-        message.
-        """
+        # This must be TRUE, if there is a GSS-API token in this message.
         bool = m.get_boolean()
         srv_token = None
         if bool:
@@ -545,10 +542,7 @@ class KexGSSGex(object):
             self.transport.host_key = NullHostKey()
         self.f = m.get_mpint()
         mic_token = m.get_string()
-        """
-        This must be TRUE, if there is a GSS-API token in this
-        message.
-        """
+        # This must be TRUE, if there is a GSS-API token in this message.
         bool = m.get_boolean()
         srv_token = None
         if bool:
