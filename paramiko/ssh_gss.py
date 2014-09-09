@@ -33,10 +33,10 @@ import struct
 import os
 import sys
 
-'''
-:var bool GSS_AUTH_AVAILABLE: Constraint that indicates if GSS-API / SSPI is
-                         Available.
-'''
+"""
+:var bool GSS_AUTH_AVAILABLE:
+    Constraint that indicates if GSS-API / SSPI is available.
+"""
 GSS_AUTH_AVAILABLE = True
 
 try:
