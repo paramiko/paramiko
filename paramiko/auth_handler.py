@@ -515,8 +515,8 @@ class AuthHandler (object):
                 # The OpenSSH server is able to create a TGT with the delegated
                 # client credentials, but this is not supported by GSS-API.
                 result = AUTH_SUCCESSFUL
-                self.transport.server_object.check_auth_gssapi_with_mic(username,
-                                                                        result)
+                self.transport.server_object.check_auth_gssapi_with_mic(
+                    username, result)
             else:
                 result = AUTH_FAILED
         elif method == "gssapi-keyex" and gss_auth:
