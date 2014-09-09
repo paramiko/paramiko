@@ -71,15 +71,18 @@ class Server (paramiko.ServerInterface):
                                    gss_authenticated=paramiko.AUTH_FAILED,
                                    cc_file=None):
         """
-        @note: We are just checking in L{AuthHandler} that the given user is
-               a valid krb5 principal!
-               We don't check if the krb5 principal is allowed to log in on
-               the server, because there is no way to do that in python. So
-               if you develop your own SSH server with paramiko for a certain
-               platform like Linux, you should call C{krb5_kuserok()} in your
-               local kerberos library to make sure that the krb5_principal has
-               an account on the server and is allowed to log in as a user.
-        @see: U{krb5_kuserok() man page <http://www.unix.com/man-page/all/3/krb5_kuserok/>}
+        .. note::
+            We are just checking in `AuthHandler` that the given user is a
+            valid krb5 principal! We don't check if the krb5 principal is
+            allowed to log in on the server, because there is no way to do that
+            in python. So if you develop your own SSH server with paramiko for
+            a certain platform like Linux, you should call ``krb5_kuserok()`` in
+            your local kerberos library to make sure that the krb5_principal
+            has an account on the server and is allowed to log in as a user.
+
+        .. seealso::
+            `krb5_kuserok() man page
+            <http://www.unix.com/man-page/all/3/krb5_kuserok/>`_
         """
         if gss_authenticated == paramiko.AUTH_SUCCESSFUL:
             return paramiko.AUTH_SUCCESSFUL
