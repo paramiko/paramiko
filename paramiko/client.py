@@ -270,11 +270,9 @@ class SSHClient (object):
         else:
             server_hostkey_name = "[%s]:%d" % (hostname, port)
 
-        """
-        If GSS-API Key Exchange is performed we are not required to check the
-        host key, because the host is authenticated via GSS-API / SSPI as well
-        as out client.
-        """
+        # If GSS-API Key Exchange is performed we are not required to check the
+        # host key, because the host is authenticated via GSS-API / SSPI as
+        # well as our client.
         if not self._transport.use_gss_kex:
             our_server_key = self._system_host_keys.get(server_hostkey_name,
                                                          {}).get(keytype, None)
