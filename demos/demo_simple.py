@@ -39,7 +39,7 @@ paramiko.util.log_to_file('demo_simple.log')
 # Paramiko client configuration
 UseGSSAPI = True             # enable GSS-API / SSPI authentication
 DoGSSAPIKeyExchange = True
-Port = 22
+port = 22
 
 # get hostname
 username = ''
@@ -55,7 +55,7 @@ if len(hostname) == 0:
 
 if hostname.find(':') >= 0:
     hostname, portstr = hostname.split(':')
-    Port = int(portstr)
+    port = int(portstr)
 
 
 # get username
@@ -75,16 +75,16 @@ try:
     client.set_missing_host_key_policy(paramiko.WarningPolicy())
     print('*** Connecting...')
     if not UseGSSAPI or (not UseGSSAPI and not DoGSSAPIKeyExchange):
-        client.connect(hostname, Port, username, password)
+        client.connect(hostname, port, username, password)
     else:
         # SSPI works only with the FQDN of the target host
         hostname = socket.getfqdn(hostname)
         try:
-            client.connect(hostname, Port, username, gss_auth=UseGSSAPI,
+            client.connect(hostname, port, username, gss_auth=UseGSSAPI,
                            gss_kex=DoGSSAPIKeyExchange)
         except Exception:
             password = getpass.getpass('Password for %s@%s: ' % (username, hostname))
-            client.connect(hostname, Port, username, password)
+            client.connect(hostname, port, username, password)
 
     chan = client.invoke_shell()
     print(repr(client.get_transport()))
