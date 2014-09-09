@@ -228,7 +228,8 @@ class SSHClient (object):
         :raises socket.error: if a socket error occurred while connecting
 
         .. versionchanged:: 1.15
-            Added the ``banner_timeout`` argument.
+            Added the ``banner_timeout``, ``gss_auth``, ``gss_kex``,
+            ``gss_deleg_creds`` and ``gss_host`` arguments.
         """
         if not sock:
             for (family, socktype, proto, canonname, sockaddr) in socket.getaddrinfo(hostname, port, socket.AF_UNSPEC, socket.SOCK_STREAM):
