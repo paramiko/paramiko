@@ -62,7 +62,7 @@ b_slash = b'/'
 class SFTPClient(BaseSFTP, ClosingContextManager):
     """
     SFTP client object.
-    
+
     Used to open an SFTP session across an open SSH `.Transport` and perform
     remote file operations.
     
@@ -101,16 +101,30 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
             raise SSHException('EOF during negotiation')
         self._log(INFO, 'Opened sftp connection (server version %d)' % server_version)
 
-    def from_transport(cls, t):
+    def from_transport(cls, t, window_size=None, max_packet_size=None):
         """
         Create an SFTP client channel from an open `.Transport`.
 
+        Setting the window and packet sizes might affect the transfer speed.
+        The default settings in the `.Transport` class are the same as in
+        OpenSSH and should work adequately for both files transfers and
+        interactive sessions.
+
         :param .Transport t: an open `.Transport` which is already authenticated
+        :param int window_size:
+            optional window size for the `.SFTPClient` session.
+        :param int max_packet_size:
+            optional max packet size for the `.SFTPClient` session..
+
         :return:
             a new `.SFTPClient` object, referring to an sftp session (channel)
             across the transport
+
+        .. versionchanged:: 1.15
+            Added the ``window_size`` and ``max_packet_size`` arguments.
         """
-        chan = t.open_session()
+        chan = t.open_session(window_size=window_size,
+                              max_packet_size=max_packet_size)
         if chan is None:
             return None
         chan.invoke_subsystem('sftp')
@@ -646,7 +660,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
 
         .. versionadded:: 1.4
         .. versionchanged:: 1.7.4
-            ``callback`` and rich attribute return value added.   
+            ``callback`` and rich attribute return value added.
         .. versionchanged:: 1.7.7
             ``confirm`` param added.
         """

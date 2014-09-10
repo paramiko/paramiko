@@ -29,6 +29,7 @@ import unittest
 import weakref
 import warnings
 import os
+import time
 from tests.util import test_path
 import paramiko
 from paramiko.common import PY2, b
@@ -93,7 +94,7 @@ class SSHClientTest (unittest.TestCase):
             if hasattr(self, attr):
                 getattr(self, attr).close()
 
-    def _run(self, allowed_keys=None):
+    def _run(self, allowed_keys=None, delay=0):
         if allowed_keys is None:
             allowed_keys = FINGERPRINTS.keys()
         self.socks, addr = self.sockl.accept()
@@ -101,6 +102,8 @@ class SSHClientTest (unittest.TestCase):
         host_key = paramiko.RSAKey.from_private_key_file(test_path('test_rsa.key'))
         self.ts.add_server_key(host_key)
         server = NullServer(allowed_keys=allowed_keys)
+        if delay:
+            time.sleep(delay)
         self.ts.start_server(self.event, server)
 
     def _test_connection(self, **kwargs):
@@ -264,6 +267,8 @@ class SSHClientTest (unittest.TestCase):
         """
         # Unclear why this is borked on Py3, but it is, and does not seem worth
         # pursuing at the moment.
+        # XXX: It's the release of the references to e.g packetizer that fails
+        # in py3...
         if not PY2:
             return
         threading.Thread(target=self._run).start()
@@ -296,7 +301,7 @@ class SSHClientTest (unittest.TestCase):
 
         self.assertTrue(p() is None)
 
-    def test_6_client_can_be_used_as_context_manager(self):
+    def test_client_can_be_used_as_context_manager(self):
         """
         verify that an SSHClient can be used a context manager
         """
@@ -317,3 +322,25 @@ class SSHClientTest (unittest.TestCase):
             self.assertTrue(self.tc._transport is not None)
 
         self.assertTrue(self.tc._transport is None)
+
+    def test_7_banner_timeout(self):
+        """
+        verify that the SSHClient has a configurable banner timeout.
+        """
+        # Start the thread with a 1 second wait.
+        threading.Thread(target=self._run, kwargs={'delay': 1}).start()
+        host_key = paramiko.RSAKey.from_private_key_file(test_path('test_rsa.key'))
+        public_host_key = paramiko.RSAKey(data=host_key.asbytes())
+
+        self.tc = paramiko.SSHClient()
+        self.tc.get_host_keys().add('[%s]:%d' % (self.addr, self.port), 'ssh-rsa', public_host_key)
+        # Connect with a half second banner timeout.
+        self.assertRaises(
+            paramiko.SSHException,
+            self.tc.connect,
+            self.addr,
+            self.port,
+            username='slowdive',
+            password='pygmalion',
+            banner_timeout=0.5
+        )

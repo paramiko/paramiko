@@ -24,12 +24,11 @@ from binascii import hexlify
 import errno
 import os
 from hashlib import sha1
+import unittest
 
 import paramiko.util
 from paramiko.util import lookup_ssh_host_config as host_config
 from paramiko.py3compat import StringIO, byte_ord
-
-from tests.util import ParamikoTest
 
 test_config_file = """\
 Host *
@@ -41,7 +40,12 @@ Host *.example.com
     \tUser bjork
 Port=3333
 Host *
- \t  \t Crazy something dumb  
+"""
+
+dont_strip_whitespace_please = "\t  \t Crazy something dumb  "
+
+test_config_file += dont_strip_whitespace_please
+test_config_file += """
 Host spoo.example.com
 Crazy something else
 """
@@ -60,7 +64,7 @@ BGQ3GQ/Fc7SX6gkpXkwcZryoi4kNFhHu5LvHcZPdxXV1D+uTMfGS1eyd2Yz/DoNWXNAl8TI0cAsW\
 from paramiko import *
 
 
-class UtilTest(ParamikoTest):
+class UtilTest(unittest.TestCase):
     def test_1_import(self):
         """
         verify that all the classes can be imported from paramiko.
@@ -333,6 +337,11 @@ IdentityFile something_%l_using_fqdn
 """
         config = paramiko.util.parse_ssh_config(StringIO(test_config))
         assert config.lookup('meh')  # will die during lookup() if bug regresses
+
+    def test_clamp_value(self):
+        self.assertEqual(32768, paramiko.util.clamp_value(32767, 32768, 32769))
+        self.assertEqual(32767, paramiko.util.clamp_value(32767, 32765, 32769))
+        self.assertEqual(32769, paramiko.util.clamp_value(32767, 32770, 32769))
 
     def test_13_config_dos_crlf_succeeds(self):
         config_file = StringIO("host abcqwerty\r\nHostName 127.0.0.1\r\n")

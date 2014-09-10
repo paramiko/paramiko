@@ -31,6 +31,7 @@ from hashlib import md5, sha1
 import paramiko
 from paramiko import util
 from paramiko.auth_handler import AuthHandler
+from paramiko.ssh_gss import GSSAuth
 from paramiko.channel import Channel
 from paramiko.common import xffffffff, cMSG_CHANNEL_OPEN, cMSG_IGNORE, \
     cMSG_GLOBAL_REQUEST, DEBUG, MSG_KEXINIT, MSG_IGNORE, MSG_DISCONNECT, \
@@ -42,11 +43,14 @@ from paramiko.common import xffffffff, cMSG_CHANNEL_OPEN, cMSG_IGNORE, \
     MSG_CHANNEL_OPEN_SUCCESS, MSG_CHANNEL_OPEN_FAILURE, MSG_CHANNEL_OPEN, \
     MSG_CHANNEL_SUCCESS, MSG_CHANNEL_FAILURE, MSG_CHANNEL_DATA, \
     MSG_CHANNEL_EXTENDED_DATA, MSG_CHANNEL_WINDOW_ADJUST, MSG_CHANNEL_REQUEST, \
-    MSG_CHANNEL_EOF, MSG_CHANNEL_CLOSE
+    MSG_CHANNEL_EOF, MSG_CHANNEL_CLOSE, MIN_PACKET_SIZE, MAX_WINDOW_SIZE, \
+    DEFAULT_WINDOW_SIZE, DEFAULT_MAX_PACKET_SIZE
 from paramiko.compress import ZlibCompressor, ZlibDecompressor
 from paramiko.dsskey import DSSKey
 from paramiko.kex_gex import KexGex
 from paramiko.kex_group1 import KexGroup1
+from paramiko.kex_group14 import KexGroup14
+from paramiko.kex_gss import KexGSSGex, KexGSSGroup1, KexGSSGroup14, NullHostKey
 from paramiko.message import Message
 from paramiko.packet import Packetizer, NeedRekeyException
 from paramiko.primes import ModulusPack
@@ -57,7 +61,7 @@ from paramiko.server import ServerInterface
 from paramiko.sftp_client import SFTPClient
 from paramiko.ssh_exception import (SSHException, BadAuthenticationType,
                                     ChannelException, ProxyCommandFailure)
-from paramiko.util import retry_on_signal, ClosingContextManager
+from paramiko.util import retry_on_signal, ClosingContextManager, clamp_value
 
 from Crypto.Cipher import Blowfish, AES, DES3, ARC4
 try:
@@ -94,7 +98,7 @@ class Transport (threading.Thread, ClosingContextManager):
                           'aes256-cbc', '3des-cbc', 'arcfour128', 'arcfour256')
     _preferred_macs = ('hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96')
     _preferred_keys = ('ssh-rsa', 'ssh-dss', 'ecdsa-sha2-nistp256')
-    _preferred_kex = ('diffie-hellman-group1-sha1', 'diffie-hellman-group-exchange-sha1')
+    _preferred_kex =  ( 'diffie-hellman-group14-sha1', 'diffie-hellman-group-exchange-sha1' , 'diffie-hellman-group1-sha1')
     _preferred_compression = ('none',)
 
     _cipher_info = {
@@ -123,7 +127,11 @@ class Transport (threading.Thread, ClosingContextManager):
 
     _kex_info = {
         'diffie-hellman-group1-sha1': KexGroup1,
+        'diffie-hellman-group14-sha1': KexGroup14,
         'diffie-hellman-group-exchange-sha1': KexGex,
+        'gss-group1-sha1-toWM5Slw5Ew8Mqkay+al2g==': KexGSSGroup1,
+        'gss-group14-sha1-toWM5Slw5Ew8Mqkay+al2g==': KexGSSGroup14,
+        'gss-gex-sha1-toWM5Slw5Ew8Mqkay+al2g==': KexGSSGex
     }
 
     _compression_info = {
@@ -137,7 +145,12 @@ class Transport (threading.Thread, ClosingContextManager):
 
     _modulus_pack = None
 
-    def __init__(self, sock):
+    def __init__(self,
+                 sock,
+                 default_window_size=DEFAULT_WINDOW_SIZE,
+                 default_max_packet_size=DEFAULT_MAX_PACKET_SIZE,
+                 gss_kex=False,
+                 gss_deleg_creds=True):
         """
         Create a new SSH session over an existing socket, or socket-like
         object.  This only creates the `.Transport` object; it doesn't begin the
@@ -163,8 +176,24 @@ class Transport (threading.Thread, ClosingContextManager):
         address and used for communication.  Exceptions from the ``socket``
         call may be thrown in this case.
 
+        .. note::
+            Modifying the the window and packet sizes might have adverse
+            effects on your channels created from this transport. The default
+            values are the same as in the OpenSSH code base and have been
+            battle tested.
+
         :param socket sock:
             a socket or socket-like object to create the session over.
+        :param int default_window_size:
+            sets the default window size on the transport. (defaults to
+            2097152)
+        :param int default_max_packet_size:
+            sets the default max packet size on the transport. (defaults to
+            32768)
+
+        .. versionchanged:: 1.15
+            Added the ``default_window_size`` and ``default_max_packet_size``
+            arguments.
         """
         self.active = False
 
@@ -218,6 +247,21 @@ class Transport (threading.Thread, ClosingContextManager):
         self.host_key_type = None
         self.host_key = None
 
+        # GSS-API / SSPI Key Exchange
+        self.use_gss_kex = gss_kex
+        # This will be set to True if GSS-API Key Exchange was performed
+        self.gss_kex_used = False
+        self.kexgss_ctxt = None
+        self.gss_host = None
+        if self.use_gss_kex:
+            self.kexgss_ctxt = GSSAuth("gssapi-keyex", gss_deleg_creds)
+            self._preferred_kex = ('gss-gex-sha1-toWM5Slw5Ew8Mqkay+al2g==',
+                                   'gss-group14-sha1-toWM5Slw5Ew8Mqkay+al2g==',
+                                   'gss-group1-sha1-toWM5Slw5Ew8Mqkay+al2g==',
+                                   'diffie-hellman-group-exchange-sha1',
+                                   'diffie-hellman-group14-sha1',
+                                   'diffie-hellman-group1-sha1')
+
         # state used during negotiation
         self.kex_engine = None
         self.H = None
@@ -234,8 +278,8 @@ class Transport (threading.Thread, ClosingContextManager):
         self.channel_events = {}       # (id -> Event)
         self.channels_seen = {}        # (id -> True)
         self._channel_counter = 1
-        self.window_size = 65536
-        self.max_packet_size = 34816
+        self.default_max_packet_size = default_max_packet_size
+        self.default_window_size = default_window_size
         self._forward_agent_handler = None
         self._x11_handler = None
         self._tcp_handler = None
@@ -290,6 +334,7 @@ class Transport (threading.Thread, ClosingContextManager):
 
         .. versionadded:: 1.5.3
         """
+        self.sock.close()
         self.close()
 
     def get_security_options(self):
@@ -300,6 +345,17 @@ class Transport (threading.Thread, ClosingContextManager):
         of preference for them.
         """
         return SecurityOptions(self)
+
+    def set_gss_host(self, gss_host):
+        """
+        Setter for C{gss_host} if GSS-API Key Exchange is performed.
+
+        :param str gss_host: The targets name in the kerberos database
+                             Default: The name of the host to connect to
+        :rtype: Void
+        """
+        # We need the FQDN to get this working with SSPI
+        self.gss_host = socket.getfqdn(gss_host)
 
     def start_client(self, event=None):
         """
@@ -321,9 +377,10 @@ class Transport (threading.Thread, ClosingContextManager):
 
         .. note:: `connect` is a simpler method for connecting as a client.
 
-        .. note:: After calling this method (or `start_server` or `connect`),
-            you should no longer directly read from or write to the original
-            socket object.
+        .. note::
+            After calling this method (or `start_server` or `connect`), you
+            should no longer directly read from or write to the original socket
+            object.
 
         :param .threading.Event event:
             an event to trigger when negotiation is complete (optional)
@@ -530,18 +587,32 @@ class Transport (threading.Thread, ClosingContextManager):
         """
         return self.active
 
-    def open_session(self):
+    def open_session(self, window_size=None, max_packet_size=None):
         """
         Request a new channel to the server, of type ``"session"``.  This is
         just an alias for calling `open_channel` with an argument of
         ``"session"``.
 
+        .. note:: Modifying the the window and packet sizes might have adverse
+            effects on the session created. The default values are the same
+            as in the OpenSSH code base and have been battle tested.
+
+        :param int window_size:
+            optional window size for this session.
+        :param int max_packet_size:
+            optional max packet size for this session.
+
         :return: a new `.Channel`
 
         :raises SSHException: if the request is rejected or the session ends
             prematurely
+
+        .. versionchanged:: 1.15
+            Added the ``window_size`` and ``max_packet_size`` arguments.
         """
-        return self.open_channel('session')
+        return self.open_channel('session',
+                                 window_size=window_size,
+                                 max_packet_size=max_packet_size)
 
     def open_x11_channel(self, src_addr=None):
         """
@@ -583,12 +654,21 @@ class Transport (threading.Thread, ClosingContextManager):
         """
         return self.open_channel('forwarded-tcpip', dest_addr, src_addr)
 
-    def open_channel(self, kind, dest_addr=None, src_addr=None):
+    def open_channel(self,
+                     kind,
+                     dest_addr=None,
+                     src_addr=None,
+                     window_size=None,
+                     max_packet_size=None):
         """
         Request a new channel to the server. `Channels <.Channel>` are
         socket-like objects used for the actual transfer of data across the
         session. You may only request a channel after negotiating encryption
         (using `connect` or `start_client`) and authenticating.
+
+        .. note:: Modifying the the window and packet sizes might have adverse
+            effects on the channel created. The default values are the same
+            as in the OpenSSH code base and have been battle tested.
 
         :param str kind:
             the kind of channel requested (usually ``"session"``,
@@ -599,22 +679,32 @@ class Transport (threading.Thread, ClosingContextManager):
             ``"direct-tcpip"`` (ignored for other channel types)
         :param src_addr: the source address of this port forwarding, if
             ``kind`` is ``"forwarded-tcpip"``, ``"direct-tcpip"``, or ``"x11"``
+        :param int window_size:
+            optional window size for this session.
+        :param int max_packet_size:
+            optional max packet size for this session.
+
         :return: a new `.Channel` on success
 
         :raises SSHException: if the request is rejected or the session ends
             prematurely
+
+        .. versionchanged:: 1.15
+            Added the ``window_size`` and ``max_packet_size`` arguments.
         """
         if not self.active:
             raise SSHException('SSH session not active')
         self.lock.acquire()
         try:
+            window_size = self._sanitize_window_size(window_size)
+            max_packet_size = self._sanitize_packet_size(max_packet_size)
             chanid = self._next_channel()
             m = Message()
             m.add_byte(cMSG_CHANNEL_OPEN)
             m.add_string(kind)
             m.add_int(chanid)
-            m.add_int(self.window_size)
-            m.add_int(self.max_packet_size)
+            m.add_int(window_size)
+            m.add_int(max_packet_size)
             if (kind == 'forwarded-tcpip') or (kind == 'direct-tcpip'):
                 m.add_string(dest_addr[0])
                 m.add_int(dest_addr[1])
@@ -628,7 +718,7 @@ class Transport (threading.Thread, ClosingContextManager):
             self.channel_events[chanid] = event = threading.Event()
             self.channels_seen[chanid] = True
             chan._set_transport(self)
-            chan._set_window(self.window_size, self.max_packet_size)
+            chan._set_window(window_size, max_packet_size)
         finally:
             self.lock.release()
         self._send_user_message(m)
@@ -672,6 +762,7 @@ class Transport (threading.Thread, ClosingContextManager):
         :param callable handler:
             optional handler for incoming forwarded connections, of the form
             ``func(Channel, (str, int), (str, int))``.
+
         :return: the port number (`int`) allocated by the server
 
         :raises SSHException: if the server refused the TCP forward request
@@ -838,7 +929,8 @@ class Transport (threading.Thread, ClosingContextManager):
             self.lock.release()
         return chan
 
-    def connect(self, hostkey=None, username='', password=None, pkey=None):
+    def connect(self, hostkey=None, username='', password=None, pkey=None,
+                gss_host=None, gss_auth=False, gss_kex=False, gss_deleg_creds=True):
         """
         Negotiate an SSH2 session, and optionally verify the server's host key
         and authenticate using a password or private key.  This is a shortcut
@@ -868,6 +960,10 @@ class Transport (threading.Thread, ClosingContextManager):
         :param .PKey pkey:
             a private key to use for authentication, if you want to use private
             key authentication; otherwise ``None``.
+        :param str gss_host: The targets name in the kerberos database. default: hostname
+        :param bool gss_auth: ``True`` if you want to use GSS-API authentication
+        :param bool gss_kex: Perform GSS-API Key Exchange and user authentication
+        :param bool gss_deleg_creds: Delegate GSS-API client credentials or not
 
         :raises SSHException: if the SSH2 negotiation fails, the host key
             supplied by the server is incorrect, or authentication fails.
@@ -878,7 +974,9 @@ class Transport (threading.Thread, ClosingContextManager):
         self.start_client()
 
         # check host key if we were given one
-        if hostkey is not None:
+        # If GSS-API Key Exchange was performed, we are not required to check
+        # the host key.
+        if (hostkey is not None) and not gss_kex:
             key = self.get_remote_server_key()
             if (key.get_name() != hostkey.get_name()) or (key.asbytes() != hostkey.asbytes()):
                 self._log(DEBUG, 'Bad host key from server')
@@ -887,13 +985,19 @@ class Transport (threading.Thread, ClosingContextManager):
                 raise SSHException('Bad host key from server')
             self._log(DEBUG, 'Host key verified (%s)' % hostkey.get_name())
 
-        if (pkey is not None) or (password is not None):
-            if password is not None:
-                self._log(DEBUG, 'Attempting password auth...')
-                self.auth_password(username, password)
-            else:
+        if (pkey is not None) or (password is not None) or gss_auth or gss_kex:
+            if gss_auth:
+                self._log(DEBUG, 'Attempting GSS-API auth... (gssapi-with-mic)')
+                self.auth_gssapi_with_mic(username, gss_host, gss_deleg_creds)
+            elif gss_kex:
+                self._log(DEBUG, 'Attempting GSS-API auth... (gssapi-keyex)')
+                self.auth_gssapi_keyex(username)
+            elif pkey is not None:
                 self._log(DEBUG, 'Attempting public-key auth...')
                 self.auth_publickey(username, pkey)
+            else:
+                self._log(DEBUG, 'Attempting password auth...')
+                self.auth_password(username, password)
 
         return
 
@@ -1175,6 +1279,55 @@ class Transport (threading.Thread, ClosingContextManager):
         self.auth_handler.auth_interactive(username, handler, my_event, submethods)
         return self.auth_handler.wait_for_response(my_event)
 
+    def auth_gssapi_with_mic(self, username, gss_host, gss_deleg_creds):
+        """
+        Authenticate to the Server using GSS-API / SSPI.
+
+        :param str username: The username to authenticate as
+        :param str gss_host: The target host
+        :param bool gss_deleg_creds: Delegate credentials or not
+        :return: list of auth types permissible for the next stage of
+                 authentication (normally empty)
+        :rtype: list
+        :raise BadAuthenticationType: if gssapi-with-mic isn't
+            allowed by the server (and no event was passed in)
+        :raise AuthenticationException: if the authentication failed (and no
+            event was passed in)
+        :raise SSHException: if there was a network error
+        """
+        if (not self.active) or (not self.initial_kex_done):
+            # we should never try to authenticate unless we're on a secure link
+            raise SSHException('No existing session')
+        my_event = threading.Event()
+        self.auth_handler = AuthHandler(self)
+        self.auth_handler.auth_gssapi_with_mic(username, gss_host, gss_deleg_creds, my_event)
+        return self.auth_handler.wait_for_response(my_event)
+
+    def auth_gssapi_keyex(self, username):
+        """
+        Authenticate to the Server with GSS-API / SSPI if GSS-API Key Exchange
+        was the used key exchange method.
+
+        :param str username: The username to authenticate as
+        :param str gss_host: The target host
+        :param bool gss_deleg_creds: Delegate credentials or not
+        :return: list of auth types permissible for the next stage of
+                 authentication (normally empty)
+        :rtype: list
+        :raise BadAuthenticationType: if GSS-API Key Exchange was not performed
+                                      (and no event was passed in)
+        :raise AuthenticationException: if the authentication failed (and no
+            event was passed in)
+        :raise SSHException: if there was a network error
+        """
+        if (not self.active) or (not self.initial_kex_done):
+            # we should never try to authenticate unless we're on a secure link
+            raise SSHException('No existing session')
+        my_event = threading.Event()
+        self.auth_handler = AuthHandler(self)
+        self.auth_handler.auth_gssapi_keyex(username, my_event)
+        return self.auth_handler.wait_for_response(my_event)
+
     def set_log_channel(self, name):
         """
         Set the channel for this transport's logging.  The default is
@@ -1259,7 +1412,7 @@ class Transport (threading.Thread, ClosingContextManager):
     def stop_thread(self):
         self.active = False
         self.packetizer.close()
-        while self.isAlive():
+        while self.is_alive() and (self is not threading.current_thread()):
             self.join(10)
 
     ###  internals...
@@ -1393,6 +1546,17 @@ class Transport (threading.Thread, ClosingContextManager):
         finally:
             self.lock.release()
 
+    def _sanitize_window_size(self, window_size):
+        if window_size is None:
+            window_size = self.default_window_size
+        return clamp_value(MIN_PACKET_SIZE, window_size, MAX_WINDOW_SIZE)
+
+    def _sanitize_packet_size(self, max_packet_size):
+        if max_packet_size is None:
+            max_packet_size = self.default_max_packet_size
+        return clamp_value(MIN_PACKET_SIZE, max_packet_size, MAX_WINDOW_SIZE)
+
+
     def run(self):
         # (use the exposed "run" method, because if we specify a thread target
         # of a private method, threading.Thread will keep a reference to it
@@ -1437,7 +1601,7 @@ class Transport (threading.Thread, ClosingContextManager):
                         if ptype not in self._expected_packet:
                             raise SSHException('Expecting packet from %r, got %d' % (self._expected_packet, ptype))
                         self._expected_packet = tuple()
-                        if (ptype >= 30) and (ptype <= 39):
+                        if (ptype >= 30) and (ptype <= 41):
                             self.kex_engine.parse_next(ptype, m)
                             continue
 
@@ -1956,7 +2120,7 @@ class Transport (threading.Thread, ClosingContextManager):
             self._channels.put(my_chanid, chan)
             self.channels_seen[my_chanid] = True
             chan._set_transport(self)
-            chan._set_window(self.window_size, self.max_packet_size)
+            chan._set_window(self.default_window_size, self.default_max_packet_size)
             chan._set_remote_channel(chanid, initial_window_size, max_packet_size)
         finally:
             self.lock.release()
@@ -1964,8 +2128,8 @@ class Transport (threading.Thread, ClosingContextManager):
         m.add_byte(cMSG_CHANNEL_OPEN_SUCCESS)
         m.add_int(chanid)
         m.add_int(my_chanid)
-        m.add_int(self.window_size)
-        m.add_int(self.max_packet_size)
+        m.add_int(self.default_window_size)
+        m.add_int(self.default_max_packet_size)
         self._send_message(m)
         self._log(DEBUG, 'Secsh channel %d (%s) opened.', my_chanid, kind)
         if kind == 'auth-agent@openssh.com':

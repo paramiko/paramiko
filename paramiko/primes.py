@@ -25,6 +25,7 @@ import os
 from paramiko import util
 from paramiko.py3compat import byte_mask, long
 from paramiko.ssh_exception import SSHException
+from paramiko.common import *
 
 
 def _roll_random(n):

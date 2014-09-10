@@ -2,6 +2,36 @@
 Changelog
 =========
 
+* :feature:`267` (also :issue:`250`, :issue:`241`, :issue:`228`) Add GSS-API /
+  SSPI (e.g. Kerberos) key exchange and authentication support
+  (:ref:`installation docs here <gssapi>`). Mega thanks to Sebastian Deiß, with
+  assist by Torsten Landschoff.
+* :bug:`346 major` Fix an issue in private key files' encryption salts that
+  could cause tracebacks and file corruption if keys were re-encrypted. Credit
+  to Xavier Nunn.
+* :feature:`362` Allow users to control the SSH banner timeout. Thanks to Cory
+  Benfield.
+* :feature:`372` Update default window & packet sizes to more closely adhere to
+  the pertinent RFC; also expose these settings in the public API so they may
+  be overridden by client code. This should address some general speed issues
+  such as :issue:`175`. Big thanks to Olle Lundberg for the update.
+* :bug:`373 major` Attempt to fix a handful of issues (such as :issue:`354`)
+  related to infinite loops and threading deadlocks. Thanks to Olle Lundberg as
+  well as a handful of community members who provided advice & feedback via
+  IRC.
+* :support:`374` (also :issue:`375`) Old code cleanup courtesy of Olle
+  Lundberg.
+* :support:`377` Factor `~paramiko.channel.Channel` openness sanity check into
+  a decorator. Thanks to Olle Lundberg for original patch.
+* :bug:`298 major` Don't perform point validation on ECDSA keys in
+  ``known_hosts`` files, since a) this can cause significant slowdown when such
+  keys exist, and b) ``known_hosts`` files are implicitly trustworthy. Thanks
+  to Kieran Spear for catch & patch.
+
+  .. note::
+    This change bumps up the version requirement for the ``ecdsa`` library to
+    ``0.11``.
+
 * :bug:`234 major` Lower logging levels for a few overly-noisy log messages
   about secure channels. Thanks to David Pursehouse for noticing & contributing
   the fix.

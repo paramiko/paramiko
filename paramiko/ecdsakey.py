@@ -38,7 +38,8 @@ class ECDSAKey (PKey):
     data.
     """
 
-    def __init__(self, msg=None, data=None, filename=None, password=None, vals=None, file_obj=None):
+    def __init__(self, msg=None, data=None, filename=None, password=None,
+                 vals=None, file_obj=None, validate_point=True):
         self.verifying_key = None
         self.signing_key = None
         if file_obj is not None:
@@ -65,7 +66,8 @@ class ECDSAKey (PKey):
                 raise SSHException('Point compression is being used: %s' %
                                    binascii.hexlify(pointinfo))
             self.verifying_key = VerifyingKey.from_string(pointinfo[1:],
-                                                          curve=curves.NIST256p)
+                                                          curve=curves.NIST256p,
+                                                          validate_point=validate_point)
         self.size = 256
 
     def asbytes(self):
