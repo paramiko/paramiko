@@ -79,6 +79,8 @@ class HostKeys (MutableMapping):
     def load(self, filename):
         """
         Read a file of known SSH host keys, in the format used by OpenSSH.
+        Alternatively, read from a file-like string object (e.g. io.StringIO),
+        in the OpenSSH format.
         This type of file unfortunately doesn't exist on Windows, but on
         posix, it will usually be stored in
         ``os.path.expanduser("~/.ssh/known_hosts")``.
@@ -87,23 +89,37 @@ class HostKeys (MutableMapping):
         not cleared.  So multiple calls to `load` will just call `add`,
         replacing any existing entries and adding new ones.
 
-        :param str filename: name of the file to read host keys from
+        :param str filename: name of the file to read host keys from or a
+         StringIO object.
 
         :raises IOError: if there was an error reading the file
         """
-        with open(filename, 'r') as f:
-            for lineno, line in enumerate(f):
-                line = line.strip()
-                if (len(line) == 0) or (line[0] == '#'):
-                    continue
-                e = HostKeyEntry.from_line(line, lineno)
-                if e is not None:
-                    _hostnames = e.hostnames
-                    for h in _hostnames:
-                        if self.check(h, e.key):
-                            e.hostnames.remove(h)
-                    if len(e.hostnames):
-                        self._entries.append(e)
+
+        try:
+            with open(filename, 'r') as f:
+                self._load_stream(f)
+        except TypeError:
+            self._load_stream(filename)
+
+    def _load_stream(self, stream):
+        """
+        Load the known hosts from a string object. Usually load() should be
+        called instead, which also accepts a file name.
+
+        :param stream: A string stream
+        """
+        for lineno, line in enumerate(stream):
+            line = line.strip()
+            if (len(line) == 0) or (line[0] == '#'):
+                continue
+            e = HostKeyEntry.from_line(line, lineno)
+            if e is not None:
+                _hostnames = e.hostnames
+                for h in _hostnames:
+                    if self.check(h, e.key):
+                        e.hostnames.remove(h)
+                if len(e.hostnames):
+                    self._entries.append(e)
 
     def save(self, filename):
         """
