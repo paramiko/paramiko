@@ -36,8 +36,8 @@ This module provides GSS-API / SSPI Key Exchange as defined in RFC 4462.
 .. versionadded:: 1.15
 """
 
+from hashlib import sha1
 
-from Crypto.Hash import SHA
 from paramiko.common import *
 from paramiko import util
 from paramiko.message import Message
@@ -196,7 +196,7 @@ class KexGSSGroup1(object):
         hm.add_mpint(self.e)
         hm.add_mpint(self.f)
         hm.add_mpint(K)
-        self.transport._set_K_H(K, SHA.new(str(hm)).digest())
+        self.transport._set_K_H(K, sha1(str(hm)).digest())
         if srv_token is not None:
             self.kexgss.ssh_init_sec_context(target=self.gss_host,
                                              recv_token=srv_token)
@@ -229,7 +229,7 @@ class KexGSSGroup1(object):
         hm.add_mpint(self.e)
         hm.add_mpint(self.f)
         hm.add_mpint(K)
-        H = SHA.new(hm.asbytes()).digest()
+        H = sha1(hm.asbytes()).digest()
         self.transport._set_K_H(K, H)
         srv_token = self.kexgss.ssh_accept_sec_context(self.gss_host,
                                                        client_token)
@@ -463,7 +463,7 @@ class KexGSSGex(object):
         hm.add_mpint(self.e)
         hm.add_mpint(self.f)
         hm.add_mpint(K)
-        H = SHA.new(hm.asbytes()).digest()
+        H = sha1(hm.asbytes()).digest()
         self.transport._set_K_H(K, H)
         srv_token = self.kexgss.ssh_accept_sec_context(self.gss_host,
                                                        client_token)
@@ -555,7 +555,7 @@ class KexGSSGex(object):
         hm.add_mpint(self.e)
         hm.add_mpint(self.f)
         hm.add_mpint(K)
-        H = SHA.new(hm.asbytes()).digest()
+        H = sha1(hm.asbytes()).digest()
         self.transport._set_K_H(K, H)
         if srv_token is not None:
             self.kexgss.ssh_init_sec_context(target=self.gss_host,
