@@ -25,7 +25,8 @@ from binascii import hexlify, unhexlify
 import os
 from hashlib import md5
 
-from Crypto.Cipher import DES3, AES
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives.ciphers import algorithms, modes, Cipher
 
 from paramiko import util
 from paramiko.common import o600, zero_byte
@@ -33,15 +34,25 @@ from paramiko.py3compat import u, encodebytes, decodebytes, b
 from paramiko.ssh_exception import SSHException, PasswordRequiredException
 
 
-class PKey (object):
+class PKey(object):
     """
     Base class for public keys.
     """
 
     # known encryption types for private key files:
     _CIPHER_TABLE = {
-        'AES-128-CBC': {'cipher': AES, 'keysize': 16, 'blocksize': 16, 'mode': AES.MODE_CBC},
-        'DES-EDE3-CBC': {'cipher': DES3, 'keysize': 24, 'blocksize': 8, 'mode': DES3.MODE_CBC},
+        'AES-128-CBC': {
+            'cipher': algorithms.AES,
+            'keysize': 16,
+            'blocksize': 16,
+            'mode': modes.CBC
+        },
+        'DES-EDE3-CBC': {
+            'cipher': algorithms.TripleDES,
+            'keysize': 24,
+            'blocksize': 8,
+            'mode': modes.CBC
+        },
     }
 
     def __init__(self, msg=None, data=None):
@@ -300,7 +311,10 @@ class PKey (object):
         mode = self._CIPHER_TABLE[encryption_type]['mode']
         salt = unhexlify(b(saltstr))
         key = util.generate_key_bytes(md5, salt, password, keysize)
-        return cipher.new(key, mode, salt).decrypt(data)
+        decryptor = Cipher(
+            cipher(key), mode(salt), backend=default_backend()
+        ).decryptor()
+        return decryptor.update(data) + decryptor.finalize()
 
     def _write_private_key_file(self, tag, filename, data, password=None):
         """
@@ -336,7 +350,10 @@ class PKey (object):
                 #data += os.urandom(n)
                 # that would make more sense ^, but it confuses openssh.
                 data += zero_byte * n
-            data = cipher.new(key, mode, salt).encrypt(data)
+            encryptor = Cipher(
+                cipher(key), mode(salt), backend=default_backend()
+            ).encryptor()
+            data = encryptor.update(data) + encryptor.finalize()
             f.write('Proc-Type: 4,ENCRYPTED\n')
             f.write('DEK-Info: %s,%s\n' % (cipher_name, u(hexlify(salt)).upper()))
             f.write('\n')

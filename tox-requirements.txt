@@ -1,2 +1,3 @@
 # Not sure why tox can't just read setup.py?
-pycrypto
+cryptography >= 0.5.4
+pyasn1

@@ -24,7 +24,7 @@ connections between python scripts.  All major ciphers and hash methods
 are supported.  SFTP client and server mode are both supported too.
 
 Required packages:
-    pyCrypto
+    Cryptography
 
 To install the `in-development version
 <https://github.com/paramiko/paramiko/tarball/master#egg=paramiko-dev>`_, use
@@ -41,8 +41,9 @@ try:
     from setuptools import setup
     kw = {
         'install_requires': [
-            'pycrypto >= 2.1, != 2.4',
+            'cryptography >= 0.5.4',
             'ecdsa >= 0.11',
+            'pyasn1',
         ],
     }
 except ImportError:

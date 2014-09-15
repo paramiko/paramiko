@@ -133,9 +133,7 @@ class ECDSAKey (PKey):
 
         @param bits: number of bits the generated key should be.
         @type bits: int
-        @param progress_func: an optional function to call at key points in
-            key generation (used by C{pyCrypto.PublicKey}).
-        @type progress_func: function
+        @param progress_func: Unused.
         @return: new private key
         @rtype: L{RSAKey}
         """

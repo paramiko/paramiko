@@ -21,22 +21,22 @@ RSA keys.
 """
 
 import os
-from hashlib import sha1
 
-from Crypto.PublicKey import RSA
+from cryptography.exceptions import InvalidSignature
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.asymmetric import rsa, padding
 
 from paramiko import util
-from paramiko.common import max_byte, zero_byte, one_byte
 from paramiko.message import Message
 from paramiko.ber import BER, BERException
 from paramiko.pkey import PKey
-from paramiko.py3compat import long
 from paramiko.ssh_exception import SSHException
 
 SHA1_DIGESTINFO = b'\x30\x21\x30\x09\x06\x05\x2b\x0e\x03\x02\x1a\x05\x00\x04\x14'
 
 
-class RSAKey (PKey):
+class RSAKey(PKey):
     """
     Representation of an RSA key which can be used to sign and verify SSH2
     data.
@@ -48,6 +48,9 @@ class RSAKey (PKey):
         self.d = None
         self.p = None
         self.q = None
+        self.dmp1 = None
+        self.dmq1 = None
+        self.iqmp = None
         if file_obj is not None:
             self._from_private_key(file_obj, password)
             return
@@ -93,9 +96,22 @@ class RSAKey (PKey):
         return self.d is not None
 
     def sign_ssh_data(self, data):
-        digest = sha1(data).digest()
-        rsa = RSA.construct((long(self.n), long(self.e), long(self.d)))
-        sig = util.deflate_long(rsa.sign(self._pkcs1imify(digest), bytes())[0], 0)
+        key = rsa.RSAPrivateNumbers(
+            p=self.p,
+            q=self.q,
+            d=self.d,
+            dmp1=self.dmp1,
+            dmq1=self.dmq1,
+            iqmp=self.iqmp,
+            public_numbers=rsa.RSAPublicNumbers(self.e, self.n)
+        ).private_key(backend=default_backend())
+        signer = key.signer(
+            padding=padding.PKCS1v15(),
+            algorithm=hashes.SHA1(),
+        )
+        signer.update(data)
+        sig = signer.finalize()
+
         m = Message()
         m.add_string('ssh-rsa')
         m.add_string(sig)
@@ -104,13 +120,21 @@ class RSAKey (PKey):
     def verify_ssh_sig(self, data, msg):
         if msg.get_text() != 'ssh-rsa':
             return False
-        sig = util.inflate_long(msg.get_binary(), True)
-        # verify the signature by SHA'ing the data and encrypting it using the
-        # public key.  some wackiness ensues where we "pkcs1imify" the 20-byte
-        # hash into a string as long as the RSA key.
-        hash_obj = util.inflate_long(self._pkcs1imify(sha1(data).digest()), True)
-        rsa = RSA.construct((long(self.n), long(self.e)))
-        return rsa.verify(hash_obj, (sig,))
+        key = rsa.RSAPublicNumbers(
+            self.e, self.n
+        ).public_key(backend=default_backend())
+        verifier = key.verifier(
+            signature=msg.get_binary(),
+            padding=padding.PKCS1v15(),
+            algorithm=hashes.SHA1(),
+        )
+        verifier.update(data)
+        try:
+            verifier.verify()
+        except InvalidSignature:
+            return False
+        else:
+            return True
 
     def _encode_key(self):
         if (self.p is None) or (self.q is None):
@@ -137,29 +161,23 @@ class RSAKey (PKey):
         generate a new host key or authentication key.
 
         :param int bits: number of bits the generated key should be.
-        :param function progress_func:
-            an optional function to call at key points in key generation (used
-            by ``pyCrypto.PublicKey``).
+        :param function progress_func: Unused
         :return: new `.RSAKey` private key
         """
-        rsa = RSA.generate(bits, os.urandom, progress_func)
-        key = RSAKey(vals=(rsa.e, rsa.n))
-        key.d = rsa.d
-        key.p = rsa.p
-        key.q = rsa.q
+        numbers = rsa.generate_private_key(
+            65537, bits, backend=default_backend()
+        ).private_numbers()
+        key = RSAKey(vals=(numbers.public_numbers.e, numbers.public_numbers.n))
+        key.d = numbers.d
+        key.p = numbers.p
+        key.q = numbers.q
+        key.dmp1 = numbers.dmp1
+        key.dmq1 = numbers.dmq1
+        key.iqmp = numbers.iqmp
         return key
     generate = staticmethod(generate)
 
     ###  internals...
-
-    def _pkcs1imify(self, data):
-        """
-        turn a 20-byte SHA1 hash into a blob of data as large as the key's N,
-        using PKCS1's \"emsa-pkcs1-v1_5\" encoding.  totally bizarre.
-        """
-        size = len(util.deflate_long(self.n, 0))
-        filler = max_byte * (size - len(SHA1_DIGESTINFO) - len(data) - 3)
-        return zero_byte + one_byte + filler + zero_byte + SHA1_DIGESTINFO + data
 
     def _from_private_key_file(self, filename, password):
         data = self._read_private_key_file('RSA', filename, password)
@@ -181,7 +199,9 @@ class RSAKey (PKey):
         self.n = keylist[1]
         self.e = keylist[2]
         self.d = keylist[3]
-        # not really needed
         self.p = keylist[4]
         self.q = keylist[5]
+        self.dmp1 = keylist[6]
+        self.dmq1 = keylist[7]
+        self.iqmp = keylist[8]
         self.size = util.bit_length(self.n)

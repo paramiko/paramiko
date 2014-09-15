@@ -20,6 +20,7 @@
 Some unit tests for SSHClient.
 """
 
+import gc
 import socket
 from tempfile import mkstemp
 import threading
@@ -29,8 +30,9 @@ import warnings
 import os
 import time
 from tests.util import test_path
+
 import paramiko
-from paramiko.common import PY2, b
+from paramiko.common import PY2
 from paramiko.ssh_exception import SSHException
 
 
@@ -287,14 +289,10 @@ class SSHClientTest (unittest.TestCase):
         self.tc.close()
         del self.tc
 
-        # hrm, sometimes p isn't cleared right away.  why is that?
-        #st = time.time()
-        #while (time.time() - st < 5.0) and (p() is not None):
-        #    time.sleep(0.1)
-
-        # instead of dumbly waiting for the GC to collect, force a collection
-        # to see whether the SSHClient object is deallocated correctly
-        import gc
+        # force a collection to see whether the SSHClient object is deallocated
+        # correctly
+        gc.collect()
+        gc.collect()
         gc.collect()
 
         self.assertTrue(p() is None)

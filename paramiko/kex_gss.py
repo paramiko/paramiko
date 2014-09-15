@@ -37,7 +37,6 @@ This module provides GSS-API / SSPI Key Exchange as defined in RFC 4462.
 """
 
 
-from Crypto.Hash import SHA
 from paramiko.common import *
 from paramiko import util
 from paramiko.message import Message

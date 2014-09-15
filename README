@@ -25,7 +25,7 @@ channels to remote services across the encrypted tunnel (this is how sftp
 works, for example).
 
 it is written entirely in python (no C or platform-dependent code) and is
-released under the GNU LGPL (lesser GPL). 
+released under the GNU LGPL (lesser GPL).
 
 the package and its API is fairly well documented in the "doc/" folder
 that should have come with this archive.
@@ -36,7 +36,7 @@ Requirements
 
   - Python 2.6 or better <http://www.python.org/> - this includes Python
     3.2 and higher as well.
-  - pycrypto 2.1 or better <https://www.dlitz.net/software/pycrypto/>
+  - Cryptography 0.5.4 or better <https://cryptography.io>
   - ecdsa 0.9 or better <https://pypi.python.org/pypi/ecdsa>
 
 If you have setuptools, you can build and install paramiko and all its
