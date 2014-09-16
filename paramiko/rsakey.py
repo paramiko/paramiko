@@ -165,7 +165,7 @@ class RSAKey(PKey):
         :return: new `.RSAKey` private key
         """
         numbers = rsa.generate_private_key(
-            65537, bits, backend=default_backend()
+            public_exponent=65537, key_size=bits, backend=default_backend()
         ).private_numbers()
         key = RSAKey(vals=(numbers.public_numbers.e, numbers.public_numbers.n))
         key.d = numbers.d
