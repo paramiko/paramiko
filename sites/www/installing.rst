@@ -16,13 +16,13 @@ via `pip <http://pip-installer.org>`_::
     Users who want the bleeding edge can install the development version via
     ``pip install paramiko==dev``.
 
-We currently support **Python 2.6, 2.7 and 3.3+** (Python **3.2** should also
-work but has a less-strong compatibility guarantee from us.) Users on Python
-2.5 or older are urged to upgrade.
+We currently support **Python 2.6, 2.7, 3.3+, and PyPy** (Python **3.2** should
+also work but has a less-strong compatibility guarantee from us.) Users on
+Python 2.5 or older are urged to upgrade.
 
-Paramiko has two hard dependencies: the pure-Python ECDSA module ``ecdsa``, and the
-PyCrypto C extension. ``ecdsa`` is easily installable from wherever you
-obtained Paramiko's package; PyCrypto may require more work. Read on for
+Paramiko has two hard dependencies: the pure-Python ECDSA module ``ecdsa``, and
+the Cryptography library. ``ecdsa`` is easily installable from wherever you
+obtained Paramiko's package; Cryptography may require more work. Read on for
 details.
 
 If you need GSS-API / SSPI support, see :ref:`the below subsection on it
@@ -50,61 +50,28 @@ If you're unsure which version to install, we have suggestions:
   stops being supported.
 
 
-PyCrypto
-========
+Cryptography
+============
 
-`PyCrypto <https://www.dlitz.net/software/pycrypto/>`_  provides the low-level
-(C-based) encryption algorithms we need to implement the SSH protocol. There
-are a couple gotchas associated with installing PyCrypto: its compatibility
-with Python's package tools, and the fact that it is a C-based extension.
+`Cryptography <https://cryptography.io>`_  provides the low-level (C-based)
+encryption algorithms we need to implement the SSH protocol. There are a few
+things to be aware of when installing Cryptography, because it includes a
+C-extension.
 
 C extension
 -----------
 
-Unless you are installing from a precompiled source such as a Debian apt
-repository or RedHat RPM, or using :ref:`pypm <pypm>`, you will also need the
-ability to build Python C-based modules from source in order to install
-PyCrypto. Users on **Unix-based platforms** such as Ubuntu or Mac OS X will
-need the traditional C build toolchain installed (e.g. Developer Tools / XCode
-Tools on the Mac, or the ``build-essential`` package on Ubuntu or Debian Linux
+Users on **Unix-based platforms** such as Ubuntu or Mac OS X will need the
+traditional C build toolchain installed (e.g. Developer Tools / XCode Tools on
+the Mac, or the ``build-essential`` package on Ubuntu or Debian Linux
 -- basically, anything with ``gcc``, ``make`` and so forth) as well as the
-Python development libraries, often named ``python-dev`` or similar.
+Python development libraries, often named ``python-dev`` or similar, and libffi
+development libraries, often named ``libffi-dev``.
 
-For **Windows** users we recommend using :ref:`pypm`, installing a C
-development environment such as `Cygwin <http://cygwin.com>`_ or obtaining a
-precompiled Win32 PyCrypto package from `voidspace's Python modules page
-<http://www.voidspace.org.uk/python/modules.shtml#pycrypto>`_.
+For **Windows** users we recommend using the most recent version of ``pip``,
+Cryptography has binary wheels on PyPI, which remove the need for having a C
+compiler.
 
-.. note::
-    Some Windows users whose Python is 64-bit have found that the PyCrypto
-    dependency ``winrandom`` may not install properly, leading to ImportErrors.
-    In this scenario, you'll probably need to compile ``winrandom`` yourself
-    via e.g. MS Visual Studio.  See `Fabric #194
-    <https://github.com/fabric/fabric/issues/194>`_ for info.
-
-
-.. _pypm:
-
-ActivePython and PyPM
-=====================
-
-Windows users who already have ActiveState's `ActivePython
-<http://www.activestate.com/activepython/downloads>`_ distribution installed
-may find Paramiko is best installed with `its package manager, PyPM
-<http://code.activestate.com/pypm/>`_. Below is example output from an
-installation of Paramiko via ``pypm``::
-
-    C:\> pypm install paramiko
-    The following packages will be installed into "%APPDATA%\Python" (2.7):
-     paramiko-1.7.8 pycrypto-2.4
-    Get: [pypm-free.activestate.com] paramiko 1.7.8
-    Get: [pypm-free.activestate.com] pycrypto 2.4
-    Installing paramiko-1.7.8
-    Installing pycrypto-2.4
-    C:\>
-
-
-.. _gssapi:
 
 Optional dependencies for GSS-API / SSPI / Kerberos
 ===================================================
