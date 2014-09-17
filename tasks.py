@@ -28,7 +28,7 @@ www = Collection.from_module(_docs, name='www', config={
 # Until we move to spec-based testing
 @task
 def test(ctx):
-    ctx.run("python test.py --verbose")
+    ctx.run("python test.py --verbose", pty=True)
 
 @task
 def coverage(ctx):
