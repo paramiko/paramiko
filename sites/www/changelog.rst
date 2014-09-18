@@ -6,6 +6,12 @@ Changelog
   SSPI (e.g. Kerberos) key exchange and authentication support
   (:ref:`installation docs here <gssapi>`). Mega thanks to Sebastian Deiß, with
   assist by Torsten Landschoff.
+
+    .. note::
+        Unix users should be aware that the ``python-gssapi`` library (a
+        requirement for using this functionality) only appears to support
+        Python 2.7 and up at this time.
+
 * :bug:`346 major` Fix an issue in private key files' encryption salts that
   could cause tracebacks and file corruption if keys were re-encrypted. Credit
   to Xavier Nunn.

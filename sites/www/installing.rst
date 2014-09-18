@@ -119,6 +119,9 @@ due to their infrequent utility & non-platform-agnostic requirements):
   ``0.1.7`` or better.
 * **Unix** needs `python-gssapi <https://pypi.python.org/pypi/python-gssapi/>`_
   ``0.6.1`` or better.
+
+  .. note:: This library appears to only function on Python 2.7 and up.
+
 * **Windows** needs `pywin32 <https://pypi.python.org/pypi/pywin32>`_ ``2.1.8``
   or better.
 
