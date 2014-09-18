@@ -72,9 +72,7 @@ class GSSAPITest(unittest.TestCase):
                 gss_flags = (gssapi.C_PROT_READY_FLAG,
                              gssapi.C_INTEG_FLAG,
                              gssapi.C_DELEG_FLAG)
-            """
-            Initialize a GSS-API context.
-            """
+            # Initialize a GSS-API context.
             ctx = gssapi.Context()
             ctx.flags = gss_flags
             krb5_oid = gssapi.OID.mech_from_string(krb5_mech)
@@ -87,41 +85,31 @@ class GSSAPITest(unittest.TestCase):
                 c_token = gss_ctxt.step(c_token)
                 gss_ctxt_status = gss_ctxt.established
                 self.assertEquals(False, gss_ctxt_status)
-                """
-                Accept a GSS-API context.
-                """
+                # Accept a GSS-API context.
                 gss_srv_ctxt = gssapi.AcceptContext()
                 s_token = gss_srv_ctxt.step(c_token)
                 gss_ctxt_status = gss_srv_ctxt.established
                 self.assertNotEquals(None, s_token)
                 self.assertEquals(True, gss_ctxt_status)
-                """
-                Establish the client context
-                """
+                # Establish the client context
                 c_token = gss_ctxt.step(s_token)
                 self.assertEquals(None, c_token)
             else:
                 while not gss_ctxt.established:
                     c_token = gss_ctxt.step(c_token)
                 self.assertNotEquals(None, c_token)
-            """
-            Build MIC
-            """
+            # Build MIC
             mic_token = gss_ctxt.get_mic(mic_msg)
 
             if server_mode:
-                """
-                Check MIC
-                """
+                # Check MIC
                 status = gss_srv_ctxt.verify_mic(mic_msg, mic_token)
                 self.assertEquals(0, status)
         else:
             gss_flags = sspicon.ISC_REQ_INTEGRITY |\
                         sspicon.ISC_REQ_MUTUAL_AUTH |\
                         sspicon.ISC_REQ_DELEGATE
-            """
-            Initialize a GSS-API context.
-            """
+            # Initialize a GSS-API context.
             target_name = "host/" + socket.getfqdn(targ_name)
             gss_ctxt = sspi.ClientAuth("Kerberos",
                                         scflags=gss_flags,
@@ -130,26 +118,18 @@ class GSSAPITest(unittest.TestCase):
                 error, token = gss_ctxt.authorize(c_token)
                 c_token = token[0].Buffer
                 self.assertEquals(0, error)
-                """
-                Accept a GSS-API context.
-                """
+                # Accept a GSS-API context.
                 gss_srv_ctxt = sspi.ServerAuth("Kerberos", spn=target_name)
                 error, token = gss_srv_ctxt.authorize(c_token)
                 s_token = token[0].Buffer
-                """
-                Establish the context.
-                """
+                # Establish the context.
                 error, token = gss_ctxt.authorize(s_token)
                 c_token = token[0].Buffer
                 self.assertEquals(None, c_token)
                 self.assertEquals(0, error)
-                """
-                Build MIC
-                """
+                # Build MIC
                 mic_token = gss_ctxt.sign(mic_msg)
-                """
-                Check MIC
-                """
+                # Check MIC
                 gss_srv_ctxt.verify(mic_msg, mic_token)
             else:
                 error, token = gss_ctxt.authorize(c_token)
