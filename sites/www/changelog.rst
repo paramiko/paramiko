@@ -2,6 +2,7 @@
 Changelog
 =========
 
+* :release:`1.15.0 <2014-09-18>`
 * :support:`393` Replace internal use of PyCrypto's ``SHA.new`` with the
   stdlib's ``hashlib.sha1``. Thanks to Alex Gaynor.
 * :feature:`267` (also :issue:`250`, :issue:`241`, :issue:`228`) Add GSS-API /
