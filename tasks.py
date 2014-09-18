@@ -27,12 +27,14 @@ www = Collection.from_module(_docs, name='www', config={
 
 # Until we move to spec-based testing
 @task
-def test(ctx):
-    ctx.run("python test.py --verbose", pty=True)
-
-@task
-def coverage(ctx):
-    ctx.run("coverage run --source=paramiko test.py --verbose")
+def test(ctx, kerberos=False, coverage=False):
+    runner = "python"
+    if coverage:
+        runner = "coverage run --source=paramiko"
+    flags = "--verbose"
+    if kerberos:
+        flags += " --gssapi-test --test-gssauth --test-gssapi-keyex"
+    ctx.run("{0} test.py {1}".format(runner, flags), pty=True)
 
 
 # Until we stop bundling docs w/ releases. Need to discover use cases first.
@@ -48,4 +50,4 @@ def release(ctx):
     publish(ctx, wheel=True)
 
 
-ns = Collection(test, coverage, release, docs=docs, www=www)
+ns = Collection(test, release, docs=docs, www=www)

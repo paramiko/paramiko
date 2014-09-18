@@ -1,0 +1,2 @@
+pyasn1>=0.1.7
+python-gssapi>=0.6.1

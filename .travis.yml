@@ -11,9 +11,10 @@ install:
   # Dev (doc/test running) requirements
   - pip install coveralls # For coveralls.io specifically
   - pip install -r dev-requirements.txt
+  - pip install -r kerberos-requirements.txt # for GSSAPI tests
 script:
   # Main tests, with coverage!
-  - invoke coverage
+  - inv test --coverage --kerberos
   # Ensure documentation & invoke pipeline run OK.
   # Run 'docs' first since its objects.inv is referred to by 'www'.
   # Also force warnings to be errors since most of them tend to be actual
