@@ -27,13 +27,11 @@ www = Collection.from_module(_docs, name='www', config={
 
 # Until we move to spec-based testing
 @task
-def test(ctx, kerberos=False, coverage=False):
+def test(ctx, coverage=False):
     runner = "python"
     if coverage:
         runner = "coverage run --source=paramiko"
     flags = "--verbose"
-    if kerberos:
-        flags += " --gssapi-test --test-gssauth --test-gssapi-keyex"
     ctx.run("{0} test.py {1}".format(runner, flags), pty=True)
 
 
