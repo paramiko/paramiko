@@ -23,12 +23,13 @@ a real actual sftp server is contacted, and a new folder is created there to
 do test file operations in (so no existing files will be harmed).
 """
 
-from binascii import hexlify
 import os
+import socket
 import sys
-import warnings
 import threading
 import unittest
+import warnings
+from binascii import hexlify
 from tempfile import mkstemp
 
 import paramiko
@@ -205,7 +206,7 @@ class SFTPTest (unittest.TestCase):
         try:
             sftp.open(FOLDER + '/test2', 'w')
             self.fail('expected exception')
-        except EOFError, socket.error:
+        except (EOFError, socket.error):
             pass
         finally:
             sftp = paramiko.SFTP.from_transport(tc)
