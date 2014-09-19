@@ -104,14 +104,13 @@ class BufferedFile (object):
     else:
         def __next__(self):
             """
-            Returns the next line from the input, or raises L{StopIteration} when
+            Returns the next line from the input, or raises `.StopIteration` when
             EOF is hit.  Unlike python file objects, it's okay to mix calls to
-            C{next} and L{readline}.
+            `.next` and `.readline`.
 
-            @raise StopIteration: when the end of the file is reached.
+            :raises StopIteration: when the end of the file is reached.
 
-            @return: a line read from the file.
-            @rtype: str
+            :returns: a line (`str`) read from the file.
             """
             line = self.readline()
             if not line:
