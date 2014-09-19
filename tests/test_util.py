@@ -349,6 +349,11 @@ IdentityFile something_%l_using_fqdn
         config.parse(config_file)
         self.assertEqual(config.lookup("abcqwerty")["hostname"], "127.0.0.1")
 
+    def test_14_get_hostnames(self):
+        f = StringIO(test_config_file)
+        config = paramiko.util.parse_ssh_config(f)
+        self.assertEqual(config.get_hostnames(), set(['*', '*.example.com', 'spoo.example.com']))
+
     def test_quoted_host_names(self):
         test_config_file = """\
 Host "param pam" param "pam"
