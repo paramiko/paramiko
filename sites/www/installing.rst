@@ -61,13 +61,15 @@ C-extension.
 C extension
 -----------
 
-Users on **Unix-based platforms** such as Ubuntu or Mac OS X will need the
-traditional C build toolchain installed (e.g. Developer Tools / XCode Tools on
-the Mac, or the ``build-essential`` package on Ubuntu or Debian Linux
--- basically, anything with ``gcc``, ``make`` and so forth) as well as the
-Python development libraries, often named ``python-dev`` or similar, OpenSSL
-headers, often named ``libssl-dev``, and libffi development libraries, often
-named ``libffi-dev``.
+Unless you are installing from a precompiled source such as a Debian apt
+repository or RedHat RPM,, you will also need the ability to build Python
+C-based modules from source in order to install Cryptography. Users on **Unix-
+based platforms** such as Ubuntu or Mac OS X will need the traditional C build
+toolchain installed (e.g. Developer Tools / XCode Tools on the Mac, or the
+``build-essential`` package on Ubuntu or Debian Linux -- basically, anything
+with ``gcc``, ``make`` and so forth) as well as the Python development
+libraries, often named ``python-dev`` or similar, OpenSSL headers, often named
+``libssl-dev``, and libffi development libraries, often named ``libffi-dev``.
 
 For **Windows** users we recommend using the most recent version of ``pip``,
 Cryptography has binary wheels on PyPI, which remove the need for having a C
