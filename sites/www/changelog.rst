@@ -2,6 +2,8 @@
 Changelog
 =========
 
+* :feature:`167` Add `.SSHConfig.get_hostnames` for easier introspection of a
+  loaded SSH config file or object. Courtesy of Søren Løvborg.
 * :release:`1.15.0 <2014-09-18>`
 * :support:`393` Replace internal use of PyCrypto's ``SHA.new`` with the
   stdlib's ``hashlib.sha1``. Thanks to Alex Gaynor.
