@@ -963,10 +963,9 @@ class Transport (threading.Thread):
     def get_banner(self):
         """
         Return the banner supplied by the server upon connect. If no banner is
-        supplied, this method returns C{None}.
+        supplied, this method returns ``None``.
 
-        @return: server supplied banner, or C{None}.
-        @rtype: string
+        :returns: server supplied banner (`str`), or ``None``.
         """
         if not self.active or (self.auth_handler is None):
             return None
