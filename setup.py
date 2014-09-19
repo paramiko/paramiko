@@ -43,7 +43,7 @@ try:
         'install_requires': [
             'cryptography >= 0.5.4',
             'ecdsa >= 0.11',
-            'pyasn1',
+            'pyasn1 >= 0.1.7',
         ],
     }
 except ImportError:
