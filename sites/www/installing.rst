@@ -65,8 +65,9 @@ Users on **Unix-based platforms** such as Ubuntu or Mac OS X will need the
 traditional C build toolchain installed (e.g. Developer Tools / XCode Tools on
 the Mac, or the ``build-essential`` package on Ubuntu or Debian Linux
 -- basically, anything with ``gcc``, ``make`` and so forth) as well as the
-Python development libraries, often named ``python-dev`` or similar, and libffi
-development libraries, often named ``libffi-dev``.
+Python development libraries, often named ``python-dev`` or similar, OpenSSL
+headers, often named ``libssl-dev``, and libffi development libraries, often
+named ``libffi-dev``.
 
 For **Windows** users we recommend using the most recent version of ``pip``,
 Cryptography has binary wheels on PyPI, which remove the need for having a C
