@@ -23,12 +23,13 @@ a real actual sftp server is contacted, and a new folder is created there to
 do test file operations in (so no existing files will be harmed).
 """
 
-from binascii import hexlify
 import os
+import socket
 import sys
-import warnings
 import threading
 import unittest
+import warnings
+from binascii import hexlify
 from tempfile import mkstemp
 
 import paramiko
@@ -194,6 +195,21 @@ class SFTPTest (unittest.TestCase):
         except:
             pass
         sftp = paramiko.SFTP.from_transport(tc)
+
+    def test_2_sftp_can_be_used_as_context_manager(self):
+        """
+        verify that the sftp session is closed when exiting the context manager
+        """
+        global sftp
+        with sftp:
+            pass
+        try:
+            sftp.open(FOLDER + '/test2', 'w')
+            self.fail('expected exception')
+        except (EOFError, socket.error):
+            pass
+        finally:
+            sftp = paramiko.SFTP.from_transport(tc)
 
     def test_3_write(self):
         """

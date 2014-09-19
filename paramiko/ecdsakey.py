@@ -17,7 +17,7 @@
 # 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
 
 """
-L{ECDSAKey}
+ECDSA keys
 """
 
 import binascii
@@ -131,11 +131,8 @@ class ECDSAKey (PKey):
         Generate a new private RSA key.  This factory function can be used to
         generate a new host key or authentication key.
 
-        @param bits: number of bits the generated key should be.
-        @type bits: int
-        @param progress_func: Unused.
-        @return: new private key
-        @rtype: L{RSAKey}
+        :param function progress_func: Unused
+        :returns: A new private key (`.RSAKey`) object
         """
         signing_key = SigningKey.generate(curve)
         key = ECDSAKey(vals=(signing_key, signing_key.get_verifying_key()))

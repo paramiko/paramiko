@@ -20,7 +20,10 @@
 Some unit tests for SSHClient.
 """
 
+from __future__ import with_statement
+
 import gc
+
 import socket
 from tempfile import mkstemp
 import threading
@@ -297,6 +300,28 @@ class SSHClientTest (unittest.TestCase):
         gc.collect()
 
         self.assertTrue(p() is None)
+
+    def test_client_can_be_used_as_context_manager(self):
+        """
+        verify that an SSHClient can be used a context manager
+        """
+        threading.Thread(target=self._run).start()
+        host_key = paramiko.RSAKey.from_private_key_file(test_path('test_rsa.key'))
+        public_host_key = paramiko.RSAKey(data=host_key.asbytes())
+
+        with paramiko.SSHClient() as tc:
+            self.tc = tc
+            self.tc.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            self.assertEquals(0, len(self.tc.get_host_keys()))
+            self.tc.connect(self.addr, self.port, username='slowdive', password='pygmalion')
+
+            self.event.wait(1.0)
+            self.assertTrue(self.event.isSet())
+            self.assertTrue(self.ts.is_active())
+
+            self.assertTrue(self.tc._transport is not None)
+
+        self.assertTrue(self.tc._transport is None)
 
     def test_7_banner_timeout(self):
         """

@@ -64,7 +64,7 @@ from paramiko.server import ServerInterface
 from paramiko.sftp_client import SFTPClient
 from paramiko.ssh_exception import (SSHException, BadAuthenticationType,
                                     ChannelException, ProxyCommandFailure)
-from paramiko.util import retry_on_signal, clamp_value
+from paramiko.util import retry_on_signal, ClosingContextManager, clamp_value
 
 
 
@@ -79,13 +79,15 @@ import atexit
 atexit.register(_join_lingering_threads)
 
 
-class Transport (threading.Thread):
+class Transport (threading.Thread, ClosingContextManager):
     """
     An SSH Transport attaches to a stream (usually a socket), negotiates an
     encrypted session, authenticates, and then creates stream tunnels, called
     `channels <.Channel>`, across the session.  Multiple channels can be
     multiplexed across a single session (and often are, in the case of port
     forwardings).
+    
+    Instances of this class may be used as context managers.
     """
     _ENCRYPT = object()
     _DECRYPT = object()
@@ -1107,10 +1109,9 @@ class Transport (threading.Thread):
     def get_banner(self):
         """
         Return the banner supplied by the server upon connect. If no banner is
-        supplied, this method returns C{None}.
+        supplied, this method returns ``None``.
 
-        @return: server supplied banner, or C{None}.
-        @rtype: string
+        :returns: server supplied banner (`str`), or ``None``.
         """
         if not self.active or (self.auth_handler is None):
             return None

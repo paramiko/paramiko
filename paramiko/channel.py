@@ -38,6 +38,7 @@ from paramiko.ssh_exception import SSHException
 from paramiko.file import BufferedFile
 from paramiko.buffered_pipe import BufferedPipe, PipeTimeout
 from paramiko import pipe
+from paramiko.util import ClosingContextManager
 
 
 def open_only(func):
@@ -60,7 +61,7 @@ def open_only(func):
     return _check
 
 
-class Channel (object):
+class Channel (ClosingContextManager):
     """
     A secure tunnel across an SSH `.Transport`.  A Channel is meant to behave
     like a socket, and has an API that should be indistinguishable from the
@@ -73,6 +74,8 @@ class Channel (object):
     flow-controlled independently.)  Similarly, if the server isn't reading
     data you send, calls to `send` may block, unless you set a timeout.  This
     is exactly like a normal network socket, so it shouldn't be too surprising.
+    
+    Instances of this class may be used as context managers.
     """
 
     def __init__(self, chanid):

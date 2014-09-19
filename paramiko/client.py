@@ -37,10 +37,10 @@ from paramiko.resource import ResourceManager
 from paramiko.rsakey import RSAKey
 from paramiko.ssh_exception import SSHException, BadHostKeyException
 from paramiko.transport import Transport
-from paramiko.util import retry_on_signal
+from paramiko.util import retry_on_signal, ClosingContextManager
 
 
-class SSHClient (object):
+class SSHClient (ClosingContextManager):
     """
     A high-level representation of a session with an SSH server.  This class
     wraps `.Transport`, `.Channel`, and `.SFTPClient` to take care of most
@@ -54,6 +54,8 @@ class SSHClient (object):
     You may pass in explicit overrides for authentication and server host key
     checking.  The default mechanism is to try to use local key files or an
     SSH agent (if one is running).
+
+    Instances of this class may be used as context managers.
 
     .. versionadded:: 1.6
     """

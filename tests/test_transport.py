@@ -20,6 +20,8 @@
 Some unit tests for the ssh2 protocol in Transport.
 """
 
+from __future__ import with_statement
+
 from binascii import hexlify
 import select
 import socket
@@ -281,6 +283,22 @@ class TransportTest(unittest.TestCase):
         self.assertEqual('Hello there.\n', f.readline())
         self.assertEqual('This is on stderr.\n', f.readline())
         self.assertEqual('', f.readline())
+        
+    def test_6a_channel_can_be_used_as_context_manager(self):
+        """
+        verify that exec_command() does something reasonable.
+        """
+        self.setup_test_server()
+
+        with self.tc.open_session() as chan:
+            with self.ts.accept(1.0) as schan:
+                chan.exec_command('yes')
+                schan.send('Hello there.\n')
+                schan.close()
+
+                f = chan.makefile()
+                self.assertEqual('Hello there.\n', f.readline())
+                self.assertEqual('', f.readline())
 
     def test_7_invoke_shell(self):
         """

@@ -46,6 +46,8 @@ def release(ctx):
     copytree(docs_build, target)
     # Publish
     publish(ctx, wheel=True)
+    # Remind
+    print("\n\nDon't forget to update RTD's versions page for new minor releases!")
 
 
 ns = Collection(test, release, docs=docs, www=www)
