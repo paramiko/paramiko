@@ -126,6 +126,16 @@ class SSHConfig (object):
         ret = self._expand_variables(ret, hostname)
         return ret
 
+    def get_hostnames(self):
+        """
+        Return the set of literal hostnames defined in the SSH config (both
+        explicit hostnames and wildcard entries).
+        """
+        hosts = set()
+        for entry in self._config:
+            hosts.update(entry['host'])
+        return hosts
+
     def _allowed(self, hosts, hostname):
         match = False
         for host in hosts:
