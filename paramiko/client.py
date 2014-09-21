@@ -398,7 +398,8 @@ class SSHClient (ClosingContextManager):
             self._agent.close()
             self._agent = None
 
-    def exec_command(self, command, bufsize=-1, timeout=None, get_pty=False):
+    def exec_command(self, command, bufsize=-1, timeout=None, get_pty=False,
+                     environment=None):
         """
         Execute a command on the SSH server.  A new `.Channel` is opened and
         the requested command is executed.  The command's input and output
@@ -411,6 +412,7 @@ class SSHClient (ClosingContextManager):
             Python
         :param int timeout:
             set command's channel timeout. See `Channel.settimeout`.settimeout
+        :param dict environment: the command's environment
         :return:
             the stdin, stdout, and stderr of the executing command, as a
             3-tuple
@@ -421,6 +423,7 @@ class SSHClient (ClosingContextManager):
         if get_pty:
             chan.get_pty()
         chan.settimeout(timeout)
+        chan.update_environment_variables(environment or {})
         chan.exec_command(command)
         stdin = chan.makefile('wb', bufsize)
         stdout = chan.makefile('r', bufsize)
@@ -428,7 +431,7 @@ class SSHClient (ClosingContextManager):
         return stdin, stdout, stderr
 
     def invoke_shell(self, term='vt100', width=80, height=24, width_pixels=0,
-                     height_pixels=0):
+                     height_pixels=0, environment=None):
         """
         Start an interactive shell session on the SSH server.  A new `.Channel`
         is opened and connected to a pseudo-terminal using the requested
@@ -440,12 +443,14 @@ class SSHClient (ClosingContextManager):
         :param int height: the height (in characters) of the terminal window
         :param int width_pixels: the width (in pixels) of the terminal window
         :param int height_pixels: the height (in pixels) of the terminal window
+        :param dict environment: the command's environment
         :return: a new `.Channel` connected to the remote shell
 
         :raises SSHException: if the server fails to invoke a shell
         """
         chan = self._transport.open_session()
         chan.get_pty(term, width, height, width_pixels, height_pixels)
+        chan.update_environment_variables(environment or {})
         chan.invoke_shell()
         return chan
 

@@ -79,6 +79,16 @@ class NullServer (paramiko.ServerInterface):
             return False
         return True
 
+    def check_channel_env_request(self, channel, name, value):
+        if name == 'INVALID_ENV':
+            return False
+
+        if not hasattr(channel, 'env'):
+            setattr(channel, 'env', {})
+
+        channel.env[name] = value
+        return True
+
 
 class SSHClientTest (unittest.TestCase):
 
@@ -373,3 +383,38 @@ class SSHClientTest (unittest.TestCase):
             password='pygmalion',
         )
         self._test_connection(**kwargs)
+
+    def test_update_environment(self):
+        """
+        Verify that environment variables can be set by the client.
+        """
+        threading.Thread(target=self._run).start()
+
+        self.tc = paramiko.SSHClient()
+        self.tc.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        self.assertEqual(0, len(self.tc.get_host_keys()))
+        self.tc.connect(self.addr, self.port, username='slowdive', password='pygmalion')
+
+        self.event.wait(1.0)
+        self.assertTrue(self.event.isSet())
+        self.assertTrue(self.ts.is_active())
+
+        target_env = {b'A': b'B', b'C': b'd'}
+
+        self.tc.exec_command('yes', environment=target_env)
+        schan = self.ts.accept(1.0)
+        self.assertEqual(target_env, getattr(schan, 'env', {}))
+        schan.close()
+
+        # Cannot use assertRaises in context manager mode as it is not supported
+        # in Python 2.6.
+        try:
+            # Verify that a rejection by the server can be detected
+            self.tc.exec_command('yes', environment={b'INVALID_ENV': b''})
+        except SSHException as e:
+            self.assertTrue('INVALID_ENV' in str(e),
+                            'Expected variable name in error message')
+            self.assertTrue(isinstance(e.args[1], SSHException),
+                            'Expected original SSHException in exception')
+        else:
+            self.assertFalse(False, 'SSHException was not thrown.')
