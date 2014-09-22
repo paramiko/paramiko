@@ -89,7 +89,7 @@ class HostKeys (MutableMapping):
         :raises IOError: if there was an error reading the file
         """
         with open(filename, 'r') as f:
-            for lineno, line in enumerate(f):
+            for lineno, line in enumerate(f, 1):
                 line = line.strip()
                 if (len(line) == 0) or (line[0] == '#'):
                     continue
