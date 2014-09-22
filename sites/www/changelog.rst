@@ -2,6 +2,10 @@
 Changelog
 =========
 
+* :bug:`399` SSH agent forwarding (potentially other functionality as
+  well) would hang due to incorrect values passed into the new window size
+  arguments for `.Transport` (thanks to a botched merge). This has been
+  corrected. Thanks to Dylan Thacker-Smith for the report & patch.
 * :release:`1.15.0 <2014-09-18>`
 * :support:`393` Replace internal use of PyCrypto's ``SHA.new`` with the
   stdlib's ``hashlib.sha1``. Thanks to Alex Gaynor.
