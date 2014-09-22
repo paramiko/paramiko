@@ -2,6 +2,11 @@
 Changelog
 =========
 
+* :release:`1.15.1 <2014-09-22>`
+* :bug:`399` SSH agent forwarding (potentially other functionality as
+  well) would hang due to incorrect values passed into the new window size
+  arguments for `.Transport` (thanks to a botched merge). This has been
+  corrected. Thanks to Dylan Thacker-Smith for the report & patch.
 * :feature:`167` Add `.SSHConfig.get_hostnames` for easier introspection of a
   loaded SSH config file or object. Courtesy of Søren Løvborg.
 * :release:`1.15.0 <2014-09-18>`
