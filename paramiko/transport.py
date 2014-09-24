@@ -60,7 +60,8 @@ from paramiko.ecdsakey import ECDSAKey
 from paramiko.server import ServerInterface
 from paramiko.sftp_client import SFTPClient
 from paramiko.ssh_exception import (SSHException, BadAuthenticationType,
-                                    ChannelException, ProxyCommandFailure)
+                                    ChannelException, ProxyCommandFailure,
+                                    DisconnectedException)
 from paramiko.util import retry_on_signal, ClosingContextManager, clamp_value
 
 from Crypto.Cipher import Blowfish, AES, DES3, ARC4
@@ -88,7 +89,7 @@ class Transport (threading.Thread, ClosingContextManager):
     `channels <.Channel>`, across the session.  Multiple channels can be
     multiplexed across a single session (and often are, in the case of port
     forwardings).
-    
+
     Instances of this class may be used as context managers.
     """
     _PROTO_ID = '2.0'
@@ -1560,6 +1561,116 @@ class Transport (threading.Thread, ClosingContextManager):
         return clamp_value(MIN_PACKET_SIZE, max_packet_size, MAX_WINDOW_SIZE)
 
 
+    def process_early(self, ptype, m):
+        """The first stage of message processing - process all packets that do
+        not count as expected.
+        """
+        if ptype == MSG_IGNORE:
+            return True
+        elif ptype == MSG_DISCONNECT:
+            self._parse_disconnect(m)
+            self.active = False
+            self.packetizer.close()
+            raise DisconnectedException()
+        elif ptype == MSG_DEBUG:
+            self._parse_debug(m)
+            return True
+        return False
+
+    def check_expected(self, ptype, m):
+        if ptype not in self._expected_packet:
+            raise SSHException('Expecting packet from %r, got %d' % (self._expected_packet, ptype))
+        self._expected_packet = tuple()
+        if (ptype >= 30) and (ptype <= 41):
+            self.kex_engine.parse_next(ptype, m)
+            return True
+        return False
+
+    def process_local_handler(self, ptype, m):
+        """Look up local handler definitions. Return True if it was handled."""
+        try:
+            handler = self._handler_table[ptype]
+        except KeyError:
+            return False
+        handler(self, m)
+        return True
+
+    def process_channel_handler(self, ptype, m):
+        """Look up channel handler definitions. Return True if it was handled."""
+        try:
+            handler = self._channel_handler_table[ptype]
+        except KeyError:
+            return False
+        chanid = m.get_int()
+        chan = self._channels.get(chanid)
+        if chan is not None:
+            handler(chan, m)
+        elif chanid in self.channels_seen:
+            self._log(DEBUG, 'Ignoring message for dead channel %d' % chanid)
+        else:
+            self._log(ERROR, 'Channel request for unknown channel %d' % chanid)
+            self.active = False
+            self.packetizer.close()
+        return True
+
+    def process_auth_handler(self, ptype, m):
+        """Look up auth handler definitions. Return True if it was handled."""
+        if self.auth_handler is None:
+            return False
+        try:
+            handler = self.auth_handler._handler_table[ptype]
+        except KeyError:
+            return False
+        handler(self.auth_handler, m)
+        return True
+
+    def process_missing_handler(self, ptype, m):
+        """Process a message that has no handler."""
+        self._log(WARNING, 'Oops, unhandled type %d' % ptype)
+        msg = Message()
+        msg.add_byte(cMSG_UNIMPLEMENTED)
+        msg.add_int(m.seqno)
+        self._send_message(msg)
+
+    def process_message(self, ptype, m):
+        """Process a single message given its packet type and message."""
+        if self.process_early(ptype, m):
+            return
+
+        if len(self._expected_packet) > 0 and self.check_expected(ptype, m):
+            return
+
+        if self.process_local_handler(ptype, m):
+            return
+        if self.process_channel_handler(ptype, m):
+            return
+        if self.process_auth_handler(ptype, m):
+            return
+        self.process_missing_handler(ptype, m)
+
+    def communicate_with_server(self):
+        """Set up the connection and communicate with the server until
+        disconnected.
+        """
+        self.packetizer.write_all(b(self.local_version + '\r\n'))
+        self._check_banner()
+        self._send_kex_init()
+        self._expect_packet(MSG_KEXINIT)
+
+        while self.active:
+            #check if we need to rekey, otherwise get a new message
+            if self.packetizer.need_rekey() and not self.in_kex:
+                self._send_kex_init()
+            try:
+                ptype, m = self.packetizer.read_message()
+            except NeedRekeyException:
+                continue
+
+            try:
+                self.process_message(ptype, m)
+            except DisconnectedException:
+                break
+
     def run(self):
         # (use the exposed "run" method, because if we specify a thread target
         # of a private method, threading.Thread will keep a reference to it
@@ -1578,57 +1689,7 @@ class Transport (threading.Thread, ClosingContextManager):
             self._log(DEBUG, 'starting thread (client mode): %s' % hex(long(id(self)) & xffffffff))
         try:
             try:
-                self.packetizer.write_all(b(self.local_version + '\r\n'))
-                self._check_banner()
-                self._send_kex_init()
-                self._expect_packet(MSG_KEXINIT)
-
-                while self.active:
-                    if self.packetizer.need_rekey() and not self.in_kex:
-                        self._send_kex_init()
-                    try:
-                        ptype, m = self.packetizer.read_message()
-                    except NeedRekeyException:
-                        continue
-                    if ptype == MSG_IGNORE:
-                        continue
-                    elif ptype == MSG_DISCONNECT:
-                        self._parse_disconnect(m)
-                        self.active = False
-                        self.packetizer.close()
-                        break
-                    elif ptype == MSG_DEBUG:
-                        self._parse_debug(m)
-                        continue
-                    if len(self._expected_packet) > 0:
-                        if ptype not in self._expected_packet:
-                            raise SSHException('Expecting packet from %r, got %d' % (self._expected_packet, ptype))
-                        self._expected_packet = tuple()
-                        if (ptype >= 30) and (ptype <= 41):
-                            self.kex_engine.parse_next(ptype, m)
-                            continue
-
-                    if ptype in self._handler_table:
-                        self._handler_table[ptype](self, m)
-                    elif ptype in self._channel_handler_table:
-                        chanid = m.get_int()
-                        chan = self._channels.get(chanid)
-                        if chan is not None:
-                            self._channel_handler_table[ptype](chan, m)
-                        elif chanid in self.channels_seen:
-                            self._log(DEBUG, 'Ignoring message for dead channel %d' % chanid)
-                        else:
-                            self._log(ERROR, 'Channel request for unknown channel %d' % chanid)
-                            self.active = False
-                            self.packetizer.close()
-                    elif (self.auth_handler is not None) and (ptype in self.auth_handler._handler_table):
-                        self.auth_handler._handler_table[ptype](self.auth_handler, m)
-                    else:
-                        self._log(WARNING, 'Oops, unhandled type %d' % ptype)
-                        msg = Message()
-                        msg.add_byte(cMSG_UNIMPLEMENTED)
-                        msg.add_int(m.seqno)
-                        self._send_message(msg)
+                self.communicate_with_server()
             except SSHException as e:
                 self._log(ERROR, 'Exception: ' + str(e))
                 self._log(ERROR, util.tb_strings())
