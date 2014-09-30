@@ -1002,10 +1002,14 @@ class Transport (threading.Thread, ClosingContextManager):
         :param .PKey pkey:
             a private key to use for authentication, if you want to use private
             key authentication; otherwise ``None``.
-        :param str gss_host: The targets name in the kerberos database. default: hostname
-        :param bool gss_auth: ``True`` if you want to use GSS-API authentication
-        :param bool gss_kex: Perform GSS-API Key Exchange and user authentication
-        :param bool gss_deleg_creds: Delegate GSS-API client credentials or not
+        :param str gss_host:
+            The target's name in the kerberos database. Default: hostname
+        :param bool gss_auth:
+            ``True`` if you want to use GSS-API authentication.
+        :param bool gss_kex:
+            Perform GSS-API Key Exchange and user authentication.
+        :param bool gss_deleg_creds:
+            Whether to delegate GSS-API client credentials.
 
         :raises SSHException: if the SSH2 negotiation fails, the host key
             supplied by the server is incorrect, or authentication fails.

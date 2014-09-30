@@ -250,7 +250,7 @@ class SSHClient (ClosingContextManager):
                     pass
             retry_on_signal(lambda: sock.connect(addr))
 
-        t = self._transport = Transport(sock, gss_kex, gss_deleg_creds)
+        t = self._transport = Transport(sock, gss_kex=gss_kex, gss_deleg_creds=gss_deleg_creds)
         t.use_compression(compress=compress)
         if gss_kex and gss_host is None:
             t.set_gss_host(hostname)

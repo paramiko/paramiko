@@ -84,7 +84,7 @@ class GSSKexTest(unittest.TestCase):
 
     def _run(self):
         self.socks, addr = self.sockl.accept()
-        self.ts = paramiko.Transport(self.socks, True)
+        self.ts = paramiko.Transport(self.socks, gss_kex=True)
         host_key = paramiko.RSAKey.from_private_key_file('tests/test_rsa.key')
         self.ts.add_server_key(host_key)
         self.ts.set_gss_host(targ_name)
