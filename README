@@ -38,6 +38,7 @@ Requirements
     3.2 and higher as well.
   - Cryptography 0.6 or better <https://cryptography.io>
   - ecdsa 0.9 or better <https://pypi.python.org/pypi/ecdsa>
+  - pyasn1 0.1.7 or better <https://pypi.python.org/pypi/pyasn1>
 
 If you have setuptools, you can build and install paramiko and all its
 dependencies with this command (as root)::
