@@ -275,8 +275,6 @@ class SSHClientTest (unittest.TestCase):
         if not PY2:
             return
         threading.Thread(target=self._run).start()
-        host_key = paramiko.RSAKey.from_private_key_file(test_path('test_rsa.key'))
-        public_host_key = paramiko.RSAKey(data=host_key.asbytes())
 
         self.tc = paramiko.SSHClient()
         self.tc.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -293,8 +291,9 @@ class SSHClientTest (unittest.TestCase):
         del self.tc
 
         # force a collection to see whether the SSHClient object is deallocated
-        # correctly; 4 GCs are needed to make sure it's really collected on
+        # correctly; 5 GCs are needed to make sure it's really collected on
         # PyPy
+        gc.collect()
         gc.collect()
         gc.collect()
         gc.collect()
@@ -307,8 +306,6 @@ class SSHClientTest (unittest.TestCase):
         verify that an SSHClient can be used a context manager
         """
         threading.Thread(target=self._run).start()
-        host_key = paramiko.RSAKey.from_private_key_file(test_path('test_rsa.key'))
-        public_host_key = paramiko.RSAKey(data=host_key.asbytes())
 
         with paramiko.SSHClient() as tc:
             self.tc = tc
