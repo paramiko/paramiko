@@ -291,11 +291,8 @@ class SSHClientTest (unittest.TestCase):
         del self.tc
 
         # force a collection to see whether the SSHClient object is deallocated
-        # correctly; 5 GCs are needed to make sure it's really collected on
+        # correctly. 2 GCs are needed to make sure it's really collected on
         # PyPy
-        gc.collect()
-        gc.collect()
-        gc.collect()
         gc.collect()
         gc.collect()
 
