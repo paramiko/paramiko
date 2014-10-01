@@ -2,6 +2,8 @@
 Changelog
 =========
 
+* :bug:`320` Update our win_pageant module to be Python 3 compatible. Thanks to
+``@sherbang`` and ``@adamkerz`` for the patches.
 * :support:`378 backported` Minor code cleanup in the SSH config module
   courtesy of Olle Lundberg.
 * :support:`249` Consolidate version information into one spot. Thanks to Gabi
