@@ -2,6 +2,8 @@
 Changelog
 =========
 
+* :bug:`320` Update our win_pageant module to be Python 3 compatible. Thanks to
+``@sherbang`` and ``@adamkerz`` for the patches.
 * :release:`1.15.1 <2014-09-22>`
 * :bug:`399` SSH agent forwarding (potentially other functionality as
   well) would hang due to incorrect values passed into the new window size
