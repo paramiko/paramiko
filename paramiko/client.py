@@ -417,7 +417,7 @@ class SSHClient (ClosingContextManager):
         """
         return self._transport
 
-    def _auth(self, username, password, pkey, key_filename, allow_agent,
+    def _auth(self, username, password, pkey, key_filenames, allow_agent,
               look_for_keys, gss_auth, gss_kex, gss_deleg_creds, gss_host):
         """
         Try, in order:
@@ -434,12 +434,10 @@ class SSHClient (ClosingContextManager):
         if username is None:
             username = getpass.getuser()
 
-        if key_filename is None:
+        if key_filenames is None:
             key_filenames = []
-        elif isinstance(key_filename, string_types):
-            key_filenames = [key_filename]
-        else:
-            key_filenames = key_filename
+        elif isinstance(key_filenames, string_types):
+            key_filenames = [key_filenames]
 
         saved_exception = None
         two_factor = False

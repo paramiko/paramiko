@@ -1563,7 +1563,11 @@ class Transport (threading.Thread, ClosingContextManager):
 
     def process_early(self, ptype, m):
         """The first stage of message processing - process all packets that do
-        not count as expected.
+        not count towards being "expected".
+
+        :param int ptype: The expected packet type
+        :param Message m: The message received
+        :return bool: True if the packet was processed, False otherwise
         """
         if ptype == MSG_IGNORE:
             return True
@@ -1578,6 +1582,12 @@ class Transport (threading.Thread, ClosingContextManager):
         return False
 
     def check_expected(self, ptype, m):
+        """Check the packet type and message against the expected packet.
+
+        :param int ptype: The expected packet type
+        :param Message m: The message received
+        :return bool: True if the packet was processed, False otherwise
+        """
         if ptype not in self._expected_packet:
             raise SSHException('Expecting packet from %r, got %d' % (self._expected_packet, ptype))
         self._expected_packet = tuple()
@@ -1587,7 +1597,12 @@ class Transport (threading.Thread, ClosingContextManager):
         return False
 
     def process_local_handler(self, ptype, m):
-        """Look up local handler definitions. Return True if it was handled."""
+        """Look up local handler definitions. Return True if it was handled.
+
+        :param int ptype: The expected packet type
+        :param Message m: The message received
+        :return bool: True if the packet was processed, False otherwise
+        """
         try:
             handler = self._handler_table[ptype]
         except KeyError:
@@ -1596,7 +1611,12 @@ class Transport (threading.Thread, ClosingContextManager):
         return True
 
     def process_channel_handler(self, ptype, m):
-        """Look up channel handler definitions. Return True if it was handled."""
+        """Look up channel handler definitions. Return True if it was handled.
+
+        :param int ptype: The expected packet type
+        :param Message m: The message received
+        :return bool: True if the packet was processed, False otherwise
+        """
         try:
             handler = self._channel_handler_table[ptype]
         except KeyError:
@@ -1614,7 +1634,12 @@ class Transport (threading.Thread, ClosingContextManager):
         return True
 
     def process_auth_handler(self, ptype, m):
-        """Look up auth handler definitions. Return True if it was handled."""
+        """Look up auth handler definitions. Return True if it was handled.
+
+        :param int ptype: The expected packet type
+        :param Message m: The message received
+        :return bool: True if the packet was processed, False otherwise
+        """
         if self.auth_handler is None:
             return False
         try:
@@ -1625,7 +1650,12 @@ class Transport (threading.Thread, ClosingContextManager):
         return True
 
     def process_missing_handler(self, ptype, m):
-        """Process a message that has no handler."""
+        """Process a message that has no handler.
+
+        :param int ptype: The expected packet type
+        :param Message m: The message received
+        :return bool: True if the packet was processed, False otherwise
+        """
         self._log(WARNING, 'Oops, unhandled type %d' % ptype)
         msg = Message()
         msg.add_byte(cMSG_UNIMPLEMENTED)
@@ -1633,7 +1663,11 @@ class Transport (threading.Thread, ClosingContextManager):
         self._send_message(msg)
 
     def process_message(self, ptype, m):
-        """Process a single message given its packet type and message."""
+        """Process a single message given its packet type and message.
+
+        :param int ptype: The expected packet type
+        :param Message m: The message received
+        """
         if self.process_early(ptype, m):
             return
 
