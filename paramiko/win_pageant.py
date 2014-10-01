@@ -26,6 +26,7 @@ import ctypes.wintypes
 import platform
 import struct
 from paramiko.util import *
+from paramiko.py3compat import b
 
 try:
     import _thread as thread # Python 3.x
@@ -43,7 +44,7 @@ win32con_WM_COPYDATA = 74
 
 
 def _get_pageant_window_object():
-    return ctypes.windll.user32.FindWindowA('Pageant', 'Pageant')
+    return ctypes.windll.user32.FindWindowA(b('Pageant'), b('Pageant'))
 
 
 def can_talk_to_agent():
@@ -90,7 +91,7 @@ def _query_pageant(msg):
     with pymap:
         pymap.write(msg)
         # Create an array buffer containing the mapped filename
-        char_buffer = array.array("c", b(map_name) + zero_byte)
+        char_buffer = array.array("b", b(map_name) + zero_byte)
         char_buffer_address, char_buffer_size = char_buffer.buffer_info()
         # Create a string to use for the SendMessage function call
         cds = COPYDATASTRUCT(_AGENT_COPYDATA_ID, char_buffer_size,
