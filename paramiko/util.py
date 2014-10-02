@@ -50,7 +50,7 @@ def inflate_long(s, always_positive=False):
         # noinspection PyAugmentAssignment
         s = filler * (4 - len(s) % 4) + s
     for i in range(0, len(s), 4):
-        out = (out << 32) + struct.unpack('>I', s[i:i+4])[0]
+        out = (out << 32) + struct.unpack('>I', s[i:i + 4])[0]
     if negative:
         out -= (long(1) << (8 * len(s)))
     return out
@@ -93,7 +93,7 @@ def format_binary(data, prefix=''):
     x = 0
     out = []
     while len(data) > x + 16:
-        out.append(format_binary_line(data[x:x+16]))
+        out.append(format_binary_line(data[x:x + 16]))
         x += 16
     if x < len(data):
         out.append(format_binary_line(data[x:]))
@@ -102,7 +102,7 @@ def format_binary(data, prefix=''):
 
 def format_binary_line(data):
     left = ' '.join(['%02X' % byte_ord(c) for c in data])
-    right = ''.join([('.%c..' % c)[(byte_ord(c)+63)//95] for c in data])
+    right = ''.join([('.%c..' % c)[(byte_ord(c) + 63) // 95] for c in data])
     return '%-50s %s' % (left, right)
 
 
@@ -137,10 +137,6 @@ def bit_length(n):
             hbyte <<= 1
             bitlen -= 1
         return bitlen
-
-
-def tb_strings():
-    return ''.join(traceback.format_exception(*sys.exc_info())).split('\n')
 
 
 def generate_key_bytes(hash_alg, salt, key, nbytes):
