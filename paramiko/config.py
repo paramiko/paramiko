@@ -93,13 +93,15 @@ class SSHConfig (object):
         """
         Return a dict of config options for a given hostname.
 
-        The host-matching rules of OpenSSH's ``ssh_config`` man page are used,
-        which means that all configuration options from matching host
-        specifications are merged, with more specific hostmasks taking
-        precedence. In other words, if ``"Port"`` is set under ``"Host *"``
-        and also ``"Host *.example.com"``, and the lookup is for
-        ``"ssh.example.com"``, then the port entry for ``"Host *.example.com"``
-        will win out.
+        The host-matching rules of OpenSSH's ``ssh_config`` man page are used:
+        For each parameter, the first obtained value will be used.  The
+        configuration files contain sections separated by ``Host''
+        specifications, and that section is only applied for hosts that match
+        one of the patterns given in the specification.
+
+        Since the first obtained value for each parameter is used, more host-
+        specific declarations should be given near the beginning of the file,
+        and general defaults at the end.
 
         The keys in the returned dict are all normalized to lowercase (look for
         ``"port"``, not ``"Port"``. The values are processed according to the
