@@ -24,7 +24,9 @@ import signal
 from subprocess import Popen, PIPE
 from select import select
 import socket
+import time
 
+from paramiko.common import io_sleep
 from paramiko.ssh_exception import ProxyCommandFailure
 from paramiko.util import ClosingContextManager
 
@@ -93,6 +95,11 @@ class ProxyCommand(ClosingContextManager):
                     # timeouts; this makes us act more like a real socket
                     # (where timeouts don't actually drop data.)
                     self.buffer.append(b)
+                # If we haven't recieved any data yet, wait a short period
+                # of time before polling again to avoid excessive CPU usage
+                # during long-running remote commands
+                if len(self.buffer) == 0:
+                    time.sleep(io_sleep)
             result = ''.join(self.buffer)
             self.buffer = []
             return result
