@@ -1642,7 +1642,7 @@ class Transport (threading.Thread, ClosingContextManager):
         if ptype in self._handler_table:
             self._handler_table[ptype](self, m)
         elif ptype in self._channel_handler_table:
-            self.process_channel_handler(m, ptype)
+            self.process_channel_handler(ptype, m)
         elif self.auth_handler and self.auth_handler._handler_table and ptype in self.auth_handler._handler_table:
             self.auth_handler._handler_table[ptype](self.auth_handler, m)
         else:
