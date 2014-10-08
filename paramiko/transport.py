@@ -1596,31 +1596,13 @@ class Transport (threading.Thread, ClosingContextManager):
             return True
         return False
 
-    def process_local_handler(self, ptype, m):
-        """Look up local handler definitions. Return True if it was handled.
-
-        :param int ptype: The expected packet type
-        :param Message m: The message received
-        :return bool: True if the packet was processed, False otherwise
-        """
-        try:
-            handler = self._handler_table[ptype]
-        except KeyError:
-            return False
-        handler(self, m)
-        return True
-
     def process_channel_handler(self, ptype, m):
-        """Look up channel handler definitions. Return True if it was handled.
+        """Process a channel message using the given handler.
 
         :param int ptype: The expected packet type
         :param Message m: The message received
-        :return bool: True if the packet was processed, False otherwise
         """
-        try:
-            handler = self._channel_handler_table[ptype]
-        except KeyError:
-            return False
+        handler = self._channel_handler_table[ptype]
         chanid = m.get_int()
         chan = self._channels.get(chanid)
         if chan is not None:
@@ -1631,23 +1613,6 @@ class Transport (threading.Thread, ClosingContextManager):
             self._log(ERROR, 'Channel request for unknown channel %d' % chanid)
             self.active = False
             self.packetizer.close()
-        return True
-
-    def process_auth_handler(self, ptype, m):
-        """Look up auth handler definitions. Return True if it was handled.
-
-        :param int ptype: The expected packet type
-        :param Message m: The message received
-        :return bool: True if the packet was processed, False otherwise
-        """
-        if self.auth_handler is None:
-            return False
-        try:
-            handler = self.auth_handler._handler_table[ptype]
-        except KeyError:
-            return False
-        handler(self.auth_handler, m)
-        return True
 
     def process_missing_handler(self, ptype, m):
         """Process a message that has no handler.
@@ -1674,13 +1639,15 @@ class Transport (threading.Thread, ClosingContextManager):
         if len(self._expected_packet) > 0 and self.check_expected(ptype, m):
             return
 
-        if self.process_local_handler(ptype, m):
-            return
-        if self.process_channel_handler(ptype, m):
-            return
-        if self.process_auth_handler(ptype, m):
-            return
-        self.process_missing_handler(ptype, m)
+        if ptype in self._handler_table:
+            self._handler_table[ptype](self, m)
+        elif ptype in self._channel_handler_table:
+            self.process_channel_handler(m, ptype)
+        elif self.auth_handler and self.auth_handler._handler_table and ptype in self.auth_handler._handler_table:
+            self.auth_handler._handler_table[ptype](self.auth_handler, m)
+        else:
+            self.process_missing_handler(ptype, m)
+
 
     def communicate_with_server(self):
         """Set up the connection and communicate with the server until
