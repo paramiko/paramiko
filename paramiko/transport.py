@@ -610,9 +610,7 @@ class Transport (threading.Thread, ClosingContextManager):
         .. versionchanged:: 1.15
             Added the ``window_size`` and ``max_packet_size`` arguments.
         """
-        return self.open_channel('session',
-                                 window_size=window_size,
-                                 max_packet_size=max_packet_size)
+        return self.open_channel('session',window_size=window_size,max_packet_size=max_packet_size)
 
     def open_x11_channel(self, src_addr=None):
         """
