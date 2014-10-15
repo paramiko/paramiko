@@ -65,7 +65,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
 
     Used to open an SFTP session across an open SSH `.Transport` and perform
     remote file operations.
-    
+
     Instances of this class may be used as context managers.
     """
     def __init__(self, sock):
@@ -101,6 +101,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
             raise SSHException('EOF during negotiation')
         self._log(INFO, 'Opened sftp connection (server version %d)' % server_version)
 
+    @classmethod
     def from_transport(cls, t, window_size=None, max_packet_size=None):
         """
         Create an SFTP client channel from an open `.Transport`.
@@ -129,7 +130,6 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
             return None
         chan.invoke_subsystem('sftp')
         return cls(chan)
-    from_transport = classmethod(from_transport)
 
     def _log(self, level, msg, *args):
         if isinstance(msg, list):

@@ -57,13 +57,11 @@ class NullServer (paramiko.ServerInterface):
 
 
 class GSSAuthTest(unittest.TestCase):
-
+    @staticmethod
     def init(username, hostname):
         global krb5_principal, targ_name
         krb5_principal = username
         targ_name = hostname
-
-    init = staticmethod(init)
 
     def setUp(self):
         self.username = krb5_principal

@@ -126,6 +126,7 @@ class ECDSAKey (PKey):
         key = self.signing_key or self.verifying_key
         self._write_private_key('EC', file_obj, key.to_der(), password)
 
+    @staticmethod
     def generate(curve=curves.NIST256p, progress_func=None):
         """
         Generate a new private RSA key.  This factory function can be used to
@@ -139,7 +140,6 @@ class ECDSAKey (PKey):
         signing_key = SigningKey.generate(curve)
         key = ECDSAKey(vals=(signing_key, signing_key.get_verifying_key()))
         return key
-    generate = staticmethod(generate)
 
     ###  internals...
 

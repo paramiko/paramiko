@@ -154,6 +154,7 @@ class DSSKey (PKey):
     def write_private_key(self, file_obj, password=None):
         self._write_private_key('DSA', file_obj, self._encode_key(), password)
 
+    @staticmethod
     def generate(bits=1024, progress_func=None):
         """
         Generate a new private DSS key.  This factory function can be used to
@@ -169,7 +170,6 @@ class DSSKey (PKey):
         key = DSSKey(vals=(dsa.p, dsa.q, dsa.g, dsa.y))
         key.x = dsa.x
         return key
-    generate = staticmethod(generate)
 
     ###  internals...
 

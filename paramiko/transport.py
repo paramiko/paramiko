@@ -88,7 +88,7 @@ class Transport (threading.Thread, ClosingContextManager):
     `channels <.Channel>`, across the session.  Multiple channels can be
     multiplexed across a single session (and often are, in the case of port
     forwardings).
-    
+
     Instances of this class may be used as context managers.
     """
     _PROTO_ID = '2.0'
@@ -508,6 +508,7 @@ class Transport (threading.Thread, ClosingContextManager):
             pass
         return None
 
+    @staticmethod
     def load_server_moduli(filename=None):
         """
         (optional)
@@ -547,7 +548,6 @@ class Transport (threading.Thread, ClosingContextManager):
         # none succeeded
         Transport._modulus_pack = None
         return False
-    load_server_moduli = staticmethod(load_server_moduli)
 
     def close(self):
         """

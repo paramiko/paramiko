@@ -307,9 +307,9 @@ class Counter (object):
         self.value = array.array('c', zero_byte * (self.blocksize - len(x)) + x)
         return self.value.tostring()
 
+    @classmethod
     def new(cls, nbits, initial_value=long(1), overflow=long(0)):
         return cls(nbits, initial_value=initial_value, overflow=overflow)
-    new = classmethod(new)
 
 
 def constant_time_bytes_eq(a, b):
