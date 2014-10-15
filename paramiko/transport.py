@@ -2207,21 +2207,6 @@ class SecurityOptions (object):
         """
         return '<paramiko.SecurityOptions for %s>' % repr(self._transport)
 
-    def _get_ciphers(self):
-        return self._transport._preferred_ciphers
-
-    def _get_digests(self):
-        return self._transport._preferred_macs
-
-    def _get_key_types(self):
-        return self._transport._preferred_keys
-
-    def _get_kex(self):
-        return self._transport._preferred_kex
-
-    def _get_compression(self):
-        return self._transport._preferred_compression
-
     def _set(self, name, orig, x):
         if type(x) is list:
             x = tuple(x)
@@ -2233,30 +2218,51 @@ class SecurityOptions (object):
             raise ValueError('unknown cipher')
         setattr(self._transport, name, x)
 
-    def _set_ciphers(self, x):
+    @property
+    def ciphers(self):
+        """Symmetric encryption ciphers"""
+        return self._transport._preferred_ciphers
+
+    @ciphers.setter
+    def ciphers(self, x):
         self._set('_preferred_ciphers', '_cipher_info', x)
 
-    def _set_digests(self, x):
+    @property
+    def digests(self):
+        """Digest (one-way hash) algorithms"""
+        return self._transport._preferred_macs
+
+    @digests.setter
+    def digests(self, x):
         self._set('_preferred_macs', '_mac_info', x)
 
-    def _set_key_types(self, x):
+    @property
+    def key_types(self):
+        """Public-key algorithms"""
+        return self._transport._preferred_keys
+
+    @key_types.setter
+    def key_types(self, x):
         self._set('_preferred_keys', '_key_info', x)
 
-    def _set_kex(self, x):
+
+    @property
+    def kex(self):
+        """Key exchange algorithms"""
+        return self._transport._preferred_kex
+
+    @kex.setter
+    def kex(self, x):
         self._set('_preferred_kex', '_kex_info', x)
 
-    def _set_compression(self, x):
-        self._set('_preferred_compression', '_compression_info', x)
+    @property
+    def compression(self):
+        """Compression algorithms"""
+        return self._transport._preferred_compression
 
-    ciphers = property(_get_ciphers, _set_ciphers, None,
-                       "Symmetric encryption ciphers")
-    digests = property(_get_digests, _set_digests, None,
-                       "Digest (one-way hash) algorithms")
-    key_types = property(_get_key_types, _set_key_types, None,
-                         "Public-key algorithms")
-    kex = property(_get_kex, _set_kex, None, "Key exchange algorithms")
-    compression = property(_get_compression, _set_compression, None,
-                           "Compression algorithms")
+    @compression.setter
+    def compression(self, x):
+        self._set('_preferred_compression', '_compression_info', x)
 
 
 class ChannelMap (object):
