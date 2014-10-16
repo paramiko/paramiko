@@ -290,7 +290,7 @@ class Channel (ClosingContextManager):
 
         .. versionadded:: 1.7.3
         """
-        return self.closed or self.status_event.isSet()
+        return self.closed or self.status_event.is_set()
 
     def recv_exit_status(self):
         """
@@ -305,7 +305,7 @@ class Channel (ClosingContextManager):
         .. versionadded:: 1.2
         """
         self.status_event.wait()
-        assert self.status_event.isSet()
+        assert self.status_event.is_set()
         return self.exit_status
 
     def send_exit_status(self, status):
@@ -1077,7 +1077,7 @@ class Channel (ClosingContextManager):
 
     def _wait_for_event(self):
         self.event.wait()
-        assert self.event.isSet()
+        assert self.event.is_set()
         if self.event_ready:
             return
         e = self.transport.get_exception()
