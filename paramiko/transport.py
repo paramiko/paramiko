@@ -405,7 +405,7 @@ class Transport (threading.Thread, ClosingContextManager):
                 if e is not None:
                     raise e
                 raise SSHException('Negotiation failed.')
-            if event.isSet():
+            if event.is_set():
                 break
 
     def start_server(self, event=None, server=None):
@@ -470,7 +470,7 @@ class Transport (threading.Thread, ClosingContextManager):
                 if e is not None:
                     raise e
                 raise SSHException('Negotiation failed.')
-            if event.isSet():
+            if event.is_set():
                 break
 
     def add_server_key(self, key):
@@ -729,7 +729,7 @@ class Transport (threading.Thread, ClosingContextManager):
                 if e is None:
                     e = SSHException('Unable to open channel.')
                 raise e
-            if event.isSet():
+            if event.is_set():
                 break
         chan = self._channels.get(chanid)
         if chan is not None:
@@ -849,7 +849,7 @@ class Transport (threading.Thread, ClosingContextManager):
                 if e is not None:
                     raise e
                 raise SSHException('Negotiation failed.')
-            if self.completion_event.isSet():
+            if self.completion_event.is_set():
                 break
         return
 
@@ -900,7 +900,7 @@ class Transport (threading.Thread, ClosingContextManager):
             self.completion_event.wait(0.1)
             if not self.active:
                 return None
-            if self.completion_event.isSet():
+            if self.completion_event.is_set():
                 break
         return self.global_response
 
@@ -1461,7 +1461,7 @@ class Transport (threading.Thread, ClosingContextManager):
                 self._log(DEBUG, 'Dropping user packet because connection is dead.')
                 return
             self.clear_to_send_lock.acquire()
-            if self.clear_to_send.isSet():
+            if self.clear_to_send.is_set():
                 break
             self.clear_to_send_lock.release()
             if time.time() > start + self.clear_to_send_timeout:

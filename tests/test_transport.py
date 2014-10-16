@@ -136,12 +136,12 @@ class TransportTest(unittest.TestCase):
 
         event = threading.Event()
         self.server = NullServer()
-        self.assertTrue(not event.isSet())
+        self.assertTrue(not event.is_set())
         self.ts.start_server(event, self.server)
         self.tc.connect(hostkey=public_host_key,
                         username='slowdive', password='pygmalion')
         event.wait(1.0)
-        self.assertTrue(event.isSet())
+        self.assertTrue(event.is_set())
         self.assertTrue(self.ts.is_active())
 
     def test_1_security_options(self):
@@ -180,7 +180,7 @@ class TransportTest(unittest.TestCase):
         self.ts.add_server_key(host_key)
         event = threading.Event()
         server = NullServer()
-        self.assertTrue(not event.isSet())
+        self.assertTrue(not event.is_set())
         self.assertEqual(None, self.tc.get_username())
         self.assertEqual(None, self.ts.get_username())
         self.assertEqual(False, self.tc.is_authenticated())
@@ -189,7 +189,7 @@ class TransportTest(unittest.TestCase):
         self.tc.connect(hostkey=public_host_key,
                         username='slowdive', password='pygmalion')
         event.wait(1.0)
-        self.assertTrue(event.isSet())
+        self.assertTrue(event.is_set())
         self.assertTrue(self.ts.is_active())
         self.assertEqual('slowdive', self.tc.get_username())
         self.assertEqual('slowdive', self.ts.get_username())
@@ -205,13 +205,13 @@ class TransportTest(unittest.TestCase):
         self.ts.add_server_key(host_key)
         event = threading.Event()
         server = NullServer()
-        self.assertTrue(not event.isSet())
+        self.assertTrue(not event.is_set())
         self.socks.send(LONG_BANNER)
         self.ts.start_server(event, server)
         self.tc.connect(hostkey=public_host_key,
                         username='slowdive', password='pygmalion')
         event.wait(1.0)
-        self.assertTrue(event.isSet())
+        self.assertTrue(event.is_set())
         self.assertTrue(self.ts.is_active())
 
     def test_4_special(self):
@@ -680,7 +680,7 @@ class TransportTest(unittest.TestCase):
             def run(self):
                 try:
                     for i in range(1, 1+self.iterations):
-                        if self.done_event.isSet():
+                        if self.done_event.is_set():
                             break
                         self.watchdog_event.set()
                         #print i, "SEND"
@@ -699,7 +699,7 @@ class TransportTest(unittest.TestCase):
 
             def run(self):
                 try:
-                    while not self.done_event.isSet():
+                    while not self.done_event.is_set():
                         if self.chan.recv_ready():
                             chan.recv(65536)
                             self.watchdog_event.set()
@@ -753,12 +753,12 @@ class TransportTest(unittest.TestCase):
 
         # Act as a watchdog timer, checking
         deadlocked = False
-        while not deadlocked and not done_event.isSet():
+        while not deadlocked and not done_event.is_set():
             for event in (st.watchdog_event, rt.watchdog_event):
                 event.wait(timeout)
-                if done_event.isSet():
+                if done_event.is_set():
                     break
-                if not event.isSet():
+                if not event.is_set():
                     deadlocked = True
                     break
                 event.clear()

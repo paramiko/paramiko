@@ -195,7 +195,7 @@ class AuthHandler (object):
                 if (e is None) or issubclass(e.__class__, EOFError):
                     e = AuthenticationException('Authentication failed.')
                 raise e
-            if event.isSet():
+            if event.is_set():
                 break
         if not self.is_authenticated():
             e = self.transport.get_exception()

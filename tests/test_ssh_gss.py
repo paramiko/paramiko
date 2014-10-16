@@ -102,7 +102,7 @@ class GSSAuthTest(unittest.TestCase):
                         gss_auth=True)
 
         self.event.wait(1.0)
-        self.assert_(self.event.isSet())
+        self.assert_(self.event.is_set())
         self.assert_(self.ts.is_active())
         self.assertEquals(self.username, self.ts.get_username())
         self.assertEquals(True, self.ts.is_authenticated())
