@@ -22,7 +22,6 @@ Useful functions used by the rest of paramiko.
 
 from __future__ import generators
 
-import array
 from binascii import hexlify, unhexlify
 import errno
 import sys
@@ -32,7 +31,7 @@ import threading
 import logging
 
 from paramiko.common import DEBUG, zero_byte, xffffffff, max_byte
-from paramiko.py3compat import PY2, long, byte_ord, b, byte_chr
+from paramiko.py3compat import PY2, long, byte_ord, b
 from paramiko.config import SSHConfig
 
 

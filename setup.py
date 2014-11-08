@@ -42,7 +42,6 @@ try:
     kw = {
         'install_requires': [
             'cryptography >= 0.6',
-            'ecdsa >= 0.11',
             'pyasn1 >= 0.1.7',
         ],
     }
