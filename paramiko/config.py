@@ -24,6 +24,7 @@ Configuration file (aka ``ssh_config``) support.
 import fnmatch
 import os
 import re
+import shlex
 import socket
 
 SSH_PORT = 22
@@ -54,7 +55,6 @@ class SSHConfig (object):
 
         :param file file_obj: a file-like object to read the config file from
         """
-
         host = {"host": ['*'], "config": {}}
         for line in file_obj:
             line = line.rstrip('\r\n').lstrip()
@@ -222,25 +222,10 @@ class SSHConfig (object):
         """
         Return a list of host_names from host value.
         """
-        i, length = 0, len(host)
-        hosts = []
-        while i < length:
-            if host[i] == '"':
-                end = host.find('"', i + 1)
-                if end < 0:
-                    raise Exception("Unparsable host %s" % host)
-                hosts.append(host[i + 1:end])
-                i = end + 1
-            elif not host[i].isspace():
-                end = i + 1
-                while end < length and not host[end].isspace() and host[end] != '"':
-                    end += 1
-                hosts.append(host[i:end])
-                i = end
-            else:
-                i += 1
-
-        return hosts
+        try:
+            return shlex.split(host)
+        except ValueError:
+            raise Exception("Unparsable host %s" % host)
 
 
 class LazyFqdn(object):
