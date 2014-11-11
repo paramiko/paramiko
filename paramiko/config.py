@@ -73,6 +73,9 @@ class SSHConfig (object):
                     'host': self._get_hosts(value),
                     'config': {}
                 }
+            elif key == 'proxycommand' and value.lower() == 'none':
+                # Proxycommands of none should not be added as an actual value. (Issue #415)
+                continue
             else:
                 if value.startswith('"') and value.endswith('"'):
                     value = value[1:-1]
