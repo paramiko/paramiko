@@ -453,3 +453,23 @@ Host param3 parara
             )
         for host in incorrect_data:
             self.assertRaises(Exception, conf._get_hosts, host)
+
+    def test_proxycommand_none_issue_418(self):
+        test_config_file = """
+Host proxycommand-standard-none
+    ProxyCommand None
+
+Host proxycommand-with-equals-none
+    ProxyCommand=None
+    """
+        for host, values in {
+            'proxycommand-standard-none':    {'hostname': 'proxycommand-standard-none'},
+            'proxycommand-with-equals-none': {'hostname': 'proxycommand-with-equals-none'}
+        }.items():
+
+            f = StringIO(test_config_file)
+            config = paramiko.util.parse_ssh_config(f)
+            self.assertEqual(
+                paramiko.util.lookup_ssh_host_config(host, config),
+                values
+            )
