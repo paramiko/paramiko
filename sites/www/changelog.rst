@@ -2,6 +2,10 @@
 Changelog
 =========
 
+* :bug:`429` Server-level debug message logging was overlooked during the
+  Python 3 compatibility update; Python 3 clients attempting to log SSH debug
+  packets encountered type errors. This is now fixed. Thanks to ``@mjmaenpaa``
+  for the catch.
 * :bug:`320` Update our win_pageant module to be Python 3 compatible. Thanks to
 ``@sherbang`` and ``@adamkerz`` for the patches.
 * :release:`1.15.1 <2014-09-22>`
