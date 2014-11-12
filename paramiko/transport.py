@@ -2149,7 +2149,7 @@ class Transport (threading.Thread, ClosingContextManager):
         always_display = m.get_boolean()
         msg = m.get_string()
         lang = m.get_string()
-        self._log(DEBUG, 'Debug msg: ' + util.safe_string(msg))
+        self._log(DEBUG, 'Debug msg: {0}'.format(util.safe_string(msg)))
 
     def _get_subsystem_handler(self, name):
         try:
