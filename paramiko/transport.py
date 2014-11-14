@@ -295,6 +295,7 @@ class Transport (threading.Thread, ClosingContextManager):
         self.global_response = None     # response Message from an arbitrary global request
         self.completion_event = None    # user-defined event callbacks
         self.banner_timeout = 15        # how long (seconds) to wait for the SSH banner
+        self.banner = None              # AuthHandler to save MSG_USERAUTH_BANNER msg here
 
         # server mode:
         self.server_mode = False
@@ -1070,14 +1071,13 @@ class Transport (threading.Thread, ClosingContextManager):
 
     def get_banner(self):
         """
-        Return the banner supplied by the server upon connect. If no banner is
+        Return the banner supplied by the server via MSG_USERAUTH_BANNER, picked
+        up by the auth_handler, saved in the Transport. If no banner is
         supplied, this method returns ``None``.
 
         :returns: server supplied banner (`str`), or ``None``.
         """
-        if not self.active or (self.auth_handler is None):
-            return None
-        return self.auth_handler.banner
+        return self.banner
 
     def auth_none(self, username):
         """
