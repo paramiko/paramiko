@@ -563,6 +563,7 @@ class Transport (threading.Thread, ClosingContextManager):
         for chan in list(self._channels.values()):
             chan._unlink()
         self.sock.close()
+	self.packetizer.close()
 
     def get_remote_server_key(self):
         """
