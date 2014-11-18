@@ -55,6 +55,7 @@ from paramiko.message import Message
 from paramiko.packet import Packetizer, NeedRekeyException
 from paramiko.primes import ModulusPack
 from paramiko.py3compat import string_types, long, byte_ord, b
+from paramiko.resource import ResourceManager
 from paramiko.rsakey import RSAKey
 from paramiko.ecdsakey import ECDSAKey
 from paramiko.server import ServerInterface
@@ -226,6 +227,9 @@ class Transport (threading.Thread, ClosingContextManager):
         threading.Thread.__init__(self)
         self.setDaemon(True)
         self.sock = sock
+
+	ResourceManager.register(self, self)
+
         # Python < 2.3 doesn't have the settimeout method - RogerB
         try:
             # we set the timeout so we can check self.active periodically to
