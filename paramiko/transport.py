@@ -228,7 +228,7 @@ class Transport (threading.Thread, ClosingContextManager):
         self.setDaemon(True)
         self.sock = sock
 
-	ResourceManager.register(self, self)
+        ResourceManager.register(self, self)
 
         # Python < 2.3 doesn't have the settimeout method - RogerB
         try:
