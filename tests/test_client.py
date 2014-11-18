@@ -301,6 +301,22 @@ class SSHClientTest (unittest.TestCase):
 
         self.assertTrue(p() is None)
 
+    def test_client_cleanup_does_not_close_transport(self):
+        threading.Thread(target=self._run).start()
+        host_key = paramiko.RSAKey.from_private_key_file(test_path('test_rsa.key'))
+        public_host_key = paramiko.RSAKey(data=host_key.asbytes())
+        self.tc = paramiko.SSHClient()
+        self.tc.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        self.tc.connect(self.addr, self.port, username='slowdive', password='pygmalion')
+        self.ts = self.tc.get_transport()
+        client_wr = weakref.ref(self.tc)
+        packetizer_wr = weakref.ref(self.ts.packetizer)
+        del self.tc
+        import gc
+        gc.collect()
+        self.assertTrue(client_wr() is None)
+        self.assertTrue(packetizer_wr() is not None) 
+
     def test_client_can_be_used_as_context_manager(self):
         """
         verify that an SSHClient can be used a context manager

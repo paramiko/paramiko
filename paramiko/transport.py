@@ -564,6 +564,9 @@ class Transport (threading.Thread, ClosingContextManager):
             chan._unlink()
         self.sock.close()
         self.packetizer.close()
+        #We have a cyclic reference with packetizer
+        #Delete our ref otherwise we can't be GC'd
+        del self.packetizer
 
     def get_remote_server_key(self):
         """
