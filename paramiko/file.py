@@ -221,8 +221,8 @@ class BufferedFile (object):
                     # truncate line and return
                     self._rbuffer = line[size:]
                     line = line[:size]
-                    self._pos += len(line)
-                    return line if self._flags & self.FLAG_BINARY else u(line)
+                    #self._pos += len(line)
+                    break#return line if self._flags & self.FLAG_BINARY else u(line)
                 n = size - len(line)
             else:
                 n = self._bufsize
@@ -244,6 +244,11 @@ class BufferedFile (object):
             rpos = line.find(cr_byte)
             if (rpos >= 0) and (rpos < pos or pos < 0):
                 pos = rpos
+        if pos == -1:
+            #self._rbuffer = line[size:]
+            #line = line[:size]
+            self._pos += len(line)
+            return line if self._flags & self.FLAG_BINARY else u(line)
         xpos = pos + 1
         if (line[pos] == cr_byte_value) and (xpos < len(line)) and (line[xpos] == linefeed_byte_value):
             xpos += 1

@@ -70,13 +70,15 @@ class BufferedFileTest (unittest.TestCase):
 
     def test_2_readline(self):
         f = LoopbackFile('r+U')
-        f.write(b'First line.\nSecond line.\r\nThird line.\nFinal line non-terminated.')
+        f.write(b'First line.\nSecond line.\r\nThird line.\nFourth line.\nFifth line.\nFinal line non-terminated.')
         self.assertEqual(f.readline(), 'First line.\n')
         # universal newline mode should convert this linefeed:
         self.assertEqual(f.readline(), 'Second line.\n')
         # truncated line:
         self.assertEqual(f.readline(7), 'Third l')
         self.assertEqual(f.readline(), 'ine.\n')
+        self.assertEqual(f.readline(25), 'Fourth line.\n')
+        self.assertEqual(f.readline(), 'Fifth line.\n')
         self.assertEqual(f.readline(), 'Final line non-terminated.')
         self.assertEqual(f.readline(), '')
         f.close()
