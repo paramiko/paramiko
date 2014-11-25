@@ -204,7 +204,7 @@ class BufferedFile (object):
         if not (self._flags & self.FLAG_READ):
             raise IOError('File not open for reading')
         line = self._rbuffer
-        truncated = False;
+        truncated = False
         while True:
             if self._at_trailing_cr and (self._flags & self.FLAG_UNIVERSAL_NEWLINE) and (len(line) > 0):
                 # edge case: the newline may be '\r\n' and we may have read
@@ -246,12 +246,15 @@ class BufferedFile (object):
             if (rpos >= 0) and (rpos < pos or pos < 0):
                 pos = rpos
         if pos == -1:
+            # we couldn't find a newline in the truncated string, return it
             self._pos += len(line)
             return line if self._flags & self.FLAG_BINARY else u(line)
         xpos = pos + 1
         if (line[pos] == cr_byte_value) and (xpos < len(line)) and (line[xpos] == linefeed_byte_value):
             xpos += 1
-        
+        # if the string was truncated, _rbuffer needs to have the string after 
+        # the newline character plus the truncated part of the line we stored
+        # earlier in _rbuffer
         self._rbuffer = line[xpos:] + self._rbuffer if truncated else line[xpos:]
         lf = line[pos:xpos]
         line = line[:pos] + linefeed_byte
