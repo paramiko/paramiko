@@ -148,6 +148,19 @@ class Message (object):
         @return: a 32-bit unsigned integer.
         @rtype: int
         """
+        byte = self.get_bytes(1)
+        if byte == max_byte:
+            return util.inflate_long(self.get_binary())
+        byte += self.get_bytes(3)
+        return struct.unpack('>I', byte)[0]
+
+    def get_size(self):
+        """
+        Fetch an int from the stream.
+
+        @return: a 32-bit unsigned integer.
+        @rtype: int
+        """
         return struct.unpack('>I', self.get_bytes(4))[0]
 
     def get_int64(self):
@@ -249,6 +262,20 @@ class Message (object):
         Add an integer to the stream.
         
         :param int n: integer to add
+        """
+        if n >= Message.big_int:
+            self.packet.write(max_byte)
+            self.add_string(util.deflate_long(n))
+        else:
+            self.packet.write(struct.pack('>I', n))
+        return self
+
+    def add_int(self, n):
+        """
+        Add an integer to the stream.
+
+        @param n: integer to add
+        @type n: int
         """
         if n >= Message.big_int:
             self.packet.write(max_byte)

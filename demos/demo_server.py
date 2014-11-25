@@ -66,9 +66,42 @@ class Server (paramiko.ServerInterface):
         if (username == 'robey') and (key == self.good_pub_key):
             return paramiko.AUTH_SUCCESSFUL
         return paramiko.AUTH_FAILED
+    
+    def check_auth_gssapi_with_mic(self, username,
+                                   gss_authenticated=paramiko.AUTH_FAILED,
+                                   cc_file=None):
+        """
+        .. note::
+            We are just checking in `AuthHandler` that the given user is a
+            valid krb5 principal! We don't check if the krb5 principal is
+            allowed to log in on the server, because there is no way to do that
+            in python. So if you develop your own SSH server with paramiko for
+            a certain platform like Linux, you should call ``krb5_kuserok()`` in
+            your local kerberos library to make sure that the krb5_principal
+            has an account on the server and is allowed to log in as a user.
+
+        .. seealso::
+            `krb5_kuserok() man page
+            <http://www.unix.com/man-page/all/3/krb5_kuserok/>`_
+        """
+        if gss_authenticated == paramiko.AUTH_SUCCESSFUL:
+            return paramiko.AUTH_SUCCESSFUL
+        return paramiko.AUTH_FAILED
+
+    def check_auth_gssapi_keyex(self, username,
+                                gss_authenticated=paramiko.AUTH_FAILED,
+                                cc_file=None):
+        if gss_authenticated == paramiko.AUTH_SUCCESSFUL:
+            return paramiko.AUTH_SUCCESSFUL
+        return paramiko.AUTH_FAILED
+
+    def enable_auth_gssapi(self):
+        UseGSSAPI = True
+        GSSAPICleanupCredentials = False
+        return UseGSSAPI
 
     def get_allowed_auths(self, username):
-        return 'password,publickey'
+        return 'gssapi-keyex,gssapi-with-mic,password,publickey'
 
     def check_channel_shell_request(self, channel):
         self.event.set()
@@ -78,6 +111,8 @@ class Server (paramiko.ServerInterface):
                                   pixelheight, modes):
         return True
 
+
+DoGSSAPIKeyExchange = True
 
 # now connect
 try:
@@ -101,7 +136,8 @@ except Exception as e:
 print('Got a connection!')
 
 try:
-    t = paramiko.Transport(client)
+    t = paramiko.Transport(client, gss_kex=DoGSSAPIKeyExchange)
+    t.set_gss_host(socket.getfqdn(""))
     try:
         t.load_server_moduli()
     except:

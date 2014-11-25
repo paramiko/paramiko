@@ -27,23 +27,27 @@ www = Collection.from_module(_docs, name='www', config={
 
 # Until we move to spec-based testing
 @task
-def test(ctx):
-    ctx.run("python test.py --verbose")
-
-@task
-def coverage(ctx):
-    ctx.run("coverage run --source=paramiko test.py --verbose")
+def test(ctx, coverage=False):
+    runner = "python"
+    if coverage:
+        runner = "coverage run --source=paramiko"
+    flags = "--verbose"
+    ctx.run("{0} test.py {1}".format(runner, flags), pty=True)
 
 
 # Until we stop bundling docs w/ releases. Need to discover use cases first.
-@task('docs') # Will invoke the API doc site build
+@task
 def release(ctx):
+    # Build docs first. Use terribad workaround pending invoke #146
+    ctx.run("inv docs")
     # Move the built docs into where Epydocs used to live
     target = 'docs'
     rmtree(target, ignore_errors=True)
     copytree(docs_build, target)
     # Publish
     publish(ctx, wheel=True)
+    # Remind
+    print("\n\nDon't forget to update RTD's versions page for new minor releases!")
 
 
-ns = Collection(test, coverage, release, docs=docs, www=www)
+ns = Collection(test, release, docs=docs, www=www)

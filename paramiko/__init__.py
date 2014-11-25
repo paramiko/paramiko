@@ -17,20 +17,20 @@
 # 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
 
 import sys
+from paramiko._version import __version__, __version_info__
 
 if sys.version_info < (2, 6):
     raise RuntimeError('You need Python 2.6+ for this module.')
 
 
 __author__ = "Jeff Forcier <jeff@bitprophet.org>"
-__version__ = "1.14.0"
-__version_info__ = tuple([ int(d) for d in __version__.split(".") ])
 __license__ = "GNU Lesser General Public License (LGPL)"
 
 
 from paramiko.transport import SecurityOptions, Transport
 from paramiko.client import SSHClient, MissingHostKeyPolicy, AutoAddPolicy, RejectPolicy, WarningPolicy
 from paramiko.auth_handler import AuthHandler
+from paramiko.ssh_gss import GSSAuth, GSS_AUTH_AVAILABLE
 from paramiko.channel import Channel, ChannelFile
 from paramiko.ssh_exception import SSHException, PasswordRequiredException, \
     BadAuthenticationType, ChannelException, BadHostKeyException, \

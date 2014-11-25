@@ -324,13 +324,12 @@ class PKey (object):
     def _write_private_key(self, tag, f, data, password=None):
         f.write('-----BEGIN %s PRIVATE KEY-----\n' % tag)
         if password is not None:
-            # since we only support one cipher here, use it
             cipher_name = list(self._CIPHER_TABLE.keys())[0]
             cipher = self._CIPHER_TABLE[cipher_name]['cipher']
             keysize = self._CIPHER_TABLE[cipher_name]['keysize']
             blocksize = self._CIPHER_TABLE[cipher_name]['blocksize']
             mode = self._CIPHER_TABLE[cipher_name]['mode']
-            salt = os.urandom(16)
+            salt = os.urandom(blocksize)
             key = util.generate_key_bytes(md5, salt, password, keysize)
             if len(data) % blocksize != 0:
                 n = blocksize - len(data) % blocksize

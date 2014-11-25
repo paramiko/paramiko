@@ -115,12 +115,13 @@ def unhexify(s):
 
 
 def safe_string(s):
-    out = ''
+    out = b('')
     for c in s:
-        if (byte_ord(c) >= 32) and (byte_ord(c) <= 127):
-            out += c
+        i = byte_ord(c)
+        if 32 <= i <= 127:
+            out += byte_chr(i)
         else:
-            out += '%%%02X' % byte_ord(c)
+            out += b('%%%02X' % i)
     return out
 
 
@@ -320,3 +321,15 @@ def constant_time_bytes_eq(a, b):
     for i in (xrange if PY2 else range)(len(a)):
         res |= byte_ord(a[i]) ^ byte_ord(b[i])
     return res == 0
+
+
+class ClosingContextManager(object):
+    def __enter__(self):
+        return self
+
+    def __exit__(self, type, value, traceback):
+        self.close()
+
+
+def clamp_value(minimum, val, maximum):
+    return max(minimum, min(val, maximum))

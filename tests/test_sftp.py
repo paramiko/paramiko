@@ -23,12 +23,13 @@ a real actual sftp server is contacted, and a new folder is created there to
 do test file operations in (so no existing files will be harmed).
 """
 
-from binascii import hexlify
 import os
+import socket
 import sys
-import warnings
 import threading
 import unittest
+import warnings
+from binascii import hexlify
 from tempfile import mkstemp
 
 import paramiko
@@ -195,6 +196,21 @@ class SFTPTest (unittest.TestCase):
             pass
         sftp = paramiko.SFTP.from_transport(tc)
 
+    def test_2_sftp_can_be_used_as_context_manager(self):
+        """
+        verify that the sftp session is closed when exiting the context manager
+        """
+        global sftp
+        with sftp:
+            pass
+        try:
+            sftp.open(FOLDER + '/test2', 'w')
+            self.fail('expected exception')
+        except (EOFError, socket.error):
+            pass
+        finally:
+            sftp = paramiko.SFTP.from_transport(tc)
+
     def test_3_write(self):
         """
         verify that a file can be created and written, and the size is correct.
@@ -279,8 +295,8 @@ class SFTPTest (unittest.TestCase):
 
     def test_7_listdir(self):
         """
-        verify that a folder can be created, a bunch of files can be placed in it,
-        and those files show up in sftp.listdir.
+        verify that a folder can be created, a bunch of files can be placed in
+        it, and those files show up in sftp.listdir.
         """
         try:
             sftp.open(FOLDER + '/duck.txt', 'w').close()
@@ -288,6 +304,26 @@ class SFTPTest (unittest.TestCase):
             sftp.open(FOLDER + '/tertiary.py', 'w').close()
 
             x = sftp.listdir(FOLDER)
+            self.assertEqual(len(x), 3)
+            self.assertTrue('duck.txt' in x)
+            self.assertTrue('fish.txt' in x)
+            self.assertTrue('tertiary.py' in x)
+            self.assertTrue('random' not in x)
+        finally:
+            sftp.remove(FOLDER + '/duck.txt')
+            sftp.remove(FOLDER + '/fish.txt')
+            sftp.remove(FOLDER + '/tertiary.py')
+
+    def test_7_5_listdir_iter(self):
+        """
+        listdir_iter version of above test
+        """
+        try:
+            sftp.open(FOLDER + '/duck.txt', 'w').close()
+            sftp.open(FOLDER + '/fish.txt', 'w').close()
+            sftp.open(FOLDER + '/tertiary.py', 'w').close()
+
+            x = [x.filename for x in sftp.listdir_iter(FOLDER)]
             self.assertEqual(len(x), 3)
             self.assertTrue('duck.txt' in x)
             self.assertTrue('fish.txt' in x)

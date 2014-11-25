@@ -21,6 +21,7 @@ Some unit tests for public/private key objects.
 """
 
 import unittest
+import os
 from binascii import hexlify
 from hashlib import md5
 
@@ -253,3 +254,20 @@ class KeyTest (unittest.TestCase):
         msg.rewind()
         pub = ECDSAKey(data=key.asbytes())
         self.assertTrue(pub.verify_ssh_sig(b'ice weasels', msg))
+
+    def test_salt_size(self):
+        # Read an existing encrypted private key
+        file_ = test_path('test_rsa_password.key')
+        password = 'television'
+        newfile = file_ + '.new'
+        newpassword = 'radio'
+        key = RSAKey(filename=file_, password=password)
+        # Write out a newly re-encrypted copy with a new password.
+        # When the bug under test exists, this will ValueError.
+        try:
+            key.write_private_key_file(newfile, password=newpassword)
+            # Verify the inner key data still matches (when no ValueError)
+            key2 = RSAKey(filename=newfile, password=newpassword)
+            self.assertEqual(key, key2)
+        finally:
+            os.remove(newfile)
