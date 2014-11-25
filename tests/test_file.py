@@ -77,6 +77,7 @@ class BufferedFileTest (unittest.TestCase):
         # truncated line:
         self.assertEqual(f.readline(7), 'Third l')
         self.assertEqual(f.readline(), 'ine.\n')
+        # readline should not read past the fourth line
         self.assertEqual(f.readline(25), 'Fourth line.\n')
         self.assertEqual(f.readline(), 'Fifth line.\n')
         self.assertEqual(f.readline(), 'Final line non-terminated.')
