@@ -24,6 +24,7 @@ import signal
 from subprocess import Popen, PIPE
 from select import select
 import socket
+import time
 
 from paramiko.ssh_exception import ProxyCommandFailure
 from paramiko.util import ClosingContextManager
@@ -79,20 +80,24 @@ class ProxyCommand(ClosingContextManager):
         :return: the length of the read content, as an `int`
         """
         try:
-            start = datetime.now()
+            start = time.time()
             while len(self.buffer) < size:
+                select_timeout = None
                 if self.timeout is not None:
-                    elapsed = (datetime.now() - start).microseconds
-                    timeout = self.timeout * 1000 * 1000  # to microseconds
-                    if elapsed >= timeout:
+                    elapsed = (time.time() - start)
+                    if elapsed >= self.timeout:
                         raise socket.timeout()
-                r, w, x = select([self.process.stdout], [], [], 0.0)
+                    select_timeout = self.timeout - elapsed
+
+                r, w, x = select(
+                    [self.process.stdout], [], [], select_timeout)
                 if r and r[0] == self.process.stdout:
-                    b = os.read(self.process.stdout.fileno(), 1)
+                    b = os.read(
+                        self.process.stdout.fileno(), size - len(self.buffer))
                     # Store in class-level buffer for persistence across
                     # timeouts; this makes us act more like a real socket
                     # (where timeouts don't actually drop data.)
-                    self.buffer.append(b)
+                    self.buffer.extend(b)
             result = ''.join(self.buffer)
             self.buffer = []
             return result
