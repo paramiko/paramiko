@@ -890,7 +890,7 @@ class Channel (ClosingContextManager):
         self.out_max_packet_size = self.transport. \
             _sanitize_packet_size(max_packet_size)
         self.active = 1
-        self._log(DEBUG, 'Max packet out: %d bytes' % max_packet_size)
+        self._log(DEBUG, 'Max packet out: %d bytes' % self.out_max_packet_size)
 
     def _request_success(self, m):
         self._log(DEBUG, 'Sesch channel %d request ok' % self.chanid)
