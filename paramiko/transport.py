@@ -43,8 +43,8 @@ from paramiko.common import xffffffff, cMSG_CHANNEL_OPEN, cMSG_IGNORE, \
     MSG_CHANNEL_OPEN_SUCCESS, MSG_CHANNEL_OPEN_FAILURE, MSG_CHANNEL_OPEN, \
     MSG_CHANNEL_SUCCESS, MSG_CHANNEL_FAILURE, MSG_CHANNEL_DATA, \
     MSG_CHANNEL_EXTENDED_DATA, MSG_CHANNEL_WINDOW_ADJUST, MSG_CHANNEL_REQUEST, \
-    MSG_CHANNEL_EOF, MSG_CHANNEL_CLOSE, MIN_PACKET_SIZE, MAX_WINDOW_SIZE, \
-    DEFAULT_WINDOW_SIZE, DEFAULT_MAX_PACKET_SIZE
+    MSG_CHANNEL_EOF, MSG_CHANNEL_CLOSE, MIN_WINDOW_SIZE, MIN_PACKET_SIZE, \
+    MAX_WINDOW_SIZE, DEFAULT_WINDOW_SIZE, DEFAULT_MAX_PACKET_SIZE
 from paramiko.compress import ZlibCompressor, ZlibDecompressor
 from paramiko.dsskey import DSSKey
 from paramiko.kex_gex import KexGex
@@ -1554,7 +1554,7 @@ class Transport (threading.Thread, ClosingContextManager):
     def _sanitize_window_size(self, window_size):
         if window_size is None:
             window_size = self.default_window_size
-        return clamp_value(MIN_PACKET_SIZE, window_size, MAX_WINDOW_SIZE)
+        return clamp_value(MIN_WINDOW_SIZE, window_size, MAX_WINDOW_SIZE)
 
     def _sanitize_packet_size(self, max_packet_size):
         if max_packet_size is None:

@@ -35,7 +35,7 @@ from paramiko import Transport, SecurityOptions, ServerInterface, RSAKey, DSSKey
 from paramiko import AUTH_FAILED, AUTH_SUCCESSFUL
 from paramiko import OPEN_SUCCEEDED, OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED
 from paramiko.common import MSG_KEXINIT, cMSG_CHANNEL_WINDOW_ADJUST, \
-                            MIN_PACKET_SIZE, MAX_WINDOW_SIZE, \
+                            MIN_PACKET_SIZE, MIN_WINDOW_SIZE, MAX_WINDOW_SIZE, \
                             DEFAULT_WINDOW_SIZE, DEFAULT_MAX_PACKET_SIZE
 from paramiko.py3compat import bytes
 from paramiko.message import Message
@@ -779,7 +779,7 @@ class TransportTest(unittest.TestCase):
         """
         verify that we conform to the rfc of packet and window sizes.
         """
-        for val, correct in [(32767, MIN_PACKET_SIZE),
+        for val, correct in [(4095, MIN_PACKET_SIZE),
                              (None, DEFAULT_MAX_PACKET_SIZE),
                              (2**32, MAX_WINDOW_SIZE)]:
             self.assertEqual(self.tc._sanitize_packet_size(val), correct)
@@ -788,7 +788,7 @@ class TransportTest(unittest.TestCase):
         """
         verify that we conform to the rfc of packet and window sizes.
         """
-        for val, correct in [(32767, MIN_PACKET_SIZE),
+        for val, correct in [(32767, MIN_WINDOW_SIZE),
                              (None, DEFAULT_WINDOW_SIZE),
                              (2**32, MAX_WINDOW_SIZE)]:
             self.assertEqual(self.tc._sanitize_window_size(val), correct)
