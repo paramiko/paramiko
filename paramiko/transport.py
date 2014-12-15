@@ -1074,6 +1074,8 @@ class Transport (threading.Thread, ClosingContextManager):
         supplied, this method returns ``None``.
 
         :returns: server supplied banner (`str`), or ``None``.
+
+        .. versionadded:: 1.13
         """
         if not self.active or (self.auth_handler is None):
             return None
