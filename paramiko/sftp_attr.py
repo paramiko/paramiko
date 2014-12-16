@@ -96,19 +96,19 @@ class SFTPAttributes (object):
         return attr
 
     def _unpack(self, msg):
-        self._flags = msg.get_int()
+        self._flags = msg.get_size()
         if self._flags & self.FLAG_SIZE:
             self.st_size = msg.get_int64()
         if self._flags & self.FLAG_UIDGID:
-            self.st_uid = msg.get_int()
-            self.st_gid = msg.get_int()
+            self.st_uid = msg.get_size()
+            self.st_gid = msg.get_size()
         if self._flags & self.FLAG_PERMISSIONS:
-            self.st_mode = msg.get_int()
+            self.st_mode = msg.get_size()
         if self._flags & self.FLAG_AMTIME:
-            self.st_atime = msg.get_int()
-            self.st_mtime = msg.get_int()
+            self.st_atime = msg.get_size()
+            self.st_mtime = msg.get_size()
         if self._flags & self.FLAG_EXTENDED:
-            count = msg.get_int()
+            count = msg.get_size()
             for i in range(count):
                 self.attr[msg.get_string()] = msg.get_string()
 

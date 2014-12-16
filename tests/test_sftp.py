@@ -40,6 +40,7 @@ from tests.loop import LoopSocket
 from tests.util import test_path
 import paramiko.util
 from paramiko.sftp_attr import SFTPAttributes
+from paramiko.message import Message
 
 ARTICLE = '''
 Insulin sensitivity and liver insulin receptor structure in ducks from two
@@ -809,6 +810,18 @@ class SFTPTest (unittest.TestCase):
             self.assertEqual(data, NON_UTF8_DATA)
         finally:
             sftp.remove('%s/nonutf8data' % FOLDER)
+
+
+    # Cygwin could return 0xffffffff for unknown uid or gid, but they should
+    # not be treated as big_int.
+    resp_stat = b'\x00\x00\x00\x07\x00\x00\x00\x0f\x00\x00\x00\x00\x00\x00\x10\x00\x00\x00\x02 \xff\xff\xff\xff\x00\x00A\xc0LS\x11\x84LS\x11\x84'
+
+    def test_P_stat_unpack(self):
+        """Test unpacking of stat() response that contains 0xffffffff."""
+        msg = Message(self.resp_stat)
+        self.assertEqual(7, msg.get_int())
+        attr = SFTPAttributes._from_msg(msg)
+        self.assertEqual(0xffffffff, attr.st_gid)
 
 
 if __name__ == '__main__':

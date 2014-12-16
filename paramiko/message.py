@@ -148,19 +148,6 @@ class Message (object):
         @return: a 32-bit unsigned integer.
         @rtype: int
         """
-        byte = self.get_bytes(1)
-        if byte == max_byte:
-            return util.inflate_long(self.get_binary())
-        byte += self.get_bytes(3)
-        return struct.unpack('>I', byte)[0]
-
-    def get_size(self):
-        """
-        Fetch an int from the stream.
-
-        @return: a 32-bit unsigned integer.
-        @rtype: int
-        """
         return struct.unpack('>I', self.get_bytes(4))[0]
 
     def get_int64(self):
