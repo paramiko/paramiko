@@ -73,7 +73,8 @@ class AgentSSH(object):
         self._keys = tuple(keys)
 
     def _close(self):
-        #self._conn.close()
+        if self._conn is not None:
+            self._conn.close()
         self._conn = None
         self._keys = ()
 

@@ -2,6 +2,9 @@
 Changelog
 =========
 
+* :bug:`459` Tighten up agent connection closure behavior to avoid spurious
+  ``ResourceWarning`` display in some situations. Thanks to ``@tkrapp`` for the
+  catch.
 * :bug:`429` Server-level debug message logging was overlooked during the
   Python 3 compatibility update; Python 3 clients attempting to log SSH debug
   packets encountered type errors. This is now fixed. Thanks to ``@mjmaenpaa``
