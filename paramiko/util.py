@@ -115,12 +115,13 @@ def unhexify(s):
 
 
 def safe_string(s):
-    out = ''
+    out = b('')
     for c in s:
-        if (byte_ord(c) >= 32) and (byte_ord(c) <= 127):
-            out += c
+        i = byte_ord(c)
+        if 32 <= i <= 127:
+            out += byte_chr(i)
         else:
-            out += '%%%02X' % byte_ord(c)
+            out += b('%%%02X' % i)
     return out
 
 

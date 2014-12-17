@@ -277,7 +277,7 @@ class Transport (threading.Thread, ClosingContextManager):
         self._channels = ChannelMap()
         self.channel_events = {}       # (id -> Event)
         self.channels_seen = {}        # (id -> True)
-        self._channel_counter = 1
+        self._channel_counter = 0
         self.default_max_packet_size = default_max_packet_size
         self.default_window_size = default_window_size
         self._forward_agent_handler = None
@@ -1074,6 +1074,8 @@ class Transport (threading.Thread, ClosingContextManager):
         supplied, this method returns ``None``.
 
         :returns: server supplied banner (`str`), or ``None``.
+
+        .. versionadded:: 1.13
         """
         if not self.active or (self.auth_handler is None):
             return None
@@ -2149,7 +2151,7 @@ class Transport (threading.Thread, ClosingContextManager):
         always_display = m.get_boolean()
         msg = m.get_string()
         lang = m.get_string()
-        self._log(DEBUG, 'Debug msg: ' + util.safe_string(msg))
+        self._log(DEBUG, 'Debug msg: {0}'.format(util.safe_string(msg)))
 
     def _get_subsystem_handler(self, name):
         try:
