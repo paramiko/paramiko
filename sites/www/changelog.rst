@@ -2,6 +2,10 @@
 Changelog
 =========
 
+* :bug:`266` Change numbering of `~paramiko.transport.Transport` channels to
+  start at 0 instead of 1 for better compatibility with OpenSSH & certain
+  server implementations which break on 1-indexed channels. Thanks to
+  ``@egroeper`` for catch & patch.
 * :bug:`459` Tighten up agent connection closure behavior to avoid spurious
   ``ResourceWarning`` display in some situations. Thanks to ``@tkrapp`` for the
   catch.
