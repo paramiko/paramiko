@@ -2,7 +2,7 @@
 Changelog
 =========
 
-* :support:`413` Replace handrolled ``ssh_config`` parsing code with use of the
+* :support:`431` Replace handrolled ``ssh_config`` parsing code with use of the
   ``shlex`` module. Thanks to Yan Kalchevskiy.
 * :support:`422` Clean up some unused imports. Courtesy of Olle Lundberg.
 * :support:`421` Modernize threading calls to user newer API. Thanks to Olle
