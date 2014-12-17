@@ -231,7 +231,7 @@ class Transport (threading.Thread):
         self._channels = ChannelMap()
         self.channel_events = {}       # (id -> Event)
         self.channels_seen = {}        # (id -> True)
-        self._channel_counter = 1
+        self._channel_counter = 0
         self.window_size = 65536
         self.max_packet_size = 34816
         self._forward_agent_handler = None
