@@ -2,6 +2,8 @@
 Changelog
 =========
 
+* :support:`421` Modernize threading calls to user newer API. Thanks to Olle
+  Lundberg.
 * :support:`419` Modernize a bunch of the codebase internals to leverage
   decorators. Props to ``@beckjake`` for realizing we're no longer on Python
   2.2 :D
