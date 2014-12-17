@@ -23,7 +23,6 @@ Useful functions used by the rest of paramiko.
 from __future__ import generators
 
 import array
-from binascii import hexlify, unhexlify
 import errno
 import sys
 import struct
@@ -104,14 +103,6 @@ def format_binary_line(data):
     left = ' '.join(['%02X' % byte_ord(c) for c in data])
     right = ''.join([('.%c..' % c)[(byte_ord(c)+63)//95] for c in data])
     return '%-50s %s' % (left, right)
-
-
-def hexify(s):
-    return hexlify(s).upper()
-
-
-def unhexify(s):
-    return unhexlify(s)
 
 
 def safe_string(s):
