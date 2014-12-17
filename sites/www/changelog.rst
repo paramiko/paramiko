@@ -2,6 +2,10 @@
 Changelog
 =========
 
+* :bug:`415` Fix ``ssh_config`` parsing to correctly interpret ``ProxyCommand
+  none`` as the lack of a proxy command, instead of as a literal command string
+  of ``"none"``. Thanks to Richard Spiers for the catch & Sean Johnson for the
+  fix.
 * :support:`431` Replace handrolled ``ssh_config`` parsing code with use of the
   ``shlex`` module. Thanks to Yan Kalchevskiy.
 * :support:`422` Clean up some unused imports. Courtesy of Olle Lundberg.
