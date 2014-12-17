@@ -2,6 +2,7 @@
 Changelog
 =========
 
+* :support:`422` Clean up some unused imports. Courtesy of Olle Lundberg.
 * :bug:`266` Change numbering of `~paramiko.transport.Transport` channels to
   start at 0 instead of 1 for better compatibility with OpenSSH & certain
   server implementations which break on 1-indexed channels. Thanks to
