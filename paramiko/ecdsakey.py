@@ -162,9 +162,8 @@ class ECDSAKey(PKey):
         :param function progress_func: Unused
         :returns: A new private key (`.RSAKey`) object
         """
-        signing_key = SigningKey.generate(curve)
-        key = ECDSAKey(vals=(signing_key, signing_key.get_verifying_key()))
-        return key
+        private_key = ec.generate_private_key(curve, backend=default_backend())
+        return ECDSAKey(vals=(private_key, private_key.public_key()))
 
     ###  internals...
 
