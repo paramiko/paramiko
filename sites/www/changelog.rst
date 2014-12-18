@@ -2,6 +2,10 @@
 Changelog
 =========
 
+* :bug:`428` Fix an issue in `~paramiko.file.BufferedFile` (primarily used in
+  the SFTP modules) concerning incorrect behavior by
+  `~paramiko.file.BufferedFile.readlines` on files whose size exceeds the
+  buffer size. Thanks to ``@achapp`` for catch & patch.
 * :bug:`415` Fix ``ssh_config`` parsing to correctly interpret ``ProxyCommand
   none`` as the lack of a proxy command, instead of as a literal command string
   of ``"none"``. Thanks to Richard Spiers for the catch & Sean Johnson for the
