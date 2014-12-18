@@ -24,9 +24,9 @@ from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import dsa
-
-from pyasn1.codec.der import encoder, decoder
-from pyasn1.type import namedtype, univ
+from cryptography.hazmat.primitives.asymmetric.utils import (
+    decode_rfc6979_signature, encode_rfc6979_signature
+)
 
 from paramiko import util
 from paramiko.common import zero_byte
@@ -34,13 +34,6 @@ from paramiko.ssh_exception import SSHException
 from paramiko.message import Message
 from paramiko.ber import BER, BERException
 from paramiko.pkey import PKey
-
-
-class _DSSSigValue(univ.Sequence):
-    componentType = namedtype.NamedTypes(
-        namedtype.NamedType('r', univ.Integer()),
-        namedtype.NamedType('s', univ.Integer())
-    )
 
 
 class DSSKey(PKey):
@@ -120,8 +113,7 @@ class DSSKey(PKey):
         ).private_key(backend=default_backend())
         signer = key.signer(hashes.SHA1())
         signer.update(data)
-        signature = signer.finalize()
-        (r, s), _ = decoder.decode(signature)
+        r, s = decode_rfc6979_signature(signer.finalize())
 
         m = Message()
         m.add_string('ssh-dss')
@@ -149,10 +141,7 @@ class DSSKey(PKey):
         sigR = util.inflate_long(sig[:20], 1)
         sigS = util.inflate_long(sig[20:], 1)
 
-        sig_asn1 = _DSSSigValue()
-        sig_asn1.setComponentByName('r', sigR)
-        sig_asn1.setComponentByName('s', sigS)
-        signature = encoder.encode(sig_asn1)
+        signature = encode_rfc6979_signature(sigR, sigS)
 
         key = dsa.DSAPublicNumbers(
             y=self.y,

@@ -28,11 +28,11 @@ from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import ec
-
-from pyasn1.codec.der import decoder, encoder
+from cryptography.hazmat.primitives.asymmetric.utils import (
+    decode_rfc6979_signature, encode_rfc6979_signature
+)
 
 from paramiko.common import four_byte, one_byte
-from paramiko.dsskey import _DSSSigValue
 from paramiko.message import Message
 from paramiko.pkey import PKey
 from paramiko.py3compat import byte_chr
@@ -122,7 +122,7 @@ class ECDSAKey(PKey):
         signer = self.signing_key.signer(ec.ECDSA(hashes.SHA256()))
         signer.update(data)
         sig = signer.finalize()
-        (r, s), _ = decoder.decode(sig)
+        r, s = decode_rfc6979_signature(sig)
 
         m = Message()
         m.add_string('ecdsa-sha2-nistp256')
@@ -134,10 +134,7 @@ class ECDSAKey(PKey):
             return False
         sig = msg.get_binary()
         sigR, sigS = self._sigdecode(sig)
-        sig_asn1 = _DSSSigValue()
-        sig_asn1.setComponentByName('r', sigR)
-        sig_asn1.setComponentByName('s', sigS)
-        signature = encoder.encode(sig_asn1)
+        signature = encode_rfc6979_signature(sigR, sigS)
 
         verifier = self.verifying_key.verifier(signature, ec.ECDSA(hashes.SHA256()))
         verifier.update(data)
