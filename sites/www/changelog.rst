@@ -18,15 +18,15 @@ Changelog
   none`` as the lack of a proxy command, instead of as a literal command string
   of ``"none"``. Thanks to Richard Spiers for the catch & Sean Johnson for the
   fix.
-* :support:`431` Replace handrolled ``ssh_config`` parsing code with use of the
-  ``shlex`` module. Thanks to Yan Kalchevskiy.
+* :support:`431 backported` Replace handrolled ``ssh_config`` parsing code with
+  use of the ``shlex`` module. Thanks to Yan Kalchevskiy.
 * :support:`422 backported` Clean up some unused imports. Courtesy of Olle
   Lundberg.
-* :support:`421` Modernize threading calls to user newer API. Thanks to Olle
-  Lundberg.
-* :support:`419` Modernize a bunch of the codebase internals to leverage
-  decorators. Props to ``@beckjake`` for realizing we're no longer on Python
-  2.2 :D
+* :support:`421 backported` Modernize threading calls to user newer API. Thanks
+  to Olle Lundberg.
+* :support:`419 backported` Modernize a bunch of the codebase internals to
+  leverage decorators. Props to ``@beckjake`` for realizing we're no longer on
+  Python 2.2 :D
 * :bug:`266` Change numbering of `~paramiko.transport.Transport` channels to
   start at 0 instead of 1 for better compatibility with OpenSSH & certain
   server implementations which break on 1-indexed channels. Thanks to
