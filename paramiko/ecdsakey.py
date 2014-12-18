@@ -248,7 +248,7 @@ class ECDSAKey(PKey):
         asn1_key.setComponentByName("privateKey", private_key)
         asn1_key.setComponentByName("parameters")
         asn1_key.getComponentByName("parameters").setComponentByName("namedCurve", _CURVE_TO_OID[type(key.curve)])
-        asn1_key.setComponentByName("publicKey", "'%s'H" % binascii.hexlify(public_key))
+        asn1_key.setComponentByName("publicKey", "'%s'H" % binascii.hexlify(public_key).decode())
         return encoder.encode(asn1_key)
 
     def _sigencode(self, r, s):
