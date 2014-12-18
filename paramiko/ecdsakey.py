@@ -221,7 +221,7 @@ class ECDSAKey(PKey):
 %s
 -----END EC PRIVATE KEY-----
 """ % "\n".join(textwrap.wrap(base64.b64encode(data).decode(), 64))
-        key = serialization.load_pem_private_key(s, password=None, backend=default_backend())
+        key = serialization.load_pem_private_key(s.encode(), password=None, backend=default_backend())
         self.signing_key = key
         self.verifying_key = key.public_key()
         self.size = key.curve.key_size
