@@ -2,6 +2,11 @@
 Changelog
 =========
 
+* :bug:`413` (also :issue:`414`, :issue:`420`, :issue:`454`) Be significantly
+  smarter about polling & timing behavior when running proxy commands, to avoid
+  unnecessary (often 100%!) CPU usage. Major thanks to Jason Dunsmore for
+  report & initial patchset and to Chris Adams & John Morrissey for followup
+  improvements.
 * :bug:`455` Tweak packet size handling to conform better to the OpenSSH RFCs;
   this helps address issues with interactive program cursors. Courtesy of Jeff
   Quast.
