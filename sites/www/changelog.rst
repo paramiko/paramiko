@@ -2,6 +2,38 @@
 Changelog
 =========
 
+* :bug:`455` Tweak packet size handling to conform better to the OpenSSH RFCs;
+  this helps address issues with interactive program cursors. Courtesy of Jeff
+  Quast.
+* :bug:`428` Fix an issue in `~paramiko.file.BufferedFile` (primarily used in
+  the SFTP modules) concerning incorrect behavior by
+  `~paramiko.file.BufferedFile.readlines` on files whose size exceeds the
+  buffer size. Thanks to ``@achapp`` for catch & patch.
+* :bug:`415` Fix ``ssh_config`` parsing to correctly interpret ``ProxyCommand
+  none`` as the lack of a proxy command, instead of as a literal command string
+  of ``"none"``. Thanks to Richard Spiers for the catch & Sean Johnson for the
+  fix.
+* :support:`431` Replace handrolled ``ssh_config`` parsing code with use of the
+  ``shlex`` module. Thanks to Yan Kalchevskiy.
+* :support:`422` Clean up some unused imports. Courtesy of Olle Lundberg.
+* :support:`421` Modernize threading calls to user newer API. Thanks to Olle
+  Lundberg.
+* :support:`419` Modernize a bunch of the codebase internals to leverage
+  decorators. Props to ``@beckjake`` for realizing we're no longer on Python
+  2.2 :D
+* :bug:`266` Change numbering of `~paramiko.transport.Transport` channels to
+  start at 0 instead of 1 for better compatibility with OpenSSH & certain
+  server implementations which break on 1-indexed channels. Thanks to
+  ``@egroeper`` for catch & patch.
+* :bug:`459` Tighten up agent connection closure behavior to avoid spurious
+  ``ResourceWarning`` display in some situations. Thanks to ``@tkrapp`` for the
+  catch.
+* :bug:`429` Server-level debug message logging was overlooked during the
+  Python 3 compatibility update; Python 3 clients attempting to log SSH debug
+  packets encountered type errors. This is now fixed. Thanks to ``@mjmaenpaa``
+  for the catch.
+* :bug:`320` Update our win_pageant module to be Python 3 compatible. Thanks to
+``@sherbang`` and ``@adamkerz`` for the patches.
 * :release:`1.15.1 <2014-09-22>`
 * :bug:`399` SSH agent forwarding (potentially other functionality as
   well) would hang due to incorrect values passed into the new window size

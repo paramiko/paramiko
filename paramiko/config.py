@@ -24,6 +24,7 @@ Configuration file (aka ``ssh_config``) support.
 import fnmatch
 import os
 import re
+import shlex
 import socket
 
 SSH_PORT = 22
@@ -54,7 +55,6 @@ class SSHConfig (object):
 
         :param file file_obj: a file-like object to read the config file from
         """
-
         host = {"host": ['*'], "config": {}}
         for line in file_obj:
             line = line.rstrip('\r\n').lstrip()
@@ -73,6 +73,9 @@ class SSHConfig (object):
                     'host': self._get_hosts(value),
                     'config': {}
                 }
+            elif key == 'proxycommand' and value.lower() == 'none':
+                # Proxycommands of none should not be added as an actual value. (Issue #415)
+                continue
             else:
                 if value.startswith('"') and value.endswith('"'):
                     value = value[1:-1]
@@ -93,13 +96,15 @@ class SSHConfig (object):
         """
         Return a dict of config options for a given hostname.
 
-        The host-matching rules of OpenSSH's ``ssh_config`` man page are used,
-        which means that all configuration options from matching host
-        specifications are merged, with more specific hostmasks taking
-        precedence. In other words, if ``"Port"`` is set under ``"Host *"``
-        and also ``"Host *.example.com"``, and the lookup is for
-        ``"ssh.example.com"``, then the port entry for ``"Host *.example.com"``
-        will win out.
+        The host-matching rules of OpenSSH's ``ssh_config`` man page are used:
+        For each parameter, the first obtained value will be used.  The
+        configuration files contain sections separated by ``Host''
+        specifications, and that section is only applied for hosts that match
+        one of the patterns given in the specification.
+
+        Since the first obtained value for each parameter is used, more host-
+        specific declarations should be given near the beginning of the file,
+        and general defaults at the end.
 
         The keys in the returned dict are all normalized to lowercase (look for
         ``"port"``, not ``"Port"``. The values are processed according to the
@@ -220,25 +225,10 @@ class SSHConfig (object):
         """
         Return a list of host_names from host value.
         """
-        i, length = 0, len(host)
-        hosts = []
-        while i < length:
-            if host[i] == '"':
-                end = host.find('"', i + 1)
-                if end < 0:
-                    raise Exception("Unparsable host %s" % host)
-                hosts.append(host[i + 1:end])
-                i = end + 1
-            elif not host[i].isspace():
-                end = i + 1
-                while end < length and not host[end].isspace() and host[end] != '"':
-                    end += 1
-                hosts.append(host[i:end])
-                i = end
-            else:
-                i += 1
-
-        return hosts
+        try:
+            return shlex.split(host)
+        except ValueError:
+            raise Exception("Unparsable host %s" % host)
 
 
 class LazyFqdn(object):

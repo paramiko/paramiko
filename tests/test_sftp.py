@@ -97,7 +97,7 @@ def get_sftp():
 
 
 class SFTPTest (unittest.TestCase):
-
+    @staticmethod
     def init(hostname, username, keyfile, passwd):
         global sftp, tc
 
@@ -129,8 +129,8 @@ class SFTPTest (unittest.TestCase):
             sys.stderr.write('\n')
             sys.exit(1)
         sftp = paramiko.SFTP.from_transport(t)
-    init = staticmethod(init)
 
+    @staticmethod
     def init_loopback():
         global sftp, tc
 
@@ -150,12 +150,11 @@ class SFTPTest (unittest.TestCase):
         event.wait(1.0)
 
         sftp = paramiko.SFTP.from_transport(tc)
-    init_loopback = staticmethod(init_loopback)
 
+    @staticmethod
     def set_big_file_test(onoff):
         global g_big_file_test
         g_big_file_test = onoff
-    set_big_file_test = staticmethod(set_big_file_test)
 
     def setUp(self):
         global FOLDER

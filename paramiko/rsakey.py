@@ -155,6 +155,7 @@ class RSAKey(PKey):
     def write_private_key(self, file_obj, password=None):
         self._write_private_key('RSA', file_obj, self._encode_key(), password)
 
+    @staticmethod
     def generate(bits, progress_func=None):
         """
         Generate a new private RSA key.  This factory function can be used to
@@ -175,7 +176,6 @@ class RSAKey(PKey):
         key.dmq1 = numbers.dmq1
         key.iqmp = numbers.iqmp
         return key
-    generate = staticmethod(generate)
 
     ###  internals...
 

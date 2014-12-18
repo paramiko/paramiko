@@ -22,7 +22,7 @@ Useful functions used by the rest of paramiko.
 
 from __future__ import generators
 
-from binascii import hexlify, unhexlify
+import array
 import errno
 import sys
 import struct
@@ -105,21 +105,14 @@ def format_binary_line(data):
     return '%-50s %s' % (left, right)
 
 
-def hexify(s):
-    return hexlify(s).upper()
-
-
-def unhexify(s):
-    return unhexlify(s)
-
-
 def safe_string(s):
-    out = ''
+    out = b('')
     for c in s:
-        if (byte_ord(c) >= 32) and (byte_ord(c) <= 127):
-            out += c
+        i = byte_ord(c)
+        if 32 <= i <= 127:
+            out += byte_chr(i)
         else:
-            out += '%%%02X' % byte_ord(c)
+            out += b('%%%02X' % i)
     return out
 
 
@@ -280,6 +273,40 @@ def retry_on_signal(function):
                 raise
 
 
+<<<<<<< HEAD
+=======
+class Counter (object):
+    """Stateful counter for CTR mode crypto"""
+    def __init__(self, nbits, initial_value=long(1), overflow=long(0)):
+        self.blocksize = nbits / 8
+        self.overflow = overflow
+        # start with value - 1 so we don't have to store intermediate values when counting
+        # could the iv be 0?
+        if initial_value == 0:
+            self.value = array.array('c', max_byte * self.blocksize)
+        else:
+            x = deflate_long(initial_value - 1, add_sign_padding=False)
+            self.value = array.array('c', zero_byte * (self.blocksize - len(x)) + x)
+
+    def __call__(self):
+        """Increament the counter and return the new value"""
+        i = self.blocksize - 1
+        while i > -1:
+            c = self.value[i] = byte_chr((byte_ord(self.value[i]) + 1) % 256)
+            if c != zero_byte:
+                return self.value.tostring()
+            i -= 1
+        # counter reset
+        x = deflate_long(self.overflow, add_sign_padding=False)
+        self.value = array.array('c', zero_byte * (self.blocksize - len(x)) + x)
+        return self.value.tostring()
+
+    @classmethod
+    def new(cls, nbits, initial_value=long(1), overflow=long(0)):
+        return cls(nbits, initial_value=initial_value, overflow=overflow)
+
+
+>>>>>>> master
 def constant_time_bytes_eq(a, b):
     if len(a) != len(b):
         return False

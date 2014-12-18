@@ -27,14 +27,12 @@ import socket
 
 
 class GSSAPITest(unittest.TestCase):
-
+    @staticmethod
     def init(hostname=None, srv_mode=False):
         global krb5_mech, targ_name, server_mode
         krb5_mech = "1.2.840.113554.1.2.2"
         targ_name = hostname
         server_mode = srv_mode
-
-    init = staticmethod(init)
 
     def test_1_pyasn1(self):
         """

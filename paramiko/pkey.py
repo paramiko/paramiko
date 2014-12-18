@@ -171,6 +171,7 @@ class PKey(object):
         """
         return False
 
+    @classmethod
     def from_private_key_file(cls, filename, password=None):
         """
         Create a key object by reading a private key file.  If the private
@@ -192,8 +193,8 @@ class PKey(object):
         """
         key = cls(filename=filename, password=password)
         return key
-    from_private_key_file = classmethod(from_private_key_file)
 
+    @classmethod
     def from_private_key(cls, file_obj, password=None):
         """
         Create a key object by reading a private key from a file (or file-like)
@@ -213,7 +214,6 @@ class PKey(object):
         """
         key = cls(file_obj=file_obj, password=password)
         return key
-    from_private_key = classmethod(from_private_key)
 
     def write_private_key_file(self, filename, password=None):
         """

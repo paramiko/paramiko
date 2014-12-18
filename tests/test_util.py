@@ -27,8 +27,8 @@ from hashlib import sha1
 import unittest
 
 import paramiko.util
-from paramiko.util import lookup_ssh_host_config as host_config
-from paramiko.py3compat import StringIO, byte_ord
+from paramiko.util import lookup_ssh_host_config as host_config, safe_string
+from paramiko.py3compat import StringIO, byte_ord, b
 
 test_config_file = """\
 Host *
@@ -453,3 +453,34 @@ Host param3 parara
             )
         for host in incorrect_data:
             self.assertRaises(Exception, conf._get_hosts, host)
+
+    def test_safe_string(self):
+        vanilla = b("vanilla")
+        has_bytes = b("has \7\3 bytes")
+        safe_vanilla = safe_string(vanilla)
+        safe_has_bytes = safe_string(has_bytes)
+        expected_bytes = b("has %07%03 bytes")
+        err = "{0!r} != {1!r}"
+        assert safe_vanilla == vanilla, err.format(safe_vanilla, vanilla)
+        assert safe_has_bytes == expected_bytes, \
+            err.format(safe_has_bytes, expected_bytes)
+
+    def test_proxycommand_none_issue_418(self):
+        test_config_file = """
+Host proxycommand-standard-none
+    ProxyCommand None
+
+Host proxycommand-with-equals-none
+    ProxyCommand=None
+    """
+        for host, values in {
+            'proxycommand-standard-none':    {'hostname': 'proxycommand-standard-none'},
+            'proxycommand-with-equals-none': {'hostname': 'proxycommand-with-equals-none'}
+        }.items():
+
+            f = StringIO(test_config_file)
+            config = paramiko.util.parse_ssh_config(f)
+            self.assertEqual(
+                paramiko.util.lookup_ssh_host_config(host, config),
+                values
+            )

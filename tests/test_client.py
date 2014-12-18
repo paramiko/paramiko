@@ -131,7 +131,7 @@ class SSHClientTest (unittest.TestCase):
 
         # Authentication successful?
         self.event.wait(1.0)
-        self.assertTrue(self.event.isSet())
+        self.assertTrue(self.event.is_set())
         self.assertTrue(self.ts.is_active())
         self.assertEqual('slowdive', self.ts.get_username())
         self.assertEqual(True, self.ts.is_authenticated())
@@ -229,7 +229,7 @@ class SSHClientTest (unittest.TestCase):
         self.tc.connect(self.addr, self.port, username='slowdive', password='pygmalion')
 
         self.event.wait(1.0)
-        self.assertTrue(self.event.isSet())
+        self.assertTrue(self.event.is_set())
         self.assertTrue(self.ts.is_active())
         self.assertEqual('slowdive', self.ts.get_username())
         self.assertEqual(True, self.ts.is_authenticated())
@@ -283,7 +283,7 @@ class SSHClientTest (unittest.TestCase):
         self.tc.connect(self.addr, self.port, username='slowdive', password='pygmalion')
 
         self.event.wait(1.0)
-        self.assertTrue(self.event.isSet())
+        self.assertTrue(self.event.is_set())
         self.assertTrue(self.ts.is_active())
 
         p = weakref.ref(self.tc._transport.packetizer)
@@ -312,7 +312,7 @@ class SSHClientTest (unittest.TestCase):
             self.tc.connect(self.addr, self.port, username='slowdive', password='pygmalion')
 
             self.event.wait(1.0)
-            self.assertTrue(self.event.isSet())
+            self.assertTrue(self.event.is_set())
             self.assertTrue(self.ts.is_active())
 
             self.assertTrue(self.tc._transport is not None)

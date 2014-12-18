@@ -46,8 +46,8 @@ from paramiko.common import xffffffff, cMSG_CHANNEL_OPEN, cMSG_IGNORE, \
     MSG_CHANNEL_OPEN_SUCCESS, MSG_CHANNEL_OPEN_FAILURE, MSG_CHANNEL_OPEN, \
     MSG_CHANNEL_SUCCESS, MSG_CHANNEL_FAILURE, MSG_CHANNEL_DATA, \
     MSG_CHANNEL_EXTENDED_DATA, MSG_CHANNEL_WINDOW_ADJUST, MSG_CHANNEL_REQUEST, \
-    MSG_CHANNEL_EOF, MSG_CHANNEL_CLOSE, MIN_PACKET_SIZE, MAX_WINDOW_SIZE, \
-    DEFAULT_WINDOW_SIZE, DEFAULT_MAX_PACKET_SIZE
+    MSG_CHANNEL_EOF, MSG_CHANNEL_CLOSE, MIN_WINDOW_SIZE, MIN_PACKET_SIZE, \
+    MAX_WINDOW_SIZE, DEFAULT_WINDOW_SIZE, DEFAULT_MAX_PACKET_SIZE
 from paramiko.compress import ZlibCompressor, ZlibDecompressor
 from paramiko.dsskey import DSSKey
 from paramiko.kex_gex import KexGex
@@ -86,7 +86,7 @@ class Transport (threading.Thread, ClosingContextManager):
     `channels <.Channel>`, across the session.  Multiple channels can be
     multiplexed across a single session (and often are, in the case of port
     forwardings).
-    
+
     Instances of this class may be used as context managers.
     """
     _ENCRYPT = object()
@@ -319,7 +319,7 @@ class Transport (threading.Thread, ClosingContextManager):
         self._channels = ChannelMap()
         self.channel_events = {}       # (id -> Event)
         self.channels_seen = {}        # (id -> True)
-        self._channel_counter = 1
+        self._channel_counter = 0
         self.default_max_packet_size = default_max_packet_size
         self.default_window_size = default_window_size
         self._forward_agent_handler = None
@@ -447,7 +447,7 @@ class Transport (threading.Thread, ClosingContextManager):
                 if e is not None:
                     raise e
                 raise SSHException('Negotiation failed.')
-            if event.isSet():
+            if event.is_set():
                 break
 
     def start_server(self, event=None, server=None):
@@ -512,7 +512,7 @@ class Transport (threading.Thread, ClosingContextManager):
                 if e is not None:
                     raise e
                 raise SSHException('Negotiation failed.')
-            if event.isSet():
+            if event.is_set():
                 break
 
     def add_server_key(self, key):
@@ -550,6 +550,7 @@ class Transport (threading.Thread, ClosingContextManager):
             pass
         return None
 
+    @staticmethod
     def load_server_moduli(filename=None):
         """
         (optional)
@@ -589,7 +590,6 @@ class Transport (threading.Thread, ClosingContextManager):
         # none succeeded
         Transport._modulus_pack = None
         return False
-    load_server_moduli = staticmethod(load_server_moduli)
 
     def close(self):
         """
@@ -771,7 +771,7 @@ class Transport (threading.Thread, ClosingContextManager):
                 if e is None:
                     e = SSHException('Unable to open channel.')
                 raise e
-            if event.isSet():
+            if event.is_set():
                 break
         chan = self._channels.get(chanid)
         if chan is not None:
@@ -891,7 +891,7 @@ class Transport (threading.Thread, ClosingContextManager):
                 if e is not None:
                     raise e
                 raise SSHException('Negotiation failed.')
-            if self.completion_event.isSet():
+            if self.completion_event.is_set():
                 break
         return
 
@@ -942,7 +942,7 @@ class Transport (threading.Thread, ClosingContextManager):
             self.completion_event.wait(0.1)
             if not self.active:
                 return None
-            if self.completion_event.isSet():
+            if self.completion_event.is_set():
                 break
         return self.global_response
 
@@ -1116,6 +1116,8 @@ class Transport (threading.Thread, ClosingContextManager):
         supplied, this method returns ``None``.
 
         :returns: server supplied banner (`str`), or ``None``.
+
+        .. versionadded:: 1.13
         """
         if not self.active or (self.auth_handler is None):
             return None
@@ -1501,7 +1503,7 @@ class Transport (threading.Thread, ClosingContextManager):
                 self._log(DEBUG, 'Dropping user packet because connection is dead.')
                 return
             self.clear_to_send_lock.acquire()
-            if self.clear_to_send.isSet():
+            if self.clear_to_send.is_set():
                 break
             self.clear_to_send_lock.release()
             if time.time() > start + self.clear_to_send_timeout:
@@ -1606,7 +1608,7 @@ class Transport (threading.Thread, ClosingContextManager):
     def _sanitize_window_size(self, window_size):
         if window_size is None:
             window_size = self.default_window_size
-        return clamp_value(MIN_PACKET_SIZE, window_size, MAX_WINDOW_SIZE)
+        return clamp_value(MIN_WINDOW_SIZE, window_size, MAX_WINDOW_SIZE)
 
     def _sanitize_packet_size(self, max_packet_size):
         if max_packet_size is None:
@@ -2203,7 +2205,7 @@ class Transport (threading.Thread, ClosingContextManager):
         always_display = m.get_boolean()
         msg = m.get_string()
         lang = m.get_string()
-        self._log(DEBUG, 'Debug msg: ' + util.safe_string(msg))
+        self._log(DEBUG, 'Debug msg: {0}'.format(util.safe_string(msg)))
 
     def _get_subsystem_handler(self, name):
         try:
@@ -2261,21 +2263,6 @@ class SecurityOptions (object):
         """
         return '<paramiko.SecurityOptions for %s>' % repr(self._transport)
 
-    def _get_ciphers(self):
-        return self._transport._preferred_ciphers
-
-    def _get_digests(self):
-        return self._transport._preferred_macs
-
-    def _get_key_types(self):
-        return self._transport._preferred_keys
-
-    def _get_kex(self):
-        return self._transport._preferred_kex
-
-    def _get_compression(self):
-        return self._transport._preferred_compression
-
     def _set(self, name, orig, x):
         if type(x) is list:
             x = tuple(x)
@@ -2287,30 +2274,51 @@ class SecurityOptions (object):
             raise ValueError('unknown cipher')
         setattr(self._transport, name, x)
 
-    def _set_ciphers(self, x):
+    @property
+    def ciphers(self):
+        """Symmetric encryption ciphers"""
+        return self._transport._preferred_ciphers
+
+    @ciphers.setter
+    def ciphers(self, x):
         self._set('_preferred_ciphers', '_cipher_info', x)
 
-    def _set_digests(self, x):
+    @property
+    def digests(self):
+        """Digest (one-way hash) algorithms"""
+        return self._transport._preferred_macs
+
+    @digests.setter
+    def digests(self, x):
         self._set('_preferred_macs', '_mac_info', x)
 
-    def _set_key_types(self, x):
+    @property
+    def key_types(self):
+        """Public-key algorithms"""
+        return self._transport._preferred_keys
+
+    @key_types.setter
+    def key_types(self, x):
         self._set('_preferred_keys', '_key_info', x)
 
-    def _set_kex(self, x):
+
+    @property
+    def kex(self):
+        """Key exchange algorithms"""
+        return self._transport._preferred_kex
+
+    @kex.setter
+    def kex(self, x):
         self._set('_preferred_kex', '_kex_info', x)
 
-    def _set_compression(self, x):
-        self._set('_preferred_compression', '_compression_info', x)
+    @property
+    def compression(self):
+        """Compression algorithms"""
+        return self._transport._preferred_compression
 
-    ciphers = property(_get_ciphers, _set_ciphers, None,
-                       "Symmetric encryption ciphers")
-    digests = property(_get_digests, _set_digests, None,
-                       "Digest (one-way hash) algorithms")
-    key_types = property(_get_key_types, _set_key_types, None,
-                         "Public-key algorithms")
-    kex = property(_get_kex, _set_kex, None, "Key exchange algorithms")
-    compression = property(_get_compression, _set_compression, None,
-                           "Compression algorithms")
+    @compression.setter
+    def compression(self, x):
+        self._set('_preferred_compression', '_compression_info', x)
 
 
 class ChannelMap (object):

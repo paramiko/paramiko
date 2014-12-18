@@ -23,7 +23,6 @@ ECDSA keys
 import base64
 import binascii
 import textwrap
-from hashlib import sha256
 
 from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.backends import default_backend
@@ -36,7 +35,7 @@ from paramiko.common import four_byte, one_byte
 from paramiko.dsskey import _DSSSigValue
 from paramiko.message import Message
 from paramiko.pkey import PKey
-from paramiko.py3compat import byte_chr, u
+from paramiko.py3compat import byte_chr
 from paramiko.ssh_exception import SSHException
 from paramiko.util import deflate_long, inflate_long
 
@@ -157,6 +156,7 @@ class ECDSAKey(PKey):
         key = self.signing_key or self.verifying_key
         self._write_private_key('EC', file_obj, key.to_der(), password)
 
+    @staticmethod
     def generate(curve=ec.SECP256R1(), progress_func=None):
         """
         Generate a new private RSA key.  This factory function can be used to
@@ -168,7 +168,6 @@ class ECDSAKey(PKey):
         signing_key = SigningKey.generate(curve)
         key = ECDSAKey(vals=(signing_key, signing_key.get_verifying_key()))
         return key
-    generate = staticmethod(generate)
 
     ###  internals...
 

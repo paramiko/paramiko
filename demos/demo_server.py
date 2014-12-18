@@ -159,7 +159,7 @@ try:
     print('Authenticated!')
 
     server.event.wait(10)
-    if not server.event.isSet():
+    if not server.event.is_set():
         print('*** Client never asked for a shell.')
         sys.exit(1)
 
