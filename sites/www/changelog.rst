@@ -20,7 +20,8 @@ Changelog
   fix.
 * :support:`431` Replace handrolled ``ssh_config`` parsing code with use of the
   ``shlex`` module. Thanks to Yan Kalchevskiy.
-* :support:`422` Clean up some unused imports. Courtesy of Olle Lundberg.
+* :support:`422 backported` Clean up some unused imports. Courtesy of Olle
+  Lundberg.
 * :support:`421` Modernize threading calls to user newer API. Thanks to Olle
   Lundberg.
 * :support:`419` Modernize a bunch of the codebase internals to leverage
@@ -99,8 +100,8 @@ Changelog
   async/generator based file listings. Thanks to John Begeman.
 * :support:`378 backported` Minor code cleanup in the SSH config module
   courtesy of Olle Lundberg.
-* :support:`249` Consolidate version information into one spot. Thanks to Gabi
-  Davar for the reminder.
+* :support:`249 backported` Consolidate version information into one spot.
+  Thanks to Gabi Davar for the reminder.
 * :release:`1.14.1 <2014-08-25>`
 * :release:`1.13.2 <2014-08-25>`
 * :bug:`376` Be less aggressive about expanding variables in ``ssh_config``
