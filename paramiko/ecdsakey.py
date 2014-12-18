@@ -241,7 +241,7 @@ class ECDSAKey(PKey):
             x_str = zero_byte * (key_length - len(x_str)) + x_str
         if len(y_str) < key_length:
             y_str = zero_byte * (key_length - len(y_str)) + y_str
-        public_key = "\x04" + x_str + y_str
+        public_key = b"\x04" + x_str + y_str
 
         asn1_key = _ECPrivateKey()
         asn1_key.setComponentByName("version", 1)
