@@ -2,6 +2,11 @@
 Changelog
 =========
 
+* :bug:`413` (also :issue:`414`, :issue:`420`, :issue:`454`) Be significantly
+  smarter about polling & timing behavior when running proxy commands, to avoid
+  unnecessary (often 100%!) CPU usage. Major thanks to Jason Dunsmore for
+  report & initial patchset and to Chris Adams & John Morrissey for followup
+  improvements.
 * :bug:`428` Fix an issue in `~paramiko.file.BufferedFile` (primarily used in
   the SFTP modules) concerning incorrect behavior by
   `~paramiko.file.BufferedFile.readlines` on files whose size exceeds the
