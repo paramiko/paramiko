@@ -11,7 +11,8 @@ Changelog
   the SFTP modules) concerning incorrect behavior by
   `~paramiko.file.BufferedFile.readlines` on files whose size exceeds the
   buffer size. Thanks to ``@achapp`` for catch & patch.
-* :support:`422` Clean up some unused imports. Courtesy of Olle Lundberg.
+* :support:`422 backported` Clean up some unused imports. Courtesy of Olle
+  Lundberg.
 * :bug:`266` Change numbering of `~paramiko.transport.Transport` channels to
   start at 0 instead of 1 for better compatibility with OpenSSH & certain
   server implementations which break on 1-indexed channels. Thanks to
@@ -27,8 +28,8 @@ Changelog
   ``@sherbang`` and ``@adamkerz`` for the patches.
 * :support:`378 backported` Minor code cleanup in the SSH config module
   courtesy of Olle Lundberg.
-* :support:`249` Consolidate version information into one spot. Thanks to Gabi
-  Davar for the reminder.
+* :support:`249 backported` Consolidate version information into one spot.
+  Thanks to Gabi Davar for the reminder.
 * :release:`1.14.1 <2014-08-25>`
 * :release:`1.13.2 <2014-08-25>`
 * :bug:`376` Be less aggressive about expanding variables in ``ssh_config``
