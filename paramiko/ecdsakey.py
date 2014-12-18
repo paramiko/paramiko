@@ -32,13 +32,50 @@ from cryptography.hazmat.primitives.asymmetric.utils import (
     decode_rfc6979_signature, encode_rfc6979_signature
 )
 
-from paramiko.common import four_byte, one_byte
+from pyasn1.codec.der import encoder
+from pyasn1.type import namedtype, namedval, tag, univ
+
+from paramiko.common import four_byte, one_byte, zero_byte
 from paramiko.message import Message
 from paramiko.pkey import PKey
 from paramiko.py3compat import byte_chr
 from paramiko.ssh_exception import SSHException
 from paramiko.util import deflate_long, inflate_long
 
+
+# RFC 5480, section 2.1.1
+class _ECParameters(univ.Choice):
+    # TODO: There are a few more options for this choice I think, the RFC says
+    # not to use them though...
+    componentType = namedtype.NamedTypes(
+        namedtype.NamedType("namedCurve", univ.ObjectIdentifier()),
+    )
+
+
+# RFC 5915, Appendix A
+class _ECPrivateKey(univ.Sequence):
+    componentType = namedtype.NamedTypes(
+        namedtype.NamedType(
+            "version",
+            univ.Integer(
+                namedValues=namedval.NamedValues(
+                    ("ecPrivkeyVer1", 1),
+                )
+            ),
+        ),
+        namedtype.NamedType("privateKey", univ.OctetString()),
+        namedtype.OptionalNamedType("parameters", _ECParameters().subtype(
+            implicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatSimple, 0),
+        )),
+        namedtype.OptionalNamedType("publicKey", univ.BitString().subtype(
+            implicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatSimple, 1),
+        )),
+    )
+
+
+_CURVE_TO_OID = {
+    ec.SECP256R1: univ.ObjectIdentifier("1.2.840.10045.3.1.7")
+}
 
 class ECDSAKey(PKey):
     """
@@ -147,11 +184,11 @@ class ECDSAKey(PKey):
 
     def write_private_key_file(self, filename, password=None):
         key = self.signing_key or self.verifying_key
-        self._write_private_key_file('EC', filename, key.to_der(), password)
+        self._write_private_key_file('EC', filename, self._to_der(key), password)
 
     def write_private_key(self, file_obj, password=None):
         key = self.signing_key or self.verifying_key
-        self._write_private_key('EC', file_obj, key.to_der(), password)
+        self._write_private_key('EC', file_obj, self._to_der(key), password)
 
     @staticmethod
     def generate(curve=ec.SECP256R1(), progress_func=None):
@@ -188,6 +225,31 @@ class ECDSAKey(PKey):
         self.signing_key = key
         self.verifying_key = key.public_key()
         self.size = key.curve.key_size
+
+    def _to_der(self, key):
+        private_numbers = key.private_numbers()
+        public_numbers = private_numbers.public_numbers
+
+        private_key = deflate_long(
+            private_numbers.private_value, add_sign_padding=False
+        )
+        x_str = deflate_long(public_numbers.x, add_sign_padding=False)
+        y_str = deflate_long(public_numbers.y, add_sign_padding=False)
+
+        key_length = key.curve.key_size // 8
+        if len(x_str) < key_length:
+            x_str = zero_byte * (key_length - len(x_str)) + x_str
+        if len(y_str) < key_length:
+            y_str = zero_byte * (key_length - len(y_str)) + y_str
+        public_key = "\x04" + x_str + y_str
+
+        asn1_key = _ECPrivateKey()
+        asn1_key.setComponentByName("version", 1)
+        asn1_key.setComponentByName("privateKey", private_key)
+        asn1_key.setComponentByName("parameters")
+        asn1_key.getComponentByName("parameters").setComponentByName("namedCurve", _CURVE_TO_OID[type(key.curve)])
+        asn1_key.setComponentByName("publicKey", "'%s'H" % binascii.hexlify(public_key))
+        return encoder.encode(asn1_key)
 
     def _sigencode(self, r, s):
         msg = Message()
