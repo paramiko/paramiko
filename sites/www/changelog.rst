@@ -2,6 +2,10 @@
 Changelog
 =========
 
+* :bug:`428` Fix an issue in `~paramiko.file.BufferedFile` (primarily used in
+  the SFTP modules) concerning incorrect behavior by
+  `~paramiko.file.BufferedFile.readlines` on files whose size exceeds the
+  buffer size. Thanks to ``@achapp`` for catch & patch.
 * :support:`422` Clean up some unused imports. Courtesy of Olle Lundberg.
 * :bug:`266` Change numbering of `~paramiko.transport.Transport` channels to
   start at 0 instead of 1 for better compatibility with OpenSSH & certain
