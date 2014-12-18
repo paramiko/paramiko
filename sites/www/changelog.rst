@@ -2,6 +2,9 @@
 Changelog
 =========
 
+* :bug:`455` Tweak packet size handling to conform better to the OpenSSH RFCs;
+  this helps address issues with interactive program cursors. Courtesy of Jeff
+  Quast.
 * :bug:`428` Fix an issue in `~paramiko.file.BufferedFile` (primarily used in
   the SFTP modules) concerning incorrect behavior by
   `~paramiko.file.BufferedFile.readlines` on files whose size exceeds the
