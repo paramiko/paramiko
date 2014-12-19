@@ -2,6 +2,7 @@
 Changelog
 =========
 
+* :release:`1.15.2 <2014-12-19>`
 * :release:`1.14.2 <2014-12-19>`
 * :release:`1.13.3 <2014-12-19>`
 * :bug:`413` (also :issue:`414`, :issue:`420`, :issue:`454`) Be significantly
