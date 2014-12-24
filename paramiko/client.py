@@ -404,7 +404,8 @@ class SSHClient (ClosingContextManager):
         """
         saved_exception = None
         two_factor = False
-        allowed_types = []
+        allowed_types = set()
+        two_factor_types = set(['keyboard-interactive','password'])
 
         # If GSS-API support and GSS-PI Key Exchange was performed, we attempt
         # authentication with gssapi-keyex.
@@ -430,8 +431,8 @@ class SSHClient (ClosingContextManager):
         if pkey is not None:
             try:
                 self._log(DEBUG, 'Trying SSH key %s' % hexlify(pkey.get_fingerprint()))
-                allowed_types = self._transport.auth_publickey(username, pkey)
-                two_factor = (allowed_types == ['password'])
+                allowed_types = set(self._transport.auth_publickey(username, pkey))
+                two_factor = (allowed_types & two_factor_types)
                 if not two_factor:
                     return
             except SSHException as e:
@@ -444,7 +445,7 @@ class SSHClient (ClosingContextManager):
                         key = pkey_class.from_private_key_file(key_filename, password)
                         self._log(DEBUG, 'Trying key %s from %s' % (hexlify(key.get_fingerprint()), key_filename))
                         self._transport.auth_publickey(username, key)
-                        two_factor = (allowed_types == ['password'])
+                        two_factor = (allowed_types & two_factor_types)
                         if not two_factor:
                             return
                         break
@@ -458,9 +459,9 @@ class SSHClient (ClosingContextManager):
             for key in self._agent.get_keys():
                 try:
                     self._log(DEBUG, 'Trying SSH agent key %s' % hexlify(key.get_fingerprint()))
-                    # for 2-factor auth a successfully auth'd key will result in ['password']
-                    allowed_types = self._transport.auth_publickey(username, key)
-                    two_factor = (allowed_types == ['password'])
+                    # for 2-factor auth a successfully auth'd key password will return an allowed 2fac auth method
+                    allowed_types = set(self._transport.auth_publickey(username, key))
+                    two_factor = (allowed_types & two_factor_types)
                     if not two_factor:
                         return
                     break
@@ -497,8 +498,8 @@ class SSHClient (ClosingContextManager):
                     key = pkey_class.from_private_key_file(filename, password)
                     self._log(DEBUG, 'Trying discovered key %s in %s' % (hexlify(key.get_fingerprint()), filename))
                     # for 2-factor auth a successfully auth'd key will result in ['password']
-                    allowed_types = self._transport.auth_publickey(username, key)
-                    two_factor = (allowed_types == ['password'])
+                    allowed_types = set(self._transport.auth_publickey(username, key))
+                    two_factor = (allowed_types & two_factor_types)
                     if not two_factor:
                         return
                     break
@@ -512,7 +513,11 @@ class SSHClient (ClosingContextManager):
             except SSHException as e:
                 saved_exception = e
         elif two_factor:
-            raise SSHException('Two-factor authentication requires a password')
+            try:
+                self._transport.auth_interactive_dumb(username)
+                return
+            except SSHException as e:
+                saved_exception = e
 
         # if we got an auth-failed exception earlier, re-raise it
         if saved_exception is not None:
