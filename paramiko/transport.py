@@ -20,6 +20,7 @@
 Core protocol implementation
 """
 
+from __future__ import print_function
 import os
 import socket
 import sys
@@ -1283,6 +1284,27 @@ class Transport (threading.Thread, ClosingContextManager):
         self.auth_handler = AuthHandler(self)
         self.auth_handler.auth_interactive(username, handler, my_event, submethods)
         return self.auth_handler.wait_for_response(my_event)
+
+    def auth_interactive_dumb(self, username, handler=None, submethods=''):
+        """
+        Autenticate to the server interactively but dumber.
+        Just print the prompt and / or instructions to stdout and send back
+        the response. This is good for situations where partial auth is
+        achieved by key and then the user has to enter a 2fac token.
+        """
+
+        if not handler:
+            def handler(title, instructions, prompt_list):
+                answers = []
+                if title:
+                    print(title.strip())
+                if instructions:
+                    print(instructions.strip())
+                for prompt,show_input in prompt_list:
+                    print(prompt.strip(),end=' ')
+                    answers.append(raw_input())
+                return answers
+        return self.auth_interactive(username, handler, submethods)
 
     def auth_gssapi_with_mic(self, username, gss_host, gss_deleg_creds):
         """
