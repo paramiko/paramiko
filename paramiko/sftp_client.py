@@ -33,7 +33,7 @@ from paramiko.sftp import BaseSFTP, CMD_OPENDIR, CMD_HANDLE, SFTPError, CMD_READ
     CMD_NAME, CMD_CLOSE, SFTP_FLAG_READ, SFTP_FLAG_WRITE, SFTP_FLAG_CREATE, \
     SFTP_FLAG_TRUNC, SFTP_FLAG_APPEND, SFTP_FLAG_EXCL, CMD_OPEN, CMD_REMOVE, \
     CMD_RENAME, CMD_MKDIR, CMD_RMDIR, CMD_STAT, CMD_ATTRS, CMD_LSTAT, \
-    CMD_SYMLINK, CMD_SETSTAT, CMD_READLINK, CMD_REALPATH, CMD_STATUS, SFTP_OK, \
+    CMD_SYMLINK, CMD_SETSTAT, CMD_READLINK, CMD_REALPATH, CMD_STATUS, CMD_EXTENDED, SFTP_OK, \
     SFTP_EOF, SFTP_NO_SUCH_FILE, SFTP_PERMISSION_DENIED
 
 from paramiko.sftp_attr import SFTPAttributes
@@ -445,6 +445,20 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         self._log(DEBUG, 'symlink(%r, %r)' % (source, dest))
         source = bytestring(source)
         self._request(CMD_SYMLINK, source, dest)
+
+    def hardlink(self, source, dest):
+        """
+        Create a hardlink of the ``source`` path at ``destination``.
+
+        :param str source: path of the original file
+        :param str dest: path of the newly created symlink
+
+        :raises OSError: if the server does not support hardlinking
+        """
+        dest = self._adjust_cwd(dest)
+        self._log(DEBUG, 'hardlink(%r, %r)' % (source, dest))
+        source = bytestring(source)
+        self._request(CMD_EXTENDED, "hardlink@openssh.com", source, dest)
 
     def chmod(self, path, mode):
         """
