@@ -501,6 +501,34 @@ class SFTPTest (unittest.TestCase):
             except:
                 pass
 
+    def test_Ca_hardlink(self):
+        """
+        create a hardlink and check that original and link have synchronized contents.
+        """
+        try:
+            with sftp.open(FOLDER + '/original.txt', 'w') as f:
+                f.write('org\n')
+            sftp.hardlink(FOLDER + '/original.txt', FOLDER + '/hardlink.txt')
+            def assert_equal_contents():
+                with sftp.open(FOLDER + '/original.txt') as f:
+                    orig = f.read()
+                with sftp.open(FOLDER + '/hardlink.txt') as f:
+                    link = f.read()
+                self.assertEqual(orig, link, "Hardlinked files have different content")
+            assert_equal_contents()
+            with sftp.open(FOLDER + '/hardlink.txt', 'w') as f:
+                f.write('other\n')
+            assert_equal_contents()
+        finally:
+            try:
+                sftp.remove(FOLDER + '/original.txt')
+            except:
+                pass
+            try:
+                sftp.remove(FOLDER + '/hardlink.txt')
+            except:
+                pass
+
     def test_D_flush_seek(self):
         """
         verify that buffered writes are automatically flushed on seek.
