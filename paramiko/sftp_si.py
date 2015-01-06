@@ -294,3 +294,16 @@ class SFTPServerInterface (object):
         :return: an error code `int` like ``SFTP_OK``.
         """
         return SFTP_OP_UNSUPPORTED
+
+    def hardlink(self, oldpath, newpath):
+        """
+        Create a hard link on the server, as new pathname ``newpath``,
+        with ``oldpath`` as the target of the link.
+
+        :param str oldpath:
+            path of the original file.
+        :param str newpath:
+            path of the new hard link to create.
+        :return: an error code `int` like ``SFTP_OK``.
+        """
+        return SFTP_OP_UNSUPPORTED

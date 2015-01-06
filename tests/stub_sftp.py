@@ -191,6 +191,15 @@ class StubSFTPServer (SFTPServerInterface):
             return SFTPServer.convert_errno(e.errno)
         return SFTP_OK
 
+    def hardlink(self, oldpath, newpath):
+        newpath = self._realpath(newpath)
+        oldpath = self._realpath(oldpath)
+        try:
+            os.link(oldpath, newpath)
+        except OSError as e:
+            return SFTPServer.convert_errno(e.errno)
+        return SFTP_OK
+
     def readlink(self, path):
         path = self._realpath(path)
         try:
