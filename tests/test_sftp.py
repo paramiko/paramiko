@@ -276,6 +276,39 @@ class SFTPTest (unittest.TestCase):
             except:
                 pass
 
+
+    def test_5a_posix_rename(self):
+        """Test posix-rename@openssh.com protocol extension."""
+        try:
+            # first check that the normal rename works as specified
+            with sftp.open(FOLDER + '/a', 'w') as f:
+                f.write('one')
+            sftp.rename(FOLDER + '/a', FOLDER + '/b')
+            with sftp.open(FOLDER + '/a', 'w') as f:
+                f.write('two')
+            try:
+                sftp.rename(FOLDER + '/a', FOLDER + '/b')
+                self.assertTrue(False, 'no exception when rename-ing onto existing file')
+            except OSError:
+                pass
+
+            # now check with the posix_rename
+            sftp.posix_rename(FOLDER + '/a', FOLDER + '/b')
+            with sftp.open(FOLDER + '/b', 'r') as f:
+                data = u(f.read())
+            self.assertEqual('two', data, "Contents of renamed file not the same as original file")
+
+        finally:
+            try:
+                sftp.remove(FOLDER + '/a')
+            except:
+                pass
+            try:
+                sftp.remove(FOLDER + '/b')
+            except:
+                pass
+
+
     def test_6_folder(self):
         """
         create a temporary folder, verify that we can create a file in it, then
