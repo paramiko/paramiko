@@ -266,8 +266,8 @@ class SSHClient (ClosingContextManager):
         if known_host_keys:
             # order the keys as follows: known keys in preferred-keys order,
             # then unknown keys in preferred-keys order
-            valid_known_keys = [k for k in known_host_keys
-                                if k in t._preferred_keys]
+            valid_known_keys = [k for k in t._preferred_keys
+                                if k in known_host_keys]
             t._preferred_keys = (valid_known_keys
                                  + [k for k in t._preferred_keys
                                     if k not in valid_known_keys])
