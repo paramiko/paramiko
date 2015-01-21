@@ -259,10 +259,14 @@ class SSHClient (ClosingContextManager):
             server_hostkey_name = "[%s]:%d" % (hostname, port)
 
         # if we already have a host key stored, change our key preference
-        known_host_keys = self._system_host_keys.get(server_hostkey_name,
-                                                     {})
-        if not known_host_keys:
-            self._host_keys.get(server_hostkey_name, {})
+        known_host_keys = {}
+        known_host_keys.update(
+            self._system_host_keys.get(server_hostkey_name, {})
+        )
+        known_host_keys.update(
+            self.get_host_keys().get(server_hostkey_name, {})
+        )
+
         if known_host_keys:
             # order the keys as follows: known keys in preferred-keys order,
             # then unknown keys in preferred-keys order
