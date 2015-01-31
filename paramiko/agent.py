@@ -113,7 +113,7 @@ class AgentProxyThread(threading.Thread):
             self.__inr = r
             self.__addr = addr # This should be an IP address as a string? or None
             self._agent.connect()
-            if self._agent._conn is None or not (hasattr(self._agent._conn, 'fileno') or isinstance(self._agent, int)):
+            if not isinstance(self._agent, int) and (self._agent._conn is None or not hasattr(self._agent._conn, 'fileno')):
                 raise AuthenticationException("Unable to connect to SSH agent")
             self._communicate()
         except:
