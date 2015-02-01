@@ -289,7 +289,7 @@ class SFTPTest (unittest.TestCase):
             try:
                 sftp.rename(FOLDER + '/a', FOLDER + '/b')
                 self.assertTrue(False, 'no exception when rename-ing onto existing file')
-            except OSError:
+            except (OSError, IOError):
                 pass
 
             # now check with the posix_rename
