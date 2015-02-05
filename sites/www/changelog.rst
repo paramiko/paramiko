@@ -2,6 +2,10 @@
 Changelog
 =========
 
+* :bug:`402` Check to see if an SSH agent is actually present before trying to
+  forward it to the remote end. This replaces what was usually a useless
+  ``TypeError`` with a human-readable ``AuthenticationError``. Credit to Ken
+  Jordan for the fix and Yvan Marques for original report.
 * :release:`1.15.2 <2014-12-19>`
 * :release:`1.14.2 <2014-12-19>`
 * :release:`1.13.3 <2014-12-19>`

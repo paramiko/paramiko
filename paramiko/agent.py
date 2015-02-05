@@ -32,7 +32,7 @@ from select import select
 from paramiko.common import asbytes, io_sleep
 from paramiko.py3compat import byte_chr
 
-from paramiko.ssh_exception import SSHException
+from paramiko.ssh_exception import SSHException, AuthenticationException
 from paramiko.message import Message
 from paramiko.pkey import PKey
 from paramiko.util import retry_on_signal
@@ -109,9 +109,12 @@ class AgentProxyThread(threading.Thread):
     def run(self):
         try:
             (r, addr) = self.get_connection()
+            # Found that r should be either a socket from the socket library or None
             self.__inr = r
-            self.__addr = addr
+            self.__addr = addr # This should be an IP address as a string? or None
             self._agent.connect()
+            if not isinstance(self._agent, int) and (self._agent._conn is None or not hasattr(self._agent._conn, 'fileno')):
+                raise AuthenticationException("Unable to connect to SSH agent")
             self._communicate()
         except:
             #XXX Not sure what to do here ... raise or pass ?
