@@ -177,11 +177,9 @@ class SSHClient (ClosingContextManager):
         """
         Yield pairs of address families and addresses to try for connecting.
 
-        @param hostname: the server to connect to
-        @type hostname: str
-        @param port: the server port to connect to
-        @type port: int
-        @rtype: generator
+        :param str hostname: the server to connect to
+        :param int port: the server port to connect to
+        :returns: Yields an iterable of ``(family, address)`` tuples
         """
         guess = True
         addrinfos = socket.getaddrinfo(hostname, port, socket.AF_UNSPEC, socket.SOCK_STREAM)
