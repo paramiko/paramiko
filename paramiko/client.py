@@ -256,6 +256,7 @@ class SSHClient (ClosingContextManager):
             ``gss_deleg_creds`` and ``gss_host`` arguments.
         """
         if not sock:
+            # Try multiple possible address families (e.g. IPv4 vs IPv6)
             for af, addr in self._families_and_addresses(hostname, port):
                 try:
                     sock = socket.socket(af, socket.SOCK_STREAM)
