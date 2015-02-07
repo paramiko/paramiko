@@ -36,7 +36,9 @@ from paramiko.hostkeys import HostKeys
 from paramiko.py3compat import string_types
 from paramiko.resource import ResourceManager
 from paramiko.rsakey import RSAKey
-from paramiko.ssh_exception import SSHException, BadHostKeyException
+from paramiko.ssh_exception import (
+    SSHException, BadHostKeyException, ConnectionError
+)
 from paramiko.transport import Transport
 from paramiko.util import retry_on_signal, ClosingContextManager
 
@@ -256,8 +258,10 @@ class SSHClient (ClosingContextManager):
             ``gss_deleg_creds`` and ``gss_host`` arguments.
         """
         if not sock:
+            errors = {}
             # Try multiple possible address families (e.g. IPv4 vs IPv6)
-            for af, addr in self._families_and_addresses(hostname, port):
+            to_try = list(self._families_and_addresses(hostname, port))
+            for af, addr in to_try:
                 try:
                     sock = socket.socket(af, socket.SOCK_STREAM)
                     if timeout is not None:
@@ -269,10 +273,22 @@ class SSHClient (ClosingContextManager):
                     # Break out of the loop on success
                     break
                 except socket.error, e:
-                    # If the port is not open on IPv6 for example, we may still try IPv4.
-                    # Likewise if the host is not reachable using that address family.
+                    # Raise anything that isn't a straight up connection error
+                    # (such as a resolution error)
                     if e.errno not in (ECONNREFUSED, EHOSTUNREACH):
                         raise
+                    # Capture anything else so we know how the run looks once
+                    # iteration is complete. Retain info about which attempt
+                    # this was.
+                    errors[addr] = e
+
+            # Make sure we explode usefully if no address family attempts
+            # succeeded. We've no way of knowing which error is the "right"
+            # one, so we construct a hybrid exception containing all the real
+            # ones, of a subclass that client code should still be watching for
+            # (socket.error)
+            if len(errors) == len(to_try):
+                raise ConnectionError(errors)
 
         t = self._transport = Transport(sock, gss_kex=gss_kex, gss_deleg_creds=gss_deleg_creds)
         t.use_compression(compress=compress)
