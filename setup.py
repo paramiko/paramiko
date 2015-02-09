@@ -42,7 +42,7 @@ try:
     kw = {
         'install_requires': [
             'pycrypto >= 2.1, != 2.4',
-            'ecdsa >= 0.11',
+            'ecdsa >= 0.13',
         ],
     }
 except ImportError:
