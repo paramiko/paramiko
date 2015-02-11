@@ -21,6 +21,7 @@
 """
 
 import threading, socket
+from paramiko.common import asbytes
 
 
 class LoopSocket (object):
@@ -31,7 +32,7 @@ class LoopSocket (object):
     """
     
     def __init__(self):
-        self.__in_buffer = ''
+        self.__in_buffer = bytes()
         self.__lock = threading.Lock()
         self.__cv = threading.Condition(self.__lock)
         self.__timeout = None
@@ -41,11 +42,12 @@ class LoopSocket (object):
         self.__unlink()
         try:
             self.__lock.acquire()
-            self.__in_buffer = ''
+            self.__in_buffer = bytes()
         finally:
             self.__lock.release()
 
     def send(self, data):
+        data = asbytes(data)
         if self.__mate is None:
             # EOF
             raise EOFError()
@@ -57,7 +59,7 @@ class LoopSocket (object):
         try:
             if self.__mate is None:
                 # EOF
-                return ''
+                return bytes()
             if len(self.__in_buffer) == 0:
                 self.__cv.wait(self.__timeout)
             if len(self.__in_buffer) == 0:

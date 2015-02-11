@@ -18,33 +18,34 @@
 
 import stat
 import time
-from paramiko.common import *
-from paramiko.sftp import *
+from paramiko.common import x80000000, o700, o70, xffffffff
+from paramiko.py3compat import long, b
 
 
 class SFTPAttributes (object):
     """
     Representation of the attributes of a file (or proxied file) for SFTP in
     client or server mode.  It attemps to mirror the object returned by
-    C{os.stat} as closely as possible, so it may have the following fields,
-    with the same meanings as those returned by an C{os.stat} object:
-        - st_size
-        - st_uid
-        - st_gid
-        - st_mode
-        - st_atime
-        - st_mtime
+    `os.stat` as closely as possible, so it may have the following fields,
+    with the same meanings as those returned by an `os.stat` object:
+
+        - ``st_size``
+        - ``st_uid``
+        - ``st_gid``
+        - ``st_mode``
+        - ``st_atime``
+        - ``st_mtime``
 
     Because SFTP allows flags to have other arbitrary named attributes, these
-    are stored in a dict named C{attr}.  Occasionally, the filename is also
-    stored, in C{filename}.
+    are stored in a dict named ``attr``.  Occasionally, the filename is also
+    stored, in ``filename``.
     """
 
     FLAG_SIZE = 1
     FLAG_UIDGID = 2
     FLAG_PERMISSIONS = 4
     FLAG_AMTIME = 8
-    FLAG_EXTENDED = 0x80000000L
+    FLAG_EXTENDED = x80000000
 
     def __init__(self):
         """
@@ -59,17 +60,15 @@ class SFTPAttributes (object):
         self.st_mtime = None
         self.attr = {}
 
+    @classmethod
     def from_stat(cls, obj, filename=None):
         """
-        Create an SFTPAttributes object from an existing C{stat} object (an
-        object returned by C{os.stat}).
+        Create an `.SFTPAttributes` object from an existing ``stat`` object (an
+        object returned by `os.stat`).
 
-        @param obj: an object returned by C{os.stat} (or equivalent).
-        @type obj: object
-        @param filename: the filename associated with this file.
-        @type filename: str
-        @return: new L{SFTPAttributes} object with the same attribute fields.
-        @rtype: L{SFTPAttributes}
+        :param object obj: an object returned by `os.stat` (or equivalent).
+        :param str filename: the filename associated with this file.
+        :return: new `.SFTPAttributes` object with the same attribute fields.
         """
         attr = cls()
         attr.st_size = obj.st_size
@@ -81,15 +80,12 @@ class SFTPAttributes (object):
         if filename is not None:
             attr.filename = filename
         return attr
-    from_stat = classmethod(from_stat)
 
     def __repr__(self):
         return '<SFTPAttributes: %s>' % self._debug_str()
 
-
     ###  internals...
-
-
+    @classmethod
     def _from_msg(cls, msg, filename=None, longname=None):
         attr = cls()
         attr._unpack(msg)
@@ -98,7 +94,6 @@ class SFTPAttributes (object):
         if longname is not None:
             attr.longname = longname
         return attr
-    _from_msg = classmethod(_from_msg)
 
     def _unpack(self, msg):
         self._flags = msg.get_int()
@@ -143,7 +138,7 @@ class SFTPAttributes (object):
             msg.add_int(long(self.st_mtime))
         if self._flags & self.FLAG_EXTENDED:
             msg.add_int(len(self.attr))
-            for key, val in self.attr.iteritems():
+            for key, val in self.attr.items():
                 msg.add_string(key)
                 msg.add_string(val)
         return
@@ -158,11 +153,12 @@ class SFTPAttributes (object):
             out += 'mode=' + oct(self.st_mode) + ' '
         if (self.st_atime is not None) and (self.st_mtime is not None):
             out += 'atime=%d mtime=%d ' % (self.st_atime, self.st_mtime)
-        for k, v in self.attr.iteritems():
+        for k, v in self.attr.items():
             out += '"%s"=%r ' % (str(k), v)
         out += ']'
         return out
 
+    @staticmethod
     def _rwx(n, suid, sticky=False):
         if suid:
             suid = 2
@@ -172,10 +168,9 @@ class SFTPAttributes (object):
         else:
             out += '-xSs'[suid + (n & 1)]
         return out
-    _rwx = staticmethod(_rwx)
 
     def __str__(self):
-        "create a unix-style long description of the file (like ls -l)"
+        """create a unix-style long description of the file (like ls -l)"""
         if self.st_mode is not None:
             kind = stat.S_IFMT(self.st_mode)
             if kind == stat.S_IFIFO:
@@ -194,13 +189,13 @@ class SFTPAttributes (object):
                 ks = 's'
             else:
                 ks = '?'
-            ks += self._rwx((self.st_mode & 0700) >> 6, self.st_mode & stat.S_ISUID)
-            ks += self._rwx((self.st_mode & 070) >> 3, self.st_mode & stat.S_ISGID)
+            ks += self._rwx((self.st_mode & o700) >> 6, self.st_mode & stat.S_ISUID)
+            ks += self._rwx((self.st_mode & o70) >> 3, self.st_mode & stat.S_ISGID)
             ks += self._rwx(self.st_mode & 7, self.st_mode & stat.S_ISVTX, True)
         else:
             ks = '?---------'
         # compute display date
-        if (self.st_mtime is None) or (self.st_mtime == 0xffffffffL):
+        if (self.st_mtime is None) or (self.st_mtime == xffffffff):
             # shouldn't really happen
             datestr = '(unknown date)'
         else:
@@ -221,3 +216,5 @@ class SFTPAttributes (object):
 
         return '%s   1 %-8d %-8d %8d %-12s %s' % (ks, uid, gid, self.st_size, datestr, filename)
 
+    def asbytes(self):
+        return b(str(self))

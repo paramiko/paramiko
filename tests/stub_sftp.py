@@ -21,8 +21,10 @@ A stub SFTP server for loopback SFTP testing.
 """
 
 import os
+import sys
 from paramiko import ServerInterface, SFTPServerInterface, SFTPServer, SFTPAttributes, \
     SFTPHandle, SFTP_OK, AUTH_SUCCESSFUL, OPEN_SUCCEEDED
+from paramiko.common import o666
 
 
 class StubServer (ServerInterface):
@@ -38,7 +40,7 @@ class StubSFTPHandle (SFTPHandle):
     def stat(self):
         try:
             return SFTPAttributes.from_stat(os.fstat(self.readfile.fileno()))
-        except OSError, e:
+        except OSError as e:
             return SFTPServer.convert_errno(e.errno)
 
     def chattr(self, attr):
@@ -47,7 +49,7 @@ class StubSFTPHandle (SFTPHandle):
         try:
             SFTPServer.set_file_attr(self.filename, attr)
             return SFTP_OK
-        except OSError, e:
+        except OSError as e:
             return SFTPServer.convert_errno(e.errno)
 
 
@@ -62,34 +64,34 @@ class StubSFTPServer (SFTPServerInterface):
     def list_folder(self, path):
         path = self._realpath(path)
         try:
-            out = [ ]
+            out = []
             flist = os.listdir(path)
             for fname in flist:
                 attr = SFTPAttributes.from_stat(os.stat(os.path.join(path, fname)))
                 attr.filename = fname
                 out.append(attr)
             return out
-        except OSError, e:
+        except OSError as e:
             return SFTPServer.convert_errno(e.errno)
 
     def stat(self, path):
         path = self._realpath(path)
         try:
             return SFTPAttributes.from_stat(os.stat(path))
-        except OSError, e:
+        except OSError as e:
             return SFTPServer.convert_errno(e.errno)
 
     def lstat(self, path):
         path = self._realpath(path)
         try:
             return SFTPAttributes.from_stat(os.lstat(path))
-        except OSError, e:
+        except OSError as e:
             return SFTPServer.convert_errno(e.errno)
 
     def open(self, path, flags, attr):
         path = self._realpath(path)
         try:
-            binary_flag = getattr(os, 'O_BINARY',  0)
+            binary_flag = getattr(os, 'O_BINARY', 0)
             flags |= binary_flag
             mode = getattr(attr, 'st_mode', None)
             if mode is not None:
@@ -97,8 +99,8 @@ class StubSFTPServer (SFTPServerInterface):
             else:
                 # os.open() defaults to 0777 which is
                 # an odd default mode for files
-                fd = os.open(path, flags, 0666)
-        except OSError, e:
+                fd = os.open(path, flags, o666)
+        except OSError as e:
             return SFTPServer.convert_errno(e.errno)
         if (flags & os.O_CREAT) and (attr is not None):
             attr._flags &= ~attr.FLAG_PERMISSIONS
@@ -118,7 +120,7 @@ class StubSFTPServer (SFTPServerInterface):
             fstr = 'rb'
         try:
             f = os.fdopen(fd, fstr)
-        except OSError, e:
+        except OSError as e:
             return SFTPServer.convert_errno(e.errno)
         fobj = StubSFTPHandle(flags)
         fobj.filename = path
@@ -130,7 +132,7 @@ class StubSFTPServer (SFTPServerInterface):
         path = self._realpath(path)
         try:
             os.remove(path)
-        except OSError, e:
+        except OSError as e:
             return SFTPServer.convert_errno(e.errno)
         return SFTP_OK
 
@@ -139,7 +141,7 @@ class StubSFTPServer (SFTPServerInterface):
         newpath = self._realpath(newpath)
         try:
             os.rename(oldpath, newpath)
-        except OSError, e:
+        except OSError as e:
             return SFTPServer.convert_errno(e.errno)
         return SFTP_OK
 
@@ -149,7 +151,7 @@ class StubSFTPServer (SFTPServerInterface):
             os.mkdir(path)
             if attr is not None:
                 SFTPServer.set_file_attr(path, attr)
-        except OSError, e:
+        except OSError as e:
             return SFTPServer.convert_errno(e.errno)
         return SFTP_OK
 
@@ -157,7 +159,7 @@ class StubSFTPServer (SFTPServerInterface):
         path = self._realpath(path)
         try:
             os.rmdir(path)
-        except OSError, e:
+        except OSError as e:
             return SFTPServer.convert_errno(e.errno)
         return SFTP_OK
 
@@ -165,7 +167,7 @@ class StubSFTPServer (SFTPServerInterface):
         path = self._realpath(path)
         try:
             SFTPServer.set_file_attr(path, attr)
-        except OSError, e:
+        except OSError as e:
             return SFTPServer.convert_errno(e.errno)
         return SFTP_OK
 
@@ -185,7 +187,7 @@ class StubSFTPServer (SFTPServerInterface):
                 target_path = '<error>'
         try:
             os.symlink(target_path, path)
-        except OSError, e:
+        except OSError as e:
             return SFTPServer.convert_errno(e.errno)
         return SFTP_OK
 
@@ -193,7 +195,7 @@ class StubSFTPServer (SFTPServerInterface):
         path = self._realpath(path)
         try:
             symlink = os.readlink(path)
-        except OSError, e:
+        except OSError as e:
             return SFTPServer.convert_errno(e.errno)
         # if it's absolute, remove the root
         if os.path.isabs(symlink):
