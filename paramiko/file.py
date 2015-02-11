@@ -15,6 +15,8 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with Paramiko; if not, write to the Free Software Foundation, Inc.,
 # 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
+import io
+
 from paramiko.common import linefeed_byte_value, crlf, cr_byte, linefeed_byte, \
     cr_byte_value
 from paramiko.py3compat import BytesIO, PY2, u, b, bytes_types
@@ -148,6 +150,8 @@ class BufferedFile (ClosingContextManager):
             while True:
                 try:
                     new_data = self._read(self._DEFAULT_BUFSIZE)
+                except io.BlockingIOError:
+                    break
                 except EOFError:
                     new_data = None
                 if (new_data is None) or (len(new_data) == 0):

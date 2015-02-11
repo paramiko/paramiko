@@ -21,6 +21,8 @@ Abstraction for an SSH2 channel.
 """
 
 import binascii
+import errno
+import io
 import os
 import socket
 import time
@@ -1214,7 +1216,10 @@ class ChannelFile (BufferedFile):
         return '<paramiko.ChannelFile from ' + repr(self.channel) + '>'
 
     def _read(self, size):
-        return self.channel.recv(size)
+        try:
+            return self.channel.recv(size)
+        except socket.timeout:
+            raise io.BlockingIOError(errno.EAGAIN, os.strerror(errno.EAGAIN))
 
     def _write(self, data):
         self.channel.sendall(data)
@@ -1226,7 +1231,10 @@ class ChannelStderrFile (ChannelFile):
         ChannelFile.__init__(self, channel, mode, bufsize)
 
     def _read(self, size):
-        return self.channel.recv_stderr(size)
+        try:
+            return self.channel.recv_stderr(size)
+        except socket.timeout:
+            raise io.BlockingIOError(errno.EAGAIN, os.strerror(errno.EAGAIN))
 
     def _write(self, data):
         self.channel.sendall_stderr(data)

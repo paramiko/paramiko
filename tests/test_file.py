@@ -48,7 +48,6 @@ class LoopbackFile (BufferedFile):
         self.buffer += data
         return len(data)
 
-
 class BufferedFileTest (unittest.TestCase):
 
     def test_1_simple(self):

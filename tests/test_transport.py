@@ -23,6 +23,9 @@ Some unit tests for the ssh2 protocol in Transport.
 from __future__ import with_statement
 
 from binascii import hexlify
+import errno
+import io
+import os
 import select
 import socket
 import time
@@ -313,6 +316,22 @@ class TransportTest(unittest.TestCase):
         self.assertEqual('communist j. cat\n', f.readline())
         chan.close()
         self.assertEqual('', f.readline())
+
+    def test_7a_verify_non_blocking_channelfile_io(self):
+        """
+        verify that a non blocking read on a channelfile doesn't
+        block on read when so configured
+        """
+        self.setup_test_server()
+        chan = self.tc.open_session()
+        chan.invoke_shell()
+        schan = self.ts.accept(1.0)
+        chan.send('communist j. cat\n')
+        schan.setblocking(0)
+        f = schan.makefile()
+        self.assertRaises(io.BlockingIOError, f._read, -1)
+        chan.close()
+        self.assertEqual(b'', f.read(-1))
 
     def test_8_channel_exception(self):
         """
