@@ -2,6 +2,7 @@
 Changelog
 =========
 
+* :bug:`461` Correct the obvious typo in SECURITY_ATTRIBUTES descriptor setter.
 * :bug:`402` Check to see if an SSH agent is actually present before trying to
   forward it to the remote end. This replaces what was usually a useless
   ``TypeError`` with a human-readable ``AuthenticationError``. Credit to Ken
