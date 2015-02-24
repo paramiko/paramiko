@@ -2,6 +2,11 @@
 Changelog
 =========
 
+* :bug:`62` Add timeout for handshake completion.
+  This adds a mechanism for timing out a connection if the ssh handshake
+  never completes.
+  Credit to ``@dacut`` for initial report and patch and to Olle Lundberg for
+  re-implementation.
 * :bug:`402` Check to see if an SSH agent is actually present before trying to
   forward it to the remote end. This replaces what was usually a useless
   ``TypeError`` with a human-readable ``AuthenticationError``. Credit to Ken

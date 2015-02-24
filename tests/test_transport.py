@@ -792,3 +792,20 @@ class TransportTest(unittest.TestCase):
                              (None, DEFAULT_WINDOW_SIZE),
                              (2**32, MAX_WINDOW_SIZE)]:
             self.assertEqual(self.tc._sanitize_window_size(val), correct)
+
+    def test_L_handshake_timeout(self):
+        """
+        verify that we can get a hanshake timeout.
+        """
+        host_key = RSAKey.from_private_key_file(test_path('test_rsa.key'))
+        public_host_key = RSAKey(data=host_key.asbytes())
+        self.ts.add_server_key(host_key)
+        event = threading.Event()
+        server = NullServer()
+        self.assertTrue(not event.is_set())
+        self.tc.handshake_timeout = 0.000000000001
+        self.ts.start_server(event, server)
+        self.assertRaises(EOFError, self.tc.connect,
+                          hostkey=public_host_key,
+                          username='slowdive',
+                          password='pygmalion')

@@ -295,6 +295,8 @@ class Transport (threading.Thread, ClosingContextManager):
         self.global_response = None     # response Message from an arbitrary global request
         self.completion_event = None    # user-defined event callbacks
         self.banner_timeout = 15        # how long (seconds) to wait for the SSH banner
+        self.handshake_timeout = 15     # how long (seconds) to wait for the handshake to finish after SSH banner sent.
+
 
         # server mode:
         self.server_mode = False
@@ -1582,6 +1584,12 @@ class Transport (threading.Thread, ClosingContextManager):
             try:
                 self.packetizer.write_all(b(self.local_version + '\r\n'))
                 self._check_banner()
+                # The above is actually very much part of the handshake, but sometimes the banner can be read
+                # but the machine is not responding, for example when the remote ssh daemon is loaded in to memory
+                # but we can not read from the disk/spawn a new shell.
+                # Make sure we can specify a timeout for the initial handshake.
+                # Re-use the banner timeout for now.
+                self.packetizer.start_handshake(self.handshake_timeout)
                 self._send_kex_init()
                 self._expect_packet(MSG_KEXINIT)
 
@@ -1631,6 +1639,7 @@ class Transport (threading.Thread, ClosingContextManager):
                         msg.add_byte(cMSG_UNIMPLEMENTED)
                         msg.add_int(m.seqno)
                         self._send_message(msg)
+                    self.packetizer.complete_handshake()
             except SSHException as e:
                 self._log(ERROR, 'Exception: ' + str(e))
                 self._log(ERROR, util.tb_strings())
