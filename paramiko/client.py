@@ -338,7 +338,7 @@ class SSHClient (ClosingContextManager):
 
         :raises SSHException: if the server fails to execute the command
         """
-        chan = self._transport.open_session()
+        chan = self._transport.open_session(timeout=timeout)
         if get_pty:
             chan.get_pty()
         chan.settimeout(timeout)

@@ -2,6 +2,9 @@
 Changelog
 =========
 
+* :bug:`439` Resolve the timeout issue on lost conection.
+  When the destination disappears on an established session paramiko will hang on trying to open a channel.
+  Credit to ``@vazir`` for patch.
 * :bug:`62` Add timeout for handshake completion.
   This adds a mechanism for timing out a connection if the ssh handshake
   never completes.
