@@ -2,6 +2,11 @@
 Changelog
 =========
 
+* :bug:`22 major` Try harder to connect to multiple network families (e.g. IPv4
+  vs IPv6) in case of connection issues; this helps with problems such as hosts
+  which resolve both IPv4 and IPv6 addresses but are only listening on IPv4.
+  Thanks to Dries Desmet for original report and Torsten Landschoff for the
+  foundational patchset.
 * :bug:`402` Check to see if an SSH agent is actually present before trying to
   forward it to the remote end. This replaces what was usually a useless
   ``TypeError`` with a human-readable ``AuthenticationError``. Credit to Ken
