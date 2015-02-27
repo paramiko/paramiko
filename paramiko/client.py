@@ -272,7 +272,7 @@ class SSHClient (ClosingContextManager):
                     retry_on_signal(lambda: sock.connect(addr))
                     # Break out of the loop on success
                     break
-                except socket.error, e:
+                except socket.error as e:
                     # Raise anything that isn't a straight up connection error
                     # (such as a resolution error)
                     if e.errno not in (ECONNREFUSED, EHOSTUNREACH):
