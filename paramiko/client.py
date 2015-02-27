@@ -196,10 +196,25 @@ class SSHClient (ClosingContextManager):
             for family, _, _, _, sockaddr in addrinfos:
                 yield family, sockaddr
 
-    def connect(self, hostname, port=SSH_PORT, username=None, password=None, pkey=None,
-                key_filename=None, timeout=None, allow_agent=True, look_for_keys=True,
-                compress=False, sock=None, gss_auth=False, gss_kex=False,
-                gss_deleg_creds=True, gss_host=None, banner_timeout=None):
+    def connect(
+        self,
+        hostname,
+        port=SSH_PORT,
+        username=None,
+        password=None,
+        pkey=None,
+        key_filename=None,
+        timeout=None,
+        allow_agent=True,
+        look_for_keys=True,
+        compress=False,
+        sock=None,
+        gss_auth=False,
+        gss_kex=False,
+        gss_deleg_creds=True,
+        gss_host=None,
+        banner_timeout=None
+    ):
         """
         Connect to an SSH server and authenticate to it.  The server's host key
         is checked against the system host keys (see `load_system_host_keys`)
@@ -230,8 +245,10 @@ class SSHClient (ClosingContextManager):
         :param str key_filename:
             the filename, or list of filenames, of optional private key(s) to
             try for authentication
-        :param float timeout: an optional timeout (in seconds) for the TCP connect
-        :param bool allow_agent: set to False to disable connecting to the SSH agent
+        :param float timeout:
+            an optional timeout (in seconds) for the TCP connect
+        :param bool allow_agent:
+            set to False to disable connecting to the SSH agent
         :param bool look_for_keys:
             set to False to disable searching for discoverable private key
             files in ``~/.ssh/``
@@ -240,9 +257,11 @@ class SSHClient (ClosingContextManager):
             an open socket or socket-like object (such as a `.Channel`) to use
             for communication to the target host
         :param bool gss_auth: ``True`` if you want to use GSS-API authentication
-        :param bool gss_kex: Perform GSS-API Key Exchange and user authentication
+        :param bool gss_kex:
+            Perform GSS-API Key Exchange and user authentication
         :param bool gss_deleg_creds: Delegate GSS-API client credentials or not
-        :param str gss_host: The targets name in the kerberos database. default: hostname
+        :param str gss_host:
+            The targets name in the kerberos database. default: hostname
         :param float banner_timeout: an optional timeout (in seconds) to wait
             for the SSH banner to be presented.
 
