@@ -337,7 +337,7 @@ class Channel (ClosingContextManager):
         further x11 requests can be made from the server to the client,
         when an x11 application is run in a shell session.
 
-        From RFC4254::
+        From :rfc:`4254`::
 
             It is RECOMMENDED that the 'x11 authentication cookie' that is
             sent be a fake, random cookie, and that the cookie be checked and
