@@ -26,11 +26,7 @@ Please see the sidebar to the left to begin.
 .. rubric:: Footnotes
 
 .. [#]
-    SSH is defined in RFCs
-    `4251 <http://www.rfc-editor.org/rfc/rfc4251.txt>`_,
-    `4252 <http://www.rfc-editor.org/rfc/rfc4252.txt>`_,
-    `4253 <http://www.rfc-editor.org/rfc/rfc4253.txt>`_, and 
-    `4254 <http://www.rfc-editor.org/rfc/rfc4254.txt>`_;
-    the primary working implementation of the protocol is the `OpenSSH project
+    SSH is defined in :rfc:`4251`, :rfc:`4252`, :rfc:`4253` and :rfc:`4254`. The
+    primary working implementation of the protocol is the `OpenSSH project
     <http://openssh.org>`_.  Paramiko implements a large portion of the SSH
     feature set, but there are occasional gaps.
