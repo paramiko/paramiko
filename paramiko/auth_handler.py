@@ -510,15 +510,11 @@ class AuthHandler (object):
                 result = AUTH_FAILED
                 self._send_auth_result(username, method, result)
                 raise
-            if retval == 0:
-                # TODO: Implement client credential saving.
-                # The OpenSSH server is able to create a TGT with the delegated
-                # client credentials, but this is not supported by GSS-API.
-                result = AUTH_SUCCESSFUL
-                self.transport.server_object.check_auth_gssapi_with_mic(
-                    username, result)
-            else:
-                result = AUTH_FAILED
+            # TODO: Implement client credential saving.
+            # The OpenSSH server is able to create a TGT with the delegated
+            # client credentials, but this is not supported by GSS-API.
+            result = AUTH_SUCCESSFUL
+            self.transport.server_object.check_auth_gssapi_with_mic(username, result)
         elif method == "gssapi-keyex" and gss_auth:
             mic_token = m.get_string()
             sshgss = self.transport.kexgss_ctxt
@@ -534,12 +530,8 @@ class AuthHandler (object):
                 result = AUTH_FAILED
                 self._send_auth_result(username, method, result)
                 raise
-            if retval == 0:
-                result = AUTH_SUCCESSFUL
-                self.transport.server_object.check_auth_gssapi_keyex(username,
-                                                                      result)
-            else:
-                result = AUTH_FAILED
+            result = AUTH_SUCCESSFUL
+            self.transport.server_object.check_auth_gssapi_keyex(username, result)
         else:
             result = self.transport.server_object.check_auth_none(username)
         # okay, send result
