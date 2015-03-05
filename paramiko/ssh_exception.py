@@ -135,7 +135,14 @@ class ProxyCommandFailure (SSHException):
 
 class NoValidConnectionsError(socket.error):
     """
-    High-level socket error wrapping 1+ actual socket.error objects.
+    Multiple connection attempts were made and no families succeeded.
+
+    This exception class wraps multiple "real" underlying connection errors,
+    all of which represent failed connection attempts. Because these errors are
+    not guaranteed to all be of the same error type (i.e. different errno,
+    class, message, etc) we expose a single unified error message and a
+    ``None`` errno so that instances of this class match most normal handling
+    of `socket.error` objects.
     
     To see the wrapped exception objects, access the ``errors`` attribute.
     ``errors`` is a dict whose keys are address tuples (e.g. ``('127.0.0.1',
@@ -156,6 +163,7 @@ class NoValidConnectionsError(socket.error):
         tail = addrs[-1][0]
         msg = "Unable to connect to port {0} at {1} or {2}"
         super(NoValidConnectionsError, self).__init__(
+            None, # stand-in for errno
             msg.format(addrs[0][1], body, tail)
         )
         self.errors = errors
