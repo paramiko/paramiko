@@ -161,7 +161,7 @@ class NoValidConnectionsError(socket.error):
         addrs = errors.keys()
         body = ', '.join([x[0] for x in addrs[:-1]])
         tail = addrs[-1][0]
-        msg = "Unable to connect to port {0} at {1} or {2}"
+        msg = "Unable to connect to port {0} on {1} or {2}"
         super(NoValidConnectionsError, self).__init__(
             None, # stand-in for errno
             msg.format(addrs[0][1], body, tail)
