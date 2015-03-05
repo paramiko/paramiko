@@ -133,7 +133,7 @@ class ProxyCommandFailure (SSHException):
         self.args = (command, error, )
 
 
-class ConnectionError(socket.error):
+class NoValidConnectionsError(socket.error):
     """
     High-level socket error wrapping 1+ actual socket.error objects.
     
@@ -155,7 +155,7 @@ class ConnectionError(socket.error):
         body = ', '.join([x[0] for x in addrs[:-1]])
         tail = addrs[-1][0]
         msg = "Unable to connect to port {0} at {1} or {2}"
-        super(ConnectionError, self).__init__(
+        super(NoValidConnectionsError, self).__init__(
             msg.format(addrs[0][1], body, tail)
         )
         self.errors = errors

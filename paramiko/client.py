@@ -37,7 +37,7 @@ from paramiko.py3compat import string_types
 from paramiko.resource import ResourceManager
 from paramiko.rsakey import RSAKey
 from paramiko.ssh_exception import (
-    SSHException, BadHostKeyException, ConnectionError
+    SSHException, BadHostKeyException, NoValidConnectionsError
 )
 from paramiko.transport import Transport
 from paramiko.util import retry_on_signal, ClosingContextManager
@@ -307,7 +307,7 @@ class SSHClient (ClosingContextManager):
             # ones, of a subclass that client code should still be watching for
             # (socket.error)
             if len(errors) == len(to_try):
-                raise ConnectionError(errors)
+                raise NoValidConnectionsError(errors)
 
         t = self._transport = Transport(sock, gss_kex=gss_kex, gss_deleg_creds=gss_deleg_creds)
         t.use_compression(compress=compress)
