@@ -20,9 +20,7 @@
 ECDSA keys
 """
 
-import base64
 import binascii
-import textwrap
 
 from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.backends import default_backend
@@ -32,7 +30,7 @@ from cryptography.hazmat.primitives.asymmetric.utils import (
     decode_rfc6979_signature, encode_rfc6979_signature
 )
 
-from paramiko.common import four_byte, one_byte, zero_byte
+from paramiko.common import four_byte, one_byte
 from paramiko.message import Message
 from paramiko.pkey import PKey
 from paramiko.py3compat import byte_chr
