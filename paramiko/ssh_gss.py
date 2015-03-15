@@ -20,7 +20,7 @@
 
 
 """
-This module provides GSS-API / SSPI  authentication as defined in RFC 4462.
+This module provides GSS-API / SSPI  authentication as defined in :rfc:`4462`.
 
 .. note:: Credential delegation is not supported in server mode.
 

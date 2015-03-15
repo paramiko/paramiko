@@ -2,6 +2,23 @@
 Changelog
 =========
 
+* :bug:`22 major` Try harder to connect to multiple network families (e.g. IPv4
+  vs IPv6) in case of connection issues; this helps with problems such as hosts
+  which resolve both IPv4 and IPv6 addresses but are only listening on IPv4.
+  Thanks to Dries Desmet for original report and Torsten Landschoff for the
+  foundational patchset.
+* :bug:`402` Check to see if an SSH agent is actually present before trying to
+  forward it to the remote end. This replaces what was usually a useless
+  ``TypeError`` with a human-readable ``AuthenticationError``. Credit to Ken
+  Jordan for the fix and Yvan Marques for original report.
+* :release:`1.15.2 <2014-12-19>`
+* :release:`1.14.2 <2014-12-19>`
+* :release:`1.13.3 <2014-12-19>`
+* :bug:`413` (also :issue:`414`, :issue:`420`, :issue:`454`) Be significantly
+  smarter about polling & timing behavior when running proxy commands, to avoid
+  unnecessary (often 100%!) CPU usage. Major thanks to Jason Dunsmore for
+  report & initial patchset and to Chris Adams & John Morrissey for followup
+  improvements.
 * :bug:`455` Tweak packet size handling to conform better to the OpenSSH RFCs;
   this helps address issues with interactive program cursors. Courtesy of Jeff
   Quast.
@@ -13,14 +30,15 @@ Changelog
   none`` as the lack of a proxy command, instead of as a literal command string
   of ``"none"``. Thanks to Richard Spiers for the catch & Sean Johnson for the
   fix.
-* :support:`431` Replace handrolled ``ssh_config`` parsing code with use of the
-  ``shlex`` module. Thanks to Yan Kalchevskiy.
-* :support:`422` Clean up some unused imports. Courtesy of Olle Lundberg.
-* :support:`421` Modernize threading calls to user newer API. Thanks to Olle
+* :support:`431 backported` Replace handrolled ``ssh_config`` parsing code with
+  use of the ``shlex`` module. Thanks to Yan Kalchevskiy.
+* :support:`422 backported` Clean up some unused imports. Courtesy of Olle
   Lundberg.
-* :support:`419` Modernize a bunch of the codebase internals to leverage
-  decorators. Props to ``@beckjake`` for realizing we're no longer on Python
-  2.2 :D
+* :support:`421 backported` Modernize threading calls to user newer API. Thanks
+  to Olle Lundberg.
+* :support:`419 backported` Modernize a bunch of the codebase internals to
+  leverage decorators. Props to ``@beckjake`` for realizing we're no longer on
+  Python 2.2 :D
 * :bug:`266` Change numbering of `~paramiko.transport.Transport` channels to
   start at 0 instead of 1 for better compatibility with OpenSSH & certain
   server implementations which break on 1-indexed channels. Thanks to
@@ -33,7 +51,7 @@ Changelog
   packets encountered type errors. This is now fixed. Thanks to ``@mjmaenpaa``
   for the catch.
 * :bug:`320` Update our win_pageant module to be Python 3 compatible. Thanks to
-``@sherbang`` and ``@adamkerz`` for the patches.
+  ``@sherbang`` and ``@adamkerz`` for the patches.
 * :release:`1.15.1 <2014-09-22>`
 * :bug:`399` SSH agent forwarding (potentially other functionality as
   well) would hang due to incorrect values passed into the new window size
@@ -94,8 +112,8 @@ Changelog
   async/generator based file listings. Thanks to John Begeman.
 * :support:`378 backported` Minor code cleanup in the SSH config module
   courtesy of Olle Lundberg.
-* :support:`249` Consolidate version information into one spot. Thanks to Gabi
-  Davar for the reminder.
+* :support:`249 backported` Consolidate version information into one spot.
+  Thanks to Gabi Davar for the reminder.
 * :release:`1.14.1 <2014-08-25>`
 * :release:`1.13.2 <2014-08-25>`
 * :bug:`376` Be less aggressive about expanding variables in ``ssh_config``
