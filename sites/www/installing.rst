@@ -20,10 +20,8 @@ We currently support **Python 2.6, 2.7, 3.3+, and PyPy** (Python **3.2** should
 also work but has a less-strong compatibility guarantee from us.) Users on
 Python 2.5 or older are urged to upgrade.
 
-Paramiko has three hard dependencies: the pure-Python ECDSA module ``ecdsa``
-and ASN1 module ``pyasn1``, and the Cryptography library. ``ecdsa`` is easily
-installable from wherever you obtained Paramiko's package; Cryptography may
-require more work. Read on for details.
+Paramiko has two hard dependencies: the pure-Python ASN1 module ``pyasn1``, and
+the Cryptography library. Read on for details on installing ``cryptography``.
 
 If you need GSS-API / SSPI support, see :ref:`the below subsection on it
 <gssapi>` for details on additional dependencies.

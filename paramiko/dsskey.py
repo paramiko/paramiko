@@ -118,8 +118,8 @@ class DSSKey(PKey):
         m = Message()
         m.add_string('ssh-dss')
         # apparently, in rare cases, r or s may be shorter than 20 bytes!
-        rstr = util.deflate_long(int(r), 0)
-        sstr = util.deflate_long(int(s), 0)
+        rstr = util.deflate_long(r, 0)
+        sstr = util.deflate_long(s, 0)
         if len(rstr) < 20:
             rstr = zero_byte * (20 - len(rstr)) + rstr
         if len(sstr) < 20:
