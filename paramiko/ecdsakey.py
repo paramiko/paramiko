@@ -187,7 +187,7 @@ class ECDSAKey(PKey):
     def _to_der(self, key):
         return key.private_bytes(
             serialization.Encoding.DER,
-            serialization.Format.TraditionalOpenSSL,
+            serialization.PrivateFormat.TraditionalOpenSSL,
             serialization.NoEncryption(),
         )
 
