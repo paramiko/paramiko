@@ -146,12 +146,12 @@ class ECDSAKey(PKey):
             return True
 
     def write_private_key_file(self, filename, password=None):
-        with open(filename, "wb") as f:
+        with open(filename, "w") as f:
             self.write_private_key(f, password=password)
 
     def write_private_key(self, file_obj, password=None):
         key = self.signing_key or self.verifying_key
-        file_obj.write(self._to_pem(key, password=password))
+        file_obj.write(self._to_pem(key, password=password).decode())
 
     @staticmethod
     def generate(curve=ec.SECP256R1(), progress_func=None):
