@@ -6,7 +6,6 @@ python:
   - "3.2"
   - "3.3"
   - "3.4"
-  - "pypy"
 install:
   # Self-install for setup.py-driven deps
   - pip install -e .
