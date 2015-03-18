@@ -21,15 +21,16 @@ Common API for all public keys.
 """
 
 import base64
-from binascii import hexlify, unhexlify
+from binascii import unhexlify
 import os
 from hashlib import md5
 
 from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.ciphers import algorithms, modes, Cipher
 
 from paramiko import util
-from paramiko.common import o600, zero_byte
+from paramiko.common import o600
 from paramiko.py3compat import u, encodebytes, decodebytes, b
 from paramiko.ssh_exception import SSHException, PasswordRequiredException
 
@@ -316,7 +317,7 @@ class PKey(object):
         ).decryptor()
         return decryptor.update(data) + decryptor.finalize()
 
-    def _write_private_key_file(self, tag, filename, data, password=None):
+    def _write_private_key_file(self, filename, key, format, password=None):
         """
         Write an SSH2-format private key file in a form that can be read by
         paramiko or openssh.  If no password is given, the key is written in
@@ -333,34 +334,16 @@ class PKey(object):
         with open(filename, 'w', o600) as f:
             # grrr... the mode doesn't always take hold
             os.chmod(filename, o600)
-            self._write_private_key(tag, f, data, password)
+            self._write_private_key(f, key, format)
 
-    def _write_private_key(self, tag, f, data, password=None):
-        f.write('-----BEGIN %s PRIVATE KEY-----\n' % tag)
-        if password is not None:
-            cipher_name = list(self._CIPHER_TABLE.keys())[0]
-            cipher = self._CIPHER_TABLE[cipher_name]['cipher']
-            keysize = self._CIPHER_TABLE[cipher_name]['keysize']
-            blocksize = self._CIPHER_TABLE[cipher_name]['blocksize']
-            mode = self._CIPHER_TABLE[cipher_name]['mode']
-            salt = os.urandom(blocksize)
-            key = util.generate_key_bytes(md5, salt, password, keysize)
-            if len(data) % blocksize != 0:
-                n = blocksize - len(data) % blocksize
-                #data += os.urandom(n)
-                # that would make more sense ^, but it confuses openssh.
-                data += zero_byte * n
-            encryptor = Cipher(
-                cipher(key), mode(salt), backend=default_backend()
-            ).encryptor()
-            data = encryptor.update(data) + encryptor.finalize()
-            f.write('Proc-Type: 4,ENCRYPTED\n')
-            f.write('DEK-Info: %s,%s\n' % (cipher_name, u(hexlify(salt)).upper()))
-            f.write('\n')
-        s = u(encodebytes(data))
-        # re-wrap to 64-char lines
-        s = ''.join(s.split('\n'))
-        s = '\n'.join([s[i: i + 64] for i in range(0, len(s), 64)])
-        f.write(s)
-        f.write('\n')
-        f.write('-----END %s PRIVATE KEY-----\n' % tag)
+    def _write_private_key(self, f, key, format, password=None):
+        if password is None:
+            encryption = serialization.NoEncryption()
+        else:
+            encryption = serialization.BestEncryption(password)
+
+        f.write(key.private_bytes(
+            serialization.Encoding.PEM,
+            format,
+            encryption
+        ))

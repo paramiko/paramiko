@@ -20,11 +20,9 @@
 RSA keys.
 """
 
-import os
-
 from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import rsa, padding
 
 from paramiko import util
@@ -136,24 +134,41 @@ class RSAKey(PKey):
         else:
             return True
 
-    def _encode_key(self):
-        if (self.p is None) or (self.q is None):
-            raise SSHException('Not enough key info to write private key file')
-        keylist = [0, self.n, self.e, self.d, self.p, self.q,
-                   self.d % (self.p - 1), self.d % (self.q - 1),
-                   util.mod_inverse(self.q, self.p)]
-        try:
-            b = BER()
-            b.encode(keylist)
-        except BERException:
-            raise SSHException('Unable to create ber encoding of key')
-        return b.asbytes()
-
     def write_private_key_file(self, filename, password=None):
-        self._write_private_key_file('RSA', filename, self._encode_key(), password)
+        key = rsa.RSAPrivateNumbers(
+            p=self.p,
+            q=self.q,
+            d=self.d,
+            dmp1=self.dmp1,
+            dmq1=self.dmq1,
+            iqmp=self.iqmp,
+            public_numbers=rsa.RSAPublicNumbers(self.e, self.n)
+        ).private_key(backend=default_backend())
+
+        self._write_private_key_file(
+            filename,
+            key,
+            serialization.Format.TraditionalOpenSSL,
+            password=password
+        )
 
     def write_private_key(self, file_obj, password=None):
-        self._write_private_key('RSA', file_obj, self._encode_key(), password)
+        key = rsa.RSAPrivateNumbers(
+            p=self.p,
+            q=self.q,
+            d=self.d,
+            dmp1=self.dmp1,
+            dmq1=self.dmq1,
+            iqmp=self.iqmp,
+            public_numbers=rsa.RSAPublicNumbers(self.e, self.n)
+        ).private_key(backend=default_backend())
+
+        self._write_private_key(
+            file_obj,
+            key,
+            serialization.Format.TraditionalOpenSSL,
+            password=password
+        )
 
     @staticmethod
     def generate(bits, progress_func=None):

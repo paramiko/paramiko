@@ -144,12 +144,20 @@ class ECDSAKey(PKey):
             return True
 
     def write_private_key_file(self, filename, password=None):
-        with open(filename, "w") as f:
-            self.write_private_key(f, password=password)
+        self._write_private_key_file(
+            filename,
+            self.signing_key,
+            serialization.Format.TraditionalOpenSSL,
+            password=password
+        )
 
     def write_private_key(self, file_obj, password=None):
-        key = self.signing_key or self.verifying_key
-        file_obj.write(self._to_pem(key, password=password).decode())
+        self._write_private_key(
+            file_obj,
+            self.signing_key,
+            serialization.Format.TraditionalOpenSSL,
+            password=password
+        )
 
     @staticmethod
     def generate(curve=ec.SECP256R1(), progress_func=None):
@@ -181,17 +189,6 @@ class ECDSAKey(PKey):
         self.signing_key = key
         self.verifying_key = key.public_key()
         self.size = key.curve.key_size
-
-    def _to_pem(self, key, password):
-        if password is None:
-            encryption = serialization.NoEncryption()
-        else:
-            encryption = serialization.BestEncryption(password)
-        return key.private_bytes(
-            serialization.Encoding.PEM,
-            serialization.PrivateFormat.TraditionalOpenSSL,
-            encryption
-        )
 
     def _sigencode(self, r, s):
         msg = Message()
