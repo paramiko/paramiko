@@ -93,7 +93,7 @@ class RSAKey(PKey):
         return self.size
 
     def can_sign(self):
-        return self.d is not None
+        return isinstance(self.key, rsa.RSAPrivateKey)
 
     def sign_ssh_data(self, data):
         signer = self.key.signer(
