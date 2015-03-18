@@ -162,7 +162,7 @@ class RSAKey(PKey):
 
     def _decode_key(self, data):
         key = serialization.load_der_private_key(
-            data, password="", backend=default_backend()
+            data, password=None, backend=default_backend()
         )
         assert isinstance(key, rsa.RSAPrivateKey)
         self.key = key
