@@ -25,9 +25,7 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import rsa, padding
 
-from paramiko import util
 from paramiko.message import Message
-from paramiko.ber import BER, BERException
 from paramiko.pkey import PKey
 from paramiko.ssh_exception import SSHException
 
@@ -40,15 +38,8 @@ class RSAKey(PKey):
     data.
     """
 
-    def __init__(self, msg=None, data=None, filename=None, password=None, vals=None, file_obj=None):
-        self.n = None
-        self.e = None
-        self.d = None
-        self.p = None
-        self.q = None
-        self.dmp1 = None
-        self.dmq1 = None
-        self.iqmp = None
+    def __init__(self, msg=None, data=None, filename=None, password=None, key=None, file_obj=None):
+        self.key = None
         if file_obj is not None:
             self._from_private_key(file_obj, password)
             return
@@ -57,31 +48,37 @@ class RSAKey(PKey):
             return
         if (msg is None) and (data is not None):
             msg = Message(data)
-        if vals is not None:
-            self.e, self.n = vals
+        if key is not None:
+            self.key = key
         else:
             if msg is None:
                 raise SSHException('Key object may not be empty')
             if msg.get_text() != 'ssh-rsa':
                 raise SSHException('Invalid key')
-            self.e = msg.get_mpint()
-            self.n = msg.get_mpint()
-        self.size = util.bit_length(self.n)
+            self.key = rsa.RSAPublicNumbers(
+                e=msg.get_mpint(), n=msg.get_mpint()
+            ).public_key(default_backend())
+
+    @property
+    def size(self):
+        return self.key.key_size
 
     def asbytes(self):
+        public_numbers = self.key.public_numbers()
         m = Message()
         m.add_string('ssh-rsa')
-        m.add_mpint(self.e)
-        m.add_mpint(self.n)
+        m.add_mpint(public_numbers.e)
+        m.add_mpint(public_numbers.n)
         return m.asbytes()
 
     def __str__(self):
         return self.asbytes()
 
     def __hash__(self):
+        public_numbers = self.key.public_numbers()
         h = hash(self.get_name())
-        h = h * 37 + hash(self.e)
-        h = h * 37 + hash(self.n)
+        h = h * 37 + hash(public_numbers.e)
+        h = h * 37 + hash(public_numbers.n)
         return hash(h)
 
     def get_name(self):
@@ -94,16 +91,7 @@ class RSAKey(PKey):
         return self.d is not None
 
     def sign_ssh_data(self, data):
-        key = rsa.RSAPrivateNumbers(
-            p=self.p,
-            q=self.q,
-            d=self.d,
-            dmp1=self.dmp1,
-            dmq1=self.dmq1,
-            iqmp=self.iqmp,
-            public_numbers=rsa.RSAPublicNumbers(self.e, self.n)
-        ).private_key(backend=default_backend())
-        signer = key.signer(
+        signer = self.key.signer(
             padding=padding.PKCS1v15(),
             algorithm=hashes.SHA1(),
         )
@@ -118,10 +106,7 @@ class RSAKey(PKey):
     def verify_ssh_sig(self, data, msg):
         if msg.get_text() != 'ssh-rsa':
             return False
-        key = rsa.RSAPublicNumbers(
-            self.e, self.n
-        ).public_key(backend=default_backend())
-        verifier = key.verifier(
+        verifier = self.key.verifier(
             signature=msg.get_binary(),
             padding=padding.PKCS1v15(),
             algorithm=hashes.SHA1(),
@@ -135,38 +120,18 @@ class RSAKey(PKey):
             return True
 
     def write_private_key_file(self, filename, password=None):
-        key = rsa.RSAPrivateNumbers(
-            p=self.p,
-            q=self.q,
-            d=self.d,
-            dmp1=self.dmp1,
-            dmq1=self.dmq1,
-            iqmp=self.iqmp,
-            public_numbers=rsa.RSAPublicNumbers(self.e, self.n)
-        ).private_key(backend=default_backend())
-
         self._write_private_key_file(
             filename,
-            key,
-            serialization.Format.TraditionalOpenSSL,
+            self.key,
+            serialization.PrivateFormat.TraditionalOpenSSL,
             password=password
         )
 
     def write_private_key(self, file_obj, password=None):
-        key = rsa.RSAPrivateNumbers(
-            p=self.p,
-            q=self.q,
-            d=self.d,
-            dmp1=self.dmp1,
-            dmq1=self.dmq1,
-            iqmp=self.iqmp,
-            public_numbers=rsa.RSAPublicNumbers(self.e, self.n)
-        ).private_key(backend=default_backend())
-
         self._write_private_key(
             file_obj,
-            key,
-            serialization.Format.TraditionalOpenSSL,
+            self.key,
+            serialization.PrivateFormat.TraditionalOpenSSL,
             password=password
         )
 
@@ -180,17 +145,10 @@ class RSAKey(PKey):
         :param function progress_func: Unused
         :return: new `.RSAKey` private key
         """
-        numbers = rsa.generate_private_key(
+        key = rsa.generate_private_key(
             public_exponent=65537, key_size=bits, backend=default_backend()
-        ).private_numbers()
-        key = RSAKey(vals=(numbers.public_numbers.e, numbers.public_numbers.n))
-        key.d = numbers.d
-        key.p = numbers.p
-        key.q = numbers.q
-        key.dmp1 = numbers.dmp1
-        key.dmq1 = numbers.dmq1
-        key.iqmp = numbers.iqmp
-        return key
+        )
+        return RSAKey(key=key)
 
     ###  internals...
 
@@ -203,20 +161,8 @@ class RSAKey(PKey):
         self._decode_key(data)
 
     def _decode_key(self, data):
-        # private key file contains:
-        # RSAPrivateKey = { version = 0, n, e, d, p, q, d mod p-1, d mod q-1, q**-1 mod p }
-        try:
-            keylist = BER(data).decode()
-        except BERException:
-            raise SSHException('Unable to parse key file')
-        if (type(keylist) is not list) or (len(keylist) < 4) or (keylist[0] != 0):
-            raise SSHException('Not a valid RSA private key file (bad ber encoding)')
-        self.n = keylist[1]
-        self.e = keylist[2]
-        self.d = keylist[3]
-        self.p = keylist[4]
-        self.q = keylist[5]
-        self.dmp1 = keylist[6]
-        self.dmq1 = keylist[7]
-        self.iqmp = keylist[8]
-        self.size = util.bit_length(self.n)
+        key = serialization.load_der_private_key(
+            data, password="", backend=default_backend()
+        )
+        assert isinstance(key, rsa.RSAPrivateKey)
+        self.key = key

@@ -176,7 +176,7 @@ class DSSKey(PKey):
         self._write_private_key_file(
             filename,
             key,
-            serialization.Format.TraditionalOpenSSL,
+            serialization.PrivateFormat.TraditionalOpenSSL,
             password=password
         )
 
@@ -196,7 +196,7 @@ class DSSKey(PKey):
         self._write_private_key(
             file_obj,
             key,
-            serialization.Format.TraditionalOpenSSL,
+            serialization.PrivateFormat.TraditionalOpenSSL,
             password=password
         )
 

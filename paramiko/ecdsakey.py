@@ -147,7 +147,7 @@ class ECDSAKey(PKey):
         self._write_private_key_file(
             filename,
             self.signing_key,
-            serialization.Format.TraditionalOpenSSL,
+            serialization.PrivateFormat.TraditionalOpenSSL,
             password=password
         )
 
@@ -155,7 +155,7 @@ class ECDSAKey(PKey):
         self._write_private_key(
             file_obj,
             self.signing_key,
-            serialization.Format.TraditionalOpenSSL,
+            serialization.PrivateFormat.TraditionalOpenSSL,
             password=password
         )
 
