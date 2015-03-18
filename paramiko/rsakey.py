@@ -63,22 +63,27 @@ class RSAKey(PKey):
     def size(self):
         return self.key.key_size
 
+    @property
+    def public_numbers(self):
+        if isinstance(self.key, rsa.RSAPrivateKey):
+            return self.key.private_numbers().public_numbers
+        else:
+            return self.key.public_numbers
+
     def asbytes(self):
-        public_numbers = self.key.public_numbers()
         m = Message()
         m.add_string('ssh-rsa')
-        m.add_mpint(public_numbers.e)
-        m.add_mpint(public_numbers.n)
+        m.add_mpint(self.public_numbers.e)
+        m.add_mpint(self.public_numbers.n)
         return m.asbytes()
 
     def __str__(self):
         return self.asbytes()
 
     def __hash__(self):
-        public_numbers = self.key.public_numbers()
         h = hash(self.get_name())
-        h = h * 37 + hash(public_numbers.e)
-        h = h * 37 + hash(public_numbers.n)
+        h = h * 37 + hash(self.public_numbers.e)
+        h = h * 37 + hash(self.public_numbers.n)
         return hash(h)
 
     def get_name(self):
