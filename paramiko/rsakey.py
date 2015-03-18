@@ -68,7 +68,7 @@ class RSAKey(PKey):
         if isinstance(self.key, rsa.RSAPrivateKey):
             return self.key.private_numbers().public_numbers
         else:
-            return self.key.public_numbers
+            return self.key.public_numbers()
 
     def asbytes(self):
         m = Message()
