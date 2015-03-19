@@ -346,4 +346,4 @@ class PKey(object):
             serialization.Encoding.PEM,
             format,
             encryption
-        ))
+        ).decode())
