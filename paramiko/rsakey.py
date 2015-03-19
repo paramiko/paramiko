@@ -111,7 +111,11 @@ class RSAKey(PKey):
     def verify_ssh_sig(self, data, msg):
         if msg.get_text() != 'ssh-rsa':
             return False
-        verifier = self.key.verifier(
+        key = self.key
+        if isinstance(key, rsa.RSAPrivateKey):
+            key = key.public_key()
+
+        verifier = key.verifier(
             signature=msg.get_binary(),
             padding=padding.PKCS1v15(),
             algorithm=hashes.SHA1(),
