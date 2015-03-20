@@ -246,7 +246,7 @@ class TransportTest(ParamikoTest):
         chan = self.tc.open_session()
         schan = self.ts.accept(1.0)
         try:
-            chan.exec_command('no')
+            chan.exec_command(b'command contains \xfc and is not a valid UTF-8 string')
             self.assertTrue(False)
         except SSHException:
             pass
