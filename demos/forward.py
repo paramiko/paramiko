@@ -84,7 +84,7 @@ class ForwardServer(SocketServer.ThreadingTCPServer,object):
     def join(self):
         if self.th:
             # Workaround for Thread.join() prevents KeyboardInterrupt from getting raised.
-            while self.th.isAlive():
+            while self.th.is_alive():
                 self.th.join(0.1)
 
     def __enter__(self):
