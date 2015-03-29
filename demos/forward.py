@@ -46,7 +46,7 @@ DEFAULT_PORT = 4000
 
 g_verbose = True
 
-class ForwardServer(SocketServer.ThreadingTCPServer,object):
+class ForwardServer(SocketServer.ThreadingTCPServer, object):
     """
     Use ForwardServer in two ways:
 
