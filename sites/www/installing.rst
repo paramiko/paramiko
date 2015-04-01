@@ -60,7 +60,7 @@ C extension
 -----------
 
 Unless you are installing from a precompiled source such as a Debian apt
-repository or RedHat RPM,, you will also need the ability to build Python
+repository or RedHat RPM, you will also need the ability to build Python
 C-based modules from source in order to install Cryptography. Users on **Unix-
 based platforms** such as Ubuntu or Mac OS X will need the traditional C build
 toolchain installed (e.g. Developer Tools / XCode Tools on the Mac, or the
