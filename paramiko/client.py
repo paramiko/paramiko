@@ -276,38 +276,33 @@ class SSHClient (ClosingContextManager):
             Added the ``banner_timeout``, ``gss_auth``, ``gss_kex``,
             ``gss_deleg_creds`` and ``gss_host`` arguments.
         """
-        if not sock:
-            errors = {}
-            # Try multiple possible address families (e.g. IPv4 vs IPv6)
-            to_try = list(self._families_and_addresses(hostname, port))
-            for af, addr in to_try:
-                try:
-                    sock = socket.socket(af, socket.SOCK_STREAM)
-                    if timeout is not None:
-                        try:
-                            sock.settimeout(timeout)
-                        except:
-                            pass
-                    retry_on_signal(lambda: sock.connect(addr))
-                    # Break out of the loop on success
+        try:
+            for (family, socktype, proto, canonname, sockaddr) in socket.getaddrinfo(hostname, port, socket.AF_UNSPEC, socket.SOCK_STREAM):
+                if socktype == socket.SOCK_STREAM:
+                    af = family
+                    addr = sockaddr
                     break
-                except socket.error as e:
-                    # Raise anything that isn't a straight up connection error
-                    # (such as a resolution error)
-                    if e.errno not in (ECONNREFUSED, EHOSTUNREACH):
-                        raise
-                    # Capture anything else so we know how the run looks once
-                    # iteration is complete. Retain info about which attempt
-                    # this was.
-                    errors[addr] = e
+            else:
+                # some OS like AIX don't indicate SOCK_STREAM support, so just guess. :(
+                af, _, _, _, addr = socket.getaddrinfo(hostname, port, socket.AF_UNSPEC, socket.SOCK_STREAM)
+        except socket.gaierror as e:
+                raise SSHException('%s: %s' % (hostname, str(e)))
 
-            # Make sure we explode usefully if no address family attempts
-            # succeeded. We've no way of knowing which error is the "right"
-            # one, so we construct a hybrid exception containing all the real
-            # ones, of a subclass that client code should still be watching for
-            # (socket.error)
-            if len(errors) == len(to_try):
-                raise NoValidConnectionsError(errors)
+        hostname, port = addr
+
+        if not sock:
+            sock = socket.socket(af, socket.SOCK_STREAM)
+
+        if timeout is not None:
+            try:
+                sock.settimeout(timeout)
+            except:
+                pass
+
+        try:
+            retry_on_signal(lambda: sock.connect((hostname, port)))
+        except socket.error as e:
+            raise SSHException('Unable to connect to %s: %s' % (hostname, str(e)))
 
         t = self._transport = Transport(sock, gss_kex=gss_kex, gss_deleg_creds=gss_deleg_creds)
         t.use_compression(compress=compress)
