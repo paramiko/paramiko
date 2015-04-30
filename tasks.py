@@ -3,26 +3,8 @@ from os.path import join
 from shutil import rmtree, copytree
 
 from invoke import Collection, ctask as task
-from invocations import docs as _docs
+from invocations.docs import docs, www
 from invocations.packaging import publish
-
-
-d = 'sites'
-
-# Usage doc/API site (published as docs.paramiko.org)
-docs_path = join(d, 'docs')
-docs_build = join(docs_path, '_build')
-docs = Collection.from_module(_docs, name='docs', config={
-    'sphinx.source': docs_path,
-    'sphinx.target': docs_build,
-})
-
-# Main/about/changelog site ((www.)?paramiko.org)
-www_path = join(d, 'www')
-www = Collection.from_module(_docs, name='www', config={
-    'sphinx.source': www_path,
-    'sphinx.target': join(www_path, '_build'),
-})
 
 
 # Until we move to spec-based testing
@@ -45,9 +27,9 @@ def release(ctx):
     rmtree(target, ignore_errors=True)
     copytree(docs_build, target)
     # Publish
-    publish(ctx, wheel=True)
+    publish(ctx)
     # Remind
     print("\n\nDon't forget to update RTD's versions page for new minor releases!")
 
 
-ns = Collection(test, release, docs=docs, www=www)
+ns = Collection(test, coverage, release, docs, www)
