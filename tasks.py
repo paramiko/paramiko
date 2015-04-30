@@ -17,6 +17,11 @@ def test(ctx, coverage=False):
     ctx.run("{0} test.py {1}".format(runner, flags), pty=True)
 
 
+@task
+def coverage(ctx):
+    ctx.run("coverage run --source=paramiko test.py --verbose")
+
+
 # Until we stop bundling docs w/ releases. Need to discover use cases first.
 @task
 def release(ctx):
