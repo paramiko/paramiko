@@ -2,6 +2,8 @@
 Changelog
 =========
 
+* :bug:`502` Fix an issue in server mode, when processing an exec request.
+  A command that is not a valid UTF-8 string, caused an UnicodeDecodeError.
 * :release:`1.13.3 <2014-12-19>`
 * :bug:`413` (also :issue:`414`, :issue:`420`, :issue:`454`) Be significantly
   smarter about polling & timing behavior when running proxy commands, to avoid

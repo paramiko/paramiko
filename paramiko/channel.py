@@ -989,7 +989,7 @@ class Channel (object):
             else:
                 ok = server.check_channel_env_request(self, name, value)
         elif key == 'exec':
-            cmd = m.get_text()
+            cmd = m.get_string()
             if server is None:
                 ok = False
             else:
