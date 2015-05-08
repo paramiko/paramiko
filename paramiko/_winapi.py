@@ -146,7 +146,7 @@ class MemoryMap(object):
         if filemap == INVALID_HANDLE_VALUE:
             raise Exception("Failed to create file mapping")
         self.filemap = filemap
-        self.view = memory.MapViewOfFile(filemap, FILE_MAP_WRITE, 0, 0, 0)
+        self.view = MapViewOfFile(filemap, FILE_MAP_WRITE, 0, 0, 0)
         return self
 
     def seek(self, pos):
@@ -322,7 +322,7 @@ def GetTokenInformation(token, information_class):
         information_class.num,
         ctypes.byref(data), ctypes.sizeof(data),
         ctypes.byref(data_size)))
-    return ctypes.cast(data, ctypes.POINTER(security.TOKEN_USER)).contents
+    return ctypes.cast(data, ctypes.POINTER(TOKEN_USER)).contents
 
 def OpenProcessToken(proc_handle, access):
     result = ctypes.wintypes.HANDLE()
@@ -337,9 +337,9 @@ def get_current_user():
     """
     process = OpenProcessToken(
         ctypes.windll.kernel32.GetCurrentProcess(),
-        security.TokenAccess.TOKEN_QUERY,
+        TokenAccess.TOKEN_QUERY,
     )
-    return GetTokenInformation(process, security.TOKEN_USER)
+    return GetTokenInformation(process, TOKEN_USER)
 
 def get_security_attributes_for_user(user=None):
     """
@@ -349,17 +349,17 @@ def get_security_attributes_for_user(user=None):
     if user is None:
         user = get_current_user()
 
-    assert isinstance(user, security.TOKEN_USER), "user must be TOKEN_USER instance"
+    assert isinstance(user, TOKEN_USER), "user must be TOKEN_USER instance"
 
-    SD = security.SECURITY_DESCRIPTOR()
-    SA = security.SECURITY_ATTRIBUTES()
+    SD = SECURITY_DESCRIPTOR()
+    SA = SECURITY_ATTRIBUTES()
     # by attaching the actual security descriptor, it will be garbage-
     # collected with the security attributes
     SA.descriptor = SD
     SA.bInheritHandle = 1
 
     ctypes.windll.advapi32.InitializeSecurityDescriptor(ctypes.byref(SD),
-        security.SECURITY_DESCRIPTOR.REVISION)
+        SECURITY_DESCRIPTOR.REVISION)
     ctypes.windll.advapi32.SetSecurityDescriptorOwner(ctypes.byref(SD),
         user.SID, 0)
     return SA
