@@ -7,7 +7,7 @@
 # Software Foundation; either version 2.1 of the License, or (at your option)
 # any later version.
 #
-# Paramiko is distrubuted in the hope that it will be useful, but WITHOUT ANY
+# Paramiko is distributed in the hope that it will be useful, but WITHOUT ANY
 # WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
 # A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more
 # details.
@@ -21,15 +21,17 @@ Abstraction for an SSH2 channel.
 """
 
 import binascii
-import sys
 import time
 import threading
 import socket
-import os
 
-from paramiko.common import *
 from paramiko import util
+from paramiko.common import cMSG_CHANNEL_REQUEST, cMSG_CHANNEL_WINDOW_ADJUST, \
+    cMSG_CHANNEL_DATA, cMSG_CHANNEL_EXTENDED_DATA, DEBUG, ERROR, \
+    cMSG_CHANNEL_SUCCESS, cMSG_CHANNEL_FAILURE, cMSG_CHANNEL_EOF, \
+    cMSG_CHANNEL_CLOSE
 from paramiko.message import Message
+from paramiko.py3compat import bytes_types
 from paramiko.ssh_exception import SSHException
 from paramiko.file import BufferedFile
 from paramiko.buffered_pipe import BufferedPipe, PipeTimeout
@@ -42,29 +44,28 @@ MIN_PACKET_SIZE = 1024
 
 class Channel (object):
     """
-    A secure tunnel across an SSH L{Transport}.  A Channel is meant to behave
+    A secure tunnel across an SSH `.Transport`.  A Channel is meant to behave
     like a socket, and has an API that should be indistinguishable from the
-    python socket API.
+    Python socket API.
 
     Because SSH2 has a windowing kind of flow control, if you stop reading data
     from a Channel and its buffer fills up, the server will be unable to send
     you any more data until you read some of it.  (This won't affect other
     channels on the same transport -- all channels on a single transport are
     flow-controlled independently.)  Similarly, if the server isn't reading
-    data you send, calls to L{send} may block, unless you set a timeout.  This
+    data you send, calls to `send` may block, unless you set a timeout.  This
     is exactly like a normal network socket, so it shouldn't be too surprising.
     """
 
     def __init__(self, chanid):
         """
         Create a new channel.  The channel is not associated with any
-        particular session or L{Transport} until the Transport attaches it.
+        particular session or `.Transport` until the Transport attaches it.
         Normally you would only call this method from the constructor of a
-        subclass of L{Channel}.
+        subclass of `.Channel`.
 
-        @param chanid: the ID of this channel, as passed by an existing
-            L{Transport}.
-        @type chanid: int
+        :param int chanid:
+            the ID of this channel, as passed by an existing `.Transport`.
         """
         self.chanid = chanid
         self.remote_chanid = 0
@@ -104,8 +105,6 @@ class Channel (object):
     def __repr__(self):
         """
         Return a string representation of this object, for debugging.
-
-        @rtype: str
         """
         out = '<paramiko.Channel %d' % self.chanid
         if self.closed:
@@ -115,44 +114,44 @@ class Channel (object):
                 out += ' (EOF received)'
             if self.eof_sent:
                 out += ' (EOF sent)'
-            out += ' (open) window=%d' % (self.out_window_size)
+            out += ' (open) window=%d' % self.out_window_size
             if len(self.in_buffer) > 0:
                 out += ' in-buffer=%d' % (len(self.in_buffer),)
         out += ' -> ' + repr(self.transport)
         out += '>'
         return out
 
-    def get_pty(self, term='vt100', width=80, height=24):
+    def get_pty(self, term='vt100', width=80, height=24, width_pixels=0,
+                height_pixels=0):
         """
         Request a pseudo-terminal from the server.  This is usually used right
         after creating a client channel, to ask the server to provide some
-        basic terminal semantics for a shell invoked with L{invoke_shell}.
+        basic terminal semantics for a shell invoked with `invoke_shell`.
         It isn't necessary (or desirable) to call this method if you're going
-        to exectue a single command with L{exec_command}.
+        to exectue a single command with `exec_command`.
 
-        @param term: the terminal type to emulate (for example, C{'vt100'})
-        @type term: str
-        @param width: width (in characters) of the terminal screen
-        @type width: int
-        @param height: height (in characters) of the terminal screen
-        @type height: int
+        :param str term: the terminal type to emulate (for example, ``'vt100'``)
+        :param int width: width (in characters) of the terminal screen
+        :param int height: height (in characters) of the terminal screen
+        :param int width_pixels: width (in pixels) of the terminal screen
+        :param int height_pixels: height (in pixels) of the terminal screen
         
-        @raise SSHException: if the request was rejected or the channel was
-            closed
+        :raises SSHException:
+            if the request was rejected or the channel was closed
         """
         if self.closed or self.eof_received or self.eof_sent or not self.active:
             raise SSHException('Channel is not open')
         m = Message()
-        m.add_byte(chr(MSG_CHANNEL_REQUEST))
+        m.add_byte(cMSG_CHANNEL_REQUEST)
         m.add_int(self.remote_chanid)
         m.add_string('pty-req')
         m.add_boolean(True)
         m.add_string(term)
         m.add_int(width)
         m.add_int(height)
-        # pixel height, width (usually useless)
-        m.add_int(0).add_int(0)
-        m.add_string('')
+        m.add_int(width_pixels)
+        m.add_int(height_pixels)
+        m.add_string(bytes())
         self._event_pending()
         self.transport._send_user_message(m)
         self._wait_for_event()
@@ -163,23 +162,23 @@ class Channel (object):
         allows it, the channel will then be directly connected to the stdin,
         stdout, and stderr of the shell.
         
-        Normally you would call L{get_pty} before this, in which case the
+        Normally you would call `get_pty` before this, in which case the
         shell will operate through the pty, and the channel will be connected
         to the stdin and stdout of the pty.
         
         When the shell exits, the channel will be closed and can't be reused.
         You must open a new channel if you wish to open another shell.
         
-        @raise SSHException: if the request was rejected or the channel was
+        :raises SSHException: if the request was rejected or the channel was
             closed
         """
         if self.closed or self.eof_received or self.eof_sent or not self.active:
             raise SSHException('Channel is not open')
         m = Message()
-        m.add_byte(chr(MSG_CHANNEL_REQUEST))
+        m.add_byte(cMSG_CHANNEL_REQUEST)
         m.add_int(self.remote_chanid)
         m.add_string('shell')
-        m.add_boolean(1)
+        m.add_boolean(True)
         self._event_pending()
         self.transport._send_user_message(m)
         self._wait_for_event()
@@ -194,16 +193,15 @@ class Channel (object):
         can't be reused.  You must open a new channel if you wish to execute
         another command.
 
-        @param command: a shell command to execute.
-        @type command: str
+        :param str command: a shell command to execute.
 
-        @raise SSHException: if the request was rejected or the channel was
+        :raises SSHException: if the request was rejected or the channel was
             closed
         """
         if self.closed or self.eof_received or self.eof_sent or not self.active:
             raise SSHException('Channel is not open')
         m = Message()
-        m.add_byte(chr(MSG_CHANNEL_REQUEST))
+        m.add_byte(cMSG_CHANNEL_REQUEST)
         m.add_int(self.remote_chanid)
         m.add_string('exec')
         m.add_boolean(True)
@@ -214,23 +212,22 @@ class Channel (object):
 
     def invoke_subsystem(self, subsystem):
         """
-        Request a subsystem on the server (for example, C{sftp}).  If the
+        Request a subsystem on the server (for example, ``sftp``).  If the
         server allows it, the channel will then be directly connected to the
         requested subsystem.
         
         When the subsystem finishes, the channel will be closed and can't be
         reused.
 
-        @param subsystem: name of the subsystem being requested.
-        @type subsystem: str
+        :param str subsystem: name of the subsystem being requested.
 
-        @raise SSHException: if the request was rejected or the channel was
-            closed
+        :raises SSHException:
+            if the request was rejected or the channel was closed
         """
         if self.closed or self.eof_received or self.eof_sent or not self.active:
             raise SSHException('Channel is not open')
         m = Message()
-        m.add_byte(chr(MSG_CHANNEL_REQUEST))
+        m.add_byte(cMSG_CHANNEL_REQUEST)
         m.add_int(self.remote_chanid)
         m.add_string('subsystem')
         m.add_boolean(True)
@@ -239,58 +236,57 @@ class Channel (object):
         self.transport._send_user_message(m)
         self._wait_for_event()
 
-    def resize_pty(self, width=80, height=24):
+    def resize_pty(self, width=80, height=24, width_pixels=0, height_pixels=0):
         """
         Resize the pseudo-terminal.  This can be used to change the width and
-        height of the terminal emulation created in a previous L{get_pty} call.
+        height of the terminal emulation created in a previous `get_pty` call.
 
-        @param width: new width (in characters) of the terminal screen
-        @type width: int
-        @param height: new height (in characters) of the terminal screen
-        @type height: int
+        :param int width: new width (in characters) of the terminal screen
+        :param int height: new height (in characters) of the terminal screen
+        :param int width_pixels: new width (in pixels) of the terminal screen
+        :param int height_pixels: new height (in pixels) of the terminal screen
 
-        @raise SSHException: if the request was rejected or the channel was
-            closed
+        :raises SSHException:
+            if the request was rejected or the channel was closed
         """
         if self.closed or self.eof_received or self.eof_sent or not self.active:
             raise SSHException('Channel is not open')
         m = Message()
-        m.add_byte(chr(MSG_CHANNEL_REQUEST))
+        m.add_byte(cMSG_CHANNEL_REQUEST)
         m.add_int(self.remote_chanid)
         m.add_string('window-change')
-        m.add_boolean(True)
+        m.add_boolean(False)
         m.add_int(width)
         m.add_int(height)
-        m.add_int(0).add_int(0)
-        self._event_pending()
+        m.add_int(width_pixels)
+        m.add_int(height_pixels)
         self.transport._send_user_message(m)
-        self._wait_for_event()
 
     def exit_status_ready(self):
         """
         Return true if the remote process has exited and returned an exit
         status. You may use this to poll the process status if you don't
-        want to block in L{recv_exit_status}. Note that the server may not
+        want to block in `recv_exit_status`. Note that the server may not
         return an exit status in some cases (like bad servers).
         
-        @return: True if L{recv_exit_status} will return immediately
-        @rtype: bool
-        @since: 1.7.3
+        :return:
+            ``True`` if `recv_exit_status` will return immediately, else ``False``.
+
+        .. versionadded:: 1.7.3
         """
         return self.closed or self.status_event.isSet()
         
     def recv_exit_status(self):
         """
         Return the exit status from the process on the server.  This is
-        mostly useful for retrieving the reults of an L{exec_command}.
+        mostly useful for retrieving the results of an `exec_command`.
         If the command hasn't finished yet, this method will wait until
         it does, or until the channel is closed.  If no exit status is
         provided by the server, -1 is returned.
         
-        @return: the exit code of the process on the server.
-        @rtype: int
+        :return: the exit code (as an `int`) of the process on the server.
         
-        @since: 1.2
+        .. versionadded:: 1.2
         """
         self.status_event.wait()
         assert self.status_event.isSet()
@@ -303,15 +299,14 @@ class Channel (object):
         get some sort of status code back from an executed command after
         it completes.
         
-        @param status: the exit code of the process
-        @type status: int
+        :param int status: the exit code of the process
         
-        @since: 1.2
+        .. versionadded:: 1.2
         """
         # in many cases, the channel will not still be open here.
         # that's fine.
         m = Message()
-        m.add_byte(chr(MSG_CHANNEL_REQUEST))
+        m.add_byte(cMSG_CHANNEL_REQUEST)
         m.add_int(self.remote_chanid)
         m.add_string('exit-status')
         m.add_boolean(False)
@@ -334,30 +329,29 @@ class Channel (object):
         If you omit the auth_cookie, a new secure random 128-bit value will be
         generated, used, and returned.  You will need to use this value to
         verify incoming x11 requests and replace them with the actual local
-        x11 cookie (which requires some knoweldge of the x11 protocol).
+        x11 cookie (which requires some knowledge of the x11 protocol).
         
         If a handler is passed in, the handler is called from another thread
         whenever a new x11 connection arrives.  The default handler queues up
         incoming x11 connections, which may be retrieved using
-        L{Transport.accept}.  The handler's calling signature is::
+        `.Transport.accept`.  The handler's calling signature is::
         
             handler(channel: Channel, (address: str, port: int))
         
-        @param screen_number: the x11 screen number (0, 10, etc)
-        @type screen_number: int
-        @param auth_protocol: the name of the X11 authentication method used;
-            if none is given, C{"MIT-MAGIC-COOKIE-1"} is used
-        @type auth_protocol: str
-        @param auth_cookie: hexadecimal string containing the x11 auth cookie;
-            if none is given, a secure random 128-bit value is generated
-        @type auth_cookie: str
-        @param single_connection: if True, only a single x11 connection will be
-            forwarded (by default, any number of x11 connections can arrive
-            over this session)
-        @type single_connection: bool
-        @param handler: an optional handler to use for incoming X11 connections
-        @type handler: function
-        @return: the auth_cookie used
+        :param int screen_number: the x11 screen number (0, 10, etc.)
+        :param str auth_protocol:
+            the name of the X11 authentication method used; if none is given,
+            ``"MIT-MAGIC-COOKIE-1"`` is used
+        :param str auth_cookie:
+            hexadecimal string containing the x11 auth cookie; if none is
+            given, a secure random 128-bit value is generated
+        :param bool single_connection:
+            if True, only a single x11 connection will be forwarded (by
+            default, any number of x11 connections can arrive over this
+            session)
+        :param function handler:
+            an optional handler to use for incoming X11 connections
+        :return: the auth_cookie used
         """
         if self.closed or self.eof_received or self.eof_sent or not self.active:
             raise SSHException('Channel is not open')
@@ -367,7 +361,7 @@ class Channel (object):
             auth_cookie = binascii.hexlify(self.transport.rng.read(16))
 
         m = Message()
-        m.add_byte(chr(MSG_CHANNEL_REQUEST))
+        m.add_byte(cMSG_CHANNEL_REQUEST)
         m.add_int(self.remote_chanid)
         m.add_string('x11-req')
         m.add_boolean(True)
@@ -384,21 +378,20 @@ class Channel (object):
     def request_forward_agent(self, handler):
         """
         Request for a forward SSH Agent on this channel.
-        This is only valid for an ssh-agent from openssh !!!
+        This is only valid for an ssh-agent from OpenSSH !!!
 
-        @param handler: a required handler to use for incoming SSH Agent connections
-        @type handler: function
+        :param function handler:
+            a required handler to use for incoming SSH Agent connections
 
-        @return: if we are ok or not (at that time we always return ok)
-        @rtype: boolean
+        :return: True if we are ok, else False (at that time we always return ok)
 
-        @raise: SSHException in case of channel problem.
+        :raises: SSHException in case of channel problem.
         """
         if self.closed or self.eof_received or self.eof_sent or not self.active:
             raise SSHException('Channel is not open')
 
         m = Message()
-        m.add_byte(chr(MSG_CHANNEL_REQUEST))
+        m.add_byte(cMSG_CHANNEL_REQUEST)
         m.add_int(self.remote_chanid)
         m.add_string('auth-agent-req@openssh.com')
         m.add_boolean(False)
@@ -408,10 +401,7 @@ class Channel (object):
 
     def get_transport(self):
         """
-        Return the L{Transport} associated with this channel.
-
-        @return: the L{Transport} that was used to create this channel.
-        @rtype: L{Transport}
+        Return the `.Transport` associated with this channel.
         """
         return self.transport
 
@@ -419,57 +409,51 @@ class Channel (object):
         """
         Set a name for this channel.  Currently it's only used to set the name
         of the channel in logfile entries.  The name can be fetched with the
-        L{get_name} method.
+        `get_name` method.
 
-        @param name: new channel name
-        @type name: str
+        :param str name: new channel name
         """
         self._name = name
 
     def get_name(self):
         """
-        Get the name of this channel that was previously set by L{set_name}.
-
-        @return: the name of this channel.
-        @rtype: str
+        Get the name of this channel that was previously set by `set_name`.
         """
         return self._name
 
     def get_id(self):
         """
-        Return the ID # for this channel.  The channel ID is unique across
-        a L{Transport} and usually a small number.  It's also the number
-        passed to L{ServerInterface.check_channel_request} when determining
-        whether to accept a channel request in server mode.
-
-        @return: the ID of this channel.
-        @rtype: int
+        Return the `int` ID # for this channel.
+        
+        The channel ID is unique across a `.Transport` and usually a small
+        number.  It's also the number passed to
+        `.ServerInterface.check_channel_request` when determining whether to
+        accept a channel request in server mode.
         """
         return self.chanid
     
     def set_combine_stderr(self, combine):
         """
         Set whether stderr should be combined into stdout on this channel.
-        The default is C{False}, but in some cases it may be convenient to
+        The default is ``False``, but in some cases it may be convenient to
         have both streams combined.
         
-        If this is C{False}, and L{exec_command} is called (or C{invoke_shell}
-        with no pty), output to stderr will not show up through the L{recv}
-        and L{recv_ready} calls.  You will have to use L{recv_stderr} and
-        L{recv_stderr_ready} to get stderr output.
+        If this is ``False``, and `exec_command` is called (or ``invoke_shell``
+        with no pty), output to stderr will not show up through the `recv`
+        and `recv_ready` calls.  You will have to use `recv_stderr` and
+        `recv_stderr_ready` to get stderr output.
         
-        If this is C{True}, data will never show up via L{recv_stderr} or
-        L{recv_stderr_ready}.
+        If this is ``True``, data will never show up via `recv_stderr` or
+        `recv_stderr_ready`.
         
-        @param combine: C{True} if stderr output should be combined into
-            stdout on this channel.
-        @type combine: bool
-        @return: previous setting.
-        @rtype: bool
+        :param bool combine:
+            ``True`` if stderr output should be combined into stdout on this
+            channel.
+        :return: the previous setting (a `bool`).
         
-        @since: 1.1
+        .. versionadded:: 1.1
         """
-        data = ''
+        data = bytes()
         self.lock.acquire()
         try:
             old = self.combine_stderr
@@ -483,57 +467,51 @@ class Channel (object):
             self._feed(data)
         return old
 
-    
     ###  socket API
-
 
     def settimeout(self, timeout):
         """
-        Set a timeout on blocking read/write operations.  The C{timeout}
-        argument can be a nonnegative float expressing seconds, or C{None}.  If
+        Set a timeout on blocking read/write operations.  The ``timeout``
+        argument can be a nonnegative float expressing seconds, or ``None``.  If
         a float is given, subsequent channel read/write operations will raise
         a timeout exception if the timeout period value has elapsed before the
-        operation has completed.  Setting a timeout of C{None} disables
+        operation has completed.  Setting a timeout of ``None`` disables
         timeouts on socket operations.
 
-        C{chan.settimeout(0.0)} is equivalent to C{chan.setblocking(0)};
-        C{chan.settimeout(None)} is equivalent to C{chan.setblocking(1)}.
+        ``chan.settimeout(0.0)`` is equivalent to ``chan.setblocking(0)``;
+        ``chan.settimeout(None)`` is equivalent to ``chan.setblocking(1)``.
 
-        @param timeout: seconds to wait for a pending read/write operation
-            before raising C{socket.timeout}, or C{None} for no timeout.
-        @type timeout: float
+        :param float timeout:
+            seconds to wait for a pending read/write operation before raising
+            ``socket.timeout``, or ``None`` for no timeout.
         """
         self.timeout = timeout
 
     def gettimeout(self):
         """
         Returns the timeout in seconds (as a float) associated with socket
-        operations, or C{None} if no timeout is set.  This reflects the last
-        call to L{setblocking} or L{settimeout}.
-
-        @return: timeout in seconds, or C{None}.
-        @rtype: float
+        operations, or ``None`` if no timeout is set.  This reflects the last
+        call to `setblocking` or `settimeout`.
         """
         return self.timeout
 
     def setblocking(self, blocking):
         """
-        Set blocking or non-blocking mode of the channel: if C{blocking} is 0,
+        Set blocking or non-blocking mode of the channel: if ``blocking`` is 0,
         the channel is set to non-blocking mode; otherwise it's set to blocking
         mode. Initially all channels are in blocking mode.
 
-        In non-blocking mode, if a L{recv} call doesn't find any data, or if a
-        L{send} call can't immediately dispose of the data, an error exception
+        In non-blocking mode, if a `recv` call doesn't find any data, or if a
+        `send` call can't immediately dispose of the data, an error exception
         is raised. In blocking mode, the calls block until they can proceed. An
-        EOF condition is considered "immediate data" for L{recv}, so if the
+        EOF condition is considered "immediate data" for `recv`, so if the
         channel is closed in the read direction, it will never block.
 
-        C{chan.setblocking(0)} is equivalent to C{chan.settimeout(0)};
-        C{chan.setblocking(1)} is equivalent to C{chan.settimeout(None)}.
+        ``chan.setblocking(0)`` is equivalent to ``chan.settimeout(0)``;
+        ``chan.setblocking(1)`` is equivalent to ``chan.settimeout(None)``.
 
-        @param blocking: 0 to set non-blocking mode; non-0 to set blocking
-            mode.
-        @type blocking: int
+        :param int blocking:
+            0 to set non-blocking mode; non-0 to set blocking mode.
         """
         if blocking:
             self.settimeout(None)
@@ -543,12 +521,10 @@ class Channel (object):
     def getpeername(self):
         """
         Return the address of the remote side of this Channel, if possible.
-        This is just a wrapper around C{'getpeername'} on the Transport, used
-        to provide enough of a socket-like interface to allow asyncore to work.
-        (asyncore likes to call C{'getpeername'}.)
 
-        @return: the address if the remote host, if known
-        @rtype: tuple(str, int)
+        This simply wraps `.Transport.getpeername`, used to provide enough of a
+        socket-like interface to allow asyncore to work. (asyncore likes to
+        call ``'getpeername'``.)
         """
         return self.transport.getpeername()
 
@@ -556,7 +532,7 @@ class Channel (object):
         """
         Close the channel.  All future read/write operations on the channel
         will fail.  The remote end will receive no more data (after queued data
-        is flushed).  Channels are automatically closed when their L{Transport}
+        is flushed).  Channels are automatically closed when their `.Transport`
         is closed or when they are garbage collected.
         """
         self.lock.acquire()
@@ -581,12 +557,12 @@ class Channel (object):
     def recv_ready(self):
         """
         Returns true if data is buffered and ready to be read from this
-        channel.  A C{False} result does not mean that the channel has closed;
+        channel.  A ``False`` result does not mean that the channel has closed;
         it means you may need to wait before more data arrives.
         
-        @return: C{True} if a L{recv} call on this channel would immediately
-            return at least one byte; C{False} otherwise.
-        @rtype: boolean
+        :return:
+            ``True`` if a `recv` call on this channel would immediately return
+            at least one byte; ``False`` otherwise.
         """
         return self.in_buffer.read_ready()
 
@@ -594,27 +570,25 @@ class Channel (object):
         """
         Receive data from the channel.  The return value is a string
         representing the data received.  The maximum amount of data to be
-        received at once is specified by C{nbytes}.  If a string of length zero
+        received at once is specified by ``nbytes``.  If a string of length zero
         is returned, the channel stream has closed.
 
-        @param nbytes: maximum number of bytes to read.
-        @type nbytes: int
-        @return: data.
-        @rtype: str
+        :param int nbytes: maximum number of bytes to read.
+        :return: received data, as a `str`
         
-        @raise socket.timeout: if no data is ready before the timeout set by
-            L{settimeout}.
+        :raises socket.timeout:
+            if no data is ready before the timeout set by `settimeout`.
         """
         try:
             out = self.in_buffer.read(nbytes, self.timeout)
-        except PipeTimeout, e:
+        except PipeTimeout:
             raise socket.timeout()
 
         ack = self._check_add_window(len(out))
         # no need to hold the channel lock when sending this
         if ack > 0:
             m = Message()
-            m.add_byte(chr(MSG_CHANNEL_WINDOW_ADJUST))
+            m.add_byte(cMSG_CHANNEL_WINDOW_ADJUST)
             m.add_int(self.remote_chanid)
             m.add_int(ack)
             self.transport._send_user_message(m)
@@ -624,47 +598,45 @@ class Channel (object):
     def recv_stderr_ready(self):
         """
         Returns true if data is buffered and ready to be read from this
-        channel's stderr stream.  Only channels using L{exec_command} or
-        L{invoke_shell} without a pty will ever have data on the stderr
+        channel's stderr stream.  Only channels using `exec_command` or
+        `invoke_shell` without a pty will ever have data on the stderr
         stream.
         
-        @return: C{True} if a L{recv_stderr} call on this channel would
-            immediately return at least one byte; C{False} otherwise.
-        @rtype: boolean
+        :return:
+            ``True`` if a `recv_stderr` call on this channel would immediately
+            return at least one byte; ``False`` otherwise.
         
-        @since: 1.1
+        .. versionadded:: 1.1
         """
         return self.in_stderr_buffer.read_ready()
 
     def recv_stderr(self, nbytes):
         """
         Receive data from the channel's stderr stream.  Only channels using
-        L{exec_command} or L{invoke_shell} without a pty will ever have data
+        `exec_command` or `invoke_shell` without a pty will ever have data
         on the stderr stream.  The return value is a string representing the
         data received.  The maximum amount of data to be received at once is
-        specified by C{nbytes}.  If a string of length zero is returned, the
+        specified by ``nbytes``.  If a string of length zero is returned, the
         channel stream has closed.
 
-        @param nbytes: maximum number of bytes to read.
-        @type nbytes: int
-        @return: data.
-        @rtype: str
+        :param int nbytes: maximum number of bytes to read.
+        :return: received data as a `str`
         
-        @raise socket.timeout: if no data is ready before the timeout set by
-            L{settimeout}.
+        :raises socket.timeout: if no data is ready before the timeout set by
+            `settimeout`.
         
-        @since: 1.1
+        .. versionadded:: 1.1
         """
         try:
             out = self.in_stderr_buffer.read(nbytes, self.timeout)
-        except PipeTimeout, e:
+        except PipeTimeout:
             raise socket.timeout()
             
         ack = self._check_add_window(len(out))
         # no need to hold the channel lock when sending this
         if ack > 0:
             m = Message()
-            m.add_byte(chr(MSG_CHANNEL_WINDOW_ADJUST))
+            m.add_byte(cMSG_CHANNEL_WINDOW_ADJUST)
             m.add_int(self.remote_chanid)
             m.add_int(ack)
             self.transport._send_user_message(m)
@@ -677,12 +649,12 @@ class Channel (object):
         This means the channel is either closed (so any write attempt would
         return immediately) or there is at least one byte of space in the 
         outbound buffer. If there is at least one byte of space in the
-        outbound buffer, a L{send} call will succeed immediately and return
+        outbound buffer, a `send` call will succeed immediately and return
         the number of bytes actually written.
         
-        @return: C{True} if a L{send} call on this channel would immediately
-            succeed or fail
-        @rtype: boolean
+        :return:
+            ``True`` if a `send` call on this channel would immediately succeed
+            or fail
         """
         self.lock.acquire()
         try:
@@ -700,13 +672,11 @@ class Channel (object):
         transmitted, the application needs to attempt delivery of the remaining
         data.
 
-        @param s: data to send
-        @type s: str
-        @return: number of bytes actually sent
-        @rtype: int
+        :param str s: data to send
+        :return: number of bytes actually sent, as an `int`
 
-        @raise socket.timeout: if no data could be sent before the timeout set
-            by L{settimeout}.
+        :raises socket.timeout: if no data could be sent before the timeout set
+            by `settimeout`.
         """
         size = len(s)
         self.lock.acquire()
@@ -716,7 +686,7 @@ class Channel (object):
                 # eof or similar
                 return 0
             m = Message()
-            m.add_byte(chr(MSG_CHANNEL_DATA))
+            m.add_byte(cMSG_CHANNEL_DATA)
             m.add_int(self.remote_chanid)
             m.add_string(s[:size])
         finally:
@@ -735,15 +705,13 @@ class Channel (object):
         data has been sent: if only some of the data was transmitted, the
         application needs to attempt delivery of the remaining data.
         
-        @param s: data to send.
-        @type s: str
-        @return: number of bytes actually sent.
-        @rtype: int
+        :param str s: data to send.
+        :return: number of bytes actually sent, as an `int`.
         
-        @raise socket.timeout: if no data could be sent before the timeout set
-            by L{settimeout}.
+        :raises socket.timeout:
+            if no data could be sent before the timeout set by `settimeout`.
         
-        @since: 1.1
+        .. versionadded:: 1.1
         """
         size = len(s)
         self.lock.acquire()
@@ -753,7 +721,7 @@ class Channel (object):
                 # eof or similar
                 return 0
             m = Message()
-            m.add_byte(chr(MSG_CHANNEL_EXTENDED_DATA))
+            m.add_byte(cMSG_CHANNEL_EXTENDED_DATA)
             m.add_int(self.remote_chanid)
             m.add_int(1)
             m.add_string(s[:size])
@@ -767,20 +735,20 @@ class Channel (object):
     def sendall(self, s):
         """
         Send data to the channel, without allowing partial results.  Unlike
-        L{send}, this method continues to send data from the given string until
+        `send`, this method continues to send data from the given string until
         either all data has been sent or an error occurs.  Nothing is returned.
 
-        @param s: data to send.
-        @type s: str
+        :param str s: data to send.
 
-        @raise socket.timeout: if sending stalled for longer than the timeout
-            set by L{settimeout}.
-        @raise socket.error: if an error occured before the entire string was
-            sent.
+        :raises socket.timeout:
+            if sending stalled for longer than the timeout set by `settimeout`.
+        :raises socket.error:
+            if an error occurred before the entire string was sent.
         
-        @note: If the channel is closed while only part of the data hase been
+        .. note::
+            If the channel is closed while only part of the data has been
             sent, there is no way to determine how much data (if any) was sent.
-            This is irritating, but identically follows python's API.
+            This is irritating, but identically follows Python's API.
         """
         while s:
             if self.closed:
@@ -793,19 +761,18 @@ class Channel (object):
     def sendall_stderr(self, s):
         """
         Send data to the channel's "stderr" stream, without allowing partial
-        results.  Unlike L{send_stderr}, this method continues to send data
+        results.  Unlike `send_stderr`, this method continues to send data
         from the given string until all data has been sent or an error occurs.
         Nothing is returned.
         
-        @param s: data to send to the client as "stderr" output.
-        @type s: str
+        :param str s: data to send to the client as "stderr" output.
         
-        @raise socket.timeout: if sending stalled for longer than the timeout
-            set by L{settimeout}.
-        @raise socket.error: if an error occured before the entire string was
-            sent.
+        :raises socket.timeout:
+            if sending stalled for longer than the timeout set by `settimeout`.
+        :raises socket.error:
+            if an error occurred before the entire string was sent.
             
-        @since: 1.1
+        .. versionadded:: 1.1
         """
         while s:
             if self.closed:
@@ -817,49 +784,46 @@ class Channel (object):
     def makefile(self, *params):
         """
         Return a file-like object associated with this channel.  The optional
-        C{mode} and C{bufsize} arguments are interpreted the same way as by
-        the built-in C{file()} function in python.
+        ``mode`` and ``bufsize`` arguments are interpreted the same way as by
+        the built-in ``file()`` function in Python.
 
-        @return: object which can be used for python file I/O.
-        @rtype: L{ChannelFile}
+        :return: `.ChannelFile` object which can be used for Python file I/O.
         """
         return ChannelFile(*([self] + list(params)))
 
     def makefile_stderr(self, *params):
         """
         Return a file-like object associated with this channel's stderr
-        stream.   Only channels using L{exec_command} or L{invoke_shell}
+        stream.   Only channels using `exec_command` or `invoke_shell`
         without a pty will ever have data on the stderr stream.
         
-        The optional C{mode} and C{bufsize} arguments are interpreted the
-        same way as by the built-in C{file()} function in python.  For a
+        The optional ``mode`` and ``bufsize`` arguments are interpreted the
+        same way as by the built-in ``file()`` function in Python.  For a
         client, it only makes sense to open this file for reading.  For a
         server, it only makes sense to open this file for writing.
         
-        @return: object which can be used for python file I/O.
-        @rtype: L{ChannelFile}
+        :return: `.ChannelFile` object which can be used for Python file I/O.
 
-        @since: 1.1
+        .. versionadded:: 1.1
         """
         return ChannelStderrFile(*([self] + list(params)))
         
     def fileno(self):
         """
         Returns an OS-level file descriptor which can be used for polling, but
-        but I{not} for reading or writing.  This is primaily to allow python's
-        C{select} module to work.
+        but not for reading or writing.  This is primarily to allow Python's
+        ``select`` module to work.
 
-        The first time C{fileno} is called on a channel, a pipe is created to
+        The first time ``fileno`` is called on a channel, a pipe is created to
         simulate real OS-level file descriptor (FD) behavior.  Because of this,
         two OS-level FDs are created, which will use up FDs faster than normal.
         (You won't notice this effect unless you have hundreds of channels
         open at the same time.)
 
-        @return: an OS-level file descriptor
-        @rtype: int
+        :return: an OS-level file descriptor (`int`)
         
-        @warning: This method causes channel reads to be slightly less
-            efficient.
+        .. warning::
+            This method causes channel reads to be slightly less efficient.
         """
         self.lock.acquire()
         try:
@@ -876,14 +840,14 @@ class Channel (object):
 
     def shutdown(self, how):
         """
-        Shut down one or both halves of the connection.  If C{how} is 0,
-        further receives are disallowed.  If C{how} is 1, further sends
-        are disallowed.  If C{how} is 2, further sends and receives are
+        Shut down one or both halves of the connection.  If ``how`` is 0,
+        further receives are disallowed.  If ``how`` is 1, further sends
+        are disallowed.  If ``how`` is 2, further sends and receives are
         disallowed.  This closes the stream in one or both directions.
 
-        @param how: 0 (stop receiving), 1 (stop sending), or 2 (stop
-            receiving and sending).
-        @type how: int
+        :param int how:
+            0 (stop receiving), 1 (stop sending), or 2 (stop receiving and
+              sending).
         """
         if (how == 0) or (how == 2):
             # feign "read" shutdown
@@ -902,10 +866,10 @@ class Channel (object):
         Shutdown the receiving side of this socket, closing the stream in
         the incoming direction.  After this call, future reads on this
         channel will fail instantly.  This is a convenience method, equivalent
-        to C{shutdown(0)}, for people who don't make it a habit to
+        to ``shutdown(0)``, for people who don't make it a habit to
         memorize unix constants from the 1970s.
         
-        @since: 1.2
+        .. versionadded:: 1.2
         """
         self.shutdown(0)
     
@@ -914,16 +878,14 @@ class Channel (object):
         Shutdown the sending side of this socket, closing the stream in
         the outgoing direction.  After this call, future writes on this
         channel will fail instantly.  This is a convenience method, equivalent
-        to C{shutdown(1)}, for people who don't make it a habit to
+        to ``shutdown(1)``, for people who don't make it a habit to
         memorize unix constants from the 1970s.
         
-        @since: 1.2
+        .. versionadded:: 1.2
         """
         self.shutdown(1)
 
-
     ###  calls from Transport
-
 
     def _set_transport(self, transport):
         self.transport = transport
@@ -961,16 +923,16 @@ class Channel (object):
                 self.transport._send_user_message(m)
 
     def _feed(self, m):
-        if type(m) is str:
+        if isinstance(m, bytes_types):
             # passed from _feed_extended
             s = m
         else:
-            s = m.get_string()
+            s = m.get_binary()
         self.in_buffer.feed(s)
 
     def _feed_extended(self, m):
         code = m.get_int()
-        s = m.get_string()
+        s = m.get_binary()
         if code != 1:
             self._log(ERROR, 'unknown extended_data type %d; discarding' % code)
             return
@@ -991,7 +953,7 @@ class Channel (object):
             self.lock.release()
 
     def _handle_request(self, m):
-        key = m.get_string()
+        key = m.get_text()
         want_reply = m.get_boolean()
         server = self.transport.server_object
         ok = False
@@ -1019,14 +981,21 @@ class Channel (object):
                 ok = False
             else:
                 ok = server.check_channel_shell_request(self)
+        elif key == 'env':
+            name = m.get_string()
+            value = m.get_string()
+            if server is None:
+                ok = False
+            else:
+                ok = server.check_channel_env_request(self, name, value)
         elif key == 'exec':
-            cmd = m.get_string()
+            cmd = m.get_text()
             if server is None:
                 ok = False
             else:
                 ok = server.check_channel_exec_request(self, cmd)
         elif key == 'subsystem':
-            name = m.get_string()
+            name = m.get_text()
             if server is None:
                 ok = False
             else:
@@ -1043,8 +1012,8 @@ class Channel (object):
                                                                 pixelheight)
         elif key == 'x11-req':
             single_connection = m.get_boolean()
-            auth_proto = m.get_string()
-            auth_cookie = m.get_string()
+            auth_proto = m.get_text()
+            auth_cookie = m.get_binary()
             screen_number = m.get_int()
             if server is None:
                 ok = False
@@ -1062,9 +1031,9 @@ class Channel (object):
         if want_reply:
             m = Message()
             if ok:
-                m.add_byte(chr(MSG_CHANNEL_SUCCESS))
+                m.add_byte(cMSG_CHANNEL_SUCCESS)
             else:
-                m.add_byte(chr(MSG_CHANNEL_FAILURE))
+                m.add_byte(cMSG_CHANNEL_FAILURE)
             m.add_int(self.remote_chanid)
             self.transport._send_user_message(m)
 
@@ -1092,9 +1061,7 @@ class Channel (object):
             if m is not None:
                 self.transport._send_user_message(m)
 
-
     ###  internals...
-
 
     def _log(self, level, msg, *args):
         self.logger.log(level, "[chan " + self._name + "] " + msg, *args)
@@ -1130,7 +1097,7 @@ class Channel (object):
         if self.eof_sent:
             return None
         m = Message()
-        m.add_byte(chr(MSG_CHANNEL_EOF))
+        m.add_byte(cMSG_CHANNEL_EOF)
         m.add_int(self.remote_chanid)
         self.eof_sent = True
         self._log(DEBUG, 'EOF sent (%s)', self._name)
@@ -1142,7 +1109,7 @@ class Channel (object):
             return None, None
         m1 = self._send_eof()
         m2 = Message()
-        m2.add_byte(chr(MSG_CHANNEL_CLOSE))
+        m2.add_byte(cMSG_CHANNEL_CLOSE)
         m2.add_int(self.remote_chanid)
         self._set_closed()
         # can't unlink from the Transport yet -- the remote side may still
@@ -1181,7 +1148,7 @@ class Channel (object):
     def _wait_for_send_window(self, size):
         """
         (You are already holding the lock.)
-        Wait for the send window to open up, and allocate up to C{size} bytes
+        Wait for the send window to open up, and allocate up to ``size`` bytes
         for transmission.  If no space opens up before the timeout, a timeout
         exception is raised.  Returns the number of bytes available to send
         (may be less than requested).
@@ -1200,7 +1167,7 @@ class Channel (object):
                     return 0
                 then = time.time()
                 self.out_buffer_cv.wait(timeout)
-                if timeout != None:
+                if timeout is not None:
                     timeout -= time.time() - then
                     if timeout <= 0.0:
                         raise socket.timeout()
@@ -1219,16 +1186,18 @@ class Channel (object):
 
 class ChannelFile (BufferedFile):
     """
-    A file-like wrapper around L{Channel}.  A ChannelFile is created by calling
-    L{Channel.makefile}.
+    A file-like wrapper around `.Channel`.  A ChannelFile is created by calling
+    `Channel.makefile`.
 
-    @bug: To correctly emulate the file object created from a socket's
-        C{makefile} method, a L{Channel} and its C{ChannelFile} should be able
-        to be closed or garbage-collected independently.  Currently, closing
-        the C{ChannelFile} does nothing but flush the buffer.
+    .. warning::
+        To correctly emulate the file object created from a socket's `makefile
+        <python:socket.socket.makefile>` method, a `.Channel` and its
+        `.ChannelFile` should be able to be closed or garbage-collected
+        independently. Currently, closing the `ChannelFile` does nothing but
+        flush the buffer.
     """
 
-    def __init__(self, channel, mode = 'r', bufsize = -1):
+    def __init__(self, channel, mode='r', bufsize=-1):
         self.channel = channel
         BufferedFile.__init__(self)
         self._set_mode(mode, bufsize)
@@ -1236,8 +1205,6 @@ class ChannelFile (BufferedFile):
     def __repr__(self):
         """
         Returns a string representation of this object, for debugging.
-
-        @rtype: str
         """
         return '<paramiko.ChannelFile from ' + repr(self.channel) + '>'
 
@@ -1250,7 +1217,7 @@ class ChannelFile (BufferedFile):
 
 
 class ChannelStderrFile (ChannelFile):
-    def __init__(self, channel, mode = 'r', bufsize = -1):
+    def __init__(self, channel, mode='r', bufsize=-1):
         ChannelFile.__init__(self, channel, mode, bufsize)
 
     def _read(self, size):

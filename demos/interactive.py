@@ -7,7 +7,7 @@
 # Software Foundation; either version 2.1 of the License, or (at your option)
 # any later version.
 #
-# Paramiko is distrubuted in the hope that it will be useful, but WITHOUT ANY
+# Paramiko is distributed in the hope that it will be useful, but WITHOUT ANY
 # WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
 # A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more
 # details.
@@ -19,6 +19,7 @@
 
 import socket
 import sys
+from paramiko.py3compat import u
 
 # windows does not have termios...
 try:
@@ -49,9 +50,9 @@ def posix_shell(chan):
             r, w, e = select.select([chan, sys.stdin], [], [])
             if chan in r:
                 try:
-                    x = chan.recv(1024)
+                    x = u(chan.recv(1024))
                     if len(x) == 0:
-                        print '\r\n*** EOF\r\n',
+                        sys.stdout.write('\r\n*** EOF\r\n')
                         break
                     sys.stdout.write(x)
                     sys.stdout.flush()

@@ -9,7 +9,7 @@
 # Software Foundation; either version 2.1 of the License, or (at your option)
 # any later version.
 #
-# Paramiko is distrubuted in the hope that it will be useful, but WITHOUT ANY
+# Paramiko is distributed in the hope that it will be useful, but WITHOUT ANY
 # WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
 # A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more
 # details.
@@ -29,22 +29,21 @@ import unittest
 from optparse import OptionParser
 import paramiko
 import threading
+from paramiko.py3compat import PY2
 
 sys.path.append('tests')
 
-from test_message import MessageTest
-from test_file import BufferedFileTest
-from test_buffered_pipe import BufferedPipeTest
-from test_util import UtilTest
-from test_hostkeys import HostKeysTest
-from test_pkey import KeyTest
-from test_kex import KexTest
-from test_packetizer import PacketizerTest
-from test_auth import AuthTest
-from test_transport import TransportTest
-from test_sftp import SFTPTest
-from test_sftp_big import BigSFTPTest
-from test_client import SSHClientTest
+from tests.test_message import MessageTest
+from tests.test_file import BufferedFileTest
+from tests.test_buffered_pipe import BufferedPipeTest
+from tests.test_util import UtilTest
+from tests.test_hostkeys import HostKeysTest
+from tests.test_pkey import KeyTest
+from tests.test_kex import KexTest
+from tests.test_packetizer import PacketizerTest
+from tests.test_auth import AuthTest
+from tests.test_transport import TransportTest
+from tests.test_client import SSHClientTest
 
 default_host = 'localhost'
 default_user = os.environ.get('USER', 'nobody')
@@ -109,13 +108,16 @@ def main():
     paramiko.util.log_to_file('test.log')
     
     if options.use_sftp:
+        from tests.test_sftp import SFTPTest
         if options.use_loopback_sftp:
             SFTPTest.init_loopback()
         else:
             SFTPTest.init(options.hostname, options.username, options.keyfile, options.password)
         if not options.use_big_file:
             SFTPTest.set_big_file_test(False)
-    
+    if options.use_big_file:
+        from tests.test_sftp_big import BigSFTPTest
+
     suite = unittest.TestSuite()
     suite.addTest(unittest.makeSuite(MessageTest))
     suite.addTest(unittest.makeSuite(BufferedFileTest))
@@ -147,7 +149,10 @@ def main():
     # TODO: make that not a problem, jeez
     for thread in threading.enumerate():
         if thread is not threading.currentThread():
-            thread._Thread__stop()
+            if PY2:
+                thread._Thread__stop()
+            else:
+                thread._stop()
     # Exit correctly
     if not result.wasSuccessful():
         sys.exit(1)

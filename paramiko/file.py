@@ -7,7 +7,7 @@
 # Software Foundation; either version 2.1 of the License, or (at your option)
 # any later version.
 #
-# Paramiko is distrubuted in the hope that it will be useful, but WITHOUT ANY
+# Paramiko is distributed in the hope that it will be useful, but WITHOUT ANY
 # WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
 # A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more
 # details.
@@ -15,17 +15,14 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with Paramiko; if not, write to the Free Software Foundation, Inc.,
 # 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
-
-"""
-BufferedFile.
-"""
-
-from cStringIO import StringIO
+from paramiko.common import linefeed_byte_value, crlf, cr_byte, linefeed_byte, \
+    cr_byte_value
+from paramiko.py3compat import BytesIO, PY2, u, b, bytes_types
 
 
 class BufferedFile (object):
     """
-    Reusable base class to implement python-style file buffering around a
+    Reusable base class to implement Python-style file buffering around a
     simpler stream.
     """
 
@@ -47,8 +44,8 @@ class BufferedFile (object):
         self.newlines = None
         self._flags = 0
         self._bufsize = self._DEFAULT_BUFSIZE
-        self._wbuffer = StringIO()
-        self._rbuffer = ''
+        self._wbuffer = BytesIO()
+        self._rbuffer = bytes()
         self._at_trailing_cr = False
         self._closed = False
         # pos - position within the file, according to the user
@@ -67,10 +64,7 @@ class BufferedFile (object):
         file.  This iterator happens to return the file itself, since a file is
         its own iterator.
 
-        @raise ValueError: if the file is closed.
-        
-        @return: an interator.
-        @rtype: iterator
+        :raises ValueError: if the file is closed.
         """
         if self._closed:
             raise ValueError('I/O operation on closed file')
@@ -89,36 +83,56 @@ class BufferedFile (object):
         buffering is not turned on.
         """
         self._write_all(self._wbuffer.getvalue())
-        self._wbuffer = StringIO()
+        self._wbuffer = BytesIO()
         return
 
-    def next(self):
-        """
-        Returns the next line from the input, or raises L{StopIteration} when
-        EOF is hit.  Unlike python file objects, it's okay to mix calls to
-        C{next} and L{readline}.
+    if PY2:
+        def next(self):
+            """
+            Returns the next line from the input, or raises
+            `~exceptions.StopIteration` when EOF is hit.  Unlike Python file
+            objects, it's okay to mix calls to `next` and `readline`.
 
-        @raise StopIteration: when the end of the file is reached.
+            :raises StopIteration: when the end of the file is reached.
 
-        @return: a line read from the file.
-        @rtype: str
-        """
-        line = self.readline()
-        if not line:
-            raise StopIteration
-        return line
+            :return: a line (`str`) read from the file.
+            """
+            line = self.readline()
+            if not line:
+                raise StopIteration
+            return line
+    else:
+        def __next__(self):
+            """
+            Returns the next line from the input, or raises `.StopIteration` when
+            EOF is hit.  Unlike python file objects, it's okay to mix calls to
+            `.next` and `.readline`.
+
+            :raises StopIteration: when the end of the file is reached.
+
+            :returns: a line (`str`) read from the file.
+            """
+            line = self.readline()
+            if not line:
+                raise StopIteration
+            return line
 
     def read(self, size=None):
         """
-        Read at most C{size} bytes from the file (less if we hit the end of the
-        file first).  If the C{size} argument is negative or omitted, read all
+        Read at most ``size`` bytes from the file (less if we hit the end of the
+        file first).  If the ``size`` argument is negative or omitted, read all
         the remaining data in the file.
 
-        @param size: maximum number of bytes to read
-        @type size: int
-        @return: data read from the file, or an empty string if EOF was
+        .. note::
+            ``'b'`` mode flag is ignored (``self.FLAG_BINARY`` in
+            ``self._flags``), because SSH treats all files as binary, since we
+            have no idea what encoding the file is in, or even if the file is
+            text data.
+
+        :param int size: maximum number of bytes to read
+        :return:
+            data read from the file (as bytes), or an empty string if EOF was
             encountered immediately
-        @rtype: str
         """
         if self._closed:
             raise IOError('File is closed')
@@ -127,7 +141,7 @@ class BufferedFile (object):
         if (size is None) or (size < 0):
             # go for broke
             result = self._rbuffer
-            self._rbuffer = ''
+            self._rbuffer = bytes()
             self._pos += len(result)
             while True:
                 try:
@@ -139,12 +153,12 @@ class BufferedFile (object):
                 result += new_data
                 self._realpos += len(new_data)
                 self._pos += len(new_data)
-            return result
+            return result 
         if size <= len(self._rbuffer):
             result = self._rbuffer[:size]
             self._rbuffer = self._rbuffer[size:]
             self._pos += len(result)
-            return result
+            return result 
         while len(self._rbuffer) < size:
             read_size = size - len(self._rbuffer)
             if self._flags & self.FLAG_BUFFERED:
@@ -160,7 +174,7 @@ class BufferedFile (object):
         result = self._rbuffer[:size]
         self._rbuffer = self._rbuffer[size:]
         self._pos += len(result)
-        return result
+        return result 
 
     def readline(self, size=None):
         """
@@ -171,14 +185,18 @@ class BufferedFile (object):
         incomplete line may be returned.  An empty string is returned only when
         EOF is encountered immediately.
 
-        @note: Unlike stdio's C{fgets()}, the returned string contains null
-        characters (C{'\\0'}) if they occurred in the input.
+        .. note::
+            Unlike stdio's ``fgets``, the returned string contains null
+            characters (``'\\0'``) if they occurred in the input.
 
-        @param size: maximum length of returned string.
-        @type size: int
-        @return: next line of the file, or an empty string if the end of the
+        :param int size: maximum length of returned string.
+        :return:
+            next line of the file, or an empty string if the end of the
             file has been reached.
-        @rtype: str
+
+            If the file was opened in binary (``'b'``) mode: bytes are returned
+            Else: the encoding of the file is assumed to be UTF-8 and character
+            strings (`str`) are returned
         """
         # it's almost silly how complex this function is.
         if self._closed:
@@ -186,102 +204,108 @@ class BufferedFile (object):
         if not (self._flags & self.FLAG_READ):
             raise IOError('File not open for reading')
         line = self._rbuffer
+        truncated = False
         while True:
             if self._at_trailing_cr and (self._flags & self.FLAG_UNIVERSAL_NEWLINE) and (len(line) > 0):
                 # edge case: the newline may be '\r\n' and we may have read
                 # only the first '\r' last time.
-                if line[0] == '\n':
+                if line[0] == linefeed_byte_value:
                     line = line[1:]
-                    self._record_newline('\r\n')
+                    self._record_newline(crlf)
                 else:
-                    self._record_newline('\r')
+                    self._record_newline(cr_byte)
                 self._at_trailing_cr = False
             # check size before looking for a linefeed, in case we already have
             # enough.
             if (size is not None) and (size >= 0):
                 if len(line) >= size:
-                    # truncate line and return
+                    # truncate line
                     self._rbuffer = line[size:]
                     line = line[:size]
-                    self._pos += len(line)
-                    return line
+                    truncated = True
+                    break
                 n = size - len(line)
             else:
                 n = self._bufsize
-            if ('\n' in line) or ((self._flags & self.FLAG_UNIVERSAL_NEWLINE) and ('\r' in line)):
+            if (linefeed_byte in line) or ((self._flags & self.FLAG_UNIVERSAL_NEWLINE) and (cr_byte in line)):
                 break
             try:
                 new_data = self._read(n)
             except EOFError:
                 new_data = None
             if (new_data is None) or (len(new_data) == 0):
-                self._rbuffer = ''
+                self._rbuffer = bytes()
                 self._pos += len(line)
-                return line
+                return line if self._flags & self.FLAG_BINARY else u(line)
             line += new_data
             self._realpos += len(new_data)
         # find the newline
-        pos = line.find('\n')
+        pos = line.find(linefeed_byte)
         if self._flags & self.FLAG_UNIVERSAL_NEWLINE:
-            rpos = line.find('\r')
-            if (rpos >= 0) and ((rpos < pos) or (pos < 0)):
+            rpos = line.find(cr_byte)
+            if (rpos >= 0) and (rpos < pos or pos < 0):
                 pos = rpos
+        if pos == -1:
+            # we couldn't find a newline in the truncated string, return it
+            self._pos += len(line)
+            return line if self._flags & self.FLAG_BINARY else u(line)
         xpos = pos + 1
-        if (line[pos] == '\r') and (xpos < len(line)) and (line[xpos] == '\n'):
+        if (line[pos] == cr_byte_value) and (xpos < len(line)) and (line[xpos] == linefeed_byte_value):
             xpos += 1
-        self._rbuffer = line[xpos:]
+        # if the string was truncated, _rbuffer needs to have the string after 
+        # the newline character plus the truncated part of the line we stored
+        # earlier in _rbuffer
+        self._rbuffer = line[xpos:] + self._rbuffer if truncated else line[xpos:]
         lf = line[pos:xpos]
-        line = line[:pos] + '\n'
-        if (len(self._rbuffer) == 0) and (lf == '\r'):
+        line = line[:pos] + linefeed_byte
+        if (len(self._rbuffer) == 0) and (lf == cr_byte):
             # we could read the line up to a '\r' and there could still be a
             # '\n' following that we read next time.  note that and eat it.
             self._at_trailing_cr = True
         else:
             self._record_newline(lf)
         self._pos += len(line)
-        return line
+        return line if self._flags & self.FLAG_BINARY else u(line)
 
     def readlines(self, sizehint=None):
         """
-        Read all remaining lines using L{readline} and return them as a list.
-        If the optional C{sizehint} argument is present, instead of reading up
+        Read all remaining lines using `readline` and return them as a list.
+        If the optional ``sizehint`` argument is present, instead of reading up
         to EOF, whole lines totalling approximately sizehint bytes (possibly
         after rounding up to an internal buffer size) are read.
 
-        @param sizehint: desired maximum number of bytes to read.
-        @type sizehint: int
-        @return: list of lines read from the file.
-        @rtype: list
+        :param int sizehint: desired maximum number of bytes to read.
+        :return: `list` of lines read from the file.
         """
         lines = []
-        bytes = 0
+        byte_count = 0
         while True:
             line = self.readline()
             if len(line) == 0:
                 break
             lines.append(line)
-            bytes += len(line)
-            if (sizehint is not None) and (bytes >= sizehint):
+            byte_count += len(line)
+            if (sizehint is not None) and (byte_count >= sizehint):
                 break
         return lines
 
     def seek(self, offset, whence=0):
         """
-        Set the file's current position, like stdio's C{fseek}.  Not all file
+        Set the file's current position, like stdio's ``fseek``.  Not all file
         objects support seeking.
 
-        @note: If a file is opened in append mode (C{'a'} or C{'a+'}), any seek
+        .. note::
+            If a file is opened in append mode (``'a'`` or ``'a+'``), any seek
             operations will be undone at the next write (as the file position
             will move back to the end of the file).
         
-        @param offset: position to move to within the file, relative to
-            C{whence}.
-        @type offset: int
-        @param whence: type of movement: 0 = absolute; 1 = relative to the
-            current position; 2 = relative to the end of the file.
-        @type whence: int
+        :param int offset:
+            position to move to within the file, relative to ``whence``.
+        :param int whence:
+            type of movement: 0 = absolute; 1 = relative to the current
+            position; 2 = relative to the end of the file.
 
-        @raise IOError: if the file doesn't support random access.
+        :raises IOError: if the file doesn't support random access.
         """
         raise IOError('File does not support seeking.')
 
@@ -291,21 +315,20 @@ class BufferedFile (object):
         useful if the underlying file doesn't support random access, or was
         opened in append mode.
 
-        @return: file position (in bytes).
-        @rtype: int
+        :return: file position (`number <int>` of bytes).
         """
         return self._pos
 
     def write(self, data):
         """
-        Write data to the file.  If write buffering is on (C{bufsize} was
+        Write data to the file.  If write buffering is on (``bufsize`` was
         specified and non-zero), some or all of the data may not actually be
-        written yet.  (Use L{flush} or L{close} to force buffered data to be
+        written yet.  (Use `flush` or `close` to force buffered data to be
         written out.)
 
-        @param data: data to write.
-        @type data: str
+        :param str data: data to write
         """
+        data = b(data)
         if self._closed:
             raise IOError('File is closed')
         if not (self._flags & self.FLAG_WRITE):
@@ -316,12 +339,12 @@ class BufferedFile (object):
         self._wbuffer.write(data)
         if self._flags & self.FLAG_LINE_BUFFERED:
             # only scan the new data for linefeed, to avoid wasting time.
-            last_newline_pos = data.rfind('\n')
+            last_newline_pos = data.rfind(linefeed_byte)
             if last_newline_pos >= 0:
                 wbuf = self._wbuffer.getvalue()
                 last_newline_pos += len(wbuf) - len(data)
                 self._write_all(wbuf[:last_newline_pos + 1])
-                self._wbuffer = StringIO()
+                self._wbuffer = BytesIO()
                 self._wbuffer.write(wbuf[last_newline_pos + 1:])
             return
         # even if we're line buffering, if the buffer has grown past the
@@ -334,11 +357,10 @@ class BufferedFile (object):
         """
         Write a sequence of strings to the file.  The sequence can be any
         iterable object producing strings, typically a list of strings.  (The
-        name is intended to match L{readlines}; C{writelines} does not add line
+        name is intended to match `readlines`; `writelines` does not add line
         separators.)
 
-        @param sequence: an iterable sequence of strings.
-        @type sequence: sequence
+        :param iterable sequence: an iterable sequence of strings.
         """
         for line in sequence:
             self.write(line)
@@ -346,47 +368,44 @@ class BufferedFile (object):
 
     def xreadlines(self):
         """
-        Identical to C{iter(f)}.  This is a deprecated file interface that
-        predates python iterator support.
-
-        @return: an iterator.
-        @rtype: iterator
+        Identical to ``iter(f)``.  This is a deprecated file interface that
+        predates Python iterator support.
         """
         return self
 
+    @property
+    def closed(self):
+        return self._closed
 
     ###  overrides...
 
-
     def _read(self, size):
         """
-        I{(subclass override)}
-        Read data from the stream.  Return C{None} or raise C{EOFError} to
+        (subclass override)
+        Read data from the stream.  Return ``None`` or raise ``EOFError`` to
         indicate EOF.
         """
         raise EOFError()
 
     def _write(self, data):
         """
-        I{(subclass override)}
+        (subclass override)
         Write data into the stream.
         """
         raise IOError('write not implemented')
 
     def _get_size(self):
         """
-        I{(subclass override)}
-        Return the size of the file.  This is called from within L{_set_mode}
+        (subclass override)
+        Return the size of the file.  This is called from within `_set_mode`
         if the file is opened in append mode, so the file position can be
-        tracked and L{seek} and L{tell} will work correctly.  If the file is
+        tracked and `seek` and `tell` will work correctly.  If the file is
         a stream that can't be randomly accessed, you don't need to override
         this method,
         """
         return 0
 
-
     ###  internals...
-
 
     def _set_mode(self, mode='r', bufsize=-1):
         """
@@ -415,13 +434,13 @@ class BufferedFile (object):
             self._flags |= self.FLAG_READ
         if ('w' in mode) or ('+' in mode):
             self._flags |= self.FLAG_WRITE
-        if ('a' in mode):
+        if 'a' in mode:
             self._flags |= self.FLAG_WRITE | self.FLAG_APPEND
             self._size = self._get_size()
             self._pos = self._realpos = self._size
-        if ('b' in mode):
+        if 'b' in mode:
             self._flags |= self.FLAG_BINARY
-        if ('U' in mode):
+        if 'U' in mode:
             self._flags |= self.FLAG_UNIVERSAL_NEWLINE
             # built-in file objects have this attribute to store which kinds of
             # line terminations they've seen:
@@ -450,7 +469,7 @@ class BufferedFile (object):
             return
         if self.newlines is None:
             self.newlines = newline
-        elif (type(self.newlines) is str) and (self.newlines != newline):
+        elif self.newlines != newline and isinstance(self.newlines, bytes_types):
             self.newlines = (self.newlines, newline)
         elif newline not in self.newlines:
             self.newlines += (newline,)

@@ -7,7 +7,7 @@
 # Software Foundation; either version 2.1 of the License, or (at your option)
 # any later version.
 #
-# Paramiko is distrubuted in the hope that it will be useful, but WITHOUT ANY
+# Paramiko is distributed in the hope that it will be useful, but WITHOUT ANY
 # WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
 # A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more
 # details.
@@ -25,18 +25,21 @@ import threading
 import unittest
 
 from paramiko import Transport, ServerInterface, RSAKey, DSSKey, \
-    SSHException, BadAuthenticationType, InteractiveQuery, ChannelException, \
+    BadAuthenticationType, InteractiveQuery, \
     AuthenticationException
 from paramiko import AUTH_FAILED, AUTH_PARTIALLY_SUCCESSFUL, AUTH_SUCCESSFUL
-from paramiko import OPEN_SUCCEEDED, OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED
-from loop import LoopSocket
+from paramiko.py3compat import u
+from tests.loop import LoopSocket
+from tests.util import test_path
+
+_pwd = u('\u2022')
 
 
 class NullServer (ServerInterface):
     paranoid_did_password = False
     paranoid_did_public_key = False
-    paranoid_key = DSSKey.from_private_key_file('tests/test_dss.key')
-    
+    paranoid_key = DSSKey.from_private_key_file(test_path('test_dss.key'))
+
     def get_allowed_auths(self, username):
         if username == 'slowdive':
             return 'publickey,password'
@@ -64,7 +67,7 @@ class NullServer (ServerInterface):
             if self.paranoid_did_public_key:
                 return AUTH_SUCCESSFUL
             return AUTH_PARTIALLY_SUCCESSFUL
-        if (username == 'utf8') and (password == u'\u2022'):
+        if (username == 'utf8') and (password == _pwd):
             return AUTH_SUCCESSFUL
         if (username == 'non-utf8') and (password == '\xff'):
             return AUTH_SUCCESSFUL
@@ -110,18 +113,18 @@ class AuthTest (unittest.TestCase):
         self.sockc.close()
     
     def start_server(self):
-        host_key = RSAKey.from_private_key_file('tests/test_rsa.key')
-        self.public_host_key = RSAKey(data=str(host_key))
+        host_key = RSAKey.from_private_key_file(test_path('test_rsa.key'))
+        self.public_host_key = RSAKey(data=host_key.asbytes())
         self.ts.add_server_key(host_key)
         self.event = threading.Event()
         self.server = NullServer()
-        self.assert_(not self.event.isSet())
+        self.assertTrue(not self.event.isSet())
         self.ts.start_server(self.event, self.server)
     
     def verify_finished(self):
         self.event.wait(1.0)
-        self.assert_(self.event.isSet())
-        self.assert_(self.ts.is_active())
+        self.assertTrue(self.event.isSet())
+        self.assertTrue(self.ts.is_active())
 
     def test_1_bad_auth_type(self):
         """
@@ -132,11 +135,11 @@ class AuthTest (unittest.TestCase):
         try:
             self.tc.connect(hostkey=self.public_host_key,
                             username='unknown', password='error')
-            self.assert_(False)
+            self.assertTrue(False)
         except:
             etype, evalue, etb = sys.exc_info()
-            self.assertEquals(BadAuthenticationType, etype)
-            self.assertEquals(['publickey'], evalue.allowed_types)
+            self.assertEqual(BadAuthenticationType, etype)
+            self.assertEqual(['publickey'], evalue.allowed_types)
 
     def test_2_bad_password(self):
         """
@@ -147,10 +150,10 @@ class AuthTest (unittest.TestCase):
         self.tc.connect(hostkey=self.public_host_key)
         try:
             self.tc.auth_password(username='slowdive', password='error')
-            self.assert_(False)
+            self.assertTrue(False)
         except:
             etype, evalue, etb = sys.exc_info()
-            self.assert_(issubclass(etype, AuthenticationException))
+            self.assertTrue(issubclass(etype, AuthenticationException))
         self.tc.auth_password(username='slowdive', password='pygmalion')
         self.verify_finished()
     
@@ -161,10 +164,10 @@ class AuthTest (unittest.TestCase):
         self.start_server()
         self.tc.connect(hostkey=self.public_host_key)
         remain = self.tc.auth_password(username='paranoid', password='paranoid')
-        self.assertEquals(['publickey'], remain)
-        key = DSSKey.from_private_key_file('tests/test_dss.key')
+        self.assertEqual(['publickey'], remain)
+        key = DSSKey.from_private_key_file(test_path('test_dss.key'))
         remain = self.tc.auth_publickey(username='paranoid', key=key)
-        self.assertEquals([], remain)
+        self.assertEqual([], remain)
         self.verify_finished()
 
     def test_4_interactive_auth(self):
@@ -180,9 +183,9 @@ class AuthTest (unittest.TestCase):
             self.got_prompts = prompts
             return ['cat']
         remain = self.tc.auth_interactive('commie', handler)
-        self.assertEquals(self.got_title, 'password')
-        self.assertEquals(self.got_prompts, [('Password', False)])
-        self.assertEquals([], remain)
+        self.assertEqual(self.got_title, 'password')
+        self.assertEqual(self.got_prompts, [('Password', False)])
+        self.assertEqual([], remain)
         self.verify_finished()
         
     def test_5_interactive_auth_fallback(self):
@@ -193,7 +196,7 @@ class AuthTest (unittest.TestCase):
         self.start_server()
         self.tc.connect(hostkey=self.public_host_key)
         remain = self.tc.auth_password('commie', 'cat')
-        self.assertEquals([], remain)
+        self.assertEqual([], remain)
         self.verify_finished()
 
     def test_6_auth_utf8(self):
@@ -202,8 +205,8 @@ class AuthTest (unittest.TestCase):
         """
         self.start_server()
         self.tc.connect(hostkey=self.public_host_key)
-        remain = self.tc.auth_password('utf8', u'\u2022')
-        self.assertEquals([], remain)
+        remain = self.tc.auth_password('utf8', _pwd)
+        self.assertEqual([], remain)
         self.verify_finished()
 
     def test_7_auth_non_utf8(self):
@@ -214,7 +217,7 @@ class AuthTest (unittest.TestCase):
         self.start_server()
         self.tc.connect(hostkey=self.public_host_key)
         remain = self.tc.auth_password('non-utf8', '\xff')
-        self.assertEquals([], remain)
+        self.assertEqual([], remain)
         self.verify_finished()
 
     def test_8_auth_gets_disconnected(self):
@@ -228,4 +231,4 @@ class AuthTest (unittest.TestCase):
             remain = self.tc.auth_password('bad-server', 'hello')
         except:
             etype, evalue, etb = sys.exc_info()
-            self.assert_(issubclass(etype, AuthenticationException))
+            self.assertTrue(issubclass(etype, AuthenticationException))

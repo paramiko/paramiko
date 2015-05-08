@@ -9,7 +9,7 @@
 # Software Foundation; either version 2.1 of the License, or (at your option)
 # any later version.
 #
-# Paramiko is distrubuted in the hope that it will be useful, but WITHOUT ANY
+# Paramiko is distributed in the hope that it will be useful, but WITHOUT ANY
 # WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
 # A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more
 # details.
@@ -25,9 +25,13 @@ import os
 import socket
 import sys
 import traceback
+from paramiko.py3compat import input
 
 import paramiko
-import interactive
+try:
+    import interactive
+except ImportError:
+    from . import interactive
 
 
 # setup logging
@@ -40,9 +44,9 @@ if len(sys.argv) > 1:
     if hostname.find('@') >= 0:
         username, hostname = hostname.split('@')
 else:
-    hostname = raw_input('Hostname: ')
+    hostname = input('Hostname: ')
 if len(hostname) == 0:
-    print '*** Hostname required.'
+    print('*** Hostname required.')
     sys.exit(1)
 port = 22
 if hostname.find(':') >= 0:
@@ -53,7 +57,7 @@ if hostname.find(':') >= 0:
 # get username
 if username == '':
     default_username = getpass.getuser()
-    username = raw_input('Username [%s]: ' % default_username)
+    username = input('Username [%s]: ' % default_username)
     if len(username) == 0:
         username = default_username
 password = getpass.getpass('Password for %s@%s: ' % (username, hostname))
@@ -63,19 +67,18 @@ password = getpass.getpass('Password for %s@%s: ' % (username, hostname))
 try:
     client = paramiko.SSHClient()
     client.load_system_host_keys()
-    client.set_missing_host_key_policy(paramiko.WarningPolicy)
-    print '*** Connecting...'
+    client.set_missing_host_key_policy(paramiko.WarningPolicy())
+    print('*** Connecting...')
     client.connect(hostname, port, username, password)
     chan = client.invoke_shell()
-    print repr(client.get_transport())
-    print '*** Here we go!'
-    print
+    print(repr(client.get_transport()))
+    print('*** Here we go!\n')
     interactive.interactive_shell(chan)
     chan.close()
     client.close()
 
-except Exception, e:
-    print '*** Caught exception: %s: %s' % (e.__class__, e)
+except Exception as e:
+    print('*** Caught exception: %s: %s' % (e.__class__, e))
     traceback.print_exc()
     try:
         client.close()
