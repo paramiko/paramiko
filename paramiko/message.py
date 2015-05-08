@@ -38,8 +38,6 @@ class Message (object):
     paramiko doesn't support yet.
     """
 
-    big_int = long(0xff000000)
-
     def __init__(self, content=None):
         """
         Create a new SSH2 message.
@@ -135,11 +133,7 @@ class Message (object):
 
         :return: a 32-bit unsigned `int`.
         """
-        byte = self.get_bytes(1)
-        if byte == max_byte:
-            return util.inflate_long(self.get_binary())
-        byte += self.get_bytes(3)
-        return struct.unpack('>I', byte)[0]
+        return struct.unpack('>I', self.get_bytes(4))[0]
 
     def get_size(self):
         """
@@ -251,11 +245,7 @@ class Message (object):
         @param n: integer to add
         @type n: int
         """
-        if n >= Message.big_int:
-            self.packet.write(max_byte)
-            self.add_string(util.deflate_long(n))
-        else:
-            self.packet.write(struct.pack('>I', n))
+        self.packet.write(struct.pack('>I', n))
         return self
 
     def add_int64(self, n):

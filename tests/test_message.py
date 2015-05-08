@@ -30,7 +30,7 @@ class MessageTest (unittest.TestCase):
     __a = b'\x00\x00\x00\x17\x07\x60\xe0\x90\x00\x00\x00\x01\x71\x00\x00\x00\x05\x68\x65\x6c\x6c\x6f\x00\x00\x03\xe8' + b'x' * 1000
     __b = b'\x01\x00\xf3\x00\x3f\x00\x00\x00\x10\x68\x75\x65\x79\x2c\x64\x65\x77\x65\x79\x2c\x6c\x6f\x75\x69\x65'
     __c = b'\x00\x00\x00\x00\x00\x00\x00\x05\x00\x00\xf5\xe4\xd3\xc2\xb1\x09\x00\x00\x00\x01\x11\x00\x00\x00\x07\x00\xf5\xe4\xd3\xc2\xb1\x09\x00\x00\x00\x06\x9a\x1b\x2c\x3d\x4e\xf7'
-    __d = b'\x00\x00\x00\x05\xff\x00\x00\x00\x05\x11\x22\x33\x44\x55\xff\x00\x00\x00\x0a\x00\xf0\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00\x03\x63\x61\x74\x00\x00\x00\x03\x61\x2c\x62'
+    __d = b'\x00\x00\x00\x05\x00\x00\x00\x00\x11"3D\x00\x00\x00\n\x00\xf0\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00\x03cat\x00\x00\x00\x03a,b'
 
     def test_1_encode(self):
         msg = Message()
@@ -83,8 +83,13 @@ class MessageTest (unittest.TestCase):
     def test_3_add(self):
         msg = Message()
         msg.add(5)
-        msg.add(0x1122334455)
-        msg.add(0xf00000000000000000)
+
+        import struct
+        self.assertRaises(struct.error, msg.add, 0x1122334455)
+        self.assertRaises(struct.error, msg.add, 0xf00000000000000000)
+        msg.add_int64(0x11223344)
+        self.assertRaises(struct.error, msg.add_int64, 0xf00000000000000000)
+        msg.add_mpint(0xf00000000000000000)
         msg.add(True)
         msg.add('cat')
         msg.add(['a', 'b'])
@@ -93,10 +98,10 @@ class MessageTest (unittest.TestCase):
     def test_4_misc(self):
         msg = Message(self.__d)
         self.assertEqual(msg.get_int(), 5)
-        self.assertEqual(msg.get_int(), 0x1122334455)
-        self.assertEqual(msg.get_int(), 0xf00000000000000000)
-        self.assertEqual(msg.get_so_far(), self.__d[:29])
-        self.assertEqual(msg.get_remainder(), self.__d[29:])
+        self.assertEqual(msg.get_int64(), 0x11223344)
+        self.assertEqual(msg.get_mpint(), 0xf00000000000000000)
+        self.assertEqual(msg.get_so_far(), self.__d[:26])
+        self.assertEqual(msg.get_remainder(), self.__d[26:])
         msg.rewind()
         self.assertEqual(msg.get_int(), 5)
         self.assertEqual(msg.get_so_far(), self.__d[:4])
