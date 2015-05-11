@@ -147,6 +147,8 @@ class Transport (threading.Thread, ClosingContextManager):
 
     def __init__(self,
                  sock,
+                 hostname,
+                 port,
                  default_window_size=DEFAULT_WINDOW_SIZE,
                  default_max_packet_size=DEFAULT_MAX_PACKET_SIZE,
                  gss_kex=False,
@@ -222,6 +224,12 @@ class Transport (threading.Thread, ClosingContextManager):
             else:
                 raise SSHException(
                     'Unable to connect to %s: %s' % (hostname, reason))
+        elif isinstance(sock, socket.socket):
+            try:
+                retry_on_signal(lambda: sock.connect((hostname, port)))
+            except socket.error as e:
+                reason = str(e)
+
         # okay, normal socket-ish flow here...
         threading.Thread.__init__(self)
         self.setDaemon(True)
