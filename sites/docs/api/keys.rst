@@ -17,6 +17,11 @@ RSA
 
 .. automodule:: paramiko.rsakey
 
+RSA Certificate
+===============
+
+.. automodule:: paramiko.rsacert
+
 ECDSA
 =====
 
