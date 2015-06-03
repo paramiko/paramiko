@@ -219,8 +219,8 @@ class SECURITY_ATTRIBUTES(ctypes.Structure):
 
     @descriptor.setter
     def descriptor(self, value):
-        self._descriptor = descriptor
-        self.lpSecurityDescriptor = ctypes.addressof(descriptor)
+        self._descriptor = value
+        self.lpSecurityDescriptor = ctypes.addressof(value)
 
 def GetTokenInformation(token, information_class):
     """
