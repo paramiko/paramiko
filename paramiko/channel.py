@@ -1220,6 +1220,18 @@ class ChannelFile (BufferedFile):
         self.channel.sendall(data)
         return len(data)
 
+    def getChannel(self):
+        return self.channel
+
+    def shutdown(self, how):
+        self.channel.shutdown(how)
+
+    def shutdown_read(self):
+        self.channel.shutdown_read()
+
+    def shutdown_write(self):
+        self.channel.shutdown_write()
+
 
 class ChannelStderrFile (ChannelFile):
     def __init__(self, channel, mode='r', bufsize=-1):
