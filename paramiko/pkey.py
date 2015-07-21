@@ -274,7 +274,7 @@ class PKey (object):
             start += 1
         # find end
         end = start
-        while (lines[end].strip() != '-----END ' + tag + ' PRIVATE KEY-----') and (end < len(lines)):
+        while end < len(lines) and lines[end].strip() != '-----END ' + tag + ' PRIVATE KEY-----':
             end += 1
         # if we trudged to the end of the file, just try to cope.
         try:
