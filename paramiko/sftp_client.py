@@ -685,9 +685,10 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
 
         .. versionadded:: 1.10
         """
+        file_size = self.stat(remotepath).st_size
         with self.open(remotepath, 'rb') as fr:
-            file_size = self.stat(remotepath).st_size
-            fr.prefetch()
+            fr.prefetch(file_size)
+
             size = 0
             while True:
                 data = fr.read(32768)
