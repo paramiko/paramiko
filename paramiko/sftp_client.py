@@ -690,11 +690,13 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
             fr.prefetch()
             size = 0
             while True:
-                data = fr.read(32768)
+                data = fr.read(32768, file_size)
                 fl.write(data)
                 size += len(data)
                 if callback is not None:
                     callback(size, file_size)
+                if size >= file_size:
+                    break
                 if len(data) == 0:
                     break
         return size

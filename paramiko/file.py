@@ -119,7 +119,7 @@ class BufferedFile (ClosingContextManager):
                 raise StopIteration
             return line
 
-    def read(self, size=None):
+    def read(self, size=None, file_size=0):
         """
         Read at most ``size`` bytes from the file (less if we hit the end of the
         file first).  If the ``size`` argument is negative or omitted, read all
@@ -173,6 +173,8 @@ class BufferedFile (ClosingContextManager):
                 break
             self._rbuffer += new_data
             self._realpos += len(new_data)
+            if self._realpos >= file_size:
+                break
         result = self._rbuffer[:size]
         self._rbuffer = self._rbuffer[size:]
         self._pos += len(result)
