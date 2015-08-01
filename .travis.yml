@@ -3,7 +3,6 @@ sudo: false
 python:
   - "2.6"
   - "2.7"
-  - "3.2"
   - "3.3"
   - "3.4"
 install:
@@ -19,9 +18,8 @@ script:
   # Run 'docs' first since its objects.inv is referred to by 'www'.
   # Also force warnings to be errors since most of them tend to be actual
   # problems.
-  # Finally, skip them under Python 3.2 due to sphinx shenanigans
-  - "[[ $TRAVIS_PYTHON_VERSION != 3.2 ]] && invoke docs -o -W || true"
-  - "[[ $TRAVIS_PYTHON_VERSION != 3.2 ]] && invoke www -o -W || true"
+  - "invoke docs -o -W || true"
+  - "invoke www -o -W || true"
 notifications:
   irc:
     channels: "irc.freenode.org#paramiko"

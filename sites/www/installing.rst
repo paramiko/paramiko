@@ -16,9 +16,8 @@ via `pip <http://pip-installer.org>`_::
     Users who want the bleeding edge can install the development version via
     ``pip install paramiko==dev``.
 
-We currently support **Python 2.6, 2.7, 3.3+, and PyPy** (Python **3.2** should
-also work but has a less-strong compatibility guarantee from us.) Users on
-Python 2.5 or older are urged to upgrade.
+We currently support **Python 2.6, 2.7, 3.3+, and PyPy** Users on Python 2.5 or
+older are urged to upgrade.
 
 Paramiko has two hard dependencies: the pure-Python ASN1 module ``pyasn1``, and
 the Cryptography library. Read on for details on installing ``cryptography``.
