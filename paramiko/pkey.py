@@ -28,8 +28,8 @@ from hashlib import md5
 from Crypto.Cipher import DES3, AES
 
 from paramiko import util
-from paramiko.common import o600, zero_byte
-from paramiko.py3compat import u, encodebytes, decodebytes, b
+from paramiko.common import o600
+from paramiko.py3compat import u, encodebytes, decodebytes, b, byte_chr
 from paramiko.ssh_exception import SSHException, PasswordRequiredException
 
 
@@ -333,9 +333,8 @@ class PKey (object):
             key = util.generate_key_bytes(md5, salt, password, keysize)
             if len(data) % blocksize != 0:
                 n = blocksize - len(data) % blocksize
-                #data += os.urandom(n)
-                # that would make more sense ^, but it confuses openssh.
-                data += zero_byte * n
+                # RFC2315 - padding should be n bytes of value (n)
+                data += byte_chr(n) * n
             data = cipher.new(key, mode, salt).encrypt(data)
             f.write('Proc-Type: 4,ENCRYPTED\n')
             f.write('DEK-Info: %s,%s\n' % (cipher_name, u(hexlify(salt)).upper()))
