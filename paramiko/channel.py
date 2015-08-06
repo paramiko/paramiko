@@ -1021,12 +1021,16 @@ class Channel(ClosingContextManager):
                 self.transport._send_user_message(m)
 
     def _feed(self, m):
-        if isinstance(m, bytes_types):
-            # passed from _feed_extended
-            s = m
-        else:
-            s = m.get_binary()
-        self.in_buffer.feed(s)
+        self.lock.acquire()
+        try:
+            if isinstance(m, bytes_types):
+                # passed from _feed_extended
+                s = m
+            else:
+                s = m.get_binary()
+            self.in_buffer.feed(s)
+        finally:
+            self.lock.release()
 
     def _feed_extended(self, m):
         code = m.get_int()
@@ -1039,7 +1043,12 @@ class Channel(ClosingContextManager):
         if self.combine_stderr:
             self._feed(s)
         else:
-            self.in_stderr_buffer.feed(s)
+            self.lock.acquire()
+            try:
+                self.in_stderr_buffer.feed(s)
+            finally:
+                self.lock.release()
+
 
     def _window_adjust(self, m):
         nbytes = m.get_int()
