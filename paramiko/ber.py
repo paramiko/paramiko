@@ -104,7 +104,8 @@ class BER(object):
         # no need to support ident > 31 here
         self.content += byte_chr(ident)
         if len(val) > 0x7f:
-            lenstr = util.deflate_long(len(val))
+            # no sign padding as content length is not 2's complement
+            lenstr = util.deflate_long(len(val), add_sign_padding=False)
             self.content += byte_chr(0x80 + len(lenstr)) + lenstr
         else:
             self.content += byte_chr(len(val))
