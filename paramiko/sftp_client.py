@@ -589,6 +589,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
 
         .. versionadded:: 1.4
         """
+        # TODO: make class initialize with self._cwd set to self.normalize('.')
         return self._cwd and u(self._cwd)
 
     def putfo(self, fl, remotepath, file_size=0, callback=None, confirm=True):
