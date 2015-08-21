@@ -140,9 +140,9 @@ class NoValidConnectionsError(socket.error):
     This exception class wraps multiple "real" underlying connection errors,
     all of which represent failed connection attempts. Because these errors are
     not guaranteed to all be of the same error type (i.e. different errno,
-    class, message, etc) we expose a single unified error message and a
-    ``None`` errno so that instances of this class match most normal handling
-    of `socket.error` objects.
+    `socket.error` subclass, message, etc) we expose a single unified error
+    message and a ``None`` errno so that instances of this class match most
+    normal handling of `socket.error` objects.
     
     To see the wrapped exception objects, access the ``errors`` attribute.
     ``errors`` is a dict whose keys are address tuples (e.g. ``('127.0.0.1',
