@@ -2,6 +2,7 @@
 Changelog
 =========
 
+* :bug:`461` Correct the obvious typo in SECURITY_ATTRIBUTES descriptor setter.
 * :bug:`22 major` Try harder to connect to multiple network families (e.g. IPv4
   vs IPv6) in case of connection issues; this helps with problems such as hosts
   which resolve both IPv4 and IPv6 addresses but are only listening on IPv4.
