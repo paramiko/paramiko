@@ -746,10 +746,10 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
                     raise Exception('unknown type for %r type %r' % (item, type(item)))
             num = self.request_number
             self._expecting[num] = fileobj
-            self._send_packet(t, msg)
             self.request_number += 1
         finally:
             self._lock.release()
+        self._send_packet(t, msg)
         return num
 
     def _read_response(self, waitfor=None):
@@ -760,15 +760,19 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
                 raise SSHException('Server connection dropped: %s' % str(e))
             msg = Message(data)
             num = msg.get_int()
-            if num not in self._expecting:
-                # might be response for a file that was closed before responses came back
-                self._log(DEBUG, 'Unexpected response #%d' % (num,))
-                if waitfor is None:
-                    # just doing a single check
-                    break
-                continue
-            fileobj = self._expecting[num]
-            del self._expecting[num]
+            self._lock.acquire()
+            try:
+                if num not in self._expecting:
+                    # might be response for a file that was closed before responses came back
+                    self._log(DEBUG, 'Unexpected response #%d' % (num,))
+                    if waitfor is None:
+                        # just doing a single check
+                        break
+                    continue
+                fileobj = self._expecting[num]
+                del self._expecting[num]
+            finally:
+                self._lock.release()
             if num == waitfor:
                 # synchronous
                 if t == CMD_STATUS:

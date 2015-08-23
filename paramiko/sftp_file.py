@@ -460,8 +460,8 @@ class SFTPFile (BufferedFile):
         # do these read requests in a temporary thread because there may be
         # a lot of them, so it may block.
         for offset, length in chunks:
+            num = self.sftp._async_request(self, CMD_READ, self.handle, long(offset), int(length))
             with self._prefetch_lock:
-                num = self.sftp._async_request(self, CMD_READ, self.handle, long(offset), int(length))
                 self._prefetch_extents[num] = (offset, length)
 
     def _async_response(self, t, msg, num):
@@ -475,13 +475,17 @@ class SFTPFile (BufferedFile):
         if t != CMD_DATA:
             raise SFTPError('Expected data')
         data = msg.get_string()
-        with self._prefetch_lock:
-            offset, length = self._prefetch_extents[num]
-            self._prefetch_data[offset] = data
-            del self._prefetch_extents[num]
-            if len(self._prefetch_extents) == 0:
-                self._prefetch_done = True
-    
+        while True:
+            with self._prefetch_lock:
+                # spin if in race with _prefetch_thread
+                if self._prefetch_extents.has_key(num):
+                    offset, length = self._prefetch_extents[num]
+                    self._prefetch_data[offset] = data
+                    del self._prefetch_extents[num]
+                    if len(self._prefetch_extents) == 0:
+                        self._prefetch_done = True
+                    break
+
     def _check_exception(self):
         """if there's a saved exception, raise & clear it"""
         if self._saved_exception is not None:
