@@ -478,7 +478,7 @@ class SFTPFile (BufferedFile):
         while True:
             with self._prefetch_lock:
                 # spin if in race with _prefetch_thread
-                if self._prefetch_extents.has_key(num):
+                if num in self._prefetch_extents:
                     offset, length = self._prefetch_extents[num]
                     self._prefetch_data[offset] = data
                     del self._prefetch_extents[num]
