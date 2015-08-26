@@ -379,7 +379,7 @@ class SFTPFile (BufferedFile):
         """
         self.pipelined = pipelined
     
-    def prefetch(self):
+    def prefetch(self, size):
         """
         Pre-fetch the remaining contents of this file in anticipation of future
         `.read` calls.  If reading the entire file, pre-fetching can
@@ -393,7 +393,6 @@ class SFTPFile (BufferedFile):
 
         .. versionadded:: 1.5.1
         """
-        size = self.stat().st_size
         # queue up async reads for the rest of the file
         chunks = []
         n = self._realpos
