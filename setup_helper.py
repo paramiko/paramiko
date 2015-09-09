@@ -124,7 +124,12 @@ def make_tarball(base_name, base_dir, compress='gzip', verbose=0, dry_run=0,
         tar = tarfile.open(archive_name, mode=mode)
         # This recursively adds everything underneath base_dir
         try:
-            tar.add(base_dir, filter=_set_uid_gid)
+            try:
+                # Support for the `filter' parameter was added in Python 2.7,
+                # earlier versions will raise TypeError.
+                tar.add(base_dir, filter=_set_uid_gid)
+            except TypeError:
+                tar.add(base_dir)
         finally:
             tar.close()
 
