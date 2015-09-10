@@ -700,7 +700,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
                     break
         return size
 
-    def get(self, remotepath, localpath, callback=None):
+    def get(self, remotepath, localpath, preserve=False, callback=None):
         """
         Copy a remote file (``remotepath``) from the SFTP server to the local
         host as ``localpath``.  Any exception raised by operations will be
@@ -708,6 +708,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
 
         :param str remotepath: the remote file to copy
         :param str localpath: the destination path on the local host
+        :param bool preserve: if set to True, scp preserves original atime and mtime of remote file
         :param callable callback:
             optional callback function (form: ``func(int, int)``) that accepts
             the bytes transferred so far and the total bytes to be transferred
@@ -716,12 +717,18 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         .. versionchanged:: 1.7.4
             Added the ``callback`` param
         """
-        file_size = self.stat(remotepath).st_size
+        file_stat = self.stat(remotepath)
+        file_size = file_stat.st_size
         with open(localpath, 'wb') as fl:
             size = self.getfo(remotepath, fl, callback)
+
+        if preserve:
+            os.utime(localpath, (file_stat.st_atime, file_stat.st_mtime))
+
         s = os.stat(localpath)
         if s.st_size != size:
             raise IOError('size mismatch in get!  %d != %d' % (s.st_size, size))
+
 
     ###  internals...
 
