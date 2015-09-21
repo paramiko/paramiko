@@ -59,7 +59,7 @@ class BufferedFile (ClosingContextManager):
 
     def __del__(self):
         self.close()
-        
+
     def __iter__(self):
         """
         Returns an iterator that can be used to iterate over the lines in this
@@ -119,6 +119,41 @@ class BufferedFile (ClosingContextManager):
                 raise StopIteration
             return line
 
+    def readable(self):
+        """
+        Check if the file can be read from.
+
+        :return:
+            `True` if the file can be read from. If `False`, :meth`read` will
+            raise an exception
+        """
+        return (self._flags & self.FLAG_READ) == self.FLAG_READ
+
+    def writable(self):
+        """
+        Check if the file can be written to.
+
+        :return:
+            `True` if the file can be written to. If `False`, :meth:`write`
+            will raise an exception
+        """
+        return (self._flags & self.FLAG_WRITE) == self.FLAG_WRITE
+
+    def seekable(self):
+        """
+        Check if the file supports random access.
+
+        :return:
+            `True` if the file supports random access. If `False`,
+            :meth:`seek` will raise an exception
+        """
+        return False
+
+    def readinto(self, buff):
+        data = self.read(len(buff))
+        buff[:len(data)] = data
+        return len(data)
+
     def read(self, size=None):
         """
         Read at most ``size`` bytes from the file (less if we hit the end of the
@@ -155,12 +190,12 @@ class BufferedFile (ClosingContextManager):
                 result += new_data
                 self._realpos += len(new_data)
                 self._pos += len(new_data)
-            return result 
+            return result
         if size <= len(self._rbuffer):
             result = self._rbuffer[:size]
             self._rbuffer = self._rbuffer[size:]
             self._pos += len(result)
-            return result 
+            return result
         while len(self._rbuffer) < size:
             read_size = size - len(self._rbuffer)
             if self._flags & self.FLAG_BUFFERED:
@@ -176,7 +211,7 @@ class BufferedFile (ClosingContextManager):
         result = self._rbuffer[:size]
         self._rbuffer = self._rbuffer[size:]
         self._pos += len(result)
-        return result 
+        return result
 
     def readline(self, size=None):
         """
@@ -254,7 +289,7 @@ class BufferedFile (ClosingContextManager):
         xpos = pos + 1
         if (line[pos] == cr_byte_value) and (xpos < len(line)) and (line[xpos] == linefeed_byte_value):
             xpos += 1
-        # if the string was truncated, _rbuffer needs to have the string after 
+        # if the string was truncated, _rbuffer needs to have the string after
         # the newline character plus the truncated part of the line we stored
         # earlier in _rbuffer
         self._rbuffer = line[xpos:] + self._rbuffer if truncated else line[xpos:]
@@ -300,7 +335,7 @@ class BufferedFile (ClosingContextManager):
             If a file is opened in append mode (``'a'`` or ``'a+'``), any seek
             operations will be undone at the next write (as the file position
             will move back to the end of the file).
-        
+
         :param int offset:
             position to move to within the file, relative to ``whence``.
         :param int whence:
