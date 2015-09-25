@@ -150,6 +150,13 @@ class BufferedFile (ClosingContextManager):
         return False
 
     def readinto(self, buff):
+        """
+        Read up to ``len(buff)`` bytes into :class:`bytearray` *buff* and
+        return the number of bytes read.
+
+        :return:
+            the number of bytes read
+        """
         data = self.read(len(buff))
         buff[:len(data)] = data
         return len(data)

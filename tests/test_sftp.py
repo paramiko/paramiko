@@ -429,6 +429,7 @@ class SFTPTest (unittest.TestCase):
                     line_number += 1
                     pos_list.append(loc)
                     loc = f.tell()
+                self.assertTrue(f.seekable())
                 f.seek(pos_list[6], f.SEEK_SET)
                 self.assertEqual(f.readline(), 'Nouzilly, France.\n')
                 f.seek(pos_list[17], f.SEEK_SET)

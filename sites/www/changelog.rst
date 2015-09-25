@@ -2,6 +2,7 @@
 Changelog
 =========
 
+* Add missing file-like object methods for BufferedFile and SFTPFile.
 * :support:`582` Fix some old ``setup.py`` related helper code which was
   breaking ``bdist_dumb`` on Mac OS X. Thanks to Peter Odding for the patch.
 * :bug:`22 major` Try harder to connect to multiple network families (e.g. IPv4
@@ -168,7 +169,7 @@ Changelog
   Plugaru.
 * :bug:`-` Fix logging error in sftp_client for filenames containing the '%'
   character. Thanks to Antoine Brenner.
-* :bug:`308` Fix regression in dsskey.py that caused sporadic signature 
+* :bug:`308` Fix regression in dsskey.py that caused sporadic signature
   verification failures. Thanks to Chris Rose.
 * :support:`299` Use deterministic signatures for ECDSA keys for improved
   security. Thanks to Alex Gaynor.
@@ -191,7 +192,7 @@ Changelog
 * :feature:`16` **Python 3 support!** Our test suite passes under Python 3, and
   it (& Fabric's test suite) continues to pass under Python 2. **Python 2.5 is
   no longer supported with this change!**
-  
+
   The merged code was built on many contributors' efforts, both code &
   feedback. In no particular order, we thank Daniel Goertzen, Ivan Kolodyazhny,
   Tomi Pieviläinen, Jason R. Coombs, Jan N. Schulze, ``@Lazik``, Dorian Pula,
