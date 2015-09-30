@@ -2,6 +2,10 @@
 Changelog
 =========
 
+* :bug:`490` Skip invalid/unparseable lines in ``known_hosts`` files, instead
+  of raising `SSHException`. This brings Paramiko's behavior more in line with
+  OpenSSH, which silently ignores such input. Catch & patch courtesy of Martin
+  Topholm.
 * :bug:`404` Print details when displaying `BadHostKeyException` objects
   (expected vs received data) instead of just "hey shit broke". Patch credit:
   Loic Dachary.
