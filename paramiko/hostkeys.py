@@ -19,6 +19,7 @@
 
 import binascii
 import os
+import ssh_exception
 
 from hashlib import sha1
 from hmac import HMAC
@@ -96,7 +97,10 @@ class HostKeys (MutableMapping):
                 line = line.strip()
                 if (len(line) == 0) or (line[0] == '#'):
                     continue
-                e = HostKeyEntry.from_line(line, lineno)
+                try:
+                    e = HostKeyEntry.from_line(line, lineno)
+                except ssh_exception.SSHException:
+                    continue
                 if e is not None:
                     _hostnames = e.hostnames
                     for h in _hostnames:
