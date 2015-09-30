@@ -106,7 +106,7 @@ MapViewOfFile.restype = ctypes.wintypes.HANDLE
 
 class MemoryMap(object):
     """
-    A memory map object which can have security attributes overrideden.
+    A memory map object which can have security attributes overridden.
     """
     def __init__(self, name, length, security_attributes=None):
         self.name = name
@@ -219,8 +219,8 @@ class SECURITY_ATTRIBUTES(ctypes.Structure):
 
     @descriptor.setter
     def descriptor(self, value):
-        self._descriptor = descriptor
-        self.lpSecurityDescriptor = ctypes.addressof(descriptor)
+        self._descriptor = value
+        self.lpSecurityDescriptor = ctypes.addressof(value)
 
 def GetTokenInformation(token, information_class):
     """
