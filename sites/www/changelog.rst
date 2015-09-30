@@ -2,6 +2,8 @@
 Changelog
 =========
 
+* :support:`516 backported` Document `~paramiko.agent.AgentRequestHandler`.
+  Thanks to ``@toejough`` for report & suggestions.
 * :bug:`496` Fix a handful of small but critical bugs in Paramiko's GSSAPI
   support (note: this includes switching from PyCrypo's Random to
   `os.urandom`). Thanks to Anselm Kruis for catch & patch.
