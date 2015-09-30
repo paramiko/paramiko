@@ -2,6 +2,10 @@
 Changelog
 =========
 
+* :bug:`353` (via :issue:`482`) Fix a bug introduced in the Python 3 port
+  which caused ``OverFlowError`` (and other symptoms) in SFTP functionality.
+  Thanks to ``@dboreham`` for leading the troubleshooting charge, and to
+  Scott Maxwell for the final patch.
 * :support:`582` Fix some old ``setup.py`` related helper code which was
   breaking ``bdist_dumb`` on Mac OS X. Thanks to Peter Odding for the patch.
 * :bug:`22 major` Try harder to connect to multiple network families (e.g. IPv4

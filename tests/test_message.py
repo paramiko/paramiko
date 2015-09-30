@@ -92,12 +92,12 @@ class MessageTest (unittest.TestCase):
 
     def test_4_misc(self):
         msg = Message(self.__d)
-        self.assertEqual(msg.get_int(), 5)
-        self.assertEqual(msg.get_int(), 0x1122334455)
-        self.assertEqual(msg.get_int(), 0xf00000000000000000)
+        self.assertEqual(msg.get_adaptive_int(), 5)
+        self.assertEqual(msg.get_adaptive_int(), 0x1122334455)
+        self.assertEqual(msg.get_adaptive_int(), 0xf00000000000000000)
         self.assertEqual(msg.get_so_far(), self.__d[:29])
         self.assertEqual(msg.get_remainder(), self.__d[29:])
         msg.rewind()
-        self.assertEqual(msg.get_int(), 5)
+        self.assertEqual(msg.get_adaptive_int(), 5)
         self.assertEqual(msg.get_so_far(), self.__d[:4])
         self.assertEqual(msg.get_remainder(), self.__d[4:])
