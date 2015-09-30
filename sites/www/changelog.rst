@@ -2,6 +2,10 @@
 Changelog
 =========
 
+* :bug:`353` (via :issue:`482`) Fix a bug introduced in the Python 3 port
+  which caused ``OverFlowError`` (and other symptoms) in SFTP functionality.
+  Thanks to ``@dboreham`` for leading the troubleshooting charge, and to
+  Scott Maxwell for the final patch.
 * :bug:`402` Check to see if an SSH agent is actually present before trying to
   forward it to the remote end. This replaces what was usually a useless
   ``TypeError`` with a human-readable ``AuthenticationError``. Credit to Ken
