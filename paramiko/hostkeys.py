@@ -19,7 +19,6 @@
 
 import binascii
 import os
-import ssh_exception
 
 from hashlib import sha1
 from hmac import HMAC
@@ -36,6 +35,7 @@ from paramiko.dsskey import DSSKey
 from paramiko.rsakey import RSAKey
 from paramiko.util import get_logger, constant_time_bytes_eq
 from paramiko.ecdsakey import ECDSAKey
+from paramiko.ssh_exception import SSHException
 
 
 class HostKeys (MutableMapping):
@@ -99,7 +99,7 @@ class HostKeys (MutableMapping):
                     continue
                 try:
                     e = HostKeyEntry.from_line(line, lineno)
-                except ssh_exception.SSHException:
+                except SSHException:
                     continue
                 if e is not None:
                     _hostnames = e.hostnames
