@@ -2,6 +2,10 @@
 Changelog
 =========
 
+* :bug:`469` (also :issue:`488`, :issue:`461` and like a dozen others) Fix a
+  typo introduced in the 1.15 release which broke WinPageant support. Thanks to
+  everyone who submitted patches, and to Steve Cohen who was the lucky winner
+  of the cherry-pick lottery.
 * :bug:`353` (via :issue:`482`) Fix a bug introduced in the Python 3 port
   which caused ``OverFlowError`` (and other symptoms) in SFTP functionality.
   Thanks to ``@dboreham`` for leading the troubleshooting charge, and to
