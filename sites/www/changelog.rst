@@ -2,6 +2,9 @@
 Changelog
 =========
 
+* :bug:`404` Print details when displaying `BadHostKeyException` objects
+  (expected vs received data) instead of just "hey shit broke". Patch credit:
+  Loic Dachary.
 * :bug:`469` (also :issue:`488`, :issue:`461` and like a dozen others) Fix a
   typo introduced in the 1.15 release which broke WinPageant support. Thanks to
   everyone who submitted patches, and to Steve Cohen who was the lucky winner
