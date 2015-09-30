@@ -10,6 +10,21 @@ Changelog
   never completes.
   Credit to ``@dacut`` for initial report and patch and to Olle Lundberg for
   re-implementation.
+* :bug:`490` Skip invalid/unparseable lines in ``known_hosts`` files, instead
+  of raising `SSHException`. This brings Paramiko's behavior more in line with
+  OpenSSH, which silently ignores such input. Catch & patch courtesy of Martin
+  Topholm.
+* :bug:`404` Print details when displaying `BadHostKeyException` objects
+  (expected vs received data) instead of just "hey shit broke". Patch credit:
+  Loic Dachary.
+* :bug:`469` (also :issue:`488`, :issue:`461` and like a dozen others) Fix a
+  typo introduced in the 1.15 release which broke WinPageant support. Thanks to
+  everyone who submitted patches, and to Steve Cohen who was the lucky winner
+  of the cherry-pick lottery.
+* :bug:`353` (via :issue:`482`) Fix a bug introduced in the Python 3 port
+  which caused ``OverFlowError`` (and other symptoms) in SFTP functionality.
+  Thanks to ``@dboreham`` for leading the troubleshooting charge, and to
+  Scott Maxwell for the final patch.
 * :bug:`402` Check to see if an SSH agent is actually present before trying to
   forward it to the remote end. This replaces what was usually a useless
   ``TypeError`` with a human-readable ``AuthenticationError``. Credit to Ken
