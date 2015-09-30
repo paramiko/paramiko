@@ -2,14 +2,10 @@
 Changelog
 =========
 
-* :bug:`439` Resolve the timeout issue on lost conection.
-  When the destination disappears on an established session paramiko will hang on trying to open a channel.
-  Credit to ``@vazir`` for patch.
-* :bug:`62` Add timeout for handshake completion.
-  This adds a mechanism for timing out a connection if the ssh handshake
-  never completes.
-  Credit to ``@dacut`` for initial report and patch and to Olle Lundberg for
-  re-implementation.
+* :bug:`491` (combines :issue:`62` and :issue:`439`) Implement timeout
+  functionality to address hangs from dropped network connections and/or failed
+  handshakes. Credit to ``@vazir`` and ``@dacut`` for the original patches and
+  to Olle Lundberg for reimplementation.
 * :bug:`490` Skip invalid/unparseable lines in ``known_hosts`` files, instead
   of raising `SSHException`. This brings Paramiko's behavior more in line with
   OpenSSH, which silently ignores such input. Catch & patch courtesy of Martin
