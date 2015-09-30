@@ -37,6 +37,7 @@ This module provides GSS-API / SSPI Key Exchange as defined in :rfc:`4462`.
 .. versionadded:: 1.15
 """
 
+import os
 from hashlib import sha1
 
 from paramiko.common import *
@@ -130,7 +131,7 @@ class KexGSSGroup1(object):
         larger than q (but this is a tiny tiny subset of potential x).
         """
         while 1:
-            x_bytes = self.transport.rng.read(128)
+            x_bytes = os.urandom(128)
             x_bytes = byte_mask(x_bytes[0], 0x7f) + x_bytes[1:]
             if (x_bytes[:8] != self.b7fffffffffffffff) and \
                    (x_bytes[:8] != self.b0000000000000000):
@@ -366,7 +367,7 @@ class KexGSSGex(object):
             qhbyte <<= 1
             qmask >>= 1
         while True:
-            x_bytes = self.transport.rng.read(byte_count)
+            x_bytes = os.urandom(byte_count)
             x_bytes = byte_mask(x_bytes[0], qmask) + x_bytes[1:]
             x = util.inflate_long(x_bytes, 1)
             if (x > 1) and (x < q):

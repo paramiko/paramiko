@@ -2,6 +2,9 @@
 Changelog
 =========
 
+* :bug:`496` Fix a handful of small but critical bugs in Paramiko's GSSAPI
+  support (note: this includes switching from PyCrypo's Random to
+  `os.urandom`). Thanks to Anselm Kruis for catch & patch.
 * :bug:`491` (combines :issue:`62` and :issue:`439`) Implement timeout
   functionality to address hangs from dropped network connections and/or failed
   handshakes. Credit to ``@vazir`` and ``@dacut`` for the original patches and
