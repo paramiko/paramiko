@@ -381,7 +381,7 @@ class Transport (threading.Thread, ClosingContextManager):
         self.completion_event = None    # user-defined event callbacks
         self.banner_timeout = 15        # how long (seconds) to wait for the SSH banner
         self.handshake_timeout = 15     # how long (seconds) to wait for the handshake to finish after SSH banner sent.
-
+        self.negotiation_timeout = 60   # how long (seconds) to wait negotiation result
 
         # server mode:
         self.server_mode = False
@@ -485,7 +485,8 @@ class Transport (threading.Thread, ClosingContextManager):
         # synchronous, wait for a result
         self.completion_event = event = threading.Event()
         self.start()
-        while True:
+        begin_time = time.time()
+        while time.time() - begin_time < self.negotiation_timeout:
             event.wait(0.1)
             if not self.active:
                 e = self.get_exception()
@@ -494,6 +495,9 @@ class Transport (threading.Thread, ClosingContextManager):
                 raise SSHException('Negotiation failed.')
             if event.is_set():
                 break
+        else:
+            raise SSHException('Negotiation timed out (%d seconds)'
+                               % self.negotiation_timeout)
 
     def start_server(self, event=None, server=None):
         """
