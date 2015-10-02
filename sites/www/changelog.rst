@@ -2,6 +2,7 @@
 Changelog
 =========
 
+* :release:`1.15.3 <2015-10-02>`
 * :support:`554 backported` Fix inaccuracies in the docstring for the ECDSA key
   class. Thanks to Jared Hance for the patch.
 * :support:`516 backported` Document `~paramiko.agent.AgentRequestHandler`.
