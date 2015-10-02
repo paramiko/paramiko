@@ -2,6 +2,8 @@
 Changelog
 =========
 
+* :support:`554 backported` Fix inaccuracies in the docstring for the ECDSA key
+  class. Thanks to Jared Hance for the patch.
 * :support:`516 backported` Document `~paramiko.agent.AgentRequestHandler`.
   Thanks to ``@toejough`` for report & suggestions.
 * :bug:`496` Fix a handful of small but critical bugs in Paramiko's GSSAPI
