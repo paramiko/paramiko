@@ -2,6 +2,7 @@
 Changelog
 =========
 
+* :release:`1.15.3 <2015-10-02>`
 * :support:`554 backported` Fix inaccuracies in the docstring for the ECDSA key
   class. Thanks to Jared Hance for the patch.
 * :support:`516 backported` Document `~paramiko.agent.AgentRequestHandler`.
@@ -14,12 +15,12 @@ Changelog
   handshakes. Credit to ``@vazir`` and ``@dacut`` for the original patches and
   to Olle Lundberg for reimplementation.
 * :bug:`490` Skip invalid/unparseable lines in ``known_hosts`` files, instead
-  of raising `SSHException`. This brings Paramiko's behavior more in line with
-  OpenSSH, which silently ignores such input. Catch & patch courtesy of Martin
-  Topholm.
-* :bug:`404` Print details when displaying `BadHostKeyException` objects
-  (expected vs received data) instead of just "hey shit broke". Patch credit:
-  Loic Dachary.
+  of raising `~paramiko.ssh_exception.SSHException`. This brings Paramiko's
+  behavior more in line with OpenSSH, which silently ignores such input. Catch
+  & patch courtesy of Martin Topholm.
+* :bug:`404` Print details when displaying
+  `~paramiko.ssh_exception.BadHostKeyException` objects (expected vs received
+  data) instead of just "hey shit broke". Patch credit: Loic Dachary.
 * :bug:`469` (also :issue:`488`, :issue:`461` and like a dozen others) Fix a
   typo introduced in the 1.15 release which broke WinPageant support. Thanks to
   everyone who submitted patches, and to Steve Cohen who was the lucky winner
@@ -37,8 +38,9 @@ Changelog
   foundational patchset.
 * :bug:`402` Check to see if an SSH agent is actually present before trying to
   forward it to the remote end. This replaces what was usually a useless
-  ``TypeError`` with a human-readable ``AuthenticationError``. Credit to Ken
-  Jordan for the fix and Yvan Marques for original report.
+  ``TypeError`` with a human-readable
+  `~paramiko.ssh_exception.AuthenticationException`. Credit to Ken Jordan for
+  the fix and Yvan Marques for original report.
 * :release:`1.15.2 <2014-12-19>`
 * :release:`1.14.2 <2014-12-19>`
 * :release:`1.13.3 <2014-12-19>`
