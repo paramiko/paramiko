@@ -25,7 +25,8 @@ def release(ctx):
     # Move the built docs into where Epydocs used to live
     target = 'docs'
     rmtree(target, ignore_errors=True)
-    copytree(docs_build, target)
+    # TODO: make it easier to yank out this config val from the docs coll
+    copytree('sites/docs/_build', target)
     # Publish
     publish(ctx)
     # Remind
