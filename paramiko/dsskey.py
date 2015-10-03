@@ -31,7 +31,7 @@ from paramiko.py3compat import long
 from paramiko.ssh_exception import SSHException
 from paramiko.message import Message
 from paramiko.ber import BER, BERException
-from paramiko.pkey import PKey
+from paramiko.pkey import PKey, KeyFormatException
 
 
 class DSSKey (PKey):
@@ -60,7 +60,7 @@ class DSSKey (PKey):
             if msg is None:
                 raise SSHException('Key object may not be empty')
             if msg.get_text() != 'ssh-dss':
-                raise SSHException('Invalid key')
+                raise KeyFormatException('Invalid key')
             self.p = msg.get_mpint()
             self.q = msg.get_mpint()
             self.g = msg.get_mpint()
@@ -187,9 +187,9 @@ class DSSKey (PKey):
         try:
             keylist = BER(data).decode()
         except BERException as e:
-            raise SSHException('Unable to parse key file: ' + str(e))
+            raise KeyFormatException('Unable to parse key file: ' + str(e))
         if (type(keylist) is not list) or (len(keylist) < 6) or (keylist[0] != 0):
-            raise SSHException('not a valid DSA private key file (bad ber encoding)')
+            raise KeyFormatException('not a valid DSA private key file (bad ber encoding)')
         self.p = keylist[1]
         self.q = keylist[2]
         self.g = keylist[3]

@@ -54,10 +54,11 @@ class PKey (object):
         :param .Message msg:
             an optional SSH `.Message` containing a public key of this type.
         :param str data: an optional string containing a public key of this type
-
+        
+        :raises KeyFormatException:
+            if a key cannot be created from the ``data`` or ``msg`` given.
         :raises SSHException:
-            if a key cannot be created from the ``data`` or ``msg`` given, or
-            no key was passed in.
+            if no key was passed in.
         """
         pass
 
@@ -178,7 +179,7 @@ class PKey (object):
         :raises IOError: if there was an error reading the file
         :raises PasswordRequiredException: if the private key file is
             encrypted, and ``password`` is ``None``
-        :raises SSHException: if the key file is invalid
+        :raises KeyFormatException: if the key file is invalid
         """
         key = cls(filename=filename, password=password)
         return key
@@ -199,7 +200,7 @@ class PKey (object):
         :raises IOError: if there was an error reading the key
         :raises PasswordRequiredException: if the private key file is encrypted,
             and ``password`` is ``None``
-        :raises SSHException: if the key file is invalid
+        :raises KeyFormatException: if the key file is invalid
         """
         key = cls(file_obj=file_obj, password=password)
         return key
@@ -249,7 +250,7 @@ class PKey (object):
         :raises IOError: if there was an error reading the file.
         :raises PasswordRequiredException: if the private key file is
             encrypted, and ``password`` is ``None``.
-        :raises SSHException: if the key file is invalid.
+        :raises KeyFormatException: if the key file is invalid.
         """
         with open(filename, 'r') as f:
             data = self._read_private_key(tag, f, password)
@@ -261,7 +262,7 @@ class PKey (object):
         while (start < len(lines)) and (lines[start].strip() != '-----BEGIN ' + tag + ' PRIVATE KEY-----'):
             start += 1
         if start >= len(lines):
-            raise SSHException('not a valid ' + tag + ' private key file')
+            raise KeyFormatException('not a valid ' + tag + ' private key file')
         # parse any headers first
         headers = {}
         start += 1
@@ -279,19 +280,19 @@ class PKey (object):
         try:
             data = decodebytes(b(''.join(lines[start:end])))
         except base64.binascii.Error as e:
-            raise SSHException('base64 decoding error: ' + str(e))
+            raise KeyFormatException('base64 decoding error: ' + str(e))
         if 'proc-type' not in headers:
             # unencryped: done
             return data
         # encrypted keyfile: will need a password
         if headers['proc-type'] != '4,ENCRYPTED':
-            raise SSHException('Unknown private key structure "%s"' % headers['proc-type'])
+            raise KeyFormatException('Unknown private key structure "%s"' % headers['proc-type'])
         try:
             encryption_type, saltstr = headers['dek-info'].split(',')
         except:
-            raise SSHException("Can't parse DEK-info in private key file")
+            raise KeyFormatException("Can't parse DEK-info in private key file")
         if encryption_type not in self._CIPHER_TABLE:
-            raise SSHException('Unknown private key cipher "%s"' % encryption_type)
+            raise KeyFormatException('Unknown private key cipher "%s"' % encryption_type)
         # if no password was passed in, raise an exception pointing out that we need one
         if password is None:
             raise PasswordRequiredException('Private key file is encrypted')
@@ -347,3 +348,11 @@ class PKey (object):
         f.write(s)
         f.write('\n')
         f.write('-----END %s PRIVATE KEY-----\n' % tag)
+
+
+class KeyFormatException(SSHException):
+    """
+    Exception raised when an attempt to read a key fails because the key is
+    malformed.
+    """
+    pass

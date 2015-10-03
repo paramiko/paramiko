@@ -27,7 +27,7 @@ from ecdsa import SigningKey, VerifyingKey, der, curves
 
 from paramiko.common import four_byte, one_byte
 from paramiko.message import Message
-from paramiko.pkey import PKey
+from paramiko.pkey import PKey, KeyFormatException
 from paramiko.py3compat import byte_chr, u
 from paramiko.ssh_exception import SSHException
 
@@ -56,14 +56,14 @@ class ECDSAKey (PKey):
             if msg is None:
                 raise SSHException('Key object may not be empty')
             if msg.get_text() != 'ecdsa-sha2-nistp256':
-                raise SSHException('Invalid key')
+                raise KeyFormatException('Invalid key')
             curvename = msg.get_text()
             if curvename != 'nistp256':
-                raise SSHException("Can't handle curve of type %s" % curvename)
+                raise KeyFormatException("Can't handle curve of type %s" % curvename)
 
             pointinfo = msg.get_binary()
             if pointinfo[0:1] != four_byte:
-                raise SSHException('Point compression is being used: %s' %
+                raise KeyFormatException('Point compression is being used: %s' %
                                    binascii.hexlify(pointinfo))
             self.verifying_key = VerifyingKey.from_string(pointinfo[1:],
                                                           curve=curves.NIST256p,
