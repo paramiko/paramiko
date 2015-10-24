@@ -369,4 +369,3 @@ class KexTest (unittest.TestCase):
         self.assertEqual(x, hexlify(transport._message.asbytes()).upper())
         self.assertTrue(transport._activated)
 
-
