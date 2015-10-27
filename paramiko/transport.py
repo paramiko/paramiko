@@ -98,7 +98,7 @@ class Transport (threading.Thread, ClosingContextManager):
                           'aes256-cbc', '3des-cbc', 'arcfour128', 'arcfour256')
     _preferred_macs = ('hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96')
     _preferred_keys = ('ssh-rsa', 'ssh-dss', 'ecdsa-sha2-nistp256')
-    _preferred_kex =  ( 'diffie-hellman-group14-sha1', 'diffie-hellman-group-exchange-sha1' , 'diffie-hellman-group1-sha1')
+    _preferred_kex = ('diffie-hellman-group14-sha1', 'diffie-hellman-group-exchange-sha1' , 'diffie-hellman-group1-sha1')
     _preferred_compression = ('none',)
 
     _cipher_info = {
@@ -1432,12 +1432,12 @@ class Transport (threading.Thread, ClosingContextManager):
 
     ###  internals...
 
-    def _log(self, level, msg, *args):
+    def _log(self, level, msg, *args, **kwargs):
         if issubclass(type(msg), list):
             for m in msg:
                 self.logger.log(level, m)
         else:
-            self.logger.log(level, msg, *args)
+            self.logger.log(level, msg, *args, **kwargs)
 
     def _get_modulus_pack(self):
         """used by KexGex to find primes for group exchange"""
@@ -1649,12 +1649,10 @@ class Transport (threading.Thread, ClosingContextManager):
                         self._send_message(msg)
                     self.packetizer.complete_handshake()
             except SSHException as e:
-                self._log(ERROR, 'Exception: ' + str(e))
-                self._log(ERROR, util.tb_strings())
+                self._log(ERROR, 'Exception: ' + str(e), exc_info=sys.exc_info())
                 self.saved_exception = e
             except EOFError as e:
                 self._log(DEBUG, 'EOF in transport thread')
-                #self._log(DEBUG, util.tb_strings())
                 self.saved_exception = e
             except socket.error as e:
                 if type(e.args) is tuple:
@@ -1667,8 +1665,7 @@ class Transport (threading.Thread, ClosingContextManager):
                 self._log(ERROR, 'Socket exception: ' + emsg)
                 self.saved_exception = e
             except Exception as e:
-                self._log(ERROR, 'Unknown exception: ' + str(e))
-                self._log(ERROR, util.tb_strings())
+                self._log(ERROR, 'Unknown exception: ' + str(e), exc_info=sys.exc_info())
                 self.saved_exception = e
             _active_threads.remove(self)
             for chan in list(self._channels.values()):
@@ -1737,7 +1734,7 @@ class Transport (threading.Thread, ClosingContextManager):
         comment = ''
         i = buf.find(' ')
         if i >= 0:
-            comment = buf[i+1:]
+            comment = buf[i + 1:]
             buf = buf[:i]
         # parse out version string and make sure it matches
         segs = buf.split('-', 2)
