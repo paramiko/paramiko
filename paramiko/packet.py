@@ -389,7 +389,8 @@ class Packetizer (object):
         if self.__dump_packets:
             self._log(DEBUG, util.format_binary(header, 'IN: '))
         packet_size = struct.unpack('>I', header[:4])[0]
-        # leftover contains decrypted bytes from the first block (after the length field)
+        # leftover contains decrypted bytes from the first block (after the
+        # length field)
         leftover = header[4:]
         if (packet_size - len(leftover)) % self.__block_size_in != 0:
             raise SSHException('Invalid packet blocking')

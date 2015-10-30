@@ -1599,9 +1599,11 @@ class Transport (threading.Thread, ClosingContextManager):
             try:
                 self.packetizer.write_all(b(self.local_version + '\r\n'))
                 self._check_banner()
-                # The above is actually very much part of the handshake, but sometimes the banner can be read
-                # but the machine is not responding, for example when the remote ssh daemon is loaded in to memory
-                # but we can not read from the disk/spawn a new shell.
+                # The above is actually very much part of the handshake, but
+                # sometimes the banner can be read but the machine is not
+                # responding, for example when the remote ssh daemon is loaded
+                # in to memory but we can not read from the disk/spawn a new
+                # shell.
                 # Make sure we can specify a timeout for the initial handshake.
                 # Re-use the banner timeout for now.
                 self.packetizer.start_handshake(self.handshake_timeout)
@@ -1909,8 +1911,8 @@ class Transport (threading.Thread, ClosingContextManager):
         engine = self._get_cipher(self.remote_cipher, key_in, IV_in)
         mac_size = self._mac_info[self.remote_mac]['size']
         mac_engine = self._mac_info[self.remote_mac]['class']
-        # initial mac keys are done in the hash's natural size (not the potentially truncated
-        # transmission size)
+        # initial mac keys are done in the hash's natural size (not the
+        # potentially truncated transmission size)
         if self.server_mode:
             mac_key = self._compute_key('E', mac_engine().digest_size)
         else:
@@ -1936,8 +1938,8 @@ class Transport (threading.Thread, ClosingContextManager):
         engine = self._get_cipher(self.local_cipher, key_out, IV_out)
         mac_size = self._mac_info[self.local_mac]['size']
         mac_engine = self._mac_info[self.local_mac]['class']
-        # initial mac keys are done in the hash's natural size (not the potentially truncated
-        # transmission size)
+        # initial mac keys are done in the hash's natural size (not the
+        # potentially truncated transmission size)
         if self.server_mode:
             mac_key = self._compute_key('F', mac_engine().digest_size)
         else:
