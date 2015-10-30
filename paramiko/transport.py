@@ -100,8 +100,8 @@ class Transport (threading.Thread, ClosingContextManager):
                        'hmac-sha1')
     _preferred_keys = ('ssh-rsa', 'ssh-dss', 'ecdsa-sha2-nistp256')
     _preferred_kex =  ('diffie-hellman-group1-sha1',
-                       'diffie-hellman-group14-sha1', 
-                       'diffie-hellman-group-exchange-sha1' ,
+                       'diffie-hellman-group14-sha1',
+                       'diffie-hellman-group-exchange-sha1',
                        'diffie-hellman-group-exchange-sha256')
     _preferred_compression = ('none',)
 
@@ -1772,7 +1772,7 @@ class Transport (threading.Thread, ClosingContextManager):
             kex_mp = [k for k in self._preferred_kex if k.startswith(mp_required_prefix)]
             if (self._modulus_pack is None) and (len(kex_mp) > 0):
                 # can't do group-exchange if we don't have a pack of potential primes
-                pkex = [k for k in self.get_security_options().kex 
+                pkex = [k for k in self.get_security_options().kex
                                 if not k.startswith(mp_required_prefix)]
                 self.get_security_options().kex = pkex
             available_server_keys = list(filter(list(self.server_key_dict.keys()).__contains__,
