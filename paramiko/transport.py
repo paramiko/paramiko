@@ -94,8 +94,8 @@ class Transport (threading.Thread, ClosingContextManager):
     _PROTO_ID = '2.0'
     _CLIENT_ID = 'paramiko_%s' % paramiko.__version__
 
-    _preferred_ciphers = ('aes128-ctr', 'aes256-ctr', 'aes128-cbc', 'blowfish-cbc',
-                          'aes256-cbc', '3des-cbc', 'arcfour128', 'arcfour256')
+    _preferred_ciphers = ('aes128-ctr', 'aes192-ctr', 'aes256-ctr', 'aes128-cbc', 'blowfish-cbc',
+                          'aes192-cbc', 'aes256-cbc', '3des-cbc', 'arcfour128', 'arcfour256')
     _preferred_macs = ('hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96')
     _preferred_keys = ('ssh-rsa', 'ssh-dss', 'ecdsa-sha2-nistp256')
     _preferred_kex =  ( 'diffie-hellman-group14-sha1', 'diffie-hellman-group-exchange-sha1' , 'diffie-hellman-group1-sha1')
@@ -103,9 +103,11 @@ class Transport (threading.Thread, ClosingContextManager):
 
     _cipher_info = {
         'aes128-ctr': {'class': AES, 'mode': AES.MODE_CTR, 'block-size': 16, 'key-size': 16},
+        'aes192-ctr': {'class': AES, 'mode': AES.MODE_CTR, 'block-size': 16, 'key-size': 24},
         'aes256-ctr': {'class': AES, 'mode': AES.MODE_CTR, 'block-size': 16, 'key-size': 32},
         'blowfish-cbc': {'class': Blowfish, 'mode': Blowfish.MODE_CBC, 'block-size': 8, 'key-size': 16},
         'aes128-cbc': {'class': AES, 'mode': AES.MODE_CBC, 'block-size': 16, 'key-size': 16},
+        'aes192-cbc': {'class': AES, 'mode': AES.MODE_CBC, 'block-size': 16, 'key-size': 24},
         'aes256-cbc': {'class': AES, 'mode': AES.MODE_CBC, 'block-size': 16, 'key-size': 32},
         '3des-cbc': {'class': DES3, 'mode': DES3.MODE_CBC, 'block-size': 8, 'key-size': 24},
         'arcfour128': {'class': ARC4, 'mode': None, 'block-size': 8, 'key-size': 16},
