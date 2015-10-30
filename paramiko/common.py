@@ -195,7 +195,11 @@ DEFAULT_MAX_PACKET_SIZE = 2 ** 15
 # lower bound on the max packet size we'll accept from the remote host
 # Minimum packet size is 32768 bytes according to
 # http://www.ietf.org/rfc/rfc4254.txt
-MIN_PACKET_SIZE = 2 ** 15
+MIN_WINDOW_SIZE = 2 ** 15
+
+# However, according to http://www.ietf.org/rfc/rfc4253.txt it is perfectly
+# legal to accept a size much smaller, as OpenSSH client does as size 16384.
+MIN_PACKET_SIZE = 2 ** 12
 
 # Max windows size according to http://www.ietf.org/rfc/rfc4254.txt
 MAX_WINDOW_SIZE = 2**32 -1

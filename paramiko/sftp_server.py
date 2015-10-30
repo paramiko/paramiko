@@ -129,6 +129,7 @@ class SFTPServer (BaseSFTP, SubsystemHandler):
         self.file_table = {}
         self.folder_table = {}
 
+    @staticmethod
     def convert_errno(e):
         """
         Convert an errno value (as from an ``OSError`` or ``IOError``) into a
@@ -146,8 +147,8 @@ class SFTPServer (BaseSFTP, SubsystemHandler):
             return SFTP_NO_SUCH_FILE
         else:
             return SFTP_FAILURE
-    convert_errno = staticmethod(convert_errno)
 
+    @staticmethod
     def set_file_attr(filename, attr):
         """
         Change a file's attributes on the local filesystem.  The contents of
@@ -173,7 +174,6 @@ class SFTPServer (BaseSFTP, SubsystemHandler):
         if attr._flags & attr.FLAG_SIZE:
             with open(filename, 'w+') as f:
                 f.truncate(attr.st_size)
-    set_file_attr = staticmethod(set_file_attr)
 
     ###  internals...
 

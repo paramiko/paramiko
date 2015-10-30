@@ -34,7 +34,7 @@ from paramiko.common import cMSG_SERVICE_REQUEST, cMSG_DISCONNECT, \
     cMSG_USERAUTH_GSSAPI_ERRTOK, cMSG_USERAUTH_GSSAPI_MIC,\
     MSG_USERAUTH_GSSAPI_RESPONSE, MSG_USERAUTH_GSSAPI_TOKEN, \
     MSG_USERAUTH_GSSAPI_EXCHANGE_COMPLETE, MSG_USERAUTH_GSSAPI_ERROR, \
-    MSG_USERAUTH_GSSAPI_ERRTOK, MSG_USERAUTH_GSSAPI_MIC
+    MSG_USERAUTH_GSSAPI_ERRTOK, MSG_USERAUTH_GSSAPI_MIC, MSG_NAMES
 
 from paramiko.message import Message
 from paramiko.py3compat import bytestring
@@ -195,7 +195,7 @@ class AuthHandler (object):
                 if (e is None) or issubclass(e.__class__, EOFError):
                     e = AuthenticationException('Authentication failed.')
                 raise e
-            if event.isSet():
+            if event.is_set():
                 break
         if not self.is_authenticated():
             e = self.transport.get_exception()
@@ -510,15 +510,11 @@ class AuthHandler (object):
                 result = AUTH_FAILED
                 self._send_auth_result(username, method, result)
                 raise
-            if retval == 0:
-                # TODO: Implement client credential saving.
-                # The OpenSSH server is able to create a TGT with the delegated
-                # client credentials, but this is not supported by GSS-API.
-                result = AUTH_SUCCESSFUL
-                self.transport.server_object.check_auth_gssapi_with_mic(
-                    username, result)
-            else:
-                result = AUTH_FAILED
+            # TODO: Implement client credential saving.
+            # The OpenSSH server is able to create a TGT with the delegated
+            # client credentials, but this is not supported by GSS-API.
+            result = AUTH_SUCCESSFUL
+            self.transport.server_object.check_auth_gssapi_with_mic(username, result)
         elif method == "gssapi-keyex" and gss_auth:
             mic_token = m.get_string()
             sshgss = self.transport.kexgss_ctxt
@@ -534,12 +530,8 @@ class AuthHandler (object):
                 result = AUTH_FAILED
                 self._send_auth_result(username, method, result)
                 raise
-            if retval == 0:
-                result = AUTH_SUCCESSFUL
-                self.transport.server_object.check_auth_gssapi_keyex(username,
-                                                                      result)
-            else:
-                result = AUTH_FAILED
+            result = AUTH_SUCCESSFUL
+            self.transport.server_object.check_auth_gssapi_keyex(username, result)
         else:
             result = self.transport.server_object.check_auth_none(username)
         # okay, send result

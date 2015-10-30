@@ -35,6 +35,7 @@ from paramiko.dsskey import DSSKey
 from paramiko.rsakey import RSAKey
 from paramiko.util import get_logger, constant_time_bytes_eq
 from paramiko.ecdsakey import ECDSAKey
+from paramiko.ssh_exception import SSHException
 
 
 class HostKeys (MutableMapping):
@@ -96,7 +97,10 @@ class HostKeys (MutableMapping):
                 line = line.strip()
                 if (len(line) == 0) or (line[0] == '#'):
                     continue
-                e = HostKeyEntry.from_line(line, lineno)
+                try:
+                    e = HostKeyEntry.from_line(line, lineno)
+                except SSHException:
+                    continue
                 if e is not None:
                     _hostnames = e.hostnames
                     for h in _hostnames:
@@ -255,6 +259,7 @@ class HostKeys (MutableMapping):
             ret.append(self.lookup(k))
         return ret
 
+    @staticmethod
     def hash_host(hostname, salt=None):
         """
         Return a "hashed" form of the hostname, as used by OpenSSH when storing
@@ -274,7 +279,6 @@ class HostKeys (MutableMapping):
         hmac = HMAC(salt, b(hostname), sha1).digest()
         hostkey = '|1|%s|%s' % (u(encodebytes(salt)), u(encodebytes(hmac)))
         return hostkey.replace('\n', '')
-    hash_host = staticmethod(hash_host)
 
 
 class InvalidHostKey(Exception):
@@ -294,6 +298,7 @@ class HostKeyEntry:
         self.hostnames = hostnames
         self.key = key
 
+    @classmethod
     def from_line(cls, line, lineno=None):
         """
         Parses the given line of text to find the names for the host,
@@ -336,7 +341,6 @@ class HostKeyEntry:
             raise InvalidHostKey(line, e)
 
         return cls(names, key)
-    from_line = classmethod(from_line)
 
     def to_line(self):
         """

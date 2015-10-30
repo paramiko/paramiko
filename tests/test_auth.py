@@ -118,12 +118,12 @@ class AuthTest (unittest.TestCase):
         self.ts.add_server_key(host_key)
         self.event = threading.Event()
         self.server = NullServer()
-        self.assertTrue(not self.event.isSet())
+        self.assertTrue(not self.event.is_set())
         self.ts.start_server(self.event, self.server)
     
     def verify_finished(self):
         self.event.wait(1.0)
-        self.assertTrue(self.event.isSet())
+        self.assertTrue(self.event.is_set())
         self.assertTrue(self.ts.is_active())
 
     def test_1_bad_auth_type(self):

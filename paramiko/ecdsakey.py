@@ -126,20 +126,18 @@ class ECDSAKey (PKey):
         key = self.signing_key or self.verifying_key
         self._write_private_key('EC', file_obj, key.to_der(), password)
 
+    @staticmethod
     def generate(curve=curves.NIST256p, progress_func=None):
         """
-        Generate a new private RSA key.  This factory function can be used to
+        Generate a new private ECDSA key.  This factory function can be used to
         generate a new host key or authentication key.
 
-        :param function progress_func:
-            an optional function to call at key points in key generation (used
-            by ``pyCrypto.PublicKey``).
-        :returns: A new private key (`.RSAKey`) object
+        :param function progress_func: Not used for this type of key.
+        :returns: A new private key (`.ECDSAKey`) object
         """
         signing_key = SigningKey.generate(curve)
         key = ECDSAKey(vals=(signing_key, signing_key.get_verifying_key()))
         return key
-    generate = staticmethod(generate)
 
     ###  internals...
 

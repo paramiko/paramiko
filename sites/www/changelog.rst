@@ -2,12 +2,86 @@
 Changelog
 =========
 
+* :release:`1.15.3 <2015-10-02>`
+* :support:`554 backported` Fix inaccuracies in the docstring for the ECDSA key
+  class. Thanks to Jared Hance for the patch.
+* :support:`516 backported` Document `~paramiko.agent.AgentRequestHandler`.
+  Thanks to ``@toejough`` for report & suggestions.
+* :bug:`496` Fix a handful of small but critical bugs in Paramiko's GSSAPI
+  support (note: this includes switching from PyCrypo's Random to
+  `os.urandom`). Thanks to Anselm Kruis for catch & patch.
+* :bug:`491` (combines :issue:`62` and :issue:`439`) Implement timeout
+  functionality to address hangs from dropped network connections and/or failed
+  handshakes. Credit to ``@vazir`` and ``@dacut`` for the original patches and
+  to Olle Lundberg for reimplementation.
+* :bug:`490` Skip invalid/unparseable lines in ``known_hosts`` files, instead
+  of raising `~paramiko.ssh_exception.SSHException`. This brings Paramiko's
+  behavior more in line with OpenSSH, which silently ignores such input. Catch
+  & patch courtesy of Martin Topholm.
+* :bug:`404` Print details when displaying
+  `~paramiko.ssh_exception.BadHostKeyException` objects (expected vs received
+  data) instead of just "hey shit broke". Patch credit: Loic Dachary.
+* :bug:`469` (also :issue:`488`, :issue:`461` and like a dozen others) Fix a
+  typo introduced in the 1.15 release which broke WinPageant support. Thanks to
+  everyone who submitted patches, and to Steve Cohen who was the lucky winner
+  of the cherry-pick lottery.
+* :bug:`353` (via :issue:`482`) Fix a bug introduced in the Python 3 port
+  which caused ``OverFlowError`` (and other symptoms) in SFTP functionality.
+  Thanks to ``@dboreham`` for leading the troubleshooting charge, and to
+  Scott Maxwell for the final patch.
+* :support:`582` Fix some old ``setup.py`` related helper code which was
+  breaking ``bdist_dumb`` on Mac OS X. Thanks to Peter Odding for the patch.
+* :bug:`22 major` Try harder to connect to multiple network families (e.g. IPv4
+  vs IPv6) in case of connection issues; this helps with problems such as hosts
+  which resolve both IPv4 and IPv6 addresses but are only listening on IPv4.
+  Thanks to Dries Desmet for original report and Torsten Landschoff for the
+  foundational patchset.
+* :bug:`402` Check to see if an SSH agent is actually present before trying to
+  forward it to the remote end. This replaces what was usually a useless
+  ``TypeError`` with a human-readable
+  `~paramiko.ssh_exception.AuthenticationException`. Credit to Ken Jordan for
+  the fix and Yvan Marques for original report.
+* :release:`1.15.2 <2014-12-19>`
+* :release:`1.14.2 <2014-12-19>`
+* :release:`1.13.3 <2014-12-19>`
+* :bug:`413` (also :issue:`414`, :issue:`420`, :issue:`454`) Be significantly
+  smarter about polling & timing behavior when running proxy commands, to avoid
+  unnecessary (often 100%!) CPU usage. Major thanks to Jason Dunsmore for
+  report & initial patchset and to Chris Adams & John Morrissey for followup
+  improvements.
+* :bug:`455` Tweak packet size handling to conform better to the OpenSSH RFCs;
+  this helps address issues with interactive program cursors. Courtesy of Jeff
+  Quast.
+* :bug:`428` Fix an issue in `~paramiko.file.BufferedFile` (primarily used in
+  the SFTP modules) concerning incorrect behavior by
+  `~paramiko.file.BufferedFile.readlines` on files whose size exceeds the
+  buffer size. Thanks to ``@achapp`` for catch & patch.
+* :bug:`415` Fix ``ssh_config`` parsing to correctly interpret ``ProxyCommand
+  none`` as the lack of a proxy command, instead of as a literal command string
+  of ``"none"``. Thanks to Richard Spiers for the catch & Sean Johnson for the
+  fix.
+* :support:`431 backported` Replace handrolled ``ssh_config`` parsing code with
+  use of the ``shlex`` module. Thanks to Yan Kalchevskiy.
+* :support:`422 backported` Clean up some unused imports. Courtesy of Olle
+  Lundberg.
+* :support:`421 backported` Modernize threading calls to user newer API. Thanks
+  to Olle Lundberg.
+* :support:`419 backported` Modernize a bunch of the codebase internals to
+  leverage decorators. Props to ``@beckjake`` for realizing we're no longer on
+  Python 2.2 :D
+* :bug:`266` Change numbering of `~paramiko.transport.Transport` channels to
+  start at 0 instead of 1 for better compatibility with OpenSSH & certain
+  server implementations which break on 1-indexed channels. Thanks to
+  ``@egroeper`` for catch & patch.
+* :bug:`459` Tighten up agent connection closure behavior to avoid spurious
+  ``ResourceWarning`` display in some situations. Thanks to ``@tkrapp`` for the
+  catch.
 * :bug:`429` Server-level debug message logging was overlooked during the
   Python 3 compatibility update; Python 3 clients attempting to log SSH debug
   packets encountered type errors. This is now fixed. Thanks to ``@mjmaenpaa``
   for the catch.
 * :bug:`320` Update our win_pageant module to be Python 3 compatible. Thanks to
-``@sherbang`` and ``@adamkerz`` for the patches.
+  ``@sherbang`` and ``@adamkerz`` for the patches.
 * :release:`1.15.1 <2014-09-22>`
 * :bug:`399` SSH agent forwarding (potentially other functionality as
   well) would hang due to incorrect values passed into the new window size
@@ -68,8 +142,8 @@ Changelog
   async/generator based file listings. Thanks to John Begeman.
 * :support:`378 backported` Minor code cleanup in the SSH config module
   courtesy of Olle Lundberg.
-* :support:`249` Consolidate version information into one spot. Thanks to Gabi
-  Davar for the reminder.
+* :support:`249 backported` Consolidate version information into one spot.
+  Thanks to Gabi Davar for the reminder.
 * :release:`1.14.1 <2014-08-25>`
 * :release:`1.13.2 <2014-08-25>`
 * :bug:`376` Be less aggressive about expanding variables in ``ssh_config``

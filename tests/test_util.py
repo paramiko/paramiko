@@ -464,3 +464,23 @@ Host param3 parara
         assert safe_vanilla == vanilla, err.format(safe_vanilla, vanilla)
         assert safe_has_bytes == expected_bytes, \
             err.format(safe_has_bytes, expected_bytes)
+
+    def test_proxycommand_none_issue_418(self):
+        test_config_file = """
+Host proxycommand-standard-none
+    ProxyCommand None
+
+Host proxycommand-with-equals-none
+    ProxyCommand=None
+    """
+        for host, values in {
+            'proxycommand-standard-none':    {'hostname': 'proxycommand-standard-none'},
+            'proxycommand-with-equals-none': {'hostname': 'proxycommand-with-equals-none'}
+        }.items():
+
+            f = StringIO(test_config_file)
+            config = paramiko.util.parse_ssh_config(f)
+            self.assertEqual(
+                paramiko.util.lookup_ssh_host_config(host, config),
+                values
+            )
