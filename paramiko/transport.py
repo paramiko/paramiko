@@ -1873,6 +1873,7 @@ class Transport (threading.Thread, ClosingContextManager):
             raise SSHException('Incompatible ssh server (no acceptable macs)')
         self.local_mac = agreed_local_macs[0]
         self.remote_mac = agreed_remote_macs[0]
+        self._log(DEBUG, 'MACs agreed: local=%s, remote=%s' % (self.local_mac, self.remote_mac))
 
         if self.server_mode:
             agreed_remote_compression = list(filter(self._preferred_compression.__contains__, client_compress_algo_list))
