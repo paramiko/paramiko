@@ -1598,6 +1598,7 @@ class Transport (threading.Thread, ClosingContextManager):
         try:
             try:
                 self.packetizer.write_all(b(self.local_version + '\r\n'))
+                self._log(DEBUG, 'Local version/idstring: %s' % self.local_version)
                 self._check_banner()
                 # The above is actually very much part of the handshake, but
                 # sometimes the banner can be read but the machine is not
@@ -1742,6 +1743,7 @@ class Transport (threading.Thread, ClosingContextManager):
             raise SSHException('Indecipherable protocol version "' + buf + '"')
         # save this server version string for later
         self.remote_version = buf
+        self._log(DEBUG, 'Remote version/idstring: %s' % buf)
         # pull off any attached comment
         comment = ''
         i = buf.find(' ')
