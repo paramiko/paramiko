@@ -9,8 +9,14 @@ from invocations.packaging import publish
 
 # Until we move to spec-based testing
 @task
-def test(ctx):
-    ctx.run("python test.py --verbose", pty=True)
+def test(ctx, coverage=False, flags=""):
+    if "--verbose" not in flags.split():
+        flags += " --verbose"
+    runner = "python"
+    if coverage:
+        runner = "coverage run --source=paramiko"
+    ctx.run("{0} test.py {1}".format(runner, flags), pty=True)
+
 
 @task
 def coverage(ctx):
