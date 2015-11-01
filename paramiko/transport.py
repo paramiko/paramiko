@@ -94,15 +94,36 @@ class Transport (threading.Thread, ClosingContextManager):
     _PROTO_ID = '2.0'
     _CLIENT_ID = 'paramiko_%s' % paramiko.__version__
 
-    _preferred_ciphers = ('aes128-ctr', 'aes256-ctr', 'aes128-cbc', 'blowfish-cbc',
-                          'aes256-cbc', '3des-cbc', 'arcfour128', 'arcfour256')
-    _preferred_macs = ('hmac-sha2-256', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96',
-                       'hmac-sha1')
-    _preferred_keys = ('ssh-rsa', 'ssh-dss', 'ecdsa-sha2-nistp256')
-    _preferred_kex =  ('diffie-hellman-group1-sha1',
-                       'diffie-hellman-group14-sha1',
-                       'diffie-hellman-group-exchange-sha1',
-                       'diffie-hellman-group-exchange-sha256')
+    # These tuples of algorithm identifiers are in preference order; do not
+    # reorder without reason!
+    _preferred_ciphers = (
+        'aes128-ctr',
+        'aes256-ctr',
+        'aes128-cbc',
+        'blowfish-cbc',
+        'aes256-cbc',
+        '3des-cbc',
+        'arcfour128',
+        'arcfour256',
+    )
+    _preferred_macs = (
+        'hmac-sha2-256',
+        'hmac-md5',
+        'hmac-sha1-96',
+        'hmac-md5-96',
+        'hmac-sha1',
+    )
+    _preferred_keys = (
+        'ssh-rsa',
+        'ssh-dss',
+        'ecdsa-sha2-nistp256',
+    )
+    _preferred_kex =  (
+        'diffie-hellman-group1-sha1',
+        'diffie-hellman-group14-sha1',
+        'diffie-hellman-group-exchange-sha1',
+        'diffie-hellman-group-exchange-sha256',
+    )
     _preferred_compression = ('none',)
 
     _cipher_info = {
