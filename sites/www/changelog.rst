@@ -2,6 +2,9 @@
 Changelog
 =========
 
+* :bug:`359` Use correct attribute name when trying to use Python 3's
+  ``int.bit_length`` method; prior to fix, the Python 2 custom fallback
+  implementation was always used, even on Python 3. Thanks to Alex Gaynor.
 * :support:`594 backported` Correct some post-Python3-port docstrings to
   specify ``bytes`` type instead of ``str``. Credit to ``@redixin``.
 * :bug:`565` Don't explode with ``IndexError`` when reading private key files
