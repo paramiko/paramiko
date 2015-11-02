@@ -2,6 +2,9 @@
 Changelog
 =========
 
+* :bug:`565` Don't explode with ``IndexError`` when reading private key files
+  lacking an ``-----END <type> PRIVATE KEY-----`` footer. Patch courtesy of
+  Prasanna Santhanam.
 * :release:`1.13.3 <2014-12-19>`
 * :bug:`413` (also :issue:`414`, :issue:`420`, :issue:`454`) Be significantly
   smarter about polling & timing behavior when running proxy commands, to avoid
