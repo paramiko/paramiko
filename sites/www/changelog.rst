@@ -6,6 +6,10 @@ Changelog
   :issue:`581`, and a bunch of other duplicates besides) Add support for SHA-2
   based key exchange (kex) algorithm ``diffie-hellman-group-exchange-sha256``
   and (H)MAC algorithms ``hmac-sha2-256`` and ``hmac-sha2-512``.
+  
+  This change includes tweaks to debug-level logging regarding
+  algorithm-selection handshakes; the old all-in-one log line is now multiple
+  easier-to-read, printed-at-handshake-time log lines.
 
   Thanks to the many people who submitted patches for this functionality and/or
   assisted in testing those patches. That list includes but is not limited to,
