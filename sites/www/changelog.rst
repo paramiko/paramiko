@@ -2,6 +2,9 @@
 Changelog
 =========
 
+* :feature:`604` Add support for the ``aes192-ctr`` and ``aes192-cbc`` ciphers.
+  Thanks to Michiel Tiller for noticing it was as easy as tweaking some key
+  sizes :D
 * :feature:`356` (also :issue:`596`, :issue:`365`, :issue:`341`, :issue:`164`,
   :issue:`581`, and a bunch of other duplicates besides) Add support for SHA-2
   based key exchange (kex) algorithm ``diffie-hellman-group-exchange-sha256``
