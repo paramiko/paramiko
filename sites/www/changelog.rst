@@ -2,6 +2,8 @@
 Changelog
 =========
 
+* :support:`594 backported` Correct some post-Python3-port docstrings to
+  specify ``bytes`` type instead of ``str``. Credit to ``@redixin``.
 * :bug:`565` Don't explode with ``IndexError`` when reading private key files
   lacking an ``-----END <type> PRIVATE KEY-----`` footer. Patch courtesy of
   Prasanna Santhanam.
