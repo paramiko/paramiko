@@ -127,14 +127,54 @@ class Transport (threading.Thread, ClosingContextManager):
     _preferred_compression = ('none',)
 
     _cipher_info = {
-        'aes128-ctr': {'class': AES, 'mode': AES.MODE_CTR, 'block-size': 16, 'key-size': 16},
-        'aes256-ctr': {'class': AES, 'mode': AES.MODE_CTR, 'block-size': 16, 'key-size': 32},
-        'blowfish-cbc': {'class': Blowfish, 'mode': Blowfish.MODE_CBC, 'block-size': 8, 'key-size': 16},
-        'aes128-cbc': {'class': AES, 'mode': AES.MODE_CBC, 'block-size': 16, 'key-size': 16},
-        'aes256-cbc': {'class': AES, 'mode': AES.MODE_CBC, 'block-size': 16, 'key-size': 32},
-        '3des-cbc': {'class': DES3, 'mode': DES3.MODE_CBC, 'block-size': 8, 'key-size': 24},
-        'arcfour128': {'class': ARC4, 'mode': None, 'block-size': 8, 'key-size': 16},
-        'arcfour256': {'class': ARC4, 'mode': None, 'block-size': 8, 'key-size': 32},
+        'aes128-ctr': {
+            'class': AES,
+            'mode': AES.MODE_CTR,
+            'block-size': 16,
+            'key-size': 16
+        },
+        'aes256-ctr': {
+            'class': AES,
+            'mode': AES.MODE_CTR,
+            'block-size': 16,
+            'key-size': 32
+        },
+        'blowfish-cbc': {
+            'class': Blowfish,
+            'mode': Blowfish.MODE_CBC,
+            'block-size': 8,
+            'key-size': 16
+        },
+        'aes128-cbc': {
+            'class': AES,
+            'mode': AES.MODE_CBC,
+            'block-size': 16,
+            'key-size': 16
+        },
+        'aes256-cbc': {
+            'class': AES,
+            'mode': AES.MODE_CBC,
+            'block-size': 16,
+            'key-size': 32
+        },
+        '3des-cbc': {
+            'class': DES3,
+            'mode': DES3.MODE_CBC,
+            'block-size': 8,
+            'key-size': 24
+        },
+        'arcfour128': {
+            'class': ARC4,
+            'mode': None,
+            'block-size': 8,
+            'key-size': 16
+        },
+        'arcfour256': {
+            'class': ARC4,
+            'mode': None,
+            'block-size': 8,
+            'key-size': 32
+        },
     }
 
     _mac_info = {
@@ -1859,12 +1899,20 @@ class Transport (threading.Thread, ClosingContextManager):
                   ' server lang:' + str(server_lang_list) +
                   ' kex follows?' + str(kex_follows))
 
-        # as a server, we pick the first item in the client's list that we support.
-        # as a client, we pick the first item in our list that the server supports.
+        # as a server, we pick the first item in the client's list that we
+        # support.
+        # as a client, we pick the first item in our list that the server
+        # supports.
         if self.server_mode:
-            agreed_kex = list(filter(self._preferred_kex.__contains__, kex_algo_list))
+            agreed_kex = list(filter(
+                self._preferred_kex.__contains__,
+                kex_algo_list
+            ))
         else:
-            agreed_kex = list(filter(kex_algo_list.__contains__, self._preferred_kex))
+            agreed_kex = list(filter(
+                kex_algo_list.__contains__,
+                self._preferred_kex
+            ))
         if len(agreed_kex) == 0:
             raise SSHException('Incompatible ssh peer (no acceptable kex algorithm)')
         self.kex_engine = self._kex_info[agreed_kex[0]](self)
