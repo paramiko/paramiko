@@ -2,6 +2,9 @@
 Changelog
 =========
 
+* :bug:`366` Fix `~paramiko.sftp_attributes.SFTPAttributes` so its string
+  representation doesn't raise exceptions on empty/initialized instances. Patch
+  by Ulrich Petri.
 * :bug:`359` Use correct attribute name when trying to use Python 3's
   ``int.bit_length`` method; prior to fix, the Python 2 custom fallback
   implementation was always used, even on Python 3. Thanks to Alex Gaynor.
