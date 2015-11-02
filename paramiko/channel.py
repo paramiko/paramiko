@@ -575,8 +575,8 @@ class Channel (object):
         is returned, the channel stream has closed.
 
         :param int nbytes: maximum number of bytes to read.
-        :return: received data, as a `str`
-        
+        :return: received data, as a `bytes`
+
         :raises socket.timeout:
             if no data is ready before the timeout set by `settimeout`.
         """
