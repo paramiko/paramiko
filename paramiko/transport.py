@@ -1778,6 +1778,18 @@ class Transport (threading.Thread, ClosingContextManager):
             if self.sys.modules is not None:
                 raise
 
+
+    def _log_agreement(self, which, local, remote):
+        # Log useful, non-duplicative line re: an agreed-upon algorithm.
+        # Old code implied algorithms could be asymmetrical (different for
+        # inbound vs outbound) so we preserve that possibility.
+        msg = "{0} agreed: ".format(which)
+        if local == remote:
+            msg += local
+        else:
+            msg += "local={0}, remote={1}".format(local, remote)
+        self._log(DEBUG, msg)
+
     ###  protocol stages
 
     def _negotiate_keys(self, m):
@@ -1946,7 +1958,9 @@ class Transport (threading.Thread, ClosingContextManager):
             raise SSHException('Incompatible ssh server (no acceptable ciphers)')
         self.local_cipher = agreed_local_ciphers[0]
         self.remote_cipher = agreed_remote_ciphers[0]
-        self._log(DEBUG, 'Ciphers agreed: local=%s, remote=%s' % (self.local_cipher, self.remote_cipher))
+        self._log_agreement(
+            'Cipher', local=self.local_cipher, remote=self.remote_cipher
+        )
 
         if self.server_mode:
             agreed_remote_macs = list(filter(self._preferred_macs.__contains__, client_mac_algo_list))
@@ -1958,7 +1972,9 @@ class Transport (threading.Thread, ClosingContextManager):
             raise SSHException('Incompatible ssh server (no acceptable macs)')
         self.local_mac = agreed_local_macs[0]
         self.remote_mac = agreed_remote_macs[0]
-        self._log(DEBUG, 'MACs agreed: local=%s, remote=%s' % (self.local_mac, self.remote_mac))
+        self._log_agreement(
+            'MAC', local=self.local_mac, remote=self.remote_mac
+        )
 
         if self.server_mode:
             agreed_remote_compression = list(filter(self._preferred_compression.__contains__, client_compress_algo_list))
@@ -1970,7 +1986,11 @@ class Transport (threading.Thread, ClosingContextManager):
             raise SSHException('Incompatible ssh server (no acceptable compression) %r %r %r' % (agreed_local_compression, agreed_remote_compression, self._preferred_compression))
         self.local_compression = agreed_local_compression[0]
         self.remote_compression = agreed_remote_compression[0]
-        self._log(DEBUG, 'Compressions agreed: local=%s' % self.local_compression)
+        self._log_agreement(
+            'Compression',
+            local=self.local_compression,
+            remote=self.remote_compression
+        )
 
         # save for computing hash later...
         # now wait!  openssh has a bug (and others might too) where there are
