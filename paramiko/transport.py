@@ -1918,6 +1918,7 @@ class Transport (threading.Thread, ClosingContextManager):
         if len(agreed_kex) == 0:
             raise SSHException('Incompatible ssh peer (no acceptable kex algorithm)')
         self.kex_engine = self._kex_info[agreed_kex[0]](self)
+        self._log(DEBUG, "Kex agreed: %s" % agreed_kex[0])
 
         if self.server_mode:
             available_server_keys = list(filter(list(self.server_key_dict.keys()).__contains__,
@@ -1969,6 +1970,7 @@ class Transport (threading.Thread, ClosingContextManager):
             raise SSHException('Incompatible ssh server (no acceptable compression) %r %r %r' % (agreed_local_compression, agreed_remote_compression, self._preferred_compression))
         self.local_compression = agreed_local_compression[0]
         self.remote_compression = agreed_remote_compression[0]
+        self._log(DEBUG, 'Compressions agreed: local=%s' % self.local_compression)
 
         self._log(DEBUG, 'using kex %s; server key type %s; cipher: local %s, remote %s; mac: local %s, remote %s; compression: local %s, remote %s' %
                   (agreed_kex[0], self.host_key_type, self.local_cipher, self.remote_cipher, self.local_mac,
