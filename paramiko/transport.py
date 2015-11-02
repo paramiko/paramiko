@@ -1537,6 +1537,13 @@ class Transport (threading.Thread, ClosingContextManager):
         # Fallback to SHA1 for kex engines that fail to specify a hex
         # algorithm, or for e.g. transport tests that don't run kexinit.
         hash_algo = getattr(self.kex_engine, 'hash_algo', None)
+        hash_select_msg = "kex engine %s specified hash_algo %r" % (self.kex_engine.__class__.__name__, hash_algo)
+        if hash_algo is None:
+            hash_algo = sha1
+            hash_select_msg += ", falling back to sha1"
+        if not hasattr(self, '_logged_hash_selection'):
+            self._log(DEBUG, hash_select_msg)
+            setattr(self, '_logged_hash_selection', True)
         out = sofar = hash_algo(m.asbytes()).digest()
         while len(out) < nbytes:
             m = Message()
