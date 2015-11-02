@@ -1972,10 +1972,6 @@ class Transport (threading.Thread, ClosingContextManager):
         self.remote_compression = agreed_remote_compression[0]
         self._log(DEBUG, 'Compressions agreed: local=%s' % self.local_compression)
 
-        self._log(DEBUG, 'using kex %s; server key type %s; cipher: local %s, remote %s; mac: local %s, remote %s; compression: local %s, remote %s' %
-                  (agreed_kex[0], self.host_key_type, self.local_cipher, self.remote_cipher, self.local_mac,
-                   self.remote_mac, self.local_compression, self.remote_compression))
-
         # save for computing hash later...
         # now wait!  openssh has a bug (and others might too) where there are
         # actually some extra bytes (one NUL byte in openssh's case) added to
