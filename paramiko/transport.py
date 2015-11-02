@@ -98,9 +98,11 @@ class Transport (threading.Thread, ClosingContextManager):
     # reorder without reason!
     _preferred_ciphers = (
         'aes128-ctr',
+        'aes192-ctr',
         'aes256-ctr',
         'aes128-cbc',
         'blowfish-cbc',
+        'aes192-cbc',
         'aes256-cbc',
         '3des-cbc',
         'arcfour128',
@@ -134,6 +136,12 @@ class Transport (threading.Thread, ClosingContextManager):
             'block-size': 16,
             'key-size': 16
         },
+        'aes192-ctr': {
+            'class': AES,
+            'mode': AES.MODE_CTR,
+            'block-size': 16,
+            'key-size': 24
+        },
         'aes256-ctr': {
             'class': AES,
             'mode': AES.MODE_CTR,
@@ -151,6 +159,12 @@ class Transport (threading.Thread, ClosingContextManager):
             'mode': AES.MODE_CBC,
             'block-size': 16,
             'key-size': 16
+        },
+        'aes192-cbc': {
+            'class': AES,
+            'mode': AES.MODE_CBC,
+            'block-size': 16,
+            'key-size': 24
         },
         'aes256-cbc': {
             'class': AES,
