@@ -3,14 +3,15 @@ Changelog
 =========
 
 * :feature:`356` (also :issue:`596`, :issue:`365`, :issue:`341`, :issue:`164`,
-  and a bunch of other duplicates besides) Add support for 256-bit SHA-2 based
-  key exchange (kex) algorithm ``diffie-hellman-group-exchange-sha256`` and
-  (H)MAC algorithm ``hmac-sha2-256``.
+  :issue:`581`, and a bunch of other duplicates besides) Add support for SHA-2
+  based key exchange (kex) algorithm ``diffie-hellman-group-exchange-sha256``
+  and (H)MAC algorithms ``hmac-sha2-256`` and ``hmac-sha2-512``.
 
   Thanks to the many people who submitted patches for this functionality and/or
   assisted in testing those patches. That list includes but is not limited to,
   and in no particular order: Matthias Witte, Dag Wieers, Ash Berlin, Etienne
-  Perot, Gert van Dijk, ``@GuyShaanan``, Aaron Bieber, and ``@cyphase``.
+  Perot, Gert van Dijk, ``@GuyShaanan``, Aaron Bieber, ``@cyphase``, and Eric
+  Brown.
 * :release:`1.15.3 <2015-10-02>`
 * :support:`554 backported` Fix inaccuracies in the docstring for the ECDSA key
   class. Thanks to Jared Hance for the patch.
