@@ -1536,7 +1536,7 @@ class Transport (threading.Thread, ClosingContextManager):
         m.add_bytes(self.session_id)
         # Fallback to SHA1 for kex engines that fail to specify a hex
         # algorithm, or for e.g. transport tests that don't run kexinit.
-        hash_algo = getattr(self.kex_engine, 'hex_algo', sha1)
+        hash_algo = getattr(self.kex_engine, 'hash_algo', None)
         out = sofar = hash_algo(m.asbytes()).digest()
         while len(out) < nbytes:
             m = Message()
