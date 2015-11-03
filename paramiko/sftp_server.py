@@ -30,7 +30,7 @@ from paramiko.sftp import BaseSFTP, Message, SFTP_FAILURE, \
     SFTP_PERMISSION_DENIED, SFTP_NO_SUCH_FILE
 from paramiko.sftp_si import SFTPServerInterface
 from paramiko.sftp_attr import SFTPAttributes
-from paramiko.common import DEBUG
+from paramiko.common import DEBUG, ERROR
 from paramiko.py3compat import long, string_types, bytes_types, b
 from paramiko.server import SubsystemHandler
 
@@ -56,6 +56,8 @@ class SFTPServer (BaseSFTP, SubsystemHandler):
     it can be (and is meant to be) set as the handler for ``"sftp"`` requests.
     Use `.Transport.set_subsystem_handler` to activate this class.
     """
+
+    log_sock_prefix = True
 
     def __init__(self, channel, name, server, sftp_si=SFTPServerInterface, *largs, **kwargs):
         """
@@ -86,9 +88,13 @@ class SFTPServer (BaseSFTP, SubsystemHandler):
     def _log(self, level, msg):
         if issubclass(type(msg), list):
             for m in msg:
-                super(SFTPServer, self)._log(level, "[chan " + self.sock.get_name() + "] " + m)
+                if self.log_sock_prefix:
+                    m = "[chan " + self.sock.get_name() + "] " + m
+                super(SFTPServer, self)._log(level, m)
         else:
-            super(SFTPServer, self)._log(level, "[chan " + self.sock.get_name() + "] " + msg)
+            if self.log_sock_prefix:
+                msg = "[chan " + self.sock.get_name() + "] " + msg
+            super(SFTPServer, self)._log(level, msg)
 
     def start_subsystem(self, name, transport, channel):
         self.sock = channel
@@ -102,16 +108,16 @@ class SFTPServer (BaseSFTP, SubsystemHandler):
                 self._log(DEBUG, 'EOF -- end of session')
                 return
             except Exception as e:
-                self._log(DEBUG, 'Exception on channel: ' + str(e))
-                self._log(DEBUG, util.tb_strings())
+                self._log(ERROR, 'Exception on channel: ' + str(e))
+                self._log(ERROR, util.tb_strings())
                 return
             msg = Message(data)
             request_number = msg.get_int()
             try:
                 self._process(t, request_number, msg)
             except Exception as e:
-                self._log(DEBUG, 'Exception in server processing: ' + str(e))
-                self._log(DEBUG, util.tb_strings())
+                self._log(ERROR, 'Exception in server processing: ' + str(e))
+                self._log(ERROR, util.tb_strings())
                 # send some kind of failure message, at least
                 try:
                     self._send_status(request_number, SFTP_FAILURE)
