@@ -2,6 +2,18 @@
 Changelog
 =========
 
+* :release:`1.13.4 <2015-11-02>`
+* :bug:`366` Fix `~paramiko.sftp_attributes.SFTPAttributes` so its string
+  representation doesn't raise exceptions on empty/initialized instances. Patch
+  by Ulrich Petri.
+* :bug:`359` Use correct attribute name when trying to use Python 3's
+  ``int.bit_length`` method; prior to fix, the Python 2 custom fallback
+  implementation was always used, even on Python 3. Thanks to Alex Gaynor.
+* :support:`594 backported` Correct some post-Python3-port docstrings to
+  specify ``bytes`` type instead of ``str``. Credit to ``@redixin``.
+* :bug:`565` Don't explode with ``IndexError`` when reading private key files
+  lacking an ``-----END <type> PRIVATE KEY-----`` footer. Patch courtesy of
+  Prasanna Santhanam.
 * :release:`1.13.3 <2014-12-19>`
 * :bug:`413` (also :issue:`414`, :issue:`420`, :issue:`454`) Be significantly
   smarter about polling & timing behavior when running proxy commands, to avoid
