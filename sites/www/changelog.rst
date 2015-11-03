@@ -2,6 +2,7 @@
 Changelog
 =========
 
+* :release:`1.15.4 <2015-11-02>`
 * :release:`1.14.3 <2015-11-02>`
 * :release:`1.13.4 <2015-11-02>`
 * :bug:`366` Fix `~paramiko.sftp_attributes.SFTPAttributes` so its string
