@@ -53,7 +53,7 @@ class SSHConfig (object):
         """
         Read an OpenSSH config from the given file object.
 
-        :param file file_obj: a file-like object to read the config file from
+        :param file_obj: a file-like object to read the config file from
         """
         host = {"host": ['*'], "config": {}}
         for line in file_obj:
@@ -98,7 +98,7 @@ class SSHConfig (object):
 
         The host-matching rules of OpenSSH's ``ssh_config`` man page are used:
         For each parameter, the first obtained value will be used.  The
-        configuration files contain sections separated by ``Host''
+        configuration files contain sections separated by ``Host``
         specifications, and that section is only applied for hosts that match
         one of the patterns given in the specification.
 
