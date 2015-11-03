@@ -51,7 +51,7 @@ class SSHConfig (object):
         """
         Read an OpenSSH config from the given file object.
 
-        :param file file_obj: a file-like object to read the config file from
+        :param file_obj: a file-like object to read the config file from
         """
         host = {"host": ['*'], "config": {}}
         for line in file_obj:

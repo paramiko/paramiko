@@ -192,7 +192,7 @@ class PKey (object):
         ``None``, the given password will be used to decrypt the key (otherwise
         `.PasswordRequiredException` is thrown).
 
-        :param file file_obj: the file to read from
+        :param file_obj: the file-like object to read from
         :param str password:
             an optional password to use to decrypt the key, if it's encrypted
         :return: a new `.PKey` based on the given private key
@@ -225,7 +225,7 @@ class PKey (object):
         Write private key contents into a file (or file-like) object.  If the
         password is not ``None``, the key is encrypted before writing.
 
-        :param file file_obj: the file object to write into
+        :param file_obj: the file-like object to write into
         :param str password: an optional password to use to encrypt the key
 
         :raises IOError: if there was an error writing to the file
@@ -311,8 +311,9 @@ class PKey (object):
         a trivially-encoded format (base64) which is completely insecure.  If
         a password is given, DES-EDE3-CBC is used.
 
-        :param str tag: ``"RSA"`` or ``"DSA"``, the tag used to mark the data block.
-        :param file filename: name of the file to write.
+        :param str tag:
+            ``"RSA"`` or ``"DSA"``, the tag used to mark the data block.
+        :param filename: name of the file to write.
         :param str data: data blob that makes up the private key.
         :param str password: an optional password to use to encrypt the file.
 
