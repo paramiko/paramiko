@@ -3,7 +3,7 @@ from os.path import join
 from shutil import rmtree, copytree
 
 from invoke import Collection, ctask as task
-from invocations.docs import docs, www
+from invocations.docs import docs, www, sites
 from invocations.packaging import publish
 
 
@@ -39,4 +39,4 @@ def release(ctx):
     print("\n\nDon't forget to update RTD's versions page for new minor releases!")
 
 
-ns = Collection(test, coverage, release, docs, www)
+ns = Collection(test, coverage, release, docs, www, sites)
