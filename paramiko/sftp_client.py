@@ -517,7 +517,7 @@ class SFTPClient(BaseSFTP):
 
         The SFTP operations use pipelining for speed.
 
-        :param file fl: opened file or file-like object to copy
+        :param fl: opened file or file-like object to copy
         :param str remotepath: the destination path on the SFTP server
         :param int file_size:
             optional size parameter passed to callback. If none is specified,
