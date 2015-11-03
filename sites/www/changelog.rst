@@ -2,6 +2,9 @@
 Changelog
 =========
 
+* :support:`525 backported` Update the vendored Windows API addon to a more
+  recent edition. Also fixes :issue:`193`, :issue:`488`, :issue:`498`. Thanks
+  to Jason Coombs.
 * :release:`1.13.4 <2015-11-02>`
 * :bug:`366` Fix `~paramiko.sftp_attributes.SFTPAttributes` so its string
   representation doesn't raise exceptions on empty/initialized instances. Patch
