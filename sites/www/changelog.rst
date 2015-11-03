@@ -2,6 +2,9 @@
 Changelog
 =========
 
+* :bug:`401` Fix line number reporting in log output regarding invalid
+  ``known_hosts`` line entries. Thanks to Dylan Thacker-Smith for catch &
+  patch.
 * :support:`525 backported` Update the vendored Windows API addon to a more
   recent edition. Also fixes :issue:`193`, :issue:`488`, :issue:`498`. Thanks
   to Jason Coombs.
