@@ -3,7 +3,7 @@ import base64
 
 __all__ = ['PY2', 'string_types', 'integer_types', 'text_type', 'bytes_types', 'bytes', 'long', 'input',
            'decodebytes', 'encodebytes', 'bytestring', 'byte_ord', 'byte_chr', 'byte_mask',
-           'b', 'u', 'b2s', 'StringIO', 'BytesIO', 'is_callable', 'MAXSIZE', 'next']
+           'b', 'u', 'b2s', 'StringIO', 'BytesIO', 'is_callable', 'MAXSIZE', 'next', 'builtins']
 
 PY2 = sys.version_info[0] < 3
 
@@ -17,6 +17,8 @@ if PY2:
     input = raw_input
     decodebytes = base64.decodestring
     encodebytes = base64.encodestring
+
+    import __builtin__ as builtins
 
 
     def bytestring(s):  # NOQA
@@ -102,6 +104,7 @@ if PY2:
 else:
     import collections
     import struct
+    import builtins
     string_types = str
     text_type = str
     bytes = bytes
