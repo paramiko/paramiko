@@ -38,12 +38,19 @@ def interactive_shell(chan):
         windows_shell(chan)
 
 
-def posix_shell(chan):
+def posix_shell(chan, blocking_stdin=False):
+    ''' set blocking_stdin to True if you're having problems with your terminal session '''
     import select
 
     oldtty = termios.tcgetattr(sys.stdin)
-    fl = fcntl.fcntl(sys.stdin.fileno(), fcntl.F_GETFL)
-    fcntl.fcntl(sys.stdin.fileno(), fcntl.F_SETFL, fl | os.O_NONBLOCK)
+    if not blocking_stdin:
+        read_bytes = 4
+        import fcntl
+        import os
+        fl = fcntl.fcntl(sys.stdin.fileno(), fcntl.F_GETFL)
+        fcntl.fcntl(sys.stdin.fileno(), fcntl.F_SETFL, fl | os.O_NONBLOCK)
+    else:
+        read_bytes = 1
     try:
         tty.setraw(sys.stdin.fileno())
         tty.setcbreak(sys.stdin.fileno())
@@ -64,14 +71,15 @@ def posix_shell(chan):
                 except socket.timeout:
                     pass
             if sys.stdin in r:
-                x = sys.stdin.read(4)
+                x = sys.stdin.read(read_bytes)
                 if len(x) == 0:
                     break
                 chan.send(x)
 
     finally:
         termios.tcsetattr(sys.stdin, termios.TCSADRAIN, oldtty)
-        fcntl.fcntl(sys.stdin.fileno(), fcntl.F_SETFL, fl)
+        if not blocking_stdin:
+            fcntl.fcntl(sys.stdin.fileno(), fcntl.F_SETFL, fl)
 
 
 # thanks to Mike Looijmans for this code
