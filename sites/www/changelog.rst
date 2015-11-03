@@ -2,6 +2,7 @@
 Changelog
 =========
 
+* :release:`1.13.4 <2015-11-02>`
 * :bug:`366` Fix `~paramiko.sftp_attributes.SFTPAttributes` so its string
   representation doesn't raise exceptions on empty/initialized instances. Patch
   by Ulrich Petri.
