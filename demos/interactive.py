@@ -16,16 +16,16 @@
 # along with Paramiko; if not, write to the Free Software Foundation, Inc.,
 # 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
 
+
 import socket
 import sys
 from paramiko.py3compat import u
+import os
 
 # windows does not have termios...
 try:
     import termios
     import tty
-    import fcntl
-    import os
     has_termios = True
 except ImportError:
     has_termios = False
@@ -38,19 +38,10 @@ def interactive_shell(chan):
         windows_shell(chan)
 
 
-def posix_shell(chan, blocking_stdin=False):
-    ''' set blocking_stdin to True if you're having problems with your terminal session '''
+def posix_shell(chan):
     import select
 
     oldtty = termios.tcgetattr(sys.stdin)
-    if not blocking_stdin:
-        read_bytes = 4
-        import fcntl
-        import os
-        fl = fcntl.fcntl(sys.stdin.fileno(), fcntl.F_GETFL)
-        fcntl.fcntl(sys.stdin.fileno(), fcntl.F_SETFL, fl | os.O_NONBLOCK)
-    else:
-        read_bytes = 1
     try:
         tty.setraw(sys.stdin.fileno())
         tty.setcbreak(sys.stdin.fileno())
@@ -58,28 +49,24 @@ def posix_shell(chan, blocking_stdin=False):
 
         while True:
             r, w, e = select.select([chan, sys.stdin], [], [])
-
             if chan in r:
                 try:
                     x = u(chan.recv(1024))
                     if len(x) == 0:
                         sys.stdout.write('\r\n*** EOF\r\n')
-                        chan.close()
                         break
                     sys.stdout.write(x)
                     sys.stdout.flush()
                 except socket.timeout:
                     pass
             if sys.stdin in r:
-                x = sys.stdin.read(read_bytes)
+                x = os.read(sys.stdin.fileno(), 4)
                 if len(x) == 0:
                     break
                 chan.send(x)
 
     finally:
         termios.tcsetattr(sys.stdin, termios.TCSADRAIN, oldtty)
-        if not blocking_stdin:
-            fcntl.fcntl(sys.stdin.fileno(), fcntl.F_SETFL, fl)
 
 
 # thanks to Mike Looijmans for this code
