@@ -25,6 +25,7 @@ import getpass
 import os
 import socket
 import warnings
+from errno import ECONNREFUSED, EHOSTUNREACH
 
 from paramiko.agent import Agent
 from paramiko.common import DEBUG
@@ -35,7 +36,9 @@ from paramiko.hostkeys import HostKeys
 from paramiko.py3compat import string_types
 from paramiko.resource import ResourceManager
 from paramiko.rsakey import RSAKey
-from paramiko.ssh_exception import SSHException, BadHostKeyException
+from paramiko.ssh_exception import (
+    SSHException, BadHostKeyException, NoValidConnectionsError
+)
 from paramiko.transport import Transport
 from paramiko.util import retry_on_signal, ClosingContextManager
 
@@ -172,10 +175,46 @@ class SSHClient (ClosingContextManager):
         """
         self._policy = policy
 
-    def connect(self, hostname, port=SSH_PORT, username=None, password=None, pkey=None,
-                key_filename=None, timeout=None, allow_agent=True, look_for_keys=True,
-                compress=False, sock=None, gss_auth=False, gss_kex=False,
-                gss_deleg_creds=True, gss_host=None, banner_timeout=None):
+    def _families_and_addresses(self, hostname, port):
+        """
+        Yield pairs of address families and addresses to try for connecting.
+
+        :param str hostname: the server to connect to
+        :param int port: the server port to connect to
+        :returns: Yields an iterable of ``(family, address)`` tuples
+        """
+        guess = True
+        addrinfos = socket.getaddrinfo(hostname, port, socket.AF_UNSPEC, socket.SOCK_STREAM)
+        for (family, socktype, proto, canonname, sockaddr) in addrinfos:
+            if socktype == socket.SOCK_STREAM:
+                yield family, sockaddr
+                guess = False
+
+        # some OS like AIX don't indicate SOCK_STREAM support, so just guess. :(
+        # We only do this if we did not get a single result marked as socktype == SOCK_STREAM.
+        if guess:
+            for family, _, _, _, sockaddr in addrinfos:
+                yield family, sockaddr
+
+    def connect(
+        self,
+        hostname,
+        port=SSH_PORT,
+        username=None,
+        password=None,
+        pkey=None,
+        key_filename=None,
+        timeout=None,
+        allow_agent=True,
+        look_for_keys=True,
+        compress=False,
+        sock=None,
+        gss_auth=False,
+        gss_kex=False,
+        gss_deleg_creds=True,
+        gss_host=None,
+        banner_timeout=None
+    ):
         """
         Connect to an SSH server and authenticate to it.  The server's host key
         is checked against the system host keys (see `load_system_host_keys`)
@@ -206,8 +245,10 @@ class SSHClient (ClosingContextManager):
         :param str key_filename:
             the filename, or list of filenames, of optional private key(s) to
             try for authentication
-        :param float timeout: an optional timeout (in seconds) for the TCP connect
-        :param bool allow_agent: set to False to disable connecting to the SSH agent
+        :param float timeout:
+            an optional timeout (in seconds) for the TCP connect
+        :param bool allow_agent:
+            set to False to disable connecting to the SSH agent
         :param bool look_for_keys:
             set to False to disable searching for discoverable private key
             files in ``~/.ssh/``
@@ -215,10 +256,13 @@ class SSHClient (ClosingContextManager):
         :param socket sock:
             an open socket or socket-like object (such as a `.Channel`) to use
             for communication to the target host
-        :param bool gss_auth: ``True`` if you want to use GSS-API authentication
-        :param bool gss_kex: Perform GSS-API Key Exchange and user authentication
+        :param bool gss_auth:
+            ``True`` if you want to use GSS-API authentication
+        :param bool gss_kex:
+            Perform GSS-API Key Exchange and user authentication
         :param bool gss_deleg_creds: Delegate GSS-API client credentials or not
-        :param str gss_host: The targets name in the kerberos database. default: hostname
+        :param str gss_host:
+            The targets name in the kerberos database. default: hostname
         :param float banner_timeout: an optional timeout (in seconds) to wait
             for the SSH banner to be presented.
 
@@ -234,21 +278,37 @@ class SSHClient (ClosingContextManager):
             ``gss_deleg_creds`` and ``gss_host`` arguments.
         """
         if not sock:
-            for (family, socktype, proto, canonname, sockaddr) in socket.getaddrinfo(hostname, port, socket.AF_UNSPEC, socket.SOCK_STREAM):
-                if socktype == socket.SOCK_STREAM:
-                    af = family
-                    addr = sockaddr
-                    break
-            else:
-                # some OS like AIX don't indicate SOCK_STREAM support, so just guess. :(
-                af, _, _, _, addr = socket.getaddrinfo(hostname, port, socket.AF_UNSPEC, socket.SOCK_STREAM)
-            sock = socket.socket(af, socket.SOCK_STREAM)
-            if timeout is not None:
+            errors = {}
+            # Try multiple possible address families (e.g. IPv4 vs IPv6)
+            to_try = list(self._families_and_addresses(hostname, port))
+            for af, addr in to_try:
                 try:
-                    sock.settimeout(timeout)
-                except:
-                    pass
-            retry_on_signal(lambda: sock.connect(addr))
+                    sock = socket.socket(af, socket.SOCK_STREAM)
+                    if timeout is not None:
+                        try:
+                            sock.settimeout(timeout)
+                        except:
+                            pass
+                    retry_on_signal(lambda: sock.connect(addr))
+                    # Break out of the loop on success
+                    break
+                except socket.error as e:
+                    # Raise anything that isn't a straight up connection error
+                    # (such as a resolution error)
+                    if e.errno not in (ECONNREFUSED, EHOSTUNREACH):
+                        raise
+                    # Capture anything else so we know how the run looks once
+                    # iteration is complete. Retain info about which attempt
+                    # this was.
+                    errors[addr] = e
+
+            # Make sure we explode usefully if no address family attempts
+            # succeeded. We've no way of knowing which error is the "right"
+            # one, so we construct a hybrid exception containing all the real
+            # ones, of a subclass that client code should still be watching for
+            # (socket.error)
+            if len(errors) == len(to_try):
+                raise NoValidConnectionsError(errors)
 
         t = self._transport = Transport(sock, gss_kex=gss_kex, gss_deleg_creds=gss_deleg_creds)
         t.use_compression(compress=compress)
@@ -338,7 +398,7 @@ class SSHClient (ClosingContextManager):
 
         :raises SSHException: if the server fails to execute the command
         """
-        chan = self._transport.open_session()
+        chan = self._transport.open_session(timeout=timeout)
         if get_pty:
             chan.get_pty()
         chan.settimeout(timeout)

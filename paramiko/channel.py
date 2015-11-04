@@ -337,7 +337,7 @@ class Channel (ClosingContextManager):
         further x11 requests can be made from the server to the client,
         when an x11 application is run in a shell session.
 
-        From RFC4254::
+        From :rfc:`4254`::
 
             It is RECOMMENDED that the 'x11 authentication cookie' that is
             sent be a fake, random cookie, and that the cookie be checked and
@@ -587,7 +587,7 @@ class Channel (ClosingContextManager):
         is returned, the channel stream has closed.
 
         :param int nbytes: maximum number of bytes to read.
-        :return: received data, as a `str`
+        :return: received data, as a `bytes`
 
         :raises socket.timeout:
             if no data is ready before the timeout set by `settimeout`.
@@ -975,7 +975,7 @@ class Channel (ClosingContextManager):
             else:
                 ok = server.check_channel_env_request(self, name, value)
         elif key == 'exec':
-            cmd = m.get_text()
+            cmd = m.get_string()
             if server is None:
                 ok = False
             else:

@@ -811,6 +811,11 @@ class SFTPTest (unittest.TestCase):
             sftp.remove('%s/nonutf8data' % FOLDER)
 
 
+    def test_sftp_attributes_empty_str(self):
+        sftp_attributes = SFTPAttributes()
+        self.assertEqual(str(sftp_attributes), "?---------   1 0        0               0 (unknown date) ?")
+
+
 if __name__ == '__main__':
     SFTPTest.init_loopback()
     # logging is required by test_N_file_with_percent
