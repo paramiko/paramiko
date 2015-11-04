@@ -162,11 +162,11 @@ class ECDSAKey(PKey):
     @staticmethod
     def generate(curve=ec.SECP256R1(), progress_func=None):
         """
-        Generate a new private RSA key.  This factory function can be used to
+        Generate a new private ECDSA key.  This factory function can be used to
         generate a new host key or authentication key.
 
-        :param function progress_func: Unused
-        :returns: A new private key (`.RSAKey`) object
+        :param function progress_func: Not used for this type of key.
+        :returns: A new private key (`.ECDSAKey`) object
         """
         private_key = ec.generate_private_key(curve, backend=default_backend())
         return ECDSAKey(vals=(private_key, private_key.public_key()))

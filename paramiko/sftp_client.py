@@ -589,6 +589,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
 
         .. versionadded:: 1.4
         """
+        # TODO: make class initialize with self._cwd set to self.normalize('.')
         return self._cwd and u(self._cwd)
 
     def putfo(self, fl, remotepath, file_size=0, callback=None, confirm=True):
@@ -599,7 +600,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
 
         The SFTP operations use pipelining for speed.
 
-        :param file fl: opened file or file-like object to copy
+        :param fl: opened file or file-like object to copy
         :param str remotepath: the destination path on the SFTP server
         :param int file_size:
             optional size parameter passed to callback. If none is specified,

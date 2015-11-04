@@ -209,12 +209,15 @@ class SFTPAttributes (object):
         # not all servers support uid/gid
         uid = self.st_uid
         gid = self.st_gid
+        size = self.st_size
         if uid is None:
             uid = 0
         if gid is None:
             gid = 0
+        if size is None:
+            size = 0
 
-        return '%s   1 %-8d %-8d %8d %-12s %s' % (ks, uid, gid, self.st_size, datestr, filename)
+        return '%s   1 %-8d %-8d %8d %-12s %s' % (ks, uid, gid, size, datestr, filename)
 
     def asbytes(self):
         return b(str(self))

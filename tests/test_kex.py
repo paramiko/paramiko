@@ -26,7 +26,7 @@ import unittest
 
 import paramiko.util
 from paramiko.kex_group1 import KexGroup1
-from paramiko.kex_gex import KexGex
+from paramiko.kex_gex import KexGex, KexGexSHA256
 from paramiko import Message
 from paramiko.common import byte_chr
 
@@ -252,3 +252,121 @@ class KexTest (unittest.TestCase):
         self.assertEqual(H, hexlify(transport._H).upper())
         self.assertEqual(x, hexlify(transport._message.asbytes()).upper())
         self.assertTrue(transport._activated)
+
+    def test_7_gex_sha256_client(self):
+        transport = FakeTransport()
+        transport.server_mode = False
+        kex = KexGexSHA256(transport)
+        kex.start_kex()
+        x = b'22000004000000080000002000'
+        self.assertEqual(x, hexlify(transport._message.asbytes()).upper())
+        self.assertEqual((paramiko.kex_gex._MSG_KEXDH_GEX_GROUP,), transport._expect)
+
+        msg = Message()
+        msg.add_mpint(FakeModulusPack.P)
+        msg.add_mpint(FakeModulusPack.G)
+        msg.rewind()
+        kex.parse_next(paramiko.kex_gex._MSG_KEXDH_GEX_GROUP, msg)
+        x = b'20000000807E2DDB1743F3487D6545F04F1C8476092FB912B013626AB5BCEB764257D88BBA64243B9F348DF7B41B8C814A995E00299913503456983FFB9178D3CD79EB6D55522418A8ABF65375872E55938AB99A84A0B5FC8A1ECC66A7C3766E7E0F80B7CE2C9225FC2DD683F4764244B72963BBB383F529DCF0C5D17740B8A2ADBE9208D4'
+        self.assertEqual(x, hexlify(transport._message.asbytes()).upper())
+        self.assertEqual((paramiko.kex_gex._MSG_KEXDH_GEX_REPLY,), transport._expect)
+
+        msg = Message()
+        msg.add_string('fake-host-key')
+        msg.add_mpint(69)
+        msg.add_string('fake-sig')
+        msg.rewind()
+        kex.parse_next(paramiko.kex_gex._MSG_KEXDH_GEX_REPLY, msg)
+        H = b'AD1A9365A67B4496F05594AD1BF656E3CDA0851289A4C1AFF549FEAE50896DF4'
+        self.assertEqual(self.K, transport._K)
+        self.assertEqual(H, hexlify(transport._H).upper())
+        self.assertEqual((b'fake-host-key', b'fake-sig'), transport._verify)
+        self.assertTrue(transport._activated)
+
+    def test_8_gex_sha256_old_client(self):
+        transport = FakeTransport()
+        transport.server_mode = False
+        kex = KexGexSHA256(transport)
+        kex.start_kex(_test_old_style=True)
+        x = b'1E00000800'
+        self.assertEqual(x, hexlify(transport._message.asbytes()).upper())
+        self.assertEqual((paramiko.kex_gex._MSG_KEXDH_GEX_GROUP,), transport._expect)
+
+        msg = Message()
+        msg.add_mpint(FakeModulusPack.P)
+        msg.add_mpint(FakeModulusPack.G)
+        msg.rewind()
+        kex.parse_next(paramiko.kex_gex._MSG_KEXDH_GEX_GROUP, msg)
+        x = b'20000000807E2DDB1743F3487D6545F04F1C8476092FB912B013626AB5BCEB764257D88BBA64243B9F348DF7B41B8C814A995E00299913503456983FFB9178D3CD79EB6D55522418A8ABF65375872E55938AB99A84A0B5FC8A1ECC66A7C3766E7E0F80B7CE2C9225FC2DD683F4764244B72963BBB383F529DCF0C5D17740B8A2ADBE9208D4'
+        self.assertEqual(x, hexlify(transport._message.asbytes()).upper())
+        self.assertEqual((paramiko.kex_gex._MSG_KEXDH_GEX_REPLY,), transport._expect)
+
+        msg = Message()
+        msg.add_string('fake-host-key')
+        msg.add_mpint(69)
+        msg.add_string('fake-sig')
+        msg.rewind()
+        kex.parse_next(paramiko.kex_gex._MSG_KEXDH_GEX_REPLY, msg)
+        H = b'518386608B15891AE5237DEE08DCADDE76A0BCEFCE7F6DB3AD66BC41D256DFE5'
+        self.assertEqual(self.K, transport._K)
+        self.assertEqual(H, hexlify(transport._H).upper())
+        self.assertEqual((b'fake-host-key', b'fake-sig'), transport._verify)
+        self.assertTrue(transport._activated)
+
+    def test_9_gex_sha256_server(self):
+        transport = FakeTransport()
+        transport.server_mode = True
+        kex = KexGexSHA256(transport)
+        kex.start_kex()
+        self.assertEqual((paramiko.kex_gex._MSG_KEXDH_GEX_REQUEST, paramiko.kex_gex._MSG_KEXDH_GEX_REQUEST_OLD), transport._expect)
+
+        msg = Message()
+        msg.add_int(1024)
+        msg.add_int(2048)
+        msg.add_int(4096)
+        msg.rewind()
+        kex.parse_next(paramiko.kex_gex._MSG_KEXDH_GEX_REQUEST, msg)
+        x = b'1F0000008100FFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD129024E088A67CC74020BBEA63B139B22514A08798E3404DDEF9519B3CD3A431B302B0A6DF25F14374FE1356D6D51C245E485B576625E7EC6F44C42E9A637ED6B0BFF5CB6F406B7EDEE386BFB5A899FA5AE9F24117C4B1FE649286651ECE65381FFFFFFFFFFFFFFFF0000000102'
+        self.assertEqual(x, hexlify(transport._message.asbytes()).upper())
+        self.assertEqual((paramiko.kex_gex._MSG_KEXDH_GEX_INIT,), transport._expect)
+
+        msg = Message()
+        msg.add_mpint(12345)
+        msg.rewind()
+        kex.parse_next(paramiko.kex_gex._MSG_KEXDH_GEX_INIT, msg)
+        K = 67592995013596137876033460028393339951879041140378510871612128162185209509220726296697886624612526735888348020498716482757677848959420073720160491114319163078862905400020959196386947926388406687288901564192071077389283980347784184487280885335302632305026248574716290537036069329724382811853044654824945750581
+        H = b'CCAC0497CF0ABA1DBF55E1A3995D17F4CC31824B0E8D95CDF8A06F169D050D80'
+        x = b'210000000866616B652D6B6579000000807E2DDB1743F3487D6545F04F1C8476092FB912B013626AB5BCEB764257D88BBA64243B9F348DF7B41B8C814A995E00299913503456983FFB9178D3CD79EB6D55522418A8ABF65375872E55938AB99A84A0B5FC8A1ECC66A7C3766E7E0F80B7CE2C9225FC2DD683F4764244B72963BBB383F529DCF0C5D17740B8A2ADBE9208D40000000866616B652D736967'
+        self.assertEqual(K, transport._K)
+        self.assertEqual(H, hexlify(transport._H).upper())
+        self.assertEqual(x, hexlify(transport._message.asbytes()).upper())
+        self.assertTrue(transport._activated)
+
+    def test_10_gex_sha256_server_with_old_client(self):
+        transport = FakeTransport()
+        transport.server_mode = True
+        kex = KexGexSHA256(transport)
+        kex.start_kex()
+        self.assertEqual((paramiko.kex_gex._MSG_KEXDH_GEX_REQUEST, paramiko.kex_gex._MSG_KEXDH_GEX_REQUEST_OLD), transport._expect)
+
+        msg = Message()
+        msg.add_int(2048)
+        msg.rewind()
+        kex.parse_next(paramiko.kex_gex._MSG_KEXDH_GEX_REQUEST_OLD, msg)
+        x = b'1F0000008100FFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD129024E088A67CC74020BBEA63B139B22514A08798E3404DDEF9519B3CD3A431B302B0A6DF25F14374FE1356D6D51C245E485B576625E7EC6F44C42E9A637ED6B0BFF5CB6F406B7EDEE386BFB5A899FA5AE9F24117C4B1FE649286651ECE65381FFFFFFFFFFFFFFFF0000000102'
+        self.assertEqual(x, hexlify(transport._message.asbytes()).upper())
+        self.assertEqual((paramiko.kex_gex._MSG_KEXDH_GEX_INIT,), transport._expect)
+
+        msg = Message()
+        msg.add_mpint(12345)
+        msg.rewind()
+        kex.parse_next(paramiko.kex_gex._MSG_KEXDH_GEX_INIT, msg)
+        K = 67592995013596137876033460028393339951879041140378510871612128162185209509220726296697886624612526735888348020498716482757677848959420073720160491114319163078862905400020959196386947926388406687288901564192071077389283980347784184487280885335302632305026248574716290537036069329724382811853044654824945750581
+        H = b'3DDD2AD840AD095E397BA4D0573972DC60F6461FD38A187CACA6615A5BC8ADBB'
+        x = b'210000000866616B652D6B6579000000807E2DDB1743F3487D6545F04F1C8476092FB912B013626AB5BCEB764257D88BBA64243B9F348DF7B41B8C814A995E00299913503456983FFB9178D3CD79EB6D55522418A8ABF65375872E55938AB99A84A0B5FC8A1ECC66A7C3766E7E0F80B7CE2C9225FC2DD683F4764244B72963BBB383F529DCF0C5D17740B8A2ADBE9208D40000000866616B652D736967'
+        self.assertEqual(K, transport._K)
+        self.assertEqual(H, hexlify(transport._H).upper())
+        self.assertEqual(x, hexlify(transport._message.asbytes()).upper())
+        self.assertTrue(transport._activated)
+
+

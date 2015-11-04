@@ -290,6 +290,26 @@ class AgentServerProxy(AgentSSH):
 
 
 class AgentRequestHandler(object):
+    """
+    Primary/default implementation of SSH agent forwarding functionality.
+
+    Simply instantiate this class, handing it a live command-executing session
+    object, and it will handle forwarding any local SSH agent processes it
+    finds.
+
+    For example::
+
+        # Connect
+        client = SSHClient()
+        client.connect(host, port, username)
+        # Obtain session
+        session = client.get_transport().open_session()
+        # Forward local agent
+        AgentRequestHandler(session)
+        # Commands executed after this point will see the forwarded agent on
+        # the remote end.
+        session.exec_command("git clone https://my.git.repository/")
+    """
     def __init__(self, chanClient):
         self._conn = None
         self.__chanC = chanClient
