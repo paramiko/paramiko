@@ -22,7 +22,8 @@ generator "g" are provided by the server.  A bit more work is required on the
 client side, and a **lot** more on the server side.
 """
 
-from Crypto.Hash import SHA
+import os
+from hashlib import sha1, sha256
 
 from paramiko import util
 from paramiko.common import DEBUG
@@ -43,6 +44,7 @@ class KexGex (object):
     min_bits = 1024
     max_bits = 8192
     preferred_bits = 2048
+    hash_algo = sha1
 
     def __init__(self, transport):
         self.transport = transport
@@ -86,7 +88,7 @@ class KexGex (object):
             return self._parse_kexdh_gex_reply(m)
         elif ptype == _MSG_KEXDH_GEX_REQUEST_OLD:
             return self._parse_kexdh_gex_request_old(m)
-        raise SSHException('KexGex asked to handle packet type %d' % ptype)
+        raise SSHException('KexGex %s asked to handle packet type %d' % self.name, ptype)
 
     ###  internals...
 
@@ -101,7 +103,7 @@ class KexGex (object):
             qhbyte <<= 1
             qmask >>= 1
         while True:
-            x_bytes = self.transport.rng.read(byte_count)
+            x_bytes = os.urandom(byte_count)
             x_bytes = byte_mask(x_bytes[0], qmask) + x_bytes[1:]
             x = util.inflate_long(x_bytes, 1)
             if (x > 1) and (x < q):
@@ -203,10 +205,10 @@ class KexGex (object):
         hm.add_mpint(self.e)
         hm.add_mpint(self.f)
         hm.add_mpint(K)
-        H = SHA.new(hm.asbytes()).digest()
+        H = self.hash_algo(hm.asbytes()).digest()
         self.transport._set_K_H(K, H)
         # sign it
-        sig = self.transport.get_server_key().sign_ssh_data(self.transport.rng, H)
+        sig = self.transport.get_server_key().sign_ssh_data(H)
         # send reply
         m = Message()
         m.add_byte(c_MSG_KEXDH_GEX_REPLY)
@@ -215,7 +217,7 @@ class KexGex (object):
         m.add_string(sig)
         self.transport._send_message(m)
         self.transport._activate_outbound()
-        
+
     def _parse_kexdh_gex_reply(self, m):
         host_key = m.get_string()
         self.f = m.get_mpint()
@@ -238,6 +240,10 @@ class KexGex (object):
         hm.add_mpint(self.e)
         hm.add_mpint(self.f)
         hm.add_mpint(K)
-        self.transport._set_K_H(K, SHA.new(hm.asbytes()).digest())
+        self.transport._set_K_H(K, self.hash_algo(hm.asbytes()).digest())
         self.transport._verify_key(host_key, sig)
         self.transport._activate_outbound()
+
+class KexGexSHA256(KexGex):
+    name = 'diffie-hellman-group-exchange-sha256'
+    hash_algo = sha256

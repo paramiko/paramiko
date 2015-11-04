@@ -23,12 +23,13 @@ a real actual sftp server is contacted, and a new folder is created there to
 do test file operations in (so no existing files will be harmed).
 """
 
-from binascii import hexlify
 import os
+import socket
 import sys
-import warnings
 import threading
 import unittest
+import warnings
+from binascii import hexlify
 from tempfile import mkstemp
 
 import paramiko
@@ -96,7 +97,7 @@ def get_sftp():
 
 
 class SFTPTest (unittest.TestCase):
-
+    @staticmethod
     def init(hostname, username, keyfile, passwd):
         global sftp, tc
 
@@ -128,8 +129,8 @@ class SFTPTest (unittest.TestCase):
             sys.stderr.write('\n')
             sys.exit(1)
         sftp = paramiko.SFTP.from_transport(t)
-    init = staticmethod(init)
 
+    @staticmethod
     def init_loopback():
         global sftp, tc
 
@@ -149,12 +150,11 @@ class SFTPTest (unittest.TestCase):
         event.wait(1.0)
 
         sftp = paramiko.SFTP.from_transport(tc)
-    init_loopback = staticmethod(init_loopback)
 
+    @staticmethod
     def set_big_file_test(onoff):
         global g_big_file_test
         g_big_file_test = onoff
-    set_big_file_test = staticmethod(set_big_file_test)
 
     def setUp(self):
         global FOLDER
@@ -194,6 +194,21 @@ class SFTPTest (unittest.TestCase):
         except:
             pass
         sftp = paramiko.SFTP.from_transport(tc)
+
+    def test_2_sftp_can_be_used_as_context_manager(self):
+        """
+        verify that the sftp session is closed when exiting the context manager
+        """
+        global sftp
+        with sftp:
+            pass
+        try:
+            sftp.open(FOLDER + '/test2', 'w')
+            self.fail('expected exception')
+        except (EOFError, socket.error):
+            pass
+        finally:
+            sftp = paramiko.SFTP.from_transport(tc)
 
     def test_3_write(self):
         """
@@ -279,8 +294,8 @@ class SFTPTest (unittest.TestCase):
 
     def test_7_listdir(self):
         """
-        verify that a folder can be created, a bunch of files can be placed in it,
-        and those files show up in sftp.listdir.
+        verify that a folder can be created, a bunch of files can be placed in
+        it, and those files show up in sftp.listdir.
         """
         try:
             sftp.open(FOLDER + '/duck.txt', 'w').close()
@@ -288,6 +303,26 @@ class SFTPTest (unittest.TestCase):
             sftp.open(FOLDER + '/tertiary.py', 'w').close()
 
             x = sftp.listdir(FOLDER)
+            self.assertEqual(len(x), 3)
+            self.assertTrue('duck.txt' in x)
+            self.assertTrue('fish.txt' in x)
+            self.assertTrue('tertiary.py' in x)
+            self.assertTrue('random' not in x)
+        finally:
+            sftp.remove(FOLDER + '/duck.txt')
+            sftp.remove(FOLDER + '/fish.txt')
+            sftp.remove(FOLDER + '/tertiary.py')
+
+    def test_7_5_listdir_iter(self):
+        """
+        listdir_iter version of above test
+        """
+        try:
+            sftp.open(FOLDER + '/duck.txt', 'w').close()
+            sftp.open(FOLDER + '/fish.txt', 'w').close()
+            sftp.open(FOLDER + '/tertiary.py', 'w').close()
+
+            x = [x.filename for x in sftp.listdir_iter(FOLDER)]
             self.assertEqual(len(x), 3)
             self.assertTrue('duck.txt' in x)
             self.assertTrue('fish.txt' in x)
@@ -774,6 +809,11 @@ class SFTPTest (unittest.TestCase):
             self.assertEqual(data, NON_UTF8_DATA)
         finally:
             sftp.remove('%s/nonutf8data' % FOLDER)
+
+
+    def test_sftp_attributes_empty_str(self):
+        sftp_attributes = SFTPAttributes()
+        self.assertEqual(str(sftp_attributes), "?---------   1 0        0               0 (unknown date) ?")
 
 
 if __name__ == '__main__':

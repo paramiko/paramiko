@@ -21,11 +21,11 @@ ECDSA keys
 """
 
 import binascii
-from ecdsa import SigningKey, VerifyingKey, der, curves
-from Crypto.Hash import SHA256
-from ecdsa.test_pyecdsa import ECDSA
-from paramiko.common import four_byte, one_byte
+from hashlib import sha256
 
+from ecdsa import SigningKey, VerifyingKey, der, curves
+
+from paramiko.common import four_byte, one_byte
 from paramiko.message import Message
 from paramiko.pkey import PKey
 from paramiko.py3compat import byte_chr, u
@@ -38,7 +38,8 @@ class ECDSAKey (PKey):
     data.
     """
 
-    def __init__(self, msg=None, data=None, filename=None, password=None, vals=None, file_obj=None):
+    def __init__(self, msg=None, data=None, filename=None, password=None,
+                 vals=None, file_obj=None, validate_point=True):
         self.verifying_key = None
         self.signing_key = None
         if file_obj is not None:
@@ -50,7 +51,7 @@ class ECDSAKey (PKey):
         if (msg is None) and (data is not None):
             msg = Message(data)
         if vals is not None:
-            self.verifying_key, self.signing_key = vals
+            self.signing_key, self.verifying_key = vals
         else:
             if msg is None:
                 raise SSHException('Key object may not be empty')
@@ -65,7 +66,8 @@ class ECDSAKey (PKey):
                 raise SSHException('Point compression is being used: %s' %
                                    binascii.hexlify(pointinfo))
             self.verifying_key = VerifyingKey.from_string(pointinfo[1:],
-                                                          curve=curves.NIST256p)
+                                                          curve=curves.NIST256p,
+                                                          validate_point=validate_point)
         self.size = 256
 
     def asbytes(self):
@@ -97,10 +99,9 @@ class ECDSAKey (PKey):
     def can_sign(self):
         return self.signing_key is not None
 
-    def sign_ssh_data(self, rpool, data):
-        digest = SHA256.new(data).digest()
-        sig = self.signing_key.sign_digest(digest, entropy=rpool.read,
-                                           sigencode=self._sigencode)
+    def sign_ssh_data(self, data):
+        sig = self.signing_key.sign_deterministic(
+            data, sigencode=self._sigencode, hashfunc=sha256)
         m = Message()
         m.add_string('ecdsa-sha2-nistp256')
         m.add_string(sig)
@@ -113,7 +114,7 @@ class ECDSAKey (PKey):
 
         # verify the signature by SHA'ing the data and encrypting it
         # using the public key.
-        hash_obj = SHA256.new(data).digest()
+        hash_obj = sha256(data).digest()
         return self.verifying_key.verify_digest(sig, hash_obj,
                                                 sigdecode=self._sigdecode)
 
@@ -125,20 +126,18 @@ class ECDSAKey (PKey):
         key = self.signing_key or self.verifying_key
         self._write_private_key('EC', file_obj, key.to_der(), password)
 
-    def generate(bits, progress_func=None):
+    @staticmethod
+    def generate(curve=curves.NIST256p, progress_func=None):
         """
-        Generate a new private RSA key.  This factory function can be used to
+        Generate a new private ECDSA key.  This factory function can be used to
         generate a new host key or authentication key.
 
-        :param function progress_func:
-            an optional function to call at key points in key generation (used
-            by ``pyCrypto.PublicKey``).
-        :returns: A new private key (`.RSAKey`) object
+        :param function progress_func: Not used for this type of key.
+        :returns: A new private key (`.ECDSAKey`) object
         """
-        signing_key = ECDSA.generate()
+        signing_key = SigningKey.generate(curve)
         key = ECDSAKey(vals=(signing_key, signing_key.get_verifying_key()))
         return key
-    generate = staticmethod(generate)
 
     ###  internals...
 

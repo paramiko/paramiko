@@ -24,10 +24,10 @@ Configuration file (aka ``ssh_config``) support.
 import fnmatch
 import os
 import re
+import shlex
 import socket
 
 SSH_PORT = 22
-proxy_re = re.compile(r"^(proxycommand)\s*=*\s*(.*)", re.I)
 
 
 class SSHConfig (object):
@@ -41,6 +41,8 @@ class SSHConfig (object):
     .. versionadded:: 1.6
     """
 
+    SETTINGS_REGEX = re.compile(r'(\w+)(?:\s*=\s*|\s+)(.+)')
+
     def __init__(self):
         """
         Create a new OpenSSH config object.
@@ -51,46 +53,43 @@ class SSHConfig (object):
         """
         Read an OpenSSH config from the given file object.
 
-        :param file file_obj: a file-like object to read the config file from
+        :param file_obj: a file-like object to read the config file from
         """
         host = {"host": ['*'], "config": {}}
         for line in file_obj:
             line = line.rstrip('\r\n').lstrip()
             if not line or line.startswith('#'):
                 continue
-            if '=' in line:
-                # Ensure ProxyCommand gets properly split
-                if line.lower().strip().startswith('proxycommand'):
-                    match = proxy_re.match(line)
-                    key, value = match.group(1).lower(), match.group(2)
-                else:
-                    key, value = line.split('=', 1)
-                    key = key.strip().lower()
-            else:
-                # find first whitespace, and split there
-                i = 0
-                while (i < len(line)) and not line[i].isspace():
-                    i += 1
-                if i == len(line):
-                    raise Exception('Unparsable line: %r' % line)
-                key = line[:i].lower()
-                value = line[i:].lstrip()
 
+            match = re.match(self.SETTINGS_REGEX, line)
+            if not match:
+                raise Exception("Unparsable line %s" % line)
+            key = match.group(1).lower()
+            value = match.group(2)
+            
             if key == 'host':
                 self._config.append(host)
-                value = value.split()
-                host = {key: value, 'config': {}}
-            #identityfile, localforward, remoteforward keys are special cases, since they are allowed to be
-            # specified multiple times and they should be tried in order
-            # of specification.
+                host = {
+                    'host': self._get_hosts(value),
+                    'config': {}
+                }
+            elif key == 'proxycommand' and value.lower() == 'none':
+                # Proxycommands of none should not be added as an actual value. (Issue #415)
+                continue
+            else:
+                if value.startswith('"') and value.endswith('"'):
+                    value = value[1:-1]
 
-            elif key in ['identityfile', 'localforward', 'remoteforward']:
-                if key in host['config']:
-                    host['config'][key].append(value)
-                else:
-                    host['config'][key] = [value]
-            elif key not in host['config']:
-                host['config'][key] = value
+                #identityfile, localforward, remoteforward keys are special cases, since they are allowed to be
+                # specified multiple times and they should be tried in order
+                # of specification.
+                if key in ['identityfile', 'localforward', 'remoteforward']:
+                    if key in host['config']:
+                        host['config'][key].append(value)
+                    else:
+                        host['config'][key] = [value]
+                elif key not in host['config']:
+                    host['config'][key] = value
         self._config.append(host)
 
     def lookup(self, hostname):
@@ -99,7 +98,7 @@ class SSHConfig (object):
 
         The host-matching rules of OpenSSH's ``ssh_config`` man page are used:
         For each parameter, the first obtained value will be used.  The
-        configuration files contain sections separated by ``Host''
+        configuration files contain sections separated by ``Host``
         specifications, and that section is only applied for hosts that match
         one of the patterns given in the specification.
 
@@ -131,6 +130,16 @@ class SSHConfig (object):
                     ret[key].extend(value)
         ret = self._expand_variables(ret, hostname)
         return ret
+
+    def get_hostnames(self):
+        """
+        Return the set of literal hostnames defined in the SSH config (both
+        explicit hostnames and wildcard entries).
+        """
+        hosts = set()
+        for entry in self._config:
+            hosts.update(entry['host'])
+        return hosts
 
     def _allowed(self, hosts, hostname):
         match = False
@@ -211,6 +220,15 @@ class SSHConfig (object):
                         if find in config[k]:
                             config[k] = config[k].replace(find, str(replace))
         return config
+
+    def _get_hosts(self, host):
+        """
+        Return a list of host_names from host value.
+        """
+        try:
+            return shlex.split(host)
+        except ValueError:
+            raise Exception("Unparsable host %s" % host)
 
 
 class LazyFqdn(object):

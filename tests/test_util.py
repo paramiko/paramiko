@@ -23,12 +23,12 @@ Some unit tests for utility functions.
 from binascii import hexlify
 import errno
 import os
-from Crypto.Hash import SHA
+from hashlib import sha1
+import unittest
+
 import paramiko.util
 from paramiko.util import lookup_ssh_host_config as host_config, safe_string
 from paramiko.py3compat import StringIO, byte_ord, b
-
-from tests.util import ParamikoTest
 
 test_config_file = """\
 Host *
@@ -40,7 +40,12 @@ Host *.example.com
     \tUser bjork
 Port=3333
 Host *
- \t  \t Crazy something dumb  
+"""
+
+dont_strip_whitespace_please = "\t  \t Crazy something dumb  "
+
+test_config_file += dont_strip_whitespace_please
+test_config_file += """
 Host spoo.example.com
 Crazy something else
 """
@@ -59,7 +64,7 @@ BGQ3GQ/Fc7SX6gkpXkwcZryoi4kNFhHu5LvHcZPdxXV1D+uTMfGS1eyd2Yz/DoNWXNAl8TI0cAsW\
 from paramiko import *
 
 
-class UtilTest(ParamikoTest):
+class UtilTest(unittest.TestCase):
     def test_1_import(self):
         """
         verify that all the classes can be imported from paramiko.
@@ -136,7 +141,7 @@ class UtilTest(ParamikoTest):
             )
 
     def test_4_generate_key_bytes(self):
-        x = paramiko.util.generate_key_bytes(SHA, b'ABCDEFGH', 'This is my secret passphrase.', 64)
+        x = paramiko.util.generate_key_bytes(sha1, b'ABCDEFGH', 'This is my secret passphrase.', 64)
         hex = ''.join(['%02x' % byte_ord(c) for c in x])
         self.assertEqual(hex, '9110e2f6793b69363e58173e9436b13a5a4b339005741d5c680e505f57d871347b4239f14fb5c46e857d5e100424873ba849ac699cea98d729e57b3e84378e8b')
 
@@ -152,12 +157,6 @@ class UtilTest(ParamikoTest):
             self.assertEqual(b'E6684DB30E109B67B70FF1DC5C7F1363', fp)
         finally:
             os.unlink('hostfile.temp')
-
-    def test_6_random(self):
-        from paramiko.common import rng
-        # just verify that we can pull out 32 bytes and not get an exception.
-        x = rng.read(32)
-        self.assertEqual(len(x), 32)
 
     def test_7_host_config_expose_issue_33(self):
         test_config_file = """
@@ -339,11 +338,121 @@ IdentityFile something_%l_using_fqdn
         config = paramiko.util.parse_ssh_config(StringIO(test_config))
         assert config.lookup('meh')  # will die during lookup() if bug regresses
 
+    def test_clamp_value(self):
+        self.assertEqual(32768, paramiko.util.clamp_value(32767, 32768, 32769))
+        self.assertEqual(32767, paramiko.util.clamp_value(32767, 32765, 32769))
+        self.assertEqual(32769, paramiko.util.clamp_value(32767, 32770, 32769))
+
     def test_13_config_dos_crlf_succeeds(self):
         config_file = StringIO("host abcqwerty\r\nHostName 127.0.0.1\r\n")
         config = paramiko.SSHConfig()
         config.parse(config_file)
         self.assertEqual(config.lookup("abcqwerty")["hostname"], "127.0.0.1")
+
+    def test_14_get_hostnames(self):
+        f = StringIO(test_config_file)
+        config = paramiko.util.parse_ssh_config(f)
+        self.assertEqual(config.get_hostnames(), set(['*', '*.example.com', 'spoo.example.com']))
+
+    def test_quoted_host_names(self):
+        test_config_file = """\
+Host "param pam" param "pam"
+    Port 1111
+
+Host "param2"
+    Port 2222
+
+Host param3 parara
+    Port 3333
+
+Host param4 "p a r" "p" "par" para
+    Port 4444
+"""
+        res = {
+            'param pam': {'hostname': 'param pam', 'port': '1111'},
+            'param': {'hostname': 'param', 'port': '1111'},
+            'pam': {'hostname': 'pam', 'port': '1111'},
+
+            'param2': {'hostname': 'param2', 'port': '2222'},
+
+            'param3': {'hostname': 'param3', 'port': '3333'},
+            'parara': {'hostname': 'parara', 'port': '3333'},
+
+            'param4': {'hostname': 'param4', 'port': '4444'},
+            'p a r': {'hostname': 'p a r', 'port': '4444'},
+            'p': {'hostname': 'p', 'port': '4444'},
+            'par': {'hostname': 'par', 'port': '4444'},
+            'para': {'hostname': 'para', 'port': '4444'},
+        }
+        f = StringIO(test_config_file)
+        config = paramiko.util.parse_ssh_config(f)
+        for host, values in res.items():
+            self.assertEquals(
+                paramiko.util.lookup_ssh_host_config(host, config),
+                values
+            )
+
+    def test_quoted_params_in_config(self):
+        test_config_file = """\
+Host "param pam" param "pam"
+    IdentityFile id_rsa
+
+Host "param2"
+    IdentityFile "test rsa key"
+
+Host param3 parara
+    IdentityFile id_rsa
+    IdentityFile "test rsa key"
+"""
+        res = {
+            'param pam': {'hostname': 'param pam', 'identityfile': ['id_rsa']},
+            'param': {'hostname': 'param', 'identityfile': ['id_rsa']},
+            'pam': {'hostname': 'pam', 'identityfile': ['id_rsa']},
+
+            'param2': {'hostname': 'param2', 'identityfile': ['test rsa key']},
+
+            'param3': {'hostname': 'param3', 'identityfile': ['id_rsa', 'test rsa key']},
+            'parara': {'hostname': 'parara', 'identityfile': ['id_rsa', 'test rsa key']},
+        }
+        f = StringIO(test_config_file)
+        config = paramiko.util.parse_ssh_config(f)
+        for host, values in res.items():
+            self.assertEquals(
+                paramiko.util.lookup_ssh_host_config(host, config),
+                values
+            )
+
+    def test_quoted_host_in_config(self):
+        conf = SSHConfig()
+        correct_data = {
+            'param': ['param'],
+            '"param"': ['param'],
+
+            'param pam': ['param', 'pam'],
+            '"param" "pam"': ['param', 'pam'],
+            '"param" pam': ['param', 'pam'],
+            'param "pam"': ['param', 'pam'],
+
+            'param "pam" p': ['param', 'pam', 'p'],
+            '"param" pam "p"': ['param', 'pam', 'p'],
+
+            '"pa ram"': ['pa ram'],
+            '"pa ram" pam': ['pa ram', 'pam'],
+            'param "p a m"': ['param', 'p a m'],
+        }
+        incorrect_data = [
+            'param"',
+            '"param',
+            'param "pam',
+            'param "pam" "p a',
+        ]
+        for host, values in correct_data.items():
+            self.assertEquals(
+                conf._get_hosts(host),
+                values
+            )
+        for host in incorrect_data:
+            self.assertRaises(Exception, conf._get_hosts, host)
 
     def test_safe_string(self):
         vanilla = b("vanilla")
@@ -355,3 +464,23 @@ IdentityFile something_%l_using_fqdn
         assert safe_vanilla == vanilla, err.format(safe_vanilla, vanilla)
         assert safe_has_bytes == expected_bytes, \
             err.format(safe_has_bytes, expected_bytes)
+
+    def test_proxycommand_none_issue_418(self):
+        test_config_file = """
+Host proxycommand-standard-none
+    ProxyCommand None
+
+Host proxycommand-with-equals-none
+    ProxyCommand=None
+    """
+        for host, values in {
+            'proxycommand-standard-none':    {'hostname': 'proxycommand-standard-none'},
+            'proxycommand-with-equals-none': {'hostname': 'proxycommand-with-equals-none'}
+        }.items():
+
+            f = StringIO(test_config_file)
+            config = paramiko.util.parse_ssh_config(f)
+            self.assertEqual(
+                paramiko.util.lookup_ssh_host_config(host, config),
+                values
+            )

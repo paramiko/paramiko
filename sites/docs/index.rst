@@ -50,6 +50,8 @@ Authentication & keys
     api/agent
     api/hostkeys
     api/keys
+    api/ssh_gss
+    api/kex_gss
 
 
 Other primary functions

@@ -29,6 +29,9 @@ MSG_USERAUTH_REQUEST, MSG_USERAUTH_FAILURE, MSG_USERAUTH_SUCCESS, \
     MSG_USERAUTH_BANNER = range(50, 54)
 MSG_USERAUTH_PK_OK = 60
 MSG_USERAUTH_INFO_REQUEST, MSG_USERAUTH_INFO_RESPONSE = range(60, 62)
+MSG_USERAUTH_GSSAPI_RESPONSE, MSG_USERAUTH_GSSAPI_TOKEN = range(60, 62)
+MSG_USERAUTH_GSSAPI_EXCHANGE_COMPLETE, MSG_USERAUTH_GSSAPI_ERROR,\
+MSG_USERAUTH_GSSAPI_ERRTOK, MSG_USERAUTH_GSSAPI_MIC = range(63, 67)
 MSG_GLOBAL_REQUEST, MSG_REQUEST_SUCCESS, MSG_REQUEST_FAILURE = range(80, 83)
 MSG_CHANNEL_OPEN, MSG_CHANNEL_OPEN_SUCCESS, MSG_CHANNEL_OPEN_FAILURE, \
     MSG_CHANNEL_WINDOW_ADJUST, MSG_CHANNEL_DATA, MSG_CHANNEL_EXTENDED_DATA, \
@@ -50,6 +53,12 @@ cMSG_USERAUTH_BANNER = byte_chr(MSG_USERAUTH_BANNER)
 cMSG_USERAUTH_PK_OK = byte_chr(MSG_USERAUTH_PK_OK)
 cMSG_USERAUTH_INFO_REQUEST = byte_chr(MSG_USERAUTH_INFO_REQUEST)
 cMSG_USERAUTH_INFO_RESPONSE = byte_chr(MSG_USERAUTH_INFO_RESPONSE)
+cMSG_USERAUTH_GSSAPI_RESPONSE = byte_chr(MSG_USERAUTH_GSSAPI_RESPONSE)
+cMSG_USERAUTH_GSSAPI_TOKEN = byte_chr(MSG_USERAUTH_GSSAPI_TOKEN)
+cMSG_USERAUTH_GSSAPI_EXCHANGE_COMPLETE = byte_chr(MSG_USERAUTH_GSSAPI_EXCHANGE_COMPLETE)
+cMSG_USERAUTH_GSSAPI_ERROR = byte_chr(MSG_USERAUTH_GSSAPI_ERROR)
+cMSG_USERAUTH_GSSAPI_ERRTOK = byte_chr(MSG_USERAUTH_GSSAPI_ERRTOK)
+cMSG_USERAUTH_GSSAPI_MIC = byte_chr(MSG_USERAUTH_GSSAPI_MIC)
 cMSG_GLOBAL_REQUEST = byte_chr(MSG_GLOBAL_REQUEST)
 cMSG_REQUEST_SUCCESS = byte_chr(MSG_REQUEST_SUCCESS)
 cMSG_REQUEST_FAILURE = byte_chr(MSG_REQUEST_FAILURE)
@@ -80,6 +89,8 @@ MSG_NAMES = {
     32: 'kex32',
     33: 'kex33',
     34: 'kex34',
+    40: 'kex40',
+    41: 'kex41',
     MSG_USERAUTH_REQUEST: 'userauth-request',
     MSG_USERAUTH_FAILURE: 'userauth-failure',
     MSG_USERAUTH_SUCCESS: 'userauth-success',
@@ -99,7 +110,13 @@ MSG_NAMES = {
     MSG_CHANNEL_CLOSE: 'channel-close',
     MSG_CHANNEL_REQUEST: 'channel-request',
     MSG_CHANNEL_SUCCESS: 'channel-success',
-    MSG_CHANNEL_FAILURE: 'channel-failure'
+    MSG_CHANNEL_FAILURE: 'channel-failure',
+    MSG_USERAUTH_GSSAPI_RESPONSE: 'userauth-gssapi-response',
+    MSG_USERAUTH_GSSAPI_TOKEN: 'userauth-gssapi-token',
+    MSG_USERAUTH_GSSAPI_EXCHANGE_COMPLETE: 'userauth-gssapi-exchange-complete',
+    MSG_USERAUTH_GSSAPI_ERROR: 'userauth-gssapi-error',
+    MSG_USERAUTH_GSSAPI_ERRTOK: 'userauth-gssapi-error-token',
+    MSG_USERAUTH_GSSAPI_MIC: 'userauth-gssapi-mic'
 }
 
 
@@ -125,11 +142,6 @@ CONNECTION_FAILED_CODE = {
 
 DISCONNECT_SERVICE_NOT_AVAILABLE, DISCONNECT_AUTH_CANCELLED_BY_USER, \
     DISCONNECT_NO_MORE_AUTH_METHODS_AVAILABLE = 7, 13, 14
-
-from Crypto import Random
-
-# keep a crypto-strong PRNG nearby
-rng = Random.new()
 
 zero_byte = byte_chr(0)
 one_byte = byte_chr(1)
@@ -176,3 +188,18 @@ CRITICAL = logging.CRITICAL
 
 # Common IO/select/etc sleep period, in seconds
 io_sleep = 0.01
+
+DEFAULT_WINDOW_SIZE = 64 * 2 ** 15
+DEFAULT_MAX_PACKET_SIZE = 2 ** 15
+
+# lower bound on the max packet size we'll accept from the remote host
+# Minimum packet size is 32768 bytes according to
+# http://www.ietf.org/rfc/rfc4254.txt
+MIN_WINDOW_SIZE = 2 ** 15
+
+# However, according to http://www.ietf.org/rfc/rfc4253.txt it is perfectly
+# legal to accept a size much smaller, as OpenSSH client does as size 16384.
+MIN_PACKET_SIZE = 2 ** 12
+
+# Max windows size according to http://www.ietf.org/rfc/rfc4254.txt
+MAX_WINDOW_SIZE = 2**32 -1

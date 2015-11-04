@@ -21,23 +21,19 @@ Packet handling
 """
 
 import errno
+import os
 import socket
 import struct
 import threading
 import time
+from hmac import HMAC
 
 from paramiko import util
 from paramiko.common import linefeed_byte, cr_byte_value, asbytes, MSG_NAMES, \
-    DEBUG, xffffffff, zero_byte, rng
+    DEBUG, xffffffff, zero_byte
 from paramiko.py3compat import u, byte_ord
 from paramiko.ssh_exception import SSHException, ProxyCommandFailure
 from paramiko.message import Message
-
-
-try:
-    from r_hmac import HMAC
-except ImportError:
-    from Crypto.Hash.HMAC import HMAC
 
 
 def compute_hmac(key, message, digest_class):
@@ -102,6 +98,10 @@ class Packetizer (object):
         self.__keepalive_interval = 0
         self.__keepalive_last = time.time()
         self.__keepalive_callback = None
+
+        self.__timer = None
+        self.__handshake_complete = False
+        self.__timer_expired = False
 
     def set_log(self, log):
         """
@@ -186,6 +186,45 @@ class Packetizer (object):
         self.__keepalive_callback = callback
         self.__keepalive_last = time.time()
 
+    def read_timer(self):
+        self.__timer_expired = True
+
+    def start_handshake(self, timeout):
+        """
+        Tells `Packetizer` that the handshake process started.
+        Starts a book keeping timer that can signal a timeout in the
+        handshake process.
+
+        :param float timeout: amount of seconds to wait before timing out
+        """
+        if not self.__timer:
+            self.__timer = threading.Timer(float(timeout), self.read_timer)
+            self.__timer.start()
+
+    def handshake_timed_out(self):
+        """
+        Checks if the handshake has timed out.
+        If `start_handshake` wasn't called before the call to this function
+        the return value will always be `False`.
+        If the handshake completed before a time out was reached the return value will be `False`
+
+        :return: handshake time out status, as a `bool`
+        """
+        if not self.__timer:
+            return False
+        if self.__handshake_complete:
+            return False
+        return self.__timer_expired
+
+    def complete_handshake(self):
+        """
+        Tells `Packetizer` that the handshake has completed.
+        """
+        if self.__timer:
+            self.__timer.cancel()
+            self.__timer_expired = False
+            self.__handshake_complete = True
+
     def read_all(self, n, check_rekey=False):
         """
         Read as close to N bytes as possible, blocking as long as necessary.
@@ -204,6 +243,8 @@ class Packetizer (object):
             n -= len(out)
         while n > 0:
             got_timeout = False
+            if self.handshake_timed_out():
+                raise EOFError()
             try:
                 x = self.__socket.recv(n)
                 if len(x) == 0:
@@ -235,6 +276,7 @@ class Packetizer (object):
 
     def write_all(self, out):
         self.__keepalive_last = time.time()
+        iteration_with_zero_as_return_value = 0
         while len(out) > 0:
             retry_write = False
             try:
@@ -258,6 +300,15 @@ class Packetizer (object):
                 n = 0
                 if self.__closed:
                     n = -1
+            else:
+                if n == 0 and iteration_with_zero_as_return_value > 10:
+                # We shouldn't retry the write, but we didn't
+                # manage to send anything over the socket. This might be an
+                # indication that we have lost contact with the remote side,
+                # but are yet to receive an EOFError or other socket errors.
+                # Let's give it some iteration to try and catch up.
+                    n = -1
+                iteration_with_zero_as_return_value += 1
             if n < 0:
                 raise EOFError()
             if n == len(out):
@@ -338,7 +389,8 @@ class Packetizer (object):
         if self.__dump_packets:
             self._log(DEBUG, util.format_binary(header, 'IN: '))
         packet_size = struct.unpack('>I', header[:4])[0]
-        # leftover contains decrypted bytes from the first block (after the length field)
+        # leftover contains decrypted bytes from the first block (after the
+        # length field)
         leftover = header[4:]
         if (packet_size - len(leftover)) % self.__block_size_in != 0:
             raise SSHException('Invalid packet blocking')
@@ -359,7 +411,7 @@ class Packetizer (object):
                 raise SSHException('Mismatched MAC')
         padding = byte_ord(packet[0])
         payload = packet[1:packet_size - padding]
-        
+
         if self.__dump_packets:
             self._log(DEBUG, 'Got payload (%d bytes, %d padding)' % (packet_size, padding))
 
@@ -455,7 +507,7 @@ class Packetizer (object):
             # don't waste random bytes for the padding
             packet += (zero_byte * padding)
         else:
-            packet += rng.read(padding)
+            packet += os.urandom(padding)
         return packet
 
     def _trigger_rekey(self):

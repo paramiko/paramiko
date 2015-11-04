@@ -129,7 +129,7 @@ class Message (object):
         b = self.get_bytes(1)
         return b != zero_byte
 
-    def get_int(self):
+    def get_adaptive_int(self):
         """
         Fetch an int from the stream.
 
@@ -141,7 +141,7 @@ class Message (object):
         byte += self.get_bytes(3)
         return struct.unpack('>I', byte)[0]
 
-    def get_size(self):
+    def get_int(self):
         """
         Fetch an int from the stream.
 
@@ -172,7 +172,7 @@ class Message (object):
         contain unprintable characters.  (It's not unheard of for a string to
         contain another byte-stream message.)
         """
-        return self.get_bytes(self.get_size())
+        return self.get_bytes(self.get_int())
 
     def get_text(self):
         """
@@ -183,7 +183,7 @@ class Message (object):
         @return: a string.
         @rtype: string
         """
-        return u(self.get_bytes(self.get_size()))
+        return u(self.get_bytes(self.get_int()))
         #return self.get_bytes(self.get_size())
 
     def get_binary(self):
@@ -195,7 +195,7 @@ class Message (object):
         @return: a string.
         @rtype: string
         """
-        return self.get_bytes(self.get_size())
+        return self.get_bytes(self.get_int())
 
     def get_list(self):
         """
@@ -235,7 +235,7 @@ class Message (object):
             self.packet.write(zero_byte)
         return self
             
-    def add_size(self, n):
+    def add_int(self, n):
         """
         Add an integer to the stream.
         
@@ -244,7 +244,7 @@ class Message (object):
         self.packet.write(struct.pack('>I', n))
         return self
             
-    def add_int(self, n):
+    def add_adaptive_int(self, n):
         """
         Add an integer to the stream.
         
@@ -283,7 +283,7 @@ class Message (object):
         :param str s: string to add
         """
         s = asbytes(s)
-        self.add_size(len(s))
+        self.add_int(len(s))
         self.packet.write(s)
         return self
 
@@ -302,7 +302,7 @@ class Message (object):
         if type(i) is bool:
             return self.add_boolean(i)
         elif isinstance(i, integer_types):
-            return self.add_int(i)
+            return self.add_adaptive_int(i)
         elif type(i) is list:
             return self.add_list(i)
         else:

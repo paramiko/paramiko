@@ -5,6 +5,7 @@ dist/
 paramiko.egg-info/
 test.log
 docs/
+demos/*.log
 !sites/docs
 _build
 .coverage

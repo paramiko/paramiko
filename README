@@ -72,6 +72,14 @@ Bugs & Support
 Please file bug reports at https://github.com/paramiko/paramiko/. There is currently no mailing list but we plan to create a new one ASAP.
 
 
+Kerberos Support
+----------------
+
+Paramiko ships with optional Kerberos/GSSAPI support; for info on the extra
+dependencies for this, see the 'GSS-API' section on the 'Installation' page of
+our main website, http://paramiko.org .
+
+
 Demo
 ----
 
