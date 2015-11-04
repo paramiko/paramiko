@@ -182,13 +182,13 @@ class Transport (threading.Thread, ClosingContextManager):
         'arcfour128': {
             'class': algorithms.ARC4,
             'mode': None,
-            'block size': 8,
+            'block-size': 8,
             'key-size': 16
         },
         'arcfour256': {
             'class': algorithms.ARC4,
             'mode': None,
-            'block size': 8,
+            'block-size': 8,
             'key-size': 32
         },
     }
