@@ -2,6 +2,11 @@
 Changelog
 =========
 
+* :bug:`194 major` (also :issue:`562`, :issue:`530`, :issue:`576`) Streamline
+  use of ``stat`` when downloading SFTP files via `SFTPClient.get
+  <paramiko.sftp_client.SFTPClient.get>`; this avoids triggering bugs in some
+  off-spec SFTP servers such as IBM Sterling. Thanks to ``@muraleee`` for the
+  initial report and to Torkil Gustavsen for the patch.
 * :feature:`467` (also :issue:`139`, :issue:`412`) Fully enable two-factor
   authentication (e.g. when a server requires ``AuthenticationMethods
   pubkey,keyboard-interactive``). Thanks to ``@perryjrandall`` for the patch
