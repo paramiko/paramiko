@@ -24,6 +24,7 @@ import os
 import socket
 import sys
 import threading
+import traceback
 import time
 import weakref
 from hashlib import md5, sha1, sha256, sha512
@@ -1745,26 +1746,16 @@ class Transport (threading.Thread, ClosingContextManager):
                         self._send_message(msg)
                     self.packetizer.complete_handshake()
             except SSHException as e:
-                self._log(ERROR, 'Exception: ' + str(e))
-                self._log(ERROR, util.tb_strings())
+                self._log(ERROR, traceback.format_exc())
                 self.saved_exception = e
             except EOFError as e:
                 self._log(DEBUG, 'EOF in transport thread')
-                #self._log(DEBUG, util.tb_strings())
                 self.saved_exception = e
             except socket.error as e:
-                if type(e.args) is tuple:
-                    if e.args:
-                        emsg = '%s (%d)' % (e.args[1], e.args[0])
-                    else:  # empty tuple, e.g. socket.timeout
-                        emsg = str(e) or repr(e)
-                else:
-                    emsg = e.args
-                self._log(ERROR, 'Socket exception: ' + emsg)
+                self._log(ERROR, traceback.format_exc())
                 self.saved_exception = e
             except Exception as e:
-                self._log(ERROR, 'Unknown exception: ' + str(e))
-                self._log(ERROR, util.tb_strings())
+                self._log(ERROR, traceback.format_exc())
                 self.saved_exception = e
             _active_threads.remove(self)
             for chan in list(self._channels.values()):
