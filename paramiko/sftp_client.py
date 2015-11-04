@@ -717,7 +717,6 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         .. versionchanged:: 1.7.4
             Added the ``callback`` param
         """
-        file_size = self.stat(remotepath).st_size
         with open(localpath, 'wb') as fl:
             size = self.getfo(remotepath, fl, callback)
         s = os.stat(localpath)
