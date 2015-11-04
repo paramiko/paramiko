@@ -504,7 +504,7 @@ class SSHClient (ClosingContextManager):
                     try:
                         key = pkey_class.from_private_key_file(key_filename, password)
                         self._log(DEBUG, 'Trying key %s from %s' % (hexlify(key.get_fingerprint()), key_filename))
-                        self._transport.auth_publickey(username, key)
+                        allowed_types = set(self._transport.auth_publickey(username, key))
                         two_factor = (allowed_types & two_factor_types)
                         if not two_factor:
                             return
