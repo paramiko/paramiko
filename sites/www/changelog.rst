@@ -2,6 +2,10 @@
 Changelog
 =========
 
+* :feature:`467` (also :issue:`139`, :issue:`412`) Fully enable two-factor
+  authentication (e.g. when a server requires ``AuthenticationMethods
+  pubkey,keyboard-interactive``). Thanks to ``@perryjrandall`` for the patch
+  and to ``@nevins-b`` and Matt Robenolt for additional support.
 * :bug:`502 major` Fix 'exec' requests in server mode to use ``get_string``
   instead of ``get_text`` to avoid ``UnicodeDecodeError`` on non-UTF-8 input.
   Thanks to Anselm Kruis for the patch & discussion.
