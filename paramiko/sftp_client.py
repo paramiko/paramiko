@@ -669,7 +669,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         with open(localpath, 'rb') as fl:
             return self.putfo(fl, remotepath, file_size, callback, confirm)
 
-    def getfo(self, remotepath, fl, callback=None):
+    def getfo(self, remotepath, fl, file_size=0, callback=None):
         """
         Copy a remote file (``remotepath``) from the SFTP server and write to
         an open file or file-like object, ``fl``.  Any exception raised by
@@ -679,6 +679,9 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         :param object remotepath: opened file or file-like object to copy to
         :param str fl:
             the destination path on the local host or open file object
+        :param int file_size:
+                    optional size parameter passed to callback. If none is specified,
+                    size defaults to 0
         :param callable callback:
             optional callback function (form: ``func(int, int)``) that accepts
             the bytes transferred so far and the total bytes to be transferred
@@ -687,8 +690,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         .. versionadded:: 1.10
         """
         with self.open(remotepath, 'rb') as fr:
-            file_size = self.stat(remotepath).st_size
-            fr.prefetch()
+            fr.prefetch(file_size)
             size = 0
             while True:
                 data = fr.read(32768)
@@ -716,9 +718,10 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         .. versionchanged:: 1.7.4
             Added the ``callback`` param
         """
+        self._log(DEBUG, 'Including fix for IBM Sterling Integrator Extractable=1 files')
         file_size = self.stat(remotepath).st_size
         with open(localpath, 'wb') as fl:
-            size = self.getfo(remotepath, fl, callback)
+            size = self.getfo(remotepath, fl, file_size,callback)
         s = os.stat(localpath)
         if s.st_size != size:
             raise IOError('size mismatch in get!  %d != %d' % (s.st_size, size))
