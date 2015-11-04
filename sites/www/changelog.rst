@@ -2,8 +2,9 @@
 Changelog
 =========
 
-* :bug:`502` Fix an issue in server mode, when processing an exec request.
-  A command that is not a valid UTF-8 string, caused an UnicodeDecodeError.
+* :bug:`502 major` Fix 'exec' requests in server mode to use ``get_string``
+  instead of ``get_text`` to avoid ``UnicodeDecodeError`` on non-UTF-8 input.
+  Thanks to Anselm Kruis for the patch & discussion.
 * :bug:`401` Fix line number reporting in log output regarding invalid
   ``known_hosts`` line entries. Thanks to Dylan Thacker-Smith for catch &
   patch.
