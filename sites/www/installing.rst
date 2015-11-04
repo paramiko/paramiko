@@ -72,6 +72,7 @@ For **Windows** users we recommend using the most recent version of ``pip``,
 Cryptography has binary wheels on PyPI, which remove the need for having a C
 compiler.
 
+.. _gssapi:
 
 Optional dependencies for GSS-API / SSPI / Kerberos
 ===================================================
