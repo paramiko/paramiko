@@ -256,7 +256,8 @@ class SSHClient (ClosingContextManager):
         :param socket sock:
             an open socket or socket-like object (such as a `.Channel`) to use
             for communication to the target host
-        :param bool gss_auth: ``True`` if you want to use GSS-API authentication
+        :param bool gss_auth:
+            ``True`` if you want to use GSS-API authentication
         :param bool gss_kex:
             Perform GSS-API Key Exchange and user authentication
         :param bool gss_deleg_creds: Delegate GSS-API client credentials or not
