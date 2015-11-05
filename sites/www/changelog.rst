@@ -113,7 +113,7 @@ Changelog
   use of the ``shlex`` module. Thanks to Yan Kalchevskiy.
 * :support:`422 backported` Clean up some unused imports. Courtesy of Olle
   Lundberg.
-* :support:`421 backported` Modernize threading calls to user newer API. Thanks
+* :support:`421 backported` Modernize threading calls to use newer API. Thanks
   to Olle Lundberg.
 * :support:`419 backported` Modernize a bunch of the codebase internals to
   leverage decorators. Props to ``@beckjake`` for realizing we're no longer on
