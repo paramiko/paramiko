@@ -155,7 +155,7 @@ class ECDSAKey (PKey):
         self._write_private_key('EC', file_obj, key.to_der(), password)
 
     @staticmethod
-    def generate(curve=curves.NIST256p, progress_func=None):
+    def generate(curve=curves.NIST256p, progress_func=None, bits=None):
         """
         Generate a new private ECDSA key.  This factory function can be used to
         generate a new host key or authentication key.
@@ -163,6 +163,13 @@ class ECDSAKey (PKey):
         :param function progress_func: Not used for this type of key.
         :returns: A new private key (`.ECDSAKey`) object
         """
+        # Compatibility with RSAKey and DSSKey
+        # Allow selecting curve by specifying key size
+        if bits is not None:
+            for v in CURVES.values():
+                if  v['size']==bits:
+                    curve = v['curve']
+
         signing_key = SigningKey.generate(curve)
         key = ECDSAKey(vals=(signing_key, signing_key.get_verifying_key()))
         return key

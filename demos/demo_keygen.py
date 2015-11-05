@@ -25,6 +25,7 @@ from optparse import OptionParser
 
 from paramiko import DSSKey
 from paramiko import RSAKey
+from paramiko import ECDSAKey
 from paramiko.ssh_exception import SSHException
 from paramiko.py3compat import u
 
@@ -41,6 +42,7 @@ default_values = {
 key_dispatch_table = {
     'dsa': DSSKey,
     'rsa': RSAKey,
+    'ecdsa': ECDSAKey
 }
 
 def progress(arg=None):
@@ -65,7 +67,7 @@ if __name__ == '__main__':
 
     parser = OptionParser(usage=usage)
     parser.add_option("-t", "--type", type="string", dest="ktype",
-        help="Specify type of key to create (dsa or rsa)",
+        help="Specify type of key to create (dsa, rsa or ecdsa)",
         metavar="ktype", default=default_values["ktype"])
     parser.add_option("-b", "--bits", type="int", dest="bits",
         help="Number of bits in the key to create", metavar="bits",
