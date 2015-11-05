@@ -166,9 +166,12 @@ class ECDSAKey (PKey):
         # Compatibility with RSAKey and DSSKey
         # Allow selecting curve by specifying key size
         if bits is not None:
+            curve = None
             for v in CURVES.values():
                 if  v['size']==bits:
                     curve = v['curve']
+            if curve is None:
+                raise ValueError("Unsupported key size: %s" % str(bits))
 
         signing_key = SigningKey.generate(curve)
         key = ECDSAKey(vals=(signing_key, signing_key.get_verifying_key()))
