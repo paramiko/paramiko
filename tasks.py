@@ -25,7 +25,10 @@ def coverage(ctx):
 
 # Until we stop bundling docs w/ releases. Need to discover use cases first.
 @task
-def release(ctx):
+def release(ctx, sdist=True, wheel=True):
+    """
+    Wraps invocations.packaging.release to add baked-in docs folder.
+    """
     # Build docs first. Use terribad workaround pending invoke #146
     ctx.run("inv docs")
     # Move the built docs into where Epydocs used to live
@@ -34,7 +37,7 @@ def release(ctx):
     # TODO: make it easier to yank out this config val from the docs coll
     copytree('sites/docs/_build', target)
     # Publish
-    publish(ctx)
+    publish(ctx, sdist=sdist, wheel=wheel)
     # Remind
     print("\n\nDon't forget to update RTD's versions page for new minor releases!")
 
