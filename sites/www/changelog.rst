@@ -2,6 +2,7 @@
 Changelog
 =========
 
+* :release:`1.16.0 <2015-11-04>`
 * :bug:`194 major` (also :issue:`562`, :issue:`530`, :issue:`576`) Streamline
   use of ``stat`` when downloading SFTP files via `SFTPClient.get
   <paramiko.sftp_client.SFTPClient.get>`; this avoids triggering bugs in some
