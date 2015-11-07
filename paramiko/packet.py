@@ -204,9 +204,10 @@ class Packetizer (object):
     def handshake_timed_out(self):
         """
         Checks if the handshake has timed out.
-        If `start_handshake` wasn't called before the call to this function
-        the return value will always be `False`.
-        If the handshake completed before a time out was reached the return value will be `False`
+
+        If `start_handshake` wasn't called before the call to this function,
+        the return value will always be `False`. If the handshake completed
+        before a timeout was reached, the return value will be `False`
 
         :return: handshake time out status, as a `bool`
         """
