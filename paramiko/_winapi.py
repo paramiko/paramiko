@@ -1,6 +1,6 @@
 """
 Windows API functions implemented as ctypes functions and classes as found
-in jaraco.windows (3.3).
+in jaraco.windows (3.4.1).
 
 If you encounter issues with this module, please consider reporting the issues
 in jaraco.windows and asking the author to port the fixes back here.
@@ -123,7 +123,7 @@ MapViewOfFile.restype = ctypes.wintypes.HANDLE
 
 class MemoryMap(object):
     """
-    A memory map object which can have security attributes overrideden.
+    A memory map object which can have security attributes overridden.
     """
     def __init__(self, name, length, security_attributes=None):
         self.name = name
@@ -158,7 +158,7 @@ class MemoryMap(object):
         if self.pos + n >= self.length:  # A little safety.
             raise ValueError("Refusing to write %d bytes" % n)
         dest = self.view + self.pos
-        length = ctypes.wintypes.SIZE(n)
+        length = ctypes.c_size_t(n)
         ctypes.windll.kernel32.RtlMoveMemory(dest, msg, length)
         self.pos += n
 
@@ -168,7 +168,7 @@ class MemoryMap(object):
         """
         out = ctypes.create_string_buffer(n)
         source = self.view + self.pos
-        length = ctypes.wintypes.SIZE(n)
+        length = ctypes.c_size_t(n)
         ctypes.windll.kernel32.RtlMoveMemory(out, source, length)
         self.pos += n
         return out.raw
