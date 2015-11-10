@@ -40,6 +40,8 @@ try:
 except ImportError:
     bcrypt_available = False
 
+PRIVATE_KEY_FORMAT_ORIGINAL=1
+PRIVATE_KEY_FORMAT_OPENSSH =2
 
 class PKey (object):
     """
@@ -293,10 +295,10 @@ class PKey (object):
             m=reENDtag.match(lines[end])
 
         if keytype != 'OPENSSH':
-            data=self._read_private_key_oldformat(lines[start:end],password)
+            (pkformat,data)=self._read_private_key_oldformat(lines[start:end],password)
         else:
-            data=self._read_private_key_newformat(''.join(lines[start:end]),password)
-        return data
+            (pkformat,data)=self._read_private_key_newformat(''.join(lines[start:end]),password)
+        return (pkformat,data)
 
 
     def _read_private_key_oldformat(self, lines, password):
@@ -338,7 +340,9 @@ class PKey (object):
         mode = _CIPHER_TABLE[encryption_type]['mode']
         salt = unhexlify(b(saltstr))
         key = util.generate_key_bytes(md5, salt, password, keysize)
-        return cipher.new(key, mode, salt).decrypt(data)
+        return ( PRIVATE_KEY_FORMAT_ORIGINAL,
+                 cipher.new(key, mode, salt).decrypt(data) )
+
 
     def _read_private_key_newformat(self, lines, password):
         try:
@@ -381,8 +385,10 @@ class PKey (object):
 
             # run bcrypt kdf to derive key and iv (32 + 16 bytes)
             key_iv = bcrypt.kdf(password, salt, 48, rounds)
+            key=key_iv[:32]
+            iv=key_iv[32:]
             # decrypt private key blob
-            cipher = AES.new(key_iv[:32], AES.MODE_CBC, key_iv[32:])
+            cipher = AES.new(key, AES.MODE_CBC, iv)
             decrypted_privkey=cipher.decrypt(privkey_blob)
 
         elif (cipher=='none') and (kdfname=='none'):
@@ -405,44 +411,7 @@ class PKey (object):
         padlen = ord(keydata[len(keydata)-1])
         keydata=keydata[:len(keydata)-padlen]
 
-        # At this point we have a perfectly valid decrypted private key blob
-        # which however is structured completely differently from the old 
-        # SSH2 private key format, which in Paramiko each key class takes care
-        # of the decoding on its own. For now, to prevent having to rewrite them;
-        # The following code restructures the private key to the old format
-        if keytype == 'ssh-rsa':
-            #RSA key
-            (n,e,d,p,q,x) = self._uint32_cstruct_unpack(keydata,'iiiiii')
-            keylist = [0, n, e, d, p, q,
-                       d % (p - 1), d % (q - 1),
-                       util.mod_inverse(q, p)]
-            try:
-                ber = BER()
-                ber.encode(keylist)
-            except BERException:
-                raise SSHException('Unable to create ber encoding of key')
-            data =  ber.asbytes()
-
-        elif keytype == 'ssh-dss':
-            #DSS key
-            (p,q,g,y,x) = self._uint32_cstruct_unpack(keydata,'iiiii')
-            keylist = [0, p, q, g, y, x]
-            try:
-                ber = BER()
-                ber.encode(keylist)
-            except BERException:
-                raise SSHException('Unable to create ber encoding of key')
-            data = ber.asbytes()
-
-        elif keytype.split('-')[0] == 'ecdsa':
-            #ECDSA key
-            ( curve,
-              something1,
-              something2 ) = self._uint32_cstruct_unpack(keydata,'sssr')
-            #TODOTODOTODOTODTODO
-            #need to figure this out
-
-        return data
+        return (PRIVATE_KEY_FORMAT_OPENSSH,keydata)
 
 
     def _write_private_key_file(self, tag, filename, data, password=None):
@@ -494,16 +463,16 @@ class PKey (object):
  
     def _uint32_cstruct_unpack(self,data,strformat):
         '''
-        Unpacks a c data structure containaing a mix of 32-bit uints and 
+        Used to read new OpenSSH private key format.
+        Unpacks a c data structure containing a mix of 32-bit uints and 
         variable length strings prefixed by 32-bit uint size field,
         according to the specified format. returns the unpacked vars
         in a tuple.
-        Used to read new OpenSSH private key format.
         Format strings:
           s - denotes a string
           i - denotes a long integer, encoded as a byte string
           u - denotes a 32-bit unsigned integer
-          r - the remainder of the input string, returned in a string
+          r - the remainder of the input string, returned as a string
         '''
         l=()
         idx=0
@@ -516,7 +485,7 @@ class PKey (object):
                 idx+=s_size
                 l = l + (s,)
             if f=="i":
-                #string
+                #long integer
                 s_size=struct.unpack(">L",data[idx:idx+4])[0]
                 idx+=4
                 s=data[idx:idx+s_size]

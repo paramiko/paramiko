@@ -162,26 +162,37 @@ class RSAKey (PKey):
         return zero_byte + one_byte + filler + zero_byte + SHA1_DIGESTINFO + data
 
     def _from_private_key_file(self, filename, password):
-        data = self._read_private_key_file('RSA', filename, password)
-        self._decode_key(data)
+        (pkformat, data) = self._read_private_key_file('RSA', filename, password)
+        self._decode_key(pkformat, data)
 
     def _from_private_key(self, file_obj, password):
-        data = self._read_private_key('RSA', file_obj, password)
-        self._decode_key(data)
+        (pkformat, data) = self._read_private_key('RSA', file_obj, password)
+        self._decode_key(pkformat, data)
 
-    def _decode_key(self, data):
-        # private key file contains:
-        # RSAPrivateKey = { version = 0, n, e, d, p, q, d mod p-1, d mod q-1, q**-1 mod p }
-        try:
-            keylist = BER(data).decode()
-        except BERException:
-            raise SSHException('Unable to parse key file')
-        if (type(keylist) is not list) or (len(keylist) < 4) or (keylist[0] != 0):
-            raise SSHException('Not a valid RSA private key file (bad ber encoding)')
-        self.n = keylist[1]
-        self.e = keylist[2]
-        self.d = keylist[3]
-        # not really needed
-        self.p = keylist[4]
-        self.q = keylist[5]
-        self.size = util.bit_length(self.n)
+    def _decode_key(self, pkformat, data):
+        if pkformat==PRIVATE_KEY_FORMAT_ORIGINAL:
+            # private key file contains:
+            # RSAPrivateKey = { version = 0, n, e, d, p, q, d mod p-1, d mod q-1, q**-1 mod p }
+            try:
+                keylist = BER(data).decode()
+            except BERException:
+                raise SSHException('Unable to parse key file')
+            if (type(keylist) is not list) or (len(keylist) < 4) or (keylist[0] != 0):
+                raise SSHException('Not a valid RSA private key file (bad ber encoding)')
+            self.n = keylist[1]
+            self.e = keylist[2]
+            self.d = keylist[3]
+            # not really needed
+            self.p = keylist[4]
+            self.q = keylist[5]
+            self.size = util.bit_length(self.n)
+       elif pkformat==PRIVATE_KEY_FORMAT_OPENSSH:
+            #RSA key
+            ( self.n,
+              self.e,
+              self.d,
+              self.p,
+              self.q,
+              self.x ) = self._uint32_cstruct_unpack(keydata,'iiiiii')
+            self.size = util.bit_length(self.n)
+

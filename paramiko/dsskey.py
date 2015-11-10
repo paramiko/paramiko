@@ -174,25 +174,34 @@ class DSSKey (PKey):
     ###  internals...
 
     def _from_private_key_file(self, filename, password):
-        data = self._read_private_key_file('DSA', filename, password)
-        self._decode_key(data)
+        (pkformat, data) = self._read_private_key_file('DSA', filename, password)
+        self._decode_key(pkformat, data)
 
     def _from_private_key(self, file_obj, password):
-        data = self._read_private_key('DSA', file_obj, password)
-        self._decode_key(data)
+        (pkformat, data) = self._read_private_key('DSA', file_obj, password)
+        self._decode_key(pkformat, data)
 
-    def _decode_key(self, data):
-        # private key file contains:
-        # DSAPrivateKey = { version = 0, p, q, g, y, x }
-        try:
-            keylist = BER(data).decode()
-        except BERException as e:
-            raise SSHException('Unable to parse key file: ' + str(e))
-        if (type(keylist) is not list) or (len(keylist) < 6) or (keylist[0] != 0):
-            raise SSHException('not a valid DSA private key file (bad ber encoding)')
-        self.p = keylist[1]
-        self.q = keylist[2]
-        self.g = keylist[3]
-        self.y = keylist[4]
-        self.x = keylist[5]
-        self.size = util.bit_length(self.p)
+    def _decode_key(self, pkformat, data):
+        if pkformat==PRIVATE_KEY_FORMAT_ORIGINAL:
+            # private key file contains:
+            # DSAPrivateKey = { version = 0, p, q, g, y, x }
+            try:
+                keylist = BER(data).decode()
+            except BERException as e:
+                raise SSHException('Unable to parse key file: ' + str(e))
+            if (type(keylist) is not list) or (len(keylist) < 6) or (keylist[0] != 0):
+                raise SSHException('not a valid DSA private key file (bad ber encoding)')
+            self.p = keylist[1]
+            self.q = keylist[2]
+            self.g = keylist[3]
+            self.y = keylist[4]
+            self.x = keylist[5]
+            self.size = util.bit_length(self.p)
+        elif pkformat==PRIVATE_KEY_FORMAT_OPENSSH:
+            ( self.p,
+              self.q,
+              self.g,
+              self.y,
+              self.x ) = self._uint32_cstruct_unpack(keydata,'iiiii')
+            self.size = util.bit_length(self.p)
+

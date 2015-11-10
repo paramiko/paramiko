@@ -142,26 +142,35 @@ class ECDSAKey (PKey):
     ###  internals...
 
     def _from_private_key_file(self, filename, password):
-        data = self._read_private_key_file('EC', filename, password)
-        self._decode_key(data)
+        (pkformat, data) = self._read_private_key_file('EC', filename, password)
+        self._decode_key(pkformat, data)
 
     def _from_private_key(self, file_obj, password):
-        data = self._read_private_key('EC', file_obj, password)
-        self._decode_key(data)
+        (pkformat, data) = self._read_private_key('EC', file_obj, password)
+        self._decode_key(pkformat, data)
 
     ALLOWED_PADDINGS = [one_byte, byte_chr(2) * 2, byte_chr(3) * 3, byte_chr(4) * 4,
                         byte_chr(5) * 5, byte_chr(6) * 6, byte_chr(7) * 7]
 
-    def _decode_key(self, data):
-        s, padding = der.remove_sequence(data)
-        if padding:
-            if padding not in self.ALLOWED_PADDINGS:
-                raise ValueError("weird padding: %s" % u(binascii.hexlify(data)))
-            data = data[:-len(padding)]
-        key = SigningKey.from_der(data)
-        self.signing_key = key
-        self.verifying_key = key.get_verifying_key()
-        self.size = 256
+    def _decode_key(self, pkformat, data):
+        if pkformat == PRIVATE_KEY_FORMAT_ORIGINAL:
+            s, padding = der.remove_sequence(data)
+            if padding:
+                if padding not in self.ALLOWED_PADDINGS:
+                    raise ValueError("weird padding: %s" % u(binascii.hexlify(data)))
+                data = data[:-len(padding)]
+            key = SigningKey.from_der(data)
+            self.signing_key = key
+            self.verifying_key = key.get_verifying_key()
+            self.size = 256
+        elif pkformat == PRIVATE_KEY_FORMAT_OPENSSH:
+            ( curve,
+              verkey,
+              sigkey ) = self._uint32_cstruct_unpack(keydata,'sssr')
+            key = SigningKey.from_der(sigkey)
+            self.signing_key = key
+            self.verifying_key = key.get_verifying_key()
+            self.size = 256
 
     def _sigencode(self, r, s, order):
         msg = Message()
