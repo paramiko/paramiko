@@ -329,14 +329,14 @@ class PKey (object):
             encryption_type, saltstr = headers['dek-info'].split(',')
         except:
             raise SSHException("Can't parse DEK-info in private key file")
-        if encryption_type not in _CIPHER_TABLE:
+        if encryption_type not in self._CIPHER_TABLE:
             raise SSHException('Unknown private key cipher "%s"' % encryption_type)
         # if no password was passed in, raise an exception pointing out that we need one
         if password is None:
             raise PasswordRequiredException('Private key file is encrypted')
-        cipher = _CIPHER_TABLE[encryption_type]['cipher']
-        keysize = _CIPHER_TABLE[encryption_type]['keysize']
-        mode = _CIPHER_TABLE[encryption_type]['mode']
+        cipher = self._CIPHER_TABLE[encryption_type]['cipher']
+        keysize = self._CIPHER_TABLE[encryption_type]['keysize']
+        mode = self._CIPHER_TABLE[encryption_type]['mode']
         salt = unhexlify(b(saltstr))
         key = util.generate_key_bytes(md5, salt, password, keysize)
         return ( self.PRIVATE_KEY_FORMAT_ORIGINAL,

@@ -166,10 +166,11 @@ class ECDSAKey (PKey):
         elif pkformat == self.PRIVATE_KEY_FORMAT_OPENSSH:
             ( curve,
               verkey,
-              sigkey ) = self._uint32_cstruct_unpack(keydata,'sssr')
-            key = SigningKey.from_der(sigkey)
-            self.signing_key = key
-            self.verifying_key = key.get_verifying_key()
+              sigkey ) = self._uint32_cstruct_unpack(data,'sss')
+            self.signing_key = SigningKey.from_string(sigkey,
+                                                      curve=curves.NIST256p,
+                                                      hashfunc=sha256)
+            self.verifying_key = self.signing_key.get_verifying_key()
             self.size = 256
 
     def _sigencode(self, r, s, order):
