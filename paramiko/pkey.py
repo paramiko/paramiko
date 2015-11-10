@@ -29,11 +29,12 @@ from Crypto.Cipher import DES3, AES
 
 from paramiko import util
 from paramiko.common import o600, zero_byte
-from paramiko.py3compat import u, encodebytes, decodebytes, b
+from paramiko.py3compat import u, encodebytes, decodebytes, b, byte_ord
 from paramiko.ssh_exception import SSHException, PasswordRequiredException
 from paramiko.ber import BER, BERException
 import re
 import struct
+
 try:
     import bcrypt   # <-- this has to be py-bcrypt 0.4
     bcrypt_available=True
@@ -298,7 +299,7 @@ class PKey (object):
             else:
                 raise SSHException('Encountered %s key, expected %s key' % (keytype,tag) )
         elif keytype == 'OPENSSH':
-            (pkformat,data) = self._read_private_key_newformat(''.join(lines[start:end]),password)
+            (pkformat,data) = self._read_private_key_newformat(lines[start:end],password)
         else:
             raise SSHException('Unknown privatekey type encountered: '+keytype)
 
@@ -356,13 +357,13 @@ class PKey (object):
         https://github.com/openssh/openssh-portable/blob/master/PROTOCOL.key
         '''
         try:
-            data = decodebytes(b(lines))
+            data = decodebytes(b(''.join(lines)))
         except base64.binascii.Error as e:
             raise SSHException('base64 decoding error: ' + str(e))
 
-        ## read data struct 
+        ## read data struct
         AUTH_MAGIC = data[:14]
-        if AUTH_MAGIC != 'openssh-key-v1':
+        if AUTH_MAGIC != b('openssh-key-v1'):
             raise SSHException('Unexpected OpenSSH key header encountered')
 
         ( cipher,
@@ -376,7 +377,7 @@ class PKey (object):
         ( pubkey,
           privkey_blob ) = self._uint32_cstruct_unpack(remainder,'ss')
 
-        if (cipher=='aes256-cbc') and (kdfname=='bcrypt'):
+        if (cipher==b('aes256-cbc')) and (kdfname==b('bcrypt')):
             # Encrypted private key. 
             # The only cipher & kdf used by OpenSSH today are aes256-cbc & bcrypt
 
@@ -401,7 +402,7 @@ class PKey (object):
             cipher = AES.new(key, AES.MODE_CBC, iv)
             decrypted_privkey=cipher.decrypt(privkey_blob)
 
-        elif (cipher=='none') and (kdfname=='none'):
+        elif (cipher==b('none')) and (kdfname==b('none')):
             # Unencrypted private key
             decrypted_privkey = privkey_blob
 
@@ -418,7 +419,7 @@ class PKey (object):
             raise SSHException('OpenSSH private key file checkints do not match')
 
         # Remove padding
-        padlen = ord(keydata[len(keydata)-1])
+        padlen = byte_ord(keydata[len(keydata)-1])
         keydata=keydata[:len(keydata)-padlen]
 
         return (self.PRIVATE_KEY_FORMAT_OPENSSH,keydata)

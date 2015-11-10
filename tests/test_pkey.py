@@ -84,7 +84,7 @@ ADRvOqQ5R98Sxst765CAqXmRtz8vwoD96g==
 # Following is a 2048-bit RSA key saved in the new OpenSSH private key format
 PUB_RSA_2K_OPENSSH = 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDF+Dpr54DX0WdeTDpNAMdkCWEkl3OXtNgf58qlN1gX572OLBqLf0zT4bHstUEpU3piazph/rSWcUMuBoD46tZ6jiH7H9b9Pem2eYQWaELDDkM+v9BMbEy5rMbFRLol5OtEvPFqneyEAanPOgvd8t3yyhSev9QVusakzJ8j8LGgrA8huYZ+Srnw0shEWLG70KUKCh3rG0QIvA8nfhtUOisr2Gp+F0YxMGb5gwBlQYAYE5l6u1SjZ7hNjyNosjK+wRBFgFFBYVpkZKJgWoK9w4ijFyzMZTucnZMqKOKAjIJvHfKBf2/cEfYxSq1EndqTqjYsd9T7/s2vcn1OH5a0wkER'
 
-FINGER_RSA_2K_OPENSSH = 'SHA256:yGChUa/FSl7RyyWAE9BJ/Nsl8gNFXsa9zyuXEi2vJ3s'
+FINGER_RSA_2K_OPENSSH = '2048 68:d1:72:01:bf:c0:0c:66:97:78:df:ce:75:74:46:d6'
 
 RSA_2K_OPENSSH_PRIVATE_OUT = """\
 -----BEGIN OPENSSH PRIVATE KEY-----
@@ -297,7 +297,9 @@ class KeyTest (unittest.TestCase):
         self.assertEqual('ssh-rsa', key.get_name())
         self.assertEqual(PUB_RSA_2K_OPENSSH.split()[1], key.get_base64())
         self.assertEqual(2048, key.get_bits())
-        #TODO new style fingerprints not yet implemented 
+        exp_rsa = b(FINGER_RSA_2K_OPENSSH.split()[1].replace(':', ''))
+        my_rsa = hexlify(key.get_fingerprint())
+        self.assertEqual(exp_rsa, my_rsa)
         #TODO new key format can only be read, not written
 
     def test_salt_size(self):
