@@ -170,7 +170,7 @@ class RSAKey (PKey):
         self._decode_key(pkformat, data)
 
     def _decode_key(self, pkformat, data):
-        if pkformat==PRIVATE_KEY_FORMAT_ORIGINAL:
+        if pkformat==self.PRIVATE_KEY_FORMAT_ORIGINAL:
             # private key file contains:
             # RSAPrivateKey = { version = 0, n, e, d, p, q, d mod p-1, d mod q-1, q**-1 mod p }
             try:
@@ -186,7 +186,7 @@ class RSAKey (PKey):
             self.p = keylist[4]
             self.q = keylist[5]
             self.size = util.bit_length(self.n)
-       elif pkformat==PRIVATE_KEY_FORMAT_OPENSSH:
+        elif pkformat==self.PRIVATE_KEY_FORMAT_OPENSSH:
             #RSA key
             ( self.n,
               self.e,

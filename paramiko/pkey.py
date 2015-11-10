@@ -40,9 +40,6 @@ try:
 except ImportError:
     bcrypt_available = False
 
-PRIVATE_KEY_FORMAT_ORIGINAL=1
-PRIVATE_KEY_FORMAT_OPENSSH =2
-
 class PKey (object):
     """
     Base class for public keys.
@@ -53,6 +50,8 @@ class PKey (object):
         'AES-128-CBC': {'cipher': AES, 'keysize': 16, 'blocksize': 16, 'mode': AES.MODE_CBC},
         'DES-EDE3-CBC': {'cipher': DES3, 'keysize': 24, 'blocksize': 8, 'mode': DES3.MODE_CBC},
     }
+    PRIVATE_KEY_FORMAT_ORIGINAL=1
+    PRIVATE_KEY_FORMAT_OPENSSH =2
 
     def __init__(self, msg=None, data=None):
         """
@@ -322,7 +321,7 @@ class PKey (object):
 
         if 'proc-type' not in headers:
             # unencryped: done
-            return data
+            return (self.PRIVATE_KEY_FORMAT_ORIGINAL, data)
         # encrypted keyfile: will need a password
         if headers['proc-type'] != '4,ENCRYPTED':
             raise SSHException('Unknown private key structure "%s"' % headers['proc-type'])
@@ -340,7 +339,7 @@ class PKey (object):
         mode = _CIPHER_TABLE[encryption_type]['mode']
         salt = unhexlify(b(saltstr))
         key = util.generate_key_bytes(md5, salt, password, keysize)
-        return ( PRIVATE_KEY_FORMAT_ORIGINAL,
+        return ( self.PRIVATE_KEY_FORMAT_ORIGINAL,
                  cipher.new(key, mode, salt).decrypt(data) )
 
 
@@ -411,7 +410,7 @@ class PKey (object):
         padlen = ord(keydata[len(keydata)-1])
         keydata=keydata[:len(keydata)-padlen]
 
-        return (PRIVATE_KEY_FORMAT_OPENSSH,keydata)
+        return (self.PRIVATE_KEY_FORMAT_OPENSSH,keydata)
 
 
     def _write_private_key_file(self, tag, filename, data, password=None):

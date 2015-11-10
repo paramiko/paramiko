@@ -182,7 +182,7 @@ class DSSKey (PKey):
         self._decode_key(pkformat, data)
 
     def _decode_key(self, pkformat, data):
-        if pkformat==PRIVATE_KEY_FORMAT_ORIGINAL:
+        if pkformat==self.PRIVATE_KEY_FORMAT_ORIGINAL:
             # private key file contains:
             # DSAPrivateKey = { version = 0, p, q, g, y, x }
             try:
@@ -197,7 +197,7 @@ class DSSKey (PKey):
             self.y = keylist[4]
             self.x = keylist[5]
             self.size = util.bit_length(self.p)
-        elif pkformat==PRIVATE_KEY_FORMAT_OPENSSH:
+        elif pkformat==self.PRIVATE_KEY_FORMAT_OPENSSH:
             ( self.p,
               self.q,
               self.g,

@@ -153,7 +153,7 @@ class ECDSAKey (PKey):
                         byte_chr(5) * 5, byte_chr(6) * 6, byte_chr(7) * 7]
 
     def _decode_key(self, pkformat, data):
-        if pkformat == PRIVATE_KEY_FORMAT_ORIGINAL:
+        if pkformat == self.PRIVATE_KEY_FORMAT_ORIGINAL:
             s, padding = der.remove_sequence(data)
             if padding:
                 if padding not in self.ALLOWED_PADDINGS:
@@ -163,7 +163,7 @@ class ECDSAKey (PKey):
             self.signing_key = key
             self.verifying_key = key.get_verifying_key()
             self.size = 256
-        elif pkformat == PRIVATE_KEY_FORMAT_OPENSSH:
+        elif pkformat == self.PRIVATE_KEY_FORMAT_OPENSSH:
             ( curve,
               verkey,
               sigkey ) = self._uint32_cstruct_unpack(keydata,'sssr')
