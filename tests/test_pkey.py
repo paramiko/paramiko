@@ -81,6 +81,43 @@ ADRvOqQ5R98Sxst765CAqXmRtz8vwoD96g==
 -----END EC PRIVATE KEY-----
 """
 
+# Following is a 2048-bit RSA key saved in the new OpenSSH private key format
+PUB_RSA_2K_OPENSSH = 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDF+Dpr54DX0WdeTDpNAMdkCWEkl3OXtNgf58qlN1gX572OLBqLf0zT4bHstUEpU3piazph/rSWcUMuBoD46tZ6jiH7H9b9Pem2eYQWaELDDkM+v9BMbEy5rMbFRLol5OtEvPFqneyEAanPOgvd8t3yyhSev9QVusakzJ8j8LGgrA8huYZ+Srnw0shEWLG70KUKCh3rG0QIvA8nfhtUOisr2Gp+F0YxMGb5gwBlQYAYE5l6u1SjZ7hNjyNosjK+wRBFgFFBYVpkZKJgWoK9w4ijFyzMZTucnZMqKOKAjIJvHfKBf2/cEfYxSq1EndqTqjYsd9T7/s2vcn1OH5a0wkER'
+
+FINGER_RSA_2K_OPENSSH = 'SHA256:yGChUa/FSl7RyyWAE9BJ/Nsl8gNFXsa9zyuXEi2vJ3s'
+
+RSA_2K_OPENSSH_PRIVATE_OUT = """\
+-----BEGIN OPENSSH PRIVATE KEY-----
+b3BlbnNzaC1rZXktdjEAAAAACmFlczI1Ni1jYmMAAAAGYmNyeXB0AAAAGAAAABD0R3hOFS
+FMb2SJeo5h8QPNAAAAEAAAAAEAAAEXAAAAB3NzaC1yc2EAAAADAQABAAABAQDF+Dpr54DX
+0WdeTDpNAMdkCWEkl3OXtNgf58qlN1gX572OLBqLf0zT4bHstUEpU3piazph/rSWcUMuBo
+D46tZ6jiH7H9b9Pem2eYQWaELDDkM+v9BMbEy5rMbFRLol5OtEvPFqneyEAanPOgvd8t3y
+yhSev9QVusakzJ8j8LGgrA8huYZ+Srnw0shEWLG70KUKCh3rG0QIvA8nfhtUOisr2Gp+F0
+YxMGb5gwBlQYAYE5l6u1SjZ7hNjyNosjK+wRBFgFFBYVpkZKJgWoK9w4ijFyzMZTucnZMq
+KOKAjIJvHfKBf2/cEfYxSq1EndqTqjYsd9T7/s2vcn1OH5a0wkERAAAD0JnzCJYfDeiUQ6
+9LOAb6/NnhKvFjCdBYal60MfLcLBHvzHLJvTneQ4f1Vknq8xEVmRba7SDSfwaEybP/1FsP
+SGH6FNKA5gKllemgmcaUVr3wtNPtjX4WgsyHcwCRgHmOiyNrUj0OZR5wbZabHIIyirl4wa
+LBz8Jb3GalKEagtyWsBKDCKHCFNzh8xmsT1SWhnC7baRyC8e3krQm9hGbNhpj6Q5AtN3ql
+wBVamUp0eKxkt70mKBKI4v3DR8KqrEndeK6d0cegVEkE67fqa99a5J3uSDC8mglKrHiKEs
+dU1dh/bOF/H3aFpINlRwvlZ95Opby7rG0BHgbZONq0+VUnABVzNTM5Xd5UKjjCF28CrQBf
+XS6WeHeUx2zHtOmL1xdePk+Bii+SSUl3pLa4SDwX4nV95cSPx8vMm8dJEruxad6+MPoSuy
+Oyho89jqUTSgC/RPejuTgrnB3WbzE5SJb+V3zMata0J1wxbNfYKG9U+VucUZhP4+jzfNqH
+B/v8JqtuxnqR8NjPsK2+8wJxebL2KVNjKOm//6P3KSDsavpscGpVWOM06zUlwWCB26W3pP
+X/+xO9aR5wiBteFKoJG1waziIjqhOJSmvq+I/texUKEUd/eEFNt10Ubc0zy0sRYVN8rIRJ
+masQzCYuUylDzCa4ar1s4qngBZzWL2PRkPuXuhoHuT0J5no174GR6+6EAYZZhnq0tkYrhZ
+Ar0tQ4CDlI235a3MPHzvABuwYuWys1tBuLAb+6Gc6CmCiQ+mhojfQUBYG5T65iRFA5UQsH
+O1RLEC3yasxGcBI6d0J/fwOP/YLktNu3AeUumr0N9Xgf02DlBNwd+4GOI0LcQvl/3J8ppo
+bamTppKPEZ2d32VNEO+Z6Zx5DlIVm5gDeMvIvdwap445VnhL3ZZH2NCkAcXM9+0WH+Quas
+JCAMgPYiP9FzF+8Onmj2OmhgIVj/9eanhS3/GLrRC4xCvER2V7PwgB0I5qY110BPEttDyo
+IvYE51kvtdW447SK7HZywJnkyw2RNm+29dvWJJwSQckUHuZkXEtmEPk0ePL3yf2NH5XYJc
+pXX6Zac0KemCPIHr8l7GogE4Rb2BBTqddkegb9piz6QTAPcQnn+GuMFG06IBhUrgcMEQ8x
+UOXYUUrT5HvSxWUcgaYH1nfC3bTWmDaodw8/HQKyF6c44rujO2s2NLFOCAyQMUNdhh3lfD
+yHYLO7xYkP6xzzkpk+2lwBoeYdQdAwlKN/XqC8ZhBfwTdem/1hh1BpQJFbbFftWxU8gxxi
+iuI+vmlsuIsxKoGCq8YXuophx62lo=
+-----END OPENSSH PRIVATE KEY-----
+"""
+
+
 x1234 = b'\x01\x02\x03\x04'
 
 
@@ -254,6 +291,14 @@ class KeyTest (unittest.TestCase):
         msg.rewind()
         pub = ECDSAKey(data=key.asbytes())
         self.assertTrue(pub.verify_ssh_sig(b'ice weasels', msg))
+ 
+    def test_14_load_RSA_key_new_format(self):
+        key = RSAKey.from_private_key_file(test_path('test_rsa_2k_o.key'),b'television')
+        self.assertEqual('ssh-rsa', key.get_name())
+        self.assertEqual(PUB_RSA_2K_OPENSSH.split()[1], key.get_base64())
+        self.assertEqual(2048, key.get_bits())
+        #TODO new style fingerprints not yet implemented 
+        #TODO new key format can only be read, not written
 
     def test_salt_size(self):
         # Read an existing encrypted private key

@@ -202,6 +202,6 @@ class DSSKey (PKey):
               self.q,
               self.g,
               self.y,
-              self.x ) = self._uint32_cstruct_unpack(keydata,'iiiii')
+              self.x ) = self._uint32_cstruct_unpack(data,'iiiii')
             self.size = util.bit_length(self.p)
 

@@ -159,7 +159,11 @@ class ECDSAKey (PKey):
                 if padding not in self.ALLOWED_PADDINGS:
                     raise ValueError("weird padding: %s" % u(binascii.hexlify(data)))
                 data = data[:-len(padding)]
-            key = SigningKey.from_der(data)
+            try:
+                key = SigningKey.from_der(data)
+            except der.UnexpectedDER as e:
+                raise SSHException('Unexpected error while reading '+
+                                   'private key file: ' + str(e))
             self.signing_key = key
             self.verifying_key = key.get_verifying_key()
             self.size = 256

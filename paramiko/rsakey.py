@@ -193,6 +193,6 @@ class RSAKey (PKey):
               self.d,
               self.p,
               self.q,
-              self.x ) = self._uint32_cstruct_unpack(keydata,'iiiiii')
+              self.x ) = self._uint32_cstruct_unpack(data,'iiiiii')
             self.size = util.bit_length(self.n)
 

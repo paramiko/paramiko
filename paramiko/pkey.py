@@ -262,8 +262,8 @@ class PKey (object):
         :raises SSHException: if the key file is invalid.
         """
         with open(filename, 'r') as f:
-            data = self._read_private_key(tag, f, password)
-        return data
+            (pkformat, data) = self._read_private_key(tag, f, password)
+        return (pkformat, data)
 
     def _read_private_key(self, tag, f, password=None):
         reBEGINtag = re.compile('^-{5}BEGIN (RSA|DSA|EC|OPENSSH) PRIVATE KEY-{5}\s*$')
@@ -281,7 +281,6 @@ class PKey (object):
             start+=1
             m=reBEGINtag.match(lines[start])
         start += 1
-
         keytype = m.group(1)
         if start >= len(lines):
             raise SSHException('not a valid private key file')
@@ -293,16 +292,22 @@ class PKey (object):
             end+=1
             m=reENDtag.match(lines[end])
 
-        if keytype != 'OPENSSH':
-            (pkformat,data)=self._read_private_key_oldformat(lines[start:end],password)
+        if keytype in ['RSA','DSA','EC']:
+            if keytype==tag:
+                (pkformat,data) = self._read_private_key_oldformat(lines[start:end],password)
+            else:
+                raise SSHException('Encountered %s key, expected %s key' % (keytype,tag) )
+        elif keytype == 'OPENSSH':
+            (pkformat,data) = self._read_private_key_newformat(''.join(lines[start:end]),password)
         else:
-            (pkformat,data)=self._read_private_key_newformat(''.join(lines[start:end]),password)
+            raise SSHException('Unknown privatekey type encountered: '+keytype)
+
         return (pkformat,data)
 
 
     def _read_private_key_oldformat(self, lines, password):
         '''
-        Read the original OpenSSH SSH2 private ket format 
+        Read the original OpenSSH SSH2 private key format
         '''
         start=0
         # parse any headers first
@@ -344,6 +349,12 @@ class PKey (object):
 
 
     def _read_private_key_newformat(self, lines, password):
+        '''
+        Read the new OpenSSH SSH2 private key format available
+        since OpenSSH version 6.5
+        Reference:
+        https://github.com/openssh/openssh-portable/blob/master/PROTOCOL.key
+        '''
         try:
             data = decodebytes(b(lines))
         except base64.binascii.Error as e:
