@@ -309,10 +309,9 @@ class KeyTest (unittest.TestCase):
             my_rsa = hexlify(key.get_fingerprint())
             self.assertEqual(exp_rsa, my_rsa)
         else:
-            self.assertRaises(SSHException,
+            with self.assertRaises(SSHException):
                 key = RSAKey.from_private_key_file(
                         test_path('test_rsa_2k_o.key'),b'television')
-            )
 
     def test_salt_size(self):
         # Read an existing encrypted private key
