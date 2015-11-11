@@ -30,6 +30,12 @@ from paramiko.py3compat import StringIO, byte_chr, b, bytes
 
 from tests.util import test_path
 
+try:
+    import bcrypt   # <-- this has to be py-bcrypt 0.4
+    bcrypt_available=True
+except ImportError:
+    bcrypt_available = False
+
 # from openssh's ssh-keygen
 PUB_RSA = 'ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAIEA049W6geFpmsljTwfvI1UmKWWJPNFI74+vNKTk4dmzkQY2yAMs6FhlvhlI8ysU4oj71ZsRYMecHbBbxdN79+JRFVYTKaLqjwGENeTd+yv4q+V2PvZv3fLnzApI3l7EJCqhWwJUHJ1jAkZzqDx0tyOL4uoZpww3nmE0kb3y21tH4c='
 PUB_DSS = 'ssh-dss AAAAB3NzaC1kc3MAAACBAOeBpgNnfRzr/twmAQRu2XwWAp3CFtrVnug6s6fgwj/oLjYbVtjAy6pl/h0EKCWx2rf1IetyNsTxWrniA9I6HeDj65X1FyDkg6g8tvCnaNB8Xp/UUhuzHuGsMIipRxBxw9LF608EqZcj1E3ytktoW5B5OcjrkEoz3xG7C+rpIjYvAAAAFQDwz4UnmsGiSNu5iqjn3uTzwUpshwAAAIEAkxfFeY8P2wZpDjX0MimZl5wkoFQDL25cPzGBuB4OnB8NoUk/yjAHIIpEShw8V+LzouMK5CTJQo5+Ngw3qIch/WgRmMHy4kBq1SsXMjQCte1So6HBMvBPIW5SiMTmjCfZZiw4AYHK+B/JaOwaG9yRg2Ejg4Ok10+XFDxlqZo8Y+wAAACARmR7CCPjodxASvRbIyzaVpZoJ/Z6x7dAumV+ysrV1BVYd0lYukmnjO1kKBWApqpH1ve9XDQYN8zgxM4b16L21kpoWQnZtXrY3GZ4/it9kUgyB7+NwacIBlXa8cMDL7Q/69o0d54U0X/NeX5QxuYR6OMJlrkQB7oiW/P/1mwjQgE='
@@ -293,14 +299,20 @@ class KeyTest (unittest.TestCase):
         self.assertTrue(pub.verify_ssh_sig(b'ice weasels', msg))
  
     def test_14_load_RSA_key_new_format(self):
-        key = RSAKey.from_private_key_file(test_path('test_rsa_2k_o.key'),b'television')
-        self.assertEqual('ssh-rsa', key.get_name())
-        self.assertEqual(PUB_RSA_2K_OPENSSH.split()[1], key.get_base64())
-        self.assertEqual(2048, key.get_bits())
-        exp_rsa = b(FINGER_RSA_2K_OPENSSH.split()[1].replace(':', ''))
-        my_rsa = hexlify(key.get_fingerprint())
-        self.assertEqual(exp_rsa, my_rsa)
-        #TODO new key format can only be read, not written
+        if bcrypt_available:
+            key = RSAKey.from_private_key_file(
+                    test_path('test_rsa_2k_o.key'),b'television')
+            self.assertEqual('ssh-rsa', key.get_name())
+            self.assertEqual(PUB_RSA_2K_OPENSSH.split()[1], key.get_base64())
+            self.assertEqual(2048, key.get_bits())
+            exp_rsa = b(FINGER_RSA_2K_OPENSSH.split()[1].replace(':', ''))
+            my_rsa = hexlify(key.get_fingerprint())
+            self.assertEqual(exp_rsa, my_rsa)
+        else:
+            self.assertRaises(SSHException,
+                key = RSAKey.from_private_key_file(
+                        test_path('test_rsa_2k_o.key'),b'television')
+            )
 
     def test_salt_size(self):
         # Read an existing encrypted private key
