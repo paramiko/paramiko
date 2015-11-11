@@ -27,7 +27,7 @@ from hashlib import md5
 
 from paramiko import RSAKey, DSSKey, ECDSAKey, Message, util
 from paramiko.py3compat import StringIO, byte_chr, b, bytes
-
+from paramiko.ssh_exception import SSHException
 from tests.util import test_path
 
 try:
