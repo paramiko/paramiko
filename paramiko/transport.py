@@ -134,7 +134,7 @@ class Transport (threading.Thread, ClosingContextManager):
         'gss-gex-sha1-toWM5Slw5Ew8Mqkay+al2g==',
         'gss-group14-sha1-toWM5Slw5Ew8Mqkay+al2g==',
         'gss-group1-sha1-toWM5Slw5Ew8Mqkay+al2g=='
-    ) + self._preferred_kex
+    ) + _preferred_kex
 
     _preferred_compression = ('none',)
 
