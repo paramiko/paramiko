@@ -349,7 +349,7 @@ class Transport (threading.Thread, ClosingContextManager):
         self.gss_host = None
         if self.use_gss_kex:
             self.kexgss_ctxt = GSSAuth("gssapi-keyex", gss_deleg_creds)
-            self._preferred_kex = _preferred_gss_kex
+            self._preferred_kex = self._preferred_gss_kex
 
         # state used during negotiation
         self.kex_engine = None
