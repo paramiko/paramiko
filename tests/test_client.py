@@ -196,12 +196,18 @@ class SSHClientTest (unittest.TestCase):
             (['dss', 'rsa', 'ecdsa'], ['dss']), # Try ECDSA but fail
             (['rsa', 'ecdsa'], ['ecdsa']), # ECDSA success
         ):
-            self._test_connection(
-                key_filename=[
-                    test_path('test_{0}.key'.format(x)) for x in attempt
-                ],
-                allowed_keys=[types_[x] for x in accept],
-            )
+            try:
+                self._test_connection(
+                    key_filename=[
+                        test_path('test_{0}.key'.format(x)) for x in attempt
+                    ],
+                    allowed_keys=[types_[x] for x in accept],
+                )
+            finally:
+                # Clean up to avoid occasional gc-related deadlocks.
+                # TODO: use nose test generators after nose port
+                self.tearDown()
+                self.setUp()
 
     def test_multiple_key_files_failure(self):
         """

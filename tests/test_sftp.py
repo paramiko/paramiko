@@ -696,7 +696,8 @@ class SFTPTest (unittest.TestCase):
                 f.readv([(0, 12)])
 
             with sftp.open(FOLDER + '/zero', 'r') as f:
-                f.prefetch()
+                file_size = f.stat().st_size
+                f.prefetch(file_size)
                 f.read(100)
         finally:
             sftp.unlink(FOLDER + '/zero')

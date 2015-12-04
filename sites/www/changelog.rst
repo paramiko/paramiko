@@ -2,6 +2,16 @@
 Changelog
 =========
 
+* :release:`1.16.0 <2015-11-04>`
+* :bug:`194 major` (also :issue:`562`, :issue:`530`, :issue:`576`) Streamline
+  use of ``stat`` when downloading SFTP files via `SFTPClient.get
+  <paramiko.sftp_client.SFTPClient.get>`; this avoids triggering bugs in some
+  off-spec SFTP servers such as IBM Sterling. Thanks to ``@muraleee`` for the
+  initial report and to Torkil Gustavsen for the patch.
+* :feature:`467` (also :issue:`139`, :issue:`412`) Fully enable two-factor
+  authentication (e.g. when a server requires ``AuthenticationMethods
+  pubkey,keyboard-interactive``). Thanks to ``@perryjrandall`` for the patch
+  and to ``@nevins-b`` and Matt Robenolt for additional support.
 * :bug:`502 major` Fix 'exec' requests in server mode to use ``get_string``
   instead of ``get_text`` to avoid ``UnicodeDecodeError`` on non-UTF-8 input.
   Thanks to Anselm Kruis for the patch & discussion.
@@ -104,7 +114,7 @@ Changelog
   use of the ``shlex`` module. Thanks to Yan Kalchevskiy.
 * :support:`422 backported` Clean up some unused imports. Courtesy of Olle
   Lundberg.
-* :support:`421 backported` Modernize threading calls to user newer API. Thanks
+* :support:`421 backported` Modernize threading calls to use newer API. Thanks
   to Olle Lundberg.
 * :support:`419 backported` Modernize a bunch of the codebase internals to
   leverage decorators. Props to ``@beckjake`` for realizing we're no longer on
