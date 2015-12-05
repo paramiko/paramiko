@@ -114,7 +114,7 @@ class Channel (ClosingContextManager):
         self.event = threading.Event()
         self.event_ready = False
         self.combine_stderr = False
-        self.exit_status = -1
+        self.exit_status = None 
         self.origin_addr = None
 
     def __del__(self):
@@ -298,9 +298,10 @@ class Channel (ClosingContextManager):
         mostly useful for retrieving the results of an `exec_command`.
         If the command hasn't finished yet, this method will wait until
         it does, or until the channel is closed.  If no exit status is
-        provided by the server, -1 is returned.
+        provided by the server, None is returned.
 
-        :return: the exit code (as an `int`) of the process on the server.
+        :return: the exit code (as an `int`) of the process on the server 
+                    or ``None``.
 
         .. versionadded:: 1.2
         """
