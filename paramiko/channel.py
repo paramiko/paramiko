@@ -286,7 +286,8 @@ class Channel (ClosingContextManager):
         return an exit status in some cases (like bad servers).
 
         :return:
-            ``True`` if `recv_exit_status` will return immediately, else ``False``.
+            ``True`` if `recv_exit_status` will return immediately, else
+            ``False``.
 
         .. versionadded:: 1.7.3
         """
@@ -299,6 +300,17 @@ class Channel (ClosingContextManager):
         If the command hasn't finished yet, this method will wait until
         it does, or until the channel is closed.  If no exit status is
         provided by the server, -1 is returned.
+
+        .. warning::
+            In some situations, receiving remote output larger than the current
+            `.Transport` or session's ``window_size`` (e.g. that set by the
+            ``default_window_size`` kwarg for `.Transport.__init__`) will cause
+            `.recv_exit_status` to hang indefinitely if it is called prior to a
+            sufficiently large `.read` (or if there are no threads calling
+            `.read` in the background).
+
+            In these cases, ensuring that `.recv_exit_status` is called *after*
+            `.read` (or, again, using threads) can avoid the hang.
 
         :return: the exit code (as an `int`) of the process on the server.
 
