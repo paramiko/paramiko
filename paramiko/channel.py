@@ -286,7 +286,8 @@ class Channel (ClosingContextManager):
         return an exit status in some cases (like bad servers).
 
         :return:
-            ``True`` if `recv_exit_status` will return immediately, else ``False``.
+            ``True`` if `recv_exit_status` will return immediately, else
+            ``False``.
 
         .. versionadded:: 1.7.3
         """
