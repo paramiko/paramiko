@@ -164,7 +164,7 @@ class NoValidConnectionsError(socket.error):
         :param dict errors:
             The errors dict to store, as described by class docstring.
         """
-        addrs = errors.keys()
+        addrs = list(errors.keys())
         body = ', '.join([x[0] for x in addrs[:-1]])
         tail = addrs[-1][0]
         msg = "Unable to connect to port {0} on {1} or {2}"
