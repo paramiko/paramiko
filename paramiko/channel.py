@@ -306,11 +306,11 @@ class Channel (ClosingContextManager):
             `.Transport` or session's ``window_size`` (e.g. that set by the
             ``default_window_size`` kwarg for `.Transport.__init__`) will cause
             `.recv_exit_status` to hang indefinitely if it is called prior to a
-            sufficiently large `.read` (or if there are no threads calling
-            `.read` in the background).
+            sufficiently large `~Channel..read` (or if there are no threads
+            calling `~Channel.read` in the background).
 
             In these cases, ensuring that `.recv_exit_status` is called *after*
-            `.read` (or, again, using threads) can avoid the hang.
+            `~Channel.read` (or, again, using threads) can avoid the hang.
 
         :return: the exit code (as an `int`) of the process on the server.
 
