@@ -2,6 +2,8 @@
 Changelog
 =========
 
+* :support:`636` Clean up and enhance the README (and rename it to
+  ``README.rst`` from just ``README``). Thanks to ``@LucasRMehl``.
 * :release:`1.16.0 <2015-11-04>`
 * :bug:`194 major` (also :issue:`562`, :issue:`530`, :issue:`576`) Streamline
   use of ``stat`` when downloading SFTP files via `SFTPClient.get
