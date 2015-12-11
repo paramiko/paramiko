@@ -2,6 +2,8 @@
 Changelog
 =========
 
+* :support:`636` Clean up and enhance the README (and rename it to
+  ``README.rst`` from just ``README``). Thanks to ``@LucasRMehl``.
 * :bug:`401` Fix line number reporting in log output regarding invalid
   ``known_hosts`` line entries. Thanks to Dylan Thacker-Smith for catch &
   patch.
