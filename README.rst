@@ -43,8 +43,8 @@ Requirements
 ------------
 
 - `Python <http://www.python.org/>`_ 2.6, 2.7, or 3.3+
-- Cryptography 0.8 or better <https://cryptography.io>
-- pyasn1 0.1.7 or better <https://pypi.python.org/pypi/pyasn1>
+- `Cryptography <https://cryptography.io>`_ 0.8 or better
+- `pyasn1 <https://pypi.python.org/pypi/pyasn1>`_ 0.1.7 or better
 
 
 Installation
