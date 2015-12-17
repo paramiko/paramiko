@@ -156,6 +156,8 @@ class NoValidConnectionsError(socket.error):
     It is implied/assumed that all the errors given to a single instance of
     this class are from connecting to the same hostname + port (and thus that
     the differences are in the resolution of the hostname - e.g. IPv4 vs v6).
+
+    .. versionadded:: 1.16
     """
     def __init__(self, errors):
         """
