@@ -72,17 +72,6 @@ dependency ``winrandom`` may not install properly, leading to an
 yourself.  See `Fabric #194 <https://github.com/fabric/fabric/issues/194>`_
 for info.
 
-Some Python distributions don't include the UTF-8 string encodings, for
-reasons of space (misguided as that is).  If your distribution is
-missing encodings, you'll see an error like this::
-
-    LookupError: no codec search functions registered: can't find encoding
-
-This means you need to copy string encodings over from a working system
-(it probably only happens on embedded systems, not normal Python
-installs).  Valeriy Pogrebitskiy says the best place to look is
-``.../lib/python*/encodings/__init__.py``.
-
 
 Bugs & Support
 --------------
