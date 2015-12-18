@@ -21,9 +21,10 @@ RSA keys.
 """
 
 import os
-from hashlib import sha1
 
 from Crypto.PublicKey import RSA
+from Crypto.Hash import SHA as SHA1
+from Crypto.Signature import PKCS1_v1_5
 
 from paramiko import util
 from paramiko.common import max_byte, zero_byte, one_byte
@@ -93,9 +94,9 @@ class RSAKey (PKey):
         return self.d is not None
 
     def sign_ssh_data(self, data):
-        digest = sha1(data).digest()
         rsa = RSA.construct((long(self.n), long(self.e), long(self.d)))
-        sig = util.deflate_long(rsa.sign(self._pkcs1imify(digest), bytes())[0], 0)
+        signer = PKCS1_v1_5.new(rsa)
+        sig = signer.sign(SHA1.new(data))
         m = Message()
         m.add_string('ssh-rsa')
         m.add_string(sig)
@@ -104,13 +105,10 @@ class RSAKey (PKey):
     def verify_ssh_sig(self, data, msg):
         if msg.get_text() != 'ssh-rsa':
             return False
-        sig = util.inflate_long(msg.get_binary(), True)
-        # verify the signature by SHA'ing the data and encrypting it using the
-        # public key.  some wackiness ensues where we "pkcs1imify" the 20-byte
-        # hash into a string as long as the RSA key.
-        hash_obj = util.inflate_long(self._pkcs1imify(sha1(data).digest()), True)
+        sig = msg.get_binary()
         rsa = RSA.construct((long(self.n), long(self.e)))
-        return rsa.verify(hash_obj, (sig,))
+        verifier = PKCS1_v1_5.new(rsa)
+        return verifier.verify(SHA1.new(data), sig)
 
     def _encode_key(self):
         if (self.p is None) or (self.q is None):
@@ -143,7 +141,7 @@ class RSAKey (PKey):
             by ``pyCrypto.PublicKey``).
         :return: new `.RSAKey` private key
         """
-        rsa = RSA.generate(bits, os.urandom, progress_func)
+        rsa = RSA.generate(bits, os.urandom)
         key = RSAKey(vals=(rsa.e, rsa.n))
         key.d = rsa.d
         key.p = rsa.p
@@ -151,15 +149,6 @@ class RSAKey (PKey):
         return key
 
     ###  internals...
-
-    def _pkcs1imify(self, data):
-        """
-        turn a 20-byte SHA1 hash into a blob of data as large as the key's N,
-        using PKCS1's \"emsa-pkcs1-v1_5\" encoding.  totally bizarre.
-        """
-        size = len(util.deflate_long(self.n, 0))
-        filler = max_byte * (size - len(SHA1_DIGESTINFO) - len(data) - 3)
-        return zero_byte + one_byte + filler + zero_byte + SHA1_DIGESTINFO + data
 
     def _from_private_key_file(self, filename, password):
         data = self._read_private_key_file('RSA', filename, password)

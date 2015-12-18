@@ -277,6 +277,12 @@ class SSHClientTest (unittest.TestCase):
         # in py3...
         if not PY2:
             return
+
+        # PyPy does not use GC
+        import platform
+        if platform.python_implementation() == 'PyPy':
+            return
+
         threading.Thread(target=self._run).start()
         host_key = paramiko.RSAKey.from_private_key_file(test_path('test_rsa.key'))
         public_host_key = paramiko.RSAKey(data=host_key.asbytes())
