@@ -38,10 +38,18 @@ To install the `in-development version
 
 import sys
 try:
+    import platform
     from setuptools import setup
+
+    if platform.python_implementation() == 'PyPy' or\
+                      platform.system() == 'Windows':
+        crypto_lib = 'pycryptodome'
+    else:
+        crypto_lib = 'pycrypto >= 2.1, != 2.4'
+
     kw = {
         'install_requires': [
-            'pycrypto >= 2.1, != 2.4',
+            crypto_lib,
             'ecdsa >= 0.11',
         ],
     }
