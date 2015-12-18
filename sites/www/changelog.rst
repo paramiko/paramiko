@@ -2,6 +2,9 @@
 Changelog
 =========
 
+* :feature:`588` Add missing file-like object methods for
+  `~paramiko.file.BufferedFile` and `~paramiko.sftp_file.SFTPFile`. Thanks to
+  Adam Meily for the patch.
 * :support:`636` Clean up and enhance the README (and rename it to
   ``README.rst`` from just ``README``). Thanks to ``@LucasRMehl``.
 * :release:`1.16.0 <2015-11-04>`
@@ -44,7 +47,7 @@ Changelog
   :issue:`581`, and a bunch of other duplicates besides) Add support for SHA-2
   based key exchange (kex) algorithm ``diffie-hellman-group-exchange-sha256``
   and (H)MAC algorithms ``hmac-sha2-256`` and ``hmac-sha2-512``.
-  
+
   This change includes tweaks to debug-level logging regarding
   algorithm-selection handshakes; the old all-in-one log line is now multiple
   easier-to-read, printed-at-handshake-time log lines.
@@ -248,7 +251,7 @@ Changelog
   Plugaru.
 * :bug:`-` Fix logging error in sftp_client for filenames containing the '%'
   character. Thanks to Antoine Brenner.
-* :bug:`308` Fix regression in dsskey.py that caused sporadic signature 
+* :bug:`308` Fix regression in dsskey.py that caused sporadic signature
   verification failures. Thanks to Chris Rose.
 * :support:`299` Use deterministic signatures for ECDSA keys for improved
   security. Thanks to Alex Gaynor.
@@ -271,7 +274,7 @@ Changelog
 * :feature:`16` **Python 3 support!** Our test suite passes under Python 3, and
   it (& Fabric's test suite) continues to pass under Python 2. **Python 2.5 is
   no longer supported with this change!**
-  
+
   The merged code was built on many contributors' efforts, both code &
   feedback. In no particular order, we thank Daniel Goertzen, Ivan Kolodyazhny,
   Tomi Pieviläinen, Jason R. Coombs, Jan N. Schulze, ``@Lazik``, Dorian Pula,
