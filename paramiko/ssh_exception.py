@@ -107,7 +107,11 @@ class BadHostKeyException (SSHException):
     .. versionadded:: 1.6
     """
     def __init__(self, hostname, got_key, expected_key):
-        SSHException.__init__(self, 'Host key for server %s does not match!' % hostname)
+        SSHException.__init__(self,
+                              'Host key for server %s does not match : got %s expected %s' % (
+                                  hostname,
+                                  got_key.get_base64(),
+                                  expected_key.get_base64()))
         self.hostname = hostname
         self.key = got_key
         self.expected_key = expected_key
@@ -152,6 +156,8 @@ class NoValidConnectionsError(socket.error):
     It is implied/assumed that all the errors given to a single instance of
     this class are from connecting to the same hostname + port (and thus that
     the differences are in the resolution of the hostname - e.g. IPv4 vs v6).
+
+    .. versionadded:: 1.16
     """
     def __init__(self, errors):
         """

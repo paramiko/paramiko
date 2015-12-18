@@ -22,7 +22,7 @@
 
 import threading
 from paramiko import util
-from paramiko.common import DEBUG, ERROR, OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED, AUTH_FAILED
+from paramiko.common import DEBUG, ERROR, OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED, AUTH_FAILED, AUTH_SUCCESSFUL
 from paramiko.py3compat import string_types
 
 

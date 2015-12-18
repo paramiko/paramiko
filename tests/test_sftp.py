@@ -697,7 +697,8 @@ class SFTPTest (unittest.TestCase):
                 f.readv([(0, 12)])
 
             with sftp.open(FOLDER + '/zero', 'r') as f:
-                f.prefetch()
+                file_size = f.stat().st_size
+                f.prefetch(file_size)
                 f.read(100)
         finally:
             sftp.unlink(FOLDER + '/zero')
@@ -810,6 +811,11 @@ class SFTPTest (unittest.TestCase):
             self.assertEqual(data, NON_UTF8_DATA)
         finally:
             sftp.remove('%s/nonutf8data' % FOLDER)
+
+
+    def test_sftp_attributes_empty_str(self):
+        sftp_attributes = SFTPAttributes()
+        self.assertEqual(str(sftp_attributes), "?---------   1 0        0               0 (unknown date) ?")
 
 
 if __name__ == '__main__':

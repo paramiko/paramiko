@@ -132,7 +132,8 @@ class BigSFTPTest (unittest.TestCase):
             
             start = time.time()
             with sftp.open('%s/hongry.txt' % FOLDER, 'rb') as f:
-                f.prefetch()
+                file_size = f.stat().st_size
+                f.prefetch(file_size)
 
                 # read on odd boundaries to make sure the bytes aren't getting scrambled
                 n = 0
@@ -171,7 +172,8 @@ class BigSFTPTest (unittest.TestCase):
             chunk = 793
             for i in range(10):
                 with sftp.open('%s/hongry.txt' % FOLDER, 'rb') as f:
-                    f.prefetch()
+                    file_size = f.stat().st_size
+                    f.prefetch(file_size)
                     base_offset = (512 * 1024) + 17 * random.randint(1000, 2000)
                     offsets = [base_offset + j * chunk for j in range(100)]
                     # randomly seek around and read them out
@@ -245,9 +247,11 @@ class BigSFTPTest (unittest.TestCase):
 
             for i in range(10):
                 with sftp.open('%s/hongry.txt' % FOLDER, 'r') as f:
-                    f.prefetch()
+                    file_size = f.stat().st_size
+                    f.prefetch(file_size)
             with sftp.open('%s/hongry.txt' % FOLDER, 'r') as f:
-                f.prefetch()
+                file_size = f.stat().st_size
+                f.prefetch(file_size)
                 for n in range(1024):
                     data = f.read(1024)
                     self.assertEqual(data, kblob)
@@ -275,7 +279,8 @@ class BigSFTPTest (unittest.TestCase):
             self.assertEqual(sftp.stat('%s/hongry.txt' % FOLDER).st_size, 1024 * 1024)
 
             with sftp.open('%s/hongry.txt' % FOLDER, 'rb') as f:
-                f.prefetch()
+                file_size = f.stat().st_size
+                f.prefetch(file_size)
                 data = f.read(1024)
                 self.assertEqual(data, kblob)
 
@@ -353,7 +358,8 @@ class BigSFTPTest (unittest.TestCase):
             
             # try to read it too.
             with sftp.open('%s/hongry.txt' % FOLDER, 'r', 128 * 1024) as f:
-                f.prefetch()
+                file_size = f.stat().st_size
+                f.prefetch(file_size)
                 total = 0
                 while total < 1024 * 1024:
                     total += len(f.read(32 * 1024))
