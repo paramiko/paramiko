@@ -97,7 +97,7 @@ class BufferedFile (ClosingContextManager):
 
             :raises StopIteration: when the end of the file is reached.
 
-            :return: a line (`str`) read from the file.
+            :returns: a line (`str`) read from the file.
             """
             line = self.readline()
             if not line:
@@ -174,7 +174,7 @@ class BufferedFile (ClosingContextManager):
             text data.
 
         :param int size: maximum number of bytes to read
-        :return:
+        :returns:
             data read from the file (as bytes), or an empty string if EOF was
             encountered immediately
         """
@@ -234,7 +234,7 @@ class BufferedFile (ClosingContextManager):
             characters (``'\\0'``) if they occurred in the input.
 
         :param int size: maximum length of returned string.
-        :return:
+        :returns:
             next line of the file, or an empty string if the end of the
             file has been reached.
 
@@ -319,7 +319,7 @@ class BufferedFile (ClosingContextManager):
         after rounding up to an internal buffer size) are read.
 
         :param int sizehint: desired maximum number of bytes to read.
-        :return: `list` of lines read from the file.
+        :returns: `list` of lines read from the file.
         """
         lines = []
         byte_count = 0
@@ -359,7 +359,7 @@ class BufferedFile (ClosingContextManager):
         useful if the underlying file doesn't support random access, or was
         opened in append mode.
 
-        :return: file position (`number <int>` of bytes).
+        :returns: file position (`number <int>` of bytes).
         """
         return self._pos
 
