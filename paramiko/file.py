@@ -123,9 +123,9 @@ class BufferedFile (ClosingContextManager):
         """
         Check if the file can be read from.
 
-        :return:
-            `True` if the file can be read from. If `False`, :meth`read` will
-            raise an exception
+        :returns:
+            `True` if the file can be read from. If `False`, `read` will raise
+            an exception.
         """
         return (self._flags & self.FLAG_READ) == self.FLAG_READ
 
@@ -133,9 +133,9 @@ class BufferedFile (ClosingContextManager):
         """
         Check if the file can be written to.
 
-        :return:
-            `True` if the file can be written to. If `False`, :meth:`write`
-            will raise an exception
+        :returns:
+            `True` if the file can be written to. If `False`, `write` will
+            raise an exception.
         """
         return (self._flags & self.FLAG_WRITE) == self.FLAG_WRITE
 
@@ -143,9 +143,9 @@ class BufferedFile (ClosingContextManager):
         """
         Check if the file supports random access.
 
-        :return:
-            `True` if the file supports random access. If `False`,
-            :meth:`seek` will raise an exception
+        :returns:
+            `True` if the file supports random access. If `False`, `seek` will
+            raise an exception.
         """
         return False
 
@@ -154,8 +154,8 @@ class BufferedFile (ClosingContextManager):
         Read up to ``len(buff)`` bytes into :class:`bytearray` *buff* and
         return the number of bytes read.
 
-        :return:
-            the number of bytes read
+        :returns:
+            The number of bytes read.
         """
         data = self.read(len(buff))
         buff[:len(data)] = data
