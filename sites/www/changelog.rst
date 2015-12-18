@@ -2,7 +2,9 @@
 Changelog
 =========
 
-* Add missing file-like object methods for BufferedFile and SFTPFile.
+* :feature:`588` Add missing file-like object methods for
+  `~paramiko.file.BufferedFile` and `~paramiko.sftp_file.SFTPFile`. Thanks to
+  Adam Meily for the patch.
 * :support:`636` Clean up and enhance the README (and rename it to
   ``README.rst`` from just ``README``). Thanks to ``@LucasRMehl``.
 * :release:`1.16.0 <2015-11-04>`
