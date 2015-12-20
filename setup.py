@@ -45,7 +45,7 @@ try:
                       platform.system() == 'Windows':
         crypto_lib = 'pycryptodome'
     else:
-        crypto_lib = 'pycrypto >= 2.1, != 2.4'
+        crypto_lib = 'pycrypto >= 2.5'
 
     kw = {
         'install_requires': [
