@@ -2,6 +2,9 @@
 Changelog
 =========
 
+* :bug:`652` Fix behavior of ``gssapi-with-mic`` auth requests so they fail
+  gracefully (allowing followup via other auth methods) instead of raising an
+  exception. Patch courtesy of ``@jamercee``.
 * :feature:`588` Add missing file-like object methods for
   `~paramiko.file.BufferedFile` and `~paramiko.sftp_file.SFTPFile`. Thanks to
   Adam Meily for the patch.
