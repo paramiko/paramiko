@@ -2,6 +2,9 @@
 Changelog
 =========
 
+* :bug:`652` Fix behavior of ``gssapi-with-mic`` auth requests so they fail
+  gracefully (allowing followup via other auth methods) instead of raising an
+  exception. Patch courtesy of ``@jamercee``.
 * :support:`636` Clean up and enhance the README (and rename it to
   ``README.rst`` from just ``README``). Thanks to ``@LucasRMehl``.
 * :bug:`401` Fix line number reporting in log output regarding invalid
