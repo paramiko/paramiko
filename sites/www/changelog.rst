@@ -1,7 +1,8 @@
 =========
 Changelog
 =========
-
+* :bug:`658` Fix the incorrect parameter size issue in MemoryMap.read and
+  write under 32-bit Python on Windows.
 * :bug:`652` Fix behavior of ``gssapi-with-mic`` auth requests so they fail
   gracefully (allowing followup via other auth methods) instead of raising an
   exception. Patch courtesy of ``@jamercee``.
