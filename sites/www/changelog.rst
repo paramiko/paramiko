@@ -2,6 +2,9 @@
 Changelog
 =========
 
+* :bug:`499` Strip trailing/leading whitespace from lines when parsing SSH
+  config files - this brings things in line with OpenSSH behavior. Thanks to
+  Alfredo Esteban for the original report and Nick Pillitteri for the patch.
 * :support:`636` Clean up and enhance the README (and rename it to
   ``README.rst`` from just ``README``). Thanks to ``@LucasRMehl``.
 * :bug:`401` Fix line number reporting in log output regarding invalid
