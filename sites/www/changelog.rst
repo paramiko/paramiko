@@ -2,6 +2,9 @@
 Changelog
 =========
 
+* :bug:`499` Strip trailing/leading whitespace from lines when parsing SSH
+  config files - this brings things in line with OpenSSH behavior. Thanks to
+  Alfredo Esteban for the original report and Nick Pillitteri for the patch.
 * :bug:`652` Fix behavior of ``gssapi-with-mic`` auth requests so they fail
   gracefully (allowing followup via other auth methods) instead of raising an
   exception. Patch courtesy of ``@jamercee``.
