@@ -21,9 +21,14 @@ DSS keys.
 """
 
 import os
-from hashlib import sha1
 
 from Crypto.PublicKey import DSA
+from Crypto.Hash import SHA as SHA1
+try:
+    # Only in Pycryptodome
+    from Crypto.Signature import DSS
+except ImportError:
+    pass
 
 from paramiko import util
 from paramiko.common import zero_byte
@@ -98,25 +103,33 @@ class DSSKey (PKey):
         return self.x is not None
 
     def sign_ssh_data(self, data):
-        digest = sha1(data).digest()
-        dss = DSA.construct((long(self.y), long(self.g), long(self.p), long(self.q), long(self.x)))
-        # generate a suitable k
-        qsize = len(util.deflate_long(self.q, 0))
-        while True:
-            k = util.inflate_long(os.urandom(qsize), 1)
-            if (k > 2) and (k < self.q):
-                break
-        r, s = dss.sign(util.inflate_long(digest, 1), k)
         m = Message()
         m.add_string('ssh-dss')
-        # apparently, in rare cases, r or s may be shorter than 20 bytes!
-        rstr = util.deflate_long(r, 0)
-        sstr = util.deflate_long(s, 0)
-        if len(rstr) < 20:
-            rstr = zero_byte * (20 - len(rstr)) + rstr
-        if len(sstr) < 20:
-            sstr = zero_byte * (20 - len(sstr)) + sstr
-        m.add_string(rstr + sstr)
+        dss = DSA.construct((long(self.y), long(self.g), long(self.p), long(self.q), long(self.x)))
+
+        if hasattr(dss, "sign"):
+            # PyCrypto
+            digest = SHA1.new(data).digest()
+            # generate a suitable k
+            qsize = len(util.deflate_long(self.q, 0))
+            while True:
+                k = util.inflate_long(os.urandom(qsize), 1)
+                if (k > 2) and (k < self.q):
+                    break
+            r, s = dss.sign(util.inflate_long(digest, 1), k)
+            # apparently, in rare cases, r or s may be shorter than 20 bytes!
+            rstr = util.deflate_long(r, 0)
+            sstr = util.deflate_long(s, 0)
+            if len(rstr) < 20:
+                rstr = zero_byte * (20 - len(rstr)) + rstr
+            if len(sstr) < 20:
+                sstr = zero_byte * (20 - len(sstr)) + sstr
+            m.add_string(rstr + sstr)
+        else:
+            # PyCryptodome
+            signer = DSS.new(dss, 'fips-186-3')
+            sig = signer.sign(SHA1.new(data))
+            m.add_string(sig)
         return m
 
     def verify_ssh_sig(self, data, msg):
@@ -129,13 +142,23 @@ class DSSKey (PKey):
                 return 0
             sig = msg.get_binary()
 
-        # pull out (r, s) which are NOT encoded as mpints
-        sigR = util.inflate_long(sig[:20], 1)
-        sigS = util.inflate_long(sig[20:], 1)
-        sigM = util.inflate_long(sha1(data).digest(), 1)
-
         dss = DSA.construct((long(self.y), long(self.g), long(self.p), long(self.q)))
-        return dss.verify(sigM, (sigR, sigS))
+        if hasattr(dss, "sign"):
+            # PyCrypto
+            # pull out (r, s) which are NOT encoded as mpints
+            sigR = util.inflate_long(sig[:20], 1)
+            sigS = util.inflate_long(sig[20:], 1)
+            sigM = util.inflate_long(SHA1.new(data).digest(), 1)
+            result = dss.verify(sigM, (sigR, sigS))
+        else:
+            # PyCryptodome
+            try:
+                verifier = DSS.new(dss, 'fips-186-3')
+                verifier.verify(SHA1.new(data), sig)
+                result = True
+            except ValueError:
+                result = False
+        return result
 
     def _encode_key(self):
         if self.x is None:
