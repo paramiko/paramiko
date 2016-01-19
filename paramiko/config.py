@@ -57,7 +57,9 @@ class SSHConfig (object):
         """
         host = {"host": ['*'], "config": {}}
         for line in file_obj:
-            line = line.rstrip('\r\n').lstrip()
+            # Strip any leading or trailing whitespace from the line.
+            # See https://github.com/paramiko/paramiko/issues/499 for more info.
+            line = line.strip()
             if not line or line.startswith('#'):
                 continue
 
