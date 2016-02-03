@@ -2,6 +2,8 @@
 Changelog
 =========
 
+* :bug:`676` paramiko.sftp_file.prefetch is now backwards compatible with
+  previous versions of paramiko (1.15 to 1.5)
 * :bug:`499` Strip trailing/leading whitespace from lines when parsing SSH
   config files - this brings things in line with OpenSSH behavior. Thanks to
   Alfredo Esteban for the original report and Nick Pillitteri for the patch.
