@@ -395,7 +395,7 @@ class SFTPFile (BufferedFile):
         """
 
 	if file_size is None:
-		file_size = self.stat().st_size;
+            file_size = self.stat().st_size;
 
         # queue up async reads for the rest of the file
         chunks = []
