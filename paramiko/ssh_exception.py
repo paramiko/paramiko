@@ -173,3 +173,6 @@ class NoValidConnectionsError(socket.error):
             msg.format(addrs[0][1], body, tail)
         )
         self.errors = errors
+
+    def __reduce__(self):
+        return (NoValidConnectionsError, (self.errors, ))
