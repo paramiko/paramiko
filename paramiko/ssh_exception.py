@@ -178,4 +178,4 @@ class NoValidConnectionsError(socket.error):
         self.errors = errors
 
     def __reduce__(self):
-        return (NoValidConnectionsError, (self.errors, ))
+        return (self.__class__, (self.errors, ))
