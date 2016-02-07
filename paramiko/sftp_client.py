@@ -600,7 +600,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
 
         The SFTP operations use pipelining for speed.
 
-        :param file fl: opened file or file-like object to copy
+        :param fl: opened file or file-like object to copy
         :param str remotepath: the destination path on the SFTP server
         :param int file_size:
             optional size parameter passed to callback. If none is specified,
@@ -686,9 +686,10 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
 
         .. versionadded:: 1.10
         """
+        file_size = self.stat(remotepath).st_size
         with self.open(remotepath, 'rb') as fr:
-            file_size = self.stat(remotepath).st_size
-            fr.prefetch()
+            fr.prefetch(file_size)
+
             size = 0
             while True:
                 data = fr.read(32768)
@@ -716,7 +717,6 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         .. versionchanged:: 1.7.4
             Added the ``callback`` param
         """
-        file_size = self.stat(remotepath).st_size
         with open(localpath, 'wb') as fl:
             size = self.getfo(remotepath, fl, callback)
         s = os.stat(localpath)

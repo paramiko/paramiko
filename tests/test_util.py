@@ -30,6 +30,7 @@ import paramiko.util
 from paramiko.util import lookup_ssh_host_config as host_config, safe_string
 from paramiko.py3compat import StringIO, byte_ord, b
 
+# Note some lines in this configuration have trailing spaces on purpose
 test_config_file = """\
 Host *
     User robey
@@ -110,7 +111,7 @@ class UtilTest(unittest.TestCase):
         self.assertEqual(config._config,
             [{'host': ['*'], 'config': {}}, {'host': ['*'], 'config': {'identityfile': ['~/.ssh/id_rsa'], 'user': 'robey'}},
             {'host': ['*.example.com'], 'config': {'user': 'bjork', 'port': '3333'}},
-            {'host': ['*'], 'config': {'crazy': 'something dumb  '}},
+            {'host': ['*'], 'config': {'crazy': 'something dumb'}},
             {'host': ['spoo.example.com'], 'config': {'crazy': 'something else'}}])
 
     def test_3_host_config(self):
@@ -119,14 +120,14 @@ class UtilTest(unittest.TestCase):
         config = paramiko.util.parse_ssh_config(f)
 
         for host, values in {
-            'irc.danger.com':   {'crazy': 'something dumb  ',
+            'irc.danger.com':   {'crazy': 'something dumb',
                                 'hostname': 'irc.danger.com',
                                 'user': 'robey'},
-            'irc.example.com':  {'crazy': 'something dumb  ',
+            'irc.example.com':  {'crazy': 'something dumb',
                                 'hostname': 'irc.example.com',
                                 'user': 'robey',
                                 'port': '3333'},
-            'spoo.example.com': {'crazy': 'something dumb  ',
+            'spoo.example.com': {'crazy': 'something dumb',
                                 'hostname': 'spoo.example.com',
                                 'user': 'robey',
                                 'port': '3333'}

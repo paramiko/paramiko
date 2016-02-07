@@ -2,6 +2,96 @@
 Changelog
 =========
 
+* :bug:`499` Strip trailing/leading whitespace from lines when parsing SSH
+  config files - this brings things in line with OpenSSH behavior. Thanks to
+  Alfredo Esteban for the original report and Nick Pillitteri for the patch.
+* :bug:`652` Fix behavior of ``gssapi-with-mic`` auth requests so they fail
+  gracefully (allowing followup via other auth methods) instead of raising an
+  exception. Patch courtesy of ``@jamercee``.
+* :feature:`588` Add missing file-like object methods for
+  `~paramiko.file.BufferedFile` and `~paramiko.sftp_file.SFTPFile`. Thanks to
+  Adam Meily for the patch.
+* :support:`636` Clean up and enhance the README (and rename it to
+  ``README.rst`` from just ``README``). Thanks to ``@LucasRMehl``.
+* :release:`1.16.0 <2015-11-04>`
+* :bug:`194 major` (also :issue:`562`, :issue:`530`, :issue:`576`) Streamline
+  use of ``stat`` when downloading SFTP files via `SFTPClient.get
+  <paramiko.sftp_client.SFTPClient.get>`; this avoids triggering bugs in some
+  off-spec SFTP servers such as IBM Sterling. Thanks to ``@muraleee`` for the
+  initial report and to Torkil Gustavsen for the patch.
+* :feature:`467` (also :issue:`139`, :issue:`412`) Fully enable two-factor
+  authentication (e.g. when a server requires ``AuthenticationMethods
+  pubkey,keyboard-interactive``). Thanks to ``@perryjrandall`` for the patch
+  and to ``@nevins-b`` and Matt Robenolt for additional support.
+* :bug:`502 major` Fix 'exec' requests in server mode to use ``get_string``
+  instead of ``get_text`` to avoid ``UnicodeDecodeError`` on non-UTF-8 input.
+  Thanks to Anselm Kruis for the patch & discussion.
+* :bug:`401` Fix line number reporting in log output regarding invalid
+  ``known_hosts`` line entries. Thanks to Dylan Thacker-Smith for catch &
+  patch.
+* :support:`525 backported` Update the vendored Windows API addon to a more
+  recent edition. Also fixes :issue:`193`, :issue:`488`, :issue:`498`. Thanks
+  to Jason Coombs.
+* :release:`1.15.4 <2015-11-02>`
+* :release:`1.14.3 <2015-11-02>`
+* :release:`1.13.4 <2015-11-02>`
+* :bug:`366` Fix `~paramiko.sftp_attributes.SFTPAttributes` so its string
+  representation doesn't raise exceptions on empty/initialized instances. Patch
+  by Ulrich Petri.
+* :bug:`359` Use correct attribute name when trying to use Python 3's
+  ``int.bit_length`` method; prior to fix, the Python 2 custom fallback
+  implementation was always used, even on Python 3. Thanks to Alex Gaynor.
+* :support:`594 backported` Correct some post-Python3-port docstrings to
+  specify ``bytes`` type instead of ``str``. Credit to ``@redixin``.
+* :bug:`565` Don't explode with ``IndexError`` when reading private key files
+  lacking an ``-----END <type> PRIVATE KEY-----`` footer. Patch courtesy of
+  Prasanna Santhanam.
+* :feature:`604` Add support for the ``aes192-ctr`` and ``aes192-cbc`` ciphers.
+  Thanks to Michiel Tiller for noticing it was as easy as tweaking some key
+  sizes :D
+* :feature:`356` (also :issue:`596`, :issue:`365`, :issue:`341`, :issue:`164`,
+  :issue:`581`, and a bunch of other duplicates besides) Add support for SHA-2
+  based key exchange (kex) algorithm ``diffie-hellman-group-exchange-sha256``
+  and (H)MAC algorithms ``hmac-sha2-256`` and ``hmac-sha2-512``.
+
+  This change includes tweaks to debug-level logging regarding
+  algorithm-selection handshakes; the old all-in-one log line is now multiple
+  easier-to-read, printed-at-handshake-time log lines.
+
+  Thanks to the many people who submitted patches for this functionality and/or
+  assisted in testing those patches. That list includes but is not limited to,
+  and in no particular order: Matthias Witte, Dag Wieers, Ash Berlin, Etienne
+  Perot, Gert van Dijk, ``@GuyShaanan``, Aaron Bieber, ``@cyphase``, and Eric
+  Brown.
+* :release:`1.15.3 <2015-10-02>`
+* :support:`554 backported` Fix inaccuracies in the docstring for the ECDSA key
+  class. Thanks to Jared Hance for the patch.
+* :support:`516 backported` Document `~paramiko.agent.AgentRequestHandler`.
+  Thanks to ``@toejough`` for report & suggestions.
+* :bug:`496` Fix a handful of small but critical bugs in Paramiko's GSSAPI
+  support (note: this includes switching from PyCrypo's Random to
+  `os.urandom`). Thanks to Anselm Kruis for catch & patch.
+* :bug:`491` (combines :issue:`62` and :issue:`439`) Implement timeout
+  functionality to address hangs from dropped network connections and/or failed
+  handshakes. Credit to ``@vazir`` and ``@dacut`` for the original patches and
+  to Olle Lundberg for reimplementation.
+* :bug:`490` Skip invalid/unparseable lines in ``known_hosts`` files, instead
+  of raising `~paramiko.ssh_exception.SSHException`. This brings Paramiko's
+  behavior more in line with OpenSSH, which silently ignores such input. Catch
+  & patch courtesy of Martin Topholm.
+* :bug:`404` Print details when displaying
+  `~paramiko.ssh_exception.BadHostKeyException` objects (expected vs received
+  data) instead of just "hey shit broke". Patch credit: Loic Dachary.
+* :bug:`469` (also :issue:`488`, :issue:`461` and like a dozen others) Fix a
+  typo introduced in the 1.15 release which broke WinPageant support. Thanks to
+  everyone who submitted patches, and to Steve Cohen who was the lucky winner
+  of the cherry-pick lottery.
+* :bug:`353` (via :issue:`482`) Fix a bug introduced in the Python 3 port
+  which caused ``OverFlowError`` (and other symptoms) in SFTP functionality.
+  Thanks to ``@dboreham`` for leading the troubleshooting charge, and to
+  Scott Maxwell for the final patch.
+* :support:`582` Fix some old ``setup.py`` related helper code which was
+  breaking ``bdist_dumb`` on Mac OS X. Thanks to Peter Odding for the patch.
 * :bug:`22 major` Try harder to connect to multiple network families (e.g. IPv4
   vs IPv6) in case of connection issues; this helps with problems such as hosts
   which resolve both IPv4 and IPv6 addresses but are only listening on IPv4.
@@ -9,8 +99,9 @@ Changelog
   foundational patchset.
 * :bug:`402` Check to see if an SSH agent is actually present before trying to
   forward it to the remote end. This replaces what was usually a useless
-  ``TypeError`` with a human-readable ``AuthenticationError``. Credit to Ken
-  Jordan for the fix and Yvan Marques for original report.
+  ``TypeError`` with a human-readable
+  `~paramiko.ssh_exception.AuthenticationException`. Credit to Ken Jordan for
+  the fix and Yvan Marques for original report.
 * :release:`1.15.2 <2014-12-19>`
 * :release:`1.14.2 <2014-12-19>`
 * :release:`1.13.3 <2014-12-19>`
@@ -34,7 +125,7 @@ Changelog
   use of the ``shlex`` module. Thanks to Yan Kalchevskiy.
 * :support:`422 backported` Clean up some unused imports. Courtesy of Olle
   Lundberg.
-* :support:`421 backported` Modernize threading calls to user newer API. Thanks
+* :support:`421 backported` Modernize threading calls to use newer API. Thanks
   to Olle Lundberg.
 * :support:`419 backported` Modernize a bunch of the codebase internals to
   leverage decorators. Props to ``@beckjake`` for realizing we're no longer on
@@ -166,7 +257,7 @@ Changelog
   Plugaru.
 * :bug:`-` Fix logging error in sftp_client for filenames containing the '%'
   character. Thanks to Antoine Brenner.
-* :bug:`308` Fix regression in dsskey.py that caused sporadic signature 
+* :bug:`308` Fix regression in dsskey.py that caused sporadic signature
   verification failures. Thanks to Chris Rose.
 * :support:`299` Use deterministic signatures for ECDSA keys for improved
   security. Thanks to Alex Gaynor.
@@ -189,7 +280,7 @@ Changelog
 * :feature:`16` **Python 3 support!** Our test suite passes under Python 3, and
   it (& Fabric's test suite) continues to pass under Python 2. **Python 2.5 is
   no longer supported with this change!**
-  
+
   The merged code was built on many contributors' efforts, both code &
   feedback. In no particular order, we thank Daniel Goertzen, Ivan Kolodyazhny,
   Tomi Pieviläinen, Jason R. Coombs, Jan N. Schulze, ``@Lazik``, Dorian Pula,

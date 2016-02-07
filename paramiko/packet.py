@@ -99,6 +99,10 @@ class Packetizer (object):
         self.__keepalive_last = time.time()
         self.__keepalive_callback = None
 
+        self.__timer = None
+        self.__handshake_complete = False
+        self.__timer_expired = False
+
     def set_log(self, log):
         """
         Set the Python log object to use for logging.
@@ -182,6 +186,46 @@ class Packetizer (object):
         self.__keepalive_callback = callback
         self.__keepalive_last = time.time()
 
+    def read_timer(self):
+        self.__timer_expired = True
+
+    def start_handshake(self, timeout):
+        """
+        Tells `Packetizer` that the handshake process started.
+        Starts a book keeping timer that can signal a timeout in the
+        handshake process.
+
+        :param float timeout: amount of seconds to wait before timing out
+        """
+        if not self.__timer:
+            self.__timer = threading.Timer(float(timeout), self.read_timer)
+            self.__timer.start()
+
+    def handshake_timed_out(self):
+        """
+        Checks if the handshake has timed out.
+
+        If `start_handshake` wasn't called before the call to this function,
+        the return value will always be `False`. If the handshake completed
+        before a timeout was reached, the return value will be `False`
+
+        :return: handshake time out status, as a `bool`
+        """
+        if not self.__timer:
+            return False
+        if self.__handshake_complete:
+            return False
+        return self.__timer_expired
+
+    def complete_handshake(self):
+        """
+        Tells `Packetizer` that the handshake has completed.
+        """
+        if self.__timer:
+            self.__timer.cancel()
+            self.__timer_expired = False
+            self.__handshake_complete = True
+
     def read_all(self, n, check_rekey=False):
         """
         Read as close to N bytes as possible, blocking as long as necessary.
@@ -200,6 +244,8 @@ class Packetizer (object):
             n -= len(out)
         while n > 0:
             got_timeout = False
+            if self.handshake_timed_out():
+                raise EOFError()
             try:
                 x = self.__socket.recv(n)
                 if len(x) == 0:
@@ -344,7 +390,8 @@ class Packetizer (object):
         if self.__dump_packets:
             self._log(DEBUG, util.format_binary(header, 'IN: '))
         packet_size = struct.unpack('>I', header[:4])[0]
-        # leftover contains decrypted bytes from the first block (after the length field)
+        # leftover contains decrypted bytes from the first block (after the
+        # length field)
         leftover = header[4:]
         if (packet_size - len(leftover)) % self.__block_size_in != 0:
             raise SSHException('Invalid packet blocking')

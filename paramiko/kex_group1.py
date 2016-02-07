@@ -45,6 +45,7 @@ class KexGroup1(object):
     G = 2
 
     name = 'diffie-hellman-group1-sha1'
+    hash_algo = sha1
 
     def __init__(self, transport):
         self.transport = transport

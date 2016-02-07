@@ -12,7 +12,6 @@ html_theme_options = {
     'description': "A Python implementation of SSHv2.",
     'github_user': 'paramiko',
     'github_repo': 'paramiko',
-    'gratipay_user': 'bitprophet',
     'analytics_id': 'UA-18486793-2',
     'travis_button': True,
 }

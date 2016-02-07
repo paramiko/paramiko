@@ -28,6 +28,7 @@ import socket
 import time
 import threading
 import random
+from hashlib import sha1
 import unittest
 
 from paramiko import Transport, SecurityOptions, ServerInterface, RSAKey, DSSKey, \
@@ -77,7 +78,7 @@ class NullServer (ServerInterface):
         return OPEN_SUCCEEDED
 
     def check_channel_exec_request(self, channel, command):
-        if command != 'yes':
+        if command != b'yes':
             return False
         return True
 
@@ -251,7 +252,7 @@ class TransportTest(unittest.TestCase):
         chan = self.tc.open_session()
         schan = self.ts.accept(1.0)
         try:
-            chan.exec_command('no')
+            chan.exec_command(b'command contains \xfc and is not a valid UTF-8 string')
             self.assertTrue(False)
         except SSHException:
             pass
@@ -447,9 +448,11 @@ class TransportTest(unittest.TestCase):
         bytes = self.tc.packetizer._Packetizer__sent_bytes
         chan.send('x' * 1024)
         bytes2 = self.tc.packetizer._Packetizer__sent_bytes
+        block_size = self.tc._cipher_info[self.tc.local_cipher]['block-size']
+        mac_size = self.tc._mac_info[self.tc.local_mac]['size']
         # tests show this is actually compressed to *52 bytes*!  including packet overhead!  nice!! :)
         self.assertTrue(bytes2 - bytes < 1024)
-        self.assertEqual(52, bytes2 - bytes)
+        self.assertEqual(16 + block_size + mac_size, bytes2 - bytes)
 
         chan.close()
         schan.close()
@@ -792,3 +795,20 @@ class TransportTest(unittest.TestCase):
                              (None, DEFAULT_WINDOW_SIZE),
                              (2**32, MAX_WINDOW_SIZE)]:
             self.assertEqual(self.tc._sanitize_window_size(val), correct)
+
+    def test_L_handshake_timeout(self):
+        """
+        verify that we can get a hanshake timeout.
+        """
+        host_key = RSAKey.from_private_key_file(test_path('test_rsa.key'))
+        public_host_key = RSAKey(data=host_key.asbytes())
+        self.ts.add_server_key(host_key)
+        event = threading.Event()
+        server = NullServer()
+        self.assertTrue(not event.is_set())
+        self.tc.handshake_timeout = 0.000000000001
+        self.ts.start_server(event, server)
+        self.assertRaises(EOFError, self.tc.connect,
+                          hostkey=public_host_key,
+                          username='slowdive',
+                          password='pygmalion')
