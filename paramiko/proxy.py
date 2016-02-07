@@ -38,7 +38,7 @@ class ProxyCommand(ClosingContextManager):
     `.Transport` and `.Packetizer` classes. Using this class instead of a
     regular socket makes it possible to talk with a Popen'd command that will
     proxy traffic between the client and a server hosted in another machine.
-    
+
     Instances of this class may be used as context managers.
     """
     def __init__(self, command_line):
@@ -50,9 +50,9 @@ class ProxyCommand(ClosingContextManager):
             the command that should be executed and used as the proxy.
         """
         self.cmd = shlsplit(command_line)
-        self.process = Popen(self.cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE)
+        self.process = Popen(self.cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE,
+                             bufsize=0)
         self.timeout = None
-        self.buffer = []
 
     def send(self, content):
         """
@@ -77,11 +77,12 @@ class ProxyCommand(ClosingContextManager):
 
         :param int size: how many chars should be read
 
-        :return: the length of the read content, as an `int`
+        :return: the string of bytes read, which may be shorter than requested
         """
         try:
+            buffer = b''
             start = time.time()
-            while len(self.buffer) < size:
+            while len(buffer) < size:
                 select_timeout = None
                 if self.timeout is not None:
                     elapsed = (time.time() - start)
@@ -92,16 +93,13 @@ class ProxyCommand(ClosingContextManager):
                 r, w, x = select(
                     [self.process.stdout], [], [], select_timeout)
                 if r and r[0] == self.process.stdout:
-                    b = os.read(
-                        self.process.stdout.fileno(), size - len(self.buffer))
-                    # Store in class-level buffer for persistence across
-                    # timeouts; this makes us act more like a real socket
-                    # (where timeouts don't actually drop data.)
-                    self.buffer.extend(b)
-            result = ''.join(self.buffer)
-            self.buffer = []
-            return result
+                    buffer += os.read(
+                        self.process.stdout.fileno(), size - len(buffer))
+            return buffer
         except socket.timeout:
+            if buffer:
+                # Don't raise socket.timeout, return partial result instead
+                return buffer
             raise  # socket.timeout is a subclass of IOError
         except IOError as e:
             raise ProxyCommandFailure(' '.join(self.cmd), e.strerror)
