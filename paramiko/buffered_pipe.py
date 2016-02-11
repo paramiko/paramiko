@@ -70,11 +70,15 @@ class BufferedPipe (object):
         
         :param threading.Event event: the event to set/clear
         """
-        self._event = event
-        if len(self._buffer) > 0:
-            event.set()
-        else:
-            event.clear()
+        self._lock.acquire()
+        try:
+            self._event = event
+            if self._closed or len(self._buffer) > 0:
+                event.set()
+            else:
+                event.clear()
+        finally:
+            self._lock.release()
         
     def feed(self, data):
         """

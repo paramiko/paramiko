@@ -812,3 +812,21 @@ class TransportTest(unittest.TestCase):
                           hostkey=public_host_key,
                           username='slowdive',
                           password='pygmalion')
+
+    def test_M_select_after_close(self):
+        """
+        verify that select works when a channel is already closed.
+        """
+        self.setup_test_server()
+        chan = self.tc.open_session()
+        chan.invoke_shell()
+        schan = self.ts.accept(1.0)
+        schan.close()
+
+        # give client a moment to receive close notification
+        time.sleep(0.1)
+
+        r, w, e = select.select([chan], [], [], 0.1)
+        self.assertEqual([chan], r)
+        self.assertEqual([], w)
+        self.assertEqual([], e)
