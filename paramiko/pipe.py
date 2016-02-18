@@ -28,6 +28,7 @@ will trigger as readable in `select <select.select>`.
 import sys
 import os
 import socket
+import threading
 from paramiko.py3compat import b
 
 
@@ -45,12 +46,17 @@ class PosixPipe (object):
         self._set = False
         self._forever = False
         self._closed = False
+        self._lock = threading.Lock()
     
     def close(self):
-        os.close(self._rfd)
-        os.close(self._wfd)
-        # used for unit tests:
-        self._closed = True
+        self._lock.acquire()
+        try:
+            os.close(self._rfd)
+            os.close(self._wfd)
+            # used for unit tests:
+            self._closed = True
+        finally:
+            self._lock.release()
     
     def fileno(self):
         return self._rfd
@@ -58,14 +64,26 @@ class PosixPipe (object):
     def clear(self):
         if not self._set or self._forever:
             return
-        os.read(self._rfd, 1)
-        self._set = False
+        self._lock.acquire()
+        try:
+            if not self._set or self._forever:
+                return
+            os.read(self._rfd, 1)
+            self._set = False
+        finally:
+            self._lock.release()
     
     def set(self):
         if self._set or self._closed:
             return
-        self._set = True
-        os.write(self._wfd, b'*')
+        self._lock.acquire()
+        try:
+            if self._set or self._closed:
+                return
+            self._set = True
+            os.write(self._wfd, b'*')
+        finally:
+            self._lock.release()
     
     def set_forever(self):
         self._forever = True
