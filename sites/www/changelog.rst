@@ -2,6 +2,9 @@
 Changelog
 =========
 
+* :support:`697` Remove whitespace in our ``setup.py``'s ``install_requires``
+  as it triggers occasional bugs in some versions of ``setuptools``. Thanks to
+  Justin Lecher for catch & original patch.
 * :bug:`499` Strip trailing/leading whitespace from lines when parsing SSH
   config files - this brings things in line with OpenSSH behavior. Thanks to
   Alfredo Esteban for the original report and Nick Pillitteri for the patch.
