@@ -41,8 +41,8 @@ try:
     from setuptools import setup
     kw = {
         'install_requires': [
-            'cryptography >= 0.8',
-            'pyasn1 >= 0.1.7',
+            'cryptography>=0.8',
+            'pyasn1>=0.1.7',
         ],
     }
 except ImportError:
