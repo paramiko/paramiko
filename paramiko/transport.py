@@ -1854,8 +1854,16 @@ class Transport (threading.Thread, ClosingContextManager):
                 buf = self.packetizer.readline(timeout)
             except ProxyCommandFailure:
                 raise
+            except socket.timeout:
+                raise SSHException(
+                        'Error reading SSH protocol banner: '
+                        'Timed out {0} s for line {1}.'.format(timeout, i+1))
+            except EOFError:
+                raise SSHException('Error reading SSH protocol banner: '
+                                   'Remote server closed connection.')
             except Exception as e:
-                raise SSHException('Error reading SSH protocol banner' + str(e))
+                raise SSHException(
+                        'Error reading SSH protocol banner: ' + repr(e))
             if buf[:4] == 'SSH-':
                 break
             self._log(DEBUG, 'Banner: ' + buf)
