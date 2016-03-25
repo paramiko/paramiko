@@ -29,7 +29,7 @@ import warnings
 from errno import ECONNREFUSED, EHOSTUNREACH
 
 from paramiko.agent import Agent
-from paramiko.common import DEBUG
+from paramiko.common import DEBUG, EXCEPTION
 from paramiko.config import SSH_PORT
 from paramiko.dsskey import DSSKey
 from paramiko.ecdsakey import ECDSAKey
@@ -38,7 +38,7 @@ from paramiko.py3compat import string_types
 from paramiko.resource import ResourceManager
 from paramiko.rsakey import RSAKey
 from paramiko.ssh_exception import (
-    SSHException, BadHostKeyException, NoValidConnectionsError
+    SSHException, BadHostKeyException, NoValidConnectionsError, AuthenticationException
 )
 from paramiko.transport import Transport
 from paramiko.util import retry_on_signal, ClosingContextManager
@@ -474,14 +474,29 @@ class SSHClient (ClosingContextManager):
         allowed_types = set()
         two_factor_types = set(['keyboard-interactive', 'password'])
 
+        algo_map = {'DSA': {'class': DSSKey,
+                            'filename': 'id_dsa'},
+                    'EC':  {'class': ECDSAKey,
+                            'filename': 'id_ecds'},
+                    'RSA': {'class': RSAKey,
+                            'filename': 'id_rsa'}
+                    }
+
         # If GSS-API support and GSS-PI Key Exchange was performed, we attempt
         # authentication with gssapi-keyex.
         if gss_kex and self._transport.gss_kex_used:
             try:
                 self._transport.auth_gssapi_keyex(username)
-                return
-            except Exception as e:
+            except AuthenticationException as e:
+                self._log(EXCEPTION, 'Authentication failure')
+                raise
+            except SSHException as e:
                 saved_exception = e
+            except Exception as e:
+                self._log(EXCEPTION, 'non-ssh exception')
+                raise
+            else:
+                return
 
         # Try GSS-API authentication (gssapi-with-mic) only if GSS-API Key
         # Exchange is not performed, because if we use GSS-API for the key
@@ -491,9 +506,16 @@ class SSHClient (ClosingContextManager):
             try:
                 self._transport.auth_gssapi_with_mic(username, gss_host,
                                                      gss_deleg_creds)
-                return
-            except Exception as e:
+            except AuthenticationException as e:
+                self._log(EXCEPTION, 'Authentication failure')
+                raise
+            except SSHException as e:
                 saved_exception = e
+            except Exception as e:
+                self._log(EXCEPTION, 'non-ssh exception')
+                raise
+            else:
+                return
 
         if pkey is not None:
             try:
@@ -504,43 +526,73 @@ class SSHClient (ClosingContextManager):
                 two_factor = (allowed_types & two_factor_types)
                 if not two_factor:
                     return
+            except AuthenticationException as e:
+                self._log(EXCEPTION, 'Authentication failure')
+                raise
             except SSHException as e:
                 saved_exception = e
+            except Exception as e:
+                self._log(EXCEPTION, 'non-ssh exception')
+                raise
 
         if not two_factor:
             for key_filename in key_filenames:
-                pkey_class = None
+                algo_opt = []
                 with open(key_filename, 'r') as f:
                     first_line = f.readline()
-                    if re.search('BEGIN DSA PRIVATE KEY', first_line):
-                        pkey_class = DSSKey
-                    elif re.search('BEGIN EC PRIVATE KEY', first_line):
-                        pkey_class = ECDSAKey
-                    elif re.search('BEGIN RSA PRIVATE KEY', first_line):
-                        pkey_class = RSAKey
-                    elif re.search('BEGIN OPENSSH PRIVATE KEY', first_line):
-                        global ED25519Key
-                        pkey_class = ED25519Key
-                        raise SSHException(
-                            'ED25519Key class not yet implemented')
+                    match = re.search('BEGIN (\S+) PRIVATE KEY', first_line)
+
+                    algo = match.group(1)
+                    if algo == 'OPENSSH':
+                        estr = 'ED25519Key class not yet implemented'
+                        self._log(EXCEPTION, estr)
+                        raise SSHException(estr)
+                    elif algo in algo_map:
+                        algo_opt.append(algo)
+                    elif algo not in algo_map:
+                        self._log(DEBUG,
+                                  'First line of SSH key is:\n%s' % first_line)
+                        self._log(DEBUG, 'Public Key Algorithm not recognized')
+                        algo_opt.append(algo_map.keys())
+
+                for algo in algo_opt:
+                    pk_class = algo_map[algo]['class']
+                    try:
+                        key = pk_class.from_private_key_file(
+                            key_filename, password)
+                    except SSHException as e:
+                        self._log(DEBUG,
+                                  '%s is not the right Public Key Algorithm for file %s' % (
+                                      algo, key_filename_))
+                        continue
+                    except:
+                        self._log(EXCEPTION, 'non-ssh exception')
+                        raise
                     else:
-                        self._log(
-                            DEBUG, 'First line of SSH key is:\n%s' % first_line)
-                        raise SSHException(
-                            'Public Key Algorithm not recognized')
-                try:
-                    key = pkey_class.from_private_key_file(
-                        key_filename, password)
+                        self._log(DEBUG,
+                                  '%s is the right Public Key Algorithm for file %s' % (
+                                      algo, key_filename))
+
                     self._log(DEBUG, 'Trying key %s from %s' %
                               (hexlify(key.get_fingerprint()), key_filename))
-                    allowed_types = set(
-                        self._transport.auth_publickey(username, key))
-                    two_factor = (allowed_types & two_factor_types)
-                    if not two_factor:
-                        return
-                    break
-                except SSHException as e:
-                    saved_exception = e
+
+                    try:
+                        allowed_types = set(
+                            self._transport.auth_publickey(username, key))
+                        two_factor = (allowed_types & two_factor_types)
+                        if not two_factor:
+                            return
+                    except AuthenticationException as e:
+                        self._log(EXCEPTION, 'Authentication failure')
+                        raise
+                    except SSHException as e:
+                        self._log(EXCEPTION, 'ssh exception')
+                        raise
+                    except:
+                        self._log(EXCEPTION, 'non-ssh exception')
+                        raise
+                    else:
+                        break
 
         if not two_factor and allow_agent:
             if self._agent is None:
@@ -558,39 +610,47 @@ class SSHClient (ClosingContextManager):
                     if not two_factor:
                         return
                     break
+                except AuthenticationException as e:
+                    self._log(EXCEPTION, 'Authentication failure')
+                    raise
                 except SSHException as e:
-                    saved_exception = e
+                    self._log(DEBUG,
+                              '%s is not the right Public Key' % key)
+                except:
+                    self._log(EXCEPTION, 'non-ssh exception')
+                    raise
+                else:
+                    self._log(DEBUG,
+                              '%s is the right Public Key' % key)
+                    break
 
         if not two_factor:
             keyfiles = []
-            rsa_key = os.path.expanduser('~/.ssh/id_rsa')
-            dsa_key = os.path.expanduser('~/.ssh/id_dsa')
-            ecdsa_key = os.path.expanduser('~/.ssh/id_ecdsa')
-            if os.path.isfile(rsa_key):
-                keyfiles.append((RSAKey, rsa_key))
-            if os.path.isfile(dsa_key):
-                keyfiles.append((DSSKey, dsa_key))
-            if os.path.isfile(ecdsa_key):
-                keyfiles.append((ECDSAKey, ecdsa_key))
-            # look in ~/ssh/ for windows users:
-            rsa_key = os.path.expanduser('~/ssh/id_rsa')
-            dsa_key = os.path.expanduser('~/ssh/id_dsa')
-            ecdsa_key = os.path.expanduser('~/ssh/id_ecdsa')
-            if os.path.isfile(rsa_key):
-                keyfiles.append((RSAKey, rsa_key))
-            if os.path.isfile(dsa_key):
-                keyfiles.append((DSSKey, dsa_key))
-            if os.path.isfile(ecdsa_key):
-                keyfiles.append((ECDSAKey, ecdsa_key))
+            if look_for_keys:
+                for pfx in ('~/.ssh', '~/ssh'):
+                    for algo, adict in algo_map:
+                        keyfile = os.path.join(os.path.expanduser(pfx),
+                                               adict['filename'])
+                        if os.path.isfile(keyfile):
+                            keyfiles.append((algo, keyfile))
 
-            if not look_for_keys:
-                keyfiles = []
-
-            for pkey_class, filename in keyfiles:
+            for algo, filename in keyfiles:
+                pkey_class = algo_map[algo]['class']
                 try:
                     key = pkey_class.from_private_key_file(filename, password)
-                    self._log(DEBUG, 'Trying discovered key %s in %s' %
-                              (hexlify(key.get_fingerprint()), filename))
+                except SSHException as e:
+                    self._log(
+                        DEBUG, 'password does not match file %s' % filename)
+                    continue
+                except Exception as e:
+                    raise
+                else:
+                    self._log(DEBUG, 'password matches file %s' % filename)
+
+                self._log(DEBUG, 'Trying discovered key %s in %s' %
+                          (hexlify(key.get_fingerprint()), filename))
+
+                try:
                     # for 2-factor auth a successfully auth'd key will result
                     # in ['password']
                     allowed_types = set(
@@ -598,22 +658,34 @@ class SSHClient (ClosingContextManager):
                     two_factor = (allowed_types & two_factor_types)
                     if not two_factor:
                         return
+                except AuthenticationException as e:
+                    self._log(EXCEPTION, 'Authentication failure')
+                    raise
+                except Exception as e:
+                    raise
+                else:
                     break
-                except (SSHException, IOError) as e:
-                    saved_exception = e
 
         if password is not None:
             try:
                 self._transport.auth_password(username, password)
-                return
+            except AuthenticationException as e:
+                self._log(EXCEPTION, 'Authentication failure')
+                raise
             except SSHException as e:
                 saved_exception = e
+            else:
+                return
         elif two_factor:
             try:
                 self._transport.auth_interactive_dumb(username)
-                return
+            except AuthenticationException as e:
+                self._log(EXCEPTION, 'Authentication failure')
+                raise
             except SSHException as e:
                 saved_exception = e
+            else:
+                return
 
         # if we got an auth-failed exception earlier, re-raise it
         if saved_exception is not None:
