@@ -1395,7 +1395,10 @@ class Transport (threading.Thread, ClosingContextManager):
                     print(instructions.strip())
                 for prompt,show_input in prompt_list:
                     print(prompt.strip(),end=' ')
-                    answers.append(raw_input())
+                    if (sys.version_info > (3, 0)):
+                        answers.append(input())
+                    else:
+                        answers.append(raw_input())
                 return answers
         return self.auth_interactive(username, handler, submethods)
 
