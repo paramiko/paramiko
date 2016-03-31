@@ -21,6 +21,7 @@ Core protocol implementation
 """
 
 from __future__ import print_function
+from builtins import input
 import os
 import socket
 import sys
@@ -1395,7 +1396,7 @@ class Transport (threading.Thread, ClosingContextManager):
                     print(instructions.strip())
                 for prompt,show_input in prompt_list:
                     print(prompt.strip(),end=' ')
-                    answers.append(raw_input())
+                    answers.append(input())
                 return answers
         return self.auth_interactive(username, handler, submethods)
 
