@@ -49,40 +49,6 @@ If you're unsure which version to install, we have suggestions:
   carefully upgrade to whichever version they care to, when their release line
   stops being supported.
 
-
-PyCrypto
-========
-
-`PyCrypto <https://www.dlitz.net/software/pycrypto/>`_  provides the low-level
-(C-based) encryption algorithms we need to implement the SSH protocol. There
-are a couple gotchas associated with installing PyCrypto: its compatibility
-with Python's package tools, and the fact that it is a C-based extension.
-
-C extension
------------
-
-Unless you are installing from a precompiled source such as a Debian apt
-repository or RedHat RPM, or using :ref:`pypm <pypm>`, you will also need the
-ability to build Python C-based modules from source in order to install
-PyCrypto. Users on **Unix-based platforms** such as Ubuntu or Mac OS X will
-need the traditional C build toolchain installed (e.g. Developer Tools / XCode
-Tools on the Mac, or the ``build-essential`` package on Ubuntu or Debian Linux
--- basically, anything with ``gcc``, ``make`` and so forth) as well as the
-Python development libraries, often named ``python-dev`` or similar.
-
-For **Windows** users we recommend using :ref:`pypm`, installing a C
-development environment such as `Cygwin <http://cygwin.com>`_ or obtaining a
-precompiled Win32 PyCrypto package from `voidspace's Python modules page
-<http://www.voidspace.org.uk/python/modules.shtml#pycrypto>`_.
-
-.. note::
-    Some Windows users whose Python is 64-bit have found that the PyCrypto
-    dependency ``winrandom`` may not install properly, leading to ImportErrors.
-    In this scenario, you'll probably need to compile ``winrandom`` yourself
-    via e.g. MS Visual Studio.  See `Fabric #194
-    <https://github.com/fabric/fabric/issues/194>`_ for info.
-
-
 .. _pypm:
 
 ActivePython and PyPM
