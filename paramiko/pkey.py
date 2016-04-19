@@ -25,7 +25,7 @@ from binascii import hexlify, unhexlify
 import os
 from hashlib import md5
 
-from Crypto.Cipher import DES3, AES
+from Cryptodome.Cipher import DES3, AES
 
 from paramiko import util
 from paramiko.common import o600, zero_byte

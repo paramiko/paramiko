@@ -22,9 +22,9 @@ RSA keys.
 
 import os
 
-from Crypto.PublicKey import RSA
-from Crypto.Hash import SHA as SHA1
-from Crypto.Signature import PKCS1_v1_5
+from Cryptodome.PublicKey import RSA
+from Cryptodome.Hash import SHA as SHA1
+from Cryptodome.Signature import PKCS1_v1_5
 
 from paramiko import util
 from paramiko.common import max_byte, zero_byte, one_byte

@@ -25,7 +25,7 @@ from hashlib import sha1
 
 from tests.loop import LoopSocket
 
-from Crypto.Cipher import AES
+from Cryptodome.Cipher import AES
 
 from paramiko import Message, Packetizer, util
 from paramiko.common import byte_chr, zero_byte
