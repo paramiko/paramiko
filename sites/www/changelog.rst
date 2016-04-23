@@ -2,6 +2,10 @@
 Changelog
 =========
 
+* :support:`612` Identify & work around a race condition in the test for
+  handshake timeouts, which was causing frequent test failures for a subset of
+  contributors as well as Travis-CI (usually, but not always, limited to Python
+  3.5). Props to Ed Kellett for assistance during some of the troubleshooting.
 * :support:`697` Remove whitespace in our ``setup.py``'s ``install_requires``
   as it triggers occasional bugs in some versions of ``setuptools``. Thanks to
   Justin Lecher for catch & original patch.
