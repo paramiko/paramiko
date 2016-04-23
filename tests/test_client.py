@@ -353,3 +353,23 @@ class SSHClientTest (unittest.TestCase):
             self.tc.connect,
             **kwargs
         )
+
+    def test_8_auth_trickledown(self):
+        """
+        Failed key auth doesn't prevent subsequent pw auth from succeeding
+        """
+        # NOTE: re #387, re #394
+        # If pkey module used within Client._auth isn't correctly handling auth
+        # errors (e.g. if it allows things like ValueError to bubble up as per
+        # midway thru #394) client.connect() will fail (at key load step)
+        # instead of succeeding (at password step)
+        kwargs = dict(
+            # Password-protected key whose passphrase is not 'pygmalion' (it's
+            # 'television' as per tests/test_pkey.py). NOTE: must use
+            # key_filename, loading the actual key here with PKey will except
+            # immediately; we're testing the try/except crap within Client.
+            key_filename=[test_path('test_rsa_password.key')],
+            # Actual password for default 'slowdive' user
+            password='pygmalion',
+        )
+        self._test_connection(**kwargs)
