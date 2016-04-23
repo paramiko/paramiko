@@ -87,6 +87,12 @@ class SSHClientTest (unittest.TestCase):
         self.sockl.bind(('localhost', 0))
         self.sockl.listen(1)
         self.addr, self.port = self.sockl.getsockname()
+        self.connect_kwargs = dict(
+            hostname=self.addr,
+            port=self.port,
+            username='slowdive',
+            look_for_keys=False,
+        )
         self.event = threading.Event()
 
     def tearDown(self):
@@ -124,7 +130,7 @@ class SSHClientTest (unittest.TestCase):
         self.tc.get_host_keys().add('[%s]:%d' % (self.addr, self.port), 'ssh-rsa', public_host_key)
 
         # Actual connection
-        self.tc.connect(self.addr, self.port, username='slowdive', **kwargs)
+        self.tc.connect(**dict(self.connect_kwargs, **kwargs))
 
         # Authentication successful?
         self.event.wait(1.0)
@@ -229,7 +235,7 @@ class SSHClientTest (unittest.TestCase):
         self.tc = paramiko.SSHClient()
         self.tc.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         self.assertEqual(0, len(self.tc.get_host_keys()))
-        self.tc.connect(self.addr, self.port, username='slowdive', password='pygmalion')
+        self.tc.connect(password='pygmalion', **self.connect_kwargs)
 
         self.event.wait(1.0)
         self.assertTrue(self.event.is_set())
@@ -284,7 +290,7 @@ class SSHClientTest (unittest.TestCase):
         self.tc = paramiko.SSHClient()
         self.tc.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         self.assertEqual(0, len(self.tc.get_host_keys()))
-        self.tc.connect(self.addr, self.port, username='slowdive', password='pygmalion')
+        self.tc.connect(**dict(self.connect_kwargs, password='pygmalion'))
 
         self.event.wait(1.0)
         self.assertTrue(self.event.is_set())
@@ -319,7 +325,7 @@ class SSHClientTest (unittest.TestCase):
             self.tc = tc
             self.tc.set_missing_host_key_policy(paramiko.AutoAddPolicy())
             self.assertEquals(0, len(self.tc.get_host_keys()))
-            self.tc.connect(self.addr, self.port, username='slowdive', password='pygmalion')
+            self.tc.connect(**dict(self.connect_kwargs, password='pygmalion'))
 
             self.event.wait(1.0)
             self.assertTrue(self.event.is_set())
@@ -341,12 +347,9 @@ class SSHClientTest (unittest.TestCase):
         self.tc = paramiko.SSHClient()
         self.tc.get_host_keys().add('[%s]:%d' % (self.addr, self.port), 'ssh-rsa', public_host_key)
         # Connect with a half second banner timeout.
+        kwargs = dict(self.connect_kwargs, banner_timeout=0.5)
         self.assertRaises(
             paramiko.SSHException,
             self.tc.connect,
-            self.addr,
-            self.port,
-            username='slowdive',
-            password='pygmalion',
-            banner_timeout=0.5
+            **kwargs
         )
