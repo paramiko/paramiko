@@ -30,10 +30,9 @@ from cryptography.hazmat.primitives.asymmetric.utils import (
     decode_rfc6979_signature, encode_rfc6979_signature
 )
 
-from paramiko.common import four_byte, one_byte
+from paramiko.common import four_byte
 from paramiko.message import Message
 from paramiko.pkey import PKey
-from paramiko.py3compat import byte_chr
 from paramiko.ssh_exception import SSHException
 from paramiko.util import deflate_long, inflate_long
 
@@ -182,9 +181,6 @@ class ECDSAKey(PKey):
     def _from_private_key(self, file_obj, password):
         data = self._read_private_key('EC', file_obj, password)
         self._decode_key(data)
-
-    ALLOWED_PADDINGS = [one_byte, byte_chr(2) * 2, byte_chr(3) * 3, byte_chr(4) * 4,
-                        byte_chr(5) * 5, byte_chr(6) * 6, byte_chr(7) * 7]
 
     def _decode_key(self, data):
         try:
