@@ -29,8 +29,6 @@ from paramiko.message import Message
 from paramiko.pkey import PKey
 from paramiko.ssh_exception import SSHException
 
-SHA1_DIGESTINFO = b'\x30\x21\x30\x09\x06\x05\x2b\x0e\x03\x02\x1a\x05\x00\x04\x14'
-
 
 class RSAKey(PKey):
     """
@@ -170,8 +168,12 @@ class RSAKey(PKey):
         self._decode_key(data)
 
     def _decode_key(self, data):
-        key = serialization.load_der_private_key(
-            data, password=None, backend=default_backend()
-        )
+        try:
+            key = serialization.load_der_private_key(
+                data, password=None, backend=default_backend()
+            )
+        except ValueError as e:
+            raise SSHException(str(e))
+
         assert isinstance(key, rsa.RSAPrivateKey)
         self.key = key
