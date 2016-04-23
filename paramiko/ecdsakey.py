@@ -134,7 +134,9 @@ class ECDSAKey(PKey):
         sigR, sigS = self._sigdecode(sig)
         signature = encode_rfc6979_signature(sigR, sigS)
 
-        verifier = self.verifying_key.verifier(signature, ec.ECDSA(hashes.SHA256()))
+        verifier = self.verifying_key.verifier(
+            signature, ec.ECDSA(hashes.SHA256())
+        )
         verifier.update(data)
         try:
             verifier.verify()
@@ -185,7 +187,13 @@ class ECDSAKey(PKey):
                         byte_chr(5) * 5, byte_chr(6) * 6, byte_chr(7) * 7]
 
     def _decode_key(self, data):
-        key = serialization.load_der_private_key(data, password=None, backend=default_backend())
+        try:
+            key = serialization.load_der_private_key(
+                data, password=None, backend=default_backend()
+            )
+        except ValueError as e:
+            raise SSHException(str(e))
+
         self.signing_key = key
         self.verifying_key = key.public_key()
         self.size = key.curve.key_size
