@@ -76,8 +76,8 @@ In general, you'll need one of the following setups:
   is required. ``pip`` will install statically compiled binary archives of
   Cryptography & its dependencies.
 * On Linux, or on other platforms with older versions of ``pip``: you'll need a
-  C build toolchain, plus development headers for Python, OpenSSL and CFFI.
-  Again, see `Cryptography's install docs`_; these requirements may
+  C build toolchain, plus development headers for Python, OpenSSL and
+  ``libffi``. Again, see `Cryptography's install docs`_; these requirements may
   occasionally change.
 
   .. warning::
