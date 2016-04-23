@@ -32,7 +32,7 @@ from hashlib import sha1
 import unittest
 
 from paramiko import Transport, SecurityOptions, ServerInterface, RSAKey, DSSKey, \
-    SSHException, ChannelException
+    SSHException, ChannelException, Packetizer
 from paramiko import AUTH_FAILED, AUTH_SUCCESSFUL
 from paramiko import OPEN_SUCCEEDED, OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED
 from paramiko.common import MSG_KEXINIT, cMSG_CHANNEL_WINDOW_ADJUST, \
@@ -800,6 +800,22 @@ class TransportTest(unittest.TestCase):
         """
         verify that we can get a hanshake timeout.
         """
+        # Tweak client Transport instance's Packetizer instance so
+        # its read_message() sleeps a bit. This helps prevent race conditions
+        # where the client Transport's timeout timer thread doesn't even have
+        # time to get scheduled before the main client thread finishes
+        # handshaking with the server.
+        # (Doing this on the server's transport *sounds* more 'correct' but
+        # actually doesn't work nearly as well for whatever reason.)
+        class SlowPacketizer(Packetizer):
+            def read_message(self):
+                time.sleep(1)
+                return super(SlowPacketizer, self).read_message()
+        # NOTE: prettttty sure since the replaced .packetizer Packetizer is now
+        # no longer doing anything with its copy of the socket...everything'll
+        # be fine. Even tho it's a bit squicky.
+        self.tc.packetizer = SlowPacketizer(self.tc.sock)
+        # Continue with regular test red tape.
         host_key = RSAKey.from_private_key_file(test_path('test_rsa.key'))
         public_host_key = RSAKey(data=host_key.asbytes())
         self.ts.add_server_key(host_key)
