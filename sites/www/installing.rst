@@ -16,14 +16,15 @@ via `pip <http://pip-installer.org>`_::
     Users who want the bleeding edge can install the development version via
     ``pip install paramiko==dev``.
 
-We currently support **Python 2.6, 2.7, 3.3+, and PyPy** Users on Python 2.5 or
-older are urged to upgrade.
+We currently support **Python 2.6, 2.7, 3.3+, and PyPy**. Users on Python 2.5
+or older (or 3.2 or older) are urged to upgrade.
 
-Paramiko has two hard dependencies: the pure-Python ASN1 module ``pyasn1``, and
-the Cryptography library. Read on for details on installing ``cryptography``.
+Paramiko has only one direct hard dependency: the Cryptography library. See
+:ref:`cryptography`.
 
 If you need GSS-API / SSPI support, see :ref:`the below subsection on it
-<gssapi>` for details on additional dependencies.
+<gssapi>` for details on its optional dependencies.
+
 
 .. _release-lines:
 
@@ -34,43 +35,45 @@ Users desiring stability may wish to pin themselves to a specific release line
 once they first start using Paramiko; to assist in this, we guarantee bugfixes
 for the last 2-3 releases including the latest stable one.
 
+This typically spans major & minor versions, so even if e.g. 3.1 is the latest
+stable release, it's likely that bugfixes will occasionally come out for the
+latest 2.x and perhaps even 1.x releases, as well as for 3.0.
+
 If you're unsure which version to install, we have suggestions:
 
 * **Completely new users** should always default to the **latest stable
   release** (as above, whatever is newest / whatever shows up with ``pip
   install paramiko``.)
 * **Users upgrading from a much older version** (e.g. the 1.7.x line) should
-  probably get the **oldest actively supported line** (see the paragraph above
-  this list for what that currently is.)
+  probably get the **oldest actively supported line** (check the
+  :ref:`changelog` for recent releases).
 * **Everybody else** is hopefully already "on" a given version and can
   carefully upgrade to whichever version they care to, when their release line
   stops being supported.
 
 
+.. _cryptography:
+
 Cryptography
 ============
 
 `Cryptography <https://cryptography.io>`_  provides the low-level (C-based)
-encryption algorithms we need to implement the SSH protocol. There are a few
-things to be aware of when installing Cryptography, because it includes a
-C-extension.
+encryption algorithms we need to implement the SSH protocol. It has detailed
+`installation instructions <crypto-install>`_ (and an `FAQ
+<https://cryptography.io/en/latest/faq/>`_) which you should read carefully.
 
-C extension
------------
+In general, you'll need one of the following setups:
 
-Unless you are installing from a precompiled source such as a Debian apt
-repository or RedHat RPM, you will also need the ability to build Python
-C-based modules from source in order to install Cryptography. Users on **Unix-
-based platforms** such as Ubuntu or Mac OS X will need the traditional C build
-toolchain installed (e.g. Developer Tools / XCode Tools on the Mac, or the
-``build-essential`` package on Ubuntu or Debian Linux -- basically, anything
-with ``gcc``, ``make`` and so forth) as well as the Python development
-libraries, often named ``python-dev`` or similar, OpenSSL headers, often named
-``libssl-dev``, and libffi development libraries, often named ``libffi-dev``.
+* On Windows or Mac OS X, provided your ``pip`` is modern (8.x+): nothing else
+  is required. ``pip`` will install statically compiled binary archives of
+  Cryptography & its dependencies.
+* On Linux, or on other platforms with older versions of ``pip``: you'll need a
+  C build toolchain, plus development headers for Python, OpenSSL and CFFI.
+  Again, see `Cryptography's install docs <crypto-install>`_; these
+  requirements may occasionally change.
 
-For **Windows** users we recommend using the most recent version of ``pip``,
-Cryptography has binary wheels on PyPI, which remove the need for having a C
-compiler.
+.. _crypto-install: https://cryptography.io/en/latest/installation/
+
 
 .. _gssapi:
 
