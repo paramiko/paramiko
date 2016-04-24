@@ -4,7 +4,7 @@ Changelog
 
 * :bug:`632` Fix logic bug in the SFTP client's callback-calling functionality;
   previously there was a chance the given callback would fire twice at the end
-  of a transfer. Thanks to ``@ab9-er`` for catch & patch.
+  of a transfer. Thanks to ``@ab9-er`` for catch & original patch.
 * :support:`612` Identify & work around a race condition in the test for
   handshake timeouts, which was causing frequent test failures for a subset of
   contributors as well as Travis-CI (usually, but not always, limited to Python
