@@ -2,6 +2,8 @@
 Changelog
 =========
 
+* :bug:`613` (via :issue:`619`) Update to ``jaraco.windows`` 3.4.1 to fix some
+  errors related to ``ctypes`` on Windows platforms. Credit to Jason R. Coombs.
 * :support:`621 backported` Annotate some public attributes on
   `~paramiko.channel.Channel` such as ``.closed``. Thanks to Sergey Vasilyev
   for the report.
