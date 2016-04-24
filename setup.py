@@ -38,11 +38,13 @@ To install the `in-development version
 
 import sys
 try:
+    import platform
     from setuptools import setup
+
     kw = {
         'install_requires': [
-            'pycrypto>=2.1,!=2.4',
-            'ecdsa>=0.11',
+            'pycryptodomex',
+            'ecdsa >= 0.11',
         ],
     }
 except ImportError:

@@ -64,11 +64,8 @@ from paramiko.ssh_exception import (SSHException, BadAuthenticationType,
                                     ChannelException, ProxyCommandFailure)
 from paramiko.util import retry_on_signal, ClosingContextManager, clamp_value
 
-from Crypto.Cipher import Blowfish, AES, DES3, ARC4
-try:
-    from Crypto.Util import Counter
-except ImportError:
-    from paramiko.util import Counter
+from Cryptodome.Cipher import Blowfish, AES, DES3, ARC4
+from Cryptodome.Util import Counter
 
 
 # for thread cleanup
@@ -1646,7 +1643,7 @@ class Transport (threading.Thread, ClosingContextManager):
         elif name.endswith("-ctr"):
             # CTR modes, we need a counter
             counter = Counter.new(nbits=self._cipher_info[name]['block-size'] * 8, initial_value=util.inflate_long(iv, True))
-            return self._cipher_info[name]['class'].new(key, self._cipher_info[name]['mode'], iv, counter)
+            return self._cipher_info[name]['class'].new(key, self._cipher_info[name]['mode'], counter=counter)
         else:
             return self._cipher_info[name]['class'].new(key, self._cipher_info[name]['mode'], iv)
 
