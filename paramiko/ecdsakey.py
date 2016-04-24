@@ -21,7 +21,7 @@ ECDSA keys
 """
 
 import binascii
-from hashlib import sha256
+from hashlib import sha256, sha384, sha512
 
 from ecdsa import SigningKey, VerifyingKey, der, curves
 
@@ -32,11 +32,64 @@ from paramiko.py3compat import byte_chr, u
 from paramiko.ssh_exception import SSHException
 
 
+class _ECDSACurve(object):
+    """
+    Object for representing a specific ECDSA Curve (i.e. nistp256, nistp384,
+    etc.). Handles the generation of the key format identifier and the
+    selection of the proper hash function. Also grabs the proper curve from the
+    ecdsa package.
+    """
+    def __init__(self, oid, nist_name, key_length):
+        self.oid = oid
+        self.nist_name = nist_name
+        self.key_length = key_length
+
+        # Defined in RFC 5656 6.2
+        self.key_format_identifier = "ecdsa-sha2-" + self.nist_name
+
+        # Defined in RFC 5656 6.2.1
+        if self.key_length <= 256:
+            self.hash_object = sha256
+        elif self.key_length <= 384:
+            self.hash_object = sha384
+        else:
+            self.hash_object = sha512
+
+        self.curve = curves.find_curve(self.oid)
+
+
+class _ECDSACurveSet(object):
+    """
+    A collection to hold the ECDSA curves. Allows querying by oid and by key
+    format identifier. The two ways in which ECDSAKey needs to be able to look
+    up curves.
+    """
+    def __init__(self, ecdsa_curves):
+        self.ecdsa_curves = ecdsa_curves
+
+    def get_by_oid(self, oid):
+        for curve in self.ecdsa_curves:
+            if curve.oid == oid:
+                return curve
+
+    def get_by_key_format_identifier(self, key_format_identifier):
+        for curve in self.ecdsa_curves:
+            if curve.key_format_identifier == key_format_identifier:
+                return curve
+
+
 class ECDSAKey (PKey):
     """
     Representation of an ECDSA key which can be used to sign and verify SSH2
     data.
     """
+
+    _ECDSA_CURVES = _ECDSACurveSet([
+        _ECDSACurve((1,2,840,10045,3,1,7), 'nistp256', 256),
+        _ECDSACurve((1,3,132,0,34), 'nistp384', 384),
+        _ECDSACurve((1,3,132,0,35), 'nistp521', 521),
+    ])
+
 
     def __init__(self, msg=None, data=None, filename=None, password=None,
                  vals=None, file_obj=None, validate_point=True):
@@ -55,10 +108,12 @@ class ECDSAKey (PKey):
         else:
             if msg is None:
                 raise SSHException('Key object may not be empty')
-            if msg.get_text() != 'ecdsa-sha2-nistp256':
+            self.ecdsa_curve = self._ECDSA_CURVES.get_by_key_format_identifier(
+                msg.get_text())
+            if self.ecdsa_curve is None:
                 raise SSHException('Invalid key')
             curvename = msg.get_text()
-            if curvename != 'nistp256':
+            if curvename != self.ecdsa_curve.nist_name:
                 raise SSHException("Can't handle curve of type %s" % curvename)
 
             pointinfo = msg.get_binary()
@@ -66,15 +121,14 @@ class ECDSAKey (PKey):
                 raise SSHException('Point compression is being used: %s' %
                                    binascii.hexlify(pointinfo))
             self.verifying_key = VerifyingKey.from_string(pointinfo[1:],
-                                                          curve=curves.NIST256p,
+                                                          curve=self.ecdsa_curve.curve,
                                                           validate_point=validate_point)
-        self.size = 256
 
     def asbytes(self):
         key = self.verifying_key
         m = Message()
-        m.add_string('ecdsa-sha2-nistp256')
-        m.add_string('nistp256')
+        m.add_string(self.ecdsa_curve.key_format_identifier)
+        m.add_string(self.ecdsa_curve.nist_name)
 
         point_str = four_byte + key.to_string()
 
@@ -91,30 +145,31 @@ class ECDSAKey (PKey):
         return hash(h)
 
     def get_name(self):
-        return 'ecdsa-sha2-nistp256'
+        return self.ecdsa_curve.key_format_identifier
 
     def get_bits(self):
-        return self.size
+        return self.ecdsa_curve.key_length
 
     def can_sign(self):
         return self.signing_key is not None
 
     def sign_ssh_data(self, data):
         sig = self.signing_key.sign_deterministic(
-            data, sigencode=self._sigencode, hashfunc=sha256)
+            data, sigencode=self._sigencode,
+            hashfunc=self.ecdsa_curve.hash_object)
         m = Message()
-        m.add_string('ecdsa-sha2-nistp256')
+        m.add_string(self.ecdsa_curve.key_format_identifier)
         m.add_string(sig)
         return m
 
     def verify_ssh_sig(self, data, msg):
-        if msg.get_text() != 'ecdsa-sha2-nistp256':
+        if msg.get_text() != self.ecdsa_curve.key_format_identifier:
             return False
         sig = msg.get_binary()
 
         # verify the signature by SHA'ing the data and encrypting it
         # using the public key.
-        hash_obj = sha256(data).digest()
+        hash_obj = self.ecdsa_curve.hash_object(data).digest()
         return self.verifying_key.verify_digest(sig, hash_obj,
                                                 sigdecode=self._sigdecode)
 
@@ -149,8 +204,12 @@ class ECDSAKey (PKey):
         data = self._read_private_key('EC', file_obj, password)
         self._decode_key(data)
 
-    ALLOWED_PADDINGS = [one_byte, byte_chr(2) * 2, byte_chr(3) * 3, byte_chr(4) * 4,
-                        byte_chr(5) * 5, byte_chr(6) * 6, byte_chr(7) * 7]
+    ALLOWED_PADDINGS = [one_byte, byte_chr(2) * 2, byte_chr(3) * 3, 
+                        byte_chr(4) * 4, byte_chr(5) * 5, byte_chr(6) * 6,
+                        byte_chr(7) * 7, byte_chr(8) * 8, byte_chr(9) * 9,
+                        byte_chr(10) * 10, byte_chr(11) * 11,
+                        byte_chr(12) * 12, byte_chr(13) * 13,
+                        byte_chr(14) * 14, byte_chr(15) * 15]
 
     def _decode_key(self, data):
         s, padding = der.remove_sequence(data)
@@ -161,7 +220,7 @@ class ECDSAKey (PKey):
         key = SigningKey.from_der(data)
         self.signing_key = key
         self.verifying_key = key.get_verifying_key()
-        self.size = 256
+        self.ecdsa_curve = self._ECDSA_CURVES.get_by_oid(key.curve.oid)
 
     def _sigencode(self, r, s, order):
         msg = Message()
