@@ -2,6 +2,9 @@
 Changelog
 =========
 
+* :support:`621 backported` Annotate some public attributes on
+  `~paramiko.channel.Channel` such as ``.closed``. Thanks to Sergey Vasilyev
+  for the report.
 * :bug:`632` Fix logic bug in the SFTP client's callback-calling functionality;
   previously there was a chance the given callback would fire twice at the end
   of a transfer. Thanks to ``@ab9-er`` for catch & original patch.
