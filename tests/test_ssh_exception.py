@@ -16,15 +16,16 @@ class NoValidConnectionsErrorTest (unittest.TestCase):
 
     def test_error_message_for_single_host(self):
         exc = NoValidConnectionsError({('127.0.0.1', '22'): Exception()})
-        self.assertIn("Unable to connect to port 22 on 127.0.0.1", str(exc))
+        assert "Unable to connect to port 22 on 127.0.0.1" in str(exc)
 
     def test_error_message_for_two_hosts(self):
         exc = NoValidConnectionsError({('127.0.0.1', '22'): Exception(),
                                        ('::1', '22'): Exception()})
-        self.assertIn("Unable to connect to port 22 on 127.0.0.1 or ::1", str(exc))
+        assert "Unable to connect to port 22 on 127.0.0.1 or ::1" in str(exc)
 
     def test_error_message_for_multiple_hosts(self):
         exc = NoValidConnectionsError({('127.0.0.1', '22'): Exception(),
                                        ('::1', '22'): Exception(),
                                        ('10.0.0.42', '22'): Exception()})
-        self.assertIn("Unable to connect to port 22 on 10.0.0.42, 127.0.0.1 or ::1", str(exc))
+        exp = "Unable to connect to port 22 on 10.0.0.42, 127.0.0.1 or ::1"
+        assert exp in str(exc)
