@@ -161,10 +161,23 @@ class SSHClient (ClosingContextManager):
 
     def set_missing_host_key_policy(self, policy):
         """
-        Set the policy to use when connecting to a server that doesn't have a
-        host key in either the system or local `.HostKeys` objects.  The
-        default policy is to reject all unknown servers (using `.RejectPolicy`).
-        You may substitute `.AutoAddPolicy` or write your own policy class.
+        Set policy to use when connecting to servers without a known host key.
+
+        Specifically:
+
+        * A **policy** is an instance of a "policy class", namely some subclass
+          of `.MissingHostKeyPolicy` such as `.RejectPolicy` (the default),
+          `.AutoAddPolicy`, `.WarningPolicy`, or a user-created subclass.
+
+          .. note::
+            This method takes class **instances**, not **classes** themselves.
+            Thus it must be called as e.g.
+            ``.set_missing_host_key_policy(WarningPolicy())`` and *not*
+            ``.set_missing_host_key_policy(WarningPolicy)``.
+
+        * A host key is **known** when it appears in the client object's cached
+          host keys structures (those manipulated by `load_system_host_keys`
+          and/or `load_host_keys`).
 
         :param .MissingHostKeyPolicy policy:
             the policy to use when receiving a host key from a
