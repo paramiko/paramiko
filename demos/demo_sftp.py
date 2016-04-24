@@ -34,6 +34,11 @@ from paramiko.py3compat import input
 # setup logging
 paramiko.util.log_to_file('demo_sftp.log')
 
+# Paramiko client configuration
+UseGSSAPI = True             # enable GSS-API / SSPI authentication
+DoGSSAPIKeyExchange = True
+Port = 22
+
 # get hostname
 username = ''
 if len(sys.argv) > 1:
@@ -45,10 +50,10 @@ else:
 if len(hostname) == 0:
     print('*** Hostname required.')
     sys.exit(1)
-port = 22
+
 if hostname.find(':') >= 0:
     hostname, portstr = hostname.split(':')
-    port = int(portstr)
+    Port = int(portstr)
 
 
 # get username
@@ -57,7 +62,10 @@ if username == '':
     username = input('Username [%s]: ' % default_username)
     if len(username) == 0:
         username = default_username
-password = getpass.getpass('Password for %s@%s: ' % (username, hostname))
+if not UseGSSAPI:
+    password = getpass.getpass('Password for %s@%s: ' % (username, hostname))
+else:
+    password = None
 
 
 # get host key, if we know one
@@ -81,8 +89,9 @@ if hostname in host_keys:
 
 # now, connect and use paramiko Transport to negotiate SSH2 across the connection
 try:
-    t = paramiko.Transport((hostname, port))
-    t.connect(username=username, password=password, hostkey=hostkey)
+    t = paramiko.Transport((hostname, Port))
+    t.connect(hostkey, username, password, gss_host=socket.getfqdn(hostname),
+              gss_auth=UseGSSAPI, gss_kex=DoGSSAPIKeyExchange)
     sftp = paramiko.SFTPClient.from_transport(t)
 
     # dirlist on remote host

@@ -27,9 +27,10 @@ import socket
 import time
 
 from paramiko.ssh_exception import ProxyCommandFailure
+from paramiko.util import ClosingContextManager
 
 
-class ProxyCommand(object):
+class ProxyCommand(ClosingContextManager):
     """
     Wraps a subprocess running ProxyCommand-driven programs.
 
@@ -37,6 +38,8 @@ class ProxyCommand(object):
     `.Transport` and `.Packetizer` classes. Using this class instead of a
     regular socket makes it possible to talk with a Popen'd command that will
     proxy traffic between the client and a server hosted in another machine.
+    
+    Instances of this class may be used as context managers.
     """
     def __init__(self, command_line):
         """

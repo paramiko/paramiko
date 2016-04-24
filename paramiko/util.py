@@ -118,7 +118,7 @@ def safe_string(s):
 
 def bit_length(n):
     try:
-        return n.bitlength()
+        return n.bit_length()
     except AttributeError:
         norm = deflate_long(n, False)
         hbyte = byte_ord(norm[0])
@@ -135,15 +135,14 @@ def tb_strings():
     return ''.join(traceback.format_exception(*sys.exc_info())).split('\n')
 
 
-def generate_key_bytes(hashclass, salt, key, nbytes):
+def generate_key_bytes(hash_alg, salt, key, nbytes):
     """
     Given a password, passphrase, or other human-source key, scramble it
     through a secure hash into some keyworthy bytes.  This specific algorithm
     is used for encrypting/decrypting private key files.
 
-    :param class hashclass:
-        class from `Crypto.Hash` that can be used as a secure hashing function
-        (like ``MD5`` or ``SHA``).
+    :param function hash_alg: A function which creates a new hash object, such
+        as ``hashlib.sha256``.
     :param salt: data to salt the hash with.
     :type salt: byte string
     :param str key: human-entered password or passphrase.
@@ -155,7 +154,7 @@ def generate_key_bytes(hashclass, salt, key, nbytes):
     if len(salt) > 8:
         salt = salt[:8]
     while nbytes > 0:
-        hash_obj = hashclass.new()
+        hash_obj = hash_alg()
         if len(digest) > 0:
             hash_obj.update(digest)
         hash_obj.update(b(key))
@@ -300,9 +299,9 @@ class Counter (object):
         self.value = array.array('c', zero_byte * (self.blocksize - len(x)) + x)
         return self.value.tostring()
 
+    @classmethod
     def new(cls, nbits, initial_value=long(1), overflow=long(0)):
         return cls(nbits, initial_value=initial_value, overflow=overflow)
-    new = classmethod(new)
 
 
 def constant_time_bytes_eq(a, b):
@@ -313,3 +312,15 @@ def constant_time_bytes_eq(a, b):
     for i in (xrange if PY2 else range)(len(a)):
         res |= byte_ord(a[i]) ^ byte_ord(b[i])
     return res == 0
+
+
+class ClosingContextManager(object):
+    def __enter__(self):
+        return self
+
+    def __exit__(self, type, value, traceback):
+        self.close()
+
+
+def clamp_value(minimum, val, maximum):
+    return max(minimum, min(val, maximum))

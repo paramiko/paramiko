@@ -21,9 +21,11 @@ Abstraction for an SSH2 channel.
 """
 
 import binascii
+import os
+import socket
 import time
 import threading
-import socket
+from functools import wraps
 
 from paramiko import util
 from paramiko.common import cMSG_CHANNEL_REQUEST, cMSG_CHANNEL_WINDOW_ADJUST, \
@@ -36,13 +38,30 @@ from paramiko.ssh_exception import SSHException
 from paramiko.file import BufferedFile
 from paramiko.buffered_pipe import BufferedPipe, PipeTimeout
 from paramiko import pipe
+from paramiko.util import ClosingContextManager
 
 
-# lower bound on the max packet size we'll accept from the remote host
-MIN_PACKET_SIZE = 1024
+def open_only(func):
+    """
+    Decorator for `.Channel` methods which performs an openness check.
+
+    :raises SSHException:
+        If the wrapped method is called on an unopened `.Channel`.
+    """
+    @wraps(func)
+    def _check(self, *args, **kwds):
+        if (
+            self.closed
+            or self.eof_received
+            or self.eof_sent
+            or not self.active
+        ):
+            raise SSHException('Channel is not open')
+        return func(self, *args, **kwds)
+    return _check
 
 
-class Channel (object):
+class Channel (ClosingContextManager):
     """
     A secure tunnel across an SSH `.Transport`.  A Channel is meant to behave
     like a socket, and has an API that should be indistinguishable from the
@@ -55,6 +74,8 @@ class Channel (object):
     flow-controlled independently.)  Similarly, if the server isn't reading
     data you send, calls to `send` may block, unless you set a timeout.  This
     is exactly like a normal network socket, so it shouldn't be too surprising.
+    
+    Instances of this class may be used as context managers.
     """
 
     def __init__(self, chanid):
@@ -67,15 +88,20 @@ class Channel (object):
         :param int chanid:
             the ID of this channel, as passed by an existing `.Transport`.
         """
+        #: Channel ID
         self.chanid = chanid
+        #: Remote channel ID
         self.remote_chanid = 0
+        #: `.Transport` managing this channel
         self.transport = None
+        #: Whether the connection is presently active
         self.active = False
         self.eof_received = 0
         self.eof_sent = 0
         self.in_buffer = BufferedPipe()
         self.in_stderr_buffer = BufferedPipe()
         self.timeout = None
+        #: Whether the connection has been closed
         self.closed = False
         self.ultra_debug = False
         self.lock = threading.Lock()
@@ -95,13 +121,13 @@ class Channel (object):
         self.combine_stderr = False
         self.exit_status = -1
         self.origin_addr = None
-    
+
     def __del__(self):
         try:
             self.close()
         except:
             pass
-        
+
     def __repr__(self):
         """
         Return a string representation of this object, for debugging.
@@ -121,6 +147,7 @@ class Channel (object):
         out += '>'
         return out
 
+    @open_only
     def get_pty(self, term='vt100', width=80, height=24, width_pixels=0,
                 height_pixels=0):
         """
@@ -135,12 +162,10 @@ class Channel (object):
         :param int height: height (in characters) of the terminal screen
         :param int width_pixels: width (in pixels) of the terminal screen
         :param int height_pixels: height (in pixels) of the terminal screen
-        
+
         :raises SSHException:
             if the request was rejected or the channel was closed
         """
-        if self.closed or self.eof_received or self.eof_sent or not self.active:
-            raise SSHException('Channel is not open')
         m = Message()
         m.add_byte(cMSG_CHANNEL_REQUEST)
         m.add_int(self.remote_chanid)
@@ -156,24 +181,23 @@ class Channel (object):
         self.transport._send_user_message(m)
         self._wait_for_event()
 
+    @open_only
     def invoke_shell(self):
         """
         Request an interactive shell session on this channel.  If the server
         allows it, the channel will then be directly connected to the stdin,
         stdout, and stderr of the shell.
-        
+
         Normally you would call `get_pty` before this, in which case the
         shell will operate through the pty, and the channel will be connected
         to the stdin and stdout of the pty.
-        
+
         When the shell exits, the channel will be closed and can't be reused.
         You must open a new channel if you wish to open another shell.
-        
+
         :raises SSHException: if the request was rejected or the channel was
             closed
         """
-        if self.closed or self.eof_received or self.eof_sent or not self.active:
-            raise SSHException('Channel is not open')
         m = Message()
         m.add_byte(cMSG_CHANNEL_REQUEST)
         m.add_int(self.remote_chanid)
@@ -183,12 +207,13 @@ class Channel (object):
         self.transport._send_user_message(m)
         self._wait_for_event()
 
+    @open_only
     def exec_command(self, command):
         """
         Execute a command on the server.  If the server allows it, the channel
         will then be directly connected to the stdin, stdout, and stderr of
         the command being executed.
-        
+
         When the command finishes executing, the channel will be closed and
         can't be reused.  You must open a new channel if you wish to execute
         another command.
@@ -198,8 +223,6 @@ class Channel (object):
         :raises SSHException: if the request was rejected or the channel was
             closed
         """
-        if self.closed or self.eof_received or self.eof_sent or not self.active:
-            raise SSHException('Channel is not open')
         m = Message()
         m.add_byte(cMSG_CHANNEL_REQUEST)
         m.add_int(self.remote_chanid)
@@ -210,12 +233,13 @@ class Channel (object):
         self.transport._send_user_message(m)
         self._wait_for_event()
 
+    @open_only
     def invoke_subsystem(self, subsystem):
         """
         Request a subsystem on the server (for example, ``sftp``).  If the
         server allows it, the channel will then be directly connected to the
         requested subsystem.
-        
+
         When the subsystem finishes, the channel will be closed and can't be
         reused.
 
@@ -224,8 +248,6 @@ class Channel (object):
         :raises SSHException:
             if the request was rejected or the channel was closed
         """
-        if self.closed or self.eof_received or self.eof_sent or not self.active:
-            raise SSHException('Channel is not open')
         m = Message()
         m.add_byte(cMSG_CHANNEL_REQUEST)
         m.add_int(self.remote_chanid)
@@ -236,6 +258,7 @@ class Channel (object):
         self.transport._send_user_message(m)
         self._wait_for_event()
 
+    @open_only
     def resize_pty(self, width=80, height=24, width_pixels=0, height_pixels=0):
         """
         Resize the pseudo-terminal.  This can be used to change the width and
@@ -249,8 +272,6 @@ class Channel (object):
         :raises SSHException:
             if the request was rejected or the channel was closed
         """
-        if self.closed or self.eof_received or self.eof_sent or not self.active:
-            raise SSHException('Channel is not open')
         m = Message()
         m.add_byte(cMSG_CHANNEL_REQUEST)
         m.add_int(self.remote_chanid)
@@ -268,14 +289,15 @@ class Channel (object):
         status. You may use this to poll the process status if you don't
         want to block in `recv_exit_status`. Note that the server may not
         return an exit status in some cases (like bad servers).
-        
+
         :return:
-            ``True`` if `recv_exit_status` will return immediately, else ``False``.
+            ``True`` if `recv_exit_status` will return immediately, else
+            ``False``.
 
         .. versionadded:: 1.7.3
         """
-        return self.closed or self.status_event.isSet()
-        
+        return self.closed or self.status_event.is_set()
+
     def recv_exit_status(self):
         """
         Return the exit status from the process on the server.  This is
@@ -283,13 +305,24 @@ class Channel (object):
         If the command hasn't finished yet, this method will wait until
         it does, or until the channel is closed.  If no exit status is
         provided by the server, -1 is returned.
-        
+
+        .. warning::
+            In some situations, receiving remote output larger than the current
+            `.Transport` or session's ``window_size`` (e.g. that set by the
+            ``default_window_size`` kwarg for `.Transport.__init__`) will cause
+            `.recv_exit_status` to hang indefinitely if it is called prior to a
+            sufficiently large `~Channel..read` (or if there are no threads
+            calling `~Channel.read` in the background).
+
+            In these cases, ensuring that `.recv_exit_status` is called *after*
+            `~Channel.read` (or, again, using threads) can avoid the hang.
+
         :return: the exit code (as an `int`) of the process on the server.
-        
+
         .. versionadded:: 1.2
         """
         self.status_event.wait()
-        assert self.status_event.isSet()
+        assert self.status_event.is_set()
         return self.exit_status
 
     def send_exit_status(self, status):
@@ -298,9 +331,9 @@ class Channel (object):
         really only makes sense in server mode.)  Many clients expect to
         get some sort of status code back from an executed command after
         it completes.
-        
+
         :param int status: the exit code of the process
-        
+
         .. versionadded:: 1.2
         """
         # in many cases, the channel will not still be open here.
@@ -312,20 +345,21 @@ class Channel (object):
         m.add_boolean(False)
         m.add_int(status)
         self.transport._send_user_message(m)
-    
+
+    @open_only
     def request_x11(self, screen_number=0, auth_protocol=None, auth_cookie=None,
                     single_connection=False, handler=None):
         """
         Request an x11 session on this channel.  If the server allows it,
         further x11 requests can be made from the server to the client,
         when an x11 application is run in a shell session.
-        
-        From RFC4254::
+
+        From :rfc:`4254`::
 
             It is RECOMMENDED that the 'x11 authentication cookie' that is
             sent be a fake, random cookie, and that the cookie be checked and
             replaced by the real cookie when a connection request is received.
-        
+
         If you omit the auth_cookie, a new secure random 128-bit value will be
         generated, used, and returned.  You will need to use this value to
         verify incoming x11 requests and replace them with the actual local
@@ -335,9 +369,9 @@ class Channel (object):
         whenever a new x11 connection arrives.  The default handler queues up
         incoming x11 connections, which may be retrieved using
         `.Transport.accept`.  The handler's calling signature is::
-        
+
             handler(channel: Channel, (address: str, port: int))
-        
+
         :param int screen_number: the x11 screen number (0, 10, etc.)
         :param str auth_protocol:
             the name of the X11 authentication method used; if none is given,
@@ -353,12 +387,10 @@ class Channel (object):
             an optional handler to use for incoming X11 connections
         :return: the auth_cookie used
         """
-        if self.closed or self.eof_received or self.eof_sent or not self.active:
-            raise SSHException('Channel is not open')
         if auth_protocol is None:
             auth_protocol = 'MIT-MAGIC-COOKIE-1'
         if auth_cookie is None:
-            auth_cookie = binascii.hexlify(self.transport.rng.read(16))
+            auth_cookie = binascii.hexlify(os.urandom(16))
 
         m = Message()
         m.add_byte(cMSG_CHANNEL_REQUEST)
@@ -375,6 +407,7 @@ class Channel (object):
         self.transport._set_x11_handler(handler)
         return auth_cookie
 
+    @open_only
     def request_forward_agent(self, handler):
         """
         Request for a forward SSH Agent on this channel.
@@ -387,9 +420,6 @@ class Channel (object):
 
         :raises: SSHException in case of channel problem.
         """
-        if self.closed or self.eof_received or self.eof_sent or not self.active:
-            raise SSHException('Channel is not open')
-
         m = Message()
         m.add_byte(cMSG_CHANNEL_REQUEST)
         m.add_int(self.remote_chanid)
@@ -424,33 +454,33 @@ class Channel (object):
     def get_id(self):
         """
         Return the `int` ID # for this channel.
-        
+
         The channel ID is unique across a `.Transport` and usually a small
         number.  It's also the number passed to
         `.ServerInterface.check_channel_request` when determining whether to
         accept a channel request in server mode.
         """
         return self.chanid
-    
+
     def set_combine_stderr(self, combine):
         """
         Set whether stderr should be combined into stdout on this channel.
         The default is ``False``, but in some cases it may be convenient to
         have both streams combined.
-        
+
         If this is ``False``, and `exec_command` is called (or ``invoke_shell``
         with no pty), output to stderr will not show up through the `recv`
         and `recv_ready` calls.  You will have to use `recv_stderr` and
         `recv_stderr_ready` to get stderr output.
-        
+
         If this is ``True``, data will never show up via `recv_stderr` or
         `recv_stderr_ready`.
-        
+
         :param bool combine:
             ``True`` if stderr output should be combined into stdout on this
             channel.
         :return: the previous setting (a `bool`).
-        
+
         .. versionadded:: 1.1
         """
         data = bytes()
@@ -559,7 +589,7 @@ class Channel (object):
         Returns true if data is buffered and ready to be read from this
         channel.  A ``False`` result does not mean that the channel has closed;
         it means you may need to wait before more data arrives.
-        
+
         :return:
             ``True`` if a `recv` call on this channel would immediately return
             at least one byte; ``False`` otherwise.
@@ -574,8 +604,8 @@ class Channel (object):
         is returned, the channel stream has closed.
 
         :param int nbytes: maximum number of bytes to read.
-        :return: received data, as a `str`
-        
+        :return: received data, as a `bytes`
+
         :raises socket.timeout:
             if no data is ready before the timeout set by `settimeout`.
         """
@@ -601,11 +631,11 @@ class Channel (object):
         channel's stderr stream.  Only channels using `exec_command` or
         `invoke_shell` without a pty will ever have data on the stderr
         stream.
-        
+
         :return:
             ``True`` if a `recv_stderr` call on this channel would immediately
             return at least one byte; ``False`` otherwise.
-        
+
         .. versionadded:: 1.1
         """
         return self.in_stderr_buffer.read_ready()
@@ -621,17 +651,17 @@ class Channel (object):
 
         :param int nbytes: maximum number of bytes to read.
         :return: received data as a `str`
-        
+
         :raises socket.timeout: if no data is ready before the timeout set by
             `settimeout`.
-        
+
         .. versionadded:: 1.1
         """
         try:
             out = self.in_stderr_buffer.read(nbytes, self.timeout)
         except PipeTimeout:
             raise socket.timeout()
-            
+
         ack = self._check_add_window(len(out))
         # no need to hold the channel lock when sending this
         if ack > 0:
@@ -647,11 +677,11 @@ class Channel (object):
         """
         Returns true if data can be written to this channel without blocking.
         This means the channel is either closed (so any write attempt would
-        return immediately) or there is at least one byte of space in the 
+        return immediately) or there is at least one byte of space in the
         outbound buffer. If there is at least one byte of space in the
         outbound buffer, a `send` call will succeed immediately and return
         the number of bytes actually written.
-        
+
         :return:
             ``True`` if a `send` call on this channel would immediately succeed
             or fail
@@ -663,7 +693,7 @@ class Channel (object):
             return self.out_window_size > 0
         finally:
             self.lock.release()
-    
+
     def send(self, s):
         """
         Send data to the channel.  Returns the number of bytes sent, or 0 if
@@ -678,23 +708,11 @@ class Channel (object):
         :raises socket.timeout: if no data could be sent before the timeout set
             by `settimeout`.
         """
-        size = len(s)
-        self.lock.acquire()
-        try:
-            size = self._wait_for_send_window(size)
-            if size == 0:
-                # eof or similar
-                return 0
-            m = Message()
-            m.add_byte(cMSG_CHANNEL_DATA)
-            m.add_int(self.remote_chanid)
-            m.add_string(s[:size])
-        finally:
-            self.lock.release()
-        # Note: We release self.lock before calling _send_user_message.
-        # Otherwise, we can deadlock during re-keying.
-        self.transport._send_user_message(m)
-        return size
+
+        m = Message()
+        m.add_byte(cMSG_CHANNEL_DATA)
+        m.add_int(self.remote_chanid)
+        return self._send(s, m)
 
     def send_stderr(self, s):
         """
@@ -704,33 +722,22 @@ class Channel (object):
         stream is closed.  Applications are responsible for checking that all
         data has been sent: if only some of the data was transmitted, the
         application needs to attempt delivery of the remaining data.
-        
+
         :param str s: data to send.
         :return: number of bytes actually sent, as an `int`.
-        
+
         :raises socket.timeout:
             if no data could be sent before the timeout set by `settimeout`.
-        
+
         .. versionadded:: 1.1
         """
-        size = len(s)
-        self.lock.acquire()
-        try:
-            size = self._wait_for_send_window(size)
-            if size == 0:
-                # eof or similar
-                return 0
-            m = Message()
-            m.add_byte(cMSG_CHANNEL_EXTENDED_DATA)
-            m.add_int(self.remote_chanid)
-            m.add_int(1)
-            m.add_string(s[:size])
-        finally:
-            self.lock.release()
-        # Note: We release self.lock before calling _send_user_message.
-        # Otherwise, we can deadlock during re-keying.
-        self.transport._send_user_message(m)
-        return size
+
+        m = Message()
+        m.add_byte(cMSG_CHANNEL_EXTENDED_DATA)
+        m.add_int(self.remote_chanid)
+        m.add_int(1)
+        return self._send(s, m)
+
 
     def sendall(self, s):
         """
@@ -751,9 +758,6 @@ class Channel (object):
             This is irritating, but identically follows Python's API.
         """
         while s:
-            if self.closed:
-                # this doesn't seem useful, but it is the documented behavior of Socket
-                raise socket.error('Socket is closed')
             sent = self.send(s)
             s = s[sent:]
         return None
@@ -764,9 +768,9 @@ class Channel (object):
         results.  Unlike `send_stderr`, this method continues to send data
         from the given string until all data has been sent or an error occurs.
         Nothing is returned.
-        
+
         :param str s: data to send to the client as "stderr" output.
-        
+
         :raises socket.timeout:
             if sending stalled for longer than the timeout set by `settimeout`.
         :raises socket.error:
@@ -775,8 +779,6 @@ class Channel (object):
         .. versionadded:: 1.1
         """
         while s:
-            if self.closed:
-                raise socket.error('Socket is closed')
             sent = self.send_stderr(s)
             s = s[sent:]
         return None
@@ -796,18 +798,18 @@ class Channel (object):
         Return a file-like object associated with this channel's stderr
         stream.   Only channels using `exec_command` or `invoke_shell`
         without a pty will ever have data on the stderr stream.
-        
+
         The optional ``mode`` and ``bufsize`` arguments are interpreted the
         same way as by the built-in ``file()`` function in Python.  For a
         client, it only makes sense to open this file for reading.  For a
         server, it only makes sense to open this file for writing.
-        
+
         :return: `.ChannelFile` object which can be used for Python file I/O.
 
         .. versionadded:: 1.1
         """
         return ChannelStderrFile(*([self] + list(params)))
-        
+
     def fileno(self):
         """
         Returns an OS-level file descriptor which can be used for polling, but
@@ -821,7 +823,7 @@ class Channel (object):
         open at the same time.)
 
         :return: an OS-level file descriptor (`int`)
-        
+
         .. warning::
             This method causes channel reads to be slightly less efficient.
         """
@@ -860,7 +862,7 @@ class Channel (object):
                 self.lock.release()
             if m is not None:
                 self.transport._send_user_message(m)
-    
+
     def shutdown_read(self):
         """
         Shutdown the receiving side of this socket, closing the stream in
@@ -868,11 +870,11 @@ class Channel (object):
         channel will fail instantly.  This is a convenience method, equivalent
         to ``shutdown(0)``, for people who don't make it a habit to
         memorize unix constants from the 1970s.
-        
+
         .. versionadded:: 1.2
         """
         self.shutdown(0)
-    
+
     def shutdown_write(self):
         """
         Shutdown the sending side of this socket, closing the stream in
@@ -880,7 +882,7 @@ class Channel (object):
         channel will fail instantly.  This is a convenience method, equivalent
         to ``shutdown(1)``, for people who don't make it a habit to
         memorize unix constants from the 1970s.
-        
+
         .. versionadded:: 1.2
         """
         self.shutdown(1)
@@ -898,14 +900,15 @@ class Channel (object):
         self.in_window_threshold = window_size // 10
         self.in_window_sofar = 0
         self._log(DEBUG, 'Max packet in: %d bytes' % max_packet_size)
-        
+
     def _set_remote_channel(self, chanid, window_size, max_packet_size):
         self.remote_chanid = chanid
         self.out_window_size = window_size
-        self.out_max_packet_size = max(max_packet_size, MIN_PACKET_SIZE)
+        self.out_max_packet_size = self.transport. \
+            _sanitize_packet_size(max_packet_size)
         self.active = 1
-        self._log(DEBUG, 'Max packet out: %d bytes' % max_packet_size)
-        
+        self._log(DEBUG, 'Max packet out: %d bytes' % self.out_max_packet_size)
+
     def _request_success(self, m):
         self._log(DEBUG, 'Sesch channel %d request ok' % self.chanid)
         self.event_ready = True
@@ -940,7 +943,7 @@ class Channel (object):
             self._feed(s)
         else:
             self.in_stderr_buffer.feed(s)
-        
+
     def _window_adjust(self, m):
         nbytes = m.get_int()
         self.lock.acquire()
@@ -989,7 +992,7 @@ class Channel (object):
             else:
                 ok = server.check_channel_env_request(self, name, value)
         elif key == 'exec':
-            cmd = m.get_text()
+            cmd = m.get_string()
             if server is None:
                 ok = False
             else:
@@ -1063,6 +1066,25 @@ class Channel (object):
 
     ###  internals...
 
+    def _send(self, s, m):
+        size = len(s)
+        self.lock.acquire()
+        try:
+            if self.closed:
+                # this doesn't seem useful, but it is the documented behavior of Socket
+                raise socket.error('Socket is closed')
+            size = self._wait_for_send_window(size)
+            if size == 0:
+                # eof or similar
+                return 0
+            m.add_string(s[:size])
+        finally:
+            self.lock.release()
+        # Note: We release self.lock before calling _send_user_message.
+        # Otherwise, we can deadlock during re-keying.
+        self.transport._send_user_message(m)
+        return size
+
     def _log(self, level, msg, *args):
         self.logger.log(level, "[chan " + self._name + "] " + msg, *args)
 
@@ -1072,7 +1094,7 @@ class Channel (object):
 
     def _wait_for_event(self):
         self.event.wait()
-        assert self.event.isSet()
+        assert self.event.is_set()
         if self.event_ready:
             return
         e = self.transport.get_exception()
@@ -1182,7 +1204,7 @@ class Channel (object):
         if self.ultra_debug:
             self._log(DEBUG, 'window down to %d' % self.out_window_size)
         return size
-        
+
 
 class ChannelFile (BufferedFile):
     """
@@ -1222,7 +1244,7 @@ class ChannelStderrFile (ChannelFile):
 
     def _read(self, size):
         return self.channel.recv_stderr(size)
-    
+
     def _write(self, data):
         self.channel.sendall_stderr(data)
         return len(data)

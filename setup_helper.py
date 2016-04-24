@@ -30,9 +30,42 @@ import distutils.archive_util
 from distutils.dir_util import mkpath
 from distutils.spawn import spawn
 
+try:
+    from pwd import getpwnam
+except ImportError:
+    getpwnam = None
 
-def make_tarball(base_name, base_dir, compress='gzip',
-                 verbose=False, dry_run=False):
+try:
+    from grp import getgrnam
+except ImportError:
+    getgrnam = None
+
+def _get_gid(name):
+    """Returns a gid, given a group name."""
+    if getgrnam is None or name is None:
+        return None
+    try:
+        result = getgrnam(name)
+    except KeyError:
+        result = None
+    if result is not None:
+        return result[2]
+    return None
+
+def _get_uid(name):
+    """Returns an uid, given a user name."""
+    if getpwnam is None or name is None:
+        return None
+    try:
+        result = getpwnam(name)
+    except KeyError:
+        result = None
+    if result is not None:
+        return result[2]
+    return None
+
+def make_tarball(base_name, base_dir, compress='gzip', verbose=0, dry_run=0,
+                 owner=None, group=None):
     """Create a tar file from all the files under 'base_dir'.
     This file may be compressed.
 
@@ -75,11 +108,30 @@ def make_tarball(base_name, base_dir, compress='gzip',
     mkpath(os.path.dirname(archive_name), dry_run=dry_run)
     log.info('Creating tar file %s with mode %s' % (archive_name, mode))
 
+    uid = _get_uid(owner)
+    gid = _get_gid(group)
+
+    def _set_uid_gid(tarinfo):
+        if gid is not None:
+            tarinfo.gid = gid
+            tarinfo.gname = group
+        if uid is not None:
+            tarinfo.uid = uid
+            tarinfo.uname = owner
+        return tarinfo
+
     if not dry_run:
         tar = tarfile.open(archive_name, mode=mode)
         # This recursively adds everything underneath base_dir
-        tar.add(base_dir)
-        tar.close()
+        try:
+            try:
+                # Support for the `filter' parameter was added in Python 2.7,
+                # earlier versions will raise TypeError.
+                tar.add(base_dir, filter=_set_uid_gid)
+            except TypeError:
+                tar.add(base_dir)
+        finally:
+            tar.close()
 
     if compress and compress not in tarfile_compress_flag:
         spawn([compress] + compress_flags[compress] + [archive_name],

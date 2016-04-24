@@ -3,14 +3,20 @@ from os.path import join
 from shutil import rmtree, copytree
 
 from invoke import Collection, ctask as task
-from invocations.docs import docs, www
+from invocations.docs import docs, www, sites
 from invocations.packaging import publish
 
 
 # Until we move to spec-based testing
 @task
-def test(ctx):
-    ctx.run("python test.py --verbose", pty=True)
+def test(ctx, coverage=False, flags=""):
+    if "--verbose" not in flags.split():
+        flags += " --verbose"
+    runner = "python"
+    if coverage:
+        runner = "coverage run --source=paramiko"
+    ctx.run("{0} test.py {1}".format(runner, flags), pty=True)
+
 
 @task
 def coverage(ctx):
@@ -19,17 +25,21 @@ def coverage(ctx):
 
 # Until we stop bundling docs w/ releases. Need to discover use cases first.
 @task
-def release(ctx):
+def release(ctx, sdist=True, wheel=True):
+    """
+    Wraps invocations.packaging.release to add baked-in docs folder.
+    """
     # Build docs first. Use terribad workaround pending invoke #146
     ctx.run("inv docs")
     # Move the built docs into where Epydocs used to live
     target = 'docs'
     rmtree(target, ignore_errors=True)
-    copytree(docs_build, target)
+    # TODO: make it easier to yank out this config val from the docs coll
+    copytree('sites/docs/_build', target)
     # Publish
-    publish(ctx)
+    publish(ctx, sdist=sdist, wheel=wheel)
     # Remind
     print("\n\nDon't forget to update RTD's versions page for new minor releases!")
 
 
-ns = Collection(test, coverage, release, docs, www)
+ns = Collection(test, coverage, release, docs, www, sites)

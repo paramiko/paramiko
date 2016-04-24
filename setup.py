@@ -41,8 +41,8 @@ try:
     from setuptools import setup
     kw = {
         'install_requires': [
-            'pycrypto >= 2.1, != 2.4',
-            'ecdsa',
+            'pycrypto>=2.1,!=2.4',
+            'ecdsa>=0.11',
         ],
     }
 except ImportError:
@@ -86,6 +86,8 @@ setup(
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.2',
         'Programming Language :: Python :: 3.3',
+        'Programming Language :: Python :: 3.4',
+        'Programming Language :: Python :: 3.5',
     ],
     **kw
 )

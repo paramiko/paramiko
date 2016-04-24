@@ -16,6 +16,8 @@
 # along with Paramiko; if not, write to the Free Software Foundation, Inc.,
 # 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
 
+import socket
+
 
 class SSHException (Exception):
     """
@@ -105,7 +107,11 @@ class BadHostKeyException (SSHException):
     .. versionadded:: 1.6
     """
     def __init__(self, hostname, got_key, expected_key):
-        SSHException.__init__(self, 'Host key for server %s does not match!' % hostname)
+        SSHException.__init__(self,
+                              'Host key for server %s does not match : got %s expected %s' % (
+                                  hostname,
+                                  got_key.get_base64(),
+                                  expected_key.get_base64()))
         self.hostname = hostname
         self.key = got_key
         self.expected_key = expected_key
@@ -129,3 +135,41 @@ class ProxyCommandFailure (SSHException):
         self.error = error
         # for unpickling
         self.args = (command, error, )
+
+
+class NoValidConnectionsError(socket.error):
+    """
+    Multiple connection attempts were made and no families succeeded.
+
+    This exception class wraps multiple "real" underlying connection errors,
+    all of which represent failed connection attempts. Because these errors are
+    not guaranteed to all be of the same error type (i.e. different errno,
+    `socket.error` subclass, message, etc) we expose a single unified error
+    message and a ``None`` errno so that instances of this class match most
+    normal handling of `socket.error` objects.
+    
+    To see the wrapped exception objects, access the ``errors`` attribute.
+    ``errors`` is a dict whose keys are address tuples (e.g. ``('127.0.0.1',
+    22)``) and whose values are the exception encountered trying to connect to
+    that address.
+
+    It is implied/assumed that all the errors given to a single instance of
+    this class are from connecting to the same hostname + port (and thus that
+    the differences are in the resolution of the hostname - e.g. IPv4 vs v6).
+
+    .. versionadded:: 1.16
+    """
+    def __init__(self, errors):
+        """
+        :param dict errors:
+            The errors dict to store, as described by class docstring.
+        """
+        addrs = errors.keys()
+        body = ', '.join([x[0] for x in addrs[:-1]])
+        tail = addrs[-1][0]
+        msg = "Unable to connect to port {0} on {1} or {2}"
+        super(NoValidConnectionsError, self).__init__(
+            None, # stand-in for errno
+            msg.format(addrs[0][1], body, tail)
+        )
+        self.errors = errors

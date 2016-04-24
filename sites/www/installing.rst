@@ -2,6 +2,8 @@
 Installing
 ==========
 
+.. _paramiko-itself:
+
 Paramiko itself
 ===============
 
@@ -14,14 +16,39 @@ via `pip <http://pip-installer.org>`_::
     Users who want the bleeding edge can install the development version via
     ``pip install paramiko==dev``.
 
-We currently support **Python 2.5/2.6/2.7**, with support for Python 3 coming
-soon. Users on Python 2.4 or older are urged to upgrade. Paramiko *may* work on
-Python 2.4 still, but there is no longer any support guarantee.
+We currently support **Python 2.6, 2.7 and 3.3+** (Python **3.2** should also
+work but has a less-strong compatibility guarantee from us.) Users on Python
+2.5 or older are urged to upgrade.
 
-Paramiko has two dependencies: the pure-Python ECDSA module ``ecdsa``, and the
+Paramiko has two hard dependencies: the pure-Python ECDSA module ``ecdsa``, and the
 PyCrypto C extension. ``ecdsa`` is easily installable from wherever you
 obtained Paramiko's package; PyCrypto may require more work. Read on for
 details.
+
+If you need GSS-API / SSPI support, see :ref:`the below subsection on it
+<gssapi>` for details on additional dependencies.
+
+.. _release-lines:
+
+Release lines
+-------------
+
+Users desiring stability may wish to pin themselves to a specific release line
+once they first start using Paramiko; to assist in this, we guarantee bugfixes
+for the last 2-3 releases including the latest stable one.
+
+If you're unsure which version to install, we have suggestions:
+
+* **Completely new users** should always default to the **latest stable
+  release** (as above, whatever is newest / whatever shows up with ``pip
+  install paramiko``.)
+* **Users upgrading from a much older version** (e.g. the 1.7.x line) should
+  probably get the **oldest actively supported line** (see the paragraph above
+  this list for what that currently is.)
+* **Everybody else** is hopefully already "on" a given version and can
+  carefully upgrade to whichever version they care to, when their release line
+  stops being supported.
+
 
 PyCrypto
 ========
@@ -30,34 +57,6 @@ PyCrypto
 (C-based) encryption algorithms we need to implement the SSH protocol. There
 are a couple gotchas associated with installing PyCrypto: its compatibility
 with Python's package tools, and the fact that it is a C-based extension.
-
-.. _pycrypto-and-pip:
-
-Possible gotcha on older Python and/or pip versions
----------------------------------------------------
-
-We strongly recommend using ``pip`` to as it is newer and generally better than
-``easy_install``. However, a combination of bugs in specific (now rather old)
-versions of Python, ``pip`` and PyCrypto can prevent installation of PyCrypto.
-Specifically:
-
-* Python = 2.5.x
-* PyCrypto >= 2.1 (required for most modern versions of Paramiko)
-* ``pip`` < 0.8.1
-
-When all three criteria are met, you may encounter ``No such file or
-directory`` IOErrors when trying to ``pip install paramiko`` or ``pip install
-PyCrypto``.
-
-The fix is to make sure at least one of the above criteria is not met, by doing
-the following (in order of preference):
-
-* Upgrade to ``pip`` 0.8.1 or above, e.g. by running ``pip install -U pip``.
-* Upgrade to Python 2.6 or above.
-* Downgrade to Paramiko 1.7.6 or 1.7.7, which do not require PyCrypto >= 2.1,
-  and install PyCrypto 2.0.1 (the oldest version on PyPI which works with
-  Paramiko 1.7.6/1.7.7)
-
 
 C extension
 -----------
@@ -103,3 +102,31 @@ installation of Paramiko via ``pypm``::
     Installing paramiko-1.7.8
     Installing pycrypto-2.4
     C:\>
+
+
+.. _gssapi:
+
+Optional dependencies for GSS-API / SSPI / Kerberos
+===================================================
+
+In order to use GSS-API/Kerberos & related functionality, a couple of
+additional dependencies are required (these are not listed in our ``setup.py``
+due to their infrequent utility & non-platform-agnostic requirements):
+
+* It hopefully goes without saying but **all platforms** need **a working
+  installation of GSS-API itself**, e.g. Heimdal.
+* **All platforms** need `pyasn1 <https://pypi.python.org/pypi/pyasn1>`_
+  ``0.1.7`` or better.
+* **Unix** needs `python-gssapi <https://pypi.python.org/pypi/python-gssapi/>`_
+  ``0.6.1`` or better.
+
+  .. note:: This library appears to only function on Python 2.7 and up.
+
+* **Windows** needs `pywin32 <https://pypi.python.org/pypi/pywin32>`_ ``2.1.8``
+  or better.
+
+.. note::
+    If you use Microsoft SSPI for kerberos authentication and credential
+    delegation, make sure that the target host is trusted for delegation in the
+    active directory configuration. For details see:
+    http://technet.microsoft.com/en-us/library/cc738491%28v=ws.10%29.aspx

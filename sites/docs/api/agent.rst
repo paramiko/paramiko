@@ -1,4 +1,4 @@
-SSH Agents
+SSH agents
 ==========
 
 .. automodule:: paramiko.agent

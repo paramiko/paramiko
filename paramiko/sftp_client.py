@@ -39,6 +39,7 @@ from paramiko.sftp import BaseSFTP, CMD_OPENDIR, CMD_HANDLE, SFTPError, CMD_READ
 from paramiko.sftp_attr import SFTPAttributes
 from paramiko.ssh_exception import SSHException
 from paramiko.sftp_file import SFTPFile
+from paramiko.util import ClosingContextManager
 
 
 def _to_unicode(s):
@@ -58,12 +59,14 @@ def _to_unicode(s):
 b_slash = b'/'
 
 
-class SFTPClient(BaseSFTP):
+class SFTPClient(BaseSFTP, ClosingContextManager):
     """
     SFTP client object.
-    
+
     Used to open an SFTP session across an open SSH `.Transport` and perform
     remote file operations.
+
+    Instances of this class may be used as context managers.
     """
     def __init__(self, sock):
         """
@@ -98,21 +101,35 @@ class SFTPClient(BaseSFTP):
             raise SSHException('EOF during negotiation')
         self._log(INFO, 'Opened sftp connection (server version %d)' % server_version)
 
-    def from_transport(cls, t):
+    @classmethod
+    def from_transport(cls, t, window_size=None, max_packet_size=None):
         """
         Create an SFTP client channel from an open `.Transport`.
 
+        Setting the window and packet sizes might affect the transfer speed.
+        The default settings in the `.Transport` class are the same as in
+        OpenSSH and should work adequately for both files transfers and
+        interactive sessions.
+
         :param .Transport t: an open `.Transport` which is already authenticated
+        :param int window_size:
+            optional window size for the `.SFTPClient` session.
+        :param int max_packet_size:
+            optional max packet size for the `.SFTPClient` session..
+
         :return:
             a new `.SFTPClient` object, referring to an sftp session (channel)
             across the transport
+
+        .. versionchanged:: 1.15
+            Added the ``window_size`` and ``max_packet_size`` arguments.
         """
-        chan = t.open_session()
+        chan = t.open_session(window_size=window_size,
+                              max_packet_size=max_packet_size)
         if chan is None:
             return None
         chan.invoke_subsystem('sftp')
         return cls(chan)
-    from_transport = classmethod(from_transport)
 
     def _log(self, level, msg, *args):
         if isinstance(msg, list):
@@ -195,6 +212,71 @@ class SFTPClient(BaseSFTP):
                     filelist.append(attr)
         self._request(CMD_CLOSE, handle)
         return filelist
+
+    def listdir_iter(self, path='.', read_aheads=50):
+        """
+        Generator version of `.listdir_attr`.
+
+        See the API docs for `.listdir_attr` for overall details.
+
+        This function adds one more kwarg on top of `.listdir_attr`:
+        ``read_aheads``, an integer controlling how many
+        ``SSH_FXP_READDIR`` requests are made to the server. The default of 50
+        should suffice for most file listings as each request/response cycle
+        may contain multiple files (dependant on server implementation.)
+
+        .. versionadded:: 1.15
+        """
+        path = self._adjust_cwd(path)
+        self._log(DEBUG, 'listdir(%r)' % path)
+        t, msg = self._request(CMD_OPENDIR, path)
+
+        if t != CMD_HANDLE:
+            raise SFTPError('Expected handle')
+
+        handle = msg.get_string()
+
+        nums = list()
+        while True:
+            try:
+                # Send out a bunch of readdir requests so that we can read the
+                # responses later on Section 6.7 of the SSH file transfer RFC
+                # explains this
+                # http://filezilla-project.org/specs/draft-ietf-secsh-filexfer-02.txt
+                for i in range(read_aheads):
+                    num = self._async_request(type(None), CMD_READDIR, handle)
+                    nums.append(num)
+
+
+                # For each of our sent requests
+                # Read and parse the corresponding packets
+                # If we're at the end of our queued requests, then fire off
+                # some more requests
+                # Exit the loop when we've reached the end of the directory
+                # handle
+                for num in nums:
+                    t, pkt_data = self._read_packet()
+                    msg = Message(pkt_data)
+                    new_num = msg.get_int()
+                    if num == new_num:
+                        if t == CMD_STATUS:
+                            self._convert_status(msg)
+                    count = msg.get_int()
+                    for i in range(count):
+                        filename = msg.get_text()
+                        longname = msg.get_text()
+                        attr = SFTPAttributes._from_msg(
+                            msg, filename, longname)
+                        if (filename != '.') and (filename != '..'):
+                            yield attr
+
+                # If we've hit the end of our queued requests, reset nums.
+                nums = list()
+
+            except EOFError:
+                self._request(CMD_CLOSE, handle)
+                return
+
 
     def open(self, filename, mode='r', bufsize=-1):
         """
@@ -507,7 +589,20 @@ class SFTPClient(BaseSFTP):
 
         .. versionadded:: 1.4
         """
+        # TODO: make class initialize with self._cwd set to self.normalize('.')
         return self._cwd and u(self._cwd)
+
+    def _transfer_with_callback(self, reader, writer, file_size, callback):
+        size = 0
+        while True:
+            data = reader.read(32768)
+            writer.write(data)
+            size += len(data)
+            if len(data) == 0:
+                break
+            if callback is not None:
+                callback(size, file_size)
+        return size
 
     def putfo(self, fl, remotepath, file_size=0, callback=None, confirm=True):
         """
@@ -517,7 +612,7 @@ class SFTPClient(BaseSFTP):
 
         The SFTP operations use pipelining for speed.
 
-        :param file fl: opened file or file-like object to copy
+        :param fl: opened file or file-like object to copy
         :param str remotepath: the destination path on the SFTP server
         :param int file_size:
             optional size parameter passed to callback. If none is specified,
@@ -538,15 +633,9 @@ class SFTPClient(BaseSFTP):
         """
         with self.file(remotepath, 'wb') as fr:
             fr.set_pipelined(True)
-            size = 0
-            while True:
-                data = fl.read(32768)
-                fr.write(data)
-                size += len(data)
-                if callback is not None:
-                    callback(size, file_size)
-                if len(data) == 0:
-                    break
+            size = self._transfer_with_callback(
+                reader=fl, writer=fr, file_size=file_size, callback=callback
+            )
         if confirm:
             s = self.stat(remotepath)
             if s.st_size != size:
@@ -578,7 +667,7 @@ class SFTPClient(BaseSFTP):
 
         .. versionadded:: 1.4
         .. versionchanged:: 1.7.4
-            ``callback`` and rich attribute return value added.   
+            ``callback`` and rich attribute return value added.
         .. versionchanged:: 1.7.7
             ``confirm`` param added.
         """
@@ -603,18 +692,13 @@ class SFTPClient(BaseSFTP):
 
         .. versionadded:: 1.10
         """
+        file_size = self.stat(remotepath).st_size
         with self.open(remotepath, 'rb') as fr:
-            file_size = self.stat(remotepath).st_size
-            fr.prefetch()
-            size = 0
-            while True:
-                data = fr.read(32768)
-                fl.write(data)
-                size += len(data)
-                if callback is not None:
-                    callback(size, file_size)
-                if len(data) == 0:
-                    break
+            fr.prefetch(file_size)
+            return self._transfer_with_callback(
+                reader=fr, writer=fl, file_size=file_size, callback=callback
+            )
+
         return size
 
     def get(self, remotepath, localpath, callback=None):
@@ -633,7 +717,6 @@ class SFTPClient(BaseSFTP):
         .. versionchanged:: 1.7.4
             Added the ``callback`` param
         """
-        file_size = self.stat(remotepath).st_size
         with open(localpath, 'wb') as fl:
             size = self.getfo(remotepath, fl, callback)
         s = os.stat(localpath)
