@@ -44,6 +44,7 @@ from tests.test_packetizer import PacketizerTest
 from tests.test_auth import AuthTest
 from tests.test_transport import TransportTest
 from tests.test_client import SSHClientTest
+from tests.test_ssh_exception import SSHExceptionTest
 from test_client import SSHClientTest
 from test_gssapi import GSSAPITest
 from test_ssh_gss import GSSAuthTest
@@ -157,6 +158,7 @@ def main():
         suite.addTest(unittest.makeSuite(AuthTest))
         suite.addTest(unittest.makeSuite(TransportTest))
     suite.addTest(unittest.makeSuite(SSHClientTest))
+    suite.addTest(unittest.makeSuite(SSHExceptionTest))
     if options.use_sftp:
         suite.addTest(unittest.makeSuite(SFTPTest))
     if options.use_big_file:
