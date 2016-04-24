@@ -2,6 +2,11 @@
 Changelog
 =========
 
+* :bug:`617` (aka `fabric/fabric#1429
+  <https://github.com/fabric/fabric/issues/1429>`_; via :issue:`679`; related:
+  :issue:`678`, :issue:`685`) Fix up
+  `~paramiko.ssh_exception.NoValidConnectionsError` so it pickles correctly.
+  Thanks to Rebecca Schlussel for the report & Marius Gedminas for the patch.
 * :bug:`613` (via :issue:`619`) Update to ``jaraco.windows`` 3.4.1 to fix some
   errors related to ``ctypes`` on Windows platforms. Credit to Jason R. Coombs.
 * :support:`621 backported` Annotate some public attributes on
