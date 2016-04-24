@@ -43,8 +43,9 @@ from tests.test_kex import KexTest
 from tests.test_packetizer import PacketizerTest
 from tests.test_auth import AuthTest
 from tests.test_transport import TransportTest
+from tests.test_ssh_exception import NoValidConnectionsErrorTest
 from tests.test_client import SSHClientTest
-from test_client import SSHClientTest
+from test_client import SSHClientTest  # XXX why shadow the above import?
 from test_gssapi import GSSAPITest
 from test_ssh_gss import GSSAuthTest
 from test_kex_gss import GSSKexTest
@@ -156,6 +157,7 @@ def main():
     if options.use_transport:
         suite.addTest(unittest.makeSuite(AuthTest))
         suite.addTest(unittest.makeSuite(TransportTest))
+    suite.addTest(unittest.makeSuite(NoValidConnectionsErrorTest))
     suite.addTest(unittest.makeSuite(SSHClientTest))
     if options.use_sftp:
         suite.addTest(unittest.makeSuite(SFTPTest))

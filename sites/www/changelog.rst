@@ -2,6 +2,20 @@
 Changelog
 =========
 
+* :bug:`617` (aka `fabric/fabric#1429
+  <https://github.com/fabric/fabric/issues/1429>`_; via :issue:`679`; related:
+  :issue:`678`, :issue:`685`, :issue:`615` & :issue:`616`) Fix up
+  `~paramiko.ssh_exception.NoValidConnectionsError` so it pickles correctly,
+  and fix a related Python 3 compatibility issue. Thanks to Rebecca Schlussel
+  for the report & Marius Gedminas for the patch.
+* :bug:`613` (via :issue:`619`) Update to ``jaraco.windows`` 3.4.1 to fix some
+  errors related to ``ctypes`` on Windows platforms. Credit to Jason R. Coombs.
+* :support:`621 backported` Annotate some public attributes on
+  `~paramiko.channel.Channel` such as ``.closed``. Thanks to Sergey Vasilyev
+  for the report.
+* :bug:`632` Fix logic bug in the SFTP client's callback-calling functionality;
+  previously there was a chance the given callback would fire twice at the end
+  of a transfer. Thanks to ``@ab9-er`` for catch & original patch.
 * :support:`612` Identify & work around a race condition in the test for
   handshake timeouts, which was causing frequent test failures for a subset of
   contributors as well as Travis-CI (usually, but not always, limited to Python

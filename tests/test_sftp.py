@@ -611,7 +611,7 @@ class SFTPTest (unittest.TestCase):
 
         with sftp.open(FOLDER + '/bunny.txt', 'rb') as f:
             self.assertEqual(text, f.read(128))
-        self.assertEqual((41, 41), saved_progress[-1])
+        self.assertEqual([(41, 41)], saved_progress)
 
         os.unlink(localname)
         fd, localname = mkstemp()
@@ -621,7 +621,7 @@ class SFTPTest (unittest.TestCase):
 
         with open(localname, 'rb') as f:
             self.assertEqual(text, f.read(128))
-        self.assertEqual((41, 41), saved_progress[-1])
+        self.assertEqual([(41, 41)], saved_progress)
 
         os.unlink(localname)
         sftp.unlink(FOLDER + '/bunny.txt')
