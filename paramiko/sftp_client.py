@@ -592,6 +592,18 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         # TODO: make class initialize with self._cwd set to self.normalize('.')
         return self._cwd and u(self._cwd)
 
+    def _transfer_with_callback(self, reader, writer, file_size, callback):
+        size = 0
+        while True:
+            data = reader.read(32768)
+            writer.write(data)
+            size += len(data)
+            if len(data) == 0:
+                break
+            if callback is not None:
+                callback(size, file_size)
+        return size
+
     def putfo(self, fl, remotepath, file_size=0, callback=None, confirm=True):
         """
         Copy the contents of an open file object (``fl``) to the SFTP server as
@@ -621,15 +633,9 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         """
         with self.file(remotepath, 'wb') as fr:
             fr.set_pipelined(True)
-            size = 0
-            while True:
-                data = fl.read(32768)
-                fr.write(data)
-                size += len(data)
-                if callback is not None:
-                    callback(size, file_size)
-                if len(data) == 0:
-                    break
+            size = self._transfer_with_callback(
+                reader=fl, writer=fr, file_size=file_size, callback=callback
+            )
         if confirm:
             s = self.stat(remotepath)
             if s.st_size != size:
@@ -689,16 +695,10 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         file_size = self.stat(remotepath).st_size
         with self.open(remotepath, 'rb') as fr:
             fr.prefetch(file_size)
+            return self._transfer_with_callback(
+                reader=fr, writer=fl, file_size=file_size, callback=callback
+            )
 
-            size = 0
-            while True:
-                data = fr.read(32768)
-                fl.write(data)
-                size += len(data)
-                if callback is not None:
-                    callback(size, file_size)
-                if len(data) == 0:
-                    break
         return size
 
     def get(self, remotepath, localpath, callback=None):
