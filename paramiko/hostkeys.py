@@ -331,7 +331,7 @@ class HostKeyEntry:
                 key = RSAKey(data=decodebytes(key))
             elif keytype == 'ssh-dss':
                 key = DSSKey(data=decodebytes(key))
-            elif keytype == 'ecdsa-sha2-nistp256':
+            elif keytype in ECDSAKey.supported_key_format_identifiers():
                 key = ECDSAKey(data=decodebytes(key), validate_point=False)
             else:
                 log.info("Unable to handle key of type %s" % (keytype,))
