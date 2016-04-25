@@ -2,6 +2,9 @@
 Changelog
 =========
 
+* :support:`729 backported` Clean up ``setup.py`` to always use ``setuptools``,
+  not doing so was a historical artifact from bygone days. Thanks to Alex
+  Gaynor.
 * :bug:`649 major` Update the module in charge of handling SSH moduli so it's
   consistent with OpenSSH behavior re: prime number selection. Thanks to Damien
   Tournoud for catch & patch.
