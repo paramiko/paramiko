@@ -2,6 +2,11 @@
 Changelog
 =========
 
+* :bug:`676` (via :issue:`677`) Fix a backwards incompatibility issue that
+  cropped up in `SFTPFile.prefetch <~paramiko.sftp_file.prefetch>` re: the
+  erroneously non-optional ``file_size`` parameter. Should only affect users
+  who manually call ``prefetch``. Thanks to ``@stevevanhooser`` for catch &
+  patch.
 * :bug:`577` (via :issue:`578`; should also fix :issue:`718`, :issue:`560`) Fix
   stalled/hung SFTP downloads by cleaning up some threading lock issues. Thanks
   to Stephen C. Pope for the patch.

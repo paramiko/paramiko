@@ -389,7 +389,7 @@ class SFTPFile (BufferedFile):
         """
         self.pipelined = pipelined
 
-    def prefetch(self, file_size):
+    def prefetch(self, file_size=None):
         """
         Pre-fetch the remaining contents of this file in anticipation of future
         `.read` calls.  If reading the entire file, pre-fetching can
@@ -401,8 +401,24 @@ class SFTPFile (BufferedFile):
         data may be read in a random order (using `.seek`); chunks of the
         buffer that haven't been read will continue to be buffered.
 
+        :param int file_size:
+            When this is ``None`` (the default), this method calls `stat` to
+            determine the remote file size. In some situations, doing so can
+            cause exceptions or hangs (see `#562
+            <https://github.com/paramiko/paramiko/pull/562>`_); as a
+            workaround, one may call `stat` explicitly and pass its value in
+            via this parameter.
+
         .. versionadded:: 1.5.1
+        .. versionchanged:: 1.16.0
+            The ``file_size`` parameter was added (with no default value).
+        .. versionchanged:: 1.16.1
+            The ``file_size`` parameter was made optional for backwards
+            compatibility.
         """
+        if file_size is None:
+            file_size = self.stat().st_size;
+
         # queue up async reads for the rest of the file
         chunks = []
         n = self._realpos
