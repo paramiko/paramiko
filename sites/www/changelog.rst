@@ -25,6 +25,9 @@ Changelog
     8**).
 
 * :release:`1.17.0 <2016-04-25>`
+* :bug:`577` (via :issue:`578`; should also fix :issue:`718`, :issue:`560`) Fix
+  stalled/hung SFTP downloads by cleaning up some threading lock issues. Thanks
+  to Stephen C. Pope for the patch.
 * :bug:`716` Fix a Python 3 compatibility issue when handling two-factor
   authentication. Thanks to Mateusz Kowalski for the catch & original patch.
 * :support:`729 backported` Clean up ``setup.py`` to always use ``setuptools``,
