@@ -2,6 +2,7 @@
 Changelog
 =========
 
+* :release:`1.17.0 <2016-04-25>`
 * :support:`729 backported` Clean up ``setup.py`` to always use ``setuptools``,
   not doing so was a historical artifact from bygone days. Thanks to Alex
   Gaynor.
