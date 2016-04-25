@@ -2,6 +2,28 @@
 Changelog
 =========
 
+* :feature:`394` Replace PyCrypto with the Python Cryptographic Authority
+  (PyCA) 'Cryptography' library suite. This improves security, installability,
+  and performance; adds PyPy support; and much more.
+
+  There aren't enough ways to thank Alex Gaynor for all of his work on this,
+  and then his patience while the maintainer let his PR grow moss for a year
+  and change. Paul Kehrer came in with an assist, and I think I saw Olle
+  Lundberg, ``@techtonik`` and ``@johnthagen`` supplying backup as well. Thanks
+  to all!
+
+  .. warning::
+    **This is a backwards incompatible change.**
+
+    However, **it should only affect installation** requirements; **no API
+    changes are intended or expected**. Please report any such breakages as
+    bugs.
+
+    See our updated :doc:`installation docs <installing>` for details on what
+    is now required to install Paramiko; many/most users should be able to
+    simply ``pip install -U paramiko`` (especially if you **upgrade to pip
+    8**).
+
 * :support:`729 backported` Clean up ``setup.py`` to always use ``setuptools``,
   not doing so was a historical artifact from bygone days. Thanks to Alex
   Gaynor.
