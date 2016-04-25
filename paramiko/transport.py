@@ -121,13 +121,21 @@ class Transport (threading.Thread, ClosingContextManager):
         'ssh-rsa',
         'ssh-dss',
         'ecdsa-sha2-nistp256',
+        'ecdsa-sha2-nistp384',
+        'ecdsa-sha2-nistp521'
     )
     _preferred_kex =  (
         'diffie-hellman-group1-sha1',
         'diffie-hellman-group14-sha1',
         'diffie-hellman-group-exchange-sha1',
-        'diffie-hellman-group-exchange-sha256',
+        'diffie-hellman-group-exchange-sha256'
     )
+    _preferred_gss_kex = (
+        'gss-gex-sha1-toWM5Slw5Ew8Mqkay+al2g==',
+        'gss-group14-sha1-toWM5Slw5Ew8Mqkay+al2g==',
+        'gss-group1-sha1-toWM5Slw5Ew8Mqkay+al2g=='
+    ) + _preferred_kex
+
     _preferred_compression = ('none',)
 
     _cipher_info = {
@@ -206,6 +214,8 @@ class Transport (threading.Thread, ClosingContextManager):
         'ssh-rsa': RSAKey,
         'ssh-dss': DSSKey,
         'ecdsa-sha2-nistp256': ECDSAKey,
+        'ecdsa-sha2-nistp384': ECDSAKey,
+        'ecdsa-sha2-nistp521': ECDSAKey
     }
 
     _kex_info = {
@@ -339,12 +349,7 @@ class Transport (threading.Thread, ClosingContextManager):
         self.gss_host = None
         if self.use_gss_kex:
             self.kexgss_ctxt = GSSAuth("gssapi-keyex", gss_deleg_creds)
-            self._preferred_kex = ('gss-gex-sha1-toWM5Slw5Ew8Mqkay+al2g==',
-                                   'gss-group14-sha1-toWM5Slw5Ew8Mqkay+al2g==',
-                                   'gss-group1-sha1-toWM5Slw5Ew8Mqkay+al2g==',
-                                   'diffie-hellman-group-exchange-sha1',
-                                   'diffie-hellman-group14-sha1',
-                                   'diffie-hellman-group1-sha1')
+            self._preferred_kex = self._preferred_gss_kex
 
         # state used during negotiation
         self.kex_engine = None
