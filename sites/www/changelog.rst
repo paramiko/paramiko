@@ -24,6 +24,9 @@ Changelog
     simply ``pip install -U paramiko`` (especially if you **upgrade to pip
     8**).
 
+* :release:`1.17.0 <2016-04-25>`
+* :bug:`716` Fix a Python 3 compatibility issue when handling two-factor
+  authentication. Thanks to Mateusz Kowalski for the catch & original patch.
 * :support:`729 backported` Clean up ``setup.py`` to always use ``setuptools``,
   not doing so was a historical artifact from bygone days. Thanks to Alex
   Gaynor.

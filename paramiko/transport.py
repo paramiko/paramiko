@@ -58,7 +58,7 @@ from paramiko.kex_gss import KexGSSGex, KexGSSGroup1, KexGSSGroup14, NullHostKey
 from paramiko.message import Message
 from paramiko.packet import Packetizer, NeedRekeyException
 from paramiko.primes import ModulusPack
-from paramiko.py3compat import string_types, long, byte_ord, b
+from paramiko.py3compat import string_types, long, byte_ord, b, input
 from paramiko.rsakey import RSAKey
 from paramiko.ecdsakey import ECDSAKey
 from paramiko.server import ServerInterface
@@ -1397,7 +1397,7 @@ class Transport (threading.Thread, ClosingContextManager):
                     print(instructions.strip())
                 for prompt,show_input in prompt_list:
                     print(prompt.strip(),end=' ')
-                    answers.append(raw_input())
+                    answers.append(input())
                 return answers
         return self.auth_interactive(username, handler, submethods)
 
