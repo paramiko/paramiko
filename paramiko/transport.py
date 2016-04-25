@@ -1646,7 +1646,7 @@ class Transport (threading.Thread, ClosingContextManager):
         elif name.endswith("-ctr"):
             # CTR modes, we need a counter
             counter = Counter.new(nbits=self._cipher_info[name]['block-size'] * 8, initial_value=util.inflate_long(iv, True))
-            return self._cipher_info[name]['class'].new(key, self._cipher_info[name]['mode'], iv, counter)
+            return self._cipher_info[name]['class'].new(key, self._cipher_info[name]['mode'], '', counter)
         else:
             return self._cipher_info[name]['class'].new(key, self._cipher_info[name]['mode'], iv)
 
