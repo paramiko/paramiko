@@ -2,6 +2,9 @@
 Changelog
 =========
 
+* :bug:`577` (via :issue:`578`; should also fix :issue:`718`, :issue:`560`) Fix
+  stalled/hung SFTP downloads by cleaning up some threading lock issues. Thanks
+  to Stephen C. Pope for the patch.
 * :support:`729 backported` Clean up ``setup.py`` to always use ``setuptools``,
   not doing so was a historical artifact from bygone days. Thanks to Alex
   Gaynor.
