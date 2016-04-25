@@ -2,7 +2,6 @@
 Changelog
 =========
 
-* :release:`1.15.5 <2016-04-25>`
 * :bug:`577` (via :issue:`578`; should also fix :issue:`718`, :issue:`560`) Fix
   stalled/hung SFTP downloads by cleaning up some threading lock issues. Thanks
   to Stephen C. Pope for the patch.
