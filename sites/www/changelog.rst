@@ -2,6 +2,8 @@
 Changelog
 =========
 
+* :release:`1.16.1 <2016-04-25>`
+* :release:`1.15.5 <2016-04-25>`
 * :bug:`676` (via :issue:`677`) Fix a backwards incompatibility issue that
   cropped up in `SFTPFile.prefetch <~paramiko.sftp_file.prefetch>` re: the
   erroneously non-optional ``file_size`` parameter. Should only affect users
