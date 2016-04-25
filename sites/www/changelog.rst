@@ -2,6 +2,9 @@
 Changelog
 =========
 
+* :support:`729 backported` Clean up ``setup.py`` to always use ``setuptools``,
+  not doing so was a historical artifact from bygone days. Thanks to Alex
+  Gaynor.
 * :support:`621 backported` Annotate some public attributes on
   `~paramiko.channel.Channel` such as ``.closed``. Thanks to Sergey Vasilyev
   for the report.
