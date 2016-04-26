@@ -2,6 +2,15 @@
 Changelog
 =========
 
+* :release:`1.17.0 <2016-04-25>`
+* :release:`1.16.1 <2016-04-25>`
+* :release:`1.15.5 <2016-04-25>`
+* :bug:`670` Due to an earlier bugfix, less-specific ``Host`` blocks'
+  ``ProxyCommand`` values were overriding ``ProxyCommand none`` in
+  more-specific ``Host`` blocks. This has been fixed in a backwards compatible
+  manner (i.e. ``ProxyCommand none`` continues to appear as a total lack of any
+  ``proxycommand`` key in parsed config structures). Thanks to Pat Brisbin for
+  the catch.
 * :bug:`676` (via :issue:`677`) Fix a backwards incompatibility issue that
   cropped up in `SFTPFile.prefetch <~paramiko.sftp_file.prefetch>` re: the
   erroneously non-optional ``file_size`` parameter. Should only affect users
@@ -127,8 +136,8 @@ Changelog
   class. Thanks to Jared Hance for the patch.
 * :support:`516 backported` Document `~paramiko.agent.AgentRequestHandler`.
   Thanks to ``@toejough`` for report & suggestions.
-* :bug:`496` Fix a handful of small but critical bugs in Paramiko's GSSAPI
-  support (note: this includes switching from PyCrypo's Random to
+* :bug:`496 (1.15+)` Fix a handful of small but critical bugs in Paramiko's
+  GSSAPI support (note: this includes switching from PyCrypo's Random to
   `os.urandom`). Thanks to Anselm Kruis for catch & patch.
 * :bug:`491` (combines :issue:`62` and :issue:`439`) Implement timeout
   functionality to address hangs from dropped network connections and/or failed
