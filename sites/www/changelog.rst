@@ -3,6 +3,12 @@ Changelog
 =========
 
 * :release:`1.15.5 <2016-04-25>`
+* :bug:`670` Due to an earlier bugfix, less-specific ``Host`` blocks'
+  ``ProxyCommand`` values were overriding ``ProxyCommand none`` in
+  more-specific ``Host`` blocks. This has been fixed in a backwards compatible
+  manner (i.e. ``ProxyCommand none`` continues to appear as a total lack of any
+  ``proxycommand`` key in parsed config structures). Thanks to Pat Brisbin for
+  the catch.
 * :bug:`577` (via :issue:`578`; should also fix :issue:`718`, :issue:`560`) Fix
   stalled/hung SFTP downloads by cleaning up some threading lock issues. Thanks
   to Stephen C. Pope for the patch.
