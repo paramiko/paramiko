@@ -121,7 +121,7 @@ class Transport (threading.Thread, ClosingContextManager):
     _preferred_keys = (
         'ssh-rsa',
         'ssh-dss',
-    )+tuple(ECDSAKey.supported_key_format_identifiers())
+    ) + tuple(ECDSAKey.supported_key_format_identifiers())
     _preferred_kex =  (
         'diffie-hellman-group1-sha1',
         'diffie-hellman-group14-sha1',

@@ -39,10 +39,11 @@ from paramiko.util import deflate_long, inflate_long
 
 class _ECDSACurve(object):
     """
-    Object for representing a specific ECDSA Curve (i.e. nistp256, nistp384,
-    etc.). Handles the generation of the key format identifier and the
-    selection of the proper hash function. Also grabs the proper curve from the
-    ecdsa package.
+    Represents a specific ECDSA Curve (nistp256, nistp384, etc).
+
+    Handles the generation of the key format identifier and the selection of
+    the proper hash function. Also grabs the proper curve from the 'ecdsa'
+    package.
     """
     def __init__(self, curve_class, nist_name):
         self.nist_name = nist_name

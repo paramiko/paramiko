@@ -145,7 +145,7 @@ class KeyTest (unittest.TestCase):
         self.assertEqual(exp_rsa, my_rsa)
         self.assertEqual(PUB_RSA.split()[1], key.get_base64())
         self.assertEqual(1024, key.get_bits())
-        
+
     def test_4_load_dss(self):
         key = DSSKey.from_private_key_file(test_path('test_dss.key'))
         self.assertEqual('ssh-dss', key.get_name())
