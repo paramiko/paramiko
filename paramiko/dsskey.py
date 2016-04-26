@@ -20,21 +20,23 @@
 DSS keys.
 """
 
-import os
-from hashlib import sha1
-
-from Crypto.PublicKey import DSA
+from cryptography.exceptions import InvalidSignature
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import hashes, serialization
+from cryptography.hazmat.primitives.asymmetric import dsa
+from cryptography.hazmat.primitives.asymmetric.utils import (
+    decode_rfc6979_signature, encode_rfc6979_signature
+)
 
 from paramiko import util
 from paramiko.common import zero_byte
-from paramiko.py3compat import long
 from paramiko.ssh_exception import SSHException
 from paramiko.message import Message
 from paramiko.ber import BER, BERException
 from paramiko.pkey import PKey
 
 
-class DSSKey (PKey):
+class DSSKey(PKey):
     """
     Representation of a DSS key which can be used to sign an verify SSH2
     data.
@@ -98,15 +100,21 @@ class DSSKey (PKey):
         return self.x is not None
 
     def sign_ssh_data(self, data):
-        digest = sha1(data).digest()
-        dss = DSA.construct((long(self.y), long(self.g), long(self.p), long(self.q), long(self.x)))
-        # generate a suitable k
-        qsize = len(util.deflate_long(self.q, 0))
-        while True:
-            k = util.inflate_long(os.urandom(qsize), 1)
-            if (k > 2) and (k < self.q):
-                break
-        r, s = dss.sign(util.inflate_long(digest, 1), k)
+        key = dsa.DSAPrivateNumbers(
+            x=self.x,
+            public_numbers=dsa.DSAPublicNumbers(
+                y=self.y,
+                parameter_numbers=dsa.DSAParameterNumbers(
+                    p=self.p,
+                    q=self.q,
+                    g=self.g
+                )
+            )
+        ).private_key(backend=default_backend())
+        signer = key.signer(hashes.SHA1())
+        signer.update(data)
+        r, s = decode_rfc6979_signature(signer.finalize())
+
         m = Message()
         m.add_string('ssh-dss')
         # apparently, in rare cases, r or s may be shorter than 20 bytes!
@@ -132,27 +140,65 @@ class DSSKey (PKey):
         # pull out (r, s) which are NOT encoded as mpints
         sigR = util.inflate_long(sig[:20], 1)
         sigS = util.inflate_long(sig[20:], 1)
-        sigM = util.inflate_long(sha1(data).digest(), 1)
 
-        dss = DSA.construct((long(self.y), long(self.g), long(self.p), long(self.q)))
-        return dss.verify(sigM, (sigR, sigS))
+        signature = encode_rfc6979_signature(sigR, sigS)
 
-    def _encode_key(self):
-        if self.x is None:
-            raise SSHException('Not enough key information')
-        keylist = [0, self.p, self.q, self.g, self.y, self.x]
+        key = dsa.DSAPublicNumbers(
+            y=self.y,
+            parameter_numbers=dsa.DSAParameterNumbers(
+                p=self.p,
+                q=self.q,
+                g=self.g
+            )
+        ).public_key(backend=default_backend())
+        verifier = key.verifier(signature, hashes.SHA1())
+        verifier.update(data)
         try:
-            b = BER()
-            b.encode(keylist)
-        except BERException:
-            raise SSHException('Unable to create ber encoding of key')
-        return b.asbytes()
+            verifier.verify()
+        except InvalidSignature:
+            return False
+        else:
+            return True
 
     def write_private_key_file(self, filename, password=None):
-        self._write_private_key_file('DSA', filename, self._encode_key(), password)
+        key = dsa.DSAPrivateNumbers(
+            x=self.x,
+            public_numbers=dsa.DSAPublicNumbers(
+                y=self.y,
+                parameter_numbers=dsa.DSAParameterNumbers(
+                    p=self.p,
+                    q=self.q,
+                    g=self.g
+                )
+            )
+        ).private_key(backend=default_backend())
+
+        self._write_private_key_file(
+            filename,
+            key,
+            serialization.PrivateFormat.TraditionalOpenSSL,
+            password=password
+        )
 
     def write_private_key(self, file_obj, password=None):
-        self._write_private_key('DSA', file_obj, self._encode_key(), password)
+        key = dsa.DSAPrivateNumbers(
+            x=self.x,
+            public_numbers=dsa.DSAPublicNumbers(
+                y=self.y,
+                parameter_numbers=dsa.DSAParameterNumbers(
+                    p=self.p,
+                    q=self.q,
+                    g=self.g
+                )
+            )
+        ).private_key(backend=default_backend())
+
+        self._write_private_key(
+            file_obj,
+            key,
+            serialization.PrivateFormat.TraditionalOpenSSL,
+            password=password
+        )
 
     @staticmethod
     def generate(bits=1024, progress_func=None):
@@ -161,14 +207,19 @@ class DSSKey (PKey):
         generate a new host key or authentication key.
 
         :param int bits: number of bits the generated key should be.
-        :param function progress_func:
-            an optional function to call at key points in key generation (used
-            by ``pyCrypto.PublicKey``).
+        :param function progress_func: Unused
         :return: new `.DSSKey` private key
         """
-        dsa = DSA.generate(bits, os.urandom, progress_func)
-        key = DSSKey(vals=(dsa.p, dsa.q, dsa.g, dsa.y))
-        key.x = dsa.x
+        numbers = dsa.generate_private_key(
+            bits, backend=default_backend()
+        ).private_numbers()
+        key = DSSKey(vals=(
+            numbers.public_numbers.parameter_numbers.p,
+            numbers.public_numbers.parameter_numbers.q,
+            numbers.public_numbers.parameter_numbers.g,
+            numbers.public_numbers.y
+        ))
+        key.x = numbers.x
         return key
 
     ###  internals...

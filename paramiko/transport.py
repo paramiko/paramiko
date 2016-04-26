@@ -29,6 +29,9 @@ import time
 import weakref
 from hashlib import md5, sha1, sha256, sha512
 
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives.ciphers import algorithms, Cipher, modes
+
 import paramiko
 from paramiko import util
 from paramiko.auth_handler import AuthHandler
@@ -55,7 +58,7 @@ from paramiko.kex_gss import KexGSSGex, KexGSSGroup1, KexGSSGroup14, NullHostKey
 from paramiko.message import Message
 from paramiko.packet import Packetizer, NeedRekeyException
 from paramiko.primes import ModulusPack
-from paramiko.py3compat import string_types, long, byte_ord, b
+from paramiko.py3compat import string_types, long, byte_ord, b, input
 from paramiko.rsakey import RSAKey
 from paramiko.ecdsakey import ECDSAKey
 from paramiko.server import ServerInterface
@@ -63,12 +66,6 @@ from paramiko.sftp_client import SFTPClient
 from paramiko.ssh_exception import (SSHException, BadAuthenticationType,
                                     ChannelException, ProxyCommandFailure)
 from paramiko.util import retry_on_signal, ClosingContextManager, clamp_value
-
-from Crypto.Cipher import Blowfish, AES, DES3
-try:
-    from Crypto.Util import Counter
-except ImportError:
-    from paramiko.util import Counter
 
 
 # for thread cleanup
@@ -92,6 +89,9 @@ class Transport (threading.Thread, ClosingContextManager):
 
     Instances of this class may be used as context managers.
     """
+    _ENCRYPT = object()
+    _DECRYPT = object()
+
     _PROTO_ID = '2.0'
     _CLIENT_ID = 'paramiko_%s' % paramiko.__version__
 
@@ -130,54 +130,55 @@ class Transport (threading.Thread, ClosingContextManager):
 
     _cipher_info = {
         'aes128-ctr': {
-            'class': AES,
-            'mode': AES.MODE_CTR,
+            'class': algorithms.AES,
+            'mode': modes.CTR,
             'block-size': 16,
             'key-size': 16
         },
         'aes192-ctr': {
-            'class': AES,
-            'mode': AES.MODE_CTR,
+            'class': algorithms.AES,
+            'mode': modes.CTR,
             'block-size': 16,
             'key-size': 24
         },
         'aes256-ctr': {
-            'class': AES,
-            'mode': AES.MODE_CTR,
+            'class': algorithms.AES,
+            'mode': modes.CTR,
             'block-size': 16,
             'key-size': 32
         },
         'blowfish-cbc': {
-            'class': Blowfish,
-            'mode': Blowfish.MODE_CBC,
+            'class': algorithms.Blowfish,
+            'mode': modes.CBC,
             'block-size': 8,
             'key-size': 16
         },
         'aes128-cbc': {
-            'class': AES,
-            'mode': AES.MODE_CBC,
+            'class': algorithms.AES,
+            'mode': modes.CBC,
             'block-size': 16,
             'key-size': 16
         },
         'aes192-cbc': {
-            'class': AES,
-            'mode': AES.MODE_CBC,
+            'class': algorithms.AES,
+            'mode': modes.CBC,
             'block-size': 16,
             'key-size': 24
         },
         'aes256-cbc': {
-            'class': AES,
-            'mode': AES.MODE_CBC,
+            'class': algorithms.AES,
+            'mode': modes.CBC,
             'block-size': 16,
             'key-size': 32
         },
         '3des-cbc': {
-            'class': DES3,
-            'mode': DES3.MODE_CBC,
+            'class': algorithms.TripleDES,
+            'mode': modes.CBC,
             'block-size': 8,
             'key-size': 24
         },
     }
+
 
     _mac_info = {
         'hmac-sha1': {'class': sha1, 'size': 20},
@@ -1381,7 +1382,7 @@ class Transport (threading.Thread, ClosingContextManager):
                     print(instructions.strip())
                 for prompt,show_input in prompt_list:
                     print(prompt.strip(),end=' ')
-                    answers.append(raw_input())
+                    answers.append(input())
                 return answers
         return self.auth_interactive(username, handler, submethods)
 
@@ -1619,15 +1620,19 @@ class Transport (threading.Thread, ClosingContextManager):
             sofar += digest
         return out[:nbytes]
 
-    def _get_cipher(self, name, key, iv):
+    def _get_cipher(self, name, key, iv, operation):
         if name not in self._cipher_info:
             raise SSHException('Unknown client cipher ' + name)
-        if name.endswith("-ctr"):
-            # CTR modes, we need a counter
-            counter = Counter.new(nbits=self._cipher_info[name]['block-size'] * 8, initial_value=util.inflate_long(iv, True))
-            return self._cipher_info[name]['class'].new(key, self._cipher_info[name]['mode'], iv, counter)
         else:
-            return self._cipher_info[name]['class'].new(key, self._cipher_info[name]['mode'], iv)
+            cipher = Cipher(
+                self._cipher_info[name]['class'](key),
+                self._cipher_info[name]['mode'](iv),
+                backend=default_backend(),
+            )
+            if operation is self._ENCRYPT:
+                return cipher.encryptor()
+            else:
+                return cipher.decryptor()
 
     def _set_forward_agent_handler(self, handler):
         if handler is None:
@@ -2023,7 +2028,7 @@ class Transport (threading.Thread, ClosingContextManager):
         else:
             IV_in = self._compute_key('B', block_size)
             key_in = self._compute_key('D', self._cipher_info[self.remote_cipher]['key-size'])
-        engine = self._get_cipher(self.remote_cipher, key_in, IV_in)
+        engine = self._get_cipher(self.remote_cipher, key_in, IV_in, self._DECRYPT)
         mac_size = self._mac_info[self.remote_mac]['size']
         mac_engine = self._mac_info[self.remote_mac]['class']
         # initial mac keys are done in the hash's natural size (not the
@@ -2050,7 +2055,7 @@ class Transport (threading.Thread, ClosingContextManager):
         else:
             IV_out = self._compute_key('A', block_size)
             key_out = self._compute_key('C', self._cipher_info[self.local_cipher]['key-size'])
-        engine = self._get_cipher(self.local_cipher, key_out, IV_out)
+        engine = self._get_cipher(self.local_cipher, key_out, IV_out, self._ENCRYPT)
         mac_size = self._mac_info[self.local_mac]['size']
         mac_engine = self._mac_info[self.local_mac]['class']
         # initial mac keys are done in the hash's natural size (not the

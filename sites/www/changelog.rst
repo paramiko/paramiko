@@ -2,6 +2,58 @@
 Changelog
 =========
 
+* :bug:`676` (via :issue:`677`) Fix a backwards incompatibility issue that
+  cropped up in `SFTPFile.prefetch <~paramiko.sftp_file.prefetch>` re: the
+  erroneously non-optional ``file_size`` parameter. Should only affect users
+  who manually call ``prefetch``. Thanks to ``@stevevanhooser`` for catch &
+  patch.
+* :feature:`394` Replace PyCrypto with the Python Cryptographic Authority
+  (PyCA) 'Cryptography' library suite. This improves security, installability,
+  and performance; adds PyPy support; and much more.
+
+  There aren't enough ways to thank Alex Gaynor for all of his work on this,
+  and then his patience while the maintainer let his PR grow moss for a year
+  and change. Paul Kehrer came in with an assist, and I think I saw Olle
+  Lundberg, ``@techtonik`` and ``@johnthagen`` supplying backup as well. Thanks
+  to all!
+
+  .. warning::
+    **This is a backwards incompatible change.**
+
+    However, **it should only affect installation** requirements; **no API
+    changes are intended or expected**. Please report any such breakages as
+    bugs.
+
+    See our updated :doc:`installation docs <installing>` for details on what
+    is now required to install Paramiko; many/most users should be able to
+    simply ``pip install -U paramiko`` (especially if you **upgrade to pip
+    8**).
+
+* :bug:`577` (via :issue:`578`; should also fix :issue:`718`, :issue:`560`) Fix
+  stalled/hung SFTP downloads by cleaning up some threading lock issues. Thanks
+  to Stephen C. Pope for the patch.
+* :bug:`716` Fix a Python 3 compatibility issue when handling two-factor
+  authentication. Thanks to Mateusz Kowalski for the catch & original patch.
+* :support:`729 backported` Clean up ``setup.py`` to always use ``setuptools``,
+  not doing so was a historical artifact from bygone days. Thanks to Alex
+  Gaynor.
+* :bug:`649 major` Update the module in charge of handling SSH moduli so it's
+  consistent with OpenSSH behavior re: prime number selection. Thanks to Damien
+  Tournoud for catch & patch.
+* :bug:`617` (aka `fabric/fabric#1429
+  <https://github.com/fabric/fabric/issues/1429>`_; via :issue:`679`; related:
+  :issue:`678`, :issue:`685`, :issue:`615` & :issue:`616`) Fix up
+  `~paramiko.ssh_exception.NoValidConnectionsError` so it pickles correctly,
+  and fix a related Python 3 compatibility issue. Thanks to Rebecca Schlussel
+  for the report & Marius Gedminas for the patch.
+* :bug:`613` (via :issue:`619`) Update to ``jaraco.windows`` 3.4.1 to fix some
+  errors related to ``ctypes`` on Windows platforms. Credit to Jason R. Coombs.
+* :support:`621 backported` Annotate some public attributes on
+  `~paramiko.channel.Channel` such as ``.closed``. Thanks to Sergey Vasilyev
+  for the report.
+* :bug:`632` Fix logic bug in the SFTP client's callback-calling functionality;
+  previously there was a chance the given callback would fire twice at the end
+  of a transfer. Thanks to ``@ab9-er`` for catch & original patch.
 * :support:`612` Identify & work around a race condition in the test for
   handshake timeouts, which was causing frequent test failures for a subset of
   contributors as well as Travis-CI (usually, but not always, limited to Python
@@ -155,8 +207,9 @@ Changelog
   well) would hang due to incorrect values passed into the new window size
   arguments for `.Transport` (thanks to a botched merge). This has been
   corrected. Thanks to Dylan Thacker-Smith for the report & patch.
-* :feature:`167` Add `.SSHConfig.get_hostnames` for easier introspection of a
-  loaded SSH config file or object. Courtesy of Søren Løvborg.
+* :feature:`167` Add `~paramiko.config.SSHConfig.get_hostnames` for easier
+  introspection of a loaded SSH config file or object. Courtesy of Søren
+  Løvborg.
 * :release:`1.15.0 <2014-09-18>`
 * :support:`393` Replace internal use of PyCrypto's ``SHA.new`` with the
   stdlib's ``hashlib.sha1``. Thanks to Alex Gaynor.

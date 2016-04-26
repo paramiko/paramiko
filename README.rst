@@ -42,10 +42,9 @@ that should have come with this archive.
 Requirements
 ------------
 
-- `Python <http://www.python.org/>`_ 2.6, 2.7, or 3.3+ (3.2 should also work,
-  but it is not recommended)
-- `pycrypto <https://www.dlitz.net/software/pycrypto/>`_ 2.1+
-- `ecdsa <https://pypi.python.org/pypi/ecdsa>`_ 0.11+
+- `Python <http://www.python.org/>`_ 2.6, 2.7, or 3.3+
+- `Cryptography <https://cryptography.io>`_ 0.8 or better
+- `pyasn1 <https://pypi.python.org/pypi/pyasn1>`_ 0.1.7 or better
 
 
 Installation
@@ -65,13 +64,6 @@ Portability Issues
 Paramiko primarily supports POSIX platforms with standard OpenSSH
 implementations, and is most frequently tested on Linux and OS X.  Windows is
 supported as well, though it may not be as straightforward.
-
-Some Windows users whose Python is 64-bit have found that the PyCrypto
-dependency ``winrandom`` may not install properly, leading to an
-``ImportError``.  In this scenario, you may need to compile ``winrandom``
-yourself.  See `Fabric #194 <https://github.com/fabric/fabric/issues/194>`_
-for info.
-
 
 Bugs & Support
 --------------
