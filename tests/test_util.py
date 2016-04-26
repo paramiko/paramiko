@@ -485,3 +485,33 @@ Host proxycommand-with-equals-none
                 paramiko.util.lookup_ssh_host_config(host, config),
                 values
             )
+
+    def test_proxycommand_none_masking(self):
+        # Re: https://github.com/paramiko/paramiko/issues/670
+        source_config = """
+Host specific-host
+    ProxyCommand none
+
+Host other-host
+    ProxyCommand other-proxy
+
+Host *
+    ProxyCommand default-proxy
+"""
+        config = paramiko.SSHConfig()
+        config.parse(StringIO(source_config))
+        # When bug is present, the full stripping-out of specific-host's
+        # ProxyCommand means it actually appears to pick up the default
+        # ProxyCommand value instead, due to cascading. It should (for
+        # backwards compatibility reasons in 1.x/2.x) appear completely blank,
+        # as if the host had no ProxyCommand whatsoever.
+        # Threw another unrelated host in there just for sanity reasons.
+        self.assertFalse('proxycommand' in config.lookup('specific-host'))
+        self.assertEqual(
+            config.lookup('other-host')['proxycommand'],
+            'other-proxy'
+        )
+        self.assertEqual(
+            config.lookup('some-random-host')['proxycommand'],
+            'default-proxy'
+        )
