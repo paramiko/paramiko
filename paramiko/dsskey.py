@@ -25,7 +25,7 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import dsa
 from cryptography.hazmat.primitives.asymmetric.utils import (
-    decode_rfc6979_signature, encode_rfc6979_signature
+    decode_dss_signature, encode_dss_signature
 )
 
 from paramiko import util
@@ -113,7 +113,7 @@ class DSSKey(PKey):
         ).private_key(backend=default_backend())
         signer = key.signer(hashes.SHA1())
         signer.update(data)
-        r, s = decode_rfc6979_signature(signer.finalize())
+        r, s = decode_dss_signature(signer.finalize())
 
         m = Message()
         m.add_string('ssh-dss')
@@ -141,7 +141,7 @@ class DSSKey(PKey):
         sigR = util.inflate_long(sig[:20], 1)
         sigS = util.inflate_long(sig[20:], 1)
 
-        signature = encode_rfc6979_signature(sigR, sigS)
+        signature = encode_dss_signature(sigR, sigS)
 
         key = dsa.DSAPublicNumbers(
             y=self.y,
