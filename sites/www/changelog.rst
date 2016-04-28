@@ -5,6 +5,10 @@ Changelog
 * :release:`1.17.0 <2016-04-25>`
 * :release:`1.16.1 <2016-04-25>`
 * :release:`1.15.5 <2016-04-25>`
+* :feature:`731` (working off the earlier :issue:`611`) Add support for 384-
+  and 512-bit elliptic curve groups in ECDSA key types (aka
+  ``ecdsa-sha2-nistp384`` / ``ecdsa-sha2-nistp521``). Thanks to Michiel Tiller
+  and ``@CrazyCasta`` for the patches.
 * :bug:`670` Due to an earlier bugfix, less-specific ``Host`` blocks'
   ``ProxyCommand`` values were overriding ``ProxyCommand none`` in
   more-specific ``Host`` blocks. This has been fixed in a backwards compatible
