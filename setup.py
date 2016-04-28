@@ -76,7 +76,7 @@ setup(
         'Programming Language :: Python :: 3.5',
     ],
     install_requires=[
-        'cryptography>=0.8',
+        'cryptography>=1.1',
         'pyasn1>=0.1.7',
     ],
 )
