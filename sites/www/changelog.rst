@@ -2,7 +2,7 @@
 Changelog
 =========
 
-* :release:`1.17.0 <2016-04-25>`
+* :release:`1.17.0 <2016-04-28>`
 * :release:`1.16.1 <2016-04-28>`
 * :release:`1.15.5 <2016-04-28>`
 * :bug:`670` Due to an earlier bugfix, less-specific ``Host`` blocks'
