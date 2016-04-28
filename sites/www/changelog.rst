@@ -12,19 +12,20 @@ Changelog
 * :bug:`577` (via :issue:`578`; should also fix :issue:`718`, :issue:`560`) Fix
   stalled/hung SFTP downloads by cleaning up some threading lock issues. Thanks
   to Stephen C. Pope for the patch.
-* :support:`729 backported` Clean up ``setup.py`` to always use ``setuptools``,
+* :support:`729 (1.15+)` Clean up ``setup.py`` to always use ``setuptools``,
   not doing so was a historical artifact from bygone days. Thanks to Alex
   Gaynor.
-* :support:`621 backported` Annotate some public attributes on
+* :support:`621 (1.15+)` Annotate some public attributes on
   `~paramiko.channel.Channel` such as ``.closed``. Thanks to Sergey Vasilyev
   for the report.
 * :bug:`632` Fix logic bug in the SFTP client's callback-calling functionality;
   previously there was a chance the given callback would fire twice at the end
   of a transfer. Thanks to ``@ab9-er`` for catch & original patch.
-* :support:`612` Identify & work around a race condition in the test for
-  handshake timeouts, which was causing frequent test failures for a subset of
-  contributors as well as Travis-CI (usually, but not always, limited to Python
-  3.5). Props to Ed Kellett for assistance during some of the troubleshooting.
+* :support:`612 (1.15+)` Identify & work around a race condition in the test
+  for handshake timeouts, which was causing frequent test failures for a subset
+  of contributors as well as Travis-CI (usually, but not always, limited to
+  Python 3.5). Props to Ed Kellett for assistance during some of the
+  troubleshooting.
 * :support:`697` Remove whitespace in our ``setup.py``'s ``install_requires``
   as it triggers occasional bugs in some versions of ``setuptools``. Thanks to
   Justin Lecher for catch & original patch.
