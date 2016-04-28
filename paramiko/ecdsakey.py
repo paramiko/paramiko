@@ -20,21 +20,19 @@
 ECDSA keys
 """
 
-import binascii
-
 from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives.asymmetric.utils import (
-    decode_rfc6979_signature, encode_rfc6979_signature
+    decode_dss_signature, encode_dss_signature
 )
 
 from paramiko.common import four_byte
 from paramiko.message import Message
 from paramiko.pkey import PKey
 from paramiko.ssh_exception import SSHException
-from paramiko.util import deflate_long, inflate_long
+from paramiko.util import deflate_long
 
 
 class _ECDSACurve(object):
@@ -131,18 +129,12 @@ class ECDSAKey(PKey):
                 raise SSHException("Can't handle curve of type %s" % curvename)
 
             pointinfo = msg.get_binary()
-            if pointinfo[0:1] != four_byte:
-                raise SSHException('Point compression is being used: %s' %
-                                   binascii.hexlify(pointinfo))
-            curve = self.ecdsa_curve.curve_class()
-            key_bytes = (curve.key_size + 7) // 8
-            numbers = ec.EllipticCurvePublicNumbers(
-                x=inflate_long(pointinfo[1:1 + key_bytes],
-                               always_positive=True),
-                y=inflate_long(pointinfo[1 + key_bytes:],
-                               always_positive=True),
-                curve=curve
-            )
+            try:
+                numbers = ec.EllipticCurvePublicNumbers.from_encoded_point(
+                    ec.SECP256R1(), pointinfo
+                )
+            except ValueError:
+                raise SSHException("Invalid public key")
             self.verifying_key = numbers.public_key(backend=default_backend())
 
     @classmethod
@@ -192,7 +184,7 @@ class ECDSAKey(PKey):
         signer = self.signing_key.signer(ecdsa)
         signer.update(data)
         sig = signer.finalize()
-        r, s = decode_rfc6979_signature(sig)
+        r, s = decode_dss_signature(sig)
 
         m = Message()
         m.add_string(self.ecdsa_curve.key_format_identifier)
@@ -204,7 +196,7 @@ class ECDSAKey(PKey):
             return False
         sig = msg.get_binary()
         sigR, sigS = self._sigdecode(sig)
-        signature = encode_rfc6979_signature(sigR, sigS)
+        signature = encode_dss_signature(sigR, sigS)
 
         verifier = self.verifying_key.verifier(
             signature, ec.ECDSA(self.ecdsa_curve.hash_object())
