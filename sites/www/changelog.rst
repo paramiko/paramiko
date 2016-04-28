@@ -24,9 +24,9 @@ Changelog
 * :support:`729 (1.15+)` Clean up ``setup.py`` to always use ``setuptools``,
   not doing so was a historical artifact from bygone days. Thanks to Alex
   Gaynor.
-* :bug:`649 major` Update the module in charge of handling SSH moduli so it's
-  consistent with OpenSSH behavior re: prime number selection. Thanks to Damien
-  Tournoud for catch & patch.
+* :bug:`649 (==1.17)` Update the module in charge of handling SSH moduli so
+  it's consistent with OpenSSH behavior re: prime number selection. Thanks to
+  Damien Tournoud for catch & patch.
 * :bug:`617` (aka `fabric/fabric#1429
   <https://github.com/fabric/fabric/issues/1429>`_; via :issue:`679`; related:
   :issue:`678`, :issue:`685`, :issue:`615` & :issue:`616`) Fix up
@@ -55,7 +55,7 @@ Changelog
 * :bug:`652` Fix behavior of ``gssapi-with-mic`` auth requests so they fail
   gracefully (allowing followup via other auth methods) instead of raising an
   exception. Patch courtesy of ``@jamercee``.
-* :feature:`588` Add missing file-like object methods for
+* :feature:`588 (==1.17)` Add missing file-like object methods for
   `~paramiko.file.BufferedFile` and `~paramiko.sftp_file.SFTPFile`. Thanks to
   Adam Meily for the patch.
 * :support:`636` Clean up and enhance the README (and rename it to
