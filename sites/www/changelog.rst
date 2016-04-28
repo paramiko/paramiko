@@ -3,7 +3,7 @@ Changelog
 =========
 
 * :release:`1.16.1 <2016-04-25>`
-* :release:`1.15.5 <2016-04-25>`
+* :release:`1.15.5 <2016-04-28>`
 * :bug:`670` Due to an earlier bugfix, less-specific ``Host`` blocks'
   ``ProxyCommand`` values were overriding ``ProxyCommand none`` in
   more-specific ``Host`` blocks. This has been fixed in a backwards compatible
@@ -20,7 +20,7 @@ Changelog
   to Stephen C. Pope for the patch.
 * :bug:`716` Fix a Python 3 compatibility issue when handling two-factor
   authentication. Thanks to Mateusz Kowalski for the catch & original patch.
-* :support:`729 backported` Clean up ``setup.py`` to always use ``setuptools``,
+* :support:`729 (1.15+)` Clean up ``setup.py`` to always use ``setuptools``,
   not doing so was a historical artifact from bygone days. Thanks to Alex
   Gaynor.
 * :bug:`617` (aka `fabric/fabric#1429
@@ -31,16 +31,17 @@ Changelog
   for the report & Marius Gedminas for the patch.
 * :bug:`613` (via :issue:`619`) Update to ``jaraco.windows`` 3.4.1 to fix some
   errors related to ``ctypes`` on Windows platforms. Credit to Jason R. Coombs.
-* :support:`621 backported` Annotate some public attributes on
+* :support:`621 (1.15+)` Annotate some public attributes on
   `~paramiko.channel.Channel` such as ``.closed``. Thanks to Sergey Vasilyev
   for the report.
 * :bug:`632` Fix logic bug in the SFTP client's callback-calling functionality;
   previously there was a chance the given callback would fire twice at the end
   of a transfer. Thanks to ``@ab9-er`` for catch & original patch.
-* :support:`612` Identify & work around a race condition in the test for
-  handshake timeouts, which was causing frequent test failures for a subset of
-  contributors as well as Travis-CI (usually, but not always, limited to Python
-  3.5). Props to Ed Kellett for assistance during some of the troubleshooting.
+* :support:`612 (1.15+)` Identify & work around a race condition in the test
+  for handshake timeouts, which was causing frequent test failures for a subset
+  of contributors as well as Travis-CI (usually, but not always, limited to
+  Python 3.5). Props to Ed Kellett for assistance during some of the
+  troubleshooting.
 * :support:`697` Remove whitespace in our ``setup.py``'s ``install_requires``
   as it triggers occasional bugs in some versions of ``setuptools``. Thanks to
   Justin Lecher for catch & original patch.
