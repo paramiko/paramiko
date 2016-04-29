@@ -21,30 +21,22 @@ Paramiko
 What
 ----
 
-"Paramiko" is a combination of the esperanto words for "paranoid" and
-"friend".  It's a module for Python 2.6+ that implements the SSH2 protocol
-for secure (encrypted and authenticated) connections to remote machines.
-Unlike SSL (aka TLS), SSH2 protocol does not require hierarchical
-certificates signed by a powerful central authority.  You may know SSH2 as
-the protocol that replaced Telnet and rsh for secure access to remote
-shells, but the protocol also includes the ability to open arbitrary
-channels to remote services across the encrypted tunnel (this is how SFTP
-works, for example).
+"Paramiko" is a combination of the Esperanto words for "paranoid" and
+"friend".  It's a module for Python 2.6+/3.3+ that implements the SSH2 protocol
+for secure (encrypted and authenticated) connections to remote machines. Unlike
+SSL (aka TLS), SSH2 protocol does not require hierarchical certificates signed
+by a powerful central authority.  You may know SSH2 as the protocol that
+replaced Telnet and rsh for secure access to remote shells, but the protocol
+also includes the ability to open arbitrary channels to remote services across
+the encrypted tunnel (this is how SFTP works, for example).
 
-It is written entirely in Python (no C or platform-dependent code) and is
-released under the GNU Lesser General Public License (`LGPL
+It is written entirely in Python (though it depends on third-party C wrappers
+for low level crypto; these are often available precompiled) and is released
+under the GNU Lesser General Public License (`LGPL
 <https://www.gnu.org/copyleft/lesser.html>`_).
 
-The package and its API is fairly well documented in the "doc/" folder
-that should have come with this archive.
-
-
-Requirements
-------------
-
-- `Python <http://www.python.org/>`_ 2.6, 2.7, or 3.3+
-- `Cryptography <https://cryptography.io>`_ 0.8 or better
-- `pyasn1 <https://pypi.python.org/pypi/pyasn1>`_ 0.1.7 or better
+The package and its API is fairly well documented in the ``docs`` folder that
+should have come with this archive.
 
 
 Installation
