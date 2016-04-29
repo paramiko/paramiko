@@ -21,31 +21,22 @@ Paramiko
 What
 ----
 
-"Paramiko" is a combination of the esperanto words for "paranoid" and
-"friend".  It's a module for Python 2.6+ that implements the SSH2 protocol
-for secure (encrypted and authenticated) connections to remote machines.
-Unlike SSL (aka TLS), SSH2 protocol does not require hierarchical
-certificates signed by a powerful central authority.  You may know SSH2 as
-the protocol that replaced Telnet and rsh for secure access to remote
-shells, but the protocol also includes the ability to open arbitrary
-channels to remote services across the encrypted tunnel (this is how SFTP
-works, for example).
+"Paramiko" is a combination of the Esperanto words for "paranoid" and
+"friend".  It's a module for Python 2.6+/3.3+ that implements the SSH2 protocol
+for secure (encrypted and authenticated) connections to remote machines. Unlike
+SSL (aka TLS), SSH2 protocol does not require hierarchical certificates signed
+by a powerful central authority.  You may know SSH2 as the protocol that
+replaced Telnet and rsh for secure access to remote shells, but the protocol
+also includes the ability to open arbitrary channels to remote services across
+the encrypted tunnel (this is how SFTP works, for example).
 
-It is written entirely in Python (no C or platform-dependent code) and is
-released under the GNU Lesser General Public License (`LGPL
+It is written entirely in Python (though it depends on third-party C wrappers
+for low level crypto; these are often available precompiled) and is released
+under the GNU Lesser General Public License (`LGPL
 <https://www.gnu.org/copyleft/lesser.html>`_).
 
-The package and its API is fairly well documented in the "doc/" folder
-that should have come with this archive.
-
-
-Requirements
-------------
-
-- `Python <http://www.python.org/>`_ 2.6, 2.7, or 3.3+ (3.2 should also work,
-  but it is not recommended)
-- `pycrypto <https://www.dlitz.net/software/pycrypto/>`_ 2.1+
-- `ecdsa <https://pypi.python.org/pypi/ecdsa>`_ 0.11+
+The package and its API is fairly well documented in the ``docs`` folder that
+should have come with this archive.
 
 
 Installation
