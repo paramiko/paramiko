@@ -21,9 +21,9 @@ Changelog
   to Stephen C. Pope for the patch.
 * :bug:`716` Fix a Python 3 compatibility issue when handling two-factor
   authentication. Thanks to Mateusz Kowalski for the catch & original patch.
-* :support:`729 (1.15+)` Clean up ``setup.py`` to always use ``setuptools``,
-  not doing so was a historical artifact from bygone days. Thanks to Alex
-  Gaynor.
+* :support:`729 backported (>=1.15,<2.0)` Clean up ``setup.py`` to always use
+  ``setuptools``, not doing so was a historical artifact from bygone days.
+  Thanks to Alex Gaynor.
 * :bug:`649 (==1.17)` Update the module in charge of handling SSH moduli so
   it's consistent with OpenSSH behavior re: prime number selection. Thanks to
   Damien Tournoud for catch & patch.
@@ -35,20 +35,21 @@ Changelog
   for the report & Marius Gedminas for the patch.
 * :bug:`613` (via :issue:`619`) Update to ``jaraco.windows`` 3.4.1 to fix some
   errors related to ``ctypes`` on Windows platforms. Credit to Jason R. Coombs.
-* :support:`621 (1.15+)` Annotate some public attributes on
+* :support:`621 backported (>=1.15,<2.0)` Annotate some public attributes on
   `~paramiko.channel.Channel` such as ``.closed``. Thanks to Sergey Vasilyev
   for the report.
 * :bug:`632` Fix logic bug in the SFTP client's callback-calling functionality;
   previously there was a chance the given callback would fire twice at the end
   of a transfer. Thanks to ``@ab9-er`` for catch & original patch.
-* :support:`612 (1.15+)` Identify & work around a race condition in the test
-  for handshake timeouts, which was causing frequent test failures for a subset
-  of contributors as well as Travis-CI (usually, but not always, limited to
-  Python 3.5). Props to Ed Kellett for assistance during some of the
-  troubleshooting.
-* :support:`697` Remove whitespace in our ``setup.py``'s ``install_requires``
-  as it triggers occasional bugs in some versions of ``setuptools``. Thanks to
-  Justin Lecher for catch & original patch.
+* :support:`612 backported (>=1.15,<2.0)` Identify & work around a race
+  condition in the test for handshake timeouts, which was causing frequent test
+  failures for a subset of contributors as well as Travis-CI (usually, but not
+  always, limited to Python 3.5). Props to Ed Kellett for assistance during
+  some of the troubleshooting.
+* :support:`697 backported (>=1.15,<2.0)` Remove whitespace in our
+  ``setup.py``'s ``install_requires`` as it triggers occasional bugs in some
+  versions of ``setuptools``. Thanks to Justin Lecher for catch & original
+  patch.
 * :bug:`499` Strip trailing/leading whitespace from lines when parsing SSH
   config files - this brings things in line with OpenSSH behavior. Thanks to
   Alfredo Esteban for the original report and Nick Pillitteri for the patch.
@@ -58,8 +59,8 @@ Changelog
 * :feature:`588 (==1.17)` Add missing file-like object methods for
   `~paramiko.file.BufferedFile` and `~paramiko.sftp_file.SFTPFile`. Thanks to
   Adam Meily for the patch.
-* :support:`636` Clean up and enhance the README (and rename it to
-  ``README.rst`` from just ``README``). Thanks to ``@LucasRMehl``.
+* :support:`636 backported (>=1.15,<2.0)` Clean up and enhance the README (and
+  rename it to ``README.rst`` from just ``README``). Thanks to ``@LucasRMehl``.
 * :release:`1.16.0 <2015-11-04>`
 * :bug:`194 major` (also :issue:`562`, :issue:`530`, :issue:`576`) Streamline
   use of ``stat`` when downloading SFTP files via `SFTPClient.get
