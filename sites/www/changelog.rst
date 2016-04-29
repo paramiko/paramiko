@@ -12,31 +12,32 @@ Changelog
 * :bug:`577` (via :issue:`578`; should also fix :issue:`718`, :issue:`560`) Fix
   stalled/hung SFTP downloads by cleaning up some threading lock issues. Thanks
   to Stephen C. Pope for the patch.
-* :support:`729 backported (1.15+)` Clean up ``setup.py`` to always use
+* :support:`729 backported (>=1.15,<2.0)` Clean up ``setup.py`` to always use
   ``setuptools``, not doing so was a historical artifact from bygone days.
   Thanks to Alex Gaynor.
-* :support:`621 backported (1.15+)` Annotate some public attributes on
+* :support:`621 backported (>=1.15,<2.0)` Annotate some public attributes on
   `~paramiko.channel.Channel` such as ``.closed``. Thanks to Sergey Vasilyev
   for the report.
 * :bug:`632` Fix logic bug in the SFTP client's callback-calling functionality;
   previously there was a chance the given callback would fire twice at the end
   of a transfer. Thanks to ``@ab9-er`` for catch & original patch.
-* :support:`612 backported (1.15+)` Identify & work around a race condition in
-  the test for handshake timeouts, which was causing frequent test failures for
-  a subset of contributors as well as Travis-CI (usually, but not always,
-  limited to Python 3.5). Props to Ed Kellett for assistance during some of the
-  troubleshooting.
-* :support:`697 backported (1.15+)` Remove whitespace in our ``setup.py``'s
-  ``install_requires`` as it triggers occasional bugs in some versions of
-  ``setuptools``. Thanks to Justin Lecher for catch & original patch.
+* :support:`612 backported (>=1.15,<2.0)` Identify & work around a race
+  condition in the test for handshake timeouts, which was causing frequent test
+  failures for a subset of contributors as well as Travis-CI (usually, but not
+  always, limited to Python 3.5). Props to Ed Kellett for assistance during
+  some of the troubleshooting.
+* :support:`697 backported (>=1.15,<2.0)` Remove whitespace in our
+  ``setup.py``'s ``install_requires`` as it triggers occasional bugs in some
+  versions of ``setuptools``. Thanks to Justin Lecher for catch & original
+  patch.
 * :bug:`499` Strip trailing/leading whitespace from lines when parsing SSH
   config files - this brings things in line with OpenSSH behavior. Thanks to
   Alfredo Esteban for the original report and Nick Pillitteri for the patch.
 * :bug:`652` Fix behavior of ``gssapi-with-mic`` auth requests so they fail
   gracefully (allowing followup via other auth methods) instead of raising an
   exception. Patch courtesy of ``@jamercee``.
-* :support:`636 backported (1.15+)` Clean up and enhance the README (and rename
-  it to ``README.rst`` from just ``README``). Thanks to ``@LucasRMehl``.
+* :support:`636 backported (>=1.15,<2.0)` Clean up and enhance the README (and
+  rename it to ``README.rst`` from just ``README``). Thanks to ``@LucasRMehl``.
 * :bug:`401` Fix line number reporting in log output regarding invalid
   ``known_hosts`` line entries. Thanks to Dylan Thacker-Smith for catch &
   patch.
