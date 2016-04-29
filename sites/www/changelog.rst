@@ -51,9 +51,9 @@ Changelog
 * :support:`729 backported (>=1.15,<2.0)` Clean up ``setup.py`` to always use
   ``setuptools``, not doing so was a historical artifact from bygone days.
   Thanks to Alex Gaynor.
-* :bug:`649 (==1.17)` Update the module in charge of handling SSH moduli so
-  it's consistent with OpenSSH behavior re: prime number selection. Thanks to
-  Damien Tournoud for catch & patch.
+* :bug:`649 major (==1.17)` Update the module in charge of handling SSH moduli
+  so it's consistent with OpenSSH behavior re: prime number selection. Thanks
+  to Damien Tournoud for catch & patch.
 * :bug:`617` (aka `fabric/fabric#1429
   <https://github.com/fabric/fabric/issues/1429>`_; via :issue:`679`; related:
   :issue:`678`, :issue:`685`, :issue:`615` & :issue:`616`) Fix up
