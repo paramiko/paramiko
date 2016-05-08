@@ -77,7 +77,7 @@ setup(
         'Programming Language :: Python :: 3.5',
     ],
     install_requires=[
-        'pycrypto>=2.1,!=2.4',
-        'ecdsa>=0.11',
+        'pycrypto>=2.1,!=2.4,<3.0',
+        'ecdsa>=0.11,<2.0',
     ],
 )
