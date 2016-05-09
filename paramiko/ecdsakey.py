@@ -258,7 +258,7 @@ class ECDSAKey(PKey):
             key = serialization.load_der_private_key(
                 data, password=None, backend=default_backend()
             )
-        except ValueError as e:
+        except (ValueError, AssertionError) as e:
             raise SSHException(str(e))
 
         self.signing_key = key
