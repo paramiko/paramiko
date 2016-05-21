@@ -1025,7 +1025,8 @@ class Transport (threading.Thread, ClosingContextManager):
         return chan
 
     def connect(self, hostkey=None, username='', password=None, pkey=None,
-                gss_host=None, gss_auth=False, gss_kex=False, gss_deleg_creds=True):
+                gss_host=None, gss_auth=False, gss_kex=False, gss_deleg_creds=True,
+                check_key=False):
         """
         Negotiate an SSH2 session, and optionally verify the server's host key
         and authenticate using a password or private key.  This is a shortcut
@@ -1063,6 +1064,8 @@ class Transport (threading.Thread, ClosingContextManager):
             Perform GSS-API Key Exchange and user authentication.
         :param bool gss_deleg_creds:
             Whether to delegate GSS-API client credentials.
+        :param bool check_key:
+            Whether to perform server-side public key checking. Default: False
 
         :raises SSHException: if the SSH2 negotiation fails, the host key
             supplied by the server is incorrect, or authentication fails.
@@ -1093,7 +1096,7 @@ class Transport (threading.Thread, ClosingContextManager):
                 self.auth_gssapi_keyex(username)
             elif pkey is not None:
                 self._log(DEBUG, 'Attempting public-key auth...')
-                self.auth_publickey(username, pkey)
+                self.auth_publickey(username, pkey, None, check_key)
             else:
                 self._log(DEBUG, 'Attempting password auth...')
                 self.auth_password(username, password)
@@ -1281,7 +1284,7 @@ class Transport (threading.Thread, ClosingContextManager):
                 # attempt failed; just raise the original exception
                 raise e
 
-    def auth_publickey(self, username, key, event=None):
+    def auth_publickey(self, username, key, event=None, check_key=False):
         """
         Authenticate to the server using a private key.  The key is used to
         sign data from the server, so it must include the private part.
@@ -1304,6 +1307,8 @@ class Transport (threading.Thread, ClosingContextManager):
         :param .threading.Event event:
             an event to trigger when the authentication attempt is complete
             (whether it was successful or not)
+        :param bool check_key:
+            Whether to perform server-side public key checking. Default: False
         :return:
             `list` of auth types permissible for the next stage of
             authentication (normally empty)
@@ -1322,7 +1327,7 @@ class Transport (threading.Thread, ClosingContextManager):
         else:
             my_event = event
         self.auth_handler = AuthHandler(self)
-        self.auth_handler.auth_publickey(username, key, my_event)
+        self.auth_handler.auth_publickey(username, key, my_event, check_key)
         if event is not None:
             # caller wants to wait for event themselves
             return []

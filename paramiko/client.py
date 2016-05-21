@@ -226,7 +226,8 @@ class SSHClient (ClosingContextManager):
         gss_kex=False,
         gss_deleg_creds=True,
         gss_host=None,
-        banner_timeout=None
+        banner_timeout=None,
+        check_key=False
     ):
         """
         Connect to an SSH server and authenticate to it.  The server's host key
@@ -278,6 +279,10 @@ class SSHClient (ClosingContextManager):
             The targets name in the kerberos database. default: hostname
         :param float banner_timeout: an optional timeout (in seconds) to wait
             for the SSH banner to be presented.
+        :param bool check_key:
+            set to True to perform server-based pubkey checking.
+            This option mimics openssh behavior and could fix auth issues for
+            some SSH server implementations.
 
         :raises BadHostKeyException: if the server's host key could not be
             verified
@@ -377,7 +382,8 @@ class SSHClient (ClosingContextManager):
         if gss_host is None:
             gss_host = hostname
         self._auth(username, password, pkey, key_filenames, allow_agent,
-                   look_for_keys, gss_auth, gss_kex, gss_deleg_creds, gss_host)
+                   look_for_keys, gss_auth, gss_kex, gss_deleg_creds, gss_host,
+                   check_key)
 
     def close(self):
         """
@@ -462,7 +468,8 @@ class SSHClient (ClosingContextManager):
         return self._transport
 
     def _auth(self, username, password, pkey, key_filenames, allow_agent,
-              look_for_keys, gss_auth, gss_kex, gss_deleg_creds, gss_host):
+              look_for_keys, gss_auth, gss_kex, gss_deleg_creds, gss_host,
+              check_key):
         """
         Try, in order:
 
@@ -504,7 +511,7 @@ class SSHClient (ClosingContextManager):
         if pkey is not None:
             try:
                 self._log(DEBUG, 'Trying SSH key %s' % hexlify(pkey.get_fingerprint()))
-                allowed_types = set(self._transport.auth_publickey(username, pkey))
+                allowed_types = set(self._transport.auth_publickey(username, pkey, None, check_key))
                 two_factor = (allowed_types & two_factor_types)
                 if not two_factor:
                     return
@@ -517,7 +524,7 @@ class SSHClient (ClosingContextManager):
                     try:
                         key = pkey_class.from_private_key_file(key_filename, password)
                         self._log(DEBUG, 'Trying key %s from %s' % (hexlify(key.get_fingerprint()), key_filename))
-                        allowed_types = set(self._transport.auth_publickey(username, key))
+                        allowed_types = set(self._transport.auth_publickey(username, key, None, check_key))
                         two_factor = (allowed_types & two_factor_types)
                         if not two_factor:
                             return
@@ -533,7 +540,7 @@ class SSHClient (ClosingContextManager):
                 try:
                     self._log(DEBUG, 'Trying SSH agent key %s' % hexlify(key.get_fingerprint()))
                     # for 2-factor auth a successfully auth'd key password will return an allowed 2fac auth method
-                    allowed_types = set(self._transport.auth_publickey(username, key))
+                    allowed_types = set(self._transport.auth_publickey(username, key, None, check_key))
                     two_factor = (allowed_types & two_factor_types)
                     if not two_factor:
                         return
@@ -571,7 +578,7 @@ class SSHClient (ClosingContextManager):
                     key = pkey_class.from_private_key_file(filename, password)
                     self._log(DEBUG, 'Trying discovered key %s in %s' % (hexlify(key.get_fingerprint()), filename))
                     # for 2-factor auth a successfully auth'd key will result in ['password']
-                    allowed_types = set(self._transport.auth_publickey(username, key))
+                    allowed_types = set(self._transport.auth_publickey(username, key, None, check_key))
                     two_factor = (allowed_types & two_factor_types)
                     if not two_factor:
                         return
