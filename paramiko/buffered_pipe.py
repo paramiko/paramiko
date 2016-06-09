@@ -73,6 +73,11 @@ class BufferedPipe (object):
         self._lock.acquire()
         try:
             self._event = event
+            # Make sure the event starts in `set` state if we appear to already
+            # be closed; otherwise, if we start in `clear` state & are closed,
+            # nothing will ever call `.feed` and the event (& OS pipe, if we're
+            # wrapping one - see `Channel.fileno`) will permanently stay in
+            # `clear`, causing deadlock if e.g. `select`ed upon.
             if self._closed or len(self._buffer) > 0:
                 event.set()
             else:
