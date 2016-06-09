@@ -2,6 +2,13 @@
 Changelog
 =========
 
+* :bug:`537` Fix a bug in `BufferedPipe.set_event
+  <paramiko.buffered_pipe.BufferedPipe.set_event>` which could cause
+  deadlocks/hangs when one uses `select.select` against
+  `~paramiko.channel.Channel` objects (or otherwise calls `Channel.fileno
+  <paramiko.channel.Channel.fileno>` after the channel has closed). Thanks to
+  Przemysław Strzelczak for the report & reproduction case, and to Krzysztof
+  Rusek for the fix.
 * :release:`1.16.1 <2016-04-28>`
 * :release:`1.15.5 <2016-04-28>`
 * :bug:`670` Due to an earlier bugfix, less-specific ``Host`` blocks'
