@@ -2,7 +2,7 @@ from os import mkdir
 from os.path import join
 from shutil import rmtree, copytree
 
-from invoke import Collection, ctask as task
+from invoke import Collection, task
 from invocations.docs import docs, www, sites
 from invocations.packaging import publish
 

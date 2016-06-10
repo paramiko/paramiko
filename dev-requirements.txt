@@ -1,8 +1,8 @@
 # Older junk
 tox>=1.4,<1.5
 # For newer tasks like building Sphinx docs.
-invoke>=0.11.1,<2.0
-invocations>=0.11.0,<2.0
+invoke>=0.13,<2.0
+invocations>=0.13,<2.0
 sphinx>=1.1.3,<2.0
 alabaster>=0.7.5,<2.0
 releases>=1.1.0,<2.0
