@@ -103,6 +103,10 @@ class Packetizer (object):
         self.__handshake_complete = False
         self.__timer_expired = False
 
+    @property
+    def closed(self):
+        return self.__closed
+
     def set_log(self, log):
         """
         Set the Python log object to use for logging.
