@@ -1532,8 +1532,17 @@ class Transport (threading.Thread, ClosingContextManager):
     def stop_thread(self):
         self.active = False
         self.packetizer.close()
-        while self.is_alive() and (self is not threading.current_thread()):
-            self.join(10)
+        # Keep trying to join() our main thread, quickly, until:
+        # * We join()ed successfully (self.is_alive() == False)
+        # * Or it looks like we've hit issue #520 (socket.recv hitting some
+        # race condition preventing it from timing out correctly), wherein our
+        # socket and packetizer are both closed (but where we'd otherwise be
+        # sitting forever on that recv()).
+        while (
+            self.is_alive() and self is not threading.current_thread()
+            and not self.sock._closed and not self.packetizer.closed
+        ):
+            self.join(0.1)
 
     ###  internals...
 
