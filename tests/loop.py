@@ -37,9 +37,11 @@ class LoopSocket (object):
         self.__cv = threading.Condition(self.__lock)
         self.__timeout = None
         self.__mate = None
+        self._closed = False
 
     def close(self):
         self.__unlink()
+        self._closed = True
         try:
             self.__lock.acquire()
             self.__in_buffer = bytes()
