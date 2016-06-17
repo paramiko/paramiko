@@ -382,6 +382,12 @@ class SSHClient (ClosingContextManager):
     def close(self):
         """
         Close this SSHClient and its underlying `.Transport`.
+
+        .. warning::
+            Failure to do this may, in some situations, cause your Python
+            interpreter to hang at shutdown (often due to race conditions).
+            It's good practice to `close` your client objects anytime you're
+            done using them, instead of relying on garbage collection.
         """
         if self._transport is None:
             return
