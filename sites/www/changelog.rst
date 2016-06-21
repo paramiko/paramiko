@@ -2,7 +2,10 @@
 Changelog
 =========
 
-* :bug:`537` Fix a bug in `BufferedPipe.set_event
+* :bug:`520 (1.16+)` (Partial fix) Fix at least one instance of race condition
+  driven threading hangs at end of the Python interpreter session. (Includes a
+  docs update as well - always make sure to ``.close()`` your clients!)
+* :bug:`537 (1.16+)` Fix a bug in `BufferedPipe.set_event
   <paramiko.buffered_pipe.BufferedPipe.set_event>` which could cause
   deadlocks/hangs when one uses `select.select` against
   `~paramiko.channel.Channel` objects (or otherwise calls `Channel.fileno
