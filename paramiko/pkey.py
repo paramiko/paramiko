@@ -336,7 +336,7 @@ class PKey(object):
         with open(filename, 'w', o600) as f:
             # grrr... the mode doesn't always take hold
             os.chmod(filename, o600)
-            self._write_private_key(f, key, format)
+            self._write_private_key(f, key, format, password=password)
 
     def _write_private_key(self, f, key, format, password=None):
         if password is None:
