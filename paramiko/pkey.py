@@ -48,6 +48,12 @@ class PKey(object):
             'blocksize': 16,
             'mode': modes.CBC
         },
+        'AES-256-CBC': {
+            'cipher': algorithms.AES,
+            'keysize': 32,
+            'blocksize': 16,
+            'mode': modes.CBC
+        },
         'DES-EDE3-CBC': {
             'cipher': algorithms.TripleDES,
             'keysize': 24,
