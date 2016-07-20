@@ -1,4 +1,5 @@
 # Copyright (C) 2003-2007  Robey Pointer <robeypointer@gmail.com>
+# Copyright (C) 2003-2007  Robey Pointer <robeypointer@gmail.com>
 #
 # This file is part of paramiko.
 #
@@ -444,7 +445,7 @@ class Transport (threading.Thread, ClosingContextManager):
         # We need the FQDN to get this working with SSPI
         self.gss_host = socket.getfqdn(gss_host)
 
-    def start_client(self, event=None):
+    def start_client(self, event=None, timeout=None):
         """
         Negotiate a new SSH2 session as a client.  This is the first step after
         creating a new `.Transport`.  A separate thread is created for protocol
@@ -455,7 +456,7 @@ class Transport (threading.Thread, ClosingContextManager):
         be triggered.  On failure, `is_active` will return ``False``.
 
         (Since 1.4) If ``event`` is ``None``, this method will not return until
-        negotation is done.  On success, the method returns normally.
+        negotiation is done.  On success, the method returns normally.
         Otherwise an SSHException is raised.
 
         After a successful negotiation, you will usually want to authenticate,
@@ -472,6 +473,9 @@ class Transport (threading.Thread, ClosingContextManager):
         :param .threading.Event event:
             an event to trigger when negotiation is complete (optional)
 
+        :param float timeout:
+            a timeout, in seconds, for SSH2 session negotiation (optional)
+
         :raises SSHException: if negotiation fails (and no ``event`` was passed
             in)
         """
@@ -485,6 +489,7 @@ class Transport (threading.Thread, ClosingContextManager):
         # synchronous, wait for a result
         self.completion_event = event = threading.Event()
         self.start()
+        max_time = time.time() + timeout if timeout is not None else None
         while True:
             event.wait(0.1)
             if not self.active:
@@ -492,7 +497,7 @@ class Transport (threading.Thread, ClosingContextManager):
                 if e is not None:
                     raise e
                 raise SSHException('Negotiation failed.')
-            if event.is_set():
+            if event.is_set() or (timeout is not None and time.time() >= max_time):
                 break
 
     def start_server(self, event=None, server=None):
