@@ -3,6 +3,8 @@ Changelog
 =========
 
 * :release:`1.16.2 <2016-06-21>`
+* :bug:`758 (1.16+)` Apply type definitions to ``_winapi`` module from
+  jaraco.windows 3.6.1.
 * :bug:`520 (1.16+)` (Partial fix) Fix at least one instance of race condition
   driven threading hangs at end of the Python interpreter session. (Includes a
   docs update as well - always make sure to ``.close()`` your clients!)
