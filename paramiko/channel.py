@@ -88,15 +88,20 @@ class Channel (ClosingContextManager):
         :param int chanid:
             the ID of this channel, as passed by an existing `.Transport`.
         """
+        #: Channel ID
         self.chanid = chanid
+        #: Remote channel ID
         self.remote_chanid = 0
+        #: `.Transport` managing this channel
         self.transport = None
+        #: Whether the connection is presently active
         self.active = False
         self.eof_received = 0
         self.eof_sent = 0
         self.in_buffer = BufferedPipe()
         self.in_stderr_buffer = BufferedPipe()
         self.timeout = None
+        #: Whether the connection has been closed
         self.closed = False
         self.ultra_debug = False
         self.lock = threading.Lock()

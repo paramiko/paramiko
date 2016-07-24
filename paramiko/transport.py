@@ -29,6 +29,9 @@ import time
 import weakref
 from hashlib import md5, sha1, sha256, sha512
 
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives.ciphers import algorithms, Cipher, modes
+
 import paramiko
 from paramiko import util
 from paramiko.auth_handler import AuthHandler
@@ -55,7 +58,7 @@ from paramiko.kex_gss import KexGSSGex, KexGSSGroup1, KexGSSGroup14, NullHostKey
 from paramiko.message import Message
 from paramiko.packet import Packetizer, NeedRekeyException
 from paramiko.primes import ModulusPack
-from paramiko.py3compat import string_types, long, byte_ord, b
+from paramiko.py3compat import string_types, long, byte_ord, b, input, PY2
 from paramiko.rsakey import RSAKey
 from paramiko.ecdsakey import ECDSAKey
 from paramiko.server import ServerInterface
@@ -64,11 +67,6 @@ from paramiko.ssh_exception import (SSHException, BadAuthenticationType,
                                     ChannelException, ProxyCommandFailure)
 from paramiko.util import retry_on_signal, ClosingContextManager, clamp_value
 
-from Crypto.Cipher import Blowfish, AES, DES3, ARC4
-try:
-    from Crypto.Util import Counter
-except ImportError:
-    from paramiko.util import Counter
 
 
 # for thread cleanup
@@ -92,6 +90,9 @@ class Transport (threading.Thread, ClosingContextManager):
 
     Instances of this class may be used as context managers.
     """
+    _ENCRYPT = object()
+    _DECRYPT = object()
+
     _PROTO_ID = '2.0'
     _CLIENT_ID = 'paramiko_%s' % paramiko.__version__
 
@@ -120,8 +121,7 @@ class Transport (threading.Thread, ClosingContextManager):
     _preferred_keys = (
         'ssh-rsa',
         'ssh-dss',
-        'ecdsa-sha2-nistp256',
-    )
+    ) + tuple(ECDSAKey.supported_key_format_identifiers())
     _preferred_kex =  (
         'diffie-hellman-group1-sha1',
         'diffie-hellman-group14-sha1',
@@ -132,66 +132,67 @@ class Transport (threading.Thread, ClosingContextManager):
 
     _cipher_info = {
         'aes128-ctr': {
-            'class': AES,
-            'mode': AES.MODE_CTR,
+            'class': algorithms.AES,
+            'mode': modes.CTR,
             'block-size': 16,
             'key-size': 16
         },
         'aes192-ctr': {
-            'class': AES,
-            'mode': AES.MODE_CTR,
+            'class': algorithms.AES,
+            'mode': modes.CTR,
             'block-size': 16,
             'key-size': 24
         },
         'aes256-ctr': {
-            'class': AES,
-            'mode': AES.MODE_CTR,
+            'class': algorithms.AES,
+            'mode': modes.CTR,
             'block-size': 16,
             'key-size': 32
         },
         'blowfish-cbc': {
-            'class': Blowfish,
-            'mode': Blowfish.MODE_CBC,
+            'class': algorithms.Blowfish,
+            'mode': modes.CBC,
             'block-size': 8,
             'key-size': 16
         },
         'aes128-cbc': {
-            'class': AES,
-            'mode': AES.MODE_CBC,
+            'class': algorithms.AES,
+            'mode': modes.CBC,
             'block-size': 16,
             'key-size': 16
         },
         'aes192-cbc': {
-            'class': AES,
-            'mode': AES.MODE_CBC,
+            'class': algorithms.AES,
+            'mode': modes.CBC,
             'block-size': 16,
             'key-size': 24
         },
         'aes256-cbc': {
-            'class': AES,
-            'mode': AES.MODE_CBC,
+            'class': algorithms.AES,
+            'mode': modes.CBC,
             'block-size': 16,
             'key-size': 32
         },
         '3des-cbc': {
-            'class': DES3,
-            'mode': DES3.MODE_CBC,
+            'class': algorithms.TripleDES,
+            'mode': modes.CBC,
             'block-size': 8,
             'key-size': 24
         },
         'arcfour128': {
-            'class': ARC4,
+            'class': algorithms.ARC4,
             'mode': None,
             'block-size': 8,
             'key-size': 16
         },
         'arcfour256': {
-            'class': ARC4,
+            'class': algorithms.ARC4,
             'mode': None,
             'block-size': 8,
             'key-size': 32
         },
     }
+
 
     _mac_info = {
         'hmac-sha1': {'class': sha1, 'size': 20},
@@ -1395,7 +1396,7 @@ class Transport (threading.Thread, ClosingContextManager):
                     print(instructions.strip())
                 for prompt,show_input in prompt_list:
                     print(prompt.strip(),end=' ')
-                    answers.append(raw_input())
+                    answers.append(input())
                 return answers
         return self.auth_interactive(username, handler, submethods)
 
@@ -1532,8 +1533,23 @@ class Transport (threading.Thread, ClosingContextManager):
     def stop_thread(self):
         self.active = False
         self.packetizer.close()
-        while self.is_alive() and (self is not threading.current_thread()):
-            self.join(10)
+        if PY2:
+            # Original join logic; #520 doesn't appear commonly present under
+            # Python 2.
+            while self.is_alive() and self is not threading.current_thread():
+                self.join(10)
+        else:
+            # Keep trying to join() our main thread, quickly, until:
+            # * We join()ed successfully (self.is_alive() == False)
+            # * Or it looks like we've hit issue #520 (socket.recv hitting some
+            # race condition preventing it from timing out correctly), wherein
+            # our socket and packetizer are both closed (but where we'd
+            # otherwise be sitting forever on that recv()).
+            while (
+                self.is_alive() and self is not threading.current_thread()
+                and not self.sock._closed and not self.packetizer.closed
+            ):
+                self.join(0.1)
 
     ###  internals...
 
@@ -1633,22 +1649,34 @@ class Transport (threading.Thread, ClosingContextManager):
             sofar += digest
         return out[:nbytes]
 
-    def _get_cipher(self, name, key, iv):
+    def _get_cipher(self, name, key, iv, operation):
         if name not in self._cipher_info:
             raise SSHException('Unknown client cipher ' + name)
         if name in ('arcfour128', 'arcfour256'):
             # arcfour cipher
-            cipher = self._cipher_info[name]['class'].new(key)
+            cipher = Cipher(
+                self._cipher_info[name]['class'](key),
+                None,
+                backend=default_backend()
+            )
+            if operation is self._ENCRYPT:
+                engine = cipher.encryptor()
+            else:
+                engine = cipher.decryptor()
             # as per RFC 4345, the first 1536 bytes of keystream
             # generated by the cipher MUST be discarded
-            cipher.encrypt(" " * 1536)
-            return cipher
-        elif name.endswith("-ctr"):
-            # CTR modes, we need a counter
-            counter = Counter.new(nbits=self._cipher_info[name]['block-size'] * 8, initial_value=util.inflate_long(iv, True))
-            return self._cipher_info[name]['class'].new(key, self._cipher_info[name]['mode'], iv, counter)
+            engine.encrypt(" " * 1536)
+            return engine
         else:
-            return self._cipher_info[name]['class'].new(key, self._cipher_info[name]['mode'], iv)
+            cipher = Cipher(
+                self._cipher_info[name]['class'](key),
+                self._cipher_info[name]['mode'](iv),
+                backend=default_backend(),
+            )
+            if operation is self._ENCRYPT:
+                return cipher.encryptor()
+            else:
+                return cipher.decryptor()
 
     def _set_forward_agent_handler(self, handler):
         if handler is None:
@@ -2044,7 +2072,7 @@ class Transport (threading.Thread, ClosingContextManager):
         else:
             IV_in = self._compute_key('B', block_size)
             key_in = self._compute_key('D', self._cipher_info[self.remote_cipher]['key-size'])
-        engine = self._get_cipher(self.remote_cipher, key_in, IV_in)
+        engine = self._get_cipher(self.remote_cipher, key_in, IV_in, self._DECRYPT)
         mac_size = self._mac_info[self.remote_mac]['size']
         mac_engine = self._mac_info[self.remote_mac]['class']
         # initial mac keys are done in the hash's natural size (not the
@@ -2071,7 +2099,7 @@ class Transport (threading.Thread, ClosingContextManager):
         else:
             IV_out = self._compute_key('A', block_size)
             key_out = self._compute_key('C', self._cipher_info[self.local_cipher]['key-size'])
-        engine = self._get_cipher(self.local_cipher, key_out, IV_out)
+        engine = self._get_cipher(self.local_cipher, key_out, IV_out, self._ENCRYPT)
         mac_size = self._mac_info[self.local_mac]['size']
         mac_engine = self._mac_info[self.local_mac]['class']
         # initial mac keys are done in the hash's natural size (not the

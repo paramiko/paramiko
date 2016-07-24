@@ -2,7 +2,7 @@ from os import mkdir
 from os.path import join
 from shutil import rmtree, copytree
 
-from invoke import Collection, ctask as task
+from invoke import Collection, task
 from invocations.docs import docs, www, sites
 from invocations.packaging import publish
 
@@ -25,7 +25,7 @@ def coverage(ctx):
 
 # Until we stop bundling docs w/ releases. Need to discover use cases first.
 @task
-def release(ctx, sdist=True, wheel=True):
+def release(ctx, sdist=True, wheel=True, sign=True, dry_run=False):
     """
     Wraps invocations.packaging.release to add baked-in docs folder.
     """
@@ -37,7 +37,7 @@ def release(ctx, sdist=True, wheel=True):
     # TODO: make it easier to yank out this config val from the docs coll
     copytree('sites/docs/_build', target)
     # Publish
-    publish(ctx, sdist=sdist, wheel=wheel)
+    publish(ctx, sdist=sdist, wheel=wheel, sign=sign, dry_run=dry_run)
     # Remind
     print("\n\nDon't forget to update RTD's versions page for new minor releases!")
 

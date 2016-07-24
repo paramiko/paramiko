@@ -592,6 +592,18 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         # TODO: make class initialize with self._cwd set to self.normalize('.')
         return self._cwd and u(self._cwd)
 
+    def _transfer_with_callback(self, reader, writer, file_size, callback):
+        size = 0
+        while True:
+            data = reader.read(32768)
+            writer.write(data)
+            size += len(data)
+            if len(data) == 0:
+                break
+            if callback is not None:
+                callback(size, file_size)
+        return size
+
     def putfo(self, fl, remotepath, file_size=0, callback=None, confirm=True):
         """
         Copy the contents of an open file object (``fl``) to the SFTP server as
@@ -621,15 +633,9 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         """
         with self.file(remotepath, 'wb') as fr:
             fr.set_pipelined(True)
-            size = 0
-            while True:
-                data = fl.read(32768)
-                fr.write(data)
-                size += len(data)
-                if callback is not None:
-                    callback(size, file_size)
-                if len(data) == 0:
-                    break
+            size = self._transfer_with_callback(
+                reader=fl, writer=fr, file_size=file_size, callback=callback
+            )
         if confirm:
             s = self.stat(remotepath)
             if s.st_size != size:
@@ -689,16 +695,10 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         file_size = self.stat(remotepath).st_size
         with self.open(remotepath, 'rb') as fr:
             fr.prefetch(file_size)
+            return self._transfer_with_callback(
+                reader=fr, writer=fl, file_size=file_size, callback=callback
+            )
 
-            size = 0
-            while True:
-                data = fr.read(32768)
-                fl.write(data)
-                size += len(data)
-                if callback is not None:
-                    callback(size, file_size)
-                if len(data) == 0:
-                    break
         return size
 
     def get(self, remotepath, localpath, callback=None):
@@ -748,10 +748,10 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
                     raise Exception('unknown type for %r type %r' % (item, type(item)))
             num = self.request_number
             self._expecting[num] = fileobj
-            self._send_packet(t, msg)
             self.request_number += 1
         finally:
             self._lock.release()
+        self._send_packet(t, msg)
         return num
 
     def _read_response(self, waitfor=None):
@@ -762,15 +762,19 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
                 raise SSHException('Server connection dropped: %s' % str(e))
             msg = Message(data)
             num = msg.get_int()
-            if num not in self._expecting:
-                # might be response for a file that was closed before responses came back
-                self._log(DEBUG, 'Unexpected response #%d' % (num,))
-                if waitfor is None:
-                    # just doing a single check
-                    break
-                continue
-            fileobj = self._expecting[num]
-            del self._expecting[num]
+            self._lock.acquire()
+            try:
+                if num not in self._expecting:
+                    # might be response for a file that was closed before responses came back
+                    self._log(DEBUG, 'Unexpected response #%d' % (num,))
+                    if waitfor is None:
+                        # just doing a single check
+                        break
+                    continue
+                fileobj = self._expecting[num]
+                del self._expecting[num]
+            finally:
+                self._lock.release()
             if num == waitfor:
                 # synchronous
                 if t == CMD_STATUS:
