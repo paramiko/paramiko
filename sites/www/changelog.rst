@@ -3,7 +3,10 @@ Changelog
 =========
 
 * :bug:`758 (1.16+)` Apply type definitions to ``_winapi`` module from
-  jaraco.windows 3.6.1.
+  `jaraco.windows <https://github.com/jaraco/jaraco.windows>`_ 3.6.1. This
+  should address issues on Windows platforms that often result in errors like
+  ``ArgumentError: [...] int too long to convert``. Thanks to ``@swohlerLL``
+  for the report and Jason R. Coombs for the patch.
 * :release:`1.16.2 <2016-06-21>`
 * :bug:`520 (1.16+)` (Partial fix) Fix at least one instance of race condition
   driven threading hangs at end of the Python interpreter session. (Includes a
