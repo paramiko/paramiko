@@ -2,6 +2,11 @@
 Changelog
 =========
 
+* :bug:`758 (1.16+)` Apply type definitions to ``_winapi`` module from
+  `jaraco.windows <https://github.com/jaraco/jaraco.windows>`_ 3.6.1. This
+  should address issues on Windows platforms that often result in errors like
+  ``ArgumentError: [...] int too long to convert``. Thanks to ``@swohlerLL``
+  for the report and Jason R. Coombs for the patch.
 * :release:`2.0.1 <2016-06-21>`
 * :release:`1.17.1 <2016-06-21>`
 * :release:`1.16.2 <2016-06-21>`
