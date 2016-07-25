@@ -693,6 +693,8 @@ class Transport (threading.Thread, ClosingContextManager):
         :raises SSHException: if the request is rejected or the session ends
             prematurely
 
+        .. versionchanged:: 1.13.4/1.14.3/1.15.3
+            Added the ``timeout`` argument.
         .. versionchanged:: 1.15
             Added the ``window_size`` and ``max_packet_size`` arguments.
         """
