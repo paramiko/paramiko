@@ -2,7 +2,7 @@
 Changelog
 =========
 
-* :bug:`673` (via :issue:`681`) Fix protocol banner read errors
+* :bug:`673 (1.16+)` (via :issue:`681`) Fix protocol banner read errors
   (``SSHException``) which would occasionally pop up when using
   ``ProxyCommand`` gatewaying. Thanks to ``@Depado`` for the initial report and
   Paul Kapp for the fix.
