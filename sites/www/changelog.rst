@@ -2,6 +2,10 @@
 Changelog
 =========
 
+* :bug:`673` (via :issue:`681`) Fix protocol banner read errors
+  (``SSHException``) which would occasionally pop up when using
+  ``ProxyCommand`` gatewaying. Thanks to ``@Depado`` for the initial report and
+  Paul Kapp for the fix.
 * :bug:`774 (1.16+)` Add a ``_closed`` private attribute to
   `~paramiko.channel.Channel` objects so that they continue functioning when
   used as proxy sockets under Python 3 (e.g. as ``direct-tcpip`` gateways for
