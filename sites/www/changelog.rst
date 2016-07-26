@@ -2,6 +2,10 @@
 Changelog
 =========
 
+* :bug:`774 (1.16+)` Add a ``_closed`` private attribute to
+  `~paramiko.channel.Channel` objects so that they continue functioning when
+  used as proxy sockets under Python 3 (e.g. as ``direct-tcpip`` gateways for
+  other Paramiko connections.)
 * :bug:`758 (1.16+)` Apply type definitions to ``_winapi`` module from
   `jaraco.windows <https://github.com/jaraco/jaraco.windows>`_ 3.6.1. This
   should address issues on Windows platforms that often result in errors like
