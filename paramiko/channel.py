@@ -887,6 +887,12 @@ class Channel (ClosingContextManager):
         """
         self.shutdown(1)
 
+    @property
+    def _closed(self):
+        # Concession to Python 3's socket API, which has a private ._closed
+        # attribute instead of a semipublic .closed attribute.
+        return self.closed
+
     ###  calls from Transport
 
     def _set_transport(self, transport):
