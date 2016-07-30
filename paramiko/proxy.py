@@ -107,5 +107,14 @@ class ProxyCommand(ClosingContextManager):
     def close(self):
         os.kill(self.process.pid, signal.SIGTERM)
 
+    @property
+    def closed(self):
+        return self.process.returncode is not None
+
+    @property
+    def _closed(self):
+        # Concession to Python 3 socket-like API
+        return self.closed
+
     def settimeout(self, timeout):
         self.timeout = timeout
