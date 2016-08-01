@@ -86,20 +86,21 @@ Demo
 ----
 
 Several demo scripts come with Paramiko to demonstrate how to use it.
-Probably the simplest demo of all is this::
+Probably the simplest demo is this::
 
-    import paramiko, base64
-    key = paramiko.RSAKey(data=base64.decodestring('AAA...'))
+    import base64
+    import paramiko
+    key = paramiko.RSAKey(data=base64.b64decode(b'AAA...'))
     client = paramiko.SSHClient()
     client.get_host_keys().add('ssh.example.com', 'ssh-rsa', key)
     client.connect('ssh.example.com', username='strongbad', password='thecheat')
     stdin, stdout, stderr = client.exec_command('ls')
     for line in stdout:
-        print '... ' + line.strip('\n')
+        print('... ' + line.strip('\n'))
     client.close()
 
 This prints out the results of executing ``ls`` on a remote server. The host
-key 'AAA...' should of course be replaced by the actual base64 encoding of the
+key b'AAA...' should of course be replaced by the actual base64 encoding of the
 host key.  If you skip host key verification, the connection is not secure!
 
 The following example scripts (in demos/) get progressively more detailed:
