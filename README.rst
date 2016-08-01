@@ -93,7 +93,7 @@ Probably the simplest demo is this::
     client.close()
 
 This prints out the results of executing ``ls`` on a remote server. The host
-key b'AAA...' should of course be replaced by the actual base64 encoding of the
+key ``b'AAA...'`` should of course be replaced by the actual base64 encoding of the
 host key.  If you skip host key verification, the connection is not secure!
 
 The following example scripts (in demos/) get progressively more detailed:
