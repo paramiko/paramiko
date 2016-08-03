@@ -53,6 +53,7 @@ class ProxyCommand(ClosingContextManager):
         self.process = Popen(self.cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE,
                              bufsize=0)
         self.timeout = None
+        self._closed
 
     def send(self, content):
         """
@@ -106,6 +107,7 @@ class ProxyCommand(ClosingContextManager):
 
     def close(self):
         os.kill(self.process.pid, signal.SIGTERM)
+        self._closed = True
 
     def settimeout(self, timeout):
         self.timeout = timeout
