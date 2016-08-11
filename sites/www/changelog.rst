@@ -2,6 +2,22 @@
 Changelog
 =========
 
+* :release:`2.0.2 <2016-07-25>`
+* :release:`1.17.2 <2016-07-25>`
+* :release:`1.16.3 <2016-07-25>`
+* :bug:`673 (1.16+)` (via :issue:`681`) Fix protocol banner read errors
+  (``SSHException``) which would occasionally pop up when using
+  ``ProxyCommand`` gatewaying. Thanks to ``@Depado`` for the initial report and
+  Paul Kapp for the fix.
+* :bug:`774 (1.16+)` Add a ``_closed`` private attribute to
+  `~paramiko.channel.Channel` objects so that they continue functioning when
+  used as proxy sockets under Python 3 (e.g. as ``direct-tcpip`` gateways for
+  other Paramiko connections.)
+* :bug:`758 (1.16+)` Apply type definitions to ``_winapi`` module from
+  `jaraco.windows <https://github.com/jaraco/jaraco.windows>`_ 3.6.1. This
+  should address issues on Windows platforms that often result in errors like
+  ``ArgumentError: [...] int too long to convert``. Thanks to ``@swohlerLL``
+  for the report and Jason R. Coombs for the patch.
 * :release:`2.0.1 <2016-06-21>`
 * :release:`1.17.1 <2016-06-21>`
 * :release:`1.16.2 <2016-06-21>`
@@ -247,10 +263,10 @@ Changelog
   (:ref:`installation docs here <gssapi>`). Mega thanks to Sebastian Deiß, with
   assist by Torsten Landschoff.
 
-    .. note::
-        Unix users should be aware that the ``python-gssapi`` library (a
-        requirement for using this functionality) only appears to support
-        Python 2.7 and up at this time.
+  .. note::
+      Unix users should be aware that the ``python-gssapi`` library (a
+      requirement for using this functionality) only appears to support
+      Python 2.7 and up at this time.
 
 * :bug:`346 major` Fix an issue in private key files' encryption salts that
   could cause tracebacks and file corruption if keys were re-encrypted. Credit
