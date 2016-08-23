@@ -42,6 +42,12 @@ class PKey(object):
 
     # known encryption types for private key files:
     _CIPHER_TABLE = {
+        'AES-256-CBC': {
+            'cipher': algorithms.AES,
+            'keysize': 32,
+            'blocksize': 16,
+            'mode': modes.CBC
+        },
         'AES-128-CBC': {
             'cipher': algorithms.AES,
             'keysize': 16,
@@ -342,7 +348,7 @@ class PKey(object):
         if password is None:
             encryption = serialization.NoEncryption()
         else:
-            encryption = serialization.BestEncryption(password)
+            encryption = serialization.BestAvailableEncryption(password)
 
         f.write(key.private_bytes(
             serialization.Encoding.PEM,
