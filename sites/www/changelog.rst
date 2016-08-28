@@ -2,6 +2,8 @@
 Changelog
 =========
 
+* :bug:`802 (1.16+)` Better align GlobalAlloc argument spec with the API
+  docs, incidentally improving supported Python versions on Windows.
 * :bug:`824` Fix the implementation of ``PKey.write_private_key_file`` (this
   method is only publicly defined on subclasses; the fix was in the private
   real implementation) so it passes the correct params to ``open()``. This bug
