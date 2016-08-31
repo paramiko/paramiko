@@ -342,8 +342,10 @@ class PKey(object):
         if password is None:
             encryption = serialization.NoEncryption()
         else:
-            encryption = serialization.BestAvailableEncryption(password)
-
+            try:
+                encryption = serialization.BestAvailableEncryption(password)
+            except AttributeError:
+                encryption = serialization.BestEncryption(password)
         f.write(key.private_bytes(
             serialization.Encoding.PEM,
             format,
