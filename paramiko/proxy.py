@@ -105,7 +105,8 @@ class ProxyCommand(ClosingContextManager):
             raise ProxyCommandFailure(' '.join(self.cmd), e.strerror)
 
     def close(self):
-        os.kill(self.process.pid, signal.SIGTERM)
+        self.process.kill()
+        self.process.poll()
 
     @property
     def closed(self):
