@@ -1,0 +1,179 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Frequently Asked/Answered Questions &mdash; Paramiko  documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Paramiko  documentation" href="index.html" />
+    <link rel="next" title="Installing" href="installing.html" />
+    <link rel="prev" title="Changelog" href="changelog.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="frequently-asked-answered-questions">
+<h1>Frequently Asked/Answered Questions<a class="headerlink" href="#frequently-asked-answered-questions" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="which-version-should-i-use-i-see-multiple-active-releases">
+<h2>Which version should I use? I see multiple active releases.<a class="headerlink" href="#which-version-should-i-use-i-see-multiple-active-releases" title="Permalink to this headline">¶</a></h2>
+<p>Please see <a class="reference internal" href="installing.html#release-lines"><span class="std std-ref">the installation docs</span></a> which have an explicit
+section about this topic.</p>
+</div>
+<div class="section" id="paramiko-doesn-t-work-with-my-cisco-windows-or-other-non-unix-system">
+<h2>Paramiko doesn&#8217;t work with my Cisco, Windows or other non-Unix system!<a class="headerlink" href="#paramiko-doesn-t-work-with-my-cisco-windows-or-other-non-unix-system" title="Permalink to this headline">¶</a></h2>
+<p>In an ideal world, the developers would love to support every possible target
+system. Unfortunately, volunteer development time and access to non-mainstream
+platforms are limited, meaning that we can only fully support standard OpenSSH
+implementations such as those found on the average Linux distribution (as well
+as on Mac OS X and *BSD.)</p>
+<p>Because of this, <strong>we typically close bug reports for nonstandard SSH
+implementations or host systems</strong>.</p>
+<p>However, <strong>closed does not imply locked</strong> - affected users can still post
+comments on such tickets - and <strong>we will always consider actual patch
+submissions for these issues</strong>, provided they can get +1s from similarly
+affected users and are proven to not break existing functionality.</p>
+</div>
+<div class="section" id="i-m-having-strange-issues-with-my-code-hanging-at-shutdown">
+<h2>I&#8217;m having strange issues with my code hanging at shutdown!<a class="headerlink" href="#i-m-having-strange-issues-with-my-code-hanging-at-shutdown" title="Permalink to this headline">¶</a></h2>
+<p>Make sure you explicitly <code class="docutils literal"><span class="pre">.close()</span></code> your connection objects (usually
+<code class="docutils literal"><span class="pre">SSHClient</span></code>) if you&#8217;re having any sort of hang/freeze at shutdown time!</p>
+<p>Doing so isn&#8217;t strictly necessary 100% of the time, but it is almost always the
+right solution if you run into the various corner cases that cause race
+conditions, etc.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">Paramiko</a></h1>
+
+
+
+<p class="blurb">A Python implementation of SSHv2.</p>
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=paramiko&repo=paramiko&type=watch&count=true&size=large&v=2"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+
+    
+
+<p>
+<a href="https://travis-ci.org/paramiko/paramiko">
+    <img
+        alt="https://secure.travis-ci.org/paramiko/paramiko.svg?branch=master"
+        src="https://secure.travis-ci.org/paramiko/paramiko.svg?branch=master"
+    />
+</a>
+</p>
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="changelog.html">Changelog</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">FAQs</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#which-version-should-i-use-i-see-multiple-active-releases">Which version should I use? I see multiple active releases.</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#paramiko-doesn-t-work-with-my-cisco-windows-or-other-non-unix-system">Paramiko doesn&#8217;t work with my Cisco, Windows or other non-Unix system!</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#i-m-having-strange-issues-with-my-code-hanging-at-shutdown">I&#8217;m having strange issues with my code hanging at shutdown!</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="installing.html">Installing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contact.html">Contact</a></li>
+</ul>
+
+
+<hr />
+<ul>
+    
+    <li class="toctree-l1"><a href="http://docs.paramiko.org">API Docs</a></li>
+    
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016 Jeff Forcier.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.4</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.8</a>
+      
+      |
+      <a href="_sources/faq.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+    <script type="text/javascript">
+
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-18486793-2']);
+      _gaq.push(['_setDomainName', 'none']);
+      _gaq.push(['_setAllowLinker', true]);
+      _gaq.push(['_trackPageview']);
+
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+
+    </script>
+    
+  </body>
+</html>

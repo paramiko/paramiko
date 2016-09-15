@@ -1,0 +1,248 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Installing (1.x) &mdash; Paramiko  documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Paramiko  documentation" href="index.html" />
+    <link rel="up" title="Installing" href="installing.html" />
+    <link rel="next" title="Contributing" href="contributing.html" />
+    <link rel="prev" title="Installing" href="installing.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="installing-1-x">
+<h1>Installing (1.x)<a class="headerlink" href="#installing-1-x" title="Permalink to this headline">¶</a></h1>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Installing Paramiko 2.0 or above? See <a class="reference internal" href="installing.html"><span class="doc">Installing</span></a> instead.</p>
+</div>
+<p>This document includes legacy notes on installing Paramiko 1.x (specifically,
+1.13 and up). Users are strongly encouraged to upgrade to 2.0 when possible;
+PyCrypto (the dependency covered below) is no longer maintained and contains
+security vulnerabilities.</p>
+</div>
+<div class="section" id="general-install-notes">
+<h1>General install notes<a class="headerlink" href="#general-install-notes" title="Permalink to this headline">¶</a></h1>
+<ul>
+<li><p class="first">Python 2.6+ and 3.3+ are supported; Python &lt;=2.5 and 3.0-3.2 are <strong>not
+supported</strong>.</p>
+</li>
+<li><p class="first">See the note in the main install doc about <a class="reference internal" href="installing.html#release-lines"><span class="std std-ref">Release lines</span></a> for details
+on specific versions you may want to install.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">1.x will eventually be entirely end-of-lifed.</p>
+</div>
+</li>
+<li><p class="first">Paramiko 1.7-1.14 have only one dependency: <a class="reference internal" href="#pycrypto"><span class="std std-ref">PyCrypto</span></a>.</p>
+</li>
+<li><p class="first">Paramiko 1.15+ (not including 2.x and above) add a second, pure-Python
+dependency: the <code class="docutils literal"><span class="pre">ecdsa</span></code> module, trivially installable via PyPI.</p>
+</li>
+<li><p class="first">Paramiko 1.15+ (again, not including 2.x and up) also allows you to
+optionally install a few more dependencies to gain support for
+<a class="reference internal" href="#gssapi-on-1x"><span class="std std-ref">GSS-API/Kerberos</span></a>.</p>
+</li>
+<li><p class="first">Users on Windows may want to opt for the <a class="reference internal" href="#pypm"><span class="std std-ref">ActivePython and PyPM</span></a> approach.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="pycrypto">
+<span id="id1"></span><h1>PyCrypto<a class="headerlink" href="#pycrypto" title="Permalink to this headline">¶</a></h1>
+<p><a class="reference external" href="https://www.dlitz.net/software/pycrypto/">PyCrypto</a>  provides the low-level
+(C-based) encryption algorithms we need to implement the SSH protocol. There
+are a couple gotchas associated with installing PyCrypto: its compatibility
+with Python&#8217;s package tools, and the fact that it is a C-based extension.</p>
+<div class="section" id="c-extension">
+<h2>C extension<a class="headerlink" href="#c-extension" title="Permalink to this headline">¶</a></h2>
+<p>Unless you are installing from a precompiled source such as a Debian apt
+repository or RedHat RPM, or using <a class="reference internal" href="#pypm"><span class="std std-ref">pypm</span></a>, you will also need the
+ability to build Python C-based modules from source in order to install
+PyCrypto. Users on <strong>Unix-based platforms</strong> such as Ubuntu or Mac OS X will
+need the traditional C build toolchain installed (e.g. Developer Tools / XCode
+Tools on the Mac, or the <code class="docutils literal"><span class="pre">build-essential</span></code> package on Ubuntu or Debian Linux
+&#8211; basically, anything with <code class="docutils literal"><span class="pre">gcc</span></code>, <code class="docutils literal"><span class="pre">make</span></code> and so forth) as well as the
+Python development libraries, often named <code class="docutils literal"><span class="pre">python-dev</span></code> or similar.</p>
+<p>For <strong>Windows</strong> users we recommend using <a class="reference internal" href="#pypm"><span class="std std-ref">ActivePython and PyPM</span></a>, installing a C
+development environment such as <a class="reference external" href="http://cygwin.com">Cygwin</a> or obtaining a
+precompiled Win32 PyCrypto package from <a class="reference external" href="http://www.voidspace.org.uk/python/modules.shtml#pycrypto">voidspace&#8217;s Python modules page</a>.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Some Windows users whose Python is 64-bit have found that the PyCrypto
+dependency <code class="docutils literal"><span class="pre">winrandom</span></code> may not install properly, leading to ImportErrors.
+In this scenario, you&#8217;ll probably need to compile <code class="docutils literal"><span class="pre">winrandom</span></code> yourself
+via e.g. MS Visual Studio.  See <a class="reference external" href="https://github.com/fabric/fabric/issues/194">Fabric #194</a> for info.</p>
+</div>
+</div>
+</div>
+<div class="section" id="activepython-and-pypm">
+<span id="pypm"></span><h1>ActivePython and PyPM<a class="headerlink" href="#activepython-and-pypm" title="Permalink to this headline">¶</a></h1>
+<p>Windows users who already have ActiveState&#8217;s <a class="reference external" href="http://www.activestate.com/activepython/downloads">ActivePython</a> distribution installed
+may find Paramiko is best installed with <a class="reference external" href="http://code.activestate.com/pypm/">its package manager, PyPM</a>. Below is example output from an
+installation of Paramiko via <code class="docutils literal"><span class="pre">pypm</span></code>:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">C</span><span class="p">:</span>\<span class="o">&gt;</span> <span class="n">pypm</span> <span class="n">install</span> <span class="n">paramiko</span>
+<span class="n">The</span> <span class="n">following</span> <span class="n">packages</span> <span class="n">will</span> <span class="n">be</span> <span class="n">installed</span> <span class="n">into</span> <span class="s2">&quot;%APPDATA%\Python&quot;</span> <span class="p">(</span><span class="mf">2.7</span><span class="p">):</span>
+ <span class="n">paramiko</span><span class="o">-</span><span class="mf">1.7</span><span class="o">.</span><span class="mi">8</span> <span class="n">pycrypto</span><span class="o">-</span><span class="mf">2.4</span>
+<span class="n">Get</span><span class="p">:</span> <span class="p">[</span><span class="n">pypm</span><span class="o">-</span><span class="n">free</span><span class="o">.</span><span class="n">activestate</span><span class="o">.</span><span class="n">com</span><span class="p">]</span> <span class="n">paramiko</span> <span class="mf">1.7</span><span class="o">.</span><span class="mi">8</span>
+<span class="n">Get</span><span class="p">:</span> <span class="p">[</span><span class="n">pypm</span><span class="o">-</span><span class="n">free</span><span class="o">.</span><span class="n">activestate</span><span class="o">.</span><span class="n">com</span><span class="p">]</span> <span class="n">pycrypto</span> <span class="mf">2.4</span>
+<span class="n">Installing</span> <span class="n">paramiko</span><span class="o">-</span><span class="mf">1.7</span><span class="o">.</span><span class="mi">8</span>
+<span class="n">Installing</span> <span class="n">pycrypto</span><span class="o">-</span><span class="mf">2.4</span>
+<span class="n">C</span><span class="p">:</span>\<span class="o">&gt;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="optional-dependencies-for-gss-api-sspi-kerberos">
+<span id="gssapi-on-1x"></span><h1>Optional dependencies for GSS-API / SSPI / Kerberos<a class="headerlink" href="#optional-dependencies-for-gss-api-sspi-kerberos" title="Permalink to this headline">¶</a></h1>
+<p>First, see the main install doc&#8217;s notes: <a class="reference internal" href="installing.html#gssapi"><span class="std std-ref">Optional dependencies for GSS-API / SSPI / Kerberos</span></a> - everything there is
+required for Paramiko 1.x as well.</p>
+<p>Additionally, users of Paramiko 1.x, on all platforms, need a final dependency:
+<a class="reference external" href="https://pypi.python.org/pypi/pyasn1">pyasn1</a> <code class="docutils literal"><span class="pre">0.1.7</span></code> or better.</p>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">Paramiko</a></h1>
+
+
+
+<p class="blurb">A Python implementation of SSHv2.</p>
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=paramiko&repo=paramiko&type=watch&count=true&size=large&v=2"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+
+    
+
+<p>
+<a href="https://travis-ci.org/paramiko/paramiko">
+    <img
+        alt="https://secure.travis-ci.org/paramiko/paramiko.svg?branch=master"
+        src="https://secure.travis-ci.org/paramiko/paramiko.svg?branch=master"
+    />
+</a>
+</p>
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="changelog.html">Changelog</a></li>
+<li class="toctree-l1"><a class="reference internal" href="faq.html">FAQs</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="installing.html">Installing</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="installing.html#paramiko-itself">Paramiko itself</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installing.html#cryptography">Cryptography</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="installing.html#optional-dependencies-for-gss-api-sspi-kerberos">Optional dependencies for GSS-API / SSPI / Kerberos</a><ul class="current">
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Installing (1.x)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#general-install-notes">General install notes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pycrypto">PyCrypto</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#c-extension">C extension</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#activepython-and-pypm">ActivePython and PyPM</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#optional-dependencies-for-gss-api-sspi-kerberos">Optional dependencies for GSS-API / SSPI / Kerberos</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contact.html">Contact</a></li>
+</ul>
+
+
+<hr />
+<ul>
+    
+    <li class="toctree-l1"><a href="http://docs.paramiko.org">API Docs</a></li>
+    
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016 Jeff Forcier.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.4</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.8</a>
+      
+      |
+      <a href="_sources/installing-1.x.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+    <script type="text/javascript">
+
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-18486793-2']);
+      _gaq.push(['_setDomainName', 'none']);
+      _gaq.push(['_setAllowLinker', true]);
+      _gaq.push(['_trackPageview']);
+
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+
+    </script>
+    
+  </body>
+</html>
