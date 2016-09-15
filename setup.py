@@ -26,9 +26,8 @@ are supported.  SFTP client and server mode are both supported too.
 Required packages:
     pyCrypto
 
-To install the `in-development version
-<https://github.com/paramiko/paramiko/tarball/master#egg=paramiko-dev>`_, use
-`pip install paramiko==dev`.
+To install the development version, ``pip install -e
+git+https://github.com/paramiko/paramiko/#egg=paramiko``.
 '''
 
 import sys

@@ -12,10 +12,6 @@ via `pip <http://pip-installer.org>`_::
 
     $ pip install paramiko
 
-.. note::
-    Users who want the bleeding edge can install the development version via
-    ``pip install paramiko==dev``.
-
 We currently support **Python 2.6, 2.7 and 3.3+** (Python **3.2** should also
 work but has a less-strong compatibility guarantee from us.) Users on Python
 2.5 or older are urged to upgrade.
