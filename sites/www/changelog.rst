@@ -2,6 +2,8 @@
 Changelog
 =========
 
+* :bug:`802 (1.16+)` Better align GlobalAlloc argument spec with the API
+  docs, incidentally improving supported Python versions on Windows.
 * :release:`1.16.3 <2016-07-25>`
 * :bug:`673 (1.16+)` (via :issue:`681`) Fix protocol banner read errors
   (``SSHException``) which would occasionally pop up when using
