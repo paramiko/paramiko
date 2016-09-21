@@ -66,6 +66,32 @@ Tools on the Mac, or the ``build-essential`` package on Ubuntu or Debian Linux
 -- basically, anything with ``gcc``, ``make`` and so forth) as well as the
 Python development libraries, often named ``python-dev`` or similar.
 
+Slow vs fast crypto math
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+PyCrypto attempts to use the ``gmp`` C math library if it is present on your
+system, which enables what it internally calls "fastmath" (``_fastmath.so``).
+When those headers are not available, it falls back to "slowmath"
+(``_slowmath.py``) which is a pure-Python implementation.
+
+Real-world tests have shown significant benefits to using the C version of this
+code; thus we strongly recommend you install the ``gmp`` development headers
+**before** installing Paramiko/PyCrypto. E.g.::
+
+    $ apt-get install libgmp-dev # or just apt
+    $ yum install gmp-devel # or dnf
+    $ brew install gmp
+
+If you're unsure which version of math you've ended up with, a quick way to
+check is to examine whether ``_fastmath.so`` or ``_slowmath.py`` appears in the
+output of::
+
+    from Crypto.PublicKey import RSA
+    print(RSA._impl._math)
+
+Windows
+~~~~~~~
+
 For **Windows** users we recommend using :ref:`pypm`, installing a C
 development environment such as `Cygwin <http://cygwin.com>`_ or obtaining a
 precompiled Win32 PyCrypto package from `voidspace's Python modules page
