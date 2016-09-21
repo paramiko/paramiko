@@ -2,6 +2,9 @@
 Changelog
 =========
 
+* :support:`819 backported (>=1.15,<2.0)` Document how lacking ``gmp`` headers
+  at install time can cause a significant performance hit if you build PyCrypto
+  from source. (Most system-distributed packages already have this enabled.)
 * :release:`2.0.2 <2016-07-25>`
 * :release:`1.17.2 <2016-07-25>`
 * :release:`1.16.3 <2016-07-25>`
