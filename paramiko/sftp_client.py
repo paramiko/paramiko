@@ -717,11 +717,20 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         .. versionchanged:: 1.7.4
             Added the ``callback`` param
         """
-        with open(localpath, 'wb') as fl:
-            size = self.getfo(remotepath, fl, callback)
-        s = os.stat(localpath)
-        if s.st_size != size:
-            raise IOError('size mismatch in get!  %d != %d' % (s.st_size, size))
+        backuppath = '{0}.paramiko_bak'.format(localpath)
+        if os.path.isfile(localpath):
+            os.rename(localpath, backuppath)
+        try:
+            with open(localpath, 'wb') as fl:
+                size = self.getfo(remotepath, fl, callback)
+            s = os.stat(localpath)
+            if s.st_size != size:
+                raise IOError('size mismatch in get!  %d != %d' % (s.st_size, size))
+            if os.path.isfile(backuppath):
+                os.remove(backuppath)
+        except:
+            os.rename(backuppath, localpath)
+            raise
 
     ###  internals...
 
