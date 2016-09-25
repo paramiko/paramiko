@@ -2,6 +2,9 @@
 Changelog
 =========
 
+* :bug:`724 (1.16+)` (via :issue:`724`) Prevent SFTP get() method from emptying
+  files when called on closed connections. Thanks to ``@dmitrytokarev`` for the
+  report and Adam (``@operatingops``) for the patch.
 * :support:`819 backported (>=1.15,<2.0)` Document how lacking ``gmp`` headers
   at install time can cause a significant performance hit if you build PyCrypto
   from source. (Most system-distributed packages already have this enabled.)
