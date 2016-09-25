@@ -595,6 +595,7 @@ class SFTPTest (unittest.TestCase):
         """
         verify that get/put work.
         """
+        global sftp
         warnings.filterwarnings('ignore', 'tempnam.*')
 
         fd, localname = mkstemp()
@@ -622,8 +623,19 @@ class SFTPTest (unittest.TestCase):
             self.assertEqual(text, f.read(128))
         self.assertEqual([(41, 41)], saved_progress)
 
-        os.unlink(localname)
         sftp.unlink(FOLDER + '/bunny.txt')
+
+        # If the connection is closed, get() shouldn't change the local file.
+        sftp.close()
+        try:
+            sftp.get('somefile', localname)
+        except socket.error:
+            pass
+        sftp = paramiko.SFTP.from_transport(tc)
+        with open(localname, 'rb') as f:
+            self.assertEqual(text, f.read(128))
+
+        os.unlink(localname)
 
     def test_I_check(self):
         """
