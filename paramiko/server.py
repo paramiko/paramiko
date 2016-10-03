@@ -54,6 +54,7 @@ class ServerInterface (object):
             - `check_channel_window_change_request`
             - `check_channel_x11_request`
             - `check_channel_forward_agent_request`
+            - `check_channel_signal_request`
 
         The ``chanid`` parameter is a small number that uniquely identifies the
         channel within a `.Transport`.  A `.Channel` object is not created
@@ -69,7 +70,7 @@ class ServerInterface (object):
             - ``OPEN_FAILED_CONNECT_FAILED``
             - ``OPEN_FAILED_UNKNOWN_CHANNEL_TYPE``
             - ``OPEN_FAILED_RESOURCE_SHORTAGE``
-        
+
         The default implementation always returns
         ``OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED``.
 
@@ -160,7 +161,7 @@ class ServerInterface (object):
         Note that you don't have to actually verify any key signtature here.
         If you're willing to accept the key, Paramiko will do the work of
         verifying the client's signature.
-        
+
         The default implementation always returns `.AUTH_FAILED`.
 
         :param str username: the username of the authenticating client
@@ -173,21 +174,21 @@ class ServerInterface (object):
         :rtype: int
         """
         return AUTH_FAILED
-    
+
     def check_auth_interactive(self, username, submethods):
         """
         Begin an interactive authentication challenge, if supported.  You
         should override this method in server mode if you want to support the
         ``"keyboard-interactive"`` auth type, which requires you to send a
         series of questions for the client to answer.
-        
+
         Return `.AUTH_FAILED` if this auth method isn't supported.  Otherwise,
         you should return an `.InteractiveQuery` object containing the prompts
         and instructions for the user.  The response will be sent via a call
         to `check_auth_interactive_response`.
-        
+
         The default implementation always returns `.AUTH_FAILED`.
-        
+
         :param str username: the username of the authenticating client
         :param str submethods:
             a comma-separated list of methods preferred by the client (usually
@@ -198,13 +199,13 @@ class ServerInterface (object):
         :rtype: int or `.InteractiveQuery`
         """
         return AUTH_FAILED
-    
+
     def check_auth_interactive_response(self, responses):
         """
         Continue or finish an interactive authentication challenge, if
         supported.  You should override this method in server mode if you want
         to support the ``"keyboard-interactive"`` auth type.
-        
+
         Return `.AUTH_FAILED` if the responses are not accepted,
         `.AUTH_SUCCESSFUL` if the responses are accepted and complete
         the authentication, or `.AUTH_PARTIALLY_SUCCESSFUL` if your
@@ -275,7 +276,7 @@ class ServerInterface (object):
                  `.AUTH_SUCCESSFUL`
         :rtype: int
         :note: Kerberos credential delegation is not supported.
-        :see: `.ssh_gss` `.kex_gss` 
+        :see: `.ssh_gss` `.kex_gss`
         :note: : We are just checking in L{AuthHandler} that the given user is
                  a valid krb5 principal!
                  We don't check if the krb5 principal is allowed to log in on
@@ -303,7 +304,7 @@ class ServerInterface (object):
         UseGSSAPI = False
         GSSAPICleanupCredentials = False
         return UseGSSAPI
-        
+
     def check_port_forward_request(self, address, port):
         """
         Handle a request for port forwarding.  The client is asking that
@@ -312,11 +313,11 @@ class ServerInterface (object):
         address (any address associated with this server) and a port of ``0``
         indicates that no specific port is requested (usually the OS will pick
         a port).
-        
+
         The default implementation always returns ``False``, rejecting the
         port forwarding request.  If the request is accepted, you should return
         the port opened for listening.
-        
+
         :param str address: the requested address
         :param int port: the requested port
         :return:
@@ -324,18 +325,18 @@ class ServerInterface (object):
             to reject
         """
         return False
-    
+
     def cancel_port_forward_request(self, address, port):
         """
         The client would like to cancel a previous port-forwarding request.
         If the given address and port is being forwarded across this ssh
         connection, the port should be closed.
-        
+
         :param str address: the forwarded address
         :param int port: the forwarded port
         """
         pass
-        
+
     def check_global_request(self, kind, msg):
         """
         Handle a global request of the given ``kind``.  This method is called
@@ -354,7 +355,7 @@ class ServerInterface (object):
 
         The default implementation always returns ``False``, indicating that it
         does not support any global requests.
-        
+
         .. note:: Port forwarding requests are handled separately, in
             `check_port_forward_request`.
 
@@ -411,20 +412,20 @@ class ServerInterface (object):
         Determine if a shell command will be executed for the client.  If this
         method returns ``True``, the channel should be connected to the stdin,
         stdout, and stderr of the shell command.
-        
+
         The default implementation always returns ``False``.
-        
+
         :param .Channel channel: the `.Channel` the request arrived on.
         :param str command: the command to execute.
         :return:
             ``True`` if this channel is now hooked up to the stdin, stdout, and
             stderr of the executing command; ``False`` if the command will not
             be executed.
-        
+
         .. versionadded:: 1.1
         """
         return False
-        
+
     def check_channel_subsystem_request(self, channel, name):
         """
         Determine if a requested subsystem will be provided to the client on
@@ -471,15 +472,15 @@ class ServerInterface (object):
         :return: ``True`` if the terminal was resized; ``False`` if not.
         """
         return False
-    
+
     def check_channel_x11_request(self, channel, single_connection, auth_protocol, auth_cookie, screen_number):
         """
         Determine if the client will be provided with an X11 session.  If this
         method returns ``True``, X11 applications should be routed through new
         SSH channels, using `.Transport.open_x11_channel`.
-        
+
         The default implementation always returns ``False``.
-        
+
         :param .Channel channel: the `.Channel` the X11 request arrived on
         :param bool single_connection:
             ``True`` if only a single X11 channel should be opened, else
@@ -529,7 +530,7 @@ class ServerInterface (object):
             - ``OPEN_FAILED_CONNECT_FAILED``
             - ``OPEN_FAILED_UNKNOWN_CHANNEL_TYPE``
             - ``OPEN_FAILED_RESOURCE_SHORTAGE``
-        
+
         The default implementation always returns
         ``OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED``.
 
@@ -562,19 +563,33 @@ class ServerInterface (object):
         """
         return False
 
+    def check_channel_signal_request(self, channel, signal_name):
+        """
+        Check whether a requested signal can be sent to the process/subsystem
+        on the given channel.  This method should return ``True`` if the server
+        is willing to send the signal.
+
+        The default implementation always returns ``False``.
+
+        :param channel: the `.Channel` the env request arrived on
+        :param str signal_name: name of the signal, without the SIG prefix
+        :returns: A boolean
+        """
+        return False
+
 
 class InteractiveQuery (object):
     """
     A query (set of prompts) for a user during interactive authentication.
     """
-    
+
     def __init__(self, name='', instructions='', *prompts):
         """
         Create a new interactive query to send to the client.  The name and
         instructions are optional, but are generally displayed to the end
         user.  A list of prompts may be included, or they may be added via
         the `add_prompt` method.
-        
+
         :param str name: name of this query
         :param str instructions:
             user instructions (usually short) about this query
@@ -588,12 +603,12 @@ class InteractiveQuery (object):
                 self.add_prompt(x)
             else:
                 self.add_prompt(x[0], x[1])
-    
+
     def add_prompt(self, prompt, echo=True):
         """
         Add a prompt to this query.  The prompt should be a (reasonably short)
         string.  Multiple prompts can be added to the same query.
-        
+
         :param str prompt: the user prompt
         :param bool echo:
             ``True`` (default) if the user's response should be echoed;
@@ -634,7 +649,7 @@ class SubsystemHandler (threading.Thread):
         self.__transport = channel.get_transport()
         self.__name = name
         self.__server = server
-        
+
     def get_server(self):
         """
         Return the `.ServerInterface` object associated with this channel and

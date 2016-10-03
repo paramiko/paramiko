@@ -74,7 +74,7 @@ class Channel (ClosingContextManager):
     flow-controlled independently.)  Similarly, if the server isn't reading
     data you send, calls to `send` may block, unless you set a timeout.  This
     is exactly like a normal network socket, so it shouldn't be too surprising.
-    
+
     Instances of this class may be used as context managers.
     """
 
@@ -121,6 +121,8 @@ class Channel (ClosingContextManager):
         self.combine_stderr = False
         self.exit_status = -1
         self.origin_addr = None
+        self.exit_signal = None
+        self.core_dumped = False
 
     def __del__(self):
         try:
@@ -283,12 +285,36 @@ class Channel (ClosingContextManager):
         m.add_int(height_pixels)
         self.transport._send_user_message(m)
 
+    @open_only
+    def send_signal(self, signal_name='TERM'):
+        """
+        Send a signal to the process/service on the remote side of the channel.
+        NOTE: OpenSSH server as of 7.2 does not actually do any action
+        (other than logging) in response to the signal.
+
+        :param string signal_name: signal name (without the SIG prefix)
+
+        :raises SSHException:
+            if the channel was closed
+        """
+        m = Message()
+        m.add_byte(cMSG_CHANNEL_REQUEST)
+        m.add_int(self.remote_chanid)
+        m.add_string('signal')
+        m.add_boolean(False)
+        m.add_string(signal_name)
+        self.transport._send_user_message(m)
+
     def exit_status_ready(self):
         """
         Return true if the remote process has exited and returned an exit
         status. You may use this to poll the process status if you don't
         want to block in `recv_exit_status`. Note that the server may not
-        return an exit status in some cases (like bad servers).
+        return an exit status in some cases (like processes terminated by
+        a signal, or bad servers).
+        In the case where the process was terminated, exit_status will hold
+        the default value (-1), and the exit_signal will hold the name of
+        the signal (without the 'SIG' prefix).
 
         :return:
             ``True`` if `recv_exit_status` will return immediately, else
@@ -364,7 +390,7 @@ class Channel (ClosingContextManager):
         generated, used, and returned.  You will need to use this value to
         verify incoming x11 requests and replace them with the actual local
         x11 cookie (which requires some knowledge of the x11 protocol).
-        
+
         If a handler is passed in, the handler is called from another thread
         whenever a new x11 connection arrives.  The default handler queues up
         incoming x11 connections, which may be retrieved using
@@ -751,7 +777,7 @@ class Channel (ClosingContextManager):
             if sending stalled for longer than the timeout set by `settimeout`.
         :raises socket.error:
             if an error occurred before the entire string was sent.
-        
+
         .. note::
             If the channel is closed while only part of the data has been
             sent, there is no way to determine how much data (if any) was sent.
@@ -775,7 +801,7 @@ class Channel (ClosingContextManager):
             if sending stalled for longer than the timeout set by `settimeout`.
         :raises socket.error:
             if an error occurred before the entire string was sent.
-            
+
         .. versionadded:: 1.1
         """
         while s:
@@ -964,6 +990,17 @@ class Channel (ClosingContextManager):
             self.exit_status = m.get_int()
             self.status_event.set()
             ok = True
+        elif key == 'exit-signal':
+            # Like exit-status, but for when process is killed by a signal.
+            self.exit_signal = m.get_string()
+            self.core_dumped = m.get_boolean()
+            # Ignore these, since OpenSSH does not populate them
+            # self.signal_message = m.get_string()
+            # self.signal_language = m.get_string()
+            # For API waiting on exit_status_ready(), indicate that process
+            # has exited.
+            self.status_event.set()
+            ok = True
         elif key == 'xon-xoff':
             # ignore
             ok = True
@@ -1028,6 +1065,12 @@ class Channel (ClosingContextManager):
                 ok = False
             else:
                 ok = server.check_channel_forward_agent_request(self)
+        elif key == 'signal':
+            name = m.get_string()
+            if server is None:
+                ok = False
+            else:
+                ok = server.check_channel_signal_request(self, name)
         else:
             self._log(DEBUG, 'Unhandled channel request "%s"' % key)
             ok = False
