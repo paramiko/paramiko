@@ -22,18 +22,17 @@ Server-mode SFTP support.
 
 import os
 import errno
+import logging
 import sys
-import traceback
 from hashlib import md5, sha1
 
-from paramiko import util
 from paramiko.sftp import BaseSFTP, Message, SFTP_FAILURE, \
     SFTP_PERMISSION_DENIED, SFTP_NO_SUCH_FILE
 from paramiko.sftp_si import SFTPServerInterface
 from paramiko.sftp_attr import SFTPAttributes
-from paramiko.common import DEBUG, ERROR
 from paramiko.py3compat import long, string_types, bytes_types, b
 from paramiko.server import SubsystemHandler
+
 
 
 # known hash algorithms for the "check-file" extension
@@ -49,6 +48,9 @@ _hash_class = {
     'sha1': sha1,
     'md5': md5,
 }
+
+LOGGER = logging.getLogger(__name__)
+LOGGER.setLevel(logging.INFO)
 
 
 class SFTPServer (BaseSFTP, SubsystemHandler):
@@ -76,7 +78,6 @@ class SFTPServer (BaseSFTP, SubsystemHandler):
         BaseSFTP.__init__(self)
         SubsystemHandler.__init__(self, channel, name, server)
         transport = channel.get_transport()
-        self.logger = util.get_logger(transport.get_log_channel() + '.sftp')
         self.ultra_debug = transport.get_hexdump()
         self.next_handle = 1
         # map of handle-string to SFTPHandle for files & folders:
@@ -84,35 +85,26 @@ class SFTPServer (BaseSFTP, SubsystemHandler):
         self.folder_table = {}
         self.server = sftp_si(server, *largs, **kwargs)
 
-    def _log(self, level, msg):
-        if issubclass(type(msg), list):
-            for m in msg:
-                super(SFTPServer, self)._log(level, m)
-        else:
-            super(SFTPServer, self)._log(level, msg)
-
     def start_subsystem(self, name, transport, channel):
         self.sock = channel
-        self._log(DEBUG, 'Started sftp server on channel %s' % repr(channel))
+        LOGGER.debug('Started sftp server on channel %s' % repr(channel))
         self._send_server_version()
         self.server.session_started()
         while True:
             try:
                 t, data = self._read_packet()
             except EOFError:
-                self._log(DEBUG, 'EOF -- end of session')
+                LOGGER.debug('EOF -- end of session')
                 return
             except Exception as e:
-                self._log(ERROR, 'Exception on channel: ' + str(e))
-                self._log(ERROR, traceback.format_exc())
+                LOGGER.error(e, exc_info=True)
                 return
             msg = Message(data)
             request_number = msg.get_int()
             try:
                 self._process(t, request_number, msg)
             except Exception as e:
-                self._log(ERROR, 'Exception in server processing: ' + str(e))
-                self._log(ERROR, traceback.format_exc())
+                LOGGER.error(e, exc_info=True)
                 # send some kind of failure message, at least
                 try:
                     self._send_status(request_number, SFTP_FAILURE)
@@ -176,7 +168,7 @@ class SFTPServer (BaseSFTP, SubsystemHandler):
             with open(filename, 'w+') as f:
                 f.truncate(attr.st_size)
 
-    ###  internals...
+    #  internals...
 
     def _response(self, request_number, t, *arg):
         msg = Message()
@@ -319,7 +311,7 @@ class SFTPServer (BaseSFTP, SubsystemHandler):
         return flags
 
     def _process(self, t, request_number, msg):
-        self._log(DEBUG, 'Request: %s' % CMD_NAMES[t])
+        LOGGER.debug('Request: %s' % CMD_NAMES[t])
         if t == CMD_OPEN:
             path = msg.get_text()
             flags = self._convert_pflags(msg.get_int())
