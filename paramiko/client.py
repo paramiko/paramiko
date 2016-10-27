@@ -136,7 +136,7 @@ class SSHClient (ClosingContextManager):
 
         # update local host keys from file (in case other SSH clients
         # have written to the known_hosts file meanwhile.
-        if self._host_keys_filename is not None:
+        if self._host_keys_filename is not None and os.path.isfile(self._host_keys_filename):
             self.load_host_keys(self._host_keys_filename)
 
         with open(filename, 'w') as f:
