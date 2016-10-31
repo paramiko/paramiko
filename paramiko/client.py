@@ -139,10 +139,11 @@ class SSHClient (ClosingContextManager):
         if self._host_keys_filename is not None and os.path.isfile(self._host_keys_filename):
             self.load_host_keys(self._host_keys_filename)
 
-        with open(filename, 'w') as f:
-            for hostname, keys in self._host_keys.items():
-                for keytype, key in keys.items():
-                    f.write('%s %s %s\n' % (hostname, keytype, key.get_base64()))
+        try:
+            self._host_keys.save(filename)
+        except IOError as e:
+            warnings.warn("Failed to add the host key to the list of known hosts: (%s): %s" 
+                          % (filename, e), stacklevel=2)
 
     def get_host_keys(self):
         """
