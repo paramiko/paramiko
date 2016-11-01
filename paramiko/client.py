@@ -131,7 +131,7 @@ class SSHClient (ClosingContextManager):
 
         :param str filename: the filename to save to
 
-        :raises IOError: if the file could not be written
+        Issues Warning if file could not be written, but continues.
         """
 
         # update local host keys from file (in case other SSH clients
