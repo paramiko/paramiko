@@ -408,9 +408,9 @@ class SSHClientTest (unittest.TestCase):
                 client.save_host_keys(localname)
                 warnings.simplefilter('default')
                 self.assertTrue(True, 'save_host_keys: issue warning for write failure')
-                self.assertTrue((len(w) == 1), "save_host_keys: Expected one UserError")
+                self.assertTrue((len(w) == 1), "save_host_keys: Expected one UserWarning")
                 self.assertTrue(issubclass(w[0].category, UserWarning), 
-                                "save_host_keys: Expected UserError")
+                                "save_host_keys: Expected UserWarning")
         except self.failureException:
             raise
         except Exception as e:
