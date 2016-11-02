@@ -25,7 +25,9 @@ from __future__ import with_statement
 import gc
 import platform
 import socket
-from tempfile import mkstemp
+from tempfile import mkstemp, mkdtemp
+import shutil
+import stat
 import threading
 import unittest
 import weakref
@@ -369,3 +371,60 @@ class SSHClientTest (unittest.TestCase):
             password='pygmalion',
         )
         self._test_connection(**kwargs)
+
+    def test_9_load_save_host_keys(self):
+        """
+        verify that SSHClient correctly loads and saves a known_hosts file.
+        """
+        warnings.resetwarnings()
+
+        host_key = paramiko.RSAKey.from_private_key_file(test_path('test_rsa.key'))
+        public_host_key = paramiko.RSAKey(data=host_key.asbytes())
+        tempdir = mkdtemp()
+        localname = os.path.join(tempdir, "test_known_hosts")
+
+        client = paramiko.SSHClient()
+        self.assertEquals(0, len(client.get_host_keys()))
+
+        host_id = '[%s]:%d' % (self.addr, self.port)
+
+        self.assertRaises( # should raise IOError for missing file
+            IOError,
+            client.load_host_keys,
+            localname)
+
+        client.get_host_keys().add(host_id, 'ssh-rsa', public_host_key)
+        self.assertEquals(1, len(client.get_host_keys()))
+        self.assertEquals(public_host_key, client.get_host_keys()[host_id]['ssh-rsa'])
+
+        readonly = stat.S_IRUSR
+        readwrite = stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR
+
+        # Make dir read only and fail save with warning no assertion 
+        os.chmod(tempdir, readonly)
+        try:
+            with warnings.catch_warnings(record=True) as w:
+                warnings.simplefilter("always")
+                client.save_host_keys(localname)
+                warnings.simplefilter('default')
+                self.assertTrue(True, 'save_host_keys: issue warning for write failure')
+                self.assertTrue((len(w) == 1), "save_host_keys: Expected one UserWarning")
+                self.assertTrue(issubclass(w[0].category, UserWarning), 
+                                "save_host_keys: Expected UserWarning")
+        except self.failureException:
+            raise
+        except Exception as e:
+            self.assertFalse(True, 'save_host_keys: Got Exception instead of warning')
+
+        self.assertEquals(False, os.path.exists(localname))
+
+        # make dir writable and succeed
+        os.chmod(tempdir, readwrite)
+        # This will issue a warning that it failed to read the file in
+        client.save_host_keys(localname)
+        self.assertEquals(True, os.path.exists(localname))
+
+        with open(localname) as fd:
+            assert host_id in fd.read()
+
+        shutil.rmtree(tempdir)
