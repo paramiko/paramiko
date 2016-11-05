@@ -1153,6 +1153,18 @@ class Transport (threading.Thread, ClosingContextManager):
         """
         return self.active and (self.auth_handler is not None) and self.auth_handler.is_authenticated()
 
+    def is_publickey_probe_ok(self):
+        """
+        Return true if this session is active and public key probe succeeded.
+
+        :return:
+            True if the session is still open and public key would be accepted
+            for authentication; False if key would not be accepted and/or 
+            the session is closed.
+        """
+        return self.active and (self.auth_handler is not None) and self.auth_handler.is_publickey_probe_ok()
+
+
     def get_username(self):
         """
         Return the username this connection is authenticated for.  If the
