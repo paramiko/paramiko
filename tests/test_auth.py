@@ -232,3 +232,18 @@ class AuthTest (unittest.TestCase):
         except:
             etype, evalue, etb = sys.exc_info()
             self.assertTrue(issubclass(etype, AuthenticationException))
+
+    def test_9_pubkey_probe(self):
+        """
+        verify whether publickey would be accepted.
+        """
+        self.start_server()
+        self.tc.connect(hostkey=self.public_host_key)
+        key = DSSKey.from_private_key_file(test_path('test_dss.key'))
+        self.tc.auth_publickey(username='paranoid', key=key, probe=True)
+        self.assertEqual(True, self.tc.is_publickey_probe_ok())
+        self.assertEqual(False, self.tc.is_authenticated())
+        self.tc.auth_publickey(username='paranoid', key=key)
+        self.assertEqual(False, self.tc.is_publickey_probe_ok())
+        self.assertEqual(False, self.tc.is_authenticated())
+        self.verify_finished()

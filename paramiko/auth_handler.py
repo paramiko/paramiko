@@ -588,6 +588,8 @@ class AuthHandler (object):
         # who cares.
 
     def _parse_userauth_info_request(self, m):
+        if self.auth_method == 'publickey':
+            return self._parse_userauth_pk_ok(m)
         if self.auth_method != 'keyboard-interactive':
             raise SSHException('Illegal info request from server')
         title = m.get_text()
@@ -629,5 +631,5 @@ class AuthHandler (object):
         MSG_USERAUTH_BANNER: _parse_userauth_banner,
         MSG_USERAUTH_INFO_REQUEST: _parse_userauth_info_request,
         MSG_USERAUTH_INFO_RESPONSE: _parse_userauth_info_response,
-        MSG_USERAUTH_PK_OK: _parse_userauth_pk_ok,
+        #MSG_USERAUTH_PK_OK: _parse_userauth_pk_ok,
     }
