@@ -34,7 +34,8 @@ from paramiko.common import cMSG_SERVICE_REQUEST, cMSG_DISCONNECT, \
     cMSG_USERAUTH_GSSAPI_ERRTOK, cMSG_USERAUTH_GSSAPI_MIC,\
     MSG_USERAUTH_GSSAPI_RESPONSE, MSG_USERAUTH_GSSAPI_TOKEN, \
     MSG_USERAUTH_GSSAPI_EXCHANGE_COMPLETE, MSG_USERAUTH_GSSAPI_ERROR, \
-    MSG_USERAUTH_GSSAPI_ERRTOK, MSG_USERAUTH_GSSAPI_MIC, MSG_NAMES
+    MSG_USERAUTH_GSSAPI_ERRTOK, MSG_USERAUTH_GSSAPI_MIC, MSG_NAMES, \
+    MSG_USERAUTH_PK_OK
 
 from paramiko.message import Message
 from paramiko.py3compat import bytestring
@@ -60,6 +61,8 @@ class AuthHandler (object):
         self.private_key = None
         self.interactive_handler = None
         self.submethods = None
+        self.publickey_probe = False
+        self.publickey_probe_ok = False
         # for server mode:
         self.auth_username = None
         self.auth_fail_count = 0
@@ -69,6 +72,9 @@ class AuthHandler (object):
 
     def is_authenticated(self):
         return self.authenticated
+
+    def is_publickey_probe_ok(self):
+        return self.publickey_probe_ok
 
     def get_username(self):
         if self.transport.server_mode:
@@ -86,13 +92,15 @@ class AuthHandler (object):
         finally:
             self.transport.lock.release()
 
-    def auth_publickey(self, username, key, event):
+    def auth_publickey(self, username, key, event, probe = False):
         self.transport.lock.acquire()
         try:
             self.auth_event = event
             self.auth_method = 'publickey'
             self.username = username
             self.private_key = key
+            self.publickey_probe = probe
+            self.publickey_probe_ok = False
             self._request_auth()
         finally:
             self.transport.lock.release()
@@ -197,6 +205,8 @@ class AuthHandler (object):
                 raise e
             if event.is_set():
                 break
+        if self.publickey_probe_ok:
+            return []
         if not self.is_authenticated():
             e = self.transport.get_exception()
             if e is None:
@@ -234,12 +244,13 @@ class AuthHandler (object):
                 password = bytestring(self.password)
                 m.add_string(password)
             elif self.auth_method == 'publickey':
-                m.add_boolean(True)
+                m.add_boolean(not self.publickey_probe)
                 m.add_string(self.private_key.get_name())
                 m.add_string(self.private_key)
-                blob = self._get_session_blob(self.private_key, 'ssh-connection', self.username)
-                sig = self.private_key.sign_ssh_data(blob)
-                m.add_string(sig)
+                if not self.publickey_probe:
+                    blob = self._get_session_blob(self.private_key, 'ssh-connection', self.username)
+                    sig = self.private_key.sign_ssh_data(blob)
+                    m.add_string(sig)
             elif self.auth_method == 'keyboard-interactive':
                 m.add_string('')
                 m.add_string(self.submethods)
@@ -545,6 +556,12 @@ class AuthHandler (object):
         if self.auth_event is not None:
             self.auth_event.set()
 
+    def _parse_userauth_pk_ok(self, m):
+        self.transport._log(INFO, 'Authentication (%s) public key OK!' % self.auth_method)
+        self.publickey_probe_ok = True
+        if self.auth_event is not None:
+            self.auth_event.set()
+
     def _parse_userauth_failure(self, m):
         authlist = m.get_list()
         partial = m.get_boolean()
@@ -612,4 +629,5 @@ class AuthHandler (object):
         MSG_USERAUTH_BANNER: _parse_userauth_banner,
         MSG_USERAUTH_INFO_REQUEST: _parse_userauth_info_request,
         MSG_USERAUTH_INFO_RESPONSE: _parse_userauth_info_response,
+        MSG_USERAUTH_PK_OK: _parse_userauth_pk_ok,
     }
