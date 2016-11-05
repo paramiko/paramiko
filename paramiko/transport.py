@@ -1283,7 +1283,7 @@ class Transport (threading.Thread, ClosingContextManager):
                 # attempt failed; just raise the original exception
                 raise e
 
-    def auth_publickey(self, username, key, event=None):
+    def auth_publickey(self, username, key, event=None, probe=False):
         """
         Authenticate to the server using a private key.  The key is used to
         sign data from the server, so it must include the private part.
@@ -1324,7 +1324,7 @@ class Transport (threading.Thread, ClosingContextManager):
         else:
             my_event = event
         self.auth_handler = AuthHandler(self)
-        self.auth_handler.auth_publickey(username, key, my_event)
+        self.auth_handler.auth_publickey(username, key, my_event, probe)
         if event is not None:
             # caller wants to wait for event themselves
             return []
