@@ -398,8 +398,14 @@ class SSHClient (ClosingContextManager):
             self._agent.close()
             self._agent = None
 
-    def exec_command(self, command, bufsize=-1, timeout=None, get_pty=False,
-                     environment=None):
+    def exec_command(
+        self,
+        command,
+        bufsize=-1,
+        timeout=None,
+        get_pty=False,
+        environment=None,
+    ):
         """
         Execute a command on the SSH server.  A new `.Channel` is opened and
         the requested command is executed.  The command's input and output
@@ -412,7 +418,9 @@ class SSHClient (ClosingContextManager):
             Python
         :param int timeout:
             set command's channel timeout. See `Channel.settimeout`.settimeout
-        :param dict environment: the command's environment
+        :param dict environment:
+            a dict of shell environment variables, to be merged into the
+            default environment that the remote command executes within.
         :return:
             the stdin, stdout, and stderr of the executing command, as a
             3-tuple
@@ -423,7 +431,8 @@ class SSHClient (ClosingContextManager):
         if get_pty:
             chan.get_pty()
         chan.settimeout(timeout)
-        chan.update_environment_variables(environment or {})
+        if environment:
+            chan.update_environment(environment)
         chan.exec_command(command)
         stdin = chan.makefile('wb', bufsize)
         stdout = chan.makefile('r', bufsize)

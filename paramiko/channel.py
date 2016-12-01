@@ -284,14 +284,16 @@ class Channel (ClosingContextManager):
         self.transport._send_user_message(m)
 
     @open_only
-    def update_environment_variables(self, environment):
+    def update_environment(self, environment):
         """
-        Updates this channel's environment. This operation is additive - i.e.
-        the current environment is not reset before the given environment
-        variables are set.
+        Updates this channel's remote shell environment.
 
-        :param dict environment: a dictionary containing the name and respective
-            values to set
+        .. note::
+            This operation is additive - i.e. the current environment is not
+            reset before the given environment variables are set.
+
+        :param dict environment:
+            a dictionary containing the name and respective values to set
         :raises SSHException:
             if any of the environment variables was rejected by the server or
             the channel was closed
@@ -300,7 +302,8 @@ class Channel (ClosingContextManager):
             try:
                 self.set_environment_variable(name, value)
             except SSHException as e:
-                raise SSHException("Failed to set environment variable \"%s\"." % name, e)
+                err = "Failed to set environment variable \"{0}\"."
+                raise SSHException(err.format(name), e)
 
     @open_only
     def set_environment_variable(self, name, value):
