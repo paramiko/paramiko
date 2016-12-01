@@ -292,6 +292,10 @@ class Channel (ClosingContextManager):
             This operation is additive - i.e. the current environment is not
             reset before the given environment variables are set.
 
+        .. warning::
+            Servers may silently reject some environment variables; see the
+            warning in `set_environment_variable` for details.
+
         :param dict environment:
             a dictionary containing the name and respective values to set
         :raises SSHException:
@@ -309,6 +313,12 @@ class Channel (ClosingContextManager):
     def set_environment_variable(self, name, value):
         """
         Set the value of an environment variable.
+
+        .. warning::
+            The server may reject this request depending on its ``AcceptEnv``
+            setting; such rejections will fail silently (which is common client
+            practice for this particular request type). Make sure you
+            understand your server's configuration before using!
 
         :param str name: name of the environment variable
         :param str value: value of the environment variable
