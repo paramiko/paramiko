@@ -421,6 +421,11 @@ class SSHClient (ClosingContextManager):
         :param dict environment:
             a dict of shell environment variables, to be merged into the
             default environment that the remote command executes within.
+
+            .. warning::
+                Servers may silently reject some environment variables; see the
+                warning in `.Channel.set_environment_variable` for details.
+
         :return:
             the stdin, stdout, and stderr of the executing command, as a
             3-tuple

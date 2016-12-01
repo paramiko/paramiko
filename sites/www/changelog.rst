@@ -8,7 +8,8 @@ Changelog
   and `Channel.set_environment_variable
   <paramiko.channel.Channel.set_environment_variable>` methods) which
   implements the ``env`` SSH message type. This means the remote shell
-  environment can be set without the use of ``VARNAME=value`` shell tricks.
+  environment can be set without the use of ``VARNAME=value`` shell tricks,
+  provided the server's ``AcceptEnv`` lists the variables you need to set.
   Thanks to Philip Lorenz for the pull request.
 * :support:`819 backported (>=1.15,<2.0)` Document how lacking ``gmp`` headers
   at install time can cause a significant performance hit if you build PyCrypto
