@@ -20,7 +20,7 @@
 
 
 """
-This module provides GSS-API / SSPI  authentication as defined in RFC 4462.
+This module provides GSS-API / SSPI  authentication as defined in :rfc:`4462`.
 
 .. note:: Credential delegation is not supported in server mode.
 
@@ -39,22 +39,8 @@ import sys
 """
 GSS_AUTH_AVAILABLE = True
 
-try:
-    from pyasn1.type.univ import ObjectIdentifier
-    from pyasn1.codec.der import encoder, decoder
-except ImportError:
-    GSS_AUTH_AVAILABLE = False
-    class ObjectIdentifier(object):
-        def __init__(self, *args):
-            raise NotImplementedError("Module pyasn1 not importable")
-
-    class decoder(object):
-        def decode(self):
-            raise NotImplementedError("Module pyasn1 not importable")
-
-    class encoder(object):
-        def encode(self):
-            raise NotImplementedError("Module pyasn1 not importable")
+from pyasn1.type.univ import ObjectIdentifier
+from pyasn1.codec.der import encoder, decoder
 
 from paramiko.common import MSG_USERAUTH_REQUEST
 from paramiko.ssh_exception import SSHException
@@ -360,8 +346,8 @@ class _SSH_GSSAPI(_SSH_GSSAuth):
         :param str mic_token: The MIC token received from the client
         :param str session_id: The SSH session ID
         :param str username: The name of the user who attempts to login
-        :return: 0 if the MIC check was successful and 1 if it fails
-        :rtype: int
+        :return: None if the MIC check was successful
+        :raises gssapi.GSSException: if the MIC check failed
         """
         self._session_id = session_id
         self._username = username
@@ -371,11 +357,7 @@ class _SSH_GSSAPI(_SSH_GSSAuth):
                                         self._username,
                                         self._service,
                                         self._auth_method)
-            try:
-                self._gss_srv_ctxt.verify_mic(mic_field,
-                                              mic_token)
-            except gssapi.BadSignature:
-                raise Exception("GSS-API MIC check failed.")
+            self._gss_srv_ctxt.verify_mic(mic_field, mic_token)
         else:
             # for key exchange with gssapi-keyex
             # client mode
@@ -534,31 +516,26 @@ class _SSH_SSPI(_SSH_GSSAuth):
         :param str mic_token: The MIC token received from the client
         :param str session_id: The SSH session ID
         :param str username: The name of the user who attempts to login
-        :return: 0 if the MIC check was successful
-        :rtype: int
+        :return: None if the MIC check was successful
+        :raises sspi.error: if the MIC check failed
         """
         self._session_id = session_id
         self._username = username
-        mic_status = 1
         if username is not None:
             # server mode
             mic_field = self._ssh_build_mic(self._session_id,
                                             self._username,
                                             self._service,
                                             self._auth_method)
-            mic_status = self._gss_srv_ctxt.verify(mic_field,
-                                                   mic_token)
+            # Verifies data and its signature.  If verification fails, an 
+            # sspi.error will be raised.
+            self._gss_srv_ctxt.verify(mic_field, mic_token)
         else:
             # for key exchange with gssapi-keyex
             # client mode
-            mic_status = self._gss_ctxt.verify(self._session_id,
-                                               mic_token)
-        """
-        The SSPI method C{verify} has no return value, so if no SSPI error
-        is returned, set C{mic_status} to 0.
-        """
-        mic_status = 0
-        return mic_status
+            # Verifies data and its signature.  If verification fails, an 
+            # sspi.error will be raised.
+            self._gss_ctxt.verify(self._session_id, mic_token)
 
     @property
     def credentials_delegated(self):

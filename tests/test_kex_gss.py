@@ -58,13 +58,11 @@ class NullServer (paramiko.ServerInterface):
 
 
 class GSSKexTest(unittest.TestCase):
-
+    @staticmethod
     def init(username, hostname):
         global krb5_principal, targ_name
         krb5_principal = username
         targ_name = hostname
-
-    init = staticmethod(init)
 
     def setUp(self):
         self.username = krb5_principal
@@ -84,7 +82,7 @@ class GSSKexTest(unittest.TestCase):
 
     def _run(self):
         self.socks, addr = self.sockl.accept()
-        self.ts = paramiko.Transport(self.socks, True)
+        self.ts = paramiko.Transport(self.socks, gss_kex=True)
         host_key = paramiko.RSAKey.from_private_key_file('tests/test_rsa.key')
         self.ts.add_server_key(host_key)
         self.ts.set_gss_host(targ_name)
@@ -111,7 +109,7 @@ class GSSKexTest(unittest.TestCase):
                         gss_auth=True, gss_kex=True)
 
         self.event.wait(1.0)
-        self.assert_(self.event.isSet())
+        self.assert_(self.event.is_set())
         self.assert_(self.ts.is_active())
         self.assertEquals(self.username, self.ts.get_username())
         self.assertEquals(True, self.ts.is_authenticated())

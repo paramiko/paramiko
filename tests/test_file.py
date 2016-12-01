@@ -70,13 +70,17 @@ class BufferedFileTest (unittest.TestCase):
 
     def test_2_readline(self):
         f = LoopbackFile('r+U')
-        f.write(b'First line.\nSecond line.\r\nThird line.\nFinal line non-terminated.')
+        f.write(b'First line.\nSecond line.\r\nThird line.\n' +
+                b'Fourth line.\nFinal line non-terminated.')
+
         self.assertEqual(f.readline(), 'First line.\n')
         # universal newline mode should convert this linefeed:
         self.assertEqual(f.readline(), 'Second line.\n')
         # truncated line:
         self.assertEqual(f.readline(7), 'Third l')
         self.assertEqual(f.readline(), 'ine.\n')
+        # newline should be detected and only the fourth line returned
+        self.assertEqual(f.readline(39), 'Fourth line.\n')
         self.assertEqual(f.readline(), 'Final line non-terminated.')
         self.assertEqual(f.readline(), '')
         f.close()
@@ -161,7 +165,28 @@ class BufferedFileTest (unittest.TestCase):
             f.write(buffer(b'Too small.'))
             f.close()
 
+    def test_9_readable(self):
+        f = LoopbackFile('r')
+        self.assertTrue(f.readable())
+        self.assertFalse(f.writable())
+        self.assertFalse(f.seekable())
+        f.close()
+
+    def test_A_writable(self):
+        f = LoopbackFile('w')
+        self.assertTrue(f.writable())
+        self.assertFalse(f.readable())
+        self.assertFalse(f.seekable())
+        f.close()
+
+    def test_B_readinto(self):
+        data = bytearray(5)
+        f = LoopbackFile('r+')
+        f._write(b"hello")
+        f.readinto(data)
+        self.assertEqual(data, b'hello')
+        f.close()
+
 if __name__ == '__main__':
     from unittest import main
     main()
-

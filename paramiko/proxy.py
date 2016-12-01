@@ -24,6 +24,7 @@ import signal
 from subprocess import Popen, PIPE
 from select import select
 import socket
+import time
 
 from paramiko.ssh_exception import ProxyCommandFailure
 from paramiko.util import ClosingContextManager
@@ -37,7 +38,7 @@ class ProxyCommand(ClosingContextManager):
     `.Transport` and `.Packetizer` classes. Using this class instead of a
     regular socket makes it possible to talk with a Popen'd command that will
     proxy traffic between the client and a server hosted in another machine.
-    
+
     Instances of this class may be used as context managers.
     """
     def __init__(self, command_line):
@@ -49,9 +50,9 @@ class ProxyCommand(ClosingContextManager):
             the command that should be executed and used as the proxy.
         """
         self.cmd = shlsplit(command_line)
-        self.process = Popen(self.cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE)
+        self.process = Popen(self.cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE,
+                             bufsize=0)
         self.timeout = None
-        self.buffer = []
 
     def send(self, content):
         """
@@ -76,27 +77,29 @@ class ProxyCommand(ClosingContextManager):
 
         :param int size: how many chars should be read
 
-        :return: the length of the read content, as an `int`
+        :return: the string of bytes read, which may be shorter than requested
         """
         try:
-            start = datetime.now()
-            while len(self.buffer) < size:
+            buffer = b''
+            start = time.time()
+            while len(buffer) < size:
+                select_timeout = None
                 if self.timeout is not None:
-                    elapsed = (datetime.now() - start).microseconds
-                    timeout = self.timeout * 1000 * 1000  # to microseconds
-                    if elapsed >= timeout:
+                    elapsed = (time.time() - start)
+                    if elapsed >= self.timeout:
                         raise socket.timeout()
-                r, w, x = select([self.process.stdout], [], [], 0.0)
+                    select_timeout = self.timeout - elapsed
+
+                r, w, x = select(
+                    [self.process.stdout], [], [], select_timeout)
                 if r and r[0] == self.process.stdout:
-                    b = os.read(self.process.stdout.fileno(), 1)
-                    # Store in class-level buffer for persistence across
-                    # timeouts; this makes us act more like a real socket
-                    # (where timeouts don't actually drop data.)
-                    self.buffer.append(b)
-            result = ''.join(self.buffer)
-            self.buffer = []
-            return result
+                    buffer += os.read(
+                        self.process.stdout.fileno(), size - len(buffer))
+            return buffer
         except socket.timeout:
+            if buffer:
+                # Don't raise socket.timeout, return partial result instead
+                return buffer
             raise  # socket.timeout is a subclass of IOError
         except IOError as e:
             raise ProxyCommandFailure(' '.join(self.cmd), e.strerror)

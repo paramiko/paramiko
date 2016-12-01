@@ -97,7 +97,7 @@ def get_sftp():
 
 
 class SFTPTest (unittest.TestCase):
-
+    @staticmethod
     def init(hostname, username, keyfile, passwd):
         global sftp, tc
 
@@ -129,8 +129,8 @@ class SFTPTest (unittest.TestCase):
             sys.stderr.write('\n')
             sys.exit(1)
         sftp = paramiko.SFTP.from_transport(t)
-    init = staticmethod(init)
 
+    @staticmethod
     def init_loopback():
         global sftp, tc
 
@@ -150,12 +150,11 @@ class SFTPTest (unittest.TestCase):
         event.wait(1.0)
 
         sftp = paramiko.SFTP.from_transport(tc)
-    init_loopback = staticmethod(init_loopback)
 
+    @staticmethod
     def set_big_file_test(onoff):
         global g_big_file_test
         g_big_file_test = onoff
-    set_big_file_test = staticmethod(set_big_file_test)
 
     def setUp(self):
         global FOLDER
@@ -430,6 +429,7 @@ class SFTPTest (unittest.TestCase):
                     line_number += 1
                     pos_list.append(loc)
                     loc = f.tell()
+                self.assertTrue(f.seekable())
                 f.seek(pos_list[6], f.SEEK_SET)
                 self.assertEqual(f.readline(), 'Nouzilly, France.\n')
                 f.seek(pos_list[17], f.SEEK_SET)
@@ -611,7 +611,7 @@ class SFTPTest (unittest.TestCase):
 
         with sftp.open(FOLDER + '/bunny.txt', 'rb') as f:
             self.assertEqual(text, f.read(128))
-        self.assertEqual((41, 41), saved_progress[-1])
+        self.assertEqual([(41, 41)], saved_progress)
 
         os.unlink(localname)
         fd, localname = mkstemp()
@@ -621,7 +621,7 @@ class SFTPTest (unittest.TestCase):
 
         with open(localname, 'rb') as f:
             self.assertEqual(text, f.read(128))
-        self.assertEqual((41, 41), saved_progress[-1])
+        self.assertEqual([(41, 41)], saved_progress)
 
         os.unlink(localname)
         sftp.unlink(FOLDER + '/bunny.txt')
@@ -697,7 +697,8 @@ class SFTPTest (unittest.TestCase):
                 f.readv([(0, 12)])
 
             with sftp.open(FOLDER + '/zero', 'r') as f:
-                f.prefetch()
+                file_size = f.stat().st_size
+                f.prefetch(file_size)
                 f.read(100)
         finally:
             sftp.unlink(FOLDER + '/zero')
@@ -810,6 +811,11 @@ class SFTPTest (unittest.TestCase):
             self.assertEqual(data, NON_UTF8_DATA)
         finally:
             sftp.remove('%s/nonutf8data' % FOLDER)
+
+
+    def test_sftp_attributes_empty_str(self):
+        sftp_attributes = SFTPAttributes()
+        self.assertEqual(str(sftp_attributes), "?---------   1 0        0               0 (unknown date) ?")
 
 
 if __name__ == '__main__':

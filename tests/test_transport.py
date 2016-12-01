@@ -28,14 +28,15 @@ import socket
 import time
 import threading
 import random
+from hashlib import sha1
 import unittest
 
 from paramiko import Transport, SecurityOptions, ServerInterface, RSAKey, DSSKey, \
-    SSHException, ChannelException
+    SSHException, ChannelException, Packetizer
 from paramiko import AUTH_FAILED, AUTH_SUCCESSFUL
 from paramiko import OPEN_SUCCEEDED, OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED
 from paramiko.common import MSG_KEXINIT, cMSG_CHANNEL_WINDOW_ADJUST, \
-                            MIN_PACKET_SIZE, MAX_WINDOW_SIZE, \
+                            MIN_PACKET_SIZE, MIN_WINDOW_SIZE, MAX_WINDOW_SIZE, \
                             DEFAULT_WINDOW_SIZE, DEFAULT_MAX_PACKET_SIZE
 from paramiko.py3compat import bytes
 from paramiko.message import Message
@@ -77,7 +78,7 @@ class NullServer (ServerInterface):
         return OPEN_SUCCEEDED
 
     def check_channel_exec_request(self, channel, command):
-        if command != 'yes':
+        if command != b'yes':
             return False
         return True
 
@@ -136,12 +137,12 @@ class TransportTest(unittest.TestCase):
 
         event = threading.Event()
         self.server = NullServer()
-        self.assertTrue(not event.isSet())
+        self.assertTrue(not event.is_set())
         self.ts.start_server(event, self.server)
         self.tc.connect(hostkey=public_host_key,
                         username='slowdive', password='pygmalion')
         event.wait(1.0)
-        self.assertTrue(event.isSet())
+        self.assertTrue(event.is_set())
         self.assertTrue(self.ts.is_active())
 
     def test_1_security_options(self):
@@ -180,7 +181,7 @@ class TransportTest(unittest.TestCase):
         self.ts.add_server_key(host_key)
         event = threading.Event()
         server = NullServer()
-        self.assertTrue(not event.isSet())
+        self.assertTrue(not event.is_set())
         self.assertEqual(None, self.tc.get_username())
         self.assertEqual(None, self.ts.get_username())
         self.assertEqual(False, self.tc.is_authenticated())
@@ -189,7 +190,7 @@ class TransportTest(unittest.TestCase):
         self.tc.connect(hostkey=public_host_key,
                         username='slowdive', password='pygmalion')
         event.wait(1.0)
-        self.assertTrue(event.isSet())
+        self.assertTrue(event.is_set())
         self.assertTrue(self.ts.is_active())
         self.assertEqual('slowdive', self.tc.get_username())
         self.assertEqual('slowdive', self.ts.get_username())
@@ -205,13 +206,13 @@ class TransportTest(unittest.TestCase):
         self.ts.add_server_key(host_key)
         event = threading.Event()
         server = NullServer()
-        self.assertTrue(not event.isSet())
+        self.assertTrue(not event.is_set())
         self.socks.send(LONG_BANNER)
         self.ts.start_server(event, server)
         self.tc.connect(hostkey=public_host_key,
                         username='slowdive', password='pygmalion')
         event.wait(1.0)
-        self.assertTrue(event.isSet())
+        self.assertTrue(event.is_set())
         self.assertTrue(self.ts.is_active())
 
     def test_4_special(self):
@@ -251,7 +252,7 @@ class TransportTest(unittest.TestCase):
         chan = self.tc.open_session()
         schan = self.ts.accept(1.0)
         try:
-            chan.exec_command('no')
+            chan.exec_command(b'command contains \xfc and is not a valid UTF-8 string')
             self.assertTrue(False)
         except SSHException:
             pass
@@ -447,9 +448,11 @@ class TransportTest(unittest.TestCase):
         bytes = self.tc.packetizer._Packetizer__sent_bytes
         chan.send('x' * 1024)
         bytes2 = self.tc.packetizer._Packetizer__sent_bytes
+        block_size = self.tc._cipher_info[self.tc.local_cipher]['block-size']
+        mac_size = self.tc._mac_info[self.tc.local_mac]['size']
         # tests show this is actually compressed to *52 bytes*!  including packet overhead!  nice!! :)
         self.assertTrue(bytes2 - bytes < 1024)
-        self.assertEqual(52, bytes2 - bytes)
+        self.assertEqual(16 + block_size + mac_size, bytes2 - bytes)
 
         chan.close()
         schan.close()
@@ -680,7 +683,7 @@ class TransportTest(unittest.TestCase):
             def run(self):
                 try:
                     for i in range(1, 1+self.iterations):
-                        if self.done_event.isSet():
+                        if self.done_event.is_set():
                             break
                         self.watchdog_event.set()
                         #print i, "SEND"
@@ -699,7 +702,7 @@ class TransportTest(unittest.TestCase):
 
             def run(self):
                 try:
-                    while not self.done_event.isSet():
+                    while not self.done_event.is_set():
                         if self.chan.recv_ready():
                             chan.recv(65536)
                             self.watchdog_event.set()
@@ -753,12 +756,12 @@ class TransportTest(unittest.TestCase):
 
         # Act as a watchdog timer, checking
         deadlocked = False
-        while not deadlocked and not done_event.isSet():
+        while not deadlocked and not done_event.is_set():
             for event in (st.watchdog_event, rt.watchdog_event):
                 event.wait(timeout)
-                if done_event.isSet():
+                if done_event.is_set():
                     break
-                if not event.isSet():
+                if not event.is_set():
                     deadlocked = True
                     break
                 event.clear()
@@ -779,7 +782,7 @@ class TransportTest(unittest.TestCase):
         """
         verify that we conform to the rfc of packet and window sizes.
         """
-        for val, correct in [(32767, MIN_PACKET_SIZE),
+        for val, correct in [(4095, MIN_PACKET_SIZE),
                              (None, DEFAULT_MAX_PACKET_SIZE),
                              (2**32, MAX_WINDOW_SIZE)]:
             self.assertEqual(self.tc._sanitize_packet_size(val), correct)
@@ -788,7 +791,58 @@ class TransportTest(unittest.TestCase):
         """
         verify that we conform to the rfc of packet and window sizes.
         """
-        for val, correct in [(32767, MIN_PACKET_SIZE),
+        for val, correct in [(32767, MIN_WINDOW_SIZE),
                              (None, DEFAULT_WINDOW_SIZE),
                              (2**32, MAX_WINDOW_SIZE)]:
             self.assertEqual(self.tc._sanitize_window_size(val), correct)
+
+    def test_L_handshake_timeout(self):
+        """
+        verify that we can get a hanshake timeout.
+        """
+        # Tweak client Transport instance's Packetizer instance so
+        # its read_message() sleeps a bit. This helps prevent race conditions
+        # where the client Transport's timeout timer thread doesn't even have
+        # time to get scheduled before the main client thread finishes
+        # handshaking with the server.
+        # (Doing this on the server's transport *sounds* more 'correct' but
+        # actually doesn't work nearly as well for whatever reason.)
+        class SlowPacketizer(Packetizer):
+            def read_message(self):
+                time.sleep(1)
+                return super(SlowPacketizer, self).read_message()
+        # NOTE: prettttty sure since the replaced .packetizer Packetizer is now
+        # no longer doing anything with its copy of the socket...everything'll
+        # be fine. Even tho it's a bit squicky.
+        self.tc.packetizer = SlowPacketizer(self.tc.sock)
+        # Continue with regular test red tape.
+        host_key = RSAKey.from_private_key_file(test_path('test_rsa.key'))
+        public_host_key = RSAKey(data=host_key.asbytes())
+        self.ts.add_server_key(host_key)
+        event = threading.Event()
+        server = NullServer()
+        self.assertTrue(not event.is_set())
+        self.tc.handshake_timeout = 0.000000000001
+        self.ts.start_server(event, server)
+        self.assertRaises(EOFError, self.tc.connect,
+                          hostkey=public_host_key,
+                          username='slowdive',
+                          password='pygmalion')
+
+    def test_M_select_after_close(self):
+        """
+        verify that select works when a channel is already closed.
+        """
+        self.setup_test_server()
+        chan = self.tc.open_session()
+        chan.invoke_shell()
+        schan = self.ts.accept(1.0)
+        schan.close()
+
+        # give client a moment to receive close notification
+        time.sleep(0.1)
+
+        r, w, e = select.select([chan], [], [], 0.1)
+        self.assertEqual([chan], r)
+        self.assertEqual([], w)
+        self.assertEqual([], e)

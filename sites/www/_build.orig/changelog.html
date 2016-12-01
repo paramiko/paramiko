@@ -1,0 +1,1250 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Changelog &mdash; Paramiko  documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Paramiko  documentation" href="index.html" />
+    <link rel="next" title="Frequently Asked/Answered Questions" href="faq.html" />
+    <link rel="prev" title="Welcome to Paramiko!" href="index.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="changelog">
+<h1>Changelog<a class="headerlink" href="#changelog" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="Next 2.x bugfix release">
+<h2 style="margin-bottom: 0.3em;"><a class="reference external" href="https://github.com/paramiko/paramiko/tree/master">Next 2.x bugfix release</a></h2><ul class="simple">
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/758">#758</a><span>:</span> Apply type definitions to <code class="docutils literal"><span class="pre">_winapi</span></code> module from
+<a class="reference external" href="https://github.com/jaraco/jaraco.windows">jaraco.windows</a> 3.6.1. This
+should address issues on Windows platforms that often result in errors like
+<code class="docutils literal"><span class="pre">ArgumentError:</span> <span class="pre">[...]</span> <span class="pre">int</span> <span class="pre">too</span> <span class="pre">long</span> <span class="pre">to</span> <span class="pre">convert</span></code>. Thanks to <code class="docutils literal"><span class="pre">&#64;swohlerLL</span></code>
+for the report and Jason R. Coombs for the patch.</li>
+</ul>
+</div>
+<div class="section" id="Next 1.x bugfix release">
+<h2 style="margin-bottom: 0.3em;"><a class="reference external" href="https://github.com/paramiko/paramiko/tree/master">Next 1.x bugfix release</a></h2><ul class="simple">
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/758">#758</a><span>:</span> Apply type definitions to <code class="docutils literal"><span class="pre">_winapi</span></code> module from
+<a class="reference external" href="https://github.com/jaraco/jaraco.windows">jaraco.windows</a> 3.6.1. This
+should address issues on Windows platforms that often result in errors like
+<code class="docutils literal"><span class="pre">ArgumentError:</span> <span class="pre">[...]</span> <span class="pre">int</span> <span class="pre">too</span> <span class="pre">long</span> <span class="pre">to</span> <span class="pre">convert</span></code>. Thanks to <code class="docutils literal"><span class="pre">&#64;swohlerLL</span></code>
+for the report and Jason R. Coombs for the patch.</li>
+</ul>
+</div>
+<div class="section" id="2.0.1">
+<h2 style="margin-bottom: 0.3em;"><a class="reference external" href="https://github.com/paramiko/paramiko/tree/2.0.1">2.0.1</a> <span style="font-size: 75%;">2016-06-21</span></h2><ul class="simple">
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/537">#537</a><span>:</span> Fix a bug in <a class="reference external" href="/Users/jforcier/Code/oss/paramiko/sites/www/../docs/_build/api/buffered_pipe.html#paramiko.buffered_pipe.BufferedPipe.set_event" title="(in Paramiko v)"><code class="xref py py-obj docutils literal"><span class="pre">BufferedPipe.set_event</span></code></a> which could cause
+deadlocks/hangs when one uses <a class="reference external" href="https://docs.python.org/2.6/library/select.html#select.select" title="(in Python v2.6)"><code class="xref py py-obj docutils literal"><span class="pre">select.select</span></code></a> against
+<a class="reference external" href="/Users/jforcier/Code/oss/paramiko/sites/www/../docs/_build/api/channel.html#paramiko.channel.Channel" title="(in Paramiko v)"><code class="xref py py-obj docutils literal"><span class="pre">Channel</span></code></a> objects (or otherwise calls <a class="reference external" href="/Users/jforcier/Code/oss/paramiko/sites/www/../docs/_build/api/channel.html#paramiko.channel.Channel.fileno" title="(in Paramiko v)"><code class="xref py py-obj docutils literal"><span class="pre">Channel.fileno</span></code></a> after the channel has closed). Thanks to
+Przemysław Strzelczak for the report &amp; reproduction case, and to Krzysztof
+Rusek for the fix.</li>
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/520">#520</a><span>:</span> (Partial fix) Fix at least one instance of race condition
+driven threading hangs at end of the Python interpreter session. (Includes a
+docs update as well - always make sure to <code class="docutils literal"><span class="pre">.close()</span></code> your clients!)</li>
+</ul>
+</div>
+<div class="section" id="1.17.1">
+<h2 style="margin-bottom: 0.3em;"><a class="reference external" href="https://github.com/paramiko/paramiko/tree/1.17.1">1.17.1</a> <span style="font-size: 75%;">2016-06-21</span></h2><ul class="simple">
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/537">#537</a><span>:</span> Fix a bug in <a class="reference external" href="/Users/jforcier/Code/oss/paramiko/sites/www/../docs/_build/api/buffered_pipe.html#paramiko.buffered_pipe.BufferedPipe.set_event" title="(in Paramiko v)"><code class="xref py py-obj docutils literal"><span class="pre">BufferedPipe.set_event</span></code></a> which could cause
+deadlocks/hangs when one uses <a class="reference external" href="https://docs.python.org/2.6/library/select.html#select.select" title="(in Python v2.6)"><code class="xref py py-obj docutils literal"><span class="pre">select.select</span></code></a> against
+<a class="reference external" href="/Users/jforcier/Code/oss/paramiko/sites/www/../docs/_build/api/channel.html#paramiko.channel.Channel" title="(in Paramiko v)"><code class="xref py py-obj docutils literal"><span class="pre">Channel</span></code></a> objects (or otherwise calls <a class="reference external" href="/Users/jforcier/Code/oss/paramiko/sites/www/../docs/_build/api/channel.html#paramiko.channel.Channel.fileno" title="(in Paramiko v)"><code class="xref py py-obj docutils literal"><span class="pre">Channel.fileno</span></code></a> after the channel has closed). Thanks to
+Przemysław Strzelczak for the report &amp; reproduction case, and to Krzysztof
+Rusek for the fix.</li>
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/520">#520</a><span>:</span> (Partial fix) Fix at least one instance of race condition
+driven threading hangs at end of the Python interpreter session. (Includes a
+docs update as well - always make sure to <code class="docutils literal"><span class="pre">.close()</span></code> your clients!)</li>
+</ul>
+</div>
+<div class="section" id="1.16.2">
+<h2 style="margin-bottom: 0.3em;"><a class="reference external" href="https://github.com/paramiko/paramiko/tree/1.16.2">1.16.2</a> <span style="font-size: 75%;">2016-06-21</span></h2><ul class="simple">
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/537">#537</a><span>:</span> Fix a bug in <a class="reference external" href="/Users/jforcier/Code/oss/paramiko/sites/www/../docs/_build/api/buffered_pipe.html#paramiko.buffered_pipe.BufferedPipe.set_event" title="(in Paramiko v)"><code class="xref py py-obj docutils literal"><span class="pre">BufferedPipe.set_event</span></code></a> which could cause
+deadlocks/hangs when one uses <a class="reference external" href="https://docs.python.org/2.6/library/select.html#select.select" title="(in Python v2.6)"><code class="xref py py-obj docutils literal"><span class="pre">select.select</span></code></a> against
+<a class="reference external" href="/Users/jforcier/Code/oss/paramiko/sites/www/../docs/_build/api/channel.html#paramiko.channel.Channel" title="(in Paramiko v)"><code class="xref py py-obj docutils literal"><span class="pre">Channel</span></code></a> objects (or otherwise calls <a class="reference external" href="/Users/jforcier/Code/oss/paramiko/sites/www/../docs/_build/api/channel.html#paramiko.channel.Channel.fileno" title="(in Paramiko v)"><code class="xref py py-obj docutils literal"><span class="pre">Channel.fileno</span></code></a> after the channel has closed). Thanks to
+Przemysław Strzelczak for the report &amp; reproduction case, and to Krzysztof
+Rusek for the fix.</li>
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/520">#520</a><span>:</span> (Partial fix) Fix at least one instance of race condition
+driven threading hangs at end of the Python interpreter session. (Includes a
+docs update as well - always make sure to <code class="docutils literal"><span class="pre">.close()</span></code> your clients!)</li>
+</ul>
+</div>
+<div class="section" id="2.0.0">
+<h2 style="margin-bottom: 0.3em;"><a class="reference external" href="https://github.com/paramiko/paramiko/tree/2.0.0">2.0.0</a> <span style="font-size: 75%;">2016-04-28</span></h2><ul>
+<li><p class="first">[<span style="color: #40A056;">Feature</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/394">#394</a><span>:</span> Replace PyCrypto with the Python Cryptographic Authority
+(PyCA) &#8216;Cryptography&#8217; library suite. This improves security, installability,
+and performance; adds PyPy support; and much more.</p>
+<p>There aren&#8217;t enough ways to thank Alex Gaynor for all of his work on this,
+and then his patience while the maintainer let his PR grow moss for a year
+and change. Paul Kehrer came in with an assist, and I think I saw Olle
+Lundberg, <code class="docutils literal"><span class="pre">&#64;techtonik</span></code> and <code class="docutils literal"><span class="pre">&#64;johnthagen</span></code> supplying backup as well. Thanks
+to all!</p>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p><strong>This is a backwards incompatible change.</strong></p>
+<p>However, <strong>it should only affect installation</strong> requirements; <strong>no API
+changes are intended or expected</strong>. Please report any such breakages as
+bugs.</p>
+<p class="last">See our updated <a class="reference internal" href="installing.html"><span class="doc">installation docs</span></a> for details on what
+is now required to install Paramiko; many/most users should be able to
+simply <code class="docutils literal"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">-U</span> <span class="pre">paramiko</span></code> (especially if you <strong>upgrade to pip
+8</strong>).</p>
+</div>
+</li>
+<li><p class="first">[<span style="color: #40A056;">Feature</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/731">#731</a><span>:</span> (working off the earlier <a class="reference external" href="https://github.com/paramiko/paramiko/issues/611">#611</a>) Add support for 384-
+and 512-bit elliptic curve groups in ECDSA key types (aka
+<code class="docutils literal"><span class="pre">ecdsa-sha2-nistp384</span></code> / <code class="docutils literal"><span class="pre">ecdsa-sha2-nistp521</span></code>). Thanks to Michiel Tiller
+and <code class="docutils literal"><span class="pre">&#64;CrazyCasta</span></code> for the patches.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="1.17.0">
+<h2 style="margin-bottom: 0.3em;"><a class="reference external" href="https://github.com/paramiko/paramiko/tree/1.17.0">1.17.0</a> <span style="font-size: 75%;">2016-04-28</span></h2><ul class="simple">
+<li>[<span style="color: #40A056;">Feature</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/588">#588</a><span>:</span> Add missing file-like object methods for
+<a class="reference external" href="/Users/jforcier/Code/oss/paramiko/sites/www/../docs/_build/api/file.html#paramiko.file.BufferedFile" title="(in Paramiko v)"><code class="xref py py-obj docutils literal"><span class="pre">BufferedFile</span></code></a> and <a class="reference external" href="/Users/jforcier/Code/oss/paramiko/sites/www/../docs/_build/api/sftp.html#paramiko.sftp_file.SFTPFile" title="(in Paramiko v)"><code class="xref py py-obj docutils literal"><span class="pre">SFTPFile</span></code></a>. Thanks to
+Adam Meily for the patch.</li>
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/649">#649</a><span>:</span> Update the module in charge of handling SSH moduli
+so it&#8217;s consistent with OpenSSH behavior re: prime number selection. Thanks
+to Damien Tournoud for catch &amp; patch.</li>
+<li>[<span style="color: #4070A0;">Support</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/636">#636</a><span>:</span> Clean up and enhance the README (and
+rename it to <code class="docutils literal"><span class="pre">README.rst</span></code> from just <code class="docutils literal"><span class="pre">README</span></code>). Thanks to <code class="docutils literal"><span class="pre">&#64;LucasRMehl</span></code>.</li>
+<li>[<span style="color: #4070A0;">Support</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/697">#697</a><span>:</span> Remove whitespace in our
+<code class="docutils literal"><span class="pre">setup.py</span></code>&#8216;s <code class="docutils literal"><span class="pre">install_requires</span></code> as it triggers occasional bugs in some
+versions of <code class="docutils literal"><span class="pre">setuptools</span></code>. Thanks to Justin Lecher for catch &amp; original
+patch.</li>
+<li>[<span style="color: #4070A0;">Support</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/612">#612</a><span>:</span> Identify &amp; work around a race
+condition in the test for handshake timeouts, which was causing frequent test
+failures for a subset of contributors as well as Travis-CI (usually, but not
+always, limited to Python 3.5). Props to Ed Kellett for assistance during
+some of the troubleshooting.</li>
+<li>[<span style="color: #4070A0;">Support</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/621">#621</a><span>:</span> Annotate some public attributes on
+<a class="reference external" href="/Users/jforcier/Code/oss/paramiko/sites/www/../docs/_build/api/channel.html#paramiko.channel.Channel" title="(in Paramiko v)"><code class="xref py py-obj docutils literal"><span class="pre">Channel</span></code></a> such as <code class="docutils literal"><span class="pre">.closed</span></code>. Thanks to Sergey Vasilyev
+for the report.</li>
+<li>[<span style="color: #4070A0;">Support</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/729">#729</a><span>:</span> Clean up <code class="docutils literal"><span class="pre">setup.py</span></code> to always use
+<code class="docutils literal"><span class="pre">setuptools</span></code>, not doing so was a historical artifact from bygone days.
+Thanks to Alex Gaynor.</li>
+</ul>
+</div>
+<div class="section" id="1.16.1">
+<h2 style="margin-bottom: 0.3em;"><a class="reference external" href="https://github.com/paramiko/paramiko/tree/1.16.1">1.16.1</a> <span style="font-size: 75%;">2016-04-28</span></h2><ul class="simple">
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/652">#652</a><span>:</span> Fix behavior of <code class="docutils literal"><span class="pre">gssapi-with-mic</span></code> auth requests so they fail
+gracefully (allowing followup via other auth methods) instead of raising an
+exception. Patch courtesy of <code class="docutils literal"><span class="pre">&#64;jamercee</span></code>.</li>
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/499">#499</a><span>:</span> Strip trailing/leading whitespace from lines when parsing SSH
+config files - this brings things in line with OpenSSH behavior. Thanks to
+Alfredo Esteban for the original report and Nick Pillitteri for the patch.</li>
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/632">#632</a><span>:</span> Fix logic bug in the SFTP client&#8217;s callback-calling functionality;
+previously there was a chance the given callback would fire twice at the end
+of a transfer. Thanks to <code class="docutils literal"><span class="pre">&#64;ab9-er</span></code> for catch &amp; original patch.</li>
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/613">#613</a><span>:</span> (via <a class="reference external" href="https://github.com/paramiko/paramiko/issues/619">#619</a>) Update to <code class="docutils literal"><span class="pre">jaraco.windows</span></code> 3.4.1 to fix some
+errors related to <code class="docutils literal"><span class="pre">ctypes</span></code> on Windows platforms. Credit to Jason R. Coombs.</li>
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/617">#617</a><span>:</span> (aka <a class="reference external" href="https://github.com/fabric/fabric/issues/1429">fabric/fabric#1429</a>; via <a class="reference external" href="https://github.com/paramiko/paramiko/issues/679">#679</a>; related:
+<a class="reference external" href="https://github.com/paramiko/paramiko/issues/678">#678</a>, <a class="reference external" href="https://github.com/paramiko/paramiko/issues/685">#685</a>, <a class="reference external" href="https://github.com/paramiko/paramiko/issues/615">#615</a> &amp; <a class="reference external" href="https://github.com/paramiko/paramiko/issues/616">#616</a>) Fix up
+<a class="reference external" href="/Users/jforcier/Code/oss/paramiko/sites/www/../docs/_build/api/ssh_exception.html#paramiko.ssh_exception.NoValidConnectionsError" title="(in Paramiko v)"><code class="xref py py-obj docutils literal"><span class="pre">NoValidConnectionsError</span></code></a> so it pickles correctly,
+and fix a related Python 3 compatibility issue. Thanks to Rebecca Schlussel
+for the report &amp; Marius Gedminas for the patch.</li>
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/716">#716</a><span>:</span> Fix a Python 3 compatibility issue when handling two-factor
+authentication. Thanks to Mateusz Kowalski for the catch &amp; original patch.</li>
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/577">#577</a><span>:</span> (via <a class="reference external" href="https://github.com/paramiko/paramiko/issues/578">#578</a>; should also fix <a class="reference external" href="https://github.com/paramiko/paramiko/issues/718">#718</a>, <a class="reference external" href="https://github.com/paramiko/paramiko/issues/560">#560</a>) Fix
+stalled/hung SFTP downloads by cleaning up some threading lock issues. Thanks
+to Stephen C. Pope for the patch.</li>
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/676">#676</a><span>:</span> (via <a class="reference external" href="https://github.com/paramiko/paramiko/issues/677">#677</a>) Fix a backwards incompatibility issue that
+cropped up in <code class="xref py py-obj docutils literal"><span class="pre">SFTPFile.prefetch</span></code> re: the
+erroneously non-optional <code class="docutils literal"><span class="pre">file_size</span></code> parameter. Should only affect users
+who manually call <code class="docutils literal"><span class="pre">prefetch</span></code>. Thanks to <code class="docutils literal"><span class="pre">&#64;stevevanhooser</span></code> for catch &amp;
+patch.</li>
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/670">#670</a><span>:</span> Due to an earlier bugfix, less-specific <code class="docutils literal"><span class="pre">Host</span></code> blocks&#8217;
+<code class="docutils literal"><span class="pre">ProxyCommand</span></code> values were overriding <code class="docutils literal"><span class="pre">ProxyCommand</span> <span class="pre">none</span></code> in
+more-specific <code class="docutils literal"><span class="pre">Host</span></code> blocks. This has been fixed in a backwards compatible
+manner (i.e. <code class="docutils literal"><span class="pre">ProxyCommand</span> <span class="pre">none</span></code> continues to appear as a total lack of any
+<code class="docutils literal"><span class="pre">proxycommand</span></code> key in parsed config structures). Thanks to Pat Brisbin for
+the catch.</li>
+<li>[<span style="color: #4070A0;">Support</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/636">#636</a><span>:</span> Clean up and enhance the README (and
+rename it to <code class="docutils literal"><span class="pre">README.rst</span></code> from just <code class="docutils literal"><span class="pre">README</span></code>). Thanks to <code class="docutils literal"><span class="pre">&#64;LucasRMehl</span></code>.</li>
+<li>[<span style="color: #4070A0;">Support</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/697">#697</a><span>:</span> Remove whitespace in our
+<code class="docutils literal"><span class="pre">setup.py</span></code>&#8216;s <code class="docutils literal"><span class="pre">install_requires</span></code> as it triggers occasional bugs in some
+versions of <code class="docutils literal"><span class="pre">setuptools</span></code>. Thanks to Justin Lecher for catch &amp; original
+patch.</li>
+<li>[<span style="color: #4070A0;">Support</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/612">#612</a><span>:</span> Identify &amp; work around a race
+condition in the test for handshake timeouts, which was causing frequent test
+failures for a subset of contributors as well as Travis-CI (usually, but not
+always, limited to Python 3.5). Props to Ed Kellett for assistance during
+some of the troubleshooting.</li>
+<li>[<span style="color: #4070A0;">Support</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/621">#621</a><span>:</span> Annotate some public attributes on
+<a class="reference external" href="/Users/jforcier/Code/oss/paramiko/sites/www/../docs/_build/api/channel.html#paramiko.channel.Channel" title="(in Paramiko v)"><code class="xref py py-obj docutils literal"><span class="pre">Channel</span></code></a> such as <code class="docutils literal"><span class="pre">.closed</span></code>. Thanks to Sergey Vasilyev
+for the report.</li>
+<li>[<span style="color: #4070A0;">Support</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/729">#729</a><span>:</span> Clean up <code class="docutils literal"><span class="pre">setup.py</span></code> to always use
+<code class="docutils literal"><span class="pre">setuptools</span></code>, not doing so was a historical artifact from bygone days.
+Thanks to Alex Gaynor.</li>
+</ul>
+</div>
+<div class="section" id="1.15.5">
+<h2 style="margin-bottom: 0.3em;"><a class="reference external" href="https://github.com/paramiko/paramiko/tree/1.15.5">1.15.5</a> <span style="font-size: 75%;">2016-04-28</span></h2><ul class="simple">
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/401">#401</a><span>:</span> Fix line number reporting in log output regarding invalid
+<code class="docutils literal"><span class="pre">known_hosts</span></code> line entries. Thanks to Dylan Thacker-Smith for catch &amp;
+patch.</li>
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/652">#652</a><span>:</span> Fix behavior of <code class="docutils literal"><span class="pre">gssapi-with-mic</span></code> auth requests so they fail
+gracefully (allowing followup via other auth methods) instead of raising an
+exception. Patch courtesy of <code class="docutils literal"><span class="pre">&#64;jamercee</span></code>.</li>
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/499">#499</a><span>:</span> Strip trailing/leading whitespace from lines when parsing SSH
+config files - this brings things in line with OpenSSH behavior. Thanks to
+Alfredo Esteban for the original report and Nick Pillitteri for the patch.</li>
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/632">#632</a><span>:</span> Fix logic bug in the SFTP client&#8217;s callback-calling functionality;
+previously there was a chance the given callback would fire twice at the end
+of a transfer. Thanks to <code class="docutils literal"><span class="pre">&#64;ab9-er</span></code> for catch &amp; original patch.</li>
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/613">#613</a><span>:</span> (via <a class="reference external" href="https://github.com/paramiko/paramiko/issues/619">#619</a>) Update to <code class="docutils literal"><span class="pre">jaraco.windows</span></code> 3.4.1 to fix some
+errors related to <code class="docutils literal"><span class="pre">ctypes</span></code> on Windows platforms. Credit to Jason R. Coombs.</li>
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/617">#617</a><span>:</span> (aka <a class="reference external" href="https://github.com/fabric/fabric/issues/1429">fabric/fabric#1429</a>; via <a class="reference external" href="https://github.com/paramiko/paramiko/issues/679">#679</a>; related:
+<a class="reference external" href="https://github.com/paramiko/paramiko/issues/678">#678</a>, <a class="reference external" href="https://github.com/paramiko/paramiko/issues/685">#685</a>, <a class="reference external" href="https://github.com/paramiko/paramiko/issues/615">#615</a> &amp; <a class="reference external" href="https://github.com/paramiko/paramiko/issues/616">#616</a>) Fix up
+<a class="reference external" href="/Users/jforcier/Code/oss/paramiko/sites/www/../docs/_build/api/ssh_exception.html#paramiko.ssh_exception.NoValidConnectionsError" title="(in Paramiko v)"><code class="xref py py-obj docutils literal"><span class="pre">NoValidConnectionsError</span></code></a> so it pickles correctly,
+and fix a related Python 3 compatibility issue. Thanks to Rebecca Schlussel
+for the report &amp; Marius Gedminas for the patch.</li>
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/716">#716</a><span>:</span> Fix a Python 3 compatibility issue when handling two-factor
+authentication. Thanks to Mateusz Kowalski for the catch &amp; original patch.</li>
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/577">#577</a><span>:</span> (via <a class="reference external" href="https://github.com/paramiko/paramiko/issues/578">#578</a>; should also fix <a class="reference external" href="https://github.com/paramiko/paramiko/issues/718">#718</a>, <a class="reference external" href="https://github.com/paramiko/paramiko/issues/560">#560</a>) Fix
+stalled/hung SFTP downloads by cleaning up some threading lock issues. Thanks
+to Stephen C. Pope for the patch.</li>
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/676">#676</a><span>:</span> (via <a class="reference external" href="https://github.com/paramiko/paramiko/issues/677">#677</a>) Fix a backwards incompatibility issue that
+cropped up in <code class="xref py py-obj docutils literal"><span class="pre">SFTPFile.prefetch</span></code> re: the
+erroneously non-optional <code class="docutils literal"><span class="pre">file_size</span></code> parameter. Should only affect users
+who manually call <code class="docutils literal"><span class="pre">prefetch</span></code>. Thanks to <code class="docutils literal"><span class="pre">&#64;stevevanhooser</span></code> for catch &amp;
+patch.</li>
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/670">#670</a><span>:</span> Due to an earlier bugfix, less-specific <code class="docutils literal"><span class="pre">Host</span></code> blocks&#8217;
+<code class="docutils literal"><span class="pre">ProxyCommand</span></code> values were overriding <code class="docutils literal"><span class="pre">ProxyCommand</span> <span class="pre">none</span></code> in
+more-specific <code class="docutils literal"><span class="pre">Host</span></code> blocks. This has been fixed in a backwards compatible
+manner (i.e. <code class="docutils literal"><span class="pre">ProxyCommand</span> <span class="pre">none</span></code> continues to appear as a total lack of any
+<code class="docutils literal"><span class="pre">proxycommand</span></code> key in parsed config structures). Thanks to Pat Brisbin for
+the catch.</li>
+<li>[<span style="color: #4070A0;">Support</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/525">#525</a><span>:</span> Update the vendored Windows API addon to a more
+recent edition. Also fixes <a class="reference external" href="https://github.com/paramiko/paramiko/issues/193">#193</a>, <a class="reference external" href="https://github.com/paramiko/paramiko/issues/488">#488</a>, <a class="reference external" href="https://github.com/paramiko/paramiko/issues/498">#498</a>. Thanks
+to Jason Coombs.</li>
+<li>[<span style="color: #4070A0;">Support</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/636">#636</a><span>:</span> Clean up and enhance the README (and
+rename it to <code class="docutils literal"><span class="pre">README.rst</span></code> from just <code class="docutils literal"><span class="pre">README</span></code>). Thanks to <code class="docutils literal"><span class="pre">&#64;LucasRMehl</span></code>.</li>
+<li>[<span style="color: #4070A0;">Support</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/697">#697</a><span>:</span> Remove whitespace in our
+<code class="docutils literal"><span class="pre">setup.py</span></code>&#8216;s <code class="docutils literal"><span class="pre">install_requires</span></code> as it triggers occasional bugs in some
+versions of <code class="docutils literal"><span class="pre">setuptools</span></code>. Thanks to Justin Lecher for catch &amp; original
+patch.</li>
+<li>[<span style="color: #4070A0;">Support</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/612">#612</a><span>:</span> Identify &amp; work around a race
+condition in the test for handshake timeouts, which was causing frequent test
+failures for a subset of contributors as well as Travis-CI (usually, but not
+always, limited to Python 3.5). Props to Ed Kellett for assistance during
+some of the troubleshooting.</li>
+<li>[<span style="color: #4070A0;">Support</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/621">#621</a><span>:</span> Annotate some public attributes on
+<a class="reference external" href="/Users/jforcier/Code/oss/paramiko/sites/www/../docs/_build/api/channel.html#paramiko.channel.Channel" title="(in Paramiko v)"><code class="xref py py-obj docutils literal"><span class="pre">Channel</span></code></a> such as <code class="docutils literal"><span class="pre">.closed</span></code>. Thanks to Sergey Vasilyev
+for the report.</li>
+<li>[<span style="color: #4070A0;">Support</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/729">#729</a><span>:</span> Clean up <code class="docutils literal"><span class="pre">setup.py</span></code> to always use
+<code class="docutils literal"><span class="pre">setuptools</span></code>, not doing so was a historical artifact from bygone days.
+Thanks to Alex Gaynor.</li>
+</ul>
+</div>
+<div class="section" id="1.16.0">
+<h2 style="margin-bottom: 0.3em;"><a class="reference external" href="https://github.com/paramiko/paramiko/tree/1.16.0">1.16.0</a> <span style="font-size: 75%;">2015-11-04</span></h2><ul>
+<li><p class="first">[<span style="color: #40A056;">Feature</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/167">#167</a><span>:</span> Add <a class="reference external" href="/Users/jforcier/Code/oss/paramiko/sites/www/../docs/_build/api/config.html#paramiko.config.SSHConfig.get_hostnames" title="(in Paramiko v)"><code class="xref py py-obj docutils literal"><span class="pre">get_hostnames</span></code></a> for easier
+introspection of a loaded SSH config file or object. Courtesy of Søren
+Løvborg.</p>
+</li>
+<li><p class="first">[<span style="color: #40A056;">Feature</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/356">#356</a><span>:</span> (also <a class="reference external" href="https://github.com/paramiko/paramiko/issues/596">#596</a>, <a class="reference external" href="https://github.com/paramiko/paramiko/issues/365">#365</a>, <a class="reference external" href="https://github.com/paramiko/paramiko/issues/341">#341</a>, <a class="reference external" href="https://github.com/paramiko/paramiko/issues/164">#164</a>,
+<a class="reference external" href="https://github.com/paramiko/paramiko/issues/581">#581</a>, and a bunch of other duplicates besides) Add support for SHA-2
+based key exchange (kex) algorithm <code class="docutils literal"><span class="pre">diffie-hellman-group-exchange-sha256</span></code>
+and (H)MAC algorithms <code class="docutils literal"><span class="pre">hmac-sha2-256</span></code> and <code class="docutils literal"><span class="pre">hmac-sha2-512</span></code>.</p>
+<p>This change includes tweaks to debug-level logging regarding
+algorithm-selection handshakes; the old all-in-one log line is now multiple
+easier-to-read, printed-at-handshake-time log lines.</p>
+<p>Thanks to the many people who submitted patches for this functionality and/or
+assisted in testing those patches. That list includes but is not limited to,
+and in no particular order: Matthias Witte, Dag Wieers, Ash Berlin, Etienne
+Perot, Gert van Dijk, <code class="docutils literal"><span class="pre">&#64;GuyShaanan</span></code>, Aaron Bieber, <code class="docutils literal"><span class="pre">&#64;cyphase</span></code>, and Eric
+Brown.</p>
+</li>
+<li><p class="first">[<span style="color: #40A056;">Feature</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/604">#604</a><span>:</span> Add support for the <code class="docutils literal"><span class="pre">aes192-ctr</span></code> and <code class="docutils literal"><span class="pre">aes192-cbc</span></code> ciphers.
+Thanks to Michiel Tiller for noticing it was as easy as tweaking some key
+sizes :D</p>
+</li>
+<li><p class="first">[<span style="color: #40A056;">Feature</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/467">#467</a><span>:</span> (also <a class="reference external" href="https://github.com/paramiko/paramiko/issues/139">#139</a>, <a class="reference external" href="https://github.com/paramiko/paramiko/issues/412">#412</a>) Fully enable two-factor
+authentication (e.g. when a server requires <code class="docutils literal"><span class="pre">AuthenticationMethods</span>
+<span class="pre">pubkey,keyboard-interactive</span></code>). Thanks to <code class="docutils literal"><span class="pre">&#64;perryjrandall</span></code> for the patch
+and to <code class="docutils literal"><span class="pre">&#64;nevins-b</span></code> and Matt Robenolt for additional support.</p>
+</li>
+<li><p class="first">[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/22">#22</a><span>:</span> Try harder to connect to multiple network families (e.g. IPv4
+vs IPv6) in case of connection issues; this helps with problems such as hosts
+which resolve both IPv4 and IPv6 addresses but are only listening on IPv4.
+Thanks to Dries Desmet for original report and Torsten Landschoff for the
+foundational patchset.</p>
+</li>
+<li><p class="first">[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/502">#502</a><span>:</span> Fix &#8216;exec&#8217; requests in server mode to use <code class="docutils literal"><span class="pre">get_string</span></code>
+instead of <code class="docutils literal"><span class="pre">get_text</span></code> to avoid <code class="docutils literal"><span class="pre">UnicodeDecodeError</span></code> on non-UTF-8 input.
+Thanks to Anselm Kruis for the patch &amp; discussion.</p>
+</li>
+<li><p class="first">[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/194">#194</a><span>:</span> (also <a class="reference external" href="https://github.com/paramiko/paramiko/issues/562">#562</a>, <a class="reference external" href="https://github.com/paramiko/paramiko/issues/530">#530</a>, <a class="reference external" href="https://github.com/paramiko/paramiko/issues/576">#576</a>) Streamline
+use of <code class="docutils literal"><span class="pre">stat</span></code> when downloading SFTP files via <a class="reference external" href="/Users/jforcier/Code/oss/paramiko/sites/www/../docs/_build/api/sftp.html#paramiko.sftp_client.SFTPClient.get" title="(in Paramiko v)"><code class="xref py py-obj docutils literal"><span class="pre">SFTPClient.get</span></code></a>; this avoids triggering bugs in some
+off-spec SFTP servers such as IBM Sterling. Thanks to <code class="docutils literal"><span class="pre">&#64;muraleee</span></code> for the
+initial report and to Torkil Gustavsen for the patch.</p>
+</li>
+<li><p class="first">[<span style="color: #4070A0;">Support</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/419">#419</a><span>:</span> Modernize a bunch of the codebase internals to
+leverage decorators. Props to <code class="docutils literal"><span class="pre">&#64;beckjake</span></code> for realizing we&#8217;re no longer on
+Python 2.2 :D</p>
+</li>
+<li><p class="first">[<span style="color: #4070A0;">Support</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/421">#421</a><span>:</span> Modernize threading calls to use newer API. Thanks
+to Olle Lundberg.</p>
+</li>
+<li><p class="first">[<span style="color: #4070A0;">Support</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/422">#422</a><span>:</span> Clean up some unused imports. Courtesy of Olle
+Lundberg.</p>
+</li>
+<li><p class="first">[<span style="color: #4070A0;">Support</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/431">#431</a><span>:</span> Replace handrolled <code class="docutils literal"><span class="pre">ssh_config</span></code> parsing code with
+use of the <code class="docutils literal"><span class="pre">shlex</span></code> module. Thanks to Yan Kalchevskiy.</p>
+</li>
+<li><p class="first">[<span style="color: #4070A0;">Support</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/582">#582</a><span>:</span> Fix some old <code class="docutils literal"><span class="pre">setup.py</span></code> related helper code which was
+breaking <code class="docutils literal"><span class="pre">bdist_dumb</span></code> on Mac OS X. Thanks to Peter Odding for the patch.</p>
+</li>
+<li><p class="first">[<span style="color: #4070A0;">Support</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/516">#516</a><span>:</span> Document <a class="reference external" href="/Users/jforcier/Code/oss/paramiko/sites/www/../docs/_build/api/agent.html#paramiko.agent.AgentRequestHandler" title="(in Paramiko v)"><code class="xref py py-obj docutils literal"><span class="pre">AgentRequestHandler</span></code></a>.
+Thanks to <code class="docutils literal"><span class="pre">&#64;toejough</span></code> for report &amp; suggestions.</p>
+</li>
+<li><p class="first">[<span style="color: #4070A0;">Support</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/554">#554</a><span>:</span> Fix inaccuracies in the docstring for the ECDSA key
+class. Thanks to Jared Hance for the patch.</p>
+</li>
+<li><p class="first">[<span style="color: #4070A0;">Support</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/594">#594</a><span>:</span> Correct some post-Python3-port docstrings to
+specify <code class="docutils literal"><span class="pre">bytes</span></code> type instead of <code class="docutils literal"><span class="pre">str</span></code>. Credit to <code class="docutils literal"><span class="pre">&#64;redixin</span></code>.</p>
+</li>
+<li><p class="first">[<span style="color: #4070A0;">Support</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/525">#525</a><span>:</span> Update the vendored Windows API addon to a more
+recent edition. Also fixes <a class="reference external" href="https://github.com/paramiko/paramiko/issues/193">#193</a>, <a class="reference external" href="https://github.com/paramiko/paramiko/issues/488">#488</a>, <a class="reference external" href="https://github.com/paramiko/paramiko/issues/498">#498</a>. Thanks
+to Jason Coombs.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="1.15.4">
+<h2 style="margin-bottom: 0.3em;"><a class="reference external" href="https://github.com/paramiko/paramiko/tree/1.15.4">1.15.4</a> <span style="font-size: 75%;">2015-11-02</span></h2><ul class="simple">
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/565">#565</a><span>:</span> Don&#8217;t explode with <code class="docutils literal"><span class="pre">IndexError</span></code> when reading private key files
+lacking an <code class="docutils literal"><span class="pre">-----END</span> <span class="pre">&lt;type&gt;</span> <span class="pre">PRIVATE</span> <span class="pre">KEY-----</span></code> footer. Patch courtesy of
+Prasanna Santhanam.</li>
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/359">#359</a><span>:</span> Use correct attribute name when trying to use Python 3&#8217;s
+<code class="docutils literal"><span class="pre">int.bit_length</span></code> method; prior to fix, the Python 2 custom fallback
+implementation was always used, even on Python 3. Thanks to Alex Gaynor.</li>
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/366">#366</a><span>:</span> Fix <code class="xref py py-obj docutils literal"><span class="pre">SFTPAttributes</span></code> so its string
+representation doesn&#8217;t raise exceptions on empty/initialized instances. Patch
+by Ulrich Petri.</li>
+<li>[<span style="color: #4070A0;">Support</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/594">#594</a><span>:</span> Correct some post-Python3-port docstrings to
+specify <code class="docutils literal"><span class="pre">bytes</span></code> type instead of <code class="docutils literal"><span class="pre">str</span></code>. Credit to <code class="docutils literal"><span class="pre">&#64;redixin</span></code>.</li>
+</ul>
+</div>
+<div class="section" id="1.14.3">
+<h2 style="margin-bottom: 0.3em;"><a class="reference external" href="https://github.com/paramiko/paramiko/tree/1.14.3">1.14.3</a> <span style="font-size: 75%;">2015-11-02</span></h2><ul class="simple">
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/402">#402</a><span>:</span> Check to see if an SSH agent is actually present before trying to
+forward it to the remote end. This replaces what was usually a useless
+<code class="docutils literal"><span class="pre">TypeError</span></code> with a human-readable
+<a class="reference external" href="/Users/jforcier/Code/oss/paramiko/sites/www/../docs/_build/api/ssh_exception.html#paramiko.ssh_exception.AuthenticationException" title="(in Paramiko v)"><code class="xref py py-obj docutils literal"><span class="pre">AuthenticationException</span></code></a>. Credit to Ken Jordan for
+the fix and Yvan Marques for original report.</li>
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/353">#353</a><span>:</span> (via <a class="reference external" href="https://github.com/paramiko/paramiko/issues/482">#482</a>) Fix a bug introduced in the Python 3 port
+which caused <code class="docutils literal"><span class="pre">OverFlowError</span></code> (and other symptoms) in SFTP functionality.
+Thanks to <code class="docutils literal"><span class="pre">&#64;dboreham</span></code> for leading the troubleshooting charge, and to
+Scott Maxwell for the final patch.</li>
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/469">#469</a><span>:</span> (also <a class="reference external" href="https://github.com/paramiko/paramiko/issues/488">#488</a>, <a class="reference external" href="https://github.com/paramiko/paramiko/issues/461">#461</a> and like a dozen others) Fix a
+typo introduced in the 1.15 release which broke WinPageant support. Thanks to
+everyone who submitted patches, and to Steve Cohen who was the lucky winner
+of the cherry-pick lottery.</li>
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/404">#404</a><span>:</span> Print details when displaying
+<a class="reference external" href="/Users/jforcier/Code/oss/paramiko/sites/www/../docs/_build/api/ssh_exception.html#paramiko.ssh_exception.BadHostKeyException" title="(in Paramiko v)"><code class="xref py py-obj docutils literal"><span class="pre">BadHostKeyException</span></code></a> objects (expected vs received
+data) instead of just &#8220;hey shit broke&#8221;. Patch credit: Loic Dachary.</li>
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/490">#490</a><span>:</span> Skip invalid/unparseable lines in <code class="docutils literal"><span class="pre">known_hosts</span></code> files, instead
+of raising <a class="reference external" href="/Users/jforcier/Code/oss/paramiko/sites/www/../docs/_build/api/ssh_exception.html#paramiko.ssh_exception.SSHException" title="(in Paramiko v)"><code class="xref py py-obj docutils literal"><span class="pre">SSHException</span></code></a>. This brings Paramiko&#8217;s
+behavior more in line with OpenSSH, which silently ignores such input. Catch
+&amp; patch courtesy of Martin Topholm.</li>
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/491">#491</a><span>:</span> (combines <a class="reference external" href="https://github.com/paramiko/paramiko/issues/62">#62</a> and <a class="reference external" href="https://github.com/paramiko/paramiko/issues/439">#439</a>) Implement timeout
+functionality to address hangs from dropped network connections and/or failed
+handshakes. Credit to <code class="docutils literal"><span class="pre">&#64;vazir</span></code> and <code class="docutils literal"><span class="pre">&#64;dacut</span></code> for the original patches and
+to Olle Lundberg for reimplementation.</li>
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/565">#565</a><span>:</span> Don&#8217;t explode with <code class="docutils literal"><span class="pre">IndexError</span></code> when reading private key files
+lacking an <code class="docutils literal"><span class="pre">-----END</span> <span class="pre">&lt;type&gt;</span> <span class="pre">PRIVATE</span> <span class="pre">KEY-----</span></code> footer. Patch courtesy of
+Prasanna Santhanam.</li>
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/359">#359</a><span>:</span> Use correct attribute name when trying to use Python 3&#8217;s
+<code class="docutils literal"><span class="pre">int.bit_length</span></code> method; prior to fix, the Python 2 custom fallback
+implementation was always used, even on Python 3. Thanks to Alex Gaynor.</li>
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/366">#366</a><span>:</span> Fix <code class="xref py py-obj docutils literal"><span class="pre">SFTPAttributes</span></code> so its string
+representation doesn&#8217;t raise exceptions on empty/initialized instances. Patch
+by Ulrich Petri.</li>
+<li>[<span style="color: #4070A0;">Support</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/516">#516</a><span>:</span> Document <a class="reference external" href="/Users/jforcier/Code/oss/paramiko/sites/www/../docs/_build/api/agent.html#paramiko.agent.AgentRequestHandler" title="(in Paramiko v)"><code class="xref py py-obj docutils literal"><span class="pre">AgentRequestHandler</span></code></a>.
+Thanks to <code class="docutils literal"><span class="pre">&#64;toejough</span></code> for report &amp; suggestions.</li>
+<li>[<span style="color: #4070A0;">Support</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/554">#554</a><span>:</span> Fix inaccuracies in the docstring for the ECDSA key
+class. Thanks to Jared Hance for the patch.</li>
+<li>[<span style="color: #4070A0;">Support</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/594">#594</a><span>:</span> Correct some post-Python3-port docstrings to
+specify <code class="docutils literal"><span class="pre">bytes</span></code> type instead of <code class="docutils literal"><span class="pre">str</span></code>. Credit to <code class="docutils literal"><span class="pre">&#64;redixin</span></code>.</li>
+</ul>
+</div>
+<div class="section" id="1.13.4">
+<h2 style="margin-bottom: 0.3em;"><a class="reference external" href="https://github.com/paramiko/paramiko/tree/1.13.4">1.13.4</a> <span style="font-size: 75%;">2015-11-02</span></h2><ul class="simple">
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/402">#402</a><span>:</span> Check to see if an SSH agent is actually present before trying to
+forward it to the remote end. This replaces what was usually a useless
+<code class="docutils literal"><span class="pre">TypeError</span></code> with a human-readable
+<a class="reference external" href="/Users/jforcier/Code/oss/paramiko/sites/www/../docs/_build/api/ssh_exception.html#paramiko.ssh_exception.AuthenticationException" title="(in Paramiko v)"><code class="xref py py-obj docutils literal"><span class="pre">AuthenticationException</span></code></a>. Credit to Ken Jordan for
+the fix and Yvan Marques for original report.</li>
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/353">#353</a><span>:</span> (via <a class="reference external" href="https://github.com/paramiko/paramiko/issues/482">#482</a>) Fix a bug introduced in the Python 3 port
+which caused <code class="docutils literal"><span class="pre">OverFlowError</span></code> (and other symptoms) in SFTP functionality.
+Thanks to <code class="docutils literal"><span class="pre">&#64;dboreham</span></code> for leading the troubleshooting charge, and to
+Scott Maxwell for the final patch.</li>
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/469">#469</a><span>:</span> (also <a class="reference external" href="https://github.com/paramiko/paramiko/issues/488">#488</a>, <a class="reference external" href="https://github.com/paramiko/paramiko/issues/461">#461</a> and like a dozen others) Fix a
+typo introduced in the 1.15 release which broke WinPageant support. Thanks to
+everyone who submitted patches, and to Steve Cohen who was the lucky winner
+of the cherry-pick lottery.</li>
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/404">#404</a><span>:</span> Print details when displaying
+<a class="reference external" href="/Users/jforcier/Code/oss/paramiko/sites/www/../docs/_build/api/ssh_exception.html#paramiko.ssh_exception.BadHostKeyException" title="(in Paramiko v)"><code class="xref py py-obj docutils literal"><span class="pre">BadHostKeyException</span></code></a> objects (expected vs received
+data) instead of just &#8220;hey shit broke&#8221;. Patch credit: Loic Dachary.</li>
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/490">#490</a><span>:</span> Skip invalid/unparseable lines in <code class="docutils literal"><span class="pre">known_hosts</span></code> files, instead
+of raising <a class="reference external" href="/Users/jforcier/Code/oss/paramiko/sites/www/../docs/_build/api/ssh_exception.html#paramiko.ssh_exception.SSHException" title="(in Paramiko v)"><code class="xref py py-obj docutils literal"><span class="pre">SSHException</span></code></a>. This brings Paramiko&#8217;s
+behavior more in line with OpenSSH, which silently ignores such input. Catch
+&amp; patch courtesy of Martin Topholm.</li>
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/491">#491</a><span>:</span> (combines <a class="reference external" href="https://github.com/paramiko/paramiko/issues/62">#62</a> and <a class="reference external" href="https://github.com/paramiko/paramiko/issues/439">#439</a>) Implement timeout
+functionality to address hangs from dropped network connections and/or failed
+handshakes. Credit to <code class="docutils literal"><span class="pre">&#64;vazir</span></code> and <code class="docutils literal"><span class="pre">&#64;dacut</span></code> for the original patches and
+to Olle Lundberg for reimplementation.</li>
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/565">#565</a><span>:</span> Don&#8217;t explode with <code class="docutils literal"><span class="pre">IndexError</span></code> when reading private key files
+lacking an <code class="docutils literal"><span class="pre">-----END</span> <span class="pre">&lt;type&gt;</span> <span class="pre">PRIVATE</span> <span class="pre">KEY-----</span></code> footer. Patch courtesy of
+Prasanna Santhanam.</li>
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/359">#359</a><span>:</span> Use correct attribute name when trying to use Python 3&#8217;s
+<code class="docutils literal"><span class="pre">int.bit_length</span></code> method; prior to fix, the Python 2 custom fallback
+implementation was always used, even on Python 3. Thanks to Alex Gaynor.</li>
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/366">#366</a><span>:</span> Fix <code class="xref py py-obj docutils literal"><span class="pre">SFTPAttributes</span></code> so its string
+representation doesn&#8217;t raise exceptions on empty/initialized instances. Patch
+by Ulrich Petri.</li>
+<li>[<span style="color: #4070A0;">Support</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/516">#516</a><span>:</span> Document <a class="reference external" href="/Users/jforcier/Code/oss/paramiko/sites/www/../docs/_build/api/agent.html#paramiko.agent.AgentRequestHandler" title="(in Paramiko v)"><code class="xref py py-obj docutils literal"><span class="pre">AgentRequestHandler</span></code></a>.
+Thanks to <code class="docutils literal"><span class="pre">&#64;toejough</span></code> for report &amp; suggestions.</li>
+<li>[<span style="color: #4070A0;">Support</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/554">#554</a><span>:</span> Fix inaccuracies in the docstring for the ECDSA key
+class. Thanks to Jared Hance for the patch.</li>
+<li>[<span style="color: #4070A0;">Support</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/594">#594</a><span>:</span> Correct some post-Python3-port docstrings to
+specify <code class="docutils literal"><span class="pre">bytes</span></code> type instead of <code class="docutils literal"><span class="pre">str</span></code>. Credit to <code class="docutils literal"><span class="pre">&#64;redixin</span></code>.</li>
+</ul>
+</div>
+<div class="section" id="1.15.3">
+<h2 style="margin-bottom: 0.3em;"><a class="reference external" href="https://github.com/paramiko/paramiko/tree/1.15.3">1.15.3</a> <span style="font-size: 75%;">2015-10-02</span></h2><ul class="simple">
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/402">#402</a><span>:</span> Check to see if an SSH agent is actually present before trying to
+forward it to the remote end. This replaces what was usually a useless
+<code class="docutils literal"><span class="pre">TypeError</span></code> with a human-readable
+<a class="reference external" href="/Users/jforcier/Code/oss/paramiko/sites/www/../docs/_build/api/ssh_exception.html#paramiko.ssh_exception.AuthenticationException" title="(in Paramiko v)"><code class="xref py py-obj docutils literal"><span class="pre">AuthenticationException</span></code></a>. Credit to Ken Jordan for
+the fix and Yvan Marques for original report.</li>
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/353">#353</a><span>:</span> (via <a class="reference external" href="https://github.com/paramiko/paramiko/issues/482">#482</a>) Fix a bug introduced in the Python 3 port
+which caused <code class="docutils literal"><span class="pre">OverFlowError</span></code> (and other symptoms) in SFTP functionality.
+Thanks to <code class="docutils literal"><span class="pre">&#64;dboreham</span></code> for leading the troubleshooting charge, and to
+Scott Maxwell for the final patch.</li>
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/469">#469</a><span>:</span> (also <a class="reference external" href="https://github.com/paramiko/paramiko/issues/488">#488</a>, <a class="reference external" href="https://github.com/paramiko/paramiko/issues/461">#461</a> and like a dozen others) Fix a
+typo introduced in the 1.15 release which broke WinPageant support. Thanks to
+everyone who submitted patches, and to Steve Cohen who was the lucky winner
+of the cherry-pick lottery.</li>
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/404">#404</a><span>:</span> Print details when displaying
+<a class="reference external" href="/Users/jforcier/Code/oss/paramiko/sites/www/../docs/_build/api/ssh_exception.html#paramiko.ssh_exception.BadHostKeyException" title="(in Paramiko v)"><code class="xref py py-obj docutils literal"><span class="pre">BadHostKeyException</span></code></a> objects (expected vs received
+data) instead of just &#8220;hey shit broke&#8221;. Patch credit: Loic Dachary.</li>
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/490">#490</a><span>:</span> Skip invalid/unparseable lines in <code class="docutils literal"><span class="pre">known_hosts</span></code> files, instead
+of raising <a class="reference external" href="/Users/jforcier/Code/oss/paramiko/sites/www/../docs/_build/api/ssh_exception.html#paramiko.ssh_exception.SSHException" title="(in Paramiko v)"><code class="xref py py-obj docutils literal"><span class="pre">SSHException</span></code></a>. This brings Paramiko&#8217;s
+behavior more in line with OpenSSH, which silently ignores such input. Catch
+&amp; patch courtesy of Martin Topholm.</li>
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/491">#491</a><span>:</span> (combines <a class="reference external" href="https://github.com/paramiko/paramiko/issues/62">#62</a> and <a class="reference external" href="https://github.com/paramiko/paramiko/issues/439">#439</a>) Implement timeout
+functionality to address hangs from dropped network connections and/or failed
+handshakes. Credit to <code class="docutils literal"><span class="pre">&#64;vazir</span></code> and <code class="docutils literal"><span class="pre">&#64;dacut</span></code> for the original patches and
+to Olle Lundberg for reimplementation.</li>
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/496">#496</a><span>:</span> Fix a handful of small but critical bugs in Paramiko&#8217;s
+GSSAPI support (note: this includes switching from PyCrypo&#8217;s Random to
+<a class="reference external" href="https://docs.python.org/2.6/library/os.html#os.urandom" title="(in Python v2.6)"><code class="xref py py-obj docutils literal"><span class="pre">os.urandom</span></code></a>). Thanks to Anselm Kruis for catch &amp; patch.</li>
+<li>[<span style="color: #4070A0;">Support</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/516">#516</a><span>:</span> Document <a class="reference external" href="/Users/jforcier/Code/oss/paramiko/sites/www/../docs/_build/api/agent.html#paramiko.agent.AgentRequestHandler" title="(in Paramiko v)"><code class="xref py py-obj docutils literal"><span class="pre">AgentRequestHandler</span></code></a>.
+Thanks to <code class="docutils literal"><span class="pre">&#64;toejough</span></code> for report &amp; suggestions.</li>
+<li>[<span style="color: #4070A0;">Support</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/554">#554</a><span>:</span> Fix inaccuracies in the docstring for the ECDSA key
+class. Thanks to Jared Hance for the patch.</li>
+</ul>
+</div>
+<div class="section" id="1.15.2">
+<h2 style="margin-bottom: 0.3em;"><a class="reference external" href="https://github.com/paramiko/paramiko/tree/1.15.2">1.15.2</a> <span style="font-size: 75%;">2014-12-19</span></h2><ul class="simple">
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/320">#320</a><span>:</span> Update our win_pageant module to be Python 3 compatible. Thanks to
+<code class="docutils literal"><span class="pre">&#64;sherbang</span></code> and <code class="docutils literal"><span class="pre">&#64;adamkerz</span></code> for the patches.</li>
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/429">#429</a><span>:</span> Server-level debug message logging was overlooked during the
+Python 3 compatibility update; Python 3 clients attempting to log SSH debug
+packets encountered type errors. This is now fixed. Thanks to <code class="docutils literal"><span class="pre">&#64;mjmaenpaa</span></code>
+for the catch.</li>
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/459">#459</a><span>:</span> Tighten up agent connection closure behavior to avoid spurious
+<code class="docutils literal"><span class="pre">ResourceWarning</span></code> display in some situations. Thanks to <code class="docutils literal"><span class="pre">&#64;tkrapp</span></code> for the
+catch.</li>
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/266">#266</a><span>:</span> Change numbering of <a class="reference external" href="/Users/jforcier/Code/oss/paramiko/sites/www/../docs/_build/api/transport.html#paramiko.transport.Transport" title="(in Paramiko v)"><code class="xref py py-obj docutils literal"><span class="pre">Transport</span></code></a> channels to
+start at 0 instead of 1 for better compatibility with OpenSSH &amp; certain
+server implementations which break on 1-indexed channels. Thanks to
+<code class="docutils literal"><span class="pre">&#64;egroeper</span></code> for catch &amp; patch.</li>
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/415">#415</a><span>:</span> Fix <code class="docutils literal"><span class="pre">ssh_config</span></code> parsing to correctly interpret <code class="docutils literal"><span class="pre">ProxyCommand</span>
+<span class="pre">none</span></code> as the lack of a proxy command, instead of as a literal command string
+of <code class="docutils literal"><span class="pre">&quot;none&quot;</span></code>. Thanks to Richard Spiers for the catch &amp; Sean Johnson for the
+fix.</li>
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/428">#428</a><span>:</span> Fix an issue in <a class="reference external" href="/Users/jforcier/Code/oss/paramiko/sites/www/../docs/_build/api/file.html#paramiko.file.BufferedFile" title="(in Paramiko v)"><code class="xref py py-obj docutils literal"><span class="pre">BufferedFile</span></code></a> (primarily used in
+the SFTP modules) concerning incorrect behavior by
+<a class="reference external" href="/Users/jforcier/Code/oss/paramiko/sites/www/../docs/_build/api/file.html#paramiko.file.BufferedFile.readlines" title="(in Paramiko v)"><code class="xref py py-obj docutils literal"><span class="pre">readlines</span></code></a> on files whose size exceeds the
+buffer size. Thanks to <code class="docutils literal"><span class="pre">&#64;achapp</span></code> for catch &amp; patch.</li>
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/455">#455</a><span>:</span> Tweak packet size handling to conform better to the OpenSSH RFCs;
+this helps address issues with interactive program cursors. Courtesy of Jeff
+Quast.</li>
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/413">#413</a><span>:</span> (also <a class="reference external" href="https://github.com/paramiko/paramiko/issues/414">#414</a>, <a class="reference external" href="https://github.com/paramiko/paramiko/issues/420">#420</a>, <a class="reference external" href="https://github.com/paramiko/paramiko/issues/454">#454</a>) Be significantly
+smarter about polling &amp; timing behavior when running proxy commands, to avoid
+unnecessary (often 100%!) CPU usage. Major thanks to Jason Dunsmore for
+report &amp; initial patchset and to Chris Adams &amp; John Morrissey for followup
+improvements.</li>
+<li>[<span style="color: #4070A0;">Support</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/419">#419</a><span>:</span> Modernize a bunch of the codebase internals to
+leverage decorators. Props to <code class="docutils literal"><span class="pre">&#64;beckjake</span></code> for realizing we&#8217;re no longer on
+Python 2.2 :D</li>
+<li>[<span style="color: #4070A0;">Support</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/421">#421</a><span>:</span> Modernize threading calls to use newer API. Thanks
+to Olle Lundberg.</li>
+<li>[<span style="color: #4070A0;">Support</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/422">#422</a><span>:</span> Clean up some unused imports. Courtesy of Olle
+Lundberg.</li>
+<li>[<span style="color: #4070A0;">Support</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/431">#431</a><span>:</span> Replace handrolled <code class="docutils literal"><span class="pre">ssh_config</span></code> parsing code with
+use of the <code class="docutils literal"><span class="pre">shlex</span></code> module. Thanks to Yan Kalchevskiy.</li>
+</ul>
+</div>
+<div class="section" id="1.14.2">
+<h2 style="margin-bottom: 0.3em;"><a class="reference external" href="https://github.com/paramiko/paramiko/tree/1.14.2">1.14.2</a> <span style="font-size: 75%;">2014-12-19</span></h2><ul class="simple">
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/399">#399</a><span>:</span> SSH agent forwarding (potentially other functionality as
+well) would hang due to incorrect values passed into the new window size
+arguments for <code class="xref py py-obj docutils literal"><span class="pre">Transport</span></code> (thanks to a botched merge). This has been
+corrected. Thanks to Dylan Thacker-Smith for the report &amp; patch.</li>
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/320">#320</a><span>:</span> Update our win_pageant module to be Python 3 compatible. Thanks to
+<code class="docutils literal"><span class="pre">&#64;sherbang</span></code> and <code class="docutils literal"><span class="pre">&#64;adamkerz</span></code> for the patches.</li>
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/429">#429</a><span>:</span> Server-level debug message logging was overlooked during the
+Python 3 compatibility update; Python 3 clients attempting to log SSH debug
+packets encountered type errors. This is now fixed. Thanks to <code class="docutils literal"><span class="pre">&#64;mjmaenpaa</span></code>
+for the catch.</li>
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/459">#459</a><span>:</span> Tighten up agent connection closure behavior to avoid spurious
+<code class="docutils literal"><span class="pre">ResourceWarning</span></code> display in some situations. Thanks to <code class="docutils literal"><span class="pre">&#64;tkrapp</span></code> for the
+catch.</li>
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/266">#266</a><span>:</span> Change numbering of <a class="reference external" href="/Users/jforcier/Code/oss/paramiko/sites/www/../docs/_build/api/transport.html#paramiko.transport.Transport" title="(in Paramiko v)"><code class="xref py py-obj docutils literal"><span class="pre">Transport</span></code></a> channels to
+start at 0 instead of 1 for better compatibility with OpenSSH &amp; certain
+server implementations which break on 1-indexed channels. Thanks to
+<code class="docutils literal"><span class="pre">&#64;egroeper</span></code> for catch &amp; patch.</li>
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/415">#415</a><span>:</span> Fix <code class="docutils literal"><span class="pre">ssh_config</span></code> parsing to correctly interpret <code class="docutils literal"><span class="pre">ProxyCommand</span>
+<span class="pre">none</span></code> as the lack of a proxy command, instead of as a literal command string
+of <code class="docutils literal"><span class="pre">&quot;none&quot;</span></code>. Thanks to Richard Spiers for the catch &amp; Sean Johnson for the
+fix.</li>
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/428">#428</a><span>:</span> Fix an issue in <a class="reference external" href="/Users/jforcier/Code/oss/paramiko/sites/www/../docs/_build/api/file.html#paramiko.file.BufferedFile" title="(in Paramiko v)"><code class="xref py py-obj docutils literal"><span class="pre">BufferedFile</span></code></a> (primarily used in
+the SFTP modules) concerning incorrect behavior by
+<a class="reference external" href="/Users/jforcier/Code/oss/paramiko/sites/www/../docs/_build/api/file.html#paramiko.file.BufferedFile.readlines" title="(in Paramiko v)"><code class="xref py py-obj docutils literal"><span class="pre">readlines</span></code></a> on files whose size exceeds the
+buffer size. Thanks to <code class="docutils literal"><span class="pre">&#64;achapp</span></code> for catch &amp; patch.</li>
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/455">#455</a><span>:</span> Tweak packet size handling to conform better to the OpenSSH RFCs;
+this helps address issues with interactive program cursors. Courtesy of Jeff
+Quast.</li>
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/413">#413</a><span>:</span> (also <a class="reference external" href="https://github.com/paramiko/paramiko/issues/414">#414</a>, <a class="reference external" href="https://github.com/paramiko/paramiko/issues/420">#420</a>, <a class="reference external" href="https://github.com/paramiko/paramiko/issues/454">#454</a>) Be significantly
+smarter about polling &amp; timing behavior when running proxy commands, to avoid
+unnecessary (often 100%!) CPU usage. Major thanks to Jason Dunsmore for
+report &amp; initial patchset and to Chris Adams &amp; John Morrissey for followup
+improvements.</li>
+<li>[<span style="color: #4070A0;">Support</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/249">#249</a><span>:</span> Consolidate version information into one spot.
+Thanks to Gabi Davar for the reminder.</li>
+<li>[<span style="color: #4070A0;">Support</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/378">#378</a><span>:</span> Minor code cleanup in the SSH config module
+courtesy of Olle Lundberg.</li>
+<li>[<span style="color: #4070A0;">Support</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/419">#419</a><span>:</span> Modernize a bunch of the codebase internals to
+leverage decorators. Props to <code class="docutils literal"><span class="pre">&#64;beckjake</span></code> for realizing we&#8217;re no longer on
+Python 2.2 :D</li>
+<li>[<span style="color: #4070A0;">Support</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/421">#421</a><span>:</span> Modernize threading calls to use newer API. Thanks
+to Olle Lundberg.</li>
+<li>[<span style="color: #4070A0;">Support</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/422">#422</a><span>:</span> Clean up some unused imports. Courtesy of Olle
+Lundberg.</li>
+<li>[<span style="color: #4070A0;">Support</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/431">#431</a><span>:</span> Replace handrolled <code class="docutils literal"><span class="pre">ssh_config</span></code> parsing code with
+use of the <code class="docutils literal"><span class="pre">shlex</span></code> module. Thanks to Yan Kalchevskiy.</li>
+</ul>
+</div>
+<div class="section" id="1.13.3">
+<h2 style="margin-bottom: 0.3em;"><a class="reference external" href="https://github.com/paramiko/paramiko/tree/1.13.3">1.13.3</a> <span style="font-size: 75%;">2014-12-19</span></h2><ul class="simple">
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/399">#399</a><span>:</span> SSH agent forwarding (potentially other functionality as
+well) would hang due to incorrect values passed into the new window size
+arguments for <code class="xref py py-obj docutils literal"><span class="pre">Transport</span></code> (thanks to a botched merge). This has been
+corrected. Thanks to Dylan Thacker-Smith for the report &amp; patch.</li>
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/320">#320</a><span>:</span> Update our win_pageant module to be Python 3 compatible. Thanks to
+<code class="docutils literal"><span class="pre">&#64;sherbang</span></code> and <code class="docutils literal"><span class="pre">&#64;adamkerz</span></code> for the patches.</li>
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/429">#429</a><span>:</span> Server-level debug message logging was overlooked during the
+Python 3 compatibility update; Python 3 clients attempting to log SSH debug
+packets encountered type errors. This is now fixed. Thanks to <code class="docutils literal"><span class="pre">&#64;mjmaenpaa</span></code>
+for the catch.</li>
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/459">#459</a><span>:</span> Tighten up agent connection closure behavior to avoid spurious
+<code class="docutils literal"><span class="pre">ResourceWarning</span></code> display in some situations. Thanks to <code class="docutils literal"><span class="pre">&#64;tkrapp</span></code> for the
+catch.</li>
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/266">#266</a><span>:</span> Change numbering of <a class="reference external" href="/Users/jforcier/Code/oss/paramiko/sites/www/../docs/_build/api/transport.html#paramiko.transport.Transport" title="(in Paramiko v)"><code class="xref py py-obj docutils literal"><span class="pre">Transport</span></code></a> channels to
+start at 0 instead of 1 for better compatibility with OpenSSH &amp; certain
+server implementations which break on 1-indexed channels. Thanks to
+<code class="docutils literal"><span class="pre">&#64;egroeper</span></code> for catch &amp; patch.</li>
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/415">#415</a><span>:</span> Fix <code class="docutils literal"><span class="pre">ssh_config</span></code> parsing to correctly interpret <code class="docutils literal"><span class="pre">ProxyCommand</span>
+<span class="pre">none</span></code> as the lack of a proxy command, instead of as a literal command string
+of <code class="docutils literal"><span class="pre">&quot;none&quot;</span></code>. Thanks to Richard Spiers for the catch &amp; Sean Johnson for the
+fix.</li>
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/428">#428</a><span>:</span> Fix an issue in <a class="reference external" href="/Users/jforcier/Code/oss/paramiko/sites/www/../docs/_build/api/file.html#paramiko.file.BufferedFile" title="(in Paramiko v)"><code class="xref py py-obj docutils literal"><span class="pre">BufferedFile</span></code></a> (primarily used in
+the SFTP modules) concerning incorrect behavior by
+<a class="reference external" href="/Users/jforcier/Code/oss/paramiko/sites/www/../docs/_build/api/file.html#paramiko.file.BufferedFile.readlines" title="(in Paramiko v)"><code class="xref py py-obj docutils literal"><span class="pre">readlines</span></code></a> on files whose size exceeds the
+buffer size. Thanks to <code class="docutils literal"><span class="pre">&#64;achapp</span></code> for catch &amp; patch.</li>
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/455">#455</a><span>:</span> Tweak packet size handling to conform better to the OpenSSH RFCs;
+this helps address issues with interactive program cursors. Courtesy of Jeff
+Quast.</li>
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/413">#413</a><span>:</span> (also <a class="reference external" href="https://github.com/paramiko/paramiko/issues/414">#414</a>, <a class="reference external" href="https://github.com/paramiko/paramiko/issues/420">#420</a>, <a class="reference external" href="https://github.com/paramiko/paramiko/issues/454">#454</a>) Be significantly
+smarter about polling &amp; timing behavior when running proxy commands, to avoid
+unnecessary (often 100%!) CPU usage. Major thanks to Jason Dunsmore for
+report &amp; initial patchset and to Chris Adams &amp; John Morrissey for followup
+improvements.</li>
+<li>[<span style="color: #4070A0;">Support</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/249">#249</a><span>:</span> Consolidate version information into one spot.
+Thanks to Gabi Davar for the reminder.</li>
+<li>[<span style="color: #4070A0;">Support</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/378">#378</a><span>:</span> Minor code cleanup in the SSH config module
+courtesy of Olle Lundberg.</li>
+<li>[<span style="color: #4070A0;">Support</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/419">#419</a><span>:</span> Modernize a bunch of the codebase internals to
+leverage decorators. Props to <code class="docutils literal"><span class="pre">&#64;beckjake</span></code> for realizing we&#8217;re no longer on
+Python 2.2 :D</li>
+<li>[<span style="color: #4070A0;">Support</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/421">#421</a><span>:</span> Modernize threading calls to use newer API. Thanks
+to Olle Lundberg.</li>
+<li>[<span style="color: #4070A0;">Support</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/422">#422</a><span>:</span> Clean up some unused imports. Courtesy of Olle
+Lundberg.</li>
+<li>[<span style="color: #4070A0;">Support</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/431">#431</a><span>:</span> Replace handrolled <code class="docutils literal"><span class="pre">ssh_config</span></code> parsing code with
+use of the <code class="docutils literal"><span class="pre">shlex</span></code> module. Thanks to Yan Kalchevskiy.</li>
+</ul>
+</div>
+<div class="section" id="1.15.1">
+<h2 style="margin-bottom: 0.3em;"><a class="reference external" href="https://github.com/paramiko/paramiko/tree/1.15.1">1.15.1</a> <span style="font-size: 75%;">2014-09-22</span></h2><ul class="simple">
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/399">#399</a><span>:</span> SSH agent forwarding (potentially other functionality as
+well) would hang due to incorrect values passed into the new window size
+arguments for <code class="xref py py-obj docutils literal"><span class="pre">Transport</span></code> (thanks to a botched merge). This has been
+corrected. Thanks to Dylan Thacker-Smith for the report &amp; patch.</li>
+</ul>
+</div>
+<div class="section" id="1.15.0">
+<h2 style="margin-bottom: 0.3em;"><a class="reference external" href="https://github.com/paramiko/paramiko/tree/1.15.0">1.15.0</a> <span style="font-size: 75%;">2014-09-18</span></h2><ul>
+<li><p class="first">[<span style="color: #40A056;">Feature</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/131">#131</a><span>:</span> Add a <a class="reference external" href="/Users/jforcier/Code/oss/paramiko/sites/www/../docs/_build/api/sftp.html#paramiko.sftp_client.SFTPClient.listdir_iter" title="(in Paramiko v)"><code class="xref py py-obj docutils literal"><span class="pre">listdir_iter</span></code></a> method
+to <a class="reference external" href="/Users/jforcier/Code/oss/paramiko/sites/www/../docs/_build/api/sftp.html#paramiko.sftp_client.SFTPClient" title="(in Paramiko v)"><code class="xref py py-obj docutils literal"><span class="pre">SFTPClient</span></code></a> allowing for more efficient,
+async/generator based file listings. Thanks to John Begeman.</p>
+</li>
+<li><p class="first">[<span style="color: #40A056;">Feature</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/184">#184</a><span>:</span> Support quoted values in SSH config file parsing. Credit to
+Yan Kalchevskiy.</p>
+</li>
+<li><p class="first">[<span style="color: #40A056;">Feature</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/218">#218</a><span>:</span> Add support for ECDSA private keys on the client side. Thanks
+to <code class="docutils literal"><span class="pre">&#64;aszlig</span></code> for the patch.</p>
+</li>
+<li><p class="first">[<span style="color: #40A056;">Feature</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/372">#372</a><span>:</span> Update default window &amp; packet sizes to more closely adhere to
+the pertinent RFC; also expose these settings in the public API so they may
+be overridden by client code. This should address some general speed issues
+such as <a class="reference external" href="https://github.com/paramiko/paramiko/issues/175">#175</a>. Big thanks to Olle Lundberg for the update.</p>
+</li>
+<li><p class="first">[<span style="color: #40A056;">Feature</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/362">#362</a><span>:</span> Allow users to control the SSH banner timeout. Thanks to Cory
+Benfield.</p>
+</li>
+<li><p class="first">[<span style="color: #40A056;">Feature</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/267">#267</a><span>:</span> (also <a class="reference external" href="https://github.com/paramiko/paramiko/issues/250">#250</a>, <a class="reference external" href="https://github.com/paramiko/paramiko/issues/241">#241</a>, <a class="reference external" href="https://github.com/paramiko/paramiko/issues/228">#228</a>) Add GSS-API /
+SSPI (e.g. Kerberos) key exchange and authentication support
+(<a class="reference internal" href="installing.html#gssapi"><span class="std std-ref">installation docs here</span></a>). Mega thanks to Sebastian Deiß, with
+assist by Torsten Landschoff.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Unix users should be aware that the <code class="docutils literal"><span class="pre">python-gssapi</span></code> library (a
+requirement for using this functionality) only appears to support
+Python 2.7 and up at this time.</p>
+</div>
+</li>
+<li><p class="first">[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/335">#335</a><span>:</span> Fix ECDSA key generation (generation of brand new ECDSA keys
+was broken previously). Thanks to <code class="docutils literal"><span class="pre">&#64;solarw</span></code> for catch &amp; patch.</p>
+</li>
+<li><p class="first">[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/234">#234</a><span>:</span> Lower logging levels for a few overly-noisy log messages
+about secure channels. Thanks to David Pursehouse for noticing &amp; contributing
+the fix.</p>
+</li>
+<li><p class="first">[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/298">#298</a><span>:</span> Don&#8217;t perform point validation on ECDSA keys in
+<code class="docutils literal"><span class="pre">known_hosts</span></code> files, since a) this can cause significant slowdown when such
+keys exist, and b) <code class="docutils literal"><span class="pre">known_hosts</span></code> files are implicitly trustworthy. Thanks
+to Kieran Spear for catch &amp; patch.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">This change bumps up the version requirement for the <code class="docutils literal"><span class="pre">ecdsa</span></code> library to
+<code class="docutils literal"><span class="pre">0.11</span></code>.</p>
+</div>
+</li>
+<li><p class="first">[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/373">#373</a><span>:</span> Attempt to fix a handful of issues (such as <a class="reference external" href="https://github.com/paramiko/paramiko/issues/354">#354</a>)
+related to infinite loops and threading deadlocks. Thanks to Olle Lundberg as
+well as a handful of community members who provided advice &amp; feedback via
+IRC.</p>
+</li>
+<li><p class="first">[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/346">#346</a><span>:</span> Fix an issue in private key files&#8217; encryption salts that
+could cause tracebacks and file corruption if keys were re-encrypted. Credit
+to Xavier Nunn.</p>
+</li>
+<li><p class="first">[<span style="color: #4070A0;">Support</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/371">#371</a><span>:</span> Add Travis support &amp; docs update for Python 3.4. Thanks to
+Olle Lundberg.</p>
+</li>
+<li><p class="first">[<span style="color: #4070A0;">Support</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/169">#169</a><span>:</span> Minor refactor of
+<a class="reference external" href="/Users/jforcier/Code/oss/paramiko/sites/www/../docs/_build/api/sftp.html#paramiko.sftp_client.SFTPClient.put" title="(in Paramiko v)"><code class="xref py py-obj docutils literal"><span class="pre">paramiko.sftp_client.SFTPClient.put</span></code></a> thanks to Abhinav Upadhyay.</p>
+</li>
+<li><p class="first">[<span style="color: #4070A0;">Support</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/229">#229</a><span>:</span> Fix a couple of incorrectly-copied docstrings&#8217; <code class="docutils literal"><span class="pre">..</span>
+<span class="pre">versionadded::</span></code> RST directives. Thanks to Aarni Koskela for the catch.</p>
+</li>
+<li><p class="first">[<span style="color: #4070A0;">Support</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/324">#324</a><span>:</span> A bevvy of documentation typo fixes, courtesy of Roy
+Wellington.</p>
+</li>
+<li><p class="first">[<span style="color: #4070A0;">Support</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/249">#249</a><span>:</span> Consolidate version information into one spot.
+Thanks to Gabi Davar for the reminder.</p>
+</li>
+<li><p class="first">[<span style="color: #4070A0;">Support</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/378">#378</a><span>:</span> Minor code cleanup in the SSH config module
+courtesy of Olle Lundberg.</p>
+</li>
+<li><p class="first">[<span style="color: #4070A0;">Support</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/377">#377</a><span>:</span> Factor <a class="reference external" href="/Users/jforcier/Code/oss/paramiko/sites/www/../docs/_build/api/channel.html#paramiko.channel.Channel" title="(in Paramiko v)"><code class="xref py py-obj docutils literal"><span class="pre">Channel</span></code></a> openness sanity check into
+a decorator. Thanks to Olle Lundberg for original patch.</p>
+</li>
+<li><p class="first">[<span style="color: #4070A0;">Support</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/374">#374</a><span>:</span> (also <a class="reference external" href="https://github.com/paramiko/paramiko/issues/375">#375</a>) Old code cleanup courtesy of Olle
+Lundberg.</p>
+</li>
+<li><p class="first">[<span style="color: #4070A0;">Support</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/393">#393</a><span>:</span> Replace internal use of PyCrypto&#8217;s <code class="docutils literal"><span class="pre">SHA.new</span></code> with the
+stdlib&#8217;s <code class="docutils literal"><span class="pre">hashlib.sha1</span></code>. Thanks to Alex Gaynor.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="1.14.1">
+<h2 style="margin-bottom: 0.3em;"><a class="reference external" href="https://github.com/paramiko/paramiko/tree/1.14.1">1.14.1</a> <span style="font-size: 75%;">2014-08-25</span></h2><ul class="simple">
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/285">#285</a><span>:</span> (also <a class="reference external" href="https://github.com/paramiko/paramiko/issues/352">#352</a>) Update our Python 3 <code class="docutils literal"><span class="pre">b()</span></code> compatibility shim
+to handle <code class="docutils literal"><span class="pre">buffer</span></code> objects correctly; this fixes a frequently reported
+issue affecting many users, including users of the <code class="docutils literal"><span class="pre">bzr</span></code> software suite.
+Thanks to <code class="docutils literal"><span class="pre">&#64;basictheprogram</span></code> for the initial report, Jelmer Vernooij for
+the fix and Andrew Starr-Bochicchio &amp; Jeremy T. Bouse (among others) for
+discussion &amp; feedback.</li>
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/239">#239</a><span>:</span> Add Windows-style CRLF support to SSH config file parsing. Props
+to Christopher Swenson.</li>
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/272">#272</a><span>:</span> Fix a bug where <code class="docutils literal"><span class="pre">known_hosts</span></code> parsing hashed the input hostname
+as well as the hostnames from the <code class="docutils literal"><span class="pre">known_hosts</span></code> file, on every comparison.
+Thanks to <code class="docutils literal"><span class="pre">&#64;sigmunau</span></code> for final patch and <code class="docutils literal"><span class="pre">&#64;ostacey</span></code> for the original
+report.</li>
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/312">#312</a><span>:</span> <a class="reference external" href="/Users/jforcier/Code/oss/paramiko/sites/www/../docs/_build/api/transport.html#paramiko.transport.Transport" title="(in Paramiko v)"><code class="xref py py-obj docutils literal"><span class="pre">paramiko.transport.Transport</span></code></a> had a bug in its <code class="docutils literal"><span class="pre">__repr__</span></code> which
+surfaces during errors encountered within its <code class="docutils literal"><span class="pre">__init__</span></code>, causing
+problematic tracebacks in such situations. Thanks to Simon Percivall for
+catch &amp; patch.</li>
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/376">#376</a><span>:</span> Be less aggressive about expanding variables in <code class="docutils literal"><span class="pre">ssh_config</span></code>
+files, which results in a speedup of SSH config parsing. Credit to Olle
+Lundberg.</li>
+<li>[<span style="color: #4070A0;">Support</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/169">#169</a><span>:</span> Minor refactor of
+<a class="reference external" href="/Users/jforcier/Code/oss/paramiko/sites/www/../docs/_build/api/sftp.html#paramiko.sftp_client.SFTPClient.put" title="(in Paramiko v)"><code class="xref py py-obj docutils literal"><span class="pre">paramiko.sftp_client.SFTPClient.put</span></code></a> thanks to Abhinav Upadhyay.</li>
+<li>[<span style="color: #4070A0;">Support</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/229">#229</a><span>:</span> Fix a couple of incorrectly-copied docstrings&#8217; <code class="docutils literal"><span class="pre">..</span>
+<span class="pre">versionadded::</span></code> RST directives. Thanks to Aarni Koskela for the catch.</li>
+<li>[<span style="color: #4070A0;">Support</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/324">#324</a><span>:</span> A bevvy of documentation typo fixes, courtesy of Roy
+Wellington.</li>
+</ul>
+</div>
+<div class="section" id="1.13.2">
+<h2 style="margin-bottom: 0.3em;"><a class="reference external" href="https://github.com/paramiko/paramiko/tree/1.13.2">1.13.2</a> <span style="font-size: 75%;">2014-08-25</span></h2><ul class="simple">
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/285">#285</a><span>:</span> (also <a class="reference external" href="https://github.com/paramiko/paramiko/issues/352">#352</a>) Update our Python 3 <code class="docutils literal"><span class="pre">b()</span></code> compatibility shim
+to handle <code class="docutils literal"><span class="pre">buffer</span></code> objects correctly; this fixes a frequently reported
+issue affecting many users, including users of the <code class="docutils literal"><span class="pre">bzr</span></code> software suite.
+Thanks to <code class="docutils literal"><span class="pre">&#64;basictheprogram</span></code> for the initial report, Jelmer Vernooij for
+the fix and Andrew Starr-Bochicchio &amp; Jeremy T. Bouse (among others) for
+discussion &amp; feedback.</li>
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/239">#239</a><span>:</span> Add Windows-style CRLF support to SSH config file parsing. Props
+to Christopher Swenson.</li>
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/272">#272</a><span>:</span> Fix a bug where <code class="docutils literal"><span class="pre">known_hosts</span></code> parsing hashed the input hostname
+as well as the hostnames from the <code class="docutils literal"><span class="pre">known_hosts</span></code> file, on every comparison.
+Thanks to <code class="docutils literal"><span class="pre">&#64;sigmunau</span></code> for final patch and <code class="docutils literal"><span class="pre">&#64;ostacey</span></code> for the original
+report.</li>
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/312">#312</a><span>:</span> <a class="reference external" href="/Users/jforcier/Code/oss/paramiko/sites/www/../docs/_build/api/transport.html#paramiko.transport.Transport" title="(in Paramiko v)"><code class="xref py py-obj docutils literal"><span class="pre">paramiko.transport.Transport</span></code></a> had a bug in its <code class="docutils literal"><span class="pre">__repr__</span></code> which
+surfaces during errors encountered within its <code class="docutils literal"><span class="pre">__init__</span></code>, causing
+problematic tracebacks in such situations. Thanks to Simon Percivall for
+catch &amp; patch.</li>
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/376">#376</a><span>:</span> Be less aggressive about expanding variables in <code class="docutils literal"><span class="pre">ssh_config</span></code>
+files, which results in a speedup of SSH config parsing. Credit to Olle
+Lundberg.</li>
+<li>[<span style="color: #4070A0;">Support</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/169">#169</a><span>:</span> Minor refactor of
+<a class="reference external" href="/Users/jforcier/Code/oss/paramiko/sites/www/../docs/_build/api/sftp.html#paramiko.sftp_client.SFTPClient.put" title="(in Paramiko v)"><code class="xref py py-obj docutils literal"><span class="pre">paramiko.sftp_client.SFTPClient.put</span></code></a> thanks to Abhinav Upadhyay.</li>
+<li>[<span style="color: #4070A0;">Support</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/229">#229</a><span>:</span> Fix a couple of incorrectly-copied docstrings&#8217; <code class="docutils literal"><span class="pre">..</span>
+<span class="pre">versionadded::</span></code> RST directives. Thanks to Aarni Koskela for the catch.</li>
+<li>[<span style="color: #4070A0;">Support</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/324">#324</a><span>:</span> A bevvy of documentation typo fixes, courtesy of Roy
+Wellington.</li>
+</ul>
+</div>
+<div class="section" id="1.14.0">
+<h2 style="margin-bottom: 0.3em;"><a class="reference external" href="https://github.com/paramiko/paramiko/tree/1.14.0">1.14.0</a> <span style="font-size: 75%;">2014-05-07</span></h2><ul class="simple">
+<li>[<span style="color: #4070A0;">Support</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/284">#284</a><span>:</span> Add Python language trove identifiers to <code class="docutils literal"><span class="pre">setup.py</span></code>. Thanks
+to Alex Gaynor for catch &amp; patch.</li>
+<li>[<span style="color: #4070A0;">Support</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/290">#290</a><span>:</span> (also <a class="reference external" href="https://github.com/paramiko/paramiko/issues/292">#292</a>) Add support for building universal
+(Python 2+3 compatible) wheel files during the release process. Courtesy of
+Alex Gaynor.</li>
+<li>[<span style="color: #4070A0;">Support</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/295">#295</a><span>:</span> Swap out a bunch of PyCrypto hash functions with use of
+<a class="reference external" href="https://docs.python.org/2.6/library/hashlib.html#module-hashlib" title="(in Python v2.6)"><code class="xref py py-obj docutils literal"><span class="pre">hashlib</span></code></a>. Thanks to Alex Gaynor.</li>
+<li>[<span style="color: #4070A0;">Support</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/297">#297</a><span>:</span> Replace PyCrypto&#8217;s <code class="docutils literal"><span class="pre">Random</span></code> with <a class="reference external" href="https://docs.python.org/2.6/library/os.html#os.urandom" title="(in Python v2.6)"><code class="xref py py-obj docutils literal"><span class="pre">os.urandom</span></code></a> for improved
+speed and security. Thanks again to Alex.</li>
+<li>[<span style="color: #4070A0;">Support</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/299">#299</a><span>:</span> Use deterministic signatures for ECDSA keys for improved
+security. Thanks to Alex Gaynor.</li>
+</ul>
+</div>
+<div class="section" id="1.13.1">
+<h2 style="margin-bottom: 0.3em;"><a class="reference external" href="https://github.com/paramiko/paramiko/tree/1.13.1">1.13.1</a> <span style="font-size: 75%;">2014-05-07</span></h2><ul>
+<li><p class="first">[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/235">#235</a><span>:</span> Improve string type testing in a handful of spots (e.g. <code class="docutils literal"><span class="pre">s/if</span>
+<span class="pre">type(x)</span> <span class="pre">is</span> <span class="pre">str/if</span> <span class="pre">isinstance(x,</span> <span class="pre">basestring)/g</span></code>.) Thanks to <code class="docutils literal"><span class="pre">&#64;ksamuel</span></code> for
+the report.</p>
+</li>
+<li><p class="first">[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/308">#308</a><span>:</span> Fix regression in dsskey.py that caused sporadic signature
+verification failures. Thanks to Chris Rose.</p>
+</li>
+<li><p class="first">[<span style="color: #A04040;">Bug</span>]<span>:</span><span> </span> Fix logging error in sftp_client for filenames containing the &#8216;%&#8217;
+character. Thanks to Antoine Brenner.</p>
+</li>
+<li><p class="first">[<span style="color: #A04040;">Bug</span>]<span>:</span><span> </span> Added self.args for exception classes. Used for unpickling. Related
+to (<a class="reference external" href="https://github.com/fabric/fabric/issues/986">Fabric #986</a>, <a class="reference external" href="https://github.com/fabric/fabric/issues/714">Fabric
+#714</a>). Thanks to Alex
+Plugaru.</p>
+</li>
+<li><p class="first">[<span style="color: #A04040;">Bug</span>]<span>:</span><span> </span> <a class="reference external" href="/Users/jforcier/Code/oss/paramiko/sites/www/../docs/_build/api/file.html#paramiko.file.BufferedFile.read" title="(in Paramiko v)"><code class="xref py py-obj docutils literal"><span class="pre">paramiko.file.BufferedFile.read</span></code></a> incorrectly returned text strings
+after the Python 3 migration, despite bytes being more appropriate for file
+contents (which may be binary or of an unknown encoding.) This has been
+addressed.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last"><a class="reference external" href="/Users/jforcier/Code/oss/paramiko/sites/www/../docs/_build/api/file.html#paramiko.file.BufferedFile.readline" title="(in Paramiko v)"><code class="xref py py-obj docutils literal"><span class="pre">paramiko.file.BufferedFile.readline</span></code></a> continues to return strings, not
+bytes, as &#8220;lines&#8221; only make sense for textual data. It assumes UTF-8 by
+default.</p>
+</div>
+<p>This should fix <a class="reference external" href="http://comments.gmane.org/gmane.comp.sysutils.backup.obnam/252">this issue raised on the Obnam mailing list</a>.  Thanks
+to Antoine Brenner for the patch.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="1.12.4">
+<h2 style="margin-bottom: 0.3em;"><a class="reference external" href="https://github.com/paramiko/paramiko/tree/1.12.4">1.12.4</a> <span style="font-size: 75%;">2014-05-07</span></h2><ul>
+<li><p class="first">[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/235">#235</a><span>:</span> Improve string type testing in a handful of spots (e.g. <code class="docutils literal"><span class="pre">s/if</span>
+<span class="pre">type(x)</span> <span class="pre">is</span> <span class="pre">str/if</span> <span class="pre">isinstance(x,</span> <span class="pre">basestring)/g</span></code>.) Thanks to <code class="docutils literal"><span class="pre">&#64;ksamuel</span></code> for
+the report.</p>
+</li>
+<li><p class="first">[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/308">#308</a><span>:</span> Fix regression in dsskey.py that caused sporadic signature
+verification failures. Thanks to Chris Rose.</p>
+</li>
+<li><p class="first">[<span style="color: #A04040;">Bug</span>]<span>:</span><span> </span> Fix logging error in sftp_client for filenames containing the &#8216;%&#8217;
+character. Thanks to Antoine Brenner.</p>
+</li>
+<li><p class="first">[<span style="color: #A04040;">Bug</span>]<span>:</span><span> </span> Added self.args for exception classes. Used for unpickling. Related
+to (<a class="reference external" href="https://github.com/fabric/fabric/issues/986">Fabric #986</a>, <a class="reference external" href="https://github.com/fabric/fabric/issues/714">Fabric
+#714</a>). Thanks to Alex
+Plugaru.</p>
+</li>
+<li><p class="first">[<span style="color: #A04040;">Bug</span>]<span>:</span><span> </span> <a class="reference external" href="/Users/jforcier/Code/oss/paramiko/sites/www/../docs/_build/api/file.html#paramiko.file.BufferedFile.read" title="(in Paramiko v)"><code class="xref py py-obj docutils literal"><span class="pre">paramiko.file.BufferedFile.read</span></code></a> incorrectly returned text strings
+after the Python 3 migration, despite bytes being more appropriate for file
+contents (which may be binary or of an unknown encoding.) This has been
+addressed.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last"><a class="reference external" href="/Users/jforcier/Code/oss/paramiko/sites/www/../docs/_build/api/file.html#paramiko.file.BufferedFile.readline" title="(in Paramiko v)"><code class="xref py py-obj docutils literal"><span class="pre">paramiko.file.BufferedFile.readline</span></code></a> continues to return strings, not
+bytes, as &#8220;lines&#8221; only make sense for textual data. It assumes UTF-8 by
+default.</p>
+</div>
+<p>This should fix <a class="reference external" href="http://comments.gmane.org/gmane.comp.sysutils.backup.obnam/252">this issue raised on the Obnam mailing list</a>.  Thanks
+to Antoine Brenner for the patch.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="1.11.6">
+<h2 style="margin-bottom: 0.3em;"><a class="reference external" href="https://github.com/paramiko/paramiko/tree/1.11.6">1.11.6</a> <span style="font-size: 75%;">2014-05-07</span></h2><ul>
+<li><p class="first">[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/235">#235</a><span>:</span> Improve string type testing in a handful of spots (e.g. <code class="docutils literal"><span class="pre">s/if</span>
+<span class="pre">type(x)</span> <span class="pre">is</span> <span class="pre">str/if</span> <span class="pre">isinstance(x,</span> <span class="pre">basestring)/g</span></code>.) Thanks to <code class="docutils literal"><span class="pre">&#64;ksamuel</span></code> for
+the report.</p>
+</li>
+<li><p class="first">[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/308">#308</a><span>:</span> Fix regression in dsskey.py that caused sporadic signature
+verification failures. Thanks to Chris Rose.</p>
+</li>
+<li><p class="first">[<span style="color: #A04040;">Bug</span>]<span>:</span><span> </span> Fix logging error in sftp_client for filenames containing the &#8216;%&#8217;
+character. Thanks to Antoine Brenner.</p>
+</li>
+<li><p class="first">[<span style="color: #A04040;">Bug</span>]<span>:</span><span> </span> Added self.args for exception classes. Used for unpickling. Related
+to (<a class="reference external" href="https://github.com/fabric/fabric/issues/986">Fabric #986</a>, <a class="reference external" href="https://github.com/fabric/fabric/issues/714">Fabric
+#714</a>). Thanks to Alex
+Plugaru.</p>
+</li>
+<li><p class="first">[<span style="color: #A04040;">Bug</span>]<span>:</span><span> </span> <a class="reference external" href="/Users/jforcier/Code/oss/paramiko/sites/www/../docs/_build/api/file.html#paramiko.file.BufferedFile.read" title="(in Paramiko v)"><code class="xref py py-obj docutils literal"><span class="pre">paramiko.file.BufferedFile.read</span></code></a> incorrectly returned text strings
+after the Python 3 migration, despite bytes being more appropriate for file
+contents (which may be binary or of an unknown encoding.) This has been
+addressed.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last"><a class="reference external" href="/Users/jforcier/Code/oss/paramiko/sites/www/../docs/_build/api/file.html#paramiko.file.BufferedFile.readline" title="(in Paramiko v)"><code class="xref py py-obj docutils literal"><span class="pre">paramiko.file.BufferedFile.readline</span></code></a> continues to return strings, not
+bytes, as &#8220;lines&#8221; only make sense for textual data. It assumes UTF-8 by
+default.</p>
+</div>
+<p>This should fix <a class="reference external" href="http://comments.gmane.org/gmane.comp.sysutils.backup.obnam/252">this issue raised on the Obnam mailing list</a>.  Thanks
+to Antoine Brenner for the patch.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="1.13.0">
+<h2 style="margin-bottom: 0.3em;"><a class="reference external" href="https://github.com/paramiko/paramiko/tree/1.13.0">1.13.0</a> <span style="font-size: 75%;">2014-03-13</span></h2><ul>
+<li><p class="first">[<span style="color: #40A056;">Feature</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/58">#58</a><span>:</span> Allow client code to access the stored SSH server banner via
+<a class="reference external" href="/Users/jforcier/Code/oss/paramiko/sites/www/../docs/_build/api/transport.html#paramiko.transport.Transport.get_banner" title="(in Paramiko v)"><code class="xref py py-obj docutils literal"><span class="pre">Transport.get_banner</span></code></a>. Thanks to
+<code class="docutils literal"><span class="pre">&#64;Jhoanor</span></code> for the patch.</p>
+</li>
+<li><p class="first">[<span style="color: #40A056;">Feature</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/16">#16</a><span>:</span> <strong>Python 3 support!</strong> Our test suite passes under Python 3, and
+it (&amp; Fabric&#8217;s test suite) continues to pass under Python 2. <strong>Python 2.5 is
+no longer supported with this change!</strong></p>
+<p>The merged code was built on many contributors&#8217; efforts, both code &amp;
+feedback. In no particular order, we thank Daniel Goertzen, Ivan Kolodyazhny,
+Tomi Pieviläinen, Jason R. Coombs, Jan N. Schulze, <code class="docutils literal"><span class="pre">&#64;Lazik</span></code>, Dorian Pula,
+Scott Maxwell, Tshepang Lekhonkhobe, Aaron Meurer, and Dave Halter.</p>
+</li>
+<li><p class="first">[<span style="color: #4070A0;">Support</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/256">#256</a><span>:</span> Convert API documentation to Sphinx, yielding a new
+API docs website to replace the old Epydoc one. Thanks to Olle Lundberg for
+the initial conversion work.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="1.12.3">
+<h2 style="margin-bottom: 0.3em;"><a class="reference external" href="https://github.com/paramiko/paramiko/tree/1.12.3">1.12.3</a> <span style="font-size: 75%;">2014-03-13</span></h2><ul class="simple">
+<li>[<span style="color: #A04040;">Bug</span>]<span>:</span><span> </span> Use constant-time hash comparison operations where possible, to
+protect against <a class="reference external" href="http://codahale.com/a-lesson-in-timing-attacks/">timing-based attacks</a>. Thanks to Alex Gaynor
+for the patch.</li>
+<li>[<span style="color: #4070A0;">Support</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/256">#256</a><span>:</span> Convert API documentation to Sphinx, yielding a new
+API docs website to replace the old Epydoc one. Thanks to Olle Lundberg for
+the initial conversion work.</li>
+</ul>
+</div>
+<div class="section" id="1.11.5">
+<h2 style="margin-bottom: 0.3em;"><a class="reference external" href="https://github.com/paramiko/paramiko/tree/1.11.5">1.11.5</a> <span style="font-size: 75%;">2014-03-13</span></h2><ul class="simple">
+<li>[<span style="color: #A04040;">Bug</span>]<span>:</span><span> </span> Use constant-time hash comparison operations where possible, to
+protect against <a class="reference external" href="http://codahale.com/a-lesson-in-timing-attacks/">timing-based attacks</a>. Thanks to Alex Gaynor
+for the patch.</li>
+<li>[<span style="color: #4070A0;">Support</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/256">#256</a><span>:</span> Convert API documentation to Sphinx, yielding a new
+API docs website to replace the old Epydoc one. Thanks to Olle Lundberg for
+the initial conversion work.</li>
+</ul>
+</div>
+<div class="section" id="1.10.7">
+<h2 style="margin-bottom: 0.3em;"><a class="reference external" href="https://github.com/paramiko/paramiko/tree/1.10.7">1.10.7</a> <span style="font-size: 75%;">2014-03-13</span></h2><ul class="simple">
+<li>[<span style="color: #A04040;">Bug</span>]<span>:</span><span> </span> Use constant-time hash comparison operations where possible, to
+protect against <a class="reference external" href="http://codahale.com/a-lesson-in-timing-attacks/">timing-based attacks</a>. Thanks to Alex Gaynor
+for the patch.</li>
+<li>[<span style="color: #4070A0;">Support</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/256">#256</a><span>:</span> Convert API documentation to Sphinx, yielding a new
+API docs website to replace the old Epydoc one. Thanks to Olle Lundberg for
+the initial conversion work.</li>
+</ul>
+</div>
+<div class="section" id="1.12.2">
+<h2 style="margin-bottom: 0.3em;"><a class="reference external" href="https://github.com/paramiko/paramiko/tree/1.12.2">1.12.2</a> <span style="font-size: 75%;">2014-02-14</span></h2><ul class="simple">
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/193">#193</a><span>:</span> (and its attentant PRs <a class="reference external" href="https://github.com/paramiko/paramiko/issues/230">#230</a> &amp; <a class="reference external" href="https://github.com/paramiko/paramiko/issues/253">#253</a>) Fix SSH agent
+problems present on Windows. Thanks to David Hobbs for initial report and to
+Aarni Koskela &amp; Olle Lundberg for the patches.</li>
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/34">#34</a><span>:</span> (PR <a class="reference external" href="https://github.com/paramiko/paramiko/issues/35">#35</a>) Fix SFTP prefetching incompatibility with some
+SFTP servers regarding request/response ordering. Thanks to Richard
+Kettlewell.</li>
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/268">#268</a><span>:</span> Fix some missed renames of <code class="docutils literal"><span class="pre">ProxyCommand</span></code> related error classes.
+Thanks to Marius Gedminas for catch &amp; patch.</li>
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/252">#252</a><span>:</span> (<a class="reference external" href="https://github.com/fabric/fabric/issues/1020">Fabric #1020</a>)
+Enhanced the implementation of <code class="docutils literal"><span class="pre">ProxyCommand</span></code> to avoid a deadlock/hang
+condition that frequently occurs at <code class="docutils literal"><span class="pre">Transport</span></code> shutdown time. Thanks to
+Mateusz Kobos, Matthijs van der Vleuten and Guillaume Zitta for the original
+reports and to Marius Gedminas for helping test nontrivial use cases.</li>
+</ul>
+</div>
+<div class="section" id="1.11.4">
+<h2 style="margin-bottom: 0.3em;"><a class="reference external" href="https://github.com/paramiko/paramiko/tree/1.11.4">1.11.4</a> <span style="font-size: 75%;">2014-02-14</span></h2><ul class="simple">
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/193">#193</a><span>:</span> (and its attentant PRs <a class="reference external" href="https://github.com/paramiko/paramiko/issues/230">#230</a> &amp; <a class="reference external" href="https://github.com/paramiko/paramiko/issues/253">#253</a>) Fix SSH agent
+problems present on Windows. Thanks to David Hobbs for initial report and to
+Aarni Koskela &amp; Olle Lundberg for the patches.</li>
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/34">#34</a><span>:</span> (PR <a class="reference external" href="https://github.com/paramiko/paramiko/issues/35">#35</a>) Fix SFTP prefetching incompatibility with some
+SFTP servers regarding request/response ordering. Thanks to Richard
+Kettlewell.</li>
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/268">#268</a><span>:</span> Fix some missed renames of <code class="docutils literal"><span class="pre">ProxyCommand</span></code> related error classes.
+Thanks to Marius Gedminas for catch &amp; patch.</li>
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/252">#252</a><span>:</span> (<a class="reference external" href="https://github.com/fabric/fabric/issues/1020">Fabric #1020</a>)
+Enhanced the implementation of <code class="docutils literal"><span class="pre">ProxyCommand</span></code> to avoid a deadlock/hang
+condition that frequently occurs at <code class="docutils literal"><span class="pre">Transport</span></code> shutdown time. Thanks to
+Mateusz Kobos, Matthijs van der Vleuten and Guillaume Zitta for the original
+reports and to Marius Gedminas for helping test nontrivial use cases.</li>
+</ul>
+</div>
+<div class="section" id="1.10.6">
+<h2 style="margin-bottom: 0.3em;"><a class="reference external" href="https://github.com/paramiko/paramiko/tree/1.10.6">1.10.6</a> <span style="font-size: 75%;">2014-02-14</span></h2><ul class="simple">
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/193">#193</a><span>:</span> (and its attentant PRs <a class="reference external" href="https://github.com/paramiko/paramiko/issues/230">#230</a> &amp; <a class="reference external" href="https://github.com/paramiko/paramiko/issues/253">#253</a>) Fix SSH agent
+problems present on Windows. Thanks to David Hobbs for initial report and to
+Aarni Koskela &amp; Olle Lundberg for the patches.</li>
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/34">#34</a><span>:</span> (PR <a class="reference external" href="https://github.com/paramiko/paramiko/issues/35">#35</a>) Fix SFTP prefetching incompatibility with some
+SFTP servers regarding request/response ordering. Thanks to Richard
+Kettlewell.</li>
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/268">#268</a><span>:</span> Fix some missed renames of <code class="docutils literal"><span class="pre">ProxyCommand</span></code> related error classes.
+Thanks to Marius Gedminas for catch &amp; patch.</li>
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/252">#252</a><span>:</span> (<a class="reference external" href="https://github.com/fabric/fabric/issues/1020">Fabric #1020</a>)
+Enhanced the implementation of <code class="docutils literal"><span class="pre">ProxyCommand</span></code> to avoid a deadlock/hang
+condition that frequently occurs at <code class="docutils literal"><span class="pre">Transport</span></code> shutdown time. Thanks to
+Mateusz Kobos, Matthijs van der Vleuten and Guillaume Zitta for the original
+reports and to Marius Gedminas for helping test nontrivial use cases.</li>
+</ul>
+</div>
+<div class="section" id="1.12.1">
+<h2 style="margin-bottom: 0.3em;"><a class="reference external" href="https://github.com/paramiko/paramiko/tree/1.12.1">1.12.1</a> <span style="font-size: 75%;">2014-01-08</span></h2><ul class="simple">
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/176">#176</a><span>:</span> Fix AttributeError bugs in known_hosts file (re)loading. Thanks
+to Nathan Scowcroft for the patch &amp; Martin Blumenstingl for the initial test
+case.</li>
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/225">#225</a><span>:</span> Note ecdsa requirement in README. Thanks to Amaury
+Rodriguez for the catch.</li>
+</ul>
+</div>
+<div class="section" id="1.11.3">
+<h2 style="margin-bottom: 0.3em;"><a class="reference external" href="https://github.com/paramiko/paramiko/tree/1.11.3">1.11.3</a> <span style="font-size: 75%;">2014-01-08</span></h2><ul class="simple">
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/176">#176</a><span>:</span> Fix AttributeError bugs in known_hosts file (re)loading. Thanks
+to Nathan Scowcroft for the patch &amp; Martin Blumenstingl for the initial test
+case.</li>
+</ul>
+</div>
+<div class="section" id="1.10.5">
+<h2 style="margin-bottom: 0.3em;"><a class="reference external" href="https://github.com/paramiko/paramiko/tree/1.10.5">1.10.5</a> <span style="font-size: 75%;">2014-01-08</span></h2><ul class="simple">
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/176">#176</a><span>:</span> Fix AttributeError bugs in known_hosts file (re)loading. Thanks
+to Nathan Scowcroft for the patch &amp; Martin Blumenstingl for the initial test
+case.</li>
+</ul>
+</div>
+<div class="section" id="1.12.0">
+<h2 style="margin-bottom: 0.3em;"><a class="reference external" href="https://github.com/paramiko/paramiko/tree/1.12.0">1.12.0</a> <span style="font-size: 75%;">2013-09-27</span></h2><ul>
+<li><p class="first">[<span style="color: #40A056;">Feature</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/136">#136</a><span>:</span> Add server-side support for the SSH protocol&#8217;s &#8216;env&#8217; command.
+Thanks to Benjamin Pollack for the patch.</p>
+</li>
+<li><p class="first">[<span style="color: #40A056;">Feature</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/152">#152</a><span>:</span> Add tentative support for ECDSA keys. <strong>This adds the ecdsa
+module as a new dependency of Paramiko.</strong> The module is available at
+<a class="reference external" href="https://github.com/warner/python-ecdsa">warner/python-ecdsa on Github</a> and
+<a class="reference external" href="https://pypi.python.org/pypi/ecdsa">ecdsa on PyPI</a>.</p>
+<blockquote>
+<div><ul class="simple">
+<li>Note that you might still run into problems with key negotiation &#8211;
+Paramiko picks the first key that the server offers, which might not be
+what you have in your known_hosts file.</li>
+<li>Mega thanks to Ethan Glasser-Camp for the patch.</li>
+</ul>
+</div></blockquote>
+</li>
+</ul>
+</div>
+<div class="section" id="1.11.2">
+<h2 style="margin-bottom: 0.3em;"><a class="reference external" href="https://github.com/paramiko/paramiko/tree/1.11.2">1.11.2</a> <span style="font-size: 75%;">2013-09-27</span></h2><ul class="simple">
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/199">#199</a><span>:</span> Typo fix in the license header cross-project. Thanks to Armin
+Ronacher for catch &amp; patch.</li>
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/200">#200</a><span>:</span> Fix an exception-causing typo in <code class="docutils literal"><span class="pre">demo_simple.py</span></code>. Thanks to Alex
+Buchanan for catch &amp; Dave Foster for patch.</li>
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/179">#179</a><span>:</span> Fix a missing variable causing errors when an ssh_config file has
+a non-default AddressFamily set. Thanks to Ed Marshall &amp; Tomaz Muraus for
+catch &amp; patch.</li>
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/156">#156</a><span>:</span> Fix potential deadlock condition when using Channel
+objects as sockets (e.g. when using SSH gatewaying). Thanks to Steven Noonan
+and Frank Arnold for catch &amp; patch.</li>
+</ul>
+</div>
+<div class="section" id="1.10.4">
+<h2 style="margin-bottom: 0.3em;"><a class="reference external" href="https://github.com/paramiko/paramiko/tree/1.10.4">1.10.4</a> <span style="font-size: 75%;">2013-09-27</span></h2><ul class="simple">
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/199">#199</a><span>:</span> Typo fix in the license header cross-project. Thanks to Armin
+Ronacher for catch &amp; patch.</li>
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/200">#200</a><span>:</span> Fix an exception-causing typo in <code class="docutils literal"><span class="pre">demo_simple.py</span></code>. Thanks to Alex
+Buchanan for catch &amp; Dave Foster for patch.</li>
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/179">#179</a><span>:</span> Fix a missing variable causing errors when an ssh_config file has
+a non-default AddressFamily set. Thanks to Ed Marshall &amp; Tomaz Muraus for
+catch &amp; patch.</li>
+</ul>
+</div>
+<div class="section" id="1.11.1">
+<h2 style="margin-bottom: 0.3em;"><a class="reference external" href="https://github.com/paramiko/paramiko/tree/1.11.1">1.11.1</a> <span style="font-size: 75%;">2013-09-20</span></h2><ul class="simple">
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/168">#168</a><span>:</span> Update config handling to properly handle multiple &#8216;localforward&#8217;
+and &#8216;remoteforward&#8217; keys. Thanks to Emre Yılmaz for the patch.</li>
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/36">#36</a><span>:</span> Fix the port-forwarding demo to avoid file descriptor errors.
+Thanks to Jonathan Halcrow for catch &amp; patch.</li>
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/162">#162</a><span>:</span> Clean up HMAC module import to avoid deadlocks in certain uses of
+SSHClient. Thanks to Gernot Hillier for the catch &amp; suggested fix.</li>
+</ul>
+</div>
+<div class="section" id="1.10.3">
+<h2 style="margin-bottom: 0.3em;"><a class="reference external" href="https://github.com/paramiko/paramiko/tree/1.10.3">1.10.3</a> <span style="font-size: 75%;">2013-09-20</span></h2><ul class="simple">
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/168">#168</a><span>:</span> Update config handling to properly handle multiple &#8216;localforward&#8217;
+and &#8216;remoteforward&#8217; keys. Thanks to Emre Yılmaz for the patch.</li>
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/36">#36</a><span>:</span> Fix the port-forwarding demo to avoid file descriptor errors.
+Thanks to Jonathan Halcrow for catch &amp; patch.</li>
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/162">#162</a><span>:</span> Clean up HMAC module import to avoid deadlocks in certain uses of
+SSHClient. Thanks to Gernot Hillier for the catch &amp; suggested fix.</li>
+</ul>
+</div>
+<div class="section" id="1.11.0">
+<h2 style="margin-bottom: 0.3em;"><a class="reference external" href="https://github.com/paramiko/paramiko/tree/1.11.0">1.11.0</a> <span style="font-size: 75%;">2013-07-26</span></h2><ul class="simple">
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/87">#87</a><span>:</span> Ensure updates to <code class="docutils literal"><span class="pre">known_hosts</span></code> files account for any
+updates to said files after Paramiko initially read them. (Includes related
+fix to guard against duplicate entries during subsequent <code class="docutils literal"><span class="pre">known_hosts</span></code>
+loads.) Thanks to <code class="docutils literal"><span class="pre">&#64;sunweaver</span></code> for the contribution.</li>
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/98">#98</a><span>:</span> On Windows, when interacting with the PuTTY PAgeant, Paramiko
+now creates the shared memory map with explicit Security Attributes of the
+user, which is the same technique employed by the canonical PuTTY library to
+avoid permissions issues when Paramiko is running under a different UAC
+context than the PuTTY Ageant process. Thanks to Jason R. Coombs for the
+patch.</li>
+<li>[<span style="color: #4070A0;">Support</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/100">#100</a><span>:</span> Remove use of PyWin32 in <code class="docutils literal"><span class="pre">win_pageant</span></code> module. Module was
+already dependent on ctypes for constructing appropriate structures and had
+ctypes implementations of all functionality. Thanks to Jason R. Coombs for
+the patch.</li>
+</ul>
+</div>
+<div class="section" id="1.10.2">
+<h2 style="margin-bottom: 0.3em;"><a class="reference external" href="https://github.com/paramiko/paramiko/tree/1.10.2">1.10.2</a> <span style="font-size: 75%;">2013-07-26</span></h2><ul class="simple">
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/146">#146</a><span>:</span> Indentation fixes for readability. Thanks to Abhinav Upadhyay for
+catch &amp; patch.</li>
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/153">#153</a><span>:</span> (also <a class="reference external" href="https://github.com/paramiko/paramiko/issues/67">#67</a>) Warn on parse failure when reading known_hosts
+file.  Thanks to <code class="docutils literal"><span class="pre">&#64;glasserc</span></code> for patch.</li>
+</ul>
+</div>
+<div class="section" id="1.10.1">
+<h2 style="margin-bottom: 0.3em;"><a class="reference external" href="https://github.com/paramiko/paramiko/tree/1.10.1">1.10.1</a> <span style="font-size: 75%;">2013-04-05</span></h2><ul class="simple">
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/154">#154</a><span>:</span> (<a class="reference external" href="https://github.com/fabric/fabric/issues/876">Fabric #876</a>)
+Forwarded SSH agent connections left stale local pipes lying around, which
+could cause local (and sometimes remote or network) resource starvation when
+running many agent-using remote commands. Thanks to Kevin Tegtmeier for catch
+&amp; patch.</li>
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/142">#142</a><span>:</span> (<a class="reference external" href="https://github.com/fabric/fabric/issues/811">Fabric #811</a>)
+SFTP put of empty file will still return the attributes of the put file.
+Thanks to Jason R. Coombs for the patch.</li>
+</ul>
+</div>
+<div class="section" id="1.10.0">
+<h2 style="margin-bottom: 0.3em;"><a class="reference external" href="https://github.com/paramiko/paramiko/tree/1.10.0">1.10.0</a> <span style="font-size: 75%;">2013-03-01</span></h2><ul class="simple">
+<li>[<span style="color: #40A056;">Feature</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/80">#80</a><span>:</span> Expose the internal &#8220;is closed&#8221; property of the file transfer
+class <code class="docutils literal"><span class="pre">BufferedFile</span></code> as <code class="docutils literal"><span class="pre">.closed</span></code>, better conforming to Python&#8217;s file
+interface.  Thanks to <code class="docutils literal"><span class="pre">&#64;smunaut</span></code> and James Hiscock for catch &amp; patch.</li>
+<li>[<span style="color: #40A056;">Feature</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/113">#113</a><span>:</span> Add <code class="docutils literal"><span class="pre">timeout</span></code> parameter to <code class="docutils literal"><span class="pre">SSHClient.exec_command</span></code> for
+easier setting of the command&#8217;s internal channel object&#8217;s timeout. Thanks to
+Cernov Vladimir for the patch.</li>
+<li>[<span style="color: #40A056;">Feature</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/71">#71</a><span>:</span> Add <code class="docutils literal"><span class="pre">SFTPClient.putfo</span></code> and <code class="docutils literal"><span class="pre">.getfo</span></code> methods to allow direct
+uploading/downloading of file-like objects. Thanks to Eric Buehl for the
+patch.</li>
+<li>[<span style="color: #40A056;">Feature</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/115">#115</a><span>:</span> Add convenience <code class="docutils literal"><span class="pre">get_pty</span></code> kwarg to <code class="docutils literal"><span class="pre">Client.exec_command</span></code> so
+users not manually controlling a channel object can still toggle PTY
+creation. Thanks to Michael van der Kolff for the patch.</li>
+<li>[<span style="color: #40A056;">Feature</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/116">#116</a><span>:</span> Limit <code class="docutils literal"><span class="pre">Message.get_bytes</span></code> to an upper bound of 1MB to protect
+against potential DoS vectors. Thanks to <code class="docutils literal"><span class="pre">&#64;mvschaik</span></code> for catch &amp; patch.</li>
+<li>[<span style="color: #40A056;">Feature</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/127">#127</a><span>:</span> Turn <code class="docutils literal"><span class="pre">SFTPFile</span></code> into a context manager. Thanks to Michael
+Williamson for the patch.</li>
+<li>[<span style="color: #40A056;">Feature</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/128">#128</a><span>:</span> Defer FQDN resolution until needed, when parsing SSH config
+files.  Thanks to Parantapa Bhattacharya for catch &amp; patch.</li>
+<li>[<span style="color: #40A056;">Feature</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/110">#110</a><span>:</span> Honor SSH config <code class="docutils literal"><span class="pre">AddressFamily</span></code> setting when looking up
+local host&#8217;s FQDN. Thanks to John Hensley for the patch.</li>
+<li>[<span style="color: #40A056;">Feature</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/93">#93</a><span>:</span> Overhaul SSH config parsing to be in line with <code class="docutils literal"><span class="pre">man</span>
+<span class="pre">ssh_config</span></code> (&amp; the behavior of <code class="docutils literal"><span class="pre">ssh</span></code> itself), including addition of parameter
+expansion within config values. Thanks to Olle Lundberg for the patch.</li>
+<li>[<span style="color: #40A056;">Feature</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/66">#66</a><span>:</span> Batch SFTP writes to help speed up file transfers. Thanks to
+Olle Lundberg for the patch.</li>
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/102">#102</a><span>:</span> Forego random padding for packets when running under
+<code class="docutils literal"><span class="pre">*-ctr</span></code> ciphers.  This corrects some slowdowns on platforms where random
+byte generation is inefficient (e.g. Windows). Thanks to  <code class="docutils literal"><span class="pre">&#64;warthog618</span></code> for
+catch &amp; patch, and Michael van der Kolff for code/technique review.</li>
+<li>[<span style="color: #A04040;">Bug</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/133">#133</a><span>:</span> Fix handling of window-change events to be on-spec and not
+attempt to wait for a response from the remote sshd; this fixes problems with
+less common targets such as some Cisco devices. Thanks to Phillip Heller for
+catch &amp; patch.</li>
+<li>[<span style="color: #4070A0;">Support</span>]<span> </span><a class="reference external" href="https://github.com/paramiko/paramiko/issues/94">#94</a><span>:</span> Remove duplication of SSH port constant. Thanks to Olle
+Lundberg for the catch.</li>
+</ul>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">Paramiko</a></h1>
+
+
+
+<p class="blurb">A Python implementation of SSHv2.</p>
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=paramiko&repo=paramiko&type=watch&count=true&size=large&v=2"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+
+    
+
+<p>
+<a href="https://travis-ci.org/paramiko/paramiko">
+    <img
+        alt="https://secure.travis-ci.org/paramiko/paramiko.svg?branch=master"
+        src="https://secure.travis-ci.org/paramiko/paramiko.svg?branch=master"
+    />
+</a>
+</p>
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Changelog</a></li>
+<li class="toctree-l1"><a class="reference internal" href="faq.html">FAQs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installing.html">Installing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contact.html">Contact</a></li>
+</ul>
+
+
+<hr />
+<ul>
+    
+    <li class="toctree-l1"><a href="http://docs.paramiko.org">API Docs</a></li>
+    
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016 Jeff Forcier.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.4</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.8</a>
+      
+      |
+      <a href="_sources/changelog.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+    <script type="text/javascript">
+
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-18486793-2']);
+      _gaq.push(['_setDomainName', 'none']);
+      _gaq.push(['_setAllowLinker', true]);
+      _gaq.push(['_trackPageview']);
+
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+
+    </script>
+    
+  </body>
+</html>

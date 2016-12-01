@@ -20,13 +20,17 @@
 Core protocol implementation
 """
 
+from __future__ import print_function
 import os
 import socket
 import sys
 import threading
 import time
 import weakref
-from hashlib import md5, sha1
+from hashlib import md5, sha1, sha256, sha512
+
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives.ciphers import algorithms, Cipher, modes
 
 import paramiko
 from paramiko import util
@@ -43,18 +47,18 @@ from paramiko.common import xffffffff, cMSG_CHANNEL_OPEN, cMSG_IGNORE, \
     MSG_CHANNEL_OPEN_SUCCESS, MSG_CHANNEL_OPEN_FAILURE, MSG_CHANNEL_OPEN, \
     MSG_CHANNEL_SUCCESS, MSG_CHANNEL_FAILURE, MSG_CHANNEL_DATA, \
     MSG_CHANNEL_EXTENDED_DATA, MSG_CHANNEL_WINDOW_ADJUST, MSG_CHANNEL_REQUEST, \
-    MSG_CHANNEL_EOF, MSG_CHANNEL_CLOSE, MIN_PACKET_SIZE, MAX_WINDOW_SIZE, \
-    DEFAULT_WINDOW_SIZE, DEFAULT_MAX_PACKET_SIZE
+    MSG_CHANNEL_EOF, MSG_CHANNEL_CLOSE, MIN_WINDOW_SIZE, MIN_PACKET_SIZE, \
+    MAX_WINDOW_SIZE, DEFAULT_WINDOW_SIZE, DEFAULT_MAX_PACKET_SIZE
 from paramiko.compress import ZlibCompressor, ZlibDecompressor
 from paramiko.dsskey import DSSKey
-from paramiko.kex_gex import KexGex
+from paramiko.kex_gex import KexGex, KexGexSHA256
 from paramiko.kex_group1 import KexGroup1
 from paramiko.kex_group14 import KexGroup14
 from paramiko.kex_gss import KexGSSGex, KexGSSGroup1, KexGSSGroup14, NullHostKey
 from paramiko.message import Message
 from paramiko.packet import Packetizer, NeedRekeyException
 from paramiko.primes import ModulusPack
-from paramiko.py3compat import string_types, long, byte_ord, b
+from paramiko.py3compat import string_types, long, byte_ord, b, input, PY2
 from paramiko.rsakey import RSAKey
 from paramiko.ecdsakey import ECDSAKey
 from paramiko.server import ServerInterface
@@ -63,11 +67,6 @@ from paramiko.ssh_exception import (SSHException, BadAuthenticationType,
                                     ChannelException, ProxyCommandFailure)
 from paramiko.util import retry_on_signal, ClosingContextManager, clamp_value
 
-from Crypto.Cipher import Blowfish, AES, DES3, ARC4
-try:
-    from Crypto.Util import Counter
-except ImportError:
-    from paramiko.util import Counter
 
 
 # for thread cleanup
@@ -88,33 +87,118 @@ class Transport (threading.Thread, ClosingContextManager):
     `channels <.Channel>`, across the session.  Multiple channels can be
     multiplexed across a single session (and often are, in the case of port
     forwardings).
-    
+
     Instances of this class may be used as context managers.
     """
+    _ENCRYPT = object()
+    _DECRYPT = object()
+
     _PROTO_ID = '2.0'
     _CLIENT_ID = 'paramiko_%s' % paramiko.__version__
 
-    _preferred_ciphers = ('aes128-ctr', 'aes256-ctr', 'aes128-cbc', 'blowfish-cbc',
-                          'aes256-cbc', '3des-cbc', 'arcfour128', 'arcfour256')
-    _preferred_macs = ('hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96')
-    _preferred_keys = ('ssh-rsa', 'ssh-dss', 'ecdsa-sha2-nistp256')
-    _preferred_kex =  ( 'diffie-hellman-group14-sha1', 'diffie-hellman-group-exchange-sha1' , 'diffie-hellman-group1-sha1')
+    # These tuples of algorithm identifiers are in preference order; do not
+    # reorder without reason!
+    _preferred_ciphers = (
+        'aes128-ctr',
+        'aes192-ctr',
+        'aes256-ctr',
+        'aes128-cbc',
+        'blowfish-cbc',
+        'aes192-cbc',
+        'aes256-cbc',
+        '3des-cbc',
+        'arcfour128',
+        'arcfour256',
+    )
+    _preferred_macs = (
+        'hmac-sha2-256',
+        'hmac-sha2-512',
+        'hmac-md5',
+        'hmac-sha1-96',
+        'hmac-md5-96',
+        'hmac-sha1',
+    )
+    _preferred_keys = (
+        'ssh-rsa',
+        'ssh-dss',
+    ) + tuple(ECDSAKey.supported_key_format_identifiers())
+    _preferred_kex =  (
+        'diffie-hellman-group1-sha1',
+        'diffie-hellman-group14-sha1',
+        'diffie-hellman-group-exchange-sha1',
+        'diffie-hellman-group-exchange-sha256',
+    )
     _preferred_compression = ('none',)
 
     _cipher_info = {
-        'aes128-ctr': {'class': AES, 'mode': AES.MODE_CTR, 'block-size': 16, 'key-size': 16},
-        'aes256-ctr': {'class': AES, 'mode': AES.MODE_CTR, 'block-size': 16, 'key-size': 32},
-        'blowfish-cbc': {'class': Blowfish, 'mode': Blowfish.MODE_CBC, 'block-size': 8, 'key-size': 16},
-        'aes128-cbc': {'class': AES, 'mode': AES.MODE_CBC, 'block-size': 16, 'key-size': 16},
-        'aes256-cbc': {'class': AES, 'mode': AES.MODE_CBC, 'block-size': 16, 'key-size': 32},
-        '3des-cbc': {'class': DES3, 'mode': DES3.MODE_CBC, 'block-size': 8, 'key-size': 24},
-        'arcfour128': {'class': ARC4, 'mode': None, 'block-size': 8, 'key-size': 16},
-        'arcfour256': {'class': ARC4, 'mode': None, 'block-size': 8, 'key-size': 32},
+        'aes128-ctr': {
+            'class': algorithms.AES,
+            'mode': modes.CTR,
+            'block-size': 16,
+            'key-size': 16
+        },
+        'aes192-ctr': {
+            'class': algorithms.AES,
+            'mode': modes.CTR,
+            'block-size': 16,
+            'key-size': 24
+        },
+        'aes256-ctr': {
+            'class': algorithms.AES,
+            'mode': modes.CTR,
+            'block-size': 16,
+            'key-size': 32
+        },
+        'blowfish-cbc': {
+            'class': algorithms.Blowfish,
+            'mode': modes.CBC,
+            'block-size': 8,
+            'key-size': 16
+        },
+        'aes128-cbc': {
+            'class': algorithms.AES,
+            'mode': modes.CBC,
+            'block-size': 16,
+            'key-size': 16
+        },
+        'aes192-cbc': {
+            'class': algorithms.AES,
+            'mode': modes.CBC,
+            'block-size': 16,
+            'key-size': 24
+        },
+        'aes256-cbc': {
+            'class': algorithms.AES,
+            'mode': modes.CBC,
+            'block-size': 16,
+            'key-size': 32
+        },
+        '3des-cbc': {
+            'class': algorithms.TripleDES,
+            'mode': modes.CBC,
+            'block-size': 8,
+            'key-size': 24
+        },
+        'arcfour128': {
+            'class': algorithms.ARC4,
+            'mode': None,
+            'block-size': 8,
+            'key-size': 16
+        },
+        'arcfour256': {
+            'class': algorithms.ARC4,
+            'mode': None,
+            'block-size': 8,
+            'key-size': 32
+        },
     }
+
 
     _mac_info = {
         'hmac-sha1': {'class': sha1, 'size': 20},
         'hmac-sha1-96': {'class': sha1, 'size': 12},
+        'hmac-sha2-256': {'class': sha256, 'size': 32},
+        'hmac-sha2-512': {'class': sha512, 'size': 64},
         'hmac-md5': {'class': md5, 'size': 16},
         'hmac-md5-96': {'class': md5, 'size': 12},
     }
@@ -129,6 +213,7 @@ class Transport (threading.Thread, ClosingContextManager):
         'diffie-hellman-group1-sha1': KexGroup1,
         'diffie-hellman-group14-sha1': KexGroup14,
         'diffie-hellman-group-exchange-sha1': KexGex,
+        'diffie-hellman-group-exchange-sha256': KexGexSHA256,
         'gss-group1-sha1-toWM5Slw5Ew8Mqkay+al2g==': KexGSSGroup1,
         'gss-group14-sha1-toWM5Slw5Ew8Mqkay+al2g==': KexGSSGroup14,
         'gss-gex-sha1-toWM5Slw5Ew8Mqkay+al2g==': KexGSSGex
@@ -277,7 +362,7 @@ class Transport (threading.Thread, ClosingContextManager):
         self._channels = ChannelMap()
         self.channel_events = {}       # (id -> Event)
         self.channels_seen = {}        # (id -> True)
-        self._channel_counter = 1
+        self._channel_counter = 0
         self.default_max_packet_size = default_max_packet_size
         self.default_window_size = default_window_size
         self._forward_agent_handler = None
@@ -295,6 +380,8 @@ class Transport (threading.Thread, ClosingContextManager):
         self.global_response = None     # response Message from an arbitrary global request
         self.completion_event = None    # user-defined event callbacks
         self.banner_timeout = 15        # how long (seconds) to wait for the SSH banner
+        self.handshake_timeout = 15     # how long (seconds) to wait for the handshake to finish after SSH banner sent.
+
 
         # server mode:
         self.server_mode = False
@@ -405,7 +492,7 @@ class Transport (threading.Thread, ClosingContextManager):
                 if e is not None:
                     raise e
                 raise SSHException('Negotiation failed.')
-            if event.isSet():
+            if event.is_set():
                 break
 
     def start_server(self, event=None, server=None):
@@ -470,7 +557,7 @@ class Transport (threading.Thread, ClosingContextManager):
                 if e is not None:
                     raise e
                 raise SSHException('Negotiation failed.')
-            if event.isSet():
+            if event.is_set():
                 break
 
     def add_server_key(self, key):
@@ -508,6 +595,7 @@ class Transport (threading.Thread, ClosingContextManager):
             pass
         return None
 
+    @staticmethod
     def load_server_moduli(filename=None):
         """
         (optional)
@@ -547,7 +635,6 @@ class Transport (threading.Thread, ClosingContextManager):
         # none succeeded
         Transport._modulus_pack = None
         return False
-    load_server_moduli = staticmethod(load_server_moduli)
 
     def close(self):
         """
@@ -587,7 +674,7 @@ class Transport (threading.Thread, ClosingContextManager):
         """
         return self.active
 
-    def open_session(self, window_size=None, max_packet_size=None):
+    def open_session(self, window_size=None, max_packet_size=None, timeout=None):
         """
         Request a new channel to the server, of type ``"session"``.  This is
         just an alias for calling `open_channel` with an argument of
@@ -607,12 +694,15 @@ class Transport (threading.Thread, ClosingContextManager):
         :raises SSHException: if the request is rejected or the session ends
             prematurely
 
+        .. versionchanged:: 1.13.4/1.14.3/1.15.3
+            Added the ``timeout`` argument.
         .. versionchanged:: 1.15
             Added the ``window_size`` and ``max_packet_size`` arguments.
         """
         return self.open_channel('session',
                                  window_size=window_size,
-                                 max_packet_size=max_packet_size)
+                                 max_packet_size=max_packet_size,
+                                 timeout=timeout)
 
     def open_x11_channel(self, src_addr=None):
         """
@@ -659,7 +749,8 @@ class Transport (threading.Thread, ClosingContextManager):
                      dest_addr=None,
                      src_addr=None,
                      window_size=None,
-                     max_packet_size=None):
+                     max_packet_size=None,
+                     timeout=None):
         """
         Request a new channel to the server. `Channels <.Channel>` are
         socket-like objects used for the actual transfer of data across the
@@ -683,17 +774,20 @@ class Transport (threading.Thread, ClosingContextManager):
             optional window size for this session.
         :param int max_packet_size:
             optional max packet size for this session.
+        :param float timeout:
+            optional timeout opening a channel, default 3600s (1h)
 
         :return: a new `.Channel` on success
 
-        :raises SSHException: if the request is rejected or the session ends
-            prematurely
+        :raises SSHException: if the request is rejected, the session ends
+            prematurely or there is a timeout openning a channel
 
         .. versionchanged:: 1.15
             Added the ``window_size`` and ``max_packet_size`` arguments.
         """
         if not self.active:
             raise SSHException('SSH session not active')
+        timeout = 3600 if timeout is None else timeout
         self.lock.acquire()
         try:
             window_size = self._sanitize_window_size(window_size)
@@ -722,6 +816,7 @@ class Transport (threading.Thread, ClosingContextManager):
         finally:
             self.lock.release()
         self._send_user_message(m)
+        start_ts = time.time()
         while True:
             event.wait(0.1)
             if not self.active:
@@ -729,8 +824,10 @@ class Transport (threading.Thread, ClosingContextManager):
                 if e is None:
                     e = SSHException('Unable to open channel.')
                 raise e
-            if event.isSet():
+            if event.is_set():
                 break
+            elif start_ts + timeout < time.time():
+                raise SSHException('Timeout openning channel.')
         chan = self._channels.get(chanid)
         if chan is not None:
             return chan
@@ -849,7 +946,7 @@ class Transport (threading.Thread, ClosingContextManager):
                 if e is not None:
                     raise e
                 raise SSHException('Negotiation failed.')
-            if self.completion_event.isSet():
+            if self.completion_event.is_set():
                 break
         return
 
@@ -900,7 +997,7 @@ class Transport (threading.Thread, ClosingContextManager):
             self.completion_event.wait(0.1)
             if not self.active:
                 return None
-            if self.completion_event.isSet():
+            if self.completion_event.is_set():
                 break
         return self.global_response
 
@@ -960,10 +1057,14 @@ class Transport (threading.Thread, ClosingContextManager):
         :param .PKey pkey:
             a private key to use for authentication, if you want to use private
             key authentication; otherwise ``None``.
-        :param str gss_host: The targets name in the kerberos database. default: hostname
-        :param bool gss_auth: ``True`` if you want to use GSS-API authentication
-        :param bool gss_kex: Perform GSS-API Key Exchange and user authentication
-        :param bool gss_deleg_creds: Delegate GSS-API client credentials or not
+        :param str gss_host:
+            The target's name in the kerberos database. Default: hostname
+        :param bool gss_auth:
+            ``True`` if you want to use GSS-API authentication.
+        :param bool gss_kex:
+            Perform GSS-API Key Exchange and user authentication.
+        :param bool gss_deleg_creds:
+            Whether to delegate GSS-API client credentials.
 
         :raises SSHException: if the SSH2 negotiation fails, the host key
             supplied by the server is incorrect, or authentication fails.
@@ -1070,6 +1171,8 @@ class Transport (threading.Thread, ClosingContextManager):
         supplied, this method returns ``None``.
 
         :returns: server supplied banner (`str`), or ``None``.
+
+        .. versionadded:: 1.13
         """
         if not self.active or (self.auth_handler is None):
             return None
@@ -1278,6 +1381,27 @@ class Transport (threading.Thread, ClosingContextManager):
         self.auth_handler.auth_interactive(username, handler, my_event, submethods)
         return self.auth_handler.wait_for_response(my_event)
 
+    def auth_interactive_dumb(self, username, handler=None, submethods=''):
+        """
+        Autenticate to the server interactively but dumber.
+        Just print the prompt and / or instructions to stdout and send back
+        the response. This is good for situations where partial auth is
+        achieved by key and then the user has to enter a 2fac token.
+        """
+
+        if not handler:
+            def handler(title, instructions, prompt_list):
+                answers = []
+                if title:
+                    print(title.strip())
+                if instructions:
+                    print(instructions.strip())
+                for prompt,show_input in prompt_list:
+                    print(prompt.strip(),end=' ')
+                    answers.append(input())
+                return answers
+        return self.auth_interactive(username, handler, submethods)
+
     def auth_gssapi_with_mic(self, username, gss_host, gss_deleg_creds):
         """
         Authenticate to the Server using GSS-API / SSPI.
@@ -1411,8 +1535,23 @@ class Transport (threading.Thread, ClosingContextManager):
     def stop_thread(self):
         self.active = False
         self.packetizer.close()
-        while self.is_alive() and (self is not threading.current_thread()):
-            self.join(10)
+        if PY2:
+            # Original join logic; #520 doesn't appear commonly present under
+            # Python 2.
+            while self.is_alive() and self is not threading.current_thread():
+                self.join(10)
+        else:
+            # Keep trying to join() our main thread, quickly, until:
+            # * We join()ed successfully (self.is_alive() == False)
+            # * Or it looks like we've hit issue #520 (socket.recv hitting some
+            # race condition preventing it from timing out correctly), wherein
+            # our socket and packetizer are both closed (but where we'd
+            # otherwise be sitting forever on that recv()).
+            while (
+                self.is_alive() and self is not threading.current_thread()
+                and not self.sock._closed and not self.packetizer.closed
+            ):
+                self.join(0.1)
 
     ###  internals...
 
@@ -1455,7 +1594,7 @@ class Transport (threading.Thread, ClosingContextManager):
                 self._log(DEBUG, 'Dropping user packet because connection is dead.')
                 return
             self.clear_to_send_lock.acquire()
-            if self.clear_to_send.isSet():
+            if self.clear_to_send.is_set():
                 break
             self.clear_to_send_lock.release()
             if time.time() > start + self.clear_to_send_timeout:
@@ -1491,33 +1630,55 @@ class Transport (threading.Thread, ClosingContextManager):
         m.add_bytes(self.H)
         m.add_byte(b(id))
         m.add_bytes(self.session_id)
-        out = sofar = sha1(m.asbytes()).digest()
+        # Fallback to SHA1 for kex engines that fail to specify a hex
+        # algorithm, or for e.g. transport tests that don't run kexinit.
+        hash_algo = getattr(self.kex_engine, 'hash_algo', None)
+        hash_select_msg = "kex engine %s specified hash_algo %r" % (self.kex_engine.__class__.__name__, hash_algo)
+        if hash_algo is None:
+            hash_algo = sha1
+            hash_select_msg += ", falling back to sha1"
+        if not hasattr(self, '_logged_hash_selection'):
+            self._log(DEBUG, hash_select_msg)
+            setattr(self, '_logged_hash_selection', True)
+        out = sofar = hash_algo(m.asbytes()).digest()
         while len(out) < nbytes:
             m = Message()
             m.add_mpint(self.K)
             m.add_bytes(self.H)
             m.add_bytes(sofar)
-            digest = sha1(m.asbytes()).digest()
+            digest = hash_algo(m.asbytes()).digest()
             out += digest
             sofar += digest
         return out[:nbytes]
 
-    def _get_cipher(self, name, key, iv):
+    def _get_cipher(self, name, key, iv, operation):
         if name not in self._cipher_info:
             raise SSHException('Unknown client cipher ' + name)
         if name in ('arcfour128', 'arcfour256'):
             # arcfour cipher
-            cipher = self._cipher_info[name]['class'].new(key)
+            cipher = Cipher(
+                self._cipher_info[name]['class'](key),
+                None,
+                backend=default_backend()
+            )
+            if operation is self._ENCRYPT:
+                engine = cipher.encryptor()
+            else:
+                engine = cipher.decryptor()
             # as per RFC 4345, the first 1536 bytes of keystream
             # generated by the cipher MUST be discarded
-            cipher.encrypt(" " * 1536)
-            return cipher
-        elif name.endswith("-ctr"):
-            # CTR modes, we need a counter
-            counter = Counter.new(nbits=self._cipher_info[name]['block-size'] * 8, initial_value=util.inflate_long(iv, True))
-            return self._cipher_info[name]['class'].new(key, self._cipher_info[name]['mode'], iv, counter)
+            engine.encrypt(" " * 1536)
+            return engine
         else:
-            return self._cipher_info[name]['class'].new(key, self._cipher_info[name]['mode'], iv)
+            cipher = Cipher(
+                self._cipher_info[name]['class'](key),
+                self._cipher_info[name]['mode'](iv),
+                backend=default_backend(),
+            )
+            if operation is self._ENCRYPT:
+                return cipher.encryptor()
+            else:
+                return cipher.decryptor()
 
     def _set_forward_agent_handler(self, handler):
         if handler is None:
@@ -1548,7 +1709,7 @@ class Transport (threading.Thread, ClosingContextManager):
     def _sanitize_window_size(self, window_size):
         if window_size is None:
             window_size = self.default_window_size
-        return clamp_value(MIN_PACKET_SIZE, window_size, MAX_WINDOW_SIZE)
+        return clamp_value(MIN_WINDOW_SIZE, window_size, MAX_WINDOW_SIZE)
 
     def _sanitize_packet_size(self, max_packet_size):
         if max_packet_size is None:
@@ -1575,7 +1736,16 @@ class Transport (threading.Thread, ClosingContextManager):
         try:
             try:
                 self.packetizer.write_all(b(self.local_version + '\r\n'))
+                self._log(DEBUG, 'Local version/idstring: %s' % self.local_version)
                 self._check_banner()
+                # The above is actually very much part of the handshake, but
+                # sometimes the banner can be read but the machine is not
+                # responding, for example when the remote ssh daemon is loaded
+                # in to memory but we can not read from the disk/spawn a new
+                # shell.
+                # Make sure we can specify a timeout for the initial handshake.
+                # Re-use the banner timeout for now.
+                self.packetizer.start_handshake(self.handshake_timeout)
                 self._send_kex_init()
                 self._expect_packet(MSG_KEXINIT)
 
@@ -1625,6 +1795,7 @@ class Transport (threading.Thread, ClosingContextManager):
                         msg.add_byte(cMSG_UNIMPLEMENTED)
                         msg.add_int(m.seqno)
                         self._send_message(msg)
+                    self.packetizer.complete_handshake()
             except SSHException as e:
                 self._log(ERROR, 'Exception: ' + str(e))
                 self._log(ERROR, util.tb_strings())
@@ -1673,6 +1844,18 @@ class Transport (threading.Thread, ClosingContextManager):
             if self.sys.modules is not None:
                 raise
 
+
+    def _log_agreement(self, which, local, remote):
+        # Log useful, non-duplicative line re: an agreed-upon algorithm.
+        # Old code implied algorithms could be asymmetrical (different for
+        # inbound vs outbound) so we preserve that possibility.
+        msg = "{0} agreed: ".format(which)
+        if local == remote:
+            msg += local
+        else:
+            msg += "local={0}, remote={1}".format(local, remote)
+        self._log(DEBUG, msg)
+
     ###  protocol stages
 
     def _negotiate_keys(self, m):
@@ -1710,6 +1893,7 @@ class Transport (threading.Thread, ClosingContextManager):
             raise SSHException('Indecipherable protocol version "' + buf + '"')
         # save this server version string for later
         self.remote_version = buf
+        self._log(DEBUG, 'Remote version/idstring: %s' % buf)
         # pull off any attached comment
         comment = ''
         i = buf.find(' ')
@@ -1738,10 +1922,12 @@ class Transport (threading.Thread, ClosingContextManager):
             self.clear_to_send_lock.release()
         self.in_kex = True
         if self.server_mode:
-            if (self._modulus_pack is None) and ('diffie-hellman-group-exchange-sha1' in self._preferred_kex):
+            mp_required_prefix = 'diffie-hellman-group-exchange-sha'
+            kex_mp = [k for k in self._preferred_kex if k.startswith(mp_required_prefix)]
+            if (self._modulus_pack is None) and (len(kex_mp) > 0):
                 # can't do group-exchange if we don't have a pack of potential primes
-                pkex = list(self.get_security_options().kex)
-                pkex.remove('diffie-hellman-group-exchange-sha1')
+                pkex = [k for k in self.get_security_options().kex
+                                if not k.startswith(mp_required_prefix)]
                 self.get_security_options().kex = pkex
             available_server_keys = list(filter(list(self.server_key_dict.keys()).__contains__,
                                                 self._preferred_keys))
@@ -1793,15 +1979,24 @@ class Transport (threading.Thread, ClosingContextManager):
                   ' server lang:' + str(server_lang_list) +
                   ' kex follows?' + str(kex_follows))
 
-        # as a server, we pick the first item in the client's list that we support.
-        # as a client, we pick the first item in our list that the server supports.
+        # as a server, we pick the first item in the client's list that we
+        # support.
+        # as a client, we pick the first item in our list that the server
+        # supports.
         if self.server_mode:
-            agreed_kex = list(filter(self._preferred_kex.__contains__, kex_algo_list))
+            agreed_kex = list(filter(
+                self._preferred_kex.__contains__,
+                kex_algo_list
+            ))
         else:
-            agreed_kex = list(filter(kex_algo_list.__contains__, self._preferred_kex))
+            agreed_kex = list(filter(
+                kex_algo_list.__contains__,
+                self._preferred_kex
+            ))
         if len(agreed_kex) == 0:
             raise SSHException('Incompatible ssh peer (no acceptable kex algorithm)')
         self.kex_engine = self._kex_info[agreed_kex[0]](self)
+        self._log(DEBUG, "Kex agreed: %s" % agreed_kex[0])
 
         if self.server_mode:
             available_server_keys = list(filter(list(self.server_key_dict.keys()).__contains__,
@@ -1829,7 +2024,9 @@ class Transport (threading.Thread, ClosingContextManager):
             raise SSHException('Incompatible ssh server (no acceptable ciphers)')
         self.local_cipher = agreed_local_ciphers[0]
         self.remote_cipher = agreed_remote_ciphers[0]
-        self._log(DEBUG, 'Ciphers agreed: local=%s, remote=%s' % (self.local_cipher, self.remote_cipher))
+        self._log_agreement(
+            'Cipher', local=self.local_cipher, remote=self.remote_cipher
+        )
 
         if self.server_mode:
             agreed_remote_macs = list(filter(self._preferred_macs.__contains__, client_mac_algo_list))
@@ -1841,6 +2038,9 @@ class Transport (threading.Thread, ClosingContextManager):
             raise SSHException('Incompatible ssh server (no acceptable macs)')
         self.local_mac = agreed_local_macs[0]
         self.remote_mac = agreed_remote_macs[0]
+        self._log_agreement(
+            'MAC', local=self.local_mac, remote=self.remote_mac
+        )
 
         if self.server_mode:
             agreed_remote_compression = list(filter(self._preferred_compression.__contains__, client_compress_algo_list))
@@ -1852,10 +2052,11 @@ class Transport (threading.Thread, ClosingContextManager):
             raise SSHException('Incompatible ssh server (no acceptable compression) %r %r %r' % (agreed_local_compression, agreed_remote_compression, self._preferred_compression))
         self.local_compression = agreed_local_compression[0]
         self.remote_compression = agreed_remote_compression[0]
-
-        self._log(DEBUG, 'using kex %s; server key type %s; cipher: local %s, remote %s; mac: local %s, remote %s; compression: local %s, remote %s' %
-                  (agreed_kex[0], self.host_key_type, self.local_cipher, self.remote_cipher, self.local_mac,
-                   self.remote_mac, self.local_compression, self.remote_compression))
+        self._log_agreement(
+            'Compression',
+            local=self.local_compression,
+            remote=self.remote_compression
+        )
 
         # save for computing hash later...
         # now wait!  openssh has a bug (and others might too) where there are
@@ -1873,11 +2074,11 @@ class Transport (threading.Thread, ClosingContextManager):
         else:
             IV_in = self._compute_key('B', block_size)
             key_in = self._compute_key('D', self._cipher_info[self.remote_cipher]['key-size'])
-        engine = self._get_cipher(self.remote_cipher, key_in, IV_in)
+        engine = self._get_cipher(self.remote_cipher, key_in, IV_in, self._DECRYPT)
         mac_size = self._mac_info[self.remote_mac]['size']
         mac_engine = self._mac_info[self.remote_mac]['class']
-        # initial mac keys are done in the hash's natural size (not the potentially truncated
-        # transmission size)
+        # initial mac keys are done in the hash's natural size (not the
+        # potentially truncated transmission size)
         if self.server_mode:
             mac_key = self._compute_key('E', mac_engine().digest_size)
         else:
@@ -1900,11 +2101,11 @@ class Transport (threading.Thread, ClosingContextManager):
         else:
             IV_out = self._compute_key('A', block_size)
             key_out = self._compute_key('C', self._cipher_info[self.local_cipher]['key-size'])
-        engine = self._get_cipher(self.local_cipher, key_out, IV_out)
+        engine = self._get_cipher(self.local_cipher, key_out, IV_out, self._ENCRYPT)
         mac_size = self._mac_info[self.local_mac]['size']
         mac_engine = self._mac_info[self.local_mac]['class']
-        # initial mac keys are done in the hash's natural size (not the potentially truncated
-        # transmission size)
+        # initial mac keys are done in the hash's natural size (not the
+        # potentially truncated transmission size)
         if self.server_mode:
             mac_key = self._compute_key('F', mac_engine().digest_size)
         else:
@@ -2145,7 +2346,7 @@ class Transport (threading.Thread, ClosingContextManager):
         always_display = m.get_boolean()
         msg = m.get_string()
         lang = m.get_string()
-        self._log(DEBUG, 'Debug msg: ' + util.safe_string(msg))
+        self._log(DEBUG, 'Debug msg: {0}'.format(util.safe_string(msg)))
 
     def _get_subsystem_handler(self, name):
         try:
@@ -2203,21 +2404,6 @@ class SecurityOptions (object):
         """
         return '<paramiko.SecurityOptions for %s>' % repr(self._transport)
 
-    def _get_ciphers(self):
-        return self._transport._preferred_ciphers
-
-    def _get_digests(self):
-        return self._transport._preferred_macs
-
-    def _get_key_types(self):
-        return self._transport._preferred_keys
-
-    def _get_kex(self):
-        return self._transport._preferred_kex
-
-    def _get_compression(self):
-        return self._transport._preferred_compression
-
     def _set(self, name, orig, x):
         if type(x) is list:
             x = tuple(x)
@@ -2229,30 +2415,51 @@ class SecurityOptions (object):
             raise ValueError('unknown cipher')
         setattr(self._transport, name, x)
 
-    def _set_ciphers(self, x):
+    @property
+    def ciphers(self):
+        """Symmetric encryption ciphers"""
+        return self._transport._preferred_ciphers
+
+    @ciphers.setter
+    def ciphers(self, x):
         self._set('_preferred_ciphers', '_cipher_info', x)
 
-    def _set_digests(self, x):
+    @property
+    def digests(self):
+        """Digest (one-way hash) algorithms"""
+        return self._transport._preferred_macs
+
+    @digests.setter
+    def digests(self, x):
         self._set('_preferred_macs', '_mac_info', x)
 
-    def _set_key_types(self, x):
+    @property
+    def key_types(self):
+        """Public-key algorithms"""
+        return self._transport._preferred_keys
+
+    @key_types.setter
+    def key_types(self, x):
         self._set('_preferred_keys', '_key_info', x)
 
-    def _set_kex(self, x):
+
+    @property
+    def kex(self):
+        """Key exchange algorithms"""
+        return self._transport._preferred_kex
+
+    @kex.setter
+    def kex(self, x):
         self._set('_preferred_kex', '_kex_info', x)
 
-    def _set_compression(self, x):
-        self._set('_preferred_compression', '_compression_info', x)
+    @property
+    def compression(self):
+        """Compression algorithms"""
+        return self._transport._preferred_compression
 
-    ciphers = property(_get_ciphers, _set_ciphers, None,
-                       "Symmetric encryption ciphers")
-    digests = property(_get_digests, _set_digests, None,
-                       "Digest (one-way hash) algorithms")
-    key_types = property(_get_key_types, _set_key_types, None,
-                         "Public-key algorithms")
-    kex = property(_get_kex, _set_kex, None, "Key exchange algorithms")
-    compression = property(_get_compression, _set_compression, None,
-                           "Compression algorithms")
+    @compression.setter
+    def compression(self, x):
+        self._set('_preferred_compression', '_compression_info', x)
 
 
 class ChannelMap (object):

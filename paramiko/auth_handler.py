@@ -34,7 +34,7 @@ from paramiko.common import cMSG_SERVICE_REQUEST, cMSG_DISCONNECT, \
     cMSG_USERAUTH_GSSAPI_ERRTOK, cMSG_USERAUTH_GSSAPI_MIC,\
     MSG_USERAUTH_GSSAPI_RESPONSE, MSG_USERAUTH_GSSAPI_TOKEN, \
     MSG_USERAUTH_GSSAPI_EXCHANGE_COMPLETE, MSG_USERAUTH_GSSAPI_ERROR, \
-    MSG_USERAUTH_GSSAPI_ERRTOK, MSG_USERAUTH_GSSAPI_MIC
+    MSG_USERAUTH_GSSAPI_ERRTOK, MSG_USERAUTH_GSSAPI_MIC, MSG_NAMES
 
 from paramiko.message import Message
 from paramiko.py3compat import bytestring
@@ -195,7 +195,7 @@ class AuthHandler (object):
                 if (e is None) or issubclass(e.__class__, EOFError):
                     e = AuthenticationException('Authentication failed.')
                 raise e
-            if event.isSet():
+            if event.is_set():
                 break
         if not self.is_authenticated():
             e = self.transport.get_exception()
@@ -356,7 +356,7 @@ class AuthHandler (object):
             m.add_string(p[0])
             m.add_boolean(p[1])
         self.transport._send_message(m)
- 
+
     def _parse_userauth_request(self, m):
         if not self.transport.server_mode:
             # er, uh... what?
@@ -495,8 +495,9 @@ class AuthHandler (object):
                         m.add_string(token)
                         self.transport._send_message(m)
                 else:
-                    raise SSHException("Client asked to handle paket %s"
-                                       %MSG_NAMES[ptype])
+                    result = AUTH_FAILED
+                    self._send_auth_result(username, method, result)
+                    return
                 # check MIC
                 ptype, m = self.transport.packetizer.read_message()
                 if ptype == MSG_USERAUTH_GSSAPI_MIC:
@@ -510,15 +511,11 @@ class AuthHandler (object):
                 result = AUTH_FAILED
                 self._send_auth_result(username, method, result)
                 raise
-            if retval == 0:
-                # TODO: Implement client credential saving.
-                # The OpenSSH server is able to create a TGT with the delegated
-                # client credentials, but this is not supported by GSS-API.
-                result = AUTH_SUCCESSFUL
-                self.transport.server_object.check_auth_gssapi_with_mic(
-                    username, result)
-            else:
-                result = AUTH_FAILED
+            # TODO: Implement client credential saving.
+            # The OpenSSH server is able to create a TGT with the delegated
+            # client credentials, but this is not supported by GSS-API.
+            result = AUTH_SUCCESSFUL
+            self.transport.server_object.check_auth_gssapi_with_mic(username, result)
         elif method == "gssapi-keyex" and gss_auth:
             mic_token = m.get_string()
             sshgss = self.transport.kexgss_ctxt
@@ -534,12 +531,8 @@ class AuthHandler (object):
                 result = AUTH_FAILED
                 self._send_auth_result(username, method, result)
                 raise
-            if retval == 0:
-                result = AUTH_SUCCESSFUL
-                self.transport.server_object.check_auth_gssapi_keyex(username,
-                                                                      result)
-            else:
-                result = AUTH_FAILED
+            result = AUTH_SUCCESSFUL
+            self.transport.server_object.check_auth_gssapi_keyex(username, result)
         else:
             result = self.transport.server_object.check_auth_none(username)
         # okay, send result
@@ -576,7 +569,7 @@ class AuthHandler (object):
         lang = m.get_string()
         self.transport._log(INFO, 'Auth banner: %s' % banner)
         # who cares.
-    
+
     def _parse_userauth_info_request(self, m):
         if self.auth_method != 'keyboard-interactive':
             raise SSHException('Illegal info request from server')
@@ -588,14 +581,14 @@ class AuthHandler (object):
         for i in range(prompts):
             prompt_list.append((m.get_text(), m.get_boolean()))
         response_list = self.interactive_handler(title, instructions, prompt_list)
-        
+
         m = Message()
         m.add_byte(cMSG_USERAUTH_INFO_RESPONSE)
         m.add_int(len(response_list))
         for r in response_list:
             m.add_string(r)
         self.transport._send_message(m)
-    
+
     def _parse_userauth_info_response(self, m):
         if not self.transport.server_mode:
             raise SSHException('Illegal info response from server')

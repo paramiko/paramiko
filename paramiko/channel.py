@@ -88,15 +88,20 @@ class Channel (ClosingContextManager):
         :param int chanid:
             the ID of this channel, as passed by an existing `.Transport`.
         """
+        #: Channel ID
         self.chanid = chanid
+        #: Remote channel ID
         self.remote_chanid = 0
+        #: `.Transport` managing this channel
         self.transport = None
+        #: Whether the connection is presently active
         self.active = False
         self.eof_received = 0
         self.eof_sent = 0
         self.in_buffer = BufferedPipe()
         self.in_stderr_buffer = BufferedPipe()
         self.timeout = None
+        #: Whether the connection has been closed
         self.closed = False
         self.ultra_debug = False
         self.lock = threading.Lock()
@@ -327,11 +332,12 @@ class Channel (ClosingContextManager):
         return an exit status in some cases (like bad servers).
 
         :return:
-            ``True`` if `recv_exit_status` will return immediately, else ``False``.
+            ``True`` if `recv_exit_status` will return immediately, else
+            ``False``.
 
         .. versionadded:: 1.7.3
         """
-        return self.closed or self.status_event.isSet()
+        return self.closed or self.status_event.is_set()
 
     def recv_exit_status(self):
         """
@@ -341,12 +347,23 @@ class Channel (ClosingContextManager):
         it does, or until the channel is closed.  If no exit status is
         provided by the server, -1 is returned.
 
+        .. warning::
+            In some situations, receiving remote output larger than the current
+            `.Transport` or session's ``window_size`` (e.g. that set by the
+            ``default_window_size`` kwarg for `.Transport.__init__`) will cause
+            `.recv_exit_status` to hang indefinitely if it is called prior to a
+            sufficiently large `~Channel..read` (or if there are no threads
+            calling `~Channel.read` in the background).
+
+            In these cases, ensuring that `.recv_exit_status` is called *after*
+            `~Channel.read` (or, again, using threads) can avoid the hang.
+
         :return: the exit code (as an `int`) of the process on the server.
 
         .. versionadded:: 1.2
         """
         self.status_event.wait()
-        assert self.status_event.isSet()
+        assert self.status_event.is_set()
         return self.exit_status
 
     def send_exit_status(self, status):
@@ -378,7 +395,7 @@ class Channel (ClosingContextManager):
         further x11 requests can be made from the server to the client,
         when an x11 application is run in a shell session.
 
-        From RFC4254::
+        From :rfc:`4254`::
 
             It is RECOMMENDED that the 'x11 authentication cookie' that is
             sent be a fake, random cookie, and that the cookie be checked and
@@ -628,7 +645,7 @@ class Channel (ClosingContextManager):
         is returned, the channel stream has closed.
 
         :param int nbytes: maximum number of bytes to read.
-        :return: received data, as a `str`
+        :return: received data, as a `bytes`
 
         :raises socket.timeout:
             if no data is ready before the timeout set by `settimeout`.
@@ -911,6 +928,12 @@ class Channel (ClosingContextManager):
         """
         self.shutdown(1)
 
+    @property
+    def _closed(self):
+        # Concession to Python 3's socket API, which has a private ._closed
+        # attribute instead of a semipublic .closed attribute.
+        return self.closed
+
     ###  calls from Transport
 
     def _set_transport(self, transport):
@@ -931,7 +954,7 @@ class Channel (ClosingContextManager):
         self.out_max_packet_size = self.transport. \
             _sanitize_packet_size(max_packet_size)
         self.active = 1
-        self._log(DEBUG, 'Max packet out: %d bytes' % max_packet_size)
+        self._log(DEBUG, 'Max packet out: %d bytes' % self.out_max_packet_size)
 
     def _request_success(self, m):
         self._log(DEBUG, 'Sesch channel %d request ok' % self.chanid)
@@ -1016,7 +1039,7 @@ class Channel (ClosingContextManager):
             else:
                 ok = server.check_channel_env_request(self, name, value)
         elif key == 'exec':
-            cmd = m.get_text()
+            cmd = m.get_string()
             if server is None:
                 ok = False
             else:
@@ -1118,7 +1141,7 @@ class Channel (ClosingContextManager):
 
     def _wait_for_event(self):
         self.event.wait()
-        assert self.event.isSet()
+        assert self.event.is_set()
         if self.event_ready:
             return
         e = self.transport.get_exception()

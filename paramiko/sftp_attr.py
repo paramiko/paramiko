@@ -60,6 +60,7 @@ class SFTPAttributes (object):
         self.st_mtime = None
         self.attr = {}
 
+    @classmethod
     def from_stat(cls, obj, filename=None):
         """
         Create an `.SFTPAttributes` object from an existing ``stat`` object (an
@@ -79,13 +80,12 @@ class SFTPAttributes (object):
         if filename is not None:
             attr.filename = filename
         return attr
-    from_stat = classmethod(from_stat)
 
     def __repr__(self):
         return '<SFTPAttributes: %s>' % self._debug_str()
 
     ###  internals...
-
+    @classmethod
     def _from_msg(cls, msg, filename=None, longname=None):
         attr = cls()
         attr._unpack(msg)
@@ -94,7 +94,6 @@ class SFTPAttributes (object):
         if longname is not None:
             attr.longname = longname
         return attr
-    _from_msg = classmethod(_from_msg)
 
     def _unpack(self, msg):
         self._flags = msg.get_int()
@@ -159,6 +158,7 @@ class SFTPAttributes (object):
         out += ']'
         return out
 
+    @staticmethod
     def _rwx(n, suid, sticky=False):
         if suid:
             suid = 2
@@ -168,7 +168,6 @@ class SFTPAttributes (object):
         else:
             out += '-xSs'[suid + (n & 1)]
         return out
-    _rwx = staticmethod(_rwx)
 
     def __str__(self):
         """create a unix-style long description of the file (like ls -l)"""
@@ -210,12 +209,15 @@ class SFTPAttributes (object):
         # not all servers support uid/gid
         uid = self.st_uid
         gid = self.st_gid
+        size = self.st_size
         if uid is None:
             uid = 0
         if gid is None:
             gid = 0
+        if size is None:
+            size = 0
 
-        return '%s   1 %-8d %-8d %8d %-12s %s' % (ks, uid, gid, self.st_size, datestr, filename)
+        return '%s   1 %-8d %-8d %8d %-12s %s' % (ks, uid, gid, size, datestr, filename)
 
     def asbytes(self):
         return b(str(self))

@@ -24,6 +24,7 @@ Configuration file (aka ``ssh_config``) support.
 import fnmatch
 import os
 import re
+import shlex
 import socket
 
 SSH_PORT = 22
@@ -52,12 +53,13 @@ class SSHConfig (object):
         """
         Read an OpenSSH config from the given file object.
 
-        :param file file_obj: a file-like object to read the config file from
+        :param file_obj: a file-like object to read the config file from
         """
-
         host = {"host": ['*'], "config": {}}
         for line in file_obj:
-            line = line.rstrip('\r\n').lstrip()
+            # Strip any leading or trailing whitespace from the line.
+            # See https://github.com/paramiko/paramiko/issues/499 for more info.
+            line = line.strip()
             if not line or line.startswith('#'):
                 continue
 
@@ -73,13 +75,18 @@ class SSHConfig (object):
                     'host': self._get_hosts(value),
                     'config': {}
                 }
+            elif key == 'proxycommand' and value.lower() == 'none':
+                # Store 'none' as None; prior to 3.x, it will get stripped out
+                # at the end (for compatibility with issue #415). After 3.x, it
+                # will simply not get stripped, leaving a nice explicit marker.
+                host['config'][key] = None
             else:
                 if value.startswith('"') and value.endswith('"'):
                     value = value[1:-1]
 
-                #identityfile, localforward, remoteforward keys are special cases, since they are allowed to be
-                # specified multiple times and they should be tried in order
-                # of specification.
+                # identityfile, localforward, remoteforward keys are special
+                # cases, since they are allowed to be specified multiple times
+                # and they should be tried in order of specification.
                 if key in ['identityfile', 'localforward', 'remoteforward']:
                     if key in host['config']:
                         host['config'][key].append(value)
@@ -93,13 +100,15 @@ class SSHConfig (object):
         """
         Return a dict of config options for a given hostname.
 
-        The host-matching rules of OpenSSH's ``ssh_config`` man page are used,
-        which means that all configuration options from matching host
-        specifications are merged, with more specific hostmasks taking
-        precedence. In other words, if ``"Port"`` is set under ``"Host *"``
-        and also ``"Host *.example.com"``, and the lookup is for
-        ``"ssh.example.com"``, then the port entry for ``"Host *.example.com"``
-        will win out.
+        The host-matching rules of OpenSSH's ``ssh_config`` man page are used:
+        For each parameter, the first obtained value will be used.  The
+        configuration files contain sections separated by ``Host``
+        specifications, and that section is only applied for hosts that match
+        one of the patterns given in the specification.
+
+        Since the first obtained value for each parameter is used, more host-
+        specific declarations should be given near the beginning of the file,
+        and general defaults at the end.
 
         The keys in the returned dict are all normalized to lowercase (look for
         ``"port"``, not ``"Port"``. The values are processed according to the
@@ -120,10 +129,13 @@ class SSHConfig (object):
                     # else it will reference the original list
                     # in self._config and update that value too
                     # when the extend() is being called.
-                    ret[key] = value[:]
+                    ret[key] = value[:] if value is not None else value
                 elif key == 'identityfile':
                     ret[key].extend(value)
         ret = self._expand_variables(ret, hostname)
+        # TODO: remove in 3.x re #670
+        if 'proxycommand' in ret and ret['proxycommand'] is None:
+            del ret['proxycommand']
         return ret
 
     def get_hostnames(self):
@@ -204,6 +216,8 @@ class SSHConfig (object):
                         }
 
         for k in config:
+            if config[k] is None:
+                continue
             if k in replacements:
                 for find, replace in replacements[k]:
                     if isinstance(config[k], list):
@@ -220,25 +234,10 @@ class SSHConfig (object):
         """
         Return a list of host_names from host value.
         """
-        i, length = 0, len(host)
-        hosts = []
-        while i < length:
-            if host[i] == '"':
-                end = host.find('"', i + 1)
-                if end < 0:
-                    raise Exception("Unparsable host %s" % host)
-                hosts.append(host[i + 1:end])
-                i = end + 1
-            elif not host[i].isspace():
-                end = i + 1
-                while end < length and not host[end].isspace() and host[end] != '"':
-                    end += 1
-                hosts.append(host[i:end])
-                i = end
-            else:
-                i += 1
-
-        return hosts
+        try:
+            return shlex.split(host)
+        except ValueError:
+            raise Exception("Unparsable host %s" % host)
 
 
 class LazyFqdn(object):
