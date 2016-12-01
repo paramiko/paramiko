@@ -330,12 +330,10 @@ class Channel (ClosingContextManager):
         m.add_byte(cMSG_CHANNEL_REQUEST)
         m.add_int(self.remote_chanid)
         m.add_string('env')
-        m.add_boolean(True)
+        m.add_boolean(False)
         m.add_string(name)
         m.add_string(value)
-        self._event_pending()
         self.transport._send_user_message(m)
-        self._wait_for_event()
 
     def exit_status_ready(self):
         """
