@@ -75,8 +75,9 @@ class PacketizerTest (unittest.TestCase):
         self.assertEqual(1, m.get_int())
         self.assertEqual(900, m.get_int())
 
-    @unittest.skipIf(sys.platform.startswith("win"), 'no SIGALRM on windows')
     def test_3_closed(self):
+        if sys.platform.startswith("win"): # no SIGALRM on windows
+            return
         rsock = LoopSocket()
         wsock = LoopSocket()
         rsock.link(wsock)
