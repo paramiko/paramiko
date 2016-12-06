@@ -2,6 +2,8 @@
 Changelog
 =========
 
+* :bug:`681` Fix a Python3-specific bug re: the handling of read buffers when
+  using ``ProxyCommand``. Thanks to Paul Kapp for catch & patch.
 * :feature:`398` Add an ``environment`` dict argument to `Client.exec_command
   <paramiko.client.SSHClient.exec_command>` (plus the lower level
   `Channel.update_environment <paramiko.channel.Channel.update_environment>`
