@@ -2,6 +2,8 @@
 Changelog
 =========
 
+* :support:`792 (1.17+)` Minor updates to the README and demos; thanks to Alan
+  Yee.
 * :bug:`789` Add a missing ``.closed`` attribute (plus ``._closed`` because
   reasons) to `ProxyCommand <paramiko.proxy.ProxyCommand>` so the earlier
   partial fix for :issue:`520` works in situations where one is gatewaying via
