@@ -2,6 +2,11 @@
 Changelog
 =========
 
+* :bug:`334` Make the ``subprocess`` import in ``proxy.py`` lazy so users on
+  platforms without it (such as Google App Engine) can import Paramiko
+  successfully. (Relatedly, make it easier to tweak an active socket check
+  timeout  [in `Transport <paramko.transport.Transport>`] which was previously
+  hardcoded.) Credit: Shinya Okano.
 * :support:`854 backported` Fix incorrect docstring/param-list for
   `Transport.auth_gssapi_keyex
   <paramiko.transport.Transport.auth_gssapi_keyex>` so it matches the real
