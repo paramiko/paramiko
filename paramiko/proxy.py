@@ -21,7 +21,6 @@ from datetime import datetime
 import os
 from shlex import split as shlsplit
 import signal
-from subprocess import Popen, PIPE
 from select import select
 import socket
 import time
@@ -49,6 +48,9 @@ class ProxyCommand(ClosingContextManager):
         :param str command_line:
             the command that should be executed and used as the proxy.
         """
+        # NOTE: subprocess import done lazily so platforms without it (e.g.
+        # GAE) can still import us during overall Paramiko load.
+        from subprocess import Popen, PIPE
         self.cmd = shlsplit(command_line)
         self.process = Popen(self.cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE,
                              bufsize=0)
