@@ -283,6 +283,58 @@ class Channel (ClosingContextManager):
         m.add_int(height_pixels)
         self.transport._send_user_message(m)
 
+    @open_only
+    def update_environment(self, environment):
+        """
+        Updates this channel's remote shell environment.
+
+        .. note::
+            This operation is additive - i.e. the current environment is not
+            reset before the given environment variables are set.
+
+        .. warning::
+            Servers may silently reject some environment variables; see the
+            warning in `set_environment_variable` for details.
+
+        :param dict environment:
+            a dictionary containing the name and respective values to set
+        :raises SSHException:
+            if any of the environment variables was rejected by the server or
+            the channel was closed
+        """
+        for name, value in environment.items():
+            try:
+                self.set_environment_variable(name, value)
+            except SSHException as e:
+                err = "Failed to set environment variable \"{0}\"."
+                raise SSHException(err.format(name), e)
+
+    @open_only
+    def set_environment_variable(self, name, value):
+        """
+        Set the value of an environment variable.
+
+        .. warning::
+            The server may reject this request depending on its ``AcceptEnv``
+            setting; such rejections will fail silently (which is common client
+            practice for this particular request type). Make sure you
+            understand your server's configuration before using!
+
+        :param str name: name of the environment variable
+        :param str value: value of the environment variable
+
+        :raises SSHException:
+            if the request was rejected or the channel was closed
+        """
+        m = Message()
+        m.add_byte(cMSG_CHANNEL_REQUEST)
+        m.add_int(self.remote_chanid)
+        m.add_string('env')
+        m.add_boolean(False)
+        m.add_string(name)
+        m.add_string(value)
+        self.transport._send_user_message(m)
+
     def exit_status_ready(self):
         """
         Return true if the remote process has exited and returned an exit

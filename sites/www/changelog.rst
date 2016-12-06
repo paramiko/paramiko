@@ -18,6 +18,16 @@ Changelog
   signature. Caught by ``@Score_Under``.
 * :bug:`681` Fix a Python3-specific bug re: the handling of read buffers when
   using ``ProxyCommand``. Thanks to Paul Kapp for catch & patch.
+* :feature:`398 (1.18+)` Add an ``environment`` dict argument to
+  `Client.exec_command <paramiko.client.SSHClient.exec_command>` (plus the
+  lower level `Channel.update_environment
+  <paramiko.channel.Channel.update_environment>` and
+  `Channel.set_environment_variable
+  <paramiko.channel.Channel.set_environment_variable>` methods) which
+  implements the ``env`` SSH message type. This means the remote shell
+  environment can be set without the use of ``VARNAME=value`` shell tricks,
+  provided the server's ``AcceptEnv`` lists the variables you need to set.
+  Thanks to Philip Lorenz for the pull request.
 * :support:`819 backported (>=1.15,<2.0)` Document how lacking ``gmp`` headers
   at install time can cause a significant performance hit if you build PyCrypto
   from source. (Most system-distributed packages already have this enabled.)
