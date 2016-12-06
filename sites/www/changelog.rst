@@ -7,6 +7,15 @@ Changelog
   ``SSHException``. This moves the behavior in line with other "bad keys"
   situations, re: Paramiko's main auth loop. Thanks to MengHuan Yu for the
   patch.
+* :bug:`334` Make the ``subprocess`` import in ``proxy.py`` lazy so users on
+  platforms without it (such as Google App Engine) can import Paramiko
+  successfully. (Relatedly, make it easier to tweak an active socket check
+  timeout  [in `Transport <paramko.transport.Transport>`] which was previously
+  hardcoded.) Credit: Shinya Okano.
+* :support:`854 backported` Fix incorrect docstring/param-list for
+  `Transport.auth_gssapi_keyex
+  <paramiko.transport.Transport.auth_gssapi_keyex>` so it matches the real
+  signature. Caught by ``@Score_Under``.
 * :bug:`681` Fix a Python3-specific bug re: the handling of read buffers when
   using ``ProxyCommand``. Thanks to Paul Kapp for catch & patch.
 * :support:`819 backported (>=1.15,<2.0)` Document how lacking ``gmp`` headers
