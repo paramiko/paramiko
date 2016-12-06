@@ -2,6 +2,21 @@
 Changelog
 =========
 
+* :bug:`334` Make the ``subprocess`` import in ``proxy.py`` lazy so users on
+  platforms without it (such as Google App Engine) can import Paramiko
+  successfully. (Relatedly, make it easier to tweak an active socket check
+  timeout  [in `Transport <paramko.transport.Transport>`] which was previously
+  hardcoded.) Credit: Shinya Okano.
+* :support:`854 backported` Fix incorrect docstring/param-list for
+  `Transport.auth_gssapi_keyex
+  <paramiko.transport.Transport.auth_gssapi_keyex>` so it matches the real
+  signature. Caught by ``@Score_Under``.
+* :bug:`681` Fix a Python3-specific bug re: the handling of read buffers when
+  using ``ProxyCommand``. Thanks to Paul Kapp for catch & patch.
+* :support:`819 backported (>=1.15,<2.0)` Document how lacking ``gmp`` headers
+  at install time can cause a significant performance hit if you build PyCrypto
+  from source. (Most system-distributed packages already have this enabled.)
+* :release:`1.17.2 <2016-07-25>`
 * :release:`1.16.3 <2016-07-25>`
 * :bug:`673 (1.16+)` (via :issue:`681`) Fix protocol banner read errors
   (``SSHException``) which would occasionally pop up when using
@@ -16,6 +31,7 @@ Changelog
   should address issues on Windows platforms that often result in errors like
   ``ArgumentError: [...] int too long to convert``. Thanks to ``@swohlerLL``
   for the report and Jason R. Coombs for the patch.
+* :release:`1.17.1 <2016-06-21>`
 * :release:`1.16.2 <2016-06-21>`
 * :bug:`520 (1.16+)` (Partial fix) Fix at least one instance of race condition
   driven threading hangs at end of the Python interpreter session. (Includes a
@@ -27,6 +43,7 @@ Changelog
   <paramiko.channel.Channel.fileno>` after the channel has closed). Thanks to
   Przemysław Strzelczak for the report & reproduction case, and to Krzysztof
   Rusek for the fix.
+* :release:`1.17.0 <2016-04-28>`
 * :release:`1.16.1 <2016-04-28>`
 * :release:`1.15.5 <2016-04-28>`
 * :bug:`670` Due to an earlier bugfix, less-specific ``Host`` blocks'
@@ -48,6 +65,9 @@ Changelog
 * :support:`729 backported (>=1.15,<2.0)` Clean up ``setup.py`` to always use
   ``setuptools``, not doing so was a historical artifact from bygone days.
   Thanks to Alex Gaynor.
+* :bug:`649 major (==1.17)` Update the module in charge of handling SSH moduli
+  so it's consistent with OpenSSH behavior re: prime number selection. Thanks
+  to Damien Tournoud for catch & patch.
 * :bug:`617` (aka `fabric/fabric#1429
   <https://github.com/fabric/fabric/issues/1429>`_; via :issue:`679`; related:
   :issue:`678`, :issue:`685`, :issue:`615` & :issue:`616`) Fix up
@@ -77,6 +97,9 @@ Changelog
 * :bug:`652` Fix behavior of ``gssapi-with-mic`` auth requests so they fail
   gracefully (allowing followup via other auth methods) instead of raising an
   exception. Patch courtesy of ``@jamercee``.
+* :feature:`588 (==1.17)` Add missing file-like object methods for
+  `~paramiko.file.BufferedFile` and `~paramiko.sftp_file.SFTPFile`. Thanks to
+  Adam Meily for the patch.
 * :support:`636 backported (>=1.15,<2.0)` Clean up and enhance the README (and
   rename it to ``README.rst`` from just ``README``). Thanks to ``@LucasRMehl``.
 * :release:`1.16.0 <2015-11-04>`

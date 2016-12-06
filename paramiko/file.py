@@ -59,7 +59,7 @@ class BufferedFile (ClosingContextManager):
 
     def __del__(self):
         self.close()
-        
+
     def __iter__(self):
         """
         Returns an iterator that can be used to iterate over the lines in this
@@ -97,7 +97,7 @@ class BufferedFile (ClosingContextManager):
 
             :raises StopIteration: when the end of the file is reached.
 
-            :return: a line (`str`) read from the file.
+            :returns: a line (`str`) read from the file.
             """
             line = self.readline()
             if not line:
@@ -119,6 +119,48 @@ class BufferedFile (ClosingContextManager):
                 raise StopIteration
             return line
 
+    def readable(self):
+        """
+        Check if the file can be read from.
+
+        :returns:
+            `True` if the file can be read from. If `False`, `read` will raise
+            an exception.
+        """
+        return (self._flags & self.FLAG_READ) == self.FLAG_READ
+
+    def writable(self):
+        """
+        Check if the file can be written to.
+
+        :returns:
+            `True` if the file can be written to. If `False`, `write` will
+            raise an exception.
+        """
+        return (self._flags & self.FLAG_WRITE) == self.FLAG_WRITE
+
+    def seekable(self):
+        """
+        Check if the file supports random access.
+
+        :returns:
+            `True` if the file supports random access. If `False`, `seek` will
+            raise an exception.
+        """
+        return False
+
+    def readinto(self, buff):
+        """
+        Read up to ``len(buff)`` bytes into :class:`bytearray` *buff* and
+        return the number of bytes read.
+
+        :returns:
+            The number of bytes read.
+        """
+        data = self.read(len(buff))
+        buff[:len(data)] = data
+        return len(data)
+
     def read(self, size=None):
         """
         Read at most ``size`` bytes from the file (less if we hit the end of the
@@ -132,7 +174,7 @@ class BufferedFile (ClosingContextManager):
             text data.
 
         :param int size: maximum number of bytes to read
-        :return:
+        :returns:
             data read from the file (as bytes), or an empty string if EOF was
             encountered immediately
         """
@@ -155,12 +197,12 @@ class BufferedFile (ClosingContextManager):
                 result += new_data
                 self._realpos += len(new_data)
                 self._pos += len(new_data)
-            return result 
+            return result
         if size <= len(self._rbuffer):
             result = self._rbuffer[:size]
             self._rbuffer = self._rbuffer[size:]
             self._pos += len(result)
-            return result 
+            return result
         while len(self._rbuffer) < size:
             read_size = size - len(self._rbuffer)
             if self._flags & self.FLAG_BUFFERED:
@@ -176,7 +218,7 @@ class BufferedFile (ClosingContextManager):
         result = self._rbuffer[:size]
         self._rbuffer = self._rbuffer[size:]
         self._pos += len(result)
-        return result 
+        return result
 
     def readline(self, size=None):
         """
@@ -192,7 +234,7 @@ class BufferedFile (ClosingContextManager):
             characters (``'\\0'``) if they occurred in the input.
 
         :param int size: maximum length of returned string.
-        :return:
+        :returns:
             next line of the file, or an empty string if the end of the
             file has been reached.
 
@@ -254,7 +296,7 @@ class BufferedFile (ClosingContextManager):
         xpos = pos + 1
         if (line[pos] == cr_byte_value) and (xpos < len(line)) and (line[xpos] == linefeed_byte_value):
             xpos += 1
-        # if the string was truncated, _rbuffer needs to have the string after 
+        # if the string was truncated, _rbuffer needs to have the string after
         # the newline character plus the truncated part of the line we stored
         # earlier in _rbuffer
         self._rbuffer = line[xpos:] + self._rbuffer if truncated else line[xpos:]
@@ -277,7 +319,7 @@ class BufferedFile (ClosingContextManager):
         after rounding up to an internal buffer size) are read.
 
         :param int sizehint: desired maximum number of bytes to read.
-        :return: `list` of lines read from the file.
+        :returns: `list` of lines read from the file.
         """
         lines = []
         byte_count = 0
@@ -300,7 +342,7 @@ class BufferedFile (ClosingContextManager):
             If a file is opened in append mode (``'a'`` or ``'a+'``), any seek
             operations will be undone at the next write (as the file position
             will move back to the end of the file).
-        
+
         :param int offset:
             position to move to within the file, relative to ``whence``.
         :param int whence:
@@ -317,7 +359,7 @@ class BufferedFile (ClosingContextManager):
         useful if the underlying file doesn't support random access, or was
         opened in append mode.
 
-        :return: file position (`number <int>` of bytes).
+        :returns: file position (`number <int>` of bytes).
         """
         return self._pos
 
