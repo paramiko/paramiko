@@ -2,6 +2,14 @@
 Changelog
 =========
 
+* :feature:`780 (1.18+)` (also :issue:`779`, and may help users affected by
+  :issue:`520`) Add an optional ``timeout`` parameter to
+  `Transport.start_client <paramiko.transport.Transport.start_client>` (and
+  feed it the value of the configured connection timeout when used within
+  `SSHClient <paramiko.client.SSHClient>`.) This helps prevent situations where
+  network connectivity isn't timing out, but the remote server is otherwise
+  unable to service the connection in a timely manner. Credit to
+  ``@sanseihappa``.
 * :bug:`742` (also re: :issue:`559`) Catch ``AssertionError`` thrown by
   Cryptography when attempting to load bad ECDSA keys, turning it into an
   ``SSHException``. This moves the behavior in line with other "bad keys"
