@@ -2,6 +2,14 @@
 Changelog
 =========
 
+* :feature:`780 (1.18+)` (also :issue:`779`, and may help users affected by
+  :issue:`520`) Add an optional ``timeout`` parameter to
+  `Transport.start_client <paramiko.transport.Transport.start_client>` (and
+  feed it the value of the configured connection timeout when used within
+  `SSHClient <paramiko.client.SSHClient>`.) This helps prevent situations where
+  network connectivity isn't timing out, but the remote server is otherwise
+  unable to service the connection in a timely manner. Credit to
+  ``@sanseihappa``.
 * :bug:`334` Make the ``subprocess`` import in ``proxy.py`` lazy so users on
   platforms without it (such as Google App Engine) can import Paramiko
   successfully. (Relatedly, make it easier to tweak an active socket check
