@@ -20,6 +20,7 @@
 Some unit tests for the ssh2 protocol in Transport.
 """
 
+import sys
 import unittest
 from hashlib import sha1
 
@@ -32,7 +33,6 @@ from paramiko.common import byte_chr, zero_byte
 
 x55 = byte_chr(0x55)
 x1f = byte_chr(0x1f)
-
 
 class PacketizerTest (unittest.TestCase):
 
@@ -75,6 +75,7 @@ class PacketizerTest (unittest.TestCase):
         self.assertEqual(1, m.get_int())
         self.assertEqual(900, m.get_int())
 
+    @unittest.skipIf(sys.platform.startswith("win"), 'no SIGALRM on windows')
     def test_3_closed(self):
         rsock = LoopSocket()
         wsock = LoopSocket()
