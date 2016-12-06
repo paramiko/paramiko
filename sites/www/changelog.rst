@@ -2,6 +2,8 @@
 Changelog
 =========
 
+* :bug:`681` Fix a Python3-specific bug re: the handling of read buffers when
+  using ``ProxyCommand``. Thanks to Paul Kapp for catch & patch.
 * :support:`819 backported (>=1.15,<2.0)` Document how lacking ``gmp`` headers
   at install time can cause a significant performance hit if you build PyCrypto
   from source. (Most system-distributed packages already have this enabled.)
