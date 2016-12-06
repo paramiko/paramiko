@@ -2,6 +2,8 @@
 Changelog
 =========
 
+* :support:`792 (1.17+)` Minor updates to the README and demos; thanks to Alan
+  Yee.
 * :feature:`780 (1.18+)` (also :issue:`779`, and may help users affected by
   :issue:`520`) Add an optional ``timeout`` parameter to
   `Transport.start_client <paramiko.transport.Transport.start_client>` (and
