@@ -1427,20 +1427,18 @@ class Transport (threading.Thread, ClosingContextManager):
 
     def auth_gssapi_keyex(self, username):
         """
-        Authenticate to the Server with GSS-API / SSPI if GSS-API Key Exchange
-        was the used key exchange method.
+        Authenticate to the server with GSS-API/SSPI if GSS-API kex is in use.
 
-        :param str username: The username to authenticate as
-        :param str gss_host: The target host
-        :param bool gss_deleg_creds: Delegate credentials or not
-        :return: list of auth types permissible for the next stage of
-                 authentication (normally empty)
-        :rtype: list
-        :raise BadAuthenticationType: if GSS-API Key Exchange was not performed
-                                      (and no event was passed in)
-        :raise AuthenticationException: if the authentication failed (and no
-            event was passed in)
-        :raise SSHException: if there was a network error
+        :param str username: The username to authenticate as.
+        :returns:
+            a `list` of auth types permissible for the next stage of
+            authentication (normally empty)
+        :raises BadAuthenticationType:
+            if GSS-API Key Exchange was not performed (and no event was passed
+            in)
+        :raises AuthenticationException:
+            if the authentication failed (and no event was passed in)
+        :raises SSHException: if there was a network error
         """
         if (not self.active) or (not self.initial_kex_done):
             # we should never try to authenticate unless we're on a secure link
