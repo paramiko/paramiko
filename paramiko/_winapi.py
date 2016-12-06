@@ -89,7 +89,7 @@ def handle_nonzero_success(result):
 GMEM_MOVEABLE = 0x2
 
 GlobalAlloc = ctypes.windll.kernel32.GlobalAlloc
-GlobalAlloc.argtypes = ctypes.wintypes.UINT, ctypes.c_ssize_t
+GlobalAlloc.argtypes = ctypes.wintypes.UINT, ctypes.c_size_t
 GlobalAlloc.restype = ctypes.wintypes.HANDLE
 
 GlobalLock = ctypes.windll.kernel32.GlobalLock
