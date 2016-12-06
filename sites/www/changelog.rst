@@ -2,6 +2,11 @@
 Changelog
 =========
 
+* :bug:`742` (also re: :issue:`559`) Catch ``AssertionError`` thrown by
+  Cryptography when attempting to load bad ECDSA keys, turning it into an
+  ``SSHException``. This moves the behavior in line with other "bad keys"
+  situations, re: Paramiko's main auth loop. Thanks to MengHuan Yu for the
+  patch.
 * :bug:`681` Fix a Python3-specific bug re: the handling of read buffers when
   using ``ProxyCommand``. Thanks to Paul Kapp for catch & patch.
 * :support:`819 backported (>=1.15,<2.0)` Document how lacking ``gmp`` headers
