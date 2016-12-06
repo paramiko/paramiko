@@ -2,6 +2,8 @@
 Changelog
 =========
 
+* :support:`801 (1.17+)` Skip a Unix-only test when on Windows; thanks to
+  Gabi Davar.
 * :support:`792 (1.17+)` Minor updates to the README and demos; thanks to Alan
   Yee.
 * :bug:`789` Add a missing ``.closed`` attribute (plus ``._closed`` because
