@@ -2,6 +2,11 @@
 Changelog
 =========
 
+* :bug:`824` Fix the implementation of ``PKey.write_private_key_file`` (this
+  method is only publicly defined on subclasses; the fix was in the private
+  real implementation) so it passes the correct params to ``open()``. This bug
+  apparently went unnoticed and unfixed for 12 entire years. Congrats to John
+  Villalovos for noticing & submitting the patch!
 * :support:`801 (1.17+)` Skip a Unix-only test when on Windows; thanks to
   Gabi Davar.
 * :support:`792 (1.17+)` Minor updates to the README and demos; thanks to Alan
