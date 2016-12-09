@@ -2,6 +2,9 @@
 Changelog
 =========
 
+* :release:`2.0.3 <2016-12-09>`
+* :release:`1.18.0 <2016-12-09>`
+* :release:`1.17.3 <2016-12-09>`
 * :bug:`802 (1.17+)` (via :issue:`804`) Update our vendored Windows API module
   to address errors of the form ``AttributeError: 'module' object has no
   attribute 'c_ssize_t'``. Credit to Jason R. Coombs.
