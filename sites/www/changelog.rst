@@ -2,6 +2,10 @@
 Changelog
 =========
 
+* :bug:`859` (via :issue:`860`) A tweak to the original patch implementing
+  :issue:`398` was not fully applied, causing calls to
+  `~paramiko.client.SSHClient.invoke_shell` to fail with ``AttributeError``.
+  This has been fixed. Patch credit: Kirk Byers.
 * :release:`1.18.0 <2016-12-09>`
 * :release:`1.17.3 <2016-12-09>`
 * :bug:`802 (1.17+)` (via :issue:`804`) Update our vendored Windows API module
