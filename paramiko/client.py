@@ -335,7 +335,7 @@ class SSHClient (ClosingContextManager):
             t.set_log_channel(self._log_channel)
         if banner_timeout is not None:
             t.banner_timeout = banner_timeout
-        t.start_client(timeout=timeout)
+        t.start_client()
         ResourceManager.register(self, t)
 
         server_key = t.get_remote_server_key()
