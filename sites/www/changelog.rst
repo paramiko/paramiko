@@ -2,11 +2,12 @@
 Changelog
 =========
 
-* :bug:`- (2.0)` Accidentally merged the new features from 1.1.80 into the 2.0
-  line. (We're obviously still new at managing split feature/bug releases on
-  both sides of a major version bump!). This included merging a bug in one of
-  those new features (breaking `~paramiko.client.SSHClient.invoke_shell` with
-  an ``AttributeError``.) The offending code has been stripped out.
+<<<<<<< HEAD
+* :bug:`-` Accidentally merged the new features from 1.18.0 into the
+  2.0.x bugfix-only branch. This included merging a bug in one of those new
+  features (breaking `~paramiko.client.SSHClient.invoke_shell` with an
+  ``AttributeError``.) The offending code has been stripped out of the 2.0.x
+  line (but of course, remains in 2.1.x and above.)
 * :bug:`859` (via :issue:`860`) A tweak to the original patch implementing
   :issue:`398` was not fully applied, causing calls to
   `~paramiko.client.SSHClient.invoke_shell` to fail with ``AttributeError``.
