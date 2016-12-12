@@ -2,7 +2,6 @@
 Changelog
 =========
 
-<<<<<<< HEAD
 * :bug:`-` Accidentally merged the new features from 1.18.0 into the
   2.0.x bugfix-only branch. This included merging a bug in one of those new
   features (breaking `~paramiko.client.SSHClient.invoke_shell` with an
