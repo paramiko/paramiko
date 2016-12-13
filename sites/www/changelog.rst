@@ -2,6 +2,7 @@
 Changelog
 =========
 
+* :release:`2.1.1 <2016-12-12>`
 * :release:`2.0.4 <2016-12-12>`
 * :release:`1.18.1 <2016-12-12>`
 * :bug:`859` (via :issue:`860`) A tweak to the original patch implementing
