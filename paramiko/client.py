@@ -464,7 +464,6 @@ class SSHClient (ClosingContextManager):
         """
         chan = self._transport.open_session()
         chan.get_pty(term, width, height, width_pixels, height_pixels)
-        chan.update_environment(environment or {})
         chan.invoke_shell()
         return chan
 
