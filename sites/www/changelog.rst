@@ -2,6 +2,11 @@
 Changelog
 =========
 
+* :release:`1.18.1 <2016-12-12>`
+* :bug:`859` (via :issue:`860`) A tweak to the original patch implementing
+  :issue:`398` was not fully applied, causing calls to
+  `~paramiko.client.SSHClient.invoke_shell` to fail with ``AttributeError``.
+  This has been fixed. Patch credit: Kirk Byers.
 * :bug:`-` Accidentally merged the new features from 1.18.0 into the
   2.0.x bugfix-only branch. This included merging a bug in one of those new
   features (breaking `~paramiko.client.SSHClient.invoke_shell` with an
