@@ -2,6 +2,9 @@
 Changelog
 =========
 
+* :support:`866 backported` (also :issue:`838`) Remove an old test-related file
+  we don't support, and add PyPy to Travis-CI config. Thanks to Pierce Lopez
+  for the final patch and Pedro Rodrigues for an earlier edition.
 * :release:`1.17.3 <2016-12-09>`
 * :bug:`802 (1.17+)` (via :issue:`804`) Update our vendored Windows API module
   to address errors of the form ``AttributeError: 'module' object has no
