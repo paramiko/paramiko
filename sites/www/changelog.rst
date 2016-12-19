@@ -2,6 +2,9 @@
 Changelog
 =========
 
+* :support:`866 backported` (also :issue:`838`) Remove an old test-related file
+  we don't support, and add PyPy to Travis-CI config. Thanks to Pierce Lopez
+  for the final patch and Pedro Rodrigues for an earlier edition.
 * :release:`1.18.1 <2016-12-12>`
 * :bug:`859` (via :issue:`860`) A tweak to the original patch implementing
   :issue:`398` was not fully applied, causing calls to
