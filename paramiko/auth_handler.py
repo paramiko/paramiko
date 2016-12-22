@@ -21,6 +21,7 @@
 """
 
 import weakref
+import time
 from paramiko.common import cMSG_SERVICE_REQUEST, cMSG_DISCONNECT, \
     DISCONNECT_SERVICE_NOT_AVAILABLE, DISCONNECT_NO_MORE_AUTH_METHODS_AVAILABLE, \
     cMSG_USERAUTH_REQUEST, cMSG_SERVICE_ACCEPT, DEBUG, AUTH_SUCCESSFUL, INFO, \
@@ -188,6 +189,7 @@ class AuthHandler (object):
         return m.asbytes()
 
     def wait_for_response(self, event):
+        max_ts = time.time() + self.transport.auth_timeout if self.transport.auth_timeout is not None else None
         while True:
             event.wait(0.1)
             if not self.transport.is_active():
@@ -197,6 +199,9 @@ class AuthHandler (object):
                 raise e
             if event.is_set():
                 break
+            elif max_ts is not None and max_ts >= time.time():
+                raise AuthenticationException('Authentication timeout.')
+
         if not self.is_authenticated():
             e = self.transport.get_exception()
             if e is None:

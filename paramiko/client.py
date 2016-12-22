@@ -226,7 +226,8 @@ class SSHClient (ClosingContextManager):
         gss_kex=False,
         gss_deleg_creds=True,
         gss_host=None,
-        banner_timeout=None
+        banner_timeout=None,
+        auth_timeout=None
     ):
         """
         Connect to an SSH server and authenticate to it.  The server's host key
@@ -278,7 +279,8 @@ class SSHClient (ClosingContextManager):
             The targets name in the kerberos database. default: hostname
         :param float banner_timeout: an optional timeout (in seconds) to wait
             for the SSH banner to be presented.
-
+        :param float auth_timeout: an optional timeout (in seconds) to wait for
+            an authentication response.
         :raises BadHostKeyException: if the server's host key could not be
             verified
         :raises AuthenticationException: if authentication failed
@@ -335,6 +337,8 @@ class SSHClient (ClosingContextManager):
             t.set_log_channel(self._log_channel)
         if banner_timeout is not None:
             t.banner_timeout = banner_timeout
+        if auth_timeout is not None:
+            t.auth_timeout = auth_timeout
         t.start_client(timeout=timeout)
         ResourceManager.register(self, t)
 
