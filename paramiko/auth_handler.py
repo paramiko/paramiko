@@ -199,7 +199,7 @@ class AuthHandler (object):
                 raise e
             if event.is_set():
                 break
-            elif max_ts is not None and max_ts >= time.time():
+            if max_ts is not None and max_ts <= time.time():
                 raise AuthenticationException('Authentication timeout.')
 
         if not self.is_authenticated():
