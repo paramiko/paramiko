@@ -383,7 +383,7 @@ class Transport (threading.Thread, ClosingContextManager):
         self.completion_event = None    # user-defined event callbacks
         self.banner_timeout = 15        # how long (seconds) to wait for the SSH banner
         self.handshake_timeout = 15     # how long (seconds) to wait for the handshake to finish after SSH banner sent.
-        self.auth_timeout = 15          # how long (seconds) to wait for the auth response.
+        self.auth_timeout = 30          # how long (seconds) to wait for the auth response.
 
         # server mode:
         self.server_mode = False
