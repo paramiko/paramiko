@@ -253,7 +253,7 @@ class AuthTest (unittest.TestCase):
             except:
                 etype, evalue, etb = sys.exc_info()
                 self.assertTrue(issubclass(etype, AuthenticationException))
-                self.assertIn('Authentication timeout', str(evalue))
+                self.assertTrue('Authentication timeout' in str(evalue))
         finally:
             # Restore value
             self.tc.auth_timeout = auth_timeout
