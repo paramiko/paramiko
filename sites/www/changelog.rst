@@ -2,6 +2,9 @@
 Changelog
 =========
 
+* :feature:`add-auth-timeout` Adds a timeout for the authentication process.
+  This is a fix to prevent the client getting stuck if an SSH server becomes
+  un-responsive during the authentication. Credit to ``@timsavage``.
 * :support:`866 backported` (also :issue:`838`) Remove an old test-related file
   we don't support, and add PyPy to Travis-CI config. Thanks to Pierce Lopez
   for the final patch and Pedro Rodrigues for an earlier edition.
