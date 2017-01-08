@@ -26,6 +26,7 @@ import os
 import re
 import shlex
 import socket
+import glob
 
 SSH_PORT = 22
 
@@ -49,7 +50,7 @@ class SSHConfig (object):
         """
         self._config = []
 
-    def parse(self, file_obj):
+    def parse(self, file_obj,parsed_files=None):
         """
         Read an OpenSSH config from the given file object.
 
@@ -68,7 +69,7 @@ class SSHConfig (object):
                 raise Exception("Unparsable line %s" % line)
             key = match.group(1).lower()
             value = match.group(2)
-            
+
             if key == 'host':
                 self._config.append(host)
                 host = {
@@ -80,6 +81,27 @@ class SSHConfig (object):
                 # at the end (for compatibility with issue #415). After 3.x, it
                 # will simply not get stripped, leaving a nice explicit marker.
                 host['config'][key] = None
+            elif key == 'include':
+                # support for Include directive in ssh_config
+
+                path = value
+                # according to SSH documentation if the path is relative, we look forward in ~/.ssh
+                if path[0] != '/' and path[0]!='~':
+                    path = '~/.ssh/'+path
+                #expand the user home path
+                path = os.path.expanduser(path)
+
+                if parsed_files == None:
+                    parsed_files = []
+
+                #parse every included file
+                for filename in glob.iglob(path):
+                    if os.path.isfile(filename):
+                        if path in parsed_files:
+                            raise Exception("Include loop detected in ssh config file: %s" %path)
+                        with open(filename) as fd:
+                            parsed_files.append(path);
+                            self.parse(fd,parsed_files)
             else:
                 if value.startswith('"') and value.endswith('"'):
                     value = value[1:-1]
