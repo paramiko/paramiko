@@ -85,7 +85,7 @@ class SSHConfig (object):
                 # support for Include directive in ssh_config
                 path = value
                 # according to SSH documentation if the path is relative, we look forward in ~/.ssh
-                if os.path.isabs(path) and path[0] != '~':
+                if os.path.isabs(path) == False and path[0] != '~':
                     path = '~/.ssh/'+path
                 #expand the user home path
                 path = os.path.expanduser(path)
@@ -96,7 +96,7 @@ class SSHConfig (object):
                 for filename in glob.iglob(path):
                     if os.path.isfile(filename):
                         if filename in parsed_files:
-                            raise Exception("Include loop detected in ssh config file: %s" % path)
+                            raise Exception("Include loop detected in ssh config file: %s" % filename)
                         with open(filename) as fd:
                             parsed_files.append(filename)
                             self.parse(fd, parsed_files)
