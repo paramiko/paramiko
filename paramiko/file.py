@@ -370,7 +370,7 @@ class BufferedFile (ClosingContextManager):
         written yet.  (Use `flush` or `close` to force buffered data to be
         written out.)
 
-        :param str data: data to write
+        :param str/bytes data: data to write
         """
         data = b(data)
         if self._closed:
