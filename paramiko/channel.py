@@ -155,7 +155,7 @@ class Channel (ClosingContextManager):
         after creating a client channel, to ask the server to provide some
         basic terminal semantics for a shell invoked with `invoke_shell`.
         It isn't necessary (or desirable) to call this method if you're going
-        to exectue a single command with `exec_command`.
+        to execute a single command with `exec_command`.
 
         :param str term: the terminal type to emulate (for example, ``'vt100'``)
         :param int width: width (in characters) of the terminal screen
