@@ -361,7 +361,7 @@ class SSHClientTest (unittest.TestCase):
         # NOTE: re #387, re #394
         # If pkey module used within Client._auth isn't correctly handling auth
         # errors (e.g. if it allows things like ValueError to bubble up as per
-        # midway thru #394) client.connect() will fail (at key load step)
+        # midway through #394) client.connect() will fail (at key load step)
         # instead of succeeding (at password step)
         kwargs = dict(
             # Password-protected key whose passphrase is not 'pygmalion' (it's
