@@ -507,7 +507,7 @@ class Transport (threading.Thread, ClosingContextManager):
         be triggered.  On failure, `is_active` will return ``False``.
 
         (Since 1.4) If ``event`` is ``None``, this method will not return until
-        negotation is done.  On success, the method returns normally.
+        negotiation is done.  On success, the method returns normally.
         Otherwise an SSHException is raised.
 
         After a successful negotiation, the client will need to authenticate.
@@ -2291,7 +2291,7 @@ class Transport (threading.Thread, ClosingContextManager):
             finally:
                 self.lock.release()
             if kind == 'direct-tcpip':
-                # handle direct-tcpip requests comming from the client
+                # handle direct-tcpip requests coming from the client
                 dest_addr = m.get_text()
                 dest_port = m.get_int()
                 origin_addr = m.get_text()

@@ -208,7 +208,7 @@ class SFTPServerInterface (object):
 
         The ``attr`` object will contain only those fields provided by the
         client in its request, so you should use ``hasattr`` to check for
-        the presense of fields before using them.  In some cases, the ``attr``
+        the presence of fields before using them.  In some cases, the ``attr``
         object may be completely empty.
 
         :param str path:
