@@ -413,7 +413,7 @@ class SFTPTest (unittest.TestCase):
     def test_A_readline_seek(self):
         """
         create a text file and write a bunch of text into it.  then count the lines
-        in the file, and seek around to retreive particular lines.  this should
+        in the file, and seek around to retrieve particular lines.  this should
         verify that read buffering and 'tell' work well together, and that read
         buffering is reset on 'seek'.
         """

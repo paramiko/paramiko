@@ -223,7 +223,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         ``read_aheads``, an integer controlling how many
         ``SSH_FXP_READDIR`` requests are made to the server. The default of 50
         should suffice for most file listings as each request/response cycle
-        may contain multiple files (dependant on server implementation.)
+        may contain multiple files (dependent on server implementation.)
 
         .. versionadded:: 1.15
         """
@@ -828,6 +828,6 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
 
 class SFTP(SFTPClient):
     """
-    An alias for `.SFTPClient` for backwards compatability.
+    An alias for `.SFTPClient` for backwards compatibility.
     """
     pass
