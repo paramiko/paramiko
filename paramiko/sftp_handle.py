@@ -179,7 +179,7 @@ class SFTPHandle (ClosingContextManager):
 
     def _get_next_files(self):
         """
-        Used by the SFTP server code to retreive a cached directory
+        Used by the SFTP server code to retrieve a cached directory
         listing.
         """
         fnlist = self.__files[:16]

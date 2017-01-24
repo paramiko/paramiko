@@ -331,7 +331,7 @@ class Agent(AgentSSH):
     """
     Client interface for using private keys from an SSH agent running on the
     local machine.  If an SSH agent is running, this class can be used to
-    connect to it and retreive `.PKey` objects which can be used when
+    connect to it and retrieve `.PKey` objects which can be used when
     attempting to authenticate to remote SSH servers.
 
     Upon initialization, a session with the local machine's SSH agent is

@@ -385,7 +385,7 @@ class ServerInterface (object):
         :param int pixelheight:
             height of screen in pixels, if known (may be ``0`` if unknown).
         :return:
-            ``True`` if the psuedo-terminal has been allocated; ``False``
+            ``True`` if the pseudo-terminal has been allocated; ``False``
             otherwise.
         """
         return False
