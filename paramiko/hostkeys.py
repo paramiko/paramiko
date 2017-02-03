@@ -25,11 +25,11 @@ from hmac import HMAC
 
 from paramiko.py3compat import b, u, encodebytes, decodebytes
 
-try:
-    from collections import MutableMapping
-except ImportError:
+try:                                                    # pragma: no cover
+    from collections import MutableMapping              # pragma: no cover
+except ImportError:                                     # pragma: no cover
     # noinspection PyUnresolvedReferences
-    from UserDict import DictMixin as MutableMapping
+    from UserDict import DictMixin as MutableMapping    # pragma: no cover
 
 from paramiko.dsskey import DSSKey
 from paramiko.rsakey import RSAKey
@@ -50,7 +50,7 @@ class HostKeys (MutableMapping):
     .. versionadded:: 1.5.3
     """
 
-    def __init__(self, filename=None):
+    def __init__(self, filename=None, fp=None):
         """
         Create a new HostKeys object, optionally loading keys from an OpenSSH
         style host-key file.
@@ -59,8 +59,12 @@ class HostKeys (MutableMapping):
         """
         # emulate a dict of { hostname: { keytype: PKey } }
         self._entries = []
+
         if filename is not None:
             self.load(filename)
+
+        if fp is not None:
+            self.load_fp(fp)
 
     def add(self, hostname, keytype, key):
         """
@@ -77,6 +81,31 @@ class HostKeys (MutableMapping):
                 return
         self._entries.append(HostKeyEntry([hostname], key))
 
+    def load_fp(self, fp):
+        for line_number, line in enumerate(fp, 1):
+
+            # Removing trailing newlines and spaces
+            line = line.strip()
+
+            # Skip if the line is empty or a comment
+            if (len(line) == 0) or (line[0] == '#'):
+                continue
+
+            # Try to create a HostKeyEntry from the line
+            try:
+                host_key_entry = HostKeyEntry.from_line(line, line_number)
+            except SSHException:
+                continue
+
+            # Add the HostKeyEntry to the entries
+            if host_key_entry is not None:
+                hostnames = host_key_entry.hostnames
+                for hostname in hostnames:
+                    if self.check(hostname, host_key_entry.key):
+                        host_key_entry.hostnames.remove(hostname)
+                if len(host_key_entry.hostnames):
+                    self._entries.append(host_key_entry)
+
     def load(self, filename):
         """
         Read a file of known SSH host keys, in the format used by OpenSSH.
@@ -92,22 +121,20 @@ class HostKeys (MutableMapping):
 
         :raises IOError: if there was an error reading the file
         """
-        with open(filename, 'r') as f:
-            for lineno, line in enumerate(f, 1):
-                line = line.strip()
-                if (len(line) == 0) or (line[0] == '#'):
-                    continue
-                try:
-                    e = HostKeyEntry.from_line(line, lineno)
-                except SSHException:
-                    continue
-                if e is not None:
-                    _hostnames = e.hostnames
-                    for h in _hostnames:
-                        if self.check(h, e.key):
-                            e.hostnames.remove(h)
-                    if len(e.hostnames):
-                        self._entries.append(e)
+        with open(filename, 'r') as fp:
+            self.load_fp(fp=fp)
+
+    def save_fp(self, fp):
+
+        # For each entry
+        for host_key_entry in self._entries:
+
+            # Convert the entry to a known_host line
+            line = host_key_entry.to_line()
+
+            # And write it to a io.TextIOBase type
+            if line:
+                fp.write(line)
 
     def save(self, filename):
         """
@@ -122,11 +149,8 @@ class HostKeys (MutableMapping):
 
         .. versionadded:: 1.6.1
         """
-        with open(filename, 'w') as f:
-            for e in self._entries:
-                line = e.to_line()
-                if line:
-                    f.write(line)
+        with open(filename, 'w') as fp:
+            self.save_fp(fp=fp)
 
     def lookup(self, hostname):
         """
@@ -151,31 +175,31 @@ class HostKeys (MutableMapping):
                 return len(self.keys())
 
             def __delitem__(self, key):
-                for e in list(self._entries):
-                    if e.key.get_name() == key:
-                        self._entries.remove(e)
+                for entry in list(self._entries):
+                    if entry.key.get_name() == key:
+                        self._entries.remove(entry)
                 else:
                     raise KeyError(key)
 
             def __getitem__(self, key):
-                for e in self._entries:
-                    if e.key.get_name() == key:
-                        return e.key
+                for entry in self._entries:
+                    if entry.key.get_name() == key:
+                        return entry.key
                 raise KeyError(key)
 
             def __setitem__(self, key, val):
-                for e in self._entries:
-                    if e.key is None:
+                for entry in self._entries:
+                    if entry.key is None:
                         continue
-                    if e.key.get_name() == key:
+                    if entry.key.get_name() == key:
                         # replace
-                        e.key = val
+                        entry.key = val
                         break
                 else:
                     # add a new one
-                    e = HostKeyEntry([hostname], val)
-                    self._entries.append(e)
-                    self._hostkeys._entries.append(e)
+                    entry = HostKeyEntry([hostname], val)
+                    self._entries.append(entry)
+                    self._hostkeys._entries.append(entry)
 
             def keys(self):
                 return [e.key.get_name() for e in self._entries if e.key is not None]
