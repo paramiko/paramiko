@@ -648,10 +648,10 @@ class Transport (threading.Thread, ClosingContextManager):
         """
         if not self.active:
             return
+        self.sock.close()
         self.stop_thread()
         for chan in list(self._channels.values()):
             chan._unlink()
-        self.sock.close()
 
     def get_remote_server_key(self):
         """
