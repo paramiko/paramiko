@@ -336,6 +336,7 @@ class SSHClient (ClosingContextManager):
         if banner_timeout is not None:
             t.banner_timeout = banner_timeout
         t.start_client()
+        t.set_sshclient(self)
         ResourceManager.register(self, t)
 
         server_key = t.get_remote_server_key()
