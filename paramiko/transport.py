@@ -281,6 +281,7 @@ class Transport (threading.Thread, ClosingContextManager):
             arguments.
         """
         self.active = False
+        self._sshclient = None
 
         if isinstance(sock, string_types):
             # convert "host:port" into (host, port)
@@ -636,6 +637,9 @@ class Transport (threading.Thread, ClosingContextManager):
         Transport._modulus_pack = None
         return False
 
+    def set_sshclient(self, sshclient):
+        self._sshclient = sshclient
+
     def close(self):
         """
         Close this session, and any open channels that are tied to it.
@@ -646,6 +650,7 @@ class Transport (threading.Thread, ClosingContextManager):
         for chan in list(self._channels.values()):
             chan._unlink()
         self.sock.close()
+        self._sshclient = None
 
     def get_remote_server_key(self):
         """
