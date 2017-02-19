@@ -2,6 +2,9 @@
 Changelog
 =========
 
+* :bug:`895` Fix a bug in server-mode concerning multiple interactive auth
+  steps (which were incorrectly responded to). Thanks to Dennis Kaarsemaker for
+  catch & patch.
 * :support:`866 backported` (also :issue:`838`) Remove an old test-related file
   we don't support, and add PyPy to Travis-CI config. Thanks to Pierce Lopez
   for the final patch and Pedro Rodrigues for an earlier edition.
