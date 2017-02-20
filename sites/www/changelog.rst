@@ -2,8 +2,8 @@
 Changelog
 =========
 
-* :bug:`44` (via :issue:`891`) `SSHClient <paramiko.client.SSHClient>` now
-  gives its internal `Transport <paramiko.transport.Transport>` a handle on
+* :bug:`44 (1.17+)` (via :issue:`891`) `SSHClient <paramiko.client.SSHClient>`
+  now gives its internal `Transport <paramiko.transport.Transport>` a handle on
   itself, preventing garbage collection of the client until the session is
   closed. Without this, some code which returns stream or transport objects
   without the client that generated them, would result in premature session
