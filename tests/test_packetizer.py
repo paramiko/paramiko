@@ -101,9 +101,13 @@ class PacketizerTest (unittest.TestCase):
         import signal
 
         class TimeoutError(Exception):
-            pass
+            def __init__(self, error_message):
+                if hasattr(errno, 'ETIME'):
+                    self.message = os.sterror(errno.ETIME)
+                else:
+                    self.messaage = error_message
 
-        def timeout(seconds=1, error_message=os.strerror(errno.ETIME)):
+        def timeout(seconds=1, error_message='Timer expired'):
             def decorator(func):
                 def _handle_timeout(signum, frame):
                     raise TimeoutError(error_message)
