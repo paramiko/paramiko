@@ -175,7 +175,7 @@ class Message (object):
         """
         Fetch a Unicode string from the stream.
         """
-        return u(self.get_bytes(self.get_int()))
+        return u(self.get_string())
 
     def get_binary(self):
         """
