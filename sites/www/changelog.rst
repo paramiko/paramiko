@@ -2,6 +2,9 @@
 Changelog
 =========
 
+* :bug:`862 (1.17+)` (via :issue:`863`) Avoid test suite exceptions on
+  platforms lacking ``errno.ETIME`` (which seems to be some FreeBSD and some
+  Windows environments.) Thanks to Sofian Brabez.
 * :bug:`44 (1.17+)` (via :issue:`891`) `SSHClient <paramiko.client.SSHClient>`
   now gives its internal `Transport <paramiko.transport.Transport>` a handle on
   itself, preventing garbage collection of the client until the session is
