@@ -2,6 +2,13 @@
 Changelog
 =========
 
+* :bug:`44` (via :issue:`891`) `SSHClient <paramiko.client.SSHClient>` now
+  gives its internal `Transport <paramiko.transport.Transport>` a handle on
+  itself, preventing garbage collection of the client until the session is
+  closed. Without this, some code which returns stream or transport objects
+  without the client that generated them, would result in premature session
+  closure when the client was GCd. Credit: ``@w31rd0`` for original report,
+  Omer Anson for the patch.
 * :bug:`713 (1.17+)` (via :issue:`714` and :issue:`889`) Don't pass
   initialization vectors to PyCrypto when dealing with counter-mode ciphers;
   newer PyCrypto versions throw an exception otherwise (older ones simply
