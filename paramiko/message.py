@@ -173,9 +173,7 @@ class Message (object):
 
     def get_text(self):
         """
-        Fetch a string from the stream.  This could be a byte string and may
-        contain unprintable characters.  (It's not unheard of for a string to
-        contain another byte-stream Message.)
+        Fetch a Unicode string from the stream.
         """
         return u(self.get_bytes(self.get_int()))
 
