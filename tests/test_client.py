@@ -414,3 +414,29 @@ class SSHClientTest (unittest.TestCase):
                             'Expected original SSHException in exception')
         else:
             self.assertFalse(False, 'SSHException was not thrown.')
+
+    def test_preferred_key_type(self):
+        """
+        Verify that setting an preferred key type doesn't break
+        """
+        threading.Thread(target=self._run).start()
+
+        self.tc = paramiko.SSHClient()
+        self.tc.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        try:
+          self.tc.connect(self.addr, self.port, username='slowdive', password='pygmalion', pref_key_type='ecdsa-sha2-nistp256')
+        except:
+          self.assertTrue(False, 'connect with a preferred key type failed')
+
+    def test_unknown_preferred_key_type(self):
+        """
+        Verify that setting a non-existent preferred key type doesn't break
+        """
+        threading.Thread(target=self._run).start()
+
+        self.tc = paramiko.SSHClient()
+        self.tc.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        try:
+          self.tc.connect(self.addr, self.port, username='slowdive', password='pygmalion', pref_key_type='banana')
+        except:
+          self.assertTrue(False, 'connect with an unknown preferred key type failed')

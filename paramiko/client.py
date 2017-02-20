@@ -226,7 +226,8 @@ class SSHClient (ClosingContextManager):
         gss_kex=False,
         gss_deleg_creds=True,
         gss_host=None,
-        banner_timeout=None
+        banner_timeout=None,
+        pref_key_type=None
     ):
         """
         Connect to an SSH server and authenticate to it.  The server's host key
@@ -278,6 +279,11 @@ class SSHClient (ClosingContextManager):
             The targets name in the kerberos database. default: hostname
         :param float banner_timeout: an optional timeout (in seconds) to wait
             for the SSH banner to be presented.
+	:param str pref_key_type:
+            indicates preference of a given type of key during host key
+            verification. Useful when only a subset of the host key types
+            supported by both the client are found in the set of known key
+            for a particular host
 
         :raises BadHostKeyException: if the server's host key could not be
             verified
@@ -289,6 +295,8 @@ class SSHClient (ClosingContextManager):
         .. versionchanged:: 1.15
             Added the ``banner_timeout``, ``gss_auth``, ``gss_kex``,
             ``gss_deleg_creds`` and ``gss_host`` arguments.
+        .. versionchanged:: 2.1
+            Added the ``pref_key_type`` argument.
         """
         if not sock:
             errors = {}
@@ -335,6 +343,14 @@ class SSHClient (ClosingContextManager):
             t.set_log_channel(self._log_channel)
         if banner_timeout is not None:
             t.banner_timeout = banner_timeout
+
+        so = t.get_security_options()
+        key_types = list(so.key_types)
+        if pref_key_type is not None and pref_key_type in key_types:
+          key_types.remove(pref_key_type)
+          key_types.insert(0, pref_key_type)
+          so.key_types = key_types
+
         t.start_client(timeout=timeout)
         ResourceManager.register(self, t)
 
