@@ -207,8 +207,8 @@ class Transport (threading.Thread, ClosingContextManager):
     _key_info = {
         'ssh-rsa': RSAKey,
         'ssh-dss': DSSKey,
-        'ecdsa-sha2-nistp256': ECDSAKey,
     }
+    _key_info.update((name, ECDSAKey) for name in ECDSAKey.supported_key_format_identifiers())
 
     _kex_info = {
         'diffie-hellman-group1-sha1': KexGroup1,
