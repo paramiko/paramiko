@@ -119,10 +119,10 @@ class Transport (threading.Thread, ClosingContextManager):
         'hmac-md5-96',
         'hmac-sha1',
     )
-    _preferred_keys = (
+    _preferred_keys = tuple(ECDSAKey.supported_key_format_identifiers()) + (
         'ssh-rsa',
         'ssh-dss',
-    ) + tuple(ECDSAKey.supported_key_format_identifiers())
+    )
     _preferred_kex =  (
         'diffie-hellman-group1-sha1',
         'diffie-hellman-group14-sha1',
