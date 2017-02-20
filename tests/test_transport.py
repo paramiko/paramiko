@@ -169,11 +169,11 @@ class TransportTest(unittest.TestCase):
         try:
             o.key_types = kt
         except:
-            self.assertTrue(False)
+            self.assertTrue(False, 'setting correct key_types failed')
 
         try:
             o.key_types = ['banana']
-            self.assertTrue(False)
+            self.assertTrue(False, 'setting incorrect key_types didn\'t fail')
         except:
             pass
 
