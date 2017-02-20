@@ -1129,7 +1129,8 @@ class Channel (ClosingContextManager):
         self.lock.acquire()
         try:
             if self.closed:
-                # this doesn't seem useful, but it is the documented behavior of Socket
+                # this doesn't seem useful, but it is the documented behavior
+                # of Socket
                 raise socket.error('Socket is closed')
             size = self._wait_for_send_window(size)
             if size == 0:
