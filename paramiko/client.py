@@ -341,37 +341,43 @@ class SSHClient (ClosingContextManager):
             t.set_log_channel(self._log_channel)
         if banner_timeout is not None:
             t.banner_timeout = banner_timeout
-        t.start_client(timeout=timeout)
-        t.set_sshclient(self)
-        ResourceManager.register(self, t)
-
-        server_key = t.get_remote_server_key()
-        keytype = server_key.get_name()
 
         if port == SSH_PORT:
             server_hostkey_name = hostname
         else:
             server_hostkey_name = "[%s]:%d" % (hostname, port)
+        our_server_keys = None
 
         # If GSS-API Key Exchange is performed we are not required to check the
         # host key, because the host is authenticated via GSS-API / SSPI as
         # well as our client.
         if not self._transport.use_gss_kex:
-            our_server_key = self._system_host_keys.get(
-                server_hostkey_name, {}).get(keytype)
-            if our_server_key is None:
-                our_server_key = self._host_keys.get(server_hostkey_name,
-                                                     {}).get(keytype, None)
-            if our_server_key is None:
-                # will raise exception if the key is rejected;
-                # let that fall out
-                self._policy.missing_host_key(self, server_hostkey_name,
-                                              server_key)
-                # if the callback returns, assume the key is ok
-                our_server_key = server_key
+            our_server_keys = self._system_host_keys.get(server_hostkey_name)
+            if our_server_keys is None:
+                our_server_keys = self._host_keys.get(server_hostkey_name)
+            if our_server_keys is not None:
+                keytype = our_server_keys.keys()[0]
+                sec_opts = t.get_security_options()
+                other_types = [x for x in sec_opts.key_types if x != keytype]
+                sec_opts.key_types = [keytype] + other_types
 
-            if server_key != our_server_key:
-                raise BadHostKeyException(hostname, server_key, our_server_key)
+        t.start_client(timeout=timeout)
+        t.set_sshclient(self)
+        ResourceManager.register(self, t)
+
+        if not self._transport.use_gss_kex:
+            server_key = t.get_remote_server_key()
+            if our_server_keys is None:
+                # will raise exception if the key is rejected
+                self._policy.missing_host_key(
+                    self, server_hostkey_name, server_key
+                )
+            else:
+                our_key = our_server_keys.get(server_key.get_name())
+                if our_key != server_key:
+                    if our_key is None:
+                        our_key = list(our_server_keys.values())[0]
+                    raise BadHostKeyException(hostname, server_key, our_key)
 
         if username is None:
             username = getpass.getuser()
