@@ -2,7 +2,7 @@
 Changelog
 =========
 
-* :bug:`713 (<2.0)` (via :issue:`714` and :issue:`889`) Don't pass
+* :bug:`713 (1.17+)` (via :issue:`714` and :issue:`889`) Don't pass
   initialization vectors to PyCrypto when dealing with counter-mode ciphers;
   newer PyCrypto versions throw an exception otherwise (older ones simply
   ignored this parameter altogether). Thanks to ``@jmh045000`` for report &
