@@ -2,6 +2,11 @@
 Changelog
 =========
 
+* :bug:`713 (<2.0)` (via :issue:`714` and :issue:`889`) Don't pass
+  initialization vectors to PyCrypto when dealing with counter-mode ciphers;
+  newer PyCrypto versions throw an exception otherwise (older ones simply
+  ignored this parameter altogether). Thanks to ``@jmh045000`` for report &
+  patches.
 * :bug:`895` Fix a bug in server-mode concerning multiple interactive auth
   steps (which were incorrectly responded to). Thanks to Dennis Kaarsemaker for
   catch & patch.

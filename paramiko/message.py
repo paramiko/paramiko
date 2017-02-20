@@ -144,9 +144,6 @@ class Message (object):
     def get_int(self):
         """
         Fetch an int from the stream.
-
-        @return: a 32-bit unsigned integer.
-        @rtype: int
         """
         return struct.unpack('>I', self.get_bytes(4))[0]
 
@@ -176,24 +173,15 @@ class Message (object):
 
     def get_text(self):
         """
-        Fetch a string from the stream.  This could be a byte string and may
-        contain unprintable characters.  (It's not unheard of for a string to
-        contain another byte-stream Message.)
-
-        @return: a string.
-        @rtype: string
+        Fetch a Unicode string from the stream.
         """
-        return u(self.get_bytes(self.get_int()))
-        #return self.get_bytes(self.get_size())
+        return u(self.get_string())
 
     def get_binary(self):
         """
         Fetch a string from the stream.  This could be a byte string and may
         contain unprintable characters.  (It's not unheard of for a string to
         contain another byte-stream Message.)
-
-        @return: a string.
-        @rtype: string
         """
         return self.get_bytes(self.get_int())
 
