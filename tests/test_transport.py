@@ -162,6 +162,21 @@ class TransportTest(unittest.TestCase):
         except TypeError:
             pass
 
+    def test_1a_security_options_set_key_types(self):
+        o = self.tc.get_security_options()
+        kt = o.key_types
+
+        try:
+            o.key_types = kt
+        except:
+            self.assertTrue(False)
+
+        try:
+            o.key_types = ['banana']
+            self.assertTrue(False)
+        except:
+            pass
+
     def test_2_compute_key(self):
         self.tc.K = 123281095979686581523377256114209720774539068973101330872763622971399429481072519713536292772709507296759612401802191955568143056534122385270077606457721553469730659233569339356140085284052436697480759510519672848743794433460113118986816826624865291116513647975790797391795651716378444844877749505443714557929
         self.tc.H = b'\x0C\x83\x07\xCD\xE6\x85\x6F\xF3\x0B\xA9\x36\x84\xEB\x0F\x04\xC2\x52\x0E\x9E\xD3'
