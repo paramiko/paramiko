@@ -2,6 +2,9 @@
 Changelog
 =========
 
+* :bug:`853 (1.17+)` Tweak how `RSAKey.__str__ <paramiko.rsakey.RSAKey>`
+  behaves so it doesn't cause ``TypeError`` under Python 3. Thanks to Francisco
+  Couzo for the report.
 * :bug:`862 (1.17+)` (via :issue:`863`) Avoid test suite exceptions on
   platforms lacking ``errno.ETIME`` (which seems to be some FreeBSD and some
   Windows environments.) Thanks to Sofian Brabez.
