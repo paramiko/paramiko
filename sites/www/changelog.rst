@@ -2,6 +2,10 @@
 Changelog
 =========
 
+* :bug:`865` prefer ssh host key which is the same type as in known_hosts.
+  Commonly an ecdsa key is in known_hosts but SSHClient gets an rsa key.
+  Also, consider different key types a mismatch rather than "missing".
+  Also, prefer ecdsa over rsa if no known key yet, to match openssh client.
 * :release:`2.1.2 <2017-02-20>`
 * :release:`2.0.5 <2017-02-20>`
 * :release:`1.18.2 <2017-02-20>`
