@@ -32,7 +32,7 @@ def release(ctx, sdist=True, wheel=True, sign=True, dry_run=False):
     Wraps invocations.packaging.publish to add baked-in docs folder.
     """
     # Build docs first. Use terribad workaround pending invoke #146
-    ctx.run("inv docs")
+    ctx.run("inv docs", pty=True, hide=False)
     # Move the built docs into where Epydocs used to live
     target = 'docs'
     rmtree(target, ignore_errors=True)
