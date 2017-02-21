@@ -2,6 +2,7 @@
 Changelog
 =========
 
+* :release:`1.17.4 <2017-02-20>`
 * :bug:`853 (1.17+)` Tweak how `RSAKey.__str__ <paramiko.rsakey.RSAKey>`
   behaves so it doesn't cause ``TypeError`` under Python 3. Thanks to Francisco
   Couzo for the report.
