@@ -30,7 +30,7 @@ from paramiko.common import max_byte, zero_byte, one_byte
 from paramiko.message import Message
 from paramiko.ber import BER, BERException
 from paramiko.pkey import PKey
-from paramiko.py3compat import long
+from paramiko.py3compat import long, PY2
 from paramiko.ssh_exception import SSHException
 
 SHA1_DIGESTINFO = b'\x30\x21\x30\x09\x06\x05\x2b\x0e\x03\x02\x1a\x05\x00\x04\x14'
@@ -75,7 +75,16 @@ class RSAKey (PKey):
         return m.asbytes()
 
     def __str__(self):
-        return self.asbytes()
+        # NOTE: as per inane commentary in #853, this appears to be the least
+        # crummy way to get a representation that prints identical to Python
+        # 2's previous behavior, on both interpreters.
+        # TODO: replace with a nice clean fingerprint display or something
+        if PY2:
+            # Can't just return the .decode below for Py2 because stuff still
+            # tries stuffing it into ASCII for whatever godforsaken reason
+            return self.asbytes()
+        else:
+            return self.asbytes().decode('utf8', errors='ignore')
 
     def __hash__(self):
         h = hash(self.get_name())
