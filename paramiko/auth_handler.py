@@ -416,8 +416,8 @@ class AuthHandler (object):
             except SSHException as e:
                 self.transport._log(INFO, 'Auth rejected: public key: %s' % str(e))
                 key = None
-            except:
-                self.transport._log(INFO, 'Auth rejected: unsupported or mangled public key')
+            except Exception as e:
+                self.transport._log(INFO, 'Auth rejected: unsupported or mangled public key: %s' % str(e))
                 key = None
             if key is None:
                 self._disconnect_no_more_auth()
