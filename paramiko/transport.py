@@ -1038,7 +1038,7 @@ class Transport (threading.Thread, ClosingContextManager):
         return chan
 
     def connect(self, hostkey=None, username='', password=None, pkey=None,
-                gss_host=None, gss_auth=False, gss_kex=False, gss_deleg_creds=True):
+                gss_host=None, gss_auth=False, gss_kex=False, gss_deleg_creds=True, timeout=None):
         """
         Negotiate an SSH2 session, and optionally verify the server's host key
         and authenticate using a password or private key.  This is a shortcut
@@ -1076,6 +1076,8 @@ class Transport (threading.Thread, ClosingContextManager):
             Perform GSS-API Key Exchange and user authentication.
         :param bool gss_deleg_creds:
             Whether to delegate GSS-API client credentials.
+        :param float timeout:
+            a timeout, in seconds, for SSH2 session negotiation (optional)
 
         :raises SSHException: if the SSH2 negotiation fails, the host key
             supplied by the server is incorrect, or authentication fails.
@@ -1083,7 +1085,7 @@ class Transport (threading.Thread, ClosingContextManager):
         if hostkey is not None:
             self._preferred_keys = [hostkey.get_name()]
 
-        self.start_client()
+        self.start_client(timeout=timeout)
 
         # check host key if we were given one
         # If GSS-API Key Exchange was performed, we are not required to check
