@@ -2,6 +2,10 @@
 Changelog
 =========
 
+* :bug:`865` SSHClient requests the type of host key it has (e.g. from
+  known_hosts) and does not consider a different type to be a "Missing"
+  host key. This fixes a common case where an ecdsa key is in known_hosts and
+  the server also has an rsa host key. Thanks to Pierce Lopez.
 * :bug:`741` (also :issue:`809`, :issue:`772`; all via :issue:`912`) Writing
   encrypted/password-protected private key files was silently broken since 2.0
   due to an incorrect API call; this has been fixed.
