@@ -699,8 +699,6 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
                 reader=fr, writer=fl, file_size=file_size, callback=callback
             )
 
-        return size
-
     def get(self, remotepath, localpath, callback=None):
         """
         Copy a remote file (``remotepath``) from the SFTP server to the local
