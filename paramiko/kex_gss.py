@@ -40,7 +40,7 @@ This module provides GSS-API / SSPI Key Exchange as defined in :rfc:`4462`.
 import os
 from hashlib import sha1
 
-from paramiko.common import *  # noqa
+from paramiko.common import DEBUG, max_byte, zero_byte
 from paramiko import util
 from paramiko.message import Message
 from paramiko.py3compat import byte_chr, byte_mask, byte_ord
