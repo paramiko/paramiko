@@ -2,6 +2,8 @@
 Changelog
 =========
 
+* :bug:`683` Make `util.log_to_file()` append instead of replace. Thanks
+  to ``@vlcinsky`` for the report.
 * :release:`2.1.2 <2017-02-20>`
 * :release:`2.0.5 <2017-02-20>`
 * :release:`1.18.2 <2017-02-20>`
