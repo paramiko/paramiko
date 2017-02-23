@@ -2,6 +2,8 @@
 Changelog
 =========
 
+* :bug:`683` Make `util.log_to_file()` append instead of replace. Thanks
+  to ``@vlcinsky`` for the report.
 * :release:`1.18.2 <2017-02-20>`
 * :release:`1.17.4 <2017-02-20>`
 * :bug:`853 (1.17+)` Tweak how `RSAKey.__str__ <paramiko.rsakey.RSAKey>`
