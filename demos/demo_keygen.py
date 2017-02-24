@@ -96,6 +96,8 @@ if __name__ == '__main__':
 
     if options.newphrase:
         phrase = getattr(options, 'newphrase')
+        # Turn it into bytes.
+        phrase=phrase.encode("utf-8")
 
     if options.verbose:
         pfunc = progress

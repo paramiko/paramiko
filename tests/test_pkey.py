@@ -29,6 +29,7 @@ import base64
 
 from paramiko import RSAKey, DSSKey, ECDSAKey, Message, util
 from paramiko.py3compat import StringIO, byte_chr, b, bytes, PY2
+from cryptography.hazmat.primitives.serialization import BestAvailableEncryption
 
 from tests.util import test_path
 
@@ -119,6 +120,13 @@ class KeyTest (unittest.TestCase):
 
     def tearDown(self):
         pass
+
+    def assert_keyfile_is_encrypted(self,keyfile):
+        """A quick check that filename looks like an encrypted key."""
+        with open(keyfile,"r") as fh:
+            self.assertEqual(fh.readline()[:-1],"-----BEGIN RSA PRIVATE KEY-----")
+            self.assertEqual(fh.readline()[:-1],"Proc-Type: 4,ENCRYPTED")
+            self.assertEqual(fh.readline()[0:10],"DEK-Info: ")
 
     def test_1_generate_key_bytes(self):
         key = util.generate_key_bytes(md5, x1234, 'happy birthday', 30)
@@ -420,12 +428,13 @@ class KeyTest (unittest.TestCase):
         file_ = test_path('test_rsa_password.key')
         password = 'television'
         newfile = file_ + '.new'
-        newpassword = 'radio'
+        newpassword = b'radio'
         key = RSAKey(filename=file_, password=password)
         # Write out a newly re-encrypted copy with a new password.
         # When the bug under test exists, this will ValueError.
         try:
             key.write_private_key_file(newfile, password=newpassword)
+            self.assert_keyfile_is_encrypted(newfile)
             # Verify the inner key data still matches (when no ValueError)
             key2 = RSAKey(filename=newfile, password=newpassword)
             self.assertEqual(key, key2)
@@ -436,3 +445,30 @@ class KeyTest (unittest.TestCase):
         key = RSAKey.from_private_key_file(test_path('test_rsa.key'))
         comparable = TEST_KEY_BYTESTR_2 if PY2 else TEST_KEY_BYTESTR_3
         self.assertEqual(str(key), comparable)
+
+    def test_BestAvailableEncryption(self):
+        # the ok case:
+        self.assertTrue(BestAvailableEncryption(b"password"))
+
+        # bad: not a string
+        with self.assertRaises(ValueError):
+            BestAvailableEncryption("not bytes")
+        # bad: too short
+        with self.assertRaises(ValueError):
+            BestAvailableEncryption(b"")
+
+    def test_keyfile_is_actually_encrypted(self):
+        # Read an existing encrypted private key
+        file_ = test_path('test_rsa_password.key')
+        # @todo: The decryptor takes string or bytes; Whereas encryption only takes bytes.
+        password = 'television'
+        newfile = file_ + '.new'
+        newpassword = b'radio'
+        key = RSAKey(filename=file_, password=password)
+        # Write out a newly re-encrypted copy with a new password.
+        # When the bug under test exists, this will ValueError.
+        try:
+            key.write_private_key_file(newfile, password=newpassword)
+            self.assert_keyfile_is_encrypted(newfile)
+        finally:
+            os.remove(newfile)
