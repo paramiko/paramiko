@@ -2,6 +2,7 @@
 Changelog
 =========
 
+* :bug:`772`, :bug:`809`, :bug:`912`: Use the password to encrypt `RSAKey` files.
 * :bug:`683` Make `util.log_to_file()` append instead of replace. Thanks
   to ``@vlcinsky`` for the report.
 * :release:`2.1.2 <2017-02-20>`

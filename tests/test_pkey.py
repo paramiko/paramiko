@@ -428,7 +428,7 @@ class KeyTest (unittest.TestCase):
         file_ = test_path('test_rsa_password.key')
         password = 'television'
         newfile = file_ + '.new'
-        newpassword = b'radio'
+        newpassword = 'radio'
         key = RSAKey(filename=file_, password=password)
         # Write out a newly re-encrypted copy with a new password.
         # When the bug under test exists, this will ValueError.
@@ -466,7 +466,7 @@ class KeyTest (unittest.TestCase):
         # @todo: The decryptor takes string or bytes; Whereas encryption only takes bytes.
         password = 'television'
         newfile = file_ + '.new'
-        newpassword = b'radio'
+        newpassword = 'radio'
         key = RSAKey(filename=file_, password=password)
         # Write out a newly re-encrypted copy with a new password.
         # When the bug under test exists, this will ValueError.

@@ -347,6 +347,8 @@ class PKey(object):
         if password is None:
             encryption = serialization.NoEncryption()
         else:
+            # ensure it is bytes.
+            password=b(password)
             encryption = serialization.BestAvailableEncryption(password)
 
         f.write(key.private_bytes(
