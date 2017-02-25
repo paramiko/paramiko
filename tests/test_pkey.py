@@ -29,7 +29,6 @@ import base64
 
 from paramiko import RSAKey, DSSKey, ECDSAKey, Message, util
 from paramiko.py3compat import StringIO, byte_chr, b, bytes, PY2
-from cryptography.hazmat.primitives.serialization import BestAvailableEncryption
 
 from tests.util import test_path
 
@@ -446,24 +445,9 @@ class KeyTest (unittest.TestCase):
         comparable = TEST_KEY_BYTESTR_2 if PY2 else TEST_KEY_BYTESTR_3
         self.assertEqual(str(key), comparable)
 
-    def test_BestAvailableEncryption(self):
-        # the ok case:
-        self.assertTrue(BestAvailableEncryption(b"password"))
-
-        # Doesnt work on 2.6, 2.7 & pypy
-        # bad: not a string
-        # with self.assertRaises(ValueError):
-        #     BestAvailableEncryption("not bytes")
-
-        # Doesnt work on 2.6
-        # bad: too short
-        # with self.assertRaises(ValueError):
-        #     BestAvailableEncryption(b"")
-
     def test_keyfile_is_actually_encrypted(self):
         # Read an existing encrypted private key
         file_ = test_path('test_rsa_password.key')
-        # @todo: The decryptor takes string or bytes; Whereas encryption only takes bytes.
         password = 'television'
         newfile = file_ + '.new'
         newpassword = 'radio'
