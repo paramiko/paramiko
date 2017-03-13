@@ -436,16 +436,22 @@ class Transport (threading.Thread, ClosingContextManager):
         """
         return SecurityOptions(self)
 
-    def set_gss_host(self, gss_host):
+    def set_gss_host(self, gss_host, gss_trust_dns):
         """
         Setter for C{gss_host} if GSS-API Key Exchange is performed.
 
         :param str gss_host: The targets name in the kerberos database
                              Default: The name of the host to connect to
+        :param gss_trust_dns: Indicates whether or not the DNS is trusted to
+                              securely canonicalize the name of the host being
+                              connected to (default `True`).
         :rtype: Void
         """
         # We need the FQDN to get this working with SSPI
-        self.gss_host = socket.getfqdn(gss_host)
+        if gss_trust_dns:
+            self.gss_host = socket.getfqdn(gss_host)
+        else:
+            self.gss_host = gss_host
 
     def start_client(self, event=None, timeout=None):
         """
@@ -1038,7 +1044,8 @@ class Transport (threading.Thread, ClosingContextManager):
         return chan
 
     def connect(self, hostkey=None, username='', password=None, pkey=None,
-                gss_host=None, gss_auth=False, gss_kex=False, gss_deleg_creds=True):
+                gss_host=None, gss_auth=False, gss_kex=False,
+                gss_deleg_creds=True, gss_trust_dns=True):
         """
         Negotiate an SSH2 session, and optionally verify the server's host key
         and authenticate using a password or private key.  This is a shortcut
@@ -1076,12 +1083,18 @@ class Transport (threading.Thread, ClosingContextManager):
             Perform GSS-API Key Exchange and user authentication.
         :param bool gss_deleg_creds:
             Whether to delegate GSS-API client credentials.
+        :param gss_trust_dns: Indicates whether or not the DNS is trusted to
+                              securely canonicalize the name of the host being
+                              connected to (default `True`).
 
         :raises SSHException: if the SSH2 negotiation fails, the host key
             supplied by the server is incorrect, or authentication fails.
         """
         if hostkey is not None:
             self._preferred_keys = [hostkey.get_name()]
+
+        if gss_host is not None:
+            self.set_gss_host(gss_host, gss_trust_dns)
 
         self.start_client()
 
@@ -1100,7 +1113,7 @@ class Transport (threading.Thread, ClosingContextManager):
         if (pkey is not None) or (password is not None) or gss_auth or gss_kex:
             if gss_auth:
                 self._log(DEBUG, 'Attempting GSS-API auth... (gssapi-with-mic)')
-                self.auth_gssapi_with_mic(username, gss_host, gss_deleg_creds)
+                self.auth_gssapi_with_mic(username, self.gss_host, gss_deleg_creds)
             elif gss_kex:
                 self._log(DEBUG, 'Attempting GSS-API auth... (gssapi-keyex)')
                 self.auth_gssapi_keyex(username)
