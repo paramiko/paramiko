@@ -284,10 +284,12 @@ class Transport (threading.Thread, ClosingContextManager):
         """
         self.active = False
         self._sshclient = None
+        self.hostname = None
 
         if isinstance(sock, string_types):
             # convert "host:port" into (host, port)
             hl = sock.split(':', 1)
+            self.hostname = hl[0]
             if len(hl) == 1:
                 sock = (hl[0], 22)
             else:
@@ -295,6 +297,7 @@ class Transport (threading.Thread, ClosingContextManager):
         if type(sock) is tuple:
             # connect to the given (host, port)
             hostname, port = sock
+            self.hostname = hostname
             reason = 'No suitable address family'
             for (family, socktype, proto, canonname, sockaddr) in socket.getaddrinfo(hostname, port, socket.AF_UNSPEC, socket.SOCK_STREAM):
                 if socktype == socket.SOCK_STREAM:
@@ -436,19 +439,17 @@ class Transport (threading.Thread, ClosingContextManager):
         """
         return SecurityOptions(self)
 
-    def set_gss_host(self, gss_host, gss_trust_dns):
+    def set_gss_host(self, gss_host, dns_lookup):
         """
         Setter for C{gss_host} if GSS-API Key Exchange is performed.
 
         :param str gss_host: The targets name in the kerberos database
                              Default: The name of the host to connect to
-        :param gss_trust_dns: Indicates whether or not the DNS is trusted to
-                              securely canonicalize the name of the host being
-                              connected to (default `True`).
+        :param dns_lookup:   Indicates whether or not ``gss_host`` should be
+                             canonicalized (default ``True``).
         :rtype: Void
         """
-        # We need the FQDN to get this working with SSPI
-        if gss_trust_dns:
+        if dns_lookup:
             self.gss_host = socket.getfqdn(gss_host)
         else:
             self.gss_host = gss_host
@@ -1085,8 +1086,7 @@ class Transport (threading.Thread, ClosingContextManager):
             Whether to delegate GSS-API client credentials.
         :param gss_trust_dns: Indicates whether or not the DNS is trusted to
                               securely canonicalize the name of the host being
-                              connected to (default `True`).
-
+                              connected to (default ``True``).
         :raises SSHException: if the SSH2 negotiation fails, the host key
             supplied by the server is incorrect, or authentication fails.
         """
@@ -1094,7 +1094,9 @@ class Transport (threading.Thread, ClosingContextManager):
             self._preferred_keys = [hostkey.get_name()]
 
         if gss_host is not None:
-            self.set_gss_host(gss_host, gss_trust_dns)
+            self.set_gss_host(gss_host, False)
+        else:
+            self.set_gss_host(self.hostname, gss_trust_dns)
 
         self.start_client()
 
