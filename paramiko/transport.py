@@ -1095,7 +1095,7 @@ class Transport (threading.Thread, ClosingContextManager):
 
         if gss_host is not None:
             self.set_gss_host(gss_host, False)
-        else:
+        elif self.hostname is not None:
             self.set_gss_host(self.hostname, gss_trust_dns)
 
         self.start_client()
