@@ -27,6 +27,7 @@ from cryptography.hazmat.primitives.asymmetric import rsa, padding
 
 from paramiko.message import Message
 from paramiko.pkey import PKey
+from paramiko.py3compat import PY2
 from paramiko.ssh_exception import SSHException
 
 
@@ -76,7 +77,16 @@ class RSAKey(PKey):
         return m.asbytes()
 
     def __str__(self):
-        return self.asbytes()
+        # NOTE: as per inane commentary in #853, this appears to be the least
+        # crummy way to get a representation that prints identical to Python
+        # 2's previous behavior, on both interpreters.
+        # TODO: replace with a nice clean fingerprint display or something
+        if PY2:
+            # Can't just return the .decode below for Py2 because stuff still
+            # tries stuffing it into ASCII for whatever godforsaken reason
+            return self.asbytes()
+        else:
+            return self.asbytes().decode('utf8', errors='ignore')
 
     def __hash__(self):
         h = hash(self.get_name())

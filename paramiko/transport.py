@@ -1,4 +1,5 @@
 # Copyright (C) 2003-2007  Robey Pointer <robeypointer@gmail.com>
+# Copyright (C) 2003-2007  Robey Pointer <robeypointer@gmail.com>
 #
 # This file is part of paramiko.
 #
@@ -229,6 +230,7 @@ class Transport (threading.Thread, ClosingContextManager):
     }
 
     _modulus_pack = None
+    _active_check_timeout = 0.1
 
     def __init__(self,
                  sock,
@@ -281,6 +283,7 @@ class Transport (threading.Thread, ClosingContextManager):
             arguments.
         """
         self.active = False
+        self._sshclient = None
 
         if isinstance(sock, string_types):
             # convert "host:port" into (host, port)
@@ -316,7 +319,7 @@ class Transport (threading.Thread, ClosingContextManager):
             # we set the timeout so we can check self.active periodically to
             # see if we should bail.  socket.timeout exception is never
             # propagated.
-            self.sock.settimeout(0.1)
+            self.sock.settimeout(self._active_check_timeout)
         except AttributeError:
             pass
 
@@ -444,7 +447,7 @@ class Transport (threading.Thread, ClosingContextManager):
         # We need the FQDN to get this working with SSPI
         self.gss_host = socket.getfqdn(gss_host)
 
-    def start_client(self, event=None):
+    def start_client(self, event=None, timeout=None):
         """
         Negotiate a new SSH2 session as a client.  This is the first step after
         creating a new `.Transport`.  A separate thread is created for protocol
@@ -455,7 +458,7 @@ class Transport (threading.Thread, ClosingContextManager):
         be triggered.  On failure, `is_active` will return ``False``.
 
         (Since 1.4) If ``event`` is ``None``, this method will not return until
-        negotation is done.  On success, the method returns normally.
+        negotiation is done.  On success, the method returns normally.
         Otherwise an SSHException is raised.
 
         After a successful negotiation, you will usually want to authenticate,
@@ -472,6 +475,9 @@ class Transport (threading.Thread, ClosingContextManager):
         :param .threading.Event event:
             an event to trigger when negotiation is complete (optional)
 
+        :param float timeout:
+            a timeout, in seconds, for SSH2 session negotiation (optional)
+
         :raises SSHException: if negotiation fails (and no ``event`` was passed
             in)
         """
@@ -485,6 +491,7 @@ class Transport (threading.Thread, ClosingContextManager):
         # synchronous, wait for a result
         self.completion_event = event = threading.Event()
         self.start()
+        max_time = time.time() + timeout if timeout is not None else None
         while True:
             event.wait(0.1)
             if not self.active:
@@ -492,7 +499,7 @@ class Transport (threading.Thread, ClosingContextManager):
                 if e is not None:
                     raise e
                 raise SSHException('Negotiation failed.')
-            if event.is_set():
+            if event.is_set() or (timeout is not None and time.time() >= max_time):
                 break
 
     def start_server(self, event=None, server=None):
@@ -506,7 +513,7 @@ class Transport (threading.Thread, ClosingContextManager):
         be triggered.  On failure, `is_active` will return ``False``.
 
         (Since 1.4) If ``event`` is ``None``, this method will not return until
-        negotation is done.  On success, the method returns normally.
+        negotiation is done.  On success, the method returns normally.
         Otherwise an SSHException is raised.
 
         After a successful negotiation, the client will need to authenticate.
@@ -636,6 +643,9 @@ class Transport (threading.Thread, ClosingContextManager):
         Transport._modulus_pack = None
         return False
 
+    def set_sshclient(self, sshclient):
+        self._sshclient = sshclient
+
     def close(self):
         """
         Close this session, and any open channels that are tied to it.
@@ -646,6 +656,7 @@ class Transport (threading.Thread, ClosingContextManager):
         for chan in list(self._channels.values()):
             chan._unlink()
         self.sock.close()
+        self._sshclient = None
 
     def get_remote_server_key(self):
         """
@@ -1428,20 +1439,18 @@ class Transport (threading.Thread, ClosingContextManager):
 
     def auth_gssapi_keyex(self, username):
         """
-        Authenticate to the Server with GSS-API / SSPI if GSS-API Key Exchange
-        was the used key exchange method.
+        Authenticate to the server with GSS-API/SSPI if GSS-API kex is in use.
 
-        :param str username: The username to authenticate as
-        :param str gss_host: The target host
-        :param bool gss_deleg_creds: Delegate credentials or not
-        :return: list of auth types permissible for the next stage of
-                 authentication (normally empty)
-        :rtype: list
-        :raise BadAuthenticationType: if GSS-API Key Exchange was not performed
-                                      (and no event was passed in)
-        :raise AuthenticationException: if the authentication failed (and no
-            event was passed in)
-        :raise SSHException: if there was a network error
+        :param str username: The username to authenticate as.
+        :returns:
+            a `list` of auth types permissible for the next stage of
+            authentication (normally empty)
+        :raises BadAuthenticationType:
+            if GSS-API Key Exchange was not performed (and no event was passed
+            in)
+        :raises AuthenticationException:
+            if the authentication failed (and no event was passed in)
+        :raises SSHException: if there was a network error
         """
         if (not self.active) or (not self.initial_kex_done):
             # we should never try to authenticate unless we're on a secure link
@@ -2292,7 +2301,7 @@ class Transport (threading.Thread, ClosingContextManager):
             finally:
                 self.lock.release()
             if kind == 'direct-tcpip':
-                # handle direct-tcpip requests comming from the client
+                # handle direct-tcpip requests coming from the client
                 dest_addr = m.get_text()
                 dest_port = m.get_int()
                 origin_addr = m.get_text()

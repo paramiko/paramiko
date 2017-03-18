@@ -2,6 +2,110 @@
 Changelog
 =========
 
+* :bug:`683` Make `util.log_to_file()` append instead of replace. Thanks
+  to ``@vlcinsky`` for the report.
+* :release:`2.1.2 <2017-02-20>`
+* :release:`2.0.5 <2017-02-20>`
+* :release:`1.18.2 <2017-02-20>`
+* :release:`1.17.4 <2017-02-20>`
+* :bug:`853 (1.17+)` Tweak how `RSAKey.__str__ <paramiko.rsakey.RSAKey>`
+  behaves so it doesn't cause ``TypeError`` under Python 3. Thanks to Francisco
+  Couzo for the report.
+* :bug:`862 (1.17+)` (via :issue:`863`) Avoid test suite exceptions on
+  platforms lacking ``errno.ETIME`` (which seems to be some FreeBSD and some
+  Windows environments.) Thanks to Sofian Brabez.
+* :bug:`44 (1.17+)` (via :issue:`891`) `SSHClient <paramiko.client.SSHClient>`
+  now gives its internal `Transport <paramiko.transport.Transport>` a handle on
+  itself, preventing garbage collection of the client until the session is
+  closed. Without this, some code which returns stream or transport objects
+  without the client that generated them, would result in premature session
+  closure when the client was GCd. Credit: ``@w31rd0`` for original report,
+  Omer Anson for the patch.
+* :bug:`713 (<2.0)` (via :issue:`714` and :issue:`889`) Don't pass
+  initialization vectors to PyCrypto when dealing with counter-mode ciphers;
+  newer PyCrypto versions throw an exception otherwise (older ones simply
+  ignored this parameter altogether). Thanks to ``@jmh045000`` for report &
+  patches.
+* :bug:`895 (1.17+)` Fix a bug in server-mode concerning multiple interactive
+  auth steps (which were incorrectly responded to). Thanks to Dennis
+  Kaarsemaker for catch & patch.
+* :support:`866 backported (1.17+)` (also :issue:`838`) Remove an old
+  test-related file we don't support, and add PyPy to Travis-CI config. Thanks
+  to Pierce Lopez for the final patch and Pedro Rodrigues for an earlier
+  edition.
+* :release:`2.1.1 <2016-12-12>`
+* :release:`2.0.4 <2016-12-12>`
+* :release:`1.18.1 <2016-12-12>`
+* :bug:`859 (1.18+)` (via :issue:`860`) A tweak to the original patch
+  implementing :issue:`398` was not fully applied, causing calls to
+  `~paramiko.client.SSHClient.invoke_shell` to fail with ``AttributeError``.
+  This has been fixed. Patch credit: Kirk Byers.
+* :bug:`-` Accidentally merged the new features from 1.18.0 into the
+  2.0.x bugfix-only branch. This included merging a bug in one of those new
+  features (breaking `~paramiko.client.SSHClient.invoke_shell` with an
+  ``AttributeError``.) The offending code has been stripped out of the 2.0.x
+  line (but of course, remains in 2.1.x and above.)
+* :bug:`859` (via :issue:`860`) A tweak to the original patch implementing
+  :issue:`398` was not fully applied, causing calls to
+  `~paramiko.client.SSHClient.invoke_shell` to fail with ``AttributeError``.
+  This has been fixed. Patch credit: Kirk Byers.
+* :release:`2.1.0 <2016-12-09>`
+* :release:`2.0.3 <2016-12-09>`
+* :release:`1.18.0 <2016-12-09>`
+* :release:`1.17.3 <2016-12-09>`
+* :bug:`802 (1.17+)` (via :issue:`804`) Update our vendored Windows API module
+  to address errors of the form ``AttributeError: 'module' object has no
+  attribute 'c_ssize_t'``. Credit to Jason R. Coombs.
+* :bug:`824 (1.17+)` Fix the implementation of ``PKey.write_private_key_file``
+  (this method is only publicly defined on subclasses; the fix was in the
+  private real implementation) so it passes the correct params to ``open()``.
+  This bug apparently went unnoticed and unfixed for 12 entire years. Congrats
+  to John Villalovos for noticing & submitting the patch!
+* :support:`801 backported (1.17+)` Skip a Unix-only test when on Windows;
+  thanks to Gabi Davar.
+* :support:`792 backported (1.17+)` Minor updates to the README and demos;
+  thanks to Alan Yee.
+* :feature:`780 (1.18+)` (also :issue:`779`, and may help users affected by
+  :issue:`520`) Add an optional ``timeout`` parameter to
+  `Transport.start_client <paramiko.transport.Transport.start_client>` (and
+  feed it the value of the configured connection timeout when used within
+  `SSHClient <paramiko.client.SSHClient>`.) This helps prevent situations where
+  network connectivity isn't timing out, but the remote server is otherwise
+  unable to service the connection in a timely manner. Credit to
+  ``@sanseihappa``.
+* :bug:`742` (also re: :issue:`559`) Catch ``AssertionError`` thrown by
+  Cryptography when attempting to load bad ECDSA keys, turning it into an
+  ``SSHException``. This moves the behavior in line with other "bad keys"
+  situations, re: Paramiko's main auth loop. Thanks to MengHuan Yu for the
+  patch.
+* :bug:`789 (1.17+)` Add a missing ``.closed`` attribute (plus ``._closed``
+  because reasons) to `ProxyCommand <paramiko.proxy.ProxyCommand>` so the
+  earlier partial fix for :issue:`520` works in situations where one is
+  gatewaying via ``ProxyCommand``.
+* :bug:`334 (1.17+)` Make the ``subprocess`` import in ``proxy.py`` lazy so
+  users on platforms without it (such as Google App Engine) can import Paramiko
+  successfully. (Relatedly, make it easier to tweak an active socket check
+  timeout  [in `Transport <paramko.transport.Transport>`] which was previously
+  hardcoded.) Credit: Shinya Okano.
+* :support:`854 backported (1.17+)` Fix incorrect docstring/param-list for
+  `Transport.auth_gssapi_keyex
+  <paramiko.transport.Transport.auth_gssapi_keyex>` so it matches the real
+  signature. Caught by ``@Score_Under``.
+* :bug:`681 (1.17+)` Fix a Python3-specific bug re: the handling of read
+  buffers when using ``ProxyCommand``. Thanks to Paul Kapp for catch & patch.
+* :feature:`398 (1.18+)` Add an ``environment`` dict argument to
+  `Client.exec_command <paramiko.client.SSHClient.exec_command>` (plus the
+  lower level `Channel.update_environment
+  <paramiko.channel.Channel.update_environment>` and
+  `Channel.set_environment_variable
+  <paramiko.channel.Channel.set_environment_variable>` methods) which
+  implements the ``env`` SSH message type. This means the remote shell
+  environment can be set without the use of ``VARNAME=value`` shell tricks,
+  provided the server's ``AcceptEnv`` lists the variables you need to set.
+  Thanks to Philip Lorenz for the pull request.
+* :support:`819 backported (>=1.15,<2.0)` Document how lacking ``gmp`` headers
+  at install time can cause a significant performance hit if you build PyCrypto
+  from source. (Most system-distributed packages already have this enabled.)
 * :release:`2.0.2 <2016-07-25>`
 * :release:`1.17.2 <2016-07-25>`
 * :release:`1.16.3 <2016-07-25>`

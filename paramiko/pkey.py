@@ -333,8 +333,7 @@ class PKey(object):
 
         :raises IOError: if there was an error writing the file.
         """
-        with open(filename, 'w', o600) as f:
-            # grrr... the mode doesn't always take hold
+        with open(filename, 'w') as f:
             os.chmod(filename, o600)
             self._write_private_key(f, key, format)
 

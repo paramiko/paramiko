@@ -597,7 +597,7 @@ class AuthHandler (object):
         for i in range(n):
             responses.append(m.get_text())
         result = self.transport.server_object.check_auth_interactive_response(responses)
-        if isinstance(type(result), InteractiveQuery):
+        if isinstance(result, InteractiveQuery):
             # make interactive query instead of response
             self._interactive_query(result)
             return
