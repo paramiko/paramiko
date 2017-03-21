@@ -60,6 +60,8 @@ deflate_ff = max_byte if PY2 else 0xff
 def deflate_long(n, add_sign_padding=True):
     """turns a long-int into a normalized byte string (adapted from Crypto.Util.number)"""
     # after much testing, this algorithm was deemed to be the fastest
+    if n == 0:
+        return b''
     s = bytes()
     n = long(n)
     while (n != 0) and (n != -1):
