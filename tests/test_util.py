@@ -528,3 +528,6 @@ Host *
             config.lookup('some-random-host')['proxycommand'],
             'default-proxy'
         )
+        
+    def test_deflate_long_zero(self):
+        self.assertEqual(paramiko.util.deflate_long(0), b'\x00\x00\x00\x00')
