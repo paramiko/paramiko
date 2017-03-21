@@ -530,4 +530,4 @@ Host *
         )
         
     def test_deflate_long_zero(self):
-        self.assertEqual(paramiko.util.deflate_long(0), b'\x00\x00\x00\x00')
+        self.assertEqual(paramiko.util.deflate_long(0), b'')
