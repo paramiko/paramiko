@@ -89,10 +89,8 @@ class RSAKey(PKey):
             return self.asbytes().decode('utf8', errors='ignore')
 
     def __hash__(self):
-        h = hash(self.get_name())
-        h = h * 37 + hash(self.public_numbers.e)
-        h = h * 37 + hash(self.public_numbers.n)
-        return hash(h)
+        return hash((self.get_name(), self.public_numbers.e,
+                     self.public_numbers.n))
 
     def get_name(self):
         return 'ssh-rsa'
