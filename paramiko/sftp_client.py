@@ -596,7 +596,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         size = 0
         while True:
             data = reader.read(32768)
-            writer.write(data)
+            writer.write(data.decode())
             size += len(data)
             if len(data) == 0:
                 break
