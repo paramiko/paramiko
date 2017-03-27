@@ -25,6 +25,7 @@ import os
 import socket
 import time
 import threading
+# TODO: switch as much of py3compat.py to 'six' as possible, then use six.wraps
 from functools import wraps
 
 from paramiko import util
