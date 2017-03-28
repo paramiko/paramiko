@@ -446,7 +446,7 @@ class SSHClient (ClosingContextManager):
         return stdin, stdout, stderr
 
     def invoke_shell(self, term='vt100', width=80, height=24, width_pixels=0,
-                     height_pixels=0, environment=None):
+                     height_pixels=0, environment=None, timeout=None):
         """
         Start an interactive shell session on the SSH server.  A new `.Channel`
         is opened and connected to a pseudo-terminal using the requested
@@ -463,7 +463,7 @@ class SSHClient (ClosingContextManager):
 
         :raises SSHException: if the server fails to invoke a shell
         """
-        chan = self._transport.open_session()
+        chan = self._transport.open_session(timeout=timeout)
         chan.get_pty(term, width, height, width_pixels, height_pixels)
         chan.invoke_shell()
         return chan
