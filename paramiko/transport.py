@@ -567,6 +567,18 @@ class Transport (threading.Thread, ClosingContextManager):
             if event.is_set():
                 break
 
+    def set_client_id(self, client_id):
+        """
+        Change the software identification in the client side SSH version.
+        The default banner, currently, is 'SSH 2.0 paramiko-1.13' and
+        this function allows the caller to alter the banner to be like
+        so: 'SSH 2.0 <client_id>'
+
+        @param client_id: The string to display in the client SSH banner
+        @type client_id: str
+        """
+        self.local_version = 'SSH-' + self._PROTO_ID + '-' + client_id
+
     def add_server_key(self, key):
         """
         Add a host key to the list of keys used for server mode.  When behaving

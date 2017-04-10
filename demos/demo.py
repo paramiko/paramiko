@@ -42,12 +42,12 @@ def agent_auth(transport, username):
     Attempt to authenticate to the given transport using any of the private
     keys available from an SSH agent.
     """
-    
+
     agent = paramiko.Agent()
     agent_keys = agent.get_keys()
     if len(agent_keys) == 0:
         return
-        
+
     for key in agent_keys:
         print('Trying ssh-agent key %s' % hexlify(key.get_fingerprint()))
         try:
@@ -120,6 +120,7 @@ except Exception as e:
 
 try:
     t = paramiko.Transport(sock)
+    t.set_client_id('demo.py ' + paramiko.__version__)
     try:
         t.start_client()
     except paramiko.SSHException:
