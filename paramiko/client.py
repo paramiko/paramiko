@@ -74,6 +74,7 @@ class SSHClient (ClosingContextManager):
         self._policy = RejectPolicy()
         self._transport = None
         self._agent = None
+        self.known_hosts = None
 
     def load_system_host_keys(self, filename=None):
         """
