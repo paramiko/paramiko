@@ -189,6 +189,24 @@ class HostKeys (MutableMapping):
             return None
         return SubDict(hostname, entries, self)
 
+    def clear_host(self, hostname):
+        """
+        Remove a hostkey entry for a given hostname or IP.  Returns True if
+        entry was found or False if it wasn't.
+        :param str hostname: the hostname (or IP) to remove 
+        :return: boolean -> indicating whether entry was found 
+        """
+        entries = []
+        for e in self._entries:
+            for h in e.hostnames:
+                if h.startswith('|1|') and not hostname.startswith('|1|') and constant_time_bytes_eq(self.hash_host(hostname, h), h) or h == hostname:
+                    entries.append(e)
+        if len(entries) == 0:
+            return False
+        for e in entries:
+            self._entries.remove(e)
+        return True
+
     def check(self, hostname, key):
         """
         Return True if the given key is associated with the given hostname
