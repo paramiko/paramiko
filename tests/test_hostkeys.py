@@ -119,8 +119,9 @@ class HostKeysTest (unittest.TestCase):
     def test_5_dict(self):
         hostdict = paramiko.HostKeys('hostfile.temp')
         self.assertTrue('secure.example.com' in hostdict)
-        hostdict.clear_host('secure.example.com')
+        self.assertTrue(hostdict.clear_host('secure.example.com'))
         self.assertTrue('secure.example.com' not in hostdict)
+        self.assertFalse(hostdict.clear_host('secure.example.com'))
 
         hostdict = paramiko.HostKeys('hostfile.temp')
         self.assertTrue('secure.example.com' in hostdict)
