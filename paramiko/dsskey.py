@@ -78,6 +78,16 @@ class DSSKey(PKey):
         m.add_mpint(self.y)
         return m.asbytes()
 
+    def asagentbytes(self):
+        m = Message()
+        m.add_string('ssh-dss')
+        m.add_mpint(self.p)
+        m.add_mpint(self.q)
+        m.add_mpint(self.g)
+        m.add_mpint(self.y)
+        m.add_mpint(self.x)
+        return m.asbytes()
+
     def __str__(self):
         return self.asbytes()
 

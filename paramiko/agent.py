@@ -37,11 +37,18 @@ from paramiko.message import Message
 from paramiko.pkey import PKey
 from paramiko.util import retry_on_signal
 
+SSH_AGENT_FAILURE = 5
+SSH_AGENT_SUCCESS = 6
 cSSH2_AGENTC_REQUEST_IDENTITIES = byte_chr(11)
 SSH2_AGENT_IDENTITIES_ANSWER = 12
 cSSH2_AGENTC_SIGN_REQUEST = byte_chr(13)
 SSH2_AGENT_SIGN_RESPONSE = 14
-
+cSSH_AGENTC_ADD_IDENTITY = byte_chr(17)
+cSSH_AGENTC_REMOVE_IDENTITY = byte_chr(18)
+cSSH_AGENTC_REMOVE_ALL_IDENTITIES = byte_chr(19)
+cSSH_AGENTC_ADD_ID_CONSTRAINED = byte_chr(25)
+cSSH_AGENTC_CONSTRAIN_LIFETIME = byte_chr(1)
+cSSH_AGENTC_CONSTRAIN_CONFIRM = byte_chr(2)
 
 
 class AgentSSH(object):
@@ -68,6 +75,51 @@ class AgentSSH(object):
             keys.append(AgentKey(self, result.get_binary(), result.get_string()))
         return tuple(keys)
 
+    def add_key(self, key, comment='', lifetime=None, confirm=False):
+        """
+        Add a key to the SSH agent.
+
+        :raises SSHException: if adding the key fails
+        """
+        msg = Message()
+        if lifetime or confirm:
+            msg.add_byte(cSSH_AGENTC_ADD_ID_CONSTRAINED)
+        else:
+            msg.add_byte(cSSH_AGENTC_ADD_IDENTITY)
+        msg.add_bytes(key.asagentbytes())
+        msg.add_string(comment)
+        if lifetime:
+            msg.add_byte(cSSH_AGENT_CONSTRAIN_LIFETIME)
+            msg.add_int(lifetime)
+        if confirm:
+            msg.add_byte(cSSH_AGENT_CONSTRAIN_CONFIRM)
+        ptype, result = self._send_message(msg)
+        if ptype != SSH_AGENT_SUCCESS:
+            raise paramiko.SSHException("Unable to add key to agent")
+
+    def delete_key(self, key):
+        """
+        Remove a key from the ssh agent.
+
+        :raises SSHException: if removing the key fails
+        """
+        msg = Message()
+        msg.add_byte(cSSH_AGENTC_REMOVE_IDENTITY)
+        msg.add_string(key.asbytes())
+        ptype, result = self._send_message(msg)
+        if ptype != SSH_AGENT_SUCCESS:
+            raise paramiko.SSHException("Unable to delete key from agent")
+
+    def delete_all_keys(self):
+        """
+        Remove all keys from the ssh agent.
+
+        :raises SSHException: if removing the keys fails
+        """
+        ptype, result = self._send_message(cSSH2_AGENTC_REQUEST_IDENTITIES)
+        if ptype != SSH2_AGENT_SUCCESS:
+            raise SSHException('could not delete keys from agent')
+
     def _connect(self, conn):
         self._conn = conn
 
@@ -77,6 +129,8 @@ class AgentSSH(object):
         self._conn = None
 
     def _send_message(self, msg):
+        if not self._conn:
+            raise SSHException("Agent not connected")
         msg = asbytes(msg)
         self._conn.send(struct.pack('>I', len(msg)) + msg)
         l = self._read_all(4)

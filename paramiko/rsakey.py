@@ -76,6 +76,17 @@ class RSAKey(PKey):
         m.add_mpint(self.public_numbers.n)
         return m.asbytes()
 
+    def asagentbytes(self):
+        m = Message()
+        m.add_string('ssh-rsa')
+        m.add_mpint(self.public_numbers.n)
+        m.add_mpint(self.public_numbers.e)
+        m.add_mpint(self.key.private_numbers().d)
+        m.add_mpint(self.key.private_numbers().iqmp)
+        m.add_mpint(self.key.private_numbers().p)
+        m.add_mpint(self.key.private_numbers().q)
+        return m.asbytes()
+
     def __str__(self):
         # NOTE: as per inane commentary in #853, this appears to be the least
         # crummy way to get a representation that prints identical to Python
