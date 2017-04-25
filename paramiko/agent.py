@@ -420,6 +420,29 @@ class Agent(AgentSSH):
         """
         self._close()
 
+class ForwardedAgent(AgentSSH):
+    """
+    Client interface to be for using private keys from an SSH agent forwarded
+    to a paramiko ssh server. This class is only usable from server code.
+
+    :raises SSHException:
+        if an SSH agent is found, but speaks an incompatible protocol
+    """
+    def __init__(self, t):
+        AgentSSH.__init__(self)
+        self.__t = t
+
+    def __del__(self):
+        self.close()
+
+    def connect(self):
+        conn_sock = self.__t.open_forward_agent_channel()
+        if conn_sock is None:
+            raise paramiko.SSHException('lost ssh-agent')
+        self._connect(conn_sock)
+
+    def close(self):
+        self._close()
 
 class AgentKey(PKey):
     """
