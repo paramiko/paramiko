@@ -47,7 +47,6 @@ SSH2_AGENT_SIGN_RESPONSE = 14
 class AgentSSH(object):
     def __init__(self):
         self._conn = None
-        self._keys = ()
 
     def get_keys(self):
         """
@@ -59,10 +58,8 @@ class AgentSSH(object):
             a tuple of `.AgentKey` objects representing keys available on the
             SSH agent
         """
-        return self._keys
-
-    def _connect(self, conn):
-        self._conn = conn
+        if not self._conn:
+            return tuple()
         ptype, result = self._send_message(cSSH2_AGENTC_REQUEST_IDENTITIES)
         if ptype != SSH2_AGENT_IDENTITIES_ANSWER:
             raise SSHException('could not get keys from ssh-agent')
@@ -70,13 +67,15 @@ class AgentSSH(object):
         for i in range(result.get_int()):
             keys.append(AgentKey(self, result.get_binary()))
             result.get_string()
-        self._keys = tuple(keys)
+        return tuple(keys)
+
+    def _connect(self, conn):
+        self._conn = conn
 
     def _close(self):
         if self._conn is not None:
             self._conn.close()
         self._conn = None
-        self._keys = ()
 
     def _send_message(self, msg):
         msg = asbytes(msg)
