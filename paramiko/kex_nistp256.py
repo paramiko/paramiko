@@ -9,7 +9,7 @@ from paramiko.py3compat import byte_chr, long
 from paramiko.ssh_exception import SSHException
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.asymmetric import ec
-
+from binascii import hexlify
 
 _MSG_KEXECDH_INIT, _MSG_KEXECDH_REPLY = range(30, 32)
 c_MSG_KEXECDH_INIT, c_MSG_KEXECDH_REPLY = [byte_chr(c) for c in range(30, 32)]
@@ -59,7 +59,7 @@ class KexNistp256():
         self.Q_C = ec.EllipticCurvePublicNumbers.from_encoded_point(self.curve, Q_C_bytes)
         K_S = self.transport.get_server_key().asbytes()
         K = self.P.exchange(ec.ECDH(), self.Q_C.public_key(default_backend()))
-        K = long(K.encode('hex'), 16)
+        K = long(hexlify(K), 16)
         #compute exchange hash
         hm = Message()
         hm.add(self.transport.remote_version, self.transport.local_version,
@@ -87,7 +87,7 @@ class KexNistp256():
         self.Q_S = ec.EllipticCurvePublicNumbers.from_encoded_point(self.curve, Q_S_bytes)
         sig = m.get_binary()
         K = self.P.exchange(ec.ECDH(), self.Q_S.public_key(default_backend()))
-        K = long(K.encode('hex'), 16)
+        K = long(hexlify(K), 16)
         #compute exchange hash and verify signature
         hm = Message()
         hm.add(self.transport.local_version, self.transport.remote_version,
