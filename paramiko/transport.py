@@ -55,6 +55,9 @@ from paramiko.dsskey import DSSKey
 from paramiko.kex_gex import KexGex, KexGexSHA256
 from paramiko.kex_group1 import KexGroup1
 from paramiko.kex_group14 import KexGroup14
+from paramiko.kex_nistp256 import KexNistp256
+from paramiko.kex_nistp384 import KexNistp384
+from paramiko.kex_nistp521 import KexNistp521
 from paramiko.kex_gss import KexGSSGex, KexGSSGroup1, KexGSSGroup14, NullHostKey
 from paramiko.message import Message
 from paramiko.packet import Packetizer, NeedRekeyException
@@ -128,6 +131,9 @@ class Transport (threading.Thread, ClosingContextManager):
         'diffie-hellman-group14-sha1',
         'diffie-hellman-group-exchange-sha1',
         'diffie-hellman-group-exchange-sha256',
+        'ecdh-sha2-nistp256',
+        'ecdh-sha2-nistp384',
+        'ecdh-sha2-nistp521',
     )
     _preferred_compression = ('none',)
 
@@ -217,7 +223,10 @@ class Transport (threading.Thread, ClosingContextManager):
         'diffie-hellman-group-exchange-sha256': KexGexSHA256,
         'gss-group1-sha1-toWM5Slw5Ew8Mqkay+al2g==': KexGSSGroup1,
         'gss-group14-sha1-toWM5Slw5Ew8Mqkay+al2g==': KexGSSGroup14,
-        'gss-gex-sha1-toWM5Slw5Ew8Mqkay+al2g==': KexGSSGex
+        'gss-gex-sha1-toWM5Slw5Ew8Mqkay+al2g==': KexGSSGex,
+        'ecdh-sha2-nistp256': KexNistp256,
+        'ecdh-sha2-nistp384': KexNistp384,
+        'ecdh-sha2-nistp521': KexNistp521
     }
 
     _compression_info = {
