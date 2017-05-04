@@ -3,7 +3,7 @@ Ephemeral Elliptic Curve Diffie-Hellman (ECDH) key exchange
 RFC 5656, Section 4
 """
 
-from hashlib import sha256
+from hashlib import sha256, sha384, sha512
 from paramiko.message import Message
 from paramiko.py3compat import byte_chr, long
 from paramiko.ssh_exception import SSHException
@@ -100,3 +100,15 @@ class KexNistp256():
         self.transport._set_K_H(K, self.hash_algo(hm.asbytes()).digest())
         self.transport._verify_key(K_S, sig)
         self.transport._activate_outbound()
+
+
+class KexNistp384(KexNistp256):
+    name = "ecdh-sha2-nistp384"
+    hash_algo = sha384
+    curve = ec.SECP384R1()
+
+
+class KexNistp521(KexNistp256):
+    name = "ecdh-sha2-nistp521"
+    hash_algo = sha512
+    curve = ec.SECP521R1()

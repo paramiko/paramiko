@@ -55,9 +55,7 @@ from paramiko.dsskey import DSSKey
 from paramiko.kex_gex import KexGex, KexGexSHA256
 from paramiko.kex_group1 import KexGroup1
 from paramiko.kex_group14 import KexGroup14
-from paramiko.kex_nistp256 import KexNistp256
-from paramiko.kex_nistp384 import KexNistp384
-from paramiko.kex_nistp521 import KexNistp521
+from paramiko.kex_ecdh_nist import KexNistp256, KexNistp384, KexNistp521
 from paramiko.kex_gss import KexGSSGex, KexGSSGroup1, KexGSSGroup14, NullHostKey
 from paramiko.message import Message
 from paramiko.packet import Packetizer, NeedRekeyException

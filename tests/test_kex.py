@@ -29,7 +29,7 @@ from paramiko.kex_group1 import KexGroup1
 from paramiko.kex_gex import KexGex, KexGexSHA256
 from paramiko import Message
 from paramiko.common import byte_chr
-from paramiko.kex_nistp256 import KexNistp256
+from paramiko.kex_ecdh_nist import KexNistp256
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.asymmetric import ec
 
@@ -391,7 +391,7 @@ class KexTest (unittest.TestCase):
         transport.server_mode = False
         kex = KexNistp256(transport)
         kex.start_kex()
-        self.assertEqual((paramiko.kex_nistp256._MSG_KEXECDH_REPLY,), transport._expect)
+        self.assertEqual((paramiko.kex_ecdh_nist._MSG_KEXECDH_REPLY,), transport._expect)
 
         #fake reply
         msg = Message()
@@ -400,7 +400,7 @@ class KexTest (unittest.TestCase):
         msg.add_string(Q_S)
         msg.add_string('fake-sig')
         msg.rewind()
-        kex.parse_next(paramiko.kex_nistp256._MSG_KEXECDH_REPLY, msg)
+        kex.parse_next(paramiko.kex_ecdh_nist._MSG_KEXECDH_REPLY, msg)
         H = b'BAF7CE243A836037EB5D2221420F35C02B9AB6C957FE3BDE3369307B9612570A'
         self.assertEqual(K, kex.transport._K)
         self.assertEqual(H, hexlify(transport._H).upper())
@@ -413,7 +413,7 @@ class KexTest (unittest.TestCase):
         transport.server_mode = True
         kex = KexNistp256(transport)
         kex.start_kex()
-        self.assertEqual((paramiko.kex_nistp256._MSG_KEXECDH_INIT,), transport._expect)
+        self.assertEqual((paramiko.kex_ecdh_nist._MSG_KEXECDH_INIT,), transport._expect)
 
         #fake init
         msg=Message()
@@ -421,7 +421,7 @@ class KexTest (unittest.TestCase):
         H = b'2EF4957AFD530DD3F05DBEABF68D724FACC060974DA9704F2AEE4C3DE861E7CA'
         msg.add_string(Q_C)
         msg.rewind()
-        kex.parse_next(paramiko.kex_nistp256._MSG_KEXECDH_INIT, msg)
+        kex.parse_next(paramiko.kex_ecdh_nist._MSG_KEXECDH_INIT, msg)
         self.assertEqual(K, transport._K)
         self.assertTrue(transport._activated)
         self.assertEqual(H, hexlify(transport._H).upper())
