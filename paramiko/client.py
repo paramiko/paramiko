@@ -34,7 +34,6 @@ from paramiko.dsskey import DSSKey
 from paramiko.ecdsakey import ECDSAKey
 from paramiko.hostkeys import HostKeys
 from paramiko.py3compat import string_types
-from paramiko.resource import ResourceManager
 from paramiko.rsakey import RSAKey
 from paramiko.ssh_exception import (
     SSHException, BadHostKeyException, NoValidConnectionsError
@@ -341,7 +340,6 @@ class SSHClient (ClosingContextManager):
             t.banner_timeout = banner_timeout
         t.start_client()
         t.set_sshclient(self)
-        ResourceManager.register(self, t)
 
         server_key = t.get_remote_server_key()
         keytype = server_key.get_name()
