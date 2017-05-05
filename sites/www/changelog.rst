@@ -2,6 +2,10 @@
 Changelog
 =========
 
+* :bug:`949` SSHClient and Transport could cause a memory leak if there's
+  a connection problem or protocol error, even if ``Transport.close()``
+  is called. Thanks Kyle Agronick for the discovery and investigation,
+  and Pierce Lopez for assistance.
 * :support:`974 backported` Overhaul the codebase to be PEP-8, etc, compliant
   (i.e. passes the maintainer's preferred `flake8 <http://flake8.pycqa.org/>`_
   configuration) and add a ``flake8`` step to the Travis config. Big thanks to
