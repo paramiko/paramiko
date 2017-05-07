@@ -15,7 +15,7 @@ install:
   # Self-install for setup.py-driven deps
   - pip install -e .
   # Dev (doc/test running) requirements
-  - pip install coveralls # For coveralls.io specifically
+  - pip install codecov # For codecov specifically
   - pip install -r dev-requirements.txt
 script:
   # Main tests, w/ coverage!
@@ -34,4 +34,4 @@ notifications:
     on_failure: change
   email: false
 after_success:
-  - coveralls
+  - codecov
