@@ -37,7 +37,7 @@ from tests.test_message import MessageTest
 from tests.test_file import BufferedFileTest
 from tests.test_buffered_pipe import BufferedPipeTest
 from tests.test_util import UtilTest
-from tests.test_hostkeys import HostKeysTest
+from tests.test_hostkeys import HostKeysTestEmpty, HostKeysTestLoadedFromFp, HostKeysTestLoadedFromFile
 from tests.test_pkey import KeyTest
 from tests.test_kex import KexTest
 from tests.test_packetizer import PacketizerTest
@@ -149,7 +149,9 @@ def main():
     suite.addTest(unittest.makeSuite(BufferedFileTest))
     suite.addTest(unittest.makeSuite(BufferedPipeTest))
     suite.addTest(unittest.makeSuite(UtilTest))
-    suite.addTest(unittest.makeSuite(HostKeysTest))
+    suite.addTest(unittest.makeSuite(HostKeysTestEmpty))
+    suite.addTest(unittest.makeSuite(HostKeysTestLoadedFromFp))
+    suite.addTest(unittest.makeSuite(HostKeysTestLoadedFromFile))
     if options.use_pkey:
         suite.addTest(unittest.makeSuite(KeyTest))
     suite.addTest(unittest.makeSuite(KexTest))

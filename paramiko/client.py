@@ -102,7 +102,12 @@ class SSHClient (ClosingContextManager):
             except IOError:
                 pass
             return
-        self._system_host_keys.load(filename)
+
+        with open(filename, 'r') as fp:
+            self._system_host_keys.load_fp(fp)
+
+    def load_host_keys_fp(self, fp):
+        self._host_keys.load_fp(fp=fp)
 
     def load_host_keys(self, filename):
         """
@@ -121,7 +126,12 @@ class SSHClient (ClosingContextManager):
         :raises IOError: if the filename could not be read
         """
         self._host_keys_filename = filename
-        self._host_keys.load(filename)
+
+        with open(filename, 'r') as fp:
+            self.load_host_keys_fp(fp)
+
+    def save_host_keys_fp(self, fp):
+        self._host_keys.save_fp(fp=fp)
 
     def save_host_keys(self, filename):
         """
@@ -139,10 +149,8 @@ class SSHClient (ClosingContextManager):
         if self._host_keys_filename is not None:
             self.load_host_keys(self._host_keys_filename)
 
-        with open(filename, 'w') as f:
-            for hostname, keys in self._host_keys.items():
-                for keytype, key in keys.items():
-                    f.write('%s %s %s\n' % (hostname, keytype, key.get_base64()))
+        with open(filename, 'w') as fp:
+            self.save_host_keys_fp(fp=fp)
 
     def get_host_keys(self):
         """
