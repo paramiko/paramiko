@@ -237,7 +237,9 @@ class Transport (threading.Thread, ClosingContextManager):
                  default_window_size=DEFAULT_WINDOW_SIZE,
                  default_max_packet_size=DEFAULT_MAX_PACKET_SIZE,
                  gss_kex=False,
-                 gss_deleg_creds=True):
+                 gss_deleg_creds=True,
+                 banner_timeout=15,
+                 handshake_timeout=15):
         """
         Create a new SSH session over an existing socket, or socket-like
         object.  This only creates the `.Transport` object; it doesn't begin the
@@ -277,6 +279,12 @@ class Transport (threading.Thread, ClosingContextManager):
         :param int default_max_packet_size:
             sets the default max packet size on the transport. (defaults to
             32768)
+            
+        :param int banner_timeout:
+            How many seconds to wait for the SSH banner
+        :param int handshake_timeout:
+            How many secons to wait for the handshake to finish after SSH 
+            banner sent
 
         .. versionchanged:: 1.15
             Added the ``default_window_size`` and ``default_max_packet_size``
@@ -382,8 +390,8 @@ class Transport (threading.Thread, ClosingContextManager):
         self.auth_handler = None
         self.global_response = None     # response Message from an arbitrary global request
         self.completion_event = None    # user-defined event callbacks
-        self.banner_timeout = 15        # how long (seconds) to wait for the SSH banner
-        self.handshake_timeout = 15     # how long (seconds) to wait for the handshake to finish after SSH banner sent.
+        self.banner_timeout = banner_timeout        # how long (seconds) to wait for the SSH banner
+        self.handshake_timeout = handshake_timeout     # how long (seconds) to wait for the handshake to finish after SSH banner sent.
 
 
         # server mode:
