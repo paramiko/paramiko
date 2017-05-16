@@ -88,7 +88,7 @@ class KexGex (object):
             return self._parse_kexdh_gex_reply(m)
         elif ptype == _MSG_KEXDH_GEX_REQUEST_OLD:
             return self._parse_kexdh_gex_request_old(m)
-        raise SSHException('KexGex %s asked to handle packet type %d' % self.name, ptype)
+        raise SSHException('KexGex %s asked to handle packet type %d' % (self.name, ptype))
 
     ###  internals...
 
