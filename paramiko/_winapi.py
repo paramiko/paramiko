@@ -380,5 +380,5 @@ def get_security_attributes_for_user(user=None):
     ctypes.windll.advapi32.InitializeSecurityDescriptor(ctypes.byref(SD),
         SECURITY_DESCRIPTOR.REVISION)
     ctypes.windll.advapi32.SetSecurityDescriptorOwner(ctypes.byref(SD),
-        user.SID, 0)
+        ctypes.cast(user.SID,ctypes.c_long), 0)
     return SA
