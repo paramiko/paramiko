@@ -17,9 +17,10 @@
 # 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
 
 
+import datetime
+import errno
 import os
 from shlex import split as shlsplit
-import signal
 from select import select
 import socket
 import time
@@ -106,7 +107,20 @@ class ProxyCommand(ClosingContextManager):
             raise ProxyCommandFailure(' '.join(self.cmd), e.strerror)
 
     def close(self):
-        os.kill(self.process.pid, signal.SIGTERM)
+        kill_after = datetime.datetime.utcnow() + datetime.timedelta(seconds=5)
+        try:
+            self.process.terminate()
+            while datetime.datetime.utcnow() < kill_after:
+                if self.process.poll() is not None:
+                    break
+                time.sleep(0.1)
+            else:
+                self.process.kill()
+        except OSError as e:
+            # Don't traceback if something else killed our command.
+            if e.errno != errno.ESRCH:
+                raise
+        self.process.wait()
 
     @property
     def closed(self):
