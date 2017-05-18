@@ -84,6 +84,15 @@ class ProxyCommand(ClosingContextManager):
             buffer = b''
             start = time.time()
             while len(buffer) < size:
+                # The proxy command might die just before this function was
+                # called, or during this loop. If that happens, we can end up
+                # in an infinite loop with os.read() returning 0. The best way
+                # to prevent that seems to be to check to make sure the proxy
+                # command process is still running, and raise if it's not.
+                if self.process.poll() is not None:
+                    raise ProxyCommandFailure(' '.join(self.cmd),
+                                              'died while trying to read')
+
                 select_timeout = None
                 if self.timeout is not None:
                     elapsed = (time.time() - start)
