@@ -2,6 +2,10 @@
 Changelog
 =========
 
+* :bug:`949` SSHClient and Transport could cause a memory leak if there's
+  a connection problem or protocol error, even if ``Transport.close()``
+  is called. Thanks Kyle Agronick for the discovery and investigation,
+  and Pierce Lopez for assistance.
 * :bug:`683` Make `util.log_to_file()` append instead of replace. Thanks
   to ``@vlcinsky`` for the report.
 * :release:`2.0.5 <2017-02-20>`
