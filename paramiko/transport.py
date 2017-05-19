@@ -78,7 +78,7 @@ import atexit
 atexit.register(_join_lingering_threads)
 
 
-class Transport(object):
+class Transport(ClosingContextManager):
     """
     An SSH Transport attaches to a stream (usually a socket), negotiates an
     encrypted session, authenticates, and then creates stream tunnels, called
@@ -1091,7 +1091,7 @@ class Transport(object):
         return repr(self._transport_thread)
 
 
-class TransportThread (threading.Thread, ClosingContextManager):
+class TransportThread (threading.Thread):
     """
     An SSH Transport attaches to a stream (usually a socket), negotiates an
     encrypted session, authenticates, and then creates stream tunnels, called
