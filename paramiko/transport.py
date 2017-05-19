@@ -248,9 +248,17 @@ class Transport(ClosingContextManager):
     def H(self):
         return self._transport_thread.H
 
+    @H.setter
+    def H_set(self, H_prop):
+        self._transport_thread.H = H_prop
+
     @property
     def K(self):
         return self._transport_thread.K
+
+    @K.setter
+    def K_set(self, K_prop):
+        self._transport_thread.K = K_prop
 
     @property
     def sock(self):
@@ -275,6 +283,22 @@ class Transport(ClosingContextManager):
     @property
     def _cipher_info(self):
         return self._transport_thread._cipher_info
+
+    @property
+    def remote_cipher(self):
+        return self._transport_thread.remote_cipher
+
+    @remote_cipher.setter
+    def remote_cipher_set(self, remote_cipher_prop):
+        self._transport_thread.remote_cipher = remote_cipher_prop
+
+    @property
+    def _mac_info(self):
+        return self._transport_thread._mac_info
+
+    @_mac_info.setter
+    def _mac_info_set(self, _mac_info_prop):
+        self._transport_thread._mac_info = _mac_info_prop
 
     def accept(self, timeout=None):
         """
