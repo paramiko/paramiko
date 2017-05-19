@@ -238,7 +238,7 @@ class Transport(ClosingContextManager):
 
     @property
     def local_cipher(self):
-        return self._local_cipher.local_cipher
+        return self._transport_thread.local_cipher
 
     @local_cipher.setter
     def local_cipher_set(self, local_cipher_prop):
@@ -257,12 +257,24 @@ class Transport(ClosingContextManager):
         return self._transport_thread.sock
 
     @property
+    def session_id(self):
+        return self._transport_thread.session_id
+
+    @session_id.setter
+    def session_id_set(self, session_id_prop):
+        self._transport_thread.session_id = session_id_prop
+
+    @property
     def _handler_table(self):
         return self._transport_thread._handler_table
 
     @property
     def _channel_handler_table(self):
         return self._transport_thread._channel_handler_table
+
+    @property
+    def _cipher_info(self):
+        return self._transport_thread._cipher_info
 
     def accept(self, timeout=None):
         """
