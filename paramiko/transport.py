@@ -161,7 +161,7 @@ class Transport(ClosingContextManager):
         return self._transport_thread.ciphers
 
     @ciphers.setter
-    def ciphers_set(self, ciphers_prop):
+    def ciphers(self, ciphers_prop):
         self._transport_thread.ciphers = ciphers_prop
 
     @property
@@ -169,7 +169,7 @@ class Transport(ClosingContextManager):
         return self._transport_thread.compression
 
     @compression.setter
-    def compression_set(self, compression_prop):
+    def compression(self, compression_prop):
         self._transport_thread.compression = compression_prop
 
     @property
@@ -177,7 +177,7 @@ class Transport(ClosingContextManager):
         return self._transport_thread.digests
 
     @digests.setter
-    def digests_set(self, digests_prop):
+    def digests(self, digests_prop):
         self._transport_thread.digests = digests_prop
 
     @property
@@ -185,7 +185,7 @@ class Transport(ClosingContextManager):
         return self._transport_thread.kex
 
     @kex.setter
-    def kex_set(self, kex_prop):
+    def kex(self, kex_prop):
         self._transport_thread.kex = kex_prop
 
     @property
@@ -193,7 +193,7 @@ class Transport(ClosingContextManager):
         return self._transport_thread.key_types
 
     @key_types.setter
-    def key_types_set(self, key_types_prop):
+    def key_types(self, key_types_prop):
         self._transport_thread.key_types = key_types_prop
 
     @property
@@ -201,23 +201,15 @@ class Transport(ClosingContextManager):
         return self._transport_thread.use_gss_kex
 
     @use_gss_kex.setter
-    def use_gss_kex_set(self, use_gss_kex_prop):
+    def use_gss_kex(self, use_gss_kex_prop):
         self._transport_thread.use_gss_kex = use_gss_kex_prop
-
-    @property
-    def _log(self):
-        return self._transport_thread._log
-
-    @use_gss_kex.setter
-    def _log_set(self, _log_prop):
-        self._transport_thread._log = _log_prop
 
     @property
     def packetizer(self):
         return self._transport_thread.packetizer
 
     @packetizer.setter
-    def packetizer_set(self, packetizer_prop):
+    def packetizer(self, packetizer_prop):
         self._transport_thread.packetizer = packetizer_prop
 
     @property
@@ -225,7 +217,7 @@ class Transport(ClosingContextManager):
         return self._transport_thread.server_object
 
     @server_object.setter
-    def server_object_set(self, server_object_prop):
+    def server_object(self, server_object_prop):
         self._transport_thread.server_object = server_object_prop
 
     @property
@@ -233,7 +225,7 @@ class Transport(ClosingContextManager):
         return self._transport_thread._compute_key
 
     @_compute_key.setter
-    def _compute_key_set(self, _compute_key_prop):
+    def _compute_key(self, _compute_key_prop):
         self._transport_thread._compute_key = _compute_key_prop
 
     @property
@@ -241,7 +233,7 @@ class Transport(ClosingContextManager):
         return self._transport_thread.local_cipher
 
     @local_cipher.setter
-    def local_cipher_set(self, local_cipher_prop):
+    def local_cipher(self, local_cipher_prop):
         self._transport_thread.local_cipher = local_cipher_prop
 
     @property
@@ -249,7 +241,7 @@ class Transport(ClosingContextManager):
         return self._transport_thread.H
 
     @H.setter
-    def H_set(self, H_prop):
+    def H(self, H_prop):
         self._transport_thread.H = H_prop
 
     @property
@@ -257,7 +249,7 @@ class Transport(ClosingContextManager):
         return self._transport_thread.K
 
     @K.setter
-    def K_set(self, K_prop):
+    def K(self, K_prop):
         self._transport_thread.K = K_prop
 
     @property
@@ -269,7 +261,7 @@ class Transport(ClosingContextManager):
         return self._transport_thread.session_id
 
     @session_id.setter
-    def session_id_set(self, session_id_prop):
+    def session_id(self, session_id_prop):
         self._transport_thread.session_id = session_id_prop
 
     @property
@@ -277,7 +269,7 @@ class Transport(ClosingContextManager):
         return self._transport_thread._handler_table
 
     @_handler_table.setter
-    def _handler_table_set(self, _handler_table_prop):
+    def _handler_table(self, _handler_table_prop):
         self._transport_thread._handler_table = _handler_table_prop
 
     @property
@@ -285,7 +277,7 @@ class Transport(ClosingContextManager):
         return self._transport_thread._channel_handler_table
 
     @_channel_handler_table.setter
-    def _channel_handler_table_set(self, _channel_handler_table_prop):
+    def _channel_handler_table(self, _channel_handler_table_prop):
         self._channel_handler_table = _channel_handler_table_prop
 
     @property
@@ -297,7 +289,7 @@ class Transport(ClosingContextManager):
         return self._transport_thread.remote_cipher
 
     @remote_cipher.setter
-    def remote_cipher_set(self, remote_cipher_prop):
+    def remote_cipher(self, remote_cipher_prop):
         self._transport_thread.remote_cipher = remote_cipher_prop
 
     @property
@@ -305,7 +297,7 @@ class Transport(ClosingContextManager):
         return self._transport_thread._mac_info
 
     @_mac_info.setter
-    def _mac_info_set(self, _mac_info_prop):
+    def _mac_info(self, _mac_info_prop):
         self._transport_thread._mac_info = _mac_info_prop
 
     @property
@@ -313,14 +305,14 @@ class Transport(ClosingContextManager):
         return self._transport_thread.local_mac
 
     @local_mac.setter
-    def local_mac_set(self, local_mac_prop):
+    def local_mac(self, local_mac_prop):
         self._transport_thread.local_mac = local_mac_prop
 
     @property
     def _handler_table(self):
         return self._transport_thread._handler_table
 
-    def _handler_table_set(self, _handler_table_prop):
+    def _handler_table(self, _handler_table_prop):
         self._transport_thread._handler_table = _handler_table_prop
 
     def accept(self, timeout=None):
@@ -1142,6 +1134,9 @@ class Transport(ClosingContextManager):
 
     def _set_x11_handler(self, handler):
         self._transport_thread._set_x11_handler(handler)
+
+    def _log(self, level, msg, *args):
+        self._transport_thread._log(level, msg, *args)
 
     def __repr__(self):
         """
