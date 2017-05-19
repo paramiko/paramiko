@@ -308,13 +308,6 @@ class Transport(ClosingContextManager):
     def local_mac(self, local_mac_prop):
         self._transport_thread.local_mac = local_mac_prop
 
-    @property
-    def _handler_table(self):
-        return self._transport_thread._handler_table
-
-    def _handler_table(self, _handler_table_prop):
-        self._transport_thread._handler_table = _handler_table_prop
-
     def accept(self, timeout=None):
         """
         Return the next channel opened by the client over this transport, in
