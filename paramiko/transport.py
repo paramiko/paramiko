@@ -218,7 +218,7 @@ class Transport(ClosingContextManager):
 
     @packetizer.setter
     def packetizer_set(self, packetizer_prop):
-        self._transport_thread._log = packetizer_prop
+        self._transport_thread.packetizer = packetizer_prop
 
     @property
     def server_object(self):
@@ -276,9 +276,17 @@ class Transport(ClosingContextManager):
     def _handler_table(self):
         return self._transport_thread._handler_table
 
+    @_handler_table.setter
+    def _handler_table_set(self, _handler_table_prop):
+        self._transport_thread._handler_table = _handler_table_prop
+
     @property
     def _channel_handler_table(self):
         return self._transport_thread._channel_handler_table
+
+    @_channel_handler_table.setter
+    def _channel_handler_table_set(self, _channel_handler_table_prop):
+        self._channel_handler_table = _channel_handler_table_prop
 
     @property
     def _cipher_info(self):
