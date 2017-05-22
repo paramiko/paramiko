@@ -58,6 +58,7 @@ class AuthHandler (object):
         self.banner = None
         self.password = None
         self.private_key = None
+        self.check_key = False
         self.interactive_handler = None
         self.submethods = None
         # for server mode:
@@ -86,13 +87,14 @@ class AuthHandler (object):
         finally:
             self.transport.lock.release()
 
-    def auth_publickey(self, username, key, event):
+    def auth_publickey(self, username, key, event, check_key):
         self.transport.lock.acquire()
         try:
             self.auth_event = event
             self.auth_method = 'publickey'
             self.username = username
             self.private_key = key
+            self.check_key = check_key
             self._request_auth()
         finally:
             self.transport.lock.release()
@@ -220,6 +222,16 @@ class AuthHandler (object):
         # dunno this one
         self._disconnect_service_not_available()
 
+    def _prepare_key_auth(self, m, send_real):
+        m.add_boolean(send_real)
+        m.add_string(self.private_key.get_name())
+        m.add_string(self.private_key)
+        if not send_real:
+            return
+        blob = self._get_session_blob(self.private_key, 'ssh-connection', self.username)
+        sig = self.private_key.sign_ssh_data(blob)
+        m.add_string(sig)
+
     def _parse_service_accept(self, m):
         service = m.get_text()
         if service == 'ssh-userauth':
@@ -234,12 +246,7 @@ class AuthHandler (object):
                 password = bytestring(self.password)
                 m.add_string(password)
             elif self.auth_method == 'publickey':
-                m.add_boolean(True)
-                m.add_string(self.private_key.get_name())
-                m.add_string(self.private_key)
-                blob = self._get_session_blob(self.private_key, 'ssh-connection', self.username)
-                sig = self.private_key.sign_ssh_data(blob)
-                m.add_string(sig)
+                self._prepare_key_auth(m, not self.check_key)
             elif self.auth_method == 'keyboard-interactive':
                 m.add_string('')
                 m.add_string(self.submethods)
@@ -570,7 +577,26 @@ class AuthHandler (object):
         self.transport._log(INFO, 'Auth banner: %s' % banner)
         # who cares.
 
+    def _parse_userauth_pk_ok(self, m):
+        """
+        Handle positive server reply (SSH_MSG_USERAUTH_PK_OK) on
+        the auth acceptability of the public key by sending
+        actual SSH_MSG_USERAUTH_REQUEST with signed data
+        per RFC 4252 clause 7.
+        """
+        self.transport._log(DEBUG, 'publickey check done, sending signed data')
+
+        m = Message()
+        m.add_byte(cMSG_USERAUTH_REQUEST)
+        m.add_string(self.username)
+        m.add_string('ssh-connection')
+        m.add_string(self.auth_method)
+        self._prepare_key_auth(m, True)
+        self.transport._send_message(m)
+
     def _parse_userauth_info_request(self, m):
+        if self.auth_method == 'publickey':
+            return self._parse_userauth_pk_ok(m)
         if self.auth_method != 'keyboard-interactive':
             raise SSHException('Illegal info request from server')
         title = m.get_text()
