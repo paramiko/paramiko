@@ -77,7 +77,7 @@ def make_tarball(base_name, base_dir, compress='gzip', verbose=0, dry_run=0,
     For 'gzip' and 'bzip2' the internal tarfile module will be used.
     For 'compress' the .tar will be created using tarfile, and then
     we will spawn 'compress' afterwards.
-    The output tar file will be named 'base_name' + ".tar", 
+    The output tar file will be named 'base_name' + ".tar",
     possibly plus the appropriate compression extension (".gz",
     ".bz2" or ".Z").  Return the output filename.
     """
@@ -87,12 +87,14 @@ def make_tarball(base_name, base_dir, compress='gzip', verbose=0, dry_run=0,
     # "create a tree of hardlinks" step!  (Would also be nice to
     # detect GNU tar to use its 'z' option and save a step.)
 
-    compress_ext = { 'gzip': ".gz",
-                     'bzip2': '.bz2',
-                     'compress': ".Z" }
+    compress_ext = {
+        'gzip': ".gz",
+        'bzip2': '.bz2',
+        'compress': ".Z",
+    }
 
     # flags for compression program, each element of list will be an argument
-    tarfile_compress_flag = {'gzip':'gz', 'bzip2':'bz2'}
+    tarfile_compress_flag = {'gzip': 'gz', 'bzip2': 'bz2'}
     compress_flags = {'compress': ["-f"]}
 
     if compress is not None and compress not in compress_ext.keys():
@@ -144,11 +146,10 @@ def make_tarball(base_name, base_dir, compress='gzip', verbose=0, dry_run=0,
 _custom_formats = {
     'gztar': (make_tarball, [('compress', 'gzip')], "gzip'ed tar-file"),
     'bztar': (make_tarball, [('compress', 'bzip2')], "bzip2'ed tar-file"),
-    'ztar':  (make_tarball, [('compress', 'compress')], "compressed tar file"),
-    'tar':   (make_tarball, [('compress', None)], "uncompressed tar file"),
+    'ztar': (make_tarball, [('compress', 'compress')], "compressed tar file"),
+    'tar': (make_tarball, [('compress', None)], "uncompressed tar file"),
 }
 
 # Hack in and insert ourselves into the distutils code base
 def install_custom_make_tarball():
     distutils.archive_util.ARCHIVE_FORMATS.update(_custom_formats)
-

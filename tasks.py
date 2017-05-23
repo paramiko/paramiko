@@ -1,4 +1,3 @@
-from os import mkdir
 from os.path import join
 from shutil import rmtree, copytree
 
@@ -41,7 +40,9 @@ def release(ctx, sdist=True, wheel=True, sign=True, dry_run=False):
     # Publish
     publish(ctx, sdist=sdist, wheel=wheel, sign=sign, dry_run=dry_run)
     # Remind
-    print("\n\nDon't forget to update RTD's versions page for new minor releases!")
+    print("\n\nDon't forget to update RTD's versions page for new minor "
+          "releases!")
+
 
 # TODO: "replace one task with another" needs a better public API, this is
 # using unpublished internals & skips all the stuff add_task() does re:
