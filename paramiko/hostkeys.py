@@ -179,12 +179,18 @@ class HostKeys (MutableMapping):
                     self._hostkeys._entries.append(e)
 
             def keys(self):
-                return [e.key.get_name() for e in self._entries if e.key is not None]
+                return [
+                    e.key.get_name() for e in self._entries
+                    if e.key is not None
+                ]
 
         entries = []
         for e in self._entries:
             for h in e.hostnames:
-                if h.startswith('|1|') and not hostname.startswith('|1|') and constant_time_bytes_eq(self.hash_host(hostname, h), h) or h == hostname:
+                if h.startswith('|1|') and not hostname.startswith('|1|') and \
+                        constant_time_bytes_eq(
+                            self.hash_host(hostname, h), h) \
+                        or h == hostname:
                     entries.append(e)
         if len(entries) == 0:
             return None
@@ -235,7 +241,7 @@ class HostKeys (MutableMapping):
         for key_type in entry.keys():
             found = False
             for e in self._entries:
-                if (hostname in e.hostnames) and (e.key.get_name() == key_type):
+                if (hostname in e.hostnames) and e.key.get_name() == key_type:
                     # replace
                     e.key = entry[key_type]
                     found = True
@@ -264,7 +270,8 @@ class HostKeys (MutableMapping):
         hashed hostnames in the known_hosts file.
 
         :param str hostname: the hostname to hash
-        :param str salt: optional salt to use when hashing (must be 20 bytes long)
+        :param str salt: optional salt to use when hashing
+            (must be 20 bytes long)
         :return: the hashed hostname as a `str`
         """
         if salt is None:
@@ -347,8 +354,10 @@ class HostKeyEntry:
         included.
         """
         if self.valid:
-            return '%s %s %s\n' % (','.join(self.hostnames), self.key.get_name(),
-                   self.key.get_base64())
+            return '%s %s %s\n' % (
+                ','.join(self.hostnames),
+                self.key.get_name(),
+                self.key.get_base64())
         return None
 
     def __repr__(self):
