@@ -15,8 +15,8 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with Paramiko; if not, write to the Free Software Foundation, Inc.,
 # 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
-from paramiko.common import linefeed_byte_value, crlf, cr_byte, linefeed_byte, \
-    cr_byte_value
+from paramiko.common import linefeed_byte_value, crlf, cr_byte, \
+    linefeed_byte, cr_byte_value
 from paramiko.py3compat import BytesIO, PY2, u, b, bytes_types
 
 from paramiko.util import ClosingContextManager
@@ -106,9 +106,9 @@ class BufferedFile (ClosingContextManager):
     else:
         def __next__(self):
             """
-            Returns the next line from the input, or raises `.StopIteration` when
-            EOF is hit.  Unlike python file objects, it's okay to mix calls to
-            `.next` and `.readline`.
+            Returns the next line from the input, or raises `.StopIteration`
+            when EOF is hit.  Unlike python file objects, it's okay to mix
+            calls to `.next` and `.readline`.
 
             :raises StopIteration: when the end of the file is reached.
 
@@ -163,9 +163,9 @@ class BufferedFile (ClosingContextManager):
 
     def read(self, size=None):
         """
-        Read at most ``size`` bytes from the file (less if we hit the end of the
-        file first).  If the ``size`` argument is negative or omitted, read all
-        the remaining data in the file.
+        Read at most ``size`` bytes from the file (less if we hit the end of
+        the file first).  If the ``size`` argument is negative or omitted,
+        read all the remaining data in the file.
 
         .. note::
             ``'b'`` mode flag is ignored (``self.FLAG_BINARY`` in
@@ -250,7 +250,9 @@ class BufferedFile (ClosingContextManager):
         line = self._rbuffer
         truncated = False
         while True:
-            if self._at_trailing_cr and (self._flags & self.FLAG_UNIVERSAL_NEWLINE) and (len(line) > 0):
+            if self._at_trailing_cr and \
+                    (self._flags & self.FLAG_UNIVERSAL_NEWLINE) and \
+                    (len(line) > 0):
                 # edge case: the newline may be '\r\n' and we may have read
                 # only the first '\r' last time.
                 if line[0] == linefeed_byte_value:
@@ -271,7 +273,9 @@ class BufferedFile (ClosingContextManager):
                 n = size - len(line)
             else:
                 n = self._bufsize
-            if (linefeed_byte in line) or ((self._flags & self.FLAG_UNIVERSAL_NEWLINE) and (cr_byte in line)):
+            if (linefeed_byte in line) or \
+                    ((self._flags & self.FLAG_UNIVERSAL_NEWLINE) and
+                        (cr_byte in line)):
                 break
             try:
                 new_data = self._read(n)
@@ -294,12 +298,18 @@ class BufferedFile (ClosingContextManager):
             self._pos += len(line)
             return line if self._flags & self.FLAG_BINARY else u(line)
         xpos = pos + 1
-        if (line[pos] == cr_byte_value) and (xpos < len(line)) and (line[xpos] == linefeed_byte_value):
+        if (line[pos] == cr_byte_value) and \
+                (xpos < len(line)) and \
+                (line[xpos] == linefeed_byte_value):
             xpos += 1
         # if the string was truncated, _rbuffer needs to have the string after
         # the newline character plus the truncated part of the line we stored
         # earlier in _rbuffer
-        self._rbuffer = line[xpos:] + self._rbuffer if truncated else line[xpos:]
+        if truncated:
+            self._rbuffer = line[xpos:] + self._rbuffer
+        else:
+            self._rbuffer = line[xpos:]
+
         lf = line[pos:xpos]
         line = line[:pos] + linefeed_byte
         if (len(self._rbuffer) == 0) and (lf == cr_byte):
@@ -421,7 +431,7 @@ class BufferedFile (ClosingContextManager):
     def closed(self):
         return self._closed
 
-    ###  overrides...
+    # ...overrides...
 
     def _read(self, size):
         """
@@ -449,7 +459,7 @@ class BufferedFile (ClosingContextManager):
         """
         return 0
 
-    ###  internals...
+    # ...internals...
 
     def _set_mode(self, mode='r', bufsize=-1):
         """
@@ -513,7 +523,8 @@ class BufferedFile (ClosingContextManager):
             return
         if self.newlines is None:
             self.newlines = newline
-        elif self.newlines != newline and isinstance(self.newlines, bytes_types):
+        elif self.newlines != newline and \
+                isinstance(self.newlines, bytes_types):
             self.newlines = (self.newlines, newline)
         elif newline not in self.newlines:
             self.newlines += (newline,)
