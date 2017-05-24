@@ -58,7 +58,7 @@ class SSHConfig (object):
         host = {"host": ['*'], "config": {}}
         for line in file_obj:
             # Strip any leading or trailing whitespace from the line.
-            # See https://github.com/paramiko/paramiko/issues/499 for more info.
+            # Refer to https://github.com/paramiko/paramiko/issues/499
             line = line.strip()
             if not line or line.startswith('#'):
                 continue
@@ -68,7 +68,7 @@ class SSHConfig (object):
                 raise Exception("Unparsable line %s" % line)
             key = match.group(1).lower()
             value = match.group(2)
-            
+
             if key == 'host':
                 self._config.append(host)
                 host = {

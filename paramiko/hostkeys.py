@@ -111,8 +111,8 @@ class HostKeys (MutableMapping):
 
     def save(self, filename):
         """
-        Save host keys into a file, in the format used by OpenSSH.  The order of
-        keys in the file will be preserved when possible (if these keys were
+        Save host keys into a file, in the format used by OpenSSH.  The order
+        of keys in the file will be preserved when possible (if these keys were
         loaded from a file originally).  The single exception is that combined
         lines will be split into individual key lines, which is arguably a bug.
 
@@ -135,7 +135,8 @@ class HostKeys (MutableMapping):
         returned.  The keytype will be either ``"ssh-rsa"`` or ``"ssh-dss"``.
 
         :param str hostname: the hostname (or IP) to lookup
-        :return: dict of `str` -> `.PKey` keys associated with this host (or ``None``)
+        :return: dict of `str` -> `.PKey` keys associated with this host
+            (or ``None``)
         """
         class SubDict (MutableMapping):
             def __init__(self, hostname, entries, hostkeys):
@@ -219,9 +220,6 @@ class HostKeys (MutableMapping):
 
     def __len__(self):
         return len(self.keys())
-
-    def __delitem__(self, key):
-        k = self[key]
 
     def __getitem__(self, key):
         ret = self.lookup(key)
