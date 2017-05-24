@@ -233,6 +233,9 @@ class HostKeys (MutableMapping):
             raise KeyError(key)
         return ret
 
+    def __delitem__(self, key):
+        pass  # Needed for instantiating HostKeys.
+
     def __setitem__(self, hostname, entry):
         # don't use this please.
         if len(entry) == 0:
