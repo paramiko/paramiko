@@ -197,14 +197,16 @@ class SSHClient (ClosingContextManager):
         :returns: Yields an iterable of ``(family, address)`` tuples
         """
         guess = True
-        addrinfos = socket.getaddrinfo(hostname, port, socket.AF_UNSPEC, socket.SOCK_STREAM)
+        addrinfos = socket.getaddrinfo(
+            hostname, port, socket.AF_UNSPEC, socket.SOCK_STREAM)
         for (family, socktype, proto, canonname, sockaddr) in addrinfos:
             if socktype == socket.SOCK_STREAM:
                 yield family, sockaddr
                 guess = False
 
-        # some OS like AIX don't indicate SOCK_STREAM support, so just guess. :(
-        # We only do this if we did not get a single result marked as socktype == SOCK_STREAM.
+        # some OS like AIX don't indicate SOCK_STREAM support, so just
+        # guess. :(  We only do this if we did not get a single result marked
+        # as socktype == SOCK_STREAM.
         if guess:
             for family, _, _, _, sockaddr in addrinfos:
                 yield family, sockaddr
@@ -323,7 +325,8 @@ class SSHClient (ClosingContextManager):
             if len(errors) == len(to_try):
                 raise NoValidConnectionsError(errors)
 
-        t = self._transport = Transport(sock, gss_kex=gss_kex, gss_deleg_creds=gss_deleg_creds)
+        t = self._transport = Transport(
+            sock, gss_kex=gss_kex, gss_deleg_creds=gss_deleg_creds)
         t.use_compression(compress=compress)
         if gss_kex and gss_host is None:
             t.set_gss_host(hostname)
@@ -357,7 +360,8 @@ class SSHClient (ClosingContextManager):
                 our_server_key = self._host_keys.get(server_hostkey_name,
                                                      {}).get(keytype, None)
             if our_server_key is None:
-                # will raise exception if the key is rejected; let that fall out
+                # will raise exception if the key is rejected;
+                # let that fall out
                 self._policy.missing_host_key(self, server_hostkey_name,
                                               server_key)
                 # if the callback returns, assume the key is ok
@@ -485,7 +489,7 @@ class SSHClient (ClosingContextManager):
         saved_exception = None
         two_factor = False
         allowed_types = set()
-        two_factor_types = set(['keyboard-interactive','password'])
+        two_factor_types = set(['keyboard-interactive', 'password'])
 
         # If GSS-API support and GSS-PI Key Exchange was performed, we attempt
         # authentication with gssapi-keyex.
@@ -510,8 +514,11 @@ class SSHClient (ClosingContextManager):
 
         if pkey is not None:
             try:
-                self._log(DEBUG, 'Trying SSH key %s' % hexlify(pkey.get_fingerprint()))
-                allowed_types = set(self._transport.auth_publickey(username, pkey))
+                self._log(
+                    DEBUG,
+                    'Trying SSH key %s' % hexlify(pkey.get_fingerprint()))
+                allowed_types = set(
+                    self._transport.auth_publickey(username, pkey))
                 two_factor = (allowed_types & two_factor_types)
                 if not two_factor:
                     return
@@ -522,9 +529,14 @@ class SSHClient (ClosingContextManager):
             for key_filename in key_filenames:
                 for pkey_class in (RSAKey, DSSKey, ECDSAKey):
                     try:
-                        key = pkey_class.from_private_key_file(key_filename, password)
-                        self._log(DEBUG, 'Trying key %s from %s' % (hexlify(key.get_fingerprint()), key_filename))
-                        allowed_types = set(self._transport.auth_publickey(username, key))
+                        key = pkey_class.from_private_key_file(
+                            key_filename, password)
+                        self._log(
+                            DEBUG,
+                            'Trying key %s from %s' % (
+                                hexlify(key.get_fingerprint()), key_filename))
+                        allowed_types = set(
+                            self._transport.auth_publickey(username, key))
                         two_factor = (allowed_types & two_factor_types)
                         if not two_factor:
                             return
@@ -538,9 +550,14 @@ class SSHClient (ClosingContextManager):
 
             for key in self._agent.get_keys():
                 try:
-                    self._log(DEBUG, 'Trying SSH agent key %s' % hexlify(key.get_fingerprint()))
-                    # for 2-factor auth a successfully auth'd key password will return an allowed 2fac auth method
-                    allowed_types = set(self._transport.auth_publickey(username, key))
+                    self._log(
+                        DEBUG,
+                        'Trying SSH agent key %s' % hexlify(
+                            key.get_fingerprint()))
+                    # for 2-factor auth a successfully auth'd key password
+                    # will return an allowed 2fac auth method
+                    allowed_types = set(
+                        self._transport.auth_publickey(username, key))
                     two_factor = (allowed_types & two_factor_types)
                     if not two_factor:
                         return
@@ -576,9 +593,15 @@ class SSHClient (ClosingContextManager):
             for pkey_class, filename in keyfiles:
                 try:
                     key = pkey_class.from_private_key_file(filename, password)
-                    self._log(DEBUG, 'Trying discovered key %s in %s' % (hexlify(key.get_fingerprint()), filename))
-                    # for 2-factor auth a successfully auth'd key will result in ['password']
-                    allowed_types = set(self._transport.auth_publickey(username, key))
+                    self._log(
+                        DEBUG,
+                        'Trying discovered key %s in %s' % (
+                            hexlify(key.get_fingerprint()), filename))
+
+                    # for 2-factor auth a successfully auth'd key will result
+                    # in ['password']
+                    allowed_types = set(
+                        self._transport.auth_publickey(username, key))
                     two_factor = (allowed_types & two_factor_types)
                     if not two_factor:
                         return
@@ -662,4 +685,5 @@ class WarningPolicy (MissingHostKeyPolicy):
     """
     def missing_host_key(self, client, hostname, key):
         warnings.warn('Unknown %s host key for %s: %s' %
-                      (key.get_name(), hostname, hexlify(key.get_fingerprint())))
+                      (key.get_name(), hostname, hexlify(
+                          key.get_fingerprint())))
