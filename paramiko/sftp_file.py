@@ -274,7 +274,9 @@ class SFTPFile (BufferedFile):
         :param int uid: new owner's uid
         :param int gid: new group id
         """
-        self.sftp._log(DEBUG, 'chown(%s, %r, %r)' % (hexlify(self.handle), uid, gid))
+        self.sftp._log(
+            DEBUG,
+            'chown(%s, %r, %r)' % (hexlify(self.handle), uid, gid))
         attr = SFTPAttributes()
         attr.st_uid, attr.st_gid = uid, gid
         self.sftp._request(CMD_FSETSTAT, self.handle, attr)
@@ -308,7 +310,9 @@ class SFTPFile (BufferedFile):
         :param size: the new size of the file
         :type size: int or long
         """
-        self.sftp._log(DEBUG, 'truncate(%s, %r)' % (hexlify(self.handle), size))
+        self.sftp._log(
+            DEBUG,
+            'truncate(%s, %r)' % (hexlify(self.handle), size))
         attr = SFTPAttributes()
         attr.st_size = size
         self.sftp._request(CMD_FSETSTAT, self.handle, attr)
@@ -362,10 +366,11 @@ class SFTPFile (BufferedFile):
 
         .. versionadded:: 1.4
         """
-        t, msg = self.sftp._request(CMD_EXTENDED, 'check-file', self.handle,
-                                    hash_algorithm, long(offset), long(length), block_size)
-        ext = msg.get_text()
-        alg = msg.get_text()
+        t, msg = self.sftp._request(
+            CMD_EXTENDED, 'check-file', self.handle,
+            hash_algorithm, long(offset), long(length), block_size)
+        msg.get_text()  # ext
+        msg.get_text()  # alg
         data = msg.get_remainder()
         return data
 
@@ -417,7 +422,7 @@ class SFTPFile (BufferedFile):
             compatibility.
         """
         if file_size is None:
-            file_size = self.stat().st_size;
+            file_size = self.stat().st_size
 
         # queue up async reads for the rest of the file
         chunks = []
@@ -465,7 +470,7 @@ class SFTPFile (BufferedFile):
             self.seek(x[0])
             yield self.read(x[1])
 
-    ###  internals...
+    # ...internals...
 
     def _get_size(self):
         try:

@@ -34,8 +34,10 @@ from paramiko.ssh_exception import SSHException
 
 _MSG_KEXDH_GEX_REQUEST_OLD, _MSG_KEXDH_GEX_GROUP, _MSG_KEXDH_GEX_INIT, \
     _MSG_KEXDH_GEX_REPLY, _MSG_KEXDH_GEX_REQUEST = range(30, 35)
+
 c_MSG_KEXDH_GEX_REQUEST_OLD, c_MSG_KEXDH_GEX_GROUP, c_MSG_KEXDH_GEX_INIT, \
-    c_MSG_KEXDH_GEX_REPLY, c_MSG_KEXDH_GEX_REQUEST = [byte_chr(c) for c in range(30, 35)]
+    c_MSG_KEXDH_GEX_REPLY, c_MSG_KEXDH_GEX_REQUEST = \
+    [byte_chr(c) for c in range(30, 35)]
 
 
 class KexGex (object):
@@ -58,7 +60,8 @@ class KexGex (object):
 
     def start_kex(self, _test_old_style=False):
         if self.transport.server_mode:
-            self.transport._expect_packet(_MSG_KEXDH_GEX_REQUEST, _MSG_KEXDH_GEX_REQUEST_OLD)
+            self.transport._expect_packet(
+                _MSG_KEXDH_GEX_REQUEST, _MSG_KEXDH_GEX_REQUEST_OLD)
             return
         # request a bit range: we accept (min_bits) to (max_bits), but prefer
         # (preferred_bits).  according to the spec, we shouldn't pull the
@@ -88,9 +91,10 @@ class KexGex (object):
             return self._parse_kexdh_gex_reply(m)
         elif ptype == _MSG_KEXDH_GEX_REQUEST_OLD:
             return self._parse_kexdh_gex_request_old(m)
-        raise SSHException('KexGex %s asked to handle packet type %d' % self.name, ptype)
+        raise SSHException(
+            'KexGex %s asked to handle packet type %d' % self.name, ptype)
 
-    ###  internals...
+    # ...internals...
 
     def _generate_x(self):
         # generate an "x" (1 < x < (p-1)/2).
@@ -134,7 +138,10 @@ class KexGex (object):
         pack = self.transport._get_modulus_pack()
         if pack is None:
             raise SSHException('Can\'t do server-side gex with no modulus pack')
-        self.transport._log(DEBUG, 'Picking p (%d <= %d <= %d bits)' % (minbits, preferredbits, maxbits))
+        self.transport._log(
+            DEBUG,
+            'Picking p (%d <= %d <= %d bits)' % (
+                minbits, preferredbits, maxbits))
         self.g, self.p = pack.get_modulus(minbits, preferredbits, maxbits)
         m = Message()
         m.add_byte(c_MSG_KEXDH_GEX_GROUP)
@@ -144,7 +151,8 @@ class KexGex (object):
         self.transport._expect_packet(_MSG_KEXDH_GEX_INIT)
 
     def _parse_kexdh_gex_request_old(self, m):
-        # same as above, but without min_bits or max_bits (used by older clients like putty)
+        # same as above, but without min_bits or max_bits (used by older
+        # clients like putty)
         self.preferred_bits = m.get_int()
         # smoosh the user's preferred size into our own limits
         if self.preferred_bits > self.max_bits:
@@ -155,8 +163,10 @@ class KexGex (object):
         pack = self.transport._get_modulus_pack()
         if pack is None:
             raise SSHException('Can\'t do server-side gex with no modulus pack')
-        self.transport._log(DEBUG, 'Picking p (~ %d bits)' % (self.preferred_bits,))
-        self.g, self.p = pack.get_modulus(self.min_bits, self.preferred_bits, self.max_bits)
+        self.transport._log(
+            DEBUG, 'Picking p (~ %d bits)' % (self.preferred_bits,))
+        self.g, self.p = pack.get_modulus(
+            self.min_bits, self.preferred_bits, self.max_bits)
         m = Message()
         m.add_byte(c_MSG_KEXDH_GEX_GROUP)
         m.add_mpint(self.p)
@@ -243,6 +253,7 @@ class KexGex (object):
         self.transport._set_K_H(K, self.hash_algo(hm.asbytes()).digest())
         self.transport._verify_key(host_key, sig)
         self.transport._activate_outbound()
+
 
 class KexGexSHA256(KexGex):
     name = 'diffie-hellman-group-exchange-sha256'
