@@ -584,7 +584,7 @@ class KexGSSGex(object):
         maj_status = m.get_int()
         min_status = m.get_int()
         err_msg = m.get_string()
-        lang_tag = m.get_string()   # we don't care about the language!
+        m.get_string()   # we don't care about the language (lang_tag)!
         raise SSHException("GSS-API Error:\nMajor Status: %s\nMinor Status: %s\
                             \nError Message: %s\n") % (str(maj_status),
                                                        str(min_status),
