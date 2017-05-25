@@ -20,7 +20,8 @@
 Common constants and global variables.
 """
 import logging
-from paramiko.py3compat import byte_chr, PY2, bytes_types, string_types, b, long
+from paramiko.py3compat import byte_chr, PY2, bytes_types, string_types, b,\
+    long
 
 MSG_DISCONNECT, MSG_IGNORE, MSG_UNIMPLEMENTED, MSG_DEBUG, \
     MSG_SERVICE_REQUEST, MSG_SERVICE_ACCEPT = range(1, 7)
@@ -31,7 +32,7 @@ MSG_USERAUTH_PK_OK = 60
 MSG_USERAUTH_INFO_REQUEST, MSG_USERAUTH_INFO_RESPONSE = range(60, 62)
 MSG_USERAUTH_GSSAPI_RESPONSE, MSG_USERAUTH_GSSAPI_TOKEN = range(60, 62)
 MSG_USERAUTH_GSSAPI_EXCHANGE_COMPLETE, MSG_USERAUTH_GSSAPI_ERROR,\
-MSG_USERAUTH_GSSAPI_ERRTOK, MSG_USERAUTH_GSSAPI_MIC = range(63, 67)
+    MSG_USERAUTH_GSSAPI_ERRTOK, MSG_USERAUTH_GSSAPI_MIC = range(63, 67)
 MSG_GLOBAL_REQUEST, MSG_REQUEST_SUCCESS, MSG_REQUEST_FAILURE = range(80, 83)
 MSG_CHANNEL_OPEN, MSG_CHANNEL_OPEN_SUCCESS, MSG_CHANNEL_OPEN_FAILURE, \
     MSG_CHANNEL_WINDOW_ADJUST, MSG_CHANNEL_DATA, MSG_CHANNEL_EXTENDED_DATA, \
@@ -171,6 +172,7 @@ def asbytes(s):
                 raise Exception('Unknown type')
     return s
 
+
 xffffffff = long(0xffffffff)
 x80000000 = long(0x80000000)
 o666 = 438
@@ -203,4 +205,4 @@ MIN_WINDOW_SIZE = 2 ** 15
 MIN_PACKET_SIZE = 2 ** 12
 
 # Max windows size according to http://www.ietf.org/rfc/rfc4254.txt
-MAX_WINDOW_SIZE = 2**32 -1
+MAX_WINDOW_SIZE = 2 ** 32 - 1
