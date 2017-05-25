@@ -137,7 +137,8 @@ class KexGex (object):
         # generate prime
         pack = self.transport._get_modulus_pack()
         if pack is None:
-            raise SSHException('Can\'t do server-side gex with no modulus pack')
+            raise SSHException(
+                'Can\'t do server-side gex with no modulus pack')
         self.transport._log(
             DEBUG,
             'Picking p (%d <= %d <= %d bits)' % (
@@ -162,7 +163,8 @@ class KexGex (object):
         # generate prime
         pack = self.transport._get_modulus_pack()
         if pack is None:
-            raise SSHException('Can\'t do server-side gex with no modulus pack')
+            raise SSHException(
+                'Can\'t do server-side gex with no modulus pack')
         self.transport._log(
             DEBUG, 'Picking p (~ %d bits)' % (self.preferred_bits,))
         self.g, self.p = pack.get_modulus(
@@ -181,7 +183,9 @@ class KexGex (object):
         # reject if p's bit length < 1024 or > 8192
         bitlen = util.bit_length(self.p)
         if (bitlen < 1024) or (bitlen > 8192):
-            raise SSHException('Server-generated gex p (don\'t ask) is out of range (%d bits)' % bitlen)
+            raise SSHException(
+                'Server-generated gex p (don\'t ask) is out of range '
+                '(%d bits)' % bitlen)
         self.transport._log(DEBUG, 'Got server p (%d bits)' % bitlen)
         self._generate_x()
         # now compute e = g^x mod p
@@ -200,7 +204,8 @@ class KexGex (object):
         self.f = pow(self.g, self.x, self.p)
         K = pow(self.e, self.x, self.p)
         key = self.transport.get_server_key().asbytes()
-        # okay, build up the hash H of (V_C || V_S || I_C || I_S || K_S || min || n || max || p || g || e || f || K)
+        # okay, build up the hash H of
+        # (V_C || V_S || I_C || I_S || K_S || min || n || max || p || g || e || f || K)  # noqa
         hm = Message()
         hm.add(self.transport.remote_version, self.transport.local_version,
                self.transport.remote_kex_init, self.transport.local_kex_init,
@@ -235,7 +240,8 @@ class KexGex (object):
         if (self.f < 1) or (self.f > self.p - 1):
             raise SSHException('Server kex "f" is out of range')
         K = pow(self.f, self.x, self.p)
-        # okay, build up the hash H of (V_C || V_S || I_C || I_S || K_S || min || n || max || p || g || e || f || K)
+        # okay, build up the hash H of
+        # (V_C || V_S || I_C || I_S || K_S || min || n || max || p || g || e || f || K)  # noqa
         hm = Message()
         hm.add(self.transport.local_version, self.transport.remote_version,
                self.transport.local_kex_init, self.transport.remote_kex_init,

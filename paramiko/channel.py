@@ -50,12 +50,8 @@ def open_only(func):
     """
     @wraps(func)
     def _check(self, *args, **kwds):
-        if (
-            self.closed
-            or self.eof_received
-            or self.eof_sent
-            or not self.active
-        ):
+        if self.closed or self.eof_received or self.eof_sent or \
+                not self.active:
             raise SSHException('Channel is not open')
         return func(self, *args, **kwds)
     return _check
@@ -74,7 +70,7 @@ class Channel (ClosingContextManager):
     flow-controlled independently.)  Similarly, if the server isn't reading
     data you send, calls to `send` may block, unless you set a timeout.  This
     is exactly like a normal network socket, so it shouldn't be too surprising.
-    
+
     Instances of this class may be used as context managers.
     """
 
@@ -157,7 +153,8 @@ class Channel (ClosingContextManager):
         It isn't necessary (or desirable) to call this method if you're going
         to execute a single command with `exec_command`.
 
-        :param str term: the terminal type to emulate (for example, ``'vt100'``)
+        :param str term: the terminal type to emulate
+            (for example, ``'vt100'``)
         :param int width: width (in characters) of the terminal screen
         :param int height: height (in characters) of the terminal screen
         :param int width_pixels: width (in pixels) of the terminal screen
@@ -347,8 +344,14 @@ class Channel (ClosingContextManager):
         self.transport._send_user_message(m)
 
     @open_only
-    def request_x11(self, screen_number=0, auth_protocol=None, auth_cookie=None,
-                    single_connection=False, handler=None):
+    def request_x11(
+            self,
+            screen_number=0,
+            auth_protocol=None,
+            auth_cookie=None,
+            single_connection=False,
+            handler=None
+    ):
         """
         Request an x11 session on this channel.  If the server allows it,
         further x11 requests can be made from the server to the client,
@@ -364,7 +367,7 @@ class Channel (ClosingContextManager):
         generated, used, and returned.  You will need to use this value to
         verify incoming x11 requests and replace them with the actual local
         x11 cookie (which requires some knowledge of the x11 protocol).
-        
+
         If a handler is passed in, the handler is called from another thread
         whenever a new x11 connection arrives.  The default handler queues up
         incoming x11 connections, which may be retrieved using
@@ -497,16 +500,16 @@ class Channel (ClosingContextManager):
             self._feed(data)
         return old
 
-    ###  socket API
+    # ...socket API...
 
     def settimeout(self, timeout):
         """
         Set a timeout on blocking read/write operations.  The ``timeout``
-        argument can be a nonnegative float expressing seconds, or ``None``.  If
-        a float is given, subsequent channel read/write operations will raise
-        a timeout exception if the timeout period value has elapsed before the
-        operation has completed.  Setting a timeout of ``None`` disables
-        timeouts on socket operations.
+        argument can be a nonnegative float expressing seconds, or ``None``.
+        If a float is given, subsequent channel read/write operations will
+        raise a timeout exception if the timeout period value has elapsed
+        before the operation has completed.  Setting a timeout of ``None``
+        disables timeouts on socket operations.
 
         ``chan.settimeout(0.0)`` is equivalent to ``chan.setblocking(0)``;
         ``chan.settimeout(None)`` is equivalent to ``chan.setblocking(1)``.
