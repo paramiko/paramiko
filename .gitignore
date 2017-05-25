@@ -1,3 +1,4 @@
+*.sw[nop]
 *.pyc
 build/
 dist/
