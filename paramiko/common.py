@@ -20,7 +20,7 @@
 Common constants and global variables.
 """
 import logging
-from paramiko.py3compat import byte_chr, PY2, bytes_types, string_types, b, long
+from paramiko.py3compat import byte_chr, PY2, bytes_types, text_type, long
 
 MSG_DISCONNECT, MSG_IGNORE, MSG_UNIMPLEMENTED, MSG_DEBUG, MSG_SERVICE_REQUEST, \
     MSG_SERVICE_ACCEPT = range(1, 7)
@@ -160,15 +160,17 @@ else:
 
 
 def asbytes(s):
-    if not isinstance(s, bytes_types):
-        if isinstance(s, string_types):
-            s = b(s)
-        else:
-            try:
-                s = s.asbytes()
-            except Exception:
-                raise Exception('Unknown type')
+    if isinstance(s, bytes_types):
+        return s
+    if isinstance(s, text_type):
+        # GZ 2017-05-25: Accept text and encode as utf-8 for compatibilty only.
+        return s.encode("utf-8")
+    asbytes = getattr(s, "asbytes", None)
+    if asbytes is not None:
+        return asbytes()
+    # May be an object that implements the buffer api, let callers decide
     return s
+
 
 xffffffff = long(0xffffffff)
 x80000000 = long(0x80000000)
