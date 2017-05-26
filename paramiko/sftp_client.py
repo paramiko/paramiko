@@ -758,13 +758,10 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
                     msg.add_int64(item)
                 elif isinstance(item, int):
                     msg.add_int(item)
-                elif isinstance(item, (string_types, bytes_types)):
-                    msg.add_string(item)
                 elif isinstance(item, SFTPAttributes):
                     item._pack(msg)
                 else:
-                    raise Exception(
-                        'unknown type for %r type %r' % (item, type(item)))
+                    msg.add_string(item)
             num = self.request_number
             self._expecting[num] = fileobj
             self.request_number += 1
