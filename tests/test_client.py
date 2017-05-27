@@ -43,6 +43,7 @@ FINGERPRINTS = {
     'ssh-dss': b'\x44\x78\xf0\xb9\xa2\x3c\xc5\x18\x20\x09\xff\x75\x5b\xc1\xd2\x6c',
     'ssh-rsa': b'\x60\x73\x38\x44\xcb\x51\x86\x65\x7f\xde\xda\xa2\x2b\x5a\x57\xd5',
     'ecdsa-sha2-nistp256': b'\x25\x19\xeb\x55\xe6\xa1\x47\xff\x4f\x38\xd2\x75\x6f\xa5\xd5\x60',
+    'ssh-ed25519': b'\x1d\xf3\xefoj\x95\x99\xb7\xedq\x7f&\xba\xb0CD',
 }
 
 
@@ -193,6 +194,9 @@ class SSHClientTest (unittest.TestCase):
         verify that SSHClient works with an ECDSA key.
         """
         self._test_connection(key_filename=test_path('test_ecdsa_256.key'))
+
+    def test_client_ed25519(self):
+        self._test_connection(key_filename=test_path('test_ed25519.key'))
 
     def test_3_multiple_key_files(self):
         """
