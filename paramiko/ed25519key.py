@@ -68,6 +68,10 @@ class Ed25519Key(PKey):
         from paramiko.transport import Transport
         # We may eventually want this to be usable for other key types, as
         # OpenSSH moves to it, but for now this is just for Ed25519 keys.
+        # This format is described here:
+        # https://github.com/openssh/openssh-portable/blob/master/PROTOCOL.key
+        # The description isn't totally complete, and I had to refer to the
+        # source for a full implementation.
         message = Message(data)
         if message.get_bytes(len(OPENSSH_AUTH_MAGIC)) != OPENSSH_AUTH_MAGIC:
             raise SSHException('Invalid key')
