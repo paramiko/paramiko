@@ -25,6 +25,7 @@ import six
 
 from paramiko.message import Message
 from paramiko.pkey import PKey
+from paramiko.ssh_exception import SSHException, PasswordRequiredException
 
 
 OPENSSH_AUTH_MAGIC = "openssh-key-v1\x00"
@@ -78,12 +79,12 @@ class Ed25519Key(PKey):
 
         if kdfname == "none":
             # kdfname of "none" must have an empty kdfoptions, the ciphername
-            # must be "none" and there must not be a password.
-            if kdfoptions or ciphername != "none" or password:
+            # must be "none"
+            if kdfoptions or ciphername != "none":
                 raise SSHException('Invalid key')
         elif kdfname == "bcrypt":
             if not password:
-                raise SSHException('Invalid key')
+                raise PasswordRequiredException('Private key file is encrypted')
             kdf = Message(kdfoptions)
             bcrypt_salt = kdf.get_binary()
             bcrypt_rounds = kdf.get_int()
@@ -109,7 +110,10 @@ class Ed25519Key(PKey):
                 password=password,
                 salt=bcrypt_salt,
                 desired_key_bytes=cipher['key-size'] + cipher['block-size'],
-                rounds=bcrypt_rounds
+                rounds=bcrypt_rounds,
+                # We can't control how many rounds are on disk, so no sense
+                # warning about it.
+                ignore_few_rounds=True,
             )
             decryptor = Cipher(
                 cipher['class'](key[:cipher['key-size']]),

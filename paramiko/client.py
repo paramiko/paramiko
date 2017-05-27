@@ -594,14 +594,11 @@ class SSHClient (ClosingContextManager):
                 (ECDSAKey, "ecdsa"),
                 (Ed25519Key, "ed25519"),
             ]:
-                full_path = os.path.expanduser("~/.ssh/id_%s" % path)
-                if os.path.isfile(full_path):
-                    keyfiles.append((keytype, full_path))
-
-                # look in ~/ssh/ for windows users:
-                full_path = os.path.expanduser("~/ssh/id_%s" % path)
-                if os.path.isfile(full_path):
-                    keyfiles.append((keytype, full_path))
+                # ~/ssh/ is for windows
+                for directory in [".ssh", "ssh"]:
+                    full_path = os.path.expanduser("~/%s/id_%s" % (directory, path))
+                    if os.path.isfile(full_path):
+                        keyfiles.append((keytype, full_path))
 
             if not look_for_keys:
                 keyfiles = []
