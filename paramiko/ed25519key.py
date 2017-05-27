@@ -25,6 +25,9 @@ from paramiko.pkey import PKey
 OPENSSH_AUTH_MAGIC = "openssh-key-v1\x00"
 
 def unpad(data):
+    # At the moment, this is only used for unpadding private keys on disk, and
+    # only unencrypted ones at that. In the future, if either of those changes,
+    # this really ought to be made constant time.
     padding_length = six.indexbytes(data, -1)
     if padding_length > 16:
         raise SSHException('Invalid key')
@@ -49,7 +52,7 @@ class Ed25519Key(PKey):
                 signing_key = self._parse_signing_key_data(data)
 
         if signing_key is None and verifying_key is None:
-            import pdb; pdb.set_trace()
+            raise ValueError("need a key")
 
         self._signing_key = signing_key
         self._verifying_key = verifying_key
@@ -68,11 +71,12 @@ class Ed25519Key(PKey):
         num_keys = message.get_int()
 
         if ciphername != "none" or kdfname != "none" or kdfoptions:
+            # TODO: add support for `kdfname == "bcrypt"` as documented in:
+            # https://github.com/openssh/openssh-portable/blob/master/PROTOCOL.key#L21-L28
             raise NotImplementedError("Encrypted keys are not implemented")
 
         public_keys = []
         for _ in range(num_keys):
-            # We don't need the public keys, fast-forward through them.
             pubkey = Message(message.get_binary())
             if pubkey.get_string() != 'ssh-ed25519':
                 raise SSHException('Invalid key')
@@ -92,6 +96,7 @@ class Ed25519Key(PKey):
             # The second half of the key data is yet another copy of the public
             # key...
             signing_key = nacl.signing.SigningKey(key_data[:32])
+            # Verify that all the public keys are the same...
             assert (
                 signing_key.verify_key.encode() == public == public_keys[i] == key_data[32:]
             )
