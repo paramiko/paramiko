@@ -75,6 +75,7 @@ setup(
     ],
     install_requires=[
         'cryptography>=1.1',
+        'pynacl',
         'pyasn1>=0.1.7',
     ],
 )

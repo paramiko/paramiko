@@ -360,6 +360,8 @@ class HostKeyEntry:
                 key = DSSKey(data=decodebytes(key))
             elif keytype in ECDSAKey.supported_key_format_identifiers():
                 key = ECDSAKey(data=decodebytes(key), validate_point=False)
+            elif keytype == 'ssh-ed25519':
+                key = Ed25519Key(data=decodebytes(key))
             else:
                 log.info("Unable to handle key of type %s" % (keytype,))
                 return None

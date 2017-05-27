@@ -54,6 +54,7 @@ from paramiko.common import (
 )
 from paramiko.compress import ZlibCompressor, ZlibDecompressor
 from paramiko.dsskey import DSSKey
+from paramiko.ed25519key import Ed25519Key
 from paramiko.kex_gex import KexGex, KexGexSHA256
 from paramiko.kex_group1 import KexGroup1
 from paramiko.kex_group14 import KexGroup14
@@ -123,6 +124,7 @@ class Transport (threading.Thread, ClosingContextManager):
         'hmac-sha1',
     )
     _preferred_keys = (
+        'ssh-ed25519',
         'ssh-rsa',
         'ssh-dss',
     ) + tuple(ECDSAKey.supported_key_format_identifiers())
@@ -211,6 +213,7 @@ class Transport (threading.Thread, ClosingContextManager):
         'ssh-rsa': RSAKey,
         'ssh-dss': DSSKey,
         'ecdsa-sha2-nistp256': ECDSAKey,
+        'ssh-ed25519': Ed25519Key,
     }
 
     _kex_info = {

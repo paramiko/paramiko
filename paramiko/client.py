@@ -32,6 +32,7 @@ from paramiko.common import DEBUG
 from paramiko.config import SSH_PORT
 from paramiko.dsskey import DSSKey
 from paramiko.ecdsakey import ECDSAKey
+from paramiko.ed25519key import Ed25519Key
 from paramiko.hostkeys import HostKeys
 from paramiko.py3compat import string_types
 from paramiko.resource import ResourceManager
@@ -586,25 +587,21 @@ class SSHClient (ClosingContextManager):
 
         if not two_factor:
             keyfiles = []
-            rsa_key = os.path.expanduser('~/.ssh/id_rsa')
-            dsa_key = os.path.expanduser('~/.ssh/id_dsa')
-            ecdsa_key = os.path.expanduser('~/.ssh/id_ecdsa')
-            if os.path.isfile(rsa_key):
-                keyfiles.append((RSAKey, rsa_key))
-            if os.path.isfile(dsa_key):
-                keyfiles.append((DSSKey, dsa_key))
-            if os.path.isfile(ecdsa_key):
-                keyfiles.append((ECDSAKey, ecdsa_key))
-            # look in ~/ssh/ for windows users:
-            rsa_key = os.path.expanduser('~/ssh/id_rsa')
-            dsa_key = os.path.expanduser('~/ssh/id_dsa')
-            ecdsa_key = os.path.expanduser('~/ssh/id_ecdsa')
-            if os.path.isfile(rsa_key):
-                keyfiles.append((RSAKey, rsa_key))
-            if os.path.isfile(dsa_key):
-                keyfiles.append((DSSKey, dsa_key))
-            if os.path.isfile(ecdsa_key):
-                keyfiles.append((ECDSAKey, ecdsa_key))
+
+            for keytype, path in [
+                (RSAKey, "rsa"),
+                (DSSKey, "dsa"),
+                (ECDSAKey, "ecdsa"),
+                (Ed25519Key, "ed25519"),
+            ]:
+                full_path = os.path.expanduser("~/.ssh/id_%s" % path)
+                if os.path.isfile(full_path):
+                    keyfiles.append((keytype, full_path))
+
+                # look in ~/ssh/ for windows users:
+                full_path = os.path.expanduser("~/ssh/id_%s" % path)
+                if os.path.isfile(full_path):
+                    keyfiles.append((keytype, full_path))
 
             if not look_for_keys:
                 keyfiles = []
