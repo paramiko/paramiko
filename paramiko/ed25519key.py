@@ -30,6 +30,7 @@ from paramiko.ssh_exception import SSHException, PasswordRequiredException
 
 OPENSSH_AUTH_MAGIC = b"openssh-key-v1\x00"
 
+
 def unpad(data):
     # At the moment, this is only used for unpadding private keys on disk, and
     # only unencrypted ones at that. In the future, if either of those changes,
@@ -63,7 +64,6 @@ class Ed25519Key(PKey):
         self._signing_key = signing_key
         self._verifying_key = verifying_key
 
-
     def _parse_signing_key_data(self, data, password):
         from paramiko.transport import Transport
         # We may eventually want this to be usable for other key types, as
@@ -84,7 +84,9 @@ class Ed25519Key(PKey):
                 raise SSHException('Invalid key')
         elif kdfname == "bcrypt":
             if not password:
-                raise PasswordRequiredException('Private key file is encrypted')
+                raise PasswordRequiredException(
+                    'Private key file is encrypted'
+                )
             kdf = Message(kdfoptions)
             bcrypt_salt = kdf.get_binary()
             bcrypt_rounds = kdf.get_int()
@@ -120,7 +122,9 @@ class Ed25519Key(PKey):
                 cipher['mode'](key[cipher['key-size']:]),
                 backend=default_backend()
             ).decryptor()
-            private_data = decryptor.update(private_ciphertext) + decryptor.finalize()
+            private_data = (
+                decryptor.update(private_ciphertext) + decryptor.finalize()
+            )
 
         message = Message(unpad(private_data))
         if message.get_int() != message.get_int():
@@ -138,7 +142,8 @@ class Ed25519Key(PKey):
             signing_key = nacl.signing.SigningKey(key_data[:32])
             # Verify that all the public keys are the same...
             assert (
-                signing_key.verify_key.encode() == public == public_keys[i] == key_data[32:]
+                signing_key.verify_key.encode() == public == public_keys[i] ==
+                key_data[32:]
             )
             signing_keys.append(signing_key)
             # Comment, ignore.
