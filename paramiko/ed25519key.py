@@ -32,15 +32,15 @@ OPENSSH_AUTH_MAGIC = b"openssh-key-v1\x00"
 
 
 def unpad(data):
-    # At the moment, this is only used for unpadding private keys on disk, and
-    # only unencrypted ones at that. In the future, if either of those changes,
-    # this really ought to be made constant time.
+    # At the moment, this is only used for unpadding private keys on disk. This
+    # really ought to be made constant time (possibly by upstreaming this logic
+    # into pyca/cryptography).
     padding_length = six.indexbytes(data, -1)
     if padding_length > 16:
-        raise SSHException('Invalid key')
+        raise SSHException("Invalid key")
     for i in range(1, padding_length + 1):
         if six.indexbytes(data, -i) != (padding_length - i + 1):
-            raise SSHException('Invalid key')
+            raise SSHException("Invalid key")
     return data[:-padding_length]
 
 
@@ -51,7 +51,7 @@ class Ed25519Key(PKey):
             msg = Message(data)
         if msg is not None:
             if msg.get_text() != "ssh-ed25519":
-                raise SSHException('Invalid key')
+                raise SSHException("Invalid key")
             verifying_key = nacl.signing.VerifyKey(msg.get_bytes(32))
         elif filename is not None:
             with open(filename, "r") as f:
@@ -74,7 +74,7 @@ class Ed25519Key(PKey):
         # source for a full implementation.
         message = Message(data)
         if message.get_bytes(len(OPENSSH_AUTH_MAGIC)) != OPENSSH_AUTH_MAGIC:
-            raise SSHException('Invalid key')
+            raise SSHException("Invalid key")
 
         ciphername = message.get_text()
         kdfname = message.get_text()
@@ -85,26 +85,26 @@ class Ed25519Key(PKey):
             # kdfname of "none" must have an empty kdfoptions, the ciphername
             # must be "none"
             if kdfoptions or ciphername != "none":
-                raise SSHException('Invalid key')
+                raise SSHException("Invalid key")
         elif kdfname == "bcrypt":
             if not password:
                 raise PasswordRequiredException(
-                    'Private key file is encrypted'
+                    "Private key file is encrypted"
                 )
             kdf = Message(kdfoptions)
             bcrypt_salt = kdf.get_binary()
             bcrypt_rounds = kdf.get_int()
         else:
-            raise SSHException('Invalid key')
+            raise SSHException("Invalid key")
 
         if ciphername != "none" and ciphername not in Transport._cipher_info:
-            raise SSHException('Invalid key')
+            raise SSHException("Invalid key")
 
         public_keys = []
         for _ in range(num_keys):
             pubkey = Message(message.get_binary())
-            if pubkey.get_text() != 'ssh-ed25519':
-                raise SSHException('Invalid key')
+            if pubkey.get_text() != "ssh-ed25519":
+                raise SSHException("Invalid key")
             public_keys.append(pubkey.get_binary())
 
         private_ciphertext = message.get_binary()
@@ -115,15 +115,15 @@ class Ed25519Key(PKey):
             key = bcrypt.kdf(
                 password=password,
                 salt=bcrypt_salt,
-                desired_key_bytes=cipher['key-size'] + cipher['block-size'],
+                desired_key_bytes=cipher["key-size"] + cipher["block-size"],
                 rounds=bcrypt_rounds,
                 # We can't control how many rounds are on disk, so no sense
                 # warning about it.
                 ignore_few_rounds=True,
             )
             decryptor = Cipher(
-                cipher['class'](key[:cipher['key-size']]),
-                cipher['mode'](key[cipher['key-size']:]),
+                cipher["class"](key[:cipher["key-size"]]),
+                cipher["mode"](key[cipher["key-size"]:]),
                 backend=default_backend()
             ).decryptor()
             private_data = (
@@ -132,12 +132,12 @@ class Ed25519Key(PKey):
 
         message = Message(unpad(private_data))
         if message.get_int() != message.get_int():
-            raise SSHException('Invalid key')
+            raise SSHException("Invalid key")
 
         signing_keys = []
         for i in range(num_keys):
-            if message.get_text() != 'ssh-ed25519':
-                raise SSHException('Invalid key')
+            if message.get_text() != "ssh-ed25519":
+                raise SSHException("Invalid key")
             # A copy of the public key, again, ignore.
             public = message.get_binary()
             key_data = message.get_binary()
@@ -154,7 +154,7 @@ class Ed25519Key(PKey):
             message.get_binary()
 
         if len(signing_keys) != 1:
-            raise SSHException('Invalid key')
+            raise SSHException("Invalid key")
         return signing_keys[0]
 
     def asbytes(self):
@@ -163,7 +163,7 @@ class Ed25519Key(PKey):
         else:
             v = self._verifying_key
         m = Message()
-        m.add_string('ssh-ed25519')
+        m.add_string("ssh-ed25519")
         m.add_bytes(v.encode())
         return m.asbytes()
 
@@ -178,12 +178,12 @@ class Ed25519Key(PKey):
 
     def sign_ssh_data(self, data):
         m = Message()
-        m.add_string('ssh-ed25519')
+        m.add_string("ssh-ed25519")
         m.add_string(self._signing_key.sign(data).signature)
         return m
 
     def verify_ssh_sig(self, data, msg):
-        if msg.get_text() != 'ssh-ed25519':
+        if msg.get_text() != "ssh-ed25519":
             return False
 
         try:
