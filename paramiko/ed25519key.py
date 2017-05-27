@@ -14,6 +14,11 @@
 # along with Paramiko; if not, write to the Free Software Foundation, Inc.,
 # 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
 
+import bcrypt
+
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives.ciphers import Cipher
+
 import nacl.signing
 
 import six
@@ -49,7 +54,7 @@ class Ed25519Key(PKey):
         elif filename is not None:
             with open(filename, "rb") as f:
                 data = self._read_private_key("OPENSSH", f)
-                signing_key = self._parse_signing_key_data(data)
+                signing_key = self._parse_signing_key_data(data, password)
 
         if signing_key is None and verifying_key is None:
             raise ValueError("need a key")
@@ -58,7 +63,8 @@ class Ed25519Key(PKey):
         self._verifying_key = verifying_key
 
 
-    def _parse_signing_key_data(self, data):
+    def _parse_signing_key_data(self, data, password):
+        from paramiko.transport import Transport
         # We may eventually want this to be usable for other key types, as
         # OpenSSH moves to it, but for now this is just for Ed25519 keys.
         message = Message(data)
@@ -70,10 +76,22 @@ class Ed25519Key(PKey):
         kdfoptions = message.get_string()
         num_keys = message.get_int()
 
-        if ciphername != "none" or kdfname != "none" or kdfoptions:
-            # TODO: add support for `kdfname == "bcrypt"` as documented in:
-            # https://github.com/openssh/openssh-portable/blob/master/PROTOCOL.key#L21-L28
-            raise NotImplementedError("Encrypted keys are not implemented")
+        if kdfname == "none":
+            # kdfname of "none" must have an empty kdfoptions, the ciphername
+            # must be "none" and there must not be a password.
+            if kdfoptions or ciphername != "none" or password:
+                raise SSHException('Invalid key')
+        elif kdfname == "bcrypt":
+            if not password:
+                raise SSHException('Invalid key')
+            kdf = Message(kdfoptions)
+            bcrypt_salt = kdf.get_binary()
+            bcrypt_rounds = kdf.get_int()
+        else:
+            raise SSHException('Invalid key')
+
+        if ciphername != "none" and ciphername not in Transport._cipher_info:
+            raise SSHException('Invalid key')
 
         public_keys = []
         for _ in range(num_keys):
@@ -82,7 +100,25 @@ class Ed25519Key(PKey):
                 raise SSHException('Invalid key')
             public_keys.append(pubkey.get_binary())
 
-        message = Message(unpad(message.get_binary()))
+        private_ciphertext = message.get_binary()
+        if ciphername == "none":
+            private_data = private_ciphertext
+        else:
+            cipher = Transport._cipher_info[ciphername]
+            key = bcrypt.kdf(
+                password=password,
+                salt=bcrypt_salt,
+                desired_key_bytes=cipher['key-size'] + cipher['block-size'],
+                rounds=bcrypt_rounds
+            )
+            decryptor = Cipher(
+                cipher['class'](key[:cipher['key-size']]),
+                cipher['mode'](key[cipher['key-size']:]),
+                backend=default_backend()
+            ).decryptor()
+            private_data = decryptor.update(private_ciphertext) + decryptor.finalize()
+
+        message = Message(unpad(private_data))
         if message.get_int() != message.get_int():
             raise SSHException('Invalid key')
 
