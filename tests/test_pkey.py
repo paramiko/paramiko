@@ -433,7 +433,7 @@ class KeyTest(unittest.TestCase):
     def test_ed25519(self):
         key1 = Ed25519Key.from_private_key_file(test_path('test_ed25519.key'))
         key2 = Ed25519Key.from_private_key_file(
-            test_path('test_ed25519_password.key'), 'abc123'
+            test_path('test_ed25519_password.key'), b'abc123'
         )
 
         self.assertNotEqual(key1.asbytes(), key2.asbytes())

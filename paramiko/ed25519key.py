@@ -72,9 +72,9 @@ class Ed25519Key(PKey):
         if message.get_bytes(len(OPENSSH_AUTH_MAGIC)) != OPENSSH_AUTH_MAGIC:
             raise SSHException('Invalid key')
 
-        ciphername = message.get_string()
-        kdfname = message.get_string()
-        kdfoptions = message.get_string()
+        ciphername = message.get_text()
+        kdfname = message.get_text()
+        kdfoptions = message.get_binary()
         num_keys = message.get_int()
 
         if kdfname == "none":
@@ -97,7 +97,7 @@ class Ed25519Key(PKey):
         public_keys = []
         for _ in range(num_keys):
             pubkey = Message(message.get_binary())
-            if pubkey.get_string() != 'ssh-ed25519':
+            if pubkey.get_text() != 'ssh-ed25519':
                 raise SSHException('Invalid key')
             public_keys.append(pubkey.get_binary())
 
@@ -128,7 +128,7 @@ class Ed25519Key(PKey):
 
         signing_keys = []
         for i in range(num_keys):
-            if message.get_string() != 'ssh-ed25519':
+            if message.get_text() != 'ssh-ed25519':
                 raise SSHException('Invalid key')
             # A copy of the public key, again, ignore.
             public = message.get_binary()
@@ -142,7 +142,7 @@ class Ed25519Key(PKey):
             )
             signing_keys.append(signing_key)
             # Comment, ignore.
-            message.get_string()
+            message.get_binary()
 
         if len(signing_keys) != 1:
             raise SSHException('Invalid key')
