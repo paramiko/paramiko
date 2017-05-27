@@ -28,7 +28,7 @@ from paramiko.pkey import PKey
 from paramiko.ssh_exception import SSHException, PasswordRequiredException
 
 
-OPENSSH_AUTH_MAGIC = "openssh-key-v1\x00"
+OPENSSH_AUTH_MAGIC = b"openssh-key-v1\x00"
 
 def unpad(data):
     # At the moment, this is only used for unpadding private keys on disk, and
