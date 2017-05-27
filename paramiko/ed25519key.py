@@ -53,7 +53,7 @@ class Ed25519Key(PKey):
                 raise SSHException('Invalid key')
             verifying_key = nacl.signing.VerifyKey(msg.get_bytes(32))
         elif filename is not None:
-            with open(filename, "rb") as f:
+            with open(filename, "r") as f:
                 data = self._read_private_key("OPENSSH", f)
                 signing_key = self._parse_signing_key_data(data, password)
 
