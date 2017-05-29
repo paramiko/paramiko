@@ -142,7 +142,8 @@ class SSHClient (ClosingContextManager):
         with open(filename, 'w') as f:
             for hostname, keys in self._host_keys.items():
                 for keytype, key in keys.items():
-                    f.write('%s %s %s\n' % (hostname, keytype, key.get_base64()))
+                    f.write('%s %s %s\n' % (
+                        hostname, keytype, key.get_base64()))
 
     def get_host_keys(self):
         """
@@ -354,8 +355,8 @@ class SSHClient (ClosingContextManager):
         # host key, because the host is authenticated via GSS-API / SSPI as
         # well as our client.
         if not self._transport.use_gss_kex:
-            our_server_key = self._system_host_keys.get(server_hostkey_name,
-                                                         {}).get(keytype, None)
+            our_server_key = self._system_host_keys.get(
+                server_hostkey_name, {}).get(keytype)
             if our_server_key is None:
                 our_server_key = self._host_keys.get(server_hostkey_name,
                                                      {}).get(keytype, None)

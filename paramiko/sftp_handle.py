@@ -30,10 +30,10 @@ class SFTPHandle (ClosingContextManager):
     Abstract object representing a handle to an open file (or folder) in an
     SFTP server implementation.  Each handle has a string representation used
     by the client to refer to the underlying file.
-    
+
     Server implementations can (and should) subclass SFTPHandle to implement
     features of a file handle, like `stat` or `chattr`.
-    
+
     Instances of this class may be used as context managers.
     """
     def __init__(self, flags=0):
@@ -41,8 +41,9 @@ class SFTPHandle (ClosingContextManager):
         Create a new file handle representing a local file being served over
         SFTP.  If ``flags`` is passed in, it's used to determine if the file
         is open in append mode.
-        
-        :param int flags: optional flags as passed to `.SFTPServerInterface.open`
+
+        :param int flags: optional flags as passed to
+        `.SFTPServerInterface.open`
         """
         self.__flags = flags
         self.__name = None
@@ -55,7 +56,7 @@ class SFTPHandle (ClosingContextManager):
         When a client closes a file, this method is called on the handle.
         Normally you would use this method to close the underlying OS level
         file object(s).
-        
+
         The default implementation checks for attributes on ``self`` named
         ``readfile`` and/or ``writefile``, and if either or both are present,
         their ``close()`` methods are called.  This means that if you are
@@ -117,7 +118,7 @@ class SFTPHandle (ClosingContextManager):
         differently from ``readfile`` to make it easy to implement read-only
         (or write-only) files, but if both attributes are present, they should
         refer to the same file.
-        
+
         :param offset: position in the file to start reading from.
         :type offset: int or long
         :param str data: data to write into the file.
@@ -167,7 +168,7 @@ class SFTPHandle (ClosingContextManager):
         """
         return SFTP_OP_UNSUPPORTED
 
-    ###  internals...
+    # ...internals...
 
     def _set_files(self, files):
         """

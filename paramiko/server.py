@@ -22,7 +22,8 @@
 
 import threading
 from paramiko import util
-from paramiko.common import DEBUG, ERROR, OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED, AUTH_FAILED, AUTH_SUCCESSFUL
+from paramiko.common import DEBUG, ERROR, \
+    OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED, AUTH_FAILED, AUTH_SUCCESSFUL
 from paramiko.py3compat import string_types
 
 
@@ -250,9 +251,10 @@ class ServerInterface (object):
                  We don't check if the krb5 principal is allowed to log in on
                  the server, because there is no way to do that in python. So
                  if you develop your own SSH server with paramiko for a cetain
-                 plattform like Linux, you should call C{krb5_kuserok()} in your
-                 local kerberos library to make sure that the krb5_principal has
-                 an account on the server and is allowed to log in as a user.
+                 plattform like Linux, you should call C{krb5_kuserok()} in
+                 your local kerberos library to make sure that the
+                 krb5_principal has an account on the server and is allowed to
+                 log in as a user.
         :see: `http://www.unix.com/man-page/all/3/krb5_kuserok/`
         """
         if gss_authenticated == AUTH_SUCCESSFUL:
@@ -281,9 +283,10 @@ class ServerInterface (object):
                  We don't check if the krb5 principal is allowed to log in on
                  the server, because there is no way to do that in python. So
                  if you develop your own SSH server with paramiko for a cetain
-                 plattform like Linux, you should call C{krb5_kuserok()} in your
-                 local kerberos library to make sure that the krb5_principal has
-                 an account on the server and is allowed to log in as a user.
+                 plattform like Linux, you should call C{krb5_kuserok()} in
+                 your local kerberos library to make sure that the
+                 krb5_principal has an account on the server and is allowed
+                 to log in as a user.
         :see: `http://www.unix.com/man-page/all/3/krb5_kuserok/`
         """
         if gss_authenticated == AUTH_SUCCESSFUL:
@@ -366,10 +369,11 @@ class ServerInterface (object):
         """
         return False
 
-    ###  Channel requests
+    # ...Channel requests...
 
-    def check_channel_pty_request(self, channel, term, width, height, pixelwidth, pixelheight,
-                                  modes):
+    def check_channel_pty_request(
+            self, channel, term, width, height, pixelwidth, pixelheight,
+            modes):
         """
         Determine if a pseudo-terminal of the given dimensions (usually
         requested for shell access) can be provided on the given channel.
@@ -447,14 +451,16 @@ class ServerInterface (object):
             ``True`` if this channel is now hooked up to the requested
             subsystem; ``False`` if that subsystem can't or won't be provided.
         """
-        handler_class, larg, kwarg = channel.get_transport()._get_subsystem_handler(name)
+        handler_class, larg, kwarg = \
+            channel.get_transport()._get_subsystem_handler(name)
         if handler_class is None:
             return False
         handler = handler_class(channel, name, self, *larg, **kwarg)
         handler.start()
         return True
 
-    def check_channel_window_change_request(self, channel, width, height, pixelwidth, pixelheight):
+    def check_channel_window_change_request(
+            self, channel, width, height, pixelwidth, pixelheight):
         """
         Determine if the pseudo-terminal on the given channel can be resized.
         This only makes sense if a pty was previously allocated on it.
@@ -472,7 +478,9 @@ class ServerInterface (object):
         """
         return False
     
-    def check_channel_x11_request(self, channel, single_connection, auth_protocol, auth_cookie, screen_number):
+    def check_channel_x11_request(
+            self, channel, single_connection, auth_protocol, auth_cookie,
+            screen_number):
         """
         Determine if the client will be provided with an X11 session.  If this
         method returns ``True``, X11 applications should be routed through new
@@ -588,12 +596,12 @@ class InteractiveQuery (object):
                 self.add_prompt(x)
             else:
                 self.add_prompt(x[0], x[1])
-    
+
     def add_prompt(self, prompt, echo=True):
         """
         Add a prompt to this query.  The prompt should be a (reasonably short)
         string.  Multiple prompts can be added to the same query.
-        
+
         :param str prompt: the user prompt
         :param bool echo:
             ``True`` (default) if the user's response should be echoed;
@@ -621,10 +629,11 @@ class SubsystemHandler (threading.Thread):
         Create a new handler for a channel.  This is used by `.ServerInterface`
         to start up a new handler when a channel requests this subsystem.  You
         don't need to override this method, but if you do, be sure to pass the
-        ``channel`` and ``name`` parameters through to the original ``__init__``
-        method here.
+        ``channel`` and ``name`` parameters through to the original
+        ``__init__`` method here.
 
-        :param .Channel channel: the channel associated with this subsystem request.
+        :param .Channel channel: the channel associated with this
+            subsystem request.
         :param str name: name of the requested subsystem.
         :param .ServerInterface server:
             the server object for the session that started this subsystem
@@ -634,7 +643,7 @@ class SubsystemHandler (threading.Thread):
         self.__transport = channel.get_transport()
         self.__name = name
         self.__server = server
-        
+
     def get_server(self):
         """
         Return the `.ServerInterface` object associated with this channel and
@@ -644,10 +653,12 @@ class SubsystemHandler (threading.Thread):
 
     def _run(self):
         try:
-            self.__transport._log(DEBUG, 'Starting handler for subsystem %s' % self.__name)
+            self.__transport._log(
+                DEBUG, 'Starting handler for subsystem %s' % self.__name)
             self.start_subsystem(self.__name, self.__transport, self.__channel)
         except Exception as e:
-            self.__transport._log(ERROR, 'Exception in subsystem handler for "%s": %s' %
+            self.__transport._log(
+                ERROR, 'Exception in subsystem handler for "%s": %s' %
                                   (self.__name, str(e)))
             self.__transport._log(ERROR, util.tb_strings())
         try:
@@ -663,8 +674,8 @@ class SubsystemHandler (threading.Thread):
         subsystem is finished, this method will return.  After this method
         returns, the channel is closed.
 
-        The combination of ``transport`` and ``channel`` are unique; this handler
-        corresponds to exactly one `.Channel` on one `.Transport`.
+        The combination of ``transport`` and ``channel`` are unique; this
+        handler corresponds to exactly one `.Channel` on one `.Transport`.
 
         .. note::
             It is the responsibility of this method to exit if the underlying
@@ -676,7 +687,8 @@ class SubsystemHandler (threading.Thread):
 
         :param str name: name of the requested subsystem.
         :param .Transport transport: the server-mode `.Transport`.
-        :param .Channel channel: the channel associated with this subsystem request.
+        :param .Channel channel: the channel associated with this subsystem
+        request.
         """
         pass
 

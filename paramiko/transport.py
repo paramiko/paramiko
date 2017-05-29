@@ -1806,7 +1806,6 @@ class Transport (threading.Thread, ClosingContextManager):
                 self.saved_exception = e
             except EOFError as e:
                 self._log(DEBUG, 'EOF in transport thread')
-                #self._log(DEBUG, util.tb_strings())
                 self.saved_exception = e
             except socket.error as e:
                 if type(e.args) is tuple:
@@ -2070,7 +2069,8 @@ class Transport (threading.Thread, ClosingContextManager):
         self.remote_kex_init = cMSG_KEXINIT + m.get_so_far()
 
     def _activate_inbound(self):
-        """switch on newly negotiated encryption parameters for inbound traffic"""
+        """switch on newly negotiated encryption parameters for
+         inbound traffic"""
         block_size = self._cipher_info[self.remote_cipher]['block-size']
         if self.server_mode:
             IV_in = self._compute_key('A', block_size)
@@ -2094,18 +2094,22 @@ class Transport (threading.Thread, ClosingContextManager):
             self.packetizer.set_inbound_compressor(compress_in())
 
     def _activate_outbound(self):
-        """switch on newly negotiated encryption parameters for outbound traffic"""
+        """switch on newly negotiated encryption parameters for
+         outbound traffic"""
         m = Message()
         m.add_byte(cMSG_NEWKEYS)
         self._send_message(m)
         block_size = self._cipher_info[self.local_cipher]['block-size']
         if self.server_mode:
             IV_out = self._compute_key('B', block_size)
-            key_out = self._compute_key('D', self._cipher_info[self.local_cipher]['key-size'])
+            key_out = self._compute_key(
+                'D', self._cipher_info[self.local_cipher]['key-size'])
         else:
             IV_out = self._compute_key('A', block_size)
-            key_out = self._compute_key('C', self._cipher_info[self.local_cipher]['key-size'])
-        engine = self._get_cipher(self.local_cipher, key_out, IV_out, self._ENCRYPT)
+            key_out = self._compute_key(
+                'C', self._cipher_info[self.local_cipher]['key-size'])
+        engine = self._get_cipher(
+            self.local_cipher, key_out, IV_out, self._ENCRYPT)
         mac_size = self._mac_info[self.local_mac]['size']
         mac_engine = self._mac_info[self.local_mac]['class']
         # initial mac keys are done in the hash's natural size (not the
@@ -2115,9 +2119,11 @@ class Transport (threading.Thread, ClosingContextManager):
         else:
             mac_key = self._compute_key('E', mac_engine().digest_size)
         sdctr = self.local_cipher.endswith('-ctr')
-        self.packetizer.set_outbound_cipher(engine, block_size, mac_engine, mac_size, mac_key, sdctr)
+        self.packetizer.set_outbound_cipher(
+            engine, block_size, mac_engine, mac_size, mac_key, sdctr)
         compress_out = self._compression_info[self.local_compression][0]
-        if (compress_out is not None) and ((self.local_compression != 'zlib@openssh.com') or self.authenticated):
+        if (compress_out is not None) and \
+                ((self.local_compression != 'zlib@openssh.com') or self.authenticated):
             self._log(DEBUG, 'Switching on outbound compression ...')
             self.packetizer.set_outbound_compressor(compress_out())
         if not self.packetizer.need_rekey():
@@ -2173,7 +2179,10 @@ class Transport (threading.Thread, ClosingContextManager):
         self._log(DEBUG, 'Received global request "%s"' % kind)
         want_reply = m.get_boolean()
         if not self.server_mode:
-            self._log(DEBUG, 'Rejecting "%s" global request from server.' % kind)
+            self._log(
+                DEBUG,
+                'Rejecting "%s" global request from server.' % kind
+            )
             ok = False
         elif kind == 'tcpip-forward':
             address = m.get_text()
@@ -2224,7 +2233,8 @@ class Transport (threading.Thread, ClosingContextManager):
             return
         self.lock.acquire()
         try:
-            chan._set_remote_channel(server_chanid, server_window_size, server_max_packet_size)
+            chan._set_remote_channel(
+                server_chanid, server_window_size, server_max_packet_size)
             self._log(DEBUG, 'Secsh channel %d opened.' % chanid)
             if chanid in self.channel_events:
                 self.channel_events[chanid].set()
@@ -2237,9 +2247,13 @@ class Transport (threading.Thread, ClosingContextManager):
         chanid = m.get_int()
         reason = m.get_int()
         reason_str = m.get_text()
-        lang = m.get_text()
+        m.get_text()  # ignored language
         reason_text = CONNECTION_FAILED_CODE.get(reason, '(unknown code)')
-        self._log(ERROR, 'Secsh channel %d open FAILED: %s: %s' % (chanid, reason_str, reason_text))
+        self._log(
+            ERROR,
+            'Secsh channel %d open FAILED: %s: %s' % (
+                chanid, reason_str, reason_text)
+        )
         self.lock.acquire()
         try:
             self.saved_exception = ChannelException(reason, reason_text)
@@ -2258,7 +2272,8 @@ class Transport (threading.Thread, ClosingContextManager):
         initial_window_size = m.get_int()
         max_packet_size = m.get_int()
         reject = False
-        if (kind == 'auth-agent@openssh.com') and (self._forward_agent_handler is not None):
+        if (kind == 'auth-agent@openssh.com') and \
+                (self._forward_agent_handler is not None):
             self._log(DEBUG, 'Incoming forward agent connection')
             self.lock.acquire()
             try:
@@ -2268,7 +2283,11 @@ class Transport (threading.Thread, ClosingContextManager):
         elif (kind == 'x11') and (self._x11_handler is not None):
             origin_addr = m.get_text()
             origin_port = m.get_int()
-            self._log(DEBUG, 'Incoming x11 connection from %s:%d' % (origin_addr, origin_port))
+            self._log(
+                DEBUG,
+                'Incoming x11 connection from %s:%d' % (
+                    origin_addr, origin_port)
+            )
             self.lock.acquire()
             try:
                 my_chanid = self._next_channel()
@@ -2279,14 +2298,20 @@ class Transport (threading.Thread, ClosingContextManager):
             server_port = m.get_int()
             origin_addr = m.get_text()
             origin_port = m.get_int()
-            self._log(DEBUG, 'Incoming tcp forwarded connection from %s:%d' % (origin_addr, origin_port))
+            self._log(
+                DEBUG,
+                'Incoming tcp forwarded connection from %s:%d' % (
+                    origin_addr, origin_port)
+            )
             self.lock.acquire()
             try:
                 my_chanid = self._next_channel()
             finally:
                 self.lock.release()
         elif not self.server_mode:
-            self._log(DEBUG, 'Rejecting "%s" channel request from server.' % kind)
+            self._log(
+                DEBUG,
+                'Rejecting "%s" channel request from server.' % kind)
             reject = True
             reason = OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED
         else:
@@ -2302,11 +2327,17 @@ class Transport (threading.Thread, ClosingContextManager):
                 origin_addr = m.get_text()
                 origin_port = m.get_int()
                 reason = self.server_object.check_channel_direct_tcpip_request(
-                    my_chanid, (origin_addr, origin_port), (dest_addr, dest_port))
+                    my_chanid,
+                    (origin_addr, origin_port),
+                    (dest_addr, dest_port)
+                )
             else:
-                reason = self.server_object.check_channel_request(kind, my_chanid)
+                reason = self.server_object.check_channel_request(
+                    kind, my_chanid)
             if reason != OPEN_SUCCEEDED:
-                self._log(DEBUG, 'Rejecting "%s" channel request from client.' % kind)
+                self._log(
+                    DEBUG,
+                    'Rejecting "%s" channel request from client.' % kind)
                 reject = True
         if reject:
             msg = Message()
@@ -2324,8 +2355,10 @@ class Transport (threading.Thread, ClosingContextManager):
             self._channels.put(my_chanid, chan)
             self.channels_seen[my_chanid] = True
             chan._set_transport(self)
-            chan._set_window(self.default_window_size, self.default_max_packet_size)
-            chan._set_remote_channel(chanid, initial_window_size, max_packet_size)
+            chan._set_window(
+                self.default_window_size, self.default_max_packet_size)
+            chan._set_remote_channel(
+                chanid, initial_window_size, max_packet_size)
         finally:
             self.lock.release()
         m = Message()
@@ -2342,14 +2375,18 @@ class Transport (threading.Thread, ClosingContextManager):
             self._x11_handler(chan, (origin_addr, origin_port))
         elif kind == 'forwarded-tcpip':
             chan.origin_addr = (origin_addr, origin_port)
-            self._tcp_handler(chan, (origin_addr, origin_port), (server_addr, server_port))
+            self._tcp_handler(
+                chan,
+                (origin_addr, origin_port),
+                (server_addr, server_port)
+            )
         else:
             self._queue_incoming_channel(chan)
 
     def _parse_debug(self, m):
-        always_display = m.get_boolean()
+        m.get_boolean()  # always_display
         msg = m.get_string()
-        lang = m.get_string()
+        m.get_string()  # language
         self._log(DEBUG, 'Debug msg: {0}'.format(util.safe_string(msg)))
 
     def _get_subsystem_handler(self, name):
@@ -2396,7 +2433,6 @@ class SecurityOptions (object):
     ``ValueError`` will be raised.  If you try to assign something besides a
     tuple to one of the fields, ``TypeError`` will be raised.
     """
-    #__slots__ = [ 'ciphers', 'digests', 'key_types', 'kex', 'compression', '_transport' ]
     __slots__ = '_transport'
 
     def __init__(self, transport):

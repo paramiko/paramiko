@@ -419,7 +419,8 @@ class Channel (ClosingContextManager):
         :param function handler:
             a required handler to use for incoming SSH Agent connections
 
-        :return: True if we are ok, else False (at that time we always return ok)
+        :return: True if we are ok, else False
+            (at that time we always return ok)
 
         :raises: SSHException in case of channel problem.
         """
@@ -603,8 +604,8 @@ class Channel (ClosingContextManager):
         """
         Receive data from the channel.  The return value is a string
         representing the data received.  The maximum amount of data to be
-        received at once is specified by ``nbytes``.  If a string of length zero
-        is returned, the channel stream has closed.
+        received at once is specified by ``nbytes``.  If a string of
+        length zero is returned, the channel stream has closed.
 
         :param int nbytes: maximum number of bytes to read.
         :return: received data, as a `bytes`
@@ -754,7 +755,7 @@ class Channel (ClosingContextManager):
             if sending stalled for longer than the timeout set by `settimeout`.
         :raises socket.error:
             if an error occurred before the entire string was sent.
-        
+
         .. note::
             If the channel is closed while only part of the data has been
             sent, there is no way to determine how much data (if any) was sent.
@@ -778,7 +779,7 @@ class Channel (ClosingContextManager):
             if sending stalled for longer than the timeout set by `settimeout`.
         :raises socket.error:
             if an error occurred before the entire string was sent.
-            
+
         .. versionadded:: 1.1
         """
         while s:
@@ -896,7 +897,7 @@ class Channel (ClosingContextManager):
         # attribute instead of a semipublic .closed attribute.
         return self.closed
 
-    ###  calls from Transport
+    # ...calls from Transport
 
     def _set_transport(self, transport):
         self.transport = transport
@@ -905,7 +906,8 @@ class Channel (ClosingContextManager):
     def _set_window(self, window_size, max_packet_size):
         self.in_window_size = window_size
         self.in_max_packet_size = max_packet_size
-        # threshold of bytes we receive before we bother to send a window update
+        # threshold of bytes we receive before we bother to send
+        # a window update
         self.in_window_threshold = window_size // 10
         self.in_window_sofar = 0
         self._log(DEBUG, 'Max packet in: %d bytes' % max_packet_size)
@@ -946,7 +948,10 @@ class Channel (ClosingContextManager):
         code = m.get_int()
         s = m.get_binary()
         if code != 1:
-            self._log(ERROR, 'unknown extended_data type %d; discarding' % code)
+            self._log(
+                ERROR,
+                'unknown extended_data type %d; discarding' % code
+            )
             return
         if self.combine_stderr:
             self._feed(s)
@@ -986,8 +991,15 @@ class Channel (ClosingContextManager):
             if server is None:
                 ok = False
             else:
-                ok = server.check_channel_pty_request(self, term, width, height, pixelwidth,
-                                                      pixelheight, modes)
+                ok = server.check_channel_pty_request(
+                    self,
+                    term,
+                    width,
+                    height,
+                    pixelwidth,
+                    pixelheight,
+                    modes
+                )
         elif key == 'shell':
             if server is None:
                 ok = False
@@ -1020,8 +1032,8 @@ class Channel (ClosingContextManager):
             if server is None:
                 ok = False
             else:
-                ok = server.check_channel_window_change_request(self, width, height, pixelwidth,
-                                                                pixelheight)
+                ok = server.check_channel_window_change_request(
+                    self, width, height, pixelwidth, pixelheight)
         elif key == 'x11-req':
             single_connection = m.get_boolean()
             auth_proto = m.get_text()
@@ -1030,8 +1042,13 @@ class Channel (ClosingContextManager):
             if server is None:
                 ok = False
             else:
-                ok = server.check_channel_x11_request(self, single_connection,
-                                                      auth_proto, auth_cookie, screen_number)
+                ok = server.check_channel_x11_request(
+                    self,
+                    single_connection,
+                    auth_proto,
+                    auth_cookie,
+                    screen_number
+                )
         elif key == 'auth-agent-req@openssh.com':
             if server is None:
                 ok = False
@@ -1073,7 +1090,7 @@ class Channel (ClosingContextManager):
             if m is not None:
                 self.transport._send_user_message(m)
 
-    ###  internals...
+    # ...internals...
 
     def _send(self, s, m):
         size = len(s)
@@ -1149,7 +1166,8 @@ class Channel (ClosingContextManager):
         return m1, m2
 
     def _unlink(self):
-        # server connection could die before we become active: still signal the close!
+        # server connection could die before we become active:
+        # still signal the close!
         if self.closed:
             return
         self.lock.acquire()
@@ -1192,7 +1210,8 @@ class Channel (ClosingContextManager):
             # should we block?
             if self.timeout == 0.0:
                 raise socket.timeout()
-            # loop here in case we get woken up but a different thread has filled the buffer
+            # loop here in case we get woken up but a different thread has
+            # filled the buffer
             timeout = self.timeout
             while self.out_window_size == 0:
                 if self.closed or self.eof_sent:
