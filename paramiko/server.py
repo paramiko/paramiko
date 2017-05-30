@@ -688,7 +688,7 @@ class SubsystemHandler (threading.Thread):
         :param str name: name of the requested subsystem.
         :param .Transport transport: the server-mode `.Transport`.
         :param .Channel channel: the channel associated with this subsystem
-        request.
+            request.
         """
         pass
 
