@@ -1,20 +1,22 @@
 import sys
 import base64
 
-__all__ = ['PY2', 'string_types', 'integer_types', 'text_type', 'bytes_types', 'bytes', 'long', 'input',
-           'decodebytes', 'encodebytes', 'bytestring', 'byte_ord', 'byte_chr', 'byte_mask',
-           'b', 'u', 'b2s', 'StringIO', 'BytesIO', 'is_callable', 'MAXSIZE', 'next', 'builtins']
+__all__ = ['PY2', 'string_types', 'integer_types', 'text_type', 'bytes_types',
+           'bytes', 'long', 'input', 'decodebytes', 'encodebytes',
+           'bytestring', 'byte_ord', 'byte_chr', 'byte_mask', 'b', 'u', 'b2s',
+           'StringIO', 'BytesIO', 'is_callable', 'MAXSIZE',
+           'next', 'builtins']
 
 PY2 = sys.version_info[0] < 3
 
 if PY2:
-    string_types = basestring
-    text_type = unicode
+    string_types = basestring  # NOQA
+    text_type = unicode  # NOQA
     bytes_types = str
     bytes = str
-    integer_types = (int, long)
-    long = long
-    input = raw_input
+    integer_types = (int, long)  # NOQA
+    long = long  # NOQA
+    input = raw_input  # NOQA
     decodebytes = base64.decodestring
     encodebytes = base64.encodestring
 
@@ -22,7 +24,7 @@ if PY2:
 
 
     def bytestring(s):  # NOQA
-        if isinstance(s, unicode):
+        if isinstance(s, unicode):  # NOQA
             return s.encode('utf-8')
         return s
 
@@ -39,9 +41,9 @@ if PY2:
         """cast unicode or bytes to bytes"""
         if isinstance(s, str):
             return s
-        elif isinstance(s, unicode):
+        elif isinstance(s, unicode):  # NOQA
             return s.encode(encoding)
-        elif isinstance(s, buffer):
+        elif isinstance(s, buffer):  # NOQA
             return s
         else:
             raise TypeError("Expected unicode or bytes, got %r" % s)
@@ -51,9 +53,9 @@ if PY2:
         """cast bytes or unicode to unicode"""
         if isinstance(s, str):
             return s.decode(encoding)
-        elif isinstance(s, unicode):
+        elif isinstance(s, unicode):  # NOQA
             return s
-        elif isinstance(s, buffer):
+        elif isinstance(s, buffer):  # NOQA
             return s.decode(encoding)
         else:
             raise TypeError("Expected unicode or bytes, got %r" % s)
