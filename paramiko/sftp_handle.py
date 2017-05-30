@@ -43,7 +43,7 @@ class SFTPHandle (ClosingContextManager):
         is open in append mode.
 
         :param int flags: optional flags as passed to
-        `.SFTPServerInterface.open`
+            `.SFTPServerInterface.open`
         """
         self.__flags = flags
         self.__name = None
