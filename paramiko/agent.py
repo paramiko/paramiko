@@ -109,15 +109,19 @@ class AgentProxyThread(threading.Thread):
     def run(self):
         try:
             (r, addr) = self.get_connection()
-            # Found that r should be either a socket from the socket library or None
+            # Found that r should be either
+            # a socket from the socket library or None
             self.__inr = r
-            self.__addr = addr # This should be an IP address as a string? or None
+            # The address should be an IP address as a string? or None
+            self.__addr = addr
             self._agent.connect()
-            if not isinstance(self._agent, int) and (self._agent._conn is None or not hasattr(self._agent._conn, 'fileno')):
+            if not isinstance(self._agent, int) and \
+                    (self._agent._conn is None or
+                     not hasattr(self._agent._conn, 'fileno')):
                 raise AuthenticationException("Unable to connect to SSH agent")
             self._communicate()
         except:
-            #XXX Not sure what to do here ... raise or pass ?
+            # XXX Not sure what to do here ... raise or pass ?
             raise
 
     def _communicate(self):
@@ -213,7 +217,8 @@ class AgentClientProxy(object):
         if ('SSH_AUTH_SOCK' in os.environ) and (sys.platform != 'win32'):
             conn = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
             try:
-                retry_on_signal(lambda: conn.connect(os.environ['SSH_AUTH_SOCK']))
+                retry_on_signal(
+                    lambda: conn.connect(os.environ['SSH_AUTH_SOCK']))
             except:
                 # probably a dangling env var: the ssh agent is gone
                 return

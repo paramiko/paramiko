@@ -25,13 +25,13 @@ import array
 import ctypes.wintypes
 import platform
 import struct
-from paramiko.util import *
+from paramiko.util import *  # noqa
 from paramiko.py3compat import b
 
 try:
-    import _thread as thread # Python 3.x
+    import _thread as thread  # Python 3.x
 except ImportError:
-    import thread # Python 2.5-2.7
+    import thread  # Python 2.5-2.7
 
 from . import _winapi
 
@@ -57,7 +57,10 @@ def can_talk_to_agent():
     return bool(_get_pageant_window_object())
 
 
-ULONG_PTR = ctypes.c_uint64 if platform.architecture()[0] == '64bit' else ctypes.c_uint32
+if platform.architecture()[0] == '64bit':
+    ULONG_PTR = ctypes.c_uint64
+else:
+    ULONG_PTR = ctypes.c_uint32
 
 
 class COPYDATASTRUCT(ctypes.Structure):
@@ -91,7 +94,7 @@ def _query_pageant(msg):
     with pymap:
         pymap.write(msg)
         # Create an array buffer containing the mapped filename
-        char_buffer = array.array("b", b(map_name) + zero_byte)
+        char_buffer = array.array("b", b(map_name) + zero_byte)  # noqa
         char_buffer_address, char_buffer_size = char_buffer.buffer_info()
         # Create a string to use for the SendMessage function call
         cds = COPYDATASTRUCT(_AGENT_COPYDATA_ID, char_buffer_size,
