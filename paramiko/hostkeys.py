@@ -251,9 +251,9 @@ class HostKeys (MutableMapping):
             if self._hostname_matches(key, entry):
                 index = i
                 break
-        if i is None:
+        if index is None:
             raise KeyError(key)
-        self._entries.pop(i)
+        self._entries.pop(index)
 
     def __setitem__(self, hostname, entry):
         # don't use this please.
