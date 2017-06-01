@@ -395,8 +395,8 @@ class AuthHandler (object):
                 (self.auth_username != username)):
             self.transport._log(
                 WARNING,
-                'Auth rejected because the client attempted to change '
-                'username in mid-flight')
+                'Auth rejected because the client attempted to change username in mid-flight' # noqa
+            )
             self._disconnect_no_more_auth()
             return
         self.auth_username = username
