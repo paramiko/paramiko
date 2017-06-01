@@ -184,7 +184,6 @@ class Message (object):
         @rtype: string
         """
         return u(self.get_bytes(self.get_int()))
-        #return self.get_bytes(self.get_size())
 
     def get_binary(self):
         """

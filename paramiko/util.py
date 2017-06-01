@@ -98,7 +98,7 @@ def format_binary(data, prefix=''):
         x += 16
     if x < len(data):
         out.append(format_binary_line(data[x:]))
-    return [prefix + x for x in out]
+    return [prefix + line for line in out]
 
 
 def format_binary_line(data):
