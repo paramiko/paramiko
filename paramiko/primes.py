@@ -75,8 +75,11 @@ class ModulusPack (object):
         # type 2 (meets basic structural requirements)
         # test 4 (more than just a small-prime sieve)
         # tries < 100 if test & 4 (at least 100 tries of miller-rabin)
-        if (mod_type < 2) or (tests < 4) or \
-                ((tests & 4) and (tests < 8) and (tries < 100)):
+        if (
+            mod_type < 2 or
+            tests < 4 or
+            (tests & 4 and tests < 8 and tries < 100)
+        ):
             self.discarded.append(
                 (modulus, 'does not meet basic requirements'))
             return

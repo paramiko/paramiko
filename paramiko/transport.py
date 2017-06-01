@@ -2125,8 +2125,13 @@ class Transport (threading.Thread, ClosingContextManager):
         self.packetizer.set_outbound_cipher(
             engine, block_size, mac_engine, mac_size, mac_key, sdctr)
         compress_out = self._compression_info[self.local_compression][0]
-        if (compress_out is not None) and \
-                ((self.local_compression != 'zlib@openssh.com') or self.authenticated):
+        if (
+            compress_out is not None and
+            (
+                self.local_compression != 'zlib@openssh.com' or
+                self.authenticated
+            )
+        ):
             self._log(DEBUG, 'Switching on outbound compression ...')
             self.packetizer.set_outbound_compressor(compress_out())
         if not self.packetizer.need_rekey():
@@ -2275,8 +2280,10 @@ class Transport (threading.Thread, ClosingContextManager):
         initial_window_size = m.get_int()
         max_packet_size = m.get_int()
         reject = False
-        if (kind == 'auth-agent@openssh.com') and \
-                (self._forward_agent_handler is not None):
+        if (
+            kind == 'auth-agent@openssh.com' and
+            self._forward_agent_handler is not None
+        ):
             self._log(DEBUG, 'Incoming forward agent connection')
             self.lock.acquire()
             try:

@@ -394,9 +394,11 @@ class Packetizer (object):
 
             self.__sent_bytes += len(out)
             self.__sent_packets += 1
-            if (self.__sent_packets >= self.REKEY_PACKETS or
-                    self.__sent_bytes >= self.REKEY_BYTES)\
-                    and not self.__need_rekey:
+            sent_too_much = (
+                self.__sent_packets >= self.REKEY_PACKETS or
+                self.__sent_bytes >= self.REKEY_BYTES
+            )
+            if sent_too_much and not self.__need_rekey:
                 # only ask once for rekeying
                 self._log(DEBUG, 'Rekeying (hit %d packets, %d bytes sent)' %
                           (self.__sent_packets, self.__sent_bytes))
@@ -506,9 +508,11 @@ class Packetizer (object):
             self.__logger.log(level, msg)
 
     def _check_keepalive(self):
-        if (not self.__keepalive_interval) or \
-                (not self.__block_engine_out) or \
-                self.__need_rekey:
+        if (
+            not self.__keepalive_interval or
+            not self.__block_engine_out or
+            self.__need_rekey
+        ):
             # wait till we're encrypting, and not in the middle of rekeying
             return
         now = time.time()

@@ -405,12 +405,16 @@ class _SSH_SSPI(_SSH_GSSAuth):
         _SSH_GSSAuth.__init__(self, auth_method, gss_deleg_creds)
 
         if self._gss_deleg_creds:
-            self._gss_flags = \
-                sspicon.ISC_REQ_INTEGRITY | sspicon.ISC_REQ_MUTUAL_AUTH | \
+            self._gss_flags = (
+                sspicon.ISC_REQ_INTEGRITY |
+                sspicon.ISC_REQ_MUTUAL_AUTH |
                 sspicon.ISC_REQ_DELEGATE
+            )
         else:
-            self._gss_flags = \
-                sspicon.ISC_REQ_INTEGRITY | sspicon.ISC_REQ_MUTUAL_AUTH
+            self._gss_flags = (
+                sspicon.ISC_REQ_INTEGRITY |
+                sspicon.ISC_REQ_MUTUAL_AUTH
+            )
 
     def ssh_init_sec_context(self, target, desired_mech=None,
                              username=None, recv_token=None):
@@ -546,8 +550,10 @@ class _SSH_SSPI(_SSH_GSSAuth):
         :return: ``True`` if credentials are delegated, otherwise ``False``
         :rtype: Boolean
         """
-        return self._gss_flags & sspicon.ISC_REQ_DELEGATE and \
+        return (
+            self._gss_flags & sspicon.ISC_REQ_DELEGATE and
             (self._gss_srv_ctxt_status or self._gss_flags)
+        )
 
     def save_client_creds(self, client_token):
         """

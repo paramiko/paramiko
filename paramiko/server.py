@@ -22,8 +22,10 @@
 
 import threading
 from paramiko import util
-from paramiko.common import DEBUG, ERROR, \
-    OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED, AUTH_FAILED, AUTH_SUCCESSFUL
+from paramiko.common import (
+    DEBUG, ERROR, OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED, AUTH_FAILED,
+    AUTH_SUCCESSFUL,
+)
 from paramiko.py3compat import string_types
 
 
@@ -450,8 +452,8 @@ class ServerInterface (object):
             ``True`` if this channel is now hooked up to the requested
             subsystem; ``False`` if that subsystem can't or won't be provided.
         """
-        handler_class, larg, kwarg = \
-            channel.get_transport()._get_subsystem_handler(name)
+        transport = channel.get_transport()
+        handler_class, larg, kwarg = transport._get_subsystem_handler(name)
         if handler_class is None:
             return False
         handler = handler_class(channel, name, self, *larg, **kwarg)
