@@ -251,9 +251,11 @@ class BufferedFile (ClosingContextManager):
         line = self._rbuffer
         truncated = False
         while True:
-            if self._at_trailing_cr and \
-                    (self._flags & self.FLAG_UNIVERSAL_NEWLINE) and \
-                    (len(line) > 0):
+            if (
+                self._at_trailing_cr and
+                self._flags & self.FLAG_UNIVERSAL_NEWLINE and
+                len(line) > 0
+            ):
                 # edge case: the newline may be '\r\n' and we may have read
                 # only the first '\r' last time.
                 if line[0] == linefeed_byte_value:
@@ -274,9 +276,13 @@ class BufferedFile (ClosingContextManager):
                 n = size - len(line)
             else:
                 n = self._bufsize
-            if (linefeed_byte in line) or \
-                    ((self._flags & self.FLAG_UNIVERSAL_NEWLINE) and
-                        (cr_byte in line)):
+            if (
+                linefeed_byte in line or
+                (
+                    self._flags & self.FLAG_UNIVERSAL_NEWLINE and
+                    cr_byte in line
+                )
+            ):
                 break
             try:
                 new_data = self._read(n)
@@ -299,9 +305,11 @@ class BufferedFile (ClosingContextManager):
             self._pos += len(line)
             return line if self._flags & self.FLAG_BINARY else u(line)
         xpos = pos + 1
-        if (line[pos] == cr_byte_value) and \
-                (xpos < len(line)) and \
-                (line[xpos] == linefeed_byte_value):
+        if (
+            line[pos] == cr_byte_value and
+            xpos < len(line) and
+            line[xpos] == linefeed_byte_value
+        ):
             xpos += 1
         # if the string was truncated, _rbuffer needs to have the string after
         # the newline character plus the truncated part of the line we stored
@@ -524,8 +532,10 @@ class BufferedFile (ClosingContextManager):
             return
         if self.newlines is None:
             self.newlines = newline
-        elif self.newlines != newline and \
-                isinstance(self.newlines, bytes_types):
+        elif (
+            self.newlines != newline and
+            isinstance(self.newlines, bytes_types)
+        ):
             self.newlines = (self.newlines, newline)
         elif newline not in self.newlines:
             self.newlines += (newline,)

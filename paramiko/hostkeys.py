@@ -187,10 +187,12 @@ class HostKeys (MutableMapping):
         entries = []
         for e in self._entries:
             for h in e.hostnames:
-                if h.startswith('|1|') and not hostname.startswith('|1|') and \
-                        constant_time_bytes_eq(
-                            self.hash_host(hostname, h), h) \
-                        or h == hostname:
+                if (
+                    h == hostname or
+                    h.startswith('|1|') and
+                    not hostname.startswith('|1|') and
+                    constant_time_bytes_eq(self.hash_host(hostname, h), h)
+                ):
                     entries.append(e)
         if len(entries) == 0:
             return None

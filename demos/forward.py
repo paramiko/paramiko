@@ -105,7 +105,7 @@ def verbose(s):
         print(s)
 
 
-HELP = """\
+HELP = """
 Set up a forward tunnel across an SSH server, using paramiko. A local port
 (given with -p) is forwarded across an SSH session to an address:port from
 the SSH server. This is similar to the openssh -L option.

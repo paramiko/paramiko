@@ -920,8 +920,9 @@ class Channel (ClosingContextManager):
     def _set_remote_channel(self, chanid, window_size, max_packet_size):
         self.remote_chanid = chanid
         self.out_window_size = window_size
-        self.out_max_packet_size = self.transport. \
-            _sanitize_packet_size(max_packet_size)
+        self.out_max_packet_size = self.transport._sanitize_packet_size(
+            max_packet_size
+        )
         self.active = 1
         self._log(DEBUG, 'Max packet out: %d bytes' % self.out_max_packet_size)
 

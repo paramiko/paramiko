@@ -224,8 +224,9 @@ class SSHConfig (object):
                     if isinstance(config[k], list):
                         for item in range(len(config[k])):
                             if find in config[k][item]:
-                                config[k][item] = config[k][item].\
-                                    replace(find, str(replace))
+                                config[k][item] = config[k][item].replace(
+                                    find, str(replace)
+                                )
                     else:
                         if find in config[k]:
                             config[k] = config[k].replace(find, str(replace))
@@ -267,8 +268,9 @@ class LazyFqdn(object):
             address_family = self.config.get('addressfamily', 'any').lower()
             if address_family != 'any':
                 try:
-                    family = socket.AF_INET if address_family == 'inet' \
-                        else socket.AF_INET6
+                    family = socket.AF_INET6
+                    if address_family == 'inet':
+                        socket.AF_INET
                     results = socket.getaddrinfo(
                         self.host,
                         None,

@@ -137,8 +137,8 @@ class KexGSSGroup1(object):
         while 1:
             x_bytes = os.urandom(128)
             x_bytes = byte_mask(x_bytes[0], 0x7f) + x_bytes[1:]
-            if (x_bytes[:8] != self.b7fffffffffffffff) and \
-                    (x_bytes[:8] != self.b0000000000000000):
+            first = x_bytes[:8]
+            if first not in (self.b7fffffffffffffff, self.b0000000000000000):
                 break
         self.x = util.inflate_long(x_bytes)
 

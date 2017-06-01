@@ -313,8 +313,10 @@ class AuthHandler (object):
                 else:
                     raise SSHException(
                         "Received Package: %s" % MSG_NAMES[ptype])
-            elif self.auth_method == 'gssapi-keyex' and\
-                self.transport.gss_kex_used:
+            elif (
+                self.auth_method == 'gssapi-keyex' and
+                self.transport.gss_kex_used
+            ):
                 kexgss = self.transport.kexgss_ctxt
                 kexgss.set_username(self.username)
                 mic_token = kexgss.ssh_get_mic(self.transport.session_id)

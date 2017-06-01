@@ -85,7 +85,7 @@ def verbose(s):
         print(s)
 
 
-HELP = """\
+HELP = """
 Set up a reverse forwarding tunnel across an SSH server, using paramiko. A
 port on the SSH server (given with -p) is forwarded across an SSH session
 back to the local machine, and out to a remote site reachable from this
