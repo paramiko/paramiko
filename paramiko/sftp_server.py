@@ -200,7 +200,7 @@ class SFTPServer (BaseSFTP, SubsystemHandler):
                 item._pack(msg)
             else:
                 raise Exception(
-                    'unknown type for {!r} type {!r}'.format(
+                    'unknown type for {0!r} type {1!r}'.format(
                         item, type(item)))
         self._send_packet(t, msg)
 

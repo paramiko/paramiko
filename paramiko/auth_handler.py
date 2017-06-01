@@ -302,6 +302,7 @@ class AuthHandler (object):
                     maj_status = m.get_int()
                     min_status = m.get_int()
                     err_msg = m.get_string()
+                    m.get_string() # Lang tag - discarded
                     raise SSHException("GSS-API Error:\nMajor Status: %s\n\
                                         Minor Status: %s\ \nError Message:\
                                          %s\n") % (str(maj_status),
@@ -394,8 +395,8 @@ class AuthHandler (object):
                 (self.auth_username != username)):
             self.transport._log(
                 WARNING,
-                'Auth rejected because the client attempted to change '
-                'username in mid-flight')
+                'Auth rejected because the client attempted to change username in mid-flight' # noqa
+            )
             self._disconnect_no_more_auth()
             return
         self.auth_username = username

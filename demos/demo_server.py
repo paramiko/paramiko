@@ -96,9 +96,7 @@ class Server (paramiko.ServerInterface):
         return paramiko.AUTH_FAILED
 
     def enable_auth_gssapi(self):
-        UseGSSAPI = True
-        GSSAPICleanupCredentials = False
-        return UseGSSAPI
+        return True
 
     def get_allowed_auths(self, username):
         return 'gssapi-keyex,gssapi-with-mic,password,publickey'
