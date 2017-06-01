@@ -660,8 +660,10 @@ class SubsystemHandler (threading.Thread):
         except Exception as e:
             self.__transport._log(
                 ERROR,
-                'Exception in subsystem handler for "{}": {}'.format(
-                    self.__name, e))
+                'Exception in subsystem handler for "{0}": {1}'.format(
+                    self.__name, e
+                )
+            )
             self.__transport._log(ERROR, util.tb_strings())
         try:
             self.finish_subsystem()

@@ -186,17 +186,27 @@ class HostKeys (MutableMapping):
 
         entries = []
         for e in self._entries:
-            for h in e.hostnames:
-                if (
-                    h == hostname or
-                    h.startswith('|1|') and
-                    not hostname.startswith('|1|') and
-                    constant_time_bytes_eq(self.hash_host(hostname, h), h)
-                ):
-                    entries.append(e)
+            if self._hostname_matches(hostname, e):
+                entries.append(e)
         if len(entries) == 0:
             return None
         return SubDict(hostname, entries, self)
+
+    def _hostname_matches(self, hostname, entry):
+        """
+        Tests whether ``hostname`` string matches given SubDict ``entry``.
+
+        :returns bool:
+        """
+        for h in entry.hostnames:
+            if (
+                h == hostname or
+                h.startswith('|1|') and
+                not hostname.startswith('|1|') and
+                constant_time_bytes_eq(self.hash_host(hostname, h), h)
+            ):
+                return True
+        return False
 
     def check(self, hostname, key):
         """
@@ -236,7 +246,14 @@ class HostKeys (MutableMapping):
         return ret
 
     def __delitem__(self, key):
-        pass  # Needed for instantiating HostKeys.
+        index = None
+        for i, entry in enumerate(self._entries):
+            if self._hostname_matches(key, entry):
+                index = i
+                break
+        if index is None:
+            raise KeyError(key)
+        self._entries.pop(index)
 
     def __setitem__(self, hostname, entry):
         # don't use this please.
