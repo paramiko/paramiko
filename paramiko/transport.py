@@ -1901,10 +1901,10 @@ class Transport (threading.Thread, ClosingContextManager):
         self.remote_version = buf
         self._log(DEBUG, 'Remote version/idstring: %s' % buf)
         # pull off any attached comment
-        comment = ''
+        # NOTE: comment used to be stored in a variable and then...never used.
+        # since 2003. ca 877cd974b8182d26fa76d566072917ea67b64e67
         i = buf.find(' ')
         if i >= 0:
-            comment = buf[i+1:]
             buf = buf[:i]
         # parse out version string and make sure it matches
         segs = buf.split('-', 2)
