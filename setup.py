@@ -16,6 +16,13 @@
 # along with Paramiko; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Suite 500, Boston, MA  02110-1335  USA.
 
+import sys
+from setuptools import setup
+
+if sys.platform == 'darwin':
+    import setup_helper
+
+    setup_helper.install_custom_make_tarball()
 
 longdesc = '''
 This is a library for making SSH2 connections (client or server).
@@ -30,14 +37,6 @@ To install the development version, ``pip install -e
 git+https://github.com/paramiko/paramiko/#egg=paramiko``.
 '''
 
-import sys
-from setuptools import setup
-
-
-if sys.platform == 'darwin':
-    import setup_helper
-    setup_helper.install_custom_make_tarball()
-
 
 # Version info -- read without importing
 _locals = {}
@@ -45,22 +44,22 @@ with open('paramiko/_version.py') as fp:
     exec(fp.read(), None, _locals)
 version = _locals['__version__']
 
-
 setup(
-    name = "paramiko",
-    version = version,
-    description = "SSH2 protocol library",
-    long_description = longdesc,
-    author = "Jeff Forcier",
-    author_email = "jeff@bitprophet.org",
-    url = "https://github.com/paramiko/paramiko/",
-    packages = [ 'paramiko' ],
-    license = 'LGPL',
-    platforms = 'Posix; MacOS X; Windows',
-    classifiers = [
+    name="paramiko",
+    version=version,
+    description="SSH2 protocol library",
+    long_description=longdesc,
+    author="Jeff Forcier",
+    author_email="jeff@bitprophet.org",
+    url="https://github.com/paramiko/paramiko/",
+    packages=['paramiko'],
+    license='LGPL',
+    platforms='Posix; MacOS X; Windows',
+    classifiers=[
         'Development Status :: 5 - Production/Stable',
         'Intended Audience :: Developers',
-        'License :: OSI Approved :: GNU Library or Lesser General Public License (LGPL)',
+        'License :: OSI Approved :: '
+        'GNU Library or Lesser General Public License (LGPL)',
         'Operating System :: OS Independent',
         'Topic :: Internet',
         'Topic :: Security :: Cryptography',
