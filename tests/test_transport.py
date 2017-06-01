@@ -31,13 +31,16 @@ import random
 from hashlib import sha1
 import unittest
 
-from paramiko import Transport, SecurityOptions, ServerInterface, RSAKey, DSSKey, \
-    SSHException, ChannelException, Packetizer
+from paramiko import (
+    Transport, SecurityOptions, ServerInterface, RSAKey, DSSKey, SSHException,
+    ChannelException, Packetizer,
+)
 from paramiko import AUTH_FAILED, AUTH_SUCCESSFUL
 from paramiko import OPEN_SUCCEEDED, OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED
-from paramiko.common import MSG_KEXINIT, cMSG_CHANNEL_WINDOW_ADJUST, \
-                            MIN_PACKET_SIZE, MIN_WINDOW_SIZE, MAX_WINDOW_SIZE, \
-                            DEFAULT_WINDOW_SIZE, DEFAULT_MAX_PACKET_SIZE
+from paramiko.common import (
+    MSG_KEXINIT, cMSG_CHANNEL_WINDOW_ADJUST, MIN_PACKET_SIZE, MIN_WINDOW_SIZE,
+    MAX_WINDOW_SIZE, DEFAULT_WINDOW_SIZE, DEFAULT_MAX_PACKET_SIZE,
+)
 from paramiko.py3compat import bytes
 from paramiko.message import Message
 from tests.loop import LoopSocket

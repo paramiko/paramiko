@@ -31,11 +31,11 @@ class AuthenticationException (SSHException):
     Exception raised when authentication failed for some reason.  It may be
     possible to retry with different credentials.  (Other classes specify more
     specific reasons.)
-    
+
     .. versionadded:: 1.6
     """
     pass
-    
+
 
 class PasswordRequiredException (AuthenticationException):
     """
@@ -49,15 +49,15 @@ class BadAuthenticationType (AuthenticationException):
     Exception raised when an authentication type (like password) is used, but
     the server isn't allowing that type.  (It may only allow public-key, for
     example.)
-    
+
     :ivar list allowed_types:
         list of allowed authentication types provided by the server (possible
         values are: ``"none"``, ``"password"``, and ``"publickey"``).
-    
+
     .. versionadded:: 1.1
     """
     allowed_types = []
-    
+
     def __init__(self, explanation, types):
         AuthenticationException.__init__(self, explanation)
         self.allowed_types = types
@@ -65,7 +65,8 @@ class BadAuthenticationType (AuthenticationException):
         self.args = (explanation, types, )
 
     def __str__(self):
-        return SSHException.__str__(self) + ' (allowed_types=%r)' % self.allowed_types
+        return '{} (allowed_types={!r})'.format(
+            SSHException.__str__(self), self.allowed_types)
 
 
 class PartialAuthentication (AuthenticationException):
@@ -73,7 +74,7 @@ class PartialAuthentication (AuthenticationException):
     An internal exception thrown in the case of partial authentication.
     """
     allowed_types = []
-    
+
     def __init__(self, types):
         AuthenticationException.__init__(self, 'partial authentication')
         self.allowed_types = types
@@ -84,9 +85,9 @@ class PartialAuthentication (AuthenticationException):
 class ChannelException (SSHException):
     """
     Exception raised when an attempt to open a new `.Channel` fails.
-    
+
     :ivar int code: the error code returned by the server
-    
+
     .. versionadded:: 1.6
     """
     def __init__(self, code, text):
@@ -99,19 +100,19 @@ class ChannelException (SSHException):
 class BadHostKeyException (SSHException):
     """
     The host key given by the SSH server did not match what we were expecting.
-    
+
     :ivar str hostname: the hostname of the SSH server
     :ivar PKey got_key: the host key presented by the server
     :ivar PKey expected_key: the host key expected
-    
+
     .. versionadded:: 1.6
     """
     def __init__(self, hostname, got_key, expected_key):
-        SSHException.__init__(self,
-                              'Host key for server %s does not match : got %s expected %s' % (
-                                  hostname,
-                                  got_key.get_base64(),
-                                  expected_key.get_base64()))
+        message = 'Host key for server {} does not match: got {} expected {}'
+        message = message.format(
+            hostname, got_key.get_base64(),
+            expected_key.get_base64())
+        SSHException.__init__(self, message)
         self.hostname = hostname
         self.key = got_key
         self.expected_key = expected_key
@@ -147,7 +148,7 @@ class NoValidConnectionsError(socket.error):
     `socket.error` subclass, message, etc) we expose a single unified error
     message and a ``None`` errno so that instances of this class match most
     normal handling of `socket.error` objects.
-    
+
     To see the wrapped exception objects, access the ``errors`` attribute.
     ``errors`` is a dict whose keys are address tuples (e.g. ``('127.0.0.1',
     22)``) and whose values are the exception encountered trying to connect to

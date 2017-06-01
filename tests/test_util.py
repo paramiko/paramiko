@@ -475,9 +475,10 @@ Host param3 parara
         safe_has_bytes = safe_string(has_bytes)
         expected_bytes = b("has %07%03 bytes")
         err = "{0!r} != {1!r}"
-        assert safe_vanilla == vanilla, err.format(safe_vanilla, vanilla)
-        assert safe_has_bytes == expected_bytes, \
-            err.format(safe_has_bytes, expected_bytes)
+        msg = err.format(safe_vanilla, vanilla)
+        assert safe_vanilla == vanilla, msg
+        msg = err.format(safe_has_bytes, expected_bytes)
+        assert safe_has_bytes == expected_bytes, msg
 
     def test_proxycommand_none_issue_418(self):
         test_config_file = """
