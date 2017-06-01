@@ -115,3 +115,17 @@ class HostKeysTest (unittest.TestCase):
         self.assertEqual(b'7EC91BB336CB6D810B124B1353C32396', fp)
         fp = hexlify(hostdict['secure.example.com']['ssh-dss'].get_fingerprint()).upper()
         self.assertEqual(b'4478F0B9A23CC5182009FF755BC1D26C', fp)
+
+    def test_5_dict(self):
+        hostdict = paramiko.HostKeys('hostfile.temp')
+        self.assertTrue('secure.example.com' in hostdict)
+        self.assertTrue(hostdict.clear_host('secure.example.com'))
+        self.assertTrue('secure.example.com' not in hostdict)
+        self.assertFalse(hostdict.clear_host('secure.example.com'))
+
+        hostdict = paramiko.HostKeys('hostfile.temp')
+        self.assertTrue('secure.example.com' in hostdict)
+        hostdict.clear_host('secure.example.com')
+        hostdict.save('hostfile.temp')
+        hostdict.load('hostfile.temp')
+        self.assertTrue('secure.example.com' not in hostdict)
