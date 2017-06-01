@@ -392,8 +392,7 @@ class BufferedFile (ClosingContextManager):
         :param data: ``str``/``bytes`` data to write
         """
         if isinstance(data, text_type):
-            # GZ 2017-05-25: Accepting text on a binary stream unconditionally
-            # cooercing to utf-8 seems questionable, but compatibility reasons?
+            # Accept text and encode as utf-8 for compatibility only.
             data = data.encode('utf-8')
         if self._closed:
             raise IOError('File is closed')

@@ -163,15 +163,16 @@ else:
 
 
 def asbytes(s):
+    """Coerce to bytes if possible or return unchanged."""
     if isinstance(s, bytes_types):
         return s
     if isinstance(s, text_type):
-        # GZ 2017-05-25: Accept text and encode as utf-8 for compatibilty only.
+        # Accept text and encode as utf-8 for compatibility only.
         return s.encode("utf-8")
     asbytes = getattr(s, "asbytes", None)
     if asbytes is not None:
         return asbytes()
-    # May be an object that implements the buffer api, let callers decide
+    # May be an object that implements the buffer api, let callers handle.
     return s
 
 

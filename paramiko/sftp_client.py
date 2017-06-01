@@ -761,6 +761,8 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
                 elif isinstance(item, SFTPAttributes):
                     item._pack(msg)
                 else:
+                    # For all other types, rely on as_string() to either coerce
+                    # to bytes before writing or raise a suitable exception.
                     msg.add_string(item)
             num = self.request_number
             self._expecting[num] = fileobj
