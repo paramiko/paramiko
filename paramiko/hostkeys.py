@@ -246,7 +246,14 @@ class HostKeys (MutableMapping):
         return ret
 
     def __delitem__(self, key):
-        pass  # Needed for instantiating HostKeys.
+        index = None
+        for i, entry in enumerate(self._entries):
+            if self._hostname_matches(key, entry):
+                index = i
+                break
+        if i is None:
+            raise KeyError(key)
+        self._entries.pop(i)
 
     def __setitem__(self, hostname, entry):
         # don't use this please.
