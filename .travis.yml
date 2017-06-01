@@ -25,6 +25,8 @@ script:
   # Also force warnings to be errors since most of them tend to be actual
   # problems.
   - invoke docs -o -W www -o -W
+  # flake8 is now possible!
+  - flake8
 notifications:
   irc:
     channels: "irc.freenode.org#paramiko"
