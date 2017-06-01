@@ -512,7 +512,10 @@ class Transport (threading.Thread, ClosingContextManager):
                 if e is not None:
                     raise e
                 raise SSHException('Negotiation failed.')
-            if event.is_set() or (timeout is not None and time.time() >= max_time):
+            if (
+                event.is_set() or
+                (timeout is not None and time.time() >= max_time)
+            ):
                 break
 
     def start_server(self, event=None, server=None):
