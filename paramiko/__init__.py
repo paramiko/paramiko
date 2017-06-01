@@ -29,14 +29,18 @@ __license__ = "GNU Lesser General Public License (LGPL)"
 
 
 from paramiko.transport import SecurityOptions, Transport
-from paramiko.client import SSHClient, MissingHostKeyPolicy, AutoAddPolicy, \
-    RejectPolicy, WarningPolicy
+from paramiko.client import (
+    SSHClient, MissingHostKeyPolicy, AutoAddPolicy, RejectPolicy, 
+    WarningPolicy,
+)
 from paramiko.auth_handler import AuthHandler
 from paramiko.ssh_gss import GSSAuth, GSS_AUTH_AVAILABLE
 from paramiko.channel import Channel, ChannelFile
-from paramiko.ssh_exception import SSHException, PasswordRequiredException, \
-    BadAuthenticationType, ChannelException, BadHostKeyException, \
-    AuthenticationException, ProxyCommandFailure
+from paramiko.ssh_exception import (
+    SSHException, PasswordRequiredException, BadAuthenticationType,
+    ChannelException, BadHostKeyException, AuthenticationException,
+    ProxyCommandFailure,
+)
 from paramiko.server import ServerInterface, SubsystemHandler, InteractiveQuery
 from paramiko.rsakey import RSAKey
 from paramiko.dsskey import DSSKey
@@ -57,14 +61,17 @@ from paramiko.hostkeys import HostKeys
 from paramiko.config import SSHConfig
 from paramiko.proxy import ProxyCommand
 
-from paramiko.common import AUTH_SUCCESSFUL, AUTH_PARTIALLY_SUCCESSFUL, \
-    AUTH_FAILED, OPEN_SUCCEEDED, OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED, \
-    OPEN_FAILED_CONNECT_FAILED, OPEN_FAILED_UNKNOWN_CHANNEL_TYPE, \
-    OPEN_FAILED_RESOURCE_SHORTAGE
+from paramiko.common import (
+    AUTH_SUCCESSFUL, AUTH_PARTIALLY_SUCCESSFUL, AUTH_FAILED, OPEN_SUCCEEDED,
+    OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED, OPEN_FAILED_CONNECT_FAILED,
+    OPEN_FAILED_UNKNOWN_CHANNEL_TYPE, OPEN_FAILED_RESOURCE_SHORTAGE,
+)
 
-from paramiko.sftp import SFTP_OK, SFTP_EOF, SFTP_NO_SUCH_FILE, \
-    SFTP_PERMISSION_DENIED, SFTP_FAILURE, SFTP_BAD_MESSAGE, \
-    SFTP_NO_CONNECTION, SFTP_CONNECTION_LOST, SFTP_OP_UNSUPPORTED
+from paramiko.sftp import (
+    SFTP_OK, SFTP_EOF, SFTP_NO_SUCH_FILE, SFTP_PERMISSION_DENIED, SFTP_FAILURE,
+    SFTP_BAD_MESSAGE, SFTP_NO_CONNECTION, SFTP_CONNECTION_LOST,
+    SFTP_OP_UNSUPPORTED,
+)
 
 from paramiko.common import io_sleep
 

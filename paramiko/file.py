@@ -15,8 +15,9 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with Paramiko; if not, write to the Free Software Foundation, Inc.,
 # 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
-from paramiko.common import linefeed_byte_value, crlf, cr_byte, \
-    linefeed_byte, cr_byte_value
+from paramiko.common import (
+    linefeed_byte_value, crlf, cr_byte, linefeed_byte, cr_byte_value,
+)
 from paramiko.py3compat import BytesIO, PY2, u, b, bytes_types
 
 from paramiko.util import ClosingContextManager

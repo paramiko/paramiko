@@ -28,10 +28,11 @@ import threading
 from functools import wraps
 
 from paramiko import util
-from paramiko.common import cMSG_CHANNEL_REQUEST, cMSG_CHANNEL_WINDOW_ADJUST, \
-    cMSG_CHANNEL_DATA, cMSG_CHANNEL_EXTENDED_DATA, DEBUG, ERROR, \
-    cMSG_CHANNEL_SUCCESS, cMSG_CHANNEL_FAILURE, cMSG_CHANNEL_EOF, \
-    cMSG_CHANNEL_CLOSE
+from paramiko.common import (
+    cMSG_CHANNEL_REQUEST, cMSG_CHANNEL_WINDOW_ADJUST, cMSG_CHANNEL_DATA,
+    cMSG_CHANNEL_EXTENDED_DATA, DEBUG, ERROR, cMSG_CHANNEL_SUCCESS,
+    cMSG_CHANNEL_FAILURE, cMSG_CHANNEL_EOF, cMSG_CHANNEL_CLOSE,
+)
 from paramiko.message import Message
 from paramiko.py3compat import bytes_types
 from paramiko.ssh_exception import SSHException
@@ -50,8 +51,12 @@ def open_only(func):
     """
     @wraps(func)
     def _check(self, *args, **kwds):
-        if self.closed or self.eof_received or self.eof_sent or \
-                not self.active:
+        if (
+            self.closed or
+            self.eof_received or
+            self.eof_sent or
+            not self.active
+        ):
             raise SSHException('Channel is not open')
         return func(self, *args, **kwds)
     return _check

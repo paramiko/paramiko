@@ -29,8 +29,10 @@ import time
 from hmac import HMAC
 
 from paramiko import util
-from paramiko.common import linefeed_byte, cr_byte_value, asbytes, MSG_NAMES, \
-    DEBUG, xffffffff, zero_byte
+from paramiko.common import (
+    linefeed_byte, cr_byte_value, asbytes, MSG_NAMES, DEBUG, xffffffff,
+    zero_byte,
+)
 from paramiko.py3compat import u, byte_ord
 from paramiko.ssh_exception import SSHException, ProxyCommandFailure
 from paramiko.message import Message
