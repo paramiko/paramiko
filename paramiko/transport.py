@@ -211,6 +211,8 @@ class Transport (threading.Thread, ClosingContextManager):
         'ssh-rsa': RSAKey,
         'ssh-dss': DSSKey,
         'ecdsa-sha2-nistp256': ECDSAKey,
+        'ecdsa-sha2-nistp384': ECDSAKey,
+        'ecdsa-sha2-nistp521': ECDSAKey,
     }
 
     _kex_info = {
