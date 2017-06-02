@@ -117,7 +117,11 @@ class SSHClientTest (unittest.TestCase):
             allowed_keys = FINGERPRINTS.keys()
         self.socks, addr = self.sockl.accept()
         self.ts = paramiko.Transport(self.socks)
-        host_key = paramiko.RSAKey.from_private_key_file(test_path('test_rsa.key'))
+        keypath = test_path('test_rsa.key')
+        host_key = paramiko.RSAKey.from_private_key_file(keypath)
+        self.ts.add_server_key(host_key)
+        keypath = test_path('test_ecdsa_256.key')
+        host_key = paramiko.ECDSAKey.from_private_key_file(keypath)
         self.ts.add_server_key(host_key)
         server = NullServer(allowed_keys=allowed_keys)
         if delay:
@@ -439,6 +443,52 @@ class SSHClientTest (unittest.TestCase):
             gss_kex=True,
              **self.connect_kwargs
         )
+
+    def _client_host_key_bad(self, host_key):
+        threading.Thread(target=self._run).start()
+        hostname = '[%s]:%d' % (self.addr, self.port)
+
+        self.tc = paramiko.SSHClient()
+        self.tc.set_missing_host_key_policy(paramiko.WarningPolicy())
+        known_hosts = self.tc.get_host_keys()
+        known_hosts.add(hostname, host_key.get_name(), host_key)
+
+        self.assertRaises(
+            paramiko.BadHostKeyException,
+            self.tc.connect,
+            password='pygmalion',
+            **self.connect_kwargs
+        )
+
+    def _client_host_key_good(self, ktype, kfile):
+        threading.Thread(target=self._run).start()
+        hostname = '[%s]:%d' % (self.addr, self.port)
+
+        self.tc = paramiko.SSHClient()
+        self.tc.set_missing_host_key_policy(paramiko.RejectPolicy())
+        host_key = ktype.from_private_key_file(test_path(kfile))
+        known_hosts = self.tc.get_host_keys()
+        known_hosts.add(hostname, host_key.get_name(), host_key)
+
+        self.tc.connect(password='pygmalion', **self.connect_kwargs)
+        self.event.wait(1.0)
+        self.assertTrue(self.event.is_set())
+        self.assertTrue(self.ts.is_active())
+        self.assertEqual(True, self.ts.is_authenticated())
+
+    def test_host_key_negotiation_1(self):
+        host_key = paramiko.ECDSAKey.generate()
+        self._client_host_key_bad(host_key)
+
+    def test_host_key_negotiation_2(self):
+        host_key = paramiko.RSAKey.generate(2048)
+        self._client_host_key_bad(host_key)
+
+    def test_host_key_negotiation_3(self):
+        self._client_host_key_good(paramiko.ECDSAKey, 'test_ecdsa_256.key')
+
+    def test_host_key_negotiation_4(self):
+        self._client_host_key_good(paramiko.RSAKey, 'test_rsa.key')
 
     def test_update_environment(self):
         """
