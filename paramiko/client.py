@@ -223,6 +223,7 @@ class SSHClient (ClosingContextManager):
         timeout=None,
         allow_agent=True,
         look_for_keys=True,
+        key_search_path=['~/.ssh', '~/ssh'],
         compress=False,
         sock=None,
         gss_auth=False,
@@ -268,6 +269,9 @@ class SSHClient (ClosingContextManager):
         :param bool look_for_keys:
             set to False to disable searching for discoverable private key
             files in ``~/.ssh/``
+        :param list key_search_path:
+            a list of directories to search for private keys when using
+            look_for_keys. Defaults to ``['~/.ssh','~/ssh']``
         :param bool compress: set to True to turn on compression
         :param socket sock:
             an open socket or socket-like object (such as a `.Channel`) to use
@@ -383,7 +387,7 @@ class SSHClient (ClosingContextManager):
         if gss_host is None:
             gss_host = hostname
         self._auth(username, password, pkey, key_filenames, allow_agent,
-                   look_for_keys, gss_auth, gss_kex, gss_deleg_creds, gss_host)
+                   look_for_keys, key_search_path, gss_auth, gss_kex, gss_deleg_creds, gss_host)
 
     def close(self):
         """
@@ -492,7 +496,7 @@ class SSHClient (ClosingContextManager):
         return self._transport
 
     def _auth(self, username, password, pkey, key_filenames, allow_agent,
-              look_for_keys, gss_auth, gss_kex, gss_deleg_creds, gss_host):
+              look_for_keys, key_search_path, gss_auth, gss_kex, gss_deleg_creds, gss_host):
         """
         Try, in order:
 
@@ -586,25 +590,16 @@ class SSHClient (ClosingContextManager):
 
         if not two_factor:
             keyfiles = []
-            rsa_key = os.path.expanduser('~/.ssh/id_rsa')
-            dsa_key = os.path.expanduser('~/.ssh/id_dsa')
-            ecdsa_key = os.path.expanduser('~/.ssh/id_ecdsa')
-            if os.path.isfile(rsa_key):
-                keyfiles.append((RSAKey, rsa_key))
-            if os.path.isfile(dsa_key):
-                keyfiles.append((DSSKey, dsa_key))
-            if os.path.isfile(ecdsa_key):
-                keyfiles.append((ECDSAKey, ecdsa_key))
-            # look in ~/ssh/ for windows users:
-            rsa_key = os.path.expanduser('~/ssh/id_rsa')
-            dsa_key = os.path.expanduser('~/ssh/id_dsa')
-            ecdsa_key = os.path.expanduser('~/ssh/id_ecdsa')
-            if os.path.isfile(rsa_key):
-                keyfiles.append((RSAKey, rsa_key))
-            if os.path.isfile(dsa_key):
-                keyfiles.append((DSSKey, dsa_key))
-            if os.path.isfile(ecdsa_key):
-                keyfiles.append((ECDSAKey, ecdsa_key))
+            for path in key_search_path:
+                rsa_key = os.path.expanduser('{0}/id_rsa'.format(path))
+                dsa_key = os.path.expanduser('{0}/id_dsa'.format(path))
+                ecdsa_key = os.path.expanduser('{0}/id_ecdsa'.format(path))
+                if os.path.isfile(rsa_key):
+                    keyfiles.append((RSAKey, rsa_key))
+                if os.path.isfile(dsa_key):
+                    keyfiles.append((DSSKey, dsa_key))
+                if os.path.isfile(ecdsa_key):
+                    keyfiles.append((ECDSAKey, ecdsa_key))
 
             if not look_for_keys:
                 keyfiles = []
