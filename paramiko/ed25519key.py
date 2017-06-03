@@ -52,7 +52,7 @@ class Ed25519Key(PKey):
         if msg is not None:
             if msg.get_text() != "ssh-ed25519":
                 raise SSHException("Invalid key")
-            verifying_key = nacl.signing.VerifyKey(msg.get_bytes(32))
+            verifying_key = nacl.signing.VerifyKey(msg.get_binary())
         elif filename is not None:
             with open(filename, "r") as f:
                 data = self._read_private_key("OPENSSH", f)
@@ -164,7 +164,7 @@ class Ed25519Key(PKey):
             v = self._verifying_key
         m = Message()
         m.add_string("ssh-ed25519")
-        m.add_bytes(v.encode())
+        m.add_string(v.encode())
         return m.asbytes()
 
     def get_name(self):
