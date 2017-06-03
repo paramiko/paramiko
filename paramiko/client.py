@@ -588,7 +588,7 @@ class SSHClient (ClosingContextManager):
         if not two_factor:
             keyfiles = []
 
-            for keytype, path in [
+            for keytype, name in [
                 (RSAKey, "rsa"),
                 (DSSKey, "dsa"),
                 (ECDSAKey, "ecdsa"),
@@ -596,7 +596,9 @@ class SSHClient (ClosingContextManager):
             ]:
                 # ~/ssh/ is for windows
                 for directory in [".ssh", "ssh"]:
-                    full_path = os.path.expanduser("~/%s/id_%s" % (directory, path))
+                    full_path = os.path.expanduser(
+                        "~/%s/id_%s" % (directory, name)
+                    )
                     if os.path.isfile(full_path):
                         keyfiles.append((keytype, full_path))
 
