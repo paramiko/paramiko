@@ -181,9 +181,7 @@ class ECDSAKey(PKey):
 
     def sign_ssh_data(self, data):
         ecdsa = ec.ECDSA(self.ecdsa_curve.hash_object())
-        signer = self.signing_key.signer(ecdsa)
-        signer.update(data)
-        sig = signer.finalize()
+        sig = self.signing_key.sign(data, ecdsa)
         r, s = decode_dss_signature(sig)
 
         m = Message()
@@ -198,12 +196,10 @@ class ECDSAKey(PKey):
         sigR, sigS = self._sigdecode(sig)
         signature = encode_dss_signature(sigR, sigS)
 
-        verifier = self.verifying_key.verifier(
-            signature, ec.ECDSA(self.ecdsa_curve.hash_object())
-        )
-        verifier.update(data)
         try:
-            verifier.verify()
+            self.verifying_key.verify(
+                signature, data, ec.ECDSA(self.ecdsa_curve.hash_object())
+            )
         except InvalidSignature:
             return False
         else:

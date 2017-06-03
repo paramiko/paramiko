@@ -112,9 +112,8 @@ class DSSKey(PKey):
                 )
             )
         ).private_key(backend=default_backend())
-        signer = key.signer(hashes.SHA1())
-        signer.update(data)
-        r, s = decode_dss_signature(signer.finalize())
+        sig = key.sign(data, hashes.SHA1())
+        r, s = decode_dss_signature(sig)
 
         m = Message()
         m.add_string('ssh-dss')
@@ -152,10 +151,8 @@ class DSSKey(PKey):
                 g=self.g
             )
         ).public_key(backend=default_backend())
-        verifier = key.verifier(signature, hashes.SHA1())
-        verifier.update(data)
         try:
-            verifier.verify()
+            key.verify(signature, data, hashes.SHA1())
         except InvalidSignature:
             return False
         else:

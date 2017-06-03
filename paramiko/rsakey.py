@@ -105,12 +105,11 @@ class RSAKey(PKey):
         return isinstance(self.key, rsa.RSAPrivateKey)
 
     def sign_ssh_data(self, data):
-        signer = self.key.signer(
+        sig = self.key.sign(
+            data,
             padding=padding.PKCS1v15(),
             algorithm=hashes.SHA1(),
         )
-        signer.update(data)
-        sig = signer.finalize()
 
         m = Message()
         m.add_string('ssh-rsa')
@@ -124,14 +123,10 @@ class RSAKey(PKey):
         if isinstance(key, rsa.RSAPrivateKey):
             key = key.public_key()
 
-        verifier = key.verifier(
-            signature=msg.get_binary(),
-            padding=padding.PKCS1v15(),
-            algorithm=hashes.SHA1(),
-        )
-        verifier.update(data)
         try:
-            verifier.verify()
+            key.verify(
+                msg.get_binary(), data, padding.PKCS1v15(), hashes.SHA1()
+            )
         except InvalidSignature:
             return False
         else:
