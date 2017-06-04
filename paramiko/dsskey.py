@@ -42,7 +42,8 @@ class DSSKey(PKey):
     data.
     """
 
-    def __init__(self, msg=None, data=None, filename=None, password=None, vals=None, file_obj=None):
+    def __init__(self, msg=None, data=None, filename=None, password=None,
+                 vals=None, file_obj=None):
         self.p = None
         self.q = None
         self.g = None
@@ -222,7 +223,7 @@ class DSSKey(PKey):
         key.x = numbers.x
         return key
 
-    ###  internals...
+    # ...internals...
 
     def _from_private_key_file(self, filename, password):
         data = self._read_private_key_file('DSA', filename, password)
@@ -239,8 +240,13 @@ class DSSKey(PKey):
             keylist = BER(data).decode()
         except BERException as e:
             raise SSHException('Unable to parse key file: ' + str(e))
-        if (type(keylist) is not list) or (len(keylist) < 6) or (keylist[0] != 0):
-            raise SSHException('not a valid DSA private key file (bad ber encoding)')
+        if (
+            type(keylist) is not list or
+            len(keylist) < 6 or
+            keylist[0] != 0
+        ):
+            raise SSHException(
+                'not a valid DSA private key file (bad ber encoding)')
         self.p = keylist[1]
         self.q = keylist[2]
         self.g = keylist[3]

@@ -26,15 +26,17 @@ from paramiko.message import Message
 from paramiko.py3compat import byte_chr, byte_ord
 
 
-CMD_INIT, CMD_VERSION, CMD_OPEN, CMD_CLOSE, CMD_READ, CMD_WRITE, CMD_LSTAT, CMD_FSTAT, \
-    CMD_SETSTAT, CMD_FSETSTAT, CMD_OPENDIR, CMD_READDIR, CMD_REMOVE, CMD_MKDIR, \
-    CMD_RMDIR, CMD_REALPATH, CMD_STAT, CMD_RENAME, CMD_READLINK, CMD_SYMLINK = range(1, 21)
+CMD_INIT, CMD_VERSION, CMD_OPEN, CMD_CLOSE, CMD_READ, CMD_WRITE, CMD_LSTAT, \
+    CMD_FSTAT, CMD_SETSTAT, CMD_FSETSTAT, CMD_OPENDIR, CMD_READDIR, \
+    CMD_REMOVE, CMD_MKDIR, CMD_RMDIR, CMD_REALPATH, CMD_STAT, CMD_RENAME, \
+    CMD_READLINK, CMD_SYMLINK = range(1, 21)
 CMD_STATUS, CMD_HANDLE, CMD_DATA, CMD_NAME, CMD_ATTRS = range(101, 106)
 CMD_EXTENDED, CMD_EXTENDED_REPLY = range(200, 202)
 
 SFTP_OK = 0
-SFTP_EOF, SFTP_NO_SUCH_FILE, SFTP_PERMISSION_DENIED, SFTP_FAILURE, SFTP_BAD_MESSAGE, \
-    SFTP_NO_CONNECTION, SFTP_CONNECTION_LOST, SFTP_OP_UNSUPPORTED = range(1, 9)
+SFTP_EOF, SFTP_NO_SUCH_FILE, SFTP_PERMISSION_DENIED, SFTP_FAILURE, \
+    SFTP_BAD_MESSAGE, SFTP_NO_CONNECTION, SFTP_CONNECTION_LOST, \
+    SFTP_OP_UNSUPPORTED = range(1, 9)
 
 SFTP_DESC = ['Success',
              'End of file',
@@ -98,7 +100,7 @@ class BaseSFTP (object):
         self.sock = None
         self.ultra_debug = False
 
-    ###  internals...
+    # ...internals...
 
     def _send_version(self):
         self._send_packet(CMD_INIT, struct.pack('>I', _VERSION))
@@ -124,7 +126,7 @@ class BaseSFTP (object):
         msg.add(*extension_pairs)
         self._send_packet(CMD_VERSION, msg)
         return version
-        
+
     def _log(self, level, msg, *args):
         self.logger.log(level, msg, *args)
 
@@ -154,7 +156,7 @@ class BaseSFTP (object):
                         break
             else:
                 x = self.sock.recv(n)
-                
+
             if len(x) == 0:
                 raise EOFError()
             out += x
@@ -162,7 +164,6 @@ class BaseSFTP (object):
         return out
 
     def _send_packet(self, t, packet):
-        #self._log(DEBUG2, 'write: %s (len=%d)' % (CMD_NAMES.get(t, '0x%02x' % t), len(packet)))
         packet = asbytes(packet)
         out = struct.pack('>I', len(packet) + 1) + byte_chr(t) + packet
         if self.ultra_debug:
@@ -181,6 +182,5 @@ class BaseSFTP (object):
             self._log(DEBUG, util.format_binary(data, 'IN: '))
         if size > 0:
             t = byte_ord(data[0])
-            #self._log(DEBUG2, 'read: %s (len=%d)' % (CMD_NAMES.get(t), '0x%02x' % t, len(data)-1))
             return t, data[1:]
         return 0, bytes()

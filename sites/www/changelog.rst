@@ -2,6 +2,10 @@
 Changelog
 =========
 
+* :support:`974 backported` Overhaul the codebase to be PEP-8, etc, compliant
+  (i.e. passes the maintainer's preferred `flake8 <http://flake8.pycqa.org/>`_
+  configuration) and add a ``flake8`` step to the Travis config. Big thanks to
+  Dorian Pula!
 * :bug:`683` Make `util.log_to_file()` append instead of replace. Thanks
   to ``@vlcinsky`` for the report.
 * :release:`2.1.2 <2017-02-20>`

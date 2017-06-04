@@ -20,6 +20,7 @@ Please see the sidebar to the left to begin.
     changelog
     FAQs <faq>
     installing
+    installing-1.x
     contributing
     contact
 

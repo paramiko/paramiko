@@ -180,7 +180,7 @@ class _SSH_GSSAuth(object):
         return True
 
     # Internals
-    #--------------------------------------------------------------------------
+    # -------------------------------------------------------------------------
     def _make_uint32(self, integer):
         """
         Create a 32 bit unsigned integer (The byte sequence of an integer).
@@ -258,8 +258,8 @@ class _SSH_GSSAPI(_SSH_GSSAuth):
         :param str recv_token: The GSS-API token received from the Server
         :raise SSHException: Is raised if the desired mechanism of the client
                              is not supported
-        :return: A ``String`` if the GSS-API has returned a token or ``None`` if
-                 no token was returned
+        :return: A ``String`` if the GSS-API has returned a token or
+            ``None`` if no token was returned
         :rtype: String or None
         """
         self._username = username
@@ -286,8 +286,9 @@ class _SSH_GSSAPI(_SSH_GSSAuth):
             else:
                 token = self._gss_ctxt.step(recv_token)
         except gssapi.GSSException:
-            raise gssapi.GSSException("{0} Target: {1}".format(sys.exc_info()[1],
-                                                               self._gss_host))
+            message = "{0} Target: {1}".format(
+                sys.exc_info()[1], self._gss_host)
+            raise gssapi.GSSException(message)
         self._gss_ctxt_status = self._gss_ctxt.established
         return token
 
@@ -404,12 +405,16 @@ class _SSH_SSPI(_SSH_GSSAuth):
         _SSH_GSSAuth.__init__(self, auth_method, gss_deleg_creds)
 
         if self._gss_deleg_creds:
-            self._gss_flags = sspicon.ISC_REQ_INTEGRITY |\
-                              sspicon.ISC_REQ_MUTUAL_AUTH |\
-                              sspicon.ISC_REQ_DELEGATE
+            self._gss_flags = (
+                sspicon.ISC_REQ_INTEGRITY |
+                sspicon.ISC_REQ_MUTUAL_AUTH |
+                sspicon.ISC_REQ_DELEGATE
+            )
         else:
-            self._gss_flags = sspicon.ISC_REQ_INTEGRITY |\
-                              sspicon.ISC_REQ_MUTUAL_AUTH
+            self._gss_flags = (
+                sspicon.ISC_REQ_INTEGRITY |
+                sspicon.ISC_REQ_MUTUAL_AUTH
+            )
 
     def ssh_init_sec_context(self, target, desired_mech=None,
                              username=None, recv_token=None):
@@ -527,13 +532,13 @@ class _SSH_SSPI(_SSH_GSSAuth):
                                             self._username,
                                             self._service,
                                             self._auth_method)
-            # Verifies data and its signature.  If verification fails, an 
+            # Verifies data and its signature.  If verification fails, an
             # sspi.error will be raised.
             self._gss_srv_ctxt.verify(mic_field, mic_token)
         else:
             # for key exchange with gssapi-keyex
             # client mode
-            # Verifies data and its signature.  If verification fails, an 
+            # Verifies data and its signature.  If verification fails, an
             # sspi.error will be raised.
             self._gss_ctxt.verify(self._session_id, mic_token)
 
@@ -546,10 +551,9 @@ class _SSH_SSPI(_SSH_GSSAuth):
         :rtype: Boolean
         """
         return (
-                self._gss_flags & sspicon.ISC_REQ_DELEGATE
-                ) and (
-                self._gss_srv_ctxt_status or (self._gss_flags)
-           )
+            self._gss_flags & sspicon.ISC_REQ_DELEGATE and
+            (self._gss_srv_ctxt_status or self._gss_flags)
+        )
 
     def save_client_creds(self, client_token):
         """
