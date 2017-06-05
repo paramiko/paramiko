@@ -2,6 +2,9 @@
 Changelog
 =========
 
+* :bug:`794` Finishing touches to support ecdsa-sha2-nistp384 and
+  ecdsa-sha2-nistp521 host keys. Thanks ``@ncoult`` and ``@kasdoe`` for
+  reports.
 * :support:`974 backported` Overhaul the codebase to be PEP-8, etc, compliant
   (i.e. passes the maintainer's preferred `flake8 <http://flake8.pycqa.org/>`_
   configuration) and add a ``flake8`` step to the Travis config. Big thanks to
