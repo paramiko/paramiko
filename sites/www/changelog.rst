@@ -2,6 +2,9 @@
 Changelog
 =========
 
+* :feature:`951` Add support for ECDH key exchange (kex), specifically the
+  algorithms ``ecdh-sha2-nistp256``, ``ecdh-sha2-nistp384``, and
+  ``ecdh-sha2-nistp521``. Thanks to Shashank Veerapaneni for the patch.
 * :support:`- backported` A big formatting pass to clean up an enormous number
   of invalid Sphinx reference links, discovered by switching to a modern,
   rigorous nitpicking doc-building mode.
