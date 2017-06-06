@@ -43,9 +43,7 @@ class NullServer (paramiko.ServerInterface):
         return paramiko.AUTH_FAILED
 
     def enable_auth_gssapi(self):
-        UseGSSAPI = True
-        GSSAPICleanupCredentials = True
-        return UseGSSAPI
+        return True
 
     def check_channel_request(self, kind, chanid):
         return paramiko.OPEN_SUCCEEDED

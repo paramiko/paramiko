@@ -35,6 +35,7 @@ from paramiko.dsskey import DSSKey
 from paramiko.rsakey import RSAKey
 from paramiko.util import get_logger, constant_time_bytes_eq
 from paramiko.ecdsakey import ECDSAKey
+from paramiko.ed25519key import Ed25519Key
 from paramiko.ssh_exception import SSHException
 
 
@@ -90,7 +91,7 @@ class HostKeys (MutableMapping):
 
         :param str filename: name of the file to read host keys from
 
-        :raises IOError: if there was an error reading the file
+        :raises: ``IOError`` -- if there was an error reading the file
         """
         with open(filename, 'r') as f:
             for lineno, line in enumerate(f, 1):
@@ -111,14 +112,14 @@ class HostKeys (MutableMapping):
 
     def save(self, filename):
         """
-        Save host keys into a file, in the format used by OpenSSH.  The order of
-        keys in the file will be preserved when possible (if these keys were
+        Save host keys into a file, in the format used by OpenSSH.  The order
+        of keys in the file will be preserved when possible (if these keys were
         loaded from a file originally).  The single exception is that combined
         lines will be split into individual key lines, which is arguably a bug.
 
         :param str filename: name of the file to write
 
-        :raises IOError: if there was an error writing the file
+        :raises: ``IOError`` -- if there was an error writing the file
 
         .. versionadded:: 1.6.1
         """
@@ -135,7 +136,8 @@ class HostKeys (MutableMapping):
         returned.  The keytype will be either ``"ssh-rsa"`` or ``"ssh-dss"``.
 
         :param str hostname: the hostname (or IP) to lookup
-        :return: dict of `str` -> `.PKey` keys associated with this host (or ``None``)
+        :return: dict of `str` -> `.PKey` keys associated with this host
+            (or ``None``)
         """
         class SubDict (MutableMapping):
             def __init__(self, hostname, entries, hostkeys):
@@ -178,16 +180,34 @@ class HostKeys (MutableMapping):
                     self._hostkeys._entries.append(e)
 
             def keys(self):
-                return [e.key.get_name() for e in self._entries if e.key is not None]
+                return [
+                    e.key.get_name() for e in self._entries
+                    if e.key is not None
+                ]
 
         entries = []
         for e in self._entries:
-            for h in e.hostnames:
-                if h.startswith('|1|') and not hostname.startswith('|1|') and constant_time_bytes_eq(self.hash_host(hostname, h), h) or h == hostname:
-                    entries.append(e)
+            if self._hostname_matches(hostname, e):
+                entries.append(e)
         if len(entries) == 0:
             return None
         return SubDict(hostname, entries, self)
+
+    def _hostname_matches(self, hostname, entry):
+        """
+        Tests whether ``hostname`` string matches given SubDict ``entry``.
+
+        :returns bool:
+        """
+        for h in entry.hostnames:
+            if (
+                h == hostname or
+                h.startswith('|1|') and
+                not hostname.startswith('|1|') and
+                constant_time_bytes_eq(self.hash_host(hostname, h), h)
+            ):
+                return True
+        return False
 
     def check(self, hostname, key):
         """
@@ -220,14 +240,21 @@ class HostKeys (MutableMapping):
     def __len__(self):
         return len(self.keys())
 
-    def __delitem__(self, key):
-        k = self[key]
-
     def __getitem__(self, key):
         ret = self.lookup(key)
         if ret is None:
             raise KeyError(key)
         return ret
+
+    def __delitem__(self, key):
+        index = None
+        for i, entry in enumerate(self._entries):
+            if self._hostname_matches(key, entry):
+                index = i
+                break
+        if index is None:
+            raise KeyError(key)
+        self._entries.pop(index)
 
     def __setitem__(self, hostname, entry):
         # don't use this please.
@@ -237,7 +264,7 @@ class HostKeys (MutableMapping):
         for key_type in entry.keys():
             found = False
             for e in self._entries:
-                if (hostname in e.hostnames) and (e.key.get_name() == key_type):
+                if (hostname in e.hostnames) and e.key.get_name() == key_type:
                     # replace
                     e.key = entry[key_type]
                     found = True
@@ -266,7 +293,8 @@ class HostKeys (MutableMapping):
         hashed hostnames in the known_hosts file.
 
         :param str hostname: the hostname to hash
-        :param str salt: optional salt to use when hashing (must be 20 bytes long)
+        :param str salt: optional salt to use when hashing
+            (must be 20 bytes long)
         :return: the hashed hostname as a `str`
         """
         if salt is None:
@@ -333,6 +361,8 @@ class HostKeyEntry:
                 key = DSSKey(data=decodebytes(key))
             elif keytype in ECDSAKey.supported_key_format_identifiers():
                 key = ECDSAKey(data=decodebytes(key), validate_point=False)
+            elif keytype == 'ssh-ed25519':
+                key = Ed25519Key(data=decodebytes(key))
             else:
                 log.info("Unable to handle key of type %s" % (keytype,))
                 return None
@@ -349,8 +379,10 @@ class HostKeyEntry:
         included.
         """
         if self.valid:
-            return '%s %s %s\n' % (','.join(self.hostnames), self.key.get_name(),
-                   self.key.get_base64())
+            return '%s %s %s\n' % (
+                ','.join(self.hostnames),
+                self.key.get_name(),
+                self.key.get_base64())
         return None
 
     def __repr__(self):
