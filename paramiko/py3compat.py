@@ -1,5 +1,6 @@
-import sys
 import base64
+import time
+import sys
 
 __all__ = ['PY2', 'string_types', 'integer_types', 'text_type', 'bytes_types', 'bytes', 'long', 'input',
            'decodebytes', 'encodebytes', 'bytestring', 'byte_ord', 'byte_chr', 'byte_mask',
@@ -8,6 +9,9 @@ __all__ = ['PY2', 'string_types', 'integer_types', 'text_type', 'bytes_types', '
 PY2 = sys.version_info[0] < 3
 
 if PY2:
+    import __builtin__ as builtins
+    import locale
+
     string_types = basestring
     text_type = unicode
     bytes_types = str
@@ -17,8 +21,6 @@ if PY2:
     input = raw_input
     decodebytes = base64.decodestring
     encodebytes = base64.encodestring
-
-    import __builtin__ as builtins
 
 
     def bytestring(s):  # NOQA
@@ -101,6 +103,11 @@ if PY2:
         # 64-bit
         MAXSIZE = int((1 << 63) - 1)        # NOQA
     del X
+
+    def strftime(format, t):
+        """Same as time.strftime but returns unicode."""
+        _, encoding = locale.getlocale(locale.LC_TIME)
+        return time.strftime(format, t).decode(encoding or 'ascii')
 else:
     import collections
     import struct
@@ -167,3 +174,5 @@ else:
     next = next
 
     MAXSIZE = sys.maxsize       # NOQA
+
+    strftime = time.strftime    # NOQA
