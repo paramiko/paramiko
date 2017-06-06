@@ -9,6 +9,12 @@ Changelog
   patch.
 * :feature:`325` (via :issue:`972`) Add Ed25519 support, for both host keys
   and user authentication. Big thanks to Alex Gaynor for the patch.
+
+  .. note::
+    This change adds the ``bcrypt`` and ``pynacl`` Python libraries as
+    dependencies. No C-level dependencies beyond those previously required (for
+    Cryptography) have been added.
+
 * :support:`974 backported` Overhaul the codebase to be PEP-8, etc, compliant
   (i.e. passes the maintainer's preferred `flake8 <http://flake8.pycqa.org/>`_
   configuration) and add a ``flake8`` step to the Travis config. Big thanks to
