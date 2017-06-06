@@ -122,9 +122,12 @@ class Transport (threading.Thread, ClosingContextManager):
         'hmac-sha1',
     )
     _preferred_keys = (
+        'ecdsa-sha2-nistp256',
+        'ecdsa-sha2-nistp384',
+        'ecdsa-sha2-nistp521',
         'ssh-rsa',
         'ssh-dss',
-    ) + tuple(ECDSAKey.supported_key_format_identifiers())
+    )
     _preferred_kex = (
         'diffie-hellman-group1-sha1',
         'diffie-hellman-group14-sha1',
