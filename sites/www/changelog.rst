@@ -2,6 +2,14 @@
 Changelog
 =========
 
+* :feature:`65` (via :issue:`471`) Add support for OpenSSH's SFTP
+  ``posix-rename`` protocol extension (section 3.3 of `OpenSSH's protocol
+  extension document
+  <http://cvsweb.openbsd.org/cgi-bin/cvsweb/src/usr.bin/ssh/PROTOCOL?rev=1.31>`_),
+  via a new ``posix_rename`` method in `SFTPClient
+  <paramiko.sftp_client.SFTPClient.posix_rename>` and `SFTPServerInterface
+  <paramiko.sftp_si.SFTPServerInterface.posix_rename>`. Thanks to Wren Turkal
+  for the initial patch & Mika Pflüger for the enhanced, merged PR.
 * :feature:`869` Add an ``auth_timeout`` kwarg to `SSHClient.connect
   <paramiko.client.SSHClient.connect>` (default: 30s) to avoid hangs when the
   remote end becomes unresponsive during the authentication step. Credit to
