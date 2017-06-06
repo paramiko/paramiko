@@ -252,7 +252,7 @@ class SFTPFile (BufferedFile):
 
     def seek(self, offset, whence=0):
         """
-        Set the file’s current position.
+        Set the file's current position.
 
         See `file.seek` for details.
         """
