@@ -72,9 +72,8 @@ def GSSAuth(auth_method, gss_deleg_creds=True):
                                  We delegate credentials by default.
     :return: Either an `._SSH_GSSAPI` (Unix) object or an
              `_SSH_SSPI` (Windows) object
-    :rtype: Object
 
-    :raise ImportError: If no GSS-API / SSPI module could be imported.
+    :raises: ``ImportError`` -- If no GSS-API / SSPI module could be imported.
 
     :see: `RFC 4462 <http://www.ietf.org/rfc/rfc4462.txt>`_
     :note: Check for the available API and return either an `._SSH_GSSAPI`
@@ -131,7 +130,6 @@ class _SSH_GSSAuth(object):
         as the only service value.
 
         :param str service: The desired SSH service
-        :rtype: Void
         """
         if service.find("ssh-"):
             self._service = service
@@ -142,7 +140,6 @@ class _SSH_GSSAuth(object):
         username is not set by C{ssh_init_sec_context}.
 
         :param str username: The name of the user who attempts to login
-        :rtype: Void
         """
         self._username = username
 
@@ -155,7 +152,6 @@ class _SSH_GSSAuth(object):
         :return: A byte sequence containing the number of supported
                  OIDs, the length of the OID and the actual OID encoded with
                  DER
-        :rtype: Bytes
         :note: In server mode we just return the OID length and the DER encoded
                OID.
         """
@@ -172,7 +168,6 @@ class _SSH_GSSAuth(object):
 
         :param str desired_mech: The desired GSS-API mechanism of the client
         :return: ``True`` if the given OID is supported, otherwise C{False}
-        :rtype: Boolean
         """
         mech, __ = decoder.decode(desired_mech)
         if mech.__str__() != self._krb5_mech:
@@ -180,14 +175,13 @@ class _SSH_GSSAuth(object):
         return True
 
     # Internals
-    #--------------------------------------------------------------------------
+    # -------------------------------------------------------------------------
     def _make_uint32(self, integer):
         """
         Create a 32 bit unsigned integer (The byte sequence of an integer).
 
         :param int integer: The integer value to convert
         :return: The byte sequence of an 32 bit integer
-        :rtype: Bytes
         """
         return struct.pack("!I", integer)
 
@@ -207,7 +201,6 @@ class _SSH_GSSAuth(object):
                  string    service (ssh-connection),
                  string    authentication-method
                            (gssapi-with-mic or gssapi-keyex)
-        :rtype: Bytes
         """
         mic = self._make_uint32(len(session_id))
         mic += session_id
@@ -256,11 +249,11 @@ class _SSH_GSSAPI(_SSH_GSSAuth):
                                  ("pseudo negotiated" mechanism, because we
                                  support just the krb5 mechanism :-))
         :param str recv_token: The GSS-API token received from the Server
-        :raise SSHException: Is raised if the desired mechanism of the client
-                             is not supported
-        :return: A ``String`` if the GSS-API has returned a token or ``None`` if
-                 no token was returned
-        :rtype: String or None
+        :raises:
+            `.SSHException` -- Is raised if the desired mechanism of the client
+            is not supported
+        :return: A ``String`` if the GSS-API has returned a token or
+            ``None`` if no token was returned
         """
         self._username = username
         self._gss_host = target
@@ -286,8 +279,9 @@ class _SSH_GSSAPI(_SSH_GSSAuth):
             else:
                 token = self._gss_ctxt.step(recv_token)
         except gssapi.GSSException:
-            raise gssapi.GSSException("{0} Target: {1}".format(sys.exc_info()[1],
-                                                               self._gss_host))
+            message = "{0} Target: {1}".format(
+                sys.exc_info()[1], self._gss_host)
+            raise gssapi.GSSException(message)
         self._gss_ctxt_status = self._gss_ctxt.established
         return token
 
@@ -303,8 +297,6 @@ class _SSH_GSSAPI(_SSH_GSSAuth):
                  gssapi-keyex:
                  Returns the MIC token from GSS-API with the SSH session ID as
                  message.
-        :rtype: String
-        :see: `._ssh_build_mic`
         """
         self._session_id = session_id
         if not gss_kex:
@@ -328,7 +320,6 @@ class _SSH_GSSAPI(_SSH_GSSAuth):
                                if it's not the initial call.
         :return: A ``String`` if the GSS-API has returned a token or ``None``
                 if no token was returned
-        :rtype: String or None
         """
         # hostname and username are not required for GSSAPI, but for SSPI
         self._gss_host = hostname
@@ -347,7 +338,7 @@ class _SSH_GSSAPI(_SSH_GSSAuth):
         :param str session_id: The SSH session ID
         :param str username: The name of the user who attempts to login
         :return: None if the MIC check was successful
-        :raises gssapi.GSSException: if the MIC check failed
+        :raises: ``gssapi.GSSException`` -- if the MIC check failed
         """
         self._session_id = session_id
         self._username = username
@@ -370,7 +361,6 @@ class _SSH_GSSAPI(_SSH_GSSAuth):
         Checks if credentials are delegated (server mode).
 
         :return: ``True`` if credentials are delegated, otherwise ``False``
-        :rtype: bool
         """
         if self._gss_srv_ctxt.delegated_cred is not None:
             return True
@@ -383,8 +373,9 @@ class _SSH_GSSAPI(_SSH_GSSAuth):
         (server mode).
 
         :param str client_token: The GSS-API token received form the client
-        :raise NotImplementedError: Credential delegation is currently not
-                                    supported in server mode
+        :raises:
+            ``NotImplementedError`` -- Credential delegation is currently not
+            supported in server mode
         """
         raise NotImplementedError
 
@@ -404,12 +395,16 @@ class _SSH_SSPI(_SSH_GSSAuth):
         _SSH_GSSAuth.__init__(self, auth_method, gss_deleg_creds)
 
         if self._gss_deleg_creds:
-            self._gss_flags = sspicon.ISC_REQ_INTEGRITY |\
-                              sspicon.ISC_REQ_MUTUAL_AUTH |\
-                              sspicon.ISC_REQ_DELEGATE
+            self._gss_flags = (
+                sspicon.ISC_REQ_INTEGRITY |
+                sspicon.ISC_REQ_MUTUAL_AUTH |
+                sspicon.ISC_REQ_DELEGATE
+            )
         else:
-            self._gss_flags = sspicon.ISC_REQ_INTEGRITY |\
-                              sspicon.ISC_REQ_MUTUAL_AUTH
+            self._gss_flags = (
+                sspicon.ISC_REQ_INTEGRITY |
+                sspicon.ISC_REQ_MUTUAL_AUTH
+            )
 
     def ssh_init_sec_context(self, target, desired_mech=None,
                              username=None, recv_token=None):
@@ -422,11 +417,11 @@ class _SSH_SSPI(_SSH_GSSAuth):
                                  ("pseudo negotiated" mechanism, because we
                                  support just the krb5 mechanism :-))
         :param recv_token: The SSPI token received from the Server
-        :raise SSHException: Is raised if the desired mechanism of the client
-                             is not supported
+        :raises:
+            `.SSHException` -- Is raised if the desired mechanism of the client
+            is not supported
         :return: A ``String`` if the SSPI has returned a token or ``None`` if
                  no token was returned
-        :rtype: String or None
         """
         self._username = username
         self._gss_host = target
@@ -471,8 +466,6 @@ class _SSH_SSPI(_SSH_GSSAuth):
                  gssapi-keyex:
                  Returns the MIC token from SSPI with the SSH session ID as
                  message.
-        :rtype: String
-        :see: `._ssh_build_mic`
         """
         self._session_id = session_id
         if not gss_kex:
@@ -496,7 +489,6 @@ class _SSH_SSPI(_SSH_GSSAuth):
                                if it's not the initial call.
         :return: A ``String`` if the SSPI has returned a token or ``None`` if
                  no token was returned
-        :rtype: String or None
         """
         self._gss_host = hostname
         self._username = username
@@ -517,7 +509,7 @@ class _SSH_SSPI(_SSH_GSSAuth):
         :param str session_id: The SSH session ID
         :param str username: The name of the user who attempts to login
         :return: None if the MIC check was successful
-        :raises sspi.error: if the MIC check failed
+        :raises: ``sspi.error`` -- if the MIC check failed
         """
         self._session_id = session_id
         self._username = username
@@ -527,13 +519,13 @@ class _SSH_SSPI(_SSH_GSSAuth):
                                             self._username,
                                             self._service,
                                             self._auth_method)
-            # Verifies data and its signature.  If verification fails, an 
+            # Verifies data and its signature.  If verification fails, an
             # sspi.error will be raised.
             self._gss_srv_ctxt.verify(mic_field, mic_token)
         else:
             # for key exchange with gssapi-keyex
             # client mode
-            # Verifies data and its signature.  If verification fails, an 
+            # Verifies data and its signature.  If verification fails, an
             # sspi.error will be raised.
             self._gss_ctxt.verify(self._session_id, mic_token)
 
@@ -543,13 +535,11 @@ class _SSH_SSPI(_SSH_GSSAuth):
         Checks if credentials are delegated (server mode).
 
         :return: ``True`` if credentials are delegated, otherwise ``False``
-        :rtype: Boolean
         """
         return (
-                self._gss_flags & sspicon.ISC_REQ_DELEGATE
-                ) and (
-                self._gss_srv_ctxt_status or (self._gss_flags)
-           )
+            self._gss_flags & sspicon.ISC_REQ_DELEGATE and
+            (self._gss_srv_ctxt_status or self._gss_flags)
+        )
 
     def save_client_creds(self, client_token):
         """
@@ -558,7 +548,8 @@ class _SSH_SSPI(_SSH_GSSAuth):
         (server mode).
 
         :param str client_token: The SSPI token received form the client
-        :raise NotImplementedError: Credential delegation is currently not
-                                    supported in server mode
+        :raises:
+            ``NotImplementedError`` -- Credential delegation is currently not
+            supported in server mode
         """
         raise NotImplementedError

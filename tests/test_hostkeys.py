@@ -115,3 +115,15 @@ class HostKeysTest (unittest.TestCase):
         self.assertEqual(b'7EC91BB336CB6D810B124B1353C32396', fp)
         fp = hexlify(hostdict['secure.example.com']['ssh-dss'].get_fingerprint()).upper()
         self.assertEqual(b'4478F0B9A23CC5182009FF755BC1D26C', fp)
+
+    def test_delitem(self):
+        hostdict = paramiko.HostKeys('hostfile.temp')
+        target = 'happy.example.com'
+        entry = hostdict[target] # will KeyError if not present
+        del hostdict[target]
+        try:
+            entry = hostdict[target]
+        except KeyError:
+            pass # Good
+        else:
+            assert False, "Entry was not deleted from HostKeys on delitem!"

@@ -17,7 +17,6 @@
 # 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
 
 
-from datetime import datetime
 import os
 from shlex import split as shlsplit
 import signal

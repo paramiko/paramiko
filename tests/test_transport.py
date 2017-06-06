@@ -31,13 +31,16 @@ import random
 from hashlib import sha1
 import unittest
 
-from paramiko import Transport, SecurityOptions, ServerInterface, RSAKey, DSSKey, \
-    SSHException, ChannelException, Packetizer
+from paramiko import (
+    Transport, SecurityOptions, ServerInterface, RSAKey, DSSKey, SSHException,
+    ChannelException, Packetizer,
+)
 from paramiko import AUTH_FAILED, AUTH_SUCCESSFUL
 from paramiko import OPEN_SUCCEEDED, OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED
-from paramiko.common import MSG_KEXINIT, cMSG_CHANNEL_WINDOW_ADJUST, \
-                            MIN_PACKET_SIZE, MIN_WINDOW_SIZE, MAX_WINDOW_SIZE, \
-                            DEFAULT_WINDOW_SIZE, DEFAULT_MAX_PACKET_SIZE
+from paramiko.common import (
+    MSG_KEXINIT, cMSG_CHANNEL_WINDOW_ADJUST, MIN_PACKET_SIZE, MIN_WINDOW_SIZE,
+    MAX_WINDOW_SIZE, DEFAULT_WINDOW_SIZE, DEFAULT_MAX_PACKET_SIZE,
+)
 from paramiko.py3compat import bytes
 from paramiko.message import Message
 from tests.loop import LoopSocket
@@ -161,6 +164,15 @@ class TransportTest(unittest.TestCase):
             self.assertTrue(False)
         except TypeError:
             pass
+
+    def test_1b_security_options_reset(self):
+        o = self.tc.get_security_options()
+        # should not throw any exceptions
+        o.ciphers = o.ciphers
+        o.digests = o.digests
+        o.key_types = o.key_types
+        o.kex = o.kex
+        o.compression = o.compression
 
     def test_2_compute_key(self):
         self.tc.K = 123281095979686581523377256114209720774539068973101330872763622971399429481072519713536292772709507296759612401802191955568143056534122385270077606457721553469730659233569339356140085284052436697480759510519672848743794433460113118986816826624865291116513647975790797391795651716378444844877749505443714557929

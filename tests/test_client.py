@@ -43,6 +43,7 @@ FINGERPRINTS = {
     'ssh-dss': b'\x44\x78\xf0\xb9\xa2\x3c\xc5\x18\x20\x09\xff\x75\x5b\xc1\xd2\x6c',
     'ssh-rsa': b'\x60\x73\x38\x44\xcb\x51\x86\x65\x7f\xde\xda\xa2\x2b\x5a\x57\xd5',
     'ecdsa-sha2-nistp256': b'\x25\x19\xeb\x55\xe6\xa1\x47\xff\x4f\x38\xd2\x75\x6f\xa5\xd5\x60',
+    'ssh-ed25519': b'\xb3\xd5"\xaa\xf9u^\xe8\xcd\x0e\xea\x02\xb9)\xa2\x80',
 }
 
 
@@ -196,6 +197,9 @@ class SSHClientTest (unittest.TestCase):
         verify that SSHClient works with an ECDSA key.
         """
         self._test_connection(key_filename=test_path('test_ecdsa_256.key'))
+
+    def test_client_ed25519(self):
+        self._test_connection(key_filename=test_path('test_ed25519.key'))
 
     def test_3_multiple_key_files(self):
         """
@@ -370,7 +374,7 @@ class SSHClientTest (unittest.TestCase):
         # NOTE: re #387, re #394
         # If pkey module used within Client._auth isn't correctly handling auth
         # errors (e.g. if it allows things like ValueError to bubble up as per
-        # midway thru #394) client.connect() will fail (at key load step)
+        # midway through #394) client.connect() will fail (at key load step)
         # instead of succeeding (at password step)
         kwargs = dict(
             # Password-protected key whose passphrase is not 'pygmalion' (it's
@@ -435,3 +439,20 @@ class SSHClientTest (unittest.TestCase):
                             'Expected original SSHException in exception')
         else:
             self.assertFalse(False, 'SSHException was not thrown.')
+
+
+    def test_missing_key_policy_accepts_classes_or_instances(self):
+        """
+        Client.missing_host_key_policy() can take classes or instances.
+        """
+        # AN ACTUAL UNIT TEST?! GOOD LORD
+        # (But then we have to test a private API...meh.)
+        client = paramiko.SSHClient()
+        # Default
+        assert isinstance(client._policy, paramiko.RejectPolicy)
+        # Hand in an instance (classic behavior)
+        client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        assert isinstance(client._policy, paramiko.AutoAddPolicy)
+        # Hand in just the class (new behavior)
+        client.set_missing_host_key_policy(paramiko.AutoAddPolicy)
+        assert isinstance(client._policy, paramiko.AutoAddPolicy)

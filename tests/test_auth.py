@@ -25,9 +25,10 @@ import threading
 import unittest
 from time import sleep
 
-from paramiko import Transport, ServerInterface, RSAKey, DSSKey, \
-    BadAuthenticationType, InteractiveQuery, \
-    AuthenticationException
+from paramiko import (
+    Transport, ServerInterface, RSAKey, DSSKey, BadAuthenticationType,
+    InteractiveQuery, AuthenticationException,
+)
 from paramiko import AUTH_FAILED, AUTH_PARTIALLY_SUCCESSFUL, AUTH_SUCCESSFUL
 from paramiko.py3compat import u
 from tests.loop import LoopSocket

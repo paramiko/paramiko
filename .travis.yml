@@ -9,6 +9,7 @@ python:
   - "3.3"
   - "3.4"
   - "3.5"
+  - "3.6"
   - "pypy-5.4.1"
 install:
   # Self-install for setup.py-driven deps
@@ -19,11 +20,10 @@ install:
 script:
   # Main tests, w/ coverage!
   - inv test --coverage
-  # Ensure documentation & invoke pipeline run OK.
-  # Run 'docs' first since its objects.inv is referred to by 'www'.
-  # Also force warnings to be errors since most of them tend to be actual
-  # problems.
-  - invoke docs -o -W www -o -W
+  # Ensure documentation builds, both sites, maxxed nitpicking
+  - inv sites
+  # flake8 is now possible!
+  - flake8
 notifications:
   irc:
     channels: "irc.freenode.org#paramiko"

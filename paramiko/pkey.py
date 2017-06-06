@@ -65,9 +65,10 @@ class PKey(object):
 
         :param .Message msg:
             an optional SSH `.Message` containing a public key of this type.
-        :param str data: an optional string containing a public key of this type
+        :param str data: an optional string containing a public key
+            of this type
 
-        :raises SSHException:
+        :raises: `.SSHException` --
             if a key cannot be created from the ``data`` or ``msg`` given, or
             no key was passed in.
         """
@@ -85,6 +86,8 @@ class PKey(object):
         return self.asbytes()
 
     # noinspection PyUnresolvedReferences
+    # TODO: The comparison functions should be removed as per:
+    # https://docs.python.org/3.0/whatsnew/3.0.html#ordering-comparisons
     def __cmp__(self, other):
         """
         Compare this key to another.  Returns 0 if this key is equivalent to
@@ -92,13 +95,13 @@ class PKey(object):
         of the key are compared, so a public key will compare equal to its
         corresponding private key.
 
-        :param .Pkey other: key to compare to.
+        :param .PKey other: key to compare to.
         """
         hs = hash(self)
         ho = hash(other)
         if hs != ho:
-            return cmp(hs, ho)
-        return cmp(self.asbytes(), other.asbytes())
+            return cmp(hs, ho)   # noqa
+        return cmp(self.asbytes(), other.asbytes())  # noqa
 
     def __eq__(self, other):
         return hash(self) == hash(other)
@@ -188,10 +191,10 @@ class PKey(object):
             encrypted
         :return: a new `.PKey` based on the given private key
 
-        :raises IOError: if there was an error reading the file
-        :raises PasswordRequiredException: if the private key file is
+        :raises: ``IOError`` -- if there was an error reading the file
+        :raises: `.PasswordRequiredException` -- if the private key file is
             encrypted, and ``password`` is ``None``
-        :raises SSHException: if the key file is invalid
+        :raises: `.SSHException` -- if the key file is invalid
         """
         key = cls(filename=filename, password=password)
         return key
@@ -209,10 +212,10 @@ class PKey(object):
             an optional password to use to decrypt the key, if it's encrypted
         :return: a new `.PKey` based on the given private key
 
-        :raises IOError: if there was an error reading the key
-        :raises PasswordRequiredException:
+        :raises: ``IOError`` -- if there was an error reading the key
+        :raises: `.PasswordRequiredException` --
             if the private key file is encrypted, and ``password`` is ``None``
-        :raises SSHException: if the key file is invalid
+        :raises: `.SSHException` -- if the key file is invalid
         """
         key = cls(file_obj=file_obj, password=password)
         return key
@@ -226,8 +229,8 @@ class PKey(object):
         :param str password:
             an optional password to use to encrypt the key file
 
-        :raises IOError: if there was an error writing the file
-        :raises SSHException: if the key is invalid
+        :raises: ``IOError`` -- if there was an error writing the file
+        :raises: `.SSHException` -- if the key is invalid
         """
         raise Exception('Not implemented in PKey')
 
@@ -239,8 +242,8 @@ class PKey(object):
         :param file_obj: the file-like object to write into
         :param str password: an optional password to use to encrypt the key
 
-        :raises IOError: if there was an error writing to the file
-        :raises SSHException: if the key is invalid
+        :raises: ``IOError`` -- if there was an error writing to the file
+        :raises: `.SSHException` -- if the key is invalid
         """
         raise Exception('Not implemented in PKey')
 
@@ -249,20 +252,21 @@ class PKey(object):
         Read an SSH2-format private key file, looking for a string of the type
         ``"BEGIN xxx PRIVATE KEY"`` for some ``xxx``, base64-decode the text we
         find, and return it as a string.  If the private key is encrypted and
-        ``password`` is not ``None``, the given password will be used to decrypt
-        the key (otherwise `.PasswordRequiredException` is thrown).
+        ``password`` is not ``None``, the given password will be used to
+        decrypt the key (otherwise `.PasswordRequiredException` is thrown).
 
-        :param str tag: ``"RSA"`` or ``"DSA"``, the tag used to mark the data block.
+        :param str tag: ``"RSA"`` or ``"DSA"``, the tag used to mark the
+            data block.
         :param str filename: name of the file to read.
         :param str password:
             an optional password to use to decrypt the key file, if it's
             encrypted.
         :return: data blob (`str`) that makes up the private key.
 
-        :raises IOError: if there was an error reading the file.
-        :raises PasswordRequiredException: if the private key file is
+        :raises: ``IOError`` -- if there was an error reading the file.
+        :raises: `.PasswordRequiredException` -- if the private key file is
             encrypted, and ``password`` is ``None``.
-        :raises SSHException: if the key file is invalid.
+        :raises: `.SSHException` -- if the key file is invalid.
         """
         with open(filename, 'r') as f:
             data = self._read_private_key(tag, f, password)
@@ -271,7 +275,8 @@ class PKey(object):
     def _read_private_key(self, tag, f, password=None):
         lines = f.readlines()
         start = 0
-        while (start < len(lines)) and (lines[start].strip() != '-----BEGIN ' + tag + ' PRIVATE KEY-----'):
+        beginning_of_key = '-----BEGIN ' + tag + ' PRIVATE KEY-----'
+        while start < len(lines) and lines[start].strip() != beginning_of_key:
             start += 1
         if start >= len(lines):
             raise SSHException('not a valid ' + tag + ' private key file')
@@ -286,7 +291,8 @@ class PKey(object):
             start += 1
         # find end
         end = start
-        while end < len(lines) and lines[end].strip() != '-----END ' + tag + ' PRIVATE KEY-----':
+        ending_of_key = '-----END ' + tag + ' PRIVATE KEY-----'
+        while end < len(lines) and lines[end].strip() != ending_of_key:
             end += 1
         # if we trudged to the end of the file, just try to cope.
         try:
@@ -298,14 +304,17 @@ class PKey(object):
             return data
         # encrypted keyfile: will need a password
         if headers['proc-type'] != '4,ENCRYPTED':
-            raise SSHException('Unknown private key structure "%s"' % headers['proc-type'])
+            raise SSHException(
+                'Unknown private key structure "%s"' % headers['proc-type'])
         try:
             encryption_type, saltstr = headers['dek-info'].split(',')
         except:
             raise SSHException("Can't parse DEK-info in private key file")
         if encryption_type not in self._CIPHER_TABLE:
-            raise SSHException('Unknown private key cipher "%s"' % encryption_type)
-        # if no password was passed in, raise an exception pointing out that we need one
+            raise SSHException(
+                'Unknown private key cipher "%s"' % encryption_type)
+        # if no password was passed in,
+        # raise an exception pointing out that we need one
         if password is None:
             raise PasswordRequiredException('Private key file is encrypted')
         cipher = self._CIPHER_TABLE[encryption_type]['cipher']
@@ -331,7 +340,7 @@ class PKey(object):
         :param str data: data blob that makes up the private key.
         :param str password: an optional password to use to encrypt the file.
 
-        :raises IOError: if there was an error writing the file.
+        :raises: ``IOError`` -- if there was an error writing the file.
         """
         with open(filename, 'w') as f:
             os.chmod(filename, o600)
