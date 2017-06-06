@@ -398,7 +398,7 @@ class Transport(threading.Thread, ClosingContextManager):
         # banner sent.
         self.handshake_timeout = 15
         # how long (seconds) to wait for the auth response.
-        self.auth_timeout = 30          
+        self.auth_timeout = 30
 
         # server mode:
         self.server_mode = False

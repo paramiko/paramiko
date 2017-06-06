@@ -22,6 +22,7 @@
 
 import weakref
 import time
+
 from paramiko.common import (
     cMSG_SERVICE_REQUEST, cMSG_DISCONNECT, DISCONNECT_SERVICE_NOT_AVAILABLE,
     DISCONNECT_NO_MORE_AUTH_METHODS_AVAILABLE, cMSG_USERAUTH_REQUEST,
@@ -36,7 +37,6 @@ from paramiko.common import (
     MSG_USERAUTH_GSSAPI_TOKEN, MSG_USERAUTH_GSSAPI_ERROR,
     MSG_USERAUTH_GSSAPI_ERRTOK, MSG_USERAUTH_GSSAPI_MIC, MSG_NAMES,
 )
-
 from paramiko.message import Message
 from paramiko.py3compat import bytestring
 from paramiko.ssh_exception import (
@@ -191,7 +191,9 @@ class AuthHandler (object):
         return m.asbytes()
 
     def wait_for_response(self, event):
-        max_ts = time.time() + self.transport.auth_timeout if self.transport.auth_timeout is not None else None
+        max_ts = None
+        if self.transport.auth_timeout is not None:
+            max_ts = time.time() + self.transport.auth_timeout
         while True:
             event.wait(0.1)
             if not self.transport.is_active():
