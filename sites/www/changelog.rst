@@ -2,6 +2,9 @@
 Changelog
 =========
 
+* :bug:`900` Prefer ecdsa-sha2-nistp(256|384|521) host key types, like
+  the openssh client does. Thanks ``@ncoult`` for the report and Pierce
+  Lopez for the patch.
 * :bug:`794` (via :issue:`981`) Prior support for ``ecdsa-sha2-nistp(384|521)``
   algorithms didn't fully extend to covering host keys, preventing connection
   to hosts which only offer these key types and no others. This is now fixed.
