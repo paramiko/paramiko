@@ -208,7 +208,7 @@ class DSSKey(PKey):
         generate a new host key or authentication key.
 
         :param int bits: number of bits the generated key should be.
-        :param function progress_func: Unused
+        :param progress_func: Unused
         :return: new `.DSSKey` private key
         """
         numbers = dsa.generate_private_key(

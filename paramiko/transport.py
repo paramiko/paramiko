@@ -464,7 +464,6 @@ class Transport(threading.Thread, ClosingContextManager):
 
         :param str gss_host: The targets name in the kerberos database
                              Default: The name of the host to connect to
-        :rtype: Void
         """
         # We need the FQDN to get this working with SSPI
         self.gss_host = socket.getfqdn(gss_host)
@@ -500,8 +499,9 @@ class Transport(threading.Thread, ClosingContextManager):
         :param float timeout:
             a timeout, in seconds, for SSH2 session negotiation (optional)
 
-        :raises SSHException: if negotiation fails (and no ``event`` was passed
-            in)
+        :raises:
+            `.SSHException` -- if negotiation fails (and no ``event`` was
+            passed in)
         """
         self.active = True
         if event is not None:
@@ -565,8 +565,9 @@ class Transport(threading.Thread, ClosingContextManager):
             an object used to perform authentication and create `channels
             <.Channel>`
 
-        :raises SSHException: if negotiation fails (and no ``event`` was passed
-            in)
+        :raises:
+            `.SSHException` -- if negotiation fails (and no ``event`` was
+            passed in)
         """
         if server is None:
             server = ServerInterface()
@@ -692,7 +693,7 @@ class Transport(threading.Thread, ClosingContextManager):
             string)``. You can get the same effect by calling `.PKey.get_name`
             for the key type, and ``str(key)`` for the key string.
 
-        :raises SSHException: if no session is currently active.
+        :raises: `.SSHException` -- if no session is currently active.
 
         :return: public key (`.PKey`) of the remote server
         """
@@ -732,7 +733,8 @@ class Transport(threading.Thread, ClosingContextManager):
 
         :return: a new `.Channel`
 
-        :raises SSHException: if the request is rejected or the session ends
+        :raises:
+            `.SSHException` -- if the request is rejected or the session ends
             prematurely
 
         .. versionchanged:: 1.13.4/1.14.3/1.15.3
@@ -755,7 +757,8 @@ class Transport(threading.Thread, ClosingContextManager):
             x11 port, ie. 6010)
         :return: a new `.Channel`
 
-        :raises SSHException: if the request is rejected or the session ends
+        :raises:
+            `.SSHException` -- if the request is rejected or the session ends
             prematurely
         """
         return self.open_channel('x11', src_addr=src_addr)
@@ -769,7 +772,7 @@ class Transport(threading.Thread, ClosingContextManager):
 
         :return: a new `.Channel`
 
-        :raises SSHException:
+        :raises: `.SSHException` --
             if the request is rejected or the session ends prematurely
         """
         return self.open_channel('auth-agent@openssh.com')
@@ -821,7 +824,8 @@ class Transport(threading.Thread, ClosingContextManager):
 
         :return: a new `.Channel` on success
 
-        :raises SSHException: if the request is rejected, the session ends
+        :raises:
+            `.SSHException` -- if the request is rejected, the session ends
             prematurely or there is a timeout openning a channel
 
         .. versionchanged:: 1.15
@@ -908,7 +912,8 @@ class Transport(threading.Thread, ClosingContextManager):
 
         :return: the port number (`int`) allocated by the server
 
-        :raises SSHException: if the server refused the TCP forward request
+        :raises:
+            `.SSHException` -- if the server refused the TCP forward request
         """
         if not self.active:
             raise SSHException('SSH session not active')
@@ -982,8 +987,9 @@ class Transport(threading.Thread, ClosingContextManager):
         traffic both ways as the two sides swap keys and do computations.  This
         method returns when the session has switched to new keys.
 
-        :raises SSHException: if the key renegotiation failed (which causes the
-            session to end)
+        :raises:
+            `.SSHException` -- if the key renegotiation failed (which causes
+            the session to end)
         """
         self.completion_event = threading.Event()
         self._send_kex_init()
@@ -1124,7 +1130,7 @@ class Transport(threading.Thread, ClosingContextManager):
         :param bool gss_deleg_creds:
             Whether to delegate GSS-API client credentials.
 
-        :raises SSHException: if the SSH2 negotiation fails, the host key
+        :raises: `.SSHException` -- if the SSH2 negotiation fails, the host key
             supplied by the server is incorrect, or authentication fails.
         """
         if hostkey is not None:
@@ -1198,7 +1204,7 @@ class Transport(threading.Thread, ClosingContextManager):
         passed to the `.SubsystemHandler` constructor later.
 
         :param str name: name of the subsystem.
-        :param class handler:
+        :param handler:
             subclass of `.SubsystemHandler` that handles this subsystem.
         """
         try:
@@ -1259,9 +1265,11 @@ class Transport(threading.Thread, ClosingContextManager):
             `list` of auth types permissible for the next stage of
             authentication (normally empty)
 
-        :raises BadAuthenticationType: if "none" authentication isn't allowed
+        :raises:
+            `.BadAuthenticationType` -- if "none" authentication isn't allowed
             by the server for this user
-        :raises SSHException: if the authentication failed due to a network
+        :raises:
+            `.SSHException` -- if the authentication failed due to a network
             error
 
         .. versionadded:: 1.5
@@ -1312,11 +1320,13 @@ class Transport(threading.Thread, ClosingContextManager):
             `list` of auth types permissible for the next stage of
             authentication (normally empty)
 
-        :raises BadAuthenticationType: if password authentication isn't
+        :raises:
+            `.BadAuthenticationType` -- if password authentication isn't
             allowed by the server for this user (and no event was passed in)
-        :raises AuthenticationException: if the authentication failed (and no
+        :raises:
+            `.AuthenticationException` -- if the authentication failed (and no
             event was passed in)
-        :raises SSHException: if there was a network error
+        :raises: `.SSHException` -- if there was a network error
         """
         if (not self.active) or (not self.initial_kex_done):
             # we should never try to send the password unless we're on a secure
@@ -1381,11 +1391,13 @@ class Transport(threading.Thread, ClosingContextManager):
             `list` of auth types permissible for the next stage of
             authentication (normally empty)
 
-        :raises BadAuthenticationType: if public-key authentication isn't
+        :raises:
+            `.BadAuthenticationType` -- if public-key authentication isn't
             allowed by the server for this user (and no event was passed in)
-        :raises AuthenticationException: if the authentication failed (and no
+        :raises:
+            `.AuthenticationException` -- if the authentication failed (and no
             event was passed in)
-        :raises SSHException: if there was a network error
+        :raises: `.SSHException` -- if there was a network error
         """
         if (not self.active) or (not self.initial_kex_done):
             # we should never try to authenticate unless we're on a secure link
@@ -1437,10 +1449,10 @@ class Transport(threading.Thread, ClosingContextManager):
             `list` of auth types permissible for the next stage of
             authentication (normally empty).
 
-        :raises BadAuthenticationType: if public-key authentication isn't
+        :raises: `.BadAuthenticationType` -- if public-key authentication isn't
             allowed by the server for this user
-        :raises AuthenticationException: if the authentication failed
-        :raises SSHException: if there was a network error
+        :raises: `.AuthenticationException` -- if the authentication failed
+        :raises: `.SSHException` -- if there was a network error
 
         .. versionadded:: 1.5
         """
@@ -1485,11 +1497,12 @@ class Transport(threading.Thread, ClosingContextManager):
         :return: list of auth types permissible for the next stage of
                  authentication (normally empty)
         :rtype: list
-        :raise BadAuthenticationType: if gssapi-with-mic isn't
+        :raises: `.BadAuthenticationType` -- if gssapi-with-mic isn't
             allowed by the server (and no event was passed in)
-        :raise AuthenticationException: if the authentication failed (and no
+        :raises:
+            `.AuthenticationException` -- if the authentication failed (and no
             event was passed in)
-        :raise SSHException: if there was a network error
+        :raises: `.SSHException` -- if there was a network error
         """
         if (not self.active) or (not self.initial_kex_done):
             # we should never try to authenticate unless we're on a secure link
@@ -1509,12 +1522,12 @@ class Transport(threading.Thread, ClosingContextManager):
         :returns:
             a `list` of auth types permissible for the next stage of
             authentication (normally empty)
-        :raises BadAuthenticationType:
+        :raises: `.BadAuthenticationType` --
             if GSS-API Key Exchange was not performed (and no event was passed
             in)
-        :raises AuthenticationException:
+        :raises: `.AuthenticationException` --
             if the authentication failed (and no event was passed in)
-        :raises SSHException: if there was a network error
+        :raises: `.SSHException` -- if there was a network error
         """
         if (not self.active) or (not self.initial_kex_done):
             # we should never try to authenticate unless we're on a secure link

@@ -67,7 +67,7 @@ class BufferedFile (ClosingContextManager):
         file.  This iterator happens to return the file itself, since a file is
         its own iterator.
 
-        :raises ValueError: if the file is closed.
+        :raises: ``ValueError`` -- if the file is closed.
         """
         if self._closed:
             raise ValueError('I/O operation on closed file')
@@ -93,10 +93,10 @@ class BufferedFile (ClosingContextManager):
         def next(self):
             """
             Returns the next line from the input, or raises
-            `~exceptions.StopIteration` when EOF is hit.  Unlike Python file
+            ``StopIteration`` when EOF is hit.  Unlike Python file
             objects, it's okay to mix calls to `next` and `readline`.
 
-            :raises StopIteration: when the end of the file is reached.
+            :raises: ``StopIteration`` -- when the end of the file is reached.
 
             :returns: a line (`str`) read from the file.
             """
@@ -107,11 +107,11 @@ class BufferedFile (ClosingContextManager):
     else:
         def __next__(self):
             """
-            Returns the next line from the input, or raises `.StopIteration`
+            Returns the next line from the input, or raises ``StopIteration``
             when EOF is hit.  Unlike python file objects, it's okay to mix
             calls to `.next` and `.readline`.
 
-            :raises StopIteration: when the end of the file is reached.
+            :raises: ``StopIteration`` -- when the end of the file is reached.
 
             :returns: a line (`str`) read from the file.
             """
@@ -152,8 +152,8 @@ class BufferedFile (ClosingContextManager):
 
     def readinto(self, buff):
         """
-        Read up to ``len(buff)`` bytes into :class:`bytearray` *buff* and
-        return the number of bytes read.
+        Read up to ``len(buff)`` bytes into ``bytearray`` *buff* and return the
+        number of bytes read.
 
         :returns:
             The number of bytes read.
@@ -368,7 +368,7 @@ class BufferedFile (ClosingContextManager):
             type of movement: 0 = absolute; 1 = relative to the current
             position; 2 = relative to the end of the file.
 
-        :raises IOError: if the file doesn't support random access.
+        :raises: ``IOError`` -- if the file doesn't support random access.
         """
         raise IOError('File does not support seeking.')
 
@@ -389,7 +389,7 @@ class BufferedFile (ClosingContextManager):
         written yet.  (Use `flush` or `close` to force buffered data to be
         written out.)
 
-        :param str/bytes data: data to write
+        :param data: ``str``/``bytes`` data to write
         """
         data = b(data)
         if self._closed:
@@ -423,7 +423,7 @@ class BufferedFile (ClosingContextManager):
         name is intended to match `readlines`; `writelines` does not add line
         separators.)
 
-        :param iterable sequence: an iterable sequence of strings.
+        :param sequence: an iterable sequence of strings.
         """
         for line in sequence:
             self.write(line)
