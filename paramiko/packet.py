@@ -43,6 +43,9 @@ def compute_hmac(key, message, digest_class):
 
 
 class NeedRekeyException (Exception):
+    """
+    Exception indicating a rekey is needed.
+    """
     pass
 
 
@@ -253,8 +256,9 @@ class Packetizer (object):
         :param int n: number of bytes to read
         :return: the data read, as a `str`
 
-        :raises EOFError:
-            if the socket was closed before all the bytes could be read
+        :raises:
+            ``EOFError`` -- if the socket was closed before all the bytes could
+            be read
         """
         out = bytes()
         # handle over-reading from reading the banner line
@@ -413,8 +417,8 @@ class Packetizer (object):
         Only one thread should ever be in this function (no other locking is
         done).
 
-        :raises SSHException: if the packet is mangled
-        :raises NeedRekeyException: if the transport should rekey
+        :raises: `.SSHException` -- if the packet is mangled
+        :raises: `.NeedRekeyException` -- if the transport should rekey
         """
         header = self.read_all(self.__block_size_in, check_rekey=True)
         if self.__block_engine_in is not None:

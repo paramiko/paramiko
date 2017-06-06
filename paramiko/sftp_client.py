@@ -83,8 +83,8 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
 
         :param .Channel sock: an open `.Channel` using the ``"sftp"`` subsystem
 
-        :raises SSHException: if there's an exception while negotiating
-            sftp
+        :raises:
+            `.SSHException` -- if there's an exception while negotiating sftp
         """
         BaseSFTP.__init__(self)
         self.sock = sock
@@ -321,7 +321,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         :param int bufsize: desired buffering (-1 = default buffer size)
         :return: an `.SFTPFile` object representing the open file
 
-        :raises IOError: if the file could not be opened.
+        :raises: ``IOError`` -- if the file could not be opened.
         """
         filename = self._adjust_cwd(filename)
         self._log(DEBUG, 'open(%r, %r)' % (filename, mode))
@@ -356,7 +356,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
 
         :param str path: path (absolute or relative) of the file to remove
 
-        :raises IOError: if the path refers to a folder (directory)
+        :raises: ``IOError`` -- if the path refers to a folder (directory)
         """
         path = self._adjust_cwd(path)
         self._log(DEBUG, 'remove(%r)' % path)
@@ -371,7 +371,8 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         :param str oldpath: existing name of the file or folder
         :param str newpath: new name for the file or folder
 
-        :raises IOError: if ``newpath`` is a folder, or something else goes
+        :raises:
+            ``IOError`` -- if ``newpath`` is a folder, or something else goes
             wrong
         """
         oldpath = self._adjust_cwd(oldpath)
@@ -522,8 +523,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         method on Python file objects.
 
         :param str path: path of the file to modify
-        :param size: the new size of the file
-        :type size: int or long
+        :param int size: the new size of the file
         """
         path = self._adjust_cwd(path)
         self._log(DEBUG, 'truncate(%r, %r)' % (path, size))
@@ -562,7 +562,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         :param str path: path to be normalized
         :return: normalized form of the given path (as a `str`)
 
-        :raises IOError: if the path can't be resolved on the server
+        :raises: ``IOError`` -- if the path can't be resolved on the server
         """
         path = self._adjust_cwd(path)
         self._log(DEBUG, 'normalize(%r)' % path)
@@ -585,7 +585,8 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
 
         :param str path: new current working directory
 
-        :raises IOError: if the requested path doesn't exist on the server
+        :raises:
+            ``IOError`` -- if the requested path doesn't exist on the server
 
         .. versionadded:: 1.4
         """
