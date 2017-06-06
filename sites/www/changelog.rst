@@ -2,6 +2,8 @@
 Changelog
 =========
 
+* :feature:`325` (via :issue:`972`) Add Ed25519 support, for both host keys
+  and user authentication. Big thanks to Alex Gaynor for the patch.
 * :support:`974 backported` Overhaul the codebase to be PEP-8, etc, compliant
   (i.e. passes the maintainer's preferred `flake8 <http://flake8.pycqa.org/>`_
   configuration) and add a ``flake8`` step to the Travis config. Big thanks to
