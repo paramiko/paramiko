@@ -114,10 +114,10 @@ class Transport(threading.Thread, ClosingContextManager):
     _preferred_macs = (
         'hmac-sha2-256',
         'hmac-sha2-512',
+        'hmac-sha1',
         'hmac-md5',
         'hmac-sha1-96',
         'hmac-md5-96',
-        'hmac-sha1',
     )
     _preferred_keys = (
         'ecdsa-sha2-nistp256',
