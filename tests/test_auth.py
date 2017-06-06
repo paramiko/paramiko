@@ -243,18 +243,12 @@ class AuthTest (unittest.TestCase):
         verify that authentication times out if server takes to long to
         respond (or never responds).
         """
-        auth_timeout = self.tc.auth_timeout
-        self.tc.auth_timeout = 2  # Reduce to 2 seconds to speed up test
-
+        self.tc.auth_timeout = 1  # 1 second, to speed up test
+        self.start_server()
+        self.tc.connect()
         try:
-            self.start_server()
-            self.tc.connect()
-            try:
-                remain = self.tc.auth_password('unresponsive-server', 'hello')
-            except:
-                etype, evalue, etb = sys.exc_info()
-                self.assertTrue(issubclass(etype, AuthenticationException))
-                self.assertTrue('Authentication timeout' in str(evalue))
-        finally:
-            # Restore value
-            self.tc.auth_timeout = auth_timeout
+            remain = self.tc.auth_password('unresponsive-server', 'hello')
+        except:
+            etype, evalue, etb = sys.exc_info()
+            self.assertTrue(issubclass(etype, AuthenticationException))
+            self.assertTrue('Authentication timeout' in str(evalue))
