@@ -170,16 +170,10 @@ class SSHClient (ClosingContextManager):
 
         Specifically:
 
-        * A **policy** is an instance of a "policy class", namely some subclass
-          of `.MissingHostKeyPolicy` such as `.RejectPolicy` (the default),
-          `.AutoAddPolicy`, `.WarningPolicy`, or a user-created subclass.
-
-          .. note::
-            This method takes class **instances**, not **classes** themselves.
-            Thus it must be called as e.g.
-            ``.set_missing_host_key_policy(WarningPolicy())`` and *not*
-            ``.set_missing_host_key_policy(WarningPolicy)``.
-
+        * A **policy** is a "policy class" (or instance thereof), namely some
+          subclass of `.MissingHostKeyPolicy` such as `.RejectPolicy` (the
+          default), `.AutoAddPolicy`, `.WarningPolicy`, or a user-created
+          subclass.
         * A host key is **known** when it appears in the client object's cached
           host keys structures (those manipulated by `load_system_host_keys`
           and/or `load_host_keys`).
