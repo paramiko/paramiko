@@ -40,7 +40,7 @@ print('Read key: ' + u(hexlify(host_key.get_fingerprint())))
 
 
 class Server (paramiko.ServerInterface):
-    # 'data' is the output of base64.encodestring(str(key))
+    # 'data' is the output of base64.b64encode(key)
     # (using the "user_rsa_key" files)
     data = (b'AAAAB3NzaC1yc2EAAAABIwAAAIEAyO4it3fHlmGZWJaGrfeHOVY7RWO3P9M7hp'
             b'fAu7jJ2d7eothvfeuoRFtJwhUmZDluRdFyhFY/hFAh76PJKGAusIqIQKlkJxMC'
@@ -96,9 +96,7 @@ class Server (paramiko.ServerInterface):
         return paramiko.AUTH_FAILED
 
     def enable_auth_gssapi(self):
-        UseGSSAPI = True
-        GSSAPICleanupCredentials = False
-        return UseGSSAPI
+        return True
 
     def get_allowed_auths(self, username):
         return 'gssapi-keyex,gssapi-with-mic,password,publickey'

@@ -41,7 +41,7 @@ def format_system_message(errno):
         ctypes.byref(result_buffer),
         buffer_size,
         arguments,
-        )
+    )
     # note the following will cause an infinite loop if GetLastError
     #  repeatedly returns an error that cannot be formatted, although
     #  this should not happen.
@@ -52,13 +52,14 @@ def format_system_message(errno):
 
 
 class WindowsError(builtins.WindowsError):
-    "more info about errors at http://msdn.microsoft.com/en-us/library/ms681381(VS.85).aspx"
+    """more info about errors at
+    http://msdn.microsoft.com/en-us/library/ms681381(VS.85).aspx"""
 
     def __init__(self, value=None):
         if value is None:
             value = ctypes.windll.kernel32.GetLastError()
         strerror = format_system_message(value)
-        if sys.version_info > (3,3):
+        if sys.version_info > (3, 3):
             args = 0, strerror, None, value
         else:
             args = value, strerror
@@ -78,6 +79,7 @@ class WindowsError(builtins.WindowsError):
     def __repr__(self):
         return '{self.__class__.__name__}({self.winerror})'.format(**vars())
 
+
 def handle_nonzero_success(result):
     if result == 0:
         raise WindowsError()
@@ -89,7 +91,7 @@ def handle_nonzero_success(result):
 GMEM_MOVEABLE = 0x2
 
 GlobalAlloc = ctypes.windll.kernel32.GlobalAlloc
-GlobalAlloc.argtypes = ctypes.wintypes.UINT, ctypes.c_ssize_t
+GlobalAlloc.argtypes = ctypes.wintypes.UINT, ctypes.c_size_t
 GlobalAlloc.restype = ctypes.wintypes.HANDLE
 
 GlobalLock = ctypes.windll.kernel32.GlobalLock
@@ -118,8 +120,21 @@ CreateFileMapping.restype = ctypes.wintypes.HANDLE
 MapViewOfFile = ctypes.windll.kernel32.MapViewOfFile
 MapViewOfFile.restype = ctypes.wintypes.HANDLE
 
+UnmapViewOfFile = ctypes.windll.kernel32.UnmapViewOfFile
+UnmapViewOfFile.argtypes = ctypes.wintypes.HANDLE,
+
+RtlMoveMemory = ctypes.windll.kernel32.RtlMoveMemory
+RtlMoveMemory.argtypes = (
+    ctypes.c_void_p,
+    ctypes.c_void_p,
+    ctypes.c_size_t,
+)
+
+ctypes.windll.kernel32.LocalFree.argtypes = ctypes.wintypes.HLOCAL,
+
 #####################
 # jaraco.windows.mmap
+
 
 class MemoryMap(object):
     """
@@ -176,6 +191,7 @@ class MemoryMap(object):
     def __exit__(self, exc_type, exc_val, tb):
         ctypes.windll.kernel32.UnmapViewOfFile(self.view)
         ctypes.windll.kernel32.CloseHandle(self.filemap)
+
 
 #############################
 # jaraco.windows.api.security
@@ -240,11 +256,14 @@ POLICY_EXECUTE = (
     POLICY_VIEW_LOCAL_INFORMATION |
     POLICY_LOOKUP_NAMES)
 
+
 class TokenAccess:
     TOKEN_QUERY = 0x8
 
+
 class TokenInformationClass:
     TokenUser = 1
+
 
 class TOKEN_USER(ctypes.Structure):
     num = 1
@@ -280,6 +299,7 @@ class SECURITY_DESCRIPTOR(ctypes.Structure):
         ('Dacl', ctypes.c_void_p),
     ]
 
+
 class SECURITY_ATTRIBUTES(ctypes.Structure):
     """
     typedef struct _SECURITY_ATTRIBUTES {
@@ -307,8 +327,16 @@ class SECURITY_ATTRIBUTES(ctypes.Structure):
         self._descriptor = value
         self.lpSecurityDescriptor = ctypes.addressof(value)
 
+
+ctypes.windll.advapi32.SetSecurityDescriptorOwner.argtypes = (
+    ctypes.POINTER(SECURITY_DESCRIPTOR),
+    ctypes.c_void_p,
+    ctypes.wintypes.BOOL,
+)
+
 #########################
 # jaraco.windows.security
+
 
 def GetTokenInformation(token, information_class):
     """
@@ -324,12 +352,14 @@ def GetTokenInformation(token, information_class):
         ctypes.byref(data_size)))
     return ctypes.cast(data, ctypes.POINTER(TOKEN_USER)).contents
 
+
 def OpenProcessToken(proc_handle, access):
     result = ctypes.wintypes.HANDLE()
     proc_handle = ctypes.wintypes.HANDLE(proc_handle)
     handle_nonzero_success(ctypes.windll.advapi32.OpenProcessToken(
         proc_handle, access, ctypes.byref(result)))
     return result
+
 
 def get_current_user():
     """
@@ -340,6 +370,7 @@ def get_current_user():
         TokenAccess.TOKEN_QUERY,
     )
     return GetTokenInformation(process, TOKEN_USER)
+
 
 def get_security_attributes_for_user(user=None):
     """

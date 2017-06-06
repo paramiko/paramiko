@@ -32,7 +32,7 @@ class Message (object):
     An SSH2 message is a stream of bytes that encodes some combination of
     strings, integers, bools, and infinite-precision integers (known in Python
     as longs).  This class builds or breaks down such a byte stream.
-    
+
     Normally you don't need to deal with anything this low-level, but it's
     exposed for people implementing custom extensions, or features that
     paramiko doesn't support yet.
@@ -184,7 +184,6 @@ class Message (object):
         @rtype: string
         """
         return u(self.get_bytes(self.get_int()))
-        #return self.get_bytes(self.get_size())
 
     def get_binary(self):
         """
@@ -200,7 +199,7 @@ class Message (object):
     def get_list(self):
         """
         Fetch a `list` of `strings <str>` from the stream.
-        
+
         These are trivially encoded as comma-separated values in a string.
         """
         return self.get_text().split(',')
@@ -208,7 +207,7 @@ class Message (object):
     def add_bytes(self, b):
         """
         Write bytes to the stream, without any formatting.
-        
+
         :param str b: bytes to add
         """
         self.packet.write(b)
@@ -217,7 +216,7 @@ class Message (object):
     def add_byte(self, b):
         """
         Write a single byte to the stream, without any formatting.
-        
+
         :param str b: byte to add
         """
         self.packet.write(b)
@@ -226,7 +225,7 @@ class Message (object):
     def add_boolean(self, b):
         """
         Add a boolean value to the stream.
-        
+
         :param bool b: boolean value to add
         """
         if b:
@@ -234,20 +233,20 @@ class Message (object):
         else:
             self.packet.write(zero_byte)
         return self
-            
+
     def add_int(self, n):
         """
         Add an integer to the stream.
-        
+
         :param int n: integer to add
         """
         self.packet.write(struct.pack('>I', n))
         return self
-            
+
     def add_adaptive_int(self, n):
         """
         Add an integer to the stream.
-        
+
         :param int n: integer to add
         """
         if n >= Message.big_int:
@@ -270,7 +269,7 @@ class Message (object):
         """
         Add a long int to the stream, encoded as an infinite-precision
         integer.  This method only works on positive numbers.
-        
+
         :param long z: long int to add
         """
         self.add_string(util.deflate_long(z))
@@ -279,7 +278,7 @@ class Message (object):
     def add_string(self, s):
         """
         Add a string to the stream.
-        
+
         :param str s: string to add
         """
         s = asbytes(s)
@@ -292,12 +291,12 @@ class Message (object):
         Add a list of strings to the stream.  They are encoded identically to
         a single string of values separated by commas.  (Yes, really, that's
         how SSH2 does it.)
-        
+
         :param list l: list of strings to add
         """
         self.add_string(','.join(l))
         return self
-        
+
     def _add(self, i):
         if type(i) is bool:
             return self.add_boolean(i)
@@ -315,7 +314,7 @@ class Message (object):
 
         .. warning::
             Longs are encoded non-deterministically.  Don't use this method.
-        
+
         :param seq: the sequence of items
         """
         for item in seq:

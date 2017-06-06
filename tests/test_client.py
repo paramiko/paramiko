@@ -182,7 +182,7 @@ class SSHClientTest (unittest.TestCase):
         """
         verify that SSHClient works with an ECDSA key.
         """
-        self._test_connection(key_filename=test_path('test_ecdsa.key'))
+        self._test_connection(key_filename=test_path('test_ecdsa_256.key'))
 
     def test_3_multiple_key_files(self):
         """
@@ -199,8 +199,8 @@ class SSHClientTest (unittest.TestCase):
         for attempt, accept in (
             (['rsa', 'dss'], ['dss']), # Original test #3
             (['dss', 'rsa'], ['dss']), # Ordering matters sometimes, sadly
-            (['dss', 'rsa', 'ecdsa'], ['dss']), # Try ECDSA but fail
-            (['rsa', 'ecdsa'], ['ecdsa']), # ECDSA success
+            (['dss', 'rsa', 'ecdsa_256'], ['dss']), # Try ECDSA but fail
+            (['rsa', 'ecdsa_256'], ['ecdsa']), # ECDSA success
         ):
             try:
                 self._test_connection(
@@ -357,7 +357,7 @@ class SSHClientTest (unittest.TestCase):
         # NOTE: re #387, re #394
         # If pkey module used within Client._auth isn't correctly handling auth
         # errors (e.g. if it allows things like ValueError to bubble up as per
-        # midway thru #394) client.connect() will fail (at key load step)
+        # midway through #394) client.connect() will fail (at key load step)
         # instead of succeeding (at password step)
         kwargs = dict(
             # Password-protected key whose passphrase is not 'pygmalion' (it's

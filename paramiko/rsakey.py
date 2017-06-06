@@ -27,6 +27,7 @@ from cryptography.hazmat.primitives.asymmetric import rsa, padding
 
 from paramiko.message import Message
 from paramiko.pkey import PKey
+from paramiko.py3compat import PY2
 from paramiko.ssh_exception import SSHException
 
 
@@ -36,7 +37,8 @@ class RSAKey(PKey):
     data.
     """
 
-    def __init__(self, msg=None, data=None, filename=None, password=None, key=None, file_obj=None):
+    def __init__(self, msg=None, data=None, filename=None, password=None,
+                 key=None, file_obj=None):
         self.key = None
         if file_obj is not None:
             self._from_private_key(file_obj, password)
@@ -76,7 +78,16 @@ class RSAKey(PKey):
         return m.asbytes()
 
     def __str__(self):
-        return self.asbytes()
+        # NOTE: as per inane commentary in #853, this appears to be the least
+        # crummy way to get a representation that prints identical to Python
+        # 2's previous behavior, on both interpreters.
+        # TODO: replace with a nice clean fingerprint display or something
+        if PY2:
+            # Can't just return the .decode below for Py2 because stuff still
+            # tries stuffing it into ASCII for whatever godforsaken reason
+            return self.asbytes()
+        else:
+            return self.asbytes().decode('utf8', errors='ignore')
 
     def __hash__(self):
         h = hash(self.get_name())
@@ -149,7 +160,7 @@ class RSAKey(PKey):
         generate a new host key or authentication key.
 
         :param int bits: number of bits the generated key should be.
-        :param function progress_func: Unused
+        :param progress_func: Unused
         :return: new `.RSAKey` private key
         """
         key = rsa.generate_private_key(
@@ -157,7 +168,7 @@ class RSAKey(PKey):
         )
         return RSAKey(key=key)
 
-    ###  internals...
+    # ...internals...
 
     def _from_private_key_file(self, filename, password):
         data = self._read_private_key_file('RSA', filename, password)
