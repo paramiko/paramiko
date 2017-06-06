@@ -109,9 +109,9 @@ class Transport(threading.Thread, ClosingContextManager):
         'aes192-ctr',
         'aes256-ctr',
         'aes128-cbc',
-        'blowfish-cbc',
         'aes192-cbc',
         'aes256-cbc',
+        'blowfish-cbc',
         '3des-cbc',
     )
     _preferred_macs = (
@@ -123,10 +123,10 @@ class Transport(threading.Thread, ClosingContextManager):
         'hmac-sha1',
     )
     _preferred_keys = (
+        'ssh-ed25519',
         'ecdsa-sha2-nistp256',
         'ecdsa-sha2-nistp384',
         'ecdsa-sha2-nistp521',
-        'ssh-ed25519',
         'ssh-rsa',
         'ssh-dss',
     )
