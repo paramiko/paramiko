@@ -2,6 +2,11 @@
 Changelog
 =========
 
+* :bug:`900` (via :issue:`911`) Prefer newer ``ecdsa-sha2-nistp`` keys over RSA
+  and DSA keys during host key selection. This improves compatibility with
+  OpenSSH, both in terms of general behavior, and also re: ability to properly
+  leverage OpenSSH-modified ``known_hosts`` files. Credit: ``@kasdoe`` for
+  original report/PR and Pierce Lopez for the second draft.
 * :bug:`794` (via :issue:`981`) Prior support for ``ecdsa-sha2-nistp(384|521)``
   algorithms didn't fully extend to covering host keys, preventing connection
   to hosts which only offer these key types and no others. This is now fixed.
