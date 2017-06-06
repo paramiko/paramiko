@@ -209,7 +209,7 @@ class SFTPServerInterface (object):
         :param str oldpath:
             the requested path (relative or absolute) of the existing file.
         :param str newpath: the requested new path of the file.
-        :return: an SFTP error code `int` like `.SFTP_OK`.
+        :return: an SFTP error code `int` like ``SFTP_OK``.
         """
         return SFTP_OP_UNSUPPORTED
 

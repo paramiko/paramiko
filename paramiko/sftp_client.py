@@ -391,7 +391,8 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         :param str newpath: new name for the file or folder, will be
             overwritten if it already exists
 
-        :raises IOError: if ``newpath`` is a folder, posix-rename is not
+        :raises:
+            ``IOError`` -- if ``newpath`` is a folder, posix-rename is not
             supported by the server or something else goes wrong
         """
         oldpath = self._adjust_cwd(oldpath)
