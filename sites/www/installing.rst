@@ -110,9 +110,3 @@ due to their infrequent utility & non-platform-agnostic requirements):
     delegation, make sure that the target host is trusted for delegation in the
     active directory configuration. For details see:
     http://technet.microsoft.com/en-us/library/cc738491%28v=ws.10%29.aspx
-
-
-.. toctree::
-    :hidden:
-
-    installing-1.x

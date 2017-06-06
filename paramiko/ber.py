@@ -71,7 +71,8 @@ class BER(object):
             t = size & 0x7f
             if self.idx + t > len(self.content):
                 return None
-            size = util.inflate_long(self.content[self.idx: self.idx + t], True)
+            size = util.inflate_long(
+                self.content[self.idx: self.idx + t], True)
             self.idx += t
         if self.idx + size > len(self.content):
             # can't fit
@@ -87,7 +88,8 @@ class BER(object):
             return util.inflate_long(data)
         else:
             # 1: boolean (00 false, otherwise true)
-            raise BERException('Unknown ber encoding type %d (robey is lazy)' % ident)
+            raise BERException(
+                'Unknown ber encoding type %d (robey is lazy)' % ident)
 
     @staticmethod
     def decode_sequence(data):

@@ -229,19 +229,19 @@ class ECDSAKey(PKey):
         Generate a new private ECDSA key.  This factory function can be used to
         generate a new host key or authentication key.
 
-        :param function progress_func: Not used for this type of key.
+        :param progress_func: Not used for this type of key.
         :returns: A new private key (`.ECDSAKey`) object
         """
         if bits is not None:
             curve = cls._ECDSA_CURVES.get_by_key_length(bits)
             if curve is None:
-                raise ValueError("Unsupported key length: %d"%(bits))
+                raise ValueError("Unsupported key length: %d" % bits)
             curve = curve.curve_class()
 
         private_key = ec.generate_private_key(curve, backend=default_backend())
         return ECDSAKey(vals=(private_key, private_key.public_key()))
 
-    ###  internals...
+    # ...internals...
 
     def _from_private_key_file(self, filename, password):
         data = self._read_private_key_file('EC', filename, password)

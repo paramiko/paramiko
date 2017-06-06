@@ -37,7 +37,8 @@ class RSAKey(PKey):
     data.
     """
 
-    def __init__(self, msg=None, data=None, filename=None, password=None, key=None, file_obj=None):
+    def __init__(self, msg=None, data=None, filename=None, password=None,
+                 key=None, file_obj=None):
         self.key = None
         if file_obj is not None:
             self._from_private_key(file_obj, password)
@@ -157,7 +158,7 @@ class RSAKey(PKey):
         generate a new host key or authentication key.
 
         :param int bits: number of bits the generated key should be.
-        :param function progress_func: Unused
+        :param progress_func: Unused
         :return: new `.RSAKey` private key
         """
         key = rsa.generate_private_key(
@@ -165,7 +166,7 @@ class RSAKey(PKey):
         )
         return RSAKey(key=key)
 
-    ###  internals...
+    # ...internals...
 
     def _from_private_key_file(self, filename, password):
         data = self._read_private_key_file('RSA', filename, password)

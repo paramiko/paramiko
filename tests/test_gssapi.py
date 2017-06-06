@@ -104,9 +104,11 @@ class GSSAPITest(unittest.TestCase):
                 status = gss_srv_ctxt.verify_mic(mic_msg, mic_token)
                 self.assertEquals(0, status)
         else:
-            gss_flags = sspicon.ISC_REQ_INTEGRITY |\
-                        sspicon.ISC_REQ_MUTUAL_AUTH |\
-                        sspicon.ISC_REQ_DELEGATE
+            gss_flags = (
+                sspicon.ISC_REQ_INTEGRITY |
+                sspicon.ISC_REQ_MUTUAL_AUTH |
+                sspicon.ISC_REQ_DELEGATE
+            )
             # Initialize a GSS-API context.
             target_name = "host/" + socket.getfqdn(targ_name)
             gss_ctxt = sspi.ClientAuth("Kerberos",
