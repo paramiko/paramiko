@@ -22,6 +22,7 @@ SSH client & key policies
 
 from binascii import hexlify
 import getpass
+import inspect
 import os
 import socket
 import warnings
@@ -182,6 +183,8 @@ class SSHClient (ClosingContextManager):
             the policy to use when receiving a host key from a
             previously-unknown server
         """
+        if inspect.isclass(policy):
+            policy = policy()
         self._policy = policy
 
     def _families_and_addresses(self, hostname, port):
