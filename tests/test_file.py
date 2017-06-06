@@ -70,9 +70,9 @@ class BufferedFileTest (unittest.TestCase):
 
     def test_2_readline(self):
         f = LoopbackFile('r+U')
-        f.write(b'First line.\nSecond line.\r\nThird line.\n' + 
+        f.write(b'First line.\nSecond line.\r\nThird line.\n' +
                 b'Fourth line.\nFinal line non-terminated.')
-        
+
         self.assertEqual(f.readline(), 'First line.\n')
         # universal newline mode should convert this linefeed:
         self.assertEqual(f.readline(), 'Second line.\n')
@@ -165,7 +165,28 @@ class BufferedFileTest (unittest.TestCase):
             f.write(buffer(b'Too small.'))
             f.close()
 
+    def test_9_readable(self):
+        f = LoopbackFile('r')
+        self.assertTrue(f.readable())
+        self.assertFalse(f.writable())
+        self.assertFalse(f.seekable())
+        f.close()
+
+    def test_A_writable(self):
+        f = LoopbackFile('w')
+        self.assertTrue(f.writable())
+        self.assertFalse(f.readable())
+        self.assertFalse(f.seekable())
+        f.close()
+
+    def test_B_readinto(self):
+        data = bytearray(5)
+        f = LoopbackFile('r+')
+        f._write(b"hello")
+        f.readinto(data)
+        self.assertEqual(data, b'hello')
+        f.close()
+
 if __name__ == '__main__':
     from unittest import main
     main()
-

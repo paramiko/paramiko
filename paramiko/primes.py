@@ -25,7 +25,7 @@ import os
 from paramiko import util
 from paramiko.py3compat import byte_mask, long
 from paramiko.ssh_exception import SSHException
-from paramiko.common import *
+from paramiko.common import *  # noqa
 
 
 def _roll_random(n):
@@ -62,7 +62,8 @@ class ModulusPack (object):
         self.discarded = []
 
     def _parse_modulus(self, line):
-        timestamp, mod_type, tests, tries, size, generator, modulus = line.split()
+        timestamp, mod_type, tests, tries, size, generator, modulus = \
+            line.split()
         mod_type = int(mod_type)
         tests = int(tests)
         tries = int(tries)
@@ -74,8 +75,13 @@ class ModulusPack (object):
         # type 2 (meets basic structural requirements)
         # test 4 (more than just a small-prime sieve)
         # tries < 100 if test & 4 (at least 100 tries of miller-rabin)
-        if (mod_type < 2) or (tests < 4) or ((tests & 4) and (tests < 8) and (tries < 100)):
-            self.discarded.append((modulus, 'does not meet basic requirements'))
+        if (
+            mod_type < 2 or
+            tests < 4 or
+            (tests & 4 and tests < 8 and tries < 100)
+        ):
+            self.discarded.append(
+                (modulus, 'does not meet basic requirements'))
             return
         if generator == 0:
             generator = 2
@@ -85,7 +91,8 @@ class ModulusPack (object):
         # this is okay.
         bl = util.bit_length(modulus)
         if (bl != size) and (bl != size + 1):
-            self.discarded.append((modulus, 'incorrectly reported bit length %d' % size))
+            self.discarded.append(
+                (modulus, 'incorrectly reported bit length %d' % size))
             return
         if bl not in self.pack:
             self.pack[bl] = []
@@ -113,12 +120,12 @@ class ModulusPack (object):
         good = -1
         # find nearest bitsize >= preferred
         for b in bitsizes:
-            if (b >= prefer) and (b < max) and (b < good or good == -1):
+            if (b >= prefer) and (b <= max) and (b < good or good == -1):
                 good = b
         # if that failed, find greatest bitsize >= min
         if good == -1:
             for b in bitsizes:
-                if (b >= min) and (b < max) and (b > good):
+                if (b >= min) and (b <= max) and (b > good):
                     good = b
         if good == -1:
             # their entire (min, max) range has no intersection with our range.

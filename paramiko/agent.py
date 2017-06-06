@@ -32,7 +32,7 @@ from select import select
 from paramiko.common import asbytes, io_sleep
 from paramiko.py3compat import byte_chr
 
-from paramiko.ssh_exception import SSHException
+from paramiko.ssh_exception import SSHException, AuthenticationException
 from paramiko.message import Message
 from paramiko.pkey import PKey
 from paramiko.util import retry_on_signal
@@ -109,12 +109,23 @@ class AgentProxyThread(threading.Thread):
     def run(self):
         try:
             (r, addr) = self.get_connection()
+            # Found that r should be either
+            # a socket from the socket library or None
             self.__inr = r
+            # The address should be an IP address as a string? or None
             self.__addr = addr
             self._agent.connect()
+            if (
+                not isinstance(self._agent, int) and
+                (
+                    self._agent._conn is None or
+                    not hasattr(self._agent._conn, 'fileno')
+                )
+            ):
+                raise AuthenticationException("Unable to connect to SSH agent")
             self._communicate()
         except:
-            #XXX Not sure what to do here ... raise or pass ?
+            # XXX Not sure what to do here ... raise or pass ?
             raise
 
     def _communicate(self):
@@ -210,7 +221,8 @@ class AgentClientProxy(object):
         if ('SSH_AUTH_SOCK' in os.environ) and (sys.platform != 'win32'):
             conn = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
             try:
-                retry_on_signal(lambda: conn.connect(os.environ['SSH_AUTH_SOCK']))
+                retry_on_signal(
+                    lambda: conn.connect(os.environ['SSH_AUTH_SOCK']))
             except:
                 # probably a dangling env var: the ssh agent is gone
                 return
@@ -241,7 +253,7 @@ class AgentServerProxy(AgentSSH):
     """
     :param .Transport t: Transport used for SSH Agent communication forwarding
 
-    :raises SSHException: mostly if we lost the agent
+    :raises: `.SSHException` -- mostly if we lost the agent
     """
     def __init__(self, t):
         AgentSSH.__init__(self)
@@ -287,6 +299,26 @@ class AgentServerProxy(AgentSSH):
 
 
 class AgentRequestHandler(object):
+    """
+    Primary/default implementation of SSH agent forwarding functionality.
+
+    Simply instantiate this class, handing it a live command-executing session
+    object, and it will handle forwarding any local SSH agent processes it
+    finds.
+
+    For example::
+
+        # Connect
+        client = SSHClient()
+        client.connect(host, port, username)
+        # Obtain session
+        session = client.get_transport().open_session()
+        # Forward local agent
+        AgentRequestHandler(session)
+        # Commands executed after this point will see the forwarded agent on
+        # the remote end.
+        session.exec_command("git clone https://my.git.repository/")
+    """
     def __init__(self, chanClient):
         self._conn = None
         self.__chanC = chanClient
@@ -308,14 +340,14 @@ class Agent(AgentSSH):
     """
     Client interface for using private keys from an SSH agent running on the
     local machine.  If an SSH agent is running, this class can be used to
-    connect to it and retreive `.PKey` objects which can be used when
+    connect to it and retrieve `.PKey` objects which can be used when
     attempting to authenticate to remote SSH servers.
 
     Upon initialization, a session with the local machine's SSH agent is
     opened, if one is running. If no agent is running, initialization will
     succeed, but `get_keys` will return an empty tuple.
 
-    :raises SSHException:
+    :raises: `.SSHException` --
         if an SSH agent is found, but speaks an incompatible protocol
     """
     def __init__(self):

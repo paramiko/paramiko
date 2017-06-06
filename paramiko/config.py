@@ -53,11 +53,13 @@ class SSHConfig (object):
         """
         Read an OpenSSH config from the given file object.
 
-        :param file file_obj: a file-like object to read the config file from
+        :param file_obj: a file-like object to read the config file from
         """
         host = {"host": ['*'], "config": {}}
         for line in file_obj:
-            line = line.rstrip('\r\n').lstrip()
+            # Strip any leading or trailing whitespace from the line.
+            # Refer to https://github.com/paramiko/paramiko/issues/499
+            line = line.strip()
             if not line or line.startswith('#'):
                 continue
 
@@ -66,7 +68,7 @@ class SSHConfig (object):
                 raise Exception("Unparsable line %s" % line)
             key = match.group(1).lower()
             value = match.group(2)
-            
+
             if key == 'host':
                 self._config.append(host)
                 host = {
@@ -74,15 +76,17 @@ class SSHConfig (object):
                     'config': {}
                 }
             elif key == 'proxycommand' and value.lower() == 'none':
-                # Proxycommands of none should not be added as an actual value. (Issue #415)
-                continue
+                # Store 'none' as None; prior to 3.x, it will get stripped out
+                # at the end (for compatibility with issue #415). After 3.x, it
+                # will simply not get stripped, leaving a nice explicit marker.
+                host['config'][key] = None
             else:
                 if value.startswith('"') and value.endswith('"'):
                     value = value[1:-1]
 
-                #identityfile, localforward, remoteforward keys are special cases, since they are allowed to be
-                # specified multiple times and they should be tried in order
-                # of specification.
+                # identityfile, localforward, remoteforward keys are special
+                # cases, since they are allowed to be specified multiple times
+                # and they should be tried in order of specification.
                 if key in ['identityfile', 'localforward', 'remoteforward']:
                     if key in host['config']:
                         host['config'][key].append(value)
@@ -98,7 +102,7 @@ class SSHConfig (object):
 
         The host-matching rules of OpenSSH's ``ssh_config`` man page are used:
         For each parameter, the first obtained value will be used.  The
-        configuration files contain sections separated by ``Host''
+        configuration files contain sections separated by ``Host``
         specifications, and that section is only applied for hosts that match
         one of the patterns given in the specification.
 
@@ -125,10 +129,13 @@ class SSHConfig (object):
                     # else it will reference the original list
                     # in self._config and update that value too
                     # when the extend() is being called.
-                    ret[key] = value[:]
+                    ret[key] = value[:] if value is not None else value
                 elif key == 'identityfile':
                     ret[key].extend(value)
         ret = self._expand_variables(ret, hostname)
+        # TODO: remove in 3.x re #670
+        if 'proxycommand' in ret and ret['proxycommand'] is None:
+            del ret['proxycommand']
         return ret
 
     def get_hostnames(self):
@@ -202,6 +209,7 @@ class SSHConfig (object):
                         ],
                         'proxycommand':
                         [
+                            ('~', homedir),
                             ('%h', config['hostname']),
                             ('%p', port),
                             ('%r', remoteuser)
@@ -209,13 +217,16 @@ class SSHConfig (object):
                         }
 
         for k in config:
+            if config[k] is None:
+                continue
             if k in replacements:
                 for find, replace in replacements[k]:
                     if isinstance(config[k], list):
                         for item in range(len(config[k])):
                             if find in config[k][item]:
-                                config[k][item] = config[k][item].\
-                                    replace(find, str(replace))
+                                config[k][item] = config[k][item].replace(
+                                    find, str(replace)
+                                )
                     else:
                         if find in config[k]:
                             config[k] = config[k].replace(find, str(replace))
@@ -257,8 +268,9 @@ class LazyFqdn(object):
             address_family = self.config.get('addressfamily', 'any').lower()
             if address_family != 'any':
                 try:
-                    family = socket.AF_INET if address_family == 'inet' \
-                        else socket.AF_INET6
+                    family = socket.AF_INET6
+                    if address_family == 'inet':
+                        socket.AF_INET
                     results = socket.getaddrinfo(
                         self.host,
                         None,

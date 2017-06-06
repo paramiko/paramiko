@@ -32,7 +32,7 @@ class Message (object):
     An SSH2 message is a stream of bytes that encodes some combination of
     strings, integers, bools, and infinite-precision integers (known in Python
     as longs).  This class builds or breaks down such a byte stream.
-    
+
     Normally you don't need to deal with anything this low-level, but it's
     exposed for people implementing custom extensions, or features that
     paramiko doesn't support yet.
@@ -129,7 +129,7 @@ class Message (object):
         b = self.get_bytes(1)
         return b != zero_byte
 
-    def get_int(self):
+    def get_adaptive_int(self):
         """
         Fetch an int from the stream.
 
@@ -141,25 +141,9 @@ class Message (object):
         byte += self.get_bytes(3)
         return struct.unpack('>I', byte)[0]
 
-    def get_size(self):
+    def get_int(self):
         """
         Fetch an int from the stream.
-
-        @return: a 32-bit unsigned integer.
-        @rtype: int
-        """
-        byte = self.get_bytes(1)
-        if byte == max_byte:
-            return util.inflate_long(self.get_binary())
-        byte += self.get_bytes(3)
-        return struct.unpack('>I', byte)[0]
-
-    def get_size(self):
-        """
-        Fetch an int from the stream.
-
-        @return: a 32-bit unsigned integer.
-        @rtype: int
         """
         return struct.unpack('>I', self.get_bytes(4))[0]
 
@@ -185,35 +169,26 @@ class Message (object):
         contain unprintable characters.  (It's not unheard of for a string to
         contain another byte-stream message.)
         """
-        return self.get_bytes(self.get_size())
+        return self.get_bytes(self.get_int())
 
     def get_text(self):
         """
-        Fetch a string from the stream.  This could be a byte string and may
-        contain unprintable characters.  (It's not unheard of for a string to
-        contain another byte-stream Message.)
-
-        @return: a string.
-        @rtype: string
+        Fetch a Unicode string from the stream.
         """
-        return u(self.get_bytes(self.get_size()))
-        #return self.get_bytes(self.get_size())
+        return u(self.get_string())
 
     def get_binary(self):
         """
         Fetch a string from the stream.  This could be a byte string and may
         contain unprintable characters.  (It's not unheard of for a string to
         contain another byte-stream Message.)
-
-        @return: a string.
-        @rtype: string
         """
-        return self.get_bytes(self.get_size())
+        return self.get_bytes(self.get_int())
 
     def get_list(self):
         """
         Fetch a `list` of `strings <str>` from the stream.
-        
+
         These are trivially encoded as comma-separated values in a string.
         """
         return self.get_text().split(',')
@@ -221,7 +196,7 @@ class Message (object):
     def add_bytes(self, b):
         """
         Write bytes to the stream, without any formatting.
-        
+
         :param str b: bytes to add
         """
         self.packet.write(b)
@@ -230,7 +205,7 @@ class Message (object):
     def add_byte(self, b):
         """
         Write a single byte to the stream, without any formatting.
-        
+
         :param str b: byte to add
         """
         self.packet.write(b)
@@ -239,7 +214,7 @@ class Message (object):
     def add_boolean(self, b):
         """
         Add a boolean value to the stream.
-        
+
         :param bool b: boolean value to add
         """
         if b:
@@ -247,35 +222,21 @@ class Message (object):
         else:
             self.packet.write(zero_byte)
         return self
-            
-    def add_size(self, n):
+
+    def add_int(self, n):
         """
         Add an integer to the stream.
-        
+
         :param int n: integer to add
         """
         self.packet.write(struct.pack('>I', n))
         return self
-            
-    def add_int(self, n):
+
+    def add_adaptive_int(self, n):
         """
         Add an integer to the stream.
-        
+
         :param int n: integer to add
-        """
-        if n >= Message.big_int:
-            self.packet.write(max_byte)
-            self.add_string(util.deflate_long(n))
-        else:
-            self.packet.write(struct.pack('>I', n))
-        return self
-
-    def add_int(self, n):
-        """
-        Add an integer to the stream.
-
-        @param n: integer to add
-        @type n: int
         """
         if n >= Message.big_int:
             self.packet.write(max_byte)
@@ -297,7 +258,7 @@ class Message (object):
         """
         Add a long int to the stream, encoded as an infinite-precision
         integer.  This method only works on positive numbers.
-        
+
         :param long z: long int to add
         """
         self.add_string(util.deflate_long(z))
@@ -306,11 +267,11 @@ class Message (object):
     def add_string(self, s):
         """
         Add a string to the stream.
-        
+
         :param str s: string to add
         """
         s = asbytes(s)
-        self.add_size(len(s))
+        self.add_int(len(s))
         self.packet.write(s)
         return self
 
@@ -319,17 +280,17 @@ class Message (object):
         Add a list of strings to the stream.  They are encoded identically to
         a single string of values separated by commas.  (Yes, really, that's
         how SSH2 does it.)
-        
+
         :param list l: list of strings to add
         """
         self.add_string(','.join(l))
         return self
-        
+
     def _add(self, i):
         if type(i) is bool:
             return self.add_boolean(i)
         elif isinstance(i, integer_types):
-            return self.add_int(i)
+            return self.add_adaptive_int(i)
         elif type(i) is list:
             return self.add_list(i)
         else:
@@ -342,7 +303,7 @@ class Message (object):
 
         .. warning::
             Longs are encoded non-deterministically.  Don't use this method.
-        
+
         :param seq: the sequence of items
         """
         for item in seq:

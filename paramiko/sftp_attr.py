@@ -84,7 +84,7 @@ class SFTPAttributes (object):
     def __repr__(self):
         return '<SFTPAttributes: %s>' % self._debug_str()
 
-    ###  internals...
+    # ...internals...
     @classmethod
     def _from_msg(cls, msg, filename=None, longname=None):
         attr = cls()
@@ -189,9 +189,12 @@ class SFTPAttributes (object):
                 ks = 's'
             else:
                 ks = '?'
-            ks += self._rwx((self.st_mode & o700) >> 6, self.st_mode & stat.S_ISUID)
-            ks += self._rwx((self.st_mode & o70) >> 3, self.st_mode & stat.S_ISGID)
-            ks += self._rwx(self.st_mode & 7, self.st_mode & stat.S_ISVTX, True)
+            ks += self._rwx(
+                (self.st_mode & o700) >> 6, self.st_mode & stat.S_ISUID)
+            ks += self._rwx(
+                (self.st_mode & o70) >> 3, self.st_mode & stat.S_ISGID)
+            ks += self._rwx(
+                self.st_mode & 7, self.st_mode & stat.S_ISVTX, True)
         else:
             ks = '?---------'
         # compute display date
@@ -201,20 +204,26 @@ class SFTPAttributes (object):
         else:
             if abs(time.time() - self.st_mtime) > 15552000:
                 # (15552000 = 6 months)
-                datestr = time.strftime('%d %b %Y', time.localtime(self.st_mtime))
+                datestr = time.strftime(
+                    '%d %b %Y', time.localtime(self.st_mtime))
             else:
-                datestr = time.strftime('%d %b %H:%M', time.localtime(self.st_mtime))
+                datestr = time.strftime(
+                    '%d %b %H:%M', time.localtime(self.st_mtime))
         filename = getattr(self, 'filename', '?')
 
         # not all servers support uid/gid
         uid = self.st_uid
         gid = self.st_gid
+        size = self.st_size
         if uid is None:
             uid = 0
         if gid is None:
             gid = 0
+        if size is None:
+            size = 0
 
-        return '%s   1 %-8d %-8d %8d %-12s %s' % (ks, uid, gid, self.st_size, datestr, filename)
+        return '%s   1 %-8d %-8d %8d %-12s %s' % (
+            ks, uid, gid, size, datestr, filename)
 
     def asbytes(self):
         return b(str(self))

@@ -22,8 +22,10 @@ A stub SFTP server for loopback SFTP testing.
 
 import os
 import sys
-from paramiko import ServerInterface, SFTPServerInterface, SFTPServer, SFTPAttributes, \
-    SFTPHandle, SFTP_OK, SFTP_FAILURE, AUTH_SUCCESSFUL, OPEN_SUCCEEDED
+from paramiko import (
+    ServerInterface, SFTPServerInterface, SFTPServer, SFTPAttributes,
+    SFTPHandle, SFTP_OK, SFTP_FAILURE, AUTH_SUCCESSFUL, OPEN_SUCCEEDED,
+)
 from paramiko.common import o666
 
 
@@ -55,7 +57,7 @@ class StubSFTPHandle (SFTPHandle):
 
 class StubSFTPServer (SFTPServerInterface):
     # assume current folder is a fine root
-    # (the tests always create and eventualy delete a subfolder, so there shouldn't be any mess)
+    # (the tests always create and eventually delete a subfolder, so there shouldn't be any mess)
     ROOT = os.getcwd()
         
     def _realpath(self, path):

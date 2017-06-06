@@ -30,6 +30,7 @@ import paramiko.util
 from paramiko.util import lookup_ssh_host_config as host_config, safe_string
 from paramiko.py3compat import StringIO, byte_ord, b
 
+# Note some lines in this configuration have trailing spaces on purpose
 test_config_file = """\
 Host *
     User robey
@@ -65,7 +66,7 @@ from paramiko import *
 
 
 class UtilTest(unittest.TestCase):
-    def test_1_import(self):
+    def test_import(self):
         """
         verify that all the classes can be imported from paramiko.
         """
@@ -103,30 +104,30 @@ class UtilTest(unittest.TestCase):
         self.assertTrue('SSHConfig' in symbols)
         self.assertTrue('util' in symbols)
 
-    def test_2_parse_config(self):
+    def test_parse_config(self):
         global test_config_file
         f = StringIO(test_config_file)
         config = paramiko.util.parse_ssh_config(f)
         self.assertEqual(config._config,
             [{'host': ['*'], 'config': {}}, {'host': ['*'], 'config': {'identityfile': ['~/.ssh/id_rsa'], 'user': 'robey'}},
             {'host': ['*.example.com'], 'config': {'user': 'bjork', 'port': '3333'}},
-            {'host': ['*'], 'config': {'crazy': 'something dumb  '}},
+            {'host': ['*'], 'config': {'crazy': 'something dumb'}},
             {'host': ['spoo.example.com'], 'config': {'crazy': 'something else'}}])
 
-    def test_3_host_config(self):
+    def test_host_config(self):
         global test_config_file
         f = StringIO(test_config_file)
         config = paramiko.util.parse_ssh_config(f)
 
         for host, values in {
-            'irc.danger.com':   {'crazy': 'something dumb  ',
+            'irc.danger.com':   {'crazy': 'something dumb',
                                 'hostname': 'irc.danger.com',
                                 'user': 'robey'},
-            'irc.example.com':  {'crazy': 'something dumb  ',
+            'irc.example.com':  {'crazy': 'something dumb',
                                 'hostname': 'irc.example.com',
                                 'user': 'robey',
                                 'port': '3333'},
-            'spoo.example.com': {'crazy': 'something dumb  ',
+            'spoo.example.com': {'crazy': 'something dumb',
                                 'hostname': 'spoo.example.com',
                                 'user': 'robey',
                                 'port': '3333'}
@@ -140,12 +141,12 @@ class UtilTest(unittest.TestCase):
                 values
             )
 
-    def test_4_generate_key_bytes(self):
+    def test_generate_key_bytes(self):
         x = paramiko.util.generate_key_bytes(sha1, b'ABCDEFGH', 'This is my secret passphrase.', 64)
         hex = ''.join(['%02x' % byte_ord(c) for c in x])
         self.assertEqual(hex, '9110e2f6793b69363e58173e9436b13a5a4b339005741d5c680e505f57d871347b4239f14fb5c46e857d5e100424873ba849ac699cea98d729e57b3e84378e8b')
 
-    def test_5_host_keys(self):
+    def test_host_keys(self):
         with open('hostfile.temp', 'w') as f:
             f.write(test_hosts_file)
         try:
@@ -158,7 +159,7 @@ class UtilTest(unittest.TestCase):
         finally:
             os.unlink('hostfile.temp')
 
-    def test_7_host_config_expose_issue_33(self):
+    def test_host_config_expose_issue_33(self):
         test_config_file = """
 Host www13.*
     Port 22
@@ -177,7 +178,7 @@ Host *
             {'hostname': host, 'port': '22'}
         )
 
-    def test_8_eintr_retry(self):
+    def test_eintr_retry(self):
         self.assertEqual('foo', paramiko.util.retry_on_signal(lambda: 'foo'))
 
         # Variables that are set by raises_intr
@@ -202,7 +203,7 @@ Host *
         self.assertRaises(AssertionError,
                           lambda: paramiko.util.retry_on_signal(raises_other_exception))
 
-    def test_9_proxycommand_config_equals_parsing(self):
+    def test_proxycommand_config_equals_parsing(self):
         """
         ProxyCommand should not split on equals signs within the value.
         """
@@ -221,7 +222,7 @@ Host equals-delimited
                 'foo bar=biz baz'
             )
 
-    def test_10_proxycommand_interpolation(self):
+    def test_proxycommand_interpolation(self):
         """
         ProxyCommand should perform interpolation on the value
         """
@@ -247,7 +248,20 @@ Host *
                 val
             )
 
-    def test_11_host_config_test_negation(self):
+    def test_proxycommand_tilde_expansion(self):
+        """
+        Tilde (~) should be expanded inside ProxyCommand
+        """
+        config = paramiko.util.parse_ssh_config(StringIO("""
+Host test
+    ProxyCommand    ssh -F ~/.ssh/test_config bastion nc %h %p
+"""))
+        self.assertEqual(
+            'ssh -F %s/.ssh/test_config bastion nc test 22' % os.path.expanduser('~'),
+            host_config('test', config)['proxycommand']
+        )
+
+    def test_host_config_test_negation(self):
         test_config_file = """
 Host www13.* !*.example.com
     Port 22
@@ -269,7 +283,7 @@ Host *
             {'hostname': host, 'port': '8080'}
         )
 
-    def test_12_host_config_test_proxycommand(self):
+    def test_host_config_test_proxycommand(self):
         test_config_file = """
 Host proxy-with-equal-divisor-and-space
 ProxyCommand = foo=bar
@@ -297,7 +311,7 @@ ProxyCommand foo=bar:%h-%p
                 values
             )
 
-    def test_11_host_config_test_identityfile(self):
+    def test_host_config_test_identityfile(self):
         test_config_file = """
 
 IdentityFile id_dsa0
@@ -327,7 +341,7 @@ IdentityFile id_dsa22
                 values
             )
 
-    def test_12_config_addressfamily_and_lazy_fqdn(self):
+    def test_config_addressfamily_and_lazy_fqdn(self):
         """
         Ensure the code path honoring non-'all' AddressFamily doesn't asplode
         """
@@ -343,13 +357,13 @@ IdentityFile something_%l_using_fqdn
         self.assertEqual(32767, paramiko.util.clamp_value(32767, 32765, 32769))
         self.assertEqual(32769, paramiko.util.clamp_value(32767, 32770, 32769))
 
-    def test_13_config_dos_crlf_succeeds(self):
+    def test_config_dos_crlf_succeeds(self):
         config_file = StringIO("host abcqwerty\r\nHostName 127.0.0.1\r\n")
         config = paramiko.SSHConfig()
         config.parse(config_file)
         self.assertEqual(config.lookup("abcqwerty")["hostname"], "127.0.0.1")
 
-    def test_14_get_hostnames(self):
+    def test_get_hostnames(self):
         f = StringIO(test_config_file)
         config = paramiko.util.parse_ssh_config(f)
         self.assertEqual(config.get_hostnames(), set(['*', '*.example.com', 'spoo.example.com']))
@@ -461,9 +475,10 @@ Host param3 parara
         safe_has_bytes = safe_string(has_bytes)
         expected_bytes = b("has %07%03 bytes")
         err = "{0!r} != {1!r}"
-        assert safe_vanilla == vanilla, err.format(safe_vanilla, vanilla)
-        assert safe_has_bytes == expected_bytes, \
-            err.format(safe_has_bytes, expected_bytes)
+        msg = err.format(safe_vanilla, vanilla)
+        assert safe_vanilla == vanilla, msg
+        msg = err.format(safe_has_bytes, expected_bytes)
+        assert safe_has_bytes == expected_bytes, msg
 
     def test_proxycommand_none_issue_418(self):
         test_config_file = """
@@ -484,3 +499,33 @@ Host proxycommand-with-equals-none
                 paramiko.util.lookup_ssh_host_config(host, config),
                 values
             )
+
+    def test_proxycommand_none_masking(self):
+        # Re: https://github.com/paramiko/paramiko/issues/670
+        source_config = """
+Host specific-host
+    ProxyCommand none
+
+Host other-host
+    ProxyCommand other-proxy
+
+Host *
+    ProxyCommand default-proxy
+"""
+        config = paramiko.SSHConfig()
+        config.parse(StringIO(source_config))
+        # When bug is present, the full stripping-out of specific-host's
+        # ProxyCommand means it actually appears to pick up the default
+        # ProxyCommand value instead, due to cascading. It should (for
+        # backwards compatibility reasons in 1.x/2.x) appear completely blank,
+        # as if the host had no ProxyCommand whatsoever.
+        # Threw another unrelated host in there just for sanity reasons.
+        self.assertFalse('proxycommand' in config.lookup('specific-host'))
+        self.assertEqual(
+            config.lookup('other-host')['proxycommand'],
+            'other-proxy'
+        )
+        self.assertEqual(
+            config.lookup('some-random-host')['proxycommand'],
+            'default-proxy'
+        )

@@ -22,20 +22,25 @@ SSH client & key policies
 
 from binascii import hexlify
 import getpass
+import inspect
 import os
 import socket
 import warnings
+from errno import ECONNREFUSED, EHOSTUNREACH
 
 from paramiko.agent import Agent
 from paramiko.common import DEBUG
 from paramiko.config import SSH_PORT
 from paramiko.dsskey import DSSKey
 from paramiko.ecdsakey import ECDSAKey
+from paramiko.ed25519key import Ed25519Key
 from paramiko.hostkeys import HostKeys
 from paramiko.py3compat import string_types
 from paramiko.resource import ResourceManager
 from paramiko.rsakey import RSAKey
-from paramiko.ssh_exception import SSHException, BadHostKeyException
+from paramiko.ssh_exception import (
+    SSHException, BadHostKeyException, NoValidConnectionsError
+)
 from paramiko.transport import Transport
 from paramiko.util import retry_on_signal, ClosingContextManager
 
@@ -88,7 +93,7 @@ class SSHClient (ClosingContextManager):
 
         :param str filename: the filename to read, or ``None``
 
-        :raises IOError:
+        :raises: ``IOError`` --
             if a filename was provided and the file could not be read
         """
         if filename is None:
@@ -115,7 +120,7 @@ class SSHClient (ClosingContextManager):
 
         :param str filename: the filename to read
 
-        :raises IOError: if the filename could not be read
+        :raises: ``IOError`` -- if the filename could not be read
         """
         self._host_keys_filename = filename
         self._host_keys.load(filename)
@@ -128,7 +133,7 @@ class SSHClient (ClosingContextManager):
 
         :param str filename: the filename to save to
 
-        :raises IOError: if the file could not be written
+        :raises: ``IOError`` -- if the file could not be written
         """
 
         # update local host keys from file (in case other SSH clients
@@ -139,7 +144,8 @@ class SSHClient (ClosingContextManager):
         with open(filename, 'w') as f:
             for hostname, keys in self._host_keys.items():
                 for keytype, key in keys.items():
-                    f.write('%s %s %s\n' % (hostname, keytype, key.get_base64()))
+                    f.write('%s %s %s\n' % (
+                        hostname, keytype, key.get_base64()))
 
     def get_host_keys(self):
         """
@@ -161,21 +167,69 @@ class SSHClient (ClosingContextManager):
 
     def set_missing_host_key_policy(self, policy):
         """
-        Set the policy to use when connecting to a server that doesn't have a
-        host key in either the system or local `.HostKeys` objects.  The
-        default policy is to reject all unknown servers (using `.RejectPolicy`).
-        You may substitute `.AutoAddPolicy` or write your own policy class.
+        Set policy to use when connecting to servers without a known host key.
+
+        Specifically:
+
+        * A **policy** is a "policy class" (or instance thereof), namely some
+          subclass of `.MissingHostKeyPolicy` such as `.RejectPolicy` (the
+          default), `.AutoAddPolicy`, `.WarningPolicy`, or a user-created
+          subclass.
+        * A host key is **known** when it appears in the client object's cached
+          host keys structures (those manipulated by `load_system_host_keys`
+          and/or `load_host_keys`).
 
         :param .MissingHostKeyPolicy policy:
             the policy to use when receiving a host key from a
             previously-unknown server
         """
+        if inspect.isclass(policy):
+            policy = policy()
         self._policy = policy
 
-    def connect(self, hostname, port=SSH_PORT, username=None, password=None, pkey=None,
-                key_filename=None, timeout=None, allow_agent=True, look_for_keys=True,
-                compress=False, sock=None, gss_auth=False, gss_kex=False,
-                gss_deleg_creds=True, gss_host=None, banner_timeout=None):
+    def _families_and_addresses(self, hostname, port):
+        """
+        Yield pairs of address families and addresses to try for connecting.
+
+        :param str hostname: the server to connect to
+        :param int port: the server port to connect to
+        :returns: Yields an iterable of ``(family, address)`` tuples
+        """
+        guess = True
+        addrinfos = socket.getaddrinfo(
+            hostname, port, socket.AF_UNSPEC, socket.SOCK_STREAM)
+        for (family, socktype, proto, canonname, sockaddr) in addrinfos:
+            if socktype == socket.SOCK_STREAM:
+                yield family, sockaddr
+                guess = False
+
+        # some OS like AIX don't indicate SOCK_STREAM support, so just
+        # guess. :(  We only do this if we did not get a single result marked
+        # as socktype == SOCK_STREAM.
+        if guess:
+            for family, _, _, _, sockaddr in addrinfos:
+                yield family, sockaddr
+
+    def connect(
+        self,
+        hostname,
+        port=SSH_PORT,
+        username=None,
+        password=None,
+        pkey=None,
+        key_filename=None,
+        timeout=None,
+        allow_agent=True,
+        look_for_keys=True,
+        compress=False,
+        sock=None,
+        gss_auth=False,
+        gss_kex=False,
+        gss_deleg_creds=True,
+        gss_host=None,
+        banner_timeout=None,
+        auth_timeout=None,
+    ):
         """
         Connect to an SSH server and authenticate to it.  The server's host key
         is checked against the system host keys (see `load_system_host_keys`)
@@ -206,8 +260,10 @@ class SSHClient (ClosingContextManager):
         :param str key_filename:
             the filename, or list of filenames, of optional private key(s) to
             try for authentication
-        :param float timeout: an optional timeout (in seconds) for the TCP connect
-        :param bool allow_agent: set to False to disable connecting to the SSH agent
+        :param float timeout:
+            an optional timeout (in seconds) for the TCP connect
+        :param bool allow_agent:
+            set to False to disable connecting to the SSH agent
         :param bool look_for_keys:
             set to False to disable searching for discoverable private key
             files in ``~/.ssh/``
@@ -215,17 +271,24 @@ class SSHClient (ClosingContextManager):
         :param socket sock:
             an open socket or socket-like object (such as a `.Channel`) to use
             for communication to the target host
-        :param bool gss_auth: ``True`` if you want to use GSS-API authentication
-        :param bool gss_kex: Perform GSS-API Key Exchange and user authentication
+        :param bool gss_auth:
+            ``True`` if you want to use GSS-API authentication
+        :param bool gss_kex:
+            Perform GSS-API Key Exchange and user authentication
         :param bool gss_deleg_creds: Delegate GSS-API client credentials or not
-        :param str gss_host: The targets name in the kerberos database. default: hostname
+        :param str gss_host:
+            The targets name in the kerberos database. default: hostname
         :param float banner_timeout: an optional timeout (in seconds) to wait
             for the SSH banner to be presented.
+        :param float auth_timeout: an optional timeout (in seconds) to wait for
+            an authentication response.
 
-        :raises BadHostKeyException: if the server's host key could not be
+        :raises:
+            `.BadHostKeyException` -- if the server's host key could not be
             verified
-        :raises AuthenticationException: if authentication failed
-        :raises SSHException: if there was any other error connecting or
+        :raises: `.AuthenticationException` -- if authentication failed
+        :raises:
+            `.SSHException` -- if there was any other error connecting or
             establishing an SSH session
         :raises socket.error: if a socket error occurred while connecting
 
@@ -234,23 +297,40 @@ class SSHClient (ClosingContextManager):
             ``gss_deleg_creds`` and ``gss_host`` arguments.
         """
         if not sock:
-            for (family, socktype, proto, canonname, sockaddr) in socket.getaddrinfo(hostname, port, socket.AF_UNSPEC, socket.SOCK_STREAM):
-                if socktype == socket.SOCK_STREAM:
-                    af = family
-                    addr = sockaddr
-                    break
-            else:
-                # some OS like AIX don't indicate SOCK_STREAM support, so just guess. :(
-                af, _, _, _, addr = socket.getaddrinfo(hostname, port, socket.AF_UNSPEC, socket.SOCK_STREAM)
-            sock = socket.socket(af, socket.SOCK_STREAM)
-            if timeout is not None:
+            errors = {}
+            # Try multiple possible address families (e.g. IPv4 vs IPv6)
+            to_try = list(self._families_and_addresses(hostname, port))
+            for af, addr in to_try:
                 try:
-                    sock.settimeout(timeout)
-                except:
-                    pass
-            retry_on_signal(lambda: sock.connect(addr))
+                    sock = socket.socket(af, socket.SOCK_STREAM)
+                    if timeout is not None:
+                        try:
+                            sock.settimeout(timeout)
+                        except:
+                            pass
+                    retry_on_signal(lambda: sock.connect(addr))
+                    # Break out of the loop on success
+                    break
+                except socket.error as e:
+                    # Raise anything that isn't a straight up connection error
+                    # (such as a resolution error)
+                    if e.errno not in (ECONNREFUSED, EHOSTUNREACH):
+                        raise
+                    # Capture anything else so we know how the run looks once
+                    # iteration is complete. Retain info about which attempt
+                    # this was.
+                    errors[addr] = e
 
-        t = self._transport = Transport(sock, gss_kex=gss_kex, gss_deleg_creds=gss_deleg_creds)
+            # Make sure we explode usefully if no address family attempts
+            # succeeded. We've no way of knowing which error is the "right"
+            # one, so we construct a hybrid exception containing all the real
+            # ones, of a subclass that client code should still be watching for
+            # (socket.error)
+            if len(errors) == len(to_try):
+                raise NoValidConnectionsError(errors)
+
+        t = self._transport = Transport(
+            sock, gss_kex=gss_kex, gss_deleg_creds=gss_deleg_creds)
         t.use_compression(compress=compress)
         if gss_kex and gss_host is None:
             t.set_gss_host(hostname)
@@ -262,7 +342,10 @@ class SSHClient (ClosingContextManager):
             t.set_log_channel(self._log_channel)
         if banner_timeout is not None:
             t.banner_timeout = banner_timeout
-        t.start_client()
+        if auth_timeout is not None:
+            t.auth_timeout = auth_timeout
+        t.start_client(timeout=timeout)
+        t.set_sshclient(self)
         ResourceManager.register(self, t)
 
         server_key = t.get_remote_server_key()
@@ -277,13 +360,14 @@ class SSHClient (ClosingContextManager):
         # host key, because the host is authenticated via GSS-API / SSPI as
         # well as our client.
         if not self._transport.use_gss_kex:
-            our_server_key = self._system_host_keys.get(server_hostkey_name,
-                                                         {}).get(keytype, None)
+            our_server_key = self._system_host_keys.get(
+                server_hostkey_name, {}).get(keytype)
             if our_server_key is None:
                 our_server_key = self._host_keys.get(server_hostkey_name,
                                                      {}).get(keytype, None)
             if our_server_key is None:
-                # will raise exception if the key is rejected; let that fall out
+                # will raise exception if the key is rejected;
+                # let that fall out
                 self._policy.missing_host_key(self, server_hostkey_name,
                                               server_key)
                 # if the callback returns, assume the key is ok
@@ -309,6 +393,12 @@ class SSHClient (ClosingContextManager):
     def close(self):
         """
         Close this SSHClient and its underlying `.Transport`.
+
+        .. warning::
+            Failure to do this may, in some situations, cause your Python
+            interpreter to hang at shutdown (often due to race conditions).
+            It's good practice to `close` your client objects anytime you're
+            done using them, instead of relying on garbage collection.
         """
         if self._transport is None:
             return
@@ -319,7 +409,14 @@ class SSHClient (ClosingContextManager):
             self._agent.close()
             self._agent = None
 
-    def exec_command(self, command, bufsize=-1, timeout=None, get_pty=False):
+    def exec_command(
+        self,
+        command,
+        bufsize=-1,
+        timeout=None,
+        get_pty=False,
+        environment=None,
+    ):
         """
         Execute a command on the SSH server.  A new `.Channel` is opened and
         the requested command is executed.  The command's input and output
@@ -331,17 +428,27 @@ class SSHClient (ClosingContextManager):
             interpreted the same way as by the built-in ``file()`` function in
             Python
         :param int timeout:
-            set command's channel timeout. See `Channel.settimeout`.settimeout
+            set command's channel timeout. See `.Channel.settimeout`
+        :param dict environment:
+            a dict of shell environment variables, to be merged into the
+            default environment that the remote command executes within.
+
+            .. warning::
+                Servers may silently reject some environment variables; see the
+                warning in `.Channel.set_environment_variable` for details.
+
         :return:
             the stdin, stdout, and stderr of the executing command, as a
             3-tuple
 
-        :raises SSHException: if the server fails to execute the command
+        :raises: `.SSHException` -- if the server fails to execute the command
         """
-        chan = self._transport.open_session()
+        chan = self._transport.open_session(timeout=timeout)
         if get_pty:
             chan.get_pty()
         chan.settimeout(timeout)
+        if environment:
+            chan.update_environment(environment)
         chan.exec_command(command)
         stdin = chan.makefile('wb', bufsize)
         stdout = chan.makefile('r', bufsize)
@@ -349,7 +456,7 @@ class SSHClient (ClosingContextManager):
         return stdin, stdout, stderr
 
     def invoke_shell(self, term='vt100', width=80, height=24, width_pixels=0,
-                     height_pixels=0):
+                     height_pixels=0, environment=None):
         """
         Start an interactive shell session on the SSH server.  A new `.Channel`
         is opened and connected to a pseudo-terminal using the requested
@@ -361,9 +468,10 @@ class SSHClient (ClosingContextManager):
         :param int height: the height (in characters) of the terminal window
         :param int width_pixels: the width (in pixels) of the terminal window
         :param int height_pixels: the height (in pixels) of the terminal window
+        :param dict environment: the command's environment
         :return: a new `.Channel` connected to the remote shell
 
-        :raises SSHException: if the server fails to invoke a shell
+        :raises: `.SSHException` -- if the server fails to invoke a shell
         """
         chan = self._transport.open_session()
         chan.get_pty(term, width, height, width_pixels, height_pixels)
@@ -404,7 +512,8 @@ class SSHClient (ClosingContextManager):
         """
         saved_exception = None
         two_factor = False
-        allowed_types = []
+        allowed_types = set()
+        two_factor_types = set(['keyboard-interactive', 'password'])
 
         # If GSS-API support and GSS-PI Key Exchange was performed, we attempt
         # authentication with gssapi-keyex.
@@ -429,9 +538,12 @@ class SSHClient (ClosingContextManager):
 
         if pkey is not None:
             try:
-                self._log(DEBUG, 'Trying SSH key %s' % hexlify(pkey.get_fingerprint()))
-                allowed_types = self._transport.auth_publickey(username, pkey)
-                two_factor = (allowed_types == ['password'])
+                self._log(
+                    DEBUG,
+                    'Trying SSH key %s' % hexlify(pkey.get_fingerprint()))
+                allowed_types = set(
+                    self._transport.auth_publickey(username, pkey))
+                two_factor = (allowed_types & two_factor_types)
                 if not two_factor:
                     return
             except SSHException as e:
@@ -439,12 +551,17 @@ class SSHClient (ClosingContextManager):
 
         if not two_factor:
             for key_filename in key_filenames:
-                for pkey_class in (RSAKey, DSSKey, ECDSAKey):
+                for pkey_class in (RSAKey, DSSKey, ECDSAKey, Ed25519Key):
                     try:
-                        key = pkey_class.from_private_key_file(key_filename, password)
-                        self._log(DEBUG, 'Trying key %s from %s' % (hexlify(key.get_fingerprint()), key_filename))
-                        self._transport.auth_publickey(username, key)
-                        two_factor = (allowed_types == ['password'])
+                        key = pkey_class.from_private_key_file(
+                            key_filename, password)
+                        self._log(
+                            DEBUG,
+                            'Trying key %s from %s' % (
+                                hexlify(key.get_fingerprint()), key_filename))
+                        allowed_types = set(
+                            self._transport.auth_publickey(username, key))
+                        two_factor = (allowed_types & two_factor_types)
                         if not two_factor:
                             return
                         break
@@ -457,10 +574,15 @@ class SSHClient (ClosingContextManager):
 
             for key in self._agent.get_keys():
                 try:
-                    self._log(DEBUG, 'Trying SSH agent key %s' % hexlify(key.get_fingerprint()))
-                    # for 2-factor auth a successfully auth'd key will result in ['password']
-                    allowed_types = self._transport.auth_publickey(username, key)
-                    two_factor = (allowed_types == ['password'])
+                    self._log(
+                        DEBUG,
+                        'Trying SSH agent key %s' % hexlify(
+                            key.get_fingerprint()))
+                    # for 2-factor auth a successfully auth'd key password
+                    # will return an allowed 2fac auth method
+                    allowed_types = set(
+                        self._transport.auth_publickey(username, key))
+                    two_factor = (allowed_types & two_factor_types)
                     if not two_factor:
                         return
                     break
@@ -469,25 +591,20 @@ class SSHClient (ClosingContextManager):
 
         if not two_factor:
             keyfiles = []
-            rsa_key = os.path.expanduser('~/.ssh/id_rsa')
-            dsa_key = os.path.expanduser('~/.ssh/id_dsa')
-            ecdsa_key = os.path.expanduser('~/.ssh/id_ecdsa')
-            if os.path.isfile(rsa_key):
-                keyfiles.append((RSAKey, rsa_key))
-            if os.path.isfile(dsa_key):
-                keyfiles.append((DSSKey, dsa_key))
-            if os.path.isfile(ecdsa_key):
-                keyfiles.append((ECDSAKey, ecdsa_key))
-            # look in ~/ssh/ for windows users:
-            rsa_key = os.path.expanduser('~/ssh/id_rsa')
-            dsa_key = os.path.expanduser('~/ssh/id_dsa')
-            ecdsa_key = os.path.expanduser('~/ssh/id_ecdsa')
-            if os.path.isfile(rsa_key):
-                keyfiles.append((RSAKey, rsa_key))
-            if os.path.isfile(dsa_key):
-                keyfiles.append((DSSKey, dsa_key))
-            if os.path.isfile(ecdsa_key):
-                keyfiles.append((ECDSAKey, ecdsa_key))
+
+            for keytype, name in [
+                (RSAKey, "rsa"),
+                (DSSKey, "dsa"),
+                (ECDSAKey, "ecdsa"),
+                (Ed25519Key, "ed25519"),
+            ]:
+                # ~/ssh/ is for windows
+                for directory in [".ssh", "ssh"]:
+                    full_path = os.path.expanduser(
+                        "~/%s/id_%s" % (directory, name)
+                    )
+                    if os.path.isfile(full_path):
+                        keyfiles.append((keytype, full_path))
 
             if not look_for_keys:
                 keyfiles = []
@@ -495,10 +612,16 @@ class SSHClient (ClosingContextManager):
             for pkey_class, filename in keyfiles:
                 try:
                     key = pkey_class.from_private_key_file(filename, password)
-                    self._log(DEBUG, 'Trying discovered key %s in %s' % (hexlify(key.get_fingerprint()), filename))
-                    # for 2-factor auth a successfully auth'd key will result in ['password']
-                    allowed_types = self._transport.auth_publickey(username, key)
-                    two_factor = (allowed_types == ['password'])
+                    self._log(
+                        DEBUG,
+                        'Trying discovered key %s in %s' % (
+                            hexlify(key.get_fingerprint()), filename))
+
+                    # for 2-factor auth a successfully auth'd key will result
+                    # in ['password']
+                    allowed_types = set(
+                        self._transport.auth_publickey(username, key))
+                    two_factor = (allowed_types & two_factor_types)
                     if not two_factor:
                         return
                     break
@@ -512,7 +635,11 @@ class SSHClient (ClosingContextManager):
             except SSHException as e:
                 saved_exception = e
         elif two_factor:
-            raise SSHException('Two-factor authentication requires a password')
+            try:
+                self._transport.auth_interactive_dumb(username)
+                return
+            except SSHException as e:
+                saved_exception = e
 
         # if we got an auth-failed exception earlier, re-raise it
         if saved_exception is not None:
@@ -577,4 +704,5 @@ class WarningPolicy (MissingHostKeyPolicy):
     """
     def missing_host_key(self, client, hostname, key):
         warnings.warn('Unknown %s host key for %s: %s' %
-                      (key.get_name(), hostname, hexlify(key.get_fingerprint())))
+                      (key.get_name(), hostname, hexlify(
+                          key.get_fingerprint())))

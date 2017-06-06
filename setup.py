@@ -16,6 +16,13 @@
 # along with Paramiko; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Suite 500, Boston, MA  02110-1335  USA.
 
+import sys
+from setuptools import setup
+
+if sys.platform == 'darwin':
+    import setup_helper
+
+    setup_helper.install_custom_make_tarball()
 
 longdesc = '''
 This is a library for making SSH2 connections (client or server).
@@ -24,34 +31,11 @@ connections between python scripts.  All major ciphers and hash methods
 are supported.  SFTP client and server mode are both supported too.
 
 Required packages:
-    pyCrypto
+    Cryptography
 
-To install the `in-development version
-<https://github.com/paramiko/paramiko/tarball/master#egg=paramiko-dev>`_, use
-`pip install paramiko==dev`.
+To install the development version, ``pip install -e
+git+https://github.com/paramiko/paramiko/#egg=paramiko``.
 '''
-
-# if someday we want to *require* setuptools, uncomment this:
-# (it will cause setuptools to be automatically downloaded)
-#import ez_setup
-#ez_setup.use_setuptools()
-
-import sys
-try:
-    from setuptools import setup
-    kw = {
-        'install_requires': [
-            'pycrypto >= 2.1, != 2.4',
-            'ecdsa >= 0.11',
-        ],
-    }
-except ImportError:
-    from distutils.core import setup
-    kw = {}
-
-if sys.platform == 'darwin':
-    import setup_helper
-    setup_helper.install_custom_make_tarball()
 
 
 # Version info -- read without importing
@@ -60,22 +44,22 @@ with open('paramiko/_version.py') as fp:
     exec(fp.read(), None, _locals)
 version = _locals['__version__']
 
-
 setup(
-    name = "paramiko",
-    version = version,
-    description = "SSH2 protocol library",
-    long_description = longdesc,
-    author = "Jeff Forcier",
-    author_email = "jeff@bitprophet.org",
-    url = "https://github.com/paramiko/paramiko/",
-    packages = [ 'paramiko' ],
-    license = 'LGPL',
-    platforms = 'Posix; MacOS X; Windows',
-    classifiers = [
+    name="paramiko",
+    version=version,
+    description="SSH2 protocol library",
+    long_description=longdesc,
+    author="Jeff Forcier",
+    author_email="jeff@bitprophet.org",
+    url="https://github.com/paramiko/paramiko/",
+    packages=['paramiko'],
+    license='LGPL',
+    platforms='Posix; MacOS X; Windows',
+    classifiers=[
         'Development Status :: 5 - Production/Stable',
         'Intended Audience :: Developers',
-        'License :: OSI Approved :: GNU Library or Lesser General Public License (LGPL)',
+        'License :: OSI Approved :: '
+        'GNU Library or Lesser General Public License (LGPL)',
         'Operating System :: OS Independent',
         'Topic :: Internet',
         'Topic :: Security :: Cryptography',
@@ -87,6 +71,12 @@ setup(
         'Programming Language :: Python :: 3.2',
         'Programming Language :: Python :: 3.3',
         'Programming Language :: Python :: 3.4',
+        'Programming Language :: Python :: 3.5',
     ],
-    **kw
+    install_requires=[
+        'bcrypt>=3.0.0',
+        'cryptography>=1.1',
+        'pynacl>=1.0.1',
+        'pyasn1>=0.1.7',
+    ],
 )

@@ -2,6 +2,361 @@
 Changelog
 =========
 
+* :feature:`869` Add an ``auth_timeout`` kwarg to `SSHClient.connect
+  <paramiko.client.SSHClient.connect>` (default: 30s) to avoid hangs when the
+  remote end becomes unresponsive during the authentication step. Credit to
+  ``@timsavage``.
+* :support:`921` Tighten up the ``__hash__`` implementation for various key
+  classes; less code is good code. Thanks to Francisco Couzo for the patch.
+* :bug:`983` Move ``sha1`` above the now-arguably-broken ``md5`` in the list of
+  preferred MAC algorithms, as an incremental security improvement for users
+  whose target systems offer both. Credit: Pierce Lopez.
+* :bug:`667` The RC4/arcfour family of ciphers has been broken since version
+  2.0; but since the algorithm is now known to be completely insecure, we are
+  opting to remove support outright instead of fixing it. Thanks to Alex Gaynor
+  for catch & patch.
+* :feature:`857` Allow `SSHClient.set_missing_host_key_policy
+  <paramiko.client.SSHClient.set_missing_host_key_policy>` to accept policy
+  classes _or_ instances, instead of only instances, thus fixing a
+  long-standing gotcha for unaware users.
+* :feature:`951` Add support for ECDH key exchange (kex), specifically the
+  algorithms ``ecdh-sha2-nistp256``, ``ecdh-sha2-nistp384``, and
+  ``ecdh-sha2-nistp521``. They now come before the older ``diffie-hellman-*``
+  family of kex algorithms in the preferred-kex list. Thanks to Shashank
+  Veerapaneni for the patch & Pierce Lopez for a follow-up.
+* :support:`- backported` A big formatting pass to clean up an enormous number
+  of invalid Sphinx reference links, discovered by switching to a modern,
+  rigorous nitpicking doc-building mode.
+* :bug:`900` (via :issue:`911`) Prefer newer ``ecdsa-sha2-nistp`` keys over RSA
+  and DSA keys during host key selection. This improves compatibility with
+  OpenSSH, both in terms of general behavior, and also re: ability to properly
+  leverage OpenSSH-modified ``known_hosts`` files. Credit: ``@kasdoe`` for
+  original report/PR and Pierce Lopez for the second draft.
+* :bug:`794` (via :issue:`981`) Prior support for ``ecdsa-sha2-nistp(384|521)``
+  algorithms didn't fully extend to covering host keys, preventing connection
+  to hosts which only offer these key types and no others. This is now fixed.
+  Thanks to ``@ncoult`` and ``@kasdoe`` for reports and Pierce Lopez for the
+  patch.
+* :feature:`325` (via :issue:`972`) Add Ed25519 support, for both host keys
+  and user authentication. Big thanks to Alex Gaynor for the patch.
+
+  .. note::
+    This change adds the ``bcrypt`` and ``pynacl`` Python libraries as
+    dependencies. No C-level dependencies beyond those previously required (for
+    Cryptography) have been added.
+
+* :support:`974 backported` Overhaul the codebase to be PEP-8, etc, compliant
+  (i.e. passes the maintainer's preferred `flake8 <http://flake8.pycqa.org/>`_
+  configuration) and add a ``flake8`` step to the Travis config. Big thanks to
+  Dorian Pula!
+* :bug:`683` Make ``util.log_to_file`` append instead of replace. Thanks
+  to ``@vlcinsky`` for the report.
+* :release:`2.1.2 <2017-02-20>`
+* :release:`2.0.5 <2017-02-20>`
+* :release:`1.18.2 <2017-02-20>`
+* :release:`1.17.4 <2017-02-20>`
+* :bug:`853 (1.17+)` Tweak how `RSAKey.__str__ <paramiko.rsakey.RSAKey>`
+  behaves so it doesn't cause ``TypeError`` under Python 3. Thanks to Francisco
+  Couzo for the report.
+* :bug:`862 (1.17+)` (via :issue:`863`) Avoid test suite exceptions on
+  platforms lacking ``errno.ETIME`` (which seems to be some FreeBSD and some
+  Windows environments.) Thanks to Sofian Brabez.
+* :bug:`44 (1.17+)` (via :issue:`891`) `SSHClient <paramiko.client.SSHClient>`
+  now gives its internal `Transport <paramiko.transport.Transport>` a handle on
+  itself, preventing garbage collection of the client until the session is
+  closed. Without this, some code which returns stream or transport objects
+  without the client that generated them, would result in premature session
+  closure when the client was GCd. Credit: ``@w31rd0`` for original report,
+  Omer Anson for the patch.
+* :bug:`713 (<2.0)` (via :issue:`714` and :issue:`889`) Don't pass
+  initialization vectors to PyCrypto when dealing with counter-mode ciphers;
+  newer PyCrypto versions throw an exception otherwise (older ones simply
+  ignored this parameter altogether). Thanks to ``@jmh045000`` for report &
+  patches.
+* :bug:`895 (1.17+)` Fix a bug in server-mode concerning multiple interactive
+  auth steps (which were incorrectly responded to). Thanks to Dennis
+  Kaarsemaker for catch & patch.
+* :support:`866 backported (1.17+)` (also :issue:`838`) Remove an old
+  test-related file we don't support, and add PyPy to Travis-CI config. Thanks
+  to Pierce Lopez for the final patch and Pedro Rodrigues for an earlier
+  edition.
+* :release:`2.1.1 <2016-12-12>`
+* :release:`2.0.4 <2016-12-12>`
+* :release:`1.18.1 <2016-12-12>`
+* :bug:`859 (1.18+)` (via :issue:`860`) A tweak to the original patch
+  implementing :issue:`398` was not fully applied, causing calls to
+  `~paramiko.client.SSHClient.invoke_shell` to fail with ``AttributeError``.
+  This has been fixed. Patch credit: Kirk Byers.
+* :bug:`-` Accidentally merged the new features from 1.18.0 into the
+  2.0.x bugfix-only branch. This included merging a bug in one of those new
+  features (breaking `~paramiko.client.SSHClient.invoke_shell` with an
+  ``AttributeError``.) The offending code has been stripped out of the 2.0.x
+  line (but of course, remains in 2.1.x and above.)
+* :bug:`859` (via :issue:`860`) A tweak to the original patch implementing
+  :issue:`398` was not fully applied, causing calls to
+  `~paramiko.client.SSHClient.invoke_shell` to fail with ``AttributeError``.
+  This has been fixed. Patch credit: Kirk Byers.
+* :release:`2.1.0 <2016-12-09>`
+* :release:`2.0.3 <2016-12-09>`
+* :release:`1.18.0 <2016-12-09>`
+* :release:`1.17.3 <2016-12-09>`
+* :bug:`802 (1.17+)` (via :issue:`804`) Update our vendored Windows API module
+  to address errors of the form ``AttributeError: 'module' object has no
+  attribute 'c_ssize_t'``. Credit to Jason R. Coombs.
+* :bug:`824 (1.17+)` Fix the implementation of ``PKey.write_private_key_file``
+  (this method is only publicly defined on subclasses; the fix was in the
+  private real implementation) so it passes the correct params to ``open()``.
+  This bug apparently went unnoticed and unfixed for 12 entire years. Congrats
+  to John Villalovos for noticing & submitting the patch!
+* :support:`801 backported (1.17+)` Skip a Unix-only test when on Windows;
+  thanks to Gabi Davar.
+* :support:`792 backported (1.17+)` Minor updates to the README and demos;
+  thanks to Alan Yee.
+* :feature:`780 (1.18+)` (also :issue:`779`, and may help users affected by
+  :issue:`520`) Add an optional ``timeout`` parameter to
+  `Transport.start_client <paramiko.transport.Transport.start_client>` (and
+  feed it the value of the configured connection timeout when used within
+  `SSHClient <paramiko.client.SSHClient>`.) This helps prevent situations where
+  network connectivity isn't timing out, but the remote server is otherwise
+  unable to service the connection in a timely manner. Credit to
+  ``@sanseihappa``.
+* :bug:`742` (also re: :issue:`559`) Catch ``AssertionError`` thrown by
+  Cryptography when attempting to load bad ECDSA keys, turning it into an
+  ``SSHException``. This moves the behavior in line with other "bad keys"
+  situations, re: Paramiko's main auth loop. Thanks to MengHuan Yu for the
+  patch.
+* :bug:`789 (1.17+)` Add a missing ``.closed`` attribute (plus ``._closed``
+  because reasons) to `ProxyCommand <paramiko.proxy.ProxyCommand>` so the
+  earlier partial fix for :issue:`520` works in situations where one is
+  gatewaying via ``ProxyCommand``.
+* :bug:`334 (1.17+)` Make the ``subprocess`` import in ``proxy.py`` lazy so
+  users on platforms without it (such as Google App Engine) can import Paramiko
+  successfully. (Relatedly, make it easier to tweak an active socket check
+  timeout  [in `Transport <paramiko.transport.Transport>`] which was previously
+  hardcoded.) Credit: Shinya Okano.
+* :support:`854 backported (1.17+)` Fix incorrect docstring/param-list for
+  `Transport.auth_gssapi_keyex
+  <paramiko.transport.Transport.auth_gssapi_keyex>` so it matches the real
+  signature. Caught by ``@Score_Under``.
+* :bug:`681 (1.17+)` Fix a Python3-specific bug re: the handling of read
+  buffers when using ``ProxyCommand``. Thanks to Paul Kapp for catch & patch.
+* :feature:`398 (1.18+)` Add an ``environment`` dict argument to
+  `Client.exec_command <paramiko.client.SSHClient.exec_command>` (plus the
+  lower level `Channel.update_environment
+  <paramiko.channel.Channel.update_environment>` and
+  `Channel.set_environment_variable
+  <paramiko.channel.Channel.set_environment_variable>` methods) which
+  implements the ``env`` SSH message type. This means the remote shell
+  environment can be set without the use of ``VARNAME=value`` shell tricks,
+  provided the server's ``AcceptEnv`` lists the variables you need to set.
+  Thanks to Philip Lorenz for the pull request.
+* :support:`819 backported (>=1.15,<2.0)` Document how lacking ``gmp`` headers
+  at install time can cause a significant performance hit if you build PyCrypto
+  from source. (Most system-distributed packages already have this enabled.)
+* :release:`2.0.2 <2016-07-25>`
+* :release:`1.17.2 <2016-07-25>`
+* :release:`1.16.3 <2016-07-25>`
+* :bug:`673 (1.16+)` (via :issue:`681`) Fix protocol banner read errors
+  (``SSHException``) which would occasionally pop up when using
+  ``ProxyCommand`` gatewaying. Thanks to ``@Depado`` for the initial report and
+  Paul Kapp for the fix.
+* :bug:`774 (1.16+)` Add a ``_closed`` private attribute to
+  `~paramiko.channel.Channel` objects so that they continue functioning when
+  used as proxy sockets under Python 3 (e.g. as ``direct-tcpip`` gateways for
+  other Paramiko connections.)
+* :bug:`758 (1.16+)` Apply type definitions to ``_winapi`` module from
+  `jaraco.windows <https://github.com/jaraco/jaraco.windows>`_ 3.6.1. This
+  should address issues on Windows platforms that often result in errors like
+  ``ArgumentError: [...] int too long to convert``. Thanks to ``@swohlerLL``
+  for the report and Jason R. Coombs for the patch.
+* :release:`2.0.1 <2016-06-21>`
+* :release:`1.17.1 <2016-06-21>`
+* :release:`1.16.2 <2016-06-21>`
+* :bug:`520 (1.16+)` (Partial fix) Fix at least one instance of race condition
+  driven threading hangs at end of the Python interpreter session. (Includes a
+  docs update as well - always make sure to ``.close()`` your clients!)
+* :bug:`537 (1.16+)` Fix a bug in `BufferedPipe.set_event
+  <paramiko.buffered_pipe.BufferedPipe.set_event>` which could cause
+  deadlocks/hangs when one uses `select.select` against
+  `~paramiko.channel.Channel` objects (or otherwise calls `Channel.fileno
+  <paramiko.channel.Channel.fileno>` after the channel has closed). Thanks to
+  Przemysław Strzelczak for the report & reproduction case, and to Krzysztof
+  Rusek for the fix.
+* :release:`2.0.0 <2016-04-28>`
+* :release:`1.17.0 <2016-04-28>`
+* :release:`1.16.1 <2016-04-28>`
+* :release:`1.15.5 <2016-04-28>`
+* :feature:`731` (working off the earlier :issue:`611`) Add support for 384-
+  and 512-bit elliptic curve groups in ECDSA key types (aka
+  ``ecdsa-sha2-nistp384`` / ``ecdsa-sha2-nistp521``). Thanks to Michiel Tiller
+  and ``@CrazyCasta`` for the patches.
+* :bug:`670` Due to an earlier bugfix, less-specific ``Host`` blocks'
+  ``ProxyCommand`` values were overriding ``ProxyCommand none`` in
+  more-specific ``Host`` blocks. This has been fixed in a backwards compatible
+  manner (i.e. ``ProxyCommand none`` continues to appear as a total lack of any
+  ``proxycommand`` key in parsed config structures). Thanks to Pat Brisbin for
+  the catch.
+* :bug:`676` (via :issue:`677`) Fix a backwards incompatibility issue that
+  cropped up in `SFTPFile.prefetch <paramiko.sftp_file.SFTPFile.prefetch>` re:
+  the erroneously non-optional ``file_size`` parameter. Should only affect
+  users who manually call ``prefetch``. Thanks to ``@stevevanhooser`` for catch
+  & patch.
+* :feature:`394` Replace PyCrypto with the Python Cryptographic Authority
+  (PyCA) 'Cryptography' library suite. This improves security, installability,
+  and performance; adds PyPy support; and much more.
+
+  There aren't enough ways to thank Alex Gaynor for all of his work on this,
+  and then his patience while the maintainer let his PR grow moss for a year
+  and change. Paul Kehrer came in with an assist, and I think I saw Olle
+  Lundberg, ``@techtonik`` and ``@johnthagen`` supplying backup as well. Thanks
+  to all!
+
+  .. warning::
+    **This is a backwards incompatible change.**
+
+    However, **it should only affect installation** requirements; **no API
+    changes are intended or expected**. Please report any such breakages as
+    bugs.
+
+    See our updated :doc:`installation docs <installing>` for details on what
+    is now required to install Paramiko; many/most users should be able to
+    simply ``pip install -U paramiko`` (especially if you **upgrade to pip
+    8**).
+
+* :bug:`577` (via :issue:`578`; should also fix :issue:`718`, :issue:`560`) Fix
+  stalled/hung SFTP downloads by cleaning up some threading lock issues. Thanks
+  to Stephen C. Pope for the patch.
+* :bug:`716` Fix a Python 3 compatibility issue when handling two-factor
+  authentication. Thanks to Mateusz Kowalski for the catch & original patch.
+* :support:`729 backported (>=1.15,<2.0)` Clean up ``setup.py`` to always use
+  ``setuptools``, not doing so was a historical artifact from bygone days.
+  Thanks to Alex Gaynor.
+* :bug:`649 major (==1.17)` Update the module in charge of handling SSH moduli
+  so it's consistent with OpenSSH behavior re: prime number selection. Thanks
+  to Damien Tournoud for catch & patch.
+* :bug:`617` (aka `fabric/fabric#1429
+  <https://github.com/fabric/fabric/issues/1429>`_; via :issue:`679`; related:
+  :issue:`678`, :issue:`685`, :issue:`615` & :issue:`616`) Fix up
+  `~paramiko.ssh_exception.NoValidConnectionsError` so it pickles correctly,
+  and fix a related Python 3 compatibility issue. Thanks to Rebecca Schlussel
+  for the report & Marius Gedminas for the patch.
+* :bug:`613` (via :issue:`619`) Update to ``jaraco.windows`` 3.4.1 to fix some
+  errors related to ``ctypes`` on Windows platforms. Credit to Jason R. Coombs.
+* :support:`621 backported (>=1.15,<2.0)` Annotate some public attributes on
+  `~paramiko.channel.Channel` such as ``.closed``. Thanks to Sergey Vasilyev
+  for the report.
+* :bug:`632` Fix logic bug in the SFTP client's callback-calling functionality;
+  previously there was a chance the given callback would fire twice at the end
+  of a transfer. Thanks to ``@ab9-er`` for catch & original patch.
+* :support:`612 backported (>=1.15,<2.0)` Identify & work around a race
+  condition in the test for handshake timeouts, which was causing frequent test
+  failures for a subset of contributors as well as Travis-CI (usually, but not
+  always, limited to Python 3.5). Props to Ed Kellett for assistance during
+  some of the troubleshooting.
+* :support:`697 backported (>=1.15,<2.0)` Remove whitespace in our
+  ``setup.py``'s ``install_requires`` as it triggers occasional bugs in some
+  versions of ``setuptools``. Thanks to Justin Lecher for catch & original
+  patch.
+* :bug:`499` Strip trailing/leading whitespace from lines when parsing SSH
+  config files - this brings things in line with OpenSSH behavior. Thanks to
+  Alfredo Esteban for the original report and Nick Pillitteri for the patch.
+* :bug:`652` Fix behavior of ``gssapi-with-mic`` auth requests so they fail
+  gracefully (allowing followup via other auth methods) instead of raising an
+  exception. Patch courtesy of ``@jamercee``.
+* :feature:`588 (==1.17)` Add missing file-like object methods for
+  `~paramiko.file.BufferedFile` and `~paramiko.sftp_file.SFTPFile`. Thanks to
+  Adam Meily for the patch.
+* :support:`636 backported (>=1.15,<2.0)` Clean up and enhance the README (and
+  rename it to ``README.rst`` from just ``README``). Thanks to ``@LucasRMehl``.
+* :release:`1.16.0 <2015-11-04>`
+* :bug:`194 major` (also :issue:`562`, :issue:`530`, :issue:`576`) Streamline
+  use of ``stat`` when downloading SFTP files via `SFTPClient.get
+  <paramiko.sftp_client.SFTPClient.get>`; this avoids triggering bugs in some
+  off-spec SFTP servers such as IBM Sterling. Thanks to ``@muraleee`` for the
+  initial report and to Torkil Gustavsen for the patch.
+* :feature:`467` (also :issue:`139`, :issue:`412`) Fully enable two-factor
+  authentication (e.g. when a server requires ``AuthenticationMethods
+  pubkey,keyboard-interactive``). Thanks to ``@perryjrandall`` for the patch
+  and to ``@nevins-b`` and Matt Robenolt for additional support.
+* :bug:`502 major` Fix 'exec' requests in server mode to use ``get_string``
+  instead of ``get_text`` to avoid ``UnicodeDecodeError`` on non-UTF-8 input.
+  Thanks to Anselm Kruis for the patch & discussion.
+* :bug:`401` Fix line number reporting in log output regarding invalid
+  ``known_hosts`` line entries. Thanks to Dylan Thacker-Smith for catch &
+  patch.
+* :support:`525 backported` Update the vendored Windows API addon to a more
+  recent edition. Also fixes :issue:`193`, :issue:`488`, :issue:`498`. Thanks
+  to Jason Coombs.
+* :release:`1.15.4 <2015-11-02>`
+* :release:`1.14.3 <2015-11-02>`
+* :release:`1.13.4 <2015-11-02>`
+* :bug:`366` Fix `~paramiko.sftp_attr.SFTPAttributes` so its string
+  representation doesn't raise exceptions on empty/initialized instances. Patch
+  by Ulrich Petri.
+* :bug:`359` Use correct attribute name when trying to use Python 3's
+  ``int.bit_length`` method; prior to fix, the Python 2 custom fallback
+  implementation was always used, even on Python 3. Thanks to Alex Gaynor.
+* :support:`594 backported` Correct some post-Python3-port docstrings to
+  specify ``bytes`` type instead of ``str``. Credit to ``@redixin``.
+* :bug:`565` Don't explode with ``IndexError`` when reading private key files
+  lacking an ``-----END <type> PRIVATE KEY-----`` footer. Patch courtesy of
+  Prasanna Santhanam.
+* :feature:`604` Add support for the ``aes192-ctr`` and ``aes192-cbc`` ciphers.
+  Thanks to Michiel Tiller for noticing it was as easy as tweaking some key
+  sizes :D
+* :feature:`356` (also :issue:`596`, :issue:`365`, :issue:`341`, :issue:`164`,
+  :issue:`581`, and a bunch of other duplicates besides) Add support for SHA-2
+  based key exchange (kex) algorithm ``diffie-hellman-group-exchange-sha256``
+  and (H)MAC algorithms ``hmac-sha2-256`` and ``hmac-sha2-512``.
+
+  This change includes tweaks to debug-level logging regarding
+  algorithm-selection handshakes; the old all-in-one log line is now multiple
+  easier-to-read, printed-at-handshake-time log lines.
+
+  Thanks to the many people who submitted patches for this functionality and/or
+  assisted in testing those patches. That list includes but is not limited to,
+  and in no particular order: Matthias Witte, Dag Wieers, Ash Berlin, Etienne
+  Perot, Gert van Dijk, ``@GuyShaanan``, Aaron Bieber, ``@cyphase``, and Eric
+  Brown.
+* :release:`1.15.3 <2015-10-02>`
+* :support:`554 backported` Fix inaccuracies in the docstring for the ECDSA key
+  class. Thanks to Jared Hance for the patch.
+* :support:`516 backported` Document `~paramiko.agent.AgentRequestHandler`.
+  Thanks to ``@toejough`` for report & suggestions.
+* :bug:`496 (1.15+)` Fix a handful of small but critical bugs in Paramiko's
+  GSSAPI support (note: this includes switching from PyCrypo's Random to
+  `os.urandom`). Thanks to Anselm Kruis for catch & patch.
+* :bug:`491` (combines :issue:`62` and :issue:`439`) Implement timeout
+  functionality to address hangs from dropped network connections and/or failed
+  handshakes. Credit to ``@vazir`` and ``@dacut`` for the original patches and
+  to Olle Lundberg for reimplementation.
+* :bug:`490` Skip invalid/unparseable lines in ``known_hosts`` files, instead
+  of raising `~paramiko.ssh_exception.SSHException`. This brings Paramiko's
+  behavior more in line with OpenSSH, which silently ignores such input. Catch
+  & patch courtesy of Martin Topholm.
+* :bug:`404` Print details when displaying
+  `~paramiko.ssh_exception.BadHostKeyException` objects (expected vs received
+  data) instead of just "hey shit broke". Patch credit: Loic Dachary.
+* :bug:`469` (also :issue:`488`, :issue:`461` and like a dozen others) Fix a
+  typo introduced in the 1.15 release which broke WinPageant support. Thanks to
+  everyone who submitted patches, and to Steve Cohen who was the lucky winner
+  of the cherry-pick lottery.
+* :bug:`353` (via :issue:`482`) Fix a bug introduced in the Python 3 port
+  which caused ``OverFlowError`` (and other symptoms) in SFTP functionality.
+  Thanks to ``@dboreham`` for leading the troubleshooting charge, and to
+  Scott Maxwell for the final patch.
+* :support:`582` Fix some old ``setup.py`` related helper code which was
+  breaking ``bdist_dumb`` on Mac OS X. Thanks to Peter Odding for the patch.
+* :bug:`22 major` Try harder to connect to multiple network families (e.g. IPv4
+  vs IPv6) in case of connection issues; this helps with problems such as hosts
+  which resolve both IPv4 and IPv6 addresses but are only listening on IPv4.
+  Thanks to Dries Desmet for original report and Torsten Landschoff for the
+  foundational patchset.
+* :bug:`402` Check to see if an SSH agent is actually present before trying to
+  forward it to the remote end. This replaces what was usually a useless
+  ``TypeError`` with a human-readable
+  `~paramiko.ssh_exception.AuthenticationException`. Credit to Ken Jordan for
+  the fix and Yvan Marques for original report.
 * :release:`1.15.2 <2014-12-19>`
 * :release:`1.14.2 <2014-12-19>`
 * :release:`1.13.3 <2014-12-19>`
@@ -25,7 +380,7 @@ Changelog
   use of the ``shlex`` module. Thanks to Yan Kalchevskiy.
 * :support:`422 backported` Clean up some unused imports. Courtesy of Olle
   Lundberg.
-* :support:`421 backported` Modernize threading calls to user newer API. Thanks
+* :support:`421 backported` Modernize threading calls to use newer API. Thanks
   to Olle Lundberg.
 * :support:`419 backported` Modernize a bunch of the codebase internals to
   leverage decorators. Props to ``@beckjake`` for realizing we're no longer on
@@ -46,10 +401,12 @@ Changelog
 * :release:`1.15.1 <2014-09-22>`
 * :bug:`399` SSH agent forwarding (potentially other functionality as
   well) would hang due to incorrect values passed into the new window size
-  arguments for `.Transport` (thanks to a botched merge). This has been
-  corrected. Thanks to Dylan Thacker-Smith for the report & patch.
-* :feature:`167` Add `.SSHConfig.get_hostnames` for easier introspection of a
-  loaded SSH config file or object. Courtesy of Søren Løvborg.
+  arguments for `~paramiko.transport.Transport` (thanks to a botched merge).
+  This has been corrected. Thanks to Dylan Thacker-Smith for the report &
+  patch.
+* :feature:`167` Add `~paramiko.config.SSHConfig.get_hostnames` for easier
+  introspection of a loaded SSH config file or object. Courtesy of Søren
+  Løvborg.
 * :release:`1.15.0 <2014-09-18>`
 * :support:`393` Replace internal use of PyCrypto's ``SHA.new`` with the
   stdlib's ``hashlib.sha1``. Thanks to Alex Gaynor.
@@ -58,10 +415,10 @@ Changelog
   (:ref:`installation docs here <gssapi>`). Mega thanks to Sebastian Deiß, with
   assist by Torsten Landschoff.
 
-    .. note::
-        Unix users should be aware that the ``python-gssapi`` library (a
-        requirement for using this functionality) only appears to support
-        Python 2.7 and up at this time.
+  .. note::
+      Unix users should be aware that the ``python-gssapi`` library (a
+      requirement for using this functionality) only appears to support
+      Python 2.7 and up at this time.
 
 * :bug:`346 major` Fix an issue in private key files' encryption salts that
   could cause tracebacks and file corruption if keys were re-encrypted. Credit
@@ -157,7 +514,7 @@ Changelog
   Plugaru.
 * :bug:`-` Fix logging error in sftp_client for filenames containing the '%'
   character. Thanks to Antoine Brenner.
-* :bug:`308` Fix regression in dsskey.py that caused sporadic signature 
+* :bug:`308` Fix regression in dsskey.py that caused sporadic signature
   verification failures. Thanks to Chris Rose.
 * :support:`299` Use deterministic signatures for ECDSA keys for improved
   security. Thanks to Alex Gaynor.
@@ -180,7 +537,7 @@ Changelog
 * :feature:`16` **Python 3 support!** Our test suite passes under Python 3, and
   it (& Fabric's test suite) continues to pass under Python 2. **Python 2.5 is
   no longer supported with this change!**
-  
+
   The merged code was built on many contributors' efforts, both code &
   feedback. In no particular order, we thank Daniel Goertzen, Ivan Kolodyazhny,
   Tomi Pieviläinen, Jason R. Coombs, Jan N. Schulze, ``@Lazik``, Dorian Pula,

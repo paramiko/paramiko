@@ -1,2 +1,0 @@
-# Not sure why tox can't just read setup.py?
-pycrypto

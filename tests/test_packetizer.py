@@ -20,19 +20,20 @@
 Some unit tests for the ssh2 protocol in Transport.
 """
 
+import sys
 import unittest
 from hashlib import sha1
 
-from tests.loop import LoopSocket
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives.ciphers import algorithms, Cipher, modes
 
-from Crypto.Cipher import AES
+from tests.loop import LoopSocket
 
 from paramiko import Message, Packetizer, util
 from paramiko.common import byte_chr, zero_byte
 
 x55 = byte_chr(0x55)
 x1f = byte_chr(0x1f)
-
 
 class PacketizerTest (unittest.TestCase):
 
@@ -43,8 +44,12 @@ class PacketizerTest (unittest.TestCase):
         p = Packetizer(wsock)
         p.set_log(util.get_logger('paramiko.transport'))
         p.set_hexdump(True)
-        cipher = AES.new(zero_byte * 16, AES.MODE_CBC, x55 * 16)
-        p.set_outbound_cipher(cipher, 16, sha1, 12, x1f * 20)
+        encryptor = Cipher(
+            algorithms.AES(zero_byte * 16),
+            modes.CBC(x55 * 16),
+            backend=default_backend()
+        ).encryptor()
+        p.set_outbound_cipher(encryptor, 16, sha1, 12, x1f * 20)
 
         # message has to be at least 16 bytes long, so we'll have at least one
         # block of data encrypted that contains zero random padding bytes
@@ -66,8 +71,12 @@ class PacketizerTest (unittest.TestCase):
         p = Packetizer(rsock)
         p.set_log(util.get_logger('paramiko.transport'))
         p.set_hexdump(True)
-        cipher = AES.new(zero_byte * 16, AES.MODE_CBC, x55 * 16)
-        p.set_inbound_cipher(cipher, 16, sha1, 12, x1f * 20)
+        decryptor = Cipher(
+            algorithms.AES(zero_byte * 16),
+            modes.CBC(x55 * 16),
+            backend=default_backend()
+        ).decryptor()
+        p.set_inbound_cipher(decryptor, 16, sha1, 12, x1f * 20)
         wsock.send(b'\x43\x91\x97\xbd\x5b\x50\xac\x25\x87\xc2\xc4\x6b\xc7\xe9\x38\xc0\x90\xd2\x16\x56\x0d\x71\x73\x61\x38\x7c\x4c\x3d\xfb\x97\x7d\xe2\x6e\x03\xb1\xa0\xc2\x1c\xd6\x41\x41\x4c\xb4\x59')
         cmd, m = p.read_message()
         self.assertEqual(100, cmd)
@@ -76,14 +85,20 @@ class PacketizerTest (unittest.TestCase):
         self.assertEqual(900, m.get_int())
 
     def test_3_closed(self):
+        if sys.platform.startswith("win"): # no SIGALRM on windows
+            return
         rsock = LoopSocket()
         wsock = LoopSocket()
         rsock.link(wsock)
         p = Packetizer(wsock)
         p.set_log(util.get_logger('paramiko.transport'))
         p.set_hexdump(True)
-        cipher = AES.new(zero_byte * 16, AES.MODE_CBC, x55 * 16)
-        p.set_outbound_cipher(cipher, 16, sha1, 12, x1f * 20)
+        encryptor = Cipher(
+            algorithms.AES(zero_byte * 16),
+            modes.CBC(x55 * 16),
+            backend=default_backend()
+        ).encryptor()
+        p.set_outbound_cipher(encryptor, 16, sha1, 12, x1f * 20)
 
         # message has to be at least 16 bytes long, so we'll have at least one
         # block of data encrypted that contains zero random padding bytes
@@ -99,9 +114,13 @@ class PacketizerTest (unittest.TestCase):
         import signal
 
         class TimeoutError(Exception):
-            pass
+            def __init__(self, error_message):
+                if hasattr(errno, 'ETIME'):
+                    self.message = os.sterror(errno.ETIME)
+                else:
+                    self.messaage = error_message
 
-        def timeout(seconds=1, error_message=os.strerror(errno.ETIME)):
+        def timeout(seconds=1, error_message='Timer expired'):
             def decorator(func):
                 def _handle_timeout(signum, frame):
                     raise TimeoutError(error_message)
