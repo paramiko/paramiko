@@ -120,10 +120,10 @@ class Transport(threading.Thread, ClosingContextManager):
     _preferred_macs = (
         'hmac-sha2-256',
         'hmac-sha2-512',
+        'hmac-sha1',
         'hmac-md5',
         'hmac-sha1-96',
         'hmac-md5-96',
-        'hmac-sha1',
     )
     _preferred_keys = (
         'ecdsa-sha2-nistp256',
@@ -134,13 +134,13 @@ class Transport(threading.Thread, ClosingContextManager):
         'ssh-dss',
     )
     _preferred_kex = (
-        'diffie-hellman-group1-sha1',
-        'diffie-hellman-group14-sha1',
-        'diffie-hellman-group-exchange-sha1',
-        'diffie-hellman-group-exchange-sha256',
         'ecdh-sha2-nistp256',
         'ecdh-sha2-nistp384',
         'ecdh-sha2-nistp521',
+        'diffie-hellman-group-exchange-sha256',
+        'diffie-hellman-group-exchange-sha1',
+        'diffie-hellman-group14-sha1',
+        'diffie-hellman-group1-sha1',
     )
     _preferred_compression = ('none',)
 
