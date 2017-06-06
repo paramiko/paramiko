@@ -2,9 +2,10 @@
 Changelog
 =========
 
-* :feature:`add-auth-timeout` Adds a timeout for the authentication process.
-  This is a fix to prevent the client getting stuck if an SSH server becomes
-  un-responsive during the authentication. Credit to ``@timsavage``.
+* :feature:`869` Add an ``auth_timeout`` kwarg to `SSHClient.connect
+  <paramiko.client.SSHClient.connect>` (default: 30s) to avoid hangs when the
+  remote end becomes unresponsive during the authentication step. Credit to
+  ``@timsavage``.
 * :support:`921` Tighten up the ``__hash__`` implementation for various key
   classes; less code is good code. Thanks to Francisco Couzo for the patch.
 * :bug:`983` Move ``sha1`` above the now-arguably-broken ``md5`` in the list of
