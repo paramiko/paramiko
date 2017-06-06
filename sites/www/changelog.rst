@@ -2,6 +2,9 @@
 Changelog
 =========
 
+* :support:`- backported` A big formatting pass to clean up an enormous number
+  of invalid Sphinx reference links, discovered by switching to a modern,
+  rigorous nitpicking doc-building mode.
 * :bug:`900` (via :issue:`911`) Prefer newer ``ecdsa-sha2-nistp`` keys over RSA
   and DSA keys during host key selection. This improves compatibility with
   OpenSSH, both in terms of general behavior, and also re: ability to properly
