@@ -2,6 +2,10 @@
 Changelog
 =========
 
+* :bug:`667` The RC4/arcfour family of ciphers has been broken since version
+  2.0; but since the algorithm is now known to be completely insecure, we are
+  opting to remove support outright instead of fixing it. Thanks to Alex Gaynor
+  for catch & patch.
 * :feature:`857` Allow `SSHClient.set_missing_host_key_policy
   <paramiko.client.SSHClient.set_missing_host_key_policy>` to accept policy
   classes _or_ instances, instead of only instances, thus fixing a
