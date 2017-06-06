@@ -25,12 +25,15 @@ from paramiko.py3compat import (
     )
 
 
+skip = getattr(unittest, "skip", None)
+if skip is None:
+    def skip(reason):
+        """Stub skip decorator for Python 2.6 compatibility."""
+        return lambda func: None
+
+
 def skipUnlessBuiltin(name):
     """Skip decorated test if builtin name does not exist."""
     if getattr(builtins, name, None) is None:
-        skip = getattr(unittest, "skip", None)
-        if skip is None:
-            # Python 2.6 pseudo-skip
-            return lambda func: None
         return skip("No builtin " + repr(name))
     return lambda func: func
