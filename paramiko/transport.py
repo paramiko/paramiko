@@ -236,7 +236,7 @@ class Transport(threading.Thread, ClosingContextManager):
         'gss-gex-sha1-toWM5Slw5Ew8Mqkay+al2g==': KexGSSGex,
         'ecdh-sha2-nistp256': KexNistp256,
         'ecdh-sha2-nistp384': KexNistp384,
-        'ecdh-sha2-nistp521': KexNistp521
+        'ecdh-sha2-nistp521': KexNistp521,
     }
 
     _compression_info = {
