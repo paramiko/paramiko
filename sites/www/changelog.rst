@@ -2,6 +2,11 @@
 Changelog
 =========
 
+* :bug:`794` (via :issue:`981`) Prior support for ``ecdsa-sha2-nistp(384|521)``
+  algorithms didn't fully extend to covering host keys, preventing connection
+  to hosts which only offer these key types and no others. This is now fixed.
+  Thanks to ``@ncoult`` and ``@kasdoe`` for reports and Pierce Lopez for the
+  patch.
 * :feature:`325` (via :issue:`972`) Add Ed25519 support, for both host keys
   and user authentication. Big thanks to Alex Gaynor for the patch.
 * :support:`974 backported` Overhaul the codebase to be PEP-8, etc, compliant
