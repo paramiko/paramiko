@@ -307,9 +307,9 @@ class Channel (ClosingContextManager):
 
         :param dict environment:
             a dictionary containing the name and respective values to set
-        :raises SSHException:
-            if any of the environment variables was rejected by the server or
-            the channel was closed
+        :raises:
+            `.SSHException` -- if any of the environment variables was rejected
+            by the server or the channel was closed
         """
         for name, value in environment.items():
             try:
@@ -332,8 +332,9 @@ class Channel (ClosingContextManager):
         :param str name: name of the environment variable
         :param str value: value of the environment variable
 
-        :raises SSHException:
-            if the request was rejected or the channel was closed
+        :raises:
+            `.SSHException` -- if the request was rejected or the channel was
+            closed
         """
         m = Message()
         m.add_byte(cMSG_CHANNEL_REQUEST)
