@@ -2,6 +2,10 @@
 Changelog
 =========
 
+* :bug:`667` The RC4/arcfour family of ciphers has been broken since version
+  2.0; but since the algorithm is now known to be completely insecure, we are
+  opting to remove support outright instead of fixing it. Thanks to Alex Gaynor
+  for catch & patch.
 * :support:`- backported` A big formatting pass to clean up an enormous number
   of invalid Sphinx reference links, discovered by switching to a modern,
   rigorous nitpicking doc-building mode.
