@@ -418,3 +418,20 @@ class SSHClientTest (unittest.TestCase):
                             'Expected original SSHException in exception')
         else:
             self.assertFalse(False, 'SSHException was not thrown.')
+
+
+    def test_missing_key_policy_accepts_classes_or_instances(self):
+        """
+        Client.missing_host_key_policy() can take classes or instances.
+        """
+        # AN ACTUAL UNIT TEST?! GOOD LORD
+        # (But then we have to test a private API...meh.)
+        client = paramiko.SSHClient()
+        # Default
+        assert isinstance(client._policy, paramiko.RejectPolicy)
+        # Hand in an instance (classic behavior)
+        client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        assert isinstance(client._policy, paramiko.AutoAddPolicy)
+        # Hand in just the class (new behavior)
+        client.set_missing_host_key_policy(paramiko.AutoAddPolicy)
+        assert isinstance(client._policy, paramiko.AutoAddPolicy)

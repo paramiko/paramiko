@@ -2,6 +2,18 @@
 Changelog
 =========
 
+* :bug:`-` (partial application of :issue:`983`) Move ``sha1`` above the
+  now-arguably-broken ``md5`` in the list of preferred MAC algorithms, as an
+  incremental security improvement for users whose target systems offer both.
+  Credit: Pierce Lopez.
+* :bug:`667` The RC4/arcfour family of ciphers has been broken since version
+  2.0; but since the algorithm is now known to be completely insecure, we are
+  opting to remove support outright instead of fixing it. Thanks to Alex Gaynor
+  for catch & patch.
+* :feature:`857` Allow `SSHClient.set_missing_host_key_policy
+  <paramiko.client.SSHClient.set_missing_host_key_policy>` to accept policy
+  classes _or_ instances, instead of only instances, thus fixing a
+  long-standing gotcha for unaware users.
 * :feature:`951` Add support for ECDH key exchange (kex), specifically the
   algorithms ``ecdh-sha2-nistp256``, ``ecdh-sha2-nistp384``, and
   ``ecdh-sha2-nistp521``. Thanks to Shashank Veerapaneni for the patch.
