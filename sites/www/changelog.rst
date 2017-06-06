@@ -2,6 +2,9 @@
 Changelog
 =========
 
+* :bug:`983` Move ``sha1`` above the now-arguably-broken ``md5`` in the list of
+  preferred MAC algorithms, as an incremental security improvement for users
+  whose target systems offer both. Credit: Pierce Lopez.
 * :bug:`667` The RC4/arcfour family of ciphers has been broken since version
   2.0; but since the algorithm is now known to be completely insecure, we are
   opting to remove support outright instead of fixing it. Thanks to Alex Gaynor
