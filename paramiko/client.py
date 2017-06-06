@@ -227,7 +227,8 @@ class SSHClient (ClosingContextManager):
         gss_kex=False,
         gss_deleg_creds=True,
         gss_host=None,
-        banner_timeout=None
+        banner_timeout=None,
+        interactive_handler=None
     ):
         """
         Connect to an SSH server and authenticate to it.  The server's host key
@@ -383,7 +384,7 @@ class SSHClient (ClosingContextManager):
         if gss_host is None:
             gss_host = hostname
         self._auth(username, password, pkey, key_filenames, allow_agent,
-                   look_for_keys, gss_auth, gss_kex, gss_deleg_creds, gss_host)
+                   look_for_keys, gss_auth, gss_kex, gss_deleg_creds, gss_host, interactive_handler)
 
     def close(self):
         """
@@ -492,7 +493,7 @@ class SSHClient (ClosingContextManager):
         return self._transport
 
     def _auth(self, username, password, pkey, key_filenames, allow_agent,
-              look_for_keys, gss_auth, gss_kex, gss_deleg_creds, gss_host):
+              look_for_keys, gss_auth, gss_kex, gss_deleg_creds, gss_host, interactive_handler):
         """
         Try, in order:
 
@@ -525,9 +526,12 @@ class SSHClient (ClosingContextManager):
         # why should we do that again?
         if gss_auth:
             try:
-                self._transport.auth_gssapi_with_mic(username, gss_host,
-                                                     gss_deleg_creds)
-                return
+                self._log(DEBUG, 'Trying GSS auth')
+                allowed_types = set(self._transport.auth_gssapi_with_mic(username, gss_host,
+                                                     gss_deleg_creds))
+                two_factor = (allowed_types & two_factor_types)
+                if not two_factor:
+                    return
             except Exception as e:
                 saved_exception = e
 
@@ -625,16 +629,28 @@ class SSHClient (ClosingContextManager):
 
         if password is not None:
             try:
-                self._transport.auth_password(username, password)
-                return
+                self._log(DEBUG, 'Trying password auth')
+                allowed_types = set(self._transport.auth_password(username, password))
+                two_factor = (allowed_types & two_factor_types)
+                if not two_factor:
+                    return
             except SSHException as e:
                 saved_exception = e
         elif two_factor:
             try:
-                self._transport.auth_interactive_dumb(username)
+                self._transport.auth_interactive_dumb(username, handler=interactive_handler)
                 return
             except SSHException as e:
                 saved_exception = e
+
+        if two_factor:
+            try:
+                self._log(DEBUG, 'Trying interactive')
+                self._transport.auth_interactive_dumb(username, handler=interactive_handler)
+                return
+            except SSHException as e:
+                saved_exception = e
+
 
         # if we got an auth-failed exception earlier, re-raise it
         if saved_exception is not None:
