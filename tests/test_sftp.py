@@ -35,7 +35,7 @@ from tempfile import mkstemp
 import paramiko
 from paramiko.py3compat import PY2, b, u, StringIO
 from paramiko.common import o777, o600, o666, o644
-from tests import skipUnlessBuiltin
+from tests import requireNonAsciiLocale, skipUnlessBuiltin
 from tests.stub_sftp import StubServer, StubSFTPServer
 from tests.loop import LoopSocket
 from tests.util import test_path
@@ -333,6 +333,16 @@ class SFTPTest (unittest.TestCase):
             sftp.remove(FOLDER + '/duck.txt')
             sftp.remove(FOLDER + '/fish.txt')
             sftp.remove(FOLDER + '/tertiary.py')
+
+    @requireNonAsciiLocale()
+    def test_listdir_in_locale(self):
+        """Test listdir under a locale that uses non-ascii text."""
+        sftp.open(FOLDER + '/canard.txt', 'w').close()
+        try:
+            folder_contents = sftp.listdir(FOLDER)
+            self.assertEqual(['canard.txt'], folder_contents)
+        finally:
+            sftp.remove(FOLDER + '/canard.txt')
 
     def test_8_setstat(self):
         """
@@ -813,6 +823,12 @@ class SFTPTest (unittest.TestCase):
         finally:
             sftp.remove('%s/nonutf8data' % FOLDER)
 
+    @requireNonAsciiLocale('LC_TIME')
+    def test_sftp_attributes_locale_time(self):
+        """Test SFTPAttributes under a locale with non-ascii time strings."""
+        some_stat = os.stat(FOLDER)
+        sftp_attributes = SFTPAttributes.from_stat(some_stat, u('a_directory'))
+        self.assertTrue(b'a_directory' in sftp_attributes.asbytes())
 
     def test_sftp_attributes_empty_str(self):
         sftp_attributes = SFTPAttributes()
