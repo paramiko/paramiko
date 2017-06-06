@@ -68,7 +68,7 @@ class PKey(object):
         :param str data: an optional string containing a public key
             of this type
 
-        :raises SSHException:
+        :raises: `.SSHException` --
             if a key cannot be created from the ``data`` or ``msg`` given, or
             no key was passed in.
         """
@@ -95,7 +95,7 @@ class PKey(object):
         of the key are compared, so a public key will compare equal to its
         corresponding private key.
 
-        :param .Pkey other: key to compare to.
+        :param .PKey other: key to compare to.
         """
         hs = hash(self)
         ho = hash(other)
@@ -191,10 +191,10 @@ class PKey(object):
             encrypted
         :return: a new `.PKey` based on the given private key
 
-        :raises IOError: if there was an error reading the file
-        :raises PasswordRequiredException: if the private key file is
+        :raises: ``IOError`` -- if there was an error reading the file
+        :raises: `.PasswordRequiredException` -- if the private key file is
             encrypted, and ``password`` is ``None``
-        :raises SSHException: if the key file is invalid
+        :raises: `.SSHException` -- if the key file is invalid
         """
         key = cls(filename=filename, password=password)
         return key
@@ -212,10 +212,10 @@ class PKey(object):
             an optional password to use to decrypt the key, if it's encrypted
         :return: a new `.PKey` based on the given private key
 
-        :raises IOError: if there was an error reading the key
-        :raises PasswordRequiredException:
+        :raises: ``IOError`` -- if there was an error reading the key
+        :raises: `.PasswordRequiredException` --
             if the private key file is encrypted, and ``password`` is ``None``
-        :raises SSHException: if the key file is invalid
+        :raises: `.SSHException` -- if the key file is invalid
         """
         key = cls(file_obj=file_obj, password=password)
         return key
@@ -229,8 +229,8 @@ class PKey(object):
         :param str password:
             an optional password to use to encrypt the key file
 
-        :raises IOError: if there was an error writing the file
-        :raises SSHException: if the key is invalid
+        :raises: ``IOError`` -- if there was an error writing the file
+        :raises: `.SSHException` -- if the key is invalid
         """
         raise Exception('Not implemented in PKey')
 
@@ -242,8 +242,8 @@ class PKey(object):
         :param file_obj: the file-like object to write into
         :param str password: an optional password to use to encrypt the key
 
-        :raises IOError: if there was an error writing to the file
-        :raises SSHException: if the key is invalid
+        :raises: ``IOError`` -- if there was an error writing to the file
+        :raises: `.SSHException` -- if the key is invalid
         """
         raise Exception('Not implemented in PKey')
 
@@ -263,10 +263,10 @@ class PKey(object):
             encrypted.
         :return: data blob (`str`) that makes up the private key.
 
-        :raises IOError: if there was an error reading the file.
-        :raises PasswordRequiredException: if the private key file is
+        :raises: ``IOError`` -- if there was an error reading the file.
+        :raises: `.PasswordRequiredException` -- if the private key file is
             encrypted, and ``password`` is ``None``.
-        :raises SSHException: if the key file is invalid.
+        :raises: `.SSHException` -- if the key file is invalid.
         """
         with open(filename, 'r') as f:
             data = self._read_private_key(tag, f, password)
@@ -340,7 +340,7 @@ class PKey(object):
         :param str data: data blob that makes up the private key.
         :param str password: an optional password to use to encrypt the file.
 
-        :raises IOError: if there was an error writing the file.
+        :raises: ``IOError`` -- if there was an error writing the file.
         """
         with open(filename, 'w') as f:
             os.chmod(filename, o600)

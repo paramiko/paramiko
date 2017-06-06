@@ -90,7 +90,7 @@ class HostKeys (MutableMapping):
 
         :param str filename: name of the file to read host keys from
 
-        :raises IOError: if there was an error reading the file
+        :raises: ``IOError`` -- if there was an error reading the file
         """
         with open(filename, 'r') as f:
             for lineno, line in enumerate(f, 1):
@@ -118,7 +118,7 @@ class HostKeys (MutableMapping):
 
         :param str filename: name of the file to write
 
-        :raises IOError: if there was an error writing the file
+        :raises: ``IOError`` -- if there was an error writing the file
 
         .. versionadded:: 1.6.1
         """

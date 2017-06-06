@@ -46,8 +46,9 @@ def open_only(func):
     """
     Decorator for `.Channel` methods which performs an openness check.
 
-    :raises SSHException:
-        If the wrapped method is called on an unopened `.Channel`.
+    :raises:
+        `.SSHException` -- If the wrapped method is called on an unopened
+        `.Channel`.
     """
     @wraps(func)
     def _check(self, *args, **kwds):
@@ -165,8 +166,9 @@ class Channel (ClosingContextManager):
         :param int width_pixels: width (in pixels) of the terminal screen
         :param int height_pixels: height (in pixels) of the terminal screen
 
-        :raises SSHException:
-            if the request was rejected or the channel was closed
+        :raises:
+            `.SSHException` -- if the request was rejected or the channel was
+            closed
         """
         m = Message()
         m.add_byte(cMSG_CHANNEL_REQUEST)
@@ -197,7 +199,8 @@ class Channel (ClosingContextManager):
         When the shell exits, the channel will be closed and can't be reused.
         You must open a new channel if you wish to open another shell.
 
-        :raises SSHException: if the request was rejected or the channel was
+        :raises:
+            `.SSHException` -- if the request was rejected or the channel was
             closed
         """
         m = Message()
@@ -222,7 +225,8 @@ class Channel (ClosingContextManager):
 
         :param str command: a shell command to execute.
 
-        :raises SSHException: if the request was rejected or the channel was
+        :raises:
+            `.SSHException` -- if the request was rejected or the channel was
             closed
         """
         m = Message()
@@ -247,8 +251,9 @@ class Channel (ClosingContextManager):
 
         :param str subsystem: name of the subsystem being requested.
 
-        :raises SSHException:
-            if the request was rejected or the channel was closed
+        :raises:
+            `.SSHException` -- if the request was rejected or the channel was
+            closed
         """
         m = Message()
         m.add_byte(cMSG_CHANNEL_REQUEST)
@@ -271,8 +276,9 @@ class Channel (ClosingContextManager):
         :param int width_pixels: new width (in pixels) of the terminal screen
         :param int height_pixels: new height (in pixels) of the terminal screen
 
-        :raises SSHException:
-            if the request was rejected or the channel was closed
+        :raises:
+            `.SSHException` -- if the request was rejected or the channel was
+            closed
         """
         m = Message()
         m.add_byte(cMSG_CHANNEL_REQUEST)
@@ -365,11 +371,11 @@ class Channel (ClosingContextManager):
             `.Transport` or session's ``window_size`` (e.g. that set by the
             ``default_window_size`` kwarg for `.Transport.__init__`) will cause
             `.recv_exit_status` to hang indefinitely if it is called prior to a
-            sufficiently large `~Channel..read` (or if there are no threads
-            calling `~Channel.read` in the background).
+            sufficiently large `.Channel.recv` (or if there are no threads
+            calling `.Channel.recv` in the background).
 
             In these cases, ensuring that `.recv_exit_status` is called *after*
-            `~Channel.read` (or, again, using threads) can avoid the hang.
+            `.Channel.recv` (or, again, using threads) can avoid the hang.
 
         :return: the exit code (as an `int`) of the process on the server.
 
@@ -443,8 +449,8 @@ class Channel (ClosingContextManager):
             if True, only a single x11 connection will be forwarded (by
             default, any number of x11 connections can arrive over this
             session)
-        :param function handler:
-            an optional handler to use for incoming X11 connections
+        :param handler:
+            an optional callable handler to use for incoming X11 connections
         :return: the auth_cookie used
         """
         if auth_protocol is None:
@@ -473,8 +479,9 @@ class Channel (ClosingContextManager):
         Request for a forward SSH Agent on this channel.
         This is only valid for an ssh-agent from OpenSSH !!!
 
-        :param function handler:
-            a required handler to use for incoming SSH Agent connections
+        :param handler:
+            a required callable handler to use for incoming SSH Agent
+            connections
 
         :return: True if we are ok, else False
             (at that time we always return ok)
@@ -665,7 +672,7 @@ class Channel (ClosingContextManager):
         length zero is returned, the channel stream has closed.
 
         :param int nbytes: maximum number of bytes to read.
-        :return: received data, as a `bytes`
+        :return: received data, as a ``str``/``bytes``.
 
         :raises socket.timeout:
             if no data is ready before the timeout set by `settimeout`.
