@@ -472,7 +472,9 @@ class SFTPServer (BaseSFTP, SubsystemHandler):
             elif tag == 'posix-rename@openssh.com':
                 oldpath = msg.get_text()
                 newpath = msg.get_text()
-                self._send_status(request_number, self.server.posix_rename(oldpath, newpath))
+                self._send_status(
+                    request_number, self.server.posix_rename(oldpath, newpath)
+                )
             else:
                 self._send_status(request_number, SFTP_OP_UNSUPPORTED)
         else:
