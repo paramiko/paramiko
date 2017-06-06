@@ -2,6 +2,10 @@
 Changelog
 =========
 
+* :feature:`857` Allow `SSHClient.set_missing_host_key_policy
+  <paramiko.client.SSHClient.set_missing_host_key_policy>` to accept policy
+  classes _or_ instances, instead of only instances, thus fixing a
+  long-standing gotcha for unaware users.
 * :feature:`951` Add support for ECDH key exchange (kex), specifically the
   algorithms ``ecdh-sha2-nistp256``, ``ecdh-sha2-nistp384``, and
   ``ecdh-sha2-nistp521``. Thanks to Shashank Veerapaneni for the patch.
