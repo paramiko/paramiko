@@ -2,6 +2,16 @@
 Changelog
 =========
 
+* :bug:`741` (also :issue:`809`, :issue:`772`; all via :issue:`912`) Writing
+  encrypted/password-protected private key files was silently broken since 2.0
+  due to an incorrect API call; this has been fixed.
+
+  Includes a directly related fix, namely adding the ability to read
+  ``AES-256-CBC`` ciphered private keys (which is now what we tend to write out
+  as it is Cryptography's default private key cipher.)
+
+  Thanks to ``@virlos`` for the original report, Chris Harris and ``@ibuler``
+  for initial draft PRs, and ``@jhgorrell`` for the final patch.
 * :bug:`983` Move ``sha1`` above the now-arguably-broken ``md5`` in the list of
   preferred MAC algorithms, as an incremental security improvement for users
   whose target systems offer both. Credit: Pierce Lopez.

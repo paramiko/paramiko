@@ -78,6 +78,7 @@ def _join_lingering_threads():
     for thr in _active_threads:
         thr.stop_thread()
 
+
 import atexit
 atexit.register(_join_lingering_threads)
 
