@@ -112,10 +112,7 @@ TEST_KEY_BYTESTR_2 = '\x00\x00\x00\x07ssh-rsa\x00\x00\x00\x01#\x00\x00\x00\x81\x
 TEST_KEY_BYTESTR_3 = '\x00\x00\x00\x07ssh-rsa\x00\x00\x00\x01#\x00\x00\x00\x00ӏV\x07k%<\x1fT$E#>ғfD\x18 \x0cae#̬S#VlE\x1epvo\x17M߉DUXL<\x06\x10דw\u2bd5ٿw˟0)#y{\x10l\tPru\t\x19Π\u070e/f0yFmm\x1f'
 
 
-<<<<<<< HEAD
 class KeyTest(unittest.TestCase):
-=======
-class KeyTest (unittest.TestCase):
 
     def setUp(self):
         pass
@@ -135,7 +132,6 @@ class KeyTest (unittest.TestCase):
             self.assertEqual(fh.readline()[:-1], "Proc-Type: 4,ENCRYPTED")
             self.assertEqual(fh.readline()[0:10], "DEK-Info: ")
 
->>>>>>> 2.1
     def test_1_generate_key_bytes(self):
         key = util.generate_key_bytes(md5, x1234, 'happy birthday', 30)
         exp = b'\x61\xE1\xF2\x72\xF4\xC1\xC4\x56\x15\x86\xBD\x32\x24\x98\xC0\xE9\x24\x67\x27\x80\xF4\x7B\xB3\x7D\xDA\x7D\x54\x01\x9E\x64'
