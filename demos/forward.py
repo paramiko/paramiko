@@ -30,6 +30,7 @@ import getpass
 import os
 import socket
 import select
+from threading import Thread
 try:
     import SocketServer
 except ImportError:
@@ -45,31 +46,75 @@ DEFAULT_PORT = 4000
 
 g_verbose = True
 
+class ForwardServer(SocketServer.ThreadingTCPServer, object):
+    """
+    Use ForwardServer in two ways:
 
-class ForwardServer (SocketServer.ThreadingTCPServer):
-    daemon_threads = True
-    allow_reuse_address = True
-    
+    1. Call run() directly to start the forwarding.
 
-class Handler (SocketServer.BaseRequestHandler):
+        ForwardServer(...).run()
 
+       In this usage pattern, the thread calling run() will be blocked until stop() is called from another thread.
+
+    2. Use "with" statement to start server in a daemon thread.
+
+        with ForwardServer(...) as serv:
+            # Use the forwarded port
+
+       In this usage pattern, the thread creating the server is not blocked and so can do something useful with the forwarded port.
+       The server will be automatically stopped at the end of the with block.
+    """
+    def __init__(self, local_port, remote_host, remote_port, ssh_transport):
+        # Save these for use by Handler class.
+        self.remote_host = remote_host
+        self.remote_port = remote_port
+        self.ssh_transport = ssh_transport
+        super(ForwardServer, self).__init__(('', local_port), Handler)
+        self.daemon_threads = True
+        self.allow_reuse_address = True
+        self.th = None
+
+    def run(self):
+        self.serve_forever()
+
+    def stop(self):
+        self.shutdown()
+        self.socket.close()
+
+    def join(self):
+        if self.th:
+            # Workaround for Thread.join() prevents KeyboardInterrupt from getting raised.
+            while self.th.is_alive():
+                self.th.join(0.1)
+
+    def __enter__(self):
+        self.th = Thread(target=self.run)
+        self.th.daemon = True
+        self.th.start()
+        return self
+
+    def __exit__(self, exc, val, trace):
+        self.stop()
+
+class Handler(SocketServer.BaseRequestHandler):
     def handle(self):
         try:
-            chan = self.ssh_transport.open_channel('direct-tcpip',
-                                                   (self.chain_host, self.chain_port),
-                                                   self.request.getpeername())
+            chan = self.server.ssh_transport.open_channel('direct-tcpip',
+                                                          (self.server.remote_host, self.server.remote_port),
+                                                          self.request.getpeername())
         except Exception as e:
-            verbose('Incoming request to %s:%d failed: %s' % (self.chain_host,
-                                                              self.chain_port,
+            verbose('Incoming request to %s:%d failed: %s' % (self.server.remote_host,
+                                                              self.server.remote_port,
                                                               repr(e)))
             return
         if chan is None:
             verbose('Incoming request to %s:%d was rejected by the SSH server.' %
-                    (self.chain_host, self.chain_port))
+                    (self.server.remote_host, self.server.remote_port))
             return
 
         verbose('Connected!  Tunnel open %r -> %r -> %r' % (self.request.getpeername(),
-                                                            chan.getpeername(), (self.chain_host, self.chain_port)))
+                                                            chan.getpeername(),
+                                                            (self.server.remote_host, self.server.remote_port)))
         while True:
             r, w, x = select.select([self.request, chan], [], [])
             if self.request in r:
@@ -87,18 +132,6 @@ class Handler (SocketServer.BaseRequestHandler):
         chan.close()
         self.request.close()
         verbose('Tunnel closed from %r' % (peername,))
-
-
-def forward_tunnel(local_port, remote_host, remote_port, transport):
-    # this is a little convoluted, but lets me configure things for the Handler
-    # object.  (SocketServer doesn't give Handlers any way to access the outer
-    # server normally.)
-    class SubHander (Handler):
-        chain_host = remote_host
-        chain_port = remote_port
-        ssh_transport = transport
-    ForwardServer(('', local_port), SubHander).serve_forever()
-
 
 def verbose(s):
     if g_verbose:
@@ -176,7 +209,9 @@ def main():
     verbose('Now forwarding port %d to %s:%d ...' % (options.port, remote[0], remote[1]))
 
     try:
-        forward_tunnel(options.port, remote[0], remote[1], client.get_transport())
+        #ForwardServer(options.port, remote[0], remote[1], client.get_transport()).run()
+        with ForwardServer(options.port, remote[0], remote[1], client.get_transport()) as serv:
+            serv.join()
     except KeyboardInterrupt:
         print('C-c: Port forwarding stopped.')
         sys.exit(0)
