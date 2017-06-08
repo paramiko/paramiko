@@ -10,6 +10,11 @@ python:
   - "3.4"
   - "3.5"
   - "3.6"
+addons:
+  apt:
+    packages:
+      # Include language pack for locale testing
+      - language-pack-ko
 install:
   # Self-install for setup.py-driven deps
   - pip install -e .
