@@ -36,7 +36,7 @@ from tests.util import test_path
 
 import paramiko
 from paramiko.common import PY2
-from paramiko.ssh_exception import SSHException
+from paramiko.ssh_exception import SSHException, AuthenticationException
 
 
 FINGERPRINTS = {
@@ -391,18 +391,12 @@ class SSHClientTest (unittest.TestCase):
         """
         verify that the SSHClient has a configurable auth timeout
         """
-        threading.Thread(target=self._run).start()
-        host_key = paramiko.RSAKey.from_private_key_file(test_path('test_rsa.key'))
-        public_host_key = paramiko.RSAKey(data=host_key.asbytes())
-
-        self.tc = paramiko.SSHClient()
-        self.tc.get_host_keys().add('[%s]:%d' % (self.addr, self.port), 'ssh-rsa', public_host_key)
         # Connect with a half second auth timeout
-        kwargs = dict(self.connect_kwargs, password='unresponsive-server', auth_timeout=0.5)
         self.assertRaises(
-            paramiko.AuthenticationException,
-            self.tc.connect,
-            **kwargs
+            AuthenticationException,
+            self._test_connection,
+            password='unresponsive-server',
+            auth_timeout=0.5,
         )
 
     def test_update_environment(self):
