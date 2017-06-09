@@ -48,6 +48,12 @@ class PKey(object):
             'blocksize': 16,
             'mode': modes.CBC
         },
+        'AES-256-CBC': {
+            'cipher': algorithms.AES,
+            'keysize': 32,
+            'blocksize': 16,
+            'mode': modes.CBC
+        },
         'DES-EDE3-CBC': {
             'cipher': algorithms.TripleDES,
             'keysize': 24,
@@ -344,13 +350,13 @@ class PKey(object):
         """
         with open(filename, 'w') as f:
             os.chmod(filename, o600)
-            self._write_private_key(f, key, format)
+            self._write_private_key(f, key, format, password=password)
 
     def _write_private_key(self, f, key, format, password=None):
         if password is None:
             encryption = serialization.NoEncryption()
         else:
-            encryption = serialization.BestEncryption(password)
+            encryption = serialization.BestAvailableEncryption(b(password))
 
         f.write(key.private_bytes(
             serialization.Encoding.PEM,

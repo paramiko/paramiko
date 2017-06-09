@@ -83,13 +83,7 @@ class DSSKey(PKey):
         return self.asbytes()
 
     def __hash__(self):
-        h = hash(self.get_name())
-        h = h * 37 + hash(self.p)
-        h = h * 37 + hash(self.q)
-        h = h * 37 + hash(self.g)
-        h = h * 37 + hash(self.y)
-        # h might be a long by now...
-        return hash(h)
+        return hash((self.get_name(), self.p, self.q, self.g, self.y))
 
     def get_name(self):
         return 'ssh-dss'

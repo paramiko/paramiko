@@ -25,7 +25,7 @@ import array
 import ctypes.wintypes
 import platform
 import struct
-from paramiko.util import *  # noqa
+from paramiko.common import zero_byte
 from paramiko.py3compat import b
 
 try:

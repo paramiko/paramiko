@@ -113,6 +113,25 @@ TEST_KEY_BYTESTR_3 = '\x00\x00\x00\x07ssh-rsa\x00\x00\x00\x01#\x00\x00\x00\x00ӏ
 
 
 class KeyTest(unittest.TestCase):
+
+    def setUp(self):
+        pass
+
+    def tearDown(self):
+        pass
+
+    def assert_keyfile_is_encrypted(self, keyfile):
+        """
+        A quick check that filename looks like an encrypted key.
+        """
+        with open(keyfile, "r") as fh:
+            self.assertEqual(
+                fh.readline()[:-1],
+                "-----BEGIN RSA PRIVATE KEY-----"
+            )
+            self.assertEqual(fh.readline()[:-1], "Proc-Type: 4,ENCRYPTED")
+            self.assertEqual(fh.readline()[0:10], "DEK-Info: ")
+
     def test_1_generate_key_bytes(self):
         key = util.generate_key_bytes(md5, x1234, 'happy birthday', 30)
         exp = b'\x61\xE1\xF2\x72\xF4\xC1\xC4\x56\x15\x86\xBD\x32\x24\x98\xC0\xE9\x24\x67\x27\x80\xF4\x7B\xB3\x7D\xDA\x7D\x54\x01\x9E\x64'
@@ -419,6 +438,7 @@ class KeyTest(unittest.TestCase):
         # When the bug under test exists, this will ValueError.
         try:
             key.write_private_key_file(newfile, password=newpassword)
+            self.assert_keyfile_is_encrypted(newfile)
             # Verify the inner key data still matches (when no ValueError)
             key2 = RSAKey(filename=newfile, password=newpassword)
             self.assertEqual(key, key2)
@@ -437,3 +457,18 @@ class KeyTest(unittest.TestCase):
         )
 
         self.assertNotEqual(key1.asbytes(), key2.asbytes())
+
+    def test_keyfile_is_actually_encrypted(self):
+        # Read an existing encrypted private key
+        file_ = test_path('test_rsa_password.key')
+        password = 'television'
+        newfile = file_ + '.new'
+        newpassword = 'radio'
+        key = RSAKey(filename=file_, password=password)
+        # Write out a newly re-encrypted copy with a new password.
+        # When the bug under test exists, this will ValueError.
+        try:
+            key.write_private_key_file(newfile, password=newpassword)
+            self.assert_keyfile_is_encrypted(newfile)
+        finally:
+            os.remove(newfile)

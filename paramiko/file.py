@@ -18,7 +18,7 @@
 from paramiko.common import (
     linefeed_byte_value, crlf, cr_byte, linefeed_byte, cr_byte_value,
 )
-from paramiko.py3compat import BytesIO, PY2, u, b, bytes_types
+from paramiko.py3compat import BytesIO, PY2, u, bytes_types, text_type
 
 from paramiko.util import ClosingContextManager
 
@@ -391,7 +391,9 @@ class BufferedFile (ClosingContextManager):
 
         :param data: ``str``/``bytes`` data to write
         """
-        data = b(data)
+        if isinstance(data, text_type):
+            # Accept text and encode as utf-8 for compatibility only.
+            data = data.encode('utf-8')
         if self._closed:
             raise IOError('File is closed')
         if not (self._flags & self.FLAG_WRITE):

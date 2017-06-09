@@ -23,6 +23,7 @@ Some unit tests for authenticating over a Transport.
 import sys
 import threading
 import unittest
+from time import sleep
 
 from paramiko import (
     Transport, ServerInterface, RSAKey, DSSKey, BadAuthenticationType,
@@ -74,6 +75,9 @@ class NullServer (ServerInterface):
             return AUTH_SUCCESSFUL
         if username == 'bad-server':
             raise Exception("Ack!")
+        if username == 'unresponsive-server':
+            sleep(5)
+            return AUTH_SUCCESSFUL
         return AUTH_FAILED
 
     def check_auth_publickey(self, username, key):
@@ -233,3 +237,18 @@ class AuthTest (unittest.TestCase):
         except:
             etype, evalue, etb = sys.exc_info()
             self.assertTrue(issubclass(etype, AuthenticationException))
+
+    def test_9_auth_non_responsive(self):
+        """
+        verify that authentication times out if server takes to long to
+        respond (or never responds).
+        """
+        self.tc.auth_timeout = 1  # 1 second, to speed up test
+        self.start_server()
+        self.tc.connect()
+        try:
+            remain = self.tc.auth_password('unresponsive-server', 'hello')
+        except:
+            etype, evalue, etb = sys.exc_info()
+            self.assertTrue(issubclass(etype, AuthenticationException))
+            self.assertTrue('Authentication timeout' in str(evalue))

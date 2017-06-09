@@ -6,8 +6,8 @@ Paramiko
 
 .. image:: https://travis-ci.org/paramiko/paramiko.svg?branch=master
     :target: https://travis-ci.org/paramiko/paramiko
-.. image:: https://coveralls.io/repos/paramiko/paramiko/badge.svg?branch=master&service=github
-    :target: https://coveralls.io/github/paramiko/paramiko?branch=master
+.. image:: https://codecov.io/gh/paramiko/paramiko/branch/master/graph/badge.svg
+    :target: https://codecov.io/gh/paramiko/paramiko
 
 :Paramiko:    Python SSH module
 :Copyright:   Copyright (c) 2003-2009  Robey Pointer <robeypointer@gmail.com>

@@ -2,6 +2,51 @@
 Changelog
 =========
 
+* :bug:`984` Enhance default cipher preference order such that
+  ``aes(192|256)-cbc`` are preferred over ``blowfish-cbc``. Thanks to Alex
+  Gaynor.
+* :bug:`971 (1.17+)` Allow any type implementing the buffer API to be used with
+  `BufferedFile <paramiko.file.BufferedFile>`, `Channel
+  <paramiko.channel.Channel>`, and `SFTPFile <paramiko.sftp_file.SFTPFile>`.
+  This resolves a regression introduced in 1.13 with the Python 3 porting
+  changes, when using types such as ``memoryview``. Credit: Martin Packman.
+* :bug:`741` (also :issue:`809`, :issue:`772`; all via :issue:`912`) Writing
+  encrypted/password-protected private key files was silently broken since 2.0
+  due to an incorrect API call; this has been fixed.
+
+  Includes a directly related fix, namely adding the ability to read
+  ``AES-256-CBC`` ciphered private keys (which is now what we tend to write out
+  as it is Cryptography's default private key cipher.)
+
+  Thanks to ``@virlos`` for the original report, Chris Harris and ``@ibuler``
+  for initial draft PRs, and ``@jhgorrell`` for the final patch.
+* :feature:`65` (via :issue:`471`) Add support for OpenSSH's SFTP
+  ``posix-rename`` protocol extension (section 3.3 of `OpenSSH's protocol
+  extension document
+  <http://cvsweb.openbsd.org/cgi-bin/cvsweb/src/usr.bin/ssh/PROTOCOL?rev=1.31>`_),
+  via a new ``posix_rename`` method in `SFTPClient
+  <paramiko.sftp_client.SFTPClient.posix_rename>` and `SFTPServerInterface
+  <paramiko.sftp_si.SFTPServerInterface.posix_rename>`. Thanks to Wren Turkal
+  for the initial patch & Mika Pflüger for the enhanced, merged PR.
+* :feature:`869` Add an ``auth_timeout`` kwarg to `SSHClient.connect
+  <paramiko.client.SSHClient.connect>` (default: 30s) to avoid hangs when the
+  remote end becomes unresponsive during the authentication step. Credit to
+  ``@timsavage``.
+
+  .. note::
+    This technically changes behavior, insofar as very slow auth steps >30s
+    will now cause timeout exceptions instead of completing. We doubt most
+    users will notice; those affected can simply give a higher value to
+    ``auth_timeout``.
+
+* :support:`921` Tighten up the ``__hash__`` implementation for various key
+  classes; less code is good code. Thanks to Francisco Couzo for the patch.
+* :support:`956 backported (1.17+)` Switch code coverage service from
+  coveralls.io to codecov.io (& then disable the latter's auto-comments.)
+  Thanks to Nikolai Røed Kristiansen for the patch.
+* :bug:`983` Move ``sha1`` above the now-arguably-broken ``md5`` in the list of
+  preferred MAC algorithms, as an incremental security improvement for users
+  whose target systems offer both. Credit: Pierce Lopez.
 * :bug:`667` The RC4/arcfour family of ciphers has been broken since version
   2.0; but since the algorithm is now known to be completely insecure, we are
   opting to remove support outright instead of fixing it. Thanks to Alex Gaynor
@@ -12,7 +57,9 @@ Changelog
   long-standing gotcha for unaware users.
 * :feature:`951` Add support for ECDH key exchange (kex), specifically the
   algorithms ``ecdh-sha2-nistp256``, ``ecdh-sha2-nistp384``, and
-  ``ecdh-sha2-nistp521``. Thanks to Shashank Veerapaneni for the patch.
+  ``ecdh-sha2-nistp521``. They now come before the older ``diffie-hellman-*``
+  family of kex algorithms in the preferred-kex list. Thanks to Shashank
+  Veerapaneni for the patch & Pierce Lopez for a follow-up.
 * :support:`- backported` A big formatting pass to clean up an enormous number
   of invalid Sphinx reference links, discovered by switching to a modern,
   rigorous nitpicking doc-building mode.
@@ -38,8 +85,12 @@ Changelog
   (i.e. passes the maintainer's preferred `flake8 <http://flake8.pycqa.org/>`_
   configuration) and add a ``flake8`` step to the Travis config. Big thanks to
   Dorian Pula!
-* :bug:`683` Make ``util.log_to_file`` append instead of replace. Thanks
-  to ``@vlcinsky`` for the report.
+* :bug:`949 (1.17+)` SSHClient and Transport could cause a memory leak if
+  there's a connection problem or protocol error, even if ``Transport.close()``
+  is called. Thanks Kyle Agronick for the discovery and investigation, and
+  Pierce Lopez for assistance.
+* :bug:`683 (1.17+)` Make ``util.log_to_file`` append instead of replace.
+  Thanks to ``@vlcinsky`` for the report.
 * :release:`2.1.2 <2017-02-20>`
 * :release:`2.0.5 <2017-02-20>`
 * :release:`1.18.2 <2017-02-20>`

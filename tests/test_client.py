@@ -36,7 +36,7 @@ from tests.util import test_path
 
 import paramiko
 from paramiko.common import PY2
-from paramiko.ssh_exception import SSHException
+from paramiko.ssh_exception import SSHException, AuthenticationException
 
 
 FINGERPRINTS = {
@@ -60,6 +60,9 @@ class NullServer (paramiko.ServerInterface):
 
     def check_auth_password(self, username, password):
         if (username == 'slowdive') and (password == 'pygmalion'):
+            return paramiko.AUTH_SUCCESSFUL
+        if (username == 'slowdive') and (password == 'unresponsive-server'):
+            time.sleep(5)
             return paramiko.AUTH_SUCCESSFUL
         return paramiko.AUTH_FAILED
 
@@ -294,13 +297,10 @@ class SSHClientTest (unittest.TestCase):
         verify that when an SSHClient is collected, its transport (and the
         transport's packetizer) is closed.
         """
-        # Unclear why this is borked on Py3, but it is, and does not seem worth
-        # pursuing at the moment. Skipped on PyPy because it fails on travis
-        # for unknown reasons, works fine locally.
-        # XXX: It's the release of the references to e.g packetizer that fails
-        # in py3...
-        if not PY2 or platform.python_implementation() == "PyPy":
+        # Skipped on PyPy because it fails on travis for unknown reasons
+        if platform.python_implementation() == "PyPy":
             return
+
         threading.Thread(target=self._run).start()
 
         self.tc = paramiko.SSHClient()
@@ -318,8 +318,8 @@ class SSHClientTest (unittest.TestCase):
         del self.tc
 
         # force a collection to see whether the SSHClient object is deallocated
-        # correctly. 2 GCs are needed to make sure it's really collected on
-        # PyPy
+        # 2 GCs are needed on PyPy, time is needed for Python 3
+        time.sleep(0.3)
         gc.collect()
         gc.collect()
 
@@ -383,6 +383,18 @@ class SSHClientTest (unittest.TestCase):
             password='pygmalion',
         )
         self._test_connection(**kwargs)
+
+    def test_9_auth_timeout(self):
+        """
+        verify that the SSHClient has a configurable auth timeout
+        """
+        # Connect with a half second auth timeout
+        self.assertRaises(
+            AuthenticationException,
+            self._test_connection,
+            password='unresponsive-server',
+            auth_timeout=0.5,
+        )
 
     def test_update_environment(self):
         """

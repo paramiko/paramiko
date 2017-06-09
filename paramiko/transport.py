@@ -117,10 +117,10 @@ class Transport(threading.Thread, ClosingContextManager):
     _preferred_macs = (
         'hmac-sha2-256',
         'hmac-sha2-512',
+        'hmac-sha1',
         'hmac-md5',
         'hmac-sha1-96',
         'hmac-md5-96',
-        'hmac-sha1',
     )
     _preferred_keys = (
         'ssh-ed25519',
@@ -131,13 +131,13 @@ class Transport(threading.Thread, ClosingContextManager):
         'ssh-dss',
     )
     _preferred_kex = (
-        'diffie-hellman-group1-sha1',
-        'diffie-hellman-group14-sha1',
-        'diffie-hellman-group-exchange-sha1',
-        'diffie-hellman-group-exchange-sha256',
         'ecdh-sha2-nistp256',
         'ecdh-sha2-nistp384',
         'ecdh-sha2-nistp521',
+        'diffie-hellman-group-exchange-sha256',
+        'diffie-hellman-group-exchange-sha1',
+        'diffie-hellman-group14-sha1',
+        'diffie-hellman-group1-sha1',
     )
     _preferred_compression = ('none',)
 
@@ -287,7 +287,6 @@ class Transport(threading.Thread, ClosingContextManager):
             arguments.
         """
         self.active = False
-        self._sshclient = None
 
         if isinstance(sock, string_types):
             # convert "host:port" into (host, port)
@@ -321,14 +320,9 @@ class Transport(threading.Thread, ClosingContextManager):
         threading.Thread.__init__(self)
         self.setDaemon(True)
         self.sock = sock
-        # Python < 2.3 doesn't have the settimeout method - RogerB
-        try:
-            # we set the timeout so we can check self.active periodically to
-            # see if we should bail.  socket.timeout exception is never
-            # propagated.
-            self.sock.settimeout(self._active_check_timeout)
-        except AttributeError:
-            pass
+        # we set the timeout so we can check self.active periodically to
+        # see if we should bail. socket.timeout exception is never propagated.
+        self.sock.settimeout(self._active_check_timeout)
 
         # negotiated crypto parameters
         self.packetizer = Packetizer(sock)
@@ -397,6 +391,8 @@ class Transport(threading.Thread, ClosingContextManager):
         # how long (seconds) to wait for the handshake to finish after SSH
         # banner sent.
         self.handshake_timeout = 15
+        # how long (seconds) to wait for the auth response.
+        self.auth_timeout = 30
 
         # server mode:
         self.server_mode = False
@@ -661,9 +657,6 @@ class Transport(threading.Thread, ClosingContextManager):
         Transport._modulus_pack = None
         return False
 
-    def set_sshclient(self, sshclient):
-        self._sshclient = sshclient
-
     def close(self):
         """
         Close this session, and any open channels that are tied to it.
@@ -674,7 +667,6 @@ class Transport(threading.Thread, ClosingContextManager):
         for chan in list(self._channels.values()):
             chan._unlink()
         self.sock.close()
-        self._sshclient = None
 
     def get_remote_server_key(self):
         """
