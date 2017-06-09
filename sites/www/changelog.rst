@@ -2,6 +2,9 @@
 Changelog
 =========
 
+* :release:`2.0.6 <2017-06-09>`
+* :release:`1.18.3 <2017-06-09>`
+* :release:`1.17.5 <2017-06-09>`
 * :bug:`865` SSHClient now requests the type of host key it has (e.g. from
   known_hosts) and does not consider a different type to be a "Missing" host
   key. This fixes a common case where an ECDSA key is in known_hosts and the
