@@ -65,15 +65,8 @@ if PY2:
         return s
 
 
-    try:
-        import cStringIO
-
-        StringIO = cStringIO.StringIO   # NOQA
-    except ImportError:
-        import StringIO
-
-        StringIO = StringIO.StringIO    # NOQA
-
+    import cStringIO
+    StringIO = cStringIO.StringIO
     BytesIO = StringIO
 
 
