@@ -2,6 +2,9 @@
 Changelog
 =========
 
+* :bug:`984` Enhance default cipher preference order such that
+  ``aes(192|256)-cbc`` are preferred over ``blowfish-cbc``. Thanks to Alex
+  Gaynor.
 * :bug:`971 (1.17+)` Allow any type implementing the buffer API to be used with
   `BufferedFile <paramiko.file.BufferedFile>`, `Channel
   <paramiko.channel.Channel>`, and `SFTPFile <paramiko.sftp_file.SFTPFile>`.
