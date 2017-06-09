@@ -33,9 +33,9 @@ Changelog
 
 * :support:`921` Tighten up the ``__hash__`` implementation for various key
   classes; less code is good code. Thanks to Francisco Couzo for the patch.
-* :support:`956 (1.17+)` Switch code coverage service from coveralls.io to
-  codecov.io (& then disable the latter's auto-comments.) Thanks to Nikolai
-  Røed Kristiansen for the patch.
+* :support:`956 backported (1.17+)` Switch code coverage service from
+  coveralls.io to codecov.io (& then disable the latter's auto-comments.)
+  Thanks to Nikolai Røed Kristiansen for the patch.
 * :bug:`983` Move ``sha1`` above the now-arguably-broken ``md5`` in the list of
   preferred MAC algorithms, as an incremental security improvement for users
   whose target systems offer both. Credit: Pierce Lopez.
