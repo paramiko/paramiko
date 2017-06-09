@@ -2,6 +2,7 @@
 Changelog
 =========
 
+* :release:`2.0.6 <2017-06-09>`
 * :release:`1.18.3 <2017-06-09>`
 * :release:`1.17.5 <2017-06-09>`
 * :support:`906 (1.18+)` Clean up a handful of outdated imports and related
