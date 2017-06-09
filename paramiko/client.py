@@ -361,8 +361,6 @@ class SSHClient (ClosingContextManager):
                 sec_opts.key_types = [keytype] + other_types
 
         t.start_client(timeout=timeout)
-        t.set_sshclient(self)
-        ResourceManager.register(self, t)
 
         if not self._transport.use_gss_kex:
             server_key = t.get_remote_server_key()
