@@ -2,6 +2,7 @@
 Changelog
 =========
 
+* :release:`1.17.5 <2017-06-09>`
 * :bug:`971 (1.17+)` Allow any type implementing the buffer API to be used with
   `BufferedFile <paramiko.file.BufferedFile>`, `Channel
   <paramiko.channel.Channel>`, and `SFTPFile <paramiko.sftp_file.SFTPFile>`.
