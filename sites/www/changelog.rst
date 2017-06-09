@@ -2,6 +2,8 @@
 Changelog
 =========
 
+* :support:`906 (1.18+)` Clean up a handful of outdated imports and related
+  tweaks. Thanks to Pierce Lopez.
 * :bug:`984` Enhance default cipher preference order such that
   ``aes(192|256)-cbc`` are preferred over ``blowfish-cbc``. Thanks to Alex
   Gaynor.
