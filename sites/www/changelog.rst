@@ -2,6 +2,18 @@
 Changelog
 =========
 
+* :bug:`971 (1.17+)` Allow any type implementing the buffer API to be used with
+  `BufferedFile <paramiko.file.BufferedFile>`, `Channel
+  <paramiko.channel.Channel>`, and `SFTPFile <paramiko.sftp_file.SFTPFile>`.
+  This resolves a regression introduced in 1.13 with the Python 3 porting
+  changes, when using types such as ``memoryview``. Credit: Martin Packman.
+* :support:`956 backported` Switch code coverage service from coveralls.io to
+  codecov.io (& then disable the latter's auto-comments.) Thanks to Nikolai
+  Røed Kristiansen for the patch.
+* :bug:`949` SSHClient and Transport could cause a memory leak if there's
+  a connection problem or protocol error, even if ``Transport.close()``
+  is called. Thanks Kyle Agronick for the discovery and investigation,
+  and Pierce Lopez for assistance.
 * :bug:`683` Make `util.log_to_file()` append instead of replace. Thanks
   to ``@vlcinsky`` for the report.
 * :release:`1.18.2 <2017-02-20>`
