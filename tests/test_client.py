@@ -22,6 +22,8 @@ Some unit tests for SSHClient.
 
 from __future__ import with_statement
 
+import gc
+import platform
 import socket
 from tempfile import mkstemp
 import threading
@@ -287,12 +289,10 @@ class SSHClientTest (unittest.TestCase):
         verify that when an SSHClient is collected, its transport (and the
         transport's packetizer) is closed.
         """
-        # Unclear why this is borked on Py3, but it is, and does not seem worth
-        # pursuing at the moment.
-        # XXX: It's the release of the references to e.g packetizer that fails
-        # in py3...
-        if not PY2:
+        # Skipped on PyPy because it fails on travis for unknown reasons
+        if platform.python_implementation() == "PyPy":
             return
+
         threading.Thread(target=self._run).start()
         host_key = paramiko.RSAKey.from_private_key_file(test_path('test_rsa.key'))
         public_host_key = paramiko.RSAKey(data=host_key.asbytes())
@@ -311,14 +311,9 @@ class SSHClientTest (unittest.TestCase):
         self.tc.close()
         del self.tc
 
-        # hrm, sometimes p isn't cleared right away.  why is that?
-        #st = time.time()
-        #while (time.time() - st < 5.0) and (p() is not None):
-        #    time.sleep(0.1)
-
-        # instead of dumbly waiting for the GC to collect, force a collection
-        # to see whether the SSHClient object is deallocated correctly
-        import gc
+        # 2 GCs are needed on PyPy, time is needed for Python 3
+        time.sleep(0.3)
+        gc.collect()
         gc.collect()
 
         self.assertTrue(p() is None)
