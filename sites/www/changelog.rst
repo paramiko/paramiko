@@ -2,6 +2,7 @@
 Changelog
 =========
 
+* :release:`1.17.5 <2017-06-09>`
 * :support:`906 (1.18+)` Clean up a handful of outdated imports and related
   tweaks. Thanks to Pierce Lopez.
 * :bug:`971 (1.17+)` Allow any type implementing the buffer API to be used with
