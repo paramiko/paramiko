@@ -2,6 +2,8 @@
 Changelog
 =========
 
+* :support:`906 (1.18+)` Clean up a handful of outdated imports and related
+  tweaks. Thanks to Pierce Lopez.
 * :bug:`971 (1.17+)` Allow any type implementing the buffer API to be used with
   `BufferedFile <paramiko.file.BufferedFile>`, `Channel
   <paramiko.channel.Channel>`, and `SFTPFile <paramiko.sftp_file.SFTPFile>`.
