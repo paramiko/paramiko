@@ -2,6 +2,9 @@
 Changelog
 =========
 
+* :support:`956 backported` Switch code coverage service from coveralls.io to
+  codecov.io (& then disable the latter's auto-comments.) Thanks to Nikolai
+  Røed Kristiansen for the patch.
 * :bug:`949` SSHClient and Transport could cause a memory leak if there's
   a connection problem or protocol error, even if ``Transport.close()``
   is called. Thanks Kyle Agronick for the discovery and investigation,
