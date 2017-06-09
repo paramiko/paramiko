@@ -290,13 +290,10 @@ class SSHClientTest (unittest.TestCase):
         verify that when an SSHClient is collected, its transport (and the
         transport's packetizer) is closed.
         """
-        # Unclear why this is borked on Py3, but it is, and does not seem worth
-        # pursuing at the moment. Skipped on PyPy because it fails on travis
-        # for unknown reasons, works fine locally.
-        # XXX: It's the release of the references to e.g packetizer that fails
-        # in py3...
-        if not PY2 or platform.python_implementation() == "PyPy":
+        # Skipped on PyPy because it fails on travis for unknown reasons
+        if platform.python_implementation() == "PyPy":
             return
+
         threading.Thread(target=self._run).start()
 
         self.tc = paramiko.SSHClient()
@@ -314,8 +311,8 @@ class SSHClientTest (unittest.TestCase):
         del self.tc
 
         # force a collection to see whether the SSHClient object is deallocated
-        # correctly. 2 GCs are needed to make sure it's really collected on
-        # PyPy
+        # 2 GCs are needed on PyPy, time is needed for Python 3
+        time.sleep(0.3)
         gc.collect()
         gc.collect()
 

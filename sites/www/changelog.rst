@@ -2,6 +2,10 @@
 Changelog
 =========
 
+* :bug:`949` SSHClient and Transport could cause a memory leak if there's
+  a connection problem or protocol error, even if ``Transport.close()``
+  is called. Thanks Kyle Agronick for the discovery and investigation,
+  and Pierce Lopez for assistance.
 * :bug:`741` (also :issue:`809`, :issue:`772`; all via :issue:`912`) Writing
   encrypted/password-protected private key files was silently broken since 2.0
   due to an incorrect API call; this has been fixed.
