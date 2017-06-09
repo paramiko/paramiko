@@ -34,7 +34,6 @@ from paramiko.dsskey import DSSKey
 from paramiko.ecdsakey import ECDSAKey
 from paramiko.hostkeys import HostKeys
 from paramiko.py3compat import string_types
-from paramiko.resource import ResourceManager
 from paramiko.rsakey import RSAKey
 from paramiko.ssh_exception import (
     SSHException, BadHostKeyException, NoValidConnectionsError
@@ -91,7 +90,7 @@ class SSHClient (ClosingContextManager):
 
         :param str filename: the filename to read, or ``None``
 
-        :raises IOError:
+        :raises: ``IOError`` --
             if a filename was provided and the file could not be read
         """
         if filename is None:
@@ -118,7 +117,7 @@ class SSHClient (ClosingContextManager):
 
         :param str filename: the filename to read
 
-        :raises IOError: if the filename could not be read
+        :raises: ``IOError`` -- if the filename could not be read
         """
         self._host_keys_filename = filename
         self._host_keys.load(filename)
@@ -131,7 +130,7 @@ class SSHClient (ClosingContextManager):
 
         :param str filename: the filename to save to
 
-        :raises IOError: if the file could not be written
+        :raises: ``IOError`` -- if the file could not be written
         """
 
         # update local host keys from file (in case other SSH clients
@@ -282,10 +281,12 @@ class SSHClient (ClosingContextManager):
         :param float banner_timeout: an optional timeout (in seconds) to wait
             for the SSH banner to be presented.
 
-        :raises BadHostKeyException: if the server's host key could not be
+        :raises:
+            `.BadHostKeyException` -- if the server's host key could not be
             verified
-        :raises AuthenticationException: if authentication failed
-        :raises SSHException: if there was any other error connecting or
+        :raises: `.AuthenticationException` -- if authentication failed
+        :raises:
+            `.SSHException` -- if there was any other error connecting or
             establishing an SSH session
         :raises socket.error: if a socket error occurred while connecting
 
@@ -340,8 +341,6 @@ class SSHClient (ClosingContextManager):
         if banner_timeout is not None:
             t.banner_timeout = banner_timeout
         t.start_client()
-        t.set_sshclient(self)
-        ResourceManager.register(self, t)
 
         server_key = t.get_remote_server_key()
         keytype = server_key.get_name()
@@ -416,12 +415,12 @@ class SSHClient (ClosingContextManager):
             interpreted the same way as by the built-in ``file()`` function in
             Python
         :param int timeout:
-            set command's channel timeout. See `Channel.settimeout`.settimeout
+            set command's channel timeout. See `.Channel.settimeout`
         :return:
             the stdin, stdout, and stderr of the executing command, as a
             3-tuple
 
-        :raises SSHException: if the server fails to execute the command
+        :raises: `.SSHException` -- if the server fails to execute the command
         """
         chan = self._transport.open_session(timeout=timeout)
         if get_pty:
@@ -448,7 +447,7 @@ class SSHClient (ClosingContextManager):
         :param int height_pixels: the height (in pixels) of the terminal window
         :return: a new `.Channel` connected to the remote shell
 
-        :raises SSHException: if the server fails to invoke a shell
+        :raises: `.SSHException` -- if the server fails to invoke a shell
         """
         chan = self._transport.open_session()
         chan.get_pty(term, width, height, width_pixels, height_pixels)

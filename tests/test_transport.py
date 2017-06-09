@@ -43,6 +43,7 @@ from paramiko.common import (
 )
 from paramiko.py3compat import bytes
 from paramiko.message import Message
+from tests import skipUnlessBuiltin
 from tests.loop import LoopSocket
 from tests.util import test_path
 
@@ -164,6 +165,15 @@ class TransportTest(unittest.TestCase):
             self.assertTrue(False)
         except TypeError:
             pass
+
+    def test_1b_security_options_reset(self):
+        o = self.tc.get_security_options()
+        # should not throw any exceptions
+        o.ciphers = o.ciphers
+        o.digests = o.digests
+        o.key_types = o.key_types
+        o.kex = o.kex
+        o.compression = o.compression
 
     def test_2_compute_key(self):
         self.tc.K = 123281095979686581523377256114209720774539068973101330872763622971399429481072519713536292772709507296759612401802191955568143056534122385270077606457721553469730659233569339356140085284052436697480759510519672848743794433460113118986816826624865291116513647975790797391795651716378444844877749505443714557929
@@ -849,3 +859,71 @@ class TransportTest(unittest.TestCase):
         self.assertEqual([chan], r)
         self.assertEqual([], w)
         self.assertEqual([], e)
+
+    def test_channel_send_misc(self):
+        """
+        verify behaviours sending various instances to a channel
+        """
+        self.setup_test_server()
+        text = u"\xa7 slice me nicely"
+        with self.tc.open_session() as chan:
+            schan = self.ts.accept(1.0)
+            if schan is None:
+                self.fail("Test server transport failed to accept")
+            sfile = schan.makefile()
+
+            # TypeError raised on non string or buffer type
+            self.assertRaises(TypeError, chan.send, object())
+            self.assertRaises(TypeError, chan.sendall, object())
+
+            # sendall() accepts a unicode instance
+            chan.sendall(text)
+            expected = text.encode("utf-8")
+            self.assertEqual(sfile.read(len(expected)), expected)
+
+    @skipUnlessBuiltin('buffer')
+    def test_channel_send_buffer(self):
+        """
+        verify sending buffer instances to a channel
+        """
+        self.setup_test_server()
+        data = 3 * b'some test data\n whole'
+        with self.tc.open_session() as chan:
+            schan = self.ts.accept(1.0)
+            if schan is None:
+                self.fail("Test server transport failed to accept")
+            sfile = schan.makefile()
+
+            # send() accepts buffer instances
+            sent = 0
+            while sent < len(data):
+                sent += chan.send(buffer(data, sent, 8))
+            self.assertEqual(sfile.read(len(data)), data)
+
+            # sendall() accepts a buffer instance
+            chan.sendall(buffer(data))
+            self.assertEqual(sfile.read(len(data)), data)
+
+    @skipUnlessBuiltin('memoryview')
+    def test_channel_send_memoryview(self):
+        """
+        verify sending memoryview instances to a channel
+        """
+        self.setup_test_server()
+        data = 3 * b'some test data\n whole'
+        with self.tc.open_session() as chan:
+            schan = self.ts.accept(1.0)
+            if schan is None:
+                self.fail("Test server transport failed to accept")
+            sfile = schan.makefile()
+
+            # send() accepts memoryview slices
+            sent = 0
+            view = memoryview(data)
+            while sent < len(view):
+                sent += chan.send(view[sent:sent+8])
+            self.assertEqual(sfile.read(len(data)), data)
+
+            # sendall() accepts a memoryview instance
+            chan.sendall(memoryview(data))
+            self.assertEqual(sfile.read(len(data)), data)

@@ -77,7 +77,7 @@ class SFTPHandle (ClosingContextManager):
         to be 64 bits.
 
         If the end of the file has been reached, this method may return an
-        empty string to signify EOF, or it may also return `.SFTP_EOF`.
+        empty string to signify EOF, or it may also return ``SFTP_EOF``.
 
         The default implementation checks for an attribute on ``self`` named
         ``readfile``, and if present, performs the read operation on the Python
@@ -85,7 +85,6 @@ class SFTPHandle (ClosingContextManager):
         common case where you are wrapping a Python file object.)
 
         :param offset: position in the file to start reading from.
-        :type offset: int or long
         :param int length: number of bytes to attempt to read.
         :return: data read from the file, or an SFTP error code, as a `str`.
         """
@@ -120,9 +119,8 @@ class SFTPHandle (ClosingContextManager):
         refer to the same file.
 
         :param offset: position in the file to start reading from.
-        :type offset: int or long
         :param str data: data to write into the file.
-        :return: an SFTP error code like `.SFTP_OK`.
+        :return: an SFTP error code like ``SFTP_OK``.
         """
         writefile = getattr(self, 'writefile', None)
         if writefile is None:
@@ -152,7 +150,7 @@ class SFTPHandle (ClosingContextManager):
 
         :return:
             an attributes object for the given file, or an SFTP error code
-            (like `.SFTP_PERMISSION_DENIED`).
+            (like ``SFTP_PERMISSION_DENIED``).
         :rtype: `.SFTPAttributes` or error code
         """
         return SFTP_OP_UNSUPPORTED
@@ -164,7 +162,7 @@ class SFTPHandle (ClosingContextManager):
         check for the presence of fields before using them.
 
         :param .SFTPAttributes attr: the attributes to change on this file.
-        :return: an `int` error code like `.SFTP_OK`.
+        :return: an `int` error code like ``SFTP_OK``.
         """
         return SFTP_OP_UNSUPPORTED
 
