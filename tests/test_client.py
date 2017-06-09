@@ -35,7 +35,7 @@ import time
 from tests.util import test_path
 
 import paramiko
-from paramiko.common import PY2, b
+from paramiko.py3compat import PY2, b
 from paramiko.ssh_exception import SSHException
 
 
