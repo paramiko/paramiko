@@ -34,7 +34,6 @@ from paramiko.dsskey import DSSKey
 from paramiko.ecdsakey import ECDSAKey
 from paramiko.hostkeys import HostKeys
 from paramiko.py3compat import string_types
-from paramiko.resource import ResourceManager
 from paramiko.rsakey import RSAKey
 from paramiko.ssh_exception import (
     SSHException, BadHostKeyException, NoValidConnectionsError

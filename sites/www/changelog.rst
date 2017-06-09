@@ -3,9 +3,19 @@ Changelog
 =========
 
 * :bug:`865` SSHClient requests the type of host key it has (e.g. from
-  known_hosts) and does not consider a different type to be a "Missing"
-  host key. This fixes a common case where an ecdsa key is in known_hosts and
-  the server also has an rsa host key. Thanks to Pierce Lopez.
+  known_hosts) and does not consider a different type to be a "Missing" host
+  key. This fixes a common case where an ECDSA key is in known_hosts and the
+  server also has an RSA host key. Thanks to Pierce Lopez.
+* :support:`906 (1.18+)` Clean up a handful of outdated imports and related
+  tweaks. Thanks to Pierce Lopez.
+* :bug:`984` Enhance default cipher preference order such that
+  ``aes(192|256)-cbc`` are preferred over ``blowfish-cbc``. Thanks to Alex
+  Gaynor.
+* :bug:`971 (1.17+)` Allow any type implementing the buffer API to be used with
+  `BufferedFile <paramiko.file.BufferedFile>`, `Channel
+  <paramiko.channel.Channel>`, and `SFTPFile <paramiko.sftp_file.SFTPFile>`.
+  This resolves a regression introduced in 1.13 with the Python 3 porting
+  changes, when using types such as ``memoryview``. Credit: Martin Packman.
 * :bug:`741` (also :issue:`809`, :issue:`772`; all via :issue:`912`) Writing
   encrypted/password-protected private key files was silently broken since 2.0
   due to an incorrect API call; this has been fixed.
@@ -16,6 +26,9 @@ Changelog
 
   Thanks to ``@virlos`` for the original report, Chris Harris and ``@ibuler``
   for initial draft PRs, and ``@jhgorrell`` for the final patch.
+* :support:`956 (1.17+)` Switch code coverage service from coveralls.io to
+  codecov.io (& then disable the latter's auto-comments.) Thanks to Nikolai
+  Røed Kristiansen for the patch.
 * :bug:`983` Move ``sha1`` above the now-arguably-broken ``md5`` in the list of
   preferred MAC algorithms, as an incremental security improvement for users
   whose target systems offer both. Credit: Pierce Lopez.
@@ -40,8 +53,12 @@ Changelog
   (i.e. passes the maintainer's preferred `flake8 <http://flake8.pycqa.org/>`_
   configuration) and add a ``flake8`` step to the Travis config. Big thanks to
   Dorian Pula!
-* :bug:`683` Make ``util.log_to_file`` append instead of replace. Thanks
-  to ``@vlcinsky`` for the report.
+* :bug:`949 (1.17+)` SSHClient and Transport could cause a memory leak if
+  there's a connection problem or protocol error, even if ``Transport.close()``
+  is called. Thanks Kyle Agronick for the discovery and investigation, and
+  Pierce Lopez for assistance.
+* :bug:`683 (1.17+)` Make ``util.log_to_file`` append instead of replace.
+  Thanks to ``@vlcinsky`` for the report.
 * :release:`2.1.2 <2017-02-20>`
 * :release:`2.0.5 <2017-02-20>`
 * :release:`1.18.2 <2017-02-20>`

@@ -107,9 +107,9 @@ class Transport(threading.Thread, ClosingContextManager):
         'aes192-ctr',
         'aes256-ctr',
         'aes128-cbc',
-        'blowfish-cbc',
         'aes192-cbc',
         'aes256-cbc',
+        'blowfish-cbc',
         '3des-cbc',
     )
     _preferred_macs = (
@@ -277,7 +277,6 @@ class Transport(threading.Thread, ClosingContextManager):
             arguments.
         """
         self.active = False
-        self._sshclient = None
 
         if isinstance(sock, string_types):
             # convert "host:port" into (host, port)
@@ -311,14 +310,9 @@ class Transport(threading.Thread, ClosingContextManager):
         threading.Thread.__init__(self)
         self.setDaemon(True)
         self.sock = sock
-        # Python < 2.3 doesn't have the settimeout method - RogerB
-        try:
-            # we set the timeout so we can check self.active periodically to
-            # see if we should bail.  socket.timeout exception is never
-            # propagated.
-            self.sock.settimeout(self._active_check_timeout)
-        except AttributeError:
-            pass
+        # we set the timeout so we can check self.active periodically to
+        # see if we should bail. socket.timeout exception is never propagated.
+        self.sock.settimeout(self._active_check_timeout)
 
         # negotiated crypto parameters
         self.packetizer = Packetizer(sock)
@@ -651,9 +645,6 @@ class Transport(threading.Thread, ClosingContextManager):
         Transport._modulus_pack = None
         return False
 
-    def set_sshclient(self, sshclient):
-        self._sshclient = sshclient
-
     def close(self):
         """
         Close this session, and any open channels that are tied to it.
@@ -664,7 +655,6 @@ class Transport(threading.Thread, ClosingContextManager):
         for chan in list(self._channels.values()):
             chan._unlink()
         self.sock.close()
-        self._sshclient = None
 
     def get_remote_server_key(self):
         """
