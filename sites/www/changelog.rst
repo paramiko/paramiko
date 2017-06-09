@@ -2,13 +2,6 @@
 Changelog
 =========
 
-* :support:`956 backported` Switch code coverage service from coveralls.io to
-  codecov.io (& then disable the latter's auto-comments.) Thanks to Nikolai
-  Røed Kristiansen for the patch.
-* :bug:`949` SSHClient and Transport could cause a memory leak if there's
-  a connection problem or protocol error, even if ``Transport.close()``
-  is called. Thanks Kyle Agronick for the discovery and investigation,
-  and Pierce Lopez for assistance.
 * :bug:`741` (also :issue:`809`, :issue:`772`; all via :issue:`912`) Writing
   encrypted/password-protected private key files was silently broken since 2.0
   due to an incorrect API call; this has been fixed.
@@ -40,6 +33,9 @@ Changelog
 
 * :support:`921` Tighten up the ``__hash__`` implementation for various key
   classes; less code is good code. Thanks to Francisco Couzo for the patch.
+* :support:`956 (1.17+)` Switch code coverage service from coveralls.io to
+  codecov.io (& then disable the latter's auto-comments.) Thanks to Nikolai
+  Røed Kristiansen for the patch.
 * :bug:`983` Move ``sha1`` above the now-arguably-broken ``md5`` in the list of
   preferred MAC algorithms, as an incremental security improvement for users
   whose target systems offer both. Credit: Pierce Lopez.
@@ -81,8 +77,12 @@ Changelog
   (i.e. passes the maintainer's preferred `flake8 <http://flake8.pycqa.org/>`_
   configuration) and add a ``flake8`` step to the Travis config. Big thanks to
   Dorian Pula!
-* :bug:`683` Make ``util.log_to_file`` append instead of replace. Thanks
-  to ``@vlcinsky`` for the report.
+* :bug:`949 (1.17+)` SSHClient and Transport could cause a memory leak if
+  there's a connection problem or protocol error, even if ``Transport.close()``
+  is called. Thanks Kyle Agronick for the discovery and investigation, and
+  Pierce Lopez for assistance.
+* :bug:`683 (1.17+)` Make ``util.log_to_file`` append instead of replace.
+  Thanks to ``@vlcinsky`` for the report.
 * :release:`2.1.2 <2017-02-20>`
 * :release:`2.0.5 <2017-02-20>`
 * :release:`1.18.2 <2017-02-20>`
