@@ -2,6 +2,11 @@
 Changelog
 =========
 
+* :bug:`971 (1.17+)` Allow any type implementing the buffer API to be used with
+  `BufferedFile <paramiko.file.BufferedFile>`, `Channel
+  <paramiko.channel.Channel>`, and `SFTPFile <paramiko.sftp_file.SFTPFile>`.
+  This resolves a regression introduced in 1.13 with the Python 3 porting
+  changes, when using types such as ``memoryview``. Credit: Martin Packman.
 * :bug:`741` (also :issue:`809`, :issue:`772`; all via :issue:`912`) Writing
   encrypted/password-protected private key files was silently broken since 2.0
   due to an incorrect API call; this has been fixed.

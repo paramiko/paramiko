@@ -28,9 +28,7 @@ from paramiko import util
 from paramiko.channel import Channel
 from paramiko.message import Message
 from paramiko.common import INFO, DEBUG, o777
-from paramiko.py3compat import (
-    bytestring, b, u, long, string_types, bytes_types,
-)
+from paramiko.py3compat import bytestring, b, u, long
 from paramiko.sftp import (
     BaseSFTP, CMD_OPENDIR, CMD_HANDLE, SFTPError, CMD_READDIR, CMD_NAME,
     CMD_CLOSE, SFTP_FLAG_READ, SFTP_FLAG_WRITE, SFTP_FLAG_CREATE,
@@ -779,13 +777,12 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
                     msg.add_int64(item)
                 elif isinstance(item, int):
                     msg.add_int(item)
-                elif isinstance(item, (string_types, bytes_types)):
-                    msg.add_string(item)
                 elif isinstance(item, SFTPAttributes):
                     item._pack(msg)
                 else:
-                    raise Exception(
-                        'unknown type for %r type %r' % (item, type(item)))
+                    # For all other types, rely on as_string() to either coerce
+                    # to bytes before writing or raise a suitable exception.
+                    msg.add_string(item)
             num = self.request_number
             self._expecting[num] = fileobj
             self.request_number += 1
