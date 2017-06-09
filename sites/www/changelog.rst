@@ -2,6 +2,10 @@
 Changelog
 =========
 
+* :bug:`865` SSHClient requests the type of host key it has (e.g. from
+  known_hosts) and does not consider a different type to be a "Missing" host
+  key. This fixes a common case where an ECDSA key is in known_hosts and the
+  server also has an RSA host key. Thanks to Pierce Lopez.
 * :support:`906 (1.18+)` Clean up a handful of outdated imports and related
   tweaks. Thanks to Pierce Lopez.
 * :bug:`984` Enhance default cipher preference order such that
