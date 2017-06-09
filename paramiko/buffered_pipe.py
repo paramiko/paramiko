@@ -90,7 +90,7 @@ class BufferedPipe (object):
         Feed new data into this pipe.  This method is assumed to be called
         from a separate thread, so synchronization is done.
 
-        :param data: the data to add, as a `str` or `bytes`
+        :param data: the data to add, as a ``str`` or ``bytes``
         """
         self._lock.acquire()
         try:
@@ -134,11 +134,11 @@ class BufferedPipe (object):
         :param int nbytes: maximum number of bytes to read
         :param float timeout:
             maximum seconds to wait (or ``None``, the default, to wait forever)
-        :return: the read data, as a `bytes`
+        :return: the read data, as a ``str`` or ``bytes``
 
-        :raises PipeTimeout:
-            if a timeout was specified and no data was ready before that
-            timeout
+        :raises:
+            `.PipeTimeout` -- if a timeout was specified and no data was ready
+            before that timeout
         """
         out = bytes()
         self._lock.acquire()

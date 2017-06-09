@@ -71,7 +71,6 @@ from paramiko.ssh_exception import (
 from paramiko.util import retry_on_signal, ClosingContextManager, clamp_value
 
 
-
 # for thread cleanup
 _active_threads = []
 
@@ -79,11 +78,12 @@ def _join_lingering_threads():
     for thr in _active_threads:
         thr.stop_thread()
 
+
 import atexit
 atexit.register(_join_lingering_threads)
 
 
-class Transport (threading.Thread, ClosingContextManager):
+class Transport(threading.Thread, ClosingContextManager):
     """
     An SSH Transport attaches to a stream (usually a socket), negotiates an
     encrypted session, authenticates, and then creates stream tunnels, called
@@ -110,21 +110,22 @@ class Transport (threading.Thread, ClosingContextManager):
         'aes192-cbc',
         'aes256-cbc',
         '3des-cbc',
-        'arcfour128',
-        'arcfour256',
     )
     _preferred_macs = (
         'hmac-sha2-256',
         'hmac-sha2-512',
+        'hmac-sha1',
         'hmac-md5',
         'hmac-sha1-96',
         'hmac-md5-96',
-        'hmac-sha1',
     )
     _preferred_keys = (
+        'ecdsa-sha2-nistp256',
+        'ecdsa-sha2-nistp384',
+        'ecdsa-sha2-nistp521',
         'ssh-rsa',
         'ssh-dss',
-    ) + tuple(ECDSAKey.supported_key_format_identifiers())
+    )
     _preferred_kex = (
         'diffie-hellman-group1-sha1',
         'diffie-hellman-group14-sha1',
@@ -182,18 +183,6 @@ class Transport (threading.Thread, ClosingContextManager):
             'block-size': 8,
             'key-size': 24
         },
-        'arcfour128': {
-            'class': algorithms.ARC4,
-            'mode': None,
-            'block-size': 8,
-            'key-size': 16
-        },
-        'arcfour256': {
-            'class': algorithms.ARC4,
-            'mode': None,
-            'block-size': 8,
-            'key-size': 32
-        },
     }
 
 
@@ -210,6 +199,8 @@ class Transport (threading.Thread, ClosingContextManager):
         'ssh-rsa': RSAKey,
         'ssh-dss': DSSKey,
         'ecdsa-sha2-nistp256': ECDSAKey,
+        'ecdsa-sha2-nistp384': ECDSAKey,
+        'ecdsa-sha2-nistp521': ECDSAKey,
     }
 
     _kex_info = {
@@ -285,7 +276,6 @@ class Transport (threading.Thread, ClosingContextManager):
             arguments.
         """
         self.active = False
-        self._sshclient = None
 
         if isinstance(sock, string_types):
             # convert "host:port" into (host, port)
@@ -449,7 +439,6 @@ class Transport (threading.Thread, ClosingContextManager):
 
         :param str gss_host: The targets name in the kerberos database
                              Default: The name of the host to connect to
-        :rtype: Void
         """
         # We need the FQDN to get this working with SSPI
         self.gss_host = socket.getfqdn(gss_host)
@@ -482,8 +471,9 @@ class Transport (threading.Thread, ClosingContextManager):
         :param .threading.Event event:
             an event to trigger when negotiation is complete (optional)
 
-        :raises SSHException: if negotiation fails (and no ``event`` was passed
-            in)
+        :raises:
+            `.SSHException` -- if negotiation fails (and no ``event`` was
+            passed in)
         """
         self.active = True
         if event is not None:
@@ -543,8 +533,9 @@ class Transport (threading.Thread, ClosingContextManager):
             an object used to perform authentication and create `channels
             <.Channel>`
 
-        :raises SSHException: if negotiation fails (and no ``event`` was passed
-            in)
+        :raises:
+            `.SSHException` -- if negotiation fails (and no ``event`` was
+            passed in)
         """
         if server is None:
             server = ServerInterface()
@@ -646,9 +637,6 @@ class Transport (threading.Thread, ClosingContextManager):
         Transport._modulus_pack = None
         return False
 
-    def set_sshclient(self, sshclient):
-        self._sshclient = sshclient
-
     def close(self):
         """
         Close this session, and any open channels that are tied to it.
@@ -659,7 +647,6 @@ class Transport (threading.Thread, ClosingContextManager):
         for chan in list(self._channels.values()):
             chan._unlink()
         self.sock.close()
-        self._sshclient = None
 
     def get_remote_server_key(self):
         """
@@ -670,7 +657,7 @@ class Transport (threading.Thread, ClosingContextManager):
             string)``. You can get the same effect by calling `.PKey.get_name`
             for the key type, and ``str(key)`` for the key string.
 
-        :raises SSHException: if no session is currently active.
+        :raises: `.SSHException` -- if no session is currently active.
 
         :return: public key (`.PKey`) of the remote server
         """
@@ -710,7 +697,8 @@ class Transport (threading.Thread, ClosingContextManager):
 
         :return: a new `.Channel`
 
-        :raises SSHException: if the request is rejected or the session ends
+        :raises:
+            `.SSHException` -- if the request is rejected or the session ends
             prematurely
 
         .. versionchanged:: 1.13.4/1.14.3/1.15.3
@@ -733,7 +721,8 @@ class Transport (threading.Thread, ClosingContextManager):
             x11 port, ie. 6010)
         :return: a new `.Channel`
 
-        :raises SSHException: if the request is rejected or the session ends
+        :raises:
+            `.SSHException` -- if the request is rejected or the session ends
             prematurely
         """
         return self.open_channel('x11', src_addr=src_addr)
@@ -747,7 +736,7 @@ class Transport (threading.Thread, ClosingContextManager):
 
         :return: a new `.Channel`
 
-        :raises SSHException:
+        :raises: `.SSHException` --
             if the request is rejected or the session ends prematurely
         """
         return self.open_channel('auth-agent@openssh.com')
@@ -799,7 +788,8 @@ class Transport (threading.Thread, ClosingContextManager):
 
         :return: a new `.Channel` on success
 
-        :raises SSHException: if the request is rejected, the session ends
+        :raises:
+            `.SSHException` -- if the request is rejected, the session ends
             prematurely or there is a timeout openning a channel
 
         .. versionchanged:: 1.15
@@ -886,7 +876,8 @@ class Transport (threading.Thread, ClosingContextManager):
 
         :return: the port number (`int`) allocated by the server
 
-        :raises SSHException: if the server refused the TCP forward request
+        :raises:
+            `.SSHException` -- if the server refused the TCP forward request
         """
         if not self.active:
             raise SSHException('SSH session not active')
@@ -960,8 +951,9 @@ class Transport (threading.Thread, ClosingContextManager):
         traffic both ways as the two sides swap keys and do computations.  This
         method returns when the session has switched to new keys.
 
-        :raises SSHException: if the key renegotiation failed (which causes the
-            session to end)
+        :raises:
+            `.SSHException` -- if the key renegotiation failed (which causes
+            the session to end)
         """
         self.completion_event = threading.Event()
         self._send_kex_init()
@@ -1102,7 +1094,7 @@ class Transport (threading.Thread, ClosingContextManager):
         :param bool gss_deleg_creds:
             Whether to delegate GSS-API client credentials.
 
-        :raises SSHException: if the SSH2 negotiation fails, the host key
+        :raises: `.SSHException` -- if the SSH2 negotiation fails, the host key
             supplied by the server is incorrect, or authentication fails.
         """
         if hostkey is not None:
@@ -1176,7 +1168,7 @@ class Transport (threading.Thread, ClosingContextManager):
         passed to the `.SubsystemHandler` constructor later.
 
         :param str name: name of the subsystem.
-        :param class handler:
+        :param handler:
             subclass of `.SubsystemHandler` that handles this subsystem.
         """
         try:
@@ -1237,9 +1229,11 @@ class Transport (threading.Thread, ClosingContextManager):
             `list` of auth types permissible for the next stage of
             authentication (normally empty)
 
-        :raises BadAuthenticationType: if "none" authentication isn't allowed
+        :raises:
+            `.BadAuthenticationType` -- if "none" authentication isn't allowed
             by the server for this user
-        :raises SSHException: if the authentication failed due to a network
+        :raises:
+            `.SSHException` -- if the authentication failed due to a network
             error
 
         .. versionadded:: 1.5
@@ -1290,11 +1284,13 @@ class Transport (threading.Thread, ClosingContextManager):
             `list` of auth types permissible for the next stage of
             authentication (normally empty)
 
-        :raises BadAuthenticationType: if password authentication isn't
+        :raises:
+            `.BadAuthenticationType` -- if password authentication isn't
             allowed by the server for this user (and no event was passed in)
-        :raises AuthenticationException: if the authentication failed (and no
+        :raises:
+            `.AuthenticationException` -- if the authentication failed (and no
             event was passed in)
-        :raises SSHException: if there was a network error
+        :raises: `.SSHException` -- if there was a network error
         """
         if (not self.active) or (not self.initial_kex_done):
             # we should never try to send the password unless we're on a secure
@@ -1359,11 +1355,13 @@ class Transport (threading.Thread, ClosingContextManager):
             `list` of auth types permissible for the next stage of
             authentication (normally empty)
 
-        :raises BadAuthenticationType: if public-key authentication isn't
+        :raises:
+            `.BadAuthenticationType` -- if public-key authentication isn't
             allowed by the server for this user (and no event was passed in)
-        :raises AuthenticationException: if the authentication failed (and no
+        :raises:
+            `.AuthenticationException` -- if the authentication failed (and no
             event was passed in)
-        :raises SSHException: if there was a network error
+        :raises: `.SSHException` -- if there was a network error
         """
         if (not self.active) or (not self.initial_kex_done):
             # we should never try to authenticate unless we're on a secure link
@@ -1415,10 +1413,10 @@ class Transport (threading.Thread, ClosingContextManager):
             `list` of auth types permissible for the next stage of
             authentication (normally empty).
 
-        :raises BadAuthenticationType: if public-key authentication isn't
+        :raises: `.BadAuthenticationType` -- if public-key authentication isn't
             allowed by the server for this user
-        :raises AuthenticationException: if the authentication failed
-        :raises SSHException: if there was a network error
+        :raises: `.AuthenticationException` -- if the authentication failed
+        :raises: `.SSHException` -- if there was a network error
 
         .. versionadded:: 1.5
         """
@@ -1463,11 +1461,12 @@ class Transport (threading.Thread, ClosingContextManager):
         :return: list of auth types permissible for the next stage of
                  authentication (normally empty)
         :rtype: list
-        :raise BadAuthenticationType: if gssapi-with-mic isn't
+        :raises: `.BadAuthenticationType` -- if gssapi-with-mic isn't
             allowed by the server (and no event was passed in)
-        :raise AuthenticationException: if the authentication failed (and no
+        :raises:
+            `.AuthenticationException` -- if the authentication failed (and no
             event was passed in)
-        :raise SSHException: if there was a network error
+        :raises: `.SSHException` -- if there was a network error
         """
         if (not self.active) or (not self.initial_kex_done):
             # we should never try to authenticate unless we're on a secure link
@@ -1487,12 +1486,12 @@ class Transport (threading.Thread, ClosingContextManager):
         :returns:
             a `list` of auth types permissible for the next stage of
             authentication (normally empty)
-        :raises BadAuthenticationType:
+        :raises: `.BadAuthenticationType` --
             if GSS-API Key Exchange was not performed (and no event was passed
             in)
-        :raises AuthenticationException:
+        :raises: `.AuthenticationException` --
             if the authentication failed (and no event was passed in)
-        :raises SSHException: if there was a network error
+        :raises: `.SSHException` -- if there was a network error
         """
         if (not self.active) or (not self.initial_kex_done):
             # we should never try to authenticate unless we're on a secure link
@@ -1714,21 +1713,6 @@ class Transport (threading.Thread, ClosingContextManager):
     def _get_cipher(self, name, key, iv, operation):
         if name not in self._cipher_info:
             raise SSHException('Unknown client cipher ' + name)
-        if name in ('arcfour128', 'arcfour256'):
-            # arcfour cipher
-            cipher = Cipher(
-                self._cipher_info[name]['class'](key),
-                None,
-                backend=default_backend()
-            )
-            if operation is self._ENCRYPT:
-                engine = cipher.encryptor()
-            else:
-                engine = cipher.decryptor()
-            # as per RFC 4345, the first 1536 bytes of keystream
-            # generated by the cipher MUST be discarded
-            engine.encrypt(" " * 1536)
-            return engine
         else:
             cipher = Cipher(
                 self._cipher_info[name]['class'](key),

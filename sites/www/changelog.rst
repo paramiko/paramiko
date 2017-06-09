@@ -2,12 +2,54 @@
 Changelog
 =========
 
+* :bug:`971 (1.17+)` Allow any type implementing the buffer API to be used with
+  `BufferedFile <paramiko.file.BufferedFile>`, `Channel
+  <paramiko.channel.Channel>`, and `SFTPFile <paramiko.sftp_file.SFTPFile>`.
+  This resolves a regression introduced in 1.13 with the Python 3 porting
+  changes, when using types such as ``memoryview``. Credit: Martin Packman.
+* :bug:`741` (also :issue:`809`, :issue:`772`; all via :issue:`912`) Writing
+  encrypted/password-protected private key files was silently broken since 2.0
+  due to an incorrect API call; this has been fixed.
+
+  Includes a directly related fix, namely adding the ability to read
+  ``AES-256-CBC`` ciphered private keys (which is now what we tend to write out
+  as it is Cryptography's default private key cipher.)
+
+  Thanks to ``@virlos`` for the original report, Chris Harris and ``@ibuler``
+  for initial draft PRs, and ``@jhgorrell`` for the final patch.
+* :support:`956 (1.17+)` Switch code coverage service from coveralls.io to
+  codecov.io (& then disable the latter's auto-comments.) Thanks to Nikolai
+  Røed Kristiansen for the patch.
+* :bug:`983` Move ``sha1`` above the now-arguably-broken ``md5`` in the list of
+  preferred MAC algorithms, as an incremental security improvement for users
+  whose target systems offer both. Credit: Pierce Lopez.
+* :bug:`667` The RC4/arcfour family of ciphers has been broken since version
+  2.0; but since the algorithm is now known to be completely insecure, we are
+  opting to remove support outright instead of fixing it. Thanks to Alex Gaynor
+  for catch & patch.
+* :support:`- backported` A big formatting pass to clean up an enormous number
+  of invalid Sphinx reference links, discovered by switching to a modern,
+  rigorous nitpicking doc-building mode.
+* :bug:`900` (via :issue:`911`) Prefer newer ``ecdsa-sha2-nistp`` keys over RSA
+  and DSA keys during host key selection. This improves compatibility with
+  OpenSSH, both in terms of general behavior, and also re: ability to properly
+  leverage OpenSSH-modified ``known_hosts`` files. Credit: ``@kasdoe`` for
+  original report/PR and Pierce Lopez for the second draft.
+* :bug:`794` (via :issue:`981`) Prior support for ``ecdsa-sha2-nistp(384|521)``
+  algorithms didn't fully extend to covering host keys, preventing connection
+  to hosts which only offer these key types and no others. This is now fixed.
+  Thanks to ``@ncoult`` and ``@kasdoe`` for reports and Pierce Lopez for the
+  patch.
 * :support:`974 backported` Overhaul the codebase to be PEP-8, etc, compliant
   (i.e. passes the maintainer's preferred `flake8 <http://flake8.pycqa.org/>`_
   configuration) and add a ``flake8`` step to the Travis config. Big thanks to
   Dorian Pula!
-* :bug:`683` Make `util.log_to_file()` append instead of replace. Thanks
-  to ``@vlcinsky`` for the report.
+* :bug:`949 (1.17+)` SSHClient and Transport could cause a memory leak if
+  there's a connection problem or protocol error, even if ``Transport.close()``
+  is called. Thanks Kyle Agronick for the discovery and investigation, and
+  Pierce Lopez for assistance.
+* :bug:`683 (1.17+)` Make ``util.log_to_file`` append instead of replace.
+  Thanks to ``@vlcinsky`` for the report.
 * :release:`2.0.5 <2017-02-20>`
 * :release:`1.18.2 <2017-02-20>`
 * :release:`1.17.4 <2017-02-20>`
@@ -82,7 +124,7 @@ Changelog
 * :bug:`334 (1.17+)` Make the ``subprocess`` import in ``proxy.py`` lazy so
   users on platforms without it (such as Google App Engine) can import Paramiko
   successfully. (Relatedly, make it easier to tweak an active socket check
-  timeout  [in `Transport <paramko.transport.Transport>`] which was previously
+  timeout  [in `Transport <paramiko.transport.Transport>`] which was previously
   hardcoded.) Credit: Shinya Okano.
 * :support:`854 backported (1.17+)` Fix incorrect docstring/param-list for
   `Transport.auth_gssapi_keyex
@@ -137,10 +179,10 @@ Changelog
   ``proxycommand`` key in parsed config structures). Thanks to Pat Brisbin for
   the catch.
 * :bug:`676` (via :issue:`677`) Fix a backwards incompatibility issue that
-  cropped up in `SFTPFile.prefetch <~paramiko.sftp_file.prefetch>` re: the
-  erroneously non-optional ``file_size`` parameter. Should only affect users
-  who manually call ``prefetch``. Thanks to ``@stevevanhooser`` for catch &
-  patch.
+  cropped up in `SFTPFile.prefetch <paramiko.sftp_file.SFTPFile.prefetch>` re:
+  the erroneously non-optional ``file_size`` parameter. Should only affect
+  users who manually call ``prefetch``. Thanks to ``@stevevanhooser`` for catch
+  & patch.
 * :feature:`394` Replace PyCrypto with the Python Cryptographic Authority
   (PyCA) 'Cryptography' library suite. This improves security, installability,
   and performance; adds PyPy support; and much more.
@@ -230,7 +272,7 @@ Changelog
 * :release:`1.15.4 <2015-11-02>`
 * :release:`1.14.3 <2015-11-02>`
 * :release:`1.13.4 <2015-11-02>`
-* :bug:`366` Fix `~paramiko.sftp_attributes.SFTPAttributes` so its string
+* :bug:`366` Fix `~paramiko.sftp_attr.SFTPAttributes` so its string
   representation doesn't raise exceptions on empty/initialized instances. Patch
   by Ulrich Petri.
 * :bug:`359` Use correct attribute name when trying to use Python 3's
@@ -341,8 +383,9 @@ Changelog
 * :release:`1.15.1 <2014-09-22>`
 * :bug:`399` SSH agent forwarding (potentially other functionality as
   well) would hang due to incorrect values passed into the new window size
-  arguments for `.Transport` (thanks to a botched merge). This has been
-  corrected. Thanks to Dylan Thacker-Smith for the report & patch.
+  arguments for `~paramiko.transport.Transport` (thanks to a botched merge).
+  This has been corrected. Thanks to Dylan Thacker-Smith for the report &
+  patch.
 * :feature:`167` Add `~paramiko.config.SSHConfig.get_hostnames` for easier
   introspection of a loaded SSH config file or object. Courtesy of Søren
   Løvborg.
