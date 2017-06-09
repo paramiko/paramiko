@@ -106,15 +106,15 @@ class ServerInterface (object):
         Determine if a client may open channels with no (further)
         authentication.
 
-        Return `.AUTH_FAILED` if the client must authenticate, or
-        `.AUTH_SUCCESSFUL` if it's okay for the client to not
+        Return ``AUTH_FAILED`` if the client must authenticate, or
+        ``AUTH_SUCCESSFUL`` if it's okay for the client to not
         authenticate.
 
-        The default implementation always returns `.AUTH_FAILED`.
+        The default implementation always returns ``AUTH_FAILED``.
 
         :param str username: the username of the client.
         :return:
-            `.AUTH_FAILED` if the authentication fails; `.AUTH_SUCCESSFUL` if
+            ``AUTH_FAILED`` if the authentication fails; ``AUTH_SUCCESSFUL`` if
             it succeeds.
         :rtype: int
         """
@@ -125,21 +125,21 @@ class ServerInterface (object):
         Determine if a given username and password supplied by the client is
         acceptable for use in authentication.
 
-        Return `.AUTH_FAILED` if the password is not accepted,
-        `.AUTH_SUCCESSFUL` if the password is accepted and completes
-        the authentication, or `.AUTH_PARTIALLY_SUCCESSFUL` if your
+        Return ``AUTH_FAILED`` if the password is not accepted,
+        ``AUTH_SUCCESSFUL`` if the password is accepted and completes
+        the authentication, or ``AUTH_PARTIALLY_SUCCESSFUL`` if your
         authentication is stateful, and this key is accepted for
         authentication, but more authentication is required.  (In this latter
         case, `get_allowed_auths` will be called to report to the client what
         options it has for continuing the authentication.)
 
-        The default implementation always returns `.AUTH_FAILED`.
+        The default implementation always returns ``AUTH_FAILED``.
 
         :param str username: the username of the authenticating client.
         :param str password: the password given by the client.
         :return:
-            `.AUTH_FAILED` if the authentication fails; `.AUTH_SUCCESSFUL` if
-            it succeeds; `.AUTH_PARTIALLY_SUCCESSFUL` if the password auth is
+            ``AUTH_FAILED`` if the authentication fails; ``AUTH_SUCCESSFUL`` if
+            it succeeds; ``AUTH_PARTIALLY_SUCCESSFUL`` if the password auth is
             successful, but authentication must continue.
         :rtype: int
         """
@@ -152,9 +152,9 @@ class ServerInterface (object):
         check the username and key and decide if you would accept a signature
         made using this key.
 
-        Return `.AUTH_FAILED` if the key is not accepted,
-        `.AUTH_SUCCESSFUL` if the key is accepted and completes the
-        authentication, or `.AUTH_PARTIALLY_SUCCESSFUL` if your
+        Return ``AUTH_FAILED`` if the key is not accepted,
+        ``AUTH_SUCCESSFUL`` if the key is accepted and completes the
+        authentication, or ``AUTH_PARTIALLY_SUCCESSFUL`` if your
         authentication is stateful, and this password is accepted for
         authentication, but more authentication is required.  (In this latter
         case, `get_allowed_auths` will be called to report to the client what
@@ -164,13 +164,13 @@ class ServerInterface (object):
         If you're willing to accept the key, Paramiko will do the work of
         verifying the client's signature.
 
-        The default implementation always returns `.AUTH_FAILED`.
+        The default implementation always returns ``AUTH_FAILED``.
 
         :param str username: the username of the authenticating client
         :param .PKey key: the key object provided by the client
         :return:
-            `.AUTH_FAILED` if the client can't authenticate with this key;
-            `.AUTH_SUCCESSFUL` if it can; `.AUTH_PARTIALLY_SUCCESSFUL` if it
+            ``AUTH_FAILED`` if the client can't authenticate with this key;
+            ``AUTH_SUCCESSFUL`` if it can; ``AUTH_PARTIALLY_SUCCESSFUL`` if it
             can authenticate with this key but must continue with
             authentication
         :rtype: int
@@ -184,19 +184,19 @@ class ServerInterface (object):
         ``"keyboard-interactive"`` auth type, which requires you to send a
         series of questions for the client to answer.
 
-        Return `.AUTH_FAILED` if this auth method isn't supported.  Otherwise,
+        Return ``AUTH_FAILED`` if this auth method isn't supported.  Otherwise,
         you should return an `.InteractiveQuery` object containing the prompts
         and instructions for the user.  The response will be sent via a call
         to `check_auth_interactive_response`.
 
-        The default implementation always returns `.AUTH_FAILED`.
+        The default implementation always returns ``AUTH_FAILED``.
 
         :param str username: the username of the authenticating client
         :param str submethods:
             a comma-separated list of methods preferred by the client (usually
             empty)
         :return:
-            `.AUTH_FAILED` if this auth method isn't supported; otherwise an
+            ``AUTH_FAILED`` if this auth method isn't supported; otherwise an
             object containing queries for the user
         :rtype: int or `.InteractiveQuery`
         """
@@ -208,9 +208,9 @@ class ServerInterface (object):
         supported.  You should override this method in server mode if you want
         to support the ``"keyboard-interactive"`` auth type.
 
-        Return `.AUTH_FAILED` if the responses are not accepted,
-        `.AUTH_SUCCESSFUL` if the responses are accepted and complete
-        the authentication, or `.AUTH_PARTIALLY_SUCCESSFUL` if your
+        Return ``AUTH_FAILED`` if the responses are not accepted,
+        ``AUTH_SUCCESSFUL`` if the responses are accepted and complete
+        the authentication, or ``AUTH_PARTIALLY_SUCCESSFUL`` if your
         authentication is stateful, and this set of responses is accepted for
         authentication, but more authentication is required.  (In this latter
         case, `get_allowed_auths` will be called to report to the client what
@@ -221,12 +221,12 @@ class ServerInterface (object):
         client to respond with more answers, calling this method again.  This
         cycle can continue indefinitely.
 
-        The default implementation always returns `.AUTH_FAILED`.
+        The default implementation always returns ``AUTH_FAILED``.
 
         :param list responses: list of `str` responses from the client
         :return:
-            `.AUTH_FAILED` if the authentication fails; `.AUTH_SUCCESSFUL` if
-            it succeeds; `.AUTH_PARTIALLY_SUCCESSFUL` if the interactive auth
+            ``AUTH_FAILED`` if the authentication fails; ``AUTH_SUCCESSFUL`` if
+            it succeeds; ``AUTH_PARTIALLY_SUCCESSFUL`` if the interactive auth
             is successful, but authentication must continue; otherwise an
             object containing queries for the user
         :rtype: int or `.InteractiveQuery`
@@ -243,8 +243,8 @@ class ServerInterface (object):
         :param str username: The username of the authenticating client
         :param int gss_authenticated: The result of the krb5 authentication
         :param str cc_filename: The krb5 client credentials cache filename
-        :return: `.AUTH_FAILED` if the user is not authenticated otherwise
-                 `.AUTH_SUCCESSFUL`
+        :return: ``AUTH_FAILED`` if the user is not authenticated otherwise
+                 ``AUTH_SUCCESSFUL``
         :rtype: int
         :note: Kerberos credential delegation is not supported.
         :see: `.ssh_gss`
@@ -257,7 +257,7 @@ class ServerInterface (object):
                  your local kerberos library to make sure that the
                  krb5_principal has an account on the server and is allowed to
                  log in as a user.
-        :see: `http://www.unix.com/man-page/all/3/krb5_kuserok/`
+        :see: http://www.unix.com/man-page/all/3/krb5_kuserok/
         """
         if gss_authenticated == AUTH_SUCCESSFUL:
             return AUTH_SUCCESSFUL
@@ -275,8 +275,8 @@ class ServerInterface (object):
         :param str username: The username of the authenticating client
         :param int gss_authenticated: The result of the krb5 authentication
         :param str cc_filename: The krb5 client credentials cache filename
-        :return: `.AUTH_FAILED` if the user is not authenticated otherwise
-                 `.AUTH_SUCCESSFUL`
+        :return: ``AUTH_FAILED`` if the user is not authenticated otherwise
+                 ``AUTH_SUCCESSFUL``
         :rtype: int
         :note: Kerberos credential delegation is not supported.
         :see: `.ssh_gss` `.kex_gss`
@@ -289,7 +289,7 @@ class ServerInterface (object):
                  your local kerberos library to make sure that the
                  krb5_principal has an account on the server and is allowed
                  to log in as a user.
-        :see: `http://www.unix.com/man-page/all/3/krb5_kuserok/`
+        :see: http://www.unix.com/man-page/all/3/krb5_kuserok/
         """
         if gss_authenticated == AUTH_SUCCESSFUL:
             return AUTH_SUCCESSFUL
@@ -301,9 +301,8 @@ class ServerInterface (object):
         authentication.
         The default implementation always returns false.
 
-        :return: True if GSSAPI authentication is enabled otherwise false
-        :rtype:  Boolean
-        :see: : `.ssh_gss`
+        :returns bool: Whether GSSAPI authentication is enabled.
+        :see: `.ssh_gss`
         """
         UseGSSAPI = False
         return UseGSSAPI

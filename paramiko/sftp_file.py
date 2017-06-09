@@ -251,6 +251,11 @@ class SFTPFile (BufferedFile):
         return True
 
     def seek(self, offset, whence=0):
+        """
+        Set the file's current position.
+
+        See `file.seek` for details.
+        """
         self.flush()
         if whence == self.SEEK_SET:
             self._realpos = self._pos = offset
@@ -267,8 +272,8 @@ class SFTPFile (BufferedFile):
         exactly like `.SFTPClient.stat`, except that it operates on an
         already-open file.
 
-        :return: an `.SFTPAttributes` object containing attributes about this
-            file.
+        :returns:
+            an `.SFTPAttributes` object containing attributes about this file.
         """
         t, msg = self.sftp._request(CMD_FSTAT, self.handle)
         if t != CMD_ATTRS:
@@ -332,7 +337,6 @@ class SFTPFile (BufferedFile):
         Python file objects.
 
         :param size: the new size of the file
-        :type size: int or long
         """
         self.sftp._log(
             DEBUG,
@@ -370,21 +374,18 @@ class SFTPFile (BufferedFile):
         :param offset:
             offset into the file to begin hashing (0 means to start from the
             beginning)
-        :type offset: int or long
         :param length:
             number of bytes to hash (0 means continue to the end of the file)
-        :type length: int or long
         :param int block_size:
             number of bytes to hash per result (must not be less than 256; 0
             means to compute only one hash of the entire segment)
-        :type block_size: int
         :return:
             `str` of bytes representing the hash of each block, concatenated
             together
 
-        :raises IOError: if the server doesn't support the "check-file"
-            extension, or possibly doesn't support the hash algorithm
-            requested
+        :raises:
+            ``IOError`` -- if the server doesn't support the "check-file"
+            extension, or possibly doesn't support the hash algorithm requested
 
         .. note:: Many (most?) servers don't support this extension yet.
 
@@ -466,9 +467,8 @@ class SFTPFile (BufferedFile):
         once.
 
         :param chunks:
-            a list of (offset, length) tuples indicating which sections of the
-            file to read
-        :type chunks: list(tuple(long, int))
+            a list of ``(offset, length)`` tuples indicating which sections of
+            the file to read
         :return: a list of blocks read, in the same order as in ``chunks``
 
         .. versionadded:: 1.5.4

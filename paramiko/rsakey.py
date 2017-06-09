@@ -160,7 +160,7 @@ class RSAKey(PKey):
         generate a new host key or authentication key.
 
         :param int bits: number of bits the generated key should be.
-        :param function progress_func: Unused
+        :param progress_func: Unused
         :return: new `.RSAKey` private key
         """
         key = rsa.generate_private_key(

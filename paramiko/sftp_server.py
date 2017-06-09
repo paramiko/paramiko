@@ -72,7 +72,7 @@ class SFTPServer (BaseSFTP, SubsystemHandler):
         :param str name: name of the requested subsystem.
         :param .ServerInterface server:
             the server object associated with this channel and subsystem
-        :param class sftp_si:
+        :param sftp_si:
             a subclass of `.SFTPServerInterface` to use for handling individual
             requests.
         """
