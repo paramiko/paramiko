@@ -2,6 +2,11 @@
 Changelog
 =========
 
+* :bug:`971 (1.17+)` Allow any type implementing the buffer API to be used with
+  `BufferedFile <paramiko.file.BufferedFile>`, `Channel
+  <paramiko.channel.Channel>`, and `SFTPFile <paramiko.sftp_file.SFTPFile>`.
+  This resolves a regression introduced in 1.13 with the Python 3 porting
+  changes, when using types such as ``memoryview``. Credit: Martin Packman.
 * :support:`956 backported` Switch code coverage service from coveralls.io to
   codecov.io (& then disable the latter's auto-comments.) Thanks to Nikolai
   Røed Kristiansen for the patch.
