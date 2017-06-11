@@ -2,6 +2,9 @@
 Changelog
 =========
 
+* :bug:`985 (1.17+)` Fix listdir failure when server uses a locale. Now on
+  Python 2.7 `SFTPAttributes <paramiko.sftp_attr.SFTPAttributes>` will decode
+  abbreviated month names correctly rather than raise ``UnicodeDecodeError```.
 * :release:`2.0.6 <2017-06-09>`
 * :release:`1.18.3 <2017-06-09>`
 * :release:`1.17.5 <2017-06-09>`
