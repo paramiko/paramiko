@@ -2,6 +2,11 @@
 Changelog
 =========
 
+* :bug:`993` ssh-ed25519 host keys were not comparable, causing an
+  exception if such a key existed in ``known_hosts``. Thanks Oleh Prypin
+  for the report and Pierce Lopez for the fix.
+* :bug:`990` The bcrypt dependency should have been on version 3.1.3 or
+  greater. Thanks Paul Howarth for the report.
 * :release:`2.2.0 <2017-06-09>`
 * :release:`2.1.3 <2017-06-09>`
 * :release:`2.0.6 <2017-06-09>`
