@@ -167,6 +167,13 @@ class Ed25519Key(PKey):
         m.add_string(v.encode())
         return m.asbytes()
 
+    def __hash__(self):
+        if self.can_sign():
+            v = self._signing_key.verify_key
+        else:
+            v = self._verifying_key
+        return hash((self.get_name(), v))
+
     def get_name(self):
         return "ssh-ed25519"
 
