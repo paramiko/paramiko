@@ -80,6 +80,9 @@ class ProxyCommand(ClosingContextManager):
 
         :return: the string of bytes read, which may be shorter than requested
         """
+        if self.process.poll() is not None:
+            raise ProxyCommandFailure(' '.join(self.cmd), 'command died while trying to read')
+
         try:
             buffer = b''
             start = time.time()
