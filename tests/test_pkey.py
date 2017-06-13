@@ -455,8 +455,16 @@ class KeyTest(unittest.TestCase):
         key2 = Ed25519Key.from_private_key_file(
             test_path('test_ed25519_password.key'), b'abc123'
         )
-
         self.assertNotEqual(key1.asbytes(), key2.asbytes())
+
+    def test_ed25519_compare(self):
+        # verify that the private & public keys compare equal
+        key = Ed25519Key.from_private_key_file(test_path('test_ed25519.key'))
+        self.assertEqual(key, key)
+        pub = Ed25519Key(data=key.asbytes())
+        self.assertTrue(key.can_sign())
+        self.assertTrue(not pub.can_sign())
+        self.assertEqual(key, pub)
 
     def test_keyfile_is_actually_encrypted(self):
         # Read an existing encrypted private key
