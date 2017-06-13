@@ -466,7 +466,6 @@ class KeyTest(unittest.TestCase):
         self.assertTrue(not pub.can_sign())
         self.assertEqual(key, pub)
 
-
     def test_keyfile_is_actually_encrypted(self):
         # Read an existing encrypted private key
         file_ = test_path('test_rsa_password.key')
