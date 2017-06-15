@@ -365,7 +365,7 @@ class SSHClient (ClosingContextManager):
 
         t.start_client(timeout=timeout)
 
-        if not self._transport.use_gss_kex:
+        if not self._transport.use_gss_kex and look_for_keys:
             server_key = t.get_remote_server_key()
             if our_server_keys is None:
                 # will raise exception if the key is rejected
