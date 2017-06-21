@@ -28,9 +28,10 @@ __author__ = "Jeff Forcier <jeff@bitprophet.org>"
 __license__ = "GNU Lesser General Public License (LGPL)"
 
 
+from paramiko.pkcs11 import pkcs11_open_session, pkcs11_close_session
 from paramiko.transport import SecurityOptions, Transport
 from paramiko.client import (
-    SSHClient, MissingHostKeyPolicy, AutoAddPolicy, RejectPolicy, 
+    SSHClient, MissingHostKeyPolicy, AutoAddPolicy, RejectPolicy,
     WarningPolicy,
 )
 from paramiko.auth_handler import AuthHandler
@@ -114,4 +115,6 @@ __all__ = [
     'SSHConfig',
     'util',
     'io_sleep',
+    'pkcs11_open_session',
+    'pkcs11_close_session',
 ]

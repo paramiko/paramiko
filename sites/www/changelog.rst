@@ -2,6 +2,8 @@
 Changelog
 =========
 
+* :feature:`827` Add support for PKCS #11 which enables the use of smartcards
+  and other cryptographic tokens.
 * :release:`2.2.1 <2017-06-13>`
 * :bug:`993` Ed25519 host keys were not comparable/hashable, causing an
   exception if such a key existed in a ``known_hosts`` file. Thanks to Oleh
