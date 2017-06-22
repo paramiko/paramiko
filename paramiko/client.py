@@ -535,6 +535,7 @@ class SSHClient (ClosingContextManager):
             try:
                 allowed_types = set(self._transport.auth_pkcs11(username,
                                     pkcs11pin, pkcs11provider, pkcs11session))
+                two_factor = (allowed_types & two_factor_types)
                 if not two_factor:
                     return
             except SSHException as e:

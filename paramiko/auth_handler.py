@@ -24,10 +24,9 @@ import threading
 import os
 from ctypes import (cdll, Structure, c_ulong, c_void_p, byref, c_char,
                     c_int)
-import cryptography
-from cryptography.hazmat.primitives.serialization import load_ssh_public_key
 import weakref
 import time
+import binascii
 
 from paramiko.common import (
     cMSG_SERVICE_REQUEST, cMSG_DISCONNECT, DISCONNECT_SERVICE_NOT_AVAILABLE,
@@ -51,6 +50,12 @@ from paramiko.ssh_exception import (
 )
 from paramiko.server import InteractiveQuery
 from paramiko.ssh_gss import GSSAuth
+from paramiko.py3compat import b, decodebytes
+from paramiko.dsskey import DSSKey
+from paramiko.rsakey import RSAKey
+from paramiko.ecdsakey import ECDSAKey
+from paramiko.ed25519key import Ed25519Key
+from paramiko.hostkeys import InvalidHostKey
 from paramiko import pkcs11_open_session, pkcs11_close_session
 from paramiko.pkcs11 import pkcs11_get_public_key
 
@@ -221,18 +226,6 @@ class AuthHandler (object):
         m.add_string(key)
         return m.asbytes()
 
-    def _get_session_blob_pkcs11(self, key_name, key, service, username):
-        m = Message()
-        m.add_string(self.transport.session_id)
-        m.add_byte(cMSG_USERAUTH_REQUEST)
-        m.add_string(username)
-        m.add_string(service)
-        m.add_string('publickey')
-        m.add_boolean(True)
-        m.add_string(key_name)
-        m.add_string(key)
-        return m.asbytes()
-
     def wait_for_response(self, event):
         max_ts = None
         if self.transport.auth_timeout is not None:
@@ -284,7 +277,7 @@ class AuthHandler (object):
                     pkcs15-tool")
         return str(self.pkcs11publickey)
 
-    def _pkcs11_sign_ssh_data(self, blob):
+    def _pkcs11_sign_ssh_data(self, blob, key_name):
         if not os.path.isfile(self.pkcs11provider):
             raise SSHException("pkcs11provider path is not valid: %s"
                                % self.pkcs11provider)
@@ -332,7 +325,7 @@ class AuthHandler (object):
             signed_buffer_ret += sig_buffer[i]
         # Convert to Paramiko message
         m = Message()
-        m.add_string('ssh-rsa')
+        m.add_string(key_name)
         m.add_string(signed_buffer_ret)
         return m
 
@@ -361,22 +354,39 @@ class AuthHandler (object):
                     m.add_string(sig)
                 else:
                     # Smartcard PKCS11 Private Key
-                    keym = Message()
-                    keym.add_string('ssh-rsa')
-                    pkcs11_tmp_pub = load_ssh_public_key(
-                        self._pkcs11_get_public_key(),
-                        cryptography.hazmat.backends.default_backend())
-                    keym.add_mpint(pkcs11_tmp_pub.public_numbers().e)
-                    keym.add_mpint(pkcs11_tmp_pub.public_numbers().n)
-                    key_asbytes = keym.asbytes()
+                    fields = self._pkcs11_get_public_key().split(' ')
+
+                    if len(fields) < 2:
+                        SSHException("Not enough fields found in pkcs11 key")
+
+                    keytype = fields[0]
+                    pub_key = fields[1]
+
+                    try:
+                        pub_key = b(pub_key)
+                        if keytype == 'ssh-rsa':
+                            pub_key = RSAKey(data=decodebytes(pub_key))
+                        elif keytype == 'ssh-dss':
+                            pub_key = DSSKey(data=decodebytes(pub_key))
+                        elif keytype in ECDSAKey\
+                            .supported_key_format_identifiers():
+                            pub_key = ECDSAKey(data=decodebytes(pub_key),
+                                               validate_point=False)
+                        elif keytype == 'ssh-ed25519':
+                            pub_key = Ed25519Key(data=decodebytes(pub_key))
+                        else:
+                            SSHException("Unable to handle key of type %s"
+                                         % (keytype,))
+                    except binascii.Error as e:
+                        raise InvalidHostKey(self._pkcs11_get_public_key(), e)
+
                     m.add_boolean(True)
-                    m.add_string("ssh-rsa")
-                    m.add_string(key_asbytes)
-                    blob = self._get_session_blob_pkcs11("ssh-rsa",
-                                                         key_asbytes,
-                                                         'ssh-connection',
-                                                         self.username)
-                    sig = self._pkcs11_sign_ssh_data(blob)
+                    m.add_string(pub_key.get_name())
+                    m.add_string(pub_key.asbytes())
+                    blob = self._get_session_blob(pub_key,
+                                                  'ssh-connection',
+                                                  self.username)
+                    sig = self._pkcs11_sign_ssh_data(blob, keytype)
                     m.add_string(sig)
             elif self.auth_method == 'keyboard-interactive':
                 m.add_string('')
