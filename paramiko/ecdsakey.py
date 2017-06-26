@@ -165,10 +165,8 @@ class ECDSAKey(PKey):
         return self.asbytes()
 
     def __hash__(self):
-        h = hash(self.get_name())
-        h = h * 37 + hash(self.verifying_key.public_numbers().x)
-        h = h * 37 + hash(self.verifying_key.public_numbers().y)
-        return hash(h)
+        return hash((self.get_name(), self.verifying_key.public_numbers().x,
+                     self.verifying_key.public_numbers().y))
 
     def get_name(self):
         return self.ecdsa_curve.key_format_identifier
@@ -227,7 +225,7 @@ class ECDSAKey(PKey):
         Generate a new private ECDSA key.  This factory function can be used to
         generate a new host key or authentication key.
 
-        :param function progress_func: Not used for this type of key.
+        :param progress_func: Not used for this type of key.
         :returns: A new private key (`.ECDSAKey`) object
         """
         if bits is not None:

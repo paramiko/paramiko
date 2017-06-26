@@ -83,13 +83,7 @@ class DSSKey(PKey):
         return self.asbytes()
 
     def __hash__(self):
-        h = hash(self.get_name())
-        h = h * 37 + hash(self.p)
-        h = h * 37 + hash(self.q)
-        h = h * 37 + hash(self.g)
-        h = h * 37 + hash(self.y)
-        # h might be a long by now...
-        return hash(h)
+        return hash((self.get_name(), self.p, self.q, self.g, self.y))
 
     def get_name(self):
         return 'ssh-dss'
@@ -205,7 +199,7 @@ class DSSKey(PKey):
         generate a new host key or authentication key.
 
         :param int bits: number of bits the generated key should be.
-        :param function progress_func: Unused
+        :param progress_func: Unused
         :return: new `.DSSKey` private key
         """
         numbers = dsa.generate_private_key(

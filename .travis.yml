@@ -10,21 +10,18 @@ python:
   - "3.4"
   - "3.5"
   - "3.6"
-  - "pypy-5.4.1"
+  - "pypy-5.6.0"
 install:
   # Self-install for setup.py-driven deps
   - pip install -e .
   # Dev (doc/test running) requirements
-  - pip install coveralls # For coveralls.io specifically
+  - pip install codecov # For codecov specifically
   - pip install -r dev-requirements.txt
 script:
   # Main tests, w/ coverage!
   - inv test --coverage
-  # Ensure documentation & invoke pipeline run OK.
-  # Run 'docs' first since its objects.inv is referred to by 'www'.
-  # Also force warnings to be errors since most of them tend to be actual
-  # problems.
-  - invoke docs -o -W www -o -W
+  # Ensure documentation builds, both sites, maxxed nitpicking
+  - inv sites
   # flake8 is now possible!
   - flake8
 notifications:
@@ -36,4 +33,4 @@ notifications:
     on_failure: change
   email: false
 after_success:
-  - coveralls
+  - codecov

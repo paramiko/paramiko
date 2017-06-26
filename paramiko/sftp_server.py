@@ -72,7 +72,7 @@ class SFTPServer (BaseSFTP, SubsystemHandler):
         :param str name: name of the requested subsystem.
         :param .ServerInterface server:
             the server object associated with this channel and subsystem
-        :param class sftp_si:
+        :param sftp_si:
             a subclass of `.SFTPServerInterface` to use for handling individual
             requests.
         """
@@ -469,6 +469,12 @@ class SFTPServer (BaseSFTP, SubsystemHandler):
             tag = msg.get_text()
             if tag == 'check-file':
                 self._check_file(request_number, msg)
+            elif tag == 'posix-rename@openssh.com':
+                oldpath = msg.get_text()
+                newpath = msg.get_text()
+                self._send_status(
+                    request_number, self.server.posix_rename(oldpath, newpath)
+                )
             else:
                 self._send_status(request_number, SFTP_OP_UNSUPPORTED)
         else:

@@ -40,7 +40,7 @@ This module provides GSS-API / SSPI Key Exchange as defined in :rfc:`4462`.
 import os
 from hashlib import sha1
 
-from paramiko.common import *  # noqa
+from paramiko.common import DEBUG, max_byte, zero_byte
 from paramiko import util
 from paramiko.message import Message
 from paramiko.py3compat import byte_chr, byte_mask, byte_ord
@@ -108,7 +108,7 @@ class KexGSSGroup1(object):
         """
         Parse the next packet.
 
-        :param char ptype: The type of the incoming packet
+        :param ptype: The (string) type of the incoming packet
         :param `.Message` m: The paket content
         """
         if self.transport.server_mode and (ptype == MSG_KEXGSS_INIT):
@@ -345,7 +345,7 @@ class KexGSSGex(object):
         """
         Parse the next packet.
 
-        :param char ptype: The type of the incoming packet
+        :param ptype: The (string) type of the incoming packet
         :param `.Message` m: The paket content
         """
         if ptype == MSG_KEXGSS_GROUPREQ:

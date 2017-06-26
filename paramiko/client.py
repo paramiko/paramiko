@@ -22,6 +22,7 @@ SSH client & key policies
 
 from binascii import hexlify
 import getpass
+import inspect
 import os
 import socket
 import warnings
@@ -35,7 +36,6 @@ from paramiko.ecdsakey import ECDSAKey
 from paramiko.ed25519key import Ed25519Key
 from paramiko.hostkeys import HostKeys
 from paramiko.py3compat import string_types
-from paramiko.resource import ResourceManager
 from paramiko.rsakey import RSAKey
 from paramiko.ssh_exception import (
     SSHException, BadHostKeyException, NoValidConnectionsError
@@ -92,7 +92,7 @@ class SSHClient (ClosingContextManager):
 
         :param str filename: the filename to read, or ``None``
 
-        :raises IOError:
+        :raises: ``IOError`` --
             if a filename was provided and the file could not be read
         """
         if filename is None:
@@ -119,7 +119,7 @@ class SSHClient (ClosingContextManager):
 
         :param str filename: the filename to read
 
-        :raises IOError: if the filename could not be read
+        :raises: ``IOError`` -- if the filename could not be read
         """
         self._host_keys_filename = filename
         self._host_keys.load(filename)
@@ -132,7 +132,7 @@ class SSHClient (ClosingContextManager):
 
         :param str filename: the filename to save to
 
-        :raises IOError: if the file could not be written
+        :raises: ``IOError`` -- if the file could not be written
         """
 
         # update local host keys from file (in case other SSH clients
@@ -170,16 +170,10 @@ class SSHClient (ClosingContextManager):
 
         Specifically:
 
-        * A **policy** is an instance of a "policy class", namely some subclass
-          of `.MissingHostKeyPolicy` such as `.RejectPolicy` (the default),
-          `.AutoAddPolicy`, `.WarningPolicy`, or a user-created subclass.
-
-          .. note::
-            This method takes class **instances**, not **classes** themselves.
-            Thus it must be called as e.g.
-            ``.set_missing_host_key_policy(WarningPolicy())`` and *not*
-            ``.set_missing_host_key_policy(WarningPolicy)``.
-
+        * A **policy** is a "policy class" (or instance thereof), namely some
+          subclass of `.MissingHostKeyPolicy` such as `.RejectPolicy` (the
+          default), `.AutoAddPolicy`, `.WarningPolicy`, or a user-created
+          subclass.
         * A host key is **known** when it appears in the client object's cached
           host keys structures (those manipulated by `load_system_host_keys`
           and/or `load_host_keys`).
@@ -188,6 +182,8 @@ class SSHClient (ClosingContextManager):
             the policy to use when receiving a host key from a
             previously-unknown server
         """
+        if inspect.isclass(policy):
+            policy = policy()
         self._policy = policy
 
     def _families_and_addresses(self, hostname, port):
@@ -230,7 +226,8 @@ class SSHClient (ClosingContextManager):
         gss_kex=False,
         gss_deleg_creds=True,
         gss_host=None,
-        banner_timeout=None
+        banner_timeout=None,
+        auth_timeout=None,
     ):
         """
         Connect to an SSH server and authenticate to it.  The server's host key
@@ -282,11 +279,15 @@ class SSHClient (ClosingContextManager):
             The targets name in the kerberos database. default: hostname
         :param float banner_timeout: an optional timeout (in seconds) to wait
             for the SSH banner to be presented.
+        :param float auth_timeout: an optional timeout (in seconds) to wait for
+            an authentication response.
 
-        :raises BadHostKeyException: if the server's host key could not be
+        :raises:
+            `.BadHostKeyException` -- if the server's host key could not be
             verified
-        :raises AuthenticationException: if authentication failed
-        :raises SSHException: if there was any other error connecting or
+        :raises: `.AuthenticationException` -- if authentication failed
+        :raises:
+            `.SSHException` -- if there was any other error connecting or
             establishing an SSH session
         :raises socket.error: if a socket error occurred while connecting
 
@@ -340,37 +341,43 @@ class SSHClient (ClosingContextManager):
             t.set_log_channel(self._log_channel)
         if banner_timeout is not None:
             t.banner_timeout = banner_timeout
-        t.start_client(timeout=timeout)
-        t.set_sshclient(self)
-        ResourceManager.register(self, t)
-
-        server_key = t.get_remote_server_key()
-        keytype = server_key.get_name()
+        if auth_timeout is not None:
+            t.auth_timeout = auth_timeout
 
         if port == SSH_PORT:
             server_hostkey_name = hostname
         else:
             server_hostkey_name = "[%s]:%d" % (hostname, port)
+        our_server_keys = None
 
         # If GSS-API Key Exchange is performed we are not required to check the
         # host key, because the host is authenticated via GSS-API / SSPI as
         # well as our client.
         if not self._transport.use_gss_kex:
-            our_server_key = self._system_host_keys.get(
-                server_hostkey_name, {}).get(keytype)
-            if our_server_key is None:
-                our_server_key = self._host_keys.get(server_hostkey_name,
-                                                     {}).get(keytype, None)
-            if our_server_key is None:
-                # will raise exception if the key is rejected;
-                # let that fall out
-                self._policy.missing_host_key(self, server_hostkey_name,
-                                              server_key)
-                # if the callback returns, assume the key is ok
-                our_server_key = server_key
+            our_server_keys = self._system_host_keys.get(server_hostkey_name)
+            if our_server_keys is None:
+                our_server_keys = self._host_keys.get(server_hostkey_name)
+            if our_server_keys is not None:
+                keytype = our_server_keys.keys()[0]
+                sec_opts = t.get_security_options()
+                other_types = [x for x in sec_opts.key_types if x != keytype]
+                sec_opts.key_types = [keytype] + other_types
 
-            if server_key != our_server_key:
-                raise BadHostKeyException(hostname, server_key, our_server_key)
+        t.start_client(timeout=timeout)
+
+        if not self._transport.use_gss_kex:
+            server_key = t.get_remote_server_key()
+            if our_server_keys is None:
+                # will raise exception if the key is rejected
+                self._policy.missing_host_key(
+                    self, server_hostkey_name, server_key
+                )
+            else:
+                our_key = our_server_keys.get(server_key.get_name())
+                if our_key != server_key:
+                    if our_key is None:
+                        our_key = list(our_server_keys.values())[0]
+                    raise BadHostKeyException(hostname, server_key, our_key)
 
         if username is None:
             username = getpass.getuser()
@@ -424,7 +431,7 @@ class SSHClient (ClosingContextManager):
             interpreted the same way as by the built-in ``file()`` function in
             Python
         :param int timeout:
-            set command's channel timeout. See `Channel.settimeout`.settimeout
+            set command's channel timeout. See `.Channel.settimeout`
         :param dict environment:
             a dict of shell environment variables, to be merged into the
             default environment that the remote command executes within.
@@ -437,7 +444,7 @@ class SSHClient (ClosingContextManager):
             the stdin, stdout, and stderr of the executing command, as a
             3-tuple
 
-        :raises SSHException: if the server fails to execute the command
+        :raises: `.SSHException` -- if the server fails to execute the command
         """
         chan = self._transport.open_session(timeout=timeout)
         if get_pty:
@@ -467,7 +474,7 @@ class SSHClient (ClosingContextManager):
         :param dict environment: the command's environment
         :return: a new `.Channel` connected to the remote shell
 
-        :raises SSHException: if the server fails to invoke a shell
+        :raises: `.SSHException` -- if the server fails to invoke a shell
         """
         chan = self._transport.open_session()
         chan.get_pty(term, width, height, width_pixels, height_pixels)

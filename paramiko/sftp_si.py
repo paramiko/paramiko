@@ -72,7 +72,7 @@ class SFTPServerInterface (object):
         on that file.  On success, a new object subclassed from `.SFTPHandle`
         should be returned.  This handle will be used for future operations
         on the file (read, write, etc).  On failure, an error code such as
-        `.SFTP_PERMISSION_DENIED` should be returned.
+        ``SFTP_PERMISSION_DENIED`` should be returned.
 
         ``flags`` contains the requested mode for opening (read-only,
         write-append, etc) as a bitset of flags from the ``os`` module:
@@ -120,7 +120,7 @@ class SFTPServerInterface (object):
         `.SFTPAttributes.from_stat` will usually do what you want.
 
         In case of an error, you should return one of the ``SFTP_*`` error
-        codes, such as `.SFTP_PERMISSION_DENIED`.
+        codes, such as ``SFTP_PERMISSION_DENIED``.
 
         :param str path: the requested path (relative or absolute) to be
             listed.
@@ -150,7 +150,7 @@ class SFTPServerInterface (object):
             for.
         :return:
             an `.SFTPAttributes` object for the given file, or an SFTP error
-            code (like `.SFTP_PERMISSION_DENIED`).
+            code (like ``SFTP_PERMISSION_DENIED``).
         """
         return SFTP_OP_UNSUPPORTED
 
@@ -168,7 +168,7 @@ class SFTPServerInterface (object):
         :type path: str
         :return:
             an `.SFTPAttributes` object for the given file, or an SFTP error
-            code (like `.SFTP_PERMISSION_DENIED`).
+            code (like ``SFTP_PERMISSION_DENIED``).
         """
         return SFTP_OP_UNSUPPORTED
 
@@ -178,7 +178,7 @@ class SFTPServerInterface (object):
 
         :param str path:
             the requested path (relative or absolute) of the file to delete.
-        :return: an SFTP error code `int` like `.SFTP_OK`.
+        :return: an SFTP error code `int` like ``SFTP_OK``.
         """
         return SFTP_OP_UNSUPPORTED
 
@@ -197,7 +197,19 @@ class SFTPServerInterface (object):
         :param str oldpath:
             the requested path (relative or absolute) of the existing file.
         :param str newpath: the requested new path of the file.
-        :return: an SFTP error code `int` like `.SFTP_OK`.
+        :return: an SFTP error code `int` like ``SFTP_OK``.
+        """
+        return SFTP_OP_UNSUPPORTED
+
+    def posix_rename(self, oldpath, newpath):
+        """
+        Rename (or move) a file, following posix conventions. If newpath
+        already exists, it will be overwritten.
+
+        :param str oldpath:
+            the requested path (relative or absolute) of the existing file.
+        :param str newpath: the requested new path of the file.
+        :return: an SFTP error code `int` like ``SFTP_OK``.
         """
         return SFTP_OP_UNSUPPORTED
 
@@ -214,7 +226,7 @@ class SFTPServerInterface (object):
         :param str path:
             requested path (relative or absolute) of the new folder.
         :param .SFTPAttributes attr: requested attributes of the new folder.
-        :return: an SFTP error code `int` like `.SFTP_OK`.
+        :return: an SFTP error code `int` like ``SFTP_OK``.
         """
         return SFTP_OP_UNSUPPORTED
 
@@ -226,7 +238,7 @@ class SFTPServerInterface (object):
 
         :param str path:
             requested path (relative or absolute) of the folder to remove.
-        :return: an SFTP error code `int` like `.SFTP_OK`.
+        :return: an SFTP error code `int` like ``SFTP_OK``.
         """
         return SFTP_OP_UNSUPPORTED
 
@@ -241,7 +253,7 @@ class SFTPServerInterface (object):
         :param attr:
             requested attributes to change on the file (an `.SFTPAttributes`
             object)
-        :return: an error code `int` like `.SFTP_OK`.
+        :return: an error code `int` like ``SFTP_OK``.
         """
         return SFTP_OP_UNSUPPORTED
 
@@ -277,7 +289,7 @@ class SFTPServerInterface (object):
         :param str path: path (relative or absolute) of the symbolic link.
         :return:
             the target `str` path of the symbolic link, or an error code like
-            `.SFTP_NO_SUCH_FILE`.
+            ``SFTP_NO_SUCH_FILE``.
         """
         return SFTP_OP_UNSUPPORTED
 
