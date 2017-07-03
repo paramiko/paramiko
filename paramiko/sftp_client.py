@@ -626,6 +626,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         .. versionadded:: 1.4
         """
         # TODO: make class initialize with self._cwd set to self.normalize('.')
+        if not self._cwd: chdir('.')
         return self._cwd and u(self._cwd)
 
     def _transfer_with_callback(self, reader, writer, file_size, callback):
