@@ -36,6 +36,7 @@ from paramiko.common import (
     cMSG_USERAUTH_GSSAPI_MIC, MSG_USERAUTH_GSSAPI_RESPONSE,
     MSG_USERAUTH_GSSAPI_TOKEN, MSG_USERAUTH_GSSAPI_ERROR,
     MSG_USERAUTH_GSSAPI_ERRTOK, MSG_USERAUTH_GSSAPI_MIC, MSG_NAMES,
+    cMSG_USERAUTH_BANNER
 )
 from paramiko.message import Message
 from paramiko.py3compat import bytestring
@@ -225,6 +226,13 @@ class AuthHandler (object):
             m.add_byte(cMSG_SERVICE_ACCEPT)
             m.add_string(service)
             self.transport._send_message(m)
+            banner, language = self.transport.server_object.get_banner()
+            if banner:
+                m = Message()
+                m.add_byte(cMSG_USERAUTH_BANNER)
+                m.add_string(banner)
+                m.add_string(language)
+                self.transport._send_message(m)
             return
         # dunno this one
         self._disconnect_service_not_available()
