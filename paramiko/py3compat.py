@@ -140,7 +140,7 @@ else:
     def u(s, encoding='utf8'):
         """cast bytes or unicode to unicode"""
         if isinstance(s, bytes):
-            return s.decode(encoding)
+            return s.decode(encoding,'ignore')
         elif isinstance(s, str):
             return s
         else:
