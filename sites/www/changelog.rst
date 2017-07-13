@@ -2,6 +2,10 @@
 Changelog
 =========
 
+* :support:`1012` (via :issue:`1016`) Enhance documentation around the new
+  `SFTP.posix_rename <paramiko.sftp_client.SFTPClient.posix_rename>` method so
+  it's referenced in the 'standard' ``rename`` method for increased visibility.
+  Thanks to Marius Flage for the report.
 * :release:`2.2.1 <2017-06-13>`
 * :bug:`993` Ed25519 host keys were not comparable/hashable, causing an
   exception if such a key existed in a ``known_hosts`` file. Thanks to Oleh
