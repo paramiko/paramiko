@@ -288,7 +288,7 @@ class Transport(threading.Thread, ClosingContextManager):
             arguments.
         """
 
-        connect_timeout = kwargs.get('connect_timeout')
+        conn_timeout = kwargs.get('connect_timeout')
 
         self.active = False
 
@@ -312,8 +312,8 @@ class Transport(threading.Thread, ClosingContextManager):
                     # addr = sockaddr
                     sock = socket.socket(af, socket.SOCK_STREAM)
                     try:
-                        if connect_timeout and isinstance( connect_timeout, int ):
-                            sock.settimeout(connect_timeout)
+                        if conn_timeout and isinstance(conn_timeout, int):
+                            sock.settimeout(conn_timeout)
 
                         retry_on_signal(lambda: sock.connect((hostname, port)))
                     except socket.error as e:
