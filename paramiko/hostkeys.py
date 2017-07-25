@@ -151,6 +151,7 @@ class HostKeys (MutableMapping):
                 for e in list(self._entries):
                     if e.key.get_name() == key:
                         self._entries.remove(e)
+                        break
                 else:
                     raise KeyError(key)
 
