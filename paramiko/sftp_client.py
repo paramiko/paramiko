@@ -366,6 +366,11 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         """
         Rename a file or folder from ``oldpath`` to ``newpath``.
 
+        .. note::
+            This method implements 'standard' SFTP ``RENAME`` behavior; those
+            seeking the OpenSSH "POSIX rename" extension behavior should use
+            `posix_rename`.
+
         :param str oldpath:
             existing name of the file or folder
         :param str newpath:
@@ -392,6 +397,8 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         :raises:
             ``IOError`` -- if ``newpath`` is a folder, posix-rename is not
             supported by the server or something else goes wrong
+
+        :versionadded: 2.2
         """
         oldpath = self._adjust_cwd(oldpath)
         newpath = self._adjust_cwd(newpath)
