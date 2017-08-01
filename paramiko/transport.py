@@ -1992,6 +1992,7 @@ class Transport(threading.Thread, ClosingContextManager):
             self.clear_to_send.clear()
         finally:
             self.clear_to_send_lock.release()
+        self.gss_kex_used = False
         self.in_kex = True
         if self.server_mode:
             mp_required_prefix = 'diffie-hellman-group-exchange-sha'
