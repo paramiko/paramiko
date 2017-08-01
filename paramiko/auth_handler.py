@@ -503,52 +503,13 @@ class AuthHandler (object):
             supported_mech = sshgss.ssh_gss_oids("server")
             # RFC 4462 says we are not required to implement GSS-API error
             # messages. See section 3.8 in http://www.ietf.org/rfc/rfc4462.txt
-            while True:
-                m = Message()
-                m.add_byte(cMSG_USERAUTH_GSSAPI_RESPONSE)
-                m.add_bytes(supported_mech)
-                self.transport._send_message(m)
-                ptype, m = self.transport.packetizer.read_message()
-                if ptype == MSG_USERAUTH_GSSAPI_TOKEN:
-                    client_token = m.get_string()
-                    # use the client token as input to establish a secure
-                    # context.
-                    try:
-                        token = sshgss.ssh_accept_sec_context(self.gss_host,
-                                                              client_token,
-                                                              username)
-                    except Exception:
-                        result = AUTH_FAILED
-                        self._send_auth_result(username, method, result)
-                        raise
-                    if token is not None:
-                        m = Message()
-                        m.add_byte(cMSG_USERAUTH_GSSAPI_TOKEN)
-                        m.add_string(token)
-                        self.transport._send_message(m)
-                else:
-                    result = AUTH_FAILED
-                    self._send_auth_result(username, method, result)
-                    return
-                # check MIC
-                ptype, m = self.transport.packetizer.read_message()
-                if ptype == MSG_USERAUTH_GSSAPI_MIC:
-                    break
-            mic_token = m.get_string()
-            try:
-                sshgss.ssh_check_mic(mic_token,
-                                     self.transport.session_id,
-                                     username)
-            except Exception:
-                result = AUTH_FAILED
-                self._send_auth_result(username, method, result)
-                raise
-            # TODO: Implement client credential saving.
-            # The OpenSSH server is able to create a TGT with the delegated
-            # client credentials, but this is not supported by GSS-API.
-            result = AUTH_SUCCESSFUL
-            self.transport.server_object.check_auth_gssapi_with_mic(
-                username, result)
+            m = Message()
+            m.add_byte(cMSG_USERAUTH_GSSAPI_RESPONSE)
+            m.add_bytes(supported_mech)
+            self.transport.auth_handler = GssapiWithMicAuthHandler(self, sshgss)
+            self.transport._expected_packet = (MSG_USERAUTH_GSSAPI_TOKEN, MSG_USERAUTH_REQUEST, MSG_SERVICE_REQUEST)
+            self.transport._send_message(m)
+            return
         elif method == "gssapi-keyex" and gss_auth:
             mic_token = m.get_string()
             sshgss = self.transport.kexgss_ctxt
@@ -657,4 +618,102 @@ class AuthHandler (object):
         MSG_USERAUTH_BANNER: _parse_userauth_banner,
         MSG_USERAUTH_INFO_REQUEST: _parse_userauth_info_request,
         MSG_USERAUTH_INFO_RESPONSE: _parse_userauth_info_response,
+    }
+
+
+class GssapiWithMicAuthHandler(object):
+    """A specialized Auth handler for gssapi-with-mic
+
+    During the GSSAPI token exchange we need a modified dispatch table,
+    because the packet type numbers are not unique.
+    """
+
+    method = "gssapi-with-mic"
+
+    def __init__(self, delegate, sshgss):
+        self._delegate = delegate
+        self.sshgss = sshgss
+
+    def abort(self):
+        self._restore_delegate_auth_handler()
+        return self._delegate.abort()
+
+    @property
+    def transport(self):
+        return self._delegate.transport
+
+    @property
+    def _send_auth_result(self):
+        return self._delegate._send_auth_result
+
+    @property
+    def auth_username(self):
+        return self._delegate.auth_username
+
+    @property
+    def gss_host(self):
+        return self._delegate.gss_host
+
+    def _restore_delegate_auth_handler(self):
+        self.transport.auth_handler = self._delegate
+
+    def _parse_userauth_gssapi_token(self, m):
+        client_token = m.get_string()
+        # use the client token as input to establish a secure
+        # context.
+        sshgss = self.sshgss
+        try:
+            token = sshgss.ssh_accept_sec_context(self.gss_host,
+                                                  client_token,
+                                                  self.auth_username)
+        except Exception as e:
+            self.transport.saved_exception = e
+            result = AUTH_FAILED
+            self._restore_delegate_auth_handler()
+            self._send_auth_result(self.auth_username, self.method, result)
+            raise
+        if token is not None:
+            m = Message()
+            m.add_byte(cMSG_USERAUTH_GSSAPI_TOKEN)
+            m.add_string(token)
+            self.transport._expected_packet = (MSG_USERAUTH_GSSAPI_TOKEN,
+                                               MSG_USERAUTH_GSSAPI_MIC,
+                                               MSG_USERAUTH_REQUEST)
+            self.transport._send_message(m)
+
+    def _parse_userauth_gssapi_mic(self, m):
+        mic_token = m.get_string()
+        sshgss = self.sshgss
+        username = self.auth_username
+        self._restore_delegate_auth_handler()
+        try:
+            sshgss.ssh_check_mic(mic_token,
+                                 self.transport.session_id,
+                                 username)
+        except Exception as e:
+            self.transport.saved_exception = e
+            result = AUTH_FAILED
+            self._send_auth_result(username, self.method, result)
+            raise
+        # TODO: Implement client credential saving.
+        # The OpenSSH server is able to create a TGT with the delegated
+        # client credentials, but this is not supported by GSS-API.
+        result = AUTH_SUCCESSFUL
+        self.transport.server_object.check_auth_gssapi_with_mic(username, result)
+        # okay, send result
+        self._send_auth_result(username, self.method, result)
+
+    def _parse_service_request(self, m):
+        self._restore_delegate_auth_handler()
+        return self._delegate._parse_service_request(m)
+
+    def _parse_userauth_request(self, m):
+        self._restore_delegate_auth_handler()
+        return self._delegate._parse_userauth_request(m)
+
+    _handler_table = {
+        MSG_SERVICE_REQUEST: _parse_service_request,
+        MSG_USERAUTH_REQUEST: _parse_userauth_request,
+        MSG_USERAUTH_GSSAPI_TOKEN: _parse_userauth_gssapi_token,
+        MSG_USERAUTH_GSSAPI_MIC: _parse_userauth_gssapi_mic,
     }

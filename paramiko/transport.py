@@ -1838,6 +1838,8 @@ class Transport(threading.Thread, ClosingContextManager):
                     ):
                         handler = self.auth_handler._handler_table[ptype]
                         handler(self.auth_handler, m)
+                        if len(self._expected_packet) > 0:
+                            continue
                     else:
                         self._log(WARNING, 'Oops, unhandled type %d' % ptype)
                         msg = Message()
