@@ -43,7 +43,7 @@ from paramiko.ssh_exception import (
     PartialAuthentication,
 )
 from paramiko.server import InteractiveQuery
-from paramiko.ssh_gss import GSSAuth
+from paramiko.ssh_gss import GSSAuth, GSS_EXCEPTIONS
 
 
 class AuthHandler (object):
@@ -262,19 +262,24 @@ class AuthHandler (object):
                     mech = m.get_string()
                     m = Message()
                     m.add_byte(cMSG_USERAUTH_GSSAPI_TOKEN)
-                    m.add_string(sshgss.ssh_init_sec_context(self.gss_host,
-                                                             mech,
-                                                             self.username,))
+                    try:
+                        m.add_string(sshgss.ssh_init_sec_context(self.gss_host,
+                                                                 mech,
+                                                                 self.username,))
+                    except GSS_EXCEPTIONS as e:
+                        return self._handle_local_gss_failure(e)
                     self.transport._send_message(m)
                     while True:
                         ptype, m = self.transport.packetizer.read_message()
                         if ptype == MSG_USERAUTH_GSSAPI_TOKEN:
                             srv_token = m.get_string()
-                            next_token = sshgss.ssh_init_sec_context(
-                                self.gss_host,
-                                mech,
-                                self.username,
-                                srv_token)
+                            try:
+                                next_token = sshgss.ssh_init_sec_context(self.gss_host,
+                                                                         mech,
+                                                                         self.username,
+                                                                         srv_token)
+                            except GSS_EXCEPTIONS as e:
+                                return self._handle_local_gss_failure(e)
                             # After this step the GSSAPI should not return any
                             # token. If it does, we keep sending the token to
                             # the server until no more token is returned.
@@ -608,6 +613,16 @@ class AuthHandler (object):
             return
         self._send_auth_result(
             self.auth_username, 'keyboard-interactive', result)
+
+    def _handle_local_gss_failure(self, e):
+        self.transport.saved_exception = e
+        self.transport._log(DEBUG, "GSSAPI failure: %s" % str(e))
+        self.transport._log(INFO, 'Authentication (%s) failed.' % self.auth_method)
+        self.authenticated = False
+        self.username = None
+        if self.auth_event is not None:
+            self.auth_event.set()
+        return
 
     _handler_table = {
         MSG_SERVICE_REQUEST: _parse_service_request,
