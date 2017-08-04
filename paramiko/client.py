@@ -347,22 +347,21 @@ class SSHClient (ClosingContextManager):
             server_hostkey_name = "[%s]:%d" % (hostname, port)
         our_server_keys = None
 
-        # If GSS-API Key Exchange is performed we are not required to check the
-        # host key, because the host is authenticated via GSS-API / SSPI as
-        # well as our client.
-        if not self._transport.use_gss_kex:
-            our_server_keys = self._system_host_keys.get(server_hostkey_name)
-            if our_server_keys is None:
-                our_server_keys = self._host_keys.get(server_hostkey_name)
-            if our_server_keys is not None:
-                keytype = our_server_keys.keys()[0]
-                sec_opts = t.get_security_options()
-                other_types = [x for x in sec_opts.key_types if x != keytype]
-                sec_opts.key_types = [keytype] + other_types
+        our_server_keys = self._system_host_keys.get(server_hostkey_name)
+        if our_server_keys is None:
+            our_server_keys = self._host_keys.get(server_hostkey_name)
+        if our_server_keys is not None:
+            keytype = our_server_keys.keys()[0]
+            sec_opts = t.get_security_options()
+            other_types = [x for x in sec_opts.key_types if x != keytype]
+            sec_opts.key_types = [keytype] + other_types
 
         t.start_client(timeout=timeout)
 
-        if not self._transport.use_gss_kex:
+        # If GSS-API Key Exchange is performed we are not required to check the
+        # host key, because the host is authenticated via GSS-API / SSPI as
+        # well as our client.
+        if not self._transport.gss_kex_used:
             server_key = t.get_remote_server_key()
             if our_server_keys is None:
                 # will raise exception if the key is rejected
