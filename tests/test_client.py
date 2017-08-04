@@ -150,6 +150,7 @@ class SSHClientTest (unittest.TestCase):
         self.assertTrue(self.ts.is_active())
         self.assertEqual('slowdive', self.ts.get_username())
         self.assertEqual(True, self.ts.is_authenticated())
+        self.assertEqual(False, self.tc.get_transport().gss_kex_used)
 
         # Command execution functions?
         stdin, stdout, stderr = self.tc.exec_command('yes')
@@ -378,6 +379,66 @@ class SSHClientTest (unittest.TestCase):
             password='pygmalion',
         )
         self._test_connection(**kwargs)
+
+    def test_9_auth_trickledown_gsskex(self):
+        """
+        Failed gssapi-keyex auth doesn't prevent subsequent key auth from succeeding
+        """
+        if not paramiko.GSS_AUTH_AVAILABLE:
+            return  # for python 2.6 lacks skipTest
+        kwargs = dict(
+            gss_kex=True,
+            key_filename=[test_path('test_rsa.key')],
+        )
+        self._test_connection(**kwargs)
+
+    def test_10_auth_trickledown_gssauth(self):
+        """
+        Failed gssapi-with-mic auth doesn't prevent subsequent key auth from succeeding
+        """
+        if not paramiko.GSS_AUTH_AVAILABLE:
+            return  # for python 2.6 lacks skipTest
+        kwargs = dict(
+            gss_auth=True,
+            key_filename=[test_path('test_rsa.key')],
+        )
+        self._test_connection(**kwargs)
+
+    def test_11_reject_policy(self):
+        """
+        verify that SSHClient's RejectPolicy works.
+        """
+        threading.Thread(target=self._run).start()
+
+        self.tc = paramiko.SSHClient()
+        self.tc.set_missing_host_key_policy(paramiko.RejectPolicy())
+        self.assertEqual(0, len(self.tc.get_host_keys()))
+        self.assertRaises(
+            paramiko.SSHException,
+            self.tc.connect,
+            password='pygmalion', **self.connect_kwargs
+        )
+
+    def test_12_reject_policy_gsskex(self):
+        """
+        verify that SSHClient's RejectPolicy works,
+        even if gssapi-keyex was enabled but not used.
+        """
+        # Test for a bug present in paramiko versions released before 2017-08-01
+        if not paramiko.GSS_AUTH_AVAILABLE:
+            return  # for python 2.6 lacks skipTest
+        threading.Thread(target=self._run).start()
+
+        self.tc = paramiko.SSHClient()
+        self.tc.set_missing_host_key_policy(paramiko.RejectPolicy())
+        self.assertEqual(0, len(self.tc.get_host_keys()))
+        self.assertRaises(
+            paramiko.SSHException,
+            self.tc.connect,
+            password='pygmalion',
+            gss_kex=True,
+             **self.connect_kwargs
+        )
 
     def test_update_environment(self):
         """
