@@ -228,6 +228,7 @@ class SSHClient (ClosingContextManager):
         gss_host=None,
         banner_timeout=None,
         auth_timeout=None,
+        gss_trust_dns=True
     ):
         """
         Connect to an SSH server and authenticate to it.  The server's host key
@@ -277,6 +278,9 @@ class SSHClient (ClosingContextManager):
         :param bool gss_deleg_creds: Delegate GSS-API client credentials or not
         :param str gss_host:
             The targets name in the kerberos database. default: hostname
+        :param bool gss_trust_dns: Indicates whether or not the DNS is trusted to
+                              securely canonicalize the name of the host being
+                              connected to (default ``True``).
         :param float banner_timeout: an optional timeout (in seconds) to wait
             for the SSH banner to be presented.
         :param float auth_timeout: an optional timeout (in seconds) to wait for
@@ -331,12 +335,11 @@ class SSHClient (ClosingContextManager):
         t = self._transport = Transport(
             sock, gss_kex=gss_kex, gss_deleg_creds=gss_deleg_creds)
         t.use_compression(compress=compress)
-        if gss_kex and gss_host is None:
-            t.set_gss_host(hostname)
-        elif gss_kex and gss_host is not None:
-            t.set_gss_host(gss_host)
-        else:
-            pass
+        if gss_host is None:
+            t.set_gss_host(hostname, gss_trust_dns)
+        elif gss_host is not None:
+            # Don't canonicalize gss_host
+            t.set_gss_host(gss_host, False)
         if self._log_channel is not None:
             t.set_log_channel(self._log_channel)
         if banner_timeout is not None:
@@ -387,10 +390,9 @@ class SSHClient (ClosingContextManager):
             key_filenames = [key_filename]
         else:
             key_filenames = key_filename
-        if gss_host is None:
-            gss_host = hostname
+
         self._auth(username, password, pkey, key_filenames, allow_agent,
-                   look_for_keys, gss_auth, gss_kex, gss_deleg_creds, gss_host)
+                   look_for_keys, gss_auth, gss_kex, gss_deleg_creds, t.gss_host)
 
     def close(self):
         """
