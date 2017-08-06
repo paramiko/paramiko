@@ -317,7 +317,7 @@ class AgentRequestHandler(object):
         AgentRequestHandler(session)
         # Commands executed after this point will see the forwarded agent on
         # the remote end.
-        session.exec_command("git clone https://my.git.repository/")
+        client.exec_command("git clone https://my.git.repository/")
     """
     def __init__(self, chanClient):
         self._conn = None
