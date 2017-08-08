@@ -2,6 +2,9 @@
 Changelog
 =========
 
+* :bug:`60` Improved the performance of compressed transport by using default
+  zlib compression level (which is 6) rather than the max level of 9 which is
+  very CPU intensive.
 * :support:`1012` (via :issue:`1016`) Enhance documentation around the new
   `SFTP.posix_rename <paramiko.sftp_client.SFTPClient.posix_rename>` method so
   it's referenced in the 'standard' ``rename`` method for increased visibility.
