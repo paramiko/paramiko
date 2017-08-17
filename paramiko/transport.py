@@ -54,8 +54,6 @@ from paramiko.common import (
     DEFAULT_WINDOW_SIZE, DEFAULT_MAX_PACKET_SIZE,
 )
 from paramiko.compress import ZlibCompressor, ZlibDecompressor
-from paramiko.dsskey import DSSKey
-from paramiko.ed25519key import Ed25519Key
 from paramiko.kex_gex import KexGex, KexGexSHA256
 from paramiko.kex_group1 import KexGroup1
 from paramiko.kex_group14 import KexGroup14
@@ -65,8 +63,6 @@ from paramiko.message import Message
 from paramiko.packet import Packetizer, NeedRekeyException
 from paramiko.primes import ModulusPack
 from paramiko.py3compat import string_types, long, byte_ord, b, input, PY2
-from paramiko.rsakey import RSAKey
-from paramiko.ecdsakey import ECDSAKey
 from paramiko.server import ServerInterface
 from paramiko.sftp_client import SFTPClient
 from paramiko.ssh_exception import (

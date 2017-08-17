@@ -17,7 +17,6 @@
 # 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
 
 
-import binascii
 import os
 
 from collections import MutableMapping
@@ -26,14 +25,8 @@ from hmac import HMAC
 
 from paramiko.py3compat import b, u, encodebytes, decodebytes
 
-from paramiko.dsskey import DSSKey
-from paramiko.rsakey import RSAKey
 from paramiko.util import get_logger, constant_time_bytes_eq
-from paramiko.ecdsakey import ECDSAKey
-from paramiko.ed25519key import Ed25519Key
-from paramiko.ssh_exception import (
-    SSHException, InvalidHostKey, UnknownKeyType,
-)
+from paramiko.ssh_exception import SSHException, UnknownKeyType
 from .authentication import hostkey_from_text
 
 

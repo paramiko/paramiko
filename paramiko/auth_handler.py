@@ -20,13 +20,11 @@
 `.AuthHandler`
 """
 
-import threading
+from ctypes import cdll, Structure, c_ulong, c_void_p, byref, c_char, c_int
 import os
-from ctypes import (cdll, Structure, c_ulong, c_void_p, byref, c_char,
-                    c_int)
-import weakref
+import threading
 import time
-import binascii
+import weakref
 
 from paramiko.common import (
     cMSG_SERVICE_REQUEST, cMSG_DISCONNECT, DISCONNECT_SERVICE_NOT_AVAILABLE,
@@ -50,12 +48,6 @@ from paramiko.ssh_exception import (
 )
 from paramiko.server import InteractiveQuery
 from paramiko.ssh_gss import GSSAuth
-from paramiko.py3compat import b, decodebytes
-from paramiko.dsskey import DSSKey
-from paramiko.rsakey import RSAKey
-from paramiko.ecdsakey import ECDSAKey
-from paramiko.ed25519key import Ed25519Key
-from paramiko.hostkeys import InvalidHostKey
 from paramiko import pkcs11_open_session, pkcs11_close_session
 from paramiko.pkcs11 import pkcs11_get_public_key
 from .authentication import hostkey_from_text
