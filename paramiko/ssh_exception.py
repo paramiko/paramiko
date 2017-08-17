@@ -119,6 +119,40 @@ class BadHostKeyException (SSHException):
         self.args = (hostname, got_key, expected_key, )
 
 
+class UnknownKeyType(SSHException):
+    """
+    A (typically host) key was specified, but with an unknown key type.
+
+    Usually indicates a key type we haven't added support for yet, or (less
+    common) some sort of corruption or garbage.
+
+    :param str type_: The key type requested, which was unknown.
+    :param str key: The textual key data accompanying the bad key type.
+
+    .. versionadded:: 2.3
+    """
+    def __init__(self, type_, key):
+        message = "Unable to handle key of type {0!r}".format(type_)
+        self.message = message
+        self.type_ = type_
+        self.key = key
+        # for unpickling
+        self.args = (type_, key)
+
+    def __str__(self):
+        # Heaven forbid we want to rely on the builtin stringification AND
+        # ability to add context to our God damned errors. Of course not!
+        # That'd be silly.
+        return self.message
+
+
+class InvalidHostKey(Exception):
+    def __init__(self, line, exc):
+        self.line = line
+        self.exc = exc
+        self.args = (line, exc)
+
+
 class ProxyCommandFailure (SSHException):
     """
     The "ProxyCommand" found in the .ssh/config file returned an error.

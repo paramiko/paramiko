@@ -2,6 +2,14 @@
 Changelog
 =========
 
+* :support:`-` Refactor some common (mostly host-)key related logic into a new
+  module, ``authentication.py``. Includes use of a new `SSHException
+  <paramiko.ssh_exception.SSHException>` subclass, `UnknownKeyType
+  <paramiko.ssh_exception.UnknownKeyType>`, which may now be raised by the
+  authentication step during SSH connections (in place of a vanilla
+  ``SSHException``, so your ``except`` statements will all still work!) Also
+  migrated ``InvalidHostKey`` to ``ssh_exception.py`` (though it is of course
+  still importable from its previous home, ``hostkeys.py``.)
 * :feature:`827` Add support for PKCS #11 which enables the use of smartcards
   and other cryptographic tokens.
 * :support:`1012` (via :issue:`1016`) Enhance documentation around the new

@@ -36,6 +36,7 @@ from cryptography.hazmat.primitives.ciphers import algorithms, Cipher, modes
 import paramiko
 from paramiko import util
 from paramiko.auth_handler import AuthHandler
+from paramiko.authentication import KEY_CLASSES
 from paramiko.ssh_gss import GSSAuth
 from paramiko.channel import Channel
 from paramiko.common import (
@@ -202,14 +203,7 @@ class Transport(threading.Thread, ClosingContextManager):
         'hmac-md5-96': {'class': md5, 'size': 12},
     }
 
-    _key_info = {
-        'ssh-rsa': RSAKey,
-        'ssh-dss': DSSKey,
-        'ecdsa-sha2-nistp256': ECDSAKey,
-        'ecdsa-sha2-nistp384': ECDSAKey,
-        'ecdsa-sha2-nistp521': ECDSAKey,
-        'ssh-ed25519': Ed25519Key,
-    }
+    _key_info = KEY_CLASSES
 
     _kex_info = {
         'diffie-hellman-group1-sha1': KexGroup1,
@@ -2664,7 +2658,6 @@ class SecurityOptions (object):
     @key_types.setter
     def key_types(self, x):
         self._set('_preferred_keys', '_key_info', x)
-
 
     @property
     def kex(self):

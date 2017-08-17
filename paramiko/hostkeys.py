@@ -31,7 +31,10 @@ from paramiko.rsakey import RSAKey
 from paramiko.util import get_logger, constant_time_bytes_eq
 from paramiko.ecdsakey import ECDSAKey
 from paramiko.ed25519key import Ed25519Key
-from paramiko.ssh_exception import SSHException
+from paramiko.ssh_exception import (
+    SSHException, InvalidHostKey, UnknownKeyType,
+)
+from .authentication import hostkey_from_text
 
 
 class HostKeys (MutableMapping):
@@ -304,13 +307,6 @@ class HostKeys (MutableMapping):
         return hostkey.replace('\n', '')
 
 
-class InvalidHostKey(Exception):
-    def __init__(self, line, exc):
-        self.line = line
-        self.exc = exc
-        self.args = (line, exc)
-
-
 class HostKeyEntry:
     """
     Representation of a line in an OpenSSH-style "known hosts" file.
@@ -349,21 +345,10 @@ class HostKeyEntry:
         # Decide what kind of key we're looking at and create an object
         # to hold it accordingly.
         try:
-            key = b(key)
-            if keytype == 'ssh-rsa':
-                key = RSAKey(data=decodebytes(key))
-            elif keytype == 'ssh-dss':
-                key = DSSKey(data=decodebytes(key))
-            elif keytype in ECDSAKey.supported_key_format_identifiers():
-                key = ECDSAKey(data=decodebytes(key), validate_point=False)
-            elif keytype == 'ssh-ed25519':
-                key = Ed25519Key(data=decodebytes(key))
-            else:
-                log.info("Unable to handle key of type %s" % (keytype,))
-                return None
-
-        except binascii.Error as e:
-            raise InvalidHostKey(line, e)
+            key = hostkey_from_text(type_=keytype, key=key, source=line)
+        except UnknownKeyType:
+            log.info("Unable to handle key of type %s" % (keytype,))
+            return None
 
         return cls(names, key)
 

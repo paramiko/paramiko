@@ -58,6 +58,7 @@ from paramiko.ed25519key import Ed25519Key
 from paramiko.hostkeys import InvalidHostKey
 from paramiko import pkcs11_open_session, pkcs11_close_session
 from paramiko.pkcs11 import pkcs11_get_public_key
+from .authentication import hostkey_from_text
 
 
 class AuthHandler (object):
@@ -354,7 +355,8 @@ class AuthHandler (object):
                     m.add_string(sig)
                 else:
                     # Smartcard PKCS11 Private Key
-                    fields = self._pkcs11_get_public_key().split(' ')
+                    pubkey_source = self._pkcs11_get_public_key()
+                    fields = pubkey_source.split(' ')
 
                     if len(fields) < 2:
                         SSHException("Not enough fields found in pkcs11 key")
@@ -362,30 +364,16 @@ class AuthHandler (object):
                     keytype = fields[0]
                     pub_key = fields[1]
 
-                    try:
-                        pub_key = b(pub_key)
-                        if keytype == 'ssh-rsa':
-                            pub_key = RSAKey(data=decodebytes(pub_key))
-                        elif keytype == 'ssh-dss':
-                            pub_key = DSSKey(data=decodebytes(pub_key))
-                        elif keytype in ECDSAKey\
-                            .supported_key_format_identifiers():
-                            pub_key = ECDSAKey(data=decodebytes(pub_key),
-                                               validate_point=False)
-                        elif keytype == 'ssh-ed25519':
-                            pub_key = Ed25519Key(data=decodebytes(pub_key))
-                        else:
-                            SSHException("Unable to handle key of type %s"
-                                         % (keytype,))
-                    except binascii.Error as e:
-                        raise InvalidHostKey(self._pkcs11_get_public_key(), e)
+                    key = hostkey_from_text(
+                        type_=keytype, key=pub_key, source=pubkey_source,
+                    )
 
                     m.add_boolean(True)
-                    m.add_string(pub_key.get_name())
-                    m.add_string(pub_key.asbytes())
-                    blob = self._get_session_blob(pub_key,
-                                                  'ssh-connection',
-                                                  self.username)
+                    m.add_string(key.get_name())
+                    m.add_string(key.asbytes())
+                    blob = self._get_session_blob(
+                        key, 'ssh-connection', self.username,
+                    )
                     sig = self._pkcs11_sign_ssh_data(blob, keytype)
                     m.add_string(sig)
             elif self.auth_method == 'keyboard-interactive':
