@@ -608,17 +608,27 @@ class SSHClient (ClosingContextManager):
                     )
                     if os.path.isfile(full_path):
                         keyfiles.append((keytype, full_path))
+                        if os.path.isfile(full_path + '-cert.pub'):
+                            keyfiles.append((keytype, full_path + '-cert.pub'))
 
             if not look_for_keys:
                 keyfiles = []
 
             for pkey_class, filename in keyfiles:
                 try:
-                    key = pkey_class.from_private_key_file(filename, password)
-                    self._log(
-                        DEBUG,
-                        'Trying discovered key %s in %s' % (
-                            hexlify(key.get_fingerprint()), filename))
+                    if filename.endswith('-cert.pub'):
+                        key = pkey_class.from_private_key_file(filename.rstrip('-cert.pub'), password)
+                        key.load_certificate(pubkey_filename=filename)
+                        self._log(
+                            DEBUG,
+                            'Trying discovered certificate %s in %s' % (
+                                hexlify(key.get_fingerprint()), filename))
+                    else:
+                        key = pkey_class.from_private_key_file(filename, password)
+                        self._log(
+                            DEBUG,
+                            'Trying discovered key %s in %s' % (
+                                hexlify(key.get_fingerprint()), filename))
 
                     # for 2-factor auth a successfully auth'd key will result
                     # in ['password']
