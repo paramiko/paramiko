@@ -617,7 +617,7 @@ class SSHClient (ClosingContextManager):
             for pkey_class, filename in keyfiles:
                 try:
                     if filename.endswith('-cert.pub'):
-                        key = pkey_class.from_private_key_file(filename.rstrip('-cert.pub'), password)
+                        key = pkey_class.from_private_key_file(filename[:-len('-cert.pub')], password)
                         key.load_certificate(pubkey_filename=filename)
                         self._log(
                             DEBUG,
