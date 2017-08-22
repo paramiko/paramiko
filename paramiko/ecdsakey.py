@@ -46,7 +46,6 @@ class _ECDSACurve(object):
     def __init__(self, curve_class, nist_name):
         self.nist_name = nist_name
         self.key_length = curve_class.key_size
-        self.public_blob = None
 
         # Defined in RFC 5656 6.2
         self.key_format_identifier = "ecdsa-sha2-" + self.nist_name
@@ -106,6 +105,7 @@ class ECDSAKey(PKey):
                  vals=None, file_obj=None, validate_point=True):
         self.verifying_key = None
         self.signing_key = None
+        self.public_blob = None
         if file_obj is not None:
             self._from_private_key(file_obj, password)
             return
