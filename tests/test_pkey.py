@@ -480,3 +480,27 @@ class KeyTest(unittest.TestCase):
             self.assert_keyfile_is_encrypted(newfile)
         finally:
             os.remove(newfile)
+
+    def test_certificates(self):
+        # PKey.load_certificate
+        key = RSAKey.from_private_key_file(test_path('test_rsa.key'))
+        self.assertTrue(key.public_blob is None)
+        key.load_certificate(pubkey_filename=test_path('test_rsa.key-cert.pub'))
+        self.assertTrue(key.public_blob is not None)
+        self.assertEqual(key.public_blob.key_type, 'ssh-rsa-cert-v01@openssh.com')
+        self.assertEqual(key.public_blob.comment, 'test_rsa.key.pub')
+        # Delve into blob contents, for test purposes
+        msg = Message(key.public_blob.key_blob)
+        self.assertEqual(msg.get_string(), 'ssh-rsa-cert-v01@openssh.com')
+        nonce = msg.get_string()
+        e = msg.get_mpint()
+        n = msg.get_mpint()
+        self.assertEqual(e, key.public_numbers.e)
+        self.assertEqual(n, key.public_numbers.n)
+        # Serial number
+        self.assertEqual(msg.get_int64(), 1234)
+
+        # Prevented from loading certificate that doesn't match
+        key1 = Ed25519Key.from_private_key_file(test_path('test_ed25519.key'))
+        self.assertRaises(ValueError, key1.load_certificate,
+            pubkey_filename=test_path('test_rsa.key-cert.pub'))

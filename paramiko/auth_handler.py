@@ -186,8 +186,13 @@ class AuthHandler (object):
         m.add_string(service)
         m.add_string('publickey')
         m.add_boolean(True)
-        m.add_string(key.get_name())
-        m.add_string(key)
+        # Use certificate contents, if available, plain pubkey otherwise
+        if key.public_blob:
+            m.add_string(key.public_blob.key_type)
+            m.add_string(key.public_blob.key_blob)
+        else:
+            m.add_string(key.get_name())
+            m.add_string(key)
         return m.asbytes()
 
     def wait_for_response(self, event):
@@ -244,8 +249,13 @@ class AuthHandler (object):
                 m.add_string(password)
             elif self.auth_method == 'publickey':
                 m.add_boolean(True)
-                m.add_string(self.private_key.get_name())
-                m.add_string(self.private_key)
+                # Use certificate contents, if available, plain pubkey otherwise
+                if self.private_key.public_blob:
+                    m.add_string(self.private_key.public_blob.key_type)
+                    m.add_string(self.private_key.public_blob.key_blob)
+                else:
+                    m.add_string(self.private_key.get_name())
+                    m.add_string(self.private_key)
                 blob = self._get_session_blob(
                     self.private_key, 'ssh-connection', self.username)
                 sig = self.private_key.sign_ssh_data(blob)

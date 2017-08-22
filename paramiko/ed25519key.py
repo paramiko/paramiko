@@ -63,6 +63,7 @@ class Ed25519Key(PKey):
 
         self._signing_key = signing_key
         self._verifying_key = verifying_key
+        self.public_blob = None
 
     def _parse_signing_key_data(self, data, password):
         from paramiko.transport import Transport

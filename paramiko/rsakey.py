@@ -40,6 +40,7 @@ class RSAKey(PKey):
     def __init__(self, msg=None, data=None, filename=None, password=None,
                  key=None, file_obj=None):
         self.key = None
+        self.public_blob = None
         if file_obj is not None:
             self._from_private_key(file_obj, password)
             return

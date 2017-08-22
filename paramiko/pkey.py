@@ -33,6 +33,7 @@ from paramiko import util
 from paramiko.common import o600
 from paramiko.py3compat import u, encodebytes, decodebytes, b
 from paramiko.ssh_exception import SSHException, PasswordRequiredException
+from paramiko.message import Message
 
 
 class PKey(object):
@@ -363,3 +364,71 @@ class PKey(object):
             format,
             encryption
         ).decode())
+
+    def load_certificate(self, **kwargs):
+        """
+        Supplement the private key contents with data loaded from
+        an OpenSSH public key (.pub) or certificate (-cert.pub) file.
+
+        The .pub contents adds no real value, since the private key
+        file includes sufficient information to derive the public
+        key info. For certificates, however, this can be used on
+        the client side to offer authentication requests to the server
+        based on certificate instead of raw public key.
+
+        See: https://github.com/openssh/openssh-portable/blob/master/PROTOCOL.certkeys
+
+        Note: very little effort is made to validate the certificate contents,
+        that is for the server to decide if it is good enough to authenticate
+        successfully.
+        """
+        blob = PublicBlob(**kwargs)
+        if not blob.key_type.startswith(self.get_name()):
+            raise ValueError('PublicBlob type %s incompatible with key type %s' %
+                (blob.key_type, self.get_name()))
+        self.public_blob = blob
+
+
+# General construct for an OpenSSH style Public Key blob
+# readable from a one-line file of the format:
+#     <key-name> <base64-blob> [<comment>]
+# Of little value in the case of standard public keys
+# {ssh-rsa, ssh-dss, ssh-ecdsa, ssh-ed25519}, but should
+# provide rudimentary support for {*-cert.v01}
+class PublicBlob(object):
+    '''
+    OpenSSH plain public key or OpenSSH signed public key (certificate)
+    A mostly dumb container
+    '''
+    def __init__(self, pubkey_filename=None, pubkey_string=None):
+        '''
+        Can read from a file or string.
+        '''
+        if pubkey_filename:
+            with open(pubkey_filename) as f:
+                fields = f.read().split(None, 2)
+        elif pubkey_string:
+            fields = pubkey_string.split(None, 2)
+        else:
+            raise ValueError('PublicBlob() requires either a pubkey_filename or pubkey_string')
+        if len(fields) < 2:
+            raise ValueError('PublicBlob() not enough fields %s', fields)
+        self.key_type = fields[0]
+        self.key_blob = decodebytes(fields[1])
+        try:
+            self.comment = fields[2].strip()
+        except IndexError:
+            self.comment = None
+        # Verify that the blob message first (string) field matches the key_type
+        m = Message(self.key_blob)
+        blob_type = m.get_string()
+        if blob_type != self.key_type:
+            raise ValueError(
+                'Invalid PublicBlob contents. Key type [%s], expected [%s]' %
+                    (blob_type, self.key_type))
+
+    def __str__(self):
+        if self.comment:
+            return '%s public key/certificate - %s' % (self.key_type, self.comment)
+        else:
+            return '%s public key/certificate' % self.key_type

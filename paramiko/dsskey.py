@@ -49,6 +49,7 @@ class DSSKey(PKey):
         self.g = None
         self.y = None
         self.x = None
+        self.public_blob = None
         if file_obj is not None:
             self._from_private_key(file_obj, password)
             return
