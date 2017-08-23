@@ -4,6 +4,7 @@ from shutil import rmtree, copytree
 from invoke import Collection, task
 from invocations.docs import docs, www, sites
 from invocations.packaging.release import ns as release_coll, publish
+from invocations.testing import count_errors
 
 
 # Until we move to spec-based testing
@@ -49,7 +50,7 @@ def release(ctx, sdist=True, wheel=True, sign=True, dry_run=False):
 # aliasing, defaults etc.
 release_coll.tasks['publish'] = release
 
-ns = Collection(test, coverage, release_coll, docs, www, sites)
+ns = Collection(test, coverage, release_coll, docs, www, sites, count_errors)
 ns.configure({
     'packaging': {
         # NOTE: many of these are also set in kwarg defaults above; but having
