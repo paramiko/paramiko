@@ -2,6 +2,11 @@
 Changelog
 =========
 
+* :support:`1041` Modify logic around explicit disconnect
+  messages, and unknown-channel situations, so that they rely on centralized
+  shutdown code instead of running their own. This is at worst removing some
+  unnecessary code, and may help with some situations where Paramiko hangs at
+  the end of a session. Thanks to Paul Kapp for the patch.
 * :support:`1012` (via :issue:`1016`) Enhance documentation around the new
   `SFTP.posix_rename <paramiko.sftp_client.SFTPClient.posix_rename>` method so
   it's referenced in the 'standard' ``rename`` method for increased visibility.

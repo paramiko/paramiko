@@ -1825,8 +1825,6 @@ class Transport(threading.Thread, ClosingContextManager):
                         continue
                     elif ptype == MSG_DISCONNECT:
                         self._parse_disconnect(m)
-                        self.active = False
-                        self.packetizer.close()
                         break
                     elif ptype == MSG_DEBUG:
                         self._parse_debug(m)
@@ -1850,8 +1848,7 @@ class Transport(threading.Thread, ClosingContextManager):
                             self._log(DEBUG, 'Ignoring message for dead channel %d' % chanid) # noqa
                         else:
                             self._log(ERROR, 'Channel request for unknown channel %d' % chanid) # noqa
-                            self.active = False
-                            self.packetizer.close()
+                            break
                     elif (
                         self.auth_handler is not None and
                         ptype in self.auth_handler._handler_table
