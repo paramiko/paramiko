@@ -513,6 +513,26 @@ class SSHClient (ClosingContextManager):
         """
         return self._transport
 
+    def _key_from_filepath(self, filename, klass, password):
+        """
+        Attempt to derive a `.PKey` from given string path ``filename``.
+        """
+        cert_suffix = '-cert.pub'
+        key_path = filename
+        is_cert = False
+        if filename.endswith(cert_suffix):
+            key_path = filename[:-len(cert_suffix)]
+            is_cert = True
+        key = klass.from_private_key_file(key_path, password)
+        if is_cert:
+            key.load_certificate(pubkey_filename=filename)
+        type_ = 'certificate' if is_cert else 'key'
+        msg = "Trying discovered {0} {1} in {2}".format(
+            type_, hexlify(key.get_fingerprint()), filename,
+        )
+        self._log(DEBUG, msg)
+        return key
+
     def _auth(self, username, password, pkey, key_filenames, allow_agent,
               look_for_keys, gss_auth, gss_kex, gss_deleg_creds, gss_host):
         """
@@ -570,12 +590,9 @@ class SSHClient (ClosingContextManager):
             for key_filename in key_filenames:
                 for pkey_class in (RSAKey, DSSKey, ECDSAKey, Ed25519Key):
                     try:
-                        key = pkey_class.from_private_key_file(
-                            key_filename, password)
-                        self._log(
-                            DEBUG,
-                            'Trying key %s from %s' % (
-                                hexlify(key.get_fingerprint()), key_filename))
+                        key = self._key_from_filepath(
+                            key_filename, pkey_class, password,
+                        )
                         allowed_types = set(
                             self._transport.auth_publickey(username, key))
                         two_factor = (allowed_types & two_factor_types)
@@ -630,20 +647,9 @@ class SSHClient (ClosingContextManager):
 
             for pkey_class, filename in keyfiles:
                 try:
-                    if filename.endswith('-cert.pub'):
-                        key = pkey_class.from_private_key_file(filename[:-len('-cert.pub')], password)
-                        key.load_certificate(pubkey_filename=filename)
-                        self._log(
-                            DEBUG,
-                            'Trying discovered certificate %s in %s' % (
-                                hexlify(key.get_fingerprint()), filename))
-                    else:
-                        key = pkey_class.from_private_key_file(filename, password)
-                        self._log(
-                            DEBUG,
-                            'Trying discovered key %s in %s' % (
-                                hexlify(key.get_fingerprint()), filename))
-
+                    key = self._key_from_filepath(
+                        filename, pkey_class, password,
+                    )
                     # for 2-factor auth a successfully auth'd key will result
                     # in ['password']
                     allowed_types = set(
