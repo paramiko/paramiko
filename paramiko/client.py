@@ -240,9 +240,23 @@ class SSHClient (ClosingContextManager):
         Authentication is attempted in the following order of priority:
 
             - The ``pkey`` or ``key_filename`` passed in (if any)
+
+              - ``key_filename`` may contain OpenSSH public certificate paths
+                as well as regular private-key paths; when files ending in
+                ``-cert.pub`` are found, they are assumed to match a private
+                key, and both components will be loaded. (The private key
+                itself does *not* need to be listed in ``key_filename`` for
+                this to occur - *just* the certificate.)
+
             - Any key we can find through an SSH agent
             - Any "id_rsa", "id_dsa" or "id_ecdsa" key discoverable in
               ``~/.ssh/``
+
+              - When OpenSSH-style public certificates exist that match an
+                existing such private key (so e.g. one has ``id_rsa`` and
+                ``id_rsa-cert.pub``) the certificate will be loaded alongside
+                the private key and used for authentication.
+
             - Plain username/password auth, if a password was given
 
         If a private key requires a password to unlock it, and a password is
@@ -257,8 +271,8 @@ class SSHClient (ClosingContextManager):
             a password to use for authentication or for unlocking a private key
         :param .PKey pkey: an optional private key to use for authentication
         :param str key_filename:
-            the filename, or list of filenames, of optional private key(s) to
-            try for authentication
+            the filename, or list of filenames, of optional private key(s)
+            and/or certs to try for authentication
         :param float timeout:
             an optional timeout (in seconds) for the TCP connect
         :param bool allow_agent:

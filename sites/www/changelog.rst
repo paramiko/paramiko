@@ -2,6 +2,21 @@
 Changelog
 =========
 
+* :feature:`1042` (also partially :issue:`531`) Implement generic (suitable for
+  all key types) client-side certificate authentication.
+
+  The core implementation is `PKey.load_certificate
+  <paramiko.pkey.PKey.load_certificate>` and its corresponding ``.public_blob``
+  attribute on key objects, which is honored in the auth and transport modules.
+  Additionally, `SSHClient.connect <paramiko.client.SSHClient.connect>` will
+  now automatically load certificate data alongside private key data when one
+  has appropriately-named cert files (e.g. ``id_rsa-cert.pub``) - see its
+  docstring for details.
+
+  Thanks to Paul Kapp for the final patch, and to Jason Rigby for earlier work
+  in :issue:`531` (which remains open as it contains additional functionality
+  that may get merged later.)
+
 * :support:`1041` Modify logic around explicit disconnect
   messages, and unknown-channel situations, so that they rely on centralized
   shutdown code instead of running their own. This is at worst removing some
