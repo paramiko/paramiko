@@ -2,6 +2,11 @@
 Changelog
 =========
 
+* :support:`-` Display exception type and message when logging auth-rejection
+  messages (ones reading ``Auth rejected: unsupported or mangled public key``);
+  previously this error case had a bare except and did not display exactly why
+  the key failed. It will now append info such as ``KeyError:
+  'some-unknown-type-string'`` or similar.
 * :feature:`1042` (also partially :issue:`531`) Implement generic (suitable for
   all key types) client-side certificate authentication.
 
