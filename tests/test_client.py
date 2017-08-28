@@ -248,6 +248,21 @@ class SSHClientTest (unittest.TestCase):
             allowed_keys=['ecdsa-sha2-nistp256'],
         )
 
+    def test_certs_allowed_as_key_filename_values(self):
+        # TODO: connect() with key_filename containing a cert file, loads up
+        # both the cert and its implied key. This is new functionality on top
+        # of the OpenSSH-compatible stuff.
+        assert False
+
+    def test_certs_implicitly_loaded_alongside_key_filename_keys(self):
+        # TODO: same but with just the key paths, i.e. vanilla OpenSSH behavior
+        assert False
+
+    def test_default_key_locations_trigger_cert_loads_if_found(self):
+        # TODO: what it says on the tin: ~/.ssh/id_rsa tries to load
+        # ~/.ssh/id_rsa-cert.pub
+        assert False
+
     def test_4_auto_add_policy(self):
         """
         verify that SSHClient's AutoAddPolicy works.

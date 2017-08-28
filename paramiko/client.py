@@ -515,22 +515,34 @@ class SSHClient (ClosingContextManager):
 
     def _key_from_filepath(self, filename, klass, password):
         """
-        Attempt to derive a `.PKey` from given string path ``filename``.
+        Attempt to derive a `.PKey` from given string path ``filename``:
+
+        - If ``filename`` appears to be a cert, the matching private key is
+          loaded.
+        - Otherwise, the filename is assumed to be a private key, and the
+          matching public cert will be loaded if it exists.
         """
         cert_suffix = '-cert.pub'
-        key_path = filename
-        is_cert = False
+        # Assume privkey, not cert, by default
         if filename.endswith(cert_suffix):
             key_path = filename[:-len(cert_suffix)]
-            is_cert = True
+            cert_path = filename
+        else:
+            key_path = filename
+            cert_path = filename + cert_suffix
+        # Blindly try the key path; if no private key, nothing will work.
         key = klass.from_private_key_file(key_path, password)
-        if is_cert:
-            key.load_certificate(pubkey_filename=filename)
-        type_ = 'certificate' if is_cert else 'key'
-        msg = "Trying discovered {0} {1} in {2}".format(
-            type_, hexlify(key.get_fingerprint()), filename,
+        # TODO: change this to 'Loading' instead of 'Trying' sometime; probably
+        # when #387 is released, since this is a critical log message users are
+        # likely testing/filtering for (bah.)
+        msg = "Trying discovered key {0} in {1}".format(
+            hexlify(key.get_fingerprint()), key_path,
         )
         self._log(DEBUG, msg)
+        # Attempt to load cert if it exists.
+        if os.path.isfile(cert_path):
+            key.load_certificate(pubkey_filename=cert_path)
+            self._log(DEBUG, "Adding public certificate {0}".format(cert_path))
         return key
 
     def _auth(self, username, password, pkey, key_filenames, allow_agent,
