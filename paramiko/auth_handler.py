@@ -249,7 +249,8 @@ class AuthHandler (object):
                 m.add_string(password)
             elif self.auth_method == 'publickey':
                 m.add_boolean(True)
-                # Use certificate contents, if available, plain pubkey otherwise
+                # Use certificate contents, if available, plain pubkey
+                # otherwise
                 if self.private_key.public_blob:
                     m.add_string(self.private_key.public_blob.key_type)
                     m.add_string(self.private_key.public_blob.key_blob)
