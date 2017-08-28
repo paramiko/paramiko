@@ -538,7 +538,7 @@ class SSHClient (ClosingContextManager):
         """
         Try, in order:
 
-            - The key passed in, if one was passed in.
+            - The key(s) passed in, if one was passed in.
             - Any key we can find through an SSH agent (if allowed).
             - Any "id_rsa", "id_dsa" or "id_ecdsa" key discoverable in ~/.ssh/
               (if allowed).
@@ -638,6 +638,7 @@ class SSHClient (ClosingContextManager):
                         "~/%s/id_%s" % (directory, name)
                     )
                     if os.path.isfile(full_path):
+                        # TODO: only do this append if below did not run
                         keyfiles.append((keytype, full_path))
                         if os.path.isfile(full_path + '-cert.pub'):
                             keyfiles.append((keytype, full_path + '-cert.pub'))
