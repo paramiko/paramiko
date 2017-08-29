@@ -477,3 +477,10 @@ class PublicBlob(object):
             return '%s public key/certificate - %s' % (self.key_type, self.comment)
         else:
             return '%s public key/certificate' % self.key_type
+
+    def __eq__(self, other):
+        # Just piggyback on Message/BytesIO, since both of these should be one.
+        return self and other and self.key_blob == other.key_blob
+
+    def __ne__(self, other):
+        return not self == other
