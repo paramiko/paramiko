@@ -263,24 +263,28 @@ class SSHClientTest (unittest.TestCase):
         # NOTE: giving cert path here, not key path. (Key path test is below.
         # They're similar except for which path is given; the expected auth and
         # server-side behavior is 100% identical.)
-        cert_path = test_path('test_rsa.key-cert.pub')
-        self._test_connection(
-            key_filename=cert_path,
-            public_blob=PublicBlob.from_file(cert_path),
-        )
+        for type_ in ('rsa', 'dss', 'ecdsa_256', 'ed25519'):
+            cert_path = test_path('test_{}.key-cert.pub'.format(type_))
+            self._test_connection(
+                key_filename=cert_path,
+                public_blob=PublicBlob.from_file(cert_path),
+            )
 
     def test_certs_implicitly_loaded_alongside_key_filename_keys(self):
         # NOTE: a regular test_connection() w/ test_rsa.key would incidentally
-        # test this (because test_rsa.key-cert.pub exists) but incidental tests
+        # test this (because test_xxx.key-cert.pub exists) but incidental tests
         # stink, so NullServer and friends were updated to allow assertions
         # about the server-side key object's public blob. Thus, we can prove
         # that a specific cert was found, along with regular authorization
         # succeeding proving that the overall flow works.
-        key_path = test_path('test_rsa.key')
-        self._test_connection(
-            key_filename=key_path,
-            public_blob=PublicBlob.from_file('{0}-cert.pub'.format(key_path)),
-        )
+        for type_ in ('rsa', 'dss', 'ecdsa', 'ed25519'):
+            key_path = test_path('test_{}.key'.format(type_))
+            self._test_connection(
+                key_filename=key_path,
+                public_blob=PublicBlob.from_file(
+                    '{0}-cert.pub'.format(key_path)
+                ),
+            )
 
     def test_default_key_locations_trigger_cert_loads_if_found(self):
         # TODO: what it says on the tin: ~/.ssh/id_rsa tries to load
