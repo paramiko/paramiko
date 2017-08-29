@@ -491,7 +491,7 @@ class KeyTest(unittest.TestCase):
         self.assertEqual(key.public_blob.comment, 'test_rsa.key.pub')
         # Delve into blob contents, for test purposes
         msg = Message(key.public_blob.key_blob)
-        self.assertEqual(msg.get_string(), 'ssh-rsa-cert-v01@openssh.com')
+        self.assertEqual(msg.get_text(), 'ssh-rsa-cert-v01@openssh.com')
         nonce = msg.get_string()
         e = msg.get_mpint()
         n = msg.get_mpint()

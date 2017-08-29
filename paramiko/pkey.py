@@ -493,7 +493,7 @@ class PublicBlob(object):
             msg = "Not enough fields for public blob: {0}"
             raise ValueError(msg.format(fields))
         key_type = fields[0]
-        key_blob = decodebytes(fields[1])
+        key_blob = decodebytes(b(fields[1]))
         try:
             comment = fields[2].strip()
         except IndexError:
@@ -501,7 +501,7 @@ class PublicBlob(object):
         # Verify that the blob message first (string) field matches the
         # key_type
         m = Message(key_blob)
-        blob_type = m.get_string()
+        blob_type = m.get_text()
         if blob_type != key_type:
             msg = "Invalid PublicBlob contents: key type={0!r}, but blob type={1!r}" # noqa
             raise ValueError(msg.format(key_type, blob_type))
