@@ -392,7 +392,6 @@ class PKey(object):
         # introspection first!)
         msg.rewind()
         type_ = msg.get_text()
-        nonce = None
         # Regular public key - nothing special to do besides the implicit
         # type check.
         if type_ in key_types:
@@ -408,7 +407,7 @@ class PKey(object):
             # Read out nonce as it comes before the public numbers.
             # TODO: usefully interpret it & other non-public-number fields
             # (requires going back into per-type subclasses.)
-            nonce = msg.get_string()
+            msg.get_string()
         else:
             err = 'Invalid key (class: {0}, data type: {1}'
             raise SSHException(err.format(self.__class__.__name__, type_))
@@ -425,7 +424,8 @@ class PKey(object):
         the client side to offer authentication requests to the server
         based on certificate instead of raw public key.
 
-        See: https://github.com/openssh/openssh-portable/blob/master/PROTOCOL.certkeys
+        See:
+        https://github.com/openssh/openssh-portable/blob/master/PROTOCOL.certkeys
 
         Note: very little effort is made to validate the certificate contents,
         that is for the server to decide if it is good enough to authenticate
@@ -439,8 +439,8 @@ class PKey(object):
             constructor = 'from_string'
         blob = getattr(PublicBlob, constructor)(value)
         if not blob.key_type.startswith(self.get_name()):
-            raise ValueError('PublicBlob type %s incompatible with key type %s' %
-                (blob.key_type, self.get_name()))
+            err = "PublicBlob type {0} incompatible with key type {1}"
+            raise ValueError(err.format(blob.key_type, self.get_name()))
         self.public_blob = blob
 
 
@@ -520,10 +520,10 @@ class PublicBlob(object):
         return cls(type_=type_, blob=message.asbytes())
 
     def __str__(self):
+        ret = '{0} public key/certificate'.format(self.key_type)
         if self.comment:
-            return '%s public key/certificate - %s' % (self.key_type, self.comment)
-        else:
-            return '%s public key/certificate' % self.key_type
+            ret += "- {0}".format(self.comment)
+        return ret
 
     def __eq__(self, other):
         # Just piggyback on Message/BytesIO, since both of these should be one.
