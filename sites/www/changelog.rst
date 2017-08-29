@@ -7,8 +7,8 @@ Changelog
   previously this error case had a bare except and did not display exactly why
   the key failed. It will now append info such as ``KeyError:
   'some-unknown-type-string'`` or similar.
-* :feature:`1042` (also partially :issue:`531`) Implement generic (suitable for
-  all key types) client-side certificate authentication.
+* :feature:`1042` (also partially :issue:`531`) Implement basic client-side
+  certificate authentication (as per the OpenSSH vendor extension.)
 
   The core implementation is `PKey.load_certificate
   <paramiko.pkey.PKey.load_certificate>` and its corresponding ``.public_blob``
@@ -18,9 +18,17 @@ Changelog
   has appropriately-named cert files (e.g. ``id_rsa-cert.pub``) - see its
   docstring for details.
 
-  Thanks to Paul Kapp for the final patch, and to Jason Rigby for earlier work
-  in :issue:`531` (which remains open as it contains additional functionality
-  that may get merged later.)
+  Thanks to Jason Rigby for a first draft (:issue:`531`) and to Paul Kapp for
+  the second draft, upon which the current functionality has been based (with
+  modifications.)
+
+  .. note::
+    This support is client-focused; Paramiko-driven server code is capable of
+    handling cert-bearing pubkey auth packets, *but* it does not interpret any
+    cert-specific fields, so the end result is functionally identical to a
+    vanilla pubkey auth process (and thus requires e.g. prepopulated
+    authorized-keys data.) We expect full server-side cert support to follow
+    later.
 
 * :support:`1041` Modify logic around explicit disconnect
   messages, and unknown-channel situations, so that they rely on centralized
