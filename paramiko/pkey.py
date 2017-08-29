@@ -413,7 +413,6 @@ class PKey(object):
             err = 'Invalid key (class: {0}, data type: {1}'
             raise SSHException(err.format(self.__class__.__name__, type_))
 
-
     def load_certificate(self, value):
         """
         Supplement the private key contents with data loaded from an OpenSSH

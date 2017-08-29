@@ -214,6 +214,7 @@ class Transport(threading.Thread, ClosingContextManager):
         'ecdsa-sha2-nistp521': ECDSAKey,
         'ecdsa-sha2-nistp521-cert-v01@openssh.com': ECDSAKey,
         'ssh-ed25519': Ed25519Key,
+        'ssh-ed25519-cert-v01@openssh.com': Ed25519Key,
     }
 
     _kex_info = {
