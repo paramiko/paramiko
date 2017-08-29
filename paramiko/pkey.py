@@ -31,7 +31,7 @@ from cryptography.hazmat.primitives.ciphers import algorithms, modes, Cipher
 
 from paramiko import util
 from paramiko.common import o600
-from paramiko.py3compat import u, encodebytes, decodebytes, b
+from paramiko.py3compat import u, encodebytes, decodebytes, b, string_types
 from paramiko.ssh_exception import SSHException, PasswordRequiredException
 from paramiko.message import Message
 
@@ -372,19 +372,35 @@ class PKey(object):
         This includes fast-forwarding cert ``msg`` objects past the nonce, so
         that the subsequent fields are the key numbers; thus the caller may
         expect to treat the message as key material afterwards either way.
+
+        The obtained key type is returned for classes which need to know what
+        it was (e.g. ECDSA.)
         """
+        # Normalization; most classes have a single key type and give a string,
+        # but eg ECDSA is a 1:N mapping.
+        key_types = key_type
+        cert_types = cert_type
+        if isinstance(key_type, string_types):
+            key_types = [key_types]
+        if isinstance(cert_types, string_types):
+            cert_types = [cert_types]
+        # Can't do much with no message, that should've been handled elsewhere
         if msg is None:
             raise SSHException('Key object may not be empty')
+        # First field is always key type, in either kind of object. (make sure
+        # we rewind before grabbing it - sometimes caller had to do their own
+        # introspection first!)
+        msg.rewind()
         type_ = msg.get_text()
         nonce = None
         # Regular public key - nothing special to do besides the implicit
         # type check.
-        if type_ == key_type:
+        if type_ in key_types:
             pass
         # OpenSSH-compatible certificate - store full copy as .public_blob
         # (so signing works correctly) and then fast-forward past the
         # nonce.
-        elif type_ == cert_type:
+        elif type_ in cert_types:
             # This seems the cleanest way to 'clone' an already-being-read
             # message; they're *IO objects at heart and their .getvalue()
             # always returns the full value regardless of pointer position.
