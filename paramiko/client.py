@@ -541,7 +541,7 @@ class SSHClient (ClosingContextManager):
         self._log(DEBUG, msg)
         # Attempt to load cert if it exists.
         if os.path.isfile(cert_path):
-            key.load_certificate(pubkey_filename=cert_path)
+            key.load_certificate(cert_path)
             self._log(DEBUG, "Adding public certificate {0}".format(cert_path))
         return key
 

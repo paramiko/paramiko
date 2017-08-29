@@ -485,7 +485,7 @@ class KeyTest(unittest.TestCase):
         # PKey.load_certificate
         key = RSAKey.from_private_key_file(test_path('test_rsa.key'))
         self.assertTrue(key.public_blob is None)
-        key.load_certificate(pubkey_filename=test_path('test_rsa.key-cert.pub'))
+        key.load_certificate(test_path('test_rsa.key-cert.pub'))
         self.assertTrue(key.public_blob is not None)
         self.assertEqual(key.public_blob.key_type, 'ssh-rsa-cert-v01@openssh.com')
         self.assertEqual(key.public_blob.comment, 'test_rsa.key.pub')
@@ -502,5 +502,8 @@ class KeyTest(unittest.TestCase):
 
         # Prevented from loading certificate that doesn't match
         key1 = Ed25519Key.from_private_key_file(test_path('test_ed25519.key'))
-        self.assertRaises(ValueError, key1.load_certificate,
-            pubkey_filename=test_path('test_rsa.key-cert.pub'))
+        self.assertRaises(
+            ValueError,
+            key1.load_certificate,
+            test_path('test_rsa.key-cert.pub'),
+        )
