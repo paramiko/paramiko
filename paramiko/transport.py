@@ -206,6 +206,7 @@ class Transport(threading.Thread, ClosingContextManager):
         'ssh-rsa': RSAKey,
         'ssh-rsa-cert-v01@openssh.com': RSAKey,
         'ssh-dss': DSSKey,
+        'ssh-dss-cert-v01@openssh.com': DSSKey,
         'ecdsa-sha2-nistp256': ECDSAKey,
         'ecdsa-sha2-nistp384': ECDSAKey,
         'ecdsa-sha2-nistp521': ECDSAKey,
