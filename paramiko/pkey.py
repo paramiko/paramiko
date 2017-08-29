@@ -517,7 +517,6 @@ class PublicBlob(object):
         OpenSSH-style certificates 'are' their own network representation."
         """
         type_ = message.get_text()
-        message.rewind()
         return cls(type_=type_, blob=message.asbytes())
 
     def __str__(self):
