@@ -365,6 +365,38 @@ class PKey(object):
             encryption
         ).decode())
 
+    def _check_type_and_load_cert(self, msg, key_type, cert_type):
+        """
+        Perform message type-checking & optional certificate loading.
+
+        This includes fast-forwarding cert ``msg`` objects past the nonce, so
+        that the subsequent fields are the key numbers; thus the caller may
+        expect to treat the message as key material afterwards either way.
+        """
+        if msg is None:
+            raise SSHException('Key object may not be empty')
+        type_ = msg.get_text()
+        nonce = None
+        # Regular public key - nothing special to do besides the implicit
+        # type check.
+        if type_ == key_type:
+            pass
+        # OpenSSH-compatible certificate - store full copy as .public_blob
+        # (so signing works correctly) and then fast-forward past the
+        # nonce.
+        elif type_ == cert_type:
+            # This seems the cleanest way to 'clone' an already-being-read
+            # message; they're *IO objects at heart and their .getvalue()
+            # always returns the full value regardless of pointer position.
+            self.load_certificate(Message(msg.asbytes()))
+            # Read out nonce as it comes before the public numbers.
+            # TODO: usefully interpret it & other non-public-number fields
+            # (requires going back into per-type subclasses.)
+            nonce = msg.get_string()
+        else:
+            raise SSHException('Invalid key')
+
+
     def load_certificate(self, value):
         """
         Supplement the private key contents with data loaded from an OpenSSH

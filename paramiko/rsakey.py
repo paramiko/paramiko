@@ -52,28 +52,11 @@ class RSAKey(PKey):
         if key is not None:
             self.key = key
         else:
-            if msg is None:
-                raise SSHException('Key object may not be empty')
-            type_ = msg.get_text()
-            nonce = None
-            # Regular public key - nothing special to do besides the implicit
-            # type check.
-            if type_ == 'ssh-rsa':
-                pass
-            # OpenSSH-compatible certificate - store full copy as .public_blob
-            # (so signing works correctly) and then fast-forward past the
-            # nonce.
-            elif type_ == 'ssh-rsa-cert-v01@openssh.com':
-                # This seems the cleanest way to 'clone' an already-being-read
-                # message?
-                self.load_certificate(Message(msg.asbytes()))
-                # Read out nonce as it comes before the public numbers.
-                # TODO: usefully interpret it & other non-public-number fields
-                nonce = msg.get_string()
-            else:
-                raise SSHException('Invalid key')
-            # Now that we've read type and (possibly) nonce, public numbers are
-            # next in either case.
+            self._check_type_and_load_cert(
+                msg=msg,
+                key_type='ssh-rsa',
+                cert_type='ssh-rsa-cert-v01@openssh.com',
+            )
             self.key = rsa.RSAPublicNumbers(
                 e=msg.get_mpint(), n=msg.get_mpint()
             ).public_key(default_backend())
