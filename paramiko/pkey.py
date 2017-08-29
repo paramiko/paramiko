@@ -394,7 +394,8 @@ class PKey(object):
             # (requires going back into per-type subclasses.)
             nonce = msg.get_string()
         else:
-            raise SSHException('Invalid key')
+            err = 'Invalid key (class: {0}, data type: {1}'
+            raise SSHException(err.format(self.__class__.__name__, type_))
 
 
     def load_certificate(self, value):
@@ -487,8 +488,8 @@ class PublicBlob(object):
         m = Message(key_blob)
         blob_type = m.get_string()
         if blob_type != key_type:
-            msg = "Invalid PublicBlob contents: key type {0!r}, expected {1!r}"
-            raise ValueError(msg.format(blob_type, key_type))
+            msg = "Invalid PublicBlob contents: key type={0!r}, but blob type={1!r}" # noqa
+            raise ValueError(msg.format(key_type, blob_type))
         # All good? All good.
         return cls(type_=key_type, blob=key_blob, comment=comment)
 
