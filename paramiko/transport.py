@@ -1009,7 +1009,7 @@ class Transport(threading.Thread, ClosingContextManager):
             return x.global_request('keepalive@lag.net', wait=False)
         self.packetizer.set_keepalive(interval, _request)
 
-    def global_request(self, kind, data=None, wait=True):
+    def global_request(self, kind, data=None, wait=5):
         """
         Make a global request to the remote host.  These are normally
         extensions to the SSH2 protocol.
@@ -1018,13 +1018,18 @@ class Transport(threading.Thread, ClosingContextManager):
         :param tuple data:
             an optional tuple containing additional data to attach to the
             request.
-        :param bool wait:
-            ``True`` if this method should not return until a response is
-            received; ``False`` otherwise.
+        :param int wait:
+            ``False`` or ''0'' if this method should not wait until a response
+            is received; `int` sets up a timeout for awaiting response.
+            ''True'' sets timeout to the default of 5s.
+
         :return:
             a `.Message` containing possible additional data if the request was
             successful (or an empty `.Message` if ``wait`` was ``False``);
             ``None`` if the request was denied.
+
+        :raises:
+            `.SSHException` -- if there is a timeout making a global request
         """
         if wait:
             self.completion_event = threading.Event()
@@ -1038,13 +1043,17 @@ class Transport(threading.Thread, ClosingContextManager):
         self._send_user_message(m)
         if not wait:
             return None
-        while True:
+        # sets default timeout to 5 in case ``wait`` == True
+        timeout = 5 if isinstance(wait, bool) else wait
+        start_ts = time.time()
+        while start_ts + timeout > time.time():
             self.completion_event.wait(0.1)
             if not self.active:
                 return None
             if self.completion_event.is_set():
-                break
-        return self.global_response
+                return self.global_response
+        else:
+            raise SSHException('Timeout making a global request')
 
     def accept(self, timeout=None):
         """

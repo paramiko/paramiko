@@ -30,6 +30,7 @@ import threading
 import random
 from hashlib import sha1
 import unittest
+import mock
 
 from paramiko import (
     Transport, SecurityOptions, ServerInterface, RSAKey, DSSKey, SSHException,
@@ -927,3 +928,50 @@ class TransportTest(unittest.TestCase):
             # sendall() accepts a memoryview instance
             chan.sendall(memoryview(data))
             self.assertEqual(sfile.read(len(data)), data)
+
+    def test_global_request_timeout(self):
+        """
+        verify global_request timeouts.
+        """
+        self.setup_test_server()
+
+        # set each time() call 6s away from each other
+        mock_time = mock.Mock()
+        mock_time.side_effect = [new_time for new_time in range(100, 500, 6)]
+
+        chan = self.tc.open_session()
+
+        schan = self.ts.accept(1.0)
+
+        with mock.patch('time.time', mock_time):
+
+            # timeout should throw exception, as default wait time is 5s
+            self.assertRaises(SSHException,
+                              self.tc.global_request,
+                              "tcpip-forward",
+                              ("aaa", 9998),
+                              wait=True)
+
+            # timeout shouldn't throw SSHException
+            self.tc.global_request(
+                "tcpip-forward",
+                ("aaa", 9998),
+                wait=7)
+
+            # timeout should throw exception
+            self.assertRaises(SSHException,
+                              self.tc.global_request,
+                              "tcpip-forward",
+                              ("aaa", 9998),
+                              wait=1)
+
+            # timeout shouldn't throw SSHException, as it won't work without
+            # 'wait' flag set up
+            self.tc.global_request(
+                "tcpip-forward",
+                ("aaa", 9998),
+                wait=False)
+
+            # tidy up
+            chan.close()
+            schan.close()
