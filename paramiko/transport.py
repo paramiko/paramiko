@@ -372,7 +372,7 @@ class Transport(threading.Thread, ClosingContextManager):
                     try:
                         retry_on_signal(lambda: sock.connect((hostname, port)))
                     except socket.error as e:
-                        reason = str(e)
+                        reason = str(e) or repr(e)
                     else:
                         break
             else:
@@ -2068,14 +2068,7 @@ class Transport(threading.Thread, ClosingContextManager):
                 self._log(DEBUG, "EOF in transport thread")
                 self.saved_exception = e
             except socket.error as e:
-                if type(e.args) is tuple:
-                    if e.args:
-                        emsg = "{} ({:d})".format(e.args[1], e.args[0])
-                    else:  # empty tuple, e.g. socket.timeout
-                        emsg = str(e) or repr(e)
-                else:
-                    emsg = e.args
-                self._log(ERROR, "Socket exception: " + emsg)
+                self._log(ERROR, "Socket exception: " + (str(e) or repr(e)))
                 self.saved_exception = e
             except Exception as e:
                 self._log(ERROR, "Unknown exception: " + str(e))
