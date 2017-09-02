@@ -265,7 +265,7 @@ class SSHClientTest (unittest.TestCase):
         # server-side behavior is 100% identical.)
         # NOTE: only bothered whipping up one cert per overall class/family.
         for type_ in ('rsa', 'dss', 'ecdsa_256', 'ed25519'):
-            cert_path = test_path('test_{}.key-cert.pub'.format(type_))
+            cert_path = test_path('test_{0}.key-cert.pub'.format(type_))
             self._test_connection(
                 key_filename=cert_path,
                 public_blob=PublicBlob.from_file(cert_path),
@@ -279,7 +279,7 @@ class SSHClientTest (unittest.TestCase):
         # that a specific cert was found, along with regular authorization
         # succeeding proving that the overall flow works.
         for type_ in ('rsa', 'dss', 'ecdsa_256', 'ed25519'):
-            key_path = test_path('test_{}.key'.format(type_))
+            key_path = test_path('test_{0}.key'.format(type_))
             self._test_connection(
                 key_filename=key_path,
                 public_blob=PublicBlob.from_file(

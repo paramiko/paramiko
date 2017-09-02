@@ -134,7 +134,7 @@ class ECDSAKey(PKey):
             )
             key_types = self._ECDSA_CURVES.get_key_format_identifier_list()
             cert_types = [
-                '{}-cert-v01@openssh.com'.format(x)
+                '{0}-cert-v01@openssh.com'.format(x)
                 for x in key_types
             ]
             self._check_type_and_load_cert(
