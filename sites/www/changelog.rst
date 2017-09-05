@@ -2,6 +2,9 @@
 Changelog
 =========
 
+* :bug:`1039` Ed25519 auth key decryption raised an unexpected exception when
+  given a unicode password string (typical in python 3).
+  Report by Theodor van Nahl and fix by Pierce Lopez.
 * :support:`1012` (via :issue:`1016`) Enhance documentation around the new
   `SFTP.posix_rename <paramiko.sftp_client.SFTPClient.posix_rename>` method so
   it's referenced in the 'standard' ``rename`` method for increased visibility.
