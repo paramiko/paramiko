@@ -5,6 +5,39 @@ Changelog
 * :bug:`60` Improved the performance of compressed transport by using default
   zlib compression level (which is 6) rather than the max level of 9 which is
   very CPU intensive.
+* :support:`-` Display exception type and message when logging auth-rejection
+  messages (ones reading ``Auth rejected: unsupported or mangled public key``);
+  previously this error case had a bare except and did not display exactly why
+  the key failed. It will now append info such as ``KeyError:
+  'some-unknown-type-string'`` or similar.
+* :feature:`1042` (also partially :issue:`531`) Implement basic client-side
+  certificate authentication (as per the OpenSSH vendor extension.)
+
+  The core implementation is `PKey.load_certificate
+  <paramiko.pkey.PKey.load_certificate>` and its corresponding ``.public_blob``
+  attribute on key objects, which is honored in the auth and transport modules.
+  Additionally, `SSHClient.connect <paramiko.client.SSHClient.connect>` will
+  now automatically load certificate data alongside private key data when one
+  has appropriately-named cert files (e.g. ``id_rsa-cert.pub``) - see its
+  docstring for details.
+
+  Thanks to Jason Rigby for a first draft (:issue:`531`) and to Paul Kapp for
+  the second draft, upon which the current functionality has been based (with
+  modifications.)
+
+  .. note::
+    This support is client-focused; Paramiko-driven server code is capable of
+    handling cert-bearing pubkey auth packets, *but* it does not interpret any
+    cert-specific fields, so the end result is functionally identical to a
+    vanilla pubkey auth process (and thus requires e.g. prepopulated
+    authorized-keys data.) We expect full server-side cert support to follow
+    later.
+
+* :support:`1041` Modify logic around explicit disconnect
+  messages, and unknown-channel situations, so that they rely on centralized
+  shutdown code instead of running their own. This is at worst removing some
+  unnecessary code, and may help with some situations where Paramiko hangs at
+  the end of a session. Thanks to Paul Kapp for the patch.
 * :support:`1012` (via :issue:`1016`) Enhance documentation around the new
   `SFTP.posix_rename <paramiko.sftp_client.SFTPClient.posix_rename>` method so
   it's referenced in the 'standard' ``rename`` method for increased visibility.

@@ -40,6 +40,7 @@ class RSAKey(PKey):
     def __init__(self, msg=None, data=None, filename=None, password=None,
                  key=None, file_obj=None):
         self.key = None
+        self.public_blob = None
         if file_obj is not None:
             self._from_private_key(file_obj, password)
             return
@@ -51,10 +52,11 @@ class RSAKey(PKey):
         if key is not None:
             self.key = key
         else:
-            if msg is None:
-                raise SSHException('Key object may not be empty')
-            if msg.get_text() != 'ssh-rsa':
-                raise SSHException('Invalid key')
+            self._check_type_and_load_cert(
+                msg=msg,
+                key_type='ssh-rsa',
+                cert_type='ssh-rsa-cert-v01@openssh.com',
+            )
             self.key = rsa.RSAPublicNumbers(
                 e=msg.get_mpint(), n=msg.get_mpint()
             ).public_key(default_backend())
