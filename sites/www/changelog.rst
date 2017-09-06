@@ -2,6 +2,11 @@
 Changelog
 =========
 
+* :support:`-` Ed25519 keys never got proper API documentation support; this
+  has been fixed.
+* :feature:`1026` Update `~paramiko.ed25519key.Ed25519Key` so its constructor
+  offers the same ``file_obj`` parameter as its sibling key classes. Credit:
+  Michal Kuffa.
 * :feature:`1013` Added pre-authentication banner support for the server
   interface (`ServerInterface.get_banner
   <paramiko.server.ServerInterface.get_banner>` plus related support in
