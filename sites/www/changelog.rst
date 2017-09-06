@@ -2,6 +2,10 @@
 Changelog
 =========
 
+* :feature:`1013` Added pre-authentication banner support for the server
+  interface (`ServerInterface.get_banner
+  <paramiko.server.ServerInterface.get_banner>` plus related support in
+  ``Transport/AuthHandler``.) Patch courtesy of Dennis Kaarsemaker.
 * :bug:`60 major` (via :issue:`1037`) Paramiko originally defaulted to zlib
   compression level 9 (when one connects with ``compression=True``; it defaults
   to off.) This has been found to be quite wasteful and tends to cause much
