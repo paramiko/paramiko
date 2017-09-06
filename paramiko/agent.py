@@ -387,6 +387,7 @@ class AgentKey(PKey):
     def __init__(self, agent, blob):
         self.agent = agent
         self.blob = blob
+        self.public_blob = None
         self.name = Message(blob).get_text()
 
     def asbytes(self):
