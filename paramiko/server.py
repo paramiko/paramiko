@@ -579,6 +579,8 @@ class ServerInterface (object):
         The default implementation always returns ``(None, None)``.
 
         :returns: A tuple containing the banner and language code.
+
+        .. versionadded:: 2.3
         """
         return (None, None)
 
