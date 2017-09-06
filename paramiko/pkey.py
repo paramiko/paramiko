@@ -31,8 +31,9 @@ from cryptography.hazmat.primitives.ciphers import algorithms, modes, Cipher
 
 from paramiko import util
 from paramiko.common import o600
-from paramiko.py3compat import u, encodebytes, decodebytes, b
+from paramiko.py3compat import u, encodebytes, decodebytes, b, string_types
 from paramiko.ssh_exception import SSHException, PasswordRequiredException
+from paramiko.message import Message
 
 
 class PKey(object):
@@ -363,3 +364,170 @@ class PKey(object):
             format,
             encryption
         ).decode())
+
+    def _check_type_and_load_cert(self, msg, key_type, cert_type):
+        """
+        Perform message type-checking & optional certificate loading.
+
+        This includes fast-forwarding cert ``msg`` objects past the nonce, so
+        that the subsequent fields are the key numbers; thus the caller may
+        expect to treat the message as key material afterwards either way.
+
+        The obtained key type is returned for classes which need to know what
+        it was (e.g. ECDSA.)
+        """
+        # Normalization; most classes have a single key type and give a string,
+        # but eg ECDSA is a 1:N mapping.
+        key_types = key_type
+        cert_types = cert_type
+        if isinstance(key_type, string_types):
+            key_types = [key_types]
+        if isinstance(cert_types, string_types):
+            cert_types = [cert_types]
+        # Can't do much with no message, that should've been handled elsewhere
+        if msg is None:
+            raise SSHException('Key object may not be empty')
+        # First field is always key type, in either kind of object. (make sure
+        # we rewind before grabbing it - sometimes caller had to do their own
+        # introspection first!)
+        msg.rewind()
+        type_ = msg.get_text()
+        # Regular public key - nothing special to do besides the implicit
+        # type check.
+        if type_ in key_types:
+            pass
+        # OpenSSH-compatible certificate - store full copy as .public_blob
+        # (so signing works correctly) and then fast-forward past the
+        # nonce.
+        elif type_ in cert_types:
+            # This seems the cleanest way to 'clone' an already-being-read
+            # message; they're *IO objects at heart and their .getvalue()
+            # always returns the full value regardless of pointer position.
+            self.load_certificate(Message(msg.asbytes()))
+            # Read out nonce as it comes before the public numbers.
+            # TODO: usefully interpret it & other non-public-number fields
+            # (requires going back into per-type subclasses.)
+            msg.get_string()
+        else:
+            err = 'Invalid key (class: {0}, data type: {1}'
+            raise SSHException(err.format(self.__class__.__name__, type_))
+
+    def load_certificate(self, value):
+        """
+        Supplement the private key contents with data loaded from an OpenSSH
+        public key (``.pub``) or certificate (``-cert.pub``) file, a string
+        containing such a file, or a `.Message` object.
+
+        The .pub contents adds no real value, since the private key
+        file includes sufficient information to derive the public
+        key info. For certificates, however, this can be used on
+        the client side to offer authentication requests to the server
+        based on certificate instead of raw public key.
+
+        See:
+        https://github.com/openssh/openssh-portable/blob/master/PROTOCOL.certkeys
+
+        Note: very little effort is made to validate the certificate contents,
+        that is for the server to decide if it is good enough to authenticate
+        successfully.
+        """
+        if isinstance(value, Message):
+            constructor = 'from_message'
+        elif os.path.isfile(value):
+            constructor = 'from_file'
+        else:
+            constructor = 'from_string'
+        blob = getattr(PublicBlob, constructor)(value)
+        if not blob.key_type.startswith(self.get_name()):
+            err = "PublicBlob type {0} incompatible with key type {1}"
+            raise ValueError(err.format(blob.key_type, self.get_name()))
+        self.public_blob = blob
+
+
+# General construct for an OpenSSH style Public Key blob
+# readable from a one-line file of the format:
+#     <key-name> <base64-blob> [<comment>]
+# Of little value in the case of standard public keys
+# {ssh-rsa, ssh-dss, ssh-ecdsa, ssh-ed25519}, but should
+# provide rudimentary support for {*-cert.v01}
+class PublicBlob(object):
+    """
+    OpenSSH plain public key or OpenSSH signed public key (certificate).
+
+    Tries to be as dumb as possible and barely cares about specific
+    per-key-type data.
+
+    ..note::
+        Most of the time you'll want to call `from_file`, `from_string` or
+        `from_message` for useful instantiation, the main constructor is
+        basically "I should be using ``attrs`` for this."
+    """
+    def __init__(self, type_, blob, comment=None):
+        """
+        Create a new public blob of given type and contents.
+
+        :param str type_: Type indicator, eg ``ssh-rsa``.
+        :param blob: The blob bytes themselves.
+        :param str comment: A comment, if one was given (e.g. file-based.)
+        """
+        self.key_type = type_
+        self.key_blob = blob
+        self.comment = comment
+
+    @classmethod
+    def from_file(cls, filename):
+        """
+        Create a public blob from a ``-cert.pub``-style file on disk.
+        """
+        with open(filename) as f:
+            string = f.read()
+        return cls.from_string(string)
+
+    @classmethod
+    def from_string(cls, string):
+        """
+        Create a public blob from a ``-cert.pub``-style string.
+        """
+        fields = string.split(None, 2)
+        if len(fields) < 2:
+            msg = "Not enough fields for public blob: {0}"
+            raise ValueError(msg.format(fields))
+        key_type = fields[0]
+        key_blob = decodebytes(b(fields[1]))
+        try:
+            comment = fields[2].strip()
+        except IndexError:
+            comment = None
+        # Verify that the blob message first (string) field matches the
+        # key_type
+        m = Message(key_blob)
+        blob_type = m.get_text()
+        if blob_type != key_type:
+            msg = "Invalid PublicBlob contents: key type={0!r}, but blob type={1!r}" # noqa
+            raise ValueError(msg.format(key_type, blob_type))
+        # All good? All good.
+        return cls(type_=key_type, blob=key_blob, comment=comment)
+
+    @classmethod
+    def from_message(cls, message):
+        """
+        Create a public blob from a network `.Message`.
+
+        Specifically, a cert-bearing pubkey auth packet, because by definition
+        OpenSSH-style certificates 'are' their own network representation."
+        """
+        type_ = message.get_text()
+        return cls(type_=type_, blob=message.asbytes())
+
+    def __str__(self):
+        ret = '{0} public key/certificate'.format(self.key_type)
+        if self.comment:
+            ret += "- {0}".format(self.comment)
+        return ret
+
+    def __eq__(self, other):
+        # Just piggyback on Message/BytesIO, since both of these should be one.
+        return self and other and self.key_blob == other.key_blob
+
+    def __ne__(self, other):
+        return not self == other

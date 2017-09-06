@@ -50,8 +50,11 @@ class Ed25519Key(PKey):
         if msg is None and data is not None:
             msg = Message(data)
         if msg is not None:
-            if msg.get_text() != "ssh-ed25519":
-                raise SSHException("Invalid key")
+            self._check_type_and_load_cert(
+                msg=msg,
+                key_type="ssh-ed25519",
+                cert_type="ssh-ed25519-cert-v01@openssh.com",
+            )
             verifying_key = nacl.signing.VerifyKey(msg.get_binary())
         elif filename is not None:
             with open(filename, "r") as f:

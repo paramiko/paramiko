@@ -194,6 +194,11 @@ class SFTPServerInterface (object):
             ``newpath`` already exists.  (The rename operation should be
             non-desctructive.)
 
+        .. note::
+            This method implements 'standard' SFTP ``RENAME`` behavior; those
+            seeking the OpenSSH "POSIX rename" extension behavior should use
+            `posix_rename`.
+
         :param str oldpath:
             the requested path (relative or absolute) of the existing file.
         :param str newpath: the requested new path of the file.
@@ -210,6 +215,8 @@ class SFTPServerInterface (object):
             the requested path (relative or absolute) of the existing file.
         :param str newpath: the requested new path of the file.
         :return: an SFTP error code `int` like ``SFTP_OK``.
+
+        :versionadded: 2.2
         """
         return SFTP_OP_UNSUPPORTED
 
