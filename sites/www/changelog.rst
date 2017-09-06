@@ -2,7 +2,7 @@
 Changelog
 =========
 
-* :support:`979` Update how we use `Cryptography <https://cryptography.io>`'s
+* :support:`979` Update how we use `Cryptography <https://cryptography.io>`_'s
   signature/verification methods so we aren't relying on a deprecated API.
   Thanks to Paul Kehrer for the patch.
 
