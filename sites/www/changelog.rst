@@ -2,9 +2,18 @@
 Changelog
 =========
 
-* :bug:`60` Improved the performance of compressed transport by using default
-  zlib compression level (which is 6) rather than the max level of 9 which is
-  very CPU intensive.
+* :bug:`60 major` (via :issue:`1037`) Paramiko originally defaulted to zlib
+  compression level 9 (when one connects with ``compression=True``; it defaults
+  to off.) This has been found to be quite wasteful and tends to cause much
+  longer transfers in most cases, than is necessary.
+
+  OpenSSH defaults to compression level 6, which is a much more reasonable
+  setting (nearly identical compression characteristics but noticeably,
+  sometimes significantly, faster transmission); Paramiko now uses this value
+  instead.
+
+  Thanks to Damien Dubé for the report and ``@DrNeutron`` for investigating &
+  submitting the patch.
 * :support:`-` Display exception type and message when logging auth-rejection
   messages (ones reading ``Auth rejected: unsupported or mangled public key``);
   previously this error case had a bare except and did not display exactly why
