@@ -2,6 +2,14 @@
 Changelog
 =========
 
+* :support:`979` Update how we use `Cryptography <https://cryptography.io>`'s
+  signature/verification methods so we aren't relying on a deprecated API.
+  Thanks to Paul Kehrer for the patch.
+
+  .. warning::
+    This bumps the minimum Cryptography version from 1.1 to 1.5. Such an
+    upgrade should be backwards compatible and easy to do. See `their changelog
+    <https://cryptography.io/en/latest/changelog/>`_ for additional details.
 * :support:`-` Ed25519 keys never got proper API documentation support; this
   has been fixed.
 * :feature:`1026` Update `~paramiko.ed25519key.Ed25519Key` so its constructor
