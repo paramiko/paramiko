@@ -36,7 +36,26 @@ happy.example.com ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAIEA8bP1ZA7DCZDB9J0s50l31M\
 BGQ3GQ/Fc7SX6gkpXkwcZryoi4kNFhHu5LvHcZPdxXV1D+uTMfGS1eyd2Yz/DoNWXNAl8TI0cAsW\
 5ymME3bQ4J/k1IKxCtz/bAlAqFgKoc+EolMziDYqWIATtW0rYTJvzGAzTmMj80/QpsFH+Pc2M=
 """
-
+wildcard_hosts_file= """\
+wi?dcard1.com ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAIEA8bP1ZA7DCZDB9J0s50l31M\
+BGQ3GQ/Fc7SX6gkpXkwcZryoi4kNFhHu5LvHcZPdxXV1D+uTMfGS1eyd2Yz/DoNWXNAl8TI0cAsW\
+5ymME3bQ4J/k1IKxCtz/bAlAqFgKoc+EolMziDYqWIATtW0rYTJvzGAzTmMj80/QpsFH+Pc2M=
+wild*2.com ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAIEA8bP1ZA7DCZDB9J0s50l31M\
+BGQ3GQ/Fc7SX6gkpXkwcZryoi4kNFhHu5LvHcZPdxXV1D+uTMfGS1eyd2Yz/DoNWXNAl8TI0cAsW\
+5ymME3bQ4J/k1IKxCtz/bAlAqFgKoc+EolMziDYqWIATtW0rYTJvzGAzTmMj80/QpsFH+Pc2M=
+[wi?d*3.com]:42 ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAIEA8bP1ZA7DCZDB9J0s50l31M\
+BGQ3GQ/Fc7SX6gkpXkwcZryoi4kNFhHu5LvHcZPdxXV1D+uTMfGS1eyd2Yz/DoNWXNAl8TI0cAsW\
+5ymME3bQ4J/k1IKxCtz/bAlAqFgKoc+EolMziDYqWIATtW0rYTJvzGAzTmMj80/QpsFH+Pc2M=
+[wi?d*4.com]:4? ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAIEA8bP1ZA7DCZDB9J0s50l31M\
+BGQ3GQ/Fc7SX6gkpXkwcZryoi4kNFhHu5LvHcZPdxXV1D+uTMfGS1eyd2Yz/DoNWXNAl8TI0cAsW\
+5ymME3bQ4J/k1IKxCtz/bAlAqFgKoc+EolMziDYqWIATtW0rYTJvzGAzTmMj80/QpsFH+Pc2M=
+*card.com,!wildcard.com ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAIEA8bP1ZA7DCZDB9J0s50\
+l31M\BGQ3GQ/Fc7SX6gkpXkwcZryoi4kNFhHu5LvHcZPdxXV1D+uTMfGS1eyd2Yz/DoNWXNAl8TI0c\
+AsW5ymME3bQ4J/k1IKxCtz/bAlAqFgKoc+EolMziDYqWIATtW0rYTJvzGAzTmMj80/QpsFH+Pc2M=
+example.com ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAIEA8bP1ZA7DCZDB9J0s50l31M\
+BGQ3GQ/Fc7SX6gkpXkwcZryoi4kNFhHu5LvHcZPdxXV1D+uTMfGS1eyd2Yz/DoNWXNAl8TI0cAsW\
+5ymME3bQ4J/k1IKxCtz/bAlAqFgKoc+EolMziDYqWIATtW0rYTJvzGAzTmMj80/QpsFH+Pc2M=
+"""
 keyblob = b"""\
 AAAAB3NzaC1yc2EAAAABIwAAAIEA8bP1ZA7DCZDB9J0s50l31MBGQ3GQ/Fc7SX6gkpXkwcZryoi4k\
 NFhHu5LvHcZPdxXV1D+uTMfGS1eyd2Yz/DoNWXNAl8TI0cAsW5ymME3bQ4J/k1IKxCtz/bAlAqFgK\
@@ -58,9 +77,12 @@ class HostKeysTest (unittest.TestCase):
     def setUp(self):
         with open('hostfile.temp', 'w') as f:
             f.write(test_hosts_file)
+        with open('wildcard.temp', 'w') as f:
+            f.write(wildcard_hosts_file)
 
     def tearDown(self):
         os.unlink('hostfile.temp')
+        os.unlink('wildcard.temp')
 
     def test_1_load(self):
         hostdict = paramiko.HostKeys('hostfile.temp')
@@ -127,3 +149,19 @@ class HostKeysTest (unittest.TestCase):
             pass # Good
         else:
             assert False, "Entry was not deleted from HostKeys on delitem!"
+
+    def test__hostname_matches_with_wildcards(self):
+        hostdict = paramiko.HostKeys('wildcard.temp')
+
+        self.assertTrue(hostdict.lookup('wildcard1.com'))
+        self.assertFalse(hostdict.lookup('willdcard1.com'))
+        self.assertFalse(hostdict.lookup('wilddcard1.com'))
+        self.assertTrue(hostdict.lookup('wildcard2.com'))
+        self.assertTrue(hostdict.lookup('[wildcard3.com]:42'))
+        self.assertTrue(hostdict.lookup('[wildcard4.com]:42'))
+        self.assertFalse(hostdict.lookup('[wildcard4.com]:12'))
+        self.assertFalse(hostdict.lookup('wildcard666.com'))
+        self.assertTrue(hostdict.lookup('example.com'))
+        self.assertFalse(hostdict.lookup('wildcard.com'))
+        self.assertTrue(hostdict.lookup('turbocard.com'))
+

@@ -19,6 +19,7 @@
 
 import binascii
 import os
+import re
 
 from collections import MutableMapping
 from hashlib import sha1
@@ -194,15 +195,46 @@ class HostKeys (MutableMapping):
 
         :returns bool:
         """
+        result = False
         for h in entry.hostnames:
-            if (
-                h == hostname or
-                h.startswith('|1|') and
-                not hostname.startswith('|1|') and
-                constant_time_bytes_eq(self.hash_host(hostname, h), h)
-            ):
+            try:
+                if (
+                    self.wildcard_matches(h, hostname) or
+                    h.startswith('|1|') and
+                    not hostname.startswith('|1|') and
+                    constant_time_bytes_eq(self.hash_host(hostname, h), h)
+                ):
+                    result = True
+            except KnownHostsNegation:
+                return False
+        return result
+
+    @staticmethod
+    def wildcard_matches(wildcard, hostname):
+        """
+        Implements '*' and '?' wildcards and '!' negation as in sshd.
+        :param str wildcard: host name / pattern from known_hosts
+        :param str hostname: target host name
+        :return bool:
+        """
+        wildcard_negation = False
+        if hostname.startswith('|1|'):
+            return False
+        if wildcard.startswith("!"):
+            wildcard_negation = True
+            wildcard = wildcard[1:]
+
+        wildcard = re.escape(wildcard)
+        wildcard = wildcard.replace("\\?", ".")
+        wildcard = wildcard.replace("\\*", ".*")
+
+        if re.match(wildcard, hostname):
+            if wildcard_negation:
+                raise KnownHostsNegation("Hostname negated in known_hosts")
+            else:
                 return True
-        return False
+        else:
+            return False
 
     def check(self, hostname, key):
         """
@@ -382,3 +414,10 @@ class HostKeyEntry:
 
     def __repr__(self):
         return '<HostKeyEntry %r: %r>' % (self.hostnames, self.key)
+
+
+class KnownHostsNegation(Exception):
+    """
+    Raised in case host name matches negation pattern in 'known_hosts'.
+    """
+    pass
