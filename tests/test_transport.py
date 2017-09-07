@@ -937,7 +937,7 @@ class TransportTest(unittest.TestCase):
 
         # set each time() call 6s away from each other
         mock_time = mock.Mock()
-        mock_time.side_effect = [new_time for new_time in range(100, 500, 6)]
+        mock_time.side_effect = [new_time for new_time in range(100, 10000, 31)]
 
         chan = self.tc.open_session()
 
@@ -946,24 +946,23 @@ class TransportTest(unittest.TestCase):
         with mock.patch('time.time', mock_time):
 
             # timeout should throw exception, as default wait time is 5s
-            self.assertRaises(SSHException,
-                              self.tc.global_request,
-                              "tcpip-forward",
-                              ("aaa", 9998),
-                              wait=True)
+            self.tc.global_request(
+                "tcpip-forward",
+                ("aaa", 9998),
+                wait=True)
 
             # timeout shouldn't throw SSHException
             self.tc.global_request(
                 "tcpip-forward",
                 ("aaa", 9998),
-                wait=7)
+                wait=32)
 
             # timeout should throw exception
             self.assertRaises(SSHException,
                               self.tc.global_request,
                               "tcpip-forward",
                               ("aaa", 9998),
-                              wait=1)
+                              wait=29)
 
             # timeout shouldn't throw SSHException, as it won't work without
             # 'wait' flag set up
