@@ -227,8 +227,6 @@ class SSHClient (ClosingContextManager):
         gss_deleg_creds=True,
         gss_host=None,
         banner_timeout=None,
-        pkcs11pin=None,
-        pkcs11provider=None,
         pkcs11session=None,
         auth_timeout=None,
     ):
@@ -282,12 +280,10 @@ class SSHClient (ClosingContextManager):
             The targets name in the kerberos database. default: hostname
         :param float banner_timeout: an optional timeout (in seconds) to wait
             for the SSH banner to be presented.
-        :param str pkcs11pin: If using PKCS11, this will be the pin of your
-            token or smartcard.
-        :param str pkcs11provider: If using PKCS11, this will be the provider
-            for the PKCS11 interface. Example: /usr/local/lib/opensc-pkcs11.so.
-        :param str pkcs11session: If using PKCS11 in a multithreaded
-            application you can share the session between threads.
+        :param str pkcs11session: The pkcs11 session obtained by calling pkcs11_open_session.
+            If using PKCS11 in a multithreaded application you can share the session between threads.
+            You can make multiple calls to connect using the same pkcs11 session.
+            You must call pkcs11_close_session to cleanly close the session.
         :param float auth_timeout: an optional timeout (in seconds) to wait for
             an authentication response.
 
@@ -401,7 +397,7 @@ class SSHClient (ClosingContextManager):
             gss_host = hostname
         self._auth(username, password, pkey, key_filenames, allow_agent,
                    look_for_keys, gss_auth, gss_kex, gss_deleg_creds, gss_host,
-                   pkcs11pin, pkcs11provider, pkcs11session)
+                   pkcs11session)
 
     def close(self):
         """
@@ -511,7 +507,7 @@ class SSHClient (ClosingContextManager):
 
     def _auth(self, username, password, pkey, key_filenames, allow_agent,
               look_for_keys, gss_auth, gss_kex, gss_deleg_creds, gss_host,
-              pkcs11pin, pkcs11provider, pkcs11session):
+              pkcs11session):
         """
         Try, in order:
 
@@ -530,11 +526,10 @@ class SSHClient (ClosingContextManager):
         two_factor_types = set(['keyboard-interactive', 'password'])
 
         # PKCS11 / Smartcard authentication
-        if username is not None and pkcs11pin is not None and \
-           pkcs11provider is not None:
+        if username is not None and pkcs11session is not None:
             try:
                 allowed_types = set(self._transport.auth_pkcs11(username,
-                                    pkcs11pin, pkcs11provider, pkcs11session))
+                                    pkcs11session))
                 two_factor = (allowed_types & two_factor_types)
                 if not two_factor:
                     return
