@@ -57,8 +57,7 @@ from paramiko.rsakey import RSAKey
 from paramiko.ecdsakey import ECDSAKey
 from paramiko.ed25519key import Ed25519Key
 from paramiko.hostkeys import InvalidHostKey
-from paramiko import pkcs11_open_session, pkcs11_close_session
-from paramiko.pkcs11 import pkcs11_get_public_key
+from paramiko.pkcs11 import PKCS11Exception
 
 
 class AuthHandler (object):
@@ -292,7 +291,6 @@ class AuthHandler (object):
                                % self.pkcs11session["provider"])
         lib = cdll.LoadLibrary(self.pkcs11session["provider"])
         session = self.pkcs11session["session"]
-        public_key = self._pkcs11_get_public_key()
         keyret = self.pkcs11session["keyret"]
 
         # Init Signing Data

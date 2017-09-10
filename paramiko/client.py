@@ -294,10 +294,11 @@ class SSHClient (ClosingContextManager):
             The targets name in the kerberos database. default: hostname
         :param float banner_timeout: an optional timeout (in seconds) to wait
             for the SSH banner to be presented.
-        :param str pkcs11session: The pkcs11 session obtained by calling pkcs11_open_session.
-            If using PKCS11 in a multithreaded application you can share the session between threads.
-            You can make multiple calls to connect using the same pkcs11 session.
-            You must call pkcs11_close_session to cleanly close the session.
+        :param str pkcs11session: The pkcs11 session obtained by calling
+            pkcs11_open_session. If using PKCS11 in a multithreaded application
+            you can share the session between threads. You can make multiple
+            calls to connect using the same pkcs11 session. You must call
+            pkcs11_close_session to cleanly close the session.
         :param float auth_timeout: an optional timeout (in seconds) to wait for
             an authentication response.
 

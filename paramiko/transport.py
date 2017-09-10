@@ -1406,7 +1406,7 @@ class Transport(threading.Thread, ClosingContextManager):
     def auth_pkcs11(self, username, pkcs11session, event=None):
         """
         :param str username: the username to authenticate as
-        :param str pkcs11session: pkcs11 session obtained from pkcs11_open_session
+        :param str pkcs11session: session obtained from pkcs11_open_session
         :param .threading.Event event:
             an event to trigger when the authentication attempt is complete
             (whether it was successful or not)

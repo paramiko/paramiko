@@ -3,12 +3,12 @@ from ctypes import (c_void_p, c_ulong, c_int, c_char_p, cast, addressof,
 import subprocess
 import os
 import errno
-from paramiko.ssh_exception import AuthenticationException
+from paramiko.ssh_exception import AuthenticationException, SSHException
 
 
-class PKCS11Exception (Exception):
+class PKCS11Exception (SSHException):
     """
-    Exception raised by failures in PKCS11 protocol negotiation or logic errors.
+    Exception raised by failures in the PKCS11 api or logic errors.
     """
     pass
 
@@ -22,7 +22,7 @@ class PKCS11AuthenticationException (AuthenticationException):
 
 def pkcs11_get_public_key(keyid="01"):
     """
-    :param str pkcs11keyid: The keyid to use for the pkcs11 session, the default is "01".
+    :param str pkcs11keyid: The keyid to use for the pkcs11 session.
     """
     public_key = None
     try:
@@ -45,17 +45,18 @@ def pkcs11_get_public_key(keyid="01"):
     return str(public_key)
 
 
-def pkcs11_open_session(pkcs11provider, pkcs11pin, pkcs11keyid="01", pkcs11slot=0, pkcs11publickey=None):
+def pkcs11_open_session(pkcs11provider, pkcs11pin, pkcs11keyid="01",
+                        pkcs11slot=0, pkcs11publickey=None):
     """
     :param str pkcs11provider: If using PKCS11, this will be the provider
         for the PKCS11 interface. Example: /usr/local/lib/opensc-pkcs11.so.
     :param str pkcs11pin: If using PKCS11, this will be the pin of your
         token or smartcard.
-    :param str pkcs11keyid: The keyid to use for the pkcs11 session, the default is "01".
-    :param int pkcs11slot: The slot id used for establishing the pkcs11 session.
-    :param str pkcs11publickey: If left the default (None), the public key will be
-        detected using OpenSC pkcs15-tool. Alternatively you can provide it manually
-        using this argument.
+    :param str pkcs11keyid: The keyid to use for the pkcs11 session.
+    :param int pkcs11slot: The slot id used for establishing the session.
+    :param str pkcs11publickey: If left the default (None), the public key
+        will be detected using OpenSC pkcs15-tool. Alternatively you can
+        provide it manually using this argument.
     """
     public_key = ""
     session = None
@@ -81,7 +82,7 @@ def pkcs11_open_session(pkcs11provider, pkcs11pin, pkcs11keyid="01", pkcs11slot=
     # Init
     if not os.path.isfile(pkcs11provider):
         raise PKCS11Exception("pkcs11provider path is not valid: %s"
-                        % pkcs11provider)
+                              % pkcs11provider)
     lib = cdll.LoadLibrary(pkcs11provider)
     res = lib.C_Initialize(byref(init_args))
     if res != 0:
@@ -136,19 +137,22 @@ def pkcs11_open_session(pkcs11provider, pkcs11pin, pkcs11keyid="01", pkcs11slot=
     if res != 0:
         raise PKCS11Exception("PKCS11 Failed to Find Objects Final")
 
-    return {"session": session, "public_key": public_key, "keyret": keyret, "provider": pkcs11provider}
+    return {"session": session, "public_key": public_key,
+            "keyret": keyret, "provider": pkcs11provider}
 
 
 def pkcs11_close_session(pkcs11session):
     """
-    :param str pkcs11session: pkcs11 session obtained from calling pkcs11_open_session
+    :param str pkcs11session: pkcs11 session obtained
+        by calling pkcs11_open_session
     """
     if "provider" not in pkcs11session:
-        raise PKCS11Exception("pkcs11 session is missing the provider, the session is not valid")
-    pkcs11provider=pkcs11session["provider"]
+        raise PKCS11Exception("pkcs11 session is missing the provider,\
+                               the session is not valid")
+    pkcs11provider = pkcs11session["provider"]
     if not os.path.isfile(pkcs11provider):
         raise PKCS11Exception("pkcs11provider path is not valid: %s"
-                        % pkcs11provider)
+                              % pkcs11provider)
     lib = cdll.LoadLibrary(pkcs11provider)
     # Wrap things up
     res = lib.C_Finalize(c_int(0))
