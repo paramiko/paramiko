@@ -41,6 +41,7 @@ from paramiko.common import (
     cMSG_USERAUTH_GSSAPI_MIC, MSG_USERAUTH_GSSAPI_RESPONSE,
     MSG_USERAUTH_GSSAPI_TOKEN, MSG_USERAUTH_GSSAPI_ERROR,
     MSG_USERAUTH_GSSAPI_ERRTOK, MSG_USERAUTH_GSSAPI_MIC, MSG_NAMES,
+    cMSG_USERAUTH_BANNER
 )
 from paramiko.message import Message
 from paramiko.py3compat import bytestring
@@ -216,8 +217,13 @@ class AuthHandler (object):
         m.add_string(service)
         m.add_string('publickey')
         m.add_boolean(True)
-        m.add_string(key.get_name())
-        m.add_string(key)
+        # Use certificate contents, if available, plain pubkey otherwise
+        if key.public_blob:
+            m.add_string(key.public_blob.key_type)
+            m.add_string(key.public_blob.key_blob)
+        else:
+            m.add_string(key.get_name())
+            m.add_string(key)
         return m.asbytes()
 
     def wait_for_response(self, event):
@@ -255,6 +261,13 @@ class AuthHandler (object):
             m.add_byte(cMSG_SERVICE_ACCEPT)
             m.add_string(service)
             self.transport._send_message(m)
+            banner, language = self.transport.server_object.get_banner()
+            if banner:
+                m = Message()
+                m.add_byte(cMSG_USERAUTH_BANNER)
+                m.add_string(banner)
+                m.add_string(language)
+                self.transport._send_message(m)
             return
         # dunno this one
         self._disconnect_service_not_available()
@@ -332,10 +345,16 @@ class AuthHandler (object):
                 m.add_string(password)
             elif self.auth_method == 'publickey':
                 if self.pkcs11session is None:
-                    # Private Key
                     m.add_boolean(True)
-                    m.add_string(self.private_key.get_name())
-                    m.add_string(self.private_key)
+                    # Private Key
+                    # Use certificate contents, if available, plain pubkey
+                    # otherwise
+                    if self.private_key.public_blob:
+                        m.add_string(self.private_key.public_blob.key_type)
+                        m.add_string(self.private_key.public_blob.key_blob)
+                    else:
+                        m.add_string(self.private_key.get_name())
+                        m.add_string(self.private_key)
                     blob = self._get_session_blob(
                         self.private_key, 'ssh-connection', self.username)
                     sig = self.private_key.sign_ssh_data(blob)
@@ -574,10 +593,9 @@ class AuthHandler (object):
                     INFO,
                     'Auth rejected: public key: %s' % str(e))
                 key = None
-            except:
-                self.transport._log(
-                    INFO,
-                    'Auth rejected: unsupported or mangled public key')
+            except Exception as e:
+                msg = 'Auth rejected: unsupported or mangled public key ({0}: {1})' # noqa
+                self.transport._log(INFO, msg.format(e.__class__.__name__, e))
                 key = None
             if key is None:
                 self._disconnect_no_more_auth()

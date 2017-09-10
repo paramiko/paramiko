@@ -105,6 +105,7 @@ class ECDSAKey(PKey):
                  vals=None, file_obj=None, validate_point=True):
         self.verifying_key = None
         self.signing_key = None
+        self.public_blob = None
         if file_obj is not None:
             self._from_private_key(file_obj, password)
             return
@@ -118,12 +119,29 @@ class ECDSAKey(PKey):
             c_class = self.signing_key.curve.__class__
             self.ecdsa_curve = self._ECDSA_CURVES.get_by_curve_class(c_class)
         else:
-            if msg is None:
-                raise SSHException('Key object may not be empty')
+            # Must set ecdsa_curve first; subroutines called herein may need to
+            # spit out our get_name(), which relies on this.
+            key_type = msg.get_text()
+            # But this also means we need to hand it a real key/curve
+            # identifier, so strip out any cert business. (NOTE: could push
+            # that into _ECDSACurveSet.get_by_key_format_identifier(), but it
+            # feels more correct to do it here?)
+            suffix = '-cert-v01@openssh.com'
+            if key_type.endswith(suffix):
+                key_type = key_type[:-len(suffix)]
             self.ecdsa_curve = self._ECDSA_CURVES.get_by_key_format_identifier(
-                msg.get_text())
-            if self.ecdsa_curve is None:
-                raise SSHException('Invalid key')
+                key_type
+            )
+            key_types = self._ECDSA_CURVES.get_key_format_identifier_list()
+            cert_types = [
+                '{0}-cert-v01@openssh.com'.format(x)
+                for x in key_types
+            ]
+            self._check_type_and_load_cert(
+                msg=msg,
+                key_type=key_types,
+                cert_type=cert_types,
+            )
             curvename = msg.get_text()
             if curvename != self.ecdsa_curve.nist_name:
                 raise SSHException("Can't handle curve of type %s" % curvename)
@@ -179,9 +197,7 @@ class ECDSAKey(PKey):
 
     def sign_ssh_data(self, data):
         ecdsa = ec.ECDSA(self.ecdsa_curve.hash_object())
-        signer = self.signing_key.signer(ecdsa)
-        signer.update(data)
-        sig = signer.finalize()
+        sig = self.signing_key.sign(data, ecdsa)
         r, s = decode_dss_signature(sig)
 
         m = Message()
@@ -196,12 +212,10 @@ class ECDSAKey(PKey):
         sigR, sigS = self._sigdecode(sig)
         signature = encode_dss_signature(sigR, sigS)
 
-        verifier = self.verifying_key.verifier(
-            signature, ec.ECDSA(self.ecdsa_curve.hash_object())
-        )
-        verifier.update(data)
         try:
-            verifier.verify()
+            self.verifying_key.verify(
+                signature, data, ec.ECDSA(self.ecdsa_curve.hash_object())
+            )
         except InvalidSignature:
             return False
         else:
