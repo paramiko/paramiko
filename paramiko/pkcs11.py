@@ -42,7 +42,7 @@ def pkcs11_get_public_key(keyid="01"):
     if public_key is None or len(public_key) < 1:
         raise PKCS11Exception("Invalid ssh public key returned by pkcs15-tool")
 
-    return str(public_key)
+    return public_key.decode('utf-8')
 
 
 def pkcs11_open_session(pkcs11provider, pkcs11pin, pkcs11keyid="01",
@@ -58,12 +58,11 @@ def pkcs11_open_session(pkcs11provider, pkcs11pin, pkcs11keyid="01",
         will be detected using OpenSC pkcs15-tool. Alternatively you can
         provide it manually using this argument.
     """
-    public_key = ""
     session = None
 
     # Get Public SSH Key
     if pkcs11publickey is None:
-        public_key = pkcs11_get_public_key(pkcs11keyid)
+        pkcs11publickey = pkcs11_get_public_key(pkcs11keyid)
 
     class ck_c_initialize_args(Structure):
         _fields_ = [('CreateMutex', c_void_p), ('DestroyMutex', c_void_p),
@@ -98,7 +97,7 @@ def pkcs11_open_session(pkcs11provider, pkcs11pin, pkcs11keyid="01",
 
     # Login
     login_type = c_int(1)  # 1=USER PIN
-    str_pin = str(pkcs11pin)
+    str_pin = pkcs11pin.encode('utf-8')
     pin = c_char_p(str_pin)
     res = lib.C_Login(session, login_type, pin, len(str_pin))
     if res != 0:
@@ -118,7 +117,7 @@ def pkcs11_open_session(pkcs11provider, pkcs11pin, pkcs11keyid="01",
 
     keyret = c_ulong()
     cls = c_ulong(3)  # CKO_PRIVATE_KEY
-    objid_str = str(pkcs11keyid)
+    objid_str = pkcs11keyid.encode('utf-8')
     objid = c_char_p(objid_str)
     objid_len = c_ulong(len(objid_str))
     attrs[0].type = c_ulong(0)  # CKA_CLASS
@@ -137,7 +136,7 @@ def pkcs11_open_session(pkcs11provider, pkcs11pin, pkcs11keyid="01",
     if res != 0:
         raise PKCS11Exception("PKCS11 Failed to Find Objects Final")
 
-    return {"session": session, "public_key": public_key,
+    return {"session": session, "public_key": pkcs11publickey,
             "keyret": keyret, "provider": pkcs11provider}
 
 

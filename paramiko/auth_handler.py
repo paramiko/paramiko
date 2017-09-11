@@ -275,9 +275,10 @@ class AuthHandler (object):
         if "public_key" not in self.pkcs11session:
             raise PKCS11Exception("pkcs11 session does not have a public_key")
         if len(self.pkcs11session["public_key"]) < 1:
-            raise SSHException("pkcs11 session contains invalid public key %s"
-                % self.pkcs11session["public_key"])
-        return str(self.pkcs11session["public_key"])
+            raise PKCS11Exception("pkcs11 session contains invalid public \
+                                  key %s"
+                                  % self.pkcs11session["public_key"])
+        return self.pkcs11session["public_key"]
 
     def _pkcs11_sign_ssh_data(self, blob, key_name):
         if "provider" not in self.pkcs11session:
@@ -362,7 +363,8 @@ class AuthHandler (object):
                     fields = self._pkcs11_get_public_key().split(' ')
 
                     if len(fields) < 2:
-                        SSHException("Not enough fields found in pkcs11 key")
+                        raise PKCS11Exception("Not enough fields \
+                                               found in pkcs11 key")
 
                     keytype = fields[0]
                     pub_key = fields[1]
@@ -380,8 +382,9 @@ class AuthHandler (object):
                         elif keytype == 'ssh-ed25519':
                             pub_key = Ed25519Key(data=decodebytes(pub_key))
                         else:
-                            SSHException("Unable to handle key of type %s"
-                                         % (keytype,))
+                            raise SSHException("Unable to handle \
+                                               key of type %s"
+                                               % (keytype,))
                     except binascii.Error as e:
                         raise InvalidHostKey(self._pkcs11_get_public_key(), e)
 
