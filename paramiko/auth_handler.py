@@ -39,6 +39,7 @@ from paramiko.common import (
     cMSG_USERAUTH_GSSAPI_MIC, MSG_USERAUTH_GSSAPI_RESPONSE,
     MSG_USERAUTH_GSSAPI_TOKEN, MSG_USERAUTH_GSSAPI_ERROR,
     MSG_USERAUTH_GSSAPI_ERRTOK, MSG_USERAUTH_GSSAPI_MIC, MSG_NAMES,
+    cMSG_USERAUTH_BANNER
 )
 from paramiko.message import Message
 from paramiko.py3compat import bytestring
@@ -51,6 +52,7 @@ from paramiko.ssh_gss import GSSAuth
 from paramiko import pkcs11_open_session, pkcs11_close_session
 from paramiko.pkcs11 import pkcs11_get_public_key
 from .authentication import hostkey_from_text
+from paramiko.pkcs11 import PKCS11Exception
 
 
 class AuthHandler (object):
@@ -77,10 +79,7 @@ class AuthHandler (object):
         self.gss_host = None
         self.gss_deleg_creds = True
         # for PKCS11 / Smartcard
-        self.pkcs11pin = None
-        self.pkcs11provider = None
         self.pkcs11session = None
-        self.pkcs11publickey = None
         if AuthHandler._pkcs11_lock is None:
             AuthHandler._pkcs11_lock = threading.Lock()
         self.pkcs11_lock = AuthHandler._pkcs11_lock
@@ -115,15 +114,12 @@ class AuthHandler (object):
         finally:
             self.transport.lock.release()
 
-    def auth_pkcs11(self, username, pkcs11pin, pkcs11provider, pkcs11session,
-                    event):
+    def auth_pkcs11(self, username, pkcs11session, event):
         self.transport.lock.acquire()
         try:
             self.auth_event = event
             self.auth_method = 'publickey'
             self.username = username
-            self.pkcs11pin = pkcs11pin
-            self.pkcs11provider = pkcs11provider
             self.pkcs11session = pkcs11session
             self._request_auth()
         finally:
@@ -215,8 +211,13 @@ class AuthHandler (object):
         m.add_string(service)
         m.add_string('publickey')
         m.add_boolean(True)
-        m.add_string(key.get_name())
-        m.add_string(key)
+        # Use certificate contents, if available, plain pubkey otherwise
+        if key.public_blob:
+            m.add_string(key.public_blob.key_type)
+            m.add_string(key.public_blob.key_blob)
+        else:
+            m.add_string(key.get_name())
+            m.add_string(key)
         return m.asbytes()
 
     def wait_for_response(self, event):
@@ -254,35 +255,39 @@ class AuthHandler (object):
             m.add_byte(cMSG_SERVICE_ACCEPT)
             m.add_string(service)
             self.transport._send_message(m)
+            banner, language = self.transport.server_object.get_banner()
+            if banner:
+                m = Message()
+                m.add_byte(cMSG_USERAUTH_BANNER)
+                m.add_string(banner)
+                m.add_string(language)
+                self.transport._send_message(m)
             return
         # dunno this one
         self._disconnect_service_not_available()
 
     def _pkcs11_get_public_key(self):
-        if self.pkcs11publickey is None:
-            if self.pkcs11session is None:
-                self.pkcs11publickey = pkcs11_get_public_key()
-            else:
-                self.pkcs11publickey = self.pkcs11session[1]
-
-            if self.pkcs11publickey is None or len(self.pkcs11publickey) < 1:
-                raise SSHException("Invalid ssh public key returned by \
-                    pkcs15-tool")
-        return str(self.pkcs11publickey)
+        if "public_key" not in self.pkcs11session:
+            raise PKCS11Exception("pkcs11 session does not have a public_key")
+        if len(self.pkcs11session["public_key"]) < 1:
+            raise PKCS11Exception("pkcs11 session contains invalid public \
+                                  key %s"
+                                  % self.pkcs11session["public_key"])
+        return self.pkcs11session["public_key"]
 
     def _pkcs11_sign_ssh_data(self, blob, key_name):
-        if not os.path.isfile(self.pkcs11provider):
-            raise SSHException("pkcs11provider path is not valid: %s"
-                               % self.pkcs11provider)
-        lib = cdll.LoadLibrary(self.pkcs11provider)
-        if self.pkcs11session is None:
-            (session,
-             public_key,
-             keyret) = pkcs11_open_session(self.pkcs11provider,
-                                           self.pkcs11pin,
-                                           self.pkcs11publickey)
-        else:
-            (session, public_key, keyret) = self.pkcs11session
+        if "provider" not in self.pkcs11session:
+            raise PKCS11Exception("pkcs11 session does not have a provider")
+        if "session" not in self.pkcs11session:
+            raise PKCS11Exception("pkcs11 session does not have a session")
+        if "keyret" not in self.pkcs11session:
+            raise PKCS11Exception("pkcs11 session does not have a keyret")
+        if not os.path.isfile(self.pkcs11session["provider"]):
+            raise PKCS11Exception("pkcs11provider does not exist: %s"
+                               % self.pkcs11session["provider"])
+        lib = cdll.LoadLibrary(self.pkcs11session["provider"])
+        session = self.pkcs11session["session"]
+        keyret = self.pkcs11session["keyret"]
 
         # Init Signing Data
         class ck_mechanism(Structure):
@@ -294,7 +299,7 @@ class AuthHandler (object):
         self.pkcs11_lock.acquire()
         res = lib.C_SignInit(session, byref(mech), keyret)
         if res != 0:
-            raise SSHException("PKCS11 Failed to Sign Init")
+            raise PKCS11Exception("PKCS11 Failed to Sign Init")
 
         in_buffer = (c_char * 1025)()
         sig_buffer = (c_char * 512)()
@@ -305,11 +310,8 @@ class AuthHandler (object):
         r = c_int(len(blob))
         res = lib.C_Sign(session, in_buffer, r, sig_buffer, byref(sig_len))
         if res != 0:
-            raise SSHException("PKCS11 Failed to Sign")
+            raise PKCS11Exception("PKCS11 Failed to Sign")
 
-        if self.pkcs11session is None:
-            # Let User Manage The Session, Do Not Close
-            pkcs11_close_session(self.pkcs11provider)
         self.pkcs11_lock.release()
 
         # Convert ctype char array to python string
@@ -336,11 +338,17 @@ class AuthHandler (object):
                 password = bytestring(self.password)
                 m.add_string(password)
             elif self.auth_method == 'publickey':
-                if self.pkcs11pin is None:
-                    # Private Key
+                if self.pkcs11session is None:
                     m.add_boolean(True)
-                    m.add_string(self.private_key.get_name())
-                    m.add_string(self.private_key)
+                    # Private Key
+                    # Use certificate contents, if available, plain pubkey
+                    # otherwise
+                    if self.private_key.public_blob:
+                        m.add_string(self.private_key.public_blob.key_type)
+                        m.add_string(self.private_key.public_blob.key_blob)
+                    else:
+                        m.add_string(self.private_key.get_name())
+                        m.add_string(self.private_key)
                     blob = self._get_session_blob(
                         self.private_key, 'ssh-connection', self.username)
                     sig = self.private_key.sign_ssh_data(blob)
@@ -351,7 +359,8 @@ class AuthHandler (object):
                     fields = pubkey_source.split(' ')
 
                     if len(fields) < 2:
-                        SSHException("Not enough fields found in pkcs11 key")
+                        raise PKCS11Exception("Not enough fields \
+                                               found in pkcs11 key")
 
                     keytype = fields[0]
                     pub_key = fields[1]
@@ -566,10 +575,9 @@ class AuthHandler (object):
                     INFO,
                     'Auth rejected: public key: %s' % str(e))
                 key = None
-            except:
-                self.transport._log(
-                    INFO,
-                    'Auth rejected: unsupported or mangled public key')
+            except Exception as e:
+                msg = 'Auth rejected: unsupported or mangled public key ({0}: {1})' # noqa
+                self.transport._log(INFO, msg.format(e.__class__.__name__, e))
                 key = None
             if key is None:
                 self._disconnect_no_more_auth()

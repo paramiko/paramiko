@@ -12,6 +12,68 @@ Changelog
   still importable from its previous home, ``hostkeys.py``.)
 * :feature:`827` Add support for PKCS #11 which enables the use of smartcards
   and other cryptographic tokens.
+* :support:`979` Update how we use `Cryptography <https://cryptography.io>`_'s
+  signature/verification methods so we aren't relying on a deprecated API.
+  Thanks to Paul Kehrer for the patch.
+
+  .. warning::
+    This bumps the minimum Cryptography version from 1.1 to 1.5. Such an
+    upgrade should be backwards compatible and easy to do. See `their changelog
+    <https://cryptography.io/en/latest/changelog/>`_ for additional details.
+* :support:`-` Ed25519 keys never got proper API documentation support; this
+  has been fixed.
+* :feature:`1026` Update `~paramiko.ed25519key.Ed25519Key` so its constructor
+  offers the same ``file_obj`` parameter as its sibling key classes. Credit:
+  Michal Kuffa.
+* :feature:`1013` Added pre-authentication banner support for the server
+  interface (`ServerInterface.get_banner
+  <paramiko.server.ServerInterface.get_banner>` plus related support in
+  ``Transport/AuthHandler``.) Patch courtesy of Dennis Kaarsemaker.
+* :bug:`60 major` (via :issue:`1037`) Paramiko originally defaulted to zlib
+  compression level 9 (when one connects with ``compression=True``; it defaults
+  to off.) This has been found to be quite wasteful and tends to cause much
+  longer transfers in most cases, than is necessary.
+
+  OpenSSH defaults to compression level 6, which is a much more reasonable
+  setting (nearly identical compression characteristics but noticeably,
+  sometimes significantly, faster transmission); Paramiko now uses this value
+  instead.
+
+  Thanks to Damien Dubé for the report and ``@DrNeutron`` for investigating &
+  submitting the patch.
+* :support:`-` Display exception type and message when logging auth-rejection
+  messages (ones reading ``Auth rejected: unsupported or mangled public key``);
+  previously this error case had a bare except and did not display exactly why
+  the key failed. It will now append info such as ``KeyError:
+  'some-unknown-type-string'`` or similar.
+* :feature:`1042` (also partially :issue:`531`) Implement basic client-side
+  certificate authentication (as per the OpenSSH vendor extension.)
+
+  The core implementation is `PKey.load_certificate
+  <paramiko.pkey.PKey.load_certificate>` and its corresponding ``.public_blob``
+  attribute on key objects, which is honored in the auth and transport modules.
+  Additionally, `SSHClient.connect <paramiko.client.SSHClient.connect>` will
+  now automatically load certificate data alongside private key data when one
+  has appropriately-named cert files (e.g. ``id_rsa-cert.pub``) - see its
+  docstring for details.
+
+  Thanks to Jason Rigby for a first draft (:issue:`531`) and to Paul Kapp for
+  the second draft, upon which the current functionality has been based (with
+  modifications.)
+
+  .. note::
+    This support is client-focused; Paramiko-driven server code is capable of
+    handling cert-bearing pubkey auth packets, *but* it does not interpret any
+    cert-specific fields, so the end result is functionally identical to a
+    vanilla pubkey auth process (and thus requires e.g. prepopulated
+    authorized-keys data.) We expect full server-side cert support to follow
+    later.
+
+* :support:`1041` Modify logic around explicit disconnect
+  messages, and unknown-channel situations, so that they rely on centralized
+  shutdown code instead of running their own. This is at worst removing some
+  unnecessary code, and may help with some situations where Paramiko hangs at
+  the end of a session. Thanks to Paul Kapp for the patch.
 * :support:`1012` (via :issue:`1016`) Enhance documentation around the new
   `SFTP.posix_rename <paramiko.sftp_client.SFTPClient.posix_rename>` method so
   it's referenced in the 'standard' ``rename`` method for increased visibility.

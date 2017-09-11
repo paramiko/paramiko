@@ -467,6 +467,12 @@ class KeyTest(unittest.TestCase):
         self.assertTrue(not pub.can_sign())
         self.assertEqual(key, pub)
 
+    def test_ed25519_load_from_file_obj(self):
+        with open(test_path('test_ed25519.key')) as pkey_fileobj:
+            key = Ed25519Key.from_private_key(pkey_fileobj)
+        self.assertEqual(key, key)
+        self.assertTrue(key.can_sign())
+
     def test_keyfile_is_actually_encrypted(self):
         # Read an existing encrypted private key
         file_ = test_path('test_rsa_password.key')
@@ -481,3 +487,30 @@ class KeyTest(unittest.TestCase):
             self.assert_keyfile_is_encrypted(newfile)
         finally:
             os.remove(newfile)
+
+    def test_certificates(self):
+        # PKey.load_certificate
+        key = RSAKey.from_private_key_file(test_path('test_rsa.key'))
+        self.assertTrue(key.public_blob is None)
+        key.load_certificate(test_path('test_rsa.key-cert.pub'))
+        self.assertTrue(key.public_blob is not None)
+        self.assertEqual(key.public_blob.key_type, 'ssh-rsa-cert-v01@openssh.com')
+        self.assertEqual(key.public_blob.comment, 'test_rsa.key.pub')
+        # Delve into blob contents, for test purposes
+        msg = Message(key.public_blob.key_blob)
+        self.assertEqual(msg.get_text(), 'ssh-rsa-cert-v01@openssh.com')
+        nonce = msg.get_string()
+        e = msg.get_mpint()
+        n = msg.get_mpint()
+        self.assertEqual(e, key.public_numbers.e)
+        self.assertEqual(n, key.public_numbers.n)
+        # Serial number
+        self.assertEqual(msg.get_int64(), 1234)
+
+        # Prevented from loading certificate that doesn't match
+        key1 = Ed25519Key.from_private_key_file(test_path('test_ed25519.key'))
+        self.assertRaises(
+            ValueError,
+            key1.load_certificate,
+            test_path('test_rsa.key-cert.pub'),
+        )

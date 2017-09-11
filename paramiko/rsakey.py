@@ -40,6 +40,7 @@ class RSAKey(PKey):
     def __init__(self, msg=None, data=None, filename=None, password=None,
                  key=None, file_obj=None):
         self.key = None
+        self.public_blob = None
         if file_obj is not None:
             self._from_private_key(file_obj, password)
             return
@@ -51,10 +52,11 @@ class RSAKey(PKey):
         if key is not None:
             self.key = key
         else:
-            if msg is None:
-                raise SSHException('Key object may not be empty')
-            if msg.get_text() != 'ssh-rsa':
-                raise SSHException('Invalid key')
+            self._check_type_and_load_cert(
+                msg=msg,
+                key_type='ssh-rsa',
+                cert_type='ssh-rsa-cert-v01@openssh.com',
+            )
             self.key = rsa.RSAPublicNumbers(
                 e=msg.get_mpint(), n=msg.get_mpint()
             ).public_key(default_backend())
@@ -103,12 +105,11 @@ class RSAKey(PKey):
         return isinstance(self.key, rsa.RSAPrivateKey)
 
     def sign_ssh_data(self, data):
-        signer = self.key.signer(
+        sig = self.key.sign(
+            data,
             padding=padding.PKCS1v15(),
             algorithm=hashes.SHA1(),
         )
-        signer.update(data)
-        sig = signer.finalize()
 
         m = Message()
         m.add_string('ssh-rsa')
@@ -122,14 +123,10 @@ class RSAKey(PKey):
         if isinstance(key, rsa.RSAPrivateKey):
             key = key.public_key()
 
-        verifier = key.verifier(
-            signature=msg.get_binary(),
-            padding=padding.PKCS1v15(),
-            algorithm=hashes.SHA1(),
-        )
-        verifier.update(data)
         try:
-            verifier.verify()
+            key.verify(
+                msg.get_binary(), data, padding.PKCS1v15(), hashes.SHA1()
+            )
         except InvalidSignature:
             return False
         else:
