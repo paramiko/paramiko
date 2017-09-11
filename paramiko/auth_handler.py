@@ -49,10 +49,11 @@ from paramiko.ssh_exception import (
 )
 from paramiko.server import InteractiveQuery
 from paramiko.ssh_gss import GSSAuth
-from paramiko import pkcs11_open_session, pkcs11_close_session
-from paramiko.pkcs11 import pkcs11_get_public_key
+from .pkcs11 import (
+    pkcs11_get_public_key, pkcs11_open_session, pkcs11_close_session,
+    PKCS11Exception,
+)
 from .authentication import hostkey_from_text
-from paramiko.pkcs11 import PKCS11Exception
 
 
 class AuthHandler (object):
@@ -296,23 +297,21 @@ class AuthHandler (object):
 
         mech = ck_mechanism()
         mech.mechanism = 6  # CKM_SHA1_RSA_PKCS
-        self.pkcs11_lock.acquire()
-        res = lib.C_SignInit(session, byref(mech), keyret)
-        if res != 0:
-            raise PKCS11Exception("PKCS11 Failed to Sign Init")
+        with self.pkcs11_lock:
+            res = lib.C_SignInit(session, byref(mech), keyret)
+            if res != 0:
+                raise PKCS11Exception("PKCS11 Failed to Sign Init")
 
-        in_buffer = (c_char * 1025)()
-        sig_buffer = (c_char * 512)()
-        for i in range(0, 1025):
-            if i < len(blob):
-                in_buffer[i] = c_char(blob[i])
-        sig_len = c_ulong(len(blob))
-        r = c_int(len(blob))
-        res = lib.C_Sign(session, in_buffer, r, sig_buffer, byref(sig_len))
-        if res != 0:
-            raise PKCS11Exception("PKCS11 Failed to Sign")
-
-        self.pkcs11_lock.release()
+            in_buffer = (c_char * 1025)()
+            sig_buffer = (c_char * 512)()
+            for i in range(0, 1025):
+                if i < len(blob):
+                    in_buffer[i] = c_char(blob[i])
+            sig_len = c_ulong(len(blob))
+            r = c_int(len(blob))
+            res = lib.C_Sign(session, in_buffer, r, sig_buffer, byref(sig_len))
+            if res != 0:
+                raise PKCS11Exception("PKCS11 Failed to Sign")
 
         # Convert ctype char array to python string
         signed_buffer_ret = b''
