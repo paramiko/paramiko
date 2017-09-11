@@ -528,7 +528,6 @@ class SSHClientTest (unittest.TestCase):
         else:
             self.assertFalse(False, 'SSHException was not thrown.')
 
-
     def test_missing_key_policy_accepts_classes_or_instances(self):
         """
         Client.missing_host_key_policy() can take classes or instances.
