@@ -50,6 +50,7 @@ from test_client import SSHClientTest  # XXX why shadow the above import?
 from test_gssapi import GSSAPITest
 from test_ssh_gss import GSSAuthTest
 from test_kex_gss import GSSKexTest
+from tests.test_pkcs11 import Pkcs11Test
 
 default_host = 'localhost'
 default_user = os.environ.get('USER', 'nobody')
@@ -160,6 +161,7 @@ def main():
         suite.addTest(unittest.makeSuite(TransportTest))
     suite.addTest(unittest.makeSuite(NoValidConnectionsErrorTest))
     suite.addTest(unittest.makeSuite(SSHClientTest))
+    suite.addTest(unittest.makeSuite(Pkcs11Test))
     if options.use_sftp:
         suite.addTest(unittest.makeSuite(SFTPTest))
     if options.use_big_file:

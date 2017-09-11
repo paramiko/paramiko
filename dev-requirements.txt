@@ -10,3 +10,4 @@ semantic_version<3.0
 wheel==0.24
 twine==1.5
 flake8==2.6.2
+mock>=2.0.0

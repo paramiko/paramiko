@@ -20,13 +20,12 @@
 `.AuthHandler`
 """
 
-import threading
-import os
-from ctypes import (cdll, Structure, c_ulong, c_void_p, byref, c_char,
-                    c_int)
-import weakref
-import time
+from ctypes import cdll, Structure, c_ulong, c_void_p, byref, c_char, c_int
 import binascii
+import os
+import threading
+import time
+import weakref
 
 from paramiko.common import (
     cMSG_SERVICE_REQUEST, cMSG_DISCONNECT, DISCONNECT_SERVICE_NOT_AVAILABLE,
@@ -57,7 +56,7 @@ from paramiko.rsakey import RSAKey
 from paramiko.ecdsakey import ECDSAKey
 from paramiko.ed25519key import Ed25519Key
 from paramiko.hostkeys import InvalidHostKey
-from paramiko.pkcs11 import PKCS11Exception
+from .pkcs11 import PKCS11Exception
 
 
 class AuthHandler (object):
@@ -275,9 +274,8 @@ class AuthHandler (object):
         if "public_key" not in self.pkcs11session:
             raise PKCS11Exception("pkcs11 session does not have a public_key")
         if len(self.pkcs11session["public_key"]) < 1:
-            raise SSHException("pkcs11 session contains invalid public key %s"
-                % self.pkcs11session["public_key"])
-        return str(self.pkcs11session["public_key"])
+            raise PKCS11Exception("pkcs11 session contains invalid public key {}".format(self.pkcs11session["public_key"])) # noqa
+        return self.pkcs11session["public_key"]
 
     def _pkcs11_sign_ssh_data(self, blob, key_name):
         if "provider" not in self.pkcs11session:
@@ -287,8 +285,7 @@ class AuthHandler (object):
         if "keyret" not in self.pkcs11session:
             raise PKCS11Exception("pkcs11 session does not have a keyret")
         if not os.path.isfile(self.pkcs11session["provider"]):
-            raise PKCS11Exception("pkcs11provider does not exist: %s"
-                               % self.pkcs11session["provider"])
+            raise PKCS11Exception("pkcs11provider does not exist: {}".format(self.pkcs11session["provider"])) # noqa
         lib = cdll.LoadLibrary(self.pkcs11session["provider"])
         session = self.pkcs11session["session"]
         keyret = self.pkcs11session["keyret"]
@@ -300,23 +297,21 @@ class AuthHandler (object):
 
         mech = ck_mechanism()
         mech.mechanism = 6  # CKM_SHA1_RSA_PKCS
-        self.pkcs11_lock.acquire()
-        res = lib.C_SignInit(session, byref(mech), keyret)
-        if res != 0:
-            raise PKCS11Exception("PKCS11 Failed to Sign Init")
+        with self.pkcs11_lock:
+            res = lib.C_SignInit(session, byref(mech), keyret)
+            if res != 0:
+                raise PKCS11Exception("PKCS11 Failed to Sign Init")
 
-        in_buffer = (c_char * 1025)()
-        sig_buffer = (c_char * 512)()
-        for i in range(0, 1025):
-            if i < len(blob):
-                in_buffer[i] = c_char(blob[i])
-        sig_len = c_ulong(len(blob))
-        r = c_int(len(blob))
-        res = lib.C_Sign(session, in_buffer, r, sig_buffer, byref(sig_len))
-        if res != 0:
-            raise PKCS11Exception("PKCS11 Failed to Sign")
-
-        self.pkcs11_lock.release()
+            in_buffer = (c_char * 1025)()
+            sig_buffer = (c_char * 512)()
+            for i in range(0, 1025):
+                if i < len(blob):
+                    in_buffer[i] = c_char(blob[i])
+            sig_len = c_ulong(len(blob))
+            r = c_int(len(blob))
+            res = lib.C_Sign(session, in_buffer, r, sig_buffer, byref(sig_len))
+            if res != 0:
+                raise PKCS11Exception("PKCS11 Failed to Sign")
 
         # Convert ctype char array to python string
         signed_buffer_ret = b''
@@ -359,38 +354,38 @@ class AuthHandler (object):
                     m.add_string(sig)
                 else:
                     # Smartcard PKCS11 Private Key
-                    fields = self._pkcs11_get_public_key().split(' ')
+                    pubkey_source = self._pkcs11_get_public_key()
+                    fields = pubkey_source.split(' ')
 
                     if len(fields) < 2:
-                        SSHException("Not enough fields found in pkcs11 key")
+                        raise PKCS11Exception("Not enough fields found in pkcs11 key") # noqa
 
                     keytype = fields[0]
-                    pub_key = fields[1]
+                    key = fields[1]
 
                     try:
-                        pub_key = b(pub_key)
+                        key = b(key)
                         if keytype == 'ssh-rsa':
-                            pub_key = RSAKey(data=decodebytes(pub_key))
+                            key = RSAKey(data=decodebytes(key))
                         elif keytype == 'ssh-dss':
-                            pub_key = DSSKey(data=decodebytes(pub_key))
+                            key = DSSKey(data=decodebytes(key))
                         elif keytype in ECDSAKey\
                             .supported_key_format_identifiers():
-                            pub_key = ECDSAKey(data=decodebytes(pub_key),
-                                               validate_point=False)
+                            key = ECDSAKey(data=decodebytes(key),
+                                           validate_point=False)
                         elif keytype == 'ssh-ed25519':
-                            pub_key = Ed25519Key(data=decodebytes(pub_key))
+                            key = Ed25519Key(data=decodebytes(key))
                         else:
-                            SSHException("Unable to handle key of type %s"
-                                         % (keytype,))
+                            raise SSHException("Unable to handle key of type {}".format(keytype)) # noqa
                     except binascii.Error as e:
                         raise InvalidHostKey(self._pkcs11_get_public_key(), e)
 
                     m.add_boolean(True)
-                    m.add_string(pub_key.get_name())
-                    m.add_string(pub_key.asbytes())
-                    blob = self._get_session_blob(pub_key,
-                                                  'ssh-connection',
-                                                  self.username)
+                    m.add_string(key.get_name())
+                    m.add_string(key.asbytes())
+                    blob = self._get_session_blob(
+                        key, 'ssh-connection', self.username,
+                    )
                     sig = self._pkcs11_sign_ssh_data(blob, keytype)
                     m.add_string(sig)
             elif self.auth_method == 'keyboard-interactive':
