@@ -20,6 +20,7 @@
 `.AuthHandler`
 """
 
+from contextlib import contextmanager
 from ctypes import cdll, Structure, c_ulong, c_void_p, byref, c_char, c_int
 import os
 import threading
@@ -94,64 +95,57 @@ class AuthHandler (object):
         else:
             return self.username
 
-    def auth_none(self, username, event):
+    @contextmanager
+    def _auth(self, username, event, method):
+        """
+        Perform authentication in a lock-capable context manager.
+
+        Expected use is to modify `self` with additional attributes required
+        for the desired auth type, within the managed block.
+
+        Basic cases which don't need such attributes can simply `pass` inside
+        the block, which looks a bit silly but is better than having another
+        non-contextmanager variant.
+        """
         with self.transport.lock:
             self.auth_event = event
-            self.auth_method = 'none'
+            self.auth_method = method
             self.username = username
+            yield
             self._request_auth()
+
+    def auth_none(self, username, event):
+        with self._auth(username, event, 'none'):
+            pass
 
     def auth_publickey(self, username, key, event):
-        with self.transport.lock:
-            self.auth_event = event
-            self.auth_method = 'publickey'
-            self.username = username
+        with self._auth(username, event, 'publickey'):
             self.private_key = key
-            self._request_auth()
 
     def auth_pkcs11(self, username, pkcs11session, event):
-        with self.transport.lock:
-            self.auth_event = event
-            self.auth_method = 'publickey'
-            self.username = username
+        with self._auth(username, event, 'publickey'):
             self.pkcs11session = pkcs11session
-            self._request_auth()
 
     def auth_password(self, username, password, event):
-        with self.transport.lock:
-            self.auth_event = event
-            self.auth_method = 'password'
-            self.username = username
+        with self._auth(username, event, 'password'):
             self.password = password
-            self._request_auth()
 
     def auth_interactive(self, username, handler, event, submethods=''):
         """
         response_list = handler(title, instructions, prompt_list)
         """
-        with self.transport.lock:
-            self.auth_event = event
-            self.auth_method = 'keyboard-interactive'
-            self.username = username
+        with self._auth(username, event, 'keyboard-interactive'):
             self.interactive_handler = handler
             self.submethods = submethods
-            self._request_auth()
 
     def auth_gssapi_with_mic(self, username, gss_host, gss_deleg_creds, event):
-        with self.transport.lock:
-            self.auth_event = event
-            self.auth_method = 'gssapi-with-mic'
-            self.username = username
+        with self._auth(username, event, 'gssapi-with-mic'):
             self.gss_host = gss_host
             self.gss_deleg_creds = gss_deleg_creds
-            self._request_auth()
 
     def auth_gssapi_keyex(self, username, event):
-        with self.transport.lock:
-            self.auth_event = event
-            self.auth_method = 'gssapi-keyex'
-            self.username = username
-            self._request_auth()
+        with self._auth(username, event, 'gssapi-keyex'):
+            pass
 
     def abort(self):
         if self.auth_event is not None:
