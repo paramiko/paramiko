@@ -554,15 +554,12 @@ class Channel (ClosingContextManager):
         .. versionadded:: 1.1
         """
         data = bytes()
-        self.lock.acquire()
-        try:
+        with self.lock:
             old = self.combine_stderr
             self.combine_stderr = combine
             if combine and not old:
                 # copy old stderr buffer into primary buffer
                 data = self.in_stderr_buffer.empty()
-        finally:
-            self.lock.release()
         if len(data) > 0:
             self._feed(data)
         return old
@@ -635,8 +632,7 @@ class Channel (ClosingContextManager):
         is flushed).  Channels are automatically closed when their `.Transport`
         is closed or when they are garbage collected.
         """
-        self.lock.acquire()
-        try:
+        with self.lock:
             # only close the pipe when the user explicitly closes the channel.
             # otherwise they will get unpleasant surprises.  (and do it before
             # checking self.closed, since the remote host may have already
@@ -648,8 +644,6 @@ class Channel (ClosingContextManager):
             if not self.active or self.closed:
                 return
             msgs = self._close_internal()
-        finally:
-            self.lock.release()
         for m in msgs:
             if m is not None:
                 self.transport._send_user_message(m)
@@ -756,13 +750,10 @@ class Channel (ClosingContextManager):
             ``True`` if a `send` call on this channel would immediately succeed
             or fail
         """
-        self.lock.acquire()
-        try:
+        with self.lock:
             if self.closed or self.eof_sent:
                 return True
             return self.out_window_size > 0
-        finally:
-            self.lock.release()
 
     def send(self, s):
         """
@@ -897,8 +888,7 @@ class Channel (ClosingContextManager):
         .. warning::
             This method causes channel reads to be slightly less efficient.
         """
-        self.lock.acquire()
-        try:
+        with self.lock:
             if self._pipe is not None:
                 return self._pipe.fileno()
             # create the pipe and feed in any existing data
@@ -907,8 +897,6 @@ class Channel (ClosingContextManager):
             self.in_buffer.set_event(p1)
             self.in_stderr_buffer.set_event(p2)
             return self._pipe.fileno()
-        finally:
-            self.lock.release()
 
     def shutdown(self, how):
         """
@@ -925,11 +913,8 @@ class Channel (ClosingContextManager):
             # feign "read" shutdown
             self.eof_received = 1
         if (how == 1) or (how == 2):
-            self.lock.acquire()
-            try:
+            with self.lock:
                 m = self._send_eof()
-            finally:
-                self.lock.release()
             if m is not None:
                 self.transport._send_user_message(m)
 
@@ -994,11 +979,8 @@ class Channel (ClosingContextManager):
         return
 
     def _request_failed(self, m):
-        self.lock.acquire()
-        try:
+        with self.lock:
             msgs = self._close_internal()
-        finally:
-            self.lock.release()
         for m in msgs:
             if m is not None:
                 self.transport._send_user_message(m)
@@ -1027,14 +1009,11 @@ class Channel (ClosingContextManager):
 
     def _window_adjust(self, m):
         nbytes = m.get_int()
-        self.lock.acquire()
-        try:
+        with self.lock:
             if self.ultra_debug:
                 self._log(DEBUG, 'window up %d' % nbytes)
             self.out_window_size += nbytes
             self.out_buffer_cv.notifyAll()
-        finally:
-            self.lock.release()
 
     def _handle_request(self, m):
         key = m.get_text()
@@ -1134,25 +1113,19 @@ class Channel (ClosingContextManager):
             self.transport._send_user_message(m)
 
     def _handle_eof(self, m):
-        self.lock.acquire()
-        try:
+        with self.lock:
             if not self.eof_received:
                 self.eof_received = True
                 self.in_buffer.close()
                 self.in_stderr_buffer.close()
                 if self._pipe is not None:
                     self._pipe.set_forever()
-        finally:
-            self.lock.release()
         self._log(DEBUG, 'EOF received (%s)', self._name)
 
     def _handle_close(self, m):
-        self.lock.acquire()
-        try:
+        with self.lock:
             msgs = self._close_internal()
             self.transport._unlink_channel(self.chanid)
-        finally:
-            self.lock.release()
         for m in msgs:
             if m is not None:
                 self.transport._send_user_message(m)
@@ -1161,8 +1134,7 @@ class Channel (ClosingContextManager):
 
     def _send(self, s, m):
         size = len(s)
-        self.lock.acquire()
-        try:
+        with self.lock:
             if self.closed:
                 # this doesn't seem useful, but it is the documented behavior
                 # of Socket
@@ -1172,8 +1144,6 @@ class Channel (ClosingContextManager):
                 # eof or similar
                 return 0
             m.add_string(s[:size])
-        finally:
-            self.lock.release()
         # Note: We release self.lock before calling _send_user_message.
         # Otherwise, we can deadlock during re-keying.
         self.transport._send_user_message(m)
@@ -1237,16 +1207,12 @@ class Channel (ClosingContextManager):
         # still signal the close!
         if self.closed:
             return
-        self.lock.acquire()
-        try:
+        with self.lock:
             self._set_closed()
             self.transport._unlink_channel(self.chanid)
-        finally:
-            self.lock.release()
 
     def _check_add_window(self, n):
-        self.lock.acquire()
-        try:
+        with self.lock:
             if self.closed or self.eof_received or not self.active:
                 return 0
             if self.ultra_debug:
@@ -1259,8 +1225,6 @@ class Channel (ClosingContextManager):
             out = self.in_window_sofar
             self.in_window_sofar = 0
             return out
-        finally:
-            self.lock.release()
 
     def _wait_for_send_window(self, size):
         """

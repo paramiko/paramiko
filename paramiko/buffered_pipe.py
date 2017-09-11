@@ -70,8 +70,7 @@ class BufferedPipe (object):
 
         :param threading.Event event: the event to set/clear
         """
-        self._lock.acquire()
-        try:
+        with self._lock:
             self._event = event
             # Make sure the event starts in `set` state if we appear to already
             # be closed; otherwise, if we start in `clear` state & are closed,
@@ -82,8 +81,6 @@ class BufferedPipe (object):
                 event.set()
             else:
                 event.clear()
-        finally:
-            self._lock.release()
 
     def feed(self, data):
         """
@@ -92,14 +89,11 @@ class BufferedPipe (object):
 
         :param data: the data to add, as a ``str`` or ``bytes``
         """
-        self._lock.acquire()
-        try:
+        with self._lock:
             if self._event is not None:
                 self._event.set()
             self._buffer_frombytes(b(data))
             self._cv.notifyAll()
-        finally:
-            self._lock.release()
 
     def read_ready(self):
         """
@@ -111,13 +105,10 @@ class BufferedPipe (object):
             ``True`` if a `read` call would immediately return at least one
             byte; ``False`` otherwise.
         """
-        self._lock.acquire()
-        try:
+        with self._lock:
             if len(self._buffer) == 0:
                 return False
             return True
-        finally:
-            self._lock.release()
 
     def read(self, nbytes, timeout=None):
         """
@@ -141,8 +132,7 @@ class BufferedPipe (object):
             before that timeout
         """
         out = bytes()
-        self._lock.acquire()
-        try:
+        with self._lock:
             if len(self._buffer) == 0:
                 if self._closed:
                     return out
@@ -168,9 +158,6 @@ class BufferedPipe (object):
             else:
                 out = self._buffer_tobytes(nbytes)
                 del self._buffer[:nbytes]
-        finally:
-            self._lock.release()
-
         return out
 
     def empty(self):
@@ -181,29 +168,23 @@ class BufferedPipe (object):
             any data that was in the buffer prior to clearing it out, as a
             `str`
         """
-        self._lock.acquire()
-        try:
+        with self._lock:
             out = self._buffer_tobytes()
             del self._buffer[:]
             if (self._event is not None) and not self._closed:
                 self._event.clear()
             return out
-        finally:
-            self._lock.release()
 
     def close(self):
         """
         Close this pipe object.  Future calls to `read` after the buffer
         has been emptied will return immediately with an empty string.
         """
-        self._lock.acquire()
-        try:
+        with self._lock:
             self._closed = True
             self._cv.notifyAll()
             if self._event is not None:
                 self._event.set()
-        finally:
-            self._lock.release()
 
     def __len__(self):
         """
@@ -211,8 +192,5 @@ class BufferedPipe (object):
 
         :return: number (`int`) of bytes buffered
         """
-        self._lock.acquire()
-        try:
+        with self._lock:
             return len(self._buffer)
-        finally:
-            self._lock.release()

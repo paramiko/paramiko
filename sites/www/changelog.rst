@@ -2,6 +2,8 @@
 Changelog
 =========
 
+* :support:`-` Update all uses of `threading.Lock` (and similar classes) to use
+  context manager syntax instead of ``try``/``finally``.
 * :support:`-` Refactor some common (mostly host-)key related logic into a new
   module, ``authentication.py``. Includes use of a new `SSHException
   <paramiko.ssh_exception.SSHException>` subclass, `UnknownKeyType

@@ -775,8 +775,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
 
     def _async_request(self, fileobj, t, *arg):
         # this method may be called from other threads (prefetch)
-        self._lock.acquire()
-        try:
+        with self._lock:
             msg = Message()
             msg.add_int(self.request_number)
             for item in arg:
@@ -793,8 +792,6 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
             num = self.request_number
             self._expecting[num] = fileobj
             self.request_number += 1
-        finally:
-            self._lock.release()
         self._send_packet(t, msg)
         return num
 
@@ -806,8 +803,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
                 raise SSHException('Server connection dropped: %s' % str(e))
             msg = Message(data)
             num = msg.get_int()
-            self._lock.acquire()
-            try:
+            with self._lock:
                 if num not in self._expecting:
                     # might be response for a file that was closed before
                     # responses came back
@@ -818,8 +814,6 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
                     continue
                 fileobj = self._expecting[num]
                 del self._expecting[num]
-            finally:
-                self._lock.release()
             if num == waitfor:
                 # synchronous
                 if t == CMD_STATUS:

@@ -95,84 +95,63 @@ class AuthHandler (object):
             return self.username
 
     def auth_none(self, username, event):
-        self.transport.lock.acquire()
-        try:
+        with self.transport.lock:
             self.auth_event = event
             self.auth_method = 'none'
             self.username = username
             self._request_auth()
-        finally:
-            self.transport.lock.release()
 
     def auth_publickey(self, username, key, event):
-        self.transport.lock.acquire()
-        try:
+        with self.transport.lock:
             self.auth_event = event
             self.auth_method = 'publickey'
             self.username = username
             self.private_key = key
             self._request_auth()
-        finally:
-            self.transport.lock.release()
 
     def auth_pkcs11(self, username, pkcs11session, event):
-        self.transport.lock.acquire()
-        try:
+        with self.transport.lock:
             self.auth_event = event
             self.auth_method = 'publickey'
             self.username = username
             self.pkcs11session = pkcs11session
             self._request_auth()
-        finally:
-            self.transport.lock.release()
 
     def auth_password(self, username, password, event):
-        self.transport.lock.acquire()
-        try:
+        with self.transport.lock:
             self.auth_event = event
             self.auth_method = 'password'
             self.username = username
             self.password = password
             self._request_auth()
-        finally:
-            self.transport.lock.release()
 
     def auth_interactive(self, username, handler, event, submethods=''):
         """
         response_list = handler(title, instructions, prompt_list)
         """
-        self.transport.lock.acquire()
-        try:
+        with self.transport.lock:
             self.auth_event = event
             self.auth_method = 'keyboard-interactive'
             self.username = username
             self.interactive_handler = handler
             self.submethods = submethods
             self._request_auth()
-        finally:
-            self.transport.lock.release()
 
     def auth_gssapi_with_mic(self, username, gss_host, gss_deleg_creds, event):
-        self.transport.lock.acquire()
-        try:
+        with self.transport.lock:
             self.auth_event = event
             self.auth_method = 'gssapi-with-mic'
             self.username = username
             self.gss_host = gss_host
             self.gss_deleg_creds = gss_deleg_creds
             self._request_auth()
-        finally:
-            self.transport.lock.release()
 
     def auth_gssapi_keyex(self, username, event):
-        self.transport.lock.acquire()
-        try:
+        with self.transport.lock:
             self.auth_event = event
             self.auth_method = 'gssapi-keyex'
             self.username = username
             self._request_auth()
-        finally:
-            self.transport.lock.release()
 
     def abort(self):
         if self.auth_event is not None:

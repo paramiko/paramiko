@@ -42,11 +42,8 @@ class LoopSocket (object):
     def close(self):
         self.__unlink()
         self._closed = True
-        try:
-            self.__lock.acquire()
+        with self.__lock:
             self.__in_buffer = bytes()
-        finally:
-            self.__lock.release()
 
     def send(self, data):
         data = asbytes(data)
@@ -57,8 +54,7 @@ class LoopSocket (object):
         return len(data)
 
     def recv(self, n):
-        self.__lock.acquire()
-        try:
+        with self.__lock:
             if self.__mate is None:
                 # EOF
                 return bytes()
@@ -69,8 +65,6 @@ class LoopSocket (object):
             out = self.__in_buffer[:n]
             self.__in_buffer = self.__in_buffer[n:]
             return out
-        finally:
-            self.__lock.release()
 
     def settimeout(self, n):
         self.__timeout = n
@@ -80,22 +74,16 @@ class LoopSocket (object):
         self.__mate.__mate = self
 
     def __feed(self, data):
-        self.__lock.acquire()
-        try:
+        with self.__lock:
             self.__in_buffer += data
             self.__cv.notifyAll()
-        finally:
-            self.__lock.release()
             
     def __unlink(self):
         m = None
-        self.__lock.acquire()
-        try:
+        with self.__lock:
             if self.__mate is not None:
                 m = self.__mate
                 self.__mate = None
-        finally:
-            self.__lock.release()
         if m is not None:
             m.__unlink()
 

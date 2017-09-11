@@ -370,8 +370,7 @@ class Packetizer (object):
         else:
             cmd_name = '$%x' % cmd
         orig_len = len(data)
-        self.__write_lock.acquire()
-        try:
+        with self.__write_lock:
             if self.__compress_engine_out is not None:
                 data = self.__compress_engine_out(data)
             packet = self._build_packet(data)
@@ -409,8 +408,6 @@ class Packetizer (object):
                 self.__received_bytes_overflow = 0
                 self.__received_packets_overflow = 0
                 self._trigger_rekey()
-        finally:
-            self.__write_lock.release()
 
     def read_message(self):
         """

@@ -808,8 +808,7 @@ class Transport(threading.Thread, ClosingContextManager):
         if not self.active:
             raise SSHException('SSH session not active')
         timeout = 3600 if timeout is None else timeout
-        self.lock.acquire()
-        try:
+        with self.lock:
             window_size = self._sanitize_window_size(window_size)
             max_packet_size = self._sanitize_packet_size(max_packet_size)
             chanid = self._next_channel()
@@ -833,8 +832,6 @@ class Transport(threading.Thread, ClosingContextManager):
             self.channels_seen[chanid] = True
             chan._set_transport(self)
             chan._set_window(window_size, max_packet_size)
-        finally:
-            self.lock.release()
         self._send_user_message(m)
         start_ts = time.time()
         while True:
@@ -1040,8 +1037,7 @@ class Transport(threading.Thread, ClosingContextManager):
             seconds to wait for a channel, or ``None`` to wait forever
         :return: a new `.Channel` opened by the client
         """
-        self.lock.acquire()
-        try:
+        with self.lock:
             if len(self.server_accepts) > 0:
                 chan = self.server_accepts.pop(0)
             else:
@@ -1051,8 +1047,6 @@ class Transport(threading.Thread, ClosingContextManager):
                 else:
                     # timeout
                     chan = None
-        finally:
-            self.lock.release()
         return chan
 
     def connect(
@@ -1159,13 +1153,10 @@ class Transport(threading.Thread, ClosingContextManager):
 
         .. versionadded:: 1.1
         """
-        self.lock.acquire()
-        try:
+        with self.lock:
             e = self.saved_exception
             self.saved_exception = None
             return e
-        finally:
-            self.lock.release()
 
     def set_subsystem_handler(self, name, handler, *larg, **kwarg):
         """
@@ -1181,11 +1172,8 @@ class Transport(threading.Thread, ClosingContextManager):
         :param handler:
             subclass of `.SubsystemHandler` that handles this subsystem.
         """
-        try:
-            self.lock.acquire()
+        with self.lock:
             self.subsystem_table[name] = (handler, larg, kwarg)
-        finally:
-            self.lock.release()
 
     def is_authenticated(self):
         """
@@ -1783,12 +1771,9 @@ class Transport(threading.Thread, ClosingContextManager):
             self._x11_handler = handler
 
     def _queue_incoming_channel(self, channel):
-        self.lock.acquire()
-        try:
+        with self.lock:
             self.server_accepts.append(channel)
             self.server_accept_cv.notify()
-        finally:
-            self.lock.release()
 
     def _sanitize_window_size(self, window_size):
         if window_size is None:
@@ -1915,11 +1900,8 @@ class Transport(threading.Thread, ClosingContextManager):
                     self.auth_handler.abort()
                 for event in self.channel_events.values():
                     event.set()
-                try:
-                    self.lock.acquire()
+                with self.lock:
                     self.server_accept_cv.notify()
-                finally:
-                    self.lock.release()
             self.sock.close()
         except:
             # Don't raise spurious 'NoneType has no attribute X' errors when we
@@ -1945,11 +1927,8 @@ class Transport(threading.Thread, ClosingContextManager):
 
     def _negotiate_keys(self, m):
         # throws SSHException on anything unusual
-        self.clear_to_send_lock.acquire()
-        try:
+        with self.clear_to_send_lock:
             self.clear_to_send.clear()
-        finally:
-            self.clear_to_send_lock.release()
         if self.local_kex_init is None:
             # remote side wants to renegotiate
             self._send_kex_init()
@@ -2004,11 +1983,8 @@ class Transport(threading.Thread, ClosingContextManager):
         announce to the other side that we'd like to negotiate keys, and what
         kind of key negotiation we support.
         """
-        self.clear_to_send_lock.acquire()
-        try:
+        with self.clear_to_send_lock:
             self.clear_to_send.clear()
-        finally:
-            self.clear_to_send_lock.release()
         self.in_kex = True
         if self.server_mode:
             mp_required_prefix = 'diffie-hellman-group-exchange-sha'
@@ -2324,11 +2300,8 @@ class Transport(threading.Thread, ClosingContextManager):
         # it's now okay to send data again (if this was a re-key)
         if not self.packetizer.need_rekey():
             self.in_kex = False
-        self.clear_to_send_lock.acquire()
-        try:
+        with self.clear_to_send_lock:
             self.clear_to_send.set()
-        finally:
-            self.clear_to_send_lock.release()
         return
 
     def _parse_disconnect(self, m):
@@ -2393,16 +2366,13 @@ class Transport(threading.Thread, ClosingContextManager):
         if chan is None:
             self._log(WARNING, 'Success for unrequested channel! [??]')
             return
-        self.lock.acquire()
-        try:
+        with self.lock:
             chan._set_remote_channel(
                 server_chanid, server_window_size, server_max_packet_size)
             self._log(DEBUG, 'Secsh channel %d opened.' % chanid)
             if chanid in self.channel_events:
                 self.channel_events[chanid].set()
                 del self.channel_events[chanid]
-        finally:
-            self.lock.release()
         return
 
     def _parse_channel_open_failure(self, m):
@@ -2416,16 +2386,13 @@ class Transport(threading.Thread, ClosingContextManager):
             'Secsh channel %d open FAILED: %s: %s' % (
                 chanid, reason_str, reason_text)
         )
-        self.lock.acquire()
-        try:
+        with self.lock:
             self.saved_exception = ChannelException(reason, reason_text)
             if chanid in self.channel_events:
                 self._channels.delete(chanid)
                 if chanid in self.channel_events:
                     self.channel_events[chanid].set()
                     del self.channel_events[chanid]
-        finally:
-            self.lock.release()
         return
 
     def _parse_channel_open(self, m):
@@ -2439,11 +2406,8 @@ class Transport(threading.Thread, ClosingContextManager):
             self._forward_agent_handler is not None
         ):
             self._log(DEBUG, 'Incoming forward agent connection')
-            self.lock.acquire()
-            try:
+            with self.lock:
                 my_chanid = self._next_channel()
-            finally:
-                self.lock.release()
         elif (kind == 'x11') and (self._x11_handler is not None):
             origin_addr = m.get_text()
             origin_port = m.get_int()
@@ -2452,11 +2416,8 @@ class Transport(threading.Thread, ClosingContextManager):
                 'Incoming x11 connection from %s:%d' % (
                     origin_addr, origin_port)
             )
-            self.lock.acquire()
-            try:
+            with self.lock:
                 my_chanid = self._next_channel()
-            finally:
-                self.lock.release()
         elif (kind == 'forwarded-tcpip') and (self._tcp_handler is not None):
             server_addr = m.get_text()
             server_port = m.get_int()
@@ -2467,11 +2428,8 @@ class Transport(threading.Thread, ClosingContextManager):
                 'Incoming tcp forwarded connection from %s:%d' % (
                     origin_addr, origin_port)
             )
-            self.lock.acquire()
-            try:
+            with self.lock:
                 my_chanid = self._next_channel()
-            finally:
-                self.lock.release()
         elif not self.server_mode:
             self._log(
                 DEBUG,
@@ -2479,11 +2437,8 @@ class Transport(threading.Thread, ClosingContextManager):
             reject = True
             reason = OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED
         else:
-            self.lock.acquire()
-            try:
+            with self.lock:
                 my_chanid = self._next_channel()
-            finally:
-                self.lock.release()
             if kind == 'direct-tcpip':
                 # handle direct-tcpip requests coming from the client
                 dest_addr = m.get_text()
@@ -2514,8 +2469,7 @@ class Transport(threading.Thread, ClosingContextManager):
             return
 
         chan = Channel(my_chanid)
-        self.lock.acquire()
-        try:
+        with self.lock:
             self._channels.put(my_chanid, chan)
             self.channels_seen[my_chanid] = True
             chan._set_transport(self)
@@ -2523,8 +2477,6 @@ class Transport(threading.Thread, ClosingContextManager):
                 self.default_window_size, self.default_max_packet_size)
             chan._set_remote_channel(
                 chanid, initial_window_size, max_packet_size)
-        finally:
-            self.lock.release()
         m = Message()
         m.add_byte(cMSG_CHANNEL_OPEN_SUCCESS)
         m.add_int(chanid)
@@ -2554,13 +2506,10 @@ class Transport(threading.Thread, ClosingContextManager):
         self._log(DEBUG, 'Debug msg: {0}'.format(util.safe_string(msg)))
 
     def _get_subsystem_handler(self, name):
-        try:
-            self.lock.acquire()
+        with self.lock:
             if name not in self.subsystem_table:
                 return None, [], {}
             return self.subsystem_table[name]
-        finally:
-            self.lock.release()
 
     _handler_table = {
         MSG_NEWKEYS: _parse_newkeys,
@@ -2672,39 +2621,24 @@ class ChannelMap (object):
         self._lock = threading.Lock()
 
     def put(self, chanid, chan):
-        self._lock.acquire()
-        try:
+        with self._lock:
             self._map[chanid] = chan
-        finally:
-            self._lock.release()
 
     def get(self, chanid):
-        self._lock.acquire()
-        try:
+        with self._lock:
             return self._map.get(chanid, None)
-        finally:
-            self._lock.release()
 
     def delete(self, chanid):
-        self._lock.acquire()
-        try:
+        with self._lock:
             try:
                 del self._map[chanid]
             except KeyError:
                 pass
-        finally:
-            self._lock.release()
 
     def values(self):
-        self._lock.acquire()
-        try:
+        with self._lock:
             return list(self._map.values())
-        finally:
-            self._lock.release()
 
     def __len__(self):
-        self._lock.acquire()
-        try:
+        with self._lock:
             return len(self._map)
-        finally:
-            self._lock.release()
