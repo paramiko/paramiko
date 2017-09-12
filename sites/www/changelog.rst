@@ -12,8 +12,8 @@ Changelog
   ``SSHException``, so your ``except`` statements will all still work!) Also
   migrated ``InvalidHostKey`` to ``ssh_exception.py`` (though it is of course
   still importable from its previous home, ``hostkeys.py``.)
-* :feature:`827` Add support for PKCS #11 which enables the use of smartcards
-  and other cryptographic tokens.
+* :feature:`827` Add support for PKCS #11 (via `paramiko.pkcs11`) which enables
+  the use of smartcards and other cryptographic tokens, such as YubiKeys.
 * :support:`979` Update how we use `Cryptography <https://cryptography.io>`_'s
   signature/verification methods so we aren't relying on a deprecated API.
   Thanks to Paul Kehrer for the patch.

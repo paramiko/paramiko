@@ -1,5 +1,35 @@
-from ctypes import (c_void_p, c_ulong, c_int, c_char_p, cast, addressof,
-                    sizeof, byref, cdll, Structure)
+"""
+Support for PKCS#11-hosted private RSA keys & operations using them.
+
+Smart devices (such as smartcards and YubiKeys) can hold private key data & its
+corresponding public key data (in the form of a certificate) as well as perform
+signature operations using the private key - all without actually exposing the
+private key to the user, and typically protected by a secret PIN as well.
+
+Traditionally, Paramiko expects access to private key material, so the PKCS#11
+style of approach requires extra code - in this case, using the `ctypes` stdlib
+module to access a PKCS#11 "provider", a ``.so`` or ``.dll`` file such as those
+distributed by `OpenSC <https://github.com/OpenSC/OpenSC/wiki>`_.
+
+The typical case involves generating a PKCS "session" (via `.open_session`,
+giving it the provider file path and the PIN) and handing the result to
+`.Client.connect` as its ``pkcs11_session`` argument. The same session may be
+used across multiple clients and/or threads; in any case, it must be explicitly
+closed via `.close_session`.
+
+.. note::
+    This module is based on the following reference material:
+
+    - `OpenSSH's own PKCS#11 support
+      <https://github.com/openssh/openssh-portable/blob/master/ssh-pkcs11.c>`_
+    - `The official PKCS#11 specification
+      <http://docs.oasis-open.org/pkcs11/pkcs11-base/v2.40/os/pkcs11-base-v2.40-os.html>`_
+"""
+
+from ctypes import (
+    c_void_p, c_ulong, c_int, c_char_p, cast, addressof, sizeof, byref, cdll,
+    Structure,
+)
 import subprocess
 import os
 import errno

@@ -52,6 +52,7 @@ Authentication & keys
     api/keys
     api/ssh_gss
     api/kex_gss
+    api/pkcs11
 
 
 Other primary functions
