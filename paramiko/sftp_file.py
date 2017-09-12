@@ -38,7 +38,7 @@ from paramiko.sftp import (
 from paramiko.sftp_attr import SFTPAttributes
 
 
-class SFTPFile (BufferedFile):
+class SFTPFile(BufferedFile):
     """
     Proxy object for a file on the remote server, in client mode SFTP.
 

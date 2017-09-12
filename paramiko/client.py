@@ -44,7 +44,7 @@ from paramiko.transport import Transport
 from paramiko.util import retry_on_signal, ClosingContextManager
 
 
-class SSHClient (ClosingContextManager):
+class SSHClient(ClosingContextManager):
     """
     A high-level representation of a session with an SSH server.  This class
     wraps `.Transport`, `.Channel`, and `.SFTPClient` to take care of most
@@ -715,7 +715,7 @@ class SSHClient (ClosingContextManager):
         self._transport._log(level, msg)
 
 
-class MissingHostKeyPolicy (object):
+class MissingHostKeyPolicy(object):
     """
     Interface for defining the policy that `.SSHClient` should use when the
     SSH server's hostname is not in either the system host keys or the
@@ -736,7 +736,7 @@ class MissingHostKeyPolicy (object):
         pass
 
 
-class AutoAddPolicy (MissingHostKeyPolicy):
+class AutoAddPolicy(MissingHostKeyPolicy):
     """
     Policy for automatically adding the hostname and new host key to the
     local `.HostKeys` object, and saving it.  This is used by `.SSHClient`.
@@ -750,7 +750,7 @@ class AutoAddPolicy (MissingHostKeyPolicy):
                     (key.get_name(), hostname, hexlify(key.get_fingerprint())))
 
 
-class RejectPolicy (MissingHostKeyPolicy):
+class RejectPolicy(MissingHostKeyPolicy):
     """
     Policy for automatically rejecting the unknown hostname & key.  This is
     used by `.SSHClient`.
@@ -762,7 +762,7 @@ class RejectPolicy (MissingHostKeyPolicy):
         raise SSHException('Server %r not found in known_hosts' % hostname)
 
 
-class WarningPolicy (MissingHostKeyPolicy):
+class WarningPolicy(MissingHostKeyPolicy):
     """
     Policy for logging a Python-style warning for an unknown host key, but
     accepting it. This is used by `.SSHClient`.

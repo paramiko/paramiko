@@ -25,7 +25,7 @@ import sys
 from paramiko.sftp import SFTP_OP_UNSUPPORTED
 
 
-class SFTPServerInterface (object):
+class SFTPServerInterface(object):
     """
     This class defines an interface for controlling the behavior of paramiko
     when using the `.SFTPServer` subsystem to provide an SFTP server.

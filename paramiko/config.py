@@ -30,7 +30,7 @@ import socket
 SSH_PORT = 22
 
 
-class SSHConfig (object):
+class SSHConfig(object):
     """
     Representation of config information as stored in the format used by
     OpenSSH. Queries can be made via `lookup`. The format is described in

@@ -29,7 +29,7 @@ from paramiko import (
 from paramiko.common import o666
 
 
-class StubServer (ServerInterface):
+class StubServer(ServerInterface):
     def check_auth_password(self, username, password):
         # all are allowed
         return AUTH_SUCCESSFUL
@@ -38,7 +38,7 @@ class StubServer (ServerInterface):
         return OPEN_SUCCEEDED
 
 
-class StubSFTPHandle (SFTPHandle):
+class StubSFTPHandle(SFTPHandle):
     def stat(self):
         try:
             return SFTPAttributes.from_stat(os.fstat(self.readfile.fileno()))
@@ -55,7 +55,7 @@ class StubSFTPHandle (SFTPHandle):
             return SFTPServer.convert_errno(e.errno)
 
 
-class StubSFTPServer (SFTPServerInterface):
+class StubSFTPServer(SFTPServerInterface):
     # assume current folder is a fine root
     # (the tests always create and eventually delete a subfolder, so there shouldn't be any mess)
     ROOT = os.getcwd()

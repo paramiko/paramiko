@@ -46,12 +46,12 @@ DEFAULT_PORT = 4000
 g_verbose = True
 
 
-class ForwardServer (SocketServer.ThreadingTCPServer):
+class ForwardServer(SocketServer.ThreadingTCPServer):
     daemon_threads = True
     allow_reuse_address = True
     
 
-class Handler (SocketServer.BaseRequestHandler):
+class Handler(SocketServer.BaseRequestHandler):
 
     def handle(self):
         try:
@@ -93,7 +93,7 @@ def forward_tunnel(local_port, remote_host, remote_port, transport):
     # this is a little convoluted, but lets me configure things for the Handler
     # object.  (SocketServer doesn't give Handlers any way to access the outer
     # server normally.)
-    class SubHander (Handler):
+    class SubHander(Handler):
         chain_host = remote_host
         chain_port = remote_port
         ssh_transport = transport

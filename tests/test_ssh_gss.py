@@ -30,7 +30,7 @@ import unittest
 import paramiko
 
 
-class NullServer (paramiko.ServerInterface):
+class NullServer(paramiko.ServerInterface):
 
     def get_allowed_auths(self, username):
         return 'gssapi-with-mic'

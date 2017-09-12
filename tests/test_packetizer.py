@@ -35,7 +35,7 @@ from paramiko.common import byte_chr, zero_byte
 x55 = byte_chr(0x55)
 x1f = byte_chr(0x1f)
 
-class PacketizerTest (unittest.TestCase):
+class PacketizerTest(unittest.TestCase):
 
     def test_1_write(self):
         rsock = LoopSocket()

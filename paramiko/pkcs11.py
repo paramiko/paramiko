@@ -6,14 +6,14 @@ import errno
 from paramiko.ssh_exception import AuthenticationException, SSHException
 
 
-class PKCS11Exception (SSHException):
+class PKCS11Exception(SSHException):
     """
-    Exception raised by failures in the PKCS11 api or logic errors.
+    Exception raised by failures in the PKCS11 API or related logic errors.
     """
     pass
 
 
-class PKCS11AuthenticationException (AuthenticationException):
+class PKCS11AuthenticationException(AuthenticationException):
     """
     Exception raised when pkcs11 authentication failed for some reason.
     """

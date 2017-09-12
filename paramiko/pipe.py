@@ -38,7 +38,7 @@ def make_pipe():
     return p
 
 
-class PosixPipe (object):
+class PosixPipe(object):
     def __init__(self):
         self._rfd, self._wfd = os.pipe()
         self._set = False
@@ -71,7 +71,7 @@ class PosixPipe (object):
         self.set()
 
 
-class WindowsPipe (object):
+class WindowsPipe(object):
     """
     On Windows, only an OS-level "WinSock" may be used in select(), but reads
     and writes must be to the actual socket object.
@@ -117,7 +117,7 @@ class WindowsPipe (object):
         self.set()
 
 
-class OrPipe (object):
+class OrPipe(object):
     def __init__(self, pipe):
         self._set = False
         self._partner = None

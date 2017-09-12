@@ -2534,7 +2534,7 @@ class Transport(threading.Thread, ClosingContextManager):
     }
 
 
-class SecurityOptions (object):
+class SecurityOptions(object):
     """
     Simple object containing the security preferences of an ssh transport.
     These are tuples of acceptable ciphers, digests, key types, and key
@@ -2614,7 +2614,7 @@ class SecurityOptions (object):
         self._set('_preferred_compression', '_compression_info', x)
 
 
-class ChannelMap (object):
+class ChannelMap(object):
     def __init__(self):
         # (id -> Channel)
         self._map = weakref.WeakValueDictionary()

@@ -40,7 +40,7 @@ c_MSG_KEXDH_GEX_REQUEST_OLD, c_MSG_KEXDH_GEX_GROUP, c_MSG_KEXDH_GEX_INIT, \
     [byte_chr(c) for c in range(30, 35)]
 
 
-class KexGex (object):
+class KexGex(object):
 
     name = 'diffie-hellman-group-exchange-sha1'
     min_bits = 1024

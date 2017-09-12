@@ -19,14 +19,14 @@
 import socket
 
 
-class SSHException (Exception):
+class SSHException(Exception):
     """
     Exception raised by failures in SSH2 protocol negotiation or logic errors.
     """
     pass
 
 
-class AuthenticationException (SSHException):
+class AuthenticationException(SSHException):
     """
     Exception raised when authentication failed for some reason.  It may be
     possible to retry with different credentials.  (Other classes specify more
@@ -37,14 +37,14 @@ class AuthenticationException (SSHException):
     pass
 
 
-class PasswordRequiredException (AuthenticationException):
+class PasswordRequiredException(AuthenticationException):
     """
     Exception raised when a password is needed to unlock a private key file.
     """
     pass
 
 
-class BadAuthenticationType (AuthenticationException):
+class BadAuthenticationType(AuthenticationException):
     """
     Exception raised when an authentication type (like password) is used, but
     the server isn't allowing that type.  (It may only allow public-key, for
@@ -68,7 +68,7 @@ class BadAuthenticationType (AuthenticationException):
         )
 
 
-class PartialAuthentication (AuthenticationException):
+class PartialAuthentication(AuthenticationException):
     """
     An internal exception thrown in the case of partial authentication.
     """
@@ -81,7 +81,7 @@ class PartialAuthentication (AuthenticationException):
         self.args = (types, )
 
 
-class ChannelException (SSHException):
+class ChannelException(SSHException):
     """
     Exception raised when an attempt to open a new `.Channel` fails.
 
@@ -96,7 +96,7 @@ class ChannelException (SSHException):
         self.args = (code, text, )
 
 
-class BadHostKeyException (SSHException):
+class BadHostKeyException(SSHException):
     """
     The host key given by the SSH server did not match what we were expecting.
 
@@ -153,7 +153,7 @@ class InvalidHostKey(Exception):
         self.args = (line, exc)
 
 
-class ProxyCommandFailure (SSHException):
+class ProxyCommandFailure(SSHException):
     """
     The "ProxyCommand" found in the .ssh/config file returned an error.
 

@@ -53,7 +53,7 @@ Ngw3qIch/WgRmMHy4kBq1SsXMjQCte1So6HBMvBPIW5SiMTmjCfZZiw4AYHK+B/JaOwaG9yRg2Ejg\
 0d54U0X/NeX5QxuYR6OMJlrkQB7oiW/P/1mwjQgE="""
 
 
-class HostKeysTest (unittest.TestCase):
+class HostKeysTest(unittest.TestCase):
 
     def setUp(self):
         with open('hostfile.temp', 'w') as f:

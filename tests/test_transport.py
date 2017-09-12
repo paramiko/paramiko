@@ -61,7 +61,7 @@ Maybe.
 """
 
 
-class NullServer (ServerInterface):
+class NullServer(ServerInterface):
     paranoid_did_password = False
     paranoid_did_public_key = False
     paranoid_key = DSSKey.from_private_key_file(test_path('test_dss.key'))

@@ -21,7 +21,7 @@ from paramiko.py3compat import b, byte_ord, byte_chr, long
 import paramiko.util as util
 
 
-class BERException (Exception):
+class BERException(Exception):
     pass
 
 

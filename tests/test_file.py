@@ -30,7 +30,7 @@ from paramiko.py3compat import BytesIO
 from tests import skipUnlessBuiltin
 
 
-class LoopbackFile (BufferedFile):
+class LoopbackFile(BufferedFile):
     """
     BufferedFile object that you can write data into, and then read it back.
     """
@@ -50,7 +50,7 @@ class LoopbackFile (BufferedFile):
         return len(data)
 
 
-class BufferedFileTest (unittest.TestCase):
+class BufferedFileTest(unittest.TestCase):
 
     def test_1_simple(self):
         f = LoopbackFile('r')

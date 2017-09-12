@@ -49,7 +49,7 @@ def _roll_random(n):
     return num
 
 
-class ModulusPack (object):
+class ModulusPack(object):
     """
     convenience object for holding the contents of the /etc/ssh/moduli file,
     on systems that have such a file.

@@ -29,7 +29,7 @@ from paramiko.common import (
 from paramiko.py3compat import string_types
 
 
-class ServerInterface (object):
+class ServerInterface(object):
     """
     This class defines an interface for controlling the behavior of Paramiko
     in server mode.
@@ -584,7 +584,7 @@ class ServerInterface (object):
         """
         return (None, None)
 
-class InteractiveQuery (object):
+class InteractiveQuery(object):
     """
     A query (set of prompts) for a user during interactive authentication.
     """
@@ -623,7 +623,7 @@ class InteractiveQuery (object):
         self.prompts.append((prompt, echo))
 
 
-class SubsystemHandler (threading.Thread):
+class SubsystemHandler(threading.Thread):
     """
     Handler for a subsytem in server mode.  If you create a subclass of this
     class and pass it to `.Transport.set_subsystem_handler`, an object of this

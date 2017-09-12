@@ -24,7 +24,7 @@ import threading, socket
 from paramiko.common import asbytes
 
 
-class LoopSocket (object):
+class LoopSocket(object):
     """
     A LoopSocket looks like a normal socket, but all data written to it is
     delivered on the read-end of another LoopSocket, and vice versa.  It's

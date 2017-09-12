@@ -64,7 +64,7 @@ def open_only(func):
     return _check
 
 
-class Channel (ClosingContextManager):
+class Channel(ClosingContextManager):
     """
     A secure tunnel across an SSH `.Transport`.  A Channel is meant to behave
     like a socket, and has an API that should be indistinguishable from the
@@ -1266,7 +1266,7 @@ class Channel (ClosingContextManager):
         return size
 
 
-class ChannelFile (BufferedFile):
+class ChannelFile(BufferedFile):
     """
     A file-like wrapper around `.Channel`.  A ChannelFile is created by calling
     `Channel.makefile`.
@@ -1298,7 +1298,7 @@ class ChannelFile (BufferedFile):
         return len(data)
 
 
-class ChannelStderrFile (ChannelFile):
+class ChannelStderrFile(ChannelFile):
     def __init__(self, channel, mode='r', bufsize=-1):
         ChannelFile.__init__(self, channel, mode, bufsize)
 

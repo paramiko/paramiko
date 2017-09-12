@@ -106,7 +106,7 @@ class NullServer(paramiko.ServerInterface):
         return True
 
 
-class SSHClientTest (unittest.TestCase):
+class SSHClientTest(unittest.TestCase):
 
     def setUp(self):
         self.sockl = socket.socket()

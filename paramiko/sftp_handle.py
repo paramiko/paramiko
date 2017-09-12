@@ -25,7 +25,7 @@ from paramiko.sftp import SFTP_OP_UNSUPPORTED, SFTP_OK
 from paramiko.util import ClosingContextManager
 
 
-class SFTPHandle (ClosingContextManager):
+class SFTPHandle(ClosingContextManager):
     """
     Abstract object representing a handle to an open file (or folder) in an
     SFTP server implementation.  Each handle has a string representation used

@@ -22,7 +22,7 @@ from paramiko.common import x80000000, o700, o70, xffffffff
 from paramiko.py3compat import long, b
 
 
-class SFTPAttributes (object):
+class SFTPAttributes(object):
     """
     Representation of the attributes of a file (or proxied file) for SFTP in
     client or server mode.  It attemps to mirror the object returned by

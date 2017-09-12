@@ -57,7 +57,7 @@ from .pkcs11 import (
 from .authentication import hostkey_from_text
 
 
-class AuthHandler (object):
+class AuthHandler(object):
     """
     Internal class to handle the mechanics of authentication.
     """

@@ -53,7 +53,7 @@ _hash_class = {
 }
 
 
-class SFTPServer (BaseSFTP, SubsystemHandler):
+class SFTPServer(BaseSFTP, SubsystemHandler):
     """
     Server-side SFTP subsystem support.  Since this is a `.SubsystemHandler`,
     it can be (and is meant to be) set as the handler for ``"sftp"`` requests.

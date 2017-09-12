@@ -97,7 +97,7 @@ def get_sftp():
     return sftp
 
 
-class SFTPTest (unittest.TestCase):
+class SFTPTest(unittest.TestCase):
     @staticmethod
     def init(hostname, username, keyfile, passwd):
         global sftp, tc

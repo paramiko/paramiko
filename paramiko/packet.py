@@ -42,7 +42,7 @@ def compute_hmac(key, message, digest_class):
     return HMAC(key, message, digest_class).digest()
 
 
-class NeedRekeyException (Exception):
+class NeedRekeyException(Exception):
     """
     Exception indicating a rekey is needed.
     """
@@ -56,7 +56,7 @@ def first_arg(e):
     return arg
 
 
-class Packetizer (object):
+class Packetizer(object):
     """
     Implementation of the base SSH packet protocol.
     """

@@ -23,7 +23,7 @@ from paramiko.py3compat import BytesIO, PY2, u, bytes_types, text_type
 from paramiko.util import ClosingContextManager
 
 
-class BufferedFile (ClosingContextManager):
+class BufferedFile(ClosingContextManager):
     """
     Reusable base class to implement Python-style file buffering around a
     simpler stream.

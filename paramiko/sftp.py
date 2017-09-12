@@ -90,11 +90,11 @@ CMD_NAMES = {
 }
 
 
-class SFTPError (Exception):
+class SFTPError(Exception):
     pass
 
 
-class BaseSFTP (object):
+class BaseSFTP(object):
     def __init__(self):
         self.logger = util.get_logger('paramiko.sftp')
         self.sock = None

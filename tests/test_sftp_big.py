@@ -36,7 +36,7 @@ from tests.test_sftp import get_sftp
 FOLDER = os.environ.get('TEST_FOLDER', 'temp-testing000')
 
 
-class BigSFTPTest (unittest.TestCase):
+class BigSFTPTest(unittest.TestCase):
 
     def setUp(self):
         global FOLDER

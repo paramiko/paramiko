@@ -30,7 +30,7 @@ from paramiko.ssh_exception import SSHException, UnknownKeyType
 from .authentication import hostkey_from_text
 
 
-class HostKeys (MutableMapping):
+class HostKeys(MutableMapping):
     """
     Representation of an OpenSSH-style "known hosts" file.  Host keys can be
     read from one or more files, and then individual hosts can be looked up to
@@ -130,7 +130,7 @@ class HostKeys (MutableMapping):
         :return: dict of `str` -> `.PKey` keys associated with this host
             (or ``None``)
         """
-        class SubDict (MutableMapping):
+        class SubDict(MutableMapping):
             def __init__(self, hostname, entries, hostkeys):
                 self._hostname = hostname
                 self._entries = entries
