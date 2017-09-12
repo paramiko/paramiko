@@ -353,7 +353,7 @@ class SSHClient (ClosingContextManager):
         # If GSS-API Key Exchange is performed we are not required to check the
         # host key, because the host is authenticated via GSS-API / SSPI as
         # well as our client.
-        if not self._transport.use_gss_kex:
+        if not self._transport.gss_kex_used:
             our_server_key = self._system_host_keys.get(
                 server_hostkey_name, {}).get(keytype)
             if our_server_key is None:
