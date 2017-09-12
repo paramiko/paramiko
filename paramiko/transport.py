@@ -133,6 +133,11 @@ class Transport(threading.Thread, ClosingContextManager):
         'diffie-hellman-group-exchange-sha1',
         'diffie-hellman-group-exchange-sha256',
     )
+    _preferred_gsskex = (
+        'gss-gex-sha1-toWM5Slw5Ew8Mqkay+al2g==',
+        'gss-group14-sha1-toWM5Slw5Ew8Mqkay+al2g==',
+        'gss-group1-sha1-toWM5Slw5Ew8Mqkay+al2g==',
+    )
     _preferred_compression = ('none',)
 
     _cipher_info = {
@@ -334,12 +339,7 @@ class Transport(threading.Thread, ClosingContextManager):
         self.gss_host = None
         if self.use_gss_kex:
             self.kexgss_ctxt = GSSAuth("gssapi-keyex", gss_deleg_creds)
-            self._preferred_kex = ('gss-gex-sha1-toWM5Slw5Ew8Mqkay+al2g==',
-                                   'gss-group14-sha1-toWM5Slw5Ew8Mqkay+al2g==',
-                                   'gss-group1-sha1-toWM5Slw5Ew8Mqkay+al2g==',
-                                   'diffie-hellman-group-exchange-sha1',
-                                   'diffie-hellman-group14-sha1',
-                                   'diffie-hellman-group1-sha1')
+            self._preferred_kex = self._preferred_gsskex + self._preferred_kex
 
         # state used during negotiation
         self.kex_engine = None
@@ -1846,6 +1846,8 @@ class Transport(threading.Thread, ClosingContextManager):
                     ):
                         handler = self.auth_handler._handler_table[ptype]
                         handler(self.auth_handler, m)
+                        if len(self._expected_packet) > 0:
+                            continue
                     else:
                         self._log(WARNING, 'Oops, unhandled type %d' % ptype)
                         msg = Message()

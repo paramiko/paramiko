@@ -34,7 +34,7 @@ from paramiko.client import (
     WarningPolicy,
 )
 from paramiko.auth_handler import AuthHandler
-from paramiko.ssh_gss import GSSAuth, GSS_AUTH_AVAILABLE
+from paramiko.ssh_gss import GSSAuth, GSS_AUTH_AVAILABLE, GSS_EXCEPTIONS
 from paramiko.channel import Channel, ChannelFile
 from paramiko.ssh_exception import (
     SSHException, PasswordRequiredException, BadAuthenticationType,
