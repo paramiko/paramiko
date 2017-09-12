@@ -2,6 +2,9 @@
 Changelog
 =========
 
+* :bug:`1055` (also :issue:`1056`, :issue:`1057`, :issue:`1058`, :issue:`1059`)
+  Fix up host-key checking in our GSSAPI support, which was previously using an
+  incorrect API call. Thanks to Anselm Kruis for the patches.
 * :support:`1012` (via :issue:`1016`) Enhance documentation around the new
   `SFTP.posix_rename <paramiko.sftp_client.SFTPClient.posix_rename>` method so
   it's referenced in the 'standard' ``rename`` method for increased visibility.
