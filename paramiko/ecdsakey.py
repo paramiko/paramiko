@@ -30,7 +30,7 @@ from cryptography.hazmat.primitives.asymmetric.utils import (
 
 from paramiko.common import four_byte
 from paramiko.message import Message
-from paramiko.pkey import PKey
+from paramiko.pkey import PKey, CERT_SUFFIX
 from paramiko.ssh_exception import SSHException
 from paramiko.util import deflate_long
 
@@ -71,6 +71,10 @@ class _ECDSACurveSet(object):
         self.ecdsa_curves = ecdsa_curves
 
     def get_key_format_identifier_list(self):
+        # NOTE: does _not_ include cert variants, since this list is used at
+        # times to tell regular keys apart from certs.
+        # get_by_key_format_identifier() however _does_ return the right curve
+        # for a given cert identifier.
         return [curve.key_format_identifier for curve in self.ecdsa_curves]
 
     def get_by_curve_class(self, curve_class):
@@ -80,7 +84,8 @@ class _ECDSACurveSet(object):
 
     def get_by_key_format_identifier(self, key_format_identifier):
         for curve in self.ecdsa_curves:
-            if curve.key_format_identifier == key_format_identifier:
+            identifier = curve.key_format_identifier
+            if key_format_identifier in (identifier, identifier + CERT_SUFFIX):
                 return curve
 
     def get_by_key_length(self, key_length):
@@ -122,21 +127,11 @@ class ECDSAKey(PKey):
             # Must set ecdsa_curve first; subroutines called herein may need to
             # spit out our get_name(), which relies on this.
             key_type = msg.get_text()
-            # But this also means we need to hand it a real key/curve
-            # identifier, so strip out any cert business. (NOTE: could push
-            # that into _ECDSACurveSet.get_by_key_format_identifier(), but it
-            # feels more correct to do it here?)
-            suffix = '-cert-v01@openssh.com'
-            if key_type.endswith(suffix):
-                key_type = key_type[:-len(suffix)]
             self.ecdsa_curve = self._ECDSA_CURVES.get_by_key_format_identifier(
                 key_type
             )
             key_types = self._ECDSA_CURVES.get_key_format_identifier_list()
-            cert_types = [
-                '{0}-cert-v01@openssh.com'.format(x)
-                for x in key_types
-            ]
+            cert_types = [x + CERT_SUFFIX for x in key_types]
             self._check_type_and_load_cert(
                 msg=msg,
                 key_type=key_types,

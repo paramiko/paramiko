@@ -7,6 +7,7 @@ system.
 
 import binascii
 
+from .pkey import CERT_SUFFIX
 from .dsskey import DSSKey
 from .ecdsakey import ECDSAKey
 from .ed25519key import Ed25519Key
@@ -15,13 +16,19 @@ from .rsakey import RSAKey
 from .ssh_exception import UnknownKeyType, InvalidHostKey
 
 
+# Basic, one-to-one type-to-class mapping key classes
 KEY_CLASSES = {
     'ssh-rsa': RSAKey,
     'ssh-dss': DSSKey,
     'ssh-ed25519': Ed25519Key,
 }
+# Key classes which support >1 key type/identifier
 for identifier in ECDSAKey.supported_key_format_identifiers():
     KEY_CLASSES[identifier] = ECDSAKey
+# Expand with all certificate identifiers; blessedly, it's always "key type
+# plus suffix". (Even when the RFC has typos suggesting otherwise...)
+for identifier, klass in list(KEY_CLASSES.items()):
+    KEY_CLASSES[identifier + CERT_SUFFIX] = klass
 
 
 # TODO: is this useful for anything besides _host_ keys? User keys will not
