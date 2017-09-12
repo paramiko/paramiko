@@ -263,9 +263,10 @@ class AuthHandler (object):
                     m = Message()
                     m.add_byte(cMSG_USERAUTH_GSSAPI_TOKEN)
                     try:
-                        m.add_string(sshgss.ssh_init_sec_context(self.gss_host,
-                                                                 mech,
-                                                                 self.username,))
+                        m.add_string(sshgss.ssh_init_sec_context(
+                            self.gss_host,
+                            mech,
+                            self.username,))
                     except GSS_EXCEPTIONS as e:
                         return self._handle_local_gss_failure(e)
                     self.transport._send_message(m)
@@ -274,10 +275,11 @@ class AuthHandler (object):
                         if ptype == MSG_USERAUTH_GSSAPI_TOKEN:
                             srv_token = m.get_string()
                             try:
-                                next_token = sshgss.ssh_init_sec_context(self.gss_host,
-                                                                         mech,
-                                                                         self.username,
-                                                                         srv_token)
+                                next_token = sshgss.ssh_init_sec_context(
+                                    self.gss_host,
+                                    mech,
+                                    self.username,
+                                    srv_token)
                             except GSS_EXCEPTIONS as e:
                                 return self._handle_local_gss_failure(e)
                             # After this step the GSSAPI should not return any
@@ -307,7 +309,7 @@ class AuthHandler (object):
                     maj_status = m.get_int()
                     min_status = m.get_int()
                     err_msg = m.get_string()
-                    m.get_string() # Lang tag - discarded
+                    m.get_string()  # Lang tag - discarded
                     raise SSHException("GSS-API Error:\nMajor Status: %s\n\
                                         Minor Status: %s\ \nError Message:\
                                          %s\n") % (str(maj_status),
@@ -400,7 +402,7 @@ class AuthHandler (object):
                 (self.auth_username != username)):
             self.transport._log(
                 WARNING,
-                'Auth rejected because the client attempted to change username in mid-flight' # noqa
+                'Auth rejected because the client attempted to change username in mid-flight'  # noqa
             )
             self._disconnect_no_more_auth()
             return
@@ -511,8 +513,11 @@ class AuthHandler (object):
             m = Message()
             m.add_byte(cMSG_USERAUTH_GSSAPI_RESPONSE)
             m.add_bytes(supported_mech)
-            self.transport.auth_handler = GssapiWithMicAuthHandler(self, sshgss)
-            self.transport._expected_packet = (MSG_USERAUTH_GSSAPI_TOKEN, MSG_USERAUTH_REQUEST, MSG_SERVICE_REQUEST)
+            self.transport.auth_handler = GssapiWithMicAuthHandler(self,
+                                                                   sshgss)
+            self.transport._expected_packet = (MSG_USERAUTH_GSSAPI_TOKEN,
+                                               MSG_USERAUTH_REQUEST,
+                                               MSG_SERVICE_REQUEST)
             self.transport._send_message(m)
             return
         elif method == "gssapi-keyex" and gss_auth:
@@ -617,7 +622,8 @@ class AuthHandler (object):
     def _handle_local_gss_failure(self, e):
         self.transport.saved_exception = e
         self.transport._log(DEBUG, "GSSAPI failure: %s" % str(e))
-        self.transport._log(INFO, 'Authentication (%s) failed.' % self.auth_method)
+        self.transport._log(INFO, 'Authentication (%s) failed.' %
+                            self.auth_method)
         self.authenticated = False
         self.username = None
         if self.auth_event is not None:
@@ -714,7 +720,8 @@ class GssapiWithMicAuthHandler(object):
         # The OpenSSH server is able to create a TGT with the delegated
         # client credentials, but this is not supported by GSS-API.
         result = AUTH_SUCCESSFUL
-        self.transport.server_object.check_auth_gssapi_with_mic(username, result)
+        self.transport.server_object.check_auth_gssapi_with_mic(username,
+                                                                result)
         # okay, send result
         self._send_auth_result(username, self.method, result)
 

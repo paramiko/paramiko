@@ -33,25 +33,20 @@ import struct
 import os
 import sys
 
-"""
-:var bool GSS_AUTH_AVAILABLE:
-    Constraint that indicates if GSS-API / SSPI is available.
-"""
+
+#: A boolean constraint that indicates if GSS-API / SSPI is available.
 GSS_AUTH_AVAILABLE = True
 
-"""
-:var tuple GSS_EXCEPTIONS:
-    The exception types used by the underlying GSSAPI implementation.
-"""
+
+#: A tuple of the exception types used by the underlying GSSAPI implementation.
 GSS_EXCEPTIONS = ()
+
 
 from pyasn1.type.univ import ObjectIdentifier
 from pyasn1.codec.der import encoder, decoder
 
 
-"""
-:var str _API: Constraint for the used API
-"""
+#: :var str _API: Constraint for the used API
 _API = "MIT"
 
 try:
@@ -355,9 +350,9 @@ class _SSH_GSSAPI(_SSH_GSSAuth):
         if self._username is not None:
             # server mode
             mic_field = self._ssh_build_mic(self._session_id,
-                                        self._username,
-                                        self._service,
-                                        self._auth_method)
+                                            self._username,
+                                            self._service,
+                                            self._auth_method)
             self._gss_srv_ctxt.verify_mic(mic_field, mic_token)
         else:
             # for key exchange with gssapi-keyex
