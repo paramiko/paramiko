@@ -2,6 +2,11 @@
 Changelog
 =========
 
+* :bug:`1061` Clean up GSSAPI authentication procedures so they do not prevent
+  normal fallback to other authentication methods on failure. (In other words,
+  presence of GSSAPI functionality on a target server precluded use of _any_
+  other auth type if the user was unable to pass GSSAPI auth.) Patch via Anselm
+  Kruis.
 * :bug:`1060` Fix key exchange (kex) algorithm list for GSSAPI authentication;
   previously, the list used solely out-of-date algorithms, and now contains
   newer ones listed preferentially before the old. Credit: Anselm Kruis.
