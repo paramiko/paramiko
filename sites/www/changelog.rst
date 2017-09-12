@@ -2,6 +2,9 @@
 Changelog
 =========
 
+* :bug:`1055` (also :issue:`1056`, :issue:`1057`, :issue:`1058`, :issue:`1059`)
+  Fix up host-key checking in our GSSAPI support, which was previously using an
+  incorrect API call. Thanks to Anselm Kruis for the patches.
 * :release:`2.1.3 <2017-06-09>`
 * :release:`2.0.6 <2017-06-09>`
 * :release:`1.18.3 <2017-06-09>`
