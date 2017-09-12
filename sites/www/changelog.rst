@@ -2,6 +2,9 @@
 Changelog
 =========
 
+* :bug:`1055` (also :issue:`1056`, :issue:`1057`, :issue:`1058`, :issue:`1059`)
+  Fix up host-key checking in our GSSAPI support, which was previously using an
+  incorrect API call. Thanks to Anselm Kruis for the patches.
 * :support:`979` Update how we use `Cryptography <https://cryptography.io>`_'s
   signature/verification methods so we aren't relying on a deprecated API.
   Thanks to Paul Kehrer for the patch.
