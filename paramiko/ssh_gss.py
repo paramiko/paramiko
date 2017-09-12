@@ -33,33 +33,38 @@ import struct
 import os
 import sys
 
-"""
-:var bool GSS_AUTH_AVAILABLE:
-    Constraint that indicates if GSS-API / SSPI is available.
-"""
+
+#: A boolean constraint that indicates if GSS-API / SSPI is available.
 GSS_AUTH_AVAILABLE = True
+
+
+#: A tuple of the exception types used by the underlying GSSAPI implementation.
+GSS_EXCEPTIONS = ()
+
 
 from pyasn1.type.univ import ObjectIdentifier
 from pyasn1.codec.der import encoder, decoder
 
-from paramiko.common import MSG_USERAUTH_REQUEST
-from paramiko.ssh_exception import SSHException
 
-"""
-:var str _API: Constraint for the used API
-"""
+#: :var str _API: Constraint for the used API
 _API = "MIT"
 
 try:
     import gssapi
+    GSS_EXCEPTIONS = (gssapi.GSSException,)
 except (ImportError, OSError):
     try:
+        import pywintypes
         import sspicon
         import sspi
         _API = "SSPI"
+        GSS_EXCEPTIONS = (pywintypes.error,)
     except ImportError:
         GSS_AUTH_AVAILABLE = False
         _API = None
+
+from paramiko.common import MSG_USERAUTH_REQUEST
+from paramiko.ssh_exception import SSHException
 
 
 def GSSAuth(auth_method, gss_deleg_creds=True):
@@ -345,9 +350,9 @@ class _SSH_GSSAPI(_SSH_GSSAuth):
         if self._username is not None:
             # server mode
             mic_field = self._ssh_build_mic(self._session_id,
-                                        self._username,
-                                        self._service,
-                                        self._auth_method)
+                                            self._username,
+                                            self._service,
+                                            self._auth_method)
             self._gss_srv_ctxt.verify_mic(mic_field, mic_token)
         else:
             # for key exchange with gssapi-keyex
@@ -438,9 +443,10 @@ class _SSH_SSPI(_SSH_GSSAuth):
                                                  targetspn=targ_name)
             error, token = self._gss_ctxt.authorize(recv_token)
             token = token[0].Buffer
-        except:
-            raise Exception("{0}, Target: {1}".format(sys.exc_info()[1],
-                                                      self._gss_host))
+        except pywintypes.error as e:
+            e.strerror += ", Target: {1}".format(e, self._gss_host)
+            raise
+
         if error == 0:
             """
             if the status is GSS_COMPLETE (error = 0) the context is fully
