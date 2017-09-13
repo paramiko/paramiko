@@ -292,9 +292,10 @@ class SSHClient (ClosingContextManager):
         :param bool gss_deleg_creds: Delegate GSS-API client credentials or not
         :param str gss_host:
             The targets name in the kerberos database. default: hostname
-        :param bool gss_trust_dns: Indicates whether or not the DNS is trusted to
-                              securely canonicalize the name of the host being
-                              connected to (default ``True``).
+        :param bool gss_trust_dns:
+            Indicates whether or not the DNS is trusted to securely
+            canonicalize the name of the host being connected to (default
+            ``True``).
         :param float banner_timeout: an optional timeout (in seconds) to wait
             for the SSH banner to be presented.
         :param float auth_timeout: an optional timeout (in seconds) to wait for
