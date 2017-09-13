@@ -228,7 +228,7 @@ class SSHClient (ClosingContextManager):
         gss_host=None,
         banner_timeout=None,
         auth_timeout=None,
-        gss_trust_dns=True
+        gss_trust_dns=True,
     ):
         """
         Connect to an SSH server and authenticate to it.  The server's host key
