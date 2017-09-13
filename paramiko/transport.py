@@ -459,11 +459,13 @@ class Transport(threading.Thread, ClosingContextManager):
         """
         Setter for C{gss_host} if GSS-API Key Exchange is performed.
 
-        :param str gss_host: The targets name in the kerberos database
-                             Default: The name of the host to connect to
-        :param bool dns_lookup:   Indicates whether or not ``gss_host`` should be
-                             canonicalized (default ``True``).
-        :rtype: Void
+        :param str gss_host:
+            The target's name in the kerberos database. Default: The name of
+            the host to connect to.
+        :param bool dns_lookup:
+            Indicates whether or not ``gss_host`` should be canonicalized
+            (default ``True``).
+        :returns: ``None``.
         """
         if dns_lookup:
             self.gss_host = socket.getfqdn(gss_host)
