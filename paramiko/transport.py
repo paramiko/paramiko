@@ -1137,6 +1137,9 @@ class Transport(threading.Thread, ClosingContextManager):
 
         :raises: `.SSHException` -- if the SSH2 negotiation fails, the host key
             supplied by the server is incorrect, or authentication fails.
+
+        .. versionchanged:: 2.3
+            Added the ``gss_trust_dns`` argument.
         """
         if hostkey is not None:
             self._preferred_keys = [hostkey.get_name()]

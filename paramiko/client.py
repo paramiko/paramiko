@@ -313,6 +313,8 @@ class SSHClient (ClosingContextManager):
         .. versionchanged:: 1.15
             Added the ``banner_timeout``, ``gss_auth``, ``gss_kex``,
             ``gss_deleg_creds`` and ``gss_host`` arguments.
+        .. versionchanged:: 2.3
+            Added the ``gss_trust_dns`` argument.
         """
         if not sock:
             errors = {}
