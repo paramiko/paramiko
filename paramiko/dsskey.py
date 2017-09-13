@@ -49,6 +49,7 @@ class DSSKey(PKey):
         self.g = None
         self.y = None
         self.x = None
+        self.public_blob = None
         if file_obj is not None:
             self._from_private_key(file_obj, password)
             return
@@ -60,10 +61,11 @@ class DSSKey(PKey):
         if vals is not None:
             self.p, self.q, self.g, self.y = vals
         else:
-            if msg is None:
-                raise SSHException('Key object may not be empty')
-            if msg.get_text() != 'ssh-dss':
-                raise SSHException('Invalid key')
+            self._check_type_and_load_cert(
+                msg=msg,
+                key_type='ssh-dss',
+                cert_type='ssh-dss-cert-v01@openssh.com',
+            )
             self.p = msg.get_mpint()
             self.q = msg.get_mpint()
             self.g = msg.get_mpint()
@@ -106,9 +108,8 @@ class DSSKey(PKey):
                 )
             )
         ).private_key(backend=default_backend())
-        signer = key.signer(hashes.SHA1())
-        signer.update(data)
-        r, s = decode_dss_signature(signer.finalize())
+        sig = key.sign(data, hashes.SHA1())
+        r, s = decode_dss_signature(sig)
 
         m = Message()
         m.add_string('ssh-dss')
@@ -146,10 +147,8 @@ class DSSKey(PKey):
                 g=self.g
             )
         ).public_key(backend=default_backend())
-        verifier = key.verifier(signature, hashes.SHA1())
-        verifier.update(data)
         try:
-            verifier.verify()
+            key.verify(signature, data, hashes.SHA1())
         except InvalidSignature:
             return False
         else:

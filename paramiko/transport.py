@@ -209,11 +209,17 @@ class Transport(threading.Thread, ClosingContextManager):
 
     _key_info = {
         'ssh-rsa': RSAKey,
+        'ssh-rsa-cert-v01@openssh.com': RSAKey,
         'ssh-dss': DSSKey,
+        'ssh-dss-cert-v01@openssh.com': DSSKey,
         'ecdsa-sha2-nistp256': ECDSAKey,
+        'ecdsa-sha2-nistp256-cert-v01@openssh.com': ECDSAKey,
         'ecdsa-sha2-nistp384': ECDSAKey,
+        'ecdsa-sha2-nistp384-cert-v01@openssh.com': ECDSAKey,
         'ecdsa-sha2-nistp521': ECDSAKey,
+        'ecdsa-sha2-nistp521-cert-v01@openssh.com': ECDSAKey,
         'ssh-ed25519': Ed25519Key,
+        'ssh-ed25519-cert-v01@openssh.com': Ed25519Key,
     }
 
     _kex_info = {
@@ -1842,8 +1848,6 @@ class Transport(threading.Thread, ClosingContextManager):
                         continue
                     elif ptype == MSG_DISCONNECT:
                         self._parse_disconnect(m)
-                        self.active = False
-                        self.packetizer.close()
                         break
                     elif ptype == MSG_DEBUG:
                         self._parse_debug(m)
@@ -1867,8 +1871,7 @@ class Transport(threading.Thread, ClosingContextManager):
                             self._log(DEBUG, 'Ignoring message for dead channel %d' % chanid) # noqa
                         else:
                             self._log(ERROR, 'Channel request for unknown channel %d' % chanid) # noqa
-                            self.active = False
-                            self.packetizer.close()
+                            break
                     elif (
                         self.auth_handler is not None and
                         ptype in self.auth_handler._handler_table

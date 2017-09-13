@@ -21,3 +21,8 @@ ECDSA
 =====
 
 .. automodule:: paramiko.ecdsakey
+
+Ed25519
+=======
+
+.. automodule:: paramiko.ed25519key
