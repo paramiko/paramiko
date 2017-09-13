@@ -1188,7 +1188,9 @@ class Transport(threading.Thread, ClosingContextManager):
         if (pkey is not None) or (password is not None) or gss_auth or gss_kex:
             if gss_auth:
                 self._log(DEBUG, 'Attempting GSS-API auth... (gssapi-with-mic)') # noqa
-                self.auth_gssapi_with_mic(username, self.gss_host, gss_deleg_creds)
+                self.auth_gssapi_with_mic(
+                    username, self.gss_host, gss_deleg_creds,
+                )
             elif gss_kex:
                 self._log(DEBUG, 'Attempting GSS-API auth... (gssapi-keyex)')
                 self.auth_gssapi_keyex(username)
