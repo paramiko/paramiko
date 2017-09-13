@@ -350,7 +350,8 @@ class SSHClient (ClosingContextManager):
                 raise NoValidConnectionsError(errors)
 
         t = self._transport = Transport(
-            sock, gss_kex=gss_kex, gss_deleg_creds=gss_deleg_creds)
+            sock, gss_kex=gss_kex, gss_deleg_creds=gss_deleg_creds
+        )
         t.use_compression(compress=compress)
         if gss_kex:
             if gss_host is None:
