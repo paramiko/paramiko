@@ -2,6 +2,10 @@
 Changelog
 =========
 
+* :feature:`1063` Add a ``gss_trust_dns`` setting to ``Client`` and
+  ``Transport`` to allow explicitly setting whether or not DNS canonicalization
+  should occur when using GSSAPI. Thanks to Richard E. Silverman for the report
+  & Sebastian Deiß for initial patchset.
 * :bug:`1061` Clean up GSSAPI authentication procedures so they do not prevent
   normal fallback to other authentication methods on failure. (In other words,
   presence of GSSAPI functionality on a target server precluded use of _any_
