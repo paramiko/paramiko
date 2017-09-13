@@ -455,22 +455,36 @@ class Transport(threading.Thread, ClosingContextManager):
         """
         return SecurityOptions(self)
 
-    def set_gss_host(self, gss_host, dns_lookup=True):
+    def set_gss_host(self, kex_requested, gss_host, trust_dns):
         """
-        Setter for C{gss_host} if GSS-API Key Exchange is performed.
+        Normalize/canonicalize ``self.gss_host`` depending on various factors.
 
+        :param bool kex_requested:
+            Whether GSSAPI key exchange was even requested. If not, this is a
+            no-op and nothing happens (and ``self.gss_host`` is not set.)
         :param str gss_host:
-            The target's name in the kerberos database. Default: The name of
-            the host to connect to.
-        :param bool dns_lookup:
-            Indicates whether or not ``gss_host`` should be canonicalized
-            (default ``True``).
+            The explicitly requested GSS-oriented hostname to connect to (i.e.
+            what the host's name is in the Kerberos database.) Defaults to
+            ``self.hostname`` (which will be the 'real' target hostname and/or
+            host portion of given socket object.)
+        :param bool trust_dns:
+            Indicates whether or not DNS is trusted; if true, DNS will be used
+            to canonicalize the GSS hostname (which again will either be
+            ``gss_host`` or the transport's default hostname.)
         :returns: ``None``.
         """
-        if dns_lookup:
-            self.gss_host = socket.getfqdn(gss_host)
-        else:
-            self.gss_host = gss_host
+        # No GSSAPI in play == nothing to do
+        if not kex_requested:
+            return
+        # Obtain the correct host first - did user request a GSS-specific name
+        # to use that is distinct from the actual SSH target hostname?
+        if gss_host is None:
+            gss_host = self.hostname
+        # Finally, canonicalize via DNS if DNS is trusted.
+        if trust_dns:
+            gss_host = socket.getfqdn(gss_host)
+        # And set attribute for reference later.
+        self.gss_host = gss_host
 
     def start_client(self, event=None, timeout=None):
         """
@@ -1144,10 +1158,11 @@ class Transport(threading.Thread, ClosingContextManager):
         if hostkey is not None:
             self._preferred_keys = [hostkey.get_name()]
 
-        if gss_host is not None:
-            self.set_gss_host(gss_host, False)
-        elif self.hostname is not None:
-            self.set_gss_host(self.hostname, gss_trust_dns)
+        self.set_gss_host(
+            kex_requested=gss_kex,
+            gss_host=gss_host,
+            trust_dns=gss_trust_dns,
+        )
 
         self.start_client()
 

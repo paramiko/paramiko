@@ -353,12 +353,11 @@ class SSHClient (ClosingContextManager):
             sock, gss_kex=gss_kex, gss_deleg_creds=gss_deleg_creds
         )
         t.use_compression(compress=compress)
-        if gss_kex:
-            if gss_host is None:
-                t.set_gss_host(hostname, gss_trust_dns)
-            elif gss_host is not None:
-                # Don't canonicalize gss_host
-                t.set_gss_host(gss_host, False)
+        t.set_gss_host(
+            kex_requested=gss_kex,
+            gss_host=gss_host,
+            trust_dns=gss_trust_dns,
+        )
         if self._log_channel is not None:
             t.set_log_channel(self._log_channel)
         if banner_timeout is not None:
