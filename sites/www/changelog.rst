@@ -2,10 +2,11 @@
 Changelog
 =========
 
-* :bug:`865` SSHClient requests the type of host key it has (e.g. from
-  known_hosts) and does not consider a different type to be a "Missing"
-  host key. This fixes the case where an ecdsa key is in known_hosts and
-  the server also has an rsa host key. Thanks to Pierce Lopez.
+* :bug:`945` (backport of :issue:`910` and re: :issue:`865`) SSHClient now
+  requests the type of host key it has (e.g. from known_hosts) and does not
+  consider a different type to be a "Missing" host key. This fixes a common
+  case where an ECDSA key is in known_hosts and the server also has an RSA host
+  key. Thanks to Pierce Lopez.
 * :bug:`1055` (also :issue:`1056`, :issue:`1057`, :issue:`1058`, :issue:`1059`)
   Fix up host-key checking in our GSSAPI support, which was previously using an
   incorrect API call. Thanks to Anselm Kruis for the patches.
