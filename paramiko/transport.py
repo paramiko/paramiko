@@ -1130,9 +1130,10 @@ class Transport(threading.Thread, ClosingContextManager):
             Perform GSS-API Key Exchange and user authentication.
         :param bool gss_deleg_creds:
             Whether to delegate GSS-API client credentials.
-        :param gss_trust_dns: Indicates whether or not the DNS is trusted to
-                              securely canonicalize the name of the host being
-                              connected to (default ``True``).
+        :param gss_trust_dns:
+            Indicates whether or not the DNS is trusted to securely
+            canonicalize the name of the host being connected to (default
+            ``True``).
 
         :raises: `.SSHException` -- if the SSH2 negotiation fails, the host key
             supplied by the server is incorrect, or authentication fails.

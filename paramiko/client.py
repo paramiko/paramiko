@@ -407,8 +407,10 @@ class SSHClient (ClosingContextManager):
         else:
             key_filenames = key_filename
 
-        self._auth(username, password, pkey, key_filenames, allow_agent,
-                   look_for_keys, gss_auth, gss_kex, gss_deleg_creds, t.gss_host)
+        self._auth(
+            username, password, pkey, key_filenames, allow_agent,
+            look_for_keys, gss_auth, gss_kex, gss_deleg_creds, t.gss_host,
+        )
 
     def close(self):
         """
@@ -582,9 +584,9 @@ class SSHClient (ClosingContextManager):
         # why should we do that again?
         if gss_auth:
             try:
-                self._transport.auth_gssapi_with_mic(username, gss_host,
-                                                     gss_deleg_creds)
-                return
+                return self._transport.auth_gssapi_with_mic(
+                    username, gss_host, gss_deleg_creds,
+                )
             except Exception as e:
                 saved_exception = e
 
