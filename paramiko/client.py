@@ -229,6 +229,7 @@ class SSHClient (ClosingContextManager):
         banner_timeout=None,
         pkcs11_session=None,
         auth_timeout=None,
+        gss_trust_dns=True,
     ):
         """
         Connect to an SSH server and authenticate to it.  The server's host key
@@ -292,6 +293,10 @@ class SSHClient (ClosingContextManager):
         :param bool gss_deleg_creds: Delegate GSS-API client credentials or not
         :param str gss_host:
             The targets name in the kerberos database. default: hostname
+        :param bool gss_trust_dns:
+            Indicates whether or not the DNS is trusted to securely
+            canonicalize the name of the host being connected to (default
+            ``True``).
         :param float banner_timeout: an optional timeout (in seconds) to wait
             for the SSH banner to be presented.
         :param str pkcs11_session: The PKCS#11 session obtained by calling
@@ -313,6 +318,8 @@ class SSHClient (ClosingContextManager):
         .. versionchanged:: 1.15
             Added the ``banner_timeout``, ``gss_auth``, ``gss_kex``,
             ``gss_deleg_creds`` and ``gss_host`` arguments.
+        .. versionchanged:: 2.3
+            Added the ``gss_trust_dns`` argument.
         """
         if not sock:
             errors = {}
@@ -348,14 +355,14 @@ class SSHClient (ClosingContextManager):
                 raise NoValidConnectionsError(errors)
 
         t = self._transport = Transport(
-            sock, gss_kex=gss_kex, gss_deleg_creds=gss_deleg_creds)
+            sock, gss_kex=gss_kex, gss_deleg_creds=gss_deleg_creds
+        )
         t.use_compression(compress=compress)
-        if gss_kex and gss_host is None:
-            t.set_gss_host(hostname)
-        elif gss_kex and gss_host is not None:
-            t.set_gss_host(gss_host)
-        else:
-            pass
+        t.set_gss_host(
+            kex_requested=gss_kex,
+            gss_host=gss_host,
+            trust_dns=gss_trust_dns,
+        )
         if self._log_channel is not None:
             t.set_log_channel(self._log_channel)
         if banner_timeout is not None:
@@ -369,22 +376,21 @@ class SSHClient (ClosingContextManager):
             server_hostkey_name = "[%s]:%d" % (hostname, port)
         our_server_keys = None
 
-        # If GSS-API Key Exchange is performed we are not required to check the
-        # host key, because the host is authenticated via GSS-API / SSPI as
-        # well as our client.
-        if not self._transport.use_gss_kex:
-            our_server_keys = self._system_host_keys.get(server_hostkey_name)
-            if our_server_keys is None:
-                our_server_keys = self._host_keys.get(server_hostkey_name)
-            if our_server_keys is not None:
-                keytype = our_server_keys.keys()[0]
-                sec_opts = t.get_security_options()
-                other_types = [x for x in sec_opts.key_types if x != keytype]
-                sec_opts.key_types = [keytype] + other_types
+        our_server_keys = self._system_host_keys.get(server_hostkey_name)
+        if our_server_keys is None:
+            our_server_keys = self._host_keys.get(server_hostkey_name)
+        if our_server_keys is not None:
+            keytype = our_server_keys.keys()[0]
+            sec_opts = t.get_security_options()
+            other_types = [x for x in sec_opts.key_types if x != keytype]
+            sec_opts.key_types = [keytype] + other_types
 
         t.start_client(timeout=timeout)
 
-        if not self._transport.use_gss_kex:
+        # If GSS-API Key Exchange is performed we are not required to check the
+        # host key, because the host is authenticated via GSS-API / SSPI as
+        # well as our client.
+        if not self._transport.gss_kex_used:
             server_key = t.get_remote_server_key()
             if our_server_keys is None:
                 # will raise exception if the key is rejected
@@ -407,11 +413,11 @@ class SSHClient (ClosingContextManager):
             key_filenames = [key_filename]
         else:
             key_filenames = key_filename
-        if gss_host is None:
-            gss_host = hostname
-        self._auth(username, password, pkey, key_filenames, allow_agent,
-                   look_for_keys, gss_auth, gss_kex, gss_deleg_creds, gss_host,
-                   pkcs11_session)
+        self._auth(
+            username, password, pkey, key_filenames, allow_agent,
+            look_for_keys, gss_auth, gss_kex, gss_deleg_creds, t.gss_host,
+            pkcs11_session
+        )
 
     def close(self):
         """
@@ -597,9 +603,9 @@ class SSHClient (ClosingContextManager):
         # why should we do that again?
         if gss_auth:
             try:
-                self._transport.auth_gssapi_with_mic(username, gss_host,
-                                                     gss_deleg_creds)
-                return
+                return self._transport.auth_gssapi_with_mic(
+                    username, gss_host, gss_deleg_creds,
+                )
             except Exception as e:
                 saved_exception = e
 

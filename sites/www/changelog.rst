@@ -4,6 +4,21 @@ Changelog
 
 * :feature:`827` Add support for PKCS #11 which enables the use of smartcards
   and other cryptographic tokens.
+* :feature:`1063` Add a ``gss_trust_dns`` option to ``Client`` and
+  ``Transport`` to allow explicitly setting whether or not DNS canonicalization
+  should occur when using GSSAPI. Thanks to Richard E. Silverman for the report
+  & Sebastian Deiß for initial patchset.
+* :bug:`1061` Clean up GSSAPI authentication procedures so they do not prevent
+  normal fallback to other authentication methods on failure. (In other words,
+  presence of GSSAPI functionality on a target server precluded use of _any_
+  other auth type if the user was unable to pass GSSAPI auth.) Patch via Anselm
+  Kruis.
+* :bug:`1060` Fix key exchange (kex) algorithm list for GSSAPI authentication;
+  previously, the list used solely out-of-date algorithms, and now contains
+  newer ones listed preferentially before the old. Credit: Anselm Kruis.
+* :bug:`1055` (also :issue:`1056`, :issue:`1057`, :issue:`1058`, :issue:`1059`)
+  Fix up host-key checking in our GSSAPI support, which was previously using an
+  incorrect API call. Thanks to Anselm Kruis for the patches.
 * :support:`979` Update how we use `Cryptography <https://cryptography.io>`_'s
   signature/verification methods so we aren't relying on a deprecated API.
   Thanks to Paul Kehrer for the patch.

@@ -83,7 +83,6 @@ class KexGSSGroup1(object):
         """
         Start the GSS-API / SSPI Authenticated Diffie-Hellman Key Exchange.
         """
-        self.transport.gss_kex_used = True
         self._generate_x()
         if self.transport.server_mode:
             # compute f = g^x mod p, but don't send it yet
@@ -216,6 +215,7 @@ class KexGSSGroup1(object):
         else:
             self.kexgss.ssh_check_mic(mic_token,
                                       self.transport.session_id)
+        self.transport.gss_kex_used = True
         self.transport._activate_outbound()
 
     def _parse_kexgss_init(self, m):
@@ -258,6 +258,7 @@ class KexGSSGroup1(object):
             else:
                 m.add_boolean(False)
             self.transport._send_message(m)
+            self.transport.gss_kex_used = True
             self.transport._activate_outbound()
         else:
             m.add_byte(c_MSG_KEXGSS_CONTINUE)
@@ -325,7 +326,6 @@ class KexGSSGex(object):
         """
         Start the GSS-API / SSPI Authenticated Diffie-Hellman Group Exchange
         """
-        self.transport.gss_kex_used = True
         if self.transport.server_mode:
             self.transport._expect_packet(MSG_KEXGSS_GROUPREQ)
             return
@@ -501,6 +501,7 @@ class KexGSSGex(object):
             else:
                 m.add_boolean(False)
             self.transport._send_message(m)
+            self.transport.gss_kex_used = True
             self.transport._activate_outbound()
         else:
             m.add_byte(c_MSG_KEXGSS_CONTINUE)
@@ -587,6 +588,7 @@ class KexGSSGex(object):
         else:
             self.kexgss.ssh_check_mic(mic_token,
                                       self.transport.session_id)
+        self.transport.gss_kex_used = True
         self.transport._activate_outbound()
 
     def _parse_kexgss_error(self, m):
