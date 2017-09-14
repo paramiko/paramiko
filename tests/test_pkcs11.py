@@ -100,10 +100,10 @@ class Pkcs11Test(unittest.TestCase):
     def test_2_pkcs11_close_session_success(self,
                                             mock_isfile,
                                             mock_loadlibrary):
-        pkcs11session = {"pkcs11provider": "/test/path/example"}
+        pkcs11_session = {"pkcs11provider": "/test/path/example"}
         threw_exception = True
         try:
-            pkcs11.close_session(pkcs11session)
+            pkcs11.close_session(pkcs11_session)
         except Exception:
             threw_exception = False
         self.assertTrue(not threw_exception)
@@ -113,10 +113,10 @@ class Pkcs11Test(unittest.TestCase):
                 return_value=MockPKCS11Lib())
     def test_3_pkcs11_close_session_fail_nofile(self, mock_isfile,
                                                 mock_loadlibrary):
-        pkcs11session = {"pkcs11provider": "/test/path/example"}
+        pkcs11_session = {"pkcs11provider": "/test/path/example"}
         threw_exception = False
         try:
-            pkcs11.close_session(pkcs11session)
+            pkcs11.close_session(pkcs11_session)
         except PKCS11Exception:
             threw_exception = True
         self.assertTrue(threw_exception)
@@ -148,7 +148,7 @@ class Pkcs11Test(unittest.TestCase):
         self.assertEqual(testauth.auth_event, None)
         self.assertEqual(testauth.auth_method, 'publickey')
         self.assertEqual(testauth.username, "testuser")
-        self.assertEqual(testauth.pkcs11session, session)
+        self.assertEqual(testauth.pkcs11_session, session)
 
     @mock.patch('paramiko.auth_handler.AuthHandler._request_auth',
                 return_value=True)

@@ -83,7 +83,7 @@ class AuthHandler (object):
         self.gss_host = None
         self.gss_deleg_creds = True
         # for PKCS11 / Smartcard
-        self.pkcs11session = None
+        self.pkcs11_session = None
         if AuthHandler._pkcs11_lock is None:
             AuthHandler._pkcs11_lock = threading.Lock()
         self.pkcs11_lock = AuthHandler._pkcs11_lock
@@ -118,13 +118,13 @@ class AuthHandler (object):
         finally:
             self.transport.lock.release()
 
-    def auth_pkcs11(self, username, pkcs11session, event):
+    def auth_pkcs11(self, username, pkcs11_session, event):
         self.transport.lock.acquire()
         try:
             self.auth_event = event
             self.auth_method = 'publickey'
             self.username = username
-            self.pkcs11session = pkcs11session
+            self.pkcs11_session = pkcs11_session
             self._request_auth()
         finally:
             self.transport.lock.release()
@@ -271,24 +271,24 @@ class AuthHandler (object):
         self._disconnect_service_not_available()
 
     def _pkcs11_get_public_key(self):
-        if "public_key" not in self.pkcs11session:
+        if "public_key" not in self.pkcs11_session:
             raise PKCS11Exception("pkcs11 session does not have a public_key")
-        if len(self.pkcs11session["public_key"]) < 1:
-            raise PKCS11Exception("pkcs11 session contains invalid public key {}".format(self.pkcs11session["public_key"])) # noqa
-        return self.pkcs11session["public_key"]
+        if len(self.pkcs11_session["public_key"]) < 1:
+            raise PKCS11Exception("pkcs11 session contains invalid public key {}".format(self.pkcs11_session["public_key"])) # noqa
+        return self.pkcs11_session["public_key"]
 
     def _pkcs11_sign_ssh_data(self, blob, key_name):
-        if "provider" not in self.pkcs11session:
+        if "provider" not in self.pkcs11_session:
             raise PKCS11Exception("pkcs11 session does not have a provider")
-        if "session" not in self.pkcs11session:
+        if "session" not in self.pkcs11_session:
             raise PKCS11Exception("pkcs11 session does not have a session")
-        if "keyret" not in self.pkcs11session:
+        if "keyret" not in self.pkcs11_session:
             raise PKCS11Exception("pkcs11 session does not have a keyret")
-        if not os.path.isfile(self.pkcs11session["provider"]):
-            raise PKCS11Exception("pkcs11provider does not exist: {}".format(self.pkcs11session["provider"])) # noqa
-        lib = cdll.LoadLibrary(self.pkcs11session["provider"])
-        session = self.pkcs11session["session"]
-        keyret = self.pkcs11session["keyret"]
+        if not os.path.isfile(self.pkcs11_session["provider"]):
+            raise PKCS11Exception("pkcs11provider does not exist: {}".format(self.pkcs11_session["provider"])) # noqa
+        lib = cdll.LoadLibrary(self.pkcs11_session["provider"])
+        session = self.pkcs11_session["session"]
+        keyret = self.pkcs11_session["keyret"]
 
         # Init Signing Data
         class ck_mechanism(Structure):
@@ -337,7 +337,7 @@ class AuthHandler (object):
                 password = bytestring(self.password)
                 m.add_string(password)
             elif self.auth_method == 'publickey':
-                if self.pkcs11session is None:
+                if self.pkcs11_session is None:
                     m.add_boolean(True)
                     # Private Key
                     # Use certificate contents, if available, plain pubkey

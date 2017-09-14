@@ -13,9 +13,9 @@ distributed by `OpenSC <https://github.com/OpenSC/OpenSC/wiki>`_.
 
 The typical case involves generating a PKCS "session" (via `.open_session`,
 giving it the provider file path and the PIN) and handing the result to
-`.Client.connect` as its ``pkcs11_session`` argument. The same session may be
-used across multiple clients and/or threads; in any case, it must be explicitly
-closed via `.close_session`.
+`.client.SSHClient.connect` as its ``pkcs11_session`` argument. The same
+session may be used across multiple clients and/or threads; in any case,
+it must be explicitly closed via `.close_session`.
 
 .. note::
     This module is based on the following reference material:
@@ -52,6 +52,7 @@ class PKCS11AuthenticationException(AuthenticationException):
 
 def get_public_key(keyid="01"):
     """
+    Get the public key from a smart device
     :param str pkcs11keyid: The keyid to use for the pkcs11 session.
     """
     public_key = None
@@ -77,15 +78,16 @@ def get_public_key(keyid="01"):
 
 def open_session(provider, pin, keyid="01", slot=0, publickey=None):
     """
+    Open a pkcs11 session on a smart device.
     :param str provider: If using PKCS11, this will be the provider
-        for the PKCS11 interface. Example: /usr/local/lib/opensc-pkcs11.so.
+    for the PKCS11 interface. Example: /usr/local/lib/opensc-pkcs11.so.
     :param str pin: If using PKCS11, this will be the pin of your
-        token or smartcard.
+    token or smartcard.
     :param str keyid: The keyid to use for the pkcs11 session.
     :param int slot: The slot id used for establishing the session.
     :param str publickey: If left the default (None), the public key
-        will be detected using OpenSC pkcs15-tool. Alternatively you can
-        provide it manually using this argument.
+    will be detected using OpenSC pkcs15-tool. Alternatively you can
+    provide it manually using this argument.
     """
     session = None
 
@@ -170,8 +172,9 @@ def open_session(provider, pin, keyid="01", slot=0, publickey=None):
 
 def close_session(session):
     """
+    Close a pkcs11 session on a smart device.
     :param str session: pkcs11 session obtained
-        by calling pkcs11_open_session
+    by calling pkcs11_open_session
     """
     if "provider" not in session:
         raise PKCS11Exception("pkcs11 session is missing the provider, the session is not valid") # noqa

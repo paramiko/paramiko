@@ -300,8 +300,8 @@ class SSHClient (ClosingContextManager):
         :param float banner_timeout: an optional timeout (in seconds) to wait
             for the SSH banner to be presented.
         :param str pkcs11_session: The PKCS#11 session obtained by calling
-            `pkcs11.open_session`. Note that the caller is responsible for
-            calling `pkcs11.close_session` with that object at shutdown, as it
+            `.pkcs11.open_session`. Note that the caller is responsible for
+            calling `.pkcs11.close_session` with that object at shutdown, as it
             may be reused between multiple clients.
         :param float auth_timeout: an optional timeout (in seconds) to wait for
             an authentication response.

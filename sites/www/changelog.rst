@@ -2,8 +2,8 @@
 Changelog
 =========
 
-* :feature:`827` Add support for PKCS #11 which enables the use of smartcards
-  and other cryptographic tokens.
+* :feature:`827` Add support for PKCS #11 (via `paramiko.pkcs11`) which enables
+  the use of smartcards and other cryptographic tokens, such as YubiKeys.
 * :feature:`1063` Add a ``gss_trust_dns`` option to ``Client`` and
   ``Transport`` to allow explicitly setting whether or not DNS canonicalization
   should occur when using GSSAPI. Thanks to Richard E. Silverman for the report
