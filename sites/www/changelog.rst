@@ -2,6 +2,8 @@
 Changelog
 =========
 
+* :feature:`1001` Add ``?`` and ``*`` wildcards support as well as negation
+  ``!`` for hosts lookup in ``known_hosts``. By ``@philusky``.
 * :feature:`1063` Add a ``gss_trust_dns`` option to ``Client`` and
   ``Transport`` to allow explicitly setting whether or not DNS canonicalization
   should occur when using GSSAPI. Thanks to Richard E. Silverman for the report
