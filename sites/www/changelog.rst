@@ -2,6 +2,11 @@
 Changelog
 =========
 
+* :bug:`1065` Add rekeying support to GSSAPI connections, which was erroneously
+  missing. Without this fix, any attempt to renegotiate the transport keys for
+  a ``gss-kex``-authed `~paramiko.transport.Transport` would cause a MIC
+  failure and terminate the connection. Thanks to Sebastian Deiß and Anselm
+  Kruis for the patch.
 * :bug:`1061` Clean up GSSAPI authentication procedures so they do not prevent
   normal fallback to other authentication methods on failure. (In other words,
   presence of GSSAPI functionality on a target server precluded use of _any_
