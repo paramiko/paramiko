@@ -2,6 +2,8 @@
 Changelog
 =========
 
+* :release:`2.2.2 <2017-09-18>`
+* :release:`2.1.4 <2017-09-18>`
 * :release:`2.0.7 <2017-09-18>`
 * :release:`1.18.4 <2017-09-18>`
 * :bug:`1065` Add rekeying support to GSSAPI connections, which was erroneously
