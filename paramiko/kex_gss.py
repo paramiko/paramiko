@@ -206,15 +206,14 @@ class KexGSSGroup1(object):
         hm.add_mpint(self.e)
         hm.add_mpint(self.f)
         hm.add_mpint(K)
-        self.transport._set_K_H(K, sha1(str(hm)).digest())
+        H = sha1(str(hm)).digest()
+        self.transport._set_K_H(K, H)
         if srv_token is not None:
             self.kexgss.ssh_init_sec_context(target=self.gss_host,
                                              recv_token=srv_token)
-            self.kexgss.ssh_check_mic(mic_token,
-                                      self.transport.session_id)
+            self.kexgss.ssh_check_mic(mic_token, H)
         else:
-            self.kexgss.ssh_check_mic(mic_token,
-                                      self.transport.session_id)
+            self.kexgss.ssh_check_mic(mic_token, H)
         self.transport.gss_kex_used = True
         self.transport._activate_outbound()
 
@@ -583,11 +582,9 @@ class KexGSSGex(object):
         if srv_token is not None:
             self.kexgss.ssh_init_sec_context(target=self.gss_host,
                                              recv_token=srv_token)
-            self.kexgss.ssh_check_mic(mic_token,
-                                      self.transport.session_id)
+            self.kexgss.ssh_check_mic(mic_token, H)
         else:
-            self.kexgss.ssh_check_mic(mic_token,
-                                      self.transport.session_id)
+            self.kexgss.ssh_check_mic(mic_token, H)
         self.transport.gss_kex_used = True
         self.transport._activate_outbound()
 
