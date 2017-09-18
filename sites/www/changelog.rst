@@ -2,9 +2,10 @@
 Changelog
 =========
 
-* :bug:`1055` (also :issue:`1056`, :issue:`1057`, :issue:`1058`, :issue:`1059`)
-  Fix up host-key checking in our GSSAPI support, which was previously using an
-  incorrect API call. Thanks to Anselm Kruis for the patches.
+* :bug:`1055 (1.17+)` (also :issue:`1056`, :issue:`1057`, :issue:`1058`,
+  :issue:`1059`) Fix up host-key checking in our GSSAPI support, which was
+  previously using an incorrect API call. Thanks to Anselm Kruis for the
+  patches.
 * :release:`1.17.5 <2017-06-09>`
 * :bug:`971 (1.17+)` Allow any type implementing the buffer API to be used with
   `BufferedFile <paramiko.file.BufferedFile>`, `Channel
