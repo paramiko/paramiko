@@ -455,13 +455,10 @@ class Transport(threading.Thread, ClosingContextManager):
         """
         return SecurityOptions(self)
 
-    def set_gss_host(self, kex_requested, gss_host, trust_dns):
+    def set_gss_host(self, gss_host, trust_dns=True, gssapi_requested=True):
         """
         Normalize/canonicalize ``self.gss_host`` depending on various factors.
 
-        :param bool kex_requested:
-            Whether GSSAPI key exchange was even requested. If not, this is a
-            no-op and nothing happens (and ``self.gss_host`` is not set.)
         :param str gss_host:
             The explicitly requested GSS-oriented hostname to connect to (i.e.
             what the host's name is in the Kerberos database.) Defaults to
@@ -471,17 +468,23 @@ class Transport(threading.Thread, ClosingContextManager):
             Indicates whether or not DNS is trusted; if true, DNS will be used
             to canonicalize the GSS hostname (which again will either be
             ``gss_host`` or the transport's default hostname.)
+            (Defaults to True due to backwards compatibility.)
+        :param bool gssapi_requested:
+            Whether GSSAPI key exchange or authentication was even requested.
+            If not, this is a no-op and nothing happens
+            (and ``self.gss_host`` is not set.)
+            (Defaults to True due to backwards compatibility.)
         :returns: ``None``.
         """
         # No GSSAPI in play == nothing to do
-        if not kex_requested:
+        if not gssapi_requested:
             return
         # Obtain the correct host first - did user request a GSS-specific name
         # to use that is distinct from the actual SSH target hostname?
         if gss_host is None:
             gss_host = self.hostname
         # Finally, canonicalize via DNS if DNS is trusted.
-        if trust_dns:
+        if trust_dns and gss_host is not None:
             gss_host = socket.getfqdn(gss_host)
         # And set attribute for reference later.
         self.gss_host = gss_host
@@ -1159,9 +1162,9 @@ class Transport(threading.Thread, ClosingContextManager):
             self._preferred_keys = [hostkey.get_name()]
 
         self.set_gss_host(
-            kex_requested=gss_kex,
             gss_host=gss_host,
             trust_dns=gss_trust_dns,
+            gssapi_requested=gss_kex or gss_auth,
         )
 
         self.start_client()

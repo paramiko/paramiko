@@ -354,9 +354,11 @@ class SSHClient (ClosingContextManager):
         )
         t.use_compression(compress=compress)
         t.set_gss_host(
-            kex_requested=gss_kex,
-            gss_host=gss_host,
+            # t.hostname may be None, but GSS-API requires a target name.
+            # Therefore use hostname as fallback.
+            gss_host=gss_host or hostname,
             trust_dns=gss_trust_dns,
+            gssapi_requested=gss_auth or gss_kex,
         )
         if self._log_channel is not None:
             t.set_log_channel(self._log_channel)
