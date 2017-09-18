@@ -2,6 +2,7 @@
 Changelog
 =========
 
+* :release:`2.0.7 <2017-09-18>`
 * :release:`1.18.4 <2017-09-18>`
 * :bug:`1065` Add rekeying support to GSSAPI connections, which was erroneously
   missing. Without this fix, any attempt to renegotiate the transport keys for
