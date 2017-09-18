@@ -1125,7 +1125,7 @@ class Transport(threading.Thread, ClosingContextManager):
         # check host key if we were given one
         # If GSS-API Key Exchange was performed, we are not required to check
         # the host key.
-        if (hostkey is not None) and not gss_kex:
+        if (hostkey is not None) and not self.gss_kex_used:
             key = self.get_remote_server_key()
             if (
                 key.get_name() != hostkey.get_name() or
