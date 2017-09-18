@@ -2,6 +2,7 @@
 Changelog
 =========
 
+* :release:`1.18.4 <2017-09-18>`
 * :bug:`1061` Clean up GSSAPI authentication procedures so they do not prevent
   normal fallback to other authentication methods on failure. (In other words,
   presence of GSSAPI functionality on a target server precluded use of _any_
