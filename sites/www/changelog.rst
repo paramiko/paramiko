@@ -3,8 +3,8 @@ Changelog
 =========
 
 * :release:`1.18.4 <2017-09-18>`
-* :bug:`945` (backport of :issue:`910` and re: :issue:`865`) SSHClient now
-  requests the type of host key it has (e.g. from known_hosts) and does not
+* :bug:`945 (1.18+)` (backport of :issue:`910` and re: :issue:`865`) SSHClient
+  now requests the type of host key it has (e.g. from known_hosts) and does not
   consider a different type to be a "Missing" host key. This fixes a common
   case where an ECDSA key is in known_hosts and the server also has an RSA host
   key. Thanks to Pierce Lopez.
