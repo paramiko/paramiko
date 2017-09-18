@@ -2,6 +2,11 @@
 Changelog
 =========
 
+* :bug:`1065` Add rekeying support to GSSAPI connections, which was erroneously
+  missing. Without this fix, any attempt to renegotiate the transport keys for
+  a ``gss-kex``-authed `~paramiko.transport.Transport` would cause a MIC
+  failure and terminate the connection. Thanks to Sebastian Deiß and Anselm
+  Kruis for the patch.
 * :feature:`1063` Add a ``gss_trust_dns`` option to ``Client`` and
   ``Transport`` to allow explicitly setting whether or not DNS canonicalization
   should occur when using GSSAPI. Thanks to Richard E. Silverman for the report
