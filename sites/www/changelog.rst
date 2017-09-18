@@ -8,9 +8,10 @@ Changelog
   consider a different type to be a "Missing" host key. This fixes a common
   case where an ECDSA key is in known_hosts and the server also has an RSA host
   key. Thanks to Pierce Lopez.
-* :bug:`1055` (also :issue:`1056`, :issue:`1057`, :issue:`1058`, :issue:`1059`)
-  Fix up host-key checking in our GSSAPI support, which was previously using an
-  incorrect API call. Thanks to Anselm Kruis for the patches.
+* :bug:`1055 (1.17+)` (also :issue:`1056`, :issue:`1057`, :issue:`1058`,
+  :issue:`1059`) Fix up host-key checking in our GSSAPI support, which was
+  previously using an incorrect API call. Thanks to Anselm Kruis for the
+  patches.
 * :release:`1.18.3 <2017-06-09>`
 * :release:`1.17.5 <2017-06-09>`
 * :support:`906 (1.18+)` Clean up a handful of outdated imports and related
