@@ -12,9 +12,10 @@ Changelog
 * :bug:`1060` Fix key exchange (kex) algorithm list for GSSAPI authentication;
   previously, the list used solely out-of-date algorithms, and now contains
   newer ones listed preferentially before the old. Credit: Anselm Kruis.
-* :bug:`1055` (also :issue:`1056`, :issue:`1057`, :issue:`1058`, :issue:`1059`)
-  Fix up host-key checking in our GSSAPI support, which was previously using an
-  incorrect API call. Thanks to Anselm Kruis for the patches.
+* :bug:`1055 (1.17+)` (also :issue:`1056`, :issue:`1057`, :issue:`1058`,
+  :issue:`1059`) Fix up host-key checking in our GSSAPI support, which was
+  previously using an incorrect API call. Thanks to Anselm Kruis for the
+  patches.
 * :release:`2.0.6 <2017-06-09>`
 * :release:`1.18.3 <2017-06-09>`
 * :release:`1.17.5 <2017-06-09>`
