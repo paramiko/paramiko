@@ -3,6 +3,30 @@ Changelog
 =========
 
 * :release:`1.18.4 <2017-09-18>`
+* :bug:`1061` Clean up GSSAPI authentication procedures so they do not prevent
+  normal fallback to other authentication methods on failure. (In other words,
+  presence of GSSAPI functionality on a target server precluded use of _any_
+  other auth type if the user was unable to pass GSSAPI auth.) Patch via Anselm
+  Kruis.
+* :bug:`1060` Fix key exchange (kex) algorithm list for GSSAPI authentication;
+  previously, the list used solely out-of-date algorithms, and now contains
+  newer ones listed preferentially before the old. Credit: Anselm Kruis.
+* :bug:`1055` (also :issue:`1056`, :issue:`1057`, :issue:`1058`, :issue:`1059`)
+  Fix up host-key checking in our GSSAPI support, which was previously using an
+  incorrect API call. Thanks to Anselm Kruis for the patches.
+* :release:`2.0.6 <2017-06-09>`
+* :release:`1.18.3 <2017-06-09>`
+* :release:`1.17.5 <2017-06-09>`
+* :support:`906 (1.18+)` Clean up a handful of outdated imports and related
+  tweaks. Thanks to Pierce Lopez.
+* :bug:`984` Enhance default cipher preference order such that
+  ``aes(192|256)-cbc`` are preferred over ``blowfish-cbc``. Thanks to Alex
+  Gaynor.
+* :bug:`971 (1.17+)` Allow any type implementing the buffer API to be used with
+  `BufferedFile <paramiko.file.BufferedFile>`, `Channel
+  <paramiko.channel.Channel>`, and `SFTPFile <paramiko.sftp_file.SFTPFile>`.
+  This resolves a regression introduced in 1.13 with the Python 3 porting
+  changes, when using types such as ``memoryview``. Credit: Martin Packman.
 * :bug:`741` (also :issue:`809`, :issue:`772`; all via :issue:`912`) Writing
   encrypted/password-protected private key files was silently broken since 2.0
   due to an incorrect API call; this has been fixed.
