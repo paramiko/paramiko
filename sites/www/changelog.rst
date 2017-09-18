@@ -12,6 +12,11 @@ Changelog
 * :bug:`1060` Fix key exchange (kex) algorithm list for GSSAPI authentication;
   previously, the list used solely out-of-date algorithms, and now contains
   newer ones listed preferentially before the old. Credit: Anselm Kruis.
+* :bug:`945 (1.18+)` (backport of :issue:`910` and re: :issue:`865`) SSHClient
+  now requests the type of host key it has (e.g. from known_hosts) and does not
+  consider a different type to be a "Missing" host key. This fixes a common
+  case where an ECDSA key is in known_hosts and the server also has an RSA host
+  key. Thanks to Pierce Lopez.
 * :bug:`1055 (1.17+)` (also :issue:`1056`, :issue:`1057`, :issue:`1058`,
   :issue:`1059`) Fix up host-key checking in our GSSAPI support, which was
   previously using an incorrect API call. Thanks to Anselm Kruis for the
