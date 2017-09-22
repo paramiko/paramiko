@@ -488,6 +488,9 @@ class KeyTest(unittest.TestCase):
             os.remove(newfile)
 
     def test_certificates(self):
+        # NOTE: we also test 'live' use of cert auth for all key types in
+        # test_client.py; this and nearby cert tests are more about the gritty
+        # details.
         # PKey.load_certificate
         key_path = test_path(os.path.join('cert_support', 'test_rsa.key'))
         key = RSAKey.from_private_key_file(key_path)
