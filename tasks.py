@@ -1,3 +1,4 @@
+import os
 from os.path import join
 from shutil import rmtree, copytree
 
@@ -15,7 +16,13 @@ def test(ctx, coverage=False, flags=""):
     runner = "python"
     if coverage:
         runner = "coverage run --source=paramiko"
-    ctx.run("{0} test.py {1}".format(runner, flags), pty=True)
+    # Strip SSH_AUTH_SOCK from parent env to avoid pollution by interactive
+    # users.
+    env = dict(os.environ)
+    if 'SSH_AUTH_SOCK' in env:
+        del env['SSH_AUTH_SOCK']
+    cmd = "{0} test.py {1}".format(runner, flags)
+    ctx.run(cmd, pty=True, env=env, replace_env=True)
 
 
 @task
