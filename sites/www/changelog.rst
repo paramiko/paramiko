@@ -2,6 +2,7 @@
 Changelog
 =========
 
+* :release:`2.3.1 <2017-09-22>`
 * :bug:`1071` Certificate support broke the no-certificate case for Ed25519
   keys (symptom is an ``AttributeError`` about ``public_blob``.) This went
   uncaught due to cert autoload behavior (i.e. our test suite never actually
