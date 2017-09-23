@@ -20,19 +20,14 @@ Test the used APIs for pkcs11
 
 import unittest
 import mock
-from paramiko.pkcs11 import (
-    PKCS11Exception, pkcs11_get_public_key, pkcs11_close_session,
-    pkcs11_open_session
-)
+from paramiko import pkcs11
+from paramiko.pkcs11 import PKCS11Exception 
 from paramiko.auth_handler import AuthHandler
 from paramiko.transport import Transport
 from tests.loop import LoopSocket
 
 
-test_rsa_public_key = b"ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAIEA049W6geFpm\
-sljTwfvI1UmKWWJPNFI74+vNKTk4dmzkQY2yAMs6FhlvhlI8ysU4oj71ZsRYMecHbBbxdN\
-79+JRFVYTKaLqjwGENeTd+yv4q+V2PvZv3fLnzApI3l7EJCqhWwJUHJ1jAkZzqDx0tyOL4u\
-oZpww3nmE0kb3y21tH4c="
+test_rsa_public_key = b"ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAIEA049W6geFpmsljTwfvI1UmKWWJPNFI74+vNKTk4dmzkQY2yAMs6FhlvhlI8ysU4oj71ZsRYMecHbBbxdN79+JRFVYTKaLqjwGENeTd+yv4q+V2PvZv3fLnzApI3l7EJCqhWwJUHJ1jAkZzqDx0tyOL4uoZpww3nmE0kb3y21tH4c=" # noqa
 
 
 class MockPKCS11Lib(object):
@@ -96,7 +91,7 @@ class Pkcs11Test(unittest.TestCase):
         """
         Test Getting Public Key
         """
-        public_key = pkcs11_get_public_key()
+        public_key = pkcs11.get_public_key()
         self.assertEqual(public_key, test_rsa_public_key.decode("utf-8"))
 
     @mock.patch('os.path.isfile', return_value=True)
@@ -105,10 +100,10 @@ class Pkcs11Test(unittest.TestCase):
     def test_2_pkcs11_close_session_success(self,
                                             mock_isfile,
                                             mock_loadlibrary):
-        pkcs11session = {"pkcs11provider": "/test/path/example"}
+        pkcs11_session = {"provider": "/test/path/example"}
         threw_exception = True
         try:
-            pkcs11_close_session(pkcs11session)
+            pkcs11.close_session(pkcs11_session)
         except Exception:
             threw_exception = False
         self.assertTrue(not threw_exception)
@@ -118,10 +113,10 @@ class Pkcs11Test(unittest.TestCase):
                 return_value=MockPKCS11Lib())
     def test_3_pkcs11_close_session_fail_nofile(self, mock_isfile,
                                                 mock_loadlibrary):
-        pkcs11session = {"pkcs11provider": "/test/path/example"}
+        pkcs11_session = {"provider": "/test/path/example"}
         threw_exception = False
         try:
-            pkcs11_close_session(pkcs11session)
+            pkcs11.close_session(pkcs11_session)
         except PKCS11Exception:
             threw_exception = True
         self.assertTrue(threw_exception)
@@ -135,7 +130,7 @@ class Pkcs11Test(unittest.TestCase):
                                    mock_popen,
                                    mock_isfile,
                                    mock_loadlibrary):
-        session = pkcs11_open_session("/test/provider/example", "1234")
+        session = pkcs11.open_session("/test/provider/example", "1234")
         self.assertEqual(0, session["session"].value)
         self.assertEqual(test_rsa_public_key.decode("utf-8"), session["public_key"])
         self.assertEqual(0, session["keyret"].value)
@@ -153,7 +148,7 @@ class Pkcs11Test(unittest.TestCase):
         self.assertEqual(testauth.auth_event, None)
         self.assertEqual(testauth.auth_method, 'publickey')
         self.assertEqual(testauth.username, "testuser")
-        self.assertEqual(testauth.pkcs11session, session)
+        self.assertEqual(testauth.pkcs11_session, session)
 
     @mock.patch('paramiko.auth_handler.AuthHandler._request_auth',
                 return_value=True)

@@ -227,7 +227,7 @@ class SSHClient(ClosingContextManager):
         gss_deleg_creds=True,
         gss_host=None,
         banner_timeout=None,
-        pkcs11session=None,
+        pkcs11_session=None,
         auth_timeout=None,
     ):
         """
@@ -295,8 +295,8 @@ class SSHClient(ClosingContextManager):
         :param float banner_timeout: an optional timeout (in seconds) to wait
             for the SSH banner to be presented.
         :param str pkcs11_session: The PKCS#11 session obtained by calling
-            `pkcs11.open_session`. Note that the caller is responsible for
-            calling `pkcs11.close_session` with that object at shutdown, as it
+            `.pkcs11.open_session`. Note that the caller is responsible for
+            calling `.pkcs11.close_session` with that object at shutdown, as it
             may be reused between multiple clients.
         :param float auth_timeout: an optional timeout (in seconds) to wait for
             an authentication response.
@@ -411,7 +411,7 @@ class SSHClient(ClosingContextManager):
             gss_host = hostname
         self._auth(username, password, pkey, key_filenames, allow_agent,
                    look_for_keys, gss_auth, gss_kex, gss_deleg_creds, gss_host,
-                   pkcs11session)
+                   pkcs11_session)
 
     def close(self):
         """
@@ -553,7 +553,7 @@ class SSHClient(ClosingContextManager):
 
     def _auth(self, username, password, pkey, key_filenames, allow_agent,
               look_for_keys, gss_auth, gss_kex, gss_deleg_creds, gss_host,
-              pkcs11session):
+              pkcs11_session):
         """
         Try, in order:
 
@@ -572,10 +572,10 @@ class SSHClient(ClosingContextManager):
         two_factor_types = set(['keyboard-interactive', 'password'])
 
         # PKCS11 / Smartcard authentication
-        if username is not None and pkcs11session is not None:
+        if username is not None and pkcs11_session is not None:
             try:
                 allowed_types = set(self._transport.auth_pkcs11(username,
-                                    pkcs11session))
+                                    pkcs11_session))
                 two_factor = (allowed_types & two_factor_types)
                 if not two_factor:
                     return

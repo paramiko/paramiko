@@ -13,9 +13,9 @@ distributed by `OpenSC <https://github.com/OpenSC/OpenSC/wiki>`_.
 
 The typical case involves generating a PKCS "session" (via `.open_session`,
 giving it the provider file path and the PIN) and handing the result to
-`.Client.connect` as its ``pkcs11_session`` argument. The same session may be
-used across multiple clients and/or threads; in any case, it must be explicitly
-closed via `.close_session`.
+`.client.SSHClient.connect` as its ``pkcs11_session`` argument. The same
+session may be used across multiple clients and/or threads; in any case,
+it must be explicitly closed via `.close_session`.
 
 .. note::
     This module is based on the following reference material:
@@ -50,8 +50,9 @@ class PKCS11AuthenticationException(AuthenticationException):
     pass
 
 
-def pkcs11_get_public_key(keyid="01"):
+def get_public_key(keyid="01"):
     """
+    Get the public key from a smart device
     :param str pkcs11keyid: The keyid to use for the pkcs11 session.
     """
     public_key = None
@@ -75,24 +76,24 @@ def pkcs11_get_public_key(keyid="01"):
     return public_key.decode('utf-8')
 
 
-def pkcs11_open_session(pkcs11provider, pkcs11pin, pkcs11keyid="01",
-                        pkcs11slot=0, pkcs11publickey=None):
+def open_session(provider, pin, keyid="01", slot=0, publickey=None):
     """
-    :param str pkcs11provider: If using PKCS11, this will be the provider
-        for the PKCS11 interface. Example: /usr/local/lib/opensc-pkcs11.so.
-    :param str pkcs11pin: If using PKCS11, this will be the pin of your
-        token or smartcard.
-    :param str pkcs11keyid: The keyid to use for the pkcs11 session.
-    :param int pkcs11slot: The slot id used for establishing the session.
-    :param str pkcs11publickey: If left the default (None), the public key
-        will be detected using OpenSC pkcs15-tool. Alternatively you can
-        provide it manually using this argument.
+    Open a pkcs11 session on a smart device.
+    :param str provider: If using PKCS11, this will be the provider
+    for the PKCS11 interface. Example: /usr/local/lib/opensc-pkcs11.so.
+    :param str pin: If using PKCS11, this will be the pin of your
+    token or smartcard.
+    :param str keyid: The keyid to use for the pkcs11 session.
+    :param int slot: The slot id used for establishing the session.
+    :param str publickey: If left the default (None), the public key
+    will be detected using OpenSC pkcs15-tool. Alternatively you can
+    provide it manually using this argument.
     """
     session = None
 
     # Get Public SSH Key
-    if pkcs11publickey is None:
-        pkcs11publickey = pkcs11_get_public_key(pkcs11keyid)
+    if publickey is None:
+        publickey = get_public_key(keyid)
 
     class ck_c_initialize_args(Structure):
         _fields_ = [('CreateMutex', c_void_p), ('DestroyMutex', c_void_p),
@@ -109,27 +110,26 @@ def pkcs11_open_session(pkcs11provider, pkcs11pin, pkcs11keyid="01",
     init_args.flags = c_ulong(2)  # OS Locking for Multithreading Support
 
     # Init
-    if not os.path.isfile(pkcs11provider):
-        raise PKCS11Exception("pkcs11provider path is not valid: %s"
-                              % pkcs11provider)
-    lib = cdll.LoadLibrary(pkcs11provider)
+    if not os.path.isfile(provider):
+        raise PKCS11Exception("provider path is not valid: {}".format(provider)) # noqa
+    lib = cdll.LoadLibrary(provider)
     res = lib.C_Initialize(byref(init_args))
     if res != 0:
         raise PKCS11Exception("PKCS11 Failed to Initialize")
 
     # Session
-    slot = c_ulong(pkcs11slot)  # slot number
+    cstr_slot = c_ulong(slot)  # slot number
     session = c_ulong()
     flags = c_int(6)  # CKF_SERIAL_SESSION (100b), CKF_RW_SESSION(10b)
-    res = lib.C_OpenSession(slot, flags, 0, 0, byref(session))
+    res = lib.C_OpenSession(cstr_slot, flags, 0, 0, byref(session))
     if res != 0:
         raise PKCS11Exception("PKCS11 Failed to Open Session")
 
     # Login
     login_type = c_int(1)  # 1=USER PIN
-    str_pin = pkcs11pin.encode('utf-8')
-    pin = c_char_p(str_pin)
-    res = lib.C_Login(session, login_type, pin, len(str_pin))
+    str_pin = pin.encode('utf-8')
+    cstr_pin = c_char_p(str_pin)
+    res = lib.C_Login(session, login_type, cstr_pin, len(str_pin))
     if res != 0:
         raise PKCS11AuthenticationException("PKCS11 Login Failed")
 
@@ -147,7 +147,7 @@ def pkcs11_open_session(pkcs11provider, pkcs11pin, pkcs11keyid="01",
 
     keyret = c_ulong()
     cls = c_ulong(3)  # CKO_PRIVATE_KEY
-    objid_str = pkcs11keyid.encode('utf-8')
+    objid_str = keyid.encode('utf-8')
     objid = c_char_p(objid_str)
     objid_len = c_ulong(len(objid_str))
     attrs[0].type = c_ulong(0)  # CKA_CLASS
@@ -166,23 +166,22 @@ def pkcs11_open_session(pkcs11provider, pkcs11pin, pkcs11keyid="01",
     if res != 0:
         raise PKCS11Exception("PKCS11 Failed to Find Objects Final")
 
-    return {"session": session, "public_key": pkcs11publickey,
-            "keyret": keyret, "provider": pkcs11provider}
+    return {"session": session, "public_key": publickey,
+            "keyret": keyret, "provider": provider}
 
 
-def pkcs11_close_session(pkcs11session):
+def close_session(session):
     """
-    :param str pkcs11session: pkcs11 session obtained
-        by calling pkcs11_open_session
+    Close a pkcs11 session on a smart device.
+    :param str session: pkcs11 session obtained
+    by calling `.pkcs11.open_session`
     """
-    if "provider" not in pkcs11session:
-        raise PKCS11Exception("pkcs11 session is missing the provider,\
-                               the session is not valid")
-    pkcs11provider = pkcs11session["provider"]
-    if not os.path.isfile(pkcs11provider):
-        raise PKCS11Exception("pkcs11provider path is not valid: %s"
-                              % pkcs11provider)
-    lib = cdll.LoadLibrary(pkcs11provider)
+    if "provider" not in session:
+        raise PKCS11Exception("pkcs11 session is missing the provider, the session is not valid") # noqa
+    provider = session["provider"]
+    if not os.path.isfile(provider):
+        raise PKCS11Exception("provider path is not valid: {}".format(provider)) # noqa
+    lib = cdll.LoadLibrary(provider)
     # Wrap things up
     res = lib.C_Finalize(c_int(0))
     if res != 0:

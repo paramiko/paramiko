@@ -1375,10 +1375,10 @@ class Transport(threading.Thread, ClosingContextManager):
             return []
         return self.auth_handler.wait_for_response(my_event)
 
-    def auth_pkcs11(self, username, pkcs11session, event=None):
+    def auth_pkcs11(self, username, pkcs11_session, event=None):
         """
         :param str username: the username to authenticate as
-        :param str pkcs11session: session obtained from pkcs11_open_session
+        :param str pkcs11_session: session obtained from pkcs11_open_session
         :param .threading.Event event:
             an event to trigger when the authentication attempt is complete
             (whether it was successful or not)
@@ -1399,7 +1399,7 @@ class Transport(threading.Thread, ClosingContextManager):
         else:
             my_event = event
         self.auth_handler = AuthHandler(self)
-        self.auth_handler.auth_pkcs11(username, pkcs11session, my_event)
+        self.auth_handler.auth_pkcs11(username, pkcs11_session, my_event)
         if event is not None:
             # caller wants to wait for event themselves
             return []

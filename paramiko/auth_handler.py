@@ -50,10 +50,7 @@ from paramiko.ssh_exception import (
 )
 from paramiko.server import InteractiveQuery
 from paramiko.ssh_gss import GSSAuth
-from .pkcs11 import (
-    pkcs11_get_public_key, pkcs11_open_session, pkcs11_close_session,
-    PKCS11Exception,
-)
+from .pkcs11 import PKCS11Exception
 from .authentication import hostkey_from_text
 
 
@@ -81,7 +78,7 @@ class AuthHandler(object):
         self.gss_host = None
         self.gss_deleg_creds = True
         # for PKCS11 / Smartcard
-        self.pkcs11session = None
+        self.pkcs11_session = None
         if AuthHandler._pkcs11_lock is None:
             AuthHandler._pkcs11_lock = threading.Lock()
         self.pkcs11_lock = AuthHandler._pkcs11_lock
@@ -122,9 +119,9 @@ class AuthHandler(object):
         with self._auth(username, event, 'publickey'):
             self.private_key = key
 
-    def auth_pkcs11(self, username, pkcs11session, event):
+    def auth_pkcs11(self, username, pkcs11_session, event):
         with self._auth(username, event, 'publickey'):
-            self.pkcs11session = pkcs11session
+            self.pkcs11_session = pkcs11_session
 
     def auth_password(self, username, password, event):
         with self._auth(username, event, 'password'):
@@ -241,27 +238,24 @@ class AuthHandler(object):
         self._disconnect_service_not_available()
 
     def _pkcs11_get_public_key(self):
-        if "public_key" not in self.pkcs11session:
+        if "public_key" not in self.pkcs11_session:
             raise PKCS11Exception("pkcs11 session does not have a public_key")
-        if len(self.pkcs11session["public_key"]) < 1:
-            raise PKCS11Exception("pkcs11 session contains invalid public \
-                                  key %s"
-                                  % self.pkcs11session["public_key"])
-        return self.pkcs11session["public_key"]
+        if len(self.pkcs11_session["public_key"]) < 1:
+            raise PKCS11Exception("pkcs11 session contains invalid public key {}".format(self.pkcs11_session["public_key"])) # noqa
+        return self.pkcs11_session["public_key"]
 
     def _pkcs11_sign_ssh_data(self, blob, key_name):
-        if "provider" not in self.pkcs11session:
+        if "provider" not in self.pkcs11_session:
             raise PKCS11Exception("pkcs11 session does not have a provider")
-        if "session" not in self.pkcs11session:
+        if "session" not in self.pkcs11_session:
             raise PKCS11Exception("pkcs11 session does not have a session")
-        if "keyret" not in self.pkcs11session:
+        if "keyret" not in self.pkcs11_session:
             raise PKCS11Exception("pkcs11 session does not have a keyret")
-        if not os.path.isfile(self.pkcs11session["provider"]):
-            raise PKCS11Exception("pkcs11provider does not exist: %s"
-                               % self.pkcs11session["provider"])
-        lib = cdll.LoadLibrary(self.pkcs11session["provider"])
-        session = self.pkcs11session["session"]
-        keyret = self.pkcs11session["keyret"]
+        if not os.path.isfile(self.pkcs11_session["provider"]):
+            raise PKCS11Exception("pkcs11provider does not exist: {}".format(self.pkcs11_session["provider"])) # noqa
+        lib = cdll.LoadLibrary(self.pkcs11_session["provider"])
+        session = self.pkcs11_session["session"]
+        keyret = self.pkcs11_session["keyret"]
 
         # Init Signing Data
         class ck_mechanism(Structure):
@@ -310,7 +304,7 @@ class AuthHandler(object):
                 password = bytestring(self.password)
                 m.add_string(password)
             elif self.auth_method == 'publickey':
-                if self.pkcs11session is None:
+                if self.pkcs11_session is None:
                     m.add_boolean(True)
                     # Private Key
                     # Use certificate contents, if available, plain pubkey
@@ -331,8 +325,7 @@ class AuthHandler(object):
                     fields = pubkey_source.split(' ')
 
                     if len(fields) < 2:
-                        raise PKCS11Exception("Not enough fields \
-                                               found in pkcs11 key")
+                        raise PKCS11Exception("Not enough fields found in pkcs11 key") # noqa
 
                     keytype = fields[0]
                     pub_key = fields[1]
