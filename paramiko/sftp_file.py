@@ -30,7 +30,7 @@ import time
 from paramiko.common import DEBUG
 
 from paramiko.file import BufferedFile
-from paramiko.py3compat import long
+from paramiko.py3compat import u, long
 from paramiko.sftp import (
     CMD_CLOSE, CMD_READ, CMD_DATA, SFTPError, CMD_WRITE, CMD_STATUS, CMD_FSTAT,
     CMD_ATTRS, CMD_FSETSTAT, CMD_EXTENDED,
@@ -83,7 +83,7 @@ class SFTPFile (BufferedFile):
         # __del__.)
         if self._closed:
             return
-        self.sftp._log(DEBUG, 'close(%s)' % hexlify(self.handle))
+        self.sftp._log(DEBUG, 'close(%s)' % u(hexlify(self.handle)))
         if self.pipelined:
             self.sftp._finish_responses(self)
         BufferedFile.close(self)
