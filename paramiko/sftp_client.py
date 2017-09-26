@@ -341,7 +341,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         handle = msg.get_binary()
         self._log(
             DEBUG,
-            'open(%r, %r) -> %s' % (filename, mode, hexlify(handle)))
+            'open(%r, %r) -> %s' % (filename, mode, u(hexlify(handle))))
         return SFTPFile(self, handle, mode, bufsize)
 
     # Python continues to vacillate about "open" vs "file"...
