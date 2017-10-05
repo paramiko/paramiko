@@ -214,7 +214,7 @@ class Channel (ClosingContextManager):
         self._wait_for_event()
 
     @open_only
-    def exec_command(self, command):
+    def exec_command(self, command, timeout=None):
         """
         Execute a command on the server.  If the server allows it, the channel
         will then be directly connected to the stdin, stdout, and stderr of
@@ -225,6 +225,9 @@ class Channel (ClosingContextManager):
         another command.
 
         :param str command: a shell command to execute.
+
+        :param int timeout:
+            set thread timeout when waiting for event.
 
         :raises:
             `.SSHException` -- if the request was rejected or the channel was
@@ -238,7 +241,7 @@ class Channel (ClosingContextManager):
         m.add_string(command)
         self._event_pending()
         self.transport._send_user_message(m)
-        self._wait_for_event()
+        self._wait_for_event(timeout=timeout)
 
     @open_only
     def invoke_subsystem(self, subsystem):
@@ -1186,8 +1189,8 @@ class Channel (ClosingContextManager):
         self.event.clear()
         self.event_ready = False
 
-    def _wait_for_event(self):
-        self.event.wait()
+    def _wait_for_event(self, timeout=None):
+        self.event.wait(timeout=timeout)
         assert self.event.is_set()
         if self.event_ready:
             return

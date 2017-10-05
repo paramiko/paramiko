@@ -475,7 +475,7 @@ class SSHClient (ClosingContextManager):
         chan.settimeout(timeout)
         if environment:
             chan.update_environment(environment)
-        chan.exec_command(command)
+        chan.exec_command(command, timeout)
         stdin = chan.makefile('wb', bufsize)
         stdout = chan.makefile('r', bufsize)
         stderr = chan.makefile_stderr('r', bufsize)
