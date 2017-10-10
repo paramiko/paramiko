@@ -589,7 +589,7 @@ class SSHClientTest (unittest.TestCase):
             self.assertTrue(isinstance(e.args[1], SSHException),
                             'Expected original SSHException in exception')
         else:
-            self.assertFalse(False, 'SSHException was not thrown.')
+            self.fail('SSHException was not thrown.')
 
 
     def test_missing_key_policy_accepts_classes_or_instances(self):
