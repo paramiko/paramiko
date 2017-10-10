@@ -474,7 +474,7 @@ Host param3 parara
         safe_vanilla = safe_string(vanilla)
         safe_has_bytes = safe_string(has_bytes)
         expected_bytes = b("has %07%03 bytes")
-        err = "{0!r} != {1!r}"
+        err = "{!r} != {!r}"
         msg = err.format(safe_vanilla, vanilla)
         assert safe_vanilla == vanilla, msg
         msg = err.format(safe_has_bytes, expected_bytes)

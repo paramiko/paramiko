@@ -284,7 +284,7 @@ class _SSH_GSSAPI(_SSH_GSSAuth):
             else:
                 token = self._gss_ctxt.step(recv_token)
         except gssapi.GSSException:
-            message = "{0} Target: {1}".format(
+            message = "{} Target: {}".format(
                 sys.exc_info()[1], self._gss_host)
             raise gssapi.GSSException(message)
         self._gss_ctxt_status = self._gss_ctxt.established

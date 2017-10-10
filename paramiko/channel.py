@@ -315,7 +315,7 @@ class Channel (ClosingContextManager):
             try:
                 self.set_environment_variable(name, value)
             except SSHException as e:
-                err = "Failed to set environment variable \"{0}\"."
+                err = "Failed to set environment variable \"{}\"."
                 raise SSHException(err.format(name), e)
 
     @open_only

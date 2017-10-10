@@ -1965,11 +1965,11 @@ class Transport(threading.Thread, ClosingContextManager):
         # Log useful, non-duplicative line re: an agreed-upon algorithm.
         # Old code implied algorithms could be asymmetrical (different for
         # inbound vs outbound) so we preserve that possibility.
-        msg = "{0} agreed: ".format(which)
+        msg = "{} agreed: ".format(which)
         if local == remote:
             msg += local
         else:
-            msg += "local={0}, remote={1}".format(local, remote)
+            msg += "local={}, remote={}".format(local, remote)
         self._log(DEBUG, msg)
 
     # protocol stages
@@ -2025,9 +2025,9 @@ class Transport(threading.Thread, ClosingContextManager):
         version = segs[1]
         client = segs[2]
         if version != '1.99' and version != '2.0':
-            msg = 'Incompatible version ({0} instead of 2.0)'
+            msg = 'Incompatible version ({} instead of 2.0)'
             raise SSHException(msg.format(version))
-        msg = 'Connected (version {0}, client {1})'.format(version, client)
+        msg = 'Connected (version {}, client {})'.format(version, client)
         self._log(INFO, msg)
 
     def _send_kex_init(self):
@@ -2223,7 +2223,7 @@ class Transport(threading.Thread, ClosingContextManager):
             len(agreed_local_compression) == 0 or
             len(agreed_remote_compression) == 0
         ):
-            msg = 'Incompatible ssh server (no acceptable compression) {0!r} {1!r} {2!r}' # noqa
+            msg = 'Incompatible ssh server (no acceptable compression) {!r} {!r} {!r}' # noqa
             raise SSHException(msg.format(
                 agreed_local_compression, agreed_remote_compression,
                 self._preferred_compression,
@@ -2583,7 +2583,7 @@ class Transport(threading.Thread, ClosingContextManager):
         m.get_boolean()  # always_display
         msg = m.get_string()
         m.get_string()  # language
-        self._log(DEBUG, 'Debug msg: {0}'.format(util.safe_string(msg)))
+        self._log(DEBUG, 'Debug msg: {}'.format(util.safe_string(msg)))
 
     def _get_subsystem_handler(self, name):
         try:

@@ -409,7 +409,7 @@ class PKey(object):
             # (requires going back into per-type subclasses.)
             msg.get_string()
         else:
-            err = 'Invalid key (class: {0}, data type: {1}'
+            err = 'Invalid key (class: {}, data type: {}'
             raise SSHException(err.format(self.__class__.__name__, type_))
 
     def load_certificate(self, value):
@@ -439,7 +439,7 @@ class PKey(object):
             constructor = 'from_string'
         blob = getattr(PublicBlob, constructor)(value)
         if not blob.key_type.startswith(self.get_name()):
-            err = "PublicBlob type {0} incompatible with key type {1}"
+            err = "PublicBlob type {} incompatible with key type {}"
             raise ValueError(err.format(blob.key_type, self.get_name()))
         self.public_blob = blob
 
@@ -490,7 +490,7 @@ class PublicBlob(object):
         """
         fields = string.split(None, 2)
         if len(fields) < 2:
-            msg = "Not enough fields for public blob: {0}"
+            msg = "Not enough fields for public blob: {}"
             raise ValueError(msg.format(fields))
         key_type = fields[0]
         key_blob = decodebytes(b(fields[1]))
@@ -503,7 +503,7 @@ class PublicBlob(object):
         m = Message(key_blob)
         blob_type = m.get_text()
         if blob_type != key_type:
-            msg = "Invalid PublicBlob contents: key type={0!r}, but blob type={1!r}" # noqa
+            msg = "Invalid PublicBlob contents: key type={!r}, but blob type={!r}" # noqa
             raise ValueError(msg.format(key_type, blob_type))
         # All good? All good.
         return cls(type_=key_type, blob=key_blob, comment=comment)
@@ -520,9 +520,9 @@ class PublicBlob(object):
         return cls(type_=type_, blob=message.asbytes())
 
     def __str__(self):
-        ret = '{0} public key/certificate'.format(self.key_type)
+        ret = '{} public key/certificate'.format(self.key_type)
         if self.comment:
-            ret += "- {0}".format(self.comment)
+            ret += "- {}".format(self.comment)
         return ret
 
     def __eq__(self, other):

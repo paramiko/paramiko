@@ -544,14 +544,14 @@ class SSHClient (ClosingContextManager):
         # TODO: change this to 'Loading' instead of 'Trying' sometime; probably
         # when #387 is released, since this is a critical log message users are
         # likely testing/filtering for (bah.)
-        msg = "Trying discovered key {0} in {1}".format(
+        msg = "Trying discovered key {} in {}".format(
             hexlify(key.get_fingerprint()), key_path,
         )
         self._log(DEBUG, msg)
         # Attempt to load cert if it exists.
         if os.path.isfile(cert_path):
             key.load_certificate(cert_path)
-            self._log(DEBUG, "Adding public certificate {0}".format(cert_path))
+            self._log(DEBUG, "Adding public certificate {}".format(cert_path))
         return key
 
     def _auth(self, username, password, pkey, key_filenames, allow_agent,

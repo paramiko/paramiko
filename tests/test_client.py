@@ -238,7 +238,7 @@ class SSHClientTest (unittest.TestCase):
             try:
                 self._test_connection(
                     key_filename=[
-                        test_path('test_{0}.key'.format(x)) for x in attempt
+                        test_path('test_{}.key'.format(x)) for x in attempt
                     ],
                     allowed_keys=[types_[x] for x in accept],
                 )
@@ -266,7 +266,7 @@ class SSHClientTest (unittest.TestCase):
         # server-side behavior is 100% identical.)
         # NOTE: only bothered whipping up one cert per overall class/family.
         for type_ in ('rsa', 'dss', 'ecdsa_256', 'ed25519'):
-            cert_name = 'test_{0}.key-cert.pub'.format(type_)
+            cert_name = 'test_{}.key-cert.pub'.format(type_)
             cert_path = test_path(os.path.join('cert_support', cert_name))
             self._test_connection(
                 key_filename=cert_path,
@@ -281,12 +281,12 @@ class SSHClientTest (unittest.TestCase):
         # that a specific cert was found, along with regular authorization
         # succeeding proving that the overall flow works.
         for type_ in ('rsa', 'dss', 'ecdsa_256', 'ed25519'):
-            key_name = 'test_{0}.key'.format(type_)
+            key_name = 'test_{}.key'.format(type_)
             key_path = test_path(os.path.join('cert_support', key_name))
             self._test_connection(
                 key_filename=key_path,
                 public_blob=PublicBlob.from_file(
-                    '{0}-cert.pub'.format(key_path)
+                    '{}-cert.pub'.format(key_path)
                 ),
             )
 

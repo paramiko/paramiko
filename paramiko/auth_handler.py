@@ -475,7 +475,7 @@ class AuthHandler (object):
                     'Auth rejected: public key: %s' % str(e))
                 key = None
             except Exception as e:
-                msg = 'Auth rejected: unsupported or mangled public key ({0}: {1})' # noqa
+                msg = 'Auth rejected: unsupported or mangled public key ({}: {})' # noqa
                 self.transport._log(INFO, msg.format(e.__class__.__name__, e))
                 key = None
             if key is None:

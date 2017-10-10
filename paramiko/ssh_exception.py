@@ -63,7 +63,7 @@ class BadAuthenticationType (AuthenticationException):
         self.args = (explanation, types, )
 
     def __str__(self):
-        return '{0} (allowed_types={1!r})'.format(
+        return '{} (allowed_types={!r})'.format(
             SSHException.__str__(self), self.allowed_types
         )
 
@@ -107,7 +107,7 @@ class BadHostKeyException (SSHException):
     .. versionadded:: 1.6
     """
     def __init__(self, hostname, got_key, expected_key):
-        message = 'Host key for server {0} does not match: got {1}, expected {2}' # noqa
+        message = 'Host key for server {} does not match: got {}, expected {}' # noqa
         message = message.format(
             hostname, got_key.get_base64(),
             expected_key.get_base64())
