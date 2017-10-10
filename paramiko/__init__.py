@@ -19,15 +19,6 @@
 # flake8: noqa
 import sys
 from paramiko._version import __version__, __version_info__
-
-if sys.version_info < (2, 6):
-    raise RuntimeError('You need Python 2.6+ for this module.')
-
-
-__author__ = "Jeff Forcier <jeff@bitprophet.org>"
-__license__ = "GNU Lesser General Public License (LGPL)"
-
-
 from paramiko.transport import SecurityOptions, Transport
 from paramiko.client import (
     SSHClient, MissingHostKeyPolicy, AutoAddPolicy, RejectPolicy,
@@ -75,6 +66,10 @@ from paramiko.sftp import (
 )
 
 from paramiko.common import io_sleep
+
+
+__author__ = "Jeff Forcier <jeff@bitprophet.org>"
+__license__ = "GNU Lesser General Public License (LGPL)"
 
 __all__ = [
     'Transport',
