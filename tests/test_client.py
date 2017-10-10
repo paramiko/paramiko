@@ -556,10 +556,7 @@ class SSHClientTest (unittest.TestCase):
     def test_host_key_negotiation_4(self):
         self._client_host_key_good(paramiko.RSAKey, 'test_rsa.key')
 
-    def test_update_environment(self):
-        """
-        Verify that environment variables can be set by the client.
-        """
+    def _setup_for_env(self):
         threading.Thread(target=self._run).start()
 
         self.tc = paramiko.SSHClient()
@@ -571,6 +568,11 @@ class SSHClientTest (unittest.TestCase):
         self.assertTrue(self.event.isSet())
         self.assertTrue(self.ts.is_active())
 
+    def test_update_environment(self):
+        """
+        Verify that environment variables can be set by the client.
+        """
+        self._setup_for_env()
         target_env = {b'A': b'B', b'C': b'd'}
 
         self.tc.exec_command('yes', environment=target_env)
@@ -578,6 +580,8 @@ class SSHClientTest (unittest.TestCase):
         self.assertEqual(target_env, getattr(schan, 'env', {}))
         schan.close()
 
+    def test_env_update_failures(self):
+        self._setup_for_env()
         with self.assertRaises(SSHException) as manager:
             # Verify that a rejection by the server can be detected
             self.tc.exec_command('yes', environment={b'INVALID_ENV': b''})
