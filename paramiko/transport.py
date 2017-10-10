@@ -857,7 +857,7 @@ class Transport(threading.Thread, ClosingContextManager):
             if event.is_set():
                 break
             elif start_ts + timeout < time.time():
-                raise SSHException('Timeout openning channel.')
+                raise SSHException('Timeout opening channel.')
         chan = self._channels.get(chanid)
         if chan is not None:
             return chan
