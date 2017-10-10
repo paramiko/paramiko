@@ -444,7 +444,7 @@ class _SSH_SSPI(_SSH_GSSAuth):
             error, token = self._gss_ctxt.authorize(recv_token)
             token = token[0].Buffer
         except pywintypes.error as e:
-            e.strerror += ", Target: {1}".format(e, self._gss_host)
+            e.strerror += ", Target: {}".format(e, self._gss_host)
             raise
 
         if error == 0:
