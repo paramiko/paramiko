@@ -578,19 +578,17 @@ class SSHClientTest (unittest.TestCase):
         self.assertEqual(target_env, getattr(schan, 'env', {}))
         schan.close()
 
-        # Cannot use assertRaises in context manager mode as it is not supported
-        # in Python 2.6.
-        try:
+        with self.assertRaises(SSHException) as manager:
             # Verify that a rejection by the server can be detected
             self.tc.exec_command('yes', environment={b'INVALID_ENV': b''})
-        except SSHException as e:
-            self.assertTrue('INVALID_ENV' in str(e),
-                            'Expected variable name in error message')
-            self.assertTrue(isinstance(e.args[1], SSHException),
-                            'Expected original SSHException in exception')
-        else:
-            self.fail('SSHException was not thrown.')
-
+        self.assertTrue(
+            'INVALID_ENV' in str(manager.exception),
+            'Expected variable name in error message'
+        )
+        self.assertTrue(
+            isinstance(manager.exception.args[1], SSHException),
+            'Expected original SSHException in exception'
+        )
 
     def test_missing_key_policy_accepts_classes_or_instances(self):
         """
