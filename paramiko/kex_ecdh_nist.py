@@ -45,7 +45,7 @@ class KexNistp256():
             return self._parse_kexecdh_init(m)
         elif not self.transport.server_mode and (ptype == _MSG_KEXECDH_REPLY):
             return self._parse_kexecdh_reply(m)
-        raise SSHException('KexECDH asked to handle packet type %d' % ptype)
+        raise SSHException('KexECDH asked to handle packet type {:d}'.format(ptype))
 
     def _generate_key_pair(self):
         self.P = ec.generate_private_key(self.curve, default_backend())

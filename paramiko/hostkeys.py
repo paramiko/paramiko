@@ -300,7 +300,7 @@ class HostKeys (MutableMapping):
             salt = decodebytes(b(salt))
         assert len(salt) == sha1().digest_size
         hmac = HMAC(salt, b(hostname), sha1).digest()
-        hostkey = '|1|%s|%s' % (u(encodebytes(salt)), u(encodebytes(hmac)))
+        hostkey = '|1|{}|{}'.format(u(encodebytes(salt)), u(encodebytes(hmac)))
         return hostkey.replace('\n', '')
 
 
@@ -338,8 +338,9 @@ class HostKeyEntry:
         fields = line.split(' ')
         if len(fields) < 3:
             # Bad number of fields
-            log.info("Not enough fields found in known_hosts in line %s (%r)" %
-                     (lineno, line))
+            log.info("Not enough fields found in known_hosts in line {} ({!r})".format(
+                 lineno, line
+            ))
             return None
         fields = fields[:3]
 
@@ -359,7 +360,7 @@ class HostKeyEntry:
             elif keytype == 'ssh-ed25519':
                 key = Ed25519Key(data=decodebytes(key))
             else:
-                log.info("Unable to handle key of type %s" % (keytype,))
+                log.info("Unable to handle key of type {}".format(keytype))
                 return None
 
         except binascii.Error as e:
@@ -374,11 +375,12 @@ class HostKeyEntry:
         included.
         """
         if self.valid:
-            return '%s %s %s\n' % (
+            return '{} {} {}\n'.format(
                 ','.join(self.hostnames),
                 self.key.get_name(),
-                self.key.get_base64())
+                self.key.get_base64(),
+            )
         return None
 
     def __repr__(self):
-        return '<HostKeyEntry %r: %r>' % (self.hostnames, self.key)
+        return '<HostKeyEntry {!r}: {!r}>'.format(self.hostnames, self.key)

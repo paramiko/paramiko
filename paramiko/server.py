@@ -667,7 +667,8 @@ class SubsystemHandler (threading.Thread):
     def _run(self):
         try:
             self.__transport._log(
-                DEBUG, 'Starting handler for subsystem %s' % self.__name)
+                DEBUG, 'Starting handler for subsystem {}'.format(self.__name)
+            )
             self.start_subsystem(self.__name, self.__transport, self.__channel)
         except Exception as e:
             self.__transport._log(

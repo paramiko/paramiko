@@ -144,7 +144,7 @@ class ECDSAKey(PKey):
             )
             curvename = msg.get_text()
             if curvename != self.ecdsa_curve.nist_name:
-                raise SSHException("Can't handle curve of type %s" % curvename)
+                raise SSHException("Can't handle curve of type {}".format(curvename))
 
             pointinfo = msg.get_binary()
             try:
@@ -249,7 +249,7 @@ class ECDSAKey(PKey):
         if bits is not None:
             curve = cls._ECDSA_CURVES.get_by_key_length(bits)
             if curve is None:
-                raise ValueError("Unsupported key length: %d" % bits)
+                raise ValueError("Unsupported key length: {:d}".format(bits))
             curve = curve.curve_class()
 
         private_key = ec.generate_private_key(curve, backend=default_backend())

@@ -120,8 +120,8 @@ class KexGSSGroup1(object):
             return self._parse_kexgss_complete(m)
         elif ptype == MSG_KEXGSS_ERROR:
             return self._parse_kexgss_error(m)
-        raise SSHException('GSS KexGroup1 asked to handle packet type %d'
-                           % ptype)
+        msg = 'GSS KexGroup1 asked to handle packet type {:d}'
+        raise SSHException(msg.format(ptype))
 
     # ##  internals...
 
@@ -282,10 +282,11 @@ class KexGSSGroup1(object):
         min_status = m.get_int()
         err_msg = m.get_string()
         m.get_string()   # we don't care about the language!
-        raise SSHException("GSS-API Error:\nMajor Status: %s\nMinor Status: %s\
-                            \nError Message: %s\n") % (str(maj_status),
-                                                       str(min_status),
-                                                       err_msg)
+        raise SSHException("""GSS-API Error:
+Major Status: {}
+Minor Status: {}
+Error Message: {}
+""".format(maj_status, min_status, err_msg))
 
 
 class KexGSSGroup14(KexGSSGroup1):
@@ -361,7 +362,8 @@ class KexGSSGex(object):
             return self._parse_kexgss_complete(m)
         elif ptype == MSG_KEXGSS_ERROR:
             return self._parse_kexgss_error(m)
-        raise SSHException('KexGex asked to handle packet type %d' % ptype)
+        msg = 'KexGex asked to handle packet type {:d}'
+        raise SSHException(msg.format(ptype))
 
     # ##  internals...
 
@@ -416,8 +418,10 @@ class KexGSSGex(object):
                 'Can\'t do server-side gex with no modulus pack')
         self.transport._log(
             DEBUG,  # noqa
-            'Picking p (%d <= %d <= %d bits)' % (
-                minbits, preferredbits, maxbits))
+            'Picking p ({} <= {} <= {} bits)'.format(
+                minbits, preferredbits, maxbits,
+            )
+        )
         self.g, self.p = pack.get_modulus(minbits, preferredbits, maxbits)
         m = Message()
         m.add_byte(c_MSG_KEXGSS_GROUP)
@@ -439,8 +443,8 @@ class KexGSSGex(object):
         if (bitlen < 1024) or (bitlen > 8192):
             raise SSHException(
                 'Server-generated gex p (don\'t ask) is out of range '
-                '(%d bits)' % bitlen)
-        self.transport._log(DEBUG, 'Got server p (%d bits)' % bitlen)  # noqa
+                '({} bits)'.format(bitlen))
+        self.transport._log(DEBUG, 'Got server p ({} bits)'.format(bitlen))  # noqa
         self._generate_x()
         # now compute e = g^x mod p
         self.e = pow(self.g, self.x, self.p)
@@ -603,10 +607,11 @@ class KexGSSGex(object):
         min_status = m.get_int()
         err_msg = m.get_string()
         m.get_string()   # we don't care about the language (lang_tag)!
-        raise SSHException("GSS-API Error:\nMajor Status: %s\nMinor Status: %s\
-                            \nError Message: %s\n") % (str(maj_status),
-                                                       str(min_status),
-                                                       err_msg)
+        raise SSHException("""GSS-API Error:
+Major Status: {}
+Minor Status: {}
+Error Message: {}
+""".format(maj_status, min_status, err_msg))
 
 
 class NullHostKey(object):

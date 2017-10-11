@@ -92,7 +92,7 @@ class KexGex (object):
         elif ptype == _MSG_KEXDH_GEX_REQUEST_OLD:
             return self._parse_kexdh_gex_request_old(m)
         raise SSHException(
-            'KexGex %s asked to handle packet type %d' % self.name, ptype)
+            'KexGex {} asked to handle packet type {:d}'.format(self.name, ptype))
 
     # ...internals...
 
@@ -141,8 +141,10 @@ class KexGex (object):
                 'Can\'t do server-side gex with no modulus pack')
         self.transport._log(
             DEBUG,
-            'Picking p (%d <= %d <= %d bits)' % (
-                minbits, preferredbits, maxbits))
+            'Picking p ({} <= {} <= {} bits)'.format(
+                minbits, preferredbits, maxbits,
+            )
+        )
         self.g, self.p = pack.get_modulus(minbits, preferredbits, maxbits)
         m = Message()
         m.add_byte(c_MSG_KEXDH_GEX_GROUP)
@@ -166,7 +168,8 @@ class KexGex (object):
             raise SSHException(
                 'Can\'t do server-side gex with no modulus pack')
         self.transport._log(
-            DEBUG, 'Picking p (~ %d bits)' % (self.preferred_bits,))
+            DEBUG, 'Picking p (~ {} bits)'.format(self.preferred_bits)
+        )
         self.g, self.p = pack.get_modulus(
             self.min_bits, self.preferred_bits, self.max_bits)
         m = Message()
@@ -185,8 +188,8 @@ class KexGex (object):
         if (bitlen < 1024) or (bitlen > 8192):
             raise SSHException(
                 'Server-generated gex p (don\'t ask) is out of range '
-                '(%d bits)' % bitlen)
-        self.transport._log(DEBUG, 'Got server p (%d bits)' % bitlen)
+                '({} bits)'.format(bitlen))
+        self.transport._log(DEBUG, 'Got server p ({} bits)'.format(bitlen))
         self._generate_x()
         # now compute e = g^x mod p
         self.e = pow(self.g, self.x, self.p)

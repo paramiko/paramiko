@@ -312,14 +312,14 @@ class PKey(object):
         # encrypted keyfile: will need a password
         if headers['proc-type'] != '4,ENCRYPTED':
             raise SSHException(
-                'Unknown private key structure "%s"' % headers['proc-type'])
+                'Unknown private key structure "{}"'.format(headers['proc-type']))
         try:
             encryption_type, saltstr = headers['dek-info'].split(',')
         except:
             raise SSHException("Can't parse DEK-info in private key file")
         if encryption_type not in self._CIPHER_TABLE:
             raise SSHException(
-                'Unknown private key cipher "%s"' % encryption_type)
+                'Unknown private key cipher "{}"'.format(encryption_type))
         # if no password was passed in,
         # raise an exception pointing out that we need one
         if password is None:

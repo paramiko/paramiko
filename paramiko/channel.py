@@ -135,7 +135,7 @@ class Channel (ClosingContextManager):
         """
         Return a string representation of this object, for debugging.
         """
-        out = '<paramiko.Channel %d' % self.chanid
+        out = '<paramiko.Channel {}'.format(self.chanid)
         if self.closed:
             out += ' (closed)'
         elif self.active:
@@ -143,9 +143,9 @@ class Channel (ClosingContextManager):
                 out += ' (EOF received)'
             if self.eof_sent:
                 out += ' (EOF sent)'
-            out += ' (open) window=%d' % self.out_window_size
+            out += ' (open) window={}'.format(self.out_window_size)
             if len(self.in_buffer) > 0:
-                out += ' in-buffer=%d' % (len(self.in_buffer),)
+                out += ' in-buffer={}'.format(len(self.in_buffer))
         out += ' -> ' + repr(self.transport)
         out += '>'
         return out
@@ -976,7 +976,7 @@ class Channel (ClosingContextManager):
         # a window update
         self.in_window_threshold = window_size // 10
         self.in_window_sofar = 0
-        self._log(DEBUG, 'Max packet in: %d bytes' % max_packet_size)
+        self._log(DEBUG, 'Max packet in: {} bytes'.format(max_packet_size))
 
     def _set_remote_channel(self, chanid, window_size, max_packet_size):
         self.remote_chanid = chanid
@@ -985,10 +985,10 @@ class Channel (ClosingContextManager):
             max_packet_size
         )
         self.active = 1
-        self._log(DEBUG, 'Max packet out: %d bytes' % self.out_max_packet_size)
+        self._log(DEBUG, 'Max packet out: {} bytes'.format(self.out_max_packet_size))
 
     def _request_success(self, m):
-        self._log(DEBUG, 'Sesch channel %d request ok' % self.chanid)
+        self._log(DEBUG, 'Sesch channel {} request ok'.format(self.chanid))
         self.event_ready = True
         self.event.set()
         return
@@ -1017,7 +1017,7 @@ class Channel (ClosingContextManager):
         if code != 1:
             self._log(
                 ERROR,
-                'unknown extended_data type %d; discarding' % code
+                'unknown extended_data type {}; discarding'.format(code)
             )
             return
         if self.combine_stderr:
@@ -1030,7 +1030,7 @@ class Channel (ClosingContextManager):
         self.lock.acquire()
         try:
             if self.ultra_debug:
-                self._log(DEBUG, 'window up %d' % nbytes)
+                self._log(DEBUG, 'window up {}'.format(nbytes))
             self.out_window_size += nbytes
             self.out_buffer_cv.notifyAll()
         finally:
@@ -1122,7 +1122,7 @@ class Channel (ClosingContextManager):
             else:
                 ok = server.check_channel_forward_agent_request(self)
         else:
-            self._log(DEBUG, 'Unhandled channel request "%s"' % key)
+            self._log(DEBUG, 'Unhandled channel request "{}"'.format(key))
             ok = False
         if want_reply:
             m = Message()
@@ -1144,7 +1144,7 @@ class Channel (ClosingContextManager):
                     self._pipe.set_forever()
         finally:
             self.lock.release()
-        self._log(DEBUG, 'EOF received (%s)', self._name)
+        self._log(DEBUG, 'EOF received ({})'.format(self._name))
 
     def _handle_close(self, m):
         self.lock.acquire()
@@ -1216,7 +1216,7 @@ class Channel (ClosingContextManager):
         m.add_byte(cMSG_CHANNEL_EOF)
         m.add_int(self.remote_chanid)
         self.eof_sent = True
-        self._log(DEBUG, 'EOF sent (%s)', self._name)
+        self._log(DEBUG, 'EOF sent ({})'.format(self._name))
         return m
 
     def _close_internal(self):
@@ -1250,12 +1250,12 @@ class Channel (ClosingContextManager):
             if self.closed or self.eof_received or not self.active:
                 return 0
             if self.ultra_debug:
-                self._log(DEBUG, 'addwindow %d' % n)
+                self._log(DEBUG, 'addwindow {}'.format(n))
             self.in_window_sofar += n
             if self.in_window_sofar <= self.in_window_threshold:
                 return 0
             if self.ultra_debug:
-                self._log(DEBUG, 'addwindow send %d' % self.in_window_sofar)
+                self._log(DEBUG, 'addwindow send {}'.format(self.in_window_sofar))
             out = self.in_window_sofar
             self.in_window_sofar = 0
             return out
@@ -1298,7 +1298,7 @@ class Channel (ClosingContextManager):
             size = self.out_max_packet_size - 64
         self.out_window_size -= size
         if self.ultra_debug:
-            self._log(DEBUG, 'window down to %d' % self.out_window_size)
+            self._log(DEBUG, 'window down to {}'.format(self.out_window_size))
         return size
 
 

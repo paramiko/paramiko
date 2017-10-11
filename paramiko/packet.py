@@ -368,7 +368,7 @@ class Packetizer (object):
         if cmd in MSG_NAMES:
             cmd_name = MSG_NAMES[cmd]
         else:
-            cmd_name = '$%x' % cmd
+            cmd_name = '${:x}'.format(cmd)
         orig_len = len(data)
         self.__write_lock.acquire()
         try:
@@ -378,7 +378,8 @@ class Packetizer (object):
             if self.__dump_packets:
                 self._log(
                     DEBUG,
-                    'Write packet <%s>, length %d' % (cmd_name, orig_len))
+                    'Write packet <{}>, length {}'.format(cmd_name, orig_len)
+                )
                 self._log(DEBUG, util.format_binary(packet, 'OUT: '))
             if self.__block_engine_out is not None:
                 out = self.__block_engine_out.update(packet)
@@ -404,8 +405,9 @@ class Packetizer (object):
             )
             if sent_too_much and not self.__need_rekey:
                 # only ask once for rekeying
-                self._log(DEBUG, 'Rekeying (hit %d packets, %d bytes sent)' %
-                          (self.__sent_packets, self.__sent_bytes))
+                self._log(DEBUG, 'Rekeying (hit {} packets, {} bytes sent)'.format(
+                          self.__sent_packets, self.__sent_bytes,
+                ))
                 self.__received_bytes_overflow = 0
                 self.__received_packets_overflow = 0
                 self._trigger_rekey()
@@ -456,7 +458,8 @@ class Packetizer (object):
         if self.__dump_packets:
             self._log(
                 DEBUG,
-                'Got payload (%d bytes, %d padding)' % (packet_size, padding))
+                'Got payload ({} bytes, {} padding)'.format(packet_size, padding),
+            )
 
         if self.__compress_engine_in is not None:
             payload = self.__compress_engine_in(payload)
@@ -483,8 +486,9 @@ class Packetizer (object):
         elif (self.__received_packets >= self.REKEY_PACKETS) or \
              (self.__received_bytes >= self.REKEY_BYTES):
             # only ask once for rekeying
-            self._log(DEBUG, 'Rekeying (hit %d packets, %d bytes received)' %
-                      (self.__received_packets, self.__received_bytes))
+            self._log(DEBUG, 'Rekeying (hit {} packets, {} bytes received)'.format(
+                self.__received_packets, self.__received_bytes,
+            ))
             self.__received_bytes_overflow = 0
             self.__received_packets_overflow = 0
             self._trigger_rekey()
@@ -493,11 +497,12 @@ class Packetizer (object):
         if cmd in MSG_NAMES:
             cmd_name = MSG_NAMES[cmd]
         else:
-            cmd_name = '$%x' % cmd
+            cmd_name = '${:x}'.format(cmd)
         if self.__dump_packets:
             self._log(
                 DEBUG,
-                'Read packet <%s>, length %d' % (cmd_name, len(payload)))
+                'Read packet <{}>, length {}'.format(cmd_name, len(payload))
+            )
         return cmd, msg
 
     # ...protected...

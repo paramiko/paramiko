@@ -143,8 +143,9 @@ class SSHClient (ClosingContextManager):
         with open(filename, 'w') as f:
             for hostname, keys in self._host_keys.items():
                 for keytype, key in keys.items():
-                    f.write('%s %s %s\n' % (
-                        hostname, keytype, key.get_base64()))
+                    f.write('{} {} {}\n'.format(
+                        hostname, keytype, key.get_base64()
+                    ))
 
     def get_host_keys(self):
         """
@@ -370,7 +371,7 @@ class SSHClient (ClosingContextManager):
         if port == SSH_PORT:
             server_hostkey_name = hostname
         else:
-            server_hostkey_name = "[%s]:%d" % (hostname, port)
+            server_hostkey_name = "[{}]:{}".format(hostname, port)
         our_server_keys = None
 
         our_server_keys = self._system_host_keys.get(server_hostkey_name)
@@ -598,7 +599,7 @@ class SSHClient (ClosingContextManager):
             try:
                 self._log(
                     DEBUG,
-                    'Trying SSH key %s' % hexlify(pkey.get_fingerprint()))
+                    'Trying SSH key {}'.format(hexlify(pkey.get_fingerprint())))
                 allowed_types = set(
                     self._transport.auth_publickey(username, pkey))
                 two_factor = (allowed_types & two_factor_types)
@@ -631,8 +632,9 @@ class SSHClient (ClosingContextManager):
                 try:
                     self._log(
                         DEBUG,
-                        'Trying SSH agent key %s' % hexlify(
-                            key.get_fingerprint()))
+                        'Trying SSH agent key {}'.format(
+                            hexlify(key.get_fingerprint())
+                    ))
                     # for 2-factor auth a successfully auth'd key password
                     # will return an allowed 2fac auth method
                     allowed_types = set(
@@ -656,7 +658,7 @@ class SSHClient (ClosingContextManager):
                 # ~/ssh/ is for windows
                 for directory in [".ssh", "ssh"]:
                     full_path = os.path.expanduser(
-                        "~/%s/id_%s" % (directory, name)
+                        "~/{}/id_{}".format(directory, name)
                     )
                     if os.path.isfile(full_path):
                         # TODO: only do this append if below did not run
@@ -736,8 +738,9 @@ class AutoAddPolicy (MissingHostKeyPolicy):
         client._host_keys.add(hostname, key.get_name(), key)
         if client._host_keys_filename is not None:
             client.save_host_keys(client._host_keys_filename)
-        client._log(DEBUG, 'Adding %s host key for %s: %s' %
-                    (key.get_name(), hostname, hexlify(key.get_fingerprint())))
+        client._log(DEBUG, 'Adding {} host key for {}: {}'.format(
+            key.get_name(), hostname, hexlify(key.get_fingerprint()),
+        ))
 
 
 class RejectPolicy (MissingHostKeyPolicy):
@@ -747,9 +750,10 @@ class RejectPolicy (MissingHostKeyPolicy):
     """
 
     def missing_host_key(self, client, hostname, key):
-        client._log(DEBUG, 'Rejecting %s host key for %s: %s' %
-                    (key.get_name(), hostname, hexlify(key.get_fingerprint())))
-        raise SSHException('Server %r not found in known_hosts' % hostname)
+        client._log(DEBUG, 'Rejecting {} host key for {}: {}'.format(
+            key.get_name(), hostname, hexlify(key.get_fingerprint()),
+        ))
+        raise SSHException('Server {!r} not found in known_hosts'.format(hostname))
 
 
 class WarningPolicy (MissingHostKeyPolicy):
@@ -758,6 +762,6 @@ class WarningPolicy (MissingHostKeyPolicy):
     accepting it. This is used by `.SSHClient`.
     """
     def missing_host_key(self, client, hostname, key):
-        warnings.warn('Unknown %s host key for %s: %s' %
-                      (key.get_name(), hostname, hexlify(
-                          key.get_fingerprint())))
+        warnings.warn('Unknown {} host key for {}: {}'.format(
+            key.get_name(), hostname, hexlify(key.get_fingerprint()),
+        ))
