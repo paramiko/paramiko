@@ -71,6 +71,9 @@ class AuthHandler (object):
         self.gss_host = None
         self.gss_deleg_creds = True
 
+    def _log(self, *args):
+        return self.transport._log(*args)
+
     def is_authenticated(self):
         return self.authenticated
 
@@ -245,7 +248,7 @@ class AuthHandler (object):
     def _parse_service_accept(self, m):
         service = m.get_text()
         if service == 'ssh-userauth':
-            self.transport._log(DEBUG, 'userauth is OK')
+            self._log(DEBUG, 'userauth is OK')
             m = Message()
             m.add_byte(cMSG_USERAUTH_REQUEST)
             m.add_string(self.username)
@@ -363,7 +366,7 @@ Error Message: {}
                     'Unknown auth method "{}"'.format(self.auth_method))
             self.transport._send_message(m)
         else:
-            self.transport._log(
+            self._log(
                 DEBUG,
                 'Service request "{}" accepted (?)'.format(service))
 
@@ -371,11 +374,11 @@ Error Message: {}
         # okay, send result
         m = Message()
         if result == AUTH_SUCCESSFUL:
-            self.transport._log(INFO, 'Auth granted ({}).'.format(method))
+            self._log(INFO, 'Auth granted ({}).'.format(method))
             m.add_byte(cMSG_USERAUTH_SUCCESS)
             self.authenticated = True
         else:
-            self.transport._log(INFO, 'Auth rejected ({}).'.format(method))
+            self._log(INFO, 'Auth rejected ({}).'.format(method))
             m.add_byte(cMSG_USERAUTH_FAILURE)
             m.add_string(
                 self.transport.server_object.get_allowed_auths(username))
@@ -418,7 +421,7 @@ Error Message: {}
         username = m.get_text()
         service = m.get_text()
         method = m.get_text()
-        self.transport._log(
+        self._log(
             DEBUG,
             'Auth request (type={}) service={}, username={}'.format(
                 method, service, username
@@ -429,7 +432,7 @@ Error Message: {}
             return
         if ((self.auth_username is not None) and
                 (self.auth_username != username)):
-            self.transport._log(
+            self._log(
                 WARNING,
                 'Auth rejected because the client attempted to change username in mid-flight'  # noqa
             )
@@ -454,7 +457,7 @@ Error Message: {}
                 # always treated as failure, since we don't support changing
                 # passwords, but collect the list of valid auth types from
                 # the callback anyway
-                self.transport._log(
+                self._log(
                     DEBUG,
                     'Auth request to change passwords (rejected)')
                 newpassword = m.get_binary()
@@ -473,13 +476,13 @@ Error Message: {}
             try:
                 key = self.transport._key_info[keytype](Message(keyblob))
             except SSHException as e:
-                self.transport._log(
+                self._log(
                     INFO,
                     'Auth rejected: public key: {}'.format(str(e)))
                 key = None
             except Exception as e:
                 msg = 'Auth rejected: unsupported or mangled public key ({}: {})' # noqa
-                self.transport._log(INFO, msg.format(e.__class__.__name__, e))
+                self._log(INFO, msg.format(e.__class__.__name__, e))
                 key = None
             if key is None:
                 self._disconnect_no_more_auth()
@@ -501,7 +504,7 @@ Error Message: {}
                 sig = Message(m.get_binary())
                 blob = self._get_session_blob(key, service, username)
                 if not key.verify_ssh_sig(blob, sig):
-                    self.transport._log(
+                    self._log(
                         INFO,
                         'Auth rejected: invalid signature')
                     result = AUTH_FAILED
@@ -522,7 +525,7 @@ Error Message: {}
             # We can't accept more than one OID, so if the SSH client sends
             # more than one, disconnect.
             if mechs > 1:
-                self.transport._log(
+                self._log(
                     INFO,
                     'Disconnect: Received more than one GSS-API OID mechanism')
                 self._disconnect_no_more_auth()
@@ -530,7 +533,7 @@ Error Message: {}
             mech_ok = sshgss.ssh_check_mech(desired_mech)
             # if we don't support the mechanism, disconnect.
             if not mech_ok:
-                self.transport._log(
+                self._log(
                     INFO,
                     'Disconnect: Received an invalid GSS-API OID mechanism')
                 self._disconnect_no_more_auth()
@@ -572,7 +575,7 @@ Error Message: {}
         self._send_auth_result(username, method, result)
 
     def _parse_userauth_success(self, m):
-        self.transport._log(
+        self._log(
             INFO,
             'Authentication ({}) successful!'.format(self.auth_method))
         self.authenticated = True
@@ -584,20 +587,21 @@ Error Message: {}
         authlist = m.get_list()
         partial = m.get_boolean()
         if partial:
-            self.transport._log(INFO, 'Authentication continues...')
-            self.transport._log(DEBUG, 'Methods: ' + str(authlist))
+            self._log(INFO, 'Authentication continues...')
+            self._log(DEBUG, 'Methods: ' + str(authlist))
             self.transport.saved_exception = PartialAuthentication(authlist)
         elif self.auth_method not in authlist:
-            self.transport._log(
+            self._log(
                 DEBUG,
-                'Authentication type ({}) not permitted.'.format(self.auth_method))
-            self.transport._log(
+                'Authentication type ({}) not permitted.'.format(self.auth_method)
+            )
+            self._log(
                 DEBUG,
                 'Allowed methods: ' + str(authlist))
             self.transport.saved_exception = BadAuthenticationType(
                 'Bad authentication type', authlist)
         else:
-            self.transport._log(
+            self._log(
                 INFO,
                 'Authentication ({}) failed.'.format(self.auth_method))
         self.authenticated = False
@@ -608,7 +612,7 @@ Error Message: {}
     def _parse_userauth_banner(self, m):
         banner = m.get_string()
         self.banner = banner
-        self.transport._log(INFO, 'Auth banner: {}'.format(banner))
+        self._log(INFO, 'Auth banner: {}'.format(banner))
         # who cares.
 
     def _parse_userauth_info_request(self, m):
@@ -649,8 +653,8 @@ Error Message: {}
 
     def _handle_local_gss_failure(self, e):
         self.transport.saved_exception = e
-        self.transport._log(DEBUG, "GSSAPI failure: {}".format(e))
-        self.transport._log(INFO, 'Authentication ({}) failed.'.format(
+        self._log(DEBUG, "GSSAPI failure: {}".format(e))
+        self._log(INFO, 'Authentication ({}) failed.'.format(
             self.auth_method))
         self.authenticated = False
         self.username = None
