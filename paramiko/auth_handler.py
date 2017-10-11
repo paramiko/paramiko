@@ -591,19 +591,21 @@ Error Message: {}
             self._log(DEBUG, 'Methods: ' + str(authlist))
             self.transport.saved_exception = PartialAuthentication(authlist)
         elif self.auth_method not in authlist:
-            self._log(
-                DEBUG,
-                'Authentication type ({}) not permitted.'.format(self.auth_method)
-            )
-            self._log(
-                DEBUG,
-                'Allowed methods: ' + str(authlist))
+            for msg in (
+                'Authentication type ({}) not permitted.'.format(
+                    self.auth_method
+                ),
+                'Allowed methods: {}'.format(authlist),
+            ):
+                self._log(DEBUG, msg)
             self.transport.saved_exception = BadAuthenticationType(
-                'Bad authentication type', authlist)
+                'Bad authentication type', authlist
+            )
         else:
             self._log(
                 INFO,
-                'Authentication ({}) failed.'.format(self.auth_method))
+                'Authentication ({}) failed.'.format(self.auth_method)
+            )
         self.authenticated = False
         self.username = None
         if self.auth_event is not None:
