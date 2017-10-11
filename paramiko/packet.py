@@ -405,8 +405,9 @@ class Packetizer (object):
             )
             if sent_too_much and not self.__need_rekey:
                 # only ask once for rekeying
-                self._log(DEBUG, 'Rekeying (hit {} packets, {} bytes sent)'.format(
-                          self.__sent_packets, self.__sent_bytes,
+                msg = "Rekeying (hit {} packets, {} bytes sent)"
+                self._log(DEBUG, msg.format(
+                    self.__sent_packets, self.__sent_bytes,
                 ))
                 self.__received_bytes_overflow = 0
                 self.__received_packets_overflow = 0
@@ -458,7 +459,9 @@ class Packetizer (object):
         if self.__dump_packets:
             self._log(
                 DEBUG,
-                'Got payload ({} bytes, {} padding)'.format(packet_size, padding),
+                'Got payload ({} bytes, {} padding)'.format(
+                    packet_size, padding
+                )
             )
 
         if self.__compress_engine_in is not None:
@@ -486,7 +489,8 @@ class Packetizer (object):
         elif (self.__received_packets >= self.REKEY_PACKETS) or \
              (self.__received_bytes >= self.REKEY_BYTES):
             # only ask once for rekeying
-            self._log(DEBUG, 'Rekeying (hit {} packets, {} bytes received)'.format(
+            msg = "Rekeying (hit {} packets, {} bytes received)"
+            self._log(DEBUG, msg.format(
                 self.__received_packets, self.__received_bytes,
             ))
             self.__received_bytes_overflow = 0

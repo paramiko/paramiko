@@ -310,9 +310,11 @@ class PKey(object):
             # unencryped: done
             return data
         # encrypted keyfile: will need a password
-        if headers['proc-type'] != '4,ENCRYPTED':
+        proc_type = headers['proc-type']
+        if proc_type != '4,ENCRYPTED':
             raise SSHException(
-                'Unknown private key structure "{}"'.format(headers['proc-type']))
+                'Unknown private key structure "{}"'.format(proc_type)
+            )
         try:
             encryption_type, saltstr = headers['dek-info'].split(',')
         except:

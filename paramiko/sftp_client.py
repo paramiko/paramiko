@@ -105,7 +105,8 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
             raise SSHException('EOF during negotiation')
         self._log(
             INFO,
-            'Opened sftp connection (server version {})'.format(server_version))
+            'Opened sftp connection (server version {})'.format(server_version)
+        )
 
     @classmethod
     def from_transport(cls, t, window_size=None, max_packet_size=None):
@@ -343,7 +344,8 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         handle = msg.get_binary()
         self._log(
             DEBUG,
-            'open({!r}, {!r}) -> {}'.format(filename, mode, u(hexlify(handle))))
+            'open({!r}, {!r}) -> {}'.format(filename, mode, u(hexlify(handle)))
+        )
         return SFTPFile(self, handle, mode, bufsize)
 
     # Python continues to vacillate about "open" vs "file"...
@@ -622,8 +624,10 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
             self._cwd = None
             return
         if not stat.S_ISDIR(self.stat(path).st_mode):
+            code = errno.ENOTDIR
             raise SFTPError(
-                errno.ENOTDIR, "{}: {}".format(os.strerror(errno.ENOTDIR), path))
+                code, "{}: {}".format(os.strerror(code), path)
+            )
         self._cwd = b(self.normalize(path))
 
     def getcwd(self):

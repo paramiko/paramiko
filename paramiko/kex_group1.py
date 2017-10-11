@@ -73,7 +73,8 @@ class KexGroup1(object):
             return self._parse_kexdh_init(m)
         elif not self.transport.server_mode and (ptype == _MSG_KEXDH_REPLY):
             return self._parse_kexdh_reply(m)
-        raise SSHException('KexGroup1 asked to handle packet type {:d}'.format(ptype))
+        msg = "KexGroup1 asked to handle packet type {:d}"
+        raise SSHException(msg.format(ptype))
 
     # ...internals...
 

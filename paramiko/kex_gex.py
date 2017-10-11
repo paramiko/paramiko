@@ -91,8 +91,8 @@ class KexGex (object):
             return self._parse_kexdh_gex_reply(m)
         elif ptype == _MSG_KEXDH_GEX_REQUEST_OLD:
             return self._parse_kexdh_gex_request_old(m)
-        raise SSHException(
-            'KexGex {} asked to handle packet type {:d}'.format(self.name, ptype))
+        msg = "KexGex {} asked to handle packet type {:d}"
+        raise SSHException(msg.format(self.name, ptype))
 
     # ...internals...
 

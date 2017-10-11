@@ -338,9 +338,8 @@ class HostKeyEntry:
         fields = line.split(' ')
         if len(fields) < 3:
             # Bad number of fields
-            log.info("Not enough fields found in known_hosts in line {} ({!r})".format(
-                 lineno, line
-            ))
+            msg = "Not enough fields found in known_hosts in line {} ({!r})"
+            log.info(msg.format(lineno, line))
             return None
         fields = fields[:3]
 

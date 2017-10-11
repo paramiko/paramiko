@@ -144,7 +144,9 @@ class ECDSAKey(PKey):
             )
             curvename = msg.get_text()
             if curvename != self.ecdsa_curve.nist_name:
-                raise SSHException("Can't handle curve of type {}".format(curvename))
+                raise SSHException(
+                    "Can't handle curve of type {}".format(curvename)
+                )
 
             pointinfo = msg.get_binary()
             try:

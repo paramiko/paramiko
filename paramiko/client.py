@@ -599,7 +599,8 @@ class SSHClient (ClosingContextManager):
             try:
                 self._log(
                     DEBUG,
-                    'Trying SSH key {}'.format(hexlify(pkey.get_fingerprint())))
+                    'Trying SSH key {}'.format(hexlify(pkey.get_fingerprint()))
+                )
                 allowed_types = set(
                     self._transport.auth_publickey(username, pkey))
                 two_factor = (allowed_types & two_factor_types)
@@ -630,11 +631,8 @@ class SSHClient (ClosingContextManager):
 
             for key in self._agent.get_keys():
                 try:
-                    self._log(
-                        DEBUG,
-                        'Trying SSH agent key {}'.format(
-                            hexlify(key.get_fingerprint())
-                    ))
+                    id_ = hexlify(key.get_fingerprint())
+                    self._log(DEBUG, 'Trying SSH agent key {}'.format(id_))
                     # for 2-factor auth a successfully auth'd key password
                     # will return an allowed 2fac auth method
                     allowed_types = set(
@@ -753,7 +751,9 @@ class RejectPolicy (MissingHostKeyPolicy):
         client._log(DEBUG, 'Rejecting {} host key for {}: {}'.format(
             key.get_name(), hostname, hexlify(key.get_fingerprint()),
         ))
-        raise SSHException('Server {!r} not found in known_hosts'.format(hostname))
+        raise SSHException(
+            'Server {!r} not found in known_hosts'.format(hostname)
+        )
 
 
 class WarningPolicy (MissingHostKeyPolicy):

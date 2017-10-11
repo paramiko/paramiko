@@ -985,7 +985,8 @@ class Channel (ClosingContextManager):
             max_packet_size
         )
         self.active = 1
-        self._log(DEBUG, 'Max packet out: {} bytes'.format(self.out_max_packet_size))
+        self._log(DEBUG,
+            'Max packet out: {} bytes'.format(self.out_max_packet_size))
 
     def _request_success(self, m):
         self._log(DEBUG, 'Sesch channel {} request ok'.format(self.chanid))
@@ -1255,7 +1256,8 @@ class Channel (ClosingContextManager):
             if self.in_window_sofar <= self.in_window_threshold:
                 return 0
             if self.ultra_debug:
-                self._log(DEBUG, 'addwindow send {}'.format(self.in_window_sofar))
+                self._log(DEBUG,
+                    'addwindow send {}'.format(self.in_window_sofar))
             out = self.in_window_sofar
             self.in_window_sofar = 0
             return out
