@@ -571,7 +571,7 @@ class SSHClient (ClosingContextManager):
         saved_exception = None
         two_factor = False
         allowed_types = set()
-        two_factor_types = set(['keyboard-interactive', 'password'])
+        two_factor_types = {'keyboard-interactive', 'password'}
 
         # If GSS-API support and GSS-PI Key Exchange was performed, we attempt
         # authentication with gssapi-keyex.

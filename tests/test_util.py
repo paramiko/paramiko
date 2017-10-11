@@ -366,7 +366,7 @@ IdentityFile something_%l_using_fqdn
     def test_get_hostnames(self):
         f = StringIO(test_config_file)
         config = paramiko.util.parse_ssh_config(f)
-        self.assertEqual(config.get_hostnames(), set(['*', '*.example.com', 'spoo.example.com']))
+        self.assertEqual(config.get_hostnames(), {'*', '*.example.com', 'spoo.example.com'})
 
     def test_quoted_host_names(self):
         test_config_file = """\
