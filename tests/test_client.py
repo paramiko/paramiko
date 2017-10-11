@@ -580,6 +580,7 @@ class SSHClientTest (unittest.TestCase):
         self.assertEqual(target_env, getattr(schan, 'env', {}))
         schan.close()
 
+    @unittest.skip("Clients normally fail silently, thus so do we, for now")
     def test_env_update_failures(self):
         self._setup_for_env()
         with self.assertRaises(SSHException) as manager:
