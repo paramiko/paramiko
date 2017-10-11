@@ -40,6 +40,10 @@ from paramiko.common import PY2
 from paramiko.ssh_exception import SSHException, AuthenticationException
 
 
+requires_gss_auth = unittest.skipUnless(
+    paramiko.GSS_AUTH_AVAILABLE, "GSS auth not available"
+)
+
 FINGERPRINTS = {
     'ssh-dss': b'\x44\x78\xf0\xb9\xa2\x3c\xc5\x18\x20\x09\xff\x75\x5b\xc1\xd2\x6c',
     'ssh-rsa': b'\x60\x73\x38\x44\xcb\x51\x86\x65\x7f\xde\xda\xa2\x2b\x5a\x57\xd5',
@@ -450,24 +454,22 @@ class SSHClientTest (unittest.TestCase):
             auth_timeout=0.5,
         )
 
+    @requires_gss_auth
     def test_10_auth_trickledown_gsskex(self):
         """
         Failed gssapi-keyex auth doesn't prevent subsequent key auth from succeeding
         """
-        if not paramiko.GSS_AUTH_AVAILABLE:
-            return  # for python 2.6 lacks skipTest
         kwargs = dict(
             gss_kex=True,
             key_filename=[test_path('test_rsa.key')],
         )
         self._test_connection(**kwargs)
 
+    @requires_gss_auth
     def test_11_auth_trickledown_gssauth(self):
         """
         Failed gssapi-with-mic auth doesn't prevent subsequent key auth from succeeding
         """
-        if not paramiko.GSS_AUTH_AVAILABLE:
-            return  # for python 2.6 lacks skipTest
         kwargs = dict(
             gss_auth=True,
             key_filename=[test_path('test_rsa.key')],
@@ -489,14 +491,13 @@ class SSHClientTest (unittest.TestCase):
             password='pygmalion', **self.connect_kwargs
         )
 
+    @requires_gss_auth
     def test_13_reject_policy_gsskex(self):
         """
         verify that SSHClient's RejectPolicy works,
         even if gssapi-keyex was enabled but not used.
         """
         # Test for a bug present in paramiko versions released before 2017-08-01
-        if not paramiko.GSS_AUTH_AVAILABLE:
-            return  # for python 2.6 lacks skipTest
         threading.Thread(target=self._run).start()
 
         self.tc = paramiko.SSHClient()

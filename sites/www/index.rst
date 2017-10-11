@@ -1,11 +1,11 @@
 Welcome to Paramiko!
 ====================
 
-Paramiko is a Python (2.6+, 3.3+) implementation of the SSHv2 protocol [#]_,
+Paramiko is a Python (2.7, 3.4+) implementation of the SSHv2 protocol [#]_,
 providing both client and server functionality. While it leverages a Python C
-extension for low level cryptography
-(`Cryptography <https://cryptography.io>`_), Paramiko itself is a pure Python
-interface around SSH networking concepts.
+extension for low level cryptography (`Cryptography
+<https://cryptography.io>`_), Paramiko itself is a pure Python interface around
+SSH networking concepts.
 
 This website covers project information for Paramiko such as the changelog,
 contribution guidelines, development roadmap, news/blog, and so forth. Detailed

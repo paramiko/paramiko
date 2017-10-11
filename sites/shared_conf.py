@@ -26,7 +26,7 @@ html_sidebars = {
 
 # Everything intersphinx's to Python
 intersphinx_mapping = {
-    'python': ('http://docs.python.org/2.6', None),
+    'python': ('https://docs.python.org/2.7/', None),
 }
 
 # Regular settings

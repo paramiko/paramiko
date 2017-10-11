@@ -28,9 +28,5 @@ from paramiko.py3compat import (
 def skipUnlessBuiltin(name):
     """Skip decorated test if builtin name does not exist."""
     if getattr(builtins, name, None) is None:
-        skip = getattr(unittest, "skip", None)
-        if skip is None:
-            # Python 2.6 pseudo-skip
-            return lambda func: None
-        return skip("No builtin " + repr(name))
+        return unittest.skip("No builtin " + repr(name))
     return lambda func: func
