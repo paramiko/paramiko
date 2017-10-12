@@ -415,7 +415,8 @@ class Transport(threading.Thread, ClosingContextManager):
         """
         Returns a string representation of this object, for debugging.
         """
-        out = '<paramiko.Transport at {}'.format(hex(long(id(self)) & xffffffff))
+        id_ = hex(long(id(self)) & xffffffff)
+        out = '<paramiko.Transport at {}'.format(id_)
         if not self.active:
             out += ' (unconnected)'
         else:
@@ -425,7 +426,8 @@ class Transport(threading.Thread, ClosingContextManager):
                     self._cipher_info[self.local_cipher]['key-size'] * 8
                 )
             if self.is_authenticated():
-                out += ' (active; {:d} open channel(s))'.format(len(self._channels))
+                out += ' (active; {} open channel(s))'.format(
+                    len(self._channels))
             elif self.initial_kex_done:
                 out += ' (connected; awaiting auth)'
             else:
@@ -1186,7 +1188,8 @@ class Transport(threading.Thread, ClosingContextManager):
                     key.get_name(), repr(key.asbytes()),
                 ))
                 raise SSHException('Bad host key from server')
-            self._log(DEBUG, 'Host key verified ({})'.format(hostkey.get_name()))
+            self._log(DEBUG, 'Host key verified ({})'.format(
+                hostkey.get_name()))
 
         if (pkey is not None) or (password is not None) or gss_auth or gss_kex:
             if gss_auth:
@@ -1907,7 +1910,8 @@ class Transport(threading.Thread, ClosingContextManager):
                         if len(self._expected_packet) > 0:
                             continue
                     else:
-                        self._log(WARNING, 'Oops, unhandled type {:d}'.format(ptype))
+                        err = 'Oops, unhandled type {:d}'.format(ptype)
+                        self._log(WARNING, err)
                         msg = Message()
                         msg.add_byte(cMSG_UNIMPLEMENTED)
                         msg.add_int(m.seqno)
@@ -2447,7 +2451,8 @@ class Transport(threading.Thread, ClosingContextManager):
             ERROR,
             'Secsh channel {:d} open FAILED: {}: {}'.format(
                 chanid, reason_str, reason_text,
-        ))
+            )
+        )
         self.lock.acquire()
         try:
             self.saved_exception = ChannelException(reason, reason_text)
@@ -2483,7 +2488,8 @@ class Transport(threading.Thread, ClosingContextManager):
                 DEBUG,
                 'Incoming x11 connection from {}:{:d}'.format(
                     origin_addr, origin_port,
-            ))
+                )
+            )
             self.lock.acquire()
             try:
                 my_chanid = self._next_channel()
@@ -2498,7 +2504,8 @@ class Transport(threading.Thread, ClosingContextManager):
                 DEBUG,
                 'Incoming tcp forwarded connection from {}:{:d}'.format(
                     origin_addr, origin_port,
-            ))
+                )
+            )
             self.lock.acquire()
             try:
                 my_chanid = self._next_channel()
@@ -2638,7 +2645,7 @@ class SecurityOptions (object):
         """
         Returns a string representation of this object, for debugging.
         """
-        return '<paramiko.SecurityOptions for {}>'.format(repr(self._transport))
+        return '<paramiko.SecurityOptions for {!r}>'.format(self._transport)
 
     def _set(self, name, orig, x):
         if type(x) is list:

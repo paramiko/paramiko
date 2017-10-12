@@ -288,7 +288,8 @@ class SFTPFile (BufferedFile):
 
         :param int mode: new permissions
         """
-        self.sftp._log(DEBUG, 'chmod({}, {!r})'.format(hexlify(self.handle), mode))
+        self.sftp._log(DEBUG, 'chmod({}, {!r})'.format(
+            hexlify(self.handle), mode))
         attr = SFTPAttributes()
         attr.st_mode = mode
         self.sftp._request(CMD_FSETSTAT, self.handle, attr)
@@ -325,7 +326,8 @@ class SFTPFile (BufferedFile):
         """
         if times is None:
             times = (time.time(), time.time())
-        self.sftp._log(DEBUG, 'utime({}, {!r})'.format(hexlify(self.handle), times))
+        self.sftp._log(DEBUG, 'utime({}, {!r})'.format(
+            hexlify(self.handle), times))
         attr = SFTPAttributes()
         attr.st_atime, attr.st_mtime = times
         self.sftp._request(CMD_FSETSTAT, self.handle, attr)
@@ -473,7 +475,8 @@ class SFTPFile (BufferedFile):
 
         .. versionadded:: 1.5.4
         """
-        self.sftp._log(DEBUG, 'readv({}, {!r})'.format(hexlify(self.handle), chunks))
+        self.sftp._log(DEBUG, 'readv({}, {!r})'.format(
+            hexlify(self.handle), chunks))
 
         read_chunks = []
         for offset, size in chunks:

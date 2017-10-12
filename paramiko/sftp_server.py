@@ -100,7 +100,7 @@ class SFTPServer (BaseSFTP, SubsystemHandler):
 
     def start_subsystem(self, name, transport, channel):
         self.sock = channel
-        self._log(DEBUG, 'Started sftp server on channel {}'.format(repr(channel)))
+        self._log(DEBUG, 'Started sftp server on channel {!r}'.format(channel))
         self._send_server_version()
         self.server.session_started()
         while True:
