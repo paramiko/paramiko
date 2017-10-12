@@ -128,7 +128,7 @@ class ProxyCommandFailure (SSHException):
     """
     def __init__(self, command, error):
         SSHException.__init__(self,
-            '"ProxyCommand (%s)" returned non-zero exit status: %s' % (
+            '"ProxyCommand ({})" returned non-zero exit status: {}'.format(
                 command, error
             )
         )

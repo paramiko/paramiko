@@ -100,7 +100,7 @@ class SFTPServer (BaseSFTP, SubsystemHandler):
 
     def start_subsystem(self, name, transport, channel):
         self.sock = channel
-        self._log(DEBUG, 'Started sftp server on channel %s' % repr(channel))
+        self._log(DEBUG, 'Started sftp server on channel {}'.format(repr(channel)))
         self._send_server_version()
         self.server.session_started()
         while True:
@@ -209,7 +209,7 @@ class SFTPServer (BaseSFTP, SubsystemHandler):
             # must be error code
             self._send_status(request_number, handle)
             return
-        handle._set_name(b('hx%d' % self.next_handle))
+        handle._set_name(b('hx{:d}'.format(self.next_handle)))
         self.next_handle += 1
         if folder:
             self.folder_table[handle._get_name()] = handle
@@ -334,7 +334,7 @@ class SFTPServer (BaseSFTP, SubsystemHandler):
         return flags
 
     def _process(self, t, request_number, msg):
-        self._log(DEBUG, 'Request: %s' % CMD_NAMES[t])
+        self._log(DEBUG, 'Request: {}'.format(CMD_NAMES[t]))
         if t == CMD_OPEN:
             path = msg.get_text()
             flags = self._convert_pflags(msg.get_int())

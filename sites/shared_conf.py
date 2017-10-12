@@ -32,7 +32,7 @@ intersphinx_mapping = {
 # Regular settings
 project = 'Paramiko'
 year = datetime.now().year
-copyright = '%d Jeff Forcier' % year
+copyright = '{} Jeff Forcier'.format(year)
 master_doc = 'index'
 templates_path = ['_templates']
 exclude_trees = ['_build']

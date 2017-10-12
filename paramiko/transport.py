@@ -100,7 +100,7 @@ class Transport(threading.Thread, ClosingContextManager):
     _DECRYPT = object()
 
     _PROTO_ID = '2.0'
-    _CLIENT_ID = 'paramiko_%s' % paramiko.__version__
+    _CLIENT_ID = 'paramiko_{}'.format(paramiko.__version__)
 
     # These tuples of algorithm identifiers are in preference order; do not
     # reorder without reason!
@@ -329,7 +329,7 @@ class Transport(threading.Thread, ClosingContextManager):
                         break
             else:
                 raise SSHException(
-                    'Unable to connect to %s: %s' % (hostname, reason))
+                    'Unable to connect to {}: {}'.format(hostname, reason))
         # okay, normal socket-ish flow here...
         threading.Thread.__init__(self)
         self.setDaemon(True)
@@ -415,17 +415,17 @@ class Transport(threading.Thread, ClosingContextManager):
         """
         Returns a string representation of this object, for debugging.
         """
-        out = '<paramiko.Transport at %s' % hex(long(id(self)) & xffffffff)
+        out = '<paramiko.Transport at {}'.format(hex(long(id(self)) & xffffffff))
         if not self.active:
             out += ' (unconnected)'
         else:
             if self.local_cipher != '':
-                out += ' (cipher %s, %d bits)' % (
+                out += ' (cipher {}, {:d} bits)'.format(
                     self.local_cipher,
                     self._cipher_info[self.local_cipher]['key-size'] * 8
                 )
             if self.is_authenticated():
-                out += ' (active; %d open channel(s))' % len(self._channels)
+                out += ' (active; {:d} open channel(s))'.format(len(self._channels))
             elif self.initial_kex_done:
                 out += ' (connected; awaiting auth)'
             else:
@@ -1061,7 +1061,7 @@ class Transport(threading.Thread, ClosingContextManager):
         m.add_boolean(wait)
         if data is not None:
             m.add(*data)
-        self._log(DEBUG, 'Sending global request "%s"' % kind)
+        self._log(DEBUG, 'Sending global request "{}"'.format(kind))
         self._send_user_message(m)
         if not wait:
             return None
@@ -1179,14 +1179,14 @@ class Transport(threading.Thread, ClosingContextManager):
                 key.asbytes() != hostkey.asbytes()
             ):
                 self._log(DEBUG, 'Bad host key from server')
-                self._log(DEBUG, 'Expected: %s: %s' % (
-                    hostkey.get_name(), repr(hostkey.asbytes()))
-                )
-                self._log(DEBUG, 'Got     : %s: %s' % (
-                    key.get_name(), repr(key.asbytes()))
-                )
+                self._log(DEBUG, 'Expected: {}: {}'.format(
+                    hostkey.get_name(), repr(hostkey.asbytes()),
+                ))
+                self._log(DEBUG, 'Got     : {}: {}'.format(
+                    key.get_name(), repr(key.asbytes()),
+                ))
                 raise SSHException('Bad host key from server')
-            self._log(DEBUG, 'Host key verified (%s)' % hostkey.get_name())
+            self._log(DEBUG, 'Host key verified ({})'.format(hostkey.get_name()))
 
         if (pkey is not None) or (password is not None) or gss_auth or gss_kex:
             if gss_auth:
@@ -1746,7 +1746,7 @@ class Transport(threading.Thread, ClosingContextManager):
         if key is None:
             raise SSHException('Unknown host key type')
         if not key.verify_ssh_sig(self.H, Message(sig)):
-            raise SSHException('Signature verification (%s) failed.' % self.host_key_type) # noqa
+            raise SSHException('Signature verification ({}) failed.'.format(self.host_key_type)) # noqa
         self.host_key = key
 
     def _compute_key(self, id, nbytes):
@@ -1759,8 +1759,8 @@ class Transport(threading.Thread, ClosingContextManager):
         # Fallback to SHA1 for kex engines that fail to specify a hex
         # algorithm, or for e.g. transport tests that don't run kexinit.
         hash_algo = getattr(self.kex_engine, 'hash_algo', None)
-        hash_select_msg = "kex engine %s specified hash_algo %r" % (
-            self.kex_engine.__class__.__name__, hash_algo
+        hash_select_msg = "kex engine {} specified hash_algo {!r}".format(
+            self.kex_engine.__class__.__name__, hash_algo,
         )
         if hash_algo is None:
             hash_algo = sha1
@@ -1844,13 +1844,13 @@ class Transport(threading.Thread, ClosingContextManager):
         _active_threads.append(self)
         tid = hex(long(id(self)) & xffffffff)
         if self.server_mode:
-            self._log(DEBUG, 'starting thread (server mode): %s' % tid)
+            self._log(DEBUG, 'starting thread (server mode): {}'.format(tid))
         else:
-            self._log(DEBUG, 'starting thread (client mode): %s' % tid)
+            self._log(DEBUG, 'starting thread (client mode): {}'.format(tid))
         try:
             try:
                 self.packetizer.write_all(b(self.local_version + '\r\n'))
-                self._log(DEBUG, 'Local version/idstring: %s' % self.local_version) # noqa
+                self._log(DEBUG, 'Local version/idstring: {}'.format(self.local_version)) # noqa
                 self._check_banner()
                 # The above is actually very much part of the handshake, but
                 # sometimes the banner can be read but the machine is not
@@ -1880,7 +1880,7 @@ class Transport(threading.Thread, ClosingContextManager):
                         continue
                     if len(self._expected_packet) > 0:
                         if ptype not in self._expected_packet:
-                            raise SSHException('Expecting packet from %r, got %d' % (self._expected_packet, ptype)) # noqa
+                            raise SSHException('Expecting packet from {!r}, got {:d}'.format(self._expected_packet, ptype)) # noqa
                         self._expected_packet = tuple()
                         if (ptype >= 30) and (ptype <= 41):
                             self.kex_engine.parse_next(ptype, m)
@@ -1894,9 +1894,9 @@ class Transport(threading.Thread, ClosingContextManager):
                         if chan is not None:
                             self._channel_handler_table[ptype](chan, m)
                         elif chanid in self.channels_seen:
-                            self._log(DEBUG, 'Ignoring message for dead channel %d' % chanid) # noqa
+                            self._log(DEBUG, 'Ignoring message for dead channel {:d}'.format(chanid)) # noqa
                         else:
-                            self._log(ERROR, 'Channel request for unknown channel %d' % chanid) # noqa
+                            self._log(ERROR, 'Channel request for unknown channel {:d}'.format(chanid)) # noqa
                             break
                     elif (
                         self.auth_handler is not None and
@@ -1907,7 +1907,7 @@ class Transport(threading.Thread, ClosingContextManager):
                         if len(self._expected_packet) > 0:
                             continue
                     else:
-                        self._log(WARNING, 'Oops, unhandled type %d' % ptype)
+                        self._log(WARNING, 'Oops, unhandled type {:d}'.format(ptype))
                         msg = Message()
                         msg.add_byte(cMSG_UNIMPLEMENTED)
                         msg.add_int(m.seqno)
@@ -1923,7 +1923,7 @@ class Transport(threading.Thread, ClosingContextManager):
             except socket.error as e:
                 if type(e.args) is tuple:
                     if e.args:
-                        emsg = '%s (%d)' % (e.args[1], e.args[0])
+                        emsg = '{} ({:d})'.format(e.args[1], e.args[0])
                     else:  # empty tuple, e.g. socket.timeout
                         emsg = str(e) or repr(e)
                 else:
@@ -2011,7 +2011,7 @@ class Transport(threading.Thread, ClosingContextManager):
             raise SSHException('Indecipherable protocol version "' + buf + '"')
         # save this server version string for later
         self.remote_version = buf
-        self._log(DEBUG, 'Remote version/idstring: %s' % buf)
+        self._log(DEBUG, 'Remote version/idstring: {}'.format(buf))
         # pull off any attached comment
         # NOTE: comment used to be stored in a variable and then...never used.
         # since 2003. ca 877cd974b8182d26fa76d566072917ea67b64e67
@@ -2130,7 +2130,7 @@ class Transport(threading.Thread, ClosingContextManager):
         if len(agreed_kex) == 0:
             raise SSHException('Incompatible ssh peer (no acceptable kex algorithm)') # noqa
         self.kex_engine = self._kex_info[agreed_kex[0]](self)
-        self._log(DEBUG, "Kex agreed: %s" % agreed_kex[0])
+        self._log(DEBUG, "Kex agreed: {}".format(agreed_kex[0]))
 
         if self.server_mode:
             available_server_keys = list(filter(
@@ -2366,16 +2366,16 @@ class Transport(threading.Thread, ClosingContextManager):
     def _parse_disconnect(self, m):
         code = m.get_int()
         desc = m.get_text()
-        self._log(INFO, 'Disconnect (code %d): %s' % (code, desc))
+        self._log(INFO, 'Disconnect (code {:d}): {}'.format(code, desc))
 
     def _parse_global_request(self, m):
         kind = m.get_text()
-        self._log(DEBUG, 'Received global request "%s"' % kind)
+        self._log(DEBUG, 'Received global request "{}"'.format(kind))
         want_reply = m.get_boolean()
         if not self.server_mode:
             self._log(
                 DEBUG,
-                'Rejecting "%s" global request from server.' % kind
+                'Rejecting "{}" global request from server.'.format(kind)
             )
             ok = False
         elif kind == 'tcpip-forward':
@@ -2429,7 +2429,7 @@ class Transport(threading.Thread, ClosingContextManager):
         try:
             chan._set_remote_channel(
                 server_chanid, server_window_size, server_max_packet_size)
-            self._log(DEBUG, 'Secsh channel %d opened.' % chanid)
+            self._log(DEBUG, 'Secsh channel {:d} opened.'.format(chanid))
             if chanid in self.channel_events:
                 self.channel_events[chanid].set()
                 del self.channel_events[chanid]
@@ -2445,9 +2445,9 @@ class Transport(threading.Thread, ClosingContextManager):
         reason_text = CONNECTION_FAILED_CODE.get(reason, '(unknown code)')
         self._log(
             ERROR,
-            'Secsh channel %d open FAILED: %s: %s' % (
-                chanid, reason_str, reason_text)
-        )
+            'Secsh channel {:d} open FAILED: {}: {}'.format(
+                chanid, reason_str, reason_text,
+        ))
         self.lock.acquire()
         try:
             self.saved_exception = ChannelException(reason, reason_text)
@@ -2481,9 +2481,9 @@ class Transport(threading.Thread, ClosingContextManager):
             origin_port = m.get_int()
             self._log(
                 DEBUG,
-                'Incoming x11 connection from %s:%d' % (
-                    origin_addr, origin_port)
-            )
+                'Incoming x11 connection from {}:{:d}'.format(
+                    origin_addr, origin_port,
+            ))
             self.lock.acquire()
             try:
                 my_chanid = self._next_channel()
@@ -2496,9 +2496,9 @@ class Transport(threading.Thread, ClosingContextManager):
             origin_port = m.get_int()
             self._log(
                 DEBUG,
-                'Incoming tcp forwarded connection from %s:%d' % (
-                    origin_addr, origin_port)
-            )
+                'Incoming tcp forwarded connection from {}:{:d}'.format(
+                    origin_addr, origin_port,
+            ))
             self.lock.acquire()
             try:
                 my_chanid = self._next_channel()
@@ -2507,7 +2507,7 @@ class Transport(threading.Thread, ClosingContextManager):
         elif not self.server_mode:
             self._log(
                 DEBUG,
-                'Rejecting "%s" channel request from server.' % kind)
+                'Rejecting "{}" channel request from server.'.format(kind))
             reject = True
             reason = OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED
         else:
@@ -2533,7 +2533,7 @@ class Transport(threading.Thread, ClosingContextManager):
             if reason != OPEN_SUCCEEDED:
                 self._log(
                     DEBUG,
-                    'Rejecting "%s" channel request from client.' % kind)
+                    'Rejecting "{}" channel request from client.'.format(kind))
                 reject = True
         if reject:
             msg = Message()
@@ -2564,7 +2564,7 @@ class Transport(threading.Thread, ClosingContextManager):
         m.add_int(self.default_window_size)
         m.add_int(self.default_max_packet_size)
         self._send_message(m)
-        self._log(DEBUG, 'Secsh channel %d (%s) opened.', my_chanid, kind)
+        self._log(DEBUG, 'Secsh channel {:d} ({}) opened.', my_chanid, kind)
         if kind == 'auth-agent@openssh.com':
             self._forward_agent_handler(chan)
         elif kind == 'x11':
@@ -2638,7 +2638,7 @@ class SecurityOptions (object):
         """
         Returns a string representation of this object, for debugging.
         """
-        return '<paramiko.SecurityOptions for %s>' % repr(self._transport)
+        return '<paramiko.SecurityOptions for {}>'.format(repr(self._transport))
 
     def _set(self, name, orig, x):
         if type(x) is list:
