@@ -2571,7 +2571,9 @@ class Transport(threading.Thread, ClosingContextManager):
         m.add_int(self.default_window_size)
         m.add_int(self.default_max_packet_size)
         self._send_message(m)
-        self._log(DEBUG, 'Secsh channel {:d} ({}) opened.', my_chanid, kind)
+        self._log(DEBUG,
+            'Secsh channel {:d} ({}) opened.'.format(my_chanid, kind)
+        )
         if kind == 'auth-agent@openssh.com':
             self._forward_agent_handler(chan)
         elif kind == 'x11':

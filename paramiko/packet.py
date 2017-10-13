@@ -489,8 +489,8 @@ class Packetizer (object):
         elif (self.__received_packets >= self.REKEY_PACKETS) or \
              (self.__received_bytes >= self.REKEY_BYTES):
             # only ask once for rekeying
-            msg = "Rekeying (hit {} packets, {} bytes received)"
-            self._log(DEBUG, msg.format(
+            err = "Rekeying (hit {} packets, {} bytes received)"
+            self._log(DEBUG, err.format(
                 self.__received_packets, self.__received_bytes,
             ))
             self.__received_bytes_overflow = 0
