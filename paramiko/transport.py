@@ -1298,7 +1298,7 @@ class Transport(threading.Thread, ClosingContextManager):
 
         :param str username: the username to authenticate as
         :return:
-            `list` of auth types permissible for the next stage of
+            list of auth types permissible for the next stage of
             authentication (normally empty)
 
         :raises:
@@ -1353,7 +1353,7 @@ class Transport(threading.Thread, ClosingContextManager):
             ``True`` if an attempt at an automated "interactive" password auth
             should be made if the server doesn't support normal password auth
         :return:
-            `list` of auth types permissible for the next stage of
+            list of auth types permissible for the next stage of
             authentication (normally empty)
 
         :raises:
@@ -1424,7 +1424,7 @@ class Transport(threading.Thread, ClosingContextManager):
             an event to trigger when the authentication attempt is complete
             (whether it was successful or not)
         :return:
-            `list` of auth types permissible for the next stage of
+            list of auth types permissible for the next stage of
             authentication (normally empty)
 
         :raises:
@@ -1482,7 +1482,7 @@ class Transport(threading.Thread, ClosingContextManager):
         :param callable handler: a handler for responding to server questions
         :param str submethods: a string list of desired submethods (optional)
         :return:
-            `list` of auth types permissible for the next stage of
+            list of auth types permissible for the next stage of
             authentication (normally empty).
 
         :raises: `.BadAuthenticationType` -- if public-key authentication isn't
@@ -1532,7 +1532,6 @@ class Transport(threading.Thread, ClosingContextManager):
         :param bool gss_deleg_creds: Delegate credentials or not
         :return: list of auth types permissible for the next stage of
                  authentication (normally empty)
-        :rtype: list
         :raises: `.BadAuthenticationType` -- if gssapi-with-mic isn't
             allowed by the server (and no event was passed in)
         :raises:
@@ -1556,7 +1555,7 @@ class Transport(threading.Thread, ClosingContextManager):
 
         :param str username: The username to authenticate as.
         :returns:
-            a `list` of auth types permissible for the next stage of
+            a list of auth types permissible for the next stage of
             authentication (normally empty)
         :raises: `.BadAuthenticationType` --
             if GSS-API Key Exchange was not performed (and no event was passed

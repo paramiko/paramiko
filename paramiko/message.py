@@ -187,7 +187,7 @@ class Message (object):
 
     def get_list(self):
         """
-        Fetch a `list` of `strings <str>` from the stream.
+        Fetch a list of `strings <str>` from the stream.
 
         These are trivially encoded as comma-separated values in a string.
         """
@@ -281,7 +281,7 @@ class Message (object):
         a single string of values separated by commas.  (Yes, really, that's
         how SSH2 does it.)
 
-        :param list l: list of strings to add
+        :param l: list of strings to add
         """
         self.add_string(','.join(l))
         return self

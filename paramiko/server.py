@@ -223,7 +223,7 @@ class ServerInterface (object):
 
         The default implementation always returns ``AUTH_FAILED``.
 
-        :param list responses: list of `str` responses from the client
+        :param responses: list of `str` responses from the client
         :return:
             ``AUTH_FAILED`` if the authentication fails; ``AUTH_SUCCESSFUL`` if
             it succeeds; ``AUTH_PARTIALLY_SUCCESSFUL`` if the interactive auth
