@@ -86,9 +86,7 @@ FOLDER = os.environ.get('TEST_FOLDER', 'temp-testing000')
 sftp = None
 tc = None
 g_big_file_test = True
-# we need to use eval(compile()) here because Py3.2 doesn't support the 'u' marker for unicode
-# this test is the only line in the entire program that has to be treated specially to support Py3.2
-unicode_folder = eval(compile(r"u'\u00fcnic\u00f8de'" if PY2 else r"'\u00fcnic\u00f8de'", 'test_sftp.py', 'eval'))
+unicode_folder = u'\u00fcnic\u00f8de' if PY2 else '\u00fcnic\u00f8de'
 utf8_folder = b'/\xc3\xbcnic\xc3\xb8\x64\x65'
 
 
