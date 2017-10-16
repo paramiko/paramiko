@@ -44,7 +44,7 @@ win32con_WM_COPYDATA = 74
 
 
 def _get_pageant_window_object():
-    return ctypes.windll.user32.FindWindowA(b('Pageant'), b('Pageant'))
+    return ctypes.windll.user32.FindWindowA(b'Pageant', b'Pageant')
 
 
 def can_talk_to_agent():

@@ -469,11 +469,11 @@ Host param3 parara
             self.assertRaises(Exception, conf._get_hosts, host)
 
     def test_safe_string(self):
-        vanilla = b("vanilla")
-        has_bytes = b("has \7\3 bytes")
+        vanilla = b"vanilla"
+        has_bytes = b"has \7\3 bytes"
         safe_vanilla = safe_string(vanilla)
         safe_has_bytes = safe_string(has_bytes)
-        expected_bytes = b("has %07%03 bytes")
+        expected_bytes = b"has %07%03 bytes"
         err = "{!r} != {!r}"
         msg = err.format(safe_vanilla, vanilla)
         assert safe_vanilla == vanilla, msg

@@ -111,13 +111,13 @@ def format_binary_line(data):
 
 
 def safe_string(s):
-    out = b('')
+    out = b''
     for c in s:
         i = byte_ord(c)
         if 32 <= i <= 127:
             out += byte_chr(i)
         else:
-            out += b('%{:02X}'.format(i))
+            out += b'%{:02X}'.format(i)
     return out
 
 
