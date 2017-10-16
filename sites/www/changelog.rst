@@ -2,6 +2,9 @@
 Changelog
 =========
 
+* :support:`1070` Drop Python 2.6 and Python 3.3 support; now only 2.7 and 3.4+
+  are supported. If you're unable to upgrade from 2.6 or 3.3, please stick to
+  the Paramiko 2.3.x (or below) release lines.
 * :release:`2.3.1 <2017-09-22>`
 * :bug:`1071` Certificate support broke the no-certificate case for Ed25519
   keys (symptom is an ``AttributeError`` about ``public_blob``.) This went
