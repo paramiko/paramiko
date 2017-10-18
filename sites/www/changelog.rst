@@ -2,6 +2,7 @@
 Changelog
 =========
 
+* :support:`- backported` Include LICENSE file in wheel archives.
 * :release:`2.0.7 <2017-09-18>`
 * :release:`1.18.4 <2017-09-18>`
 * :bug:`1061` Clean up GSSAPI authentication procedures so they do not prevent
