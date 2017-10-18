@@ -2,6 +2,7 @@
 Changelog
 =========
 
+* :support:`- backported` Include LICENSE file in wheel archives.
 * :bug:`1055 (1.17+)` (also :issue:`1056`, :issue:`1057`, :issue:`1058`,
   :issue:`1059`) Fix up host-key checking in our GSSAPI support, which was
   previously using an incorrect API call. Thanks to Anselm Kruis for the
