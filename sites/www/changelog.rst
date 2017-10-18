@@ -2,6 +2,7 @@
 Changelog
 =========
 
+* :support:`- backported` Include LICENSE file in wheel archives.
 * :support:`1070` Drop Python 2.6 and Python 3.3 support; now only 2.7 and 3.4+
   are supported. If you're unable to upgrade from 2.6 or 3.3, please stick to
   the Paramiko 2.3.x (or below) release lines.
