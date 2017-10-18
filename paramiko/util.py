@@ -117,7 +117,7 @@ def safe_string(s):
         if 32 <= i <= 127:
             out += byte_chr(i)
         else:
-            out += b'%{:02X}'.format(i)
+            out += b('%{:02X}'.format(i))
     return out
 
 

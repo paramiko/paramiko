@@ -32,7 +32,7 @@ from paramiko.sftp import (
 from paramiko.sftp_si import SFTPServerInterface
 from paramiko.sftp_attr import SFTPAttributes
 from paramiko.common import DEBUG
-from paramiko.py3compat import long, string_types, bytes_types
+from paramiko.py3compat import long, string_types, bytes_types, b
 from paramiko.server import SubsystemHandler
 
 
@@ -209,7 +209,7 @@ class SFTPServer (BaseSFTP, SubsystemHandler):
             # must be error code
             self._send_status(request_number, handle)
             return
-        handle._set_name(b'hx{:d}'.format(self.next_handle))
+        handle._set_name(b('hx{:d}'.format(self.next_handle)))
         self.next_handle += 1
         if folder:
             self.folder_table[handle._get_name()] = handle
