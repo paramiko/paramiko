@@ -2,6 +2,7 @@
 Changelog
 =========
 
+* :support:`- backported` Include LICENSE file in wheel archives.
 * :release:`2.2.2 <2017-09-18>`
 * :release:`2.1.4 <2017-09-18>`
 * :release:`2.0.7 <2017-09-18>`
