@@ -30,8 +30,10 @@ from paramiko import (
 )
 from paramiko import AUTH_FAILED, AUTH_PARTIALLY_SUCCESSFUL, AUTH_SUCCESSFUL
 from paramiko.py3compat import u
-from tests.loop import LoopSocket
-from tests.util import _support
+
+from .loop import LoopSocket
+from .util import _support
+
 
 _pwd = u('\u2022')
 

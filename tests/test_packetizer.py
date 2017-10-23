@@ -27,10 +27,11 @@ from hashlib import sha1
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.ciphers import algorithms, Cipher, modes
 
-from tests.loop import LoopSocket
-
 from paramiko import Message, Packetizer, util
 from paramiko.common import byte_chr, zero_byte
+
+from .loop import LoopSocket
+
 
 x55 = byte_chr(0x55)
 x1f = byte_chr(0x1f)

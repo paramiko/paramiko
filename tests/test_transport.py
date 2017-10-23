@@ -43,9 +43,9 @@ from paramiko.common import (
 )
 from paramiko.py3compat import bytes
 from paramiko.message import Message
-from tests import skipUnlessBuiltin
-from tests.loop import LoopSocket
-from tests.util import _support
+
+from .util import needs_builtin, _support
+from .loop import LoopSocket
 
 
 LONG_BANNER = """\
@@ -892,7 +892,7 @@ class TransportTest(unittest.TestCase):
             expected = text.encode("utf-8")
             self.assertEqual(sfile.read(len(expected)), expected)
 
-    @skipUnlessBuiltin('buffer')
+    @needs_builtin('buffer')
     def test_channel_send_buffer(self):
         """
         verify sending buffer instances to a channel
@@ -915,7 +915,7 @@ class TransportTest(unittest.TestCase):
             chan.sendall(buffer(data))
             self.assertEqual(sfile.read(len(data)), data)
 
-    @skipUnlessBuiltin('memoryview')
+    @needs_builtin('memoryview')
     def test_channel_send_memoryview(self):
         """
         verify sending memoryview instances to a channel

@@ -24,6 +24,9 @@ from binascii import hexlify
 import os
 import unittest
 
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives.asymmetric import ec
+
 import paramiko.util
 from paramiko.kex_group1 import KexGroup1
 from paramiko.kex_gex import KexGex, KexGexSHA256

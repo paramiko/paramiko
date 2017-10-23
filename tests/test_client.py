@@ -23,20 +23,21 @@ Some unit tests for SSHClient.
 from __future__ import with_statement
 
 import gc
+import os
 import platform
 import socket
-from tempfile import mkstemp
 import threading
-import unittest
-import weakref
-import warnings
-import os
 import time
-from tests.util import _support
+import unittest
+import warnings
+import weakref
+from tempfile import mkstemp
 
 import paramiko
 from paramiko.py3compat import PY2, b
 from paramiko.ssh_exception import SSHException
+
+from .util import _support
 
 
 FINGERPRINTS = {

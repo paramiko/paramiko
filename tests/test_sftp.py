@@ -33,14 +33,16 @@ from binascii import hexlify
 from tempfile import mkstemp
 
 import paramiko
+import paramiko.util
 from paramiko.py3compat import PY2, b, u, StringIO
 from paramiko.common import o777, o600, o666, o644
-from tests import skipUnlessBuiltin
-from tests.stub_sftp import StubServer, StubSFTPServer
-from tests.loop import LoopSocket
-from tests.util import _support
-import paramiko.util
 from paramiko.sftp_attr import SFTPAttributes
+
+from .util import needs_builtin
+from .stub_sftp import StubServer, StubSFTPServer
+from .loop import LoopSocket
+from .util import _support
+
 
 ARTICLE = '''
 Insulin sensitivity and liver insulin receptor structure in ducks from two
@@ -818,7 +820,7 @@ class SFTPTest (unittest.TestCase):
         sftp_attributes = SFTPAttributes()
         self.assertEqual(str(sftp_attributes), "?---------   1 0        0               0 (unknown date) ?")
 
-    @skipUnlessBuiltin('buffer')
+    @needs_builtin('buffer')
     def test_write_buffer(self):
         """Test write() using a buffer instance."""
         data = 3 * b'A potentially large block of data to chunk up.\n'
@@ -832,7 +834,7 @@ class SFTPTest (unittest.TestCase):
         finally:
             sftp.remove('%s/write_buffer' % FOLDER)
 
-    @skipUnlessBuiltin('memoryview')
+    @needs_builtin('memoryview')
     def test_write_memoryview(self):
         """Test write() using a memoryview instance."""
         data = 3 * b'A potentially large block of data to chunk up.\n'

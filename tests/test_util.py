@@ -30,6 +30,7 @@ import paramiko.util
 from paramiko.util import lookup_ssh_host_config as host_config, safe_string
 from paramiko.py3compat import StringIO, byte_ord, b
 
+
 # Note some lines in this configuration have trailing spaces on purpose
 test_config_file = """\
 Host *
