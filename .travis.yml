@@ -22,6 +22,7 @@ install:
   # Self-install for setup.py-driven deps
   - pip install -e .
   # Dev (doc/test running) requirements
+  # TODO: use pipenv + whatever contexty-type stuff it has
   - pip install codecov # For codecov specifically
   - pip install -r dev-requirements.txt
 script:
