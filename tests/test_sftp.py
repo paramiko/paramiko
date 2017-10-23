@@ -92,65 +92,36 @@ unicode_folder = u'\u00fcnic\u00f8de' if PY2 else '\u00fcnic\u00f8de'
 utf8_folder = b'/\xc3\xbcnic\xc3\xb8\x64\x65'
 
 
-def get_sftp():
-    global sftp
-    return sftp
+# TODO: turn into a pytest fixture; consider making it module or session-global
+# to mimic old behavior (though that still feels unclean to me...)
+def make_loopback_sftp():
+    """
+    Set up an in-memory SFTP server.
+
+    :returns:
+        A 2-tuple of the resulting SFTPClient (for tests that just care about a
+        'default' client) and Transport (for testing instantiation _of_
+        SFTPClient itself, which can take an existing transport object.)
+    """
+    socks = LoopSocket()
+    sockc = LoopSocket()
+    sockc.link(socks)
+    tc = paramiko.Transport(sockc)
+    ts = paramiko.Transport(socks)
+
+    host_key = paramiko.RSAKey.from_private_key_file(_support('test_rsa.key'))
+    ts.add_server_key(host_key)
+    event = threading.Event()
+    server = StubServer()
+    ts.set_subsystem_handler('sftp', paramiko.SFTPServer, StubSFTPServer)
+    ts.start_server(event, server)
+    tc.connect(username='slowdive', password='pygmalion')
+    event.wait(1.0)
+
+    return paramiko.SFTP.from_transport(tc), tc
 
 
 class SFTPTest (unittest.TestCase):
-    @staticmethod
-    def init(hostname, username, keyfile, passwd):
-        global sftp, tc
-
-        t = paramiko.Transport(hostname)
-        tc = t
-        try:
-            key = paramiko.RSAKey.from_private_key_file(keyfile, passwd)
-        except paramiko.PasswordRequiredException:
-            sys.stderr.write('\n\nparamiko.RSAKey.from_private_key_file REQUIRES PASSWORD.\n')
-            sys.stderr.write('You have two options:\n')
-            sys.stderr.write('* Use the "-K" option to point to a different (non-password-protected)\n')
-            sys.stderr.write('  private key file.\n')
-            sys.stderr.write('* Use the "-P" option to provide the password needed to unlock this private\n')
-            sys.stderr.write('  key.\n')
-            sys.stderr.write('\n')
-            sys.exit(1)
-        try:
-            t.connect(username=username, pkey=key)
-        except paramiko.SSHException:
-            t.close()
-            sys.stderr.write('\n\nparamiko.Transport.connect FAILED.\n')
-            sys.stderr.write('There are several possible reasons why it might fail so quickly:\n\n')
-            sys.stderr.write('* The host to connect to (%s) is not a valid SSH server.\n' % hostname)
-            sys.stderr.write('  (Use the "-H" option to change the host.)\n')
-            sys.stderr.write('* The username to auth as (%s) is invalid.\n' % username)
-            sys.stderr.write('  (Use the "-U" option to change the username.)\n')
-            sys.stderr.write('* The private key given (%s) is not accepted by the server.\n' % keyfile)
-            sys.stderr.write('  (Use the "-K" option to provide a different key file.)\n')
-            sys.stderr.write('\n')
-            sys.exit(1)
-        sftp = paramiko.SFTP.from_transport(t)
-
-    @staticmethod
-    def init_loopback():
-        global sftp, tc
-
-        socks = LoopSocket()
-        sockc = LoopSocket()
-        sockc.link(socks)
-        tc = paramiko.Transport(sockc)
-        ts = paramiko.Transport(socks)
-
-        host_key = paramiko.RSAKey.from_private_key_file(_support('test_rsa.key'))
-        ts.add_server_key(host_key)
-        event = threading.Event()
-        server = StubServer()
-        ts.set_subsystem_handler('sftp', paramiko.SFTPServer, StubSFTPServer)
-        ts.start_server(event, server)
-        tc.connect(username='slowdive', password='pygmalion')
-        event.wait(1.0)
-
-        sftp = paramiko.SFTP.from_transport(tc)
 
     @staticmethod
     def set_big_file_test(onoff):
@@ -158,6 +129,11 @@ class SFTPTest (unittest.TestCase):
         g_big_file_test = onoff
 
     def setUp(self):
+        # TODO: I think this was created to allow working around litter from
+        # broken previous test runs, and/or to allow concurrent testing? Either
+        # way I hate it and it should die ASAP in favor of pytest fixtures or
+        # similar things that do try/finally.
+        # TODO: also, for god's sake remove the global in favor of self.
         global FOLDER
         for i in range(1000):
             FOLDER = FOLDER[:-3] + '%03d' % i
