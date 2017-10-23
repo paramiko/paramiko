@@ -1,3 +1,4 @@
+import os
 from os.path import join
 from shutil import rmtree, copytree
 
@@ -6,20 +7,32 @@ from invocations.docs import docs, www, sites
 from invocations.packaging.release import ns as release_coll, publish
 
 
-# Until we move to spec-based testing
 @task
-def test(ctx, coverage=False, flags=""):
-    if "--verbose" not in flags.split():
-        flags += " --verbose"
-    runner = "python"
+def test(ctx, verbose=True, coverage=False, opts=""):
+    # TODO: once pytest coverage plugin works, see if there's a pytest-native
+    # way to handle the env stuff too, then we can remove these tasks entirely
+    # in favor of just "run pytest"?
+    if verbose:
+        opts += " --verbose"
+    runner = "pytest"
     if coverage:
-        runner = "coverage run --source=paramiko"
-    ctx.run("{0} test.py {1}".format(runner, flags), pty=True)
+        # Leverage how pytest can be run as 'python -m pytest', and then how
+        # coverage can be told to run things in that manner instead of
+        # expecting a literal .py file.
+        # TODO: get pytest's coverage plugin working, IIRC it has issues?
+        runner = "coverage run --source=paramiko -m pytest"
+    # Strip SSH_AUTH_SOCK from parent env to avoid pollution by interactive
+    # users.
+    env = dict(os.environ)
+    if 'SSH_AUTH_SOCK' in env:
+        del env['SSH_AUTH_SOCK']
+    cmd = "{} {}".format(runner, opts)
+    ctx.run(cmd, pty=True, env=env, replace_env=True)
 
 
 @task
-def coverage(ctx):
-    ctx.run("coverage run --source=paramiko test.py --verbose")
+def coverage(ctx, opts=""):
+    return test(ctx, coverage=True, opts=opts)
 
 
 # Until we stop bundling docs w/ releases. Need to discover use cases first.
