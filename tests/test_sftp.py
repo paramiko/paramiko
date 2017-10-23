@@ -165,15 +165,14 @@ class TestSFTP(object):
             with sftp.open(sftp.FOLDER + '/first.txt', 'w') as f:
                 f.write('content!\n')
             sftp.rename(sftp.FOLDER + '/first.txt', sftp.FOLDER + '/second.txt')
-            try:
+            with pytest.raises(IOError, match='No such file'):
                 sftp.open(sftp.FOLDER + '/first.txt', 'r')
-                self.assertTrue(False, 'no exception on reading nonexistent file')
-            except IOError:
-                pass
             with sftp.open(sftp.FOLDER + '/second.txt', 'r') as f:
                 f.seek(-6, f.SEEK_END)
                 assert u(f.read(4)) == 'tent'
         finally:
+            # TODO: this is gross, make some sort of 'remove if possible' / 'rm
+            # -f' a-like, jeez
             try:
                 sftp.remove(sftp.FOLDER + '/first.txt')
             except:
@@ -192,12 +191,9 @@ class TestSFTP(object):
         sftp.open(sftp.FOLDER + '/subfolder/test', 'w').close()
         sftp.remove(sftp.FOLDER + '/subfolder/test')
         sftp.rmdir(sftp.FOLDER + '/subfolder')
-        try:
+        # shouldn't be able to create that file if dir removed
+        with pytest.raises(IOError, match="No such file"):
             sftp.open(sftp.FOLDER + '/subfolder/test')
-            # shouldn't be able to create that file
-            self.assertTrue(False, 'no exception at dummy file creation')
-        except IOError:
-            pass
 
     def test_7_listdir(self, sftp):
         """
@@ -211,10 +207,10 @@ class TestSFTP(object):
 
             x = sftp.listdir(sftp.FOLDER)
             assert len(x) == 3
-            self.assertTrue('duck.txt' in x)
-            self.assertTrue('fish.txt' in x)
-            self.assertTrue('tertiary.py' in x)
-            self.assertTrue('random' not in x)
+            assert 'duck.txt' in x
+            assert 'fish.txt' in x
+            assert 'tertiary.py' in x
+            assert 'random' not in x
         finally:
             sftp.remove(sftp.FOLDER + '/duck.txt')
             sftp.remove(sftp.FOLDER + '/fish.txt')
@@ -231,10 +227,10 @@ class TestSFTP(object):
 
             x = [x.filename for x in sftp.listdir_iter(sftp.FOLDER)]
             assert len(x) == 3
-            self.assertTrue('duck.txt' in x)
-            self.assertTrue('fish.txt' in x)
-            self.assertTrue('tertiary.py' in x)
-            self.assertTrue('random' not in x)
+            assert 'duck.txt' in x
+            assert 'fish.txt' in x
+            assert 'tertiary.py' in x
+            assert 'random' not in x
         finally:
             sftp.remove(sftp.FOLDER + '/duck.txt')
             sftp.remove(sftp.FOLDER + '/fish.txt')
@@ -336,7 +332,7 @@ class TestSFTP(object):
                     line_number += 1
                     pos_list.append(loc)
                     loc = f.tell()
-                self.assertTrue(f.seekable())
+                assert f.seekable()
                 f.seek(pos_list[6], f.SEEK_SET)
                 assert f.readline(), 'Nouzilly == France.\n'
                 f.seek(pos_list[17], f.SEEK_SET)
@@ -392,7 +388,7 @@ class TestSFTP(object):
             assert sftp.stat(sftp.FOLDER + '/link.txt').st_size == 9
             # the sftp server may be hiding extra path members from us, so the
             # length may be longer than we expect:
-            self.assertTrue(sftp.lstat(sftp.FOLDER + '/link2.txt').st_size >= len(abs_path))
+            assert sftp.lstat(sftp.FOLDER + '/link2.txt').st_size >= len(abs_path)
             assert sftp.stat(sftp.FOLDER + '/link2.txt').st_size == 9
             assert sftp.stat(sftp.FOLDER + '/original.txt').st_size == 9
         finally:
@@ -435,33 +431,21 @@ class TestSFTP(object):
         error.
         """
         pwd = sftp.normalize('.')
-        self.assertTrue(len(pwd) > 0)
+        assert len(pwd) > 0
         f = sftp.normalize('./' + sftp.FOLDER)
-        self.assertTrue(len(f) > 0)
+        assert len(f) > 0
         assert os.path.join(pwd, sftp.FOLDER) == f
 
     def test_F_mkdir(self, sftp):
         """
         verify that mkdir/rmdir work.
         """
-        try:
+        sftp.mkdir(sftp.FOLDER + '/subfolder')
+        with pytest.raises(IOError): # generic msg only
             sftp.mkdir(sftp.FOLDER + '/subfolder')
-        except:
-            self.assertTrue(False, 'exception creating subfolder')
-        try:
-            sftp.mkdir(sftp.FOLDER + '/subfolder')
-            self.assertTrue(False, 'no exception overwriting subfolder')
-        except IOError:
-            pass
-        try:
+        sftp.rmdir(sftp.FOLDER + '/subfolder')
+        with pytest.raises(IOError, match="No such file"):
             sftp.rmdir(sftp.FOLDER + '/subfolder')
-        except:
-            self.assertTrue(False, 'exception removing subfolder')
-        try:
-            sftp.rmdir(sftp.FOLDER + '/subfolder')
-            self.assertTrue(False, 'no exception removing nonexistent subfolder')
-        except IOError:
-            pass
 
     def test_G_chdir(self, sftp):
         """
@@ -549,8 +533,7 @@ class TestSFTP(object):
                 sum = f.check('md5', 0, 512)
                 assert '93DE4788FCA28D471516963A1FE3856A' == u(hexlify(sum)).upper()
                 sum = f.check('md5', 0, 0, 510)
-                self.assertEqual('EB3B45B8CD55A0707D99B177544A319F373183D241432BB2157AB9E46358C4AC90370B5CADE5D90336FC1716F90B36D6',
-                                 u(hexlify(sum)).upper())
+                assert u(hexlify(sum)).upper() == 'EB3B45B8CD55A0707D99B177544A319F373183D241432BB2157AB9E46358C4AC90370B5CADE5D90336FC1716F90B36D6' # noqa
         finally:
             sftp.unlink(sftp.FOLDER + '/kitty.txt')
 
@@ -684,10 +667,9 @@ class TestSFTP(object):
         try:
             attrs = sftp.putfo(stream, target)
             # the returned attributes should not be null
-            self.assertNotEqual(attrs, None)
+            assert attrs is not None
         finally:
             sftp.remove(target)
-
 
     def test_N_file_with_percent(self, sftp):
         """
