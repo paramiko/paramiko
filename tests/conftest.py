@@ -1,3 +1,4 @@
+import logging
 import os
 import threading
 
@@ -11,6 +12,16 @@ from .util import _support
 
 # TODO: not a huge fan of conftest.py files, see if we can move these somewhere
 # 'nicer'.
+
+
+# Perform logging by default; pytest will capture and thus hide it normally,
+# presenting it on error/failure.
+# Also make sure to set up timestamping for more sanity when debugging.
+logging.basicConfig(
+    level=logging.DEBUG,
+    format="[%(relativeCreated)s]\t%(levelname)s:%(name)s:%(message)s",
+    datefmt="%H:%M:%S",
+)
 
 
 def make_sftp_folder(client):
