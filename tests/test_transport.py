@@ -45,7 +45,7 @@ from paramiko.py3compat import bytes
 from paramiko.message import Message
 from tests import skipUnlessBuiltin
 from tests.loop import LoopSocket
-from tests.util import test_path
+from tests.util import _support
 
 
 LONG_BANNER = """\
@@ -64,7 +64,7 @@ Maybe.
 class NullServer (ServerInterface):
     paranoid_did_password = False
     paranoid_did_public_key = False
-    paranoid_key = DSSKey.from_private_key_file(test_path('test_dss.key'))
+    paranoid_key = DSSKey.from_private_key_file(_support('test_dss.key'))
 
     def get_allowed_auths(self, username):
         if username == 'slowdive':
@@ -136,7 +136,7 @@ class TransportTest(unittest.TestCase):
     def setup_test_server(
         self, client_options=None, server_options=None, connect_kwargs=None,
     ):
-        host_key = RSAKey.from_private_key_file(test_path('test_rsa.key'))
+        host_key = RSAKey.from_private_key_file(_support('test_rsa.key'))
         public_host_key = RSAKey(data=host_key.asbytes())
         self.ts.add_server_key(host_key)
 
@@ -200,7 +200,7 @@ class TransportTest(unittest.TestCase):
         loopback sockets.  this is hardly "simple" but it's simpler than the
         later tests. :)
         """
-        host_key = RSAKey.from_private_key_file(test_path('test_rsa.key'))
+        host_key = RSAKey.from_private_key_file(_support('test_rsa.key'))
         public_host_key = RSAKey(data=host_key.asbytes())
         self.ts.add_server_key(host_key)
         event = threading.Event()
@@ -225,7 +225,7 @@ class TransportTest(unittest.TestCase):
         """
         verify that a long banner doesn't mess up the handshake.
         """
-        host_key = RSAKey.from_private_key_file(test_path('test_rsa.key'))
+        host_key = RSAKey.from_private_key_file(_support('test_rsa.key'))
         public_host_key = RSAKey(data=host_key.asbytes())
         self.ts.add_server_key(host_key)
         event = threading.Event()
@@ -840,7 +840,7 @@ class TransportTest(unittest.TestCase):
         # be fine. Even tho it's a bit squicky.
         self.tc.packetizer = SlowPacketizer(self.tc.sock)
         # Continue with regular test red tape.
-        host_key = RSAKey.from_private_key_file(test_path('test_rsa.key'))
+        host_key = RSAKey.from_private_key_file(_support('test_rsa.key'))
         public_host_key = RSAKey(data=host_key.asbytes())
         self.ts.add_server_key(host_key)
         event = threading.Event()

@@ -32,7 +32,7 @@ import weakref
 import warnings
 import os
 import time
-from tests.util import test_path
+from tests.util import _support
 
 import paramiko
 from paramiko.py3compat import PY2, b
@@ -108,7 +108,7 @@ class SSHClientTest (unittest.TestCase):
             allowed_keys = FINGERPRINTS.keys()
         self.socks, addr = self.sockl.accept()
         self.ts = paramiko.Transport(self.socks)
-        host_key = paramiko.RSAKey.from_private_key_file(test_path('test_rsa.key'))
+        host_key = paramiko.RSAKey.from_private_key_file(_support('test_rsa.key'))
         self.ts.add_server_key(host_key)
         server = NullServer(allowed_keys=allowed_keys)
         if delay:
@@ -125,7 +125,7 @@ class SSHClientTest (unittest.TestCase):
         run_kwargs = {'allowed_keys': kwargs.pop('allowed_keys', None)}
         # Server setup
         threading.Thread(target=self._run, kwargs=run_kwargs).start()
-        host_key = paramiko.RSAKey.from_private_key_file(test_path('test_rsa.key'))
+        host_key = paramiko.RSAKey.from_private_key_file(_support('test_rsa.key'))
         public_host_key = paramiko.RSAKey(data=host_key.asbytes())
 
         # Client setup
@@ -171,19 +171,19 @@ class SSHClientTest (unittest.TestCase):
         """
         verify that SSHClient works with a DSA key.
         """
-        self._test_connection(key_filename=test_path('test_dss.key'))
+        self._test_connection(key_filename=_support('test_dss.key'))
 
     def test_client_rsa(self):
         """
         verify that SSHClient works with an RSA key.
         """
-        self._test_connection(key_filename=test_path('test_rsa.key'))
+        self._test_connection(key_filename=_support('test_rsa.key'))
 
     def test_2_5_client_ecdsa(self):
         """
         verify that SSHClient works with an ECDSA key.
         """
-        self._test_connection(key_filename=test_path('test_ecdsa_256.key'))
+        self._test_connection(key_filename=_support('test_ecdsa_256.key'))
 
     def test_3_multiple_key_files(self):
         """
@@ -206,7 +206,7 @@ class SSHClientTest (unittest.TestCase):
             try:
                 self._test_connection(
                     key_filename=[
-                        test_path('test_{0}.key'.format(x)) for x in attempt
+                        _support('test_{}.key'.format(x)) for x in attempt
                     ],
                     allowed_keys=[types_[x] for x in accept],
                 )
@@ -224,7 +224,7 @@ class SSHClientTest (unittest.TestCase):
         # various platforms trigger different errors here >_<
         self.assertRaises(SSHException,
             self._test_connection,
-            key_filename=[test_path('test_rsa.key')],
+            key_filename=[_support('test_rsa.key')],
             allowed_keys=['ecdsa-sha2-nistp256'],
         )
 
@@ -233,7 +233,7 @@ class SSHClientTest (unittest.TestCase):
         verify that SSHClient's AutoAddPolicy works.
         """
         threading.Thread(target=self._run).start()
-        host_key = paramiko.RSAKey.from_private_key_file(test_path('test_rsa.key'))
+        host_key = paramiko.RSAKey.from_private_key_file(_support('test_rsa.key'))
         public_host_key = paramiko.RSAKey(data=host_key.asbytes())
 
         self.tc = paramiko.SSHClient()
@@ -255,7 +255,7 @@ class SSHClientTest (unittest.TestCase):
         """
         warnings.filterwarnings('ignore', 'tempnam.*')
 
-        host_key = paramiko.RSAKey.from_private_key_file(test_path('test_rsa.key'))
+        host_key = paramiko.RSAKey.from_private_key_file(_support('test_rsa.key'))
         public_host_key = paramiko.RSAKey(data=host_key.asbytes())
         fd, localname = mkstemp()
         os.close(fd)
@@ -335,7 +335,7 @@ class SSHClientTest (unittest.TestCase):
         """
         # Start the thread with a 1 second wait.
         threading.Thread(target=self._run, kwargs={'delay': 1}).start()
-        host_key = paramiko.RSAKey.from_private_key_file(test_path('test_rsa.key'))
+        host_key = paramiko.RSAKey.from_private_key_file(_support('test_rsa.key'))
         public_host_key = paramiko.RSAKey(data=host_key.asbytes())
 
         self.tc = paramiko.SSHClient()
@@ -362,7 +362,7 @@ class SSHClientTest (unittest.TestCase):
             # 'television' as per tests/test_pkey.py). NOTE: must use
             # key_filename, loading the actual key here with PKey will except
             # immediately; we're testing the try/except crap within Client.
-            key_filename=[test_path('test_rsa_password.key')],
+            key_filename=[_support('test_rsa_password.key')],
             # Actual password for default 'slowdive' user
             password='pygmalion',
         )
@@ -376,7 +376,7 @@ class SSHClientTest (unittest.TestCase):
             return  # for python 2.6 lacks skipTest
         kwargs = dict(
             gss_kex=True,
-            key_filename=[test_path('test_rsa.key')],
+            key_filename=[_support('test_rsa.key')],
         )
         self._test_connection(**kwargs)
 
@@ -388,7 +388,7 @@ class SSHClientTest (unittest.TestCase):
             return  # for python 2.6 lacks skipTest
         kwargs = dict(
             gss_auth=True,
-            key_filename=[test_path('test_rsa.key')],
+            key_filename=[_support('test_rsa.key')],
         )
         self._test_connection(**kwargs)
 
