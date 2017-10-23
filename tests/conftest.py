@@ -39,13 +39,15 @@ def make_sftp_folder(client):
             pass
 
 
-# TODO: apply at module or session level
-# TODO: roll in SFTP folder setup and teardown?
-# NOTE: This is defined here for use by both SFTP (normal & 'big') suites.
 @pytest.fixture(scope='session')
-def sftp():
+def sftp_server():
     """
-    Set up an in-memory SFTP server, returning its corresponding SFTPClient.
+    Set up an in-memory SFTP server thread. Yields the client Transport/socket.
+
+    The resulting client Transport (along with all the server components) will
+    be the same object throughout the test session; the `sftp` fixture then
+    creates new higher level client objects wrapped around the client
+    Transport, as necessary.
     """
     # Sockets & transports
     socks = LoopSocket()
@@ -56,14 +58,27 @@ def sftp():
     # Auth
     host_key = RSAKey.from_private_key_file(_support('test_rsa.key'))
     ts.add_server_key(host_key)
-    # Server & client setup
+    # Server setup
     event = threading.Event()
     server = StubServer()
     ts.set_subsystem_handler('sftp', SFTPServer, StubSFTPServer)
     ts.start_server(event, server)
-    tc.connect(username='slowdive', password='pygmalion')
+    # Wait (so client has time to connect? Not sure. Old.)
     event.wait(1.0)
-    client = SFTP.from_transport(tc)
+    # Make & yield connection.
+    tc.connect(username='slowdive', password='pygmalion')
+    yield tc
+    # TODO: any need for shutdown? Why didn't old suite do so? Or was that the
+    # point of the "join all threads from threading module" crap in test.py?
+
+
+@pytest.fixture
+def sftp(sftp_server):
+    """
+    Yield an SFTP client connected to the global in-session SFTP server thread.
+    """
+    # Client setup
+    client = SFTP.from_transport(sftp_server)
     # Work in 'remote' folder setup (as it wants to use the client)
     # TODO: how cleanest to make this available to tests? Doing it this way is
     # marginally less bad than the previous 'global'-using setup, but not by
@@ -72,4 +87,8 @@ def sftp():
     # Yield client to caller
     yield client
     # Clean up
-    client.rmdir(client.FOLDER)
+    # TODO: many tests like to close the client; to match old test suite
+    # behavior we'd need to recreate the entire client? Possibly better to just
+    # make the "it runs locally, dumbass" explicit & then just use stdlib to
+    # clean up?
+    #client.rmdir(client.FOLDER)
