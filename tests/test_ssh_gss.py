@@ -29,17 +29,20 @@ import unittest
 
 import paramiko
 
-from tests.util import _support
-from tests.test_client import FINGERPRINTS
+from .util import _support, needs_gssapi
+from .test_client import FINGERPRINTS
+
 
 class NullServer (paramiko.ServerInterface):
-
     def get_allowed_auths(self, username):
         return 'gssapi-with-mic,publickey'
 
-    def check_auth_gssapi_with_mic(self, username,
-                                   gss_authenticated=paramiko.AUTH_FAILED,
-                                   cc_file=None):
+    def check_auth_gssapi_with_mic(
+        self,
+        username,
+        gss_authenticated=paramiko.AUTH_FAILED,
+        cc_file=None,
+    ):
         if gss_authenticated == paramiko.AUTH_SUCCESSFUL:
             return paramiko.AUTH_SUCCESSFUL
         return paramiko.AUTH_FAILED
@@ -66,18 +69,15 @@ class NullServer (paramiko.ServerInterface):
         return True
 
 
+@needs_gssapi
 class GSSAuthTest(unittest.TestCase):
-    @staticmethod
-    def init(username, hostname):
-        global krb5_principal, targ_name
-        krb5_principal = username
-        targ_name = hostname
-
     def setUp(self):
-        self.username = krb5_principal
-        self.hostname = socket.getfqdn(targ_name)
+        # TODO: username and targ_name should come from os.environ or whatever
+        # the approved pytest method is for runtime-configuring test data.
+        self.username = "krb5_principal"
+        self.hostname = socket.getfqdn("targ_name")
         self.sockl = socket.socket()
-        self.sockl.bind((targ_name, 0))
+        self.sockl.bind(("targ_name", 0))
         self.sockl.listen(1)
         self.addr, self.port = self.sockl.getsockname()
         self.event = threading.Event()

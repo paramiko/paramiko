@@ -23,6 +23,7 @@ Some unit tests for BufferedPipe.
 import threading
 import time
 import unittest
+
 from paramiko.buffered_pipe import BufferedPipe, PipeTimeout
 from paramiko import pipe
 from paramiko.py3compat import b

@@ -23,6 +23,7 @@ Some unit tests for HostKeys.
 from binascii import hexlify
 import os
 import unittest
+
 import paramiko
 from paramiko.py3compat import decodebytes
 

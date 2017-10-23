@@ -27,7 +27,7 @@ from paramiko.common import linefeed_byte, crlf, cr_byte
 from paramiko.file import BufferedFile
 from paramiko.py3compat import BytesIO
 
-from tests import skipUnlessBuiltin
+from .util import needs_builtin
 
 
 class LoopbackFile (BufferedFile):
@@ -198,13 +198,13 @@ class BufferedFileTest (unittest.TestCase):
             f.write(text)
             self.assertEqual(f.read(), text.encode("utf-8"))
 
-    @skipUnlessBuiltin('memoryview')
+    @needs_builtin('memoryview')
     def test_write_bytearray(self):
         with LoopbackFile('rb+') as f:
             f.write(bytearray(12))
             self.assertEqual(f.read(), 12 * b"\0")
 
-    @skipUnlessBuiltin('buffer')
+    @needs_builtin('buffer')
     def test_write_buffer(self):
         data = 3 * b"pretend giant block of data\n"
         offsets = range(0, len(data), 8)
@@ -213,7 +213,7 @@ class BufferedFileTest (unittest.TestCase):
                 f.write(buffer(data, offset, 8))
             self.assertEqual(f.read(), data)
 
-    @skipUnlessBuiltin('memoryview')
+    @needs_builtin('memoryview')
     def test_write_memoryview(self):
         data = 3 * b"pretend giant block of data\n"
         offsets = range(0, len(data), 8)

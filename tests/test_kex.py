@@ -24,14 +24,15 @@ from binascii import hexlify, unhexlify
 import os
 import unittest
 
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives.asymmetric import ec
+
 import paramiko.util
 from paramiko.kex_group1 import KexGroup1
 from paramiko.kex_gex import KexGex, KexGexSHA256
 from paramiko import Message
 from paramiko.common import byte_chr
 from paramiko.kex_ecdh_nist import KexNistp256
-from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives.asymmetric import ec
 
 
 def dummy_urandom(n):
