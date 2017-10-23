@@ -31,7 +31,7 @@ def make_sftp_folder(client):
 # TODO: apply at module or session level
 # TODO: roll in SFTP folder setup and teardown?
 # NOTE: This is defined here for use by both SFTP (normal & 'big') suites.
-@pytest.fixture
+@pytest.fixture(scope='session')
 def sftp():
     """
     Set up an in-memory SFTP server, returning its corresponding SFTPClient.
