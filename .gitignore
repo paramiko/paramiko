@@ -9,3 +9,4 @@ demos/*.log
 !sites/docs
 _build
 .coverage
+.cache
