@@ -702,21 +702,22 @@ class TestSFTP(object):
         finally:
             sftp.remove(target)
 
+    # TODO: this test doesn't actually fail if the regression (removing '%'
+    # expansion to '%%' within sftp.py's def _log()) is removed - stacktraces
+    # appear but they're clearly emitted from subthreads that have no error
+    # handling. No point running it until that is fixed somehow.
+    @pytest.mark.skip("Doesn't prove anything right now")
     def test_N_file_with_percent(self, sftp):
         """
         verify that we can create a file with a '%' in the filename.
         ( it needs to be properly escaped by _log() )
         """
-        # TODO: how best to enable this only for the one test? & how to make it
-        # not log to actual file? lol??
-        paramiko.util.log_to_file('test_sftp.log')
         f = sftp.open(sftp.FOLDER + '/test%file', 'w')
         try:
             assert f.stat().st_size == 0
         finally:
             f.close()
             sftp.remove(sftp.FOLDER + '/test%file')
-
 
     def test_O_non_utf8_data(self, sftp):
         """Test write() and read() of non utf8 data"""
@@ -767,11 +768,3 @@ class TestSFTP(object):
                 assert f.read() == data
         finally:
             sftp.remove('%s/write_memoryview' % sftp.FOLDER)
-
-
-if __name__ == '__main__':
-    SFTPTest.init_loopback()
-    # logging is required by test_N_file_with_percent
-    paramiko.util.log_to_file('test_sftp.log')
-    from unittest import main
-    main()
