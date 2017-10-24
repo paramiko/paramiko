@@ -8,4 +8,3 @@ wheel==0.24
 twine==1.9.1
 flake8==2.6.2
 pytest==3.2.1
-pytest-timeout==1.2.0
