@@ -31,6 +31,8 @@ import unittest
 
 import paramiko
 
+from .util import needs_gssapi
+
 
 class NullServer (paramiko.ServerInterface):
 
@@ -57,6 +59,7 @@ class NullServer (paramiko.ServerInterface):
         return True
 
 
+@needs_gssapi
 class GSSKexTest(unittest.TestCase):
     @staticmethod
     def init(username, hostname):
