@@ -1,5 +1,6 @@
 import logging
 import os
+import shutil
 import threading
 
 import pytest
@@ -26,17 +27,27 @@ logging.basicConfig(
 
 def make_sftp_folder(client):
     """
-    Create some non-existing, new folder on the given SFTP connection.
+    Ensure expected target temp folder exists on the remote end.
+
+    Will clean it out if it already exists.
     """
-    path = os.environ.get('TEST_FOLDER', 'temp-testing000')
-    # TODO: this is disgusting and old, replace with something smarter/simpler
-    for i in range(1000):
-        path = path[:-3] + '%03d' % i
-        try:
-            client.mkdir(path)
-            return path
-        except (IOError, OSError):
-            pass
+    # TODO: go back to using the sftp functionality itself for folder setup so
+    # we can test against live SFTP servers again someday. (Not clear if anyone
+    # is/was using the old capability for such, though...)
+    # TODO: something that would play nicer with concurrent testing (but
+    # probably e.g. using thread ID or UUIDs or something; not the "count up
+    # until you find one not used!" crap from before...)
+    # TODO: if we want to lock ourselves even harder into localhost-only
+    # testing (probably not?) could use tempdir modules for this for improved
+    # safety. Then again...why would someone have such a folder???
+    path = os.environ.get('TEST_FOLDER', 'paramiko-test-target')
+    # Forcibly nuke this directory locally, since at the moment, the below
+    # fixtures only ever run with a locally scoped stub test server.
+    if os.path.exists(path):
+        shutil.rmtree(path)
+    # Then create it anew, again locally, for the same reason.
+    os.mkdir(path)
+    return path
 
 
 @pytest.fixture(scope='session')
