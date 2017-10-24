@@ -9,4 +9,3 @@ demos/*.log
 _build
 .coverage
 .cache
-paramiko-test-target

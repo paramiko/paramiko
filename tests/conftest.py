@@ -25,7 +25,7 @@ logging.basicConfig(
 )
 
 
-def make_sftp_folder(client):
+def make_sftp_folder():
     """
     Ensure expected target temp folder exists on the remote end.
 
@@ -43,8 +43,7 @@ def make_sftp_folder(client):
     path = os.environ.get('TEST_FOLDER', 'paramiko-test-target')
     # Forcibly nuke this directory locally, since at the moment, the below
     # fixtures only ever run with a locally scoped stub test server.
-    if os.path.exists(path):
-        shutil.rmtree(path)
+    shutil.rmtree(path, ignore_errors=True)
     # Then create it anew, again locally, for the same reason.
     os.mkdir(path)
     return path
@@ -94,12 +93,8 @@ def sftp(sftp_server):
     # TODO: how cleanest to make this available to tests? Doing it this way is
     # marginally less bad than the previous 'global'-using setup, but not by
     # much?
-    client.FOLDER = make_sftp_folder(client)
+    client.FOLDER = make_sftp_folder()
     # Yield client to caller
     yield client
-    # Clean up
-    # TODO: many SFTP tests like to close the client; to match old test suite
-    # behavior we'd need to recreate the entire client? Possibly better to just
-    # make the "it runs locally, dumbass" explicit & then just use stdlib to
-    # clean up?
-    #client.rmdir(client.FOLDER)
+    # Clean up - as in make_sftp_folder, we assume local-only exec for now.
+    shutil.rmtree(client.FOLDER, ignore_errors=True)
