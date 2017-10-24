@@ -98,7 +98,7 @@ def sftp(sftp_server):
     # Yield client to caller
     yield client
     # Clean up
-    # TODO: many tests like to close the client; to match old test suite
+    # TODO: many SFTP tests like to close the client; to match old test suite
     # behavior we'd need to recreate the entire client? Possibly better to just
     # make the "it runs locally, dumbass" explicit & then just use stdlib to
     # clean up?
