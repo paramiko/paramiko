@@ -16,13 +16,16 @@ from .util import _support
 
 
 # Perform logging by default; pytest will capture and thus hide it normally,
-# presenting it on error/failure.
-# Also make sure to set up timestamping for more sanity when debugging.
-logging.basicConfig(
-    level=logging.DEBUG,
-    format="[%(relativeCreated)s]\t%(levelname)s:%(name)s:%(message)s",
-    datefmt="%H:%M:%S",
-)
+# presenting it on error/failure. (But also allow turning it off when doing
+# very pinpoint debugging - e.g. using breakpoints, so you don't want output
+# hiding enabled, but also don't want all the logging to gum up the terminal.)
+if not os.environ.get('DISABLE_LOGGING', False):
+    logging.basicConfig(
+        level=logging.DEBUG,
+        # Also make sure to set up timestamping for more sanity when debugging.
+        format="[%(relativeCreated)s]\t%(levelname)s:%(name)s:%(message)s",
+        datefmt="%H:%M:%S",
+    )
 
 
 def make_sftp_folder():
