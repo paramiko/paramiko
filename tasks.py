@@ -27,6 +27,7 @@ def test(ctx, verbose=True, coverage=False, opts=""):
     if 'SSH_AUTH_SOCK' in env:
         del env['SSH_AUTH_SOCK']
     cmd = "{} {}".format(runner, opts)
+    # NOTE: we have a pytest.ini and tend to use that over PYTEST_ADDOPTS.
     ctx.run(cmd, pty=True, env=env, replace_env=True)
 
 
