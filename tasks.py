@@ -9,9 +9,6 @@ from invocations.packaging.release import ns as release_coll, publish
 
 @task
 def test(ctx, verbose=True, coverage=False, opts=""):
-    # TODO: once pytest coverage plugin works, see if there's a pytest-native
-    # way to handle the env stuff too, then we can remove these tasks entirely
-    # in favor of just "run pytest"?
     if verbose:
         opts += " --verbose"
     runner = "pytest"
@@ -23,6 +20,9 @@ def test(ctx, verbose=True, coverage=False, opts=""):
         runner = "coverage run --source=paramiko -m pytest"
     # Strip SSH_AUTH_SOCK from parent env to avoid pollution by interactive
     # users.
+    # TODO: once pytest coverage plugin works, see if there's a pytest-native
+    # way to handle the env stuff too, then we can remove these tasks entirely
+    # in favor of just "run pytest"?
     env = dict(os.environ)
     if 'SSH_AUTH_SOCK' in env:
         del env['SSH_AUTH_SOCK']
