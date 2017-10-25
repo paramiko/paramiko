@@ -9,7 +9,7 @@ from invocations.packaging.release import ns as release_coll, publish
 
 @task
 def test(ctx, verbose=True, coverage=False, opts=""):
-    if verbose:
+    if verbose and '--verbose' not in opts and '-v' not in opts:
         opts += " --verbose"
     runner = "pytest"
     if coverage:
