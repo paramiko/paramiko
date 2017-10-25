@@ -2,6 +2,15 @@
 Changelog
 =========
 
+* :support:`1100` Updated the test suite & related docs/metadata/config to be
+  compatible with pytest instead of using the old, custom, crufty
+  unittest-based ``test.py``.
+  
+  This includes marking known-slow tests (mostly the SFTP ones) so they can be
+  filtered out by ``inv test``'s default behavior; as well as other minor
+  tweaks to test collection and/or display (for example, GSSAPI tests are
+  collected, but skipped, instead of not even being collected by default as in
+  ``test.py``.)
 * :support:`- backported` Include LICENSE file in wheel archives.
 * :support:`1070` Drop Python 2.6 and Python 3.3 support; now only 2.7 and 3.4+
   are supported. If you're unable to upgrade from 2.6 or 3.3, please stick to
