@@ -9,9 +9,19 @@ from invocations.testing import count_errors
 
 
 @task
-def test(ctx, verbose=True, coverage=False, opts=""):
+def test(ctx, verbose=True, coverage=False, include_slow=False, opts=""):
+    """
+    Run unit tests via pytest.
+
+    By default, known-slow parts of the suite are SKIPPED unless
+    ``--include-slow`` is given. (Note that ``--include-slow`` does not mesh
+    well with explicit ``--opts="-m=xxx"`` - if ``-m`` is found in ``--opts``,
+    ``--include-slow`` will be ignored!)
+    """
     if verbose and '--verbose' not in opts and '-v' not in opts:
         opts += " --verbose"
+    if '-m' not in opts and not include_slow:
+        opts += " -m 'not slow'"
     runner = "pytest"
     if coverage:
         # Leverage how pytest can be run as 'python -m pytest', and then how
@@ -34,7 +44,10 @@ def test(ctx, verbose=True, coverage=False, opts=""):
 
 @task
 def coverage(ctx, opts=""):
-    return test(ctx, coverage=True, opts=opts)
+    """
+    Execute all tests (normal and slow) with coverage enabled.
+    """
+    return test(ctx, coverage=True, include_slow=True, opts=opts)
 
 
 # Until we stop bundling docs w/ releases. Need to discover use cases first.

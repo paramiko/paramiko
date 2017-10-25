@@ -38,7 +38,7 @@ from paramiko.pkey import PublicBlob
 from paramiko.common import PY2
 from paramiko.ssh_exception import SSHException, AuthenticationException
 
-from .util import _support
+from .util import _support, slow
 
 
 requires_gss_auth = unittest.skipUnless(
@@ -443,6 +443,7 @@ class SSHClientTest (unittest.TestCase):
         )
         self._test_connection(**kwargs)
 
+    @slow
     def test_9_auth_timeout(self):
         """
         verify that the SSHClient has a configurable auth timeout

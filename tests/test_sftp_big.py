@@ -32,7 +32,10 @@ import unittest
 
 from paramiko.common import o660
 
+from .util import slow
 
+
+@slow
 class TestBigSFTP(object):
     def test_1_lots_of_files(self, sftp):
         """
