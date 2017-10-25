@@ -37,7 +37,7 @@ import paramiko
 from paramiko.py3compat import PY2, b
 from paramiko.ssh_exception import SSHException
 
-from .util import _support
+from .util import _support, slow
 
 
 FINGERPRINTS = {

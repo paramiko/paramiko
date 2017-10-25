@@ -22,3 +22,6 @@ def needs_builtin(name):
     """
     reason = "Test requires a builtin '{}'".format(name)
     return pytest.mark.skipif(not hasattr(builtins, name), reason=reason)
+
+
+slow = pytest.mark.slow

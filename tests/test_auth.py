@@ -32,7 +32,7 @@ from paramiko import AUTH_FAILED, AUTH_PARTIALLY_SUCCESSFUL, AUTH_SUCCESSFUL
 from paramiko.py3compat import u
 
 from .loop import LoopSocket
-from .util import _support
+from .util import _support, slow
 
 
 _pwd = u('\u2022')

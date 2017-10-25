@@ -44,7 +44,7 @@ from paramiko.common import (
 from paramiko.py3compat import bytes
 from paramiko.message import Message
 
-from .util import needs_builtin, _support
+from .util import needs_builtin, _support, slow
 from .loop import LoopSocket
 
 
@@ -257,6 +257,7 @@ class TransportTest(unittest.TestCase):
         self.tc.renegotiate_keys()
         self.ts.send_ignore(1024)
 
+    @slow
     def test_5_keepalive(self):
         """
         verify that the keepalive will be sent.
@@ -820,6 +821,7 @@ class TransportTest(unittest.TestCase):
                              (2**32, MAX_WINDOW_SIZE)]:
             self.assertEqual(self.tc._sanitize_window_size(val), correct)
 
+    @slow
     def test_L_handshake_timeout(self):
         """
         verify that we can get a hanshake timeout.

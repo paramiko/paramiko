@@ -42,7 +42,7 @@ from paramiko.sftp_attr import SFTPAttributes
 
 from .util import needs_builtin
 from .stub_sftp import StubServer, StubSFTPServer
-from .util import _support
+from .util import _support, slow
 
 
 ARTICLE = '''
@@ -88,6 +88,7 @@ unicode_folder = u'\u00fcnic\u00f8de' if PY2 else '\u00fcnic\u00f8de'
 utf8_folder = b'/\xc3\xbcnic\xc3\xb8\x64\x65'
 
 
+@slow
 class TestSFTP(object):
     def test_1_file(self, sftp):
         """
