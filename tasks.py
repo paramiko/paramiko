@@ -10,7 +10,7 @@ from invocations.testing import count_errors
 
 @task
 def test(ctx, verbose=True, coverage=False, opts=""):
-    if verbose:
+    if verbose and '--verbose' not in opts and '-v' not in opts:
         opts += " --verbose"
     runner = "pytest"
     if coverage:
