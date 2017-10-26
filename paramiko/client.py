@@ -230,6 +230,7 @@ class SSHClient (ClosingContextManager):
         banner_timeout=None,
         auth_timeout=None,
         gss_trust_dns=True,
+        IPv_pref=None,
     ):
         """
         Connect to an SSH server and authenticate to it.  The server's host key
@@ -301,7 +302,8 @@ class SSHClient (ClosingContextManager):
             for the SSH banner to be presented.
         :param float auth_timeout: an optional timeout (in seconds) to wait for
             an authentication response.
-
+        :param int IPv_pref: an optional hint for favouring IPv4 (if set to socket.AF_INET) 
+            or IPv6 (if set to socket.AF_INET6).
         :raises:
             `.BadHostKeyException` -- if the server's host key could not be
             verified
@@ -321,6 +323,8 @@ class SSHClient (ClosingContextManager):
             errors = {}
             # Try multiple possible address families (e.g. IPv4 vs IPv6)
             to_try = list(self._families_and_addresses(hostname, port))
+            if IPv_pref:
+                to_try.sort(key=lambda key : key[0] == IPv_pref, reverse=True)
             for af, addr in to_try:
                 try:
                     sock = socket.socket(af, socket.SOCK_STREAM)
