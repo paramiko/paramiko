@@ -232,7 +232,7 @@ class SSHConfig (object):
                                         '%n': hostname,
                                         '%p': port,
                                         '%r': remoteuser,
-                                        '%u': user})
+                                        '%u': user}, True)
         expand_variable('identityfile', {'%%': '%',
                                          '%d': homedir,
                                          '%h': config['hostname'],

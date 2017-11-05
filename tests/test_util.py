@@ -545,7 +545,7 @@ Host whatever
         home = os.path.expanduser('~')
 
         self.assertEqual(values['hostname'], 'fe80::1234:56ff:fe78:89ab%eth0')
-        self.assertEqual(values['controlpath'], '~/whatever/%n')
+        self.assertEqual(values['controlpath'], '{}/whatever/%n'.format(home))
         self.assertEqual(values['identityfile'], ['{}/myuser/%r'.format(home)])
         self.assertEqual(
             values['proxycommand'],
