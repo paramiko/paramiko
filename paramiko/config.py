@@ -42,6 +42,7 @@ class SSHConfig (object):
     """
 
     SETTINGS_REGEX = re.compile(r'(\w+)(?:\s*=\s*|\s+)(.+)')
+    TOKEN_REGEX = re.compile(r'~|%.')
 
     def __init__(self):
         """
@@ -157,6 +158,40 @@ class SSHConfig (object):
                 match = True
         return match
 
+    def _expand_value(self, value, expansions, expand_home=False):
+        """
+        Return value with expanded percent substitutions.
+
+        Any encountered two-character percent token is looked up in the
+        'expansions' dict and the resulting string is used as replacement.
+
+        Note that the search is non-overlapping, so values like '%%h'
+        will be replaced by expansions['%'] + h.
+
+        If expand_home is true, then shell-like '~' references will be
+        expanded after percent tokens expansion.
+
+        :param string/list value: a configuration option value
+        :param dict expansions: a dict of replacements. keys are
+               the percent token and values are their expansion.
+        :param bool expand_home: Perform '~' expansion if True.
+        """
+        def replacement(match):
+            token = match.group()
+            if token[0] == '~' and expand_home:
+                return os.path.expanduser(token)
+            if token[0] == '%':
+                return str(expansions.get(token, token))
+            return token
+
+        if isinstance(value, list):
+            return [
+                self.TOKEN_REGEX.sub(replacement, item)
+                for item in value
+            ]
+        else:
+            return self.TOKEN_REGEX.sub(replacement, value)
+
     def _expand_variables(self, config, hostname):
         """
         Return a dict of config options with expanded substitutions
@@ -170,66 +205,46 @@ class SSHConfig (object):
         """
 
         if 'hostname' in config:
-            config['hostname'] = config['hostname'].replace('%h', hostname)
+            config['hostname'] = self._expand_value(config['hostname'],
+                                              {'%h': hostname, '%%': '%'})
         else:
             config['hostname'] = hostname
 
-        if 'port' in config:
-            port = config['port']
-        else:
-            port = SSH_PORT
-
         user = os.getenv('USER')
-        if 'user' in config:
-            remoteuser = config['user']
-        else:
-            remoteuser = user
+        remoteuser = config.get('user', user)
+
+        port = config.get('port', SSH_PORT)
 
         host = socket.gethostname().split('.')[0]
         fqdn = LazyFqdn(config, host)
         homedir = os.path.expanduser('~')
-        replacements = {'controlpath':
-                        [
-                            ('%h', config['hostname']),
-                            ('%l', fqdn),
-                            ('%L', host),
-                            ('%n', hostname),
-                            ('%p', port),
-                            ('%r', remoteuser),
-                            ('%u', user)
-                        ],
-                        'identityfile':
-                        [
-                            ('~', homedir),
-                            ('%d', homedir),
-                            ('%h', config['hostname']),
-                            ('%l', fqdn),
-                            ('%u', user),
-                            ('%r', remoteuser)
-                        ],
-                        'proxycommand':
-                        [
-                            ('~', homedir),
-                            ('%h', config['hostname']),
-                            ('%p', port),
-                            ('%r', remoteuser)
-                        ]
-                        }
 
-        for k in config:
-            if config[k] is None:
-                continue
-            if k in replacements:
-                for find, replace in replacements[k]:
-                    if isinstance(config[k], list):
-                        for item in range(len(config[k])):
-                            if find in config[k][item]:
-                                config[k][item] = config[k][item].replace(
-                                    find, str(replace)
-                                )
-                    else:
-                        if find in config[k]:
-                            config[k] = config[k].replace(find, str(replace))
+        def expand_variable(varname, expansions, expand_home=False):
+            if varname in config and config[varname] is not None:
+                config[varname] = self._expand_value(config[varname],
+                                                     expansions,
+                                                     expand_home)
+
+        expand_variable('controlpath', {'%%': '%',
+                                        '%h': config['hostname'],
+                                        '%L': host,
+                                        '%l': fqdn,
+                                        '%n': hostname,
+                                        '%p': port,
+                                        '%r': remoteuser,
+                                        '%u': user})
+        expand_variable('identityfile', {'%%': '%',
+                                         '%d': homedir,
+                                         '%h': config['hostname'],
+                                         '%l': fqdn,
+                                         '%r': remoteuser,
+                                         '%u': user}, True)
+        # FIXME: Shouldn't the shell perform the tilde expansion here anyway?
+        expand_variable('proxycommand', {'%%': '%',
+                                         '%h': config['hostname'],
+                                         '%p': port,
+                                         '%r': remoteuser}, True)
+
         return config
 
     def _get_hosts(self, host):

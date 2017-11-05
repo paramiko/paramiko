@@ -530,3 +530,24 @@ Host *
             config.lookup('some-random-host')['proxycommand'],
             'default-proxy'
         )
+    def test_percent_expansion(self):
+        source_config = """
+Host whatever
+    User myuser
+    Hostname fe80::1234:56ff:fe78:89ab%%eth0
+    ControlPath ~/%n/%%n
+    IdentityFile ~/%r/%%r
+    ProxyCommand nc %h %p|tee ~/log
+"""
+        config = paramiko.SSHConfig()
+        config.parse(StringIO(source_config))
+        values = config.lookup('whatever')
+        home = os.path.expanduser('~')
+
+        self.assertEqual(values['hostname'], 'fe80::1234:56ff:fe78:89ab%eth0')
+        self.assertEqual(values['controlpath'], '~/whatever/%n')
+        self.assertEqual(values['identityfile'], ['{}/myuser/%r'.format(home)])
+        self.assertEqual(
+            values['proxycommand'],
+            'nc fe80::1234:56ff:fe78:89ab%eth0 22|tee {}/log'.format(home)
+        )
