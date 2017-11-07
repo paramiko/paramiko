@@ -63,15 +63,15 @@ class SFTPFile (BufferedFile):
         self._reqs = deque()
 
     def __del__(self):
-        self._close(async=True)
+        self._close(async_=True)
 
     def close(self):
         """
         Close the file.
         """
-        self._close(async=False)
+        self._close(async_=False)
 
-    def _close(self, async=False):
+    def _close(self, async_=False):
         # We allow double-close without signaling an error, because real
         # Python file objects do.  However, we must protect against actually
         # sending multiple CMD_CLOSE packets, because after we close our
@@ -86,8 +86,9 @@ class SFTPFile (BufferedFile):
             self.sftp._finish_responses(self)
         BufferedFile.close(self)
         try:
-            if async:
-                # GC'd file handle could be called from an arbitrary thread -- don't wait for a response
+            if async_:
+                # GC'd file handle could be called from an arbitrary thread
+                # -- don't wait for a response
                 self.sftp._async_request(type(None), CMD_CLOSE, self.handle)
             else:
                 self.sftp._request(CMD_CLOSE, self.handle)
