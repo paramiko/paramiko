@@ -11,6 +11,8 @@ python:
   - "3.7-dev"
   - "pypy-5.6.0"
 install:
+  # Ensure modern pip/etc on Python 3.3 workers (not sure WTF, but, eh)
+  - pip install pip==9.0.1 setuptools==36.6.0
   # Self-install for setup.py-driven deps
   - pip install -e .
   # Dev (doc/test running) requirements
