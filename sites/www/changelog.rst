@@ -2,6 +2,9 @@
 Changelog
 =========
 
+* :bug:`1108` Rename a private method keyword argument (which was named
+  ``async``) so that we're compatible with the upcoming Python 3.7 release
+  (where ``async`` is a new keyword.) Thanks to ``@vEpiphyte`` for the report.
 * :support:`1100` Updated the test suite & related docs/metadata/config to be
   compatible with pytest instead of using the old, custom, crufty
   unittest-based ``test.py``.
