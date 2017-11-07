@@ -2,6 +2,9 @@
 Changelog
 =========
 
+* :bug:`1108 (1.17+)` Rename a private method keyword argument (which was named
+  ``async``) so that we're compatible with the upcoming Python 3.7 release
+  (where ``async`` is a new keyword.) Thanks to ``@vEpiphyte`` for the report.
 * :support:`- backported` Include LICENSE file in wheel archives.
 * :release:`2.3.1 <2017-09-22>`
 * :bug:`1071` Certificate support broke the no-certificate case for Ed25519
