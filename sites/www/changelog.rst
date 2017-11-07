@@ -2,6 +2,9 @@
 Changelog
 =========
 
+* :bug:`1108 (1.17+)` Rename a private method keyword argument (which was named
+  ``async``) so that we're compatible with the upcoming Python 3.7 release
+  (where ``async`` is a new keyword.) Thanks to ``@vEpiphyte`` for the report.
 * :support:`- backported` Include LICENSE file in wheel archives.
 * :bug:`1055 (1.17+)` (also :issue:`1056`, :issue:`1057`, :issue:`1058`,
   :issue:`1059`) Fix up host-key checking in our GSSAPI support, which was
