@@ -252,7 +252,8 @@ class Transport(threading.Thread, ClosingContextManager):
                  default_window_size=DEFAULT_WINDOW_SIZE,
                  default_max_packet_size=DEFAULT_MAX_PACKET_SIZE,
                  gss_kex=False,
-                 gss_deleg_creds=True):
+                 gss_deleg_creds=True,
+                 sock_timeout=None):
         """
         Create a new SSH session over an existing socket, or socket-like
         object.  This only creates the `.Transport` object; it doesn't begin
@@ -322,6 +323,9 @@ class Transport(threading.Thread, ClosingContextManager):
                     # addr = sockaddr
                     sock = socket.socket(af, socket.SOCK_STREAM)
                     try:
+                        if sock_timeout is not None:
+                            sock.settimeout(sock_timeout)
+
                         retry_on_signal(lambda: sock.connect((hostname, port)))
                     except socket.error as e:
                         reason = str(e)
