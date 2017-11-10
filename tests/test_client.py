@@ -126,9 +126,22 @@ class ClientTest(unittest.TestCase):
         self.event = threading.Event()
 
     def tearDown(self):
-        for attr in "tc ts socks sockl".split():
-            if hasattr(self, attr):
-                getattr(self, attr).close()
+        # Shut down client Transport
+        if hasattr(self, 'tc'):
+            self.tc.close()
+        # Shut down shared socket
+        if hasattr(self, 'sockl'):
+            # Forcibly connect to server sock in case the server thread is
+            # hanging out in its accept() (e.g. if the client side of the test
+            # fails before it even gets to connecting); there's no other good
+            # way to force an accept() to exit.
+            put_a_sock_in_it = socket.socket()
+            put_a_sock_in_it.connect((self.addr, self.port))
+            put_a_sock_in_it.close()
+            # Then close "our" end of the socket (which _should_ cause the
+            # accept() to bail out, but does not, for some reason. I blame
+            # threading.)
+            self.sockl.close()
 
     def _run(self, allowed_keys=None, delay=0, public_blob=None):
         if allowed_keys is None:

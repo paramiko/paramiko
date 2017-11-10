@@ -2,6 +2,10 @@
 Changelog
 =========
 
+* :support:`-` Update ``tearDown`` of client test suite to avoid hangs due to
+  eternally blocking ``accept()`` calls on the internal server thread (which
+  can occur when test code raises an exception before actually connecting to
+  the server.)
 * :bug:`1108 (1.17+)` Rename a private method keyword argument (which was named
   ``async``) so that we're compatible with the upcoming Python 3.7 release
   (where ``async`` is a new keyword.) Thanks to ``@vEpiphyte`` for the report.
