@@ -230,6 +230,7 @@ class SSHClient (ClosingContextManager):
         banner_timeout=None,
         auth_timeout=None,
         gss_trust_dns=True,
+        passphrase=None,
     ):
         """
         Connect to an SSH server and authenticate to it.  The server's host key
@@ -270,7 +271,10 @@ class SSHClient (ClosingContextManager):
             the username to authenticate as (defaults to the current local
             username)
         :param str password:
-            a password to use for authentication or for unlocking a private key
+            Used for password authentication; is also used for private key
+            decryption if ``passphrase`` is not given.
+        :param str passphrase:
+            Used for decrypting private keys.
         :param .PKey pkey: an optional private key to use for authentication
         :param str key_filename:
             the filename, or list of filenames, of optional private key(s)
@@ -316,6 +320,8 @@ class SSHClient (ClosingContextManager):
             ``gss_deleg_creds`` and ``gss_host`` arguments.
         .. versionchanged:: 2.3
             Added the ``gss_trust_dns`` argument.
+        .. versionchanged:: 2.4
+            Added the ``passphrase`` argument.
         """
         if not sock:
             errors = {}
@@ -415,6 +421,7 @@ class SSHClient (ClosingContextManager):
         self._auth(
             username, password, pkey, key_filenames, allow_agent,
             look_for_keys, gss_auth, gss_kex, gss_deleg_creds, t.gss_host,
+            passphrase,
         )
 
     def close(self):
@@ -555,8 +562,11 @@ class SSHClient (ClosingContextManager):
             self._log(DEBUG, "Adding public certificate {}".format(cert_path))
         return key
 
-    def _auth(self, username, password, pkey, key_filenames, allow_agent,
-              look_for_keys, gss_auth, gss_kex, gss_deleg_creds, gss_host):
+    def _auth(
+        self, username, password, pkey, key_filenames, allow_agent,
+        look_for_keys, gss_auth, gss_kex, gss_deleg_creds, gss_host,
+        passphrase,
+    ):
         """
         Try, in order:
 
@@ -566,13 +576,16 @@ class SSHClient (ClosingContextManager):
               (if allowed).
             - Plain username/password auth, if a password was given.
 
-        (The password might be needed to unlock a private key, or for
-        two-factor authentication [for which it is required].)
+        (The password might be needed to unlock a private key [if 'passphrase'
+        isn't also given], or for two-factor authentication [for which it is
+        required].)
         """
         saved_exception = None
         two_factor = False
         allowed_types = set()
         two_factor_types = {'keyboard-interactive', 'password'}
+        if passphrase is None and password is not None:
+            passphrase = password
 
         # If GSS-API support and GSS-PI Key Exchange was performed, we attempt
         # authentication with gssapi-keyex.
@@ -614,7 +627,7 @@ class SSHClient (ClosingContextManager):
                 for pkey_class in (RSAKey, DSSKey, ECDSAKey, Ed25519Key):
                     try:
                         key = self._key_from_filepath(
-                            key_filename, pkey_class, password,
+                            key_filename, pkey_class, passphrase,
                         )
                         allowed_types = set(
                             self._transport.auth_publickey(username, key))
@@ -670,7 +683,7 @@ class SSHClient (ClosingContextManager):
             for pkey_class, filename in keyfiles:
                 try:
                     key = self._key_from_filepath(
-                        filename, pkey_class, password,
+                        filename, pkey_class, passphrase,
                     )
                     # for 2-factor auth a successfully auth'd key will result
                     # in ['password']

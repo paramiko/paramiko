@@ -655,7 +655,7 @@ class PasswordPassphraseTests(ClientTest):
         self._test_connection(password='pygmalion')
 
     # TODO: more granular exception pending #387
-    @raises(SSHException)
+    @raises(AuthenticationException)
     def test_passphrase_kwarg_not_used_for_password_auth(self):
         # Using the "right" password in the "wrong" field shouldn't work.
         self._test_connection(passphrase='pygmalion')
@@ -674,7 +674,7 @@ class PasswordPassphraseTests(ClientTest):
             password='television',
         )
 
-    @raises(SSHException) # TODO: more granular
+    @raises(AuthenticationException) # TODO: more granular
     def test_password_kwarg_not_used_for_passphrase_when_passphrase_kwarg_given(self): # noqa
         # Sanity: if we're given both fields, the password field is NOT used as
         # a passphrase.
