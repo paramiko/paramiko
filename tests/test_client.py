@@ -124,6 +124,7 @@ class ClientTest(unittest.TestCase):
             look_for_keys=False,
         )
         self.event = threading.Event()
+        self.kill_event = threading.Event()
 
     def tearDown(self):
         # Shut down client Transport
@@ -131,6 +132,10 @@ class ClientTest(unittest.TestCase):
             self.tc.close()
         # Shut down shared socket
         if hasattr(self, 'sockl'):
+            # Signal to server thread that it should shut down early; it checks
+            # this immediately after accept(). (In scenarios where connection
+            # actually succeeded during the test, this becomes a no-op.)
+            self.kill_event.set()
             # Forcibly connect to server sock in case the server thread is
             # hanging out in its accept() (e.g. if the client side of the test
             # fails before it even gets to connecting); there's no other good
@@ -143,10 +148,18 @@ class ClientTest(unittest.TestCase):
             # threading.)
             self.sockl.close()
 
-    def _run(self, allowed_keys=None, delay=0, public_blob=None):
+    def _run(
+        self, allowed_keys=None, delay=0, public_blob=None, kill_event=None,
+    ):
         if allowed_keys is None:
             allowed_keys = FINGERPRINTS.keys()
         self.socks, addr = self.sockl.accept()
+        # If the kill event was set at this point, it indicates an early
+        # shutdown, so bail out now and don't even try setting up a Transport
+        # (which will just verbosely die.)
+        if kill_event.is_set():
+            self.socks.close()
+            return
         self.ts = paramiko.Transport(self.socks)
         keypath = _support('test_rsa.key')
         host_key = paramiko.RSAKey.from_private_key_file(keypath)
@@ -166,7 +179,7 @@ class ClientTest(unittest.TestCase):
         The exception is ``allowed_keys`` which is stripped and handed to the
         ``NullServer`` used for testing.
         """
-        run_kwargs = {}
+        run_kwargs = {'kill_event': self.kill_event}
         for key in ('allowed_keys', 'public_blob'):
             run_kwargs[key] = kwargs.pop(key, None)
         # Server setup
