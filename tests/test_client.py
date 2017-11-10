@@ -683,10 +683,3 @@ class PasswordPassphraseTests(ClientTest):
             password='television',
             passphrase='wat? lol no',
         )
-
-    @raises(SSHException) # TODO: more granular
-    def test_passphrase_kwarg_not_used_for_password_value(self): # noqa
-        # Sanity: the new passphrase field is NEVER used for password auth!
-        self._test_connection(
-            passphrase='pygmalion',
-        )
