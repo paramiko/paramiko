@@ -654,8 +654,9 @@ class PasswordPassphraseTests(ClientTest):
         # Straightforward / duplicate of earlier basic password test.
         self._test_connection(password='pygmalion')
 
-    # TODO: more granular exception pending #387
-    @raises(AuthenticationException)
+    # TODO: more granular exception pending #387; should be signaling "no auth
+    # methods available" because no key and no password
+    @raises(SSHException)
     def test_passphrase_kwarg_not_used_for_password_auth(self):
         # Using the "right" password in the "wrong" field shouldn't work.
         self._test_connection(passphrase='pygmalion')
