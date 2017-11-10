@@ -20,7 +20,7 @@
 Some unit tests for SSHClient.
 """
 
-from __future__ import with_statement
+from __future__ import with_statement, print_function
 
 import gc
 import os
@@ -32,6 +32,8 @@ import unittest
 import warnings
 import weakref
 from tempfile import mkstemp
+
+from pytest_relaxed import raises
 
 import paramiko
 from paramiko.pkey import PublicBlob
@@ -640,3 +642,51 @@ class SSHClientTest(ClientTest):
         # Hand in just the class (new behavior)
         client.set_missing_host_key_policy(paramiko.AutoAddPolicy)
         assert isinstance(client._policy, paramiko.AutoAddPolicy)
+
+
+class PasswordPassphraseTests(ClientTest):
+    # TODO: most of these could reasonably be set up to use mocks/assertions
+    # (e.g. "gave passphrase -> expect PKey was given it as the passphrase")
+    # instead of suffering a real connection cycle.
+    # TODO: in that case, move the below to be part of an integration suite?
+
+    def test_password_kwarg_works_for_password_auth(self):
+        # Straightforward / duplicate of earlier basic password test.
+        self._test_connection(password='pygmalion')
+
+    # TODO: more granular exception pending #387
+    @raises(SSHException)
+    def test_passphrase_kwarg_not_used_for_password_auth(self):
+        # Using the "right" password in the "wrong" field shouldn't work.
+        self._test_connection(passphrase='pygmalion')
+
+    def test_passphrase_kwarg_used_for_key_passphrase(self):
+        # Straightforward again, with new passphrase kwarg.
+        self._test_connection(
+            key_filename=_support('test_rsa_password.key'),
+            passphrase='television',
+        )
+
+    def test_password_kwarg_used_for_passphrase_when_no_passphrase_kwarg_given(self): # noqa
+        # Backwards compatibility: passphrase in the password field.
+        self._test_connection(
+            key_filename=_support('test_rsa_password.key'),
+            password='television',
+        )
+
+    @raises(SSHException) # TODO: more granular
+    def test_password_kwarg_not_used_for_passphrase_when_passphrase_kwarg_given(self): # noqa
+        # Sanity: if we're given both fields, the password field is NOT used as
+        # a passphrase.
+        self._test_connection(
+            key_filename=_support('test_rsa_password.key'),
+            password='television',
+            passphrase='wat? lol no',
+        )
+
+    @raises(SSHException) # TODO: more granular
+    def test_passphrase_kwarg_not_used_for_password_value(self): # noqa
+        # Sanity: the new passphrase field is NEVER used for password auth!
+        self._test_connection(
+            passphrase='pygmalion',
+        )
