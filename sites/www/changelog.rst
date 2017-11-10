@@ -2,11 +2,11 @@
 Changelog
 =========
 
-* :feature:`-` Add a new ``passphrase`` kwarg to
-  `SSHClient.connect <~paramiko.client.SSHClient.connect>` so users may
-  disambiguate key-decryption passphrases from password-auth passwords. (This
-  is a backwards compatible change; ``password`` will still pull double duty as
-  a passphrase when ``passphrase`` is not given.)
+* :feature:`-` Add a new ``passphrase`` kwarg to `SSHClient.connect
+  <paramiko.client.SSHClient.connect>` so users may disambiguate key-decryption
+  passphrases from password-auth passwords. (This is a backwards compatible
+  change; ``password`` will still pull double duty as a passphrase when
+  ``passphrase`` is not given.)
 * :support:`-` Update ``tearDown`` of client test suite to avoid hangs due to
   eternally blocking ``accept()`` calls on the internal server thread (which
   can occur when test code raises an exception before actually connecting to
