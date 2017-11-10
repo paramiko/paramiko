@@ -111,8 +111,7 @@ class NullServer(paramiko.ServerInterface):
         return True
 
 
-class SSHClientTest (unittest.TestCase):
-
+class ClientTest(unittest.TestCase):
     def setUp(self):
         self.sockl = socket.socket()
         self.sockl.bind(('localhost', 0))
@@ -195,6 +194,8 @@ class SSHClientTest (unittest.TestCase):
         stdout.close()
         stderr.close()
 
+
+class SSHClientTest(ClientTest):
     def test_1_client(self):
         """
         verify that the SSHClient stuff works too.
