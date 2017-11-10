@@ -159,7 +159,7 @@ class ClientTest(unittest.TestCase):
         # If the kill event was set at this point, it indicates an early
         # shutdown, so bail out now and don't even try setting up a Transport
         # (which will just verbosely die.)
-        if kill_event.is_set():
+        if kill_event and kill_event.is_set():
             self.socks.close()
             return
         self.ts = paramiko.Transport(self.socks)
