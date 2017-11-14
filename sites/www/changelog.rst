@@ -2,6 +2,7 @@
 Changelog
 =========
 
+* :release:`2.4.0 <2017-11-14>`
 * :feature:`-` Add a new ``passphrase`` kwarg to `SSHClient.connect
   <paramiko.client.SSHClient.connect>` so users may disambiguate key-decryption
   passphrases from password-auth passwords. (This is a backwards compatible
