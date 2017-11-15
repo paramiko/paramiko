@@ -462,7 +462,8 @@ class SSHClient (ClosingContextManager):
             interpreted the same way as by the built-in ``file()`` function in
             Python
         :param int timeout:
-            set command's channel timeout. See `.Channel.settimeout`
+            set command's channel timeout in seconds since last i/o
+            operation. See `.Channel.settimeout`
         :param dict environment:
             a dict of shell environment variables, to be merged into the
             default environment that the remote command executes within.

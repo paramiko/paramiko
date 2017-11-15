@@ -575,8 +575,9 @@ class Channel (ClosingContextManager):
         argument can be a nonnegative float expressing seconds, or ``None``.
         If a float is given, subsequent channel read/write operations will
         raise a timeout exception if the timeout period value has elapsed
-        before the operation has completed.  Setting a timeout of ``None``
-        disables timeouts on socket operations.
+        before the operation has completed.  Elapsed time is measured since
+        the last operation, not since the channel opened.  Setting a timeout
+        of ``None`` disables timeouts on socket operations.
 
         ``chan.settimeout(0.0)`` is equivalent to ``chan.setblocking(0)``;
         ``chan.settimeout(None)`` is equivalent to ``chan.setblocking(1)``.
