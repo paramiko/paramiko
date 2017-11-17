@@ -1191,21 +1191,40 @@ class Transport(threading.Thread, ClosingContextManager):
             self._log(DEBUG, 'Host key verified ({})'.format(
                 hostkey.get_name()))
 
+        # Detect what authentication methods the server supports
+        try:
+            self._log(DEBUG, 'Attempting none auth')
+            self.auth_none(username)
+        except BadAuthenticationType as e:
+            allowed_auth_methods = frozenset(e.allowed_types)
+        else:
+            # Server allowed auth with no credentials
+            return
+
+        # Fallback to a default set of auth methods in case the server did not send any
+        if not allowed_auth_methods:
+            allowed_auth_methods = frozenset(('password', 'publickey',
+                                              'gssapi-keyex', 'gssapi-with-mic'))
+
         if (pkey is not None) or (password is not None) or gss_auth or gss_kex:
-            if gss_auth:
-                self._log(DEBUG, 'Attempting GSS-API auth... (gssapi-with-mic)') # noqa
-                self.auth_gssapi_with_mic(
-                    username, self.gss_host, gss_deleg_creds,
-                )
-            elif gss_kex:
-                self._log(DEBUG, 'Attempting GSS-API auth... (gssapi-keyex)')
-                self.auth_gssapi_keyex(username)
-            elif pkey is not None:
-                self._log(DEBUG, 'Attempting public-key auth...')
-                self.auth_publickey(username, pkey)
-            else:
-                self._log(DEBUG, 'Attempting password auth...')
-                self.auth_password(username, password)
+            while allowed_auth_methods != []:
+                # if gss_auth:
+                if gss_auth and 'gssapi-with-mic' in allowed_auth_methods:
+                    self._log(DEBUG, 'Attempting GSS-API auth... (gssapi-with-mic)') # noqa
+                    allowed_auth_methods=self.auth_gssapi_with_mic(
+                        username, self.gss_host, gss_deleg_creds,
+                    )
+                # elif gss_kex:
+                if gss_auth and 'gssapi-with-mic' in allowed_auth_methods:
+                    self._log(DEBUG, 'Attempting GSS-API auth... (gssapi-keyex)')
+                    allowed_auth_methods=self.auth_gssapi_keyex(username)
+                # elif pkey is not None:
+                elif pkey is not None and 'publickey' in allowed_auth_methods:
+                    self._log(DEBUG, 'Attempting public-key auth...')
+                    allowed_auth_methods=self.auth_publickey(username, pkey)
+                else:
+                    self._log(DEBUG, 'Attempting password auth...')
+                    allowed_auth_methods=self.auth_password(username, password)
 
         return
 
