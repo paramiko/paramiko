@@ -7,8 +7,21 @@ from invocations.docs import docs, www, sites
 from invocations.packaging.release import ns as release_coll, publish
 
 
+# TODO: this screams out for the invoke missing-feature of "I just wrap task X,
+# assume its signature by default" (even if that is just **kwargs support)
 @task
-def test(ctx, verbose=True, coverage=False, include_slow=False, opts=""):
+def test(
+    ctx,
+    verbose=True,
+    color=True,
+    capture='sys',
+    module=None,
+    k=None,
+    x=False,
+    opts="",
+    coverage=False,
+    include_slow=False,
+):
     """
     Run unit tests via pytest.
 
@@ -19,14 +32,28 @@ def test(ctx, verbose=True, coverage=False, include_slow=False, opts=""):
     """
     if verbose and '--verbose' not in opts and '-v' not in opts:
         opts += " --verbose"
+    # TODO: forget why invocations.pytest added this; is it to force color when
+    # running headless? Probably?
+    if color:
+        opts += " --color=yes"
+    opts += ' --capture={0}'.format(capture)
     if '-m' not in opts and not include_slow:
         opts += " -m 'not slow'"
+    if k is not None and not ('-k' in opts if opts else False):
+        opts += ' -k {}'.format(k)
+    if x and not ('-x' in opts if opts else False):
+        opts += ' -x'
+    modstr = ""
+    if module is not None:
+        # NOTE: implicit test_ prefix as we're not on pytest-relaxed yet
+        modstr = " tests/test_{}.py".format(module)
+    # Switch runner depending on coverage or no coverage.
+    # TODO: get pytest's coverage plugin working, IIRC it has issues?
     runner = "pytest"
     if coverage:
         # Leverage how pytest can be run as 'python -m pytest', and then how
         # coverage can be told to run things in that manner instead of
         # expecting a literal .py file.
-        # TODO: get pytest's coverage plugin working, IIRC it has issues?
         runner = "coverage run --source=paramiko -m pytest"
     # Strip SSH_AUTH_SOCK from parent env to avoid pollution by interactive
     # users.
@@ -36,7 +63,7 @@ def test(ctx, verbose=True, coverage=False, include_slow=False, opts=""):
     env = dict(os.environ)
     if 'SSH_AUTH_SOCK' in env:
         del env['SSH_AUTH_SOCK']
-    cmd = "{} {}".format(runner, opts)
+    cmd = "{} {} {}".format(runner, opts, modstr)
     # NOTE: we have a pytest.ini and tend to use that over PYTEST_ADDOPTS.
     ctx.run(cmd, pty=True, env=env, replace_env=True)
 
