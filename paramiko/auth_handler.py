@@ -70,6 +70,7 @@ class AuthHandler (object):
         # for GSSAPI
         self.gss_host = None
         self.gss_deleg_creds = True
+        self.service_request_sent = False
 
     def _log(self, *args):
         return self.transport._log(*args)
@@ -160,9 +161,15 @@ class AuthHandler (object):
 
     def _request_auth(self):
         m = Message()
-        m.add_byte(cMSG_SERVICE_REQUEST)
-        m.add_string('ssh-userauth')
-        self.transport._send_message(m)
+        if not self.service_request_sent:
+            m.add_byte(cMSG_SERVICE_REQUEST)
+            m.add_string('ssh-userauth')
+            self.service_request_sent = True
+            self.transport._send_message(m)
+        else:
+            m.add_string('ssh-userauth')
+            m.rewind()
+            self._parse_service_accept(m)
 
     def _disconnect_service_not_available(self):
         m = Message()
@@ -377,6 +384,7 @@ Error Message: {}
             self._log(INFO, 'Auth granted ({}).'.format(method))
             m.add_byte(cMSG_USERAUTH_SUCCESS)
             self.authenticated = True
+            self.service_request_sent = False
         else:
             self._log(INFO, 'Auth rejected ({}).'.format(method))
             m.add_byte(cMSG_USERAUTH_FAILURE)
@@ -387,6 +395,7 @@ Error Message: {}
             else:
                 m.add_boolean(False)
                 self.auth_fail_count += 1
+                self.service_request_sent = False
         self.transport._send_message(m)
         if self.auth_fail_count >= 10:
             self._disconnect_no_more_auth()
