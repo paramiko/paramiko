@@ -465,7 +465,7 @@ class SSHClient (ClosingContextManager):
             set command's channel timeout. See `.Channel.settimeout`
         :param bool get_pty:
             Request a pseudo-terminal from the server (default ``False``).
-            See `Channel.get_pty`
+            See `.Channel.get_pty`
         :param dict environment:
             a dict of shell environment variables, to be merged into the
             default environment that the remote command executes within.
