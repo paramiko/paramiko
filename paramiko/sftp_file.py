@@ -30,7 +30,7 @@ import time
 from paramiko.common import DEBUG
 
 from paramiko.file import BufferedFile
-from paramiko.py3compat import long
+from paramiko.py3compat import u, long
 from paramiko.sftp import (
     CMD_CLOSE, CMD_READ, CMD_DATA, SFTPError, CMD_WRITE, CMD_STATUS, CMD_FSTAT,
     CMD_ATTRS, CMD_FSETSTAT, CMD_EXTENDED,
@@ -65,15 +65,15 @@ class SFTPFile (BufferedFile):
         self._reqs = deque()
 
     def __del__(self):
-        self._close(async=True)
+        self._close(async_=True)
 
     def close(self):
         """
         Close the file.
         """
-        self._close(async=False)
+        self._close(async_=False)
 
-    def _close(self, async=False):
+    def _close(self, async_=False):
         # We allow double-close without signaling an error, because real
         # Python file objects do.  However, we must protect against actually
         # sending multiple CMD_CLOSE packets, because after we close our
@@ -83,12 +83,12 @@ class SFTPFile (BufferedFile):
         # __del__.)
         if self._closed:
             return
-        self.sftp._log(DEBUG, 'close(%s)' % hexlify(self.handle))
+        self.sftp._log(DEBUG, 'close(%s)' % u(hexlify(self.handle)))
         if self.pipelined:
             self.sftp._finish_responses(self)
         BufferedFile.close(self)
         try:
-            if async:
+            if async_:
                 # GC'd file handle could be called from an arbitrary thread
                 # -- don't wait for a response
                 self.sftp._async_request(type(None), CMD_CLOSE, self.handle)

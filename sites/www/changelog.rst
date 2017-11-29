@@ -3,8 +3,38 @@ Changelog
 =========
 
 * :bug:`1039` Ed25519 auth key decryption raised an unexpected exception when
-  given a unicode password string (typical in python 3).
-  Report by Theodor van Nahl and fix by Pierce Lopez.
+  given a unicode password string (typical in python 3). Report by Theodor van
+  Nahl and fix by Pierce Lopez.
+* :bug:`1108 (1.17+)` Rename a private method keyword argument (which was named
+  ``async``) so that we're compatible with the upcoming Python 3.7 release
+  (where ``async`` is a new keyword.) Thanks to ``@vEpiphyte`` for the report.
+* :support:`- backported` Include LICENSE file in wheel archives.
+* :release:`2.2.2 <2017-09-18>`
+* :release:`2.1.4 <2017-09-18>`
+* :release:`2.0.7 <2017-09-18>`
+* :release:`1.18.4 <2017-09-18>`
+* :bug:`1065` Add rekeying support to GSSAPI connections, which was erroneously
+  missing. Without this fix, any attempt to renegotiate the transport keys for
+  a ``gss-kex``-authed `~paramiko.transport.Transport` would cause a MIC
+  failure and terminate the connection. Thanks to Sebastian Deiß and Anselm
+  Kruis for the patch.
+* :bug:`1061` Clean up GSSAPI authentication procedures so they do not prevent
+  normal fallback to other authentication methods on failure. (In other words,
+  presence of GSSAPI functionality on a target server precluded use of _any_
+  other auth type if the user was unable to pass GSSAPI auth.) Patch via Anselm
+  Kruis.
+* :bug:`1060` Fix key exchange (kex) algorithm list for GSSAPI authentication;
+  previously, the list used solely out-of-date algorithms, and now contains
+  newer ones listed preferentially before the old. Credit: Anselm Kruis.
+* :bug:`1055 (1.17+)` (also :issue:`1056`, :issue:`1057`, :issue:`1058`,
+  :issue:`1059`) Fix up host-key checking in our GSSAPI support, which was
+  previously using an incorrect API call. Thanks to Anselm Kruis for the
+  patches.
+* :bug:`945 (1.18+)` (backport of :issue:`910` and re: :issue:`865`) SSHClient
+  now requests the type of host key it has (e.g. from known_hosts) and does not
+  consider a different type to be a "Missing" host key. This fixes a common
+  case where an ECDSA key is in known_hosts and the server also has an RSA host
+  key. Thanks to Pierce Lopez.
 * :support:`1012` (via :issue:`1016`) Enhance documentation around the new
   `SFTP.posix_rename <paramiko.sftp_client.SFTPClient.posix_rename>` method so
   it's referenced in the 'standard' ``rename`` method for increased visibility.

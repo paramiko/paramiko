@@ -83,7 +83,6 @@ class KexGSSGroup1(object):
         """
         Start the GSS-API / SSPI Authenticated Diffie-Hellman Key Exchange.
         """
-        self.transport.gss_kex_used = True
         self._generate_x()
         if self.transport.server_mode:
             # compute f = g^x mod p, but don't send it yet
@@ -207,15 +206,15 @@ class KexGSSGroup1(object):
         hm.add_mpint(self.e)
         hm.add_mpint(self.f)
         hm.add_mpint(K)
-        self.transport._set_K_H(K, sha1(str(hm)).digest())
+        H = sha1(str(hm)).digest()
+        self.transport._set_K_H(K, H)
         if srv_token is not None:
             self.kexgss.ssh_init_sec_context(target=self.gss_host,
                                              recv_token=srv_token)
-            self.kexgss.ssh_check_mic(mic_token,
-                                      self.transport.session_id)
+            self.kexgss.ssh_check_mic(mic_token, H)
         else:
-            self.kexgss.ssh_check_mic(mic_token,
-                                      self.transport.session_id)
+            self.kexgss.ssh_check_mic(mic_token, H)
+        self.transport.gss_kex_used = True
         self.transport._activate_outbound()
 
     def _parse_kexgss_init(self, m):
@@ -258,6 +257,7 @@ class KexGSSGroup1(object):
             else:
                 m.add_boolean(False)
             self.transport._send_message(m)
+            self.transport.gss_kex_used = True
             self.transport._activate_outbound()
         else:
             m.add_byte(c_MSG_KEXGSS_CONTINUE)
@@ -325,7 +325,6 @@ class KexGSSGex(object):
         """
         Start the GSS-API / SSPI Authenticated Diffie-Hellman Group Exchange
         """
-        self.transport.gss_kex_used = True
         if self.transport.server_mode:
             self.transport._expect_packet(MSG_KEXGSS_GROUPREQ)
             return
@@ -501,6 +500,7 @@ class KexGSSGex(object):
             else:
                 m.add_boolean(False)
             self.transport._send_message(m)
+            self.transport.gss_kex_used = True
             self.transport._activate_outbound()
         else:
             m.add_byte(c_MSG_KEXGSS_CONTINUE)
@@ -582,11 +582,10 @@ class KexGSSGex(object):
         if srv_token is not None:
             self.kexgss.ssh_init_sec_context(target=self.gss_host,
                                              recv_token=srv_token)
-            self.kexgss.ssh_check_mic(mic_token,
-                                      self.transport.session_id)
+            self.kexgss.ssh_check_mic(mic_token, H)
         else:
-            self.kexgss.ssh_check_mic(mic_token,
-                                      self.transport.session_id)
+            self.kexgss.ssh_check_mic(mic_token, H)
+        self.transport.gss_kex_used = True
         self.transport._activate_outbound()
 
     def _parse_kexgss_error(self, m):
