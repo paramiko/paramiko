@@ -479,6 +479,9 @@ class SSHClient (ClosingContextManager):
             3-tuple
 
         :raises: `.SSHException` -- if the server fails to execute the command
+
+        .. versionchanged:: 1.10
+            Added the ``get_pty`` kwarg.
         """
         chan = self._transport.open_session(timeout=timeout)
         if get_pty:
