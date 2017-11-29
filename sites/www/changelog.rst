@@ -2,6 +2,9 @@
 Changelog
 =========
 
+* :bug:`1039` Ed25519 auth key decryption raised an unexpected exception when
+  given a unicode password string (typical in python 3). Report by Theodor van
+  Nahl and fix by Pierce Lopez.
 * :release:`2.4.0 <2017-11-14>`
 * :feature:`-` Add a new ``passphrase`` kwarg to `SSHClient.connect
   <paramiko.client.SSHClient.connect>` so users may disambiguate key-decryption
