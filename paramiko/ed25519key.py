@@ -25,6 +25,7 @@ import six
 
 from paramiko.message import Message
 from paramiko.pkey import PKey
+from paramiko.py3compat import b
 from paramiko.ssh_exception import SSHException, PasswordRequiredException
 
 
@@ -132,7 +133,7 @@ class Ed25519Key(PKey):
         else:
             cipher = Transport._cipher_info[ciphername]
             key = bcrypt.kdf(
-                password=password,
+                password=b(password),
                 salt=bcrypt_salt,
                 desired_key_bytes=cipher["key-size"] + cipher["block-size"],
                 rounds=bcrypt_rounds,

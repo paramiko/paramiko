@@ -2,6 +2,9 @@
 Changelog
 =========
 
+* :bug:`1039` Ed25519 auth key decryption raised an unexpected exception when
+  given a unicode password string (typical in python 3). Report by Theodor van
+  Nahl and fix by Pierce Lopez.
 * :bug:`1108 (1.17+)` Rename a private method keyword argument (which was named
   ``async``) so that we're compatible with the upcoming Python 3.7 release
   (where ``async`` is a new keyword.) Thanks to ``@vEpiphyte`` for the report.
