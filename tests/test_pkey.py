@@ -466,6 +466,16 @@ class KeyTest(unittest.TestCase):
         self.assertTrue(not pub.can_sign())
         self.assertEqual(key, pub)
 
+    def test_ed25519_nonbytes_password(self):
+        # https://github.com/paramiko/paramiko/issues/1039
+        key = Ed25519Key.from_private_key_file(
+            test_path('test_ed25519_password.key'),
+            # NOTE: not a bytes. Amusingly, the test above for same key DOES
+            # explicitly cast to bytes...code smell!
+            'abc123',
+        )
+        # No exception -> it's good. Meh.
+
     def test_keyfile_is_actually_encrypted(self):
         # Read an existing encrypted private key
         file_ = test_path('test_rsa_password.key')
