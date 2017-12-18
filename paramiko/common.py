@@ -20,7 +20,7 @@
 Common constants and global variables.
 """
 import logging
-from paramiko.py3compat import byte_chr, PY2, bytes_types, text_type, long
+from paramiko.py3compat import byte_chr, PY2, bytes_types, text_type, long, b
 
 MSG_DISCONNECT, MSG_IGNORE, MSG_UNIMPLEMENTED, MSG_DEBUG, \
     MSG_SERVICE_REQUEST, MSG_SERVICE_ACCEPT = range(1, 7)
@@ -161,17 +161,24 @@ else:
 
 
 def asbytes(s):
-    """Coerce to bytes if possible or return unchanged."""
-    if isinstance(s, bytes_types):
-        return s
-    if isinstance(s, text_type):
-        # Accept text and encode as utf-8 for compatibility only.
-        return s.encode("utf-8")
-    asbytes = getattr(s, "asbytes", None)
-    if asbytes is not None:
-        return asbytes()
-    # May be an object that implements the buffer api, let callers handle.
-    return s
+    """
+    Coerce to bytes if possible or return unchanged.
+    """
+    try:
+        # Attempt to run through our version of b(), which does the Right Thing
+        # for string/unicode/buffer (Py2) or bytes/str (Py3), and raises
+        # TypeError if it's not one of those types.
+        return b(s)
+    except TypeError:
+        try:
+            # If it wasn't a string/byte/buffer type object, try calling an
+            # asbytes() method, which many of our internal classes implement.
+            return s.asbytes()
+        except AttributeError:
+            # Finally, just do nothing & assume this object is sufficiently
+            # byte-y or buffer-y that everything will work out (or that callers
+            # are capable of handling whatever it is.)
+            return s
 
 
 xffffffff = long(0xffffffff)
