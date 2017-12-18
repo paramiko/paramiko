@@ -106,6 +106,9 @@ class Channel (ClosingContextManager):
         self.timeout = None
         #: Whether the connection has been closed
         self.closed = False
+        # Whether a close message has been sent; guarded with
+        # transport.clear_to_send_lock
+        self._close_sent = False
         self.ultra_debug = False
         self.lock = threading.Lock()
         self.out_buffer_cv = threading.Condition(self.lock)
@@ -183,7 +186,7 @@ class Channel (ClosingContextManager):
         m.add_int(height_pixels)
         m.add_string(bytes())
         self._event_pending()
-        self.transport._send_user_message(m)
+        self._checked_send_user_message(m)
         self._wait_for_event()
 
     @open_only
@@ -210,7 +213,7 @@ class Channel (ClosingContextManager):
         m.add_string('shell')
         m.add_boolean(True)
         self._event_pending()
-        self.transport._send_user_message(m)
+        self._checked_send_user_message(m)
         self._wait_for_event()
 
     @open_only
@@ -237,7 +240,7 @@ class Channel (ClosingContextManager):
         m.add_boolean(True)
         m.add_string(command)
         self._event_pending()
-        self.transport._send_user_message(m)
+        self._checked_send_user_message(m)
         self._wait_for_event()
 
     @open_only
@@ -263,7 +266,7 @@ class Channel (ClosingContextManager):
         m.add_boolean(True)
         m.add_string(subsystem)
         self._event_pending()
-        self.transport._send_user_message(m)
+        self._checked_send_user_message(m)
         self._wait_for_event()
 
     @open_only
@@ -290,7 +293,7 @@ class Channel (ClosingContextManager):
         m.add_int(height)
         m.add_int(width_pixels)
         m.add_int(height_pixels)
-        self.transport._send_user_message(m)
+        self._checked_send_user_message(m)
 
     @open_only
     def update_environment(self, environment):
@@ -406,7 +409,7 @@ class Channel (ClosingContextManager):
         m.add_string('exit-status')
         m.add_boolean(False)
         m.add_int(status)
-        self.transport._send_user_message(m)
+        self._checked_send_user_message(m)
 
     @open_only
     def request_x11(
@@ -470,7 +473,7 @@ class Channel (ClosingContextManager):
         m.add_string(auth_cookie)
         m.add_int(screen_number)
         self._event_pending()
-        self.transport._send_user_message(m)
+        self._checked_send_user_message(m)
         self._wait_for_event()
         self.transport._set_x11_handler(handler)
         return auth_cookie
@@ -495,7 +498,7 @@ class Channel (ClosingContextManager):
         m.add_int(self.remote_chanid)
         m.add_string('auth-agent-req@openssh.com')
         m.add_boolean(False)
-        self.transport._send_user_message(m)
+        self._checked_send_user_message(m)
         self.transport._set_forward_agent_handler(handler)
         return True
 
@@ -628,6 +631,30 @@ class Channel (ClosingContextManager):
         """
         return self.transport.getpeername()
 
+    def _checked_send_user_message(self, message, close=False):
+        """Send a user message, checking if the channel is closed first.
+
+        Calling self.transport._send_user_message() directly suffers from
+        certain race conditions (namely, messages can be sent after a close
+        message is sent). So, we uses the transport send lock to guard as
+        we send messages to test/set self._close_sent.
+        """
+        def _checked_send():
+            if self._close_sent:
+                return
+            self.transport._send_message(message)
+            if close:
+                self._close_sent = True
+
+        self.transport._with_send_lock(_checked_send)
+
+    def _checked_close(self, close_messages):
+        eof, close = close_messages
+        if eof is not None:
+            self._checked_send_user_message(eof)
+        if close is not None:
+            self._checked_send_user_message(close, True)
+
     def close(self):
         """
         Close the channel.  All future read/write operations on the channel
@@ -650,9 +677,7 @@ class Channel (ClosingContextManager):
             msgs = self._close_internal()
         finally:
             self.lock.release()
-        for m in msgs:
-            if m is not None:
-                self.transport._send_user_message(m)
+        self._checked_close(msgs)
 
     def recv_ready(self):
         """
@@ -691,7 +716,7 @@ class Channel (ClosingContextManager):
             m.add_byte(cMSG_CHANNEL_WINDOW_ADJUST)
             m.add_int(self.remote_chanid)
             m.add_int(ack)
-            self.transport._send_user_message(m)
+            self._checked_send_user_message(m)
 
         return out
 
@@ -739,7 +764,7 @@ class Channel (ClosingContextManager):
             m.add_byte(cMSG_CHANNEL_WINDOW_ADJUST)
             m.add_int(self.remote_chanid)
             m.add_int(ack)
-            self.transport._send_user_message(m)
+            self._checked_send_user_message(m)
 
         return out
 
@@ -931,7 +956,7 @@ class Channel (ClosingContextManager):
             finally:
                 self.lock.release()
             if m is not None:
-                self.transport._send_user_message(m)
+                self._checked_send_user_message(m)
 
     def shutdown_read(self):
         """
@@ -1000,9 +1025,7 @@ class Channel (ClosingContextManager):
             msgs = self._close_internal()
         finally:
             self.lock.release()
-        for m in msgs:
-            if m is not None:
-                self.transport._send_user_message(m)
+        self._checked_close(msgs)
 
     def _feed(self, m):
         if isinstance(m, bytes_types):
@@ -1132,7 +1155,7 @@ class Channel (ClosingContextManager):
             else:
                 m.add_byte(cMSG_CHANNEL_FAILURE)
             m.add_int(self.remote_chanid)
-            self.transport._send_user_message(m)
+            self._checked_send_user_message(m)
 
     def _handle_eof(self, m):
         self.lock.acquire()
@@ -1154,9 +1177,7 @@ class Channel (ClosingContextManager):
             self.transport._unlink_channel(self.chanid)
         finally:
             self.lock.release()
-        for m in msgs:
-            if m is not None:
-                self.transport._send_user_message(m)
+        self._checked_close(msgs)
 
     # ...internals...
 
@@ -1177,7 +1198,7 @@ class Channel (ClosingContextManager):
             self.lock.release()
         # Note: We release self.lock before calling _send_user_message.
         # Otherwise, we can deadlock during re-keying.
-        self.transport._send_user_message(m)
+        self._checked_send_user_message(m)
         return size
 
     def _log(self, level, msg, *args):

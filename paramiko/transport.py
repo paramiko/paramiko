@@ -1711,6 +1711,12 @@ class Transport(threading.Thread, ClosingContextManager):
         send a message, but block if we're in key negotiation.  this is used
         for user-initiated requests.
         """
+        self._with_send_lock(lambda: self._send_message(data))
+
+    def _with_send_lock(self, fn_in_lock):
+        """
+        performs an operation with `clear_to_send_lock`.
+        """
         start = time.time()
         while True:
             self.clear_to_send.wait(0.1)
@@ -1724,7 +1730,7 @@ class Transport(threading.Thread, ClosingContextManager):
             if time.time() > start + self.clear_to_send_timeout:
                 raise SSHException('Key-exchange timed out waiting for key negotiation') # noqa
         try:
-            self._send_message(data)
+            fn_in_lock()
         finally:
             self.clear_to_send_lock.release()
 
