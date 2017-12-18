@@ -20,7 +20,7 @@
 Common constants and global variables.
 """
 import logging
-from paramiko.py3compat import byte_chr, PY2, bytes_types, text_type, long, b
+from paramiko.py3compat import byte_chr, PY2, long, b
 
 MSG_DISCONNECT, MSG_IGNORE, MSG_UNIMPLEMENTED, MSG_DEBUG, \
     MSG_SERVICE_REQUEST, MSG_SERVICE_ACCEPT = range(1, 7)

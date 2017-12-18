@@ -1,11 +1,12 @@
 import sys
 import base64
 
-__all__ = ['PY2', 'string_types', 'integer_types', 'text_type', 'bytes_types',
-           'bytes', 'long', 'input', 'decodebytes', 'encodebytes',
-           'bytestring', 'byte_ord', 'byte_chr', 'byte_mask', 'b', 'u', 'b2s',
-           'StringIO', 'BytesIO', 'is_callable', 'MAXSIZE',
-           'next', 'builtins']
+__all__ = [
+    'BytesIO', 'MAXSIZE', 'PY2', 'StringIO', 'b', 'b2s', 'builtins',
+    'byte_chr', 'byte_mask', 'byte_ord', 'bytes', 'bytes_types', 'decodebytes',
+    'encodebytes', 'input', 'integer_types', 'is_callable', 'long', 'next',
+    'string_types', 'text_type', 'u',
+]
 
 PY2 = sys.version_info[0] < 3
 
