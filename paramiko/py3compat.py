@@ -23,12 +23,6 @@ if PY2:
     import __builtin__ as builtins
 
 
-    def bytestring(s):  # NOQA
-        if isinstance(s, unicode):  # NOQA
-            return s.encode('utf-8')
-        return s
-
-
     byte_ord = ord  # NOQA
     byte_chr = chr  # NOQA
 
@@ -110,9 +104,6 @@ else:
     input = input
     decodebytes = base64.decodebytes
     encodebytes = base64.encodebytes
-
-    def bytestring(s):
-        return s
 
     def byte_ord(c):
         # In case we're handed a string instead of an int.

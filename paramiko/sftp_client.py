@@ -28,7 +28,7 @@ from paramiko import util
 from paramiko.channel import Channel
 from paramiko.message import Message
 from paramiko.common import INFO, DEBUG, o777
-from paramiko.py3compat import bytestring, b, u, long
+from paramiko.py3compat import b, u, long
 from paramiko.sftp import (
     BaseSFTP, CMD_OPENDIR, CMD_HANDLE, SFTPError, CMD_READDIR, CMD_NAME,
     CMD_CLOSE, SFTP_FLAG_READ, SFTP_FLAG_WRITE, SFTP_FLAG_CREATE,
@@ -489,7 +489,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         """
         dest = self._adjust_cwd(dest)
         self._log(DEBUG, 'symlink({!r}, {!r})'.format(source, dest))
-        source = bytestring(source)
+        source = b(source)
         self._request(CMD_SYMLINK, source, dest)
 
     def chmod(self, path, mode):
