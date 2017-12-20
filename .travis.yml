@@ -4,22 +4,24 @@ cache:
   directories:
     - $HOME/.cache/pip
 python:
-  - "2.6"
   - "2.7"
-  - "3.3"
   - "3.4"
   - "3.5"
   - "3.6"
+  - "3.7-dev"
   - "pypy-5.6.0"
 install:
+  # Ensure modern pip/etc to avoid some issues w/ older worker environs
+  - pip install pip==9.0.1 setuptools==36.6.0
   # Self-install for setup.py-driven deps
   - pip install -e .
   # Dev (doc/test running) requirements
+  # TODO: use pipenv + whatever contexty-type stuff it has
   - pip install codecov # For codecov specifically
   - pip install -r dev-requirements.txt
 script:
-  # Main tests, w/ coverage!
-  - inv test --coverage
+  # All (including slow) tests, w/ coverage!
+  - inv coverage
   # Ensure documentation builds, both sites, maxxed nitpicking
   - inv sites
   # flake8 is now possible!

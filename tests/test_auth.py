@@ -31,8 +31,10 @@ from paramiko import (
 )
 from paramiko import AUTH_FAILED, AUTH_PARTIALLY_SUCCESSFUL, AUTH_SUCCESSFUL
 from paramiko.py3compat import u
-from tests.loop import LoopSocket
-from tests.util import test_path
+
+from .loop import LoopSocket
+from .util import _support, slow
+
 
 _pwd = u('\u2022')
 
@@ -40,7 +42,7 @@ _pwd = u('\u2022')
 class NullServer (ServerInterface):
     paranoid_did_password = False
     paranoid_did_public_key = False
-    paranoid_key = DSSKey.from_private_key_file(test_path('test_dss.key'))
+    paranoid_key = DSSKey.from_private_key_file(_support('test_dss.key'))
 
     def get_allowed_auths(self, username):
         if username == 'slowdive':
@@ -118,7 +120,7 @@ class AuthTest (unittest.TestCase):
         self.sockc.close()
 
     def start_server(self):
-        host_key = RSAKey.from_private_key_file(test_path('test_rsa.key'))
+        host_key = RSAKey.from_private_key_file(_support('test_rsa.key'))
         self.public_host_key = RSAKey(data=host_key.asbytes())
         self.ts.add_server_key(host_key)
         self.event = threading.Event()
@@ -131,7 +133,7 @@ class AuthTest (unittest.TestCase):
         self.assertTrue(self.event.is_set())
         self.assertTrue(self.ts.is_active())
 
-    def test_1_bad_auth_type(self):
+    def test_bad_auth_type(self):
         """
         verify that we get the right exception when an unsupported auth
         type is requested.
@@ -146,7 +148,7 @@ class AuthTest (unittest.TestCase):
             self.assertEqual(BadAuthenticationType, etype)
             self.assertEqual(['publickey'], evalue.allowed_types)
 
-    def test_2_bad_password(self):
+    def test_bad_password(self):
         """
         verify that a bad password gets the right exception, and that a retry
         with the right password works.
@@ -162,7 +164,7 @@ class AuthTest (unittest.TestCase):
         self.tc.auth_password(username='slowdive', password='pygmalion')
         self.verify_finished()
 
-    def test_3_multipart_auth(self):
+    def test_multipart_auth(self):
         """
         verify that multipart auth works.
         """
@@ -170,12 +172,12 @@ class AuthTest (unittest.TestCase):
         self.tc.connect(hostkey=self.public_host_key)
         remain = self.tc.auth_password(username='paranoid', password='paranoid')
         self.assertEqual(['publickey'], remain)
-        key = DSSKey.from_private_key_file(test_path('test_dss.key'))
+        key = DSSKey.from_private_key_file(_support('test_dss.key'))
         remain = self.tc.auth_publickey(username='paranoid', key=key)
         self.assertEqual([], remain)
         self.verify_finished()
 
-    def test_4_interactive_auth(self):
+    def test_interactive_auth(self):
         """
         verify keyboard-interactive auth works.
         """
@@ -193,7 +195,7 @@ class AuthTest (unittest.TestCase):
         self.assertEqual([], remain)
         self.verify_finished()
 
-    def test_5_interactive_auth_fallback(self):
+    def test_interactive_auth_fallback(self):
         """
         verify that a password auth attempt will fallback to "interactive"
         if password auth isn't supported but interactive is.
@@ -204,7 +206,7 @@ class AuthTest (unittest.TestCase):
         self.assertEqual([], remain)
         self.verify_finished()
 
-    def test_6_auth_utf8(self):
+    def test_auth_utf8(self):
         """
         verify that utf-8 encoding happens in authentication.
         """
@@ -214,7 +216,7 @@ class AuthTest (unittest.TestCase):
         self.assertEqual([], remain)
         self.verify_finished()
 
-    def test_7_auth_non_utf8(self):
+    def test_auth_non_utf8(self):
         """
         verify that non-utf-8 encoded passwords can be used for broken
         servers.
@@ -225,7 +227,7 @@ class AuthTest (unittest.TestCase):
         self.assertEqual([], remain)
         self.verify_finished()
 
-    def test_8_auth_gets_disconnected(self):
+    def test_auth_gets_disconnected(self):
         """
         verify that we catch a server disconnecting during auth, and report
         it as an auth failure.
@@ -238,7 +240,8 @@ class AuthTest (unittest.TestCase):
             etype, evalue, etb = sys.exc_info()
             self.assertTrue(issubclass(etype, AuthenticationException))
 
-    def test_9_auth_non_responsive(self):
+    @slow
+    def test_auth_non_responsive(self):
         """
         verify that authentication times out if server takes to long to
         respond (or never responds).

@@ -19,8 +19,8 @@ via `pip <http://pip-installer.org>`_::
 
     $ pip install paramiko
 
-We currently support **Python 2.6, 2.7, 3.3+, and PyPy**. Users on Python 2.5
-or older (or 3.2 or older) are urged to upgrade.
+We currently support **Python 2.7, 3.4+, and PyPy**. Users on Python 2.6 or
+older (or 3.3 or older) are urged to upgrade.
 
 Paramiko has only one direct hard dependency: the Cryptography library. See
 :ref:`cryptography`.

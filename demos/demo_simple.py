@@ -37,8 +37,10 @@ except ImportError:
 # setup logging
 paramiko.util.log_to_file('demo_simple.log')
 # Paramiko client configuration
-UseGSSAPI = True             # enable GSS-API / SSPI authentication
-DoGSSAPIKeyExchange = True
+UseGSSAPI = paramiko.GSS_AUTH_AVAILABLE             # enable "gssapi-with-mic" authentication, if supported by your python installation
+DoGSSAPIKeyExchange = paramiko.GSS_AUTH_AVAILABLE   # enable "gssapi-kex" key exchange, if supported by your python installation
+# UseGSSAPI = False
+# DoGSSAPIKeyExchange = False
 port = 22
 
 # get hostname
@@ -64,7 +66,7 @@ if username == '':
     username = input('Username [%s]: ' % default_username)
     if len(username) == 0:
         username = default_username
-if not UseGSSAPI or (not UseGSSAPI and not DoGSSAPIKeyExchange):
+if not UseGSSAPI and not DoGSSAPIKeyExchange:
     password = getpass.getpass('Password for %s@%s: ' % (username, hostname))
 
 
@@ -74,15 +76,14 @@ try:
     client.load_system_host_keys()
     client.set_missing_host_key_policy(paramiko.WarningPolicy())
     print('*** Connecting...')
-    if not UseGSSAPI or (not UseGSSAPI and not DoGSSAPIKeyExchange):
+    if not UseGSSAPI and not DoGSSAPIKeyExchange:
         client.connect(hostname, port, username, password)
     else:
-        # SSPI works only with the FQDN of the target host
-        hostname = socket.getfqdn(hostname)
         try:
             client.connect(hostname, port, username, gss_auth=UseGSSAPI,
                            gss_kex=DoGSSAPIKeyExchange)
         except Exception:
+            # traceback.print_exc()
             password = getpass.getpass('Password for %s@%s: ' % (username, hostname))
             client.connect(hostname, port, username, password)
 

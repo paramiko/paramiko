@@ -223,7 +223,7 @@ class ServerInterface (object):
 
         The default implementation always returns ``AUTH_FAILED``.
 
-        :param list responses: list of `str` responses from the client
+        :param responses: list of `str` responses from the client
         :return:
             ``AUTH_FAILED`` if the authentication fails; ``AUTH_SUCCESSFUL`` if
             it succeeds; ``AUTH_PARTIALLY_SUCCESSFUL`` if the interactive auth
@@ -570,6 +570,19 @@ class ServerInterface (object):
         """
         return False
 
+    def get_banner(self):
+        """
+        A pre-login banner to display to the user. The message may span
+        multiple lines separated by crlf pairs. The language should be in
+        rfc3066 style, for example: en-US
+
+        The default implementation always returns ``(None, None)``.
+
+        :returns: A tuple containing the banner and language code.
+
+        .. versionadded:: 2.3
+        """
+        return (None, None)
 
 class InteractiveQuery (object):
     """
@@ -654,12 +667,13 @@ class SubsystemHandler (threading.Thread):
     def _run(self):
         try:
             self.__transport._log(
-                DEBUG, 'Starting handler for subsystem %s' % self.__name)
+                DEBUG, 'Starting handler for subsystem {}'.format(self.__name)
+            )
             self.start_subsystem(self.__name, self.__transport, self.__channel)
         except Exception as e:
             self.__transport._log(
                 ERROR,
-                'Exception in subsystem handler for "{0}": {1}'.format(
+                'Exception in subsystem handler for "{}": {}'.format(
                     self.__name, e
                 )
             )

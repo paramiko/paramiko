@@ -22,7 +22,7 @@ What
 ----
 
 "Paramiko" is a combination of the Esperanto words for "paranoid" and
-"friend".  It's a module for Python 2.6+/3.3+ that implements the SSH2 protocol
+"friend".  It's a module for Python 2.7/3.4+ that implements the SSH2 protocol
 for secure (encrypted and authenticated) connections to remote machines. Unlike
 SSL (aka TLS), SSH2 protocol does not require hierarchical certificates signed
 by a powerful central authority.  You may know SSH2 as the protocol that
@@ -132,6 +132,7 @@ doc/ folder.
 
 There are also unit tests here::
 
-    $ python ./test.py
+    $ pip install -r dev-requirements.txt
+    $ pytest
 
 Which will verify that most of the core components are working correctly.

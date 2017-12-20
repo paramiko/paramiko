@@ -30,7 +30,7 @@ import time
 from paramiko.common import DEBUG
 
 from paramiko.file import BufferedFile
-from paramiko.py3compat import long
+from paramiko.py3compat import u, long
 from paramiko.sftp import (
     CMD_CLOSE, CMD_READ, CMD_DATA, SFTPError, CMD_WRITE, CMD_STATUS, CMD_FSTAT,
     CMD_ATTRS, CMD_FSETSTAT, CMD_EXTENDED,
@@ -65,15 +65,15 @@ class SFTPFile (BufferedFile):
         self._reqs = deque()
 
     def __del__(self):
-        self._close(async=True)
+        self._close(async_=True)
 
     def close(self):
         """
         Close the file.
         """
-        self._close(async=False)
+        self._close(async_=False)
 
-    def _close(self, async=False):
+    def _close(self, async_=False):
         # We allow double-close without signaling an error, because real
         # Python file objects do.  However, we must protect against actually
         # sending multiple CMD_CLOSE packets, because after we close our
@@ -83,12 +83,12 @@ class SFTPFile (BufferedFile):
         # __del__.)
         if self._closed:
             return
-        self.sftp._log(DEBUG, 'close(%s)' % hexlify(self.handle))
+        self.sftp._log(DEBUG, 'close({})'.format(u(hexlify(self.handle))))
         if self.pipelined:
             self.sftp._finish_responses(self)
         BufferedFile.close(self)
         try:
-            if async:
+            if async_:
                 # GC'd file handle could be called from an arbitrary thread
                 # -- don't wait for a response
                 self.sftp._async_request(type(None), CMD_CLOSE, self.handle)
@@ -288,7 +288,8 @@ class SFTPFile (BufferedFile):
 
         :param int mode: new permissions
         """
-        self.sftp._log(DEBUG, 'chmod(%s, %r)' % (hexlify(self.handle), mode))
+        self.sftp._log(DEBUG, 'chmod({}, {!r})'.format(
+            hexlify(self.handle), mode))
         attr = SFTPAttributes()
         attr.st_mode = mode
         self.sftp._request(CMD_FSETSTAT, self.handle, attr)
@@ -305,7 +306,7 @@ class SFTPFile (BufferedFile):
         """
         self.sftp._log(
             DEBUG,
-            'chown(%s, %r, %r)' % (hexlify(self.handle), uid, gid))
+            'chown({}, {!r}, {!r})'.format(hexlify(self.handle), uid, gid))
         attr = SFTPAttributes()
         attr.st_uid, attr.st_gid = uid, gid
         self.sftp._request(CMD_FSETSTAT, self.handle, attr)
@@ -325,7 +326,8 @@ class SFTPFile (BufferedFile):
         """
         if times is None:
             times = (time.time(), time.time())
-        self.sftp._log(DEBUG, 'utime(%s, %r)' % (hexlify(self.handle), times))
+        self.sftp._log(DEBUG, 'utime({}, {!r})'.format(
+            hexlify(self.handle), times))
         attr = SFTPAttributes()
         attr.st_atime, attr.st_mtime = times
         self.sftp._request(CMD_FSETSTAT, self.handle, attr)
@@ -340,7 +342,7 @@ class SFTPFile (BufferedFile):
         """
         self.sftp._log(
             DEBUG,
-            'truncate(%s, %r)' % (hexlify(self.handle), size))
+            'truncate({}, {!r})'.format(hexlify(self.handle), size))
         attr = SFTPAttributes()
         attr.st_size = size
         self.sftp._request(CMD_FSETSTAT, self.handle, attr)
@@ -473,7 +475,8 @@ class SFTPFile (BufferedFile):
 
         .. versionadded:: 1.5.4
         """
-        self.sftp._log(DEBUG, 'readv(%s, %r)' % (hexlify(self.handle), chunks))
+        self.sftp._log(DEBUG, 'readv({}, {!r})'.format(
+            hexlify(self.handle), chunks))
 
         read_chunks = []
         for offset, size in chunks:

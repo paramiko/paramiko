@@ -1,11 +1,12 @@
 import sys
 import base64
 
-__all__ = ['PY2', 'string_types', 'integer_types', 'text_type', 'bytes_types',
-           'bytes', 'long', 'input', 'decodebytes', 'encodebytes',
-           'bytestring', 'byte_ord', 'byte_chr', 'byte_mask', 'b', 'u', 'b2s',
-           'StringIO', 'BytesIO', 'is_callable', 'MAXSIZE',
-           'next', 'builtins']
+__all__ = [
+    'BytesIO', 'MAXSIZE', 'PY2', 'StringIO', 'b', 'b2s', 'builtins',
+    'byte_chr', 'byte_mask', 'byte_ord', 'bytes', 'bytes_types', 'decodebytes',
+    'encodebytes', 'input', 'integer_types', 'is_callable', 'long', 'next',
+    'string_types', 'text_type', 'u',
+]
 
 PY2 = sys.version_info[0] < 3
 
@@ -21,12 +22,6 @@ if PY2:
     encodebytes = base64.encodestring
 
     import __builtin__ as builtins
-
-
-    def bytestring(s):  # NOQA
-        if isinstance(s, unicode):  # NOQA
-            return s.encode('utf-8')
-        return s
 
 
     byte_ord = ord  # NOQA
@@ -46,7 +41,7 @@ if PY2:
         elif isinstance(s, buffer):  # NOQA
             return s
         else:
-            raise TypeError("Expected unicode or bytes, got %r" % s)
+            raise TypeError("Expected unicode or bytes, got {!r}".format(s))
 
 
     def u(s, encoding='utf8'):  # NOQA
@@ -58,7 +53,7 @@ if PY2:
         elif isinstance(s, buffer):  # NOQA
             return s.decode(encoding)
         else:
-            raise TypeError("Expected unicode or bytes, got %r" % s)
+            raise TypeError("Expected unicode or bytes, got {!r}".format(s))
 
 
     def b2s(s):
@@ -111,9 +106,6 @@ else:
     decodebytes = base64.decodebytes
     encodebytes = base64.encodebytes
 
-    def bytestring(s):
-        return s
-
     def byte_ord(c):
         # In case we're handed a string instead of an int.
         if not isinstance(c, int):
@@ -135,7 +127,7 @@ else:
         elif isinstance(s, str):
             return s.encode(encoding)
         else:
-            raise TypeError("Expected unicode or bytes, got %r" % s)
+            raise TypeError("Expected unicode or bytes, got {!r}".format(s))
 
     def u(s, encoding='utf8'):
         """cast bytes or unicode to unicode"""
@@ -144,7 +136,7 @@ else:
         elif isinstance(s, str):
             return s
         else:
-            raise TypeError("Expected unicode or bytes, got %r" % s)
+            raise TypeError("Expected unicode or bytes, got {!r}".format(s))
 
     def b2s(s):
         return s.decode() if isinstance(s, bytes) else s

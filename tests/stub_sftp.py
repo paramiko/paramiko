@@ -22,6 +22,7 @@ A stub SFTP server for loopback SFTP testing.
 
 import os
 import sys
+
 from paramiko import (
     ServerInterface, SFTPServerInterface, SFTPServer, SFTPAttributes,
     SFTPHandle, SFTP_OK, SFTP_FAILURE, AUTH_SUCCESSFUL, OPEN_SUCCEEDED,

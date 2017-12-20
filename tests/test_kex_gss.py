@@ -31,6 +31,8 @@ import unittest
 
 import paramiko
 
+from .util import needs_gssapi
+
 
 class NullServer (paramiko.ServerInterface):
 
@@ -57,6 +59,7 @@ class NullServer (paramiko.ServerInterface):
         return True
 
 
+@needs_gssapi
 class GSSKexTest(unittest.TestCase):
     @staticmethod
     def init(username, hostname):
@@ -93,7 +96,7 @@ class GSSKexTest(unittest.TestCase):
         server = NullServer()
         self.ts.start_server(self.event, server)
 
-    def test_1_gsskex_and_auth(self):
+    def _test_gsskex_and_auth(self, gss_host, rekey=False):
         """
         Verify that Paramiko can handle SSHv2 GSS-API / SSPI authenticated
         Diffie-Hellman Key Exchange and user authentication with the GSS-API
@@ -106,16 +109,19 @@ class GSSKexTest(unittest.TestCase):
         self.tc.get_host_keys().add('[%s]:%d' % (self.hostname, self.port),
                                     'ssh-rsa', public_host_key)
         self.tc.connect(self.hostname, self.port, username=self.username,
-                        gss_auth=True, gss_kex=True)
+                        gss_auth=True, gss_kex=True, gss_host=gss_host)
 
         self.event.wait(1.0)
         self.assert_(self.event.is_set())
         self.assert_(self.ts.is_active())
         self.assertEquals(self.username, self.ts.get_username())
         self.assertEquals(True, self.ts.is_authenticated())
+        self.assertEquals(True, self.tc.get_transport().gss_kex_used)
 
         stdin, stdout, stderr = self.tc.exec_command('yes')
         schan = self.ts.accept(1.0)
+        if rekey:
+            self.tc.get_transport().renegotiate_keys()
 
         schan.send('Hello there.\n')
         schan.send_stderr('This is on stderr.\n')
@@ -129,3 +135,17 @@ class GSSKexTest(unittest.TestCase):
         stdin.close()
         stdout.close()
         stderr.close()
+
+    def test_1_gsskex_and_auth(self):
+        """
+        Verify that Paramiko can handle SSHv2 GSS-API / SSPI authenticated
+        Diffie-Hellman Key Exchange and user authentication with the GSS-API
+        context created during key exchange.
+        """
+        self._test_gsskex_and_auth(gss_host=None)
+
+    def test_2_gsskex_and_auth_rekey(self):
+        """
+        Verify that Paramiko can rekey.
+        """
+        self._test_gsskex_and_auth(gss_host=None, rekey=True)

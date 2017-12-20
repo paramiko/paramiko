@@ -338,7 +338,7 @@ class BufferedFile (ClosingContextManager):
         after rounding up to an internal buffer size) are read.
 
         :param int sizehint: desired maximum number of bytes to read.
-        :returns: `list` of lines read from the file.
+        :returns: list of lines read from the file.
         """
         lines = []
         byte_count = 0
