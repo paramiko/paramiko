@@ -212,9 +212,13 @@ class SSHConfig (object):
                             ('~', homedir),
                             ('%h', config['hostname']),
                             ('%p', port),
-                            ('%r', remoteuser)
+                            ('%r', remoteuser),
+                            ('%%', '%')
                         ]
                         }
+
+        def _replace(value, find, replace):
+            return re.sub(r'(?<!%)' + find, str(replace), value)
 
         for k in config:
             if config[k] is None:
@@ -224,12 +228,11 @@ class SSHConfig (object):
                     if isinstance(config[k], list):
                         for item in range(len(config[k])):
                             if find in config[k][item]:
-                                config[k][item] = config[k][item].replace(
-                                    find, str(replace)
-                                )
+                                config[k][item] = _replace(config[k][item],
+                                                           find, replace)
                     else:
                         if find in config[k]:
-                            config[k] = config[k].replace(find, str(replace))
+                            config[k] = _replace(config[k], find, replace)
         return config
 
     def _get_hosts(self, host):
