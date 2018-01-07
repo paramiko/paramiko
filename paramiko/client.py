@@ -307,7 +307,7 @@ class SSHClient (ClosingContextManager):
             for the SSH banner to be presented.
         :param float auth_timeout: an optional timeout (in seconds) to wait for
             an authentication response.
-        :param function auth_interactive_handler: an optional handler function
+        :param callable auth_interactive_handler: an optional handler callable
             that gets passed to .Transport.auth_interactive to process
             keyboard-interactive messages from the server (if necessary)
 
@@ -719,7 +719,9 @@ class SSHClient (ClosingContextManager):
         elif two_factor:
             if auth_interactive_handler is not None:
                 try:
-                    self._transport.auth_interactive(username, auth_interactive_handler)
+                    self._transport.auth_interactive(
+                        username, auth_interactive_handler
+                    )
                     return
                 except SSHException as e:
                     saved_exception = e
