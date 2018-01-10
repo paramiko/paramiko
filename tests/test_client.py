@@ -740,16 +740,17 @@ class KeyboardInteractiveTests(ClientTest):
         )
 
     def test_no_auth_handler_for_2fa_user_falls_back_to_reading_from_input(self):
-        # We check for IOError rather than AuthenticationException because
-        # the test suite captures output, so reading from stdin (as the 
-        # default auth_interactive_dumb does) will throw an IOError
-        with self.assertRaises(IOError) as cm:
+        # We check for IOError because the test suite captures output,
+        # so reading from stdin (as the default auth_interactive_dumb does)
+        # will throw an IOError in Python 2.7
+        with self.assertRaises((IOError, AuthenticationException)) as cm:
             self._test_connection(
                 key_filename=_support('test_rsa_password.key'),
                 passphrase='television',
             )
         the_exception = cm.exception
-        self.assertEqual( str(the_exception) , 'reading from stdin while output is captured')
+        if type(the_exception) is IOError:
+            self.assertEqual( str(the_exception) , 'reading from stdin while output is captured')
 
     def test_auth_handler_does_not_interfere_with_non_2fa_users(self):
         self.connect_kwargs['username'] = 'slowdive'
