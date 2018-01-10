@@ -231,6 +231,7 @@ class SSHClient (ClosingContextManager):
         auth_timeout=None,
         gss_trust_dns=True,
         passphrase=None,
+        auth_interactive_handler=None,
     ):
         """
         Connect to an SSH server and authenticate to it.  The server's host key
@@ -261,6 +262,7 @@ class SSHClient (ClosingContextManager):
                 the private key and used for authentication.
 
             - Plain username/password auth, if a password was given
+            - Keyboard-Interactive authentication (such as 2FA)
 
         If a private key requires a password to unlock it, and a password is
         passed in, that password will be used to attempt to unlock the key.
@@ -305,6 +307,9 @@ class SSHClient (ClosingContextManager):
             for the SSH banner to be presented.
         :param float auth_timeout: an optional timeout (in seconds) to wait for
             an authentication response.
+        :param callable auth_interactive_handler: an optional handler callable
+            that gets passed to .Transport.auth_interactive to process
+            keyboard-interactive messages from the server (if necessary)
 
         :raises:
             `.BadHostKeyException` -- if the server's host key could not be
@@ -322,6 +327,8 @@ class SSHClient (ClosingContextManager):
             Added the ``gss_trust_dns`` argument.
         .. versionchanged:: 2.4
             Added the ``passphrase`` argument.
+        .. versionchanged:: 2.5
+            Added the ``auth_interactive_handler`` argument.
         """
         if not sock:
             errors = {}
@@ -421,7 +428,7 @@ class SSHClient (ClosingContextManager):
         self._auth(
             username, password, pkey, key_filenames, allow_agent,
             look_for_keys, gss_auth, gss_kex, gss_deleg_creds, t.gss_host,
-            passphrase,
+            passphrase, auth_interactive_handler,
         )
 
     def close(self):
@@ -571,7 +578,7 @@ class SSHClient (ClosingContextManager):
     def _auth(
         self, username, password, pkey, key_filenames, allow_agent,
         look_for_keys, gss_auth, gss_kex, gss_deleg_creds, gss_host,
-        passphrase,
+        passphrase, auth_interactive_handler=None,
     ):
         """
         Try, in order:
@@ -581,6 +588,7 @@ class SSHClient (ClosingContextManager):
             - Any "id_rsa", "id_dsa" or "id_ecdsa" key discoverable in ~/.ssh/
               (if allowed).
             - Plain username/password auth, if a password was given.
+            - Keyboard-interactive, if nothing else worked
 
         (The password might be needed to unlock a private key [if 'passphrase'
         isn't also given], or for two-factor authentication [for which it is
@@ -709,11 +717,20 @@ class SSHClient (ClosingContextManager):
             except SSHException as e:
                 saved_exception = e
         elif two_factor:
-            try:
-                self._transport.auth_interactive_dumb(username)
-                return
-            except SSHException as e:
-                saved_exception = e
+            if auth_interactive_handler is not None:
+                try:
+                    self._transport.auth_interactive(
+                        username, auth_interactive_handler
+                    )
+                    return
+                except SSHException as e:
+                    saved_exception = e
+            else:
+                try:
+                    self._transport.auth_interactive_dumb(username)
+                    return
+                except SSHException as e:
+                    saved_exception = e
 
         # if we got an auth-failed exception earlier, re-raise it
         if saved_exception is not None:

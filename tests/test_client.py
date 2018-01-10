@@ -54,6 +54,9 @@ FINGERPRINTS = {
     'ssh-ed25519': b'\xb3\xd5"\xaa\xf9u^\xe8\xcd\x0e\xea\x02\xb9)\xa2\x80',
 }
 
+# This prompt mimics the Google Authenticator PAM module
+TWO_FACTOR_AUTH_PROMPT = 'Verification code:'
+
 
 class NullServer(paramiko.ServerInterface):
     def __init__(self, *args, **kwargs):
@@ -66,6 +69,8 @@ class NullServer(paramiko.ServerInterface):
     def get_allowed_auths(self, username):
         if username == 'slowdive':
             return 'publickey,password'
+        elif username == 'twofactor':
+            return 'publickey,keyboard-interactive'
         return 'publickey'
 
     def check_auth_password(self, username, password):
@@ -92,7 +97,23 @@ class NullServer(paramiko.ServerInterface):
             key.public_blob != self.__expected_public_blob
         ):
             happy = False
-        return paramiko.AUTH_SUCCESSFUL if happy else paramiko.AUTH_FAILED
+
+        if (username == 'twofactor'):
+            return paramiko.AUTH_PARTIALLY_SUCCESSFUL if happy else paramiko.AUTH_FAILED
+        else:
+            return paramiko.AUTH_SUCCESSFUL if happy else paramiko.AUTH_FAILED
+
+    def check_auth_interactive(self, username, submethods):
+        if (username == 'twofactor'):
+            query = paramiko.InteractiveQuery()
+            query.add_prompt(TWO_FACTOR_AUTH_PROMPT)
+            return query
+        return paramiko.AUTH_FAILED
+
+    def check_auth_interactive_response(self, responses):
+        if (len(responses) == 1) and (responses[0] == '12345'):
+            return paramiko.AUTH_SUCCESSFUL
+        return paramiko.AUTH_FAILED
 
     def check_channel_request(self, kind, chanid):
         return paramiko.OPEN_SUCCEEDED
@@ -200,7 +221,7 @@ class ClientTest(unittest.TestCase):
         self.event.wait(1.0)
         self.assertTrue(self.event.is_set())
         self.assertTrue(self.ts.is_active())
-        self.assertEqual('slowdive', self.ts.get_username())
+        self.assertEqual(self.connect_kwargs['username'], self.ts.get_username())
         self.assertEqual(True, self.ts.is_authenticated())
         self.assertEqual(False, self.tc.get_transport().gss_kex_used)
 
@@ -683,4 +704,58 @@ class PasswordPassphraseTests(ClientTest):
             key_filename=_support('test_rsa_password.key'),
             password='television',
             passphrase='wat? lol no',
+        )
+
+class KeyboardInteractiveTests(ClientTest):
+    """This class encapsulates tests that work with the
+    keyboard-interactive authentication method."""
+
+    def setUp(self):
+        super(KeyboardInteractiveTests, self).setUp()
+
+        # We want to be testing against the 'twofactor' user by default
+        self.connect_kwargs['username'] = 'twofactor'
+
+    @staticmethod
+    def _google_authenticator_client_mimic_handler(
+        title,
+        instructions,
+        prompt_list
+    ):
+        answers = []
+        for i in range(len(prompt_list)):
+            prompt, show_input = prompt_list[i]
+            if prompt.strip() == TWO_FACTOR_AUTH_PROMPT:
+                answers.append('12345')
+            else:
+                raise AuthenticationException('More prompts than expected.')
+
+        return answers
+
+    def test_two_factor_auth_handler_works(self):
+        self._test_connection(
+            key_filename=_support('test_rsa_password.key'),
+            passphrase='television',
+            auth_interactive_handler=self._google_authenticator_client_mimic_handler
+        )
+
+    def test_no_auth_handler_for_2fa_user_falls_back_to_reading_from_input(self):
+        # We check for IOError because the test suite captures output,
+        # so reading from stdin (as the default auth_interactive_dumb does)
+        # will throw an IOError in Python 2.7
+        with self.assertRaises((IOError, AuthenticationException)) as cm:
+            self._test_connection(
+                key_filename=_support('test_rsa_password.key'),
+                passphrase='television',
+            )
+        the_exception = cm.exception
+        if type(the_exception) is IOError:
+            self.assertEqual( str(the_exception) , 'reading from stdin while output is captured')
+
+    def test_auth_handler_does_not_interfere_with_non_2fa_users(self):
+        self.connect_kwargs['username'] = 'slowdive'
+        self._test_connection(
+            key_filename=_support('test_rsa_password.key'),
+            passphrase='television',
+            auth_interactive_handler=self._google_authenticator_client_mimic_handler
         )

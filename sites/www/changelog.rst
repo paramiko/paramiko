@@ -2,6 +2,9 @@
 Changelog
 =========
 
+* :feature:`-` Add a new ``auth_interactive_handler`` kwarg to
+  `SSHClient.connect <paramiko.client.SSHClient.connect>` so users can
+  provide their own handler function to be used with auth_interactive.
 * :bug:`1039` Ed25519 auth key decryption raised an unexpected exception when
   given a unicode password string (typical in python 3). Report by Theodor van
   Nahl and fix by Pierce Lopez.
