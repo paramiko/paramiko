@@ -95,7 +95,7 @@ class HostKeys (MutableMapping):
                     continue
                 try:
                     e = HostKeyEntry.from_line(line, lineno)
-                except SSHException:
+                except (SSHException, InvalidHostKey):
                     continue
                 if e is not None:
                     _hostnames = e.hostnames
