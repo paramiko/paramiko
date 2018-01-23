@@ -31,7 +31,6 @@ from paramiko.rsakey import RSAKey
 from paramiko.util import get_logger, constant_time_bytes_eq
 from paramiko.ecdsakey import ECDSAKey
 from paramiko.ed25519key import Ed25519Key
-from paramiko.ssh_exception import SSHException
 
 
 class HostKeys (MutableMapping):
@@ -95,7 +94,7 @@ class HostKeys (MutableMapping):
                     continue
                 try:
                     e = HostKeyEntry.from_line(line, lineno)
-                except SSHException:
+                except InvalidHostKey:
                     continue
                 if e is not None:
                     _hostnames = e.hostnames
