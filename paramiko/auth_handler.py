@@ -227,13 +227,13 @@ class AuthHandler (object):
     def _parse_service_accept(self, m):
         service = m.get_text()
         if service == 'ssh-userauth':
+            self.transport._log(DEBUG, 'userauth is OK')
             self.userauth_service_accepted = True
             self._send_auth_request()
         else:
             self.transport._log(DEBUG, 'Service request "%s" accepted (?)' % service)
 
     def _send_auth_request(self):
-        self.transport._log(DEBUG, 'userauth is OK')
         m = Message()
         m.add_byte(cMSG_USERAUTH_REQUEST)
         m.add_string(self.username)
