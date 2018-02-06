@@ -1103,7 +1103,7 @@ class Transport (threading.Thread, ClosingContextManager):
         if (not self.active) or (not self.initial_kex_done):
             raise SSHException('No existing session')
         my_event = threading.Event()
-        self.auth_handler = AuthHandler(self)
+        self._start_auth_handler()
         self.auth_handler.auth_none(username, my_event)
         return self.auth_handler.wait_for_response(my_event)
 
@@ -1159,7 +1159,7 @@ class Transport (threading.Thread, ClosingContextManager):
             my_event = threading.Event()
         else:
             my_event = event
-        self.auth_handler = AuthHandler(self)
+        self._start_auth_handler()
         self.auth_handler.auth_password(username, password, my_event)
         if event is not None:
             # caller wants to wait for event themselves
@@ -1226,8 +1226,7 @@ class Transport (threading.Thread, ClosingContextManager):
             my_event = threading.Event()
         else:
             my_event = event
-        if self.auth_handler is None:
-            self.auth_handler = AuthHandler(self)
+        self._start_auth_handler()
         self.auth_handler.auth_publickey(username, key, my_event)
         if event is not None:
             # caller wants to wait for event themselves
@@ -1281,7 +1280,7 @@ class Transport (threading.Thread, ClosingContextManager):
             # we should never try to authenticate unless we're on a secure link
             raise SSHException('No existing session')
         my_event = threading.Event()
-        self.auth_handler = AuthHandler(self)
+        self._start_auth_handler()
         self.auth_handler.auth_interactive(username, handler, my_event, submethods)
         return self.auth_handler.wait_for_response(my_event)
 
@@ -1305,7 +1304,7 @@ class Transport (threading.Thread, ClosingContextManager):
             # we should never try to authenticate unless we're on a secure link
             raise SSHException('No existing session')
         my_event = threading.Event()
-        self.auth_handler = AuthHandler(self)
+        self._start_auth_handler()
         self.auth_handler.auth_gssapi_with_mic(username, gss_host, gss_deleg_creds, my_event)
         return self.auth_handler.wait_for_response(my_event)
 
@@ -1330,7 +1329,7 @@ class Transport (threading.Thread, ClosingContextManager):
             # we should never try to authenticate unless we're on a secure link
             raise SSHException('No existing session')
         my_event = threading.Event()
-        self.auth_handler = AuthHandler(self)
+        self._start_auth_handler()
         self.auth_handler.auth_gssapi_keyex(username, my_event)
         return self.auth_handler.wait_for_response(my_event)
 
@@ -1562,6 +1561,10 @@ class Transport (threading.Thread, ClosingContextManager):
             max_packet_size = self.default_max_packet_size
         return clamp_value(MIN_PACKET_SIZE, max_packet_size, MAX_WINDOW_SIZE)
 
+    def _start_auth_handler(self):
+        # create auth handler if necessary
+        if self.auth_handler is None:
+            self.auth_handler = AuthHandler(self)
 
     def run(self):
         # (use the exposed "run" method, because if we specify a thread target
