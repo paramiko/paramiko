@@ -22,20 +22,19 @@
 Test the used APIs for GSS-API / SSPI authentication
 """
 
-import unittest
 import socket
 
-from .util import needs_gssapi
+from .util import needs_gssapi, KerberosTestCase, update_env
 
 
 @needs_gssapi
-class GSSAPITest(unittest.TestCase):
-    def setup():
-        # TODO: these vars should all come from os.environ or whatever the
-        # approved pytest method is for runtime-configuring test data.
+class GSSAPITest(KerberosTestCase):
+    def setUp(self):
+        super(GSSAPITest, self).setUp()
         self.krb5_mech = "1.2.840.113554.1.2.2"
-        self.targ_name = "hostname"
+        self.targ_name = self.realm.hostname
         self.server_mode = False
+        update_env(self, self.realm.env)
 
     def test_1_pyasn1(self):
         """
@@ -47,13 +46,14 @@ class GSSAPITest(unittest.TestCase):
         mech, __ = decoder.decode(oid)
         self.assertEqual(self.krb5_mech, mech.__str__())
 
-    def test_2_gssapi_sspi(self):
+    def _gssapi_sspi_test(self):
         """
         Test the used methods of python-gssapi or sspi, sspicon from pywin32.
         """
         try:
             import gssapi
-            if hasattr(gssapi, '__title__') and gssapi.__title__ == 'python-gssapi':
+            if (hasattr(gssapi, '__title__') and
+                    gssapi.__title__ == 'python-gssapi'):
                 _API = "PYTHON-GSSAPI-OLD"
             else:
                 _API = "PYTHON-GSSAPI-NEW"
@@ -111,7 +111,7 @@ class GSSAPITest(unittest.TestCase):
                 self.assertEqual(0, status)
 
         elif _API == "PYTHON-GSSAPI-NEW":
-            if server_mode:
+            if self.server_mode:
                 gss_flags = (gssapi.RequirementFlag.protection_ready,
                              gssapi.RequirementFlag.integrity,
                              gssapi.RequirementFlag.mutual_authentication,
@@ -122,13 +122,13 @@ class GSSAPITest(unittest.TestCase):
                              gssapi.RequirementFlag.delegate_to_peer)
             # Initialize a GSS-API context.
             krb5_oid = gssapi.MechType.kerberos
-            target_name = gssapi.Name("host@" + targ_name,
-                                      name_type=gssapi.NameType.hostbased_service)
+            target_name = gssapi.Name("host@" + self.targ_name,
+                                name_type=gssapi.NameType.hostbased_service)
             gss_ctxt = gssapi.SecurityContext(name=target_name,
                                               flags=gss_flags,
                                               mech=krb5_oid,
                                               usage='initiate')
-            if server_mode:
+            if self.server_mode:
                 c_token = gss_ctxt.step(c_token)
                 gss_ctxt_status = gss_ctxt.complete
                 self.assertEquals(False, gss_ctxt_status)
@@ -148,7 +148,7 @@ class GSSAPITest(unittest.TestCase):
             # Build MIC
             mic_token = gss_ctxt.get_signature(mic_msg)
 
-            if server_mode:
+            if self.server_mode:
                 # Check MIC
                 status = gss_srv_ctxt.verify_signature(mic_msg, mic_token)
                 self.assertEquals(0, status)
@@ -185,3 +185,16 @@ class GSSAPITest(unittest.TestCase):
                 error, token = gss_ctxt.authorize(c_token)
                 c_token = token[0].Buffer
                 self.assertNotEqual(0, error)
+
+    def test_2_gssapi_sspi_client(self):
+        """
+        Test the used methods of python-gssapi or sspi, sspicon from pywin32.
+        """
+        self._gssapi_sspi_test()
+
+    def test_3_gssapi_sspi_server(self):
+        """
+        Test the used methods of python-gssapi or sspi, sspicon from pywin32.
+        """
+        self.server_mode = True
+        self._gssapi_sspi_test()
