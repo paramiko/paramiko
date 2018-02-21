@@ -84,6 +84,7 @@ __all__ = [
     'PKey',
     'RSAKey',
     'DSSKey',
+    'Ed25519Key',
     'Message',
     'SSHException',
     'AuthenticationException',
