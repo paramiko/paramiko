@@ -2,6 +2,10 @@
 Changelog
 =========
 
+* :bug:`1168` Add newer key classes for Ed25519 and ECDSA to
+  ``paramiko.__all__`` so that code introspecting that attribute, or using
+  ``from paramiko import *`` (such as some IDEs) sees them. Thanks to
+  ``@patriksevallius`` for the patch.
 * :bug:`1039` Ed25519 auth key decryption raised an unexpected exception when
   given a unicode password string (typical in python 3). Report by Theodor van
   Nahl and fix by Pierce Lopez.
