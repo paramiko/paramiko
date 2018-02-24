@@ -85,6 +85,16 @@ class BufferedPipe (object):
         finally:
             self._lock.release()
 
+    def unlink_event(self):
+        """
+        Unlink an Event object from this buffer.
+        """
+        self._lock.acquire()
+        try:
+            self._event = None
+        finally:
+            self._lock.release()
+
     def feed(self, data):
         """
         Feed new data into this pipe.  This method is assumed to be called
