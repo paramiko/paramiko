@@ -369,6 +369,23 @@ class TransportTest(unittest.TestCase):
         self.assertEqual(23, chan.recv_exit_status())
         chan.close()
 
+
+    def test_10_resize_pty(self):
+        """
+        You should still be able to send after resizing pty.
+        i.e resizing pty should not effect the basic functionality.
+        """
+        self.setup_test_server()
+
+        with self.tc.open_session() as chan:
+            with self.ts.accept(1.0) as schan:
+                chan.resize_pty()
+                schan.send('Hello there.\n')
+                schan.close()
+                f = chan.makefile()
+                self.assertEqual('Hello there.\n', f.readline())
+                self.assertEqual('', f.readline())
+
     def test_A_select(self):
         """
         verify that select() on a channel works.
