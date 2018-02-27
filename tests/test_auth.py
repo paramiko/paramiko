@@ -60,6 +60,8 @@ class NullServer (ServerInterface):
             return 'password'
         if username == 'non-utf8':
             return 'password'
+        if username == 'no-auth':
+            return 'none'
         return 'publickey'
 
     def check_auth_password(self, username, password):
@@ -162,6 +164,22 @@ class AuthTest (unittest.TestCase):
             etype, evalue, etb = sys.exc_info()
             self.assertTrue(issubclass(etype, AuthenticationException))
         self.tc.auth_password(username='slowdive', password='pygmalion')
+        self.verify_finished()
+
+    def test_no_auth(self):
+        """
+        Test that a no auth connection is created when not providing any
+        credentials.
+        """
+        self.start_server()
+        try:
+            self.tc.connect(hostkey=self.public_host_key)
+            remain = self.tc.auth_none(username='no-auth')
+            self.assertTrue(False)
+        except:
+            etype, evalue, etb = sys.exc_info()
+            self.assertTrue(issubclass(etype, AuthenticationException))
+        
         self.verify_finished()
 
     def test_multipart_auth(self):
