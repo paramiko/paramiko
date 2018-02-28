@@ -33,7 +33,7 @@ import unittest
 
 from paramiko import (
     Transport, SecurityOptions, ServerInterface, RSAKey, DSSKey, SSHException,
-    ChannelException, Packetizer, 
+    ChannelException, Packetizer,
 )
 from paramiko import AUTH_FAILED, AUTH_SUCCESSFUL
 from paramiko import OPEN_SUCCEEDED, OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED
@@ -298,7 +298,7 @@ class TransportTest(unittest.TestCase):
         self.assertEqual('Hello there.\n', f.readline())
         self.assertEqual('This is on stderr.\n', f.readline())
         self.assertEqual('', f.readline())
-        
+
     def test_6a_channel_can_be_used_as_context_manager(self):
         """
         verify that exec_command() does something reasonable.
@@ -379,7 +379,7 @@ class TransportTest(unittest.TestCase):
 
         with self.tc.open_session() as chan:
             with self.ts.accept(1.0) as schan:
-                chan.resize_pty()
+                chan.resize_pty(width=100, height=100)
                 schan.send('Hello there.\n')
                 schan.close()
                 f = chan.makefile()
