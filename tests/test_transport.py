@@ -129,7 +129,9 @@ class TransportTest(unittest.TestCase):
         self.socks.close()
         self.sockc.close()
 
-    def setup_test_server(self, client_options=None, server_options=None):
+    def setup_test_server(
+        self, client_options=None, server_options=None, connect_kwargs=None,
+    ):
         host_key = RSAKey.from_private_key_file(test_path('test_rsa.key'))
         public_host_key = RSAKey(data=host_key.asbytes())
         self.ts.add_server_key(host_key)
@@ -143,8 +145,13 @@ class TransportTest(unittest.TestCase):
         self.server = NullServer()
         self.assertTrue(not event.is_set())
         self.ts.start_server(event, self.server)
-        self.tc.connect(hostkey=public_host_key,
-                        username='slowdive', password='pygmalion')
+        if connect_kwargs is None:
+            connect_kwargs = dict(
+                hostkey=public_host_key,
+                username='slowdive',
+                password='pygmalion',
+            )
+        self.tc.connect(**connect_kwargs)
         event.wait(1.0)
         self.assertTrue(event.is_set())
         self.assertTrue(self.ts.is_active())
