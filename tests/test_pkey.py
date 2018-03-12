@@ -470,7 +470,7 @@ class KeyTest(unittest.TestCase):
     def test_ed25519_nonbytes_password(self):
         # https://github.com/paramiko/paramiko/issues/1039
         key = Ed25519Key.from_private_key_file(
-            test_path('test_ed25519_password.key'),
+            _support('test_ed25519_password.key'),
             # NOTE: not a bytes. Amusingly, the test above for same key DOES
             # explicitly cast to bytes...code smell!
             'abc123',
