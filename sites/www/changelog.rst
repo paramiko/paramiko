@@ -2,6 +2,11 @@
 Changelog
 =========
 
+* :bug:`1175 (1.17+)` Fix a security flaw (CVE-2018-7750) in Paramiko's server
+  mode (emphasis on **server** mode; this does **not** impact *client* use!)
+  where authentication status was not checked before processing channel-open
+  and other requests typically only sent after authenticating. Big thanks to
+  Matthijs Kooijman for the report.
 * :bug:`1108 (1.17+)` Rename a private method keyword argument (which was named
   ``async``) so that we're compatible with the upcoming Python 3.7 release
   (where ``async`` is a new keyword.) Thanks to ``@vEpiphyte`` for the report.
