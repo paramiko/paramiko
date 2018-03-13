@@ -1791,9 +1791,9 @@ class Transport(threading.Thread, ClosingContextManager):
         Otherwise (client mode, authed, or pre-auth message) returns None.
         """
         if (
-            not self.server_mode
-            or ptype <= HIGHEST_USERAUTH_MESSAGE_ID
-            or self.is_authenticated()
+            not self.server_mode or
+            ptype <= HIGHEST_USERAUTH_MESSAGE_ID or
+            self.is_authenticated()
         ):
             return None
         # WELP. We must be dealing with someone trying to do non-auth things
@@ -1804,7 +1804,7 @@ class Transport(threading.Thread, ClosingContextManager):
             reply.add_byte(cMSG_REQUEST_FAILURE)
         # Channel opens let us reject w/ a specific type + message.
         elif ptype == MSG_CHANNEL_OPEN:
-            kind = message.get_text()
+            kind = message.get_text() # noqa
             chanid = message.get_int()
             reply.add_byte(cMSG_CHANNEL_OPEN_FAILURE)
             reply.add_int(chanid)
