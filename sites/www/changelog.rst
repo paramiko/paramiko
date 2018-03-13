@@ -2,6 +2,11 @@
 Changelog
 =========
 
+* :bug:`1175 (1.17+)` Fix a security flaw (CVE-2018-7750) in Paramiko's server
+  mode (emphasis on **server** mode; this does **not** impact *client* use!)
+  where authentication status was not checked before processing channel-open
+  and other requests typically only sent after authenticating. Big thanks to
+  Matthijs Kooijman for the report.
 * :bug:`1168` Add newer key classes for Ed25519 and ECDSA to
   ``paramiko.__all__`` so that code introspecting that attribute, or using
   ``from paramiko import *`` (such as some IDEs) sees them. Thanks to
