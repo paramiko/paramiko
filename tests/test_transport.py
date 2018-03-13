@@ -33,7 +33,7 @@ import unittest
 
 from paramiko import (
     Transport, SecurityOptions, ServerInterface, RSAKey, DSSKey, SSHException,
-    ChannelException, Packetizer, Channel
+    ChannelException, Packetizer, Channel,
 )
 from paramiko import AUTH_FAILED, AUTH_SUCCESSFUL
 from paramiko import OPEN_SUCCEEDED, OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED
