@@ -10,6 +10,10 @@ python:
   - "3.6"
   - "3.7-dev"
   - "pypy-5.6.0"
+matrix:
+  allow_failures:
+    - python: "3.7-dev"
+    - python: "pypy-5.6.0"
 install:
   # Ensure modern pip/etc to avoid some issues w/ older worker environs
   - pip install pip==9.0.1 setuptools==36.6.0
