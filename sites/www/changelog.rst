@@ -2,6 +2,7 @@
 Changelog
 =========
 
+* :release:`1.17.6 <2018-03-12>`
 * :bug:`1175 (1.17+)` Fix a security flaw (CVE-2018-7750) in Paramiko's server
   mode (emphasis on **server** mode; this does **not** impact *client* use!)
   where authentication status was not checked before processing channel-open
