@@ -2,6 +2,11 @@
 Changelog
 =========
 
+* :bug:`1175 (1.17+)` Fix a security flaw (CVE-2018-7750) in Paramiko's server
+  mode (emphasis on **server** mode; this does **not** impact *client* use!)
+  where authentication status was not checked before processing channel-open
+  and other requests typically only sent after authenticating. Big thanks to
+  Matthijs Kooijman for the report.
 * :bug:`1039` Ed25519 auth key decryption raised an unexpected exception when
   given a unicode password string (typical in python 3). Report by Theodor van
   Nahl and fix by Pierce Lopez.
