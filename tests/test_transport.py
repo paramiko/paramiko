@@ -82,9 +82,7 @@ class NullServer (ServerInterface):
         return OPEN_SUCCEEDED
 
     def check_channel_exec_request(self, channel, command):
-        if command != b'yes':
-            return False
-        return True
+        return command in [b'yes', b'sleep inf']
 
     def check_channel_shell_request(self, channel):
         return True
@@ -379,6 +377,46 @@ class TransportTest(unittest.TestCase):
                 raise Exception("timeout")
         self.assertEqual(23, chan.recv_exit_status())
         chan.close()
+
+    def test_9a_shutdown_read(self):
+        """
+        verify that shutdown_read() works.
+        """
+        self.setup_test_server()
+
+        chan = self.tc.open_session()
+        schan = self.ts.accept(1.0)
+        chan.exec_command('sleep inf')
+
+        chan.shutdown_read()
+        self.assertEqual(bytes(), chan.recv(1))
+
+    def test_9b_shutdown_read_background(self):
+        """
+        verify that shutdown_read() works.
+        """
+        self.setup_test_server()
+
+        chan = self.tc.open_session()
+        schan = self.ts.accept(1.0)
+        chan.exec_command('sleep inf')
+
+        class ReceiveThread(threading.Thread):
+            def __init__(self, chan):
+                threading.Thread.__init__(self, None, None, self.__class__.__name__)
+                self.setDaemon(True)
+                self.chan = chan
+
+            def run(self):
+                self.chan.recv(1)
+
+        rt = ReceiveThread(chan)
+        rt.start()
+
+        time.sleep(1.0)
+        chan.shutdown_read()
+
+        rt.join()
 
     def test_A_select(self):
         """

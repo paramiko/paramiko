@@ -923,7 +923,7 @@ class Channel (ClosingContextManager):
         """
         if (how == 0) or (how == 2):
             # feign "read" shutdown
-            self.eof_received = 1
+            self._handle_eof(None)
         if (how == 1) or (how == 2):
             self.lock.acquire()
             try:
