@@ -18,7 +18,7 @@ c_MSG_KEXECDH_INIT, c_MSG_KEXECDH_REPLY = [byte_chr(c) for c in range(30, 32)]
 class KexNistp256():
 
     name = "ecdh-sha2-nistp256"
-    hash_algo = sha256
+    hash_algo = staticmethod(sha256)
     curve = ec.SECP256R1()
 
     def __init__(self, transport):
@@ -110,11 +110,11 @@ class KexNistp256():
 
 class KexNistp384(KexNistp256):
     name = "ecdh-sha2-nistp384"
-    hash_algo = sha384
+    hash_algo = staticmethod(sha384)
     curve = ec.SECP384R1()
 
 
 class KexNistp521(KexNistp256):
     name = "ecdh-sha2-nistp521"
-    hash_algo = sha512
+    hash_algo = staticmethod(sha512)
     curve = ec.SECP521R1()

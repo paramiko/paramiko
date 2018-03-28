@@ -46,7 +46,7 @@ class KexGex (object):
     min_bits = 1024
     max_bits = 8192
     preferred_bits = 2048
-    hash_algo = sha1
+    hash_algo = staticmethod(sha1)
 
     def __init__(self, transport):
         self.transport = transport
@@ -266,4 +266,4 @@ class KexGex (object):
 
 class KexGexSHA256(KexGex):
     name = 'diffie-hellman-group-exchange-sha256'
-    hash_algo = sha256
+    hash_algo = staticmethod(sha256)
