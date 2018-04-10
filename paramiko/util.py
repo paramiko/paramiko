@@ -23,6 +23,8 @@ Useful functions used by the rest of paramiko.
 from __future__ import generators
 
 import errno
+import os
+from select import select, poll, POLLIN
 import sys
 import struct
 import traceback
@@ -302,3 +304,15 @@ class ClosingContextManager(object):
 
 def clamp_value(minimum, val, maximum):
     return max(minimum, min(val, maximum))
+
+
+def wait_until_readable(fds, timeout=None):
+    if os.name == 'posix' and sys.platform != 'darwin':
+        p = poll()
+        for fd in fds:
+            p.register(fd, POLLIN)
+        events = p.poll(timeout)
+        return [e[0] for e in events if e[1] == POLLIN]
+    else:
+        r, w, x = select(fds, [], [], timeout)
+        return r
