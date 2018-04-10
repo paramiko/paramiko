@@ -114,9 +114,10 @@ DoGSSAPIKeyExchange = True
 
 # now connect
 try:
+    PORT = 2200
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    sock.bind(('', 2200))
+    sock.bind(('', PORT))
 except Exception as e:
     print('*** Bind failed: ' + str(e))
     traceback.print_exc()
@@ -124,7 +125,7 @@ except Exception as e:
 
 try:
     sock.listen(100)
-    print('Listening for connection ...')
+    print('Listening :{} for connection ...'.format(PORT)
     client, addr = sock.accept()
 except Exception as e:
     print('*** Listen/accept failed: ' + str(e))
