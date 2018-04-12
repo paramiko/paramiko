@@ -24,7 +24,12 @@ from __future__ import generators
 
 import errno
 import os
-from select import select, poll, POLLIN
+try:
+    from select import select, poll, POLLIN
+    have_poll = True
+except ImportError:
+    from select import select
+    have_poll = False
 import sys
 import struct
 import traceback
@@ -307,11 +312,11 @@ def clamp_value(minimum, val, maximum):
 
 
 def wait_until_readable(fds, timeout=None):
-    if os.name == 'posix' and sys.platform != 'darwin':
+    if have_poll and os.name == 'posix' and sys.platform != 'darwin':
         p = poll()
         for fd in fds:
             p.register(fd, POLLIN)
-        events = p.poll(timeout)
+        events = p.poll(timeout * 1000 if timeout else None)
         return [e[0] for e in events if e[1] == POLLIN]
     else:
         r, w, x = select(fds, [], [], timeout)

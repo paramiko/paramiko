@@ -19,7 +19,6 @@
 """
 Some unit tests for utility functions.
 """
-
 from binascii import hexlify
 import errno
 import os
@@ -27,7 +26,7 @@ from hashlib import sha1
 import unittest
 
 import paramiko.util
-from paramiko.util import lookup_ssh_host_config as host_config, safe_string
+from paramiko.util import lookup_ssh_host_config as host_config, safe_string, wait_until_readable
 from paramiko.py3compat import StringIO, byte_ord, b
 
 
@@ -530,3 +529,30 @@ Host *
             config.lookup('some-random-host')['proxycommand'],
             'default-proxy'
         )
+
+    def test_wait_until_readable(self):
+
+        def run_test():
+            r0, w0 = os.pipe()
+            r1, w1 = os.pipe()
+            os.write(w1, b'foo')
+
+            readables = wait_until_readable([r0, r1], 0.2)
+            self.assertEqual([r1], readables)
+            readables = wait_until_readable([r0, r1])
+            self.assertEqual([r1], readables)
+
+            self.assertEqual(b'foo', os.read(r1, 256))
+
+            readables = wait_until_readable([r0, r1], 0.2)
+            self.assertEqual([], readables)
+
+        run_test()
+
+        # fake os.name to force wait_until_readable to use select
+        osname = os.name
+        os.name = 'fake'
+        try:
+            run_test()
+        finally:
+            os.name = osname
