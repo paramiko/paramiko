@@ -22,8 +22,12 @@ via `pip <http://pip-installer.org>`_::
 We currently support **Python 2.7, 3.4+, and PyPy**. Users on Python 2.6 or
 older (or 3.3 or older) are urged to upgrade.
 
-Paramiko has only one direct hard dependency: the Cryptography library. See
-:ref:`cryptography`.
+Paramiko has only a few direct dependencies:
+
+- The big one, with its own sub-dependencies, is Cryptography; see :ref:`its
+  specific note below <cryptography>` for more details.
+- `bcrypt <https://pypi.org/project/bcrypt/>`_, for Ed25519 key support;
+- `pynacl <https://pypi.org/project/PyNaCl/>`_, also for Ed25519 key support.
 
 If you need GSS-API / SSPI support, see :ref:`the below subsection on it
 <gssapi>` for details on its optional dependencies.
