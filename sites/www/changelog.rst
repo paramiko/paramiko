@@ -2,6 +2,18 @@
 Changelog
 =========
 
+* :support:`1191` Update our install docs with (somewhat) recently added
+  additional dependencies; we previously only required Cryptography, but the
+  docs never got updated after we incurred ``bcrypt`` and ``pynacl``
+  requirements for Ed25519 key support.
+
+  Additionally, ``pyasn1`` was never actually hard-required; it was necessary
+  during a development branch, and is used by the optional GSSAPI support, but
+  is not required for regular installation. Thus, it has been removed from our
+  ``setup.py`` and its imports in the GSSAPI code made optional.
+
+  Credit to ``@stevenwinfield`` for highlighting the outdated install docs.
+
 * :release:`2.4.1 <2018-03-12>`
 * :release:`2.3.2 <2018-03-12>`
 * :release:`2.2.3 <2018-03-12>`
