@@ -75,6 +75,5 @@ setup(
         'bcrypt>=3.1.3',
         'cryptography>=1.5',
         'pynacl>=1.0.1',
-        'pyasn1>=0.1.7',
     ],
 )
