@@ -84,9 +84,11 @@ class SSHConfig (object):
             elif key == 'include':
                 # support for Include directive in ssh_config
                 path = value
-                # according to SSH documentation if the path is relative, we look forward in ~/.ssh
+                # the path can be relative to its parent configuration file
                 if os.path.isabs(path) == False and path[0] != '~':
-                    path = '~/.ssh/'+path
+                    folder = os.path.dirname(file_obj.name)
+                    path = os.path.join(folder, path)
+
                 #expand the user home path
                 path = os.path.expanduser(path)
                 if parsed_files == None:
