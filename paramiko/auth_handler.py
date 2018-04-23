@@ -207,6 +207,10 @@ class AuthHandler (object):
             event.wait(0.1)
             if not self.transport.is_active():
                 e = self.transport.get_exception()
+                if e is None and self.is_authenticated():
+                    # no error, but the transport became deactivated
+                    # e.g. a disconnect happened while we entered the loop
+                    break
                 if (e is None) or issubclass(e.__class__, EOFError):
                     e = AuthenticationException('Authentication failed.')
                 raise e
