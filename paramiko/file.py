@@ -15,6 +15,8 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with Paramiko; if not, write to the Free Software Foundation, Inc.,
 # 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
+
+import socket
 from io import BytesIO
 
 from paramiko.common import (
@@ -288,6 +290,9 @@ class BufferedFile (ClosingContextManager):
                 break
             try:
                 new_data = self._read(n)
+            except socket.timeout:
+                self._rbuffer = line
+                raise
             except EOFError:
                 new_data = None
             if (new_data is None) or (len(new_data) == 0):
