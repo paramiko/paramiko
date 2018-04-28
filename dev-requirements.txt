@@ -5,7 +5,7 @@ alabaster>=0.7.5,<2.0
 releases>=1.1.0,<2.0
 semantic_version<3.0
 wheel==0.24
-twine==1.9.1
+twine>=1.11.0
 flake8==2.6.2
 pytest==3.2.1
 pytest_relaxed==1.0.0

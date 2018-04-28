@@ -42,8 +42,6 @@ GSS_AUTH_AVAILABLE = True
 GSS_EXCEPTIONS = ()
 
 
-from pyasn1.type.univ import ObjectIdentifier
-from pyasn1.codec.der import encoder, decoder
 
 
 #: :var str _API: Constraint for the used API
@@ -160,6 +158,8 @@ class _SSH_GSSAuth(object):
         :note: In server mode we just return the OID length and the DER encoded
                OID.
         """
+        from pyasn1.type.univ import ObjectIdentifier
+        from pyasn1.codec.der import encoder
         OIDs = self._make_uint32(1)
         krb5_OID = encoder.encode(ObjectIdentifier(self._krb5_mech))
         OID_len = self._make_uint32(len(krb5_OID))
@@ -174,6 +174,7 @@ class _SSH_GSSAuth(object):
         :param str desired_mech: The desired GSS-API mechanism of the client
         :return: ``True`` if the given OID is supported, otherwise C{False}
         """
+        from pyasn1.codec.der import decoder
         mech, __ = decoder.decode(desired_mech)
         if mech.__str__() != self._krb5_mech:
             return False
@@ -260,6 +261,7 @@ class _SSH_GSSAPI(_SSH_GSSAuth):
         :return: A ``String`` if the GSS-API has returned a token or
             ``None`` if no token was returned
         """
+        from pyasn1.codec.der import decoder
         self._username = username
         self._gss_host = target
         targ_name = gssapi.Name("host@" + self._gss_host,
@@ -428,6 +430,7 @@ class _SSH_SSPI(_SSH_GSSAuth):
         :return: A ``String`` if the SSPI has returned a token or ``None`` if
                  no token was returned
         """
+        from pyasn1.codec.der import decoder
         self._username = username
         self._gss_host = target
         error = 0

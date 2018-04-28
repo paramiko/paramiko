@@ -2,6 +2,34 @@
 Changelog
 =========
 
+* :support:`1191` Update our install docs with (somewhat) recently added
+  additional dependencies; we previously only required Cryptography, but the
+  docs never got updated after we incurred ``bcrypt`` and ``pynacl``
+  requirements for Ed25519 key support.
+
+  Additionally, ``pyasn1`` was never actually hard-required; it was necessary
+  during a development branch, and is used by the optional GSSAPI support, but
+  is not required for regular installation. Thus, it has been removed from our
+  ``setup.py`` and its imports in the GSSAPI code made optional.
+
+  Credit to ``@stevenwinfield`` for highlighting the outdated install docs.
+
+* :release:`2.4.1 <2018-03-12>`
+* :release:`2.3.2 <2018-03-12>`
+* :release:`2.2.3 <2018-03-12>`
+* :release:`2.1.5 <2018-03-12>`
+* :release:`2.0.8 <2018-03-12>`
+* :release:`1.18.5 <2018-03-12>`
+* :release:`1.17.6 <2018-03-12>`
+* :bug:`1175 (1.17+)` Fix a security flaw (CVE-2018-7750) in Paramiko's server
+  mode (emphasis on **server** mode; this does **not** impact *client* use!)
+  where authentication status was not checked before processing channel-open
+  and other requests typically only sent after authenticating. Big thanks to
+  Matthijs Kooijman for the report.
+* :bug:`1168` Add newer key classes for Ed25519 and ECDSA to
+  ``paramiko.__all__`` so that code introspecting that attribute, or using
+  ``from paramiko import *`` (such as some IDEs) sees them. Thanks to
+  ``@patriksevallius`` for the patch.
 * :bug:`1039` Ed25519 auth key decryption raised an unexpected exception when
   given a unicode password string (typical in python 3). Report by Theodor van
   Nahl and fix by Pierce Lopez.
