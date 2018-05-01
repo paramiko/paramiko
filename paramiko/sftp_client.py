@@ -109,7 +109,11 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         )
 
     @classmethod
-    def from_transport(cls, t, window_size=None, max_packet_size=None, timeout=None):
+    def from_transport(cls,
+                       t,
+                       window_size=None,
+                       max_packet_size=None,
+                       timeout=None):
         """
         Create an SFTP client channel from an open `.Transport`.
 
