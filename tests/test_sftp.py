@@ -41,7 +41,7 @@ from paramiko.py3compat import PY2, b, u, StringIO
 from paramiko.common import o777, o600, o666, o644
 from paramiko.sftp_attr import SFTPAttributes
 
-from .loop import LoopSocket
+from . import conftest
 from .stub_sftp import StubServer, StubSFTPServer
 from .util import _support, needs_builtin, slow
 
@@ -784,16 +784,8 @@ class TestSFTPTimeout(object):
         verify that the open_sftp has a configurable timeout
         """
 
-        # copied from conftest.sftp_server
-        socks = LoopSocket()
-        sockc = LoopSocket()
-        sockc.link(socks)
-        ts = paramiko.Transport(socks)
-        host_key = paramiko.RSAKey.from_private_key_file(_support('test_rsa.key'))
-        ts.add_server_key(host_key)
-        server = SlowChannelServer()
-        async_start_event = threading.Event()
-        ts.start_server(async_start_event, server)
+        slow_server = SlowChannelServer()
+        sockc = conftest.sftp_server_client_socket(slow_server)
 
         # Connect with SSHClient
         client = paramiko.SSHClient()
