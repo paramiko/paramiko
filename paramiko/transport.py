@@ -302,12 +302,12 @@ class Transport(threading.Thread, ClosingContextManager):
 
         if isinstance(sock, string_types):
             # convert "host:port" into (host, port)
-            hl = sock.split(':', 1)
+            hl = sock.split(':')
             self.hostname = hl[0]
-            if len(hl) == 1:
-                sock = (hl[0], 22)
-            else:
+            if len(hl) == 2:
                 sock = (hl[0], int(hl[1]))
+            else:
+                sock = (sock, 22)
         if type(sock) is tuple:
             # connect to the given (host, port)
             hostname, port = sock
