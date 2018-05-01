@@ -749,6 +749,9 @@ class Transport(threading.Thread, ClosingContextManager):
             optional window size for this session.
         :param int max_packet_size:
             optional max packet size for this session.
+        :param float timeout:
+            optional timeout opening a channel. (default is set in
+            Transport.open_channel)
 
         :return: a new `.Channel`
 
@@ -967,17 +970,21 @@ class Transport(threading.Thread, ClosingContextManager):
         self._tcp_handler = None
         self.global_request('cancel-tcpip-forward', (address, port), wait=True)
 
-    def open_sftp_client(self):
+    def open_sftp_client(self, timeout=None):
         """
         Create an SFTP client channel from an open transport.  On success, an
         SFTP session will be opened with the remote host, and a new
         `.SFTPClient` object will be returned.
 
+        :param float timeout:
+            optional timeout opening a channel. (default is set in
+            Transport.open_channel)
+
         :return:
             a new `.SFTPClient` referring to an sftp session (channel) across
             this transport
         """
-        return SFTPClient.from_transport(self)
+        return SFTPClient.from_transport(self, timeout=timeout)
 
     def send_ignore(self, byte_count=None):
         """

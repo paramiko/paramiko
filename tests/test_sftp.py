@@ -27,6 +27,7 @@ import os
 import socket
 import sys
 import threading
+import time
 import unittest
 import warnings
 from binascii import hexlify
@@ -40,9 +41,9 @@ from paramiko.py3compat import PY2, b, u, StringIO
 from paramiko.common import o777, o600, o666, o644
 from paramiko.sftp_attr import SFTPAttributes
 
-from .util import needs_builtin
+from .loop import LoopSocket
 from .stub_sftp import StubServer, StubSFTPServer
-from .util import _support, slow
+from .util import _support, needs_builtin, slow
 
 
 ARTICLE = '''
@@ -769,3 +770,36 @@ class TestSFTP(object):
                 assert f.read() == data
         finally:
             sftp.remove('%s/write_memoryview' % sftp.FOLDER)
+
+
+class SlowChannelServer (StubServer):
+    def check_channel_request(self, kind, chanid):
+        time.sleep(10)
+        return paramiko.OPEN_SUCCEEDED
+
+@slow
+class TestSFTPTimeout(object):
+    def test_auth_session_timeout(self, sftp_server):
+        """
+        verify that the open_sftp has a configurable timeout
+        """
+
+        # copied from conftest.sftp_server
+        socks = LoopSocket()
+        sockc = LoopSocket()
+        sockc.link(socks)
+        ts = paramiko.Transport(socks)
+        host_key = paramiko.RSAKey.from_private_key_file(_support('test_rsa.key'))
+        ts.add_server_key(host_key)
+        server = SlowChannelServer()
+        async_start_event = threading.Event()
+        ts.start_server(async_start_event, server)
+
+        # Connect with SSHClient
+        client = paramiko.SSHClient()
+        client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        client.connect('localhost', username='slowdive', password='pygmalion', sock=sockc)
+
+        # attempt to open an SFTP session with a short timeout
+        with pytest.raises(paramiko.SSHException, match='Timeout opening channel'):
+            client.open_sftp(timeout=0.5)

@@ -518,13 +518,17 @@ class SSHClient (ClosingContextManager):
         chan.invoke_shell()
         return chan
 
-    def open_sftp(self):
+    def open_sftp(self, timeout=None):
         """
         Open an SFTP session on the SSH server.
 
+        :param float timeout:
+            optional timeout opening a channel. (default is set in
+            Transport.open_channel)
+
         :return: a new `.SFTPClient` session object
         """
-        return self._transport.open_sftp_client()
+        return self._transport.open_sftp_client(timeout=timeout)
 
     def get_transport(self):
         """
