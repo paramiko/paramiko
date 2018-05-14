@@ -26,12 +26,12 @@ install:
   - pip install codecov # For codecov specifically
   - pip install -r dev-requirements.txt
 script:
+  # flake8 is now possible!
+  - flake8
   # All (including slow) tests, w/ coverage!
   - inv coverage
   # Ensure documentation builds, both sites, maxxed nitpicking
   - inv sites
-  # flake8 is now possible!
-  - flake8
 notifications:
   irc:
     channels: "irc.freenode.org#paramiko"
