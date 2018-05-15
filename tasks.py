@@ -80,7 +80,7 @@ def coverage(ctx, opts=""):
 # TODO: would be nice to tie this into our own version of build() too, but
 # still have publish() use that build()...really need to try out classes!
 @task
-def release(ctx, sdist=True, wheel=True, sign=True, dry_run=False):
+def release(ctx, sdist=True, wheel=True, sign=True, dry_run=False, index=None):
     """
     Wraps invocations.packaging.publish to add baked-in docs folder.
     """
@@ -92,7 +92,9 @@ def release(ctx, sdist=True, wheel=True, sign=True, dry_run=False):
     # TODO: make it easier to yank out this config val from the docs coll
     copytree('sites/docs/_build', target)
     # Publish
-    publish(ctx, sdist=sdist, wheel=wheel, sign=sign, dry_run=dry_run)
+    publish(
+        ctx, sdist=sdist, wheel=wheel, sign=sign, dry_run=dry_run, index=index,
+    )
     # Remind
     print("\n\nDon't forget to update RTD's versions page for new minor "
           "releases!")
