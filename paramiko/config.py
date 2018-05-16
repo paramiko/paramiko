@@ -298,26 +298,34 @@ class LazyFqdn(object):
 
 
 class SSHConfigDict(dict):
-    """A dictionary wrapper for ssh host configurations.
+    """
+    A dictionary wrapper for ssh host configurations.
 
     This class introduces some usage niceties for consumers of SSHConfig,
     specifically around the issue of variable type conversions. This offers
     as_bool(key) and as_int(key) for the current raw string values in
-    SSHConfig"""
+    SSHConfig
+    """
 
     def __init__(self, *args, **kwargs):
         # Hey, guess what? Python 2's userdict is an old-style class!
         super(SSHConfigDict, self).__init__(*args, **kwargs)
 
     def as_bool(self, key):
-        """Express the key as a boolean value. Variations on 'yes' or boolean values
-        are accepted."""
+        """
+        Express the key as a boolean value.
+
+        Variations on 'yes' or boolean values are accepted.
+        """
         val = self[key]
         if isinstance(val, bool):
             return val
         return val.lower() == 'yes'
 
     def as_int(self, key):
-        """Express the key as a true integer, if possible. Raises an Error otherwise
-        (following conventional int conversion rules)"""
+        """
+        Express the key as a true integer, if possible.
+
+        Raises an Error otherwise (following conventional int conversion rules)
+        """
         return int(self[key])
