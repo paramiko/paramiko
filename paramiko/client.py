@@ -38,7 +38,8 @@ from paramiko.hostkeys import HostKeys
 from paramiko.py3compat import string_types
 from paramiko.rsakey import RSAKey
 from paramiko.ssh_exception import (
-    SSHException, BadHostKeyException, NoValidConnectionsError
+    SSHException, BadAuthenticationType, BadHostKeyException,
+    NoValidConnectionsError
 )
 from paramiko.transport import Transport
 from paramiko.util import retry_on_signal, ClosingContextManager
@@ -614,7 +615,21 @@ class SSHClient (ClosingContextManager):
             except Exception as e:
                 saved_exception = e
 
-        if pkey is not None:
+        # Detect what authentication methods the server supports (Mirrors what
+        # Openssh client does)
+        try:
+            self._transport.auth_none(username)
+        except BadAuthenticationType as e:
+            allowed_auth_methods = frozenset(e.allowed_types)
+        else:
+            # This server allows logging in with no auth
+            return
+        # Some servers don't follow the standard and don't return their allowed
+        # auth methods Fall back to trying anything rather than trying nothing
+        if not allowed_auth_methods:
+            allowed_auth_methods = frozenset(('password', 'publickey'))
+
+        if pkey is not None and 'publickey' in allowed_auth_methods:
             try:
                 self._log(
                     DEBUG,
@@ -628,7 +643,7 @@ class SSHClient (ClosingContextManager):
             except SSHException as e:
                 saved_exception = e
 
-        if not two_factor:
+        if not two_factor and 'publickey' in allowed_auth_methods:
             for key_filename in key_filenames:
                 for pkey_class in (RSAKey, DSSKey, ECDSAKey, Ed25519Key):
                     try:
@@ -644,7 +659,8 @@ class SSHClient (ClosingContextManager):
                     except SSHException as e:
                         saved_exception = e
 
-        if not two_factor and allow_agent:
+        if (not two_factor and allow_agent and
+                'publickey' in allowed_auth_methods):
             if self._agent is None:
                 self._agent = Agent()
 
@@ -663,7 +679,7 @@ class SSHClient (ClosingContextManager):
                 except SSHException as e:
                     saved_exception = e
 
-        if not two_factor:
+        if not two_factor and 'publickey' in allowed_auth_methods:
             keyfiles = []
 
             for keytype, name in [
@@ -702,7 +718,7 @@ class SSHClient (ClosingContextManager):
                 except (SSHException, IOError) as e:
                     saved_exception = e
 
-        if password is not None:
+        if password is not None and 'password' in allowed_auth_methods:
             try:
                 self._transport.auth_password(username, password)
                 return
