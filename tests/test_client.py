@@ -38,7 +38,8 @@ from pytest_relaxed import raises
 import paramiko
 from paramiko.pkey import PublicBlob
 from paramiko.common import PY2
-from paramiko.ssh_exception import SSHException, AuthenticationException
+from paramiko.ssh_exception import SSHException, AuthenticationException, \
+    PasswordRequiredException
 
 from .util import _support, slow
 
@@ -673,6 +674,15 @@ class PasswordPassphraseTests(ClientTest):
         self._test_connection(
             key_filename=_support('test_rsa_password.key'),
             password='television',
+        )
+
+    @raises(PasswordRequiredException)
+    def test_password_required_exception_raised_with_no_passphrase(self):
+        # When no passphrase is provided, and the password is required for the key
+        # a descriptive exception should be provided
+        self._test_connection(
+            key_filename=_support('test_rsa_password.key'),
+            passphrase=None
         )
 
     @raises(AuthenticationException) # TODO: more granular
