@@ -21,6 +21,7 @@
 Configuration file (aka ``ssh_config``) support.
 """
 
+import collections
 import fnmatch
 import os
 import re
@@ -295,3 +296,28 @@ class LazyFqdn(object):
             # Cache
             self.fqdn = fqdn
         return self.fqdn
+
+
+class SSHConfigDict(collections.UserDict):
+    """A dictionary wrapper for ssh host configurations.
+
+    This class introduces some usage niceties for consumers of SSHConfig,
+    specifically around the issue of variable type conversions. This offers
+    as_bool(key) and as_int(key) for the current raw string values in
+    SSHConfig"""
+
+    def __init__(self, initialdata=None):
+        super(SSHConfigDict, self).__init__(initialdata)
+
+    def as_bool(self, key):
+        """Express the key as a boolean value. Variations on 'yes' or boolean values
+        are accepted."""
+        val = self[key]
+        if isinstance(val, bool):
+            return val
+        return val.lower() == 'yes'
+
+    def as_int(self, key):
+        """Express the key as a true integer, if possible. Raises an Error otherwise
+        (following conventional int conversion rules)"""
+        return int(self[key])
