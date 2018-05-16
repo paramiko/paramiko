@@ -645,7 +645,8 @@ class SSHClient (ClosingContextManager):
                     except SSHException as e:
                         saved_exception = e
                         if isinstance(e, PasswordRequiredException):
-                            # We found the right algorithm, but the key is encrypted
+                            # We found the right algorithm,
+                            # but the key is encrypted
                             break
 
         if not two_factor and allow_agent:
