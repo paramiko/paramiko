@@ -38,7 +38,8 @@ from paramiko.hostkeys import HostKeys
 from paramiko.py3compat import string_types
 from paramiko.rsakey import RSAKey
 from paramiko.ssh_exception import (
-    SSHException, BadHostKeyException, NoValidConnectionsError
+    SSHException, BadHostKeyException, NoValidConnectionsError,
+    PasswordRequiredException
 )
 from paramiko.transport import Transport
 from paramiko.util import retry_on_signal, ClosingContextManager
@@ -643,6 +644,9 @@ class SSHClient (ClosingContextManager):
                         break
                     except SSHException as e:
                         saved_exception = e
+                        if isinstance(e, PasswordRequiredException):
+                            # We found the right algorithm, but the key is encrypted
+                            break
 
         if not two_factor and allow_agent:
             if self._agent is None:
