@@ -21,7 +21,6 @@
 Configuration file (aka ``ssh_config``) support.
 """
 
-import collections
 import fnmatch
 import os
 import re
@@ -298,7 +297,7 @@ class LazyFqdn(object):
         return self.fqdn
 
 
-class SSHConfigDict(collections.UserDict):
+class SSHConfigDict(dict):
     """A dictionary wrapper for ssh host configurations.
 
     This class introduces some usage niceties for consumers of SSHConfig,
@@ -306,8 +305,9 @@ class SSHConfigDict(collections.UserDict):
     as_bool(key) and as_int(key) for the current raw string values in
     SSHConfig"""
 
-    def __init__(self, initialdata=None):
-        super(SSHConfigDict, self).__init__(initialdata)
+    def __init__(self, *args, **kwargs):
+        # Hey, guess what? Python 2's userdict is an old-style class!
+        super(SSHConfigDict, self).__init__(*args, **kwargs)
 
     def as_bool(self, key):
         """Express the key as a boolean value. Variations on 'yes' or boolean values
