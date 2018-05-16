@@ -262,6 +262,19 @@ Host test
             host_config('test', config)['proxycommand']
         )
 
+    def test_proxycommand_escape_expansion(self):
+        """
+        Double percents (%%) should prevent expansion inside ProxyCommand
+        """
+        config = paramiko.util.parse_ssh_config(StringIO("""
+Host test
+    ProxyCommand    ssh deep -W %h:%p -o ProxyCommand='ssh shallow -W %%h:%%p'
+"""))
+        self.assertEqual(
+            "ssh deep -W test:22 -o ProxyCommand='ssh shallow -W %h:%p'",
+            host_config('test', config)['proxycommand']
+        )
+
     def test_host_config_test_negation(self):
         test_config_file = """
 Host www13.* !*.example.com
