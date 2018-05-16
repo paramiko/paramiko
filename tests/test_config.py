@@ -2,8 +2,10 @@
 # repository
 
 import pytest
-from paramiko import config
 
+from paramiko import config
+from paramiko.util import parse_ssh_config
+from paramiko.py3compat import StringIO
 
 def test_SSHConfigDict_construct_empty():
     assert not config.SSHConfigDict()
@@ -43,3 +45,30 @@ def test_SSHConfigDict_as_int_failures(non_int):
 
     with pytest.raises(exception_type):
         conf.as_int("key")
+
+
+def test_SSHConfig_host_dicts_are_SSHConfigDict_instances():
+    test_config_file = """
+Host *.example.com
+    Port 2222
+
+Host *
+    Port 3333
+    """
+    f = StringIO(test_config_file)
+    config = parse_ssh_config(f)
+    assert config.lookup("foo.example.com").as_int("port") == 2222
+
+
+def test_SSHConfig_wildcard_host_dicts_are_SSHConfigDict_instances():
+    test_config_file = """\
+Host *.example.com
+    Port 2222
+
+Host *
+    Port 3333
+    """
+    f = StringIO(test_config_file)
+    config = parse_ssh_config(f)
+    assert config.lookup("anything-else").as_int("port") == 3333
+

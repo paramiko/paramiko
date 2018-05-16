@@ -122,7 +122,7 @@ class SSHConfig (object):
             if self._allowed(config['host'], hostname)
         ]
 
-        ret = {}
+        ret = SSHConfigDict()
         for match in matches:
             for key, value in match['config'].items():
                 if key not in ret:
