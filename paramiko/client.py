@@ -38,13 +38,15 @@ from paramiko.hostkeys import HostKeys
 from paramiko.py3compat import string_types
 from paramiko.rsakey import RSAKey
 from paramiko.ssh_exception import (
-    SSHException, BadHostKeyException, NoValidConnectionsError
+    SSHException,
+    BadHostKeyException,
+    NoValidConnectionsError,
 )
 from paramiko.transport import Transport
 from paramiko.util import retry_on_signal, ClosingContextManager
 
 
-class SSHClient (ClosingContextManager):
+class SSHClient(ClosingContextManager):
     """
     A high-level representation of a session with an SSH server.  This class
     wraps `.Transport`, `.Channel`, and `.SFTPClient` to take care of most
@@ -97,7 +99,7 @@ class SSHClient (ClosingContextManager):
         """
         if filename is None:
             # try the user's .ssh key file, and mask exceptions
-            filename = os.path.expanduser('~/.ssh/known_hosts')
+            filename = os.path.expanduser("~/.ssh/known_hosts")
             try:
                 self._system_host_keys.load(filename)
             except IOError:
@@ -140,12 +142,14 @@ class SSHClient (ClosingContextManager):
         if self._host_keys_filename is not None:
             self.load_host_keys(self._host_keys_filename)
 
-        with open(filename, 'w') as f:
+        with open(filename, "w") as f:
             for hostname, keys in self._host_keys.items():
                 for keytype, key in keys.items():
-                    f.write('{} {} {}\n'.format(
-                        hostname, keytype, key.get_base64()
-                    ))
+                    f.write(
+                        "{} {} {}\n".format(
+                            hostname, keytype, key.get_base64()
+                        )
+                    )
 
     def get_host_keys(self):
         """
@@ -197,7 +201,8 @@ class SSHClient (ClosingContextManager):
         """
         guess = True
         addrinfos = socket.getaddrinfo(
-            hostname, port, socket.AF_UNSPEC, socket.SOCK_STREAM)
+            hostname, port, socket.AF_UNSPEC, socket.SOCK_STREAM
+        )
         for (family, socktype, proto, canonname, sockaddr) in addrinfos:
             if socktype == socket.SOCK_STREAM:
                 yield family, sockaddr
@@ -419,8 +424,16 @@ class SSHClient (ClosingContextManager):
             key_filenames = key_filename
 
         self._auth(
-            username, password, pkey, key_filenames, allow_agent,
-            look_for_keys, gss_auth, gss_kex, gss_deleg_creds, t.gss_host,
+            username,
+            password,
+            pkey,
+            key_filenames,
+            allow_agent,
+            look_for_keys,
+            gss_auth,
+            gss_kex,
+            gss_deleg_creds,
+            t.gss_host,
             passphrase,
         )
 
@@ -484,13 +497,20 @@ class SSHClient (ClosingContextManager):
         if environment:
             chan.update_environment(environment)
         chan.exec_command(command)
-        stdin = chan.makefile('wb', bufsize)
-        stdout = chan.makefile('r', bufsize)
-        stderr = chan.makefile_stderr('r', bufsize)
+        stdin = chan.makefile("wb", bufsize)
+        stdout = chan.makefile("r", bufsize)
+        stderr = chan.makefile_stderr("r", bufsize)
         return stdin, stdout, stderr
 
-    def invoke_shell(self, term='vt100', width=80, height=24, width_pixels=0,
-                     height_pixels=0, environment=None):
+    def invoke_shell(
+        self,
+        term="vt100",
+        width=80,
+        height=24,
+        width_pixels=0,
+        height_pixels=0,
+        environment=None,
+    ):
         """
         Start an interactive shell session on the SSH server.  A new `.Channel`
         is opened and connected to a pseudo-terminal using the requested
@@ -539,7 +559,7 @@ class SSHClient (ClosingContextManager):
         - Otherwise, the filename is assumed to be a private key, and the
           matching public cert will be loaded if it exists.
         """
-        cert_suffix = '-cert.pub'
+        cert_suffix = "-cert.pub"
         # Assume privkey, not cert, by default
         if filename.endswith(cert_suffix):
             key_path = filename[:-len(cert_suffix)]
@@ -553,7 +573,7 @@ class SSHClient (ClosingContextManager):
         # when #387 is released, since this is a critical log message users are
         # likely testing/filtering for (bah.)
         msg = "Trying discovered key {} in {}".format(
-            hexlify(key.get_fingerprint()), key_path,
+            hexlify(key.get_fingerprint()), key_path
         )
         self._log(DEBUG, msg)
         # Attempt to load cert if it exists.
@@ -563,8 +583,17 @@ class SSHClient (ClosingContextManager):
         return key
 
     def _auth(
-        self, username, password, pkey, key_filenames, allow_agent,
-        look_for_keys, gss_auth, gss_kex, gss_deleg_creds, gss_host,
+        self,
+        username,
+        password,
+        pkey,
+        key_filenames,
+        allow_agent,
+        look_for_keys,
+        gss_auth,
+        gss_kex,
+        gss_deleg_creds,
+        gss_host,
         passphrase,
     ):
         """
@@ -583,7 +612,7 @@ class SSHClient (ClosingContextManager):
         saved_exception = None
         two_factor = False
         allowed_types = set()
-        two_factor_types = {'keyboard-interactive', 'password'}
+        two_factor_types = {"keyboard-interactive", "password"}
         if passphrase is None and password is not None:
             passphrase = password
 
@@ -603,7 +632,7 @@ class SSHClient (ClosingContextManager):
         if gss_auth:
             try:
                 return self._transport.auth_gssapi_with_mic(
-                    username, gss_host, gss_deleg_creds,
+                    username, gss_host, gss_deleg_creds
                 )
             except Exception as e:
                 saved_exception = e
@@ -612,10 +641,13 @@ class SSHClient (ClosingContextManager):
             try:
                 self._log(
                     DEBUG,
-                    'Trying SSH key {}'.format(hexlify(pkey.get_fingerprint()))
+                    "Trying SSH key {}".format(
+                        hexlify(pkey.get_fingerprint())
+                    ),
                 )
                 allowed_types = set(
-                    self._transport.auth_publickey(username, pkey))
+                    self._transport.auth_publickey(username, pkey)
+                )
                 two_factor = (allowed_types & two_factor_types)
                 if not two_factor:
                     return
@@ -627,10 +659,11 @@ class SSHClient (ClosingContextManager):
                 for pkey_class in (RSAKey, DSSKey, ECDSAKey, Ed25519Key):
                     try:
                         key = self._key_from_filepath(
-                            key_filename, pkey_class, passphrase,
+                            key_filename, pkey_class, passphrase
                         )
                         allowed_types = set(
-                            self._transport.auth_publickey(username, key))
+                            self._transport.auth_publickey(username, key)
+                        )
                         two_factor = (allowed_types & two_factor_types)
                         if not two_factor:
                             return
@@ -645,11 +678,12 @@ class SSHClient (ClosingContextManager):
             for key in self._agent.get_keys():
                 try:
                     id_ = hexlify(key.get_fingerprint())
-                    self._log(DEBUG, 'Trying SSH agent key {}'.format(id_))
+                    self._log(DEBUG, "Trying SSH agent key {}".format(id_))
                     # for 2-factor auth a successfully auth'd key password
                     # will return an allowed 2fac auth method
                     allowed_types = set(
-                        self._transport.auth_publickey(username, key))
+                        self._transport.auth_publickey(username, key)
+                    )
                     two_factor = (allowed_types & two_factor_types)
                     if not two_factor:
                         return
@@ -674,8 +708,8 @@ class SSHClient (ClosingContextManager):
                     if os.path.isfile(full_path):
                         # TODO: only do this append if below did not run
                         keyfiles.append((keytype, full_path))
-                        if os.path.isfile(full_path + '-cert.pub'):
-                            keyfiles.append((keytype, full_path + '-cert.pub'))
+                        if os.path.isfile(full_path + "-cert.pub"):
+                            keyfiles.append((keytype, full_path + "-cert.pub"))
 
             if not look_for_keys:
                 keyfiles = []
@@ -683,12 +717,13 @@ class SSHClient (ClosingContextManager):
             for pkey_class, filename in keyfiles:
                 try:
                     key = self._key_from_filepath(
-                        filename, pkey_class, passphrase,
+                        filename, pkey_class, passphrase
                     )
                     # for 2-factor auth a successfully auth'd key will result
                     # in ['password']
                     allowed_types = set(
-                        self._transport.auth_publickey(username, key))
+                        self._transport.auth_publickey(username, key)
+                    )
                     two_factor = (allowed_types & two_factor_types)
                     if not two_factor:
                         return
@@ -712,13 +747,13 @@ class SSHClient (ClosingContextManager):
         # if we got an auth-failed exception earlier, re-raise it
         if saved_exception is not None:
             raise saved_exception
-        raise SSHException('No authentication methods available')
+        raise SSHException("No authentication methods available")
 
     def _log(self, level, msg):
         self._transport._log(level, msg)
 
 
-class MissingHostKeyPolicy (object):
+class MissingHostKeyPolicy(object):
     """
     Interface for defining the policy that `.SSHClient` should use when the
     SSH server's hostname is not in either the system host keys or the
@@ -739,7 +774,7 @@ class MissingHostKeyPolicy (object):
         pass
 
 
-class AutoAddPolicy (MissingHostKeyPolicy):
+class AutoAddPolicy(MissingHostKeyPolicy):
     """
     Policy for automatically adding the hostname and new host key to the
     local `.HostKeys` object, and saving it.  This is used by `.SSHClient`.
@@ -749,32 +784,41 @@ class AutoAddPolicy (MissingHostKeyPolicy):
         client._host_keys.add(hostname, key.get_name(), key)
         if client._host_keys_filename is not None:
             client.save_host_keys(client._host_keys_filename)
-        client._log(DEBUG, 'Adding {} host key for {}: {}'.format(
-            key.get_name(), hostname, hexlify(key.get_fingerprint()),
-        ))
+        client._log(
+            DEBUG,
+            "Adding {} host key for {}: {}".format(
+                key.get_name(), hostname, hexlify(key.get_fingerprint())
+            ),
+        )
 
 
-class RejectPolicy (MissingHostKeyPolicy):
+class RejectPolicy(MissingHostKeyPolicy):
     """
     Policy for automatically rejecting the unknown hostname & key.  This is
     used by `.SSHClient`.
     """
 
     def missing_host_key(self, client, hostname, key):
-        client._log(DEBUG, 'Rejecting {} host key for {}: {}'.format(
-            key.get_name(), hostname, hexlify(key.get_fingerprint()),
-        ))
+        client._log(
+            DEBUG,
+            "Rejecting {} host key for {}: {}".format(
+                key.get_name(), hostname, hexlify(key.get_fingerprint())
+            ),
+        )
         raise SSHException(
-            'Server {!r} not found in known_hosts'.format(hostname)
+            "Server {!r} not found in known_hosts".format(hostname)
         )
 
 
-class WarningPolicy (MissingHostKeyPolicy):
+class WarningPolicy(MissingHostKeyPolicy):
     """
     Policy for logging a Python-style warning for an unknown host key, but
     accepting it. This is used by `.SSHClient`.
     """
+
     def missing_host_key(self, client, hostname, key):
-        warnings.warn('Unknown {} host key for {}: {}'.format(
-            key.get_name(), hostname, hexlify(key.get_fingerprint()),
-        ))
+        warnings.warn(
+            "Unknown {} host key for {}: {}".format(
+                key.get_name(), hostname, hexlify(key.get_fingerprint())
+            )
+        )

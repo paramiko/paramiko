@@ -19,14 +19,14 @@
 import socket
 
 
-class SSHException (Exception):
+class SSHException(Exception):
     """
     Exception raised by failures in SSH2 protocol negotiation or logic errors.
     """
     pass
 
 
-class AuthenticationException (SSHException):
+class AuthenticationException(SSHException):
     """
     Exception raised when authentication failed for some reason.  It may be
     possible to retry with different credentials.  (Other classes specify more
@@ -37,14 +37,14 @@ class AuthenticationException (SSHException):
     pass
 
 
-class PasswordRequiredException (AuthenticationException):
+class PasswordRequiredException(AuthenticationException):
     """
     Exception raised when a password is needed to unlock a private key file.
     """
     pass
 
 
-class BadAuthenticationType (AuthenticationException):
+class BadAuthenticationType(AuthenticationException):
     """
     Exception raised when an authentication type (like password) is used, but
     the server isn't allowing that type.  (It may only allow public-key, for
@@ -60,28 +60,28 @@ class BadAuthenticationType (AuthenticationException):
         AuthenticationException.__init__(self, explanation)
         self.allowed_types = types
         # for unpickling
-        self.args = (explanation, types, )
+        self.args = (explanation, types)
 
     def __str__(self):
-        return '{} (allowed_types={!r})'.format(
+        return "{} (allowed_types={!r})".format(
             SSHException.__str__(self), self.allowed_types
         )
 
 
-class PartialAuthentication (AuthenticationException):
+class PartialAuthentication(AuthenticationException):
     """
     An internal exception thrown in the case of partial authentication.
     """
     allowed_types = []
 
     def __init__(self, types):
-        AuthenticationException.__init__(self, 'partial authentication')
+        AuthenticationException.__init__(self, "partial authentication")
         self.allowed_types = types
         # for unpickling
-        self.args = (types, )
+        self.args = (types,)
 
 
-class ChannelException (SSHException):
+class ChannelException(SSHException):
     """
     Exception raised when an attempt to open a new `.Channel` fails.
 
@@ -89,14 +89,15 @@ class ChannelException (SSHException):
 
     .. versionadded:: 1.6
     """
+
     def __init__(self, code, text):
         SSHException.__init__(self, text)
         self.code = code
         # for unpickling
-        self.args = (code, text, )
+        self.args = (code, text)
 
 
-class BadHostKeyException (SSHException):
+class BadHostKeyException(SSHException):
     """
     The host key given by the SSH server did not match what we were expecting.
 
@@ -106,35 +107,38 @@ class BadHostKeyException (SSHException):
 
     .. versionadded:: 1.6
     """
+
     def __init__(self, hostname, got_key, expected_key):
-        message = 'Host key for server {} does not match: got {}, expected {}' # noqa
+        message = "Host key for server {} does not match: got {}, expected {}"  # noqa
         message = message.format(
-            hostname, got_key.get_base64(),
-            expected_key.get_base64())
+            hostname, got_key.get_base64(), expected_key.get_base64()
+        )
         SSHException.__init__(self, message)
         self.hostname = hostname
         self.key = got_key
         self.expected_key = expected_key
         # for unpickling
-        self.args = (hostname, got_key, expected_key, )
+        self.args = (hostname, got_key, expected_key)
 
 
-class ProxyCommandFailure (SSHException):
+class ProxyCommandFailure(SSHException):
     """
     The "ProxyCommand" found in the .ssh/config file returned an error.
 
     :param str command: The command line that is generating this exception.
     :param str error: The error captured from the proxy command output.
     """
+
     def __init__(self, command, error):
-        SSHException.__init__(self,
+        SSHException.__init__(
+            self,
             '"ProxyCommand ({})" returned non-zero exit status: {}'.format(
                 command, error
-            )
+            ),
         )
         self.error = error
         # for unpickling
-        self.args = (command, error, )
+        self.args = (command, error)
 
 
 class NoValidConnectionsError(socket.error):
@@ -159,23 +163,23 @@ class NoValidConnectionsError(socket.error):
 
     .. versionadded:: 1.16
     """
+
     def __init__(self, errors):
         """
         :param dict errors:
             The errors dict to store, as described by class docstring.
         """
         addrs = sorted(errors.keys())
-        body = ', '.join([x[0] for x in addrs[:-1]])
+        body = ", ".join([x[0] for x in addrs[:-1]])
         tail = addrs[-1][0]
         if body:
             msg = "Unable to connect to port {0} on {1} or {2}"
         else:
             msg = "Unable to connect to port {0} on {2}"
         super(NoValidConnectionsError, self).__init__(
-            None, # stand-in for errno
-            msg.format(addrs[0][1], body, tail)
+            None, msg.format(addrs[0][1], body, tail)  # stand-in for errno
         )
         self.errors = errors
 
     def __reduce__(self):
-        return (self.__class__, (self.errors, ))
+        return (self.__class__, (self.errors,))

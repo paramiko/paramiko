@@ -44,7 +44,7 @@ class KexGroup1(object):
     P = 0xFFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD129024E088A67CC74020BBEA63B139B22514A08798E3404DDEF9519B3CD3A431B302B0A6DF25F14374FE1356D6D51C245E485B576625E7EC6F44C42E9A637ED6B0BFF5CB6F406B7EDEE386BFB5A899FA5AE9F24117C4B1FE649286651ECE65381FFFFFFFFFFFFFFFF  # noqa
     G = 2
 
-    name = 'diffie-hellman-group1-sha1'
+    name = "diffie-hellman-group1-sha1"
     hash_algo = sha1
 
     def __init__(self, transport):
@@ -88,8 +88,10 @@ class KexGroup1(object):
         while 1:
             x_bytes = os.urandom(128)
             x_bytes = byte_mask(x_bytes[0], 0x7f) + x_bytes[1:]
-            if (x_bytes[:8] != b7fffffffffffffff and
-                    x_bytes[:8] != b0000000000000000):
+            if (
+                x_bytes[:8] != b7fffffffffffffff
+                and x_bytes[:8] != b0000000000000000
+            ):
                 break
         self.x = util.inflate_long(x_bytes)
 
@@ -104,8 +106,12 @@ class KexGroup1(object):
         # okay, build up the hash H of
         # (V_C || V_S || I_C || I_S || K_S || e || f || K)
         hm = Message()
-        hm.add(self.transport.local_version, self.transport.remote_version,
-               self.transport.local_kex_init, self.transport.remote_kex_init)
+        hm.add(
+            self.transport.local_version,
+            self.transport.remote_version,
+            self.transport.local_kex_init,
+            self.transport.remote_kex_init,
+        )
         hm.add_string(host_key)
         hm.add_mpint(self.e)
         hm.add_mpint(self.f)
@@ -124,8 +130,12 @@ class KexGroup1(object):
         # okay, build up the hash H of
         # (V_C || V_S || I_C || I_S || K_S || e || f || K)
         hm = Message()
-        hm.add(self.transport.remote_version, self.transport.local_version,
-               self.transport.remote_kex_init, self.transport.local_kex_init)
+        hm.add(
+            self.transport.remote_version,
+            self.transport.local_version,
+            self.transport.remote_kex_init,
+            self.transport.local_kex_init,
+        )
         hm.add_string(key)
         hm.add_mpint(self.e)
         hm.add_mpint(self.f)
