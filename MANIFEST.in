@@ -1,4 +1,4 @@
-include LICENSE test.py setup_helper.py
+include LICENSE setup_helper.py
 recursive-include docs *
 recursive-include tests *.py *.key
 recursive-include demos *.py *.key user_rsa_key user_rsa_key.pub

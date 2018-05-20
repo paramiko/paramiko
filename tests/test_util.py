@@ -30,6 +30,7 @@ import paramiko.util
 from paramiko.util import lookup_ssh_host_config as host_config, safe_string
 from paramiko.py3compat import StringIO, byte_ord, b
 
+
 # Note some lines in this configuration have trailing spaces on purpose
 test_config_file = """\
 Host *
@@ -366,7 +367,7 @@ IdentityFile something_%l_using_fqdn
     def test_get_hostnames(self):
         f = StringIO(test_config_file)
         config = paramiko.util.parse_ssh_config(f)
-        self.assertEqual(config.get_hostnames(), set(['*', '*.example.com', 'spoo.example.com']))
+        self.assertEqual(config.get_hostnames(), {'*', '*.example.com', 'spoo.example.com'})
 
     def test_quoted_host_names(self):
         test_config_file = """\
@@ -469,12 +470,12 @@ Host param3 parara
             self.assertRaises(Exception, conf._get_hosts, host)
 
     def test_safe_string(self):
-        vanilla = b("vanilla")
-        has_bytes = b("has \7\3 bytes")
+        vanilla = b"vanilla"
+        has_bytes = b"has \7\3 bytes"
         safe_vanilla = safe_string(vanilla)
         safe_has_bytes = safe_string(has_bytes)
-        expected_bytes = b("has %07%03 bytes")
-        err = "{0!r} != {1!r}"
+        expected_bytes = b"has %07%03 bytes"
+        err = "{!r} != {!r}"
         msg = err.format(safe_vanilla, vanilla)
         assert safe_vanilla == vanilla, msg
         msg = err.format(safe_has_bytes, expected_bytes)

@@ -21,6 +21,8 @@
 """
 
 import weakref
+import time
+
 from paramiko.common import (
     cMSG_SERVICE_REQUEST, cMSG_DISCONNECT, DISCONNECT_SERVICE_NOT_AVAILABLE,
     DISCONNECT_NO_MORE_AUTH_METHODS_AVAILABLE, cMSG_USERAUTH_REQUEST,
@@ -34,16 +36,16 @@ from paramiko.common import (
     cMSG_USERAUTH_GSSAPI_MIC, MSG_USERAUTH_GSSAPI_RESPONSE,
     MSG_USERAUTH_GSSAPI_TOKEN, MSG_USERAUTH_GSSAPI_ERROR,
     MSG_USERAUTH_GSSAPI_ERRTOK, MSG_USERAUTH_GSSAPI_MIC, MSG_NAMES,
+    cMSG_USERAUTH_BANNER
 )
-
 from paramiko.message import Message
-from paramiko.py3compat import bytestring
+from paramiko.py3compat import b
 from paramiko.ssh_exception import (
     SSHException, AuthenticationException, BadAuthenticationType,
     PartialAuthentication,
 )
 from paramiko.server import InteractiveQuery
-from paramiko.ssh_gss import GSSAuth
+from paramiko.ssh_gss import GSSAuth, GSS_EXCEPTIONS
 
 
 class AuthHandler (object):
@@ -68,6 +70,9 @@ class AuthHandler (object):
         # for GSSAPI
         self.gss_host = None
         self.gss_deleg_creds = True
+
+    def _log(self, *args):
+        return self.transport._log(*args)
 
     def is_authenticated(self):
         return self.authenticated
@@ -185,11 +190,19 @@ class AuthHandler (object):
         m.add_string(service)
         m.add_string('publickey')
         m.add_boolean(True)
-        m.add_string(key.get_name())
-        m.add_string(key)
+        # Use certificate contents, if available, plain pubkey otherwise
+        if key.public_blob:
+            m.add_string(key.public_blob.key_type)
+            m.add_string(key.public_blob.key_blob)
+        else:
+            m.add_string(key.get_name())
+            m.add_string(key)
         return m.asbytes()
 
     def wait_for_response(self, event):
+        max_ts = None
+        if self.transport.auth_timeout is not None:
+            max_ts = time.time() + self.transport.auth_timeout
         while True:
             event.wait(0.1)
             if not self.transport.is_active():
@@ -199,6 +212,9 @@ class AuthHandler (object):
                 raise e
             if event.is_set():
                 break
+            if max_ts is not None and max_ts <= time.time():
+                raise AuthenticationException('Authentication timeout.')
+
         if not self.is_authenticated():
             e = self.transport.get_exception()
             if e is None:
@@ -218,6 +234,13 @@ class AuthHandler (object):
             m.add_byte(cMSG_SERVICE_ACCEPT)
             m.add_string(service)
             self.transport._send_message(m)
+            banner, language = self.transport.server_object.get_banner()
+            if banner:
+                m = Message()
+                m.add_byte(cMSG_USERAUTH_BANNER)
+                m.add_string(banner)
+                m.add_string(language)
+                self.transport._send_message(m)
             return
         # dunno this one
         self._disconnect_service_not_available()
@@ -225,7 +248,7 @@ class AuthHandler (object):
     def _parse_service_accept(self, m):
         service = m.get_text()
         if service == 'ssh-userauth':
-            self.transport._log(DEBUG, 'userauth is OK')
+            self._log(DEBUG, 'userauth is OK')
             m = Message()
             m.add_byte(cMSG_USERAUTH_REQUEST)
             m.add_string(self.username)
@@ -233,12 +256,18 @@ class AuthHandler (object):
             m.add_string(self.auth_method)
             if self.auth_method == 'password':
                 m.add_boolean(False)
-                password = bytestring(self.password)
+                password = b(self.password)
                 m.add_string(password)
             elif self.auth_method == 'publickey':
                 m.add_boolean(True)
-                m.add_string(self.private_key.get_name())
-                m.add_string(self.private_key)
+                # Use certificate contents, if available, plain pubkey
+                # otherwise
+                if self.private_key.public_blob:
+                    m.add_string(self.private_key.public_blob.key_type)
+                    m.add_string(self.private_key.public_blob.key_blob)
+                else:
+                    m.add_string(self.private_key.get_name())
+                    m.add_string(self.private_key)
                 blob = self._get_session_blob(
                     self.private_key, 'ssh-connection', self.username)
                 sig = self.private_key.sign_ssh_data(blob)
@@ -262,19 +291,26 @@ class AuthHandler (object):
                     mech = m.get_string()
                     m = Message()
                     m.add_byte(cMSG_USERAUTH_GSSAPI_TOKEN)
-                    m.add_string(sshgss.ssh_init_sec_context(self.gss_host,
-                                                             mech,
-                                                             self.username,))
+                    try:
+                        m.add_string(sshgss.ssh_init_sec_context(
+                            self.gss_host,
+                            mech,
+                            self.username,))
+                    except GSS_EXCEPTIONS as e:
+                        return self._handle_local_gss_failure(e)
                     self.transport._send_message(m)
                     while True:
                         ptype, m = self.transport.packetizer.read_message()
                         if ptype == MSG_USERAUTH_GSSAPI_TOKEN:
                             srv_token = m.get_string()
-                            next_token = sshgss.ssh_init_sec_context(
-                                self.gss_host,
-                                mech,
-                                self.username,
-                                srv_token)
+                            try:
+                                next_token = sshgss.ssh_init_sec_context(
+                                    self.gss_host,
+                                    mech,
+                                    self.username,
+                                    srv_token)
+                            except GSS_EXCEPTIONS as e:
+                                return self._handle_local_gss_failure(e)
                             # After this step the GSSAPI should not return any
                             # token. If it does, we keep sending the token to
                             # the server until no more token is returned.
@@ -287,7 +323,8 @@ class AuthHandler (object):
                                 self.transport.send_message(m)
                     else:
                         raise SSHException(
-                            "Received Package: %s" % MSG_NAMES[ptype])
+                            "Received Package: {}".format(MSG_NAMES[ptype])
+                        )
                     m = Message()
                     m.add_byte(cMSG_USERAUTH_GSSAPI_MIC)
                     # send the MIC to the server
@@ -302,18 +339,18 @@ class AuthHandler (object):
                     maj_status = m.get_int()
                     min_status = m.get_int()
                     err_msg = m.get_string()
-                    m.get_string() # Lang tag - discarded
-                    raise SSHException("GSS-API Error:\nMajor Status: %s\n\
-                                        Minor Status: %s\ \nError Message:\
-                                         %s\n") % (str(maj_status),
-                                                   str(min_status),
-                                                   err_msg)
+                    m.get_string()  # Lang tag - discarded
+                    raise SSHException("""GSS-API Error:
+Major Status: {}
+Minor Status: {}
+Error Message: {}
+""".format(maj_status, min_status, err_msg))
                 elif ptype == MSG_USERAUTH_FAILURE:
                     self._parse_userauth_failure(m)
                     return
                 else:
                     raise SSHException(
-                        "Received Package: %s" % MSG_NAMES[ptype])
+                        "Received Package: {}".format(MSG_NAMES[ptype]))
             elif (
                 self.auth_method == 'gssapi-keyex' and
                 self.transport.gss_kex_used
@@ -326,22 +363,22 @@ class AuthHandler (object):
                 pass
             else:
                 raise SSHException(
-                    'Unknown auth method "%s"' % self.auth_method)
+                    'Unknown auth method "{}"'.format(self.auth_method))
             self.transport._send_message(m)
         else:
-            self.transport._log(
+            self._log(
                 DEBUG,
-                'Service request "%s" accepted (?)' % service)
+                'Service request "{}" accepted (?)'.format(service))
 
     def _send_auth_result(self, username, method, result):
         # okay, send result
         m = Message()
         if result == AUTH_SUCCESSFUL:
-            self.transport._log(INFO, 'Auth granted (%s).' % method)
+            self._log(INFO, 'Auth granted ({}).'.format(method))
             m.add_byte(cMSG_USERAUTH_SUCCESS)
             self.authenticated = True
         else:
-            self.transport._log(INFO, 'Auth rejected (%s).' % method)
+            self._log(INFO, 'Auth rejected ({}).'.format(method))
             m.add_byte(cMSG_USERAUTH_FAILURE)
             m.add_string(
                 self.transport.server_object.get_allowed_auths(username))
@@ -384,18 +421,20 @@ class AuthHandler (object):
         username = m.get_text()
         service = m.get_text()
         method = m.get_text()
-        self.transport._log(
+        self._log(
             DEBUG,
-            'Auth request (type=%s) service=%s, username=%s' % (
-                method, service, username))
+            'Auth request (type={}) service={}, username={}'.format(
+                method, service, username
+            )
+        )
         if service != 'ssh-connection':
             self._disconnect_service_not_available()
             return
         if ((self.auth_username is not None) and
                 (self.auth_username != username)):
-            self.transport._log(
+            self._log(
                 WARNING,
-                'Auth rejected because the client attempted to change username in mid-flight' # noqa
+                'Auth rejected because the client attempted to change username in mid-flight'  # noqa
             )
             self._disconnect_no_more_auth()
             return
@@ -418,7 +457,7 @@ class AuthHandler (object):
                 # always treated as failure, since we don't support changing
                 # passwords, but collect the list of valid auth types from
                 # the callback anyway
-                self.transport._log(
+                self._log(
                     DEBUG,
                     'Auth request to change passwords (rejected)')
                 newpassword = m.get_binary()
@@ -437,14 +476,13 @@ class AuthHandler (object):
             try:
                 key = self.transport._key_info[keytype](Message(keyblob))
             except SSHException as e:
-                self.transport._log(
+                self._log(
                     INFO,
-                    'Auth rejected: public key: %s' % str(e))
+                    'Auth rejected: public key: {}'.format(str(e)))
                 key = None
-            except:
-                self.transport._log(
-                    INFO,
-                    'Auth rejected: unsupported or mangled public key')
+            except Exception as e:
+                msg = 'Auth rejected: unsupported or mangled public key ({}: {})' # noqa
+                self._log(INFO, msg.format(e.__class__.__name__, e))
                 key = None
             if key is None:
                 self._disconnect_no_more_auth()
@@ -466,7 +504,7 @@ class AuthHandler (object):
                 sig = Message(m.get_binary())
                 blob = self._get_session_blob(key, service, username)
                 if not key.verify_ssh_sig(blob, sig):
-                    self.transport._log(
+                    self._log(
                         INFO,
                         'Auth rejected: invalid signature')
                     result = AUTH_FAILED
@@ -487,7 +525,7 @@ class AuthHandler (object):
             # We can't accept more than one OID, so if the SSH client sends
             # more than one, disconnect.
             if mechs > 1:
-                self.transport._log(
+                self._log(
                     INFO,
                     'Disconnect: Received more than one GSS-API OID mechanism')
                 self._disconnect_no_more_auth()
@@ -495,7 +533,7 @@ class AuthHandler (object):
             mech_ok = sshgss.ssh_check_mech(desired_mech)
             # if we don't support the mechanism, disconnect.
             if not mech_ok:
-                self.transport._log(
+                self._log(
                     INFO,
                     'Disconnect: Received an invalid GSS-API OID mechanism')
                 self._disconnect_no_more_auth()
@@ -503,52 +541,16 @@ class AuthHandler (object):
             supported_mech = sshgss.ssh_gss_oids("server")
             # RFC 4462 says we are not required to implement GSS-API error
             # messages. See section 3.8 in http://www.ietf.org/rfc/rfc4462.txt
-            while True:
-                m = Message()
-                m.add_byte(cMSG_USERAUTH_GSSAPI_RESPONSE)
-                m.add_bytes(supported_mech)
-                self.transport._send_message(m)
-                ptype, m = self.transport.packetizer.read_message()
-                if ptype == MSG_USERAUTH_GSSAPI_TOKEN:
-                    client_token = m.get_string()
-                    # use the client token as input to establish a secure
-                    # context.
-                    try:
-                        token = sshgss.ssh_accept_sec_context(self.gss_host,
-                                                              client_token,
-                                                              username)
-                    except Exception:
-                        result = AUTH_FAILED
-                        self._send_auth_result(username, method, result)
-                        raise
-                    if token is not None:
-                        m = Message()
-                        m.add_byte(cMSG_USERAUTH_GSSAPI_TOKEN)
-                        m.add_string(token)
-                        self.transport._send_message(m)
-                else:
-                    result = AUTH_FAILED
-                    self._send_auth_result(username, method, result)
-                    return
-                # check MIC
-                ptype, m = self.transport.packetizer.read_message()
-                if ptype == MSG_USERAUTH_GSSAPI_MIC:
-                    break
-            mic_token = m.get_string()
-            try:
-                sshgss.ssh_check_mic(mic_token,
-                                     self.transport.session_id,
-                                     username)
-            except Exception:
-                result = AUTH_FAILED
-                self._send_auth_result(username, method, result)
-                raise
-            # TODO: Implement client credential saving.
-            # The OpenSSH server is able to create a TGT with the delegated
-            # client credentials, but this is not supported by GSS-API.
-            result = AUTH_SUCCESSFUL
-            self.transport.server_object.check_auth_gssapi_with_mic(
-                username, result)
+            m = Message()
+            m.add_byte(cMSG_USERAUTH_GSSAPI_RESPONSE)
+            m.add_bytes(supported_mech)
+            self.transport.auth_handler = GssapiWithMicAuthHandler(self,
+                                                                   sshgss)
+            self.transport._expected_packet = (MSG_USERAUTH_GSSAPI_TOKEN,
+                                               MSG_USERAUTH_REQUEST,
+                                               MSG_SERVICE_REQUEST)
+            self.transport._send_message(m)
+            return
         elif method == "gssapi-keyex" and gss_auth:
             mic_token = m.get_string()
             sshgss = self.transport.kexgss_ctxt
@@ -573,9 +575,9 @@ class AuthHandler (object):
         self._send_auth_result(username, method, result)
 
     def _parse_userauth_success(self, m):
-        self.transport._log(
+        self._log(
             INFO,
-            'Authentication (%s) successful!' % self.auth_method)
+            'Authentication ({}) successful!'.format(self.auth_method))
         self.authenticated = True
         self.transport._auth_trigger()
         if self.auth_event is not None:
@@ -585,22 +587,25 @@ class AuthHandler (object):
         authlist = m.get_list()
         partial = m.get_boolean()
         if partial:
-            self.transport._log(INFO, 'Authentication continues...')
-            self.transport._log(DEBUG, 'Methods: ' + str(authlist))
+            self._log(INFO, 'Authentication continues...')
+            self._log(DEBUG, 'Methods: ' + str(authlist))
             self.transport.saved_exception = PartialAuthentication(authlist)
         elif self.auth_method not in authlist:
-            self.transport._log(
-                DEBUG,
-                'Authentication type (%s) not permitted.' % self.auth_method)
-            self.transport._log(
-                DEBUG,
-                'Allowed methods: ' + str(authlist))
+            for msg in (
+                'Authentication type ({}) not permitted.'.format(
+                    self.auth_method
+                ),
+                'Allowed methods: {}'.format(authlist),
+            ):
+                self._log(DEBUG, msg)
             self.transport.saved_exception = BadAuthenticationType(
-                'Bad authentication type', authlist)
+                'Bad authentication type', authlist
+            )
         else:
-            self.transport._log(
+            self._log(
                 INFO,
-                'Authentication (%s) failed.' % self.auth_method)
+                'Authentication ({}) failed.'.format(self.auth_method)
+            )
         self.authenticated = False
         self.username = None
         if self.auth_event is not None:
@@ -609,7 +614,7 @@ class AuthHandler (object):
     def _parse_userauth_banner(self, m):
         banner = m.get_string()
         self.banner = banner
-        self.transport._log(INFO, 'Auth banner: %s' % banner)
+        self._log(INFO, 'Auth banner: {}'.format(banner))
         # who cares.
 
     def _parse_userauth_info_request(self, m):
@@ -648,6 +653,17 @@ class AuthHandler (object):
         self._send_auth_result(
             self.auth_username, 'keyboard-interactive', result)
 
+    def _handle_local_gss_failure(self, e):
+        self.transport.saved_exception = e
+        self._log(DEBUG, "GSSAPI failure: {}".format(e))
+        self._log(INFO, 'Authentication ({}) failed.'.format(
+            self.auth_method))
+        self.authenticated = False
+        self.username = None
+        if self.auth_event is not None:
+            self.auth_event.set()
+        return
+
     _handler_table = {
         MSG_SERVICE_REQUEST: _parse_service_request,
         MSG_SERVICE_ACCEPT: _parse_service_accept,
@@ -657,4 +673,103 @@ class AuthHandler (object):
         MSG_USERAUTH_BANNER: _parse_userauth_banner,
         MSG_USERAUTH_INFO_REQUEST: _parse_userauth_info_request,
         MSG_USERAUTH_INFO_RESPONSE: _parse_userauth_info_response,
+    }
+
+
+class GssapiWithMicAuthHandler(object):
+    """A specialized Auth handler for gssapi-with-mic
+
+    During the GSSAPI token exchange we need a modified dispatch table,
+    because the packet type numbers are not unique.
+    """
+
+    method = "gssapi-with-mic"
+
+    def __init__(self, delegate, sshgss):
+        self._delegate = delegate
+        self.sshgss = sshgss
+
+    def abort(self):
+        self._restore_delegate_auth_handler()
+        return self._delegate.abort()
+
+    @property
+    def transport(self):
+        return self._delegate.transport
+
+    @property
+    def _send_auth_result(self):
+        return self._delegate._send_auth_result
+
+    @property
+    def auth_username(self):
+        return self._delegate.auth_username
+
+    @property
+    def gss_host(self):
+        return self._delegate.gss_host
+
+    def _restore_delegate_auth_handler(self):
+        self.transport.auth_handler = self._delegate
+
+    def _parse_userauth_gssapi_token(self, m):
+        client_token = m.get_string()
+        # use the client token as input to establish a secure
+        # context.
+        sshgss = self.sshgss
+        try:
+            token = sshgss.ssh_accept_sec_context(self.gss_host,
+                                                  client_token,
+                                                  self.auth_username)
+        except Exception as e:
+            self.transport.saved_exception = e
+            result = AUTH_FAILED
+            self._restore_delegate_auth_handler()
+            self._send_auth_result(self.auth_username, self.method, result)
+            raise
+        if token is not None:
+            m = Message()
+            m.add_byte(cMSG_USERAUTH_GSSAPI_TOKEN)
+            m.add_string(token)
+            self.transport._expected_packet = (MSG_USERAUTH_GSSAPI_TOKEN,
+                                               MSG_USERAUTH_GSSAPI_MIC,
+                                               MSG_USERAUTH_REQUEST)
+            self.transport._send_message(m)
+
+    def _parse_userauth_gssapi_mic(self, m):
+        mic_token = m.get_string()
+        sshgss = self.sshgss
+        username = self.auth_username
+        self._restore_delegate_auth_handler()
+        try:
+            sshgss.ssh_check_mic(mic_token,
+                                 self.transport.session_id,
+                                 username)
+        except Exception as e:
+            self.transport.saved_exception = e
+            result = AUTH_FAILED
+            self._send_auth_result(username, self.method, result)
+            raise
+        # TODO: Implement client credential saving.
+        # The OpenSSH server is able to create a TGT with the delegated
+        # client credentials, but this is not supported by GSS-API.
+        result = AUTH_SUCCESSFUL
+        self.transport.server_object.check_auth_gssapi_with_mic(username,
+                                                                result)
+        # okay, send result
+        self._send_auth_result(username, self.method, result)
+
+    def _parse_service_request(self, m):
+        self._restore_delegate_auth_handler()
+        return self._delegate._parse_service_request(m)
+
+    def _parse_userauth_request(self, m):
+        self._restore_delegate_auth_handler()
+        return self._delegate._parse_userauth_request(m)
+
+    _handler_table = {
+        MSG_SERVICE_REQUEST: _parse_service_request,
+        MSG_USERAUTH_REQUEST: _parse_userauth_request,
+        MSG_USERAUTH_GSSAPI_TOKEN: _parse_userauth_gssapi_token,
+        MSG_USERAUTH_GSSAPI_MIC: _parse_userauth_gssapi_mic,
     }

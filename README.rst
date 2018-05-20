@@ -6,12 +6,12 @@ Paramiko
 
 .. image:: https://travis-ci.org/paramiko/paramiko.svg?branch=master
     :target: https://travis-ci.org/paramiko/paramiko
-.. image:: https://coveralls.io/repos/paramiko/paramiko/badge.svg?branch=master&service=github
-    :target: https://coveralls.io/github/paramiko/paramiko?branch=master
+.. image:: https://codecov.io/gh/paramiko/paramiko/branch/master/graph/badge.svg
+    :target: https://codecov.io/gh/paramiko/paramiko
 
 :Paramiko:    Python SSH module
 :Copyright:   Copyright (c) 2003-2009  Robey Pointer <robeypointer@gmail.com>
-:Copyright:   Copyright (c) 2013-2017  Jeff Forcier <jeff@bitprophet.org>
+:Copyright:   Copyright (c) 2013-2018  Jeff Forcier <jeff@bitprophet.org>
 :License:     `LGPL <https://www.gnu.org/copyleft/lesser.html>`_
 :Homepage:    http://www.paramiko.org/
 :API docs:    http://docs.paramiko.org
@@ -22,7 +22,7 @@ What
 ----
 
 "Paramiko" is a combination of the Esperanto words for "paranoid" and
-"friend".  It's a module for Python 2.6+/3.3+ that implements the SSH2 protocol
+"friend".  It's a module for Python 2.7/3.4+ that implements the SSH2 protocol
 for secure (encrypted and authenticated) connections to remote machines. Unlike
 SSL (aka TLS), SSH2 protocol does not require hierarchical certificates signed
 by a powerful central authority.  You may know SSH2 as the protocol that
@@ -132,6 +132,7 @@ doc/ folder.
 
 There are also unit tests here::
 
-    $ python ./test.py
+    $ pip install -r dev-requirements.txt
+    $ pytest
 
 Which will verify that most of the core components are working correctly.

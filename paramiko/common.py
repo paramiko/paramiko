@@ -20,9 +20,7 @@
 Common constants and global variables.
 """
 import logging
-from paramiko.py3compat import (
-    byte_chr, PY2, bytes_types, string_types, b, long,
-)
+from paramiko.py3compat import byte_chr, PY2, long, b
 
 MSG_DISCONNECT, MSG_IGNORE, MSG_UNIMPLEMENTED, MSG_DEBUG, \
     MSG_SERVICE_REQUEST, MSG_SERVICE_ACCEPT = range(1, 7)
@@ -34,6 +32,7 @@ MSG_USERAUTH_INFO_REQUEST, MSG_USERAUTH_INFO_RESPONSE = range(60, 62)
 MSG_USERAUTH_GSSAPI_RESPONSE, MSG_USERAUTH_GSSAPI_TOKEN = range(60, 62)
 MSG_USERAUTH_GSSAPI_EXCHANGE_COMPLETE, MSG_USERAUTH_GSSAPI_ERROR,\
     MSG_USERAUTH_GSSAPI_ERRTOK, MSG_USERAUTH_GSSAPI_MIC = range(63, 67)
+HIGHEST_USERAUTH_MESSAGE_ID = 79
 MSG_GLOBAL_REQUEST, MSG_REQUEST_SUCCESS, MSG_REQUEST_FAILURE = range(80, 83)
 MSG_CHANNEL_OPEN, MSG_CHANNEL_OPEN_SUCCESS, MSG_CHANNEL_OPEN_FAILURE, \
     MSG_CHANNEL_WINDOW_ADJUST, MSG_CHANNEL_DATA, MSG_CHANNEL_EXTENDED_DATA, \
@@ -163,15 +162,24 @@ else:
 
 
 def asbytes(s):
-    if not isinstance(s, bytes_types):
-        if isinstance(s, string_types):
-            s = b(s)
-        else:
-            try:
-                s = s.asbytes()
-            except Exception:
-                raise Exception('Unknown type')
-    return s
+    """
+    Coerce to bytes if possible or return unchanged.
+    """
+    try:
+        # Attempt to run through our version of b(), which does the Right Thing
+        # for string/unicode/buffer (Py2) or bytes/str (Py3), and raises
+        # TypeError if it's not one of those types.
+        return b(s)
+    except TypeError:
+        try:
+            # If it wasn't a string/byte/buffer type object, try calling an
+            # asbytes() method, which many of our internal classes implement.
+            return s.asbytes()
+        except AttributeError:
+            # Finally, just do nothing & assume this object is sufficiently
+            # byte-y or buffer-y that everything will work out (or that callers
+            # are capable of handling whatever it is.)
+            return s
 
 
 xffffffff = long(0xffffffff)

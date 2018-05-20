@@ -25,7 +25,7 @@ import array
 import ctypes.wintypes
 import platform
 import struct
-from paramiko.util import *  # noqa
+from paramiko.common import zero_byte
 from paramiko.py3compat import b
 
 try:
@@ -44,7 +44,7 @@ win32con_WM_COPYDATA = 74
 
 
 def _get_pageant_window_object():
-    return ctypes.windll.user32.FindWindowA(b('Pageant'), b('Pageant'))
+    return ctypes.windll.user32.FindWindowA(b'Pageant', b'Pageant')
 
 
 def can_talk_to_agent():

@@ -65,7 +65,7 @@ class SSHConfig (object):
 
             match = re.match(self.SETTINGS_REGEX, line)
             if not match:
-                raise Exception("Unparsable line %s" % line)
+                raise Exception("Unparsable line {}".format(line))
             key = match.group(1).lower()
             value = match.group(2)
 
@@ -239,7 +239,7 @@ class SSHConfig (object):
         try:
             return shlex.split(host)
         except ValueError:
-            raise Exception("Unparsable host %s" % host)
+            raise Exception("Unparsable host {}".format(host))
 
 
 class LazyFqdn(object):

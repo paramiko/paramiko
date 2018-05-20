@@ -20,21 +20,17 @@
 import binascii
 import os
 
+from collections import MutableMapping
 from hashlib import sha1
 from hmac import HMAC
 
 from paramiko.py3compat import b, u, encodebytes, decodebytes
 
-try:
-    from collections import MutableMapping
-except ImportError:
-    # noinspection PyUnresolvedReferences
-    from UserDict import DictMixin as MutableMapping
-
 from paramiko.dsskey import DSSKey
 from paramiko.rsakey import RSAKey
 from paramiko.util import get_logger, constant_time_bytes_eq
 from paramiko.ecdsakey import ECDSAKey
+from paramiko.ed25519key import Ed25519Key
 from paramiko.ssh_exception import SSHException
 
 
@@ -90,7 +86,7 @@ class HostKeys (MutableMapping):
 
         :param str filename: name of the file to read host keys from
 
-        :raises IOError: if there was an error reading the file
+        :raises: ``IOError`` -- if there was an error reading the file
         """
         with open(filename, 'r') as f:
             for lineno, line in enumerate(f, 1):
@@ -118,7 +114,7 @@ class HostKeys (MutableMapping):
 
         :param str filename: name of the file to write
 
-        :raises IOError: if there was an error writing the file
+        :raises: ``IOError`` -- if there was an error writing the file
 
         .. versionadded:: 1.6.1
         """
@@ -304,7 +300,7 @@ class HostKeys (MutableMapping):
             salt = decodebytes(b(salt))
         assert len(salt) == sha1().digest_size
         hmac = HMAC(salt, b(hostname), sha1).digest()
-        hostkey = '|1|%s|%s' % (u(encodebytes(salt)), u(encodebytes(hmac)))
+        hostkey = '|1|{}|{}'.format(u(encodebytes(salt)), u(encodebytes(hmac)))
         return hostkey.replace('\n', '')
 
 
@@ -342,8 +338,8 @@ class HostKeyEntry:
         fields = line.split(' ')
         if len(fields) < 3:
             # Bad number of fields
-            log.info("Not enough fields found in known_hosts in line %s (%r)" %
-                     (lineno, line))
+            msg = "Not enough fields found in known_hosts in line {} ({!r})"
+            log.info(msg.format(lineno, line))
             return None
         fields = fields[:3]
 
@@ -360,8 +356,10 @@ class HostKeyEntry:
                 key = DSSKey(data=decodebytes(key))
             elif keytype in ECDSAKey.supported_key_format_identifiers():
                 key = ECDSAKey(data=decodebytes(key), validate_point=False)
+            elif keytype == 'ssh-ed25519':
+                key = Ed25519Key(data=decodebytes(key))
             else:
-                log.info("Unable to handle key of type %s" % (keytype,))
+                log.info("Unable to handle key of type {}".format(keytype))
                 return None
 
         except binascii.Error as e:
@@ -376,11 +374,12 @@ class HostKeyEntry:
         included.
         """
         if self.valid:
-            return '%s %s %s\n' % (
+            return '{} {} {}\n'.format(
                 ','.join(self.hostnames),
                 self.key.get_name(),
-                self.key.get_base64())
+                self.key.get_base64(),
+            )
         return None
 
     def __repr__(self):
-        return '<HostKeyEntry %r: %r>' % (self.hostnames, self.key)
+        return '<HostKeyEntry {!r}: {!r}>'.format(self.hostnames, self.key)

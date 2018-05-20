@@ -40,7 +40,7 @@ This module provides GSS-API / SSPI Key Exchange as defined in :rfc:`4462`.
 import os
 from hashlib import sha1
 
-from paramiko.common import *  # noqa
+from paramiko.common import DEBUG, max_byte, zero_byte
 from paramiko import util
 from paramiko.message import Message
 from paramiko.py3compat import byte_chr, byte_mask, byte_ord
@@ -83,7 +83,6 @@ class KexGSSGroup1(object):
         """
         Start the GSS-API / SSPI Authenticated Diffie-Hellman Key Exchange.
         """
-        self.transport.gss_kex_used = True
         self._generate_x()
         if self.transport.server_mode:
             # compute f = g^x mod p, but don't send it yet
@@ -108,7 +107,7 @@ class KexGSSGroup1(object):
         """
         Parse the next packet.
 
-        :param char ptype: The type of the incoming packet
+        :param ptype: The (string) type of the incoming packet
         :param `.Message` m: The paket content
         """
         if self.transport.server_mode and (ptype == MSG_KEXGSS_INIT):
@@ -121,8 +120,8 @@ class KexGSSGroup1(object):
             return self._parse_kexgss_complete(m)
         elif ptype == MSG_KEXGSS_ERROR:
             return self._parse_kexgss_error(m)
-        raise SSHException('GSS KexGroup1 asked to handle packet type %d'
-                           % ptype)
+        msg = 'GSS KexGroup1 asked to handle packet type {:d}'
+        raise SSHException(msg.format(ptype))
 
     # ##  internals...
 
@@ -207,15 +206,15 @@ class KexGSSGroup1(object):
         hm.add_mpint(self.e)
         hm.add_mpint(self.f)
         hm.add_mpint(K)
-        self.transport._set_K_H(K, sha1(str(hm)).digest())
+        H = sha1(str(hm)).digest()
+        self.transport._set_K_H(K, H)
         if srv_token is not None:
             self.kexgss.ssh_init_sec_context(target=self.gss_host,
                                              recv_token=srv_token)
-            self.kexgss.ssh_check_mic(mic_token,
-                                      self.transport.session_id)
+            self.kexgss.ssh_check_mic(mic_token, H)
         else:
-            self.kexgss.ssh_check_mic(mic_token,
-                                      self.transport.session_id)
+            self.kexgss.ssh_check_mic(mic_token, H)
+        self.transport.gss_kex_used = True
         self.transport._activate_outbound()
 
     def _parse_kexgss_init(self, m):
@@ -258,6 +257,7 @@ class KexGSSGroup1(object):
             else:
                 m.add_boolean(False)
             self.transport._send_message(m)
+            self.transport.gss_kex_used = True
             self.transport._activate_outbound()
         else:
             m.add_byte(c_MSG_KEXGSS_CONTINUE)
@@ -282,10 +282,11 @@ class KexGSSGroup1(object):
         min_status = m.get_int()
         err_msg = m.get_string()
         m.get_string()   # we don't care about the language!
-        raise SSHException("GSS-API Error:\nMajor Status: %s\nMinor Status: %s\
-                            \nError Message: %s\n") % (str(maj_status),
-                                                       str(min_status),
-                                                       err_msg)
+        raise SSHException("""GSS-API Error:
+Major Status: {}
+Minor Status: {}
+Error Message: {}
+""".format(maj_status, min_status, err_msg))
 
 
 class KexGSSGroup14(KexGSSGroup1):
@@ -325,7 +326,6 @@ class KexGSSGex(object):
         """
         Start the GSS-API / SSPI Authenticated Diffie-Hellman Group Exchange
         """
-        self.transport.gss_kex_used = True
         if self.transport.server_mode:
             self.transport._expect_packet(MSG_KEXGSS_GROUPREQ)
             return
@@ -345,7 +345,7 @@ class KexGSSGex(object):
         """
         Parse the next packet.
 
-        :param char ptype: The type of the incoming packet
+        :param ptype: The (string) type of the incoming packet
         :param `.Message` m: The paket content
         """
         if ptype == MSG_KEXGSS_GROUPREQ:
@@ -362,7 +362,8 @@ class KexGSSGex(object):
             return self._parse_kexgss_complete(m)
         elif ptype == MSG_KEXGSS_ERROR:
             return self._parse_kexgss_error(m)
-        raise SSHException('KexGex asked to handle packet type %d' % ptype)
+        msg = 'KexGex asked to handle packet type {:d}'
+        raise SSHException(msg.format(ptype))
 
     # ##  internals...
 
@@ -417,8 +418,10 @@ class KexGSSGex(object):
                 'Can\'t do server-side gex with no modulus pack')
         self.transport._log(
             DEBUG,  # noqa
-            'Picking p (%d <= %d <= %d bits)' % (
-                minbits, preferredbits, maxbits))
+            'Picking p ({} <= {} <= {} bits)'.format(
+                minbits, preferredbits, maxbits,
+            )
+        )
         self.g, self.p = pack.get_modulus(minbits, preferredbits, maxbits)
         m = Message()
         m.add_byte(c_MSG_KEXGSS_GROUP)
@@ -440,8 +443,8 @@ class KexGSSGex(object):
         if (bitlen < 1024) or (bitlen > 8192):
             raise SSHException(
                 'Server-generated gex p (don\'t ask) is out of range '
-                '(%d bits)' % bitlen)
-        self.transport._log(DEBUG, 'Got server p (%d bits)' % bitlen)  # noqa
+                '({} bits)'.format(bitlen))
+        self.transport._log(DEBUG, 'Got server p ({} bits)'.format(bitlen))  # noqa
         self._generate_x()
         # now compute e = g^x mod p
         self.e = pow(self.g, self.x, self.p)
@@ -501,6 +504,7 @@ class KexGSSGex(object):
             else:
                 m.add_boolean(False)
             self.transport._send_message(m)
+            self.transport.gss_kex_used = True
             self.transport._activate_outbound()
         else:
             m.add_byte(c_MSG_KEXGSS_CONTINUE)
@@ -582,11 +586,10 @@ class KexGSSGex(object):
         if srv_token is not None:
             self.kexgss.ssh_init_sec_context(target=self.gss_host,
                                              recv_token=srv_token)
-            self.kexgss.ssh_check_mic(mic_token,
-                                      self.transport.session_id)
+            self.kexgss.ssh_check_mic(mic_token, H)
         else:
-            self.kexgss.ssh_check_mic(mic_token,
-                                      self.transport.session_id)
+            self.kexgss.ssh_check_mic(mic_token, H)
+        self.transport.gss_kex_used = True
         self.transport._activate_outbound()
 
     def _parse_kexgss_error(self, m):
@@ -604,10 +607,11 @@ class KexGSSGex(object):
         min_status = m.get_int()
         err_msg = m.get_string()
         m.get_string()   # we don't care about the language (lang_tag)!
-        raise SSHException("GSS-API Error:\nMajor Status: %s\nMinor Status: %s\
-                            \nError Message: %s\n") % (str(maj_status),
-                                                       str(min_status),
-                                                       err_msg)
+        raise SSHException("""GSS-API Error:
+Major Status: {}
+Minor Status: {}
+Error Message: {}
+""".format(maj_status, min_status, err_msg))
 
 
 class NullHostKey(object):

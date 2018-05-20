@@ -4,29 +4,31 @@ cache:
   directories:
     - $HOME/.cache/pip
 python:
-  - "2.6"
   - "2.7"
-  - "3.3"
   - "3.4"
   - "3.5"
   - "3.6"
-  - "pypy-5.4.1"
+  - "3.7-dev"
+  - "pypy-5.6.0"
+matrix:
+  allow_failures:
+    - python: "3.7-dev"
 install:
+  # Ensure modern pip/etc to avoid some issues w/ older worker environs
+  - pip install pip==9.0.1 setuptools==36.6.0
   # Self-install for setup.py-driven deps
   - pip install -e .
   # Dev (doc/test running) requirements
-  - pip install coveralls # For coveralls.io specifically
+  # TODO: use pipenv + whatever contexty-type stuff it has
+  - pip install codecov # For codecov specifically
   - pip install -r dev-requirements.txt
 script:
-  # Main tests, w/ coverage!
-  - inv test --coverage
-  # Ensure documentation & invoke pipeline run OK.
-  # Run 'docs' first since its objects.inv is referred to by 'www'.
-  # Also force warnings to be errors since most of them tend to be actual
-  # problems.
-  - invoke docs -o -W www -o -W
   # flake8 is now possible!
   - flake8
+  # All (including slow) tests, w/ coverage!
+  - inv coverage
+  # Ensure documentation builds, both sites, maxxed nitpicking
+  - inv sites
 notifications:
   irc:
     channels: "irc.freenode.org#paramiko"
@@ -36,4 +38,4 @@ notifications:
     on_failure: change
   email: false
 after_success:
-  - coveralls
+  - codecov

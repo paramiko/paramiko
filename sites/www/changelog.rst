@@ -2,12 +2,273 @@
 Changelog
 =========
 
+* :support:`1191` Update our install docs with (somewhat) recently added
+  additional dependencies; we previously only required Cryptography, but the
+  docs never got updated after we incurred ``bcrypt`` and ``pynacl``
+  requirements for Ed25519 key support.
+
+  Additionally, ``pyasn1`` was never actually hard-required; it was necessary
+  during a development branch, and is used by the optional GSSAPI support, but
+  is not required for regular installation. Thus, it has been removed from our
+  ``setup.py`` and its imports in the GSSAPI code made optional.
+
+  Credit to ``@stevenwinfield`` for highlighting the outdated install docs.
+
+* :release:`2.4.1 <2018-03-12>`
+* :release:`2.3.2 <2018-03-12>`
+* :release:`2.2.3 <2018-03-12>`
+* :release:`2.1.5 <2018-03-12>`
+* :release:`2.0.8 <2018-03-12>`
+* :release:`1.18.5 <2018-03-12>`
+* :release:`1.17.6 <2018-03-12>`
+* :bug:`1175 (1.17+)` Fix a security flaw (CVE-2018-7750) in Paramiko's server
+  mode (emphasis on **server** mode; this does **not** impact *client* use!)
+  where authentication status was not checked before processing channel-open
+  and other requests typically only sent after authenticating. Big thanks to
+  Matthijs Kooijman for the report.
+* :bug:`1168` Add newer key classes for Ed25519 and ECDSA to
+  ``paramiko.__all__`` so that code introspecting that attribute, or using
+  ``from paramiko import *`` (such as some IDEs) sees them. Thanks to
+  ``@patriksevallius`` for the patch.
+* :bug:`1039` Ed25519 auth key decryption raised an unexpected exception when
+  given a unicode password string (typical in python 3). Report by Theodor van
+  Nahl and fix by Pierce Lopez.
+* :release:`2.4.0 <2017-11-14>`
+* :feature:`-` Add a new ``passphrase`` kwarg to `SSHClient.connect
+  <paramiko.client.SSHClient.connect>` so users may disambiguate key-decryption
+  passphrases from password-auth passwords. (This is a backwards compatible
+  change; ``password`` will still pull double duty as a passphrase when
+  ``passphrase`` is not given.)
+* :support:`-` Update ``tearDown`` of client test suite to avoid hangs due to
+  eternally blocking ``accept()`` calls on the internal server thread (which
+  can occur when test code raises an exception before actually connecting to
+  the server.)
+* :bug:`1108 (1.17+)` Rename a private method keyword argument (which was named
+  ``async``) so that we're compatible with the upcoming Python 3.7 release
+  (where ``async`` is a new keyword.) Thanks to ``@vEpiphyte`` for the report.
+* :support:`1100` Updated the test suite & related docs/metadata/config to be
+  compatible with pytest instead of using the old, custom, crufty
+  unittest-based ``test.py``.
+  
+  This includes marking known-slow tests (mostly the SFTP ones) so they can be
+  filtered out by ``inv test``'s default behavior; as well as other minor
+  tweaks to test collection and/or display (for example, GSSAPI tests are
+  collected, but skipped, instead of not even being collected by default as in
+  ``test.py``.)
+* :support:`- backported` Include LICENSE file in wheel archives.
+* :support:`1070` Drop Python 2.6 and Python 3.3 support; now only 2.7 and 3.4+
+  are supported. If you're unable to upgrade from 2.6 or 3.3, please stick to
+  the Paramiko 2.3.x (or below) release lines.
+* :release:`2.3.1 <2017-09-22>`
+* :bug:`1071` Certificate support broke the no-certificate case for Ed25519
+  keys (symptom is an ``AttributeError`` about ``public_blob``.) This went
+  uncaught due to cert autoload behavior (i.e. our test suite never actually
+  ran the no-cert case, because the cert existed!) Both issues have been fixed.
+  Thanks to John Hu for the report.
+* :release:`2.3.0 <2017-09-18>`
+* :release:`2.2.2 <2017-09-18>`
+* :release:`2.1.4 <2017-09-18>`
+* :release:`2.0.7 <2017-09-18>`
+* :release:`1.18.4 <2017-09-18>`
+* :bug:`1065` Add rekeying support to GSSAPI connections, which was erroneously
+  missing. Without this fix, any attempt to renegotiate the transport keys for
+  a ``gss-kex``-authed `~paramiko.transport.Transport` would cause a MIC
+  failure and terminate the connection. Thanks to Sebastian Deiß and Anselm
+  Kruis for the patch.
+* :feature:`1063` Add a ``gss_trust_dns`` option to ``Client`` and
+  ``Transport`` to allow explicitly setting whether or not DNS canonicalization
+  should occur when using GSSAPI. Thanks to Richard E. Silverman for the report
+  & Sebastian Deiß for initial patchset.
+* :bug:`1061` Clean up GSSAPI authentication procedures so they do not prevent
+  normal fallback to other authentication methods on failure. (In other words,
+  presence of GSSAPI functionality on a target server precluded use of _any_
+  other auth type if the user was unable to pass GSSAPI auth.) Patch via Anselm
+  Kruis.
+* :bug:`1060` Fix key exchange (kex) algorithm list for GSSAPI authentication;
+  previously, the list used solely out-of-date algorithms, and now contains
+  newer ones listed preferentially before the old. Credit: Anselm Kruis.
+* :bug:`1055 (1.17+)` (also :issue:`1056`, :issue:`1057`, :issue:`1058`,
+  :issue:`1059`) Fix up host-key checking in our GSSAPI support, which was
+  previously using an incorrect API call. Thanks to Anselm Kruis for the
+  patches.
+* :bug:`945 (1.18+)` (backport of :issue:`910` and re: :issue:`865`) SSHClient
+  now requests the type of host key it has (e.g. from known_hosts) and does not
+  consider a different type to be a "Missing" host key. This fixes a common
+  case where an ECDSA key is in known_hosts and the server also has an RSA host
+  key. Thanks to Pierce Lopez.
+* :support:`979` Update how we use `Cryptography <https://cryptography.io>`_'s
+  signature/verification methods so we aren't relying on a deprecated API.
+  Thanks to Paul Kehrer for the patch.
+
+  .. warning::
+    This bumps the minimum Cryptography version from 1.1 to 1.5. Such an
+    upgrade should be backwards compatible and easy to do. See `their changelog
+    <https://cryptography.io/en/latest/changelog/>`_ for additional details.
+* :support:`-` Ed25519 keys never got proper API documentation support; this
+  has been fixed.
+* :feature:`1026` Update `~paramiko.ed25519key.Ed25519Key` so its constructor
+  offers the same ``file_obj`` parameter as its sibling key classes. Credit:
+  Michal Kuffa.
+* :feature:`1013` Added pre-authentication banner support for the server
+  interface (`ServerInterface.get_banner
+  <paramiko.server.ServerInterface.get_banner>` plus related support in
+  ``Transport/AuthHandler``.) Patch courtesy of Dennis Kaarsemaker.
+* :bug:`60 major` (via :issue:`1037`) Paramiko originally defaulted to zlib
+  compression level 9 (when one connects with ``compression=True``; it defaults
+  to off.) This has been found to be quite wasteful and tends to cause much
+  longer transfers in most cases, than is necessary.
+
+  OpenSSH defaults to compression level 6, which is a much more reasonable
+  setting (nearly identical compression characteristics but noticeably,
+  sometimes significantly, faster transmission); Paramiko now uses this value
+  instead.
+
+  Thanks to Damien Dubé for the report and ``@DrNeutron`` for investigating &
+  submitting the patch.
+* :support:`-` Display exception type and message when logging auth-rejection
+  messages (ones reading ``Auth rejected: unsupported or mangled public key``);
+  previously this error case had a bare except and did not display exactly why
+  the key failed. It will now append info such as ``KeyError:
+  'some-unknown-type-string'`` or similar.
+* :feature:`1042` (also partially :issue:`531`) Implement basic client-side
+  certificate authentication (as per the OpenSSH vendor extension.)
+
+  The core implementation is `PKey.load_certificate
+  <paramiko.pkey.PKey.load_certificate>` and its corresponding ``.public_blob``
+  attribute on key objects, which is honored in the auth and transport modules.
+  Additionally, `SSHClient.connect <paramiko.client.SSHClient.connect>` will
+  now automatically load certificate data alongside private key data when one
+  has appropriately-named cert files (e.g. ``id_rsa-cert.pub``) - see its
+  docstring for details.
+
+  Thanks to Jason Rigby for a first draft (:issue:`531`) and to Paul Kapp for
+  the second draft, upon which the current functionality has been based (with
+  modifications.)
+
+  .. note::
+    This support is client-focused; Paramiko-driven server code is capable of
+    handling cert-bearing pubkey auth packets, *but* it does not interpret any
+    cert-specific fields, so the end result is functionally identical to a
+    vanilla pubkey auth process (and thus requires e.g. prepopulated
+    authorized-keys data.) We expect full server-side cert support to follow
+    later.
+
+* :support:`1041` Modify logic around explicit disconnect
+  messages, and unknown-channel situations, so that they rely on centralized
+  shutdown code instead of running their own. This is at worst removing some
+  unnecessary code, and may help with some situations where Paramiko hangs at
+  the end of a session. Thanks to Paul Kapp for the patch.
+* :support:`1012` (via :issue:`1016`) Enhance documentation around the new
+  `SFTP.posix_rename <paramiko.sftp_client.SFTPClient.posix_rename>` method so
+  it's referenced in the 'standard' ``rename`` method for increased visibility.
+  Thanks to Marius Flage for the report.
+* :release:`2.2.1 <2017-06-13>`
+* :bug:`993` Ed25519 host keys were not comparable/hashable, causing an
+  exception if such a key existed in a ``known_hosts`` file. Thanks to Oleh
+  Prypin for the report and Pierce Lopez for the fix.
+* :bug:`990` The (added in 2.2.0) ``bcrypt`` dependency should have been on
+  version 3.1.3 or greater (was initially set to 3.0.0 or greater.) Thanks to
+  Paul Howarth for the report.
+* :release:`2.2.0 <2017-06-09>`
+* :release:`2.1.3 <2017-06-09>`
+* :release:`2.0.6 <2017-06-09>`
+* :release:`1.18.3 <2017-06-09>`
+* :release:`1.17.5 <2017-06-09>`
+* :bug:`865` SSHClient now requests the type of host key it has (e.g. from
+  known_hosts) and does not consider a different type to be a "Missing" host
+  key. This fixes a common case where an ECDSA key is in known_hosts and the
+  server also has an RSA host key. Thanks to Pierce Lopez.
+* :support:`906 (1.18+)` Clean up a handful of outdated imports and related
+  tweaks. Thanks to Pierce Lopez.
+* :bug:`984` Enhance default cipher preference order such that
+  ``aes(192|256)-cbc`` are preferred over ``blowfish-cbc``. Thanks to Alex
+  Gaynor.
+* :bug:`971 (1.17+)` Allow any type implementing the buffer API to be used with
+  `BufferedFile <paramiko.file.BufferedFile>`, `Channel
+  <paramiko.channel.Channel>`, and `SFTPFile <paramiko.sftp_file.SFTPFile>`.
+  This resolves a regression introduced in 1.13 with the Python 3 porting
+  changes, when using types such as ``memoryview``. Credit: Martin Packman.
+* :bug:`741` (also :issue:`809`, :issue:`772`; all via :issue:`912`) Writing
+  encrypted/password-protected private key files was silently broken since 2.0
+  due to an incorrect API call; this has been fixed.
+
+  Includes a directly related fix, namely adding the ability to read
+  ``AES-256-CBC`` ciphered private keys (which is now what we tend to write out
+  as it is Cryptography's default private key cipher.)
+
+  Thanks to ``@virlos`` for the original report, Chris Harris and ``@ibuler``
+  for initial draft PRs, and ``@jhgorrell`` for the final patch.
+* :feature:`65` (via :issue:`471`) Add support for OpenSSH's SFTP
+  ``posix-rename`` protocol extension (section 3.3 of `OpenSSH's protocol
+  extension document
+  <http://cvsweb.openbsd.org/cgi-bin/cvsweb/src/usr.bin/ssh/PROTOCOL?rev=1.31>`_),
+  via a new ``posix_rename`` method in `SFTPClient
+  <paramiko.sftp_client.SFTPClient.posix_rename>` and `SFTPServerInterface
+  <paramiko.sftp_si.SFTPServerInterface.posix_rename>`. Thanks to Wren Turkal
+  for the initial patch & Mika Pflüger for the enhanced, merged PR.
+* :feature:`869` Add an ``auth_timeout`` kwarg to `SSHClient.connect
+  <paramiko.client.SSHClient.connect>` (default: 30s) to avoid hangs when the
+  remote end becomes unresponsive during the authentication step. Credit to
+  ``@timsavage``.
+
+  .. note::
+    This technically changes behavior, insofar as very slow auth steps >30s
+    will now cause timeout exceptions instead of completing. We doubt most
+    users will notice; those affected can simply give a higher value to
+    ``auth_timeout``.
+
+* :support:`921` Tighten up the ``__hash__`` implementation for various key
+  classes; less code is good code. Thanks to Francisco Couzo for the patch.
+* :support:`956 backported (1.17+)` Switch code coverage service from
+  coveralls.io to codecov.io (& then disable the latter's auto-comments.)
+  Thanks to Nikolai Røed Kristiansen for the patch.
+* :bug:`983` Move ``sha1`` above the now-arguably-broken ``md5`` in the list of
+  preferred MAC algorithms, as an incremental security improvement for users
+  whose target systems offer both. Credit: Pierce Lopez.
+* :bug:`667` The RC4/arcfour family of ciphers has been broken since version
+  2.0; but since the algorithm is now known to be completely insecure, we are
+  opting to remove support outright instead of fixing it. Thanks to Alex Gaynor
+  for catch & patch.
+* :feature:`857` Allow `SSHClient.set_missing_host_key_policy
+  <paramiko.client.SSHClient.set_missing_host_key_policy>` to accept policy
+  classes _or_ instances, instead of only instances, thus fixing a
+  long-standing gotcha for unaware users.
+* :feature:`951` Add support for ECDH key exchange (kex), specifically the
+  algorithms ``ecdh-sha2-nistp256``, ``ecdh-sha2-nistp384``, and
+  ``ecdh-sha2-nistp521``. They now come before the older ``diffie-hellman-*``
+  family of kex algorithms in the preferred-kex list. Thanks to Shashank
+  Veerapaneni for the patch & Pierce Lopez for a follow-up.
+* :support:`- backported` A big formatting pass to clean up an enormous number
+  of invalid Sphinx reference links, discovered by switching to a modern,
+  rigorous nitpicking doc-building mode.
+* :bug:`900` (via :issue:`911`) Prefer newer ``ecdsa-sha2-nistp`` keys over RSA
+  and DSA keys during host key selection. This improves compatibility with
+  OpenSSH, both in terms of general behavior, and also re: ability to properly
+  leverage OpenSSH-modified ``known_hosts`` files. Credit: ``@kasdoe`` for
+  original report/PR and Pierce Lopez for the second draft.
+* :bug:`794` (via :issue:`981`) Prior support for ``ecdsa-sha2-nistp(384|521)``
+  algorithms didn't fully extend to covering host keys, preventing connection
+  to hosts which only offer these key types and no others. This is now fixed.
+  Thanks to ``@ncoult`` and ``@kasdoe`` for reports and Pierce Lopez for the
+  patch.
+* :feature:`325` (via :issue:`972`) Add Ed25519 support, for both host keys
+  and user authentication. Big thanks to Alex Gaynor for the patch.
+
+  .. note::
+    This change adds the ``bcrypt`` and ``pynacl`` Python libraries as
+    dependencies. No C-level dependencies beyond those previously required (for
+    Cryptography) have been added.
+
 * :support:`974 backported` Overhaul the codebase to be PEP-8, etc, compliant
   (i.e. passes the maintainer's preferred `flake8 <http://flake8.pycqa.org/>`_
   configuration) and add a ``flake8`` step to the Travis config. Big thanks to
   Dorian Pula!
-* :bug:`683` Make `util.log_to_file()` append instead of replace. Thanks
-  to ``@vlcinsky`` for the report.
+* :bug:`949 (1.17+)` SSHClient and Transport could cause a memory leak if
+  there's a connection problem or protocol error, even if ``Transport.close()``
+  is called. Thanks Kyle Agronick for the discovery and investigation, and
+  Pierce Lopez for assistance.
+* :bug:`683 (1.17+)` Make ``util.log_to_file`` append instead of replace.
+  Thanks to ``@vlcinsky`` for the report.
 * :release:`2.1.2 <2017-02-20>`
 * :release:`2.0.5 <2017-02-20>`
 * :release:`1.18.2 <2017-02-20>`
@@ -89,7 +350,7 @@ Changelog
 * :bug:`334 (1.17+)` Make the ``subprocess`` import in ``proxy.py`` lazy so
   users on platforms without it (such as Google App Engine) can import Paramiko
   successfully. (Relatedly, make it easier to tweak an active socket check
-  timeout  [in `Transport <paramko.transport.Transport>`] which was previously
+  timeout  [in `Transport <paramiko.transport.Transport>`] which was previously
   hardcoded.) Credit: Shinya Okano.
 * :support:`854 backported (1.17+)` Fix incorrect docstring/param-list for
   `Transport.auth_gssapi_keyex
@@ -154,10 +415,10 @@ Changelog
   ``proxycommand`` key in parsed config structures). Thanks to Pat Brisbin for
   the catch.
 * :bug:`676` (via :issue:`677`) Fix a backwards incompatibility issue that
-  cropped up in `SFTPFile.prefetch <~paramiko.sftp_file.prefetch>` re: the
-  erroneously non-optional ``file_size`` parameter. Should only affect users
-  who manually call ``prefetch``. Thanks to ``@stevevanhooser`` for catch &
-  patch.
+  cropped up in `SFTPFile.prefetch <paramiko.sftp_file.SFTPFile.prefetch>` re:
+  the erroneously non-optional ``file_size`` parameter. Should only affect
+  users who manually call ``prefetch``. Thanks to ``@stevevanhooser`` for catch
+  & patch.
 * :feature:`394` Replace PyCrypto with the Python Cryptographic Authority
   (PyCA) 'Cryptography' library suite. This improves security, installability,
   and performance; adds PyPy support; and much more.
@@ -247,7 +508,7 @@ Changelog
 * :release:`1.15.4 <2015-11-02>`
 * :release:`1.14.3 <2015-11-02>`
 * :release:`1.13.4 <2015-11-02>`
-* :bug:`366` Fix `~paramiko.sftp_attributes.SFTPAttributes` so its string
+* :bug:`366` Fix `~paramiko.sftp_attr.SFTPAttributes` so its string
   representation doesn't raise exceptions on empty/initialized instances. Patch
   by Ulrich Petri.
 * :bug:`359` Use correct attribute name when trying to use Python 3's
@@ -358,8 +619,9 @@ Changelog
 * :release:`1.15.1 <2014-09-22>`
 * :bug:`399` SSH agent forwarding (potentially other functionality as
   well) would hang due to incorrect values passed into the new window size
-  arguments for `.Transport` (thanks to a botched merge). This has been
-  corrected. Thanks to Dylan Thacker-Smith for the report & patch.
+  arguments for `~paramiko.transport.Transport` (thanks to a botched merge).
+  This has been corrected. Thanks to Dylan Thacker-Smith for the report &
+  patch.
 * :feature:`167` Add `~paramiko.config.SSHConfig.get_hostnames` for easier
   introspection of a loaded SSH config file or object. Courtesy of Søren
   Løvborg.

@@ -50,12 +50,10 @@ class BadAuthenticationType (AuthenticationException):
     the server isn't allowing that type.  (It may only allow public-key, for
     example.)
 
-    :ivar list allowed_types:
-        list of allowed authentication types provided by the server (possible
-        values are: ``"none"``, ``"password"``, and ``"publickey"``).
-
     .. versionadded:: 1.1
     """
+    #: list of allowed authentication types provided by the server (possible
+    #: values are: ``"none"``, ``"password"``, and ``"publickey"``).
     allowed_types = []
 
     def __init__(self, explanation, types):
@@ -65,7 +63,7 @@ class BadAuthenticationType (AuthenticationException):
         self.args = (explanation, types, )
 
     def __str__(self):
-        return '{0} (allowed_types={1!r})'.format(
+        return '{} (allowed_types={!r})'.format(
             SSHException.__str__(self), self.allowed_types
         )
 
@@ -87,7 +85,7 @@ class ChannelException (SSHException):
     """
     Exception raised when an attempt to open a new `.Channel` fails.
 
-    :ivar int code: the error code returned by the server
+    :param int code: the error code returned by the server
 
     .. versionadded:: 1.6
     """
@@ -102,14 +100,14 @@ class BadHostKeyException (SSHException):
     """
     The host key given by the SSH server did not match what we were expecting.
 
-    :ivar str hostname: the hostname of the SSH server
-    :ivar PKey got_key: the host key presented by the server
-    :ivar PKey expected_key: the host key expected
+    :param str hostname: the hostname of the SSH server
+    :param PKey got_key: the host key presented by the server
+    :param PKey expected_key: the host key expected
 
     .. versionadded:: 1.6
     """
     def __init__(self, hostname, got_key, expected_key):
-        message = 'Host key for server {0} does not match: got {1}, expected {2}' # noqa
+        message = 'Host key for server {} does not match: got {}, expected {}' # noqa
         message = message.format(
             hostname, got_key.get_base64(),
             expected_key.get_base64())
@@ -125,12 +123,12 @@ class ProxyCommandFailure (SSHException):
     """
     The "ProxyCommand" found in the .ssh/config file returned an error.
 
-    :ivar str command: The command line that is generating this exception.
-    :ivar str error: The error captured from the proxy command output.
+    :param str command: The command line that is generating this exception.
+    :param str error: The error captured from the proxy command output.
     """
     def __init__(self, command, error):
         SSHException.__init__(self,
-            '"ProxyCommand (%s)" returned non-zero exit status: %s' % (
+            '"ProxyCommand ({})" returned non-zero exit status: {}'.format(
                 command, error
             )
         )

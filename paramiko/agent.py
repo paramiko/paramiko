@@ -253,7 +253,7 @@ class AgentServerProxy(AgentSSH):
     """
     :param .Transport t: Transport used for SSH Agent communication forwarding
 
-    :raises SSHException: mostly if we lost the agent
+    :raises: `.SSHException` -- mostly if we lost the agent
     """
     def __init__(self, t):
         AgentSSH.__init__(self)
@@ -347,7 +347,7 @@ class Agent(AgentSSH):
     opened, if one is running. If no agent is running, initialization will
     succeed, but `get_keys` will return an empty tuple.
 
-    :raises SSHException:
+    :raises: `.SSHException` --
         if an SSH agent is found, but speaks an incompatible protocol
     """
     def __init__(self):
@@ -387,6 +387,7 @@ class AgentKey(PKey):
     def __init__(self, agent, blob):
         self.agent = agent
         self.blob = blob
+        self.public_blob = None
         self.name = Message(blob).get_text()
 
     def asbytes(self):

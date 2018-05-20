@@ -31,8 +31,9 @@ from cryptography.hazmat.primitives.ciphers import algorithms, modes, Cipher
 
 from paramiko import util
 from paramiko.common import o600
-from paramiko.py3compat import u, encodebytes, decodebytes, b
+from paramiko.py3compat import u, encodebytes, decodebytes, b, string_types
 from paramiko.ssh_exception import SSHException, PasswordRequiredException
+from paramiko.message import Message
 
 
 class PKey(object):
@@ -45,6 +46,12 @@ class PKey(object):
         'AES-128-CBC': {
             'cipher': algorithms.AES,
             'keysize': 16,
+            'blocksize': 16,
+            'mode': modes.CBC
+        },
+        'AES-256-CBC': {
+            'cipher': algorithms.AES,
+            'keysize': 32,
             'blocksize': 16,
             'mode': modes.CBC
         },
@@ -68,7 +75,7 @@ class PKey(object):
         :param str data: an optional string containing a public key
             of this type
 
-        :raises SSHException:
+        :raises: `.SSHException` --
             if a key cannot be created from the ``data`` or ``msg`` given, or
             no key was passed in.
         """
@@ -95,7 +102,7 @@ class PKey(object):
         of the key are compared, so a public key will compare equal to its
         corresponding private key.
 
-        :param .Pkey other: key to compare to.
+        :param .PKey other: key to compare to.
         """
         hs = hash(self)
         ho = hash(other)
@@ -191,10 +198,10 @@ class PKey(object):
             encrypted
         :return: a new `.PKey` based on the given private key
 
-        :raises IOError: if there was an error reading the file
-        :raises PasswordRequiredException: if the private key file is
+        :raises: ``IOError`` -- if there was an error reading the file
+        :raises: `.PasswordRequiredException` -- if the private key file is
             encrypted, and ``password`` is ``None``
-        :raises SSHException: if the key file is invalid
+        :raises: `.SSHException` -- if the key file is invalid
         """
         key = cls(filename=filename, password=password)
         return key
@@ -212,10 +219,10 @@ class PKey(object):
             an optional password to use to decrypt the key, if it's encrypted
         :return: a new `.PKey` based on the given private key
 
-        :raises IOError: if there was an error reading the key
-        :raises PasswordRequiredException:
+        :raises: ``IOError`` -- if there was an error reading the key
+        :raises: `.PasswordRequiredException` --
             if the private key file is encrypted, and ``password`` is ``None``
-        :raises SSHException: if the key file is invalid
+        :raises: `.SSHException` -- if the key file is invalid
         """
         key = cls(file_obj=file_obj, password=password)
         return key
@@ -229,8 +236,8 @@ class PKey(object):
         :param str password:
             an optional password to use to encrypt the key file
 
-        :raises IOError: if there was an error writing the file
-        :raises SSHException: if the key is invalid
+        :raises: ``IOError`` -- if there was an error writing the file
+        :raises: `.SSHException` -- if the key is invalid
         """
         raise Exception('Not implemented in PKey')
 
@@ -242,8 +249,8 @@ class PKey(object):
         :param file_obj: the file-like object to write into
         :param str password: an optional password to use to encrypt the key
 
-        :raises IOError: if there was an error writing to the file
-        :raises SSHException: if the key is invalid
+        :raises: ``IOError`` -- if there was an error writing to the file
+        :raises: `.SSHException` -- if the key is invalid
         """
         raise Exception('Not implemented in PKey')
 
@@ -263,10 +270,10 @@ class PKey(object):
             encrypted.
         :return: data blob (`str`) that makes up the private key.
 
-        :raises IOError: if there was an error reading the file.
-        :raises PasswordRequiredException: if the private key file is
+        :raises: ``IOError`` -- if there was an error reading the file.
+        :raises: `.PasswordRequiredException` -- if the private key file is
             encrypted, and ``password`` is ``None``.
-        :raises SSHException: if the key file is invalid.
+        :raises: `.SSHException` -- if the key file is invalid.
         """
         with open(filename, 'r') as f:
             data = self._read_private_key(tag, f, password)
@@ -303,16 +310,18 @@ class PKey(object):
             # unencryped: done
             return data
         # encrypted keyfile: will need a password
-        if headers['proc-type'] != '4,ENCRYPTED':
+        proc_type = headers['proc-type']
+        if proc_type != '4,ENCRYPTED':
             raise SSHException(
-                'Unknown private key structure "%s"' % headers['proc-type'])
+                'Unknown private key structure "{}"'.format(proc_type)
+            )
         try:
             encryption_type, saltstr = headers['dek-info'].split(',')
         except:
             raise SSHException("Can't parse DEK-info in private key file")
         if encryption_type not in self._CIPHER_TABLE:
             raise SSHException(
-                'Unknown private key cipher "%s"' % encryption_type)
+                'Unknown private key cipher "{}"'.format(encryption_type))
         # if no password was passed in,
         # raise an exception pointing out that we need one
         if password is None:
@@ -340,20 +349,187 @@ class PKey(object):
         :param str data: data blob that makes up the private key.
         :param str password: an optional password to use to encrypt the file.
 
-        :raises IOError: if there was an error writing the file.
+        :raises: ``IOError`` -- if there was an error writing the file.
         """
         with open(filename, 'w') as f:
             os.chmod(filename, o600)
-            self._write_private_key(f, key, format)
+            self._write_private_key(f, key, format, password=password)
 
     def _write_private_key(self, f, key, format, password=None):
         if password is None:
             encryption = serialization.NoEncryption()
         else:
-            encryption = serialization.BestEncryption(password)
+            encryption = serialization.BestAvailableEncryption(b(password))
 
         f.write(key.private_bytes(
             serialization.Encoding.PEM,
             format,
             encryption
         ).decode())
+
+    def _check_type_and_load_cert(self, msg, key_type, cert_type):
+        """
+        Perform message type-checking & optional certificate loading.
+
+        This includes fast-forwarding cert ``msg`` objects past the nonce, so
+        that the subsequent fields are the key numbers; thus the caller may
+        expect to treat the message as key material afterwards either way.
+
+        The obtained key type is returned for classes which need to know what
+        it was (e.g. ECDSA.)
+        """
+        # Normalization; most classes have a single key type and give a string,
+        # but eg ECDSA is a 1:N mapping.
+        key_types = key_type
+        cert_types = cert_type
+        if isinstance(key_type, string_types):
+            key_types = [key_types]
+        if isinstance(cert_types, string_types):
+            cert_types = [cert_types]
+        # Can't do much with no message, that should've been handled elsewhere
+        if msg is None:
+            raise SSHException('Key object may not be empty')
+        # First field is always key type, in either kind of object. (make sure
+        # we rewind before grabbing it - sometimes caller had to do their own
+        # introspection first!)
+        msg.rewind()
+        type_ = msg.get_text()
+        # Regular public key - nothing special to do besides the implicit
+        # type check.
+        if type_ in key_types:
+            pass
+        # OpenSSH-compatible certificate - store full copy as .public_blob
+        # (so signing works correctly) and then fast-forward past the
+        # nonce.
+        elif type_ in cert_types:
+            # This seems the cleanest way to 'clone' an already-being-read
+            # message; they're *IO objects at heart and their .getvalue()
+            # always returns the full value regardless of pointer position.
+            self.load_certificate(Message(msg.asbytes()))
+            # Read out nonce as it comes before the public numbers.
+            # TODO: usefully interpret it & other non-public-number fields
+            # (requires going back into per-type subclasses.)
+            msg.get_string()
+        else:
+            err = 'Invalid key (class: {}, data type: {}'
+            raise SSHException(err.format(self.__class__.__name__, type_))
+
+    def load_certificate(self, value):
+        """
+        Supplement the private key contents with data loaded from an OpenSSH
+        public key (``.pub``) or certificate (``-cert.pub``) file, a string
+        containing such a file, or a `.Message` object.
+
+        The .pub contents adds no real value, since the private key
+        file includes sufficient information to derive the public
+        key info. For certificates, however, this can be used on
+        the client side to offer authentication requests to the server
+        based on certificate instead of raw public key.
+
+        See:
+        https://github.com/openssh/openssh-portable/blob/master/PROTOCOL.certkeys
+
+        Note: very little effort is made to validate the certificate contents,
+        that is for the server to decide if it is good enough to authenticate
+        successfully.
+        """
+        if isinstance(value, Message):
+            constructor = 'from_message'
+        elif os.path.isfile(value):
+            constructor = 'from_file'
+        else:
+            constructor = 'from_string'
+        blob = getattr(PublicBlob, constructor)(value)
+        if not blob.key_type.startswith(self.get_name()):
+            err = "PublicBlob type {} incompatible with key type {}"
+            raise ValueError(err.format(blob.key_type, self.get_name()))
+        self.public_blob = blob
+
+
+# General construct for an OpenSSH style Public Key blob
+# readable from a one-line file of the format:
+#     <key-name> <base64-blob> [<comment>]
+# Of little value in the case of standard public keys
+# {ssh-rsa, ssh-dss, ssh-ecdsa, ssh-ed25519}, but should
+# provide rudimentary support for {*-cert.v01}
+class PublicBlob(object):
+    """
+    OpenSSH plain public key or OpenSSH signed public key (certificate).
+
+    Tries to be as dumb as possible and barely cares about specific
+    per-key-type data.
+
+    ..note::
+        Most of the time you'll want to call `from_file`, `from_string` or
+        `from_message` for useful instantiation, the main constructor is
+        basically "I should be using ``attrs`` for this."
+    """
+    def __init__(self, type_, blob, comment=None):
+        """
+        Create a new public blob of given type and contents.
+
+        :param str type_: Type indicator, eg ``ssh-rsa``.
+        :param blob: The blob bytes themselves.
+        :param str comment: A comment, if one was given (e.g. file-based.)
+        """
+        self.key_type = type_
+        self.key_blob = blob
+        self.comment = comment
+
+    @classmethod
+    def from_file(cls, filename):
+        """
+        Create a public blob from a ``-cert.pub``-style file on disk.
+        """
+        with open(filename) as f:
+            string = f.read()
+        return cls.from_string(string)
+
+    @classmethod
+    def from_string(cls, string):
+        """
+        Create a public blob from a ``-cert.pub``-style string.
+        """
+        fields = string.split(None, 2)
+        if len(fields) < 2:
+            msg = "Not enough fields for public blob: {}"
+            raise ValueError(msg.format(fields))
+        key_type = fields[0]
+        key_blob = decodebytes(b(fields[1]))
+        try:
+            comment = fields[2].strip()
+        except IndexError:
+            comment = None
+        # Verify that the blob message first (string) field matches the
+        # key_type
+        m = Message(key_blob)
+        blob_type = m.get_text()
+        if blob_type != key_type:
+            msg = "Invalid PublicBlob contents: key type={!r}, but blob type={!r}" # noqa
+            raise ValueError(msg.format(key_type, blob_type))
+        # All good? All good.
+        return cls(type_=key_type, blob=key_blob, comment=comment)
+
+    @classmethod
+    def from_message(cls, message):
+        """
+        Create a public blob from a network `.Message`.
+
+        Specifically, a cert-bearing pubkey auth packet, because by definition
+        OpenSSH-style certificates 'are' their own network representation."
+        """
+        type_ = message.get_text()
+        return cls(type_=type_, blob=message.asbytes())
+
+    def __str__(self):
+        ret = '{} public key/certificate'.format(self.key_type)
+        if self.comment:
+            ret += "- {}".format(self.comment)
+        return ret
+
+    def __eq__(self, other):
+        # Just piggyback on Message/BytesIO, since both of these should be one.
+        return self and other and self.key_blob == other.key_blob
+
+    def __ne__(self, other):
+        return not self == other

@@ -21,9 +21,13 @@ Some unit tests for the BufferedFile abstraction.
 """
 
 import unittest
-from paramiko.file import BufferedFile
-from paramiko.common import linefeed_byte, crlf, cr_byte
 import sys
+
+from paramiko.common import linefeed_byte, crlf, cr_byte
+from paramiko.file import BufferedFile
+from paramiko.py3compat import BytesIO
+
+from .util import needs_builtin
 
 
 class LoopbackFile (BufferedFile):
@@ -33,19 +37,16 @@ class LoopbackFile (BufferedFile):
     def __init__(self, mode='r', bufsize=-1):
         BufferedFile.__init__(self)
         self._set_mode(mode, bufsize)
-        self.buffer = bytes()
+        self.buffer = BytesIO()
+        self.offset = 0
 
     def _read(self, size):
-        if len(self.buffer) == 0:
-            return None
-        if size > len(self.buffer):
-            size = len(self.buffer)
-        data = self.buffer[:size]
-        self.buffer = self.buffer[size:]
+        data = self.buffer.getvalue()[self.offset:self.offset+size]
+        self.offset += len(data)
         return data
 
     def _write(self, data):
-        self.buffer += data
+        self.buffer.write(data)
         return len(data)
 
 
@@ -186,6 +187,42 @@ class BufferedFileTest (unittest.TestCase):
         f.readinto(data)
         self.assertEqual(data, b'hello')
         f.close()
+
+    def test_write_bad_type(self):
+        with LoopbackFile('wb') as f:
+            self.assertRaises(TypeError, f.write, object())
+
+    def test_write_unicode_as_binary(self):
+        text = u"\xa7 why is writing text to a binary file allowed?\n"
+        with LoopbackFile('rb+') as f:
+            f.write(text)
+            self.assertEqual(f.read(), text.encode("utf-8"))
+
+    @needs_builtin('memoryview')
+    def test_write_bytearray(self):
+        with LoopbackFile('rb+') as f:
+            f.write(bytearray(12))
+            self.assertEqual(f.read(), 12 * b"\0")
+
+    @needs_builtin('buffer')
+    def test_write_buffer(self):
+        data = 3 * b"pretend giant block of data\n"
+        offsets = range(0, len(data), 8)
+        with LoopbackFile('rb+') as f:
+            for offset in offsets:
+                f.write(buffer(data, offset, 8))
+            self.assertEqual(f.read(), data)
+
+    @needs_builtin('memoryview')
+    def test_write_memoryview(self):
+        data = 3 * b"pretend giant block of data\n"
+        offsets = range(0, len(data), 8)
+        with LoopbackFile('rb+') as f:
+            view = memoryview(data)
+            for offset in offsets:
+                f.write(view[offset:offset+8])
+            self.assertEqual(f.read(), data)
+
 
 if __name__ == '__main__':
     from unittest import main

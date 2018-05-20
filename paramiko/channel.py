@@ -47,8 +47,9 @@ def open_only(func):
     """
     Decorator for `.Channel` methods which performs an openness check.
 
-    :raises SSHException:
-        If the wrapped method is called on an unopened `.Channel`.
+    :raises:
+        `.SSHException` -- If the wrapped method is called on an unopened
+        `.Channel`.
     """
     @wraps(func)
     def _check(self, *args, **kwds):
@@ -134,7 +135,7 @@ class Channel (ClosingContextManager):
         """
         Return a string representation of this object, for debugging.
         """
-        out = '<paramiko.Channel %d' % self.chanid
+        out = '<paramiko.Channel {}'.format(self.chanid)
         if self.closed:
             out += ' (closed)'
         elif self.active:
@@ -142,9 +143,9 @@ class Channel (ClosingContextManager):
                 out += ' (EOF received)'
             if self.eof_sent:
                 out += ' (EOF sent)'
-            out += ' (open) window=%d' % self.out_window_size
+            out += ' (open) window={}'.format(self.out_window_size)
             if len(self.in_buffer) > 0:
-                out += ' in-buffer=%d' % (len(self.in_buffer),)
+                out += ' in-buffer={}'.format(len(self.in_buffer))
         out += ' -> ' + repr(self.transport)
         out += '>'
         return out
@@ -166,8 +167,9 @@ class Channel (ClosingContextManager):
         :param int width_pixels: width (in pixels) of the terminal screen
         :param int height_pixels: height (in pixels) of the terminal screen
 
-        :raises SSHException:
-            if the request was rejected or the channel was closed
+        :raises:
+            `.SSHException` -- if the request was rejected or the channel was
+            closed
         """
         m = Message()
         m.add_byte(cMSG_CHANNEL_REQUEST)
@@ -198,7 +200,8 @@ class Channel (ClosingContextManager):
         When the shell exits, the channel will be closed and can't be reused.
         You must open a new channel if you wish to open another shell.
 
-        :raises SSHException: if the request was rejected or the channel was
+        :raises:
+            `.SSHException` -- if the request was rejected or the channel was
             closed
         """
         m = Message()
@@ -223,7 +226,8 @@ class Channel (ClosingContextManager):
 
         :param str command: a shell command to execute.
 
-        :raises SSHException: if the request was rejected or the channel was
+        :raises:
+            `.SSHException` -- if the request was rejected or the channel was
             closed
         """
         m = Message()
@@ -248,8 +252,9 @@ class Channel (ClosingContextManager):
 
         :param str subsystem: name of the subsystem being requested.
 
-        :raises SSHException:
-            if the request was rejected or the channel was closed
+        :raises:
+            `.SSHException` -- if the request was rejected or the channel was
+            closed
         """
         m = Message()
         m.add_byte(cMSG_CHANNEL_REQUEST)
@@ -272,8 +277,9 @@ class Channel (ClosingContextManager):
         :param int width_pixels: new width (in pixels) of the terminal screen
         :param int height_pixels: new height (in pixels) of the terminal screen
 
-        :raises SSHException:
-            if the request was rejected or the channel was closed
+        :raises:
+            `.SSHException` -- if the request was rejected or the channel was
+            closed
         """
         m = Message()
         m.add_byte(cMSG_CHANNEL_REQUEST)
@@ -301,15 +307,15 @@ class Channel (ClosingContextManager):
 
         :param dict environment:
             a dictionary containing the name and respective values to set
-        :raises SSHException:
-            if any of the environment variables was rejected by the server or
-            the channel was closed
+        :raises:
+            `.SSHException` -- if any of the environment variables was rejected
+            by the server or the channel was closed
         """
         for name, value in environment.items():
             try:
                 self.set_environment_variable(name, value)
             except SSHException as e:
-                err = "Failed to set environment variable \"{0}\"."
+                err = "Failed to set environment variable \"{}\"."
                 raise SSHException(err.format(name), e)
 
     @open_only
@@ -326,8 +332,9 @@ class Channel (ClosingContextManager):
         :param str name: name of the environment variable
         :param str value: value of the environment variable
 
-        :raises SSHException:
-            if the request was rejected or the channel was closed
+        :raises:
+            `.SSHException` -- if the request was rejected or the channel was
+            closed
         """
         m = Message()
         m.add_byte(cMSG_CHANNEL_REQUEST)
@@ -366,11 +373,11 @@ class Channel (ClosingContextManager):
             `.Transport` or session's ``window_size`` (e.g. that set by the
             ``default_window_size`` kwarg for `.Transport.__init__`) will cause
             `.recv_exit_status` to hang indefinitely if it is called prior to a
-            sufficiently large `~Channel..read` (or if there are no threads
-            calling `~Channel.read` in the background).
+            sufficiently large `.Channel.recv` (or if there are no threads
+            calling `.Channel.recv` in the background).
 
             In these cases, ensuring that `.recv_exit_status` is called *after*
-            `~Channel.read` (or, again, using threads) can avoid the hang.
+            `.Channel.recv` (or, again, using threads) can avoid the hang.
 
         :return: the exit code (as an `int`) of the process on the server.
 
@@ -444,8 +451,8 @@ class Channel (ClosingContextManager):
             if True, only a single x11 connection will be forwarded (by
             default, any number of x11 connections can arrive over this
             session)
-        :param function handler:
-            an optional handler to use for incoming X11 connections
+        :param handler:
+            an optional callable handler to use for incoming X11 connections
         :return: the auth_cookie used
         """
         if auth_protocol is None:
@@ -474,8 +481,9 @@ class Channel (ClosingContextManager):
         Request for a forward SSH Agent on this channel.
         This is only valid for an ssh-agent from OpenSSH !!!
 
-        :param function handler:
-            a required handler to use for incoming SSH Agent connections
+        :param handler:
+            a required callable handler to use for incoming SSH Agent
+            connections
 
         :return: True if we are ok, else False
             (at that time we always return ok)
@@ -666,7 +674,7 @@ class Channel (ClosingContextManager):
         length zero is returned, the channel stream has closed.
 
         :param int nbytes: maximum number of bytes to read.
-        :return: received data, as a `bytes`
+        :return: received data, as a ``str``/``bytes``.
 
         :raises socket.timeout:
             if no data is ready before the timeout set by `settimeout`.
@@ -968,7 +976,7 @@ class Channel (ClosingContextManager):
         # a window update
         self.in_window_threshold = window_size // 10
         self.in_window_sofar = 0
-        self._log(DEBUG, 'Max packet in: %d bytes' % max_packet_size)
+        self._log(DEBUG, 'Max packet in: {} bytes'.format(max_packet_size))
 
     def _set_remote_channel(self, chanid, window_size, max_packet_size):
         self.remote_chanid = chanid
@@ -977,10 +985,11 @@ class Channel (ClosingContextManager):
             max_packet_size
         )
         self.active = 1
-        self._log(DEBUG, 'Max packet out: %d bytes' % self.out_max_packet_size)
+        self._log(DEBUG,
+            'Max packet out: {} bytes'.format(self.out_max_packet_size))
 
     def _request_success(self, m):
-        self._log(DEBUG, 'Sesch channel %d request ok' % self.chanid)
+        self._log(DEBUG, 'Sesch channel {} request ok'.format(self.chanid))
         self.event_ready = True
         self.event.set()
         return
@@ -1009,7 +1018,7 @@ class Channel (ClosingContextManager):
         if code != 1:
             self._log(
                 ERROR,
-                'unknown extended_data type %d; discarding' % code
+                'unknown extended_data type {}; discarding'.format(code)
             )
             return
         if self.combine_stderr:
@@ -1022,7 +1031,7 @@ class Channel (ClosingContextManager):
         self.lock.acquire()
         try:
             if self.ultra_debug:
-                self._log(DEBUG, 'window up %d' % nbytes)
+                self._log(DEBUG, 'window up {}'.format(nbytes))
             self.out_window_size += nbytes
             self.out_buffer_cv.notifyAll()
         finally:
@@ -1114,7 +1123,7 @@ class Channel (ClosingContextManager):
             else:
                 ok = server.check_channel_forward_agent_request(self)
         else:
-            self._log(DEBUG, 'Unhandled channel request "%s"' % key)
+            self._log(DEBUG, 'Unhandled channel request "{}"'.format(key))
             ok = False
         if want_reply:
             m = Message()
@@ -1136,7 +1145,7 @@ class Channel (ClosingContextManager):
                     self._pipe.set_forever()
         finally:
             self.lock.release()
-        self._log(DEBUG, 'EOF received (%s)', self._name)
+        self._log(DEBUG, 'EOF received ({})'.format(self._name))
 
     def _handle_close(self, m):
         self.lock.acquire()
@@ -1208,7 +1217,7 @@ class Channel (ClosingContextManager):
         m.add_byte(cMSG_CHANNEL_EOF)
         m.add_int(self.remote_chanid)
         self.eof_sent = True
-        self._log(DEBUG, 'EOF sent (%s)', self._name)
+        self._log(DEBUG, 'EOF sent ({})'.format(self._name))
         return m
 
     def _close_internal(self):
@@ -1242,12 +1251,13 @@ class Channel (ClosingContextManager):
             if self.closed or self.eof_received or not self.active:
                 return 0
             if self.ultra_debug:
-                self._log(DEBUG, 'addwindow %d' % n)
+                self._log(DEBUG, 'addwindow {}'.format(n))
             self.in_window_sofar += n
             if self.in_window_sofar <= self.in_window_threshold:
                 return 0
             if self.ultra_debug:
-                self._log(DEBUG, 'addwindow send %d' % self.in_window_sofar)
+                self._log(DEBUG,
+                    'addwindow send {}'.format(self.in_window_sofar))
             out = self.in_window_sofar
             self.in_window_sofar = 0
             return out
@@ -1290,7 +1300,7 @@ class Channel (ClosingContextManager):
             size = self.out_max_packet_size - 64
         self.out_window_size -= size
         if self.ultra_debug:
-            self._log(DEBUG, 'window down to %d' % self.out_window_size)
+            self._log(DEBUG, 'window down to {}'.format(self.out_window_size))
         return size
 
 
