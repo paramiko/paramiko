@@ -50,7 +50,7 @@ class SSHConfig (object):
         """
         self._config = []
 
-    def parse(self, file_obj, parsed_files=None):
+    def parse(self, file_obj, parsed_files=[]):
         """
         Read an OpenSSH config from the given file object.
 
@@ -85,20 +85,17 @@ class SSHConfig (object):
                 # support for Include directive in ssh_config
                 path = value
                 # the path can be relative to its parent configuration file
-                if os.path.isabs(path) == False and path[0] != '~':
+                if not os.path.isabs(path) and path[0] != '~':
                     folder = os.path.dirname(file_obj.name)
                     path = os.path.join(folder, path)
 
-                #expand the user home path
                 path = os.path.expanduser(path)
-                if parsed_files == None:
-                    parsed_files = []
 
-                #parse every included file
                 for filename in glob.iglob(path):
                     if os.path.isfile(filename):
                         if filename in parsed_files:
-                            raise Exception("Include loop detected in ssh config file: %s" % filename)
+                            raise Exception("Include loop detected in ssh "
+                                            "config file: %s" % filename)
                         with open(filename) as fd:
                             parsed_files.append(filename)
                             self.parse(fd, parsed_files)
