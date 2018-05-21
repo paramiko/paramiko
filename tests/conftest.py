@@ -52,6 +52,24 @@ def make_sftp_folder():
     return path
 
 
+def sftp_server_client_socket(ssh_server):
+    # Sockets & transports
+    socks = LoopSocket()
+    sockc = LoopSocket()
+    sockc.link(socks)
+    ts = Transport(socks)
+    # Auth
+    host_key = RSAKey.from_private_key_file(_support('test_rsa.key'))
+    ts.add_server_key(host_key)
+    # Server setup
+    event = threading.Event()
+    ts.set_subsystem_handler('sftp', SFTPServer, StubSFTPServer)
+    ts.start_server(event, ssh_server)
+    # Wait (so client has time to connect? Not sure. Old.)
+    event.wait(1.0)
+    return sockc
+
+
 @pytest.fixture#(scope='session')
 def sftp_server():
     """
@@ -62,23 +80,11 @@ def sftp_server():
     creates new higher level client objects wrapped around the client
     Transport, as necessary.
     """
-    # Sockets & transports
-    socks = LoopSocket()
-    sockc = LoopSocket()
-    sockc.link(socks)
-    tc = Transport(sockc)
-    ts = Transport(socks)
-    # Auth
-    host_key = RSAKey.from_private_key_file(_support('test_rsa.key'))
-    ts.add_server_key(host_key)
-    # Server setup
-    event = threading.Event()
-    server = StubServer()
-    ts.set_subsystem_handler('sftp', SFTPServer, StubSFTPServer)
-    ts.start_server(event, server)
-    # Wait (so client has time to connect? Not sure. Old.)
-    event.wait(1.0)
+
+    sockc = sftp_server_client_socket(StubServer())
+
     # Make & yield connection.
+    tc = Transport(sockc)
     tc.connect(username='slowdive', password='pygmalion')
     yield tc
     # TODO: any need for shutdown? Why didn't old suite do so? Or was that the
