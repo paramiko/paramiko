@@ -50,7 +50,7 @@ class SSHConfig (object):
         """
         self._config = []
 
-    def parse(self, file_obj, parsed_files=[]):
+    def parse(self, file_obj, parsed_files=None):
         """
         Read an OpenSSH config from the given file object.
 
@@ -90,6 +90,8 @@ class SSHConfig (object):
                     path = os.path.join(folder, path)
 
                 path = os.path.expanduser(path)
+                if parsed_files is None:
+                    parsed_files = []
 
                 for filename in glob.iglob(path):
                     if os.path.isfile(filename):
