@@ -22,7 +22,7 @@ Standard SSH key exchange ("kex" if you wanna sound cool).  Diffie-Hellman of
 """
 
 from paramiko.kex_group1 import KexGroup1
-from hashlib import sha1
+from hashlib import sha1, sha256
 
 
 class KexGroup14(KexGroup1):
@@ -33,3 +33,6 @@ class KexGroup14(KexGroup1):
 
     name = 'diffie-hellman-group14-sha1'
     hash_algo = sha1
+
+class KexGroup14_SHA256(KexGroup14):
+	hash_algo = sha256
