@@ -223,6 +223,24 @@ class ECDSAKey(PKey):
         else:
             return True
 
+    def append_add_agent_parameters(self, m):
+        # Curve_name, public_key, private
+        m.add_string(self.ecdsa_curve.nist_name)
+
+        numbers = self.verifying_key.public_numbers()
+
+        key_size_bytes = (self.verifying_key.curve.key_size + 7) // 8
+
+        x_bytes = deflate_long(numbers.x, add_sign_padding=False)
+        x_bytes = b'\x00' * (key_size_bytes - len(x_bytes)) + x_bytes
+
+        y_bytes = deflate_long(numbers.y, add_sign_padding=False)
+        y_bytes = b'\x00' * (key_size_bytes - len(y_bytes)) + y_bytes
+
+        point_str = four_byte + x_bytes + y_bytes
+        m.add_string(point_str)
+        m.add_mpint(self.signing_key.private_numbers().private_value)
+
     def write_private_key_file(self, filename, password=None):
         self._write_private_key_file(
             filename,

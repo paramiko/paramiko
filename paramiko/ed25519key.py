@@ -219,3 +219,10 @@ class Ed25519Key(PKey):
             return False
         else:
             return True
+
+    def append_add_agent_parameters(self, m):
+        # Public[ENC(A)] , Private[k+ENC(A)]
+        # Using _key and _seed instead of __bytes__()
+        m.add_string(self._signing_key.verify_key._key)
+        m.add_string(self._signing_key._seed +
+            self._signing_key.verify_key._key)

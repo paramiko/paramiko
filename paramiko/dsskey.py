@@ -154,6 +154,14 @@ class DSSKey(PKey):
         else:
             return True
 
+    def append_add_agent_parameters(self, m):
+        # All mpint's p, q, g, y, x (private)
+        m.add_mpint(self.p)
+        m.add_mpint(self.q)
+        m.add_mpint(self.g)
+        m.add_mpint(self.y)
+        m.add_mpint(self.x)
+
     def write_private_key_file(self, filename, password=None):
         key = dsa.DSAPrivateNumbers(
             x=self.x,

@@ -132,6 +132,15 @@ class RSAKey(PKey):
         else:
             return True
 
+    def append_add_agent_parameters(self, m):
+        # All mpint's n, e, d, iqmp, p, q
+        m.add_mpint(self.public_numbers.n)
+        m.add_mpint(self.public_numbers.e)
+        m.add_mpint(self.key.private_numbers().d)
+        m.add_mpint(self.key.private_numbers().iqmp)
+        m.add_mpint(self.key.private_numbers().p)
+        m.add_mpint(self.key.private_numbers().q)
+
     def write_private_key_file(self, filename, password=None):
         self._write_private_key_file(
             filename,
