@@ -16,7 +16,6 @@
 # along with Paramiko; if not, write to the Free Software Foundation, Inc.,
 # 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
 
-import select
 import socket
 import struct
 
@@ -24,6 +23,7 @@ from paramiko import util
 from paramiko.common import asbytes, DEBUG
 from paramiko.message import Message
 from paramiko.py3compat import byte_chr, byte_ord
+from paramiko.util import wait_until_readable
 
 
 CMD_INIT, CMD_VERSION, CMD_OPEN, CMD_CLOSE, CMD_READ, CMD_WRITE, CMD_LSTAT, \
@@ -150,8 +150,8 @@ class BaseSFTP (object):
                 # return or raise an exception, but calling select on a closed
                 # socket will.)
                 while True:
-                    read, write, err = select.select([self.sock], [], [], 0.1)
-                    if len(read) > 0:
+                    fds = wait_until_readable([self.sock.fileno()], 0.1)
+                    if len(fds) > 0:
                         x = self.sock.recv(n)
                         break
             else:
