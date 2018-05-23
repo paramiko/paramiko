@@ -106,6 +106,8 @@ class AgentSSH(object):
         # optional timeout (-t) and confirmation (-c) args
         # See: https://tools.ietf.org/html/draft-miller-ssh-agent-02
         # Requires that the key contain Private as well as Public components
+        if not key.can_sign():
+            raise SSHException('A signing key is required')
         m = Message()
         if timeout or confirm:
             m.add_byte(cSSH2_AGENTC_ADD_ID_CONSTRAINTED)
@@ -122,7 +124,7 @@ class AgentSSH(object):
         # Send the message, expect a response of SSH2_AGENT_SUCCESS
         resp = self._send_message(m)
         if resp[0] != SSH2_AGENT_SUCCESS:
-            raise(SSHException('Failed to add key to ssh-agent'))
+            raise SSHException('Failed to add key to ssh-agent')
 
 
 class AgentProxyThread(threading.Thread):
