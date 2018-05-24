@@ -70,6 +70,7 @@ class KexGSSGroup1(object):
     b7fffffffffffffff = byte_chr(0x7f) + max_byte * 7  # noqa
     b0000000000000000 = zero_byte * 8  # noqa
     NAME = "gss-group1-sha1-toWM5Slw5Ew8Mqkay+al2g=="
+    hash_algo = staticmethod(sha1)
 
     def __init__(self, transport):
         self.transport = transport
@@ -206,7 +207,7 @@ class KexGSSGroup1(object):
         hm.add_mpint(self.e)
         hm.add_mpint(self.f)
         hm.add_mpint(K)
-        H = sha1(str(hm)).digest()
+        H = self.hash_algo(str(hm)).digest()
         self.transport._set_K_H(K, H)
         if srv_token is not None:
             self.kexgss.ssh_init_sec_context(target=self.gss_host,
@@ -240,7 +241,7 @@ class KexGSSGroup1(object):
         hm.add_mpint(self.e)
         hm.add_mpint(self.f)
         hm.add_mpint(K)
-        H = sha1(hm.asbytes()).digest()
+        H = self.hash_algo(hm.asbytes()).digest()
         self.transport._set_K_H(K, H)
         srv_token = self.kexgss.ssh_accept_sec_context(self.gss_host,
                                                        client_token)
@@ -309,6 +310,7 @@ class KexGSSGex(object):
     min_bits = 1024
     max_bits = 8192
     preferred_bits = 2048
+    hash_algo = staticmethod(sha1)
 
     def __init__(self, transport):
         self.transport = transport
@@ -487,7 +489,7 @@ class KexGSSGex(object):
         hm.add_mpint(self.e)
         hm.add_mpint(self.f)
         hm.add_mpint(K)
-        H = sha1(hm.asbytes()).digest()
+        H = self.hash_algo(hm.asbytes()).digest()
         self.transport._set_K_H(K, H)
         srv_token = self.kexgss.ssh_accept_sec_context(self.gss_host,
                                                        client_token)
@@ -581,7 +583,7 @@ class KexGSSGex(object):
         hm.add_mpint(self.e)
         hm.add_mpint(self.f)
         hm.add_mpint(K)
-        H = sha1(hm.asbytes()).digest()
+        H = self.hash_algo(hm.asbytes()).digest()
         self.transport._set_K_H(K, H)
         if srv_token is not None:
             self.kexgss.ssh_init_sec_context(target=self.gss_host,

@@ -32,4 +32,4 @@ class KexGroup14(KexGroup1):
     G = 2
 
     name = 'diffie-hellman-group14-sha1'
-    hash_algo = sha1
+    hash_algo = staticmethod(sha1)
