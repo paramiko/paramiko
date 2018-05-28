@@ -555,10 +555,10 @@ class SSHClient (ClosingContextManager):
                 )
             else:
                 key = klass.from_private_key_file(filename, password)
-                # Blindly try the key path; if no private key, nothing will work.
-                # TODO: change this to 'Loading' instead of 'Trying' sometime; probably
-                # when #387 is released, since this is a critical log message users are
-                # likely testing/filtering for (bah.)
+                # Blindly try the key path as the private key.
+                # TODO: change this to 'Loading' instead of 'Trying' sometime;
+                # probablywhen #387 is released, since this is a critical
+                # log message users are likely testing/filtering for (bah.)
                 msg = "Trying discovered key {} in {}".format(
                     hexlify(key.get_fingerprint()), filename,
                 )

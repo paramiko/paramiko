@@ -60,7 +60,8 @@ class Certificate(PKey):
         self.blob = msg.asbytes()
         self.key_type = msg.get_text()
         if self.key_type not in self._cert_types:
-            raise SSHException('Unknown certificate type: {}'.format(self.key_type))
+            raise SSHException('Unknown certificate type: {}'.format(
+                self.key_type))
         self.nonce = msg.get_string()
         self.pubkey = self._cert_types[self.key_type].from_cert_fields(msg)
         # Common v01 certificate fields follow the pubkey data
@@ -102,7 +103,8 @@ class Certificate(PKey):
 
         if msg.get_remainder():
             raise SSHException('Unexpected data at end of certificate')
-        if not self.signing_key.verify_ssh_sig(signed_block, Message(self.signature)):
+        if not self.signing_key.verify_ssh_sig(
+                signed_block, Message(self.signature)):
             raise SSHException('Certificate not properly signed')
         # Be backward compatible with earlier minimal work to support certs
         self.public_blob = None
@@ -117,7 +119,11 @@ class Certificate(PKey):
         # Hash should match value from "ssh-keygen -l" on cert or plain pubkey
         h = hashlib.sha256(self.pubkey.asbytes())
         s = base64.binascii.b2a_base64(h.digest()).decode()
-        return self.key_type + ' ' + h.name.upper() + ':' + s.strip().replace('=', '')
+        return (
+            self.key_type + ' ' +
+            h.name.upper() + ':' +
+            s.strip().replace('=', '')
+        )
 
     def __hash__(self):
         return hash(self.blob)
@@ -154,7 +160,8 @@ class Certificate(PKey):
 
     def sign_ssh_data(self, data):
         if not self.private_key:
-            raise SSHException('Certificate requires a private key for signing')
+            raise SSHException(
+                'Certificate requires a private key for signing')
         return self.private_key.sign_ssh_data(data)
 
     def verify_ssh_sig(self, data, msg):
@@ -178,9 +185,11 @@ class Certificate(PKey):
                     certificate = cls(msg=m, comment=comment or filename)
                     break
             else:
-                raise SSHException('Unable to load any certificate from {}'.format(filename))
+                raise SSHException(
+                    'Unable to load any certificate from {}'.format(filename))
         if load_private and filename.endswith('-cert.pub'):
-            constructor = cls._cert_types[certificate.get_name()].from_private_key_file
+            constructor = \
+                cls._cert_types[certificate.get_name()].from_private_key_file
             private_key = constructor(filename[:-9], passphrase)
             certificate.associate_private_key(private_key)
         return certificate
@@ -191,15 +200,18 @@ class Certificate(PKey):
         <cert_type> <base64 encoded blob> <comment>
         """
         with open(filename, 'w') as f:
-            f.write('{} {} {}\n'.format(self.get_name(), self.get_base64(), self.comment))
+            f.write('{} {} {}\n'.format(
+                self.get_name(), self.get_base64(), self.comment))
 
     # Override from_private_* methods from PKey, since certificates only
     # contain public key components (except for associated private key)
     def from_private_key_file(self, filename, password=None):
-        raise Exception('Not implemented in {}'.format(self.__class__.__name__))
+        raise Exception('Not implemented in {}'.format(
+            self.__class__.__name__))
 
     def from_private_key(self, file_obj, password=None):
-        raise Exception('Not implemented in {}'.format(self.__class__.__name__))
+        raise Exception('Not implemented in {}'.format(
+            self.__class__.__name__))
 
     @classmethod
     def generate_certificate(cls, pubkey, ca_key, serial=0,
@@ -216,7 +228,8 @@ class Certificate(PKey):
         """
         cert_name = pubkey.get_name() + '-cert-v01@openssh.com'
         if cert_name not in cls._cert_types:
-            raise SSHException('Unsupported certificate type: {}'.format(cert_name))
+            raise SSHException('Unsupported certificate type: {}'.format(
+                cert_name))
         m = Message()
         m.add_string(cert_name)
         m.add_string(os.urandom(cls._nonce_bytes))
@@ -246,7 +259,8 @@ class Certificate(PKey):
         if critical_options:
             for name, data in critical_options.items():
                 if name not in cls._critical_options:
-                    raise SSHException('Unsupported certificate option: {}'.format(name))
+                    raise SSHException(
+                        'Unsupported certificate option: {}'.format(name))
                 opts.add_string(name)
                 encoded_data = Message()
                 encoded_data.add_string(data)

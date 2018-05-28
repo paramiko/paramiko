@@ -260,7 +260,8 @@ class ECDSAKey(PKey):
     @staticmethod
     def from_cert_fields(msg):
         """
-        OpenSSH certificate - message read up to (curve,public_point) public components
+        OpenSSH certificate - message read up to
+            (curve,public_point) public components
         """
         curve = msg.get_string().decode()
         public_point = msg.get_string()
