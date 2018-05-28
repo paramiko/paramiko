@@ -37,6 +37,7 @@ from paramiko.rsakey import RSAKey
 from paramiko.dsskey import DSSKey
 from paramiko.ecdsakey import ECDSAKey
 from paramiko.ed25519key import Ed25519Key
+from paramiko.openssh_cert import Certificate
 from paramiko.sftp import SFTPError, BaseSFTP
 from paramiko.sftp_client import SFTP, SFTPClient
 from paramiko.sftp_server import SFTPServer

@@ -66,6 +66,7 @@ from paramiko.primes import ModulusPack
 from paramiko.py3compat import string_types, long, byte_ord, b, input, PY2
 from paramiko.rsakey import RSAKey
 from paramiko.ecdsakey import ECDSAKey
+from paramiko.openssh_cert import Certificate
 from paramiko.server import ServerInterface
 from paramiko.sftp_client import SFTPClient
 from paramiko.ssh_exception import (
@@ -209,17 +210,17 @@ class Transport(threading.Thread, ClosingContextManager):
 
     _key_info = {
         'ssh-rsa': RSAKey,
-        'ssh-rsa-cert-v01@openssh.com': RSAKey,
+        'ssh-rsa-cert-v01@openssh.com': Certificate,
         'ssh-dss': DSSKey,
-        'ssh-dss-cert-v01@openssh.com': DSSKey,
+        'ssh-dss-cert-v01@openssh.com': Certificate,
         'ecdsa-sha2-nistp256': ECDSAKey,
-        'ecdsa-sha2-nistp256-cert-v01@openssh.com': ECDSAKey,
+        'ecdsa-sha2-nistp256-cert-v01@openssh.com': Certificate,
         'ecdsa-sha2-nistp384': ECDSAKey,
-        'ecdsa-sha2-nistp384-cert-v01@openssh.com': ECDSAKey,
+        'ecdsa-sha2-nistp384-cert-v01@openssh.com': Certificate,
         'ecdsa-sha2-nistp521': ECDSAKey,
-        'ecdsa-sha2-nistp521-cert-v01@openssh.com': ECDSAKey,
+        'ecdsa-sha2-nistp521-cert-v01@openssh.com': Certificate,
         'ssh-ed25519': Ed25519Key,
-        'ssh-ed25519-cert-v01@openssh.com': Ed25519Key,
+        'ssh-ed25519-cert-v01@openssh.com': Certificate,
     }
 
     _kex_info = {

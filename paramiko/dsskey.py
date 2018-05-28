@@ -216,6 +216,14 @@ class DSSKey(PKey):
         key.x = numbers.x
         return key
 
+    @staticmethod
+    def from_cert_fields(msg):
+        """
+        OpenSSH certificate - message read up to (p,q,g,y) public components
+        """
+        return DSSKey(vals=(msg.get_mpint(), msg.get_mpint(),
+            msg.get_mpint(), msg.get_mpint()))
+
     # ...internals...
 
     def _from_private_key_file(self, filename, password):

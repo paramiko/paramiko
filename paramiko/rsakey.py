@@ -163,6 +163,16 @@ class RSAKey(PKey):
         )
         return RSAKey(key=key)
 
+    @staticmethod
+    def from_cert_fields(msg):
+        """
+        OpenSSH certificate - message read up to (e,n) public components
+        """
+        key = rsa.RSAPublicNumbers(
+            e=msg.get_mpint(), n=msg.get_mpint()
+        ).public_key(default_backend())
+        return RSAKey(key=key)
+
     # ...internals...
 
     def _from_private_key_file(self, filename, password):

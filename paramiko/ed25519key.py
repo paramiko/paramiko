@@ -219,3 +219,15 @@ class Ed25519Key(PKey):
             return False
         else:
             return True
+
+    @staticmethod
+    def from_cert_fields(msg):
+        """
+        OpenSSH certificate - message read up to key_id public components
+        """
+        key_id = msg.get_string()
+        # Construct a message for parsing
+        m = Message()
+        m.add_string('ssh-ed25519')
+        m.add_string(key_id)
+        return Ed25519Key(data=m.asbytes())
