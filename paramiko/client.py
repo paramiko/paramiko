@@ -35,6 +35,7 @@ from paramiko.dsskey import DSSKey
 from paramiko.ecdsakey import ECDSAKey
 from paramiko.ed25519key import Ed25519Key
 from paramiko.hostkeys import HostKeys
+from paramiko.openssh_cert import Certificate
 from paramiko.py3compat import string_types
 from paramiko.rsakey import RSAKey
 from paramiko.ssh_exception import (
@@ -541,31 +542,32 @@ class SSHClient (ClosingContextManager):
         Attempt to derive a `.PKey` from given string path ``filename``:
 
         - If ``filename`` appears to be a cert, the matching private key is
-          loaded.
+          loaded, since authentication requires the private key.
         - Otherwise, the filename is assumed to be a private key, and the
-          matching public cert will be loaded if it exists.
+          plain key is used for authentication.
         """
         cert_suffix = '-cert.pub'
-        # Assume privkey, not cert, by default
-        if filename.endswith(cert_suffix):
-            key_path = filename[:-len(cert_suffix)]
-            cert_path = filename
-        else:
-            key_path = filename
-            cert_path = filename + cert_suffix
-        # Blindly try the key path; if no private key, nothing will work.
-        key = klass.from_private_key_file(key_path, password)
-        # TODO: change this to 'Loading' instead of 'Trying' sometime; probably
-        # when #387 is released, since this is a critical log message users are
-        # likely testing/filtering for (bah.)
-        msg = "Trying discovered key {} in {}".format(
-            hexlify(key.get_fingerprint()), key_path,
-        )
+        try:
+            if filename.endswith(cert_suffix):
+                key = Certificate.load_from_file(filename, True, password)
+                msg = "Trying discovered certificate {} in {}".format(
+                    key.id_string, filename
+                )
+            else:
+                key = klass.from_private_key_file(filename, password)
+                # Blindly try the key path; if no private key, nothing will work.
+                # TODO: change this to 'Loading' instead of 'Trying' sometime; probably
+                # when #387 is released, since this is a critical log message users are
+                # likely testing/filtering for (bah.)
+                msg = "Trying discovered key {} in {}".format(
+                    hexlify(key.get_fingerprint()), filename,
+                )
+        except SSHException as e:
+            msg = "Unable to load key/cert from {}: {}".format(
+                filename, repr(e)
+            )
+            key = None
         self._log(DEBUG, msg)
-        # Attempt to load cert if it exists.
-        if os.path.isfile(cert_path):
-            key.load_certificate(cert_path)
-            self._log(DEBUG, "Adding public certificate {}".format(cert_path))
         return key
 
     def _auth(
@@ -635,6 +637,8 @@ class SSHClient (ClosingContextManager):
                         key = self._key_from_filepath(
                             key_filename, pkey_class, passphrase,
                         )
+                        if not key:
+                            continue
                         allowed_types = set(
                             self._transport.auth_publickey(username, key))
                         two_factor = (allowed_types & two_factor_types)
@@ -691,6 +695,8 @@ class SSHClient (ClosingContextManager):
                     key = self._key_from_filepath(
                         filename, pkey_class, passphrase,
                     )
+                    if not key:
+                        continue
                     # for 2-factor auth a successfully auth'd key will result
                     # in ['password']
                     allowed_types = set(

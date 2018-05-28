@@ -239,7 +239,7 @@ class PKey(object):
         :raises: ``IOError`` -- if there was an error writing the file
         :raises: `.SSHException` -- if the key is invalid
         """
-        raise Exception('Not implemented in PKey')
+        raise Exception('Not implemented in {}'.format(self.__class__.__name__))
 
     def write_private_key(self, file_obj, password=None):
         """
@@ -252,7 +252,7 @@ class PKey(object):
         :raises: ``IOError`` -- if there was an error writing to the file
         :raises: `.SSHException` -- if the key is invalid
         """
-        raise Exception('Not implemented in PKey')
+        raise Exception('Not implemented in {}'.format(self.__class__.__name__))
 
     def _read_private_key_file(self, tag, filename, password=None):
         """

@@ -27,7 +27,7 @@ from binascii import hexlify
 from hashlib import md5
 import base64
 
-from paramiko import RSAKey, DSSKey, ECDSAKey, Ed25519Key, Message, util
+from paramiko import Certificate, RSAKey, DSSKey, ECDSAKey, Ed25519Key, Message, util
 from paramiko.py3compat import StringIO, byte_chr, b, bytes, PY2
 
 from .util import _support
@@ -532,3 +532,56 @@ class KeyTest(unittest.TestCase):
             key1.load_certificate,
             _support('test_rsa.key-cert.pub'),
         )
+
+    def test_certificate_introspection(self):
+        # Test component fields contents of Certificate class
+        key_path = _support(os.path.join('cert_support', 'test_rsa.key-cert.pub'))
+        cert = Certificate.load_from_file(key_path)
+        # Without associating private key, cert cannot be used for auth/signing
+        self.assertTrue(cert.can_sign() == False)
+        self.assertEqual(cert.get_name(), 'ssh-rsa-cert-v01@openssh.com')
+        self.assertEqual(cert.comment, 'test_rsa.key.pub')
+        # Match component contents against "ssh-keygen -L" output
+        self.assertEqual(cert.cert_type, 1)
+        self.assertEqual(cert.id_string, 'Sample self-signed OpenSSH certificate')
+        self.assertEqual(cert.serial_number, 1234)
+        self.assertEqual(cert.valid_after, 0)
+        self.assertEqual(cert.valid_before, 18446744073709551615)
+        self.assertEqual(len(cert.principals), 2)
+        self.assertEqual(cert.principals[0], 'user1')
+        self.assertEqual(cert.principals[1], 'user2')
+        self.assertEqual(len(cert.options), 0)
+        self.assertEqual(len(cert.extensions), 5)
+        self.assertEqual(cert.extensions[0], 'permit-X11-forwarding')
+        self.assertEqual(cert.extensions[1], 'permit-agent-forwarding')
+        self.assertEqual(cert.extensions[2], 'permit-port-forwarding')
+        self.assertEqual(cert.extensions[3], 'permit-pty')
+        self.assertEqual(cert.extensions[4], 'permit-user-rc')
+        # RSA cert is self-signed
+        self.assertEqual(cert.pubkey, cert.signing_key)
+
+    def test_certificate_generation(self):
+        # Generate/load private keys of each supported type
+        # and produce signed keys using each key as source and CA
+        keys = {
+            'ssh-rsa': RSAKey.generate(bits=2048),
+            'ssh-dss': DSSKey.generate(),
+            'ecdsa-sha2-nistp256': ECDSAKey.generate(bits=256),
+            'ecdsa-sha2-nistp384': ECDSAKey.generate(bits=384),
+            'ecdsa-sha2-nistp521': ECDSAKey.generate(bits=521),
+            'ssh-ed25519': Ed25519Key.from_private_key_file(_support(os.path.join('cert_support', 'test_ed25519.key')))
+        }
+        for ca_type, ca_key in keys.items():
+            for target_type, target_key in keys.items():
+                cert = Certificate.generate_certificate(pubkey=target_key, ca_key=ca_key,
+                    serial=2468, id_string='{} signed by {}'.format(target_type, ca_type),
+                    principals=('user1', 'user2'), extensions=('permit-x', 'permit-y'))
+                self.assertEqual(cert.pubkey, target_key)
+                self.assertEqual(cert.signing_key, ca_key)
+                self.assertEqual(cert.serial_number, 2468)
+                self.assertTrue('user2' in cert.principals)
+                self.assertTrue('user1' in cert.principals)
+                self.assertEqual(cert.id_string, '{} signed by {}'.format(target_type, ca_type))
+                self.assertEqual(len(cert.extensions), 2)
+                self.assertTrue('permit-x' in cert.extensions)
+                self.assertTrue('permit-y' in cert.extensions)

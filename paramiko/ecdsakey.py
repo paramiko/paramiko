@@ -257,6 +257,21 @@ class ECDSAKey(PKey):
         private_key = ec.generate_private_key(curve, backend=default_backend())
         return ECDSAKey(vals=(private_key, private_key.public_key()))
 
+    @staticmethod
+    def from_cert_fields(msg):
+        """
+        OpenSSH certificate - message read up to (curve,public_point) public components
+        """
+        curve = msg.get_string().decode()
+        public_point = msg.get_string()
+        # Need to construct a new message with the key type preceding
+        # the curve and public_point we extracted from the certificate
+        key_msg = Message()
+        key_msg.add_string('ecdsa-sha2-' + curve)
+        key_msg.add_string(curve)
+        key_msg.add_string(public_point)
+        return ECDSAKey(data=key_msg.asbytes())
+
     # ...internals...
 
     def _from_private_key_file(self, filename, password):

@@ -54,6 +54,10 @@ FINGERPRINTS = {
     'ssh-ed25519': b'\xb3\xd5"\xaa\xf9u^\xe8\xcd\x0e\xea\x02\xb9)\xa2\x80',
 }
 
+TRUSTED_CA_FINGERPRINTS = (
+    b'\x54\x59\xa6\x30\xaa\xe3\x53\xc1\x64\x49\x9a\xec\x4b\x70\x9b\x51',
+    b'\x60\x73\x38\x44\xcb\x51\x86\x65\x7f\xde\xda\xa2\x2b\x5a\x57\xd5'
+)
 
 class NullServer(paramiko.ServerInterface):
     def __init__(self, *args, **kwargs):
@@ -77,21 +81,23 @@ class NullServer(paramiko.ServerInterface):
         return paramiko.AUTH_FAILED
 
     def check_auth_publickey(self, username, key):
-        try:
-            expected = FINGERPRINTS[key.get_name()]
-        except KeyError:
-            return paramiko.AUTH_FAILED
-        # Base check: allowed auth type & fingerprint matches
-        happy = (
-            key.get_name() in self.__allowed_keys and
-            key.get_fingerprint() == expected
-        )
-        # Secondary check: if test wants assertions about cert data
-        if (
-            self.__expected_public_blob is not None and
-            key.public_blob != self.__expected_public_blob
-        ):
-            happy = False
+        if isinstance(key, paramiko.Certificate):
+            if key.signing_key.get_fingerprint() in TRUSTED_CA_FINGERPRINTS:
+                # Check principals, validity interval, source-address, etc.
+                # if we were a real server...
+                happy = True
+            else:
+                happy = False
+        else:
+            try:
+                expected = FINGERPRINTS[key.get_name()]
+            except KeyError:
+                return paramiko.AUTH_FAILED
+            # Base check: allowed auth type & fingerprint matches
+            happy = (
+                key.get_name() in self.__allowed_keys and
+                key.get_fingerprint() == expected
+            )
         return paramiko.AUTH_SUCCESSFUL if happy else paramiko.AUTH_FAILED
 
     def check_channel_request(self, kind, chanid):
