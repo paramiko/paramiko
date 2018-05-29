@@ -3,6 +3,8 @@ from os.path import join
 from shutil import rmtree, copytree
 
 from invoke import Collection, task
+from invocations import travis
+from invocations.checks import blacken
 from invocations.docs import docs, www, sites
 from invocations.packaging.release import ns as release_coll, publish
 from invocations.testing import count_errors
@@ -106,7 +108,7 @@ def release(ctx, sdist=True, wheel=True, sign=True, dry_run=False, index=None):
     copytree("sites/docs/_build", target)
     # Publish
     publish(
-        ctx, sdist=sdist, wheel=wheel, sign=sign, dry_run=dry_run, index=index,
+        ctx, sdist=sdist, wheel=wheel, sign=sign, dry_run=dry_run, index=index
     )
     # Remind
     print(
@@ -121,7 +123,16 @@ def release(ctx, sdist=True, wheel=True, sign=True, dry_run=False, index=None):
 release_coll.tasks["publish"] = release
 
 ns = Collection(
-    test, coverage, guard, release_coll, docs, www, sites, count_errors
+    test,
+    coverage,
+    guard,
+    release_coll,
+    docs,
+    www,
+    sites,
+    count_errors,
+    travis,
+    blacken,
 )
 ns.configure(
     {

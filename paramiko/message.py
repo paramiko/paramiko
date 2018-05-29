@@ -27,7 +27,7 @@ from paramiko.common import zero_byte, max_byte, one_byte, asbytes
 from paramiko.py3compat import long, BytesIO, u, integer_types
 
 
-class Message (object):
+class Message(object):
     """
     An SSH2 message is a stream of bytes that encodes some combination of
     strings, integers, bools, and infinite-precision integers (known in Python
@@ -63,7 +63,7 @@ class Message (object):
         """
         Returns a string representation of this object, for debugging.
         """
-        return 'paramiko.Message(' + repr(self.packet.getvalue()) + ')'
+        return "paramiko.Message(" + repr(self.packet.getvalue()) + ")"
 
     def asbytes(self):
         """
@@ -139,13 +139,13 @@ class Message (object):
         if byte == max_byte:
             return util.inflate_long(self.get_binary())
         byte += self.get_bytes(3)
-        return struct.unpack('>I', byte)[0]
+        return struct.unpack(">I", byte)[0]
 
     def get_int(self):
         """
         Fetch an int from the stream.
         """
-        return struct.unpack('>I', self.get_bytes(4))[0]
+        return struct.unpack(">I", self.get_bytes(4))[0]
 
     def get_int64(self):
         """
@@ -153,7 +153,7 @@ class Message (object):
 
         :return: a 64-bit unsigned integer (`long`).
         """
-        return struct.unpack('>Q', self.get_bytes(8))[0]
+        return struct.unpack(">Q", self.get_bytes(8))[0]
 
     def get_mpint(self):
         """
@@ -191,7 +191,7 @@ class Message (object):
 
         These are trivially encoded as comma-separated values in a string.
         """
-        return self.get_text().split(',')
+        return self.get_text().split(",")
 
     def add_bytes(self, b):
         """
@@ -229,7 +229,7 @@ class Message (object):
 
         :param int n: integer to add
         """
-        self.packet.write(struct.pack('>I', n))
+        self.packet.write(struct.pack(">I", n))
         return self
 
     def add_adaptive_int(self, n):
@@ -242,7 +242,7 @@ class Message (object):
             self.packet.write(max_byte)
             self.add_string(util.deflate_long(n))
         else:
-            self.packet.write(struct.pack('>I', n))
+            self.packet.write(struct.pack(">I", n))
         return self
 
     def add_int64(self, n):
@@ -251,7 +251,7 @@ class Message (object):
 
         :param long n: long int to add
         """
-        self.packet.write(struct.pack('>Q', n))
+        self.packet.write(struct.pack(">Q", n))
         return self
 
     def add_mpint(self, z):
@@ -283,7 +283,7 @@ class Message (object):
 
         :param l: list of strings to add
         """
-        self.add_string(','.join(l))
+        self.add_string(",".join(l))
         return self
 
     def _add(self, i):
