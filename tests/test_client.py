@@ -264,7 +264,9 @@ class SSHClientTest(ClientTest):
         """
         # This is dumb :(
         types_ = {
-            "rsa": "ssh-rsa", "dss": "ssh-dss", "ecdsa": "ecdsa-sha2-nistp256"
+            "rsa": "ssh-rsa",
+            "dss": "ssh-dss",
+            "ecdsa": "ecdsa-sha2-nistp256",
         }
         # Various combos of attempted & valid keys
         # TODO: try every possible combo using itertools functions

@@ -71,12 +71,14 @@ class BER(object):
             t = size & 0x7f
             if self.idx + t > len(self.content):
                 return None
-            size = util.inflate_long(self.content[self.idx:self.idx + t], True)
+            size = util.inflate_long(
+                self.content[self.idx : self.idx + t], True
+            )
             self.idx += t
         if self.idx + size > len(self.content):
             # can't fit
             return None
-        data = self.content[self.idx:self.idx + size]
+        data = self.content[self.idx : self.idx + size]
         self.idx += size
         # now switch on id
         if ident == 0x30:

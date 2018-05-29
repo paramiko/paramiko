@@ -89,7 +89,7 @@ class ProxyCommand(ClosingContextManager):
             while len(buffer) < size:
                 select_timeout = None
                 if self.timeout is not None:
-                    elapsed = (time.time() - start)
+                    elapsed = time.time() - start
                     if elapsed >= self.timeout:
                         raise socket.timeout()
                     select_timeout = self.timeout - elapsed

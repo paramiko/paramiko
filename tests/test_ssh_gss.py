@@ -152,7 +152,9 @@ class GSSAuthTest(unittest.TestCase):
         """
         Failed gssapi-with-mic auth doesn't prevent subsequent key auth from succeeding
         """
-        self.hostname = "this_host_does_not_exists_and_causes_a_GSSAPI-exception"
+        self.hostname = (
+            "this_host_does_not_exists_and_causes_a_GSSAPI-exception"
+        )
         self._test_connection(
             key_filename=[_support("test_rsa.key")],
             allow_agent=False,

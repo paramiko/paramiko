@@ -66,9 +66,7 @@ class RSAKey(PKey):
             )
             self.key = rsa.RSAPublicNumbers(
                 e=msg.get_mpint(), n=msg.get_mpint()
-            ).public_key(
-                default_backend()
-            )
+            ).public_key(default_backend())
 
     @property
     def size(self):

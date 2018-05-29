@@ -109,7 +109,9 @@ class BadHostKeyException(SSHException):
     """
 
     def __init__(self, hostname, got_key, expected_key):
-        message = "Host key for server {} does not match: got {}, expected {}"  # noqa
+        message = (
+            "Host key for server {} does not match: got {}, expected {}"
+        )  # noqa
         message = message.format(
             hostname, got_key.get_base64(), expected_key.get_base64()
         )

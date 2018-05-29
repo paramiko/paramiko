@@ -166,7 +166,7 @@ class BufferedFile(ClosingContextManager):
             The number of bytes read.
         """
         data = self.read(len(buff))
-        buff[:len(data)] = data
+        buff[: len(data)] = data
         return len(data)
 
     def read(self, size=None):
@@ -283,12 +283,8 @@ class BufferedFile(ClosingContextManager):
                 n = size - len(line)
             else:
                 n = self._bufsize
-            if (
-                linefeed_byte in line
-                or (
-                    self._flags & self.FLAG_UNIVERSAL_NEWLINE
-                    and cr_byte in line
-                )
+            if linefeed_byte in line or (
+                self._flags & self.FLAG_UNIVERSAL_NEWLINE and cr_byte in line
             ):
                 break
             try:
@@ -415,9 +411,9 @@ class BufferedFile(ClosingContextManager):
             if last_newline_pos >= 0:
                 wbuf = self._wbuffer.getvalue()
                 last_newline_pos += len(wbuf) - len(data)
-                self._write_all(wbuf[:last_newline_pos + 1])
+                self._write_all(wbuf[: last_newline_pos + 1])
                 self._wbuffer = BytesIO()
-                self._wbuffer.write(wbuf[last_newline_pos + 1:])
+                self._wbuffer.write(wbuf[last_newline_pos + 1 :])
             return
         # even if we're line buffering, if the buffer has grown past the
         # buffer size, force a flush.
@@ -541,8 +537,8 @@ class BufferedFile(ClosingContextManager):
             return
         if self.newlines is None:
             self.newlines = newline
-        elif (
-            self.newlines != newline and isinstance(self.newlines, bytes_types)
+        elif self.newlines != newline and isinstance(
+            self.newlines, bytes_types
         ):
             self.newlines = (self.newlines, newline)
         elif newline not in self.newlines:

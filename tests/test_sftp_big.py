@@ -70,7 +70,7 @@ class TestBigSFTP(object):
         """
         write a 1MB file with no buffering.
         """
-        kblob = (1024 * b"x")
+        kblob = 1024 * b"x"
         start = time.time()
         try:
             with sftp.open("%s/hongry.txt" % sftp.FOLDER, "w") as f:
@@ -133,7 +133,7 @@ class TestBigSFTP(object):
                         chunk = size - n
                     data = f.read(chunk)
                     offset = n % 1024
-                    assert data == k2blob[offset:offset + chunk]
+                    assert data == k2blob[offset : offset + chunk]
                     n += chunk
 
             end = time.time()
@@ -174,7 +174,7 @@ class TestBigSFTP(object):
                         f.seek(offset)
                         data = f.read(chunk)
                         n_offset = offset % 1024
-                        assert data == k2blob[n_offset:n_offset + chunk]
+                        assert data == k2blob[n_offset : n_offset + chunk]
                         offset += chunk
             end = time.time()
             sys.stderr.write("%ds " % round(end - start))
@@ -215,7 +215,7 @@ class TestBigSFTP(object):
                     for i in range(len(readv_list)):
                         offset = readv_list[i][0]
                         n_offset = offset % 1024
-                        assert next(ret) == k2blob[n_offset:n_offset + chunk]
+                        assert next(ret) == k2blob[n_offset : n_offset + chunk]
             end = time.time()
             sys.stderr.write("%ds " % round(end - start))
         finally:
@@ -226,7 +226,7 @@ class TestBigSFTP(object):
         prefetch a 1MB file a bunch of times, discarding the file object
         without using it, to verify that paramiko doesn't get confused.
         """
-        kblob = (1024 * b"x")
+        kblob = 1024 * b"x"
         try:
             with sftp.open("%s/hongry.txt" % sftp.FOLDER, "w") as f:
                 f.set_pipelined(True)
@@ -290,7 +290,7 @@ class TestBigSFTP(object):
                 for data in f.readv(chunks):
                     offset = base_offset % 1024
                     assert chunk_size == len(data)
-                    assert k2blob[offset:offset + chunk_size] == data
+                    assert k2blob[offset : offset + chunk_size] == data
                     base_offset += chunk_size
 
             sys.stderr.write(" ")
@@ -330,7 +330,7 @@ class TestBigSFTP(object):
         """
         write a 1MB file, with no linefeeds, and a big buffer.
         """
-        mblob = (1024 * 1024 * "x")
+        mblob = 1024 * 1024 * "x"
         try:
             with sftp.open(
                 "%s/hongry.txt" % sftp.FOLDER, "w", 128 * 1024
@@ -349,7 +349,7 @@ class TestBigSFTP(object):
         """
         t = sftp.sock.get_transport()
         t.packetizer.REKEY_BYTES = 512 * 1024
-        k32blob = (32 * 1024 * "x")
+        k32blob = 32 * 1024 * "x"
         try:
             with sftp.open(
                 "%s/hongry.txt" % sftp.FOLDER, "w", 128 * 1024

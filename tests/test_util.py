@@ -117,7 +117,8 @@ class UtilTest(unittest.TestCase):
                 {
                     "host": ["*"],
                     "config": {
-                        "identityfile": ["~/.ssh/id_rsa"], "user": "robey"
+                        "identityfile": ["~/.ssh/id_rsa"],
+                        "user": "robey",
                     },
                 },
                 {

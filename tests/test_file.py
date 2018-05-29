@@ -42,7 +42,7 @@ class LoopbackFile(BufferedFile):
         self.offset = 0
 
     def _read(self, size):
-        data = self.buffer.getvalue()[self.offset:self.offset + size]
+        data = self.buffer.getvalue()[self.offset : self.offset + size]
         self.offset += len(data)
         return data
 
@@ -226,7 +226,7 @@ class BufferedFileTest(unittest.TestCase):
         with LoopbackFile("rb+") as f:
             view = memoryview(data)
             for offset in offsets:
-                f.write(view[offset:offset + 8])
+                f.write(view[offset : offset + 8])
             self.assertEqual(f.read(), data)
 
 

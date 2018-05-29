@@ -365,7 +365,7 @@ class Packetizer(object):
         while linefeed_byte not in buf:
             buf += self._read_timeout(timeout)
         n = buf.index(linefeed_byte)
-        self.__remainder = buf[n + 1:]
+        self.__remainder = buf[n + 1 :]
         buf = buf[:n]
         if (len(buf) > 0) and (buf[-1] == cr_byte_value):
             buf = buf[:-1]
@@ -400,14 +400,12 @@ class Packetizer(object):
                 out = packet
             # + mac
             if self.__block_engine_out is not None:
-                payload = struct.pack(
-                    ">I", self.__sequence_number_out
-                ) + packet
+                payload = (
+                    struct.pack(">I", self.__sequence_number_out) + packet
+                )
                 out += compute_hmac(
                     self.__mac_key_out, payload, self.__mac_engine_out
-                )[
-                    :self.__mac_size_out
-                ]
+                )[: self.__mac_size_out]
             self.__sequence_number_out = (
                 self.__sequence_number_out + 1
             ) & xffffffff
@@ -451,8 +449,8 @@ class Packetizer(object):
         if (packet_size - len(leftover)) % self.__block_size_in != 0:
             raise SSHException("Invalid packet blocking")
         buf = self.read_all(packet_size + self.__mac_size_in - len(leftover))
-        packet = buf[:packet_size - len(leftover)]
-        post_packet = buf[packet_size - len(leftover):]
+        packet = buf[: packet_size - len(leftover)]
+        post_packet = buf[packet_size - len(leftover) :]
         if self.__block_engine_in is not None:
             packet = self.__block_engine_in.update(packet)
         if self.__dump_packets:
@@ -460,19 +458,18 @@ class Packetizer(object):
         packet = leftover + packet
 
         if self.__mac_size_in > 0:
-            mac = post_packet[:self.__mac_size_in]
-            mac_payload = struct.pack(
-                ">II", self.__sequence_number_in, packet_size
-            ) + packet
+            mac = post_packet[: self.__mac_size_in]
+            mac_payload = (
+                struct.pack(">II", self.__sequence_number_in, packet_size)
+                + packet
+            )
             my_mac = compute_hmac(
                 self.__mac_key_in, mac_payload, self.__mac_engine_in
-            )[
-                :self.__mac_size_in
-            ]
+            )[: self.__mac_size_in]
             if not util.constant_time_bytes_eq(my_mac, mac):
                 raise SSHException("Mismatched MAC")
         padding = byte_ord(packet[0])
-        payload = packet[1:packet_size - padding]
+        payload = packet[1 : packet_size - padding]
 
         if self.__dump_packets:
             self._log(
@@ -499,14 +496,10 @@ class Packetizer(object):
             self.__received_bytes_overflow += raw_packet_size
             self.__received_packets_overflow += 1
             if (
-                (
-                    self.__received_packets_overflow
-                    >= self.REKEY_PACKETS_OVERFLOW_MAX
-                )
-                or (
-                    self.__received_bytes_overflow
-                    >= self.REKEY_BYTES_OVERFLOW_MAX
-                )
+                self.__received_packets_overflow
+                >= self.REKEY_PACKETS_OVERFLOW_MAX
+            ) or (
+                self.__received_bytes_overflow >= self.REKEY_BYTES_OVERFLOW_MAX
             ):
                 raise SSHException(
                     "Remote transport is ignoring rekey requests"
@@ -592,7 +585,7 @@ class Packetizer(object):
             # cute trick i caught openssh doing: if we're not encrypting or
             # SDCTR mode (RFC4344),
             # don't waste random bytes for the padding
-            packet += (zero_byte * padding)
+            packet += zero_byte * padding
         else:
             packet += os.urandom(padding)
         return packet

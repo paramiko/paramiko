@@ -231,7 +231,12 @@ class SFTPAttributes(object):
         # it untouched for the time being, re: .format() upgrade, until someone
         # has time to doublecheck
         return "%s   1 %-8d %-8d %8d %-12s %s" % (
-            ks, uid, gid, size, datestr, filename
+            ks,
+            uid,
+            gid,
+            size,
+            datestr,
+            filename,
         )
 
     def asbytes(self):

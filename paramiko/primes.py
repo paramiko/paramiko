@@ -62,7 +62,13 @@ class ModulusPack(object):
 
     def _parse_modulus(self, line):
         (
-            timestamp, mod_type, tests, tries, size, generator, modulus
+            timestamp,
+            mod_type,
+            tests,
+            tries,
+            size,
+            generator,
+            modulus,
         ) = line.split()
         mod_type = int(mod_type)
         tests = int(tests)

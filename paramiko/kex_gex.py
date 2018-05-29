@@ -38,9 +38,7 @@ from paramiko.ssh_exception import SSHException
     _MSG_KEXDH_GEX_INIT,
     _MSG_KEXDH_GEX_REPLY,
     _MSG_KEXDH_GEX_REQUEST,
-) = range(
-    30, 35
-)
+) = range(30, 35)
 
 (
     c_MSG_KEXDH_GEX_REQUEST_OLD,
@@ -48,9 +46,7 @@ from paramiko.ssh_exception import SSHException
     c_MSG_KEXDH_GEX_INIT,
     c_MSG_KEXDH_GEX_REPLY,
     c_MSG_KEXDH_GEX_REQUEST,
-) = [
-    byte_chr(c) for c in range(30, 35)
-]
+) = [byte_chr(c) for c in range(30, 35)]
 
 
 class KexGex(object):

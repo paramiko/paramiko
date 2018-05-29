@@ -207,7 +207,7 @@ class StubSFTPServer(SFTPServerInterface):
         else:
             # compute relative to path
             abspath = os.path.join(os.path.dirname(path), target_path)
-            if abspath[:len(self.ROOT)] != self.ROOT:
+            if abspath[: len(self.ROOT)] != self.ROOT:
                 # this symlink isn't going to work anyway -- just break it immediately
                 target_path = "<error>"
         try:
@@ -224,8 +224,8 @@ class StubSFTPServer(SFTPServerInterface):
             return SFTPServer.convert_errno(e.errno)
         # if it's absolute, remove the root
         if os.path.isabs(symlink):
-            if symlink[:len(self.ROOT)] == self.ROOT:
-                symlink = symlink[len(self.ROOT):]
+            if symlink[: len(self.ROOT)] == self.ROOT:
+                symlink = symlink[len(self.ROOT) :]
                 if (len(symlink) == 0) or (symlink[0] != "/"):
                     symlink = "/" + symlink
             else:

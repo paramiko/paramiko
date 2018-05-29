@@ -113,9 +113,7 @@ class DSSKey(PKey):
                     p=self.p, q=self.q, g=self.g
                 ),
             ),
-        ).private_key(
-            backend=default_backend()
-        )
+        ).private_key(backend=default_backend())
         sig = key.sign(data, hashes.SHA1())
         r, s = decode_dss_signature(sig)
 
@@ -152,9 +150,7 @@ class DSSKey(PKey):
             parameter_numbers=dsa.DSAParameterNumbers(
                 p=self.p, q=self.q, g=self.g
             ),
-        ).public_key(
-            backend=default_backend()
-        )
+        ).public_key(backend=default_backend())
         try:
             key.verify(signature, data, hashes.SHA1())
         except InvalidSignature:
@@ -171,9 +167,7 @@ class DSSKey(PKey):
                     p=self.p, q=self.q, g=self.g
                 ),
             ),
-        ).private_key(
-            backend=default_backend()
-        )
+        ).private_key(backend=default_backend())
 
         self._write_private_key_file(
             filename,
@@ -191,9 +185,7 @@ class DSSKey(PKey):
                     p=self.p, q=self.q, g=self.g
                 ),
             ),
-        ).private_key(
-            backend=default_backend()
-        )
+        ).private_key(backend=default_backend())
 
         self._write_private_key(
             file_obj,

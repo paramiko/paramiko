@@ -207,8 +207,12 @@ class TransportTest(unittest.TestCase):
         o.compression = o.compression
 
     def test_2_compute_key(self):
-        self.tc.K = 123281095979686581523377256114209720774539068973101330872763622971399429481072519713536292772709507296759612401802191955568143056534122385270077606457721553469730659233569339356140085284052436697480759510519672848743794433460113118986816826624865291116513647975790797391795651716378444844877749505443714557929
-        self.tc.H = b"\x0C\x83\x07\xCD\xE6\x85\x6F\xF3\x0B\xA9\x36\x84\xEB\x0F\x04\xC2\x52\x0E\x9E\xD3"
+        self.tc.K = (
+            123281095979686581523377256114209720774539068973101330872763622971399429481072519713536292772709507296759612401802191955568143056534122385270077606457721553469730659233569339356140085284052436697480759510519672848743794433460113118986816826624865291116513647975790797391795651716378444844877749505443714557929
+        )
+        self.tc.H = (
+            b"\x0C\x83\x07\xCD\xE6\x85\x6F\xF3\x0B\xA9\x36\x84\xEB\x0F\x04\xC2\x52\x0E\x9E\xD3"
+        )
         self.tc.session_id = self.tc.H
         key = self.tc._compute_key("C", 32)
         self.assertEqual(
@@ -793,7 +797,9 @@ class TransportTest(unittest.TestCase):
         # sends MSG_CHANNEL_WINDOW_ADJUST whenever it receives an initial
         # MSG_KEXINIT.  This is used to simulate the effect of network latency
         # on a real MSG_CHANNEL_WINDOW_ADJUST message.
-        self.tc._handler_table = self.tc._handler_table.copy()  # copy per-class dictionary
+        self.tc._handler_table = (
+            self.tc._handler_table.copy()
+        )  # copy per-class dictionary
         _negotiate_keys = self.tc._handler_table[MSG_KEXINIT]
 
         def _negotiate_keys_wrapper(self, m):
@@ -989,7 +995,7 @@ class TransportTest(unittest.TestCase):
             sent = 0
             view = memoryview(data)
             while sent < len(view):
-                sent += chan.send(view[sent:sent + 8])
+                sent += chan.send(view[sent : sent + 8])
             self.assertEqual(sfile.read(len(data)), data)
 
             # sendall() accepts a memoryview instance

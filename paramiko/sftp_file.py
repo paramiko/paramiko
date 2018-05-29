@@ -200,9 +200,8 @@ class SFTPFile(BufferedFile):
             data[:chunk],
         )
         self._reqs.append(sftp_async_request)
-        if (
-            not self.pipelined
-            or (len(self._reqs) > 100 and self.sftp.sock.recv_ready())
+        if not self.pipelined or (
+            len(self._reqs) > 100 and self.sftp.sock.recv_ready()
         ):
             while len(self._reqs):
                 req = self._reqs.popleft()
@@ -497,10 +496,9 @@ class SFTPFile(BufferedFile):
         read_chunks = []
         for offset, size in chunks:
             # don't fetch data that's already in the prefetch buffer
-            if (
-                self._data_in_prefetch_buffers(offset)
-                or self._data_in_prefetch_requests(offset, size)
-            ):
+            if self._data_in_prefetch_buffers(
+                offset
+            ) or self._data_in_prefetch_requests(offset, size):
                 continue
 
             # break up anything larger than the max read size

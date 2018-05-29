@@ -141,7 +141,7 @@ class ECDSAKey(PKey):
             # feels more correct to do it here?)
             suffix = "-cert-v01@openssh.com"
             if key_type.endswith(suffix):
-                key_type = key_type[:-len(suffix)]
+                key_type = key_type[: -len(suffix)]
             self.ecdsa_curve = self._ECDSA_CURVES.get_by_key_format_identifier(
                 key_type
             )

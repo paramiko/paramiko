@@ -562,7 +562,7 @@ class SSHClient(ClosingContextManager):
         cert_suffix = "-cert.pub"
         # Assume privkey, not cert, by default
         if filename.endswith(cert_suffix):
-            key_path = filename[:-len(cert_suffix)]
+            key_path = filename[: -len(cert_suffix)]
             cert_path = filename
         else:
             key_path = filename
@@ -648,7 +648,7 @@ class SSHClient(ClosingContextManager):
                 allowed_types = set(
                     self._transport.auth_publickey(username, pkey)
                 )
-                two_factor = (allowed_types & two_factor_types)
+                two_factor = allowed_types & two_factor_types
                 if not two_factor:
                     return
             except SSHException as e:
@@ -664,7 +664,7 @@ class SSHClient(ClosingContextManager):
                         allowed_types = set(
                             self._transport.auth_publickey(username, key)
                         )
-                        two_factor = (allowed_types & two_factor_types)
+                        two_factor = allowed_types & two_factor_types
                         if not two_factor:
                             return
                         break
@@ -684,7 +684,7 @@ class SSHClient(ClosingContextManager):
                     allowed_types = set(
                         self._transport.auth_publickey(username, key)
                     )
-                    two_factor = (allowed_types & two_factor_types)
+                    two_factor = allowed_types & two_factor_types
                     if not two_factor:
                         return
                     break
@@ -724,7 +724,7 @@ class SSHClient(ClosingContextManager):
                     allowed_types = set(
                         self._transport.auth_publickey(username, key)
                     )
-                    two_factor = (allowed_types & two_factor_types)
+                    two_factor = allowed_types & two_factor_types
                     if not two_factor:
                         return
                     break

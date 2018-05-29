@@ -424,8 +424,8 @@ class TestSFTP(object):
             assert sftp.stat(sftp.FOLDER + "/link.txt").st_size == 9
             # the sftp server may be hiding extra path members from us, so the
             # length may be longer than we expect:
-            assert (
-                sftp.lstat(sftp.FOLDER + "/link2.txt").st_size >= len(abs_path)
+            assert sftp.lstat(sftp.FOLDER + "/link2.txt").st_size >= len(
+                abs_path
             )
             assert sftp.stat(sftp.FOLDER + "/link2.txt").st_size == 9
             assert sftp.stat(sftp.FOLDER + "/original.txt").st_size == 9
@@ -786,7 +786,7 @@ class TestSFTP(object):
             with sftp.open("%s/write_memoryview" % sftp.FOLDER, "wb") as f:
                 view = memoryview(data)
                 for offset in range(0, len(data), 8):
-                    f.write(view[offset:offset + 8])
+                    f.write(view[offset : offset + 8])
 
             with sftp.open("%s/write_memoryview" % sftp.FOLDER, "rb") as f:
                 assert f.read() == data

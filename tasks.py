@@ -108,7 +108,7 @@ def release(ctx, sdist=True, wheel=True, sign=True, dry_run=False, index=None):
     copytree("sites/docs/_build", target)
     # Publish
     publish(
-        ctx, sdist=sdist, wheel=wheel, sign=sign, dry_run=dry_run, index=index,
+        ctx, sdist=sdist, wheel=wheel, sign=sign, dry_run=dry_run, index=index
     )
     # Remind
     print(

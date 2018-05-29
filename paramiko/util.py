@@ -49,9 +49,9 @@ def inflate_long(s, always_positive=False):
         # noinspection PyAugmentAssignment
         s = filler * (4 - len(s) % 4) + s
     for i in range(0, len(s), 4):
-        out = (out << 32) + struct.unpack(">I", s[i:i + 4])[0]
+        out = (out << 32) + struct.unpack(">I", s[i : i + 4])[0]
     if negative:
-        out -= (long(1) << (8 * len(s)))
+        out -= long(1) << (8 * len(s))
     return out
 
 
@@ -81,7 +81,7 @@ def deflate_long(n, add_sign_padding=True):
             s = zero_byte
         else:
             s = max_byte
-    s = s[i[0]:]
+    s = s[i[0] :]
     if add_sign_padding:
         if (n == 0) and (byte_ord(s[0]) >= 0x80):
             s = zero_byte + s
@@ -94,7 +94,7 @@ def format_binary(data, prefix=""):
     x = 0
     out = []
     while len(data) > x + 16:
-        out.append(format_binary_line(data[x:x + 16]))
+        out.append(format_binary_line(data[x : x + 16]))
         x += 16
     if x < len(data):
         out.append(format_binary_line(data[x:]))
@@ -251,7 +251,8 @@ def log_to_file(filename, level=DEBUG):
     l.setLevel(level)
     f = open(filename, "a")
     lh = logging.StreamHandler(f)
-    frm = "%(levelname)-.3s [%(asctime)s.%(msecs)03d] thr=%(_threadid)-3d %(name)s: %(message)s"  # noqa
+    frm = "%(levelname)-.3s [%(asctime)s.%(msecs)03d] thr=%(_threadid)-3d"
+    frm += " %(name)s: %(message)s"
     lh.setFormatter(logging.Formatter(frm, "%Y%m%d-%H:%M:%S"))
     l.addHandler(lh)
 

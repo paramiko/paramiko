@@ -561,9 +561,8 @@ class _SSH_SSPI(_SSH_GSSAuth):
 
         :return: ``True`` if credentials are delegated, otherwise ``False``
         """
-        return (
-            self._gss_flags & sspicon.ISC_REQ_DELEGATE
-            and (self._gss_srv_ctxt_status or self._gss_flags)
+        return self._gss_flags & sspicon.ISC_REQ_DELEGATE and (
+            self._gss_srv_ctxt_status or self._gss_flags
         )
 
     def save_client_creds(self, client_token):

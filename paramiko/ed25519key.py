@@ -145,8 +145,8 @@ class Ed25519Key(PKey):
                 ignore_few_rounds=True,
             )
             decryptor = Cipher(
-                cipher["class"](key[:cipher["key-size"]]),
-                cipher["mode"](key[cipher["key-size"]:]),
+                cipher["class"](key[: cipher["key-size"]]),
+                cipher["mode"](key[cipher["key-size"] :]),
                 backend=default_backend(),
             ).decryptor()
             private_data = (

@@ -47,9 +47,7 @@ from paramiko.py3compat import byte_chr, byte_ord
     CMD_RENAME,
     CMD_READLINK,
     CMD_SYMLINK,
-) = range(
-    1, 21
-)
+) = range(1, 21)
 (CMD_STATUS, CMD_HANDLE, CMD_DATA, CMD_NAME, CMD_ATTRS) = range(101, 106)
 (CMD_EXTENDED, CMD_EXTENDED_REPLY) = range(200, 202)
 
@@ -63,9 +61,7 @@ SFTP_OK = 0
     SFTP_NO_CONNECTION,
     SFTP_CONNECTION_LOST,
     SFTP_OP_UNSUPPORTED,
-) = range(
-    1, 9
-)
+) = range(1, 9)
 
 SFTP_DESC = [
     "Success",

@@ -583,9 +583,8 @@ class Transport(threading.Thread, ClosingContextManager):
                 if e is not None:
                     raise e
                 raise SSHException("Negotiation failed.")
-            if (
-                event.is_set()
-                or (timeout is not None and time.time() >= max_time)
+            if event.is_set() or (
+                timeout is not None and time.time() >= max_time
             ):
                 break
 
@@ -2389,7 +2388,8 @@ class Transport(threading.Thread, ClosingContextManager):
             len(agreed_local_compression) == 0
             or len(agreed_remote_compression) == 0
         ):
-            msg = "Incompatible ssh server (no acceptable compression) {!r} {!r} {!r}"  # noqa
+            msg = "Incompatible ssh server (no acceptable compression)"
+            msg += " {!r} {!r} {!r}"
             raise SSHException(
                 msg.format(
                     agreed_local_compression,
@@ -2441,12 +2441,8 @@ class Transport(threading.Thread, ClosingContextManager):
             engine, block_size, mac_engine, mac_size, mac_key
         )
         compress_in = self._compression_info[self.remote_compression][1]
-        if (
-            compress_in is not None
-            and (
-                self.remote_compression != "zlib@openssh.com"
-                or self.authenticated
-            )
+        if compress_in is not None and (
+            self.remote_compression != "zlib@openssh.com" or self.authenticated
         ):
             self._log(DEBUG, "Switching on inbound compression ...")
             self.packetizer.set_inbound_compressor(compress_in())
@@ -2484,12 +2480,8 @@ class Transport(threading.Thread, ClosingContextManager):
             engine, block_size, mac_engine, mac_size, mac_key, sdctr
         )
         compress_out = self._compression_info[self.local_compression][0]
-        if (
-            compress_out is not None
-            and (
-                self.local_compression != "zlib@openssh.com"
-                or self.authenticated
-            )
+        if compress_out is not None and (
+            self.local_compression != "zlib@openssh.com" or self.authenticated
         ):
             self._log(DEBUG, "Switching on outbound compression ...")
             self.packetizer.set_outbound_compressor(compress_out())
