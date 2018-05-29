@@ -23,7 +23,10 @@ install:
   - pip install codecov # For codecov specifically
   - pip install -r dev-requirements.txt
 script:
-  # flake8 is now possible!
+  # Fast syntax check failures for more rapid feedback to submitters
+  # (Travis-oriented metatask that version checks Python, installs, runs.)
+  - inv travis.blacken
+  # I have this in my git pre-push hook, but contributors probably don't
   - flake8
   # All (including slow) tests, w/ coverage!
   - inv coverage
