@@ -1,6 +1,6 @@
 # Invocations for common project tasks
-invoke>=0.13,<2.0
-invocations>=1.0,<2.0
+invoke>=1.0,<2.0
+invocations>=1.2.0,<2.0
 # NOTE: pytest-relaxed currently only works with pytest >=3, <3.3
 pytest>=3.2,<3.3
 pytest-relaxed==1.1.2
