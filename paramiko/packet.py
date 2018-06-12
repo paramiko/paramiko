@@ -172,7 +172,7 @@ class Packetizer(object):
         mac_engine,
         mac_size,
         mac_key,
-        etm=False
+        etm=False,
     ):
         """
         Switch inbound data cipher.
