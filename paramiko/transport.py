@@ -152,10 +152,10 @@ class Transport(threading.Thread, ClosingContextManager):
         "3des-cbc",
     )
     _preferred_macs = (
-        "hmac-sha2-256-etm@openssh.com",
-        "hmac-sha2-512-etm@openssh.com",
         "hmac-sha2-256",
         "hmac-sha2-512",
+        "hmac-sha2-256-etm@openssh.com",
+        "hmac-sha2-512-etm@openssh.com",
         "hmac-sha1",
         "hmac-md5",
         "hmac-sha1-96",

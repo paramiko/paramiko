@@ -166,7 +166,8 @@ class Packetizer(object):
             self.__need_rekey = False
 
     def set_inbound_cipher(
-        self, block_engine, block_size, mac_engine, mac_size, mac_key, etm=False
+        self, block_engine, block_size, mac_engine, mac_size, mac_key,
+            etm=False
     ):
         """
         Switch inbound data cipher.
@@ -403,8 +404,9 @@ class Packetizer(object):
                 self._log(DEBUG, util.format_binary(packet, "OUT: "))
             if self.__block_engine_out is not None:
                 if self.__etm_out:
-                    ## packet length is not encrypted in EtM
-                    out = packet[0:4] + self.__block_engine_out.update(packet[4:])
+                    # packet length is not encrypted in EtM
+                    out = packet[0:4] + self.__block_engine_out.update(
+                        packet[4:])
                 else:
                     out = self.__block_engine_out.update(packet)
             else:
@@ -413,7 +415,7 @@ class Packetizer(object):
             if self.__block_engine_out is not None:
                 if self.__etm_out:
                     payload = (
-                            struct.pack(">I", self.__sequence_number_out) + out
+                        struct.pack(">I", self.__sequence_number_out) + out
                     )
                 else:
                     payload = (
@@ -456,11 +458,12 @@ class Packetizer(object):
         header = self.read_all(self.__block_size_in, check_rekey=True)
         if self.__etm_in:
             packet_size = struct.unpack(">I", header[:4])[0]
-            packet = header[4:] + self.read_all(packet_size-self.__block_size_in+4, check_rekey=False)
+            remaining = packet_size - self.__block_size_in + 4
+            packet = header[4:] + self.read_all(remaining, check_rekey=False)
             mac = self.read_all(self.__mac_size_in, check_rekey=False)
             mac_payload = (
-                    struct.pack(">II", self.__sequence_number_in, packet_size)
-                    + packet
+                struct.pack(">II", self.__sequence_number_in, packet_size)
+                + packet
             )
             my_mac = compute_hmac(
                 self.__mac_key_in, mac_payload, self.__mac_engine_in
@@ -474,17 +477,19 @@ class Packetizer(object):
         if self.__dump_packets:
             self._log(DEBUG, util.format_binary(header, "IN: "))
 
-        #already computed
-        packet_size = packet_size if self.__etm_in else struct.unpack(">I", header[:4])[0]
+        # already computed
+        packet_size = packet_size if self.__etm_in else \
+            struct.unpack(">I", header[:4])[0]
         # leftover contains decrypted bytes from the first block (after the
         # length field)
 
-        #no leftovers
+        # no leftovers
         if not self.__etm_in:
             leftover = header[4:]
             if (packet_size - len(leftover)) % self.__block_size_in != 0:
                 raise SSHException("Invalid packet blocking")
-            buf = self.read_all(packet_size + self.__mac_size_in - len(leftover))
+            buf = self.read_all(packet_size + self.__mac_size_in
+                                - len(leftover))
             packet = buf[: packet_size - len(leftover)]
             post_packet = buf[packet_size - len(leftover) :]
 
@@ -493,7 +498,7 @@ class Packetizer(object):
             packet = leftover + packet
 
         else:
-            #already decrypted everything above
+            # already decrypted everything above
             packet = header
 
         if self.__dump_packets:
@@ -620,8 +625,10 @@ class Packetizer(object):
     def _build_packet(self, payload):
         # pad up at least 4 bytes, to nearest block-size (usually 8)
         bsize = self.__block_size_out
-        # do not include payload length in computations for padding in EtM mode (payload lenght won't be encrypted)
-        padding = 3 + bsize - ((len(payload) + (4 if self.__etm_out else 8)) % bsize)
+        # do not include payload length in computations for padding in EtM mode
+        # (payload length won't be encrypted)
+        padding = 3 + bsize - ((len(payload) +
+                               (4 if self.__etm_out else 8)) % bsize)
         packet = struct.pack(">IB", len(payload) + padding + 1, padding)
         packet += payload
         if self.__sdctr_out or self.__block_engine_out is None:
