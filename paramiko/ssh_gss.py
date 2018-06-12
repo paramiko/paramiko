@@ -42,19 +42,19 @@ GSS_AUTH_AVAILABLE = True
 GSS_EXCEPTIONS = ()
 
 
-
-
 #: :var str _API: Constraint for the used API
 _API = "MIT"
 
 try:
     import gssapi
+
     GSS_EXCEPTIONS = (gssapi.GSSException,)
 except (ImportError, OSError):
     try:
         import pywintypes
         import sspicon
         import sspi
+
         _API = "SSPI"
         GSS_EXCEPTIONS = (pywintypes.error,)
     except ImportError:
@@ -99,6 +99,7 @@ class _SSH_GSSAuth(object):
     Contains the shared variables and methods of `._SSH_GSSAPI` and
     `._SSH_SSPI`.
     """
+
     def __init__(self, auth_method, gss_deleg_creds):
         """
         :param str auth_method: The name of the SSH authentication mechanism
@@ -160,6 +161,7 @@ class _SSH_GSSAuth(object):
         """
         from pyasn1.type.univ import ObjectIdentifier
         from pyasn1.codec.der import encoder
+
         OIDs = self._make_uint32(1)
         krb5_OID = encoder.encode(ObjectIdentifier(self._krb5_mech))
         OID_len = self._make_uint32(len(krb5_OID))
@@ -175,6 +177,7 @@ class _SSH_GSSAuth(object):
         :return: ``True`` if the given OID is supported, otherwise C{False}
         """
         from pyasn1.codec.der import decoder
+
         mech, __ = decoder.decode(desired_mech)
         if mech.__str__() != self._krb5_mech:
             return False
@@ -210,7 +213,7 @@ class _SSH_GSSAuth(object):
         """
         mic = self._make_uint32(len(session_id))
         mic += session_id
-        mic += struct.pack('B', MSG_USERAUTH_REQUEST)
+        mic += struct.pack("B", MSG_USERAUTH_REQUEST)
         mic += self._make_uint32(len(username))
         mic += username.encode()
         mic += self._make_uint32(len(service))
@@ -226,6 +229,7 @@ class _SSH_GSSAPI(_SSH_GSSAuth):
 
     :see: `.GSSAuth`
     """
+
     def __init__(self, auth_method, gss_deleg_creds):
         """
         :param str auth_method: The name of the SSH authentication mechanism
@@ -235,17 +239,22 @@ class _SSH_GSSAPI(_SSH_GSSAuth):
         _SSH_GSSAuth.__init__(self, auth_method, gss_deleg_creds)
 
         if self._gss_deleg_creds:
-            self._gss_flags = (gssapi.C_PROT_READY_FLAG,
-                               gssapi.C_INTEG_FLAG,
-                               gssapi.C_MUTUAL_FLAG,
-                               gssapi.C_DELEG_FLAG)
+            self._gss_flags = (
+                gssapi.C_PROT_READY_FLAG,
+                gssapi.C_INTEG_FLAG,
+                gssapi.C_MUTUAL_FLAG,
+                gssapi.C_DELEG_FLAG,
+            )
         else:
-            self._gss_flags = (gssapi.C_PROT_READY_FLAG,
-                               gssapi.C_INTEG_FLAG,
-                               gssapi.C_MUTUAL_FLAG)
+            self._gss_flags = (
+                gssapi.C_PROT_READY_FLAG,
+                gssapi.C_INTEG_FLAG,
+                gssapi.C_MUTUAL_FLAG,
+            )
 
-    def ssh_init_sec_context(self, target, desired_mech=None,
-                             username=None, recv_token=None):
+    def ssh_init_sec_context(
+        self, target, desired_mech=None, username=None, recv_token=None
+    ):
         """
         Initialize a GSS-API context.
 
@@ -262,10 +271,12 @@ class _SSH_GSSAPI(_SSH_GSSAuth):
             ``None`` if no token was returned
         """
         from pyasn1.codec.der import decoder
+
         self._username = username
         self._gss_host = target
-        targ_name = gssapi.Name("host@" + self._gss_host,
-                                gssapi.C_NT_HOSTBASED_SERVICE)
+        targ_name = gssapi.Name(
+            "host@" + self._gss_host, gssapi.C_NT_HOSTBASED_SERVICE
+        )
         ctx = gssapi.Context()
         ctx.flags = self._gss_flags
         if desired_mech is None:
@@ -279,15 +290,16 @@ class _SSH_GSSAPI(_SSH_GSSAuth):
         token = None
         try:
             if recv_token is None:
-                self._gss_ctxt = gssapi.InitContext(peer_name=targ_name,
-                                                    mech_type=krb5_mech,
-                                                    req_flags=ctx.flags)
+                self._gss_ctxt = gssapi.InitContext(
+                    peer_name=targ_name,
+                    mech_type=krb5_mech,
+                    req_flags=ctx.flags,
+                )
                 token = self._gss_ctxt.step(token)
             else:
                 token = self._gss_ctxt.step(recv_token)
         except gssapi.GSSException:
-            message = "{} Target: {}".format(
-                sys.exc_info()[1], self._gss_host)
+            message = "{} Target: {}".format(sys.exc_info()[1], self._gss_host)
             raise gssapi.GSSException(message)
         self._gss_ctxt_status = self._gss_ctxt.established
         return token
@@ -307,10 +319,12 @@ class _SSH_GSSAPI(_SSH_GSSAuth):
         """
         self._session_id = session_id
         if not gss_kex:
-            mic_field = self._ssh_build_mic(self._session_id,
-                                            self._username,
-                                            self._service,
-                                            self._auth_method)
+            mic_field = self._ssh_build_mic(
+                self._session_id,
+                self._username,
+                self._service,
+                self._auth_method,
+            )
             mic_token = self._gss_ctxt.get_mic(mic_field)
         else:
             # for key exchange with gssapi-keyex
@@ -351,16 +365,17 @@ class _SSH_GSSAPI(_SSH_GSSAuth):
         self._username = username
         if self._username is not None:
             # server mode
-            mic_field = self._ssh_build_mic(self._session_id,
-                                            self._username,
-                                            self._service,
-                                            self._auth_method)
+            mic_field = self._ssh_build_mic(
+                self._session_id,
+                self._username,
+                self._service,
+                self._auth_method,
+            )
             self._gss_srv_ctxt.verify_mic(mic_field, mic_token)
         else:
             # for key exchange with gssapi-keyex
             # client mode
-            self._gss_ctxt.verify_mic(self._session_id,
-                                      mic_token)
+            self._gss_ctxt.verify_mic(self._session_id, mic_token)
 
     @property
     def credentials_delegated(self):
@@ -393,6 +408,7 @@ class _SSH_SSPI(_SSH_GSSAuth):
 
     :see: `.GSSAuth`
     """
+
     def __init__(self, auth_method, gss_deleg_creds):
         """
         :param str auth_method: The name of the SSH authentication mechanism
@@ -403,18 +419,18 @@ class _SSH_SSPI(_SSH_GSSAuth):
 
         if self._gss_deleg_creds:
             self._gss_flags = (
-                sspicon.ISC_REQ_INTEGRITY |
-                sspicon.ISC_REQ_MUTUAL_AUTH |
-                sspicon.ISC_REQ_DELEGATE
+                sspicon.ISC_REQ_INTEGRITY
+                | sspicon.ISC_REQ_MUTUAL_AUTH
+                | sspicon.ISC_REQ_DELEGATE
             )
         else:
             self._gss_flags = (
-                sspicon.ISC_REQ_INTEGRITY |
-                sspicon.ISC_REQ_MUTUAL_AUTH
+                sspicon.ISC_REQ_INTEGRITY | sspicon.ISC_REQ_MUTUAL_AUTH
             )
 
-    def ssh_init_sec_context(self, target, desired_mech=None,
-                             username=None, recv_token=None):
+    def ssh_init_sec_context(
+        self, target, desired_mech=None, username=None, recv_token=None
+    ):
         """
         Initialize a SSPI context.
 
@@ -431,6 +447,7 @@ class _SSH_SSPI(_SSH_GSSAuth):
                  no token was returned
         """
         from pyasn1.codec.der import decoder
+
         self._username = username
         self._gss_host = target
         error = 0
@@ -441,9 +458,9 @@ class _SSH_SSPI(_SSH_GSSAuth):
                 raise SSHException("Unsupported mechanism OID.")
         try:
             if recv_token is None:
-                self._gss_ctxt = sspi.ClientAuth("Kerberos",
-                                                 scflags=self._gss_flags,
-                                                 targetspn=targ_name)
+                self._gss_ctxt = sspi.ClientAuth(
+                    "Kerberos", scflags=self._gss_flags, targetspn=targ_name
+                )
             error, token = self._gss_ctxt.authorize(recv_token)
             token = token[0].Buffer
         except pywintypes.error as e:
@@ -478,10 +495,12 @@ class _SSH_SSPI(_SSH_GSSAuth):
         """
         self._session_id = session_id
         if not gss_kex:
-            mic_field = self._ssh_build_mic(self._session_id,
-                                            self._username,
-                                            self._service,
-                                            self._auth_method)
+            mic_field = self._ssh_build_mic(
+                self._session_id,
+                self._username,
+                self._service,
+                self._auth_method,
+            )
             mic_token = self._gss_ctxt.sign(mic_field)
         else:
             # for key exchange with gssapi-keyex
@@ -524,10 +543,12 @@ class _SSH_SSPI(_SSH_GSSAuth):
         self._username = username
         if username is not None:
             # server mode
-            mic_field = self._ssh_build_mic(self._session_id,
-                                            self._username,
-                                            self._service,
-                                            self._auth_method)
+            mic_field = self._ssh_build_mic(
+                self._session_id,
+                self._username,
+                self._service,
+                self._auth_method,
+            )
             # Verifies data and its signature.  If verification fails, an
             # sspi.error will be raised.
             self._gss_srv_ctxt.verify(mic_field, mic_token)
@@ -545,9 +566,8 @@ class _SSH_SSPI(_SSH_GSSAuth):
 
         :return: ``True`` if credentials are delegated, otherwise ``False``
         """
-        return (
-            self._gss_flags & sspicon.ISC_REQ_DELEGATE and
-            (self._gss_srv_ctxt_status or self._gss_flags)
+        return self._gss_flags & sspicon.ISC_REQ_DELEGATE and (
+            self._gss_srv_ctxt_status or self._gss_flags
         )
 
     def save_client_creds(self, client_token):
