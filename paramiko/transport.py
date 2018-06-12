@@ -152,6 +152,8 @@ class Transport(threading.Thread, ClosingContextManager):
         "3des-cbc",
     )
     _preferred_macs = (
+        "hmac-sha2-256-etm@openssh.com",
+        "hmac-sha2-512-etm@openssh.com",
         "hmac-sha2-256",
         "hmac-sha2-512",
         "hmac-sha1",
@@ -240,7 +242,9 @@ class Transport(threading.Thread, ClosingContextManager):
         "hmac-sha1": {"class": sha1, "size": 20},
         "hmac-sha1-96": {"class": sha1, "size": 12},
         "hmac-sha2-256": {"class": sha256, "size": 32},
+        "hmac-sha2-256-etm@openssh.com": {"class": sha256, "size": 32},
         "hmac-sha2-512": {"class": sha512, "size": 64},
+        "hmac-sha2-512-etm@openssh.com": {"class": sha512, "size": 64},
         "hmac-md5": {"class": md5, "size": 16},
         "hmac-md5-96": {"class": md5, "size": 12},
     }
@@ -2434,6 +2438,7 @@ class Transport(threading.Thread, ClosingContextManager):
         engine = self._get_cipher(
             self.remote_cipher, key_in, IV_in, self._DECRYPT
         )
+        etm = "etm@openssh.com" in self.remote_mac
         mac_size = self._mac_info[self.remote_mac]["size"]
         mac_engine = self._mac_info[self.remote_mac]["class"]
         # initial mac keys are done in the hash's natural size (not the
@@ -2443,7 +2448,7 @@ class Transport(threading.Thread, ClosingContextManager):
         else:
             mac_key = self._compute_key("F", mac_engine().digest_size)
         self.packetizer.set_inbound_cipher(
-            engine, block_size, mac_engine, mac_size, mac_key
+            engine, block_size, mac_engine, mac_size, mac_key, etm=etm
         )
         compress_in = self._compression_info[self.remote_compression][1]
         if compress_in is not None and (
@@ -2472,6 +2477,7 @@ class Transport(threading.Thread, ClosingContextManager):
         engine = self._get_cipher(
             self.local_cipher, key_out, IV_out, self._ENCRYPT
         )
+        etm = "etm@openssh.com" in self.local_mac
         mac_size = self._mac_info[self.local_mac]["size"]
         mac_engine = self._mac_info[self.local_mac]["class"]
         # initial mac keys are done in the hash's natural size (not the
@@ -2482,7 +2488,7 @@ class Transport(threading.Thread, ClosingContextManager):
             mac_key = self._compute_key("E", mac_engine().digest_size)
         sdctr = self.local_cipher.endswith("-ctr")
         self.packetizer.set_outbound_cipher(
-            engine, block_size, mac_engine, mac_size, mac_key, sdctr
+            engine, block_size, mac_engine, mac_size, mac_key, sdctr, etm=etm
         )
         compress_out = self._compression_info[self.local_compression][0]
         if compress_out is not None and (
