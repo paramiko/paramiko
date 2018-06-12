@@ -21,11 +21,11 @@ Standard SSH key exchange ("kex" if you wanna sound cool).  Diffie-Hellman of
 2048 bit key halves, using a known "p" prime and "g" generator.
 """
 
-from paramiko.kex_group1 import KexGroup1
+from paramiko.kex_group1_sha1 import KexGroup1Sha1
 from hashlib import sha1
 
 
-class KexGroup14(KexGroup1):
+class KexGroup14Sha1(KexGroup1Sha1):
 
     # http://tools.ietf.org/html/rfc3526#section-3
     P = (
