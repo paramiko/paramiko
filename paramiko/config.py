@@ -119,6 +119,9 @@ class SSHConfig(object):
             assert conf.as_bool('passwordauthentication') is True
 
         :param str hostname: the hostname to lookup
+
+        .. versionchanged:: 2.5
+            Returns `SSHConfigDict` objects instead of dict literals.
         """
         matches = [
             config
@@ -330,6 +333,8 @@ class SSHConfigDict(dict):
         assert conf.as_bool('compression') is True
         assert conf['serveraliveinterval'] == '60'
         assert conf.as_int('serveraliveinterval') == 60
+
+    .. versionadded:: 2.5
     """
 
     def __init__(self, *args, **kwargs):
@@ -347,6 +352,8 @@ class SSHConfigDict(dict):
         .. note::
             If (for whatever reason) the stored value is already boolean in
             nature, it's simply returned.
+
+        .. versionadded:: 2.5
         """
         val = self[key]
         if isinstance(val, bool):
@@ -359,5 +366,7 @@ class SSHConfigDict(dict):
 
         This method will raise ``ValueError`` or similar if the value is not
         int-appropriate, same as the builtin `int` type.
+
+        .. versionadded:: 2.5
         """
         return int(self[key])
