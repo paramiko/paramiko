@@ -95,7 +95,7 @@ class SSHConfig(object):
 
     def lookup(self, hostname):
         """
-        Return a dict of config options for a given hostname.
+        Return a dict (`SSHConfigDict`) of config options for a given hostname.
 
         The host-matching rules of OpenSSH's ``ssh_config`` man page are used:
         For each parameter, the first obtained value will be used.  The
@@ -110,6 +110,13 @@ class SSHConfig(object):
         The keys in the returned dict are all normalized to lowercase (look for
         ``"port"``, not ``"Port"``. The values are processed according to the
         rules for substitution variable expansion in ``ssh_config``.
+
+        Finally, please see the docs for `SSHConfigDict` for deeper info on
+        features such as optional type conversion methods, e.g.::
+
+            conf = my_config.lookup('myhost')
+            assert conf['passwordauthentication'] == 'yes'
+            assert conf.as_bool('passwordauthentication') is True
 
         :param str hostname: the hostname to lookup
         """
@@ -295,12 +302,34 @@ class LazyFqdn(object):
 
 class SSHConfigDict(dict):
     """
-    A dictionary wrapper for ssh host configurations.
+    A dictionary wrapper/subclass for per-host configuration structures.
 
-    This class introduces some usage niceties for consumers of SSHConfig,
-    specifically around the issue of variable type conversions. This offers
-    as_bool(key) and as_int(key) for the current raw string values in
-    SSHConfig
+    This class introduces some usage niceties for consumers of `SSHConfig`,
+    specifically around the issue of variable type conversions: normal value
+    access yields strings, but there are now methods such as `as_bool` and
+    `as_int` that yield casted values instead.
+
+    For example, given the following ``ssh_config`` file snippet::
+
+        Host foo.example.com
+            PasswordAuthentication no
+            Compression yes
+            ServerAliveInterval 60
+
+    the following code highlights how you can access the raw strings as well as
+    usefully Python type-casted versions (recalling that keys are all
+    normalized to lowercase first)::
+
+        my_config = SSHConfig()
+        my_config.parse(open('~/.ssh/config'))
+        conf = my_config.lookup('foo.example.com')
+
+        assert conf['passwordauthentication'] == 'no'
+        assert conf.as_bool('passwordauthentication') is False
+        assert conf['compression'] == 'yes'
+        assert conf.as_bool('compression') is True
+        assert conf['serveraliveinterval'] == '60'
+        assert conf.as_int('serveraliveinterval') == 60
     """
 
     def __init__(self, *args, **kwargs):
@@ -309,9 +338,15 @@ class SSHConfigDict(dict):
 
     def as_bool(self, key):
         """
-        Express the key as a boolean value.
+        Express given key's value as a boolean type.
 
-        Variations on 'yes' or boolean values are accepted.
+        Typically, this is used for ``ssh_config``'s pseudo-boolean values
+        which are either ``"yes"`` or ``"no"``. In such cases, ``"yes"`` yields
+        ``True`` and any other value becomes ``False``.
+
+        .. note::
+            If (for whatever reason) the stored value is already boolean in
+            nature, it's simply returned.
         """
         val = self[key]
         if isinstance(val, bool):
@@ -320,8 +355,9 @@ class SSHConfigDict(dict):
 
     def as_int(self, key):
         """
-        Express the key as a true integer, if possible.
+        Express given key's value as an integer, if possible.
 
-        Raises an Error otherwise (following conventional int conversion rules)
+        This method will raise ``ValueError`` or similar if the value is not
+        int-appropriate, same as the builtin `int` type.
         """
         return int(self[key])
