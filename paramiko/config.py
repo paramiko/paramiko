@@ -316,7 +316,7 @@ class SSHConfigDict(dict):
         val = self[key]
         if isinstance(val, bool):
             return val
-        return val.lower() == 'yes'
+        return val.lower() == "yes"
 
     def as_int(self, key):
         """

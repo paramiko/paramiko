@@ -7,6 +7,7 @@ from paramiko import config
 from paramiko.util import parse_ssh_config
 from paramiko.py3compat import StringIO
 
+
 def test_SSHConfigDict_construct_empty():
     assert not config.SSHConfigDict()
 
@@ -71,4 +72,3 @@ Host *
     f = StringIO(test_config_file)
     config = parse_ssh_config(f)
     assert config.lookup("anything-else").as_int("port") == 3333
-
