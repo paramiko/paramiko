@@ -56,8 +56,10 @@ class Ed25519Key(PKey):
     .. versionchanged:: 2.3
         Added a ``file_obj`` parameter to match other key classes.
     """
-    def __init__(self, msg=None, data=None, filename=None, password=None,
-                 file_obj=None):
+
+    def __init__(
+        self, msg=None, data=None, filename=None, password=None, file_obj=None
+    ):
         self.public_blob = None
         verifying_key = signing_key = None
         if msg is None and data is not None:
@@ -86,6 +88,7 @@ class Ed25519Key(PKey):
 
     def _parse_signing_key_data(self, data, password):
         from paramiko.transport import Transport
+
         # We may eventually want this to be usable for other key types, as
         # OpenSSH moves to it, but for now this is just for Ed25519 keys.
         # This format is described here:
@@ -142,9 +145,9 @@ class Ed25519Key(PKey):
                 ignore_few_rounds=True,
             )
             decryptor = Cipher(
-                cipher["class"](key[:cipher["key-size"]]),
-                cipher["mode"](key[cipher["key-size"]:]),
-                backend=default_backend()
+                cipher["class"](key[: cipher["key-size"]]),
+                cipher["mode"](key[cipher["key-size"] :]),
+                backend=default_backend(),
             ).decryptor()
             private_data = (
                 decryptor.update(private_ciphertext) + decryptor.finalize()
@@ -166,8 +169,10 @@ class Ed25519Key(PKey):
             signing_key = nacl.signing.SigningKey(key_data[:32])
             # Verify that all the public keys are the same...
             assert (
-                signing_key.verify_key.encode() == public == public_keys[i] ==
-                key_data[32:]
+                signing_key.verify_key.encode()
+                == public
+                == public_keys[i]
+                == key_data[32:]
             )
             signing_keys.append(signing_key)
             # Comment, ignore.
