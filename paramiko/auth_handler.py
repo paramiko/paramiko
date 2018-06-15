@@ -39,6 +39,7 @@ from paramiko.common import (
     cMSG_USERAUTH_INFO_REQUEST,
     WARNING,
     AUTH_FAILED,
+    MSG_USERAUTH_PK_OK,
     cMSG_USERAUTH_PK_OK,
     cMSG_USERAUTH_INFO_RESPONSE,
     MSG_SERVICE_REQUEST,
@@ -283,7 +284,7 @@ class AuthHandler(object):
                 password = b(self.password)
                 m.add_string(password)
             elif self.auth_method == "publickey":
-                m.add_boolean(True)
+                m.add_boolean(False)
                 # Use certificate contents, if available, plain pubkey
                 # otherwise
                 if self.private_key.public_blob:
@@ -292,11 +293,38 @@ class AuthHandler(object):
                 else:
                     m.add_string(self.private_key.get_name())
                     m.add_string(self.private_key)
-                blob = self._get_session_blob(
-                    self.private_key, "ssh-connection", self.username
-                )
-                sig = self.private_key.sign_ssh_data(blob)
-                m.add_string(sig)
+
+                # Query whether auth using "publickey" method is acceptable
+                self.transport._send_message(m)
+                ptype, m = self.transport.packetizer.read_message()
+                if ptype == MSG_USERAUTH_PK_OK:
+                    m = Message()
+                    m.add_byte(cMSG_USERAUTH_REQUEST)
+                    m.add_string(self.username)
+                    m.add_string('ssh-connection')
+                    m.add_string('publickey')
+                    m.add_boolean(True)
+
+                    # Use certificate contents, if available, plain pubkey
+                    # otherwise
+                    if self.private_key.public_blob:
+                        m.add_string(self.private_key.public_blob.key_type)
+                        m.add_string(self.private_key.public_blob.key_blob)
+                    else:
+                        m.add_string(self.private_key.get_name())
+                        m.add_string(self.private_key)
+
+                    blob = self._get_session_blob(
+                        self.private_key, 'ssh-connection', self.username)
+                    sig = self.private_key.sign_ssh_data(blob)
+                    m.add_string(sig)
+                elif ptype == MSG_USERAUTH_FAILURE:
+                    self._parse_userauth_failure(m)
+                    return
+                else:
+                    raise SSHException(
+                        "Received Package: {}".format(MSG_NAMES[ptype])
+                    )
             elif self.auth_method == "keyboard-interactive":
                 m.add_string("")
                 m.add_string(self.submethods)
