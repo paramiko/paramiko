@@ -700,25 +700,24 @@ class SSHClient(ClosingContextManager):
         if not two_factor:
             keyfiles = []
 
-            for keytype, name in [
-                (RSAKey, "rsa"),
-                (DSSKey, "dsa"),
-                (ECDSAKey, "ecdsa"),
-                (Ed25519Key, "ed25519"),
-            ]:
-                # ~/ssh/ is for windows
-                for directory in [".ssh", "ssh"]:
-                    full_path = os.path.expanduser(
-                        "~/{}/id_{}".format(directory, name)
-                    )
-                    if os.path.isfile(full_path):
-                        # TODO: only do this append if below did not run
-                        keyfiles.append((keytype, full_path))
-                        if os.path.isfile(full_path + "-cert.pub"):
-                            keyfiles.append((keytype, full_path + "-cert.pub"))
-
-            if not look_for_keys:
-                keyfiles = []
+            if look_for_keys:
+                for keytype, name in [
+                    (RSAKey, "rsa"),
+                    (DSSKey, "dsa"),
+                    (ECDSAKey, "ecdsa"),
+                    (Ed25519Key, "ed25519"),
+                ]:
+                    # ~/ssh/ is for windows
+                    for directory in [".ssh", "ssh"]:
+                        full_path = os.path.expanduser(
+                            "~/{}/id_{}".format(directory, name)
+                        )
+                        if os.path.isfile(full_path):
+                            # TODO: only do this append if below did not run
+                            keyfiles.append((keytype, full_path))
+                            if os.path.isfile(full_path + "-cert.pub"):
+                                keyfiles.append((keytype,
+                                                 full_path + "-cert.pub"))
 
             for pkey_class, filename in keyfiles:
                 try:
