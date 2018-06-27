@@ -37,8 +37,15 @@ class RSAKey(PKey):
     data.
     """
 
-    def __init__(self, msg=None, data=None, filename=None, password=None,
-                 key=None, file_obj=None):
+    def __init__(
+        self,
+        msg=None,
+        data=None,
+        filename=None,
+        password=None,
+        key=None,
+        file_obj=None,
+    ):
         self.key = None
         self.public_blob = None
         if file_obj is not None:
@@ -54,8 +61,8 @@ class RSAKey(PKey):
         else:
             self._check_type_and_load_cert(
                 msg=msg,
-                key_type='ssh-rsa',
-                cert_type='ssh-rsa-cert-v01@openssh.com',
+                key_type="ssh-rsa",
+                cert_type="ssh-rsa-cert-v01@openssh.com",
             )
             self.key = rsa.RSAPublicNumbers(
                 e=msg.get_mpint(), n=msg.get_mpint()
@@ -74,7 +81,7 @@ class RSAKey(PKey):
 
     def asbytes(self):
         m = Message()
-        m.add_string('ssh-rsa')
+        m.add_string("ssh-rsa")
         m.add_mpint(self.public_numbers.e)
         m.add_mpint(self.public_numbers.n)
         return m.asbytes()
@@ -89,14 +96,15 @@ class RSAKey(PKey):
             # tries stuffing it into ASCII for whatever godforsaken reason
             return self.asbytes()
         else:
-            return self.asbytes().decode('utf8', errors='ignore')
+            return self.asbytes().decode("utf8", errors="ignore")
 
     def __hash__(self):
-        return hash((self.get_name(), self.public_numbers.e,
-                     self.public_numbers.n))
+        return hash(
+            (self.get_name(), self.public_numbers.e, self.public_numbers.n)
+        )
 
     def get_name(self):
-        return 'ssh-rsa'
+        return "ssh-rsa"
 
     def get_bits(self):
         return self.size
@@ -106,18 +114,16 @@ class RSAKey(PKey):
 
     def sign_ssh_data(self, data):
         sig = self.key.sign(
-            data,
-            padding=padding.PKCS1v15(),
-            algorithm=hashes.SHA1(),
+            data, padding=padding.PKCS1v15(), algorithm=hashes.SHA1()
         )
 
         m = Message()
-        m.add_string('ssh-rsa')
+        m.add_string("ssh-rsa")
         m.add_string(sig)
         return m
 
     def verify_ssh_sig(self, data, msg):
-        if msg.get_text() != 'ssh-rsa':
+        if msg.get_text() != "ssh-rsa":
             return False
         key = self.key
         if isinstance(key, rsa.RSAPrivateKey):
@@ -137,7 +143,7 @@ class RSAKey(PKey):
             filename,
             self.key,
             serialization.PrivateFormat.TraditionalOpenSSL,
-            password=password
+            password=password,
         )
 
     def write_private_key(self, file_obj, password=None):
@@ -145,7 +151,7 @@ class RSAKey(PKey):
             file_obj,
             self.key,
             serialization.PrivateFormat.TraditionalOpenSSL,
-            password=password
+            password=password,
         )
 
     @staticmethod
@@ -166,11 +172,11 @@ class RSAKey(PKey):
     # ...internals...
 
     def _from_private_key_file(self, filename, password):
-        data = self._read_private_key_file('RSA', filename, password)
+        data = self._read_private_key_file("RSA", filename, password)
         self._decode_key(data)
 
     def _from_private_key(self, file_obj, password):
-        data = self._read_private_key('RSA', file_obj, password)
+        data = self._read_private_key("RSA", file_obj, password)
         self._decode_key(data)
 
     def _decode_key(self, data):

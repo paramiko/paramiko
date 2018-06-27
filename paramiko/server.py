@@ -23,13 +23,16 @@
 import threading
 from paramiko import util
 from paramiko.common import (
-    DEBUG, ERROR, OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED, AUTH_FAILED,
+    DEBUG,
+    ERROR,
+    OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED,
+    AUTH_FAILED,
     AUTH_SUCCESSFUL,
 )
 from paramiko.py3compat import string_types
 
 
-class ServerInterface (object):
+class ServerInterface(object):
     """
     This class defines an interface for controlling the behavior of Paramiko
     in server mode.
@@ -99,7 +102,7 @@ class ServerInterface (object):
         :param str username: the username requesting authentication.
         :return: a comma-separated `str` of authentication types
         """
-        return 'password'
+        return "password"
 
     def check_auth_none(self, username):
         """
@@ -233,9 +236,9 @@ class ServerInterface (object):
         """
         return AUTH_FAILED
 
-    def check_auth_gssapi_with_mic(self, username,
-                                   gss_authenticated=AUTH_FAILED,
-                                   cc_file=None):
+    def check_auth_gssapi_with_mic(
+        self, username, gss_authenticated=AUTH_FAILED, cc_file=None
+    ):
         """
         Authenticate the given user to the server if he is a valid krb5
         principal.
@@ -263,9 +266,9 @@ class ServerInterface (object):
             return AUTH_SUCCESSFUL
         return AUTH_FAILED
 
-    def check_auth_gssapi_keyex(self, username,
-                                gss_authenticated=AUTH_FAILED,
-                                cc_file=None):
+    def check_auth_gssapi_keyex(
+        self, username, gss_authenticated=AUTH_FAILED, cc_file=None
+    ):
         """
         Authenticate the given user to the server if he is a valid krb5
         principal and GSS-API Key Exchange was performed.
@@ -372,8 +375,8 @@ class ServerInterface (object):
     # ...Channel requests...
 
     def check_channel_pty_request(
-            self, channel, term, width, height, pixelwidth, pixelheight,
-            modes):
+        self, channel, term, width, height, pixelwidth, pixelheight, modes
+    ):
         """
         Determine if a pseudo-terminal of the given dimensions (usually
         requested for shell access) can be provided on the given channel.
@@ -460,7 +463,8 @@ class ServerInterface (object):
         return True
 
     def check_channel_window_change_request(
-            self, channel, width, height, pixelwidth, pixelheight):
+        self, channel, width, height, pixelwidth, pixelheight
+    ):
         """
         Determine if the pseudo-terminal on the given channel can be resized.
         This only makes sense if a pty was previously allocated on it.
@@ -479,8 +483,13 @@ class ServerInterface (object):
         return False
 
     def check_channel_x11_request(
-            self, channel, single_connection, auth_protocol, auth_cookie,
-            screen_number):
+        self,
+        channel,
+        single_connection,
+        auth_protocol,
+        auth_cookie,
+        screen_number,
+    ):
         """
         Determine if the client will be provided with an X11 session.  If this
         method returns ``True``, X11 applications should be routed through new
@@ -584,12 +593,13 @@ class ServerInterface (object):
         """
         return (None, None)
 
-class InteractiveQuery (object):
+
+class InteractiveQuery(object):
     """
     A query (set of prompts) for a user during interactive authentication.
     """
 
-    def __init__(self, name='', instructions='', *prompts):
+    def __init__(self, name="", instructions="", *prompts):
         """
         Create a new interactive query to send to the client.  The name and
         instructions are optional, but are generally displayed to the end
@@ -623,7 +633,7 @@ class InteractiveQuery (object):
         self.prompts.append((prompt, echo))
 
 
-class SubsystemHandler (threading.Thread):
+class SubsystemHandler(threading.Thread):
     """
     Handler for a subsytem in server mode.  If you create a subclass of this
     class and pass it to `.Transport.set_subsystem_handler`, an object of this
@@ -637,6 +647,7 @@ class SubsystemHandler (threading.Thread):
     ``MP3Handler`` will be created, and `start_subsystem` will be called on
     it from a new thread.
     """
+
     def __init__(self, channel, name, server):
         """
         Create a new handler for a channel.  This is used by `.ServerInterface`
@@ -667,7 +678,7 @@ class SubsystemHandler (threading.Thread):
     def _run(self):
         try:
             self.__transport._log(
-                DEBUG, 'Starting handler for subsystem {}'.format(self.__name)
+                DEBUG, "Starting handler for subsystem {}".format(self.__name)
             )
             self.start_subsystem(self.__name, self.__transport, self.__channel)
         except Exception as e:
@@ -675,7 +686,7 @@ class SubsystemHandler (threading.Thread):
                 ERROR,
                 'Exception in subsystem handler for "{}": {}'.format(
                     self.__name, e
-                )
+                ),
             )
             self.__transport._log(ERROR, util.tb_strings())
         try:

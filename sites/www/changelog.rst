@@ -2,6 +2,11 @@
 Changelog
 =========
 
+* :feature:`1212` Updated `SSHConfig.lookup <paramiko.config.SSHConfig.lookup>`
+  so it returns a new, type-casting-friendly dict subclass
+  (`~paramiko.config.SSHConfigDict`) in lieu of dict literals. This ought to be
+  backwards compatible, and allows an easier way to check boolean or int type
+  ``ssh_config`` values. Thanks to Chris Rose for the patch.
 * :support:`1191` Update our install docs with (somewhat) recently added
   additional dependencies; we previously only required Cryptography, but the
   docs never got updated after we incurred ``bcrypt`` and ``pynacl``
