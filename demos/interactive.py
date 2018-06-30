@@ -84,7 +84,7 @@ def windows_shell(chan):
                 sys.stdout.write("\r\n*** EOF ***\r\n\r\n")
                 sys.stdout.flush()
                 break
-            sys.stdout.write(data)
+            sys.stdout.write(data.decode("utf-8"))
             sys.stdout.flush()
 
     writer = threading.Thread(target=writeall, args=(chan,))
