@@ -534,6 +534,8 @@ class SSHClient(ClosingContextManager):
         :raises: `.SSHException` -- if the server fails to invoke a shell
         """
         chan = self._transport.open_session()
+        if environment:
+            chan.update_environment(environment)
         chan.get_pty(term, width, height, width_pixels, height_pixels)
         chan.invoke_shell()
         return chan
