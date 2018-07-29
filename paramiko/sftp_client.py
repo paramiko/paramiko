@@ -435,7 +435,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
             ``IOError`` -- if ``newpath`` is a folder, posix-rename is not
             supported by the server or something else goes wrong
 
-        :versionadded: 2.2
+        .. versionadded: 2.2
         """
         oldpath = self._adjust_cwd(oldpath)
         newpath = self._adjust_cwd(newpath)
