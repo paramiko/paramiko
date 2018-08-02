@@ -23,9 +23,11 @@ Some unit tests for the key exchange protocols.
 from binascii import hexlify, unhexlify
 import os
 import unittest
+import pytest
 
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.asymmetric import ec
+from cryptography.hazmat.primitives.asymmetric import x25519
 
 import paramiko.util
 from paramiko.kex_group1 import KexGroup1
@@ -33,6 +35,7 @@ from paramiko.kex_gex import KexGex, KexGexSHA256
 from paramiko import Message
 from paramiko.common import byte_chr
 from paramiko.kex_ecdh_nist import KexNistp256
+from paramiko.kex_curve25519 import KexCurve25519
 
 
 def dummy_urandom(n):
@@ -60,6 +63,17 @@ def dummy_generate_key_pair(obj):
     obj.Q_C = ec.EllipticCurvePublicNumbers.from_encoded_point(
         ec.SECP256R1(), unhexlify(public_key_numbers)
     ).public_key(default_backend())
+
+
+def dummy_generate_key_curve25519(obj):
+    private_key_value = unhexlify(
+        b"2184abc7eb3e656d2349d2470ee695b570c227340c2b2863b6c9ff427af1f040"
+    )
+    obj.P = x25519.X25519PrivateKey._from_private_bytes(private_key_value)
+    if obj.transport.server_mode:
+        obj.Q_S = obj.P.public_key()
+    else:
+        obj.Q_C = obj.P.public_key()
 
 
 class FakeKey(object):
@@ -127,6 +141,7 @@ class KexTest(unittest.TestCase):
         os.urandom = dummy_urandom
         self._original_generate_key_pair = KexNistp256._generate_key_pair
         KexNistp256._generate_key_pair = dummy_generate_key_pair
+        KexCurve25519._generate_key_pair = dummy_generate_key_curve25519
 
     def tearDown(self):
         os.urandom = self._original_urandom
@@ -541,6 +556,71 @@ class KexTest(unittest.TestCase):
         msg.add_string(Q_C)
         msg.rewind()
         kex.parse_next(paramiko.kex_ecdh_nist._MSG_KEXECDH_INIT, msg)
+        self.assertEqual(K, transport._K)
+        self.assertTrue(transport._activated)
+        self.assertEqual(H, hexlify(transport._H).upper())
+
+    def test_13_kex_c25519_client(self):
+        # Skip test if system OpenSSL doesn't support x25519
+        if not KexCurve25519.is_supported():
+            return pytest.skip(
+                "openssl used by cryptography does not support x25519"
+            )
+
+        K = (
+            71294722834835117201316639182051104803802881348227506835068888449366462300724
+        )
+        transport = FakeTransport()
+        transport.server_mode = False
+        kex = KexCurve25519(transport)
+        kex.start_kex()
+        self.assertEqual(
+            (paramiko.kex_curve25519._MSG_KEXC25519_REPLY,), transport._expect
+        )
+
+        # fake reply
+        msg = Message()
+        msg.add_string("fake-host-key")
+        Q_S = unhexlify(
+            "8d13a119452382a1ada8eea4c979f3e63ad3f0c7366786d6c5b54b87219bae49"
+        )
+        msg.add_string(Q_S)
+        msg.add_string("fake-sig")
+        msg.rewind()
+        kex.parse_next(paramiko.kex_curve25519._MSG_KEXC25519_REPLY, msg)
+        H = b"05B6F6437C0CF38D1A6C5A6F6E2558DEB54E7FC62447EBFB1E5D7407326A5475"
+        self.assertEqual(K, kex.transport._K)
+        self.assertEqual(H, hexlify(transport._H).upper())
+        self.assertEqual((b"fake-host-key", b"fake-sig"), transport._verify)
+        self.assertTrue(transport._activated)
+
+    def test_14_kex_c25519_server(self):
+        # Skip test if system OpenSSL doesn't support x25519
+        if not KexCurve25519.is_supported():
+            return pytest.skip(
+                "openssl used by cryptography does not support x25519"
+            )
+
+        K = (
+            71294722834835117201316639182051104803802881348227506835068888449366462300724
+        )
+        transport = FakeTransport()
+        transport.server_mode = True
+        kex = KexCurve25519(transport)
+        kex.start_kex()
+        self.assertEqual(
+            (paramiko.kex_curve25519._MSG_KEXC25519_INIT,), transport._expect
+        )
+
+        # fake init
+        msg = Message()
+        Q_C = unhexlify(
+            "8d13a119452382a1ada8eea4c979f3e63ad3f0c7366786d6c5b54b87219bae49"
+        )
+        H = b"DF08FCFCF31560FEE639D9B6D56D760BC3455B5ADA148E4514181023E7A9B042"
+        msg.add_string(Q_C)
+        msg.rewind()
+        kex.parse_next(paramiko.kex_curve25519._MSG_KEXC25519_INIT, msg)
         self.assertEqual(K, transport._K)
         self.assertTrue(transport._activated)
         self.assertEqual(H, hexlify(transport._H).upper())
