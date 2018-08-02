@@ -87,8 +87,13 @@ from paramiko.compress import ZlibCompressor, ZlibDecompressor
 from paramiko.dsskey import DSSKey
 from paramiko.ed25519key import Ed25519Key
 from paramiko.kex_gex import KexGex, KexGexSHA256
-from paramiko.kex_group1 import KexGroup1
-from paramiko.kex_group14 import KexGroup14
+from paramiko.kex_group1_sha1 import KexGroup1Sha1
+from paramiko.kex_group14_sha1 import KexGroup14Sha1
+from paramiko.kex_group14_sha256 import KexGroup14Sha256
+from paramiko.kex_group15_sha512 import KexGroup15Sha512
+from paramiko.kex_group16_sha512 import KexGroup16Sha512
+from paramiko.kex_group17_sha512 import KexGroup17Sha512
+from paramiko.kex_group18_sha512 import KexGroup18Sha512
 from paramiko.kex_ecdh_nist import KexNistp256, KexNistp384, KexNistp521
 from paramiko.kex_gss import KexGSSGex, KexGSSGroup1, KexGSSGroup14
 from paramiko.message import Message
@@ -172,6 +177,11 @@ class Transport(threading.Thread, ClosingContextManager):
         "ecdh-sha2-nistp521",
         "diffie-hellman-group-exchange-sha256",
         "diffie-hellman-group-exchange-sha1",
+        "diffie-hellman-group18-sha512",
+        "diffie-hellman-group17-sha512",
+        "diffie-hellman-group16-sha512",
+        "diffie-hellman-group15-sha512",
+        "diffie-hellman-group14-sha256",
         "diffie-hellman-group14-sha1",
         "diffie-hellman-group1-sha1",
     )
@@ -258,8 +268,13 @@ class Transport(threading.Thread, ClosingContextManager):
     }
 
     _kex_info = {
-        "diffie-hellman-group1-sha1": KexGroup1,
-        "diffie-hellman-group14-sha1": KexGroup14,
+        "diffie-hellman-group1-sha1": KexGroup1Sha1,
+        "diffie-hellman-group14-sha1": KexGroup14Sha1,
+        "diffie-hellman-group14-sha256": KexGroup14Sha256,
+        "diffie-hellman-group15-sha512": KexGroup15Sha512,
+        "diffie-hellman-group16-sha512": KexGroup16Sha512,
+        "diffie-hellman-group17-sha512": KexGroup17Sha512,
+        "diffie-hellman-group18-sha512": KexGroup18Sha512,
         "diffie-hellman-group-exchange-sha1": KexGex,
         "diffie-hellman-group-exchange-sha256": KexGexSHA256,
         "gss-group1-sha1-toWM5Slw5Ew8Mqkay+al2g==": KexGSSGroup1,

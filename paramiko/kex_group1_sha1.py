@@ -38,7 +38,7 @@ b7fffffffffffffff = byte_chr(0x7f) + max_byte * 7
 b0000000000000000 = zero_byte * 8
 
 
-class KexGroup1(object):
+class KexGroup1Sha1(object):
 
     # draft-ietf-secsh-transport-09.txt, page 17
     P = (
@@ -75,7 +75,7 @@ class KexGroup1(object):
             return self._parse_kexdh_init(m)
         elif not self.transport.server_mode and (ptype == _MSG_KEXDH_REPLY):
             return self._parse_kexdh_reply(m)
-        msg = "KexGroup1 asked to handle packet type {:d}"
+        msg = "KexGroup1Sha1 asked to handle packet type {:d}"
         raise SSHException(msg.format(ptype))
 
     # ...internals...
@@ -118,7 +118,7 @@ class KexGroup1(object):
         hm.add_mpint(self.e)
         hm.add_mpint(self.f)
         hm.add_mpint(K)
-        self.transport._set_K_H(K, sha1(hm.asbytes()).digest())
+        self.transport._set_K_H(K, self.hash_algo(hm.asbytes()).digest())
         self.transport._verify_key(host_key, sig)
         self.transport._activate_outbound()
 
@@ -142,7 +142,7 @@ class KexGroup1(object):
         hm.add_mpint(self.e)
         hm.add_mpint(self.f)
         hm.add_mpint(K)
-        H = sha1(hm.asbytes()).digest()
+        H = self.hash_algo(hm.asbytes()).digest()
         self.transport._set_K_H(K, H)
         # sign it
         sig = self.transport.get_server_key().sign_ssh_data(H)

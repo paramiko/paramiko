@@ -28,7 +28,7 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.asymmetric import ec
 
 import paramiko.util
-from paramiko.kex_group1 import KexGroup1
+from paramiko.kex_group1_sha1 import KexGroup1Sha1
 from paramiko.kex_gex import KexGex, KexGexSHA256
 from paramiko import Message
 from paramiko.common import byte_chr
@@ -135,14 +135,14 @@ class KexTest(unittest.TestCase):
     def test_1_group1_client(self):
         transport = FakeTransport()
         transport.server_mode = False
-        kex = KexGroup1(transport)
+        kex = KexGroup1Sha1(transport)
         kex.start_kex()
         x = (
             b"1E000000807E2DDB1743F3487D6545F04F1C8476092FB912B013626AB5BCEB764257D88BBA64243B9F348DF7B41B8C814A995E00299913503456983FFB9178D3CD79EB6D55522418A8ABF65375872E55938AB99A84A0B5FC8A1ECC66A7C3766E7E0F80B7CE2C9225FC2DD683F4764244B72963BBB383F529DCF0C5D17740B8A2ADBE9208D4"
         )
         self.assertEqual(x, hexlify(transport._message.asbytes()).upper())
         self.assertEqual(
-            (paramiko.kex_group1._MSG_KEXDH_REPLY,), transport._expect
+            (paramiko.kex_group1_sha1._MSG_KEXDH_REPLY,), transport._expect
         )
 
         # fake "reply"
@@ -151,7 +151,7 @@ class KexTest(unittest.TestCase):
         msg.add_mpint(69)
         msg.add_string("fake-sig")
         msg.rewind()
-        kex.parse_next(paramiko.kex_group1._MSG_KEXDH_REPLY, msg)
+        kex.parse_next(paramiko.kex_group1_sha1._MSG_KEXDH_REPLY, msg)
         H = b"03079780F3D3AD0B3C6DB30C8D21685F367A86D2"
         self.assertEqual(self.K, transport._K)
         self.assertEqual(H, hexlify(transport._H).upper())
@@ -161,16 +161,16 @@ class KexTest(unittest.TestCase):
     def test_2_group1_server(self):
         transport = FakeTransport()
         transport.server_mode = True
-        kex = KexGroup1(transport)
+        kex = KexGroup1Sha1(transport)
         kex.start_kex()
         self.assertEqual(
-            (paramiko.kex_group1._MSG_KEXDH_INIT,), transport._expect
+            (paramiko.kex_group1_sha1._MSG_KEXDH_INIT,), transport._expect
         )
 
         msg = Message()
         msg.add_mpint(69)
         msg.rewind()
-        kex.parse_next(paramiko.kex_group1._MSG_KEXDH_INIT, msg)
+        kex.parse_next(paramiko.kex_group1_sha1._MSG_KEXDH_INIT, msg)
         H = b"B16BF34DD10945EDE84E9C1EF24A14BFDC843389"
         x = (
             b"1F0000000866616B652D6B6579000000807E2DDB1743F3487D6545F04F1C8476092FB912B013626AB5BCEB764257D88BBA64243B9F348DF7B41B8C814A995E00299913503456983FFB9178D3CD79EB6D55522418A8ABF65375872E55938AB99A84A0B5FC8A1ECC66A7C3766E7E0F80B7CE2C9225FC2DD683F4764244B72963BBB383F529DCF0C5D17740B8A2ADBE9208D40000000866616B652D736967"
