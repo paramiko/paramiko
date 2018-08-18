@@ -2,6 +2,9 @@
 Changelog
 =========
 
+* :support:`1262 backported` Add ``*.pub`` files to the MANIFEST so distributed
+  source packages contain some necessary test assets. Credit: Alexander
+  Kapshuna.
 * :support:`1191` Update our install docs with (somewhat) recently added
   additional dependencies; we previously only required Cryptography, but the
   docs never got updated after we incurred ``bcrypt`` and ``pynacl``
