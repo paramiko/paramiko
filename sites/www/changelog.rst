@@ -2,6 +2,9 @@
 Changelog
 =========
 
+* :support:`1262 backported` Add ``*.pub`` files to the MANIFEST so distributed
+  source packages contain some necessary test assets. Credit: Alexander
+  Kapshuna.
 * :release:`2.3.2 <2018-03-12>`
 * :release:`2.2.3 <2018-03-12>`
 * :release:`2.1.5 <2018-03-12>`
