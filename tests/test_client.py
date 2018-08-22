@@ -56,7 +56,6 @@ FINGERPRINTS = {
 
 
 class NullServer(paramiko.ServerInterface):
-
     def __init__(self, *args, **kwargs):
         # Allow tests to enable/disable specific key types
         self.__allowed_keys = kwargs.pop("allowed_keys", [])
@@ -115,7 +114,6 @@ class NullServer(paramiko.ServerInterface):
 
 
 class ClientTest(unittest.TestCase):
-
     def setUp(self):
         self.sockl = socket.socket()
         self.sockl.bind(("localhost", 0))
@@ -230,7 +228,6 @@ class ClientTest(unittest.TestCase):
 
 
 class SSHClientTest(ClientTest):
-
     def test_1_client(self):
         """
         verify that the SSHClient stuff works too.

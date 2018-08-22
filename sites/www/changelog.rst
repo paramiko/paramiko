@@ -2,6 +2,9 @@
 Changelog
 =========
 
+* :support:`1262 backported` Add ``*.pub`` files to the MANIFEST so distributed
+  source packages contain some necessary test assets. Credit: Alexander
+  Kapshuna.
 * :feature:`1212` Updated `SSHConfig.lookup <paramiko.config.SSHConfig.lookup>`
   so it returns a new, type-casting-friendly dict subclass
   (`~paramiko.config.SSHConfigDict`) in lieu of dict literals. This ought to be
@@ -18,7 +21,6 @@ Changelog
   ``setup.py`` and its imports in the GSSAPI code made optional.
 
   Credit to ``@stevenwinfield`` for highlighting the outdated install docs.
-
 * :release:`2.4.1 <2018-03-12>`
 * :release:`2.3.2 <2018-03-12>`
 * :release:`2.2.3 <2018-03-12>`

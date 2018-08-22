@@ -67,7 +67,6 @@ from paramiko import *
 
 
 class UtilTest(unittest.TestCase):
-
     def test_import(self):
         """
         verify that all the classes can be imported from paramiko.

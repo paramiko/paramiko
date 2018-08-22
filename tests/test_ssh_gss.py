@@ -34,7 +34,6 @@ from .test_client import FINGERPRINTS
 
 
 class NullServer(paramiko.ServerInterface):
-
     def get_allowed_auths(self, username):
         return "gssapi-with-mic,publickey"
 
@@ -69,7 +68,6 @@ class NullServer(paramiko.ServerInterface):
 
 @needs_gssapi
 class GSSAuthTest(unittest.TestCase):
-
     def setUp(self):
         # TODO: username and targ_name should come from os.environ or whatever
         # the approved pytest method is for runtime-configuring test data.

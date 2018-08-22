@@ -136,7 +136,6 @@ class HostKeys(MutableMapping):
         """
 
         class SubDict(MutableMapping):
-
             def __init__(self, hostname, entries, hostkeys):
                 self._hostname = hostname
                 self._entries = entries
@@ -308,7 +307,6 @@ class HostKeys(MutableMapping):
 
 
 class InvalidHostKey(Exception):
-
     def __init__(self, line, exc):
         self.line = line
         self.exc = exc

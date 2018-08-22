@@ -52,7 +52,6 @@ class LoopbackFile(BufferedFile):
 
 
 class BufferedFileTest(unittest.TestCase):
-
     def test_1_simple(self):
         f = LoopbackFile("r")
         try:

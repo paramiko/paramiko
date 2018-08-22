@@ -294,6 +294,7 @@ class SECURITY_DESCRIPTOR(ctypes.Structure):
         PACL Dacl;
         }   SECURITY_DESCRIPTOR;
     """
+
     SECURITY_DESCRIPTOR_CONTROL = ctypes.wintypes.USHORT
     REVISION = 1
 
@@ -316,6 +317,7 @@ class SECURITY_ATTRIBUTES(ctypes.Structure):
         BOOL   bInheritHandle;
     } SECURITY_ATTRIBUTES;
     """
+
     _fields_ = [
         ("nLength", ctypes.wintypes.DWORD),
         ("lpSecurityDescriptor", ctypes.c_void_p),

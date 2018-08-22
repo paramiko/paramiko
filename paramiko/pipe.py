@@ -39,7 +39,6 @@ def make_pipe():
 
 
 class PosixPipe(object):
-
     def __init__(self):
         self._rfd, self._wfd = os.pipe()
         self._set = False
@@ -120,7 +119,6 @@ class WindowsPipe(object):
 
 
 class OrPipe(object):
-
     def __init__(self, pipe):
         self._set = False
         self._partner = None

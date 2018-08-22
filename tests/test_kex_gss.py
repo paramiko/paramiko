@@ -35,7 +35,6 @@ from .util import needs_gssapi
 
 
 class NullServer(paramiko.ServerInterface):
-
     def get_allowed_auths(self, username):
         return "gssapi-keyex"
 
@@ -61,7 +60,6 @@ class NullServer(paramiko.ServerInterface):
 
 @needs_gssapi
 class GSSKexTest(unittest.TestCase):
-
     @staticmethod
     def init(username, hostname):
         global krb5_principal, targ_name

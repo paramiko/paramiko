@@ -88,7 +88,6 @@ if PY2:
 
     # It's possible to have sizeof(long) != sizeof(Py_ssize_t).
     class X(object):
-
         def __len__(self):
             return 1 << 31
 

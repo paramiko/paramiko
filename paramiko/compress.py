@@ -24,7 +24,6 @@ import zlib
 
 
 class ZlibCompressor(object):
-
     def __init__(self):
         # Use the default level of zlib compression
         self.z = zlib.compressobj()
@@ -34,7 +33,6 @@ class ZlibCompressor(object):
 
 
 class ZlibDecompressor(object):
-
     def __init__(self):
         self.z = zlib.decompressobj()
 
