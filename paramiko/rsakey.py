@@ -20,7 +20,7 @@
 RSA keys.
 """
 
-from cryptography.exceptions import InvalidSignature
+from cryptography.exceptions import InvalidSignature, UnsupportedAlgorithm
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import rsa, padding
@@ -184,7 +184,7 @@ class RSAKey(PKey):
             key = serialization.load_der_private_key(
                 data, password=None, backend=default_backend()
             )
-        except ValueError as e:
+        except (ValueError, UnsupportedAlgorithm) as e:
             raise SSHException(str(e))
 
         assert isinstance(key, rsa.RSAPrivateKey)
