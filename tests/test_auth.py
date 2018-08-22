@@ -115,7 +115,6 @@ class NullServer(ServerInterface):
 
 
 class AuthTest(unittest.TestCase):
-
     def setUp(self):
         self.socks = LoopSocket()
         self.sockc = LoopSocket()

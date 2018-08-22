@@ -42,7 +42,6 @@ def close_thread(p):
 
 
 class BufferedPipeTest(unittest.TestCase):
-
     def test_1_buffered_pipe(self):
         p = BufferedPipe()
         self.assertTrue(not p.read_ready())

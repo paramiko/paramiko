@@ -145,6 +145,7 @@ ns.configure(
             "changelog_file": join(
                 www.configuration()["sphinx"]["source"], "changelog.rst"
             ),
-        }
+        },
+        "travis": {"black": {"version": "18.6b4"}},
     }
 )

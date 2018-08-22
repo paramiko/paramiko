@@ -30,7 +30,6 @@ from .util import needs_gssapi
 
 @needs_gssapi
 class GSSAPITest(unittest.TestCase):
-
     def setup():
         # TODO: these vars should all come from os.environ or whatever the
         # approved pytest method is for runtime-configuring test data.

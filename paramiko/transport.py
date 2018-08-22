@@ -132,6 +132,7 @@ class Transport(threading.Thread, ClosingContextManager):
 
     Instances of this class may be used as context managers.
     """
+
     _ENCRYPT = object()
     _DECRYPT = object()
 
@@ -2803,6 +2804,7 @@ class SecurityOptions(object):
     ``ValueError`` will be raised.  If you try to assign something besides a
     tuple to one of the fields, ``TypeError`` will be raised.
     """
+
     __slots__ = "_transport"
 
     def __init__(self, transport):
@@ -2872,7 +2874,6 @@ class SecurityOptions(object):
 
 
 class ChannelMap(object):
-
     def __init__(self):
         # (id -> Channel)
         self._map = weakref.WeakValueDictionary()

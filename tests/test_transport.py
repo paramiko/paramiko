@@ -139,7 +139,6 @@ class NullServer(ServerInterface):
 
 
 class TransportTest(unittest.TestCase):
-
     def setUp(self):
         self.socks = LoopSocket()
         self.sockc = LoopSocket()
@@ -207,12 +206,8 @@ class TransportTest(unittest.TestCase):
         o.compression = o.compression
 
     def test_2_compute_key(self):
-        self.tc.K = (
-            123281095979686581523377256114209720774539068973101330872763622971399429481072519713536292772709507296759612401802191955568143056534122385270077606457721553469730659233569339356140085284052436697480759510519672848743794433460113118986816826624865291116513647975790797391795651716378444844877749505443714557929
-        )
-        self.tc.H = (
-            b"\x0C\x83\x07\xCD\xE6\x85\x6F\xF3\x0B\xA9\x36\x84\xEB\x0F\x04\xC2\x52\x0E\x9E\xD3"
-        )
+        self.tc.K = 123281095979686581523377256114209720774539068973101330872763622971399429481072519713536292772709507296759612401802191955568143056534122385270077606457721553469730659233569339356140085284052436697480759510519672848743794433460113118986816826624865291116513647975790797391795651716378444844877749505443714557929
+        self.tc.H = b"\x0C\x83\x07\xCD\xE6\x85\x6F\xF3\x0B\xA9\x36\x84\xEB\x0F\x04\xC2\x52\x0E\x9E\xD3"
         self.tc.session_id = self.tc.H
         key = self.tc._compute_key("C", 32)
         self.assertEqual(
@@ -738,7 +733,6 @@ class TransportTest(unittest.TestCase):
         # expires, a deadlock is assumed.
 
         class SendThread(threading.Thread):
-
             def __init__(self, chan, iterations, done_event):
                 threading.Thread.__init__(
                     self, None, None, self.__class__.__name__
@@ -763,7 +757,6 @@ class TransportTest(unittest.TestCase):
                     self.watchdog_event.set()
 
         class ReceiveThread(threading.Thread):
-
             def __init__(self, chan, done_event):
                 threading.Thread.__init__(
                     self, None, None, self.__class__.__name__
@@ -890,7 +883,6 @@ class TransportTest(unittest.TestCase):
         # (Doing this on the server's transport *sounds* more 'correct' but
         # actually doesn't work nearly as well for whatever reason.)
         class SlowPacketizer(Packetizer):
-
             def read_message(self):
                 time.sleep(1)
                 return super(SlowPacketizer, self).read_message()

@@ -51,6 +51,7 @@ class NeedRekeyException(Exception):
     """
     Exception indicating a rekey is needed.
     """
+
     pass
 
 

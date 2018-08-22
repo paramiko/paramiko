@@ -917,4 +917,5 @@ class SFTP(SFTPClient):
     """
     An alias for `.SFTPClient` for backwards compatibility.
     """
+
     pass

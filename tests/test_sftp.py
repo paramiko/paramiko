@@ -90,7 +90,6 @@ utf8_folder = b"/\xc3\xbcnic\xc3\xb8\x64\x65"
 
 @slow
 class TestSFTP(object):
-
     def test_1_file(self, sftp):
         """
         verify that we can create a file.

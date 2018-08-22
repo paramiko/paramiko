@@ -55,7 +55,6 @@ Ngw3qIch/WgRmMHy4kBq1SsXMjQCte1So6HBMvBPIW5SiMTmjCfZZiw4AYHK+B/JaOwaG9yRg2Ejg\
 
 
 class HostKeysTest(unittest.TestCase):
-
     def setUp(self):
         with open("hostfile.temp", "w") as f:
             f.write(test_hosts_file)

@@ -68,6 +68,7 @@ class COPYDATASTRUCT(ctypes.Structure):
     ctypes implementation of
     http://msdn.microsoft.com/en-us/library/windows/desktop/ms649010%28v=vs.85%29.aspx
     """
+
     _fields_ = [
         ("num_data", ULONG_PTR),
         ("data_size", ctypes.wintypes.DWORD),

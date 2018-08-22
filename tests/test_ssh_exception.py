@@ -5,7 +5,6 @@ from paramiko.ssh_exception import NoValidConnectionsError
 
 
 class NoValidConnectionsErrorTest(unittest.TestCase):
-
     def test_pickling(self):
         # Regression test for https://github.com/paramiko/paramiko/issues/617
         exc = NoValidConnectionsError({("127.0.0.1", "22"): Exception()})
