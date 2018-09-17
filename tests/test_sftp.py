@@ -183,7 +183,7 @@ class TestSFTP(object):
             except:
                 pass
 
-    def test_6_folder(self):
+    def test_6_folder(self, sftp):
         """
         create a temporary folder, verify that we can create a file in it, then
         remove the folder and verify that we can't create a file in it anymore.
