@@ -40,6 +40,7 @@ try:
 except ImportError:
     getgrnam = None
 
+
 def _get_gid(name):
     """Returns a gid, given a group name."""
     if getgrnam is None or name is None:
@@ -51,6 +52,7 @@ def _get_gid(name):
     if result is not None:
         return result[2]
     return None
+
 
 def _get_uid(name):
     """Returns an uid, given a user name."""
@@ -64,8 +66,16 @@ def _get_uid(name):
         return result[2]
     return None
 
-def make_tarball(base_name, base_dir, compress='gzip', verbose=0, dry_run=0,
-                 owner=None, group=None):
+
+def make_tarball(
+    base_name,
+    base_dir,
+    compress="gzip",
+    verbose=0,
+    dry_run=0,
+    owner=None,
+    group=None,
+):
     """Create a tar file from all the files under 'base_dir'.
     This file may be compressed.
 
@@ -87,28 +97,26 @@ def make_tarball(base_name, base_dir, compress='gzip', verbose=0, dry_run=0,
     # "create a tree of hardlinks" step!  (Would also be nice to
     # detect GNU tar to use its 'z' option and save a step.)
 
-    compress_ext = {
-        'gzip': ".gz",
-        'bzip2': '.bz2',
-        'compress': ".Z",
-    }
+    compress_ext = {"gzip": ".gz", "bzip2": ".bz2", "compress": ".Z"}
 
     # flags for compression program, each element of list will be an argument
-    tarfile_compress_flag = {'gzip': 'gz', 'bzip2': 'bz2'}
-    compress_flags = {'compress': ["-f"]}
+    tarfile_compress_flag = {"gzip": "gz", "bzip2": "bz2"}
+    compress_flags = {"compress": ["-f"]}
 
     if compress is not None and compress not in compress_ext.keys():
-        raise ValueError("bad value for 'compress': must be None, 'gzip',"
-                         "'bzip2' or 'compress'")
+        raise ValueError(
+            "bad value for 'compress': must be None, 'gzip',"
+            "'bzip2' or 'compress'"
+        )
 
     archive_name = base_name + ".tar"
     if compress and compress in tarfile_compress_flag:
         archive_name += compress_ext[compress]
 
-    mode = 'w:' + tarfile_compress_flag.get(compress, '')
+    mode = "w:" + tarfile_compress_flag.get(compress, "")
 
     mkpath(os.path.dirname(archive_name), dry_run=dry_run)
-    log.info('Creating tar file %s with mode %s' % (archive_name, mode))
+    log.info("Creating tar file %s with mode %s" % (archive_name, mode))
 
     uid = _get_uid(owner)
     gid = _get_gid(group)
@@ -136,18 +144,20 @@ def make_tarball(base_name, base_dir, compress='gzip', verbose=0, dry_run=0,
             tar.close()
 
     if compress and compress not in tarfile_compress_flag:
-        spawn([compress] + compress_flags[compress] + [archive_name],
-              dry_run=dry_run)
+        spawn(
+            [compress] + compress_flags[compress] + [archive_name],
+            dry_run=dry_run,
+        )
         return archive_name + compress_ext[compress]
     else:
         return archive_name
 
 
 _custom_formats = {
-    'gztar': (make_tarball, [('compress', 'gzip')], "gzip'ed tar-file"),
-    'bztar': (make_tarball, [('compress', 'bzip2')], "bzip2'ed tar-file"),
-    'ztar': (make_tarball, [('compress', 'compress')], "compressed tar file"),
-    'tar': (make_tarball, [('compress', None)], "uncompressed tar file"),
+    "gztar": (make_tarball, [("compress", "gzip")], "gzip'ed tar-file"),
+    "bztar": (make_tarball, [("compress", "bzip2")], "bzip2'ed tar-file"),
+    "ztar": (make_tarball, [("compress", "compress")], "compressed tar file"),
+    "tar": (make_tarball, [("compress", None)], "uncompressed tar file"),
 }
 
 # Hack in and insert ourselves into the distutils code base

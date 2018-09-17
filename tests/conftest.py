@@ -19,7 +19,7 @@ from .util import _support
 # presenting it on error/failure. (But also allow turning it off when doing
 # very pinpoint debugging - e.g. using breakpoints, so you don't want output
 # hiding enabled, but also don't want all the logging to gum up the terminal.)
-if not os.environ.get('DISABLE_LOGGING', False):
+if not os.environ.get("DISABLE_LOGGING", False):
     logging.basicConfig(
         level=logging.DEBUG,
         # Also make sure to set up timestamping for more sanity when debugging.
@@ -43,7 +43,7 @@ def make_sftp_folder():
     # TODO: if we want to lock ourselves even harder into localhost-only
     # testing (probably not?) could use tempdir modules for this for improved
     # safety. Then again...why would someone have such a folder???
-    path = os.environ.get('TEST_FOLDER', 'paramiko-test-target')
+    path = os.environ.get("TEST_FOLDER", "paramiko-test-target")
     # Forcibly nuke this directory locally, since at the moment, the below
     # fixtures only ever run with a locally scoped stub test server.
     shutil.rmtree(path, ignore_errors=True)
@@ -52,7 +52,7 @@ def make_sftp_folder():
     return path
 
 
-@pytest.fixture#(scope='session')
+@pytest.fixture  # (scope='session')
 def sftp_server():
     """
     Set up an in-memory SFTP server thread. Yields the client Transport/socket.
@@ -69,17 +69,17 @@ def sftp_server():
     tc = Transport(sockc)
     ts = Transport(socks)
     # Auth
-    host_key = RSAKey.from_private_key_file(_support('test_rsa.key'))
+    host_key = RSAKey.from_private_key_file(_support("test_rsa.key"))
     ts.add_server_key(host_key)
     # Server setup
     event = threading.Event()
     server = StubServer()
-    ts.set_subsystem_handler('sftp', SFTPServer, StubSFTPServer)
+    ts.set_subsystem_handler("sftp", SFTPServer, StubSFTPServer)
     ts.start_server(event, server)
     # Wait (so client has time to connect? Not sure. Old.)
     event.wait(1.0)
     # Make & yield connection.
-    tc.connect(username='slowdive', password='pygmalion')
+    tc.connect(username="slowdive", password="pygmalion")
     yield tc
     # TODO: any need for shutdown? Why didn't old suite do so? Or was that the
     # point of the "join all threads from threading module" crap in test.py?
