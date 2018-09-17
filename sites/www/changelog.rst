@@ -2,6 +2,10 @@
 Changelog
 =========
 
+- :support:`1291 backported` Backport pytest support and application of the
+  ``black`` code formatter (both of which previously only existed in the 2.4
+  branch and above) to everything 2.0 and newer. This makes back/forward
+  porting bugfixes significantly easier.
 - :release:`2.0.8 <2018-03-12>`
 - :release:`1.18.5 <2018-03-12>`
 - :release:`1.17.6 <2018-03-12>`
