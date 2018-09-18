@@ -13,9 +13,22 @@ python:
 matrix:
   allow_failures:
     - python: "3.7-dev"
+  # Explicitly test against our oldest supported cryptography.io, in addition
+  # to whatever the latest default is.
+  include:
+    - python: 2.7
+      env: "CRYPTO_BEFORE=1.6"
+    - python: 3.6
+      env: "CRYPTO_BEFORE=1.6"
 install:
   # Ensure modern pip/etc to avoid some issues w/ older worker environs
   - pip install pip==9.0.1 setuptools==36.6.0
+  # Grab a specific version of Cryptography if desired. Doing this before other
+  # installations ensures we don't have to do any downgrading/overriding.
+  - |
+    if [[ -n "$CRYPTO_BEFORE" ]]; then
+      pip install "cryptography<${CRYPTO_BEFORE}"
+    fi
   # Self-install for setup.py-driven deps
   - pip install -e .
   # Dev (doc/test running) requirements
