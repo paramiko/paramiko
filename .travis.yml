@@ -30,7 +30,7 @@ script: |
   if [[ $TRAVIS_PYTHON_VERSION == '2.6' || $TRAVIS_PYTHON_VERSION == '3.3' ]];
   then
     flake8
-    coverage run --source=paramiko -m pytest
+    coverage run --source=paramiko -m pytest --verbose --color=yes
   else
     inv travis.blacken
     flake8
