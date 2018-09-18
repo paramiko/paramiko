@@ -208,7 +208,7 @@ class SSHClientTest(unittest.TestCase):
         self._test_connection(key_filename=_support("test_ecdsa_256.key"))
 
     def test_client_ed25519(self):
-        self._test_connection(key_filename=test_path('test_ed25519.key'))
+        self._test_connection(key_filename=_support('test_ed25519.key'))
 
     def test_3_multiple_key_files(self):
         """
