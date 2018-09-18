@@ -15,9 +15,27 @@ python:
 matrix:
   allow_failures:
     - python: "3.7-dev"
+  # Pull in a few specific combos of older cryptography.io as needed.
+  # NOTE: this should only exist in the 2.0-2.2 branches, as 2.3+ requires
+  # crypto 1.5+.
+  include:
+    - python: 2.7
+      env: "CRYPTO=1.1"
+    - python: 2.7
+      env: "CRYPTO=1.5"
+    - python: 3.6
+      env: "CRYPTO=1.1"
+    - python: 3.6
+      env: "CRYPTO=1.5"
 install:
   # Ensure modern pip/etc on Python 3.3 workers (not sure WTF, but, eh)
   - pip install pip==9.0.1 setuptools==36.6.0
+  # Grab a specific version of Cryptography if desired. (The 'vanilla' cells
+  # should all end up with latest public Cryptography version.)
+  # Doing this before other installations ensures we don't have to do any
+  # downgrading/overriding.
+  - "if [[ $CRYPTO == '1.1' ]]; then pip install 'cryptography<1.2'; fi"
+  - "if [[ $CRYPTO == '1.5' ]]; then pip install 'cryptography<1.6'; fi"
   # Self-install for setup.py-driven deps
   - pip install -e .
   # Dev (doc/test running) requirements
@@ -30,7 +48,7 @@ script: |
   if [[ $TRAVIS_PYTHON_VERSION == '2.6' || $TRAVIS_PYTHON_VERSION == '3.3' ]];
   then
     flake8
-    coverage run --source=paramiko -m pytest
+    coverage run --source=paramiko -m pytest --verbose --color=yes
   else
     inv travis.blacken
     flake8
