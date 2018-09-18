@@ -23,6 +23,7 @@ Some unit tests for HostKeys.
 from binascii import hexlify
 import os
 import unittest
+
 import paramiko
 from paramiko.py3compat import decodebytes
 
@@ -53,77 +54,79 @@ Ngw3qIch/WgRmMHy4kBq1SsXMjQCte1So6HBMvBPIW5SiMTmjCfZZiw4AYHK+B/JaOwaG9yRg2Ejg\
 0d54U0X/NeX5QxuYR6OMJlrkQB7oiW/P/1mwjQgE="""
 
 
-class HostKeysTest (unittest.TestCase):
-
+class HostKeysTest(unittest.TestCase):
     def setUp(self):
-        with open('hostfile.temp', 'w') as f:
+        with open("hostfile.temp", "w") as f:
             f.write(test_hosts_file)
 
     def tearDown(self):
-        os.unlink('hostfile.temp')
+        os.unlink("hostfile.temp")
 
     def test_1_load(self):
-        hostdict = paramiko.HostKeys('hostfile.temp')
+        hostdict = paramiko.HostKeys("hostfile.temp")
         self.assertEqual(2, len(hostdict))
         self.assertEqual(1, len(list(hostdict.values())[0]))
         self.assertEqual(1, len(list(hostdict.values())[1]))
-        fp = hexlify(hostdict['secure.example.com']['ssh-rsa'].get_fingerprint()).upper()
-        self.assertEqual(b'E6684DB30E109B67B70FF1DC5C7F1363', fp)
+        fp = hexlify(
+            hostdict["secure.example.com"]["ssh-rsa"].get_fingerprint()
+        ).upper()
+        self.assertEqual(b"E6684DB30E109B67B70FF1DC5C7F1363", fp)
 
     def test_2_add(self):
-        hostdict = paramiko.HostKeys('hostfile.temp')
-        hh = '|1|BMsIC6cUIP2zBuXR3t2LRcJYjzM=|hpkJMysjTk/+zzUUzxQEa2ieq6c='
+        hostdict = paramiko.HostKeys("hostfile.temp")
+        hh = "|1|BMsIC6cUIP2zBuXR3t2LRcJYjzM=|hpkJMysjTk/+zzUUzxQEa2ieq6c="
         key = paramiko.RSAKey(data=decodebytes(keyblob))
-        hostdict.add(hh, 'ssh-rsa', key)
+        hostdict.add(hh, "ssh-rsa", key)
         self.assertEqual(3, len(list(hostdict)))
-        x = hostdict['foo.example.com']
-        fp = hexlify(x['ssh-rsa'].get_fingerprint()).upper()
-        self.assertEqual(b'7EC91BB336CB6D810B124B1353C32396', fp)
-        self.assertTrue(hostdict.check('foo.example.com', key))
+        x = hostdict["foo.example.com"]
+        fp = hexlify(x["ssh-rsa"].get_fingerprint()).upper()
+        self.assertEqual(b"7EC91BB336CB6D810B124B1353C32396", fp)
+        self.assertTrue(hostdict.check("foo.example.com", key))
 
     def test_3_dict(self):
-        hostdict = paramiko.HostKeys('hostfile.temp')
-        self.assertTrue('secure.example.com' in hostdict)
-        self.assertTrue('not.example.com' not in hostdict)
-        self.assertTrue('secure.example.com' in hostdict)
-        self.assertTrue('not.example.com' not in hostdict)
-        x = hostdict.get('secure.example.com', None)
+        hostdict = paramiko.HostKeys("hostfile.temp")
+        self.assertTrue("secure.example.com" in hostdict)
+        self.assertTrue("not.example.com" not in hostdict)
+        self.assertTrue("secure.example.com" in hostdict)
+        self.assertTrue("not.example.com" not in hostdict)
+        x = hostdict.get("secure.example.com", None)
         self.assertTrue(x is not None)
-        fp = hexlify(x['ssh-rsa'].get_fingerprint()).upper()
-        self.assertEqual(b'E6684DB30E109B67B70FF1DC5C7F1363', fp)
+        fp = hexlify(x["ssh-rsa"].get_fingerprint()).upper()
+        self.assertEqual(b"E6684DB30E109B67B70FF1DC5C7F1363", fp)
         i = 0
         for key in hostdict:
             i += 1
         self.assertEqual(2, i)
-        
+
     def test_4_dict_set(self):
-        hostdict = paramiko.HostKeys('hostfile.temp')
+        hostdict = paramiko.HostKeys("hostfile.temp")
         key = paramiko.RSAKey(data=decodebytes(keyblob))
         key_dss = paramiko.DSSKey(data=decodebytes(keyblob_dss))
-        hostdict['secure.example.com'] = {
-            'ssh-rsa': key,
-            'ssh-dss': key_dss
-        }
-        hostdict['fake.example.com'] = {}
-        hostdict['fake.example.com']['ssh-rsa'] = key
-        
+        hostdict["secure.example.com"] = {"ssh-rsa": key, "ssh-dss": key_dss}
+        hostdict["fake.example.com"] = {}
+        hostdict["fake.example.com"]["ssh-rsa"] = key
+
         self.assertEqual(3, len(hostdict))
         self.assertEqual(2, len(list(hostdict.values())[0]))
         self.assertEqual(1, len(list(hostdict.values())[1]))
         self.assertEqual(1, len(list(hostdict.values())[2]))
-        fp = hexlify(hostdict['secure.example.com']['ssh-rsa'].get_fingerprint()).upper()
-        self.assertEqual(b'7EC91BB336CB6D810B124B1353C32396', fp)
-        fp = hexlify(hostdict['secure.example.com']['ssh-dss'].get_fingerprint()).upper()
-        self.assertEqual(b'4478F0B9A23CC5182009FF755BC1D26C', fp)
+        fp = hexlify(
+            hostdict["secure.example.com"]["ssh-rsa"].get_fingerprint()
+        ).upper()
+        self.assertEqual(b"7EC91BB336CB6D810B124B1353C32396", fp)
+        fp = hexlify(
+            hostdict["secure.example.com"]["ssh-dss"].get_fingerprint()
+        ).upper()
+        self.assertEqual(b"4478F0B9A23CC5182009FF755BC1D26C", fp)
 
     def test_delitem(self):
-        hostdict = paramiko.HostKeys('hostfile.temp')
-        target = 'happy.example.com'
-        entry = hostdict[target] # will KeyError if not present
+        hostdict = paramiko.HostKeys("hostfile.temp")
+        target = "happy.example.com"
+        entry = hostdict[target]  # will KeyError if not present
         del hostdict[target]
         try:
             entry = hostdict[target]
         except KeyError:
-            pass # Good
+            pass  # Good
         else:
             assert False, "Entry was not deleted from HostKeys on delitem!"

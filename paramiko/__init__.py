@@ -21,7 +21,7 @@ import sys
 from paramiko._version import __version__, __version_info__
 
 if sys.version_info < (2, 6):
-    raise RuntimeError('You need Python 2.6+ for this module.')
+    raise RuntimeError("You need Python 2.6+ for this module.")
 
 
 __author__ = "Jeff Forcier <jeff@bitprophet.org>"
@@ -30,15 +30,22 @@ __license__ = "GNU Lesser General Public License (LGPL)"
 
 from paramiko.transport import SecurityOptions, Transport
 from paramiko.client import (
-    SSHClient, MissingHostKeyPolicy, AutoAddPolicy, RejectPolicy, 
+    SSHClient,
+    MissingHostKeyPolicy,
+    AutoAddPolicy,
+    RejectPolicy,
     WarningPolicy,
 )
 from paramiko.auth_handler import AuthHandler
 from paramiko.ssh_gss import GSSAuth, GSS_AUTH_AVAILABLE, GSS_EXCEPTIONS
 from paramiko.channel import Channel, ChannelFile
 from paramiko.ssh_exception import (
-    SSHException, PasswordRequiredException, BadAuthenticationType,
-    ChannelException, BadHostKeyException, AuthenticationException,
+    SSHException,
+    PasswordRequiredException,
+    BadAuthenticationType,
+    ChannelException,
+    BadHostKeyException,
+    AuthenticationException,
     ProxyCommandFailure,
 )
 from paramiko.server import ServerInterface, SubsystemHandler, InteractiveQuery
@@ -62,55 +69,66 @@ from paramiko.config import SSHConfig
 from paramiko.proxy import ProxyCommand
 
 from paramiko.common import (
-    AUTH_SUCCESSFUL, AUTH_PARTIALLY_SUCCESSFUL, AUTH_FAILED, OPEN_SUCCEEDED,
-    OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED, OPEN_FAILED_CONNECT_FAILED,
-    OPEN_FAILED_UNKNOWN_CHANNEL_TYPE, OPEN_FAILED_RESOURCE_SHORTAGE,
+    AUTH_SUCCESSFUL,
+    AUTH_PARTIALLY_SUCCESSFUL,
+    AUTH_FAILED,
+    OPEN_SUCCEEDED,
+    OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED,
+    OPEN_FAILED_CONNECT_FAILED,
+    OPEN_FAILED_UNKNOWN_CHANNEL_TYPE,
+    OPEN_FAILED_RESOURCE_SHORTAGE,
 )
 
 from paramiko.sftp import (
-    SFTP_OK, SFTP_EOF, SFTP_NO_SUCH_FILE, SFTP_PERMISSION_DENIED, SFTP_FAILURE,
-    SFTP_BAD_MESSAGE, SFTP_NO_CONNECTION, SFTP_CONNECTION_LOST,
+    SFTP_OK,
+    SFTP_EOF,
+    SFTP_NO_SUCH_FILE,
+    SFTP_PERMISSION_DENIED,
+    SFTP_FAILURE,
+    SFTP_BAD_MESSAGE,
+    SFTP_NO_CONNECTION,
+    SFTP_CONNECTION_LOST,
     SFTP_OP_UNSUPPORTED,
 )
 
 from paramiko.common import io_sleep
 
 __all__ = [
-    'Transport',
-    'SSHClient',
-    'MissingHostKeyPolicy',
-    'AutoAddPolicy',
-    'RejectPolicy',
-    'WarningPolicy',
-    'SecurityOptions',
-    'SubsystemHandler',
-    'Channel',
-    'PKey',
-    'RSAKey',
-    'DSSKey',
-    'Message',
-    'SSHException',
-    'AuthenticationException',
-    'PasswordRequiredException',
-    'BadAuthenticationType',
-    'ChannelException',
-    'BadHostKeyException',
-    'ProxyCommand',
-    'ProxyCommandFailure',
-    'SFTP',
-    'SFTPFile',
-    'SFTPHandle',
-    'SFTPClient',
-    'SFTPServer',
-    'SFTPError',
-    'SFTPAttributes',
-    'SFTPServerInterface',
-    'ServerInterface',
-    'BufferedFile',
-    'Agent',
-    'AgentKey',
-    'HostKeys',
-    'SSHConfig',
-    'util',
-    'io_sleep',
+    "Transport",
+    "SSHClient",
+    "MissingHostKeyPolicy",
+    "AutoAddPolicy",
+    "RejectPolicy",
+    "WarningPolicy",
+    "SecurityOptions",
+    "SubsystemHandler",
+    "Channel",
+    "PKey",
+    "RSAKey",
+    "DSSKey",
+    "Message",
+    "SSHException",
+    "AuthenticationException",
+    "PasswordRequiredException",
+    "BadAuthenticationType",
+    "ChannelException",
+    "BadHostKeyException",
+    "ProxyCommand",
+    "ProxyCommandFailure",
+    "SFTP",
+    "SFTPFile",
+    "SFTPHandle",
+    "SFTPClient",
+    "SFTPServer",
+    "SFTPError",
+    "SFTPAttributes",
+    "SFTPServerInterface",
+    "ServerInterface",
+    "BufferedFile",
+    "Agent",
+    "AgentKey",
+    "HostKeys",
+    "SSHConfig",
+    "util",
+    "io_sleep",
 ]
