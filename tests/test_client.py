@@ -212,7 +212,7 @@ class SSHClientTest(unittest.TestCase):
             try:
                 self._test_connection(
                     key_filename=[
-                        _support("test_{}.key".format(x)) for x in attempt
+                        _support("test_{0}.key".format(x)) for x in attempt
                     ],
                     allowed_keys=[types_[x] for x in accept],
                 )

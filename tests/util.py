@@ -20,7 +20,7 @@ def needs_builtin(name):
     """
     Skip decorated test if builtin name does not exist.
     """
-    reason = "Test requires a builtin '{}'".format(name)
+    reason = "Test requires a builtin '{0}'".format(name)
     return pytest.mark.skipif(not hasattr(builtins, name), reason=reason)
 
 
