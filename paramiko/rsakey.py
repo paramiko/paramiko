@@ -61,8 +61,8 @@ class RSAKey(PKey):
         else:
             self._check_type_and_load_cert(
                 msg=msg,
-                key_type='ssh-rsa',
-                cert_type='ssh-rsa-cert-v01@openssh.com',
+                key_type="ssh-rsa",
+                cert_type="ssh-rsa-cert-v01@openssh.com",
             )
             self.key = rsa.RSAPublicNumbers(
                 e=msg.get_mpint(), n=msg.get_mpint()
@@ -114,9 +114,7 @@ class RSAKey(PKey):
 
     def sign_ssh_data(self, data):
         sig = self.key.sign(
-            data,
-            padding=padding.PKCS1v15(),
-            algorithm=hashes.SHA1(),
+            data, padding=padding.PKCS1v15(), algorithm=hashes.SHA1()
         )
 
         m = Message()

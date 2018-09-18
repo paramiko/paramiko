@@ -416,8 +416,16 @@ class SSHClient(ClosingContextManager):
             key_filenames = key_filename
 
         self._auth(
-            username, password, pkey, key_filenames, allow_agent,
-            look_for_keys, gss_auth, gss_kex, gss_deleg_creds, t.gss_host,
+            username,
+            password,
+            pkey,
+            key_filenames,
+            allow_agent,
+            look_for_keys,
+            gss_auth,
+            gss_kex,
+            gss_deleg_creds,
+            t.gss_host,
         )
 
     def close(self):
@@ -542,10 +550,10 @@ class SSHClient(ClosingContextManager):
         - Otherwise, the filename is assumed to be a private key, and the
           matching public cert will be loaded if it exists.
         """
-        cert_suffix = '-cert.pub'
+        cert_suffix = "-cert.pub"
         # Assume privkey, not cert, by default
         if filename.endswith(cert_suffix):
-            key_path = filename[:-len(cert_suffix)]
+            key_path = filename[: -len(cert_suffix)]
             cert_path = filename
         else:
             key_path = filename
@@ -556,7 +564,7 @@ class SSHClient(ClosingContextManager):
         # when #387 is released, since this is a critical log message users are
         # likely testing/filtering for (bah.)
         msg = "Trying discovered key {0} in {1}".format(
-            hexlify(key.get_fingerprint()), key_path,
+            hexlify(key.get_fingerprint()), key_path
         )
         self._log(DEBUG, msg)
         # Attempt to load cert if it exists.
@@ -565,8 +573,19 @@ class SSHClient(ClosingContextManager):
             self._log(DEBUG, "Adding public certificate {0}".format(cert_path))
         return key
 
-    def _auth(self, username, password, pkey, key_filenames, allow_agent,
-              look_for_keys, gss_auth, gss_kex, gss_deleg_creds, gss_host):
+    def _auth(
+        self,
+        username,
+        password,
+        pkey,
+        key_filenames,
+        allow_agent,
+        look_for_keys,
+        gss_auth,
+        gss_kex,
+        gss_deleg_creds,
+        gss_host,
+    ):
         """
         Try, in order:
 
@@ -600,7 +619,7 @@ class SSHClient(ClosingContextManager):
         if gss_auth:
             try:
                 return self._transport.auth_gssapi_with_mic(
-                    username, gss_host, gss_deleg_creds,
+                    username, gss_host, gss_deleg_creds
                 )
             except Exception as e:
                 saved_exception = e
@@ -625,7 +644,7 @@ class SSHClient(ClosingContextManager):
                 for pkey_class in (RSAKey, DSSKey, ECDSAKey, Ed25519Key):
                     try:
                         key = self._key_from_filepath(
-                            key_filename, pkey_class, password,
+                            key_filename, pkey_class, password
                         )
                         allowed_types = set(
                             self._transport.auth_publickey(username, key)
@@ -677,8 +696,8 @@ class SSHClient(ClosingContextManager):
                     if os.path.isfile(full_path):
                         # TODO: only do this append if below did not run
                         keyfiles.append((keytype, full_path))
-                        if os.path.isfile(full_path + '-cert.pub'):
-                            keyfiles.append((keytype, full_path + '-cert.pub'))
+                        if os.path.isfile(full_path + "-cert.pub"):
+                            keyfiles.append((keytype, full_path + "-cert.pub"))
 
             if not look_for_keys:
                 keyfiles = []
@@ -686,7 +705,7 @@ class SSHClient(ClosingContextManager):
             for pkey_class, filename in keyfiles:
                 try:
                     key = self._key_from_filepath(
-                        filename, pkey_class, password,
+                        filename, pkey_class, password
                     )
                     # for 2-factor auth a successfully auth'd key will result
                     # in ['password']

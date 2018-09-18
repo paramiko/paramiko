@@ -56,8 +56,10 @@ class Ed25519Key(PKey):
     .. versionchanged:: 2.3
         Added a ``file_obj`` parameter to match other key classes.
     """
-    def __init__(self, msg=None, data=None, filename=None, password=None,
-                 file_obj=None):
+
+    def __init__(
+        self, msg=None, data=None, filename=None, password=None, file_obj=None
+    ):
         self.public_blob = None
         verifying_key = signing_key = None
         if msg is None and data is not None:

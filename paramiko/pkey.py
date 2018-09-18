@@ -361,11 +361,11 @@ class PKey(object):
         else:
             encryption = serialization.BestAvailableEncryption(b(password))
 
-        f.write(key.private_bytes(
-            serialization.Encoding.PEM,
-            format,
-            encryption
-        ).decode())
+        f.write(
+            key.private_bytes(
+                serialization.Encoding.PEM, format, encryption
+            ).decode()
+        )
 
     def _check_type_and_load_cert(self, msg, key_type, cert_type):
         """
@@ -388,7 +388,7 @@ class PKey(object):
             cert_types = [cert_types]
         # Can't do much with no message, that should've been handled elsewhere
         if msg is None:
-            raise SSHException('Key object may not be empty')
+            raise SSHException("Key object may not be empty")
         # First field is always key type, in either kind of object. (make sure
         # we rewind before grabbing it - sometimes caller had to do their own
         # introspection first!)
@@ -411,7 +411,7 @@ class PKey(object):
             # (requires going back into per-type subclasses.)
             msg.get_string()
         else:
-            err = 'Invalid key (class: {0}, data type: {1}'
+            err = "Invalid key (class: {0}, data type: {1}"
             raise SSHException(err.format(self.__class__.__name__, type_))
 
     def load_certificate(self, value):
@@ -434,11 +434,11 @@ class PKey(object):
         successfully.
         """
         if isinstance(value, Message):
-            constructor = 'from_message'
+            constructor = "from_message"
         elif os.path.isfile(value):
-            constructor = 'from_file'
+            constructor = "from_file"
         else:
-            constructor = 'from_string'
+            constructor = "from_string"
         blob = getattr(PublicBlob, constructor)(value)
         if not blob.key_type.startswith(self.get_name()):
             err = "PublicBlob type {0} incompatible with key type {1}"
@@ -464,6 +464,7 @@ class PublicBlob(object):
         `from_message` for useful instantiation, the main constructor is
         basically "I should be using ``attrs`` for this."
     """
+
     def __init__(self, type_, blob, comment=None):
         """
         Create a new public blob of given type and contents.
@@ -505,7 +506,7 @@ class PublicBlob(object):
         m = Message(key_blob)
         blob_type = m.get_text()
         if blob_type != key_type:
-            msg = "Invalid PublicBlob contents: key type={0!r}, but blob type={1!r}" # noqa
+            msg = "Invalid PublicBlob contents: key type={0!r}, but blob type={1!r}"  # noqa
             raise ValueError(msg.format(key_type, blob_type))
         # All good? All good.
         return cls(type_=key_type, blob=key_blob, comment=comment)
@@ -522,7 +523,7 @@ class PublicBlob(object):
         return cls(type_=type_, blob=message.asbytes())
 
     def __str__(self):
-        ret = '{0} public key/certificate'.format(self.key_type)
+        ret = "{0} public key/certificate".format(self.key_type)
         if self.comment:
             ret += "- {0}".format(self.comment)
         return ret

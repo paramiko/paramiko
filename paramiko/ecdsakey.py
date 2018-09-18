@@ -139,21 +139,18 @@ class ECDSAKey(PKey):
             # identifier, so strip out any cert business. (NOTE: could push
             # that into _ECDSACurveSet.get_by_key_format_identifier(), but it
             # feels more correct to do it here?)
-            suffix = '-cert-v01@openssh.com'
+            suffix = "-cert-v01@openssh.com"
             if key_type.endswith(suffix):
-                key_type = key_type[:-len(suffix)]
+                key_type = key_type[: -len(suffix)]
             self.ecdsa_curve = self._ECDSA_CURVES.get_by_key_format_identifier(
                 key_type
             )
             key_types = self._ECDSA_CURVES.get_key_format_identifier_list()
             cert_types = [
-                '{0}-cert-v01@openssh.com'.format(x)
-                for x in key_types
+                "{0}-cert-v01@openssh.com".format(x) for x in key_types
             ]
             self._check_type_and_load_cert(
-                msg=msg,
-                key_type=key_types,
-                cert_type=cert_types,
+                msg=msg, key_type=key_types, cert_type=cert_types
             )
             curvename = msg.get_text()
             if curvename != self.ecdsa_curve.nist_name:

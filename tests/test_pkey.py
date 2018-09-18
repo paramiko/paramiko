@@ -488,7 +488,7 @@ class KeyTest(unittest.TestCase):
         # No exception -> it's good. Meh.
 
     def test_ed25519_load_from_file_obj(self):
-        with open(_support('test_ed25519.key')) as pkey_fileobj:
+        with open(_support("test_ed25519.key")) as pkey_fileobj:
             key = Ed25519Key.from_private_key(pkey_fileobj)
         self.assertEqual(key, key)
         self.assertTrue(key.can_sign())
@@ -513,19 +513,21 @@ class KeyTest(unittest.TestCase):
         # test_client.py; this and nearby cert tests are more about the gritty
         # details.
         # PKey.load_certificate
-        key_path = _support(os.path.join('cert_support', 'test_rsa.key'))
+        key_path = _support(os.path.join("cert_support", "test_rsa.key"))
         key = RSAKey.from_private_key_file(key_path)
         self.assertTrue(key.public_blob is None)
         cert_path = _support(
-            os.path.join('cert_support', 'test_rsa.key-cert.pub')
+            os.path.join("cert_support", "test_rsa.key-cert.pub")
         )
         key.load_certificate(cert_path)
         self.assertTrue(key.public_blob is not None)
-        self.assertEqual(key.public_blob.key_type, 'ssh-rsa-cert-v01@openssh.com')
-        self.assertEqual(key.public_blob.comment, 'test_rsa.key.pub')
+        self.assertEqual(
+            key.public_blob.key_type, "ssh-rsa-cert-v01@openssh.com"
+        )
+        self.assertEqual(key.public_blob.comment, "test_rsa.key.pub")
         # Delve into blob contents, for test purposes
         msg = Message(key.public_blob.key_blob)
-        self.assertEqual(msg.get_text(), 'ssh-rsa-cert-v01@openssh.com')
+        self.assertEqual(msg.get_text(), "ssh-rsa-cert-v01@openssh.com")
         nonce = msg.get_string()
         e = msg.get_mpint()
         n = msg.get_mpint()
@@ -535,10 +537,10 @@ class KeyTest(unittest.TestCase):
         self.assertEqual(msg.get_int64(), 1234)
 
         # Prevented from loading certificate that doesn't match
-        key_path = _support(os.path.join('cert_support', 'test_ed25519.key'))
+        key_path = _support(os.path.join("cert_support", "test_ed25519.key"))
         key1 = Ed25519Key.from_private_key_file(key_path)
         self.assertRaises(
             ValueError,
             key1.load_certificate,
-            _support('test_rsa.key-cert.pub'),
+            _support("test_rsa.key-cert.pub"),
         )

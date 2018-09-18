@@ -71,8 +71,8 @@ class DSSKey(PKey):
         else:
             self._check_type_and_load_cert(
                 msg=msg,
-                key_type='ssh-dss',
-                cert_type='ssh-dss-cert-v01@openssh.com',
+                key_type="ssh-dss",
+                cert_type="ssh-dss-cert-v01@openssh.com",
             )
             self.p = msg.get_mpint()
             self.q = msg.get_mpint()

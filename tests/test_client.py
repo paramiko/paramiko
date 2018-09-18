@@ -52,9 +52,9 @@ FINGERPRINTS = {
 class NullServer(paramiko.ServerInterface):
     def __init__(self, *args, **kwargs):
         # Allow tests to enable/disable specific key types
-        self.__allowed_keys = kwargs.pop('allowed_keys', [])
+        self.__allowed_keys = kwargs.pop("allowed_keys", [])
         # And allow them to set a (single...meh) expected public blob (cert)
-        self.__expected_public_blob = kwargs.pop('public_blob', None)
+        self.__expected_public_blob = kwargs.pop("public_blob", None)
         super(NullServer, self).__init__(*args, **kwargs)
 
     def get_allowed_auths(self, username):
@@ -77,13 +77,13 @@ class NullServer(paramiko.ServerInterface):
             return paramiko.AUTH_FAILED
         # Base check: allowed auth type & fingerprint matches
         happy = (
-            key.get_name() in self.__allowed_keys and
-            key.get_fingerprint() == expected
+            key.get_name() in self.__allowed_keys
+            and key.get_fingerprint() == expected
         )
         # Secondary check: if test wants assertions about cert data
         if (
-            self.__expected_public_blob is not None and
-            key.public_blob != self.__expected_public_blob
+            self.__expected_public_blob is not None
+            and key.public_blob != self.__expected_public_blob
         ):
             happy = False
         return paramiko.AUTH_SUCCESSFUL if happy else paramiko.AUTH_FAILED
@@ -150,7 +150,7 @@ class SSHClientTest(unittest.TestCase):
         ``NullServer`` used for testing.
         """
         run_kwargs = {}
-        for key in ('allowed_keys', 'public_blob'):
+        for key in ("allowed_keys", "public_blob"):
             run_kwargs[key] = kwargs.pop(key, None)
         # Server setup
         threading.Thread(target=self._run, kwargs=run_kwargs).start()
@@ -270,9 +270,9 @@ class SSHClientTest(unittest.TestCase):
         # They're similar except for which path is given; the expected auth and
         # server-side behavior is 100% identical.)
         # NOTE: only bothered whipping up one cert per overall class/family.
-        for type_ in ('rsa', 'dss', 'ecdsa_256', 'ed25519'):
-            cert_name = 'test_{0}.key-cert.pub'.format(type_)
-            cert_path = _support(os.path.join('cert_support', cert_name))
+        for type_ in ("rsa", "dss", "ecdsa_256", "ed25519"):
+            cert_name = "test_{0}.key-cert.pub".format(type_)
+            cert_path = _support(os.path.join("cert_support", cert_name))
             self._test_connection(
                 key_filename=cert_path,
                 public_blob=PublicBlob.from_file(cert_path),
@@ -285,13 +285,13 @@ class SSHClientTest(unittest.TestCase):
         # about the server-side key object's public blob. Thus, we can prove
         # that a specific cert was found, along with regular authorization
         # succeeding proving that the overall flow works.
-        for type_ in ('rsa', 'dss', 'ecdsa_256', 'ed25519'):
-            key_name = 'test_{0}.key'.format(type_)
-            key_path = _support(os.path.join('cert_support', key_name))
+        for type_ in ("rsa", "dss", "ecdsa_256", "ed25519"):
+            key_name = "test_{0}.key".format(type_)
+            key_path = _support(os.path.join("cert_support", key_name))
             self._test_connection(
                 key_filename=key_path,
                 public_blob=PublicBlob.from_file(
-                    '{0}-cert.pub'.format(key_path)
+                    "{0}-cert.pub".format(key_path)
                 ),
             )
 

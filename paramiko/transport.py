@@ -244,18 +244,18 @@ class Transport(threading.Thread, ClosingContextManager):
     }
 
     _key_info = {
-        'ssh-rsa': RSAKey,
-        'ssh-rsa-cert-v01@openssh.com': RSAKey,
-        'ssh-dss': DSSKey,
-        'ssh-dss-cert-v01@openssh.com': DSSKey,
-        'ecdsa-sha2-nistp256': ECDSAKey,
-        'ecdsa-sha2-nistp256-cert-v01@openssh.com': ECDSAKey,
-        'ecdsa-sha2-nistp384': ECDSAKey,
-        'ecdsa-sha2-nistp384-cert-v01@openssh.com': ECDSAKey,
-        'ecdsa-sha2-nistp521': ECDSAKey,
-        'ecdsa-sha2-nistp521-cert-v01@openssh.com': ECDSAKey,
-        'ssh-ed25519': Ed25519Key,
-        'ssh-ed25519-cert-v01@openssh.com': Ed25519Key,
+        "ssh-rsa": RSAKey,
+        "ssh-rsa-cert-v01@openssh.com": RSAKey,
+        "ssh-dss": DSSKey,
+        "ssh-dss-cert-v01@openssh.com": DSSKey,
+        "ecdsa-sha2-nistp256": ECDSAKey,
+        "ecdsa-sha2-nistp256-cert-v01@openssh.com": ECDSAKey,
+        "ecdsa-sha2-nistp384": ECDSAKey,
+        "ecdsa-sha2-nistp384-cert-v01@openssh.com": ECDSAKey,
+        "ecdsa-sha2-nistp521": ECDSAKey,
+        "ecdsa-sha2-nistp521-cert-v01@openssh.com": ECDSAKey,
+        "ssh-ed25519": Ed25519Key,
+        "ssh-ed25519-cert-v01@openssh.com": Ed25519Key,
     }
 
     _kex_info = {
@@ -340,7 +340,7 @@ class Transport(threading.Thread, ClosingContextManager):
 
         if isinstance(sock, string_types):
             # convert "host:port" into (host, port)
-            hl = sock.split(':', 1)
+            hl = sock.split(":", 1)
             self.hostname = hl[0]
             if len(hl) == 1:
                 sock = (hl[0], 22)
@@ -350,7 +350,7 @@ class Transport(threading.Thread, ClosingContextManager):
             # connect to the given (host, port)
             hostname, port = sock
             self.hostname = hostname
-            reason = 'No suitable address family'
+            reason = "No suitable address family"
             addrinfos = socket.getaddrinfo(
                 hostname, port, socket.AF_UNSPEC, socket.SOCK_STREAM
             )
@@ -1236,9 +1236,11 @@ class Transport(threading.Thread, ClosingContextManager):
 
         if (pkey is not None) or (password is not None) or gss_auth or gss_kex:
             if gss_auth:
-                self._log(DEBUG, 'Attempting GSS-API auth... (gssapi-with-mic)') # noqa
+                self._log(
+                    DEBUG, "Attempting GSS-API auth... (gssapi-with-mic)"
+                )  # noqa
                 self.auth_gssapi_with_mic(
-                    username, self.gss_host, gss_deleg_creds,
+                    username, self.gss_host, gss_deleg_creds
                 )
             elif gss_kex:
                 self._log(DEBUG, "Attempting GSS-API auth... (gssapi-keyex)")
@@ -2006,7 +2008,11 @@ class Transport(threading.Thread, ClosingContextManager):
                                 % chanid,
                             )  # noqa
                         else:
-                            self._log(ERROR, 'Channel request for unknown channel %d' % chanid) # noqa
+                            self._log(
+                                ERROR,
+                                "Channel request for unknown channel %d"
+                                % chanid,
+                            )  # noqa
                             break
                     elif (
                         self.auth_handler is not None

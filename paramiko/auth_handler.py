@@ -46,6 +46,7 @@ from paramiko.common import (
     MSG_USERAUTH_REQUEST,
     MSG_USERAUTH_SUCCESS,
     MSG_USERAUTH_FAILURE,
+    cMSG_USERAUTH_BANNER,
     MSG_USERAUTH_BANNER,
     MSG_USERAUTH_INFO_REQUEST,
     MSG_USERAUTH_INFO_RESPONSE,
@@ -508,7 +509,7 @@ class AuthHandler(object):
                 )
                 key = None
             except Exception as e:
-                msg = 'Auth rejected: unsupported or mangled public key ({0}: {1})' # noqa
+                msg = "Auth rejected: unsupported or mangled public key ({0}: {1})"  # noqa
                 self.transport._log(INFO, msg.format(e.__class__.__name__, e))
                 key = None
             if key is None:

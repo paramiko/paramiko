@@ -593,6 +593,7 @@ class ServerInterface(object):
         """
         return (None, None)
 
+
 class InteractiveQuery(object):
     """
     A query (set of prompts) for a user during interactive authentication.

@@ -7,7 +7,6 @@ from invocations import travis
 from invocations.checks import blacken
 from invocations.docs import docs, www, sites
 from invocations.packaging.release import ns as release_coll, publish
-from invocations.testing import count_errors
 
 
 # TODO: this screams out for the invoke missing-feature of "I just wrap task X,
