@@ -85,7 +85,7 @@ class NullServer(ServerInterface):
             return AUTH_SUCCESSFUL
         if username == "bad-server":
             raise Exception("Ack!")
-        if username == 'unresponsive-server':
+        if username == "unresponsive-server":
             sleep(5)
             return AUTH_SUCCESSFUL
         return AUTH_FAILED
@@ -264,8 +264,8 @@ class AuthTest(unittest.TestCase):
         self.start_server()
         self.tc.connect()
         try:
-            remain = self.tc.auth_password('unresponsive-server', 'hello')
+            remain = self.tc.auth_password("unresponsive-server", "hello")
         except:
             etype, evalue, etb = sys.exc_info()
             self.assertTrue(issubclass(etype, AuthenticationException))
-            self.assertTrue('Authentication timeout' in str(evalue))
+            self.assertTrue("Authentication timeout" in str(evalue))

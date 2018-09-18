@@ -168,7 +168,6 @@ class StubSFTPServer(SFTPServerInterface):
             return SFTPServer.convert_errno(e.errno)
         return SFTP_OK
 
-
     def mkdir(self, path, attr):
         path = self._realpath(path)
         try:

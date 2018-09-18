@@ -160,21 +160,21 @@ class Transport(threading.Thread, ClosingContextManager):
         "hmac-md5-96",
     )
     _preferred_keys = (
-        'ssh-ed25519',
-        'ecdsa-sha2-nistp256',
-        'ecdsa-sha2-nistp384',
-        'ecdsa-sha2-nistp521',
-        'ssh-rsa',
-        'ssh-dss',
+        "ssh-ed25519",
+        "ecdsa-sha2-nistp256",
+        "ecdsa-sha2-nistp384",
+        "ecdsa-sha2-nistp521",
+        "ssh-rsa",
+        "ssh-dss",
     )
     _preferred_kex = (
-        'ecdh-sha2-nistp256',
-        'ecdh-sha2-nistp384',
-        'ecdh-sha2-nistp521',
-        'diffie-hellman-group-exchange-sha256',
-        'diffie-hellman-group-exchange-sha1',
-        'diffie-hellman-group14-sha1',
-        'diffie-hellman-group1-sha1',
+        "ecdh-sha2-nistp256",
+        "ecdh-sha2-nistp384",
+        "ecdh-sha2-nistp521",
+        "diffie-hellman-group-exchange-sha256",
+        "diffie-hellman-group-exchange-sha1",
+        "diffie-hellman-group14-sha1",
+        "diffie-hellman-group1-sha1",
     )
     _preferred_gsskex = (
         "gss-gex-sha1-toWM5Slw5Ew8Mqkay+al2g==",
@@ -244,25 +244,25 @@ class Transport(threading.Thread, ClosingContextManager):
     }
 
     _key_info = {
-        'ssh-rsa': RSAKey,
-        'ssh-dss': DSSKey,
-        'ecdsa-sha2-nistp256': ECDSAKey,
-        'ecdsa-sha2-nistp384': ECDSAKey,
-        'ecdsa-sha2-nistp521': ECDSAKey,
-        'ssh-ed25519': Ed25519Key,
+        "ssh-rsa": RSAKey,
+        "ssh-dss": DSSKey,
+        "ecdsa-sha2-nistp256": ECDSAKey,
+        "ecdsa-sha2-nistp384": ECDSAKey,
+        "ecdsa-sha2-nistp521": ECDSAKey,
+        "ssh-ed25519": Ed25519Key,
     }
 
     _kex_info = {
-        'diffie-hellman-group1-sha1': KexGroup1,
-        'diffie-hellman-group14-sha1': KexGroup14,
-        'diffie-hellman-group-exchange-sha1': KexGex,
-        'diffie-hellman-group-exchange-sha256': KexGexSHA256,
-        'gss-group1-sha1-toWM5Slw5Ew8Mqkay+al2g==': KexGSSGroup1,
-        'gss-group14-sha1-toWM5Slw5Ew8Mqkay+al2g==': KexGSSGroup14,
-        'gss-gex-sha1-toWM5Slw5Ew8Mqkay+al2g==': KexGSSGex,
-        'ecdh-sha2-nistp256': KexNistp256,
-        'ecdh-sha2-nistp384': KexNistp384,
-        'ecdh-sha2-nistp521': KexNistp521,
+        "diffie-hellman-group1-sha1": KexGroup1,
+        "diffie-hellman-group14-sha1": KexGroup14,
+        "diffie-hellman-group-exchange-sha1": KexGex,
+        "diffie-hellman-group-exchange-sha256": KexGexSHA256,
+        "gss-group1-sha1-toWM5Slw5Ew8Mqkay+al2g==": KexGSSGroup1,
+        "gss-group14-sha1-toWM5Slw5Ew8Mqkay+al2g==": KexGSSGroup14,
+        "gss-gex-sha1-toWM5Slw5Ew8Mqkay+al2g==": KexGSSGex,
+        "ecdh-sha2-nistp256": KexNistp256,
+        "ecdh-sha2-nistp384": KexNistp384,
+        "ecdh-sha2-nistp521": KexNistp521,
     }
 
     _compression_info = {

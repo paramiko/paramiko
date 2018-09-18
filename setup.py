@@ -75,9 +75,9 @@ setup(
         "Programming Language :: Python :: 3.6",
     ],
     install_requires=[
-        'bcrypt>=3.1.3',
-        'cryptography>=1.1',
-        'pynacl>=1.0.1',
-        'pyasn1>=0.1.7',
+        "bcrypt>=3.1.3",
+        "cryptography>=1.1",
+        "pynacl>=1.0.1",
+        "pyasn1>=0.1.7",
     ],
 )

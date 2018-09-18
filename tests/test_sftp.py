@@ -189,34 +189,35 @@ class TestSFTP(object):
         """Test posix-rename@openssh.com protocol extension."""
         try:
             # first check that the normal rename works as specified
-            with sftp.open(sftp.FOLDER + '/a', 'w') as f:
-                f.write('one')
-            sftp.rename(sftp.FOLDER + '/a', sftp.FOLDER + '/b')
-            with sftp.open(sftp.FOLDER + '/a', 'w') as f:
-                f.write('two')
+            with sftp.open(sftp.FOLDER + "/a", "w") as f:
+                f.write("one")
+            sftp.rename(sftp.FOLDER + "/a", sftp.FOLDER + "/b")
+            with sftp.open(sftp.FOLDER + "/a", "w") as f:
+                f.write("two")
             try:
-                sftp.rename(sftp.FOLDER + '/a', sftp.FOLDER + '/b')
-                self.assertTrue(False, 'no exception when rename-ing onto existing file')
+                sftp.rename(sftp.FOLDER + "/a", sftp.FOLDER + "/b")
+                self.assertTrue(
+                    False, "no exception when rename-ing onto existing file"
+                )
             except (OSError, IOError):
                 pass
 
             # now check with the posix_rename
-            sftp.posix_rename(sftp.FOLDER + '/a', sftp.FOLDER + '/b')
-            with sftp.open(sftp.FOLDER + '/b', 'r') as f:
+            sftp.posix_rename(sftp.FOLDER + "/a", sftp.FOLDER + "/b")
+            with sftp.open(sftp.FOLDER + "/b", "r") as f:
                 data = u(f.read())
             err = "Contents of renamed file not the same as original file"
             assert data == "two", err
 
         finally:
             try:
-                sftp.remove(sftp.FOLDER + '/a')
+                sftp.remove(sftp.FOLDER + "/a")
             except:
                 pass
             try:
-                sftp.remove(sftp.FOLDER + '/b')
+                sftp.remove(sftp.FOLDER + "/b")
             except:
                 pass
-
 
     def test_6_folder(self, sftp):
         """

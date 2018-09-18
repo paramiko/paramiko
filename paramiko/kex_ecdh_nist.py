@@ -15,7 +15,7 @@ _MSG_KEXECDH_INIT, _MSG_KEXECDH_REPLY = range(30, 32)
 c_MSG_KEXECDH_INIT, c_MSG_KEXECDH_REPLY = [byte_chr(c) for c in range(30, 32)]
 
 
-class KexNistp256():
+class KexNistp256:
 
     name = "ecdh-sha2-nistp256"
     hash_algo = sha256
@@ -45,7 +45,7 @@ class KexNistp256():
             return self._parse_kexecdh_init(m)
         elif not self.transport.server_mode and (ptype == _MSG_KEXECDH_REPLY):
             return self._parse_kexecdh_reply(m)
-        raise SSHException('KexECDH asked to handle packet type %d' % ptype)
+        raise SSHException("KexECDH asked to handle packet type %d" % ptype)
 
     def _generate_key_pair(self):
         self.P = ec.generate_private_key(self.curve, default_backend())
@@ -64,8 +64,12 @@ class KexNistp256():
         K = long(hexlify(K), 16)
         # compute exchange hash
         hm = Message()
-        hm.add(self.transport.remote_version, self.transport.local_version,
-               self.transport.remote_kex_init, self.transport.local_kex_init)
+        hm.add(
+            self.transport.remote_version,
+            self.transport.local_version,
+            self.transport.remote_kex_init,
+            self.transport.local_kex_init,
+        )
         hm.add_string(K_S)
         hm.add_string(Q_C_bytes)
         # SEC1: V2.0  2.3.3 Elliptic-Curve-Point-to-Octet-String Conversion
@@ -94,8 +98,12 @@ class KexNistp256():
         K = long(hexlify(K), 16)
         # compute exchange hash and verify signature
         hm = Message()
-        hm.add(self.transport.local_version, self.transport.remote_version,
-               self.transport.local_kex_init, self.transport.remote_kex_init)
+        hm.add(
+            self.transport.local_version,
+            self.transport.remote_version,
+            self.transport.local_kex_init,
+            self.transport.remote_kex_init,
+        )
         hm.add_string(K_S)
         # SEC1: V2.0  2.3.3 Elliptic-Curve-Point-to-Octet-String Conversion
         hm.add_string(self.Q_C.public_numbers().encode_point())

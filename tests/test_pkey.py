@@ -462,15 +462,15 @@ class KeyTest(unittest.TestCase):
         self.assertEqual(str(key), comparable)
 
     def test_ed25519(self):
-        key1 = Ed25519Key.from_private_key_file(_support('test_ed25519.key'))
+        key1 = Ed25519Key.from_private_key_file(_support("test_ed25519.key"))
         key2 = Ed25519Key.from_private_key_file(
-            _support('test_ed25519_password.key'), b'abc123'
+            _support("test_ed25519_password.key"), b"abc123"
         )
         self.assertNotEqual(key1.asbytes(), key2.asbytes())
 
     def test_ed25519_compare(self):
         # verify that the private & public keys compare equal
-        key = Ed25519Key.from_private_key_file(_support('test_ed25519.key'))
+        key = Ed25519Key.from_private_key_file(_support("test_ed25519.key"))
         self.assertEqual(key, key)
         pub = Ed25519Key(data=key.asbytes())
         self.assertTrue(key.can_sign())
@@ -480,10 +480,10 @@ class KeyTest(unittest.TestCase):
     def test_ed25519_nonbytes_password(self):
         # https://github.com/paramiko/paramiko/issues/1039
         key = Ed25519Key.from_private_key_file(
-            _support('test_ed25519_password.key'),
+            _support("test_ed25519_password.key"),
             # NOTE: not a bytes. Amusingly, the test above for same key DOES
             # explicitly cast to bytes...code smell!
-            'abc123',
+            "abc123",
         )
         # No exception -> it's good. Meh.
 

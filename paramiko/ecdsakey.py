@@ -179,8 +179,13 @@ class ECDSAKey(PKey):
         return self.asbytes()
 
     def __hash__(self):
-        return hash((self.get_name(), self.verifying_key.public_numbers().x,
-                     self.verifying_key.public_numbers().y))
+        return hash(
+            (
+                self.get_name(),
+                self.verifying_key.public_numbers().x,
+                self.verifying_key.public_numbers().y,
+            )
+        )
 
     def get_name(self):
         return self.ecdsa_curve.key_format_identifier

@@ -228,7 +228,7 @@ class AuthHandler(object):
             if event.is_set():
                 break
             if max_ts is not None and max_ts <= time.time():
-                raise AuthenticationException('Authentication timeout.')
+                raise AuthenticationException("Authentication timeout.")
 
         if not self.is_authenticated():
             e = self.transport.get_exception()

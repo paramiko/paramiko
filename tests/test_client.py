@@ -41,10 +41,10 @@ from .util import _support, slow
 
 
 FINGERPRINTS = {
-    'ssh-dss': b'\x44\x78\xf0\xb9\xa2\x3c\xc5\x18\x20\x09\xff\x75\x5b\xc1\xd2\x6c',
-    'ssh-rsa': b'\x60\x73\x38\x44\xcb\x51\x86\x65\x7f\xde\xda\xa2\x2b\x5a\x57\xd5',
-    'ecdsa-sha2-nistp256': b'\x25\x19\xeb\x55\xe6\xa1\x47\xff\x4f\x38\xd2\x75\x6f\xa5\xd5\x60',
-    'ssh-ed25519': b'\xb3\xd5"\xaa\xf9u^\xe8\xcd\x0e\xea\x02\xb9)\xa2\x80',
+    "ssh-dss": b"\x44\x78\xf0\xb9\xa2\x3c\xc5\x18\x20\x09\xff\x75\x5b\xc1\xd2\x6c",
+    "ssh-rsa": b"\x60\x73\x38\x44\xcb\x51\x86\x65\x7f\xde\xda\xa2\x2b\x5a\x57\xd5",
+    "ecdsa-sha2-nistp256": b"\x25\x19\xeb\x55\xe6\xa1\x47\xff\x4f\x38\xd2\x75\x6f\xa5\xd5\x60",
+    "ssh-ed25519": b'\xb3\xd5"\xaa\xf9u^\xe8\xcd\x0e\xea\x02\xb9)\xa2\x80',
 }
 
 
@@ -62,7 +62,7 @@ class NullServer(paramiko.ServerInterface):
     def check_auth_password(self, username, password):
         if (username == "slowdive") and (password == "pygmalion"):
             return paramiko.AUTH_SUCCESSFUL
-        if (username == 'slowdive') and (password == 'unresponsive-server'):
+        if (username == "slowdive") and (password == "unresponsive-server"):
             time.sleep(5)
             return paramiko.AUTH_SUCCESSFUL
         return paramiko.AUTH_FAILED
@@ -208,7 +208,7 @@ class SSHClientTest(unittest.TestCase):
         self._test_connection(key_filename=_support("test_ecdsa_256.key"))
 
     def test_client_ed25519(self):
-        self._test_connection(key_filename=_support('test_ed25519.key'))
+        self._test_connection(key_filename=_support("test_ed25519.key"))
 
     def test_3_multiple_key_files(self):
         """
@@ -408,7 +408,7 @@ class SSHClientTest(unittest.TestCase):
         self.assertRaises(
             AuthenticationException,
             self._test_connection,
-            password='unresponsive-server',
+            password="unresponsive-server",
             auth_timeout=0.5,
         )
 
