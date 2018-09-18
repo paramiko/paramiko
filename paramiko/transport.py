@@ -536,9 +536,8 @@ class Transport(threading.Thread, ClosingContextManager):
                 if e is not None:
                     raise e
                 raise SSHException("Negotiation failed.")
-            if (
-                event.is_set() or
-                (timeout is not None and time.time() >= max_time)
+            if event.is_set() or (
+                timeout is not None and time.time() >= max_time
             ):
                 break
 
@@ -2225,10 +2224,10 @@ class Transport(threading.Thread, ClosingContextManager):
             )  # noqa
         self.host_key_type = agreed_keys[0]
         if self.server_mode and (self.get_server_key() is None):
-            raise SSHException('Incompatible ssh peer (can\'t match requested host key type)') # noqa
-        self._log_agreement(
-            'HostKey', agreed_keys[0], agreed_keys[0]
-        )
+            raise SSHException(
+                "Incompatible ssh peer (can't match requested host key type)"
+            )  # noqa
+        self._log_agreement("HostKey", agreed_keys[0], agreed_keys[0])
 
         if self.server_mode:
             agreed_local_ciphers = list(

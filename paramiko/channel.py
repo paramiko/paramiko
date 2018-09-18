@@ -329,7 +329,7 @@ class Channel(ClosingContextManager):
             try:
                 self.set_environment_variable(name, value)
             except SSHException as e:
-                err = "Failed to set environment variable \"{0}\"."
+                err = 'Failed to set environment variable "{0}".'
                 raise SSHException(err.format(name), e)
 
     @open_only
@@ -353,7 +353,7 @@ class Channel(ClosingContextManager):
         m = Message()
         m.add_byte(cMSG_CHANNEL_REQUEST)
         m.add_int(self.remote_chanid)
-        m.add_string('env')
+        m.add_string("env")
         m.add_boolean(False)
         m.add_string(name)
         m.add_string(value)
