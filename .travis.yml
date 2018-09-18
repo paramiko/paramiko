@@ -15,22 +15,28 @@ python:
 matrix:
   allow_failures:
     - python: "3.7-dev"
-    - python: "pypy-5.6.0"
 install:
   # Ensure modern pip/etc on Python 3.3 workers (not sure WTF, but, eh)
   - pip install pip==9.0.1 setuptools==36.6.0
   # Self-install for setup.py-driven deps
   - pip install -e .
   # Dev (doc/test running) requirements
+  # TODO: use pipenv + whatever contexty-type stuff it has
   - pip install codecov # For codecov specifically
   - pip install -r dev-requirements.txt
-script:
-  # Main tests, w/ coverage!
-  - inv test --coverage
-  # Ensure documentation builds, both sites, maxxed nitpicking
-  - inv sites
-  # flake8 is now possible!
-  - flake8
+script: |
+  # NOTE: the below hilarity should only exist in 2.0-2.3, 2.4+ should've gone
+  # back to vague normalcy!
+  if [[ $TRAVIS_PYTHON_VERSION == '2.6' || $TRAVIS_PYTHON_VERSION == '3.3' ]];
+  then
+    flake8
+    coverage run --source=paramiko -m pytest
+  else
+    inv travis.blacken
+    flake8
+    inv coverage
+    inv sites
+  fi
 notifications:
   irc:
     channels: "irc.freenode.org#paramiko"

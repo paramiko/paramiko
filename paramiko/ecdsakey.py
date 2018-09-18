@@ -25,7 +25,8 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives.asymmetric.utils import (
-    decode_dss_signature, encode_dss_signature
+    decode_dss_signature,
+    encode_dss_signature,
 )
 
 from paramiko.common import four_byte
@@ -43,6 +44,7 @@ class _ECDSACurve(object):
     the proper hash function. Also grabs the proper curve from the 'ecdsa'
     package.
     """
+
     def __init__(self, curve_class, nist_name):
         self.nist_name = nist_name
         self.key_length = curve_class.key_size
@@ -67,6 +69,7 @@ class _ECDSACurveSet(object):
     format identifier. The two ways in which ECDSAKey needs to be able to look
     up curves.
     """
+
     def __init__(self, ecdsa_curves):
         self.ecdsa_curves = ecdsa_curves
 
@@ -95,14 +98,24 @@ class ECDSAKey(PKey):
     data.
     """
 
-    _ECDSA_CURVES = _ECDSACurveSet([
-        _ECDSACurve(ec.SECP256R1, 'nistp256'),
-        _ECDSACurve(ec.SECP384R1, 'nistp384'),
-        _ECDSACurve(ec.SECP521R1, 'nistp521'),
-    ])
+    _ECDSA_CURVES = _ECDSACurveSet(
+        [
+            _ECDSACurve(ec.SECP256R1, "nistp256"),
+            _ECDSACurve(ec.SECP384R1, "nistp384"),
+            _ECDSACurve(ec.SECP521R1, "nistp521"),
+        ]
+    )
 
-    def __init__(self, msg=None, data=None, filename=None, password=None,
-                 vals=None, file_obj=None, validate_point=True):
+    def __init__(
+        self,
+        msg=None,
+        data=None,
+        filename=None,
+        password=None,
+        vals=None,
+        file_obj=None,
+        validate_point=True,
+    ):
         self.verifying_key = None
         self.signing_key = None
         if file_obj is not None:
@@ -119,11 +132,12 @@ class ECDSAKey(PKey):
             self.ecdsa_curve = self._ECDSA_CURVES.get_by_curve_class(c_class)
         else:
             if msg is None:
-                raise SSHException('Key object may not be empty')
+                raise SSHException("Key object may not be empty")
             self.ecdsa_curve = self._ECDSA_CURVES.get_by_key_format_identifier(
-                msg.get_text())
+                msg.get_text()
+            )
             if self.ecdsa_curve is None:
-                raise SSHException('Invalid key')
+                raise SSHException("Invalid key")
             curvename = msg.get_text()
             if curvename != self.ecdsa_curve.nist_name:
                 raise SSHException("Can't handle curve of type %s" % curvename)
@@ -152,10 +166,10 @@ class ECDSAKey(PKey):
         key_size_bytes = (key.curve.key_size + 7) // 8
 
         x_bytes = deflate_long(numbers.x, add_sign_padding=False)
-        x_bytes = b'\x00' * (key_size_bytes - len(x_bytes)) + x_bytes
+        x_bytes = b"\x00" * (key_size_bytes - len(x_bytes)) + x_bytes
 
         y_bytes = deflate_long(numbers.y, add_sign_padding=False)
-        y_bytes = b'\x00' * (key_size_bytes - len(y_bytes)) + y_bytes
+        y_bytes = b"\x00" * (key_size_bytes - len(y_bytes)) + y_bytes
 
         point_str = four_byte + x_bytes + y_bytes
         m.add_string(point_str)
@@ -212,7 +226,7 @@ class ECDSAKey(PKey):
             filename,
             self.signing_key,
             serialization.PrivateFormat.TraditionalOpenSSL,
-            password=password
+            password=password,
         )
 
     def write_private_key(self, file_obj, password=None):
@@ -220,7 +234,7 @@ class ECDSAKey(PKey):
             file_obj,
             self.signing_key,
             serialization.PrivateFormat.TraditionalOpenSSL,
-            password=password
+            password=password,
         )
 
     @classmethod
@@ -244,11 +258,11 @@ class ECDSAKey(PKey):
     # ...internals...
 
     def _from_private_key_file(self, filename, password):
-        data = self._read_private_key_file('EC', filename, password)
+        data = self._read_private_key_file("EC", filename, password)
         self._decode_key(data)
 
     def _from_private_key(self, file_obj, password):
-        data = self._read_private_key('EC', file_obj, password)
+        data = self._read_private_key("EC", file_obj, password)
         self._decode_key(data)
 
     def _decode_key(self, data):
