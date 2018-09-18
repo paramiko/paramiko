@@ -28,14 +28,15 @@ import time
 from paramiko.py3compat import PY2, b
 
 
-class PipeTimeout (IOError):
+class PipeTimeout(IOError):
     """
     Indicates that a timeout was reached on a read from a `.BufferedPipe`.
     """
+
     pass
 
 
-class BufferedPipe (object):
+class BufferedPipe(object):
     """
     A buffer that obeys normal read (with timeout) & close semantics for a
     file or socket, but is fed data from another thread.  This is used by
@@ -46,16 +47,19 @@ class BufferedPipe (object):
         self._lock = threading.Lock()
         self._cv = threading.Condition(self._lock)
         self._event = None
-        self._buffer = array.array('B')
+        self._buffer = array.array("B")
         self._closed = False
 
     if PY2:
+
         def _buffer_frombytes(self, data):
             self._buffer.fromstring(data)
 
         def _buffer_tobytes(self, limit=None):
             return self._buffer[:limit].tostring()
+
     else:
+
         def _buffer_frombytes(self, data):
             self._buffer.frombytes(data)
 
