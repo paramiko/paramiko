@@ -470,7 +470,7 @@ class SSHClientTest(unittest.TestCase):
 
         self.tc = paramiko.SSHClient()
         self.tc.set_missing_host_key_policy(paramiko.RejectPolicy())
-        host_key = ktype.from_private_key_file(test_path(kfile))
+        host_key = ktype.from_private_key_file(_support(kfile))
         known_hosts = self.tc.get_host_keys()
         known_hosts.add(hostname, host_key.get_name(), host_key)
 
