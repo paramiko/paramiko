@@ -2030,7 +2030,7 @@ class Transport(threading.Thread, ClosingContextManager):
                         # itself literally MSG_UNIMPLEMENTED, in which case, we
                         # just shut up to avoid causing a useless loop).
                         name = MSG_NAMES[ptype]
-                        warning = "Oops, unhandled type {} ({!r})".format(
+                        warning = "Oops, unhandled type {0} ({1!r})".format(
                             ptype, name
                         )
                         self._log(WARNING, warning)
