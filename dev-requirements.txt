@@ -4,6 +4,7 @@ invocations>=1.2.0,<2.0
 # NOTE: pytest-relaxed currently only works with pytest >=3, <3.3
 pytest>=3.2,<3.3
 pytest-relaxed==1.1.2
+mock==2.0.0
 # Linting!
 flake8==2.4.0
 # Coverage!
