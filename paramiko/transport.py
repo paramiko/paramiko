@@ -51,6 +51,7 @@ from paramiko.common import (
     MSG_CHANNEL_WINDOW_ADJUST, MSG_CHANNEL_REQUEST, MSG_CHANNEL_EOF,
     MSG_CHANNEL_CLOSE, MIN_WINDOW_SIZE, MIN_PACKET_SIZE, MAX_WINDOW_SIZE,
     DEFAULT_WINDOW_SIZE, DEFAULT_MAX_PACKET_SIZE, HIGHEST_USERAUTH_MESSAGE_ID,
+    MSG_UNIMPLEMENTED, MSG_NAMES,
 )
 from paramiko.compress import ZlibCompressor, ZlibDecompressor
 from paramiko.dsskey import DSSKey
@@ -1950,12 +1951,20 @@ class Transport(threading.Thread, ClosingContextManager):
                         if len(self._expected_packet) > 0:
                             continue
                     else:
-                        err = 'Oops, unhandled type {:d}'.format(ptype)
-                        self._log(WARNING, err)
-                        msg = Message()
-                        msg.add_byte(cMSG_UNIMPLEMENTED)
-                        msg.add_int(m.seqno)
-                        self._send_message(msg)
+                        # Respond with "I don't implement this particular
+                        # message type" message (unless the message type was
+                        # itself literally MSG_UNIMPLEMENTED, in which case, we
+                        # just shut up to avoid causing a useless loop).
+                        name = MSG_NAMES[ptype]
+                        warning = "Oops, unhandled type {} ({!r})".format(
+                            ptype, name
+                        )
+                        self._log(WARNING, warning)
+                        if ptype != MSG_UNIMPLEMENTED:
+                            msg = Message()
+                            msg.add_byte(cMSG_UNIMPLEMENTED)
+                            msg.add_int(m.seqno)
+                            self._send_message(msg)
                     self.packetizer.complete_handshake()
             except SSHException as e:
                 self._log(ERROR, 'Exception: ' + str(e))

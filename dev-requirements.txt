@@ -9,3 +9,4 @@ twine>=1.11.0
 flake8==2.6.2
 pytest==3.2.1
 pytest_relaxed==1.0.0
+mock==2.0.0

@@ -2,6 +2,11 @@
 Changelog
 =========
 
+- :bug:`-` Modify protocol message handling such that ``Transport`` does not
+  respond to ``MSG_UNIMPLEMENTED`` with its own ``MSG_UNIMPLEMENTED``. This
+  behavior probably didn't cause any outright errors, but it doesn't seem to
+  conform to the RFCs and could cause (non-infinite) feedback loops in some
+  scenarios (usually those involving Paramiko on both ends).
 * :support:`1262 backported` Add ``*.pub`` files to the MANIFEST so distributed
   source packages contain some necessary test assets. Credit: Alexander
   Kapshuna.
