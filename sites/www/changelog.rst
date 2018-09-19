@@ -7,6 +7,17 @@ Changelog
   behavior probably didn't cause any outright errors, but it doesn't seem to
   conform to the RFCs and could cause (non-infinite) feedback loops in some
   scenarios (usually those involving Paramiko on both ends).
+- :bug:`1283` Fix exploit (CVE-2018-1000805) in Paramiko's server mode (**not**
+  client mode) where hostile clients could trick the server into thinking they
+  were authenticated without actually submitting valid authentication.
+
+  Specifically, steps have been taken to start separating client and server
+  related message types in the message handling tables within ``Transport`` and
+  ``AuthHandler``; this work is not complete but enough has been performed to
+  close off this particular exploit (which was the only obvious such exploit
+  for this particular channel).
+
+  Thanks to Daniel Hoffman for the detailed report.
 * :support:`1262 backported` Add ``*.pub`` files to the MANIFEST so distributed
   source packages contain some necessary test assets. Credit: Alexander
   Kapshuna.
