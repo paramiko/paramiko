@@ -2,15 +2,16 @@
 Changelog
 =========
 
+- :release:`2.1.6 <2018-09-18>`
+- :release:`2.0.9 <2018-09-18>`
 - :bug:`-` Modify protocol message handling such that ``Transport`` does not
   respond to ``MSG_UNIMPLEMENTED`` with its own ``MSG_UNIMPLEMENTED`` message.
   This behavior probably didn't cause any outright errors, but it doesn't seem
   to conform to the RFCs and could cause (non-infinite) feedback loops in some
   scenarios (usually those involving Paramiko on both ends).
-- :bug:`1283 (1.17+)` Fix exploit (CVE pending) in Paramiko's server mode
-  (**not** client mode) where hostile clients could trick the server into
-  thinking they were authenticated without actually submitting valid
-  authentication.
+- :bug:`1283` Fix exploit (CVE pending) in Paramiko's server mode (**not**
+  client mode) where hostile clients could trick the server into thinking they
+  were authenticated without actually submitting valid authentication.
 
   Specifically, steps have been taken to start separating client and server
   related message types in the message handling tables within ``Transport`` and
