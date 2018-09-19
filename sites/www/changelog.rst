@@ -2,6 +2,7 @@
 Changelog
 =========
 
+- :release:`2.2.4 <2018-09-18>`
 - :release:`2.1.6 <2018-09-18>`
 - :release:`2.0.9 <2018-09-18>`
 - :bug:`-` Modify protocol message handling such that ``Transport`` does not
