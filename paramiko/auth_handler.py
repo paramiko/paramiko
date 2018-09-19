@@ -705,16 +705,38 @@ Error Message: {}
             self.auth_event.set()
         return
 
-    _handler_table = {
+    # TODO: do the same to the other tables, in Transport.
+    # TODO 3.0: MAY make sense to make these tables into actual
+    # classes/instances that can be fed a mode bool or whatever. Or,
+    # alternately (both?) make the message types small classes or enums that
+    # embed this info within themselves (which could also then tidy up the
+    # current 'integer -> human readable short string' stuff in common.py).
+    # TODO: if we do that, also expose 'em publicly.
+
+    # Messages which should be handled _by_ servers (sent by clients)
+    _server_handler_table = {
         MSG_SERVICE_REQUEST: _parse_service_request,
-        MSG_SERVICE_ACCEPT: _parse_service_accept,
         MSG_USERAUTH_REQUEST: _parse_userauth_request,
+        MSG_USERAUTH_INFO_RESPONSE: _parse_userauth_info_response,
+    }
+
+    # Messages which should be handled _by_ clients (sent by servers)
+    _client_handler_table = {
+        MSG_SERVICE_ACCEPT: _parse_service_accept,
         MSG_USERAUTH_SUCCESS: _parse_userauth_success,
         MSG_USERAUTH_FAILURE: _parse_userauth_failure,
         MSG_USERAUTH_BANNER: _parse_userauth_banner,
         MSG_USERAUTH_INFO_REQUEST: _parse_userauth_info_request,
-        MSG_USERAUTH_INFO_RESPONSE: _parse_userauth_info_response,
     }
+
+    # NOTE: prior to the fix for #1283, this was a static dict instead of a
+    # property. Should be backwards compatible in most/all cases.
+    @property
+    def _handler_table(self):
+        if self.transport.server_mode:
+            return self._server_handler_table
+        else:
+            return self._client_handler_table
 
 
 class GssapiWithMicAuthHandler(object):
@@ -811,9 +833,15 @@ class GssapiWithMicAuthHandler(object):
         self._restore_delegate_auth_handler()
         return self._delegate._parse_userauth_request(m)
 
-    _handler_table = {
+    __handler_table = {
         MSG_SERVICE_REQUEST: _parse_service_request,
         MSG_USERAUTH_REQUEST: _parse_userauth_request,
         MSG_USERAUTH_GSSAPI_TOKEN: _parse_userauth_gssapi_token,
         MSG_USERAUTH_GSSAPI_MIC: _parse_userauth_gssapi_mic,
     }
+
+    @property
+    def _handler_table(self):
+        # TODO: determine if we can cut this up like we did for the primary
+        # AuthHandler class.
+        return self.__handler_table
