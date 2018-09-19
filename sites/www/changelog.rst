@@ -2,6 +2,7 @@
 Changelog
 =========
 
+- :release:`2.0.9 <2018-09-18>`
 - :bug:`-` Modify protocol message handling such that ``Transport`` does not
   respond to ``MSG_UNIMPLEMENTED`` with its own ``MSG_UNIMPLEMENTED`` message.
   This behavior probably didn't cause any outright errors, but it doesn't seem
