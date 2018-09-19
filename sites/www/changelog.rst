@@ -2,6 +2,11 @@
 Changelog
 =========
 
+- :bug:`-` Modify protocol message handling such that ``Transport`` does not
+  respond to ``MSG_UNIMPLEMENTED`` with its own ``MSG_UNIMPLEMENTED`` message.
+  This behavior probably didn't cause any outright errors, but it doesn't seem
+  to conform to the RFCs and could cause (non-infinite) feedback loops in some
+  scenarios (usually those involving Paramiko on both ends).
 - :support:`1292 backported` Backport changes from :issue:`979` (added in
   Paramiko 2.3) to Paramiko 2.0-2.2, using duck-typing to preserve backwards
   compatibility. This allows these older versions to use newer Cryptography

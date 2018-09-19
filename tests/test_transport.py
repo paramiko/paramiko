@@ -30,6 +30,7 @@ import threading
 import random
 from hashlib import sha1
 import unittest
+from mock import Mock
 
 from paramiko import (
     Transport,
@@ -47,6 +48,7 @@ from paramiko import OPEN_SUCCEEDED, OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED
 from paramiko.common import (
     MSG_KEXINIT,
     cMSG_CHANNEL_WINDOW_ADJUST,
+    cMSG_UNIMPLEMENTED,
     MIN_PACKET_SIZE,
     MIN_WINDOW_SIZE,
     MAX_WINDOW_SIZE,
@@ -1027,3 +1029,26 @@ class TransportTest(unittest.TestCase):
             assert "forwarding request denied" in str(e)
         else:
             assert False, "Did not raise SSHException!"
+
+    def _send_unimplemented(self, server_is_sender):
+        self.setup_test_server()
+        sender, recipient = self.tc, self.ts
+        if server_is_sender:
+            sender, recipient = self.ts, self.tc
+        recipient._send_message = Mock()
+        msg = Message()
+        msg.add_byte(cMSG_UNIMPLEMENTED)
+        sender._send_message(msg)
+        # TODO: I hate this but I literally don't see a good way to know when
+        # the recipient has received the sender's message (there are no
+        # existing threading events in play that work for this), esp in this
+        # case where we don't WANT a response (as otherwise we could
+        # potentially try blocking on the sender's receipt of a reply...maybe).
+        time.sleep(0.1)
+        assert not recipient._send_message.called
+
+    def test_server_does_not_respond_to_MSG_UNIMPLEMENTED(self):
+        self._send_unimplemented(server_is_sender=False)
+
+    def test_client_does_not_respond_to_MSG_UNIMPLEMENTED(self):
+        self._send_unimplemented(server_is_sender=True)
