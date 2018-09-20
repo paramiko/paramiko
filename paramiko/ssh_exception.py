@@ -23,6 +23,7 @@ class SSHException(Exception):
     """
     Exception raised by failures in SSH2 protocol negotiation or logic errors.
     """
+
     pass
 
 
@@ -34,6 +35,7 @@ class AuthenticationException(SSHException):
 
     .. versionadded:: 1.6
     """
+
     pass
 
 
@@ -41,6 +43,7 @@ class PasswordRequiredException(AuthenticationException):
     """
     Exception raised when a password is needed to unlock a private key file.
     """
+
     pass
 
 
@@ -52,6 +55,7 @@ class BadAuthenticationType(AuthenticationException):
 
     .. versionadded:: 1.1
     """
+
     #: list of allowed authentication types provided by the server (possible
     #: values are: ``"none"``, ``"password"``, and ``"publickey"``).
     allowed_types = []
@@ -72,6 +76,7 @@ class PartialAuthentication(AuthenticationException):
     """
     An internal exception thrown in the case of partial authentication.
     """
+
     allowed_types = []
 
     def __init__(self, types):

@@ -1348,7 +1348,6 @@ class ChannelFile(BufferedFile):
 
 
 class ChannelStderrFile(ChannelFile):
-
     def __init__(self, channel, mode="r", bufsize=-1):
         ChannelFile.__init__(self, channel, mode, bufsize)
 

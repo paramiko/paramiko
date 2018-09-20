@@ -32,6 +32,7 @@ class PipeTimeout(IOError):
     """
     Indicates that a timeout was reached on a read from a `.BufferedPipe`.
     """
+
     pass
 
 

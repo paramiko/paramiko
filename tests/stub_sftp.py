@@ -38,7 +38,6 @@ from paramiko.common import o666
 
 
 class StubServer(ServerInterface):
-
     def check_auth_password(self, username, password):
         # all are allowed
         return AUTH_SUCCESSFUL
@@ -48,7 +47,6 @@ class StubServer(ServerInterface):
 
 
 class StubSFTPHandle(SFTPHandle):
-
     def stat(self):
         try:
             return SFTPAttributes.from_stat(os.fstat(self.readfile.fileno()))

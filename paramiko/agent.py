@@ -44,7 +44,6 @@ SSH2_AGENT_SIGN_RESPONSE = 14
 
 
 class AgentSSH(object):
-
     def __init__(self):
         self._conn = None
         self._keys = ()

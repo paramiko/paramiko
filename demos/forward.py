@@ -53,7 +53,6 @@ class ForwardServer(SocketServer.ThreadingTCPServer):
 
 
 class Handler(SocketServer.BaseRequestHandler):
-
     def handle(self):
         try:
             chan = self.ssh_transport.open_channel(
