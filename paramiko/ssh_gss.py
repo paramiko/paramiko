@@ -49,7 +49,7 @@ try:
     import gssapi
 
     GSS_EXCEPTIONS = (gssapi.GSSException,)
-except (ImportError, OSError):
+except (ImportError, OSError, AttributeError):
     try:
         import pywintypes
         import sspicon
