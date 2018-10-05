@@ -53,8 +53,11 @@ class GSSAPITest(KerberosTestCase):
         """
         try:
             import gssapi
-            if (hasattr(gssapi, '__title__') and
-                    gssapi.__title__ == 'python-gssapi'):
+
+            if (
+                hasattr(gssapi, "__title__")
+                and gssapi.__title__ == "python-gssapi"
+            ):
                 _API = "PYTHON-GSSAPI-OLD"
             else:
                 _API = "PYTHON-GSSAPI-NEW"
@@ -118,28 +121,36 @@ class GSSAPITest(KerberosTestCase):
                 self.assertEquals(0, status)
         elif _API == "PYTHON-GSSAPI-NEW":
             if self.server_mode:
-                gss_flags = (gssapi.RequirementFlag.protection_ready,
-                             gssapi.RequirementFlag.integrity,
-                             gssapi.RequirementFlag.mutual_authentication,
-                             gssapi.RequirementFlag.delegate_to_peer)
+                gss_flags = (
+                    gssapi.RequirementFlag.protection_ready,
+                    gssapi.RequirementFlag.integrity,
+                    gssapi.RequirementFlag.mutual_authentication,
+                    gssapi.RequirementFlag.delegate_to_peer,
+                )
             else:
-                gss_flags = (gssapi.RequirementFlag.protection_ready,
-                             gssapi.RequirementFlag.integrity,
-                             gssapi.RequirementFlag.delegate_to_peer)
+                gss_flags = (
+                    gssapi.RequirementFlag.protection_ready,
+                    gssapi.RequirementFlag.integrity,
+                    gssapi.RequirementFlag.delegate_to_peer,
+                )
             # Initialize a GSS-API context.
             krb5_oid = gssapi.MechType.kerberos
-            target_name = gssapi.Name("host@" + self.targ_name,
-                                name_type=gssapi.NameType.hostbased_service)
-            gss_ctxt = gssapi.SecurityContext(name=target_name,
-                                              flags=gss_flags,
-                                              mech=krb5_oid,
-                                              usage='initiate')
+            target_name = gssapi.Name(
+                "host@" + self.targ_name,
+                name_type=gssapi.NameType.hostbased_service,
+            )
+            gss_ctxt = gssapi.SecurityContext(
+                name=target_name,
+                flags=gss_flags,
+                mech=krb5_oid,
+                usage="initiate",
+            )
             if self.server_mode:
                 c_token = gss_ctxt.step(c_token)
                 gss_ctxt_status = gss_ctxt.complete
                 self.assertEquals(False, gss_ctxt_status)
                 # Accept a GSS-API context.
-                gss_srv_ctxt = gssapi.SecurityContext(usage='accept')
+                gss_srv_ctxt = gssapi.SecurityContext(usage="accept")
                 s_token = gss_srv_ctxt.step(c_token)
                 gss_ctxt_status = gss_srv_ctxt.complete
                 self.assertNotEquals(None, s_token)

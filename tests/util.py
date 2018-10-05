@@ -13,8 +13,9 @@ def _support(filename):
     return join(dirname(realpath(__file__)), filename)
 
 
-needs_gssapi = pytest.mark.skipif(not GSS_AUTH_AVAILABLE,
-                                  reason="No GSSAPI to test")
+needs_gssapi = pytest.mark.skipif(
+    not GSS_AUTH_AVAILABLE, reason="No GSSAPI to test"
+)
 
 
 def needs_builtin(name):
@@ -41,9 +42,11 @@ slow = pytest.mark.slow
 #
 # ToDo: add a Windows specific implementation?
 
-if (os.environ.get("K5TEST_USER_PRINC", None) and
-        os.environ.get("K5TEST_HOSTNAME", None) and
-        os.environ.get("KRB5_KTNAME", None)):  # add other vars as needed
+if (
+    os.environ.get("K5TEST_USER_PRINC", None)
+    and os.environ.get("K5TEST_HOSTNAME", None)
+    and os.environ.get("KRB5_KTNAME", None)
+):  # add other vars as needed
 
     # The environment provides the required information
     class DummyK5Realm(object):
@@ -62,6 +65,8 @@ if (os.environ.get("K5TEST_USER_PRINC", None) and
         @classmethod
         def tearDownClass(cls):
             del cls.realm
+
+
 else:
     try:
         # Try to setup a kerberos environment
@@ -71,21 +76,27 @@ else:
         class KerberosTestCase(unittest.TestCase):
             @classmethod
             def setUpClass(cls):
-                raise unittest.SkipTest('Missing extension package k5test. '
-                                        'Please run "pip install k5test" '
-                                        'to install it.')
+                raise unittest.SkipTest(
+                    "Missing extension package k5test. "
+                    'Please run "pip install k5test" '
+                    "to install it."
+                )
+
 
 def update_env(testcase, mapping, env=os.environ):
     """Modify os.environ during a test case and restore during cleanup."""
     saved_env = env.copy()
+
     def replace(target, source):
         target.update(source)
         for k in list(target):
             if k not in source:
                 target.pop(k, None)
+
     testcase.addCleanup(replace, env, saved_env)
     env.update(mapping)
     return testcase
+
 
 def k5shell(args=None):
     """Create a shell with an kerberos environment
@@ -97,6 +108,7 @@ def k5shell(args=None):
     import k5test
     import atexit
     import subprocess
+
     k5 = k5test.K5Realm()
     atexit.register(k5.stop)
     os.environ.update(k5.env)

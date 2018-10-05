@@ -51,14 +51,17 @@ _API = None
 
 try:
     import gssapi
-    if hasattr(gssapi, '__title__') and gssapi.__title__ == 'python-gssapi':
+
+    if hasattr(gssapi, "__title__") and gssapi.__title__ == "python-gssapi":
         # old, unmaintained python-gssapi package
         _API = "MIT"  # keep this for compatibility
         GSS_EXCEPTIONS = (gssapi.GSSException,)
     else:
         _API = "PYTHON-GSSAPI-NEW"
-        GSS_EXCEPTIONS = (gssapi.exceptions.GeneralError,
-                          gssapi.raw.misc.GSSError,)
+        GSS_EXCEPTIONS = (
+            gssapi.exceptions.GeneralError,
+            gssapi.raw.misc.GSSError,
+        )
 except (ImportError, OSError):
     try:
         import pywintypes
@@ -422,6 +425,7 @@ class _SSH_GSSAPI_NEW(_SSH_GSSAuth):
 
     :see: `.GSSAuth`
     """
+
     def __init__(self, auth_method, gss_deleg_creds):
         """
         :param str auth_method: The name of the SSH authentication mechanism
@@ -431,17 +435,22 @@ class _SSH_GSSAPI_NEW(_SSH_GSSAuth):
         _SSH_GSSAuth.__init__(self, auth_method, gss_deleg_creds)
 
         if self._gss_deleg_creds:
-            self._gss_flags = (gssapi.RequirementFlag.protection_ready,
-                               gssapi.RequirementFlag.integrity,
-                               gssapi.RequirementFlag.mutual_authentication,
-                               gssapi.RequirementFlag.delegate_to_peer)
+            self._gss_flags = (
+                gssapi.RequirementFlag.protection_ready,
+                gssapi.RequirementFlag.integrity,
+                gssapi.RequirementFlag.mutual_authentication,
+                gssapi.RequirementFlag.delegate_to_peer,
+            )
         else:
-            self._gss_flags = (gssapi.RequirementFlag.protection_ready,
-                               gssapi.RequirementFlag.integrity,
-                               gssapi.RequirementFlag.mutual_authentication)
+            self._gss_flags = (
+                gssapi.RequirementFlag.protection_ready,
+                gssapi.RequirementFlag.integrity,
+                gssapi.RequirementFlag.mutual_authentication,
+            )
 
-    def ssh_init_sec_context(self, target, desired_mech=None,
-                             username=None, recv_token=None):
+    def ssh_init_sec_context(
+        self, target, desired_mech=None, username=None, recv_token=None
+    ):
         """
         Initialize a GSS-API context.
 
@@ -460,8 +469,10 @@ class _SSH_GSSAPI_NEW(_SSH_GSSAuth):
         """
         self._username = username
         self._gss_host = target
-        targ_name = gssapi.Name("host@" + self._gss_host,
-                                name_type=gssapi.NameType.hostbased_service)
+        targ_name = gssapi.Name(
+            "host@" + self._gss_host,
+            name_type=gssapi.NameType.hostbased_service,
+        )
         if desired_mech is not None:
             mech, __ = decoder.decode(desired_mech)
             if mech.__str__() != self._krb5_mech:
@@ -469,10 +480,12 @@ class _SSH_GSSAPI_NEW(_SSH_GSSAuth):
         krb5_mech = gssapi.MechType.kerberos
         token = None
         if recv_token is None:
-            self._gss_ctxt = gssapi.SecurityContext(name=targ_name,
-                                                    flags=self._gss_flags,
-                                                    mech=krb5_mech,
-                                                    usage='initiate')
+            self._gss_ctxt = gssapi.SecurityContext(
+                name=targ_name,
+                flags=self._gss_flags,
+                mech=krb5_mech,
+                usage="initiate",
+            )
             token = self._gss_ctxt.step(token)
         else:
             token = self._gss_ctxt.step(recv_token)
@@ -495,10 +508,12 @@ class _SSH_GSSAPI_NEW(_SSH_GSSAuth):
         """
         self._session_id = session_id
         if not gss_kex:
-            mic_field = self._ssh_build_mic(self._session_id,
-                                            self._username,
-                                            self._service,
-                                            self._auth_method)
+            mic_field = self._ssh_build_mic(
+                self._session_id,
+                self._username,
+                self._service,
+                self._auth_method,
+            )
             mic_token = self._gss_ctxt.get_signature(mic_field)
         else:
             # for key exchange with gssapi-keyex
@@ -520,7 +535,7 @@ class _SSH_GSSAPI_NEW(_SSH_GSSAuth):
         self._gss_host = hostname
         self._username = username
         if self._gss_srv_ctxt is None:
-            self._gss_srv_ctxt = gssapi.SecurityContext(usage='accept')
+            self._gss_srv_ctxt = gssapi.SecurityContext(usage="accept")
         token = self._gss_srv_ctxt.step(recv_token)
         self._gss_srv_ctxt_status = self._gss_srv_ctxt.complete
         return token
@@ -539,16 +554,17 @@ class _SSH_GSSAPI_NEW(_SSH_GSSAuth):
         self._username = username
         if self._username is not None:
             # server mode
-            mic_field = self._ssh_build_mic(self._session_id,
-                                            self._username,
-                                            self._service,
-                                            self._auth_method)
+            mic_field = self._ssh_build_mic(
+                self._session_id,
+                self._username,
+                self._service,
+                self._auth_method,
+            )
             self._gss_srv_ctxt.verify_signature(mic_field, mic_token)
         else:
             # for key exchange with gssapi-keyex
             # client mode
-            self._gss_ctxt.verify_signature(self._session_id,
-                                            mic_token)
+            self._gss_ctxt.verify_signature(self._session_id, mic_token)
 
     @property
     def credentials_delegated(self):
