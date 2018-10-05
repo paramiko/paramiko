@@ -20,6 +20,10 @@ matrix:
       env: "CRYPTO_BEFORE=1.6"
     - python: 3.6
       env: "CRYPTO_BEFORE=1.6"
+    - python: 2.7
+      env: "USE_K5TEST=yes"
+    - python: 3.6
+      env: "USE_K5TEST=yes"
 install:
   # Ensure modern pip/etc to avoid some issues w/ older worker environs
   - pip install pip==9.0.1 setuptools==36.6.0
@@ -35,6 +39,25 @@ install:
   # TODO: use pipenv + whatever contexty-type stuff it has
   - pip install codecov # For codecov specifically
   - pip install -r dev-requirements.txt
+  - |
+    if [[ -n "$USE_K5TEST" ]]; then
+      # we need a few commands and libraries
+      # Debian/Ubuntu package: commands used by package k5test
+      #   libkrb5-dev: krb5-config
+      #   krb5-kdc: kdb5_util, krb5kdc
+      #   krb5-admin-server: kadmin.local, kprop, kadmind
+      #   krb5-user: kinit, klist
+      #
+      #   krb5-multidev: required to build gssapi
+      sudo apt-get -y install libkrb5-dev krb5-admin-server \
+                              krb5-kdc krb5-user krb5-multidev && \
+      pip install k5test gssapi
+    fi
+  # In case of problems uncomment the following to get the krb environment
+  # - |
+  #   if [[ -n "$USE_K5TEST" ]]; then
+  #     python -c 'from tests.util import k5shell; k5shell()' env | sort
+  #   fi
 script:
   # Fast syntax check failures for more rapid feedback to submitters
   # (Travis-oriented metatask that version checks Python, installs, runs.)
