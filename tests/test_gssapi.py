@@ -25,14 +25,17 @@ Test the used APIs for GSS-API / SSPI authentication
 import unittest
 import socket
 
+from .util import needs_gssapi
 
+
+@needs_gssapi
 class GSSAPITest(unittest.TestCase):
-    @staticmethod
-    def init(hostname=None, srv_mode=False):
-        global krb5_mech, targ_name, server_mode
-        krb5_mech = "1.2.840.113554.1.2.2"
-        targ_name = hostname
-        server_mode = srv_mode
+    def setup():
+        # TODO: these vars should all come from os.environ or whatever the
+        # approved pytest method is for runtime-configuring test data.
+        self.krb5_mech = "1.2.840.113554.1.2.2"
+        self.targ_name = "hostname"
+        self.server_mode = False
 
     def test_1_pyasn1(self):
         """
@@ -40,9 +43,10 @@ class GSSAPITest(unittest.TestCase):
         """
         from pyasn1.type.univ import ObjectIdentifier
         from pyasn1.codec.der import encoder, decoder
-        oid = encoder.encode(ObjectIdentifier(krb5_mech))
+
+        oid = encoder.encode(ObjectIdentifier(self.krb5_mech))
         mech, __ = decoder.decode(oid)
-        self.assertEquals(krb5_mech, mech.__str__())
+        self.assertEquals(self.krb5_mech, mech.__str__())
 
     def test_2_gssapi_sspi(self):
         """
@@ -57,6 +61,7 @@ class GSSAPITest(unittest.TestCase):
         except ImportError:
             import sspicon
             import sspi
+
             _API = "SSPI"
 
         c_token = None
@@ -64,25 +69,30 @@ class GSSAPITest(unittest.TestCase):
         mic_msg = b"G'day Mate!"
 
         if _API == "PYTHON-GSSAPI-OLD":
-            if server_mode:
-                gss_flags = (gssapi.C_PROT_READY_FLAG,
-                             gssapi.C_INTEG_FLAG,
-                             gssapi.C_MUTUAL_FLAG,
-                             gssapi.C_DELEG_FLAG)
+            if self.server_mode:
+                gss_flags = (
+                    gssapi.C_PROT_READY_FLAG,
+                    gssapi.C_INTEG_FLAG,
+                    gssapi.C_MUTUAL_FLAG,
+                    gssapi.C_DELEG_FLAG,
+                )
             else:
-                gss_flags = (gssapi.C_PROT_READY_FLAG,
-                             gssapi.C_INTEG_FLAG,
-                             gssapi.C_DELEG_FLAG)
+                gss_flags = (
+                    gssapi.C_PROT_READY_FLAG,
+                    gssapi.C_INTEG_FLAG,
+                    gssapi.C_DELEG_FLAG,
+                )
             # Initialize a GSS-API context.
             ctx = gssapi.Context()
             ctx.flags = gss_flags
-            krb5_oid = gssapi.OID.mech_from_string(krb5_mech)
-            target_name = gssapi.Name("host@" + targ_name,
-                                      gssapi.C_NT_HOSTBASED_SERVICE)
-            gss_ctxt = gssapi.InitContext(peer_name=target_name,
-                                          mech_type=krb5_oid,
-                                          req_flags=ctx.flags)
-            if server_mode:
+            krb5_oid = gssapi.OID.mech_from_string(self.krb5_mech)
+            target_name = gssapi.Name(
+                "host@" + self.targ_name, gssapi.C_NT_HOSTBASED_SERVICE
+            )
+            gss_ctxt = gssapi.InitContext(
+                peer_name=target_name, mech_type=krb5_oid, req_flags=ctx.flags
+            )
+            if self.server_mode:
                 c_token = gss_ctxt.step(c_token)
                 gss_ctxt_status = gss_ctxt.established
                 self.assertEquals(False, gss_ctxt_status)
@@ -102,12 +112,12 @@ class GSSAPITest(unittest.TestCase):
             # Build MIC
             mic_token = gss_ctxt.get_mic(mic_msg)
 
-            if server_mode:
+            if self.server_mode:
                 # Check MIC
                 status = gss_srv_ctxt.verify_mic(mic_msg, mic_token)
                 self.assertEquals(0, status)
         elif _API == "PYTHON-GSSAPI-NEW":
-            if server_mode:
+            if self.server_mode:
                 gss_flags = (gssapi.RequirementFlag.protection_ready,
                              gssapi.RequirementFlag.integrity,
                              gssapi.RequirementFlag.mutual_authentication,
@@ -124,7 +134,7 @@ class GSSAPITest(unittest.TestCase):
                                               flags=gss_flags,
                                               mech=krb5_oid,
                                               usage='initiate')
-            if server_mode:
+            if self.server_mode:
                 c_token = gss_ctxt.step(c_token)
                 gss_ctxt_status = gss_ctxt.complete
                 self.assertEquals(False, gss_ctxt_status)
@@ -144,22 +154,22 @@ class GSSAPITest(unittest.TestCase):
             # Build MIC
             mic_token = gss_ctxt.get_signature(mic_msg)
 
-            if server_mode:
+            if self.server_mode:
                 # Check MIC
                 status = gss_srv_ctxt.verify_signature(mic_msg, mic_token)
                 self.assertEquals(0, status)
         else:
             gss_flags = (
-                sspicon.ISC_REQ_INTEGRITY |
-                sspicon.ISC_REQ_MUTUAL_AUTH |
-                sspicon.ISC_REQ_DELEGATE
+                sspicon.ISC_REQ_INTEGRITY
+                | sspicon.ISC_REQ_MUTUAL_AUTH
+                | sspicon.ISC_REQ_DELEGATE
             )
             # Initialize a GSS-API context.
-            target_name = "host/" + socket.getfqdn(targ_name)
-            gss_ctxt = sspi.ClientAuth("Kerberos",
-                                        scflags=gss_flags,
-                                        targetspn=target_name)
-            if server_mode:
+            target_name = "host/" + socket.getfqdn(self.targ_name)
+            gss_ctxt = sspi.ClientAuth(
+                "Kerberos", scflags=gss_flags, targetspn=target_name
+            )
+            if self.server_mode:
                 error, token = gss_ctxt.authorize(c_token)
                 c_token = token[0].Buffer
                 self.assertEquals(0, error)

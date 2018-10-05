@@ -31,14 +31,14 @@ import socket
 
 
 def make_pipe():
-    if sys.platform[:3] != 'win':
+    if sys.platform[:3] != "win":
         p = PosixPipe()
     else:
         p = WindowsPipe()
     return p
 
 
-class PosixPipe (object):
+class PosixPipe(object):
     def __init__(self):
         self._rfd, self._wfd = os.pipe()
         self._set = False
@@ -64,26 +64,27 @@ class PosixPipe (object):
         if self._set or self._closed:
             return
         self._set = True
-        os.write(self._wfd, b'*')
+        os.write(self._wfd, b"*")
 
     def set_forever(self):
         self._forever = True
         self.set()
 
 
-class WindowsPipe (object):
+class WindowsPipe(object):
     """
     On Windows, only an OS-level "WinSock" may be used in select(), but reads
     and writes must be to the actual socket object.
     """
+
     def __init__(self):
         serv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        serv.bind(('127.0.0.1', 0))
+        serv.bind(("127.0.0.1", 0))
         serv.listen(1)
 
         # need to save sockets in _rsock/_wsock so they don't get closed
         self._rsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self._rsock.connect(('127.0.0.1', serv.getsockname()[1]))
+        self._rsock.connect(("127.0.0.1", serv.getsockname()[1]))
 
         self._wsock, addr = serv.accept()
         serv.close()
@@ -110,14 +111,14 @@ class WindowsPipe (object):
         if self._set or self._closed:
             return
         self._set = True
-        self._wsock.send(b'*')
+        self._wsock.send(b"*")
 
     def set_forever(self):
         self._forever = True
         self.set()
 
 
-class OrPipe (object):
+class OrPipe(object):
     def __init__(self, pipe):
         self._set = False
         self._partner = None

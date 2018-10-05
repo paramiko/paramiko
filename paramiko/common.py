@@ -22,21 +22,45 @@ Common constants and global variables.
 import logging
 from paramiko.py3compat import byte_chr, PY2, bytes_types, text_type, long
 
-MSG_DISCONNECT, MSG_IGNORE, MSG_UNIMPLEMENTED, MSG_DEBUG, \
-    MSG_SERVICE_REQUEST, MSG_SERVICE_ACCEPT = range(1, 7)
-MSG_KEXINIT, MSG_NEWKEYS = range(20, 22)
-MSG_USERAUTH_REQUEST, MSG_USERAUTH_FAILURE, MSG_USERAUTH_SUCCESS, \
-    MSG_USERAUTH_BANNER = range(50, 54)
+(
+    MSG_DISCONNECT,
+    MSG_IGNORE,
+    MSG_UNIMPLEMENTED,
+    MSG_DEBUG,
+    MSG_SERVICE_REQUEST,
+    MSG_SERVICE_ACCEPT,
+) = range(1, 7)
+(MSG_KEXINIT, MSG_NEWKEYS) = range(20, 22)
+(
+    MSG_USERAUTH_REQUEST,
+    MSG_USERAUTH_FAILURE,
+    MSG_USERAUTH_SUCCESS,
+    MSG_USERAUTH_BANNER,
+) = range(50, 54)
 MSG_USERAUTH_PK_OK = 60
-MSG_USERAUTH_INFO_REQUEST, MSG_USERAUTH_INFO_RESPONSE = range(60, 62)
-MSG_USERAUTH_GSSAPI_RESPONSE, MSG_USERAUTH_GSSAPI_TOKEN = range(60, 62)
-MSG_USERAUTH_GSSAPI_EXCHANGE_COMPLETE, MSG_USERAUTH_GSSAPI_ERROR,\
-    MSG_USERAUTH_GSSAPI_ERRTOK, MSG_USERAUTH_GSSAPI_MIC = range(63, 67)
-MSG_GLOBAL_REQUEST, MSG_REQUEST_SUCCESS, MSG_REQUEST_FAILURE = range(80, 83)
-MSG_CHANNEL_OPEN, MSG_CHANNEL_OPEN_SUCCESS, MSG_CHANNEL_OPEN_FAILURE, \
-    MSG_CHANNEL_WINDOW_ADJUST, MSG_CHANNEL_DATA, MSG_CHANNEL_EXTENDED_DATA, \
-    MSG_CHANNEL_EOF, MSG_CHANNEL_CLOSE, MSG_CHANNEL_REQUEST, \
-    MSG_CHANNEL_SUCCESS, MSG_CHANNEL_FAILURE = range(90, 101)
+(MSG_USERAUTH_INFO_REQUEST, MSG_USERAUTH_INFO_RESPONSE) = range(60, 62)
+(MSG_USERAUTH_GSSAPI_RESPONSE, MSG_USERAUTH_GSSAPI_TOKEN) = range(60, 62)
+(
+    MSG_USERAUTH_GSSAPI_EXCHANGE_COMPLETE,
+    MSG_USERAUTH_GSSAPI_ERROR,
+    MSG_USERAUTH_GSSAPI_ERRTOK,
+    MSG_USERAUTH_GSSAPI_MIC,
+) = range(63, 67)
+HIGHEST_USERAUTH_MESSAGE_ID = 79
+(MSG_GLOBAL_REQUEST, MSG_REQUEST_SUCCESS, MSG_REQUEST_FAILURE) = range(80, 83)
+(
+    MSG_CHANNEL_OPEN,
+    MSG_CHANNEL_OPEN_SUCCESS,
+    MSG_CHANNEL_OPEN_FAILURE,
+    MSG_CHANNEL_WINDOW_ADJUST,
+    MSG_CHANNEL_DATA,
+    MSG_CHANNEL_EXTENDED_DATA,
+    MSG_CHANNEL_EOF,
+    MSG_CHANNEL_CLOSE,
+    MSG_CHANNEL_REQUEST,
+    MSG_CHANNEL_SUCCESS,
+    MSG_CHANNEL_FAILURE,
+) = range(90, 101)
 
 cMSG_DISCONNECT = byte_chr(MSG_DISCONNECT)
 cMSG_IGNORE = byte_chr(MSG_IGNORE)
@@ -55,8 +79,9 @@ cMSG_USERAUTH_INFO_REQUEST = byte_chr(MSG_USERAUTH_INFO_REQUEST)
 cMSG_USERAUTH_INFO_RESPONSE = byte_chr(MSG_USERAUTH_INFO_RESPONSE)
 cMSG_USERAUTH_GSSAPI_RESPONSE = byte_chr(MSG_USERAUTH_GSSAPI_RESPONSE)
 cMSG_USERAUTH_GSSAPI_TOKEN = byte_chr(MSG_USERAUTH_GSSAPI_TOKEN)
-cMSG_USERAUTH_GSSAPI_EXCHANGE_COMPLETE = \
-    byte_chr(MSG_USERAUTH_GSSAPI_EXCHANGE_COMPLETE)
+cMSG_USERAUTH_GSSAPI_EXCHANGE_COMPLETE = byte_chr(
+    MSG_USERAUTH_GSSAPI_EXCHANGE_COMPLETE
+)
 cMSG_USERAUTH_GSSAPI_ERROR = byte_chr(MSG_USERAUTH_GSSAPI_ERROR)
 cMSG_USERAUTH_GSSAPI_ERRTOK = byte_chr(MSG_USERAUTH_GSSAPI_ERRTOK)
 cMSG_USERAUTH_GSSAPI_MIC = byte_chr(MSG_USERAUTH_GSSAPI_MIC)
@@ -77,47 +102,47 @@ cMSG_CHANNEL_FAILURE = byte_chr(MSG_CHANNEL_FAILURE)
 
 # for debugging:
 MSG_NAMES = {
-    MSG_DISCONNECT: 'disconnect',
-    MSG_IGNORE: 'ignore',
-    MSG_UNIMPLEMENTED: 'unimplemented',
-    MSG_DEBUG: 'debug',
-    MSG_SERVICE_REQUEST: 'service-request',
-    MSG_SERVICE_ACCEPT: 'service-accept',
-    MSG_KEXINIT: 'kexinit',
-    MSG_NEWKEYS: 'newkeys',
-    30: 'kex30',
-    31: 'kex31',
-    32: 'kex32',
-    33: 'kex33',
-    34: 'kex34',
-    40: 'kex40',
-    41: 'kex41',
-    MSG_USERAUTH_REQUEST: 'userauth-request',
-    MSG_USERAUTH_FAILURE: 'userauth-failure',
-    MSG_USERAUTH_SUCCESS: 'userauth-success',
-    MSG_USERAUTH_BANNER: 'userauth--banner',
-    MSG_USERAUTH_PK_OK: 'userauth-60(pk-ok/info-request)',
-    MSG_USERAUTH_INFO_RESPONSE: 'userauth-info-response',
-    MSG_GLOBAL_REQUEST: 'global-request',
-    MSG_REQUEST_SUCCESS: 'request-success',
-    MSG_REQUEST_FAILURE: 'request-failure',
-    MSG_CHANNEL_OPEN: 'channel-open',
-    MSG_CHANNEL_OPEN_SUCCESS: 'channel-open-success',
-    MSG_CHANNEL_OPEN_FAILURE: 'channel-open-failure',
-    MSG_CHANNEL_WINDOW_ADJUST: 'channel-window-adjust',
-    MSG_CHANNEL_DATA: 'channel-data',
-    MSG_CHANNEL_EXTENDED_DATA: 'channel-extended-data',
-    MSG_CHANNEL_EOF: 'channel-eof',
-    MSG_CHANNEL_CLOSE: 'channel-close',
-    MSG_CHANNEL_REQUEST: 'channel-request',
-    MSG_CHANNEL_SUCCESS: 'channel-success',
-    MSG_CHANNEL_FAILURE: 'channel-failure',
-    MSG_USERAUTH_GSSAPI_RESPONSE: 'userauth-gssapi-response',
-    MSG_USERAUTH_GSSAPI_TOKEN: 'userauth-gssapi-token',
-    MSG_USERAUTH_GSSAPI_EXCHANGE_COMPLETE: 'userauth-gssapi-exchange-complete',
-    MSG_USERAUTH_GSSAPI_ERROR: 'userauth-gssapi-error',
-    MSG_USERAUTH_GSSAPI_ERRTOK: 'userauth-gssapi-error-token',
-    MSG_USERAUTH_GSSAPI_MIC: 'userauth-gssapi-mic'
+    MSG_DISCONNECT: "disconnect",
+    MSG_IGNORE: "ignore",
+    MSG_UNIMPLEMENTED: "unimplemented",
+    MSG_DEBUG: "debug",
+    MSG_SERVICE_REQUEST: "service-request",
+    MSG_SERVICE_ACCEPT: "service-accept",
+    MSG_KEXINIT: "kexinit",
+    MSG_NEWKEYS: "newkeys",
+    30: "kex30",
+    31: "kex31",
+    32: "kex32",
+    33: "kex33",
+    34: "kex34",
+    40: "kex40",
+    41: "kex41",
+    MSG_USERAUTH_REQUEST: "userauth-request",
+    MSG_USERAUTH_FAILURE: "userauth-failure",
+    MSG_USERAUTH_SUCCESS: "userauth-success",
+    MSG_USERAUTH_BANNER: "userauth--banner",
+    MSG_USERAUTH_PK_OK: "userauth-60(pk-ok/info-request)",
+    MSG_USERAUTH_INFO_RESPONSE: "userauth-info-response",
+    MSG_GLOBAL_REQUEST: "global-request",
+    MSG_REQUEST_SUCCESS: "request-success",
+    MSG_REQUEST_FAILURE: "request-failure",
+    MSG_CHANNEL_OPEN: "channel-open",
+    MSG_CHANNEL_OPEN_SUCCESS: "channel-open-success",
+    MSG_CHANNEL_OPEN_FAILURE: "channel-open-failure",
+    MSG_CHANNEL_WINDOW_ADJUST: "channel-window-adjust",
+    MSG_CHANNEL_DATA: "channel-data",
+    MSG_CHANNEL_EXTENDED_DATA: "channel-extended-data",
+    MSG_CHANNEL_EOF: "channel-eof",
+    MSG_CHANNEL_CLOSE: "channel-close",
+    MSG_CHANNEL_REQUEST: "channel-request",
+    MSG_CHANNEL_SUCCESS: "channel-success",
+    MSG_CHANNEL_FAILURE: "channel-failure",
+    MSG_USERAUTH_GSSAPI_RESPONSE: "userauth-gssapi-response",
+    MSG_USERAUTH_GSSAPI_TOKEN: "userauth-gssapi-token",
+    MSG_USERAUTH_GSSAPI_EXCHANGE_COMPLETE: "userauth-gssapi-exchange-complete",
+    MSG_USERAUTH_GSSAPI_ERROR: "userauth-gssapi-error",
+    MSG_USERAUTH_GSSAPI_ERRTOK: "userauth-gssapi-error-token",
+    MSG_USERAUTH_GSSAPI_MIC: "userauth-gssapi-mic",
 }
 
 
@@ -126,23 +151,28 @@ AUTH_SUCCESSFUL, AUTH_PARTIALLY_SUCCESSFUL, AUTH_FAILED = range(3)
 
 
 # channel request failed reasons:
-(OPEN_SUCCEEDED,
- OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED,
- OPEN_FAILED_CONNECT_FAILED,
- OPEN_FAILED_UNKNOWN_CHANNEL_TYPE,
- OPEN_FAILED_RESOURCE_SHORTAGE) = range(0, 5)
+(
+    OPEN_SUCCEEDED,
+    OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED,
+    OPEN_FAILED_CONNECT_FAILED,
+    OPEN_FAILED_UNKNOWN_CHANNEL_TYPE,
+    OPEN_FAILED_RESOURCE_SHORTAGE,
+) = range(0, 5)
 
 
 CONNECTION_FAILED_CODE = {
-    1: 'Administratively prohibited',
-    2: 'Connect failed',
-    3: 'Unknown channel type',
-    4: 'Resource shortage'
+    1: "Administratively prohibited",
+    2: "Connect failed",
+    3: "Unknown channel type",
+    4: "Resource shortage",
 }
 
 
-DISCONNECT_SERVICE_NOT_AVAILABLE, DISCONNECT_AUTH_CANCELLED_BY_USER, \
-    DISCONNECT_NO_MORE_AUTH_METHODS_AVAILABLE = 7, 13, 14
+(
+    DISCONNECT_SERVICE_NOT_AVAILABLE,
+    DISCONNECT_AUTH_CANCELLED_BY_USER,
+    DISCONNECT_NO_MORE_AUTH_METHODS_AVAILABLE,
+) = (7, 13, 14)
 
 zero_byte = byte_chr(0)
 one_byte = byte_chr(1)

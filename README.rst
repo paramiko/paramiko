@@ -132,6 +132,7 @@ doc/ folder.
 
 There are also unit tests here::
 
-    $ python ./test.py
+    $ pip install -r dev-requirements.txt
+    $ pytest
 
 Which will verify that most of the core components are working correctly.
