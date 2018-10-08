@@ -12,7 +12,7 @@ Changelog
   behavior probably didn't cause any outright errors, but it doesn't seem to
   conform to the RFCs and could cause (non-infinite) feedback loops in some
   scenarios (usually those involving Paramiko on both ends).
-- :bug:`1283` Fix exploit (CVE pending) in Paramiko's server mode (**not**
+- :bug:`1283` Fix exploit (CVE-2018-1000805) in Paramiko's server mode (**not**
   client mode) where hostile clients could trick the server into thinking they
   were authenticated without actually submitting valid authentication.
 
