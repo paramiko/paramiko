@@ -79,7 +79,9 @@ Demo
 ----
 
 Several demo scripts come with Paramiko to demonstrate how to use it.
-Probably the simplest demo is this::
+Probably the simplest demo is this
+
+.. code-block:: python
 
     import base64
     import paramiko
