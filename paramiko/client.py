@@ -360,82 +360,82 @@ class SSHClient(ClosingContextManager):
             # (socket.error)
             if len(errors) == len(to_try):
                 raise NoValidConnectionsError(errors)
+        if not self._transport:
+            t = self._transport = Transport(
+                sock, gss_kex=gss_kex, gss_deleg_creds=gss_deleg_creds
+            )
+            t.use_compression(compress=compress)
+            t.set_gss_host(
+                # t.hostname may be None, but GSS-API requires a target name.
+                # Therefore use hostname as fallback.
+                gss_host=gss_host or hostname,
+                trust_dns=gss_trust_dns,
+                gssapi_requested=gss_auth or gss_kex,
+            )
+            if self._log_channel is not None:
+                t.set_log_channel(self._log_channel)
+            if banner_timeout is not None:
+                t.banner_timeout = banner_timeout
+            if auth_timeout is not None:
+                t.auth_timeout = auth_timeout
 
-        t = self._transport = Transport(
-            sock, gss_kex=gss_kex, gss_deleg_creds=gss_deleg_creds
-        )
-        t.use_compression(compress=compress)
-        t.set_gss_host(
-            # t.hostname may be None, but GSS-API requires a target name.
-            # Therefore use hostname as fallback.
-            gss_host=gss_host or hostname,
-            trust_dns=gss_trust_dns,
-            gssapi_requested=gss_auth or gss_kex,
-        )
-        if self._log_channel is not None:
-            t.set_log_channel(self._log_channel)
-        if banner_timeout is not None:
-            t.banner_timeout = banner_timeout
-        if auth_timeout is not None:
-            t.auth_timeout = auth_timeout
-
-        if port == SSH_PORT:
-            server_hostkey_name = hostname
-        else:
-            server_hostkey_name = "[{}]:{}".format(hostname, port)
-        our_server_keys = None
-
-        our_server_keys = self._system_host_keys.get(server_hostkey_name)
-        if our_server_keys is None:
-            our_server_keys = self._host_keys.get(server_hostkey_name)
-        if our_server_keys is not None:
-            keytype = our_server_keys.keys()[0]
-            sec_opts = t.get_security_options()
-            other_types = [x for x in sec_opts.key_types if x != keytype]
-            sec_opts.key_types = [keytype] + other_types
-
-        t.start_client(timeout=timeout)
-
-        # If GSS-API Key Exchange is performed we are not required to check the
-        # host key, because the host is authenticated via GSS-API / SSPI as
-        # well as our client.
-        if not self._transport.gss_kex_used:
-            server_key = t.get_remote_server_key()
-            if our_server_keys is None:
-                # will raise exception if the key is rejected
-                self._policy.missing_host_key(
-                    self, server_hostkey_name, server_key
-                )
+            if port == SSH_PORT:
+                server_hostkey_name = hostname
             else:
-                our_key = our_server_keys.get(server_key.get_name())
-                if our_key != server_key:
-                    if our_key is None:
-                        our_key = list(our_server_keys.values())[0]
-                    raise BadHostKeyException(hostname, server_key, our_key)
+                server_hostkey_name = "[{}]:{}".format(hostname, port)
+            our_server_keys = None
 
-        if username is None:
-            username = getpass.getuser()
+            our_server_keys = self._system_host_keys.get(server_hostkey_name)
+            if our_server_keys is None:
+                our_server_keys = self._host_keys.get(server_hostkey_name)
+            if our_server_keys is not None:
+                keytype = our_server_keys.keys()[0]
+                sec_opts = t.get_security_options()
+                other_types = [x for x in sec_opts.key_types if x != keytype]
+                sec_opts.key_types = [keytype] + other_types
 
-        if key_filename is None:
-            key_filenames = []
-        elif isinstance(key_filename, string_types):
-            key_filenames = [key_filename]
-        else:
-            key_filenames = key_filename
+            t.start_client(timeout=timeout)
 
-        self._auth(
-            username,
-            password,
-            pkey,
-            key_filenames,
-            allow_agent,
-            look_for_keys,
-            gss_auth,
-            gss_kex,
-            gss_deleg_creds,
-            t.gss_host,
-            passphrase,
-        )
+            # If GSS-API Key Exchange is performed we are not required to check the
+            # host key, because the host is authenticated via GSS-API / SSPI as
+            # well as our client.
+            if not self._transport.gss_kex_used:
+                server_key = t.get_remote_server_key()
+                if our_server_keys is None:
+                    # will raise exception if the key is rejected
+                    self._policy.missing_host_key(
+                        self, server_hostkey_name, server_key
+                    )
+                else:
+                    our_key = our_server_keys.get(server_key.get_name())
+                    if our_key != server_key:
+                        if our_key is None:
+                            our_key = list(our_server_keys.values())[0]
+                        raise BadHostKeyException(hostname, server_key, our_key)
+
+            if username is None:
+                username = getpass.getuser()
+
+            if key_filename is None:
+                key_filenames = []
+            elif isinstance(key_filename, string_types):
+                key_filenames = [key_filename]
+            else:
+                key_filenames = key_filename
+
+            self._auth(
+                username,
+                password,
+                pkey,
+                key_filenames,
+                allow_agent,
+                look_for_keys,
+                gss_auth,
+                gss_kex,
+                gss_deleg_creds,
+                t.gss_host,
+                passphrase,
+            )
 
     def close(self):
         """
