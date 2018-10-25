@@ -20,11 +20,11 @@
 Some unit tests for the BufferedFile abstraction.
 """
 
+from io import BytesIO
 import unittest
 
 from paramiko.common import linefeed_byte, crlf, cr_byte
 from paramiko.file import BufferedFile
-from paramiko.py3compat import BytesIO
 
 from .util import needs_builtin
 

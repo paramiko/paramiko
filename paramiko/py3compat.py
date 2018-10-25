@@ -2,10 +2,27 @@ import sys
 import base64
 
 __all__ = [
-    'BytesIO', 'MAXSIZE', 'PY2', 'StringIO', 'b', 'b2s', 'builtins',
-    'byte_chr', 'byte_mask', 'byte_ord', 'bytes', 'bytes_types', 'decodebytes',
-    'encodebytes', 'input', 'integer_types', 'is_callable', 'long', 'next',
-    'string_types', 'text_type', 'u',
+    "MAXSIZE",
+    "PY2",
+    "StringIO",
+    "b",
+    "b2s",
+    "builtins",
+    "byte_chr",
+    "byte_mask",
+    "byte_ord",
+    "bytes",
+    "bytes_types",
+    "decodebytes",
+    "encodebytes",
+    "input",
+    "integer_types",
+    "is_callable",
+    "long",
+    "next",
+    "string_types",
+    "text_type",
+    "u",
 ]
 
 PY2 = sys.version_info[0] < 3
@@ -62,7 +79,6 @@ if PY2:
 
     import cStringIO
     StringIO = cStringIO.StringIO
-    BytesIO = StringIO
 
 
     def is_callable(c):  # NOQA
@@ -143,8 +159,7 @@ else:
         return s.decode() if isinstance(s, bytes) else s
 
     import io
-    StringIO = io.StringIO      # NOQA
-    BytesIO = io.BytesIO        # NOQA
+    StringIO = io.StringIO
 
     def is_callable(c):
         return isinstance(c, collections.Callable)
