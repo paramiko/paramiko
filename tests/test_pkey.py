@@ -221,7 +221,7 @@ class KeyTest(unittest.TestCase):
         for keytype, precomputed_sig in (
             (RSAKey, SIGNED_RSA),
             (RSA256Key, SIGNED_RSA256),
-            (RSA512Key, SIGNED_RSA512)
+            (RSA512Key, SIGNED_RSA512),
         ):
             key = keytype.from_private_key_file(_support("test_rsa.key"))
             msg = key.sign_ssh_data(b"ice weasels")
