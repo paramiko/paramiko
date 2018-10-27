@@ -210,6 +210,6 @@ class RSA512Key(RSAKey):
     """
     RSA key which uses SHA-512 for signing instead of deprecated SHA-1
     """
-    
+
     hash_algorithm = hashes.SHA512()
     hash_algo_name = "rsa-sha2-512"
