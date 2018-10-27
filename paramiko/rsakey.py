@@ -36,6 +36,7 @@ class RSAKey(PKey):
     Representation of an RSA key which can be used to sign and verify SSH2
     data.
     """
+
     hash_algorithm = hashes.SHA1()
     hash_algo_name = "ssh-rsa"
 
@@ -173,6 +174,7 @@ class RSAKey(PKey):
             public_exponent=65537, key_size=bits, backend=default_backend()
         )
         return cls(key=key)
+
     # ...internals...
 
     def _from_private_key_file(self, filename, password):
@@ -199,6 +201,7 @@ class RSA256Key(RSAKey):
     """
     RSA key which uses SHA-256 for signing instead of deprecated SHA-1
     """
+
     hash_algorithm = hashes.SHA256()
     hash_algo_name = "rsa-sha2-256"
 
@@ -207,5 +210,6 @@ class RSA512Key(RSAKey):
     """
     RSA key which uses SHA-512 for signing instead of deprecated SHA-1
     """
+    
     hash_algorithm = hashes.SHA512()
     hash_algo_name = "rsa-sha2-512"

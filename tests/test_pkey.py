@@ -219,9 +219,10 @@ class KeyTest(unittest.TestCase):
     def test_8_sign_rsa(self):
         # verify that the rsa private key can sign and verify
         for keytype, precomputed_sig in (
-                (RSAKey, SIGNED_RSA),
-                (RSA256Key, SIGNED_RSA256),
-                (RSA512Key, SIGNED_RSA512)):
+            (RSAKey, SIGNED_RSA),
+            (RSA256Key, SIGNED_RSA256),
+            (RSA512Key, SIGNED_RSA512)
+        ):
             key = keytype.from_private_key_file(_support("test_rsa.key"))
             msg = key.sign_ssh_data(b"ice weasels")
             self.assertTrue(type(msg) is Message)
