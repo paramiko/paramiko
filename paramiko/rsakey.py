@@ -36,6 +36,8 @@ class RSAKey(PKey):
     Representation of an RSA key which can be used to sign and verify SSH2
     data.
     """
+    hash_algorithm = hashes.SHA1()
+    hash_algo_name = "ssh-rsa"
 
     def __init__(
         self,
@@ -104,7 +106,10 @@ class RSAKey(PKey):
         )
 
     def get_name(self):
-        return "ssh-rsa"
+        # This might need to stay "ssh-rsa" for all types, depending on
+        # OpenSSH convention on how to distinguish key type and algorithm
+        # choice, which seems to currently be in flux... (RFC-8332)
+        return self.hash_algo_name
 
     def get_bits(self):
         return self.size
@@ -114,16 +119,16 @@ class RSAKey(PKey):
 
     def sign_ssh_data(self, data):
         sig = self.key.sign(
-            data, padding=padding.PKCS1v15(), algorithm=hashes.SHA1()
+            data, padding=padding.PKCS1v15(), algorithm=self.hash_algorithm
         )
 
         m = Message()
-        m.add_string("ssh-rsa")
+        m.add_string(self.hash_algo_name)
         m.add_string(sig)
         return m
 
     def verify_ssh_sig(self, data, msg):
-        if msg.get_text() != "ssh-rsa":
+        if msg.get_text() != self.hash_algo_name:
             return False
         key = self.key
         if isinstance(key, rsa.RSAPrivateKey):
@@ -131,7 +136,7 @@ class RSAKey(PKey):
 
         try:
             key.verify(
-                msg.get_binary(), data, padding.PKCS1v15(), hashes.SHA1()
+                msg.get_binary(), data, padding.PKCS1v15(), self.hash_algorithm
             )
         except InvalidSignature:
             return False
@@ -154,8 +159,8 @@ class RSAKey(PKey):
             password=password,
         )
 
-    @staticmethod
-    def generate(bits, progress_func=None):
+    @classmethod
+    def generate(cls, bits, progress_func=None):
         """
         Generate a new private RSA key.  This factory function can be used to
         generate a new host key or authentication key.
@@ -167,8 +172,7 @@ class RSAKey(PKey):
         key = rsa.generate_private_key(
             public_exponent=65537, key_size=bits, backend=default_backend()
         )
-        return RSAKey(key=key)
-
+        return cls(key=key)
     # ...internals...
 
     def _from_private_key_file(self, filename, password):
@@ -189,3 +193,19 @@ class RSAKey(PKey):
 
         assert isinstance(key, rsa.RSAPrivateKey)
         self.key = key
+
+
+class RSA256Key(RSAKey):
+    """
+    RSA key which uses SHA-256 for signing instead of deprecated SHA-1
+    """
+    hash_algorithm = hashes.SHA256()
+    hash_algo_name = "rsa-sha2-256"
+
+
+class RSA512Key(RSAKey):
+    """
+    RSA key which uses SHA-512 for signing instead of deprecated SHA-1
+    """
+    hash_algorithm = hashes.SHA512()
+    hash_algo_name = "rsa-sha2-512"

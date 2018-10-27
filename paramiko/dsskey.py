@@ -194,8 +194,8 @@ class DSSKey(PKey):
             password=password,
         )
 
-    @staticmethod
-    def generate(bits=1024, progress_func=None):
+    @classmethod
+    def generate(cls, bits=1024, progress_func=None):
         """
         Generate a new private DSS key.  This factory function can be used to
         generate a new host key or authentication key.
@@ -207,7 +207,7 @@ class DSSKey(PKey):
         numbers = dsa.generate_private_key(
             bits, backend=default_backend()
         ).private_numbers()
-        key = DSSKey(
+        key = cls(
             vals=(
                 numbers.public_numbers.parameter_numbers.p,
                 numbers.public_numbers.parameter_numbers.q,

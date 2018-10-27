@@ -28,6 +28,7 @@ from hashlib import md5
 import base64
 
 from paramiko import RSAKey, DSSKey, ECDSAKey, Ed25519Key, Message, util
+from paramiko import RSA256Key, RSA512Key
 from paramiko.py3compat import StringIO, byte_chr, b, bytes, PY2
 
 from .util import _support
@@ -46,6 +47,8 @@ FINGER_ECDSA_256 = "256 25:19:eb:55:e6:a1:47:ff:4f:38:d2:75:6f:a5:d5:60"
 FINGER_ECDSA_384 = "384 c1:8d:a0:59:09:47:41:8e:a8:a6:07:01:29:23:b4:65"
 FINGER_ECDSA_521 = "521 44:58:22:52:12:33:16:0e:ce:0e:be:2c:7c:7e:cc:1e"
 SIGNED_RSA = "20:d7:8a:31:21:cb:f7:92:12:f2:a4:89:37:f5:78:af:e6:16:b6:25:b9:97:3d:a2:cd:5f:ca:20:21:73:4c:ad:34:73:8f:20:77:28:e2:94:15:08:d8:91:40:7a:85:83:bf:18:37:95:dc:54:1a:9b:88:29:6c:73:ca:38:b4:04:f1:56:b9:f2:42:9d:52:1b:29:29:b4:4f:fd:c9:2d:af:47:d2:40:76:30:f3:63:45:0c:d9:1d:43:86:0f:1c:70:e2:93:12:34:f3:ac:c5:0a:2f:14:50:66:59:f1:88:ee:c1:4a:e9:d1:9c:4e:46:f0:0e:47:6f:38:74:f1:44:a8"
+SIGNED_RSA256 = "cc:06:60:e0:00:2c:ac:9e:26:bc:d5:68:64:3f:9f:a7:e5:aa:41:eb:88:4a:25:05:9c:93:84:66:ef:ef:60:f4:34:fb:f4:c8:3d:55:33:6a:77:bd:b2:ee:83:0f:71:27:41:7e:f5:07:05:00:a9:4c:07:80:6f:be:76:67:cb:58:35:b9:2b:f3:c2:d3:3c:ee:e1:3f:59:e0:fa:e4:5c:92:ed:ae:74:de:0d:d6:27:16:8f:84:a3:86:68:0c:94:90:7d:6e:cc:81:12:d8:b6:ad:aa:31:a8:13:3d:63:81:3e:bb:05:b6:38:4d:02:0d:1b:5b:70:de:83:cc:3a:cb:31"
+SIGNED_RSA512 = "87:46:8b:75:92:33:78:a0:22:35:32:39:23:c6:ab:e1:06:92:ad:bc:7f:6e:ab:19:32:e4:78:b2:2c:8f:1d:0c:65:da:fc:a5:07:ca:b6:55:55:31:83:b1:a0:af:d1:95:c5:2e:af:56:ba:f5:41:64:0f:39:9d:af:82:43:22:8f:90:52:9d:89:e7:45:97:df:f3:f2:bc:7b:3a:db:89:0e:34:fd:18:62:25:1b:ef:77:aa:c6:6c:99:36:3a:84:d6:9c:2a:34:8c:7f:f4:bb:c9:a5:9a:6c:11:f2:cf:da:51:5e:1e:7f:90:27:34:de:b2:f3:15:4f:db:47:32:6b:a7"
 
 RSA_PRIVATE_OUT = """\
 -----BEGIN RSA PRIVATE KEY-----
@@ -137,20 +140,23 @@ class KeyTest(unittest.TestCase):
         self.assertEqual(exp, key)
 
     def test_2_load_rsa(self):
-        key = RSAKey.from_private_key_file(_support("test_rsa.key"))
-        self.assertEqual("ssh-rsa", key.get_name())
-        exp_rsa = b(FINGER_RSA.split()[1].replace(":", ""))
-        my_rsa = hexlify(key.get_fingerprint())
-        self.assertEqual(exp_rsa, my_rsa)
-        self.assertEqual(PUB_RSA.split()[1], key.get_base64())
-        self.assertEqual(1024, key.get_bits())
+        # Repeat RSA tests for different flavors of RSA, which
+        # vary only by signature algorithm.
+        for keytype in (RSAKey, RSA256Key, RSA512Key):
+            key = keytype.from_private_key_file(_support("test_rsa.key"))
+            self.assertEqual(key.hash_algo_name, key.get_name())
+            exp_rsa = b(FINGER_RSA.split()[1].replace(":", ""))
+            my_rsa = hexlify(key.get_fingerprint())
+            self.assertEqual(exp_rsa, my_rsa)
+            self.assertEqual(PUB_RSA.split()[1], key.get_base64())
+            self.assertEqual(1024, key.get_bits())
 
-        s = StringIO()
-        key.write_private_key(s)
-        self.assertEqual(RSA_PRIVATE_OUT, s.getvalue())
-        s.seek(0)
-        key2 = RSAKey.from_private_key(s)
-        self.assertEqual(key, key2)
+            s = StringIO()
+            key.write_private_key(s)
+            self.assertEqual(RSA_PRIVATE_OUT, s.getvalue())
+            s.seek(0)
+            key2 = keytype.from_private_key(s)
+            self.assertEqual(key, key2)
 
     def test_3_load_rsa_password(self):
         key = RSAKey.from_private_key_file(
@@ -192,12 +198,14 @@ class KeyTest(unittest.TestCase):
 
     def test_6_compare_rsa(self):
         # verify that the private & public keys compare equal
-        key = RSAKey.from_private_key_file(_support("test_rsa.key"))
-        self.assertEqual(key, key)
-        pub = RSAKey(data=key.asbytes())
-        self.assertTrue(key.can_sign())
-        self.assertTrue(not pub.can_sign())
-        self.assertEqual(key, pub)
+        # for each RSA flavor
+        for keytype in (RSAKey, RSA256Key, RSA512Key):
+            key = keytype.from_private_key_file(_support("test_rsa.key"))
+            self.assertEqual(key, key)
+            pub = keytype(data=key.asbytes())
+            self.assertTrue(key.can_sign())
+            self.assertTrue(not pub.can_sign())
+            self.assertEqual(key, pub)
 
     def test_7_compare_dss(self):
         # verify that the private & public keys compare equal
@@ -210,18 +218,22 @@ class KeyTest(unittest.TestCase):
 
     def test_8_sign_rsa(self):
         # verify that the rsa private key can sign and verify
-        key = RSAKey.from_private_key_file(_support("test_rsa.key"))
-        msg = key.sign_ssh_data(b"ice weasels")
-        self.assertTrue(type(msg) is Message)
-        msg.rewind()
-        self.assertEqual("ssh-rsa", msg.get_text())
-        sig = bytes().join(
-            [byte_chr(int(x, 16)) for x in SIGNED_RSA.split(":")]
-        )
-        self.assertEqual(sig, msg.get_binary())
-        msg.rewind()
-        pub = RSAKey(data=key.asbytes())
-        self.assertTrue(pub.verify_ssh_sig(b"ice weasels", msg))
+        for keytype, precomputed_sig in (
+                (RSAKey, SIGNED_RSA),
+                (RSA256Key, SIGNED_RSA256),
+                (RSA512Key, SIGNED_RSA512)):
+            key = keytype.from_private_key_file(_support("test_rsa.key"))
+            msg = key.sign_ssh_data(b"ice weasels")
+            self.assertTrue(type(msg) is Message)
+            msg.rewind()
+            self.assertEqual(key.get_name(), msg.get_text())
+            sig = bytes().join(
+                [byte_chr(int(x, 16)) for x in precomputed_sig.split(":")]
+            )
+            self.assertEqual(sig, msg.get_binary())
+            msg.rewind()
+            pub = keytype(data=key.asbytes())
+            self.assertTrue(pub.verify_ssh_sig(b"ice weasels", msg))
 
     def test_9_sign_dss(self):
         # verify that the dss private key can sign and verify
@@ -544,3 +556,20 @@ class KeyTest(unittest.TestCase):
             key1.load_certificate,
             _support("test_rsa.key-cert.pub"),
         )
+
+    def test_rsa_type_change(self):
+        # RSAKey, RSA256Key, and RSA512Key types can be converted from/to
+        # other flavors using the underlying key. All that differs is
+        # the hash algorithm.
+        for keytype in (RSAKey, RSA256Key, RSA512Key):
+            key = keytype.from_private_key_file(_support("test_rsa.key"))
+            rsakey = RSAKey(key=key.key)
+            self.assertEqual(rsakey.hash_algo_name, "ssh-rsa")
+            rsa256 = RSA256Key(key=key.key)
+            self.assertEqual(rsa256.hash_algo_name, "rsa-sha2-256")
+            rsa512 = RSA512Key(key=key.key)
+            self.assertEqual(rsa512.hash_algo_name, "rsa-sha2-512")
+            # Other than hash_algo, all 3 should match
+            self.assertEqual(key.asbytes(), rsakey.asbytes())
+            self.assertEqual(key.asbytes(), rsa256.asbytes())
+            self.assertEqual(key.asbytes(), rsa512.asbytes())

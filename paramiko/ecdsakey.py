@@ -270,7 +270,7 @@ class ECDSAKey(PKey):
             curve = curve.curve_class()
 
         private_key = ec.generate_private_key(curve, backend=default_backend())
-        return ECDSAKey(vals=(private_key, private_key.public_key()))
+        return cls(vals=(private_key, private_key.public_key()))
 
     # ...internals...
 
