@@ -2216,7 +2216,6 @@ class Transport(threading.Thread, ClosingContextManager):
             else:
                 preferred_kex = self._preferred_kex + ("ext-info-c",)
 
-
         m = Message()
         m.add_byte(cMSG_KEXINIT)
         m.add_bytes(os.urandom(16))
