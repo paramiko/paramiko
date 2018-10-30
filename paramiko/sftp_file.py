@@ -45,6 +45,11 @@ from paramiko.sftp import (
 )
 from paramiko.sftp_attr import SFTPAttributes
 
+# Some sftp servers will choke if you send read/write requests larger than
+# this size.
+MAX_REQUEST_SIZE = 32768
+
+
 
 class SFTPFile(BufferedFile):
     """
@@ -54,11 +59,9 @@ class SFTPFile(BufferedFile):
     that built-in Python file objects are.
     """
 
-    # Some sftp servers will choke if you send read/write requests larger than
-    # this size.
-    MAX_REQUEST_SIZE = 32768
 
-    def __init__(self, sftp, handle, mode="r", bufsize=-1):
+    def __init__(self, sftp, handle, mode="r", bufsize=-1,
+                 max_request_size=MAX_REQUEST_SIZE):
         BufferedFile.__init__(self)
         self.sftp = sftp
         self.handle = handle
@@ -177,7 +180,7 @@ class SFTPFile(BufferedFile):
         return prefetch
 
     def _read(self, size):
-        size = min(size, self.MAX_REQUEST_SIZE)
+        size = min(size, self.max_request_size)
         if self._prefetching:
             data = self._read_prefetch(size)
             if data is not None:
@@ -191,7 +194,7 @@ class SFTPFile(BufferedFile):
 
     def _write(self, data):
         # may write less than requested if it would exceed max packet size
-        chunk = min(len(data), self.MAX_REQUEST_SIZE)
+        chunk = min(len(data), self.max_request_size)
         sftp_async_request = self.sftp._async_request(
             type(None),
             CMD_WRITE,
@@ -469,7 +472,7 @@ class SFTPFile(BufferedFile):
         chunks = []
         n = self._realpos
         while n < file_size:
-            chunk = min(self.MAX_REQUEST_SIZE, file_size - n)
+            chunk = min(self.max_request_size, file_size - n)
             chunks.append((n, chunk))
             n += chunk
         if len(chunks) > 0:
@@ -503,7 +506,7 @@ class SFTPFile(BufferedFile):
 
             # break up anything larger than the max read size
             while size > 0:
-                chunk_size = min(size, self.MAX_REQUEST_SIZE)
+                chunk_size = min(size, self.max_request_size)
                 read_chunks.append((offset, chunk_size))
                 offset += chunk_size
                 size -= chunk_size
