@@ -65,7 +65,7 @@ from paramiko.sftp import (
 
 from paramiko.sftp_attr import SFTPAttributes
 from paramiko.ssh_exception import SSHException
-from paramiko.sftp_file import SFTPFile
+from paramiko.sftp_file import SFTPFile, MAX_REQUEST_SIZE
 from paramiko.util import ClosingContextManager
 
 
@@ -323,7 +323,8 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
                 self._request(CMD_CLOSE, handle)
                 return
 
-    def open(self, filename, mode="r", bufsize=-1):
+    def open(self, filename, mode="r", bufsize=-1,
+             max_request_size=MAX_REQUEST_SIZE):
         """
         Open a file on the remote server.  The arguments are the same as for
         Python's built-in `python:file` (aka `python:open`).  A file-like
@@ -351,6 +352,9 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         :param str filename: name of the file to open
         :param str mode: mode (Python-style) to open in
         :param int bufsize: desired buffering (-1 = default buffer size)
+        :param int max_request_size:  size of read/write requests on the file
+        some ftp servers will choke if you send read/write requests larger
+        than 32768
         :return: an `.SFTPFile` object representing the open file
 
         :raises: ``IOError`` -- if the file could not be opened.
@@ -379,7 +383,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
                 filename, mode, u(hexlify(handle))
             ),
         )
-        return SFTPFile(self, handle, mode, bufsize)
+        return SFTPFile(self, handle, mode, bufsize, MAX_REQUEST_SIZE)
 
     # Python continues to vacillate about "open" vs "file"...
     file = open
