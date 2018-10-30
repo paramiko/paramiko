@@ -383,7 +383,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
                 filename, mode, u(hexlify(handle))
             ),
         )
-        return SFTPFile(self, handle, mode, bufsize, MAX_REQUEST_SIZE)
+        return SFTPFile(self, handle, mode, bufsize, max_request_size)
 
     # Python continues to vacillate about "open" vs "file"...
     file = open
