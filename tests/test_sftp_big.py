@@ -373,3 +373,37 @@ class TestBigSFTP(object):
         finally:
             sftp.remove("%s/hongry.txt" % sftp.FOLDER)
             t.packetizer.REKEY_BYTES = pow(2, 30)
+
+    def test_2_big_file_max_request_size(self, sftp):
+        """
+        write a 1MB file with no buffering.
+        """
+        kblob = 1024 * b"x"
+        start = time.time()
+        try:
+            with sftp.open("%s/hongry.txt" % sftp.FOLDER, "w",
+                           max_request_size=16384) as f:
+                for n in range(1024):
+                    f.write(kblob)
+                    if n % 128 == 0:
+                        sys.stderr.write(".")
+            sys.stderr.write(" ")
+
+            assert (
+                sftp.stat("%s/hongry.txt" % sftp.FOLDER).st_size == 1024 * 1024
+            )
+            end = time.time()
+            sys.stderr.write("%ds " % round(end - start))
+
+            start = time.time()
+            with sftp.open("%s/hongry.txt" % sftp.FOLDER, "r",
+                           max_request_size=16384) as f:
+                for n in range(1024):
+                    data = f.read(1024)
+                    assert data == kblob
+
+            end = time.time()
+            sys.stderr.write("%ds " % round(end - start))
+        finally:
+            sftp.remove("%s/hongry.txt" % sftp.FOLDER)
+
