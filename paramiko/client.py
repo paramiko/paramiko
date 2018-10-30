@@ -830,7 +830,7 @@ class WarningPolicy(MissingHostKeyPolicy):
         )
 
 
-class IgnorePolicy(paramiko.MissingHostKeyPolicy):
+class IgnorePolicy(MissingHostKeyPolicy):
     """
     Policy for ignoring missing host key.
     """
