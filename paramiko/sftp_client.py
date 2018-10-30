@@ -355,6 +355,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         :param int max_request_size:  size of read/write requests on the file
         some ftp servers will choke if you send read/write requests larger
         than 32768
+
         :return: an `.SFTPFile` object representing the open file
 
         :raises: ``IOError`` -- if the file could not be opened.
