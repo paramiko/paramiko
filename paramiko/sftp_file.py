@@ -60,8 +60,14 @@ class SFTPFile(BufferedFile):
     """
 
 
-    def __init__(self, sftp, handle, mode="r", bufsize=-1,
-                 max_request_size=MAX_REQUEST_SIZE):
+    def __init__(
+        self,
+        sftp,
+        handle,
+        mode="r",
+        bufsize=-1,
+        max_request_size=MAX_REQUEST_SIZE
+    ):
         self.max_request_size = max_request_size
         BufferedFile.__init__(self)
         self.sftp = sftp

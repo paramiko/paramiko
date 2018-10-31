@@ -381,8 +381,7 @@ class TestBigSFTP(object):
         kblob = 1024 * b"x"
         start = time.time()
         try:
-            with sftp.open("%s/hongry.txt" % sftp.FOLDER, "w",
-                           max_request_size=16384) as f:
+            with sftp.open("%s/hongry.txt" % sftp.FOLDER, "w", max_request_size=16384) as f:
                 for n in range(1024):
                     f.write(kblob)
                     if n % 128 == 0:
@@ -396,8 +395,7 @@ class TestBigSFTP(object):
             sys.stderr.write("%ds " % round(end - start))
 
             start = time.time()
-            with sftp.open("%s/hongry.txt" % sftp.FOLDER, "r",
-                           max_request_size=16384) as f:
+            with sftp.open("%s/hongry.txt" % sftp.FOLDER, "r", max_request_size=16384) as f:
                 for n in range(1024):
                     data = f.read(1024)
                     assert data == kblob
