@@ -59,7 +59,12 @@ class SFTPFile(BufferedFile):
     """
 
     def __init__(
-        self, sftp, handle, mode="r", bufsize=-1, max_request_size=MAX_REQUEST_SIZE
+        self,
+        sftp,
+        handle,
+        mode="r",
+        bufsize=-1,
+        max_request_size=MAX_REQUEST_SIZE,
     ):
         self.max_request_size = max_request_size
         BufferedFile.__init__(self)
@@ -113,7 +118,9 @@ class SFTPFile(BufferedFile):
             pass
 
     def _data_in_prefetch_requests(self, offset, size):
-        k = [x for x in list(self._prefetch_extents.values()) if x[0] <= offset]
+        k = [
+            x for x in list(self._prefetch_extents.values()) if x[0] <= offset
+        ]
         if len(k) == 0:
             return False
         k.sort(key=lambda x: x[0])
@@ -194,7 +201,11 @@ class SFTPFile(BufferedFile):
         # may write less than requested if it would exceed max packet size
         chunk = min(len(data), self.max_request_size)
         sftp_async_request = self.sftp._async_request(
-            type(None), CMD_WRITE, self.handle, long(self._realpos), data[:chunk]
+            type(None),
+            CMD_WRITE,
+            self.handle,
+            long(self._realpos),
+            data[:chunk],
         )
         self._reqs.append(sftp_async_request)
         if not self.pipelined or (
@@ -290,7 +301,9 @@ class SFTPFile(BufferedFile):
 
         :param int mode: new permissions
         """
-        self.sftp._log(DEBUG, "chmod({}, {!r})".format(hexlify(self.handle), mode))
+        self.sftp._log(
+            DEBUG, "chmod({}, {!r})".format(hexlify(self.handle), mode)
+        )
         attr = SFTPAttributes()
         attr.st_mode = mode
         self.sftp._request(CMD_FSETSTAT, self.handle, attr)
@@ -306,7 +319,8 @@ class SFTPFile(BufferedFile):
         :param int gid: new group id
         """
         self.sftp._log(
-            DEBUG, "chown({}, {!r}, {!r})".format(hexlify(self.handle), uid, gid)
+            DEBUG,
+            "chown({}, {!r}, {!r})".format(hexlify(self.handle), uid, gid),
         )
         attr = SFTPAttributes()
         attr.st_uid, attr.st_gid = uid, gid
@@ -327,7 +341,9 @@ class SFTPFile(BufferedFile):
         """
         if times is None:
             times = (time.time(), time.time())
-        self.sftp._log(DEBUG, "utime({}, {!r})".format(hexlify(self.handle), times))
+        self.sftp._log(
+            DEBUG, "utime({}, {!r})".format(hexlify(self.handle), times)
+        )
         attr = SFTPAttributes()
         attr.st_atime, attr.st_mtime = times
         self.sftp._request(CMD_FSETSTAT, self.handle, attr)
@@ -340,7 +356,9 @@ class SFTPFile(BufferedFile):
 
         :param size: the new size of the file
         """
-        self.sftp._log(DEBUG, "truncate({}, {!r})".format(hexlify(self.handle), size))
+        self.sftp._log(
+            DEBUG, "truncate({}, {!r})".format(hexlify(self.handle), size)
+        )
         attr = SFTPAttributes()
         attr.st_size = size
         self.sftp._request(CMD_FSETSTAT, self.handle, attr)
@@ -479,7 +497,9 @@ class SFTPFile(BufferedFile):
 
         .. versionadded:: 1.5.4
         """
-        self.sftp._log(DEBUG, "readv({}, {!r})".format(hexlify(self.handle), chunks))
+        self.sftp._log(
+            DEBUG, "readv({}, {!r})".format(hexlify(self.handle), chunks)
+        )
 
         read_chunks = []
         for offset, size in chunks:
