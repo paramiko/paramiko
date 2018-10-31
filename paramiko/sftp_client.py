@@ -122,19 +122,14 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         if type(sock) is Channel:
             # override default logger
             transport = self.sock.get_transport()
-            self.logger = util.get_logger(
-                transport.get_log_channel() + ".sftp"
-            )
+            self.logger = util.get_logger(transport.get_log_channel() + ".sftp")
             self.ultra_debug = transport.get_hexdump()
         try:
             server_version = self._send_version()
         except EOFError:
             raise SSHException("EOF during negotiation")
         self._log(
-            INFO,
-            "Opened sftp connection (server version {})".format(
-                server_version
-            ),
+            INFO, "Opened sftp connection (server version {})".format(server_version)
         )
 
     @classmethod
@@ -161,9 +156,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         .. versionchanged:: 1.15
             Added the ``window_size`` and ``max_packet_size`` arguments.
         """
-        chan = t.open_session(
-            window_size=window_size, max_packet_size=max_packet_size
-        )
+        chan = t.open_session(window_size=window_size, max_packet_size=max_packet_size)
         if chan is None:
             return None
         chan.invoke_subsystem("sftp")
@@ -180,9 +173,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
             # before logging
             msg = msg.replace("%", "%%")
             super(SFTPClient, self)._log(
-                level,
-                "[chan %s] " + msg,
-                *([self.sock.get_name()] + list(args))
+                level, "[chan %s] " + msg, *([self.sock.get_name()] + list(args))
             )
 
     def close(self):
@@ -310,9 +301,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
                     for i in range(count):
                         filename = msg.get_text()
                         longname = msg.get_text()
-                        attr = SFTPAttributes._from_msg(
-                            msg, filename, longname
-                        )
+                        attr = SFTPAttributes._from_msg(msg, filename, longname)
                         if (filename != ".") and (filename != ".."):
                             yield attr
 
@@ -323,8 +312,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
                 self._request(CMD_CLOSE, handle)
                 return
 
-    def open(self, filename, mode="r", bufsize=-1,
-             max_request_size=MAX_REQUEST_SIZE):
+    def open(self, filename, mode="r", bufsize=-1, max_request_size=MAX_REQUEST_SIZE):
         """
         Open a file on the remote server.  The arguments are the same as for
         Python's built-in `python:file` (aka `python:open`).  A file-like
@@ -379,10 +367,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
             raise SFTPError("Expected handle")
         handle = msg.get_binary()
         self._log(
-            DEBUG,
-            "open({!r}, {!r}) -> {}".format(
-                filename, mode, u(hexlify(handle))
-            ),
+            DEBUG, "open({!r}, {!r}) -> {}".format(filename, mode, u(hexlify(handle)))
         )
         return SFTPFile(self, handle, mode, bufsize, max_request_size)
 
@@ -445,9 +430,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         oldpath = self._adjust_cwd(oldpath)
         newpath = self._adjust_cwd(newpath)
         self._log(DEBUG, "posix_rename({!r}, {!r})".format(oldpath, newpath))
-        self._request(
-            CMD_EXTENDED, "posix-rename@openssh.com", oldpath, newpath
-        )
+        self._request(CMD_EXTENDED, "posix-rename@openssh.com", oldpath, newpath)
 
     def mkdir(self, path, mode=o777):
         """
@@ -724,9 +707,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         if confirm:
             s = self.stat(remotepath)
             if s.st_size != size:
-                raise IOError(
-                    "size mismatch in put!  {} != {}".format(s.st_size, size)
-                )
+                raise IOError("size mismatch in put!  {} != {}".format(s.st_size, size))
         else:
             s = SFTPAttributes()
         return s
@@ -807,9 +788,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
             size = self.getfo(remotepath, fl, callback)
         s = os.stat(localpath)
         if s.st_size != size:
-            raise IOError(
-                "size mismatch in get!  {} != {}".format(s.st_size, size)
-            )
+            raise IOError("size mismatch in get!  {} != {}".format(s.st_size, size))
 
     # ...internals...
 
