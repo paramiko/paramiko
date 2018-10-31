@@ -352,9 +352,9 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         :param str filename: name of the file to open
         :param str mode: mode (Python-style) to open in
         :param int bufsize: desired buffering (-1 = default buffer size)
-        :param int max_request_size:  size of read/write requests on the file
-        some ftp servers will choke if you send read/write requests larger
-        than 32768
+        :param int max_request_size:
+            size of read/write requests on the file some ftp servers will choke
+            if you send read/write requests larger than 32768
 
         :return: an `.SFTPFile` object representing the open file
 
