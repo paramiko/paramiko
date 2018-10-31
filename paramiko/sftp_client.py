@@ -323,7 +323,8 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
                 self._request(CMD_CLOSE, handle)
                 return
 
-    def open(self, filename, mode="r", bufsize=-1, max_request_size=MAX_REQUEST_SIZE):
+    def open(self, filename, mode="r", bufsize=-1,
+             max_request_size=MAX_REQUEST_SIZE):
         """
         Open a file on the remote server.  The arguments are the same as for
         Python's built-in `python:file` (aka `python:open`).  A file-like
