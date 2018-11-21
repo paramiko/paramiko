@@ -87,12 +87,12 @@ class Handler(SocketServer.BaseRequestHandler):
                 data = self.request.recv(1024)
                 if len(data) == 0:
                     break
-                chan.send(data)
+                chan.sendall(data)
             if chan in r:
                 data = chan.recv(1024)
                 if len(data) == 0:
                     break
-                self.request.send(data)
+                self.request.sendall(data)
 
         peername = self.request.getpeername()
         chan.close()
