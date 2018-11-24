@@ -448,6 +448,26 @@ class Packetizer(object):
         finally:
             self.__write_lock.release()
 
+    def send_mux_message(self, data):
+        """
+        Write a block of data to a mux socket. No encryption, MAC,
+        or compression; just a length-prefixed block of data.
+        Also, no rekey tallying for mux connections...
+        """
+        self.__write_lock.acquire()
+        try:
+            mux_packet_type = struct.unpack(">I", data[:4])[0]
+            out = struct.pack(">I", len(data)) + data
+            if self.__dump_packets:
+                self._log(
+                    DEBUG,
+                    "Write mux packet <{}>, length {}".format(mux_packet_type, len(data)),
+                )
+                self._log(DEBUG, util.format_binary(out, "OUT: "))
+            self.write_all(out)
+        finally:
+            self.__write_lock.release()
+
     def read_message(self):
         """
         Only one thread should ever be in this function (no other locking is
@@ -456,7 +476,10 @@ class Packetizer(object):
         :raises: `.SSHException` -- if the packet is mangled
         :raises: `.NeedRekeyException` -- if the transport should rekey
         """
-        header = self.read_all(self.__block_size_in, check_rekey=True)
+        # __block_size_in of zero is only used when communicating with
+        # a ControlMaster, when we actually need to read the packet length
+        # as an int32, so request 4 bytes in this case.
+        header = self.read_all(self.__block_size_in or 4, check_rekey=True)
         if self.__etm_in:
             packet_size = struct.unpack(">I", header[:4])[0]
             remaining = packet_size - self.__block_size_in + 4
@@ -489,7 +512,7 @@ class Packetizer(object):
             # leftover contains decrypted bytes from the first block (after the
             # length field)
             leftover = header[4:]
-            if (packet_size - len(leftover)) % self.__block_size_in != 0:
+            if self.__block_size_in and (packet_size - len(leftover)) % self.__block_size_in != 0:
                 raise SSHException("Invalid packet blocking")
             buf = self.read_all(
                 packet_size + self.__mac_size_in - len(leftover)
@@ -576,6 +599,25 @@ class Packetizer(object):
             )
         return cmd, msg
 
+    def read_mux_message(self):
+        """
+        Read a block of data from a mux socket. No encryption, MAC,
+        or compression; just a length-prefixed block of data.
+        Also, no rekey tallying for mux connections...
+        """
+        len_prefix = self.read_all(4)
+        packet_size = struct.unpack(">I", len_prefix)[0]
+        data = self.read_all(packet_size)
+        mux_packet_type = struct.unpack(">I", data[:4])[0]
+        msg = Message(data[4:])
+        if self.__dump_packets:
+            self._log(
+                DEBUG,
+                "Read mux packet <{}>, length {}".format(mux_packet_type, len(data)),
+            )
+            self._log(DEBUG, util.format_binary(len_prefix + data, "IN: "))
+        return mux_packet_type, msg
+
     # ...protected...
 
     def _log(self, level, msg):
@@ -625,10 +667,15 @@ class Packetizer(object):
     def _build_packet(self, payload):
         # pad up at least 4 bytes, to nearest block-size (usually 8)
         bsize = self.__block_size_out
-        # do not include payload length in computations for padding in EtM mode
-        # (payload length won't be encrypted)
-        addlen = 4 if self.__etm_out else 8
-        padding = 3 + bsize - ((len(payload) + addlen) % bsize)
+        if bsize:
+            # do not include payload length in computations for padding in EtM mode
+            # (payload length won't be encrypted)
+            addlen = 4 if self.__etm_out else 8
+            padding = 3 + bsize - ((len(payload) + addlen) % bsize)
+        else:
+            # ControlMaster padding of zero still needs to be added, but
+            # cannot be used for modulo calculation - just set padding to zero
+            padding = 0
         packet = struct.pack(">IB", len(payload) + padding + 1, padding)
         packet += payload
         if self.__sdctr_out or self.__block_engine_out is None:
