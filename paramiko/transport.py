@@ -297,7 +297,7 @@ class Transport(threading.Thread, ClosingContextManager):
         default_max_packet_size=DEFAULT_MAX_PACKET_SIZE,
         gss_kex=False,
         gss_deleg_creds=True,
-        mux_path = None,
+        mux_path=None,
     ):
         """
         Create a new SSH session over an existing socket, or socket-like
@@ -1022,10 +1022,11 @@ class Transport(threading.Thread, ClosingContextManager):
         response = self.global_request(
             "tcpip-forward", (address, port), wait=True
         )
-        if response is None:
-            raise SSHException("TCP forwarding request denied")
-        if port == 0:
-            port = response.get_int()
+        if not self.mux_path:
+            if response is None:
+                raise SSHException("TCP forwarding request denied")
+            if port == 0:
+                port = response.get_int()
         if handler is None:
 
             def default_handler(channel, src_addr, dest_addr_port):
@@ -1094,6 +1095,10 @@ class Transport(threading.Thread, ClosingContextManager):
             `.SSHException` -- if the key renegotiation failed (which causes
             the session to end)
         """
+        if self.mux_path:
+            # Disallow this when in mux proxy mode
+            self._log(DEBUG, "Ignoring renegotiate_keys() in mux proxy mode")
+            return
         self.completion_event = threading.Event()
         self._send_kex_init()
         while True:
@@ -1152,6 +1157,10 @@ class Transport(threading.Thread, ClosingContextManager):
         self._log(DEBUG, 'Sending global request "{}"'.format(kind))
         self._send_user_message(m)
         if not wait:
+            return None
+        if self.mux_path:
+            # Mux master does not forward the global_response reply
+            self._log(DEBUG, "Skipping global_response wait from mux proxy")
             return None
         while True:
             self.completion_event.wait(0.1)
@@ -2011,7 +2020,8 @@ class Transport(threading.Thread, ClosingContextManager):
                     self.packetizer.write_all(b(self.local_version + "\r\n"))
                     self._log(
                         DEBUG,
-                        "Local version/idstring: {}".format(self.local_version),
+                        "Local version/idstring: {}".format(
+                            self.local_version),
                     )  # noqa
                     self._check_banner()
                     # The above is actually very much part of the handshake, but
@@ -2603,6 +2613,7 @@ class Transport(threading.Thread, ClosingContextManager):
                 DEBUG,
                 'Rejecting "{}" global request from server.'.format(kind),
             )
+            self._log(DEBUG, "want_reply {}".format(want_reply))
             ok = False
         elif kind == "tcpip-forward":
             address = m.get_text()
@@ -2843,10 +2854,13 @@ class Transport(threading.Thread, ClosingContextManager):
         self.packetizer.send_mux_message(m.asbytes())
         resp, msg = self.packetizer.read_mux_message()
         if resp != MUX_MSG_HELLO:
-            raise SSHException("Expected MUX_MSG_HELLO response, got 0x{:x}".format(resp))
+            raise SSHException(
+                "Expected MUX_MSG_HELLO response, got 0x{:x}".format(resp))
         remote_version = msg.get_int()
         if remote_version != version:
-            raise SSHException("Expected Mux protocol version {:d}, got {:d}".format(version, remote_version))
+            raise SSHException(
+                "Expected Mux protocol version {:d}, got {:d}".format(
+                    version, remote_version))
         # Send MUX_C_ALIVE_CHECK as final confirmation
         m = paramiko.Message()
         m.add_int(MUX_C_ALIVE_CHECK)
@@ -2857,7 +2871,8 @@ class Transport(threading.Thread, ClosingContextManager):
             raise SSHException("Mux Alive - Invalid reply 0x{:x}".format(resp))
         request_id = msg.get_int()
         if request_id != 1:
-            raise SSHException("Mux reply - expected request id 1, got {}", request_id)
+            raise SSHException(
+                "Mux reply - expected request id 1, got {}", request_id)
         pid = msg.get_int()
         self._log(DEBUG, "Connected to SSH ControlMaster (PID {})".format(pid))
         # Everything looks good, one last request to enter proxy mode
@@ -2867,7 +2882,9 @@ class Transport(threading.Thread, ClosingContextManager):
         self.packetizer.send_mux_message(m.asbytes())
         resp, msg = self.packetizer.read_mux_message()
         if resp != MUX_S_PROXY or msg.get_int() != 2:
-            raise SSHException('Mux proxy request - got unexpected reply: 0x{:x} {!r}'.format(resp, msg))
+            raise SSHException(
+                "Mux proxy request - got unexpected reply: 0x{:x} {!r}".format(
+                    resp, msg))
 
     _handler_table = {
         MSG_NEWKEYS: _parse_newkeys,

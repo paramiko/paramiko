@@ -443,7 +443,8 @@ class Packetizer(object):
             if self.__dump_packets:
                 self._log(
                     DEBUG,
-                    "Write mux packet <{}>, length {}".format(mux_packet_type, len(data)),
+                    "Write mux packet <{}>, length {}".format(
+                        mux_packet_type, len(data)),
                 )
                 self._log(DEBUG, util.format_binary(out, "OUT: "))
             self.write_all(out)
@@ -470,7 +471,8 @@ class Packetizer(object):
         # leftover contains decrypted bytes from the first block (after the
         # length field)
         leftover = header[4:]
-        if self.__block_size_in and (packet_size - len(leftover)) % self.__block_size_in != 0:
+        if (self.__block_size_in and
+                (packet_size - len(leftover)) % self.__block_size_in != 0):
             raise SSHException("Invalid packet blocking")
         buf = self.read_all(packet_size + self.__mac_size_in - len(leftover))
         packet = buf[: packet_size - len(leftover)]
@@ -567,7 +569,8 @@ class Packetizer(object):
         if self.__dump_packets:
             self._log(
                 DEBUG,
-                "Read mux packet <{}>, length {}".format(mux_packet_type, len(data)),
+                "Read mux packet <{}>, length {}".format(
+                    mux_packet_type, len(data)),
             )
             self._log(DEBUG, util.format_binary(len_prefix + data, "IN: "))
         return mux_packet_type, msg
