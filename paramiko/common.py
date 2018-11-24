@@ -174,6 +174,15 @@ CONNECTION_FAILED_CODE = {
     DISCONNECT_NO_MORE_AUTH_METHODS_AVAILABLE,
 ) = (7, 13, 14)
 
+(
+    MUX_MSG_HELLO,
+    MUX_C_PROXY,
+    MUX_S_PROXY,
+    MUX_C_ALIVE_CHECK,
+    MUX_S_ALIVE,
+    MUX_S_OK,
+) = (1, 0x1000000F, 0x8000000F, 0x10000004, 0x80000005, 0x80000001)
+
 zero_byte = byte_chr(0)
 one_byte = byte_chr(1)
 four_byte = byte_chr(4)
