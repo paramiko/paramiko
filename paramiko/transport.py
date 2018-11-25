@@ -426,7 +426,8 @@ class Transport(threading.Thread, ClosingContextManager):
                 raise SSHException(
                     "Unable to connect to ControlPath '{}' - {}".format(
                         controlpath, e
-                    ))
+                    )
+                )
 
         if type(sock) is tuple:
             # connect to the given (host, port)
@@ -2099,16 +2100,17 @@ class Transport(threading.Thread, ClosingContextManager):
                     self._log(
                         DEBUG,
                         "Local version/idstring: {}".format(
-                            self.local_version),
+                            self.local_version
+                        ),
                     )  # noqa
                     self._check_banner()
-                    # The above is actually very much part of the handshake, but
-                    # sometimes the banner can be read but the machine is not
-                    # responding, for example when the remote ssh daemon is loaded
-                    # in to memory but we can not read from the disk/spawn a new
-                    # shell.
-                    # Make sure we can specify a timeout for the initial handshake.
-                    # Re-use the banner timeout for now.
+                    # The above is actually very much part of the handshake,
+                    # but sometimes the banner can be read but the machine is
+                    # not responding, for example when the remote ssh daemon is
+                    # loaded in to memory but we can not read from the
+                    # dick/spawn a new shell.
+                    # Make sure we can specify a timeout for the initial
+                    # handshake. Re-use the banner timeout for now.
                     self.packetizer.start_handshake(self.handshake_timeout)
                     self._send_kex_init()
                     self._expect_packet(MSG_KEXINIT)
@@ -2935,12 +2937,15 @@ class Transport(threading.Thread, ClosingContextManager):
         resp, msg = self.packetizer.read_mux_message()
         if resp != MUX_MSG_HELLO:
             raise SSHException(
-                "Expected MUX_MSG_HELLO response, got 0x{:x}".format(resp))
+                "Expected MUX_MSG_HELLO response, got 0x{:x}".format(resp)
+            )
         remote_version = msg.get_int()
         if remote_version != version:
             raise SSHException(
                 "Expected Mux protocol version {:d}, got {:d}".format(
-                    version, remote_version))
+                    version, remote_version
+                )
+            )
         # Send MUX_C_ALIVE_CHECK as final confirmation
         m = paramiko.Message()
         m.add_int(MUX_C_ALIVE_CHECK)
@@ -2952,7 +2957,8 @@ class Transport(threading.Thread, ClosingContextManager):
         request_id = msg.get_int()
         if request_id != 1:
             raise SSHException(
-                "Mux reply - expected request id 1, got {}", request_id)
+                "Mux reply - expected request id 1, got {}", request_id
+            )
         pid = msg.get_int()
         self._log(DEBUG, "Connected to SSH ControlMaster (PID {})".format(pid))
         # Everything looks good, one last request to enter proxy mode
