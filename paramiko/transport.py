@@ -297,7 +297,7 @@ class Transport(threading.Thread, ClosingContextManager):
         default_max_packet_size=DEFAULT_MAX_PACKET_SIZE,
         gss_kex=False,
         gss_deleg_creds=True,
-        mux_path=None,
+        controlpath=None,
     ):
         """
         Create a new SSH session over an existing socket, or socket-like
@@ -338,6 +338,14 @@ class Transport(threading.Thread, ClosingContextManager):
         :param int default_max_packet_size:
             sets the default max packet size on the transport. (defaults to
             32768)
+        :param boolean gss_kex:
+            Use GSSAPI key exchange
+        :param boolean gss_deleg_creds:
+            Opt to delegate GSSAPI credentials
+        :param string controlpath:
+            Connect to a multiplexing ControlMaster instead of standard
+            TCP socket, allowing a shared connection to an already negotiated
+            and authenticated SSH Transport (via proxy)
 
         .. versionchanged:: 1.15
             Added the ``default_window_size`` and ``default_max_packet_size``
@@ -356,27 +364,29 @@ class Transport(threading.Thread, ClosingContextManager):
                 sock = (hl[0], 22)
             else:
                 sock = (hl[0], int(hl[1]))
-        # If mux_path is set, try connecting to it, fallback to non-mux
-        self.mux_path = None
-        if mux_path:
+        # If controlpath is set, try connecting to it
+        self.controlpath = None
+        if controlpath:
             try:
-                self._log(INFO, "Trying ControlPath '%s'", mux_path)
+                self._log(INFO, "Trying ControlPath '%s'", controlpath)
                 mux_sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-                mux_sock.connect(mux_path)
-                self._log(DEBUG, "Connected to ControlPath '%s'", mux_path)
-                # Send/recv the HELLO message to Mux server
+                mux_sock.connect(controlpath)
+                self._log(DEBUG, "Connected to ControlPath '%s'", controlpath)
                 self.packetizer = Packetizer(mux_sock)
                 self.packetizer.set_log(self.logger)
                 # Mux connection requires no cipher, no compression, no padding
                 self.packetizer.set_outbound_cipher(None, 0, None, 0, None)
                 self.packetizer.set_inbound_cipher(None, 0, None, 0, None)
-                #
+                # Send/recv the HELLO message to Mux server
                 self._start_mux_session()
-                self.mux_path = mux_path
+                self.controlpath = controlpath
                 sock = mux_sock
             except Exception as e:
-                self._log(INFO, "Multiplex connection failed: %r", e)
-                self._log(INFO, "Falling back to socket connection")
+                self._log(INFO, "ControlPath connection failed: %r", e)
+                raise SSHException(
+                    "Unable to connect to ControlPath '{}' - {}".format(
+                        controlpath, e
+                    ))
 
         if type(sock) is tuple:
             # connect to the given (host, port)
@@ -410,7 +420,7 @@ class Transport(threading.Thread, ClosingContextManager):
         self.sock.settimeout(self._active_check_timeout)
 
         # negotiated crypto parameters
-        if not self.mux_path:
+        if not self.controlpath:
             self.packetizer = Packetizer(sock)
         self.local_version = "SSH-" + self._PROTO_ID + "-" + self._CLIENT_ID
         self.remote_version = ""
@@ -481,8 +491,8 @@ class Transport(threading.Thread, ClosingContextManager):
         self.server_accept_cv = threading.Condition(self.lock)
         self.subsystem_table = {}
 
-        # Express connect state when using ControlMaster
-        if self.mux_path:
+        # Express connect state when using controlpath
+        if self.controlpath:
             self.initial_kex_done = True
             self.authenticated = True
             self.auth_handler = AuthHandler(self)
@@ -498,8 +508,8 @@ class Transport(threading.Thread, ClosingContextManager):
         out = "<paramiko.Transport at {}".format(id_)
         if not self.active:
             out += " (unconnected)"
-        elif self.mux_path:
-            out += " (Mux/ControlPath {})".format(self.mux_path)
+        elif self.controlpath:
+            out += " (Mux/ControlPath {})".format(self.controlpath)
         else:
             if self.local_cipher != "":
                 out += " (cipher {}, {:d} bits)".format(
@@ -1022,7 +1032,7 @@ class Transport(threading.Thread, ClosingContextManager):
         response = self.global_request(
             "tcpip-forward", (address, port), wait=True
         )
-        if not self.mux_path:
+        if not self.controlpath:
             if response is None:
                 raise SSHException("TCP forwarding request denied")
             if port == 0:
@@ -1095,7 +1105,7 @@ class Transport(threading.Thread, ClosingContextManager):
             `.SSHException` -- if the key renegotiation failed (which causes
             the session to end)
         """
-        if self.mux_path:
+        if self.controlpath:
             # Disallow this when in mux proxy mode
             self._log(DEBUG, "Ignoring renegotiate_keys() in mux proxy mode")
             return
@@ -1158,7 +1168,7 @@ class Transport(threading.Thread, ClosingContextManager):
         self._send_user_message(m)
         if not wait:
             return None
-        if self.mux_path:
+        if self.controlpath:
             # Mux master does not forward the global_response reply
             self._log(DEBUG, "Skipping global_response wait from mux proxy")
             return None
@@ -1265,8 +1275,8 @@ class Transport(threading.Thread, ClosingContextManager):
         )
 
         self.start_client()
-        if self.mux_path:
-            # If ControlMaster connection has been established, then there
+        if self.controlpath:
+            # If ControlPath connection has been established, then there
             # is no need to check host keys or do any user authentication
             return
 
@@ -2009,14 +2019,14 @@ class Transport(threading.Thread, ClosingContextManager):
             self._log(DEBUG, "starting thread (server mode): {}".format(tid))
         else:
             self._log(DEBUG, "starting thread (client mode): {}".format(tid))
-            if self.mux_path:
+            if self.controlpath:
                 # No initial protocol chatter (banner, Kex) takes
-                # place when using ControlMaster mux connection. Force
+                # place when using ControlPath mux connection. Force
                 # the completion event to allow start_client to return.
                 self.completion_event.set()
         try:
             try:
-                if not self.mux_path:
+                if not self.controlpath:
                     self.packetizer.write_all(b(self.local_version + "\r\n"))
                     self._log(
                         DEBUG,
@@ -2842,10 +2852,10 @@ class Transport(threading.Thread, ClosingContextManager):
 
     def _start_mux_session(self, version=4):
         """
-        Check the SSH ControlMaster connection, and ensure that the
+        Check the SSH ControlPath connection, and ensure that the
         server side responds appropriately to MUX_MSG_HELLO, MUX_C_ALIVE_CHECK,
         and MUX_C_PROXY messages. Once entering proxy mode, the client
-        SSH protocol messages can be sent to the ControlMaster as
+        SSH protocol messages can be sent to the ControlPath as
         unencrypted, unpadded Transport messages.
         """
         m = paramiko.Message()
