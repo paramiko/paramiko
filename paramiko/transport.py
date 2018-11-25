@@ -338,9 +338,9 @@ class Transport(threading.Thread, ClosingContextManager):
         :param int default_max_packet_size:
             sets the default max packet size on the transport. (defaults to
             32768)
-        :param boolean gss_kex:
+        :param bool gss_kex:
             Use GSSAPI key exchange
-        :param boolean gss_deleg_creds:
+        :param bool gss_deleg_creds:
             Opt to delegate GSSAPI credentials
         :param string controlpath:
             Connect to a multiplexing ControlMaster instead of standard
