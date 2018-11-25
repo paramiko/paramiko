@@ -340,7 +340,8 @@ class SSHClient(ClosingContextManager):
         if controlpath:
             try:
                 t = self._transport = Transport(
-                    (hostname, port), controlpath=controlpath)
+                    (hostname, port), controlpath=controlpath
+                )
                 # If this connection succeeds, most (but not all) of the
                 # SSHClient connect steps can be bypassed
                 if self._log_channel is not None:
