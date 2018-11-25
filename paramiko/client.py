@@ -237,6 +237,7 @@ class SSHClient(ClosingContextManager):
         gss_trust_dns=True,
         passphrase=None,
         disabled_algorithms=None,
+        controlpath=None,
     ):
         """
         Connect to an SSH server and authenticate to it.  The server's host key
@@ -314,6 +315,8 @@ class SSHClient(ClosingContextManager):
         :param dict disabled_algorithms:
             an optional dict passed directly to `.Transport` and its keyword
             argument of the same name.
+        :param string controlpath: path to unix domain socket of running
+            ControlMaster multiplexing agent.
 
         :raises:
             `.BadHostKeyException` -- if the server's host key could not be
@@ -334,6 +337,19 @@ class SSHClient(ClosingContextManager):
         .. versionchanged:: 2.6
             Added the ``disabled_algorithms`` argument.
         """
+        if controlpath:
+            try:
+                t = self._transport = Transport(
+                    (hostname, port), controlpath=controlpath)
+                # If this connection succeeds, most (but not all) of the
+                # SSHClient connect steps can be bypassed
+                if self._log_channel is not None:
+                    t.set_log_channel(self._log_channel)
+                t.start_client(timeout=timeout)
+                return
+            except SSHException as e:
+                # Quietly fallback to traditional connection steps
+                pass
         if not sock:
             errors = {}
             # Try multiple possible address families (e.g. IPv4 vs IPv6)
