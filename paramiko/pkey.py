@@ -388,7 +388,7 @@ class PKey(object):
         https://github.com/openssh/openssh-portable/blob/master/PROTOCOL.key
         """
         try:
-            data = decodebytes(b(''.join(lines)))
+            data = decodebytes(b("".join(lines)))
         except base64.binascii.Error as e:
             raise SSHException("base64 decoding error: " + str(e))
 
@@ -426,7 +426,7 @@ class PKey(object):
                 )
 
             # Unpack salt and rounds from kdfoptions
-            salt, rounds = self._uint32_cstruct_unpack(kdf_options, 'su')
+            salt, rounds = self._uint32_cstruct_unpack(kdf_options, "su")
 
             # run bcrypt kdf to derive key and iv/nonce (32 + 16 bytes)
             key_iv = bcrypt.kdf(b(password), b(salt), 48, rounds)
@@ -479,14 +479,14 @@ class PKey(object):
             for f in strformat:
                 if f == "s":
                     # string
-                    s_size = struct.unpack(">L", data[idx:idx + 4])[0]
+                    s_size = struct.unpack(">L", data[idx : idx + 4])[0]
                     idx += 4
                     s = data[idx:idx + s_size]
                     idx += s_size
                     arr.append(s)
                 if f == "i":
                     # long integer
-                    s_size = struct.unpack(">L", data[idx:idx + 4])[0]
+                    s_size = struct.unpack(">L", data[idx : idx + 4])[0]
                     idx += 4
                     s = data[idx:idx + s_size]
                     idx += s_size
@@ -494,7 +494,7 @@ class PKey(object):
                     arr.append(i)
                 elif f == "u":
                     # 32-bit unsigned int
-                    u = struct.unpack(">L", data[idx:idx + 4])[0]
+                    u = struct.unpack(">L", data[idx : idx + 4])[0]
                     idx += 4
                     arr.append(u)
                 elif f == "r":

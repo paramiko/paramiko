@@ -443,21 +443,23 @@ class KeyTest(unittest.TestCase):
 
     def test_22_load_RSA_key_new_format(self):
         key = RSAKey.from_private_key_file(
-            _support("test_rsa_2k_o.key"), b"television")
+            _support("test_rsa_2k_o.key"), b"television"
+        )
         self.assertEqual("ssh-rsa", key.get_name())
         self.assertEqual(PUB_RSA_2K_OPENSSH.split()[1], key.get_base64())
         self.assertEqual(2048, key.get_bits())
-        exp_rsa = b(FINGER_RSA_2K_OPENSSH.split()[1].replace(':', ''))
+        exp_rsa = b(FINGER_RSA_2K_OPENSSH.split()[1].replace(":", ""))
         my_rsa = hexlify(key.get_fingerprint())
         self.assertEqual(exp_rsa, my_rsa)
 
     def test_23_load_DSS_key_new_format(self):
         key = DSSKey.from_private_key_file(
-            _support("test_dss_1k_o.key"), b"television")
+            _support("test_dss_1k_o.key"), b"television"
+        )
         self.assertEqual("ssh-dss", key.get_name())
         self.assertEqual(PUB_DSS_1K_OPENSSH.split()[1], key.get_base64())
         self.assertEqual(1024, key.get_bits())
-        exp_rsa = b(FINGER_DSS_1K_OPENSSH.split()[1].replace(':', ''))
+        exp_rsa = b(FINGER_DSS_1K_OPENSSH.split()[1].replace(":", ""))
         my_rsa = hexlify(key.get_fingerprint())
         self.assertEqual(exp_rsa, my_rsa)
 
