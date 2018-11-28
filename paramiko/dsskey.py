@@ -238,10 +238,10 @@ class DSSKey(PKey):
             except BERException as e:
                 raise SSHException("Unable to parse key file: " + str(e))
         elif pkformat == self.PRIVATE_KEY_FORMAT_OPENSSH:
-            keylist = self._uint32_cstruct_unpack(data, 'iiiii')
+            keylist = self._uint32_cstruct_unpack(data, "iiiii")
             keylist = [0] + list(keylist)
         else:
-            raise SSHException('private key format.')
+            raise SSHException("private key format.")
         if type(keylist) is not list or len(keylist) < 6 or keylist[0] != 0:
             raise SSHException(
                 "not a valid DSA private key file (bad ber encoding)"

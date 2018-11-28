@@ -292,13 +292,13 @@ class ECDSAKey(PKey):
             except (ValueError, AssertionError) as e:
                 raise SSHException(str(e))
         elif pkformat == self.PRIVATE_KEY_FORMAT_OPENSSH:
-            curve, verkey, sigkey = self._uint32_cstruct_unpack(data, 'sss')
+            curve, verkey, sigkey = self._uint32_cstruct_unpack(data, "sss")
             try:
                 key = ec.derive_private_key(sigkey, curve, default_backend())
             except TypeError as e:
                 raise SSHException(str(e))
         else:
-            raise SSHException('unknown private key format.')
+            raise SSHException("unknown private key format.")
 
         self.signing_key = key
         self.verifying_key = key.public_key()

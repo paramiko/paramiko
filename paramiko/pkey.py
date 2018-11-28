@@ -35,8 +35,14 @@ from cryptography.hazmat.primitives.ciphers import algorithms, modes, Cipher
 
 from paramiko import util
 from paramiko.common import o600
-from paramiko.py3compat import u, encodebytes, decodebytes, b, string_types,\
-    byte_ord
+from paramiko.py3compat import (
+    u,
+    encodebytes,
+    decodebytes,
+    b,
+    string_types,
+    byte_ord,
+)
 from paramiko.ssh_exception import SSHException, PasswordRequiredException
 from paramiko.message import Message
 
@@ -70,9 +76,9 @@ class PKey(object):
     PRIVATE_KEY_FORMAT_ORIGINAL = 1
     PRIVATE_KEY_FORMAT_OPENSSH = 2
     BEGIN_TAG = re.compile(
-        '^-{5}BEGIN (RSA|DSA|EC|OPENSSH) PRIVATE KEY-{5}\s*$'
+        "^-{5}BEGIN (RSA|DSA|EC|OPENSSH) PRIVATE KEY-{5}\s*$"
     )
-    END_TAG = re.compile('^-{5}END (RSA|DSA|EC|OPENSSH) PRIVATE KEY-{5}\s*$')
+    END_TAG = re.compile("^-{5}END (RSA|DSA|EC|OPENSSH) PRIVATE KEY-{5}\s*$")
 
     def __init__(self, msg=None, data=None):
         """
@@ -313,20 +319,16 @@ class PKey(object):
             m = self.END_TAG.match(lines[end])
 
         if keytype == tag:
-            data = self._read_private_key_old_format(
-                lines,
-                password,
-            )
+            data = self._read_private_key_old_format(lines, password)
             pkformat = self.PRIVATE_KEY_FORMAT_ORIGINAL
-        elif keytype == 'OPENSSH':
+        elif keytype == "OPENSSH":
             data = self._read_private_key_new_format(
-                lines[start:end],
-                password,
+                lines[start:end], password
             )
             pkformat = self.PRIVATE_KEY_FORMAT_OPENSSH
         else:
             raise SSHException(
-                'encountered {} key, expected {} key'.format(keytype, tag)
+                "encountered {} key, expected {} key".format(keytype, tag)
             )
 
         return pkformat, data
@@ -344,7 +346,7 @@ class PKey(object):
             start += 1
         # if we trudged to the end of the file, just try to cope.
         try:
-            data = decodebytes(b(''.join(lines[start:])))
+            data = decodebytes(b("".join(lines[start:])))
         except base64.binascii.Error as e:
             raise SSHException("base64 decoding error: " + str(e))
         if "proc-type" not in headers:
@@ -388,31 +390,31 @@ class PKey(object):
         try:
             data = decodebytes(b(''.join(lines)))
         except base64.binascii.Error as e:
-            raise SSHException('base64 decoding error: ' + str(e))
+            raise SSHException("base64 decoding error: " + str(e))
 
         # read data struct
         auth_magic = data[:14]
-        if auth_magic != b('openssh-key-v1'):
-            raise SSHException('unexpected OpenSSH key header encountered')
+        if auth_magic != b("openssh-key-v1"):
+            raise SSHException("unexpected OpenSSH key header encountered")
 
-        cstruct = self._uint32_cstruct_unpack(data[15:], 'sssur')
+        cstruct = self._uint32_cstruct_unpack(data[15:], "sssur")
         cipher, kdfname, kdf_options, num_pubkeys, remainder = cstruct
         # For now, just support 1 key.
         if num_pubkeys > 1:
             raise SSHException(
-                'unsupported: private keyfile has multiple keys'
+                "unsupported: private keyfile has multiple keys"
             )
-        pubkey, privkey_blob = self._uint32_cstruct_unpack(remainder, 'ss')
+        pubkey, privkey_blob = self._uint32_cstruct_unpack(remainder, "ss")
 
-        if kdfname == b('bcrypt'):
-            if cipher == b('aes256-cbc'):
+        if kdfname == b("bcrypt"):
+            if cipher == b("aes256-cbc"):
                 mode = modes.CBC
-            elif cipher == b('aes256-ctr'):
+            elif cipher == b("aes256-ctr"):
                 mode = modes.CTR
             else:
                 raise SSHException(
-                    'unknown cipher `{}` used in private key file'.format(
-                        cipher.decode('utf-8')
+                    "unknown cipher `{}` used in private key file".format(
+                        cipher.decode("utf-8")
                     )
                 )
             # Encrypted private key.
@@ -420,7 +422,7 @@ class PKey(object):
             # out that we need one
             if password is None:
                 raise PasswordRequiredException(
-                    'private key file is encrypted'
+                    "private key file is encrypted"
                 )
 
             # Unpack salt and rounds from kdfoptions
@@ -437,26 +439,26 @@ class PKey(object):
             ).decryptor()
             decrypted_privkey = decryptor.update(privkey_blob)
             decrypted_privkey += decryptor.finalize()
-        elif cipher == b('none') and kdfname == b('none'):
+        elif cipher == b("none") and kdfname == b("none"):
             # Unencrypted private key
             decrypted_privkey = privkey_blob
         else:
             raise SSHException(
-                'unknown cipher or kdf used in private key file'
+                "unknown cipher or kdf used in private key file"
             )
 
         # Unpack private key and verify checkints
-        cstruct = self._uint32_cstruct_unpack(decrypted_privkey, 'uusr')
+        cstruct = self._uint32_cstruct_unpack(decrypted_privkey, "uusr")
         checkint1, checkint2, keytype, keydata = cstruct
 
         if checkint1 != checkint2:
             raise SSHException(
-                'OpenSSH private key file checkints do not match'
+                "OpenSSH private key file checkints do not match"
             )
 
         # Remove padding
         padlen = byte_ord(keydata[len(keydata) - 1])
-        return keydata[:len(keydata) - padlen]
+        return keydata[: len(keydata) - padlen]
 
     def _uint32_cstruct_unpack(self, data, strformat):
         """
@@ -475,27 +477,27 @@ class PKey(object):
         idx = 0
         try:
             for f in strformat:
-                if f == 's':
+                if f == "s":
                     # string
-                    s_size = struct.unpack('>L', data[idx:idx + 4])[0]
+                    s_size = struct.unpack(">L", data[idx:idx + 4])[0]
                     idx += 4
                     s = data[idx:idx + s_size]
                     idx += s_size
                     arr.append(s)
-                if f == 'i':
+                if f == "i":
                     # long integer
-                    s_size = struct.unpack('>L', data[idx:idx + 4])[0]
+                    s_size = struct.unpack(">L", data[idx:idx + 4])[0]
                     idx += 4
                     s = data[idx:idx + s_size]
                     idx += s_size
                     i = util.inflate_long(s, True)
                     arr.append(i)
-                elif f == 'u':
+                elif f == "u":
                     # 32-bit unsigned int
-                    u = struct.unpack('>L', data[idx:idx + 4])[0]
+                    u = struct.unpack(">L", data[idx:idx + 4])[0]
                     idx += 4
                     arr.append(u)
-                elif f == 'r':
+                elif f == "r":
                     # remainder as string
                     s = data[idx:]
                     arr.append(s)

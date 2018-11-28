@@ -189,11 +189,8 @@ class RSAKey(PKey):
             except ValueError as e:
                 raise SSHException(str(e))
         elif pkformat == self.PRIVATE_KEY_FORMAT_OPENSSH:
-            n, e, d, iqmp, q, p = self._uint32_cstruct_unpack(data, 'iiiiii')
-            public_numbers = rsa.RSAPublicNumbers(
-                e=e,
-                n=n,
-            )
+            n, e, d, iqmp, q, p = self._uint32_cstruct_unpack(data, "iiiiii")
+            public_numbers = rsa.RSAPublicNumbers(e=e, n=n)
             key = rsa.RSAPrivateNumbers(
                 p=p,
                 q=q,
@@ -204,6 +201,6 @@ class RSAKey(PKey):
                 public_numbers=public_numbers,
             ).private_key(default_backend())
         else:
-            raise SSHException('unknown private key format.')
+            raise SSHException("unknown private key format.")
         assert isinstance(key, rsa.RSAPrivateKey)
         self.key = key
