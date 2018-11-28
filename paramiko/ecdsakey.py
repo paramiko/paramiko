@@ -295,7 +295,7 @@ class ECDSAKey(PKey):
             curve, verkey, sigkey = self._uint32_cstruct_unpack(data, "sss")
             try:
                 key = ec.derive_private_key(sigkey, curve, default_backend())
-            except TypeError as e:
+            except (AttributeError, TypeError) as e:
                 raise SSHException(str(e))
         else:
             raise SSHException("unknown private key format.")

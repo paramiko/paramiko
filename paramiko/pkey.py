@@ -481,14 +481,14 @@ class PKey(object):
                     # string
                     s_size = struct.unpack(">L", data[idx : idx + 4])[0]
                     idx += 4
-                    s = data[idx:idx + s_size]
+                    s = data[idx : idx + s_size]
                     idx += s_size
                     arr.append(s)
                 if f == "i":
                     # long integer
                     s_size = struct.unpack(">L", data[idx : idx + 4])[0]
                     idx += 4
-                    s = data[idx:idx + s_size]
+                    s = data[idx : idx + s_size]
                     idx += s_size
                     i = util.inflate_long(s, True)
                     arr.append(i)
