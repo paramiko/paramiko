@@ -229,12 +229,19 @@ class DSSKey(PKey):
         self._decode_key(data)
 
     def _decode_key(self, data):
+        pkformat, data = data
         # private key file contains:
         # DSAPrivateKey = { version = 0, p, q, g, y, x }
-        try:
-            keylist = BER(data).decode()
-        except BERException as e:
-            raise SSHException("Unable to parse key file: " + str(e))
+        if pkformat == self.PRIVATE_KEY_FORMAT_ORIGINAL:
+            try:
+                keylist = BER(data).decode()
+            except BERException as e:
+                raise SSHException("Unable to parse key file: " + str(e))
+        elif pkformat == self.PRIVATE_KEY_FORMAT_OPENSSH:
+            keylist = self._uint32_cstruct_unpack(data, 'iiiii')
+            keylist = [0] + list(keylist)
+        else:
+            raise SSHException('private key format.')
         if type(keylist) is not list or len(keylist) < 6 or keylist[0] != 0:
             raise SSHException(
                 "not a valid DSA private key file (bad ber encoding)"
