@@ -24,6 +24,10 @@ import base64
 from binascii import unhexlify
 import os
 from hashlib import md5
+import re
+import struct
+
+import bcrypt
 
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
@@ -31,7 +35,7 @@ from cryptography.hazmat.primitives.ciphers import algorithms, modes, Cipher
 
 from paramiko import util
 from paramiko.common import o600
-from paramiko.py3compat import u, encodebytes, decodebytes, b, string_types
+from paramiko.py3compat import u, encodebytes, decodebytes, b, string_types, byte_ord
 from paramiko.ssh_exception import SSHException, PasswordRequiredException
 from paramiko.message import Message
 
@@ -62,6 +66,10 @@ class PKey(object):
             'mode': modes.CBC
         },
     }
+    PRIVATE_KEY_FORMAT_ORIGINAL = 1
+    PRIVATE_KEY_FORMAT_OPENSSH = 2
+    BEGIN_TAG = re.compile(r'^-{5}BEGIN (RSA|DSA|EC|OPENSSH) PRIVATE KEY-{5}\s*$')
+    END_TAG = re.compile(r'^-{5}END (RSA|DSA|EC|OPENSSH) PRIVATE KEY-{5}\s*$')
 
     def __init__(self, msg=None, data=None):
         """
@@ -281,12 +289,43 @@ class PKey(object):
 
     def _read_private_key(self, tag, f, password=None):
         lines = f.readlines()
+
+        # find the BEGIN tag
         start = 0
-        beginning_of_key = '-----BEGIN ' + tag + ' PRIVATE KEY-----'
-        while start < len(lines) and lines[start].strip() != beginning_of_key:
+        m = self.BEGIN_TAG.match(lines[start])
+        line_range = len(lines) - 1
+        while start < line_range and not m:
             start += 1
-        if start >= len(lines):
+            m = self.BEGIN_TAG.match(lines[start])
+        start += 1
+        keytype = m.group(1) if m else None
+        if start >= len(lines) or keytype is None:
             raise SSHException('not a valid ' + tag + ' private key file')
+
+        # find the END tag
+        end = start
+        m = self.END_TAG.match(lines[end])
+        while end < line_range and not m:
+            end += 1
+            m = self.END_TAG.match(lines[end])
+
+        if keytype == tag:
+            data = self._read_private_key_old_format(lines, end, password)
+            pkformat = self.PRIVATE_KEY_FORMAT_ORIGINAL
+        elif keytype == 'OPENSSH':
+            data = self._read_private_key_new_format(
+                lines[start:end], password,
+            )
+            pkformat = self.PRIVATE_KEY_FORMAT_OPENSSH
+        else:
+            raise SSHException(
+                'encountered {} key, expected {} key'.format(keytype, tag)
+            )
+
+        return pkformat, data
+
+    def _read_private_key_old_format(self, lines, end, password):
+        start = 0
         # parse any headers first
         headers = {}
         start += 1
@@ -296,11 +335,6 @@ class PKey(object):
                 break
             headers[l[0].lower()] = l[1].strip()
             start += 1
-        # find end
-        end = start
-        ending_of_key = '-----END ' + tag + ' PRIVATE KEY-----'
-        while end < len(lines) and lines[end].strip() != ending_of_key:
-            end += 1
         # if we trudged to the end of the file, just try to cope.
         try:
             data = decodebytes(b(''.join(lines[start:end])))
@@ -335,6 +369,132 @@ class PKey(object):
             cipher(key), mode(salt), backend=default_backend()
         ).decryptor()
         return decryptor.update(data) + decryptor.finalize()
+
+    def _read_private_key_new_format(self, lines, password):
+        """
+        Read the new OpenSSH SSH2 private key format available
+        since OpenSSH version 6.5
+        Reference:
+        https://github.com/openssh/openssh-portable/blob/master/PROTOCOL.key
+        """
+        try:
+            data = decodebytes(b(''.join(lines)))
+        except base64.binascii.Error as e:
+            raise SSHException('base64 decoding error: ' + str(e))
+
+        # read data struct
+        auth_magic = data[:14]
+        if auth_magic != b('openssh-key-v1'):
+            raise SSHException('unexpected OpenSSH key header encountered')
+
+        cstruct = self._uint32_cstruct_unpack(data[15:], 'sssur')
+        cipher, kdfname, kdf_options, num_pubkeys, remainder = cstruct
+        # For now, just support 1 key.
+        if num_pubkeys > 1:
+            raise SSHException(
+                'unsupported: private keyfile has multiple keys'
+            )
+        pubkey, privkey_blob = self._uint32_cstruct_unpack(remainder, 'ss')
+
+        if kdfname == b('bcrypt'):
+            if cipher == b('aes256-cbc'):
+                mode = modes.CBC
+            elif cipher == b('aes256-ctr'):
+                mode = modes.CTR
+            else:
+                raise SSHException(
+                    'unknown cipher `{}` used in private key file'.format(
+                        cipher.decode('utf-8')
+                    )
+                )
+            # Encrypted private key.
+            # If no password was passed in, raise an exception pointing
+            # out that we need one
+            if password is None:
+                raise PasswordRequiredException(
+                    'private key file is encrypted'
+                )
+
+            # Unpack salt and rounds from kdfoptions
+            salt, rounds = self._uint32_cstruct_unpack(kdf_options, 'su')
+
+            # run bcrypt kdf to derive key and iv/nonce (32 + 16 bytes)
+            key_iv = bcrypt.kdf(b(password), b(salt), 48, rounds, ignore_few_rounds=True)
+            key = key_iv[:32]
+            iv = key_iv[32:]
+
+            # decrypt private key blob
+            decryptor = Cipher(
+                algorithms.AES(key), mode(iv), default_backend()
+            ).decryptor()
+            decrypted_privkey = decryptor.update(privkey_blob)
+            decrypted_privkey += decryptor.finalize()
+        elif cipher == b('none') and kdfname == b('none'):
+            # Unencrypted private key
+            decrypted_privkey = privkey_blob
+        else:
+            raise SSHException(
+                'unknown cipher or kdf used in private key file'
+            )
+
+        # Unpack private key and verify checkints
+        cstruct = self._uint32_cstruct_unpack(decrypted_privkey, 'uusr')
+        checkint1, checkint2, keytype, keydata = cstruct
+
+        if checkint1 != checkint2:
+            raise SSHException(
+                'OpenSSH private key file checkints do not match'
+            )
+
+        # Remove padding
+        padlen = byte_ord(keydata[len(keydata) - 1])
+        return keydata[:len(keydata) - padlen]
+
+    def _uint32_cstruct_unpack(self, data, strformat):
+        """
+        Used to read new OpenSSH private key format.
+        Unpacks a c data structure containing a mix of 32-bit uints and
+        variable length strings prefixed by 32-bit uint size field,
+        according to the specified format. Returns the unpacked vars
+        in a tuple.
+        Format strings:
+          s - denotes a string
+          i - denotes a long integer, encoded as a byte string
+          u - denotes a 32-bit unsigned integer
+          r - the remainder of the input string, returned as a string
+        """
+        arr = []
+        idx = 0
+        try:
+            for f in strformat:
+                if f == 's':
+                    # string
+                    s_size = struct.unpack('>L', data[idx:idx + 4])[0]
+                    idx += 4
+                    s = data[idx:idx + s_size]
+                    idx += s_size
+                    arr.append(s)
+                if f == 'i':
+                    # long integer
+                    s_size = struct.unpack('>L', data[idx:idx + 4])[0]
+                    idx += 4
+                    s = data[idx:idx + s_size]
+                    idx += s_size
+                    i = util.inflate_long(s, True)
+                    arr.append(i)
+                elif f == 'u':
+                    # 32-bit unsigned int
+                    u = struct.unpack('>L', data[idx:idx + 4])[0]
+                    idx += 4
+                    arr.append(u)
+                elif f == 'r':
+                    # remainder as string
+                    s = data[idx:]
+                    arr.append(s)
+                    break
+        except Exception as e:
+            raise SSHException(str(e))
+        return tuple(arr)
 
     def _write_private_key_file(self, filename, key, format, password=None):
         """

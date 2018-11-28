@@ -274,12 +274,22 @@ class ECDSAKey(PKey):
         self._decode_key(data)
 
     def _decode_key(self, data):
-        try:
-            key = serialization.load_der_private_key(
-                data, password=None, backend=default_backend()
-            )
-        except (ValueError, AssertionError) as e:
-            raise SSHException(str(e))
+        pkformat, data = data
+        if pkformat == self.PRIVATE_KEY_FORMAT_ORIGINAL:
+            try:
+                key = serialization.load_der_private_key(
+                    data, password=None, backend=default_backend()
+                )
+            except (ValueError, AssertionError) as e:
+                raise SSHException(str(e))
+        elif pkformat == self.PRIVATE_KEY_FORMAT_OPENSSH:
+            curve, verkey, sigkey = self._uint32_cstruct_unpack(data, 'sss')
+            try:
+                key = ec.derive_private_key(sigkey, curve, default_backend())
+            except (AttributeError, TypeError) as e:
+                raise SSHException(str(e))
+        else:
+            raise SSHException('unknown private key format.')
 
         self.signing_key = key
         self.verifying_key = key.public_key()

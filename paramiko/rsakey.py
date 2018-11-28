@@ -174,12 +174,27 @@ class RSAKey(PKey):
         self._decode_key(data)
 
     def _decode_key(self, data):
-        try:
-            key = serialization.load_der_private_key(
-                data, password=None, backend=default_backend()
-            )
-        except ValueError as e:
-            raise SSHException(str(e))
-
+        pkformat, data = data
+        if pkformat == self.PRIVATE_KEY_FORMAT_ORIGINAL:
+            try:
+                key = serialization.load_der_private_key(
+                    data, password=None, backend=default_backend()
+                )
+            except ValueError as e:
+                raise SSHException(str(e))
+        elif pkformat == self.PRIVATE_KEY_FORMAT_OPENSSH:
+            n, e, d, iqmp, q, p = self._uint32_cstruct_unpack(data, 'iiiiii')
+            public_numbers = rsa.RSAPublicNumbers(e=e, n=n)
+            key = rsa.RSAPrivateNumbers(
+                p=p,
+                q=q,
+                d=d,
+                dmp1=d % (p - 1),
+                dmq1=d % (q - 1),
+                iqmp=iqmp,
+                public_numbers=public_numbers,
+            ).private_key(default_backend())
+        else:
+            raise SSHException('unknown private key format.')
         assert isinstance(key, rsa.RSAPrivateKey)
         self.key = key
