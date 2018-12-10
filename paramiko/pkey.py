@@ -429,7 +429,15 @@ class PKey(object):
             salt, rounds = self._uint32_cstruct_unpack(kdf_options, "su")
 
             # run bcrypt kdf to derive key and iv/nonce (32 + 16 bytes)
-            key_iv = bcrypt.kdf(b(password), b(salt), 48, rounds)
+            key_iv = bcrypt.kdf(
+                b(password),
+                b(salt),
+                48,
+                rounds,
+                # We can't control how many rounds are on disk, so no sense
+                # warning about it.
+                ignore_few_rounds=True,
+            )
             key = key_iv[:32]
             iv = key_iv[32:]
 
