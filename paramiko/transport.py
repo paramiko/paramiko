@@ -2039,7 +2039,7 @@ class Transport(threading.Thread, ClosingContextManager):
                     # but sometimes the banner can be read but the machine is
                     # not responding, for example when the remote ssh daemon is
                     # loaded in to memory but we can not read from the
-                    # dick/spawn a new shell.
+                    # disk/spawn a new shell.
                     # Make sure we can specify a timeout for the initial
                     # handshake. Re-use the banner timeout for now.
                     self.packetizer.start_handshake(self.handshake_timeout)
@@ -2898,7 +2898,8 @@ class Transport(threading.Thread, ClosingContextManager):
         resp, msg = self.packetizer.read_mux_message()
         if resp != MUX_S_PROXY or msg.get_int() != 2:
             raise SSHException(
-                "Mux proxy request - got unexpected reply: 0x{:x} {!r}".format(
+                "Mux proxy request rejected (Requires OpenSSH 7.4 or greater)"
+                " - got unexpected reply: 0x{:x} {!r}".format(
                     resp, msg
                 )
             )
