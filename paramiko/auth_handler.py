@@ -347,7 +347,7 @@ class AuthHandler(object):
                     m.get_string()  # Lang tag - discarded
                     raise SSHException(
                         "GSS-API Error:\nMajor Status: %s\n\
-                                        Minor Status: %s\ \nError Message:\
+                                        Minor Status: %s\nError Message:\
                                          %s\n"
                     ) % (str(maj_status), str(min_status), err_msg)
                 elif ptype == MSG_USERAUTH_FAILURE:
