@@ -36,12 +36,14 @@ install:
   # downgrading/overriding.
   - "if [[ $CRYPTO == '1.1' ]]; then pip install 'cryptography<1.2'; fi"
   - "if [[ $CRYPTO == '1.5' ]]; then pip install 'cryptography<1.6'; fi"
-  # Self-install for setup.py-driven deps
-  - pip install -e .
   # Dev (doc/test running) requirements
   # TODO: use pipenv + whatever contexty-type stuff it has
   - pip install codecov # For codecov specifically
   - pip install -r dev-requirements.txt
+  # Self-install for setup.py-driven deps. Comes after dev-requirements so that
+  # is able to 'pre-pin' certain libs to lower versions (eg for py2.6 support
+  # on Paramiko <2.4).
+  - pip install -e .
 script: |
   # NOTE: the below hilarity should only exist in 2.0-2.3, 2.4+ should've gone
   # back to vague normalcy!
