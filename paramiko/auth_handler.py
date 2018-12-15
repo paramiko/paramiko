@@ -365,10 +365,14 @@ class AuthHandler(object):
                     err_msg = m.get_string()
                     m.get_string()  # Lang tag - discarded
                     raise SSHException(
-                        "GSS-API Error:\nMajor Status: %s\n\
-                                        Minor Status: %s\nError Message:\
-                                         %s\n"
-                    ) % (str(maj_status), str(min_status), err_msg)
+                        """GSS-API Error:
+Major Status: {}
+Minor Status: {}
+Error Message: {}
+""".format(
+                            maj_status, min_status, err_msg
+                        )
+                    )
                 elif ptype == MSG_USERAUTH_FAILURE:
                     self._parse_userauth_failure(m)
                     return
