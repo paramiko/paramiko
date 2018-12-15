@@ -31,12 +31,12 @@ install:
     if [[ -n "$CRYPTO_BEFORE" ]]; then
       pip install "cryptography<${CRYPTO_BEFORE}"
     fi
-  # Self-install for setup.py-driven deps
-  - pip install -e .
   # Dev (doc/test running) requirements
   # TODO: use pipenv + whatever contexty-type stuff it has
   - pip install codecov # For codecov specifically
   - pip install -r dev-requirements.txt
+  # Self-install for setup.py-driven deps
+  - pip install -e .
 script: |
   # NOTE: the below hilarity should only exist in 2.0-2.3, 2.4+ should've gone
   # back to vague normalcy!
