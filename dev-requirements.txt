@@ -8,7 +8,7 @@ pytest-relaxed==1.1.4
 pytest-xdist>=1.22,<1.25.0
 mock==2.0.0
 # Linting!
-flake8==2.4.0
+flake8==3.6.0
 # Coverage!
 coverage==3.7.1
 codecov==1.6.3
