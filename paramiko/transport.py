@@ -984,8 +984,7 @@ class Transport(threading.Thread, ClosingContextManager):
         )
         if response is None:
             raise SSHException("TCP forwarding request denied")
-        if port == 0:
-            port = response.get_int()
+        port = response.get_int()
         if handler is None:
 
             def default_handler(channel, src_addr, dest_addr_port):
