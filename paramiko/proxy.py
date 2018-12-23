@@ -83,6 +83,10 @@ class ProxyCommand(ClosingContextManager):
             buffer = b''
             start = time.time()
             while len(buffer) < size:
+                if self.closed:
+                    if buffer:
+                        return buffer
+                    raise EOFError()
                 select_timeout = None
                 if self.timeout is not None:
                     elapsed = (time.time() - start)
