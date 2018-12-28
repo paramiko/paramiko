@@ -20,7 +20,7 @@ from io import BytesIO
 from paramiko.common import (
     linefeed_byte_value, crlf, cr_byte, linefeed_byte, cr_byte_value,
 )
-from paramiko.py3compat import PY2, u, bytes_types, text_type
+from paramiko.py3compat import PY2, u, text_type
 
 from paramiko.util import ClosingContextManager
 
@@ -538,7 +538,7 @@ class BufferedFile (ClosingContextManager):
             self.newlines = newline
         elif (
             self.newlines != newline and
-            isinstance(self.newlines, bytes_types)
+            isinstance(self.newlines, bytes)
         ):
             self.newlines = (self.newlines, newline)
         elif newline not in self.newlines:

@@ -48,7 +48,7 @@ from paramiko.common import (
     DEFAULT_MAX_PACKET_SIZE,
     MSG_USERAUTH_SUCCESS,
 )
-from paramiko.py3compat import bytes, byte_chr
+from paramiko.py3compat import byte_chr
 from paramiko.message import Message
 
 from .util import needs_builtin, _support, slow

@@ -11,8 +11,6 @@ __all__ = [
     "byte_chr",
     "byte_mask",
     "byte_ord",
-    "bytes",
-    "bytes_types",
     "decodebytes",
     "encodebytes",
     "input",
@@ -30,8 +28,6 @@ PY2 = sys.version_info[0] < 3
 if PY2:
     string_types = basestring  # NOQA
     text_type = unicode  # NOQA
-    bytes_types = str
-    bytes = str
     integer_types = (int, long)  # NOQA
     long = long  # NOQA
     input = raw_input  # NOQA
@@ -113,8 +109,6 @@ else:
     import builtins
     string_types = str
     text_type = str
-    bytes = bytes
-    bytes_types = bytes
     integer_types = int
     input = input
     decodebytes = base64.decodebytes
