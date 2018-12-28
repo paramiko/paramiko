@@ -43,7 +43,6 @@ from paramiko.common import (
     cMSG_CHANNEL_CLOSE,
 )
 from paramiko.message import Message
-from paramiko.py3compat import bytes_types
 from paramiko.ssh_exception import SSHException
 from paramiko.file import BufferedFile
 from paramiko.buffered_pipe import BufferedPipe, PipeTimeout
@@ -1021,7 +1020,7 @@ class Channel(ClosingContextManager):
                 self.transport._send_user_message(m)
 
     def _feed(self, m):
-        if isinstance(m, bytes_types):
+        if isinstance(m, bytes):
             # passed from _feed_extended
             s = m
         else:

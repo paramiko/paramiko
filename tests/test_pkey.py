@@ -28,7 +28,7 @@ from hashlib import md5
 import base64
 
 from paramiko import RSAKey, DSSKey, ECDSAKey, Ed25519Key, Message, util
-from paramiko.py3compat import StringIO, byte_chr, b, bytes, PY2
+from paramiko.py3compat import StringIO, byte_chr, b, PY2
 
 from .util import _support
 
