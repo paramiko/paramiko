@@ -733,7 +733,9 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
                         possibly because the server is deleting or moving the\
                         file just after receiving it. The STAT after PUT can\
                         be avoided with confirm=false. Original exception\
-                        message: {}".format(e)
+                        message: {}".format(
+                            e
+                        )
                     )
 
         else:
