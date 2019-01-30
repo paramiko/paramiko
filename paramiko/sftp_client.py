@@ -735,7 +735,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
                         be avoided with confirm=false. Original exception\
                         message: {}".format(
                             e
-                        )
+                        ),
                     )
 
         else:
