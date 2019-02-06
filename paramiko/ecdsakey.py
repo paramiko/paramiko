@@ -160,9 +160,9 @@ class ECDSAKey(PKey):
 
             pointinfo = msg.get_binary()
             try:
-                numbers = ec.EllipticCurvePublicNumbers.from_encoded_point(
+                numbers = ec.EllipticCurvePublicKey.from_encoded_point(
                     self.ecdsa_curve.curve_class(), pointinfo
-                )
+                ).public_numbers()
             except ValueError:
                 raise SSHException("Invalid public key")
             self.verifying_key = numbers.public_key(backend=default_backend())
