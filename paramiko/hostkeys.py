@@ -21,7 +21,7 @@ import binascii
 import os
 import sys
 
-if sys.version_info >= (3, 3):
+if sys.version_info[:2] >= (3, 3):
     from collections.abc import MutableMapping
 else:
     from collections import MutableMapping
@@ -52,7 +52,7 @@ class HostKeys(MutableMapping):
     .. versionadded:: 1.5.3
     """
 
-    def __init__(self, filename=None):
+    def __init__(self, filename = None):
         """
         Create a new HostKeys object, optionally loading keys from an OpenSSH
         style host-key file.
@@ -290,7 +290,7 @@ class HostKeys(MutableMapping):
         return ret
 
     @staticmethod
-    def hash_host(hostname, salt=None):
+    def hash_host(hostname, salt = None):
         """
         Return a "hashed" form of the hostname, as used by OpenSSH when storing
         hashed hostnames in the known_hosts file.
@@ -324,13 +324,13 @@ class HostKeyEntry:
     Representation of a line in an OpenSSH-style "known hosts" file.
     """
 
-    def __init__(self, hostnames=None, key=None):
+    def __init__(self, hostnames = None, key = None):
         self.valid = (hostnames is not None) and (key is not None)
         self.hostnames = hostnames
         self.key = key
 
     @classmethod
-    def from_line(cls, line, lineno=None):
+    def from_line(cls, line, lineno = None):
         """
         Parses the given line of text to find the names for the host,
         the type of key, and the key data. The line is expected to be in the
@@ -359,13 +359,13 @@ class HostKeyEntry:
         try:
             key = b(key)
             if keytype == "ssh-rsa":
-                key = RSAKey(data=decodebytes(key))
+                key = RSAKey(data = decodebytes(key))
             elif keytype == "ssh-dss":
-                key = DSSKey(data=decodebytes(key))
+                key = DSSKey(data = decodebytes(key))
             elif keytype in ECDSAKey.supported_key_format_identifiers():
-                key = ECDSAKey(data=decodebytes(key), validate_point=False)
+                key = ECDSAKey(data = decodebytes(key), validate_point = False)
             elif keytype == "ssh-ed25519":
-                key = Ed25519Key(data=decodebytes(key))
+                key = Ed25519Key(data = decodebytes(key))
             else:
                 log.info("Unable to handle key of type {}".format(keytype))
                 return None
