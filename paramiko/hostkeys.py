@@ -19,13 +19,14 @@
 
 import binascii
 import os
-
-from collections import MutableMapping
 from hashlib import sha1
 from hmac import HMAC
+try:
+    from collections.abc import MutableMapping
+except ImportError:
+    from collections import MutableMapping
 
 from paramiko.py3compat import b, u, encodebytes, decodebytes
-
 from paramiko.dsskey import DSSKey
 from paramiko.rsakey import RSAKey
 from paramiko.util import get_logger, constant_time_bytes_eq
