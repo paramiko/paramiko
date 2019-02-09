@@ -8,6 +8,7 @@ from cryptography.hazmat.primitives.asymmetric.x25519 import (
 
 from paramiko.message import Message
 from paramiko.py3compat import byte_chr, long
+from paramiko.ssh_exception import SSHException
 
 
 _MSG_KEXECDH_INIT, _MSG_KEXECDH_REPLY = range(30, 32)
