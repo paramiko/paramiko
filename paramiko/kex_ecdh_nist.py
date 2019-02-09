@@ -66,9 +66,9 @@ class KexNistp256:
         Q_C_bytes = m.get_string()
         self.Q_C = ec.EllipticCurvePublicKey.from_encoded_point(
             self.curve, Q_C_bytes
-        ).public_numbers()
+        )
         K_S = self.transport.get_server_key().asbytes()
-        K = self.P.exchange(ec.ECDH(), self.Q_C.public_key(default_backend()))
+        K = self.P.exchange(ec.ECDH(), self.Q_C)
         K = long(hexlify(K), 16)
         # compute exchange hash
         hm = Message()
@@ -110,9 +110,9 @@ class KexNistp256:
         Q_S_bytes = m.get_string()
         self.Q_S = ec.EllipticCurvePublicKey.from_encoded_point(
             self.curve, Q_S_bytes
-        ).public_numbers()
+        )
         sig = m.get_binary()
-        K = self.P.exchange(ec.ECDH(), self.Q_S.public_key(default_backend()))
+        K = self.P.exchange(ec.ECDH(), self.Q_S)
         K = long(hexlify(K), 16)
         # compute exchange hash and verify signature
         hm = Message()
