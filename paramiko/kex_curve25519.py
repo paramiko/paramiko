@@ -1,7 +1,7 @@
 import binascii
 import hashlib
 
-from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives import constant_time, serialization
 from cryptography.hazmat.primitives.asymmetric.x25519 import (
     X25519PrivateKey, X25519PublicKey
 )
@@ -16,6 +16,13 @@ c_MSG_KEXECDH_INIT, c_MSG_KEXECDH_REPLY = [byte_chr(c) for c in range(30, 32)]
 class KexCurve25519(object):
     def __init__(self, transport):
         self.transport = transport
+        self.key = None
+
+    def _perform_exchange(self, peer_key):
+        secret = self.key.exchange(peer_key)
+        if constant_time.bytes_eq(secret, b"\x00" * 32):
+            raise SSHException("peer's curve25519 public value has wrong order")
+        return secret
 
     def start_kex(self):
         self.key = X25519PrivateKey.generate()
@@ -43,7 +50,7 @@ class KexCurve25519(object):
     def _parse_kexecdh_init(self, m):
         peer_key_bytes = m.get_string()
         peer_key = X25519PublicKey.from_public_bytes(peer_key_bytes)
-        K = self.key.exchange(peer_key)
+        K = self._perform_exchange(peer_key)
         K = long(binascii.hexlify(K), 16)
         # compute exchange hash
         hm = Message()
@@ -80,7 +87,7 @@ class KexCurve25519(object):
 
         peer_key = X25519PublicKey.from_public_bytes(peer_key_bytes)
 
-        K = self.key.exchange(peer_key)
+        K = self._perform_exchange(peer_key)
         K = long(binascii.hexlify(K), 16)
         # compute exchange hash and verify signature
         hm = Message()
