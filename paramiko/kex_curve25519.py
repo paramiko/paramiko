@@ -4,7 +4,8 @@ import hashlib
 from cryptography.exceptions import UnsupportedAlgorithm
 from cryptography.hazmat.primitives import constant_time, serialization
 from cryptography.hazmat.primitives.asymmetric.x25519 import (
-    X25519PrivateKey, X25519PublicKey
+    X25519PrivateKey,
+    X25519PublicKey,
 )
 
 from paramiko.message import Message
@@ -14,6 +15,7 @@ from paramiko.ssh_exception import SSHException
 
 _MSG_KEXECDH_INIT, _MSG_KEXECDH_REPLY = range(30, 32)
 c_MSG_KEXECDH_INIT, c_MSG_KEXECDH_REPLY = [byte_chr(c) for c in range(30, 32)]
+
 
 class KexCurve25519(object):
     def __init__(self, transport):
@@ -45,9 +47,11 @@ class KexCurve25519(object):
 
         m = Message()
         m.add_byte(c_MSG_KEXECDH_INIT)
-        m.add_string(self.key.public_key().public_bytes(
-            serialization.Encoding.Raw, serialization.PublicFormat.Raw
-        ))
+        m.add_string(
+            self.key.public_key().public_bytes(
+                serialization.Encoding.Raw, serialization.PublicFormat.Raw
+            )
+        )
         self.transport._send_message(m)
         self.transport._expect_packet(_MSG_KEXECDH_REPLY)
 
@@ -75,7 +79,7 @@ class KexCurve25519(object):
         )
         server_key_bytes = self.transport.get_server_key().asbytes()
         exchange_key_bytes = self.key.public_key().public_bytes(
-            serialization.Encoding.Raw, serialization.PublicFormat.Raw,
+            serialization.Encoding.Raw, serialization.PublicFormat.Raw
         )
         hm.add_string(server_key_bytes)
         hm.add_string(peer_key_bytes)
@@ -111,9 +115,11 @@ class KexCurve25519(object):
             self.transport.remote_kex_init,
         )
         hm.add_string(peer_host_key_bytes)
-        hm.add_string(self.key.public_key().public_bytes(
-            serialization.Encoding.Raw, serialization.PublicFormat.Raw
-        ))
+        hm.add_string(
+            self.key.public_key().public_bytes(
+                serialization.Encoding.Raw, serialization.PublicFormat.Raw
+            )
+        )
         hm.add_string(peer_key_bytes)
         hm.add_mpint(K)
         self.transport._set_K_H(K, hashlib.sha256(hm.asbytes()).digest())
