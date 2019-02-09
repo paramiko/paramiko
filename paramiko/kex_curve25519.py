@@ -22,7 +22,9 @@ class KexCurve25519(object):
     def _perform_exchange(self, peer_key):
         secret = self.key.exchange(peer_key)
         if constant_time.bytes_eq(secret, b"\x00" * 32):
-            raise SSHException("peer's curve25519 public value has wrong order")
+            raise SSHException(
+                "peer's curve25519 public value has wrong order"
+            )
         return secret
 
     def start_kex(self):
