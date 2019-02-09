@@ -1,6 +1,7 @@
 import binascii
 import hashlib
 
+from cryptography.exceptions import UnsupportedAlgorithm
 from cryptography.hazmat.primitives import constant_time, serialization
 from cryptography.hazmat.primitives.asymmetric.x25519 import (
     X25519PrivateKey, X25519PublicKey
@@ -18,6 +19,14 @@ class KexCurve25519(object):
     def __init__(self, transport):
         self.transport = transport
         self.key = None
+
+    def is_available(self):
+        try:
+            X25519PrivateKey.generate()
+        except UnsupportedAlgorithm:
+            return False
+        else:
+            return True
 
     def _perform_exchange(self, peer_key):
         secret = self.key.exchange(peer_key)
