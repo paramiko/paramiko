@@ -17,9 +17,9 @@ matrix:
   # to whatever the latest default is.
   include:
     - python: 2.7
-      env: "CRYPTO_BEFORE=2.1"
+      env: "CRYPTO_BEFORE=2.6"
     - python: 3.6
-      env: "CRYPTO_BEFORE=2.1"
+      env: "CRYPTO_BEFORE=2.6"
 install:
   # Ensure modern pip/etc to avoid some issues w/ older worker environs
   - pip install pip==9.0.1 setuptools==36.6.0
