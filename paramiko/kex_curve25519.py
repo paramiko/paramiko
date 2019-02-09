@@ -20,7 +20,8 @@ class KexCurve25519(object):
         self.transport = transport
         self.key = None
 
-    def is_available(self):
+    @classmethod
+    def is_available(cls):
         try:
             X25519PrivateKey.generate()
         except UnsupportedAlgorithm:
