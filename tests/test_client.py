@@ -33,7 +33,7 @@ import warnings
 import weakref
 from tempfile import mkstemp
 
-from pytest_relaxed import raises
+import pytest
 
 import paramiko
 from paramiko.pkey import PublicBlob
@@ -662,7 +662,7 @@ class PasswordPassphraseTests(ClientTest):
 
     # TODO: more granular exception pending #387; should be signaling "no auth
     # methods available" because no key and no password
-    @raises(SSHException)
+    @pytest.mark.xfail(raises=SSHException)
     def test_passphrase_kwarg_not_used_for_password_auth(self):
         # Using the "right" password in the "wrong" field shouldn't work.
         self._test_connection(passphrase="pygmalion")
@@ -683,8 +683,8 @@ class PasswordPassphraseTests(ClientTest):
             password="television",
         )
 
-    @raises(AuthenticationException)  # TODO: more granular
-    def test_password_kwarg_not_used_for_passphrase_when_passphrase_kwarg_given(  # noqa
+    @pytest.mark.xfail(raises=AuthenticationException)  # TODO: more granular
+    def test_password_kwarg_not_used_for_passphrase_when_passphrase_kwarg_given( # noqa
         self
     ):
         # Sanity: if we're given both fields, the password field is NOT used as
