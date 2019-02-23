@@ -55,6 +55,7 @@ from paramiko.common import (
     cMSG_KEXINIT,
     cMSG_NEWKEYS,
     MSG_NEWKEYS,
+    MSG_EXT_INFO,
     cMSG_REQUEST_SUCCESS,
     cMSG_REQUEST_FAILURE,
     CONNECTION_FAILED_CODE,
@@ -390,6 +391,7 @@ class Transport(threading.Thread, ClosingContextManager):
         self.session_id = None
         self.host_key_type = None
         self.host_key = None
+        self.rfc8308_extensions = None
 
         # GSS-API / SSPI Key Exchange
         self.use_gss_kex = gss_kex
@@ -2205,10 +2207,19 @@ class Transport(threading.Thread, ClosingContextManager):
         else:
             available_server_keys = self._preferred_keys
 
+        # Only append ext-info-c/ext-info-s on initial kex
+        if self.initial_kex_done:
+            preferred_kex = self._preferred_kex
+        else:
+            if self.server_mode:
+                preferred_kex = self._preferred_kex + ("ext-info-s",)
+            else:
+                preferred_kex = self._preferred_kex + ("ext-info-c",)
+
         m = Message()
         m.add_byte(cMSG_KEXINIT)
         m.add_bytes(os.urandom(16))
-        m.add_list(self._preferred_kex)
+        m.add_list(preferred_kex)
         m.add_list(available_server_keys)
         m.add_list(self._preferred_ciphers)
         m.add_list(self._preferred_ciphers)
@@ -2764,6 +2775,17 @@ class Transport(threading.Thread, ClosingContextManager):
         else:
             self._queue_incoming_channel(chan)
 
+    def _parse_ext_info(self, m):
+        # Should only see this message if kex_init reuest included
+        # ext-info-c (client) or ext-info-s (server)
+        nr_extensions = m.get_int()
+        self.rfc8308_extensions = {}
+        for ext in range(nr_extensions):
+            ext_name = m.get_string()
+            ext_value = m.get_string()
+            self.rfc8308_extensions[ext_name] = ext_value
+        self._log(DEBUG, "EXT-INFO: {}".format(self.rfc8308_extensions))
+
     def _parse_debug(self, m):
         m.get_boolean()  # always_display
         msg = m.get_string()
@@ -2788,6 +2810,7 @@ class Transport(threading.Thread, ClosingContextManager):
         MSG_CHANNEL_OPEN_FAILURE: _parse_channel_open_failure,
         MSG_CHANNEL_OPEN: _parse_channel_open,
         MSG_KEXINIT: _negotiate_keys,
+        MSG_EXT_INFO: _parse_ext_info,
     }
 
     _channel_handler_table = {
