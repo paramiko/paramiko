@@ -1262,8 +1262,6 @@ class Transport(threading.Thread, ClosingContextManager):
                 self._log(DEBUG, "Attempting password auth...")
                 self.auth_password(username, password)
 
-        return
-
     def get_exception(self):
         """
         Return any exception that happened during the last server request.
