@@ -40,7 +40,8 @@ def interactive_shell(chan):
 
 def posix_shell(chan):
     import select
-
+    import struct
+    import fcntl
     oldtty = termios.tcgetattr(sys.stdin)
     try:
         tty.setraw(sys.stdin.fileno())
@@ -48,6 +49,11 @@ def posix_shell(chan):
         chan.settimeout(0.0)
 
         while True:
+            # Resize terminal size every loop to make change timely
+            s = struct.pack("HHHH", 0, 0, 0, 0)
+            t = fcntl.ioctl(sys.stdout.fileno(), termios.TIOCGWINSZ, s)
+            winsize = struct.unpack("hhhh", t)
+            chan.resize_pty(width=winsize[1], height=winsize[0])
             r, w, e = select.select([chan, sys.stdin], [], [])
             if chan in r:
                 try:
