@@ -42,6 +42,7 @@ def posix_shell(chan):
     import select
     import struct
     import fcntl
+
     oldtty = termios.tcgetattr(sys.stdin)
     try:
         tty.setraw(sys.stdin.fileno())
