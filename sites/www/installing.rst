@@ -106,7 +106,7 @@ due to their infrequent utility & non-platform-agnostic requirements):
 
   .. note:: This library appears to only function on Python 2.7 and up.
 
-* **Windows** needs `pywin32 <https://pypi.python.org/pypi/pywin32>`_ ``2.1.8``
+* **Windows** needs `pywin32 <https://pypi.org/project/pywin32/>`_ ``2.1.8``
   or better.
 
 .. note::
