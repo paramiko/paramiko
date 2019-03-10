@@ -58,7 +58,7 @@ setup(
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "Intended Audience :: Developers",
-        "License :: OSI Approved :: "
+        "License :: OSI Approved :: ",
         "GNU Library or Lesser General Public License (LGPL)",
         "Operating System :: OS Independent",
         "Topic :: Internet",
