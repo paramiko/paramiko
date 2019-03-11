@@ -69,7 +69,7 @@ def dummy_generate_key_curve25519(obj):
     private_key_value = unhexlify(
         b"2184abc7eb3e656d2349d2470ee695b570c227340c2b2863b6c9ff427af1f040"
     )
-    obj.P = x25519.X25519PrivateKey._from_private_bytes(private_key_value)
+    obj.P = x25519.X25519PrivateKey.from_private_bytes(private_key_value)
     if obj.transport.server_mode:
         obj.Q_S = obj.P.public_key()
     else:
@@ -567,9 +567,7 @@ class KexTest(unittest.TestCase):
                 "openssl used by cryptography does not support x25519"
             )
 
-        K = (
-            71294722834835117201316639182051104803802881348227506835068888449366462300724
-        )
+        K = 71294722834835117201316639182051104803802881348227506835068888449366462300724
         transport = FakeTransport()
         transport.server_mode = False
         kex = KexCurve25519(transport)
@@ -601,9 +599,7 @@ class KexTest(unittest.TestCase):
                 "openssl used by cryptography does not support x25519"
             )
 
-        K = (
-            71294722834835117201316639182051104803802881348227506835068888449366462300724
-        )
+        K = 71294722834835117201316639182051104803802881348227506835068888449366462300724
         transport = FakeTransport()
         transport.server_mode = True
         kex = KexCurve25519(transport)

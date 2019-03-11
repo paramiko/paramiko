@@ -29,6 +29,7 @@ from paramiko.message import Message
 from paramiko.py3compat import byte_chr, long
 from paramiko.ssh_exception import SSHException
 from cryptography.hazmat.primitives.asymmetric import x25519
+from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
 from cryptography.exceptions import UnsupportedAlgorithm
 from binascii import hexlify
 
@@ -60,7 +61,9 @@ class KexCurve25519(object):
             return
         m = Message()
         m.add_byte(c_MSG_KEXC25519_INIT)
-        Q_C_bytes = self.Q_C.public_bytes()
+        Q_C_bytes = self.Q_C.public_bytes(
+            encoding=Encoding.Raw, format=PublicFormat.Raw
+        )
         m.add_string(Q_C_bytes)
         self.transport._send_message(m)
         self.transport._expect_packet(_MSG_KEXC25519_REPLY)
@@ -96,7 +99,10 @@ class KexCurve25519(object):
     def _generate_key_pair(self):
         while True:
             self.P = x25519.X25519PrivateKey.generate()
-            if len(self.P.public_key().public_bytes()) != 32:
+            pub = self.P.public_key().public_bytes(
+                encoding=Encoding.Raw, format=PublicFormat.Raw
+            )
+            if len(pub) != 32:
                 continue
 
             if self.transport.server_mode:
@@ -130,8 +136,16 @@ class KexCurve25519(object):
 
         # "hm" is used as the initial transport key
         hm.add_string(K_S)
-        hm.add_string(self.Q_C.public_bytes())
-        hm.add_string(self.Q_S.public_bytes())
+        hm.add_string(
+            self.Q_C.public_bytes(
+                encoding=Encoding.Raw, format=PublicFormat.Raw
+            )
+        )
+        hm.add_string(
+            self.Q_S.public_bytes(
+                encoding=Encoding.Raw, format=PublicFormat.Raw
+            )
+        )
         hm.add_mpint(K)
         self.transport._set_K_H(K, self.hash_algo(hm.asbytes()).digest())
         # Verify that server signed kex message with its own pubkey
@@ -163,7 +177,11 @@ class KexCurve25519(object):
 
         hm.add_string(K_S)
         hm.add_string(Q_C_bytes)
-        hm.add_string(self.Q_S.public_bytes())
+        hm.add_string(
+            self.Q_S.public_bytes(
+                encoding=Encoding.Raw, format=PublicFormat.Raw
+            )
+        )
         hm.add_mpint(K)
         H = self.hash_algo(hm.asbytes()).digest()
         self.transport._set_K_H(K, H)
@@ -174,7 +192,11 @@ class KexCurve25519(object):
         m = Message()
         m.add_byte(c_MSG_KEXC25519_REPLY)
         m.add_string(K_S)
-        m.add_string(self.Q_S.public_bytes())
+        m.add_string(
+            self.Q_S.public_bytes(
+                encoding=Encoding.Raw, format=PublicFormat.Raw
+            )
+        )
         m.add_string(sig)
         self.transport._send_message(m)
         self.transport._activate_outbound()
