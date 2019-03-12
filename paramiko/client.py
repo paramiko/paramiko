@@ -677,6 +677,12 @@ class SSHClient(ClosingContextManager):
                         key = self._key_from_filepath(
                             key_filename, pkey_class, passphrase
                         )
+                        self._log(
+                            DEBUG,
+                            "Trying SSH key {} ({})".format(
+                                hexlify(key.get_fingerprint()), key_filename
+                            ),
+                        )
                         allowed_types = set(
                             self._transport.auth_publickey(username, key)
                         )
