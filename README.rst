@@ -82,6 +82,7 @@ Several demo scripts come with Paramiko to demonstrate how to use it.
 Probably the simplest demo is this:
 
 .. code-block:: python
+
     import base64
     import paramiko
     key = paramiko.RSAKey(data=base64.b64decode(b'AAA...'))
