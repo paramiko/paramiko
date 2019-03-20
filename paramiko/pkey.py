@@ -307,8 +307,8 @@ class PKey(object):
             start += 1
             m = self.BEGIN_TAG.match(lines[start])
         start += 1
-        keytype = m.group(1)
-        if start >= len(lines):
+        keytype = m.group(1) if m else None
+        if start >= len(lines) or keytype is None:
             raise SSHException("not a valid " + tag + " private key file")
 
         # find the END tag
