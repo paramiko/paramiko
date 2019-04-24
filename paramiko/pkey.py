@@ -76,9 +76,11 @@ class PKey(object):
     PRIVATE_KEY_FORMAT_ORIGINAL = 1
     PRIVATE_KEY_FORMAT_OPENSSH = 2
     BEGIN_TAG = re.compile(
-        "^-{5}BEGIN (RSA|DSA|EC|OPENSSH) PRIVATE KEY-{5}\s*$"
+        "^-{5}BEGIN (RSA|DSA|EC|OPENSSH) PRIVATE KEY-{5}\s*$"  # noqa: W605
     )
-    END_TAG = re.compile("^-{5}END (RSA|DSA|EC|OPENSSH) PRIVATE KEY-{5}\s*$")
+    END_TAG = re.compile(
+        "^-{5}END (RSA|DSA|EC|OPENSSH) PRIVATE KEY-{5}\s*$"  # noqa: W605
+    )
 
     def __init__(self, msg=None, data=None):
         """
