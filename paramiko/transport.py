@@ -403,6 +403,8 @@ class Transport(threading.Thread, ClosingContextManager):
         self.handshake_timeout = 15
         # how long (seconds) to wait for the auth response.
         self.auth_timeout = 30
+        # AuthHandler to save MSG_USERAUTH_BANNER msg here
+        self.banner = None
 
         # server mode:
         self.server_mode = False
@@ -1279,16 +1281,15 @@ class Transport(threading.Thread, ClosingContextManager):
 
     def get_banner(self):
         """
-        Return the banner supplied by the server upon connect. If no banner is
+        Return the banner supplied by the server via MSG_USERAUTH_BANNER, picked
+        up by the auth_handler, saved in the Transport. If no banner is
         supplied, this method returns ``None``.
 
         :returns: server supplied banner (`str`), or ``None``.
 
         .. versionadded:: 1.13
         """
-        if not self.active or (self.auth_handler is None):
-            return None
-        return self.auth_handler.banner
+        return self.banner
 
     def auth_none(self, username):
         """

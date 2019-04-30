@@ -59,7 +59,6 @@ class AuthHandler (object):
         self.authenticated = False
         self.auth_event = None
         self.auth_method = ''
-        self.banner = None
         self.password = None
         self.private_key = None
         self.interactive_handler = None
@@ -613,7 +612,7 @@ Error Message: {}
 
     def _parse_userauth_banner(self, m):
         banner = m.get_string()
-        self.banner = banner
+        self.transport.banner = banner
         self._log(INFO, 'Auth banner: {}'.format(banner))
         # who cares.
 
