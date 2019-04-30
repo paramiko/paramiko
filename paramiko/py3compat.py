@@ -100,11 +100,12 @@ else:
     bytes = bytes
     bytes_types = bytes
     integer_types = int
-    class long(int):
-        pass
     input = input
     decodebytes = base64.decodebytes
     encodebytes = base64.encodebytes
+
+    class long(int):
+        pass
 
     def byte_ord(c):
         # In case we're handed a string instead of an int.
