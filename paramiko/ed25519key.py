@@ -37,10 +37,12 @@ def unpad(data):
     # really ought to be made constant time (possibly by upstreaming this logic
     # into pyca/cryptography).
     padding_length = six.indexbytes(data, -1)
-    if padding_length > 16:
+    if 0x21 <= padding_length <= 0x71:
+        return data
+    if padding_length > 15:
         raise SSHException("Invalid key")
-    for i in range(1, padding_length + 1):
-        if six.indexbytes(data, -i) != (padding_length - i + 1):
+    for i in range(padding_length):
+        if six.indexbytes(data, i - padding_length) != i + 1:
             raise SSHException("Invalid key")
     return data[:-padding_length]
 
