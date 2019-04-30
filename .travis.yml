@@ -3,6 +3,12 @@ language: python
 cache:
   directories:
     - $HOME/.cache/pip
+branches:
+  only:
+  - master
+notifications:
+  email: false
+
 matrix:
   include:
     - python: "2.7"
@@ -26,5 +32,3 @@ install:
 script:
   - flake8
   - pytest -v
-notifications:
-  email: false
