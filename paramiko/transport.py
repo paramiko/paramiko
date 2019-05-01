@@ -113,7 +113,6 @@ class Transport(threading.Thread, ClosingContextManager):
         'aes128-cbc',
         'aes192-cbc',
         'aes256-cbc',
-        'blowfish-cbc',
         '3des-cbc',
     )
     _preferred_macs = (
@@ -129,7 +128,6 @@ class Transport(threading.Thread, ClosingContextManager):
         'ecdsa-sha2-nistp384',
         'ecdsa-sha2-nistp521',
         'ssh-rsa',
-        'ssh-dss',
     )
     _preferred_kex = (
         'ecdh-sha2-nistp256',
