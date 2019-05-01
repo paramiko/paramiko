@@ -363,13 +363,13 @@ class SSHClientTest(ClientTest):
         os.close(fd)
 
         client = paramiko.SSHClient()
-        self.assertEquals(0, len(client.get_host_keys()))
+        self.assertEqual(0, len(client.get_host_keys()))
 
         host_id = '[%s]:%d' % (self.addr, self.port)
 
         client.get_host_keys().add(host_id, 'ssh-rsa', public_host_key)
-        self.assertEquals(1, len(client.get_host_keys()))
-        self.assertEquals(public_host_key, client.get_host_keys()[host_id]['ssh-rsa'])
+        self.assertEqual(1, len(client.get_host_keys()))
+        self.assertEqual(public_host_key, client.get_host_keys()[host_id]['ssh-rsa'])
 
         client.save_host_keys(localname)
 
@@ -420,7 +420,7 @@ class SSHClientTest(ClientTest):
         with paramiko.SSHClient() as tc:
             self.tc = tc
             self.tc.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-            self.assertEquals(0, len(self.tc.get_host_keys()))
+            self.assertEqual(0, len(self.tc.get_host_keys()))
             self.tc.connect(**dict(self.connect_kwargs, password='pygmalion'))
 
             self.event.wait(1.0)
