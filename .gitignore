@@ -1,11 +1,6 @@
 *.pyc
-build/
-dist/
-.tox/
-paramiko.egg-info/
+/build/
+/dist/
 docs/
 demos/*.log
-!sites/docs
-_build
-.coverage
 .cache

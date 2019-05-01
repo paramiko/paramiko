@@ -16,15 +16,15 @@
 # along with Paramiko; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Suite 500, Boston, MA  02110-1335  USA.
 
-import sys
+import os
 from setuptools import setup
 
-if sys.platform == 'darwin':
-    import setup_helper
-
-    setup_helper.install_custom_make_tarball()
-
 longdesc = '''
+*paramiko-ng* is a fork of `paramiko <https://pypi.org/project/paramiko/>`_
+for more active maintenance.
+
+For changes in releases of this fork, see https://github.com/ploxiln/paramiko-ng/releases
+
 This is a library for making SSH2 connections (client or server).
 Emphasis is on using SSH2 as an alternative to SSL for making secure
 connections between python scripts.  All major ciphers and hash methods
@@ -33,10 +33,26 @@ are supported.  SFTP client and server mode are both supported too.
 Required packages:
     Cryptography
 
-To install the development version, ``pip install -e
-git+https://github.com/paramiko/paramiko/#egg=paramiko``.
-'''
+The import name is still just ``paramiko``. Make sure the original *paramiko*
+is not installed before installing *paramiko-ng* - otherwise pip may report
+success even though *paramiko-ng* was not correctly installed.
 
+To install the development version::
+
+    pip install -e git+https://github.com/ploxiln/paramiko-ng/#egg=paramiko-ng
+
+You can also install under the original "paramiko" pip-package-name,
+in order to satisfy requirements for other packages::
+
+    PARAMIKO_REPLACE=1 pip install https://github.com/ploxiln/paramiko-ng/archive/2.5.0.tar.gz#egg=paramiko
+
+Replace "2.5.0" with the desired recent version, or for latest development version do::
+
+    PARAMIKO_REPLACE=1 pip install git+https://github.com/ploxiln/paramiko-ng/#egg=paramiko
+
+'''  # noqa: E501
+
+name = "paramiko" if os.environ.get('PARAMIKO_REPLACE') else "paramiko-ng"
 
 # Version info -- read without importing
 _locals = {}
@@ -45,14 +61,16 @@ with open('paramiko/_version.py') as fp:
 version = _locals['__version__']
 
 setup(
-    name="paramiko",
+    name=name,
     version=version,
+    packages=['paramiko'],
     description="SSH2 protocol library",
     long_description=longdesc,
     author="Jeff Forcier",
     author_email="jeff@bitprophet.org",
-    url="https://github.com/paramiko/paramiko/",
-    packages=['paramiko'],
+    maintainer='Pierce Lopez',
+    maintainer_email='pierce.lopez@gmail.com',
+    url="https://github.com/ploxiln/paramiko-ng/",
     license='LGPL',
     platforms='Posix; MacOS X; Windows',
     classifiers=[
@@ -70,6 +88,7 @@ setup(
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
     ],
     install_requires=[
         'bcrypt>=3.1.3',

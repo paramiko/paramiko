@@ -1,21 +1,26 @@
-========
-Paramiko
-========
+===========
+Paramiko-NG
+===========
+
+This is a fork of `paramiko <https://github.com/paramiko/paramiko/>`_ for more active maintenance.
+
+This is still imported under the name ``paramiko``, but you can
+install with the package name *paramiko-ng* (default) or *paramiko*
+(by setting the environment variable ``PARAMIKO_REPLACE``, see `Installation <#installation>`_).
+
+For changes in releases of this fork, see `releases <https://github.com/ploxiln/paramiko-ng/releases>`_
 
 .. Continuous integration and code coverage badges
 
-.. image:: https://travis-ci.org/paramiko/paramiko.svg?branch=master
-    :target: https://travis-ci.org/paramiko/paramiko
-.. image:: https://codecov.io/gh/paramiko/paramiko/branch/master/graph/badge.svg
-    :target: https://codecov.io/gh/paramiko/paramiko
+.. image:: https://travis-ci.org/ploxiln/paramiko-ng.svg?branch=master
+    :target: https://travis-ci.org/ploxiln/paramiko-ng
 
-:Paramiko:    Python SSH module
+:Paramiko-NG: Python SSH module
 :Copyright:   Copyright (c) 2003-2009  Robey Pointer <robeypointer@gmail.com>
 :Copyright:   Copyright (c) 2013-2018  Jeff Forcier <jeff@bitprophet.org>
 :License:     `LGPL <https://www.gnu.org/copyleft/lesser.html>`_
-:Homepage:    http://www.paramiko.org/
 :API docs:    http://docs.paramiko.org
-:Development: https://github.com/paramiko/paramiko
+:Development: https://github.com/ploxiln/paramiko-ng/
 
 
 What
@@ -32,22 +37,35 @@ the encrypted tunnel (this is how SFTP works, for example).
 
 It is written entirely in Python (though it depends on third-party C wrappers
 for low level crypto; these are often available precompiled) and is released
-under the GNU Lesser General Public License (`LGPL
-<https://www.gnu.org/copyleft/lesser.html>`_).
-
-The package and its API is fairly well documented in the ``docs`` folder that
-should have come with this repository.
+under the GNU Lesser General Public License (`LGPL <https://www.gnu.org/copyleft/lesser.html>`_).
 
 
 Installation
 ------------
 
-For most users, the recommended method to install is via pip::
+The import name is still just ``paramiko``. Make sure the original *paramiko*
+is not installed before installing *paramiko-ng* - otherwise pip may report
+success even though *paramiko-ng* was not correctly installed.
 
-    pip install paramiko
+The most common way to install is simply::
 
-For more detailed instructions, see the `Installing
-<http://www.paramiko.org/installing.html>`_ page on the main Paramiko website.
+    pip install paramiko-ng
+
+To install the development version::
+
+    pip install -e git+https://github.com/ploxiln/paramiko-ng/#egg=paramiko-ng
+
+You can also install under the original "paramiko" pip-package-name,
+in order to satisfy requirements for other packages::
+
+    PARAMIKO_REPLACE=1 pip install https://github.com/ploxiln/paramiko-ng/archive/2.5.0.tar.gz#egg=paramiko
+
+Replace "2.5.0" with the desired recent release, or for the latest development version do::
+
+    PARAMIKO_REPLACE=1 pip install git+https://github.com/ploxiln/paramiko-ng/#egg=paramiko
+
+The primary dependency is Cryptography, which has its own installation
+`instructions <https://cryptography.io/en/latest/installation/>`_.
 
 
 Portability Issues
@@ -57,12 +75,11 @@ Paramiko primarily supports POSIX platforms with standard OpenSSH
 implementations, and is most frequently tested on Linux and OS X.  Windows is
 supported as well, though it may not be as straightforward.
 
+
 Bugs & Support
 --------------
 
-:Bug Reports:  `Github <https://github.com/paramiko/paramiko/issues/>`_
-:Mailing List: ``paramiko@librelist.com`` (see the `LibreList website
-               <http://librelist.com/>`_ for usage details).
+:Bug Reports:  `Github <https://github.com/ploxiln/paramiko-ng/issues/>`_
 :IRC:          ``#paramiko`` on Freenode
 
 
