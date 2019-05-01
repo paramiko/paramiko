@@ -256,12 +256,12 @@ class TransportTest(unittest.TestCase):
         """
         def force_algorithms(options):
             options.ciphers = ('aes256-cbc',)
-            options.digests = ('hmac-md5-96',)
+            options.digests = ('hmac-sha1',)
         self.setup_test_server(client_options=force_algorithms)
         self.assertEqual('aes256-cbc', self.tc.local_cipher)
         self.assertEqual('aes256-cbc', self.tc.remote_cipher)
-        self.assertEqual(12, self.tc.packetizer.get_mac_size_out())
-        self.assertEqual(12, self.tc.packetizer.get_mac_size_in())
+        self.assertEqual(20, self.tc.packetizer.get_mac_size_out())
+        self.assertEqual(20, self.tc.packetizer.get_mac_size_in())
 
         self.tc.send_ignore(1024)
         self.tc.renegotiate_keys()
