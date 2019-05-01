@@ -27,7 +27,6 @@ connection to a destination reachable from the local machine.
 """
 
 import getpass
-import os
 import socket
 import select
 import sys
@@ -49,7 +48,7 @@ def handler(chan, host, port):
     except Exception as e:
         verbose('Forwarding request to %s:%d failed: %r' % (host, port, e))
         return
-    
+
     verbose('Connected!  Tunnel open %r -> %r -> %r' % (chan.origin_addr,
                                                         chan.getpeername(), (host, port)))
     while True:
@@ -102,7 +101,7 @@ def get_host_port(spec, default_port):
 
 def parse_options():
     global g_verbose
-    
+
     parser = OptionParser(usage='usage: %prog [options] <ssh-server>[:<server-port>]',
                           version='%prog 1.0', description=HELP)
     parser.add_option('-q', '--quiet', action='store_false', dest='verbose', default=True,
@@ -120,15 +119,15 @@ def parse_options():
                       help='don\'t look for or use a private key file')
     parser.add_option('-P', '--password', action='store_true', dest='readpass', default=False,
                       help='read password (for key or password auth) from stdin')
-    parser.add_option('-r', '--remote', action='store', type='string', dest='remote', default=None, metavar='host:port',
-                      help='remote host and port to forward to')
+    parser.add_option('-r', '--remote', action='store', type='string', dest='remote', default=None,
+                      help='remote host and port to forward to', metavar='host:port')
     options, args = parser.parse_args()
 
     if len(args) != 1:
         parser.error('Incorrect number of arguments.')
     if options.remote is None:
         parser.error('Remote address required (-r).')
-    
+
     g_verbose = options.verbose
     server_host, server_port = get_host_port(args[0], SSH_PORT)
     remote_host, remote_port = get_host_port(options.remote, SSH_PORT)
@@ -137,11 +136,11 @@ def parse_options():
 
 def main():
     options, server, remote = parse_options()
-    
+
     password = None
     if options.readpass:
         password = getpass.getpass('Enter SSH password: ')
-    
+
     client = paramiko.SSHClient()
     client.load_system_host_keys()
     client.set_missing_host_key_policy(paramiko.WarningPolicy())

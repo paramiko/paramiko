@@ -21,7 +21,6 @@ Some unit tests for the BufferedFile abstraction.
 """
 
 import unittest
-import sys
 
 from paramiko.common import linefeed_byte, crlf, cr_byte
 from paramiko.file import BufferedFile
@@ -41,7 +40,7 @@ class LoopbackFile (BufferedFile):
         self.offset = 0
 
     def _read(self, size):
-        data = self.buffer.getvalue()[self.offset:self.offset+size]
+        data = self.buffer.getvalue()[self.offset:self.offset + size]
         self.offset += len(data)
         return data
 
@@ -157,14 +156,14 @@ class BufferedFileTest (unittest.TestCase):
                             b'need to close them again.\n')
         f.close()
 
+    @needs_builtin('buffer')
     def test_8_buffering(self):
         """
         verify that buffered objects can be written
         """
-        if sys.version_info[0] == 2:
-            f = LoopbackFile('r+', 16)
-            f.write(buffer(b'Too small.'))
-            f.close()
+        f = LoopbackFile('r+', 16)
+        f.write(buffer(b'Too small.'))  # noqa: F821
+        f.close()
 
     def test_9_readable(self):
         f = LoopbackFile('r')
@@ -210,7 +209,7 @@ class BufferedFileTest (unittest.TestCase):
         offsets = range(0, len(data), 8)
         with LoopbackFile('rb+') as f:
             for offset in offsets:
-                f.write(buffer(data, offset, 8))
+                f.write(buffer(data, offset, 8))  # noqa: F821
             self.assertEqual(f.read(), data)
 
     @needs_builtin('memoryview')
@@ -220,7 +219,7 @@ class BufferedFileTest (unittest.TestCase):
         with LoopbackFile('rb+') as f:
             view = memoryview(data)
             for offset in offsets:
-                f.write(view[offset:offset+8])
+                f.write(view[offset:offset + 8])
             self.assertEqual(f.read(), data)
 
 

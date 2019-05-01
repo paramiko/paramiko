@@ -28,8 +28,7 @@ from paramiko import RSAKey
 from paramiko.ssh_exception import SSHException
 from paramiko.py3compat import u
 
-usage="""
-%prog [-v] [-b bits] -t type [-N new_passphrase] [-f output_keyfile]"""
+usage = """%prog [-v] [-b bits] -t type [-N new_passphrase] [-f output_keyfile]"""
 
 default_values = {
     "ktype": "dsa",
@@ -44,7 +43,6 @@ key_dispatch_table = {
 }
 
 def progress(arg=None):
-
     if not arg:
         sys.stdout.write('0%\x08\x08\x08 ')
         sys.stdout.flush()
@@ -58,10 +56,11 @@ def progress(arg=None):
         sys.stdout.write('75%\x08\x08\x08\x08 ')
         sys.stdout.flush()
 
+
 if __name__ == '__main__':
 
-    phrase=None
-    pfunc=None
+    phrase = None
+    pfunc = None
 
     parser = OptionParser(usage=usage)
     parser.add_option("-t", "--type", type="string", dest="ktype",
@@ -91,15 +90,18 @@ if __name__ == '__main__':
         parser.print_help()
         sys.exit(0)
 
-    for o in list(default_values.keys()):
-        globals()[o] = getattr(options, o, default_values[o.lower()])
+    ktype = options.ktype
+    bits = options.bits
+    filename = options.filename
+    comment = options.comment
 
     if options.newphrase:
         phrase = getattr(options, 'newphrase')
 
     if options.verbose:
         pfunc = progress
-        sys.stdout.write("Generating priv/pub %s %d bits key pair (%s/%s.pub)..." % (ktype, bits, filename, filename))
+        sys.stdout.write("Generating priv/pub %s %d bits key pair (%s/%s.pub)..."
+                         % (ktype, bits, filename, filename))
         sys.stdout.flush()
 
     if ktype == 'dsa' and bits > 1024:
@@ -123,4 +125,6 @@ if __name__ == '__main__':
         print("done.")
 
     hash = u(hexlify(pub.get_fingerprint()))
-    print("Fingerprint: %d %s %s.pub (%s)" % (bits, ":".join([ hash[i:2+i] for i in range(0, len(hash), 2)]), filename, ktype.upper()))
+    print("Fingerprint: %d %s %s.pub (%s)" % (
+        bits, ":".join([hash[i:2 + i] for i in range(0, len(hash), 2)]), filename, ktype.upper()
+    ))

@@ -28,7 +28,7 @@ class LoopSocket (object):
     delivered on the read-end of another LoopSocket, and vice versa.  It's
     like a software "socketpair".
     """
-    
+
     def __init__(self):
         self.__in_buffer = bytes()
         self.__lock = threading.Lock()
@@ -84,7 +84,7 @@ class LoopSocket (object):
             self.__cv.notifyAll()
         finally:
             self.__lock.release()
-            
+
     def __unlink(self):
         m = None
         self.__lock.acquire()
@@ -96,5 +96,3 @@ class LoopSocket (object):
             self.__lock.release()
         if m is not None:
             m.__unlink()
-
-

@@ -18,23 +18,21 @@
 # along with Paramiko; if not, write to the Free Software Foundation, Inc.,
 # 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
 
-import base64
 from binascii import hexlify
-import os
 import socket
 import sys
 import threading
 import traceback
 
 import paramiko
-from paramiko.py3compat import b, u, decodebytes
+from paramiko.py3compat import u, decodebytes
 
 
 # setup logging
 paramiko.util.log_to_file('demo_server.log')
 
 host_key = paramiko.RSAKey(filename='test_rsa.key')
-#host_key = paramiko.DSSKey(filename='test_dss.key')
+# host_key = paramiko.DSSKey(filename='test_dss.key')
 
 print('Read key: ' + u(hexlify(host_key.get_fingerprint())))
 
@@ -66,7 +64,7 @@ class Server (paramiko.ServerInterface):
         if (username == 'robey') and (key == self.good_pub_key):
             return paramiko.AUTH_SUCCESSFUL
         return paramiko.AUTH_FAILED
-    
+
     def check_auth_gssapi_with_mic(self, username,
                                    gss_authenticated=paramiko.AUTH_FAILED,
                                    cc_file=None):
@@ -178,4 +176,3 @@ except Exception as e:
     except:
         pass
     sys.exit(1)
-

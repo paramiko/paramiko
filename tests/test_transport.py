@@ -28,13 +28,12 @@ import socket
 import time
 import threading
 import random
-from hashlib import sha1
 import unittest
 from mock import Mock
 
 from paramiko import (
     Transport, SecurityOptions, ServerInterface, RSAKey, DSSKey, SSHException,
-    ChannelException, Packetizer, Channel, AuthHandler,
+    ChannelException, Packetizer, AuthHandler,
 )
 from paramiko import AUTH_FAILED, AUTH_SUCCESSFUL
 from paramiko import OPEN_SUCCEEDED, OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED
@@ -47,8 +46,6 @@ from paramiko.common import (
     MAX_WINDOW_SIZE,
     DEFAULT_WINDOW_SIZE,
     DEFAULT_MAX_PACKET_SIZE,
-    MSG_NAMES,
-    MSG_UNIMPLEMENTED,
     MSG_USERAUTH_SUCCESS,
 )
 from paramiko.py3compat import bytes, byte_chr
@@ -107,7 +104,8 @@ class NullServer (ServerInterface):
         # 'acceptable' request kind
         return kind == 'acceptable'
 
-    def check_channel_x11_request(self, channel, single_connection, auth_protocol, auth_cookie, screen_number):
+    def check_channel_x11_request(self, channel, single_connection,
+                                  auth_protocol, auth_cookie, screen_number):
         self._x11_single_connection = single_connection
         self._x11_auth_protocol = auth_protocol
         self._x11_auth_cookie = auth_cookie
@@ -197,12 +195,12 @@ class TransportTest(unittest.TestCase):
         o.compression = o.compression
 
     def test_2_compute_key(self):
-        self.tc.K = 123281095979686581523377256114209720774539068973101330872763622971399429481072519713536292772709507296759612401802191955568143056534122385270077606457721553469730659233569339356140085284052436697480759510519672848743794433460113118986816826624865291116513647975790797391795651716378444844877749505443714557929
-        self.tc.H = b'\x0C\x83\x07\xCD\xE6\x85\x6F\xF3\x0B\xA9\x36\x84\xEB\x0F\x04\xC2\x52\x0E\x9E\xD3'
+        self.tc.K = 123281095979686581523377256114209720774539068973101330872763622971399429481072519713536292772709507296759612401802191955568143056534122385270077606457721553469730659233569339356140085284052436697480759510519672848743794433460113118986816826624865291116513647975790797391795651716378444844877749505443714557929  # noqa: E501
+        self.tc.H = b'\x0C\x83\x07\xCD\xE6\x85\x6F\xF3\x0B\xA9\x36\x84\xEB\x0F\x04\xC2\x52\x0E\x9E\xD3'  # noqa: E501
         self.tc.session_id = self.tc.H
         key = self.tc._compute_key('C', 32)
         self.assertEqual(b'207E66594CA87C44ECCBA3B3CD39FDDB378E6FDB0F97C54B2AA0CFBF900CD995',
-                          hexlify(key).upper())
+                         hexlify(key).upper())
 
     def test_3_simple(self):
         """
@@ -319,7 +317,7 @@ class TransportTest(unittest.TestCase):
         self.assertEqual('Hello there.\n', f.readline())
         self.assertEqual('This is on stderr.\n', f.readline())
         self.assertEqual('', f.readline())
-        
+
     def test_6a_channel_can_be_used_as_context_manager(self):
         """
         verify that exec_command() does something reasonable.
@@ -356,7 +354,7 @@ class TransportTest(unittest.TestCase):
         """
         self.setup_test_server()
         try:
-            chan = self.tc.open_channel('bogus')
+            _ = self.tc.open_channel('bogus')
             self.fail('expected exception')
         except ChannelException as e:
             self.assertTrue(e.code == OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED)
@@ -485,7 +483,7 @@ class TransportTest(unittest.TestCase):
         bytes2 = self.tc.packetizer._Packetizer__sent_bytes
         block_size = self.tc._cipher_info[self.tc.local_cipher]['block-size']
         mac_size = self.tc._mac_info[self.tc.local_mac]['size']
-        # tests show this is actually compressed to *52 bytes*!  including packet overhead!  nice!! :)
+        # tests show this is actually compressed to *52 bytes*!  including packet overhead!  nice!
         self.assertTrue(bytes2 - bytes < 1024)
         self.assertEqual(16 + block_size + mac_size, bytes2 - bytes)
 
@@ -502,6 +500,7 @@ class TransportTest(unittest.TestCase):
         schan = self.ts.accept(1.0)
 
         requested = []
+
         def handler(c, addr_port):
             addr, port = addr_port
             requested.append((addr, port))
@@ -535,9 +534,10 @@ class TransportTest(unittest.TestCase):
         self.setup_test_server()
         chan = self.tc.open_session()
         chan.exec_command('yes')
-        schan = self.ts.accept(1.0)
+        schan = self.ts.accept(1.0)  # noqa: F841
 
         requested = []
+
         def handler(c, origin_addr_port, server_addr_port):
             requested.append(origin_addr_port)
             requested.append(server_addr_port)
@@ -571,7 +571,7 @@ class TransportTest(unittest.TestCase):
         self.setup_test_server()
         chan = self.tc.open_session()
         chan.exec_command('yes')
-        schan = self.ts.accept(1.0)
+        schan = self.ts.accept(1.0)  # noqa: F841
 
         # open a port on the "server" that the client will ask to forward to.
         greeting_server = socket.socket()
@@ -644,7 +644,7 @@ class TransportTest(unittest.TestCase):
         self.assertEqual(chan.send_ready(), True)
         total = 0
         K = '*' * 1024
-        limit = 1+(64 * 2 ** 15)
+        limit = 1 + (64 * 2**15)
         while total < limit:
             chan.send(K)
             total += len(K)
@@ -658,7 +658,7 @@ class TransportTest(unittest.TestCase):
 
     def test_I_rekey_deadlock(self):
         """
-        Regression test for deadlock when in-transit messages are received after MSG_KEXINIT is sent
+        Regression test for deadlock when in-transit messages are received after MSG_KEXINIT sent
 
         Note: When this test fails, it may leak threads.
         """
@@ -717,11 +717,10 @@ class TransportTest(unittest.TestCase):
 
             def run(self):
                 try:
-                    for i in range(1, 1+self.iterations):
+                    for i in range(1, 1 + self.iterations):
                         if self.done_event.is_set():
                             break
                         self.watchdog_event.set()
-                        #print i, "SEND"
                         self.chan.send("x" * 2048)
                 finally:
                     self.done_event.set()
@@ -761,6 +760,7 @@ class TransportTest(unittest.TestCase):
         # on a real MSG_CHANNEL_WINDOW_ADJUST message.
         self.tc._handler_table = self.tc._handler_table.copy()  # copy per-class dictionary
         _negotiate_keys = self.tc._handler_table[MSG_KEXINIT]
+
         def _negotiate_keys_wrapper(self, m):
             if self.local_kex_init is None: # Remote side sent KEXINIT
                 # Simulate in-transit MSG_CHANNEL_WINDOW_ADJUST by sending it
@@ -774,8 +774,7 @@ class TransportTest(unittest.TestCase):
         self.tc._handler_table[MSG_KEXINIT] = _negotiate_keys_wrapper
 
         # Parameters for the test
-        iterations = 500    # The deadlock does not happen every time, but it
-                            # should after many iterations.
+        iterations = 500    # deadlock should happen after many iterations
         timeout = 5
 
         # This event is set when the test is completed
@@ -920,11 +919,11 @@ class TransportTest(unittest.TestCase):
             # send() accepts buffer instances
             sent = 0
             while sent < len(data):
-                sent += chan.send(buffer(data, sent, 8))
+                sent += chan.send(buffer(data, sent, 8))  # noqa: F821
             self.assertEqual(sfile.read(len(data)), data)
 
             # sendall() accepts a buffer instance
-            chan.sendall(buffer(data))
+            chan.sendall(buffer(data))  # noqa: F821
             self.assertEqual(sfile.read(len(data)), data)
 
     @needs_builtin('memoryview')
@@ -944,7 +943,7 @@ class TransportTest(unittest.TestCase):
             sent = 0
             view = memoryview(data)
             while sent < len(view):
-                sent += chan.send(view[sent:sent+8])
+                sent += chan.send(view[sent:sent + 8])
             self.assertEqual(sfile.read(len(data)), data)
 
             # sendall() accepts a memoryview instance

@@ -52,7 +52,7 @@ def make_sftp_folder():
     return path
 
 
-@pytest.fixture#(scope='session')
+@pytest.fixture  # (scope='session')
 def sftp_server():
     """
     Set up an in-memory SFTP server thread. Yields the client Transport/socket.

@@ -23,12 +23,10 @@ a real actual sftp server is contacted, and a new folder is created there to
 do test file operations in (so no existing files will be harmed).
 """
 
-import os
 import random
 import struct
 import sys
 import time
-import unittest
 
 from paramiko.common import o660
 
@@ -80,7 +78,7 @@ class TestBigSFTP(object):
             assert sftp.stat('%s/hongry.txt' % sftp.FOLDER).st_size == 1024 * 1024
             end = time.time()
             sys.stderr.write('%ds ' % round(end - start))
-            
+
             start = time.time()
             with sftp.open('%s/hongry.txt' % sftp.FOLDER, 'r') as f:
                 for n in range(1024):
@@ -110,7 +108,7 @@ class TestBigSFTP(object):
             assert sftp.stat('%s/hongry.txt' % sftp.FOLDER).st_size == 1024 * 1024
             end = time.time()
             sys.stderr.write('%ds ' % round(end - start))
-            
+
             start = time.time()
             with sftp.open('%s/hongry.txt' % sftp.FOLDER, 'rb') as f:
                 file_size = f.stat().st_size
@@ -144,9 +142,9 @@ class TestBigSFTP(object):
                     if n % 128 == 0:
                         sys.stderr.write('.')
             sys.stderr.write(' ')
-            
+
             assert sftp.stat('%s/hongry.txt' % sftp.FOLDER).st_size == 1024 * 1024
-            
+
             start = time.time()
             k2blob = kblob + kblob
             chunk = 793
@@ -238,7 +236,7 @@ class TestBigSFTP(object):
             sys.stderr.write(' ')
         finally:
             sftp.remove('%s/hongry.txt' % sftp.FOLDER)
-    
+
     def test_7_prefetch_readv(self, sftp):
         """
         verify that prefetch and readv don't conflict with each other.
@@ -252,7 +250,7 @@ class TestBigSFTP(object):
                     if n % 128 == 0:
                         sys.stderr.write('.')
             sys.stderr.write(' ')
-            
+
             assert sftp.stat('%s/hongry.txt' % sftp.FOLDER).st_size == 1024 * 1024
 
             with sftp.open('%s/hongry.txt' % sftp.FOLDER, 'rb') as f:
@@ -274,7 +272,7 @@ class TestBigSFTP(object):
             sys.stderr.write(' ')
         finally:
             sftp.remove('%s/hongry.txt' % sftp.FOLDER)
-    
+
     def test_8_large_readv(self, sftp):
         """
         verify that a very large readv is broken up correctly and still
@@ -291,17 +289,17 @@ class TestBigSFTP(object):
             sys.stderr.write(' ')
 
             assert sftp.stat('%s/hongry.txt' % sftp.FOLDER).st_size == 1024 * 1024
-            
+
             with sftp.open('%s/hongry.txt' % sftp.FOLDER, 'rb') as f:
                 data = list(f.readv([(23 * 1024, 128 * 1024)]))
                 assert len(data) == 1
                 data = data[0]
                 assert len(data) == 128 * 1024
-            
+
             sys.stderr.write(' ')
         finally:
             sftp.remove('%s/hongry.txt' % sftp.FOLDER)
-    
+
     def test_9_big_file_big_buffer(self, sftp):
         """
         write a 1MB file, with no linefeeds, and a big buffer.
@@ -314,7 +312,7 @@ class TestBigSFTP(object):
             assert sftp.stat('%s/hongry.txt' % sftp.FOLDER).st_size == 1024 * 1024
         finally:
             sftp.remove('%s/hongry.txt' % sftp.FOLDER)
-    
+
     def test_A_big_file_renegotiate(self, sftp):
         """
         write a 1MB file, forcing key renegotiation in the middle.
@@ -329,7 +327,7 @@ class TestBigSFTP(object):
 
             assert sftp.stat('%s/hongry.txt' % sftp.FOLDER).st_size == 1024 * 1024
             assert t.H != t.session_id
-            
+
             # try to read it too.
             with sftp.open('%s/hongry.txt' % sftp.FOLDER, 'r', 128 * 1024) as f:
                 file_size = f.stat().st_size

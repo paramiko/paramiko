@@ -43,6 +43,7 @@ class SkipKerberosTestCase(unittest.TestCase):
     def setUpClass(cls):
         raise unittest.SkipTest("Missing gssapi or k5test")
 
+
 if not GSS_AUTH_AVAILABLE:
     KerberosTestCase = SkipKerberosTestCase
 
@@ -77,11 +78,13 @@ else:
 def update_env(testcase, mapping, env=os.environ):
     """Modify os.environ during a test case and restore during cleanup."""
     saved_env = env.copy()
+
     def replace(target, source):
         target.update(source)
         for k in list(target):
             if k not in source:
                 target.pop(k, None)
+
     testcase.addCleanup(replace, env, saved_env)
     env.update(mapping)
     return testcase

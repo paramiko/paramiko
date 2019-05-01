@@ -235,10 +235,12 @@ class AuthTest (unittest.TestCase):
         self.start_server()
         self.tc.connect(hostkey=self.public_host_key)
         try:
-            remain = self.tc.auth_password('bad-server', 'hello')
-        except:
+            _ = self.tc.auth_password('bad-server', 'hello')
+        except Exception:
             etype, evalue, etb = sys.exc_info()
             self.assertTrue(issubclass(etype, AuthenticationException))
+        else:
+            self.fail("AuthenticationException not thrown")
 
     @slow
     def test_auth_non_responsive(self):
@@ -250,8 +252,10 @@ class AuthTest (unittest.TestCase):
         self.start_server()
         self.tc.connect()
         try:
-            remain = self.tc.auth_password('unresponsive-server', 'hello')
-        except:
+            _ = self.tc.auth_password('unresponsive-server', 'hello')
+        except Exception:
             etype, evalue, etb = sys.exc_info()
             self.assertTrue(issubclass(etype, AuthenticationException))
             self.assertTrue('Authentication timeout' in str(evalue))
+        else:
+            self.fail("AuthenticationException not thrown")
