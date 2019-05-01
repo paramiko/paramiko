@@ -45,7 +45,7 @@ class GSSAPITest(unittest.TestCase):
         from pyasn1.codec.der import encoder, decoder
         oid = encoder.encode(ObjectIdentifier(self.krb5_mech))
         mech, __ = decoder.decode(oid)
-        self.assertEquals(self.krb5_mech, mech.__str__())
+        self.assertEqual(self.krb5_mech, mech.__str__())
 
     def test_2_gssapi_sspi(self):
         """
@@ -85,27 +85,27 @@ class GSSAPITest(unittest.TestCase):
             if self.server_mode:
                 c_token = gss_ctxt.step(c_token)
                 gss_ctxt_status = gss_ctxt.established
-                self.assertEquals(False, gss_ctxt_status)
+                self.assertEqual(False, gss_ctxt_status)
                 # Accept a GSS-API context.
                 gss_srv_ctxt = gssapi.AcceptContext()
                 s_token = gss_srv_ctxt.step(c_token)
                 gss_ctxt_status = gss_srv_ctxt.established
-                self.assertNotEquals(None, s_token)
-                self.assertEquals(True, gss_ctxt_status)
+                self.assertNotEqual(None, s_token)
+                self.assertEqual(True, gss_ctxt_status)
                 # Establish the client context
                 c_token = gss_ctxt.step(s_token)
-                self.assertEquals(None, c_token)
+                self.assertEqual(None, c_token)
             else:
                 while not gss_ctxt.established:
                     c_token = gss_ctxt.step(c_token)
-                self.assertNotEquals(None, c_token)
+                self.assertNotEqual(None, c_token)
             # Build MIC
             mic_token = gss_ctxt.get_mic(mic_msg)
 
             if self.server_mode:
                 # Check MIC
                 status = gss_srv_ctxt.verify_mic(mic_msg, mic_token)
-                self.assertEquals(0, status)
+                self.assertEqual(0, status)
         else:
             gss_flags = (
                 sspicon.ISC_REQ_INTEGRITY |
@@ -120,7 +120,7 @@ class GSSAPITest(unittest.TestCase):
             if self.server_mode:
                 error, token = gss_ctxt.authorize(c_token)
                 c_token = token[0].Buffer
-                self.assertEquals(0, error)
+                self.assertEqual(0, error)
                 # Accept a GSS-API context.
                 gss_srv_ctxt = sspi.ServerAuth("Kerberos", spn=target_name)
                 error, token = gss_srv_ctxt.authorize(c_token)
@@ -128,8 +128,8 @@ class GSSAPITest(unittest.TestCase):
                 # Establish the context.
                 error, token = gss_ctxt.authorize(s_token)
                 c_token = token[0].Buffer
-                self.assertEquals(None, c_token)
-                self.assertEquals(0, error)
+                self.assertEqual(None, c_token)
+                self.assertEqual(0, error)
                 # Build MIC
                 mic_token = gss_ctxt.sign(mic_msg)
                 # Check MIC
@@ -137,4 +137,4 @@ class GSSAPITest(unittest.TestCase):
             else:
                 error, token = gss_ctxt.authorize(c_token)
                 c_token = token[0].Buffer
-                self.assertNotEquals(0, error)
+                self.assertNotEqual(0, error)

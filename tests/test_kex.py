@@ -32,7 +32,7 @@ from paramiko.kex_group1 import KexGroup1
 from paramiko.kex_gex import KexGex, KexGexSHA256
 from paramiko import Message
 from paramiko.common import byte_chr
-from paramiko.kex_ecdh_nist import KexNistp256
+from paramiko.kex_ecdh_nist import KexNistp256, _ecdh_from_encoded_point
 
 
 def dummy_urandom(n):
@@ -41,12 +41,20 @@ def dummy_urandom(n):
 def dummy_generate_key_pair(obj):
     private_key_value = 94761803665136558137557783047955027733968423115106677159790289642479432803037
     public_key_numbers = "042bdab212fa8ba1b7c843301682a4db424d307246c7e1e6083c41d9ca7b098bf30b3d63e2ec6278488c135360456cc054b3444ecc45998c08894cbc1370f5f989"
-    public_key_numbers_obj = ec.EllipticCurvePublicNumbers.from_encoded_point(ec.SECP256R1(), unhexlify(public_key_numbers))
-    obj.P = ec.EllipticCurvePrivateNumbers(private_value=private_key_value, public_numbers=public_key_numbers_obj).private_key(default_backend())
+    public_key_numbers_obj = _ecdh_from_encoded_point(
+        ec.SECP256R1(), unhexlify(public_key_numbers)
+    ).public_numbers()
+    obj.P = ec.EllipticCurvePrivateNumbers(
+        private_value=private_key_value, public_numbers=public_key_numbers_obj
+    ).private_key(default_backend())
     if obj.transport.server_mode:
-        obj.Q_S = ec.EllipticCurvePublicNumbers.from_encoded_point(ec.SECP256R1(), unhexlify(public_key_numbers)).public_key(default_backend())
+        obj.Q_S = _ecdh_from_encoded_point(
+            ec.SECP256R1(), unhexlify(public_key_numbers)
+        )
         return
-    obj.Q_C = ec.EllipticCurvePublicNumbers.from_encoded_point(ec.SECP256R1(), unhexlify(public_key_numbers)).public_key(default_backend())
+    obj.Q_C = _ecdh_from_encoded_point(
+        ec.SECP256R1(), unhexlify(public_key_numbers)
+    )
 
 
 class FakeKey (object):

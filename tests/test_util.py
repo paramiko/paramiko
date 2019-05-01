@@ -402,7 +402,7 @@ Host param4 "p a r" "p" "par" para
         f = StringIO(test_config_file)
         config = paramiko.util.parse_ssh_config(f)
         for host, values in res.items():
-            self.assertEquals(
+            self.assertEqual(
                 paramiko.util.lookup_ssh_host_config(host, config),
                 values
             )
@@ -432,7 +432,7 @@ Host param3 parara
         f = StringIO(test_config_file)
         config = paramiko.util.parse_ssh_config(f)
         for host, values in res.items():
-            self.assertEquals(
+            self.assertEqual(
                 paramiko.util.lookup_ssh_host_config(host, config),
                 values
             )
@@ -462,7 +462,7 @@ Host param3 parara
             'param "pam" "p a',
         ]
         for host, values in correct_data.items():
-            self.assertEquals(
+            self.assertEqual(
                 conf._get_hosts(host),
                 values
             )
