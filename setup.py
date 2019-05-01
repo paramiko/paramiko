@@ -16,13 +16,7 @@
 # along with Paramiko; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Suite 500, Boston, MA  02110-1335  USA.
 
-import sys
 from setuptools import setup
-
-if sys.platform == 'darwin':
-    import setup_helper
-
-    setup_helper.install_custom_make_tarball()
 
 longdesc = '''
 This is a library for making SSH2 connections (client or server).

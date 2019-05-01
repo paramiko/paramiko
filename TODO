@@ -1,3 +1,0 @@
-* Change license to BSD for v1.8 (obtain permission from Robey)
-* Pending that, remove preamble from all files, ensure LICENSE is still correct
-* Update version stuff: use an execfile'd paramiko/_version.py
