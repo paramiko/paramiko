@@ -11,6 +11,12 @@ notifications:
 
 matrix:
   include:
+    # pypy takes longer, start it first
+    - python: "pypy2.7-7.1.1"
+      env: CRYPTO_VER=2.4.2
+    - python: "pypy3.5-7.0"
+      env: CRYPTO_VER=2.6.1
+
     - python: "2.7"
       env: CRYPTO_VER=1.5.3
     - python: "2.7"
@@ -20,11 +26,14 @@ matrix:
     - python: "3.4"
       env: CRYPTO_VER=2.4.2
     - python: "3.5"
-      env: CRYPTO_VER=2.4.2
+      env: CRYPTO_VER=2.6.1
     - python: "3.6"
+      env: CRYPTO_VER=2.4.2
     - python: "3.7"
+      env: CRYPTO_VER=2.6.1
+
 install:
-  - if [ -n "$CRYPTO_VER" ]; then pip install cryptography==$CRYPTO_VER; fi
+  - pip install cryptography==$CRYPTO_VER
   # Self-install for setup.py-driven deps
   - pip install -e .
   # Dev (doc/test running) requirements
