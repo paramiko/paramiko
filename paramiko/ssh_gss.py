@@ -48,7 +48,10 @@ _API = "MIT"
 try:
     import gssapi
 
-    GSS_EXCEPTIONS = (gssapi.GSSException,)
+    try:
+        GSS_EXCEPTIONS = (gssapi.GSSException,)
+    except AttributeError:
+        raise ImportError("Incorrect gssapi module available")
 except (ImportError, OSError):
     try:
         import pywintypes
