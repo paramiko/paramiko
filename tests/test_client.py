@@ -33,7 +33,10 @@ import warnings
 import weakref
 from tempfile import mkstemp
 
+import pytest
+
 import paramiko
+from paramiko import Ed25519Key
 from paramiko.pkey import PublicBlob
 from paramiko.common import PY2
 from paramiko.ssh_exception import SSHException, AuthenticationException
@@ -246,6 +249,7 @@ class SSHClientTest(ClientTest):
         """
         self._test_connection(key_filename=_support('test_ecdsa_256.key'))
 
+    @pytest.mark.skipif("not Ed25519Key.is_supported()")
     def test_client_ed25519(self):
         self._test_connection(key_filename=_support('test_ed25519.key'))
 
@@ -298,6 +302,8 @@ class SSHClientTest(ClientTest):
         # server-side behavior is 100% identical.)
         # NOTE: only bothered whipping up one cert per overall class/family.
         for type_ in ('rsa', 'dss', 'ecdsa_256', 'ed25519'):
+            if type_ == 'ed25519' and not Ed25519Key.is_supported():
+                continue
             cert_name = 'test_{}.key-cert.pub'.format(type_)
             cert_path = _support(os.path.join('cert_support', cert_name))
             self._test_connection(
@@ -313,6 +319,8 @@ class SSHClientTest(ClientTest):
         # that a specific cert was found, along with regular authorization
         # succeeding proving that the overall flow works.
         for type_ in ('rsa', 'dss', 'ecdsa_256', 'ed25519'):
+            if type_ == 'ed25519' and not Ed25519Key.is_supported():
+                continue
             key_name = 'test_{}.key'.format(type_)
             key_path = _support(os.path.join('cert_support', key_name))
             self._test_connection(

@@ -27,6 +27,8 @@ from binascii import hexlify
 from hashlib import md5
 import base64
 
+import pytest
+
 from paramiko import RSAKey, DSSKey, ECDSAKey, Ed25519Key, Message, util
 from paramiko.py3compat import StringIO, byte_chr, b, bytes, PY2
 
@@ -451,6 +453,7 @@ class KeyTest(unittest.TestCase):
         comparable = TEST_KEY_BYTESTR_2 if PY2 else TEST_KEY_BYTESTR_3
         self.assertEqual(str(key), comparable)
 
+    @pytest.mark.skipif("not Ed25519Key.is_supported()")
     def test_ed25519(self):
         key1 = Ed25519Key.from_private_key_file(_support('test_ed25519.key'))
         key2 = Ed25519Key.from_private_key_file(
@@ -458,6 +461,7 @@ class KeyTest(unittest.TestCase):
         )
         self.assertNotEqual(key1.asbytes(), key2.asbytes())
 
+    @pytest.mark.skipif("not Ed25519Key.is_supported()")
     def test_ed25519_compare(self):
         # verify that the private & public keys compare equal
         key = Ed25519Key.from_private_key_file(_support('test_ed25519.key'))
@@ -467,6 +471,7 @@ class KeyTest(unittest.TestCase):
         self.assertTrue(not pub.can_sign())
         self.assertEqual(key, pub)
 
+    @pytest.mark.skipif("not Ed25519Key.is_supported()")
     def test_ed25519_nonbytes_password(self):
         # https://github.com/paramiko/paramiko/issues/1039
         key = Ed25519Key.from_private_key_file(
@@ -477,6 +482,7 @@ class KeyTest(unittest.TestCase):
         )
         # No exception -> it's good. Meh.
 
+    @pytest.mark.skipif("not Ed25519Key.is_supported()")
     def test_ed25519_load_from_file_obj(self):
         with open(_support('test_ed25519.key')) as pkey_fileobj:
             key = Ed25519Key.from_private_key(pkey_fileobj)
@@ -525,8 +531,8 @@ class KeyTest(unittest.TestCase):
         self.assertEqual(msg.get_int64(), 1234)
 
         # Prevented from loading certificate that doesn't match
-        key_path = _support(os.path.join('cert_support', 'test_ed25519.key'))
-        key1 = Ed25519Key.from_private_key_file(key_path)
+        key_path = _support(os.path.join('cert_support', 'test_ecdsa_256.key'))
+        key1 = ECDSAKey.from_private_key_file(key_path)
         self.assertRaises(
             ValueError,
             key1.load_certificate,

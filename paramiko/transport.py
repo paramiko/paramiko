@@ -1,5 +1,4 @@
 # Copyright (C) 2003-2007  Robey Pointer <robeypointer@gmail.com>
-# Copyright (C) 2003-2007  Robey Pointer <robeypointer@gmail.com>
 #
 # This file is part of paramiko.
 #
@@ -124,12 +123,14 @@ class Transport(threading.Thread, ClosingContextManager):
         'hmac-sha1',
     )
     _preferred_keys = (
-        'ssh-ed25519',
         'ecdsa-sha2-nistp256',
         'ecdsa-sha2-nistp384',
         'ecdsa-sha2-nistp521',
         'ssh-rsa',
     )
+    if Ed25519Key.is_supported():
+        _preferred_keys = ('ssh-ed25519',) + _preferred_keys
+
     _preferred_kex = (
         'ecdh-sha2-nistp256',
         'ecdh-sha2-nistp384',

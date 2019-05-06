@@ -33,7 +33,7 @@ matrix:
       env: CRYPTO_VER=2.6.1
 
 install:
-  - pip install cryptography==$CRYPTO_VER
+  - pip install cryptography==$CRYPTO_VER PyNaCl
   # Self-install for setup.py-driven deps
   - pip install -e .
   # Dev (doc/test running) requirements

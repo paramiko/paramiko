@@ -14,14 +14,16 @@
 # along with Paramiko; if not, write to the Free Software Foundation, Inc.,
 # 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
 
+import six
 import bcrypt
-
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.ciphers import Cipher
 
-import nacl.signing
-
-import six
+try:
+    import nacl.signing
+    import nacl.exceptions
+except ImportError:
+    nacl = None
 
 from paramiko.message import Message
 from paramiko.pkey import PKey
@@ -58,8 +60,14 @@ class Ed25519Key(PKey):
     .. versionchanged:: 2.3
         Added a ``file_obj`` parameter to match other key classes.
     """
-    def __init__(self, msg=None, data=None, filename=None, password=None,
-                 file_obj=None):
+
+    @staticmethod
+    def is_supported():
+        return nacl is not None
+
+    def __init__(self, msg=None, data=None, filename=None, password=None, file_obj=None):
+        if nacl is None:
+            raise SSHException("Missing dependency PyNaCl")
         self.public_blob = None
         verifying_key = signing_key = None
         if msg is None and data is not None:
