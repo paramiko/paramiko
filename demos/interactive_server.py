@@ -63,6 +63,7 @@ class SimpleShell(cmd.Cmd):
     def do_exit(self, line):
         return True
 
+
 # setup logging
 paramiko.util.log_to_file("server.log")
 
@@ -92,9 +93,9 @@ class Session(paramiko.ServerInterface):
         return "password"
 
     # Removing this causes the client to echo commands back
-    #def check_channel_pty_request(
+    # def check_channel_pty_request(
     #    self, channel, term, width, height, pixelwidth, pixelheight, modes
-    #):
+    # ):
     #    return True
 
     def check_channel_shell_request(self, channel):
@@ -158,7 +159,8 @@ class Server(object):
     def use_session(self, session, channel):
         session.event.wait(10)
         if not session.event.is_set():
-            raise Exception("Client never asked for a shell or sent a command.")
+            raise Exception(
+                "Client never asked for a shell or sent a command.")
 
         if session.exec:
             return
