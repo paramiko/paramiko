@@ -160,7 +160,8 @@ class Server(object):
         session.event.wait(10)
         if not session.event.is_set():
             raise Exception(
-                "Client never asked for a shell or sent a command.")
+                "Client never asked for a shell or sent a command."
+            )
 
         if session.exec:
             return
