@@ -28,7 +28,7 @@ import threading
 
 import paramiko
 
-from .util import _support, needs_gssapi, KerberosTestCase, update_env
+from .util import _support, KerberosTestCase, update_env
 from .test_client import FINGERPRINTS
 
 
@@ -68,7 +68,6 @@ class NullServer (paramiko.ServerInterface):
         return True
 
 
-@needs_gssapi
 class GSSAuthTest(KerberosTestCase):
     def setUp(self):
         # TODO: username and targ_name should come from os.environ or whatever
@@ -114,10 +113,10 @@ class GSSAuthTest(KerberosTestCase):
                         gss_auth=True, **kwargs)
 
         self.event.wait(1.0)
-        self.assert_(self.event.is_set())
-        self.assert_(self.ts.is_active())
+        self.assertTrue(self.event.is_set())
+        self.assertTrue(self.ts.is_active())
         self.assertEqual(self.username, self.ts.get_username())
-        self.assertEqual(True, self.ts.is_authenticated())
+        self.assertTrue(self.ts.is_authenticated())
 
         stdin, stdout, stderr = self.tc.exec_command('yes')
         schan = self.ts.accept(1.0)

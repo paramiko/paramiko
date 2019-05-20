@@ -24,10 +24,9 @@ Test the used APIs for GSS-API / SSPI authentication
 
 import socket
 
-from .util import needs_gssapi, KerberosTestCase, update_env
+from .util import KerberosTestCase, update_env
 
 
-@needs_gssapi
 class GSSAPITest(KerberosTestCase):
     def setUp(self):
         super(GSSAPITest, self).setUp()
@@ -54,9 +53,9 @@ class GSSAPITest(KerberosTestCase):
             import gssapi
             if (hasattr(gssapi, '__title__') and
                     gssapi.__title__ == 'python-gssapi'):
-                _API = "PYTHON-GSSAPI-OLD"
+                _API = "MIT"
             else:
-                _API = "PYTHON-GSSAPI-NEW"
+                _API = "MIT-NEW"
         except ImportError:
             import sspicon
             import sspi
@@ -66,7 +65,7 @@ class GSSAPITest(KerberosTestCase):
         gss_ctxt_status = False
         mic_msg = b"G'day Mate!"
 
-        if _API == "PYTHON-GSSAPI-OLD":
+        if _API == "MIT":
             if self.server_mode:
                 gss_flags = (gssapi.C_PROT_READY_FLAG,
                              gssapi.C_INTEG_FLAG,
@@ -110,7 +109,7 @@ class GSSAPITest(KerberosTestCase):
                 status = gss_srv_ctxt.verify_mic(mic_msg, mic_token)
                 self.assertEqual(0, status)
 
-        elif _API == "PYTHON-GSSAPI-NEW":
+        elif _API == "MIT-NEW":
             if self.server_mode:
                 gss_flags = (gssapi.RequirementFlag.protection_ready,
                              gssapi.RequirementFlag.integrity,
@@ -131,27 +130,27 @@ class GSSAPITest(KerberosTestCase):
             if self.server_mode:
                 c_token = gss_ctxt.step(c_token)
                 gss_ctxt_status = gss_ctxt.complete
-                self.assertEquals(False, gss_ctxt_status)
+                self.assertEqual(False, gss_ctxt_status)
                 # Accept a GSS-API context.
                 gss_srv_ctxt = gssapi.SecurityContext(usage='accept')
                 s_token = gss_srv_ctxt.step(c_token)
                 gss_ctxt_status = gss_srv_ctxt.complete
-                self.assertNotEquals(None, s_token)
-                self.assertEquals(True, gss_ctxt_status)
+                self.assertNotEqual(None, s_token)
+                self.assertEqual(True, gss_ctxt_status)
                 # Establish the client context
                 c_token = gss_ctxt.step(s_token)
-                self.assertEquals(None, c_token)
+                self.assertEqual(None, c_token)
             else:
                 while not gss_ctxt.complete:
                     c_token = gss_ctxt.step(c_token)
-                self.assertNotEquals(None, c_token)
+                self.assertNotEqual(None, c_token)
             # Build MIC
             mic_token = gss_ctxt.get_signature(mic_msg)
 
             if self.server_mode:
                 # Check MIC
                 status = gss_srv_ctxt.verify_signature(mic_msg, mic_token)
-                self.assertEquals(0, status)
+                self.assertEqual(0, status)
 
         else:
             gss_flags = (

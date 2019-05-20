@@ -33,18 +33,8 @@ import struct
 import os
 import sys
 
-
-#: A boolean constraint that indicates if GSS-API / SSPI is available.
 GSS_AUTH_AVAILABLE = True
-
-
-#: A tuple of the exception types used by the underlying GSSAPI implementation.
 GSS_EXCEPTIONS = ()
-
-
-
-
-#: :var str _API: Constraint for the used API
 _API = None
 
 try:
@@ -54,7 +44,7 @@ try:
         _API = "MIT"  # keep this for compatibility
         GSS_EXCEPTIONS = (gssapi.GSSException,)
     else:
-        _API = "PYTHON-GSSAPI-NEW"
+        _API = "MIT-NEW"
         GSS_EXCEPTIONS = (gssapi.exceptions.GeneralError,
                           gssapi.raw.misc.GSSError,)
 except (ImportError, OSError):
@@ -68,9 +58,14 @@ except (ImportError, OSError):
         GSS_AUTH_AVAILABLE = False
         _API = None
 
+try:
+    from pyasn1.type.univ import ObjectIdentifier
+    from pyasn1.codec.der import encoder, decoder
+except ImportError:
+    GSS_AUTH_AVAILABLE = False
+
 from paramiko.common import MSG_USERAUTH_REQUEST
 from paramiko.ssh_exception import SSHException
-from paramiko._version import __version_info__
 
 
 def GSSAuth(auth_method, gss_deleg_creds=True):
@@ -97,7 +92,7 @@ def GSSAuth(auth_method, gss_deleg_creds=True):
     """
     if _API == "MIT":
         return _SSH_GSSAPI_OLD(auth_method, gss_deleg_creds)
-    elif _API == "PYTHON-GSSAPI-NEW":
+    elif _API == "MIT-NEW":
         return _SSH_GSSAPI_NEW(auth_method, gss_deleg_creds)
     elif _API == "SSPI" and os.name == "nt":
         return _SSH_SSPI(auth_method, gss_deleg_creds)
@@ -169,8 +164,6 @@ class _SSH_GSSAuth(object):
         :note: In server mode we just return the OID length and the DER encoded
                OID.
         """
-        from pyasn1.type.univ import ObjectIdentifier
-        from pyasn1.codec.der import encoder
         OIDs = self._make_uint32(1)
         krb5_OID = encoder.encode(ObjectIdentifier(self._krb5_mech))
         OID_len = self._make_uint32(len(krb5_OID))
@@ -185,7 +178,6 @@ class _SSH_GSSAuth(object):
         :param str desired_mech: The desired GSS-API mechanism of the client
         :return: ``True`` if the given OID is supported, otherwise C{False}
         """
-        from pyasn1.codec.der import decoder
         mech, __ = decoder.decode(desired_mech)
         if mech.__str__() != self._krb5_mech:
             return False
@@ -273,7 +265,6 @@ class _SSH_GSSAPI_OLD(_SSH_GSSAuth):
         :return: A ``String`` if the GSS-API has returned a token or
             ``None`` if no token was returned
         """
-        from pyasn1.codec.der import decoder
         self._username = username
         self._gss_host = target
         targ_name = gssapi.Name("host@" + self._gss_host,
@@ -399,11 +390,6 @@ class _SSH_GSSAPI_OLD(_SSH_GSSAuth):
         raise NotImplementedError
 
 
-if __version_info__[0] == 2 and __version_info__[0] <= 4:
-    # provide the old name for strict backward compatibility
-    _SSH_GSSAPI = _SSH_GSSAPI_OLD
-
-
 class _SSH_GSSAPI_NEW(_SSH_GSSAuth):
     """
     Implementation of the GSS-API MIT Kerberos Authentication for SSH2,
@@ -447,7 +433,6 @@ class _SSH_GSSAPI_NEW(_SSH_GSSAuth):
         :return: A ``String`` if the GSS-API has returned a token or ``None``
                  if no token was returned
         """
-        from pyasn1.codec.der import decoder
         self._username = username
         self._gss_host = target
         targ_name = gssapi.Name("host@" + self._gss_host,
@@ -608,7 +593,6 @@ class _SSH_SSPI(_SSH_GSSAuth):
         :return: A ``String`` if the SSPI has returned a token or ``None`` if
                  no token was returned
         """
-        from pyasn1.codec.der import decoder
         self._username = username
         self._gss_host = target
         error = 0

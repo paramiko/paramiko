@@ -31,7 +31,7 @@ import unittest
 
 import paramiko
 
-from .util import needs_gssapi, KerberosTestCase, update_env
+from .util import KerberosTestCase, update_env
 
 
 class NullServer (paramiko.ServerInterface):
@@ -59,7 +59,6 @@ class NullServer (paramiko.ServerInterface):
         return True
 
 
-@needs_gssapi
 class GSSKexTest(KerberosTestCase):
     def setUp(self):
         self.username = self.realm.user_princ
@@ -107,11 +106,11 @@ class GSSKexTest(KerberosTestCase):
                         gss_auth=True, gss_kex=True, gss_host=gss_host)
 
         self.event.wait(1.0)
-        self.assert_(self.event.is_set())
-        self.assert_(self.ts.is_active())
+        self.assertTrue(self.event.is_set())
+        self.assertTrue(self.ts.is_active())
         self.assertEqual(self.username, self.ts.get_username())
-        self.assertEqual(True, self.ts.is_authenticated())
-        self.assertEqual(True, self.tc.get_transport().gss_kex_used)
+        self.assertTrue(self.ts.is_authenticated())
+        self.assertTrue(self.tc.get_transport().gss_kex_used)
 
         stdin, stdout, stderr = self.tc.exec_command('yes')
         schan = self.ts.accept(1.0)

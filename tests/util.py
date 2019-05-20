@@ -13,10 +13,6 @@ def _support(filename):
     return join(dirname(realpath(__file__)), filename)
 
 
-needs_gssapi = pytest.mark.skipif(not GSS_AUTH_AVAILABLE,
-                                  reason="No GSSAPI to test")
-
-
 def needs_builtin(name):
     """
     Skip decorated test if builtin name does not exist.
@@ -26,6 +22,7 @@ def needs_builtin(name):
 
 
 slow = pytest.mark.slow
+
 
 # GSSAPI / Kerberos related tests need a working Kerberos environment.
 # The class `KerberosTestCase` provides such an environment or skips all tests.
@@ -41,11 +38,19 @@ slow = pytest.mark.slow
 #
 # ToDo: add a Windows specific implementation?
 
-if (os.environ.get("K5TEST_USER_PRINC", None) and
-        os.environ.get("K5TEST_HOSTNAME", None) and
-        os.environ.get("KRB5_KTNAME", None)):  # add other vars as needed
+class SkipKerberosTestCase(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        raise unittest.SkipTest("Missing gssapi or k5test")
 
+if not GSS_AUTH_AVAILABLE:
+    KerberosTestCase = SkipKerberosTestCase
+
+elif (os.environ.get("K5TEST_USER_PRINC") and
+      os.environ.get("K5TEST_HOSTNAME") and
+      os.environ.get("KRB5_KTNAME")):  # add other vars as needed
     # The environment provides the required information
+
     class DummyK5Realm(object):
         def __init__(self):
             for k in os.environ:
@@ -67,13 +72,7 @@ else:
         # Try to setup a kerberos environment
         from k5test import KerberosTestCase
     except Exception:
-        # Use a dummy, that skips all tests
-        class KerberosTestCase(unittest.TestCase):
-            @classmethod
-            def setUpClass(cls):
-                raise unittest.SkipTest('Missing extension package k5test. '
-                                        'Please run "pip install k5test" '
-                                        'to install it.')
+        KerberosTestCase = SkipKerberosTestCase
 
 def update_env(testcase, mapping, env=os.environ):
     """Modify os.environ during a test case and restore during cleanup."""
