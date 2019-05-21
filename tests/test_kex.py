@@ -23,6 +23,7 @@ Some unit tests for the key exchange protocols.
 from binascii import hexlify, unhexlify
 import os
 import unittest
+
 import pytest
 
 from cryptography.hazmat.backends import default_backend
@@ -68,26 +69,11 @@ def dummy_generate_key_pair(obj):
     ).public_key(default_backend())
 
 
-class UnsupportedCryptographyVersionError(Exception):
-    pass
-
-def x25519_bytes_to_private_key(private_key_value):
-    if hasattr(x25519.X25519PrivateKey, 'from_private_bytes'):
-        pk = x25519.X25519PrivateKey.from_private_bytes(private_key_value)
-    elif hasattr(x25519.X25519PrivateKey, '_from_private_bytes'):
-        pk = x25519.X25519PrivateKey._from_private_bytes(private_key_value)
-    else:
-        raise UnsupportedCryptographyVersionError(
-            "x25519 library does not support building private keys from bytes"
-        )
-
-    return pk
-
 def dummy_generate_key_curve25519(obj):
     private_key_value = unhexlify(
         b"2184abc7eb3e656d2349d2470ee695b570c227340c2b2863b6c9ff427af1f040"
     )
-    obj.P = x25519_bytes_to_private_key(private_key_value)
+    obj.P = x25519.X25519PrivateKey.from_private_bytes(private_key_value)
 
     if obj.transport.server_mode:
         obj.Q_S = obj.P.public_key()
@@ -579,23 +565,13 @@ class KexTest(unittest.TestCase):
         self.assertTrue(transport._activated)
         self.assertEqual(H, hexlify(transport._H).upper())
 
+    @pytest.mark.skipif("not KexCurve25519.is_supported()")
     def test_13_kex_c25519_client(self):
-        # Skip test if system OpenSSL doesn't support x25519
-        if not KexCurve25519.is_supported():
-            return pytest.skip(
-                "openssl used by cryptography does not support x25519"
-            )
-
         K = 71294722834835117201316639182051104803802881348227506835068888449366462300724
         transport = FakeTransport()
         transport.server_mode = False
         kex = KexCurve25519(transport)
-        try:
-            kex.start_kex()
-        except UnsupportedCryptographyVersionError:
-            return pytest.skip(
-                "cryptography version is too old to use x25519"
-            )
+        kex.start_kex()
         self.assertEqual(
             (paramiko.kex_curve25519._MSG_KEXC25519_REPLY,), transport._expect
         )
@@ -616,23 +592,13 @@ class KexTest(unittest.TestCase):
         self.assertEqual((b"fake-host-key", b"fake-sig"), transport._verify)
         self.assertTrue(transport._activated)
 
+    @pytest.mark.skipif("not KexCurve25519.is_supported()")
     def test_14_kex_c25519_server(self):
-        # Skip test if system OpenSSL doesn't support x25519
-        if not KexCurve25519.is_supported():
-            return pytest.skip(
-                "openssl used by cryptography does not support x25519"
-            )
-
         K = 71294722834835117201316639182051104803802881348227506835068888449366462300724
         transport = FakeTransport()
         transport.server_mode = True
         kex = KexCurve25519(transport)
-        try:
-            kex.start_kex()
-        except UnsupportedCryptographyVersionError:
-            return pytest.skip(
-                "cryptography version is too old to use x25519"
-            )
+        kex.start_kex()
         self.assertEqual(
             (paramiko.kex_curve25519._MSG_KEXC25519_INIT,), transport._expect
         )

@@ -1,5 +1,3 @@
-# Copyright (C) 2003-2007  Robey Pointer <robeypointer@gmail.com>
-#
 # This file is part of paramiko.
 #
 # Paramiko is free software; you can redistribute it and/or modify it under the
@@ -17,8 +15,7 @@
 # 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
 
 """
-Key exchange using DJB's Curve25519. Originally introduced in OpenSSH 6.5, and
-the only kex currently (August 2018) recommended by arthepsy's ssh-audit.
+Key exchange using DJB's Curve25519. Originally introduced in OpenSSH 6.5
 """
 
 # Author: Dan Fuhry <dan@fuhry.com>
@@ -32,8 +29,7 @@ from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
 from cryptography.exceptions import UnsupportedAlgorithm
 from binascii import hexlify
 
-# x25519 was added in cryptography 2.5, but we support as low as 1.5. Trap any
-# import failure and just don't load x25519 support.
+# x25519 was added in cryptography 2.0, but we support down to cryptography 1.5
 try:
     from cryptography.hazmat.primitives.asymmetric import x25519
 except ImportError:
@@ -95,18 +91,15 @@ class KexCurve25519(object):
         False otherwise.
         """
         if x25519 is None:
-            return False
+            return False  # cryptography < 2.0
 
         if not hasattr(Encoding, 'Raw'):
-            return False
-
-        if not hasattr(PublicFormat, 'Raw'):
-            return False
+            return False  # cryptography < 2.5
 
         try:
             x25519.X25519PublicKey.from_public_bytes(b"\x00" * 32)
         except UnsupportedAlgorithm:
-            return False
+            return False  # openssl < 1.1.0
 
         return True
 
