@@ -49,7 +49,7 @@ def _unpad_openssh(data):
     # really ought to be made constant time (possibly by upstreaming this logic
     # into pyca/cryptography).
     padding_length = six.indexbytes(data, -1)
-    if 0x20 <= padding_length < 0x7f:
+    if 0x20 <= padding_length < 0x7F:
         return data  # no padding, last byte part comment (printable ascii)
     if padding_length > 15:
         raise SSHException("Invalid key")
@@ -330,12 +330,12 @@ class PKey(object):
             end += 1
             m = self.END_TAG.match(lines[end])
 
-        if keytype == tag:
-            data = self._read_private_key_pem(lines, end, password)
-            pkformat = self._PRIVATE_KEY_FORMAT_ORIGINAL
-        elif keytype == "OPENSSH":
+        if keytype == "OPENSSH":
             data = self._read_private_key_openssh(lines[start:end], password)
             pkformat = self._PRIVATE_KEY_FORMAT_OPENSSH
+        elif keytype == tag:
+            data = self._read_private_key_pem(lines, end, password)
+            pkformat = self._PRIVATE_KEY_FORMAT_ORIGINAL
         else:
             raise SSHException(
                 "encountered {} key, expected {} key".format(keytype, tag)
