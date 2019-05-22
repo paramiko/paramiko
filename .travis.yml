@@ -18,11 +18,11 @@ matrix:
       env: CRYPTO_VER=2.6.1
 
     - python: "2.7"
-      env: CRYPTO_VER=1.5.3
+      env: CRYPTO_VER=1.6
     - python: "2.7"
       env: CRYPTO_VER=2.4.2
     - python: "3.4"
-      env: CRYPTO_VER=1.5.3
+      env: CRYPTO_VER=1.6
     - python: "3.4"
       env: CRYPTO_VER=2.4.2
     - python: "3.5"

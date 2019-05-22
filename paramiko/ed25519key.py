@@ -14,11 +14,6 @@
 # along with Paramiko; if not, write to the Free Software Foundation, Inc.,
 # 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
 
-import six
-import bcrypt
-from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives.ciphers import Cipher
-
 try:
     import nacl.signing
     import nacl.exceptions
@@ -27,26 +22,7 @@ except ImportError:
 
 from paramiko.message import Message
 from paramiko.pkey import PKey
-from paramiko.py3compat import b
-from paramiko.ssh_exception import SSHException, PasswordRequiredException
-
-
-OPENSSH_AUTH_MAGIC = b"openssh-key-v1\x00"
-
-
-def unpad(data):
-    # At the moment, this is only used for unpadding private keys on disk. This
-    # really ought to be made constant time (possibly by upstreaming this logic
-    # into pyca/cryptography).
-    padding_length = six.indexbytes(data, -1)
-    if 0x21 <= padding_length <= 0x71:
-        return data
-    if padding_length > 15:
-        raise SSHException("Invalid key")
-    for i in range(padding_length):
-        if six.indexbytes(data, i - padding_length) != i + 1:
-            raise SSHException("Invalid key")
-    return data[:-padding_length]
+from paramiko.ssh_exception import SSHException
 
 
 class Ed25519Key(PKey):
@@ -69,7 +45,10 @@ class Ed25519Key(PKey):
         if nacl is None:
             raise SSHException("Missing dependency PyNaCl")
         self.public_blob = None
-        verifying_key = signing_key = None
+        verifying_key = None
+        signing_key = None
+        pkformat = None
+
         if msg is None and data is not None:
             msg = Message(data)
         if msg is not None:
@@ -80,112 +59,30 @@ class Ed25519Key(PKey):
             )
             verifying_key = nacl.signing.VerifyKey(msg.get_binary())
         elif filename is not None:
-            with open(filename, "r") as f:
-                pkformat, data = self._read_private_key("OPENSSH", f)
+            pkformat, data = self._read_private_key_file('-', 'ssh-ed25519', filename, password)
         elif file_obj is not None:
-            pkformat, data = self._read_private_key("OPENSSH", file_obj)
-
+            pkformat, data = self._read_private_key('-', 'ssh-ed25519', file_obj, password)
         if filename or file_obj:
-            signing_key = self._parse_signing_key_data(data, password)
+            if pkformat != self.FORMAT_OPENSSH:
+                raise SSHException("Invalid key format")
+            signing_key = self._parse_signing_key_data(data)
 
         if signing_key is None and verifying_key is None:
             raise ValueError("need a key")
-
         self._signing_key = signing_key
         self._verifying_key = verifying_key
 
-    def _parse_signing_key_data(self, data, password):
-        from paramiko.transport import Transport
-        # We may eventually want this to be usable for other key types, as
-        # OpenSSH moves to it, but for now this is just for Ed25519 keys.
-        # This format is described here:
-        # https://github.com/openssh/openssh-portable/blob/master/PROTOCOL.key
-        # The description isn't totally complete, and I had to refer to the
-        # source for a full implementation.
+    def _parse_signing_key_data(self, data):
         message = Message(data)
-        if message.get_bytes(len(OPENSSH_AUTH_MAGIC)) != OPENSSH_AUTH_MAGIC:
-            raise SSHException("Invalid key")
-
-        ciphername = message.get_text()
-        kdfname = message.get_text()
-        kdfoptions = message.get_binary()
-        num_keys = message.get_int()
-
-        if kdfname == "none":
-            # kdfname of "none" must have an empty kdfoptions, the ciphername
-            # must be "none"
-            if kdfoptions or ciphername != "none":
-                raise SSHException("Invalid key")
-        elif kdfname == "bcrypt":
-            if not password:
-                raise PasswordRequiredException(
-                    "Private key file is encrypted"
-                )
-            kdf = Message(kdfoptions)
-            bcrypt_salt = kdf.get_binary()
-            bcrypt_rounds = kdf.get_int()
-        else:
-            raise SSHException("Invalid key")
-
-        if ciphername != "none" and ciphername not in Transport._cipher_info:
-            raise SSHException("Invalid key")
-
-        public_keys = []
-        for _ in range(num_keys):
-            pubkey = Message(message.get_binary())
-            if pubkey.get_text() != "ssh-ed25519":
-                raise SSHException("Invalid key")
-            public_keys.append(pubkey.get_binary())
-
-        private_ciphertext = message.get_binary()
-        if ciphername == "none":
-            private_data = private_ciphertext
-        else:
-            cipher = Transport._cipher_info[ciphername]
-            key = bcrypt.kdf(
-                password=b(password),
-                salt=bcrypt_salt,
-                desired_key_bytes=cipher["key-size"] + cipher["block-size"],
-                rounds=bcrypt_rounds,
-                # We can't control how many rounds are on disk, so no sense
-                # warning about it.
-                ignore_few_rounds=True,
-            )
-            decryptor = Cipher(
-                cipher["class"](key[:cipher["key-size"]]),
-                cipher["mode"](key[cipher["key-size"]:]),
-                backend=default_backend()
-            ).decryptor()
-            private_data = (
-                decryptor.update(private_ciphertext) + decryptor.finalize()
-            )
-
-        message = Message(unpad(private_data))
-        if message.get_int() != message.get_int():
-            raise SSHException("Invalid key")
-
-        signing_keys = []
-        for i in range(num_keys):
-            if message.get_text() != "ssh-ed25519":
-                raise SSHException("Invalid key")
-            # A copy of the public key, again, ignore.
-            public = message.get_binary()
-            key_data = message.get_binary()
-            # The second half of the key data is yet another copy of the public
-            # key...
-            signing_key = nacl.signing.SigningKey(key_data[:32])
-            # Verify that all the public keys are the same...
-            assert (
-                signing_key.verify_key.encode() == public == public_keys[i] ==
-                key_data[32:]
-            )
-            signing_keys.append(signing_key)
-            # Comment, ignore.
-            message.get_binary()
-
-        if len(signing_keys) != 1:
-            raise SSHException("Invalid key")
-        return signing_keys[0]
+        public = message.get_binary()
+        key_data = message.get_binary()
+        # The second half of the key data is yet another copy of the public key...
+        signing_key = nacl.signing.SigningKey(key_data[:32])
+        # Verify that all the public keys are the same...
+        if not signing_key.verify_key.encode() == public == key_data[32:]:
+            raise SSHException("Invalid key public part mis-match")
+        comment = message.get_binary()  # noqa: F841
+        return signing_key
 
     def asbytes(self):
         if self.can_sign():

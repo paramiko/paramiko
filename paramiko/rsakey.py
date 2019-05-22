@@ -166,24 +166,32 @@ class RSAKey(PKey):
     # ...internals...
 
     def _from_private_key_file(self, filename, password):
-        data = self._read_private_key_file('RSA', filename, password)
+        data = self._read_private_key_file('RSA', 'ssh-rsa', filename, password)
         self._decode_key(data)
 
     def _from_private_key(self, file_obj, password):
-        data = self._read_private_key('RSA', file_obj, password)
+        data = self._read_private_key('RSA', 'ssh-rsa', file_obj, password)
         self._decode_key(data)
 
     def _decode_key(self, data):
         pkformat, data = data
-        if pkformat == self.PRIVATE_KEY_FORMAT_ORIGINAL:
+        if pkformat == self.FORMAT_ORIGINAL:
             try:
                 key = serialization.load_der_private_key(
                     data, password=None, backend=default_backend()
                 )
             except ValueError as e:
                 raise SSHException(str(e))
-        elif pkformat == self.PRIVATE_KEY_FORMAT_OPENSSH:
-            n, e, d, iqmp, q, p = self._uint32_cstruct_unpack(data, 'iiiiii')
+
+        elif pkformat == self.FORMAT_OPENSSH:
+            msg = Message(data)
+            n = msg.get_mpint()
+            e = msg.get_mpint()
+            d = msg.get_mpint()
+            iqmp = msg.get_mpint()
+            q = msg.get_mpint()
+            p = msg.get_mpint()
+
             public_numbers = rsa.RSAPublicNumbers(e=e, n=n)
             key = rsa.RSAPrivateNumbers(
                 p=p,
@@ -196,5 +204,8 @@ class RSAKey(PKey):
             ).private_key(default_backend())
         else:
             raise SSHException('unknown private key format.')
-        assert isinstance(key, rsa.RSAPrivateKey)
+
+        if not isinstance(key, rsa.RSAPrivateKey):
+            raise SSHException("Invalid key type")
+
         self.key = key
