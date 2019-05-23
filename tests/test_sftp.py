@@ -26,23 +26,18 @@ do test file operations in (so no existing files will be harmed).
 import os
 import socket
 import sys
-import threading
-import unittest
 import warnings
 from binascii import hexlify
 from tempfile import mkstemp
 
 import pytest
 
-import paramiko
-import paramiko.util
 from paramiko.py3compat import PY2, b, u, StringIO
 from paramiko.common import o777, o600, o666, o644
 from paramiko.sftp_attr import SFTPAttributes
 
 from .util import needs_builtin
-from .stub_sftp import StubServer, StubSFTPServer
-from .util import _support, slow
+from .util import slow
 
 
 ARTICLE = '''
@@ -370,7 +365,7 @@ class TestSFTP(object):
                 f.seek(pos_list[17], f.SEEK_SET)
                 assert f.readline()[:4] == 'duck'
                 f.seek(pos_list[10], f.SEEK_SET)
-                assert f.readline() == 'duck types were equally resistant to exogenous insulin compared with chicken.\n'
+                assert f.readline() == 'duck types were equally resistant to exogenous insulin compared with chicken.\n'  # noqa: E501
         finally:
             sftp.remove(sftp.FOLDER + '/duck.txt')
 
@@ -655,7 +650,7 @@ class TestSFTP(object):
         """
         verify that chdir/getcwd work.
         """
-        assert sftp.getcwd() == None
+        assert sftp.getcwd() is None
         root = sftp.normalize('.')
         if root[-1] != '/':
             root += '/'
@@ -748,7 +743,7 @@ class TestSFTP(object):
         try:
             with sftp.open('%s/write_buffer' % sftp.FOLDER, 'wb') as f:
                 for offset in range(0, len(data), 8):
-                    f.write(buffer(data, offset, 8))
+                    f.write(buffer(data, offset, 8))  # noqa: F821
 
             with sftp.open('%s/write_buffer' % sftp.FOLDER, 'rb') as f:
                 assert f.read() == data
@@ -763,7 +758,7 @@ class TestSFTP(object):
             with sftp.open('%s/write_memoryview' % sftp.FOLDER, 'wb') as f:
                 view = memoryview(data)
                 for offset in range(0, len(data), 8):
-                    f.write(view[offset:offset+8])
+                    f.write(view[offset:offset + 8])
 
             with sftp.open('%s/write_memoryview' % sftp.FOLDER, 'rb') as f:
                 assert f.read() == data

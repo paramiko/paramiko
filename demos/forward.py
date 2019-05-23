@@ -27,8 +27,6 @@ connection to a destination reachable from the SSH server machine.
 """
 
 import getpass
-import os
-import socket
 import select
 try:
     import SocketServer
@@ -49,7 +47,7 @@ g_verbose = True
 class ForwardServer (SocketServer.ThreadingTCPServer):
     daemon_threads = True
     allow_reuse_address = True
-    
+
 
 class Handler (SocketServer.BaseRequestHandler):
 
@@ -68,8 +66,9 @@ class Handler (SocketServer.BaseRequestHandler):
                     (self.chain_host, self.chain_port))
             return
 
-        verbose('Connected!  Tunnel open %r -> %r -> %r' % (self.request.getpeername(),
-                                                            chan.getpeername(), (self.chain_host, self.chain_port)))
+        verbose('Connected!  Tunnel open %r -> %r -> %r' % (
+            self.request.getpeername(), chan.getpeername(), (self.chain_host, self.chain_port)
+        ))
         while True:
             r, w, x = select.select([self.request, chan], [], [])
             if self.request in r:
@@ -82,7 +81,7 @@ class Handler (SocketServer.BaseRequestHandler):
                 if len(data) == 0:
                     break
                 self.request.send(data)
-                
+
         peername = self.request.getpeername()
         chan.close()
         self.request.close()
@@ -121,7 +120,7 @@ def get_host_port(spec, default_port):
 
 def parse_options():
     global g_verbose
-    
+
     parser = OptionParser(usage='usage: %prog [options] <ssh-server>[:<server-port>]',
                           version='%prog 1.0', description=HELP)
     parser.add_option('-q', '--quiet', action='store_false', dest='verbose', default=True,
@@ -139,15 +138,15 @@ def parse_options():
                       help='don\'t look for or use a private key file')
     parser.add_option('-P', '--password', action='store_true', dest='readpass', default=False,
                       help='read password (for key or password auth) from stdin')
-    parser.add_option('-r', '--remote', action='store', type='string', dest='remote', default=None, metavar='host:port',
-                      help='remote host and port to forward to')
+    parser.add_option('-r', '--remote', action='store', type='string', dest='remote', default=None,
+                      help='remote host and port to forward to', metavar='host:port')
     options, args = parser.parse_args()
 
     if len(args) != 1:
         parser.error('Incorrect number of arguments.')
     if options.remote is None:
         parser.error('Remote address required (-r).')
-    
+
     g_verbose = options.verbose
     server_host, server_port = get_host_port(args[0], SSH_PORT)
     remote_host, remote_port = get_host_port(options.remote, SSH_PORT)
@@ -156,11 +155,11 @@ def parse_options():
 
 def main():
     options, server, remote = parse_options()
-    
+
     password = None
     if options.readpass:
         password = getpass.getpass('Enter SSH password: ')
-    
+
     client = paramiko.SSHClient()
     client.load_system_host_keys()
     client.set_missing_host_key_policy(paramiko.WarningPolicy())

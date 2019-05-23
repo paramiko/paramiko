@@ -19,10 +19,7 @@
 # 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
 
 
-import base64
 import getpass
-import os
-import socket
 import sys
 import traceback
 from paramiko.py3compat import input
@@ -37,8 +34,8 @@ except ImportError:
 # setup logging
 paramiko.util.log_to_file('demo_simple.log')
 # Paramiko client configuration
-UseGSSAPI = paramiko.GSS_AUTH_AVAILABLE             # enable "gssapi-with-mic" authentication, if supported by your python installation
-DoGSSAPIKeyExchange = paramiko.GSS_AUTH_AVAILABLE   # enable "gssapi-kex" key exchange, if supported by your python installation
+UseGSSAPI = paramiko.GSS_AUTH_AVAILABLE     # enable "gssapi-with-mic" authentication, if supported
+DoGSSAPIKeyExchange = paramiko.GSS_AUTH_AVAILABLE  # enable "gssapi-kex" key exchange, if supported
 # UseGSSAPI = False
 # DoGSSAPIKeyExchange = False
 port = 22

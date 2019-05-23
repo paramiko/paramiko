@@ -96,7 +96,7 @@ class HostKeysTest (unittest.TestCase):
         for key in hostdict:
             i += 1
         self.assertEqual(2, i)
-        
+
     def test_4_dict_set(self):
         hostdict = paramiko.HostKeys('hostfile.temp')
         key = paramiko.RSAKey(data=decodebytes(keyblob))
@@ -107,7 +107,7 @@ class HostKeysTest (unittest.TestCase):
         }
         hostdict['fake.example.com'] = {}
         hostdict['fake.example.com']['ssh-rsa'] = key
-        
+
         self.assertEqual(3, len(hostdict))
         self.assertEqual(2, len(list(hostdict.values())[0]))
         self.assertEqual(1, len(list(hostdict.values())[1]))
@@ -120,10 +120,10 @@ class HostKeysTest (unittest.TestCase):
     def test_delitem(self):
         hostdict = paramiko.HostKeys('hostfile.temp')
         target = 'happy.example.com'
-        entry = hostdict[target] # will KeyError if not present
+        _ = hostdict[target] # will KeyError if not present
         del hostdict[target]
         try:
-            entry = hostdict[target]
+            _ = hostdict[target]
         except KeyError:
             pass # Good
         else:

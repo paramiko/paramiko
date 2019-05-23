@@ -28,7 +28,7 @@ import unittest
 
 import paramiko.util
 from paramiko.util import lookup_ssh_host_config as host_config, safe_string
-from paramiko.py3compat import StringIO, byte_ord, b
+from paramiko.py3compat import StringIO, byte_ord
 
 
 # Note some lines in this configuration have trailing spaces on purpose
@@ -63,7 +63,7 @@ BGQ3GQ/Fc7SX6gkpXkwcZryoi4kNFhHu5LvHcZPdxXV1D+uTMfGS1eyd2Yz/DoNWXNAl8TI0cAsW\
 
 
 # for test 1:
-from paramiko import *
+from paramiko import *  # noqa
 
 
 class UtilTest(unittest.TestCase):
@@ -109,8 +109,9 @@ class UtilTest(unittest.TestCase):
         global test_config_file
         f = StringIO(test_config_file)
         config = paramiko.util.parse_ssh_config(f)
-        self.assertEqual(config._config,
-            [{'host': ['*'], 'config': {}}, {'host': ['*'], 'config': {'identityfile': ['~/.ssh/id_rsa'], 'user': 'robey'}},
+        self.assertEqual(config._config, [
+            {'host': ['*'], 'config': {}},
+            {'host': ['*'], 'config': {'identityfile': ['~/.ssh/id_rsa'], 'user': 'robey'}},
             {'host': ['*.example.com'], 'config': {'user': 'bjork', 'port': '3333'}},
             {'host': ['*'], 'config': {'crazy': 'something dumb'}},
             {'host': ['spoo.example.com'], 'config': {'crazy': 'something else'}}])
@@ -143,9 +144,10 @@ class UtilTest(unittest.TestCase):
             )
 
     def test_generate_key_bytes(self):
-        x = paramiko.util.generate_key_bytes(sha1, b'ABCDEFGH', 'This is my secret passphrase.', 64)
+        x = paramiko.util.generate_key_bytes(sha1, b'ABCDEFGH',
+                                             'This is my secret passphrase.', 64)
         hex = ''.join(['%02x' % byte_ord(c) for c in x])
-        self.assertEqual(hex, '9110e2f6793b69363e58173e9436b13a5a4b339005741d5c680e505f57d871347b4239f14fb5c46e857d5e100424873ba849ac699cea98d729e57b3e84378e8b')
+        self.assertEqual(hex, '9110e2f6793b69363e58173e9436b13a5a4b339005741d5c680e505f57d871347b4239f14fb5c46e857d5e100424873ba849ac699cea98d729e57b3e84378e8b')  # noqa: E501
 
     def test_host_keys(self):
         with open('hostfile.temp', 'w') as f:
@@ -185,11 +187,13 @@ Host *
         # Variables that are set by raises_intr
         intr_errors_remaining = [3]
         call_count = [0]
+
         def raises_intr():
             call_count[0] += 1
             if intr_errors_remaining[0] > 0:
                 intr_errors_remaining[0] -= 1
                 raise IOError(errno.EINTR, 'file', 'interrupted system call')
+
         self.assertTrue(paramiko.util.retry_on_signal(raises_intr) is None)
         self.assertEqual(0, intr_errors_remaining[0])
         self.assertEqual(4, call_count[0])
@@ -295,21 +299,16 @@ ProxyCommand=foo=bar
 Host proxy-without-equal-divisor
 ProxyCommand foo=bar:%h-%p
     """
-        for host, values in {
-            'proxy-with-equal-divisor-and-space'   :{'hostname': 'proxy-with-equal-divisor-and-space',
-                                                     'proxycommand': 'foo=bar'},
-            'proxy-with-equal-divisor-and-no-space':{'hostname': 'proxy-with-equal-divisor-and-no-space',
-                                                     'proxycommand': 'foo=bar'},
-            'proxy-without-equal-divisor'          :{'hostname': 'proxy-without-equal-divisor',
-                                                     'proxycommand':
-                                                     'foo=bar:proxy-without-equal-divisor-22'}
-        }.items():
-
+        for host, proxycmd in [
+            ('proxy-with-equal-divisor-and-space', 'foo=bar'),
+            ('proxy-with-equal-divisor-and-no-space', 'foo=bar'),
+            ('proxy-without-equal-divisor', 'foo=bar:proxy-without-equal-divisor-22'),
+        ]:
             f = StringIO(test_config_file)
             config = paramiko.util.parse_ssh_config(f)
             self.assertEqual(
                 paramiko.util.lookup_ssh_host_config(host, config),
-                values
+                {'hostname': host, 'proxycommand': proxycmd},
             )
 
     def test_host_config_test_identityfile(self):
@@ -327,11 +326,11 @@ Host dsa2*
 IdentityFile id_dsa22
     """
         for host, values in {
-            'foo'   :{'hostname': 'foo',
+            'foo':   {'hostname': 'foo',
                       'identityfile': ['id_dsa0', 'id_dsa1']},
-            'dsa2'  :{'hostname': 'dsa2',
+            'dsa2':  {'hostname': 'dsa2',
                       'identityfile': ['id_dsa0', 'id_dsa1', 'id_dsa2', 'id_dsa22']},
-            'dsa22' :{'hostname': 'dsa22',
+            'dsa22': {'hostname': 'dsa22',
                       'identityfile': ['id_dsa0', 'id_dsa1', 'id_dsa22']}
         }.items():
 
@@ -438,7 +437,7 @@ Host param3 parara
             )
 
     def test_quoted_host_in_config(self):
-        conf = SSHConfig()
+        conf = paramiko.SSHConfig()
         correct_data = {
             'param': ['param'],
             '"param"': ['param'],

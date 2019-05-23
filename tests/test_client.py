@@ -38,7 +38,6 @@ import pytest
 import paramiko
 from paramiko import Ed25519Key
 from paramiko.pkey import PublicBlob
-from paramiko.common import PY2
 from paramiko.ssh_exception import SSHException, AuthenticationException
 
 from .util import _support, slow
@@ -545,7 +544,7 @@ class SSHClientTest(ClientTest):
             self.tc.connect,
             password='pygmalion',
             gss_kex=True,
-             **self.connect_kwargs
+            **self.connect_kwargs
         )
 
     def _client_host_key_bad(self, host_key):

@@ -161,8 +161,8 @@ class GSSAPITest(KerberosTestCase):
             # Initialize a GSS-API context.
             target_name = "host/" + socket.getfqdn(self.targ_name)
             gss_ctxt = sspi.ClientAuth("Kerberos",
-                                        scflags=gss_flags,
-                                        targetspn=target_name)
+                                       scflags=gss_flags,
+                                       targetspn=target_name)
             if self.server_mode:
                 error, token = gss_ctxt.authorize(c_token)
                 c_token = token[0].Buffer
