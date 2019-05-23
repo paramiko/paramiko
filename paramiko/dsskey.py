@@ -219,25 +219,30 @@ class DSSKey(PKey):
     # ...internals...
 
     def _from_private_key_file(self, filename, password):
-        data = self._read_private_key_file('DSA', filename, password)
+        data = self._read_private_key_file('DSA', 'ssh-dss', filename, password)
         self._decode_key(data)
 
     def _from_private_key(self, file_obj, password):
-        data = self._read_private_key('DSA', file_obj, password)
+        data = self._read_private_key('DSA', 'ssh-dss', file_obj, password)
         self._decode_key(data)
 
     def _decode_key(self, data):
+        pkformat, data = data
         # private key file contains:
         # DSAPrivateKey = { version = 0, p, q, g, y, x }
-        try:
-            keylist = BER(data).decode()
-        except BERException as e:
-            raise SSHException('Unable to parse key file: ' + str(e))
-        if (
-            type(keylist) is not list or
-            len(keylist) < 6 or
-            keylist[0] != 0
-        ):
+        if pkformat == self.FORMAT_ORIGINAL:
+            try:
+                keylist = BER(data).decode()
+            except BERException as e:
+                raise SSHException("Unable to parse key file: " + str(e))
+
+        elif pkformat == self.FORMAT_OPENSSH:
+            msg = Message(data)
+            keylist = [0] + [msg.get_mpint() for _ in range(5)]
+        else:
+            raise SSHException('private key format.')
+
+        if type(keylist) is not list or len(keylist) < 6 or keylist[0] != 0:
             raise SSHException(
                 'not a valid DSA private key file (bad ber encoding)')
         self.p = keylist[1]

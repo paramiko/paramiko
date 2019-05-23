@@ -266,20 +266,40 @@ class ECDSAKey(PKey):
     # ...internals...
 
     def _from_private_key_file(self, filename, password):
-        data = self._read_private_key_file('EC', filename, password)
+        data = self._read_private_key_file('EC', "ecdsa-sha2-", filename, password)
         self._decode_key(data)
 
     def _from_private_key(self, file_obj, password):
-        data = self._read_private_key('EC', file_obj, password)
+        data = self._read_private_key('EC', "ecdsa-sha2-", file_obj, password)
         self._decode_key(data)
 
     def _decode_key(self, data):
-        try:
-            key = serialization.load_der_private_key(
-                data, password=None, backend=default_backend()
-            )
-        except (ValueError, AssertionError) as e:
-            raise SSHException(str(e))
+        pkformat, data = data
+        if pkformat == self.FORMAT_ORIGINAL:
+            try:
+                key = serialization.load_der_private_key(
+                    data, password=None, backend=default_backend()
+                )
+            except (ValueError, AssertionError) as e:
+                raise SSHException(str(e))
+
+        elif pkformat == self.FORMAT_OPENSSH:
+            msg = Message(data)
+            curve_name = msg.get_text()
+            verkey = msg.get_binary()  # noqa: F841
+            sigkey = msg.get_mpint()
+            curve = self._ECDSA_CURVES.get_by_key_format_identifier("ecdsa-sha2-" + curve_name)
+            if not curve:
+                raise SSHException("Invalid key curve identifier")
+            try:
+                key = ec.derive_private_key(sigkey, curve.curve_class(), default_backend())
+            except (AttributeError, TypeError) as e:
+                raise SSHException(str(e))
+        else:
+            raise SSHException('unknown private key format.')
+
+        if not isinstance(key, ec.EllipticCurvePrivateKey):
+            raise SSHException("Invalid key type")
 
         self.signing_key = key
         self.verifying_key = key.public_key()

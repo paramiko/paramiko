@@ -24,6 +24,9 @@ import base64
 from binascii import unhexlify
 import os
 from hashlib import md5
+import re
+
+import bcrypt
 
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
@@ -31,9 +34,22 @@ from cryptography.hazmat.primitives.ciphers import algorithms, modes, Cipher
 
 from paramiko import util
 from paramiko.common import o600
-from paramiko.py3compat import u, encodebytes, decodebytes, b, string_types
+from paramiko.py3compat import u, encodebytes, decodebytes, b, string_types, byte_ord
 from paramiko.ssh_exception import SSHException, PasswordRequiredException
 from paramiko.message import Message
+
+
+def unpad(data):
+    """for removing padding from openssh new-format private key files"""
+    padding_length = byte_ord(data[-1])
+    if 0x20 <= padding_length < 0x7f:
+        return data  # no padding, last byte part of comment (printable ascii)
+    if padding_length > 15:
+        raise SSHException("Invalid key padding")
+    for i in range(padding_length):
+        if byte_ord(data[i - padding_length]) != i + 1:
+            raise SSHException("Invalid key padding")
+    return data[:-padding_length]
 
 
 class PKey(object):
@@ -62,6 +78,10 @@ class PKey(object):
             'mode': modes.CBC
         },
     }
+    FORMAT_ORIGINAL = 1  # PKCS#1 for RSA or SEC1 for EC
+    FORMAT_OPENSSH = 2  # newer "openssh-key-v1" format
+    BEGIN_TAG = re.compile(r'^-{5}BEGIN (RSA|DSA|EC|OPENSSH) PRIVATE KEY-{5}\s*$')
+    END_TAG = re.compile(r'^-{5}END (RSA|DSA|EC|OPENSSH) PRIVATE KEY-{5}\s*$')
 
     def __init__(self, msg=None, data=None):
         """
@@ -254,7 +274,7 @@ class PKey(object):
         """
         raise Exception('Not implemented in PKey')
 
-    def _read_private_key_file(self, tag, filename, password=None):
+    def _read_private_key_file(self, tag, typepfx, filename, password=None):
         """
         Read an SSH2-format private key file, looking for a string of the type
         ``"BEGIN xxx PRIVATE KEY"`` for some ``xxx``, base64-decode the text we
@@ -262,12 +282,12 @@ class PKey(object):
         ``password`` is not ``None``, the given password will be used to
         decrypt the key (otherwise `.PasswordRequiredException` is thrown).
 
-        :param str tag: ``"RSA"`` or ``"DSA"``, the tag used to mark the
-            data block.
+        :param str tag: ``"RSA"`` or ``"DSA"``, the tag used to mark the data block
+            (in FORMAT_ORIGINAL files)
+        :param str typepfx: key type name prefix, e.g. ``"ssh-rsa"`` or ``"ecdsa-sha2-"``
+            (in FORMAT_OPENSSH files)
         :param str filename: name of the file to read.
-        :param str password:
-            an optional password to use to decrypt the key file, if it's
-            encrypted.
+        :param str password: optional, for decrypting the key file, if it's encrypted
         :return: data blob (`str`) that makes up the private key.
 
         :raises: ``IOError`` -- if there was an error reading the file.
@@ -276,17 +296,44 @@ class PKey(object):
         :raises: `.SSHException` -- if the key file is invalid.
         """
         with open(filename, 'r') as f:
-            data = self._read_private_key(tag, f, password)
+            data = self._read_private_key(tag, typepfx, f, password)
         return data
 
-    def _read_private_key(self, tag, f, password=None):
+    def _read_private_key(self, tag, typepfx, f, password=None):
         lines = f.readlines()
+
+        # find the BEGIN tag
         start = 0
-        beginning_of_key = '-----BEGIN ' + tag + ' PRIVATE KEY-----'
-        while start < len(lines) and lines[start].strip() != beginning_of_key:
+        m = self.BEGIN_TAG.match(lines[start])
+        line_range = len(lines) - 1
+        while start < line_range and not m:
             start += 1
-        if start >= len(lines):
+            m = self.BEGIN_TAG.match(lines[start])
+        start += 1
+        keytype = m.group(1) if m else None
+        if start >= len(lines) or keytype is None:
             raise SSHException('not a valid ' + tag + ' private key file')
+
+        # find the END tag
+        end = start
+        m = self.END_TAG.match(lines[end])
+        while end < line_range and not m:
+            end += 1
+            m = self.END_TAG.match(lines[end])
+
+        if keytype == 'OPENSSH':
+            data = self._read_private_key_new_format(typepfx, lines[start:end], password)
+            pkformat = self.FORMAT_OPENSSH
+        elif keytype == tag:
+            data = self._read_private_key_old_format(lines, end, password)
+            pkformat = self.FORMAT_ORIGINAL
+        else:
+            raise SSHException('encountered {} key, expected {} key'.format(keytype, tag))
+
+        return pkformat, data
+
+    def _read_private_key_old_format(self, lines, end, password):
+        start = 0
         # parse any headers first
         headers = {}
         start += 1
@@ -296,11 +343,6 @@ class PKey(object):
                 break
             headers[l[0].lower()] = l[1].strip()
             start += 1
-        # find end
-        end = start
-        ending_of_key = '-----END ' + tag + ' PRIVATE KEY-----'
-        while end < len(lines) and lines[end].strip() != ending_of_key:
-            end += 1
         # if we trudged to the end of the file, just try to cope.
         try:
             data = decodebytes(b(''.join(lines[start:end])))
@@ -335,6 +377,83 @@ class PKey(object):
             cipher(key), mode(salt), backend=default_backend()
         ).decryptor()
         return decryptor.update(data) + decryptor.finalize()
+
+    def _read_private_key_new_format(self, typepfx, lines, password):
+        """
+        Read the new OpenSSH SSH2 private key format available
+        since OpenSSH version 6.5
+        Reference:
+        https://github.com/openssh/openssh-portable/blob/master/PROTOCOL.key
+        https://coolaj86.com/articles/the-openssh-private-key-format/
+        """
+        try:
+            data = decodebytes(b(''.join(lines)))
+        except base64.binascii.Error as e:
+            raise SSHException('base64 decoding error: ' + str(e))
+
+        message = Message(data)
+        OPENSSH_AUTH_MAGIC = b"openssh-key-v1\x00"
+        if message.get_bytes(len(OPENSSH_AUTH_MAGIC)) != OPENSSH_AUTH_MAGIC:
+            raise SSHException("unexpected OpenSSH key header encountered")
+
+        cipher = message.get_text()
+        kdfname = message.get_text()
+        kdfoptions = message.get_binary()
+        num_keys = message.get_int()
+
+        if num_keys > 1:
+            raise SSHException("unsupported: private keyfile has multiple keys")
+
+        public_data = message.get_binary()
+        privkey_blob = message.get_binary()
+
+        keytype = Message(public_data).get_text()
+        if not keytype.startswith(typepfx):
+            raise SSHException("Invalid key type name (public part)")
+
+        if kdfname == "none":
+            if kdfoptions or cipher != "none":
+                raise SSHException("Invalid key options for kdf 'none'")
+            private_data = privkey_blob
+
+        elif kdfname == "bcrypt":
+            if not password:
+                raise PasswordRequiredException("Private key file is encrypted")
+            if cipher == 'aes256-cbc':
+                mode = modes.CBC
+            elif cipher == 'aes256-ctr':
+                mode = modes.CTR
+            else:
+                raise SSHException("unknown cipher '%s' used in private key file" % cipher)
+
+            kdf = Message(kdfoptions)
+            salt = kdf.get_binary()
+            rounds = kdf.get_int()
+
+            # run bcrypt kdf to derive key and iv/nonce (desired_key_bytes = 32 + 16 bytes)
+            key_iv = bcrypt.kdf(b(password), salt, 48, rounds, ignore_few_rounds=True)
+            key = key_iv[:32]
+            iv = key_iv[32:]
+            # decrypt private key blob
+            decryptor = Cipher(algorithms.AES(key), mode(iv), default_backend()).decryptor()
+            private_data = decryptor.update(privkey_blob) + decryptor.finalize()
+
+        else:
+            raise SSHException("unknown cipher or kdf used in private key file")
+
+        # Unpack private key and verify checkints
+        priv_msg = Message(private_data)
+        checkint1 = priv_msg.get_int()
+        checkint2 = priv_msg.get_int()
+        if checkint1 != checkint2:
+            raise SSHException('OpenSSH private key file checkints do not match')
+
+        keytype = priv_msg.get_text()
+        if not keytype.startswith(typepfx):
+            raise SSHException("Invalid key type name (private part)")
+
+        keydata = priv_msg.get_remainder()
+        return unpad(keydata)
 
     def _write_private_key_file(self, filename, key, format, password=None):
         """
