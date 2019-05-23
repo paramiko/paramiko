@@ -25,11 +25,10 @@ Unit Tests for the GSS-API / SSPI SSHv2 Authentication (gssapi-with-mic)
 
 import socket
 import threading
-import unittest
 
 import paramiko
 
-from .util import _support, needs_gssapi
+from .util import _support, KerberosTestCase, update_env
 from .test_client import FINGERPRINTS
 
 
@@ -64,23 +63,23 @@ class NullServer (paramiko.ServerInterface):
         return paramiko.OPEN_SUCCEEDED
 
     def check_channel_exec_request(self, channel, command):
-        if command != 'yes':
+        if command != b"yes":
             return False
         return True
 
 
-@needs_gssapi
-class GSSAuthTest(unittest.TestCase):
+class GSSAuthTest(KerberosTestCase):
     def setUp(self):
         # TODO: username and targ_name should come from os.environ or whatever
         # the approved pytest method is for runtime-configuring test data.
-        self.username = "krb5_principal"
-        self.hostname = socket.getfqdn("targ_name")
+        self.username = self.realm.user_princ
+        self.hostname = socket.getfqdn(self.realm.hostname)
         self.sockl = socket.socket()
-        self.sockl.bind(("targ_name", 0))
+        self.sockl.bind((self.realm.hostname, 0))
         self.sockl.listen(1)
         self.addr, self.port = self.sockl.getsockname()
         self.event = threading.Event()
+        update_env(self, self.realm.env)
         thread = threading.Thread(target=self._run)
         thread.start()
 
@@ -114,10 +113,10 @@ class GSSAuthTest(unittest.TestCase):
                         gss_auth=True, **kwargs)
 
         self.event.wait(1.0)
-        self.assert_(self.event.is_set())
-        self.assert_(self.ts.is_active())
+        self.assertTrue(self.event.is_set())
+        self.assertTrue(self.ts.is_active())
         self.assertEqual(self.username, self.ts.get_username())
-        self.assertEqual(True, self.ts.is_authenticated())
+        self.assertTrue(self.ts.is_authenticated())
 
         stdin, stdout, stderr = self.tc.exec_command('yes')
         schan = self.ts.accept(1.0)
@@ -145,7 +144,8 @@ class GSSAuthTest(unittest.TestCase):
 
     def test_2_auth_trickledown(self):
         """
-        Failed gssapi-with-mic auth doesn't prevent subsequent key auth from succeeding
+        Failed gssapi-with-mic auth doesn't prevent subsequent key auth from
+        succeeding
         """
         self.hostname = "this_host_does_not_exists_and_causes_a_GSSAPI-exception"
         self._test_connection(key_filename=[_support('test_rsa.key')],
