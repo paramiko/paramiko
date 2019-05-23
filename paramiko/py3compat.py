@@ -2,11 +2,9 @@ import sys
 import base64
 
 __all__ = [
-    "MAXSIZE",
     "PY2",
     "StringIO",
     "b",
-    "b2s",
     "builtins",
     "byte_chr",
     "byte_mask",
@@ -15,9 +13,7 @@ __all__ = [
     "encodebytes",
     "input",
     "integer_types",
-    "is_callable",
     "long",
-    "next",
     "string_types",
     "text_type",
     "u",
@@ -35,7 +31,6 @@ if PY2:
     encodebytes = base64.encodestring
 
     import __builtin__ as builtins
-
 
     byte_ord = ord  # NOQA
     byte_chr = chr  # NOQA
@@ -65,42 +60,11 @@ if PY2:
             raise TypeError("Expected unicode or bytes, got {!r}".format(s))
 
 
-    def b2s(s):
-        return s
-
-
     import cStringIO
     StringIO = cStringIO.StringIO
 
 
-    def is_callable(c):  # NOQA
-        return callable(c)
-
-
-    def get_next(c):  # NOQA
-        return c.next
-
-
-    def next(c):
-        return c.next()
-
-    # It's possible to have sizeof(long) != sizeof(Py_ssize_t).
-    class X(object):
-        def __len__(self):
-            return 1 << 31
-
-
-    try:
-        len(X())
-    except OverflowError:
-        # 32-bit
-        MAXSIZE = int((1 << 31) - 1)        # NOQA
-    else:
-        # 64-bit
-        MAXSIZE = int((1 << 63) - 1)        # NOQA
-    del X
-else:
-    import collections
+else:  # python 3+
     import struct
     import builtins
     string_types = str
@@ -145,18 +109,5 @@ else:
         else:
             raise TypeError("Expected unicode or bytes, got {!r}".format(s))
 
-    def b2s(s):
-        return s.decode() if isinstance(s, bytes) else s
-
     import io
     StringIO = io.StringIO
-
-    def is_callable(c):
-        return isinstance(c, collections.Callable)
-
-    def get_next(c):
-        return c.__next__
-
-    next = next
-
-    MAXSIZE = sys.maxsize       # NOQA
