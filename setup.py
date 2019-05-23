@@ -97,5 +97,6 @@ setup(
     ],
     extras_require={
         'Ed25519': ["PyNaCl"],
+        'gssapi': ["gssapi", "pyasn1"],
     },
 )
