@@ -444,7 +444,7 @@ class TestSFTP(object):
                 f.write('?\n')
 
             with sftp.open(sftp.FOLDER + '/happy.txt', 'r') as f:
-                assert f.readline() == u('full line?\n')
+                assert f.readline() == u'full line?\n'
                 assert f.read(7) == b'partial'
         finally:
             try:
