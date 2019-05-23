@@ -45,26 +45,22 @@ if PY2:
         return chr(ord(c) & mask)
 
 
-    def b(s, encoding='utf8'):  # NOQA
+    def b(s):
         """cast unicode or bytes to bytes"""
-        if isinstance(s, str):
+        if isinstance(s, (str, buffer)):  # noqa: F821
             return s
         elif isinstance(s, unicode):  # NOQA
-            return s.encode(encoding)
-        elif isinstance(s, buffer):  # NOQA
-            return s
+            return s.encode('utf-8')
         else:
             raise TypeError("Expected unicode or bytes, got {!r}".format(s))
 
 
-    def u(s, encoding='utf8'):  # NOQA
+    def u(s):
         """cast bytes or unicode to unicode"""
-        if isinstance(s, str):
-            return s.decode(encoding)
-        elif isinstance(s, unicode):  # NOQA
+        if isinstance(s, unicode):  # NOQA
             return s
-        elif isinstance(s, buffer):  # NOQA
-            return s.decode(encoding)
+        elif isinstance(s, (str, buffer)):  # noqa: F821
+            return s.decode('utf-8')
         else:
             raise TypeError("Expected unicode or bytes, got {!r}".format(s))
 
@@ -131,19 +127,19 @@ else:
         assert isinstance(c, int)
         return struct.pack('B', c & mask)
 
-    def b(s, encoding='utf8'):
+    def b(s):
         """cast unicode or bytes to bytes"""
         if isinstance(s, bytes):
             return s
         elif isinstance(s, str):
-            return s.encode(encoding)
+            return s.encode('utf-8')
         else:
             raise TypeError("Expected unicode or bytes, got {!r}".format(s))
 
-    def u(s, encoding='utf8'):
+    def u(s):
         """cast bytes or unicode to unicode"""
         if isinstance(s, bytes):
-            return s.decode(encoding)
+            return s.decode('utf-8')
         elif isinstance(s, str):
             return s
         else:
