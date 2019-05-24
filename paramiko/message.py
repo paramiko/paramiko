@@ -24,8 +24,8 @@ from io import BytesIO
 import struct
 
 from paramiko import util
-from paramiko.common import zero_byte, max_byte, one_byte, asbytes
-from paramiko.py3compat import long, u, integer_types
+from paramiko.common import zero_byte, one_byte, asbytes
+from paramiko.py3compat import u, integer_types
 
 
 class Message (object):
@@ -38,8 +38,6 @@ class Message (object):
     exposed for people implementing custom extensions, or features that
     paramiko doesn't support yet.
     """
-
-    big_int = long(0xff000000)
 
     def __init__(self, content=None):
         """
@@ -129,18 +127,6 @@ class Message (object):
         """
         b = self.get_bytes(1)
         return b != zero_byte
-
-    def get_adaptive_int(self):
-        """
-        Fetch an int from the stream.
-
-        :return: a 32-bit unsigned `int`.
-        """
-        byte = self.get_bytes(1)
-        if byte == max_byte:
-            return util.inflate_long(self.get_binary())
-        byte += self.get_bytes(3)
-        return struct.unpack('>I', byte)[0]
 
     def get_int(self):
         """
@@ -233,19 +219,6 @@ class Message (object):
         self.packet.write(struct.pack('>I', n))
         return self
 
-    def add_adaptive_int(self, n):
-        """
-        Add an integer to the stream.
-
-        :param int n: integer to add
-        """
-        if n >= Message.big_int:
-            self.packet.write(max_byte)
-            self.add_string(util.deflate_long(n))
-        else:
-            self.packet.write(struct.pack('>I', n))
-        return self
-
     def add_int64(self, n):
         """
         Add a 64-bit int to the stream.
@@ -291,7 +264,8 @@ class Message (object):
         if type(i) is bool:
             return self.add_boolean(i)
         elif isinstance(i, integer_types):
-            return self.add_adaptive_int(i)
+            # if not 0 <= i < 2**32, will raise struct.error
+            return self.add_int(i)
         elif type(i) is list:
             return self.add_list(i)
         else:
@@ -300,10 +274,7 @@ class Message (object):
     def add(self, *seq):
         """
         Add a sequence of items to the stream.  The values are encoded based
-        on their type: str, int, bool, list, or long.
-
-        .. warning::
-            Longs are encoded non-deterministically.  Don't use this method.
+        on their type: str, int, bool, list. Does not support int larger than ``2**32 - 1``
 
         :param seq: the sequence of items
         """
