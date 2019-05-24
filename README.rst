@@ -18,6 +18,7 @@ For changes in releases of this fork, see `releases <https://github.com/ploxiln/
 :Paramiko-NG: Python SSH module
 :Copyright:   Copyright (c) 2003-2009  Robey Pointer <robeypointer@gmail.com>
 :Copyright:   Copyright (c) 2013-2018  Jeff Forcier <jeff@bitprophet.org>
+:Copyright:   Copyright (c) 2019       Pierce Lopez <pierce.lopez@gmail.com>
 :License:     `LGPL <https://www.gnu.org/copyleft/lesser.html>`_
 :API docs:    http://docs.paramiko.org
 :Development: https://github.com/ploxiln/paramiko-ng/
@@ -150,9 +151,8 @@ which works a bit differently. For either of these, currently, you need to insta
 with the pip-package-name *paramiko*, using the ``PARAMIKO_REPLACE`` environment varariable
 as described in `Installation`_.
 
-There are also unit tests here::
+There are also unit tests which will verify that most of the components are working correctly::
 
     $ pip install -r dev-requirements.txt
     $ pytest
 
-Which will verify that most of the core components are working correctly.
