@@ -663,7 +663,7 @@ class SSHClient (ClosingContextManager):
                 except SSHException as e:
                     saved_exception = e
 
-        if not two_factor:
+        if not two_factor and look_for_keys:
             keyfiles = []
 
             for keytype, name in [
@@ -682,9 +682,6 @@ class SSHClient (ClosingContextManager):
                         keyfiles.append((keytype, full_path))
                         if os.path.isfile(full_path + '-cert.pub'):
                             keyfiles.append((keytype, full_path + '-cert.pub'))
-
-            if not look_for_keys:
-                keyfiles = []
 
             for pkey_class, filename in keyfiles:
                 try:
