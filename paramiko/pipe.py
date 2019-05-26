@@ -119,24 +119,23 @@ class WindowsPipe (object):
 
 
 class OrPipe (object):
-    def __init__(self, pipe):
+    def __init__(self, pipe, lock):
         self._set = False
         self._partner = None
         self._pipe = pipe
+        self._lock = lock
 
     def set(self):
-        self._pipe._lock.acquire()
-        self._set = True
-        if not self._partner._set:
-            self._pipe.set()
-        self._pipe._lock.release()
+        with self._lock:
+            self._set = True
+            if not self._partner._set:
+                self._pipe.set()
 
     def clear(self):
-        self._pipe._lock.acquire()
-        self._set = False
-        if not self._partner._set:
-            self._pipe.clear()
-        self._pipe._lock.release()
+        with self._lock:
+            self._set = False
+            if not self._partner._set:
+                self._pipe.clear()
 
 
 def make_or_pipe(pipe):
@@ -145,9 +144,9 @@ def make_or_pipe(pipe):
     affect the real pipe. if either returned pipe is set, the wrapped pipe
     is set. when both are cleared, the wrapped pipe is cleared.
     """
-    pipe._lock = threading.Lock()
-    p1 = OrPipe(pipe)
-    p2 = OrPipe(pipe)
+    lock = threading.Lock()
+    p1 = OrPipe(pipe, lock)
+    p2 = OrPipe(pipe, lock)
     p1._partner = p2
     p2._partner = p1
     return p1, p2
