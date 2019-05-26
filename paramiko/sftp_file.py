@@ -20,8 +20,6 @@
 SFTP file object
 """
 
-from __future__ import with_statement
-
 from binascii import hexlify
 from collections import deque
 import socket

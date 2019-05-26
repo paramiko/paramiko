@@ -20,8 +20,6 @@
 Some unit tests for SSHClient.
 """
 
-from __future__ import with_statement, print_function
-
 import gc
 import os
 import platform
