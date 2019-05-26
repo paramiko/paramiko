@@ -686,7 +686,15 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
                 reader=fl, writer=fr, file_size=file_size, callback=callback
             )
         if confirm:
-            s = self.stat(remotepath)
+            try:
+                s = self.stat(remotepath)
+            except IOError as e:
+                if e.errno == SFTP_NO_SUCH_FILE:
+                    raise IOError(SFTP_NO_SUCH_FILE,
+                        "STAT failed after successful PUT,"
+                        " possibly because the server deleted or moved the file."
+                        " STAT is skipped if confirm=false. Original error: " + str(e))
+                raise
             if s.st_size != size:
                 raise IOError(
                     'size mismatch in put!  {} != {}'.format(s.st_size, size))
