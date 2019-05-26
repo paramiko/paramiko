@@ -38,7 +38,8 @@ from paramiko.hostkeys import HostKeys
 from paramiko.py3compat import string_types
 from paramiko.rsakey import RSAKey
 from paramiko.ssh_exception import (
-    SSHException, BadHostKeyException, NoValidConnectionsError
+    SSHException, BadAuthenticationType, BadHostKeyException,
+    NoValidConnectionsError
 )
 from paramiko.transport import Transport
 from paramiko.util import retry_on_signal, ClosingContextManager
@@ -614,7 +615,20 @@ class SSHClient (ClosingContextManager):
             except Exception as e:
                 saved_exception = e
 
-        if pkey is not None:
+        # detect what authentication methods the server supports
+        # mirrors what openssh client does
+        try:
+            self._transport.auth_none(username)
+        except BadAuthenticationType as e:
+            allowed_types = set(e.allowed_types)
+        else:
+            return  # successful login with no auth
+
+        # some servers do not return allowed auth methods
+        if not allowed_types:
+            allowed_types = {'password', 'publickey'}
+
+        if pkey is not None and 'publickey' in allowed_types:
             try:
                 self._log(
                     DEBUG,
@@ -628,7 +642,7 @@ class SSHClient (ClosingContextManager):
             except SSHException as e:
                 saved_exception = e
 
-        if not two_factor:
+        if not two_factor and 'publickey' in allowed_types:
             for key_filename in key_filenames:
                 for pkey_class in (RSAKey, DSSKey, ECDSAKey, Ed25519Key):
                     try:
@@ -644,7 +658,7 @@ class SSHClient (ClosingContextManager):
                     except SSHException as e:
                         saved_exception = e
 
-        if not two_factor and allow_agent:
+        if allow_agent and not two_factor and 'publickey' in allowed_types:
             if self._agent is None:
                 self._agent = Agent()
 
@@ -652,8 +666,6 @@ class SSHClient (ClosingContextManager):
                 try:
                     id_ = hexlify(key.get_fingerprint())
                     self._log(DEBUG, 'Trying SSH agent key {}'.format(id_))
-                    # for 2-factor auth a successfully auth'd key password
-                    # will return an allowed 2fac auth method
                     allowed_types = set(
                         self._transport.auth_publickey(username, key))
                     two_factor = (allowed_types & two_factor_types)
@@ -663,9 +675,8 @@ class SSHClient (ClosingContextManager):
                 except SSHException as e:
                     saved_exception = e
 
-        if not two_factor and look_for_keys:
+        if look_for_keys and not two_factor and 'publickey' in allowed_types:
             keyfiles = []
-
             for keytype, name in [
                 (RSAKey, "rsa"),
                 (DSSKey, "dsa"),
@@ -688,8 +699,6 @@ class SSHClient (ClosingContextManager):
                     key = self._key_from_filepath(
                         filename, pkey_class, passphrase,
                     )
-                    # for 2-factor auth a successfully auth'd key will result
-                    # in ['password']
                     allowed_types = set(
                         self._transport.auth_publickey(username, key))
                     two_factor = (allowed_types & two_factor_types)
@@ -699,14 +708,23 @@ class SSHClient (ClosingContextManager):
                 except (SSHException, IOError) as e:
                     saved_exception = e
 
-        if password is not None:
+        # possible two_factor second factors
+        # (allowed_types could have been updated, only if two_factor)
+
+        if password is not None and 'password' in allowed_types:
             try:
-                self._transport.auth_password(username, password)
-                return
+                self._log(DEBUG, 'Trying password')
+                allowed_types = set(
+                    self._transport.auth_password(username, password))
+                two_factor = allowed_types & two_factor_types
+                if not two_factor:
+                    return
             except SSHException as e:
                 saved_exception = e
-        elif two_factor:
+
+        if 'keyboard-interactive' in allowed_types:
             try:
+                self._log(DEBUG, 'Trying interactive auth')
                 self._transport.auth_interactive_dumb(username)
                 return
             except SSHException as e:

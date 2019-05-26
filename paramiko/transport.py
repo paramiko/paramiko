@@ -1138,9 +1138,10 @@ class Transport(threading.Thread, ClosingContextManager):
         transfer.
 
         .. note::
-            If you fail to supply a password or private key, this method may
-            succeed, but a subsequent `open_channel` or `open_session` call may
-            fail because you haven't authenticated yet.
+            If you do not supply a password or private key, this method may
+            succeed, but a subsequent `open_channel` or `open_session` call
+            will likely fail because you haven't authenticated yet (but you
+            can call auth methods manually after this).
 
         :param .PKey hostkey:
             the host key expected from the server, or ``None`` if you don't
@@ -1204,7 +1205,7 @@ class Transport(threading.Thread, ClosingContextManager):
 
         if (pkey is not None) or (password is not None) or gss_auth or gss_kex:
             if gss_auth:
-                self._log(DEBUG, 'Attempting GSS-API auth... (gssapi-with-mic)') # noqa
+                self._log(DEBUG, 'Attempting GSS-API auth... (gssapi-with-mic)')
                 self.auth_gssapi_with_mic(
                     username, self.gss_host, gss_deleg_creds,
                 )
@@ -1218,6 +1219,7 @@ class Transport(threading.Thread, ClosingContextManager):
                 self._log(DEBUG, 'Attempting password auth...')
                 self.auth_password(username, password)
 
+        # if no auth method supplied, auth not done, caller should do auth now
         return
 
     def get_exception(self):
