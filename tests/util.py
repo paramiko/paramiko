@@ -75,6 +75,7 @@ else:
     except Exception:
         KerberosTestCase = SkipKerberosTestCase
 
+
 def update_env(testcase, mapping, env=os.environ):
     """Modify os.environ during a test case and restore during cleanup."""
     saved_env = env.copy()
@@ -88,6 +89,7 @@ def update_env(testcase, mapping, env=os.environ):
     testcase.addCleanup(replace, env, saved_env)
     env.update(mapping)
     return testcase
+
 
 def k5shell(args=None):
     """Create a shell with an kerberos environment
