@@ -807,7 +807,6 @@ class Channel (ClosingContextManager):
         m.add_int(1)
         return self._send(s, m)
 
-
     def sendall(self, s):
         """
         Send data to the channel, without allowing partial results.  Unlike

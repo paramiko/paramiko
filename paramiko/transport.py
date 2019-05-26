@@ -203,7 +203,6 @@ class Transport(threading.Thread, ClosingContextManager):
         },
     }
 
-
     _mac_info = {
         'hmac-sha1': {'class': sha1, 'size': 20},
         'hmac-sha2-256': {'class': sha256, 'size': 32},
@@ -2009,7 +2008,6 @@ class Transport(threading.Thread, ClosingContextManager):
             if self.sys.modules is not None:
                 raise
 
-
     def _log_agreement(self, which, local, remote):
         # Log useful, non-duplicative line re: an agreed-upon algorithm.
         # Old code implied algorithms could be asymmetrical (different for
@@ -2734,7 +2732,6 @@ class SecurityOptions (object):
     @key_types.setter
     def key_types(self, x):
         self._set('_preferred_keys', '_key_info', x)
-
 
     @property
     def kex(self):

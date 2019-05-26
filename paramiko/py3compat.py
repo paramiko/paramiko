@@ -35,10 +35,8 @@ if PY2:
     byte_ord = ord  # NOQA
     byte_chr = chr  # NOQA
 
-
     def byte_mask(c, mask):
         return chr(ord(c) & mask)
-
 
     def b(s):
         """cast unicode or bytes to bytes"""
@@ -49,7 +47,6 @@ if PY2:
         else:
             raise TypeError("Expected unicode or bytes, got {!r}".format(s))
 
-
     def u(s):
         """cast bytes or unicode to unicode"""
         if isinstance(s, unicode):  # NOQA
@@ -58,7 +55,6 @@ if PY2:
             return s.decode('utf-8')
         else:
             raise TypeError("Expected unicode or bytes, got {!r}".format(s))
-
 
     import cStringIO
     StringIO = cStringIO.StringIO
