@@ -26,6 +26,7 @@ import socket
 import sys
 import threading
 import time
+import atexit
 import weakref
 from hashlib import sha1, sha256, sha512
 
@@ -85,7 +86,6 @@ def _join_lingering_threads():
         thr.stop_thread()
 
 
-import atexit
 atexit.register(_join_lingering_threads)
 
 

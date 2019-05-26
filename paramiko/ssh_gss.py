@@ -33,6 +33,9 @@ import struct
 import os
 import sys
 
+from paramiko.common import MSG_USERAUTH_REQUEST
+from paramiko.ssh_exception import SSHException
+
 GSS_AUTH_AVAILABLE = True
 GSS_EXCEPTIONS = ()
 _API = None
@@ -63,9 +66,6 @@ try:
     from pyasn1.codec.der import encoder, decoder
 except ImportError:
     GSS_AUTH_AVAILABLE = False
-
-from paramiko.common import MSG_USERAUTH_REQUEST
-from paramiko.ssh_exception import SSHException
 
 
 def GSSAuth(auth_method, gss_deleg_creds=True):

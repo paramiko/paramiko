@@ -192,4 +192,4 @@ class SFTPHandle (ClosingContextManager):
         self.__name = name
 
 
-from paramiko.sftp_server import SFTPServer
+from paramiko.sftp_server import SFTPServer  # noqa: E402
