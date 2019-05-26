@@ -744,7 +744,6 @@ class TestSFTP(object):
         finally:
             sftp.remove('%s/write_buffer' % sftp.FOLDER)
 
-    @needs_builtin('memoryview')
     def test_write_memoryview(self, sftp):
         """Test write() using a memoryview instance."""
         data = 3 * b'A potentially large block of data to chunk up.\n'

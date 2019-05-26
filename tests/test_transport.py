@@ -924,7 +924,6 @@ class TransportTest(unittest.TestCase):
             chan.sendall(buffer(data))  # noqa: F821
             self.assertEqual(sfile.read(len(data)), data)
 
-    @needs_builtin('memoryview')
     def test_channel_send_memoryview(self):
         """
         verify sending memoryview instances to a channel

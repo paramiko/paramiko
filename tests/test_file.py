@@ -197,7 +197,6 @@ class BufferedFileTest (unittest.TestCase):
             f.write(text)
             self.assertEqual(f.read(), text.encode("utf-8"))
 
-    @needs_builtin('memoryview')
     def test_write_bytearray(self):
         with LoopbackFile('rb+') as f:
             f.write(bytearray(12))
@@ -212,7 +211,6 @@ class BufferedFileTest (unittest.TestCase):
                 f.write(buffer(data, offset, 8))  # noqa: F821
             self.assertEqual(f.read(), data)
 
-    @needs_builtin('memoryview')
     def test_write_memoryview(self):
         data = 3 * b"pretend giant block of data\n"
         offsets = range(0, len(data), 8)
