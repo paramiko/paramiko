@@ -316,28 +316,20 @@ class Transport(threading.Thread, ClosingContextManager):
                 sock = (hl[0], 22)
             else:
                 sock = (hl[0], int(hl[1]))
+
         if type(sock) is tuple:
             # connect to the given (host, port)
             hostname, port = sock
             self.hostname = hostname
-            reason = 'No suitable address family'
-            addrinfos = socket.getaddrinfo(
-                hostname, port, socket.AF_UNSPEC, socket.SOCK_STREAM
-            )
-            for family, socktype, proto, canonname, sockaddr in addrinfos:
-                if socktype == socket.SOCK_STREAM:
-                    af = family
-                    # addr = sockaddr
-                    sock = socket.socket(af, socket.SOCK_STREAM)
-                    try:
-                        retry_on_signal(lambda: sock.connect((hostname, port)))
-                    except socket.error as e:
-                        reason = str(e) or repr(e)
-                    else:
-                        break
-            else:
+            try:
+                sock = retry_on_signal(
+                    lambda: socket.create_connection((hostname, port))
+                )
+            except socket.error as e:
+                reason = str(e) or repr(e)
                 raise SSHException(
                     'Unable to connect to {}: {}'.format(hostname, reason))
+
         # okay, normal socket-ish flow here...
         threading.Thread.__init__(self)
         self.setDaemon(True)
