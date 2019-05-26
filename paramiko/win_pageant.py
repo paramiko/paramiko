@@ -89,8 +89,7 @@ def _query_pageant(msg):
     map_name = 'PageantRequest%08x' % thread.get_ident()
 
     pymap = _winapi.MemoryMap(map_name, _AGENT_MAX_MSGLEN,
-        _winapi.get_security_attributes_for_user(),
-        )
+                              _winapi.get_security_attributes_for_user())
     with pymap:
         pymap.write(msg)
         # Create an array buffer containing the mapped filename

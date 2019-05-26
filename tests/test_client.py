@@ -287,7 +287,8 @@ class SSHClientTest(ClientTest):
         """
         # Until #387 is fixed we have to catch a high-up exception since
         # various platforms trigger different errors here >_<
-        self.assertRaises(SSHException,
+        self.assertRaises(
+            SSHException,
             self._test_connection,
             key_filename=[_support('test_rsa.key')],
             allowed_keys=['ecdsa-sha2-nistp256'],

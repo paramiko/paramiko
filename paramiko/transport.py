@@ -2146,7 +2146,8 @@ class Transport(threading.Thread, ClosingContextManager):
         kex_follows = m.get_boolean()
         m.get_int() # unused
 
-        self._log(DEBUG,
+        self._log(
+            DEBUG,
             'kex algos:' + str(kex_algo_list) +
             ' server key:' + str(server_key_algo_list) +
             ' client encrypt:' + str(client_encrypt_algo_list) +
@@ -2617,8 +2618,8 @@ class Transport(threading.Thread, ClosingContextManager):
         m.add_int(self.default_window_size)
         m.add_int(self.default_max_packet_size)
         self._send_message(m)
-        self._log(DEBUG,
-            'Secsh channel {:d} ({}) opened.'.format(my_chanid, kind)
+        self._log(
+            DEBUG, 'Secsh channel {:d} ({}) opened.'.format(my_chanid, kind)
         )
         if kind == 'auth-agent@openssh.com':
             self._forward_agent_handler(chan)
