@@ -28,6 +28,7 @@ import pytest
 
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.asymmetric import ec
+
 try:
     from cryptography.hazmat.primitives.asymmetric import x25519
 except ImportError:

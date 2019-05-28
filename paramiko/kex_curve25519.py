@@ -93,7 +93,7 @@ class KexCurve25519(object):
         if x25519 is None:
             return False  # cryptography < 2.0
 
-        if not hasattr(Encoding, 'Raw'):
+        if not hasattr(Encoding, "Raw"):
             return False  # cryptography < 2.5
 
         try:
