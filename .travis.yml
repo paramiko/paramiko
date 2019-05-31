@@ -1,3 +1,4 @@
+dist: xenial
 language: python
 sudo: false
 cache:
@@ -8,17 +9,18 @@ python:
   - "3.4"
   - "3.5"
   - "3.6"
-  - "3.7-dev"
+  - "3.7"
+  - "3.8-dev"
   - "pypy-5.6.0"
 matrix:
   allow_failures:
-    - python: "3.7-dev"
+    - python: "3.8-dev"
   # Explicitly test against our oldest supported cryptography.io, in addition
   # to whatever the latest default is.
   include:
     - python: 2.7
       env: "OLDEST_CRYPTO=1.5"
-    - python: 3.6
+    - python: 3.7
       env: "OLDEST_CRYPTO=1.5"
 install:
   # Ensure modern pip/etc to avoid some issues w/ older worker environs
