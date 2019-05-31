@@ -2,6 +2,10 @@
 Changelog
 =========
 
+- :support:`1378 backported` Add support for the modern (as of Python 3.3)
+  import location of ``MutableMapping`` (used in host key management) to avoid
+  the old location becoming deprecated in Python 3.8. Thanks to Josh Karpel for
+  catch & patch.
 - :release:`2.2.4 <2018-09-18>`
 - :release:`2.1.6 <2018-09-18>`
 - :release:`2.0.9 <2018-09-18>`
