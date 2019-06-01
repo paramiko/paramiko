@@ -467,6 +467,8 @@ class _SSH_GSSAPI_NEW(_SSH_GSSAuth):
         :return: A ``String`` if the GSS-API has returned a token or ``None``
                  if no token was returned
         """
+        from pyasn1.codec.der import decoder
+
         self._username = username
         self._gss_host = target
         targ_name = gssapi.Name(
