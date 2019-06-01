@@ -416,7 +416,7 @@ class _SSH_GSSAPI_OLD(_SSH_GSSAuth):
         raise NotImplementedError
 
 
-if __version_info__[0] == 2 and __version_info__[0] <= 4:
+if __version_info__ < (2, 5):
     # provide the old name for strict backward compatibility
     _SSH_GSSAPI = _SSH_GSSAPI_OLD
 
