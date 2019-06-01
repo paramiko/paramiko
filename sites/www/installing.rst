@@ -96,18 +96,20 @@ Optional dependencies for GSS-API / SSPI / Kerberos
 ===================================================
 
 In order to use GSS-API/Kerberos & related functionality, a couple of
-additional dependencies are required (these are not listed in our ``setup.py``
-due to their infrequent utility & non-platform-agnostic requirements):
+additional dependencies are required:
 
 * It hopefully goes without saying but **all platforms** need **a working
   installation of GSS-API itself**, e.g. Heimdal.
-* **Unix** needs `gssapi <https://pypi.org/project/gssapi/>`__ ``1.0.0`` or
-  better.
+* **Unix** needs:
 
-  * An alternative is the `python-gssapi
-    <https://pypi.org/project/python-gssapi/>`_ library (``0.6.1`` or above),
-    though it is no longer maintained upstream, and Paramiko's support for its
-    API may eventually become deprecated.
+  * `gssapi <https://pypi.org/project/gssapi/>`__ ``1.0.0`` or better.
+
+    * An alternative is the `python-gssapi
+      <https://pypi.org/project/python-gssapi/>`_ library (``0.6.1`` or above),
+      though it is no longer maintained upstream, and Paramiko's support for
+      its API may eventually become deprecated.
+
+  * `pyasn1 <https://pypi.org/project/pyasn1/>`_ ``0.7.1`` or later.
 
 * **Windows** needs `pywin32 <https://pypi.python.org/pypi/pywin32>`_ ``2.1.8``
   or better.

@@ -54,7 +54,7 @@ install:
       #   krb5-multidev: required to build gssapi
       sudo apt-get -y install libkrb5-dev krb5-admin-server \
                               krb5-kdc krb5-user krb5-multidev && \
-      pip install k5test gssapi
+      pip install k5test gssapi pyasn1
     fi
   # In case of problems uncomment the following to get the krb environment
   # - |
