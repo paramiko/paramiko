@@ -61,7 +61,7 @@ from paramiko.common import (
     cMSG_USERAUTH_BANNER,
 )
 from paramiko.message import Message
-from paramiko.py3compat import bytestring
+from paramiko.py3compat import b
 from paramiko.ssh_exception import (
     SSHException,
     AuthenticationException,
@@ -280,7 +280,7 @@ class AuthHandler(object):
             m.add_string(self.auth_method)
             if self.auth_method == "password":
                 m.add_boolean(False)
-                password = bytestring(self.password)
+                password = b(self.password)
                 m.add_string(password)
             elif self.auth_method == "publickey":
                 m.add_boolean(True)

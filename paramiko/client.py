@@ -476,6 +476,9 @@ class SSHClient(ClosingContextManager):
             Python
         :param int timeout:
             set command's channel timeout. See `.Channel.settimeout`
+        :param bool get_pty:
+            Request a pseudo-terminal from the server (default ``False``).
+            See `.Channel.get_pty`
         :param dict environment:
             a dict of shell environment variables, to be merged into the
             default environment that the remote command executes within.
@@ -489,6 +492,9 @@ class SSHClient(ClosingContextManager):
             3-tuple
 
         :raises: `.SSHException` -- if the server fails to execute the command
+
+        .. versionchanged:: 1.10
+            Added the ``get_pty`` kwarg.
         """
         chan = self._transport.open_session(timeout=timeout)
         if get_pty:

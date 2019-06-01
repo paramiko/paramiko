@@ -70,11 +70,8 @@ setup(
         "Programming Language :: Python :: 3.4",
         "Programming Language :: Python :: 3.5",
         "Programming Language :: Python :: 3.6",
+        "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
     ],
-    install_requires=[
-        "bcrypt>=3.1.3",
-        "cryptography>=1.5",
-        "pynacl>=1.0.1",
-        "pyasn1>=0.1.7",
-    ],
+    install_requires=["bcrypt>=3.1.3", "cryptography>=2.5", "pynacl>=1.0.1"],
 )

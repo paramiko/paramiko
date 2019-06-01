@@ -2,6 +2,29 @@
 Changelog
 =========
 
+- :support:`1379` (also :issue:`1369`) Raise Cryptography dependency
+  requirement to version 2.5 (from 1.5) and update some deprecated uses of its
+  API.
+
+  This removes a bunch of warnings of the style
+  ``CryptographyDeprecationWarning: encode_point has been deprecated on
+  EllipticCurvePublicNumbers and will be removed in a future version. Please
+  use EllipticCurvePublicKey.public_bytes to obtain both compressed and
+  uncompressed point encoding`` and similar, which users who had eventually
+  upgraded to Cryptography 2.x would encounter.
+
+  .. warning::
+    This change is backwards incompatible **if** you are unable to upgrade your
+    version of Cryptography. Please see `Cryptography's own changelog
+    <https://cryptography.io/en/latest/changelog/>`_ for details on what may
+    change when you upgrade; for the most part the only changes involved
+    dropping older Python versions (such as 2.6, 3.3, or some PyPy editions)
+    which Paramiko itself has already dropped.
+
+- :support:`1378 backported` Add support for the modern (as of Python 3.3)
+  import location of ``MutableMapping`` (used in host key management) to avoid
+  the old location becoming deprecated in Python 3.8. Thanks to Josh Karpel for
+  catch & patch.
 - :release:`2.4.2 <2018-09-18>`
 - :release:`2.3.3 <2018-09-18>`
 - :release:`2.2.4 <2018-09-18>`
@@ -12,7 +35,7 @@ Changelog
   behavior probably didn't cause any outright errors, but it doesn't seem to
   conform to the RFCs and could cause (non-infinite) feedback loops in some
   scenarios (usually those involving Paramiko on both ends).
-- :bug:`1283` Fix exploit (CVE pending) in Paramiko's server mode (**not**
+- :bug:`1283` Fix exploit (CVE-2018-1000805) in Paramiko's server mode (**not**
   client mode) where hostile clients could trick the server into thinking they
   were authenticated without actually submitting valid authentication.
 
@@ -44,6 +67,22 @@ Changelog
 - :support:`1262 backported` Add ``*.pub`` files to the MANIFEST so distributed
   source packages contain some necessary test assets. Credit: Alexander
   Kapshuna.
+- :feature:`1212` Updated `SSHConfig.lookup <paramiko.config.SSHConfig.lookup>`
+  so it returns a new, type-casting-friendly dict subclass
+  (`~paramiko.config.SSHConfigDict`) in lieu of dict literals. This ought to be
+  backwards compatible, and allows an easier way to check boolean or int type
+  ``ssh_config`` values. Thanks to Chris Rose for the patch.
+- :support:`1191` Update our install docs with (somewhat) recently added
+  additional dependencies; we previously only required Cryptography, but the
+  docs never got updated after we incurred ``bcrypt`` and ``pynacl``
+  requirements for Ed25519 key support.
+
+  Additionally, ``pyasn1`` was never actually hard-required; it was necessary
+  during a development branch, and is used by the optional GSSAPI support, but
+  is not required for regular installation. Thus, it has been removed from our
+  ``setup.py`` and its imports in the GSSAPI code made optional.
+
+  Credit to ``@stevenwinfield`` for highlighting the outdated install docs.
 - :release:`2.4.1 <2018-03-12>`
 - :release:`2.3.2 <2018-03-12>`
 - :release:`2.2.3 <2018-03-12>`
@@ -56,6 +95,10 @@ Changelog
   where authentication status was not checked before processing channel-open
   and other requests typically only sent after authenticating. Big thanks to
   Matthijs Kooijman for the report.
+- :bug:`1168` Add newer key classes for Ed25519 and ECDSA to
+  ``paramiko.__all__`` so that code introspecting that attribute, or using
+  ``from paramiko import *`` (such as some IDEs) sees them. Thanks to
+  ``@patriksevallius`` for the patch.
 - :bug:`1039` Ed25519 auth key decryption raised an unexpected exception when
   given a unicode password string (typical in python 3). Report by Theodor van
   Nahl and fix by Pierce Lopez.
@@ -75,7 +118,7 @@ Changelog
 - :support:`1100` Updated the test suite & related docs/metadata/config to be
   compatible with pytest instead of using the old, custom, crufty
   unittest-based ``test.py``.
-  
+
   This includes marking known-slow tests (mostly the SFTP ones) so they can be
   filtered out by ``inv test``'s default behavior; as well as other minor
   tweaks to test collection and/or display (for example, GSSAPI tests are

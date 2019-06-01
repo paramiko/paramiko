@@ -2,29 +2,28 @@ import sys
 import base64
 
 __all__ = [
+    "BytesIO",
+    "MAXSIZE",
     "PY2",
-    "string_types",
-    "integer_types",
-    "text_type",
-    "bytes_types",
-    "bytes",
-    "long",
-    "input",
-    "decodebytes",
-    "encodebytes",
-    "bytestring",
-    "byte_ord",
+    "StringIO",
+    "b",
+    "b2s",
+    "builtins",
     "byte_chr",
     "byte_mask",
-    "b",
-    "u",
-    "b2s",
-    "StringIO",
-    "BytesIO",
+    "byte_ord",
+    "bytes",
+    "bytes_types",
+    "decodebytes",
+    "encodebytes",
+    "input",
+    "integer_types",
     "is_callable",
-    "MAXSIZE",
+    "long",
     "next",
-    "builtins",
+    "string_types",
+    "text_type",
+    "u",
 ]
 
 PY2 = sys.version_info[0] < 3
@@ -41,11 +40,6 @@ if PY2:
     encodebytes = base64.encodestring
 
     import __builtin__ as builtins
-
-    def bytestring(s):  # NOQA
-        if isinstance(s, unicode):  # NOQA
-            return s.encode("utf-8")
-        return s
 
     byte_ord = ord  # NOQA
     byte_chr = chr  # NOQA
@@ -123,9 +117,6 @@ else:
     input = input
     decodebytes = base64.decodebytes
     encodebytes = base64.encodebytes
-
-    def bytestring(s):
-        return s
 
     def byte_ord(c):
         # In case we're handed a string instead of an int.
