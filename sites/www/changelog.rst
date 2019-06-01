@@ -2,6 +2,20 @@
 Changelog
 =========
 
+- :support:`1311` (for :issue:`584`, replacing :issue:`1166`) Add
+  backwards-compatible support for the ``gssapi`` GSSAPI library, as the
+  previous backend (``python-gssapi``) has since become defunct. This change
+  also includes tests for the GSSAPI functionality.
+
+  Big thanks to Anselm Kruis for the patch and to Sebastian Deiß (author of our
+  initial GSSAPI functionality) for review.
+
+  .. note::
+    To be very clear, this patch **does not** remove support for the older
+    ``python-gssapi`` library. We *may* remove that support in a later release,
+    but for now, either library will work. Please upgrade to ``gssapi`` when
+    you can, however, as ``python-gssapi`` is no longer maintained upstream.
+
 - :support:`1379` (also :issue:`1369`) Raise Cryptography dependency
   requirement to version 2.5 (from 1.5) and update some deprecated uses of its
   API.
