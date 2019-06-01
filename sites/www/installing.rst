@@ -101,10 +101,13 @@ due to their infrequent utility & non-platform-agnostic requirements):
 
 * It hopefully goes without saying but **all platforms** need **a working
   installation of GSS-API itself**, e.g. Heimdal.
-* **Unix** needs `python-gssapi <https://pypi.org/project/python-gssapi/>`_
-  ``0.6.1`` or better.
+* **Unix** needs `gssapi <https://pypi.org/project/gssapi/>`__ ``1.0.0`` or
+  better.
 
-  .. note:: This library appears to only function on Python 2.7 and up.
+  * An alternative is the `python-gssapi
+    <https://pypi.org/project/python-gssapi/>`_ library (``0.6.1`` or above),
+    though it is no longer maintained upstream, and Paramiko's support for its
+    API may eventually become deprecated.
 
 * **Windows** needs `pywin32 <https://pypi.python.org/pypi/pywin32>`_ ``2.1.8``
   or better.
