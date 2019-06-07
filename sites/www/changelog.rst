@@ -2,6 +2,29 @@
 Changelog
 =========
 
+- :support:`1379` (also :issue:`1369`) Raise Cryptography dependency
+  requirement to version 2.5 (from 1.5) and update some deprecated uses of its
+  API.
+
+  This removes a bunch of warnings of the style
+  ``CryptographyDeprecationWarning: encode_point has been deprecated on
+  EllipticCurvePublicNumbers and will be removed in a future version. Please
+  use EllipticCurvePublicKey.public_bytes to obtain both compressed and
+  uncompressed point encoding`` and similar, which users who had eventually
+  upgraded to Cryptography 2.x would encounter.
+
+  .. warning::
+    This change is backwards incompatible **if** you are unable to upgrade your
+    version of Cryptography. Please see `Cryptography's own changelog
+    <https://cryptography.io/en/latest/changelog/>`_ for details on what may
+    change when you upgrade; for the most part the only changes involved
+    dropping older Python versions (such as 2.6, 3.3, or some PyPy editions)
+    which Paramiko itself has already dropped.
+
+- :support:`1378 backported` Add support for the modern (as of Python 3.3)
+  import location of ``MutableMapping`` (used in host key management) to avoid
+  the old location becoming deprecated in Python 3.8. Thanks to Josh Karpel for
+  catch & patch.
 - :release:`2.4.2 <2018-09-18>`
 - :release:`2.3.3 <2018-09-18>`
 - :release:`2.2.4 <2018-09-18>`
@@ -95,7 +118,7 @@ Changelog
 - :support:`1100` Updated the test suite & related docs/metadata/config to be
   compatible with pytest instead of using the old, custom, crufty
   unittest-based ``test.py``.
-  
+
   This includes marking known-slow tests (mostly the SFTP ones) so they can be
   filtered out by ``inv test``'s default behavior; as well as other minor
   tweaks to test collection and/or display (for example, GSSAPI tests are
