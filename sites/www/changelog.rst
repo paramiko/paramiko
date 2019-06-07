@@ -2,6 +2,9 @@
 Changelog
 =========
 
+- :feature:`532` (via :issue:`1384` and :issue:`1258`) Add support for
+  Curve25519 key exchange (aka ``curve25519-sha256@libssh.org``). Thanks to
+  Alex Gaynor and Dan Fuhry for supplying patches.
 - :support:`1379` (also :issue:`1369`) Raise Cryptography dependency
   requirement to version 2.5 (from 1.5) and update some deprecated uses of its
   API.
