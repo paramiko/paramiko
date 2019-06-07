@@ -24,8 +24,16 @@ from binascii import hexlify, unhexlify
 import os
 import unittest
 
+from mock import Mock, patch
+import pytest
+
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.asymmetric import ec
+
+try:
+    from cryptography.hazmat.primitives.asymmetric import x25519
+except ImportError:
+    x25519 = None
 
 import paramiko.util
 from paramiko.kex_group1 import KexGroup1
@@ -33,6 +41,7 @@ from paramiko.kex_gex import KexGex, KexGexSHA256
 from paramiko import Message
 from paramiko.common import byte_chr
 from paramiko.kex_ecdh_nist import KexNistp256
+from paramiko.kex_curve25519 import KexCurve25519
 
 
 def dummy_urandom(n):
@@ -119,9 +128,23 @@ class KexTest(unittest.TestCase):
         self._original_generate_key_pair = KexNistp256._generate_key_pair
         KexNistp256._generate_key_pair = dummy_generate_key_pair
 
+        static_x25519_key = x25519.X25519PrivateKey.from_private_bytes(
+            unhexlify(
+                b"2184abc7eb3e656d2349d2470ee695b570c227340c2b2863b6c9ff427af1f040"
+            )
+        )
+        mock_x25519 = Mock()
+        mock_x25519.generate.return_value = static_x25519_key
+        patcher = patch(
+            "paramiko.kex_curve25519.X25519PrivateKey", mock_x25519
+        )
+        patcher.start()
+        self.x25519_patcher = patcher
+
     def tearDown(self):
         os.urandom = self._original_urandom
         KexNistp256._generate_key_pair = self._original_generate_key_pair
+        self.x25519_patcher.stop()
 
     def test_1_group1_client(self):
         transport = FakeTransport()
@@ -492,6 +515,57 @@ class KexTest(unittest.TestCase):
         msg.add_string(Q_C)
         msg.rewind()
         kex.parse_next(paramiko.kex_ecdh_nist._MSG_KEXECDH_INIT, msg)
+        self.assertEqual(K, transport._K)
+        self.assertTrue(transport._activated)
+        self.assertEqual(H, hexlify(transport._H).upper())
+
+    @pytest.mark.skipif("not KexCurve25519.is_available()")
+    def test_13_kex_c25519_client(self):
+        K = 71294722834835117201316639182051104803802881348227506835068888449366462300724
+        transport = FakeTransport()
+        transport.server_mode = False
+        kex = KexCurve25519(transport)
+        kex.start_kex()
+        self.assertEqual(
+            (paramiko.kex_curve25519._MSG_KEXECDH_REPLY,), transport._expect
+        )
+
+        # fake reply
+        msg = Message()
+        msg.add_string("fake-host-key")
+        Q_S = unhexlify(
+            "8d13a119452382a1ada8eea4c979f3e63ad3f0c7366786d6c5b54b87219bae49"
+        )
+        msg.add_string(Q_S)
+        msg.add_string("fake-sig")
+        msg.rewind()
+        kex.parse_next(paramiko.kex_curve25519._MSG_KEXECDH_REPLY, msg)
+        H = b"05B6F6437C0CF38D1A6C5A6F6E2558DEB54E7FC62447EBFB1E5D7407326A5475"
+        self.assertEqual(K, kex.transport._K)
+        self.assertEqual(H, hexlify(transport._H).upper())
+        self.assertEqual((b"fake-host-key", b"fake-sig"), transport._verify)
+        self.assertTrue(transport._activated)
+
+    @pytest.mark.skipif("not KexCurve25519.is_available()")
+    def test_14_kex_c25519_server(self):
+        K = 71294722834835117201316639182051104803802881348227506835068888449366462300724
+        transport = FakeTransport()
+        transport.server_mode = True
+        kex = KexCurve25519(transport)
+        kex.start_kex()
+        self.assertEqual(
+            (paramiko.kex_curve25519._MSG_KEXECDH_INIT,), transport._expect
+        )
+
+        # fake init
+        msg = Message()
+        Q_C = unhexlify(
+            "8d13a119452382a1ada8eea4c979f3e63ad3f0c7366786d6c5b54b87219bae49"
+        )
+        H = b"DF08FCFCF31560FEE639D9B6D56D760BC3455B5ADA148E4514181023E7A9B042"
+        msg.add_string(Q_C)
+        msg.rewind()
+        kex.parse_next(paramiko.kex_curve25519._MSG_KEXECDH_INIT, msg)
         self.assertEqual(K, transport._K)
         self.assertTrue(transport._activated)
         self.assertEqual(H, hexlify(transport._H).upper())
