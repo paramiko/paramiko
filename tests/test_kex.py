@@ -128,23 +128,25 @@ class KexTest(unittest.TestCase):
         self._original_generate_key_pair = KexNistp256._generate_key_pair
         KexNistp256._generate_key_pair = dummy_generate_key_pair
 
-        static_x25519_key = x25519.X25519PrivateKey.from_private_bytes(
-            unhexlify(
-                b"2184abc7eb3e656d2349d2470ee695b570c227340c2b2863b6c9ff427af1f040"  # noqa
+        if KexCurve25519.is_available():
+            static_x25519_key = x25519.X25519PrivateKey.from_private_bytes(
+                unhexlify(
+                    b"2184abc7eb3e656d2349d2470ee695b570c227340c2b2863b6c9ff427af1f040"  # noqa
+                )
             )
-        )
-        mock_x25519 = Mock()
-        mock_x25519.generate.return_value = static_x25519_key
-        patcher = patch(
-            "paramiko.kex_curve25519.X25519PrivateKey", mock_x25519
-        )
-        patcher.start()
-        self.x25519_patcher = patcher
+            mock_x25519 = Mock()
+            mock_x25519.generate.return_value = static_x25519_key
+            patcher = patch(
+                "paramiko.kex_curve25519.X25519PrivateKey", mock_x25519
+            )
+            patcher.start()
+            self.x25519_patcher = patcher
 
     def tearDown(self):
         os.urandom = self._original_urandom
         KexNistp256._generate_key_pair = self._original_generate_key_pair
-        self.x25519_patcher.stop()
+        if hasattr(self, "x25519_patcher"):
+            self.x25519_patcher.stop()
 
     def test_group1_client(self):
         transport = FakeTransport()
