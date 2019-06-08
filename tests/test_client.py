@@ -228,13 +228,13 @@ class ClientTest(unittest.TestCase):
 
 
 class SSHClientTest(ClientTest):
-    def test_1_client(self):
+    def test_client(self):
         """
         verify that the SSHClient stuff works too.
         """
         self._test_connection(password="pygmalion")
 
-    def test_2_client_dsa(self):
+    def test_client_dsa(self):
         """
         verify that SSHClient works with a DSA key.
         """
@@ -246,7 +246,7 @@ class SSHClientTest(ClientTest):
         """
         self._test_connection(key_filename=_support("test_rsa.key"))
 
-    def test_2_5_client_ecdsa(self):
+    def test_5_client_ecdsa(self):
         """
         verify that SSHClient works with an ECDSA key.
         """
@@ -255,7 +255,7 @@ class SSHClientTest(ClientTest):
     def test_client_ed25519(self):
         self._test_connection(key_filename=_support("test_ed25519.key"))
 
-    def test_3_multiple_key_files(self):
+    def test_multiple_key_files(self):
         """
         verify that SSHClient accepts and tries multiple key files.
         """
@@ -335,7 +335,7 @@ class SSHClientTest(ClientTest):
         # code path (!) so we're punting too, sob.
         pass
 
-    def test_4_auto_add_policy(self):
+    def test_auto_add_policy(self):
         """
         verify that SSHClient's AutoAddPolicy works.
         """
@@ -358,7 +358,7 @@ class SSHClientTest(ClientTest):
         new_host_key = list(self.tc.get_host_keys()[hostname].values())[0]
         self.assertEqual(public_host_key, new_host_key)
 
-    def test_5_save_host_keys(self):
+    def test_save_host_keys(self):
         """
         verify that SSHClient correctly saves a known_hosts file.
         """
@@ -389,7 +389,7 @@ class SSHClientTest(ClientTest):
 
         os.unlink(localname)
 
-    def test_6_cleanup(self):
+    def test_cleanup(self):
         """
         verify that when an SSHClient is collected, its transport (and the
         transport's packetizer) is closed.
@@ -442,7 +442,7 @@ class SSHClientTest(ClientTest):
 
         self.assertTrue(self.tc._transport is None)
 
-    def test_7_banner_timeout(self):
+    def test_banner_timeout(self):
         """
         verify that the SSHClient has a configurable banner timeout.
         """
@@ -461,7 +461,7 @@ class SSHClientTest(ClientTest):
         kwargs = dict(self.connect_kwargs, banner_timeout=0.5)
         self.assertRaises(paramiko.SSHException, self.tc.connect, **kwargs)
 
-    def test_8_auth_trickledown(self):
+    def test_auth_trickledown(self):
         """
         Failed key auth doesn't prevent subsequent pw auth from succeeding
         """
@@ -482,7 +482,7 @@ class SSHClientTest(ClientTest):
         self._test_connection(**kwargs)
 
     @slow
-    def test_9_auth_timeout(self):
+    def test_auth_timeout(self):
         """
         verify that the SSHClient has a configurable auth timeout
         """
@@ -495,7 +495,7 @@ class SSHClientTest(ClientTest):
         )
 
     @requires_gss_auth
-    def test_10_auth_trickledown_gsskex(self):
+    def test_auth_trickledown_gsskex(self):
         """
         Failed gssapi-keyex auth doesn't prevent subsequent key auth from succeeding
         """
@@ -503,14 +503,14 @@ class SSHClientTest(ClientTest):
         self._test_connection(**kwargs)
 
     @requires_gss_auth
-    def test_11_auth_trickledown_gssauth(self):
+    def test_auth_trickledown_gssauth(self):
         """
         Failed gssapi-with-mic auth doesn't prevent subsequent key auth from succeeding
         """
         kwargs = dict(gss_auth=True, key_filename=[_support("test_rsa.key")])
         self._test_connection(**kwargs)
 
-    def test_12_reject_policy(self):
+    def test_reject_policy(self):
         """
         verify that SSHClient's RejectPolicy works.
         """
@@ -527,7 +527,7 @@ class SSHClientTest(ClientTest):
         )
 
     @requires_gss_auth
-    def test_13_reject_policy_gsskex(self):
+    def test_reject_policy_gsskex(self):
         """
         verify that SSHClient's RejectPolicy works,
         even if gssapi-keyex was enabled but not used.

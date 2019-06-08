@@ -37,7 +37,7 @@ from .util import slow
 
 @slow
 class TestBigSFTP(object):
-    def test_1_lots_of_files(self, sftp):
+    def test_lots_of_files(self, sftp):
         """
         create a bunch of files over the same session.
         """
@@ -65,7 +65,7 @@ class TestBigSFTP(object):
                 except:
                     pass
 
-    def test_2_big_file(self, sftp):
+    def test_big_file(self, sftp):
         """
         write a 1MB file with no buffering.
         """
@@ -96,7 +96,7 @@ class TestBigSFTP(object):
         finally:
             sftp.remove("%s/hongry.txt" % sftp.FOLDER)
 
-    def test_3_big_file_pipelined(self, sftp):
+    def test_big_file_pipelined(self, sftp):
         """
         write a 1MB file, with no linefeeds, using pipelining.
         """
@@ -140,7 +140,7 @@ class TestBigSFTP(object):
         finally:
             sftp.remove("%s/hongry.txt" % sftp.FOLDER)
 
-    def test_4_prefetch_seek(self, sftp):
+    def test_prefetch_seek(self, sftp):
         kblob = bytes().join([struct.pack(">H", n) for n in range(512)])
         try:
             with sftp.open("%s/hongry.txt" % sftp.FOLDER, "wb") as f:
@@ -180,7 +180,7 @@ class TestBigSFTP(object):
         finally:
             sftp.remove("%s/hongry.txt" % sftp.FOLDER)
 
-    def test_5_readv_seek(self, sftp):
+    def test_readv_seek(self, sftp):
         kblob = bytes().join([struct.pack(">H", n) for n in range(512)])
         try:
             with sftp.open("%s/hongry.txt" % sftp.FOLDER, "wb") as f:
@@ -220,7 +220,7 @@ class TestBigSFTP(object):
         finally:
             sftp.remove("%s/hongry.txt" % sftp.FOLDER)
 
-    def test_6_lots_of_prefetching(self, sftp):
+    def test_lots_of_prefetching(self, sftp):
         """
         prefetch a 1MB file a bunch of times, discarding the file object
         without using it, to verify that paramiko doesn't get confused.
@@ -255,7 +255,7 @@ class TestBigSFTP(object):
         finally:
             sftp.remove("%s/hongry.txt" % sftp.FOLDER)
 
-    def test_7_prefetch_readv(self, sftp):
+    def test_prefetch_readv(self, sftp):
         """
         verify that prefetch and readv don't conflict with each other.
         """
@@ -296,7 +296,7 @@ class TestBigSFTP(object):
         finally:
             sftp.remove("%s/hongry.txt" % sftp.FOLDER)
 
-    def test_8_large_readv(self, sftp):
+    def test_large_readv(self, sftp):
         """
         verify that a very large readv is broken up correctly and still
         returned as a single blob.
@@ -325,7 +325,7 @@ class TestBigSFTP(object):
         finally:
             sftp.remove("%s/hongry.txt" % sftp.FOLDER)
 
-    def test_9_big_file_big_buffer(self, sftp):
+    def test_big_file_big_buffer(self, sftp):
         """
         write a 1MB file, with no linefeeds, and a big buffer.
         """
@@ -342,7 +342,7 @@ class TestBigSFTP(object):
         finally:
             sftp.remove("%s/hongry.txt" % sftp.FOLDER)
 
-    def test_A_big_file_renegotiate(self, sftp):
+    def test_big_file_renegotiate(self, sftp):
         """
         write a 1MB file, forcing key renegotiation in the middle.
         """

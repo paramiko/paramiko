@@ -131,12 +131,12 @@ class KeyTest(unittest.TestCase):
             self.assertEqual(fh.readline()[:-1], "Proc-Type: 4,ENCRYPTED")
             self.assertEqual(fh.readline()[0:10], "DEK-Info: ")
 
-    def test_1_generate_key_bytes(self):
+    def test_generate_key_bytes(self):
         key = util.generate_key_bytes(md5, x1234, "happy birthday", 30)
         exp = b"\x61\xE1\xF2\x72\xF4\xC1\xC4\x56\x15\x86\xBD\x32\x24\x98\xC0\xE9\x24\x67\x27\x80\xF4\x7B\xB3\x7D\xDA\x7D\x54\x01\x9E\x64"
         self.assertEqual(exp, key)
 
-    def test_2_load_rsa(self):
+    def test_load_rsa(self):
         key = RSAKey.from_private_key_file(_support("test_rsa.key"))
         self.assertEqual("ssh-rsa", key.get_name())
         exp_rsa = b(FINGER_RSA.split()[1].replace(":", ""))
@@ -152,7 +152,7 @@ class KeyTest(unittest.TestCase):
         key2 = RSAKey.from_private_key(s)
         self.assertEqual(key, key2)
 
-    def test_3_load_rsa_password(self):
+    def test_load_rsa_password(self):
         key = RSAKey.from_private_key_file(
             _support("test_rsa_password.key"), "television"
         )
@@ -163,7 +163,7 @@ class KeyTest(unittest.TestCase):
         self.assertEqual(PUB_RSA.split()[1], key.get_base64())
         self.assertEqual(1024, key.get_bits())
 
-    def test_4_load_dss(self):
+    def test_load_dss(self):
         key = DSSKey.from_private_key_file(_support("test_dss.key"))
         self.assertEqual("ssh-dss", key.get_name())
         exp_dss = b(FINGER_DSS.split()[1].replace(":", ""))
@@ -179,7 +179,7 @@ class KeyTest(unittest.TestCase):
         key2 = DSSKey.from_private_key(s)
         self.assertEqual(key, key2)
 
-    def test_5_load_dss_password(self):
+    def test_load_dss_password(self):
         key = DSSKey.from_private_key_file(
             _support("test_dss_password.key"), "television"
         )
@@ -190,7 +190,7 @@ class KeyTest(unittest.TestCase):
         self.assertEqual(PUB_DSS.split()[1], key.get_base64())
         self.assertEqual(1024, key.get_bits())
 
-    def test_6_compare_rsa(self):
+    def test_compare_rsa(self):
         # verify that the private & public keys compare equal
         key = RSAKey.from_private_key_file(_support("test_rsa.key"))
         self.assertEqual(key, key)
@@ -199,7 +199,7 @@ class KeyTest(unittest.TestCase):
         self.assertTrue(not pub.can_sign())
         self.assertEqual(key, pub)
 
-    def test_7_compare_dss(self):
+    def test_compare_dss(self):
         # verify that the private & public keys compare equal
         key = DSSKey.from_private_key_file(_support("test_dss.key"))
         self.assertEqual(key, key)
@@ -208,7 +208,7 @@ class KeyTest(unittest.TestCase):
         self.assertTrue(not pub.can_sign())
         self.assertEqual(key, pub)
 
-    def test_8_sign_rsa(self):
+    def test_sign_rsa(self):
         # verify that the rsa private key can sign and verify
         key = RSAKey.from_private_key_file(_support("test_rsa.key"))
         msg = key.sign_ssh_data(b"ice weasels")
@@ -223,7 +223,7 @@ class KeyTest(unittest.TestCase):
         pub = RSAKey(data=key.asbytes())
         self.assertTrue(pub.verify_ssh_sig(b"ice weasels", msg))
 
-    def test_9_sign_dss(self):
+    def test_sign_dss(self):
         # verify that the dss private key can sign and verify
         key = DSSKey.from_private_key_file(_support("test_dss.key"))
         msg = key.sign_ssh_data(b"ice weasels")
@@ -238,19 +238,19 @@ class KeyTest(unittest.TestCase):
         pub = DSSKey(data=key.asbytes())
         self.assertTrue(pub.verify_ssh_sig(b"ice weasels", msg))
 
-    def test_A_generate_rsa(self):
+    def test_generate_rsa(self):
         key = RSAKey.generate(1024)
         msg = key.sign_ssh_data(b"jerri blank")
         msg.rewind()
         self.assertTrue(key.verify_ssh_sig(b"jerri blank", msg))
 
-    def test_B_generate_dss(self):
+    def test_generate_dss(self):
         key = DSSKey.generate(1024)
         msg = key.sign_ssh_data(b"jerri blank")
         msg.rewind()
         self.assertTrue(key.verify_ssh_sig(b"jerri blank", msg))
 
-    def test_C_generate_ecdsa(self):
+    def test_generate_ecdsa(self):
         key = ECDSAKey.generate()
         msg = key.sign_ssh_data(b"jerri blank")
         msg.rewind()
@@ -279,7 +279,7 @@ class KeyTest(unittest.TestCase):
         self.assertEqual(key.get_bits(), 521)
         self.assertEqual(key.get_name(), "ecdsa-sha2-nistp521")
 
-    def test_10_load_ecdsa_256(self):
+    def test_load_ecdsa_256(self):
         key = ECDSAKey.from_private_key_file(_support("test_ecdsa_256.key"))
         self.assertEqual("ecdsa-sha2-nistp256", key.get_name())
         exp_ecdsa = b(FINGER_ECDSA_256.split()[1].replace(":", ""))
@@ -295,7 +295,7 @@ class KeyTest(unittest.TestCase):
         key2 = ECDSAKey.from_private_key(s)
         self.assertEqual(key, key2)
 
-    def test_11_load_ecdsa_password_256(self):
+    def test_load_ecdsa_password_256(self):
         key = ECDSAKey.from_private_key_file(
             _support("test_ecdsa_password_256.key"), b"television"
         )
@@ -306,7 +306,7 @@ class KeyTest(unittest.TestCase):
         self.assertEqual(PUB_ECDSA_256.split()[1], key.get_base64())
         self.assertEqual(256, key.get_bits())
 
-    def test_12_compare_ecdsa_256(self):
+    def test_compare_ecdsa_256(self):
         # verify that the private & public keys compare equal
         key = ECDSAKey.from_private_key_file(_support("test_ecdsa_256.key"))
         self.assertEqual(key, key)
@@ -315,7 +315,7 @@ class KeyTest(unittest.TestCase):
         self.assertTrue(not pub.can_sign())
         self.assertEqual(key, pub)
 
-    def test_13_sign_ecdsa_256(self):
+    def test_sign_ecdsa_256(self):
         # verify that the rsa private key can sign and verify
         key = ECDSAKey.from_private_key_file(_support("test_ecdsa_256.key"))
         msg = key.sign_ssh_data(b"ice weasels")
@@ -331,7 +331,7 @@ class KeyTest(unittest.TestCase):
         pub = ECDSAKey(data=key.asbytes())
         self.assertTrue(pub.verify_ssh_sig(b"ice weasels", msg))
 
-    def test_14_load_ecdsa_384(self):
+    def test_load_ecdsa_384(self):
         key = ECDSAKey.from_private_key_file(_support("test_ecdsa_384.key"))
         self.assertEqual("ecdsa-sha2-nistp384", key.get_name())
         exp_ecdsa = b(FINGER_ECDSA_384.split()[1].replace(":", ""))
@@ -347,7 +347,7 @@ class KeyTest(unittest.TestCase):
         key2 = ECDSAKey.from_private_key(s)
         self.assertEqual(key, key2)
 
-    def test_15_load_ecdsa_password_384(self):
+    def test_load_ecdsa_password_384(self):
         key = ECDSAKey.from_private_key_file(
             _support("test_ecdsa_password_384.key"), b"television"
         )
@@ -358,7 +358,7 @@ class KeyTest(unittest.TestCase):
         self.assertEqual(PUB_ECDSA_384.split()[1], key.get_base64())
         self.assertEqual(384, key.get_bits())
 
-    def test_16_compare_ecdsa_384(self):
+    def test_compare_ecdsa_384(self):
         # verify that the private & public keys compare equal
         key = ECDSAKey.from_private_key_file(_support("test_ecdsa_384.key"))
         self.assertEqual(key, key)
@@ -367,7 +367,7 @@ class KeyTest(unittest.TestCase):
         self.assertTrue(not pub.can_sign())
         self.assertEqual(key, pub)
 
-    def test_17_sign_ecdsa_384(self):
+    def test_sign_ecdsa_384(self):
         # verify that the rsa private key can sign and verify
         key = ECDSAKey.from_private_key_file(_support("test_ecdsa_384.key"))
         msg = key.sign_ssh_data(b"ice weasels")
@@ -383,7 +383,7 @@ class KeyTest(unittest.TestCase):
         pub = ECDSAKey(data=key.asbytes())
         self.assertTrue(pub.verify_ssh_sig(b"ice weasels", msg))
 
-    def test_18_load_ecdsa_521(self):
+    def test_load_ecdsa_521(self):
         key = ECDSAKey.from_private_key_file(_support("test_ecdsa_521.key"))
         self.assertEqual("ecdsa-sha2-nistp521", key.get_name())
         exp_ecdsa = b(FINGER_ECDSA_521.split()[1].replace(":", ""))
@@ -402,7 +402,7 @@ class KeyTest(unittest.TestCase):
         key2 = ECDSAKey.from_private_key(s)
         self.assertEqual(key, key2)
 
-    def test_19_load_ecdsa_password_521(self):
+    def test_load_ecdsa_password_521(self):
         key = ECDSAKey.from_private_key_file(
             _support("test_ecdsa_password_521.key"), b"television"
         )
@@ -413,7 +413,7 @@ class KeyTest(unittest.TestCase):
         self.assertEqual(PUB_ECDSA_521.split()[1], key.get_base64())
         self.assertEqual(521, key.get_bits())
 
-    def test_20_compare_ecdsa_521(self):
+    def test_compare_ecdsa_521(self):
         # verify that the private & public keys compare equal
         key = ECDSAKey.from_private_key_file(_support("test_ecdsa_521.key"))
         self.assertEqual(key, key)
@@ -422,7 +422,7 @@ class KeyTest(unittest.TestCase):
         self.assertTrue(not pub.can_sign())
         self.assertEqual(key, pub)
 
-    def test_21_sign_ecdsa_521(self):
+    def test_sign_ecdsa_521(self):
         # verify that the rsa private key can sign and verify
         key = ECDSAKey.from_private_key_file(_support("test_ecdsa_521.key"))
         msg = key.sign_ssh_data(b"ice weasels")
