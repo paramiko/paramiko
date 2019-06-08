@@ -122,10 +122,10 @@ class HostKeysTest(unittest.TestCase):
     def test_delitem(self):
         hostdict = paramiko.HostKeys("hostfile.temp")
         target = "happy.example.com"
-        entry = hostdict[target]  # will KeyError if not present
+        hostdict[target]  # will KeyError if not present
         del hostdict[target]
         try:
-            entry = hostdict[target]
+            hostdict[target]
         except KeyError:
             pass  # Good
         else:

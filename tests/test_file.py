@@ -168,7 +168,7 @@ class BufferedFileTest(unittest.TestCase):
         """
         if sys.version_info[0] == 2:
             f = LoopbackFile("r+", 16)
-            f.write(buffer(b"Too small."))
+            f.write(buffer(b"Too small."))  # noqa
             f.close()
 
     def test_readable(self):
@@ -215,7 +215,7 @@ class BufferedFileTest(unittest.TestCase):
         offsets = range(0, len(data), 8)
         with LoopbackFile("rb+") as f:
             for offset in offsets:
-                f.write(buffer(data, offset, 8))
+                f.write(buffer(data, offset, 8))  # noqa
             self.assertEqual(f.read(), data)
 
     @needs_builtin("memoryview")

@@ -30,7 +30,7 @@ from .util import needs_gssapi
 
 @needs_gssapi
 class GSSAPITest(unittest.TestCase):
-    def setup():
+    def setup(self):
         # TODO: these vars should all come from os.environ or whatever the
         # approved pytest method is for runtime-configuring test data.
         self.krb5_mech = "1.2.840.113554.1.2.2"
