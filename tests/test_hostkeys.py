@@ -63,7 +63,7 @@ class HostKeysTest (unittest.TestCase):
     def tearDown(self):
         os.unlink('hostfile.temp')
 
-    def test_1_load(self):
+    def test_load(self):
         hostdict = paramiko.HostKeys('hostfile.temp')
         self.assertEqual(2, len(hostdict))
         self.assertEqual(1, len(list(hostdict.values())[0]))
@@ -71,7 +71,7 @@ class HostKeysTest (unittest.TestCase):
         fp = hexlify(hostdict['secure.example.com']['ssh-rsa'].get_fingerprint()).upper()
         self.assertEqual(b'E6684DB30E109B67B70FF1DC5C7F1363', fp)
 
-    def test_2_add(self):
+    def test_add(self):
         hostdict = paramiko.HostKeys('hostfile.temp')
         hh = '|1|BMsIC6cUIP2zBuXR3t2LRcJYjzM=|hpkJMysjTk/+zzUUzxQEa2ieq6c='
         key = paramiko.RSAKey(data=decodebytes(keyblob))
@@ -82,7 +82,7 @@ class HostKeysTest (unittest.TestCase):
         self.assertEqual(b'7EC91BB336CB6D810B124B1353C32396', fp)
         self.assertTrue(hostdict.check('foo.example.com', key))
 
-    def test_3_dict(self):
+    def test_dict(self):
         hostdict = paramiko.HostKeys('hostfile.temp')
         self.assertTrue('secure.example.com' in hostdict)
         self.assertTrue('not.example.com' not in hostdict)
@@ -97,7 +97,7 @@ class HostKeysTest (unittest.TestCase):
             i += 1
         self.assertEqual(2, i)
 
-    def test_4_dict_set(self):
+    def test_dict_set(self):
         hostdict = paramiko.HostKeys('hostfile.temp')
         key = paramiko.RSAKey(data=decodebytes(keyblob))
         key_dss = paramiko.DSSKey(data=decodebytes(keyblob_dss))

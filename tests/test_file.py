@@ -51,7 +51,7 @@ class LoopbackFile (BufferedFile):
 
 class BufferedFileTest (unittest.TestCase):
 
-    def test_1_simple(self):
+    def test_simple(self):
         f = LoopbackFile('r')
         try:
             f.write(b'hi')
@@ -68,7 +68,7 @@ class BufferedFileTest (unittest.TestCase):
             pass
         f.close()
 
-    def test_2_readline(self):
+    def test_readline(self):
         f = LoopbackFile('r+U')
         f.write(b'First line.\nSecond line.\r\nThird line.\n' +
                 b'Fourth line.\nFinal line non-terminated.')
@@ -93,7 +93,7 @@ class BufferedFileTest (unittest.TestCase):
         self.assertTrue(crlf in f.newlines)
         self.assertTrue(cr_byte not in f.newlines)
 
-    def test_3_lf(self):
+    def test_lf(self):
         """
         try to trick the linefeed detector.
         """
@@ -105,7 +105,7 @@ class BufferedFileTest (unittest.TestCase):
         f.close()
         self.assertEqual(f.newlines, crlf)
 
-    def test_4_write(self):
+    def test_write(self):
         """
         verify that write buffering is on.
         """
@@ -117,7 +117,7 @@ class BufferedFileTest (unittest.TestCase):
         self.assertEqual(f.readline(), 'Incomplete line...\n')
         f.close()
 
-    def test_5_flush(self):
+    def test_flush(self):
         """
         verify that flush will force a write.
         """
@@ -131,7 +131,7 @@ class BufferedFileTest (unittest.TestCase):
         self.assertEqual(f.read(3), b'')
         f.close()
 
-    def test_6_buffering(self):
+    def test_buffering_flushes(self):
         """
         verify that flushing happens automatically on buffer crossing.
         """
@@ -144,7 +144,7 @@ class BufferedFileTest (unittest.TestCase):
         self.assertEqual(f.read(20), b'Too small.  Enough.')
         f.close()
 
-    def test_7_read_all(self):
+    def test_read_all(self):
         """
         verify that read(-1) returns everything left in the file.
         """
@@ -157,7 +157,7 @@ class BufferedFileTest (unittest.TestCase):
         f.close()
 
     @needs_builtin('buffer')
-    def test_8_buffering(self):
+    def test_buffering_writes(self):
         """
         verify that buffered objects can be written
         """
@@ -165,21 +165,21 @@ class BufferedFileTest (unittest.TestCase):
         f.write(buffer(b'Too small.'))  # noqa: F821
         f.close()
 
-    def test_9_readable(self):
+    def test_readable(self):
         f = LoopbackFile('r')
         self.assertTrue(f.readable())
         self.assertFalse(f.writable())
         self.assertFalse(f.seekable())
         f.close()
 
-    def test_A_writable(self):
+    def test_writable(self):
         f = LoopbackFile('w')
         self.assertTrue(f.writable())
         self.assertFalse(f.readable())
         self.assertFalse(f.seekable())
         f.close()
 
-    def test_B_readinto(self):
+    def test_readinto(self):
         data = bytearray(5)
         f = LoopbackFile('r+')
         f._write(b"hello")
