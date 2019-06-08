@@ -245,7 +245,7 @@ class SSHClientTest(ClientTest):
         """
         self._test_connection(key_filename=_support("test_rsa.key"))
 
-    def test_5_client_ecdsa(self):
+    def test_client_ecdsa(self):
         """
         verify that SSHClient works with an ECDSA key.
         """

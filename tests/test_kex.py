@@ -123,7 +123,7 @@ class KexTest(unittest.TestCase):
         os.urandom = self._original_urandom
         KexNistp256._generate_key_pair = self._original_generate_key_pair
 
-    def test_1_group1_client(self):
+    def test_group1_client(self):
         transport = FakeTransport()
         transport.server_mode = False
         kex = KexGroup1(transport)
@@ -147,7 +147,7 @@ class KexTest(unittest.TestCase):
         self.assertEqual((b"fake-host-key", b"fake-sig"), transport._verify)
         self.assertTrue(transport._activated)
 
-    def test_2_group1_server(self):
+    def test_group1_server(self):
         transport = FakeTransport()
         transport.server_mode = True
         kex = KexGroup1(transport)
@@ -167,7 +167,7 @@ class KexTest(unittest.TestCase):
         self.assertEqual(x, hexlify(transport._message.asbytes()).upper())
         self.assertTrue(transport._activated)
 
-    def test_3_gex_client(self):
+    def test_gex_client(self):
         transport = FakeTransport()
         transport.server_mode = False
         kex = KexGex(transport)
@@ -201,7 +201,7 @@ class KexTest(unittest.TestCase):
         self.assertEqual((b"fake-host-key", b"fake-sig"), transport._verify)
         self.assertTrue(transport._activated)
 
-    def test_4_gex_old_client(self):
+    def test_gex_old_client(self):
         transport = FakeTransport()
         transport.server_mode = False
         kex = KexGex(transport)
@@ -235,7 +235,7 @@ class KexTest(unittest.TestCase):
         self.assertEqual((b"fake-host-key", b"fake-sig"), transport._verify)
         self.assertTrue(transport._activated)
 
-    def test_5_gex_server(self):
+    def test_gex_server(self):
         transport = FakeTransport()
         transport.server_mode = True
         kex = KexGex(transport)
@@ -272,7 +272,7 @@ class KexTest(unittest.TestCase):
         self.assertEqual(x, hexlify(transport._message.asbytes()).upper())
         self.assertTrue(transport._activated)
 
-    def test_6_gex_server_with_old_client(self):
+    def test_gex_server_with_old_client(self):
         transport = FakeTransport()
         transport.server_mode = True
         kex = KexGex(transport)
@@ -307,7 +307,7 @@ class KexTest(unittest.TestCase):
         self.assertEqual(x, hexlify(transport._message.asbytes()).upper())
         self.assertTrue(transport._activated)
 
-    def test_7_gex_sha256_client(self):
+    def test_gex_sha256_client(self):
         transport = FakeTransport()
         transport.server_mode = False
         kex = KexGexSHA256(transport)
@@ -341,7 +341,7 @@ class KexTest(unittest.TestCase):
         self.assertEqual((b"fake-host-key", b"fake-sig"), transport._verify)
         self.assertTrue(transport._activated)
 
-    def test_8_gex_sha256_old_client(self):
+    def test_gex_sha256_old_client(self):
         transport = FakeTransport()
         transport.server_mode = False
         kex = KexGexSHA256(transport)
@@ -375,7 +375,7 @@ class KexTest(unittest.TestCase):
         self.assertEqual((b"fake-host-key", b"fake-sig"), transport._verify)
         self.assertTrue(transport._activated)
 
-    def test_9_gex_sha256_server(self):
+    def test_gex_sha256_server(self):
         transport = FakeTransport()
         transport.server_mode = True
         kex = KexGexSHA256(transport)
@@ -412,7 +412,7 @@ class KexTest(unittest.TestCase):
         self.assertEqual(x, hexlify(transport._message.asbytes()).upper())
         self.assertTrue(transport._activated)
 
-    def test_10_gex_sha256_server_with_old_client(self):
+    def test_gex_sha256_server_with_old_client(self):
         transport = FakeTransport()
         transport.server_mode = True
         kex = KexGexSHA256(transport)
@@ -447,7 +447,7 @@ class KexTest(unittest.TestCase):
         self.assertEqual(x, hexlify(transport._message.asbytes()).upper())
         self.assertTrue(transport._activated)
 
-    def test_11_kex_nistp256_client(self):
+    def test_kex_nistp256_client(self):
         K = 91610929826364598472338906427792435253694642563583721654249504912114314269754  # noqa
         transport = FakeTransport()
         transport.server_mode = False
@@ -473,7 +473,7 @@ class KexTest(unittest.TestCase):
         self.assertEqual((b"fake-host-key", b"fake-sig"), transport._verify)
         self.assertTrue(transport._activated)
 
-    def test_12_kex_nistp256_server(self):
+    def test_kex_nistp256_server(self):
         K = 91610929826364598472338906427792435253694642563583721654249504912114314269754  # noqa
         transport = FakeTransport()
         transport.server_mode = True

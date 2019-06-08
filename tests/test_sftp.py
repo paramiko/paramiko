@@ -250,7 +250,7 @@ class TestSFTP(object):
             sftp.remove(sftp.FOLDER + "/fish.txt")
             sftp.remove(sftp.FOLDER + "/tertiary.py")
 
-    def test_5_listdir_iter(self, sftp):
+    def test_listdir_iter(self, sftp):
         """
         listdir_iter version of above test
         """
