@@ -142,7 +142,7 @@ class GSSKexTest(unittest.TestCase):
         stdout.close()
         stderr.close()
 
-    def test_1_gsskex_and_auth(self):
+    def test_gsskex_and_auth(self):
         """
         Verify that Paramiko can handle SSHv2 GSS-API / SSPI authenticated
         Diffie-Hellman Key Exchange and user authentication with the GSS-API
@@ -150,7 +150,7 @@ class GSSKexTest(unittest.TestCase):
         """
         self._test_gsskex_and_auth(gss_host=None)
 
-    def test_2_gsskex_and_auth_rekey(self):
+    def test_gsskex_and_auth_rekey(self):
         """
         Verify that Paramiko can rekey.
         """

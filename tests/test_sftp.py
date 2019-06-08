@@ -90,7 +90,7 @@ utf8_folder = b"/\xc3\xbcnic\xc3\xb8\x64\x65"
 
 @slow
 class TestSFTP(object):
-    def test_1_file(self, sftp):
+    def test_file(self, sftp):
         """
         verify that we can create a file.
         """
@@ -101,7 +101,7 @@ class TestSFTP(object):
             f.close()
             sftp.remove(sftp.FOLDER + "/test")
 
-    def test_2_close(self, sftp):
+    def test_close(self, sftp):
         """
         Verify that SFTP session close() causes a socket error on next action.
         """
@@ -109,7 +109,7 @@ class TestSFTP(object):
         with pytest.raises(socket.error, match="Socket is closed"):
             sftp.open(sftp.FOLDER + "/test2", "w")
 
-    def test_2_sftp_can_be_used_as_context_manager(self, sftp):
+    def test_sftp_can_be_used_as_context_manager(self, sftp):
         """
         verify that the sftp session is closed when exiting the context manager
         """
@@ -118,7 +118,7 @@ class TestSFTP(object):
         with pytest.raises(socket.error, match="Socket is closed"):
             sftp.open(sftp.FOLDER + "/test2", "w")
 
-    def test_3_write(self, sftp):
+    def test_write(self, sftp):
         """
         verify that a file can be created and written, and the size is correct.
         """
@@ -129,7 +129,7 @@ class TestSFTP(object):
         finally:
             sftp.remove(sftp.FOLDER + "/duck.txt")
 
-    def test_3_sftp_file_can_be_used_as_context_manager(self, sftp):
+    def test_sftp_file_can_be_used_as_context_manager(self, sftp):
         """
         verify that an opened file can be used as a context manager
         """
@@ -140,7 +140,7 @@ class TestSFTP(object):
         finally:
             sftp.remove(sftp.FOLDER + "/duck.txt")
 
-    def test_4_append(self, sftp):
+    def test_append(self, sftp):
         """
         verify that a file can be opened for append, and tell() still works.
         """
@@ -158,7 +158,7 @@ class TestSFTP(object):
         finally:
             sftp.remove(sftp.FOLDER + "/append.txt")
 
-    def test_5_rename(self, sftp):
+    def test_rename(self, sftp):
         """
         verify that renaming a file works.
         """
@@ -185,7 +185,7 @@ class TestSFTP(object):
             except:
                 pass
 
-    def test_5a_posix_rename(self, sftp):
+    def testa_posix_rename(self, sftp):
         """Test posix-rename@openssh.com protocol extension."""
         try:
             # first check that the normal rename works as specified
@@ -214,7 +214,7 @@ class TestSFTP(object):
             except:
                 pass
 
-    def test_6_folder(self, sftp):
+    def test_folder(self, sftp):
         """
         create a temporary folder, verify that we can create a file in it, then
         remove the folder and verify that we can't create a file in it anymore.
@@ -227,7 +227,7 @@ class TestSFTP(object):
         with pytest.raises(IOError, match="No such file"):
             sftp.open(sftp.FOLDER + "/subfolder/test")
 
-    def test_7_listdir(self, sftp):
+    def test_listdir(self, sftp):
         """
         verify that a folder can be created, a bunch of files can be placed in
         it, and those files show up in sftp.listdir.
@@ -248,7 +248,7 @@ class TestSFTP(object):
             sftp.remove(sftp.FOLDER + "/fish.txt")
             sftp.remove(sftp.FOLDER + "/tertiary.py")
 
-    def test_7_5_listdir_iter(self, sftp):
+    def test_5_listdir_iter(self, sftp):
         """
         listdir_iter version of above test
         """
@@ -268,7 +268,7 @@ class TestSFTP(object):
             sftp.remove(sftp.FOLDER + "/fish.txt")
             sftp.remove(sftp.FOLDER + "/tertiary.py")
 
-    def test_8_setstat(self, sftp):
+    def test_setstat(self, sftp):
         """
         verify that the setstat functions (chown, chmod, utime, truncate) work.
         """
@@ -305,7 +305,7 @@ class TestSFTP(object):
         finally:
             sftp.remove(sftp.FOLDER + "/special")
 
-    def test_9_fsetstat(self, sftp):
+    def test_fsetstat(self, sftp):
         """
         verify that the fsetstat functions (chown, chmod, utime, truncate)
         work on open files.
@@ -345,7 +345,7 @@ class TestSFTP(object):
         finally:
             sftp.remove(sftp.FOLDER + "/special")
 
-    def test_A_readline_seek(self, sftp):
+    def test_readline_seek(self, sftp):
         """
         create a text file and write a bunch of text into it.  then count the lines
         in the file, and seek around to retrieve particular lines.  this should
@@ -377,7 +377,7 @@ class TestSFTP(object):
         finally:
             sftp.remove(sftp.FOLDER + "/duck.txt")
 
-    def test_B_write_seek(self, sftp):
+    def test_write_seek(self, sftp):
         """
         create a text file, seek back and change part of it, and verify that the
         changes worked.
@@ -395,7 +395,7 @@ class TestSFTP(object):
         finally:
             sftp.remove(sftp.FOLDER + "/testing.txt")
 
-    def test_C_symlink(self, sftp):
+    def test_symlink(self, sftp):
         """
         create a symlink and then check that lstat doesn't follow it.
         """
@@ -442,7 +442,7 @@ class TestSFTP(object):
             except:
                 pass
 
-    def test_D_flush_seek(self, sftp):
+    def test_flush_seek(self, sftp):
         """
         verify that buffered writes are automatically flushed on seek.
         """
@@ -462,7 +462,7 @@ class TestSFTP(object):
             except:
                 pass
 
-    def test_E_realpath(self, sftp):
+    def test_realpath(self, sftp):
         """
         test that realpath is returning something non-empty and not an
         error.
@@ -473,7 +473,7 @@ class TestSFTP(object):
         assert len(f) > 0
         assert os.path.join(pwd, sftp.FOLDER) == f
 
-    def test_F_mkdir(self, sftp):
+    def test_mkdir(self, sftp):
         """
         verify that mkdir/rmdir work.
         """
@@ -484,7 +484,7 @@ class TestSFTP(object):
         with pytest.raises(IOError, match="No such file"):
             sftp.rmdir(sftp.FOLDER + "/subfolder")
 
-    def test_G_chdir(self, sftp):
+    def test_chdir(self, sftp):
         """
         verify that chdir/getcwd work.
         """
@@ -520,7 +520,7 @@ class TestSFTP(object):
             except:
                 pass
 
-    def test_H_get_put(self, sftp):
+    def test_get_put(self, sftp):
         """
         verify that get/put work.
         """
@@ -555,7 +555,7 @@ class TestSFTP(object):
         os.unlink(localname)
         sftp.unlink(sftp.FOLDER + "/bunny.txt")
 
-    def test_I_check(self, sftp):
+    def test_check(self, sftp):
         """
         verify that file.check() works against our own server.
         (it's an sftp extension that we support, and may be the only ones who
@@ -584,7 +584,7 @@ class TestSFTP(object):
         finally:
             sftp.unlink(sftp.FOLDER + "/kitty.txt")
 
-    def test_J_x_flag(self, sftp):
+    def test_x_flag(self, sftp):
         """
         verify that the 'x' flag works when opening a file.
         """
@@ -599,7 +599,7 @@ class TestSFTP(object):
         finally:
             sftp.unlink(sftp.FOLDER + "/unusual.txt")
 
-    def test_K_utf8(self, sftp):
+    def test_utf8(self, sftp):
         """
         verify that unicode strings are encoded into utf8 correctly.
         """
@@ -615,7 +615,7 @@ class TestSFTP(object):
             self.fail("exception " + str(e))
         sftp.unlink(b(sftp.FOLDER) + utf8_folder)
 
-    def test_L_utf8_chdir(self, sftp):
+    def test_utf8_chdir(self, sftp):
         sftp.mkdir(sftp.FOLDER + "/" + unicode_folder)
         try:
             sftp.chdir(sftp.FOLDER + "/" + unicode_folder)
@@ -626,7 +626,7 @@ class TestSFTP(object):
             sftp.chdir()
             sftp.rmdir(sftp.FOLDER + "/" + unicode_folder)
 
-    def test_M_bad_readv(self, sftp):
+    def test_bad_readv(self, sftp):
         """
         verify that readv at the end of the file doesn't essplode.
         """
@@ -642,7 +642,7 @@ class TestSFTP(object):
         finally:
             sftp.unlink(sftp.FOLDER + "/zero")
 
-    def test_N_put_without_confirm(self, sftp):
+    def test_put_without_confirm(self, sftp):
         """
         verify that get/put work without confirmation.
         """
@@ -671,7 +671,7 @@ class TestSFTP(object):
         os.unlink(localname)
         sftp.unlink(sftp.FOLDER + "/bunny.txt")
 
-    def test_O_getcwd(self, sftp):
+    def test_getcwd(self, sftp):
         """
         verify that chdir/getcwd work.
         """
@@ -690,7 +690,7 @@ class TestSFTP(object):
             except:
                 pass
 
-    def XXX_test_M_seek_append(self, sftp):
+    def test_seek_append(self, sftp):
         """
         verify that seek does't affect writes during append.
 
@@ -728,7 +728,7 @@ class TestSFTP(object):
     # appear but they're clearly emitted from subthreads that have no error
     # handling. No point running it until that is fixed somehow.
     @pytest.mark.skip("Doesn't prove anything right now")
-    def test_N_file_with_percent(self, sftp):
+    def test_file_with_percent(self, sftp):
         """
         verify that we can create a file with a '%' in the filename.
         ( it needs to be properly escaped by _log() )
@@ -740,7 +740,7 @@ class TestSFTP(object):
             f.close()
             sftp.remove(sftp.FOLDER + "/test%file")
 
-    def test_O_non_utf8_data(self, sftp):
+    def test_non_utf8_data(self, sftp):
         """Test write() and read() of non utf8 data"""
         try:
             with sftp.open("%s/nonutf8data" % sftp.FOLDER, "w") as f:

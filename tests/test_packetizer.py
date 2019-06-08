@@ -38,7 +38,7 @@ x1f = byte_chr(0x1f)
 
 
 class PacketizerTest(unittest.TestCase):
-    def test_1_write(self):
+    def test_write(self):
         rsock = LoopSocket()
         wsock = LoopSocket()
         rsock.link(wsock)
@@ -68,7 +68,7 @@ class PacketizerTest(unittest.TestCase):
             data[:16],
         )
 
-    def test_2_read(self):
+    def test_read(self):
         rsock = LoopSocket()
         wsock = LoopSocket()
         rsock.link(wsock)
@@ -90,7 +90,7 @@ class PacketizerTest(unittest.TestCase):
         self.assertEqual(1, m.get_int())
         self.assertEqual(900, m.get_int())
 
-    def test_3_closed(self):
+    def test_closed(self):
         if sys.platform.startswith("win"):  # no SIGALRM on windows
             return
         rsock = LoopSocket()
