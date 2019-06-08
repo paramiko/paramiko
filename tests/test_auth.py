@@ -250,7 +250,7 @@ class AuthTest(unittest.TestCase):
         self.start_server()
         self.tc.connect(hostkey=self.public_host_key)
         try:
-            remain = self.tc.auth_password("bad-server", "hello")
+            self.tc.auth_password("bad-server", "hello")
         except:
             etype, evalue, etb = sys.exc_info()
             self.assertTrue(issubclass(etype, AuthenticationException))
@@ -265,7 +265,7 @@ class AuthTest(unittest.TestCase):
         self.start_server()
         self.tc.connect()
         try:
-            remain = self.tc.auth_password("unresponsive-server", "hello")
+            self.tc.auth_password("unresponsive-server", "hello")
         except:
             etype, evalue, etb = sys.exc_info()
             self.assertTrue(issubclass(etype, AuthenticationException))

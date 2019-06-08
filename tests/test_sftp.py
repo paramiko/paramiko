@@ -26,23 +26,18 @@ do test file operations in (so no existing files will be harmed).
 import os
 import socket
 import sys
-import threading
-import unittest
 import warnings
 from binascii import hexlify
 from tempfile import mkstemp
 
 import pytest
 
-import paramiko
-import paramiko.util
 from paramiko.py3compat import PY2, b, u, StringIO
 from paramiko.common import o777, o600, o666, o644
 from paramiko.sftp_attr import SFTPAttributes
 
 from .util import needs_builtin
-from .stub_sftp import StubServer, StubSFTPServer
-from .util import _support, slow
+from .util import slow
 
 
 ARTICLE = """
@@ -74,14 +69,21 @@ decreased compared with chicken.
 
 
 # Here is how unicode characters are encoded over 1 to 6 bytes in utf-8
-# U-00000000 - U-0000007F: 0xxxxxxx
-# U-00000080 - U-000007FF: 110xxxxx 10xxxxxx
-# U-00000800 - U-0000FFFF: 1110xxxx 10xxxxxx 10xxxxxx
-# U-00010000 - U-001FFFFF: 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
-# U-00200000 - U-03FFFFFF: 111110xx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
-# U-04000000 - U-7FFFFFFF: 1111110x 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
+# U-00000000 - U-0000007F:
+#   0xxxxxxx
+# U-00000080 - U-000007FF:
+#   110xxxxx 10xxxxxx
+# U-00000800 - U-0000FFFF:
+#   1110xxxx 10xxxxxx 10xxxxxx
+# U-00010000 - U-001FFFFF:
+#   11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
+# U-00200000 - U-03FFFFFF:
+#   111110xx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
+# U-04000000 - U-7FFFFFFF:
+#   1111110x 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
 # Note that: hex(int('11000011',2)) == '0xc3'
-# Thus, the following 2-bytes sequence is not valid utf8: "invalid continuation byte"
+# Thus, the following 2-bytes sequence is not valid utf8: "invalid continuation
+# byte"
 NON_UTF8_DATA = b"\xC3\xC3"
 
 unicode_folder = u"\u00fcnic\u00f8de" if PY2 else "\u00fcnic\u00f8de"
@@ -347,10 +349,10 @@ class TestSFTP(object):
 
     def test_readline_seek(self, sftp):
         """
-        create a text file and write a bunch of text into it.  then count the lines
-        in the file, and seek around to retrieve particular lines.  this should
-        verify that read buffering and 'tell' work well together, and that read
-        buffering is reset on 'seek'.
+        create a text file and write a bunch of text into it.  then count the
+        lines in the file, and seek around to retrieve particular lines.  this
+        should verify that read buffering and 'tell' work well together, and
+        that read buffering is reset on 'seek'.
         """
         try:
             with sftp.open(sftp.FOLDER + "/duck.txt", "w") as f:
@@ -370,17 +372,14 @@ class TestSFTP(object):
                 f.seek(pos_list[17], f.SEEK_SET)
                 assert f.readline()[:4] == "duck"
                 f.seek(pos_list[10], f.SEEK_SET)
-                assert (
-                    f.readline()
-                    == "duck types were equally resistant to exogenous insulin compared with chicken.\n"
-                )
+                expected = "duck types were equally resistant to exogenous insulin compared with chicken.\n"  # noqa
+                assert f.readline() == expected
         finally:
             sftp.remove(sftp.FOLDER + "/duck.txt")
 
     def test_write_seek(self, sftp):
         """
-        create a text file, seek back and change part of it, and verify that the
-        changes worked.
+        Create a text file, seek back, change it, and verify.
         """
         try:
             with sftp.open(sftp.FOLDER + "/testing.txt", "w") as f:
@@ -577,10 +576,8 @@ class TestSFTP(object):
                     == u(hexlify(sum)).upper()
                 )
                 sum = f.check("md5", 0, 0, 510)
-                assert (
-                    u(hexlify(sum)).upper()
-                    == "EB3B45B8CD55A0707D99B177544A319F373183D241432BB2157AB9E46358C4AC90370B5CADE5D90336FC1716F90B36D6"
-                )  # noqa
+                expected = "EB3B45B8CD55A0707D99B177544A319F373183D241432BB2157AB9E46358C4AC90370B5CADE5D90336FC1716F90B36D6"  # noqa
+                assert u(hexlify(sum)).upper() == expected
         finally:
             sftp.unlink(sftp.FOLDER + "/kitty.txt")
 
@@ -675,7 +672,7 @@ class TestSFTP(object):
         """
         verify that chdir/getcwd work.
         """
-        assert sftp.getcwd() == None
+        assert sftp.getcwd() is None
         root = sftp.normalize(".")
         if root[-1] != "/":
             root += "/"
@@ -770,7 +767,7 @@ class TestSFTP(object):
         try:
             with sftp.open("%s/write_buffer" % sftp.FOLDER, "wb") as f:
                 for offset in range(0, len(data), 8):
-                    f.write(buffer(data, offset, 8))
+                    f.write(buffer(data, offset, 8))  # noqa
 
             with sftp.open("%s/write_buffer" % sftp.FOLDER, "rb") as f:
                 assert f.read() == data

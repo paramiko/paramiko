@@ -23,12 +23,10 @@ a real actual sftp server is contacted, and a new folder is created there to
 do test file operations in (so no existing files will be harmed).
 """
 
-import os
 import random
 import struct
 import sys
 import time
-import unittest
 
 from paramiko.common import o660
 
@@ -122,7 +120,8 @@ class TestBigSFTP(object):
                 file_size = f.stat().st_size
                 f.prefetch(file_size)
 
-                # read on odd boundaries to make sure the bytes aren't getting scrambled
+                # read on odd boundaries to make sure the bytes aren't getting
+                # scrambled
                 n = 0
                 k2blob = kblob + kblob
                 chunk = 629

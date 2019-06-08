@@ -28,36 +28,32 @@ import socket
 import time
 import threading
 import random
-from hashlib import sha1
 import unittest
 from mock import Mock
 
 from paramiko import (
-    Transport,
+    AuthHandler,
+    ChannelException,
+    DSSKey,
+    Packetizer,
+    RSAKey,
+    SSHException,
     SecurityOptions,
     ServerInterface,
-    RSAKey,
-    DSSKey,
-    SSHException,
-    ChannelException,
-    Packetizer,
-    Channel,
-    AuthHandler,
+    Transport,
 )
 from paramiko import AUTH_FAILED, AUTH_SUCCESSFUL
 from paramiko import OPEN_SUCCEEDED, OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED
 from paramiko.common import (
-    MSG_KEXINIT,
-    cMSG_CHANNEL_WINDOW_ADJUST,
-    cMSG_UNIMPLEMENTED,
+    DEFAULT_MAX_PACKET_SIZE,
+    DEFAULT_WINDOW_SIZE,
+    MAX_WINDOW_SIZE,
     MIN_PACKET_SIZE,
     MIN_WINDOW_SIZE,
-    MAX_WINDOW_SIZE,
-    DEFAULT_WINDOW_SIZE,
-    DEFAULT_MAX_PACKET_SIZE,
-    MSG_NAMES,
-    MSG_UNIMPLEMENTED,
+    MSG_KEXINIT,
     MSG_USERAUTH_SUCCESS,
+    cMSG_CHANNEL_WINDOW_ADJUST,
+    cMSG_UNIMPLEMENTED,
 )
 from paramiko.py3compat import bytes, byte_chr
 from paramiko.message import Message
@@ -212,12 +208,12 @@ class TransportTest(unittest.TestCase):
         o.compression = o.compression
 
     def test_compute_key(self):
-        self.tc.K = 123281095979686581523377256114209720774539068973101330872763622971399429481072519713536292772709507296759612401802191955568143056534122385270077606457721553469730659233569339356140085284052436697480759510519672848743794433460113118986816826624865291116513647975790797391795651716378444844877749505443714557929
-        self.tc.H = b"\x0C\x83\x07\xCD\xE6\x85\x6F\xF3\x0B\xA9\x36\x84\xEB\x0F\x04\xC2\x52\x0E\x9E\xD3"
+        self.tc.K = 123281095979686581523377256114209720774539068973101330872763622971399429481072519713536292772709507296759612401802191955568143056534122385270077606457721553469730659233569339356140085284052436697480759510519672848743794433460113118986816826624865291116513647975790797391795651716378444844877749505443714557929  # noqa
+        self.tc.H = b"\x0C\x83\x07\xCD\xE6\x85\x6F\xF3\x0B\xA9\x36\x84\xEB\x0F\x04\xC2\x52\x0E\x9E\xD3"  # noqa
         self.tc.session_id = self.tc.H
         key = self.tc._compute_key("C", 32)
         self.assertEqual(
-            b"207E66594CA87C44ECCBA3B3CD39FDDB378E6FDB0F97C54B2AA0CFBF900CD995",
+            b"207E66594CA87C44ECCBA3B3CD39FDDB378E6FDB0F97C54B2AA0CFBF900CD995",  # noqa
             hexlify(key).upper(),
         )
 
@@ -379,7 +375,7 @@ class TransportTest(unittest.TestCase):
         """
         self.setup_test_server()
         try:
-            chan = self.tc.open_channel("bogus")
+            self.tc.open_channel("bogus")
             self.fail("expected exception")
         except ChannelException as e:
             self.assertTrue(e.code == OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED)
@@ -510,7 +506,8 @@ class TransportTest(unittest.TestCase):
         bytes2 = self.tc.packetizer._Packetizer__sent_bytes
         block_size = self.tc._cipher_info[self.tc.local_cipher]["block-size"]
         mac_size = self.tc._mac_info[self.tc.local_mac]["size"]
-        # tests show this is actually compressed to *52 bytes*!  including packet overhead!  nice!! :)
+        # tests show this is actually compressed to *52 bytes*!  including
+        # packet overhead!  nice!! :)
         self.assertTrue(bytes2 - bytes < 1024)
         self.assertEqual(16 + block_size + mac_size, bytes2 - bytes)
 
@@ -563,7 +560,7 @@ class TransportTest(unittest.TestCase):
         self.setup_test_server()
         chan = self.tc.open_session()
         chan.exec_command("yes")
-        schan = self.ts.accept(1.0)
+        self.ts.accept(1.0)
 
         requested = []
 
@@ -602,7 +599,7 @@ class TransportTest(unittest.TestCase):
         self.setup_test_server()
         chan = self.tc.open_session()
         chan.exec_command("yes")
-        schan = self.ts.accept(1.0)
+        self.ts.accept(1.0)
 
         # open a port on the "server" that the client will ask to forward to.
         greeting_server = socket.socket()
@@ -691,7 +688,8 @@ class TransportTest(unittest.TestCase):
 
     def test_rekey_deadlock(self):
         """
-        Regression test for deadlock when in-transit messages are received after MSG_KEXINIT is sent
+        Regression test for deadlock when in-transit messages are received
+        after MSG_KEXINIT is sent
 
         Note: When this test fails, it may leak threads.
         """
@@ -714,12 +712,15 @@ class TransportTest(unittest.TestCase):
         #      MSG_KEXINIT to the remote host.
         #
         # On the remote host (using any SSH implementation):
-        #   5. The MSG_CHANNEL_DATA is received, and MSG_CHANNEL_WINDOW_ADJUST is sent.
-        #   6. The MSG_KEXINIT is received, and a corresponding MSG_KEXINIT is sent.
+        #   5. The MSG_CHANNEL_DATA is received, and MSG_CHANNEL_WINDOW_ADJUST
+        #      is sent.
+        #   6. The MSG_KEXINIT is received, and a corresponding MSG_KEXINIT is
+        #      sent.
         #
         # In the main thread:
         #   7. The user's program calls Channel.send().
-        #   8. Channel.send acquires Channel.lock, then calls Transport._send_user_message().
+        #   8. Channel.send acquires Channel.lock, then calls
+        #      Transport._send_user_message().
         #   9. Transport._send_user_message waits for Transport.clear_to_send
         #      to be set (i.e., it waits for re-keying to complete).
         #      Channel.lock is still held.
@@ -969,11 +970,11 @@ class TransportTest(unittest.TestCase):
             # send() accepts buffer instances
             sent = 0
             while sent < len(data):
-                sent += chan.send(buffer(data, sent, 8))
+                sent += chan.send(buffer(data, sent, 8))  # noqa
             self.assertEqual(sfile.read(len(data)), data)
 
             # sendall() accepts a buffer instance
-            chan.sendall(buffer(data))
+            chan.sendall(buffer(data))  # noqa
             self.assertEqual(sfile.read(len(data)), data)
 
     @needs_builtin("memoryview")
