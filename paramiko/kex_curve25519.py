@@ -18,6 +18,8 @@ c_MSG_KEXECDH_INIT, c_MSG_KEXECDH_REPLY = [byte_chr(c) for c in range(30, 32)]
 
 
 class KexCurve25519(object):
+    hash_algo = hashlib.sha256
+
     def __init__(self, transport):
         self.transport = transport
         self.key = None
@@ -85,7 +87,7 @@ class KexCurve25519(object):
         hm.add_string(peer_key_bytes)
         hm.add_string(exchange_key_bytes)
         hm.add_mpint(K)
-        H = hashlib.sha256(hm.asbytes()).digest()
+        H = self.hash_algo(hm.asbytes()).digest()
         self.transport._set_K_H(K, H)
         sig = self.transport.get_server_key().sign_ssh_data(H)
         # construct reply
@@ -122,6 +124,6 @@ class KexCurve25519(object):
         )
         hm.add_string(peer_key_bytes)
         hm.add_mpint(K)
-        self.transport._set_K_H(K, hashlib.sha256(hm.asbytes()).digest())
+        self.transport._set_K_H(K, self.hash_algo(hm.asbytes()).digest())
         self.transport._verify_key(peer_host_key_bytes, sig)
         self.transport._activate_outbound()
