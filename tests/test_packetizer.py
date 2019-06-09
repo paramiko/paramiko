@@ -24,6 +24,8 @@ import sys
 import unittest
 from hashlib import sha1
 
+import pytest
+
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.ciphers import algorithms, Cipher, modes
 
@@ -39,7 +41,7 @@ x1f = byte_chr(0x1f)
 
 class PacketizerTest (unittest.TestCase):
 
-    def test_1_write(self):
+    def test_write(self):
         rsock = LoopSocket()
         wsock = LoopSocket()
         rsock.link(wsock)
@@ -68,7 +70,7 @@ class PacketizerTest (unittest.TestCase):
             b'\x43\x91\x97\xbd\x5b\x50\xac\x25\x87\xc2\xc4\x6b\xc7\xe9\x38\xc0', data[:16]
         )
 
-    def test_2_read(self):
+    def test_read(self):
         rsock = LoopSocket()
         wsock = LoopSocket()
         rsock.link(wsock)
@@ -88,9 +90,8 @@ class PacketizerTest (unittest.TestCase):
         self.assertEqual(1, m.get_int())
         self.assertEqual(900, m.get_int())
 
-    def test_3_closed(self):
-        if sys.platform.startswith("win"): # no SIGALRM on windows
-            return
+    @pytest.mark.skipif(sys.platform.startswith('win'), reason="no SIGALRM on windows")
+    def test_closed(self):
         rsock = LoopSocket()
         wsock = LoopSocket()
         rsock.link(wsock)

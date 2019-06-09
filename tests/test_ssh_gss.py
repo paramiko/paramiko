@@ -134,7 +134,7 @@ class GSSAuthTest(KerberosTestCase):
         stdout.close()
         stderr.close()
 
-    def test_1_gss_auth(self):
+    def test_gss_auth(self):
         """
         Verify that Paramiko can handle SSHv2 GSS-API / SSPI authentication
         (gssapi-with-mic) in client and server mode.
@@ -142,7 +142,7 @@ class GSSAuthTest(KerberosTestCase):
         self._test_connection(allow_agent=False,
                               look_for_keys=False)
 
-    def test_2_auth_trickledown(self):
+    def test_auth_trickledown(self):
         """
         Failed gssapi-with-mic auth doesn't prevent subsequent key auth from
         succeeding

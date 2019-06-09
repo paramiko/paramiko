@@ -35,7 +35,7 @@ class GSSAPITest(KerberosTestCase):
         self.server_mode = False
         update_env(self, self.realm.env)
 
-    def test_1_pyasn1(self):
+    def test_pyasn1(self):
         """
         Test the used methods of pyasn1.
         """
@@ -185,13 +185,13 @@ class GSSAPITest(KerberosTestCase):
                 c_token = token[0].Buffer
                 self.assertNotEqual(0, error)
 
-    def test_2_gssapi_sspi_client(self):
+    def test_gssapi_sspi_client(self):
         """
         Test the used methods of python-gssapi or sspi, sspicon from pywin32.
         """
         self._gssapi_sspi_test()
 
-    def test_3_gssapi_sspi_server(self):
+    def test_gssapi_sspi_server(self):
         """
         Test the used methods of python-gssapi or sspi, sspicon from pywin32.
         """
