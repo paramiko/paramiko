@@ -47,6 +47,7 @@ from paramiko.kex_curve25519 import KexCurve25519
 def dummy_urandom(n):
     return byte_chr(0xcc) * n
 
+
 def dummy_generate_key_pair(obj):
     private_key_value = 94761803665136558137557783047955027733968423115106677159790289642479432803037  # noqa: E501
     public_key_numbers = "042bdab212fa8ba1b7c843301682a4db424d307246c7e1e6083c41d9ca7b098bf30b3d63e2ec6278488c135360456cc054b3444ecc45998c08894cbc1370f5f989"  # noqa: E501
@@ -64,6 +65,7 @@ def dummy_generate_key_pair(obj):
     obj.Q_C = _ecdh_from_encoded_point(
         ec.SECP256R1(), unhexlify(public_key_numbers)
     )
+
 
 def dummy_generate_key_curve25519(obj):
     private_key_value = unhexlify(

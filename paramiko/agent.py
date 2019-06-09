@@ -43,7 +43,6 @@ cSSH2_AGENTC_SIGN_REQUEST = byte_chr(13)
 SSH2_AGENT_SIGN_RESPONSE = 14
 
 
-
 class AgentSSH(object):
     def __init__(self):
         self._conn = None

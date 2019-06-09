@@ -42,6 +42,7 @@ key_dispatch_table = {
     'rsa': RSAKey,
 }
 
+
 def progress(arg=None):
     if not arg:
         sys.stdout.write('0%\x08\x08\x08 ')
@@ -58,7 +59,6 @@ def progress(arg=None):
 
 
 if __name__ == '__main__':
-
     phrase = None
     pfunc = None
 

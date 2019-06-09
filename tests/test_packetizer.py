@@ -36,6 +36,7 @@ from .loop import LoopSocket
 x55 = byte_chr(0x55)
 x1f = byte_chr(0x1f)
 
+
 class PacketizerTest (unittest.TestCase):
 
     def test_1_write(self):

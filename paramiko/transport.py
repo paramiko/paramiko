@@ -26,6 +26,7 @@ import socket
 import sys
 import threading
 import time
+import atexit
 import weakref
 from hashlib import sha1, sha256, sha512
 
@@ -79,12 +80,12 @@ from paramiko.util import retry_on_signal, ClosingContextManager, clamp_value
 # for thread cleanup
 _active_threads = []
 
+
 def _join_lingering_threads():
     for thr in _active_threads:
         thr.stop_thread()
 
 
-import atexit
 atexit.register(_join_lingering_threads)
 
 
@@ -202,7 +203,6 @@ class Transport(threading.Thread, ClosingContextManager):
             'key-size': 24
         },
     }
-
 
     _mac_info = {
         'hmac-sha1': {'class': sha1, 'size': 20},
@@ -2009,7 +2009,6 @@ class Transport(threading.Thread, ClosingContextManager):
             if self.sys.modules is not None:
                 raise
 
-
     def _log_agreement(self, which, local, remote):
         # Log useful, non-duplicative line re: an agreed-upon algorithm.
         # Old code implied algorithms could be asymmetrical (different for
@@ -2148,7 +2147,8 @@ class Transport(threading.Thread, ClosingContextManager):
         kex_follows = m.get_boolean()
         m.get_int() # unused
 
-        self._log(DEBUG,
+        self._log(
+            DEBUG,
             'kex algos:' + str(kex_algo_list) +
             ' server key:' + str(server_key_algo_list) +
             ' client encrypt:' + str(client_encrypt_algo_list) +
@@ -2619,8 +2619,8 @@ class Transport(threading.Thread, ClosingContextManager):
         m.add_int(self.default_window_size)
         m.add_int(self.default_max_packet_size)
         self._send_message(m)
-        self._log(DEBUG,
-            'Secsh channel {:d} ({}) opened.'.format(my_chanid, kind)
+        self._log(
+            DEBUG, 'Secsh channel {:d} ({}) opened.'.format(my_chanid, kind)
         )
         if kind == 'auth-agent@openssh.com':
             self._forward_agent_handler(chan)
@@ -2734,7 +2734,6 @@ class SecurityOptions (object):
     @key_types.setter
     def key_types(self, x):
         self._set('_preferred_keys', '_key_info', x)
-
 
     @property
     def kex(self):

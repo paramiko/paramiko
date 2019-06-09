@@ -261,7 +261,6 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
                     num = self._async_request(type(None), CMD_READDIR, handle)
                     nums.append(num)
 
-
                 # For each of our sent requests
                 # Read and parse the corresponding packets
                 # If we're at the end of our queued requests, then fire off
@@ -290,7 +289,6 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
             except EOFError:
                 self._request(CMD_CLOSE, handle)
                 return
-
 
     def open(self, filename, mode='r', bufsize=-1):
         """

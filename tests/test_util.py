@@ -123,18 +123,15 @@ class UtilTest(unittest.TestCase):
 
         for host, values in {
             'irc.danger.com':   {'crazy': 'something dumb',
-                                'hostname': 'irc.danger.com',
                                 'user': 'robey'},
             'irc.example.com':  {'crazy': 'something dumb',
-                                'hostname': 'irc.example.com',
                                 'user': 'robey',
                                 'port': '3333'},
             'spoo.example.com': {'crazy': 'something dumb',
-                                'hostname': 'spoo.example.com',
                                 'user': 'robey',
                                 'port': '3333'}
         }.items():
-            values = dict(values,
+            values.update(
                 hostname=host,
                 identityfile=[os.path.expanduser("~/.ssh/id_rsa")]
             )

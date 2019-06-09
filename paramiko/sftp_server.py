@@ -481,4 +481,4 @@ class SFTPServer (BaseSFTP, SubsystemHandler):
             self._send_status(request_number, SFTP_OP_UNSUPPORTED)
 
 
-from paramiko.sftp_handle import SFTPHandle
+from paramiko.sftp_handle import SFTPHandle  # noqa: E402

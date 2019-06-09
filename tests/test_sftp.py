@@ -178,7 +178,6 @@ class TestSFTP(object):
             except:
                 pass
 
-
     def test_5a_posix_rename(self, sftp):
         """Test posix-rename@openssh.com protocol extension."""
         try:
@@ -207,7 +206,6 @@ class TestSFTP(object):
                 sftp.remove(sftp.FOLDER + '/b')
             except:
                 pass
-
 
     def test_6_folder(self, sftp):
         """
@@ -730,7 +728,6 @@ class TestSFTP(object):
             assert data == NON_UTF8_DATA
         finally:
             sftp.remove('%s/nonutf8data' % sftp.FOLDER)
-
 
     def test_sftp_attributes_empty_str(self, sftp):
         sftp_attributes = SFTPAttributes()
