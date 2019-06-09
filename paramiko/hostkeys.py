@@ -19,8 +19,12 @@
 
 import binascii
 import os
+import sys
 
-from collections import MutableMapping
+if sys.version_info[:2] >= (3, 3):
+    from collections.abc import MutableMapping
+else:
+    from collections import MutableMapping
 from hashlib import sha1
 from hmac import HMAC
 
@@ -136,7 +140,6 @@ class HostKeys(MutableMapping):
         """
 
         class SubDict(MutableMapping):
-
             def __init__(self, hostname, entries, hostkeys):
                 self._hostname = hostname
                 self._entries = entries
@@ -308,7 +311,6 @@ class HostKeys(MutableMapping):
 
 
 class InvalidHostKey(Exception):
-
     def __init__(self, line, exc):
         self.line = line
         self.exc = exc

@@ -40,7 +40,7 @@ def test(
     # running headless? Probably?
     if color:
         opts += " --color=yes"
-    opts += " --capture={0}".format(capture)
+    opts += " --capture={}".format(capture)
     if "-m" not in opts and not include_slow:
         opts += " -m 'not slow'"
     if k is not None and not ("-k" in opts if opts else False):
@@ -145,6 +145,7 @@ ns.configure(
             "changelog_file": join(
                 www.configuration()["sphinx"]["source"], "changelog.rst"
             ),
-        }
+        },
+        "travis": {"black": {"version": "18.6b4"}},
     }
 )

@@ -28,32 +28,34 @@ import socket
 import time
 import threading
 import random
-from hashlib import sha1
 import unittest
+from mock import Mock
 
 from paramiko import (
-    Transport,
+    AuthHandler,
+    ChannelException,
+    DSSKey,
+    Packetizer,
+    RSAKey,
+    SSHException,
     SecurityOptions,
     ServerInterface,
-    RSAKey,
-    DSSKey,
-    SSHException,
-    ChannelException,
-    Packetizer,
-    Channel,
+    Transport,
 )
 from paramiko import AUTH_FAILED, AUTH_SUCCESSFUL
 from paramiko import OPEN_SUCCEEDED, OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED
 from paramiko.common import (
-    MSG_KEXINIT,
-    cMSG_CHANNEL_WINDOW_ADJUST,
+    DEFAULT_MAX_PACKET_SIZE,
+    DEFAULT_WINDOW_SIZE,
+    MAX_WINDOW_SIZE,
     MIN_PACKET_SIZE,
     MIN_WINDOW_SIZE,
-    MAX_WINDOW_SIZE,
-    DEFAULT_WINDOW_SIZE,
-    DEFAULT_MAX_PACKET_SIZE,
+    MSG_KEXINIT,
+    MSG_USERAUTH_SUCCESS,
+    cMSG_CHANNEL_WINDOW_ADJUST,
+    cMSG_UNIMPLEMENTED,
 )
-from paramiko.py3compat import bytes
+from paramiko.py3compat import bytes, byte_chr
 from paramiko.message import Message
 
 from .util import needs_builtin, _support, slow
@@ -139,7 +141,6 @@ class NullServer(ServerInterface):
 
 
 class TransportTest(unittest.TestCase):
-
     def setUp(self):
         self.socks = LoopSocket()
         self.sockc = LoopSocket()
@@ -180,7 +181,7 @@ class TransportTest(unittest.TestCase):
         self.assertTrue(event.is_set())
         self.assertTrue(self.ts.is_active())
 
-    def test_1_security_options(self):
+    def test_security_options(self):
         o = self.tc.get_security_options()
         self.assertEqual(type(o), SecurityOptions)
         self.assertTrue(("aes256-cbc", "blowfish-cbc") != o.ciphers)
@@ -197,7 +198,7 @@ class TransportTest(unittest.TestCase):
         except TypeError:
             pass
 
-    def test_1b_security_options_reset(self):
+    def testb_security_options_reset(self):
         o = self.tc.get_security_options()
         # should not throw any exceptions
         o.ciphers = o.ciphers
@@ -206,21 +207,17 @@ class TransportTest(unittest.TestCase):
         o.kex = o.kex
         o.compression = o.compression
 
-    def test_2_compute_key(self):
-        self.tc.K = (
-            123281095979686581523377256114209720774539068973101330872763622971399429481072519713536292772709507296759612401802191955568143056534122385270077606457721553469730659233569339356140085284052436697480759510519672848743794433460113118986816826624865291116513647975790797391795651716378444844877749505443714557929
-        )
-        self.tc.H = (
-            b"\x0C\x83\x07\xCD\xE6\x85\x6F\xF3\x0B\xA9\x36\x84\xEB\x0F\x04\xC2\x52\x0E\x9E\xD3"
-        )
+    def test_compute_key(self):
+        self.tc.K = 123281095979686581523377256114209720774539068973101330872763622971399429481072519713536292772709507296759612401802191955568143056534122385270077606457721553469730659233569339356140085284052436697480759510519672848743794433460113118986816826624865291116513647975790797391795651716378444844877749505443714557929  # noqa
+        self.tc.H = b"\x0C\x83\x07\xCD\xE6\x85\x6F\xF3\x0B\xA9\x36\x84\xEB\x0F\x04\xC2\x52\x0E\x9E\xD3"  # noqa
         self.tc.session_id = self.tc.H
         key = self.tc._compute_key("C", 32)
         self.assertEqual(
-            b"207E66594CA87C44ECCBA3B3CD39FDDB378E6FDB0F97C54B2AA0CFBF900CD995",
+            b"207E66594CA87C44ECCBA3B3CD39FDDB378E6FDB0F97C54B2AA0CFBF900CD995",  # noqa
             hexlify(key).upper(),
         )
 
-    def test_3_simple(self):
+    def test_simple(self):
         """
         verify that we can establish an ssh link with ourselves across the
         loopback sockets.  this is hardly "simple" but it's simpler than the
@@ -248,7 +245,7 @@ class TransportTest(unittest.TestCase):
         self.assertEqual(True, self.tc.is_authenticated())
         self.assertEqual(True, self.ts.is_authenticated())
 
-    def test_3a_long_banner(self):
+    def testa_long_banner(self):
         """
         verify that a long banner doesn't mess up the handshake.
         """
@@ -267,7 +264,7 @@ class TransportTest(unittest.TestCase):
         self.assertTrue(event.is_set())
         self.assertTrue(self.ts.is_active())
 
-    def test_4_special(self):
+    def test_special(self):
         """
         verify that the client can demand odd handshake settings, and can
         renegotiate keys in mid-stream.
@@ -288,7 +285,7 @@ class TransportTest(unittest.TestCase):
         self.ts.send_ignore(1024)
 
     @slow
-    def test_5_keepalive(self):
+    def test_keepalive(self):
         """
         verify that the keepalive will be sent.
         """
@@ -298,7 +295,7 @@ class TransportTest(unittest.TestCase):
         time.sleep(2)
         self.assertEqual("keepalive@lag.net", self.server._global_request)
 
-    def test_6_exec_command(self):
+    def test_exec_command(self):
         """
         verify that exec_command() does something reasonable.
         """
@@ -342,7 +339,7 @@ class TransportTest(unittest.TestCase):
         self.assertEqual("This is on stderr.\n", f.readline())
         self.assertEqual("", f.readline())
 
-    def test_6a_channel_can_be_used_as_context_manager(self):
+    def testa_channel_can_be_used_as_context_manager(self):
         """
         verify that exec_command() does something reasonable.
         """
@@ -358,7 +355,7 @@ class TransportTest(unittest.TestCase):
                 self.assertEqual("Hello there.\n", f.readline())
                 self.assertEqual("", f.readline())
 
-    def test_7_invoke_shell(self):
+    def test_invoke_shell(self):
         """
         verify that invoke_shell() does something reasonable.
         """
@@ -372,18 +369,18 @@ class TransportTest(unittest.TestCase):
         chan.close()
         self.assertEqual("", f.readline())
 
-    def test_8_channel_exception(self):
+    def test_channel_exception(self):
         """
         verify that ChannelException is thrown for a bad open-channel request.
         """
         self.setup_test_server()
         try:
-            chan = self.tc.open_channel("bogus")
+            self.tc.open_channel("bogus")
             self.fail("expected exception")
         except ChannelException as e:
             self.assertTrue(e.code == OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED)
 
-    def test_9_exit_status(self):
+    def test_exit_status(self):
         """
         verify that get_exit_status() works.
         """
@@ -412,7 +409,7 @@ class TransportTest(unittest.TestCase):
         self.assertEqual(23, chan.recv_exit_status())
         chan.close()
 
-    def test_A_select(self):
+    def test_select(self):
         """
         verify that select() on a channel works.
         """
@@ -467,7 +464,7 @@ class TransportTest(unittest.TestCase):
         # ...and now is closed.
         self.assertEqual(True, p._closed)
 
-    def test_B_renegotiate(self):
+    def test_renegotiate(self):
         """
         verify that a transport can correctly renegotiate mid-stream.
         """
@@ -491,7 +488,7 @@ class TransportTest(unittest.TestCase):
 
         schan.close()
 
-    def test_C_compression(self):
+    def test_compression(self):
         """
         verify that zlib compression is basically working.
         """
@@ -509,14 +506,15 @@ class TransportTest(unittest.TestCase):
         bytes2 = self.tc.packetizer._Packetizer__sent_bytes
         block_size = self.tc._cipher_info[self.tc.local_cipher]["block-size"]
         mac_size = self.tc._mac_info[self.tc.local_mac]["size"]
-        # tests show this is actually compressed to *52 bytes*!  including packet overhead!  nice!! :)
+        # tests show this is actually compressed to *52 bytes*!  including
+        # packet overhead!  nice!! :)
         self.assertTrue(bytes2 - bytes < 1024)
         self.assertEqual(16 + block_size + mac_size, bytes2 - bytes)
 
         chan.close()
         schan.close()
 
-    def test_D_x11(self):
+    def test_x11(self):
         """
         verify that an x11 port can be requested and opened.
         """
@@ -554,7 +552,7 @@ class TransportTest(unittest.TestCase):
         chan.close()
         schan.close()
 
-    def test_E_reverse_port_forwarding(self):
+    def test_reverse_port_forwarding(self):
         """
         verify that a client can ask the server to open a reverse port for
         forwarding.
@@ -562,7 +560,7 @@ class TransportTest(unittest.TestCase):
         self.setup_test_server()
         chan = self.tc.open_session()
         chan.exec_command("yes")
-        schan = self.ts.accept(1.0)
+        self.ts.accept(1.0)
 
         requested = []
 
@@ -593,7 +591,7 @@ class TransportTest(unittest.TestCase):
         self.tc.cancel_port_forward("127.0.0.1", port)
         self.assertTrue(self.server._listen is None)
 
-    def test_F_port_forwarding(self):
+    def test_port_forwarding(self):
         """
         verify that a client can forward new connections from a locally-
         forwarded port.
@@ -601,7 +599,7 @@ class TransportTest(unittest.TestCase):
         self.setup_test_server()
         chan = self.tc.open_session()
         chan.exec_command("yes")
-        schan = self.ts.accept(1.0)
+        self.ts.accept(1.0)
 
         # open a port on the "server" that the client will ask to forward to.
         greeting_server = socket.socket()
@@ -625,7 +623,7 @@ class TransportTest(unittest.TestCase):
         self.assertEqual(b"Hello!\n", cs.recv(7))
         cs.close()
 
-    def test_G_stderr_select(self):
+    def test_stderr_select(self):
         """
         verify that select() on a channel works even if only stderr is
         receiving data.
@@ -664,7 +662,7 @@ class TransportTest(unittest.TestCase):
         schan.close()
         chan.close()
 
-    def test_H_send_ready(self):
+    def test_send_ready(self):
         """
         verify that send_ready() indicates when a send would not block.
         """
@@ -688,9 +686,10 @@ class TransportTest(unittest.TestCase):
         chan.close()
         self.assertEqual(chan.send_ready(), True)
 
-    def test_I_rekey_deadlock(self):
+    def test_rekey_deadlock(self):
         """
-        Regression test for deadlock when in-transit messages are received after MSG_KEXINIT is sent
+        Regression test for deadlock when in-transit messages are received
+        after MSG_KEXINIT is sent
 
         Note: When this test fails, it may leak threads.
         """
@@ -713,12 +712,15 @@ class TransportTest(unittest.TestCase):
         #      MSG_KEXINIT to the remote host.
         #
         # On the remote host (using any SSH implementation):
-        #   5. The MSG_CHANNEL_DATA is received, and MSG_CHANNEL_WINDOW_ADJUST is sent.
-        #   6. The MSG_KEXINIT is received, and a corresponding MSG_KEXINIT is sent.
+        #   5. The MSG_CHANNEL_DATA is received, and MSG_CHANNEL_WINDOW_ADJUST
+        #      is sent.
+        #   6. The MSG_KEXINIT is received, and a corresponding MSG_KEXINIT is
+        #      sent.
         #
         # In the main thread:
         #   7. The user's program calls Channel.send().
-        #   8. Channel.send acquires Channel.lock, then calls Transport._send_user_message().
+        #   8. Channel.send acquires Channel.lock, then calls
+        #      Transport._send_user_message().
         #   9. Transport._send_user_message waits for Transport.clear_to_send
         #      to be set (i.e., it waits for re-keying to complete).
         #      Channel.lock is still held.
@@ -738,7 +740,6 @@ class TransportTest(unittest.TestCase):
         # expires, a deadlock is assumed.
 
         class SendThread(threading.Thread):
-
             def __init__(self, chan, iterations, done_event):
                 threading.Thread.__init__(
                     self, None, None, self.__class__.__name__
@@ -763,7 +764,6 @@ class TransportTest(unittest.TestCase):
                     self.watchdog_event.set()
 
         class ReceiveThread(threading.Thread):
-
             def __init__(self, chan, done_event):
                 threading.Thread.__init__(
                     self, None, None, self.__class__.__name__
@@ -855,7 +855,7 @@ class TransportTest(unittest.TestCase):
         schan.close()
         chan.close()
 
-    def test_J_sanitze_packet_size(self):
+    def test_sanitze_packet_size(self):
         """
         verify that we conform to the rfc of packet and window sizes.
         """
@@ -866,7 +866,7 @@ class TransportTest(unittest.TestCase):
         ]:
             self.assertEqual(self.tc._sanitize_packet_size(val), correct)
 
-    def test_K_sanitze_window_size(self):
+    def test_sanitze_window_size(self):
         """
         verify that we conform to the rfc of packet and window sizes.
         """
@@ -878,7 +878,7 @@ class TransportTest(unittest.TestCase):
             self.assertEqual(self.tc._sanitize_window_size(val), correct)
 
     @slow
-    def test_L_handshake_timeout(self):
+    def test_handshake_timeout(self):
         """
         verify that we can get a hanshake timeout.
         """
@@ -890,7 +890,6 @@ class TransportTest(unittest.TestCase):
         # (Doing this on the server's transport *sounds* more 'correct' but
         # actually doesn't work nearly as well for whatever reason.)
         class SlowPacketizer(Packetizer):
-
             def read_message(self):
                 time.sleep(1)
                 return super(SlowPacketizer, self).read_message()
@@ -916,7 +915,7 @@ class TransportTest(unittest.TestCase):
             password="pygmalion",
         )
 
-    def test_M_select_after_close(self):
+    def test_select_after_close(self):
         """
         verify that select works when a channel is already closed.
         """
@@ -971,11 +970,11 @@ class TransportTest(unittest.TestCase):
             # send() accepts buffer instances
             sent = 0
             while sent < len(data):
-                sent += chan.send(buffer(data, sent, 8))
+                sent += chan.send(buffer(data, sent, 8))  # noqa
             self.assertEqual(sfile.read(len(data)), data)
 
             # sendall() accepts a buffer instance
-            chan.sendall(buffer(data))
+            chan.sendall(buffer(data))  # noqa
             self.assertEqual(sfile.read(len(data)), data)
 
     @needs_builtin("memoryview")
@@ -1035,3 +1034,71 @@ class TransportTest(unittest.TestCase):
             assert "forwarding request denied" in str(e)
         else:
             assert False, "Did not raise SSHException!"
+
+    def _send_unimplemented(self, server_is_sender):
+        self.setup_test_server()
+        sender, recipient = self.tc, self.ts
+        if server_is_sender:
+            sender, recipient = self.ts, self.tc
+        recipient._send_message = Mock()
+        msg = Message()
+        msg.add_byte(cMSG_UNIMPLEMENTED)
+        sender._send_message(msg)
+        # TODO: I hate this but I literally don't see a good way to know when
+        # the recipient has received the sender's message (there are no
+        # existing threading events in play that work for this), esp in this
+        # case where we don't WANT a response (as otherwise we could
+        # potentially try blocking on the sender's receipt of a reply...maybe).
+        time.sleep(0.1)
+        assert not recipient._send_message.called
+
+    def test_server_does_not_respond_to_MSG_UNIMPLEMENTED(self):
+        self._send_unimplemented(server_is_sender=False)
+
+    def test_client_does_not_respond_to_MSG_UNIMPLEMENTED(self):
+        self._send_unimplemented(server_is_sender=True)
+
+    def _send_client_message(self, message_type):
+        self.setup_test_server(connect_kwargs={})
+        self.ts._send_message = Mock()
+        # NOTE: this isn't 100% realistic (most of these message types would
+        # have actual other fields in 'em) but it suffices to test the level of
+        # message dispatch we're interested in here.
+        msg = Message()
+        # TODO: really not liking the whole cMSG_XXX vs MSG_XXX duality right
+        # now, esp since the former is almost always just byte_chr(the
+        # latter)...but since that's the case...
+        msg.add_byte(byte_chr(message_type))
+        self.tc._send_message(msg)
+        # No good way to actually wait for server action (see above tests re:
+        # MSG_UNIMPLEMENTED). Grump.
+        time.sleep(0.1)
+
+    def _expect_unimplemented(self):
+        # Ensure MSG_UNIMPLEMENTED was sent (implies it hit end of loop instead
+        # of truly handling the given message).
+        # NOTE: When bug present, this will actually be the first thing that
+        # fails (since in many cases actual message handling doesn't involve
+        # sending a message back right away).
+        assert self.ts._send_message.call_count == 1
+        reply = self.ts._send_message.call_args[0][0]
+        reply.rewind()  # Because it's pre-send, not post-receive
+        assert reply.get_byte() == cMSG_UNIMPLEMENTED
+
+    def test_server_transports_reject_client_message_types(self):
+        # TODO: handle Transport's own tables too, not just its inner auth
+        # handler's table. See TODOs in auth_handler.py
+        for message_type in AuthHandler._client_handler_table:
+            self._send_client_message(message_type)
+            self._expect_unimplemented()
+            # Reset for rest of loop
+            self.tearDown()
+            self.setUp()
+
+    def test_server_rejects_client_MSG_USERAUTH_SUCCESS(self):
+        self._send_client_message(MSG_USERAUTH_SUCCESS)
+        # Sanity checks
+        assert not self.ts.authenticated
+        assert not self.ts.auth_handler.authenticated
+        # Real fix's behavior
+        self._expect_unimplemented()

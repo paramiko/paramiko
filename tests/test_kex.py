@@ -24,8 +24,16 @@ from binascii import hexlify, unhexlify
 import os
 import unittest
 
+from mock import Mock, patch
+import pytest
+
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.asymmetric import ec
+
+try:
+    from cryptography.hazmat.primitives.asymmetric import x25519
+except ImportError:
+    x25519 = None
 
 import paramiko.util
 from paramiko.kex_group1 import KexGroup1
@@ -35,6 +43,7 @@ from paramiko import Message
 from paramiko.common import byte_chr
 from paramiko.kex_ecdh_nist import KexNistp256
 from paramiko.kex_group16 import KexGroup16SHA512
+from paramiko.kex_curve25519 import KexCurve25519
 
 
 def dummy_urandom(n):
@@ -42,30 +51,25 @@ def dummy_urandom(n):
 
 
 def dummy_generate_key_pair(obj):
-    private_key_value = (
-        94761803665136558137557783047955027733968423115106677159790289642479432803037
-    )
-    public_key_numbers = (
-        "042bdab212fa8ba1b7c843301682a4db424d307246c7e1e6083c41d9ca7b098bf30b3d63e2ec6278488c135360456cc054b3444ecc45998c08894cbc1370f5f989"
-    )
-    public_key_numbers_obj = ec.EllipticCurvePublicNumbers.from_encoded_point(
+    private_key_value = 94761803665136558137557783047955027733968423115106677159790289642479432803037  # noqa
+    public_key_numbers = "042bdab212fa8ba1b7c843301682a4db424d307246c7e1e6083c41d9ca7b098bf30b3d63e2ec6278488c135360456cc054b3444ecc45998c08894cbc1370f5f989"  # noqa
+    public_key_numbers_obj = ec.EllipticCurvePublicKey.from_encoded_point(
         ec.SECP256R1(), unhexlify(public_key_numbers)
-    )
+    ).public_numbers()
     obj.P = ec.EllipticCurvePrivateNumbers(
         private_value=private_key_value, public_numbers=public_key_numbers_obj
     ).private_key(default_backend())
     if obj.transport.server_mode:
-        obj.Q_S = ec.EllipticCurvePublicNumbers.from_encoded_point(
+        obj.Q_S = ec.EllipticCurvePublicKey.from_encoded_point(
             ec.SECP256R1(), unhexlify(public_key_numbers)
-        ).public_key(default_backend())
+        )
         return
-    obj.Q_C = ec.EllipticCurvePublicNumbers.from_encoded_point(
+    obj.Q_C = ec.EllipticCurvePublicKey.from_encoded_point(
         ec.SECP256R1(), unhexlify(public_key_numbers)
-    ).public_key(default_backend())
+    )
 
 
 class FakeKey(object):
-
     def __str__(self):
         return "fake-key"
 
@@ -77,9 +81,7 @@ class FakeKey(object):
 
 
 class FakeModulusPack(object):
-    P = (
-        0xFFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD129024E088A67CC74020BBEA63B139B22514A08798E3404DDEF9519B3CD3A431B302B0A6DF25F14374FE1356D6D51C245E485B576625E7EC6F44C42E9A637ED6B0BFF5CB6F406B7EDEE386BFB5A899FA5AE9F24117C4B1FE649286651ECE65381FFFFFFFFFFFFFFFF
-    )
+    P = 0xFFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD129024E088A67CC74020BBEA63B139B22514A08798E3404DDEF9519B3CD3A431B302B0A6DF25F14374FE1356D6D51C245E485B576625E7EC6F44C42E9A637ED6B0BFF5CB6F406B7EDEE386BFB5A899FA5AE9F24117C4B1FE649286651ECE65381FFFFFFFFFFFFFFFF  # noqa
     G = 2
 
     def get_modulus(self, min, ask, max):
@@ -120,9 +122,7 @@ class FakeTransport(object):
 
 class KexTest(unittest.TestCase):
 
-    K = (
-        14730343317708716439807310032871972459448364195094179797249681733965528989482751523943515690110179031004049109375612685505881911274101441415545039654102474376472240501616988799699744135291070488314748284283496055223852115360852283821334858541043710301057312858051901453919067023103730011648890038847384890504
-    )
+    K = 14730343317708716439807310032871972459448364195094179797249681733965528989482751523943515690110179031004049109375612685505881911274101441415545039654102474376472240501616988799699744135291070488314748284283496055223852115360852283821334858541043710301057312858051901453919067023103730011648890038847384890504  # noqa
 
     def setUp(self):
         self._original_urandom = os.urandom
@@ -130,18 +130,32 @@ class KexTest(unittest.TestCase):
         self._original_generate_key_pair = KexNistp256._generate_key_pair
         KexNistp256._generate_key_pair = dummy_generate_key_pair
 
+        if KexCurve25519.is_available():
+            static_x25519_key = x25519.X25519PrivateKey.from_private_bytes(
+                unhexlify(
+                    b"2184abc7eb3e656d2349d2470ee695b570c227340c2b2863b6c9ff427af1f040"  # noqa
+                )
+            )
+            mock_x25519 = Mock()
+            mock_x25519.generate.return_value = static_x25519_key
+            patcher = patch(
+                "paramiko.kex_curve25519.X25519PrivateKey", mock_x25519
+            )
+            patcher.start()
+            self.x25519_patcher = patcher
+
     def tearDown(self):
         os.urandom = self._original_urandom
         KexNistp256._generate_key_pair = self._original_generate_key_pair
+        if hasattr(self, "x25519_patcher"):
+            self.x25519_patcher.stop()
 
-    def test_1_group1_client(self):
+    def test_group1_client(self):
         transport = FakeTransport()
         transport.server_mode = False
         kex = KexGroup1(transport)
         kex.start_kex()
-        x = (
-            b"1E000000807E2DDB1743F3487D6545F04F1C8476092FB912B013626AB5BCEB764257D88BBA64243B9F348DF7B41B8C814A995E00299913503456983FFB9178D3CD79EB6D55522418A8ABF65375872E55938AB99A84A0B5FC8A1ECC66A7C3766E7E0F80B7CE2C9225FC2DD683F4764244B72963BBB383F529DCF0C5D17740B8A2ADBE9208D4"
-        )
+        x = b"1E000000807E2DDB1743F3487D6545F04F1C8476092FB912B013626AB5BCEB764257D88BBA64243B9F348DF7B41B8C814A995E00299913503456983FFB9178D3CD79EB6D55522418A8ABF65375872E55938AB99A84A0B5FC8A1ECC66A7C3766E7E0F80B7CE2C9225FC2DD683F4764244B72963BBB383F529DCF0C5D17740B8A2ADBE9208D4"  # noqa
         self.assertEqual(x, hexlify(transport._message.asbytes()).upper())
         self.assertEqual(
             (paramiko.kex_group1._MSG_KEXDH_REPLY,), transport._expect
@@ -160,7 +174,7 @@ class KexTest(unittest.TestCase):
         self.assertEqual((b"fake-host-key", b"fake-sig"), transport._verify)
         self.assertTrue(transport._activated)
 
-    def test_2_group1_server(self):
+    def test_group1_server(self):
         transport = FakeTransport()
         transport.server_mode = True
         kex = KexGroup1(transport)
@@ -174,15 +188,13 @@ class KexTest(unittest.TestCase):
         msg.rewind()
         kex.parse_next(paramiko.kex_group1._MSG_KEXDH_INIT, msg)
         H = b"B16BF34DD10945EDE84E9C1EF24A14BFDC843389"
-        x = (
-            b"1F0000000866616B652D6B6579000000807E2DDB1743F3487D6545F04F1C8476092FB912B013626AB5BCEB764257D88BBA64243B9F348DF7B41B8C814A995E00299913503456983FFB9178D3CD79EB6D55522418A8ABF65375872E55938AB99A84A0B5FC8A1ECC66A7C3766E7E0F80B7CE2C9225FC2DD683F4764244B72963BBB383F529DCF0C5D17740B8A2ADBE9208D40000000866616B652D736967"
-        )
+        x = b"1F0000000866616B652D6B6579000000807E2DDB1743F3487D6545F04F1C8476092FB912B013626AB5BCEB764257D88BBA64243B9F348DF7B41B8C814A995E00299913503456983FFB9178D3CD79EB6D55522418A8ABF65375872E55938AB99A84A0B5FC8A1ECC66A7C3766E7E0F80B7CE2C9225FC2DD683F4764244B72963BBB383F529DCF0C5D17740B8A2ADBE9208D40000000866616B652D736967"  # noqa
         self.assertEqual(self.K, transport._K)
         self.assertEqual(H, hexlify(transport._H).upper())
         self.assertEqual(x, hexlify(transport._message.asbytes()).upper())
         self.assertTrue(transport._activated)
 
-    def test_3_gex_client(self):
+    def test_gex_client(self):
         transport = FakeTransport()
         transport.server_mode = False
         kex = KexGex(transport)
@@ -198,9 +210,7 @@ class KexTest(unittest.TestCase):
         msg.add_mpint(FakeModulusPack.G)
         msg.rewind()
         kex.parse_next(paramiko.kex_gex._MSG_KEXDH_GEX_GROUP, msg)
-        x = (
-            b"20000000807E2DDB1743F3487D6545F04F1C8476092FB912B013626AB5BCEB764257D88BBA64243B9F348DF7B41B8C814A995E00299913503456983FFB9178D3CD79EB6D55522418A8ABF65375872E55938AB99A84A0B5FC8A1ECC66A7C3766E7E0F80B7CE2C9225FC2DD683F4764244B72963BBB383F529DCF0C5D17740B8A2ADBE9208D4"
-        )
+        x = b"20000000807E2DDB1743F3487D6545F04F1C8476092FB912B013626AB5BCEB764257D88BBA64243B9F348DF7B41B8C814A995E00299913503456983FFB9178D3CD79EB6D55522418A8ABF65375872E55938AB99A84A0B5FC8A1ECC66A7C3766E7E0F80B7CE2C9225FC2DD683F4764244B72963BBB383F529DCF0C5D17740B8A2ADBE9208D4"  # noqa
         self.assertEqual(x, hexlify(transport._message.asbytes()).upper())
         self.assertEqual(
             (paramiko.kex_gex._MSG_KEXDH_GEX_REPLY,), transport._expect
@@ -218,7 +228,7 @@ class KexTest(unittest.TestCase):
         self.assertEqual((b"fake-host-key", b"fake-sig"), transport._verify)
         self.assertTrue(transport._activated)
 
-    def test_4_gex_old_client(self):
+    def test_gex_old_client(self):
         transport = FakeTransport()
         transport.server_mode = False
         kex = KexGex(transport)
@@ -234,9 +244,7 @@ class KexTest(unittest.TestCase):
         msg.add_mpint(FakeModulusPack.G)
         msg.rewind()
         kex.parse_next(paramiko.kex_gex._MSG_KEXDH_GEX_GROUP, msg)
-        x = (
-            b"20000000807E2DDB1743F3487D6545F04F1C8476092FB912B013626AB5BCEB764257D88BBA64243B9F348DF7B41B8C814A995E00299913503456983FFB9178D3CD79EB6D55522418A8ABF65375872E55938AB99A84A0B5FC8A1ECC66A7C3766E7E0F80B7CE2C9225FC2DD683F4764244B72963BBB383F529DCF0C5D17740B8A2ADBE9208D4"
-        )
+        x = b"20000000807E2DDB1743F3487D6545F04F1C8476092FB912B013626AB5BCEB764257D88BBA64243B9F348DF7B41B8C814A995E00299913503456983FFB9178D3CD79EB6D55522418A8ABF65375872E55938AB99A84A0B5FC8A1ECC66A7C3766E7E0F80B7CE2C9225FC2DD683F4764244B72963BBB383F529DCF0C5D17740B8A2ADBE9208D4"  # noqa
         self.assertEqual(x, hexlify(transport._message.asbytes()).upper())
         self.assertEqual(
             (paramiko.kex_gex._MSG_KEXDH_GEX_REPLY,), transport._expect
@@ -254,7 +262,7 @@ class KexTest(unittest.TestCase):
         self.assertEqual((b"fake-host-key", b"fake-sig"), transport._verify)
         self.assertTrue(transport._activated)
 
-    def test_5_gex_server(self):
+    def test_gex_server(self):
         transport = FakeTransport()
         transport.server_mode = True
         kex = KexGex(transport)
@@ -273,9 +281,7 @@ class KexTest(unittest.TestCase):
         msg.add_int(4096)
         msg.rewind()
         kex.parse_next(paramiko.kex_gex._MSG_KEXDH_GEX_REQUEST, msg)
-        x = (
-            b"1F0000008100FFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD129024E088A67CC74020BBEA63B139B22514A08798E3404DDEF9519B3CD3A431B302B0A6DF25F14374FE1356D6D51C245E485B576625E7EC6F44C42E9A637ED6B0BFF5CB6F406B7EDEE386BFB5A899FA5AE9F24117C4B1FE649286651ECE65381FFFFFFFFFFFFFFFF0000000102"
-        )
+        x = b"1F0000008100FFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD129024E088A67CC74020BBEA63B139B22514A08798E3404DDEF9519B3CD3A431B302B0A6DF25F14374FE1356D6D51C245E485B576625E7EC6F44C42E9A637ED6B0BFF5CB6F406B7EDEE386BFB5A899FA5AE9F24117C4B1FE649286651ECE65381FFFFFFFFFFFFFFFF0000000102"  # noqa
         self.assertEqual(x, hexlify(transport._message.asbytes()).upper())
         self.assertEqual(
             (paramiko.kex_gex._MSG_KEXDH_GEX_INIT,), transport._expect
@@ -285,19 +291,15 @@ class KexTest(unittest.TestCase):
         msg.add_mpint(12345)
         msg.rewind()
         kex.parse_next(paramiko.kex_gex._MSG_KEXDH_GEX_INIT, msg)
-        K = (
-            67592995013596137876033460028393339951879041140378510871612128162185209509220726296697886624612526735888348020498716482757677848959420073720160491114319163078862905400020959196386947926388406687288901564192071077389283980347784184487280885335302632305026248574716290537036069329724382811853044654824945750581
-        )
+        K = 67592995013596137876033460028393339951879041140378510871612128162185209509220726296697886624612526735888348020498716482757677848959420073720160491114319163078862905400020959196386947926388406687288901564192071077389283980347784184487280885335302632305026248574716290537036069329724382811853044654824945750581  # noqa
         H = b"CE754197C21BF3452863B4F44D0B3951F12516EF"
-        x = (
-            b"210000000866616B652D6B6579000000807E2DDB1743F3487D6545F04F1C8476092FB912B013626AB5BCEB764257D88BBA64243B9F348DF7B41B8C814A995E00299913503456983FFB9178D3CD79EB6D55522418A8ABF65375872E55938AB99A84A0B5FC8A1ECC66A7C3766E7E0F80B7CE2C9225FC2DD683F4764244B72963BBB383F529DCF0C5D17740B8A2ADBE9208D40000000866616B652D736967"
-        )
+        x = b"210000000866616B652D6B6579000000807E2DDB1743F3487D6545F04F1C8476092FB912B013626AB5BCEB764257D88BBA64243B9F348DF7B41B8C814A995E00299913503456983FFB9178D3CD79EB6D55522418A8ABF65375872E55938AB99A84A0B5FC8A1ECC66A7C3766E7E0F80B7CE2C9225FC2DD683F4764244B72963BBB383F529DCF0C5D17740B8A2ADBE9208D40000000866616B652D736967"  # noqa
         self.assertEqual(K, transport._K)
         self.assertEqual(H, hexlify(transport._H).upper())
         self.assertEqual(x, hexlify(transport._message.asbytes()).upper())
         self.assertTrue(transport._activated)
 
-    def test_6_gex_server_with_old_client(self):
+    def test_gex_server_with_old_client(self):
         transport = FakeTransport()
         transport.server_mode = True
         kex = KexGex(transport)
@@ -314,9 +316,7 @@ class KexTest(unittest.TestCase):
         msg.add_int(2048)
         msg.rewind()
         kex.parse_next(paramiko.kex_gex._MSG_KEXDH_GEX_REQUEST_OLD, msg)
-        x = (
-            b"1F0000008100FFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD129024E088A67CC74020BBEA63B139B22514A08798E3404DDEF9519B3CD3A431B302B0A6DF25F14374FE1356D6D51C245E485B576625E7EC6F44C42E9A637ED6B0BFF5CB6F406B7EDEE386BFB5A899FA5AE9F24117C4B1FE649286651ECE65381FFFFFFFFFFFFFFFF0000000102"
-        )
+        x = b"1F0000008100FFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD129024E088A67CC74020BBEA63B139B22514A08798E3404DDEF9519B3CD3A431B302B0A6DF25F14374FE1356D6D51C245E485B576625E7EC6F44C42E9A637ED6B0BFF5CB6F406B7EDEE386BFB5A899FA5AE9F24117C4B1FE649286651ECE65381FFFFFFFFFFFFFFFF0000000102"  # noqa
         self.assertEqual(x, hexlify(transport._message.asbytes()).upper())
         self.assertEqual(
             (paramiko.kex_gex._MSG_KEXDH_GEX_INIT,), transport._expect
@@ -326,19 +326,15 @@ class KexTest(unittest.TestCase):
         msg.add_mpint(12345)
         msg.rewind()
         kex.parse_next(paramiko.kex_gex._MSG_KEXDH_GEX_INIT, msg)
-        K = (
-            67592995013596137876033460028393339951879041140378510871612128162185209509220726296697886624612526735888348020498716482757677848959420073720160491114319163078862905400020959196386947926388406687288901564192071077389283980347784184487280885335302632305026248574716290537036069329724382811853044654824945750581
-        )
+        K = 67592995013596137876033460028393339951879041140378510871612128162185209509220726296697886624612526735888348020498716482757677848959420073720160491114319163078862905400020959196386947926388406687288901564192071077389283980347784184487280885335302632305026248574716290537036069329724382811853044654824945750581  # noqa
         H = b"B41A06B2E59043CEFC1AE16EC31F1E2D12EC455B"
-        x = (
-            b"210000000866616B652D6B6579000000807E2DDB1743F3487D6545F04F1C8476092FB912B013626AB5BCEB764257D88BBA64243B9F348DF7B41B8C814A995E00299913503456983FFB9178D3CD79EB6D55522418A8ABF65375872E55938AB99A84A0B5FC8A1ECC66A7C3766E7E0F80B7CE2C9225FC2DD683F4764244B72963BBB383F529DCF0C5D17740B8A2ADBE9208D40000000866616B652D736967"
-        )
+        x = b"210000000866616B652D6B6579000000807E2DDB1743F3487D6545F04F1C8476092FB912B013626AB5BCEB764257D88BBA64243B9F348DF7B41B8C814A995E00299913503456983FFB9178D3CD79EB6D55522418A8ABF65375872E55938AB99A84A0B5FC8A1ECC66A7C3766E7E0F80B7CE2C9225FC2DD683F4764244B72963BBB383F529DCF0C5D17740B8A2ADBE9208D40000000866616B652D736967"  # noqa
         self.assertEqual(K, transport._K)
         self.assertEqual(H, hexlify(transport._H).upper())
         self.assertEqual(x, hexlify(transport._message.asbytes()).upper())
         self.assertTrue(transport._activated)
 
-    def test_7_gex_sha256_client(self):
+    def test_gex_sha256_client(self):
         transport = FakeTransport()
         transport.server_mode = False
         kex = KexGexSHA256(transport)
@@ -354,9 +350,7 @@ class KexTest(unittest.TestCase):
         msg.add_mpint(FakeModulusPack.G)
         msg.rewind()
         kex.parse_next(paramiko.kex_gex._MSG_KEXDH_GEX_GROUP, msg)
-        x = (
-            b"20000000807E2DDB1743F3487D6545F04F1C8476092FB912B013626AB5BCEB764257D88BBA64243B9F348DF7B41B8C814A995E00299913503456983FFB9178D3CD79EB6D55522418A8ABF65375872E55938AB99A84A0B5FC8A1ECC66A7C3766E7E0F80B7CE2C9225FC2DD683F4764244B72963BBB383F529DCF0C5D17740B8A2ADBE9208D4"
-        )
+        x = b"20000000807E2DDB1743F3487D6545F04F1C8476092FB912B013626AB5BCEB764257D88BBA64243B9F348DF7B41B8C814A995E00299913503456983FFB9178D3CD79EB6D55522418A8ABF65375872E55938AB99A84A0B5FC8A1ECC66A7C3766E7E0F80B7CE2C9225FC2DD683F4764244B72963BBB383F529DCF0C5D17740B8A2ADBE9208D4"  # noqa
         self.assertEqual(x, hexlify(transport._message.asbytes()).upper())
         self.assertEqual(
             (paramiko.kex_gex._MSG_KEXDH_GEX_REPLY,), transport._expect
@@ -374,7 +368,7 @@ class KexTest(unittest.TestCase):
         self.assertEqual((b"fake-host-key", b"fake-sig"), transport._verify)
         self.assertTrue(transport._activated)
 
-    def test_8_gex_sha256_old_client(self):
+    def test_gex_sha256_old_client(self):
         transport = FakeTransport()
         transport.server_mode = False
         kex = KexGexSHA256(transport)
@@ -390,9 +384,7 @@ class KexTest(unittest.TestCase):
         msg.add_mpint(FakeModulusPack.G)
         msg.rewind()
         kex.parse_next(paramiko.kex_gex._MSG_KEXDH_GEX_GROUP, msg)
-        x = (
-            b"20000000807E2DDB1743F3487D6545F04F1C8476092FB912B013626AB5BCEB764257D88BBA64243B9F348DF7B41B8C814A995E00299913503456983FFB9178D3CD79EB6D55522418A8ABF65375872E55938AB99A84A0B5FC8A1ECC66A7C3766E7E0F80B7CE2C9225FC2DD683F4764244B72963BBB383F529DCF0C5D17740B8A2ADBE9208D4"
-        )
+        x = b"20000000807E2DDB1743F3487D6545F04F1C8476092FB912B013626AB5BCEB764257D88BBA64243B9F348DF7B41B8C814A995E00299913503456983FFB9178D3CD79EB6D55522418A8ABF65375872E55938AB99A84A0B5FC8A1ECC66A7C3766E7E0F80B7CE2C9225FC2DD683F4764244B72963BBB383F529DCF0C5D17740B8A2ADBE9208D4"  # noqa
         self.assertEqual(x, hexlify(transport._message.asbytes()).upper())
         self.assertEqual(
             (paramiko.kex_gex._MSG_KEXDH_GEX_REPLY,), transport._expect
@@ -410,7 +402,7 @@ class KexTest(unittest.TestCase):
         self.assertEqual((b"fake-host-key", b"fake-sig"), transport._verify)
         self.assertTrue(transport._activated)
 
-    def test_9_gex_sha256_server(self):
+    def test_gex_sha256_server(self):
         transport = FakeTransport()
         transport.server_mode = True
         kex = KexGexSHA256(transport)
@@ -429,9 +421,7 @@ class KexTest(unittest.TestCase):
         msg.add_int(4096)
         msg.rewind()
         kex.parse_next(paramiko.kex_gex._MSG_KEXDH_GEX_REQUEST, msg)
-        x = (
-            b"1F0000008100FFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD129024E088A67CC74020BBEA63B139B22514A08798E3404DDEF9519B3CD3A431B302B0A6DF25F14374FE1356D6D51C245E485B576625E7EC6F44C42E9A637ED6B0BFF5CB6F406B7EDEE386BFB5A899FA5AE9F24117C4B1FE649286651ECE65381FFFFFFFFFFFFFFFF0000000102"
-        )
+        x = b"1F0000008100FFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD129024E088A67CC74020BBEA63B139B22514A08798E3404DDEF9519B3CD3A431B302B0A6DF25F14374FE1356D6D51C245E485B576625E7EC6F44C42E9A637ED6B0BFF5CB6F406B7EDEE386BFB5A899FA5AE9F24117C4B1FE649286651ECE65381FFFFFFFFFFFFFFFF0000000102"  # noqa
         self.assertEqual(x, hexlify(transport._message.asbytes()).upper())
         self.assertEqual(
             (paramiko.kex_gex._MSG_KEXDH_GEX_INIT,), transport._expect
@@ -441,19 +431,15 @@ class KexTest(unittest.TestCase):
         msg.add_mpint(12345)
         msg.rewind()
         kex.parse_next(paramiko.kex_gex._MSG_KEXDH_GEX_INIT, msg)
-        K = (
-            67592995013596137876033460028393339951879041140378510871612128162185209509220726296697886624612526735888348020498716482757677848959420073720160491114319163078862905400020959196386947926388406687288901564192071077389283980347784184487280885335302632305026248574716290537036069329724382811853044654824945750581
-        )
+        K = 67592995013596137876033460028393339951879041140378510871612128162185209509220726296697886624612526735888348020498716482757677848959420073720160491114319163078862905400020959196386947926388406687288901564192071077389283980347784184487280885335302632305026248574716290537036069329724382811853044654824945750581  # noqa
         H = b"CCAC0497CF0ABA1DBF55E1A3995D17F4CC31824B0E8D95CDF8A06F169D050D80"
-        x = (
-            b"210000000866616B652D6B6579000000807E2DDB1743F3487D6545F04F1C8476092FB912B013626AB5BCEB764257D88BBA64243B9F348DF7B41B8C814A995E00299913503456983FFB9178D3CD79EB6D55522418A8ABF65375872E55938AB99A84A0B5FC8A1ECC66A7C3766E7E0F80B7CE2C9225FC2DD683F4764244B72963BBB383F529DCF0C5D17740B8A2ADBE9208D40000000866616B652D736967"
-        )
+        x = b"210000000866616B652D6B6579000000807E2DDB1743F3487D6545F04F1C8476092FB912B013626AB5BCEB764257D88BBA64243B9F348DF7B41B8C814A995E00299913503456983FFB9178D3CD79EB6D55522418A8ABF65375872E55938AB99A84A0B5FC8A1ECC66A7C3766E7E0F80B7CE2C9225FC2DD683F4764244B72963BBB383F529DCF0C5D17740B8A2ADBE9208D40000000866616B652D736967"  # noqa
         self.assertEqual(K, transport._K)
         self.assertEqual(H, hexlify(transport._H).upper())
         self.assertEqual(x, hexlify(transport._message.asbytes()).upper())
         self.assertTrue(transport._activated)
 
-    def test_10_gex_sha256_server_with_old_client(self):
+    def test_gex_sha256_server_with_old_client(self):
         transport = FakeTransport()
         transport.server_mode = True
         kex = KexGexSHA256(transport)
@@ -470,9 +456,7 @@ class KexTest(unittest.TestCase):
         msg.add_int(2048)
         msg.rewind()
         kex.parse_next(paramiko.kex_gex._MSG_KEXDH_GEX_REQUEST_OLD, msg)
-        x = (
-            b"1F0000008100FFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD129024E088A67CC74020BBEA63B139B22514A08798E3404DDEF9519B3CD3A431B302B0A6DF25F14374FE1356D6D51C245E485B576625E7EC6F44C42E9A637ED6B0BFF5CB6F406B7EDEE386BFB5A899FA5AE9F24117C4B1FE649286651ECE65381FFFFFFFFFFFFFFFF0000000102"
-        )
+        x = b"1F0000008100FFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD129024E088A67CC74020BBEA63B139B22514A08798E3404DDEF9519B3CD3A431B302B0A6DF25F14374FE1356D6D51C245E485B576625E7EC6F44C42E9A637ED6B0BFF5CB6F406B7EDEE386BFB5A899FA5AE9F24117C4B1FE649286651ECE65381FFFFFFFFFFFFFFFF0000000102"  # noqa
         self.assertEqual(x, hexlify(transport._message.asbytes()).upper())
         self.assertEqual(
             (paramiko.kex_gex._MSG_KEXDH_GEX_INIT,), transport._expect
@@ -482,22 +466,16 @@ class KexTest(unittest.TestCase):
         msg.add_mpint(12345)
         msg.rewind()
         kex.parse_next(paramiko.kex_gex._MSG_KEXDH_GEX_INIT, msg)
-        K = (
-            67592995013596137876033460028393339951879041140378510871612128162185209509220726296697886624612526735888348020498716482757677848959420073720160491114319163078862905400020959196386947926388406687288901564192071077389283980347784184487280885335302632305026248574716290537036069329724382811853044654824945750581
-        )
+        K = 67592995013596137876033460028393339951879041140378510871612128162185209509220726296697886624612526735888348020498716482757677848959420073720160491114319163078862905400020959196386947926388406687288901564192071077389283980347784184487280885335302632305026248574716290537036069329724382811853044654824945750581  # noqa
         H = b"3DDD2AD840AD095E397BA4D0573972DC60F6461FD38A187CACA6615A5BC8ADBB"
-        x = (
-            b"210000000866616B652D6B6579000000807E2DDB1743F3487D6545F04F1C8476092FB912B013626AB5BCEB764257D88BBA64243B9F348DF7B41B8C814A995E00299913503456983FFB9178D3CD79EB6D55522418A8ABF65375872E55938AB99A84A0B5FC8A1ECC66A7C3766E7E0F80B7CE2C9225FC2DD683F4764244B72963BBB383F529DCF0C5D17740B8A2ADBE9208D40000000866616B652D736967"
-        )
+        x = b"210000000866616B652D6B6579000000807E2DDB1743F3487D6545F04F1C8476092FB912B013626AB5BCEB764257D88BBA64243B9F348DF7B41B8C814A995E00299913503456983FFB9178D3CD79EB6D55522418A8ABF65375872E55938AB99A84A0B5FC8A1ECC66A7C3766E7E0F80B7CE2C9225FC2DD683F4764244B72963BBB383F529DCF0C5D17740B8A2ADBE9208D40000000866616B652D736967"  # noqa
         self.assertEqual(K, transport._K)
         self.assertEqual(H, hexlify(transport._H).upper())
         self.assertEqual(x, hexlify(transport._message.asbytes()).upper())
         self.assertTrue(transport._activated)
 
-    def test_11_kex_nistp256_client(self):
-        K = (
-            91610929826364598472338906427792435253694642563583721654249504912114314269754
-        )
+    def test_kex_nistp256_client(self):
+        K = 91610929826364598472338906427792435253694642563583721654249504912114314269754  # noqa
         transport = FakeTransport()
         transport.server_mode = False
         kex = KexNistp256(transport)
@@ -510,7 +488,7 @@ class KexTest(unittest.TestCase):
         msg = Message()
         msg.add_string("fake-host-key")
         Q_S = unhexlify(
-            "043ae159594ba062efa121480e9ef136203fa9ec6b6e1f8723a321c16e62b945f573f3b822258cbcd094b9fa1c125cbfe5f043280893e66863cc0cb4dccbe70210"
+            "043ae159594ba062efa121480e9ef136203fa9ec6b6e1f8723a321c16e62b945f573f3b822258cbcd094b9fa1c125cbfe5f043280893e66863cc0cb4dccbe70210"  # noqa
         )
         msg.add_string(Q_S)
         msg.add_string("fake-sig")
@@ -522,10 +500,8 @@ class KexTest(unittest.TestCase):
         self.assertEqual((b"fake-host-key", b"fake-sig"), transport._verify)
         self.assertTrue(transport._activated)
 
-    def test_12_kex_nistp256_server(self):
-        K = (
-            91610929826364598472338906427792435253694642563583721654249504912114314269754
-        )
+    def test_kex_nistp256_server(self):
+        K = 91610929826364598472338906427792435253694642563583721654249504912114314269754  # noqa
         transport = FakeTransport()
         transport.server_mode = True
         kex = KexNistp256(transport)
@@ -537,7 +513,7 @@ class KexTest(unittest.TestCase):
         # fake init
         msg = Message()
         Q_C = unhexlify(
-            "043ae159594ba062efa121480e9ef136203fa9ec6b6e1f8723a321c16e62b945f573f3b822258cbcd094b9fa1c125cbfe5f043280893e66863cc0cb4dccbe70210"
+            "043ae159594ba062efa121480e9ef136203fa9ec6b6e1f8723a321c16e62b945f573f3b822258cbcd094b9fa1c125cbfe5f043280893e66863cc0cb4dccbe70210"  # noqa
         )
         H = b"2EF4957AFD530DD3F05DBEABF68D724FACC060974DA9704F2AEE4C3DE861E7CA"
         msg.add_string(Q_C)
@@ -547,7 +523,7 @@ class KexTest(unittest.TestCase):
         self.assertTrue(transport._activated)
         self.assertEqual(H, hexlify(transport._H).upper())
 
-    def test_13_kex_group14_sha256_client(self):
+    def test_kex_group14_sha256_client(self):
         transport = FakeTransport()
         transport.server_mode = False
         kex = KexGroup14SHA256(transport)
@@ -576,7 +552,7 @@ class KexTest(unittest.TestCase):
         self.assertEqual((b"fake-host-key", b"fake-sig"), transport._verify)
         self.assertTrue(transport._activated)
 
-    def test_14_kex_group16_sha512_client(self):
+    def test_kex_group16_sha512_client(self):
         transport = FakeTransport()
         transport.server_mode = False
         kex = KexGroup16SHA512(transport)
@@ -606,3 +582,54 @@ class KexTest(unittest.TestCase):
         self.assertEqual(H, hexlify(transport._H).upper())
         self.assertEqual((b"fake-host-key", b"fake-sig"), transport._verify)
         self.assertTrue(transport._activated)
+
+    @pytest.mark.skipif("not KexCurve25519.is_available()")
+    def test_kex_c25519_client(self):
+        K = 71294722834835117201316639182051104803802881348227506835068888449366462300724  # noqa
+        transport = FakeTransport()
+        transport.server_mode = False
+        kex = KexCurve25519(transport)
+        kex.start_kex()
+        self.assertEqual(
+            (paramiko.kex_curve25519._MSG_KEXECDH_REPLY,), transport._expect
+        )
+
+        # fake reply
+        msg = Message()
+        msg.add_string("fake-host-key")
+        Q_S = unhexlify(
+            "8d13a119452382a1ada8eea4c979f3e63ad3f0c7366786d6c5b54b87219bae49"
+        )
+        msg.add_string(Q_S)
+        msg.add_string("fake-sig")
+        msg.rewind()
+        kex.parse_next(paramiko.kex_curve25519._MSG_KEXECDH_REPLY, msg)
+        H = b"05B6F6437C0CF38D1A6C5A6F6E2558DEB54E7FC62447EBFB1E5D7407326A5475"
+        self.assertEqual(K, kex.transport._K)
+        self.assertEqual(H, hexlify(transport._H).upper())
+        self.assertEqual((b"fake-host-key", b"fake-sig"), transport._verify)
+        self.assertTrue(transport._activated)
+
+    @pytest.mark.skipif("not KexCurve25519.is_available()")
+    def test_kex_c25519_server(self):
+        K = 71294722834835117201316639182051104803802881348227506835068888449366462300724  # noqa
+        transport = FakeTransport()
+        transport.server_mode = True
+        kex = KexCurve25519(transport)
+        kex.start_kex()
+        self.assertEqual(
+            (paramiko.kex_curve25519._MSG_KEXECDH_INIT,), transport._expect
+        )
+
+        # fake init
+        msg = Message()
+        Q_C = unhexlify(
+            "8d13a119452382a1ada8eea4c979f3e63ad3f0c7366786d6c5b54b87219bae49"
+        )
+        H = b"DF08FCFCF31560FEE639D9B6D56D760BC3455B5ADA148E4514181023E7A9B042"
+        msg.add_string(Q_C)
+        msg.rewind()
+        kex.parse_next(paramiko.kex_curve25519._MSG_KEXECDH_INIT, msg)
+        self.assertEqual(K, transport._K)
+        self.assertTrue(transport._activated)
+        self.assertEqual(H, hexlify(transport._H).upper())

@@ -82,10 +82,13 @@ from paramiko.common import (
     DEFAULT_WINDOW_SIZE,
     DEFAULT_MAX_PACKET_SIZE,
     HIGHEST_USERAUTH_MESSAGE_ID,
+    MSG_UNIMPLEMENTED,
+    MSG_NAMES,
 )
 from paramiko.compress import ZlibCompressor, ZlibDecompressor
 from paramiko.dsskey import DSSKey
 from paramiko.ed25519key import Ed25519Key
+from paramiko.kex_curve25519 import KexCurve25519
 from paramiko.kex_gex import KexGex, KexGexSHA256
 from paramiko.kex_group1 import KexGroup1
 from paramiko.kex_group14 import KexGroup14, KexGroup14SHA256
@@ -133,6 +136,7 @@ class Transport(threading.Thread, ClosingContextManager):
 
     Instances of this class may be used as context managers.
     """
+
     _ENCRYPT = object()
     _DECRYPT = object()
 
@@ -180,6 +184,8 @@ class Transport(threading.Thread, ClosingContextManager):
         "diffie-hellman-group14-sha1",
         "diffie-hellman-group1-sha1",
     )
+    if KexCurve25519.is_available():
+        _preferred_kex = ("curve25519-sha256@libssh.org",) + _preferred_kex
     _preferred_gsskex = (
         "gss-gex-sha1-toWM5Slw5Ew8Mqkay+al2g==",
         "gss-group14-sha1-toWM5Slw5Ew8Mqkay+al2g==",
@@ -278,6 +284,8 @@ class Transport(threading.Thread, ClosingContextManager):
         "ecdh-sha2-nistp384": KexNistp384,
         "ecdh-sha2-nistp521": KexNistp521,
     }
+    if KexCurve25519.is_available():
+        _kex_info["curve25519-sha256@libssh.org"] = KexCurve25519
 
     _compression_info = {
         # zlib@openssh.com is just zlib, but only turned on after a successful
@@ -2043,12 +2051,20 @@ class Transport(threading.Thread, ClosingContextManager):
                         if len(self._expected_packet) > 0:
                             continue
                     else:
-                        err = "Oops, unhandled type {:d}".format(ptype)
-                        self._log(WARNING, err)
-                        msg = Message()
-                        msg.add_byte(cMSG_UNIMPLEMENTED)
-                        msg.add_int(m.seqno)
-                        self._send_message(msg)
+                        # Respond with "I don't implement this particular
+                        # message type" message (unless the message type was
+                        # itself literally MSG_UNIMPLEMENTED, in which case, we
+                        # just shut up to avoid causing a useless loop).
+                        name = MSG_NAMES[ptype]
+                        warning = "Oops, unhandled type {} ({!r})".format(
+                            ptype, name
+                        )
+                        self._log(WARNING, warning)
+                        if ptype != MSG_UNIMPLEMENTED:
+                            msg = Message()
+                            msg.add_byte(cMSG_UNIMPLEMENTED)
+                            msg.add_int(m.seqno)
+                            self._send_message(msg)
                     self.packetizer.complete_handshake()
             except SSHException as e:
                 self._log(ERROR, "Exception: " + str(e))
@@ -2814,6 +2830,7 @@ class SecurityOptions(object):
     ``ValueError`` will be raised.  If you try to assign something besides a
     tuple to one of the fields, ``TypeError`` will be raised.
     """
+
     __slots__ = "_transport"
 
     def __init__(self, transport):
@@ -2883,7 +2900,6 @@ class SecurityOptions(object):
 
 
 class ChannelMap(object):
-
     def __init__(self):
         # (id -> Channel)
         self._map = weakref.WeakValueDictionary()

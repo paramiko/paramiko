@@ -14,6 +14,7 @@ html_theme_options = {
     "github_repo": "paramiko",
     "analytics_id": "UA-18486793-2",
     "travis_button": True,
+    "tidelift_url": "https://tidelift.com/subscription/pkg/pypi-paramiko?utm_source=pypi-paramiko&utm_medium=referral&utm_campaign=docs",
 }
 html_sidebars = {
     "**": ["about.html", "navigation.html", "searchbox.html", "donate.html"]

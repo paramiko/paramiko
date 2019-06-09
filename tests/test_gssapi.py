@@ -30,15 +30,14 @@ from .util import needs_gssapi
 
 @needs_gssapi
 class GSSAPITest(unittest.TestCase):
-
-    def setup():
+    def setup(self):
         # TODO: these vars should all come from os.environ or whatever the
         # approved pytest method is for runtime-configuring test data.
         self.krb5_mech = "1.2.840.113554.1.2.2"
         self.targ_name = "hostname"
         self.server_mode = False
 
-    def test_1_pyasn1(self):
+    def test_pyasn1(self):
         """
         Test the used methods of pyasn1.
         """
@@ -49,7 +48,7 @@ class GSSAPITest(unittest.TestCase):
         mech, __ = decoder.decode(oid)
         self.assertEquals(self.krb5_mech, mech.__str__())
 
-    def test_2_gssapi_sspi(self):
+    def test_gssapi_sspi(self):
         """
         Test the used methods of python-gssapi or sspi, sspicon from pywin32.
         """

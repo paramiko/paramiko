@@ -291,10 +291,10 @@ class PKey(object):
         headers = {}
         start += 1
         while start < len(lines):
-            l = lines[start].split(": ")
-            if len(l) == 1:
+            line = lines[start].split(": ")
+            if len(line) == 1:
                 break
-            headers[l[0].lower()] = l[1].strip()
+            headers[line[0].lower()] = line[1].strip()
             start += 1
         # find end
         end = start

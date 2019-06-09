@@ -21,24 +21,22 @@ A stub SFTP server for loopback SFTP testing.
 """
 
 import os
-import sys
 
 from paramiko import (
-    ServerInterface,
-    SFTPServerInterface,
-    SFTPServer,
-    SFTPAttributes,
-    SFTPHandle,
-    SFTP_OK,
-    SFTP_FAILURE,
     AUTH_SUCCESSFUL,
     OPEN_SUCCEEDED,
+    SFTPAttributes,
+    SFTPHandle,
+    SFTPServer,
+    SFTPServerInterface,
+    SFTP_FAILURE,
+    SFTP_OK,
+    ServerInterface,
 )
 from paramiko.common import o666
 
 
 class StubServer(ServerInterface):
-
     def check_auth_password(self, username, password):
         # all are allowed
         return AUTH_SUCCESSFUL
@@ -48,7 +46,6 @@ class StubServer(ServerInterface):
 
 
 class StubSFTPHandle(SFTPHandle):
-
     def stat(self):
         try:
             return SFTPAttributes.from_stat(os.fstat(self.readfile.fileno()))
@@ -67,7 +64,8 @@ class StubSFTPHandle(SFTPHandle):
 
 class StubSFTPServer(SFTPServerInterface):
     # assume current folder is a fine root
-    # (the tests always create and eventually delete a subfolder, so there shouldn't be any mess)
+    # (the tests always create and eventually delete a subfolder, so there
+    # shouldn't be any mess)
     ROOT = os.getcwd()
 
     def _realpath(self, path):
@@ -208,7 +206,8 @@ class StubSFTPServer(SFTPServerInterface):
             # compute relative to path
             abspath = os.path.join(os.path.dirname(path), target_path)
             if abspath[: len(self.ROOT)] != self.ROOT:
-                # this symlink isn't going to work anyway -- just break it immediately
+                # this symlink isn't going to work anyway -- just break it
+                # immediately
                 target_path = "<error>"
         try:
             os.symlink(target_path, path)

@@ -9,6 +9,7 @@ from paramiko.py3compat import byte_chr, long
 from paramiko.ssh_exception import SSHException
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.asymmetric import ec
+from cryptography.hazmat.primitives import serialization
 from binascii import hexlify
 
 _MSG_KEXECDH_INIT, _MSG_KEXECDH_REPLY = range(30, 32)
@@ -36,7 +37,12 @@ class KexNistp256:
         m = Message()
         m.add_byte(c_MSG_KEXECDH_INIT)
         # SEC1: V2.0  2.3.3 Elliptic-Curve-Point-to-Octet-String Conversion
-        m.add_string(self.Q_C.public_numbers().encode_point())
+        m.add_string(
+            self.Q_C.public_bytes(
+                serialization.Encoding.X962,
+                serialization.PublicFormat.UncompressedPoint,
+            )
+        )
         self.transport._send_message(m)
         self.transport._expect_packet(_MSG_KEXECDH_REPLY)
 
@@ -58,11 +64,11 @@ class KexNistp256:
 
     def _parse_kexecdh_init(self, m):
         Q_C_bytes = m.get_string()
-        self.Q_C = ec.EllipticCurvePublicNumbers.from_encoded_point(
+        self.Q_C = ec.EllipticCurvePublicKey.from_encoded_point(
             self.curve, Q_C_bytes
         )
         K_S = self.transport.get_server_key().asbytes()
-        K = self.P.exchange(ec.ECDH(), self.Q_C.public_key(default_backend()))
+        K = self.P.exchange(ec.ECDH(), self.Q_C)
         K = long(hexlify(K), 16)
         # compute exchange hash
         hm = Message()
@@ -75,7 +81,12 @@ class KexNistp256:
         hm.add_string(K_S)
         hm.add_string(Q_C_bytes)
         # SEC1: V2.0  2.3.3 Elliptic-Curve-Point-to-Octet-String Conversion
-        hm.add_string(self.Q_S.public_numbers().encode_point())
+        hm.add_string(
+            self.Q_S.public_bytes(
+                serialization.Encoding.X962,
+                serialization.PublicFormat.UncompressedPoint,
+            )
+        )
         hm.add_mpint(long(K))
         H = self.hash_algo(hm.asbytes()).digest()
         self.transport._set_K_H(K, H)
@@ -84,7 +95,12 @@ class KexNistp256:
         m = Message()
         m.add_byte(c_MSG_KEXECDH_REPLY)
         m.add_string(K_S)
-        m.add_string(self.Q_S.public_numbers().encode_point())
+        m.add_string(
+            self.Q_S.public_bytes(
+                serialization.Encoding.X962,
+                serialization.PublicFormat.UncompressedPoint,
+            )
+        )
         m.add_string(sig)
         self.transport._send_message(m)
         self.transport._activate_outbound()
@@ -92,11 +108,11 @@ class KexNistp256:
     def _parse_kexecdh_reply(self, m):
         K_S = m.get_string()
         Q_S_bytes = m.get_string()
-        self.Q_S = ec.EllipticCurvePublicNumbers.from_encoded_point(
+        self.Q_S = ec.EllipticCurvePublicKey.from_encoded_point(
             self.curve, Q_S_bytes
         )
         sig = m.get_binary()
-        K = self.P.exchange(ec.ECDH(), self.Q_S.public_key(default_backend()))
+        K = self.P.exchange(ec.ECDH(), self.Q_S)
         K = long(hexlify(K), 16)
         # compute exchange hash and verify signature
         hm = Message()
@@ -108,7 +124,12 @@ class KexNistp256:
         )
         hm.add_string(K_S)
         # SEC1: V2.0  2.3.3 Elliptic-Curve-Point-to-Octet-String Conversion
-        hm.add_string(self.Q_C.public_numbers().encode_point())
+        hm.add_string(
+            self.Q_C.public_bytes(
+                serialization.Encoding.X962,
+                serialization.PublicFormat.UncompressedPoint,
+            )
+        )
         hm.add_string(Q_S_bytes)
         hm.add_mpint(K)
         self.transport._set_K_H(K, self.hash_algo(hm.asbytes()).digest())

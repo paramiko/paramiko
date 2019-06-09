@@ -3,21 +3,20 @@ invoke>=1.0,<2.0
 invocations>=1.2.0,<2.0
 # NOTE: pytest-relaxed currently only works with pytest >=3, <3.3
 pytest>=3.2,<3.3
-pytest-relaxed==1.1.2
+pytest-relaxed==1.1.4
 # pytest-xdist for test dir watching and the inv guard task
-pytest-xdist>=1.22,<2.0
+pytest-xdist>=1.22,<1.25.0
+mock==2.0.0
 # Linting!
-flake8==2.4.0
+flake8==3.6.0
 # Coverage!
 coverage==3.7.1
 codecov==1.6.3
 # Documentation tools
 sphinx>=1.4,<1.7
-alabaster>=0.7,<2.0
+alabaster==0.7.12
 releases>=1.5,<2.0
 # Release tools
 semantic_version>=2.4,<2.5
 wheel==0.24
 twine==1.11.0
-
-
