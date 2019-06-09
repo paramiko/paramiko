@@ -18,7 +18,6 @@
 
 
 import os
-from shlex import split as shlsplit
 from select import select
 import socket
 import time
@@ -49,9 +48,9 @@ class ProxyCommand(ClosingContextManager):
         # NOTE: subprocess import done lazily so platforms without it (e.g.
         # GAE) can still import us during overall Paramiko load.
         from subprocess import Popen, PIPE
-        self.cmd = shlsplit(command_line)
+        self.cmd = command_line
         self.process = Popen(self.cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE,
-                             bufsize=0)
+                             bufsize=0, shell=True)
         self.timeout = None
 
     def send(self, content):
@@ -68,7 +67,7 @@ class ProxyCommand(ClosingContextManager):
             # died and we can't proceed. The best option here is to
             # raise an exception informing the user that the informed
             # ProxyCommand is not working.
-            raise ProxyCommandFailure(' '.join(self.cmd), e.strerror)
+            raise ProxyCommandFailure(self.cmd, e.strerror)
         return len(content)
 
     def recv(self, size):
@@ -106,7 +105,7 @@ class ProxyCommand(ClosingContextManager):
                 return buffer
             raise  # socket.timeout is a subclass of IOError
         except IOError as e:
-            raise ProxyCommandFailure(' '.join(self.cmd), e.strerror)
+            raise ProxyCommandFailure(self.cmd, e.strerror)
 
     def close(self):
         if self.process.poll() is None:
