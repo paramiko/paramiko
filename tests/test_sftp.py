@@ -385,14 +385,11 @@ class TestSFTP(object):
         finally:
             sftp.remove(sftp.FOLDER + '/testing.txt')
 
+    @pytest.mark.skipif("not hasattr(os, 'symlink')")  # on windows
     def test_symlink(self, sftp):
         """
         create a symlink and then check that lstat doesn't follow it.
         """
-        if not hasattr(os, "symlink"):
-            # skip symlink tests on windows
-            return
-
         try:
             with sftp.open(sftp.FOLDER + '/original.txt', 'w') as f:
                 f.write('original\n')

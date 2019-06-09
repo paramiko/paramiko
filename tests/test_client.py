@@ -22,7 +22,6 @@ Some unit tests for SSHClient.
 
 import gc
 import os
-import platform
 import socket
 import threading
 import time
@@ -389,10 +388,6 @@ class SSHClientTest(ClientTest):
         verify that when an SSHClient is collected, its transport (and the
         transport's packetizer) is closed.
         """
-        # Skipped on PyPy because it fails on travis for unknown reasons
-        if platform.python_implementation() == "PyPy":
-            return
-
         threading.Thread(target=self._run).start()
 
         self.tc = paramiko.SSHClient()

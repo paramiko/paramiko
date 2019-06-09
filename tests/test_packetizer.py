@@ -24,6 +24,8 @@ import sys
 import unittest
 from hashlib import sha1
 
+import pytest
+
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.ciphers import algorithms, Cipher, modes
 
@@ -88,9 +90,8 @@ class PacketizerTest (unittest.TestCase):
         self.assertEqual(1, m.get_int())
         self.assertEqual(900, m.get_int())
 
+    @pytest.mark.skipif(sys.platform.startswith('win'), reason="no SIGALRM on windows")
     def test_closed(self):
-        if sys.platform.startswith("win"): # no SIGALRM on windows
-            return
         rsock = LoopSocket()
         wsock = LoopSocket()
         rsock.link(wsock)
