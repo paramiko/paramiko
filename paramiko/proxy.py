@@ -19,7 +19,6 @@
 
 import os
 from shlex import split as shlsplit
-import signal
 from select import select
 import socket
 import time
@@ -84,6 +83,10 @@ class ProxyCommand(ClosingContextManager):
             buffer = b''
             start = time.time()
             while len(buffer) < size:
+                if self.closed:
+                    if buffer:
+                        return buffer
+                    raise EOFError()
                 select_timeout = None
                 if self.timeout is not None:
                     elapsed = (time.time() - start)
@@ -106,11 +109,15 @@ class ProxyCommand(ClosingContextManager):
             raise ProxyCommandFailure(' '.join(self.cmd), e.strerror)
 
     def close(self):
-        os.kill(self.process.pid, signal.SIGTERM)
+        if self.process.poll() is None:
+            try:
+                self.process.terminate()
+            except OSError:
+                pass
 
     @property
     def closed(self):
-        return self.process.returncode is not None
+        return self.process.poll() is not None
 
     @property
     def _closed(self):
