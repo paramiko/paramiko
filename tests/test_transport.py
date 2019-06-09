@@ -198,7 +198,7 @@ class TransportTest(unittest.TestCase):
         except TypeError:
             pass
 
-    def testb_security_options_reset(self):
+    def test_security_options_reset(self):
         o = self.tc.get_security_options()
         # should not throw any exceptions
         o.ciphers = o.ciphers
@@ -245,7 +245,7 @@ class TransportTest(unittest.TestCase):
         self.assertEqual(True, self.tc.is_authenticated())
         self.assertEqual(True, self.ts.is_authenticated())
 
-    def testa_long_banner(self):
+    def test_long_banner(self):
         """
         verify that a long banner doesn't mess up the handshake.
         """
@@ -339,7 +339,7 @@ class TransportTest(unittest.TestCase):
         self.assertEqual("This is on stderr.\n", f.readline())
         self.assertEqual("", f.readline())
 
-    def testa_channel_can_be_used_as_context_manager(self):
+    def test_channel_can_be_used_as_context_manager(self):
         """
         verify that exec_command() does something reasonable.
         """

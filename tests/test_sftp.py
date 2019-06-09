@@ -187,7 +187,7 @@ class TestSFTP(object):
             except:
                 pass
 
-    def testa_posix_rename(self, sftp):
+    def test_posix_rename(self, sftp):
         """Test posix-rename@openssh.com protocol extension."""
         try:
             # first check that the normal rename works as specified
