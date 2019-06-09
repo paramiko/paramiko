@@ -103,6 +103,8 @@ class KexCurve25519(object):
 
         return True
 
+    is_available = is_supported  # for compatibility with upstream's variant
+
     # ...internals...
 
     def _generate_key_pair(self):
