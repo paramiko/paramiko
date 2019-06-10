@@ -171,7 +171,8 @@ class SSHConfig (object):
         """
 
         if 'hostname' in config:
-            config['hostname'] = config['hostname'].replace('%h', hostname)
+            config['hostname'] = self._percent_expand(config['hostname'],
+                                                      {'h': hostname, '%': '%'})
         else:
             config['hostname'] = hostname
 
@@ -213,28 +214,6 @@ class SSHConfig (object):
                 '%': '%',
             },
         }
-
-        def _do_repls(val, rep):
-            if '%' not in val and ('~' not in rep or '~' not in val):
-                return val
-            nv = []
-            esc = False
-            for c in val:
-                if esc:
-                    if c not in rep:
-                        raise Exception('ssh_config percent_expand: unknown key %' + c)
-                    nv.append(str(rep[c]))  # str() for lazy objs
-                    esc = False
-                elif c == '%':
-                    esc = True
-                elif c == '~' and '~' in rep:
-                    nv.append(rep['~'])
-                else:
-                    nv.append(c)
-            if esc:
-                raise Exception('ssh_config percent_expand: invalid trailing %')
-            return ''.join(nv)
-
         for k in config:
             repls = replacements.get(k)
             value = config[k]
@@ -242,11 +221,32 @@ class SSHConfig (object):
                 continue
             if isinstance(value, list):
                 for i in range(len(value)):
-                    value[i] = _do_repls(value[i], repls)
+                    value[i] = self._percent_expand(value[i], repls)
             else:
-                config[k] = _do_repls(value, repls)
+                config[k] = self._percent_expand(value, repls)
 
         return config
+
+    def _percent_expand(self, value, repls):
+        if '%' not in value and ('~' not in repls or '~' not in value):
+            return value
+        nv = []
+        esc = False
+        for c in value:
+            if esc:
+                if c not in repls:
+                    raise Exception('ssh_config percent_expand: unknown key %' + c)
+                nv.append(str(repls[c]))  # str() for lazy objs
+                esc = False
+            elif c == '%':
+                esc = True
+            elif c == '~' and '~' in repls:
+                nv.append(repls['~'])
+            else:
+                nv.append(c)
+        if esc:
+            raise Exception('ssh_config percent_expand: invalid trailing %')
+        return ''.join(nv)
 
     def _get_hosts(self, host):
         """
