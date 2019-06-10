@@ -26,6 +26,7 @@ import os
 import re
 import shlex
 import socket
+import getpass
 
 SSH_PORT = 22
 
@@ -179,11 +180,8 @@ class SSHConfig (object):
         else:
             port = SSH_PORT
 
-        user = os.getenv('USER')
-        if 'user' in config:
-            remoteuser = config['user']
-        else:
-            remoteuser = user
+        user = getpass.getuser()
+        remoteuser = config.get('user', user)
 
         host = socket.gethostname().split('.')[0]
         fqdn = LazyFqdn(config, host)
