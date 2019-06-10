@@ -2,6 +2,7 @@
 Changelog
 =========
 
+- :release:`2.5.0 <2019-06-09>`
 - :feature:`1233` (also :issue:`1229`, :issue:`1332`) Add support for
   encrypt-then-MAC (ETM) schemes (``hmac-sha2-256-etm@openssh.com``,
   ``hmac-sha2-512-etm@openssh.com``) and two newer Diffie-Hellman group key
