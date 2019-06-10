@@ -54,8 +54,9 @@ Changelog
   for this particular channel).
 
   Thanks to Daniel Hoffman for the detailed report.
-- :support:`1292 backported` Backport changes from :issue:`979` (added in
-  Paramiko 2.3) to Paramiko 2.0-2.2, using duck-typing to preserve backwards
+- :support:`1292 backported (<2.4)` Backport changes from :issue:`979` (added
+  in Paramiko
+  2.3) to Paramiko 2.0-2.2, using duck-typing to preserve backwards
   compatibility. This allows these older versions to use newer Cryptography
   sign/verify APIs when available, without requiring them (as is the case with
   Paramiko 2.3+).
@@ -68,9 +69,9 @@ Changelog
     This is a no-op for Paramiko 2.3+, which have required newer Cryptography
     releases since they were released.
 
-- :support:`1291 backported` Backport pytest support and application of the
-  ``black`` code formatter (both of which previously only existed in the 2.4
-  branch and above) to everything 2.0 and newer. This makes back/forward
+- :support:`1291 backported (<2.4)` Backport pytest support and application of
+  the ``black`` code formatter (both of which previously only existed in the
+  2.4 branch and above) to everything 2.0 and newer. This makes back/forward
   porting bugfixes significantly easier.
 - :support:`1262 backported` Add ``*.pub`` files to the MANIFEST so distributed
   source packages contain some necessary test assets. Credit: Alexander
