@@ -251,19 +251,6 @@ Host equals-delimited
                 val
             )
 
-    def test_proxycommand_tilde_expansion(self):
-        """
-        Tilde (~) should be expanded inside ProxyCommand
-        """
-        config = paramiko.util.parse_ssh_config(StringIO("""
-Host test
-    ProxyCommand    ssh -F ~/.ssh/test_config bastion nc %h %p
-"""))
-        self.assertEqual(
-            'ssh -F %s/.ssh/test_config bastion nc test 22' % os.path.expanduser('~'),
-            host_config('test', config)['proxycommand']
-        )
-
     def test_host_config_test_negation(self):
         test_config_file = """
 Host www13.* !*.example.com
