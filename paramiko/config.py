@@ -175,11 +175,9 @@ class SSHConfig (object):
         else:
             config['hostname'] = hostname
 
-        if 'port' in config:
-            port = config['port']
-        else:
-            port = SSH_PORT
+        port = config.get('port', SSH_PORT)
 
+        uid = getattr(os, 'getuid', lambda: 1)  # fallback on windows
         user = getpass.getuser()
         remoteuser = config.get('user', user)
 
@@ -194,8 +192,9 @@ class SSHConfig (object):
                 'L': host,
                 'n': hostname,
                 'p': port,
-                'r': remoteuser,
+                'i': uid,
                 'u': user,
+                'r': remoteuser,
                 '%': '%',
             },
             'identityfile': {
