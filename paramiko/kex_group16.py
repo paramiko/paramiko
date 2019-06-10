@@ -1,4 +1,4 @@
-# Copyright (C) 2013  Torsten Landschoff <torsten@debian.org>
+# Copyright (C) 2019 Edgar Sousa <https://github.com/edgsousa>
 #
 # This file is part of paramiko.
 #
