@@ -25,6 +25,7 @@ import errno
 import os
 from hashlib import sha1
 import unittest
+import textwrap
 
 import paramiko.util
 from paramiko.util import lookup_ssh_host_config as host_config, safe_string
@@ -228,40 +229,27 @@ Host equals-delimited
         """
         ProxyCommand should perform interpolation on the value
         """
-        config = paramiko.util.parse_ssh_config(StringIO("""
-Host specific
-    Port 37
-    ProxyCommand host %h port %p lol
+        config = paramiko.util.parse_ssh_config(StringIO(textwrap.dedent("""\
+            Host specific
+                Port 37
+                ProxyCommand host %h port %p lol %%r-tricky%%
 
-Host portonly
-    Port 155
+            Host portonly
+                Port 155
 
-Host *
-    Port 25
-    ProxyCommand host %h port %p
-"""))
+            Host *
+                Port 25
+                ProxyCommand host %h port %p
+            """)))
         for host, val in (
             ('foo.com', "host foo.com port 25"),
-            ('specific', "host specific port 37 lol"),
+            ('specific', "host specific port 37 lol %r-tricky%"),
             ('portonly', "host portonly port 155"),
         ):
             self.assertEqual(
                 host_config(host, config)['proxycommand'],
                 val
             )
-
-    def test_proxycommand_tilde_expansion(self):
-        """
-        Tilde (~) should be expanded inside ProxyCommand
-        """
-        config = paramiko.util.parse_ssh_config(StringIO("""
-Host test
-    ProxyCommand    ssh -F ~/.ssh/test_config bastion nc %h %p
-"""))
-        self.assertEqual(
-            'ssh -F %s/.ssh/test_config bastion nc test 22' % os.path.expanduser('~'),
-            host_config('test', config)['proxycommand']
-        )
 
     def test_host_config_test_negation(self):
         test_config_file = """

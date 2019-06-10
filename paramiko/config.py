@@ -26,6 +26,7 @@ import os
 import re
 import shlex
 import socket
+import getpass
 
 SSH_PORT = 22
 
@@ -179,57 +180,73 @@ class SSHConfig (object):
         else:
             port = SSH_PORT
 
-        user = os.getenv('USER')
-        if 'user' in config:
-            remoteuser = config['user']
-        else:
-            remoteuser = user
+        user = getpass.getuser()
+        remoteuser = config.get('user', user)
 
         host = socket.gethostname().split('.')[0]
         fqdn = LazyFqdn(config, host)
         homedir = os.path.expanduser('~')
-        replacements = {'controlpath':
-                        [
-                            ('%h', config['hostname']),
-                            ('%l', fqdn),
-                            ('%L', host),
-                            ('%n', hostname),
-                            ('%p', port),
-                            ('%r', remoteuser),
-                            ('%u', user)
-                        ],
-                        'identityfile':
-                        [
-                            ('~', homedir),
-                            ('%d', homedir),
-                            ('%h', config['hostname']),
-                            ('%l', fqdn),
-                            ('%u', user),
-                            ('%r', remoteuser)
-                        ],
-                        'proxycommand':
-                        [
-                            ('~', homedir),
-                            ('%h', config['hostname']),
-                            ('%p', port),
-                            ('%r', remoteuser)
-                        ]
-                        }
+
+        replacements = {
+            'controlpath': {
+                'h': config['hostname'],
+                'l': fqdn,
+                'L': host,
+                'n': hostname,
+                'p': port,
+                'r': remoteuser,
+                'u': user,
+                '%': '%',
+            },
+            'identityfile': {
+                '~': homedir,
+                'd': homedir,
+                'h': config['hostname'],
+                'l': fqdn,
+                'u': user,
+                'r': remoteuser,
+                '%': '%',
+            },
+            'proxycommand': {
+                'h': config['hostname'],
+                'p': port,
+                'r': remoteuser,
+                '%': '%',
+            },
+        }
+
+        def _do_repls(val, rep):
+            if '%' not in val and ('~' not in rep or '~' not in val):
+                return val
+            nv = []
+            esc = False
+            for c in val:
+                if esc:
+                    if c not in rep:
+                        raise Exception('ssh_config percent_expand: unknown key %' + c)
+                    nv.append(str(rep[c]))  # str() for lazy objs
+                    esc = False
+                elif c == '%':
+                    esc = True
+                elif c == '~' and '~' in rep:
+                    nv.append(rep['~'])
+                else:
+                    nv.append(c)
+            if esc:
+                raise Exception('ssh_config percent_expand: invalid trailing %')
+            return ''.join(nv)
 
         for k in config:
-            if config[k] is None:
+            repls = replacements.get(k)
+            value = config[k]
+            if value is None or repls is None:
                 continue
-            if k in replacements:
-                for find, replace in replacements[k]:
-                    if isinstance(config[k], list):
-                        for item in range(len(config[k])):
-                            if find in config[k][item]:
-                                config[k][item] = config[k][item].replace(
-                                    find, str(replace)
-                                )
-                    else:
-                        if find in config[k]:
-                            config[k] = config[k].replace(find, str(replace))
+            if isinstance(value, list):
+                for i in range(len(value)):
+                    value[i] = _do_repls(value[i], repls)
+            else:
+                config[k] = _do_repls(value, repls)
+
         return config
 
     def _get_hosts(self, host):
