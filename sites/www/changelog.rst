@@ -2,6 +2,11 @@
 Changelog
 =========
 
+- :feature:`1233` (also :issue:`1229`, :issue:`1332`) Add support for
+  encrypt-then-MAC (ETM) schemes (``hmac-sha2-256-etm@openssh.com``,
+  ``hmac-sha2-512-etm@openssh.com``) and two newer Diffie-Hellman group key
+  exchange algorithms (``group14``, using SHA256; and ``group16``, using
+  SHA512). Patch courtesy of Edgar Sousa.
 - :feature:`532` (via :issue:`1384` and :issue:`1258`) Add support for
   Curve25519 key exchange (aka ``curve25519-sha256@libssh.org``). Thanks to
   Alex Gaynor and Dan Fuhry for supplying patches.
