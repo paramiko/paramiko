@@ -639,8 +639,11 @@ class Channel (ClosingContextManager):
             # only close the pipe when the user explicitly closes the channel.
             # otherwise they will get unpleasant surprises.  (and do it before
             # checking self.closed, since the remote host may have already
-            # closed the connection.)
+            # closed the connection.); must also unlink the pipe from in_buffer and
+            # in_stderr_buffer to avoid writing to an already closed pipe.
             if self._pipe is not None:
+                self.in_buffer.unlink_event()
+                self.in_stderr_buffer.unlink_event()
                 self._pipe.close()
                 self._pipe = None
 

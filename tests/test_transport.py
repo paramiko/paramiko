@@ -1049,3 +1049,25 @@ class TransportTest(unittest.TestCase):
         assert not self.ts.auth_handler.authenticated
         # Real fix's behavior
         self._expect_unimplemented()
+
+    def test_transport_channel_close(self):
+        """
+        verify concurrent channel closing while feeding it with data
+        """
+        self.setup_test_server()
+
+        def channel_close_thread(chan):
+            chan.close()
+
+        threads = []
+        for i in range(100):
+            chan = self.tc.open_session()
+            # trigger internal pipe creation
+            chan.fileno()
+            t = threading.Thread(target=channel_close_thread, args=(chan,))
+            threads.append(t)
+            t.start()
+            chan._feed(b'')
+
+        for t in threads:
+            t.join()
