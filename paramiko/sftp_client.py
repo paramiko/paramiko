@@ -838,9 +838,8 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
                     self._convert_status(msg)
                 return t, msg
 
-            # can not rewrite this to deal with E721, either as a None check
-            # nor as not an instance of None or NoneType
-            if fileobj is not type(None):  # noqa
+            # can not rewrite this to deal with E721
+            if fileobj is not type(None):  # noqa: E721
                 fileobj._async_response(t, msg, num)
             if waitfor is None:
                 # just doing a single check

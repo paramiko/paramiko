@@ -249,7 +249,7 @@ def log_to_file(filename, level=DEBUG):
     l.setLevel(level)
     f = open(filename, 'a')
     lh = logging.StreamHandler(f)
-    frm = '%(levelname)-.3s [%(asctime)s.%(msecs)03d] thr=%(_threadid)-3d %(name)s: %(message)s' # noqa
+    frm = '%(levelname)-.3s [%(asctime)s.%(msecs)03d] thr=%(_threadid)-3d %(name)s: %(message)s'
     lh.setFormatter(logging.Formatter(frm, '%Y%m%d-%H:%M:%S'))
     l.addHandler(lh)
 

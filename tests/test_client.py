@@ -668,16 +668,14 @@ class PasswordPassphraseTests(ClientTest):
             passphrase='television',
         )
 
-    def test_password_kwarg_used_for_passphrase_when_no_passphrase_kwarg_given(self): # noqa
+    def test_password_used_for_passphrase_when_no_passphrase(self):
         # Backwards compatibility: passphrase in the password field.
         self._test_connection(
             key_filename=_support('test_rsa_password.key'),
             password='television',
         )
 
-    def test_password_kwarg_not_used_for_passphrase_when_passphrase_kwarg_given(self): # noqa
-        # Sanity: if we're given both fields, the password field is NOT used as
-        # a passphrase.
+    def test_password_not_used_for_passphrase_when_passphrase_given(self):
         self.assertRaises(
             AuthenticationException,
             self._test_connection,

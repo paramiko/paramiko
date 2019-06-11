@@ -433,7 +433,7 @@ Error Message: {}
                 (self.auth_username != username)):
             self._log(
                 WARNING,
-                'Auth rejected because the client attempted to change username in mid-flight'  # noqa
+                'Auth rejected because the client attempted to change username in mid-flight'
             )
             self._disconnect_no_more_auth()
             return
@@ -480,7 +480,7 @@ Error Message: {}
                     'Auth rejected: public key: {}'.format(str(e)))
                 key = None
             except Exception as e:
-                msg = 'Auth rejected: unsupported or mangled public key ({}: {})' # noqa
+                msg = 'Auth rejected: unsupported or mangled public key ({}: {})'
                 self._log(INFO, msg.format(e.__class__.__name__, e))
                 key = None
             if key is None:

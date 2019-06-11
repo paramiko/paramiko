@@ -1719,14 +1719,14 @@ class Transport(threading.Thread, ClosingContextManager):
         while True:
             self.clear_to_send.wait(0.1)
             if not self.active:
-                self._log(DEBUG, 'Dropping user packet because connection is dead.') # noqa
+                self._log(DEBUG, 'Dropping user packet because connection is dead.')
                 return
             self.clear_to_send_lock.acquire()
             if self.clear_to_send.is_set():
                 break
             self.clear_to_send_lock.release()
             if time.time() > start + self.clear_to_send_timeout:
-                raise SSHException('Key-exchange timed out waiting for key negotiation') # noqa
+                raise SSHException('Key-exchange timed out waiting for key negotiation')
         try:
             self._send_message(data)
         finally:
@@ -1752,7 +1752,7 @@ class Transport(threading.Thread, ClosingContextManager):
         if key is None:
             raise SSHException('Unknown host key type')
         if not key.verify_ssh_sig(self.H, Message(sig)):
-            raise SSHException('Signature verification ({}) failed.'.format(self.host_key_type)) # noqa
+            raise SSHException('Signature verification ({}) failed.'.format(self.host_key_type))
         self.host_key = key
 
     def _compute_key(self, id, nbytes):
@@ -1859,7 +1859,7 @@ class Transport(threading.Thread, ClosingContextManager):
             reply.add_byte(cMSG_REQUEST_FAILURE)
         # Channel opens let us reject w/ a specific type + message.
         elif ptype == MSG_CHANNEL_OPEN:
-            kind = message.get_text() # noqa
+            kind = message.get_text()  # noqa: F841
             chanid = message.get_int()
             reply.add_byte(cMSG_CHANNEL_OPEN_FAILURE)
             reply.add_int(chanid)
@@ -1893,7 +1893,7 @@ class Transport(threading.Thread, ClosingContextManager):
         try:
             try:
                 self.packetizer.write_all(b(self.local_version + '\r\n'))
-                self._log(DEBUG, 'Local version/idstring: {}'.format(self.local_version)) # noqa
+                self._log(DEBUG, 'Local version/idstring: {}'.format(self.local_version))
                 self._check_banner()
                 # The above is actually very much part of the handshake, but
                 # sometimes the banner can be read but the machine is not
@@ -1923,7 +1923,8 @@ class Transport(threading.Thread, ClosingContextManager):
                         continue
                     if len(self._expected_packet) > 0:
                         if ptype not in self._expected_packet:
-                            raise SSHException('Expecting packet from {!r}, got {:d}'.format(self._expected_packet, ptype)) # noqa
+                            raise SSHException("Expecting packet from %r, got %d" %
+                                               (self._expected_packet, ptype))
                         self._expected_packet = tuple()
                         if (ptype >= 30) and (ptype <= 41):
                             self.kex_engine.parse_next(ptype, m)
@@ -1941,9 +1942,9 @@ class Transport(threading.Thread, ClosingContextManager):
                         if chan is not None:
                             self._channel_handler_table[ptype](chan, m)
                         elif chanid in self.channels_seen:
-                            self._log(DEBUG, 'Ignoring message for dead channel {:d}'.format(chanid)) # noqa
+                            self._log(DEBUG, "Ignoring message for dead channel %d" % chanid)
                         else:
-                            self._log(ERROR, 'Channel request for unknown channel {:d}'.format(chanid)) # noqa
+                            self._log(ERROR, "Channel request for unknown channel %d" % chanid)
                             break
                     elif (
                         self.auth_handler is not None and
@@ -2177,7 +2178,7 @@ class Transport(threading.Thread, ClosingContextManager):
                 self._preferred_kex
             ))
         if len(agreed_kex) == 0:
-            raise SSHException('Incompatible ssh peer (no acceptable kex algorithm)') # noqa
+            raise SSHException('Incompatible ssh peer (no acceptable kex algorithm)')
         self.kex_engine = self._kex_info[agreed_kex[0]](self)
         self._log(DEBUG, "Kex agreed: {}".format(agreed_kex[0]))
 
@@ -2194,10 +2195,10 @@ class Transport(threading.Thread, ClosingContextManager):
                 server_key_algo_list.__contains__, self._preferred_keys
             ))
         if len(agreed_keys) == 0:
-            raise SSHException('Incompatible ssh peer (no acceptable host key)') # noqa
+            raise SSHException('Incompatible ssh peer (no acceptable host key)')
         self.host_key_type = agreed_keys[0]
         if self.server_mode and (self.get_server_key() is None):
-            raise SSHException('Incompatible ssh peer (can\'t match requested host key type)') # noqa
+            raise SSHException("Incompatible ssh peer (can't match requested host key type)")
         self._log_agreement(
             'HostKey', agreed_keys[0], agreed_keys[0]
         )
@@ -2221,7 +2222,7 @@ class Transport(threading.Thread, ClosingContextManager):
                 self._preferred_ciphers
             ))
         if len(agreed_local_ciphers) == 0 or len(agreed_remote_ciphers) == 0:
-            raise SSHException('Incompatible ssh server (no acceptable ciphers)') # noqa
+            raise SSHException('Incompatible ssh server (no acceptable ciphers)')
         self.local_cipher = agreed_local_ciphers[0]
         self.remote_cipher = agreed_remote_ciphers[0]
         self._log_agreement(
@@ -2272,7 +2273,7 @@ class Transport(threading.Thread, ClosingContextManager):
             len(agreed_local_compression) == 0 or
             len(agreed_remote_compression) == 0
         ):
-            msg = 'Incompatible ssh server (no acceptable compression) {!r} {!r} {!r}' # noqa
+            msg = 'Incompatible ssh server (no acceptable compression) {!r} {!r} {!r}'
             raise SSHException(msg.format(
                 agreed_local_compression, agreed_remote_compression,
                 self._preferred_compression,

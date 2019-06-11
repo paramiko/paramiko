@@ -624,7 +624,7 @@ class PublicBlob(object):
         m = Message(key_blob)
         blob_type = m.get_text()
         if blob_type != key_type:
-            msg = "Invalid PublicBlob contents: key type={!r}, but blob type={!r}" # noqa
+            msg = "Invalid PublicBlob contents: key type={!r}, but blob type={!r}"
             raise ValueError(msg.format(key_type, blob_type))
         # All good? All good.
         return cls(type_=key_type, blob=key_blob, comment=comment)
