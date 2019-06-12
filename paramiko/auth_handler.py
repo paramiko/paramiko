@@ -20,6 +20,8 @@
 `.AuthHandler`
 """
 
+import getpass
+import socket
 import weakref
 import time
 
@@ -69,6 +71,7 @@ from paramiko.ssh_exception import (
     PartialAuthentication,
 )
 from paramiko.server import InteractiveQuery
+from paramiko.keysign import Keysign
 from paramiko.ssh_gss import GSSAuth, GSS_EXCEPTIONS
 
 
@@ -83,6 +86,7 @@ class AuthHandler(object):
         self.authenticated = False
         self.auth_event = None
         self.auth_method = ""
+        self.hostkey = None
         self.banner = None
         self.password = None
         self.private_key = None
@@ -176,6 +180,17 @@ class AuthHandler(object):
         finally:
             self.transport.lock.release()
 
+    def auth_hostbased(self, username, hostkey, event):
+        self.transport.lock.acquire()
+        try:
+            self.auth_event = event
+            self.auth_method = "hostbased"
+            self.username = username
+            self.hostkey = hostkey
+            self._request_auth()
+        finally:
+            self.transport.lock.release()
+
     def abort(self):
         if self.auth_event is not None:
             self.auth_event.set()
@@ -222,6 +237,24 @@ class AuthHandler(object):
             m.add_string(key.get_name())
             m.add_string(key)
         return m.asbytes()
+
+    def _get_hostbased_session_blob(self, hostkey, service, username):
+        m = Message()
+        m.add_string(self.transport.session_id)
+        m.add_byte(chr(MSG_USERAUTH_REQUEST))
+        m.add_string(username)
+        m.add_string(service)
+        m.add_string("hostbased")
+        m.add_string(hostkey.get_name())
+        m.add_string(str(hostkey))
+        m.add_string(self._get_local_name() + ".")
+        m.add_string(getpass.getuser())
+        return str(m)
+
+    def _get_local_name(self):
+        addr = self.transport.sock.getsockname()
+        names = socket.getnameinfo(addr, socket.NI_NAMEREQD)
+        return names[0]
 
     def wait_for_response(self, event):
         max_ts = None
@@ -391,6 +424,17 @@ Error Message: {}
                 kexgss.set_username(self.username)
                 mic_token = kexgss.ssh_get_mic(self.transport.session_id)
                 m.add_string(mic_token)
+            elif self.auth_method == "hostbased":
+                m.add_string(self.hostkey.get_name())
+                m.add_string(str(self.hostkey))
+                m.add_string(self._get_local_name() + ".")
+                m.add_string(getpass.getuser())
+                # this blob must be the same as the message (minus the sig)
+                blob = self._get_hostbased_session_blob(
+                    self.hostkey, "ssh-connection", self.username
+                )
+                sig = Keysign().sign(self.transport.sock, blob)
+                m.add_string(sig)
             elif self.auth_method == "none":
                 pass
             else:

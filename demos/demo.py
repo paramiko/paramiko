@@ -62,7 +62,8 @@ def agent_auth(transport, username):
 def manual_auth(username, hostname):
     default_auth = "p"
     auth = input(
-        "Auth by (p)assword, (r)sa key, or (d)ss key? [%s] " % default_auth
+        "Auth by (p)assword, (r)sa key, (d)ss key, or (h)ostbased? [%s] "
+        % default_auth
     )
     if len(auth) == 0:
         auth = default_auth
@@ -89,6 +90,15 @@ def manual_auth(username, hostname):
             password = getpass.getpass("DSS key password: ")
             key = paramiko.DSSKey.from_private_key_file(path, password)
         t.auth_publickey(username, key)
+    elif auth == "h":
+        default_path = os.path.join(
+            os.sep, "etc", "ssh", "ssh_host_rsa_key.pub"
+        )
+        path = input("Host key [%s]: " % default_path)
+        if len(path) == 0:
+            path = default_path
+        key = paramiko.opensshkey.load_pubkey_from_file(path)
+        t.auth_hostbased(username, key)
     else:
         pw = getpass.getpass("Password for %s@%s: " % (username, hostname))
         t.auth_password(username, pw)

@@ -59,6 +59,7 @@ from paramiko.pkey import PKey, PublicBlob
 from paramiko.hostkeys import HostKeys
 from paramiko.config import SSHConfig
 from paramiko.proxy import ProxyCommand
+from paramiko.opensshkey import load_pubkey_from_file
 
 from paramiko.common import (
     AUTH_SUCCESSFUL,

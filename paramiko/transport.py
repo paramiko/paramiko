@@ -562,8 +562,9 @@ class Transport(threading.Thread, ClosingContextManager):
         Otherwise an SSHException is raised.
 
         After a successful negotiation, you will usually want to authenticate,
-        calling `auth_password <Transport.auth_password>` or
-        `auth_publickey <Transport.auth_publickey>`.
+        calling `auth_password <Transport.auth_password>`,
+        `auth_publickey <Transport.auth_publickey>`, or
+        `auth_hostbased <Transport.auth_hostbased>`.
 
         .. note:: `connect` is a simpler method for connecting as a client.
 
@@ -1519,6 +1520,53 @@ class Transport(threading.Thread, ClosingContextManager):
             # caller wants to wait for event themselves
             return []
         return self.auth_handler.wait_for_response(my_event)
+
+    def auth_hostbased(self, username, hostkey, event=None):
+        """
+        Authenticate to the server using a host-based key.  The key is used to
+        sign data from the server, so it must include the private part.
+
+        If an ``event`` is passed in, this method will return immediately, and
+        the event will be triggered once authentication succeeds or fails.  On
+        success, `is_authenticated` will return ``True``.  On failure, you may
+        use `get_exception` to get more detailed error information.
+
+        Since 1.1, if no event is passed, this method will block until the
+        authentication succeeds or fails.  On failure, an exception is raised.
+        Otherwise, the method simply returns.
+
+        If the server requires multi-step authentication (which is very rare),
+        this method will return a list of auth types permissible for the next
+        step.  Otherwise, in the normal case, an empty list is returned.
+
+        :param str username: the username to authenticate as
+        :param .PKey hostkey: the host-based key to authenticate with
+        :param .threading.Event event:
+            an event to trigger when the authentication attempt is complete
+            (whether it was successful or not)
+        :return:
+            list of auth types permissible for the next stage of
+            authentication (normally empty)
+
+        :raises BadAuthenticationType: if public-key authentication isn't
+            allowed by the server for this user (and no event was passed in)
+        :raises AuthenticationException: if the authentication failed (and no
+            event was passed in)
+        :raises SSHException: if there was a network error
+        """
+        if (not self.active) or (not self.initial_kex_done):
+            # we should never try to authenticate unless we're on a secure link
+            raise SSHException("No existing session")
+        if event is None:
+            my_event = threading.Event()
+        else:
+            my_event = event
+        self.auth_handler = AuthHandler(self)
+        self.auth_handler.auth_hostbased(username, hostkey, my_event)
+        if event is not None:
+            return []
+        else:
+            return self.auth_handler.wait_for_response(my_event)
 
     def auth_interactive(self, username, handler, submethods=""):
         """
