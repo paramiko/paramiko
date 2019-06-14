@@ -1354,6 +1354,3 @@ class ChannelStderrFile(ChannelFile):
     def _write(self, data):
         self.channel.sendall_stderr(data)
         return len(data)
-
-
-# vim: set shiftwidth=4 expandtab :
