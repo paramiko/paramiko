@@ -1,6 +1,6 @@
 from mock import patch, MagicMock
 
-from paramiko import Channel, ChannelFile
+from paramiko import Channel, ChannelFile, ChannelStderrFile
 
 
 class TestChannelFile(object):
@@ -27,7 +27,7 @@ class TestChannelFile(object):
         chan.sendall.assert_called_once_with(b"ohai")
 
 
-def TestChannelStderrFile(object):
+class TestChannelStderrFile(object):
     def test_read_calls_channel_recv_stderr(self):
         chan = MagicMock()
         cf = ChannelStderrFile(chan)
