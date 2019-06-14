@@ -875,7 +875,8 @@ class Channel (ClosingContextManager):
         client, it only makes sense to open this file for reading.  For a
         server, it only makes sense to open this file for writing.
 
-        :return: `.ChannelFile` object which can be used for Python file I/O.
+        :returns:
+            `.ChannelStderrFile` object which can be used for Python file I/O.
 
         .. versionadded:: 1.1
         """
@@ -1337,9 +1338,12 @@ class ChannelFile (BufferedFile):
         return len(data)
 
 
-class ChannelStderrFile (ChannelFile):
-    def __init__(self, channel, mode='r', bufsize=-1):
-        ChannelFile.__init__(self, channel, mode, bufsize)
+class ChannelStderrFile(ChannelFile):
+    """
+    A file-like wrapper around `.Channel` stderr.
+
+    See `Channel.makefile_stderr` for details.
+    """
 
     def _read(self, size):
         return self.channel.recv_stderr(size)
@@ -1347,6 +1351,3 @@ class ChannelStderrFile (ChannelFile):
     def _write(self, data):
         self.channel.sendall_stderr(data)
         return len(data)
-
-
-# vim: set shiftwidth=4 expandtab :
