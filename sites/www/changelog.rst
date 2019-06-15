@@ -2,6 +2,17 @@
 Changelog
 =========
 
+- :bug:`322 major` `SSHClient.exec_command
+  <paramiko.client.SSHClient.exec_command>` previously returned a naive
+  `~paramiko.channel.ChannelFile` object for its ``stdin`` value; such objects
+  don't know to properly shut down the remote end's stdin when they
+  ``.close()``. This leads to issues when running remote commands that read
+  from stdin.
+
+  A new subclass, `~paramiko.channel.ChannelStdinFile`, has been created which
+  closes remote stdin when it itself is closed.
+  `~paramiko.client.SSHClient.exec_command` has been updated to use that class
+  for its ``stdin`` return value.
 - :release:`2.5.0 <2019-06-09>`
 - :feature:`1233` (also :issue:`1229`, :issue:`1332`) Add support for
   encrypt-then-MAC (ETM) schemes (``hmac-sha2-256-etm@openssh.com``,

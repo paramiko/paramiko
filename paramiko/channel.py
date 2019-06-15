@@ -896,6 +896,23 @@ class Channel(ClosingContextManager):
         """
         return ChannelStderrFile(*([self] + list(params)))
 
+    def makefile_stdin(self, *params):
+        """
+        Return a file-like object associated with this channel's stdin
+        stream.
+
+        The optional ``mode`` and ``bufsize`` arguments are interpreted the
+        same way as by the built-in ``file()`` function in Python.  For a
+        client, it only makes sense to open this file for writing.  For a
+        server, it only makes sense to open this file for reading.
+
+        :returns:
+            `.ChannelStdinFile` object which can be used for Python file I/O.
+
+        .. versionadded:: 2.6
+        """
+        return ChannelStdinFile(*([self] + list(params)))
+
     def fileno(self):
         """
         Returns an OS-level file descriptor which can be used for polling, but
@@ -1355,3 +1372,9 @@ class ChannelStderrFile(ChannelFile):
     def _write(self, data):
         self.channel.sendall_stderr(data)
         return len(data)
+
+
+class ChannelStdinFile(ChannelFile):
+    def close(self):
+        super(ChannelFile, self).close()
+        self.channel.shutdown_write()

@@ -213,7 +213,7 @@ class ClientTest(unittest.TestCase):
 
         # Nobody else tests the API of exec_command so let's do it here for
         # now. :weary:
-        assert isinstance(stdin, paramiko.ChannelFile)
+        assert isinstance(stdin, paramiko.ChannelStdinFile)
         assert isinstance(stdout, paramiko.ChannelFile)
         assert isinstance(stderr, paramiko.ChannelStderrFile)
 

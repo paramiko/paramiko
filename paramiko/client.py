@@ -503,7 +503,7 @@ class SSHClient(ClosingContextManager):
         if environment:
             chan.update_environment(environment)
         chan.exec_command(command)
-        stdin = chan.makefile("wb", bufsize)
+        stdin = chan.makefile_stdin("wb", bufsize)
         stdout = chan.makefile("r", bufsize)
         stderr = chan.makefile_stderr("r", bufsize)
         return stdin, stdout, stderr
