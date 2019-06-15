@@ -1,8 +1,7 @@
 # Invocations for common project tasks
 invoke>=1.0,<2.0
 invocations>=1.2.0,<2.0
-# NOTE: pytest-relaxed currently only works with pytest >=3, <3.3
-pytest==4.6.3
+pytest==4.4.2
 pytest-relaxed==1.1.5
 # pytest-xdist for test dir watching and the inv guard task
 pytest-xdist==1.28.0
