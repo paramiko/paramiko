@@ -453,11 +453,12 @@ class Packetizer (object):
         if self.__dump_packets:
             self._log(DEBUG, util.format_binary(header, 'IN: '))
 
-        # may be already computed
-        if not self.__etm_in:
+        if self.__etm_in:
+            # already decrypted everything above
+            packet = header
+        else:
             packet_size = struct.unpack(">I", header[:4])[0]
-        # leftover contains decrypted bytes from the first block (after the length field)
-        if not self.__etm_in:
+            # leftover contains decrypted bytes from the first block (after the length field)
             leftover = header[4:]
             if (packet_size - len(leftover)) % self.__block_size_in != 0:
                 raise SSHException("Invalid packet blocking")
@@ -468,9 +469,6 @@ class Packetizer (object):
             if self.__block_engine_in is not None:
                 packet = self.__block_engine_in.update(packet)
             packet = leftover + packet
-        else:
-            # already decrypted everything above
-            packet = header
 
         if self.__dump_packets:
             self._log(DEBUG, util.format_binary(packet, 'IN: '))
