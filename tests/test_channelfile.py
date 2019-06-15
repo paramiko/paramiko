@@ -6,12 +6,12 @@ from paramiko import Channel, ChannelFile, ChannelStderrFile
 class TestChannelFile(object):
     @patch("paramiko.channel.ChannelFile._set_mode")
     def test_defaults_to_unbuffered_reading(self, setmode):
-        cf = ChannelFile(Channel(None))
+        ChannelFile(Channel(None))
         setmode.assert_called_once_with("r", -1)
 
     @patch("paramiko.channel.ChannelFile._set_mode")
     def test_can_override_mode_and_bufsize(self, setmode):
-        cf = ChannelFile(Channel(None), mode="w", bufsize=25)
+        ChannelFile(Channel(None), mode="w", bufsize=25)
         setmode.assert_called_once_with("w", 25)
 
     def test_read_recvs_from_channel(self):
@@ -39,4 +39,3 @@ class TestChannelStderrFile(object):
         cf = ChannelStderrFile(chan, mode="w")
         cf.write("ohai")
         chan.sendall_stderr.assert_called_once_with(b"ohai")
-
