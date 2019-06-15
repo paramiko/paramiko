@@ -206,7 +206,7 @@ class ClientTest(unittest.TestCase):
         schan = self.ts.accept(1.0)
 
         # Nobody else tests the API of exec_command so let's do it here for now
-        assert isinstance(stdin, paramiko.ChannelFile)
+        assert isinstance(stdin, paramiko.ChannelStdinFile)
         assert isinstance(stdout, paramiko.ChannelFile)
         assert isinstance(stderr, paramiko.ChannelStderrFile)
 

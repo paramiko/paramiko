@@ -26,7 +26,7 @@ from paramiko.client import (
 )
 from paramiko.auth_handler import AuthHandler
 from paramiko.ssh_gss import GSSAuth, GSS_AUTH_AVAILABLE, GSS_EXCEPTIONS
-from paramiko.channel import Channel, ChannelFile, ChannelStderrFile
+from paramiko.channel import Channel, ChannelFile, ChannelStderrFile, ChannelStdinFile
 from paramiko.ssh_exception import (
     SSHException, PasswordRequiredException, BadAuthenticationType,
     ChannelException, BadHostKeyException, AuthenticationException,
@@ -90,6 +90,7 @@ __all__ = [
     'Channel',
     'ChannelFile',
     'ChannelStderrFile',
+    'ChannelStdinFile',
     'PKey',
     'RSAKey',
     'DSSKey',
