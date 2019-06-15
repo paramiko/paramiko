@@ -1366,6 +1366,12 @@ class ChannelFile(BufferedFile):
 
 
 class ChannelStderrFile(ChannelFile):
+    """
+    A file-like wrapper around `.Channel` stderr.
+
+    See `Channel.makefile_stderr` for details.
+    """
+
     def _read(self, size):
         return self.channel.recv_stderr(size)
 
@@ -1375,6 +1381,12 @@ class ChannelStderrFile(ChannelFile):
 
 
 class ChannelStdinFile(ChannelFile):
+    """
+    A file-like wrapper around `.Channel` stdin.
+
+    See `Channel.makefile_stdin` for details.
+    """
+
     def close(self):
         super(ChannelStdinFile, self).close()
         self.channel.shutdown_write()
