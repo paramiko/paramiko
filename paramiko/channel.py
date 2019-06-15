@@ -889,7 +889,8 @@ class Channel(ClosingContextManager):
         client, it only makes sense to open this file for reading.  For a
         server, it only makes sense to open this file for writing.
 
-        :return: `.ChannelFile` object which can be used for Python file I/O.
+        :returns:
+            `.ChannelStderrFile` object which can be used for Python file I/O.
 
         .. versionadded:: 1.1
         """
