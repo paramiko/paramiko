@@ -2,9 +2,24 @@
 Welcome to Paramiko's documentation!
 ====================================
 
-This site covers Paramiko's usage & API documentation. For basic info on what
-Paramiko is, including its public changelog & how the project is maintained,
-please see `the main project website <http://paramiko.org>`_.
+**Paramiko-NG** is a Python (2.7, 3.4+) implementation of the SSHv2 protocol [#]_,
+providing both client and server functionality. While it leverages a Python C
+extension for low level cryptography (`Cryptography <https://cryptography.io>`_),
+Paramiko-NG itself is a pure Python interface around SSH networking concepts.
+
+This site covers **Paramiko-NG**'s usage & API documentation. Paramiko-NG is still
+usually referred to as Paramiko in the documentation, and it is still imported
+as ``paramiko``.
+
+For information about installing Paramiko-NG: :doc:`installing`
+
+.. rubric:: Footnotes
+
+.. [#]
+    SSH is defined in :rfc:`4251`, :rfc:`4252`, :rfc:`4253` and :rfc:`4254`. The
+    primary working implementation of the protocol is the `OpenSSH project
+    <http://openssh.org>`_.  Paramiko implements a large portion of the SSH
+    feature set, but there are occasional gaps.
 
 
 API documentation
@@ -72,3 +87,11 @@ Miscellany
     api/file
     api/pipe
     api/ssh_exception
+
+
+Appendix
+========
+
+.. toctree::
+    installing
+    faq

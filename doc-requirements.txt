@@ -1,0 +1,7 @@
+docutils==0.14
+Sphinx==1.7.9
+alabaster==0.7.12
+Pygments==2.3.1
+MarkupSafe==1.1.1
+releases==1.6.1
+semantic_version==2.4.2
