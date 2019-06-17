@@ -36,8 +36,12 @@ install:
   - pip install cryptography==$CRYPTO_VER PyNaCl
   # Self-install for setup.py-driven deps
   - pip install -e .
-  # Dev (doc/test running) requirements
+  # test deps
   - pip install -r dev-requirements.txt
+  # docs site build
+  - if [ $TRAVIS_PYTHON_VERSION = 3.6 ]; then
+        pip install -r doc-requirements.txt;
+    fi
   # for gssapi tests
   - |
     if [ -n "$USE_K5TEST" ]; then
@@ -48,3 +52,7 @@ install:
 script:
   - flake8
   - pytest -v
+  # test docs build
+  - if [ $TRAVIS_PYTHON_VERSION = 3.6 ]; then
+        sphinx-build -W sites/docs tmpbuild;
+    fi

@@ -1,36 +1,36 @@
-=========
-Changelog
-=========
+=============
+Old Changelog
+=============
 
-- :bug:`-` Modify protocol message handling such that ``Transport`` does not
+For newer changes see https://github.com/ploxiln/paramiko-ng/releases
+
+Following are changes pre-fork, up to just past version 2.4.1
+
+* :bug:`-` Modify protocol message handling such that ``Transport`` does not
   respond to ``MSG_UNIMPLEMENTED`` with its own ``MSG_UNIMPLEMENTED``. This
   behavior probably didn't cause any outright errors, but it doesn't seem to
   conform to the RFCs and could cause (non-infinite) feedback loops in some
   scenarios (usually those involving Paramiko on both ends).
-- :bug:`1283` Fix exploit (CVE-2018-1000805) in Paramiko's server mode (**not**
+* :bug:`1283` Fix exploit (CVE-2018-1000805) in Paramiko's server mode (**not**
   client mode) where hostile clients could trick the server into thinking they
   were authenticated without actually submitting valid authentication.
-
   Specifically, steps have been taken to start separating client and server
   related message types in the message handling tables within ``Transport`` and
   ``AuthHandler``; this work is not complete but enough has been performed to
   close off this particular exploit (which was the only obvious such exploit
   for this particular channel).
-
   Thanks to Daniel Hoffman for the detailed report.
-* :support:`1262 backported` Add ``*.pub`` files to the MANIFEST so distributed
+* :bug:`1262` Add ``*.pub`` files to the MANIFEST so distributed
   source packages contain some necessary test assets. Credit: Alexander
   Kapshuna.
-* :support:`1191` Update our install docs with (somewhat) recently added
+* :bug:`1191` Update our install docs with (somewhat) recently added
   additional dependencies; we previously only required Cryptography, but the
   docs never got updated after we incurred ``bcrypt`` and ``pynacl``
   requirements for Ed25519 key support.
-
   Additionally, ``pyasn1`` was never actually hard-required; it was necessary
   during a development branch, and is used by the optional GSSAPI support, but
   is not required for regular installation. Thus, it has been removed from our
   ``setup.py`` and its imports in the GSSAPI code made optional.
-
   Credit to ``@stevenwinfield`` for highlighting the outdated install docs.
 
 * :release:`2.4.1 <2018-03-12>`
@@ -197,7 +197,7 @@ Changelog
   known_hosts) and does not consider a different type to be a "Missing" host
   key. This fixes a common case where an ECDSA key is in known_hosts and the
   server also has an RSA host key. Thanks to Pierce Lopez.
-* :support:`906 (1.18+)` Clean up a handful of outdated imports and related
+* :support:`906` Clean up a handful of outdated imports and related
   tweaks. Thanks to Pierce Lopez.
 * :bug:`984` Enhance default cipher preference order such that
   ``aes(192|256)-cbc`` are preferred over ``blowfish-cbc``. Thanks to Alex
@@ -238,7 +238,7 @@ Changelog
 
 * :support:`921` Tighten up the ``__hash__`` implementation for various key
   classes; less code is good code. Thanks to Francisco Couzo for the patch.
-* :support:`956 backported (1.17+)` Switch code coverage service from
+* :support:`956 backported` Switch code coverage service from
   coveralls.io to codecov.io (& then disable the latter's auto-comments.)
   Thanks to Nikolai Røed Kristiansen for the patch.
 * :bug:`983` Move ``sha1`` above the now-arguably-broken ``md5`` in the list of
@@ -313,7 +313,7 @@ Changelog
 * :bug:`895 (1.17+)` Fix a bug in server-mode concerning multiple interactive
   auth steps (which were incorrectly responded to). Thanks to Dennis
   Kaarsemaker for catch & patch.
-* :support:`866 backported (1.17+)` (also :issue:`838`) Remove an old
+* :support:`866 backported` (also :issue:`838`) Remove an old
   test-related file we don't support, and add PyPy to Travis-CI config. Thanks
   to Pierce Lopez for the final patch and Pedro Rodrigues for an earlier
   edition.

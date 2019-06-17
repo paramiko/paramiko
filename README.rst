@@ -20,7 +20,7 @@ For changes in releases of this fork, see `releases <https://github.com/ploxiln/
 :Copyright:   Copyright (c) 2013-2018  Jeff Forcier <jeff@bitprophet.org>
 :Copyright:   Copyright (c) 2019       Pierce Lopez <pierce.lopez@gmail.com>
 :License:     `LGPL <https://www.gnu.org/copyleft/lesser.html>`_
-:API docs:    http://docs.paramiko.org
+:API docs:    https://ploxiln.github.io/paramiko-ng/
 :Development: https://github.com/ploxiln/paramiko-ng/
 
 
@@ -61,7 +61,7 @@ in order to satisfy requirements for other packages::
 
     PARAMIKO_REPLACE=1 pip install https://github.com/ploxiln/paramiko-ng/archive/2.7.0.tar.gz#egg=paramiko
 
-Replace "2.5.0" with the desired recent release, or for the latest development version do::
+Replace "2.7.0" with the desired recent release, or for the latest development version do::
 
     PARAMIKO_REPLACE=1 pip install git+https://github.com/ploxiln/paramiko-ng/#egg=paramiko
 
