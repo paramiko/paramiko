@@ -95,3 +95,4 @@ Appendix
 .. toctree::
     installing
     faq
+    old_changelog
