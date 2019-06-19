@@ -56,20 +56,16 @@ class BadAuthenticationType(AuthenticationException):
     .. versionadded:: 1.1
     """
 
-    #: list of allowed authentication types provided by the server (possible
-    #: values are: ``"none"``, ``"password"``, and ``"publickey"``).
     allowed_types = []
 
     def __init__(self, explanation, types):
-        AuthenticationException.__init__(self, explanation)
+        AuthenticationException.__init__(self, explanation, types)
         self.allowed_types = types
-        # for unpickling
-        self.args = (explanation, types)
 
     def __str__(self):
-        return "{} (allowed_types={!r})".format(
-            SSHException.__str__(self), self.allowed_types
-        )
+        msg = "Bad authentication type, allowed types: "
+        msg += ",".join(self.allowed_types)
+        return msg
 
 
 class PartialAuthentication(AuthenticationException):
@@ -80,10 +76,13 @@ class PartialAuthentication(AuthenticationException):
     allowed_types = []
 
     def __init__(self, types):
-        AuthenticationException.__init__(self, "partial authentication")
+        AuthenticationException.__init__(self, types)
         self.allowed_types = types
-        # for unpickling
-        self.args = (types,)
+
+    def __str__(self):
+        msg = "Partial authentication, allowed types: "
+        msg += ",".join(self.allowed_types)
+        return msg
 
 
 class ChannelException(SSHException):
@@ -96,10 +95,11 @@ class ChannelException(SSHException):
     """
 
     def __init__(self, code, text):
-        SSHException.__init__(self, text)
+        SSHException.__init__(self, code, text)
         self.code = code
-        # for unpickling
-        self.args = (code, text)
+
+    def __str__(self):
+        return "ChannelException: %s, %s" % self.args
 
 
 class BadHostKeyException(SSHException):
@@ -114,18 +114,17 @@ class BadHostKeyException(SSHException):
     """
 
     def __init__(self, hostname, got_key, expected_key):
-        message = (
-            "Host key for server {} does not match: got {}, expected {}"
-        )  # noqa
-        message = message.format(
-            hostname, got_key.get_base64(), expected_key.get_base64()
-        )
-        SSHException.__init__(self, message)
+        SSHException.__init__(self, hostname, got_key, expected_key)
         self.hostname = hostname
         self.key = got_key
         self.expected_key = expected_key
-        # for unpickling
-        self.args = (hostname, got_key, expected_key)
+
+    def __str__(self):
+        return "Host key for server %s does not match: got %s, expected %s" % (
+            self.hostname,
+            self.got_key.get_base64(),
+            self.expected_key.get_base64(),
+        )
 
 
 class ProxyCommandFailure(SSHException):
@@ -137,15 +136,13 @@ class ProxyCommandFailure(SSHException):
     """
 
     def __init__(self, command, error):
-        SSHException.__init__(
-            self,
-            '"ProxyCommand ({})" returned non-zero exit status: {}'.format(
-                command, error
-            ),
-        )
+        SSHException.__init__(self, command, error)
         self.error = error
-        # for unpickling
-        self.args = (command, error)
+
+    def __str__(self):
+        return (
+            "ProxyCommand (%s) returned non-zero exit status: %s" % self.args
+        )
 
 
 class NoValidConnectionsError(socket.error):
