@@ -26,9 +26,11 @@ import os
 from hashlib import sha1
 import unittest
 
+import paramiko
 import paramiko.util
+from paramiko import SSHConfig
 from paramiko.util import lookup_ssh_host_config as host_config, safe_string
-from paramiko.py3compat import StringIO, byte_ord, b
+from paramiko.py3compat import StringIO, byte_ord
 
 
 # Note some lines in this configuration have trailing spaces on purpose
@@ -62,16 +64,12 @@ BGQ3GQ/Fc7SX6gkpXkwcZryoi4kNFhHu5LvHcZPdxXV1D+uTMfGS1eyd2Yz/DoNWXNAl8TI0cAsW\
 """
 
 
-# for test 1:
-from paramiko import *
-
-
 class UtilTest(unittest.TestCase):
     def test_import(self):
         """
         verify that all the classes can be imported from paramiko.
         """
-        symbols = list(globals().keys())
+        symbols = paramiko.__all__
         self.assertTrue("Transport" in symbols)
         self.assertTrue("SSHClient" in symbols)
         self.assertTrue("MissingHostKeyPolicy" in symbols)
@@ -172,7 +170,7 @@ class UtilTest(unittest.TestCase):
         hex = "".join(["%02x" % byte_ord(c) for c in x])
         self.assertEqual(
             hex,
-            "9110e2f6793b69363e58173e9436b13a5a4b339005741d5c680e505f57d871347b4239f14fb5c46e857d5e100424873ba849ac699cea98d729e57b3e84378e8b",
+            "9110e2f6793b69363e58173e9436b13a5a4b339005741d5c680e505f57d871347b4239f14fb5c46e857d5e100424873ba849ac699cea98d729e57b3e84378e8b",  # noqa
         )
 
     def test_host_keys(self):
@@ -452,9 +450,7 @@ Host param4 "p a r" "p" "par" para
         f = StringIO(test_config_file)
         config = paramiko.util.parse_ssh_config(f)
         for host, values in res.items():
-            self.assertEquals(
-                paramiko.util.lookup_ssh_host_config(host, config), values
-            )
+            assert paramiko.util.lookup_ssh_host_config(host, config) == values
 
     def test_quoted_params_in_config(self):
         test_config_file = """\
@@ -485,9 +481,7 @@ Host param3 parara
         f = StringIO(test_config_file)
         config = paramiko.util.parse_ssh_config(f)
         for host, values in res.items():
-            self.assertEquals(
-                paramiko.util.lookup_ssh_host_config(host, config), values
-            )
+            assert paramiko.util.lookup_ssh_host_config(host, config) == values
 
     def test_quoted_host_in_config(self):
         conf = SSHConfig()
@@ -506,7 +500,7 @@ Host param3 parara
         }
         incorrect_data = ['param"', '"param', 'param "pam', 'param "pam" "p a']
         for host, values in correct_data.items():
-            self.assertEquals(conf._get_hosts(host), values)
+            assert conf._get_hosts(host) == values
         for host in incorrect_data:
             self.assertRaises(Exception, conf._get_hosts, host)
 

@@ -1348,15 +1348,9 @@ class ChannelFile(BufferedFile):
 
 
 class ChannelStderrFile(ChannelFile):
-    def __init__(self, channel, mode="r", bufsize=-1):
-        ChannelFile.__init__(self, channel, mode, bufsize)
-
     def _read(self, size):
         return self.channel.recv_stderr(size)
 
     def _write(self, data):
         self.channel.sendall_stderr(data)
         return len(data)
-
-
-# vim: set shiftwidth=4 expandtab :

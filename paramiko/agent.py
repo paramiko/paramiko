@@ -80,8 +80,8 @@ class AgentSSH(object):
     def _send_message(self, msg):
         msg = asbytes(msg)
         self._conn.send(struct.pack(">I", len(msg)) + msg)
-        l = self._read_all(4)
-        msg = Message(self._read_all(struct.unpack(">I", l)[0]))
+        data = self._read_all(4)
+        msg = Message(self._read_all(struct.unpack(">I", data)[0]))
         return ord(msg.get_byte()), msg
 
     def _read_all(self, wanted):

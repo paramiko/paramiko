@@ -1,3 +1,4 @@
+dist: xenial
 language: python
 sudo: false
 cache:
@@ -8,18 +9,20 @@ python:
   - "3.4"
   - "3.5"
   - "3.6"
-  - "3.7-dev"
-  - "pypy-5.6.0"
+  - "3.7"
+  - "3.8-dev"
+  - "pypy"
+  - "pypy3"
 matrix:
   allow_failures:
-    - python: "3.7-dev"
+    - python: "3.8-dev"
   # Explicitly test against our oldest supported cryptography.io, in addition
   # to whatever the latest default is.
   include:
     - python: 2.7
-      env: "CRYPTO_BEFORE=1.6"
-    - python: 3.6
-      env: "CRYPTO_BEFORE=1.6"
+      env: "OLDEST_CRYPTO=1.5"
+    - python: 3.7
+      env: "OLDEST_CRYPTO=1.5"
     - python: 2.7
       env: "USE_K5TEST=yes"
     - python: 3.6
@@ -30,8 +33,8 @@ install:
   # Grab a specific version of Cryptography if desired. Doing this before other
   # installations ensures we don't have to do any downgrading/overriding.
   - |
-    if [[ -n "$CRYPTO_BEFORE" ]]; then
-      pip install "cryptography<${CRYPTO_BEFORE}"
+    if [[ -n "$OLDEST_CRYPTO" ]]; then
+      pip install "cryptography==${OLDEST_CRYPTO}"
     fi
   # Self-install for setup.py-driven deps
   - pip install -e .

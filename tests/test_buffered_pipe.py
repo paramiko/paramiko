@@ -26,7 +26,6 @@ import unittest
 
 from paramiko.buffered_pipe import BufferedPipe, PipeTimeout
 from paramiko import pipe
-from paramiko.py3compat import b
 
 
 def delay_thread(p):
@@ -42,7 +41,7 @@ def close_thread(p):
 
 
 class BufferedPipeTest(unittest.TestCase):
-    def test_1_buffered_pipe(self):
+    def test_buffered_pipe(self):
         p = BufferedPipe()
         self.assertTrue(not p.read_ready())
         p.feed("hello.")
@@ -59,7 +58,7 @@ class BufferedPipeTest(unittest.TestCase):
         self.assertTrue(not p.read_ready())
         self.assertEqual(b"", p.read(1))
 
-    def test_2_delay(self):
+    def test_delay(self):
         p = BufferedPipe()
         self.assertTrue(not p.read_ready())
         threading.Thread(target=delay_thread, args=(p,)).start()
@@ -72,13 +71,13 @@ class BufferedPipeTest(unittest.TestCase):
         self.assertEqual(b"b", p.read(1, 1.0))
         self.assertEqual(b"", p.read(1))
 
-    def test_3_close_while_reading(self):
+    def test_close_while_reading(self):
         p = BufferedPipe()
         threading.Thread(target=close_thread, args=(p,)).start()
         data = p.read(1, 1.0)
         self.assertEqual(b"", data)
 
-    def test_4_or_pipe(self):
+    def test_or_pipe(self):
         p = pipe.make_pipe()
         p1, p2 = pipe.make_or_pipe(p)
         self.assertFalse(p._set)
