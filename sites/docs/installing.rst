@@ -20,10 +20,9 @@ older (or 3.3 or older) are urged to upgrade.
 
 Paramiko-NG has only a few direct dependencies:
 
-- The big one, with its own sub-dependencies, is Cryptography; see :ref:`its
-  specific note below <cryptography>` for more details.
+- The big one is Cryptography; see :ref:`its specific note below <cryptography>` for more details.
 - `bcrypt <https://pypi.org/project/bcrypt/>`_, for "new openssh format" private keys
-- `pynacl <https://pypi.org/project/PyNaCl/>`_, optional, for Ed25519 key support
+- `pynacl <https://pypi.org/project/PyNaCl/>`_, *optional* for Ed25519 key support
 
 If you need GSS-API / SSPI support, see :ref:`the below subsection on it
 <gssapi>` for details on its optional dependencies.
@@ -36,8 +35,8 @@ Cryptography
 
 `Cryptography <https://cryptography.io>`__  provides the low-level (C-based)
 encryption algorithms we need to implement the SSH protocol. It has detailed
-`installation instructions`_ (and an `FAQ
-<https://cryptography.io/en/latest/faq/>`_) which you should read carefully.
+`installation instructions`_ (and an `FAQ <https://cryptography.io/en/latest/faq/>`_)
+which you should read carefully.
 
 In general, you'll need one of the following setups:
 
@@ -62,12 +61,10 @@ In order to use GSS-API/Kerberos & related functionality, a couple of
 additional dependencies are required (these are not listed in our ``setup.py``
 due to their infrequent utility & non-platform-agnostic requirements):
 
-* It hopefully goes without saying but **all platforms** need **a working
-  installation of GSS-API itself**, e.g. Heimdal.
-* **Unix** needs `gssapi <https://pypi.org/project/gssapi/>`__
-
-* **Windows** needs `pywin32 <https://pypi.python.org/pypi/pywin32>`_ ``2.1.8``
-  or better.
+* All platforms need **a working installation of GSS-API itself**, e.g. Heimdal.
+* All platforms need `pyasn1 <https://pypi.org/project/pyasn1/>`__ ``0.1.7`` or later.
+* **Unix** needs `gssapi <https://pypi.org/project/gssapi/>`__ ``1.4.1`` or later.
+* **Windows** needs `pywin32 <https://pypi.python.org/pypi/pywin32>`__ ``2.1.8`` or later.
 
 .. note::
     If you use Microsoft SSPI for kerberos authentication and credential
