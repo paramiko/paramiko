@@ -2,6 +2,16 @@
 Changelog
 =========
 
+- :support:`1440` (with initial fixes via :issue:`1460`) Tweak many exception
+  classes so their string representations are more human-friendly; this also
+  includes incidental changes to some ``super()`` calls.
+
+  The definitions of exceptions' ``__init__`` methods have *not* changed, nor
+  have any log messages been altered, so this should be backwards compatible
+  for everything except the actual exceptions' ``__str__()`` outputs.
+
+  Thanks to Fabian Büchler for original report & Pierce Lopez for the
+  foundational patch.
 - :support:`1311` (for :issue:`584`, replacing :issue:`1166`) Add
   backwards-compatible support for the ``gssapi`` GSSAPI library, as the
   previous backend (``python-gssapi``) has since become defunct. This change
