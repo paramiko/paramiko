@@ -489,7 +489,7 @@ class Transport(threading.Thread, ClosingContextManager):
         self.auth_timeout = 30
 
         # Note change from verb to plural noun.
-        self.disabled_algorithms = disable_algorithms
+        self.disabled_algorithms = disable_algorithms or {}
 
         # server mode:
         self.server_mode = False
@@ -502,7 +502,7 @@ class Transport(threading.Thread, ClosingContextManager):
     def _filter_algorithm(self, type_):
         default = getattr(self, "_preferred_{}".format(type_))
         return tuple(
-            x for x in default if x not in self.disabled_algorithms[type_]
+            x for x in default if x not in self.disabled_algorithms.get(type_, [])
         )
 
     @property
@@ -2253,7 +2253,7 @@ class Transport(threading.Thread, ClosingContextManager):
             mp_required_prefix = "diffie-hellman-group-exchange-sha"
             kex_mp = [
                 k
-                for k in self._preferred_kex
+                for k in self.preferred_kex
                 if k.startswith(mp_required_prefix)
             ]
             if (self._modulus_pack is None) and (len(kex_mp) > 0):
@@ -2268,21 +2268,21 @@ class Transport(threading.Thread, ClosingContextManager):
             available_server_keys = list(
                 filter(
                     list(self.server_key_dict.keys()).__contains__,
-                    self._preferred_keys,
+                    self.preferred_keys,
                 )
             )
         else:
-            available_server_keys = self._preferred_keys
+            available_server_keys = self.preferred_keys
 
         m = Message()
         m.add_byte(cMSG_KEXINIT)
         m.add_bytes(os.urandom(16))
-        m.add_list(self._preferred_kex)
+        m.add_list(self.preferred_kex)
         m.add_list(available_server_keys)
-        m.add_list(self._preferred_ciphers)
-        m.add_list(self._preferred_ciphers)
-        m.add_list(self._preferred_macs)
-        m.add_list(self._preferred_macs)
+        m.add_list(self.preferred_ciphers)
+        m.add_list(self.preferred_ciphers)
+        m.add_list(self.preferred_macs)
+        m.add_list(self.preferred_macs)
         m.add_list(self._preferred_compression)
         m.add_list(self._preferred_compression)
         m.add_string(bytes())
@@ -2340,11 +2340,11 @@ class Transport(threading.Thread, ClosingContextManager):
         # supports.
         if self.server_mode:
             agreed_kex = list(
-                filter(self._preferred_kex.__contains__, kex_algo_list)
+                filter(self.preferred_kex.__contains__, kex_algo_list)
             )
         else:
             agreed_kex = list(
-                filter(kex_algo_list.__contains__, self._preferred_kex)
+                filter(kex_algo_list.__contains__, self.preferred_kex)
             )
         if len(agreed_kex) == 0:
             raise SSHException(
@@ -2357,7 +2357,7 @@ class Transport(threading.Thread, ClosingContextManager):
             available_server_keys = list(
                 filter(
                     list(self.server_key_dict.keys()).__contains__,
-                    self._preferred_keys,
+                    self.preferred_keys,
                 )
             )
             agreed_keys = list(
@@ -2367,7 +2367,7 @@ class Transport(threading.Thread, ClosingContextManager):
             )
         else:
             agreed_keys = list(
-                filter(server_key_algo_list.__contains__, self._preferred_keys)
+                filter(server_key_algo_list.__contains__, self.preferred_keys)
             )
         if len(agreed_keys) == 0:
             raise SSHException(
@@ -2383,13 +2383,13 @@ class Transport(threading.Thread, ClosingContextManager):
         if self.server_mode:
             agreed_local_ciphers = list(
                 filter(
-                    self._preferred_ciphers.__contains__,
+                    self.preferred_ciphers.__contains__,
                     server_encrypt_algo_list,
                 )
             )
             agreed_remote_ciphers = list(
                 filter(
-                    self._preferred_ciphers.__contains__,
+                    self.preferred_ciphers.__contains__,
                     client_encrypt_algo_list,
                 )
             )
@@ -2397,13 +2397,13 @@ class Transport(threading.Thread, ClosingContextManager):
             agreed_local_ciphers = list(
                 filter(
                     client_encrypt_algo_list.__contains__,
-                    self._preferred_ciphers,
+                    self.preferred_ciphers,
                 )
             )
             agreed_remote_ciphers = list(
                 filter(
                     server_encrypt_algo_list.__contains__,
-                    self._preferred_ciphers,
+                    self.preferred_ciphers,
                 )
             )
         if len(agreed_local_ciphers) == 0 or len(agreed_remote_ciphers) == 0:
@@ -2418,17 +2418,17 @@ class Transport(threading.Thread, ClosingContextManager):
 
         if self.server_mode:
             agreed_remote_macs = list(
-                filter(self._preferred_macs.__contains__, client_mac_algo_list)
+                filter(self.preferred_macs.__contains__, client_mac_algo_list)
             )
             agreed_local_macs = list(
-                filter(self._preferred_macs.__contains__, server_mac_algo_list)
+                filter(self.preferred_macs.__contains__, server_mac_algo_list)
             )
         else:
             agreed_local_macs = list(
-                filter(client_mac_algo_list.__contains__, self._preferred_macs)
+                filter(client_mac_algo_list.__contains__, self.preferred_macs)
             )
             agreed_remote_macs = list(
-                filter(server_mac_algo_list.__contains__, self._preferred_macs)
+                filter(server_mac_algo_list.__contains__, self.preferred_macs)
             )
         if (len(agreed_local_macs) == 0) or (len(agreed_remote_macs) == 0):
             raise SSHException("Incompatible ssh server (no acceptable macs)")
