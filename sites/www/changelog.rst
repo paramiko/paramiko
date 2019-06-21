@@ -2,6 +2,11 @@
 Changelog
 =========
 
+- :bug:`1306` (via :issue:`1400`) Fix Ed25519 key handling so certain key
+  comment lengths don't cause ``SSHException("Invalid key")`` (this was
+  technically a bug in how padding, or lack thereof, is
+  calculated/interpreted). Thanks to ``@parke`` for the bug report & Pierce
+  Lopez for the patch.
 - :support:`1378 backported` Add support for the modern (as of Python 3.3)
   import location of ``MutableMapping`` (used in host key management) to avoid
   the old location becoming deprecated in Python 3.8. Thanks to Josh Karpel for
