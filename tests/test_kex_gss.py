@@ -145,7 +145,8 @@ class GSSKexTest(KerberosTestCase):
         """
         self._test_gsskex_and_auth(gss_host=None)
 
-    @unittest.expectedFailure  # to be investigated, see https://github.com/paramiko/paramiko/issues/1312
+    # To be investigated, see https://github.com/paramiko/paramiko/issues/1312
+    @unittest.expectedFailure
     def test_gsskex_and_auth_rekey(self):
         """
         Verify that Paramiko can rekey.
