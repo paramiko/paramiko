@@ -2,6 +2,11 @@
 Changelog
 =========
 
+- :bug:`1306` (via :issue:`1400`) Fix Ed25519 key handling so certain key
+  comment lengths don't cause ``SSHException("Invalid key")`` (this was
+  technically a bug in how padding, or lack thereof, is
+  calculated/interpreted). Thanks to ``@parke`` for the bug report & Pierce
+  Lopez for the patch.
 - :release:`2.5.0 <2019-06-09>`
 - :feature:`1233` (also :issue:`1229`, :issue:`1332`) Add support for
   encrypt-then-MAC (ETM) schemes (``hmac-sha2-256-etm@openssh.com``,
