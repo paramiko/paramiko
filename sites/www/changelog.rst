@@ -4,7 +4,7 @@ Changelog
 
 - :feature:`1463` Add a new keyword argument to `SSHClient.connect
   <paramiko.client.SSHClient.connect>` and `~paramiko.transport.Transport`,
-  ``disable_algorithms``, which allows selectively disabling one or more
+  ``disabled_algorithms``, which allows selectively disabling one or more
   kex/key/cipher/etc algorithms. This can be useful when disabling algorithms
   your target server (or client) does not support cleanly, or to work around
   unpatched bugs in Paramiko's own implementation thereof.

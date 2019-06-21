@@ -656,19 +656,19 @@ class SSHClientTest(ClientTest):
         assert isinstance(client._policy, paramiko.AutoAddPolicy)
 
     @patch("paramiko.client.Transport")
-    def test_disable_algorithms_defaults_to_None(self, Transport):
+    def test_disabled_algorithms_defaults_to_None(self, Transport):
         SSHClient().connect("host", sock=Mock(), password="no")
-        assert Transport.call_args[1]["disable_algorithms"] is None
+        assert Transport.call_args[1]["disabled_algorithms"] is None
 
     @patch("paramiko.client.Transport")
-    def test_disable_algorithms_passed_directly_if_given(self, Transport):
+    def test_disabled_algorithms_passed_directly_if_given(self, Transport):
         SSHClient().connect(
             "host",
             sock=Mock(),
             password="no",
-            disable_algorithms={"keys": ["ssh-dss"]},
+            disabled_algorithms={"keys": ["ssh-dss"]},
         )
-        call_arg = Transport.call_args[1]["disable_algorithms"]
+        call_arg = Transport.call_args[1]["disabled_algorithms"]
         assert call_arg == {"keys": ["ssh-dss"]}
 
 

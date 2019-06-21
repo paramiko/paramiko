@@ -236,7 +236,7 @@ class SSHClient(ClosingContextManager):
         auth_timeout=None,
         gss_trust_dns=True,
         passphrase=None,
-        disable_algorithms=None,
+        disabled_algorithms=None,
     ):
         """
         Connect to an SSH server and authenticate to it.  The server's host key
@@ -311,7 +311,7 @@ class SSHClient(ClosingContextManager):
             for the SSH banner to be presented.
         :param float auth_timeout: an optional timeout (in seconds) to wait for
             an authentication response.
-        :param dict disable_algorithms:
+        :param dict disabled_algorithms:
             an optional dict passed directly to `.Transport` and its keyword
             argument of the same name.
 
@@ -332,7 +332,7 @@ class SSHClient(ClosingContextManager):
         .. versionchanged:: 2.4
             Added the ``passphrase`` argument.
         .. versionchanged:: 2.6
-            Added the ``disable_algorithms`` argument.
+            Added the ``disabled_algorithms`` argument.
         """
         if not sock:
             errors = {}
@@ -371,7 +371,7 @@ class SSHClient(ClosingContextManager):
             sock,
             gss_kex=gss_kex,
             gss_deleg_creds=gss_deleg_creds,
-            disable_algorithms=disable_algorithms,
+            disabled_algorithms=disabled_algorithms,
         )
         t.use_compression(compress=compress)
         t.set_gss_host(

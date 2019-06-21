@@ -1115,7 +1115,7 @@ class AlgorithmDisablingTests(unittest.TestCase):
     def test_preferred_lists_filter_disabled_algorithms(self):
         t = Transport(
             sock=Mock(),
-            disable_algorithms={
+            disabled_algorithms={
                 "ciphers": ["aes128-cbc"],
                 "macs": ["hmac-md5"],
                 "keys": ["ssh-dss"],

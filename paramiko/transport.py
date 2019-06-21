@@ -146,7 +146,7 @@ class Transport(threading.Thread, ClosingContextManager):
     # These tuples of algorithm identifiers are in preference order; do not
     # reorder without reason!
     # NOTE: if you need to modify these, we suggest leveraging the
-    # `disable_algorithms` constructor argument (also available in SSHClient)
+    # `disabled_algorithms` constructor argument (also available in SSHClient)
     # instead of monkeypatching or subclassing.
     _preferred_ciphers = (
         "aes128-ctr",
@@ -309,7 +309,7 @@ class Transport(threading.Thread, ClosingContextManager):
         default_max_packet_size=DEFAULT_MAX_PACKET_SIZE,
         gss_kex=False,
         gss_deleg_creds=True,
-        disable_algorithms=None,
+        disabled_algorithms=None,
     ):
         """
         Create a new SSH session over an existing socket, or socket-like
@@ -356,7 +356,7 @@ class Transport(threading.Thread, ClosingContextManager):
         :param bool gss_deleg_creds:
             Whether to enable GSSAPI credential delegation when GSSAPI is in
             play. Default: ``True``.
-        :param dict disable_algorithms:
+        :param dict disabled_algorithms:
             If given, must be a dictionary mapping algorithm type to an
             iterable of algorithm identifiers, which will be disabled for the
             lifetime of the transport.
@@ -370,7 +370,7 @@ class Transport(threading.Thread, ClosingContextManager):
             For example, if you need to disable
             ``diffie-hellman-group16-sha512`` key exchange (perhaps because
             your code talks to a server which implements it differently from
-            Paramiko), specify ``disable_algorithms={"kex":
+            Paramiko), specify ``disabled_algorithms={"kex":
             ["diffie-hellman-group16-sha512"]}``.
 
         .. versionchanged:: 1.15
@@ -379,7 +379,7 @@ class Transport(threading.Thread, ClosingContextManager):
         .. versionchanged:: 1.15
             Added the ``gss_kex`` and ``gss_deleg_creds`` kwargs.
         .. versionchanged:: 2.6
-            Added the ``disable_algorithms`` kwarg.
+            Added the ``disabled_algorithms`` kwarg.
         """
         self.active = False
         self.hostname = None
@@ -487,9 +487,7 @@ class Transport(threading.Thread, ClosingContextManager):
         self.handshake_timeout = 15
         # how long (seconds) to wait for the auth response.
         self.auth_timeout = 30
-
-        # Note change from verb to plural noun.
-        self.disabled_algorithms = disable_algorithms or {}
+        self.disabled_algorithms = disabled_algorithms or {}
 
         # server mode:
         self.server_mode = False
@@ -502,7 +500,9 @@ class Transport(threading.Thread, ClosingContextManager):
     def _filter_algorithm(self, type_):
         default = getattr(self, "_preferred_{}".format(type_))
         return tuple(
-            x for x in default if x not in self.disabled_algorithms.get(type_, [])
+            x
+            for x in default
+            if x not in self.disabled_algorithms.get(type_, [])
         )
 
     @property
