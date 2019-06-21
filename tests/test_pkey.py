@@ -469,11 +469,15 @@ class KeyTest(unittest.TestCase):
 
     def test_ed25519_funky_padding(self):
         # Proves #1306 by just not exploding with 'Invalid key'.
-        Ed25519Key.from_private_key_file(_support("test_ed25519-funky-padding.key"))
+        Ed25519Key.from_private_key_file(
+            _support("test_ed25519-funky-padding.key")
+        )
 
     def test_ed25519_funky_padding_with_passphrase(self):
         # Proves #1306 by just not exploding with 'Invalid key'.
-        Ed25519Key.from_private_key_file(_support("test_ed25519-funky-padding_password.key"), b"asdf")
+        Ed25519Key.from_private_key_file(
+            _support("test_ed25519-funky-padding_password.key"), b"asdf"
+        )
 
     def test_ed25519_compare(self):
         # verify that the private & public keys compare equal
