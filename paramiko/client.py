@@ -236,6 +236,7 @@ class SSHClient(ClosingContextManager):
         auth_timeout=None,
         gss_trust_dns=True,
         passphrase=None,
+        disable_algorithms=None,
     ):
         """
         Connect to an SSH server and authenticate to it.  The server's host key
@@ -310,6 +311,9 @@ class SSHClient(ClosingContextManager):
             for the SSH banner to be presented.
         :param float auth_timeout: an optional timeout (in seconds) to wait for
             an authentication response.
+        :param dict disable_algorithms:
+            an optional dict passed directly to `.Transport` and its keyword
+            argument of the same name.
 
         :raises:
             `.BadHostKeyException` -- if the server's host key could not be
@@ -327,6 +331,8 @@ class SSHClient(ClosingContextManager):
             Added the ``gss_trust_dns`` argument.
         .. versionchanged:: 2.4
             Added the ``passphrase`` argument.
+        .. versionchanged:: 2.6
+            Added the ``disable_algorithms`` argument.
         """
         if not sock:
             errors = {}

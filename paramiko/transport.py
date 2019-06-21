@@ -306,6 +306,7 @@ class Transport(threading.Thread, ClosingContextManager):
         default_max_packet_size=DEFAULT_MAX_PACKET_SIZE,
         gss_kex=False,
         gss_deleg_creds=True,
+        disable_algorithms=None,
     ):
         """
         Create a new SSH session over an existing socket, or socket-like
@@ -352,12 +353,30 @@ class Transport(threading.Thread, ClosingContextManager):
         :param bool gss_deleg_creds:
             Whether to enable GSSAPI credential delegation when GSSAPI is in
             play. Default: ``True``.
+        :param dict disable_algorithms:
+            If given, must be a dictionary mapping algorithm type to an
+            iterable of algorithm identifiers, which will be disabled for the
+            lifetime of the transport.
+
+            Keys should match the last word in the class' builtin algorithm
+            tuple attributes, such as ``"ciphers"`` to disable names within
+            ``_preferred_ciphers``; or ``"kex"`` to disable something defined
+            inside ``_preferred_kex``. Values should exactly match members of
+            the matching attribute.
+
+            For example, if you need to disable
+            ``diffie-hellman-group16-sha512`` key exchange (perhaps because
+            your code talks to a server which implements it differently from
+            Paramiko), specify ``disable_algorithms={"kex":
+            ["diffie-hellman-group16-sha512"]}``.
 
         .. versionchanged:: 1.15
             Added the ``default_window_size`` and ``default_max_packet_size``
             arguments.
         .. versionchanged:: 1.15
             Added the ``gss_kex`` and ``gss_deleg_creds`` kwargs.
+        .. versionchanged:: 2.6
+            Added the ``disable_algorithms`` kwarg.
         """
         self.active = False
         self.hostname = None
