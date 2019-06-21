@@ -2,6 +2,11 @@
 Changelog
 =========
 
+- :bug:`1306` (via :issue:`1400`) Fix Ed25519 key handling so certain key
+  comment lengths don't cause ``SSHException("Invalid key")`` (this was
+  technically a bug in how padding, or lack thereof, is
+  calculated/interpreted). Thanks to ``@parke`` for the bug report & Pierce
+  Lopez for the patch.
 - :support:`1440` (with initial fixes via :issue:`1460`) Tweak many exception
   classes so their string representations are more human-friendly; this also
   includes incidental changes to some ``super()`` calls.
