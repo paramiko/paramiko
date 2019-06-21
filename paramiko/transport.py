@@ -332,10 +332,18 @@ class Transport(threading.Thread, ClosingContextManager):
         :param int default_max_packet_size:
             sets the default max packet size on the transport. (defaults to
             32768)
+        :param bool gss_kex:
+            Whether to enable GSSAPI key exchange when GSSAPI is in play.
+            Default: ``False``.
+        :param bool gss_deleg_creds:
+            Whether to enable GSSAPI credential delegation when GSSAPI is in
+            play. Default: ``True``.
 
         .. versionchanged:: 1.15
             Added the ``default_window_size`` and ``default_max_packet_size``
             arguments.
+        .. versionchanged:: 1.15
+            Added the ``gss_kex`` and ``gss_deleg_creds`` kwargs.
         """
         self.active = False
         self.hostname = None
