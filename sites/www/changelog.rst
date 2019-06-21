@@ -16,6 +16,28 @@ Changelog
     but for now, either library will work. Please upgrade to ``gssapi`` when
     you can, however, as ``python-gssapi`` is no longer maintained upstream.
 
+- :bug:`322 major` `SSHClient.exec_command
+  <paramiko.client.SSHClient.exec_command>` previously returned a naive
+  `~paramiko.channel.ChannelFile` object for its ``stdin`` value; such objects
+  don't know to properly shut down the remote end's stdin when they
+  ``.close()``. This lead to issues (such as hangs) when running remote
+  commands that read from stdin.
+
+  A new subclass, `~paramiko.channel.ChannelStdinFile`, has been created which
+  closes remote stdin when it itself is closed.
+  `~paramiko.client.SSHClient.exec_command` has been updated to use that class
+  for its ``stdin`` return value.
+
+  Thanks to Brandon Rhodes for the report & steps to reproduce.
+- :release:`2.5.0 <2019-06-09>`
+- :feature:`1233` (also :issue:`1229`, :issue:`1332`) Add support for
+  encrypt-then-MAC (ETM) schemes (``hmac-sha2-256-etm@openssh.com``,
+  ``hmac-sha2-512-etm@openssh.com``) and two newer Diffie-Hellman group key
+  exchange algorithms (``group14``, using SHA256; and ``group16``, using
+  SHA512). Patch courtesy of Edgar Sousa.
+- :feature:`532` (via :issue:`1384` and :issue:`1258`) Add support for
+  Curve25519 key exchange (aka ``curve25519-sha256@libssh.org``). Thanks to
+  Alex Gaynor and Dan Fuhry for supplying patches.
 - :support:`1379` (also :issue:`1369`) Raise Cryptography dependency
   requirement to version 2.5 (from 1.5) and update some deprecated uses of its
   API.
@@ -60,8 +82,9 @@ Changelog
   for this particular channel).
 
   Thanks to Daniel Hoffman for the detailed report.
-- :support:`1292 backported` Backport changes from :issue:`979` (added in
-  Paramiko 2.3) to Paramiko 2.0-2.2, using duck-typing to preserve backwards
+- :support:`1292 backported (<2.4)` Backport changes from :issue:`979` (added
+  in Paramiko
+  2.3) to Paramiko 2.0-2.2, using duck-typing to preserve backwards
   compatibility. This allows these older versions to use newer Cryptography
   sign/verify APIs when available, without requiring them (as is the case with
   Paramiko 2.3+).
@@ -74,9 +97,9 @@ Changelog
     This is a no-op for Paramiko 2.3+, which have required newer Cryptography
     releases since they were released.
 
-- :support:`1291 backported` Backport pytest support and application of the
-  ``black`` code formatter (both of which previously only existed in the 2.4
-  branch and above) to everything 2.0 and newer. This makes back/forward
+- :support:`1291 backported (<2.4)` Backport pytest support and application of
+  the ``black`` code formatter (both of which previously only existed in the
+  2.4 branch and above) to everything 2.0 and newer. This makes back/forward
   porting bugfixes significantly easier.
 - :support:`1262 backported` Add ``*.pub`` files to the MANIFEST so distributed
   source packages contain some necessary test assets. Credit: Alexander

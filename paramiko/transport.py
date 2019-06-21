@@ -88,9 +88,11 @@ from paramiko.common import (
 from paramiko.compress import ZlibCompressor, ZlibDecompressor
 from paramiko.dsskey import DSSKey
 from paramiko.ed25519key import Ed25519Key
+from paramiko.kex_curve25519 import KexCurve25519
 from paramiko.kex_gex import KexGex, KexGexSHA256
 from paramiko.kex_group1 import KexGroup1
-from paramiko.kex_group14 import KexGroup14
+from paramiko.kex_group14 import KexGroup14, KexGroup14SHA256
+from paramiko.kex_group16 import KexGroup16SHA512
 from paramiko.kex_ecdh_nist import KexNistp256, KexNistp384, KexNistp521
 from paramiko.kex_gss import KexGSSGex, KexGSSGroup1, KexGSSGroup14
 from paramiko.message import Message
@@ -156,6 +158,8 @@ class Transport(threading.Thread, ClosingContextManager):
     _preferred_macs = (
         "hmac-sha2-256",
         "hmac-sha2-512",
+        "hmac-sha2-256-etm@openssh.com",
+        "hmac-sha2-512-etm@openssh.com",
         "hmac-sha1",
         "hmac-md5",
         "hmac-sha1-96",
@@ -173,11 +177,15 @@ class Transport(threading.Thread, ClosingContextManager):
         "ecdh-sha2-nistp256",
         "ecdh-sha2-nistp384",
         "ecdh-sha2-nistp521",
+        "diffie-hellman-group16-sha512",
         "diffie-hellman-group-exchange-sha256",
+        "diffie-hellman-group14-sha256",
         "diffie-hellman-group-exchange-sha1",
         "diffie-hellman-group14-sha1",
         "diffie-hellman-group1-sha1",
     )
+    if KexCurve25519.is_available():
+        _preferred_kex = ("curve25519-sha256@libssh.org",) + _preferred_kex
     _preferred_gsskex = (
         "gss-gex-sha1-toWM5Slw5Ew8Mqkay+al2g==",
         "gss-group14-sha1-toWM5Slw5Ew8Mqkay+al2g==",
@@ -240,7 +248,9 @@ class Transport(threading.Thread, ClosingContextManager):
         "hmac-sha1": {"class": sha1, "size": 20},
         "hmac-sha1-96": {"class": sha1, "size": 12},
         "hmac-sha2-256": {"class": sha256, "size": 32},
+        "hmac-sha2-256-etm@openssh.com": {"class": sha256, "size": 32},
         "hmac-sha2-512": {"class": sha512, "size": 64},
+        "hmac-sha2-512-etm@openssh.com": {"class": sha512, "size": 64},
         "hmac-md5": {"class": md5, "size": 16},
         "hmac-md5-96": {"class": md5, "size": 12},
     }
@@ -265,6 +275,8 @@ class Transport(threading.Thread, ClosingContextManager):
         "diffie-hellman-group14-sha1": KexGroup14,
         "diffie-hellman-group-exchange-sha1": KexGex,
         "diffie-hellman-group-exchange-sha256": KexGexSHA256,
+        "diffie-hellman-group14-sha256": KexGroup14SHA256,
+        "diffie-hellman-group16-sha512": KexGroup16SHA512,
         "gss-group1-sha1-toWM5Slw5Ew8Mqkay+al2g==": KexGSSGroup1,
         "gss-group14-sha1-toWM5Slw5Ew8Mqkay+al2g==": KexGSSGroup14,
         "gss-gex-sha1-toWM5Slw5Ew8Mqkay+al2g==": KexGSSGex,
@@ -272,6 +284,8 @@ class Transport(threading.Thread, ClosingContextManager):
         "ecdh-sha2-nistp384": KexNistp384,
         "ecdh-sha2-nistp521": KexNistp521,
     }
+    if KexCurve25519.is_available():
+        _kex_info["curve25519-sha256@libssh.org"] = KexCurve25519
 
     _compression_info = {
         # zlib@openssh.com is just zlib, but only turned on after a successful
@@ -2440,6 +2454,7 @@ class Transport(threading.Thread, ClosingContextManager):
         engine = self._get_cipher(
             self.remote_cipher, key_in, IV_in, self._DECRYPT
         )
+        etm = "etm@openssh.com" in self.remote_mac
         mac_size = self._mac_info[self.remote_mac]["size"]
         mac_engine = self._mac_info[self.remote_mac]["class"]
         # initial mac keys are done in the hash's natural size (not the
@@ -2449,7 +2464,7 @@ class Transport(threading.Thread, ClosingContextManager):
         else:
             mac_key = self._compute_key("F", mac_engine().digest_size)
         self.packetizer.set_inbound_cipher(
-            engine, block_size, mac_engine, mac_size, mac_key
+            engine, block_size, mac_engine, mac_size, mac_key, etm=etm
         )
         compress_in = self._compression_info[self.remote_compression][1]
         if compress_in is not None and (
@@ -2478,6 +2493,7 @@ class Transport(threading.Thread, ClosingContextManager):
         engine = self._get_cipher(
             self.local_cipher, key_out, IV_out, self._ENCRYPT
         )
+        etm = "etm@openssh.com" in self.local_mac
         mac_size = self._mac_info[self.local_mac]["size"]
         mac_engine = self._mac_info[self.local_mac]["class"]
         # initial mac keys are done in the hash's natural size (not the
@@ -2488,7 +2504,7 @@ class Transport(threading.Thread, ClosingContextManager):
             mac_key = self._compute_key("E", mac_engine().digest_size)
         sdctr = self.local_cipher.endswith("-ctr")
         self.packetizer.set_outbound_cipher(
-            engine, block_size, mac_engine, mac_size, mac_key, sdctr
+            engine, block_size, mac_engine, mac_size, mac_key, sdctr, etm=etm
         )
         compress_out = self._compression_info[self.local_compression][0]
         if compress_out is not None and (

@@ -31,12 +31,14 @@ from .util import needs_gssapi, KerberosTestCase, update_env
 class GSSAPITest(KerberosTestCase):
     def setUp(self):
         super(GSSAPITest, self).setUp()
+        # TODO: these vars should all come from os.environ or whatever the
+        # approved pytest method is for runtime-configuring test data.
         self.krb5_mech = "1.2.840.113554.1.2.2"
         self.targ_name = self.realm.hostname
         self.server_mode = False
         update_env(self, self.realm.env)
 
-    def test_1_pyasn1(self):
+    def test_pyasn1(self):
         """
         Test the used methods of pyasn1.
         """
