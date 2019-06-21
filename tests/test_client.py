@@ -34,6 +34,7 @@ import weakref
 from tempfile import mkstemp
 
 from pytest_relaxed import raises
+from mock import patch, Mock
 
 import paramiko
 from paramiko import SSHClient
@@ -653,6 +654,22 @@ class SSHClientTest(ClientTest):
         # Hand in just the class (new behavior)
         client.set_missing_host_key_policy(paramiko.AutoAddPolicy)
         assert isinstance(client._policy, paramiko.AutoAddPolicy)
+
+    @patch("paramiko.client.Transport")
+    def test_disable_algorithms_defaults_to_None(self, Transport):
+        SSHClient().connect("host", sock=Mock(), password="no")
+        assert Transport.call_args[1]["disable_algorithms"] is None
+
+    @patch("paramiko.client.Transport")
+    def test_disable_algorithms_passed_directly_if_given(self, Transport):
+        SSHClient().connect(
+            "host",
+            sock=Mock(),
+            password="no",
+            disable_algorithms={"keys": ["ssh-dss"]},
+        )
+        call_arg = Transport.call_args[1]["disable_algorithms"]
+        assert call_arg == {"keys": ["ssh-dss"]}
 
 
 class PasswordPassphraseTests(ClientTest):
