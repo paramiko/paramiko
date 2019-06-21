@@ -58,14 +58,18 @@ class BadAuthenticationType(AuthenticationException):
 
     allowed_types = []
 
+    # TODO 3.0: remove explanation kwarg
     def __init__(self, explanation, types):
+        # TODO 3.0: remove this supercall unless it's actually required for
+        # pickling (after fixing pickling)
         AuthenticationException.__init__(self, explanation, types)
+        self.explanation = explanation
         self.allowed_types = types
 
     def __str__(self):
-        msg = "Bad authentication type, allowed types: "
-        msg += ",".join(self.allowed_types)
-        return msg
+        return "{}; allowed types: {!r}".format(
+            self.explanation, self.allowed_types
+        )
 
 
 class PartialAuthentication(AuthenticationException):
@@ -80,9 +84,9 @@ class PartialAuthentication(AuthenticationException):
         self.allowed_types = types
 
     def __str__(self):
-        msg = "Partial authentication, allowed types: "
-        msg += ",".join(self.allowed_types)
-        return msg
+        return "Partial authentication; allowed types: {!r}".format(
+            self.allowed_types
+        )
 
 
 class ChannelException(SSHException):
@@ -97,9 +101,10 @@ class ChannelException(SSHException):
     def __init__(self, code, text):
         SSHException.__init__(self, code, text)
         self.code = code
+        self.text = text
 
     def __str__(self):
-        return "ChannelException: %s, %s" % self.args
+        return "ChannelException({!r}, {!r})".format(self.code, self.text)
 
 
 class BadHostKeyException(SSHException):
@@ -120,9 +125,12 @@ class BadHostKeyException(SSHException):
         self.expected_key = expected_key
 
     def __str__(self):
-        return "Host key for server %s does not match: got %s, expected %s" % (
+        msg = (
+            "Host key for server {!r} does not match: got {!r}, expected {!r}"
+        )  # noqa
+        return msg.format(
             self.hostname,
-            self.got_key.get_base64(),
+            self.key.get_base64(),
             self.expected_key.get_base64(),
         )
 
@@ -137,11 +145,12 @@ class ProxyCommandFailure(SSHException):
 
     def __init__(self, command, error):
         SSHException.__init__(self, command, error)
+        self.command = command
         self.error = error
 
     def __str__(self):
-        return (
-            "ProxyCommand (%s) returned non-zero exit status: %s" % self.args
+        return 'ProxyCommand("{}") returned nonzero exit status: {}'.format(
+            self.command, self.error
         )
 
 
