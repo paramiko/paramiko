@@ -145,6 +145,9 @@ class Transport(threading.Thread, ClosingContextManager):
 
     # These tuples of algorithm identifiers are in preference order; do not
     # reorder without reason!
+    # NOTE: if you need to modify these, we suggest leveraging the
+    # `disable_algorithms` constructor argument (also available in SSHClient)
+    # instead of monkeypatching or subclassing.
     _preferred_ciphers = (
         "aes128-ctr",
         "aes192-ctr",
@@ -485,6 +488,9 @@ class Transport(threading.Thread, ClosingContextManager):
         # how long (seconds) to wait for the auth response.
         self.auth_timeout = 30
 
+        # Note change from verb to plural noun.
+        self.disabled_algorithms = disable_algorithms
+
         # server mode:
         self.server_mode = False
         self.server_object = None
@@ -492,6 +498,28 @@ class Transport(threading.Thread, ClosingContextManager):
         self.server_accepts = []
         self.server_accept_cv = threading.Condition(self.lock)
         self.subsystem_table = {}
+
+    def _filter_algorithm(self, type_):
+        default = getattr(self, "_preferred_{}".format(type_))
+        return tuple(
+            x for x in default if x not in self.disabled_algorithms[type_]
+        )
+
+    @property
+    def preferred_ciphers(self):
+        return self._filter_algorithm("ciphers")
+
+    @property
+    def preferred_macs(self):
+        return self._filter_algorithm("macs")
+
+    @property
+    def preferred_keys(self):
+        return self._filter_algorithm("keys")
+
+    @property
+    def preferred_kex(self):
+        return self._filter_algorithm("kex")
 
     def __repr__(self):
         """

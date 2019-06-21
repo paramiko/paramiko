@@ -1102,3 +1102,34 @@ class TransportTest(unittest.TestCase):
         assert not self.ts.auth_handler.authenticated
         # Real fix's behavior
         self._expect_unimplemented()
+
+
+class AlgorithmDisablingTests(unittest.TestCase):
+    def test_preferred_lists_default_to_private_attribute_contents(self):
+        t = Transport(sock=Mock())
+        assert t.preferred_ciphers == t._preferred_ciphers
+        assert t.preferred_macs == t._preferred_macs
+        assert t.preferred_keys == t._preferred_keys
+        assert t.preferred_kex == t._preferred_kex
+
+    def test_preferred_lists_filter_disabled_algorithms(self):
+        t = Transport(
+            sock=Mock(),
+            disable_algorithms={
+                "ciphers": ["aes128-cbc"],
+                "macs": ["hmac-md5"],
+                "keys": ["ssh-dss"],
+                "kex": ["diffie-hellman-group14-sha256"],
+            },
+        )
+        assert "aes128-cbc" in t._preferred_ciphers
+        assert "aes128-cbc" not in t.preferred_ciphers
+        assert "hmac-md5" in t._preferred_macs
+        assert "hmac-md5" not in t.preferred_macs
+        assert "ssh-dss" in t._preferred_keys
+        assert "ssh-dss" not in t.preferred_keys
+        assert "diffie-hellman-group14-sha256" in t._preferred_kex
+        assert "diffie-hellman-group14-sha256" not in t.preferred_kex
+
+    # TODO: a bunch of busywork proving all prior uses of ._preferred_x are now
+    # using .preferred_x :(
