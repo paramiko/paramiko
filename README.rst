@@ -136,3 +136,10 @@ There are also unit tests here::
     $ pytest
 
 Which will verify that most of the core components are working correctly.
+
+To test Kerberos/GSSAPI, you need a Kerberos environment. On UNIX you can
+use the package k5test to setup a Kerberos environment on the fly::
+
+    $ pip install -r dev-requirements.txt
+    $ pip install k5test gssapi pyasn1
+    $ pytest
