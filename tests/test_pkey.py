@@ -497,6 +497,10 @@ class KeyTest(unittest.TestCase):
         self.assertNotEqual(key1.asbytes(), key2.asbytes())
 
     @pytest.mark.skipif("not Ed25519Key.is_supported()")
+    def test_ed25519_nopad(self):
+        Ed25519Key.from_private_key_file(_support("test_ed25519_nopad.key"))
+
+    @pytest.mark.skipif("not Ed25519Key.is_supported()")
     def test_ed25519_compare(self):
         # verify that the private & public keys compare equal
         key = Ed25519Key.from_private_key_file(_support('test_ed25519.key'))
