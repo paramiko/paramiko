@@ -54,10 +54,11 @@ class BadAuthenticationType (AuthenticationException):
 
     def __init__(self, explanation, types):
         AuthenticationException.__init__(self, explanation, types)
+        self.explanation = explanation
         self.allowed_types = types
 
     def __str__(self):
-        return "Bad authentication type, allowed types: " + ','.join(self.allowed_types)
+        return "%s; allowed types: %r" % self.args
 
 
 class PartialAuthentication (AuthenticationException):
@@ -71,7 +72,7 @@ class PartialAuthentication (AuthenticationException):
         self.allowed_types = types
 
     def __str__(self):
-        return "Partial authentication, allowed types: " + ','.join(self.allowed_types)
+        return "Partial authentication; allowed types: %r" % self.allowed_types
 
 
 class ChannelException (SSHException):
@@ -85,9 +86,10 @@ class ChannelException (SSHException):
     def __init__(self, code, text):
         SSHException.__init__(self, code, text)
         self.code = code
+        self.text = text
 
     def __str__(self):
-        return "ChannelException: %s, %s" % self.args
+        return "ChannelException(%r, %r)" % self.args
 
 
 class BadHostKeyException (SSHException):
@@ -121,7 +123,8 @@ class ProxyCommandFailure (SSHException):
     """
     def __init__(self, command, error):
         SSHException.__init__(self, command, error)
+        self.command = command
         self.error = error
 
     def __str__(self):
-        return "ProxyCommand (%s) returned non-zero exit status: %s" % self.args
+        return "ProxyCommand (%r) returned non-zero exit status: %r" % self.args
