@@ -136,12 +136,12 @@ class Transport(threading.Thread, ClosingContextManager):
         'ecdh-sha2-nistp256',
         'ecdh-sha2-nistp384',
         'ecdh-sha2-nistp521',
-        'diffie-hellman-group16-sha512',
         'diffie-hellman-group-exchange-sha256',
-        'diffie-hellman-group14-sha256',
         'diffie-hellman-group-exchange-sha1',
         'diffie-hellman-group14-sha1',
         'diffie-hellman-group1-sha1',
+        'diffie-hellman-group16-sha512',  # possibly buggy ...
+        'diffie-hellman-group14-sha256',  # some compat issues with other impls
     )
     if KexCurve25519.is_supported():
         _preferred_kex = ('curve25519-sha256@libssh.org',) + _preferred_kex
