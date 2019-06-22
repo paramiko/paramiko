@@ -1139,8 +1139,12 @@ class AlgorithmDisablingTests(unittest.TestCase):
                 "macs": ["hmac-md5"],
                 "keys": ["ssh-dss"],
                 "kex": ["diffie-hellman-group14-sha256"],
+                "compression": ["zlib"],
             },
         )
+        # Enable compression cuz otherwise disabling one option for it makes no
+        # sense...
+        t.use_compression(True)
         # Effectively a random spot check, but kex init touches most/all of the
         # algorithm lists so it's a good spot.
         t._send_message = Mock()
@@ -1164,3 +1168,4 @@ class AlgorithmDisablingTests(unittest.TestCase):
         assert "hmac-md5" not in macs
         assert "ssh-dss" not in server_keys
         assert "diffie-hellman-group14-sha256" not in kexen
+        assert "zlib" not in compressions

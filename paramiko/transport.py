@@ -521,6 +521,10 @@ class Transport(threading.Thread, ClosingContextManager):
     def preferred_kex(self):
         return self._filter_algorithm("kex")
 
+    @property
+    def preferred_compression(self):
+        return self._filter_algorithm("compression")
+
     def __repr__(self):
         """
         Returns a string representation of this object, for debugging.
@@ -2283,8 +2287,8 @@ class Transport(threading.Thread, ClosingContextManager):
         m.add_list(self.preferred_ciphers)
         m.add_list(self.preferred_macs)
         m.add_list(self.preferred_macs)
-        m.add_list(self._preferred_compression)
-        m.add_list(self._preferred_compression)
+        m.add_list(self.preferred_compression)
+        m.add_list(self.preferred_compression)
         m.add_string(bytes())
         m.add_string(bytes())
         m.add_boolean(False)
@@ -2441,13 +2445,13 @@ class Transport(threading.Thread, ClosingContextManager):
         if self.server_mode:
             agreed_remote_compression = list(
                 filter(
-                    self._preferred_compression.__contains__,
+                    self.preferred_compression.__contains__,
                     client_compress_algo_list,
                 )
             )
             agreed_local_compression = list(
                 filter(
-                    self._preferred_compression.__contains__,
+                    self.preferred_compression.__contains__,
                     server_compress_algo_list,
                 )
             )
@@ -2455,13 +2459,13 @@ class Transport(threading.Thread, ClosingContextManager):
             agreed_local_compression = list(
                 filter(
                     client_compress_algo_list.__contains__,
-                    self._preferred_compression,
+                    self.preferred_compression,
                 )
             )
             agreed_remote_compression = list(
                 filter(
                     server_compress_algo_list.__contains__,
-                    self._preferred_compression,
+                    self.preferred_compression,
                 )
             )
         if (
@@ -2474,7 +2478,7 @@ class Transport(threading.Thread, ClosingContextManager):
                 msg.format(
                     agreed_local_compression,
                     agreed_remote_compression,
-                    self._preferred_compression,
+                    self.preferred_compression,
                 )
             )
         self.local_compression = agreed_local_compression[0]
