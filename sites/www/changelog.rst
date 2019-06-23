@@ -2,6 +2,7 @@
 Changelog
 =========
 
+- :release:`2.4.3 <2019-06-23>`
 - :bug:`1306` (via :issue:`1400`) Fix Ed25519 key handling so certain key
   comment lengths don't cause ``SSHException("Invalid key")`` (this was
   technically a bug in how padding, or lack thereof, is
