@@ -35,6 +35,11 @@ Changelog
   initial GSSAPI functionality) for review.
 
   .. note::
+     This feature also adds ``setup.py`` 'extras' support for installing
+     Paramiko as ``paramiko[gssapi]``, which pulls in the optional
+     dependencies you had to get by hand previously.
+
+  .. note::
     To be very clear, this patch **does not** remove support for the older
     ``python-gssapi`` library. We *may* remove that support in a later release,
     but for now, either library will work. Please upgrade to ``gssapi`` when
