@@ -8,6 +8,8 @@ Changelog
   kex/key/cipher/etc algorithms. This can be useful when disabling algorithms
   your target server (or client) does not support cleanly, or to work around
   unpatched bugs in Paramiko's own implementation thereof.
+- :release:`2.5.1 <2019-06-23>`
+- :release:`2.4.3 <2019-06-23>`
 - :bug:`1306` (via :issue:`1400`) Fix Ed25519 key handling so certain key
   comment lengths don't cause ``SSHException("Invalid key")`` (this was
   technically a bug in how padding, or lack thereof, is
