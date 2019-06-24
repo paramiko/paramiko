@@ -889,11 +889,29 @@ class Channel(ClosingContextManager):
         client, it only makes sense to open this file for reading.  For a
         server, it only makes sense to open this file for writing.
 
-        :return: `.ChannelFile` object which can be used for Python file I/O.
+        :returns:
+            `.ChannelStderrFile` object which can be used for Python file I/O.
 
         .. versionadded:: 1.1
         """
         return ChannelStderrFile(*([self] + list(params)))
+
+    def makefile_stdin(self, *params):
+        """
+        Return a file-like object associated with this channel's stdin
+        stream.
+
+        The optional ``mode`` and ``bufsize`` arguments are interpreted the
+        same way as by the built-in ``file()`` function in Python.  For a
+        client, it only makes sense to open this file for writing.  For a
+        server, it only makes sense to open this file for reading.
+
+        :returns:
+            `.ChannelStdinFile` object which can be used for Python file I/O.
+
+        .. versionadded:: 2.6
+        """
+        return ChannelStdinFile(*([self] + list(params)))
 
     def fileno(self):
         """
@@ -1348,8 +1366,11 @@ class ChannelFile(BufferedFile):
 
 
 class ChannelStderrFile(ChannelFile):
-    def __init__(self, channel, mode="r", bufsize=-1):
-        ChannelFile.__init__(self, channel, mode, bufsize)
+    """
+    A file-like wrapper around `.Channel` stderr.
+
+    See `Channel.makefile_stderr` for details.
+    """
 
     def _read(self, size):
         return self.channel.recv_stderr(size)
@@ -1359,4 +1380,13 @@ class ChannelStderrFile(ChannelFile):
         return len(data)
 
 
-# vim: set shiftwidth=4 expandtab :
+class ChannelStdinFile(ChannelFile):
+    """
+    A file-like wrapper around `.Channel` stdin.
+
+    See `Channel.makefile_stdin` for details.
+    """
+
+    def close(self):
+        super(ChannelStdinFile, self).close()
+        self.channel.shutdown_write()

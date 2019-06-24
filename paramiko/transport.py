@@ -145,6 +145,9 @@ class Transport(threading.Thread, ClosingContextManager):
 
     # These tuples of algorithm identifiers are in preference order; do not
     # reorder without reason!
+    # NOTE: if you need to modify these, we suggest leveraging the
+    # `disabled_algorithms` constructor argument (also available in SSHClient)
+    # instead of monkeypatching or subclassing.
     _preferred_ciphers = (
         "aes128-ctr",
         "aes192-ctr",
@@ -306,6 +309,7 @@ class Transport(threading.Thread, ClosingContextManager):
         default_max_packet_size=DEFAULT_MAX_PACKET_SIZE,
         gss_kex=False,
         gss_deleg_creds=True,
+        disabled_algorithms=None,
     ):
         """
         Create a new SSH session over an existing socket, or socket-like
@@ -346,10 +350,36 @@ class Transport(threading.Thread, ClosingContextManager):
         :param int default_max_packet_size:
             sets the default max packet size on the transport. (defaults to
             32768)
+        :param bool gss_kex:
+            Whether to enable GSSAPI key exchange when GSSAPI is in play.
+            Default: ``False``.
+        :param bool gss_deleg_creds:
+            Whether to enable GSSAPI credential delegation when GSSAPI is in
+            play. Default: ``True``.
+        :param dict disabled_algorithms:
+            If given, must be a dictionary mapping algorithm type to an
+            iterable of algorithm identifiers, which will be disabled for the
+            lifetime of the transport.
+
+            Keys should match the last word in the class' builtin algorithm
+            tuple attributes, such as ``"ciphers"`` to disable names within
+            ``_preferred_ciphers``; or ``"kex"`` to disable something defined
+            inside ``_preferred_kex``. Values should exactly match members of
+            the matching attribute.
+
+            For example, if you need to disable
+            ``diffie-hellman-group16-sha512`` key exchange (perhaps because
+            your code talks to a server which implements it differently from
+            Paramiko), specify ``disabled_algorithms={"kex":
+            ["diffie-hellman-group16-sha512"]}``.
 
         .. versionchanged:: 1.15
             Added the ``default_window_size`` and ``default_max_packet_size``
             arguments.
+        .. versionchanged:: 1.15
+            Added the ``gss_kex`` and ``gss_deleg_creds`` kwargs.
+        .. versionchanged:: 2.6
+            Added the ``disabled_algorithms`` kwarg.
         """
         self.active = False
         self.hostname = None
@@ -457,6 +487,7 @@ class Transport(threading.Thread, ClosingContextManager):
         self.handshake_timeout = 15
         # how long (seconds) to wait for the auth response.
         self.auth_timeout = 30
+        self.disabled_algorithms = disabled_algorithms or {}
 
         # server mode:
         self.server_mode = False
@@ -465,6 +496,34 @@ class Transport(threading.Thread, ClosingContextManager):
         self.server_accepts = []
         self.server_accept_cv = threading.Condition(self.lock)
         self.subsystem_table = {}
+
+    def _filter_algorithm(self, type_):
+        default = getattr(self, "_preferred_{}".format(type_))
+        return tuple(
+            x
+            for x in default
+            if x not in self.disabled_algorithms.get(type_, [])
+        )
+
+    @property
+    def preferred_ciphers(self):
+        return self._filter_algorithm("ciphers")
+
+    @property
+    def preferred_macs(self):
+        return self._filter_algorithm("macs")
+
+    @property
+    def preferred_keys(self):
+        return self._filter_algorithm("keys")
+
+    @property
+    def preferred_kex(self):
+        return self._filter_algorithm("kex")
+
+    @property
+    def preferred_compression(self):
+        return self._filter_algorithm("compression")
 
     def __repr__(self):
         """
@@ -2246,7 +2305,7 @@ class Transport(threading.Thread, ClosingContextManager):
             mp_required_prefix = "diffie-hellman-group-exchange-sha"
             kex_mp = [
                 k
-                for k in self._preferred_kex
+                for k in self.preferred_kex
                 if k.startswith(mp_required_prefix)
             ]
             if (self._modulus_pack is None) and (len(kex_mp) > 0):
@@ -2261,23 +2320,23 @@ class Transport(threading.Thread, ClosingContextManager):
             available_server_keys = list(
                 filter(
                     list(self.server_key_dict.keys()).__contains__,
-                    self._preferred_keys,
+                    self.preferred_keys,
                 )
             )
         else:
-            available_server_keys = self._preferred_keys
+            available_server_keys = self.preferred_keys
 
         m = Message()
         m.add_byte(cMSG_KEXINIT)
         m.add_bytes(os.urandom(16))
-        m.add_list(self._preferred_kex)
+        m.add_list(self.preferred_kex)
         m.add_list(available_server_keys)
-        m.add_list(self._preferred_ciphers)
-        m.add_list(self._preferred_ciphers)
-        m.add_list(self._preferred_macs)
-        m.add_list(self._preferred_macs)
-        m.add_list(self._preferred_compression)
-        m.add_list(self._preferred_compression)
+        m.add_list(self.preferred_ciphers)
+        m.add_list(self.preferred_ciphers)
+        m.add_list(self.preferred_macs)
+        m.add_list(self.preferred_macs)
+        m.add_list(self.preferred_compression)
+        m.add_list(self.preferred_compression)
         m.add_string(bytes())
         m.add_string(bytes())
         m.add_boolean(False)
@@ -2333,11 +2392,11 @@ class Transport(threading.Thread, ClosingContextManager):
         # supports.
         if self.server_mode:
             agreed_kex = list(
-                filter(self._preferred_kex.__contains__, kex_algo_list)
+                filter(self.preferred_kex.__contains__, kex_algo_list)
             )
         else:
             agreed_kex = list(
-                filter(kex_algo_list.__contains__, self._preferred_kex)
+                filter(kex_algo_list.__contains__, self.preferred_kex)
             )
         if len(agreed_kex) == 0:
             raise SSHException(
@@ -2350,7 +2409,7 @@ class Transport(threading.Thread, ClosingContextManager):
             available_server_keys = list(
                 filter(
                     list(self.server_key_dict.keys()).__contains__,
-                    self._preferred_keys,
+                    self.preferred_keys,
                 )
             )
             agreed_keys = list(
@@ -2360,7 +2419,7 @@ class Transport(threading.Thread, ClosingContextManager):
             )
         else:
             agreed_keys = list(
-                filter(server_key_algo_list.__contains__, self._preferred_keys)
+                filter(server_key_algo_list.__contains__, self.preferred_keys)
             )
         if len(agreed_keys) == 0:
             raise SSHException(
@@ -2376,13 +2435,13 @@ class Transport(threading.Thread, ClosingContextManager):
         if self.server_mode:
             agreed_local_ciphers = list(
                 filter(
-                    self._preferred_ciphers.__contains__,
+                    self.preferred_ciphers.__contains__,
                     server_encrypt_algo_list,
                 )
             )
             agreed_remote_ciphers = list(
                 filter(
-                    self._preferred_ciphers.__contains__,
+                    self.preferred_ciphers.__contains__,
                     client_encrypt_algo_list,
                 )
             )
@@ -2390,13 +2449,13 @@ class Transport(threading.Thread, ClosingContextManager):
             agreed_local_ciphers = list(
                 filter(
                     client_encrypt_algo_list.__contains__,
-                    self._preferred_ciphers,
+                    self.preferred_ciphers,
                 )
             )
             agreed_remote_ciphers = list(
                 filter(
                     server_encrypt_algo_list.__contains__,
-                    self._preferred_ciphers,
+                    self.preferred_ciphers,
                 )
             )
         if len(agreed_local_ciphers) == 0 or len(agreed_remote_ciphers) == 0:
@@ -2411,17 +2470,17 @@ class Transport(threading.Thread, ClosingContextManager):
 
         if self.server_mode:
             agreed_remote_macs = list(
-                filter(self._preferred_macs.__contains__, client_mac_algo_list)
+                filter(self.preferred_macs.__contains__, client_mac_algo_list)
             )
             agreed_local_macs = list(
-                filter(self._preferred_macs.__contains__, server_mac_algo_list)
+                filter(self.preferred_macs.__contains__, server_mac_algo_list)
             )
         else:
             agreed_local_macs = list(
-                filter(client_mac_algo_list.__contains__, self._preferred_macs)
+                filter(client_mac_algo_list.__contains__, self.preferred_macs)
             )
             agreed_remote_macs = list(
-                filter(server_mac_algo_list.__contains__, self._preferred_macs)
+                filter(server_mac_algo_list.__contains__, self.preferred_macs)
             )
         if (len(agreed_local_macs) == 0) or (len(agreed_remote_macs) == 0):
             raise SSHException("Incompatible ssh server (no acceptable macs)")
@@ -2434,13 +2493,13 @@ class Transport(threading.Thread, ClosingContextManager):
         if self.server_mode:
             agreed_remote_compression = list(
                 filter(
-                    self._preferred_compression.__contains__,
+                    self.preferred_compression.__contains__,
                     client_compress_algo_list,
                 )
             )
             agreed_local_compression = list(
                 filter(
-                    self._preferred_compression.__contains__,
+                    self.preferred_compression.__contains__,
                     server_compress_algo_list,
                 )
             )
@@ -2448,13 +2507,13 @@ class Transport(threading.Thread, ClosingContextManager):
             agreed_local_compression = list(
                 filter(
                     client_compress_algo_list.__contains__,
-                    self._preferred_compression,
+                    self.preferred_compression,
                 )
             )
             agreed_remote_compression = list(
                 filter(
                     server_compress_algo_list.__contains__,
-                    self._preferred_compression,
+                    self.preferred_compression,
                 )
             )
         if (
@@ -2467,7 +2526,7 @@ class Transport(threading.Thread, ClosingContextManager):
                 msg.format(
                     agreed_local_compression,
                     agreed_remote_compression,
-                    self._preferred_compression,
+                    self.preferred_compression,
                 )
             )
         self.local_compression = agreed_local_compression[0]

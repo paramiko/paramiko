@@ -450,9 +450,7 @@ Host param4 "p a r" "p" "par" para
         f = StringIO(test_config_file)
         config = paramiko.util.parse_ssh_config(f)
         for host, values in res.items():
-            self.assertEquals(
-                paramiko.util.lookup_ssh_host_config(host, config), values
-            )
+            assert paramiko.util.lookup_ssh_host_config(host, config) == values
 
     def test_quoted_params_in_config(self):
         test_config_file = """\
@@ -483,9 +481,7 @@ Host param3 parara
         f = StringIO(test_config_file)
         config = paramiko.util.parse_ssh_config(f)
         for host, values in res.items():
-            self.assertEquals(
-                paramiko.util.lookup_ssh_host_config(host, config), values
-            )
+            assert paramiko.util.lookup_ssh_host_config(host, config) == values
 
     def test_quoted_host_in_config(self):
         conf = SSHConfig()
@@ -504,7 +500,7 @@ Host param3 parara
         }
         incorrect_data = ['param"', '"param', 'param "pam', 'param "pam" "p a']
         for host, values in correct_data.items():
-            self.assertEquals(conf._get_hosts(host), values)
+            assert conf._get_hosts(host) == values
         for host in incorrect_data:
             self.assertRaises(Exception, conf._get_hosts, host)
 

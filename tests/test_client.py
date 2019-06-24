@@ -34,8 +34,10 @@ import weakref
 from tempfile import mkstemp
 
 from pytest_relaxed import raises
+from mock import patch, Mock
 
 import paramiko
+from paramiko import SSHClient
 from paramiko.pkey import PublicBlob
 from paramiko.ssh_exception import SSHException, AuthenticationException
 
@@ -191,7 +193,7 @@ class ClientTest(unittest.TestCase):
         public_host_key = paramiko.RSAKey(data=host_key.asbytes())
 
         # Client setup
-        self.tc = paramiko.SSHClient()
+        self.tc = SSHClient()
         self.tc.get_host_keys().add(
             "[%s]:%d" % (self.addr, self.port), "ssh-rsa", public_host_key
         )
@@ -210,6 +212,12 @@ class ClientTest(unittest.TestCase):
         # Command execution functions?
         stdin, stdout, stderr = self.tc.exec_command("yes")
         schan = self.ts.accept(1.0)
+
+        # Nobody else tests the API of exec_command so let's do it here for
+        # now. :weary:
+        assert isinstance(stdin, paramiko.ChannelStdinFile)
+        assert isinstance(stdout, paramiko.ChannelFile)
+        assert isinstance(stderr, paramiko.ChannelStderrFile)
 
         schan.send("Hello there.\n")
         schan.send_stderr("This is on stderr.\n")
@@ -343,7 +351,7 @@ class SSHClientTest(ClientTest):
         key_file = _support("test_ecdsa_256.key")
         public_host_key = paramiko.ECDSAKey.from_private_key_file(key_file)
 
-        self.tc = paramiko.SSHClient()
+        self.tc = SSHClient()
         self.tc.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         self.assertEqual(0, len(self.tc.get_host_keys()))
         self.tc.connect(password="pygmalion", **self.connect_kwargs)
@@ -370,16 +378,14 @@ class SSHClientTest(ClientTest):
         fd, localname = mkstemp()
         os.close(fd)
 
-        client = paramiko.SSHClient()
-        self.assertEquals(0, len(client.get_host_keys()))
+        client = SSHClient()
+        assert len(client.get_host_keys()) == 0
 
         host_id = "[%s]:%d" % (self.addr, self.port)
 
         client.get_host_keys().add(host_id, "ssh-rsa", public_host_key)
-        self.assertEquals(1, len(client.get_host_keys()))
-        self.assertEquals(
-            public_host_key, client.get_host_keys()[host_id]["ssh-rsa"]
-        )
+        assert len(client.get_host_keys()) == 1
+        assert public_host_key == client.get_host_keys()[host_id]["ssh-rsa"]
 
         client.save_host_keys(localname)
 
@@ -399,7 +405,7 @@ class SSHClientTest(ClientTest):
 
         threading.Thread(target=self._run).start()
 
-        self.tc = paramiko.SSHClient()
+        self.tc = SSHClient()
         self.tc.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         self.assertEqual(0, len(self.tc.get_host_keys()))
         self.tc.connect(**dict(self.connect_kwargs, password="pygmalion"))
@@ -427,10 +433,10 @@ class SSHClientTest(ClientTest):
         """
         threading.Thread(target=self._run).start()
 
-        with paramiko.SSHClient() as tc:
+        with SSHClient() as tc:
             self.tc = tc
             self.tc.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-            self.assertEquals(0, len(self.tc.get_host_keys()))
+            assert len(self.tc.get_host_keys()) == 0
             self.tc.connect(**dict(self.connect_kwargs, password="pygmalion"))
 
             self.event.wait(1.0)
@@ -452,7 +458,7 @@ class SSHClientTest(ClientTest):
         )
         public_host_key = paramiko.RSAKey(data=host_key.asbytes())
 
-        self.tc = paramiko.SSHClient()
+        self.tc = SSHClient()
         self.tc.get_host_keys().add(
             "[%s]:%d" % (self.addr, self.port), "ssh-rsa", public_host_key
         )
@@ -515,7 +521,7 @@ class SSHClientTest(ClientTest):
         """
         threading.Thread(target=self._run).start()
 
-        self.tc = paramiko.SSHClient()
+        self.tc = SSHClient()
         self.tc.set_missing_host_key_policy(paramiko.RejectPolicy())
         self.assertEqual(0, len(self.tc.get_host_keys()))
         self.assertRaises(
@@ -535,7 +541,7 @@ class SSHClientTest(ClientTest):
         # 2017-08-01
         threading.Thread(target=self._run).start()
 
-        self.tc = paramiko.SSHClient()
+        self.tc = SSHClient()
         self.tc.set_missing_host_key_policy(paramiko.RejectPolicy())
         self.assertEqual(0, len(self.tc.get_host_keys()))
         self.assertRaises(
@@ -550,7 +556,7 @@ class SSHClientTest(ClientTest):
         threading.Thread(target=self._run).start()
         hostname = "[%s]:%d" % (self.addr, self.port)
 
-        self.tc = paramiko.SSHClient()
+        self.tc = SSHClient()
         self.tc.set_missing_host_key_policy(paramiko.WarningPolicy())
         known_hosts = self.tc.get_host_keys()
         known_hosts.add(hostname, host_key.get_name(), host_key)
@@ -566,7 +572,7 @@ class SSHClientTest(ClientTest):
         threading.Thread(target=self._run).start()
         hostname = "[%s]:%d" % (self.addr, self.port)
 
-        self.tc = paramiko.SSHClient()
+        self.tc = SSHClient()
         self.tc.set_missing_host_key_policy(paramiko.RejectPolicy())
         host_key = ktype.from_private_key_file(_support(kfile))
         known_hosts = self.tc.get_host_keys()
@@ -595,7 +601,7 @@ class SSHClientTest(ClientTest):
     def _setup_for_env(self):
         threading.Thread(target=self._run).start()
 
-        self.tc = paramiko.SSHClient()
+        self.tc = SSHClient()
         self.tc.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         self.assertEqual(0, len(self.tc.get_host_keys()))
         self.tc.connect(
@@ -639,7 +645,7 @@ class SSHClientTest(ClientTest):
         """
         # AN ACTUAL UNIT TEST?! GOOD LORD
         # (But then we have to test a private API...meh.)
-        client = paramiko.SSHClient()
+        client = SSHClient()
         # Default
         assert isinstance(client._policy, paramiko.RejectPolicy)
         # Hand in an instance (classic behavior)
@@ -648,6 +654,22 @@ class SSHClientTest(ClientTest):
         # Hand in just the class (new behavior)
         client.set_missing_host_key_policy(paramiko.AutoAddPolicy)
         assert isinstance(client._policy, paramiko.AutoAddPolicy)
+
+    @patch("paramiko.client.Transport")
+    def test_disabled_algorithms_defaults_to_None(self, Transport):
+        SSHClient().connect("host", sock=Mock(), password="no")
+        assert Transport.call_args[1]["disabled_algorithms"] is None
+
+    @patch("paramiko.client.Transport")
+    def test_disabled_algorithms_passed_directly_if_given(self, Transport):
+        SSHClient().connect(
+            "host",
+            sock=Mock(),
+            password="no",
+            disabled_algorithms={"keys": ["ssh-dss"]},
+        )
+        call_arg = Transport.call_args[1]["disabled_algorithms"]
+        assert call_arg == {"keys": ["ssh-dss"]}
 
 
 class PasswordPassphraseTests(ClientTest):

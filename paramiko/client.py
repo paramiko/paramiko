@@ -236,6 +236,7 @@ class SSHClient(ClosingContextManager):
         auth_timeout=None,
         gss_trust_dns=True,
         passphrase=None,
+        disabled_algorithms=None,
         hostkey=None,
     ):
         """
@@ -312,8 +313,12 @@ class SSHClient(ClosingContextManager):
             for the SSH banner to be presented.
         :param float auth_timeout: an optional timeout (in seconds) to wait for
             an authentication response.
+        :param dict disabled_algorithms:
+            an optional dict passed directly to `.Transport` and its keyword
+            argument of the same name.
         :param PKey hostkey: the optional public key of the host to use for
             host-based authentication
+
         :raises:
             `.BadHostKeyException` -- if the server's host key could not be
             verified
@@ -330,6 +335,8 @@ class SSHClient(ClosingContextManager):
             Added the ``gss_trust_dns`` argument.
         .. versionchanged:: 2.4
             Added the ``passphrase`` argument.
+        .. versionchanged:: 2.6
+            Added the ``disabled_algorithms`` argument.
         """
         if not sock:
             errors = {}
@@ -365,7 +372,10 @@ class SSHClient(ClosingContextManager):
                 raise NoValidConnectionsError(errors)
 
         t = self._transport = Transport(
-            sock, gss_kex=gss_kex, gss_deleg_creds=gss_deleg_creds
+            sock,
+            gss_kex=gss_kex,
+            gss_deleg_creds=gss_deleg_creds,
+            disabled_algorithms=disabled_algorithms,
         )
         t.use_compression(compress=compress)
         t.set_gss_host(
@@ -507,7 +517,7 @@ class SSHClient(ClosingContextManager):
         if environment:
             chan.update_environment(environment)
         chan.exec_command(command)
-        stdin = chan.makefile("wb", bufsize)
+        stdin = chan.makefile_stdin("wb", bufsize)
         stdout = chan.makefile("r", bufsize)
         stderr = chan.makefile_stderr("r", bufsize)
         return stdin, stdout, stderr

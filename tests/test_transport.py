@@ -1102,3 +1102,70 @@ class TransportTest(unittest.TestCase):
         assert not self.ts.auth_handler.authenticated
         # Real fix's behavior
         self._expect_unimplemented()
+
+
+class AlgorithmDisablingTests(unittest.TestCase):
+    def test_preferred_lists_default_to_private_attribute_contents(self):
+        t = Transport(sock=Mock())
+        assert t.preferred_ciphers == t._preferred_ciphers
+        assert t.preferred_macs == t._preferred_macs
+        assert t.preferred_keys == t._preferred_keys
+        assert t.preferred_kex == t._preferred_kex
+
+    def test_preferred_lists_filter_disabled_algorithms(self):
+        t = Transport(
+            sock=Mock(),
+            disabled_algorithms={
+                "ciphers": ["aes128-cbc"],
+                "macs": ["hmac-md5"],
+                "keys": ["ssh-dss"],
+                "kex": ["diffie-hellman-group14-sha256"],
+            },
+        )
+        assert "aes128-cbc" in t._preferred_ciphers
+        assert "aes128-cbc" not in t.preferred_ciphers
+        assert "hmac-md5" in t._preferred_macs
+        assert "hmac-md5" not in t.preferred_macs
+        assert "ssh-dss" in t._preferred_keys
+        assert "ssh-dss" not in t.preferred_keys
+        assert "diffie-hellman-group14-sha256" in t._preferred_kex
+        assert "diffie-hellman-group14-sha256" not in t.preferred_kex
+
+    def test_implementation_refers_to_public_algo_lists(self):
+        t = Transport(
+            sock=Mock(),
+            disabled_algorithms={
+                "ciphers": ["aes128-cbc"],
+                "macs": ["hmac-md5"],
+                "keys": ["ssh-dss"],
+                "kex": ["diffie-hellman-group14-sha256"],
+                "compression": ["zlib"],
+            },
+        )
+        # Enable compression cuz otherwise disabling one option for it makes no
+        # sense...
+        t.use_compression(True)
+        # Effectively a random spot check, but kex init touches most/all of the
+        # algorithm lists so it's a good spot.
+        t._send_message = Mock()
+        t._send_kex_init()
+        # Cribbed from Transport._parse_kex_init, which didn't feel worth
+        # refactoring given all the vars involved :(
+        m = t._send_message.call_args[0][0]
+        m.rewind()
+        m.get_byte()  # the msg type
+        m.get_bytes(16)  # cookie, discarded
+        kexen = m.get_list()
+        server_keys = m.get_list()
+        ciphers = m.get_list()
+        m.get_list()
+        macs = m.get_list()
+        m.get_list()
+        compressions = m.get_list()
+        # OK, now we can actually check that our disabled algos were not
+        # included (as this message includes the full lists)
+        assert "aes128-cbc" not in ciphers
+        assert "hmac-md5" not in macs
+        assert "ssh-dss" not in server_keys
+        assert "diffie-hellman-group14-sha256" not in kexen
+        assert "zlib" not in compressions

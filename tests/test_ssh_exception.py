@@ -1,7 +1,15 @@
 import pickle
 import unittest
 
-from paramiko.ssh_exception import NoValidConnectionsError
+from paramiko import RSAKey
+from paramiko.ssh_exception import (
+    NoValidConnectionsError,
+    BadAuthenticationType,
+    PartialAuthentication,
+    ChannelException,
+    BadHostKeyException,
+    ProxyCommandFailure,
+)
 
 
 class NoValidConnectionsErrorTest(unittest.TestCase):
@@ -33,3 +41,35 @@ class NoValidConnectionsErrorTest(unittest.TestCase):
         )
         exp = "Unable to connect to port 22 on 10.0.0.42, 127.0.0.1 or ::1"
         assert exp in str(exc)
+
+
+class ExceptionStringDisplayTest(unittest.TestCase):
+    def test_BadAuthenticationType(self):
+        exc = BadAuthenticationType(
+            "Bad authentication type", ["ok", "also-ok"]
+        )
+        expected = "Bad authentication type; allowed types: ['ok', 'also-ok']"
+        assert str(exc) == expected
+
+    def test_PartialAuthentication(self):
+        exc = PartialAuthentication(["ok", "also-ok"])
+        expected = "Partial authentication; allowed types: ['ok', 'also-ok']"
+        assert str(exc) == expected
+
+    def test_BadHostKeyException(self):
+        got_key = RSAKey.generate(2048)
+        wanted_key = RSAKey.generate(2048)
+        exc = BadHostKeyException("myhost", got_key, wanted_key)
+        expected = "Host key for server 'myhost' does not match: got '{}', expected '{}'"  # noqa
+        assert str(exc) == expected.format(
+            got_key.get_base64(), wanted_key.get_base64()
+        )
+
+    def test_ProxyCommandFailure(self):
+        exc = ProxyCommandFailure("man squid", 7)
+        expected = 'ProxyCommand("man squid") returned nonzero exit status: 7'
+        assert str(exc) == expected
+
+    def test_ChannelException(self):
+        exc = ChannelException(17, "whatever")
+        assert str(exc) == "ChannelException(17, 'whatever')"

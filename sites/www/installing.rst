@@ -95,22 +95,41 @@ In general, you'll need one of the following setups:
 Optional dependencies for GSS-API / SSPI / Kerberos
 ===================================================
 
-In order to use GSS-API/Kerberos & related functionality, a couple of
-additional dependencies are required (these are not listed in our ``setup.py``
-due to their infrequent utility & non-platform-agnostic requirements):
-
-* It hopefully goes without saying but **all platforms** need **a working
-  installation of GSS-API itself**, e.g. Heimdal.
-* **Unix** needs `python-gssapi <https://pypi.org/project/python-gssapi/>`_
-  ``0.6.1`` or better.
-
-  .. note:: This library appears to only function on Python 2.7 and up.
-
-* **Windows** needs `pywin32 <https://pypi.python.org/pypi/pywin32>`_ ``2.1.8``
-  or better.
+In order to use GSS-API/Kerberos & related functionality, additional
+dependencies are required. It hopefully goes without saying but **all
+platforms** need **a working installation of GSS-API itself**, e.g. Heimdal.
 
 .. note::
     If you use Microsoft SSPI for kerberos authentication and credential
     delegation, make sure that the target host is trusted for delegation in the
     active directory configuration. For details see:
     http://technet.microsoft.com/en-us/library/cc738491%28v=ws.10%29.aspx
+
+The ``gssapi`` "extra" install flavor
+-------------------------------------
+
+If you're installing via ``pip`` (recommended), you should be able to get the
+optional Python package requirements by changing your installation to refer to
+``paramiko[gssapi]`` (from simply ``paramiko``), e.g.::
+
+    pip install "paramiko[gssapi]"
+
+(Or update your ``requirements.txt``, or etc.)
+
+Manual dependency installation
+------------------------------
+
+If you're not using ``pip`` or your ``pip`` is too old to support the "extras"
+functionality, the optional dependencies are as follows:
+
+* All platforms need `pyasn1 <https://pypi.org/project/pyasn1/>`_ ``0.1.7`` or
+  later.
+* **Unix** needs: `gssapi <https://pypi.org/project/gssapi/>`__ ``1.4.1`` or better.
+
+    * An alternative is the `python-gssapi
+      <https://pypi.org/project/python-gssapi/>`_ library (``0.6.1`` or above),
+      though it is no longer maintained upstream, and Paramiko's support for
+      its API may eventually become deprecated.
+
+* **Windows** needs `pywin32 <https://pypi.python.org/pypi/pywin32>`_ ``2.1.8``
+  or better.

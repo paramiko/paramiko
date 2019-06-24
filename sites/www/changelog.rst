@@ -2,6 +2,62 @@
 Changelog
 =========
 
+- :release:`2.6.0 <2019-06-23>`
+- :feature:`1463` Add a new keyword argument to `SSHClient.connect
+  <paramiko.client.SSHClient.connect>` and `~paramiko.transport.Transport`,
+  ``disabled_algorithms``, which allows selectively disabling one or more
+  kex/key/cipher/etc algorithms. This can be useful when disabling algorithms
+  your target server (or client) does not support cleanly, or to work around
+  unpatched bugs in Paramiko's own implementation thereof.
+- :release:`2.5.1 <2019-06-23>`
+- :release:`2.4.3 <2019-06-23>`
+- :bug:`1306` (via :issue:`1400`) Fix Ed25519 key handling so certain key
+  comment lengths don't cause ``SSHException("Invalid key")`` (this was
+  technically a bug in how padding, or lack thereof, is
+  calculated/interpreted). Thanks to ``@parke`` for the bug report & Pierce
+  Lopez for the patch.
+- :support:`1440` (with initial fixes via :issue:`1460`) Tweak many exception
+  classes so their string representations are more human-friendly; this also
+  includes incidental changes to some ``super()`` calls.
+
+  The definitions of exceptions' ``__init__`` methods have *not* changed, nor
+  have any log messages been altered, so this should be backwards compatible
+  for everything except the actual exceptions' ``__str__()`` outputs.
+
+  Thanks to Fabian Büchler for original report & Pierce Lopez for the
+  foundational patch.
+- :support:`1311` (for :issue:`584`, replacing :issue:`1166`) Add
+  backwards-compatible support for the ``gssapi`` GSSAPI library, as the
+  previous backend (``python-gssapi``) has since become defunct. This change
+  also includes tests for the GSSAPI functionality.
+
+  Big thanks to Anselm Kruis for the patch and to Sebastian Deiß (author of our
+  initial GSSAPI functionality) for review.
+
+  .. note::
+     This feature also adds ``setup.py`` 'extras' support for installing
+     Paramiko as ``paramiko[gssapi]``, which pulls in the optional
+     dependencies you had to get by hand previously.
+
+  .. note::
+    To be very clear, this patch **does not** remove support for the older
+    ``python-gssapi`` library. We *may* remove that support in a later release,
+    but for now, either library will work. Please upgrade to ``gssapi`` when
+    you can, however, as ``python-gssapi`` is no longer maintained upstream.
+
+- :bug:`322 major` `SSHClient.exec_command
+  <paramiko.client.SSHClient.exec_command>` previously returned a naive
+  `~paramiko.channel.ChannelFile` object for its ``stdin`` value; such objects
+  don't know to properly shut down the remote end's stdin when they
+  ``.close()``. This lead to issues (such as hangs) when running remote
+  commands that read from stdin.
+
+  A new subclass, `~paramiko.channel.ChannelStdinFile`, has been created which
+  closes remote stdin when it itself is closed.
+  `~paramiko.client.SSHClient.exec_command` has been updated to use that class
+  for its ``stdin`` return value.
+
+  Thanks to Brandon Rhodes for the report & steps to reproduce.
 - :release:`2.5.0 <2019-06-09>`
 - :feature:`1233` (also :issue:`1229`, :issue:`1332`) Add support for
   encrypt-then-MAC (ETM) schemes (``hmac-sha2-256-etm@openssh.com``,
