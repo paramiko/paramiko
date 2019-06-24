@@ -40,6 +40,7 @@ if PY2:
     encodebytes = base64.encodestring
 
     import __builtin__ as builtins
+    import codecs
 
     byte_ord = ord  # NOQA
     byte_chr = chr  # NOQA
@@ -58,14 +59,14 @@ if PY2:
         else:
             raise TypeError("Expected unicode or bytes, got {!r}".format(s))
 
-    def u(s, encoding="utf8"):  # NOQA
+    def u(s, encoding="utf8", errors="strict"):  # NOQA
         """cast bytes or unicode to unicode"""
         if isinstance(s, str):
-            return s.decode(encoding)
+            return s.decode(encoding, errors=errors)
         elif isinstance(s, unicode):  # NOQA
             return s
         elif isinstance(s, buffer):  # NOQA
-            return s.decode(encoding)
+            return codecs.decode(s, encoding, errors)
         else:
             raise TypeError("Expected unicode or bytes, got {!r}".format(s))
 
@@ -141,10 +142,10 @@ else:
         else:
             raise TypeError("Expected unicode or bytes, got {!r}".format(s))
 
-    def u(s, encoding="utf8"):
+    def u(s, encoding="utf8", errors="strict"):
         """cast bytes or unicode to unicode"""
         if isinstance(s, bytes):
-            return s.decode(encoding)
+            return s.decode(encoding, errors=errors)
         elif isinstance(s, str):
             return s
         else:

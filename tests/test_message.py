@@ -22,6 +22,8 @@ Some unit tests for ssh protocol message blocks.
 
 import unittest
 
+import pytest
+
 from paramiko.message import Message
 from paramiko.common import byte_chr, zero_byte
 
@@ -35,6 +37,7 @@ class MessageTest(unittest.TestCase):
     __b = b"\x01\x00\xf3\x00\x3f\x00\x00\x00\x10\x68\x75\x65\x79\x2c\x64\x65\x77\x65\x79\x2c\x6c\x6f\x75\x69\x65"  # noqa
     __c = b"\x00\x00\x00\x00\x00\x00\x00\x05\x00\x00\xf5\xe4\xd3\xc2\xb1\x09\x00\x00\x00\x01\x11\x00\x00\x00\x07\x00\xf5\xe4\xd3\xc2\xb1\x09\x00\x00\x00\x06\x9a\x1b\x2c\x3d\x4e\xf7"  # noqa
     __d = b"\x00\x00\x00\x05\xff\x00\x00\x00\x05\x11\x22\x33\x44\x55\xff\x00\x00\x00\x0a\x00\xf0\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00\x03\x63\x61\x74\x00\x00\x00\x03\x61\x2c\x62"  # noqa
+    __e = b"\x00\x00\x00\x071,2,\xff\xff3"
 
     def test_encode(self):
         msg = Message()
@@ -83,6 +86,16 @@ class MessageTest(unittest.TestCase):
         self.assertEqual(msg.get_mpint(), 17)
         self.assertEqual(msg.get_mpint(), 0xf5e4d3c2b109)
         self.assertEqual(msg.get_mpint(), -0x65e4d3c2b109)
+
+        msg = Message(self.__e)
+        with pytest.raises(UnicodeDecodeError):
+            msg.get_text()
+
+        msg = Message(self.__e)
+        self.assertEqual(
+            msg.get_list(errors="replace"),
+            ["1", "2", b"\xef\xbf\xbd\xef\xbf\xbd3".decode("utf8")],
+        )
 
     def test_add(self):
         msg = Message()

@@ -171,11 +171,11 @@ class Message(object):
         """
         return self.get_bytes(self.get_int())
 
-    def get_text(self):
+    def get_text(self, errors="strict"):
         """
         Fetch a Unicode string from the stream.
         """
-        return u(self.get_string())
+        return u(self.get_string(), errors=errors)
 
     def get_binary(self):
         """
@@ -185,13 +185,13 @@ class Message(object):
         """
         return self.get_bytes(self.get_int())
 
-    def get_list(self):
+    def get_list(self, errors="strict"):
         """
         Fetch a list of `strings <str>` from the stream.
 
         These are trivially encoded as comma-separated values in a string.
         """
-        return self.get_text().split(",")
+        return self.get_text(errors=errors).split(",")
 
     def add_bytes(self, b):
         """
