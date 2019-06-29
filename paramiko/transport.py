@@ -2143,24 +2143,35 @@ class Transport(threading.Thread, ClosingContextManager):
         server_mac_algo_list = m.get_list()
         client_compress_algo_list = m.get_list()
         server_compress_algo_list = m.get_list()
-        client_lang_list = m.get_list()
-        server_lang_list = m.get_list()
+        client_lang_list = m.get_string()
+        server_lang_list = m.get_string()  # a list, but may have odd bytes e.g. \xff
         kex_follows = m.get_boolean()
         m.get_int() # unused
 
         self._log(
             DEBUG,
-            'kex algos:' + str(kex_algo_list) +
-            ' server key:' + str(server_key_algo_list) +
-            ' client encrypt:' + str(client_encrypt_algo_list) +
-            ' server encrypt:' + str(server_encrypt_algo_list) +
-            ' client mac:' + str(client_mac_algo_list) +
-            ' server mac:' + str(server_mac_algo_list) +
-            ' client compress:' + str(client_compress_algo_list) +
-            ' server compress:' + str(server_compress_algo_list) +
-            ' client lang:' + str(client_lang_list) +
-            ' server lang:' + str(server_lang_list) +
-            ' kex follows?' + str(kex_follows)
+            "kex follows? %r\n"
+            "kex algos: %r\n"
+            "server key: %r\n"
+            "client encrypt: %r\n"
+            "server encrypt: %r\n"
+            "client mac: %r\n"
+            "server mac: %r\n"
+            "client lang: %r\n"
+            "server lang: %r\n"
+            "client compress: %r\n"
+            "server compress: %r",
+            kex_follows,
+            kex_algo_list,
+            server_key_algo_list,
+            client_encrypt_algo_list,
+            server_encrypt_algo_list,
+            client_mac_algo_list,
+            server_mac_algo_list,
+            client_lang_list,
+            server_lang_list,
+            client_compress_algo_list,
+            server_compress_algo_list,
         )
 
         # as a server, we pick the first item in the client's list that we
