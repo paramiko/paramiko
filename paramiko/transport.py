@@ -104,6 +104,7 @@ from paramiko.sftp_client import SFTPClient
 from paramiko.ssh_exception import (
     SSHException,
     BadAuthenticationType,
+    BadHostKeyException,
     ChannelException,
     ProxyCommandFailure,
 )
@@ -1247,7 +1248,9 @@ class Transport(threading.Thread, ClosingContextManager):
                         key.get_name(), repr(key.asbytes())
                     ),
                 )
-                raise SSHException("Bad host key from server")
+                raise BadHostKeyException(
+                    self.hostname or "[socket]", key, hostkey
+                )
             self._log(
                 DEBUG, "Host key verified ({})".format(hostkey.get_name())
             )

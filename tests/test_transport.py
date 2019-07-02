@@ -38,6 +38,7 @@ from paramiko import (
     Packetizer,
     RSAKey,
     SSHException,
+    BadHostKeyException,
     SecurityOptions,
     ServerInterface,
     Transport,
@@ -55,7 +56,7 @@ from paramiko.common import (
     cMSG_CHANNEL_WINDOW_ADJUST,
     cMSG_UNIMPLEMENTED,
 )
-from paramiko.py3compat import bytes, byte_chr
+from paramiko.py3compat import bytes, byte_chr, decodebytes
 from paramiko.message import Message
 
 from .util import needs_builtin, _support, slow
@@ -283,6 +284,28 @@ class TransportTest(unittest.TestCase):
         self.tc.send_ignore(1024)
         self.tc.renegotiate_keys()
         self.ts.send_ignore(1024)
+
+    def test_bad_hostkey(self):
+        """
+        verify exception when hostkey does not match
+        """
+        host_key = RSAKey.from_private_key_file(_support("test_rsa.key"))
+        pub_key = RSAKey(
+            data=decodebytes(
+                b"AAAAB3NzaC1yc2EAAAABIwAAAIEAyO4it3fHlmGZWJaGrfeHOVY7RWO3P9M7hpfAu7jJ2d7eothvfeuoRFtJwhUmZDluRdFyhFY/hFAh76PJKGAusIqIQKlkJxMCKDqIexkgHAfID/6mqvmnSJf0b5W8v5h2pI/stOSwTQ+pxVhwJ9ctYDhRSlF0iTUWT10hcuO4Ks8="  # noqa: E501
+            )
+        )
+        self.ts.add_server_key(host_key)
+        event = threading.Event()
+        server = NullServer()
+        self.ts.start_server(event, server)
+        self.assertRaises(
+            BadHostKeyException,
+            self.tc.connect,
+            hostkey=pub_key,
+            username="slowdive",
+            password="pygmalion",
+        )
 
     @slow
     def test_keepalive(self):
