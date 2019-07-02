@@ -27,6 +27,9 @@ import re
 import shlex
 import socket
 
+from .py3compat import StringIO
+
+
 SSH_PORT = 22
 
 
