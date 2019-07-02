@@ -237,6 +237,7 @@ class SSHClient(ClosingContextManager):
         gss_trust_dns=True,
         passphrase=None,
         disabled_algorithms=None,
+        auth_interactive_dumb_handler=None,
     ):
         """
         Connect to an SSH server and authenticate to it.  The server's host key
@@ -314,6 +315,8 @@ class SSHClient(ClosingContextManager):
         :param dict disabled_algorithms:
             an optional dict passed directly to `.Transport` and its keyword
             argument of the same name.
+        :param dict auth_interactive_dump_handler:
+            an optional handler passed to `_auth` to use for two_factor_auth.
 
         :raises:
             `.BadHostKeyException` -- if the server's host key could not be
@@ -444,6 +447,7 @@ class SSHClient(ClosingContextManager):
             gss_deleg_creds,
             t.gss_host,
             passphrase,
+            auth_interactive_dumb_handler,
         )
 
     def close(self):
@@ -610,6 +614,7 @@ class SSHClient(ClosingContextManager):
         gss_deleg_creds,
         gss_host,
         passphrase,
+        auth_interactive_dumb_handler,
     ):
         """
         Try, in order:
@@ -754,7 +759,7 @@ class SSHClient(ClosingContextManager):
                 saved_exception = e
         elif two_factor:
             try:
-                self._transport.auth_interactive_dumb(username)
+                self._transport.auth_interactive_dumb(username, auth_interactive_dumb_handler)
                 return
             except SSHException as e:
                 saved_exception = e
