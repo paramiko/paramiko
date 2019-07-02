@@ -11,34 +11,18 @@ from paramiko.py3compat import StringIO
 from paramiko import SSHConfig, SSHConfigDict
 from paramiko.util import lookup_ssh_host_config, parse_ssh_config
 
-
-# Note some lines in this configuration have trailing spaces on purpose
-test_config_file = """\
-Host *
-    User robey
-    IdentityFile    =~/.ssh/id_rsa
-
-# comment
-Host *.example.com
-    \tUser bjork
-Port=3333
-Host *
-"""
-
-dont_strip_whitespace_please = "\t  \t Crazy something dumb  "
-
-test_config_file += dont_strip_whitespace_please
-test_config_file += """
-Host spoo.example.com
-Crazy something else
-"""
+from .util import _support
 
 
 class TestSSHConfig(object):
+    def setup(self):
+        self.config_flo = open(_support("robey.config"))
+
+    def teardown(self):
+        self.config_flo.close()
+
     def test_parse_config(self):
-        global test_config_file
-        f = StringIO(test_config_file)
-        config = parse_ssh_config(f)
+        config = parse_ssh_config(self.config_flo)
         expected = [
             {"host": ["*"], "config": {}},
             {
@@ -58,9 +42,7 @@ class TestSSHConfig(object):
         assert config._config == expected
 
     def test_host_config(self):
-        global test_config_file
-        f = StringIO(test_config_file)
-        config = parse_ssh_config(f)
+        config = parse_ssh_config(self.config_flo)
 
         for host, values in {
             "irc.danger.com": {
@@ -267,8 +249,7 @@ IdentityFile something_%l_using_fqdn
         assert config.lookup("abcqwerty")["hostname"] == "127.0.0.1"
 
     def test_get_hostnames(self):
-        f = StringIO(test_config_file)
-        config = parse_ssh_config(f)
+        config = parse_ssh_config(self.config_flo)
         expected = {"*", "*.example.com", "spoo.example.com"}
         assert config.get_hostnames() == expected
 
