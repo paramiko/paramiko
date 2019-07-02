@@ -62,7 +62,7 @@ from paramiko.file import BufferedFile
 from paramiko.agent import Agent, AgentKey
 from paramiko.pkey import PKey, PublicBlob
 from paramiko.hostkeys import HostKeys
-from paramiko.config import SSHConfig
+from paramiko.config import SSHConfig, SSHConfigDict
 from paramiko.proxy import ProxyCommand
 
 from paramiko.common import (
@@ -126,6 +126,7 @@ __all__ = [
     "SFTPServerInterface",
     "SSHClient",
     "SSHConfig",
+    "SSHConfigDict",
     "SSHException",
     "SecurityOptions",
     "ServerInterface",

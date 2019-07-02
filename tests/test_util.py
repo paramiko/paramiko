@@ -101,6 +101,7 @@ class UtilTest(unittest.TestCase):
         self.assertTrue("AgentKey" in symbols)
         self.assertTrue("HostKeys" in symbols)
         self.assertTrue("SSHConfig" in symbols)
+        self.assertTrue("SSHConfigDict" in symbols)
         self.assertTrue("util" in symbols)
 
     def test_parse_config(self):
