@@ -32,7 +32,8 @@ from cryptography.hazmat.primitives.ciphers import algorithms, modes, Cipher
 from paramiko import util
 from paramiko.common import o600
 from paramiko.py3compat import u, encodebytes, decodebytes, b, string_types
-from paramiko.ssh_exception import SSHException, PasswordRequiredException
+from paramiko.ssh_exception import SSHException, PasswordRequiredException, \
+                                   PKCS8NotSupportedException
 from paramiko.message import Message
 
 
@@ -282,10 +283,16 @@ class PKey(object):
     def _read_private_key(self, tag, f, password=None):
         lines = f.readlines()
         start = 0
+        pkcs8 = False
         beginning_of_key = "-----BEGIN " + tag + " PRIVATE KEY-----"
         while start < len(lines) and lines[start].strip() != beginning_of_key:
+            if (lines[start].strip() == '-----BEGIN PRIVATE KEY-----' or
+                lines[start].strip() == '-----BEGIN ENCRYPTED PRIVATE KEY-----'):
+                pkcs8 = True
             start += 1
         if start >= len(lines):
+            if pkcs8:
+                raise PKCS8NotSupportedException('private key file is in PKCS#8 format, which is unsupported')
             raise SSHException("not a valid " + tag + " private key file")
         # parse any headers first
         headers = {}

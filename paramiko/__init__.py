@@ -43,6 +43,7 @@ from paramiko.ssh_exception import (
     BadHostKeyException,
     AuthenticationException,
     ProxyCommandFailure,
+    PKCS8NotSupportedException,
 )
 from paramiko.server import ServerInterface, SubsystemHandler, InteractiveQuery
 from paramiko.rsakey import RSAKey
@@ -110,6 +111,7 @@ __all__ = [
     "HostKeys",
     "Message",
     "MissingHostKeyPolicy",
+    "PKCS8NotSupportedException",
     "PKey",
     "PasswordRequiredException",
     "ProxyCommand",

@@ -27,6 +27,7 @@ from binascii import hexlify
 from hashlib import md5
 
 from paramiko import RSAKey, DSSKey, ECDSAKey, Ed25519Key, Message, util
+from paramiko import PKCS8NotSupportedException
 from paramiko.py3compat import StringIO, byte_chr, b, bytes, PY2
 
 from .util import _support
@@ -554,4 +555,14 @@ class KeyTest(unittest.TestCase):
             ValueError,
             key1.load_certificate,
             _support("test_rsa.key-cert.pub"),
+        )
+
+    def test_pkcs8(self):
+        self.assertRaises(PKCS8NotSupportedException,
+            RSAKey.from_private_key_file,
+            _support('test_rsa.pkcs8.key')
+        )
+        self.assertRaises(PKCS8NotSupportedException,
+            RSAKey.from_private_key_file,
+            _support('test_rsa_password.pkcs8.key'), 'television'
         )

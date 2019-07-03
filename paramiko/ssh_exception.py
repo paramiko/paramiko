@@ -26,6 +26,15 @@ class SSHException(Exception):
 
     pass
 
+class PKCS8NotSupportedException (SSHException):
+    """
+    Exception raised when a PKCS#8 private key is encountered. (Paramiko
+    currently doesn't support the PKCS#8 format.)
+
+    .. versionadded:: 2.5
+    """
+    pass
+
 
 class AuthenticationException(SSHException):
     """
