@@ -2,6 +2,10 @@
 Changelog
 =========
 
+- :feature:`-` Add new convenience classmethod constructors to
+  `~paramiko.config.SSHConfig`: `~paramiko.config.SSHConfig.from_text`,
+  `~paramiko.config.SSHConfig.from_file`, and
+  `~paramiko.config.SSHConfig.from_path`. No more annoying two-step process!
 - :release:`2.6.0 <2019-06-23>`
 - :feature:`1463` Add a new keyword argument to `SSHClient.connect
   <paramiko.client.SSHClient.connect>` and `~paramiko.transport.Transport`,

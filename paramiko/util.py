@@ -194,6 +194,9 @@ def load_host_keys(filename):
 def parse_ssh_config(file_obj):
     """
     Provided only as a backward-compatible wrapper around `.SSHConfig`.
+
+    .. deprecated:: 2.7
+        Use `SSHConfig.from_file` instead.
     """
     config = SSHConfig()
     config.parse(file_obj)

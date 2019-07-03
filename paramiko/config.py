@@ -49,8 +49,53 @@ class SSHConfig(object):
     def __init__(self):
         """
         Create a new OpenSSH config object.
+
+        Note: the newer alternate constructors `from_path`, `from_file` and
+        `from_text` are simpler to use, as they parse on instantiation. For
+        example, instead of::
+
+            config = SSHConfig()
+            config.parse(open("some-path.config")
+
+        you could::
+
+            config = SSHConfig.from_file(open("some-path.config"))
+            # Or more directly:
+            config = SSHConfig.from_path("some-path.config")
+            # Or if you have arbitrary ssh_config text from some other source:
+            config = SSHConfig.from_text("Host foo\\n\\tUser bar")
         """
         self._config = []
+
+    @classmethod
+    def from_text(cls, text):
+        """
+        Create a new, parsed `SSHConfig` from ``text`` string.
+
+        .. versionadded:: 2.7
+        """
+        return cls.from_file(StringIO(text))
+
+    @classmethod
+    def from_path(cls, path):
+        """
+        Create a new, parsed `SSHConfig` from the file found at ``path``.
+
+        .. versionadded:: 2.7
+        """
+        with open(path) as flo:
+            return cls.from_file(flo)
+
+    @classmethod
+    def from_file(cls, flo):
+        """
+        Create a new, parsed `SSHConfig` from file-like object ``flo``.
+
+        .. versionadded:: 2.7
+        """
+        obj = cls()
+        obj.parse(flo)
+        return obj
 
     def parse(self, file_obj):
         """

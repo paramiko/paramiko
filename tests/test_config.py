@@ -9,7 +9,7 @@ from pytest import raises, mark
 from paramiko.py3compat import StringIO
 
 from paramiko import SSHConfig, SSHConfigDict
-from paramiko.util import lookup_ssh_host_config, parse_ssh_config
+from paramiko.util import lookup_ssh_host_config
 
 from .util import _support
 
@@ -21,8 +21,27 @@ class TestSSHConfig(object):
     def teardown(self):
         self.config_flo.close()
 
+    def test_init(self):
+        # No args!
+        with raises(TypeError):
+            SSHConfig("uh oh!")
+        # No args.
+        assert not SSHConfig()._config
+
+    def test_from_text(self):
+        config = SSHConfig.from_text(self.config_flo.read())
+        assert config.lookup("foo.example.com")["user"] == "robey"
+
+    def test_from_file(self):
+        config = SSHConfig.from_file(self.config_flo)
+        assert config.lookup("whatever")["user"] == "robey"
+
+    def test_from_path(self):
+        config = SSHConfig.from_path(_support("robey.config"))
+        assert config.lookup("meh.example.com")["port"] == "3333"
+
     def test_parse_config(self):
-        config = parse_ssh_config(self.config_flo)
+        config = SSHConfig.from_file(self.config_flo)
         expected = [
             {"host": ["*"], "config": {}},
             {
@@ -42,7 +61,7 @@ class TestSSHConfig(object):
         assert config._config == expected
 
     def test_host_config(self):
-        config = parse_ssh_config(self.config_flo)
+        config = SSHConfig.from_file(self.config_flo)
 
         for host, values in {
             "irc.danger.com": {
@@ -82,7 +101,7 @@ Host *
     Port 3333
     """
         f = StringIO(test_config_file)
-        config = parse_ssh_config(f)
+        config = SSHConfig.from_file(f)
         host = "www13.example.com"
         expected = {"hostname": host, "port": "22"}
         assert lookup_ssh_host_config(host, config) == expected
@@ -99,7 +118,7 @@ Host equals-delimited
     ProxyCommand=foo bar=biz baz
 """
         f = StringIO(conf)
-        config = parse_ssh_config(f)
+        config = SSHConfig.from_file(f)
         for host in ("space-delimited", "equals-delimited"):
             value = lookup_ssh_host_config(host, config)["proxycommand"]
             assert value == "foo bar=biz baz"
@@ -108,7 +127,7 @@ Host equals-delimited
         """
         ProxyCommand should perform interpolation on the value
         """
-        config = parse_ssh_config(
+        config = SSHConfig.from_file(
             StringIO(
                 """
 Host specific
@@ -135,7 +154,7 @@ Host *
         """
         Tilde (~) should be expanded inside ProxyCommand
         """
-        config = parse_ssh_config(
+        config = SSHConfig.from_file(
             StringIO(
                 """
 Host test
@@ -164,7 +183,7 @@ Host *
     Port 3333
     """
         f = StringIO(test_config_file)
-        config = parse_ssh_config(f)
+        config = SSHConfig.from_file(f)
         host = "www13.example.com"
         expected = {"hostname": host, "port": "8080"}
         assert lookup_ssh_host_config(host, config) == expected
@@ -196,7 +215,7 @@ ProxyCommand foo=bar:%h-%p
         }.items():
 
             f = StringIO(test_config_file)
-            config = parse_ssh_config(f)
+            config = SSHConfig.from_file(f)
             assert lookup_ssh_host_config(host, config) == values
 
     def test_host_config_test_identityfile(self):
@@ -226,7 +245,7 @@ IdentityFile id_dsa22
         }.items():
 
             f = StringIO(test_config_file)
-            config = parse_ssh_config(f)
+            config = SSHConfig.from_file(f)
             assert lookup_ssh_host_config(host, config) == values
 
     def test_config_addressfamily_and_lazy_fqdn(self):
@@ -237,7 +256,7 @@ IdentityFile id_dsa22
 AddressFamily inet
 IdentityFile something_%l_using_fqdn
 """
-        config = parse_ssh_config(StringIO(test_config))
+        config = SSHConfig.from_file(StringIO(test_config))
         assert config.lookup(
             "meh"
         )  # will die during lookup() if bug regresses
@@ -249,7 +268,7 @@ IdentityFile something_%l_using_fqdn
         assert config.lookup("abcqwerty")["hostname"] == "127.0.0.1"
 
     def test_get_hostnames(self):
-        config = parse_ssh_config(self.config_flo)
+        config = SSHConfig.from_file(self.config_flo)
         expected = {"*", "*.example.com", "spoo.example.com"}
         assert config.get_hostnames() == expected
 
@@ -281,7 +300,7 @@ Host param4 "p a r" "p" "par" para
             "para": {"hostname": "para", "port": "4444"},
         }
         f = StringIO(test_config_file)
-        config = parse_ssh_config(f)
+        config = SSHConfig.from_file(f)
         for host, values in res.items():
             assert lookup_ssh_host_config(host, config) == values
 
@@ -312,7 +331,7 @@ Host param3 parara
             },
         }
         f = StringIO(test_config_file)
-        config = parse_ssh_config(f)
+        config = SSHConfig.from_file(f)
         for host, values in res.items():
             assert lookup_ssh_host_config(host, config) == values
 
@@ -356,7 +375,7 @@ Host proxycommand-with-equals-none
         }.items():
 
             f = StringIO(test_config_file)
-            config = parse_ssh_config(f)
+            config = SSHConfig.from_file(f)
             assert lookup_ssh_host_config(host, config) == values
 
     def test_proxycommand_none_masking(self):
@@ -428,7 +447,7 @@ class TestSSHConfigDict(object):
         Port 3333
         """
         f = StringIO(test_config_file)
-        config = parse_ssh_config(f)
+        config = SSHConfig.from_file(f)
         assert config.lookup("foo.example.com").as_int("port") == 2222
 
     def test_SSHConfig_wildcard_host_dicts_are_SSHConfigDict_instances(self):
@@ -440,5 +459,5 @@ class TestSSHConfigDict(object):
         Port 3333
         """
         f = StringIO(test_config_file)
-        config = parse_ssh_config(f)
+        config = SSHConfig.from_file(f)
         assert config.lookup("anything-else").as_int("port") == 3333
