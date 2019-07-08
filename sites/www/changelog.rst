@@ -2,6 +2,9 @@
 Changelog
 =========
 
+- :support:`-` Explicitly document :ref:`which ssh_config features we
+  currently support <ssh-config-support>`. Previously users just had to guess,
+  which is simply no good.
 - :feature:`-` Add new convenience classmethod constructors to
   `~paramiko.config.SSHConfig`: `~paramiko.config.SSHConfig.from_text`,
   `~paramiko.config.SSHConfig.from_file`, and
