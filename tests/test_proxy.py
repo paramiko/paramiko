@@ -78,7 +78,7 @@ class TestProxyCommand(object):
         os_read.side_effect = socket.timeout
         proxy = ProxyCommand("hi")
         with raises(socket.timeout):
-            data = proxy.recv(5)
+            proxy.recv(5)
         assert os_read.call_args[0] == (fileno, 5)
 
     @patch("paramiko.proxy.subprocess.Popen")

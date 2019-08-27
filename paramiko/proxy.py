@@ -29,7 +29,7 @@ import time
 subprocess, subprocess_import_error = None, None
 try:
     import subprocess
-except ImportError as e:
+except ImportError:
     pass
 
 from paramiko.ssh_exception import ProxyCommandFailure
@@ -60,8 +60,11 @@ class ProxyCommand(ClosingContextManager):
             raise subprocess_import_error
         self.cmd = shlex.split(command_line)
         self.process = subprocess.Popen(
-            self.cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE, bufsize=0
+            self.cmd,
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            bufsize=0,
         )
         self.timeout = None
 

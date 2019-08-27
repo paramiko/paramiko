@@ -3,7 +3,6 @@
 
 from os.path import expanduser
 
-import pytest
 from pytest import raises, mark
 
 from paramiko import SSHConfig, SSHConfigDict
