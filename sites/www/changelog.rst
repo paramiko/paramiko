@@ -2,6 +2,15 @@
 Changelog
 =========
 
+- :bug:`- major` Perform deduplication of ``IdentityFile`` contents during
+  ``ssh_config`` parsing; previously, if your config would result in the same
+  value being encountered more than once, ``IdentityFile`` would contain that
+  many copies of the same string.
+- :feature:`897` Implement most 'canonical hostname' ``ssh_config``
+  functionality (``CanonicalizeHostname``, ``CanonicalDomains``,
+  ``CanonicalizeFallbackLocal``, and ``CanonicalizeMaxDots``;
+  ``CanonicalizePermittedCNAMEs`` has **not** yet been implemented). All were
+  previously silently ignored. Reported by Michael Leinartas.
 - :support:`-` Explicitly document :ref:`which ssh_config features we
   currently support <ssh-config-support>`. Previously users just had to guess,
   which is simply no good.

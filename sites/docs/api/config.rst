@@ -35,9 +35,27 @@ Paramiko versions lacking some default parse-related behavior.
 
 See `OpenSSH's own ssh_config docs <ssh_config>`_ for details on the overall
 file format, and the intended meaning of the keywords and values; or check the
-documentation for your Paramiko-using library of choice (again, often
-`Fabric`_) to see what it honors on its end.
+documentation for your Paramiko-using library of choice (e.g. `Fabric`_) to see
+what it honors on its end.
 
+- ``CanonicalDomains``: sets the domains used for hostname canonicalization.
+- ``CanonicalizeFallbackLocal``: set to ``no`` to enforce that all looked-up
+  names must resolve under one of the ``CanonicalDomains`` - any names which
+  don't canonicalize will raise `CouldNotCanonicalize` (instead of silently
+  returning a config containing only global-level config values, as normal).
+- ``CanonicalizeHostname``: as with OpenSSH, when a lookup results in this
+  being set to ``yes`` (whether globally or inside a specific block), it
+  triggers an attempt to resolve the requested hostname under one of the given
+  ``CanonicalDomains``, which if successful will cause Paramiko to re-parse the
+  entire config file.
+
+  .. note::
+    As in OpenSSH, canonicalization is quietly ignored for "deep" hostnames -
+    by default, hostnames containing more than one period character. This may
+    be controlled with ``CanonicalizeMaxDots``; see below.
+
+- ``CanonicalizeMaxDots``: controls how many period characters may appear in a
+  target hostname before canonicalization is disabled.
 - ``AddressFamily``: used when looking up the local hostname for purposes of
   expanding the ``%l``/``%L`` :ref:`tokens <TOKENS>`.
 

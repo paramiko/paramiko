@@ -2,18 +2,24 @@
 # repository
 
 from os.path import expanduser
+from socket import gaierror
 
-from pytest import raises, mark
+from mock import patch
+from pytest import raises, mark, fixture
 
-from paramiko import SSHConfig, SSHConfigDict
+from paramiko import SSHConfig, SSHConfigDict, CouldNotCanonicalize
 from paramiko.util import lookup_ssh_host_config
 
-from .util import _support
+from .util import _config
+
+
+def load_config(name):
+    return SSHConfig.from_path(_config(name))
 
 
 class TestSSHConfig(object):
     def setup(self):
-        self.config = SSHConfig.from_path(_support("robey.config"))
+        self.config = load_config("robey")
 
     def test_init(self):
         # No args!
@@ -27,12 +33,13 @@ class TestSSHConfig(object):
         assert config.lookup("foo.example.com")["user"] == "foo"
 
     def test_from_file(self):
-        with open(_support("robey.config")) as flo:
+        with open(_config("robey")) as flo:
             config = SSHConfig.from_file(flo)
         assert config.lookup("whatever")["user"] == "robey"
 
     def test_from_path(self):
-        config = SSHConfig.from_path(_support("robey.config"))
+        # NOTE: DO NOT replace with use of load_config() :D
+        config = SSHConfig.from_path(_config("robey"))
         assert config.lookup("meh.example.com")["port"] == "3333"
 
     def test_parse_config(self):
@@ -451,3 +458,141 @@ Host *
 """
         )
         assert config.lookup("anything-else").as_int("port") == 3333
+
+
+@fixture
+def socket():
+    with patch("paramiko.config.socket") as mocket:
+        # Reinstate gaierror as an actual exception and not a sub-mock.
+        # (Presumably this would work with any exception, but why not use the
+        # real one?)
+        mocket.gaierror = gaierror
+        # Patch out getaddrinfo, used to detect family-specific IP lookup -
+        # only useful for a few specific tests.
+        mocket.getaddrinfo.side_effect = mocket.gaierror
+        yield mocket
+
+
+class TestHostnameCanonicalization(object):
+    # NOTE: this class uses on-disk configs, and ones with real (at time of
+    # writing) DNS names, so that one can easily test OpenSSH's behavior using
+    # "ssh -F path/to/file.config -G <target>".
+
+    def test_off_by_default(self, socket):
+        result = load_config("basic").lookup("www")
+        assert result["hostname"] == "www"
+        assert "user" not in result
+        assert not socket.gethostbyname.called
+
+    def test_explicit_no_same_as_default(self, socket):
+        result = load_config("no-canon").lookup("www")
+        assert result["hostname"] == "www"
+        assert "user" not in result
+        assert not socket.gethostbyname.called
+
+    @mark.parametrize(
+        "config_name",
+        ("canon", "canon-always", "canon-local", "canon-local-always"),
+    )
+    def test_canonicalization_base_cases(self, socket, config_name):
+        result = load_config(config_name).lookup("www")
+        assert result["hostname"] == "www.paramiko.org"
+        assert result["user"] == "rando"
+        socket.gethostbyname.assert_called_once_with("www.paramiko.org")
+
+    def test_uses_getaddrinfo_when_AddressFamily_given(self, socket):
+        # Undo default 'always fails' mock
+        socket.getaddrinfo.side_effect = None
+        socket.getaddrinfo.return_value = [True]  # just need 1st value truthy
+        result = load_config("canon-ipv4").lookup("www")
+        assert result["hostname"] == "www.paramiko.org"
+        assert result["user"] == "rando"
+        assert not socket.gethostbyname.called
+        gai_args = socket.getaddrinfo.call_args[0]
+        assert gai_args[0] == "www.paramiko.org"
+        assert gai_args[2] is socket.AF_INET  # Mocked, but, still useful
+
+    @mark.skip
+    def test_empty_CanonicalDomains_canonicalizes_despite_noop(self, socket):
+        # Confirmed this is how OpenSSH behaves as well. Bit silly, but.
+        # TODO: this requires modifying SETTINGS_REGEX, which is a mite scary
+        # (honestly I'd prefer to move to a real parser lib anyhow) and since
+        # this is a very dumb corner case, it's marked skip for now.
+        result = load_config("empty-canon").lookup("www")
+        assert result["hostname"] == "www"  # no paramiko.org
+        assert "user" not in result  # did not discover canonicalized block
+
+    def test_CanonicalDomains_may_be_set_to_space_separated_list(self, socket):
+        # Test config has a bogus domain, followed by paramiko.org
+        socket.gethostbyname.side_effect = [socket.gaierror, True]
+        result = load_config("multi-canon-domains").lookup("www")
+        assert result["hostname"] == "www.paramiko.org"
+        assert result["user"] == "rando"
+        assert [x[0][0] for x in socket.gethostbyname.call_args_list] == [
+            "www.not-a-real-tld",
+            "www.paramiko.org",
+        ]
+
+    def test_canonicalization_applies_to_single_dot_by_default(self, socket):
+        result = load_config("deep-canon").lookup("sub.www")
+        assert result["hostname"] == "sub.www.paramiko.org"
+        assert result["user"] == "deep"
+
+    def test_canonicalization_not_applied_to_two_dots_by_default(self, socket):
+        result = load_config("deep-canon").lookup("subber.sub.www")
+        assert result["hostname"] == "subber.sub.www"
+        assert "user" not in result
+
+    def test_hostname_depth_controllable_with_max_dots_directive(self, socket):
+        # This config sets MaxDots of 2, so now canonicalization occurs
+        result = load_config("deep-canon-maxdots").lookup("subber.sub.www")
+        assert result["hostname"] == "subber.sub.www.paramiko.org"
+        assert result["user"] == "deeper"
+
+    def test_max_dots_may_be_zero(self, socket):
+        result = load_config("zero-maxdots").lookup("sub.www")
+        assert result["hostname"] == "sub.www"
+        assert "user" not in result
+
+    def test_fallback_yes_does_not_canonicalize_or_error(self, socket):
+        socket.gethostbyname.side_effect = socket.gaierror
+        result = load_config("fallback-yes").lookup("www")
+        assert result["hostname"] == "www"
+        assert "user" not in result
+
+    def test_fallback_no_causes_errors_for_unresolvable_names(self, socket):
+        socket.gethostbyname.side_effect = socket.gaierror
+        with raises(CouldNotCanonicalize) as info:
+            load_config("fallback-no").lookup("doesnotexist")
+        assert str(info.value) == "doesnotexist"
+
+    def test_identityfile_continues_being_appended_to(self, socket):
+        result = load_config("canon").lookup("www")
+        assert result["identityfile"] == ["base.key", "canonicalized.key"]
+
+
+@mark.skip
+class TestCanonicalizationOfCNAMEs(object):
+    def test_permitted_cnames_may_be_one_to_one_mapping(self):
+        # CanonicalizePermittedCNAMEs *.foo.com:*.bar.com
+        pass
+
+    def test_permitted_cnames_may_be_one_to_many_mapping(self):
+        # CanonicalizePermittedCNAMEs *.foo.com:*.bar.com,*.biz.com
+        pass
+
+    def test_permitted_cnames_may_be_many_to_one_mapping(self):
+        # CanonicalizePermittedCNAMEs *.foo.com,*.bar.com:*.biz.com
+        pass
+
+    def test_permitted_cnames_may_be_many_to_many_mapping(self):
+        # CanonicalizePermittedCNAMEs *.foo.com,*.bar.com:*.biz.com,*.baz.com
+        pass
+
+    def test_permitted_cnames_may_be_multiple_mappings(self):
+        # CanonicalizePermittedCNAMEs *.foo.com,*.bar.com *.biz.com:*.baz.com
+        pass
+
+    def test_permitted_cnames_may_be_multiple_complex_mappings(self):
+        # Same as prev but with multiple patterns on both ends in both args
+        pass

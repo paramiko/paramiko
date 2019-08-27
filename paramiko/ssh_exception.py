@@ -196,3 +196,11 @@ class NoValidConnectionsError(socket.error):
 
     def __reduce__(self):
         return (self.__class__, (self.errors,))
+
+
+class CouldNotCanonicalize(SSHException):
+    """
+    Raised when hostname canonicalization fails & fallback is disabled.
+    """
+
+    pass

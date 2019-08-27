@@ -9,8 +9,15 @@ from paramiko.py3compat import builtins
 from paramiko.ssh_gss import GSS_AUTH_AVAILABLE
 
 
+tests_dir = dirname(realpath(__file__))
+
+
 def _support(filename):
-    return join(dirname(realpath(__file__)), filename)
+    return join(tests_dir, filename)
+
+
+def _config(name):
+    return join(tests_dir, "configs", "{}.config".format(name))
 
 
 needs_gssapi = pytest.mark.skipif(

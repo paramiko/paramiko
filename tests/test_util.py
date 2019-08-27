@@ -43,44 +43,47 @@ BGQ3GQ/Fc7SX6gkpXkwcZryoi4kNFhHu5LvHcZPdxXV1D+uTMfGS1eyd2Yz/DoNWXNAl8TI0cAsW\
 
 
 class UtilTest(unittest.TestCase):
-    def test_import(self):
+    def test_imports(self):
         """
         verify that all the classes can be imported from paramiko.
         """
-        symbols = paramiko.__all__
-        self.assertTrue("Agent" in symbols)
-        self.assertTrue("AgentKey" in symbols)
-        self.assertTrue("AuthenticationException" in symbols)
-        self.assertTrue("AutoAddPolicy" in symbols)
-        self.assertTrue("BadAuthenticationType" in symbols)
-        self.assertTrue("BufferedFile" in symbols)
-        self.assertTrue("Channel" in symbols)
-        self.assertTrue("ChannelException" in symbols)
-        self.assertTrue("DSSKey" in symbols)
-        self.assertTrue("HostKeys" in symbols)
-        self.assertTrue("Message" in symbols)
-        self.assertTrue("MissingHostKeyPolicy" in symbols)
-        self.assertTrue("PasswordRequiredException" in symbols)
-        self.assertTrue("RSAKey" in symbols)
-        self.assertTrue("RejectPolicy" in symbols)
-        self.assertTrue("SFTP" in symbols)
-        self.assertTrue("SFTPAttributes" in symbols)
-        self.assertTrue("SFTPClient" in symbols)
-        self.assertTrue("SFTPError" in symbols)
-        self.assertTrue("SFTPFile" in symbols)
-        self.assertTrue("SFTPHandle" in symbols)
-        self.assertTrue("SFTPServer" in symbols)
-        self.assertTrue("SFTPServerInterface" in symbols)
-        self.assertTrue("SSHClient" in symbols)
-        self.assertTrue("SSHConfig" in symbols)
-        self.assertTrue("SSHConfigDict" in symbols)
-        self.assertTrue("SSHException" in symbols)
-        self.assertTrue("SecurityOptions" in symbols)
-        self.assertTrue("ServerInterface" in symbols)
-        self.assertTrue("SubsystemHandler" in symbols)
-        self.assertTrue("Transport" in symbols)
-        self.assertTrue("WarningPolicy" in symbols)
-        self.assertTrue("util" in symbols)
+        for name in (
+            "Agent",
+            "AgentKey",
+            "AuthenticationException",
+            "AutoAddPolicy",
+            "BadAuthenticationType",
+            "BufferedFile",
+            "Channel",
+            "ChannelException",
+            "CouldNotCanonicalize",
+            "DSSKey",
+            "HostKeys",
+            "Message",
+            "MissingHostKeyPolicy",
+            "PasswordRequiredException",
+            "RSAKey",
+            "RejectPolicy",
+            "SFTP",
+            "SFTPAttributes",
+            "SFTPClient",
+            "SFTPError",
+            "SFTPFile",
+            "SFTPHandle",
+            "SFTPServer",
+            "SFTPServerInterface",
+            "SSHClient",
+            "SSHConfig",
+            "SSHConfigDict",
+            "SSHException",
+            "SecurityOptions",
+            "ServerInterface",
+            "SubsystemHandler",
+            "Transport",
+            "WarningPolicy",
+            "util",
+        ):
+            assert name in paramiko.__all__
 
     def test_generate_key_bytes(self):
         x = paramiko.util.generate_key_bytes(
