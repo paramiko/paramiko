@@ -19,8 +19,6 @@ import bcrypt
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.ciphers import Cipher
 
-import nacl.signing
-
 import six
 
 from paramiko.message import Message
@@ -72,6 +70,7 @@ class Ed25519Key(PKey):
                 key_type="ssh-ed25519",
                 cert_type="ssh-ed25519-cert-v01@openssh.com",
             )
+            import nacl.signing
             verifying_key = nacl.signing.VerifyKey(msg.get_binary())
         elif filename is not None:
             with open(filename, "r") as f:
@@ -168,6 +167,8 @@ class Ed25519Key(PKey):
             key_data = message.get_binary()
             # The second half of the key data is yet another copy of the public
             # key...
+            import nacl.signing
+
             signing_key = nacl.signing.SigningKey(key_data[:32])
             # Verify that all the public keys are the same...
             assert (
@@ -220,9 +221,10 @@ class Ed25519Key(PKey):
         if msg.get_text() != "ssh-ed25519":
             return False
 
+        from nacl.exceptions import BadSignatureError
         try:
             self._verifying_key.verify(data, msg.get_binary())
-        except nacl.exceptions.BadSignatureError:
+        except BadSignatureError:
             return False
         else:
             return True
