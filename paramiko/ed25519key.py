@@ -35,7 +35,7 @@ def unpad(data):
     # really ought to be made constant time (possibly by upstreaming this logic
     # into pyca/cryptography).
     padding_length = six.indexbytes(data, -1)
-    if 0x20 <= padding_length < 0x7f:
+    if 0x20 <= padding_length < 0x7F:
         return data  # no padding, last byte part comment (printable ascii)
     if padding_length > 15:
         raise SSHException("Invalid key")
@@ -71,6 +71,7 @@ class Ed25519Key(PKey):
                 cert_type="ssh-ed25519-cert-v01@openssh.com",
             )
             import nacl.signing
+
             verifying_key = nacl.signing.VerifyKey(msg.get_binary())
         elif filename is not None:
             with open(filename, "r") as f:
@@ -112,9 +113,7 @@ class Ed25519Key(PKey):
                 raise SSHException("Invalid key")
         elif kdfname == "bcrypt":
             if not password:
-                raise PasswordRequiredException(
-                    "Private key file is encrypted"
-                )
+                raise PasswordRequiredException("Private key file is encrypted")
             kdf = Message(kdfoptions)
             bcrypt_salt = kdf.get_binary()
             bcrypt_rounds = kdf.get_int()
@@ -150,9 +149,7 @@ class Ed25519Key(PKey):
                 cipher["mode"](key[cipher["key-size"] :]),
                 backend=default_backend(),
             ).decryptor()
-            private_data = (
-                decryptor.update(private_ciphertext) + decryptor.finalize()
-            )
+            private_data = decryptor.update(private_ciphertext) + decryptor.finalize()
 
         message = Message(unpad(private_data))
         if message.get_int() != message.get_int():
@@ -222,6 +219,7 @@ class Ed25519Key(PKey):
             return False
 
         from nacl.exceptions import BadSignatureError
+
         try:
             self._verifying_key.verify(data, msg.get_binary())
         except BadSignatureError:
