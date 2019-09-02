@@ -113,7 +113,9 @@ class Ed25519Key(PKey):
                 raise SSHException("Invalid key")
         elif kdfname == "bcrypt":
             if not password:
-                raise PasswordRequiredException("Private key file is encrypted")
+                raise PasswordRequiredException(
+                    "Private key file is encrypted"
+                )
             kdf = Message(kdfoptions)
             bcrypt_salt = kdf.get_binary()
             bcrypt_rounds = kdf.get_int()
@@ -149,7 +151,9 @@ class Ed25519Key(PKey):
                 cipher["mode"](key[cipher["key-size"] :]),
                 backend=default_backend(),
             ).decryptor()
-            private_data = decryptor.update(private_ciphertext) + decryptor.finalize()
+            private_data = (
+                decryptor.update(private_ciphertext) + decryptor.finalize()
+            )
 
         message = Message(unpad(private_data))
         if message.get_int() != message.get_int():
