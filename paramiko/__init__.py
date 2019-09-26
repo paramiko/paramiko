@@ -36,13 +36,13 @@ from paramiko.channel import (
     ChannelStdinFile,
 )
 from paramiko.ssh_exception import (
-    SSHException,
-    PasswordRequiredException,
-    BadAuthenticationType,
-    ChannelException,
-    BadHostKeyException,
     AuthenticationException,
+    BadAuthenticationType,
+    BadHostKeyException,
+    ChannelException,
+    PasswordRequiredException,
     ProxyCommandFailure,
+    SSHException,
 )
 from paramiko.server import ServerInterface, SubsystemHandler, InteractiveQuery
 from paramiko.rsakey import RSAKey
