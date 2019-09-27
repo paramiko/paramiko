@@ -141,4 +141,4 @@ class TestProxyCommand(object):
         # module-time ImportErrors. So we mock the symptoms. Meh!
         with raises(ImportError) as info:
             ProxyCommand("hi!!!")
-        assert info.value.msg == "meh"
+        assert str(info.value) == "meh"
