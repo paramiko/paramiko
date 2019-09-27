@@ -222,7 +222,7 @@ class SSHConfig(object):
 
         :param str hostname: Target hostname.
         :param options: An `SSHConfigDict` from a previous lookup pass.
-        :param list domains: List of domains (e.g. ``["paramiko.org"]``).
+        :param domains: List of domains (e.g. ``["paramiko.org"]``).
 
         :returns: A canonicalized hostname if one was found, else ``None``.
 

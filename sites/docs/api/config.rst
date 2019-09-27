@@ -41,7 +41,7 @@ what it honors on its end.
 - ``CanonicalDomains``: sets the domains used for hostname canonicalization.
 - ``CanonicalizeFallbackLocal``: set to ``no`` to enforce that all looked-up
   names must resolve under one of the ``CanonicalDomains`` - any names which
-  don't canonicalize will raise `CouldNotCanonicalize` (instead of silently
+  don't canonicalize will raise `.CouldNotCanonicalize` (instead of silently
   returning a config containing only global-level config values, as normal).
 - ``CanonicalizeHostname``: as with OpenSSH, when a lookup results in this
   being set to ``yes`` (whether globally or inside a specific block), it
