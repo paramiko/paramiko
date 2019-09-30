@@ -6,4 +6,3 @@ Host www
     CanonicalizeHostname yes
 
 
-# vim: set ft=sshconfig :

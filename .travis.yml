@@ -36,10 +36,12 @@ install:
     if [[ -n "$OLDEST_CRYPTO" ]]; then
       pip install "cryptography==${OLDEST_CRYPTO}"
     fi
-  # Self-install for setup.py-driven deps
-  - pip install -e .
+  # Self-install for setup.py-driven deps (plus additional
+  # safe-enough-for-all-matrix-cells optional deps)
+  - pip install -e ".[ed25519,invoke]"
   # Dev (doc/test running) requirements
-  # TODO: use pipenv + whatever contexty-type stuff it has
+  # TODO: use poetry + whatever contexty-type stuff it has, should be more than
+  # just prod/dev split. Also apply to the above re: extras_require.
   - pip install codecov # For codecov specifically
   - pip install -r dev-requirements.txt
   - |

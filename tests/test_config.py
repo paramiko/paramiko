@@ -4,13 +4,45 @@
 from os.path import expanduser
 from socket import gaierror
 
+from paramiko.py3compat import string_types
+
+from invoke import Result
 from mock import patch
 from pytest import raises, mark, fixture
 
-from paramiko import SSHConfig, SSHConfigDict, CouldNotCanonicalize
-from paramiko.util import lookup_ssh_host_config
+from paramiko import (
+    SSHConfig,
+    SSHConfigDict,
+    CouldNotCanonicalize,
+    ConfigParseError,
+)
 
 from .util import _config
+
+
+@fixture
+def socket():
+    """
+    Patch all of socket.* in our config module to prevent eg real DNS lookups.
+
+    Also forces getaddrinfo (used in our addressfamily lookup stuff) to always
+    fail by default to mimic usual lack of AddressFamily related crap.
+
+    Callers who want to mock DNS lookups can then safely assume gethostbyname()
+    will be in use.
+    """
+    with patch("paramiko.config.socket") as mocket:
+        # Reinstate gaierror as an actual exception and not a sub-mock.
+        # (Presumably this would work with any exception, but why not use the
+        # real one?)
+        mocket.gaierror = gaierror
+        # Patch out getaddrinfo, used to detect family-specific IP lookup -
+        # only useful for a few specific tests.
+        mocket.getaddrinfo.side_effect = mocket.gaierror
+        # Patch out getfqdn to return some real string for when it gets called;
+        # some code (eg tokenization) gets mad w/ MagicMocks
+        mocket.getfqdn.return_value = "some.fake.fqdn"
+        yield mocket
 
 
 def load_config(name):
@@ -61,41 +93,42 @@ class TestSSHConfig(object):
         ]
         assert self.config._config == expected
 
-    @mark.parametrize("host,values", (
+    @mark.parametrize(
+        "host,values",
         (
-            "irc.danger.com",
-            {
-                "crazy": "something dumb",
-                "hostname": "irc.danger.com",
-                "user": "robey",
-            },
+            (
+                "irc.danger.com",
+                {
+                    "crazy": "something dumb",
+                    "hostname": "irc.danger.com",
+                    "user": "robey",
+                },
+            ),
+            (
+                "irc.example.com",
+                {
+                    "crazy": "something dumb",
+                    "hostname": "irc.example.com",
+                    "user": "robey",
+                    "port": "3333",
+                },
+            ),
+            (
+                "spoo.example.com",
+                {
+                    "crazy": "something dumb",
+                    "hostname": "spoo.example.com",
+                    "user": "robey",
+                    "port": "3333",
+                },
+            ),
         ),
-        (
-            "irc.example.com",
-            {
-                "crazy": "something dumb",
-                "hostname": "irc.example.com",
-                "user": "robey",
-                "port": "3333",
-            },
-        ),
-        (
-            "spoo.example.com",
-            {
-                "crazy": "something dumb",
-                "hostname": "spoo.example.com",
-                "user": "robey",
-                "port": "3333",
-            },
-        ),
-    ))
+    )
     def test_host_config(self, host, values):
         expected = dict(
-            values,
-            hostname=host,
-            identityfile=[expanduser("~/.ssh/id_rsa")],
+            values, hostname=host, identityfile=[expanduser("~/.ssh/id_rsa")]
         )
-        assert lookup_ssh_host_config(host, self.config) == expected
+        assert self.config.lookup(host) == expected
 
     def test_fabric_issue_33(self):
         config = SSHConfig.from_text(
@@ -112,7 +145,7 @@ Host *
         )
         host = "www13.example.com"
         expected = {"hostname": host, "port": "22"}
-        assert lookup_ssh_host_config(host, config) == expected
+        assert config.lookup(host) == expected
 
     def test_proxycommand_config_equals_parsing(self):
         """
@@ -128,7 +161,7 @@ Host equals-delimited
 """
         )
         for host in ("space-delimited", "equals-delimited"):
-            value = lookup_ssh_host_config(host, config)["proxycommand"]
+            value = config.lookup(host)["proxycommand"]
             assert value == "foo bar=biz baz"
 
     def test_proxycommand_interpolation(self):
@@ -154,7 +187,7 @@ Host *
             ("specific", "host specific port 37 lol"),
             ("portonly", "host portonly port 155"),
         ):
-            assert lookup_ssh_host_config(host, config)["proxycommand"] == val
+            assert config.lookup(host)["proxycommand"] == val
 
     def test_proxycommand_tilde_expansion(self):
         """
@@ -169,8 +202,29 @@ Host test
         expected = "ssh -F {}/.ssh/test_config bastion nc test 22".format(
             expanduser("~")
         )
-        got = lookup_ssh_host_config("test", config)["proxycommand"]
+        got = config.lookup("test")["proxycommand"]
         assert got == expected
+
+    @patch("paramiko.config.getpass")
+    def test_controlpath_token_expansion(self, getpass):
+        getpass.getuser.return_value = "gandalf"
+        config = SSHConfig.from_text(
+            """
+Host explicit_user
+    User root
+    ControlPath user %u remoteuser %r
+
+Host explicit_host
+    HostName ohai
+    ControlPath remoteuser %r host %h orighost %n
+        """
+        )
+        result = config.lookup("explicit_user")["controlpath"]
+        # Remote user is User val, local user is User val
+        assert result == "user gandalf remoteuser root"
+        result = config.lookup("explicit_host")["controlpath"]
+        # Remote user falls back to local user; host and orighost may differ
+        assert result == "remoteuser gandalf host ohai orighost explicit_host"
 
     def test_negation(self):
         config = SSHConfig.from_text(
@@ -190,7 +244,7 @@ Host *
         )
         host = "www13.example.com"
         expected = {"hostname": host, "port": "8080"}
-        assert lookup_ssh_host_config(host, config) == expected
+        assert config.lookup(host) == expected
 
     def test_proxycommand(self):
         config = SSHConfig.from_text(
@@ -220,7 +274,7 @@ ProxyCommand foo=bar:%h-%p
             },
         }.items():
 
-            assert lookup_ssh_host_config(host, config) == values
+            assert config.lookup(host) == values
 
     def test_identityfile(self):
         config = SSHConfig.from_text(
@@ -250,7 +304,7 @@ IdentityFile id_dsa22
             },
         }.items():
 
-            assert lookup_ssh_host_config(host, config) == values
+            assert config.lookup(host) == values
 
     def test_config_addressfamily_and_lazy_fqdn(self):
         """
@@ -308,7 +362,7 @@ Host param4 "p a r" "p" "par" para
             "para": {"hostname": "para", "port": "4444"},
         }
         for host, values in res.items():
-            assert lookup_ssh_host_config(host, config) == values
+            assert config.lookup(host) == values
 
     def test_quoted_params_in_config(self):
         config = SSHConfig.from_text(
@@ -339,7 +393,7 @@ Host param3 parara
             },
         }
         for host, values in res.items():
-            assert lookup_ssh_host_config(host, config) == values
+            assert config.lookup(host) == values
 
     def test_quoted_host_in_config(self):
         conf = SSHConfig()
@@ -360,8 +414,12 @@ Host param3 parara
         for host, values in correct_data.items():
             assert conf._get_hosts(host) == values
         for host in incorrect_data:
-            with raises(Exception):
+            with raises(ConfigParseError):
                 conf._get_hosts(host)
+
+    def test_invalid_line_format_excepts(self):
+        with raises(ConfigParseError):
+            load_config("invalid")
 
     def test_proxycommand_none_issue_418(self):
         config = SSHConfig.from_text(
@@ -382,7 +440,7 @@ Host proxycommand-with-equals-none
             },
         }.items():
 
-            assert lookup_ssh_host_config(host, config) == values
+            assert config.lookup(host) == values
 
     def test_proxycommand_none_masking(self):
         # Re: https://github.com/paramiko/paramiko/issues/670
@@ -467,19 +525,6 @@ Host *
 """
         )
         assert config.lookup("anything-else").as_int("port") == 3333
-
-
-@fixture
-def socket():
-    with patch("paramiko.config.socket") as mocket:
-        # Reinstate gaierror as an actual exception and not a sub-mock.
-        # (Presumably this would work with any exception, but why not use the
-        # real one?)
-        mocket.gaierror = gaierror
-        # Patch out getaddrinfo, used to detect family-specific IP lookup -
-        # only useful for a few specific tests.
-        mocket.getaddrinfo.side_effect = mocket.gaierror
-        yield mocket
 
 
 class TestHostnameCanonicalization(object):
@@ -605,3 +650,301 @@ class TestCanonicalizationOfCNAMEs(object):
     def test_permitted_cnames_may_be_multiple_complex_mappings(self):
         # Same as prev but with multiple patterns on both ends in both args
         pass
+
+
+class TestMatchAll(object):
+    def test_always_matches(self):
+        result = load_config("match-all").lookup("general")
+        assert result["user"] == "awesome"
+
+    def test_may_not_mix_with_non_canonical_keywords(self):
+        for config in ("match-all-and-more", "match-all-and-more-before"):
+            with raises(ConfigParseError):
+                load_config(config).lookup("whatever")
+
+    def test_may_come_after_canonical(self, socket):
+        result = load_config("match-all-after-canonical").lookup("www")
+        assert result["user"] == "awesome"
+
+    def test_may_not_come_before_canonical(self, socket):
+        with raises(ConfigParseError):
+            load_config("match-all-before-canonical")
+
+    def test_after_canonical_not_loaded_when_non_canonicalized(self, socket):
+        result = load_config("match-canonical-no").lookup("a-host")
+        assert "user" not in result
+
+
+def _expect(success_on):
+    """
+    Returns a side_effect-friendly Invoke success result for given command(s).
+
+    Ensures that any other commands fail; this is useful for testing 'Match
+    exec' because it means all other such clauses under test act like no-ops.
+
+    :param success_on:
+        Single string or list of strings, noting commands that should appear to
+        succeed.
+    """
+    if isinstance(success_on, string_types):
+        success_on = [success_on]
+
+    def inner(command, *args, **kwargs):
+        # Sanity checking - we always expect that invoke.run is called with
+        # these.
+        assert kwargs.get("hide", None) == "stdout"
+        assert kwargs.get("warn", None) is True
+        # Fake exit
+        exit = 0 if command in success_on else 1
+        return Result(exited=exit)
+    return inner
+
+
+class TestMatchExec(object):
+    @patch("paramiko.config.invoke.run")
+    @mark.parametrize(
+        "cmd,user",
+        [
+            ("unquoted", "rando"),
+            ("quoted", "benjamin"),
+            ("quoted spaced", "neil"),
+        ],
+    )
+    def test_accepts_single_possibly_quoted_argument(self, run, cmd, user):
+        run.side_effect = _expect(cmd)
+        result = load_config("match-exec").lookup("whatever")
+        assert result["user"] == user
+
+    @patch("paramiko.config.invoke.run")
+    def test_does_not_match_nonzero_exit_codes(self, run):
+        # Nothing will succeed -> no User ever gets loaded
+        run.return_value = Result(exited=1)
+        result = load_config("match-exec").lookup("whatever")
+        assert "user" not in result
+
+    def test_tokenizes_argument(self):
+        # TODO: spot check a few common ones like %h, %p, %l?
+        assert False
+
+    def test_works_with_canonical(self, socket):
+        # TODO: before AND after. same file, different key/values, prove both
+        # show up?
+        assert False
+
+    def test_may_be_negated(self):
+        assert False
+
+    def test_requires_an_argument(self):
+        assert False
+
+
+class TestMatchHost(object):
+    def test_matches_target_name_when_no_hostname(self):
+        result = load_config("match-host").lookup("target")
+        assert result["user"] == "rand"
+
+    def test_matches_hostname_from_global_setting(self):
+        # Also works for ones set in regular Host stanzas
+        result = load_config("match-host-name").lookup("anything")
+        assert result["user"] == "silly"
+
+    def test_matches_hostname_from_earlier_match(self):
+        # Corner case: one Match matches original host, sets HostName,
+        # subsequent Match matches the latter.
+        result = load_config("match-host-from-match").lookup("original-host")
+        assert result["user"] == "inner"
+
+    def test_may_be_globbed(self):
+        result = load_config("match-host-glob-list").lookup("whatever")
+        assert result["user"] == "matrim"
+
+    def test_may_be_comma_separated_list(self):
+        for target in ("somehost", "someotherhost"):
+            result = load_config("match-host-glob-list").lookup(target)
+            assert result["user"] == "thom"
+
+    def test_comma_separated_list_may_have_internal_negation(self):
+        conf = load_config("match-host-glob-list")
+        assert conf.lookup("good")["user"] == "perrin"
+        assert "user" not in conf.lookup("goof")
+
+    def test_matches_canonicalized_name(self, socket):
+        # Without 'canonical' explicitly declared, mind.
+        result = load_config("match-host-canonicalized").lookup("www")
+        assert result["user"] == "rand"
+
+    def test_works_with_canonical_keyword(self, socket):
+        # NOTE: distinct from 'happens to be canonicalized' above
+        # TODO: before AND after. same file, different key/values, prove both
+        # show up?
+        result = load_config("match-host-canonicalized").lookup("docs")
+        assert result["user"] == "eric"
+
+    def test_may_be_negated(self):
+        conf = load_config("match-host-negated")
+        assert conf.lookup("docs")["user"] == "jeff"
+        assert "user" not in conf.lookup("www")
+
+    def test_requires_an_argument(self):
+        with raises(ConfigParseError):
+            load_config("match-host-no-arg")
+
+
+class TestMatchOriginalHost(object):
+    def test_matches_target_host_not_hostname(self):
+        result = load_config("match-orighost").lookup("target")
+        assert result["hostname"] == "bogus"
+        assert result["user"] == "tuon"
+
+    def test_matches_target_host_not_canonicalized_name(self, socket):
+        result = load_config("match-orighost-canonical").lookup("www")
+        assert result["hostname"] == "www.paramiko.org"
+        assert result["user"] == "tuon"
+
+    def test_may_be_globbed(self):
+        result = load_config("match-orighost").lookup("whatever")
+        assert result["user"] == "matrim"
+
+    def test_may_be_comma_separated_list(self):
+        for target in ("comma", "separated"):
+            result = load_config("match-orighost").lookup(target)
+            assert result["user"] == "chameleon"
+
+    def test_comma_separated_list_may_have_internal_negation(self):
+        result = load_config("match-orighost").lookup("nope")
+        assert "user" not in result
+
+    def test_may_be_negated(self):
+        result = load_config("match-orighost").lookup("docs")
+        assert result["user"] == "thom"
+
+    def test_requires_an_argument(self):
+        with raises(ConfigParseError):
+            load_config("match-orighost-no-arg")
+
+
+class TestMatchUser(object):
+    def test_matches_configured_username(self):
+        result = load_config("match-user-explicit").lookup("anything")
+        assert result["hostname"] == "dumb"
+
+    @patch("paramiko.config.getpass.getuser")
+    def test_matches_local_username_by_default(self, getuser):
+        getuser.return_value = "gandalf"
+        result = load_config("match-user").lookup("anything")
+        assert result["hostname"] == "gondor"
+
+    @patch("paramiko.config.getpass.getuser")
+    def test_may_be_globbed(self, getuser):
+        for user in ("bilbo", "bombadil"):
+            getuser.return_value = user
+            result = load_config("match-user").lookup("anything")
+            assert result["hostname"] == "shire"
+
+    @patch("paramiko.config.getpass.getuser")
+    def test_may_be_comma_separated_list(self, getuser):
+        for user in ("aragorn", "frodo"):
+            getuser.return_value = user
+            result = load_config("match-user").lookup("anything")
+            assert result["hostname"] == "moria"
+
+    @patch("paramiko.config.getpass.getuser")
+    def test_comma_separated_list_may_have_internal_negation(self, getuser):
+        getuser.return_value = "legolas"
+        result = load_config("match-user").lookup("anything")
+        assert "port" not in result
+        getuser.return_value = "gimli"
+        result = load_config("match-user").lookup("anything")
+        assert result["port"] == "7373"
+
+    @patch("paramiko.config.getpass.getuser")
+    def test_may_be_negated(self, getuser):
+        getuser.return_value = "saruman"
+        result = load_config("match-user").lookup("anything")
+        assert result["hostname"] == "mordor"
+
+    def test_requires_an_argument(self):
+        with raises(ConfigParseError):
+            load_config("match-user-no-arg")
+
+
+# NOTE: highly derivative of previous suite due to the former's use of
+# localuser fallback. Doesn't seem worth conflating/refactoring right now.
+class TestMatchLocalUser(object):
+    @patch("paramiko.config.getpass.getuser")
+    def test_matches_local_username(self, getuser):
+        getuser.return_value = "gandalf"
+        result = load_config("match-localuser").lookup("anything")
+        assert result["hostname"] == "gondor"
+
+    @patch("paramiko.config.getpass.getuser")
+    def test_may_be_globbed(self, getuser):
+        for user in ("bilbo", "bombadil"):
+            getuser.return_value = user
+            result = load_config("match-localuser").lookup("anything")
+            assert result["hostname"] == "shire"
+
+    @patch("paramiko.config.getpass.getuser")
+    def test_may_be_comma_separated_list(self, getuser):
+        for user in ("aragorn", "frodo"):
+            getuser.return_value = user
+            result = load_config("match-localuser").lookup("anything")
+            assert result["hostname"] == "moria"
+
+    @patch("paramiko.config.getpass.getuser")
+    def test_comma_separated_list_may_have_internal_negation(self, getuser):
+        getuser.return_value = "legolas"
+        result = load_config("match-localuser").lookup("anything")
+        assert "port" not in result
+        getuser.return_value = "gimli"
+        result = load_config("match-localuser").lookup("anything")
+        assert result["port"] == "7373"
+
+    @patch("paramiko.config.getpass.getuser")
+    def test_may_be_negated(self, getuser):
+        getuser.return_value = "saruman"
+        result = load_config("match-localuser").lookup("anything")
+        assert result["hostname"] == "mordor"
+
+    def test_requires_an_argument(self):
+        with raises(ConfigParseError):
+            load_config("match-localuser-no-arg")
+
+
+class TestComplexMatching(object):
+    # NOTE: this is still a cherry-pick of a few levels of complexity, there's
+    # no point testing literally all possible combinations.
+
+    def test_canonical_exec(self, socket):
+        assert False
+
+    def test_originalhost_host(self):
+        result = load_config("match-complex").lookup("target")
+        assert result["hostname"] == "bogus"
+        assert result["user"] == "rand"
+
+    @patch("paramiko.config.getpass.getuser")
+    def test_originalhost_localuser(self, getuser):
+        getuser.return_value = "rando"
+        result = load_config("match-complex").lookup("remote")
+        assert result["user"] == "calrissian"
+
+    @patch("paramiko.config.getpass.getuser")
+    def test_everything_but_all(self, getuser):
+        getuser.return_value = "rando"
+        result = load_config("match-complex").lookup("www")
+        assert result["port"] == "7777"
+
+    @patch("paramiko.config.getpass.getuser")
+    def test_everything_but_all_with_some_negated(self, getuser):
+        getuser.return_value = "rando"
+        result = load_config("match-complex").lookup("docs")
+        assert result["port"] == "1234"
+
+    def test_negated_canonical(self, socket):
+        # !canonical in a config that is not canonicalized - does match
+        result = load_config("match-canonical-no").lookup("specific")
+        assert result["user"] == "overload"
+        # !canonical in a config that is canonicalized - does NOT match
+        result = load_config("match-canonical-yes").lookup("www")
+        assert result["user"] == "hidden"

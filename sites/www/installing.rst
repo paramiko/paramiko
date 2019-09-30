@@ -33,9 +33,11 @@ There are also a number of **optional dependencies** you may install using
 `setuptools 'extras'
 <https://packaging.python.org/tutorials/installing-packages/#installing-setuptools-extras>`_:
 
+.. TODO 3.0: tweak the invoke line to mention proxycommand too
 .. TODO 3.0: tweak the ed25519 line to remove the caveat
 
 - If you want all optional dependencies at once, use ``paramiko[everything]``.
+- For ``Match exec`` config support, use ``paramiko[invoke]``.
 - For GSS-API / SSPI support, use ``paramiko[gssapi]``, though also see
   :ref:`the below subsection on it <gssapi>` for details.
 - ``paramiko[ed25519]`` references the dependencies for Ed25519 key support.

@@ -61,6 +61,14 @@ Paramiko releases) are included. A keyword by itself means no known departures.
 
 - ``Host``
 - ``HostName``: used in ``%h`` :ref:`token expansion <TOKENS>`
+- ``Match``: fully supported, with the usual caveat that connection-time
+  information is not present during config lookup, and thus cannot be used to
+  determine matching. This primarily impacts ``Match user``, which can match
+  against loaded ``User`` values but has no knowledge about connection-time
+  usernames.
+
+    .. versionadded:: 2.7
+
 - ``Port``: supplies potential values for ``%p`` :ref:`token expansion
   <TOKENS>`.
 - ``ProxyCommand``: see our `.ProxyCommand` class for an easy
@@ -94,7 +102,8 @@ OpenSSH, ``%L`` works in ``ControlPath`` but not elsewhere):
 - ``%n``
 - ``%p``
 - ``%r``
-- ``%u``
+- ``%u``: substitutes the configured ``User`` value, or the local user (as seen
+  by ``getpass.getuser``) if not specified.
 
 In addition, we extend OpenSSH's tokens as follows:
 

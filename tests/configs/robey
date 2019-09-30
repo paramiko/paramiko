@@ -15,4 +15,3 @@ Host *
 Host spoo.example.com
 Crazy something else
 
-# vim: set ft=sshconfig list :

@@ -201,6 +201,22 @@ class NoValidConnectionsError(socket.error):
 class CouldNotCanonicalize(SSHException):
     """
     Raised when hostname canonicalization fails & fallback is disabled.
+
+    .. versionadded:: 2.7
+    """
+
+    pass
+
+
+class ConfigParseError(SSHException):
+    """
+    A fatal error was encountered trying to parse SSH config data.
+
+    Typically this means a config file violated the ``ssh_config``
+    specification in a manner that requires exiting immediately, such as not
+    matching ``key = value`` syntax or misusing certain ``Match`` keywords.
+
+    .. versionadded:: 2.7
     """
 
     pass

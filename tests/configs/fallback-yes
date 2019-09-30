@@ -1,9 +1,7 @@
 CanonicalizeHostname yes
 CanonicalDomains paramiko.org
-CanonicalizeFallbackLocal no
+CanonicalizeFallbackLocal yes
 
 Host www.paramiko.org
     User rando
 
-
-# vim: set ft=sshconfig :

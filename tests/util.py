@@ -17,7 +17,7 @@ def _support(filename):
 
 
 def _config(name):
-    return join(tests_dir, "configs", "{}.config".format(name))
+    return join(tests_dir, "configs", name)
 
 
 needs_gssapi = pytest.mark.skipif(

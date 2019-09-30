@@ -50,6 +50,7 @@ extras_require = {
         'pywin32>=2.1.8;platform_system=="Windows"',
     ],
     "ed25519": ["pynacl>=1.0.1", "bcrypt>=3.1.3"],
+    "invoke": ["invoke>=1.3"],
 }
 everything = []
 for subdeps in extras_require.values():

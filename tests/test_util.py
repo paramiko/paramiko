@@ -56,6 +56,7 @@ class UtilTest(unittest.TestCase):
             "BufferedFile",
             "Channel",
             "ChannelException",
+            "ConfigParseError",
             "CouldNotCanonicalize",
             "DSSKey",
             "HostKeys",

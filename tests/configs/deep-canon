@@ -10,4 +10,3 @@ Host sub.www.paramiko.org
 Host subber.sub.www.paramiko.org
     User deeper
 
-# vim: set ft=sshconfig :

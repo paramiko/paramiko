@@ -2,9 +2,30 @@
 Changelog
 =========
 
+- :bug:`- major` ``ssh_config`` :ref:`token expansion <TOKENS>` used a
+  different method of determining the local username (``$USER`` env var),
+  compared to what the (much older) client connection code does
+  (``getpass.getuser``, which includes ``$USER`` but may check other variables
+  first, and is generally much more comprehensive). Both modules now use
+  ``getpass.getuser``.
+- :feature:`-` A couple of outright `~paramiko.config.SSHConfig` parse errors
+  were previously represented as vanilla ``Exception`` instances; as part of
+  recent feature work a more specific exception class,
+  `~paramiko.ssh_exception.ConfigParseError`, has been created. It is now also
+  used in those older spots, which is naturally backwards compatible.
+- :feature:`717` Implement support for the ``Match`` keyword in ``ssh_config``
+  files. Previously, this keyword was simply ignored & keywords inside such
+  blocks were treated as if they were part of the previous block. Thanks to
+  Michael Leinartas for the initial patchset.
+
+  .. note::
+    This feature adds a new :doc:`optional install dependency </installing>`,
+    `Invoke <https://www.pyinvoke.org>`_, for managing ``Match exec``
+    subprocesses.
+
 - :support:`-` Additional :doc:`installation </installing>` ``extras_require``
-  "flavors" (``ed25519`` and ``everything``) have been added to our packaging
-  metadata; see the install docs for details.
+  "flavors" (``ed25519``, ``invoke``, and ``everything``) have been added to
+  our packaging metadata; see the install docs for details.
 - :bug:`- major` Paramiko's use of ``subprocess`` for ``ProxyCommand`` support
   is conditionally imported to prevent issues on limited interpreter platforms
   like Google Compute Engine. However, any resulting ``ImportError`` was lost
