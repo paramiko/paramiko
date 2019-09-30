@@ -38,15 +38,27 @@ Paramiko releases) are included. A keyword by itself means no known departures.
   value-add on top of OpenSSH, which doesn't actually honor this setting when
   expanding ``%l``).
 - ``CanonicalDomains``
+
+    .. versionadded:: 2.7
+
 - ``CanonicalizeFallbackLocal``: when ``no``, triggers raising of
   `.CouldNotCanonicalize` for target hostnames which do not successfully
   canonicalize.
+
+    .. versionadded:: 2.7
+
 - ``CanonicalizeHostname``: along with the other ``Canonicaliz*`` settings
   (sans ``CanonicalizePermittedCNAMEs``, which is not yet implemented), enables
   hostname canonicalization, insofar as calling `.SSHConfig.lookup` with a
   given hostname will return a canonicalized copy of the config data, including
   an updated ``HostName`` value.
+
+    .. versionadded:: 2.7
+
 - ``CanonicalizeMaxDots``
+
+    .. versionadded:: 2.7
+
 - ``Host``
 - ``HostName``: used in ``%h`` :ref:`token expansion <TOKENS>`
 - ``Port``: supplies potential values for ``%p`` :ref:`token expansion
