@@ -38,6 +38,16 @@ file format, and the intended meaning of the keywords and values; or check the
 documentation for your Paramiko-using library of choice (e.g. `Fabric`_) to see
 what it honors on its end.
 
+- ``AddressFamily``: used when looking up the local hostname for purposes of
+  expanding the ``%l``/``%L`` :ref:`tokens <TOKENS>`.
+
+  .. note::
+    As with the rest of these keywords, it does **not** apply to actual SSH
+    connections (as Paramiko's client classes do not load configs for you).
+
+    In fact, OpenSSH itself does not use this setting the way Paramiko does
+    (its lookup for ``%l`` does not appear to honor ``AddressFamily``).
+
 - ``CanonicalDomains``: sets the domains used for hostname canonicalization.
 - ``CanonicalizeFallbackLocal``: set to ``no`` to enforce that all looked-up
   names must resolve under one of the ``CanonicalDomains`` - any names which
@@ -56,16 +66,6 @@ what it honors on its end.
 
 - ``CanonicalizeMaxDots``: controls how many period characters may appear in a
   target hostname before canonicalization is disabled.
-- ``AddressFamily``: used when looking up the local hostname for purposes of
-  expanding the ``%l``/``%L`` :ref:`tokens <TOKENS>`.
-
-  .. note::
-    As with the rest of these keywords, it does **not** apply to actual SSH
-    connections (as Paramiko's client classes do not load configs for you).
-
-    In fact, OpenSSH itself does not use this setting the way Paramiko does
-    (its lookup for ``%l`` does not appear to honor ``AddressFamily``).
-
 - ``Host``: exact matching, full and partial globbing (``*``), negation
   (``!``), multiple (whitespace-delimited) patterns per keyword.
 - ``HostName``: supplies potential values for ``%h`` :ref:`token expansions
