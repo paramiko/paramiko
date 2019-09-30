@@ -28,64 +28,38 @@ Keywords currently supported
 ============================
 
 The following is an alphabetical list of which `ssh_config`_ directives
-Paramiko directly supports (most of which involve the parsing/matching process
-itself). It includes any departures from OpenSSH's implementation, which are
-intentionally very few, and usually to support backwards compatibility with
-Paramiko versions lacking some default parse-related behavior.
-
-See `OpenSSH's own ssh_config docs <ssh_config>`_ for details on the overall
-file format, and the intended meaning of the keywords and values; or check the
-documentation for your Paramiko-using library of choice (e.g. `Fabric`_) to see
-what it honors on its end.
+Paramiko interprets during the parse/lookup process (as above, actual SSH
+connections **do not** reference parsed configs). Departures from `OpenSSH's
+implementation <ssh_config>`_ (e.g. to support backwards compat with older
+Paramiko releases) are included. A keyword by itself means no known departures.
 
 - ``AddressFamily``: used when looking up the local hostname for purposes of
-  expanding the ``%l``/``%L`` :ref:`tokens <TOKENS>`.
-
-  .. note::
-    As with the rest of these keywords, it does **not** apply to actual SSH
-    connections (as Paramiko's client classes do not load configs for you).
-
-    In fact, OpenSSH itself does not use this setting the way Paramiko does
-    (its lookup for ``%l`` does not appear to honor ``AddressFamily``).
-
-- ``CanonicalDomains``: sets the domains used for hostname canonicalization.
-- ``CanonicalizeFallbackLocal``: set to ``no`` to enforce that all looked-up
-  names must resolve under one of the ``CanonicalDomains`` - any names which
-  don't canonicalize will raise `.CouldNotCanonicalize` (instead of silently
-  returning a config containing only global-level config values, as normal).
-- ``CanonicalizeHostname``: as with OpenSSH, when a lookup results in this
-  being set to ``yes`` (whether globally or inside a specific block), it
-  triggers an attempt to resolve the requested hostname under one of the given
-  ``CanonicalDomains``, which if successful will cause Paramiko to re-parse the
-  entire config file.
-
-  .. note::
-    As in OpenSSH, canonicalization is quietly ignored for "deep" hostnames -
-    by default, hostnames containing more than one period character. This may
-    be controlled with ``CanonicalizeMaxDots``; see below.
-
-- ``CanonicalizeMaxDots``: controls how many period characters may appear in a
-  target hostname before canonicalization is disabled.
-- ``Host``: exact matching, full and partial globbing (``*``), negation
-  (``!``), multiple (whitespace-delimited) patterns per keyword.
-- ``HostName``: supplies potential values for ``%h`` :ref:`token expansions
-  <TOKENS>`.
-- ``IdentityFile``: its ability to be specified multiple times and result in a
-  list of values is preserved in our parser. Values for this keyword will
-  always be a list of strings, if present.
-- ``LocalForward``: like ``IdentityFile``, results in a list of strings.
-- ``Port``: supplies potential values for ``%p`` :ref:`token expansions
+  expanding the ``%l``/``%L`` :ref:`tokens <TOKENS>` (this is actually a minor
+  value-add on top of OpenSSH, which doesn't actually honor this setting when
+  expanding ``%l``).
+- ``CanonicalDomains``
+- ``CanonicalizeFallbackLocal``: when ``no``, triggers raising of
+  `.CouldNotCanonicalize` for target hostnames which do not successfully
+  canonicalize.
+- ``CanonicalizeHostname``: along with the other ``Canonicaliz*`` settings
+  (sans ``CanonicalizePermittedCNAMEs``, which is not yet implemented), enables
+  hostname canonicalization, insofar as calling `.SSHConfig.lookup` with a
+  given hostname will return a canonicalized copy of the config data, including
+  an updated ``HostName`` value.
+- ``CanonicalizeMaxDots``
+- ``Host``
+- ``HostName``: used in ``%h`` :ref:`token expansion <TOKENS>`
+- ``Port``: supplies potential values for ``%p`` :ref:`token expansion
   <TOKENS>`.
 - ``ProxyCommand``: see our `.ProxyCommand` class for an easy
   way to honor this keyword from a config you've parsed.
 
-    - Supports :ref:`expansion tokens <TOKENS>`.
+    - Honors :ref:`token expansion <TOKENS>`.
     - When a lookup would result in an effective ``ProxyCommand none``,
       Paramiko (as of 1.x-2.x) strips it from the resulting dict entirely. A
       later major version may retain the ``"none"`` marker for clarity's sake.
 
-- ``RemoteForward``: like ``IdentityFile``, results in a list of strings.
-- ``User``: supplies potential values for ``%u`` :ref:`token expansions
+- ``User``: supplies potential values for ``%u`` :ref:`token expansion
   <TOKENS>`.
 
 .. _TOKENS:
