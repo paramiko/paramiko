@@ -2,6 +2,11 @@
 Changelog
 =========
 
+- :bug:`- major` Paramiko's use of ``subprocess`` for ``ProxyCommand`` support
+  is conditionally imported to prevent issues on limited interpreter platforms
+  like Google Compute Engine. However, any resulting ``ImportError`` was lost
+  instead of preserved for raising (in the rare cases where a user tried
+  leveraging ``ProxyCommand`` in such an environment). This has been fixed.
 - :bug:`- major` Perform deduplication of ``IdentityFile`` contents during
   ``ssh_config`` parsing; previously, if your config would result in the same
   value being encountered more than once, ``IdentityFile`` would contain that

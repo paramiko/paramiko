@@ -29,8 +29,8 @@ import time
 subprocess, subprocess_import_error = None, None
 try:
     import subprocess
-except ImportError:
-    pass
+except ImportError as e:
+    subprocess_import_error = e
 
 from paramiko.ssh_exception import ProxyCommandFailure
 from paramiko.util import ClosingContextManager
