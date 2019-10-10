@@ -260,6 +260,8 @@ class Transport(threading.Thread, ClosingContextManager):
 
     _key_info = {
         "ssh-rsa": RSAKey,
+        "rsa-sha2-256": RSAKey,
+        "rsa-sha2-512": RSAKey,
         "ssh-rsa-cert-v01@openssh.com": RSAKey,
         "ssh-dss": DSSKey,
         "ssh-dss-cert-v01@openssh.com": DSSKey,
