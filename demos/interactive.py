@@ -40,30 +40,46 @@ def interactive_shell(chan):
 
 def posix_shell(chan):
     import select
+    import struct
+    import fcntl
+    import signal
+    import errno
 
     oldtty = termios.tcgetattr(sys.stdin)
+
+    def signal_winsize_handler(signum, frame):
+        if signum == signal.SIGWINCH:
+            s = struct.pack('HHHH', 0, 0, 0, 0)
+            t = fcntl.ioctl(sys.stdout.fileno(), termios.TIOCGWINSZ, s)
+            winsize = struct.unpack('hhhh', t)
+            chan.resize_pty(width=winsize[1], height=winsize[0])
+
     try:
         tty.setraw(sys.stdin.fileno())
         tty.setcbreak(sys.stdin.fileno())
         chan.settimeout(0.0)
+        signal.signal(signal.SIGWINCH, signal_winsize_handler)
 
         while True:
-            r, w, e = select.select([chan, sys.stdin], [], [])
-            if chan in r:
-                try:
-                    x = u(chan.recv(1024))
+            try:
+                r, w, e = select.select([chan, sys.stdin], [], [])
+                if chan in r:
+                    try:
+                        x = u(chan.recv(1024))
+                        if len(x) == 0:
+                            sys.stdout.write("\r\n*** EOF\r\n")
+                            break
+                        sys.stdout.write(x)
+                        sys.stdout.flush()
+                    except socket.timeout:
+                        pass
+                if sys.stdin in r:
+                    x = sys.stdin.read(1)
                     if len(x) == 0:
-                        sys.stdout.write("\r\n*** EOF\r\n")
                         break
-                    sys.stdout.write(x)
-                    sys.stdout.flush()
-                except socket.timeout:
-                    pass
-            if sys.stdin in r:
-                x = sys.stdin.read(1)
-                if len(x) == 0:
-                    break
-                chan.send(x)
+                    chan.send(x)
+             except select.error, e:
+                if e[0] != errno.EINTR: raise
 
     finally:
         termios.tcsetattr(sys.stdin, termios.TCSADRAIN, oldtty)
