@@ -63,24 +63,23 @@ def posix_shell(chan):
         while True:
             try:
                 r, w, e = select.select([chan, sys.stdin], [], [])
-                if chan in r:
-                    try:
-                        x = u(chan.recv(1024))
-                        if len(x) == 0:
-                            sys.stdout.write("\r\n*** EOF\r\n")
-                            break
-                        sys.stdout.write(x)
-                        sys.stdout.flush()
-                    except socket.timeout:
-                        pass
-                if sys.stdin in r:
-                    x = sys.stdin.read(1)
+            except select.error as e:
+                if e[0] != errno.EINTR: raise
+            if chan in r:
+                try:
+                    x = u(chan.recv(1024))
                     if len(x) == 0:
+                        sys.stdout.write("\r\n*** EOF\r\n")
                         break
-                    chan.send(x)
-            except select.error, e:
-                if e[0] != errno.EINTR: 
-                    raise
+                    sys.stdout.write(x)
+                    sys.stdout.flush()
+                except socket.timeout:
+                    pass
+            if sys.stdin in r:
+                x = sys.stdin.read(1)
+                if len(x) == 0:
+                    break
+                chan.send(x)
 
     finally:
         termios.tcsetattr(sys.stdin, termios.TCSADRAIN, oldtty)
