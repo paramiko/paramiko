@@ -79,7 +79,8 @@ def posix_shell(chan):
                         break
                     chan.send(x)
             except select.error, e:
-                if e[0] != errno.EINTR: raise
+                if e[0] != errno.EINTR: 
+                    raise
 
     finally:
         termios.tcsetattr(sys.stdin, termios.TCSADRAIN, oldtty)
