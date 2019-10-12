@@ -78,7 +78,7 @@ def posix_shell(chan):
                     if len(x) == 0:
                         break
                     chan.send(x)
-             except select.error, e:
+            except select.error, e:
                 if e[0] != errno.EINTR: raise
 
     finally:
