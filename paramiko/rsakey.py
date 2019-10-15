@@ -138,7 +138,7 @@ class RSAKey(PKey):
 
         try:
             key.verify(
-                msg.get_binary(), data, padding.PKCS1v15(), hashes.SHA1()
+                msg.get_binary(), data, padding.PKCS1v15(), algorithm
             )
         except InvalidSignature:
             return False
