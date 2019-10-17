@@ -119,6 +119,8 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         self._cwd = None
         # request # -> SFTPFile
         self._expecting = weakref.WeakValueDictionary()
+        # bandwidth DEFAULT_COPY_BUFLEN
+        self.buflen = 20480
         if type(sock) is Channel:
             # override default logger
             transport = self.sock.get_transport()
@@ -672,7 +674,45 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         # TODO: make class initialize with self._cwd set to self.normalize('.')
         return self._cwd and u(self._cwd)
 
-    def _transfer_with_callback(self, reader, writer, file_size, callback):
+    def bandwidth_limit(self, bwlimit):
+        read_len = 32768
+        bwlimit['lamt'] += read_len
+        if bwlimit['bwstart'] == 0:
+            # use time.time_ns() in Python 3.7
+            bwlimit['bwstart'] = int(time.time()* 1000000000)
+            return
+        if bwlimit['lamt'] < bwlimit['thresh']:
+            return
+
+        # Get real time as nanoseconds
+        bwlimit['bwend'] = int(time.time()* 1000000000) - bwlimit['bwstart']
+
+        # Convert Byte to bit
+        bwlimit['lamt'] *= 8
+
+        # Get expected time as nanoseconds
+        bwlimit['bwstart'] = 1000000000 * bwlimit['lamt'] / bwlimit['rate']
+
+        # If the expected time is greater than real time, wait until the time is up
+        if bwlimit['bwstart'] > bwlimit['bwend']:
+            bwlimit['bwend'] = bwlimit['bwstart'] - bwlimit['bwend']
+
+            # Adjust the wait time
+            if int(bwlimit['bwend']/1000000000):
+                bwlimit['thresh'] /= 2
+                if bwlimit['thresh'] < self.buflen / 4:
+                    bwlimit['thresh'] = self.buflen / 4
+            elif bwlimit['bwend'] % 1000000 < 10000:
+                bwlimit['thresh'] *= 2
+                if bwlimit['thresh'] > self.buflen * 8:
+                    bwlimit['thresh'] = self.buflen * 8
+
+            time.sleep(bwlimit['bwend']/1000000000)
+
+        bwlimit['lamt'] = 0
+        bwlimit['bwstart'] = int(time.time()* 1000000000)
+
+    def _transfer_with_callback(self, reader, writer, file_size, callback, bwlimit):
         size = 0
         while True:
             data = reader.read(32768)
@@ -681,10 +721,13 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
             if len(data) == 0:
                 break
             if callback is not None:
-                callback(size, file_size)
+                if bwlimit['rate']:
+                    callback(bwlimit)
+                else:
+                    callback(size, file_size)
         return size
 
-    def putfo(self, fl, remotepath, file_size=0, callback=None, confirm=True):
+    def putfo(self, fl, remotepath, file_size=0, callback=None, confirm=True, rate=None):
         """
         Copy the contents of an open file object (``fl``) to the SFTP server as
         ``remotepath``. Any exception raised by operations will be passed
@@ -700,21 +743,31 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         :param callable callback:
             optional callback function (form: ``func(int, int)``) that accepts
             the bytes transferred so far and the total bytes to be transferred
-            (since 1.7.4)
+            or function (form: ``func(int)``) that accepts limited rate
+            (since 2.7)
         :param bool confirm:
             whether to do a stat() on the file afterwards to confirm the file
             size (since 1.7.7)
+        :param int rate:
+            optional rate parameter passed to callback. Limits the used
+            bandwidth, specified in Kbit/s. If none is specified, rate defaults
+            to unlimited
 
         :return:
             an `.SFTPAttributes` object containing attributes about the given
             file.
 
         .. versionadded:: 1.10
+        .. versionchanged:: 2.7
+            ``rate`` param added.
         """
+        # bandwidth_limit_init
+        bwlimit = {'thresh': self.buflen, 'lamt': 0, 'bwstart': 0, 'bwend': 0, 'rate': rate}
+
         with self.file(remotepath, "wb") as fr:
             fr.set_pipelined(True)
             size = self._transfer_with_callback(
-                reader=fl, writer=fr, file_size=file_size, callback=callback
+                reader=fl, writer=fr, file_size=file_size, callback=callback, bwlimit=bwlimit
             )
         if confirm:
             s = self.stat(remotepath)
@@ -726,7 +779,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
             s = SFTPAttributes()
         return s
 
-    def put(self, localpath, remotepath, callback=None, confirm=True):
+    def put(self, localpath, remotepath, callback=None, confirm=True, rate=None):
         """
         Copy a local file (``localpath``) to the SFTP server as ``remotepath``.
         Any exception raised by operations will be passed through.  This
@@ -741,9 +794,14 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         :param callable callback:
             optional callback function (form: ``func(int, int)``) that accepts
             the bytes transferred so far and the total bytes to be transferred
+            or function (form: ``func(int)``) that accepts limited rate
         :param bool confirm:
             whether to do a stat() on the file afterwards to confirm the file
             size
+        :param int rate:
+            optional rate parameter passed to callback. Limits the used
+            bandwidth, specified in Kbit/s. If none is specified, rate defaults
+            to unlimited
 
         :return: an `.SFTPAttributes` object containing attributes about the
             given file
@@ -753,12 +811,16 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
             ``callback`` and rich attribute return value added.
         .. versionchanged:: 1.7.7
             ``confirm`` param added.
+        .. versionchanged:: 2.7
+            ``rate`` param added.
         """
         file_size = os.stat(localpath).st_size
         with open(localpath, "rb") as fl:
-            return self.putfo(fl, remotepath, file_size, callback, confirm)
+            if rate:
+                callback = self.bandwidth_limit
+            return self.putfo(fl, remotepath, file_size, callback, confirm, rate)
 
-    def getfo(self, remotepath, fl, callback=None):
+    def getfo(self, remotepath, fl, callback=None, rate=None):
         """
         Copy a remote file (``remotepath``) from the SFTP server and write to
         an open file or file-like object, ``fl``.  Any exception raised by
@@ -771,18 +833,27 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         :param callable callback:
             optional callback function (form: ``func(int, int)``) that accepts
             the bytes transferred so far and the total bytes to be transferred
+            or function (form: ``func(int)``) that accepts limited rate
+        :param int rate:
+            optional rate parameter passed to callback. Limits the used
+            bandwidth, specified in Kbit/s. If none is specified, rate defaults
+            to unlimited
         :return: the `number <int>` of bytes written to the opened file object
 
         .. versionadded:: 1.10
+        .. versionchanged:: 2.7
+            ``rate`` param added.
         """
+        # bandwidth_limit_init
+        bwlimit = {'thresh': self.buflen, 'lamt': 0, 'bwstart': 0, 'bwend': 0, 'rate': rate}
         file_size = self.stat(remotepath).st_size
         with self.open(remotepath, "rb") as fr:
             fr.prefetch(file_size)
             return self._transfer_with_callback(
-                reader=fr, writer=fl, file_size=file_size, callback=callback
+                reader=fr, writer=fl, file_size=file_size, callback=callback, bwlimit=bwlimit
             )
 
-    def get(self, remotepath, localpath, callback=None):
+    def get(self, remotepath, localpath, callback=None, rate=None):
         """
         Copy a remote file (``remotepath``) from the SFTP server to the local
         host as ``localpath``.  Any exception raised by operations will be
@@ -793,13 +864,21 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         :param callable callback:
             optional callback function (form: ``func(int, int)``) that accepts
             the bytes transferred so far and the total bytes to be transferred
-
+            or function (form: ``func(int)``) that accepts limited rate
+        :param int rate:
+            optional rate parameter passed to callback. Limits the used
+            bandwidth, specified in Kbit/s. If none is specified, rate defaults
+            to unlimited
         .. versionadded:: 1.4
         .. versionchanged:: 1.7.4
             Added the ``callback`` param
+        .. versionchanged:: 2.7
+            ``rate`` param added.
         """
         with open(localpath, "wb") as fl:
-            size = self.getfo(remotepath, fl, callback)
+            if rate:
+                callback = self.bandwidth_limit
+            size = self.getfo(remotepath, fl, callback, rate)
         s = os.stat(localpath)
         if s.st_size != size:
             raise IOError(
