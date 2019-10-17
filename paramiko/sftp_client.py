@@ -729,7 +729,8 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
                     callback(size, file_size)
         return size
 
-    def putfo(self,
+    def putfo(
+        self,
         fl,
         remotepath,
         file_size=0,
@@ -776,7 +777,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
             "lamt": 0,
             "bwstart": 0,
             "bwend": 0,
-            "rate": rate
+            "rate": rate,
         }
 
         with self.file(remotepath, "wb") as fr:
@@ -873,7 +874,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
             "lamt": 0,
             "bwstart": 0,
             "bwend": 0,
-            "rate": rate
+            "rate": rate,
         }
         file_size = self.stat(remotepath).st_size
         with self.open(remotepath, "rb") as fr:
