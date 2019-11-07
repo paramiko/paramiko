@@ -284,7 +284,7 @@ class PKey(object):
 
         # Support binary file-like objects
         if type(lines[0]) is bytes:
-            lines = [line.decode('ascii') for line in lines]
+            lines = [line.decode("ascii") for line in lines]
 
         start = 0
         beginning_of_key = "-----BEGIN " + tag + " PRIVATE KEY-----"
