@@ -281,6 +281,11 @@ class PKey(object):
 
     def _read_private_key(self, tag, f, password=None):
         lines = f.readlines()
+
+        # Support binary file-like objects
+        if type(lines[0]) is bytes:
+            lines = [line.decode("ascii") for line in lines]
+
         start = 0
         beginning_of_key = "-----BEGIN " + tag + " PRIVATE KEY-----"
         while start < len(lines) and lines[start].strip() != beginning_of_key:
