@@ -1812,7 +1812,7 @@ class Transport(threading.Thread, ClosingContextManager):
     # internals...
 
     def _log(self, level, msg, *args):
-        if issubclass(type(msg), list):
+        if isinstance(msg, list):
             for m in msg:
                 self.logger.log(level, m)
         else:
