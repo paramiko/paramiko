@@ -172,7 +172,7 @@ class AuthTest(unittest.TestCase):
             self.assertTrue(False)
         except:
             etype, evalue, etb = sys.exc_info()
-            self.assertTrue(issubclass(etype, AuthenticationException))
+            self.assertIsInstance(etype, AuthenticationException)
         self.tc.auth_password(username="slowdive", password="pygmalion")
         self.verify_finished()
 
@@ -253,7 +253,7 @@ class AuthTest(unittest.TestCase):
             self.tc.auth_password("bad-server", "hello")
         except:
             etype, evalue, etb = sys.exc_info()
-            self.assertTrue(issubclass(etype, AuthenticationException))
+            self.assertIsInstance(etype, AuthenticationException)
 
     @slow
     def test_auth_non_responsive(self):
@@ -268,5 +268,5 @@ class AuthTest(unittest.TestCase):
             self.tc.auth_password("unresponsive-server", "hello")
         except:
             etype, evalue, etb = sys.exc_info()
-            self.assertTrue(issubclass(etype, AuthenticationException))
+            self.assertIsInstance(etype, AuthenticationException)
             self.assertTrue("Authentication timeout" in str(evalue))
