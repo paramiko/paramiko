@@ -14,8 +14,8 @@ matrix:
     # pypy takes longer, start it first
     - python: "pypy2.7-7.1.1"
       env: CRYPTO_VER=2.4.2
-    - python: "pypy3.5-7.0"
-      env: CRYPTO_VER=2.6.1
+    - python: "pypy3.6-7.1.1"
+      env: CRYPTO_VER=2.7
 
     - python: "2.7"
       env: CRYPTO_VER=1.6
@@ -23,14 +23,14 @@ matrix:
       env: CRYPTO_VER=2.4.2 USE_K5TEST=yes
     - python: "3.4"
       env: CRYPTO_VER=1.6
-    - python: "3.4"
-      env: CRYPTO_VER=2.4.2
     - python: "3.5"
       env: CRYPTO_VER=2.6.1 USE_K5TEST=yes
     - python: "3.6"
       env: CRYPTO_VER=2.4.2
     - python: "3.7"
-      env: CRYPTO_VER=2.6.1
+      env: CRYPTO_VER=2.8
+    - python: "3.8"
+      env: CRYPTO_VER=2.7
 
 install:
   - pip install cryptography==$CRYPTO_VER PyNaCl
