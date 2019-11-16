@@ -88,7 +88,7 @@ class SFTPServer (BaseSFTP, SubsystemHandler):
         self.server = sftp_si(server, *largs, **kwargs)
 
     def _log(self, level, msg):
-        if issubclass(type(msg), list):
+        if isinstance(msg, list):
             for m in msg:
                 super(SFTPServer, self)._log(
                     level,
@@ -205,7 +205,7 @@ class SFTPServer (BaseSFTP, SubsystemHandler):
         self._send_packet(t, msg)
 
     def _send_handle_response(self, request_number, handle, folder=False):
-        if not issubclass(type(handle), SFTPHandle):
+        if not isinstance(handle, SFTPHandle):
             # must be error code
             self._send_status(request_number, handle)
             return
@@ -229,7 +229,7 @@ class SFTPServer (BaseSFTP, SubsystemHandler):
 
     def _open_folder(self, request_number, path):
         resp = self.server.list_folder(path)
-        if issubclass(type(resp), list):
+        if isinstance(resp, list):
             # got an actual list of filenames in the folder
             folder = SFTPHandle()
             folder._set_files(resp)
@@ -278,7 +278,7 @@ class SFTPServer (BaseSFTP, SubsystemHandler):
             return
         if length == 0:
             st = f.stat()
-            if not issubclass(type(st), SFTPAttributes):
+            if not isinstance(st, SFTPAttributes):
                 self._send_status(request_number, st, 'Unable to stat file')
                 return
             length = st.st_size - start
@@ -410,14 +410,14 @@ class SFTPServer (BaseSFTP, SubsystemHandler):
         elif t == CMD_STAT:
             path = msg.get_text()
             resp = self.server.stat(path)
-            if issubclass(type(resp), SFTPAttributes):
+            if isinstance(resp, SFTPAttributes):
                 self._response(request_number, CMD_ATTRS, resp)
             else:
                 self._send_status(request_number, resp)
         elif t == CMD_LSTAT:
             path = msg.get_text()
             resp = self.server.lstat(path)
-            if issubclass(type(resp), SFTPAttributes):
+            if isinstance(resp, SFTPAttributes):
                 self._response(request_number, CMD_ATTRS, resp)
             else:
                 self._send_status(request_number, resp)
@@ -428,7 +428,7 @@ class SFTPServer (BaseSFTP, SubsystemHandler):
                     request_number, SFTP_BAD_MESSAGE, 'Invalid handle')
                 return
             resp = self.file_table[handle].stat()
-            if issubclass(type(resp), SFTPAttributes):
+            if isinstance(resp, SFTPAttributes):
                 self._response(request_number, CMD_ATTRS, resp)
             else:
                 self._send_status(request_number, resp)

@@ -206,7 +206,7 @@ class AuthHandler (object):
             event.wait(0.1)
             if not self.transport.is_active():
                 e = self.transport.get_exception()
-                if (e is None) or issubclass(e.__class__, EOFError):
+                if e is None or isinstance(e, EOFError):
                     e = AuthenticationException('Authentication failed.')
                 raise e
             if event.is_set():
@@ -218,9 +218,7 @@ class AuthHandler (object):
             e = self.transport.get_exception()
             if e is None:
                 e = AuthenticationException('Authentication failed.')
-            # this is horrible.  Python Exception isn't yet descended from
-            # object, so type(e) won't work. :(
-            if issubclass(e.__class__, PartialAuthentication):
+            if isinstance(e, PartialAuthentication):
                 return e.allowed_types
             raise e
         return []
