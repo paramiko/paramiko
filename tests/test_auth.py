@@ -157,9 +157,11 @@ class AuthTest (unittest.TestCase):
         try:
             self.tc.auth_password(username='slowdive', password='error')
             self.assertTrue(False)
-        except:
-            etype, evalue, etb = sys.exc_info()
-            self.assertTrue(issubclass(etype, AuthenticationException))
+        except Exception as e:
+            self.assertIsInstance(e, AuthenticationException)
+        else:
+            self.fail("AuthenticationException not thrown")
+
         self.tc.auth_password(username='slowdive', password='pygmalion')
         self.verify_finished()
 
@@ -235,9 +237,8 @@ class AuthTest (unittest.TestCase):
         self.tc.connect(hostkey=self.public_host_key)
         try:
             _ = self.tc.auth_password('bad-server', 'hello')
-        except Exception:
-            etype, evalue, etb = sys.exc_info()
-            self.assertTrue(issubclass(etype, AuthenticationException))
+        except Exception as e:
+            self.assertIsInstance(e, AuthenticationException)
         else:
             self.fail("AuthenticationException not thrown")
 
@@ -252,9 +253,8 @@ class AuthTest (unittest.TestCase):
         self.tc.connect()
         try:
             _ = self.tc.auth_password('unresponsive-server', 'hello')
-        except Exception:
-            etype, evalue, etb = sys.exc_info()
-            self.assertTrue(issubclass(etype, AuthenticationException))
-            self.assertTrue('Authentication timeout' in str(evalue))
+        except Exception as e:
+            self.assertIsInstance(e, AuthenticationException)
+            self.assertTrue('Authentication timeout' in str(e))
         else:
             self.fail("AuthenticationException not thrown")
