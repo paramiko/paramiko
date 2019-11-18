@@ -72,7 +72,8 @@ from paramiko.ecdsakey import ECDSAKey
 from paramiko.server import ServerInterface
 from paramiko.sftp_client import SFTPClient
 from paramiko.ssh_exception import (
-    SSHException, BadAuthenticationType, ChannelException, ProxyCommandFailure,
+    SSHException, BadHostKeyException, BadAuthenticationType,
+    ChannelException, ProxyCommandFailure,
 )
 from paramiko.util import retry_on_signal, ClosingContextManager, clamp_value
 
@@ -1184,16 +1185,16 @@ class Transport(threading.Thread, ClosingContextManager):
                 key.get_name() != hostkey.get_name() or
                 key.asbytes() != hostkey.asbytes()
             ):
-                self._log(DEBUG, 'Bad host key from server')
-                self._log(DEBUG, 'Expected: {}: {}'.format(
-                    hostkey.get_name(), repr(hostkey.asbytes()),
-                ))
-                self._log(DEBUG, 'Got     : {}: {}'.format(
-                    key.get_name(), repr(key.asbytes()),
-                ))
-                raise SSHException('Bad host key from server')
-            self._log(DEBUG, 'Host key verified ({})'.format(
-                hostkey.get_name()))
+                self._log(
+                    DEBUG, "Bad host key from server.\n"
+                    "Expected: %s: %r\n"
+                    "Got     : %s: %r",
+                    hostkey.get_name(), hostkey.asbytes(),
+                    key.get_name(),     key.asbytes(),
+                )
+                raise BadHostKeyException(self.hostname or "[socket]", key, hostkey)
+
+            self._log(DEBUG, "Host key verified (%s)", hostkey.get_name())
 
         if (pkey is not None) or (password is not None) or gss_auth or gss_kex:
             if gss_auth:

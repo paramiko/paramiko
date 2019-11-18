@@ -30,8 +30,8 @@ import unittest
 from mock import Mock
 
 from paramiko import (
-    Transport, SecurityOptions, ServerInterface, RSAKey, DSSKey, SSHException,
-    ChannelException, Packetizer, AuthHandler,
+    Transport, SecurityOptions, ServerInterface, RSAKey, SSHException,
+    ChannelException, Packetizer, AuthHandler, BadHostKeyException
 )
 from paramiko import AUTH_FAILED, AUTH_SUCCESSFUL
 from paramiko import OPEN_SUCCEEDED, OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED
@@ -67,9 +67,6 @@ Maybe.
 
 
 class NullServer (ServerInterface):
-    paranoid_did_password = False
-    paranoid_did_public_key = False
-    paranoid_key = DSSKey.from_private_key_file(_support('test_dss.key'))
 
     def get_allowed_auths(self, username):
         if username == 'slowdive':
@@ -244,6 +241,20 @@ class TransportTest(unittest.TestCase):
         event.wait(1.0)
         self.assertTrue(event.is_set())
         self.assertTrue(self.ts.is_active())
+
+    def test_bad_hostkey(self):
+        badkey = RSAKey.from_private_key_file(_support('test_rsa.key'))
+        public_badkey = RSAKey(data=badkey.asbytes())
+        host_key = RSAKey.from_private_key_file(_support('test_rsa_2k_o.key'),
+                                                password='television')
+        self.ts.add_server_key(host_key)
+        event = threading.Event()
+        server = NullServer()
+        self.ts.start_server(event, server)
+        self.assertRaises(
+            BadHostKeyException, self.tc.connect,
+            hostkey=public_badkey, username='slowdive', password='pygmalion'
+        )
 
     def test_special(self):
         """
@@ -831,7 +842,7 @@ class TransportTest(unittest.TestCase):
     @slow
     def test_handshake_timeout(self):
         """
-        verify that we can get a hanshake timeout.
+        verify that we can get a handshake timeout.
         """
         # Tweak client Transport instance's Packetizer instance so
         # its read_message() sleeps a bit. This helps prevent race conditions
