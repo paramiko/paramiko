@@ -261,6 +261,34 @@ class TestSFTP(object):
             sftp.remove(sftp.FOLDER + '/fish.txt')
             sftp.remove(sftp.FOLDER + '/tertiary.py')
 
+    def test_listdir_iter_open(self, sftp):
+        """
+        open files while iterating over listdir_iter()
+        """
+        sftp.get_channel().settimeout(1.0)
+        opened = []
+        created = set()
+        try:
+            for i in range(60):
+                fname = "file%02d.txt" % i
+                f = sftp.open(sftp.FOLDER + '/' + fname, 'w')
+                f.write("*" * i)
+                f.close()
+                created.add(fname)
+
+            for attr in sftp.listdir_iter(sftp.FOLDER):
+                f = sftp.open(sftp.FOLDER + '/' + attr.filename)
+                opened.append(f)
+                created.remove(attr.filename)
+
+            assert len(created) == 0
+            # no hang and no timeouts == success
+        finally:
+            for f in opened:
+                f.close()
+            for i in range(60):
+                sftp.remove(sftp.FOLDER + "/file%02d.txt" % i)
+
     def test_setstat(self, sftp):
         """
         verify that the setstat functions (chown, chmod, utime, truncate) work.
