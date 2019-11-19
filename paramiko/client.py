@@ -398,7 +398,7 @@ class SSHClient(ClosingContextManager):
         if our_server_keys is None:
             our_server_keys = self._host_keys.get(server_hostkey_name)
         if our_server_keys is not None:
-            keytype = our_server_keys.keys()[0]
+            keytype = list(our_server_keys.keys())[0]
             sec_opts = t.get_security_options()
             other_types = [x for x in sec_opts.key_types if x != keytype]
             sec_opts.key_types = [keytype] + other_types
