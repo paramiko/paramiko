@@ -34,7 +34,7 @@ else:
         return pn.public_key(default_backend())
 
 
-class KexNistp256():
+class KexNistp256(object):
 
     name = "ecdh-sha2-nistp256"
     hash_algo = sha256
