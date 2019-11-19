@@ -59,9 +59,9 @@ To install the development version::
 You can also install under the original "paramiko" pip-package-name,
 in order to satisfy requirements for other packages::
 
-    PARAMIKO_REPLACE=1 pip install https://github.com/ploxiln/paramiko-ng/archive/2.7.0.tar.gz#egg=paramiko
+    PARAMIKO_REPLACE=1 pip install https://github.com/ploxiln/paramiko-ng/archive/2.7.4.tar.gz#egg=paramiko
 
-Replace "2.7.0" with the desired recent release, or for the latest development version do::
+Replace "2.7.4" with the desired recent release, or for the latest development version do::
 
     PARAMIKO_REPLACE=1 pip install git+https://github.com/ploxiln/paramiko-ng/#egg=paramiko
 
