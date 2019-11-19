@@ -145,11 +145,15 @@ Use
 
 The demo scripts are probably the best example of how to use this package.
 
-A much easier alternative to using paramiko directly is to use `Fabric <https://www.fabfile.org/>`_.
-There is also `fab-classic <https://github.com/ploxiln/fab-classic/#readme>`_, a fork of Fabric-1.x
-which works a bit differently. For either of these, currently, you need to install *paramiko-ng*
+A much easier alternative to using paramiko directly is to use `Fabric <https://www.fabfile.org/>`_
+(or, for managed networking equipment, `netmiko <http://ktbyers.github.io/netmiko/>`_).
+To use *paramiko-ng* with these packages, currently, you need to install paramiko-ng
 with the pip-package-name *paramiko*, using the ``PARAMIKO_REPLACE`` environment varariable
 as described in `Installation`_.
+
+There is also `fab-classic <https://github.com/ploxiln/fab-classic/#readme>`_, a fork of Fabric-1.x
+which works a bit differently than current Fabric-2.x. The latest release of fab-classic depends
+on paramiko-ng directly.
 
 There are also unit tests which will verify that most of the components are working correctly::
 

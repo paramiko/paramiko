@@ -1,6 +1,5 @@
 *.pyc
 /build/
 /dist/
-docs/
 demos/*.log
 .cache
