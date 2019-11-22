@@ -26,8 +26,8 @@ import unittest
 from time import sleep
 
 from paramiko import (
-    Transport, ServerInterface, RSAKey, DSSKey, BadAuthenticationType,
-    InteractiveQuery, AuthenticationException,
+    Transport, ServerInterface, RSAKey, BadAuthenticationType,
+    InteractiveQuery, AuthenticationException, load_private_key_file,
 )
 from paramiko import AUTH_FAILED, AUTH_PARTIALLY_SUCCESSFUL, AUTH_SUCCESSFUL
 
@@ -41,7 +41,7 @@ _pwd = u'\u2022'
 class NullServer (ServerInterface):
     paranoid_did_password = False
     paranoid_did_public_key = False
-    paranoid_key = DSSKey.from_private_key_file(_support('test_dss.key'))
+    paranoid_key = load_private_key_file(_support('test_dss.key'))
 
     def get_allowed_auths(self, username):
         if username == 'slowdive':
@@ -119,7 +119,7 @@ class AuthTest (unittest.TestCase):
         self.sockc.close()
 
     def start_server(self):
-        host_key = RSAKey.from_private_key_file(_support('test_rsa.key'))
+        host_key = load_private_key_file(_support('test_rsa.key'))
         self.public_host_key = RSAKey(data=host_key.asbytes())
         self.ts.add_server_key(host_key)
         self.event = threading.Event()
@@ -173,7 +173,7 @@ class AuthTest (unittest.TestCase):
         self.tc.connect(hostkey=self.public_host_key)
         remain = self.tc.auth_password(username='paranoid', password='paranoid')
         self.assertEqual(['publickey'], remain)
-        key = DSSKey.from_private_key_file(_support('test_dss.key'))
+        key = load_private_key_file(_support('test_dss.key'))
         remain = self.tc.auth_publickey(username='paranoid', key=key)
         self.assertEqual([], remain)
         self.verify_finished()

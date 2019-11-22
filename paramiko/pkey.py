@@ -17,7 +17,7 @@
 # 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
 
 """
-Common API for all public keys.
+Common API for all public and private keys.
 """
 
 import base64
@@ -37,6 +37,85 @@ from paramiko.common import o600
 from paramiko.py3compat import u, encodebytes, decodebytes, b, string_types, byte_ord
 from paramiko.ssh_exception import SSHException, PasswordRequiredException
 from paramiko.message import Message
+
+
+_legacy_type_registry = {}
+_openssh_type_registry = []
+
+
+def load_private_key(key_str, password=None):
+    """
+    Create a key object by reading a private key from a string.  If the private
+    key is encrypted and ``password`` is not ``None``, the given password will
+    be used to decrypt the key (otherwise `.PasswordRequiredException` is
+    thrown).
+
+    The key type is auto-detected and an instance of the appropriate `PKey` type
+    is returned. This is now the recommended API to load private keys, instead
+    of instantiating a ``*Key`` class directly.
+
+    :param str key_str: string containing the key
+    :param str password:
+        an optional password to use to decrypt the key, if it's encrypted
+    :return: `.PKey` based on the type detected
+
+    :raises: `.PasswordRequiredException` --
+        if the private key is encrypted, and ``password`` is ``None``
+    :raises: `.SSHException` -- if the key file is invalid
+
+    .. versionadded:: 2.8
+    """
+    pkformat, typ, data = PKey._read_private_key(key_str, password)
+
+    if pkformat == PKey.FORMAT_ORIGINAL:
+        cls = _legacy_type_registry.get(typ)
+    elif pkformat == PKey.FORMAT_OPENSSH:
+        cls = None
+        for map_type, map_cls in _openssh_type_registry:
+            if typ.startswith(map_type):
+                cls = map_cls
+    else:
+        assert False, "Unexpected pkformat {}".format(pkformat)
+
+    if cls is None:
+        raise SSHException("Unsupported key type {}".format(typ))
+
+    return cls(_raw=(pkformat, data))
+
+
+def load_private_key_file(filename, password=None):
+    """
+    Create a key object by reading a private key from file.  If the private key
+    is encrypted and ``password`` is not ``None``, the given password will be
+    used to decrypt the key (otherwise `.PasswordRequiredException` is thrown).
+
+    The key type is auto-detected and an instance of the appropriate `PKey`
+    subclass is returned. This is now the recommended API to load private keys,
+    instead of instantiating a ``*Key`` class directly.
+
+    :param str filename: path to the file to load
+    :param str password:
+        an optional password to use to decrypt the key, if it's encrypted
+    :return: `.PKey` based on the given private key
+
+    :raises: ``IOError`` -- if there was an error opening or reading the file
+    :raises: `.PasswordRequiredException` --
+        if the private key file is encrypted, and ``password`` is ``None``
+    :raises: `.SSHException` -- if the key file is invalid
+
+    .. versionadded:: 2.8
+    """
+    with open(filename, "r") as f:
+        return load_private_key(f.read(), password)
+
+
+def register_pkey_type(cls):
+    """Decorator for PKey subclasses to register their types for parsing."""
+    if cls.LEGACY_TYPE:
+        _legacy_type_registry[cls.LEGACY_TYPE] = cls
+    if cls.OPENSSH_TYPE_PREFIX:
+        _openssh_type_registry.append((cls.OPENSSH_TYPE_PREFIX, cls))
+    return cls
 
 
 def unpad(data):
@@ -80,8 +159,22 @@ class PKey(object):
     }
     FORMAT_ORIGINAL = 1  # PKCS#1 for RSA or SEC1 for EC
     FORMAT_OPENSSH = 2  # newer "openssh-key-v1" format
-    BEGIN_TAG = re.compile(r'^-{5}BEGIN (RSA|DSA|EC|OPENSSH) PRIVATE KEY-{5}\s*$')
-    END_TAG = re.compile(r'^-{5}END (RSA|DSA|EC|OPENSSH) PRIVATE KEY-{5}\s*$')
+
+    BEGIN_TAG = r"^-{5}BEGIN (.+) PRIVATE KEY-{5}\s*\n"
+    HEADER_LINES = r"((?:.+: .+\r?\n)*)\s*"
+    BODY_DATA = r"([^-]+)"
+    END_TAG = r"-{5}END \1 PRIVATE KEY-{5}\s*$"
+    OPENSSH_KEY_RE = re.compile(
+        BEGIN_TAG + HEADER_LINES + BODY_DATA + END_TAG,
+        re.MULTILINE
+    )
+
+    #: Subclasses set this to identify the key type in `.FORMAT_ORIGINAL` files.
+    #: E.g. ``"RSA"``, ``"DSA"``, etc.
+    LEGACY_TYPE = None
+    #: Subclasses set this to identify the key type prefix in `FORMAT_OPENSSH`
+    #: files. E.g. ``"ssh-rsa"`` or ``"ecdsa-sha2-"``
+    OPENSSH_TYPE_PREFIX = None
 
     def __init__(self, msg=None, data=None):
         """
@@ -212,6 +305,10 @@ class PKey(object):
         exist in all subclasses of PKey (such as `.RSAKey` or `.DSSKey`), but
         is useless on the abstract PKey class.
 
+        .. note::
+            It is recommended to use the key-type-agnostic
+            `.load_private_key_file` function instead.
+
         :param str filename: name of the file to read
         :param str password:
             an optional password to use to decrypt the key file, if it's
@@ -233,6 +330,10 @@ class PKey(object):
         object.  If the private key is encrypted and ``password`` is not
         ``None``, the given password will be used to decrypt the key (otherwise
         `.PasswordRequiredException` is thrown).
+
+        .. note::
+            It is recommended to use the key-type-agnostic `.load_private_key`
+            function instead.
 
         :param file_obj: the file-like object to read from
         :param str password:
@@ -274,80 +375,83 @@ class PKey(object):
         """
         raise Exception('Not implemented in PKey')
 
-    def _read_private_key_file(self, tag, typepfx, filename, password=None):
-        """
-        Read an SSH2-format private key file, looking for a string of the type
+    @classmethod
+    def _parse_openssh_pkey(cls, key_str):
+        """Common parsing logic for PEM-like OpenSSH private key formats.
+
+        Parse SSH2-format private string, looking for line containing the marker
         ``"BEGIN xxx PRIVATE KEY"`` for some ``xxx``, base64-decode the text we
-        find, and return it as a string.  If the private key is encrypted and
-        ``password`` is not ``None``, the given password will be used to
-        decrypt the key (otherwise `.PasswordRequiredException` is thrown).
+        find, and return it along with some metadata. For ``FORMAT_ORIGINAL``
+        keys, encryption headers are also parsed and returned as dict.
 
-        :param str tag: ``"RSA"`` or ``"DSA"``, the tag used to mark the data block
-            (in FORMAT_ORIGINAL files)
-        :param str typepfx: key type name prefix, e.g. ``"ssh-rsa"`` or ``"ecdsa-sha2-"``
-            (in FORMAT_OPENSSH files)
-        :param str filename: name of the file to read.
-        :param str password: optional, for decrypting the key file, if it's encrypted
-        :return: data blob (`str`) that makes up the private key.
+        :return: Four-tuple with the following fields:
 
-        :raises: ``IOError`` -- if there was an error reading the file.
-        :raises: `.PasswordRequiredException` -- if the private key file is
-            encrypted, and ``password`` is ``None``.
-        :raises: `.SSHException` -- if the key file is invalid.
+            * pkformat: ``FORMAT_ORIGINAL`` or ``FORMAT_OPENSSH``.
+            * type: string containing the type from BEGIN tag (e.g. ``RSA``).
+            * headers: encryption headers if it's a FORMAT_ORIGINAL key,
+              otherwise an empty ``dict``.
+            * data: base64-decoded data from the key body.
         """
-        with open(filename, 'r') as f:
-            data = self._read_private_key(tag, typepfx, f, password)
-        return data
+        match = cls.OPENSSH_KEY_RE.search(key_str)
+        if not match:
+            raise SSHException("not a valid private key file")
 
-    def _read_private_key(self, tag, typepfx, f, password=None):
-        lines = f.readlines()
+        typ, header_str, body = match.groups()
 
-        # find the BEGIN tag
-        start = 0
-        m = self.BEGIN_TAG.match(lines[start])
-        line_range = len(lines) - 1
-        while start < line_range and not m:
-            start += 1
-            m = self.BEGIN_TAG.match(lines[start])
-        start += 1
-        keytype = m.group(1) if m else None
-        if start >= len(lines) or keytype is None:
-            raise SSHException('not a valid ' + tag + ' private key file')
-
-        # find the END tag
-        end = start
-        m = self.END_TAG.match(lines[end])
-        while end < line_range and not m:
-            end += 1
-            m = self.END_TAG.match(lines[end])
-
-        if keytype == 'OPENSSH':
-            data = self._read_private_key_new_format(typepfx, lines[start:end], password)
-            pkformat = self.FORMAT_OPENSSH
-        elif keytype == tag:
-            data = self._read_private_key_old_format(lines, end, password)
-            pkformat = self.FORMAT_ORIGINAL
+        headers = {}
+        if typ == "OPENSSH":
+            if header_str:
+                raise SSHException("OPENSSH-format key should not contain headers")
+            pkformat = cls.FORMAT_OPENSSH
         else:
-            raise SSHException('encountered {} key, expected {} key'.format(keytype, tag))
+            pkformat = cls.FORMAT_ORIGINAL
+            if header_str:
+                for line in header_str.splitlines():
+                    key, value = line.split(": ", 1)
+                    headers[key.lower()] = value.strip()
+
+        try:
+            data = decodebytes(b(body))
+        except base64.binascii.Error as e:
+            raise SSHException("base64 decoding error: " + str(e))
+
+        return pkformat, typ, headers, data
+
+    def _from_private_key_file(self, filename, password=None):
+        with open(filename, 'r') as file_obj:
+            return self._from_private_key(file_obj, password)
+
+    def _from_private_key(self, file_obj, password=None):
+        pkformat, typ, data = self._read_private_key(file_obj.read(), password)
+
+        if pkformat == self.FORMAT_ORIGINAL:
+            expected = self.LEGACY_TYPE
+            if typ != expected:
+                if expected is None:
+                    expected = "OPENSSH"  # For error message only
+                raise SSHException("Expected key type {}, got {}"
+                                   .format(expected, typ))
+        elif pkformat == self.FORMAT_OPENSSH:
+            if not typ.startswith(self.OPENSSH_TYPE_PREFIX):
+                raise SSHException("Expected key type {}, got {}"
+                                   .format(self.OPENSSH_TYPE_PREFIX, typ))
+        else:
+            assert False, "Unexpected pkformat {}".format(pkformat)
 
         return pkformat, data
 
-    def _read_private_key_old_format(self, lines, end, password):
-        start = 0
-        # parse any headers first
-        headers = {}
-        start += 1
-        while start < len(lines):
-            l = lines[start].split(': ')
-            if len(l) == 1:
-                break
-            headers[l[0].lower()] = l[1].strip()
-            start += 1
-        # if we trudged to the end of the file, just try to cope.
-        try:
-            data = decodebytes(b(''.join(lines[start:end])))
-        except base64.binascii.Error as e:
-            raise SSHException('base64 decoding error: ' + str(e))
+    @classmethod
+    def _read_private_key(cls, key_str, password):
+        pkformat, typ, headers, data = cls._parse_openssh_pkey(key_str)
+        if pkformat == cls.FORMAT_ORIGINAL:
+            data = cls._read_private_key_old_format(headers, data, password)
+        elif pkformat == cls.FORMAT_OPENSSH:
+            assert not headers
+            typ, data = cls._read_private_key_new_format(data, password)
+        return pkformat, typ, data
+
+    @classmethod
+    def _read_private_key_old_format(cls, headers, data, password):
         if 'proc-type' not in headers:
             # unencryped: done
             return data
@@ -361,16 +465,16 @@ class PKey(object):
             encryption_type, saltstr = headers['dek-info'].split(',')
         except:
             raise SSHException("Can't parse DEK-info in private key file")
-        if encryption_type not in self._CIPHER_TABLE:
+        if encryption_type not in cls._CIPHER_TABLE:
             raise SSHException(
                 'Unknown private key cipher "{}"'.format(encryption_type))
         # if no password was passed in,
         # raise an exception pointing out that we need one
         if password is None:
             raise PasswordRequiredException('Private key file is encrypted')
-        cipher = self._CIPHER_TABLE[encryption_type]['cipher']
-        keysize = self._CIPHER_TABLE[encryption_type]['keysize']
-        mode = self._CIPHER_TABLE[encryption_type]['mode']
+        cipher = cls._CIPHER_TABLE[encryption_type]['cipher']
+        keysize = cls._CIPHER_TABLE[encryption_type]['keysize']
+        mode = cls._CIPHER_TABLE[encryption_type]['mode']
         salt = unhexlify(b(saltstr))
         key = util.generate_key_bytes(md5, salt, password, keysize)
         decryptor = Cipher(
@@ -378,7 +482,8 @@ class PKey(object):
         ).decryptor()
         return decryptor.update(data) + decryptor.finalize()
 
-    def _read_private_key_new_format(self, typepfx, lines, password):
+    @staticmethod
+    def _read_private_key_new_format(data, password):
         """
         Read the new OpenSSH SSH2 private key format available
         since OpenSSH version 6.5
@@ -386,11 +491,6 @@ class PKey(object):
         https://github.com/openssh/openssh-portable/blob/master/PROTOCOL.key
         https://coolaj86.com/articles/the-openssh-private-key-format/
         """
-        try:
-            data = decodebytes(b(''.join(lines)))
-        except base64.binascii.Error as e:
-            raise SSHException('base64 decoding error: ' + str(e))
-
         message = Message(data)
         OPENSSH_AUTH_MAGIC = b"openssh-key-v1\x00"
         if message.get_bytes(len(OPENSSH_AUTH_MAGIC)) != OPENSSH_AUTH_MAGIC:
@@ -407,9 +507,7 @@ class PKey(object):
         public_data = message.get_binary()
         privkey_blob = message.get_binary()
 
-        keytype = Message(public_data).get_text()
-        if not keytype.startswith(typepfx):
-            raise SSHException("Invalid key type name (public part)")
+        pub_keytype = Message(public_data).get_text()
 
         if kdfname == "none":
             if kdfoptions or cipher != "none":
@@ -449,11 +547,11 @@ class PKey(object):
             raise SSHException('OpenSSH private key file checkints do not match')
 
         keytype = priv_msg.get_text()
-        if not keytype.startswith(typepfx):
-            raise SSHException("Invalid key type name (private part)")
+        if pub_keytype != keytype:
+            raise SSHException("Inconsistent key types for public and private parts")
 
         keydata = priv_msg.get_remainder()
-        return unpad(keydata)
+        return keytype, unpad(keydata)
 
     def _write_private_key_file(self, filename, key, format, password=None):
         """
