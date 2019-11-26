@@ -31,13 +31,14 @@ import time
 import unittest
 import warnings
 import weakref
+from shutil import copyfile
 from tempfile import mkstemp
 
 from pytest_relaxed import raises
 from mock import patch, Mock
 
 import paramiko
-from paramiko import SSHClient
+from paramiko import SSHClient, Ed25519Key, RSAKey
 from paramiko.pkey import PublicBlob
 from paramiko.ssh_exception import SSHException, AuthenticationException
 
@@ -672,6 +673,24 @@ class SSHClientTest(ClientTest):
         assert call_arg == {"keys": ["ssh-dss"]}
 
 
+@patch("os.path.expanduser")
+def test_discover_keys(expanduser, tmpdir):
+    tmpdir = str(tmpdir)
+
+    expanduser.side_effect = lambda s: s.replace("~/", tmpdir + "/")
+
+    os.mkdir(tmpdir + "/ssh")
+    os.mkdir(tmpdir + "/.ssh")
+    copyfile(_support("test_rsa.key"), tmpdir + "/.ssh/id_rsa")
+    copyfile(_support("test_ed25519.key"), tmpdir + "/ssh/id_ed25519")
+
+    keyfiles = SSHClient()._discover_keys()
+    assert keyfiles == [
+        (RSAKey, tmpdir + "/.ssh/id_rsa"),
+        (Ed25519Key, tmpdir + "/ssh/id_ed25519"),
+    ]
+
+
 class PasswordPassphraseTests(ClientTest):
     # TODO: most of these could reasonably be set up to use mocks/assertions
     # (e.g. "gave passphrase -> expect PKey was given it as the passphrase")
@@ -697,7 +716,7 @@ class PasswordPassphraseTests(ClientTest):
         )
 
     def test_password_kwarg_used_for_passphrase_when_no_passphrase_kwarg_given(
-        self
+        self,
     ):  # noqa
         # Backwards compatibility: passphrase in the password field.
         self._test_connection(
@@ -707,7 +726,7 @@ class PasswordPassphraseTests(ClientTest):
 
     @raises(AuthenticationException)  # TODO: more granular
     def test_password_kwarg_not_used_for_passphrase_when_passphrase_kwarg_given(  # noqa
-        self
+        self,
     ):
         # Sanity: if we're given both fields, the password field is NOT used as
         # a passphrase.
