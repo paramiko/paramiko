@@ -13,8 +13,8 @@ Paramiko
 :Copyright:   Copyright (c) 2003-2009  Robey Pointer <robeypointer@gmail.com>
 :Copyright:   Copyright (c) 2013-2019  Jeff Forcier <jeff@bitprophet.org>
 :License:     `LGPL <https://www.gnu.org/copyleft/lesser.html>`_
-:Homepage:    http://www.paramiko.org/
-:API docs:    http://docs.paramiko.org
+:Homepage:    https://www.paramiko.org/
+:API docs:    https://docs.paramiko.org
 :Development: https://github.com/paramiko/paramiko
 
 
@@ -47,7 +47,7 @@ For most users, the recommended method to install is via pip::
     pip install paramiko
 
 For more detailed instructions, see the `Installing
-<http://www.paramiko.org/installing.html>`_ page on the main Paramiko website.
+<https://www.paramiko.org/installing.html>`_ page on the main Paramiko website.
 
 
 Portability Issues
