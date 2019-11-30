@@ -522,7 +522,7 @@ class SFTPServer(BaseSFTP, SubsystemHandler):
             )
         elif t == CMD_EXTENDED:
             tag = msg.get_text()
-            if tag == "check-file":
+            if tag == "check-file-handle":
                 self._check_file(request_number, msg)
             elif tag == "posix-rename@openssh.com":
                 oldpath = msg.get_text()

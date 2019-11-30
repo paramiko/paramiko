@@ -403,7 +403,7 @@ class SFTPFile(BufferedFile):
         """
         t, msg = self.sftp._request(
             CMD_EXTENDED,
-            "check-file",
+            "check-file-handle",
             self.handle,
             hash_algorithm,
             long(offset),
