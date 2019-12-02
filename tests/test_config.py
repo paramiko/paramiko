@@ -61,34 +61,43 @@ class TestSSHConfig(object):
         ]
         assert self.config._config == expected
 
-    def test_host_config(self):
-        for host, values in {
-            "irc.danger.com": {
+    @mark.parametrize("host,values", (
+        (
+            "irc.danger.com",
+            {
                 "crazy": "something dumb",
                 "hostname": "irc.danger.com",
                 "user": "robey",
             },
-            "irc.example.com": {
+        ),
+        (
+            "irc.example.com",
+            {
                 "crazy": "something dumb",
                 "hostname": "irc.example.com",
                 "user": "robey",
                 "port": "3333",
             },
-            "spoo.example.com": {
+        ),
+        (
+            "spoo.example.com",
+            {
                 "crazy": "something dumb",
                 "hostname": "spoo.example.com",
                 "user": "robey",
                 "port": "3333",
             },
-        }.items():
-            values = dict(
-                values,
-                hostname=host,
-                identityfile=[expanduser("~/.ssh/id_rsa")],
-            )
-            assert lookup_ssh_host_config(host, self.config) == values
+        ),
+    ))
+    def test_host_config(self, host, values):
+        expected = dict(
+            values,
+            hostname=host,
+            identityfile=[expanduser("~/.ssh/id_rsa")],
+        )
+        assert lookup_ssh_host_config(host, self.config) == expected
 
-    def test_host_config_expose_fabric_issue_33(self):
+    def test_fabric_issue_33(self):
         config = SSHConfig.from_text(
             """
 Host www13.*
@@ -163,7 +172,7 @@ Host test
         got = lookup_ssh_host_config("test", config)["proxycommand"]
         assert got == expected
 
-    def test_host_config_test_negation(self):
+    def test_negation(self):
         config = SSHConfig.from_text(
             """
 Host www13.* !*.example.com
@@ -183,7 +192,7 @@ Host *
         expected = {"hostname": host, "port": "8080"}
         assert lookup_ssh_host_config(host, config) == expected
 
-    def test_host_config_test_proxycommand(self):
+    def test_proxycommand(self):
         config = SSHConfig.from_text(
             """
 Host proxy-with-equal-divisor-and-space
@@ -213,7 +222,7 @@ ProxyCommand foo=bar:%h-%p
 
             assert lookup_ssh_host_config(host, config) == values
 
-    def test_host_config_test_identityfile(self):
+    def test_identityfile(self):
         config = SSHConfig.from_text(
             """
 
