@@ -702,6 +702,15 @@ def _expect(success_on):
 
 
 class TestMatchExec(object):
+    @patch("paramiko.config.invoke", new=None)
+    @patch("paramiko.config.invoke_import_error", new=ImportError("meh"))
+    def test_raises_invoke_ImportErrors_at_runtime(self):
+        # Not an ideal test, but I don't know of a non-bad way to fake out
+        # module-time ImportErrors. So we mock the symptoms. Meh!
+        with raises(ImportError) as info:
+            load_config("match-exec").lookup("oh-noes")
+        assert str(info.value) == "meh"
+
     @patch("paramiko.config.invoke.run")
     @mark.parametrize(
         "cmd,user",

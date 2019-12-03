@@ -380,6 +380,10 @@ class SSHConfig(object):
                 exec_cmd = self._tokenize(
                     options, target_hostname, "match-exec", param
                 )
+                # This is the laziest spot in which we can get mad about an
+                # inability to import Invoke.
+                if invoke is None:
+                    raise invoke_import_error
                 # Like OpenSSH, we 'redirect' stdout but let stderr bubble up
                 passed = invoke.run(exec_cmd, hide="stdout", warn=True).ok
             # Tackle any 'passed, but was negated' results from above
