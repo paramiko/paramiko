@@ -697,6 +697,7 @@ def _expect(success_on):
         # Fake exit
         exit = 0 if command in success_on else 1
         return Result(exited=exit)
+
     return inner
 
 
