@@ -407,15 +407,15 @@ class SSHClientTest(ClientTest):
 
         self.tc = SSHClient()
         self.tc.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        self.assertEqual(0, len(self.tc.get_host_keys()))
+        assert len(self.tc.get_host_keys()) == 0
         self.tc.connect(**dict(self.connect_kwargs, password="pygmalion"))
 
         self.event.wait(1.0)
-        self.assertTrue(self.event.is_set())
-        self.assertTrue(self.ts.is_active())
+        assert self.event.is_set()
+        assert self.ts.is_active()
 
         p = weakref.ref(self.tc._transport.packetizer)
-        self.assertTrue(p() is not None)
+        assert p() is not None
         self.tc.close()
         del self.tc
 
@@ -425,7 +425,7 @@ class SSHClientTest(ClientTest):
         gc.collect()
         gc.collect()
 
-        self.assertTrue(p() is None)
+        assert p() is None
 
     def test_client_can_be_used_as_context_manager(self):
         """
