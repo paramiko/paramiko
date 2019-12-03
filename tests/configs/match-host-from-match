@@ -3,4 +3,3 @@ Match host original-host
 
 Match host substituted-host
     User inner
-

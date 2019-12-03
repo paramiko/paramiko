@@ -6,5 +6,3 @@ Match host somehost,someotherhost
 
 Match host goo*,!goof
     User perrin
-
-

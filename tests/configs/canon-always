@@ -3,5 +3,3 @@ CanonicalizeHostname always
 
 Host www.paramiko.org
     User rando
-
-

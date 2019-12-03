@@ -3,4 +3,3 @@ CanonicalDomains paramiko.org
 
 Match !canonical host www*
     User hidden
-

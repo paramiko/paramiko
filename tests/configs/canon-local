@@ -4,5 +4,3 @@ Host www.paramiko.org
 Host www
     CanonicalDomains paramiko.org
     CanonicalizeHostname yes
-
-

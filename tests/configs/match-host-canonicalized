@@ -6,5 +6,3 @@ Match host www.paramiko.org
 
 Match canonical host docs.paramiko.org
     User eric
-
-
