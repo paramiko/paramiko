@@ -319,10 +319,10 @@ class PKey(object):
             m = self.END_TAG.match(lines[end])
 
         if keytype == tag:
-            data = self._read_private_key_old_format(lines, end, password)
+            data = self._read_private_key_pem(lines, end, password)
             pkformat = self._PRIVATE_KEY_FORMAT_ORIGINAL
         elif keytype == "OPENSSH":
-            data = self._read_private_key_new_format(
+            data = self._read_private_key_openssh(
                 lines[start:end], password
             )
             pkformat = self._PRIVATE_KEY_FORMAT_OPENSSH
@@ -337,7 +337,7 @@ class PKey(object):
         err = "{}._read_private_key() spat out an unknown key format id '{}'"
         raise SSHException(err.format(self.__class__.__name__, id_))
 
-    def _read_private_key_old_format(self, lines, end, password):
+    def _read_private_key_pem(self, lines, end, password):
         start = 0
         # parse any headers first
         headers = {}
@@ -384,7 +384,7 @@ class PKey(object):
         ).decryptor()
         return decryptor.update(data) + decryptor.finalize()
 
-    def _read_private_key_new_format(self, lines, password):
+    def _read_private_key_openssh(self, lines, password):
         """
         Read the new OpenSSH SSH2 private key format available
         since OpenSSH version 6.5
