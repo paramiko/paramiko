@@ -309,7 +309,7 @@ class PKey(object):
         start += 1
         keytype = m.group(1) if m else None
         if start >= len(lines) or keytype is None:
-            raise SSHException("not a valid " + tag + " private key file")
+            raise SSHException("not a valid {} private key file".format(tag))
 
         # find the END tag
         end = start
@@ -352,7 +352,7 @@ class PKey(object):
         try:
             data = decodebytes(b("".join(lines[start:end])))
         except base64.binascii.Error as e:
-            raise SSHException("base64 decoding error: " + str(e))
+            raise SSHException("base64 decoding error: {}".format(e))
         if "proc-type" not in headers:
             # unencryped: done
             return data
@@ -394,7 +394,7 @@ class PKey(object):
         try:
             data = decodebytes(b("".join(lines)))
         except base64.binascii.Error as e:
-            raise SSHException("base64 decoding error: " + str(e))
+            raise SSHException("base64 decoding error: {}".format(e))
 
         # read data struct
         auth_magic = data[:14]
