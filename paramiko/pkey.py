@@ -322,9 +322,7 @@ class PKey(object):
             data = self._read_private_key_pem(lines, end, password)
             pkformat = self._PRIVATE_KEY_FORMAT_ORIGINAL
         elif keytype == "OPENSSH":
-            data = self._read_private_key_openssh(
-                lines[start:end], password
-            )
+            data = self._read_private_key_openssh(lines[start:end], password)
             pkformat = self._PRIVATE_KEY_FORMAT_OPENSSH
         else:
             raise SSHException(
