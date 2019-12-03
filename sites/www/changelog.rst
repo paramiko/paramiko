@@ -2,6 +2,16 @@
 Changelog
 =========
 
+- :feature:`602` (via :issue:`1343`, :issue:`1313`, :issue:`618`) Implement
+  support for OpenSSH 6.5-style private key files (typically denoted as having
+  ``BEGIN OPENSSH PRIVATE KEY`` headers instead of PEM format's ``BEGIN RSA
+  PRIVATE KEY`` or similar). If you were getting any sort of weird auth error
+  from "modern" keys generated on newer operating system releases (such as
+  macOS Mojave), this is the first update to try.
+
+  Major thanks to everyone who contributed or tested versions of the patch,
+  including but not limited to: Kevin Abel, Michiel Tiller, Pierce Lopez, and
+  Jared Hobbs.
 - :bug:`- major` ``ssh_config`` :ref:`token expansion <TOKENS>` used a
   different method of determining the local username (``$USER`` env var),
   compared to what the (much older) client connection code does
