@@ -201,6 +201,6 @@ class RSAKey(PKey):
                 public_numbers=public_numbers,
             ).private_key(default_backend())
         else:
-            raise SSHException("unknown private key format.")
+            self._got_bad_key_format_id(pkformat)
         assert isinstance(key, rsa.RSAPrivateKey)
         self.key = key

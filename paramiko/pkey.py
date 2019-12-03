@@ -333,6 +333,10 @@ class PKey(object):
 
         return pkformat, data
 
+    def _got_bad_key_format_id(self, id_):
+        err = "{}._read_private_key() spat out an unknown key format id '{}'"
+        raise SSHException(err.format(self.__class__.__name__, id_))
+
     def _read_private_key_old_format(self, lines, end, password):
         start = 0
         # parse any headers first

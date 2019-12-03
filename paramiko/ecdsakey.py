@@ -298,7 +298,7 @@ class ECDSAKey(PKey):
             except (AttributeError, TypeError) as e:
                 raise SSHException(str(e))
         else:
-            raise SSHException("unknown private key format.")
+            self._got_bad_key_format_id(pkformat)
 
         self.signing_key = key
         self.verifying_key = key.public_key()

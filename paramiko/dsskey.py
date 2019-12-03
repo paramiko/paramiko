@@ -241,7 +241,7 @@ class DSSKey(PKey):
             keylist = self._uint32_cstruct_unpack(data, "iiiii")
             keylist = [0] + list(keylist)
         else:
-            raise SSHException("private key format.")
+            self._got_bad_key_format_id(pkformat)
         if type(keylist) is not list or len(keylist) < 6 or keylist[0] != 0:
             raise SSHException(
                 "not a valid DSA private key file (bad ber encoding)"
