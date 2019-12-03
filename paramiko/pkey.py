@@ -78,9 +78,7 @@ class PKey(object):
     BEGIN_TAG = re.compile(
         r"^-{5}BEGIN (RSA|DSA|EC|OPENSSH) PRIVATE KEY-{5}\s*$"
     )
-    END_TAG = re.compile(
-        r"^-{5}END (RSA|DSA|EC|OPENSSH) PRIVATE KEY-{5}\s*$"
-    )
+    END_TAG = re.compile(r"^-{5}END (RSA|DSA|EC|OPENSSH) PRIVATE KEY-{5}\s*$")
 
     def __init__(self, msg=None, data=None):
         """
