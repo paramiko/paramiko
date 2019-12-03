@@ -348,6 +348,7 @@ class SSHConfig(object):
         local_username = getpass.getuser()
         while candidates:
             candidate = candidates.pop(0)
+            passed = None
             # Obtain latest host/user value every loop, so later Match may
             # reference values assigned within a prior Match.
             configured_host = options.get("hostname", None)
@@ -361,36 +362,29 @@ class SSHConfig(object):
             # The parse step ensures we only see this by itself or after
             # canonical, so it's also an easy hard pass. (No negation here as
             # that would be uh, pretty weird?)
-            if type_ == "all":
+            elif type_ == "all":
                 return True
             # From here, we are testing various non-hard criteria,
             # short-circuiting only on fail
-            if type_ == "host":
+            elif type_ == "host":
                 hostval = configured_host or target_hostname
                 passed = self._pattern_matches(param, hostval)
-                if self._should_fail(passed, candidate):
-                    return False
-            if type_ == "originalhost":
+            elif type_ == "originalhost":
                 passed = self._pattern_matches(param, target_hostname)
-                if self._should_fail(passed, candidate):
-                    return False
-            if type_ == "user":
+            elif type_ == "user":
                 user = configured_user or local_username
                 passed = self._pattern_matches(param, user)
-                if self._should_fail(passed, candidate):
-                    return False
-            if type_ == "localuser":
+            elif type_ == "localuser":
                 passed = self._pattern_matches(param, local_username)
-                if self._should_fail(passed, candidate):
-                    return False
-            if type_ == "exec":
+            elif type_ == "exec":
                 exec_cmd = self._tokenize(
                     options, target_hostname, "match-exec", param
                 )
                 # Like OpenSSH, we 'redirect' stdout but let stderr bubble up
                 passed = invoke.run(exec_cmd, hide="stdout", warn=True).ok
-                if self._should_fail(passed, candidate):
-                    return False
+            # Tackle any 'passed, but was negated' results from above
+            if passed is not None and self._should_fail(passed, candidate):
+                return False
             # Made it all the way here? Everything matched!
             matched.append(candidate)
         # Did anything match? (To be treated as bool, usually.)
