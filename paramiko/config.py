@@ -60,6 +60,7 @@ class SSHConfig(object):
     # compatible across the board, e.g. OpenSSH 8.1 added %n to ProxyCommand.
     TOKENS_BY_CONFIG_KEY = {
         "controlpath": ["%h", "%l", "%L", "%n", "%p", "%r", "%u"],
+        "hostname": ["%h"],
         "identityfile": ["~", "%d", "%h", "%l", "%u", "%r"],
         "proxycommand": ["~", "%h", "%p", "%r"],
         # Doesn't seem worth making this 'special' for now, it will fit well
@@ -412,13 +413,12 @@ class SSHConfig(object):
         # Short-circuit if no tokenization possible
         if not allowed_tokens:
             return value
-        # Obtain potentially configured (and even possibly itself tokenized)
-        # hostname, for use with %h in other values.
+        # Obtain potentially configured hostname, for use with %h.
+        # Special-case where we are tokenizing the hostname itself, to avoid
+        # replacing %h with a %h-bearing value, etc.
         configured_hostname = target_hostname
-        if "hostname" in config:
-            configured_hostname = config["hostname"].replace(
-                "%h", target_hostname
-            )
+        if key != "hostname":
+            configured_hostname = config.get("hostname", configured_hostname)
         # Ditto the rest of the source values
         if "port" in config:
             port = config["port"]

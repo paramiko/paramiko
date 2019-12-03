@@ -467,6 +467,10 @@ Host *
         cmd = config.lookup("some-random-host")["proxycommand"]
         assert cmd == "default-proxy"
 
+    def test_hostname_tokenization(self):
+        result = load_config("hostname-tokenized").lookup("whatever")
+        assert result["hostname"] == "prefix.whatever"
+
 
 class TestSSHConfigDict(object):
     def test_SSHConfigDict_construct_empty(self):
@@ -773,6 +777,12 @@ class TestMatchExec(object):
     def test_requires_an_argument(self):
         with raises(ConfigParseError):
             load_config("match-exec-no-arg")
+
+    @patch("paramiko.config.invoke.run")
+    def test_works_with_tokenized_hostname(self, run):
+        run.side_effect = _expect("ping target")
+        result = load_config("hostname-exec-tokenized").lookup("target")
+        assert result["hostname"] == "pingable.target"
 
 
 class TestMatchHost(object):
