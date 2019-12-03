@@ -30,9 +30,6 @@ Emphasis is on using SSH2 as an alternative to SSL for making secure
 connections between python scripts.  All major ciphers and hash methods
 are supported.  SFTP client and server mode are both supported too.
 
-Required packages:
-    Cryptography
-
 To install the development version, ``pip install -e
 git+https://github.com/paramiko/paramiko/#egg=paramiko``.
 """
@@ -43,6 +40,22 @@ _locals = {}
 with open("paramiko/_version.py") as fp:
     exec(fp.read(), None, _locals)
 version = _locals["__version__"]
+
+# Have to build extras_require dynamically because it doesn't allow
+# self-referencing and I hate repeating myself.
+extras_require = {
+    "gssapi": [
+        "pyasn1>=0.1.7",
+        'gssapi>=1.4.1;platform_system!="Windows"',
+        'pywin32>=2.1.8;platform_system=="Windows"',
+    ],
+    "ed25519": ["pynacl>=1.0.1", "bcrypt>=3.1.3"],
+    "invoke": ["invoke>=1.3"],
+}
+everything = []
+for subdeps in extras_require.values():
+    everything.extend(subdeps)
+extras_require["all"] = everything
 
 setup(
     name="paramiko",
@@ -70,6 +83,11 @@ setup(
         "Programming Language :: Python :: 3.4",
         "Programming Language :: Python :: 3.5",
         "Programming Language :: Python :: 3.6",
+        "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
     ],
-    install_requires=["bcrypt>=3.1.3", "cryptography>=1.5", "pynacl>=1.0.1"],
+    # TODO 3.0: remove bcrypt, pynacl and update installation docs noting that
+    # use of the extras_require(s) is now required for those
+    install_requires=["bcrypt>=3.1.3", "cryptography>=2.5", "pynacl>=1.0.1"],
+    extras_require=extras_require,
 )

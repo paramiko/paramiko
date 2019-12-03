@@ -1,0 +1,6 @@
+Host www.paramiko.org
+    User rando
+
+Host www
+    CanonicalDomains paramiko.org
+    CanonicalizeHostname always

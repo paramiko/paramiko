@@ -1,0 +1,17 @@
+# A timeless classic?
+# NOTE: some lines in here have 'extra' whitespace (incl trailing, and mixed
+# tabs/spaces!) on purpose.
+
+Host *
+    User robey
+    IdentityFile    =~/.ssh/id_rsa
+
+# comment
+Host *.example.com
+    	User bjork
+Port=3333
+Host *
+	  	 Crazy something dumb  
+Host spoo.example.com
+Crazy something else
+

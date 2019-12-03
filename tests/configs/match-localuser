@@ -1,0 +1,14 @@
+Match localuser gandalf
+    HostName gondor
+
+Match localuser b*
+    HostName shire
+
+Match localuser aragorn,frodo
+    HostName moria
+
+Match localuser gimli,!legolas
+    Port 7373
+
+Match !localuser sauron
+    HostName mordor

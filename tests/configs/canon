@@ -1,0 +1,8 @@
+CanonicalizeHostname yes
+CanonicalDomains paramiko.org
+
+IdentityFile base.key
+
+Host www.paramiko.org
+    User rando
+    IdentityFile canonicalized.key

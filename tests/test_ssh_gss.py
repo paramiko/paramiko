@@ -25,11 +25,10 @@ Unit Tests for the GSS-API / SSPI SSHv2 Authentication (gssapi-with-mic)
 
 import socket
 import threading
-import unittest
 
 import paramiko
 
-from .util import _support, needs_gssapi
+from .util import _support, needs_gssapi, KerberosTestCase, update_env
 from .test_client import FINGERPRINTS
 
 
@@ -61,23 +60,24 @@ class NullServer(paramiko.ServerInterface):
         return paramiko.OPEN_SUCCEEDED
 
     def check_channel_exec_request(self, channel, command):
-        if command != "yes":
+        if command != b"yes":
             return False
         return True
 
 
 @needs_gssapi
-class GSSAuthTest(unittest.TestCase):
+class GSSAuthTest(KerberosTestCase):
     def setUp(self):
         # TODO: username and targ_name should come from os.environ or whatever
         # the approved pytest method is for runtime-configuring test data.
-        self.username = "krb5_principal"
-        self.hostname = socket.getfqdn("targ_name")
+        self.username = self.realm.user_princ
+        self.hostname = socket.getfqdn(self.realm.hostname)
         self.sockl = socket.socket()
-        self.sockl.bind(("targ_name", 0))
+        self.sockl.bind((self.realm.hostname, 0))
         self.sockl.listen(1)
         self.addr, self.port = self.sockl.getsockname()
         self.event = threading.Event()
+        update_env(self, self.realm.env)
         thread = threading.Thread(target=self._run)
         thread.start()
 
@@ -139,16 +139,16 @@ class GSSAuthTest(unittest.TestCase):
         stdout.close()
         stderr.close()
 
-    def test_1_gss_auth(self):
+    def test_gss_auth(self):
         """
         Verify that Paramiko can handle SSHv2 GSS-API / SSPI authentication
         (gssapi-with-mic) in client and server mode.
         """
         self._test_connection(allow_agent=False, look_for_keys=False)
 
-    def test_2_auth_trickledown(self):
+    def test_auth_trickledown(self):
         """
-        Failed gssapi-with-mic auth doesn't prevent subsequent key auth from succeeding
+        Failed gssapi-with-mic doesn't prevent subsequent key from succeeding
         """
         self.hostname = (
             "this_host_does_not_exists_and_causes_a_GSSAPI-exception"

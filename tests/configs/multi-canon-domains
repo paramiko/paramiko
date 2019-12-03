@@ -1,0 +1,5 @@
+CanonicalizeHostname yes
+CanonicalDomains not-a-real-tld paramiko.org
+
+Host www.paramiko.org
+    User rando

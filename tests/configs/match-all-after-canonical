@@ -1,0 +1,5 @@
+CanonicalizeHostname yes
+CanonicalDomains paramiko.org
+
+Match canonical all
+    User awesome

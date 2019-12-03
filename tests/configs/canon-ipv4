@@ -1,0 +1,6 @@
+CanonicalDomains paramiko.org
+CanonicalizeHostname yes
+AddressFamily inet
+
+Host www.paramiko.org
+    User rando

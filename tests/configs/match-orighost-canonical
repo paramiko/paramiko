@@ -1,0 +1,5 @@
+CanonicalizeHostname yes
+CanonicalDomains paramiko.org
+
+Match originalhost www
+    User tuon

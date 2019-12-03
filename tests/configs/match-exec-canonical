@@ -1,0 +1,10 @@
+CanonicalDomains paramiko.org
+CanonicalizeHostname always
+
+# This will match in the first, uncanonicalized pass
+Match !canonical exec uncanonicalized
+    User defenseless
+
+# And this will match the second time
+Match canonical exec canonicalized
+    Port 8007

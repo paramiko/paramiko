@@ -1,0 +1,11 @@
+CanonicalizeHostname yes
+CanonicalDomains paramiko.org
+
+Host www.paramiko.org
+    User rando
+
+Host sub.www.paramiko.org
+    User deep
+
+Host subber.sub.www.paramiko.org
+    User deeper

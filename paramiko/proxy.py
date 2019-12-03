@@ -18,11 +18,19 @@
 
 
 import os
-from shlex import split as shlsplit
+import shlex
 import signal
 from select import select
 import socket
 import time
+
+# Try-and-ignore import so platforms w/o subprocess (eg Google App Engine) can
+# still import paramiko.
+subprocess, subprocess_import_error = None, None
+try:
+    import subprocess
+except ImportError as e:
+    subprocess_import_error = e
 
 from paramiko.ssh_exception import ProxyCommandFailure
 from paramiko.util import ClosingContextManager
@@ -48,13 +56,15 @@ class ProxyCommand(ClosingContextManager):
         :param str command_line:
             the command that should be executed and used as the proxy.
         """
-        # NOTE: subprocess import done lazily so platforms without it (e.g.
-        # GAE) can still import us during overall Paramiko load.
-        from subprocess import Popen, PIPE
-
-        self.cmd = shlsplit(command_line)
-        self.process = Popen(
-            self.cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE, bufsize=0
+        if subprocess is None:
+            raise subprocess_import_error
+        self.cmd = shlex.split(command_line)
+        self.process = subprocess.Popen(
+            self.cmd,
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            bufsize=0,
         )
         self.timeout = None
 

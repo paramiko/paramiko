@@ -1,0 +1,6 @@
+CanonicalizeHostname yes
+CanonicalDomains paramiko.org
+CanonicalizeFallbackLocal yes
+
+Host www.paramiko.org
+    User rando

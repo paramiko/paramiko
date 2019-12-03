@@ -11,7 +11,7 @@ Paramiko
 
 :Paramiko:    Python SSH module
 :Copyright:   Copyright (c) 2003-2009  Robey Pointer <robeypointer@gmail.com>
-:Copyright:   Copyright (c) 2013-2018  Jeff Forcier <jeff@bitprophet.org>
+:Copyright:   Copyright (c) 2013-2019  Jeff Forcier <jeff@bitprophet.org>
 :License:     `LGPL <https://www.gnu.org/copyleft/lesser.html>`_
 :Homepage:    http://www.paramiko.org/
 :API docs:    http://docs.paramiko.org
@@ -136,3 +136,10 @@ There are also unit tests here::
     $ pytest
 
 Which will verify that most of the core components are working correctly.
+
+To test Kerberos/GSSAPI, you need a Kerberos environment. On UNIX you can
+use the package k5test to setup a Kerberos environment on the fly::
+
+    $ pip install -r dev-requirements.txt
+    $ pip install k5test gssapi pyasn1
+    $ pytest

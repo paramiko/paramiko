@@ -1,0 +1,16 @@
+HostName bogus
+
+Match originalhost target
+    User tuon
+
+Match originalhost what*
+    User matrim
+
+Match originalhost comma,sep*
+    User chameleon
+
+Match originalhost yep,!nope
+    User skipped
+
+Match !originalhost www !originalhost nope
+    User thom

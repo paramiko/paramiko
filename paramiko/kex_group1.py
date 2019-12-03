@@ -116,7 +116,7 @@ class KexGroup1(object):
         hm.add_mpint(self.e)
         hm.add_mpint(self.f)
         hm.add_mpint(K)
-        self.transport._set_K_H(K, sha1(hm.asbytes()).digest())
+        self.transport._set_K_H(K, self.hash_algo(hm.asbytes()).digest())
         self.transport._verify_key(host_key, sig)
         self.transport._activate_outbound()
 

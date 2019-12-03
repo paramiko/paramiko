@@ -33,20 +33,20 @@ from .util import _support
 
 
 # from openssh's ssh-keygen
-PUB_RSA = "ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAIEA049W6geFpmsljTwfvI1UmKWWJPNFI74+vNKTk4dmzkQY2yAMs6FhlvhlI8ysU4oj71ZsRYMecHbBbxdN79+JRFVYTKaLqjwGENeTd+yv4q+V2PvZv3fLnzApI3l7EJCqhWwJUHJ1jAkZzqDx0tyOL4uoZpww3nmE0kb3y21tH4c="
-PUB_DSS = "ssh-dss AAAAB3NzaC1kc3MAAACBAOeBpgNnfRzr/twmAQRu2XwWAp3CFtrVnug6s6fgwj/oLjYbVtjAy6pl/h0EKCWx2rf1IetyNsTxWrniA9I6HeDj65X1FyDkg6g8tvCnaNB8Xp/UUhuzHuGsMIipRxBxw9LF608EqZcj1E3ytktoW5B5OcjrkEoz3xG7C+rpIjYvAAAAFQDwz4UnmsGiSNu5iqjn3uTzwUpshwAAAIEAkxfFeY8P2wZpDjX0MimZl5wkoFQDL25cPzGBuB4OnB8NoUk/yjAHIIpEShw8V+LzouMK5CTJQo5+Ngw3qIch/WgRmMHy4kBq1SsXMjQCte1So6HBMvBPIW5SiMTmjCfZZiw4AYHK+B/JaOwaG9yRg2Ejg4Ok10+XFDxlqZo8Y+wAAACARmR7CCPjodxASvRbIyzaVpZoJ/Z6x7dAumV+ysrV1BVYd0lYukmnjO1kKBWApqpH1ve9XDQYN8zgxM4b16L21kpoWQnZtXrY3GZ4/it9kUgyB7+NwacIBlXa8cMDL7Q/69o0d54U0X/NeX5QxuYR6OMJlrkQB7oiW/P/1mwjQgE="
-PUB_ECDSA_256 = "ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBJSPZm3ZWkvk/Zx8WP+fZRZ5/NBBHnGQwR6uIC6XHGPDIHuWUzIjAwA0bzqkOUffEsbLe+uQgKl5kbc/L8KA/eo="
-PUB_ECDSA_384 = "ecdsa-sha2-nistp384 AAAAE2VjZHNhLXNoYTItbmlzdHAzODQAAAAIbmlzdHAzODQAAABhBBbGibQLW9AAZiGN2hEQxWYYoFaWKwN3PKSaDJSMqmIn1Z9sgRUuw8Y/w502OGvXL/wFk0i2z50l3pWZjD7gfMH7gX5TUiCzwrQkS+Hn1U2S9aF5WJp0NcIzYxXw2r4M2A=="
-PUB_ECDSA_521 = "ecdsa-sha2-nistp521 AAAAE2VjZHNhLXNoYTItbmlzdHA1MjEAAAAIbmlzdHA1MjEAAACFBACaOaFLZGuxa5AW16qj6VLypFbLrEWrt9AZUloCMefxO8bNLjK/O5g0rAVasar1TnyHE9qj4NwzANZASWjQNbc4MAG8vzqezFwLIn/kNyNTsXNfqEko9OgHZknlj2Z79dwTJcRAL4QLcT5aND0EHZLB2fAUDXiWIb2j4rg1mwPlBMiBXA=="
-PUB_RSA_2K_OPENSSH = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDF+Dpr54DX0WdeTDpNAMdkCWEkl3OXtNgf58qlN1gX572OLBqLf0zT4bHstUEpU3piazph/rSWcUMuBoD46tZ6jiH7H9b9Pem2eYQWaELDDkM+v9BMbEy5rMbFRLol5OtEvPFqneyEAanPOgvd8t3yyhSev9QVusakzJ8j8LGgrA8huYZ+Srnw0shEWLG70KUKCh3rG0QIvA8nfhtUOisr2Gp+F0YxMGb5gwBlQYAYE5l6u1SjZ7hNjyNosjK+wRBFgFFBYVpkZKJgWoK9w4ijFyzMZTucnZMqKOKAjIJvHfKBf2/cEfYxSq1EndqTqjYsd9T7/s2vcn1OH5a0wkER"
-PUB_DSS_1K_OPENSSH = "ssh-dss AAAAB3NzaC1kc3MAAACBAL8XEx7F9xuwBNles+vWpNF+YcofrBhjX1r5QhpBe0eoYWLHRcroN6lxwCdGYRfgOoRjTncBiixQX/uUxAY96zDh3ir492s2BcJt4ihvNn/AY0I0OTuX/2IwGk9CGzafjaeZNVYxMa8lcVt0hSOTjkPQ7gVuk6bJzMInvie+VWKLAAAAFQDUgYdY+rhR0SkKbC09BS/SIHcB+wAAAIB44+4zpCNcd0CGvZlowH99zyPX8uxQtmTLQFuR2O8O0FgVVuCdDgD0D9W8CLOp32oatpM0jyyN89EdvSWzjHzZJ+L6H1FtZps7uhpDFWHdva1R25vyGecLMUuXjo5t/D7oCDih+HwHoSAxoi0QvsPd8/qqHQVznNJKtR6thUpXEwAAAIAG4DCBjbgTTgpBw0egRkJwBSz0oTt+1IcapNU2jA6N8urMSk9YXHEQHKN68BAF3YJ59q2Ujv3LOXmBqGd1T+kzwUszfMlgzq8MMu19Yfzse6AIK1Agn1Vj6F7YXLsXDN+T4KszX5+FJa7t/Zsp3nALWy6l0f4WKivEF5Y2QpEFcQ=="
+PUB_RSA = "ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAIEA049W6geFpmsljTwfvI1UmKWWJPNFI74+vNKTk4dmzkQY2yAMs6FhlvhlI8ysU4oj71ZsRYMecHbBbxdN79+JRFVYTKaLqjwGENeTd+yv4q+V2PvZv3fLnzApI3l7EJCqhWwJUHJ1jAkZzqDx0tyOL4uoZpww3nmE0kb3y21tH4c="  # noqa
+PUB_DSS = "ssh-dss AAAAB3NzaC1kc3MAAACBAOeBpgNnfRzr/twmAQRu2XwWAp3CFtrVnug6s6fgwj/oLjYbVtjAy6pl/h0EKCWx2rf1IetyNsTxWrniA9I6HeDj65X1FyDkg6g8tvCnaNB8Xp/UUhuzHuGsMIipRxBxw9LF608EqZcj1E3ytktoW5B5OcjrkEoz3xG7C+rpIjYvAAAAFQDwz4UnmsGiSNu5iqjn3uTzwUpshwAAAIEAkxfFeY8P2wZpDjX0MimZl5wkoFQDL25cPzGBuB4OnB8NoUk/yjAHIIpEShw8V+LzouMK5CTJQo5+Ngw3qIch/WgRmMHy4kBq1SsXMjQCte1So6HBMvBPIW5SiMTmjCfZZiw4AYHK+B/JaOwaG9yRg2Ejg4Ok10+XFDxlqZo8Y+wAAACARmR7CCPjodxASvRbIyzaVpZoJ/Z6x7dAumV+ysrV1BVYd0lYukmnjO1kKBWApqpH1ve9XDQYN8zgxM4b16L21kpoWQnZtXrY3GZ4/it9kUgyB7+NwacIBlXa8cMDL7Q/69o0d54U0X/NeX5QxuYR6OMJlrkQB7oiW/P/1mwjQgE="  # noqa
+PUB_ECDSA_256 = "ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBJSPZm3ZWkvk/Zx8WP+fZRZ5/NBBHnGQwR6uIC6XHGPDIHuWUzIjAwA0bzqkOUffEsbLe+uQgKl5kbc/L8KA/eo="  # noqa
+PUB_ECDSA_384 = "ecdsa-sha2-nistp384 AAAAE2VjZHNhLXNoYTItbmlzdHAzODQAAAAIbmlzdHAzODQAAABhBBbGibQLW9AAZiGN2hEQxWYYoFaWKwN3PKSaDJSMqmIn1Z9sgRUuw8Y/w502OGvXL/wFk0i2z50l3pWZjD7gfMH7gX5TUiCzwrQkS+Hn1U2S9aF5WJp0NcIzYxXw2r4M2A=="  # noqa
+PUB_ECDSA_521 = "ecdsa-sha2-nistp521 AAAAE2VjZHNhLXNoYTItbmlzdHA1MjEAAAAIbmlzdHA1MjEAAACFBACaOaFLZGuxa5AW16qj6VLypFbLrEWrt9AZUloCMefxO8bNLjK/O5g0rAVasar1TnyHE9qj4NwzANZASWjQNbc4MAG8vzqezFwLIn/kNyNTsXNfqEko9OgHZknlj2Z79dwTJcRAL4QLcT5aND0EHZLB2fAUDXiWIb2j4rg1mwPlBMiBXA=="  # noqa
+PUB_RSA_2K_OPENSSH = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDF+Dpr54DX0WdeTDpNAMdkCWEkl3OXtNgf58qlN1gX572OLBqLf0zT4bHstUEpU3piazph/rSWcUMuBoD46tZ6jiH7H9b9Pem2eYQWaELDDkM+v9BMbEy5rMbFRLol5OtEvPFqneyEAanPOgvd8t3yyhSev9QVusakzJ8j8LGgrA8huYZ+Srnw0shEWLG70KUKCh3rG0QIvA8nfhtUOisr2Gp+F0YxMGb5gwBlQYAYE5l6u1SjZ7hNjyNosjK+wRBFgFFBYVpkZKJgWoK9w4ijFyzMZTucnZMqKOKAjIJvHfKBf2/cEfYxSq1EndqTqjYsd9T7/s2vcn1OH5a0wkER"  # noqa
+PUB_DSS_1K_OPENSSH = "ssh-dss AAAAB3NzaC1kc3MAAACBAL8XEx7F9xuwBNles+vWpNF+YcofrBhjX1r5QhpBe0eoYWLHRcroN6lxwCdGYRfgOoRjTncBiixQX/uUxAY96zDh3ir492s2BcJt4ihvNn/AY0I0OTuX/2IwGk9CGzafjaeZNVYxMa8lcVt0hSOTjkPQ7gVuk6bJzMInvie+VWKLAAAAFQDUgYdY+rhR0SkKbC09BS/SIHcB+wAAAIB44+4zpCNcd0CGvZlowH99zyPX8uxQtmTLQFuR2O8O0FgVVuCdDgD0D9W8CLOp32oatpM0jyyN89EdvSWzjHzZJ+L6H1FtZps7uhpDFWHdva1R25vyGecLMUuXjo5t/D7oCDih+HwHoSAxoi0QvsPd8/qqHQVznNJKtR6thUpXEwAAAIAG4DCBjbgTTgpBw0egRkJwBSz0oTt+1IcapNU2jA6N8urMSk9YXHEQHKN68BAF3YJ59q2Ujv3LOXmBqGd1T+kzwUszfMlgzq8MMu19Yfzse6AIK1Agn1Vj6F7YXLsXDN+T4KszX5+FJa7t/Zsp3nALWy6l0f4WKivEF5Y2QpEFcQ=="  # noqa
 
 FINGER_RSA = "1024 60:73:38:44:cb:51:86:65:7f:de:da:a2:2b:5a:57:d5"
 FINGER_DSS = "1024 44:78:f0:b9:a2:3c:c5:18:20:09:ff:75:5b:c1:d2:6c"
 FINGER_ECDSA_256 = "256 25:19:eb:55:e6:a1:47:ff:4f:38:d2:75:6f:a5:d5:60"
 FINGER_ECDSA_384 = "384 c1:8d:a0:59:09:47:41:8e:a8:a6:07:01:29:23:b4:65"
 FINGER_ECDSA_521 = "521 44:58:22:52:12:33:16:0e:ce:0e:be:2c:7c:7e:cc:1e"
-SIGNED_RSA = "20:d7:8a:31:21:cb:f7:92:12:f2:a4:89:37:f5:78:af:e6:16:b6:25:b9:97:3d:a2:cd:5f:ca:20:21:73:4c:ad:34:73:8f:20:77:28:e2:94:15:08:d8:91:40:7a:85:83:bf:18:37:95:dc:54:1a:9b:88:29:6c:73:ca:38:b4:04:f1:56:b9:f2:42:9d:52:1b:29:29:b4:4f:fd:c9:2d:af:47:d2:40:76:30:f3:63:45:0c:d9:1d:43:86:0f:1c:70:e2:93:12:34:f3:ac:c5:0a:2f:14:50:66:59:f1:88:ee:c1:4a:e9:d1:9c:4e:46:f0:0e:47:6f:38:74:f1:44:a8"
+SIGNED_RSA = "20:d7:8a:31:21:cb:f7:92:12:f2:a4:89:37:f5:78:af:e6:16:b6:25:b9:97:3d:a2:cd:5f:ca:20:21:73:4c:ad:34:73:8f:20:77:28:e2:94:15:08:d8:91:40:7a:85:83:bf:18:37:95:dc:54:1a:9b:88:29:6c:73:ca:38:b4:04:f1:56:b9:f2:42:9d:52:1b:29:29:b4:4f:fd:c9:2d:af:47:d2:40:76:30:f3:63:45:0c:d9:1d:43:86:0f:1c:70:e2:93:12:34:f3:ac:c5:0a:2f:14:50:66:59:f1:88:ee:c1:4a:e9:d1:9c:4e:46:f0:0e:47:6f:38:74:f1:44:a8"  # noqa
 FINGER_RSA_2K_OPENSSH = "2048 68:d1:72:01:bf:c0:0c:66:97:78:df:ce:75:74:46:d6"
 FINGER_DSS_1K_OPENSSH = "1024 cf:1d:eb:d7:61:d3:12:94:c6:c0:c6:54:35:35:b0:82"
 
@@ -112,8 +112,8 @@ L4QLcT5aND0EHZLB2fAUDXiWIb2j4rg1mwPlBMiBXA==
 
 x1234 = b"\x01\x02\x03\x04"
 
-TEST_KEY_BYTESTR_2 = "\x00\x00\x00\x07ssh-rsa\x00\x00\x00\x01#\x00\x00\x00\x81\x00\xd3\x8fV\xea\x07\x85\xa6k%\x8d<\x1f\xbc\x8dT\x98\xa5\x96$\xf3E#\xbe>\xbc\xd2\x93\x93\x87f\xceD\x18\xdb \x0c\xb3\xa1a\x96\xf8e#\xcc\xacS\x8a#\xefVlE\x83\x1epv\xc1o\x17M\xef\xdf\x89DUXL\xa6\x8b\xaa<\x06\x10\xd7\x93w\xec\xaf\xe2\xaf\x95\xd8\xfb\xd9\xbfw\xcb\x9f0)#y{\x10\x90\xaa\x85l\tPru\x8c\t\x19\xce\xa0\xf1\xd2\xdc\x8e/\x8b\xa8f\x9c0\xdey\x84\xd2F\xf7\xcbmm\x1f\x87"
-TEST_KEY_BYTESTR_3 = "\x00\x00\x00\x07ssh-rsa\x00\x00\x00\x01#\x00\x00\x00\x00ӏV\x07k%<\x1fT$E#>ғfD\x18 \x0cae#̬S#VlE\x1epvo\x17M߉DUXL<\x06\x10דw\u2bd5ٿw˟0)#y{\x10l\tPru\t\x19Π\u070e/f0yFmm\x1f"
+TEST_KEY_BYTESTR_2 = "\x00\x00\x00\x07ssh-rsa\x00\x00\x00\x01#\x00\x00\x00\x81\x00\xd3\x8fV\xea\x07\x85\xa6k%\x8d<\x1f\xbc\x8dT\x98\xa5\x96$\xf3E#\xbe>\xbc\xd2\x93\x93\x87f\xceD\x18\xdb \x0c\xb3\xa1a\x96\xf8e#\xcc\xacS\x8a#\xefVlE\x83\x1epv\xc1o\x17M\xef\xdf\x89DUXL\xa6\x8b\xaa<\x06\x10\xd7\x93w\xec\xaf\xe2\xaf\x95\xd8\xfb\xd9\xbfw\xcb\x9f0)#y{\x10\x90\xaa\x85l\tPru\x8c\t\x19\xce\xa0\xf1\xd2\xdc\x8e/\x8b\xa8f\x9c0\xdey\x84\xd2F\xf7\xcbmm\x1f\x87"  # noqa
+TEST_KEY_BYTESTR_3 = "\x00\x00\x00\x07ssh-rsa\x00\x00\x00\x01#\x00\x00\x00\x00ӏV\x07k%<\x1fT$E#>ғfD\x18 \x0cae#̬S#VlE\x1epvo\x17M߉DUXL<\x06\x10דw\u2bd5ٿw˟0)#y{\x10l\tPru\t\x19Π\u070e/f0yFmm\x1f"  # noqa
 
 
 class KeyTest(unittest.TestCase):
@@ -134,12 +134,12 @@ class KeyTest(unittest.TestCase):
             self.assertEqual(fh.readline()[:-1], "Proc-Type: 4,ENCRYPTED")
             self.assertEqual(fh.readline()[0:10], "DEK-Info: ")
 
-    def test_1_generate_key_bytes(self):
+    def test_generate_key_bytes(self):
         key = util.generate_key_bytes(md5, x1234, "happy birthday", 30)
-        exp = b"\x61\xE1\xF2\x72\xF4\xC1\xC4\x56\x15\x86\xBD\x32\x24\x98\xC0\xE9\x24\x67\x27\x80\xF4\x7B\xB3\x7D\xDA\x7D\x54\x01\x9E\x64"
+        exp = b"\x61\xE1\xF2\x72\xF4\xC1\xC4\x56\x15\x86\xBD\x32\x24\x98\xC0\xE9\x24\x67\x27\x80\xF4\x7B\xB3\x7D\xDA\x7D\x54\x01\x9E\x64"  # noqa
         self.assertEqual(exp, key)
 
-    def test_2_load_rsa(self):
+    def test_load_rsa(self):
         key = RSAKey.from_private_key_file(_support("test_rsa.key"))
         self.assertEqual("ssh-rsa", key.get_name())
         exp_rsa = b(FINGER_RSA.split()[1].replace(":", ""))
@@ -155,7 +155,7 @@ class KeyTest(unittest.TestCase):
         key2 = RSAKey.from_private_key(s)
         self.assertEqual(key, key2)
 
-    def test_3_load_rsa_password(self):
+    def test_load_rsa_password(self):
         key = RSAKey.from_private_key_file(
             _support("test_rsa_password.key"), "television"
         )
@@ -166,7 +166,7 @@ class KeyTest(unittest.TestCase):
         self.assertEqual(PUB_RSA.split()[1], key.get_base64())
         self.assertEqual(1024, key.get_bits())
 
-    def test_4_load_dss(self):
+    def test_load_dss(self):
         key = DSSKey.from_private_key_file(_support("test_dss.key"))
         self.assertEqual("ssh-dss", key.get_name())
         exp_dss = b(FINGER_DSS.split()[1].replace(":", ""))
@@ -182,7 +182,7 @@ class KeyTest(unittest.TestCase):
         key2 = DSSKey.from_private_key(s)
         self.assertEqual(key, key2)
 
-    def test_5_load_dss_password(self):
+    def test_load_dss_password(self):
         key = DSSKey.from_private_key_file(
             _support("test_dss_password.key"), "television"
         )
@@ -193,7 +193,7 @@ class KeyTest(unittest.TestCase):
         self.assertEqual(PUB_DSS.split()[1], key.get_base64())
         self.assertEqual(1024, key.get_bits())
 
-    def test_6_compare_rsa(self):
+    def test_compare_rsa(self):
         # verify that the private & public keys compare equal
         key = RSAKey.from_private_key_file(_support("test_rsa.key"))
         self.assertEqual(key, key)
@@ -202,7 +202,7 @@ class KeyTest(unittest.TestCase):
         self.assertTrue(not pub.can_sign())
         self.assertEqual(key, pub)
 
-    def test_7_compare_dss(self):
+    def test_compare_dss(self):
         # verify that the private & public keys compare equal
         key = DSSKey.from_private_key_file(_support("test_dss.key"))
         self.assertEqual(key, key)
@@ -211,7 +211,7 @@ class KeyTest(unittest.TestCase):
         self.assertTrue(not pub.can_sign())
         self.assertEqual(key, pub)
 
-    def test_8_sign_rsa(self):
+    def test_sign_rsa(self):
         # verify that the rsa private key can sign and verify
         key = RSAKey.from_private_key_file(_support("test_rsa.key"))
         msg = key.sign_ssh_data(b"ice weasels")
@@ -226,7 +226,7 @@ class KeyTest(unittest.TestCase):
         pub = RSAKey(data=key.asbytes())
         self.assertTrue(pub.verify_ssh_sig(b"ice weasels", msg))
 
-    def test_9_sign_dss(self):
+    def test_sign_dss(self):
         # verify that the dss private key can sign and verify
         key = DSSKey.from_private_key_file(_support("test_dss.key"))
         msg = key.sign_ssh_data(b"ice weasels")
@@ -241,19 +241,19 @@ class KeyTest(unittest.TestCase):
         pub = DSSKey(data=key.asbytes())
         self.assertTrue(pub.verify_ssh_sig(b"ice weasels", msg))
 
-    def test_A_generate_rsa(self):
+    def test_generate_rsa(self):
         key = RSAKey.generate(1024)
         msg = key.sign_ssh_data(b"jerri blank")
         msg.rewind()
         self.assertTrue(key.verify_ssh_sig(b"jerri blank", msg))
 
-    def test_B_generate_dss(self):
+    def test_generate_dss(self):
         key = DSSKey.generate(1024)
         msg = key.sign_ssh_data(b"jerri blank")
         msg.rewind()
         self.assertTrue(key.verify_ssh_sig(b"jerri blank", msg))
 
-    def test_C_generate_ecdsa(self):
+    def test_generate_ecdsa(self):
         key = ECDSAKey.generate()
         msg = key.sign_ssh_data(b"jerri blank")
         msg.rewind()
@@ -282,7 +282,7 @@ class KeyTest(unittest.TestCase):
         self.assertEqual(key.get_bits(), 521)
         self.assertEqual(key.get_name(), "ecdsa-sha2-nistp521")
 
-    def test_10_load_ecdsa_256(self):
+    def test_load_ecdsa_256(self):
         key = ECDSAKey.from_private_key_file(_support("test_ecdsa_256.key"))
         self.assertEqual("ecdsa-sha2-nistp256", key.get_name())
         exp_ecdsa = b(FINGER_ECDSA_256.split()[1].replace(":", ""))
@@ -298,7 +298,7 @@ class KeyTest(unittest.TestCase):
         key2 = ECDSAKey.from_private_key(s)
         self.assertEqual(key, key2)
 
-    def test_11_load_ecdsa_password_256(self):
+    def test_load_ecdsa_password_256(self):
         key = ECDSAKey.from_private_key_file(
             _support("test_ecdsa_password_256.key"), b"television"
         )
@@ -309,7 +309,7 @@ class KeyTest(unittest.TestCase):
         self.assertEqual(PUB_ECDSA_256.split()[1], key.get_base64())
         self.assertEqual(256, key.get_bits())
 
-    def test_12_compare_ecdsa_256(self):
+    def test_compare_ecdsa_256(self):
         # verify that the private & public keys compare equal
         key = ECDSAKey.from_private_key_file(_support("test_ecdsa_256.key"))
         self.assertEqual(key, key)
@@ -318,7 +318,7 @@ class KeyTest(unittest.TestCase):
         self.assertTrue(not pub.can_sign())
         self.assertEqual(key, pub)
 
-    def test_13_sign_ecdsa_256(self):
+    def test_sign_ecdsa_256(self):
         # verify that the rsa private key can sign and verify
         key = ECDSAKey.from_private_key_file(_support("test_ecdsa_256.key"))
         msg = key.sign_ssh_data(b"ice weasels")
@@ -334,7 +334,7 @@ class KeyTest(unittest.TestCase):
         pub = ECDSAKey(data=key.asbytes())
         self.assertTrue(pub.verify_ssh_sig(b"ice weasels", msg))
 
-    def test_14_load_ecdsa_384(self):
+    def test_load_ecdsa_384(self):
         key = ECDSAKey.from_private_key_file(_support("test_ecdsa_384.key"))
         self.assertEqual("ecdsa-sha2-nistp384", key.get_name())
         exp_ecdsa = b(FINGER_ECDSA_384.split()[1].replace(":", ""))
@@ -350,7 +350,7 @@ class KeyTest(unittest.TestCase):
         key2 = ECDSAKey.from_private_key(s)
         self.assertEqual(key, key2)
 
-    def test_15_load_ecdsa_password_384(self):
+    def test_load_ecdsa_password_384(self):
         key = ECDSAKey.from_private_key_file(
             _support("test_ecdsa_password_384.key"), b"television"
         )
@@ -361,7 +361,7 @@ class KeyTest(unittest.TestCase):
         self.assertEqual(PUB_ECDSA_384.split()[1], key.get_base64())
         self.assertEqual(384, key.get_bits())
 
-    def test_16_compare_ecdsa_384(self):
+    def test_compare_ecdsa_384(self):
         # verify that the private & public keys compare equal
         key = ECDSAKey.from_private_key_file(_support("test_ecdsa_384.key"))
         self.assertEqual(key, key)
@@ -370,7 +370,7 @@ class KeyTest(unittest.TestCase):
         self.assertTrue(not pub.can_sign())
         self.assertEqual(key, pub)
 
-    def test_17_sign_ecdsa_384(self):
+    def test_sign_ecdsa_384(self):
         # verify that the rsa private key can sign and verify
         key = ECDSAKey.from_private_key_file(_support("test_ecdsa_384.key"))
         msg = key.sign_ssh_data(b"ice weasels")
@@ -386,7 +386,7 @@ class KeyTest(unittest.TestCase):
         pub = ECDSAKey(data=key.asbytes())
         self.assertTrue(pub.verify_ssh_sig(b"ice weasels", msg))
 
-    def test_18_load_ecdsa_521(self):
+    def test_load_ecdsa_521(self):
         key = ECDSAKey.from_private_key_file(_support("test_ecdsa_521.key"))
         self.assertEqual("ecdsa-sha2-nistp521", key.get_name())
         exp_ecdsa = b(FINGER_ECDSA_521.split()[1].replace(":", ""))
@@ -405,7 +405,7 @@ class KeyTest(unittest.TestCase):
         key2 = ECDSAKey.from_private_key(s)
         self.assertEqual(key, key2)
 
-    def test_19_load_ecdsa_password_521(self):
+    def test_load_ecdsa_password_521(self):
         key = ECDSAKey.from_private_key_file(
             _support("test_ecdsa_password_521.key"), b"television"
         )
@@ -416,7 +416,7 @@ class KeyTest(unittest.TestCase):
         self.assertEqual(PUB_ECDSA_521.split()[1], key.get_base64())
         self.assertEqual(521, key.get_bits())
 
-    def test_20_compare_ecdsa_521(self):
+    def test_compare_ecdsa_521(self):
         # verify that the private & public keys compare equal
         key = ECDSAKey.from_private_key_file(_support("test_ecdsa_521.key"))
         self.assertEqual(key, key)
@@ -425,7 +425,7 @@ class KeyTest(unittest.TestCase):
         self.assertTrue(not pub.can_sign())
         self.assertEqual(key, pub)
 
-    def test_21_sign_ecdsa_521(self):
+    def test_sign_ecdsa_521(self):
         # verify that the rsa private key can sign and verify
         key = ECDSAKey.from_private_key_file(_support("test_ecdsa_521.key"))
         msg = key.sign_ssh_data(b"ice weasels")
@@ -493,6 +493,18 @@ class KeyTest(unittest.TestCase):
         )
         self.assertNotEqual(key1.asbytes(), key2.asbytes())
 
+    def test_ed25519_funky_padding(self):
+        # Proves #1306 by just not exploding with 'Invalid key'.
+        Ed25519Key.from_private_key_file(
+            _support("test_ed25519-funky-padding.key")
+        )
+
+    def test_ed25519_funky_padding_with_passphrase(self):
+        # Proves #1306 by just not exploding with 'Invalid key'.
+        Ed25519Key.from_private_key_file(
+            _support("test_ed25519-funky-padding_password.key"), b"asdf"
+        )
+
     def test_ed25519_compare(self):
         # verify that the private & public keys compare equal
         key = Ed25519Key.from_private_key_file(_support("test_ed25519.key"))
@@ -504,7 +516,7 @@ class KeyTest(unittest.TestCase):
 
     def test_ed25519_nonbytes_password(self):
         # https://github.com/paramiko/paramiko/issues/1039
-        key = Ed25519Key.from_private_key_file(
+        Ed25519Key.from_private_key_file(
             _support("test_ed25519_password.key"),
             # NOTE: not a bytes. Amusingly, the test above for same key DOES
             # explicitly cast to bytes...code smell!
@@ -553,7 +565,7 @@ class KeyTest(unittest.TestCase):
         # Delve into blob contents, for test purposes
         msg = Message(key.public_blob.key_blob)
         self.assertEqual(msg.get_text(), "ssh-rsa-cert-v01@openssh.com")
-        nonce = msg.get_string()
+        msg.get_string()
         e = msg.get_mpint()
         n = msg.get_mpint()
         self.assertEqual(e, key.public_numbers.e)

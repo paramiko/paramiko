@@ -1,0 +1,5 @@
+Match !exec "this succeeds"
+    User nope
+
+Match !exec "this fails"
+    User yup

@@ -29,15 +29,22 @@ from paramiko.client import (
 )
 from paramiko.auth_handler import AuthHandler
 from paramiko.ssh_gss import GSSAuth, GSS_AUTH_AVAILABLE, GSS_EXCEPTIONS
-from paramiko.channel import Channel, ChannelFile
+from paramiko.channel import (
+    Channel,
+    ChannelFile,
+    ChannelStderrFile,
+    ChannelStdinFile,
+)
 from paramiko.ssh_exception import (
-    SSHException,
-    PasswordRequiredException,
-    BadAuthenticationType,
-    ChannelException,
-    BadHostKeyException,
     AuthenticationException,
+    BadAuthenticationType,
+    BadHostKeyException,
+    ChannelException,
+    ConfigParseError,
+    CouldNotCanonicalize,
+    PasswordRequiredException,
     ProxyCommandFailure,
+    SSHException,
 )
 from paramiko.server import ServerInterface, SubsystemHandler, InteractiveQuery
 from paramiko.rsakey import RSAKey
@@ -57,7 +64,7 @@ from paramiko.file import BufferedFile
 from paramiko.agent import Agent, AgentKey
 from paramiko.pkey import PKey, PublicBlob
 from paramiko.hostkeys import HostKeys
-from paramiko.config import SSHConfig
+from paramiko.config import SSHConfig, SSHConfigDict
 from paramiko.proxy import ProxyCommand
 
 from paramiko.common import (
@@ -99,6 +106,8 @@ __all__ = [
     "BufferedFile",
     "Channel",
     "ChannelException",
+    "ConfigParseError",
+    "CouldNotCanonicalize",
     "DSSKey",
     "ECDSAKey",
     "Ed25519Key",
@@ -121,6 +130,7 @@ __all__ = [
     "SFTPServerInterface",
     "SSHClient",
     "SSHConfig",
+    "SSHConfigDict",
     "SSHException",
     "SecurityOptions",
     "ServerInterface",

@@ -1,0 +1,8 @@
+Match host *ever
+    User matrim
+
+Match host somehost,someotherhost
+    User thom
+
+Match host goo*,!goof
+    User perrin

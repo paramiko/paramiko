@@ -2,6 +2,139 @@
 Changelog
 =========
 
+- :bug:`- major` ``ssh_config`` :ref:`token expansion <TOKENS>` used a
+  different method of determining the local username (``$USER`` env var),
+  compared to what the (much older) client connection code does
+  (``getpass.getuser``, which includes ``$USER`` but may check other variables
+  first, and is generally much more comprehensive). Both modules now use
+  ``getpass.getuser``.
+- :feature:`-` A couple of outright `~paramiko.config.SSHConfig` parse errors
+  were previously represented as vanilla ``Exception`` instances; as part of
+  recent feature work a more specific exception class,
+  `~paramiko.ssh_exception.ConfigParseError`, has been created. It is now also
+  used in those older spots, which is naturally backwards compatible.
+- :feature:`717` Implement support for the ``Match`` keyword in ``ssh_config``
+  files. Previously, this keyword was simply ignored & keywords inside such
+  blocks were treated as if they were part of the previous block. Thanks to
+  Michael Leinartas for the initial patchset.
+
+  .. note::
+    This feature adds a new :doc:`optional install dependency </installing>`,
+    `Invoke <https://www.pyinvoke.org>`_, for managing ``Match exec``
+    subprocesses.
+
+- :support:`-` Additional :doc:`installation </installing>` ``extras_require``
+  "flavors" (``ed25519``, ``invoke``, and ``everything``) have been added to
+  our packaging metadata; see the install docs for details.
+- :bug:`- major` Paramiko's use of ``subprocess`` for ``ProxyCommand`` support
+  is conditionally imported to prevent issues on limited interpreter platforms
+  like Google Compute Engine. However, any resulting ``ImportError`` was lost
+  instead of preserved for raising (in the rare cases where a user tried
+  leveraging ``ProxyCommand`` in such an environment). This has been fixed.
+- :bug:`- major` Perform deduplication of ``IdentityFile`` contents during
+  ``ssh_config`` parsing; previously, if your config would result in the same
+  value being encountered more than once, ``IdentityFile`` would contain that
+  many copies of the same string.
+- :feature:`897` Implement most 'canonical hostname' ``ssh_config``
+  functionality (``CanonicalizeHostname``, ``CanonicalDomains``,
+  ``CanonicalizeFallbackLocal``, and ``CanonicalizeMaxDots``;
+  ``CanonicalizePermittedCNAMEs`` has **not** yet been implemented). All were
+  previously silently ignored. Reported by Michael Leinartas.
+- :support:`-` Explicitly document :ref:`which ssh_config features we
+  currently support <ssh-config-support>`. Previously users just had to guess,
+  which is simply no good.
+- :feature:`-` Add new convenience classmethod constructors to
+  `~paramiko.config.SSHConfig`: `~paramiko.config.SSHConfig.from_text`,
+  `~paramiko.config.SSHConfig.from_file`, and
+  `~paramiko.config.SSHConfig.from_path`. No more annoying two-step process!
+- :release:`2.6.0 <2019-06-23>`
+- :feature:`1463` Add a new keyword argument to `SSHClient.connect
+  <paramiko.client.SSHClient.connect>` and `~paramiko.transport.Transport`,
+  ``disabled_algorithms``, which allows selectively disabling one or more
+  kex/key/cipher/etc algorithms. This can be useful when disabling algorithms
+  your target server (or client) does not support cleanly, or to work around
+  unpatched bugs in Paramiko's own implementation thereof.
+- :release:`2.5.1 <2019-06-23>`
+- :release:`2.4.3 <2019-06-23>`
+- :bug:`1306` (via :issue:`1400`) Fix Ed25519 key handling so certain key
+  comment lengths don't cause ``SSHException("Invalid key")`` (this was
+  technically a bug in how padding, or lack thereof, is
+  calculated/interpreted). Thanks to ``@parke`` for the bug report & Pierce
+  Lopez for the patch.
+- :support:`1440` (with initial fixes via :issue:`1460`) Tweak many exception
+  classes so their string representations are more human-friendly; this also
+  includes incidental changes to some ``super()`` calls.
+
+  The definitions of exceptions' ``__init__`` methods have *not* changed, nor
+  have any log messages been altered, so this should be backwards compatible
+  for everything except the actual exceptions' ``__str__()`` outputs.
+
+  Thanks to Fabian Büchler for original report & Pierce Lopez for the
+  foundational patch.
+- :support:`1311` (for :issue:`584`, replacing :issue:`1166`) Add
+  backwards-compatible support for the ``gssapi`` GSSAPI library, as the
+  previous backend (``python-gssapi``) has since become defunct. This change
+  also includes tests for the GSSAPI functionality.
+
+  Big thanks to Anselm Kruis for the patch and to Sebastian Deiß (author of our
+  initial GSSAPI functionality) for review.
+
+  .. note::
+     This feature also adds ``setup.py`` 'extras' support for installing
+     Paramiko as ``paramiko[gssapi]``, which pulls in the optional
+     dependencies you had to get by hand previously.
+
+  .. note::
+    To be very clear, this patch **does not** remove support for the older
+    ``python-gssapi`` library. We *may* remove that support in a later release,
+    but for now, either library will work. Please upgrade to ``gssapi`` when
+    you can, however, as ``python-gssapi`` is no longer maintained upstream.
+
+- :bug:`322 major` `SSHClient.exec_command
+  <paramiko.client.SSHClient.exec_command>` previously returned a naive
+  `~paramiko.channel.ChannelFile` object for its ``stdin`` value; such objects
+  don't know to properly shut down the remote end's stdin when they
+  ``.close()``. This lead to issues (such as hangs) when running remote
+  commands that read from stdin.
+
+  A new subclass, `~paramiko.channel.ChannelStdinFile`, has been created which
+  closes remote stdin when it itself is closed.
+  `~paramiko.client.SSHClient.exec_command` has been updated to use that class
+  for its ``stdin`` return value.
+
+  Thanks to Brandon Rhodes for the report & steps to reproduce.
+- :release:`2.5.0 <2019-06-09>`
+- :feature:`1233` (also :issue:`1229`, :issue:`1332`) Add support for
+  encrypt-then-MAC (ETM) schemes (``hmac-sha2-256-etm@openssh.com``,
+  ``hmac-sha2-512-etm@openssh.com``) and two newer Diffie-Hellman group key
+  exchange algorithms (``group14``, using SHA256; and ``group16``, using
+  SHA512). Patch courtesy of Edgar Sousa.
+- :feature:`532` (via :issue:`1384` and :issue:`1258`) Add support for
+  Curve25519 key exchange (aka ``curve25519-sha256@libssh.org``). Thanks to
+  Alex Gaynor and Dan Fuhry for supplying patches.
+- :support:`1379` (also :issue:`1369`) Raise Cryptography dependency
+  requirement to version 2.5 (from 1.5) and update some deprecated uses of its
+  API.
+
+  This removes a bunch of warnings of the style
+  ``CryptographyDeprecationWarning: encode_point has been deprecated on
+  EllipticCurvePublicNumbers and will be removed in a future version. Please
+  use EllipticCurvePublicKey.public_bytes to obtain both compressed and
+  uncompressed point encoding`` and similar, which users who had eventually
+  upgraded to Cryptography 2.x would encounter.
+
+  .. warning::
+    This change is backwards incompatible **if** you are unable to upgrade your
+    version of Cryptography. Please see `Cryptography's own changelog
+    <https://cryptography.io/en/latest/changelog/>`_ for details on what may
+    change when you upgrade; for the most part the only changes involved
+    dropping older Python versions (such as 2.6, 3.3, or some PyPy editions)
+    which Paramiko itself has already dropped.
+
+- :support:`1378 backported` Add support for the modern (as of Python 3.3)
+  import location of ``MutableMapping`` (used in host key management) to avoid
+  the old location becoming deprecated in Python 3.8. Thanks to Josh Karpel for
+  catch & patch.
 - :release:`2.4.2 <2018-09-18>`
 - :release:`2.3.3 <2018-09-18>`
 - :release:`2.2.4 <2018-09-18>`
@@ -23,8 +156,9 @@ Changelog
   for this particular channel).
 
   Thanks to Daniel Hoffman for the detailed report.
-- :support:`1292 backported` Backport changes from :issue:`979` (added in
-  Paramiko 2.3) to Paramiko 2.0-2.2, using duck-typing to preserve backwards
+- :support:`1292 backported (<2.4)` Backport changes from :issue:`979` (added
+  in Paramiko
+  2.3) to Paramiko 2.0-2.2, using duck-typing to preserve backwards
   compatibility. This allows these older versions to use newer Cryptography
   sign/verify APIs when available, without requiring them (as is the case with
   Paramiko 2.3+).
@@ -37,9 +171,9 @@ Changelog
     This is a no-op for Paramiko 2.3+, which have required newer Cryptography
     releases since they were released.
 
-- :support:`1291 backported` Backport pytest support and application of the
-  ``black`` code formatter (both of which previously only existed in the 2.4
-  branch and above) to everything 2.0 and newer. This makes back/forward
+- :support:`1291 backported (<2.4)` Backport pytest support and application of
+  the ``black`` code formatter (both of which previously only existed in the
+  2.4 branch and above) to everything 2.0 and newer. This makes back/forward
   porting bugfixes significantly easier.
 - :support:`1262 backported` Add ``*.pub`` files to the MANIFEST so distributed
   source packages contain some necessary test assets. Credit: Alexander
@@ -95,7 +229,7 @@ Changelog
 - :support:`1100` Updated the test suite & related docs/metadata/config to be
   compatible with pytest instead of using the old, custom, crufty
   unittest-based ``test.py``.
-  
+
   This includes marking known-slow tests (mostly the SFTP ones) so they can be
   filtered out by ``inv test``'s default behavior; as well as other minor
   tweaks to test collection and/or display (for example, GSSAPI tests are
