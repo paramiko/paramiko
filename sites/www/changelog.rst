@@ -2,6 +2,7 @@
 Changelog
 =========
 
+- :release:`2.7.0 <2019-12-03>`
 - :feature:`602` (via :issue:`1343`, :issue:`1313`, :issue:`618`) Implement
   support for OpenSSH 6.5-style private key files (typically denoted as having
   ``BEGIN OPENSSH PRIVATE KEY`` headers instead of PEM format's ``BEGIN RSA
