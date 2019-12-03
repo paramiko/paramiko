@@ -515,6 +515,9 @@ class PKey(object):
                     arr.append(s)
                     break
         except Exception as e:
+            # PKey-consuming code frequently wants to save-and-skip-over issues
+            # with loading keys, and uses SSHException as the (really friggin
+            # awful) signal for this. So for now...we do this.
             raise SSHException(str(e))
         return tuple(arr)
 
