@@ -181,14 +181,14 @@ class RSAKey(PKey):
 
     def _decode_key(self, data):
         pkformat, data = data
-        if pkformat == self.PRIVATE_KEY_FORMAT_ORIGINAL:
+        if pkformat == self._PRIVATE_KEY_FORMAT_ORIGINAL:
             try:
                 key = serialization.load_der_private_key(
                     data, password=None, backend=default_backend()
                 )
             except ValueError as e:
                 raise SSHException(str(e))
-        elif pkformat == self.PRIVATE_KEY_FORMAT_OPENSSH:
+        elif pkformat == self._PRIVATE_KEY_FORMAT_OPENSSH:
             n, e, d, iqmp, q, p = self._uint32_cstruct_unpack(data, "iiiiii")
             public_numbers = rsa.RSAPublicNumbers(e=e, n=n)
             key = rsa.RSAPrivateNumbers(

@@ -73,8 +73,8 @@ class PKey(object):
             "mode": modes.CBC,
         },
     }
-    PRIVATE_KEY_FORMAT_ORIGINAL = 1
-    PRIVATE_KEY_FORMAT_OPENSSH = 2
+    _PRIVATE_KEY_FORMAT_ORIGINAL = 1
+    _PRIVATE_KEY_FORMAT_OPENSSH = 2
     BEGIN_TAG = re.compile(
         r"^-{5}BEGIN (RSA|DSA|EC|OPENSSH) PRIVATE KEY-{5}\s*$"
     )
@@ -320,12 +320,12 @@ class PKey(object):
 
         if keytype == tag:
             data = self._read_private_key_old_format(lines, end, password)
-            pkformat = self.PRIVATE_KEY_FORMAT_ORIGINAL
+            pkformat = self._PRIVATE_KEY_FORMAT_ORIGINAL
         elif keytype == "OPENSSH":
             data = self._read_private_key_new_format(
                 lines[start:end], password
             )
-            pkformat = self.PRIVATE_KEY_FORMAT_OPENSSH
+            pkformat = self._PRIVATE_KEY_FORMAT_OPENSSH
         else:
             raise SSHException(
                 "encountered {} key, expected {} key".format(keytype, tag)

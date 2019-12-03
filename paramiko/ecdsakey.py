@@ -284,14 +284,14 @@ class ECDSAKey(PKey):
 
     def _decode_key(self, data):
         pkformat, data = data
-        if pkformat == self.PRIVATE_KEY_FORMAT_ORIGINAL:
+        if pkformat == self._PRIVATE_KEY_FORMAT_ORIGINAL:
             try:
                 key = serialization.load_der_private_key(
                     data, password=None, backend=default_backend()
                 )
             except (ValueError, AssertionError) as e:
                 raise SSHException(str(e))
-        elif pkformat == self.PRIVATE_KEY_FORMAT_OPENSSH:
+        elif pkformat == self._PRIVATE_KEY_FORMAT_OPENSSH:
             curve, verkey, sigkey = self._uint32_cstruct_unpack(data, "sss")
             try:
                 key = ec.derive_private_key(sigkey, curve, default_backend())
