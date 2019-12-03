@@ -441,7 +441,7 @@ class KeyTest(unittest.TestCase):
         pub = ECDSAKey(data=key.asbytes())
         self.assertTrue(pub.verify_ssh_sig(b"ice weasels", msg))
 
-    def test_22_load_RSA_key_new_format(self):
+    def test_load_openssh_format_RSA_key(self):
         key = RSAKey.from_private_key_file(
             _support("test_rsa_openssh.key"), b"television"
         )
@@ -452,7 +452,7 @@ class KeyTest(unittest.TestCase):
         my_rsa = hexlify(key.get_fingerprint())
         self.assertEqual(exp_rsa, my_rsa)
 
-    def test_23_load_DSS_key_new_format(self):
+    def test_load_openssh_format_DSS_key(self):
         key = DSSKey.from_private_key_file(
             _support("test_dss_openssh.key"), b"television"
         )

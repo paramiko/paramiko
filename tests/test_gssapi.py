@@ -204,13 +204,13 @@ class GSSAPITest(KerberosTestCase):
                 c_token = token[0].Buffer
                 self.assertNotEquals(0, error)
 
-    def test_2_gssapi_sspi_client(self):
+    def test_gssapi_sspi_client(self):
         """
         Test the used methods of python-gssapi or sspi, sspicon from pywin32.
         """
         self._gssapi_sspi_test()
 
-    def test_3_gssapi_sspi_server(self):
+    def test_gssapi_sspi_server(self):
         """
         Test the used methods of python-gssapi or sspi, sspicon from pywin32.
         """
