@@ -55,7 +55,7 @@ extras_require = {
 everything = []
 for subdeps in extras_require.values():
     everything.extend(subdeps)
-extras_require["everything"] = everything
+extras_require["all"] = everything
 
 setup(
     name="paramiko",

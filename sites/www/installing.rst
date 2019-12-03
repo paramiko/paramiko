@@ -36,7 +36,7 @@ There are also a number of **optional dependencies** you may install using
 .. TODO 3.0: tweak the invoke line to mention proxycommand too
 .. TODO 3.0: tweak the ed25519 line to remove the caveat
 
-- If you want all optional dependencies at once, use ``paramiko[everything]``.
+- If you want all optional dependencies at once, use ``paramiko[all]``.
 - For ``Match exec`` config support, use ``paramiko[invoke]`` (which installs
   `Invoke <https://www.pyinvoke.org>`_).
 - For GSS-API / SSPI support, use ``paramiko[gssapi]``, though also see

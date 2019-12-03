@@ -38,6 +38,7 @@ install:
     fi
   # Self-install for setup.py-driven deps (plus additional
   # safe-enough-for-all-matrix-cells optional deps)
+  # TODO: additional matrices or test steps to test all the entrypoints
   - pip install -e ".[ed25519,invoke]"
   # Dev (doc/test running) requirements
   # TODO: use poetry + whatever contexty-type stuff it has, should be more than

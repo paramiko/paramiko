@@ -65,7 +65,7 @@ Paramiko releases) are included. A keyword by itself means no known departures.
 
     - You must have the optional dependency Invoke installed; see :ref:`the
       installation docs <paramiko-itself>` (in brief: install
-      ``paramiko[invoke]`` or ``paramiko[everything]``).
+      ``paramiko[invoke]`` or ``paramiko[all]``).
     - As usual, connection-time information is not present during config
       lookup, and thus cannot be used to determine matching. This primarily
       impacts ``Match user``, which can match against loaded ``User`` values
