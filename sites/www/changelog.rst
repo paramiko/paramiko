@@ -34,7 +34,7 @@ Changelog
     subprocesses.
 
 - :support:`-` Additional :doc:`installation </installing>` ``extras_require``
-  "flavors" (``ed25519``, ``invoke``, and ``everything``) have been added to
+  "flavors" (``ed25519``, ``invoke``, and ``all``) have been added to
   our packaging metadata; see the install docs for details.
 - :bug:`- major` Paramiko's use of ``subprocess`` for ``ProxyCommand`` support
   is conditionally imported to prevent issues on limited interpreter platforms
