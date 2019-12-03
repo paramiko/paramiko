@@ -722,20 +722,47 @@ class TestMatchExec(object):
         result = load_config("match-exec").lookup("whatever")
         assert "user" not in result
 
-    def test_tokenizes_argument(self):
-        # TODO: spot check a few common ones like %h, %p, %l?
-        assert False
+    @patch("paramiko.config.getpass")
+    @patch("paramiko.config.invoke.run")
+    def test_tokenizes_argument(self, run, getpass, socket):
+        socket.gethostname.return_value = "local.fqdn"
+        getpass.getuser.return_value = "gandalf"
+        # Actual exec value is "%d %h %L %l %n %p %r %u"
+        parts = (
+            expanduser("~"),
+            "configured",
+            "local",
+            "some.fake.fqdn",
+            "target",
+            "22",
+            "intermediate",
+            "gandalf",
+        )
+        run.side_effect = _expect(" ".join(parts))
+        result = load_config("match-exec").lookup("target")
+        assert result["port"] == "1337"
 
-    def test_works_with_canonical(self, socket):
-        # TODO: before AND after. same file, different key/values, prove both
-        # show up?
-        assert False
+    @patch("paramiko.config.invoke.run")
+    def test_works_with_canonical(self, run, socket):
+        # Ensure both stanzas' exec components appear to match
+        run.side_effect = _expect(["uncanonicalized", "canonicalized"])
+        result = load_config("match-exec-canonical").lookup("who-cares")
+        # Prove both config values got loaded up, across the two passes
+        assert result["user"] == "defenseless"
+        assert result["port"] == "8007"
 
-    def test_may_be_negated(self):
-        assert False
+    @patch("paramiko.config.invoke.run")
+    def test_may_be_negated(self, run):
+        run.side_effect = _expect("this succeeds")
+        result = load_config("match-exec-negation").lookup("so-confusing")
+        # If negation did not work, the first of the two Match exec directives
+        # would have set User to 'nope' (and/or the second would have NOT set
+        # User to 'yup')
+        assert result["user"] == "yup"
 
     def test_requires_an_argument(self):
-        assert False
+        with raises(ConfigParseError):
+            load_config("match-exec-no-arg")
 
 
 class TestMatchHost(object):
@@ -775,8 +802,6 @@ class TestMatchHost(object):
 
     def test_works_with_canonical_keyword(self, socket):
         # NOTE: distinct from 'happens to be canonicalized' above
-        # TODO: before AND after. same file, different key/values, prove both
-        # show up?
         result = load_config("match-host-canonicalized").lookup("docs")
         assert result["user"] == "eric"
 
@@ -914,9 +939,6 @@ class TestMatchLocalUser(object):
 class TestComplexMatching(object):
     # NOTE: this is still a cherry-pick of a few levels of complexity, there's
     # no point testing literally all possible combinations.
-
-    def test_canonical_exec(self, socket):
-        assert False
 
     def test_originalhost_host(self):
         result = load_config("match-complex").lookup("target")

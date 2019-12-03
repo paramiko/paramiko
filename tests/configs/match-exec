@@ -6,3 +6,11 @@ Match exec unquoted
 
 Match exec "quoted spaced"
     User neil
+
+# Just to prepopulate values for tokenizing subsequent exec
+Host target
+    User intermediate
+    HostName configured
+
+Match exec "%d %h %L %l %n %p %r %u"
+    Port 1337
