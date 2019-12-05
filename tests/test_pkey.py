@@ -481,6 +481,10 @@ class KeyTest(unittest.TestCase):
         finally:
             os.remove(newfile)
 
+    def test_load_openssh_format_RSA_nopad(self):
+        # check just not exploding with 'Invalid key'
+        RSAKey.from_private_key_file(_support("test_rsa_openssh_nopad.key"))
+
     def test_stringification(self):
         key = RSAKey.from_private_key_file(_support("test_rsa.key"))
         comparable = TEST_KEY_BYTESTR_2 if PY2 else TEST_KEY_BYTESTR_3
