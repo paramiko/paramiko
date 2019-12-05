@@ -467,12 +467,12 @@ class KeyTest(unittest.TestCase):
 
     def test_load_openssh_format_EC_key(self):
         key = ECDSAKey.from_private_key_file(
-            _support('test_ecdsa_384_openssh.key'), b'television'
+            _support("test_ecdsa_384_openssh.key"), b"television"
         )
-        self.assertEqual('ecdsa-sha2-nistp384', key.get_name())
+        self.assertEqual("ecdsa-sha2-nistp384", key.get_name())
         self.assertEqual(PUB_EC_384_OPENSSH.split()[1], key.get_base64())
         self.assertEqual(384, key.get_bits())
-        exp_fp = b(FINGER_EC_384_OPENSSH.split()[1].replace(':', ''))
+        exp_fp = b(FINGER_EC_384_OPENSSH.split()[1].replace(":", ""))
         my_fp = hexlify(key.get_fingerprint())
         self.assertEqual(exp_fp, my_fp)
 
