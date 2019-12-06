@@ -24,6 +24,7 @@ import stat
 import threading
 import time
 import weakref
+
 from paramiko import util
 from paramiko.channel import Channel
 from paramiko.message import Message
@@ -37,7 +38,6 @@ from paramiko.sftp import (
     CMD_SYMLINK, CMD_SETSTAT, CMD_READLINK, CMD_REALPATH, CMD_STATUS,
     CMD_EXTENDED, SFTP_OK, SFTP_EOF, SFTP_NO_SUCH_FILE, SFTP_PERMISSION_DENIED,
 )
-
 from paramiko.sftp_attr import SFTPAttributes
 from paramiko.ssh_exception import SSHException
 from paramiko.sftp_file import SFTPFile
@@ -227,7 +227,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         self._request(CMD_CLOSE, handle)
         return filelist
 
-    def listdir_iter(self, path='.', read_aheads=50):
+    def listdir_iter(self, path='.', read_aheads=10):
         """
         Generator version of `.listdir_attr`.
 
@@ -235,7 +235,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
 
         This function adds one more kwarg on top of `.listdir_attr`:
         ``read_aheads``, an integer controlling how many
-        ``SSH_FXP_READDIR`` requests are made to the server. The default of 50
+        ``SSH_FXP_READDIR`` requests are made to the server. The default
         should suffice for most file listings as each request/response cycle
         may contain multiple files (dependent on server implementation.)
 
@@ -250,44 +250,35 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
 
         handle = msg.get_string()
 
-        nums = list()
         while True:
+            nums = list()
+            results = list()
             try:
-                # Send out a bunch of readdir requests so that we can read the
-                # responses later on Section 6.7 of the SSH file transfer RFC
-                # explains this
+                # Send out a bunch of readdir requests so that we can read the responses later
+                # Section 6.7 of the SSH file transfer RFC explains this
                 # http://filezilla-project.org/specs/draft-ietf-secsh-filexfer-02.txt
                 for i in range(read_aheads):
                     num = self._async_request(type(None), CMD_READDIR, handle)
                     nums.append(num)
 
-                # For each of our sent requests
-                # Read and parse the corresponding packets
-                # If we're at the end of our queued requests, then fire off
-                # some more requests
-                # Exit the loop when we've reached the end of the directory
-                # handle
+                # need to read whole batch before yielding any
                 for num in nums:
-                    t, pkt_data = self._read_packet()
-                    msg = Message(pkt_data)
-                    new_num = msg.get_int()
-                    if num == new_num:
-                        if t == CMD_STATUS:
-                            self._convert_status(msg)
+                    t, msg = self._read_response(num)
                     count = msg.get_int()
                     for i in range(count):
                         filename = msg.get_text()
                         longname = msg.get_text()
-                        attr = SFTPAttributes._from_msg(
-                            msg, filename, longname)
+                        attr = SFTPAttributes._from_msg(msg, filename, longname)
                         if (filename != '.') and (filename != '..'):
-                            yield attr
+                            results.append(attr)
 
-                # If we've hit the end of our queued requests, reset nums.
-                nums = list()
+                for a in results:
+                    yield a
 
             except EOFError:
                 self._request(CMD_CLOSE, handle)
+                for a in results:
+                    yield a
                 return
 
     def open(self, filename, mode='r', bufsize=-1):
