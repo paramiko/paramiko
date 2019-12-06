@@ -31,11 +31,12 @@ from paramiko.agent import Agent
 from paramiko.common import DEBUG
 from paramiko.config import SSH_PORT
 from paramiko.dsskey import DSSKey
+from paramiko.rsakey import RSAKey
 from paramiko.ecdsakey import ECDSAKey
 from paramiko.ed25519key import Ed25519Key
+from paramiko.pkey import load_private_key_file
 from paramiko.hostkeys import HostKeys
 from paramiko.py3compat import string_types
-from paramiko.rsakey import RSAKey
 from paramiko.ssh_exception import SSHException, BadHostKeyException, BadAuthenticationType
 from paramiko.transport import Transport
 from paramiko.util import retry_on_signal, ClosingContextManager
@@ -484,7 +485,7 @@ class SSHClient (ClosingContextManager):
         """
         return self._transport
 
-    def _key_from_filepath(self, filename, klass, password):
+    def _key_from_filepath(self, filename, klass=None, password=None):
         """
         Attempt to derive a `.PKey` from given string path ``filename``:
 
@@ -502,7 +503,10 @@ class SSHClient (ClosingContextManager):
             key_path = filename
             cert_path = filename + cert_suffix
         # Blindly try the key path; if no private key, nothing will work.
-        key = klass.from_private_key_file(key_path, password)
+        if klass:
+            key = klass.from_private_key_file(key_path, password)
+        else:
+            key = load_private_key_file(key_path, password)
         # TODO: change this to 'Loading' instead of 'Trying' sometime; probably
         # when #387 is released, since this is a critical log message users are
         # likely testing/filtering for (bah.)
@@ -591,19 +595,16 @@ class SSHClient (ClosingContextManager):
 
         if not two_factor and 'publickey' in allowed_types:
             for key_filename in key_filenames:
-                for pkey_class in (RSAKey, DSSKey, ECDSAKey, Ed25519Key):
-                    try:
-                        key = self._key_from_filepath(
-                            key_filename, pkey_class, passphrase,
-                        )
-                        allowed_types = set(
-                            self._transport.auth_publickey(username, key))
-                        two_factor = (allowed_types & two_factor_types)
-                        if not two_factor:
-                            return
-                        break
-                    except SSHException as e:
-                        saved_exception = e
+                try:
+                    key = self._key_from_filepath(key_filename, password=passphrase)
+
+                    allowed_types = set(self._transport.auth_publickey(username, key))
+                    two_factor = (allowed_types & two_factor_types)
+                    if not two_factor:
+                        return
+                    break
+                except SSHException as e:
+                    saved_exception = e
 
         if allow_agent and not two_factor and 'publickey' in allowed_types:
             if self._agent is None:
