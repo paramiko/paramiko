@@ -28,7 +28,20 @@ from hashlib import md5
 
 import pytest
 
-from paramiko import RSAKey, DSSKey, ECDSAKey, Ed25519Key, Message, util
+from paramiko import (
+    util,
+    RSAKey,
+    DSSKey,
+    ECDSAKey,
+    Ed25519Key,
+    Message,
+    SSHException,
+)
+from paramiko.pkey import (
+    PKey,
+    load_private_key,
+    load_private_key_file,
+)
 from paramiko.py3compat import StringIO, byte_chr, b, PY2
 
 from .util import _support
@@ -112,6 +125,18 @@ ZGuxa5AW16qj6VLypFbLrEWrt9AZUloCMefxO8bNLjK/O5g0rAVasar1TnyHE9qj
 4NwzANZASWjQNbc4MAG8vzqezFwLIn/kNyNTsXNfqEko9OgHZknlj2Z79dwTJcRA
 L4QLcT5aND0EHZLB2fAUDXiWIb2j4rg1mwPlBMiBXA==
 -----END EC PRIVATE KEY-----
+"""
+
+UNSUPPORTED_PRIVATE_KEY = """\
+-----BEGIN UNSUPPORTED PRIVATE KEY-----
+BLABLABLABLABLA=
+-----END UNSUPPORTED PRIVATE KEY-----
+"""
+
+INVALID_BASE64_KEY = """\
+-----BEGIN OPENSSH PRIVATE KEY-----
+INVALID/PADDING
+-----END OPENSSH PRIVATE KEY-----
 """
 
 x1234 = b'\x01\x02\x03\x04'
@@ -577,3 +602,158 @@ class KeyTest(unittest.TestCase):
             key1.load_certificate,
             _support('test_rsa.key-cert.pub'),
         )
+
+    def test_autodetect_ed25519(self):
+        key = load_private_key_file(_support("test_ed25519.key"))
+        self.assertIsInstance(key, Ed25519Key)
+
+    def test_autodetect_ecdsa(self):
+        key = load_private_key_file(_support("test_ecdsa_384.key"))
+        self.assertIsInstance(key, ECDSAKey)
+
+    def test_autodetect_rsa(self):
+        key = load_private_key_file(_support("test_rsa.key"))
+        self.assertIsInstance(key, RSAKey)
+
+    def test_autodetect_dsa(self):
+        key = load_private_key_file(_support("test_dss.key"))
+        self.assertIsInstance(key, DSSKey)
+
+    def test_autodetect_password(self):
+        key = load_private_key_file(
+            _support("test_rsa_password.key"), password="television"
+        )
+        self.assertIsInstance(key, RSAKey)
+
+    def test_autodetect_string(self):
+        key = load_private_key(ECDSA_PRIVATE_OUT_256)
+        self.assertIsInstance(key, ECDSAKey)
+
+    def test_autodetect_unsupported(self):
+        with self.assertRaises(SSHException) as err:
+            load_private_key(UNSUPPORTED_PRIVATE_KEY)
+        self.assertEqual(
+            str(err.exception), "Unsupported key type UNSUPPORTED"
+        )
+
+    def test_wrong_key_type(self):
+        testcases = [
+            (
+                RSAKey,
+                _support("test_ed25519.key"),
+                "Expected key type ssh-rsa, got ssh-ed25519"
+            ),
+            (
+                Ed25519Key,
+                _support("test_rsa_password.key"),
+                "Expected key type OPENSSH, got RSA"
+            ),
+            (
+                ECDSAKey,
+                _support("test_dss.key"),
+                "Expected key type EC, got DSA"
+            ),
+            (
+                DSSKey,
+                _support("test_ecdsa_384_o.key"),
+                "Expected key type ssh-dss, got ecdsa-sha2-nistp384"
+            ),
+        ]
+        for cls, filename, errmsg in testcases:
+            with self.assertRaises(SSHException) as ctx:
+                cls(filename=filename, password=b"television")
+            self.assertEqual(str(ctx.exception), errmsg)
+
+
+class ParseTest(unittest.TestCase):
+    """
+    Testing mostly with old format and a password; other cases are a subset
+    of that.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        # Several tests rely on these fields.
+        cls.ecdsa_str = open(_support("test_ecdsa_password_256.key")).read().strip()
+        cls.ecdsa_parsed = PKey._parse_openssh_pkey(cls.ecdsa_str)
+
+    def test_parse_old_password(self):
+        """Old format with headers"""
+        pkformat, typ, headers, data = PKey._parse_openssh_pkey(self.ecdsa_str)
+
+        self.assertEqual(pkformat, PKey.FORMAT_ORIGINAL)
+        self.assertEqual(typ, ECDSAKey.LEGACY_TYPE)
+        self.assertEqual(headers, {
+            "dek-info": "AES-128-CBC,EEB56BC745EDB2DE04FC3FE1F8DA387E",
+            "proc-type": "4,ENCRYPTED"
+        })
+        self.assertIsInstance(data, bytes)
+        self.assertEqual(len(data), 128)
+
+    def test_parse_old_plain(self):
+        key_str = open(_support("test_rsa.key")).read()
+        pkformat, typ, headers, data = PKey._parse_openssh_pkey(key_str)
+
+        self.assertEqual(pkformat, PKey.FORMAT_ORIGINAL)
+        self.assertEqual(typ, RSAKey.LEGACY_TYPE)
+        self.assertEqual(headers, {})
+        self.assertIsInstance(data, bytes)
+        self.assertEqual(len(data), 606)
+
+    def test_parse_new(self):
+        """In new format, parsing is same for encryped and un-encrypted."""
+        key_str = open(_support("test_ed25519.key")).read()
+        pkformat, typ, headers, data = PKey._parse_openssh_pkey(key_str)
+
+        self.assertEqual(pkformat, PKey.FORMAT_OPENSSH)
+        self.assertEqual(typ, "OPENSSH")
+        self.assertEqual(headers, {})
+        self.assertIsInstance(data, bytes)
+        self.assertEqual(len(data), 266)
+
+    def test_parse_whitespace(self):
+        """In some places, extraneous whitespace should not affect parsing"""
+        key_str = self.ecdsa_str
+        key_str = key_str.replace("\n", "  \t\n")
+        key_str = key_str.replace(": ", ": \t ")
+        self.assertEqual(PKey._parse_openssh_pkey(key_str), self.ecdsa_parsed)
+
+    def test_parse_crlf(self):
+        """Test handling of Windows newlines"""
+        key_str = self.ecdsa_str
+        key_str = key_str.replace("\n", "\r\n")
+        self.assertEqual(PKey._parse_openssh_pkey(key_str), self.ecdsa_parsed)
+
+    def test_parse_junk(self):
+        """Non-key data is allowed before and after the key itself"""
+        key_str = '\n'.join([
+            "BLA bla BLA",
+            "Lots of junk",
+            self.ecdsa_str.strip(),
+            "It's your lucky day, we even have trailing junk!"
+        ])
+        self.assertEqual(PKey._parse_openssh_pkey(key_str), self.ecdsa_parsed)
+
+    def test_parse_begin_line(self):
+        """BEGIN tag must be on a line by itself"""
+        key_str = "BLA" + self.ecdsa_str
+        with self.assertRaises(SSHException):
+            PKey._parse_openssh_pkey(key_str)
+
+    def test_parse_end_line(self):
+        """END tag must be on a line by itself"""
+        key_str = self.ecdsa_str.strip() + "BLA"
+        with self.assertRaises(SSHException):
+            PKey._parse_openssh_pkey(key_str)
+
+    def test_bad_base64(self):
+        with self.assertRaises(SSHException) as ctx:
+            PKey._parse_openssh_pkey(INVALID_BASE64_KEY)
+        self.assertEqual(
+            str(ctx.exception), "base64 decoding error: Incorrect padding"
+        )
+
+    def test_parse_empty(self):
+        with self.assertRaises(SSHException) as ctx:
+            PKey._parse_openssh_pkey("")
+        self.assertEqual(str(ctx.exception), "not a valid private key file")

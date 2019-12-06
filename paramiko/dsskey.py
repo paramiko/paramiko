@@ -33,17 +33,21 @@ from paramiko.common import zero_byte
 from paramiko.ssh_exception import SSHException
 from paramiko.message import Message
 from paramiko.ber import BER, BERException
-from paramiko.pkey import PKey
+from paramiko.pkey import PKey, register_pkey_type
 
 
+@register_pkey_type
 class DSSKey(PKey):
     """
     Representation of a DSS key which can be used to sign an verify SSH2
     data.
     """
 
+    LEGACY_TYPE = "DSA"
+    OPENSSH_TYPE_PREFIX = "ssh-dss"
+
     def __init__(self, msg=None, data=None, filename=None, password=None,
-                 vals=None, file_obj=None):
+                 vals=None, file_obj=None, _raw=None):
         self.p = None
         self.q = None
         self.g = None
@@ -51,11 +55,13 @@ class DSSKey(PKey):
         self.x = None
         self.public_blob = None
         if file_obj is not None:
-            self._from_private_key(file_obj, password)
-            return
+            _raw = self._from_private_key(file_obj, password)
         if filename is not None:
-            self._from_private_key_file(filename, password)
+            _raw = self._from_private_key_file(filename, password)
+        if _raw is not None:
+            self._decode_key(_raw)
             return
+
         if (msg is None) and (data is not None):
             msg = Message(data)
         if vals is not None:
@@ -217,15 +223,6 @@ class DSSKey(PKey):
         return key
 
     # ...internals...
-
-    def _from_private_key_file(self, filename, password):
-        data = self._read_private_key_file('DSA', 'ssh-dss', filename, password)
-        self._decode_key(data)
-
-    def _from_private_key(self, file_obj, password):
-        data = self._read_private_key('DSA', 'ssh-dss', file_obj, password)
-        self._decode_key(data)
-
     def _decode_key(self, data):
         pkformat, data = data
         # private key file contains:

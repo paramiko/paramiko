@@ -4,7 +4,7 @@ import shutil
 import threading
 
 import pytest
-from paramiko import RSAKey, SFTPServer, SFTP, Transport
+from paramiko import SFTPServer, SFTP, Transport, load_private_key_file
 
 from .loop import LoopSocket
 from .stub_sftp import StubServer, StubSFTPServer
@@ -69,7 +69,7 @@ def sftp_server():
     tc = Transport(sockc)
     ts = Transport(socks)
     # Auth
-    host_key = RSAKey.from_private_key_file(_support('test_rsa.key'))
+    host_key = load_private_key_file(_support('test_rsa.key'))
     ts.add_server_key(host_key)
     # Server setup
     event = threading.Event()
