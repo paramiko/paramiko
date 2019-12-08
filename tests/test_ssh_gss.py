@@ -89,7 +89,7 @@ class GSSAuthTest(KerberosTestCase):
     def _run(self):
         self.socks, addr = self.sockl.accept()
         self.ts = paramiko.Transport(self.socks)
-        host_key = paramiko.RSAKey.from_private_key_file("tests/test_rsa.key")
+        host_key = paramiko.load_private_key_file("tests/test_rsa.key")
         self.ts.add_server_key(host_key)
         server = NullServer()
         self.ts.start_server(self.event, server)
@@ -100,7 +100,7 @@ class GSSAuthTest(KerberosTestCase):
 
         The exception is ... no exception yet
         """
-        host_key = paramiko.RSAKey.from_private_key_file("tests/test_rsa.key")
+        host_key = paramiko.load_private_key_file("tests/test_rsa.key")
         public_host_key = paramiko.RSAKey(data=host_key.asbytes())
 
         self.tc = paramiko.SSHClient()

@@ -26,16 +26,20 @@ from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import rsa, padding
 
 from paramiko.message import Message
-from paramiko.pkey import PKey
+from paramiko.pkey import PKey, register_pkey_type
 from paramiko.py3compat import PY2
 from paramiko.ssh_exception import SSHException
 
 
+@register_pkey_type
 class RSAKey(PKey):
     """
     Representation of an RSA key which can be used to sign and verify SSH2
     data.
     """
+
+    LEGACY_TYPE = "RSA"
+    OPENSSH_TYPE_PREFIX = "ssh-rsa"
 
     def __init__(
         self,
@@ -45,14 +49,16 @@ class RSAKey(PKey):
         password=None,
         key=None,
         file_obj=None,
+        _raw=None,
     ):
         self.key = None
         self.public_blob = None
         if file_obj is not None:
-            self._from_private_key(file_obj, password)
-            return
+            _raw = self._from_private_key(file_obj, password)
         if filename is not None:
-            self._from_private_key_file(filename, password)
+            _raw = self._from_private_key_file(filename, password)
+        if _raw is not None:
+            self._decode_key(_raw)
             return
         if (msg is None) and (data is not None):
             msg = Message(data)
@@ -170,15 +176,6 @@ class RSAKey(PKey):
         return RSAKey(key=key)
 
     # ...internals...
-
-    def _from_private_key_file(self, filename, password):
-        data = self._read_private_key_file("RSA", filename, password)
-        self._decode_key(data)
-
-    def _from_private_key(self, file_obj, password):
-        data = self._read_private_key("RSA", file_obj, password)
-        self._decode_key(data)
-
     def _decode_key(self, data):
         pkformat, data = data
         if pkformat == self._PRIVATE_KEY_FORMAT_ORIGINAL:

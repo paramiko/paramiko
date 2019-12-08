@@ -6,6 +6,7 @@ Parent key class
 ================
 
 .. automodule:: paramiko.pkey
+    :member-order: bysource
 
 DSA (DSS)
 =========

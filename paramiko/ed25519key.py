@@ -17,10 +17,11 @@
 import nacl.signing
 
 from paramiko.message import Message
-from paramiko.pkey import PKey
+from paramiko.pkey import PKey, register_pkey_type
 from paramiko.ssh_exception import SSHException
 
 
+@register_pkey_type
 class Ed25519Key(PKey):
     """
     Representation of an `Ed25519 <https://ed25519.cr.yp.to/>`_ key.
@@ -33,8 +34,18 @@ class Ed25519Key(PKey):
         Added a ``file_obj`` parameter to match other key classes.
     """
 
+    # Legacy file format does not support Ed25519
+    LEGACY_TYPE = None
+    OPENSSH_TYPE_PREFIX = "ssh-ed25519"
+
     def __init__(
-        self, msg=None, data=None, filename=None, password=None, file_obj=None
+        self,
+        msg=None,
+        data=None,
+        filename=None,
+        password=None,
+        file_obj=None,
+        _raw=None,
     ):
         self.public_blob = None
         verifying_key = None
@@ -51,15 +62,12 @@ class Ed25519Key(PKey):
             )
             verifying_key = nacl.signing.VerifyKey(msg.get_binary())
         elif filename is not None:
-            pkformat, data = self._read_private_key_file(
-                "OPENSSH", filename, password
-            )
+            _raw = self._from_private_key_file(filename, password)
         elif file_obj is not None:
-            pkformat, data = self._read_private_key(
-                "OPENSSH", file_obj, password
-            )
+            _raw = self._from_private_key(file_obj, password)
 
-        if filename or file_obj:
+        if _raw is not None:
+            pkformat, data = _raw
             assert (
                 pkformat == self._PRIVATE_KEY_FORMAT_OPENSSH
             ), "Unexpected pkformat {}".format(pkformat)
