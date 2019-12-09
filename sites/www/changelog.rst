@@ -2,6 +2,8 @@
 Changelog
 =========
 
+- :bug:`1565` (via :issue:`1566`) Fix a bug in support for ECDSA keys under the
+  newly supported OpenSSH key format. Thanks to Pierce Lopez for the patch.
 - :release:`2.7.0 <2019-12-03>`
 - :feature:`602` (via :issue:`1343`, :issue:`1313`, :issue:`618`) Implement
   support for OpenSSH 6.5-style private key files (typically denoted as having
