@@ -292,10 +292,21 @@ class ECDSAKey(PKey):
             except (ValueError, AssertionError) as e:
                 raise SSHException(str(e))
         elif pkformat == self._PRIVATE_KEY_FORMAT_OPENSSH:
-            curve, verkey, sigkey = self._uint32_cstruct_unpack(data, "sss")
             try:
-                key = ec.derive_private_key(sigkey, curve, default_backend())
-            except (AttributeError, TypeError) as e:
+                msg = Message(data)
+                curve_name = msg.get_text()
+                verkey = msg.get_binary()  # noqa: F841
+                sigkey = msg.get_mpint()
+                name = "ecdsa-sha2-" + curve_name
+                curve = self._ECDSA_CURVES.get_by_key_format_identifier(name)
+                if not curve:
+                    raise SSHException("Invalid key curve identifier")
+                key = ec.derive_private_key(
+                    sigkey, curve.curve_class(), default_backend()
+                )
+            except Exception as e:
+                # PKey._read_private_key_openssh() should check or return
+                # keytype - parsing could fail for any reason due to wrong type
                 raise SSHException(str(e))
         else:
             self._got_bad_key_format_id(pkformat)

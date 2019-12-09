@@ -2,6 +2,12 @@
 Changelog
 =========
 
+- :bug:`1567` The new-style private key format (added in 2.7) suffered from an
+  unpadding bug which had been fixed earlier for Ed25519 (as that key type has
+  always used the newer format). That fix has been refactored and applied to
+  the base key class, courtesy of Pierce Lopez.
+- :bug:`1565` (via :issue:`1566`) Fix a bug in support for ECDSA keys under the
+  newly supported OpenSSH key format. Thanks to Pierce Lopez for the patch.
 - :release:`2.7.0 <2019-12-03>`
 - :feature:`602` (via :issue:`1343`, :issue:`1313`, :issue:`618`) Implement
   support for OpenSSH 6.5-style private key files (typically denoted as having
