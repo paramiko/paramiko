@@ -410,7 +410,6 @@ class SFTPFile(BufferedFile):
             long(length),
             block_size,
         )
-        msg.get_text()  # ext
         msg.get_text()  # alg
         data = msg.get_remainder()
         return data

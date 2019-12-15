@@ -352,7 +352,6 @@ class SFTPServer(BaseSFTP, SubsystemHandler):
 
         msg = Message()
         msg.add_int(request_number)
-        msg.add_string("check-file")
         msg.add_string(algname)
         msg.add_bytes(sum_out)
         self._send_packet(CMD_EXTENDED_REPLY, msg)
