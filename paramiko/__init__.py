@@ -1,4 +1,6 @@
 # Copyright (C) 2003-2011  Robey Pointer <robeypointer@gmail.com>
+# Copyright (C) 2013-2018  Jeff Forcier <jeff@bitprophet.org>
+# Copyright (C) 2019       Pierce Lopez <pierce.lopez@gmail.com>
 #
 # This file is part of paramiko.
 #
@@ -16,8 +18,6 @@
 # along with Paramiko; if not, write to the Free Software Foundation, Inc.,
 # 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
 
-# flake8: noqa
-import sys
 from paramiko._version import __version__, __version_info__
 from paramiko.transport import SecurityOptions, Transport
 from paramiko.client import (
@@ -37,7 +37,7 @@ from paramiko.rsakey import RSAKey
 from paramiko.dsskey import DSSKey
 from paramiko.ecdsakey import ECDSAKey
 from paramiko.ed25519key import Ed25519Key
-from paramiko.sftp import SFTPError, BaseSFTP
+from paramiko.sftp import SFTPError
 from paramiko.sftp_client import SFTP, SFTPClient
 from paramiko.sftp_server import SFTPServer
 from paramiko.sftp_attr import SFTPAttributes
@@ -77,6 +77,8 @@ __author__ = "Jeff Forcier <jeff@bitprophet.org>"
 __license__ = "GNU Lesser General Public License (LGPL)"
 
 __all__ = [
+    '__version__',
+    '__version_info__',
     'Transport',
     'SSHClient',
     'MissingHostKeyPolicy',
@@ -84,14 +86,19 @@ __all__ = [
     'RejectPolicy',
     'WarningPolicy',
     'SecurityOptions',
-    'SubsystemHandler',
+    'AuthHandler',
     'Channel',
+    'ChannelFile',
     'PKey',
     'RSAKey',
     'DSSKey',
     'ECDSAKey',
     'Ed25519Key',
+    'PublicBlob',
+    'load_private_key',
+    'load_private_key_file',
     'Message',
+    'Packetizer',
     'SSHException',
     'AuthenticationException',
     'PasswordRequiredException',
@@ -100,6 +107,17 @@ __all__ = [
     'BadHostKeyException',
     'ProxyCommand',
     'ProxyCommandFailure',
+    'GSSAuth',
+    'GSS_AUTH_AVAILABLE',
+    'GSS_EXCEPTIONS',
+    'AUTH_SUCCESSFUL',
+    'AUTH_PARTIALLY_SUCCESSFUL',
+    'AUTH_FAILED',
+    'OPEN_SUCCEEDED',
+    'OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED',
+    'OPEN_FAILED_CONNECT_FAILED',
+    'OPEN_FAILED_UNKNOWN_CHANNEL_TYPE',
+    'OPEN_FAILED_RESOURCE_SHORTAGE',
     'SFTP',
     'SFTPFile',
     'SFTPHandle',
@@ -108,12 +126,22 @@ __all__ = [
     'SFTPError',
     'SFTPAttributes',
     'SFTPServerInterface',
+    'SFTP_OK',
+    'SFTP_EOF',
+    'SFTP_NO_SUCH_FILE',
+    'SFTP_PERMISSION_DENIED',
+    'SFTP_FAILURE',
+    'SFTP_BAD_MESSAGE',
+    'SFTP_NO_CONNECTION',
+    'SFTP_CONNECTION_LOST',
+    'SFTP_OP_UNSUPPORTED',
     'ServerInterface',
+    'SubsystemHandler',
+    'InteractiveQuery',
     'BufferedFile',
     'Agent',
     'AgentKey',
     'HostKeys',
     'SSHConfig',
-    'util',
     'io_sleep',
 ]
