@@ -36,7 +36,7 @@ from cryptography.hazmat.primitives.ciphers import algorithms, modes, Cipher
 
 from paramiko import util
 from paramiko.common import o600
-from paramiko.py3compat import u, b, encodebytes, decodebytes, string_types
+from paramiko.py3compat import PY2, u, b, encodebytes, decodebytes, string_types
 from paramiko.ssh_exception import SSHException, PasswordRequiredException
 from paramiko.message import Message
 
@@ -554,11 +554,18 @@ class PKey(object):
         else:
             encryption = serialization.BestAvailableEncryption(b(password))
 
-        f.write(
-            key.private_bytes(
-                serialization.Encoding.PEM, format, encryption
-            ).decode()
-        )
+        if PY2:
+            f.write(
+                key.private_bytes(
+                    serialization.Encoding.PEM, format, encryption
+                ).decode()
+            )
+        else:
+            f.write(
+                key.private_bytes(
+                    serialization.Encoding.PEM, format, encryption
+                )
+            )
 
     def _check_type_and_load_cert(self, msg, key_type, cert_type):
         """
