@@ -490,6 +490,15 @@ class KeyTest(unittest.TestCase):
         my_fp = hexlify(key.get_fingerprint())
         self.assertEqual(exp_fp, my_fp)
 
+    def test_leading_stuff(self):
+        orig = RSAKey.from_private_key(StringIO(RSA_PRIVATE_OUT))
+        skey = RSAKey.from_private_key(StringIO("\n\n" + RSA_PRIVATE_OUT + "\n\n"))
+        self.assertEqual(orig.get_fingerprint(), skey.get_fingerprint())
+
+        comment = "Bag Attributes\n    localKeyID: 32 CB FA 64 B9 D8 C5 D3 BC 4B 20 04 3D EC 38 6B 32 2D C4 9A \nKey Attributes: <No Attributes>\n"  # noqa: E501
+        ckey = RSAKey.from_private_key(StringIO(comment + RSA_PRIVATE_OUT))
+        self.assertEqual(orig.get_fingerprint(), ckey.get_fingerprint())
+
     def test_salt_size(self):
         # Read an existing encrypted private key
         file_ = _support('test_rsa_password.key')
