@@ -331,7 +331,7 @@ class PKey(object):
             m = self.END_TAG.match(lines[end])
 
         if keytype == tag:
-            data = self._read_private_key_pem(lines, end, password)
+            data = self._read_private_key_pem(lines[start:end], password)
             pkformat = self._PRIVATE_KEY_FORMAT_ORIGINAL
         elif keytype == "OPENSSH":
             data = self._read_private_key_openssh(lines[start:end], password)
@@ -347,11 +347,10 @@ class PKey(object):
         err = "{}._read_private_key() spat out an unknown key format id '{}'"
         raise SSHException(err.format(self.__class__.__name__, id_))
 
-    def _read_private_key_pem(self, lines, end, password):
-        start = 0
+    def _read_private_key_pem(self, lines, password):
         # parse any headers first
+        start = 0
         headers = {}
-        start += 1
         while start < len(lines):
             line = lines[start].split(": ")
             if len(line) == 1:
@@ -360,7 +359,7 @@ class PKey(object):
             start += 1
         # if we trudged to the end of the file, just try to cope.
         try:
-            data = decodebytes(b("".join(lines[start:end])))
+            data = decodebytes(b("".join(lines[start:])))
         except base64.binascii.Error as e:
             raise SSHException("base64 decoding error: {}".format(e))
         if "proc-type" not in headers:
