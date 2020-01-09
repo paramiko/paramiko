@@ -150,7 +150,7 @@ class KeyTest(unittest.TestCase):
         s.seek(0)
         key2 = RSAKey.from_private_key(s)
         self.assertEqual(key, key2)
-    
+
     def test_load_rsa(self):
         key = RSAKey.from_private_key_file(_support("test_rsa.key"))
         self.assertEqual("ssh-rsa", key.get_name())

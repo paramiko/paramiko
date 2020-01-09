@@ -36,7 +36,8 @@ from cryptography.hazmat.primitives.ciphers import algorithms, modes, Cipher
 
 from paramiko import util
 from paramiko.common import o600
-from paramiko.py3compat import u, b, encodebytes, decodebytes, string_types, StringIO
+from paramiko.py3compat import u, b, encodebytes, decodebytes, string_types, \
+    StringIO
 from paramiko.ssh_exception import SSHException, PasswordRequiredException
 from paramiko.message import Message
 
@@ -238,8 +239,8 @@ class PKey(object):
     @classmethod
     def from_private_key_str(cls, key_str, password=None):
         """
-        Create a key object by reading a private key from a str object.  If 
-        the private key is encrypted and ``password`` is not ``None``, the 
+        Create a key object by reading a private key from a str object.  If
+        the private key is encrypted and ``password`` is not ``None``, the
         given password will be used to decrypt the key (otherwise
         `.PasswordRequiredException` is thrown).
 
