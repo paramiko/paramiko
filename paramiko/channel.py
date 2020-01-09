@@ -376,7 +376,7 @@ class Channel(ClosingContextManager):
         """
         return self.closed or self.status_event.is_set()
 
-    def recv_exit_status(self):
+    def recv_exit_status(self, timeout_s):
         """
         Return the exit status from the process on the server.  This is
         mostly useful for retrieving the results of an `exec_command`.
@@ -396,10 +396,16 @@ class Channel(ClosingContextManager):
             `.Channel.recv` (or, again, using threads) can avoid the hang.
 
         :return: the exit code (as an `int`) of the process on the server.
-
+        
+        :raises:
+            `.SSHException` -- if the request was rejected or the channel was
+            closed
+           
         .. versionadded:: 1.2
         """
-        self.status_event.wait()
+        
+        if not self.status_event.wait(timeout=timeout_s):
+             raise socket.timeout()
         assert self.status_event.is_set()
         return self.exit_status
 
