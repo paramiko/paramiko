@@ -43,7 +43,7 @@ from paramiko.py3compat import (
     decodebytes,
     string_types,
     StringIO,
-    )
+)
 from paramiko.ssh_exception import SSHException, PasswordRequiredException
 from paramiko.message import Message
 
