@@ -36,7 +36,7 @@ from cryptography.hazmat.primitives.ciphers import algorithms, modes, Cipher
 
 from paramiko import util
 from paramiko.common import o600
-from paramiko.py3compat import u, b, encodebytes, decodebytes, string_types
+from paramiko.py3compat import u, b, encodebytes, decodebytes, string_types, StringIO
 from paramiko.ssh_exception import SSHException, PasswordRequiredException
 from paramiko.message import Message
 
@@ -233,6 +233,28 @@ class PKey(object):
         :raises: `.SSHException` -- if the key file is invalid
         """
         key = cls(filename=filename, password=password)
+        return key
+
+    @classmethod
+    def from_private_key_str(cls, key_str, password=None):
+        """
+        Create a key object by reading a private key from a str object.  If 
+        the private key is encrypted and ``password`` is not ``None``, the 
+        given password will be used to decrypt the key (otherwise
+        `.PasswordRequiredException` is thrown).
+
+        :param key_str: str containing key
+        :param str password:
+            an optional password to use to decrypt the key, if it's encrypted
+        :return: a new `.PKey` based on the given private key
+
+        :raises: ``IOError`` -- if there was an error reading the key
+        :raises: `.PasswordRequiredException` --
+            if the private key file is encrypted, and ``password`` is ``None``
+        :raises: `.SSHException` -- if the key file is invalid
+        """
+        file_obj = StringIO(key_str)
+        key = cls(file_obj=file_obj, password=password)
         return key
 
     @classmethod

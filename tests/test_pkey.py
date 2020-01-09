@@ -141,6 +141,16 @@ class KeyTest(unittest.TestCase):
         exp = b"\x61\xE1\xF2\x72\xF4\xC1\xC4\x56\x15\x86\xBD\x32\x24\x98\xC0\xE9\x24\x67\x27\x80\xF4\x7B\xB3\x7D\xDA\x7D\x54\x01\x9E\x64"  # noqa
         self.assertEqual(exp, key)
 
+    def test_load_private_key_str(self):
+        key = RSAKey.from_private_key_str(RSA_PRIVATE_OUT)
+
+        s = StringIO()
+        key.write_private_key(s)
+        self.assertEqual(RSA_PRIVATE_OUT, s.getvalue())
+        s.seek(0)
+        key2 = RSAKey.from_private_key(s)
+        self.assertEqual(key, key2)
+    
     def test_load_rsa(self):
         key = RSAKey.from_private_key_file(_support("test_rsa.key"))
         self.assertEqual("ssh-rsa", key.get_name())
