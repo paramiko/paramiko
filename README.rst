@@ -10,8 +10,8 @@ Paramiko
     :target: https://codecov.io/gh/paramiko/paramiko
 
 :Paramiko:    Python SSH module
-:Copyright:   Copyright (c) 2003-2009  Robey Pointer <robeypointer@gmail.com>
-:Copyright:   Copyright (c) 2013-2019  Jeff Forcier <jeff@bitprophet.org>
+:Copyright:   Copyright (c) 2009  Robey Pointer <robeypointer@gmail.com>
+:Copyright:   Copyright (c) 2020  Jeff Forcier <jeff@bitprophet.org>
 :License:     `LGPL <https://www.gnu.org/copyleft/lesser.html>`_
 :Homepage:    http://www.paramiko.org/
 :API docs:    http://docs.paramiko.org
