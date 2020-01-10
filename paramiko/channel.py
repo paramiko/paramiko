@@ -376,7 +376,7 @@ class Channel(ClosingContextManager):
         """
         return self.closed or self.status_event.is_set()
 
-    def recv_exit_status(self, timeout_s):
+    def recv_exit_status(self, timeout_s=None):
         """
         Return the exit status from the process on the server.  This is
         mostly useful for retrieving the results of an `exec_command`.
