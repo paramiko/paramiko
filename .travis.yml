@@ -6,16 +6,13 @@ cache:
     - $HOME/.cache/pip
 python:
   - "2.7"
-  - "3.4"
   - "3.5"
   - "3.6"
   - "3.7"
-  - "3.8-dev"
+  - "3.8"
   - "pypy"
   - "pypy3"
 matrix:
-  allow_failures:
-    - python: "3.8-dev"
   # Explicitly test against our oldest supported cryptography.io, in addition
   # to whatever the latest default is.
   include:
@@ -29,7 +26,7 @@ matrix:
       env: "USE_K5TEST=yes"
 install:
   # Ensure modern pip/etc to avoid some issues w/ older worker environs
-  - pip install pip==9.0.1 setuptools==36.6.0
+  - pip install pip==19.3.1 setuptools==41.6.0
   # Grab a specific version of Cryptography if desired. Doing this before other
   # installations ensures we don't have to do any downgrading/overriding.
   - |
