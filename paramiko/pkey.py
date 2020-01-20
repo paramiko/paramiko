@@ -157,23 +157,23 @@ class PKey(object):
             'mode': modes.CBC
         },
     }
+
     FORMAT_ORIGINAL = 1  # PKCS#1 for RSA or SEC1 for EC
     FORMAT_OPENSSH = 2  # newer "openssh-key-v1" format
 
-    BEGIN_TAG = r"^-{5}BEGIN (.+) PRIVATE KEY-{5}\s*\n"
-    HEADER_LINES = r"((?:.+: .+\r?\n)*)\s*"
-    BODY_DATA = r"([^-]+)"
-    END_TAG = r"-{5}END \1 PRIVATE KEY-{5}\s*$"
-    OPENSSH_KEY_RE = re.compile(
-        BEGIN_TAG + HEADER_LINES + BODY_DATA + END_TAG,
+    _OPENSSH_KEY_RE = re.compile(
+        r"^-{5}BEGIN (.+) PRIVATE KEY-{5}\s*\n"
+        r"((?:.+: .+\r?\n)*)\s*"  # headers (original only, optional)
+        r"([0-9A-Za-z+/=\s]+)"  # body (multi-line base64)
+        r"-{5}END \1 PRIVATE KEY-{5}\s*$",
         re.MULTILINE
     )
 
     #: Subclasses set this to identify the key type in `.FORMAT_ORIGINAL` files.
-    #: E.g. ``"RSA"``, ``"DSA"``, etc.
+    #: Examples: ``"RSA"``, ``"EC"``
     LEGACY_TYPE = None
-    #: Subclasses set this to identify the key type prefix in `FORMAT_OPENSSH`
-    #: files. E.g. ``"ssh-rsa"`` or ``"ecdsa-sha2-"``
+    #: Subclasses set this to identify the key type in `.FORMAT_OPENSSH` files.
+    #: Examples: ``"ssh-rsa"``, ``"ecdsa-sha2-"``
     OPENSSH_TYPE_PREFIX = None
 
     def __init__(self, msg=None, data=None):
@@ -392,7 +392,7 @@ class PKey(object):
               otherwise an empty ``dict``.
             * data: base64-decoded data from the key body.
         """
-        match = cls.OPENSSH_KEY_RE.search(key_str)
+        match = cls._OPENSSH_KEY_RE.search(key_str)
         if not match:
             raise SSHException("not a valid private key file")
 
