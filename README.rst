@@ -17,8 +17,8 @@ For changes in releases of this fork, see `releases <https://github.com/ploxiln/
 
 :Paramiko-NG: Python SSH module
 :Copyright:   Copyright (c) 2003-2009  Robey Pointer <robeypointer@gmail.com>
-:Copyright:   Copyright (c) 2013-2018  Jeff Forcier <jeff@bitprophet.org>
-:Copyright:   Copyright (c) 2019       Pierce Lopez <pierce.lopez@gmail.com>
+:Copyright:   Copyright (c) 2013-2019  Jeff Forcier <jeff@bitprophet.org>
+:Copyright:   Copyright (c) 2019-2020  Pierce Lopez <pierce.lopez@gmail.com>
 :License:     `LGPL <https://www.gnu.org/copyleft/lesser.html>`_
 :API docs:    https://ploxiln.github.io/paramiko-ng/
 :Development: https://github.com/ploxiln/paramiko-ng/

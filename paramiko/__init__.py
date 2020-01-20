@@ -1,6 +1,6 @@
 # Copyright (C) 2003-2011  Robey Pointer <robeypointer@gmail.com>
-# Copyright (C) 2013-2018  Jeff Forcier <jeff@bitprophet.org>
-# Copyright (C) 2019       Pierce Lopez <pierce.lopez@gmail.com>
+# Copyright (C) 2013-2019  Jeff Forcier <jeff@bitprophet.org>
+# Copyright (C) 2019-2020  Pierce Lopez <pierce.lopez@gmail.com>
 #
 # This file is part of paramiko.
 #
