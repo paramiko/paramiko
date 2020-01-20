@@ -312,7 +312,7 @@ class PKey(object):
         lines = f.readlines()
         if not lines:
             raise SSHException("no lines in {} private key file".format(tag))
-            
+
         # find the BEGIN tag
         start = 0
         m = self.BEGIN_TAG.match(lines[start])
