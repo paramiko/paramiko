@@ -1,4 +1,4 @@
-from mock import patch, MagicMock
+from mock import patch, create_autospec
 
 from paramiko import Channel, ChannelFile, ChannelStderrFile, ChannelStdinFile
 
@@ -15,13 +15,13 @@ class ChannelFileBase(object):
         setmode.assert_called_once_with("w", 25)
 
     def test_read_recvs_from_channel(self):
-        chan = MagicMock()
+        chan = create_autospec(Channel, instance=True)
         cf = self.klass(chan)
         cf.read(100)
         chan.recv.assert_called_once_with(100)
 
     def test_write_calls_channel_sendall(self):
-        chan = MagicMock()
+        chan = create_autospec(Channel, instance=True)
         cf = self.klass(chan, mode="w")
         cf.write("ohai")
         chan.sendall.assert_called_once_with(b"ohai")
@@ -33,13 +33,13 @@ class TestChannelFile(ChannelFileBase):
 
 class TestChannelStderrFile(object):
     def test_read_calls_channel_recv_stderr(self):
-        chan = MagicMock()
+        chan = create_autospec(Channel, instance=True)
         cf = ChannelStderrFile(chan)
         cf.read(100)
         chan.recv_stderr.assert_called_once_with(100)
 
     def test_write_calls_channel_sendall(self):
-        chan = MagicMock()
+        chan = create_autospec(Channel, instance=True)
         cf = ChannelStderrFile(chan, mode="w")
         cf.write("ohai")
         chan.sendall_stderr.assert_called_once_with(b"ohai")
@@ -49,9 +49,9 @@ class TestChannelStdinFile(ChannelFileBase):
     klass = ChannelStdinFile
 
     def test_close_calls_channel_shutdown_write(self):
-        chan = MagicMock()
+        chan = create_autospec(Channel, instance=True)
         cf = ChannelStdinFile(chan, mode="wb")
-        cf.flush = MagicMock()
+        cf.flush = create_autospec(lambda: None)
         cf.close()
         # Sanity check that we still call BufferedFile.close()
         cf.flush.assert_called_once_with()
