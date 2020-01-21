@@ -1102,3 +1102,22 @@ class TransportTest(unittest.TestCase):
         assert not self.ts.auth_handler.authenticated
         # Real fix's behavior
         self._expect_unimplemented()
+
+    def test_kex_invalid_utf8_lang_lists(self):
+        m = Message()
+        m.add_bytes(b"x" * 16)
+        m.add_list(self.tc._preferred_kex)
+        m.add_list(self.tc._preferred_keys)
+        m.add_list(self.tc._preferred_ciphers)
+        m.add_list(self.tc._preferred_ciphers)
+        m.add_list(self.tc._preferred_macs)
+        m.add_list(self.tc._preferred_macs)
+        m.add_list(self.tc._preferred_compression)
+        m.add_list(self.tc._preferred_compression)
+        m.add_string(b"\xff\xff\xff,\xab,hello")
+        m.add_string(b"\xff\xff\xff,\xab,hello")
+        m.add_boolean(False)
+        m.add_int(0)
+
+        m.rewind()
+        self.tc._parse_kex_init(m)

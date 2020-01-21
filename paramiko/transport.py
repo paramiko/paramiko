@@ -2242,8 +2242,8 @@ class Transport(threading.Thread, ClosingContextManager):
         server_mac_algo_list = m.get_list()
         client_compress_algo_list = m.get_list()
         server_compress_algo_list = m.get_list()
-        client_lang_list = m.get_list()
-        server_lang_list = m.get_list()
+        client_lang_list = m.get_string()
+        server_lang_list = m.get_string()
         kex_follows = m.get_boolean()
         m.get_int()  # unused
 
