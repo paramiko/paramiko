@@ -275,11 +275,13 @@ class ECDSAKey(PKey):
     # ...internals...
 
     def _from_private_key_file(self, filename, password):
-        data = self._read_private_key_file("EC", filename, password)
+        data = self._read_private_key_file(
+            "EC", "ecdsa-sha2-", filename, password
+        )
         self._decode_key(data)
 
     def _from_private_key(self, file_obj, password):
-        data = self._read_private_key("EC", file_obj, password)
+        data = self._read_private_key("EC", "ecdsa-sha2-", file_obj, password)
         self._decode_key(data)
 
     def _decode_key(self, data):

@@ -55,9 +55,9 @@ class Ed25519Key(PKey):
             verifying_key = nacl.signing.VerifyKey(msg.get_binary())
         elif filename is not None:
             with open(filename, "r") as f:
-                pkformat, data = self._read_private_key("OPENSSH", f)
+                pkformat, data = self._read_private_key("OPENSSH", "-", f)
         elif file_obj is not None:
-            pkformat, data = self._read_private_key("OPENSSH", file_obj)
+            pkformat, data = self._read_private_key("OPENSSH", "-", file_obj)
 
         if filename or file_obj:
             signing_key = self._parse_signing_key_data(data, password)

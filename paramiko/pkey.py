@@ -283,7 +283,7 @@ class PKey(object):
         """
         raise Exception("Not implemented in PKey")
 
-    def _read_private_key_file(self, tag, filename, password=None):
+    def _read_private_key_file(self, tag, pfx, filename, password=None):
         """
         Read an SSH2-format private key file, looking for a string of the type
         ``"BEGIN xxx PRIVATE KEY"`` for some ``xxx``, base64-decode the text we
@@ -305,10 +305,10 @@ class PKey(object):
         :raises: `.SSHException` -- if the key file is invalid.
         """
         with open(filename, "r") as f:
-            data = self._read_private_key(tag, f, password)
+            data = self._read_private_key(tag, pfx, f, password)
         return data
 
-    def _read_private_key(self, tag, f, password=None):
+    def _read_private_key(self, tag, pfx, f, password=None):
         lines = f.readlines()
 
         # find the BEGIN tag
@@ -334,7 +334,9 @@ class PKey(object):
             data = self._read_private_key_pem(lines, end, password)
             pkformat = self._PRIVATE_KEY_FORMAT_ORIGINAL
         elif keytype == "OPENSSH":
-            data = self._read_private_key_openssh(lines[start:end], password)
+            data = self._read_private_key_openssh(
+                pfx, lines[start:end], password
+            )
             pkformat = self._PRIVATE_KEY_FORMAT_OPENSSH
         else:
             raise SSHException(
@@ -394,7 +396,7 @@ class PKey(object):
         ).decryptor()
         return decryptor.update(data) + decryptor.finalize()
 
-    def _read_private_key_openssh(self, lines, password):
+    def _read_private_key_openssh(self, pfx, lines, password):
         """
         Read the new OpenSSH SSH2 private key format available
         since OpenSSH version 6.5
@@ -419,6 +421,10 @@ class PKey(object):
                 "unsupported: private keyfile has multiple keys"
             )
         pubkey, privkey_blob = self._uint32_cstruct_unpack(remainder, "ss")
+
+        pub_keytype = Message(pubkey).get_text()
+        if not pub_keytype.startswith(pfx):
+            raise SSHException("Invalid key type name (public part)")
 
         if kdfname == b("bcrypt"):
             if cipher == b("aes256-cbc"):
@@ -477,6 +483,8 @@ class PKey(object):
             raise SSHException(
                 "OpenSSH private key file checkints do not match"
             )
+        if keytype.decode() != pub_keytype:
+            raise SSHException("Invalid key type name (private part)")
 
         return _unpad_openssh(keydata)
 

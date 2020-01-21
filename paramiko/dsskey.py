@@ -221,11 +221,13 @@ class DSSKey(PKey):
     # ...internals...
 
     def _from_private_key_file(self, filename, password):
-        data = self._read_private_key_file("DSA", filename, password)
+        data = self._read_private_key_file(
+            "DSA", "ssh-dss", filename, password
+        )
         self._decode_key(data)
 
     def _from_private_key(self, file_obj, password):
-        data = self._read_private_key("DSA", file_obj, password)
+        data = self._read_private_key("DSA", "ssh-dss", file_obj, password)
         self._decode_key(data)
 
     def _decode_key(self, data):
