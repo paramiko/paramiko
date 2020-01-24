@@ -67,15 +67,15 @@ def load_private_key(key_str, password=None):
     """
     pkformat, typ, data = PKey._read_private_key(key_str, password)
 
+    cls = None
     if pkformat == PKey.FORMAT_ORIGINAL:
         cls = _legacy_type_registry.get(typ)
     elif pkformat == PKey.FORMAT_OPENSSH:
-        cls = None
         for map_type, map_cls in _openssh_type_registry:
             if typ.startswith(map_type):
                 cls = map_cls
     else:
-        assert False, "Unexpected pkformat {}".format(pkformat)
+        raise Exception("Unexpected pkformat {}".format(pkformat))  # impossible
 
     if cls is None:
         raise SSHException("Unsupported key type {}".format(typ))
@@ -425,18 +425,16 @@ class PKey(object):
         pkformat, typ, data = self._read_private_key(file_obj.read(), password)
 
         if pkformat == self.FORMAT_ORIGINAL:
-            expected = self.LEGACY_TYPE
-            if typ != expected:
-                if expected is None:
-                    expected = "OPENSSH"  # For error message only
+            if typ != self.LEGACY_TYPE:
                 raise SSHException("Expected key type {}, got {}"
-                                   .format(expected, typ))
+                                   .format(self.LEGACY_TYPE or "OPENSSH", typ))
+
         elif pkformat == self.FORMAT_OPENSSH:
             if not typ.startswith(self.OPENSSH_TYPE_PREFIX):
                 raise SSHException("Expected key type {}, got {}"
                                    .format(self.OPENSSH_TYPE_PREFIX, typ))
         else:
-            assert False, "Unexpected pkformat {}".format(pkformat)
+            raise Exception("Unexpected pkformat {}".format(pkformat))  # impossible
 
         return pkformat, data
 
