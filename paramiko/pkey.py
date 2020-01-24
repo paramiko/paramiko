@@ -110,7 +110,11 @@ def load_private_key_file(filename, password=None):
 
 
 def register_pkey_type(cls):
-    """Decorator for PKey subclasses to register their types for parsing."""
+    """
+    Decorator for PKey subclasses to register their types for parsing.
+
+    .. versionadded:: 2.8
+    """
     if cls.LEGACY_TYPE:
         _legacy_type_registry[cls.LEGACY_TYPE] = cls
     if cls.OPENSSH_TYPE_PREFIX:
@@ -118,7 +122,7 @@ def register_pkey_type(cls):
     return cls
 
 
-def unpad(data):
+def _unpad(data):
     """for removing padding from openssh new-format private key files"""
     padding_length = byte_ord(data[-1])
     if 0x20 <= padding_length < 0x7f:
@@ -549,7 +553,7 @@ class PKey(object):
             raise SSHException("Inconsistent key types for public and private parts")
 
         keydata = priv_msg.get_remainder()
-        return keytype, unpad(keydata)
+        return keytype, _unpad(keydata)
 
     def _write_private_key_file(self, filename, key, format, password=None):
         """
