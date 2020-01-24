@@ -75,7 +75,7 @@ def load_private_key(key_str, password=None):
             if typ.startswith(map_type):
                 cls = map_cls
     else:
-        raise Exception("Unexpected pkformat {}".format(pkformat))  # impossible
+        raise AssertionError("Unexpected pkformat {}".format(pkformat))  # impossible
 
     if cls is None:
         raise SSHException("Unsupported key type {}".format(typ))
@@ -438,7 +438,7 @@ class PKey(object):
                 raise SSHException("Expected key type {}, got {}"
                                    .format(self.OPENSSH_TYPE_PREFIX, typ))
         else:
-            raise Exception("Unexpected pkformat {}".format(pkformat))  # impossible
+            raise AssertionError("Unexpected pkformat {}".format(pkformat))  # impossible
 
         return pkformat, data
 
