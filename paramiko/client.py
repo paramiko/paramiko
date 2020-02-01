@@ -748,11 +748,15 @@ class SSHClient(ClosingContextManager):
 
         if password is not None:
             try:
-                self._transport.auth_password(username, password)
-                return
+                two_factor = set (
+                    self._transport.auth_password(username, password)
+                )
+                if not two_factor:
+                    return
             except SSHException as e:
                 saved_exception = e
-        elif two_factor:
+
+        if two_factor:
             try:
                 self._transport.auth_interactive_dumb(username)
                 return
