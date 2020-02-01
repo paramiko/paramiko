@@ -748,7 +748,7 @@ class SSHClient(ClosingContextManager):
 
         if password is not None:
             try:
-                two_factor = set (
+                two_factor = set(
                     self._transport.auth_password(username, password)
                 )
                 if not two_factor:
