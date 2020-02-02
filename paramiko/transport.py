@@ -28,6 +28,7 @@ import threading
 import time
 import atexit
 import weakref
+from getpass import getpass
 from hashlib import sha1, sha256, sha512
 
 from cryptography.hazmat.backends import default_backend
@@ -1523,8 +1524,8 @@ class Transport(threading.Thread, ClosingContextManager):
                 if instructions:
                     print(instructions.strip())
                 for prompt, show_input in prompt_list:
-                    print(prompt.strip(), end=' ')
-                    answers.append(input())
+                    func = input if show_input else getpass
+                    answers.append(func(prompt.strip() + " "))
                 return answers
         return self.auth_interactive(username, handler, submethods)
 
