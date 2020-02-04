@@ -331,7 +331,7 @@ class PKey(object):
             m = self.END_TAG.match(lines[end])
 
         if keytype == tag:
-            data = self._read_private_key_pem(lines, end, password)
+            data = self._read_private_key_pem(lines[start-1:], end, password)
             pkformat = self._PRIVATE_KEY_FORMAT_ORIGINAL
         elif keytype == "OPENSSH":
             data = self._read_private_key_openssh(lines[start:end], password)
