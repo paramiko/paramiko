@@ -237,6 +237,7 @@ class SSHClient(ClosingContextManager):
         gss_trust_dns=True,
         passphrase=None,
         disabled_algorithms=None,
+        two_factor_callback=None,
     ):
         """
         Connect to an SSH server and authenticate to it.  The server's host key
@@ -314,6 +315,10 @@ class SSHClient(ClosingContextManager):
         :param dict disabled_algorithms:
             an optional dict passed directly to `.Transport` and its keyword
             argument of the same name.
+        :param two_factor_callback:
+            an optional callable with no arguments. If specified, it will be
+            called when a 2nd factor is needed. Useful when calling `connect`
+            from a GUI which needs to open a dialog.
 
         :raises:
             `.BadHostKeyException` -- if the server's host key could not be
@@ -444,6 +449,7 @@ class SSHClient(ClosingContextManager):
             gss_deleg_creds,
             t.gss_host,
             passphrase,
+            two_factor_callback,
         )
 
     def close(self):
@@ -610,6 +616,7 @@ class SSHClient(ClosingContextManager):
         gss_deleg_creds,
         gss_host,
         passphrase,
+        two_factor_callback,
     ):
         """
         Try, in order:
@@ -753,11 +760,12 @@ class SSHClient(ClosingContextManager):
             except SSHException as e:
                 saved_exception = e
         elif two_factor:
-            try:
-                self._transport.auth_interactive_dumb(username)
+            if two_factor_callback is not None:
+                two_factor_pw = two_factor_callback()
+                self._transport.auth_password(username, two_factor_pw)
                 return
-            except SSHException as e:
-                saved_exception = e
+            self._transport.auth_interactive_dumb(username)
+            return
 
         # if we got an auth-failed exception earlier, re-raise it
         if saved_exception is not None:
