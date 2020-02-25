@@ -423,7 +423,8 @@ class Transport(threading.Thread, ClosingContextManager):
                         except:
                             reason = "Incorrect local port type: {reason}"
                             reason = reason.format(
-                                reason=type(local_bind_port))
+                                reason=type(local_bind_port)
+                            )
                     sock.bind((local_bind_ip, local_bind_port))
                     try:
                         retry_on_signal(lambda: sock.connect((hostname, port)))
