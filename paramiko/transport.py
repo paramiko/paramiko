@@ -305,8 +305,8 @@ class Transport(threading.Thread, ClosingContextManager):
     def __init__(
         self,
         sock,
-        local_bind_ip = None,
-        local_bind_port = None,
+        local_bind_ip=None,
+        local_bind_port=None,
         default_window_size=DEFAULT_WINDOW_SIZE,
         default_max_packet_size=DEFAULT_MAX_PACKET_SIZE,
         gss_kex=False,
@@ -421,8 +421,9 @@ class Transport(threading.Thread, ClosingContextManager):
                         try:
                             local_bind_port = int(local_bind_port)
                         except:
-                            reason = "Incorrect local port type: %s" % type(local_bind_port)
- 
+                            reason = "Incorrect local port type: {reason}"
+                            reason = reason.format(
+                                reason=type(local_bind_port))
                     sock.bind((local_bind_ip, local_bind_port))
                     try:
                         retry_on_signal(lambda: sock.connect((hostname, port)))
