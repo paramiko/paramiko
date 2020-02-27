@@ -144,7 +144,10 @@ else:
     def u(s, encoding="utf8"):
         """cast bytes or unicode to unicode"""
         if isinstance(s, bytes):
-            return s.decode(encoding)
+            try:
+                return s.decode(encoding)
+            except UnicodeDecodeError:
+                return s.decode('cp949')
         elif isinstance(s, str):
             return s
         else:
