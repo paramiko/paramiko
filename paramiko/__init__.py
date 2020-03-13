@@ -47,7 +47,7 @@ from paramiko.ssh_exception import (
     SSHException,
 )
 from paramiko.server import ServerInterface, SubsystemHandler, InteractiveQuery
-from paramiko.rsakey import RSAKey, RSASHA256Key
+from paramiko.rsakey import RSAKey, RSASHA256Key, RSASHA512Key
 from paramiko.dsskey import DSSKey
 from paramiko.ecdsakey import ECDSAKey
 from paramiko.ed25519key import Ed25519Key

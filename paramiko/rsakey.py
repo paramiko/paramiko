@@ -221,3 +221,12 @@ class RSASHA256Key(RSAKey):
 
     _signature_digest_algorithm = hashes.SHA256
     _signature_algorithm_name = "rsa-sha2-256"
+
+
+class RSASHA512Key(RSAKey):
+    """
+    A special RSAKey that uses SHA-256 digest for sign/verify.
+    """
+
+    _signature_digest_algorithm = hashes.SHA512
+    _signature_algorithm_name = "rsa-sha2-512"
