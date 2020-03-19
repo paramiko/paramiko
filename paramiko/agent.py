@@ -42,6 +42,9 @@ SSH2_AGENT_IDENTITIES_ANSWER = 12
 cSSH2_AGENTC_SIGN_REQUEST = byte_chr(13)
 SSH2_AGENT_SIGN_RESPONSE = 14
 
+cSSH_AGENT_RSA_SHA2_256 = 2
+cSSH_AGENT_RSA_SHA2_512 = 4
+
 
 class AgentSSH(object):
     def __init__(self):
@@ -407,12 +410,22 @@ class AgentKey(PKey):
     def get_name(self):
         return self.name
 
-    def sign_ssh_data(self, data):
+    def sign_ssh_data(self, data, flags=0):
+        """
+        Sign a blob of data with this private key, and return a `.Message`
+        representing an SSH signature message.
+
+        Use flags to sign using sha2-256 or sha2-512, default is sha1
+
+        :param str data: the data to sign.
+        :param int flags: cSSH_AGENT_RSA_SHA2_256 or cSSH_AGENT_RSA_SHA2_512
+        :return: an SSH signature `message <.Message>`.
+        """
         msg = Message()
         msg.add_byte(cSSH2_AGENTC_SIGN_REQUEST)
         msg.add_string(self.blob)
         msg.add_string(data)
-        msg.add_int(0)
+        msg.add_int(flags)
         ptype, result = self.agent._send_message(msg)
         if ptype != SSH2_AGENT_SIGN_RESPONSE:
             raise SSHException("key cannot be used for signing")
