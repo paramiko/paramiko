@@ -331,10 +331,10 @@ class PKey(object):
             m = self.END_TAG.match(lines[end])
 
         if keytype == tag:
-            data = self._read_private_key_pem(lines, end, password)
+            data = self._read_private_key_pem(lines, end, password, f.name)
             pkformat = self._PRIVATE_KEY_FORMAT_ORIGINAL
         elif keytype == "OPENSSH":
-            data = self._read_private_key_openssh(lines[start:end], password)
+            data = self._read_private_key_openssh(lines[start:end], password, f.name)
             pkformat = self._PRIVATE_KEY_FORMAT_OPENSSH
         else:
             raise SSHException(
@@ -347,7 +347,7 @@ class PKey(object):
         err = "{}._read_private_key() spat out an unknown key format id '{}'"
         raise SSHException(err.format(self.__class__.__name__, id_))
 
-    def _read_private_key_pem(self, lines, end, password):
+    def _read_private_key_pem(self, lines, end, password, filename):
         start = 0
         # parse any headers first
         headers = {}
@@ -362,7 +362,7 @@ class PKey(object):
         try:
             data = decodebytes(b("".join(lines[start:end])))
         except base64.binascii.Error as e:
-            raise SSHException("base64 decoding error: {}".format(e))
+            raise SSHException("base64 decoding error in {!r}: {}".format(filename, e))
         if "proc-type" not in headers:
             # unencryped: done
             return data
@@ -370,7 +370,7 @@ class PKey(object):
         proc_type = headers["proc-type"]
         if proc_type != "4,ENCRYPTED":
             raise SSHException(
-                'Unknown private key structure "{}"'.format(proc_type)
+                'Unknown private key structure in {!r} "{}"'.format(filename, proc_type)
             )
         try:
             encryption_type, saltstr = headers["dek-info"].split(",")
@@ -378,12 +378,16 @@ class PKey(object):
             raise SSHException("Can't parse DEK-info in private key file")
         if encryption_type not in self._CIPHER_TABLE:
             raise SSHException(
-                'Unknown private key cipher "{}"'.format(encryption_type)
+                'Unknown private key cipher in {!r} "{}"'.format(
+                    filename, encryption_type
+                )
             )
         # if no password was passed in,
         # raise an exception pointing out that we need one
         if password is None:
-            raise PasswordRequiredException("Private key file is encrypted")
+            raise PasswordRequiredException(
+                "Private key file {!r} is encrypted".format(filename)
+            )
         cipher = self._CIPHER_TABLE[encryption_type]["cipher"]
         keysize = self._CIPHER_TABLE[encryption_type]["keysize"]
         mode = self._CIPHER_TABLE[encryption_type]["mode"]
@@ -394,7 +398,7 @@ class PKey(object):
         ).decryptor()
         return decryptor.update(data) + decryptor.finalize()
 
-    def _read_private_key_openssh(self, lines, password):
+    def _read_private_key_openssh(self, lines, password, filename):
         """
         Read the new OpenSSH SSH2 private key format available
         since OpenSSH version 6.5
@@ -404,19 +408,21 @@ class PKey(object):
         try:
             data = decodebytes(b("".join(lines)))
         except base64.binascii.Error as e:
-            raise SSHException("base64 decoding error: {}".format(e))
+            raise SSHException("base64 decoding error in {!r}: {}".format(filename, e))
 
         # read data struct
         auth_magic = data[:15]
         if auth_magic != OPENSSH_AUTH_MAGIC:
-            raise SSHException("unexpected OpenSSH key header encountered")
+            raise SSHException(
+                "unexpected OpenSSH key header encountered in {!r}".format(filename)
+            )
 
         cstruct = self._uint32_cstruct_unpack(data[15:], "sssur")
         cipher, kdfname, kdf_options, num_pubkeys, remainder = cstruct
         # For now, just support 1 key.
         if num_pubkeys > 1:
             raise SSHException(
-                "unsupported: private keyfile has multiple keys"
+                "unsupported: private keyfile {!r} has multiple keys".format(filename)
             )
         pubkey, privkey_blob = self._uint32_cstruct_unpack(remainder, "ss")
 
@@ -427,8 +433,8 @@ class PKey(object):
                 mode = modes.CTR
             else:
                 raise SSHException(
-                    "unknown cipher `{}` used in private key file".format(
-                        cipher.decode("utf-8")
+                    "unknown cipher `{}` used in private key file {!r}".format(
+                        cipher.decode("utf-8"), filename
                     )
                 )
             # Encrypted private key.
@@ -436,7 +442,7 @@ class PKey(object):
             # out that we need one
             if password is None:
                 raise PasswordRequiredException(
-                    "private key file is encrypted"
+                    "private key file {!r} is encrypted".format(filename)
                 )
 
             # Unpack salt and rounds from kdfoptions
@@ -466,7 +472,7 @@ class PKey(object):
             decrypted_privkey = privkey_blob
         else:
             raise SSHException(
-                "unknown cipher or kdf used in private key file"
+                "unknown cipher or kdf used in private key file {!r}".format(filename)
             )
 
         # Unpack private key and verify checkints
@@ -475,7 +481,9 @@ class PKey(object):
 
         if checkint1 != checkint2:
             raise SSHException(
-                "OpenSSH private key file checkints do not match"
+                "OpenSSH private key file checkints do not match in {!r}".format(
+                    filename
+                )
             )
 
         return _unpad_openssh(keydata)
