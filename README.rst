@@ -84,14 +84,6 @@ Bugs & Support
 :IRC:          ``#paramiko`` on Freenode
 
 
-Kerberos Support
-----------------
-
-Paramiko ships with optional Kerberos/GSSAPI support; for info on the extra
-dependencies for this, see the `GSS-API section <http://www.paramiko.org/installing.html#gssapi>`_
-on the main Paramiko website.
-
-
 Demo
 ----
 
