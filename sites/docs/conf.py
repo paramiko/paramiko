@@ -43,7 +43,7 @@ autodoc_default_flags = ['members', 'special-members']
 
 # Intersphinx connection to stdlib
 intersphinx_mapping = {
-    'python': ('https://docs.python.org/2.7/', None),
+    'python': ('https://docs.python.org/3.7', None),
 }
 
 # just used for old changelog
