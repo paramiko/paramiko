@@ -120,7 +120,7 @@ class FakeTransport(object):
     def _activate_outbound(self):
         self._activated = True
 
-    def _log(self, level, s):
+    def _log(self, level, msg, *args):
         pass
 
     def get_server_key(self):

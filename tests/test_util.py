@@ -28,7 +28,7 @@ import unittest
 import textwrap
 
 import paramiko.util
-from paramiko.util import lookup_ssh_host_config as host_config, safe_string
+from paramiko.util import lookup_ssh_host_config as host_config
 from paramiko.py3compat import StringIO, byte_ord
 
 
@@ -451,18 +451,6 @@ Host param3 parara
             )
         for host in incorrect_data:
             self.assertRaises(Exception, conf._get_hosts, host)
-
-    def test_safe_string(self):
-        vanilla = b"vanilla"
-        has_bytes = b"has \7\3 bytes"
-        safe_vanilla = safe_string(vanilla)
-        safe_has_bytes = safe_string(has_bytes)
-        expected_bytes = b"has %07%03 bytes"
-        err = "{!r} != {!r}"
-        msg = err.format(safe_vanilla, vanilla)
-        assert safe_vanilla == vanilla, msg
-        msg = err.format(safe_has_bytes, expected_bytes)
-        assert safe_has_bytes == expected_bytes, msg
 
     def test_proxycommand_none_issue_418(self):
         test_config_file = """

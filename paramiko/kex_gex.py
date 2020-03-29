@@ -137,14 +137,10 @@ class KexGex (object):
         # generate prime
         pack = self.transport._get_modulus_pack()
         if pack is None:
-            raise SSHException(
-                'Can\'t do server-side gex with no modulus pack')
-        self.transport._log(
-            DEBUG,
-            'Picking p ({} <= {} <= {} bits)'.format(
-                minbits, preferredbits, maxbits,
-            )
-        )
+            raise SSHException("Can't do server-side gex with no modulus pack")
+
+        self.transport._log(DEBUG, "Picking p (%s <= %s <= %s bits)",
+                            minbits, preferredbits, maxbits)
         self.g, self.p = pack.get_modulus(minbits, preferredbits, maxbits)
         m = Message()
         m.add_byte(c_MSG_KEXDH_GEX_GROUP)

@@ -70,8 +70,8 @@ class AuthHandler (object):
         self.gss_host = None
         self.gss_deleg_creds = True
 
-    def _log(self, *args):
-        return self.transport._log(*args)
+    def _log(self, level, msg):
+        return self.transport._log(level, "%s", msg)
 
     def is_authenticated(self):
         return self.authenticated
@@ -611,7 +611,7 @@ Error Message: {}
     def _parse_userauth_banner(self, m):
         banner = m.get_string()
         self.transport.banner = banner
-        self._log(INFO, 'Auth banner: {}'.format(banner))
+        self._log(INFO, "Auth banner: {!r}".format(banner))
         # who cares.
 
     def _parse_userauth_info_request(self, m):

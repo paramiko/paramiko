@@ -21,14 +21,12 @@ Useful functions used by the rest of paramiko.
 """
 
 import errno
-import sys
 import struct
-import traceback
 import threading
 import logging
 
 from paramiko.common import DEBUG, zero_byte, xffffffff, max_byte
-from paramiko.py3compat import PY2, long, byte_chr, byte_ord, b
+from paramiko.py3compat import PY2, long, byte_ord, b
 from paramiko.config import SSHConfig
 
 
@@ -108,17 +106,6 @@ def format_binary_line(data):
     return '{:50s} {}'.format(left, right)
 
 
-def safe_string(s):
-    out = b''
-    for c in s:
-        i = byte_ord(c)
-        if 32 <= i <= 127:
-            out += byte_chr(i)
-        else:
-            out += b('%{:02X}'.format(i))
-    return out
-
-
 def bit_length(n):
     try:
         return n.bit_length()
@@ -132,10 +119,6 @@ def bit_length(n):
             hbyte <<= 1
             bitlen -= 1
         return bitlen
-
-
-def tb_strings():
-    return ''.join(traceback.format_exception(*sys.exc_info())).split('\n')
 
 
 def generate_key_bytes(hash_alg, salt, key, nbytes):
