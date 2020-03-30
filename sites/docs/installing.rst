@@ -11,12 +11,11 @@ via `pip <http://pip-installer.org>`_::
     $ pip install paramiko-ng
 
 You can also install under the original "paramiko" pip-package-name,
-in order to satisfy requirements for other packages (replace "2.7.0" with desired release)::
+in order to satisfy requirements for other packages (replace "2.7.6" with desired version)::
 
-    $ PARAMIKO_REPLACE=1 pip install https://github.com/ploxiln/paramiko-ng/archive/2.7.0.tar.gz#egg=paramiko
+    $ PARAMIKO_REPLACE=1 pip install https://github.com/ploxiln/paramiko-ng/archive/2.7.6.tar.gz#egg=paramiko
 
-We currently support **Python 2.7, 3.4+, and PyPy**. Users on Python 2.6 or
-older (or 3.3 or older) are urged to upgrade.
+Paramiko-NG currently supports Python 2.7, 3.4+, and PyPy.
 
 Paramiko-NG has only a few direct dependencies:
 
