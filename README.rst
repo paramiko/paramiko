@@ -8,7 +8,7 @@ This is still imported under the name ``paramiko``, but you can
 install with the package name *paramiko-ng* (default) or *paramiko*
 (by setting the environment variable ``PARAMIKO_REPLACE``, see `Installation`_).
 
-For changes in releases of this fork, see `releases <https://github.com/ploxiln/paramiko-ng/releases>`_
+Changelog: `releases <https://github.com/ploxiln/paramiko-ng/releases>`_
 
 .. Continuous integration and code coverage badges
 
@@ -52,21 +52,12 @@ The most common way to install is simply::
 
     pip install paramiko-ng
 
-To install the development version::
+You can also install under the original "paramiko" pip-package-name, in order to
+satisfy requirements for other packages (replace "2.7.6" with desired version)::
 
-    pip install -e git+https://github.com/ploxiln/paramiko-ng/#egg=paramiko-ng
+    PARAMIKO_REPLACE=1 pip install https://github.com/ploxiln/paramiko-ng/archive/2.7.6.tar.gz#egg=paramiko
 
-You can also install under the original "paramiko" pip-package-name,
-in order to satisfy requirements for other packages::
-
-    PARAMIKO_REPLACE=1 pip install https://github.com/ploxiln/paramiko-ng/archive/2.7.4.tar.gz#egg=paramiko
-
-Replace "2.7.4" with the desired recent release, or for the latest development version do::
-
-    PARAMIKO_REPLACE=1 pip install git+https://github.com/ploxiln/paramiko-ng/#egg=paramiko
-
-The primary dependency is Cryptography, which has its own installation
-`instructions <https://cryptography.io/en/latest/installation/>`_.
+For dependencies and other details, see https://ploxiln.github.io/paramiko-ng/installing.html
 
 
 Portability Issues
