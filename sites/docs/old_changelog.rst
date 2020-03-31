@@ -916,93 +916,95 @@ Following are changes pre-fork, up to just past version 2.4.1
 Very Old Changelog
 ------------------
 
-Moved here from ``NEWS`` in the repo root.
+Moved here from "NEWS" in the repo root.
+
+Issues noted as just #NN can be found at https://github.com/paramiko/pramiko/.
 
 Issues noted as "'ssh' #NN" can be found at https://github.com/bitprophet/ssh/.
 
 Issues noted as "Fabric #NN" can be found at https://github.com/fabric/fabric/.
 
 
-v1.9.0 (6th Nov 2012)
----------------------
+1.9.0 2012-11-06
+----------------
 
-* #97 (with a little #93): Improve config parsing of `ProxyCommand` directives
+* #97 (with a little #93): Improve config parsing of ``ProxyCommand`` directives
   and provide a wrapper class to allow subprocess-driven proxy commands to be
-  used as `sock=` arguments for `SSHClient.connect`.
-* #77: Allow `SSHClient.connect()` to take an explicit `sock` parameter
+  used as ``sock=`` arguments for ``SSHClient.connect``.
+* #77: Allow ``SSHClient.connect()`` to take an explicit sock parameter
   overriding creation of an internal, implicit socket object.
 * Thanks in no particular order to Erwin Bolwidt, Oskari Saarenmaa, Steven
   Noonan, Vladimir Lazarenko, Lincoln de Sousa, Valentino Volonghi, Olle
-  Lundberg, and Github user `@acrish` for the various and sundry patches
+  Lundberg, and Github user ``@acrish`` for the various and sundry patches
   leading to the above changes.
 
-v1.8.1 (6th Nov 2012)
----------------------
+1.8.1 2012-11-06
+----------------
 
-* #90: Ensure that callbacks handed to `SFTPClient.get()` always fire at least
-  once, even for zero-length files downloaded. Thanks to Github user `@enB` for
+* #90: Ensure that callbacks handed to ``SFTPClient.get()`` always fire at least
+  once, even for zero-length files downloaded. Thanks to Github user ``@enB`` for
   the catch.
 * #85: Paramiko's test suite overrides
-  `unittest.TestCase.assertTrue/assertFalse` to provide these modern assertions
+  ``unittest.TestCase.assertTrue/assertFalse`` to provide these modern assertions
   to Python 2.2/2.3, which lacked them. However on newer Pythons such as 2.7,
   this now causes deprecation warnings. The overrides have been patched to only
-  execute when necessary. Thanks to `@Arfrever` for catch & patch.
+  execute when necessary. Thanks to ``@Arfrever`` for catch & patch.
 
 
-v1.8.0 (3rd Oct 2012)
----------------------
+1.8.0 2012-10-03
+----------------
 
-* #17 ('ssh' 28): Fix spurious `NoneType has no attribute 'error'` and similar
+* #17 ('ssh' 28): Fix spurious "NoneType has no attribute 'error'" and similar
   exceptions that crop up on interpreter exit.
-* 'ssh' 32: Raise a more useful error explaining which `known_hosts` key line was
-  problematic, when encountering `binascii` issues decoding known host keys.
-  Thanks to `@thomasvs` for catch & patch.
-* 'ssh' 33: Bring `ssh_config` parsing more in line with OpenSSH spec, re: order of
-  setting overrides by `Host` specifiers. Specifically, the overrides now go by
-  file order instead of automatically sorting by `Host` value length. In
-  addition, the first value found per config key (e.g. `Port`, `User` etc)
+* 'ssh' 32: Raise a more useful error explaining which ``known_hosts`` key line was
+  problematic, when encountering ``binascii`` issues decoding known host keys.
+  Thanks to ``@thomasvs`` for catch & patch.
+* 'ssh' 33: Bring ``ssh_config`` parsing more in line with OpenSSH spec, re: order of
+  setting overrides by Host specifiers. Specifically, the overrides now go by
+  file order instead of automatically sorting by Host value length. In
+  addition, the first value found per config key (e.g. Port, User etc)
   wins, instead of the last. Thanks to Jan Brauer for the contribution.
 * 'ssh' 36: Support new server two-factor authentication option
-  (`RequiredAuthentications2`), at least re: combining key-based & password
-  auth. Thanks to Github user `bninja`.
+  (``RequiredAuthentications2``), at least re: combining key-based & password
+  auth. Thanks to Github user ``@bninja``.
 * 'ssh' 11: When raising an exception for hosts not listed in
-  `known_hosts` (when `RejectPolicy` is in effect) the exception message was
+  ``known_hosts`` (when ``RejectPolicy`` is in effect) the exception message was
   confusing/vague. This has been improved somewhat. Thanks to Cal Leeming for
   highlighting the issue.
 * 'ssh' 40: Fixed up & expanded EINTR signal handling. Thanks to Douglas Turk.
 * 'ssh' 15: Implemented parameter substitution in SSHConfig, matching the
-  implementation of `ssh_config(5)`. Thanks to Olle Lundberg for the patch.
-* 'ssh' 24: Switch some internal type checking to use `isinstance` to help prevent
+  implementation of ``ssh_config(5)``. Thanks to Olle Lundberg for the patch.
+* 'ssh' 24: Switch some internal type checking to use ``isinstance`` to help prevent
   problems with client libraries using subclasses of builtin types. Thanks to
   Alex Morega for the patch.
-* Fabric #562: Agent forwarding would error out (with `Authentication response
-  too long`) or freeze, when more than one remote connection to the local agent
+* Fabric #562: Agent forwarding would error out (with "Authentication response
+  too long") or freeze, when more than one remote connection to the local agent
   was active at the same time.  This has been fixed. Thanks to Steven McDonald
-  for assisting in troubleshooting/patching, and to GitHub user `@lynxis` for
+  for assisting in troubleshooting/patching, and to GitHub user ``@lynxis`` for
   providing the final version of the patch.
-* 'ssh' 5: Moved a `fcntl` import closer to where it's used to help avoid
-  `ImportError` problems on Windows platforms. Thanks to Jason Coombs for the
+* 'ssh' 5: Moved a ``fcntl`` import closer to where it's used to help avoid
+  ``ImportError`` problems on Windows platforms. Thanks to Jason Coombs for the
   catch + suggested fix.
 * 'ssh' 4: Updated implementation of WinPageant integration to work on 64-bit
   Windows. Thanks again to Jason Coombs for the patch.
 * Added an IO loop sleep() call to avoid needless CPU usage when agent
   forwarding is in use.
 * Handful of internal tweaks to version number storage.
-* Updated `setup.py` with `==dev` install URL for `pip` users.
-* Updated `setup.py` to account for packaging problems in PyCrypto 2.4.0
-* Added an extra `atfork()` call to help prevent spurious RNG errors when
+* Updated ``setup.py`` with ``==dev`` install URL for ``pip`` users.
+* Updated ``setup.py`` to account for packaging problems in PyCrypto 2.4.0
+* Added an extra ``atfork()`` call to help prevent spurious RNG errors when
   running under high parallel (multiprocess) load.
 * Merge PR #28: https://github.com/paramiko/paramiko/pull/28 which adds a
   ssh-keygen like demo module. (Sofian Brabez)
 
-v1.7.7.2 16may12
-----------------
+1.7.7.2 2012-05-16
+------------------
   * Merge pull request #63: https://github.com/paramiko/paramiko/pull/63 which
     fixes exceptions that occur when re-keying over fast connections. (Dwayne
     Litzenberger)
 
-v1.7.7.1 (George) 21may11
--------------------------
+1.7.7.1 2011-05-21 (George)
+---------------------------
   * Make the verification phase of SFTP.put optional (Larry Wright)
   * Patches to fix AIX support (anonymous)
   * Patch from Michele Bertoldi to allow compression to be turned on in the
@@ -1016,30 +1018,30 @@ v1.7.7.1 (George) 21may11
   * Support for openssl keys (tehfink)
   * Fix multi-process support by calling Random.atfork (sugarc0de)
 
-v1.7.6 (Fanny) 1nov09
----------------------
+1.7.6 2009-11-01 (Fanny)
+------------------------
   * fixed bugs 411099 (sftp chdir isn't unicode-safe), 363163 & 411910 (more
     IPv6 problems on windows), 413850 (race when server closes the channel),
     426925 (support port numbers in host keys)
 
-v1.7.5 (Ernest) 19jul09
------------------------
+1.7.5 2009-07-19 (Ernest)
+-------------------------
   * added support for ARC4 cipher and CTR block chaining (Denis Bernard)
   * made transport threads daemonize, to fix python 2.6 atexit behavior
   * support unicode hostnames, and IP6 addresses (Maxime Ripard, Shikhar
     Bhushan)
   * various small bug fixes
 
-v1.7.4 (Desmond) 06jul08
-------------------------
+1.7.4 2008-07-06 (Desmond)
+--------------------------
   * more randpool fixes for windows, from Dwayne Litzenberger
     (NOTE: this may require a pycrypto upgrade on windows)
   * fix potential deadlock during key exchange (Dwayne Litzenberger)
   * remove MFC dependency from windows (Mark Hammond)
   * added some optional API improvements for SFTPClient get() and put()
 
-v1.7.3 (Clara) 23mar08
-----------------------
+1.7.3 2008-03-23 (Clara)
+------------------------
   * SSHClient can be asked not to use an SSH agent now, and not to search
     for private keys
   * added WarningPolicy option for SSHClient (warn, but allow, on unknown
@@ -1054,8 +1056,8 @@ v1.7.3 (Clara) 23mar08
   * (bug 193779) translate EOFError into AuthException during authentication
   * (bug 200416) don't create a new logger object for each channel
 
-v1.7.2 (Basil) 21jan08
-----------------------
+1.7.2 2008-01-21 (Basil)
+------------------------
   * (bug 137219) catch EINTR and handle correctly
   * (bug 157205) fix select() to trigger on stderr for a channel too
   * added SSHClient.get_transport()
@@ -1064,8 +1066,8 @@ v1.7.2 (Basil) 21jan08
   * fixed the PRNG to be more secure on windows and in cases where fork() is
     called [patch from dwayne litzenberger]
 
-v1.7.1 (Amy) 10jun07
---------------------
+1.7.1 2007-06-10 (Amy)
+----------------------
   * windows SSH agent support can use the 'ctypes' module now if 'win32all' is
     not available [patch from alexander belchenko]
   * SFTPClient.listdir_attr() now preserves the 'longname' field [patch from
@@ -1074,8 +1076,8 @@ v1.7.1 (Amy) 10jun07
   * SSHClient constuctor takes an optional 'timeout' parameter [patch from
     james bardin]
 
-v1.7 (zubat) 18feb07
---------------------
+1.7 2007-02-18 (zubat)
+----------------------
   * added x11 channel support (patch from david guerizec)
   * added reverse port forwarding support
   * (bug 75370) raise an exception when contacting a broken SFTP server
@@ -1086,8 +1088,8 @@ v1.7 (zubat) 18feb07
   * if connecting to an SSH agent fails, silently fallback instead of raising
     an exception
 
-v1.6.4 (yanma) 19nov06
-----------------------
+1.6.4 2006-11-19 (yanma)
+------------------------
   * fix setup.py on osx (oops!)
   * (bug 69330) check for the existence of RSA/DSA keys before trying to open
     them in SFTPClient
@@ -1096,8 +1098,8 @@ v1.6.4 (yanma) 19nov06
   * (bug 70398) improve dict emulation in HostKeys objects
   * try harder to make sure all worker threads are joined on Transport.close()
 
-v1.6.3 (xatu) 14oct06
----------------------
+1.6.3 2006-10-14 (xatu)
+-----------------------
   * fixed bug where HostKeys.__setitem__ wouldn't always do the right thing
   * fixed bug in SFTPClient.chdir and SFTPAttributes.__str__ [patch from
     mike barber]
@@ -1105,8 +1107,8 @@ v1.6.3 (xatu) 14oct06
   * fixed bug where a thread waiting in accept() could block forever if the
     transport dies [patch from mike looijmans]
 
-v1.6.2 (weedle) 16aug06
------------------------
+1.6.2 2006-08-16 (weedle)
+-------------------------
   * added support for "old" group-exchange server mode, for compatibility
     with the windows putty client
   * fixed some more interactions with SFTP file readv() and prefetch()
@@ -1114,16 +1116,16 @@ v1.6.2 (weedle) 16aug06
     warren young]
   * fix a couple of broken lines when exporting classes (bug 55946)
 
-v1.6.1 (vulpix) 10jul06
------------------------
+1.6.1 2006-07-10 (vulpix)
+-------------------------
   * more unit tests fixed for windows/cygwin (thanks to alexander belchenko)
   * a couple of fixes related to exceptions leaking out of SFTPClient
   * added ability to set items in HostKeys via __setitem__
   * HostKeys now retains order and has a save() method
   * added PKey.write_private_key and PKey.from_private_key
 
-v1.6 (umbreon) 10may06
-----------------------
+1.6 2006-05-10 (umbreon)
+------------------------
   * pageant support on Windows thanks to john arbash meinel and todd whiteman
   * fixed unit tests to work under windows and cygwin (thanks to alexander
     belchenko for debugging)
@@ -1132,8 +1134,8 @@ v1.6 (umbreon) 10may06
   * SFTP readv() now yields results as it gets them
   * several APIs changed to throw an exception instead of "False" on failure
 
-v1.5.4 (tentacool) 11mar06
---------------------------
+1.5.4 2006-03-11 (tentacool)
+----------------------------
   * fixed HostKeys to more correctly emulate a python dict
   * fixed a bug where file read buffering was too aggressive
   * improved prefetching so that out-of-order reads still use the prefetch
@@ -1141,8 +1143,8 @@ v1.5.4 (tentacool) 11mar06
   * added experimental SFTPFile.readv() call
   * more unit tests
 
-v1.5.3 (squirtle) 19feb06
--------------------------
+1.5.3 2006-02-19 (squirtle)
+----------------------------
   * a few performance enhancements
   * added HostKeys, for dealing with openssh style "known_hosts" files, and
     added support for hashed hostnames
@@ -1160,8 +1162,8 @@ v1.5.3 (squirtle) 19feb06
     garbage collector
   * fixed a bunch of pychecker warnings, some of which were bugs
 
-v1.5.2 (rhydon) 04dec05
------------------------
+1.5.2 2005-12-04 (rhydon)
+-------------------------
   * compression support (opt-in via Transport.use_compression)
   * sftp files may be opened with mode flag 'x' for O_EXCL (exclusive-open)
     behavior, which has no direct python equivalent
@@ -1172,8 +1174,8 @@ v1.5.2 (rhydon) 04dec05
   * fixed the behavior of select()ing on a closed channel, such that it will
     always trigger as readable
 
-v1.5.1 (quilava) 31oct05
-------------------------
+1.5.1 2005-10-31 (quilava)
+--------------------------
   * SFTPFile.prefetch() added to dramatically speed up downloads (automatically
     turned on in SFTPClient.get())
   * fixed bug where garbage-collected Channels could trigger the Transport to
@@ -1183,8 +1185,8 @@ v1.5.1 (quilava) 31oct05
     makarewicz)
   * better sftp error reporting by adding fake "errno" info to IOErrors
 
-v1.5 (paras) 02oct05
---------------------
+1.5 2005-10-02 (paras)
+----------------------
   * added support for "keyboard-interactive" authentication
   * added mode (on by default) where password authentication will try to
     fallback to "keyboard-interactive" if it's supported
@@ -1198,8 +1200,8 @@ v1.5 (paras) 02oct05
   * demo scripts fixed to have a better chance of loading the host keys
     correctly on windows/cygwin
 
-v1.4 (oddish) 17jul05
----------------------
+1.4 2005-07-17 (oddish)
+-----------------------
   * added SSH-agent support (for posix) from john rochester
   * added chdir() and getcwd() to SFTPClient, to emulate a "working directory"
   * added get() and put() to SFTPClient, to emulate ftp whole-file transfers
@@ -1210,8 +1212,8 @@ v1.4 (oddish) 17jul05
   * some misc. backward-compatible API improvements (like allowing
     Transport.start_client() and start_server() to be called in a blocking way)
 
-v1.3.1 (nidoran) 28jun05
-------------------------
+1.3.1 2005-06-28 (nidoran)
+--------------------------
   * added SFTPClient.close()
   * fixed up some outdated documentation
   * made SFTPClient.file() an alias for open()
@@ -1222,8 +1224,8 @@ v1.3.1 (nidoran) 28jun05
   * fixed Channel.fileno() for Windows (again)
   * some more unit tests
 
-v1.3 (marowak) 09apr05
-----------------------
+1.3 2005-04-09 (marowak)
+------------------------
   * fixed a bug where packets larger than about 12KB would cause the session
     to die on all platforms except osx
   * added a potential workaround for windows to let Channel.fileno() (and
@@ -1231,8 +1233,8 @@ v1.3 (marowak) 09apr05
   * changed API for subsystem handlers (sorry!) to pass more info and make it
     easier to write a functional SFTP server
 
-v1.2 (lapras) 28feb05
----------------------
+1.2 2005-02-28 (lapras)
+-----------------------
   * added SFTPClient.listdir_attr() for fetching a list of files and their
     attributes in one call
   * added Channel.recv_exit_status() and Channel.send_exit_status() for
@@ -1246,8 +1248,8 @@ v1.2 (lapras) 28feb05
     to fail to start on slow machines
   * more unit tests
 
-v1.1 (kabuto) 12dec04
----------------------
+1.1 2004-12-12 (kabuto)
+-----------------------
   * server-side SFTP support
   * added support for stderr streams on client & server channels
   * added a new distinct exception for failed client authentication
@@ -1255,8 +1257,8 @@ v1.1 (kabuto) 12dec04
   * added support for multi-part authentication
   * fixed bug where get_username() wasn't working in server mode
 
-v1.0 (jigglypuff) 06nov04
--------------------------
+1.0 2004-11-06 (jigglypuff)
+---------------------------
   * fixed bug that broke server-mode authentication by private key
   * fixed bug where closing a Channel could end up killing the entire
     Transport
@@ -1265,8 +1267,8 @@ v1.0 (jigglypuff) 06nov04
     would generate the wrong hash (and therefore fail the initial handshake)
   * server-mode subsystem handler is a bit more flexible
 
-v0.9 (ivysaur) 22oct04
-----------------------
+0.9 2004-10-22 (ivysaur)
+------------------------
   * new ServerInterface class for implementing server policy, so it's no
     longer necessary to subclass Transport or Channel -- server code will
     need to be updated to follow this new API!  (see demo_server.py)
@@ -1284,8 +1286,8 @@ v0.9 (ivysaur) 22oct04
   * fleshed out the API a bit more for SFTPClient and private keys
   * a bunch of new unit tests!
 
-v0.9 (horsea) 27jun04
----------------------
+0.9 2004-06-27 (horsea)
+-----------------------
   * fixed a lockup that could happen if the channel was closed while the
     send window was full
   * better checking of maximum packet sizes
@@ -1293,8 +1295,8 @@ v0.9 (horsea) 27jun04
   * now chops sftp requests into smaller packets for some older servers
   * more sftp unit tests
 
-v0.9 (gyarados) 31may04
------------------------
+0.9 2004-05-31 (gyarados)
+-------------------------
   * Transport.open_channel() -- supports local & remote port forwarding now
   * now imports UTF-8 encodings explicitly as a hint to "freeze" utilities
   * no longer rejects older SFTP servers
@@ -1303,33 +1305,18 @@ v0.9 (gyarados) 31may04
   * Transport.connect() -- fixed bug where it would always fail when given a
     host key to verify
 
-v0.9 (fearow) 23apr04
----------------------
+0.9 2004-04-23 (fearow)
+-----------------------
   * Transport.send_ignore() -- send random ignored bytes
   * RSAKey/DSSKey added from_private_key_file() as a factory constructor;
     write_private_key_file() & generate() to create and save ssh2 keys;
     get_base64() to retrieve the exported public key
   * Transport added global_request() [client] and check_global_request()
     [server]
-  * Transport.get_remove_server_key() now returns a PKey object instead of a
+  * Transport.get_remote_server_key() now returns a PKey object instead of a
     tuple of strings
   * Transport.get_username() -- return the username you auth'd as [client]
   * Transport.set_keepalive() -- makes paramiko send periodic junk packets
     to the remote host, to keep the session active
   * python 2.2 support (thanks to Roger Binns)
   * misc. bug fixes
-
-v0.9 (eevee) 08mar04
---------------------
-
-v0.9 (doduo) 04jan04
---------------------
-
-v0.1 (charmander) 10nov03
--------------------------
-
-v0.1 (bulbasaur) 18sep03
-------------------------
-
-v0.1 (aerodactyl) 13sep03
--------------------------
