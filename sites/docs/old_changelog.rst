@@ -913,9 +913,8 @@ Following are changes pre-fork, up to just past version 2.4.1
   interface.  Thanks to ``@smunaut`` and James Hiscock for catch & patch.
 
 
-==================
 Very Old Changelog
-==================
+------------------
 
 Moved here from ``NEWS`` in the repo root.
 

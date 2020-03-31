@@ -93,6 +93,8 @@ Appendix
 ========
 
 .. toctree::
+    :maxdepth: 1
+
     installing
     faq
     old_changelog
