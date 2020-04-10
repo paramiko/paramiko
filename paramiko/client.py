@@ -35,7 +35,7 @@ from paramiko.dsskey import DSSKey
 from paramiko.ecdsakey import ECDSAKey
 from paramiko.ed25519key import Ed25519Key
 from paramiko.hostkeys import HostKeys
-from paramiko.py3compat import string_types
+from paramiko.py3compat import u,string_types
 from paramiko.rsakey import RSAKey
 from paramiko.ssh_exception import (
     SSHException,
@@ -588,7 +588,7 @@ class SSHClient(ClosingContextManager):
         # when #387 is released, since this is a critical log message users are
         # likely testing/filtering for (bah.)
         msg = "Trying discovered key {} in {}".format(
-            hexlify(key.get_fingerprint()), key_path
+            u(hexlify(key.get_fingerprint())), key_path
         )
         self._log(DEBUG, msg)
         # Attempt to load cert if it exists.
@@ -657,7 +657,7 @@ class SSHClient(ClosingContextManager):
                 self._log(
                     DEBUG,
                     "Trying SSH key {}".format(
-                        hexlify(pkey.get_fingerprint())
+                        u(hexlify(pkey.get_fingerprint()))
                     ),
                 )
                 allowed_types = set(
@@ -692,7 +692,7 @@ class SSHClient(ClosingContextManager):
 
             for key in self._agent.get_keys():
                 try:
-                    id_ = hexlify(key.get_fingerprint())
+                    id_ = u(hexlify(key.get_fingerprint()))
                     self._log(DEBUG, "Trying SSH agent key {}".format(id_))
                     # for 2-factor auth a successfully auth'd key password
                     # will return an allowed 2fac auth method
@@ -802,7 +802,7 @@ class AutoAddPolicy(MissingHostKeyPolicy):
         client._log(
             DEBUG,
             "Adding {} host key for {}: {}".format(
-                key.get_name(), hostname, hexlify(key.get_fingerprint())
+                key.get_name(), hostname, u(hexlify(key.get_fingerprint()))
             ),
         )
 
@@ -817,7 +817,7 @@ class RejectPolicy(MissingHostKeyPolicy):
         client._log(
             DEBUG,
             "Rejecting {} host key for {}: {}".format(
-                key.get_name(), hostname, hexlify(key.get_fingerprint())
+                key.get_name(), hostname, u(hexlify(key.get_fingerprint()))
             ),
         )
         raise SSHException(
@@ -834,6 +834,6 @@ class WarningPolicy(MissingHostKeyPolicy):
     def missing_host_key(self, client, hostname, key):
         warnings.warn(
             "Unknown {} host key for {}: {}".format(
-                key.get_name(), hostname, hexlify(key.get_fingerprint())
+                key.get_name(), hostname, u(hexlify(key.get_fingerprint()))
             )
         )
