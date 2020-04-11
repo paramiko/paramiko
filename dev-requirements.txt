@@ -6,8 +6,3 @@ pyflakes==2.1.1
 # for running tests
 pytest==4.4.1
 mock==2.0.0
-# for making releases
-wheel==0.33.6
-twine==1.15.0
-# twine -> readme-renderer -> Pygments, can cause issue for Python-3.4
-readme-renderer==24.0

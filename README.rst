@@ -10,11 +10,6 @@ install with the package name *paramiko-ng* (default) or *paramiko*
 
 Changelog: `releases <https://github.com/ploxiln/paramiko-ng/releases>`_
 
-.. Continuous integration and code coverage badges
-
-.. image:: https://travis-ci.org/ploxiln/paramiko-ng.svg?branch=master
-    :target: https://travis-ci.org/ploxiln/paramiko-ng
-
 :Paramiko-NG: Python SSH module
 :Copyright:   Copyright (c) 2003-2009  Robey Pointer <robeypointer@gmail.com>
 :Copyright:   Copyright (c) 2013-2019  Jeff Forcier <jeff@bitprophet.org>
