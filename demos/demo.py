@@ -28,7 +28,7 @@ import socket
 import sys
 import time
 import traceback
-from paramiko.py3compat import input
+from paramiko.py3compat import u,input
 
 import paramiko
 
@@ -50,7 +50,7 @@ def agent_auth(transport, username):
         return
 
     for key in agent_keys:
-        print("Trying ssh-agent key %s" % hexlify(key.get_fingerprint()))
+        print("Trying ssh-agent key %s" % u(hexlify(key.get_fingerprint())))
         try:
             transport.auth_publickey(username, key)
             print("... success!")

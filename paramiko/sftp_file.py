@@ -294,7 +294,7 @@ class SFTPFile(BufferedFile):
         :param int mode: new permissions
         """
         self.sftp._log(
-            DEBUG, "chmod({}, {!r})".format(hexlify(self.handle), mode)
+            DEBUG, "chmod({}, {!r})".format(u(hexlify(self.handle)), mode)
         )
         attr = SFTPAttributes()
         attr.st_mode = mode
@@ -312,7 +312,7 @@ class SFTPFile(BufferedFile):
         """
         self.sftp._log(
             DEBUG,
-            "chown({}, {!r}, {!r})".format(hexlify(self.handle), uid, gid),
+            "chown({}, {!r}, {!r})".format(u(hexlify(self.handle)), uid, gid),
         )
         attr = SFTPAttributes()
         attr.st_uid, attr.st_gid = uid, gid
@@ -334,7 +334,7 @@ class SFTPFile(BufferedFile):
         if times is None:
             times = (time.time(), time.time())
         self.sftp._log(
-            DEBUG, "utime({}, {!r})".format(hexlify(self.handle), times)
+            DEBUG, "utime({}, {!r})".format(u(hexlify(self.handle)), times)
         )
         attr = SFTPAttributes()
         attr.st_atime, attr.st_mtime = times
@@ -349,7 +349,7 @@ class SFTPFile(BufferedFile):
         :param size: the new size of the file
         """
         self.sftp._log(
-            DEBUG, "truncate({}, {!r})".format(hexlify(self.handle), size)
+            DEBUG, "truncate({}, {!r})".format(u(hexlify(self.handle)), size)
         )
         attr = SFTPAttributes()
         attr.st_size = size
@@ -490,7 +490,7 @@ class SFTPFile(BufferedFile):
         .. versionadded:: 1.5.4
         """
         self.sftp._log(
-            DEBUG, "readv({}, {!r})".format(hexlify(self.handle), chunks)
+            DEBUG, "readv({}, {!r})".format(u(hexlify(self.handle)), chunks)
         )
 
         read_chunks = []
