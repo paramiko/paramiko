@@ -19,7 +19,6 @@ html_theme_options = {
     'github_user': 'ploxiln',
     'github_repo': 'paramiko-ng',
     'github_type': 'star',
-    'travis_button': True,
 }
 html_sidebars = {
     '**': [
