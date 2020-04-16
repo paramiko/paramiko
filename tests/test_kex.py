@@ -24,7 +24,11 @@ from binascii import hexlify, unhexlify
 import os
 import unittest
 
-from mock import Mock, patch
+try:
+    from unittest.mock import Mock, patch
+except ImportError:
+    from mock import Mock, patch
+
 import pytest
 
 from cryptography.hazmat.backends import default_backend

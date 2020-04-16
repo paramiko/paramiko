@@ -7,7 +7,12 @@ from socket import gaierror
 from paramiko.py3compat import string_types
 
 from invoke import Result
-from mock import patch
+
+try:
+    from unittest.mock import patch
+except ImportError:
+    from mock import patch
+
 from pytest import raises, mark, fixture
 
 from paramiko import (

@@ -34,7 +34,11 @@ import weakref
 from tempfile import mkstemp
 
 from pytest_relaxed import raises
-from mock import patch, Mock
+
+try:
+    from unittest.mock import patch, Mock
+except ImportError:
+    from mock import patch, Mock
 
 import paramiko
 from paramiko import SSHClient

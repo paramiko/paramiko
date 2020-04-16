@@ -5,7 +5,7 @@ pytest==4.4.2
 pytest-relaxed==1.1.5
 # pytest-xdist for test dir watching and the inv guard task
 pytest-xdist==1.28.0
-mock==2.0.0
+mock==2.0.0;python_version<"3.3"
 # Linting!
 flake8==3.6.0
 # Coverage!

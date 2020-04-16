@@ -29,7 +29,11 @@ import time
 import threading
 import random
 import unittest
-from mock import Mock
+
+try:
+    from unittest.mock import Mock
+except ImportError:
+    from mock import Mock
 
 from paramiko import (
     AuthHandler,
