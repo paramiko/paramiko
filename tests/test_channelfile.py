@@ -1,4 +1,7 @@
-from mock import patch, create_autospec
+try:
+    from unittest.mock import patch, create_autospec
+except ImportError:
+    from mock import patch, create_autospec
 
 from paramiko import Channel, ChannelFile, ChannelStderrFile, ChannelStdinFile
 

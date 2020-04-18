@@ -5,4 +5,4 @@ pycodestyle==2.5.0
 pyflakes==2.1.1
 # for running tests
 pytest==4.4.1
-mock==2.0.0
+mock==2.0.0;python_version<"3.3"
