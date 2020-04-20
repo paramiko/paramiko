@@ -127,8 +127,12 @@ class BaseSFTP (object):
         self._send_packet(CMD_VERSION, msg)
         return version
 
-    def _log(self, level, msg, *args):
-        self.logger.log(level, msg, *args)
+    def _log(self, level, msg, *args, **kwargs):
+        self.logger.log(level, msg, *args, **kwargs)
+
+    def _loglist(self, level, msgs):
+        for m in msgs:
+            self._log(level, "%s", m)
 
     def _write_all(self, out):
         while len(out) > 0:
@@ -167,7 +171,7 @@ class BaseSFTP (object):
         packet = asbytes(packet)
         out = struct.pack('>I', len(packet) + 1) + byte_chr(t) + packet
         if self.ultra_debug:
-            self._log(DEBUG, util.format_binary(out, 'OUT: '))
+            self._loglist(DEBUG, util.format_binary(out, 'OUT: '))
         self._write_all(out)
 
     def _read_packet(self):
@@ -179,7 +183,7 @@ class BaseSFTP (object):
         size = struct.unpack('>I', x)[0]
         data = self._read_all(size)
         if self.ultra_debug:
-            self._log(DEBUG, util.format_binary(data, 'IN: '))
+            self._loglist(DEBUG, util.format_binary(data, 'IN: '))
         if size > 0:
             t = byte_ord(data[0])
             return t, data[1:]

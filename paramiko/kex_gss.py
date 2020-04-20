@@ -414,14 +414,10 @@ class KexGSSGex(object):
         # generate prime
         pack = self.transport._get_modulus_pack()
         if pack is None:
-            raise SSHException(
-                'Can\'t do server-side gex with no modulus pack')
-        self.transport._log(
-            DEBUG,  # noqa
-            'Picking p ({} <= {} <= {} bits)'.format(
-                minbits, preferredbits, maxbits,
-            )
-        )
+            raise SSHException("Can't do server-side gex with no modulus pack")
+
+        self.transport._log(DEBUG, "Picking p (%s <= %s <= %s bits)",
+                            minbits, preferredbits, maxbits)
         self.g, self.p = pack.get_modulus(minbits, preferredbits, maxbits)
         m = Message()
         m.add_byte(c_MSG_KEXGSS_GROUP)
@@ -444,7 +440,7 @@ class KexGSSGex(object):
             raise SSHException(
                 'Server-generated gex p (don\'t ask) is out of range '
                 '({} bits)'.format(bitlen))
-        self.transport._log(DEBUG, 'Got server p ({} bits)'.format(bitlen))  # noqa
+        self.transport._log(DEBUG, "Got server p (%s bits)", bitlen)
         self._generate_x()
         # now compute e = g^x mod p
         self.e = pow(self.g, self.x, self.p)

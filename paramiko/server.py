@@ -21,7 +21,6 @@
 """
 
 import threading
-from paramiko import util
 from paramiko.common import (
     DEBUG, ERROR, OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED, AUTH_FAILED,
     AUTH_SUCCESSFUL,
@@ -667,18 +666,11 @@ class SubsystemHandler (threading.Thread):
 
     def _run(self):
         try:
-            self.__transport._log(
-                DEBUG, 'Starting handler for subsystem {}'.format(self.__name)
-            )
+            self.__transport._log(DEBUG, "Starting handler for subsystem %s", self.__name)
             self.start_subsystem(self.__name, self.__transport, self.__channel)
         except Exception as e:
-            self.__transport._log(
-                ERROR,
-                'Exception in subsystem handler for "{}": {}'.format(
-                    self.__name, e
-                )
-            )
-            self.__transport._log(ERROR, util.tb_strings())
+            self.__transport._log(ERROR, 'Exception in subsystem handler for "%s": %s',
+                                  self.__name, e, exc_info=True)
         try:
             self.finish_subsystem()
         except:

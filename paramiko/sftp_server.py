@@ -87,20 +87,13 @@ class SFTPServer (BaseSFTP, SubsystemHandler):
         self.folder_table = {}
         self.server = sftp_si(server, *largs, **kwargs)
 
-    def _log(self, level, msg):
-        if isinstance(msg, list):
-            for m in msg:
-                super(SFTPServer, self)._log(
-                    level,
-                    "[chan " + self.sock.get_name() + "] " + m)
-        else:
-            super(SFTPServer, self)._log(
-                level,
-                "[chan " + self.sock.get_name() + "] " + msg)
+    def _log(self, level, msg, *args, **kwargs):
+        super(SFTPServer, self)._log(level, "[chan %s] " + msg,
+                                     self.sock.get_name(), *args, **kwargs)
 
     def start_subsystem(self, name, transport, channel):
         self.sock = channel
-        self._log(DEBUG, 'Started sftp server on channel {!r}'.format(channel))
+        self._log(DEBUG, "Started sftp server on channel %r", channel)
         self._send_server_version()
         self.server.session_started()
         while True:
@@ -110,16 +103,14 @@ class SFTPServer (BaseSFTP, SubsystemHandler):
                 self._log(DEBUG, 'EOF -- end of session')
                 return
             except Exception as e:
-                self._log(DEBUG, 'Exception on channel: ' + str(e))
-                self._log(DEBUG, util.tb_strings())
+                self._log(DEBUG, "Exception on channel: %s", e, exc_info=True)
                 return
             msg = Message(data)
             request_number = msg.get_int()
             try:
                 self._process(t, request_number, msg)
             except Exception as e:
-                self._log(DEBUG, 'Exception in server processing: ' + str(e))
-                self._log(DEBUG, util.tb_strings())
+                self._log(DEBUG, "Exception in server processing: %s", e, exc_info=True)
                 # send some kind of failure message, at least
                 try:
                     self._send_status(request_number, SFTP_FAILURE)
@@ -334,7 +325,7 @@ class SFTPServer (BaseSFTP, SubsystemHandler):
         return flags
 
     def _process(self, t, request_number, msg):
-        self._log(DEBUG, 'Request: {}'.format(CMD_NAMES[t]))
+        self._log(DEBUG, "Request: %s", CMD_NAMES[t])
         if t == CMD_OPEN:
             path = msg.get_text()
             flags = self._convert_pflags(msg.get_int())

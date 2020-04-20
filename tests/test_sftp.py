@@ -721,23 +721,6 @@ class TestSFTP(object):
         finally:
             sftp.remove(target)
 
-    # TODO: this test doesn't actually fail if the regression (removing '%'
-    # expansion to '%%' within sftp.py's def _log()) is removed - stacktraces
-    # appear but they're clearly emitted from subthreads that have no error
-    # handling. No point running it until that is fixed somehow.
-    @pytest.mark.skip("Doesn't prove anything right now")
-    def test_file_with_percent(self, sftp):
-        """
-        verify that we can create a file with a '%' in the filename.
-        ( it needs to be properly escaped by _log() )
-        """
-        f = sftp.open(sftp.FOLDER + '/test%file', 'w')
-        try:
-            assert f.stat().st_size == 0
-        finally:
-            f.close()
-            sftp.remove(sftp.FOLDER + '/test%file')
-
     def test_non_utf8_data(self, sftp):
         """Test write() and read() of non utf8 data"""
         try:
