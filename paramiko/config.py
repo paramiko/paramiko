@@ -319,6 +319,8 @@ class SSHConfig(object):
         """
         hosts = set()
         for entry in self._config:
+            if "host" not in entry.keys():
+                continue
             hosts.update(entry["host"])
         return hosts
 
