@@ -406,6 +406,7 @@ class Transport(threading.Thread, ClosingContextManager):
                     # addr = sockaddr
                     sock = socket.socket(af, socket.SOCK_STREAM)
                     try:
+                        sock.settimeout(self._active_check_timeout)
                         retry_on_signal(lambda: sock.connect((hostname, port)))
                     except socket.error as e:
                         reason = str(e)
