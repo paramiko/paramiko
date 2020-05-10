@@ -285,8 +285,8 @@ class Transport(threading.Thread, ClosingContextManager):
         string as the ``sock`` argument.  (A host string is a hostname with an
         optional port (separated by ``":"``) which will be converted into a
         tuple of ``(hostname, port)``.)  A socket will be connected to this
-        address and used for communication.  Exceptions from the ``socket``
-        call may be thrown in this case.
+        address and used for communication.  A default tcp connect timeout will
+        be used. For more control, pass a connected socket instead.
 
         .. note::
             Modifying the the window and packet sizes might have adverse
@@ -324,8 +324,9 @@ class Transport(threading.Thread, ClosingContextManager):
             hostname, port = sock
             self.hostname = hostname
             try:
+                # long default timeout - for more control, pass socket instead of tuple
                 sock = retry_on_signal(
-                    lambda: socket.create_connection((hostname, port))
+                    lambda: socket.create_connection((hostname, port), timeout=30)
                 )
             except socket.error as e:
                 reason = str(e) or repr(e)
