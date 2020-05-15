@@ -670,6 +670,11 @@ Error Message: {}
         # who cares.
 
     def _parse_userauth_info_request(self, m):
+        if self.auth_method == "publickey":
+            # This is also MSG_USERAUTH_PK_OK. For some reason, server
+            # ignored our previous signature. Just send it again. This
+            # happens with SSH-2.0-Cisco-1.25.
+            return self._request_userauth()
         if self.auth_method != "keyboard-interactive":
             raise SSHException("Illegal info request from server")
         title = m.get_text()
