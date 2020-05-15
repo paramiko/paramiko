@@ -79,6 +79,10 @@ class AuthHandler(object):
 
     def __init__(self, transport):
         self.transport = weakref.proxy(transport)
+        self.authservice_accepted = False
+        self._reset()
+
+    def _reset(self):
         self.username = None
         self.authenticated = False
         self.auth_event = None
@@ -110,6 +114,7 @@ class AuthHandler(object):
     def auth_none(self, username, event):
         self.transport.lock.acquire()
         try:
+            self._reset()
             self.auth_event = event
             self.auth_method = "none"
             self.username = username
@@ -120,6 +125,7 @@ class AuthHandler(object):
     def auth_publickey(self, username, key, event):
         self.transport.lock.acquire()
         try:
+            self._reset()
             self.auth_event = event
             self.auth_method = "publickey"
             self.username = username
@@ -131,6 +137,7 @@ class AuthHandler(object):
     def auth_password(self, username, password, event):
         self.transport.lock.acquire()
         try:
+            self._reset()
             self.auth_event = event
             self.auth_method = "password"
             self.username = username
@@ -145,6 +152,7 @@ class AuthHandler(object):
         """
         self.transport.lock.acquire()
         try:
+            self._reset()
             self.auth_event = event
             self.auth_method = "keyboard-interactive"
             self.username = username
@@ -157,6 +165,7 @@ class AuthHandler(object):
     def auth_gssapi_with_mic(self, username, gss_host, gss_deleg_creds, event):
         self.transport.lock.acquire()
         try:
+            self._reset()
             self.auth_event = event
             self.auth_method = "gssapi-with-mic"
             self.username = username
@@ -169,6 +178,7 @@ class AuthHandler(object):
     def auth_gssapi_keyex(self, username, event):
         self.transport.lock.acquire()
         try:
+            self._reset()
             self.auth_event = event
             self.auth_method = "gssapi-keyex"
             self.username = username
@@ -183,10 +193,13 @@ class AuthHandler(object):
     # ...internals...
 
     def _request_auth(self):
-        m = Message()
-        m.add_byte(cMSG_SERVICE_REQUEST)
-        m.add_string("ssh-userauth")
-        self.transport._send_message(m)
+        if not self.authservice_accepted:
+            m = Message()
+            m.add_byte(cMSG_SERVICE_REQUEST)
+            m.add_string("ssh-userauth")
+            self.transport._send_message(m)
+        else:
+            self._request_userauth()
 
     def _disconnect_service_not_available(self):
         m = Message()
@@ -272,6 +285,7 @@ class AuthHandler(object):
     def _parse_service_accept(self, m):
         service = m.get_text()
         if service == "ssh-userauth":
+            self.authservice_accepted = True
             self._log(DEBUG, "userauth is OK")
             self._request_userauth()
         else:
@@ -338,10 +352,7 @@ class AuthHandler(object):
                         srv_token = m.get_string()
                         try:
                             next_token = sshgss.ssh_init_sec_context(
-                                self.gss_host,
-                                mech,
-                                self.username,
-                                srv_token,
+                                self.gss_host, mech, self.username, srv_token
                             )
                         except GSS_EXCEPTIONS as e:
                             return self._handle_local_gss_failure(e)
@@ -391,8 +402,7 @@ Error Message: {}
                     "Received Package: {}".format(MSG_NAMES[ptype])
                 )
         elif (
-            self.auth_method == "gssapi-keyex"
-            and self.transport.gss_kex_used
+            self.auth_method == "gssapi-keyex" and self.transport.gss_kex_used
         ):
             kexgss = self.transport.kexgss_ctxt
             kexgss.set_username(self.username)
