@@ -25,6 +25,7 @@ read operations are blocking and can have a timeout set.
 import array
 import threading
 import time
+import socket
 from paramiko.py3compat import PY2, b
 
 
@@ -123,7 +124,7 @@ class BufferedPipe(object):
         finally:
             self._lock.release()
 
-    def read(self, nbytes, timeout=None):
+    def read(self, nbytes, timeout=None, flags: int = 0):
         """
         Read data from the pipe.  The return value is a string representing
         the data received.  The maximum amount of data to be received at once
@@ -144,6 +145,10 @@ class BufferedPipe(object):
             `.PipeTimeout` -- if a timeout was specified and no data was ready
             before that timeout
         """
+
+        if flags != 0 and flags != socket.MSG_PEEK:
+            raise NotImplementedError("only socket.MSG_PEEK flag currently supported")
+
         out = bytes()
         self._lock.acquire()
         try:
@@ -166,12 +171,14 @@ class BufferedPipe(object):
             # something's in the buffer and we have the lock!
             if len(self._buffer) <= nbytes:
                 out = self._buffer_tobytes()
-                del self._buffer[:]
+                if not (flags & socket.MSG_PEEK):
+                    del self._buffer[:]
                 if (self._event is not None) and not self._closed:
                     self._event.clear()
             else:
                 out = self._buffer_tobytes(nbytes)
-                del self._buffer[:nbytes]
+                if not (flags & socket.MSG_PEEK):
+                    del self._buffer[:]
         finally:
             self._lock.release()
 

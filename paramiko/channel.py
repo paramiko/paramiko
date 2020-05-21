@@ -682,7 +682,7 @@ class Channel(ClosingContextManager):
         """
         return self.in_buffer.read_ready()
 
-    def recv(self, nbytes):
+    def recv(self, nbytes, flags: int = 0):
         """
         Receive data from the channel.  The return value is a string
         representing the data received.  The maximum amount of data to be
@@ -696,18 +696,21 @@ class Channel(ClosingContextManager):
             if no data is ready before the timeout set by `settimeout`.
         """
         try:
-            out = self.in_buffer.read(nbytes, self.timeout)
+            out = self.in_buffer.read(nbytes, self.timeout, flags)
         except PipeTimeout:
             raise socket.timeout()
-
-        ack = self._check_add_window(len(out))
-        # no need to hold the channel lock when sending this
-        if ack > 0:
-            m = Message()
-            m.add_byte(cMSG_CHANNEL_WINDOW_ADJUST)
-            m.add_int(self.remote_chanid)
-            m.add_int(ack)
-            self.transport._send_user_message(m)
+       
+        # Only send ack if aren't PEEK-ing the data. I'm unsure if this
+        # check is needed.
+        if not (flags & socket.MSG_PEEK):
+            ack = self._check_add_window(len(out))
+            # no need to hold the channel lock when sending this
+            if ack > 0:
+                m = Message()
+                m.add_byte(cMSG_CHANNEL_WINDOW_ADJUST)
+                m.add_int(self.remote_chanid)
+                m.add_int(ack)
+                self.transport._send_user_message(m)
 
         return out
 
