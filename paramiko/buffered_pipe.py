@@ -124,7 +124,7 @@ class BufferedPipe(object):
         finally:
             self._lock.release()
 
-    def read(self, nbytes, timeout=None, flags: int = 0):
+    def read(self, nbytes, timeout=None, flags = 0):
         """
         Read data from the pipe.  The return value is a string representing
         the data received.  The maximum amount of data to be received at once
@@ -139,6 +139,9 @@ class BufferedPipe(object):
         :param int nbytes: maximum number of bytes to read
         :param float timeout:
             maximum seconds to wait (or ``None``, the default, to wait forever)
+        :param int flags:
+            socket recv flags (currently only supports socket.MSG_PEEK)
+
         :return: the read data, as a ``str`` or ``bytes``
 
         :raises:
@@ -147,7 +150,9 @@ class BufferedPipe(object):
         """
 
         if flags != 0 and flags != socket.MSG_PEEK:
-            raise NotImplementedError("only socket.MSG_PEEK flag currently supported")
+            raise NotImplementedError(
+                    "only the socket.MSG_PEEK recv flag is supported"
+            )
 
         out = bytes()
         self._lock.acquire()
@@ -171,14 +176,14 @@ class BufferedPipe(object):
             # something's in the buffer and we have the lock!
             if len(self._buffer) <= nbytes:
                 out = self._buffer_tobytes()
-                if not (flags & socket.MSG_PEEK):
+                if flags != socket.MSG_PEEK:
                     del self._buffer[:]
                 if (self._event is not None) and not self._closed:
                     self._event.clear()
             else:
                 out = self._buffer_tobytes(nbytes)
-                if not (flags & socket.MSG_PEEK):
-                    del self._buffer[:]
+                if flags != socket.MSG_PEEK:
+                    del self._buffer[:nbytes]
         finally:
             self._lock.release()
 
