@@ -672,9 +672,10 @@ Error Message: {}
 
         m = Message()
         m.add_byte(cMSG_USERAUTH_INFO_RESPONSE)
-        m.add_int(len(response_list))
-        for r in response_list:
-            m.add_string(r)
+        if (response_list is not None):
+            m.add_int(len(response_list))
+            for r in response_list:
+                m.add_string(r)
         self.transport._send_message(m)
 
     def _parse_userauth_info_response(self, m):
