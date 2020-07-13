@@ -228,7 +228,7 @@ class BufferedFile(ClosingContextManager):
         self._pos += len(result)
         return result
 
-    def readline(self, size=None):
+    def readline(self, size=None, encoding="utf8"):
         """
         Read one entire line from the file.  A trailing newline character is
         kept in the string (but may be absent when a file ends with an
@@ -331,9 +331,9 @@ class BufferedFile(ClosingContextManager):
         else:
             self._record_newline(lf)
         self._pos += len(line)
-        return line if self._flags & self.FLAG_BINARY else u(line)
+        return line if self._flags & self.FLAG_BINARY else u(line, encoding)
 
-    def readlines(self, sizehint=None):
+    def readlines(self, sizehint=None, encoding="utf8"):
         """
         Read all remaining lines using `readline` and return them as a list.
         If the optional ``sizehint`` argument is present, instead of reading up
@@ -346,7 +346,7 @@ class BufferedFile(ClosingContextManager):
         lines = []
         byte_count = 0
         while True:
-            line = self.readline()
+            line = self.readline(None, encoding)
             if len(line) == 0:
                 break
             lines.append(line)

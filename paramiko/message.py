@@ -171,11 +171,11 @@ class Message(object):
         """
         return self.get_bytes(self.get_int())
 
-    def get_text(self):
+    def get_text(self, encoding="utf8"):
         """
         Fetch a Unicode string from the stream.
         """
-        return u(self.get_string())
+        return u(self.get_string(), encoding)
 
     def get_binary(self):
         """

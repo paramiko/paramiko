@@ -203,7 +203,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         """
         return self.sock
 
-    def listdir(self, path="."):
+    def listdir(self, path=".", encoding="utf8"):
         """
         Return a list containing the names of the entries in the given
         ``path``.
@@ -215,9 +215,9 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
 
         :param str path: path to list (defaults to ``'.'``)
         """
-        return [f.filename for f in self.listdir_attr(path)]
+        return [f.filename for f in self.listdir_attr(path, encoding)]
 
-    def listdir_attr(self, path="."):
+    def listdir_attr(self, path=".", encoding="utf8"):
         """
         Return a list containing `.SFTPAttributes` objects corresponding to
         files in the given ``path``.  The list is in arbitrary order.  It does
@@ -251,15 +251,15 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
                 raise SFTPError("Expected name response")
             count = msg.get_int()
             for i in range(count):
-                filename = msg.get_text()
-                longname = msg.get_text()
+                filename = msg.get_text(encoding)
+                longname = msg.get_text(encoding)
                 attr = SFTPAttributes._from_msg(msg, filename, longname)
                 if (filename != ".") and (filename != ".."):
                     filelist.append(attr)
         self._request(CMD_CLOSE, handle)
         return filelist
 
-    def listdir_iter(self, path=".", read_aheads=50):
+    def listdir_iter(self, path=".", read_aheads=50, encoding="utf8"):
         """
         Generator version of `.listdir_attr`.
 
@@ -308,8 +308,8 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
                             self._convert_status(msg)
                     count = msg.get_int()
                     for i in range(count):
-                        filename = msg.get_text()
-                        longname = msg.get_text()
+                        filename = msg.get_text(encoding)
+                        longname = msg.get_text(encoding)
                         attr = SFTPAttributes._from_msg(
                             msg, filename, longname
                         )
@@ -615,7 +615,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
             raise SFTPError("Readlink returned {} results".format(count))
         return _to_unicode(msg.get_string())
 
-    def normalize(self, path):
+    def normalize(self, path, encoding="utf8"):
         """
         Return the normalized path (on the server) of a given path.  This
         can be used to quickly resolve symbolic links or determine what the
@@ -635,9 +635,9 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         count = msg.get_int()
         if count != 1:
             raise SFTPError("Realpath returned {} results".format(count))
-        return msg.get_text()
+        return msg.get_text(encoding)
 
-    def chdir(self, path=None):
+    def chdir(self, path=None, encoding="utf8"):
         """
         Change the "current directory" of this SFTP session.  Since SFTP
         doesn't really have the concept of a current working directory, this is
@@ -659,7 +659,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         if not stat.S_ISDIR(self.stat(path).st_mode):
             code = errno.ENOTDIR
             raise SFTPError(code, "{}: {}".format(os.strerror(code), path))
-        self._cwd = b(self.normalize(path))
+        self._cwd = b(self.normalize(path, encoding))
 
     def getcwd(self):
         """
@@ -879,12 +879,12 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
             self._read_response()
             fileobj._check_exception()
 
-    def _convert_status(self, msg):
+    def _convert_status(self, msg, encoding="utf8"):
         """
         Raises EOFError or IOError on error status; otherwise does nothing.
         """
         code = msg.get_int()
-        text = msg.get_text()
+        text = msg.get_text(encoding)
         if code == SFTP_OK:
             return
         elif code == SFTP_EOF:
