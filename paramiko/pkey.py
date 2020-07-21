@@ -176,7 +176,7 @@ class PKey(object):
         Nothing secret is revealed.
 
         :return:
-            an 43-byte `string <str>` (base64) of the SHA256 fingerprint,
+            a 43-byte `string <str>` (base64) of the SHA256 fingerprint,
             in SSH format.
         """
         return base64.b64encode(b(sha256(self.asbytes()).digest()))[:-1]
@@ -189,7 +189,7 @@ class PKey(object):
         Nothing secret is revealed.
 
         :return:
-            an 86-byte `string <str>` (base64) of the SHA512 fingerprint,
+            a 86-byte `string <str>` (base64) of the SHA512 fingerprint,
             in SSH format.
         """
         return base64.b64encode(b(sha512(self.asbytes()).digest()))[:-2]
@@ -229,9 +229,9 @@ class PKey(object):
             Depending on the algorithm variable can return
             a 16-byte `string <str>` (binary) of the MD5 fingerprint, in SSH
             format. (default)
-            an 43-byte `string <str>` (base64) of the SHA256 fingerprint,
+            a 43-byte `string <str>` (base64) of the SHA256 fingerprint,
             in SSH format.
-            an 86-byte `string <str>` (base64) of the SHA512 fingerprint,
+            a 86-byte `string <str>` (base64) of the SHA512 fingerprint,
             in SSH format.
         """
         return self.get_available_fingerprint_methods().get(algorithm, "md5")()
