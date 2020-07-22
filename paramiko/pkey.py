@@ -208,11 +208,11 @@ class PKey(object):
     def get_available_fingerprint_methods(self):
         """
         Return a dictionary of available hash algorithms and  their method
-        callbacks
+        callbacks.
 
         :return:
             a `dictionary <dict>` containing the available hash algorithms
-            and their method callbacks
+            and their method callbacks.
         """
         return dict(
             sha512=self.get_sha512_fingerprint,
