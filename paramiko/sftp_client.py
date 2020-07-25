@@ -781,7 +781,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         """
         file_size = os.stat(localpath).st_size
         with open(localpath, "rb") as fl:
-            return self.putfo(fl, remotepath.encode(encoding, errors),
+            return self.putfo(fl, remotepath,
                               file_size, callback, confirm, encoding=encoding, errors=errors)
 
     def getfo(self, remotepath, fl, callback=None, encoding="utf8", errors="strict"):
