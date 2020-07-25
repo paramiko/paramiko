@@ -1,0 +1,1784 @@
+============================= test session starts ==============================
+platform linux -- Python 3.8.2, pytest-4.4.2, py-1.8.1, pluggy-0.13.0
+rootdir: /home/chris/Schreibtisch/git/paramiko, inifile: setup.cfg
+plugins: xdist-1.28.0, forked-1.2.0
+collected 373 items
+
+tests/test_auth.py .........                                             [  2%]
+tests/test_buffered_pipe.py ....                                         [  3%]
+tests/test_channelfile.py ...........                                    [  6%]
+tests/test_client.py FFssF...FFF.......s..FF....s.F..F.F                 [ 15%]
+tests/test_config.py ................................................... [ 29%]
+s........ssssss..................................................        [ 46%]
+tests/test_file.py ............s...                                      [ 51%]
+tests/test_gssapi.py sss                                                 [ 52%]
+tests/test_hostkeys.py .....                                             [ 53%]
+tests/test_kex.py ................                                       [ 57%]
+tests/test_kex_gss.py ss                                                 [ 58%]
+tests/test_message.py ....                                               [ 59%]
+tests/test_packetizer.py ...                                             [ 60%]
+tests/test_pkey.py ......................................                [ 70%]
+tests/test_proxy.py ...........                                          [ 73%]
+tests/test_sftp.py ..............................s..s.                   [ 82%]
+tests/test_sftp_big.py ..........                                        [ 85%]
+tests/test_ssh_exception.py .........                                    [ 87%]
+tests/test_ssh_gss.py ss                                                 [ 88%]
+tests/test_transport.py .s....................................           [ 98%]
+tests/test_util.py ......                                                [100%]
+
+=================================== FAILURES ===================================
+_______________________ SSHClientTest.test_auth_timeout ________________________
+
+self = <tests.test_client.SSHClientTest testMethod=test_auth_timeout>
+
+    @slow
+    def test_auth_timeout(self):
+        """
+        verify that the SSHClient has a configurable auth timeout
+        """
+        # Connect with a half second auth timeout
+>       self.assertRaises(
+            AuthenticationException,
+            self._test_connection,
+            password="unresponsive-server",
+            auth_timeout=0.5,
+        )
+
+tests/test_client.py:495: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_client.py:202: in _test_connection
+    self.tc.connect(**dict(self.connect_kwargs, **kwargs))
+paramiko/client.py:435: in connect
+    self._auth(
+paramiko/client.py:764: in _auth
+    raise saved_exception
+paramiko/client.py:751: in _auth
+    self._transport.auth_password(username, password)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def auth_password(self, username, password, event=None, fallback=True):
+        """
+        Authenticate to the server using a password.  The username and password
+        are sent over an encrypted link.
+    
+        If an ``event`` is passed in, this method will return immediately, and
+        the event will be triggered once authentication succeeds or fails.  On
+        success, `is_authenticated` will return ``True``.  On failure, you may
+        use `get_exception` to get more detailed error information.
+    
+        Since 1.1, if no event is passed, this method will block until the
+        authentication succeeds or fails.  On failure, an exception is raised.
+        Otherwise, the method simply returns.
+    
+        Since 1.5, if no event is passed and ``fallback`` is ``True`` (the
+        default), if the server doesn't support plain password authentication
+        but does support so-called "keyboard-interactive" mode, an attempt
+        will be made to authenticate using this interactive mode.  If it fails,
+        the normal exception will be thrown as if the attempt had never been
+        made.  This is useful for some recent Gentoo and Debian distributions,
+        which turn off plain password authentication in a misguided belief
+        that interactive authentication is "more secure".  (It's not.)
+    
+        If the server requires multi-step authentication (which is very rare),
+        this method will return a list of auth types permissible for the next
+        step.  Otherwise, in the normal case, an empty list is returned.
+    
+        :param str username: the username to authenticate as
+        :param basestring password: the password to authenticate with
+        :param .threading.Event event:
+            an event to trigger when the authentication attempt is complete
+            (whether it was successful or not)
+        :param bool fallback:
+            ``True`` if an attempt at an automated "interactive" password auth
+            should be made if the server doesn't support normal password auth
+        :return:
+            list of auth types permissible for the next stage of
+            authentication (normally empty)
+    
+        :raises:
+            `.BadAuthenticationType` -- if password authentication isn't
+            allowed by the server for this user (and no event was passed in)
+        :raises:
+            `.AuthenticationException` -- if the authentication failed (and no
+            event was passed in)
+        :raises: `.SSHException` -- if there was a network error
+        """
+        if (not self.active) or (not self.initial_kex_done):
+            # we should never try to send the password unless we're on a secure
+            # link
+>           raise SSHException("No existing session")
+E           paramiko.ssh_exception.SSHException: No existing session
+
+paramiko/transport.py:1498: SSHException
+----------------------------- Captured stderr call -----------------------------
+[2534.303903579712]	DEBUG:paramiko.transport:starting thread (client mode): 0x985e4a90
+[2534.5394611358643]	DEBUG:paramiko.transport:Local version/idstring: SSH-2.0-paramiko_2.7.1
+[2535.1479053497314]	DEBUG:paramiko.transport:starting thread (server mode): 0x985dec10
+[2535.2587699890137]	DEBUG:paramiko.transport:Local version/idstring: SSH-2.0-paramiko_2.7.1
+[2535.322427749634]	DEBUG:paramiko.transport:Remote version/idstring: SSH-2.0-paramiko_2.7.1
+[2535.3622436523438]	INFO:paramiko.transport:Connected (version 2.0, client paramiko_2.7.1)
+[2535.4976654052734]	DEBUG:paramiko.transport:Remote version/idstring: SSH-2.0-paramiko_2.7.1
+[2535.679578781128]	INFO:paramiko.transport:Connected (version 2.0, client paramiko_2.7.1)
+[2535.9904766082764]	DEBUG:paramiko.transport:kex algos:['curve25519-sha256@libssh.org', 'ecdh-sha2-nistp256', 'ecdh-sha2-nistp384', 'ecdh-sha2-nistp521', 'diffie-hellman-group16-sha512', 'diffie-hellman-group-exchange-sha256', 'diffie-hellman-group14-sha256', 'diffie-hellman-group-exchange-sha1', 'diffie-hellman-group14-sha1', 'diffie-hellman-group1-sha1'] server key:['ssh-rsa', 'ssh-ed25519', 'ecdsa-sha2-nistp256', 'ecdsa-sha2-nistp384', 'ecdsa-sha2-nistp521', 'ssh-dss'] client encrypt:['aes128-ctr', 'aes192-ctr', 'aes256-ctr', 'aes128-cbc', 'aes192-cbc', 'aes256-cbc', 'blowfish-cbc', '3des-cbc'] server encrypt:['aes128-ctr', 'aes192-ctr', 'aes256-ctr', 'aes128-cbc', 'aes192-cbc', 'aes256-cbc', 'blowfish-cbc', '3des-cbc'] client mac:['hmac-sha2-256', 'hmac-sha2-512', 'hmac-sha2-256-etm@openssh.com', 'hmac-sha2-512-etm@openssh.com', 'hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96'] server mac:['hmac-sha2-256', 'hmac-sha2-512', 'hmac-sha2-256-etm@openssh.com', 'hmac-sha2-512-etm@openssh.com', 'hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96'] client compress:['none'] server compress:['none'] client lang:[''] server lang:[''] kex follows?False
+[2536.0751152038574]	DEBUG:paramiko.transport:kex algos:['curve25519-sha256@libssh.org', 'ecdh-sha2-nistp256', 'ecdh-sha2-nistp384', 'ecdh-sha2-nistp521', 'diffie-hellman-group16-sha512', 'diffie-hellman-group14-sha256', 'diffie-hellman-group14-sha1', 'diffie-hellman-group1-sha1'] server key:['ecdsa-sha2-nistp256', 'ssh-rsa'] client encrypt:['aes128-ctr', 'aes192-ctr', 'aes256-ctr', 'aes128-cbc', 'aes192-cbc', 'aes256-cbc', 'blowfish-cbc', '3des-cbc'] server encrypt:['aes128-ctr', 'aes192-ctr', 'aes256-ctr', 'aes128-cbc', 'aes192-cbc', 'aes256-cbc', 'blowfish-cbc', '3des-cbc'] client mac:['hmac-sha2-256', 'hmac-sha2-512', 'hmac-sha2-256-etm@openssh.com', 'hmac-sha2-512-etm@openssh.com', 'hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96'] server mac:['hmac-sha2-256', 'hmac-sha2-512', 'hmac-sha2-256-etm@openssh.com', 'hmac-sha2-512-etm@openssh.com', 'hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96'] client compress:['none'] server compress:['none'] client lang:[''] server lang:[''] kex follows?False
+[2536.133050918579]	DEBUG:paramiko.transport:Kex agreed: curve25519-sha256@libssh.org
+[2536.200523376465]	DEBUG:paramiko.transport:Kex agreed: curve25519-sha256@libssh.org
+[2536.261796951294]	DEBUG:paramiko.transport:HostKey agreed: ssh-rsa
+[2536.3173484802246]	DEBUG:paramiko.transport:HostKey agreed: ssh-rsa
+[2536.374092102051]	DEBUG:paramiko.transport:Cipher agreed: aes128-ctr
+[2536.4301204681396]	DEBUG:paramiko.transport:Cipher agreed: aes128-ctr
+[2536.4842414855957]	DEBUG:paramiko.transport:MAC agreed: hmac-sha2-256
+[2536.536455154419]	DEBUG:paramiko.transport:MAC agreed: hmac-sha2-256
+[2536.586284637451]	DEBUG:paramiko.transport:Compression agreed: none
+[2536.6363525390625]	DEBUG:paramiko.transport:Compression agreed: none
+[2537.6529693603516]	DEBUG:paramiko.transport:kex engine KexCurve25519 specified hash_algo <built-in function openssl_sha256>
+[2538.1407737731934]	DEBUG:paramiko.transport:kex engine KexCurve25519 specified hash_algo <built-in function openssl_sha256>
+[2538.2823944091797]	DEBUG:paramiko.transport:Switch to new keys ...
+[2538.5143756866455]	DEBUG:paramiko.transport:Switch to new keys ...
+[2539.1218662261963]	DEBUG:paramiko.transport:Trying SSH agent key b'3f7cd50f9adaac95294ce7aca5f6a8f8'
+[2539.4461154937744]	DEBUG:paramiko.transport:userauth is OK
+[2542.2439575195312]	ERROR:paramiko.transport:Exception: key cannot be used for signing
+[2542.536973953247]	ERROR:paramiko.transport:Traceback (most recent call last):
+[2542.5865650177]	ERROR:paramiko.transport:  File "/home/chris/Schreibtisch/git/paramiko/paramiko/transport.py", line 2109, in run
+[2542.619466781616]	ERROR:paramiko.transport:    handler(self.auth_handler, m)
+[2542.6480770111084]	ERROR:paramiko.transport:  File "/home/chris/Schreibtisch/git/paramiko/paramiko/auth_handler.py", line 298, in _parse_service_accept
+[2542.6759719848633]	ERROR:paramiko.transport:    sig = self.private_key.sign_ssh_data(blob)
+[2542.7026748657227]	ERROR:paramiko.transport:  File "/home/chris/Schreibtisch/git/paramiko/paramiko/agent.py", line 418, in sign_ssh_data
+[2542.729377746582]	ERROR:paramiko.transport:    raise SSHException("key cannot be used for signing")
+[2542.7558422088623]	ERROR:paramiko.transport:paramiko.ssh_exception.SSHException: key cannot be used for signing
+[2542.7815914154053]	ERROR:paramiko.transport:
+[2542.9654121398926]	DEBUG:paramiko.transport:EOF in transport thread
+------------------------------ Captured log call -------------------------------
+transport.py              1819 DEBUG    starting thread (client mode): 0x985e4a90
+transport.py              1819 DEBUG    Local version/idstring: SSH-2.0-paramiko_2.7.1
+transport.py              1819 DEBUG    starting thread (server mode): 0x985dec10
+transport.py              1819 DEBUG    Local version/idstring: SSH-2.0-paramiko_2.7.1
+transport.py              1819 DEBUG    Remote version/idstring: SSH-2.0-paramiko_2.7.1
+transport.py              1819 INFO     Connected (version 2.0, client paramiko_2.7.1)
+transport.py              1819 DEBUG    Remote version/idstring: SSH-2.0-paramiko_2.7.1
+transport.py              1819 INFO     Connected (version 2.0, client paramiko_2.7.1)
+transport.py              1819 DEBUG    kex algos:['curve25519-sha256@libssh.org', 'ecdh-sha2-nistp256', 'ecdh-sha2-nistp384', 'ecdh-sha2-nistp521', 'diffie-hellman-group16-sha512', 'diffie-hellman-group-exchange-sha256', 'diffie-hellman-group14-sha256', 'diffie-hellman-group-exchange-sha1', 'diffie-hellman-group14-sha1', 'diffie-hellman-group1-sha1'] server key:['ssh-rsa', 'ssh-ed25519', 'ecdsa-sha2-nistp256', 'ecdsa-sha2-nistp384', 'ecdsa-sha2-nistp521', 'ssh-dss'] client encrypt:['aes128-ctr', 'aes192-ctr', 'aes256-ctr', 'aes128-cbc', 'aes192-cbc', 'aes256-cbc', 'blowfish-cbc', '3des-cbc'] server encrypt:['aes128-ctr', 'aes192-ctr', 'aes256-ctr', 'aes128-cbc', 'aes192-cbc', 'aes256-cbc', 'blowfish-cbc', '3des-cbc'] client mac:['hmac-sha2-256', 'hmac-sha2-512', 'hmac-sha2-256-etm@openssh.com', 'hmac-sha2-512-etm@openssh.com', 'hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96'] server mac:['hmac-sha2-256', 'hmac-sha2-512', 'hmac-sha2-256-etm@openssh.com', 'hmac-sha2-512-etm@openssh.com', 'hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96'] client compress:['none'] server compress:['none'] client lang:[''] server lang:[''] kex follows?False
+transport.py              1819 DEBUG    kex algos:['curve25519-sha256@libssh.org', 'ecdh-sha2-nistp256', 'ecdh-sha2-nistp384', 'ecdh-sha2-nistp521', 'diffie-hellman-group16-sha512', 'diffie-hellman-group14-sha256', 'diffie-hellman-group14-sha1', 'diffie-hellman-group1-sha1'] server key:['ecdsa-sha2-nistp256', 'ssh-rsa'] client encrypt:['aes128-ctr', 'aes192-ctr', 'aes256-ctr', 'aes128-cbc', 'aes192-cbc', 'aes256-cbc', 'blowfish-cbc', '3des-cbc'] server encrypt:['aes128-ctr', 'aes192-ctr', 'aes256-ctr', 'aes128-cbc', 'aes192-cbc', 'aes256-cbc', 'blowfish-cbc', '3des-cbc'] client mac:['hmac-sha2-256', 'hmac-sha2-512', 'hmac-sha2-256-etm@openssh.com', 'hmac-sha2-512-etm@openssh.com', 'hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96'] server mac:['hmac-sha2-256', 'hmac-sha2-512', 'hmac-sha2-256-etm@openssh.com', 'hmac-sha2-512-etm@openssh.com', 'hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96'] client compress:['none'] server compress:['none'] client lang:[''] server lang:[''] kex follows?False
+transport.py              1819 DEBUG    Kex agreed: curve25519-sha256@libssh.org
+transport.py              1819 DEBUG    Kex agreed: curve25519-sha256@libssh.org
+transport.py              1819 DEBUG    HostKey agreed: ssh-rsa
+transport.py              1819 DEBUG    HostKey agreed: ssh-rsa
+transport.py              1819 DEBUG    Cipher agreed: aes128-ctr
+transport.py              1819 DEBUG    Cipher agreed: aes128-ctr
+transport.py              1819 DEBUG    MAC agreed: hmac-sha2-256
+transport.py              1819 DEBUG    MAC agreed: hmac-sha2-256
+transport.py              1819 DEBUG    Compression agreed: none
+transport.py              1819 DEBUG    Compression agreed: none
+transport.py              1819 DEBUG    kex engine KexCurve25519 specified hash_algo <built-in function openssl_sha256>
+transport.py              1819 DEBUG    kex engine KexCurve25519 specified hash_algo <built-in function openssl_sha256>
+transport.py              1819 DEBUG    Switch to new keys ...
+transport.py              1819 DEBUG    Switch to new keys ...
+transport.py              1819 DEBUG    Trying SSH agent key b'3f7cd50f9adaac95294ce7aca5f6a8f8'
+transport.py              1819 DEBUG    userauth is OK
+transport.py              1819 ERROR    Exception: key cannot be used for signing
+transport.py              1817 ERROR    Traceback (most recent call last):
+transport.py              1817 ERROR      File "/home/chris/Schreibtisch/git/paramiko/paramiko/transport.py", line 2109, in run
+transport.py              1817 ERROR        handler(self.auth_handler, m)
+transport.py              1817 ERROR      File "/home/chris/Schreibtisch/git/paramiko/paramiko/auth_handler.py", line 298, in _parse_service_accept
+transport.py              1817 ERROR        sig = self.private_key.sign_ssh_data(blob)
+transport.py              1817 ERROR      File "/home/chris/Schreibtisch/git/paramiko/paramiko/agent.py", line 418, in sign_ssh_data
+transport.py              1817 ERROR        raise SSHException("key cannot be used for signing")
+transport.py              1817 ERROR    paramiko.ssh_exception.SSHException: key cannot be used for signing
+transport.py              1817 ERROR    
+transport.py              1819 DEBUG    EOF in transport thread
+_____________________ SSHClientTest.test_auth_trickledown ______________________
+
+self = <tests.test_client.SSHClientTest testMethod=test_auth_trickledown>
+
+    def test_auth_trickledown(self):
+        """
+        Failed key auth doesn't prevent subsequent pw auth from succeeding
+        """
+        # NOTE: re #387, re #394
+        # If pkey module used within Client._auth isn't correctly handling auth
+        # errors (e.g. if it allows things like ValueError to bubble up as per
+        # midway through #394) client.connect() will fail (at key load step)
+        # instead of succeeding (at password step)
+        kwargs = dict(
+            # Password-protected key whose passphrase is not 'pygmalion' (it's
+            # 'television' as per tests/test_pkey.py). NOTE: must use
+            # key_filename, loading the actual key here with PKey will except
+            # immediately; we're testing the try/except crap within Client.
+            key_filename=[_support("test_rsa_password.key")],
+            # Actual password for default 'slowdive' user
+            password="pygmalion",
+        )
+>       self._test_connection(**kwargs)
+
+tests/test_client.py:487: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_client.py:202: in _test_connection
+    self.tc.connect(**dict(self.connect_kwargs, **kwargs))
+paramiko/client.py:435: in connect
+    self._auth(
+paramiko/client.py:764: in _auth
+    raise saved_exception
+paramiko/client.py:751: in _auth
+    self._transport.auth_password(username, password)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <paramiko.Transport at 0x985c9a60 (unconnected)>, username = 'slowdive'
+password = 'pygmalion', event = None, fallback = True
+
+    def auth_password(self, username, password, event=None, fallback=True):
+        """
+        Authenticate to the server using a password.  The username and password
+        are sent over an encrypted link.
+    
+        If an ``event`` is passed in, this method will return immediately, and
+        the event will be triggered once authentication succeeds or fails.  On
+        success, `is_authenticated` will return ``True``.  On failure, you may
+        use `get_exception` to get more detailed error information.
+    
+        Since 1.1, if no event is passed, this method will block until the
+        authentication succeeds or fails.  On failure, an exception is raised.
+        Otherwise, the method simply returns.
+    
+        Since 1.5, if no event is passed and ``fallback`` is ``True`` (the
+        default), if the server doesn't support plain password authentication
+        but does support so-called "keyboard-interactive" mode, an attempt
+        will be made to authenticate using this interactive mode.  If it fails,
+        the normal exception will be thrown as if the attempt had never been
+        made.  This is useful for some recent Gentoo and Debian distributions,
+        which turn off plain password authentication in a misguided belief
+        that interactive authentication is "more secure".  (It's not.)
+    
+        If the server requires multi-step authentication (which is very rare),
+        this method will return a list of auth types permissible for the next
+        step.  Otherwise, in the normal case, an empty list is returned.
+    
+        :param str username: the username to authenticate as
+        :param basestring password: the password to authenticate with
+        :param .threading.Event event:
+            an event to trigger when the authentication attempt is complete
+            (whether it was successful or not)
+        :param bool fallback:
+            ``True`` if an attempt at an automated "interactive" password auth
+            should be made if the server doesn't support normal password auth
+        :return:
+            list of auth types permissible for the next stage of
+            authentication (normally empty)
+    
+        :raises:
+            `.BadAuthenticationType` -- if password authentication isn't
+            allowed by the server for this user (and no event was passed in)
+        :raises:
+            `.AuthenticationException` -- if the authentication failed (and no
+            event was passed in)
+        :raises: `.SSHException` -- if there was a network error
+        """
+        if (not self.active) or (not self.initial_kex_done):
+            # we should never try to send the password unless we're on a secure
+            # link
+>           raise SSHException("No existing session")
+E           paramiko.ssh_exception.SSHException: No existing session
+
+paramiko/transport.py:1498: SSHException
+----------------------------- Captured stderr call -----------------------------
+[2607.1674823760986]	DEBUG:paramiko.transport:starting thread (client mode): 0x985c9a60
+[2607.346773147583]	DEBUG:paramiko.transport:Local version/idstring: SSH-2.0-paramiko_2.7.1
+[2607.87034034729]	DEBUG:paramiko.transport:starting thread (server mode): 0x985c96d0
+[2607.954502105713]	DEBUG:paramiko.transport:Local version/idstring: SSH-2.0-paramiko_2.7.1
+[2608.0236434936523]	DEBUG:paramiko.transport:Remote version/idstring: SSH-2.0-paramiko_2.7.1
+[2608.224630355835]	INFO:paramiko.transport:Connected (version 2.0, client paramiko_2.7.1)
+[2608.1039905548096]	DEBUG:paramiko.transport:Remote version/idstring: SSH-2.0-paramiko_2.7.1
+[2608.400821685791]	INFO:paramiko.transport:Connected (version 2.0, client paramiko_2.7.1)
+[2608.8364124298096]	DEBUG:paramiko.transport:kex algos:['curve25519-sha256@libssh.org', 'ecdh-sha2-nistp256', 'ecdh-sha2-nistp384', 'ecdh-sha2-nistp521', 'diffie-hellman-group16-sha512', 'diffie-hellman-group14-sha256', 'diffie-hellman-group14-sha1', 'diffie-hellman-group1-sha1'] server key:['ecdsa-sha2-nistp256', 'ssh-rsa'] client encrypt:['aes128-ctr', 'aes192-ctr', 'aes256-ctr', 'aes128-cbc', 'aes192-cbc', 'aes256-cbc', 'blowfish-cbc', '3des-cbc'] server encrypt:['aes128-ctr', 'aes192-ctr', 'aes256-ctr', 'aes128-cbc', 'aes192-cbc', 'aes256-cbc', 'blowfish-cbc', '3des-cbc'] client mac:['hmac-sha2-256', 'hmac-sha2-512', 'hmac-sha2-256-etm@openssh.com', 'hmac-sha2-512-etm@openssh.com', 'hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96'] server mac:['hmac-sha2-256', 'hmac-sha2-512', 'hmac-sha2-256-etm@openssh.com', 'hmac-sha2-512-etm@openssh.com', 'hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96'] client compress:['none'] server compress:['none'] client lang:[''] server lang:[''] kex follows?False
+[2608.9227199554443]	DEBUG:paramiko.transport:kex algos:['curve25519-sha256@libssh.org', 'ecdh-sha2-nistp256', 'ecdh-sha2-nistp384', 'ecdh-sha2-nistp521', 'diffie-hellman-group16-sha512', 'diffie-hellman-group-exchange-sha256', 'diffie-hellman-group14-sha256', 'diffie-hellman-group-exchange-sha1', 'diffie-hellman-group14-sha1', 'diffie-hellman-group1-sha1'] server key:['ssh-rsa', 'ssh-ed25519', 'ecdsa-sha2-nistp256', 'ecdsa-sha2-nistp384', 'ecdsa-sha2-nistp521', 'ssh-dss'] client encrypt:['aes128-ctr', 'aes192-ctr', 'aes256-ctr', 'aes128-cbc', 'aes192-cbc', 'aes256-cbc', 'blowfish-cbc', '3des-cbc'] server encrypt:['aes128-ctr', 'aes192-ctr', 'aes256-ctr', 'aes128-cbc', 'aes192-cbc', 'aes256-cbc', 'blowfish-cbc', '3des-cbc'] client mac:['hmac-sha2-256', 'hmac-sha2-512', 'hmac-sha2-256-etm@openssh.com', 'hmac-sha2-512-etm@openssh.com', 'hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96'] server mac:['hmac-sha2-256', 'hmac-sha2-512', 'hmac-sha2-256-etm@openssh.com', 'hmac-sha2-512-etm@openssh.com', 'hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96'] client compress:['none'] server compress:['none'] client lang:[''] server lang:[''] kex follows?False
+[2608.9823246002197]	DEBUG:paramiko.transport:Kex agreed: curve25519-sha256@libssh.org
+[2609.0545654296875]	DEBUG:paramiko.transport:Kex agreed: curve25519-sha256@libssh.org
+[2609.11226272583]	DEBUG:paramiko.transport:HostKey agreed: ssh-rsa
+[2609.170436859131]	DEBUG:paramiko.transport:HostKey agreed: ssh-rsa
+[2609.248638153076]	DEBUG:paramiko.transport:Cipher agreed: aes128-ctr
+[2609.3101501464844]	DEBUG:paramiko.transport:Cipher agreed: aes128-ctr
+[2609.3690395355225]	DEBUG:paramiko.transport:MAC agreed: hmac-sha2-256
+[2609.424114227295]	DEBUG:paramiko.transport:MAC agreed: hmac-sha2-256
+[2609.4765663146973]	DEBUG:paramiko.transport:Compression agreed: none
+[2609.5263957977295]	DEBUG:paramiko.transport:Compression agreed: none
+[2610.562324523926]	DEBUG:paramiko.transport:kex engine KexCurve25519 specified hash_algo <built-in function openssl_sha256>
+[2610.964059829712]	DEBUG:paramiko.transport:kex engine KexCurve25519 specified hash_algo <built-in function openssl_sha256>
+[2611.0880374908447]	DEBUG:paramiko.transport:Switch to new keys ...
+[2611.306667327881]	DEBUG:paramiko.transport:Switch to new keys ...
+[2612.283945083618]	DEBUG:paramiko.transport:Trying SSH agent key b'3f7cd50f9adaac95294ce7aca5f6a8f8'
+[2612.6067638397217]	DEBUG:paramiko.transport:userauth is OK
+[2615.3578758239746]	ERROR:paramiko.transport:Exception: key cannot be used for signing
+[2615.5107021331787]	ERROR:paramiko.transport:Traceback (most recent call last):
+[2615.5545711517334]	ERROR:paramiko.transport:  File "/home/chris/Schreibtisch/git/paramiko/paramiko/transport.py", line 2109, in run
+[2615.586757659912]	ERROR:paramiko.transport:    handler(self.auth_handler, m)
+[2615.615129470825]	ERROR:paramiko.transport:  File "/home/chris/Schreibtisch/git/paramiko/paramiko/auth_handler.py", line 298, in _parse_service_accept
+[2615.642309188843]	ERROR:paramiko.transport:    sig = self.private_key.sign_ssh_data(blob)
+[2615.6692504882812]	ERROR:paramiko.transport:  File "/home/chris/Schreibtisch/git/paramiko/paramiko/agent.py", line 418, in sign_ssh_data
+[2615.6957149505615]	ERROR:paramiko.transport:    raise SSHException("key cannot be used for signing")
+[2615.7217025756836]	ERROR:paramiko.transport:paramiko.ssh_exception.SSHException: key cannot be used for signing
+[2615.748167037964]	ERROR:paramiko.transport:
+[2615.9000396728516]	DEBUG:paramiko.transport:EOF in transport thread
+------------------------------ Captured log call -------------------------------
+transport.py              1819 DEBUG    starting thread (client mode): 0x985c9a60
+transport.py              1819 DEBUG    Local version/idstring: SSH-2.0-paramiko_2.7.1
+transport.py              1819 DEBUG    starting thread (server mode): 0x985c96d0
+transport.py              1819 DEBUG    Local version/idstring: SSH-2.0-paramiko_2.7.1
+transport.py              1819 DEBUG    Remote version/idstring: SSH-2.0-paramiko_2.7.1
+transport.py              1819 INFO     Connected (version 2.0, client paramiko_2.7.1)
+transport.py              1819 DEBUG    Remote version/idstring: SSH-2.0-paramiko_2.7.1
+transport.py              1819 INFO     Connected (version 2.0, client paramiko_2.7.1)
+transport.py              1819 DEBUG    kex algos:['curve25519-sha256@libssh.org', 'ecdh-sha2-nistp256', 'ecdh-sha2-nistp384', 'ecdh-sha2-nistp521', 'diffie-hellman-group16-sha512', 'diffie-hellman-group14-sha256', 'diffie-hellman-group14-sha1', 'diffie-hellman-group1-sha1'] server key:['ecdsa-sha2-nistp256', 'ssh-rsa'] client encrypt:['aes128-ctr', 'aes192-ctr', 'aes256-ctr', 'aes128-cbc', 'aes192-cbc', 'aes256-cbc', 'blowfish-cbc', '3des-cbc'] server encrypt:['aes128-ctr', 'aes192-ctr', 'aes256-ctr', 'aes128-cbc', 'aes192-cbc', 'aes256-cbc', 'blowfish-cbc', '3des-cbc'] client mac:['hmac-sha2-256', 'hmac-sha2-512', 'hmac-sha2-256-etm@openssh.com', 'hmac-sha2-512-etm@openssh.com', 'hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96'] server mac:['hmac-sha2-256', 'hmac-sha2-512', 'hmac-sha2-256-etm@openssh.com', 'hmac-sha2-512-etm@openssh.com', 'hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96'] client compress:['none'] server compress:['none'] client lang:[''] server lang:[''] kex follows?False
+transport.py              1819 DEBUG    kex algos:['curve25519-sha256@libssh.org', 'ecdh-sha2-nistp256', 'ecdh-sha2-nistp384', 'ecdh-sha2-nistp521', 'diffie-hellman-group16-sha512', 'diffie-hellman-group-exchange-sha256', 'diffie-hellman-group14-sha256', 'diffie-hellman-group-exchange-sha1', 'diffie-hellman-group14-sha1', 'diffie-hellman-group1-sha1'] server key:['ssh-rsa', 'ssh-ed25519', 'ecdsa-sha2-nistp256', 'ecdsa-sha2-nistp384', 'ecdsa-sha2-nistp521', 'ssh-dss'] client encrypt:['aes128-ctr', 'aes192-ctr', 'aes256-ctr', 'aes128-cbc', 'aes192-cbc', 'aes256-cbc', 'blowfish-cbc', '3des-cbc'] server encrypt:['aes128-ctr', 'aes192-ctr', 'aes256-ctr', 'aes128-cbc', 'aes192-cbc', 'aes256-cbc', 'blowfish-cbc', '3des-cbc'] client mac:['hmac-sha2-256', 'hmac-sha2-512', 'hmac-sha2-256-etm@openssh.com', 'hmac-sha2-512-etm@openssh.com', 'hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96'] server mac:['hmac-sha2-256', 'hmac-sha2-512', 'hmac-sha2-256-etm@openssh.com', 'hmac-sha2-512-etm@openssh.com', 'hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96'] client compress:['none'] server compress:['none'] client lang:[''] server lang:[''] kex follows?False
+transport.py              1819 DEBUG    Kex agreed: curve25519-sha256@libssh.org
+transport.py              1819 DEBUG    Kex agreed: curve25519-sha256@libssh.org
+transport.py              1819 DEBUG    HostKey agreed: ssh-rsa
+transport.py              1819 DEBUG    HostKey agreed: ssh-rsa
+transport.py              1819 DEBUG    Cipher agreed: aes128-ctr
+transport.py              1819 DEBUG    Cipher agreed: aes128-ctr
+transport.py              1819 DEBUG    MAC agreed: hmac-sha2-256
+transport.py              1819 DEBUG    MAC agreed: hmac-sha2-256
+transport.py              1819 DEBUG    Compression agreed: none
+transport.py              1819 DEBUG    Compression agreed: none
+transport.py              1819 DEBUG    kex engine KexCurve25519 specified hash_algo <built-in function openssl_sha256>
+transport.py              1819 DEBUG    kex engine KexCurve25519 specified hash_algo <built-in function openssl_sha256>
+transport.py              1819 DEBUG    Switch to new keys ...
+transport.py              1819 DEBUG    Switch to new keys ...
+transport.py              1819 DEBUG    Trying SSH agent key b'3f7cd50f9adaac95294ce7aca5f6a8f8'
+transport.py              1819 DEBUG    userauth is OK
+transport.py              1819 ERROR    Exception: key cannot be used for signing
+transport.py              1817 ERROR    Traceback (most recent call last):
+transport.py              1817 ERROR      File "/home/chris/Schreibtisch/git/paramiko/paramiko/transport.py", line 2109, in run
+transport.py              1817 ERROR        handler(self.auth_handler, m)
+transport.py              1817 ERROR      File "/home/chris/Schreibtisch/git/paramiko/paramiko/auth_handler.py", line 298, in _parse_service_accept
+transport.py              1817 ERROR        sig = self.private_key.sign_ssh_data(blob)
+transport.py              1817 ERROR      File "/home/chris/Schreibtisch/git/paramiko/paramiko/agent.py", line 418, in sign_ssh_data
+transport.py              1817 ERROR        raise SSHException("key cannot be used for signing")
+transport.py              1817 ERROR    paramiko.ssh_exception.SSHException: key cannot be used for signing
+transport.py              1817 ERROR    
+transport.py              1819 DEBUG    EOF in transport thread
+______________________ SSHClientTest.test_auto_add_policy ______________________
+
+self = <tests.test_client.SSHClientTest testMethod=test_auto_add_policy>
+
+    def test_auto_add_policy(self):
+        """
+        verify that SSHClient's AutoAddPolicy works.
+        """
+        threading.Thread(target=self._run).start()
+        hostname = "[%s]:%d" % (self.addr, self.port)
+        key_file = _support("test_ecdsa_256.key")
+        public_host_key = paramiko.ECDSAKey.from_private_key_file(key_file)
+    
+        self.tc = SSHClient()
+        self.tc.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        self.assertEqual(0, len(self.tc.get_host_keys()))
+>       self.tc.connect(password="pygmalion", **self.connect_kwargs)
+
+tests/test_client.py:357: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+paramiko/client.py:435: in connect
+    self._auth(
+paramiko/client.py:764: in _auth
+    raise saved_exception
+paramiko/client.py:751: in _auth
+    self._transport.auth_password(username, password)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <paramiko.Transport at 0x984ce940 (unconnected)>, username = 'slowdive'
+password = 'pygmalion', event = None, fallback = True
+
+    def auth_password(self, username, password, event=None, fallback=True):
+        """
+        Authenticate to the server using a password.  The username and password
+        are sent over an encrypted link.
+    
+        If an ``event`` is passed in, this method will return immediately, and
+        the event will be triggered once authentication succeeds or fails.  On
+        success, `is_authenticated` will return ``True``.  On failure, you may
+        use `get_exception` to get more detailed error information.
+    
+        Since 1.1, if no event is passed, this method will block until the
+        authentication succeeds or fails.  On failure, an exception is raised.
+        Otherwise, the method simply returns.
+    
+        Since 1.5, if no event is passed and ``fallback`` is ``True`` (the
+        default), if the server doesn't support plain password authentication
+        but does support so-called "keyboard-interactive" mode, an attempt
+        will be made to authenticate using this interactive mode.  If it fails,
+        the normal exception will be thrown as if the attempt had never been
+        made.  This is useful for some recent Gentoo and Debian distributions,
+        which turn off plain password authentication in a misguided belief
+        that interactive authentication is "more secure".  (It's not.)
+    
+        If the server requires multi-step authentication (which is very rare),
+        this method will return a list of auth types permissible for the next
+        step.  Otherwise, in the normal case, an empty list is returned.
+    
+        :param str username: the username to authenticate as
+        :param basestring password: the password to authenticate with
+        :param .threading.Event event:
+            an event to trigger when the authentication attempt is complete
+            (whether it was successful or not)
+        :param bool fallback:
+            ``True`` if an attempt at an automated "interactive" password auth
+            should be made if the server doesn't support normal password auth
+        :return:
+            list of auth types permissible for the next stage of
+            authentication (normally empty)
+    
+        :raises:
+            `.BadAuthenticationType` -- if password authentication isn't
+            allowed by the server for this user (and no event was passed in)
+        :raises:
+            `.AuthenticationException` -- if the authentication failed (and no
+            event was passed in)
+        :raises: `.SSHException` -- if there was a network error
+        """
+        if (not self.active) or (not self.initial_kex_done):
+            # we should never try to send the password unless we're on a secure
+            # link
+>           raise SSHException("No existing session")
+E           paramiko.ssh_exception.SSHException: No existing session
+
+paramiko/transport.py:1498: SSHException
+----------------------------- Captured stderr call -----------------------------
+[2660.7494354248047]	DEBUG:paramiko.transport:starting thread (client mode): 0x984ce940
+[2661.210775375366]	DEBUG:paramiko.transport:Local version/idstring: SSH-2.0-paramiko_2.7.1
+[2661.559820175171]	DEBUG:paramiko.transport:starting thread (server mode): 0x984ce1f0
+[2661.6604328155518]	DEBUG:paramiko.transport:Local version/idstring: SSH-2.0-paramiko_2.7.1
+[2661.738872528076]	DEBUG:paramiko.transport:Remote version/idstring: SSH-2.0-paramiko_2.7.1
+[2661.8008613586426]	INFO:paramiko.transport:Connected (version 2.0, client paramiko_2.7.1)
+[2661.84663772583]	DEBUG:paramiko.transport:Remote version/idstring: SSH-2.0-paramiko_2.7.1
+[2661.998987197876]	INFO:paramiko.transport:Connected (version 2.0, client paramiko_2.7.1)
+[2662.440299987793]	DEBUG:paramiko.transport:kex algos:['curve25519-sha256@libssh.org', 'ecdh-sha2-nistp256', 'ecdh-sha2-nistp384', 'ecdh-sha2-nistp521', 'diffie-hellman-group16-sha512', 'diffie-hellman-group14-sha256', 'diffie-hellman-group14-sha1', 'diffie-hellman-group1-sha1'] server key:['ecdsa-sha2-nistp256', 'ssh-rsa'] client encrypt:['aes128-ctr', 'aes192-ctr', 'aes256-ctr', 'aes128-cbc', 'aes192-cbc', 'aes256-cbc', 'blowfish-cbc', '3des-cbc'] server encrypt:['aes128-ctr', 'aes192-ctr', 'aes256-ctr', 'aes128-cbc', 'aes192-cbc', 'aes256-cbc', 'blowfish-cbc', '3des-cbc'] client mac:['hmac-sha2-256', 'hmac-sha2-512', 'hmac-sha2-256-etm@openssh.com', 'hmac-sha2-512-etm@openssh.com', 'hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96'] server mac:['hmac-sha2-256', 'hmac-sha2-512', 'hmac-sha2-256-etm@openssh.com', 'hmac-sha2-512-etm@openssh.com', 'hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96'] client compress:['none'] server compress:['none'] client lang:[''] server lang:[''] kex follows?False
+[2662.524461746216]	DEBUG:paramiko.transport:kex algos:['curve25519-sha256@libssh.org', 'ecdh-sha2-nistp256', 'ecdh-sha2-nistp384', 'ecdh-sha2-nistp521', 'diffie-hellman-group16-sha512', 'diffie-hellman-group-exchange-sha256', 'diffie-hellman-group14-sha256', 'diffie-hellman-group-exchange-sha1', 'diffie-hellman-group14-sha1', 'diffie-hellman-group1-sha1'] server key:['ssh-ed25519', 'ecdsa-sha2-nistp256', 'ecdsa-sha2-nistp384', 'ecdsa-sha2-nistp521', 'ssh-rsa', 'ssh-dss'] client encrypt:['aes128-ctr', 'aes192-ctr', 'aes256-ctr', 'aes128-cbc', 'aes192-cbc', 'aes256-cbc', 'blowfish-cbc', '3des-cbc'] server encrypt:['aes128-ctr', 'aes192-ctr', 'aes256-ctr', 'aes128-cbc', 'aes192-cbc', 'aes256-cbc', 'blowfish-cbc', '3des-cbc'] client mac:['hmac-sha2-256', 'hmac-sha2-512', 'hmac-sha2-256-etm@openssh.com', 'hmac-sha2-512-etm@openssh.com', 'hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96'] server mac:['hmac-sha2-256', 'hmac-sha2-512', 'hmac-sha2-256-etm@openssh.com', 'hmac-sha2-512-etm@openssh.com', 'hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96'] client compress:['none'] server compress:['none'] client lang:[''] server lang:[''] kex follows?False
+[2662.584066390991]	DEBUG:paramiko.transport:Kex agreed: curve25519-sha256@libssh.org
+[2662.6508235931396]	DEBUG:paramiko.transport:Kex agreed: curve25519-sha256@libssh.org
+[2662.707805633545]	DEBUG:paramiko.transport:HostKey agreed: ecdsa-sha2-nistp256
+[2662.764549255371]	DEBUG:paramiko.transport:HostKey agreed: ecdsa-sha2-nistp256
+[2662.820816040039]	DEBUG:paramiko.transport:Cipher agreed: aes128-ctr
+[2662.8756523132324]	DEBUG:paramiko.transport:Cipher agreed: aes128-ctr
+[2662.928819656372]	DEBUG:paramiko.transport:MAC agreed: hmac-sha2-256
+[2662.9798412323]	DEBUG:paramiko.transport:MAC agreed: hmac-sha2-256
+[2663.0282402038574]	DEBUG:paramiko.transport:Compression agreed: none
+[2663.0756855010986]	DEBUG:paramiko.transport:Compression agreed: none
+[2663.839101791382]	DEBUG:paramiko.transport:kex engine KexCurve25519 specified hash_algo <built-in function openssl_sha256>
+[2664.355516433716]	DEBUG:paramiko.transport:kex engine KexCurve25519 specified hash_algo <built-in function openssl_sha256>
+[2664.4935607910156]	DEBUG:paramiko.transport:Switch to new keys ...
+[2664.5853519439697]	DEBUG:paramiko.transport:Switch to new keys ...
+[2665.01522064209]	DEBUG:paramiko.transport:Adding ecdsa-sha2-nistp256 host key for [127.0.0.1]:57399: b'2519eb55e6a147ff4f38d2756fa5d560'
+[2665.330648422241]	DEBUG:paramiko.transport:Trying SSH agent key b'3f7cd50f9adaac95294ce7aca5f6a8f8'
+[2665.6410694122314]	DEBUG:paramiko.transport:userauth is OK
+[2668.7824726104736]	ERROR:paramiko.transport:Exception: key cannot be used for signing
+[2669.066905975342]	ERROR:paramiko.transport:Traceback (most recent call last):
+[2669.116497039795]	ERROR:paramiko.transport:  File "/home/chris/Schreibtisch/git/paramiko/paramiko/transport.py", line 2109, in run
+[2669.15225982666]	ERROR:paramiko.transport:    handler(self.auth_handler, m)
+[2669.1832542419434]	ERROR:paramiko.transport:  File "/home/chris/Schreibtisch/git/paramiko/paramiko/auth_handler.py", line 298, in _parse_service_accept
+[2669.212579727173]	ERROR:paramiko.transport:    sig = self.private_key.sign_ssh_data(blob)
+[2669.2404747009277]	ERROR:paramiko.transport:  File "/home/chris/Schreibtisch/git/paramiko/paramiko/agent.py", line 418, in sign_ssh_data
+[2669.268846511841]	ERROR:paramiko.transport:    raise SSHException("key cannot be used for signing")
+[2669.3129539489746]	ERROR:paramiko.transport:paramiko.ssh_exception.SSHException: key cannot be used for signing
+[2669.35133934021]	ERROR:paramiko.transport:
+[2669.47603225708]	DEBUG:paramiko.transport:EOF in transport thread
+------------------------------ Captured log call -------------------------------
+transport.py              1819 DEBUG    starting thread (client mode): 0x984ce940
+transport.py              1819 DEBUG    Local version/idstring: SSH-2.0-paramiko_2.7.1
+transport.py              1819 DEBUG    starting thread (server mode): 0x984ce1f0
+transport.py              1819 DEBUG    Local version/idstring: SSH-2.0-paramiko_2.7.1
+transport.py              1819 DEBUG    Remote version/idstring: SSH-2.0-paramiko_2.7.1
+transport.py              1819 INFO     Connected (version 2.0, client paramiko_2.7.1)
+transport.py              1819 DEBUG    Remote version/idstring: SSH-2.0-paramiko_2.7.1
+transport.py              1819 INFO     Connected (version 2.0, client paramiko_2.7.1)
+transport.py              1819 DEBUG    kex algos:['curve25519-sha256@libssh.org', 'ecdh-sha2-nistp256', 'ecdh-sha2-nistp384', 'ecdh-sha2-nistp521', 'diffie-hellman-group16-sha512', 'diffie-hellman-group14-sha256', 'diffie-hellman-group14-sha1', 'diffie-hellman-group1-sha1'] server key:['ecdsa-sha2-nistp256', 'ssh-rsa'] client encrypt:['aes128-ctr', 'aes192-ctr', 'aes256-ctr', 'aes128-cbc', 'aes192-cbc', 'aes256-cbc', 'blowfish-cbc', '3des-cbc'] server encrypt:['aes128-ctr', 'aes192-ctr', 'aes256-ctr', 'aes128-cbc', 'aes192-cbc', 'aes256-cbc', 'blowfish-cbc', '3des-cbc'] client mac:['hmac-sha2-256', 'hmac-sha2-512', 'hmac-sha2-256-etm@openssh.com', 'hmac-sha2-512-etm@openssh.com', 'hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96'] server mac:['hmac-sha2-256', 'hmac-sha2-512', 'hmac-sha2-256-etm@openssh.com', 'hmac-sha2-512-etm@openssh.com', 'hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96'] client compress:['none'] server compress:['none'] client lang:[''] server lang:[''] kex follows?False
+transport.py              1819 DEBUG    kex algos:['curve25519-sha256@libssh.org', 'ecdh-sha2-nistp256', 'ecdh-sha2-nistp384', 'ecdh-sha2-nistp521', 'diffie-hellman-group16-sha512', 'diffie-hellman-group-exchange-sha256', 'diffie-hellman-group14-sha256', 'diffie-hellman-group-exchange-sha1', 'diffie-hellman-group14-sha1', 'diffie-hellman-group1-sha1'] server key:['ssh-ed25519', 'ecdsa-sha2-nistp256', 'ecdsa-sha2-nistp384', 'ecdsa-sha2-nistp521', 'ssh-rsa', 'ssh-dss'] client encrypt:['aes128-ctr', 'aes192-ctr', 'aes256-ctr', 'aes128-cbc', 'aes192-cbc', 'aes256-cbc', 'blowfish-cbc', '3des-cbc'] server encrypt:['aes128-ctr', 'aes192-ctr', 'aes256-ctr', 'aes128-cbc', 'aes192-cbc', 'aes256-cbc', 'blowfish-cbc', '3des-cbc'] client mac:['hmac-sha2-256', 'hmac-sha2-512', 'hmac-sha2-256-etm@openssh.com', 'hmac-sha2-512-etm@openssh.com', 'hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96'] server mac:['hmac-sha2-256', 'hmac-sha2-512', 'hmac-sha2-256-etm@openssh.com', 'hmac-sha2-512-etm@openssh.com', 'hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96'] client compress:['none'] server compress:['none'] client lang:[''] server lang:[''] kex follows?False
+transport.py              1819 DEBUG    Kex agreed: curve25519-sha256@libssh.org
+transport.py              1819 DEBUG    Kex agreed: curve25519-sha256@libssh.org
+transport.py              1819 DEBUG    HostKey agreed: ecdsa-sha2-nistp256
+transport.py              1819 DEBUG    HostKey agreed: ecdsa-sha2-nistp256
+transport.py              1819 DEBUG    Cipher agreed: aes128-ctr
+transport.py              1819 DEBUG    Cipher agreed: aes128-ctr
+transport.py              1819 DEBUG    MAC agreed: hmac-sha2-256
+transport.py              1819 DEBUG    MAC agreed: hmac-sha2-256
+transport.py              1819 DEBUG    Compression agreed: none
+transport.py              1819 DEBUG    Compression agreed: none
+transport.py              1819 DEBUG    kex engine KexCurve25519 specified hash_algo <built-in function openssl_sha256>
+transport.py              1819 DEBUG    kex engine KexCurve25519 specified hash_algo <built-in function openssl_sha256>
+transport.py              1819 DEBUG    Switch to new keys ...
+transport.py              1819 DEBUG    Switch to new keys ...
+transport.py              1819 DEBUG    Adding ecdsa-sha2-nistp256 host key for [127.0.0.1]:57399: b'2519eb55e6a147ff4f38d2756fa5d560'
+transport.py              1819 DEBUG    Trying SSH agent key b'3f7cd50f9adaac95294ce7aca5f6a8f8'
+transport.py              1819 DEBUG    userauth is OK
+transport.py              1819 ERROR    Exception: key cannot be used for signing
+transport.py              1817 ERROR    Traceback (most recent call last):
+transport.py              1817 ERROR      File "/home/chris/Schreibtisch/git/paramiko/paramiko/transport.py", line 2109, in run
+transport.py              1817 ERROR        handler(self.auth_handler, m)
+transport.py              1817 ERROR      File "/home/chris/Schreibtisch/git/paramiko/paramiko/auth_handler.py", line 298, in _parse_service_accept
+transport.py              1817 ERROR        sig = self.private_key.sign_ssh_data(blob)
+transport.py              1817 ERROR      File "/home/chris/Schreibtisch/git/paramiko/paramiko/agent.py", line 418, in sign_ssh_data
+transport.py              1817 ERROR        raise SSHException("key cannot be used for signing")
+transport.py              1817 ERROR    paramiko.ssh_exception.SSHException: key cannot be used for signing
+transport.py              1817 ERROR    
+transport.py              1819 DEBUG    EOF in transport thread
+__________________________ SSHClientTest.test_cleanup __________________________
+
+self = <tests.test_client.SSHClientTest testMethod=test_cleanup>
+
+    def test_cleanup(self):
+        """
+        verify that when an SSHClient is collected, its transport (and the
+        transport's packetizer) is closed.
+        """
+        # Skipped on PyPy because it fails on travis for unknown reasons
+        if platform.python_implementation() == "PyPy":
+            return
+    
+        threading.Thread(target=self._run).start()
+    
+        self.tc = SSHClient()
+        self.tc.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        assert len(self.tc.get_host_keys()) == 0
+>       self.tc.connect(**dict(self.connect_kwargs, password="pygmalion"))
+
+tests/test_client.py:411: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+paramiko/client.py:435: in connect
+    self._auth(
+paramiko/client.py:764: in _auth
+    raise saved_exception
+paramiko/client.py:751: in _auth
+    self._transport.auth_password(username, password)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <paramiko.Transport at 0x98599430 (unconnected)>, username = 'slowdive'
+password = 'pygmalion', event = None, fallback = True
+
+    def auth_password(self, username, password, event=None, fallback=True):
+        """
+        Authenticate to the server using a password.  The username and password
+        are sent over an encrypted link.
+    
+        If an ``event`` is passed in, this method will return immediately, and
+        the event will be triggered once authentication succeeds or fails.  On
+        success, `is_authenticated` will return ``True``.  On failure, you may
+        use `get_exception` to get more detailed error information.
+    
+        Since 1.1, if no event is passed, this method will block until the
+        authentication succeeds or fails.  On failure, an exception is raised.
+        Otherwise, the method simply returns.
+    
+        Since 1.5, if no event is passed and ``fallback`` is ``True`` (the
+        default), if the server doesn't support plain password authentication
+        but does support so-called "keyboard-interactive" mode, an attempt
+        will be made to authenticate using this interactive mode.  If it fails,
+        the normal exception will be thrown as if the attempt had never been
+        made.  This is useful for some recent Gentoo and Debian distributions,
+        which turn off plain password authentication in a misguided belief
+        that interactive authentication is "more secure".  (It's not.)
+    
+        If the server requires multi-step authentication (which is very rare),
+        this method will return a list of auth types permissible for the next
+        step.  Otherwise, in the normal case, an empty list is returned.
+    
+        :param str username: the username to authenticate as
+        :param basestring password: the password to authenticate with
+        :param .threading.Event event:
+            an event to trigger when the authentication attempt is complete
+            (whether it was successful or not)
+        :param bool fallback:
+            ``True`` if an attempt at an automated "interactive" password auth
+            should be made if the server doesn't support normal password auth
+        :return:
+            list of auth types permissible for the next stage of
+            authentication (normally empty)
+    
+        :raises:
+            `.BadAuthenticationType` -- if password authentication isn't
+            allowed by the server for this user (and no event was passed in)
+        :raises:
+            `.AuthenticationException` -- if the authentication failed (and no
+            event was passed in)
+        :raises: `.SSHException` -- if there was a network error
+        """
+        if (not self.active) or (not self.initial_kex_done):
+            # we should never try to send the password unless we're on a secure
+            # link
+>           raise SSHException("No existing session")
+E           paramiko.ssh_exception.SSHException: No existing session
+
+paramiko/transport.py:1498: SSHException
+----------------------------- Captured stderr call -----------------------------
+[3793.842077255249]	DEBUG:paramiko.transport:starting thread (client mode): 0x98599430
+[3794.419288635254]	DEBUG:paramiko.transport:Local version/idstring: SSH-2.0-paramiko_2.7.1
+[3796.334743499756]	DEBUG:paramiko.transport:starting thread (server mode): 0x985cbca0
+[3796.642303466797]	DEBUG:paramiko.transport:Local version/idstring: SSH-2.0-paramiko_2.7.1
+[3797.1673011779785]	DEBUG:paramiko.transport:Remote version/idstring: SSH-2.0-paramiko_2.7.1
+[3797.5356578826904]	INFO:paramiko.transport:Connected (version 2.0, client paramiko_2.7.1)
+[3797.994375228882]	DEBUG:paramiko.transport:Remote version/idstring: SSH-2.0-paramiko_2.7.1
+[3798.368453979492]	INFO:paramiko.transport:Connected (version 2.0, client paramiko_2.7.1)
+[3799.8344898223877]	DEBUG:paramiko.transport:kex algos:['curve25519-sha256@libssh.org', 'ecdh-sha2-nistp256', 'ecdh-sha2-nistp384', 'ecdh-sha2-nistp521', 'diffie-hellman-group16-sha512', 'diffie-hellman-group14-sha256', 'diffie-hellman-group14-sha1', 'diffie-hellman-group1-sha1'] server key:['ecdsa-sha2-nistp256', 'ssh-rsa'] client encrypt:['aes128-ctr', 'aes192-ctr', 'aes256-ctr', 'aes128-cbc', 'aes192-cbc', 'aes256-cbc', 'blowfish-cbc', '3des-cbc'] server encrypt:['aes128-ctr', 'aes192-ctr', 'aes256-ctr', 'aes128-cbc', 'aes192-cbc', 'aes256-cbc', 'blowfish-cbc', '3des-cbc'] client mac:['hmac-sha2-256', 'hmac-sha2-512', 'hmac-sha2-256-etm@openssh.com', 'hmac-sha2-512-etm@openssh.com', 'hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96'] server mac:['hmac-sha2-256', 'hmac-sha2-512', 'hmac-sha2-256-etm@openssh.com', 'hmac-sha2-512-etm@openssh.com', 'hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96'] client compress:['none'] server compress:['none'] client lang:[''] server lang:[''] kex follows?False
+[3800.07004737854]	DEBUG:paramiko.transport:Kex agreed: curve25519-sha256@libssh.org
+[3800.248146057129]	DEBUG:paramiko.transport:HostKey agreed: ecdsa-sha2-nistp256
+[3800.4140853881836]	DEBUG:paramiko.transport:Cipher agreed: aes128-ctr
+[3800.7190227508545]	DEBUG:paramiko.transport:kex algos:['curve25519-sha256@libssh.org', 'ecdh-sha2-nistp256', 'ecdh-sha2-nistp384', 'ecdh-sha2-nistp521', 'diffie-hellman-group16-sha512', 'diffie-hellman-group-exchange-sha256', 'diffie-hellman-group14-sha256', 'diffie-hellman-group-exchange-sha1', 'diffie-hellman-group14-sha1', 'diffie-hellman-group1-sha1'] server key:['ssh-ed25519', 'ecdsa-sha2-nistp256', 'ecdsa-sha2-nistp384', 'ecdsa-sha2-nistp521', 'ssh-rsa', 'ssh-dss'] client encrypt:['aes128-ctr', 'aes192-ctr', 'aes256-ctr', 'aes128-cbc', 'aes192-cbc', 'aes256-cbc', 'blowfish-cbc', '3des-cbc'] server encrypt:['aes128-ctr', 'aes192-ctr', 'aes256-ctr', 'aes128-cbc', 'aes192-cbc', 'aes256-cbc', 'blowfish-cbc', '3des-cbc'] client mac:['hmac-sha2-256', 'hmac-sha2-512', 'hmac-sha2-256-etm@openssh.com', 'hmac-sha2-512-etm@openssh.com', 'hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96'] server mac:['hmac-sha2-256', 'hmac-sha2-512', 'hmac-sha2-256-etm@openssh.com', 'hmac-sha2-512-etm@openssh.com', 'hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96'] client compress:['none'] server compress:['none'] client lang:[''] server lang:[''] kex follows?False
+[3801.013231277466]	DEBUG:paramiko.transport:MAC agreed: hmac-sha2-256
+[3801.326036453247]	DEBUG:paramiko.transport:Kex agreed: curve25519-sha256@libssh.org
+[3801.6207218170166]	DEBUG:paramiko.transport:Compression agreed: none
+[3801.8767833709717]	DEBUG:paramiko.transport:HostKey agreed: ecdsa-sha2-nistp256
+[3802.4635314941406]	DEBUG:paramiko.transport:Cipher agreed: aes128-ctr
+[3802.788496017456]	DEBUG:paramiko.transport:MAC agreed: hmac-sha2-256
+[3802.962303161621]	DEBUG:paramiko.transport:Compression agreed: none
+[3805.6066036224365]	DEBUG:paramiko.transport:kex engine KexCurve25519 specified hash_algo <built-in function openssl_sha256>
+[3807.650089263916]	DEBUG:paramiko.transport:kex engine KexCurve25519 specified hash_algo <built-in function openssl_sha256>
+[3808.197021484375]	DEBUG:paramiko.transport:Switch to new keys ...
+[3808.9473247528076]	DEBUG:paramiko.transport:Switch to new keys ...
+[3809.896469116211]	DEBUG:paramiko.transport:Adding ecdsa-sha2-nistp256 host key for [127.0.0.1]:40543: b'2519eb55e6a147ff4f38d2756fa5d560'
+[3811.058521270752]	DEBUG:paramiko.transport:Trying SSH agent key b'3f7cd50f9adaac95294ce7aca5f6a8f8'
+[3812.3226165771484]	DEBUG:paramiko.transport:userauth is OK
+[3821.1395740509033]	ERROR:paramiko.transport:Exception: key cannot be used for signing
+[3821.613550186157]	ERROR:paramiko.transport:Traceback (most recent call last):
+[3821.803331375122]	ERROR:paramiko.transport:  File "/home/chris/Schreibtisch/git/paramiko/paramiko/transport.py", line 2109, in run
+[3821.9285011291504]	ERROR:paramiko.transport:    handler(self.auth_handler, m)
+[3822.0341205596924]	ERROR:paramiko.transport:  File "/home/chris/Schreibtisch/git/paramiko/paramiko/auth_handler.py", line 298, in _parse_service_accept
+[3822.134017944336]	ERROR:paramiko.transport:    sig = self.private_key.sign_ssh_data(blob)
+[3822.230100631714]	ERROR:paramiko.transport:  File "/home/chris/Schreibtisch/git/paramiko/paramiko/agent.py", line 418, in sign_ssh_data
+[3822.327136993408]	ERROR:paramiko.transport:    raise SSHException("key cannot be used for signing")
+[3822.4329948425293]	ERROR:paramiko.transport:paramiko.ssh_exception.SSHException: key cannot be used for signing
+[3822.5371837615967]	ERROR:paramiko.transport:
+[3823.77290725708]	DEBUG:paramiko.transport:EOF in transport thread
+------------------------------ Captured log call -------------------------------
+transport.py              1819 DEBUG    starting thread (client mode): 0x98599430
+transport.py              1819 DEBUG    Local version/idstring: SSH-2.0-paramiko_2.7.1
+transport.py              1819 DEBUG    starting thread (server mode): 0x985cbca0
+transport.py              1819 DEBUG    Local version/idstring: SSH-2.0-paramiko_2.7.1
+transport.py              1819 DEBUG    Remote version/idstring: SSH-2.0-paramiko_2.7.1
+transport.py              1819 INFO     Connected (version 2.0, client paramiko_2.7.1)
+transport.py              1819 DEBUG    Remote version/idstring: SSH-2.0-paramiko_2.7.1
+transport.py              1819 INFO     Connected (version 2.0, client paramiko_2.7.1)
+transport.py              1819 DEBUG    kex algos:['curve25519-sha256@libssh.org', 'ecdh-sha2-nistp256', 'ecdh-sha2-nistp384', 'ecdh-sha2-nistp521', 'diffie-hellman-group16-sha512', 'diffie-hellman-group14-sha256', 'diffie-hellman-group14-sha1', 'diffie-hellman-group1-sha1'] server key:['ecdsa-sha2-nistp256', 'ssh-rsa'] client encrypt:['aes128-ctr', 'aes192-ctr', 'aes256-ctr', 'aes128-cbc', 'aes192-cbc', 'aes256-cbc', 'blowfish-cbc', '3des-cbc'] server encrypt:['aes128-ctr', 'aes192-ctr', 'aes256-ctr', 'aes128-cbc', 'aes192-cbc', 'aes256-cbc', 'blowfish-cbc', '3des-cbc'] client mac:['hmac-sha2-256', 'hmac-sha2-512', 'hmac-sha2-256-etm@openssh.com', 'hmac-sha2-512-etm@openssh.com', 'hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96'] server mac:['hmac-sha2-256', 'hmac-sha2-512', 'hmac-sha2-256-etm@openssh.com', 'hmac-sha2-512-etm@openssh.com', 'hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96'] client compress:['none'] server compress:['none'] client lang:[''] server lang:[''] kex follows?False
+transport.py              1819 DEBUG    Kex agreed: curve25519-sha256@libssh.org
+transport.py              1819 DEBUG    HostKey agreed: ecdsa-sha2-nistp256
+transport.py              1819 DEBUG    Cipher agreed: aes128-ctr
+transport.py              1819 DEBUG    kex algos:['curve25519-sha256@libssh.org', 'ecdh-sha2-nistp256', 'ecdh-sha2-nistp384', 'ecdh-sha2-nistp521', 'diffie-hellman-group16-sha512', 'diffie-hellman-group-exchange-sha256', 'diffie-hellman-group14-sha256', 'diffie-hellman-group-exchange-sha1', 'diffie-hellman-group14-sha1', 'diffie-hellman-group1-sha1'] server key:['ssh-ed25519', 'ecdsa-sha2-nistp256', 'ecdsa-sha2-nistp384', 'ecdsa-sha2-nistp521', 'ssh-rsa', 'ssh-dss'] client encrypt:['aes128-ctr', 'aes192-ctr', 'aes256-ctr', 'aes128-cbc', 'aes192-cbc', 'aes256-cbc', 'blowfish-cbc', '3des-cbc'] server encrypt:['aes128-ctr', 'aes192-ctr', 'aes256-ctr', 'aes128-cbc', 'aes192-cbc', 'aes256-cbc', 'blowfish-cbc', '3des-cbc'] client mac:['hmac-sha2-256', 'hmac-sha2-512', 'hmac-sha2-256-etm@openssh.com', 'hmac-sha2-512-etm@openssh.com', 'hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96'] server mac:['hmac-sha2-256', 'hmac-sha2-512', 'hmac-sha2-256-etm@openssh.com', 'hmac-sha2-512-etm@openssh.com', 'hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96'] client compress:['none'] server compress:['none'] client lang:[''] server lang:[''] kex follows?False
+transport.py              1819 DEBUG    MAC agreed: hmac-sha2-256
+transport.py              1819 DEBUG    Kex agreed: curve25519-sha256@libssh.org
+transport.py              1819 DEBUG    Compression agreed: none
+transport.py              1819 DEBUG    HostKey agreed: ecdsa-sha2-nistp256
+transport.py              1819 DEBUG    Cipher agreed: aes128-ctr
+transport.py              1819 DEBUG    MAC agreed: hmac-sha2-256
+transport.py              1819 DEBUG    Compression agreed: none
+transport.py              1819 DEBUG    kex engine KexCurve25519 specified hash_algo <built-in function openssl_sha256>
+transport.py              1819 DEBUG    kex engine KexCurve25519 specified hash_algo <built-in function openssl_sha256>
+transport.py              1819 DEBUG    Switch to new keys ...
+transport.py              1819 DEBUG    Switch to new keys ...
+transport.py              1819 DEBUG    Adding ecdsa-sha2-nistp256 host key for [127.0.0.1]:40543: b'2519eb55e6a147ff4f38d2756fa5d560'
+transport.py              1819 DEBUG    Trying SSH agent key b'3f7cd50f9adaac95294ce7aca5f6a8f8'
+transport.py              1819 DEBUG    userauth is OK
+transport.py              1819 ERROR    Exception: key cannot be used for signing
+transport.py              1817 ERROR    Traceback (most recent call last):
+transport.py              1817 ERROR      File "/home/chris/Schreibtisch/git/paramiko/paramiko/transport.py", line 2109, in run
+transport.py              1817 ERROR        handler(self.auth_handler, m)
+transport.py              1817 ERROR      File "/home/chris/Schreibtisch/git/paramiko/paramiko/auth_handler.py", line 298, in _parse_service_accept
+transport.py              1817 ERROR        sig = self.private_key.sign_ssh_data(blob)
+transport.py              1817 ERROR      File "/home/chris/Schreibtisch/git/paramiko/paramiko/agent.py", line 418, in sign_ssh_data
+transport.py              1817 ERROR        raise SSHException("key cannot be used for signing")
+transport.py              1817 ERROR    paramiko.ssh_exception.SSHException: key cannot be used for signing
+transport.py              1817 ERROR    
+transport.py              1819 DEBUG    EOF in transport thread
+__________________________ SSHClientTest.test_client ___________________________
+
+self = <tests.test_client.SSHClientTest testMethod=test_client>
+
+    def test_client(self):
+        """
+        verify that the SSHClient stuff works too.
+        """
+>       self._test_connection(password="pygmalion")
+
+tests/test_client.py:242: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_client.py:202: in _test_connection
+    self.tc.connect(**dict(self.connect_kwargs, **kwargs))
+paramiko/client.py:435: in connect
+    self._auth(
+paramiko/client.py:764: in _auth
+    raise saved_exception
+paramiko/client.py:751: in _auth
+    self._transport.auth_password(username, password)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <paramiko.Transport at 0x98543ac0 (unconnected)>, username = 'slowdive'
+password = 'pygmalion', event = None, fallback = True
+
+    def auth_password(self, username, password, event=None, fallback=True):
+        """
+        Authenticate to the server using a password.  The username and password
+        are sent over an encrypted link.
+    
+        If an ``event`` is passed in, this method will return immediately, and
+        the event will be triggered once authentication succeeds or fails.  On
+        success, `is_authenticated` will return ``True``.  On failure, you may
+        use `get_exception` to get more detailed error information.
+    
+        Since 1.1, if no event is passed, this method will block until the
+        authentication succeeds or fails.  On failure, an exception is raised.
+        Otherwise, the method simply returns.
+    
+        Since 1.5, if no event is passed and ``fallback`` is ``True`` (the
+        default), if the server doesn't support plain password authentication
+        but does support so-called "keyboard-interactive" mode, an attempt
+        will be made to authenticate using this interactive mode.  If it fails,
+        the normal exception will be thrown as if the attempt had never been
+        made.  This is useful for some recent Gentoo and Debian distributions,
+        which turn off plain password authentication in a misguided belief
+        that interactive authentication is "more secure".  (It's not.)
+    
+        If the server requires multi-step authentication (which is very rare),
+        this method will return a list of auth types permissible for the next
+        step.  Otherwise, in the normal case, an empty list is returned.
+    
+        :param str username: the username to authenticate as
+        :param basestring password: the password to authenticate with
+        :param .threading.Event event:
+            an event to trigger when the authentication attempt is complete
+            (whether it was successful or not)
+        :param bool fallback:
+            ``True`` if an attempt at an automated "interactive" password auth
+            should be made if the server doesn't support normal password auth
+        :return:
+            list of auth types permissible for the next stage of
+            authentication (normally empty)
+    
+        :raises:
+            `.BadAuthenticationType` -- if password authentication isn't
+            allowed by the server for this user (and no event was passed in)
+        :raises:
+            `.AuthenticationException` -- if the authentication failed (and no
+            event was passed in)
+        :raises: `.SSHException` -- if there was a network error
+        """
+        if (not self.active) or (not self.initial_kex_done):
+            # we should never try to send the password unless we're on a secure
+            # link
+>           raise SSHException("No existing session")
+E           paramiko.ssh_exception.SSHException: No existing session
+
+paramiko/transport.py:1498: SSHException
+----------------------------- Captured stderr call -----------------------------
+[3891.108989715576]	DEBUG:paramiko.transport:starting thread (client mode): 0x98543ac0
+[3891.3886547088623]	DEBUG:paramiko.transport:Local version/idstring: SSH-2.0-paramiko_2.7.1
+[3891.847610473633]	DEBUG:paramiko.transport:starting thread (server mode): 0x9858c0d0
+[3892.002582550049]	DEBUG:paramiko.transport:Local version/idstring: SSH-2.0-paramiko_2.7.1
+[3892.0674324035645]	DEBUG:paramiko.transport:Remote version/idstring: SSH-2.0-paramiko_2.7.1
+[3892.1070098876953]	INFO:paramiko.transport:Connected (version 2.0, client paramiko_2.7.1)
+[3892.2555446624756]	DEBUG:paramiko.transport:Remote version/idstring: SSH-2.0-paramiko_2.7.1
+[3892.315626144409]	INFO:paramiko.transport:Connected (version 2.0, client paramiko_2.7.1)
+[3892.7459716796875]	DEBUG:paramiko.transport:kex algos:['curve25519-sha256@libssh.org', 'ecdh-sha2-nistp256', 'ecdh-sha2-nistp384', 'ecdh-sha2-nistp521', 'diffie-hellman-group16-sha512', 'diffie-hellman-group-exchange-sha256', 'diffie-hellman-group14-sha256', 'diffie-hellman-group-exchange-sha1', 'diffie-hellman-group14-sha1', 'diffie-hellman-group1-sha1'] server key:['ssh-rsa', 'ssh-ed25519', 'ecdsa-sha2-nistp256', 'ecdsa-sha2-nistp384', 'ecdsa-sha2-nistp521', 'ssh-dss'] client encrypt:['aes128-ctr', 'aes192-ctr', 'aes256-ctr', 'aes128-cbc', 'aes192-cbc', 'aes256-cbc', 'blowfish-cbc', '3des-cbc'] server encrypt:['aes128-ctr', 'aes192-ctr', 'aes256-ctr', 'aes128-cbc', 'aes192-cbc', 'aes256-cbc', 'blowfish-cbc', '3des-cbc'] client mac:['hmac-sha2-256', 'hmac-sha2-512', 'hmac-sha2-256-etm@openssh.com', 'hmac-sha2-512-etm@openssh.com', 'hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96'] server mac:['hmac-sha2-256', 'hmac-sha2-512', 'hmac-sha2-256-etm@openssh.com', 'hmac-sha2-512-etm@openssh.com', 'hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96'] client compress:['none'] server compress:['none'] client lang:[''] server lang:[''] kex follows?False
+[3892.8306102752686]	DEBUG:paramiko.transport:kex algos:['curve25519-sha256@libssh.org', 'ecdh-sha2-nistp256', 'ecdh-sha2-nistp384', 'ecdh-sha2-nistp521', 'diffie-hellman-group16-sha512', 'diffie-hellman-group14-sha256', 'diffie-hellman-group14-sha1', 'diffie-hellman-group1-sha1'] server key:['ecdsa-sha2-nistp256', 'ssh-rsa'] client encrypt:['aes128-ctr', 'aes192-ctr', 'aes256-ctr', 'aes128-cbc', 'aes192-cbc', 'aes256-cbc', 'blowfish-cbc', '3des-cbc'] server encrypt:['aes128-ctr', 'aes192-ctr', 'aes256-ctr', 'aes128-cbc', 'aes192-cbc', 'aes256-cbc', 'blowfish-cbc', '3des-cbc'] client mac:['hmac-sha2-256', 'hmac-sha2-512', 'hmac-sha2-256-etm@openssh.com', 'hmac-sha2-512-etm@openssh.com', 'hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96'] server mac:['hmac-sha2-256', 'hmac-sha2-512', 'hmac-sha2-256-etm@openssh.com', 'hmac-sha2-512-etm@openssh.com', 'hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96'] client compress:['none'] server compress:['none'] client lang:[''] server lang:[''] kex follows?False
+[3892.888069152832]	DEBUG:paramiko.transport:Kex agreed: curve25519-sha256@libssh.org
+[3892.9531574249268]	DEBUG:paramiko.transport:Kex agreed: curve25519-sha256@libssh.org
+[3893.012523651123]	DEBUG:paramiko.transport:HostKey agreed: ssh-rsa
+[3893.0652141571045]	DEBUG:paramiko.transport:HostKey agreed: ssh-rsa
+[3893.120050430298]	DEBUG:paramiko.transport:Cipher agreed: aes128-ctr
+[3893.1732177734375]	DEBUG:paramiko.transport:Cipher agreed: aes128-ctr
+[3893.2254314422607]	DEBUG:paramiko.transport:MAC agreed: hmac-sha2-256
+[3893.275499343872]	DEBUG:paramiko.transport:MAC agreed: hmac-sha2-256
+[3893.3234214782715]	DEBUG:paramiko.transport:Compression agreed: none
+[3893.371105194092]	DEBUG:paramiko.transport:Compression agreed: none
+[3894.333839416504]	DEBUG:paramiko.transport:kex engine KexCurve25519 specified hash_algo <built-in function openssl_sha256>
+[3894.860029220581]	DEBUG:paramiko.transport:kex engine KexCurve25519 specified hash_algo <built-in function openssl_sha256>
+[3895.008325576782]	DEBUG:paramiko.transport:Switch to new keys ...
+[3895.237445831299]	DEBUG:paramiko.transport:Switch to new keys ...
+[3895.761489868164]	DEBUG:paramiko.transport:Trying SSH agent key b'3f7cd50f9adaac95294ce7aca5f6a8f8'
+[3896.085262298584]	DEBUG:paramiko.transport:userauth is OK
+[3899.0049362182617]	ERROR:paramiko.transport:Exception: key cannot be used for signing
+[3899.1644382476807]	ERROR:paramiko.transport:Traceback (most recent call last):
+[3899.2066383361816]	ERROR:paramiko.transport:  File "/home/chris/Schreibtisch/git/paramiko/paramiko/transport.py", line 2109, in run
+[3899.238109588623]	ERROR:paramiko.transport:    handler(self.auth_handler, m)
+[3899.2667198181152]	ERROR:paramiko.transport:  File "/home/chris/Schreibtisch/git/paramiko/paramiko/auth_handler.py", line 298, in _parse_service_accept
+[3899.293899536133]	ERROR:paramiko.transport:    sig = self.private_key.sign_ssh_data(blob)
+[3899.320363998413]	ERROR:paramiko.transport:  File "/home/chris/Schreibtisch/git/paramiko/paramiko/agent.py", line 418, in sign_ssh_data
+[3899.3468284606934]	ERROR:paramiko.transport:    raise SSHException("key cannot be used for signing")
+[3899.3732929229736]	ERROR:paramiko.transport:paramiko.ssh_exception.SSHException: key cannot be used for signing
+[3899.3992805480957]	ERROR:paramiko.transport:
+[3899.5158672332764]	DEBUG:paramiko.transport:EOF in transport thread
+------------------------------ Captured log call -------------------------------
+transport.py              1819 DEBUG    starting thread (client mode): 0x98543ac0
+transport.py              1819 DEBUG    Local version/idstring: SSH-2.0-paramiko_2.7.1
+transport.py              1819 DEBUG    starting thread (server mode): 0x9858c0d0
+transport.py              1819 DEBUG    Local version/idstring: SSH-2.0-paramiko_2.7.1
+transport.py              1819 DEBUG    Remote version/idstring: SSH-2.0-paramiko_2.7.1
+transport.py              1819 INFO     Connected (version 2.0, client paramiko_2.7.1)
+transport.py              1819 DEBUG    Remote version/idstring: SSH-2.0-paramiko_2.7.1
+transport.py              1819 INFO     Connected (version 2.0, client paramiko_2.7.1)
+transport.py              1819 DEBUG    kex algos:['curve25519-sha256@libssh.org', 'ecdh-sha2-nistp256', 'ecdh-sha2-nistp384', 'ecdh-sha2-nistp521', 'diffie-hellman-group16-sha512', 'diffie-hellman-group-exchange-sha256', 'diffie-hellman-group14-sha256', 'diffie-hellman-group-exchange-sha1', 'diffie-hellman-group14-sha1', 'diffie-hellman-group1-sha1'] server key:['ssh-rsa', 'ssh-ed25519', 'ecdsa-sha2-nistp256', 'ecdsa-sha2-nistp384', 'ecdsa-sha2-nistp521', 'ssh-dss'] client encrypt:['aes128-ctr', 'aes192-ctr', 'aes256-ctr', 'aes128-cbc', 'aes192-cbc', 'aes256-cbc', 'blowfish-cbc', '3des-cbc'] server encrypt:['aes128-ctr', 'aes192-ctr', 'aes256-ctr', 'aes128-cbc', 'aes192-cbc', 'aes256-cbc', 'blowfish-cbc', '3des-cbc'] client mac:['hmac-sha2-256', 'hmac-sha2-512', 'hmac-sha2-256-etm@openssh.com', 'hmac-sha2-512-etm@openssh.com', 'hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96'] server mac:['hmac-sha2-256', 'hmac-sha2-512', 'hmac-sha2-256-etm@openssh.com', 'hmac-sha2-512-etm@openssh.com', 'hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96'] client compress:['none'] server compress:['none'] client lang:[''] server lang:[''] kex follows?False
+transport.py              1819 DEBUG    kex algos:['curve25519-sha256@libssh.org', 'ecdh-sha2-nistp256', 'ecdh-sha2-nistp384', 'ecdh-sha2-nistp521', 'diffie-hellman-group16-sha512', 'diffie-hellman-group14-sha256', 'diffie-hellman-group14-sha1', 'diffie-hellman-group1-sha1'] server key:['ecdsa-sha2-nistp256', 'ssh-rsa'] client encrypt:['aes128-ctr', 'aes192-ctr', 'aes256-ctr', 'aes128-cbc', 'aes192-cbc', 'aes256-cbc', 'blowfish-cbc', '3des-cbc'] server encrypt:['aes128-ctr', 'aes192-ctr', 'aes256-ctr', 'aes128-cbc', 'aes192-cbc', 'aes256-cbc', 'blowfish-cbc', '3des-cbc'] client mac:['hmac-sha2-256', 'hmac-sha2-512', 'hmac-sha2-256-etm@openssh.com', 'hmac-sha2-512-etm@openssh.com', 'hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96'] server mac:['hmac-sha2-256', 'hmac-sha2-512', 'hmac-sha2-256-etm@openssh.com', 'hmac-sha2-512-etm@openssh.com', 'hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96'] client compress:['none'] server compress:['none'] client lang:[''] server lang:[''] kex follows?False
+transport.py              1819 DEBUG    Kex agreed: curve25519-sha256@libssh.org
+transport.py              1819 DEBUG    Kex agreed: curve25519-sha256@libssh.org
+transport.py              1819 DEBUG    HostKey agreed: ssh-rsa
+transport.py              1819 DEBUG    HostKey agreed: ssh-rsa
+transport.py              1819 DEBUG    Cipher agreed: aes128-ctr
+transport.py              1819 DEBUG    Cipher agreed: aes128-ctr
+transport.py              1819 DEBUG    MAC agreed: hmac-sha2-256
+transport.py              1819 DEBUG    MAC agreed: hmac-sha2-256
+transport.py              1819 DEBUG    Compression agreed: none
+transport.py              1819 DEBUG    Compression agreed: none
+transport.py              1819 DEBUG    kex engine KexCurve25519 specified hash_algo <built-in function openssl_sha256>
+transport.py              1819 DEBUG    kex engine KexCurve25519 specified hash_algo <built-in function openssl_sha256>
+transport.py              1819 DEBUG    Switch to new keys ...
+transport.py              1819 DEBUG    Switch to new keys ...
+transport.py              1819 DEBUG    Trying SSH agent key b'3f7cd50f9adaac95294ce7aca5f6a8f8'
+transport.py              1819 DEBUG    userauth is OK
+transport.py              1819 ERROR    Exception: key cannot be used for signing
+transport.py              1817 ERROR    Traceback (most recent call last):
+transport.py              1817 ERROR      File "/home/chris/Schreibtisch/git/paramiko/paramiko/transport.py", line 2109, in run
+transport.py              1817 ERROR        handler(self.auth_handler, m)
+transport.py              1817 ERROR      File "/home/chris/Schreibtisch/git/paramiko/paramiko/auth_handler.py", line 298, in _parse_service_accept
+transport.py              1817 ERROR        sig = self.private_key.sign_ssh_data(blob)
+transport.py              1817 ERROR      File "/home/chris/Schreibtisch/git/paramiko/paramiko/agent.py", line 418, in sign_ssh_data
+transport.py              1817 ERROR        raise SSHException("key cannot be used for signing")
+transport.py              1817 ERROR    paramiko.ssh_exception.SSHException: key cannot be used for signing
+transport.py              1817 ERROR    
+transport.py              1819 DEBUG    EOF in transport thread
+___________ SSHClientTest.test_client_can_be_used_as_context_manager ___________
+
+self = <tests.test_client.SSHClientTest testMethod=test_client_can_be_used_as_context_manager>
+
+    def test_client_can_be_used_as_context_manager(self):
+        """
+        verify that an SSHClient can be used a context manager
+        """
+        threading.Thread(target=self._run).start()
+    
+        with SSHClient() as tc:
+            self.tc = tc
+            self.tc.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            assert len(self.tc.get_host_keys()) == 0
+>           self.tc.connect(**dict(self.connect_kwargs, password="pygmalion"))
+
+tests/test_client.py:440: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+paramiko/client.py:435: in connect
+    self._auth(
+paramiko/client.py:764: in _auth
+    raise saved_exception
+paramiko/client.py:751: in _auth
+    self._transport.auth_password(username, password)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <paramiko.Transport at 0x98350280 (unconnected)>, username = 'slowdive'
+password = 'pygmalion', event = None, fallback = True
+
+    def auth_password(self, username, password, event=None, fallback=True):
+        """
+        Authenticate to the server using a password.  The username and password
+        are sent over an encrypted link.
+    
+        If an ``event`` is passed in, this method will return immediately, and
+        the event will be triggered once authentication succeeds or fails.  On
+        success, `is_authenticated` will return ``True``.  On failure, you may
+        use `get_exception` to get more detailed error information.
+    
+        Since 1.1, if no event is passed, this method will block until the
+        authentication succeeds or fails.  On failure, an exception is raised.
+        Otherwise, the method simply returns.
+    
+        Since 1.5, if no event is passed and ``fallback`` is ``True`` (the
+        default), if the server doesn't support plain password authentication
+        but does support so-called "keyboard-interactive" mode, an attempt
+        will be made to authenticate using this interactive mode.  If it fails,
+        the normal exception will be thrown as if the attempt had never been
+        made.  This is useful for some recent Gentoo and Debian distributions,
+        which turn off plain password authentication in a misguided belief
+        that interactive authentication is "more secure".  (It's not.)
+    
+        If the server requires multi-step authentication (which is very rare),
+        this method will return a list of auth types permissible for the next
+        step.  Otherwise, in the normal case, an empty list is returned.
+    
+        :param str username: the username to authenticate as
+        :param basestring password: the password to authenticate with
+        :param .threading.Event event:
+            an event to trigger when the authentication attempt is complete
+            (whether it was successful or not)
+        :param bool fallback:
+            ``True`` if an attempt at an automated "interactive" password auth
+            should be made if the server doesn't support normal password auth
+        :return:
+            list of auth types permissible for the next stage of
+            authentication (normally empty)
+    
+        :raises:
+            `.BadAuthenticationType` -- if password authentication isn't
+            allowed by the server for this user (and no event was passed in)
+        :raises:
+            `.AuthenticationException` -- if the authentication failed (and no
+            event was passed in)
+        :raises: `.SSHException` -- if there was a network error
+        """
+        if (not self.active) or (not self.initial_kex_done):
+            # we should never try to send the password unless we're on a secure
+            # link
+>           raise SSHException("No existing session")
+E           paramiko.ssh_exception.SSHException: No existing session
+
+paramiko/transport.py:1498: SSHException
+----------------------------- Captured stderr call -----------------------------
+[3942.996025085449]	DEBUG:paramiko.transport:starting thread (client mode): 0x98350280
+[3943.359613418579]	DEBUG:paramiko.transport:Local version/idstring: SSH-2.0-paramiko_2.7.1
+[3943.657159805298]	DEBUG:paramiko.transport:starting thread (server mode): 0x9827b2e0
+[3943.858861923218]	DEBUG:paramiko.transport:Local version/idstring: SSH-2.0-paramiko_2.7.1
+[3943.9027309417725]	DEBUG:paramiko.transport:Remote version/idstring: SSH-2.0-paramiko_2.7.1
+[3944.035291671753]	INFO:paramiko.transport:Connected (version 2.0, client paramiko_2.7.1)
+[3944.2007541656494]	DEBUG:paramiko.transport:Remote version/idstring: SSH-2.0-paramiko_2.7.1
+[3944.281816482544]	INFO:paramiko.transport:Connected (version 2.0, client paramiko_2.7.1)
+[3944.6468353271484]	DEBUG:paramiko.transport:kex algos:['curve25519-sha256@libssh.org', 'ecdh-sha2-nistp256', 'ecdh-sha2-nistp384', 'ecdh-sha2-nistp521', 'diffie-hellman-group16-sha512', 'diffie-hellman-group14-sha256', 'diffie-hellman-group14-sha1', 'diffie-hellman-group1-sha1'] server key:['ecdsa-sha2-nistp256', 'ssh-rsa'] client encrypt:['aes128-ctr', 'aes192-ctr', 'aes256-ctr', 'aes128-cbc', 'aes192-cbc', 'aes256-cbc', 'blowfish-cbc', '3des-cbc'] server encrypt:['aes128-ctr', 'aes192-ctr', 'aes256-ctr', 'aes128-cbc', 'aes192-cbc', 'aes256-cbc', 'blowfish-cbc', '3des-cbc'] client mac:['hmac-sha2-256', 'hmac-sha2-512', 'hmac-sha2-256-etm@openssh.com', 'hmac-sha2-512-etm@openssh.com', 'hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96'] server mac:['hmac-sha2-256', 'hmac-sha2-512', 'hmac-sha2-256-etm@openssh.com', 'hmac-sha2-512-etm@openssh.com', 'hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96'] client compress:['none'] server compress:['none'] client lang:[''] server lang:[''] kex follows?False
+[3944.7154998779297]	DEBUG:paramiko.transport:Kex agreed: curve25519-sha256@libssh.org
+[3944.7922706604004]	DEBUG:paramiko.transport:kex algos:['curve25519-sha256@libssh.org', 'ecdh-sha2-nistp256', 'ecdh-sha2-nistp384', 'ecdh-sha2-nistp521', 'diffie-hellman-group16-sha512', 'diffie-hellman-group-exchange-sha256', 'diffie-hellman-group14-sha256', 'diffie-hellman-group-exchange-sha1', 'diffie-hellman-group14-sha1', 'diffie-hellman-group1-sha1'] server key:['ssh-ed25519', 'ecdsa-sha2-nistp256', 'ecdsa-sha2-nistp384', 'ecdsa-sha2-nistp521', 'ssh-rsa', 'ssh-dss'] client encrypt:['aes128-ctr', 'aes192-ctr', 'aes256-ctr', 'aes128-cbc', 'aes192-cbc', 'aes256-cbc', 'blowfish-cbc', '3des-cbc'] server encrypt:['aes128-ctr', 'aes192-ctr', 'aes256-ctr', 'aes128-cbc', 'aes192-cbc', 'aes256-cbc', 'blowfish-cbc', '3des-cbc'] client mac:['hmac-sha2-256', 'hmac-sha2-512', 'hmac-sha2-256-etm@openssh.com', 'hmac-sha2-512-etm@openssh.com', 'hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96'] server mac:['hmac-sha2-256', 'hmac-sha2-512', 'hmac-sha2-256-etm@openssh.com', 'hmac-sha2-512-etm@openssh.com', 'hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96'] client compress:['none'] server compress:['none'] client lang:[''] server lang:[''] kex follows?False
+[3944.9031352996826]	DEBUG:paramiko.transport:Kex agreed: curve25519-sha256@libssh.org
+[3944.8390007019043]	DEBUG:paramiko.transport:HostKey agreed: ecdsa-sha2-nistp256
+[3944.952964782715]	DEBUG:paramiko.transport:HostKey agreed: ecdsa-sha2-nistp256
+[3945.032835006714]	DEBUG:paramiko.transport:Cipher agreed: aes128-ctr
+[3945.0936317443848]	DEBUG:paramiko.transport:Cipher agreed: aes128-ctr
+[3945.1513290405273]	DEBUG:paramiko.transport:MAC agreed: hmac-sha2-256
+[3945.2061653137207]	DEBUG:paramiko.transport:MAC agreed: hmac-sha2-256
+[3945.2576637268066]	DEBUG:paramiko.transport:Compression agreed: none
+[3945.307493209839]	DEBUG:paramiko.transport:Compression agreed: none
+[3946.079969406128]	DEBUG:paramiko.transport:kex engine KexCurve25519 specified hash_algo <built-in function openssl_sha256>
+[3946.5808868408203]	DEBUG:paramiko.transport:kex engine KexCurve25519 specified hash_algo <built-in function openssl_sha256>
+[3946.706533432007]	DEBUG:paramiko.transport:Switch to new keys ...
+[3946.927070617676]	DEBUG:paramiko.transport:Switch to new keys ...
+[3947.1890926361084]	DEBUG:paramiko.transport:Adding ecdsa-sha2-nistp256 host key for [127.0.0.1]:46617: b'2519eb55e6a147ff4f38d2756fa5d560'
+[3947.598695755005]	DEBUG:paramiko.transport:Trying SSH agent key b'3f7cd50f9adaac95294ce7aca5f6a8f8'
+[3947.9522705078125]	DEBUG:paramiko.transport:userauth is OK
+[3950.9012699127197]	ERROR:paramiko.transport:Exception: key cannot be used for signing
+[3951.0602951049805]	ERROR:paramiko.transport:Traceback (most recent call last):
+[3951.1027336120605]	ERROR:paramiko.transport:  File "/home/chris/Schreibtisch/git/paramiko/paramiko/transport.py", line 2109, in run
+[3951.134443283081]	ERROR:paramiko.transport:    handler(self.auth_handler, m)
+[3951.1630535125732]	ERROR:paramiko.transport:  File "/home/chris/Schreibtisch/git/paramiko/paramiko/auth_handler.py", line 298, in _parse_service_accept
+[3951.1899948120117]	ERROR:paramiko.transport:    sig = self.private_key.sign_ssh_data(blob)
+[3951.2155055999756]	ERROR:paramiko.transport:  File "/home/chris/Schreibtisch/git/paramiko/paramiko/agent.py", line 418, in sign_ssh_data
+[3951.2414932250977]	ERROR:paramiko.transport:    raise SSHException("key cannot be used for signing")
+[3951.2667655944824]	ERROR:paramiko.transport:paramiko.ssh_exception.SSHException: key cannot be used for signing
+[3951.2929916381836]	ERROR:paramiko.transport:
+[3951.4098167419434]	DEBUG:paramiko.transport:EOF in transport thread
+------------------------------ Captured log call -------------------------------
+transport.py              1819 DEBUG    starting thread (client mode): 0x98350280
+transport.py              1819 DEBUG    Local version/idstring: SSH-2.0-paramiko_2.7.1
+transport.py              1819 DEBUG    starting thread (server mode): 0x9827b2e0
+transport.py              1819 DEBUG    Local version/idstring: SSH-2.0-paramiko_2.7.1
+transport.py              1819 DEBUG    Remote version/idstring: SSH-2.0-paramiko_2.7.1
+transport.py              1819 INFO     Connected (version 2.0, client paramiko_2.7.1)
+transport.py              1819 DEBUG    Remote version/idstring: SSH-2.0-paramiko_2.7.1
+transport.py              1819 INFO     Connected (version 2.0, client paramiko_2.7.1)
+transport.py              1819 DEBUG    kex algos:['curve25519-sha256@libssh.org', 'ecdh-sha2-nistp256', 'ecdh-sha2-nistp384', 'ecdh-sha2-nistp521', 'diffie-hellman-group16-sha512', 'diffie-hellman-group14-sha256', 'diffie-hellman-group14-sha1', 'diffie-hellman-group1-sha1'] server key:['ecdsa-sha2-nistp256', 'ssh-rsa'] client encrypt:['aes128-ctr', 'aes192-ctr', 'aes256-ctr', 'aes128-cbc', 'aes192-cbc', 'aes256-cbc', 'blowfish-cbc', '3des-cbc'] server encrypt:['aes128-ctr', 'aes192-ctr', 'aes256-ctr', 'aes128-cbc', 'aes192-cbc', 'aes256-cbc', 'blowfish-cbc', '3des-cbc'] client mac:['hmac-sha2-256', 'hmac-sha2-512', 'hmac-sha2-256-etm@openssh.com', 'hmac-sha2-512-etm@openssh.com', 'hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96'] server mac:['hmac-sha2-256', 'hmac-sha2-512', 'hmac-sha2-256-etm@openssh.com', 'hmac-sha2-512-etm@openssh.com', 'hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96'] client compress:['none'] server compress:['none'] client lang:[''] server lang:[''] kex follows?False
+transport.py              1819 DEBUG    Kex agreed: curve25519-sha256@libssh.org
+transport.py              1819 DEBUG    kex algos:['curve25519-sha256@libssh.org', 'ecdh-sha2-nistp256', 'ecdh-sha2-nistp384', 'ecdh-sha2-nistp521', 'diffie-hellman-group16-sha512', 'diffie-hellman-group-exchange-sha256', 'diffie-hellman-group14-sha256', 'diffie-hellman-group-exchange-sha1', 'diffie-hellman-group14-sha1', 'diffie-hellman-group1-sha1'] server key:['ssh-ed25519', 'ecdsa-sha2-nistp256', 'ecdsa-sha2-nistp384', 'ecdsa-sha2-nistp521', 'ssh-rsa', 'ssh-dss'] client encrypt:['aes128-ctr', 'aes192-ctr', 'aes256-ctr', 'aes128-cbc', 'aes192-cbc', 'aes256-cbc', 'blowfish-cbc', '3des-cbc'] server encrypt:['aes128-ctr', 'aes192-ctr', 'aes256-ctr', 'aes128-cbc', 'aes192-cbc', 'aes256-cbc', 'blowfish-cbc', '3des-cbc'] client mac:['hmac-sha2-256', 'hmac-sha2-512', 'hmac-sha2-256-etm@openssh.com', 'hmac-sha2-512-etm@openssh.com', 'hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96'] server mac:['hmac-sha2-256', 'hmac-sha2-512', 'hmac-sha2-256-etm@openssh.com', 'hmac-sha2-512-etm@openssh.com', 'hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96'] client compress:['none'] server compress:['none'] client lang:[''] server lang:[''] kex follows?False
+transport.py              1819 DEBUG    Kex agreed: curve25519-sha256@libssh.org
+transport.py              1819 DEBUG    HostKey agreed: ecdsa-sha2-nistp256
+transport.py              1819 DEBUG    HostKey agreed: ecdsa-sha2-nistp256
+transport.py              1819 DEBUG    Cipher agreed: aes128-ctr
+transport.py              1819 DEBUG    Cipher agreed: aes128-ctr
+transport.py              1819 DEBUG    MAC agreed: hmac-sha2-256
+transport.py              1819 DEBUG    MAC agreed: hmac-sha2-256
+transport.py              1819 DEBUG    Compression agreed: none
+transport.py              1819 DEBUG    Compression agreed: none
+transport.py              1819 DEBUG    kex engine KexCurve25519 specified hash_algo <built-in function openssl_sha256>
+transport.py              1819 DEBUG    kex engine KexCurve25519 specified hash_algo <built-in function openssl_sha256>
+transport.py              1819 DEBUG    Switch to new keys ...
+transport.py              1819 DEBUG    Switch to new keys ...
+transport.py              1819 DEBUG    Adding ecdsa-sha2-nistp256 host key for [127.0.0.1]:46617: b'2519eb55e6a147ff4f38d2756fa5d560'
+transport.py              1819 DEBUG    Trying SSH agent key b'3f7cd50f9adaac95294ce7aca5f6a8f8'
+transport.py              1819 DEBUG    userauth is OK
+transport.py              1819 ERROR    Exception: key cannot be used for signing
+transport.py              1817 ERROR    Traceback (most recent call last):
+transport.py              1817 ERROR      File "/home/chris/Schreibtisch/git/paramiko/paramiko/transport.py", line 2109, in run
+transport.py              1817 ERROR        handler(self.auth_handler, m)
+transport.py              1817 ERROR      File "/home/chris/Schreibtisch/git/paramiko/paramiko/auth_handler.py", line 298, in _parse_service_accept
+transport.py              1817 ERROR        sig = self.private_key.sign_ssh_data(blob)
+transport.py              1817 ERROR      File "/home/chris/Schreibtisch/git/paramiko/paramiko/agent.py", line 418, in sign_ssh_data
+transport.py              1817 ERROR        raise SSHException("key cannot be used for signing")
+transport.py              1817 ERROR    paramiko.ssh_exception.SSHException: key cannot be used for signing
+transport.py              1817 ERROR    
+transport.py              1819 DEBUG    EOF in transport thread
+__________________ SSHClientTest.test_host_key_negotiation_3 ___________________
+
+self = <tests.test_client.SSHClientTest testMethod=test_host_key_negotiation_3>
+
+    def test_host_key_negotiation_3(self):
+>       self._client_host_key_good(paramiko.ECDSAKey, "test_ecdsa_256.key")
+
+tests/test_client.py:596: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_client.py:581: in _client_host_key_good
+    self.tc.connect(password="pygmalion", **self.connect_kwargs)
+paramiko/client.py:435: in connect
+    self._auth(
+paramiko/client.py:764: in _auth
+    raise saved_exception
+paramiko/client.py:751: in _auth
+    self._transport.auth_password(username, password)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <paramiko.Transport at 0x9841aca0 (unconnected)>, username = 'slowdive'
+password = 'pygmalion', event = None, fallback = True
+
+    def auth_password(self, username, password, event=None, fallback=True):
+        """
+        Authenticate to the server using a password.  The username and password
+        are sent over an encrypted link.
+    
+        If an ``event`` is passed in, this method will return immediately, and
+        the event will be triggered once authentication succeeds or fails.  On
+        success, `is_authenticated` will return ``True``.  On failure, you may
+        use `get_exception` to get more detailed error information.
+    
+        Since 1.1, if no event is passed, this method will block until the
+        authentication succeeds or fails.  On failure, an exception is raised.
+        Otherwise, the method simply returns.
+    
+        Since 1.5, if no event is passed and ``fallback`` is ``True`` (the
+        default), if the server doesn't support plain password authentication
+        but does support so-called "keyboard-interactive" mode, an attempt
+        will be made to authenticate using this interactive mode.  If it fails,
+        the normal exception will be thrown as if the attempt had never been
+        made.  This is useful for some recent Gentoo and Debian distributions,
+        which turn off plain password authentication in a misguided belief
+        that interactive authentication is "more secure".  (It's not.)
+    
+        If the server requires multi-step authentication (which is very rare),
+        this method will return a list of auth types permissible for the next
+        step.  Otherwise, in the normal case, an empty list is returned.
+    
+        :param str username: the username to authenticate as
+        :param basestring password: the password to authenticate with
+        :param .threading.Event event:
+            an event to trigger when the authentication attempt is complete
+            (whether it was successful or not)
+        :param bool fallback:
+            ``True`` if an attempt at an automated "interactive" password auth
+            should be made if the server doesn't support normal password auth
+        :return:
+            list of auth types permissible for the next stage of
+            authentication (normally empty)
+    
+        :raises:
+            `.BadAuthenticationType` -- if password authentication isn't
+            allowed by the server for this user (and no event was passed in)
+        :raises:
+            `.AuthenticationException` -- if the authentication failed (and no
+            event was passed in)
+        :raises: `.SSHException` -- if there was a network error
+        """
+        if (not self.active) or (not self.initial_kex_done):
+            # we should never try to send the password unless we're on a secure
+            # link
+>           raise SSHException("No existing session")
+E           paramiko.ssh_exception.SSHException: No existing session
+
+paramiko/transport.py:1498: SSHException
+----------------------------- Captured stderr call -----------------------------
+[4154.746294021606]	DEBUG:paramiko.transport:starting thread (client mode): 0x9841aca0
+[4154.92057800293]	DEBUG:paramiko.transport:Local version/idstring: SSH-2.0-paramiko_2.7.1
+[4155.405759811401]	DEBUG:paramiko.transport:starting thread (server mode): 0x984ec8e0
+[4155.52020072937]	DEBUG:paramiko.transport:Local version/idstring: SSH-2.0-paramiko_2.7.1
+[4155.583620071411]	DEBUG:paramiko.transport:Remote version/idstring: SSH-2.0-paramiko_2.7.1
+[4155.622720718384]	INFO:paramiko.transport:Connected (version 2.0, client paramiko_2.7.1)
+[4155.750513076782]	DEBUG:paramiko.transport:Remote version/idstring: SSH-2.0-paramiko_2.7.1
+[4155.792236328125]	INFO:paramiko.transport:Connected (version 2.0, client paramiko_2.7.1)
+[4156.2371253967285]	DEBUG:paramiko.transport:kex algos:['curve25519-sha256@libssh.org', 'ecdh-sha2-nistp256', 'ecdh-sha2-nistp384', 'ecdh-sha2-nistp521', 'diffie-hellman-group16-sha512', 'diffie-hellman-group14-sha256', 'diffie-hellman-group14-sha1', 'diffie-hellman-group1-sha1'] server key:['ecdsa-sha2-nistp256', 'ssh-rsa'] client encrypt:['aes128-ctr', 'aes192-ctr', 'aes256-ctr', 'aes128-cbc', 'aes192-cbc', 'aes256-cbc', 'blowfish-cbc', '3des-cbc'] server encrypt:['aes128-ctr', 'aes192-ctr', 'aes256-ctr', 'aes128-cbc', 'aes192-cbc', 'aes256-cbc', 'blowfish-cbc', '3des-cbc'] client mac:['hmac-sha2-256', 'hmac-sha2-512', 'hmac-sha2-256-etm@openssh.com', 'hmac-sha2-512-etm@openssh.com', 'hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96'] server mac:['hmac-sha2-256', 'hmac-sha2-512', 'hmac-sha2-256-etm@openssh.com', 'hmac-sha2-512-etm@openssh.com', 'hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96'] client compress:['none'] server compress:['none'] client lang:[''] server lang:[''] kex follows?False
+[4156.320810317993]	DEBUG:paramiko.transport:kex algos:['curve25519-sha256@libssh.org', 'ecdh-sha2-nistp256', 'ecdh-sha2-nistp384', 'ecdh-sha2-nistp521', 'diffie-hellman-group16-sha512', 'diffie-hellman-group-exchange-sha256', 'diffie-hellman-group14-sha256', 'diffie-hellman-group-exchange-sha1', 'diffie-hellman-group14-sha1', 'diffie-hellman-group1-sha1'] server key:['ecdsa-sha2-nistp256', 'ssh-ed25519', 'ecdsa-sha2-nistp384', 'ecdsa-sha2-nistp521', 'ssh-rsa', 'ssh-dss'] client encrypt:['aes128-ctr', 'aes192-ctr', 'aes256-ctr', 'aes128-cbc', 'aes192-cbc', 'aes256-cbc', 'blowfish-cbc', '3des-cbc'] server encrypt:['aes128-ctr', 'aes192-ctr', 'aes256-ctr', 'aes128-cbc', 'aes192-cbc', 'aes256-cbc', 'blowfish-cbc', '3des-cbc'] client mac:['hmac-sha2-256', 'hmac-sha2-512', 'hmac-sha2-256-etm@openssh.com', 'hmac-sha2-512-etm@openssh.com', 'hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96'] server mac:['hmac-sha2-256', 'hmac-sha2-512', 'hmac-sha2-256-etm@openssh.com', 'hmac-sha2-512-etm@openssh.com', 'hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96'] client compress:['none'] server compress:['none'] client lang:[''] server lang:[''] kex follows?False
+[4156.376838684082]	DEBUG:paramiko.transport:Kex agreed: curve25519-sha256@libssh.org
+[4156.443119049072]	DEBUG:paramiko.transport:Kex agreed: curve25519-sha256@libssh.org
+[4156.498432159424]	DEBUG:paramiko.transport:HostKey agreed: ecdsa-sha2-nistp256
+[4156.555414199829]	DEBUG:paramiko.transport:HostKey agreed: ecdsa-sha2-nistp256
+[4156.609535217285]	DEBUG:paramiko.transport:Cipher agreed: aes128-ctr
+[4156.663656234741]	DEBUG:paramiko.transport:Cipher agreed: aes128-ctr
+[4156.715631484985]	DEBUG:paramiko.transport:MAC agreed: hmac-sha2-256
+[4156.766653060913]	DEBUG:paramiko.transport:MAC agreed: hmac-sha2-256
+[4156.815052032471]	DEBUG:paramiko.transport:Compression agreed: none
+[4156.874418258667]	DEBUG:paramiko.transport:Compression agreed: none
+[4157.575368881226]	DEBUG:paramiko.transport:kex engine KexCurve25519 specified hash_algo <built-in function openssl_sha256>
+[4158.132314682007]	DEBUG:paramiko.transport:kex engine KexCurve25519 specified hash_algo <built-in function openssl_sha256>
+[4158.26940536499]	DEBUG:paramiko.transport:Switch to new keys ...
+[4158.490419387817]	DEBUG:paramiko.transport:Switch to new keys ...
+[4158.994674682617]	DEBUG:paramiko.transport:Trying SSH agent key b'3f7cd50f9adaac95294ce7aca5f6a8f8'
+[4159.320831298828]	DEBUG:paramiko.transport:userauth is OK
+[4162.358522415161]	ERROR:paramiko.transport:Exception: key cannot be used for signing
+[4162.617921829224]	ERROR:paramiko.transport:Traceback (most recent call last):
+[4162.677764892578]	ERROR:paramiko.transport:  File "/home/chris/Schreibtisch/git/paramiko/paramiko/transport.py", line 2109, in run
+[4162.711381912231]	ERROR:paramiko.transport:    handler(self.auth_handler, m)
+[4162.741422653198]	ERROR:paramiko.transport:  File "/home/chris/Schreibtisch/git/paramiko/paramiko/auth_handler.py", line 298, in _parse_service_accept
+[4162.768840789795]	ERROR:paramiko.transport:    sig = self.private_key.sign_ssh_data(blob)
+[4162.795305252075]	ERROR:paramiko.transport:  File "/home/chris/Schreibtisch/git/paramiko/paramiko/agent.py", line 418, in sign_ssh_data
+[4162.821054458618]	ERROR:paramiko.transport:    raise SSHException("key cannot be used for signing")
+[4162.84704208374]	ERROR:paramiko.transport:paramiko.ssh_exception.SSHException: key cannot be used for signing
+[4162.874460220337]	ERROR:paramiko.transport:
+[4163.171291351318]	DEBUG:paramiko.transport:EOF in transport thread
+------------------------------ Captured log call -------------------------------
+transport.py              1819 DEBUG    starting thread (client mode): 0x9841aca0
+transport.py              1819 DEBUG    Local version/idstring: SSH-2.0-paramiko_2.7.1
+transport.py              1819 DEBUG    starting thread (server mode): 0x984ec8e0
+transport.py              1819 DEBUG    Local version/idstring: SSH-2.0-paramiko_2.7.1
+transport.py              1819 DEBUG    Remote version/idstring: SSH-2.0-paramiko_2.7.1
+transport.py              1819 INFO     Connected (version 2.0, client paramiko_2.7.1)
+transport.py              1819 DEBUG    Remote version/idstring: SSH-2.0-paramiko_2.7.1
+transport.py              1819 INFO     Connected (version 2.0, client paramiko_2.7.1)
+transport.py              1819 DEBUG    kex algos:['curve25519-sha256@libssh.org', 'ecdh-sha2-nistp256', 'ecdh-sha2-nistp384', 'ecdh-sha2-nistp521', 'diffie-hellman-group16-sha512', 'diffie-hellman-group14-sha256', 'diffie-hellman-group14-sha1', 'diffie-hellman-group1-sha1'] server key:['ecdsa-sha2-nistp256', 'ssh-rsa'] client encrypt:['aes128-ctr', 'aes192-ctr', 'aes256-ctr', 'aes128-cbc', 'aes192-cbc', 'aes256-cbc', 'blowfish-cbc', '3des-cbc'] server encrypt:['aes128-ctr', 'aes192-ctr', 'aes256-ctr', 'aes128-cbc', 'aes192-cbc', 'aes256-cbc', 'blowfish-cbc', '3des-cbc'] client mac:['hmac-sha2-256', 'hmac-sha2-512', 'hmac-sha2-256-etm@openssh.com', 'hmac-sha2-512-etm@openssh.com', 'hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96'] server mac:['hmac-sha2-256', 'hmac-sha2-512', 'hmac-sha2-256-etm@openssh.com', 'hmac-sha2-512-etm@openssh.com', 'hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96'] client compress:['none'] server compress:['none'] client lang:[''] server lang:[''] kex follows?False
+transport.py              1819 DEBUG    kex algos:['curve25519-sha256@libssh.org', 'ecdh-sha2-nistp256', 'ecdh-sha2-nistp384', 'ecdh-sha2-nistp521', 'diffie-hellman-group16-sha512', 'diffie-hellman-group-exchange-sha256', 'diffie-hellman-group14-sha256', 'diffie-hellman-group-exchange-sha1', 'diffie-hellman-group14-sha1', 'diffie-hellman-group1-sha1'] server key:['ecdsa-sha2-nistp256', 'ssh-ed25519', 'ecdsa-sha2-nistp384', 'ecdsa-sha2-nistp521', 'ssh-rsa', 'ssh-dss'] client encrypt:['aes128-ctr', 'aes192-ctr', 'aes256-ctr', 'aes128-cbc', 'aes192-cbc', 'aes256-cbc', 'blowfish-cbc', '3des-cbc'] server encrypt:['aes128-ctr', 'aes192-ctr', 'aes256-ctr', 'aes128-cbc', 'aes192-cbc', 'aes256-cbc', 'blowfish-cbc', '3des-cbc'] client mac:['hmac-sha2-256', 'hmac-sha2-512', 'hmac-sha2-256-etm@openssh.com', 'hmac-sha2-512-etm@openssh.com', 'hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96'] server mac:['hmac-sha2-256', 'hmac-sha2-512', 'hmac-sha2-256-etm@openssh.com', 'hmac-sha2-512-etm@openssh.com', 'hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96'] client compress:['none'] server compress:['none'] client lang:[''] server lang:[''] kex follows?False
+transport.py              1819 DEBUG    Kex agreed: curve25519-sha256@libssh.org
+transport.py              1819 DEBUG    Kex agreed: curve25519-sha256@libssh.org
+transport.py              1819 DEBUG    HostKey agreed: ecdsa-sha2-nistp256
+transport.py              1819 DEBUG    HostKey agreed: ecdsa-sha2-nistp256
+transport.py              1819 DEBUG    Cipher agreed: aes128-ctr
+transport.py              1819 DEBUG    Cipher agreed: aes128-ctr
+transport.py              1819 DEBUG    MAC agreed: hmac-sha2-256
+transport.py              1819 DEBUG    MAC agreed: hmac-sha2-256
+transport.py              1819 DEBUG    Compression agreed: none
+transport.py              1819 DEBUG    Compression agreed: none
+transport.py              1819 DEBUG    kex engine KexCurve25519 specified hash_algo <built-in function openssl_sha256>
+transport.py              1819 DEBUG    kex engine KexCurve25519 specified hash_algo <built-in function openssl_sha256>
+transport.py              1819 DEBUG    Switch to new keys ...
+transport.py              1819 DEBUG    Switch to new keys ...
+transport.py              1819 DEBUG    Trying SSH agent key b'3f7cd50f9adaac95294ce7aca5f6a8f8'
+transport.py              1819 DEBUG    userauth is OK
+transport.py              1819 ERROR    Exception: key cannot be used for signing
+transport.py              1817 ERROR    Traceback (most recent call last):
+transport.py              1817 ERROR      File "/home/chris/Schreibtisch/git/paramiko/paramiko/transport.py", line 2109, in run
+transport.py              1817 ERROR        handler(self.auth_handler, m)
+transport.py              1817 ERROR      File "/home/chris/Schreibtisch/git/paramiko/paramiko/auth_handler.py", line 298, in _parse_service_accept
+transport.py              1817 ERROR        sig = self.private_key.sign_ssh_data(blob)
+transport.py              1817 ERROR      File "/home/chris/Schreibtisch/git/paramiko/paramiko/agent.py", line 418, in sign_ssh_data
+transport.py              1817 ERROR        raise SSHException("key cannot be used for signing")
+transport.py              1817 ERROR    paramiko.ssh_exception.SSHException: key cannot be used for signing
+transport.py              1817 ERROR    
+transport.py              1819 DEBUG    EOF in transport thread
+--------------------------- Captured stderr teardown ---------------------------
+[4180.837631225586]	DEBUG:paramiko.transport:EOF in transport thread
+[4180.910587310791]	DEBUG:paramiko.transport:EOF in transport thread
+__________________ SSHClientTest.test_host_key_negotiation_4 ___________________
+
+self = <tests.test_client.SSHClientTest testMethod=test_host_key_negotiation_4>
+
+    def test_host_key_negotiation_4(self):
+>       self._client_host_key_good(paramiko.RSAKey, "test_rsa.key")
+
+tests/test_client.py:599: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_client.py:581: in _client_host_key_good
+    self.tc.connect(password="pygmalion", **self.connect_kwargs)
+paramiko/client.py:435: in connect
+    self._auth(
+paramiko/client.py:764: in _auth
+    raise saved_exception
+paramiko/client.py:751: in _auth
+    self._transport.auth_password(username, password)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <paramiko.Transport at 0x98540a90 (unconnected)>, username = 'slowdive'
+password = 'pygmalion', event = None, fallback = True
+
+    def auth_password(self, username, password, event=None, fallback=True):
+        """
+        Authenticate to the server using a password.  The username and password
+        are sent over an encrypted link.
+    
+        If an ``event`` is passed in, this method will return immediately, and
+        the event will be triggered once authentication succeeds or fails.  On
+        success, `is_authenticated` will return ``True``.  On failure, you may
+        use `get_exception` to get more detailed error information.
+    
+        Since 1.1, if no event is passed, this method will block until the
+        authentication succeeds or fails.  On failure, an exception is raised.
+        Otherwise, the method simply returns.
+    
+        Since 1.5, if no event is passed and ``fallback`` is ``True`` (the
+        default), if the server doesn't support plain password authentication
+        but does support so-called "keyboard-interactive" mode, an attempt
+        will be made to authenticate using this interactive mode.  If it fails,
+        the normal exception will be thrown as if the attempt had never been
+        made.  This is useful for some recent Gentoo and Debian distributions,
+        which turn off plain password authentication in a misguided belief
+        that interactive authentication is "more secure".  (It's not.)
+    
+        If the server requires multi-step authentication (which is very rare),
+        this method will return a list of auth types permissible for the next
+        step.  Otherwise, in the normal case, an empty list is returned.
+    
+        :param str username: the username to authenticate as
+        :param basestring password: the password to authenticate with
+        :param .threading.Event event:
+            an event to trigger when the authentication attempt is complete
+            (whether it was successful or not)
+        :param bool fallback:
+            ``True`` if an attempt at an automated "interactive" password auth
+            should be made if the server doesn't support normal password auth
+        :return:
+            list of auth types permissible for the next stage of
+            authentication (normally empty)
+    
+        :raises:
+            `.BadAuthenticationType` -- if password authentication isn't
+            allowed by the server for this user (and no event was passed in)
+        :raises:
+            `.AuthenticationException` -- if the authentication failed (and no
+            event was passed in)
+        :raises: `.SSHException` -- if there was a network error
+        """
+        if (not self.active) or (not self.initial_kex_done):
+            # we should never try to send the password unless we're on a secure
+            # link
+>           raise SSHException("No existing session")
+E           paramiko.ssh_exception.SSHException: No existing session
+
+paramiko/transport.py:1498: SSHException
+----------------------------- Captured stderr call -----------------------------
+[4208.102464675903]	DEBUG:paramiko.transport:starting thread (client mode): 0x98540a90
+[4208.316326141357]	DEBUG:paramiko.transport:Local version/idstring: SSH-2.0-paramiko_2.7.1
+[4208.727121353149]	DEBUG:paramiko.transport:starting thread (server mode): 0x98407460
+[4208.843469619751]	DEBUG:paramiko.transport:Local version/idstring: SSH-2.0-paramiko_2.7.1
+[4208.884477615356]	DEBUG:paramiko.transport:Remote version/idstring: SSH-2.0-paramiko_2.7.1
+[4209.014654159546]	INFO:paramiko.transport:Connected (version 2.0, client paramiko_2.7.1)
+[4209.254264831543]	DEBUG:paramiko.transport:Remote version/idstring: SSH-2.0-paramiko_2.7.1
+[4209.387540817261]	INFO:paramiko.transport:Connected (version 2.0, client paramiko_2.7.1)
+[4209.684371948242]	DEBUG:paramiko.transport:kex algos:['curve25519-sha256@libssh.org', 'ecdh-sha2-nistp256', 'ecdh-sha2-nistp384', 'ecdh-sha2-nistp521', 'diffie-hellman-group16-sha512', 'diffie-hellman-group14-sha256', 'diffie-hellman-group14-sha1', 'diffie-hellman-group1-sha1'] server key:['ecdsa-sha2-nistp256', 'ssh-rsa'] client encrypt:['aes128-ctr', 'aes192-ctr', 'aes256-ctr', 'aes128-cbc', 'aes192-cbc', 'aes256-cbc', 'blowfish-cbc', '3des-cbc'] server encrypt:['aes128-ctr', 'aes192-ctr', 'aes256-ctr', 'aes128-cbc', 'aes192-cbc', 'aes256-cbc', 'blowfish-cbc', '3des-cbc'] client mac:['hmac-sha2-256', 'hmac-sha2-512', 'hmac-sha2-256-etm@openssh.com', 'hmac-sha2-512-etm@openssh.com', 'hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96'] server mac:['hmac-sha2-256', 'hmac-sha2-512', 'hmac-sha2-256-etm@openssh.com', 'hmac-sha2-512-etm@openssh.com', 'hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96'] client compress:['none'] server compress:['none'] client lang:[''] server lang:[''] kex follows?False
+[4209.76710319519]	DEBUG:paramiko.transport:Kex agreed: curve25519-sha256@libssh.org
+[4209.823369979858]	DEBUG:paramiko.transport:HostKey agreed: ssh-rsa
+[4209.905624389648]	DEBUG:paramiko.transport:kex algos:['curve25519-sha256@libssh.org', 'ecdh-sha2-nistp256', 'ecdh-sha2-nistp384', 'ecdh-sha2-nistp521', 'diffie-hellman-group16-sha512', 'diffie-hellman-group-exchange-sha256', 'diffie-hellman-group14-sha256', 'diffie-hellman-group-exchange-sha1', 'diffie-hellman-group14-sha1', 'diffie-hellman-group1-sha1'] server key:['ssh-rsa', 'ssh-ed25519', 'ecdsa-sha2-nistp256', 'ecdsa-sha2-nistp384', 'ecdsa-sha2-nistp521', 'ssh-dss'] client encrypt:['aes128-ctr', 'aes192-ctr', 'aes256-ctr', 'aes128-cbc', 'aes192-cbc', 'aes256-cbc', 'blowfish-cbc', '3des-cbc'] server encrypt:['aes128-ctr', 'aes192-ctr', 'aes256-ctr', 'aes128-cbc', 'aes192-cbc', 'aes256-cbc', 'blowfish-cbc', '3des-cbc'] client mac:['hmac-sha2-256', 'hmac-sha2-512', 'hmac-sha2-256-etm@openssh.com', 'hmac-sha2-512-etm@openssh.com', 'hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96'] server mac:['hmac-sha2-256', 'hmac-sha2-512', 'hmac-sha2-256-etm@openssh.com', 'hmac-sha2-512-etm@openssh.com', 'hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96'] client compress:['none'] server compress:['none'] client lang:[''] server lang:[''] kex follows?False
+[4209.958553314209]	DEBUG:paramiko.transport:Cipher agreed: aes128-ctr
+[4210.030555725098]	DEBUG:paramiko.transport:Kex agreed: curve25519-sha256@libssh.org
+[4210.084915161133]	DEBUG:paramiko.transport:MAC agreed: hmac-sha2-256
+[4210.143566131592]	DEBUG:paramiko.transport:HostKey agreed: ssh-rsa
+[4210.19434928894]	DEBUG:paramiko.transport:Compression agreed: none
+[4210.248708724976]	DEBUG:paramiko.transport:Cipher agreed: aes128-ctr
+[4210.3612422943115]	DEBUG:paramiko.transport:MAC agreed: hmac-sha2-256
+[4210.400581359863]	DEBUG:paramiko.transport:Compression agreed: none
+[4211.421489715576]	DEBUG:paramiko.transport:kex engine KexCurve25519 specified hash_algo <built-in function openssl_sha256>
+[4211.880445480347]	DEBUG:paramiko.transport:kex engine KexCurve25519 specified hash_algo <built-in function openssl_sha256>
+[4212.015151977539]	DEBUG:paramiko.transport:Switch to new keys ...
+[4212.230443954468]	DEBUG:paramiko.transport:Switch to new keys ...
+[4212.835311889648]	DEBUG:paramiko.transport:Trying SSH agent key b'3f7cd50f9adaac95294ce7aca5f6a8f8'
+[4213.181972503662]	DEBUG:paramiko.transport:userauth is OK
+[4215.97957611084]	ERROR:paramiko.transport:Exception: key cannot be used for signing
+[4216.142892837524]	ERROR:paramiko.transport:Traceback (most recent call last):
+[4216.184377670288]	ERROR:paramiko.transport:  File "/home/chris/Schreibtisch/git/paramiko/paramiko/transport.py", line 2109, in run
+[4216.21561050415]	ERROR:paramiko.transport:    handler(self.auth_handler, m)
+[4216.244220733643]	ERROR:paramiko.transport:  File "/home/chris/Schreibtisch/git/paramiko/paramiko/auth_handler.py", line 298, in _parse_service_accept
+[4216.270446777344]	ERROR:paramiko.transport:    sig = self.private_key.sign_ssh_data(blob)
+[4216.297149658203]	ERROR:paramiko.transport:  File "/home/chris/Schreibtisch/git/paramiko/paramiko/agent.py", line 418, in sign_ssh_data
+[4216.322898864746]	ERROR:paramiko.transport:    raise SSHException("key cannot be used for signing")
+[4216.348648071289]	ERROR:paramiko.transport:paramiko.ssh_exception.SSHException: key cannot be used for signing
+[4216.374397277832]	ERROR:paramiko.transport:
+[4216.592788696289]	DEBUG:paramiko.transport:EOF in transport thread
+------------------------------ Captured log call -------------------------------
+transport.py              1819 DEBUG    starting thread (client mode): 0x98540a90
+transport.py              1819 DEBUG    Local version/idstring: SSH-2.0-paramiko_2.7.1
+transport.py              1819 DEBUG    starting thread (server mode): 0x98407460
+transport.py              1819 DEBUG    Local version/idstring: SSH-2.0-paramiko_2.7.1
+transport.py              1819 DEBUG    Remote version/idstring: SSH-2.0-paramiko_2.7.1
+transport.py              1819 INFO     Connected (version 2.0, client paramiko_2.7.1)
+transport.py              1819 DEBUG    Remote version/idstring: SSH-2.0-paramiko_2.7.1
+transport.py              1819 INFO     Connected (version 2.0, client paramiko_2.7.1)
+transport.py              1819 DEBUG    kex algos:['curve25519-sha256@libssh.org', 'ecdh-sha2-nistp256', 'ecdh-sha2-nistp384', 'ecdh-sha2-nistp521', 'diffie-hellman-group16-sha512', 'diffie-hellman-group14-sha256', 'diffie-hellman-group14-sha1', 'diffie-hellman-group1-sha1'] server key:['ecdsa-sha2-nistp256', 'ssh-rsa'] client encrypt:['aes128-ctr', 'aes192-ctr', 'aes256-ctr', 'aes128-cbc', 'aes192-cbc', 'aes256-cbc', 'blowfish-cbc', '3des-cbc'] server encrypt:['aes128-ctr', 'aes192-ctr', 'aes256-ctr', 'aes128-cbc', 'aes192-cbc', 'aes256-cbc', 'blowfish-cbc', '3des-cbc'] client mac:['hmac-sha2-256', 'hmac-sha2-512', 'hmac-sha2-256-etm@openssh.com', 'hmac-sha2-512-etm@openssh.com', 'hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96'] server mac:['hmac-sha2-256', 'hmac-sha2-512', 'hmac-sha2-256-etm@openssh.com', 'hmac-sha2-512-etm@openssh.com', 'hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96'] client compress:['none'] server compress:['none'] client lang:[''] server lang:[''] kex follows?False
+transport.py              1819 DEBUG    Kex agreed: curve25519-sha256@libssh.org
+transport.py              1819 DEBUG    HostKey agreed: ssh-rsa
+transport.py              1819 DEBUG    kex algos:['curve25519-sha256@libssh.org', 'ecdh-sha2-nistp256', 'ecdh-sha2-nistp384', 'ecdh-sha2-nistp521', 'diffie-hellman-group16-sha512', 'diffie-hellman-group-exchange-sha256', 'diffie-hellman-group14-sha256', 'diffie-hellman-group-exchange-sha1', 'diffie-hellman-group14-sha1', 'diffie-hellman-group1-sha1'] server key:['ssh-rsa', 'ssh-ed25519', 'ecdsa-sha2-nistp256', 'ecdsa-sha2-nistp384', 'ecdsa-sha2-nistp521', 'ssh-dss'] client encrypt:['aes128-ctr', 'aes192-ctr', 'aes256-ctr', 'aes128-cbc', 'aes192-cbc', 'aes256-cbc', 'blowfish-cbc', '3des-cbc'] server encrypt:['aes128-ctr', 'aes192-ctr', 'aes256-ctr', 'aes128-cbc', 'aes192-cbc', 'aes256-cbc', 'blowfish-cbc', '3des-cbc'] client mac:['hmac-sha2-256', 'hmac-sha2-512', 'hmac-sha2-256-etm@openssh.com', 'hmac-sha2-512-etm@openssh.com', 'hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96'] server mac:['hmac-sha2-256', 'hmac-sha2-512', 'hmac-sha2-256-etm@openssh.com', 'hmac-sha2-512-etm@openssh.com', 'hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96'] client compress:['none'] server compress:['none'] client lang:[''] server lang:[''] kex follows?False
+transport.py              1819 DEBUG    Cipher agreed: aes128-ctr
+transport.py              1819 DEBUG    Kex agreed: curve25519-sha256@libssh.org
+transport.py              1819 DEBUG    MAC agreed: hmac-sha2-256
+transport.py              1819 DEBUG    HostKey agreed: ssh-rsa
+transport.py              1819 DEBUG    Compression agreed: none
+transport.py              1819 DEBUG    Cipher agreed: aes128-ctr
+transport.py              1819 DEBUG    MAC agreed: hmac-sha2-256
+transport.py              1819 DEBUG    Compression agreed: none
+transport.py              1819 DEBUG    kex engine KexCurve25519 specified hash_algo <built-in function openssl_sha256>
+transport.py              1819 DEBUG    kex engine KexCurve25519 specified hash_algo <built-in function openssl_sha256>
+transport.py              1819 DEBUG    Switch to new keys ...
+transport.py              1819 DEBUG    Switch to new keys ...
+transport.py              1819 DEBUG    Trying SSH agent key b'3f7cd50f9adaac95294ce7aca5f6a8f8'
+transport.py              1819 DEBUG    userauth is OK
+transport.py              1819 ERROR    Exception: key cannot be used for signing
+transport.py              1817 ERROR    Traceback (most recent call last):
+transport.py              1817 ERROR      File "/home/chris/Schreibtisch/git/paramiko/paramiko/transport.py", line 2109, in run
+transport.py              1817 ERROR        handler(self.auth_handler, m)
+transport.py              1817 ERROR      File "/home/chris/Schreibtisch/git/paramiko/paramiko/auth_handler.py", line 298, in _parse_service_accept
+transport.py              1817 ERROR        sig = self.private_key.sign_ssh_data(blob)
+transport.py              1817 ERROR      File "/home/chris/Schreibtisch/git/paramiko/paramiko/agent.py", line 418, in sign_ssh_data
+transport.py              1817 ERROR        raise SSHException("key cannot be used for signing")
+transport.py              1817 ERROR    paramiko.ssh_exception.SSHException: key cannot be used for signing
+transport.py              1817 ERROR    
+transport.py              1819 DEBUG    EOF in transport thread
+--------------------------- Captured stderr teardown ---------------------------
+[4258.031845092773]	DEBUG:paramiko.transport:EOF in transport thread
+---------------------------- Captured log teardown -----------------------------
+transport.py              1819 DEBUG    EOF in transport thread
+____________________ SSHClientTest.test_update_environment _____________________
+
+self = <tests.test_client.SSHClientTest testMethod=test_update_environment>
+
+    def test_update_environment(self):
+        """
+        Verify that environment variables can be set by the client.
+        """
+>       self._setup_for_env()
+
+tests/test_client.py:619: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_client.py:607: in _setup_for_env
+    self.tc.connect(
+paramiko/client.py:435: in connect
+    self._auth(
+paramiko/client.py:764: in _auth
+    raise saved_exception
+paramiko/client.py:751: in _auth
+    self._transport.auth_password(username, password)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <paramiko.Transport at 0x983d38e0 (unconnected)>, username = 'slowdive'
+password = 'pygmalion', event = None, fallback = True
+
+    def auth_password(self, username, password, event=None, fallback=True):
+        """
+        Authenticate to the server using a password.  The username and password
+        are sent over an encrypted link.
+    
+        If an ``event`` is passed in, this method will return immediately, and
+        the event will be triggered once authentication succeeds or fails.  On
+        success, `is_authenticated` will return ``True``.  On failure, you may
+        use `get_exception` to get more detailed error information.
+    
+        Since 1.1, if no event is passed, this method will block until the
+        authentication succeeds or fails.  On failure, an exception is raised.
+        Otherwise, the method simply returns.
+    
+        Since 1.5, if no event is passed and ``fallback`` is ``True`` (the
+        default), if the server doesn't support plain password authentication
+        but does support so-called "keyboard-interactive" mode, an attempt
+        will be made to authenticate using this interactive mode.  If it fails,
+        the normal exception will be thrown as if the attempt had never been
+        made.  This is useful for some recent Gentoo and Debian distributions,
+        which turn off plain password authentication in a misguided belief
+        that interactive authentication is "more secure".  (It's not.)
+    
+        If the server requires multi-step authentication (which is very rare),
+        this method will return a list of auth types permissible for the next
+        step.  Otherwise, in the normal case, an empty list is returned.
+    
+        :param str username: the username to authenticate as
+        :param basestring password: the password to authenticate with
+        :param .threading.Event event:
+            an event to trigger when the authentication attempt is complete
+            (whether it was successful or not)
+        :param bool fallback:
+            ``True`` if an attempt at an automated "interactive" password auth
+            should be made if the server doesn't support normal password auth
+        :return:
+            list of auth types permissible for the next stage of
+            authentication (normally empty)
+    
+        :raises:
+            `.BadAuthenticationType` -- if password authentication isn't
+            allowed by the server for this user (and no event was passed in)
+        :raises:
+            `.AuthenticationException` -- if the authentication failed (and no
+            event was passed in)
+        :raises: `.SSHException` -- if there was a network error
+        """
+        if (not self.active) or (not self.initial_kex_done):
+            # we should never try to send the password unless we're on a secure
+            # link
+>           raise SSHException("No existing session")
+E           paramiko.ssh_exception.SSHException: No existing session
+
+paramiko/transport.py:1498: SSHException
+----------------------------- Captured stderr call -----------------------------
+[4333.271265029907]	DEBUG:paramiko.transport:starting thread (client mode): 0x983d38e0
+[4333.582162857056]	DEBUG:paramiko.transport:Local version/idstring: SSH-2.0-paramiko_2.7.1
+[4334.106683731079]	DEBUG:paramiko.transport:starting thread (server mode): 0x9801c5e0
+[4334.2413902282715]	DEBUG:paramiko.transport:Local version/idstring: SSH-2.0-paramiko_2.7.1
+[4334.289073944092]	DEBUG:paramiko.transport:Remote version/idstring: SSH-2.0-paramiko_2.7.1
+[4334.3799114227295]	INFO:paramiko.transport:Connected (version 2.0, client paramiko_2.7.1)
+[4334.423303604126]	DEBUG:paramiko.transport:Remote version/idstring: SSH-2.0-paramiko_2.7.1
+[4334.600925445557]	INFO:paramiko.transport:Connected (version 2.0, client paramiko_2.7.1)
+[4335.055351257324]	DEBUG:paramiko.transport:kex algos:['curve25519-sha256@libssh.org', 'ecdh-sha2-nistp256', 'ecdh-sha2-nistp384', 'ecdh-sha2-nistp521', 'diffie-hellman-group16-sha512', 'diffie-hellman-group14-sha256', 'diffie-hellman-group14-sha1', 'diffie-hellman-group1-sha1'] server key:['ecdsa-sha2-nistp256', 'ssh-rsa'] client encrypt:['aes128-ctr', 'aes192-ctr', 'aes256-ctr', 'aes128-cbc', 'aes192-cbc', 'aes256-cbc', 'blowfish-cbc', '3des-cbc'] server encrypt:['aes128-ctr', 'aes192-ctr', 'aes256-ctr', 'aes128-cbc', 'aes192-cbc', 'aes256-cbc', 'blowfish-cbc', '3des-cbc'] client mac:['hmac-sha2-256', 'hmac-sha2-512', 'hmac-sha2-256-etm@openssh.com', 'hmac-sha2-512-etm@openssh.com', 'hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96'] server mac:['hmac-sha2-256', 'hmac-sha2-512', 'hmac-sha2-256-etm@openssh.com', 'hmac-sha2-512-etm@openssh.com', 'hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96'] client compress:['none'] server compress:['none'] client lang:[''] server lang:[''] kex follows?False
+[4335.148334503174]	DEBUG:paramiko.transport:kex algos:['curve25519-sha256@libssh.org', 'ecdh-sha2-nistp256', 'ecdh-sha2-nistp384', 'ecdh-sha2-nistp521', 'diffie-hellman-group16-sha512', 'diffie-hellman-group-exchange-sha256', 'diffie-hellman-group14-sha256', 'diffie-hellman-group-exchange-sha1', 'diffie-hellman-group14-sha1', 'diffie-hellman-group1-sha1'] server key:['ssh-ed25519', 'ecdsa-sha2-nistp256', 'ecdsa-sha2-nistp384', 'ecdsa-sha2-nistp521', 'ssh-rsa', 'ssh-dss'] client encrypt:['aes128-ctr', 'aes192-ctr', 'aes256-ctr', 'aes128-cbc', 'aes192-cbc', 'aes256-cbc', 'blowfish-cbc', '3des-cbc'] server encrypt:['aes128-ctr', 'aes192-ctr', 'aes256-ctr', 'aes128-cbc', 'aes192-cbc', 'aes256-cbc', 'blowfish-cbc', '3des-cbc'] client mac:['hmac-sha2-256', 'hmac-sha2-512', 'hmac-sha2-256-etm@openssh.com', 'hmac-sha2-512-etm@openssh.com', 'hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96'] server mac:['hmac-sha2-256', 'hmac-sha2-512', 'hmac-sha2-256-etm@openssh.com', 'hmac-sha2-512-etm@openssh.com', 'hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96'] client compress:['none'] server compress:['none'] client lang:[''] server lang:[''] kex follows?False
+[4335.211277008057]	DEBUG:paramiko.transport:Kex agreed: curve25519-sha256@libssh.org
+[4335.2837562561035]	DEBUG:paramiko.transport:Kex agreed: curve25519-sha256@libssh.org
+[4335.347414016724]	DEBUG:paramiko.transport:HostKey agreed: ecdsa-sha2-nistp256
+[4335.411548614502]	DEBUG:paramiko.transport:HostKey agreed: ecdsa-sha2-nistp256
+[4335.474252700806]	DEBUG:paramiko.transport:Cipher agreed: aes128-ctr
+[4335.535764694214]	DEBUG:paramiko.transport:Cipher agreed: aes128-ctr
+[4335.594654083252]	DEBUG:paramiko.transport:MAC agreed: hmac-sha2-256
+[4335.654258728027]	DEBUG:paramiko.transport:MAC agreed: hmac-sha2-256
+[4335.710287094116]	DEBUG:paramiko.transport:Compression agreed: none
+[4335.766315460205]	DEBUG:paramiko.transport:Compression agreed: none
+[4336.624622344971]	DEBUG:paramiko.transport:kex engine KexCurve25519 specified hash_algo <built-in function openssl_sha256>
+[4337.300539016724]	DEBUG:paramiko.transport:kex engine KexCurve25519 specified hash_algo <built-in function openssl_sha256>
+[4337.46337890625]	DEBUG:paramiko.transport:Switch to new keys ...
+[4337.745904922485]	DEBUG:paramiko.transport:Switch to new keys ...
+[4338.018417358398]	DEBUG:paramiko.transport:Adding ecdsa-sha2-nistp256 host key for [127.0.0.1]:58957: b'2519eb55e6a147ff4f38d2756fa5d560'
+[4338.389158248901]	DEBUG:paramiko.transport:Trying SSH agent key b'3f7cd50f9adaac95294ce7aca5f6a8f8'
+[4338.751316070557]	DEBUG:paramiko.transport:userauth is OK
+[4341.898202896118]	ERROR:paramiko.transport:Exception: key cannot be used for signing
+[4342.066287994385]	ERROR:paramiko.transport:Traceback (most recent call last):
+[4342.11540222168]	ERROR:paramiko.transport:  File "/home/chris/Schreibtisch/git/paramiko/paramiko/transport.py", line 2109, in run
+[4342.152118682861]	ERROR:paramiko.transport:    handler(self.auth_handler, m)
+[4342.185735702515]	ERROR:paramiko.transport:  File "/home/chris/Schreibtisch/git/paramiko/paramiko/auth_handler.py", line 298, in _parse_service_accept
+[4342.217683792114]	ERROR:paramiko.transport:    sig = self.private_key.sign_ssh_data(blob)
+[4342.2486782073975]	ERROR:paramiko.transport:  File "/home/chris/Schreibtisch/git/paramiko/paramiko/agent.py", line 418, in sign_ssh_data
+[4342.280387878418]	ERROR:paramiko.transport:    raise SSHException("key cannot be used for signing")
+[4342.311382293701]	ERROR:paramiko.transport:paramiko.ssh_exception.SSHException: key cannot be used for signing
+[4342.344045639038]	ERROR:paramiko.transport:
+[4342.893362045288]	DEBUG:paramiko.transport:EOF in transport thread
+------------------------------ Captured log call -------------------------------
+transport.py              1819 DEBUG    starting thread (client mode): 0x983d38e0
+transport.py              1819 DEBUG    Local version/idstring: SSH-2.0-paramiko_2.7.1
+transport.py              1819 DEBUG    starting thread (server mode): 0x9801c5e0
+transport.py              1819 DEBUG    Local version/idstring: SSH-2.0-paramiko_2.7.1
+transport.py              1819 DEBUG    Remote version/idstring: SSH-2.0-paramiko_2.7.1
+transport.py              1819 INFO     Connected (version 2.0, client paramiko_2.7.1)
+transport.py              1819 DEBUG    Remote version/idstring: SSH-2.0-paramiko_2.7.1
+transport.py              1819 INFO     Connected (version 2.0, client paramiko_2.7.1)
+transport.py              1819 DEBUG    kex algos:['curve25519-sha256@libssh.org', 'ecdh-sha2-nistp256', 'ecdh-sha2-nistp384', 'ecdh-sha2-nistp521', 'diffie-hellman-group16-sha512', 'diffie-hellman-group14-sha256', 'diffie-hellman-group14-sha1', 'diffie-hellman-group1-sha1'] server key:['ecdsa-sha2-nistp256', 'ssh-rsa'] client encrypt:['aes128-ctr', 'aes192-ctr', 'aes256-ctr', 'aes128-cbc', 'aes192-cbc', 'aes256-cbc', 'blowfish-cbc', '3des-cbc'] server encrypt:['aes128-ctr', 'aes192-ctr', 'aes256-ctr', 'aes128-cbc', 'aes192-cbc', 'aes256-cbc', 'blowfish-cbc', '3des-cbc'] client mac:['hmac-sha2-256', 'hmac-sha2-512', 'hmac-sha2-256-etm@openssh.com', 'hmac-sha2-512-etm@openssh.com', 'hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96'] server mac:['hmac-sha2-256', 'hmac-sha2-512', 'hmac-sha2-256-etm@openssh.com', 'hmac-sha2-512-etm@openssh.com', 'hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96'] client compress:['none'] server compress:['none'] client lang:[''] server lang:[''] kex follows?False
+transport.py              1819 DEBUG    kex algos:['curve25519-sha256@libssh.org', 'ecdh-sha2-nistp256', 'ecdh-sha2-nistp384', 'ecdh-sha2-nistp521', 'diffie-hellman-group16-sha512', 'diffie-hellman-group-exchange-sha256', 'diffie-hellman-group14-sha256', 'diffie-hellman-group-exchange-sha1', 'diffie-hellman-group14-sha1', 'diffie-hellman-group1-sha1'] server key:['ssh-ed25519', 'ecdsa-sha2-nistp256', 'ecdsa-sha2-nistp384', 'ecdsa-sha2-nistp521', 'ssh-rsa', 'ssh-dss'] client encrypt:['aes128-ctr', 'aes192-ctr', 'aes256-ctr', 'aes128-cbc', 'aes192-cbc', 'aes256-cbc', 'blowfish-cbc', '3des-cbc'] server encrypt:['aes128-ctr', 'aes192-ctr', 'aes256-ctr', 'aes128-cbc', 'aes192-cbc', 'aes256-cbc', 'blowfish-cbc', '3des-cbc'] client mac:['hmac-sha2-256', 'hmac-sha2-512', 'hmac-sha2-256-etm@openssh.com', 'hmac-sha2-512-etm@openssh.com', 'hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96'] server mac:['hmac-sha2-256', 'hmac-sha2-512', 'hmac-sha2-256-etm@openssh.com', 'hmac-sha2-512-etm@openssh.com', 'hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96'] client compress:['none'] server compress:['none'] client lang:[''] server lang:[''] kex follows?False
+transport.py              1819 DEBUG    Kex agreed: curve25519-sha256@libssh.org
+transport.py              1819 DEBUG    Kex agreed: curve25519-sha256@libssh.org
+transport.py              1819 DEBUG    HostKey agreed: ecdsa-sha2-nistp256
+transport.py              1819 DEBUG    HostKey agreed: ecdsa-sha2-nistp256
+transport.py              1819 DEBUG    Cipher agreed: aes128-ctr
+transport.py              1819 DEBUG    Cipher agreed: aes128-ctr
+transport.py              1819 DEBUG    MAC agreed: hmac-sha2-256
+transport.py              1819 DEBUG    MAC agreed: hmac-sha2-256
+transport.py              1819 DEBUG    Compression agreed: none
+transport.py              1819 DEBUG    Compression agreed: none
+transport.py              1819 DEBUG    kex engine KexCurve25519 specified hash_algo <built-in function openssl_sha256>
+transport.py              1819 DEBUG    kex engine KexCurve25519 specified hash_algo <built-in function openssl_sha256>
+transport.py              1819 DEBUG    Switch to new keys ...
+transport.py              1819 DEBUG    Switch to new keys ...
+transport.py              1819 DEBUG    Adding ecdsa-sha2-nistp256 host key for [127.0.0.1]:58957: b'2519eb55e6a147ff4f38d2756fa5d560'
+transport.py              1819 DEBUG    Trying SSH agent key b'3f7cd50f9adaac95294ce7aca5f6a8f8'
+transport.py              1819 DEBUG    userauth is OK
+transport.py              1819 ERROR    Exception: key cannot be used for signing
+transport.py              1817 ERROR    Traceback (most recent call last):
+transport.py              1817 ERROR      File "/home/chris/Schreibtisch/git/paramiko/paramiko/transport.py", line 2109, in run
+transport.py              1817 ERROR        handler(self.auth_handler, m)
+transport.py              1817 ERROR      File "/home/chris/Schreibtisch/git/paramiko/paramiko/auth_handler.py", line 298, in _parse_service_accept
+transport.py              1817 ERROR        sig = self.private_key.sign_ssh_data(blob)
+transport.py              1817 ERROR      File "/home/chris/Schreibtisch/git/paramiko/paramiko/agent.py", line 418, in sign_ssh_data
+transport.py              1817 ERROR        raise SSHException("key cannot be used for signing")
+transport.py              1817 ERROR    paramiko.ssh_exception.SSHException: key cannot be used for signing
+transport.py              1817 ERROR    
+transport.py              1819 DEBUG    EOF in transport thread
+_ PasswordPassphraseTests.test_password_kwarg_not_used_for_passphrase_when_passphrase_kwarg_given _
+
+self = <tests.test_client.PasswordPassphraseTests testMethod=test_password_kwarg_not_used_for_passphrase_when_passphrase_kwarg_given>
+
+    @raises(AuthenticationException)  # TODO: more granular
+    def test_password_kwarg_not_used_for_passphrase_when_passphrase_kwarg_given(  # noqa
+        self
+    ):
+        # Sanity: if we're given both fields, the password field is NOT used as
+        # a passphrase.
+>       self._test_connection(
+            key_filename=_support("test_rsa_password.key"),
+            password="television",
+            passphrase="wat? lol no",
+        )
+
+tests/test_client.py:714: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_client.py:202: in _test_connection
+    self.tc.connect(**dict(self.connect_kwargs, **kwargs))
+paramiko/client.py:435: in connect
+    self._auth(
+paramiko/client.py:764: in _auth
+    raise saved_exception
+paramiko/client.py:751: in _auth
+    self._transport.auth_password(username, password)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <paramiko.Transport at 0x983607f0 (unconnected)>, username = 'slowdive'
+password = 'television', event = None, fallback = True
+
+    def auth_password(self, username, password, event=None, fallback=True):
+        """
+        Authenticate to the server using a password.  The username and password
+        are sent over an encrypted link.
+    
+        If an ``event`` is passed in, this method will return immediately, and
+        the event will be triggered once authentication succeeds or fails.  On
+        success, `is_authenticated` will return ``True``.  On failure, you may
+        use `get_exception` to get more detailed error information.
+    
+        Since 1.1, if no event is passed, this method will block until the
+        authentication succeeds or fails.  On failure, an exception is raised.
+        Otherwise, the method simply returns.
+    
+        Since 1.5, if no event is passed and ``fallback`` is ``True`` (the
+        default), if the server doesn't support plain password authentication
+        but does support so-called "keyboard-interactive" mode, an attempt
+        will be made to authenticate using this interactive mode.  If it fails,
+        the normal exception will be thrown as if the attempt had never been
+        made.  This is useful for some recent Gentoo and Debian distributions,
+        which turn off plain password authentication in a misguided belief
+        that interactive authentication is "more secure".  (It's not.)
+    
+        If the server requires multi-step authentication (which is very rare),
+        this method will return a list of auth types permissible for the next
+        step.  Otherwise, in the normal case, an empty list is returned.
+    
+        :param str username: the username to authenticate as
+        :param basestring password: the password to authenticate with
+        :param .threading.Event event:
+            an event to trigger when the authentication attempt is complete
+            (whether it was successful or not)
+        :param bool fallback:
+            ``True`` if an attempt at an automated "interactive" password auth
+            should be made if the server doesn't support normal password auth
+        :return:
+            list of auth types permissible for the next stage of
+            authentication (normally empty)
+    
+        :raises:
+            `.BadAuthenticationType` -- if password authentication isn't
+            allowed by the server for this user (and no event was passed in)
+        :raises:
+            `.AuthenticationException` -- if the authentication failed (and no
+            event was passed in)
+        :raises: `.SSHException` -- if there was a network error
+        """
+        if (not self.active) or (not self.initial_kex_done):
+            # we should never try to send the password unless we're on a secure
+            # link
+>           raise SSHException("No existing session")
+E           paramiko.ssh_exception.SSHException: No existing session
+
+paramiko/transport.py:1498: SSHException
+----------------------------- Captured stderr call -----------------------------
+[4445.522308349609]	DEBUG:paramiko.transport:starting thread (client mode): 0x983607f0
+[4445.802927017212]	DEBUG:paramiko.transport:Local version/idstring: SSH-2.0-paramiko_2.7.1
+[4446.320295333862]	DEBUG:paramiko.transport:starting thread (server mode): 0x984fd130
+[4446.441650390625]	DEBUG:paramiko.transport:Local version/idstring: SSH-2.0-paramiko_2.7.1
+[4446.497917175293]	DEBUG:paramiko.transport:Remote version/idstring: SSH-2.0-paramiko_2.7.1
+[4446.590423583984]	DEBUG:paramiko.transport:Remote version/idstring: SSH-2.0-paramiko_2.7.1
+[4446.645975112915]	INFO:paramiko.transport:Connected (version 2.0, client paramiko_2.7.1)
+[4446.710109710693]	INFO:paramiko.transport:Connected (version 2.0, client paramiko_2.7.1)
+[4447.336912155151]	DEBUG:paramiko.transport:kex algos:['curve25519-sha256@libssh.org', 'ecdh-sha2-nistp256', 'ecdh-sha2-nistp384', 'ecdh-sha2-nistp521', 'diffie-hellman-group16-sha512', 'diffie-hellman-group14-sha256', 'diffie-hellman-group14-sha1', 'diffie-hellman-group1-sha1'] server key:['ecdsa-sha2-nistp256', 'ssh-rsa'] client encrypt:['aes128-ctr', 'aes192-ctr', 'aes256-ctr', 'aes128-cbc', 'aes192-cbc', 'aes256-cbc', 'blowfish-cbc', '3des-cbc'] server encrypt:['aes128-ctr', 'aes192-ctr', 'aes256-ctr', 'aes128-cbc', 'aes192-cbc', 'aes256-cbc', 'blowfish-cbc', '3des-cbc'] client mac:['hmac-sha2-256', 'hmac-sha2-512', 'hmac-sha2-256-etm@openssh.com', 'hmac-sha2-512-etm@openssh.com', 'hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96'] server mac:['hmac-sha2-256', 'hmac-sha2-512', 'hmac-sha2-256-etm@openssh.com', 'hmac-sha2-512-etm@openssh.com', 'hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96'] client compress:['none'] server compress:['none'] client lang:[''] server lang:[''] kex follows?False
+[4447.445631027222]	DEBUG:paramiko.transport:kex algos:['curve25519-sha256@libssh.org', 'ecdh-sha2-nistp256', 'ecdh-sha2-nistp384', 'ecdh-sha2-nistp521', 'diffie-hellman-group16-sha512', 'diffie-hellman-group-exchange-sha256', 'diffie-hellman-group14-sha256', 'diffie-hellman-group-exchange-sha1', 'diffie-hellman-group14-sha1', 'diffie-hellman-group1-sha1'] server key:['ssh-rsa', 'ssh-ed25519', 'ecdsa-sha2-nistp256', 'ecdsa-sha2-nistp384', 'ecdsa-sha2-nistp521', 'ssh-dss'] client encrypt:['aes128-ctr', 'aes192-ctr', 'aes256-ctr', 'aes128-cbc', 'aes192-cbc', 'aes256-cbc', 'blowfish-cbc', '3des-cbc'] server encrypt:['aes128-ctr', 'aes192-ctr', 'aes256-ctr', 'aes128-cbc', 'aes192-cbc', 'aes256-cbc', 'blowfish-cbc', '3des-cbc'] client mac:['hmac-sha2-256', 'hmac-sha2-512', 'hmac-sha2-256-etm@openssh.com', 'hmac-sha2-512-etm@openssh.com', 'hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96'] server mac:['hmac-sha2-256', 'hmac-sha2-512', 'hmac-sha2-256-etm@openssh.com', 'hmac-sha2-512-etm@openssh.com', 'hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96'] client compress:['none'] server compress:['none'] client lang:[''] server lang:[''] kex follows?False
+[4447.519063949585]	DEBUG:paramiko.transport:Kex agreed: curve25519-sha256@libssh.org
+[4447.609663009644]	DEBUG:paramiko.transport:Kex agreed: curve25519-sha256@libssh.org
+[4447.683811187744]	DEBUG:paramiko.transport:HostKey agreed: ssh-rsa
+[4447.758197784424]	DEBUG:paramiko.transport:HostKey agreed: ssh-rsa
+[4447.831153869629]	DEBUG:paramiko.transport:Cipher agreed: aes128-ctr
+[4447.903394699097]	DEBUG:paramiko.transport:Cipher agreed: aes128-ctr
+[4447.972774505615]	DEBUG:paramiko.transport:MAC agreed: hmac-sha2-256
+[4448.041915893555]	DEBUG:paramiko.transport:MAC agreed: hmac-sha2-256
+[4448.107957839966]	DEBUG:paramiko.transport:Compression agreed: none
+[4448.173046112061]	DEBUG:paramiko.transport:Compression agreed: none
+[4449.421167373657]	DEBUG:paramiko.transport:kex engine KexCurve25519 specified hash_algo <built-in function openssl_sha256>
+[4450.092792510986]	DEBUG:paramiko.transport:kex engine KexCurve25519 specified hash_algo <built-in function openssl_sha256>
+[4450.326442718506]	DEBUG:paramiko.transport:Switch to new keys ...
+[4450.510025024414]	DEBUG:paramiko.transport:Switch to new keys ...
+[4451.8187046051025]	DEBUG:paramiko.transport:Trying SSH agent key b'3f7cd50f9adaac95294ce7aca5f6a8f8'
+[4452.281475067139]	DEBUG:paramiko.transport:userauth is OK
+[4455.836772918701]	ERROR:paramiko.transport:Exception: key cannot be used for signing
+[4456.056833267212]	ERROR:paramiko.transport:Traceback (most recent call last):
+[4456.1145305633545]	ERROR:paramiko.transport:  File "/home/chris/Schreibtisch/git/paramiko/paramiko/transport.py", line 2109, in run
+[4456.157684326172]	ERROR:paramiko.transport:    handler(self.auth_handler, m)
+[4456.196546554565]	ERROR:paramiko.transport:  File "/home/chris/Schreibtisch/git/paramiko/paramiko/auth_handler.py", line 298, in _parse_service_accept
+[4456.233263015747]	ERROR:paramiko.transport:    sig = self.private_key.sign_ssh_data(blob)
+[4456.2695026397705]	ERROR:paramiko.transport:  File "/home/chris/Schreibtisch/git/paramiko/paramiko/agent.py", line 418, in sign_ssh_data
+[4456.304550170898]	ERROR:paramiko.transport:    raise SSHException("key cannot be used for signing")
+[4456.3398361206055]	ERROR:paramiko.transport:paramiko.ssh_exception.SSHException: key cannot be used for signing
+[4456.374406814575]	ERROR:paramiko.transport:
+[4456.668376922607]	DEBUG:paramiko.transport:EOF in transport thread
+------------------------------ Captured log call -------------------------------
+transport.py              1819 DEBUG    starting thread (client mode): 0x983607f0
+transport.py              1819 DEBUG    Local version/idstring: SSH-2.0-paramiko_2.7.1
+transport.py              1819 DEBUG    starting thread (server mode): 0x984fd130
+transport.py              1819 DEBUG    Local version/idstring: SSH-2.0-paramiko_2.7.1
+transport.py              1819 DEBUG    Remote version/idstring: SSH-2.0-paramiko_2.7.1
+transport.py              1819 DEBUG    Remote version/idstring: SSH-2.0-paramiko_2.7.1
+transport.py              1819 INFO     Connected (version 2.0, client paramiko_2.7.1)
+transport.py              1819 INFO     Connected (version 2.0, client paramiko_2.7.1)
+transport.py              1819 DEBUG    kex algos:['curve25519-sha256@libssh.org', 'ecdh-sha2-nistp256', 'ecdh-sha2-nistp384', 'ecdh-sha2-nistp521', 'diffie-hellman-group16-sha512', 'diffie-hellman-group14-sha256', 'diffie-hellman-group14-sha1', 'diffie-hellman-group1-sha1'] server key:['ecdsa-sha2-nistp256', 'ssh-rsa'] client encrypt:['aes128-ctr', 'aes192-ctr', 'aes256-ctr', 'aes128-cbc', 'aes192-cbc', 'aes256-cbc', 'blowfish-cbc', '3des-cbc'] server encrypt:['aes128-ctr', 'aes192-ctr', 'aes256-ctr', 'aes128-cbc', 'aes192-cbc', 'aes256-cbc', 'blowfish-cbc', '3des-cbc'] client mac:['hmac-sha2-256', 'hmac-sha2-512', 'hmac-sha2-256-etm@openssh.com', 'hmac-sha2-512-etm@openssh.com', 'hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96'] server mac:['hmac-sha2-256', 'hmac-sha2-512', 'hmac-sha2-256-etm@openssh.com', 'hmac-sha2-512-etm@openssh.com', 'hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96'] client compress:['none'] server compress:['none'] client lang:[''] server lang:[''] kex follows?False
+transport.py              1819 DEBUG    kex algos:['curve25519-sha256@libssh.org', 'ecdh-sha2-nistp256', 'ecdh-sha2-nistp384', 'ecdh-sha2-nistp521', 'diffie-hellman-group16-sha512', 'diffie-hellman-group-exchange-sha256', 'diffie-hellman-group14-sha256', 'diffie-hellman-group-exchange-sha1', 'diffie-hellman-group14-sha1', 'diffie-hellman-group1-sha1'] server key:['ssh-rsa', 'ssh-ed25519', 'ecdsa-sha2-nistp256', 'ecdsa-sha2-nistp384', 'ecdsa-sha2-nistp521', 'ssh-dss'] client encrypt:['aes128-ctr', 'aes192-ctr', 'aes256-ctr', 'aes128-cbc', 'aes192-cbc', 'aes256-cbc', 'blowfish-cbc', '3des-cbc'] server encrypt:['aes128-ctr', 'aes192-ctr', 'aes256-ctr', 'aes128-cbc', 'aes192-cbc', 'aes256-cbc', 'blowfish-cbc', '3des-cbc'] client mac:['hmac-sha2-256', 'hmac-sha2-512', 'hmac-sha2-256-etm@openssh.com', 'hmac-sha2-512-etm@openssh.com', 'hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96'] server mac:['hmac-sha2-256', 'hmac-sha2-512', 'hmac-sha2-256-etm@openssh.com', 'hmac-sha2-512-etm@openssh.com', 'hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96'] client compress:['none'] server compress:['none'] client lang:[''] server lang:[''] kex follows?False
+transport.py              1819 DEBUG    Kex agreed: curve25519-sha256@libssh.org
+transport.py              1819 DEBUG    Kex agreed: curve25519-sha256@libssh.org
+transport.py              1819 DEBUG    HostKey agreed: ssh-rsa
+transport.py              1819 DEBUG    HostKey agreed: ssh-rsa
+transport.py              1819 DEBUG    Cipher agreed: aes128-ctr
+transport.py              1819 DEBUG    Cipher agreed: aes128-ctr
+transport.py              1819 DEBUG    MAC agreed: hmac-sha2-256
+transport.py              1819 DEBUG    MAC agreed: hmac-sha2-256
+transport.py              1819 DEBUG    Compression agreed: none
+transport.py              1819 DEBUG    Compression agreed: none
+transport.py              1819 DEBUG    kex engine KexCurve25519 specified hash_algo <built-in function openssl_sha256>
+transport.py              1819 DEBUG    kex engine KexCurve25519 specified hash_algo <built-in function openssl_sha256>
+transport.py              1819 DEBUG    Switch to new keys ...
+transport.py              1819 DEBUG    Switch to new keys ...
+transport.py              1819 DEBUG    Trying SSH agent key b'3f7cd50f9adaac95294ce7aca5f6a8f8'
+transport.py              1819 DEBUG    userauth is OK
+transport.py              1819 ERROR    Exception: key cannot be used for signing
+transport.py              1817 ERROR    Traceback (most recent call last):
+transport.py              1817 ERROR      File "/home/chris/Schreibtisch/git/paramiko/paramiko/transport.py", line 2109, in run
+transport.py              1817 ERROR        handler(self.auth_handler, m)
+transport.py              1817 ERROR      File "/home/chris/Schreibtisch/git/paramiko/paramiko/auth_handler.py", line 298, in _parse_service_accept
+transport.py              1817 ERROR        sig = self.private_key.sign_ssh_data(blob)
+transport.py              1817 ERROR      File "/home/chris/Schreibtisch/git/paramiko/paramiko/agent.py", line 418, in sign_ssh_data
+transport.py              1817 ERROR        raise SSHException("key cannot be used for signing")
+transport.py              1817 ERROR    paramiko.ssh_exception.SSHException: key cannot be used for signing
+transport.py              1817 ERROR    
+transport.py              1819 DEBUG    EOF in transport thread
+_____ PasswordPassphraseTests.test_password_kwarg_works_for_password_auth ______
+
+self = <tests.test_client.PasswordPassphraseTests testMethod=test_password_kwarg_works_for_password_auth>
+
+    def test_password_kwarg_works_for_password_auth(self):
+        # Straightforward / duplicate of earlier basic password test.
+>       self._test_connection(password="pygmalion")
+
+tests/test_client.py:683: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_client.py:202: in _test_connection
+    self.tc.connect(**dict(self.connect_kwargs, **kwargs))
+paramiko/client.py:435: in connect
+    self._auth(
+paramiko/client.py:764: in _auth
+    raise saved_exception
+paramiko/client.py:751: in _auth
+    self._transport.auth_password(username, password)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <paramiko.Transport at 0x98360970 (unconnected)>, username = 'slowdive'
+password = 'pygmalion', event = None, fallback = True
+
+    def auth_password(self, username, password, event=None, fallback=True):
+        """
+        Authenticate to the server using a password.  The username and password
+        are sent over an encrypted link.
+    
+        If an ``event`` is passed in, this method will return immediately, and
+        the event will be triggered once authentication succeeds or fails.  On
+        success, `is_authenticated` will return ``True``.  On failure, you may
+        use `get_exception` to get more detailed error information.
+    
+        Since 1.1, if no event is passed, this method will block until the
+        authentication succeeds or fails.  On failure, an exception is raised.
+        Otherwise, the method simply returns.
+    
+        Since 1.5, if no event is passed and ``fallback`` is ``True`` (the
+        default), if the server doesn't support plain password authentication
+        but does support so-called "keyboard-interactive" mode, an attempt
+        will be made to authenticate using this interactive mode.  If it fails,
+        the normal exception will be thrown as if the attempt had never been
+        made.  This is useful for some recent Gentoo and Debian distributions,
+        which turn off plain password authentication in a misguided belief
+        that interactive authentication is "more secure".  (It's not.)
+    
+        If the server requires multi-step authentication (which is very rare),
+        this method will return a list of auth types permissible for the next
+        step.  Otherwise, in the normal case, an empty list is returned.
+    
+        :param str username: the username to authenticate as
+        :param basestring password: the password to authenticate with
+        :param .threading.Event event:
+            an event to trigger when the authentication attempt is complete
+            (whether it was successful or not)
+        :param bool fallback:
+            ``True`` if an attempt at an automated "interactive" password auth
+            should be made if the server doesn't support normal password auth
+        :return:
+            list of auth types permissible for the next stage of
+            authentication (normally empty)
+    
+        :raises:
+            `.BadAuthenticationType` -- if password authentication isn't
+            allowed by the server for this user (and no event was passed in)
+        :raises:
+            `.AuthenticationException` -- if the authentication failed (and no
+            event was passed in)
+        :raises: `.SSHException` -- if there was a network error
+        """
+        if (not self.active) or (not self.initial_kex_done):
+            # we should never try to send the password unless we're on a secure
+            # link
+>           raise SSHException("No existing session")
+E           paramiko.ssh_exception.SSHException: No existing session
+
+paramiko/transport.py:1498: SSHException
+----------------------------- Captured stderr call -----------------------------
+[4520.58219909668]	DEBUG:paramiko.transport:starting thread (client mode): 0x98360970
+[4521.108627319336]	DEBUG:paramiko.transport:Local version/idstring: SSH-2.0-paramiko_2.7.1
+[4521.702766418457]	DEBUG:paramiko.transport:starting thread (server mode): 0x98350cd0
+[4521.904945373535]	DEBUG:paramiko.transport:Local version/idstring: SSH-2.0-paramiko_2.7.1
+[4521.953582763672]	DEBUG:paramiko.transport:Remote version/idstring: SSH-2.0-paramiko_2.7.1
+[4522.085905075073]	INFO:paramiko.transport:Connected (version 2.0, client paramiko_2.7.1)
+[4522.220849990845]	DEBUG:paramiko.transport:Remote version/idstring: SSH-2.0-paramiko_2.7.1
+[4522.311210632324]	INFO:paramiko.transport:Connected (version 2.0, client paramiko_2.7.1)
+[4522.911787033081]	DEBUG:paramiko.transport:kex algos:['curve25519-sha256@libssh.org', 'ecdh-sha2-nistp256', 'ecdh-sha2-nistp384', 'ecdh-sha2-nistp521', 'diffie-hellman-group16-sha512', 'diffie-hellman-group-exchange-sha256', 'diffie-hellman-group14-sha256', 'diffie-hellman-group-exchange-sha1', 'diffie-hellman-group14-sha1', 'diffie-hellman-group1-sha1'] server key:['ssh-rsa', 'ssh-ed25519', 'ecdsa-sha2-nistp256', 'ecdsa-sha2-nistp384', 'ecdsa-sha2-nistp521', 'ssh-dss'] client encrypt:['aes128-ctr', 'aes192-ctr', 'aes256-ctr', 'aes128-cbc', 'aes192-cbc', 'aes256-cbc', 'blowfish-cbc', '3des-cbc'] server encrypt:['aes128-ctr', 'aes192-ctr', 'aes256-ctr', 'aes128-cbc', 'aes192-cbc', 'aes256-cbc', 'blowfish-cbc', '3des-cbc'] client mac:['hmac-sha2-256', 'hmac-sha2-512', 'hmac-sha2-256-etm@openssh.com', 'hmac-sha2-512-etm@openssh.com', 'hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96'] server mac:['hmac-sha2-256', 'hmac-sha2-512', 'hmac-sha2-256-etm@openssh.com', 'hmac-sha2-512-etm@openssh.com', 'hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96'] client compress:['none'] server compress:['none'] client lang:[''] server lang:[''] kex follows?False
+[4522.975921630859]	DEBUG:paramiko.transport:Kex agreed: curve25519-sha256@libssh.org
+[4523.029088973999]	DEBUG:paramiko.transport:HostKey agreed: ssh-rsa
+[4523.080110549927]	DEBUG:paramiko.transport:Cipher agreed: aes128-ctr
+[4523.124933242798]	DEBUG:paramiko.transport:MAC agreed: hmac-sha2-256
+[4523.165941238403]	DEBUG:paramiko.transport:Compression agreed: none
+[4522.692680358887]	DEBUG:paramiko.transport:kex algos:['curve25519-sha256@libssh.org', 'ecdh-sha2-nistp256', 'ecdh-sha2-nistp384', 'ecdh-sha2-nistp521', 'diffie-hellman-group16-sha512', 'diffie-hellman-group14-sha256', 'diffie-hellman-group14-sha1', 'diffie-hellman-group1-sha1'] server key:['ecdsa-sha2-nistp256', 'ssh-rsa'] client encrypt:['aes128-ctr', 'aes192-ctr', 'aes256-ctr', 'aes128-cbc', 'aes192-cbc', 'aes256-cbc', 'blowfish-cbc', '3des-cbc'] server encrypt:['aes128-ctr', 'aes192-ctr', 'aes256-ctr', 'aes128-cbc', 'aes192-cbc', 'aes256-cbc', 'blowfish-cbc', '3des-cbc'] client mac:['hmac-sha2-256', 'hmac-sha2-512', 'hmac-sha2-256-etm@openssh.com', 'hmac-sha2-512-etm@openssh.com', 'hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96'] server mac:['hmac-sha2-256', 'hmac-sha2-512', 'hmac-sha2-256-etm@openssh.com', 'hmac-sha2-512-etm@openssh.com', 'hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96'] client compress:['none'] server compress:['none'] client lang:[''] server lang:[''] kex follows?False
+[4523.354291915894]	DEBUG:paramiko.transport:Kex agreed: curve25519-sha256@libssh.org
+[4523.405313491821]	DEBUG:paramiko.transport:HostKey agreed: ssh-rsa
+[4523.489236831665]	DEBUG:paramiko.transport:Cipher agreed: aes128-ctr
+[4523.567199707031]	DEBUG:paramiko.transport:MAC agreed: hmac-sha2-256
+[4523.611783981323]	DEBUG:paramiko.transport:Compression agreed: none
+[4524.62100982666]	DEBUG:paramiko.transport:kex engine KexCurve25519 specified hash_algo <built-in function openssl_sha256>
+[4525.038480758667]	DEBUG:paramiko.transport:kex engine KexCurve25519 specified hash_algo <built-in function openssl_sha256>
+[4525.1710414886475]	DEBUG:paramiko.transport:Switch to new keys ...
+[4525.424242019653]	DEBUG:paramiko.transport:Switch to new keys ...
+[4525.949239730835]	DEBUG:paramiko.transport:Trying SSH agent key b'3f7cd50f9adaac95294ce7aca5f6a8f8'
+[4526.2908935546875]	DEBUG:paramiko.transport:userauth is OK
+[4528.995037078857]	ERROR:paramiko.transport:Exception: key cannot be used for signing
+[4529.135942459106]	ERROR:paramiko.transport:Traceback (most recent call last):
+[4529.177665710449]	ERROR:paramiko.transport:  File "/home/chris/Schreibtisch/git/paramiko/paramiko/transport.py", line 2109, in run
+[4529.210090637207]	ERROR:paramiko.transport:    handler(self.auth_handler, m)
+[4529.23846244812]	ERROR:paramiko.transport:  File "/home/chris/Schreibtisch/git/paramiko/paramiko/auth_handler.py", line 298, in _parse_service_accept
+[4529.2651653289795]	ERROR:paramiko.transport:    sig = self.private_key.sign_ssh_data(blob)
+[4529.2956829071045]	ERROR:paramiko.transport:  File "/home/chris/Schreibtisch/git/paramiko/paramiko/agent.py", line 418, in sign_ssh_data
+[4529.336452484131]	ERROR:paramiko.transport:    raise SSHException("key cannot be used for signing")
+[4529.371500015259]	ERROR:paramiko.transport:paramiko.ssh_exception.SSHException: key cannot be used for signing
+[4529.39772605896]	ERROR:paramiko.transport:
+[4529.515504837036]	DEBUG:paramiko.transport:EOF in transport thread
+------------------------------ Captured log call -------------------------------
+transport.py              1819 DEBUG    starting thread (client mode): 0x98360970
+transport.py              1819 DEBUG    Local version/idstring: SSH-2.0-paramiko_2.7.1
+transport.py              1819 DEBUG    starting thread (server mode): 0x98350cd0
+transport.py              1819 DEBUG    Local version/idstring: SSH-2.0-paramiko_2.7.1
+transport.py              1819 DEBUG    Remote version/idstring: SSH-2.0-paramiko_2.7.1
+transport.py              1819 INFO     Connected (version 2.0, client paramiko_2.7.1)
+transport.py              1819 DEBUG    Remote version/idstring: SSH-2.0-paramiko_2.7.1
+transport.py              1819 INFO     Connected (version 2.0, client paramiko_2.7.1)
+transport.py              1819 DEBUG    kex algos:['curve25519-sha256@libssh.org', 'ecdh-sha2-nistp256', 'ecdh-sha2-nistp384', 'ecdh-sha2-nistp521', 'diffie-hellman-group16-sha512', 'diffie-hellman-group-exchange-sha256', 'diffie-hellman-group14-sha256', 'diffie-hellman-group-exchange-sha1', 'diffie-hellman-group14-sha1', 'diffie-hellman-group1-sha1'] server key:['ssh-rsa', 'ssh-ed25519', 'ecdsa-sha2-nistp256', 'ecdsa-sha2-nistp384', 'ecdsa-sha2-nistp521', 'ssh-dss'] client encrypt:['aes128-ctr', 'aes192-ctr', 'aes256-ctr', 'aes128-cbc', 'aes192-cbc', 'aes256-cbc', 'blowfish-cbc', '3des-cbc'] server encrypt:['aes128-ctr', 'aes192-ctr', 'aes256-ctr', 'aes128-cbc', 'aes192-cbc', 'aes256-cbc', 'blowfish-cbc', '3des-cbc'] client mac:['hmac-sha2-256', 'hmac-sha2-512', 'hmac-sha2-256-etm@openssh.com', 'hmac-sha2-512-etm@openssh.com', 'hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96'] server mac:['hmac-sha2-256', 'hmac-sha2-512', 'hmac-sha2-256-etm@openssh.com', 'hmac-sha2-512-etm@openssh.com', 'hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96'] client compress:['none'] server compress:['none'] client lang:[''] server lang:[''] kex follows?False
+transport.py              1819 DEBUG    Kex agreed: curve25519-sha256@libssh.org
+transport.py              1819 DEBUG    HostKey agreed: ssh-rsa
+transport.py              1819 DEBUG    Cipher agreed: aes128-ctr
+transport.py              1819 DEBUG    MAC agreed: hmac-sha2-256
+transport.py              1819 DEBUG    Compression agreed: none
+transport.py              1819 DEBUG    kex algos:['curve25519-sha256@libssh.org', 'ecdh-sha2-nistp256', 'ecdh-sha2-nistp384', 'ecdh-sha2-nistp521', 'diffie-hellman-group16-sha512', 'diffie-hellman-group14-sha256', 'diffie-hellman-group14-sha1', 'diffie-hellman-group1-sha1'] server key:['ecdsa-sha2-nistp256', 'ssh-rsa'] client encrypt:['aes128-ctr', 'aes192-ctr', 'aes256-ctr', 'aes128-cbc', 'aes192-cbc', 'aes256-cbc', 'blowfish-cbc', '3des-cbc'] server encrypt:['aes128-ctr', 'aes192-ctr', 'aes256-ctr', 'aes128-cbc', 'aes192-cbc', 'aes256-cbc', 'blowfish-cbc', '3des-cbc'] client mac:['hmac-sha2-256', 'hmac-sha2-512', 'hmac-sha2-256-etm@openssh.com', 'hmac-sha2-512-etm@openssh.com', 'hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96'] server mac:['hmac-sha2-256', 'hmac-sha2-512', 'hmac-sha2-256-etm@openssh.com', 'hmac-sha2-512-etm@openssh.com', 'hmac-sha1', 'hmac-md5', 'hmac-sha1-96', 'hmac-md5-96'] client compress:['none'] server compress:['none'] client lang:[''] server lang:[''] kex follows?False
+transport.py              1819 DEBUG    Kex agreed: curve25519-sha256@libssh.org
+transport.py              1819 DEBUG    HostKey agreed: ssh-rsa
+transport.py              1819 DEBUG    Cipher agreed: aes128-ctr
+transport.py              1819 DEBUG    MAC agreed: hmac-sha2-256
+transport.py              1819 DEBUG    Compression agreed: none
+transport.py              1819 DEBUG    kex engine KexCurve25519 specified hash_algo <built-in function openssl_sha256>
+transport.py              1819 DEBUG    kex engine KexCurve25519 specified hash_algo <built-in function openssl_sha256>
+transport.py              1819 DEBUG    Switch to new keys ...
+transport.py              1819 DEBUG    Switch to new keys ...
+transport.py              1819 DEBUG    Trying SSH agent key b'3f7cd50f9adaac95294ce7aca5f6a8f8'
+transport.py              1819 DEBUG    userauth is OK
+transport.py              1819 ERROR    Exception: key cannot be used for signing
+transport.py              1817 ERROR    Traceback (most recent call last):
+transport.py              1817 ERROR      File "/home/chris/Schreibtisch/git/paramiko/paramiko/transport.py", line 2109, in run
+transport.py              1817 ERROR        handler(self.auth_handler, m)
+transport.py              1817 ERROR      File "/home/chris/Schreibtisch/git/paramiko/paramiko/auth_handler.py", line 298, in _parse_service_accept
+transport.py              1817 ERROR        sig = self.private_key.sign_ssh_data(blob)
+transport.py              1817 ERROR      File "/home/chris/Schreibtisch/git/paramiko/paramiko/agent.py", line 418, in sign_ssh_data
+transport.py              1817 ERROR        raise SSHException("key cannot be used for signing")
+transport.py              1817 ERROR    paramiko.ssh_exception.SSHException: key cannot be used for signing
+transport.py              1817 ERROR    
+transport.py              1819 DEBUG    EOF in transport thread
+============== 11 failed, 340 passed, 22 skipped in 63.77 seconds ==============

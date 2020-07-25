@@ -779,9 +779,9 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         .. versionchanged:: 1.7.7
             ``confirm`` param added.
         """
-        file_size = os.stat(localpath, encoding, errors).st_size
+        file_size = os.stat(localpath).st_size
         with open(localpath, "rb") as fl:
-            return self.putfo(fl, remotepath.decode("utf-8", errors).encode(encoding, errors),
+            return self.putfo(fl, remotepath.encode(encoding, errors),
                               file_size, callback, confirm, encoding=encoding, errors=errors)
 
     def getfo(self, remotepath, fl, callback=None, encoding="utf8", errors="strict"):
@@ -826,7 +826,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         """
         with open(localpath, "wb") as fl:
             size = self.getfo(remotepath, fl, callback, encoding, errors)
-        s = os.stat(localpath, encoding, errors)
+        s = os.stat(localpath)
         if s.st_size != size:
             raise IOError(
                 "size mismatch in get!  {} != {}".format(s.st_size, size)
