@@ -294,7 +294,7 @@ class BufferedFile(ClosingContextManager):
             if (new_data is None) or (len(new_data) == 0):
                 self._rbuffer = bytes()
                 self._pos += len(line)
-                return line if self._flags & self.FLAG_BINARY elseu(line,
+                return line if self._flags & self.FLAG_BINARY else u(line,
                                                                     encoding,
                                                                     errors)
             line += new_data

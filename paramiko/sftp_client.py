@@ -238,16 +238,14 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         self._log(DEBUG, "listdir({!r})".format(path))
         t, msg = self._request(CMD_OPENDIR,
                                path.decode("utf8", errors)
-                               .encode(encoding, errors),
-                               encoding=encoding, errors=errors)
+                               .encode(encoding, errors))
         if t != CMD_HANDLE:
             raise SFTPError("Expected handle")
         handle = msg.get_binary()
         filelist = []
         while True:
             try:
-                t, msg = self._request(CMD_READDIR, handle,
-                                       encoding=encoding, errors=errors)
+                t, msg = self._request(CMD_READDIR, handle)
             except EOFError:
                 # done with handle
                 break
@@ -282,8 +280,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         self._log(DEBUG, "listdir({!r})".format(path))
         t, msg = self._request(CMD_OPENDIR,
                                path.decode("utf-8", errors)
-                               .encode(encoding, errors),
-                               encoding=encoding, errors=errors)
+                               .encode(encoding, errors))
 
         if t != CMD_HANDLE:
             raise SFTPError("Expected handle")
@@ -381,8 +378,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         t, msg = self._request(CMD_OPEN,
                                filename.decode("utf-8", errors)
                                .encode(encoding, errors),
-                               imode, attrblock,
-                               encoding=encoding, errors=errors)
+                               imode, attrblock)
         if t != CMD_HANDLE:
             raise SFTPError("Expected handle")
         handle = msg.get_binary()
@@ -409,8 +405,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         path = self._adjust_cwd(path)
         self._log(DEBUG, "remove({!r})".format(path))
         self._request(CMD_REMOVE,
-                      path.decode("utf-8", errors).encode(encoding, errors),
-                      encoding=encoding, errors=errors)
+                      path.decode("utf-8", errors).encode(encoding, errors))
 
     unlink = remove
 
@@ -437,8 +432,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         self._log(DEBUG, "rename({!r}, {!r})".format(oldpath, newpath))
         self._request(CMD_RENAME,
                       oldpath.decode("utf-8", errors).encode(encoding, errors),
-                      newpath.decode("utf-8", errors).encode(encoding, errors),
-                      encoding=encoding, errors=errors)
+                      newpath.decode("utf-8", errors).encode(encoding, errors))
 
     def posix_rename(self, oldpath, newpath, encoding="utf8", errors="strict"):
         """
@@ -461,8 +455,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         self._request(
             CMD_EXTENDED, "posix-rename@openssh.com",
             oldpath.decode("utf-8", errors).encode(encoding, errors),
-            newpath.decode("utf-8", errors).encode(encoding, errors),
-            encoding = encoding, errors = errors
+            newpath.decode("utf-8", errors).encode(encoding, errors)
         )
 
     def mkdir(self, path, mode=o777, encoding="utf8", errors="strict"):
@@ -480,7 +473,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         attr.st_mode = mode
         self._request(CMD_MKDIR,
                       path.decode("utf-8", errors).encode(encoding, errors),
-                      attr, encoding=encoding, errors=errors)
+                      attr)
 
     def rmdir(self, path, encoding="utf8", errors="strict"):
         """
@@ -491,8 +484,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         path = self._adjust_cwd(path)
         self._log(DEBUG, "rmdir({!r})".format(path))
         self._request(CMD_RMDIR,
-                      path.decode("utf-8", errors).encode(encoding, errors),
-                      encoding=encoding, errors=errors)
+                      path.decode("utf-8", errors).encode(encoding, errors))
 
     def stat(self, path, encoding="utf8", errors="strict"):
         """
@@ -517,8 +509,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         self._log(DEBUG, "stat({!r})".format(path))
         t, msg = self._request(CMD_STAT,
                                path.decode("utf-8", errors)
-                               .encode(encoding, errors),
-                               encoding=encoding, errors=errors)
+                               .encode(encoding, errors))
         if t != CMD_ATTRS:
             raise SFTPError("Expected attributes")
         return SFTPAttributes._from_msg(msg)
@@ -538,8 +529,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         self._log(DEBUG, "lstat({!r})".format(path))
         t, msg = self._request(CMD_LSTAT,
                                path.decode("utf8", errors)
-                               .encode(encoding, errors),
-                               encoding=encoding, errors=errors)
+                               .encode(encoding, errors))
         if t != CMD_ATTRS:
             raise SFTPError("Expected attributes")
         return SFTPAttributes._from_msg(msg)
@@ -556,8 +546,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         source = b(source)
         self._request(CMD_SYMLINK,
                       source.decode("utf-8", errors).encode(encoding, errors),
-                      dest.decode("utf-8", errors).encode(encoding, errors),
-                      encoding=encoding, errors=errors)
+                      dest.decode("utf-8", errors).encode(encoding, errors))
 
     def chmod(self, path, mode, encoding="utf8", errors="strict"):
         """
@@ -574,7 +563,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         attr.st_mode = mode
         self._request(CMD_SETSTAT,
                       path.decode("utf-8", errors).encode(encoding, errors),
-                      attr, encoding=encoding, errors=errors)
+                      attr)
 
     def chown(self, path, uid, gid, encoding="utf8", errors="strict"):
         """
@@ -592,8 +581,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         attr = SFTPAttributes()
         attr.st_uid, attr.st_gid = uid, gid
         self._request(CMD_SETSTAT,
-                      path.decode("utf-8", errors).encode(encoding, errors),
-                      attr, encoding=encoding, errors=errors)
+                      path.decode("utf-8", errors).encode(encoding, errors))
 
     def utime(self, path, times, encoding="utf8", errors="strict"):
         """
@@ -616,8 +604,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         attr = SFTPAttributes()
         attr.st_atime, attr.st_mtime = times
         self._request(CMD_SETSTAT,
-                      path.decode("utf-8", errors).encode(encoding, errors),
-                      attr, encoding=encoding, errors=errors)
+                      path.decode("utf-8", errors).encode(encoding, errors))
 
     def truncate(self, path, size, encoding="utf8", errors="strict"):
         """
@@ -633,8 +620,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         attr = SFTPAttributes()
         attr.st_size = size
         self._request(CMD_SETSTAT,
-                      path.decode("utf-8", errors).encode(encoding, errors),
-                      attr, encoding=encoding, errors=errors)
+                      path.decode("utf-8", errors).encode(encoding, errors))
 
     def readlink(self, path, encoding="utf8", errors="strict"):
         """
@@ -649,8 +635,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         self._log(DEBUG, "readlink({!r})".format(path))
         t, msg = self._request(CMD_READLINK,
                                path.decode("utf-8", errors)
-                               .encode(encoding, errors),
-                               encoding=encoding, errors=errors)
+                               .encode(encoding, errors))
         if t != CMD_NAME:
             raise SFTPError("Expected name response")
         count = msg.get_int()
@@ -676,8 +661,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         self._log(DEBUG, "normalize({!r})".format(path))
         t, msg = self._request(CMD_REALPATH,
                                path.decode("utf-8", errors)
-                               .encode(encoding, errors),
-                               encoding=encoding, errors=errors)
+                               .encode(encoding, errors))
         if t != CMD_NAME:
             raise SFTPError("Expected name response")
         count = msg.get_int()
@@ -863,9 +847,9 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
 
     # ...internals...
 
-    def _request(self, t, *arg, encoding="utf8", errors="strict"):
+    def _request(self, t, *arg):
         num = self._async_request(type(None), t, *arg)
-        return self._read_response(num, encoding, errors)
+        return self._read_response(num)
 
     def _async_request(self, fileobj, t, *arg):
         # this method may be called from other threads (prefetch)
@@ -892,7 +876,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         self._send_packet(t, msg)
         return num
 
-    def _read_response(self, waitfor=None, encoding="utf8", errors="strict"):
+    def _read_response(self, waitfor=None):
         while True:
             try:
                 t, data = self._read_packet()
@@ -917,7 +901,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
             if num == waitfor:
                 # synchronous
                 if t == CMD_STATUS:
-                    self._convert_status(msg, encoding, errors)
+                    self._convert_status(msg)
                 return t, msg
 
             # can not rewrite this to deal with E721, either as a None check
@@ -934,12 +918,12 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
             self._read_response()
             fileobj._check_exception()
 
-    def _convert_status(self, msg, encoding="utf8", errors="strict"):
+    def _convert_status(self, msg):
         """
         Raises EOFError or IOError on error status; otherwise does nothing.
         """
         code = msg.get_int()
-        text = msg.get_text(encoding, errors)
+        text = msg.get_text()
         if code == SFTP_OK:
             return
         elif code == SFTP_EOF:
