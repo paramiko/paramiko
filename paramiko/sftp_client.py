@@ -236,7 +236,9 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         """
         path = self._adjust_cwd(path)
         self._log(DEBUG, "listdir({!r})".format(path))
-        t, msg = self._request(CMD_OPENDIR, path.decode("utf8", errors).encode(encoding, errors),
+        t, msg = self._request(CMD_OPENDIR,
+                               path.decode("utf8", errors)
+                               .encode(encoding, errors),
                                encoding=encoding, errors=errors)
         if t != CMD_HANDLE:
             raise SFTPError("Expected handle")
@@ -244,7 +246,8 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         filelist = []
         while True:
             try:
-                t, msg = self._request(CMD_READDIR, handle, encoding=encoding, errors=errors)
+                t, msg = self._request(CMD_READDIR, handle,
+                                       encoding=encoding, errors=errors)
             except EOFError:
                 # done with handle
                 break
@@ -260,7 +263,8 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         self._request(CMD_CLOSE, handle)
         return filelist
 
-    def listdir_iter(self, path=".", read_aheads=50, encoding="utf8", errors="strict"):
+    def listdir_iter(self, path=".", read_aheads=50,
+                     encoding="utf8", errors="strict"):
         """
         Generator version of `.listdir_attr`.
 
@@ -276,7 +280,9 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         """
         path = self._adjust_cwd(path)
         self._log(DEBUG, "listdir({!r})".format(path))
-        t, msg = self._request(CMD_OPENDIR, path.decode("utf-8", errors).encode(encoding, errors),
+        t, msg = self._request(CMD_OPENDIR,
+                               path.decode("utf-8", errors)
+                               .encode(encoding, errors),
                                encoding=encoding, errors=errors)
 
         if t != CMD_HANDLE:
@@ -325,7 +331,8 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
                 self._request(CMD_CLOSE, handle)
                 return
 
-    def open(self, filename, mode="r", bufsize=-1, encoding="utf8", errors="strict"):
+    def open(self, filename, mode="r", bufsize=-1,
+             encoding="utf8", errors="strict"):
         """
         Open a file on the remote server.  The arguments are the same as for
         Python's built-in `python:file` (aka `python:open`).  A file-like
@@ -372,8 +379,10 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
             imode |= SFTP_FLAG_CREATE | SFTP_FLAG_EXCL
         attrblock = SFTPAttributes()
         t, msg = self._request(CMD_OPEN,
-                               filename.decode("utf-8", errors).encode(encoding, errors),
-                               imode, attrblock, encoding=encoding, errors=errors)
+                               filename.decode("utf-8", errors)
+                               .encode(encoding, errors),
+                               imode, attrblock,
+                               encoding=encoding, errors=errors)
         if t != CMD_HANDLE:
             raise SFTPError("Expected handle")
         handle = msg.get_binary()
@@ -399,7 +408,8 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         """
         path = self._adjust_cwd(path)
         self._log(DEBUG, "remove({!r})".format(path))
-        self._request(CMD_REMOVE, path.decode("utf-8", errors).encode(encoding, errors),
+        self._request(CMD_REMOVE,
+                      path.decode("utf-8", errors).encode(encoding, errors),
                       encoding=encoding, errors=errors)
 
     unlink = remove
@@ -425,7 +435,8 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         oldpath = self._adjust_cwd(oldpath)
         newpath = self._adjust_cwd(newpath)
         self._log(DEBUG, "rename({!r}, {!r})".format(oldpath, newpath))
-        self._request(CMD_RENAME, oldpath.decode("utf-8", errors).encode(encoding, errors),
+        self._request(CMD_RENAME,
+                      oldpath.decode("utf-8", errors).encode(encoding, errors),
                       newpath.decode("utf-8", errors).encode(encoding, errors),
                       encoding=encoding, errors=errors)
 
@@ -467,7 +478,8 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         self._log(DEBUG, "mkdir({!r}, {!r})".format(path, mode))
         attr = SFTPAttributes()
         attr.st_mode = mode
-        self._request(CMD_MKDIR, path.decode("utf-8", errors).encode(encoding, errors),
+        self._request(CMD_MKDIR,
+                      path.decode("utf-8", errors).encode(encoding, errors),
                       attr, encoding=encoding, errors=errors)
 
     def rmdir(self, path, encoding="utf8", errors="strict"):
@@ -478,7 +490,8 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         """
         path = self._adjust_cwd(path)
         self._log(DEBUG, "rmdir({!r})".format(path))
-        self._request(CMD_RMDIR, path.decode("utf-8", errors).encode(encoding, errors),
+        self._request(CMD_RMDIR,
+                      path.decode("utf-8", errors).encode(encoding, errors),
                       encoding=encoding, errors=errors)
 
     def stat(self, path, encoding="utf8", errors="strict"):
@@ -502,7 +515,9 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         """
         path = self._adjust_cwd(path)
         self._log(DEBUG, "stat({!r})".format(path))
-        t, msg = self._request(CMD_STAT, path.decode("utf-8", errors).encode(encoding, errors),
+        t, msg = self._request(CMD_STAT,
+                               path.decode("utf-8", errors)
+                               .encode(encoding, errors),
                                encoding=encoding, errors=errors)
         if t != CMD_ATTRS:
             raise SFTPError("Expected attributes")
@@ -521,7 +536,9 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         """
         path = self._adjust_cwd(path)
         self._log(DEBUG, "lstat({!r})".format(path))
-        t, msg = self._request(CMD_LSTAT, path.decode("utf8", errors).encode(encoding, errors),
+        t, msg = self._request(CMD_LSTAT,
+                               path.decode("utf8", errors)
+                               .encode(encoding, errors),
                                encoding=encoding, errors=errors)
         if t != CMD_ATTRS:
             raise SFTPError("Expected attributes")
@@ -555,7 +572,8 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         self._log(DEBUG, "chmod({!r}, {!r})".format(path, mode))
         attr = SFTPAttributes()
         attr.st_mode = mode
-        self._request(CMD_SETSTAT, path.decode("utf-8", errors).encode(encoding, errors),
+        self._request(CMD_SETSTAT,
+                      path.decode("utf-8", errors).encode(encoding, errors),
                       attr, encoding=encoding, errors=errors)
 
     def chown(self, path, uid, gid, encoding="utf8", errors="strict"):
@@ -573,7 +591,8 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         self._log(DEBUG, "chown({!r}, {!r}, {!r})".format(path, uid, gid))
         attr = SFTPAttributes()
         attr.st_uid, attr.st_gid = uid, gid
-        self._request(CMD_SETSTAT, path.decode("utf-8", errors).encode(encoding, errors),
+        self._request(CMD_SETSTAT,
+                      path.decode("utf-8", errors).encode(encoding, errors),
                       attr, encoding=encoding, errors=errors)
 
     def utime(self, path, times, encoding="utf8", errors="strict"):
@@ -596,7 +615,8 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         self._log(DEBUG, "utime({!r}, {!r})".format(path, times))
         attr = SFTPAttributes()
         attr.st_atime, attr.st_mtime = times
-        self._request(CMD_SETSTAT, path.decode("utf-8", errors).encode(encoding, errors),
+        self._request(CMD_SETSTAT,
+                      path.decode("utf-8", errors).encode(encoding, errors),
                       attr, encoding=encoding, errors=errors)
 
     def truncate(self, path, size, encoding="utf8", errors="strict"):
@@ -612,7 +632,8 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         self._log(DEBUG, "truncate({!r}, {!r})".format(path, size))
         attr = SFTPAttributes()
         attr.st_size = size
-        self._request(CMD_SETSTAT, path.decode("utf-8", errors).encode(encoding, errors),
+        self._request(CMD_SETSTAT,
+                      path.decode("utf-8", errors).encode(encoding, errors),
                       attr, encoding=encoding, errors=errors)
 
     def readlink(self, path, encoding="utf8", errors="strict"):
@@ -627,7 +648,8 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         path = self._adjust_cwd(path)
         self._log(DEBUG, "readlink({!r})".format(path))
         t, msg = self._request(CMD_READLINK,
-                               path.decode("utf-8", errors).encode(encoding, errors),
+                               path.decode("utf-8", errors)
+                               .encode(encoding, errors),
                                encoding=encoding, errors=errors)
         if t != CMD_NAME:
             raise SFTPError("Expected name response")
@@ -653,7 +675,8 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         path = self._adjust_cwd(path)
         self._log(DEBUG, "normalize({!r})".format(path))
         t, msg = self._request(CMD_REALPATH,
-                               path.decode("utf-8", errors).encode(encoding, errors),
+                               path.decode("utf-8", errors)
+                               .encode(encoding, errors),
                                encoding=encoding, errors=errors)
         if t != CMD_NAME:
             raise SFTPError("Expected name response")
@@ -709,7 +732,8 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
                 callback(size, file_size)
         return size
 
-    def putfo(self, fl, remotepath, file_size=0, callback=None, confirm=True, encoding="utf8", errors="strict"):
+    def putfo(self, fl, remotepath, file_size=0, callback=None, confirm=True,
+              encoding="utf8", errors="strict"):
         """
         Copy the contents of an open file object (``fl``) to the SFTP server as
         ``remotepath``. Any exception raised by operations will be passed
@@ -751,7 +775,8 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
             s = SFTPAttributes()
         return s
 
-    def put(self, localpath, remotepath, callback=None, confirm=True, encoding="utf8", errors="strict"):
+    def put(self, localpath, remotepath, callback=None, confirm=True,
+            encoding="utf8", errors="strict"):
         """
         Copy a local file (``localpath``) to the SFTP server as ``remotepath``.
         Any exception raised by operations will be passed through.  This
@@ -782,9 +807,11 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         file_size = os.stat(localpath).st_size
         with open(localpath, "rb") as fl:
             return self.putfo(fl, remotepath,
-                              file_size, callback, confirm, encoding=encoding, errors=errors)
+                              file_size, callback, confirm,
+                              encoding=encoding, errors=errors)
 
-    def getfo(self, remotepath, fl, callback=None, encoding="utf8", errors="strict"):
+    def getfo(self, remotepath, fl, callback=None,
+              encoding="utf8", errors="strict"):
         """
         Copy a remote file (``remotepath``) from the SFTP server and write to
         an open file or file-like object, ``fl``.  Any exception raised by
@@ -802,13 +829,15 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         .. versionadded:: 1.10
         """
         file_size = self.stat(remotepath, encoding, errors).st_size
-        with self.open(remotepath, "rb", encoding=encoding, errors=errors) as fr:
+        with self.open(remotepath,
+                       "rb", encoding=encoding, errors=errors) as fr:
             fr.prefetch(file_size)
             return self._transfer_with_callback(
                 reader=fr, writer=fl, file_size=file_size, callback=callback
             )
 
-    def get(self, remotepath, localpath, callback=None, encoding="utf8", errors="strict"):
+    def get(self, remotepath, localpath, callback=None,
+            encoding="utf8", errors="strict"):
         """
         Copy a remote file (``remotepath``) from the SFTP server to the local
         host as ``localpath``.  Any exception raised by operations will be
