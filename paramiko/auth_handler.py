@@ -418,12 +418,9 @@ Error Message: {}
         username = m.get_text()
         service = m.get_text()
         method = m.get_text()
-        self._log(
-            DEBUG,
-            'Auth request (type={}) service={}, username={}'.format(
-                method, service, username
-            )
-        )
+        self._log(DEBUG, "Auth request (type={!r}) service={!r}, username={!r}".format(
+            method, service, username
+        ))
         if service != 'ssh-connection':
             self._disconnect_service_not_available()
             return
