@@ -23,7 +23,17 @@ jobs:
         crypto_ver:
           - "2.4.2"
           - "2.6.1"
-          - "2.8"
+          - "2.9.2"
+          - "3.0"
+        exclude:
+          - imgtag: "python:2.7-buster"
+            crypto_ver: "3.0"
+          - imgtag: "pypy:2.7-7.3"
+            crypto_ver: "3.0"
+          - imgtag: "python:3.4-stretch"
+            crypto_ver: "3.0"
+          - imgtag: "python:3.4-stretch"
+            crypto_ver: "2.9.2"
 
     container: "${{matrix.imgtag}}"
     steps:

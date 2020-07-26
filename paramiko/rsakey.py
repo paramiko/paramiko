@@ -185,8 +185,8 @@ class RSAKey(PKey):
             e = msg.get_mpint()
             d = msg.get_mpint()
             iqmp = msg.get_mpint()
-            q = msg.get_mpint()
             p = msg.get_mpint()
+            q = msg.get_mpint()
 
             public_numbers = rsa.RSAPublicNumbers(e=e, n=n)
             key = rsa.RSAPrivateNumbers(
