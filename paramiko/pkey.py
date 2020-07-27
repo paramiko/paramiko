@@ -197,7 +197,7 @@ class PKey(object):
     def get_md5_fingerprint(self):
         """
         Return an MD5 fingerprint of the public part of this key.  Nothing
-        Nothing secret is revealed.
+        secret is revealed.
 
         :return:
             a 16-byte `string <str>` (binary) of the MD5 fingerprint, in SSH
