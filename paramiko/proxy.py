@@ -18,9 +18,10 @@
 
 
 import os
-from select import select
-import socket
+import sys
 import time
+import socket
+from select import select
 
 from paramiko.ssh_exception import ProxyCommandFailure
 from paramiko.util import ClosingContextManager
@@ -78,14 +79,19 @@ class ProxyCommand(ClosingContextManager):
 
         :return: the string of bytes read, which may be shorter than requested
         """
+        buffer = b''
         try:
-            buffer = b''
+            if sys.platform == 'win32':
+                # windows does not support select() on pipes (only on sockets)
+                return os.read(self.process.stdout.fileno(), size)
+
             start = time.time()
             while len(buffer) < size:
                 if self.closed:
                     if buffer:
                         return buffer
                     raise EOFError()
+
                 select_timeout = None
                 if self.timeout is not None:
                     elapsed = (time.time() - start)
@@ -93,11 +99,10 @@ class ProxyCommand(ClosingContextManager):
                         raise socket.timeout()
                     select_timeout = self.timeout - elapsed
 
-                r, w, x = select(
-                    [self.process.stdout], [], [], select_timeout)
+                r, w, x = select([self.process.stdout], [], [], select_timeout)
                 if r and r[0] == self.process.stdout:
-                    buffer += os.read(
-                        self.process.stdout.fileno(), size - len(buffer))
+                    buffer += os.read(self.process.stdout.fileno(), size - len(buffer))
+
             return buffer
         except socket.timeout:
             if buffer:
