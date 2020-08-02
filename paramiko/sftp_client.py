@@ -581,7 +581,8 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         attr = SFTPAttributes()
         attr.st_uid, attr.st_gid = uid, gid
         self._request(CMD_SETSTAT,
-                      path.decode("utf-8", errors).encode(encoding, errors))
+                      path.decode("utf-8", errors).encode(encoding, errors),
+                      attr)
 
     def utime(self, path, times, encoding="utf8", errors="strict"):
         """
@@ -621,7 +622,8 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         attr = SFTPAttributes()
         attr.st_size = size
         self._request(CMD_SETSTAT,
-                      path.decode("utf-8", errors).encode(encoding, errors))
+                      path.decode("utf-8", errors).encode(encoding, errors),
+                      attr)
 
     def readlink(self, path, encoding="utf8", errors="strict"):
         """
