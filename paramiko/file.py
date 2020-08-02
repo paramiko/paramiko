@@ -335,7 +335,8 @@ class BufferedFile(ClosingContextManager):
         else:
             self._record_newline(lf)
         self._pos += len(line)
-        return line if self._flags & self.FLAG_BINARY else u(line, encoding, errors)
+        return line if self._flags & self.FLAG_BINARY else u(line,
+                                                             encoding, errors)
 
     def readlines(self, sizehint=None, encoding="utf8", errors="strict"):
         """

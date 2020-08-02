@@ -604,7 +604,8 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         attr = SFTPAttributes()
         attr.st_atime, attr.st_mtime = times
         self._request(CMD_SETSTAT,
-                      path.decode("utf-8", errors).encode(encoding, errors))
+                      path.decode("utf-8", errors).encode(encoding, errors),
+                      attr)
 
     def truncate(self, path, size, encoding="utf8", errors="strict"):
         """
