@@ -188,7 +188,8 @@ class SimpleShell(cmd.Cmd):
         if pipes:
             logging_pipes = self.server_logger.upgrade_pipe(pipes)
             super(SimpleShell, self).__init__(
-                stdin=logging_pipes, stdout=logging_pipes)
+                stdin=logging_pipes, stdout=logging_pipes
+            )
         else:
             super(SimpleShell, self).__init__()
 
@@ -224,14 +225,16 @@ class SimpleShell(cmd.Cmd):
         self.stdout.write(
             "lo: \n"
             + "    inet 127.0.0.1 netmask 255.0.0.0\n"
-            + "    inet6 ::1 prefixlen 128\n")
+            + "    inet6 ::1 prefixlen 128\n"
+        )
 
     def do_ls(self, line):
         if "-l" in line:
             self.stdout.write(
                 "dr-xr-xr-x 1 user user  123 Jan 1  1970  directory\n"
                 + "-rw-rw-r-- 1 user user  123 Jan 1  1970  file.txt\n"
-                + "-rw------- 1 user user  123 Jan 1  1970  secrets.txt\n")
+                + "-rw------- 1 user user  123 Jan 1  1970  secrets.txt\n"
+            )
         else:
             self.stdout.write("directory   file.txt   secrets.txt\n")
 
