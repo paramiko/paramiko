@@ -109,6 +109,7 @@ shutdown_commanded = False
 
 class LoggingPipe():
     """Pipe needed to pull from the channel and log"""
+
     def __init__(self, logger, upstream_pipe):
         self.logger = logger
         self.upstream_pipe = upstream_pipe
@@ -128,6 +129,7 @@ class LoggingPipe():
 
 class ServerLogger():
     """Logs commands and responses to file"""
+
     def __init__(self):
         with logging_setup_mutex:
 
@@ -176,6 +178,7 @@ class SimpleShell(cmd.Cmd):
 
     Logs through the pipe for commands and responses.
     """
+
     def __init__(self, pipes=None):
         self.server_logger = ServerLogger()
         if pipes:
@@ -240,6 +243,7 @@ class SimpleShell(cmd.Cmd):
 
 class SessionConnectionError(Exception):
     """Custom exception for ServerSessions that shouldn't kill the Server"""
+
     pass
 
 
@@ -250,6 +254,7 @@ class Server(object):
     them. For each connection from a client, the new socket is sent
     off to its own thread for processing.
     """
+
     def __init__(self):
         pass
 
@@ -339,6 +344,7 @@ class ServerSession(threading.Thread):
     commands), it will try to accept a new channel until the client
     disconnects.
     """
+
     def __init__(self, client, addr):
         threading.Thread.__init__(self)
         self.client = client
@@ -420,6 +426,7 @@ class ServerSession(threading.Thread):
 
 class ClientSession(paramiko.ServerInterface):
     """Authentication and setup for each client session"""
+
     def __init__(self):
         self.event = threading.Event()
         self.exec = False
@@ -464,9 +471,9 @@ class ClientSession(paramiko.ServerInterface):
         return True
 
 
-def print_exception(exc_info,
-                    log_message="Exception running ssh server",
-                    include_trace=True):
+def print_exception(
+    exc_info, log_message="Exception running ssh server", include_trace=True
+):
     exc_type, exc_value, exc_tb = exc_info
     sys.__stdout__.write(log_message + ": Reason: " + str(exc_value) + "\n")
     if include_trace:
