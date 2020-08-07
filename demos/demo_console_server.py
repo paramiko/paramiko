@@ -107,7 +107,7 @@ bind_to = [("", 2200)]
 shutdown_commanded = False
 
 
-class LoggingPipe():
+class LoggingPipe:
     """Pipe needed to pull from the channel and log"""
 
     def __init__(self, logger, upstream_pipe):
@@ -127,7 +127,7 @@ class LoggingPipe():
         self.upstream_pipe.flush()
 
 
-class ServerLogger():
+class ServerLogger:
     """Logs commands and responses to file"""
 
     def __init__(self):
@@ -140,11 +140,15 @@ class ServerLogger():
             file_timestamp = datetime.datetime.now().strftime(stamp_format)
             if not os.path.isdir(logging_directory):
                 os.makedirs(logging_directory)
-            fh = logging.FileHandler(os.path.join(
-                logging_directory,
-                log_file_template.format(file_timestamp=file_timestamp)), "w")
+            fh = logging.FileHandler(
+                os.path.join(
+                    logging_directory,
+                    log_file_template.format(file_timestamp=file_timestamp),
+                ),
+                "w",
+            )
             fh.setLevel(logging.INFO)
-            formatter = logging.Formatter('%(asctime)s\n%(message)s')
+            formatter = logging.Formatter("%(asctime)s\n%(message)s")
             fh.setFormatter(formatter)
             self.logger.addHandler(fh)
 
@@ -218,16 +222,16 @@ class SimpleShell(cmd.Cmd):
 
     def do_ifconfig(self, line):
         self.stdout.write(
-            "lo: \n" +
-            "    inet 127.0.0.1 netmask 255.0.0.0\n" +
-            "    inet6 ::1 prefixlen 128\n")
+            "lo: \n"
+            + "    inet 127.0.0.1 netmask 255.0.0.0\n"
+            + "    inet6 ::1 prefixlen 128\n")
 
     def do_ls(self, line):
         if "-l" in line:
             self.stdout.write(
-                "dr-xr-xr-x 1 user user  123 Jan 1  1970  directory\n" +
-                "-rw-rw-r-- 1 user user  123 Jan 1  1970  file.txt\n" +
-                "-rw------- 1 user user  123 Jan 1  1970  secrets.txt\n")
+                "dr-xr-xr-x 1 user user  123 Jan 1  1970  directory\n"
+                + "-rw-rw-r-- 1 user user  123 Jan 1  1970  file.txt\n"
+                + "-rw------- 1 user user  123 Jan 1  1970  secrets.txt\n")
         else:
             self.stdout.write("directory   file.txt   secrets.txt\n")
 
@@ -394,7 +398,8 @@ class ServerSession(threading.Thread):
         client_session.event.wait(10)
         if not client_session.event.is_set():
             raise SessionConnectionError(
-                "Client never asked for a shell or sent a command.")
+                "Client never asked for a shell or sent a command."
+            )
 
         cf = channel.makefile("rwU")
         shell = SimpleShell(pipes=cf)
