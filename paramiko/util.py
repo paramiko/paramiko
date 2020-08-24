@@ -23,9 +23,7 @@ Useful functions used by the rest of paramiko.
 from __future__ import generators
 
 import errno
-import sys
 import struct
-import traceback
 import threading
 import logging
 
@@ -133,10 +131,6 @@ def bit_length(n):
             hbyte <<= 1
             bitlen -= 1
         return bitlen
-
-
-def tb_strings():
-    return "".join(traceback.format_exception(*sys.exc_info())).split("\n")
 
 
 def generate_key_bytes(hash_alg, salt, key, nbytes):
