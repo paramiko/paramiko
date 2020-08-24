@@ -1811,12 +1811,12 @@ class Transport(threading.Thread, ClosingContextManager):
 
     # internals...
 
-    def _log(self, level, msg, *args):
+    def _log(self, level, msg, *args, **kwargs):
         if issubclass(type(msg), list):
             for m in msg:
                 self.logger.log(level, m)
         else:
-            self.logger.log(level, msg, *args)
+            self.logger.log(level, msg, *args, **kwargs)
 
     def _get_modulus_pack(self):
         """used by KexGex to find primes for group exchange"""
