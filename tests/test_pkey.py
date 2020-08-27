@@ -29,6 +29,9 @@ from hashlib import md5
 from paramiko import RSAKey, DSSKey, ECDSAKey, Ed25519Key, Message, util
 from paramiko.py3compat import StringIO, byte_chr, b, bytes, PY2
 
+from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateNumbers
+from mock import patch
+
 from .util import _support
 
 
@@ -39,6 +42,8 @@ PUB_ECDSA_256 = "ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHA
 PUB_ECDSA_384 = "ecdsa-sha2-nistp384 AAAAE2VjZHNhLXNoYTItbmlzdHAzODQAAAAIbmlzdHAzODQAAABhBBbGibQLW9AAZiGN2hEQxWYYoFaWKwN3PKSaDJSMqmIn1Z9sgRUuw8Y/w502OGvXL/wFk0i2z50l3pWZjD7gfMH7gX5TUiCzwrQkS+Hn1U2S9aF5WJp0NcIzYxXw2r4M2A=="  # noqa
 PUB_ECDSA_521 = "ecdsa-sha2-nistp521 AAAAE2VjZHNhLXNoYTItbmlzdHA1MjEAAAAIbmlzdHA1MjEAAACFBACaOaFLZGuxa5AW16qj6VLypFbLrEWrt9AZUloCMefxO8bNLjK/O5g0rAVasar1TnyHE9qj4NwzANZASWjQNbc4MAG8vzqezFwLIn/kNyNTsXNfqEko9OgHZknlj2Z79dwTJcRAL4QLcT5aND0EHZLB2fAUDXiWIb2j4rg1mwPlBMiBXA=="  # noqa
 PUB_RSA_2K_OPENSSH = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDF+Dpr54DX0WdeTDpNAMdkCWEkl3OXtNgf58qlN1gX572OLBqLf0zT4bHstUEpU3piazph/rSWcUMuBoD46tZ6jiH7H9b9Pem2eYQWaELDDkM+v9BMbEy5rMbFRLol5OtEvPFqneyEAanPOgvd8t3yyhSev9QVusakzJ8j8LGgrA8huYZ+Srnw0shEWLG70KUKCh3rG0QIvA8nfhtUOisr2Gp+F0YxMGb5gwBlQYAYE5l6u1SjZ7hNjyNosjK+wRBFgFFBYVpkZKJgWoK9w4ijFyzMZTucnZMqKOKAjIJvHfKBf2/cEfYxSq1EndqTqjYsd9T7/s2vcn1OH5a0wkER"  # noqa
+RSA_2K_OPENSSH_P = 161773687847617758886803946572654778625119997081005961935077336594287351354258259920334554906235187683459069634729972458348855793639393524799865799559575414247668746919721196359908321800753913350455861871582087986355637886875933045224711827701526739934602161222599672381604211130651397331775901258858869418853  # noqa
+RSA_2K_OPENSSH_Q = 154483416325630619558401349033571772244816915504195060221073502923720741119664820208064202825686848103224453777955988437823797692957091438442833606009978046057345917301441832647551208158342812551003395417862260727795454409459089912659057393394458150862012620127030757893820711157099494238156383382454310199869  # noqa
 PUB_DSS_1K_OPENSSH = "ssh-dss AAAAB3NzaC1kc3MAAACBAL8XEx7F9xuwBNles+vWpNF+YcofrBhjX1r5QhpBe0eoYWLHRcroN6lxwCdGYRfgOoRjTncBiixQX/uUxAY96zDh3ir492s2BcJt4ihvNn/AY0I0OTuX/2IwGk9CGzafjaeZNVYxMa8lcVt0hSOTjkPQ7gVuk6bJzMInvie+VWKLAAAAFQDUgYdY+rhR0SkKbC09BS/SIHcB+wAAAIB44+4zpCNcd0CGvZlowH99zyPX8uxQtmTLQFuR2O8O0FgVVuCdDgD0D9W8CLOp32oatpM0jyyN89EdvSWzjHzZJ+L6H1FtZps7uhpDFWHdva1R25vyGecLMUuXjo5t/D7oCDih+HwHoSAxoi0QvsPd8/qqHQVznNJKtR6thUpXEwAAAIAG4DCBjbgTTgpBw0egRkJwBSz0oTt+1IcapNU2jA6N8urMSk9YXHEQHKN68BAF3YJ59q2Ujv3LOXmBqGd1T+kzwUszfMlgzq8MMu19Yfzse6AIK1Agn1Vj6F7YXLsXDN+T4KszX5+FJa7t/Zsp3nALWy6l0f4WKivEF5Y2QpEFcQ=="  # noqa
 PUB_EC_384_OPENSSH = "ecdsa-sha2-nistp384 AAAAE2VjZHNhLXNoYTItbmlzdHAzODQAAAAIbmlzdHAzODQAAABhBIch5LXTq/L/TWsTGG6dIktxD8DIMh7EfvoRmWsks6CuNDTvFvbQNtY4QO1mn5OXegHbS0M5DPIS++wpKGFP3suDEH08O35vZQasLNrL0tO2jyyEnzB2ZEx3PPYci811yg=="  # noqa
 
@@ -453,6 +458,21 @@ class KeyTest(unittest.TestCase):
         exp_rsa = b(FINGER_RSA_2K_OPENSSH.split()[1].replace(":", ""))
         my_rsa = hexlify(key.get_fingerprint())
         self.assertEqual(exp_rsa, my_rsa)
+
+    def test_loading_openssh_RSA_keys_uses_correct_p_q(self):
+        # Re #1723 - not the most elegant test but given how deep it is...
+        with patch(
+            "paramiko.rsakey.rsa.RSAPrivateNumbers", wraps=RSAPrivateNumbers
+        ) as spy:
+            # Load key
+            RSAKey.from_private_key_file(
+                _support("test_rsa_openssh.key"), b"television"
+            )
+            # Ensure spy saw the correct P and Q values as derived from
+            # hardcoded test private key value
+            kwargs = spy.call_args[1]
+            assert kwargs["p"] == RSA_2K_OPENSSH_P
+            assert kwargs["q"] == RSA_2K_OPENSSH_Q
 
     def test_load_openssh_format_DSS_key(self):
         key = DSSKey.from_private_key_file(
