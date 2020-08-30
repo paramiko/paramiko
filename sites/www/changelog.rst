@@ -2,13 +2,14 @@
 Changelog
 =========
 
-- :support:`-` Update our CI to catch issues with sdist generation,
+- :support:`- backported` Update our CI to catch issues with sdist generation,
   installation and testing.
-- :support:`1727` Add missing test suite fixtures directory to MANIFEST.in,
-  reinstating the ability to run Paramiko's tests from an sdist tarball. Thanks
-  to Sandro Tosi for reporting the issue and to Blazej Michalik for the PR.
-- :support:`1722` Remove leading whitespace from OpenSSH RSA test suite static
-  key fixture, to conform better to spec. Credit: Alex Gaynor.
+- :support:`1727 backported` Add missing test suite fixtures directory to
+  MANIFEST.in, reinstating the ability to run Paramiko's tests from an sdist
+  tarball. Thanks to Sandro Tosi for reporting the issue and to Blazej Michalik
+  for the PR.
+- :support:`1722 backported` Remove leading whitespace from OpenSSH RSA test
+  suite static key fixture, to conform better to spec. Credit: Alex Gaynor.
 - :bug:`-` Fix incorrect string formatting causing unhelpful error message
   annotation when using Kerberos/GSSAPI. (Thanks, newer version of flake8!)
 - :bug:`1723` Fix incorrectly swapped order of ``p`` and ``q`` numbers when
