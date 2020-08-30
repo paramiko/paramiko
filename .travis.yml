@@ -10,12 +10,10 @@ python:
   - "3.5"
   - "3.6"
   - "3.7"
-  - "3.8-dev"
+  - "3.8"
   - "pypy"
   - "pypy3"
 matrix:
-  allow_failures:
-    - python: "3.8-dev"
   # Explicitly test against our oldest supported cryptography.io, in addition
   # to whatever the latest default is.
   include:
