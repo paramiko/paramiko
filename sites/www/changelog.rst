@@ -2,6 +2,8 @@
 Changelog
 =========
 
+- :support:`-` Update our CI to catch issues with sdist generation,
+  installation and testing.
 - :support:`1727` Add missing test suite fixtures directory to MANIFEST.in,
   reinstating the ability to run Paramiko's tests from an sdist tarball. Thanks
   to Sandro Tosi for reporting the issue and to Blazej Michalik for the PR.
