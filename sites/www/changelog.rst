@@ -2,6 +2,10 @@
 Changelog
 =========
 
+- :support:`1722` Remove leading whitespace from OpenSSH RSA test suite static
+  key fixture, to conform better to spec. Credit: Alex Gaynor.
+- :bug:`-` Fix incorrect string formatting causing unhelpful error message
+  annotation when using Kerberos/GSSAPI. (Thanks, newer version of flake8!)
 - :bug:`1723` Fix incorrectly swapped order of ``p`` and ``q`` numbers when
   loading OpenSSH-format RSA private keys. At minimum this should address a
   slowdown when using such keys, and it also means Paramiko works with

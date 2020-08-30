@@ -275,7 +275,7 @@ class Message(object):
         self.packet.write(s)
         return self
 
-    def add_list(self, l):
+    def add_list(self, l):  # noqa: E741
         """
         Add a list of strings to the stream.  They are encoded identically to
         a single string of values separated by commas.  (Yes, really, that's
