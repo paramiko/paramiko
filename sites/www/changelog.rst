@@ -2,6 +2,9 @@
 Changelog
 =========
 
+- :support:`1727` Add missing test suite fixtures directory to MANIFEST.in,
+  reinstating the ability to run Paramiko's tests from an sdist tarball. Thanks
+  to Sandro Tosi for reporting the issue and to Blazej Michalik for the PR.
 - :support:`1722` Remove leading whitespace from OpenSSH RSA test suite static
   key fixture, to conform better to spec. Credit: Alex Gaynor.
 - :bug:`-` Fix incorrect string formatting causing unhelpful error message
