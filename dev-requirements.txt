@@ -9,7 +9,7 @@ mock==2.0.0
 # Linting!
 flake8==3.8.3
 # Coverage!
-coverage==3.7.1
+coverage==4.5.4
 codecov==1.6.3
 # Documentation tools
 sphinx>=1.4,<1.7

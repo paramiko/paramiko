@@ -72,6 +72,10 @@ script:
   - inv coverage
   # Ensure documentation builds, both sites, maxxed nitpicking
   - inv sites
+  # Sanity check ability to build sdist
+  - python setup.py sdist
+  # And ability to run tests from within the result
+  - cd dist && tar xzvf *.tar.gz && rm *.tar.gz && cd paramiko-* && ls -l && pip install -e . && inv test
 notifications:
   irc:
     channels: "irc.freenode.org#paramiko"
