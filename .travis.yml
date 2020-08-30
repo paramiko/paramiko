@@ -1,6 +1,6 @@
+os: linux
 dist: xenial
 language: python
-sudo: false
 cache:
   directories:
     - $HOME/.cache/pip
@@ -13,7 +13,7 @@ python:
   - "3.8"
   - "pypy"
   - "pypy3"
-matrix:
+jobs:
   # Explicitly test against our oldest supported cryptography.io, in addition
   # to whatever the latest default is.
   include:
