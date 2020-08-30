@@ -2,6 +2,7 @@
 Changelog
 =========
 
+- :release:`2.7.2 <2020-08-30>`
 - :support:`- backported` Update our CI to catch issues with sdist generation,
   installation and testing.
 - :support:`1727 backported` Add missing test suite fixtures directory to
