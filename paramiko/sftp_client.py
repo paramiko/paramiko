@@ -808,6 +808,27 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
 
     # ...internals...
 
+
+    def get_recursive(self, remotepath, localpath):
+        """
+        Copy a remote file or folder (``remotepath``) recursively from the SFTP
+        server to the local host as ``localpath``. Any exception raised by 
+        operations will bepassed through.  This method is primarily provided as
+        a convenience.
+
+        :param str remotepath: the remote file or folder to copy
+        :param str localpath: the destination path on the local host
+        """
+        remoteitem = self.lstat(remotepath)
+        if stat.S_ISDIR(remoteitem.st_mode):
+            os.mkdir(localpath)
+            items = self.listdir(remotepath)
+            for item in items:
+                self.get_recursive(f'{remotepath}/{item}', f'{localpath}/{item}')
+        else:
+            self.get(remotepath, localpath)
+
+
     def _request(self, t, *arg):
         num = self._async_request(type(None), t, *arg)
         return self._read_response(num)
