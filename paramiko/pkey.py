@@ -652,7 +652,8 @@ class PublicBlob(object):
     Tries to be as dumb as possible and barely cares about specific
     per-key-type data.
 
-    ..note::
+    .. note::
+
         Most of the time you'll want to call `from_file`, `from_string` or
         `from_message` for useful instantiation, the main constructor is
         basically "I should be using ``attrs`` for this."
