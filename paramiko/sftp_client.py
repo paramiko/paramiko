@@ -803,7 +803,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
             localsize = fl.tell()
         if localsize != size:
             raise IOError(
-                "size mismatch  {} != {}".format(localsize, size)
+                "size mismatch in get!  {} != {}".format(localsize, size)
             )
 
     # ...internals...
