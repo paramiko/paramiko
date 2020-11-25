@@ -800,10 +800,10 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         """
         with open(localpath, "wb") as fl:
             size = self.getfo(remotepath, fl, callback)
-        s = os.stat(localpath)
-        if s.st_size != size:
+            localsize = fl.tell()
+        if localsize != size:
             raise IOError(
-                "size mismatch in get!  {} != {}".format(s.st_size, size)
+                "size mismatch in get!  {} != {}".format(localsize, size)
             )
 
     # ...internals...
