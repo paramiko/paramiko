@@ -82,6 +82,9 @@ SFTP_FLAG_CREATE = 0x8
 SFTP_FLAG_TRUNC = 0x10
 SFTP_FLAG_EXCL = 0x20
 
+# Block size used by getfo and putfo in paramiko.sftp_client
+SFTP_FILE_OBJECT_BLOCK_SIZE = 32768
+
 _VERSION = 3
 
 

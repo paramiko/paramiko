@@ -61,6 +61,7 @@ from paramiko.sftp import (
     SFTP_EOF,
     SFTP_NO_SUCH_FILE,
     SFTP_PERMISSION_DENIED,
+    SFTP_FILE_OBJECT_BLOCK_SIZE,
 )
 
 from paramiko.sftp_attr import SFTPAttributes
@@ -675,7 +676,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
     def _transfer_with_callback(self, reader, writer, file_size, callback):
         size = 0
         while True:
-            data = reader.read(32768)
+            data = reader.read(SFTP_FILE_OBJECT_BLOCK_SIZE)
             writer.write(data)
             size += len(data)
             if len(data) == 0:
