@@ -79,7 +79,7 @@ except IOError:
     try:
         # try ~/ssh/ too, because windows can't have a folder named ~/.ssh/
         host_keys = paramiko.util.load_host_keys(
-            os.path.expanduser("~/ssh/known_hosts")
+            os.path.expanduser("~/.ssh/known_hosts")
         )
     except IOError:
         print("*** Unable to open host keys file")
