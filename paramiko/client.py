@@ -660,9 +660,20 @@ class SSHClient (ClosingContextManager):
             try:
                 self._log(DEBUG, 'Trying password')
                 allowed_types = set(
-                    self._transport.auth_password(username, password))
-                two_factor = allowed_types & two_factor_types
-                if not two_factor:
+                    self._transport.auth_password(username, password, fallback=False)
+                )
+                if 'keyboard-interactive' not in allowed_types:
+                    return
+            except SSHException as e:
+                saved_exception = e
+
+        elif password is not None and 'keyboard-interactive' in allowed_types:
+            try:
+                self._log(DEBUG, 'Trying password for keyboard-interactive')
+                allowed_types = set(
+                    self._transport.auth_interactive_static(username, password)
+                )
+                if 'keyboard-interactive' not in allowed_types:
                     return
             except SSHException as e:
                 saved_exception = e

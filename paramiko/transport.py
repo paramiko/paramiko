@@ -1391,17 +1391,7 @@ class Transport(threading.Thread, ClosingContextManager):
             if not fallback or ('keyboard-interactive' not in e.allowed_types):
                 raise
             try:
-                def handler(title, instructions, fields):
-                    if len(fields) > 1:
-                        raise SSHException('Fallback authentication failed.')
-                    if len(fields) == 0:
-                        # for some reason, at least on os x, a 2nd request will
-                        # be made with zero fields requested.  maybe it's just
-                        # to try to fake out automated scripting of the exact
-                        # type we're doing here.  *shrug* :)
-                        return []
-                    return [password]
-                return self.auth_interactive(username, handler)
+                return self.auth_interactive_static(username, password)
             except SSHException:
                 # attempt failed; just raise the original exception
                 raise e
@@ -1528,6 +1518,24 @@ class Transport(threading.Thread, ClosingContextManager):
                     answers.append(func(prompt.strip() + " "))
                 return answers
         return self.auth_interactive(username, handler, submethods)
+
+    def auth_interactive_static(self, username, response):
+        """
+        Autenticate to the server with keyboard-interactive but
+        not actually interactive, just use passed response.
+        """
+        def handler(title, instructions, fields):
+            if len(fields) > 1:
+                raise SSHException('keyboard-interactive static response not possible')
+            if len(fields) == 0:
+                # for some reason, at least on os x, a 2nd request will
+                # be made with zero fields requested.  maybe it's just
+                # to try to fake out automated scripting of the exact
+                # type we're doing here.  *shrug* :)
+                return []
+            return [response]
+
+        return self.auth_interactive(username, handler)
 
     def auth_gssapi_with_mic(self, username, gss_host, gss_deleg_creds):
         """
