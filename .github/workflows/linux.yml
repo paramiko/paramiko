@@ -6,7 +6,7 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     timeout-minutes: 30
     strategy:
       fail-fast: false
@@ -18,6 +18,7 @@ jobs:
           - "python:3.6-buster"
           - "python:3.7-buster"
           - "python:3.8-buster"
+          - "python:3.9-buster"
           - "pypy:2.7-7.3"
           - "pypy:3.6-7.3"
         crypto_ver:
@@ -67,13 +68,13 @@ jobs:
           pytest -v
 
   docs:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v1
         with:
-          python-version: 3.7
+          python-version: 3.8
 
       - name: Install dependencies
         run: |
