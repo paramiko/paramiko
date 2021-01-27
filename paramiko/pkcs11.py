@@ -13,8 +13,10 @@ giving it the provider file path and the PIN) and handing the result to
 `.client.SSHClient.connect` as its ``pkcs11_session`` argument. The same
 session may be used across multiple clients and/or threads; in any case,
 it must be explicitly closed via `.close_session`.
+
 .. note::
     This module is based on the following reference material:
+
     - `OpenSSH's own PKCS#11 support
       <https://github.com/openssh/openssh-portable/blob/master/ssh-pkcs11.c>`_
     - `The official PKCS#11 specification
@@ -48,7 +50,7 @@ class PKCS11AuthenticationException(AuthenticationException):
 def get_public_key(keyid="01"):
     """
     Get the public key from a smart device
-    :param str pkcs11keyid: The keyid to use for the pkcs11 session.
+    :param str keyid: The keyid to use for the pkcs11 session.
     """
     public_key = None
     try:
@@ -169,7 +171,7 @@ def close_session(session):
     """
     Close a pkcs11 session on a smart device.
     :param str session: pkcs11 session obtained
-    by calling pkcs11_open_session
+    by calling open_session
     """
     if "provider" not in session:
         raise PKCS11Exception("pkcs11 session is missing the provider, the session is not valid") # noqa

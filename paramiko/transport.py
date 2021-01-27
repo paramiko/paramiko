@@ -1582,12 +1582,12 @@ class Transport(threading.Thread, ClosingContextManager):
     def auth_pkcs11(self, username, pkcs11_session, event=None):
         """
         :param str username: the username to authenticate as
-        :param str pkcs11_session: session obtained from pkcs11_open_session
+        :param str pkcs11_session: session obtained from open_session
         :param .threading.Event event:
             an event to trigger when the authentication attempt is complete
             (whether it was successful or not)
         :return:
-            `list` of auth types permissible for the next stage of
+            list of auth types permissible for the next stage of
             authentication (normally empty)
         :raises:
             `.AuthenticationException` -- if the authentication failed (and no
