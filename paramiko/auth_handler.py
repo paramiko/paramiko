@@ -74,7 +74,7 @@ from paramiko.ssh_exception import (
 )
 from paramiko.server import InteractiveQuery
 from paramiko.ssh_gss import GSSAuth, GSS_EXCEPTIONS
-from paramiko.py3compat import b, decodebytes
+from paramiko.py3compat import decodebytes
 from paramiko.dsskey import DSSKey
 from paramiko.rsakey import RSAKey
 from paramiko.ecdsakey import ECDSAKey
