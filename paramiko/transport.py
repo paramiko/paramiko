@@ -1596,7 +1596,7 @@ class Transport(threading.Thread, ClosingContextManager):
         """
         if (not self.active) or (not self.initial_kex_done):
             # we should never try to authenticate unless we're on a secure link
-            raise SSHException('No existing session')
+            raise SSHException("No existing session")
         if event is None:
             my_event = threading.Event()
         else:

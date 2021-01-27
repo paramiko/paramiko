@@ -27,7 +27,7 @@ from paramiko.transport import Transport
 from tests.loop import LoopSocket
 
 
-test_rsa_public_key = b"ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAIEA049W6geFpmsljTwfvI1UmKWWJPNFI74+vNKTk4dmzkQY2yAMs6FhlvhlI8ysU4oj71ZsRYMecHbBbxdN79+JRFVYTKaLqjwGENeTd+yv4q+V2PvZv3fLnzApI3l7EJCqhWwJUHJ1jAkZzqDx0tyOL4uoZpww3nmE0kb3y21tH4c=" # noqa
+test_rsa_public_key = b"ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAIEA049W6geFpmsljTwfvI1UmKWWJPNFI74+vNKTk4dmzkQY2yAMs6FhlvhlI8ysU4oj71ZsRYMecHbBbxdN79+JRFVYTKaLqjwGENeTd+yv4q+V2PvZv3fLnzApI3l7EJCqhWwJUHJ1jAkZzqDx0tyOL4uoZpww3nmE0kb3y21tH4c="  # noqa
 
 
 class MockPKCS11Lib(object):
@@ -85,8 +85,9 @@ class Pkcs11Test(unittest.TestCase):
     def tearDown(self):
         pass
 
-    @mock.patch('subprocess.Popen',
-                return_value=MockPopen_pkcs15tool_rsakey([], []))
+    @mock.patch(
+        "subprocess.Popen", return_value=MockPopen_pkcs15tool_rsakey([], [])
+    )
     def test_1_pkcs11_get_public_key(self, mock_popen):
         """
         Test Getting Public Key
@@ -94,12 +95,13 @@ class Pkcs11Test(unittest.TestCase):
         public_key = pkcs11.get_public_key()
         self.assertEqual(public_key, test_rsa_public_key.decode("utf-8"))
 
-    @mock.patch('os.path.isfile', return_value=True)
-    @mock.patch('paramiko.pkcs11.cdll.LoadLibrary',
-                return_value=MockPKCS11Lib())
-    def test_2_pkcs11_close_session_success(self,
-                                            mock_isfile,
-                                            mock_loadlibrary):
+    @mock.patch("os.path.isfile", return_value=True)
+    @mock.patch(
+        "paramiko.pkcs11.cdll.LoadLibrary", return_value=MockPKCS11Lib()
+    )
+    def test_2_pkcs11_close_session_success(
+        self, mock_isfile, mock_loadlibrary
+    ):
         pkcs11_session = {"pkcs11provider": "/test/path/example"}
         threw_exception = True
         try:
@@ -108,11 +110,13 @@ class Pkcs11Test(unittest.TestCase):
             threw_exception = False
         self.assertTrue(not threw_exception)
 
-    @mock.patch('os.path.isfile', return_value=False)
-    @mock.patch('paramiko.pkcs11.cdll.LoadLibrary',
-                return_value=MockPKCS11Lib())
-    def test_3_pkcs11_close_session_fail_nofile(self, mock_isfile,
-                                                mock_loadlibrary):
+    @mock.patch("os.path.isfile", return_value=False)
+    @mock.patch(
+        "paramiko.pkcs11.cdll.LoadLibrary", return_value=MockPKCS11Lib()
+    )
+    def test_3_pkcs11_close_session_fail_nofile(
+        self, mock_isfile, mock_loadlibrary
+    ):
         pkcs11_session = {"pkcs11provider": "/test/path/example"}
         threw_exception = False
         try:
@@ -121,23 +125,27 @@ class Pkcs11Test(unittest.TestCase):
             threw_exception = True
         self.assertTrue(threw_exception)
 
-    @mock.patch('subprocess.Popen',
-                return_value=MockPopen_pkcs15tool_rsakey([], []))
-    @mock.patch('os.path.isfile', return_value=True)
-    @mock.patch('paramiko.pkcs11.cdll.LoadLibrary',
-                return_value=MockPKCS11Lib())
-    def test_4_pkcs11_open_session(self,
-                                   mock_popen,
-                                   mock_isfile,
-                                   mock_loadlibrary):
+    @mock.patch(
+        "subprocess.Popen", return_value=MockPopen_pkcs15tool_rsakey([], [])
+    )
+    @mock.patch("os.path.isfile", return_value=True)
+    @mock.patch(
+        "paramiko.pkcs11.cdll.LoadLibrary", return_value=MockPKCS11Lib()
+    )
+    def test_4_pkcs11_open_session(
+        self, mock_popen, mock_isfile, mock_loadlibrary
+    ):
         session = pkcs11.open_session("/test/provider/example", "1234")
         self.assertEqual(0, session["session"].value)
-        self.assertEqual(test_rsa_public_key.decode("utf-8"), session["public_key"])  # noqa
+        self.assertEqual(
+            test_rsa_public_key.decode("utf-8"), session["public_key"]
+        )
         self.assertEqual(0, session["keyret"].value)
         self.assertEqual("/test/provider/example", session["provider"])
 
-    @mock.patch('paramiko.auth_handler.AuthHandler._request_auth',
-                return_value=True)
+    @mock.patch(
+        "paramiko.auth_handler.AuthHandler._request_auth", return_value=True
+    )
     def test_5_pkcs11_authhandler_auth_pkcs11_basic(self, mock_requestauth):
         # Mock _request_auth just to test the setup
         # Just test the setup
@@ -146,13 +154,16 @@ class Pkcs11Test(unittest.TestCase):
         testauth = AuthHandler(tc)
         testauth.auth_pkcs11("testuser", session, None)
         self.assertEqual(testauth.auth_event, None)
-        self.assertEqual(testauth.auth_method, 'publickey')
+        self.assertEqual(testauth.auth_method, "publickey")
         self.assertEqual(testauth.username, "testuser")
         self.assertEqual(testauth.pkcs11_session, session)
 
-    @mock.patch('paramiko.auth_handler.AuthHandler._request_auth',
-                return_value=True)
-    def test_6_pkcs11_authhandler_pkcs11_get_public_key(self, mock_requestauth):  # noqa
+    @mock.patch(
+        "paramiko.auth_handler.AuthHandler._request_auth", return_value=True
+    )
+    def test_6_pkcs11_authhandler_pkcs11_get_public_key(
+        self, mock_requestauth
+    ):
         tc = Transport(self.sockc)
         session = {"public_key": test_rsa_public_key}
         testauth = AuthHandler(tc)

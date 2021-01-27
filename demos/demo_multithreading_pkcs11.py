@@ -31,6 +31,7 @@ if username == "":
 pkcs11provider = "/usr/local/lib/opensc-pkcs11.so"
 smartcard_pin = getpass.getpass("smartcard pin: ")
 
+
 def do_it(q):
     session = q.get()
     ssh = paramiko.SSHClient()
@@ -39,6 +40,7 @@ def do_it(q):
     stdin, stdout, stderr = ssh.exec_command("uname -a")
     for line in stdout:
         print(line)
+
 
 q = Queue()
 session = paramiko.pkcs11.open_session(pkcs11provider, smartcard_pin)

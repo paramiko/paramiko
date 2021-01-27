@@ -641,9 +641,10 @@ class SSHClient(ClosingContextManager):
         # PKCS11 / Smartcard authentication
         if username is not None and pkcs11_session is not None:
             try:
-                allowed_types = set(self._transport.auth_pkcs11(username,
-                                    pkcs11_session))
-                two_factor = (allowed_types & two_factor_types)
+                allowed_types = set(
+                    self._transport.auth_pkcs11(username, pkcs11_session)
+                )
+                two_factor = allowed_types & two_factor_types
                 if not two_factor:
                     return
             except SSHException as e:

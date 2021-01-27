@@ -24,7 +24,15 @@ it must be explicitly closed via `.close_session`.
 """
 
 from ctypes import (
-    c_void_p, c_ulong, c_int, c_char_p, cast, addressof, sizeof, byref, cdll,
+    c_void_p,
+    c_ulong,
+    c_int,
+    c_char_p,
+    cast,
+    addressof,
+    sizeof,
+    byref,
+    cdll,
     Structure,
 )
 import subprocess
@@ -37,6 +45,7 @@ class PKCS11Exception(SSHException):
     """
     Exception raised by failures in the PKCS11 API or related logic errors.
     """
+
     pass
 
 
@@ -44,6 +53,7 @@ class PKCS11AuthenticationException(AuthenticationException):
     """
     Exception raised when pkcs11 authentication failed for some reason.
     """
+
     pass
 
 
@@ -54,10 +64,12 @@ def get_public_key(keyid="01"):
     """
     public_key = None
     try:
-        p = subprocess.Popen(["pkcs15-tool", "--read-ssh-key", keyid],
-                             stdout=subprocess.PIPE,
-                             stderr=subprocess.PIPE,
-                             stdin=subprocess.PIPE)
+        p = subprocess.Popen(
+            ["pkcs15-tool", "--read-ssh-key", keyid],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            stdin=subprocess.PIPE,
+        )
         out, err = p.communicate()
         if out is not None:
             public_key = out
@@ -70,7 +82,7 @@ def get_public_key(keyid="01"):
     if public_key is None or len(public_key) < 1:
         raise PKCS11Exception("Invalid ssh public key returned by pkcs15-tool")
 
-    return public_key.decode('utf-8')
+    return public_key.decode("utf-8")
 
 
 def open_session(provider, pin, keyid="01", slot=0, publickey=None):
@@ -93,9 +105,14 @@ def open_session(provider, pin, keyid="01", slot=0, publickey=None):
         publickey = get_public_key(keyid)
 
     class ck_c_initialize_args(Structure):
-        _fields_ = [('CreateMutex', c_void_p), ('DestroyMutex', c_void_p),
-                    ('LockMutex', c_void_p), ('UnlockMutex', c_void_p),
-                    ('flags', c_ulong), ('pReserved', c_void_p)]
+        _fields_ = [
+            ("CreateMutex", c_void_p),
+            ("DestroyMutex", c_void_p),
+            ("LockMutex", c_void_p),
+            ("UnlockMutex", c_void_p),
+            ("flags", c_ulong),
+            ("pReserved", c_void_p),
+        ]
 
     # Init Args
     init_args = ck_c_initialize_args()
@@ -108,7 +125,9 @@ def open_session(provider, pin, keyid="01", slot=0, publickey=None):
 
     # Init
     if not os.path.isfile(provider):
-        raise PKCS11Exception("provider path is not valid: {}".format(provider)) # noqa
+        raise PKCS11Exception(
+            "provider path is not valid: {}".format(provider)
+        )
     lib = cdll.LoadLibrary(provider)
     res = lib.C_Initialize(byref(init_args))
     if res != 0:
@@ -124,7 +143,7 @@ def open_session(provider, pin, keyid="01", slot=0, publickey=None):
 
     # Login
     login_type = c_int(1)  # 1=USER PIN
-    str_pin = pin.encode('utf-8')
+    str_pin = pin.encode("utf-8")
     cstr_pin = c_char_p(str_pin)
     res = lib.C_Login(session, login_type, cstr_pin, len(str_pin))
     if res != 0:
@@ -132,8 +151,11 @@ def open_session(provider, pin, keyid="01", slot=0, publickey=None):
 
     # Get object for key
     class ck_attribute(Structure):
-        _fields_ = [('type', c_ulong), ('value', c_void_p),
-                    ('value_len', c_ulong)]
+        _fields_ = [
+            ("type", c_ulong),
+            ("value", c_void_p),
+            ("value_len", c_ulong),
+        ]
 
     attrs = (ck_attribute * 3)()
     count = c_ulong()
@@ -144,7 +166,7 @@ def open_session(provider, pin, keyid="01", slot=0, publickey=None):
 
     keyret = c_ulong()
     cls = c_ulong(3)  # CKO_PRIVATE_KEY
-    objid_str = keyid.encode('utf-8')
+    objid_str = keyid.encode("utf-8")
     objid = c_char_p(objid_str)
     objid_len = c_ulong(len(objid_str))
     attrs[0].type = c_ulong(0)  # CKA_CLASS
@@ -163,8 +185,12 @@ def open_session(provider, pin, keyid="01", slot=0, publickey=None):
     if res != 0:
         raise PKCS11Exception("PKCS11 Failed to Find Objects Final")
 
-    return {"session": session, "public_key": publickey,
-            "keyret": keyret, "provider": provider}
+    return {
+        "session": session,
+        "public_key": publickey,
+        "keyret": keyret,
+        "provider": provider,
+    }
 
 
 def close_session(session):
@@ -174,10 +200,14 @@ def close_session(session):
     by calling open_session
     """
     if "provider" not in session:
-        raise PKCS11Exception("pkcs11 session is missing the provider, the session is not valid") # noqa
+        raise PKCS11Exception(
+            "pkcs11 session is missing the provider, the session is not valid"
+        )
     provider = session["provider"]
     if not os.path.isfile(provider):
-        raise PKCS11Exception("provider path is not valid: {}".format(provider)) # noqa
+        raise PKCS11Exception(
+            "provider path is not valid: {}".format(provider)
+        )
     lib = cdll.LoadLibrary(provider)
     # Wrap things up
     res = lib.C_Finalize(c_int(0))
