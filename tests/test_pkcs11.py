@@ -21,7 +21,7 @@ Test the used APIs for pkcs11
 import unittest
 import mock
 from paramiko import pkcs11
-from paramiko.pkcs11 import PKCS11Exception 
+from paramiko.pkcs11 import PKCS11Exception
 from paramiko.auth_handler import AuthHandler
 from paramiko.transport import Transport
 from tests.loop import LoopSocket
@@ -132,7 +132,7 @@ class Pkcs11Test(unittest.TestCase):
                                    mock_loadlibrary):
         session = pkcs11.open_session("/test/provider/example", "1234")
         self.assertEqual(0, session["session"].value)
-        self.assertEqual(test_rsa_public_key.decode("utf-8"), session["public_key"])
+        self.assertEqual(test_rsa_public_key.decode("utf-8"), session["public_key"])  # noqa
         self.assertEqual(0, session["keyret"].value)
         self.assertEqual("/test/provider/example", session["provider"])
 
@@ -152,7 +152,7 @@ class Pkcs11Test(unittest.TestCase):
 
     @mock.patch('paramiko.auth_handler.AuthHandler._request_auth',
                 return_value=True)
-    def test_6_pkcs11_authhandler_pkcs11_get_public_key(self, mock_requestauth):
+    def test_6_pkcs11_authhandler_pkcs11_get_public_key(self, mock_requestauth):  # noqa
         tc = Transport(self.sockc)
         session = {"public_key": test_rsa_public_key}
         testauth = AuthHandler(tc)
