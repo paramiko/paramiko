@@ -237,6 +237,7 @@ class SSHClient(ClosingContextManager):
         gss_trust_dns=True,
         passphrase=None,
         disabled_algorithms=None,
+        pkcs11_session=None,
     ):
         """
         Connect to an SSH server and authenticate to it.  The server's host key
@@ -314,6 +315,10 @@ class SSHClient(ClosingContextManager):
         :param dict disabled_algorithms:
             an optional dict passed directly to `.Transport` and its keyword
             argument of the same name.
+        :param str pkcs11_session: The PKCS#11 session obtained by calling
+            `.pkcs11.open_session`. Note that the caller is responsible for
+            calling `.pkcs11.close_session` with that object at shutdown, as it
+            may be reused between multiple clients.
 
         :raises:
             `.BadHostKeyException` -- if the server's host key could not be
@@ -444,6 +449,7 @@ class SSHClient(ClosingContextManager):
             gss_deleg_creds,
             t.gss_host,
             passphrase,
+            pkcs11_session,
         )
 
     def close(self):
@@ -610,6 +616,7 @@ class SSHClient(ClosingContextManager):
         gss_deleg_creds,
         gss_host,
         passphrase,
+        pkcs11_session,
     ):
         """
         Try, in order:
@@ -630,6 +637,17 @@ class SSHClient(ClosingContextManager):
         two_factor_types = {"keyboard-interactive", "password"}
         if passphrase is None and password is not None:
             passphrase = password
+
+        # PKCS11 / Smartcard authentication
+        if username is not None and pkcs11_session is not None:
+            try:
+                allowed_types = set(self._transport.auth_pkcs11(username,
+                                    pkcs11_session))
+                two_factor = (allowed_types & two_factor_types)
+                if not two_factor:
+                    return
+            except SSHException as e:
+                saved_exception = e
 
         # If GSS-API support and GSS-PI Key Exchange was performed, we attempt
         # authentication with gssapi-keyex.

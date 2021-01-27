@@ -22,6 +22,10 @@
 
 import weakref
 import time
+from ctypes import cdll, Structure, c_ulong, c_void_p, byref, c_char, c_int
+import binascii
+import os
+import threading
 
 from paramiko.common import (
     cMSG_SERVICE_REQUEST,
@@ -70,12 +74,20 @@ from paramiko.ssh_exception import (
 )
 from paramiko.server import InteractiveQuery
 from paramiko.ssh_gss import GSSAuth, GSS_EXCEPTIONS
+from paramiko.py3compat import b, decodebytes
+from paramiko.dsskey import DSSKey
+from paramiko.rsakey import RSAKey
+from paramiko.ecdsakey import ECDSAKey
+from paramiko.ed25519key import Ed25519Key
+from paramiko.hostkeys import InvalidHostKey
+from .pkcs11 import PKCS11Exception
 
 
 class AuthHandler(object):
     """
     Internal class to handle the mechanics of authentication.
     """
+    _pkcs11_lock = None
 
     def __init__(self, transport):
         self.transport = weakref.proxy(transport)
@@ -94,6 +106,11 @@ class AuthHandler(object):
         # for GSSAPI
         self.gss_host = None
         self.gss_deleg_creds = True
+        # for PKCS11 / Smartcard
+        self.pkcs11_session = None
+        if AuthHandler._pkcs11_lock is None:
+            AuthHandler._pkcs11_lock = threading.Lock()
+        self.pkcs11_lock = AuthHandler._pkcs11_lock
 
     def _log(self, *args):
         return self.transport._log(*args)
@@ -124,6 +141,17 @@ class AuthHandler(object):
             self.auth_method = "publickey"
             self.username = username
             self.private_key = key
+            self._request_auth()
+        finally:
+            self.transport.lock.release()
+
+    def auth_pkcs11(self, username, pkcs11_session, event):
+        self.transport.lock.acquire()
+        try:
+            self.auth_event = event
+            self.auth_method = 'publickey'
+            self.username = username
+            self.pkcs11_session = pkcs11_session
             self._request_auth()
         finally:
             self.transport.lock.release()
@@ -269,6 +297,59 @@ class AuthHandler(object):
         # dunno this one
         self._disconnect_service_not_available()
 
+    def _pkcs11_get_public_key(self):
+        if "public_key" not in self.pkcs11_session:
+            raise PKCS11Exception("pkcs11 session does not have a public_key")
+        if len(self.pkcs11_session["public_key"]) < 1:
+            raise PKCS11Exception("pkcs11 session contains invalid public key {}".format(self.pkcs11_session["public_key"])) # noqa
+        return self.pkcs11_session["public_key"]
+
+    def _pkcs11_sign_ssh_data(self, blob, key_name):
+        if "provider" not in self.pkcs11_session:
+            raise PKCS11Exception("pkcs11 session does not have a provider")
+        if "session" not in self.pkcs11_session:
+            raise PKCS11Exception("pkcs11 session does not have a session")
+        if "keyret" not in self.pkcs11_session:
+            raise PKCS11Exception("pkcs11 session does not have a keyret")
+        if not os.path.isfile(self.pkcs11_session["provider"]):
+            raise PKCS11Exception("pkcs11provider does not exist: {}".format(self.pkcs11_session["provider"])) # noqa
+        lib = cdll.LoadLibrary(self.pkcs11_session["provider"])
+        session = self.pkcs11_session["session"]
+        keyret = self.pkcs11_session["keyret"]
+
+        # Init Signing Data
+        class ck_mechanism(Structure):
+            _fields_ = [("mechanism", c_ulong), ("parameter", c_void_p),
+                        ("parameter_len", c_ulong)]
+
+        mech = ck_mechanism()
+        mech.mechanism = 6  # CKM_SHA1_RSA_PKCS
+        with self.pkcs11_lock:
+            res = lib.C_SignInit(session, byref(mech), keyret)
+            if res != 0:
+                raise PKCS11Exception("PKCS11 Failed to Sign Init")
+
+            in_buffer = (c_char * 1025)()
+            sig_buffer = (c_char * 512)()
+            for i in range(0, 1025):
+                if i < len(blob):
+                    in_buffer[i] = c_char(blob[i])
+            sig_len = c_ulong(len(blob))
+            r = c_int(len(blob))
+            res = lib.C_Sign(session, in_buffer, r, sig_buffer, byref(sig_len))
+            if res != 0:
+                raise PKCS11Exception("PKCS11 Failed to Sign")
+
+        # Convert ctype char array to python string
+        signed_buffer_ret = b''
+        for i in range(0, sig_len.value):
+            signed_buffer_ret += sig_buffer[i]
+        # Convert to Paramiko message
+        m = Message()
+        m.add_string(key_name)
+        m.add_string(signed_buffer_ret)
+        return m
+
     def _parse_service_accept(self, m):
         service = m.get_text()
         if service == "ssh-userauth":
@@ -283,20 +364,57 @@ class AuthHandler(object):
                 password = b(self.password)
                 m.add_string(password)
             elif self.auth_method == "publickey":
-                m.add_boolean(True)
-                # Use certificate contents, if available, plain pubkey
-                # otherwise
-                if self.private_key.public_blob:
-                    m.add_string(self.private_key.public_blob.key_type)
-                    m.add_string(self.private_key.public_blob.key_blob)
+                if self.pkcs11_session is None:
+                    m.add_boolean(True)
+                    # Private Key
+                    # Use certificate contents, if available, plain pubkey
+                    # otherwise
+                    if self.private_key.public_blob:
+                        m.add_string(self.private_key.public_blob.key_type)
+                        m.add_string(self.private_key.public_blob.key_blob)
+                    else:
+                        m.add_string(self.private_key.get_name())
+                        m.add_string(self.private_key)
+                    blob = self._get_session_blob(
+                        self.private_key, 'ssh-connection', self.username)
+                    sig = self.private_key.sign_ssh_data(blob)
+                    m.add_string(sig)
                 else:
-                    m.add_string(self.private_key.get_name())
-                    m.add_string(self.private_key)
-                blob = self._get_session_blob(
-                    self.private_key, "ssh-connection", self.username
-                )
-                sig = self.private_key.sign_ssh_data(blob)
-                m.add_string(sig)
+                    # Smartcard PKCS11 Private Key
+                    pubkey_source = self._pkcs11_get_public_key()
+                    fields = pubkey_source.split(' ')
+
+                    if len(fields) < 2:
+                        raise PKCS11Exception("Not enough fields found in pkcs11 key") # noqa
+
+                    keytype = fields[0]
+                    key = fields[1]
+
+                    try:
+                        key = b(key)
+                        if keytype == 'ssh-rsa':
+                            key = RSAKey(data=decodebytes(key))
+                        elif keytype == 'ssh-dss':
+                            key = DSSKey(data=decodebytes(key))
+                        elif keytype in ECDSAKey\
+                            .supported_key_format_identifiers():
+                            key = ECDSAKey(data=decodebytes(key),
+                                           validate_point=False)
+                        elif keytype == 'ssh-ed25519':
+                            key = Ed25519Key(data=decodebytes(key))
+                        else:
+                            raise SSHException("Unable to handle key of type {}".format(keytype)) # noqa
+                    except binascii.Error as e:
+                        raise InvalidHostKey(self._pkcs11_get_public_key(), e)
+
+                    m.add_boolean(True)
+                    m.add_string(key.get_name())
+                    m.add_string(key.asbytes())
+                    blob = self._get_session_blob(
+                        key, 'ssh-connection', self.username,
+                    )
+                    sig = self._pkcs11_sign_ssh_data(blob, keytype)
+                    m.add_string(sig)
             elif self.auth_method == "keyboard-interactive":
                 m.add_string("")
                 m.add_string(self.submethods)

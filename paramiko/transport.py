@@ -1579,6 +1579,35 @@ class Transport(threading.Thread, ClosingContextManager):
             return []
         return self.auth_handler.wait_for_response(my_event)
 
+    def auth_pkcs11(self, username, pkcs11_session, event=None):
+        """
+        :param str username: the username to authenticate as
+        :param str pkcs11_session: session obtained from pkcs11_open_session
+        :param .threading.Event event:
+            an event to trigger when the authentication attempt is complete
+            (whether it was successful or not)
+        :return:
+            `list` of auth types permissible for the next stage of
+            authentication (normally empty)
+        :raises:
+            `.AuthenticationException` -- if the authentication failed (and no
+            event was passed in)
+        :raises: `.SSHException` -- if there was a network error
+        """
+        if (not self.active) or (not self.initial_kex_done):
+            # we should never try to authenticate unless we're on a secure link
+            raise SSHException('No existing session')
+        if event is None:
+            my_event = threading.Event()
+        else:
+            my_event = event
+        self.auth_handler = AuthHandler(self)
+        self.auth_handler.auth_pkcs11(username, pkcs11_session, my_event)
+        if event is not None:
+            # caller wants to wait for event themselves
+            return []
+        return self.auth_handler.wait_for_response(my_event)
+
     def auth_interactive(self, username, handler, submethods=""):
         """
         Authenticate to the server interactively.  A handler is used to answer
