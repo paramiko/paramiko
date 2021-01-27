@@ -149,7 +149,7 @@ class AuthHandler(object):
         self.transport.lock.acquire()
         try:
             self.auth_event = event
-            self.auth_method = 'publickey'
+            self.auth_method = "publickey"
             self.username = username
             self.pkcs11_session = pkcs11_session
             self._request_auth()
