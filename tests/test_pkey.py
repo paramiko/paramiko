@@ -122,6 +122,12 @@ x1234 = b"\x01\x02\x03\x04"
 TEST_KEY_BYTESTR_2 = "\x00\x00\x00\x07ssh-rsa\x00\x00\x00\x01#\x00\x00\x00\x81\x00\xd3\x8fV\xea\x07\x85\xa6k%\x8d<\x1f\xbc\x8dT\x98\xa5\x96$\xf3E#\xbe>\xbc\xd2\x93\x93\x87f\xceD\x18\xdb \x0c\xb3\xa1a\x96\xf8e#\xcc\xacS\x8a#\xefVlE\x83\x1epv\xc1o\x17M\xef\xdf\x89DUXL\xa6\x8b\xaa<\x06\x10\xd7\x93w\xec\xaf\xe2\xaf\x95\xd8\xfb\xd9\xbfw\xcb\x9f0)#y{\x10\x90\xaa\x85l\tPru\x8c\t\x19\xce\xa0\xf1\xd2\xdc\x8e/\x8b\xa8f\x9c0\xdey\x84\xd2F\xf7\xcbmm\x1f\x87"  # noqa
 TEST_KEY_BYTESTR_3 = "\x00\x00\x00\x07ssh-rsa\x00\x00\x00\x01#\x00\x00\x00\x00ӏV\x07k%<\x1fT$E#>ғfD\x18 \x0cae#̬S#VlE\x1epvo\x17M߉DUXL<\x06\x10דw\u2bd5ٿw˟0)#y{\x10l\tPru\t\x19Π\u070e/f0yFmm\x1f"  # noqa
 
+# The decoded public key for the `test_ed25519.key` file.
+TEST_ED25519_BYTESTR = (
+    b'\x00\x00\x00\x0bssh-ed25519\x00\x00\x00 z\xf5+\xd9(\x98\x7f'
+    b'\xf5X\x12/A\xb6\xed\xbeqU\x86\xbc\x9d\xeba\x1fr\x04E\xb8\xb4b\xa2C_'
+)
+
 
 class KeyTest(unittest.TestCase):
     def setUp(self):
@@ -523,12 +529,33 @@ class KeyTest(unittest.TestCase):
         comparable = TEST_KEY_BYTESTR_2 if PY2 else TEST_KEY_BYTESTR_3
         self.assertEqual(str(key), comparable)
 
-    def test_ed25519(self):
+    def test_ed25519_private(self):
+        """
+        It can load encrypted or unecrypted private keys in the new
+        OpenSSH v1 format.
+
+        Private keys can sign data.
+        """
         key1 = Ed25519Key.from_private_key_file(_support("test_ed25519.key"))
         key2 = Ed25519Key.from_private_key_file(
             _support("test_ed25519_password.key"), b"abc123"
         )
+
         self.assertNotEqual(key1.asbytes(), key2.asbytes())
+        self.assertTrue(key1.can_sign())
+        self.assertTrue(key2.can_sign())
+
+    def test_ed25519_public(self):
+        """
+        It can load public ED key from ASN.1 raw public key data that can be
+        passed as bytes or Message instance.
+        """
+        key1 = Ed25519Key(data=TEST_ED25519_BYTESTR)
+        key2 = Ed25519Key(msg=Message(TEST_ED25519_BYTESTR))
+
+        self.assertEqual(key1.asbytes(), key2.asbytes())
+        self.assertFalse(key1.can_sign())
+        self.assertFalse(key2.can_sign())
 
     def test_ed25519_funky_padding(self):
         # Proves #1306 by just not exploding with 'Invalid key'.
@@ -566,6 +593,58 @@ class KeyTest(unittest.TestCase):
             key = Ed25519Key.from_private_key(pkey_fileobj)
         self.assertEqual(key, key)
         self.assertTrue(key.can_sign())
+
+    def test_sign_ed25519(self):
+        """
+        A private ed25519 can be used to sign data.
+        """
+        private = Ed25519Key.from_private_key_file(
+            _support("test_ed25519.key"))
+
+        msg = private.sign_ssh_data(b"ice weasels")
+        self.assertTrue(type(msg) is Message)
+
+        msg.rewind()
+        self.assertEqual("ssh-ed25519", msg.get_text())
+
+        self.assertEqual(
+            b'\x92\xe7\xe3\x93\xc2g\x84\x16b\xf9Dy\xf7\xe5\xce\x06\x8dT\x86'
+            b'\xefm\xd5\xc8\xa2\xcc"\x86\xfa+\xae\xba\x86\x9c$\xe2\xe5@\xef'
+            b'\xe3\x18Ru\xd1XD\x8c|\xe5i\xb5a\x18\n\x11bj\xe9\x9b\x97\x97\x16'
+            b'\xb7\xf2\r',
+            msg.get_binary())
+
+        pub = Ed25519Key(data=TEST_ED25519_BYTESTR)
+        msg.rewind()
+        self.assertTrue(pub.verify_ssh_sig(b"ice weasels", msg))
+
+    def test_verify_ed25519_valid(self):
+        """
+        It returns `True` when the public key verifies the data
+        against a provided signature.
+        """
+        signature = Message()
+        signature.add_string("ssh-ed25519")
+        signature.add_string(
+            b'\x92\xe7\xe3\x93\xc2g\x84\x16b\xf9Dy\xf7\xe5\xce\x06\x8dT\x86'
+            b'\xefm\xd5\xc8\xa2\xcc"\x86\xfa+\xae\xba\x86\x9c$\xe2\xe5@\xef'
+            b'\xe3\x18Ru\xd1XD\x8c|\xe5i\xb5a\x18\n\x11bj\xe9\x9b\x97\x97\x16'
+            b'\xb7\xf2\r')
+        signature.rewind()
+
+        pub = Ed25519Key(data=TEST_ED25519_BYTESTR)
+        self.assertTrue(pub.verify_ssh_sig(b"ice weasels", signature))
+
+    def test_verify_ed25519_invalid(self):
+        """
+        It returns `False` when signature validation fails.
+        """
+        signature = Message()
+        signature.add_string("ssh-ed25519")
+        signature.add_string(b'bad/signature')
+
+        pub = Ed25519Key(data=TEST_ED25519_BYTESTR)
+        self.assertFalse(pub.verify_ssh_sig(b"ice weasels", signature))
 
     def test_keyfile_is_actually_encrypted(self):
         # Read an existing encrypted private key

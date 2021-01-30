@@ -49,7 +49,10 @@ extras_require = {
         'gssapi>=1.4.1;platform_system!="Windows"',
         'pywin32>=2.1.8;platform_system=="Windows"',
     ],
-    "ed25519": ["pynacl>=1.0.1", "bcrypt>=3.1.3"],
+    # TODO 3.0: Remove the ED extra requirement.
+    # This does nothing as ED2559 is supported via cryptography.
+    # Here for backward compatibility.
+    "ed25519": [],
     "invoke": ["invoke>=1.3"],
 }
 everything = []
@@ -86,8 +89,6 @@ setup(
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
     ],
-    # TODO 3.0: remove bcrypt, pynacl and update installation docs noting that
-    # use of the extras_require(s) is now required for those
-    install_requires=["bcrypt>=3.1.3", "cryptography>=2.5", "pynacl>=1.0.1"],
+    install_requires=["bcrypt>=3.1.3", "cryptography>=2.6"],
     extras_require=extras_require,
 )
