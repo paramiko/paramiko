@@ -103,7 +103,7 @@ In general, you'll need one of the following setups:
     ``pip install -U`` - drop that support.
 
 .. _installation instructions:
-.. _Cryptography's install docs: https://cryptography.io/en/latest/installation/
+.. _Cryptography's install docs: https://cryptography.io/en/latest/installation.html
 
 
 .. _gssapi:
