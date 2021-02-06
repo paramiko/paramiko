@@ -48,7 +48,7 @@ In general, you'll need one of the following setups:
   occasionally change.
 
 .. _installation instructions:
-.. _Cryptography's install docs: https://cryptography.io/en/latest/installation/
+.. _Cryptography's install docs: https://cryptography.io/en/latest/installation.html
 
 
 .. _gssapi:
