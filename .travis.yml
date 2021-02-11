@@ -25,7 +25,7 @@ matrix:
       env: "USE_K5TEST=yes"
 install:
   # Ensure modern pip/etc to avoid some issues w/ older worker environs
-  - pip install pip==9.0.1 setuptools==36.6.0
+  - pip install pip==20.0.1 setuptools==44.1.1
   # Grab a specific version of Cryptography if desired. Doing this before other
   # installations ensures we don't have to do any downgrading/overriding.
   - |
@@ -52,7 +52,7 @@ install:
       #
       #   krb5-multidev: required to build gssapi
       sudo apt-get -y install libkrb5-dev krb5-admin-server \
-                              krb5-kdc krb5-user krb5-multidev cargo && \
+                              krb5-kdc krb5-user krb5-multidev && \
       pip install k5test gssapi pyasn1
     fi
   # In case of problems uncomment the following to get the krb environment
