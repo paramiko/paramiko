@@ -1,10 +1,19 @@
-# NOTE: not migrating other settings into this file yet as I don't know how
-# well they'd play with our 'dual doc trees' setup. But the below should apply
-# to both equally.
 version: 2
+
+formats: all
 
 build:
   # Specific version of RTD docker image that's new enough to have Rust around
   # (so Cryptography can build from source if needed).
   # See https://github.com/readthedocs/readthedocs-docker-images
   image: "7.0"
+
+python:
+  version: 3.7
+  install:
+    - requirements: dev-requirements.txt
+  system_packages: false
+
+# NOTE: leaving sphinx.* alone as there's currently no way to differ the conf
+# file used based on project (so cannot differentiate between www and docs).
+# The web UI setting for that SHOULD take precedence?
