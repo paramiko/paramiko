@@ -57,9 +57,8 @@ install:
       #   krb5-user: kinit, klist
       #
       #   krb5-multidev: required to build gssapi
-      sudo apt-get -y install libkrb5-dev krb5-admin-server \
+      sudo apt-get -y install libkrb5-dev krb5-admin-server cargo rustc \
                               krb5-kdc krb5-user krb5-multidev && \
-                              cargo rustc && \
       pip install k5test gssapi pyasn1
     fi
   # In case of problems uncomment the following to get the krb environment
