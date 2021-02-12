@@ -91,7 +91,7 @@ In general, you'll need one of the following setups:
   here, such as `their Rust install section`_ and `this FAQ entry`_.
 
 .. _installation instructions:
-.. _Cryptography's install docs: https://cryptography.io/en/latest/installation/
+.. _Cryptography's install docs: https://cryptography.io/en/latest/installation.html
 .. _their Rust install section: https://cryptography.io/en/latest/installation.html#rust
 .. _this FAQ entry: https://cryptography.io/en/latest/faq.html#installing-cryptography-fails-with-error-can-not-find-rust-compiler
 
