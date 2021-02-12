@@ -5,12 +5,13 @@ cache:
   directories:
     - $HOME/.cache/pip
 python:
+  # refer to https://docs.travis-ci.com/user/languages/python/#python-versions
   - "2.7"
   - "3.6"
   - "3.7"
   - "3.8"
-  - "pypy"
-  - "pypy3"
+  - "pypy2.7-5.10.0"
+  - "pypy3-5.10.0"
 matrix:
   # Explicitly test against our oldest supported cryptography.io, in addition
   # to whatever the latest default is.
@@ -23,6 +24,12 @@ matrix:
       env: "USE_K5TEST=yes"
     - python: 3.7
       env: "USE_K5TEST=yes"
+    - python: pypy2.7-7.2.0
+    - python: pypy3.5-7.3.1
+  allow_failures:
+    - python: pypy2.7-7.2.0
+    - python: pypy3.5-7.3.1
+    
 install:
   # Ensure modern pip/etc to avoid some issues w/ older worker environs
   - pip install pip==20.0.1 setuptools==44.1.1
