@@ -20,3 +20,5 @@ releases>=1.5,<2.0
 semantic_version>=2.4,<2.5
 wheel==0.24
 twine==1.11.0
+# Self
+-e .
