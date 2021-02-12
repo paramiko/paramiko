@@ -30,7 +30,7 @@ matrix:
     - python: pypy2
     - python: pypy3
 install:
-   sudo apt-get -y install cargo rustc
+  - sudo apt-get -y install cargo rustc
   # Ensure modern pip/etc to avoid some issues w/ older worker environs
   - pip install pip==20.0.1 setuptools==44.1.1
   # Grab a specific version of Cryptography if desired. Doing this before other
