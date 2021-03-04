@@ -350,7 +350,8 @@ class SSHClient(ClosingContextManager):
                     # Break out of the loop on success
                     break
                 except socket.error as e:
-                    # As mentioned in socket docs - it is better to close sockets explicitly
+                    # As mentioned in socket docs it is better
+                    # to close sockets explicitly
                     if sock:
                         sock.close()
                     # Raise anything that isn't a straight up connection error
