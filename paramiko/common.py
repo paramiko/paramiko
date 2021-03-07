@@ -30,7 +30,7 @@ from paramiko.py3compat import byte_chr, PY2, long, b
     MSG_SERVICE_REQUEST,
     MSG_SERVICE_ACCEPT,
 ) = range(1, 7)
-(MSG_KEXINIT, MSG_NEWKEYS, MSG_KEXSCIPT) = range(20, 22, 30)
+(MSG_KEXINIT, MSG_NEWKEYS, MSG_KEXSKIP) = range(20, 22, 30)
 (
     MSG_USERAUTH_REQUEST,
     MSG_USERAUTH_FAILURE,
