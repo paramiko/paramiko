@@ -37,15 +37,24 @@ encryption algorithms we need to implement the SSH protocol. It has detailed
 `installation instructions`_ (and an `FAQ <https://cryptography.io/en/latest/faq/>`_)
 which you should read carefully.
 
-In general, you'll need one of the following setups:
+Cryptography provides statically built "wheels" for most common systems,
+which modern "pip" will preferentially install. These include all needed
+non-python components pre-built and should "just work".
 
-* On Windows or Mac OS X, provided your ``pip`` is modern (8.x+): nothing else
-  is required. ``pip`` will install statically compiled binary archives of
-  Cryptography & its dependencies.
-* On Linux, or on other platforms with older versions of ``pip``: you'll need a
-  C build toolchain, plus development headers for Python, OpenSSL and
-  ``libffi``. Again, see `Cryptography's install docs`_; these requirements may
-  occasionally change.
+If you need or want to build cryptography from source, you will need a
+C build toolchain, development headers for Python, OpenSSL and
+``libffi``, and starting with cryptography-3.4, also a Rust language
+toolchain installed. Again, see `Cryptography's install docs`_;
+these requirements may occasionally change.
+
+- Cryptography-3.4 dropped support for Python-2.7
+- Cryptography-3.3 dropped support for Python-3.5
+- Cryptography-3.2 dropped support for OpenSSL-1.0.2
+
+If you have a problem with these changing requirements, you can install
+the last patch release before the incompatible minor release like::
+
+    $ pip install 'cryptography<3.4'
 
 .. _installation instructions:
 .. _Cryptography's install docs: https://cryptography.io/en/latest/installation.html
