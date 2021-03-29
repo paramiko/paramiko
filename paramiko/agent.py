@@ -246,7 +246,12 @@ class AgentClientProxy(object):
             if win_pageant.can_talk_to_agent():
                 conn = win_pageant.PageantConnection()
             else:
-                return
+                import paramiko.win_openssh as win_openssh
+
+                if win_openssh.can_talk_to_agent():
+                    conn = win_openssh.OpenSSHAgentConnection()
+                else:
+                    return
         else:
             # no agent support
             return
@@ -366,6 +371,10 @@ class Agent(AgentSSH):
 
     :raises: `.SSHException` --
         if an SSH agent is found, but speaks an incompatible protocol
+
+    .. versionchanged:: 2.10
+        Added support for native openssh agent on windows (extending previous
+        putty pageant support)
     """
 
     def __init__(self):
@@ -384,7 +393,12 @@ class Agent(AgentSSH):
             if win_pageant.can_talk_to_agent():
                 conn = win_pageant.PageantConnection()
             else:
-                return
+                import paramiko.win_openssh as win_openssh
+
+                if win_openssh.can_talk_to_agent():
+                    conn = win_openssh.OpenSSHAgentConnection()
+                else:
+                    return
         else:
             # no agent support
             return
