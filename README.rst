@@ -143,3 +143,8 @@ use the package k5test to setup a Kerberos environment on the fly::
     $ pip install -r dev-requirements.txt
     $ pip install k5test gssapi pyasn1
     $ pytest
+
+Tests can be executed against different Python versions handled by
+`tox https://tox.readthedocs.io/en/latest/` with the command::
+
+   $ tox
