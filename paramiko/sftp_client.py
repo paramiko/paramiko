@@ -758,7 +758,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         with open(localpath, "rb") as fl:
             return self.putfo(fl, remotepath, file_size, callback, confirm)
 
-    def getfo(self, remotepath, fl, callback=None):
+    def getfo(self, remotepath, fl, callback=None, prefetch=True):
         """
         Copy a remote file (``remotepath``) from the SFTP server and write to
         an open file or file-like object, ``fl``.  Any exception raised by
@@ -771,18 +771,21 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         :param callable callback:
             optional callback function (form: ``func(int, int)``) that accepts
             the bytes transferred so far and the total bytes to be transferred
+        :param bool prefetch:
+            option to deactivate prefetching
         :return: the `number <int>` of bytes written to the opened file object
 
         .. versionadded:: 1.10
         """
         file_size = self.stat(remotepath).st_size
         with self.open(remotepath, "rb") as fr:
-            fr.prefetch(file_size)
+            if prefetch:
+                fr.prefetch(file_size)
             return self._transfer_with_callback(
                 reader=fr, writer=fl, file_size=file_size, callback=callback
             )
 
-    def get(self, remotepath, localpath, callback=None):
+    def get(self, remotepath, localpath, callback=None, prefetch=True):
         """
         Copy a remote file (``remotepath``) from the SFTP server to the local
         host as ``localpath``.  Any exception raised by operations will be
@@ -793,13 +796,15 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         :param callable callback:
             optional callback function (form: ``func(int, int)``) that accepts
             the bytes transferred so far and the total bytes to be transferred
+        :param bool prefetch:
+            option to deactivate prefetching
 
         .. versionadded:: 1.4
         .. versionchanged:: 1.7.4
             Added the ``callback`` param
         """
         with open(localpath, "wb") as fl:
-            size = self.getfo(remotepath, fl, callback)
+            size = self.getfo(remotepath, fl, callback, prefetch)
         s = os.stat(localpath)
         if s.st_size != size:
             raise IOError(
