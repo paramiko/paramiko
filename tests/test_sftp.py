@@ -554,6 +554,32 @@ class TestSFTP(object):
         os.unlink(localname)
         sftp.unlink(sftp.FOLDER + "/bunny.txt")
 
+    def test_get_without_prefetch(self, sftp):
+        """
+        Create a 4MB file. Verify that pull works without prefetching
+        using a lager file.
+        """
+
+        fd, localname = mkstemp()
+        os.close(fd)
+
+        with open(localname, 'wb') as f:
+            num_chars = 1024 * 1024 * 4
+            f.write(b'0' * num_chars)
+
+        sftp.put(localname, sftp.FOLDER + "/dummy_file")
+
+        os.unlink(localname)
+        fd, localname = mkstemp()
+        os.close(fd)
+
+        sftp.get(sftp.FOLDER + "/dummy_file", localname, prefetch=False)
+
+        assert os.stat(localname).st_size == 4194304
+
+        os.unlink(localname)
+        sftp.unlink(sftp.FOLDER + "/dummy_file")
+
     def test_check(self, sftp):
         """
         verify that file.check() works against our own server.
