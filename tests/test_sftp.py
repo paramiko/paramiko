@@ -560,25 +560,27 @@ class TestSFTP(object):
         using a lager file.
         """
 
+        sftp_filename = sftp.FOLDER + "/dummy_file"
+        num_chars = 1024 * 1024 * 4
+
         fd, localname = mkstemp()
         os.close(fd)
 
         with open(localname, 'wb') as f:
-            num_chars = 1024 * 1024 * 4
             f.write(b'0' * num_chars)
 
-        sftp.put(localname, sftp.FOLDER + "/dummy_file")
+        sftp.put(localname, sftp_filename)
 
         os.unlink(localname)
         fd, localname = mkstemp()
         os.close(fd)
 
-        sftp.get(sftp.FOLDER + "/dummy_file", localname, prefetch=False)
+        sftp.get(sftp_filename, localname, prefetch=False)
 
-        assert os.stat(localname).st_size == 4194304
+        assert os.stat(localname).st_size == num_chars
 
         os.unlink(localname)
-        sftp.unlink(sftp.FOLDER + "/dummy_file")
+        sftp.unlink(sftp_filename)
 
     def test_check(self, sftp):
         """
