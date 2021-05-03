@@ -134,10 +134,15 @@ class BaseSFTP(object):
         t, data = self._read_packet()
         if t != CMD_VERSION:
             raise SFTPError("Incompatible sftp protocol")
-        version = struct.unpack(">I", data[:4])[0]
+        m = Message(data)
+        version, extensions = m.get_int(), {}
+        while m.packet.tell() < len(data):
+            ext_name = m.get_text()
+            ext_data = m.get_text()
+            extensions[ext_name] = ext_data
         #        if version != _VERSION:
         #            raise SFTPError('Incompatible sftp protocol')
-        return version
+        return version, extensions
 
     def _send_server_version(self):
         # winscp will freak out if the server sends version info before the
