@@ -515,8 +515,8 @@ class Packetizer(object):
             # length field)
             leftover = header[4:]
             if (
-                    self.__block_size_in
-                    and (packet_size - len(leftover)) % self.__block_size_in != 0
+                self.__block_size_in
+                and (packet_size - len(leftover)) % self.__block_size_in != 0
             ):
                 raise SSHException("Invalid packet blocking")
             buf = self.read_all(
@@ -675,8 +675,8 @@ class Packetizer(object):
         # pad up at least 4 bytes, to nearest block-size (usually 8)
         bsize = self.__block_size_out
         if bsize:
-            # do not include payload length in computations for padding in EtM mode
-            # (payload length won't be encrypted)
+            # do not include payload length in computations for padding in EtM
+            # mode (payload length won't be encrypted)
             addlen = 4 if self.__etm_out else 8
             padding = 3 + bsize - ((len(payload) + addlen) % bsize)
         else:

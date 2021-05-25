@@ -348,7 +348,7 @@ class SSHClient(ClosingContextManager):
                     t.set_log_channel(self._log_channel)
                 t.start_client(timeout=timeout)
                 return
-            except SSHException as e:
+            except SSHException:
                 # Quietly fallback to traditional connection steps
                 pass
         if not sock:
