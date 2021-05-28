@@ -2,6 +2,9 @@
 Changelog
 =========
 
+- :feature:`553` Add `.Channel.recv_into`, `.Channel.recvfrom_into` and
+  `.Channel.recvfrom` for a more complete representation of the Python
+  ``socket`` class.  Courtesy of Daniel Black.
 - :release:`2.7.2 <2020-08-30>`
 - :support:`- backported` Update our CI to catch issues with sdist generation,
   installation and testing.
