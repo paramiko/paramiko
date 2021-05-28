@@ -27,17 +27,21 @@ matrix:
       env: "USE_K5TEST=yes"
 install:
   # Ensure modern pip/etc to avoid some issues w/ older worker environs
-  - pip install pip==9.0.1 setuptools==36.6.0
+  - pip install pip==9.0.2 setuptools==28.8.0 setuptools-rust==0.11.4 cffi==1.14.5
   # Grab a specific version of Cryptography if desired. Doing this before other
   # installations ensures we don't have to do any downgrading/overriding.
   - |
     if [[ -n "$OLDEST_CRYPTO" ]]; then
+      export CRYPTOGRAPHY_DONT_BUILD_RUST=1
       pip install "cryptography==${OLDEST_CRYPTO}"
     fi
   # Self-install for setup.py-driven deps (plus additional
   # safe-enough-for-all-matrix-cells optional deps)
   # TODO: additional matrices or test steps to test all the entrypoints
-  - pip install -e ".[ed25519,invoke]"
+  - |
+    export CRYPTOGRAPHY_DONT_BUILD_RUST=1
+    sudo apt-get install -y gcc
+    pip install -e ".[ed25519,invoke]"
   # Dev (doc/test running) requirements
   # TODO: use poetry + whatever contexty-type stuff it has, should be more than
   # just prod/dev split. Also apply to the above re: extras_require.
