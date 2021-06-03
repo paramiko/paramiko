@@ -460,9 +460,14 @@ class Packetizer(object):
         :raises: `.SSHException` -- if the packet is mangled
         :raises: `.NeedRekeyException` -- if the transport should rekey
         """
-        # timeout is a patch to check if client accept ssh-key-exchange in a timeframe.
-        # if client don't give response, we close the socket to free locked thread
-        header = self.read_all(self.__block_size_in, check_rekey=True, timeout=timeout)
+        # timeout is a patch to check if client accept ssh-key-exchange
+        # in a given timeframe. if client don't give response, we close
+        # the socket to free locked thread
+        header = self.read_all(
+            self.__block_size_in,
+            check_rekey=True,
+            timeout=timeout
+        )
         if self.__etm_in:
             packet_size = struct.unpack(">I", header[:4])[0]
             remaining = packet_size - self.__block_size_in + 4

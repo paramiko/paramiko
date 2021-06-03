@@ -493,7 +493,7 @@ class Transport(threading.Thread, ClosingContextManager):
         # how long (seconds) to wait for the auth response.
         self.auth_timeout = 30
         self.disabled_algorithms = disabled_algorithms or {}
-        # how long (seconds) to wait for ssh key exchange acceptance from client
+        # how long (seconds) to wait for ssh key acceptance from client
         self.key_exchange_timeout = key_exchange_timeout
 
 
@@ -2060,7 +2060,9 @@ class Transport(threading.Thread, ClosingContextManager):
                     if self.packetizer.need_rekey() and not self.in_kex:
                         self._send_kex_init()
                     try:
-                        ptype, m = self.packetizer.read_message(self.key_exchange_timeout)
+                        ptype, m = self.packetizer.read_message(
+                            self.key_exchange_timeout
+                        )
                     except NeedRekeyException:
                         continue
                     if ptype == MSG_IGNORE:
