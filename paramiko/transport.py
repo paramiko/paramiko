@@ -310,6 +310,7 @@ class Transport(threading.Thread, ClosingContextManager):
         gss_kex=False,
         gss_deleg_creds=True,
         disabled_algorithms=None,
+        key_exchange_timeout=0
     ):
         """
         Create a new SSH session over an existing socket, or socket-like
@@ -372,6 +373,10 @@ class Transport(threading.Thread, ClosingContextManager):
             your code talks to a server which implements it differently from
             Paramiko), specify ``disabled_algorithms={"kex":
             ["diffie-hellman-group16-sha512"]}``.
+
+        :param int key_exchange_timeout:
+            if a timeout is given, transport wait a maxium time for
+            ssh-key-exchange.
 
         .. versionchanged:: 1.15
             Added the ``default_window_size`` and ``default_max_packet_size``
@@ -488,6 +493,9 @@ class Transport(threading.Thread, ClosingContextManager):
         # how long (seconds) to wait for the auth response.
         self.auth_timeout = 30
         self.disabled_algorithms = disabled_algorithms or {}
+        # how long (seconds) to wait for ssh key exchange acceptance from client
+        self.key_exchange_timeout = key_exchange_timeout
+
 
         # server mode:
         self.server_mode = False
@@ -2052,7 +2060,7 @@ class Transport(threading.Thread, ClosingContextManager):
                     if self.packetizer.need_rekey() and not self.in_kex:
                         self._send_kex_init()
                     try:
-                        ptype, m = self.packetizer.read_message()
+                        ptype, m = self.packetizer.read_message(self.key_exchange_timeout)
                     except NeedRekeyException:
                         continue
                     if ptype == MSG_IGNORE:
