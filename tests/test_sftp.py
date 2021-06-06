@@ -566,8 +566,8 @@ class TestSFTP(object):
         fd, localname = mkstemp()
         os.close(fd)
 
-        with open(localname, 'wb') as f:
-            f.write(b'0' * num_chars)
+        with open(localname, "wb") as f:
+            f.write(b"0" * num_chars)
 
         sftp.put(localname, sftp_filename)
 
