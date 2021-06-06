@@ -772,10 +772,12 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
             optional callback function (form: ``func(int, int)``) that accepts
             the bytes transferred so far and the total bytes to be transferred
         :param bool prefetch:
-            option to deactivate prefetching
+            controls whether prefetching is performed (default: True)
         :return: the `number <int>` of bytes written to the opened file object
 
         .. versionadded:: 1.10
+        .. versionchanged:: 2.8
+            Added the ``prefetch`` keyword argument.
         """
         file_size = self.stat(remotepath).st_size
         with self.open(remotepath, "rb") as fr:
@@ -797,11 +799,13 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
             optional callback function (form: ``func(int, int)``) that accepts
             the bytes transferred so far and the total bytes to be transferred
         :param bool prefetch:
-            option to deactivate prefetching
+            controls whether prefetching is performed (default: True)
 
         .. versionadded:: 1.4
         .. versionchanged:: 1.7.4
             Added the ``callback`` param
+        .. versionchanged:: 2.8
+            Added the ``prefetch`` keyword argument.
         """
         with open(localpath, "wb") as fl:
             size = self.getfo(remotepath, fl, callback, prefetch)

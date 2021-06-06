@@ -2,6 +2,9 @@
 Changelog
 =========
 
+- :feature:`1846` Add a ``prefetch`` keyword argument to `SFTPClient.get <paramiko.sftp_client.SFTPClient.get>`/`SFTPClient.getfo <paramiko.sftp_client.SFTPClient.getfo>`
+  so users who need to skip SFTP prefetching are able to conditionally turn it
+  off. Thanks to Github user ``@h3ll0r`` for the PR.
 - :release:`2.7.2 <2020-08-30>`
 - :support:`- backported` Update our CI to catch issues with sdist generation,
   installation and testing.
