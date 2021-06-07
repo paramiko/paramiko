@@ -38,6 +38,7 @@ from paramiko.hostkeys import HostKeys
 from paramiko.py3compat import string_types
 from paramiko.rsakey import RSAKey
 from paramiko.ssh_exception import (
+    MissingHostKeyException,
     SSHException,
     BadHostKeyException,
     NoValidConnectionsError,
@@ -244,7 +245,7 @@ class SSHClient(ClosingContextManager):
         and any local host keys (`load_host_keys`).  If the server's hostname
         is not found in either set of host keys, the missing host key policy
         is used (see `set_missing_host_key_policy`).  The default policy is
-        to reject the key and raise an `.SSHException`.
+        to reject the key and raise a `.MissingHostKeyException`.
 
         Authentication is attempted in the following order of priority:
 
@@ -820,9 +821,7 @@ class RejectPolicy(MissingHostKeyPolicy):
                 key.get_name(), hostname, hexlify(key.get_fingerprint())
             ),
         )
-        raise SSHException(
-            "Server {!r} not found in known_hosts".format(hostname)
-        )
+        raise MissingHostKeyException(hostname, key)
 
 
 class WarningPolicy(MissingHostKeyPolicy):

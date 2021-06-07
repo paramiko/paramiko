@@ -135,6 +135,28 @@ class BadHostKeyException(SSHException):
         )
 
 
+class MissingHostKeyException(SSHException):
+    """
+    A host key was not found.
+
+    :param str hostname: the hostname of the SSH server
+    :param PKey got_key: the host key presented by the server
+    """
+
+    def __init__(self, hostname, got_key):
+        SSHException.__init__(self, hostname, got_key)
+        self.hostname = hostname
+        self.key = got_key
+
+    def __str__(self):
+        msg = "Server {!r} not found in known_hosts (ssh-{} {})"  # noqa
+        return msg.format(
+            self.hostname,
+            self.key.get_name(),
+            self.key.get_base64(),
+        )
+
+
 class ProxyCommandFailure(SSHException):
     """
     The "ProxyCommand" found in the .ssh/config file returned an error.
