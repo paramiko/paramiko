@@ -287,7 +287,8 @@ class Packetizer(object):
             ``EOFError`` -- if the socket was closed before all the bytes could
             be read
         """
-        out = bytes()
+        buf = bytearray(n)
+        out = memoryview(buf)
         # handle over-reading from reading the banner line
         if len(self.__remainder) > 0:
             out = self.__remainder[:n]
@@ -298,11 +299,11 @@ class Packetizer(object):
             if self.handshake_timed_out():
                 raise EOFError()
             try:
-                x = self.__socket.recv(n)
-                if len(x) == 0:
+                x = self.__socket.recv_into(out, n)
+                out = out[x:]
+                if x == 0:
                     raise EOFError()
-                out += x
-                n -= len(x)
+                n -= x
             except socket.timeout:
                 got_timeout = True
             except socket.error as e:
@@ -325,7 +326,7 @@ class Packetizer(object):
                 if check_rekey and (len(out) == 0) and self.__need_rekey:
                     raise NeedRekeyException()
                 self._check_keepalive()
-        return out
+        return bytes(buf)
 
     def write_all(self, out):
         self.__keepalive_last = time.time()

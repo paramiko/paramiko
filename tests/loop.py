@@ -70,6 +70,12 @@ class LoopSocket(object):
         finally:
             self.__lock.release()
 
+    def recv_into(self, view, n):
+        out = self.recv(n)
+        x = len(out)
+        view[:x] = out
+        return x
+
     def settimeout(self, n):
         self.__timeout = n
 
