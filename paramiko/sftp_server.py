@@ -234,7 +234,7 @@ class SFTPServer(BaseSFTP, SubsystemHandler):
                 msg.add_int(item)
             elif isinstance(item, (string_types, bytes_types)):
                 msg.add_string(item)
-            elif type(item) is SFTPAttributes:
+            elif isinstance(item, SFTPAttributes):
                 item._pack(msg)
             else:
                 raise Exception(
