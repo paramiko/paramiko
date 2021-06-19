@@ -210,7 +210,7 @@ _g_thread_lock = threading.Lock()
 
 def get_thread_id():
     global _g_thread_ids, _g_thread_counter, _g_thread_lock
-    tid = id(threading.currentThread())
+    tid = id(threading.current_thread())
     try:
         return _g_thread_ids[tid]
     except KeyError:

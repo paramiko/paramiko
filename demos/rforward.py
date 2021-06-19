@@ -75,7 +75,7 @@ def reverse_forward_tunnel(server_port, remote_host, remote_port, transport):
         if chan is None:
             continue
         thr = threading.Thread(target=handler, args=(chan, remote_host, remote_port))
-        thr.setDaemon(True)
+        thr.daemon = True
         thr.start()
 
 
