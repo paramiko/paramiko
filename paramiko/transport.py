@@ -417,7 +417,7 @@ class Transport(threading.Thread, ClosingContextManager):
                 )
         # okay, normal socket-ish flow here...
         threading.Thread.__init__(self)
-        self.setDaemon(True)
+        self.daemon = True
         self.sock = sock
         # we set the timeout so we can check self.active periodically to
         # see if we should bail. socket.timeout exception is never propagated.
