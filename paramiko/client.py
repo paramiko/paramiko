@@ -37,13 +37,18 @@ from paramiko.ed25519key import Ed25519Key
 from paramiko.hostkeys import HostKeys
 from paramiko.py3compat import string_types
 from paramiko.rsakey import RSAKey
+from paramiko.socks_proxy import SOCKSProxy
 from paramiko.ssh_exception import (
     SSHException,
     BadHostKeyException,
     NoValidConnectionsError,
 )
 from paramiko.transport import Transport
-from paramiko.util import retry_on_signal, ClosingContextManager
+from paramiko.util import (
+    families_and_addresses,
+    retry_on_signal,
+    ClosingContextManager
+)
 
 
 class SSHClient(ClosingContextManager):
@@ -77,6 +82,7 @@ class SSHClient(ClosingContextManager):
         self._policy = RejectPolicy()
         self._transport = None
         self._agent = None
+        self._socks_proxies = []
 
     def load_system_host_keys(self, filename=None):
         """
@@ -190,30 +196,6 @@ class SSHClient(ClosingContextManager):
         if inspect.isclass(policy):
             policy = policy()
         self._policy = policy
-
-    def _families_and_addresses(self, hostname, port):
-        """
-        Yield pairs of address families and addresses to try for connecting.
-
-        :param str hostname: the server to connect to
-        :param int port: the server port to connect to
-        :returns: Yields an iterable of ``(family, address)`` tuples
-        """
-        guess = True
-        addrinfos = socket.getaddrinfo(
-            hostname, port, socket.AF_UNSPEC, socket.SOCK_STREAM
-        )
-        for (family, socktype, proto, canonname, sockaddr) in addrinfos:
-            if socktype == socket.SOCK_STREAM:
-                yield family, sockaddr
-                guess = False
-
-        # some OS like AIX don't indicate SOCK_STREAM support, so just
-        # guess. :(  We only do this if we did not get a single result marked
-        # as socktype == SOCK_STREAM.
-        if guess:
-            for family, _, _, _, sockaddr in addrinfos:
-                yield family, sockaddr
 
     def connect(
         self,
@@ -337,7 +319,7 @@ class SSHClient(ClosingContextManager):
         if not sock:
             errors = {}
             # Try multiple possible address families (e.g. IPv4 vs IPv6)
-            to_try = list(self._families_and_addresses(hostname, port))
+            to_try = list(families_and_addresses(hostname, port))
             for af, addr in to_try:
                 try:
                     sock = socket.socket(af, socket.SOCK_STREAM)
@@ -456,6 +438,9 @@ class SSHClient(ClosingContextManager):
             It's good practice to `close` your client objects anytime you're
             done using them, instead of relying on garbage collection.
         """
+        for proxy in self._socks_proxies:
+            proxy.close()
+
         if self._transport is None:
             return
         self._transport.close()
@@ -554,6 +539,27 @@ class SSHClient(ClosingContextManager):
         :return: a new `.SFTPClient` session object
         """
         return self._transport.open_sftp_client()
+
+    def open_socks_proxy(self, bind_address="localhost", port=1080):
+        """
+        Start a SOCKS5 proxy and make it available on a local socket.
+
+        :param str bind_address: the interface to bind to
+        :param int port: the port to bind to
+
+        :return: a new `.SOCKSProxy` object
+        """
+        socks_proxy = SOCKSProxy(self._transport, bind_address, port)
+        self._socks_proxies.append(socks_proxy)
+        return socks_proxy
+
+    def get_socks_proxies(self):
+        """
+        Return the list of all running SOCKS proxies instances.
+
+        :return: list of running `.SOCKSProxy` objects for this SSH client
+        """
+        return self._socks_proxies
 
     def get_transport(self):
         """

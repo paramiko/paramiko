@@ -62,6 +62,7 @@ Other primary functions
     api/proxy
     api/server
     api/sftp
+    api/socks_proxy
 
 
 Miscellany
