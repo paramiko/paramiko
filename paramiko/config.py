@@ -29,7 +29,7 @@ import shlex
 import socket
 from functools import partial
 
-from .py3compat import StringIO
+from paramiko.py3compat import StringIO
 
 invoke, invoke_import_error = None, None
 try:
@@ -37,7 +37,7 @@ try:
 except ImportError as e:
     invoke_import_error = e
 
-from .ssh_exception import CouldNotCanonicalize, ConfigParseError
+from paramiko.ssh_exception import CouldNotCanonicalize, ConfigParseError
 
 
 SSH_PORT = 22

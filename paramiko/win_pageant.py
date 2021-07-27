@@ -33,7 +33,7 @@ try:
 except ImportError:
     import thread  # Python 2.5-2.7
 
-from . import _winapi
+from paramiko import _winapi
 
 
 _AGENT_COPYDATA_ID = 0x804e50ba
