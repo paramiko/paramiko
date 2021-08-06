@@ -179,9 +179,7 @@ class SSHConfig(object):
                     context["config"][key] = value
         # Store last 'open' block and we're done
         self._config.append(context)
-    
-    #workaroud https://github.com/paramiko/paramiko/issues/1888
-    #@ Change L1 port=port added
+
     def lookup(self, hostname, port=None):
         """
         Return a dict (`SSHConfigDict`) of config options for a given hostname.
@@ -238,13 +236,9 @@ class SSHConfig(object):
             hostname = self.canonicalize(hostname, options, domains)
             # Overwrite HostName again here (this is also what OpenSSH does)
             options["hostname"] = hostname
-            #workaroud https://github.com/paramiko/paramiko/issues/1888
-            #@ Change L1 port=port added
-            options = self._lookup(hostname, options, canonical=True)
+            options = self._lookup(hostname, options, canonical=True, port=port)
         return options
 
-    #workaroud https://github.com/paramiko/paramiko/issues/1888
-    #@ Change L1 port=None added
     def _lookup(self, hostname, options=None, port=None, canonical=False):
         # Init
         if options is None:
@@ -272,8 +266,6 @@ class SSHConfig(object):
                     )
         # Expand variables in resulting values (besides 'Match exec' which was
         # already handled above)
-        #workaroud https://github.com/paramiko/paramiko/issues/1888
-        #@ Change L1 port=port added
         options = self._expand_variables(options, hostname, port=port)
         # TODO: remove in 3.x re #670
         if "proxycommand" in options and options["proxycommand"] is None:
@@ -407,8 +399,6 @@ class SSHConfig(object):
     def _should_fail(self, would_pass, candidate):
         return would_pass if candidate["negate"] else not would_pass
 
-    #workaroud https://github.com/paramiko/paramiko/issues/1888
-    #@ Change L1 port=None added
     def _tokenize(self, config, target_hostname, key, value, port=None):
         """
         Tokenize a string based on current config/hostname data.
@@ -432,10 +422,8 @@ class SSHConfig(object):
         if key != "hostname":
             configured_hostname = config.get("hostname", configured_hostname)
         # Ditto the rest of the source values
-        #workaroud https://github.com/paramiko/paramiko/issues/1888
-        #@ Change L1-3 ...added
         if not port is None:
-            port=port
+            port = port
         elif "port" in config:
             port = config["port"]
         else:
@@ -486,8 +474,6 @@ class SSHConfig(object):
         """
         return self.TOKENS_BY_CONFIG_KEY.get(key, [])
 
-    #workaroud https://github.com/paramiko/paramiko/issues/1888
-    #@ Change L1 port=port added
     def _expand_variables(self, config, target_hostname, port=None):
         """
         Return a dict of config options with expanded substitutions
@@ -502,7 +488,6 @@ class SSHConfig(object):
         for k in config:
             if config[k] is None:
                 continue
-            #@ Change L1 port added
             tokenizer = partial(self._tokenize, config, target_hostname, k, port=port)
             if isinstance(config[k], list):
                 for i, value in enumerate(config[k]):
@@ -707,4 +692,3 @@ class SSHConfigDict(dict):
         .. versionadded:: 2.5
         """
         return int(self[key])
-        
