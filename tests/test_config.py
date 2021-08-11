@@ -990,3 +990,30 @@ class TestComplexMatching(object):
         # !canonical in a config that is canonicalized - does NOT match
         result = load_config("match-canonical-yes").lookup("www")
         assert result["user"] == "hidden"
+
+
+class TestSSHConfigInclude(object):
+    def setup(self):
+        config = """
+Include {basic}
+
+Host example.com
+    User exampleuser
+
+Include {basic2}
+""".format(basic=_config("basic"),
+           basic2=_config("basic2"))
+        self.config = SSHConfig.from_text(config)
+
+    def test_include(self):
+        result = self.config.lookup("www.paramiko.org")
+        assert result["hostname"] == "www.paramiko.org"
+        assert result["user"] == "rando"
+
+        result = self.config.lookup("example.com")
+        assert result["hostname"] == "example.com"
+        assert result["user"] == "exampleuser"
+
+        result = self.config.lookup("example.org")
+        assert result["hostname"] == "example.org"
+        assert result["user"] == "exampleuser2"
