@@ -17,24 +17,22 @@ jobs:
           - "python:3.5-buster"
           - "python:3.6-buster"
           - "python:3.7-buster"
-          - "python:3.8-buster"
-          - "python:3.9-buster"
-          - "pypy:2.7-7.3"
-          - "pypy:3.6-7.3"
+          - "python:3.8-bullseye"
+          - "python:3.9-bullseye"
+          - "pypy:2.7-7.3.5"
+          - "pypy:3.7-7.3.5"
         crypto_ver:
           - "2.4.2"
-          - "2.6.1"
-          - "2.9.2"
-          - "3.0"
-        exclude:
-          - imgtag: "python:2.7-buster"
-            crypto_ver: "3.0"
-          - imgtag: "pypy:2.7-7.3"
-            crypto_ver: "3.0"
-          - imgtag: "python:3.4-stretch"
-            crypto_ver: "3.0"
-          - imgtag: "python:3.4-stretch"
-            crypto_ver: "2.9.2"
+          - "2.8"
+        include:
+          - {imgtag: "python:3.4-stretch",  crypto_ver: "1.6"}
+          - {imgtag: "python:2.7-buster",   crypto_ver: "2.9.2"}
+          - {imgtag: "python:3.5-buster",   crypto_ver: "2.9.2"}
+          - {imgtag: "python:3.9-bullseye", crypto_ver: "2.9.2"}
+          - {imgtag: "python:2.7-buster",   crypto_ver: "3.1.1"}
+          - {imgtag: "python:3.6-buster",   crypto_ver: "3.1.1"}
+          - {imgtag: "python:3.8-bullseye", crypto_ver: "3.4.7"}
+          - {imgtag: "pypy:3.7-7.3.5",      crypto_ver: "3.4.7"}
 
     container: "${{matrix.imgtag}}"
     steps:
@@ -43,12 +41,6 @@ jobs:
         run: |
           pip install -r dev-requirements.txt
           pip install cryptography==${{matrix.crypto_ver}} PyNaCl
-          if [ ${{matrix.imgtag}} = python:3.4-stretch ] && \
-             [ ${{matrix.crypto_ver}} = 2.8            ]; then
-            # cryptography-1.6 does not seem to work with other distros
-            # swap it in for just this one matrix combo
-            pip install cryptography==1.6
-          fi
           if [ ${{matrix.imgtag}} = python:2.7-buster ] || \
              [ ${{matrix.imgtag}} = python:3.6-buster ]; then
             export DEBIAN_FRONTEND=noninteractive
