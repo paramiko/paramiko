@@ -1,8 +1,8 @@
 # flake8
-flake8==3.7.9
+flake8==3.8.4
 mccabe==0.6.1
-pycodestyle==2.5.0
-pyflakes==2.1.1
+pycodestyle==2.6.0
+pyflakes==2.2.0
 # for running tests
-pytest==4.4.1
+pytest==4.6.11
 mock==2.0.0;python_version<"3.3"

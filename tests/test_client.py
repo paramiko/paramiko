@@ -411,8 +411,11 @@ class SSHClientTest(ClientTest):
 
         # force a collection to see whether the SSHClient object is deallocated
         # 2 GCs are needed on PyPy, time is needed for Python 3
-        time.sleep(0.3)
+        time.sleep(0.1)
         gc.collect()
+        time.sleep(0.1)
+        gc.collect()
+        time.sleep(0.1)
         gc.collect()
 
         self.assertTrue(p() is None)
