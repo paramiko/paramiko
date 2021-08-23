@@ -297,11 +297,13 @@ class Transport(threading.Thread, ClosingContextManager):
         :param socket sock:
             a socket or socket-like object to create the session over.
         :param int default_window_size:
-            sets the default window size on the transport. (defaults to
-            2097152)
+            sets the default window size on the transport
         :param int default_max_packet_size:
-            sets the default max packet size on the transport. (defaults to
-            32768)
+            sets the default max packet size on the transport
+        :param bool gss_kex:
+            Perform GSS-API Key Exchange and user authentication.
+        :param bool gss_deleg_creds:
+            Whether to delegate GSS-API client credentials.
 
         .. versionchanged:: 1.15
             Added the ``default_window_size`` and ``default_max_packet_size``
