@@ -66,7 +66,7 @@ class SSHClient(ClosingContextManager):
     .. versionadded:: 1.6
     """
 
-    def __init__(self):
+    def __init__(self, transport=None):
         """
         Create a new SSHClient.
         """
@@ -75,7 +75,7 @@ class SSHClient(ClosingContextManager):
         self._host_keys_filename = None
         self._log_channel = None
         self._policy = RejectPolicy()
-        self._transport = None
+        self._transport = transport
         self._agent = None
 
     def load_system_host_keys(self, filename=None):
