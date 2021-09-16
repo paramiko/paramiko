@@ -1,0 +1,11 @@
+Host jump
+    HostName jump.example.orig
+    Port 1003
+
+Host finally
+    HostName finally.example.org
+    Port 1001
+
+Match final host "*.example.org" !host jump.example.org
+    ProxyJump jump
+    Port 1002

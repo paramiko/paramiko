@@ -61,7 +61,8 @@ Paramiko releases) are included. A keyword by itself means no known departures.
 
 - ``Host``
 - ``HostName``: used in ``%h`` :ref:`token expansion <TOKENS>`
-- ``Match``: fully supported, with the following caveats:
+- ``Match``: supports (canonical, final, exec, host, originalhost, user, localuser, all), with
+  the following caveats:
 
     - You must have the optional dependency Invoke installed; see :ref:`the
       installation docs <paramiko-itself>` (in brief: install

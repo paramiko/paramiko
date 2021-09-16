@@ -1030,3 +1030,14 @@ class TestComplexMatching:
         # !canonical in a config that is canonicalized - does NOT match
         result = load_config("match-canonical-yes").lookup("www")
         assert result["user"] == "hidden"
+
+
+class TestFinalMatching(object):
+    def test_final(self):
+        result = load_config("match-final").lookup("finally")
+        assert result["proxyjump"] == "jump"
+        assert result["port"] == "1001"
+
+    def test_negated(self):
+        result = load_config("match-final").lookup("jump")
+        assert result["port"] == "1003"

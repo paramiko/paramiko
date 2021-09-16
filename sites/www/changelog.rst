@@ -2,6 +2,11 @@
 Changelog
 =========
 
+- :feature:`1907` (solves :issue:`1992`) Add support and tests for
+  ssh_config ``Match final …`` which is frequently used in ProxyJump
+  configurations to exclude the jump host from the ProxyJump Match statement.
+  Patch by ``@commonism``.
+
 - :feature:`2058` (solves :issue:`1587` and possibly others) Add an explicit
   ``max_concurrent_prefetch_requests`` argument to `paramiko.client.SSHClient.get`
   and `paramiko.client.SSHClient.getfo`, allowing users to limit the number
