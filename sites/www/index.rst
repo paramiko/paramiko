@@ -10,7 +10,9 @@ SSH networking concepts.
 This website covers project information for Paramiko such as the changelog,
 contribution guidelines, development roadmap, news/blog, and so forth. Detailed
 usage and API documentation can be found at our code documentation site,
-`docs.paramiko.org <http://docs.paramiko.org>`_.
+`docs.paramiko.org <http://docs.paramiko.org>`_. Additionally, the project
+maintainer keeps a `roadmap <http://bitprophet.org/projects#roadmap>`_ on his
+website.
 
 Please see the sidebar to the left to begin.
 
