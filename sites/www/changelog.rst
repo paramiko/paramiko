@@ -2,11 +2,12 @@
 Changelog
 =========
 
-- :bug:`1882` Newer server-side key exchange algorithms not intended to use
-  SHA1 (``diffie-hellman-group14-sha256``, ``diffie-hellman-group16-sha512``)
-  were incorrectly using SHA1 after all, due to a bug causing them to ignore
-  the ``hash_algo`` class attribute. This has been corrected. Big thanks to
-  Benno Rice for catch & patch.
+- :bug:`1462` (via :issue:`1882`) Newer server-side key exchange algorithms not
+  intended to use SHA1 (``diffie-hellman-group14-sha256``,
+  ``diffie-hellman-group16-sha512``) were incorrectly using SHA1 after all, due
+  to a bug causing them to ignore the ``hash_algo`` class attribute. This has
+  been corrected. Big thanks to ``@miverson`` for the report and to Benno Rice
+  for the patch.
 - :release:`2.6.0 <2019-06-23>`
 - :feature:`1463` Add a new keyword argument to `SSHClient.connect
   <paramiko.client.SSHClient.connect>` and `~paramiko.transport.Transport`,
