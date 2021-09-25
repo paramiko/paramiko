@@ -1,17 +1,17 @@
-dist: xenial
+dist: bionic
 language: python
 sudo: false
 cache:
   directories:
     - $HOME/.cache/pip
 python:
+  # refer to https://docs.travis-ci.com/user/languages/python/#python-versions
   - "2.7"
-  - "3.4"
   - "3.5"
   - "3.6"
   - "3.7"
   - "3.8"
-  - "pypy"
+  - "pypy2"
   - "pypy3"
 matrix:
   # Explicitly test against our oldest supported cryptography.io, in addition
@@ -25,9 +25,15 @@ matrix:
       env: "USE_K5TEST=yes"
     - python: 3.7
       env: "USE_K5TEST=yes"
+    - python: pypy2
+    - python: pypy3
+  allow_failures:
+    - python: pypy2
+    - python: pypy3
 install:
+  - sudo apt-get -y install cargo rustc
   # Ensure modern pip/etc to avoid some issues w/ older worker environs
-  - pip install pip==9.0.1 setuptools==36.6.0
+  - pip install pip==20.0.1 setuptools==44.1.1
   # Grab a specific version of Cryptography if desired. Doing this before other
   # installations ensures we don't have to do any downgrading/overriding.
   - |
