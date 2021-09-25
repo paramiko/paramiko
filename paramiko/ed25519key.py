@@ -16,10 +16,12 @@
 
 import bcrypt
 
+from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import ed25519
 from cryptography.hazmat.primitives.ciphers import Cipher
 
-import nacl.signing
 
 from paramiko.message import Message
 from paramiko.pkey import PKey, OPENSSH_AUTH_MAGIC, _unpad_openssh
@@ -29,7 +31,11 @@ from paramiko.ssh_exception import SSHException, PasswordRequiredException
 
 class Ed25519Key(PKey):
     """
-    Representation of an `Ed25519 <https://ed25519.cr.yp.to/>`_ key.
+    Representation of an `Ed25519 <https://ed25519.cr.yp.to/>`_ public or
+    private key.
+
+    When `msg` or `data` arguments are provided for the constructor, a
+    public key is generated.
 
     .. note::
         Ed25519 key support was added to OpenSSH in version 6.5.
@@ -52,7 +58,8 @@ class Ed25519Key(PKey):
                 key_type="ssh-ed25519",
                 cert_type="ssh-ed25519-cert-v01@openssh.com",
             )
-            verifying_key = nacl.signing.VerifyKey(msg.get_binary())
+            verifying_key = ed25519.Ed25519PublicKey.from_public_bytes(
+                msg.get_binary())
         elif filename is not None:
             with open(filename, "r") as f:
                 pkformat, data = self._read_private_key("OPENSSH", f)
@@ -148,10 +155,14 @@ class Ed25519Key(PKey):
             key_data = message.get_binary()
             # The second half of the key data is yet another copy of the public
             # key...
-            signing_key = nacl.signing.SigningKey(key_data[:32])
+            signing_key = ed25519.Ed25519PrivateKey.from_private_bytes(
+                key_data[:32])
             # Verify that all the public keys are the same...
             assert (
-                signing_key.verify_key.encode()
+                signing_key.public_key().public_bytes(
+                    serialization.Encoding.Raw,
+                    serialization.PublicFormat.Raw,
+                )
                 == public
                 == public_keys[i]
                 == key_data[32:]
@@ -166,20 +177,20 @@ class Ed25519Key(PKey):
 
     def asbytes(self):
         if self.can_sign():
-            v = self._signing_key.verify_key
+            v = self._signing_key.public_key()
         else:
             v = self._verifying_key
+
         m = Message()
         m.add_string("ssh-ed25519")
-        m.add_string(v.encode())
+        m.add_string(v.public_bytes(
+            serialization.Encoding.Raw,
+            serialization.PublicFormat.Raw,
+        ))
         return m.asbytes()
 
     def __hash__(self):
-        if self.can_sign():
-            v = self._signing_key.verify_key
-        else:
-            v = self._verifying_key
-        return hash((self.get_name(), v))
+        return hash((self.get_name(), self.asbytes()))
 
     def get_name(self):
         return "ssh-ed25519"
@@ -193,7 +204,7 @@ class Ed25519Key(PKey):
     def sign_ssh_data(self, data):
         m = Message()
         m.add_string("ssh-ed25519")
-        m.add_string(self._signing_key.sign(data).signature)
+        m.add_string(self._signing_key.sign(data))
         return m
 
     def verify_ssh_sig(self, data, msg):
@@ -201,8 +212,8 @@ class Ed25519Key(PKey):
             return False
 
         try:
-            self._verifying_key.verify(data, msg.get_binary())
-        except nacl.exceptions.BadSignatureError:
+            self._verifying_key.verify(msg.get_binary(), data)
+        except InvalidSignature:
             return False
         else:
             return True

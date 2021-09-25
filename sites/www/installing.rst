@@ -26,27 +26,20 @@ Paramiko has only a few **direct dependencies**:
 
 - The big one, with its own sub-dependencies, is Cryptography; see :ref:`its
   specific note below <cryptography>` for more details;
-- `bcrypt <https://pypi.org/project/bcrypt/>`_, for Ed25519 key support;
-- `pynacl <https://pypi.org/project/PyNaCl/>`_, also for Ed25519 key support.
+- `bcrypt <https://pypi.org/project/bcrypt/>`_,
+   for encrypted OpenSSH v1 new key format support;
 
 There are also a number of **optional dependencies** you may install using
 `setuptools 'extras'
 <https://packaging.python.org/tutorials/installing-packages/#installing-setuptools-extras>`_:
 
 .. TODO 3.0: tweak the invoke line to mention proxycommand too
-.. TODO 3.0: tweak the ed25519 line to remove the caveat
 
 - If you want all optional dependencies at once, use ``paramiko[all]``.
 - For ``Match exec`` config support, use ``paramiko[invoke]`` (which installs
   `Invoke <https://www.pyinvoke.org>`_).
 - For GSS-API / SSPI support, use ``paramiko[gssapi]``, though also see
   :ref:`the below subsection on it <gssapi>` for details.
-- ``paramiko[ed25519]`` references the dependencies for Ed25519 key support.
-
-    - As of Paramiko 2.x this doesn't technically do anything, as those
-      dependencies are core installation requirements.
-    - However, you should use this for forwards compatibility; 3.0 will drop
-      those dependencies from core, leaving them purely optional.
 
 
 .. _release-lines:
