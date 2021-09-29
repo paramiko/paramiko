@@ -28,7 +28,7 @@ import threading
 import time
 import tempfile
 import stat
-from select import select
+import select
 from paramiko.common import asbytes, io_sleep
 from paramiko.py3compat import byte_chr
 
@@ -130,17 +130,22 @@ class AgentProxyThread(threading.Thread):
 
         oldflags = fcntl.fcntl(self.__inr, fcntl.F_GETFL)
         fcntl.fcntl(self.__inr, fcntl.F_SETFL, oldflags | os.O_NONBLOCK)
+        poller = select.poll()
+        poller.register(self._agent._conn, select.POLLIN)
+        poller.register(self.__inr, select.POLLIN)
         while not self._exit:
-            events = select([self._agent._conn, self.__inr], [], [], 0.5)
+            events = poller.poll(0.5)
+            events = [fileno for (fileno, flags) in events 
+                      if flags & select.POLLIN]
             for fd in events[0]:
-                if self._agent._conn == fd:
+                if self._agent._conn.fileno() == fd:
                     data = self._agent._conn.recv(512)
                     if len(data) != 0:
                         self.__inr.send(data)
                     else:
                         self._close()
                         break
-                elif self.__inr == fd:
+                elif self.__inr.fileno() == fd:
                     data = self.__inr.recv(512)
                     if len(data) != 0:
                         self._agent._conn.send(data)
@@ -148,6 +153,8 @@ class AgentProxyThread(threading.Thread):
                         self._close()
                         break
             time.sleep(io_sleep)
+        poller.unregister(self._agent)
+        poller.unregister(self.__inr)
 
     def _close(self):
         self._exit = True

@@ -1,4 +1,5 @@
 import signal
+import select
 import socket
 
 from mock import patch
@@ -36,12 +37,13 @@ class TestProxyCommand(object):
 
     @patch("paramiko.proxy.subprocess.Popen")
     @patch("paramiko.proxy.os.read")
-    @patch("paramiko.proxy.select")
+    @patch("paramiko.proxy.select.poll")
     def test_recv_reads_from_process_stdout_returning_bytes(
-        self, select, os_read, Popen
+        self, poll, os_read, Popen
     ):
         stdout = Popen.return_value.stdout
-        select.return_value = [stdout], None, None
+        poll.return_value.poll.return_value = [
+            (stdout.fileno(), select.POLLIN)]
         fileno = stdout.fileno.return_value
         # Intentionally returning <5 at a time sometimes
         os_read.side_effect = [b"was", b"te", b"of ti", b"me"]
@@ -55,12 +57,13 @@ class TestProxyCommand(object):
 
     @patch("paramiko.proxy.subprocess.Popen")
     @patch("paramiko.proxy.os.read")
-    @patch("paramiko.proxy.select")
+    @patch("paramiko.proxy.select.poll")
     def test_recv_returns_buffer_on_timeout_if_any_read(
-        self, select, os_read, Popen
+        self, poll, os_read, Popen
     ):
         stdout = Popen.return_value.stdout
-        select.return_value = [stdout], None, None
+        poll.return_value.poll.return_value = [
+            (stdout.fileno(), select.POLLIN)]
         fileno = stdout.fileno.return_value
         os_read.side_effect = [b"was", socket.timeout]
         proxy = ProxyCommand("hi")
@@ -70,10 +73,11 @@ class TestProxyCommand(object):
 
     @patch("paramiko.proxy.subprocess.Popen")
     @patch("paramiko.proxy.os.read")
-    @patch("paramiko.proxy.select")
-    def test_recv_raises_timeout_if_nothing_read(self, select, os_read, Popen):
+    @patch("paramiko.proxy.select.poll")
+    def test_recv_raises_timeout_if_nothing_read(self, poll, os_read, Popen):
         stdout = Popen.return_value.stdout
-        select.return_value = [stdout], None, None
+        poll.return_value.poll.return_value = [
+            (stdout.fileno(), select.POLLIN)]
         fileno = stdout.fileno.return_value
         os_read.side_effect = socket.timeout
         proxy = ProxyCommand("hi")
@@ -83,11 +87,12 @@ class TestProxyCommand(object):
 
     @patch("paramiko.proxy.subprocess.Popen")
     @patch("paramiko.proxy.os.read")
-    @patch("paramiko.proxy.select")
+    @patch("paramiko.proxy.select.poll")
     def test_recv_raises_ProxyCommandFailure_on_non_timeout_error(
-        self, select, os_read, Popen
+        self, poll, os_read, Popen
     ):
-        select.return_value = [Popen.return_value.stdout], None, None
+        poll.return_value.poll.return_value = [
+            (Popen.return_value.stdout.fileno(), select.POLLIN)]
         os_read.side_effect = IOError(0, "whoops")
         with raises(ProxyCommandFailure) as info:
             ProxyCommand("hi").recv(5)
@@ -114,12 +119,13 @@ class TestProxyCommand(object):
     @patch("paramiko.proxy.time.time")
     @patch("paramiko.proxy.subprocess.Popen")
     @patch("paramiko.proxy.os.read")
-    @patch("paramiko.proxy.select")
+    @patch("paramiko.proxy.select.poll")
     def test_timeout_affects_whether_timeout_is_raised(
-        self, select, os_read, Popen, time
+        self, poll, os_read, Popen, time
     ):
         stdout = Popen.return_value.stdout
-        select.return_value = [stdout], None, None
+        poll.return_value.poll.return_value = [
+            (stdout.fileno(), select.POLLIN)]
         # Base case: None timeout means no timing out
         os_read.return_value = b"meh"
         proxy = ProxyCommand("yello")

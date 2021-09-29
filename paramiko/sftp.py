@@ -176,11 +176,14 @@ class BaseSFTP(object):
                 # if the socket is closed.  (for some reason, recv() won't ever
                 # return or raise an exception, but calling select on a closed
                 # socket will.)
+                poller = select.poll()
+                poller.register(self.sock, select.POLLIN)
                 while True:
-                    read, write, err = select.select([self.sock], [], [], 0.1)
+                    read = poller.poll(0.1)
                     if len(read) > 0:
                         x = self.sock.recv(n)
                         break
+                poller.unregister(self.sock)
             else:
                 x = self.sock.recv(n)
 
