@@ -106,7 +106,7 @@ class ProxyCommand(ClosingContextManager):
                         raise socket.timeout()
                     select_timeout = self.timeout - elapsed
                 r = [fileno for (fileno, flags) in poller.poll(
-                    self.timeout) if flags & select.POLLIN]
+                    select_timeout) if flags & select.POLLIN]
                 if r and r[0] == self.process.stdout.fileno():
                     buffer += os.read(
                         self.process.stdout.fileno(), size - len(buffer)
