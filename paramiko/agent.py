@@ -134,8 +134,7 @@ class AgentProxyThread(threading.Thread):
         poller.register(self._agent._conn, select.POLLIN)
         poller.register(self.__inr, select.POLLIN)
         while not self._exit:
-            events = poller.poll(0.5)
-            events = [fileno for (fileno, flags) in events 
+            events = [fileno for (fileno, flags) in poller.poll(0.5) 
                       if flags & select.POLLIN]
             for fd in events[0]:
                 if self._agent._conn.fileno() == fd:
