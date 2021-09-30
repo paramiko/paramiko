@@ -180,7 +180,7 @@ class BaseSFTP(object):
                 poller.register(self.sock, select.POLLIN)
                 while True:
                     read = [fileno for (fileno, flags) in poller.poll(
-                        0.1) if fileno & select.POLLIN]
+                        0.1) if flags & select.POLLIN]
                     if self.sock in read:
                         x = self.sock.recv(n)
                         break
