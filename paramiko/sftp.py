@@ -179,8 +179,9 @@ class BaseSFTP(object):
                 poller = select.poll()
                 poller.register(self.sock, select.POLLIN)
                 while True:
-                    read = poller.poll(0.1)
-                    if len(read) > 0:
+                    read = [fileno for (fileno, flags) in poller.poll(
+                        0.1) if fileno & select.POLLIN]
+                    if self.sock in read:
                         x = self.sock.recv(n)
                         break
                 poller.unregister(self.sock)
