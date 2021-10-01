@@ -1,3 +1,21 @@
+|version| |python| |license| |ci| |coverage|
+
+.. |version| image:: https://img.shields.io/pypi/v/paramiko
+    :target: https://pypi.org/project/paramiko/
+    :alt: PyPI - Package Version
+.. |python| image:: https://img.shields.io/pypi/pyversions/paramiko
+    :target: https://pypi.org/project/paramiko/
+    :alt: PyPI - Python Version
+.. |license| image:: https://img.shields.io/pypi/l/paramiko
+    :target: https://github.com/paramiko/paramiko/blob/main/LICENSE
+    :alt: PyPI - License
+.. |ci| image:: https://img.shields.io/circleci/build/github/paramiko/paramiko/main
+    :target: https://app.circleci.com/pipelines/github/paramiko/paramiko
+    :alt: CircleCI
+.. |coverage| image:: https://img.shields.io/codecov/c/gh/paramiko/paramiko
+    :target: https://app.codecov.io/gh/paramiko/paramiko
+    :alt: Codecov
+
 Welcome to Paramiko!
 ====================
 
