@@ -1,0 +1,24 @@
+version: 2.1
+
+orbs:
+  orb: invocations/orb@1.0.2
+
+workflows:
+  main:
+    jobs:
+      - orb/lint:
+          name: Lint
+      - orb/format:
+          name: Style check
+      - orb/coverage:
+          name: Test 3.6 (w/ coverage)
+      - orb/test-release:
+          name: Release test
+      - orb/test:
+          name: Test << matrix.version >>
+          # It's not worth testing on other interpreters if the baseline one
+          # failed. Can't run >4 jobs at a time anyhow!
+          requires: ["Test 3.6 (w/ coverage)"]
+          matrix:
+            parameters:
+              version: ["3.7", "3.8", "3.9"]
