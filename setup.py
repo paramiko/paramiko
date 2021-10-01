@@ -24,15 +24,7 @@ if sys.platform == "darwin":
 
     setup_helper.install_custom_make_tarball()
 
-text = open("README.rst").read()
-long_description = """
-To find out what's new in this version of Paramiko, please see `the changelog
-<https://www.paramiko.org/changelog.html#{}>`_.
-
-{}
-""".format(
-    version, text
-)
+long_description = open("README.rst").read()
 
 # Version info -- read without importing
 _locals = {}

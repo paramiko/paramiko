@@ -7,7 +7,7 @@ Changelog
   - Migrate CI to CircleCI
   - Primary dev branch is now ``main`` (renamed)
   - Many README edits for clarity, modernization etc; including a bunch more
-    (and consistent) status badges
+    (and consistent) status badges & unification with main project site index
   - PyPI page much more fleshed out (long_description is now filled in with the
     README; sidebar links expanded; etc)
   - flake8, pytest configs split out of setup.cfg into their own files
