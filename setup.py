@@ -83,6 +83,7 @@ setup(
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
     ],
     # TODO 3.0: remove bcrypt, pynacl and update installation docs noting that
     # use of the extras_require(s) is now required for those
