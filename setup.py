@@ -24,16 +24,15 @@ if sys.platform == "darwin":
 
     setup_helper.install_custom_make_tarball()
 
-longdesc = """
-This is a library for making SSH2 connections (client or server).
-Emphasis is on using SSH2 as an alternative to SSL for making secure
-connections between python scripts.  All major ciphers and hash methods
-are supported.  SFTP client and server mode are both supported too.
+text = open("README.rst").read()
+long_description = """
+To find out what's new in this version of Paramiko, please see `the changelog
+<https://www.paramiko.org/changelog.html#{}>`_.
 
-To install the development version, ``pip install -e
-git+https://github.com/paramiko/paramiko/#egg=paramiko``.
-"""
-
+{}
+""".format(
+    version, text
+)
 
 # Version info -- read without importing
 _locals = {}
@@ -61,7 +60,7 @@ setup(
     name="paramiko",
     version=version,
     description="SSH2 protocol library",
-    long_description=longdesc,
+    long_description=long_description,
     author="Jeff Forcier",
     author_email="jeff@bitprophet.org",
     url="https://github.com/paramiko/paramiko/",
