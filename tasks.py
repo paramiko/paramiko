@@ -60,7 +60,7 @@ def test(
         # Leverage how pytest can be run as 'python -m pytest', and then how
         # coverage can be told to run things in that manner instead of
         # expecting a literal .py file.
-        runner = "coverage run --source=paramiko -m pytest"
+        runner = "coverage run -m pytest"
     # Strip SSH_AUTH_SOCK from parent env to avoid pollution by interactive
     # users.
     # TODO: once pytest coverage plugin works, see if there's a pytest-native
