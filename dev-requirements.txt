@@ -12,7 +12,7 @@ flake8==3.8.3
 black==18.6b4
 # Coverage!
 coverage==4.5.4
-codecov==1.6.3
+codecov==2.1.11
 # Documentation tools
 sphinx>=1.4,<1.7
 alabaster==0.7.12
