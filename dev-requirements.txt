@@ -8,6 +8,8 @@ pytest-xdist==1.28.0
 mock==2.0.0
 # Linting!
 flake8==3.8.3
+# Formatting!
+black==18.6b4
 # Coverage!
 coverage==4.5.4
 codecov==1.6.3
