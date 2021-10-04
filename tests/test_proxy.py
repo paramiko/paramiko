@@ -1,5 +1,5 @@
 import signal
-import select
+import selectors
 import socket
 
 from mock import patch
@@ -37,13 +37,15 @@ class TestProxyCommand(object):
 
     @patch("paramiko.proxy.subprocess.Popen")
     @patch("paramiko.proxy.os.read")
-    @patch("paramiko.proxy.select.poll")
+    @patch("paramiko.proxy.selectors.DefaultSelector")
     def test_recv_reads_from_process_stdout_returning_bytes(
-        self, poll, os_read, Popen
+        self, selector, os_read, Popen
     ):
         stdout = Popen.return_value.stdout
-        poll.return_value.poll.return_value = [
-            (stdout.fileno(), select.POLLIN)]
+        stdout_selector_key = selectors.SelectorKey(
+            stdout, stdout.fileno(), selectors.EVENT_READ, None)
+        selector.return_value.select.return_value = [
+            (stdout_selector_key, selectors.EVENT_READ)]
         fileno = stdout.fileno.return_value
         # Intentionally returning <5 at a time sometimes
         os_read.side_effect = [b"was", b"te", b"of ti", b"me"]
@@ -57,13 +59,15 @@ class TestProxyCommand(object):
 
     @patch("paramiko.proxy.subprocess.Popen")
     @patch("paramiko.proxy.os.read")
-    @patch("paramiko.proxy.select.poll")
+    @patch("paramiko.proxy.selectors.DefaultSelector")
     def test_recv_returns_buffer_on_timeout_if_any_read(
-        self, poll, os_read, Popen
+        self, selector, os_read, Popen
     ):
         stdout = Popen.return_value.stdout
-        poll.return_value.poll.return_value = [
-            (stdout.fileno(), select.POLLIN)]
+        stdout_selector_key = selectors.SelectorKey(
+            stdout, stdout.fileno(), selectors.EVENT_READ, None)
+        selector.return_value.select.return_value = [
+            (stdout_selector_key, selectors.EVENT_READ)]
         fileno = stdout.fileno.return_value
         os_read.side_effect = [b"was", socket.timeout]
         proxy = ProxyCommand("hi")
@@ -73,11 +77,13 @@ class TestProxyCommand(object):
 
     @patch("paramiko.proxy.subprocess.Popen")
     @patch("paramiko.proxy.os.read")
-    @patch("paramiko.proxy.select.poll")
-    def test_recv_raises_timeout_if_nothing_read(self, poll, os_read, Popen):
+    @patch("paramiko.proxy.selectors.DefaultSelector")
+    def test_recv_raises_timeout_if_nothing_read(self, selector, os_read, Popen):
         stdout = Popen.return_value.stdout
-        poll.return_value.poll.return_value = [
-            (stdout.fileno(), select.POLLIN)]
+        stdout_selector_key = selectors.SelectorKey(
+            stdout, stdout.fileno(), selectors.EVENT_READ, None)
+        selector.return_value.select.return_value = [
+            (stdout_selector_key, selectors.EVENT_READ)]
         fileno = stdout.fileno.return_value
         os_read.side_effect = socket.timeout
         proxy = ProxyCommand("hi")
@@ -87,12 +93,15 @@ class TestProxyCommand(object):
 
     @patch("paramiko.proxy.subprocess.Popen")
     @patch("paramiko.proxy.os.read")
-    @patch("paramiko.proxy.select.poll")
+    @patch("paramiko.proxy.selectors.DefaultSelector")
     def test_recv_raises_ProxyCommandFailure_on_non_timeout_error(
-        self, poll, os_read, Popen
+        self, selector, os_read, Popen
     ):
-        poll.return_value.poll.return_value = [
-            (Popen.return_value.stdout.fileno(), select.POLLIN)]
+        stdout = Popen.return_value.stdout
+        stdout_selector_key = selectors.SelectorKey(
+            stdout, stdout.fileno(), selectors.EVENT_READ, None)
+        selector.return_value.select.return_value = [
+            (stdout_selector_key, selectors.EVENT_READ)]
         os_read.side_effect = IOError(0, "whoops")
         with raises(ProxyCommandFailure) as info:
             ProxyCommand("hi").recv(5)
@@ -119,13 +128,15 @@ class TestProxyCommand(object):
     @patch("paramiko.proxy.time.time")
     @patch("paramiko.proxy.subprocess.Popen")
     @patch("paramiko.proxy.os.read")
-    @patch("paramiko.proxy.select.poll")
+    @patch("paramiko.proxy.selectors.DefaultSelector")
     def test_timeout_affects_whether_timeout_is_raised(
-        self, poll, os_read, Popen, time
+        self, selector, os_read, Popen, time
     ):
         stdout = Popen.return_value.stdout
-        poll.return_value.poll.return_value = [
-            (stdout.fileno(), select.POLLIN)]
+        stdout_selector_key = selectors.SelectorKey(
+            stdout, stdout.fileno(), selectors.EVENT_READ, None)
+        selector.return_value.select.return_value = [
+            (stdout_selector_key, selectors.EVENT_READ)]
         # Base case: None timeout means no timing out
         os_read.return_value = b"meh"
         proxy = ProxyCommand("yello")

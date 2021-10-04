@@ -16,7 +16,7 @@
 # along with Paramiko; if not, write to the Free Software Foundation, Inc.,
 # 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
 
-import select
+import selectors
 import socket
 import struct
 
@@ -176,15 +176,16 @@ class BaseSFTP(object):
                 # if the socket is closed.  (for some reason, recv() won't ever
                 # return or raise an exception, but calling select on a closed
                 # socket will.)
-                poller = select.poll()
-                poller.register(self.sock, select.POLLIN)
+                selector = selectors.DefaultSelector()
+                selector.register(self.sock, selectors.EVENT_READ)
                 while True:
-                    read = [fileno for (fileno, flags) in poller.poll(
-                        0.1) if flags & select.POLLIN]
+                    read = [key.fileobj for (key, flags) in selector.select(
+                        0.1) if flags & selectors.EVENT_READ]
                     if self.sock in read:
                         x = self.sock.recv(n)
                         break
-                poller.unregister(self.sock)
+                selector.unregister(self.sock)
+                selector.close()
             else:
                 x = self.sock.recv(n)
 
