@@ -152,7 +152,7 @@ class AgentProxyThread(threading.Thread):
                         self._close()
                         break
             time.sleep(io_sleep)
-        selector.unregister(self._agent)
+        selector.unregister(self._agent._conn)
         selector.unregister(self.__inr)
         selector.close()
 
