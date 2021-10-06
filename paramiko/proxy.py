@@ -111,7 +111,7 @@ class ProxyCommand(ClosingContextManager):
                     buffer += os.read(
                         self.process.stdout.fileno(), size - len(buffer)
                     )
-            selector.unrgister(self.process.stdout)
+            selector.unregister(self.process.stdout)
             selector.close()
             return buffer
         except socket.timeout:
