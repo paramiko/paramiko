@@ -1,7 +1,7 @@
 version: 2.1
 
 orbs:
-  orb: invocations/orb@1.0.2
+  orb: invocations/orb@1.0.3
 
 workflows:
   main:
@@ -10,15 +10,26 @@ workflows:
           name: Lint
       - orb/format:
           name: Style check
+      # Main test run, w/ coverage, and latest-supported cryptography
       - orb/coverage:
-          name: Test 3.6 (w/ coverage)
+          name: Test 3.6 (w/ coverage, latest crypto)
+      # Non-coverage runs w/ other crypto versions.
+      # (Phrased as 2-dimensional matrix but 3.6 only for now to save credits)
+      - orb/test:
+          name: Test << matrix.version >> w/ << matrix.pip-overrides >>
+          matrix:
+            parameters:
+              version: ["3.6"]
+              # TODO: I don't see a nicer way to do this that doesn't require
+              # making the orb know too much about its client code...
+              pip-overrides: ["cryptography==2.5", "cryptography==3.4"]
       - orb/test-release:
           name: Release test
       - orb/test:
           name: Test << matrix.version >>
           # It's not worth testing on other interpreters if the baseline one
           # failed. Can't run >4 jobs at a time anyhow!
-          requires: ["Test 3.6 (w/ coverage)"]
+          requires: ["Test 3.6 (w/ coverage, latest crypto)"]
           matrix:
             parameters:
               version: ["3.7", "3.8", "3.9"]
