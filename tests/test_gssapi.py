@@ -26,6 +26,13 @@ import socket
 
 from .util import needs_gssapi, KerberosTestCase, update_env
 
+#
+# NOTE: KerberosTestCase skips all tests if it was unable to import k5test
+# third-party library. That's the primary trigger for whether this module
+# effectively gets run or not. See tests/util.py for other triggers (a set of
+# env vars a human might have defined).
+#
+
 
 @needs_gssapi
 class GSSAPITest(KerberosTestCase):
