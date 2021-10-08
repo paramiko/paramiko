@@ -46,6 +46,7 @@ jobs:
 workflows:
   main:
     jobs:
+      # The basics
       - orb/lint:
           name: Lint
       - orb/format:
@@ -76,11 +77,15 @@ workflows:
           requires:
             - "Test 3.6 (w/ coverage, latest crypto)"
             - "Release test"
+      # Test other interpreters if main passed
       - orb/test:
           name: Test << matrix.version >>
-          # It's not worth testing on other interpreters if the baseline one
-          # failed. Can't run >4 jobs at a time anyhow!
           requires: ["Test 3.6 (w/ coverage, latest crypto)"]
           matrix:
             parameters:
               version: ["3.7", "3.8", "3.9"]
+      # Test doc building if main test suite passed (no real reason to spend
+      # all those credits if the main tests would also fail...)
+      - orb/docs:
+          name: "Docs"
+          requires: ["Test 3.6 (w/ coverage, latest crypto)"]
