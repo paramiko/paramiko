@@ -6,6 +6,22 @@ orbs:
 
 
 jobs:
+  sdist-test-suite:
+    executor:
+      name: orb/default
+      version: "3.6"
+    steps:
+      - orb/setup
+      - run: inv release.build --no-wheel --directory .
+      - run: |
+          cd dist
+          tar xzvf *.tar.gz
+          rm -v *.tar.gz
+          cd paramiko-*
+          pip install -e .
+          inv -e test
+      - orb/debug
+
   kerberos:
     executor:
       name: orb/default
@@ -54,6 +70,12 @@ workflows:
       #    requires: ["Test 3.6 (w/ coverage, latest crypto)"]
       - orb/test-release:
           name: Release test
+      # Ensure test suite is included in sdist & functions appropriately
+      - sdist-test-suite:
+          name: Test within sdist
+          requires:
+            - "Test 3.6 (w/ coverage, latest crypto)"
+            - "Release test"
       - orb/test:
           name: Test << matrix.version >>
           # It's not worth testing on other interpreters if the baseline one
