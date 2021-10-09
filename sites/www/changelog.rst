@@ -2,6 +2,7 @@
 Changelog
 =========
 
+- :release:`2.8.0 <2021-10-09>`
 - :support:`-` Administrivia overhaul, including but not limited to:
 
   - Migrate CI to CircleCI
