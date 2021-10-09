@@ -41,7 +41,8 @@ personal site.
     <https://www.paramiko.org/installing.html>`_ for details.
 
 .. [#]
-    SSH is defined in :rfc:`4251`, :rfc:`4252`, :rfc:`4253` and :rfc:`4254`. The
-    primary working implementation of the protocol is the `OpenSSH project
+    SSH is defined in :rfc-reference:`4251`, :rfc-reference:`4252`,
+    :rfc-reference:`4253` and :rfc-reference:`4254`. The primary working
+    implementation of the protocol is the `OpenSSH project
     <http://openssh.org>`_.  Paramiko implements a large portion of the SSH
     feature set, but there are occasional gaps.
