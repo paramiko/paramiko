@@ -2,7 +2,7 @@ version: 2.1
 
 
 orbs:
-  orb: invocations/orb@dev:debuggery
+  orb: invocations/orb@1.0.4
 
 
 jobs:
