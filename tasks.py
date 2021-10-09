@@ -116,17 +116,22 @@ def publish_(ctx, sdist=True, wheel=True, sign=True, dry_run=False, index=None):
     publish(
         ctx, sdist=sdist, wheel=wheel, sign=sign, dry_run=dry_run, index=index
     )
-    # Remind
-    print(
-        "\n\nDon't forget to update RTD's versions page for new minor "
-        "releases!"
-    )
+
+
+# Also have to hack up the newly enhanced all_() so it uses our publish
+@task(name="all", default=True)
+def all_(c, dry_run=False):
+    release_coll["prepare"](c, dry_run=dry_run)
+    publish_(c, dry_run=dry_run)
+    release_coll["push"](c, dry_run=dry_run)
+    release_coll["tidelift"](c, dry_run=dry_run)
 
 
 # TODO: "replace one task with another" needs a better public API, this is
 # using unpublished internals & skips all the stuff add_task() does re:
 # aliasing, defaults etc.
 release_coll.tasks["publish"] = publish_
+release_coll.tasks["all"] = all_
 
 ns = Collection(
     test,
