@@ -3,7 +3,6 @@ from os.path import join
 from shutil import rmtree, copytree
 
 from invoke import Collection, task
-from invocations import travis
 from invocations.checks import blacken
 from invocations.docs import docs, www, sites
 from invocations.packaging.release import ns as release_coll, publish
@@ -142,7 +141,6 @@ ns = Collection(
     www,
     sites,
     count_errors,
-    travis,
     blacken,
 )
 ns.configure(
@@ -157,6 +155,5 @@ ns.configure(
                 www.configuration()["sphinx"]["source"], "changelog.rst"
             ),
         },
-        "travis": {"black": {"version": "18.6b4"}},
     }
 )
