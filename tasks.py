@@ -100,7 +100,9 @@ def guard(ctx, opts=""):
 # TODO 3.0: I'd like to just axe the 'built docs in sdist', none of my other
 # projects do it.
 @task
-def publish_(ctx, sdist=True, wheel=True, sign=True, dry_run=False, index=None):
+def publish_(
+    ctx, sdist=True, wheel=True, sign=True, dry_run=False, index=None
+):
     """
     Wraps invocations.packaging.publish to add baked-in docs folder.
     """
@@ -154,6 +156,6 @@ ns.configure(
             "changelog_file": join(
                 www.configuration()["sphinx"]["source"], "changelog.rst"
             ),
-        },
+        }
     }
 )
