@@ -109,8 +109,7 @@ class ProxyCommand(ClosingContextManager):
                     select_timeout) if flags & selectors.EVENT_READ]
                 if r and r[0] == self.process.stdout:
                     buffer += os.read(
-                        self.process.stdout.fileno(), size - len(buffer)
-                    )
+                        self.process.stdout.fileno(), size - len(buffer))
             selector.unregister(self.process.stdout)
             selector.close()
             return buffer
