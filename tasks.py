@@ -101,7 +101,7 @@ def guard(ctx, opts=""):
 # TODO 3.0: I'd like to just axe the 'built docs in sdist', none of my other
 # projects do it.
 @task
-def release(ctx, sdist=True, wheel=True, sign=True, dry_run=False, index=None):
+def publish_(ctx, sdist=True, wheel=True, sign=True, dry_run=False, index=None):
     """
     Wraps invocations.packaging.publish to add baked-in docs folder.
     """
@@ -126,7 +126,7 @@ def release(ctx, sdist=True, wheel=True, sign=True, dry_run=False, index=None):
 # TODO: "replace one task with another" needs a better public API, this is
 # using unpublished internals & skips all the stuff add_task() does re:
 # aliasing, defaults etc.
-release_coll.tasks["publish"] = release
+release_coll.tasks["publish"] = publish_
 
 ns = Collection(
     test,
