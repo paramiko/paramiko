@@ -2,8 +2,8 @@
 invoke==1.6.0
 invocations==2.3.0
 pytest==4.4.2; python_version < '3.10'
-# pytest-relaxed is incompatible with Pytest 6 (current is 6.2.5)
-pytest==5.4.3; python_version >= '3.10'
+# pytest-relaxed is incompatible with Pytest 5 or 6 (current is 6.2.5)
+pytest==4.6.11; python_version >= '3.10'
 pytest-relaxed==1.1.5
 # pytest-xdist for test dir watching and the inv guard task
 pytest-xdist==1.28.0; python_version < '3.10'
