@@ -450,11 +450,13 @@ class SSHClient(ClosingContextManager):
         """
         Close this SSHClient and its underlying `.Transport`.
 
+        This should be called anytime you are done using the client object.
+
         .. warning::
-            Failure to do this may, in some situations, cause your Python
-            interpreter to hang at shutdown (often due to race conditions).
-            It's good practice to `close` your client objects anytime you're
-            done using them, instead of relying on garbage collection.
+            Paramiko registers garbage collection hooks that will try to
+            automatically close connections for you, but this is not presently
+            reliable. Failure to explicitly close your client after use may
+            lead to end-of-process hangs!
         """
         if self._transport is None:
             return
