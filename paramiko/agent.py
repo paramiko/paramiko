@@ -407,6 +407,10 @@ class AgentKey(PKey):
     def get_name(self):
         return self.name
 
+    @property
+    def _fields(self):
+        raise NotImplementedError
+
     def sign_ssh_data(self, data):
         msg = Message()
         msg.add_byte(cSSH2_AGENTC_SIGN_REQUEST)
