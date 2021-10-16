@@ -28,12 +28,16 @@ import socket
 import sys
 import warnings
 from binascii import hexlify
+from mock import patch
 from tempfile import mkstemp
 
 import pytest
 
+from paramiko import SFTPClient
 from paramiko.py3compat import PY2, b, u, StringIO
 from paramiko.common import o777, o600, o666, o644
+from paramiko.message import Message
+from paramiko.sftp import CMD_VERSION
 from paramiko.sftp_attr import SFTPAttributes
 
 from .util import needs_builtin
@@ -88,6 +92,28 @@ NON_UTF8_DATA = b"\xC3\xC3"
 
 unicode_folder = u"\u00fcnic\u00f8de" if PY2 else "\u00fcnic\u00f8de"
 utf8_folder = b"/\xc3\xbcnic\xc3\xb8\x64\x65"
+
+
+def mock_sftp_server_start_subsystem(version=0, extension_pairs=()):
+    """
+    Return a fake implementation of ``paramiko.SFTPServer.start_subsystem``
+    that will only return a ``SSH_FXP_VERSION`` packet, containing the
+    provided version and extension pairs.
+    """
+    def start_subsystem(self, name, transport, channel):
+        self.sock = channel
+        msg = Message()
+        msg.add_int(version)
+        for extension_name, extension_data in extension_pairs:
+            msg.add_string(extension_name)
+            msg.add_string(extension_data)
+        self._send_packet(CMD_VERSION, msg)
+        while True:
+            try:
+                _ = self._read_packet()
+            except EOFError:
+                return
+    return start_subsystem
 
 
 @slow
@@ -816,3 +842,39 @@ class TestSFTP(object):
                 assert f.read() == data
         finally:
             sftp.remove("%s/write_memoryview" % sftp.FOLDER)
+
+    @patch(
+        "paramiko.SFTPServer.start_subsystem",
+        mock_sftp_server_start_subsystem(version=3)
+    )
+    def test_server_version(self, sftp_server):
+        """
+        Mock the SFTP server initialization so that it returns a specific
+        server version number and make sure that get_server_version() returns
+        the same number.
+        """
+        sftp_client = SFTPClient.from_transport(sftp_server)
+        server_version = sftp_client.get_server_version()
+        assert server_version == 3
+
+    @patch(
+        "paramiko.SFTPServer.start_subsystem",
+        mock_sftp_server_start_subsystem(extension_pairs=[
+            (u"posix-rename@openssh.com", u"1"),
+            (u"hardlink@openssh.com", u"1"),
+            (u"check-file", u"md5,sha1"),
+        ])
+    )
+    def test_server_extensions(self, sftp_server):
+        """
+        Mock the SFTP server initialization so that it returns a specific list
+        of server extension pairs and make sure that get_server_extensions()
+        returns the same extensions.
+        """
+        sftp_client = SFTPClient.from_transport(sftp_server)
+        server_extensions = sftp_client.get_server_extensions()
+        assert server_extensions == {
+            u"posix-rename@openssh.com": u"1",
+            u"hardlink@openssh.com": u"1",
+            u"check-file": u"md5,sha1",
+        }

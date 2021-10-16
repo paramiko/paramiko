@@ -127,7 +127,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
             )
             self.ultra_debug = transport.get_hexdump()
         try:
-            server_version = self._send_version()
+            server_version, server_extensions = self._send_version()
         except EOFError:
             raise SSHException("EOF during negotiation")
         self._log(
@@ -136,6 +136,8 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
                 server_version
             ),
         )
+        self._server_version = server_version
+        self._server_extensions = server_extensions
 
     @classmethod
     def from_transport(cls, t, window_size=None, max_packet_size=None):
@@ -202,6 +204,29 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         .. versionadded:: 1.7.1
         """
         return self.sock
+
+    def get_server_version(self):
+        """
+        Return the server version of the ``SSH_FXP_VERSION`` packet, received
+        from the server on protocol initialization.
+
+        .. versionadded:: 2.8
+        """
+        return self._server_version
+
+    def get_server_extensions(self):
+        """
+        Return a dictionary containing the server extensions from the
+        ``SSH_FXP_VERSION`` packet, received from the server on protocol
+        initialization.
+
+        Each item of the dictionary represents an ``extension-pair``, where
+        the key is the ``extension-name`` (unicode string) and the value is
+        the ``extension-data`` (unicode string).
+
+        .. versionadded:: 2.8
+        """
+        return self._server_extensions.copy()
 
     def listdir(self, path="."):
         """
@@ -426,6 +451,11 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         """
         Rename a file or folder from ``oldpath`` to ``newpath``, following
         posix conventions.
+
+        .. note::
+            Not all servers implement posix rename. To check if the server
+            supports it, check if ``"posix-rename@openssh.com"`` is in the
+            dictionary returned by `get_server_extensions`.
 
         :param str oldpath: existing name of the file or folder
         :param str newpath: new name for the file or folder, will be
