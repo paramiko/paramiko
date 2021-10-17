@@ -80,7 +80,7 @@ class GSSKexTest(KerberosTestCase):
     def _run(self):
         self.socks, addr = self.sockl.accept()
         self.ts = paramiko.Transport(self.socks, gss_kex=True)
-        host_key = paramiko.RSAKey.from_private_key_file("tests/test_rsa.key")
+        host_key = paramiko.load_private_key_file("tests/test_rsa.key")
         self.ts.add_server_key(host_key)
         self.ts.set_gss_host(self.realm.hostname)
         try:
@@ -96,7 +96,7 @@ class GSSKexTest(KerberosTestCase):
         Diffie-Hellman Key Exchange and user authentication with the GSS-API
         context created during key exchange.
         """
-        host_key = paramiko.RSAKey.from_private_key_file("tests/test_rsa.key")
+        host_key = paramiko.load_private_key_file("tests/test_rsa.key")
         public_host_key = paramiko.RSAKey(data=host_key.asbytes())
 
         self.tc = paramiko.SSHClient()
