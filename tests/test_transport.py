@@ -55,7 +55,7 @@ from paramiko.common import (
     cMSG_CHANNEL_WINDOW_ADJUST,
     cMSG_UNIMPLEMENTED,
 )
-from paramiko.py3compat import bytes, byte_chr
+from paramiko.py3compat import byte_chr
 from paramiko.message import Message
 
 from .util import needs_builtin, _support, slow
