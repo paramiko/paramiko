@@ -40,18 +40,22 @@ class Message(object):
 
     big_int = long(0xff000000)
 
-    def __init__(self, content=None):
+    def __init__(self, content=None, encoding="utf8"):
         """
         Create a new SSH2 message.
 
         :param str content:
             the byte stream to use as the message content (passed in only when
             decomposing a message).
+        :param str encoding:
+            which text encoding are used to decode string from bytes
         """
         if content is not None:
             self.packet = BytesIO(content)
         else:
             self.packet = BytesIO()
+
+        self.text_encoding = encoding
 
     def __str__(self):
         """
@@ -175,7 +179,7 @@ class Message(object):
         """
         Fetch a Unicode string from the stream.
         """
-        return u(self.get_string())
+        return u(self.get_string(), self.text_encoding)
 
     def get_binary(self):
         """

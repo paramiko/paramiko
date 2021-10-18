@@ -1084,17 +1084,19 @@ class Transport(threading.Thread, ClosingContextManager):
         self._tcp_handler = None
         self.global_request("cancel-tcpip-forward", (address, port), wait=True)
 
-    def open_sftp_client(self):
+    def open_sftp_client(self, encoding="utf8"):
         """
         Create an SFTP client channel from an open transport.  On success, an
         SFTP session will be opened with the remote host, and a new
         `.SFTPClient` object will be returned.
 
+        :param str encoding: which text encoding used to process strings
+
         :return:
             a new `.SFTPClient` referring to an sftp session (channel) across
             this transport
         """
-        return SFTPClient.from_transport(self)
+        return SFTPClient.from_transport(self, encoding=encoding)
 
     def send_ignore(self, byte_count=None):
         """
