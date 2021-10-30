@@ -18,6 +18,7 @@
 
 
 import binascii
+import fnmatch
 import os
 import sys
 
@@ -206,6 +207,7 @@ class HostKeys(MutableMapping):
                 or h.startswith("|1|")
                 and not hostname.startswith("|1|")
                 and constant_time_bytes_eq(self.hash_host(hostname, h), h)
+                or self._wildcard_matches(hostname, h)
             ):
                 return True
         return False
@@ -308,6 +310,21 @@ class HostKeys(MutableMapping):
         hmac = HMAC(salt, b(hostname), sha1).digest()
         hostkey = "|1|{}|{}".format(u(encodebytes(salt)), u(encodebytes(hmac)))
         return hostkey.replace("\n", "")
+
+    @staticmethod
+    def _wildcard_matches(hostname, pattern):
+        """
+        Tests whether ``hostname`` string matches given ``pattern``.
+
+        Match against patterns using '*' and '?'.
+
+        :returns bool:
+        """
+        # Abort if not given a pattern
+        if '*' not in pattern and '?' not in pattern:
+            return False
+
+        return fnmatch.fnmatch(hostname, pattern)
 
 
 class InvalidHostKey(Exception):
