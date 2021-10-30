@@ -38,6 +38,15 @@ BGQ3GQ/Fc7SX6gkpXkwcZryoi4kNFhHu5LvHcZPdxXV1D+uTMfGS1eyd2Yz/DoNWXNAl8TI0cAsW\
 5ymME3bQ4J/k1IKxCtz/bAlAqFgKoc+EolMziDYqWIATtW0rYTJvzGAzTmMj80/QpsFH+Pc2M=
 """
 
+test_hosts_file_wildcards = """\
+*.any.example.com ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAIEA1PD6U2/TVxET6lkpKhOk5r9\
+q/kAYG6sP9f5zuUYP8i7FOFp/6ncCEbbtg/lB+A3iidyxoSWl+9jtoyyDOOVX4UIDV9G11Ml8om3D\
++jrpI9cycZHqilK0HmxDeCuxbwyMuaCygU9gS2qoRvNLWZk70OpIKSSpBo0Wl3/XUmz9uhc=
+?.server.example.com ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAIEA8bP1ZA7DCZDB9J0s50l3\
+1MBGQ3GQ/Fc7SX6gkpXkwcZryoi4kNFhHu5LvHcZPdxXV1D+uTMfGS1eyd2Yz/DoNWXNAl8TI0cAs\
+W5ymME3bQ4J/k1IKxCtz/bAlAqFgKoc+EolMziDYqWIATtW0rYTJvzGAzTmMj80/QpsFH+Pc2M=
+"""
+
 keyblob = b"""\
 AAAAB3NzaC1yc2EAAAABIwAAAIEA8bP1ZA7DCZDB9J0s50l31MBGQ3GQ/Fc7SX6gkpXkwcZryoi4k\
 NFhHu5LvHcZPdxXV1D+uTMfGS1eyd2Yz/DoNWXNAl8TI0cAsW5ymME3bQ4J/k1IKxCtz/bAlAqFgK\
@@ -58,9 +67,12 @@ class HostKeysTest(unittest.TestCase):
     def setUp(self):
         with open("hostfile.temp", "w") as f:
             f.write(test_hosts_file)
+        with open("hostfile_wildcards.temp", "w") as f:
+            f.write(test_hosts_file_wildcards)
 
     def tearDown(self):
         os.unlink("hostfile.temp")
+        os.unlink("hostfile_wildcards.temp")
 
     def test_load(self):
         hostdict = paramiko.HostKeys("hostfile.temp")
@@ -130,3 +142,34 @@ class HostKeysTest(unittest.TestCase):
             pass  # Good
         else:
             assert False, "Entry was not deleted from HostKeys on delitem!"
+
+    def test_lookup_wildcards(self):
+        hostdict = paramiko.HostKeys("hostfile_wildcards.temp")
+
+        # Test '*' wildcard
+        target = "dummy.any.example.com"
+
+        lookups = hostdict.lookup(hostname=target)
+        self.assertEqual(1, len(lookups))
+        fp = hexlify(lookups["ssh-rsa"].get_fingerprint()).upper()
+        self.assertEqual(b"E6684DB30E109B67B70FF1DC5C7F1363", fp)
+
+        # Test '?' wildcard
+        targets = ["a.server.example.com", "b.server.example.com"]
+
+        for target in targets:
+            lookups = hostdict.lookup(hostname=target)
+            self.assertEqual(1, len(lookups))
+            fp = hexlify(lookups["ssh-rsa"].get_fingerprint()).upper()
+            self.assertEqual(b"7EC91BB336CB6D810B124B1353C32396", fp)
+
+        # Test cases without match
+        targets = [
+            "example.com",
+            "nomatch.server.example.com",
+            "dummy.example.com",
+        ]
+
+        for target in targets:
+            lookups = hostdict.lookup(hostname=target)
+            self.assertIsNone(lookups)
