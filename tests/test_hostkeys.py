@@ -164,8 +164,11 @@ class HostKeysTest(unittest.TestCase):
             self.assertEqual(b"7EC91BB336CB6D810B124B1353C32396", fp)
 
         # Test cases without match
-        targets = ["example.com", "nomatch.server.example.com",
-                   "dummy.example.com"]
+        targets = [
+            "example.com",
+            "nomatch.server.example.com",
+            "dummy.example.com",
+        ]
 
         for target in targets:
             lookups = hostdict.lookup(hostname=target)

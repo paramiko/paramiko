@@ -321,7 +321,7 @@ class HostKeys(MutableMapping):
         :returns bool:
         """
         # Abort if not given a pattern
-        if '*' not in pattern and '?' not in pattern:
+        if "*" not in pattern and "?" not in pattern:
             return False
 
         return fnmatch.fnmatch(hostname, pattern)
