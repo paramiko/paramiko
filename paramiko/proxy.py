@@ -17,7 +17,7 @@
 # 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
 
 
-import os
+import os, sys
 import shlex
 import signal
 from select import select
@@ -88,12 +88,17 @@ class ProxyCommand(ClosingContextManager):
     def recv(self, size):
         """
         Read from the standard output of the forked program.
+        On Windows select() only works on sockets, so the loop will fail on this 
+        platform. Therefore, use a simple blocking call in this case.
 
         :param int size: how many chars should be read
 
         :return: the string of bytes read, which may be shorter than requested
         """
         try:
+            if sys.platform == 'win32':
+                return os.read(self.process.stdout.fileno(), size)
+
             buffer = b""
             start = time.time()
             while len(buffer) < size:
