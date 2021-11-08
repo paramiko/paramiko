@@ -692,7 +692,7 @@ class SSHClient(ClosingContextManager):
             if self._agent is None:
                 self._agent = Agent()
 
-            for key in self._agent.get_keys(self._transport.get_security_options()): # Generate keys based on sha preference in this connection
+            for key in self._agent.get_keys(self._transport.get_security_options()):
                 try:
                     id_ = hexlify(key.get_fingerprint())
                     self._log(DEBUG, "Trying SSH agent key {}".format(id_))
