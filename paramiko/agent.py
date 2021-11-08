@@ -406,6 +406,9 @@ class AgentKey(PKey):
         self.blob = blob
         self.public_blob = None
         self.name = Message(blob).get_text()
+        # not sure how to better "negotiate": https://datatracker.ietf.org/doc/html/draft-ietf-curdle-rsa-sha2-12#section-3.3
+        if(self.name in rsa_prefs):
+            self.name = rsa_prefs[0]
 
     def asbytes(self):
         return self.blob
@@ -421,7 +424,9 @@ class AgentKey(PKey):
         msg.add_byte(cSSH2_AGENTC_SIGN_REQUEST)
         msg.add_string(self.blob)
         msg.add_string(data)
-        msg.add_int(0)
+        # https://tools.ietf.org/id/draft-miller-ssh-agent-01.html#sigflagnum
+        # choose sha strategy based on name; sha1 = 0, sha256 = 2, sha512 = 4, bit 1 is reserved
+        msg.add_int(SHA_MAP[self.name])
         ptype, result = self.agent._send_message(msg)
         if ptype != SSH2_AGENT_SIGN_RESPONSE:
             raise SSHException("key cannot be used for signing")
