@@ -56,7 +56,7 @@ class AgentSSH(object):
         self._conn = None
         self._keys = ()
 
-    def get_keys(self):
+    def get_keys(self, sec_opts):
         """
         Return the list of keys available through the SSH agent, if any.  If
         no SSH agent was running (or it couldn't be contacted), an empty list
@@ -66,7 +66,8 @@ class AgentSSH(object):
             a tuple of `.AgentKey` objects representing keys available on the
             SSH agent
         """
-        return self._keys
+        rsa_prefs = tuple(filter(lambda sha: sha in SHA_MAP, sec_opts.key_types))
+        return tuple(map(lambda key: AgentKey(self, key, rsa_prefs), self._keys))
 
     def _connect(self, conn):
         self._conn = conn
@@ -75,7 +76,7 @@ class AgentSSH(object):
             raise SSHException("could not get keys from ssh-agent")
         keys = []
         for i in range(result.get_int()):
-            keys.append(AgentKey(self, result.get_binary()))
+            keys.append(result.get_binary())
             result.get_string()
         self._keys = tuple(keys)
 
@@ -400,7 +401,7 @@ class AgentKey(PKey):
     work as expected.
     """
 
-    def __init__(self, agent, blob):
+    def __init__(self, agent, blob, rsa_prefs):
         self.agent = agent
         self.blob = blob
         self.public_blob = None
