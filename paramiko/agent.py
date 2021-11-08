@@ -67,8 +67,7 @@ class AgentSSH(object):
             SSH agent
         """
         rsa_prefs = tuple(
-            lambda sha: sha in SHA_MAP,
-            sec_opts.key_types
+            filter(lambda sha: sha in SHA_MAP, sec_opts.key_types)
         )
         return tuple((AgentKey(self, key, rsa_prefs) for key in self._keys))
 
