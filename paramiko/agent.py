@@ -42,6 +42,14 @@ SSH2_AGENT_IDENTITIES_ANSWER = 12
 cSSH2_AGENTC_SIGN_REQUEST = byte_chr(13)
 SSH2_AGENT_SIGN_RESPONSE = 14
 
+SSH_AGENT_RSA_SHA2_256 = 2
+SSH_AGENT_RSA_SHA2_512 = 4
+
+SHA_MAP = {
+    "ssh-rsa": 0,
+    "rsa-sha2-256": SSH_AGENT_RSA_SHA2_256,
+    "rsa-sha2-512": SSH_AGENT_RSA_SHA2_512
+}
 
 class AgentSSH(object):
     def __init__(self):
