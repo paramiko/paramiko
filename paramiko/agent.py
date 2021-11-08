@@ -66,7 +66,10 @@ class AgentSSH(object):
             a tuple of `.AgentKey` objects representing keys available on the
             SSH agent
         """
-        rsa_prefs = tuple((sha for sha in sec_opts if sha in SHA_MAP))
+        rsa_prefs = tuple(
+            lambda sha: sha in SHA_MAP,
+            sec_opts.key_types
+        )
         return tuple((AgentKey(self, key, rsa_prefs) for key in self._keys))
 
     def _connect(self, conn):
