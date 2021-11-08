@@ -66,8 +66,8 @@ class AgentSSH(object):
             a tuple of `.AgentKey` objects representing keys available on the
             SSH agent
         """
-        rsa_prefs = tuple(filter(lambda sha: sha in SHA_MAP, sec_opts.key_types))
-        return tuple(map(lambda key: AgentKey(self, key, rsa_prefs), self._keys))
+        rsa_prefs = tuple((sha for sha in sec_opts if sha in SHA_MAP))
+        return tuple((AgentKey(self, key, rsa_prefs) for key in self._keys))
 
     def _connect(self, conn):
         self._conn = conn
@@ -406,7 +406,7 @@ class AgentKey(PKey):
         self.blob = blob
         self.public_blob = None
         self.name = Message(blob).get_text()
-        if(self.name in rsa_prefs):
+        if self.name in rsa_prefs:
             self.name = rsa_prefs[0]
 
     def asbytes(self):
