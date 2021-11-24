@@ -2970,9 +2970,7 @@ class Transport(threading.Thread, ClosingContextManager):
         if resp != MUX_S_PROXY or msg.get_int() != 2:
             raise SSHException(
                 "Mux proxy request rejected (Requires OpenSSH 7.4 or greater)"
-                " - got unexpected reply: 0x{:x} {!r}".format(
-                    resp, msg
-                )
+                " - got unexpected reply: 0x{:x} {!r}".format(resp, msg)
             )
 
     _handler_table = {
