@@ -64,7 +64,8 @@ from paramiko.common import (
     cMSG_CHANNEL_OPEN_SUCCESS,
     MSG_GLOBAL_REQUEST,
     MSG_REQUEST_SUCCESS,
-    MSG_REQUEST_FAILURE,
+    MSG_REQUEST_FAILURE,sock.settimeout(10)
+
     MSG_CHANNEL_OPEN_SUCCESS,
     MSG_CHANNEL_OPEN_FAILURE,
     MSG_CHANNEL_OPEN,
@@ -310,6 +311,7 @@ class Transport(threading.Thread, ClosingContextManager):
         gss_kex=False,
         gss_deleg_creds=True,
         disabled_algorithms=None,
+        socket_timeout=10,
     ):
         """
         Create a new SSH session over an existing socket, or socket-like
@@ -405,11 +407,13 @@ class Transport(threading.Thread, ClosingContextManager):
                     af = family
                     # addr = sockaddr
                     sock = socket.socket(af, socket.SOCK_STREAM)
+                    sock.settimeout(socket_timeout)
                     try:
                         retry_on_signal(lambda: sock.connect((hostname, port)))
                     except socket.error as e:
                         reason = str(e)
                     else:
+                        sock.settimeout(None)
                         break
             else:
                 raise SSHException(
