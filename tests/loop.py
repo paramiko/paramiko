@@ -81,7 +81,7 @@ class LoopSocket (object):
         self.__lock.acquire()
         try:
             self.__in_buffer += data
-            self.__cv.notifyAll()
+            self.__cv.notify_all()
         finally:
             self.__lock.release()
 
