@@ -19,6 +19,7 @@ jobs:
           - "python:3.7-buster"
           - "python:3.8-bullseye"
           - "python:3.9-bullseye"
+          - "python:3.10-bullseye"
           - "pypy:2.7-7.3.5"
           - "pypy:3.7-7.3.5"
         crypto_ver:
@@ -32,6 +33,7 @@ jobs:
           - {imgtag: "python:2.7-buster",   crypto_ver: "3.1.1"}
           - {imgtag: "python:3.6-buster",   crypto_ver: "3.1.1"}
           - {imgtag: "python:3.8-bullseye", crypto_ver: "3.4.7"}
+          - {imgtag: "python:3.9-bullseye", crypto_ver: "36.0.0"}
           - {imgtag: "pypy:3.7-7.3.5",      crypto_ver: "3.4.7"}
 
     container: "${{matrix.imgtag}}"

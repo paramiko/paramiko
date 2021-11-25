@@ -4,5 +4,6 @@ mccabe==0.6.1
 pycodestyle==2.6.0
 pyflakes==2.2.0
 # for running tests
-pytest==4.6.11
+pytest==4.6.11;python_version<"3.9"
+pytest==6.2.5;python_version>="3.9"
 mock==2.0.0;python_version<"3.3"
