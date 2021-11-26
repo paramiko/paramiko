@@ -948,7 +948,8 @@ class Channel (ClosingContextManager):
             m = None
             self.lock.acquire()
             try:
-                m = self._eof_internal()
+                if self.active:
+                    m = self._eof_internal()
             finally:
                 self.lock.release()
             if m is not None:
@@ -1230,7 +1231,7 @@ class Channel (ClosingContextManager):
 
     def _eof_internal(self):
         # you are holding the lock.
-        if self.eof_sent or self.closed:
+        if self.eof_sent:
             return None
         m = Message()
         m.add_byte(cMSG_CHANNEL_EOF)
