@@ -105,6 +105,8 @@ class Channel (ClosingContextManager):
         self.timeout = None
         #: Whether the connection has been closed
         self.closed = False
+        # whether close message was actually sent by transport yet
+        self._close_sent = False
         self.ultra_debug = False
         self.lock = threading.Lock()
         self.out_buffer_cv = threading.Condition(self.lock)
@@ -652,9 +654,8 @@ class Channel (ClosingContextManager):
             msgs = self._close_internal()
         finally:
             self.lock.release()
-        for m in msgs:
-            if m is not None:
-                self.transport._send_user_message(m)
+
+        self._close_internal_send(*msgs)
 
     def recv_ready(self):
         """
@@ -947,11 +948,11 @@ class Channel (ClosingContextManager):
             m = None
             self.lock.acquire()
             try:
-                m = self._send_eof()
+                m = self._eof_internal()
             finally:
                 self.lock.release()
             if m is not None:
-                self.transport._send_user_message(m)
+                self.transport._send_user_message(m, self._close_not_sent)
 
     def shutdown_read(self):
         """
@@ -1020,9 +1021,8 @@ class Channel (ClosingContextManager):
             msgs = self._close_internal()
         finally:
             self.lock.release()
-        for m in msgs:
-            if m is not None:
-                self.transport._send_user_message(m)
+
+        self._close_internal_send(*msgs)
 
     def _feed(self, m):
         if isinstance(m, bytes):
@@ -1174,9 +1174,8 @@ class Channel (ClosingContextManager):
             self.transport._unlink_channel(self.chanid)
         finally:
             self.lock.release()
-        for m in msgs:
-            if m is not None:
-                self.transport._send_user_message(m)
+
+        self._close_internal_send(*msgs)
 
     # ...internals...
 
@@ -1229,7 +1228,7 @@ class Channel (ClosingContextManager):
         if self._pipe is not None:
             self._pipe.set_forever()
 
-    def _send_eof(self):
+    def _eof_internal(self):
         # you are holding the lock.
         if self.eof_sent or self.closed:
             return None
@@ -1244,7 +1243,7 @@ class Channel (ClosingContextManager):
         # you are holding the lock.
         if not self.active or self.closed:
             return None, None
-        m1 = self._send_eof()
+        m1 = self._eof_internal()
         m2 = Message()
         m2.add_byte(cMSG_CHANNEL_CLOSE)
         m2.add_int(self.remote_chanid)
@@ -1252,6 +1251,27 @@ class Channel (ClosingContextManager):
         # can't unlink from the Transport yet -- the remote side may still
         # try to send meta-data (exit-status, etc)
         return m1, m2
+
+    def _close_internal_send(self, eof, close):
+        if eof is not None:
+            self.transport._send_user_message(eof, self._close_not_sent)
+        if close is not None:
+            self.transport._send_user_message(close, self._set_close_sent)
+
+    # Only one close message can be generated, and other messages will not be generated after,
+    # but messages are sent by different threads taking the transport clear_to_send lock.
+    # Races are possible: a message generated before close may actually be sent after close.
+    # This is much more likely for EOF of stdin (recently made automatic by ChannelStdinFile)
+    # than for any other message, so only EOF uses this.
+    def _close_not_sent(self):
+        # caller should hold Transport clear_to_send_lock (not channel lock)
+        return not self._close_sent
+
+    # see _close_not_sent above
+    def _set_close_sent(self):
+        # caller should hold Transport clear_to_send_lock (not channel lock)
+        self._close_sent = True
+        return True
 
     def _unlink(self):
         # server connection could die before we become active:

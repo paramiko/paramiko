@@ -1716,7 +1716,7 @@ class Transport(threading.Thread, ClosingContextManager):
     def _send_message(self, data):
         self.packetizer.send_message(data)
 
-    def _send_user_message(self, data):
+    def _send_user_message(self, data, confirm_callback=None):
         """
         send a message, but block if we're in key negotiation.  this is used
         for user-initiated requests.
@@ -1734,7 +1734,8 @@ class Transport(threading.Thread, ClosingContextManager):
             if time.time() > start + self.clear_to_send_timeout:
                 raise SSHException('Key-exchange timed out waiting for key negotiation')
         try:
-            self._send_message(data)
+            if confirm_callback is None or confirm_callback():
+                self._send_message(data)
         finally:
             self.clear_to_send_lock.release()
 
