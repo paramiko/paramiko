@@ -2,6 +2,9 @@
 Changelog
 =========
 
+- :bug:`1024` Deleting items from `~paramiko.hostkeys.HostKeys` would
+  incorrectly raise `KeyError` even for valid keys, due to a logic bug. This
+  has been fixed. Report & patch credit: Jia Zhang.
 - :bug:`1257` (also :issue:`1266`) Update RSA and ECDSA key decoding
   subroutines to correctly catch exception types thrown by modern
   versions of Cryptography (specifically ``TypeError`` and
