@@ -1,11 +1,12 @@
 from os.path import dirname, realpath, join
 import os
+import struct
 import sys
 import unittest
 
 import pytest
 
-from paramiko.py3compat import builtins
+from paramiko.py3compat import builtins, PY2
 from paramiko.ssh_gss import GSS_AUTH_AVAILABLE
 
 
@@ -127,3 +128,19 @@ def k5shell(args=None):
     if not args:
         args = [os.environ.get("SHELL", "bash")]
     sys.exit(subprocess.call(args))
+
+
+def is_low_entropy():
+    """
+    Attempts to detect whether running interpreter is low-entropy.
+
+    Classified as being in 32-bit mode under Python 2, or 32-bit mode and with
+    the hash seed set to zero under Python 3.
+    """
+    is_32bit = struct.calcsize("P") == 32 / 8
+    if PY2:
+        return is_32bit
+    else:
+        # I don't see a way to tell internally if the hash seed was set this
+        # way, but env should be plenty sufficient, this is only for testing.
+        return is_32bit and os.environ.get("PYTHONHASHSEED", None) == "0"

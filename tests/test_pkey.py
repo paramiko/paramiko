@@ -31,8 +31,9 @@ from paramiko.py3compat import StringIO, byte_chr, b, bytes, PY2
 
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateNumbers
 from mock import patch
+import pytest
 
-from .util import _support
+from .util import _support, is_low_entropy
 
 
 # from openssh's ssh-keygen
@@ -550,6 +551,21 @@ class KeyTest(unittest.TestCase):
         self.assertTrue(key.can_sign())
         self.assertTrue(not pub.can_sign())
         self.assertEqual(key, pub)
+
+    # No point testing on systems that never exhibited the bug originally
+    @pytest.mark.skipif(
+        not is_low_entropy(), reason="Not a low-entropy system"
+    )
+    def test_ed25519_32bit_collision(self):
+        # Re: 2021.10.19 security report email: two different private keys
+        # which Paramiko compared as equal on low-entropy platforms.
+        original = Ed25519Key.from_private_key_file(
+            _support("badhash_key1.ed25519.key")
+        )
+        generated = Ed25519Key.from_private_key_file(
+            _support("badhash_key2.ed25519.key")
+        )
+        assert original != generated
 
     def test_ed25519_nonbytes_password(self):
         # https://github.com/paramiko/paramiko/issues/1039
