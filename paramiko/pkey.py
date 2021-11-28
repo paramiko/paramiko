@@ -20,9 +20,6 @@
 Common API for all public keys.
 """
 
-from abc import ABC
-from abc import abstractproperty
-from abc import abstractmethod
 import base64
 from binascii import unhexlify
 import os
@@ -62,7 +59,7 @@ def _unpad_openssh(data):
     return data[:-padding_length]
 
 
-class PKey(ABC):
+class PKey(object):
     """
     Base class for public keys.
     """
@@ -148,9 +145,9 @@ class PKey(ABC):
     def __hash__(self):
         return hash(self._fields)
 
-    @abstractproperty
+    @property
     def _fields(self):
-        pass
+        raise NotImplementedError
 
     def get_name(self):
         """
