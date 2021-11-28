@@ -98,10 +98,9 @@ class RSAKey(PKey):
         else:
             return self.asbytes().decode("utf8", errors="ignore")
 
-    def __hash__(self):
-        return hash(
-            (self.get_name(), self.public_numbers.e, self.public_numbers.n)
-        )
+    @property
+    def _fields(self):
+        return (self.get_name(), self.public_numbers.e, self.public_numbers.n)
 
     def get_name(self):
         return "ssh-rsa"
