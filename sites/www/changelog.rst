@@ -2,6 +2,13 @@
 Changelog
 =========
 
+- :bug:`1257` (also :issue:`1266`) Update RSA and ECDSA key decoding
+  subroutines to correctly catch exception types thrown by modern
+  versions of Cryptography (specifically ``TypeError`` and
+  its internal ``UnsupportedAlgorithm``). These exception classes will now
+  become `~paramiko.exceptions.SSHException` instances instead of bubbling up.
+  Thanks to Ignat Semenov for the report and ``@tylergarcianet`` for an early
+  patch.
 - :bug:`-` (also :issue:`908`) Update `~paramiko.pkey.PKey` and subclasses to
   compare (``__eq__``) via direct field/attribute comparison instead of hashing
   (while retaining the existing behavior of ``__hash__`` via a slight
