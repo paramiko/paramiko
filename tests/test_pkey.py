@@ -26,9 +26,18 @@ import os
 from binascii import hexlify
 from hashlib import md5
 
-from paramiko import RSAKey, DSSKey, ECDSAKey, Ed25519Key, Message, util
+from paramiko import (
+    RSAKey,
+    DSSKey,
+    ECDSAKey,
+    Ed25519Key,
+    Message,
+    util,
+    SSHException,
+)
 from paramiko.py3compat import StringIO, byte_chr, b, bytes, PY2
 
+from cryptography.exceptions import UnsupportedAlgorithm
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateNumbers
 from mock import patch
 import pytest
@@ -162,6 +171,16 @@ class KeyTest(unittest.TestCase):
         s.seek(0)
         key2 = RSAKey.from_private_key(s)
         self.assertEqual(key, key2)
+
+    def test_load_rsa_transmutes_crypto_exceptions(self):
+        # TODO: nix unittest for pytest
+        for exception in (TypeError("onoz"), UnsupportedAlgorithm("oops")):
+            with patch(
+                "paramiko.rsakey.serialization.load_der_private_key"
+            ) as loader:
+                loader.side_effect = exception
+                with pytest.raises(SSHException, match=str(exception)):
+                    RSAKey.from_private_key_file(_support("test_rsa.key"))
 
     def test_load_rsa_password(self):
         key = RSAKey.from_private_key_file(
@@ -368,6 +387,17 @@ class KeyTest(unittest.TestCase):
         self.assertEqual(exp_ecdsa, my_ecdsa)
         self.assertEqual(PUB_ECDSA_384.split()[1], key.get_base64())
         self.assertEqual(384, key.get_bits())
+
+    def test_load_ecdsa_transmutes_crypto_exceptions(self):
+        path = _support("test_ecdsa_256.key")
+        # TODO: nix unittest for pytest
+        for exception in (TypeError("onoz"), UnsupportedAlgorithm("oops")):
+            with patch(
+                "paramiko.ecdsakey.serialization.load_der_private_key"
+            ) as loader:
+                loader.side_effect = exception
+                with pytest.raises(SSHException, match=str(exception)):
+                    ECDSAKey.from_private_key_file(path)
 
     def test_compare_ecdsa_384(self):
         # verify that the private & public keys compare equal
