@@ -567,6 +567,28 @@ class KeyTest(unittest.TestCase):
         )
         assert original != generated
 
+    def keys(self):
+        for key_class, filename in [
+            (RSAKey, "test_rsa.key"),
+            (DSSKey, "test_dss.key"),
+            (ECDSAKey, "test_ecdsa_256.key"),
+            (Ed25519Key, "test_ed25519.key"),
+        ]:
+            key1 = key_class.from_private_key_file(_support(filename))
+            key2 = key_class.from_private_key_file(_support(filename))
+            yield key1, key2
+
+    def test_keys_are_comparable(self):
+        for key1, key2 in self.keys():
+            assert key1 == key2
+
+    def test_keys_are_hashable(self):
+        # NOTE: this isn't a great test due to hashseed randomization under
+        # Python 3 preventing use of static values, but it does still prove
+        # that __hash__ is implemented/doesn't explode & works across instances
+        for key1, key2 in self.keys():
+            assert hash(key1) == hash(key2)
+
     def test_ed25519_nonbytes_password(self):
         # https://github.com/paramiko/paramiko/issues/1039
         Ed25519Key.from_private_key_file(
