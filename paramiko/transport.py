@@ -46,6 +46,7 @@ from paramiko.common import (
     DEBUG,
     MSG_KEXINIT,
     MSG_IGNORE,
+    MSG_KEXSKIP,
     MSG_DISCONNECT,
     MSG_DEBUG,
     ERROR,
@@ -2065,6 +2066,11 @@ class Transport(threading.Thread, ClosingContextManager):
                         continue
                     if len(self._expected_packet) > 0:
                         if ptype not in self._expected_packet:
+                            if ptype == MSG_KEXSKIP:
+                                # according to rfc 4253, the next packet should be ignored,
+                                # when first_kex_packet_follows is True
+                                # this is a workarround at the moment, but connection works
+                                continue
                             raise SSHException(
                                 "Expecting packet from {!r}, got {:d}".format(
                                     self._expected_packet, ptype
