@@ -21,7 +21,8 @@
 """
 
 import threading
-from paramiko import util
+import sys
+
 from paramiko.common import (
     DEBUG,
     ERROR,
@@ -685,10 +686,8 @@ class SubsystemHandler(threading.Thread):
             self.__transport._log(
                 ERROR,
                 'Exception in subsystem handler for "{}": {}'.format(
-                    self.__name, e
-                ),
+                    self.__name, e), exc_info=sys.exc_info()
             )
-            self.__transport._log(ERROR, util.tb_strings())
         try:
             self.finish_subsystem()
         except:
