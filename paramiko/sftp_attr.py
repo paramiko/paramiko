@@ -208,10 +208,10 @@ class SFTPAttributes(object):
             time_tuple = time.localtime(self.st_mtime)
             if abs(time.time() - self.st_mtime) > 15552000:
                 # (15552000 = 6 months)
-                datestr = strftime('%d %b %Y', time_tuple)
+                datestr = strftime("%d %b %Y", time_tuple)
             else:
-                datestr = strftime('%d %b %H:%M', time_tuple)
-        filename = getattr(self, 'filename', '?')
+                datestr = strftime("%d %b %H:%M", time_tuple)
+        filename = getattr(self, "filename", "?")
 
         # not all servers support uid/gid
         uid = self.st_uid
@@ -237,7 +237,7 @@ class SFTPAttributes(object):
         )
 
     def asbytes(self):
-        return self._as_text().encode('utf-8')
+        return self._as_text().encode("utf-8")
 
     if PY2:
         __unicode__ = _as_text

@@ -45,7 +45,7 @@ if PY2:
 
     def bytestring(s):  # NOQA
         if isinstance(s, unicode):  # NOQA
-            return s.encode('utf-8')
+            return s.encode("utf-8")
         return s
 
     byte_ord = ord  # NOQA
@@ -111,7 +111,9 @@ if PY2:
     def strftime(format, t):
         """Same as time.strftime but returns unicode."""
         _, encoding = locale.getlocale(locale.LC_TIME)
-        return time.strftime(format, t).decode(encoding or 'ascii')
+        return time.strftime(format, t).decode(encoding or "ascii")
+
+
 else:
     import collections
     import struct
@@ -180,4 +182,4 @@ else:
 
     MAXSIZE = sys.maxsize  # NOQA
 
-    strftime = time.strftime    # NOQA
+    strftime = time.strftime  # NOQA

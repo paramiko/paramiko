@@ -12,9 +12,14 @@ from pytest import skip
 # with names that include accented characters.
 _non_ascii_locales = [
     # East Asian locales
-    "ja_JP", "ko_KR", "zh_CN", "zh_TW",
+    "ja_JP",
+    "ko_KR",
+    "zh_CN",
+    "zh_TW",
     # European locales with non-latin alphabets
-    "el_GR", "ru_RU", "uk_UA",
+    "el_GR",
+    "ru_RU",
+    "uk_UA",
 ]
 # Also include UTF-8 versions of these locales
 _non_ascii_locales.extend([name + ".utf8" for name in _non_ascii_locales])
