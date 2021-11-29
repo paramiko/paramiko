@@ -61,7 +61,7 @@ from paramiko.common import (
     cMSG_USERAUTH_BANNER,
 )
 from paramiko.message import Message
-from paramiko.py3compat import b
+from paramiko.py3compat import b,u
 from paramiko.ssh_exception import (
     SSHException,
     AuthenticationException,
@@ -653,7 +653,7 @@ Error Message: {}
     def _parse_userauth_banner(self, m):
         banner = m.get_string()
         self.banner = banner
-        self._log(INFO, "Auth banner: {}".format(banner))
+        self._log(INFO, "Auth banner: {}".format(u(banner)))
         # who cares.
 
     def _parse_userauth_info_request(self, m):
