@@ -890,9 +890,9 @@ class TransportTest(unittest.TestCase):
         # (Doing this on the server's transport *sounds* more 'correct' but
         # actually doesn't work nearly as well for whatever reason.)
         class SlowPacketizer(Packetizer):
-            def read_message(self):
+            def read_message(self, timeout=0):
                 time.sleep(1)
-                return super(SlowPacketizer, self).read_message()
+                return super(SlowPacketizer, self).read_message(timeout)
 
         # NOTE: prettttty sure since the replaced .packetizer Packetizer is now
         # no longer doing anything with its copy of the socket...everything'll

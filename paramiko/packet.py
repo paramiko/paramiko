@@ -276,7 +276,7 @@ class Packetizer(object):
             self.__timer_expired = False
             self.__handshake_complete = True
 
-    def read_all(self, n, check_rekey=False):
+    def read_all(self, n, check_rekey=False, timeout=0):
         """
         Read as close to N bytes as possible, blocking as long as necessary.
 
@@ -293,6 +293,7 @@ class Packetizer(object):
             out = self.__remainder[:n]
             self.__remainder = self.__remainder[n:]
             n -= len(out)
+        curr_time = time.time()
         while n > 0:
             got_timeout = False
             if self.handshake_timed_out():
@@ -324,6 +325,9 @@ class Packetizer(object):
                     raise EOFError()
                 if check_rekey and (len(out) == 0) and self.__need_rekey:
                     raise NeedRekeyException()
+                # raise EOFError if no response is given in time
+                if timeout > 0 and time.time() > (curr_time + timeout):
+                    raise EOFError()
                 self._check_keepalive()
         return out
 
@@ -448,7 +452,7 @@ class Packetizer(object):
         finally:
             self.__write_lock.release()
 
-    def read_message(self):
+    def read_message(self, timeout=0):
         """
         Only one thread should ever be in this function (no other locking is
         done).
@@ -456,7 +460,14 @@ class Packetizer(object):
         :raises: `.SSHException` -- if the packet is mangled
         :raises: `.NeedRekeyException` -- if the transport should rekey
         """
-        header = self.read_all(self.__block_size_in, check_rekey=True)
+        # timeout is a patch to check if client accept ssh-key-exchange
+        # in a given timeframe. if client don't give response, we close
+        # the socket to free locked thread
+        header = self.read_all(
+            self.__block_size_in,
+            check_rekey=True,
+            timeout=timeout
+        )
         if self.__etm_in:
             packet_size = struct.unpack(">I", header[:4])[0]
             remaining = packet_size - self.__block_size_in + 4
