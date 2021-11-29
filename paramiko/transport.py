@@ -84,6 +84,11 @@ from paramiko.common import (
     HIGHEST_USERAUTH_MESSAGE_ID,
     MSG_UNIMPLEMENTED,
     MSG_NAMES,
+    MUX_MSG_HELLO,
+    MUX_C_PROXY,
+    MUX_S_PROXY,
+    MUX_C_ALIVE_CHECK,
+    MUX_S_ALIVE,
 )
 from paramiko.compress import ZlibCompressor, ZlibDecompressor
 from paramiko.dsskey import DSSKey
@@ -310,6 +315,7 @@ class Transport(threading.Thread, ClosingContextManager):
         gss_kex=False,
         gss_deleg_creds=True,
         disabled_algorithms=None,
+        controlpath=None,
     ):
         """
         Create a new SSH session over an existing socket, or socket-like
@@ -372,6 +378,10 @@ class Transport(threading.Thread, ClosingContextManager):
             your code talks to a server which implements it differently from
             Paramiko), specify ``disabled_algorithms={"kex":
             ["diffie-hellman-group16-sha512"]}``.
+        :param string controlpath:
+            Connect to a multiplexing ControlMaster instead of standard
+            TCP socket, allowing a shared connection to an already negotiated
+            and authenticated SSH Transport (via proxy)
 
         .. versionchanged:: 1.15
             Added the ``default_window_size`` and ``default_max_packet_size``
@@ -383,6 +393,8 @@ class Transport(threading.Thread, ClosingContextManager):
         """
         self.active = False
         self.hostname = None
+        self.log_name = "paramiko.transport"
+        self.logger = util.get_logger(self.log_name)
 
         if isinstance(sock, string_types):
             # convert "host:port" into (host, port)
@@ -392,6 +404,31 @@ class Transport(threading.Thread, ClosingContextManager):
                 sock = (hl[0], 22)
             else:
                 sock = (hl[0], int(hl[1]))
+        # If controlpath is set, try connecting to it
+        self.controlpath = None
+        if controlpath:
+            try:
+                self._log(INFO, "Trying ControlPath '%s'", controlpath)
+                mux_sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+                mux_sock.connect(controlpath)
+                self._log(DEBUG, "Connected to ControlPath '%s'", controlpath)
+                self.packetizer = Packetizer(mux_sock)
+                self.packetizer.set_log(self.logger)
+                # Mux connection requires no cipher, no compression, no padding
+                self.packetizer.set_outbound_cipher(None, 0, None, 0, None)
+                self.packetizer.set_inbound_cipher(None, 0, None, 0, None)
+                # Send/recv the HELLO message to Mux server
+                self._start_mux_session()
+                self.controlpath = controlpath
+                sock = mux_sock
+            except Exception as e:
+                self._log(INFO, "ControlPath connection failed: %r", e)
+                raise SSHException(
+                    "Unable to connect to ControlPath '{}' - {}".format(
+                        controlpath, e
+                    )
+                )
+
         if type(sock) is tuple:
             # connect to the given (host, port)
             hostname, port = sock
@@ -424,7 +461,8 @@ class Transport(threading.Thread, ClosingContextManager):
         self.sock.settimeout(self._active_check_timeout)
 
         # negotiated crypto parameters
-        self.packetizer = Packetizer(sock)
+        if not self.controlpath:
+            self.packetizer = Packetizer(sock)
         self.local_version = "SSH-" + self._PROTO_ID + "-" + self._CLIENT_ID
         self.remote_version = ""
         self.local_cipher = self.remote_cipher = ""
@@ -472,8 +510,6 @@ class Transport(threading.Thread, ClosingContextManager):
         self.clear_to_send = threading.Event()
         self.clear_to_send_lock = threading.Lock()
         self.clear_to_send_timeout = 30.0
-        self.log_name = "paramiko.transport"
-        self.logger = util.get_logger(self.log_name)
         self.packetizer.set_log(self.logger)
         self.auth_handler = None
         # response Message from an arbitrary global request
@@ -496,6 +532,14 @@ class Transport(threading.Thread, ClosingContextManager):
         self.server_accepts = []
         self.server_accept_cv = threading.Condition(self.lock)
         self.subsystem_table = {}
+
+        # Express connect state when using controlpath
+        if self.controlpath:
+            self.initial_kex_done = True
+            self.authenticated = True
+            self.auth_handler = AuthHandler(self)
+            self.auth_handler.authenticated = True
+            self.clear_to_send.set()
 
     def _filter_algorithm(self, type_):
         default = getattr(self, "_preferred_{}".format(type_))
@@ -533,6 +577,8 @@ class Transport(threading.Thread, ClosingContextManager):
         out = "<paramiko.Transport at {}".format(id_)
         if not self.active:
             out += " (unconnected)"
+        elif self.controlpath:
+            out += " (Mux/ControlPath {})".format(self.controlpath)
         else:
             if self.local_cipher != "":
                 out += " (cipher {}, {:d} bits)".format(
@@ -1055,10 +1101,11 @@ class Transport(threading.Thread, ClosingContextManager):
         response = self.global_request(
             "tcpip-forward", (address, port), wait=True
         )
-        if response is None:
-            raise SSHException("TCP forwarding request denied")
-        if port == 0:
-            port = response.get_int()
+        if not self.controlpath:
+            if response is None:
+                raise SSHException("TCP forwarding request denied")
+            if port == 0:
+                port = response.get_int()
         if handler is None:
 
             def default_handler(channel, src_addr, dest_addr_port):
@@ -1127,6 +1174,10 @@ class Transport(threading.Thread, ClosingContextManager):
             `.SSHException` -- if the key renegotiation failed (which causes
             the session to end)
         """
+        if self.controlpath:
+            # Disallow this when in mux proxy mode
+            self._log(DEBUG, "Ignoring renegotiate_keys() in mux proxy mode")
+            return
         self.completion_event = threading.Event()
         self._send_kex_init()
         while True:
@@ -1185,6 +1236,10 @@ class Transport(threading.Thread, ClosingContextManager):
         self._log(DEBUG, 'Sending global request "{}"'.format(kind))
         self._send_user_message(m)
         if not wait:
+            return None
+        if self.controlpath:
+            # Mux master does not forward the global_response reply
+            self._log(DEBUG, "Skipping global_response wait from mux proxy")
             return None
         while True:
             self.completion_event.wait(0.1)
@@ -1289,6 +1344,10 @@ class Transport(threading.Thread, ClosingContextManager):
         )
 
         self.start_client()
+        if self.controlpath:
+            # If ControlPath connection has been established, then there
+            # is no need to check host keys or do any user authentication
+            return
 
         # check host key if we were given one
         # If GSS-API Key Exchange was performed, we are not required to check
@@ -2029,24 +2088,32 @@ class Transport(threading.Thread, ClosingContextManager):
             self._log(DEBUG, "starting thread (server mode): {}".format(tid))
         else:
             self._log(DEBUG, "starting thread (client mode): {}".format(tid))
+            if self.controlpath:
+                # No initial protocol chatter (banner, Kex) takes
+                # place when using ControlPath mux connection. Force
+                # the completion event to allow start_client to return.
+                self.completion_event.set()
         try:
             try:
-                self.packetizer.write_all(b(self.local_version + "\r\n"))
-                self._log(
-                    DEBUG,
-                    "Local version/idstring: {}".format(self.local_version),
-                )  # noqa
-                self._check_banner()
-                # The above is actually very much part of the handshake, but
-                # sometimes the banner can be read but the machine is not
-                # responding, for example when the remote ssh daemon is loaded
-                # in to memory but we can not read from the disk/spawn a new
-                # shell.
-                # Make sure we can specify a timeout for the initial handshake.
-                # Re-use the banner timeout for now.
-                self.packetizer.start_handshake(self.handshake_timeout)
-                self._send_kex_init()
-                self._expect_packet(MSG_KEXINIT)
+                if not self.controlpath:
+                    self.packetizer.write_all(b(self.local_version + "\r\n"))
+                    self._log(
+                        DEBUG,
+                        "Local version/idstring: {}".format(
+                            self.local_version
+                        ),
+                    )  # noqa
+                    self._check_banner()
+                    # The above is actually very much part of the handshake,
+                    # but sometimes the banner can be read but the machine is
+                    # not responding, for example when the remote ssh daemon is
+                    # loaded in to memory but we can not read from the
+                    # disk/spawn a new shell.
+                    # Make sure we can specify a timeout for the initial
+                    # handshake. Re-use the banner timeout for now.
+                    self.packetizer.start_handshake(self.handshake_timeout)
+                    self._send_kex_init()
+                    self._expect_packet(MSG_KEXINIT)
 
                 while self.active:
                     if self.packetizer.need_rekey() and not self.in_kex:
@@ -2628,6 +2695,7 @@ class Transport(threading.Thread, ClosingContextManager):
                 DEBUG,
                 'Rejecting "{}" global request from server.'.format(kind),
             )
+            self._log(DEBUG, "want_reply {}".format(want_reply))
             ok = False
         elif kind == "tcpip-forward":
             address = m.get_text()
@@ -2853,6 +2921,57 @@ class Transport(threading.Thread, ClosingContextManager):
             return self.subsystem_table[name]
         finally:
             self.lock.release()
+
+    def _start_mux_session(self, version=4):
+        """
+        Check the SSH ControlPath connection, and ensure that the
+        server side responds appropriately to MUX_MSG_HELLO, MUX_C_ALIVE_CHECK,
+        and MUX_C_PROXY messages. Once entering proxy mode, the client
+        SSH protocol messages can be sent to the ControlPath as
+        unencrypted, unpadded Transport messages.
+        """
+        m = paramiko.Message()
+        m.add_int(MUX_MSG_HELLO)
+        m.add_int(version)
+        self.packetizer.send_mux_message(m.asbytes())
+        resp, msg = self.packetizer.read_mux_message()
+        if resp != MUX_MSG_HELLO:
+            raise SSHException(
+                "Expected MUX_MSG_HELLO response, got 0x{:x}".format(resp)
+            )
+        remote_version = msg.get_int()
+        if remote_version != version:
+            raise SSHException(
+                "Expected Mux protocol version {:d}, got {:d}".format(
+                    version, remote_version
+                )
+            )
+        # Send MUX_C_ALIVE_CHECK as final confirmation
+        m = paramiko.Message()
+        m.add_int(MUX_C_ALIVE_CHECK)
+        m.add_int(1)
+        self.packetizer.send_mux_message(m.asbytes())
+        resp, msg = self.packetizer.read_mux_message()
+        if resp != MUX_S_ALIVE:
+            raise SSHException("Mux Alive - Invalid reply 0x{:x}".format(resp))
+        request_id = msg.get_int()
+        if request_id != 1:
+            raise SSHException(
+                "Mux reply - expected request id 1, got {}", request_id
+            )
+        pid = msg.get_int()
+        self._log(DEBUG, "Connected to SSH ControlMaster (PID {})".format(pid))
+        # Everything looks good, one last request to enter proxy mode
+        m = paramiko.Message()
+        m.add_int(MUX_C_PROXY)
+        m.add_int(2)
+        self.packetizer.send_mux_message(m.asbytes())
+        resp, msg = self.packetizer.read_mux_message()
+        if resp != MUX_S_PROXY or msg.get_int() != 2:
+            raise SSHException(
+                "Mux proxy request rejected (Requires OpenSSH 7.4 or greater)"
+                " - got unexpected reply: 0x{:x} {!r}".format(resp, msg)
+            )
 
     _handler_table = {
         MSG_NEWKEYS: _parse_newkeys,
