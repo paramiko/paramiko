@@ -72,3 +72,4 @@ Miscellany
     api/file
     api/pipe
     api/ssh_exception
+    api/pkcs11
