@@ -5,7 +5,7 @@ Changelog
 * :bug:`985` (via :issue:`992`) Fix listdir failure when server uses a locale.
   Now on Python 2.7 `SFTPAttributes <paramiko.sftp_attr.SFTPAttributes>` will
   decode abbreviated month names correctly rather than raise
-  ``UnicodeDecodeError```.
+  ``UnicodeDecodeError```. Patch courtesy of Martin Packman.
 - :bug:`1024` Deleting items from `~paramiko.hostkeys.HostKeys` would
   incorrectly raise `KeyError` even for valid keys, due to a logic bug. This
   has been fixed. Report & patch credit: Jia Zhang.
