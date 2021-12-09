@@ -2176,7 +2176,7 @@ class Transport(threading.Thread, ClosingContextManager):
         # Log useful, non-duplicative line re: an agreed-upon algorithm.
         # Old code implied algorithms could be asymmetrical (different for
         # inbound vs outbound) so we preserve that possibility.
-        msg = "{} agreed: ".format(which)
+        msg = "{}: ".format(which)
         if local == remote:
             msg += local
         else:
@@ -2323,31 +2323,27 @@ class Transport(threading.Thread, ClosingContextManager):
         kex_follows = m.get_boolean()
         m.get_int()  # unused
 
-        self._log(
-            DEBUG,
-            "kex algos:"
-            + str(kex_algo_list)
-            + " server key:"
-            + str(server_key_algo_list)
-            + " client encrypt:"
-            + str(client_encrypt_algo_list)
-            + " server encrypt:"
-            + str(server_encrypt_algo_list)
-            + " client mac:"
-            + str(client_mac_algo_list)
-            + " server mac:"
-            + str(server_mac_algo_list)
-            + " client compress:"
-            + str(client_compress_algo_list)
-            + " server compress:"
-            + str(server_compress_algo_list)
-            + " client lang:"
-            + str(client_lang_list)
-            + " server lang:"
-            + str(server_lang_list)
-            + " kex follows?"
-            + str(kex_follows),
-        )
+        self._log(DEBUG, "=== Key exchange possibilities ===")
+        for prefix, value in (
+            ("kex algos", kex_algo_list),
+            ("server key", server_key_algo_list),
+            # TODO: shouldn't these two lines say "cipher" to match usual
+            # terminology (including elsewhere in paramiko!)?
+            ("client encrypt", client_encrypt_algo_list),
+            ("server encrypt", server_encrypt_algo_list),
+            ("client mac", client_mac_algo_list),
+            ("server mac", server_mac_algo_list),
+            ("client compress", client_compress_algo_list),
+            ("server compress", server_compress_algo_list),
+            ("client lang", client_lang_list),
+            ("server lang", server_lang_list),
+        ):
+            if value == [""]:
+                value = ["<none>"]
+            value = ", ".join(value)
+            self._log(DEBUG, "{}: {}".format(prefix, value))
+        self._log(DEBUG, "kex follows: {}".format(kex_follows))
+        self._log(DEBUG, "=== Key exchange agreements ===")
 
         # as a server, we pick the first item in the client's list that we
         # support.
@@ -2369,7 +2365,7 @@ class Transport(threading.Thread, ClosingContextManager):
                 "Incompatible ssh peer (no acceptable kex algorithm)"
             )  # noqa
         self.kex_engine = self._kex_info[agreed_kex[0]](self)
-        self._log(DEBUG, "Kex agreed: {}".format(agreed_kex[0]))
+        self._log(DEBUG, "Kex: {}".format(agreed_kex[0]))
 
         if self.server_mode:
             available_server_keys = list(
@@ -2502,6 +2498,7 @@ class Transport(threading.Thread, ClosingContextManager):
             local=self.local_compression,
             remote=self.remote_compression,
         )
+        self._log(DEBUG, "=== End of kex handshake ===")
 
         # save for computing hash later...
         # now wait!  openssh has a bug (and others might too) where there are
