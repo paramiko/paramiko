@@ -2272,6 +2272,14 @@ class Transport(threading.Thread, ClosingContextManager):
             available_server_keys = list(
                 filter(
                     list(self.server_key_dict.keys()).__contains__,
+                    # TODO: ensure tests will catch if somebody streamlines
+                    # this by mistake - case is the admittedly silly one where
+                    # the only calls to add_server_key() contain keys which
+                    # were filtered out of the below via disabled_algorithms.
+                    # If this is streamlined, we would then be allowing the
+                    # disabled algorithm(s) for hostkey use
+                    # TODO: honestly this prob just wants to get thrown out
+                    # when we make kex configuration more straightforward
                     self.preferred_keys,
                 )
             )
@@ -2291,6 +2299,9 @@ class Transport(threading.Thread, ClosingContextManager):
         m.add_list(self.preferred_compression)
         m.add_string(bytes())
         m.add_string(bytes())
+        # TODO: guess Robey never implemented the "guessing" part of the
+        # protocol. (Transport also never stores or acts on this flag's value
+        # in _parse_kex_init(), besides logging it to DEBUG.)
         m.add_boolean(False)
         m.add_int(0)
         # save a copy for later (needed to compute a hash)
@@ -2351,6 +2362,9 @@ class Transport(threading.Thread, ClosingContextManager):
                 filter(kex_algo_list.__contains__, self.preferred_kex)
             )
         if len(agreed_kex) == 0:
+            # TODO: do an auth-overhaul style aggregate exception here?
+            # TODO: would let us streamline log output & show all failures up
+            # front
             raise SSHException(
                 "Incompatible ssh peer (no acceptable kex algorithm)"
             )  # noqa
@@ -2877,6 +2891,9 @@ class Transport(threading.Thread, ClosingContextManager):
     }
 
 
+# TODO 3.0: drop this, we barely use it ourselves, it badly replicates the
+# Transport-internal algorithm management, AND does so in a way which doesn't
+# honor newer things like disabled_algorithms!
 class SecurityOptions(object):
     """
     Simple object containing the security preferences of an ssh transport.

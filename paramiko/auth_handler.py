@@ -272,6 +272,9 @@ class AuthHandler(object):
     def _parse_service_accept(self, m):
         service = m.get_text()
         if service == "ssh-userauth":
+            # TODO 3.0: this message sucks ass. change it to something more
+            # obvious. it always appears to mean "we already authed" but no! it
+            # just means "we are allowed to TRY authing!"
             self._log(DEBUG, "userauth is OK")
             m = Message()
             m.add_byte(cMSG_USERAUTH_REQUEST)
