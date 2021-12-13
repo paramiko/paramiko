@@ -191,7 +191,7 @@ class Ed25519Key(PKey):
     def can_sign(self):
         return self._signing_key is not None
 
-    def sign_ssh_data(self, data):
+    def sign_ssh_data(self, data, algorithm=None):
         m = Message()
         m.add_string("ssh-ed25519")
         m.add_string(self._signing_key.sign(data).signature)

@@ -2,6 +2,70 @@
 Changelog
 =========
 
+- :feature:`1643` Add support for SHA-2 variants of RSA key verification
+  algorithms (as described in :rfc:`8332`) as well as limited SSH extension
+  negotiation (:rfc:`8308`). How SSH servers/clients decide when and how to use
+  this functionality can be complicated; Paramiko's support is as follows:
+
+  - Client verification of server host key during key exchange will now prefer
+    ``rsa-sha2-512``, ``rsa-sha2-256``, and legacy ``ssh-rsa`` algorithms, in
+    that order, instead of just ``ssh-rsa``.
+
+      - Note that the preference order of other algorithm families such as
+        ``ed25519`` and ``ecdsa`` has not changed; for example, those two
+        groups are still preferred over RSA.
+
+  - Server mode will now offer all 3 RSA algorithms for host key verification
+    during key exchange, similar to client mode, if it has been configured with
+    an RSA host key.
+  - Client mode key exchange now sends the ``ext-info-c`` flag signaling
+    support for ``MSG_EXT_INFO``, and support for parsing the latter
+    (specifically, its ``server-sig-algs`` flag) has been added.
+  - Client mode, when performing public key authentication with an RSA key or
+    cert, will act as follows:
+
+    - In all cases, the list of algorithms to consider is based on the new
+      ``preferred_pubkeys`` list (see below) and ``disabled_algorithms``; this
+      list, like with host keys, prefers SHA2-512, SHA2-256 and SHA1, in that
+      order.
+    - When the server does not send ``server-sig-algs``, Paramiko will attempt
+      the first algorithm in the above list. Clients connecting to legacy
+      servers should thus use ``disabled_algorithms`` to turn off SHA2.
+    - When the server does send ``server-sig-algs``, the first algorithm
+      supported by both ends is used, or if there is none, it falls back to the
+      previous behavior.
+
+  - Server mode is now capable of pubkey auth involving SHA-2 signatures from
+    clients, provided one's server implementation actually provides for doing
+    so.
+
+    - This includes basic support for sending ``MSG_EXT_INFO`` (containing
+      ``server-sig-algs`` only) to clients advertising ``ext-info-c`` in their
+      key exchange list.
+
+  In order to implement the above, the following API additions were made:
+
+  - `PKey.sign_ssh_data <paramiko.pkey.PKey>`: Grew an extra, optional
+    ``algorithm`` keyword argument (defaulting to ``None`` for most subclasses,
+    and to ``"ssh-rsa"`` for `~paramiko.rsakey.RSAKey`).
+  - A new `~paramiko.ssh_exception.SSHException` subclass was added,
+    `~paramiko.ssh_exception.IncompatiblePeer`, and is raised in all spots
+    where key exchange aborts due to algorithmic incompatibility.
+
+    - Like all other exceptions in that module, it inherits from
+    ``SSHException``, and as we did not change anything else about the raising
+    (i.e. the attributes and message text are the same) this change is
+    backwards compatible.
+
+  - `~paramiko.transport.Transport` grew a ``_preferred_pubkeys`` attribute and
+    matching ``preferred_pubkeys`` property to match the other, kex-focused,
+    such members. This allows client pubkey authentication to honor the
+    ``disabled_algorithms`` feature.
+
+  Thanks to Krisztián Kovács for the report and an early stab at a patch, as
+  well as the numerous users who submitted feedback on the issue, including but
+  not limited to: Christopher Rabotin, Sam Bull, and Manfred Kaiser.
+
 - :release:`2.8.1 <2021-11-28>`
 - :bug:`985` (via :issue:`992`) Fix listdir failure when server uses a locale.
   Now on Python 2.7 `SFTPAttributes <paramiko.sftp_attr.SFTPAttributes>` will

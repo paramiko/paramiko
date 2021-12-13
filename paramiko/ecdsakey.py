@@ -211,7 +211,7 @@ class ECDSAKey(PKey):
     def can_sign(self):
         return self.signing_key is not None
 
-    def sign_ssh_data(self, data):
+    def sign_ssh_data(self, data, algorithm=None):
         ecdsa = ec.ECDSA(self.ecdsa_curve.hash_object())
         sig = self.signing_key.sign(data, ecdsa)
         r, s = decode_dss_signature(sig)

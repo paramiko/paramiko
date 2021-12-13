@@ -196,13 +196,20 @@ class PKey(object):
         """
         return u(encodebytes(self.asbytes())).replace("\n", "")
 
-    def sign_ssh_data(self, data):
+    def sign_ssh_data(self, data, algorithm=None):
         """
         Sign a blob of data with this private key, and return a `.Message`
         representing an SSH signature message.
 
-        :param str data: the data to sign.
+        :param str data:
+            the data to sign.
+        :param str algorithm:
+            the signature algorithm to use, if different from the key's
+            internal name. Default: ``None``.
         :return: an SSH signature `message <.Message>`.
+
+        .. versionchanged:: 2.9
+            Added the ``algorithm`` kwarg.
         """
         return bytes()
 

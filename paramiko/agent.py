@@ -411,7 +411,7 @@ class AgentKey(PKey):
     def _fields(self):
         raise NotImplementedError
 
-    def sign_ssh_data(self, data):
+    def sign_ssh_data(self, data, algorithm=None):
         msg = Message()
         msg.add_byte(cSSH2_AGENTC_SIGN_REQUEST)
         msg.add_string(self.blob)

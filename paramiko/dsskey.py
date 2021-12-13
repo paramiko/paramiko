@@ -105,7 +105,7 @@ class DSSKey(PKey):
     def can_sign(self):
         return self.x is not None
 
-    def sign_ssh_data(self, data):
+    def sign_ssh_data(self, data, algorithm=None):
         key = dsa.DSAPrivateNumbers(
             x=self.x,
             public_numbers=dsa.DSAPublicNumbers(
