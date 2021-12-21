@@ -72,7 +72,7 @@ from paramiko.server import InteractiveQuery
 from paramiko.ssh_gss import GSSAuth, GSS_EXCEPTIONS
 
 
-class AuthHandler(object):
+class AuthHandler:
     """
     Internal class to handle the mechanics of authentication.
     """
@@ -739,7 +739,7 @@ Error Message: {}
             return self._client_handler_table
 
 
-class GssapiWithMicAuthHandler(object):
+class GssapiWithMicAuthHandler:
     """A specialized Auth handler for gssapi-with-mic
 
     During the GSSAPI token exchange we need a modified dispatch table,

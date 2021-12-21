@@ -49,7 +49,7 @@ from paramiko.ssh_exception import SSHException
 ) = [byte_chr(c) for c in range(30, 35)]
 
 
-class KexGex(object):
+class KexGex:
 
     name = "diffie-hellman-group-exchange-sha1"
     min_bits = 1024

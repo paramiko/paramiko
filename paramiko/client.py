@@ -770,7 +770,7 @@ class SSHClient(ClosingContextManager):
         self._transport._log(level, msg)
 
 
-class MissingHostKeyPolicy(object):
+class MissingHostKeyPolicy:
     """
     Interface for defining the policy that `.SSHClient` should use when the
     SSH server's hostname is not in either the system host keys or the

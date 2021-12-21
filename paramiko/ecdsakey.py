@@ -36,7 +36,7 @@ from paramiko.ssh_exception import SSHException
 from paramiko.util import deflate_long
 
 
-class _ECDSACurve(object):
+class _ECDSACurve:
     """
     Represents a specific ECDSA Curve (nistp256, nistp384, etc).
 
@@ -63,7 +63,7 @@ class _ECDSACurve(object):
         self.curve_class = curve_class
 
 
-class _ECDSACurveSet(object):
+class _ECDSACurveSet:
     """
     A collection to hold the ECDSA curves. Allows querying by oid and by key
     format identifier. The two ways in which ECDSAKey needs to be able to look

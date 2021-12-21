@@ -37,7 +37,7 @@ from .util import needs_gssapi, KerberosTestCase, update_env
 @needs_gssapi
 class GSSAPITest(KerberosTestCase):
     def setUp(self):
-        super(GSSAPITest, self).setUp()
+        super().setUp()
         # TODO: these vars should all come from os.environ or whatever the
         # approved pytest method is for runtime-configuring test data.
         self.krb5_mech = "1.2.840.113554.1.2.2"

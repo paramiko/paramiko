@@ -34,7 +34,7 @@ from .util import slow
 
 
 @slow
-class TestBigSFTP(object):
+class TestBigSFTP:
     def test_lots_of_files(self, sftp):
         """
         create a bunch of files over the same session.

@@ -114,7 +114,7 @@ def _query_pageant(msg):
         return None
 
 
-class PageantConnection(object):
+class PageantConnection:
     """
     Mock "connection" to an agent which roughly approximates the behavior of
     a unix local-domain socket (as used by Agent).  Requests are sent to the

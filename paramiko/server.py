@@ -32,7 +32,7 @@ from paramiko.common import (
 from paramiko.py3compat import string_types
 
 
-class ServerInterface(object):
+class ServerInterface:
     """
     This class defines an interface for controlling the behavior of Paramiko
     in server mode.
@@ -594,7 +594,7 @@ class ServerInterface(object):
         return (None, None)
 
 
-class InteractiveQuery(object):
+class InteractiveQuery:
     """
     A query (set of prompts) for a user during interactive authentication.
     """

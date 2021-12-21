@@ -43,7 +43,7 @@ cSSH2_AGENTC_SIGN_REQUEST = byte_chr(13)
 SSH2_AGENT_SIGN_RESPONSE = 14
 
 
-class AgentSSH(object):
+class AgentSSH:
     def __init__(self):
         self._conn = None
         self._keys = ()
@@ -193,7 +193,7 @@ class AgentRemoteProxy(AgentProxyThread):
         return self.__chan, None
 
 
-class AgentClientProxy(object):
+class AgentClientProxy:
     """
     Class proxying request as a client:
 
@@ -302,7 +302,7 @@ class AgentServerProxy(AgentSSH):
         return self._file
 
 
-class AgentRequestHandler(object):
+class AgentRequestHandler:
     """
     Primary/default implementation of SSH agent forwarding functionality.
 

@@ -59,7 +59,7 @@ def _unpad_openssh(data):
     return data[:-padding_length]
 
 
-class PKey(object):
+class PKey:
     """
     Base class for public keys.
     """
@@ -652,7 +652,7 @@ class PKey(object):
 # Of little value in the case of standard public keys
 # {ssh-rsa, ssh-dss, ssh-ecdsa, ssh-ed25519}, but should
 # provide rudimentary support for {*-cert.v01}
-class PublicBlob(object):
+class PublicBlob:
     """
     OpenSSH plain public key or OpenSSH signed public key (certificate).
 

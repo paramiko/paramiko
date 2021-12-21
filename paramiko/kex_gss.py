@@ -67,7 +67,7 @@ from paramiko.ssh_exception import SSHException
 ]
 
 
-class KexGSSGroup1(object):
+class KexGSSGroup1:
     """
     GSS-API / SSPI Authenticated Diffie-Hellman Key Exchange as defined in `RFC
     4462 Section 2 <https://tools.ietf.org/html/rfc4462.html#section-2>`_
@@ -327,7 +327,7 @@ class KexGSSGroup14(KexGSSGroup1):
     NAME = "gss-group14-sha1-toWM5Slw5Ew8Mqkay+al2g=="
 
 
-class KexGSSGex(object):
+class KexGSSGex:
     """
     GSS-API / SSPI Authenticated Diffie-Hellman Group Exchange as defined in
     `RFC 4462 Section 2 <https://tools.ietf.org/html/rfc4462.html#section-2>`_
@@ -663,7 +663,7 @@ Error Message: {}
         )
 
 
-class NullHostKey(object):
+class NullHostKey:
     """
     This class represents the Null Host Key for GSS-API Key Exchange as defined
     in `RFC 4462 Section 5

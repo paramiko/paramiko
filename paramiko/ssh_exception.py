@@ -189,7 +189,7 @@ class NoValidConnectionsError(socket.error):
             msg = "Unable to connect to port {0} on {1} or {2}"
         else:
             msg = "Unable to connect to port {0} on {2}"
-        super(NoValidConnectionsError, self).__init__(
+        super().__init__(
             None, msg.format(addrs[0][1], body, tail)  # stand-in for errno
         )
         self.errors = errors
