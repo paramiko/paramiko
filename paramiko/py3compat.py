@@ -39,12 +39,15 @@ bytes = bytes
 bytes_types = bytes
 integer_types = int
 
+
 class long(int):
     pass
+
 
 input = input
 decodebytes = base64.decodebytes
 encodebytes = base64.encodebytes
+
 
 def byte_ord(c):
     # In case we're handed a string instead of an int.
@@ -52,13 +55,16 @@ def byte_ord(c):
         c = ord(c)
     return c
 
+
 def byte_chr(c):
     assert isinstance(c, int)
     return struct.pack("B", c)
 
+
 def byte_mask(c, mask):
     assert isinstance(c, int)
     return struct.pack("B", c & mask)
+
 
 def b(s, encoding="utf8"):
     """cast unicode or bytes to bytes"""
@@ -69,6 +75,7 @@ def b(s, encoding="utf8"):
     else:
         raise TypeError("Expected unicode or bytes, got {!r}".format(s))
 
+
 def u(s, encoding="utf8"):
     """cast bytes or unicode to unicode"""
     if isinstance(s, bytes):
@@ -78,19 +85,24 @@ def u(s, encoding="utf8"):
     else:
         raise TypeError("Expected unicode or bytes, got {!r}".format(s))
 
+
 def b2s(s):
     return s.decode() if isinstance(s, bytes) else s
+
 
 import io
 
 StringIO = io.StringIO  # NOQA
 BytesIO = io.BytesIO  # NOQA
 
+
 def is_callable(c):
     return isinstance(c, collections.Callable)
 
+
 def get_next(c):
     return c.__next__
+
 
 next = next
 
