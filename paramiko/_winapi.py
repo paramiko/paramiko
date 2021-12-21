@@ -64,7 +64,7 @@ class WindowsError(builtins.WindowsError):
             args = 0, strerror, None, value
         else:
             args = value, strerror
-        super(WindowsError, self).__init__(*args)
+        super().__init__(*args)
 
     @property
     def message(self):
@@ -133,7 +133,7 @@ ctypes.windll.kernel32.LocalFree.argtypes = (ctypes.wintypes.HLOCAL,)
 # jaraco.windows.mmap
 
 
-class MemoryMap(object):
+class MemoryMap:
     """
     A memory map object which can have security attributes overridden.
     """
@@ -325,7 +325,7 @@ class SECURITY_ATTRIBUTES(ctypes.Structure):
     ]
 
     def __init__(self, *args, **kwargs):
-        super(SECURITY_ATTRIBUTES, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.nLength = ctypes.sizeof(SECURITY_ATTRIBUTES)
 
     @property

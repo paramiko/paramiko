@@ -261,7 +261,7 @@ def log_to_file(filename, level=DEBUG):
 
 
 # make only one filter object, so it doesn't get applied more than once
-class PFilter(object):
+class PFilter:
     def filter(self, record):
         record._threadid = get_thread_id()
         return True
@@ -296,7 +296,7 @@ def constant_time_bytes_eq(a, b):
     return res == 0
 
 
-class ClosingContextManager(object):
+class ClosingContextManager:
     def __enter__(self):
         return self
 

@@ -128,13 +128,9 @@ class SFTPServer(BaseSFTP, SubsystemHandler):
     def _log(self, level, msg):
         if issubclass(type(msg), list):
             for m in msg:
-                super(SFTPServer, self)._log(
-                    level, "[chan " + self.sock.get_name() + "] " + m
-                )
+                super()._log(level, "[chan " + self.sock.get_name() + "] " + m)
         else:
-            super(SFTPServer, self)._log(
-                level, "[chan " + self.sock.get_name() + "] " + msg
-            )
+            super()._log(level, "[chan " + self.sock.get_name() + "] " + msg)
 
     def start_subsystem(self, name, transport, channel):
         self.sock = channel
@@ -166,7 +162,7 @@ class SFTPServer(BaseSFTP, SubsystemHandler):
 
     def finish_subsystem(self):
         self.server.session_ended()
-        super(SFTPServer, self).finish_subsystem()
+        super().finish_subsystem()
         # close any file handles that were left open
         # (so we can return them to the OS quickly)
         for f in self.file_table.values():

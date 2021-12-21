@@ -36,7 +36,7 @@ class PipeTimeout(IOError):
     pass
 
 
-class BufferedPipe(object):
+class BufferedPipe:
     """
     A buffer that obeys normal read (with timeout) & close semantics for a
     file or socket, but is fed data from another thread.  This is used by
