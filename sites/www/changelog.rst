@@ -2,10 +2,11 @@
 Changelog
 =========
 
-- :feature:`1643` Add support for SHA-2 variants of RSA key verification
-  algorithms (as described in :rfc:`8332`) as well as limited SSH extension
-  negotiation (:rfc:`8308`). How SSH servers/clients decide when and how to use
-  this functionality can be complicated; Paramiko's support is as follows:
+- :feature:`1643` (also :issue:`1925`, :issue:`1644`, :issue:`1326`) Add
+  support for SHA-2 variants of RSA key verification algorithms (as described
+  in :rfc:`8332`) as well as limited SSH extension negotiation (:rfc:`8308`).
+  How SSH servers/clients decide when and how to use this functionality can be
+  complicated; Paramiko's support is as follows:
 
   - Client verification of server host key during key exchange will now prefer
     ``rsa-sha2-512``, ``rsa-sha2-256``, and legacy ``ssh-rsa`` algorithms, in
@@ -35,6 +36,9 @@ Changelog
       supported by both ends is used, or if there is none, it falls back to the
       previous behavior.
 
+  - SSH agent support grew the ability to specify algorithm flags when
+    requesting private key signatures; this is now used to forward SHA2
+    algorithms when appropriate.
   - Server mode is now capable of pubkey auth involving SHA-2 signatures from
     clients, provided one's server implementation actually provides for doing
     so.
