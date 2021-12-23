@@ -57,9 +57,9 @@ Changelog
     where key exchange aborts due to algorithmic incompatibility.
 
     - Like all other exceptions in that module, it inherits from
-    ``SSHException``, and as we did not change anything else about the raising
-    (i.e. the attributes and message text are the same) this change is
-    backwards compatible.
+      ``SSHException``, and as we did not change anything else about the
+      raising (i.e. the attributes and message text are the same) this change
+      is backwards compatible.
 
   - `~paramiko.transport.Transport` grew a ``_preferred_pubkeys`` attribute and
     matching ``preferred_pubkeys`` property to match the other, kex-focused,
