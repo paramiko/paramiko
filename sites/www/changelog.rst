@@ -2,6 +2,7 @@
 Changelog
 =========
 
+- :release:`2.9.0 <2021-12-23>`
 - :feature:`1643` (also :issue:`1925`, :issue:`1644`, :issue:`1326`) Add
   support for SHA-2 variants of RSA key verification algorithms (as described
   in :rfc:`8332`) as well as limited SSH extension negotiation (:rfc:`8308`).
