@@ -7,7 +7,7 @@ pytest-relaxed==1.1.5
 pytest-xdist==1.28.0
 mock==2.0.0
 # Linting!
-flake8==3.8.3
+flake8~=4.0.1
 # Formatting!
 black==18.6b4
 # Coverage!
