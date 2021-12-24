@@ -2,6 +2,7 @@
 Changelog
 =========
 
+- :release:`2.9.1 <2021-12-24>`
 - :bug:`1955` Server-side support for ``rsa-sha2-256`` and ``ssh-rsa`` wasn't
   fully operable after 2.9.0's release (signatures for RSA pubkeys were always
   run through ``rsa-sha2-512`` instead). Report and early stab at a fix
