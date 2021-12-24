@@ -1438,3 +1438,16 @@ class TestSHA2SignaturePubkeys(unittest.TestCase):
         ) as (tc, ts):
             assert tc.is_authenticated()
             assert tc._agreed_pubkey_algorithm == "rsa-sha2-256"
+
+    def test_sha2_256_when_client_only_enables_256(self):
+        privkey = RSAKey.from_private_key_file(_support("test_rsa.key"))
+        with server(
+            pubkeys=[privkey],
+            connect=dict(pkey=privkey),
+            # Client-side only; server still accepts all 3.
+            client_init=dict(
+                disabled_algorithms=dict(pubkeys=["ssh-rsa", "rsa-sha2-512"])
+            ),
+        ) as (tc, ts):
+            assert tc.is_authenticated()
+            assert tc._agreed_pubkey_algorithm == "rsa-sha2-256"

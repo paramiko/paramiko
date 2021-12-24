@@ -2,6 +2,10 @@
 Changelog
 =========
 
+- :bug:`1955` Server-side support for ``rsa-sha2-256`` and ``ssh-rsa`` wasn't
+  fully operable after 2.9.0's release (signatures for RSA pubkeys were always
+  run through ``rsa-sha2-512`` instead). Report and early stab at a fix
+  courtesy of Jun Omae.
 - :release:`2.9.0 <2021-12-23>`
 - :feature:`1643` (also :issue:`1925`, :issue:`1644`, :issue:`1326`) Add
   support for SHA-2 variants of RSA key verification algorithms (as described
