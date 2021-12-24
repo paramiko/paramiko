@@ -49,7 +49,7 @@ def _unpad_openssh(data):
     # really ought to be made constant time (possibly by upstreaming this logic
     # into pyca/cryptography).
     padding_length = six.indexbytes(data, -1)
-    if 0x20 <= padding_length < 0x7f:
+    if 0x20 <= padding_length < 0x7F:
         return data  # no padding, last byte part comment (printable ascii)
     if padding_length > 15:
         raise SSHException("Invalid key")

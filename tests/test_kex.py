@@ -47,7 +47,7 @@ from paramiko.kex_curve25519 import KexCurve25519
 
 
 def dummy_urandom(n):
-    return byte_chr(0xcc) * n
+    return byte_chr(0xCC) * n
 
 
 def dummy_generate_key_pair(obj):

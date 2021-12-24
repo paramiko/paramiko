@@ -112,7 +112,7 @@ class KexGex(object):
         qnorm = util.deflate_long(q, 0)
         qhbyte = byte_ord(qnorm[0])
         byte_count = len(qnorm)
-        qmask = 0xff
+        qmask = 0xFF
         while not (qhbyte & 0x80):
             qhbyte <<= 1
             qmask >>= 1
