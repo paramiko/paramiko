@@ -1192,6 +1192,8 @@ def server(
     connect=None,
     pubkeys=None,
     catch_error=False,
+    server_name=None,
+    client_name=None,
 ):
     """
     SSH server contextmanager for testing.
@@ -1212,6 +1214,10 @@ def server(
     :param catch_error:
         Whether to capture connection errors & yield from contextmanager.
         Necessary for connection_time exception testing.
+    :param str server_name:
+        String to use as server identifier when establishing connection.
+    :param str client_name:
+        String to use as client identifier when establishing connection.
     """
     if init is None:
         init = {}
@@ -1225,7 +1231,11 @@ def server(
     sockc = LoopSocket()
     sockc.link(socks)
     tc = Transport(sockc, **dict(init, **client_init))
+    if client_name is not None:
+        tc.local_version = "SSH-{}-{}".format(tc._PROTO_ID, client_name)
     ts = Transport(socks, **dict(init, **server_init))
+    if server_name is not None:
+        ts.local_version = "SSH-{}-{}".format(tc._PROTO_ID, server_name)
 
     if hostkey is None:
         hostkey = RSAKey.from_private_key_file(_support("test_rsa.key"))
@@ -1363,6 +1373,17 @@ class TestExtInfo(unittest.TestCase):
             assert tc.is_authenticated()
             # Client settled on 256 despite itself not having 512 disabled
             assert tc._agreed_pubkey_algorithm == "rsa-sha2-256"
+
+    def test_ext_info_disabled_for_old_openssh(self):
+        privkey = RSAKey.from_private_key_file(_support("test_rsa.key"))
+        with server(
+            pubkeys=[privkey],
+            connect=dict(pkey=privkey),
+            client_name="OpenSSH_7.2p2 Ubuntu-4ubuntu2.10",
+        ) as (tc, _):
+            assert tc.is_authenticated()
+            # Client settled on ssh-rsa since it mustn't receive MSG_EXT_INFO
+            assert not tc.server_extensions
 
 
 # TODO: these could move into test_auth.py but that badly needs refactoring

@@ -324,6 +324,11 @@ class Transport(threading.Thread, ClosingContextManager):
         "none": (None, None),
     }
 
+    _quirks_info = [
+        # see https://bugzilla.mindrot.org/show_bug.cgi?id=2799
+        "ext_info_bug"
+    ]
+
     _modulus_pack = None
     _active_check_timeout = 0.1
 
@@ -467,6 +472,7 @@ class Transport(threading.Thread, ClosingContextManager):
         self.session_id = None
         self.host_key_type = None
         self.host_key = None
+        self.quirks = set()
 
         # GSS-API / SSPI Key Exchange
         self.use_gss_kex = gss_kex
@@ -1471,6 +1477,48 @@ class Transport(threading.Thread, ClosingContextManager):
             return None
         return self.auth_handler.banner
 
+    def enable_quirk(self, quirk):
+        """
+        Enable selected quirk.
+
+        :param str quirk: quirk to enable
+        :raises:
+            ``ValueError`` -- if provided quirk name is not known to the
+            paramiko
+        """
+        if quirk not in self._quirks_info:
+            raise ValueError("Unsupported quirk: {}".format(quirk))
+
+        self.quirks.add(quirk)
+        self._log(DEBUG, "Enabled quirk: {}".format(quirk))
+
+    def has_quirk_enabled(self, quirk):
+        """
+        Check if the given quirk is enabled.
+
+        :param str quirk: quirk name
+        :rtype: bool
+        :returns: quirk status
+        """
+        return quirk in self.quirks
+
+    def set_quirks_from_client(self, client):
+        """
+        Detect required quirks from remote client name.
+        Some clients and/or versions may contain buggy behavior that we
+        can workaround with these quirks, so here we detect them.
+
+        :param str client: remote client name and version as passed in banner
+        """
+
+        if client.startswith("OpenSSH_"):
+            version = client[8:]
+            # here should some version parser be used to properly process
+            # versions like '7.2p2', but let's don't overcomplicate things
+            # until openssh 10
+            if version < "7.8":
+                self.enable_quirk("ext_info_bug")
+
     def auth_none(self, username):
         """
         Try to authenticate to the server using no authentication at all.
@@ -2300,6 +2348,8 @@ class Transport(threading.Thread, ClosingContextManager):
         msg = "Connected (version {}, client {})".format(version, client)
         self._log(INFO, msg)
 
+        self.set_quirks_from_client(client)
+
     def _send_kex_init(self):
         """
         announce to the other side that we'd like to negotiate keys, and what
@@ -2677,6 +2727,7 @@ class Transport(threading.Thread, ClosingContextManager):
             self.server_mode
             and self.server_sig_algs
             and self._remote_ext_info == "ext-info-c"
+            and not self.has_quirk_enabled("ext_info_bug")
         ):
             extensions = {"server-sig-algs": ",".join(self.preferred_pubkeys)}
             m = Message()
