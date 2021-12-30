@@ -63,10 +63,10 @@ def open_only(func):
     @wraps(func)
     def _check(self, *args, **kwds):
         if (
-                self.closed
-                or self.eof_received
-                or self.eof_sent
-                or not self.active
+            self.closed
+            or self.eof_received
+            or self.eof_sent
+            or not self.active
         ):
             raise SSHException("Channel is not open")
         return func(self, *args, **kwds)
@@ -162,13 +162,13 @@ class Channel(ClosingContextManager):
 
     @open_only
     def get_pty(
-            self,
-            term="vt100",
-            width=80,
-            height=24,
-            width_pixels=0,
-            height_pixels=0,
-            timeout=None
+        self,
+        term="vt100",
+        width=80,
+        height=24,
+        width_pixels=0,
+        height_pixels=0,
+        timeout=None
     ):
         """
         Request a pseudo-terminal from the server.  This is usually used right
@@ -434,12 +434,12 @@ class Channel(ClosingContextManager):
 
     @open_only
     def request_x11(
-            self,
-            screen_number=0,
-            auth_protocol=None,
-            auth_cookie=None,
-            single_connection=False,
-            handler=None,
+        self,
+        screen_number=0,
+        auth_protocol=None,
+        auth_cookie=None,
+        single_connection=False,
+        handler=None,
     ):
         """
         Request an x11 session on this channel.  If the server allows it,
