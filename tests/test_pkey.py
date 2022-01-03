@@ -622,6 +622,11 @@ class KeyTest(unittest.TestCase):
         for key1, key2 in self.keys():
             assert key1 == key2
 
+    def test_keys_are_not_equal_to_none(self):
+        key2 = None
+        for key1, _ in self.keys():
+            assert key1 != key2
+
     def test_keys_are_hashable(self):
         # NOTE: this isn't a great test due to hashseed randomization under
         # Python 3 preventing use of static values, but it does still prove
