@@ -174,12 +174,13 @@ class Ed25519Key(PKey):
         m.add_string(v.encode())
         return m.asbytes()
 
-    def __hash__(self):
+    @property
+    def _fields(self):
         if self.can_sign():
             v = self._signing_key.verify_key
         else:
             v = self._verifying_key
-        return hash((self.get_name(), v))
+        return (self.get_name(), v)
 
     def get_name(self):
         return "ssh-ed25519"
@@ -190,7 +191,7 @@ class Ed25519Key(PKey):
     def can_sign(self):
         return self._signing_key is not None
 
-    def sign_ssh_data(self, data):
+    def sign_ssh_data(self, data, algorithm=None):
         m = Message()
         m.add_string("ssh-ed25519")
         m.add_string(self._signing_key.sign(data).signature)

@@ -76,7 +76,7 @@ class FakeKey(object):
     def asbytes(self):
         return b"fake-key"
 
-    def sign_ssh_data(self, H):
+    def sign_ssh_data(self, H, algorithm):
         return b"fake-sig"
 
 
@@ -93,6 +93,7 @@ class FakeTransport(object):
     remote_version = "SSH-2.0-lame"
     local_kex_init = "local-kex-init"
     remote_kex_init = "remote-kex-init"
+    host_key_type = "fake-key"
 
     def _send_message(self, m):
         self._message = m

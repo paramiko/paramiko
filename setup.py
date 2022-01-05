@@ -24,16 +24,7 @@ if sys.platform == "darwin":
 
     setup_helper.install_custom_make_tarball()
 
-longdesc = """
-This is a library for making SSH2 connections (client or server).
-Emphasis is on using SSH2 as an alternative to SSL for making secure
-connections between python scripts.  All major ciphers and hash methods
-are supported.  SFTP client and server mode are both supported too.
-
-To install the development version, ``pip install -e
-git+https://github.com/paramiko/paramiko/#egg=paramiko``.
-"""
-
+long_description = open("README.rst").read()
 
 # Version info -- read without importing
 _locals = {}
@@ -61,10 +52,17 @@ setup(
     name="paramiko",
     version=version,
     description="SSH2 protocol library",
-    long_description=longdesc,
+    long_description=long_description,
     author="Jeff Forcier",
     author_email="jeff@bitprophet.org",
-    url="https://github.com/paramiko/paramiko/",
+    url="https://paramiko.org",
+    project_urls={
+        "Docs": "https://docs.paramiko.org",
+        "Source": "https://github.com/paramiko/paramiko",
+        "Issues": "https://github.com/paramiko/paramiko/issues",
+        "Changelog": "https://www.paramiko.org/changelog.html",
+        "CI": "https://app.circleci.com/pipelines/github/paramiko/paramiko",
+    },
     packages=["paramiko"],
     license="LGPL",
     platforms="Posix; MacOS X; Windows",
@@ -85,9 +83,13 @@ setup(
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
     ],
     # TODO 3.0: remove bcrypt, pynacl and update installation docs noting that
-    # use of the extras_require(s) is now required for those
+    # use of the extras_require ("paramiko[ed2559]") is now required for those
+    # TODO 3.0: alternately, given how prevalent ed25519 is now, and how we use
+    # invoke for (increasing) subproc stuff, consider making the default flavor
+    # "full" and adding a "minimal" or similar that is just-crypto?
     install_requires=["bcrypt>=3.1.3", "cryptography>=2.5", "pynacl>=1.0.1"],
     extras_require=extras_require,
 )
