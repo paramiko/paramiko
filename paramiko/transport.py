@@ -304,7 +304,7 @@ class Transport(threading.Thread, ClosingContextManager):
         gss_kex=False,
         gss_deleg_creds=True,
         disabled_algorithms=None,
-        socket_timeout=10,
+        socket_timeout=None,
         server_sig_algs=True,
     ):
         """
@@ -372,6 +372,8 @@ class Transport(threading.Thread, ClosingContextManager):
             Whether to send an extra message to compatible clients, in server
             mode, with a list of supported pubkey algorithms. Default:
             ``True``.
+        :param float socket_timeout:
+            Sets the socket connection timeout. Default: ``None``.
 
         .. versionchanged:: 1.15
             Added the ``default_window_size`` and ``default_max_packet_size``
@@ -381,7 +383,7 @@ class Transport(threading.Thread, ClosingContextManager):
         .. versionchanged:: 2.6
             Added the ``disabled_algorithms`` kwarg.
         .. versionchanged:: 2.9
-            Added the ``server_sig_algs`` kwarg.
+            Added the ``server_sig_algs`` and ``socket_timeout`` kwargs.
         """
         self.active = False
         self.hostname = None
@@ -406,15 +408,16 @@ class Transport(threading.Thread, ClosingContextManager):
             for family, socktype, proto, canonname, sockaddr in addrinfos:
                 if socktype == socket.SOCK_STREAM:
                     af = family
-                    # addr = sockaddr
                     sock = socket.socket(af, socket.SOCK_STREAM)
-                    sock.settimeout(socket_timeout)
+                    if socket_timeout is not None:
+                        sock.settimeout(socket_timeout)
                     try:
                         retry_on_signal(lambda: sock.connect((hostname, port)))
                     except socket.error as e:
                         reason = str(e)
                     else:
-                        sock.settimeout(None)
+                        if socket_timeout is not None:
+                            sock.settimeout(None)
                         break
             else:
                 raise SSHException(
