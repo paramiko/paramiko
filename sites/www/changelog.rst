@@ -11,6 +11,17 @@ Changelog
 - :feature:`1643` (also :issue:`1925`, :issue:`1644`, :issue:`1326`) Add
   support for SHA-2 variants of RSA key verification algorithms (as described
   in :rfc:`8332`) as well as limited SSH extension negotiation (:rfc:`8308`).
+
+  .. warning::
+    This change is slightly backwards incompatible, insofar as action is
+    required if your target systems do not support either RSA2 or the
+    ``server-sig-algs`` protocol extension.
+
+    Specifically, you need to specify ``disabled_algorithms={'keys':
+    ['rsa-sha2-256', 'rsa-sha2-512']}`` in either `SSHClient
+    <paramiko.client.SSHClient.__init__>` or `Transport
+    <paramiko.transport.Transport.__init__>`. See below for details on why.
+
   How SSH servers/clients decide when and how to use this functionality can be
   complicated; Paramiko's support is as follows:
 
