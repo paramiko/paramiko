@@ -2,6 +2,13 @@
 Changelog
 =========
 
+- :bug:`-` Connecting to servers which support ``server-sig-algs`` but which
+  have no overlap between that list and what a Paramiko client supports, now
+  raise an exception instead of defaulting to ``rsa-sha2-512`` (since the use
+  of ``server-sig-algs`` allows us to know what the server supports).
+- :bug:`-` Enhanced log output when connecting to servers that do not support
+  ``server-sig-algs`` extensions, making the new-as-of-2.9 defaulting to SHA2
+  pubkey algorithms more obvious when it kicks in.
 - :release:`2.9.1 <2021-12-24>`
 - :bug:`1955` Server-side support for ``rsa-sha2-256`` and ``ssh-rsa`` wasn't
   fully operable after 2.9.0's release (signatures for RSA pubkeys were always

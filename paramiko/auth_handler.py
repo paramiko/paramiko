@@ -307,19 +307,42 @@ class AuthHandler(object):
                 "An RSA key was specified, but no RSA pubkey algorithms are configured!"  # noqa
             )
         # Check for server-sig-algs if supported & sent
-        server_algos = u(
+        server_algo_str = u(
             self.transport.server_extensions.get("server-sig-algs", b(""))
-        ).split(",")
-        self._log(DEBUG, "Server-side algorithm list: {}".format(server_algos))
-        # Only use algos from our list that the server likes, in our own
-        # preference order. (NOTE: purposefully using same style as in
-        # Transport...expect to refactor later)
-        agreement = list(filter(server_algos.__contains__, my_algos))
-        # Fallback: first one in our (possibly tweaked by caller) list
-        final = agreement[0] if agreement else my_algos[0]
-        self.transport._agreed_pubkey_algorithm = final
-        self._log(DEBUG, "Agreed upon {!r} pubkey algorithm".format(final))
-        return final
+        )
+        pubkey_algo = None
+        if server_algo_str:
+            server_algos = server_algo_str.split(",")
+            self._log(
+                DEBUG, "Server-side algorithm list: {}".format(server_algos)
+            )
+            # Only use algos from our list that the server likes, in our own
+            # preference order. (NOTE: purposefully using same style as in
+            # Transport...expect to refactor later)
+            agreement = list(filter(server_algos.__contains__, my_algos))
+            if agreement:
+                pubkey_algo = agreement[0]
+                self._log(
+                    DEBUG,
+                    "Agreed upon {!r} pubkey algorithm".format(pubkey_algo),
+                )
+            else:
+                self._log(DEBUG, "No common pubkey algorithms exist! Dying.")
+                # TODO: MAY want to use IncompatiblePeer again here but that's
+                # technically for initial key exchange, not pubkey auth.
+                err = "Unable to agree on a pubkey algorithm for signing a {!r} key!"  # noqa
+                raise AuthenticationException(err.format(key_type))
+        else:
+            # Fallback: first one in our (possibly tweaked by caller) list
+            pubkey_algo = my_algos[0]
+            msg = "Server did not send a server-sig-algs list; defaulting to our first preferred algo ({!r})"  # noqa
+            self._log(DEBUG, msg.format(pubkey_algo))
+            self._log(
+                DEBUG,
+                "NOTE: you may use the 'disabled_algorithms' SSHClient/Transport init kwarg to disable that or other algorithms if your server does not support them!",  # noqa
+            )
+        self.transport._agreed_pubkey_algorithm = pubkey_algo
+        return pubkey_algo
 
     def _parse_service_accept(self, m):
         service = m.get_text()
