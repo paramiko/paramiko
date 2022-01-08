@@ -2,6 +2,7 @@
 Changelog
 =========
 
+- :release:`2.9.2 <2022-01-08>`
 - :bug:`-` Connecting to servers which support ``server-sig-algs`` but which
   have no overlap between that list and what a Paramiko client supports, now
   raise an exception instead of defaulting to ``rsa-sha2-512`` (since the use
