@@ -1210,8 +1210,7 @@ class Channel(ClosingContextManager):
 
     def _log(self, level, msg, *args, **kwargs):
         self.logger.log(
-            level, "[chan " + self._name + "] " + msg,
-            *args, **kwargs
+            level, "[chan " + self._name + "] " + msg, *args, **kwargs
         )
 
     def _event_pending(self):

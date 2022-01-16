@@ -129,13 +129,15 @@ class SFTPServer(BaseSFTP, SubsystemHandler):
         if issubclass(type(msg), list):
             for m in msg:
                 super(SFTPServer, self)._log(
-                    level, "[chan " + self.sock.get_name() + "] " + m,
+                    level,
+                    "[chan " + self.sock.get_name() + "] " + m,
                     *args,
                     **kwargs
                 )
         else:
             super(SFTPServer, self)._log(
-                level, "[chan " + self.sock.get_name() + "] " + msg,
+                level,
+                "[chan " + self.sock.get_name() + "] " + msg,
                 *args,
                 **kwargs
             )
@@ -160,8 +162,7 @@ class SFTPServer(BaseSFTP, SubsystemHandler):
                 self._process(t, request_number, msg)
             except Exception:
                 self._log(
-                    DEBUG, "Exception in server processing",
-                    exc_info=True
+                    DEBUG, "Exception in server processing", exc_info=True
                 )
                 # send some kind of failure message, at least
                 try:
