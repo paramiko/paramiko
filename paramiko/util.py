@@ -135,10 +135,6 @@ def bit_length(n):
         return bitlen
 
 
-def tb_strings():
-    return "".join(traceback.format_exception(*sys.exc_info())).split("\n")
-
-
 def generate_key_bytes(hash_alg, salt, key, nbytes):
     """
     Given a password, passphrase, or other human-source key, scramble it
