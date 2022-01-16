@@ -680,7 +680,7 @@ class SubsystemHandler(threading.Thread):
                 DEBUG, "Starting handler for subsystem {}".format(self.__name)
             )
             self.start_subsystem(self.__name, self.__transport, self.__channel)
-        except Exception as e:
+        except Exception:
             self.__transport._log(
                 ERROR,
                 'Exception in subsystem handler for "{}"'.format(self.__name),

@@ -151,15 +151,18 @@ class SFTPServer(BaseSFTP, SubsystemHandler):
             except EOFError:
                 self._log(DEBUG, "EOF -- end of session")
                 return
-            except Exception as e:
+            except Exception:
                 self._log(DEBUG, "Exception on channel", exc_info=True)
                 return
             msg = Message(data)
             request_number = msg.get_int()
             try:
                 self._process(t, request_number, msg)
-            except Exception as e:
-                self._log(DEBUG, "Exception in server processing", exc_info=True)
+            except Exception:
+                self._log(
+                    DEBUG, "Exception in server processing",
+                    exc_info=True
+                )
                 # send some kind of failure message, at least
                 try:
                     self._send_status(request_number, SFTP_FAILURE)
