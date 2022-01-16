@@ -21,7 +21,6 @@
 """
 
 import threading
-from paramiko import util
 from paramiko.common import (
     DEBUG,
     ERROR,
