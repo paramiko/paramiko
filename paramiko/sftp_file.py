@@ -57,11 +57,14 @@ class SFTPFile(BufferedFile):
     # Some sftp servers will choke if you send read/write requests larger than
     # this size.
     MAX_REQUEST_SIZE = 32768
+    DEFAULT_BUFSIZE = MAX_REQUEST_SIZE
 
     def __init__(self, sftp, handle, mode="r", bufsize=-1):
         BufferedFile.__init__(self)
         self.sftp = sftp
         self.handle = handle
+        if bufsize < 0:
+            bufsize = self.DEFAULT_BUFSIZE
         BufferedFile._set_mode(self, mode, bufsize)
         self.pipelined = False
         self._prefetching = False
