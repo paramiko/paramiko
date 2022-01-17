@@ -25,7 +25,7 @@ from paramiko.py3compat import long, PY2, strftime
 class SFTPAttributes(object):
     """
     Representation of the attributes of a file (or proxied file) for SFTP in
-    client or server mode.  It attemps to mirror the object returned by
+    client or server mode.  It attempts to mirror the object returned by
     `os.stat` as closely as possible, so it may have the following fields,
     with the same meanings as those returned by an `os.stat` object:
 
