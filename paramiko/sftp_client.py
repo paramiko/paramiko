@@ -27,7 +27,7 @@ import weakref
 from paramiko import util
 from paramiko.channel import Channel
 from paramiko.message import Message
-from paramiko.common import INFO, DEBUG, o777
+from paramiko.common import INFO, DEBUG, o777, ERROR
 from paramiko.py3compat import b, u, long
 from paramiko.sftp import (
     BaseSFTP,
@@ -904,6 +904,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         elif code == SFTP_PERMISSION_DENIED:
             raise IOError(errno.EACCES, text)
         else:
+            self._log(ERROR, "Unexpected response code #{}".format(code))
             raise IOError(text)
 
     def _adjust_cwd(self, path):
