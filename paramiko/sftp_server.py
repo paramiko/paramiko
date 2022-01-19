@@ -23,7 +23,7 @@ Server-mode SFTP support.
 import os
 import errno
 import sys
-from hashlib import md5, sha1
+from hashlib import md5, sha1, sha256
 
 from paramiko import util
 from paramiko.sftp import (
@@ -81,7 +81,7 @@ from paramiko.sftp import (
     SFTP_OP_UNSUPPORTED,
 )
 
-_hash_class = {"sha1": sha1, "md5": md5}
+_hash_class = {"sha256": sha256, "sha1": sha1, "md5": md5}
 
 
 class SFTPServer(BaseSFTP, SubsystemHandler):
