@@ -711,6 +711,56 @@ class Channel(ClosingContextManager):
 
         return out
 
+    def recv_until(self, target, timeout=None):
+        """
+        Receive data from the channel until a target byte sequence is found
+        or a timeout occurs.  The return value is a string representing the
+        data received. If a string of length zero is returned, the sequece
+        was not found during the timeout.
+
+        :param str/bytes target: byte sequence to look for.
+        :param float timeout: maximum seconds to wait for the sequence.
+        :return: received data, as a ``str``/``bytes``.
+
+        """
+        assert timeout > 0, "Timeout must be positive or None"
+        assert len(target) > 0, "Target string must be at least one byte"
+
+        deadline = time.monotonic() + timeout if timeout else None
+
+        buffer = b""
+        keep_looking = (
+            deadline is None or deadline > time.monotonic()
+            and len(target) > 0
+        )
+
+        while keep_looking:
+            try:
+                next_byte = self.in_buffer.read(
+                    1,
+                    self.timeout
+                    if (
+                        timeout is None
+                    ) or (
+                        self.timeout > 0 and self.timeout < timeout
+                    )
+                    else timeout
+                )
+            except PipeTimeout:
+                if deadline is None or deadline > time.monotonic():
+                    continue
+                return buffer
+            else:
+                buffer += next_byte
+
+            if len(buffer) >= len(target):
+                last_bytes = buffer[-1 * (len(target)):]
+                keep_looking = last_bytes != target
+
+            keep_looking &= deadline is None or deadline > time.monotonic()
+
+        return buffer
+
     def recv_stderr_ready(self):
         """
         Returns true if data is buffered and ready to be read from this
