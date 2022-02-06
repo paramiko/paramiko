@@ -25,6 +25,7 @@ import os
 import socket
 import time
 import threading
+import re
 
 # TODO: switch as much of py3compat.py to 'six' as possible, then use six.wraps
 from functools import wraps
@@ -760,6 +761,59 @@ class Channel(ClosingContextManager):
             keep_looking &= deadline is None or deadline > time.monotonic()
 
         return buffer
+
+    def expect(self, expressions, timeout=None):
+        """
+        Receive data from the channel until one of multiple regex matches
+        the received data or a timeout occurs.  
+        Return which expression matches, the match and all received data.
+        If the timeout occurs, returns -1, None and the received data.
+
+        :param list expressions: list of regex objects or search expressions
+        :param float timeout: maximum seconds to wait for the sequence.
+        :return: expression_index, match_object, received_data
+
+        """
+        assert len(expressions) > 0, "Expressions list must not be empty"
+        assert timeout > 0, "Timeout must be positive or None"
+
+        deadline = time.monotonic() + timeout if timeout else None
+
+        for i, expression in enumerate(expressions):
+            expressions[i] = expression if (
+                hasattr(expression, "search")) else re.compile(expression)
+
+        buffer = b""
+        keep_looking = deadline is None or deadline > time.monotonic()
+
+        while keep_looking:
+            try:
+                next_byte = self.in_buffer.read(
+                    1,
+                    self.timeout
+                    if (
+                        timeout is None
+                    ) or (
+                        self.timeout > 0 and self.timeout < timeout
+                    )
+                    else timeout
+                )
+            except PipeTimeout:
+                if deadline is None or deadline > time.monotonic():
+                    continue
+                return buffer
+            else:
+                buffer += next_byte
+
+            for i, expression in enumerate(expressions):
+                expression_match = expression.search(buffer)
+
+                if expression_match:
+                    return i, expression_match, buffer
+
+            keep_looking = deadline is None or deadline > time.monotonic()
+
+        return -1, None, buffer
 
     def recv_stderr_ready(self):
         """
