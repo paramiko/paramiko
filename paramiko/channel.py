@@ -724,8 +724,8 @@ class Channel(ClosingContextManager):
         :return: received data, as a ``str``/``bytes``.
 
         """
-        assert timeout > 0, "Timeout must be positive or None"
         assert len(target) > 0, "Target string must be at least one byte"
+        assert timeout is None or timeout > 0, "Timeout must be positive or None"
 
         deadline = time.monotonic() + timeout if timeout else None
 
@@ -741,11 +741,12 @@ class Channel(ClosingContextManager):
                     1,
                     self.timeout
                     if (
-                        timeout is None
+                        deadline is None
                     ) or (
-                        self.timeout > 0 and self.timeout < timeout
+                        self.timeout and self.timeout > 0
+                        and self.timeout + time.monotonic() <= deadline
                     )
-                    else timeout
+                    else deadline - time.monotonic()
                 )
             except PipeTimeout:
                 if deadline is None or deadline > time.monotonic():
@@ -775,7 +776,7 @@ class Channel(ClosingContextManager):
 
         """
         assert len(expressions) > 0, "Expressions list must not be empty"
-        assert timeout > 0, "Timeout must be positive or None"
+        assert timeout is None or timeout > 0, "Timeout must be positive or None"
 
         deadline = time.monotonic() + timeout if timeout else None
 
@@ -792,16 +793,17 @@ class Channel(ClosingContextManager):
                     1,
                     self.timeout
                     if (
-                        timeout is None
+                        deadline is None
                     ) or (
-                        self.timeout > 0 and self.timeout < timeout
+                        self.timeout and self.timeout > 0
+                        and self.timeout + time.monotonic() <= deadline
                     )
-                    else timeout
+                    else deadline - time.monotonic()
                 )
             except PipeTimeout:
                 if deadline is None or deadline > time.monotonic():
                     continue
-                return buffer
+                break
             else:
                 buffer += next_byte
 
