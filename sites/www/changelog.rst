@@ -51,9 +51,9 @@ Changelog
     cert, will act as follows:
 
     - In all cases, the list of algorithms to consider is based on the new
-      ``preferred_pubkeys`` list (see below) and ``disabled_algorithms``; this
-      list, like with host keys, prefers SHA2-512, SHA2-256 and SHA1, in that
-      order.
+      ``preferred_pubkeys`` list (see below) and ``disabled_algorithms``
+      (specifically, its ``pubkeys`` key); this list, like with host keys,
+      prefers SHA2-512, SHA2-256 and SHA1, in that order.
     - When the server does not send ``server-sig-algs``, Paramiko will attempt
       the first algorithm in the above list. Clients connecting to legacy
       servers should thus use ``disabled_algorithms`` to turn off SHA2.
