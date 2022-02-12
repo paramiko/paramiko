@@ -3,7 +3,6 @@ import sys
 import time
 
 __all__ = [
-    "BytesIO",
     "MAXSIZE",
     "PY2",
     "StringIO",
@@ -82,7 +81,6 @@ if PY2:
     import cStringIO
 
     StringIO = cStringIO.StringIO
-    BytesIO = StringIO
 
     def is_callable(c):  # NOQA
         return callable(c)
@@ -170,7 +168,6 @@ else:
     import io
 
     StringIO = io.StringIO  # NOQA
-    BytesIO = io.BytesIO  # NOQA
 
     def is_callable(c):
         return isinstance(c, collections.Callable)
