@@ -518,6 +518,7 @@ class BufferedFile(ClosingContextManager):
     def _write_all(self, data):
         # the underlying stream may be something that does partial writes (like
         # a socket).
+        data = memoryview(data)
         while len(data) > 0:
             count = self._write(data)
             data = data[count:]
