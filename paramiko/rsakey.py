@@ -20,7 +20,7 @@
 RSA keys.
 """
 
-from cryptography.exceptions import InvalidSignature
+from cryptography.exceptions import InvalidSignature, UnsupportedAlgorithm
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import rsa, padding
@@ -37,8 +37,24 @@ class RSAKey(PKey):
     data.
     """
 
-    def __init__(self, msg=None, data=None, filename=None, password=None,
-                 key=None, file_obj=None):
+    HASHES = {
+        "ssh-rsa": hashes.SHA1,
+        "ssh-rsa-cert-v01@openssh.com": hashes.SHA1,
+        "rsa-sha2-256": hashes.SHA256,
+        "rsa-sha2-256-cert-v01@openssh.com": hashes.SHA256,
+        "rsa-sha2-512": hashes.SHA512,
+        "rsa-sha2-512-cert-v01@openssh.com": hashes.SHA512,
+    }
+
+    def __init__(
+        self,
+        msg=None,
+        data=None,
+        filename=None,
+        password=None,
+        key=None,
+        file_obj=None,
+    ):
         self.key = None
         self.public_blob = None
         if file_obj is not None:
@@ -54,8 +70,10 @@ class RSAKey(PKey):
         else:
             self._check_type_and_load_cert(
                 msg=msg,
-                key_type='ssh-rsa',
-                cert_type='ssh-rsa-cert-v01@openssh.com',
+                # NOTE: this does NOT change when using rsa2 signatures; it's
+                # purely about key loading, not exchange or verification
+                key_type="ssh-rsa",
+                cert_type="ssh-rsa-cert-v01@openssh.com",
             )
             self.key = rsa.RSAPublicNumbers(
                 e=msg.get_mpint(), n=msg.get_mpint()
@@ -74,7 +92,7 @@ class RSAKey(PKey):
 
     def asbytes(self):
         m = Message()
-        m.add_string('ssh-rsa')
+        m.add_string("ssh-rsa")
         m.add_mpint(self.public_numbers.e)
         m.add_mpint(self.public_numbers.n)
         return m.asbytes()
@@ -89,14 +107,14 @@ class RSAKey(PKey):
             # tries stuffing it into ASCII for whatever godforsaken reason
             return self.asbytes()
         else:
-            return self.asbytes().decode('utf8', errors='ignore')
+            return self.asbytes().decode("utf8", errors="ignore")
 
-    def __hash__(self):
-        return hash((self.get_name(), self.public_numbers.e,
-                     self.public_numbers.n))
+    @property
+    def _fields(self):
+        return (self.get_name(), self.public_numbers.e, self.public_numbers.n)
 
     def get_name(self):
-        return 'ssh-rsa'
+        return "ssh-rsa"
 
     def get_bits(self):
         return self.size
@@ -104,20 +122,20 @@ class RSAKey(PKey):
     def can_sign(self):
         return isinstance(self.key, rsa.RSAPrivateKey)
 
-    def sign_ssh_data(self, data):
+    def sign_ssh_data(self, data, algorithm="ssh-rsa"):
         sig = self.key.sign(
             data,
             padding=padding.PKCS1v15(),
-            algorithm=hashes.SHA1(),
+            algorithm=self.HASHES[algorithm](),
         )
-
         m = Message()
-        m.add_string('ssh-rsa')
+        m.add_string(algorithm)
         m.add_string(sig)
         return m
 
     def verify_ssh_sig(self, data, msg):
-        if msg.get_text() != 'ssh-rsa':
+        sig_algorithm = msg.get_text()
+        if sig_algorithm not in self.HASHES:
             return False
         key = self.key
         if isinstance(key, rsa.RSAPrivateKey):
@@ -125,7 +143,10 @@ class RSAKey(PKey):
 
         try:
             key.verify(
-                msg.get_binary(), data, padding.PKCS1v15(), hashes.SHA1()
+                msg.get_binary(),
+                data,
+                padding.PKCS1v15(),
+                self.HASHES[sig_algorithm](),
             )
         except InvalidSignature:
             return False
@@ -137,7 +158,7 @@ class RSAKey(PKey):
             filename,
             self.key,
             serialization.PrivateFormat.TraditionalOpenSSL,
-            password=password
+            password=password,
         )
 
     def write_private_key(self, file_obj, password=None):
@@ -145,7 +166,7 @@ class RSAKey(PKey):
             file_obj,
             self.key,
             serialization.PrivateFormat.TraditionalOpenSSL,
-            password=password
+            password=password,
         )
 
     @staticmethod
@@ -166,20 +187,35 @@ class RSAKey(PKey):
     # ...internals...
 
     def _from_private_key_file(self, filename, password):
-        data = self._read_private_key_file('RSA', filename, password)
+        data = self._read_private_key_file("RSA", filename, password)
         self._decode_key(data)
 
     def _from_private_key(self, file_obj, password):
-        data = self._read_private_key('RSA', file_obj, password)
+        data = self._read_private_key("RSA", file_obj, password)
         self._decode_key(data)
 
     def _decode_key(self, data):
-        try:
-            key = serialization.load_der_private_key(
-                data, password=None, backend=default_backend()
-            )
-        except ValueError as e:
-            raise SSHException(str(e))
-
+        pkformat, data = data
+        if pkformat == self._PRIVATE_KEY_FORMAT_ORIGINAL:
+            try:
+                key = serialization.load_der_private_key(
+                    data, password=None, backend=default_backend()
+                )
+            except (ValueError, TypeError, UnsupportedAlgorithm) as e:
+                raise SSHException(str(e))
+        elif pkformat == self._PRIVATE_KEY_FORMAT_OPENSSH:
+            n, e, d, iqmp, p, q = self._uint32_cstruct_unpack(data, "iiiiii")
+            public_numbers = rsa.RSAPublicNumbers(e=e, n=n)
+            key = rsa.RSAPrivateNumbers(
+                p=p,
+                q=q,
+                d=d,
+                dmp1=d % (p - 1),
+                dmq1=d % (q - 1),
+                iqmp=iqmp,
+                public_numbers=public_numbers,
+            ).private_key(default_backend())
+        else:
+            self._got_bad_key_format_id(pkformat)
         assert isinstance(key, rsa.RSAPrivateKey)
         self.key = key

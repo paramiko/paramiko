@@ -1,0 +1,8 @@
+CanonicalizeHostname yes
+CanonicalDomains paramiko.org
+
+Match host www.paramiko.org
+    User rand
+
+Match canonical host docs.paramiko.org
+    User eric

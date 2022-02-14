@@ -31,15 +31,16 @@ import unittest
 
 import paramiko
 
+from .util import needs_gssapi, KerberosTestCase, update_env
 
-class NullServer (paramiko.ServerInterface):
 
+class NullServer(paramiko.ServerInterface):
     def get_allowed_auths(self, username):
-        return 'gssapi-keyex'
+        return "gssapi-keyex"
 
-    def check_auth_gssapi_keyex(self, username,
-                                gss_authenticated=paramiko.AUTH_FAILED,
-                                cc_file=None):
+    def check_auth_gssapi_keyex(
+        self, username, gss_authenticated=paramiko.AUTH_FAILED, cc_file=None
+    ):
         if gss_authenticated == paramiko.AUTH_SUCCESSFUL:
             return paramiko.AUTH_SUCCESSFUL
         return paramiko.AUTH_FAILED
@@ -52,26 +53,22 @@ class NullServer (paramiko.ServerInterface):
         return paramiko.OPEN_SUCCEEDED
 
     def check_channel_exec_request(self, channel, command):
-        if command != 'yes':
+        if command != b"yes":
             return False
         return True
 
 
-class GSSKexTest(unittest.TestCase):
-    @staticmethod
-    def init(username, hostname):
-        global krb5_principal, targ_name
-        krb5_principal = username
-        targ_name = hostname
-
+@needs_gssapi
+class GSSKexTest(KerberosTestCase):
     def setUp(self):
-        self.username = krb5_principal
-        self.hostname = socket.getfqdn(targ_name)
+        self.username = self.realm.user_princ
+        self.hostname = socket.getfqdn(self.realm.hostname)
         self.sockl = socket.socket()
-        self.sockl.bind((targ_name, 0))
+        self.sockl.bind((self.realm.hostname, 0))
         self.sockl.listen(1)
         self.addr, self.port = self.sockl.getsockname()
         self.event = threading.Event()
+        update_env(self, self.realm.env)
         thread = threading.Thread(target=self._run)
         thread.start()
 
@@ -83,13 +80,13 @@ class GSSKexTest(unittest.TestCase):
     def _run(self):
         self.socks, addr = self.sockl.accept()
         self.ts = paramiko.Transport(self.socks, gss_kex=True)
-        host_key = paramiko.RSAKey.from_private_key_file('tests/test_rsa.key')
+        host_key = paramiko.RSAKey.from_private_key_file("tests/test_rsa.key")
         self.ts.add_server_key(host_key)
-        self.ts.set_gss_host(targ_name)
+        self.ts.set_gss_host(self.realm.hostname)
         try:
             self.ts.load_server_moduli()
         except:
-            print ('(Failed to load moduli -- gex will be unsupported.)')
+            print("(Failed to load moduli -- gex will be unsupported.)")
         server = NullServer()
         self.ts.start_server(self.event, server)
 
@@ -99,14 +96,21 @@ class GSSKexTest(unittest.TestCase):
         Diffie-Hellman Key Exchange and user authentication with the GSS-API
         context created during key exchange.
         """
-        host_key = paramiko.RSAKey.from_private_key_file('tests/test_rsa.key')
+        host_key = paramiko.RSAKey.from_private_key_file("tests/test_rsa.key")
         public_host_key = paramiko.RSAKey(data=host_key.asbytes())
 
         self.tc = paramiko.SSHClient()
-        self.tc.get_host_keys().add('[%s]:%d' % (self.hostname, self.port),
-                                    'ssh-rsa', public_host_key)
-        self.tc.connect(self.hostname, self.port, username=self.username,
-                        gss_auth=True, gss_kex=True, gss_host=gss_host)
+        self.tc.get_host_keys().add(
+            "[%s]:%d" % (self.hostname, self.port), "ssh-rsa", public_host_key
+        )
+        self.tc.connect(
+            self.hostname,
+            self.port,
+            username=self.username,
+            gss_auth=True,
+            gss_kex=True,
+            gss_host=gss_host,
+        )
 
         self.event.wait(1.0)
         self.assert_(self.event.is_set())
@@ -115,25 +119,25 @@ class GSSKexTest(unittest.TestCase):
         self.assertEquals(True, self.ts.is_authenticated())
         self.assertEquals(True, self.tc.get_transport().gss_kex_used)
 
-        stdin, stdout, stderr = self.tc.exec_command('yes')
+        stdin, stdout, stderr = self.tc.exec_command("yes")
         schan = self.ts.accept(1.0)
         if rekey:
             self.tc.get_transport().renegotiate_keys()
 
-        schan.send('Hello there.\n')
-        schan.send_stderr('This is on stderr.\n')
+        schan.send("Hello there.\n")
+        schan.send_stderr("This is on stderr.\n")
         schan.close()
 
-        self.assertEquals('Hello there.\n', stdout.readline())
-        self.assertEquals('', stdout.readline())
-        self.assertEquals('This is on stderr.\n', stderr.readline())
-        self.assertEquals('', stderr.readline())
+        self.assertEquals("Hello there.\n", stdout.readline())
+        self.assertEquals("", stdout.readline())
+        self.assertEquals("This is on stderr.\n", stderr.readline())
+        self.assertEquals("", stderr.readline())
 
         stdin.close()
         stdout.close()
         stderr.close()
 
-    def test_1_gsskex_and_auth(self):
+    def test_gsskex_and_auth(self):
         """
         Verify that Paramiko can handle SSHv2 GSS-API / SSPI authenticated
         Diffie-Hellman Key Exchange and user authentication with the GSS-API
@@ -141,7 +145,9 @@ class GSSKexTest(unittest.TestCase):
         """
         self._test_gsskex_and_auth(gss_host=None)
 
-    def test_2_gsskex_and_auth_rekey(self):
+    # To be investigated, see https://github.com/paramiko/paramiko/issues/1312
+    @unittest.expectedFailure
+    def test_gsskex_and_auth_rekey(self):
         """
         Verify that Paramiko can rekey.
         """

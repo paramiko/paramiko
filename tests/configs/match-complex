@@ -1,0 +1,17 @@
+HostName bogus
+
+Match originalhost target host bogus
+    User rand
+
+Match originalhost remote localuser rando
+    User calrissian
+
+# Just to set user for subsequent match
+Match originalhost www
+    User calrissian
+
+Match !canonical originalhost www host bogus localuser rando user calrissian
+    Port 7777
+
+Match !canonical !originalhost www host bogus localuser rando !user calrissian
+    Port 1234

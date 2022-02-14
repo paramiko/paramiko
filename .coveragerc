@@ -1,0 +1,5 @@
+[run]
+branch = True
+include =
+    paramiko/*
+    tests/*

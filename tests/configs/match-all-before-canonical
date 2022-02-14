@@ -1,0 +1,5 @@
+CanonicalizeHostname yes
+CanonicalDomains paramiko.org
+
+Match all canonical
+    User oops

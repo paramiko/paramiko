@@ -44,7 +44,7 @@ win32con_WM_COPYDATA = 74
 
 
 def _get_pageant_window_object():
-    return ctypes.windll.user32.FindWindowA(b('Pageant'), b('Pageant'))
+    return ctypes.windll.user32.FindWindowA(b"Pageant", b"Pageant")
 
 
 def can_talk_to_agent():
@@ -57,7 +57,7 @@ def can_talk_to_agent():
     return bool(_get_pageant_window_object())
 
 
-if platform.architecture()[0] == '64bit':
+if platform.architecture()[0] == "64bit":
     ULONG_PTR = ctypes.c_uint64
 else:
     ULONG_PTR = ctypes.c_uint32
@@ -68,10 +68,11 @@ class COPYDATASTRUCT(ctypes.Structure):
     ctypes implementation of
     http://msdn.microsoft.com/en-us/library/windows/desktop/ms649010%28v=vs.85%29.aspx
     """
+
     _fields_ = [
-        ('num_data', ULONG_PTR),
-        ('data_size', ctypes.wintypes.DWORD),
-        ('data_loc', ctypes.c_void_p),
+        ("num_data", ULONG_PTR),
+        ("data_size", ctypes.wintypes.DWORD),
+        ("data_loc", ctypes.c_void_p),
     ]
 
 
@@ -86,27 +87,29 @@ def _query_pageant(msg):
         return None
 
     # create a name for the mmap
-    map_name = 'PageantRequest%08x' % thread.get_ident()
+    map_name = "PageantRequest%08x" % thread.get_ident()
 
-    pymap = _winapi.MemoryMap(map_name, _AGENT_MAX_MSGLEN,
-        _winapi.get_security_attributes_for_user(),
-        )
+    pymap = _winapi.MemoryMap(
+        map_name, _AGENT_MAX_MSGLEN, _winapi.get_security_attributes_for_user()
+    )
     with pymap:
         pymap.write(msg)
         # Create an array buffer containing the mapped filename
         char_buffer = array.array("b", b(map_name) + zero_byte)  # noqa
         char_buffer_address, char_buffer_size = char_buffer.buffer_info()
         # Create a string to use for the SendMessage function call
-        cds = COPYDATASTRUCT(_AGENT_COPYDATA_ID, char_buffer_size,
-            char_buffer_address)
+        cds = COPYDATASTRUCT(
+            _AGENT_COPYDATA_ID, char_buffer_size, char_buffer_address
+        )
 
-        response = ctypes.windll.user32.SendMessageA(hwnd,
-            win32con_WM_COPYDATA, ctypes.sizeof(cds), ctypes.byref(cds))
+        response = ctypes.windll.user32.SendMessageA(
+            hwnd, win32con_WM_COPYDATA, ctypes.sizeof(cds), ctypes.byref(cds)
+        )
 
         if response > 0:
             pymap.seek(0)
             datalen = pymap.read(4)
-            retlen = struct.unpack('>I', datalen)[0]
+            retlen = struct.unpack(">I", datalen)[0]
             return datalen + pymap.read(retlen)
         return None
 
@@ -127,10 +130,10 @@ class PageantConnection(object):
 
     def recv(self, n):
         if self._response is None:
-            return ''
+            return ""
         ret = self._response[:n]
         self._response = self._response[n:]
-        if self._response == '':
+        if self._response == "":
             self._response = None
         return ret
 

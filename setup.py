@@ -19,65 +19,77 @@
 import sys
 from setuptools import setup
 
-if sys.platform == 'darwin':
+if sys.platform == "darwin":
     import setup_helper
 
     setup_helper.install_custom_make_tarball()
 
-longdesc = '''
-This is a library for making SSH2 connections (client or server).
-Emphasis is on using SSH2 as an alternative to SSL for making secure
-connections between python scripts.  All major ciphers and hash methods
-are supported.  SFTP client and server mode are both supported too.
-
-Required packages:
-    Cryptography
-
-To install the development version, ``pip install -e
-git+https://github.com/paramiko/paramiko/#egg=paramiko``.
-'''
-
+long_description = open("README.rst").read()
 
 # Version info -- read without importing
 _locals = {}
-with open('paramiko/_version.py') as fp:
+with open("paramiko/_version.py") as fp:
     exec(fp.read(), None, _locals)
-version = _locals['__version__']
+version = _locals["__version__"]
+
+# Have to build extras_require dynamically because it doesn't allow
+# self-referencing and I hate repeating myself.
+extras_require = {
+    "gssapi": [
+        "pyasn1>=0.1.7",
+        'gssapi>=1.4.1;platform_system!="Windows"',
+        'pywin32>=2.1.8;platform_system=="Windows"',
+    ],
+    "ed25519": ["pynacl>=1.0.1", "bcrypt>=3.1.3"],
+    "invoke": ["invoke>=1.3"],
+}
+everything = []
+for subdeps in extras_require.values():
+    everything.extend(subdeps)
+extras_require["all"] = everything
 
 setup(
     name="paramiko",
     version=version,
     description="SSH2 protocol library",
-    long_description=longdesc,
+    long_description=long_description,
     author="Jeff Forcier",
     author_email="jeff@bitprophet.org",
-    url="https://github.com/paramiko/paramiko/",
-    packages=['paramiko'],
-    license='LGPL',
-    platforms='Posix; MacOS X; Windows',
+    url="https://paramiko.org",
+    project_urls={
+        "Docs": "https://docs.paramiko.org",
+        "Source": "https://github.com/paramiko/paramiko",
+        "Issues": "https://github.com/paramiko/paramiko/issues",
+        "Changelog": "https://www.paramiko.org/changelog.html",
+        "CI": "https://app.circleci.com/pipelines/github/paramiko/paramiko",
+    },
+    packages=["paramiko"],
+    license="LGPL",
+    platforms="Posix; MacOS X; Windows",
     classifiers=[
-        'Development Status :: 5 - Production/Stable',
-        'Intended Audience :: Developers',
-        'License :: OSI Approved :: '
-        'GNU Library or Lesser General Public License (LGPL)',
-        'Operating System :: OS Independent',
-        'Topic :: Internet',
-        'Topic :: Security :: Cryptography',
-        'Programming Language :: Python',
-        'Programming Language :: Python :: 2',
-        'Programming Language :: Python :: 2.6',
-        'Programming Language :: Python :: 2.7',
-        'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.2',
-        'Programming Language :: Python :: 3.3',
-        'Programming Language :: Python :: 3.4',
-        'Programming Language :: Python :: 3.5',
-        'Programming Language :: Python :: 3.6',
+        "Development Status :: 5 - Production/Stable",
+        "Intended Audience :: Developers",
+        "License :: OSI Approved :: "
+        "GNU Library or Lesser General Public License (LGPL)",
+        "Operating System :: OS Independent",
+        "Topic :: Internet",
+        "Topic :: Security :: Cryptography",
+        "Programming Language :: Python",
+        "Programming Language :: Python :: 2",
+        "Programming Language :: Python :: 2.7",
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.4",
+        "Programming Language :: Python :: 3.5",
+        "Programming Language :: Python :: 3.6",
+        "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
     ],
-    install_requires=[
-        'bcrypt>=3.1.3',
-        'cryptography>=1.5',
-        'pynacl>=1.0.1',
-        'pyasn1>=0.1.7',
-    ],
+    # TODO 3.0: remove bcrypt, pynacl and update installation docs noting that
+    # use of the extras_require ("paramiko[ed2559]") is now required for those
+    # TODO 3.0: alternately, given how prevalent ed25519 is now, and how we use
+    # invoke for (increasing) subproc stuff, consider making the default flavor
+    # "full" and adding a "minimal" or similar that is just-crypto?
+    install_requires=["bcrypt>=3.1.3", "cryptography>=2.5", "pynacl>=1.0.1"],
+    extras_require=extras_require,
 )

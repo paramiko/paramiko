@@ -25,7 +25,7 @@ import sys
 from paramiko.sftp import SFTP_OP_UNSUPPORTED
 
 
-class SFTPServerInterface (object):
+class SFTPServerInterface(object):
     """
     This class defines an interface for controlling the behavior of paramiko
     when using the `.SFTPServer` subsystem to provide an SFTP server.
@@ -39,6 +39,7 @@ class SFTPServerInterface (object):
     All paths are in string form instead of unicode because not all SFTP
     clients & servers obey the requirement that paths be encoded in UTF-8.
     """
+
     def __init__(self, server, *largs, **kwargs):
         """
         Create a new SFTPServerInterface object.  This method does nothing by
@@ -281,10 +282,10 @@ class SFTPServerInterface (object):
         if os.path.isabs(path):
             out = os.path.normpath(path)
         else:
-            out = os.path.normpath('/' + path)
-        if sys.platform == 'win32':
+            out = os.path.normpath("/" + path)
+        if sys.platform == "win32":
             # on windows, normalize backslashes to sftp/posix format
-            out = out.replace('\\', '/')
+            out = out.replace("\\", "/")
         return out
 
     def readlink(self, path):

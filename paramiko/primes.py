@@ -49,7 +49,7 @@ def _roll_random(n):
     return num
 
 
-class ModulusPack (object):
+class ModulusPack(object):
     """
     convenience object for holding the contents of the /etc/ssh/moduli file,
     on systems that have such a file.
@@ -61,8 +61,15 @@ class ModulusPack (object):
         self.discarded = []
 
     def _parse_modulus(self, line):
-        timestamp, mod_type, tests, tries, size, generator, modulus = \
-            line.split()
+        (
+            timestamp,
+            mod_type,
+            tests,
+            tries,
+            size,
+            generator,
+            modulus,
+        ) = line.split()
         mod_type = int(mod_type)
         tests = int(tests)
         tries = int(tries)
@@ -75,12 +82,13 @@ class ModulusPack (object):
         # test 4 (more than just a small-prime sieve)
         # tries < 100 if test & 4 (at least 100 tries of miller-rabin)
         if (
-            mod_type < 2 or
-            tests < 4 or
-            (tests & 4 and tests < 8 and tries < 100)
+            mod_type < 2
+            or tests < 4
+            or (tests & 4 and tests < 8 and tries < 100)
         ):
             self.discarded.append(
-                (modulus, 'does not meet basic requirements'))
+                (modulus, "does not meet basic requirements")
+            )
             return
         if generator == 0:
             generator = 2
@@ -91,7 +99,8 @@ class ModulusPack (object):
         bl = util.bit_length(modulus)
         if (bl != size) and (bl != size + 1):
             self.discarded.append(
-                (modulus, 'incorrectly reported bit length %d' % size))
+                (modulus, "incorrectly reported bit length {}".format(size))
+            )
             return
         if bl not in self.pack:
             self.pack[bl] = []
@@ -102,10 +111,10 @@ class ModulusPack (object):
         :raises IOError: passed from any file operations that fail.
         """
         self.pack = {}
-        with open(filename, 'r') as f:
+        with open(filename, "r") as f:
             for line in f:
                 line = line.strip()
-                if (len(line) == 0) or (line[0] == '#'):
+                if (len(line) == 0) or (line[0] == "#"):
                     continue
                 try:
                     self._parse_modulus(line)
@@ -115,7 +124,7 @@ class ModulusPack (object):
     def get_modulus(self, min, prefer, max):
         bitsizes = sorted(self.pack.keys())
         if len(bitsizes) == 0:
-            raise SSHException('no moduli available')
+            raise SSHException("no moduli available")
         good = -1
         # find nearest bitsize >= preferred
         for b in bitsizes:

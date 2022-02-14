@@ -19,8 +19,12 @@
 
 import binascii
 import os
+import sys
 
-from collections import MutableMapping
+if sys.version_info[:2] >= (3, 3):
+    from collections.abc import MutableMapping
+else:
+    from collections import MutableMapping
 from hashlib import sha1
 from hmac import HMAC
 
@@ -34,7 +38,7 @@ from paramiko.ed25519key import Ed25519Key
 from paramiko.ssh_exception import SSHException
 
 
-class HostKeys (MutableMapping):
+class HostKeys(MutableMapping):
     """
     Representation of an OpenSSH-style "known hosts" file.  Host keys can be
     read from one or more files, and then individual hosts can be looked up to
@@ -88,10 +92,10 @@ class HostKeys (MutableMapping):
 
         :raises: ``IOError`` -- if there was an error reading the file
         """
-        with open(filename, 'r') as f:
+        with open(filename, "r") as f:
             for lineno, line in enumerate(f, 1):
                 line = line.strip()
-                if (len(line) == 0) or (line[0] == '#'):
+                if (len(line) == 0) or (line[0] == "#"):
                     continue
                 try:
                     e = HostKeyEntry.from_line(line, lineno)
@@ -118,7 +122,7 @@ class HostKeys (MutableMapping):
 
         .. versionadded:: 1.6.1
         """
-        with open(filename, 'w') as f:
+        with open(filename, "w") as f:
             for e in self._entries:
                 line = e.to_line()
                 if line:
@@ -134,7 +138,8 @@ class HostKeys (MutableMapping):
         :return: dict of `str` -> `.PKey` keys associated with this host
             (or ``None``)
         """
-        class SubDict (MutableMapping):
+
+        class SubDict(MutableMapping):
             def __init__(self, hostname, entries, hostkeys):
                 self._hostname = hostname
                 self._entries = entries
@@ -151,6 +156,7 @@ class HostKeys (MutableMapping):
                 for e in list(self._entries):
                     if e.key.get_name() == key:
                         self._entries.remove(e)
+                        break
                 else:
                     raise KeyError(key)
 
@@ -176,7 +182,8 @@ class HostKeys (MutableMapping):
 
             def keys(self):
                 return [
-                    e.key.get_name() for e in self._entries
+                    e.key.get_name()
+                    for e in self._entries
                     if e.key is not None
                 ]
 
@@ -196,10 +203,10 @@ class HostKeys (MutableMapping):
         """
         for h in entry.hostnames:
             if (
-                h == hostname or
-                h.startswith('|1|') and
-                not hostname.startswith('|1|') and
-                constant_time_bytes_eq(self.hash_host(hostname, h), h)
+                h == hostname
+                or h.startswith("|1|")
+                and not hostname.startswith("|1|")
+                and constant_time_bytes_eq(self.hash_host(hostname, h), h)
             ):
                 return True
         return False
@@ -295,13 +302,13 @@ class HostKeys (MutableMapping):
         if salt is None:
             salt = os.urandom(sha1().digest_size)
         else:
-            if salt.startswith('|1|'):
-                salt = salt.split('|')[2]
+            if salt.startswith("|1|"):
+                salt = salt.split("|")[2]
             salt = decodebytes(b(salt))
         assert len(salt) == sha1().digest_size
         hmac = HMAC(salt, b(hostname), sha1).digest()
-        hostkey = '|1|%s|%s' % (u(encodebytes(salt)), u(encodebytes(hmac)))
-        return hostkey.replace('\n', '')
+        hostkey = "|1|{}|{}".format(u(encodebytes(salt)), u(encodebytes(hmac)))
+        return hostkey.replace("\n", "")
 
 
 class InvalidHostKey(Exception):
@@ -334,32 +341,32 @@ class HostKeyEntry:
 
         :param str line: a line from an OpenSSH known_hosts file
         """
-        log = get_logger('paramiko.hostkeys')
-        fields = line.split(' ')
+        log = get_logger("paramiko.hostkeys")
+        fields = line.split(" ")
         if len(fields) < 3:
             # Bad number of fields
-            log.info("Not enough fields found in known_hosts in line %s (%r)" %
-                     (lineno, line))
+            msg = "Not enough fields found in known_hosts in line {} ({!r})"
+            log.info(msg.format(lineno, line))
             return None
         fields = fields[:3]
 
         names, keytype, key = fields
-        names = names.split(',')
+        names = names.split(",")
 
         # Decide what kind of key we're looking at and create an object
         # to hold it accordingly.
         try:
             key = b(key)
-            if keytype == 'ssh-rsa':
+            if keytype == "ssh-rsa":
                 key = RSAKey(data=decodebytes(key))
-            elif keytype == 'ssh-dss':
+            elif keytype == "ssh-dss":
                 key = DSSKey(data=decodebytes(key))
             elif keytype in ECDSAKey.supported_key_format_identifiers():
                 key = ECDSAKey(data=decodebytes(key), validate_point=False)
-            elif keytype == 'ssh-ed25519':
+            elif keytype == "ssh-ed25519":
                 key = Ed25519Key(data=decodebytes(key))
             else:
-                log.info("Unable to handle key of type %s" % (keytype,))
+                log.info("Unable to handle key of type {}".format(keytype))
                 return None
 
         except binascii.Error as e:
@@ -374,11 +381,12 @@ class HostKeyEntry:
         included.
         """
         if self.valid:
-            return '%s %s %s\n' % (
-                ','.join(self.hostnames),
+            return "{} {} {}\n".format(
+                ",".join(self.hostnames),
                 self.key.get_name(),
-                self.key.get_base64())
+                self.key.get_base64(),
+            )
         return None
 
     def __repr__(self):
-        return '<HostKeyEntry %r: %r>' % (self.hostnames, self.key)
+        return "<HostKeyEntry {!r}: {!r}>".format(self.hostnames, self.key)
