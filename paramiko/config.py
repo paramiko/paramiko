@@ -27,6 +27,7 @@ import os
 import re
 import shlex
 import socket
+import hashlib
 from functools import partial
 
 from .py3compat import StringIO
@@ -435,7 +436,10 @@ class SSHConfig(object):
         # The actual tokens!
         replacements = {
             # TODO: %%???
-            # TODO: %C?
+            "%C": hashlib.sha1((local_hostname +
+                                target_hostname +
+                                str(port) +
+                                remoteuser).encode("utf-8")).hexdigest(),
             "%d": homedir,
             "%h": configured_hostname,
             # TODO: %i?
