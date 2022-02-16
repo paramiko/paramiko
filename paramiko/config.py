@@ -60,7 +60,7 @@ class SSHConfig(object):
     # TODO: do a full scan of ssh.c & friends to make sure we're fully
     # compatible across the board, e.g. OpenSSH 8.1 added %n to ProxyCommand.
     TOKENS_BY_CONFIG_KEY = {
-        "controlpath": ["%h", "%l", "%L", "%n", "%p", "%r", "%u"],
+        "controlpath": ["%C", "%h", "%l", "%L", "%n", "%p", "%r", "%u"],
         "hostname": ["%h"],
         "identityfile": ["~", "%d", "%h", "%l", "%u", "%r"],
         "proxycommand": ["~", "%h", "%p", "%r"],
@@ -433,13 +433,11 @@ class SSHConfig(object):
         local_hostname = socket.gethostname().split(".")[0]
         local_fqdn = LazyFqdn(config, local_hostname)
         homedir = os.path.expanduser("~")
+        tohash = local_hostname + target_hostname + repr(port) + remoteuser
         # The actual tokens!
         replacements = {
             # TODO: %%???
-            "%C": sha1((local_hostname +
-                        target_hostname +
-                        str(port) +
-                        remoteuser).encode("utf-8")).hexdigest(),
+            "%C": sha1(tohash.encode()).hexdigest(),
             "%d": homedir,
             "%h": configured_hostname,
             # TODO: %i?
