@@ -42,6 +42,7 @@ def socket():
         # Patch out getfqdn to return some real string for when it gets called;
         # some code (eg tokenization) gets mad w/ MagicMocks
         mocket.getfqdn.return_value = "some.fake.fqdn"
+        mocket.gethostname.return_value = "local.fake.fqdn"
         yield mocket
 
 
