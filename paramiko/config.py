@@ -520,7 +520,7 @@ class SSHConfig(object):
             if type_.startswith("!"):
                 match["negate"] = True
                 type_ = type_[1:]
-            match["type"] = type_
+            match["type"] = type_.lower()
             # all/canonical have no params (everything else does)
             if type_ in ("all", "canonical"):
                 matches.append(match)
