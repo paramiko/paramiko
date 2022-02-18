@@ -319,7 +319,12 @@ class SSHConfig(object):
         """
         hosts = set()
         for entry in self._config:
-            hosts.update(entry["host"])
+            if "host" in entry:
+                hosts.update(entry["host"])
+            elif "matches" in entry:
+                for condition in entry["matches"]:
+                    if condition["type"] == "host":
+                        hosts.update(condition["param"].split(","))
         return hosts
 
     def _pattern_matches(self, patterns, target):
