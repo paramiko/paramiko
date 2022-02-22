@@ -168,7 +168,7 @@ class Channel(ClosingContextManager):
         height=24,
         width_pixels=0,
         height_pixels=0,
-        timeout=None
+        timeout=None,
     ):
         """
         Request a pseudo-terminal from the server.  This is usually used right
