@@ -2,6 +2,20 @@
 Changelog
 =========
 
+- :bug:`-` (`CVE-2022-24302
+  <https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2022-24302>`_) Creation
+  of new private key files using `~paramiko.pkey.PKey` subclasses was subject
+  to a race condition between file creation & mode modification, which could be
+  exploited by an attacker with knowledge of where the Paramiko-using code
+  would write out such files.
+
+  This has been patched by using `os.open` and `os.fdopen` to ensure new files
+  are opened with the correct mode immediately. We've left the subsequent
+  explicit ``chmod`` in place to minimize any possible disruption, though it
+  may get removed in future backwards-incompatible updates.
+
+  Thanks to Jan Schejbal for the report & feedback on the solution, and to
+  Jeremy Katz at Tidelift for coordinating the disclosure.
 - :release:`2.10.0 <2022-03-11>`
 - :feature:`1976` Add support for the ``%C`` token when parsing SSH config
   files. Foundational PR submitted by ``@jbrand42``.
