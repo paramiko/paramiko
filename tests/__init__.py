@@ -35,7 +35,6 @@ def requireNonAsciiLocale(category_name="LC_ALL"):
 
 def _decorate_with_locale(category, try_locales, test_method):
     """Decorate test_method to run after switching to a different locale."""
-
     def _test_under_locale(testself, sftp):
         original = locale.setlocale(category)
         while try_locales:
@@ -46,7 +45,7 @@ def _decorate_with_locale(category, try_locales, test_method):
                 try_locales.pop(0)
             else:
                 try:
-                    return test_method(testself)
+                    return test_method(testself, sftp)
                 finally:
                     locale.setlocale(category, original)
         skipTest = getattr(testself, "skipTest", None)
