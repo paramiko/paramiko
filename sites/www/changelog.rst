@@ -2,6 +2,12 @@
 Changelog
 =========
 
+- :support:`1985` Add ``six`` explicitly to install-requires; it snuck into
+  active use at some point but has only been indicated by transitive dependency
+  on ``bcrypt`` until they somewhat-recently dropped it. This will be
+  short-lived until we `drop Python 2
+  support <https://bitprophet.org/projects/#roadmap>`_. Thanks to Sondre
+  Lillebø Gundersen for catch & patch.
 - :release:`2.8.1 <2021-11-28>`
 - :bug:`985` (via :issue:`992`) Fix listdir failure when server uses a locale.
   Now on Python 2.7 `SFTPAttributes <paramiko.sftp_attr.SFTPAttributes>` will
