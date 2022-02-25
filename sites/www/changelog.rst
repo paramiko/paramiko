@@ -2,6 +2,12 @@
 Changelog
 =========
 
+- :support:`1985` Add ``six`` explicitly to install-requires; it snuck into
+  active use at some point but has only been indicated by transitive dependency
+  on ``bcrypt`` until they somewhat-recently dropped it. This will be
+  short-lived until we `drop Python 2
+  support <https://bitprophet.org/projects/#roadmap>`_. Thanks to Sondre
+  Lillebø Gundersen for catch & patch.
 - :release:`2.9.2 <2022-01-08>`
 - :bug:`-` Connecting to servers which support ``server-sig-algs`` but which
   have no overlap between that list and what a Paramiko client supports, now
