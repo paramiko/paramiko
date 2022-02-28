@@ -277,7 +277,7 @@ class TestSFTP(object):
         sftp.open(sftp.FOLDER + "/canard.txt", "w").close()
         try:
             folder_contents = sftp.listdir(sftp.FOLDER)
-            assert folder_contents ==  ["canard.txt"]
+            assert folder_contents == ["canard.txt"]
         finally:
             sftp.remove(sftp.FOLDER + "/canard.txt")
 
