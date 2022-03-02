@@ -69,7 +69,7 @@ def identify_pkey(fpath):
 
     if tag_start < 0 or tag_end < 1:
         # assume a single line public key
-        a,b,u = lines[0].partition(' ')
+        a, b, u = lines[0].partition(' ')
         for i in ssh_key_types:
             if bytes(a.encode('ascii')) == i[0]:
                 keytype = ('SSH2', i[1])
@@ -80,7 +80,8 @@ def identify_pkey(fpath):
         if i[0] in lines[tag_start]:
             keytype = i
             break
-    if not keytype: raise SSHException("can not determine {}".format(fpath))
+    if not keytype:
+        raise SSHException("can not determine {}".format(fpath))
     if keytype[0] in ("OPENSSH", "SSH2"):
         try:
             # consume any comment
@@ -89,15 +90,15 @@ def identify_pkey(fpath):
                     tag_start += 1
                     if line[-1] == '\\':
                         for i in lines[tag_start:tag_end]:
-                           if i[-1] == '\\':
-                               tag_start += 1
+                            if i[-1] == '\\':
+                                tag_start += 1
 
             buff = bytearray(
                 base64.b64decode("".join(lines[tag_start + 1:tag_end]))
             )
             if keytype[0] == "OPENSSH":
                 assert buff[0:len(OPENSSH_AUTH_MAGIC)] == OPENSSH_AUTH_MAGIC
-            eol=False
+            eol = False
             for i in ssh_key_types:
                 if eol:
                     break
@@ -119,6 +120,7 @@ def identify_pkey(fpath):
         ) from None
     else:
         return keytype
+
 
 if __name__ == "__main__":
 
