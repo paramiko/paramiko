@@ -32,13 +32,15 @@ ssh_key_types = [
     (b"ecdsa-sha2-nistp256-cert-v01@openssh.com", ECDSAKey),
     (b"ecdsa-sha2-nistp384-cert-v01@openssh.com", ECDSAKey),
     (b"ecdsa-sha2-nistp521-cert-v01@openssh.com", ECDSAKey),
-    (b"sk-ecdsa-sha2-nistp256-cert-v01@openssh.com", ECDSAKey)
+    (b"sk-ecdsa-sha2-nistp256-cert-v01@openssh.com", ECDSAKey),
 ]
 
 """
 determine which class should handle the given key
 provide a way to delay the dispatch to the correct class
 """
+
+
 def identify_pkey(fpath):
     tag_start = -1
     tag_end = -1
@@ -53,7 +55,8 @@ def identify_pkey(fpath):
         raise SSHException("can not determine {}".format(fpath)) from None
     try:
         assert lines[0].startswith("-----BEGIN") or lines[0].startswith(
-            "---- BEGIN")
+            "---- BEGIN"
+        )
         assert lines[-1].startswith(
             "-----END") or lines[-1].startswith("---- END")
     except AssertionError:
@@ -75,8 +78,13 @@ def identify_pkey(fpath):
                 keytype = ("SSH2", i[1])
                 return keytype
 
-    for i in [("DSA", DSSKey), ("EC", ECDSAKey) , ("OPENSSH", None),
-              ("RSA", RSAKey), ("SSH2", None)]:
+    for i in [
+            ("DSA", DSSKey),
+            ("EC", ECDSAKey) ,
+            ("OPENSSH", None),
+            ("RSA", RSAKey),
+            ("SSH2", None)
+    ]:
         if i[0] in lines[tag_start]:
             keytype = i
             break
