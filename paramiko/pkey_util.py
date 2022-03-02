@@ -57,8 +57,9 @@ def identify_pkey(fpath):
         assert lines[0].startswith("-----BEGIN") or lines[0].startswith(
             "---- BEGIN"
         )
-        assert lines[-1].startswith(
-            "-----END") or lines[-1].startswith("---- END")
+        assert lines[-1].startswith("-----END") or lines[-1].startswith(
+            "---- END"
+        )
     except AssertionError:
         for line in lines:
             if line.startswith("-----BEGIN") or line.startswith("---- BEGIN"):
@@ -79,11 +80,11 @@ def identify_pkey(fpath):
                 return keytype
 
     for i in [
-            ("DSA", DSSKey),
-            ("EC", ECDSAKey) ,
-            ("OPENSSH", None),
-            ("RSA", RSAKey),
-            ("SSH2", None)
+        ("DSA", DSSKey),
+        ("EC", ECDSAKey) ,
+        ("OPENSSH", None),
+        ("RSA", RSAKey),
+        ("SSH2", None)
     ]:
         if i[0] in lines[tag_start]:
             keytype = i
