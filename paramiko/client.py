@@ -46,6 +46,7 @@ from paramiko.transport import Transport
 from paramiko.util import retry_on_signal, ClosingContextManager
 from paramiko.pkey_util import identify_pkey
 
+
 class SSHClient(ClosingContextManager):
     """
     A high-level representation of a session with an SSH server.  This class

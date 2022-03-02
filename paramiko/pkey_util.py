@@ -7,32 +7,32 @@ from paramiko.ed25519key import Ed25519Key
 from paramiko.rsakey import RSAKey
 from paramiko.ssh_exception import SSHException
 
-OPENSSH_AUTH_MAGIC = b'openssh-key-v1' + b'\x00'
+OPENSSH_AUTH_MAGIC = b"openssh-key-v1" + b"\x00"
 
 ssh_key_types = [
-    (b'ssh-ed25519', Ed25519Key),
-    (b'ssh-ed25519-cert-v01@openssh.com', Ed25519Key),
-    (b'sk-ssh-ed25519@openssh.com', Ed25519Key),
-    (b'sk-ssh-ed25519-cert-v01@openssh.com', Ed25519Key),
-    # (b'ssh-xmss@openssh.com', 'XMSS'),
-    # (b'ssh-xmss-cert-v01@openssh.com', 'XMSS-CERT'),
-    (b'ssh-rsa', RSAKey),
-    (b'rsa-sha2-256', RSAKey),
-    (b'rsa-sha2-512', RSAKey),
-    (b'ssh-dss', DSSKey),
-    (b'ecdsa-sha2-nistp256', ECDSAKey),
-    (b'ecdsa-sha2-nistp384', ECDSAKey),
-    (b'ecdsa-sha2-nistp521', ECDSAKey),
-    (b'sk-ecdsa-sha2-nistp256@openssh.com', ECDSAKey),
-    (b'webauthn-sk-ecdsa-sha2-nistp256@openssh.com', ECDSAKey),
-    (b'ssh-rsa-cert-v01@openssh.com', RSAKey),
-    (b'rsa-sha2-256-cert-v01@openssh.com', RSAKey),
-    (b'rsa-sha2-512-cert-v01@openssh.com', RSAKey),
-    (b'ssh-dss-cert-v01@openssh.com', DSSKey),
-    (b'ecdsa-sha2-nistp256-cert-v01@openssh.com', ECDSAKey),
-    (b'ecdsa-sha2-nistp384-cert-v01@openssh.com', ECDSAKey),
-    (b'ecdsa-sha2-nistp521-cert-v01@openssh.com', ECDSAKey),
-    (b'sk-ecdsa-sha2-nistp256-cert-v01@openssh.com', ECDSAKey)
+    (b"ssh-ed25519", Ed25519Key),
+    (b"ssh-ed25519-cert-v01@openssh.com", Ed25519Key),
+    (b"sk-ssh-ed25519@openssh.com", Ed25519Key),
+    (b"sk-ssh-ed25519-cert-v01@openssh.com", Ed25519Key),
+    # (b"ssh-xmss@openssh.com", "XMSS"),
+    # (b"ssh-xmss-cert-v01@openssh.com", "XMSS-CERT"),
+    (b"ssh-rsa", RSAKey),
+    (b"rsa-sha2-256", RSAKey),
+    (b"rsa-sha2-512", RSAKey),
+    (b"ssh-dss", DSSKey),
+    (b"ecdsa-sha2-nistp256", ECDSAKey),
+    (b"ecdsa-sha2-nistp384", ECDSAKey),
+    (b"ecdsa-sha2-nistp521", ECDSAKey),
+    (b"sk-ecdsa-sha2-nistp256@openssh.com", ECDSAKey),
+    (b"webauthn-sk-ecdsa-sha2-nistp256@openssh.com", ECDSAKey),
+    (b"ssh-rsa-cert-v01@openssh.com", RSAKey),
+    (b"rsa-sha2-256-cert-v01@openssh.com", RSAKey),
+    (b"rsa-sha2-512-cert-v01@openssh.com", RSAKey),
+    (b"ssh-dss-cert-v01@openssh.com", DSSKey),
+    (b"ecdsa-sha2-nistp256-cert-v01@openssh.com", ECDSAKey),
+    (b"ecdsa-sha2-nistp384-cert-v01@openssh.com", ECDSAKey),
+    (b"ecdsa-sha2-nistp521-cert-v01@openssh.com", ECDSAKey),
+    (b"sk-ecdsa-sha2-nistp256-cert-v01@openssh.com", ECDSAKey)
 ]
 
 """
@@ -44,9 +44,9 @@ def identify_pkey(fpath):
     tag_end = -1
     count = 0
     keytype = (None, None)
-    lines = ''
+    lines = ""
     try:
-        with open(fpath, 'r') as f:
+        with open(fpath, "r") as f:
             lines = f.read().splitlines()
         assert lines
     except Exception:
@@ -69,14 +69,14 @@ def identify_pkey(fpath):
 
     if tag_start < 0 or tag_end < 1:
         # assume a single line public key
-        a, b, u = lines[0].partition(' ')
+        a, b, u = lines[0].partition(" ")
         for i in ssh_key_types:
-            if bytes(a.encode('ascii')) == i[0]:
-                keytype = ('SSH2', i[1])
+            if bytes(a.encode("ascii")) == i[0]:
+                keytype = ("SSH2", i[1])
                 return keytype
 
-    for i in [('DSA', DSSKey), ('EC', ECDSAKey) , ('OPENSSH', None),
-              ('RSA', RSAKey), ('SSH2', None)]:
+    for i in [("DSA", DSSKey), ("EC", ECDSAKey) , ("OPENSSH", None),
+              ("RSA", RSAKey), ("SSH2", None)]:
         if i[0] in lines[tag_start]:
             keytype = i
             break
@@ -86,25 +86,25 @@ def identify_pkey(fpath):
         try:
             # consume any comment
             for line in lines[tag_start:tag_end]:
-                if ':' in line or line.strip() == "":
+                if ":" in line or line.strip() == "":
                     tag_start += 1
-                    if line[-1] == '\\':
+                    if line[-1] == "\\":
                         for i in lines[tag_start:tag_end]:
-                            if i[-1] == '\\':
+                            if i[-1] == "\\":
                                 tag_start += 1
 
             buff = bytearray(
-                base64.b64decode("".join(lines[tag_start + 1:tag_end]))
+                base64.b64decode("".join(lines[tag_start + 1 : tag_end]))
             )
             if keytype[0] == "OPENSSH":
-                assert buff[0:len(OPENSSH_AUTH_MAGIC)] == OPENSSH_AUTH_MAGIC
+                assert buff[0 : len(OPENSSH_AUTH_MAGIC)] == OPENSSH_AUTH_MAGIC
             eol = False
             for i in ssh_key_types:
                 if eol:
                     break
-                lookup = (i[0] + b'\x00')
+                lookup = i[0] + b"\x00"
                 for j in range(0, len(buff) - len(lookup)):
-                    if buff[j:j + len(lookup)] == lookup:
+                    if buff[j : j + len(lookup)] == lookup:
                         keytype = (keytype[0], i[1])
                         eol = True
                         break
