@@ -674,7 +674,7 @@ class SSHClient(ClosingContextManager):
         if not two_factor:
             for key_filename in key_filenames:
                 try:
-                    pkey_class=identify_pkey(key_filename)[1]
+                    pkey_class = identify_pkey(key_filename)[1]
 
                     key = self._key_from_filepath(
                         key_filename, pkey_class, passphrase
@@ -685,7 +685,7 @@ class SSHClient(ClosingContextManager):
                     two_factor = allowed_types & two_factor_types
                     if not two_factor:
                         return
-                    #break
+                    # break
                 except SSHException as e:
                     saved_exception = e
 

@@ -36,31 +36,36 @@ ssh_key_types = [
 ]
 
 """
-provide a way to delay the dispatch to the correct class until the key type is known
+determine which class should handle the given key
+provide a way to delay the dispatch to the correct class
 """
-def identify_pkey (fpath):
+def identify_pkey(fpath):
     tag_start = -1
     tag_end = -1
     count = 0
     keytype = (None, None)
-    lines=''
+    lines = ''
     try:
-        with open (fpath, 'r') as f:
+        with open(fpath, 'r') as f:
             lines = f.read().splitlines()
-        assert (lines)
-    except Exception as e:
+        assert lines
+    except Exception:
         raise SSHException("can not determine {}".format(fpath)) from None
     try:
-        assert lines[0].startswith ("-----BEGIN") or lines[0].startswith ("---- BEGIN")
-        assert lines[-1].startswith ("-----END") or lines[-1].startswith ("---- END")
-    except AssertionError as e:
+        assert lines[0].startswith("-----BEGIN") or lines[0].startswith(
+            "---- BEGIN")
+        assert lines[-1].startswith(
+            "-----END") or lines[-1].startswith("---- END")
+    except AssertionError:
         for line in lines:
-            if line.startswith ("-----BEGIN") or line.startswith ("---- BEGIN"): tag_start = count
-            elif line.startswith ("-----END") or line.startswith ("---- END"): tag_end = count
+            if line.startswith("-----BEGIN") or line.startswith("---- BEGIN"):
+                tag_start = count
+            elif line.startswith("-----END") or line.startswith("---- END"):
+                tag_end = count
             count += 1
     else:
         tag_start = 0
-        tag_end = len (lines) - 1
+        tag_end = len(lines) - 1
 
     if tag_start < 0 or tag_end < 1:
         # assume a single line public key
@@ -70,7 +75,8 @@ def identify_pkey (fpath):
                 keytype = ('SSH2', i[1])
                 return keytype
 
-    for i in [('DSA', DSSKey), ('EC', ECDSAKey) , ('OPENSSH', None), ('RSA', RSAKey), ('SSH2', None)]:
+    for i in [('DSA', DSSKey), ('EC', ECDSAKey) , ('OPENSSH', None),
+              ('RSA', RSAKey), ('SSH2', None)]:
         if i[0] in lines[tag_start]:
             keytype = i
             break
@@ -82,38 +88,45 @@ def identify_pkey (fpath):
                 if ':' in line or line.strip() == "":
                     tag_start += 1
                     if line[-1] == '\\':
-                        for l in lines[tag_start:tag_end]:
-                           if l[-1] == '\\': tag_start += 1
+                        for i in lines[tag_start:tag_end]:
+                           if i[-1] == '\\':
+                               tag_start += 1
 
-            buff = bytearray(base64.b64decode("".join(lines[tag_start + 1:tag_end])))
+            buff = bytearray(
+                base64.b64decode("".join(lines[tag_start + 1:tag_end]))
+            )
             if keytype[0] == "OPENSSH":
                 assert buff[0:len(OPENSSH_AUTH_MAGIC)] == OPENSSH_AUTH_MAGIC
             eol=False
             for i in ssh_key_types:
-                if eol: break
+                if eol:
+                    break
                 lookup = (i[0] + b'\x00')
                 for j in range(0, len(buff) - len(lookup)):
                     if buff[j:j + len(lookup)] == lookup:
                         keytype = (keytype[0], i[1])
-                        eol=True
+                        eol = True
                         break
-        except Exception as e:
+        except Exception:
             raise SSHException("can not determine {}".format(fpath))
     try:
         assert len(keytype) == 2
         assert keytype[1]
         assert issubclass(PKey, keytype[1].__bases__)
-    except AssertionError as e:
-        raise SSHException("pkey_util.identify_pkey error: {}".format(keytype)) from None
+    except AssertionError:
+        raise SSHException(
+            "pkey_util.identify_pkey error: {}".format(keytype)
+        ) from None
     else:
         return keytype
 
 if __name__ == "__main__":
 
-    import sys, os, os.path
+    import sys
+    import os
 
-    if len(sys.argv) > 1 and os.path.isfile (os.path.abspath(sys.argv[1])):
-        result = identify_pkey (os.path.abspath(sys.argv[1]))
-        print ("result: {}".format(result))
+    if len(sys.argv) > 1 and os.path.isfile(os.path.abspath(sys.argv[1])):
+        result = identify_pkey(os.path.abspath(sys.argv[1]))
+        print("result: {}".format(result))
     else:
-        print ("{} /path/to/key".format(sys.argv[0]))
+        print("{} /path/to/key".format(sys.argv[0]))
