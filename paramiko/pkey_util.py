@@ -81,10 +81,10 @@ def identify_pkey(fpath):
 
     for i in [
         ("DSA", DSSKey),
-        ("EC", ECDSAKey) ,
+        ("EC", ECDSAKey),
         ("OPENSSH", None),
         ("RSA", RSAKey),
-        ("SSH2", None)
+        ("SSH2", None),
     ]:
         if i[0] in lines[tag_start]:
             keytype = i
