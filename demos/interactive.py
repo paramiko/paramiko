@@ -31,14 +31,14 @@ except ImportError:
     has_termios = False
 
 
-def interactive_shell(chan):
+def interactive_shell(chan, encoding="utf8", errors="strict"):
     if has_termios:
-        posix_shell(chan)
+        posix_shell(chan, encoding, errors)
     else:
         windows_shell(chan)
 
 
-def posix_shell(chan):
+def posix_shell(chan, encoding="utf8", errors="strict"):
     import select
 
     oldtty = termios.tcgetattr(sys.stdin)
@@ -51,7 +51,7 @@ def posix_shell(chan):
             r, w, e = select.select([chan, sys.stdin], [], [])
             if chan in r:
                 try:
-                    x = u(chan.recv(1024))
+                    x = u(chan.recv(1024), encoding, errors)
                     if len(x) == 0:
                         sys.stdout.write("\r\n*** EOF\r\n")
                         break

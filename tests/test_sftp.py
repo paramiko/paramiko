@@ -39,6 +39,7 @@ from paramiko.sftp_attr import SFTPAttributes
 
 from .util import needs_builtin
 from .util import slow
+from unittest import TestCase
 
 
 ARTICLE = """
@@ -277,7 +278,7 @@ class TestSFTP(object):
         sftp.open(sftp.FOLDER + "/canard.txt", "w").close()
         try:
             folder_contents = sftp.listdir(sftp.FOLDER)
-            self.assertEqual(["canard.txt"], folder_contents)
+            TestCase().assertEqual(["canard.txt"], folder_contents)
         finally:
             sftp.remove(sftp.FOLDER + "/canard.txt")
 
@@ -797,7 +798,7 @@ class TestSFTP(object):
         """Test SFTPAttributes under a locale with non-ascii time strings."""
         some_stat = os.stat(sftp.FOLDER)
         sftp_attributes = SFTPAttributes.from_stat(some_stat, u("a_directory"))
-        self.assertTrue(b"a_directory" in sftp_attributes.asbytes())
+        TestCase().assertTrue(b"a_directory" in sftp_attributes.asbytes())
 
     def test_sftp_attributes_empty_str(self, sftp):
         sftp_attributes = SFTPAttributes()

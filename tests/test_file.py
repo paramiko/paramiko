@@ -162,6 +162,7 @@ class BufferedFileTest(unittest.TestCase):
         )
         f.close()
 
+    @needs_builtin("buffer")
     def test_buffering_writes(self):
         """
         verify that buffered objects can be written
