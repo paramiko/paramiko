@@ -294,9 +294,11 @@ class BufferedFile(ClosingContextManager):
             if (new_data is None) or (len(new_data) == 0):
                 self._rbuffer = bytes()
                 self._pos += len(line)
-                return line if self._flags & self.FLAG_BINARY else u(line,
-                                                                    encoding,
-                                                                    errors)
+                return (
+                    line
+                    if self._flags & self.FLAG_BINARY
+                    else u(line, encoding, errors)
+                )
             line += new_data
             self._realpos += len(new_data)
         # find the newline
@@ -308,9 +310,11 @@ class BufferedFile(ClosingContextManager):
         if pos == -1:
             # we couldn't find a newline in the truncated string, return it
             self._pos += len(line)
-            return line if self._flags & self.FLAG_BINARY else u(line,
-                                                                 encoding,
-                                                                 errors)
+            return (
+                line
+                if self._flags & self.FLAG_BINARY
+                else u(line, encoding, errors)
+            )
         xpos = pos + 1
         if (
             line[pos] == cr_byte_value
@@ -335,8 +339,11 @@ class BufferedFile(ClosingContextManager):
         else:
             self._record_newline(lf)
         self._pos += len(line)
-        return line if self._flags & self.FLAG_BINARY else u(line,
-                                                             encoding, errors)
+        return (
+            line
+            if self._flags & self.FLAG_BINARY
+            else u(line, encoding, errors)
+        )
 
     def readlines(self, sizehint=None, encoding="utf8", errors="strict"):
         """
