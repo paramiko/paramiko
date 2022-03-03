@@ -130,3 +130,20 @@ class HostKeysTest(unittest.TestCase):
             pass  # Good
         else:
             assert False, "Entry was not deleted from HostKeys on delitem!"
+
+    def test_entry_delitem(self):
+        hostdict = paramiko.HostKeys("hostfile.temp")
+        target = "happy.example.com"
+        entry = hostdict[target]
+        key_type_list = [key_type for key_type in entry]
+        for key_type in key_type_list:
+            del entry[key_type]
+
+        # will KeyError if not present
+        for key_type in key_type_list:
+            try:
+                del entry[key_type]
+            except KeyError:
+                pass  # Good
+            else:
+                assert False, "Key was not deleted from Entry on delitem!"

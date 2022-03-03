@@ -1,0 +1,9 @@
+[flake8]
+exclude = sites,.git,build,dist,demos
+# NOTE: W503, E203 are concessions to black 18.0b5 and could be reinstated
+# later if fixed on that end.
+# NOTE: E722 seems to only have started popping up on move to flake8 3.6.0 from
+# 2.4.0. Not sure why, bare excepts have been a (regrettable) thing forever...
+ignore = E124,E125,E128,E261,E301,E302,E303,E402,E721,W503,E203,E722
+max-line-length = 79
+

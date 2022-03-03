@@ -42,6 +42,18 @@ SSH2_AGENT_IDENTITIES_ANSWER = 12
 cSSH2_AGENTC_SIGN_REQUEST = byte_chr(13)
 SSH2_AGENT_SIGN_RESPONSE = 14
 
+SSH_AGENT_RSA_SHA2_256 = 2
+SSH_AGENT_RSA_SHA2_512 = 4
+# NOTE: RFC mildly confusing; while these flags are OR'd together, OpenSSH at
+# least really treats them like "AND"s, in the sense that if it finds the
+# SHA256 flag set it won't continue looking at the SHA512 one; it
+# short-circuits right away.
+# Thus, we never want to eg submit 6 to say "either's good".
+ALGORITHM_FLAG_MAP = {
+    "rsa-sha2-256": SSH_AGENT_RSA_SHA2_256,
+    "rsa-sha2-512": SSH_AGENT_RSA_SHA2_512,
+}
+
 
 class AgentSSH(object):
     def __init__(self):
@@ -407,12 +419,16 @@ class AgentKey(PKey):
     def get_name(self):
         return self.name
 
-    def sign_ssh_data(self, data):
+    @property
+    def _fields(self):
+        raise NotImplementedError
+
+    def sign_ssh_data(self, data, algorithm=None):
         msg = Message()
         msg.add_byte(cSSH2_AGENTC_SIGN_REQUEST)
         msg.add_string(self.blob)
         msg.add_string(data)
-        msg.add_int(0)
+        msg.add_int(ALGORITHM_FLAG_MAP.get(algorithm, 0))
         ptype, result = self.agent._send_message(msg)
         if ptype != SSH2_AGENT_SIGN_RESPONSE:
             raise SSHException("key cannot be used for signing")

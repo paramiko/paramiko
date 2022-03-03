@@ -61,7 +61,7 @@ from paramiko.common import (
     cMSG_USERAUTH_BANNER,
 )
 from paramiko.message import Message
-from paramiko.py3compat import b
+from paramiko.py3compat import b, u
 from paramiko.ssh_exception import (
     SSHException,
     AuthenticationException,
@@ -206,7 +206,19 @@ class AuthHandler(object):
         self.transport._send_message(m)
         self.transport.close()
 
-    def _get_session_blob(self, key, service, username):
+    def _get_key_type_and_bits(self, key):
+        """
+        Given any key, return its type/algorithm & bits-to-sign.
+
+        Intended for input to or verification of, key signatures.
+        """
+        # Use certificate contents, if available, plain pubkey otherwise
+        if key.public_blob:
+            return key.public_blob.key_type, key.public_blob.key_blob
+        else:
+            return key.get_name(), key
+
+    def _get_session_blob(self, key, service, username, algorithm):
         m = Message()
         m.add_string(self.transport.session_id)
         m.add_byte(cMSG_USERAUTH_REQUEST)
@@ -214,13 +226,9 @@ class AuthHandler(object):
         m.add_string(service)
         m.add_string("publickey")
         m.add_boolean(True)
-        # Use certificate contents, if available, plain pubkey otherwise
-        if key.public_blob:
-            m.add_string(key.public_blob.key_type)
-            m.add_string(key.public_blob.key_blob)
-        else:
-            m.add_string(key.get_name())
-            m.add_string(key)
+        _, bits = self._get_key_type_and_bits(key)
+        m.add_string(algorithm)
+        m.add_string(bits)
         return m.asbytes()
 
     def wait_for_response(self, event):
@@ -269,9 +277,79 @@ class AuthHandler(object):
         # dunno this one
         self._disconnect_service_not_available()
 
+    def _generate_key_from_request(self, algorithm, keyblob):
+        # For use in server mode.
+        options = self.transport.preferred_pubkeys
+        if algorithm.replace("-cert-v01@openssh.com", "") not in options:
+            err = (
+                "Auth rejected: pubkey algorithm '{}' unsupported or disabled"
+            )
+            self._log(INFO, err.format(algorithm))
+            return None
+        return self.transport._key_info[algorithm](Message(keyblob))
+
+    def _finalize_pubkey_algorithm(self, key_type):
+        # Short-circuit for non-RSA keys
+        if "rsa" not in key_type:
+            return key_type
+        self._log(
+            DEBUG,
+            "Finalizing pubkey algorithm for key of type {!r}".format(
+                key_type
+            ),
+        )
+        # Only consider RSA algos from our list, lest we agree on another!
+        my_algos = [x for x in self.transport.preferred_pubkeys if "rsa" in x]
+        self._log(DEBUG, "Our pubkey algorithm list: {}".format(my_algos))
+        # Short-circuit negatively if user disabled all RSA algos (heh)
+        if not my_algos:
+            raise SSHException(
+                "An RSA key was specified, but no RSA pubkey algorithms are configured!"  # noqa
+            )
+        # Check for server-sig-algs if supported & sent
+        server_algo_str = u(
+            self.transport.server_extensions.get("server-sig-algs", b(""))
+        )
+        pubkey_algo = None
+        if server_algo_str:
+            server_algos = server_algo_str.split(",")
+            self._log(
+                DEBUG, "Server-side algorithm list: {}".format(server_algos)
+            )
+            # Only use algos from our list that the server likes, in our own
+            # preference order. (NOTE: purposefully using same style as in
+            # Transport...expect to refactor later)
+            agreement = list(filter(server_algos.__contains__, my_algos))
+            if agreement:
+                pubkey_algo = agreement[0]
+                self._log(
+                    DEBUG,
+                    "Agreed upon {!r} pubkey algorithm".format(pubkey_algo),
+                )
+            else:
+                self._log(DEBUG, "No common pubkey algorithms exist! Dying.")
+                # TODO: MAY want to use IncompatiblePeer again here but that's
+                # technically for initial key exchange, not pubkey auth.
+                err = "Unable to agree on a pubkey algorithm for signing a {!r} key!"  # noqa
+                raise AuthenticationException(err.format(key_type))
+        else:
+            # Fallback: first one in our (possibly tweaked by caller) list
+            pubkey_algo = my_algos[0]
+            msg = "Server did not send a server-sig-algs list; defaulting to our first preferred algo ({!r})"  # noqa
+            self._log(DEBUG, msg.format(pubkey_algo))
+            self._log(
+                DEBUG,
+                "NOTE: you may use the 'disabled_algorithms' SSHClient/Transport init kwarg to disable that or other algorithms if your server does not support them!",  # noqa
+            )
+        self.transport._agreed_pubkey_algorithm = pubkey_algo
+        return pubkey_algo
+
     def _parse_service_accept(self, m):
         service = m.get_text()
         if service == "ssh-userauth":
+            # TODO 3.0: this message sucks ass. change it to something more
+            # obvious. it always appears to mean "we already authed" but no! it
+            # just means "we are allowed to TRY authing!"
             self._log(DEBUG, "userauth is OK")
             m = Message()
             m.add_byte(cMSG_USERAUTH_REQUEST)
@@ -284,18 +362,17 @@ class AuthHandler(object):
                 m.add_string(password)
             elif self.auth_method == "publickey":
                 m.add_boolean(True)
-                # Use certificate contents, if available, plain pubkey
-                # otherwise
-                if self.private_key.public_blob:
-                    m.add_string(self.private_key.public_blob.key_type)
-                    m.add_string(self.private_key.public_blob.key_blob)
-                else:
-                    m.add_string(self.private_key.get_name())
-                    m.add_string(self.private_key)
+                key_type, bits = self._get_key_type_and_bits(self.private_key)
+                algorithm = self._finalize_pubkey_algorithm(key_type)
+                m.add_string(algorithm)
+                m.add_string(bits)
                 blob = self._get_session_blob(
-                    self.private_key, "ssh-connection", self.username
+                    self.private_key,
+                    "ssh-connection",
+                    self.username,
+                    algorithm,
                 )
-                sig = self.private_key.sign_ssh_data(blob)
+                sig = self.private_key.sign_ssh_data(blob, algorithm)
                 m.add_string(sig)
             elif self.auth_method == "keyboard-interactive":
                 m.add_string("")
@@ -505,10 +582,13 @@ Error Message: {}
                 )
         elif method == "publickey":
             sig_attached = m.get_boolean()
-            keytype = m.get_text()
+            # NOTE: server never wants to guess a client's algo, they're
+            # telling us directly. No need for _finalize_pubkey_algorithm
+            # anywhere in this flow.
+            algorithm = m.get_text()
             keyblob = m.get_binary()
             try:
-                key = self.transport._key_info[keytype](Message(keyblob))
+                key = self._generate_key_from_request(algorithm, keyblob)
             except SSHException as e:
                 self._log(INFO, "Auth rejected: public key: {}".format(str(e)))
                 key = None
@@ -532,12 +612,14 @@ Error Message: {}
                     # signs anything...  send special "ok" message
                     m = Message()
                     m.add_byte(cMSG_USERAUTH_PK_OK)
-                    m.add_string(keytype)
+                    m.add_string(algorithm)
                     m.add_string(keyblob)
                     self.transport._send_message(m)
                     return
                 sig = Message(m.get_binary())
-                blob = self._get_session_blob(key, service, username)
+                blob = self._get_session_blob(
+                    key, service, username, algorithm
+                )
                 if not key.verify_ssh_sig(blob, sig):
                     self._log(INFO, "Auth rejected: invalid signature")
                     result = AUTH_FAILED

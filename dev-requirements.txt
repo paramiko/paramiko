@@ -1,21 +1,23 @@
 # Invocations for common project tasks
-invoke>=1.0,<2.0
-invocations>=1.2.0,<2.0
+invoke==1.6.0
+invocations==2.3.0
 pytest==4.4.2
 pytest-relaxed==1.1.5
 # pytest-xdist for test dir watching and the inv guard task
 pytest-xdist==1.28.0
 mock==2.0.0
 # Linting!
-flake8==3.6.0
+flake8==3.8.3
+# Formatting!
+black==18.6b4
 # Coverage!
-coverage==3.7.1
-codecov==1.6.3
+coverage==4.5.4
+codecov==2.1.11
 # Documentation tools
 sphinx>=1.4,<1.7
 alabaster==0.7.12
 releases>=1.5,<2.0
 # Release tools
 semantic_version>=2.4,<2.5
-wheel==0.24
-twine==1.11.0
+# Self
+-e ".[ed25519,invoke]"

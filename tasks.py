@@ -3,7 +3,6 @@ from os.path import join
 from shutil import rmtree, copytree
 
 from invoke import Collection, task
-from invocations import travis
 from invocations.checks import blacken
 from invocations.docs import docs, www, sites
 from invocations.packaging.release import ns as release_coll, publish
@@ -60,7 +59,7 @@ def test(
         # Leverage how pytest can be run as 'python -m pytest', and then how
         # coverage can be told to run things in that manner instead of
         # expecting a literal .py file.
-        runner = "coverage run --source=paramiko -m pytest"
+        runner = "coverage run -m pytest"
     # Strip SSH_AUTH_SOCK from parent env to avoid pollution by interactive
     # users.
     # TODO: once pytest coverage plugin works, see if there's a pytest-native
@@ -75,11 +74,15 @@ def test(
 
 
 @task
-def coverage(ctx, opts=""):
+def coverage(ctx, opts="", codecov=False):
     """
     Execute all tests (normal and slow) with coverage enabled.
     """
-    return test(ctx, coverage=True, include_slow=True, opts=opts)
+    test(ctx, coverage=True, include_slow=True, opts=opts)
+    # Cribbed from invocations.pytest.coverage for now
+    if codecov:
+        ctx.run("coverage xml")
+        ctx.run("codecov")
 
 
 @task
@@ -94,8 +97,12 @@ def guard(ctx, opts=""):
 # Until we stop bundling docs w/ releases. Need to discover use cases first.
 # TODO: would be nice to tie this into our own version of build() too, but
 # still have publish() use that build()...really need to try out classes!
+# TODO 3.0: I'd like to just axe the 'built docs in sdist', none of my other
+# projects do it.
 @task
-def release(ctx, sdist=True, wheel=True, sign=True, dry_run=False, index=None):
+def publish_(
+    ctx, sdist=True, wheel=True, sign=True, dry_run=False, index=None
+):
     """
     Wraps invocations.packaging.publish to add baked-in docs folder.
     """
@@ -110,17 +117,22 @@ def release(ctx, sdist=True, wheel=True, sign=True, dry_run=False, index=None):
     publish(
         ctx, sdist=sdist, wheel=wheel, sign=sign, dry_run=dry_run, index=index
     )
-    # Remind
-    print(
-        "\n\nDon't forget to update RTD's versions page for new minor "
-        "releases!"
-    )
+
+
+# Also have to hack up the newly enhanced all_() so it uses our publish
+@task(name="all", default=True)
+def all_(c, dry_run=False):
+    release_coll["prepare"](c, dry_run=dry_run)
+    publish_(c, dry_run=dry_run)
+    release_coll["push"](c, dry_run=dry_run)
+    release_coll["tidelift"](c, dry_run=dry_run)
 
 
 # TODO: "replace one task with another" needs a better public API, this is
 # using unpublished internals & skips all the stuff add_task() does re:
 # aliasing, defaults etc.
-release_coll.tasks["publish"] = release
+release_coll.tasks["publish"] = publish_
+release_coll.tasks["all"] = all_
 
 ns = Collection(
     test,
@@ -131,7 +143,6 @@ ns = Collection(
     www,
     sites,
     count_errors,
-    travis,
     blacken,
 )
 ns.configure(
@@ -145,7 +156,6 @@ ns.configure(
             "changelog_file": join(
                 www.configuration()["sphinx"]["source"], "changelog.rst"
             ),
-        },
-        "travis": {"black": {"version": "18.6b4"}},
+        }
     }
 )

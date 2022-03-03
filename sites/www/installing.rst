@@ -102,8 +102,14 @@ In general, you'll need one of the following setups:
     1.4 and newer - which Paramiko will gladly install or upgrade, if you e.g.
     ``pip install -U`` - drop that support.
 
+* Similarly, Cryptography 3.4 and above require Rust language tooling to
+  install from source; once again see Cryptography's documentation for details
+  here, such as `their Rust install section`_ and `this FAQ entry`_.
+
 .. _installation instructions:
-.. _Cryptography's install docs: https://cryptography.io/en/latest/installation/
+.. _Cryptography's install docs: https://cryptography.io/en/latest/installation.html
+.. _their Rust install section: https://cryptography.io/en/latest/installation.html#rust
+.. _this FAQ entry: https://cryptography.io/en/latest/faq.html#installing-cryptography-fails-with-error-can-not-find-rust-compiler
 
 
 .. _gssapi:

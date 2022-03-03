@@ -1,2 +1,0 @@
-Match exec "ping %h"
-    HostName pingable.%h

@@ -140,7 +140,14 @@ class PKey(object):
         return cmp(self.asbytes(), other.asbytes())  # noqa
 
     def __eq__(self, other):
-        return hash(self) == hash(other)
+        return self._fields == other._fields
+
+    def __hash__(self):
+        return hash(self._fields)
+
+    @property
+    def _fields(self):
+        raise NotImplementedError
 
     def get_name(self):
         """
@@ -189,13 +196,20 @@ class PKey(object):
         """
         return u(encodebytes(self.asbytes())).replace("\n", "")
 
-    def sign_ssh_data(self, data):
+    def sign_ssh_data(self, data, algorithm=None):
         """
         Sign a blob of data with this private key, and return a `.Message`
         representing an SSH signature message.
 
-        :param str data: the data to sign.
+        :param str data:
+            the data to sign.
+        :param str algorithm:
+            the signature algorithm to use, if different from the key's
+            internal name. Default: ``None``.
         :return: an SSH signature `message <.Message>`.
+
+        .. versionchanged:: 2.9
+            Added the ``algorithm`` kwarg.
         """
         return bytes()
 
@@ -652,7 +666,8 @@ class PublicBlob(object):
     Tries to be as dumb as possible and barely cares about specific
     per-key-type data.
 
-    ..note::
+    .. note::
+
         Most of the time you'll want to call `from_file`, `from_string` or
         `from_message` for useful instantiation, the main constructor is
         basically "I should be using ``attrs`` for this."

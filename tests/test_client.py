@@ -421,7 +421,10 @@ class SSHClientTest(ClientTest):
 
         # force a collection to see whether the SSHClient object is deallocated
         # 2 GCs are needed on PyPy, time is needed for Python 3
-        time.sleep(0.3)
+        # TODO: this still fails randomly under CircleCI under Python 3.7, 3.8
+        # at the very least. bumped sleep 0.3->1.0s but the underlying
+        # functionality should get reevaluated once we drop Python 2.
+        time.sleep(1)
         gc.collect()
         gc.collect()
 

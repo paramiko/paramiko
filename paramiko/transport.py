@@ -84,6 +84,8 @@ from paramiko.common import (
     HIGHEST_USERAUTH_MESSAGE_ID,
     MSG_UNIMPLEMENTED,
     MSG_NAMES,
+    MSG_EXT_INFO,
+    cMSG_EXT_INFO,
 )
 from paramiko.compress import ZlibCompressor, ZlibDecompressor
 from paramiko.dsskey import DSSKey
@@ -107,6 +109,7 @@ from paramiko.ssh_exception import (
     SSHException,
     BadAuthenticationType,
     ChannelException,
+    IncompatiblePeer,
     ProxyCommandFailure,
 )
 from paramiko.util import retry_on_signal, ClosingContextManager, clamp_value
@@ -168,11 +171,25 @@ class Transport(threading.Thread, ClosingContextManager):
         "hmac-sha1-96",
         "hmac-md5-96",
     )
+    # ~= HostKeyAlgorithms in OpenSSH land
     _preferred_keys = (
         "ssh-ed25519",
         "ecdsa-sha2-nistp256",
         "ecdsa-sha2-nistp384",
         "ecdsa-sha2-nistp521",
+        "rsa-sha2-512",
+        "rsa-sha2-256",
+        "ssh-rsa",
+        "ssh-dss",
+    )
+    # ~= PubKeyAcceptedAlgorithms
+    _preferred_pubkeys = (
+        "ssh-ed25519",
+        "ecdsa-sha2-nistp256",
+        "ecdsa-sha2-nistp384",
+        "ecdsa-sha2-nistp521",
+        "rsa-sha2-512",
+        "rsa-sha2-256",
         "ssh-rsa",
         "ssh-dss",
     )
@@ -259,8 +276,16 @@ class Transport(threading.Thread, ClosingContextManager):
     }
 
     _key_info = {
+        # TODO: at some point we will want to drop this as it's no longer
+        # considered secure due to using SHA-1 for signatures. OpenSSH 8.8 no
+        # longer supports it. Question becomes at what point do we want to
+        # prevent users with older setups from using this?
         "ssh-rsa": RSAKey,
         "ssh-rsa-cert-v01@openssh.com": RSAKey,
+        "rsa-sha2-256": RSAKey,
+        "rsa-sha2-256-cert-v01@openssh.com": RSAKey,
+        "rsa-sha2-512": RSAKey,
+        "rsa-sha2-512-cert-v01@openssh.com": RSAKey,
         "ssh-dss": DSSKey,
         "ssh-dss-cert-v01@openssh.com": DSSKey,
         "ecdsa-sha2-nistp256": ECDSAKey,
@@ -310,6 +335,7 @@ class Transport(threading.Thread, ClosingContextManager):
         gss_kex=False,
         gss_deleg_creds=True,
         disabled_algorithms=None,
+        server_sig_algs=True,
     ):
         """
         Create a new SSH session over an existing socket, or socket-like
@@ -372,6 +398,10 @@ class Transport(threading.Thread, ClosingContextManager):
             your code talks to a server which implements it differently from
             Paramiko), specify ``disabled_algorithms={"kex":
             ["diffie-hellman-group16-sha512"]}``.
+        :param bool server_sig_algs:
+            Whether to send an extra message to compatible clients, in server
+            mode, with a list of supported pubkey algorithms. Default:
+            ``True``.
 
         .. versionchanged:: 1.15
             Added the ``default_window_size`` and ``default_max_packet_size``
@@ -380,9 +410,12 @@ class Transport(threading.Thread, ClosingContextManager):
             Added the ``gss_kex`` and ``gss_deleg_creds`` kwargs.
         .. versionchanged:: 2.6
             Added the ``disabled_algorithms`` kwarg.
+        .. versionchanged:: 2.9
+            Added the ``server_sig_algs`` kwarg.
         """
         self.active = False
         self.hostname = None
+        self.server_extensions = {}
 
         if isinstance(sock, string_types):
             # convert "host:port" into (host, port)
@@ -488,6 +521,7 @@ class Transport(threading.Thread, ClosingContextManager):
         # how long (seconds) to wait for the auth response.
         self.auth_timeout = 30
         self.disabled_algorithms = disabled_algorithms or {}
+        self.server_sig_algs = server_sig_algs
 
         # server mode:
         self.server_mode = False
@@ -516,6 +550,10 @@ class Transport(threading.Thread, ClosingContextManager):
     @property
     def preferred_keys(self):
         return self._filter_algorithm("keys")
+
+    @property
+    def preferred_pubkeys(self):
+        return self._filter_algorithm("pubkeys")
 
     @property
     def preferred_kex(self):
@@ -743,6 +781,12 @@ class Transport(threading.Thread, ClosingContextManager):
             the host key to add, usually an `.RSAKey` or `.DSSKey`.
         """
         self.server_key_dict[key.get_name()] = key
+        # Handle SHA-2 extensions for RSA by ensuring that lookups into
+        # self.server_key_dict will yield this key for any of the algorithm
+        # names.
+        if isinstance(key, RSAKey):
+            self.server_key_dict["rsa-sha2-256"] = key
+            self.server_key_dict["rsa-sha2-512"] = key
 
     def get_server_key(self):
         """
@@ -1280,7 +1324,17 @@ class Transport(threading.Thread, ClosingContextManager):
             Added the ``gss_trust_dns`` argument.
         """
         if hostkey is not None:
-            self._preferred_keys = [hostkey.get_name()]
+            # TODO: a more robust implementation would be to ask each key class
+            # for its nameS plural, and just use that.
+            # TODO: that could be used in a bunch of other spots too
+            if isinstance(hostkey, RSAKey):
+                self._preferred_keys = [
+                    "rsa-sha2-512",
+                    "rsa-sha2-256",
+                    "ssh-rsa",
+                ]
+            else:
+                self._preferred_keys = [hostkey.get_name()]
 
         self.set_gss_host(
             gss_host=gss_host,
@@ -2126,7 +2180,12 @@ class Transport(threading.Thread, ClosingContextManager):
                             self._send_message(msg)
                     self.packetizer.complete_handshake()
             except SSHException as e:
-                self._log(ERROR, "Exception: " + str(e))
+                self._log(
+                    ERROR,
+                    "Exception ({}): {}".format(
+                        "server" if self.server_mode else "client", e
+                    ),
+                )
                 self._log(ERROR, util.tb_strings())
                 self.saved_exception = e
             except EOFError as e:
@@ -2176,7 +2235,7 @@ class Transport(threading.Thread, ClosingContextManager):
         # Log useful, non-duplicative line re: an agreed-upon algorithm.
         # Old code implied algorithms could be asymmetrical (different for
         # inbound vs outbound) so we preserve that possibility.
-        msg = "{} agreed: ".format(which)
+        msg = "{}: ".format(which)
         if local == remote:
             msg += local
         else:
@@ -2237,7 +2296,7 @@ class Transport(threading.Thread, ClosingContextManager):
         client = segs[2]
         if version != "1.99" and version != "2.0":
             msg = "Incompatible version ({} instead of 2.0)"
-            raise SSHException(msg.format(version))
+            raise IncompatiblePeer(msg.format(version))
         msg = "Connected (version {}, client {})".format(version, client)
         self._log(INFO, msg)
 
@@ -2253,13 +2312,10 @@ class Transport(threading.Thread, ClosingContextManager):
             self.clear_to_send_lock.release()
         self.gss_kex_used = False
         self.in_kex = True
+        kex_algos = list(self.preferred_kex)
         if self.server_mode:
             mp_required_prefix = "diffie-hellman-group-exchange-sha"
-            kex_mp = [
-                k
-                for k in self.preferred_kex
-                if k.startswith(mp_required_prefix)
-            ]
+            kex_mp = [k for k in kex_algos if k.startswith(mp_required_prefix)]
             if (self._modulus_pack is None) and (len(kex_mp) > 0):
                 # can't do group-exchange if we don't have a pack of potential
                 # primes
@@ -2272,16 +2328,29 @@ class Transport(threading.Thread, ClosingContextManager):
             available_server_keys = list(
                 filter(
                     list(self.server_key_dict.keys()).__contains__,
+                    # TODO: ensure tests will catch if somebody streamlines
+                    # this by mistake - case is the admittedly silly one where
+                    # the only calls to add_server_key() contain keys which
+                    # were filtered out of the below via disabled_algorithms.
+                    # If this is streamlined, we would then be allowing the
+                    # disabled algorithm(s) for hostkey use
+                    # TODO: honestly this prob just wants to get thrown out
+                    # when we make kex configuration more straightforward
                     self.preferred_keys,
                 )
             )
         else:
             available_server_keys = self.preferred_keys
+            # Signal support for MSG_EXT_INFO.
+            # NOTE: doing this here handily means we don't even consider this
+            # value when agreeing on real kex algo to use (which is a common
+            # pitfall when adding this apparently).
+            kex_algos.append("ext-info-c")
 
         m = Message()
         m.add_byte(cMSG_KEXINIT)
         m.add_bytes(os.urandom(16))
-        m.add_list(self.preferred_kex)
+        m.add_list(kex_algos)
         m.add_list(available_server_keys)
         m.add_list(self.preferred_ciphers)
         m.add_list(self.preferred_ciphers)
@@ -2294,49 +2363,73 @@ class Transport(threading.Thread, ClosingContextManager):
         m.add_boolean(False)
         m.add_int(0)
         # save a copy for later (needed to compute a hash)
-        self.local_kex_init = m.asbytes()
+        self.local_kex_init = self._latest_kex_init = m.asbytes()
         self._send_message(m)
 
-    def _parse_kex_init(self, m):
+    def _really_parse_kex_init(self, m, ignore_first_byte=False):
+        parsed = {}
+        if ignore_first_byte:
+            m.get_byte()
         m.get_bytes(16)  # cookie, discarded
-        kex_algo_list = m.get_list()
-        server_key_algo_list = m.get_list()
-        client_encrypt_algo_list = m.get_list()
-        server_encrypt_algo_list = m.get_list()
-        client_mac_algo_list = m.get_list()
-        server_mac_algo_list = m.get_list()
-        client_compress_algo_list = m.get_list()
-        server_compress_algo_list = m.get_list()
-        client_lang_list = m.get_list()
-        server_lang_list = m.get_list()
-        kex_follows = m.get_boolean()
+        parsed["kex_algo_list"] = m.get_list()
+        parsed["server_key_algo_list"] = m.get_list()
+        parsed["client_encrypt_algo_list"] = m.get_list()
+        parsed["server_encrypt_algo_list"] = m.get_list()
+        parsed["client_mac_algo_list"] = m.get_list()
+        parsed["server_mac_algo_list"] = m.get_list()
+        parsed["client_compress_algo_list"] = m.get_list()
+        parsed["server_compress_algo_list"] = m.get_list()
+        parsed["client_lang_list"] = m.get_list()
+        parsed["server_lang_list"] = m.get_list()
+        parsed["kex_follows"] = m.get_boolean()
         m.get_int()  # unused
+        return parsed
 
-        self._log(
-            DEBUG,
-            "kex algos:"
-            + str(kex_algo_list)
-            + " server key:"
-            + str(server_key_algo_list)
-            + " client encrypt:"
-            + str(client_encrypt_algo_list)
-            + " server encrypt:"
-            + str(server_encrypt_algo_list)
-            + " client mac:"
-            + str(client_mac_algo_list)
-            + " server mac:"
-            + str(server_mac_algo_list)
-            + " client compress:"
-            + str(client_compress_algo_list)
-            + " server compress:"
-            + str(server_compress_algo_list)
-            + " client lang:"
-            + str(client_lang_list)
-            + " server lang:"
-            + str(server_lang_list)
-            + " kex follows?"
-            + str(kex_follows),
+    def _get_latest_kex_init(self):
+        return self._really_parse_kex_init(
+            Message(self._latest_kex_init), ignore_first_byte=True
         )
+
+    def _parse_kex_init(self, m):
+        parsed = self._really_parse_kex_init(m)
+        kex_algo_list = parsed["kex_algo_list"]
+        server_key_algo_list = parsed["server_key_algo_list"]
+        client_encrypt_algo_list = parsed["client_encrypt_algo_list"]
+        server_encrypt_algo_list = parsed["server_encrypt_algo_list"]
+        client_mac_algo_list = parsed["client_mac_algo_list"]
+        server_mac_algo_list = parsed["server_mac_algo_list"]
+        client_compress_algo_list = parsed["client_compress_algo_list"]
+        server_compress_algo_list = parsed["server_compress_algo_list"]
+        client_lang_list = parsed["client_lang_list"]
+        server_lang_list = parsed["server_lang_list"]
+        kex_follows = parsed["kex_follows"]
+
+        self._log(DEBUG, "=== Key exchange possibilities ===")
+        for prefix, value in (
+            ("kex algos", kex_algo_list),
+            ("server key", server_key_algo_list),
+            # TODO: shouldn't these two lines say "cipher" to match usual
+            # terminology (including elsewhere in paramiko!)?
+            ("client encrypt", client_encrypt_algo_list),
+            ("server encrypt", server_encrypt_algo_list),
+            ("client mac", client_mac_algo_list),
+            ("server mac", server_mac_algo_list),
+            ("client compress", client_compress_algo_list),
+            ("server compress", server_compress_algo_list),
+            ("client lang", client_lang_list),
+            ("server lang", server_lang_list),
+        ):
+            if value == [""]:
+                value = ["<none>"]
+            value = ", ".join(value)
+            self._log(DEBUG, "{}: {}".format(prefix, value))
+        self._log(DEBUG, "kex follows: {}".format(kex_follows))
+        self._log(DEBUG, "=== Key exchange agreements ===")
+
+        # Strip out ext-info "kex algo"
+        self._remote_ext_info = None
+        if kex_algo_list[-1].startswith("ext-info-"):
+            self._remote_ext_info = kex_algo_list.pop()
 
         # as a server, we pick the first item in the client's list that we
         # support.
@@ -2351,11 +2444,14 @@ class Transport(threading.Thread, ClosingContextManager):
                 filter(kex_algo_list.__contains__, self.preferred_kex)
             )
         if len(agreed_kex) == 0:
-            raise SSHException(
+            # TODO: do an auth-overhaul style aggregate exception here?
+            # TODO: would let us streamline log output & show all failures up
+            # front
+            raise IncompatiblePeer(
                 "Incompatible ssh peer (no acceptable kex algorithm)"
             )  # noqa
         self.kex_engine = self._kex_info[agreed_kex[0]](self)
-        self._log(DEBUG, "Kex agreed: {}".format(agreed_kex[0]))
+        self._log(DEBUG, "Kex: {}".format(agreed_kex[0]))
 
         if self.server_mode:
             available_server_keys = list(
@@ -2374,12 +2470,12 @@ class Transport(threading.Thread, ClosingContextManager):
                 filter(server_key_algo_list.__contains__, self.preferred_keys)
             )
         if len(agreed_keys) == 0:
-            raise SSHException(
+            raise IncompatiblePeer(
                 "Incompatible ssh peer (no acceptable host key)"
             )  # noqa
         self.host_key_type = agreed_keys[0]
         if self.server_mode and (self.get_server_key() is None):
-            raise SSHException(
+            raise IncompatiblePeer(
                 "Incompatible ssh peer (can't match requested host key type)"
             )  # noqa
         self._log_agreement("HostKey", agreed_keys[0], agreed_keys[0])
@@ -2411,7 +2507,7 @@ class Transport(threading.Thread, ClosingContextManager):
                 )
             )
         if len(agreed_local_ciphers) == 0 or len(agreed_remote_ciphers) == 0:
-            raise SSHException(
+            raise IncompatiblePeer(
                 "Incompatible ssh server (no acceptable ciphers)"
             )  # noqa
         self.local_cipher = agreed_local_ciphers[0]
@@ -2435,7 +2531,9 @@ class Transport(threading.Thread, ClosingContextManager):
                 filter(server_mac_algo_list.__contains__, self.preferred_macs)
             )
         if (len(agreed_local_macs) == 0) or (len(agreed_remote_macs) == 0):
-            raise SSHException("Incompatible ssh server (no acceptable macs)")
+            raise IncompatiblePeer(
+                "Incompatible ssh server (no acceptable macs)"
+            )
         self.local_mac = agreed_local_macs[0]
         self.remote_mac = agreed_remote_macs[0]
         self._log_agreement(
@@ -2474,7 +2572,7 @@ class Transport(threading.Thread, ClosingContextManager):
         ):
             msg = "Incompatible ssh server (no acceptable compression)"
             msg += " {!r} {!r} {!r}"
-            raise SSHException(
+            raise IncompatiblePeer(
                 msg.format(
                     agreed_local_compression,
                     agreed_remote_compression,
@@ -2488,6 +2586,7 @@ class Transport(threading.Thread, ClosingContextManager):
             local=self.local_compression,
             remote=self.remote_compression,
         )
+        self._log(DEBUG, "=== End of kex handshake ===")
 
         # save for computing hash later...
         # now wait!  openssh has a bug (and others might too) where there are
@@ -2573,6 +2672,20 @@ class Transport(threading.Thread, ClosingContextManager):
             self.packetizer.set_outbound_compressor(compress_out())
         if not self.packetizer.need_rekey():
             self.in_kex = False
+        # If client indicated extension support, send that packet immediately
+        if (
+            self.server_mode
+            and self.server_sig_algs
+            and self._remote_ext_info == "ext-info-c"
+        ):
+            extensions = {"server-sig-algs": ",".join(self.preferred_pubkeys)}
+            m = Message()
+            m.add_byte(cMSG_EXT_INFO)
+            m.add_int(len(extensions))
+            for name, value in sorted(extensions.items()):
+                m.add_string(name)
+                m.add_string(value)
+            self._send_message(m)
         # we always expect to receive NEWKEYS now
         self._expect_packet(MSG_NEWKEYS)
 
@@ -2587,6 +2700,20 @@ class Transport(threading.Thread, ClosingContextManager):
             compress_in = self._compression_info[self.remote_compression][1]
             self._log(DEBUG, "Switching on inbound compression ...")
             self.packetizer.set_inbound_compressor(compress_in())
+
+    def _parse_ext_info(self, msg):
+        # Packet is a count followed by that many key-string to possibly-bytes
+        # pairs.
+        extensions = {}
+        for _ in range(msg.get_int()):
+            name = msg.get_text()
+            value = msg.get_string()
+            extensions[name] = value
+        self._log(DEBUG, "Got EXT_INFO: {}".format(extensions))
+        # NOTE: this should work ok in cases where a server sends /two/ such
+        # messages; the RFC explicitly states a 2nd one should overwrite the
+        # 1st.
+        self.server_extensions = extensions
 
     def _parse_newkeys(self, m):
         self._log(DEBUG, "Switch to new keys ...")
@@ -2855,6 +2982,7 @@ class Transport(threading.Thread, ClosingContextManager):
             self.lock.release()
 
     _handler_table = {
+        MSG_EXT_INFO: _parse_ext_info,
         MSG_NEWKEYS: _parse_newkeys,
         MSG_GLOBAL_REQUEST: _parse_global_request,
         MSG_REQUEST_SUCCESS: _parse_request_success,
@@ -2877,6 +3005,9 @@ class Transport(threading.Thread, ClosingContextManager):
     }
 
 
+# TODO 3.0: drop this, we barely use it ourselves, it badly replicates the
+# Transport-internal algorithm management, AND does so in a way which doesn't
+# honor newer things like disabled_algorithms!
 class SecurityOptions(object):
     """
     Simple object containing the security preferences of an ssh transport.

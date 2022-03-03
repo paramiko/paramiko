@@ -797,7 +797,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
                               file_size, callback, confirm,
                               encoding=encoding, errors=errors)
 
-    def getfo(self, remotepath, fl, callback=None,
+    def getfo(self, remotepath, fl, callback=None, prefetch=True,
               encoding="utf8", errors="strict"):
         """
         Copy a remote file (``remotepath``) from the SFTP server and write to
@@ -811,19 +811,24 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         :param callable callback:
             optional callback function (form: ``func(int, int)``) that accepts
             the bytes transferred so far and the total bytes to be transferred
+        :param bool prefetch:
+            controls whether prefetching is performed (default: True)
         :return: the `number <int>` of bytes written to the opened file object
 
         .. versionadded:: 1.10
+        .. versionchanged:: 2.8
+            Added the ``prefetch`` keyword argument.
         """
         file_size = self.stat(remotepath, encoding, errors).st_size
         with self.open(remotepath,
                        "rb", encoding=encoding, errors=errors) as fr:
-            fr.prefetch(file_size)
+            if prefetch:
+                fr.prefetch(file_size)
             return self._transfer_with_callback(
                 reader=fr, writer=fl, file_size=file_size, callback=callback
             )
 
-    def get(self, remotepath, localpath, callback=None,
+    def get(self, remotepath, localpath, callback=None, prefetch=True,
             encoding="utf8", errors="strict"):
         """
         Copy a remote file (``remotepath``) from the SFTP server to the local
@@ -835,13 +840,17 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         :param callable callback:
             optional callback function (form: ``func(int, int)``) that accepts
             the bytes transferred so far and the total bytes to be transferred
+        :param bool prefetch:
+            controls whether prefetching is performed (default: True)
 
         .. versionadded:: 1.4
         .. versionchanged:: 1.7.4
             Added the ``callback`` param
+        .. versionchanged:: 2.8
+            Added the ``prefetch`` keyword argument.
         """
         with open(localpath, "wb") as fl:
-            size = self.getfo(remotepath, fl, callback, encoding, errors)
+            size = self.getfo(remotepath, fl, callback, prefetch, encoding, errors)
         s = os.stat(localpath)
         if s.st_size != size:
             raise IOError(

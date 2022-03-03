@@ -135,6 +135,21 @@ class BadHostKeyException(SSHException):
         )
 
 
+class IncompatiblePeer(SSHException):
+    """
+    A disagreement arose regarding an algorithm required for key exchange.
+
+    .. versionadded:: 2.9
+    """
+
+    # TODO 3.0: consider making this annotate w/ 1..N 'missing' algorithms,
+    # either just the first one that would halt kex, or even updating the
+    # Transport logic so we record /all/ that /could/ halt kex.
+    # TODO: update docstrings where this may end up raised so they are more
+    # specific.
+    pass
+
+
 class ProxyCommandFailure(SSHException):
     """
     The "ProxyCommand" found in the .ssh/config file returned an error.

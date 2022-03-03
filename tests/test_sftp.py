@@ -34,6 +34,7 @@ import pytest
 
 from paramiko.py3compat import PY2, b, u, StringIO
 from paramiko.common import o777, o600, o666, o644
+from tests import requireNonAsciiLocale
 from paramiko.sftp_attr import SFTPAttributes
 
 from .util import needs_builtin
@@ -269,6 +270,16 @@ class TestSFTP(object):
             sftp.remove(sftp.FOLDER + "/duck.txt")
             sftp.remove(sftp.FOLDER + "/fish.txt")
             sftp.remove(sftp.FOLDER + "/tertiary.py")
+
+    @requireNonAsciiLocale()
+    def test_listdir_in_locale(self, sftp):
+        """Test listdir under a locale that uses non-ascii text."""
+        sftp.open(sftp.FOLDER + "/canard.txt", "w").close()
+        try:
+            folder_contents = sftp.listdir(sftp.FOLDER)
+            self.assertEqual(["canard.txt"], folder_contents)
+        finally:
+            sftp.remove(sftp.FOLDER + "/canard.txt")
 
     def test_setstat(self, sftp):
         """
@@ -554,6 +565,34 @@ class TestSFTP(object):
         os.unlink(localname)
         sftp.unlink(sftp.FOLDER + "/bunny.txt")
 
+    def test_get_without_prefetch(self, sftp):
+        """
+        Create a 4MB file. Verify that pull works without prefetching
+        using a lager file.
+        """
+
+        sftp_filename = sftp.FOLDER + "/dummy_file"
+        num_chars = 1024 * 1024 * 4
+
+        fd, localname = mkstemp()
+        os.close(fd)
+
+        with open(localname, "wb") as f:
+            f.write(b"0" * num_chars)
+
+        sftp.put(localname, sftp_filename)
+
+        os.unlink(localname)
+        fd, localname = mkstemp()
+        os.close(fd)
+
+        sftp.get(sftp_filename, localname, prefetch=False)
+
+        assert os.stat(localname).st_size == num_chars
+
+        os.unlink(localname)
+        sftp.unlink(sftp_filename)
+
     def test_check(self, sftp):
         """
         verify that file.check() works against our own server.
@@ -752,6 +791,13 @@ class TestSFTP(object):
             assert data == NON_UTF8_DATA
         finally:
             sftp.remove("%s/nonutf8data" % sftp.FOLDER)
+
+    @requireNonAsciiLocale("LC_TIME")
+    def test_sftp_attributes_locale_time(self, sftp):
+        """Test SFTPAttributes under a locale with non-ascii time strings."""
+        some_stat = os.stat(sftp.FOLDER)
+        sftp_attributes = SFTPAttributes.from_stat(some_stat, u("a_directory"))
+        self.assertTrue(b"a_directory" in sftp_attributes.asbytes())
 
     def test_sftp_attributes_empty_str(self, sftp):
         sftp_attributes = SFTPAttributes()

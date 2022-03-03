@@ -1,5 +1,0 @@
-Match host original-host
-    HostName substituted-host
-
-Match host substituted-host
-    User inner

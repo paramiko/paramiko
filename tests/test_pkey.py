@@ -26,10 +26,23 @@ import os
 from binascii import hexlify
 from hashlib import md5
 
-from paramiko import RSAKey, DSSKey, ECDSAKey, Ed25519Key, Message, util
+from paramiko import (
+    RSAKey,
+    DSSKey,
+    ECDSAKey,
+    Ed25519Key,
+    Message,
+    util,
+    SSHException,
+)
 from paramiko.py3compat import StringIO, byte_chr, b, bytes, PY2
 
-from .util import _support
+from cryptography.exceptions import UnsupportedAlgorithm
+from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateNumbers
+from mock import patch
+import pytest
+
+from .util import _support, is_low_entropy
 
 
 # from openssh's ssh-keygen
@@ -39,6 +52,8 @@ PUB_ECDSA_256 = "ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHA
 PUB_ECDSA_384 = "ecdsa-sha2-nistp384 AAAAE2VjZHNhLXNoYTItbmlzdHAzODQAAAAIbmlzdHAzODQAAABhBBbGibQLW9AAZiGN2hEQxWYYoFaWKwN3PKSaDJSMqmIn1Z9sgRUuw8Y/w502OGvXL/wFk0i2z50l3pWZjD7gfMH7gX5TUiCzwrQkS+Hn1U2S9aF5WJp0NcIzYxXw2r4M2A=="  # noqa
 PUB_ECDSA_521 = "ecdsa-sha2-nistp521 AAAAE2VjZHNhLXNoYTItbmlzdHA1MjEAAAAIbmlzdHA1MjEAAACFBACaOaFLZGuxa5AW16qj6VLypFbLrEWrt9AZUloCMefxO8bNLjK/O5g0rAVasar1TnyHE9qj4NwzANZASWjQNbc4MAG8vzqezFwLIn/kNyNTsXNfqEko9OgHZknlj2Z79dwTJcRAL4QLcT5aND0EHZLB2fAUDXiWIb2j4rg1mwPlBMiBXA=="  # noqa
 PUB_RSA_2K_OPENSSH = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDF+Dpr54DX0WdeTDpNAMdkCWEkl3OXtNgf58qlN1gX572OLBqLf0zT4bHstUEpU3piazph/rSWcUMuBoD46tZ6jiH7H9b9Pem2eYQWaELDDkM+v9BMbEy5rMbFRLol5OtEvPFqneyEAanPOgvd8t3yyhSev9QVusakzJ8j8LGgrA8huYZ+Srnw0shEWLG70KUKCh3rG0QIvA8nfhtUOisr2Gp+F0YxMGb5gwBlQYAYE5l6u1SjZ7hNjyNosjK+wRBFgFFBYVpkZKJgWoK9w4ijFyzMZTucnZMqKOKAjIJvHfKBf2/cEfYxSq1EndqTqjYsd9T7/s2vcn1OH5a0wkER"  # noqa
+RSA_2K_OPENSSH_P = 161773687847617758886803946572654778625119997081005961935077336594287351354258259920334554906235187683459069634729972458348855793639393524799865799559575414247668746919721196359908321800753913350455861871582087986355637886875933045224711827701526739934602161222599672381604211130651397331775901258858869418853  # noqa
+RSA_2K_OPENSSH_Q = 154483416325630619558401349033571772244816915504195060221073502923720741119664820208064202825686848103224453777955988437823797692957091438442833606009978046057345917301441832647551208158342812551003395417862260727795454409459089912659057393394458150862012620127030757893820711157099494238156383382454310199869  # noqa
 PUB_DSS_1K_OPENSSH = "ssh-dss AAAAB3NzaC1kc3MAAACBAL8XEx7F9xuwBNles+vWpNF+YcofrBhjX1r5QhpBe0eoYWLHRcroN6lxwCdGYRfgOoRjTncBiixQX/uUxAY96zDh3ir492s2BcJt4ihvNn/AY0I0OTuX/2IwGk9CGzafjaeZNVYxMa8lcVt0hSOTjkPQ7gVuk6bJzMInvie+VWKLAAAAFQDUgYdY+rhR0SkKbC09BS/SIHcB+wAAAIB44+4zpCNcd0CGvZlowH99zyPX8uxQtmTLQFuR2O8O0FgVVuCdDgD0D9W8CLOp32oatpM0jyyN89EdvSWzjHzZJ+L6H1FtZps7uhpDFWHdva1R25vyGecLMUuXjo5t/D7oCDih+HwHoSAxoi0QvsPd8/qqHQVznNJKtR6thUpXEwAAAIAG4DCBjbgTTgpBw0egRkJwBSz0oTt+1IcapNU2jA6N8urMSk9YXHEQHKN68BAF3YJ59q2Ujv3LOXmBqGd1T+kzwUszfMlgzq8MMu19Yfzse6AIK1Agn1Vj6F7YXLsXDN+T4KszX5+FJa7t/Zsp3nALWy6l0f4WKivEF5Y2QpEFcQ=="  # noqa
 PUB_EC_384_OPENSSH = "ecdsa-sha2-nistp384 AAAAE2VjZHNhLXNoYTItbmlzdHAzODQAAAAIbmlzdHAzODQAAABhBIch5LXTq/L/TWsTGG6dIktxD8DIMh7EfvoRmWsks6CuNDTvFvbQNtY4QO1mn5OXegHbS0M5DPIS++wpKGFP3suDEH08O35vZQasLNrL0tO2jyyEnzB2ZEx3PPYci811yg=="  # noqa
 
@@ -48,6 +63,8 @@ FINGER_ECDSA_256 = "256 25:19:eb:55:e6:a1:47:ff:4f:38:d2:75:6f:a5:d5:60"
 FINGER_ECDSA_384 = "384 c1:8d:a0:59:09:47:41:8e:a8:a6:07:01:29:23:b4:65"
 FINGER_ECDSA_521 = "521 44:58:22:52:12:33:16:0e:ce:0e:be:2c:7c:7e:cc:1e"
 SIGNED_RSA = "20:d7:8a:31:21:cb:f7:92:12:f2:a4:89:37:f5:78:af:e6:16:b6:25:b9:97:3d:a2:cd:5f:ca:20:21:73:4c:ad:34:73:8f:20:77:28:e2:94:15:08:d8:91:40:7a:85:83:bf:18:37:95:dc:54:1a:9b:88:29:6c:73:ca:38:b4:04:f1:56:b9:f2:42:9d:52:1b:29:29:b4:4f:fd:c9:2d:af:47:d2:40:76:30:f3:63:45:0c:d9:1d:43:86:0f:1c:70:e2:93:12:34:f3:ac:c5:0a:2f:14:50:66:59:f1:88:ee:c1:4a:e9:d1:9c:4e:46:f0:0e:47:6f:38:74:f1:44:a8"  # noqa
+SIGNED_RSA_256 = "cc:6:60:e0:0:2c:ac:9e:26:bc:d5:68:64:3f:9f:a7:e5:aa:41:eb:88:4a:25:5:9c:93:84:66:ef:ef:60:f4:34:fb:f4:c8:3d:55:33:6a:77:bd:b2:ee:83:f:71:27:41:7e:f5:7:5:0:a9:4c:7:80:6f:be:76:67:cb:58:35:b9:2b:f3:c2:d3:3c:ee:e1:3f:59:e0:fa:e4:5c:92:ed:ae:74:de:d:d6:27:16:8f:84:a3:86:68:c:94:90:7d:6e:cc:81:12:d8:b6:ad:aa:31:a8:13:3d:63:81:3e:bb:5:b6:38:4d:2:d:1b:5b:70:de:83:cc:3a:cb:31"  # noqa
+SIGNED_RSA_512 = "87:46:8b:75:92:33:78:a0:22:35:32:39:23:c6:ab:e1:6:92:ad:bc:7f:6e:ab:19:32:e4:78:b2:2c:8f:1d:c:65:da:fc:a5:7:ca:b6:55:55:31:83:b1:a0:af:d1:95:c5:2e:af:56:ba:f5:41:64:f:39:9d:af:82:43:22:8f:90:52:9d:89:e7:45:97:df:f3:f2:bc:7b:3a:db:89:e:34:fd:18:62:25:1b:ef:77:aa:c6:6c:99:36:3a:84:d6:9c:2a:34:8c:7f:f4:bb:c9:a5:9a:6c:11:f2:cf:da:51:5e:1e:7f:90:27:34:de:b2:f3:15:4f:db:47:32:6b:a7"  # noqa
 FINGER_RSA_2K_OPENSSH = "2048 68:d1:72:01:bf:c0:0c:66:97:78:df:ce:75:74:46:d6"
 FINGER_DSS_1K_OPENSSH = "1024 cf:1d:eb:d7:61:d3:12:94:c6:c0:c6:54:35:35:b0:82"
 FINGER_EC_384_OPENSSH = "384 72:14:df:c1:9a:c3:e6:0e:11:29:d6:32:18:7b:ea:9b"
@@ -157,6 +174,16 @@ class KeyTest(unittest.TestCase):
         key2 = RSAKey.from_private_key(s)
         self.assertEqual(key, key2)
 
+    def test_load_rsa_transmutes_crypto_exceptions(self):
+        # TODO: nix unittest for pytest
+        for exception in (TypeError("onoz"), UnsupportedAlgorithm("oops")):
+            with patch(
+                "paramiko.rsakey.serialization.load_der_private_key"
+            ) as loader:
+                loader.side_effect = exception
+                with pytest.raises(SSHException, match=str(exception)):
+                    RSAKey.from_private_key_file(_support("test_rsa.key"))
+
     def test_load_rsa_password(self):
         key = RSAKey.from_private_key_file(
             _support("test_rsa_password.key"), "television"
@@ -213,20 +240,28 @@ class KeyTest(unittest.TestCase):
         self.assertTrue(not pub.can_sign())
         self.assertEqual(key, pub)
 
-    def test_sign_rsa(self):
-        # verify that the rsa private key can sign and verify
+    def _sign_and_verify_rsa(self, algorithm, saved_sig):
         key = RSAKey.from_private_key_file(_support("test_rsa.key"))
-        msg = key.sign_ssh_data(b"ice weasels")
-        self.assertTrue(type(msg) is Message)
+        msg = key.sign_ssh_data(b"ice weasels", algorithm)
+        assert isinstance(msg, Message)
         msg.rewind()
-        self.assertEqual("ssh-rsa", msg.get_text())
-        sig = bytes().join(
-            [byte_chr(int(x, 16)) for x in SIGNED_RSA.split(":")]
+        assert msg.get_text() == algorithm
+        expected = bytes().join(
+            [byte_chr(int(x, 16)) for x in saved_sig.split(":")]
         )
-        self.assertEqual(sig, msg.get_binary())
+        assert msg.get_binary() == expected
         msg.rewind()
         pub = RSAKey(data=key.asbytes())
         self.assertTrue(pub.verify_ssh_sig(b"ice weasels", msg))
+
+    def test_sign_and_verify_ssh_rsa(self):
+        self._sign_and_verify_rsa("ssh-rsa", SIGNED_RSA)
+
+    def test_sign_and_verify_rsa_sha2_512(self):
+        self._sign_and_verify_rsa("rsa-sha2-512", SIGNED_RSA_512)
+
+    def test_sign_and_verify_rsa_sha2_256(self):
+        self._sign_and_verify_rsa("rsa-sha2-256", SIGNED_RSA_256)
 
     def test_sign_dss(self):
         # verify that the dss private key can sign and verify
@@ -363,6 +398,17 @@ class KeyTest(unittest.TestCase):
         self.assertEqual(PUB_ECDSA_384.split()[1], key.get_base64())
         self.assertEqual(384, key.get_bits())
 
+    def test_load_ecdsa_transmutes_crypto_exceptions(self):
+        path = _support("test_ecdsa_256.key")
+        # TODO: nix unittest for pytest
+        for exception in (TypeError("onoz"), UnsupportedAlgorithm("oops")):
+            with patch(
+                "paramiko.ecdsakey.serialization.load_der_private_key"
+            ) as loader:
+                loader.side_effect = exception
+                with pytest.raises(SSHException, match=str(exception)):
+                    ECDSAKey.from_private_key_file(path)
+
     def test_compare_ecdsa_384(self):
         # verify that the private & public keys compare equal
         key = ECDSAKey.from_private_key_file(_support("test_ecdsa_384.key"))
@@ -454,6 +500,21 @@ class KeyTest(unittest.TestCase):
         my_rsa = hexlify(key.get_fingerprint())
         self.assertEqual(exp_rsa, my_rsa)
 
+    def test_loading_openssh_RSA_keys_uses_correct_p_q(self):
+        # Re #1723 - not the most elegant test but given how deep it is...
+        with patch(
+            "paramiko.rsakey.rsa.RSAPrivateNumbers", wraps=RSAPrivateNumbers
+        ) as spy:
+            # Load key
+            RSAKey.from_private_key_file(
+                _support("test_rsa_openssh.key"), b"television"
+            )
+            # Ensure spy saw the correct P and Q values as derived from
+            # hardcoded test private key value
+            kwargs = spy.call_args[1]
+            assert kwargs["p"] == RSA_2K_OPENSSH_P
+            assert kwargs["q"] == RSA_2K_OPENSSH_Q
+
     def test_load_openssh_format_DSS_key(self):
         key = DSSKey.from_private_key_file(
             _support("test_dss_openssh.key"), b"television"
@@ -530,6 +591,43 @@ class KeyTest(unittest.TestCase):
         self.assertTrue(key.can_sign())
         self.assertTrue(not pub.can_sign())
         self.assertEqual(key, pub)
+
+    # No point testing on systems that never exhibited the bug originally
+    @pytest.mark.skipif(
+        not is_low_entropy(), reason="Not a low-entropy system"
+    )
+    def test_ed25519_32bit_collision(self):
+        # Re: 2021.10.19 security report email: two different private keys
+        # which Paramiko compared as equal on low-entropy platforms.
+        original = Ed25519Key.from_private_key_file(
+            _support("badhash_key1.ed25519.key")
+        )
+        generated = Ed25519Key.from_private_key_file(
+            _support("badhash_key2.ed25519.key")
+        )
+        assert original != generated
+
+    def keys(self):
+        for key_class, filename in [
+            (RSAKey, "test_rsa.key"),
+            (DSSKey, "test_dss.key"),
+            (ECDSAKey, "test_ecdsa_256.key"),
+            (Ed25519Key, "test_ed25519.key"),
+        ]:
+            key1 = key_class.from_private_key_file(_support(filename))
+            key2 = key_class.from_private_key_file(_support(filename))
+            yield key1, key2
+
+    def test_keys_are_comparable(self):
+        for key1, key2 in self.keys():
+            assert key1 == key2
+
+    def test_keys_are_hashable(self):
+        # NOTE: this isn't a great test due to hashseed randomization under
+        # Python 3 preventing use of static values, but it does still prove
+        # that __hash__ is implemented/doesn't explode & works across instances
+        for key1, key2 in self.keys():
+            assert hash(key1) == hash(key2)
 
     def test_ed25519_nonbytes_password(self):
         # https://github.com/paramiko/paramiko/issues/1039
