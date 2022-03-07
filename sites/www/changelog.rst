@@ -2,6 +2,16 @@
 Changelog
 =========
 
+- :bug:`892 major` Significantly speed up low-level read/write actions on
+  `~paramiko.sftp_file.SFTPFile` objects by using `bytearray`/`memoryview`.
+  This is unlikely to change anything for users of the higher level methods
+  like ``SFTPClient.get`` or ``SFTPClient.getfo``, but users of
+  `SFTPClient.open <paramiko.sftp_client.SFTPClient.open>` will likely see
+  orders of magnitude improvements for files larger than a few megabytes in
+  size.
+
+  Thanks to ``@jkji`` for the original report and to Sevastian Tchernov for the
+  patch.
 - :support:`1985` Add ``six`` explicitly to install-requires; it snuck into
   active use at some point but has only been indicated by transitive dependency
   on ``bcrypt`` until they somewhat-recently dropped it. This will be

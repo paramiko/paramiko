@@ -192,7 +192,7 @@ class BufferedFile(ClosingContextManager):
             raise IOError("File is not open for reading")
         if (size is None) or (size < 0):
             # go for broke
-            result = self._rbuffer
+            result = bytearray(self._rbuffer)
             self._rbuffer = bytes()
             self._pos += len(result)
             while True:
@@ -202,10 +202,10 @@ class BufferedFile(ClosingContextManager):
                     new_data = None
                 if (new_data is None) or (len(new_data) == 0):
                     break
-                result += new_data
+                result.extend(new_data)
                 self._realpos += len(new_data)
                 self._pos += len(new_data)
-            return result
+            return bytes(result)
         if size <= len(self._rbuffer):
             result = self._rbuffer[:size]
             self._rbuffer = self._rbuffer[size:]
@@ -515,9 +515,10 @@ class BufferedFile(ClosingContextManager):
             # <http://www.python.org/doc/current/lib/built-in-funcs.html>
             self.newlines = None
 
-    def _write_all(self, data):
+    def _write_all(self, raw_data):
         # the underlying stream may be something that does partial writes (like
         # a socket).
+        data = memoryview(raw_data)
         while len(data) > 0:
             count = self._write(data)
             data = data[count:]
