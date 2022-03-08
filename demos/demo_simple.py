@@ -102,7 +102,7 @@ try:
     chan = client.invoke_shell()
     print(repr(client.get_transport()))
     print("*** Here we go!\n")
-    interactive.interactive_shell(chan)
+    interactive.interactive_shell(chan, encoding="utf8")
     chan.close()
     client.close()
 

@@ -105,31 +105,33 @@ try:
     sftp = paramiko.SFTPClient.from_transport(t)
 
     # dirlist on remote host
-    dirlist = sftp.listdir(".")
+    dirlist = sftp.listdir(".", encoding="utf8")
     print("Dirlist: %s" % dirlist)
 
     # copy this demo onto the server
     try:
-        sftp.mkdir("demo_sftp_folder")
+        sftp.mkdir("demo_sftp_folder", encoding="utf8")
     except IOError:
         print("(assuming demo_sftp_folder/ already exists)")
-    with sftp.open("demo_sftp_folder/README", "w") as f:
+    with sftp.open("demo_sftp_folder/README", "w", encoding="utf8") as f:
         f.write("This was created by demo_sftp.py.\n")
     with open("demo_sftp.py", "r") as f:
         data = f.read()
-    sftp.open("demo_sftp_folder/demo_sftp.py", "w").write(data)
+    sftp.open("demo_sftp_folder/demo_sftp.py", "w", encoding="utf8").write(
+        data
+    )
     print("created demo_sftp_folder/ on the server")
 
     # copy the README back here
-    with sftp.open("demo_sftp_folder/README", "r") as f:
+    with sftp.open("demo_sftp_folder/README", "r", encoding="utf8") as f:
         data = f.read()
     with open("README_demo_sftp", "w") as f:
         f.write(data)
     print("copied README back here")
 
     # BETTER: use the get() and put() methods
-    sftp.put("demo_sftp.py", "demo_sftp_folder/demo_sftp.py")
-    sftp.get("demo_sftp_folder/README", "README_demo_sftp")
+    sftp.put("demo_sftp.py", "demo_sftp_folder/demo_sftp.py", encoding="utf8")
+    sftp.get("demo_sftp_folder/README", "README_demo_sftp", encoding="utf8")
 
     t.close()
 

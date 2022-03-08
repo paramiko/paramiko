@@ -214,6 +214,10 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         For a list of full `.SFTPAttributes` objects, see `listdir_attr`.
 
         :param str path: path to list (defaults to ``'.'``)
+        :param str encoding:
+            encoding for paths (default: utf8)
+        :param str errors:
+            python's default encoding error handling mode (default: strict)
         """
         return [f.filename for f in self.listdir_attr(path, encoding, errors)]
 
@@ -230,6 +234,10 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         depend on the SFTP server implementation.
 
         :param str path: path to list (defaults to ``'.'``)
+        :param str encoding:
+            encoding for paths (default: utf8)
+        :param str errors:
+            python's default encoding error handling mode (default: strict)
         :return: list of `.SFTPAttributes` objects
 
         .. versionadded:: 1.2
@@ -359,6 +367,10 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         :param str filename: name of the file to open
         :param str mode: mode (Python-style) to open in
         :param int bufsize: desired buffering (-1 = default buffer size)
+        :param str encoding:
+            encoding for file paths/names and content (default: utf8)
+        :param str errors:
+            python's default encoding error handling mode (default: strict)
         :return: an `.SFTPFile` object representing the open file
 
         :raises: ``IOError`` -- if the file could not be opened.
@@ -403,6 +415,10 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         removing folders (directories), use `rmdir`.
 
         :param str path: path (absolute or relative) of the file to remove
+        :param str encoding:
+            encoding for file path (default: utf8)
+        :param str errors:
+            python's default encoding error handling mode (default: strict)
 
         :raises: ``IOError`` -- if the path refers to a folder (directory)
         """
@@ -427,6 +443,10 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
             existing name of the file or folder
         :param str newpath:
             new name for the file or folder, must not exist already
+        :param str encoding:
+            encoding for file paths/names (default: utf8)
+        :param str errors:
+            python's default encoding error handling mode (default: strict)
 
         :raises:
             ``IOError`` -- if ``newpath`` is a folder, or something else goes
@@ -449,6 +469,10 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         :param str oldpath: existing name of the file or folder
         :param str newpath: new name for the file or folder, will be
             overwritten if it already exists
+        :param str encoding:
+            encoding for file paths/names (default: utf8)
+        :param str errors:
+            python's default encoding error handling mode (default: strict)
 
         :raises:
             ``IOError`` -- if ``newpath`` is a folder, posix-rename is not
@@ -474,6 +498,10 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
 
         :param str path: name of the folder to create
         :param int mode: permissions (posix-style) for the newly-created folder
+        :param str encoding:
+            encoding for paths (default: utf8)
+        :param str errors:
+            python's default encoding error handling mode (default: strict)
         """
         path = self._adjust_cwd(path)
         self._log(DEBUG, "mkdir({!r}, {!r})".format(path, mode))
@@ -490,6 +518,10 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         Remove the folder named ``path``.
 
         :param str path: name of the folder to remove
+        :param str encoding:
+            encoding for paths (default: utf8)
+        :param str errors:
+            python's default endoding error handling mode (default: strict)
         """
         path = self._adjust_cwd(path)
         self._log(DEBUG, "rmdir({!r})".format(path))
@@ -512,6 +544,10 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         ``st_gid``, ``st_atime``, and ``st_mtime``.
 
         :param str path: the filename to stat
+        :param str encoding:
+            encoding for file paths/names and content (default: utf8)
+        :param str errors:
+            python's default encoding error handling mode (default: strict)
         :return:
             an `.SFTPAttributes` object containing attributes about the given
             file
@@ -532,6 +568,10 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         the same as `stat`.
 
         :param str path: the filename to stat
+        :param str encoding:
+            encoding for file paths/names and content (default: utf8)
+        :param str errors:
+            python's default encoding error handling mode (default: strict)
         :return:
             an `.SFTPAttributes` object containing attributes about the given
             file
@@ -551,6 +591,10 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
 
         :param str source: path of the original file
         :param str dest: path of the newly created symlink
+        :param str encoding:
+            encoding for paths/names (default: utf8)
+        :param str errors:
+            python's default encoding error handling mode (default: strict)
         """
         dest = self._adjust_cwd(dest)
         self._log(DEBUG, "symlink({!r}, {!r})".format(source, dest))
@@ -569,6 +613,10 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
 
         :param str path: path of the file to change the permissions of
         :param int mode: new permissions
+        :param str encoding:
+            encoding for file paths/names (default: utf8)
+        :param str errors:
+            python's default encoding error handling mode (default: strict)
         """
         path = self._adjust_cwd(path)
         self._log(DEBUG, "chmod({!r}, {!r})".format(path, mode))
@@ -590,6 +638,10 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         :param str path: path of the file to change the owner and group of
         :param int uid: new owner's uid
         :param int gid: new group id
+        :param str encoding:
+            encoding for file paths/names (default: utf8)
+        :param str errors:
+            python's default encoding error handling mode (default: strict)
         """
         path = self._adjust_cwd(path)
         self._log(DEBUG, "chown({!r}, {!r}, {!r})".format(path, uid, gid))
@@ -614,6 +666,10 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         :param tuple times:
             ``None`` or a tuple of (access time, modified time) in standard
             internet epoch time (seconds since 01 January 1970 GMT)
+        :param str encoding:
+            encoding for file paths/names (default: utf8)
+        :param str errors:
+            python's default encoding error handling mode (default: strict)
         """
         path = self._adjust_cwd(path)
         if times is None:
@@ -635,6 +691,10 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
 
         :param str path: path of the file to modify
         :param int size: the new size of the file
+        :param str encoding:
+            encoding for file paths/names and content (default: utf8)
+        :param str errors:
+            python's default encoding error handling mode (default: strict)
         """
         path = self._adjust_cwd(path)
         self._log(DEBUG, "truncate({!r}, {!r})".format(path, size))
@@ -653,6 +713,10 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         relative pathname.
 
         :param str path: path of the symbolic link file
+        :param str encoding:
+            encoding for file paths/names (default: utf8)
+        :param str errors:
+            python's default encoding error handling mode (default: strict)
         :return: target path, as a `str`
         """
         path = self._adjust_cwd(path)
@@ -677,6 +741,10 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         as ``path``).
 
         :param str path: path to be normalized
+        :param str encoding:
+            encoding for paths (default: utf8)
+        :param str errors:
+            python's default encoding error handling mode (default: strict)
         :return: normalized form of the given path (as a `str`)
 
         :raises: ``IOError`` -- if the path can't be resolved on the server
@@ -703,6 +771,10 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         directory.
 
         :param str path: new current working directory
+        :param str encoding:
+            encoding for paths (default: utf8)
+        :param str errors:
+            python's default encoding error handling mode (default: strict)
 
         :raises:
             ``IOError`` -- if the requested path doesn't exist on the server
@@ -722,6 +794,11 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         Return the "current working directory" for this SFTP session, as
         emulated by Paramiko.  If no directory has been set with `chdir`,
         this method will return ``None``.
+
+        :param str encoding:
+            encoding for paths (default: utf8)
+        :param str errors:
+            python's default encoding error handling mode (default: strict)
 
         .. versionadded:: 1.4
         """
@@ -769,6 +846,10 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         :param bool confirm:
             whether to do a stat() on the file afterwards to confirm the file
             size (since 1.7.7)
+        :param str encoding:
+            encoding for file paths/names and content (default: utf8)
+        :param str errors:
+            python's default encoding error handling mode (default: strict)
 
         :return:
             an `.SFTPAttributes` object containing attributes about the given
@@ -819,6 +900,10 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         :param bool confirm:
             whether to do a stat() on the file afterwards to confirm the file
             size
+        :param str encoding:
+            encoding for file paths/names and content (default: utf8)
+        :param str errors:
+            python's default encoding error handling mode (default: strict)
 
         :return: an `.SFTPAttributes` object containing attributes about the
             given file
@@ -864,6 +949,10 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
             the bytes transferred so far and the total bytes to be transferred
         :param bool prefetch:
             controls whether prefetching is performed (default: True)
+        :param str encoding:
+            encoding for file paths/names and content (default: utf8)
+        :param str errors:
+            python's default encoding error handling mode (default: strict)
         :return: the `number <int>` of bytes written to the opened file object
 
         .. versionadded:: 1.10
@@ -901,6 +990,10 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
             the bytes transferred so far and the total bytes to be transferred
         :param bool prefetch:
             controls whether prefetching is performed (default: True)
+        :param str encoding:
+            encoding for file paths/names and content (default: utf8)
+        :param str errors:
+            python's default encoding error handling mode (default: strict)
 
         .. versionadded:: 1.4
         .. versionchanged:: 1.7.4

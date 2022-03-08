@@ -174,6 +174,11 @@ class Message(object):
     def get_text(self, encoding="utf8", errors="strict"):
         """
         Fetch a Unicode string from the stream.
+
+        :param str encoding:
+            encoding for file paths/names and content (default: utf8)
+        :param str errors:
+            python's default encoding error handling mode (default: strict)
         """
         return u(self.get_string(), encoding, errors)
 
