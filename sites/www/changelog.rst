@@ -2,6 +2,10 @@
 Changelog
 =========
 
+- :feature:`1509` (via :issue:`1868`, :issue:`1837`) Add support for OpenSSH's
+  Windows agent as a fallback when Putty/WinPageant isn't available or
+  functional. Reported by ``@benj56``, early patchset by ``@lewgordon``, and
+  later PR courtesy of Patrick Spendrin.
 - :bug:`892 major` Significantly speed up low-level read/write actions on
   `~paramiko.sftp_file.SFTPFile` objects by using `bytearray`/`memoryview`.
   This is unlikely to change anything for users of the higher level methods
