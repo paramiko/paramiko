@@ -205,6 +205,36 @@ class AgentRemoteProxy(AgentProxyThread):
         return self.__chan, None
 
 
+def get_agent_connection():
+    """
+    Returns some SSH agent object, or None if none were found/supported.
+
+    .. versionadded:: 2.10
+    """
+    if ("SSH_AUTH_SOCK" in os.environ) and (sys.platform != "win32"):
+        conn = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        try:
+            retry_on_signal(
+                lambda: conn.connect(os.environ["SSH_AUTH_SOCK"])
+            )
+            return conn
+        except:
+            # probably a dangling env var: the ssh agent is gone
+            return
+    elif sys.platform == "win32":
+        from . import win_pageant, win_openssh
+
+        conn = None
+        if win_pageant.can_talk_to_agent():
+            conn = win_pageant.PageantConnection()
+        elif win_openssh.can_talk_to_agent():
+            conn = win_openssh.OpenSSHAgentConnection()
+        return conn
+    else:
+        # no agent support
+        return
+
+
 class AgentClientProxy(object):
     """
     Class proxying request as a client:
@@ -231,29 +261,8 @@ class AgentClientProxy(object):
         """
         Method automatically called by ``AgentProxyThread.run``.
         """
-        if ("SSH_AUTH_SOCK" in os.environ) and (sys.platform != "win32"):
-            conn = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-            try:
-                retry_on_signal(
-                    lambda: conn.connect(os.environ["SSH_AUTH_SOCK"])
-                )
-            except:
-                # probably a dangling env var: the ssh agent is gone
-                return
-        elif sys.platform == "win32":
-            import paramiko.win_pageant as win_pageant
-
-            if win_pageant.can_talk_to_agent():
-                conn = win_pageant.PageantConnection()
-            else:
-                import paramiko.win_openssh as win_openssh
-
-                if win_openssh.can_talk_to_agent():
-                    conn = win_openssh.OpenSSHAgentConnection()
-                else:
-                    return
-        else:
-            # no agent support
+        conn = get_agent_connection()
+        if not conn:
             return
         self._conn = conn
 
@@ -380,29 +389,10 @@ class Agent(AgentSSH):
     def __init__(self):
         AgentSSH.__init__(self)
 
-        if ("SSH_AUTH_SOCK" in os.environ) and (sys.platform != "win32"):
-            conn = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-            try:
-                conn.connect(os.environ["SSH_AUTH_SOCK"])
-            except:
-                # probably a dangling env var: the ssh agent is gone
-                return
-        elif sys.platform == "win32":
-            from . import win_pageant
-
-            if win_pageant.can_talk_to_agent():
-                conn = win_pageant.PageantConnection()
-            else:
-                import paramiko.win_openssh as win_openssh
-
-                if win_openssh.can_talk_to_agent():
-                    conn = win_openssh.OpenSSHAgentConnection()
-                else:
-                    return
-        else:
-            # no agent support
+        conn = get_agent_connection()
+        if not conn:
             return
-        self._connect(conn)
+        self._connect()
 
     def close(self):
         """
