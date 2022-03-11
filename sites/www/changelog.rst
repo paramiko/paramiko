@@ -2,7 +2,8 @@
 Changelog
 =========
 
-- :feature:`1976` Support for ``%C`` token in configuration file.
+- :feature:`1976` Add support for the ``%C`` token when parsing SSH config
+  files. Foundational PR submitted by ``@jbrand42``.
 - :feature:`1509` (via :issue:`1868`, :issue:`1837`) Add support for OpenSSH's
   Windows agent as a fallback when Putty/WinPageant isn't available or
   functional. Reported by ``@benj56`` with patches/PRs from ``@lewgordon`` and
