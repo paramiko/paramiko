@@ -344,13 +344,13 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         ``O_EXCL`` flag in posix.
 
         The file will be buffered in standard Python style by default, but
-        can be altered with the ``bufsize`` parameter.  ``0`` turns off
+        can be altered with the ``bufsize`` parameter.  ``<=0`` turns off
         buffering, ``1`` uses line buffering, and any number greater than 1
         (``>1``) uses that specific buffer size.
 
         :param str filename: name of the file to open
         :param str mode: mode (Python-style) to open in
-        :param int bufsize: desired buffering (-1 = default buffer size)
+        :param int bufsize: desired buffering (default: ``-1``)
         :return: an `.SFTPFile` object representing the open file
 
         :raises: ``IOError`` -- if the file could not be opened.
