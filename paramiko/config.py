@@ -62,11 +62,11 @@ class SSHConfig(object):
     TOKENS_BY_CONFIG_KEY = {
         "controlpath": ["%C", "%h", "%l", "%L", "%n", "%p", "%r", "%u"],
         "hostname": ["%h"],
-        "identityfile": ["~", "%d", "%h", "%l", "%u", "%r"],
+        "identityfile": ["%C", "~", "%d", "%h", "%l", "%u", "%r"],
         "proxycommand": ["~", "%h", "%p", "%r"],
         # Doesn't seem worth making this 'special' for now, it will fit well
         # enough (no actual match-exec config key to be confused with).
-        "match-exec": ["%d", "%h", "%L", "%l", "%n", "%p", "%r", "%u"],
+        "match-exec": ["%C", "%d", "%h", "%L", "%l", "%n", "%p", "%r", "%u"],
     }
 
     def __init__(self):

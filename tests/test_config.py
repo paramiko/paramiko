@@ -218,6 +218,9 @@ Host explicit_user
 Host explicit_host
     HostName ohai
     ControlPath remoteuser %r host %h orighost %n
+
+Host hashbrowns
+    ControlPath %C
         """
         )
         result = config.lookup("explicit_user")["controlpath"]
@@ -226,6 +229,9 @@ Host explicit_host
         result = config.lookup("explicit_host")["controlpath"]
         # Remote user falls back to local user; host and orighost may differ
         assert result == "remoteuser gandalf host ohai orighost explicit_host"
+        # Supports %C
+        result = config.lookup("hashbrowns")["controlpath"]
+        assert result == "fc995d9f41ca1bcec7bc1d7f1ca87b9ff568a6d4"
 
     def test_negation(self):
         config = SSHConfig.from_text(
@@ -280,7 +286,6 @@ ProxyCommand foo=bar:%h-%p
     def test_identityfile(self):
         config = SSHConfig.from_text(
             """
-
 IdentityFile id_dsa0
 
 Host *
@@ -291,6 +296,9 @@ IdentityFile id_dsa2
 
 Host dsa2*
 IdentityFile id_dsa22
+
+Host hashbrowns
+IdentityFile %C
 """
         )
         for host, values in {
@@ -303,8 +311,15 @@ IdentityFile id_dsa22
                 "hostname": "dsa22",
                 "identityfile": ["id_dsa0", "id_dsa1", "id_dsa22"],
             },
+            "hashbrowns": {
+                "hostname": "hashbrowns",
+                "identityfile": [
+                    "id_dsa0",
+                    "id_dsa1",
+                    "d5c0115d09912e39ff27844ea9d6052fc6048f99",
+                ],
+            },
         }.items():
-
             assert config.lookup(host) == values
 
     def test_config_addressfamily_and_lazy_fqdn(self):
@@ -740,10 +755,10 @@ class TestMatchExec(object):
     @patch("paramiko.config.getpass")
     @patch("paramiko.config.invoke.run")
     def test_tokenizes_argument(self, run, getpass, socket):
-        socket.gethostname.return_value = "local.fqdn"
         getpass.getuser.return_value = "gandalf"
-        # Actual exec value is "%d %h %L %l %n %p %r %u"
+        # Actual exec value is "%C %d %h %L %l %n %p %r %u"
         parts = (
+            "bf5ba06778434a9384ee4217e462f64888bd0cd2",
             expanduser("~"),
             "configured",
             "local",
