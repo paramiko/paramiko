@@ -11,7 +11,8 @@ Changelog
 - :bug:`892 major` Significantly speed up low-level read/write actions on
   `~paramiko.sftp_file.SFTPFile` objects by using `bytearray`/`memoryview`.
   This is unlikely to change anything for users of the higher level methods
-  like ``SFTPClient.get`` or ``SFTPClient.getfo``, but users of
+  like `SFTPClient.get <paramiko.sftp_client.SFTPClient.get>` or
+  `SFTPClient.getfo <paramiko.sftp_client.SFTPClient.getfo>`, but users of
   `SFTPClient.open <paramiko.sftp_client.SFTPClient.open>` will likely see
   orders of magnitude improvements for files larger than a few megabytes in
   size.
