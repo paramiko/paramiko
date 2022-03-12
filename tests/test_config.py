@@ -207,7 +207,7 @@ Host test
         assert got == expected
 
     @patch("paramiko.config.getpass")
-    def test_controlpath_token_expansion(self, getpass):
+    def test_controlpath_token_expansion(self, getpass, socket):
         getpass.getuser.return_value = "gandalf"
         config = SSHConfig.from_text(
             """
@@ -231,7 +231,7 @@ Host hashbrowns
         assert result == "remoteuser gandalf host ohai orighost explicit_host"
         # Supports %C
         result = config.lookup("hashbrowns")["controlpath"]
-        assert result == "fc995d9f41ca1bcec7bc1d7f1ca87b9ff568a6d4"
+        assert result == "a438e7dbf5308b923aba9db8fe2ca63447ac8688"
 
     def test_negation(self):
         config = SSHConfig.from_text(
@@ -283,7 +283,9 @@ ProxyCommand foo=bar:%h-%p
 
             assert config.lookup(host) == values
 
-    def test_identityfile(self):
+    @patch("paramiko.config.getpass")
+    def test_identityfile(self, getpass, socket):
+        getpass.getuser.return_value = "gandalf"
         config = SSHConfig.from_text(
             """
 IdentityFile id_dsa0
@@ -316,7 +318,7 @@ IdentityFile %C
                 "identityfile": [
                     "id_dsa0",
                     "id_dsa1",
-                    "d5c0115d09912e39ff27844ea9d6052fc6048f99",
+                    "a438e7dbf5308b923aba9db8fe2ca63447ac8688",
                 ],
             },
         }.items():
