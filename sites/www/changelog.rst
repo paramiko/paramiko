@@ -2,6 +2,7 @@
 Changelog
 =========
 
+- :release:`2.10.1 <2022-03-11>`
 - :bug:`-` (`CVE-2022-24302
   <https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2022-24302>`_) Creation
   of new private key files using `~paramiko.pkey.PKey` subclasses was subject
