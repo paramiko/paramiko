@@ -2,6 +2,7 @@
 Changelog
 =========
 
+- :release:`2.10.0 <2022-03-11>`
 - :feature:`1976` Add support for the ``%C`` token when parsing SSH config
   files. Foundational PR submitted by ``@jbrand42``.
 - :feature:`1509` (via :issue:`1868`, :issue:`1837`) Add support for OpenSSH's
