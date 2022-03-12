@@ -390,7 +390,7 @@ class Agent(AgentSSH):
         conn = get_agent_connection()
         if not conn:
             return
-        self._connect()
+        self._connect(conn)
 
     def close(self):
         """
