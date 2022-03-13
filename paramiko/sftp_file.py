@@ -65,7 +65,7 @@ class SFTPFile(BufferedFile):
         mode="r",
         bufsize=-1,
         encoding="utf8",
-        errors="strict"
+        errors="strict",
     ):
         BufferedFile.__init__(self, encoding=encoding, errors=errors)
         self.sftp = sftp

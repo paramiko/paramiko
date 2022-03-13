@@ -16,7 +16,7 @@ class ChannelFileBase(object):
             mode="w",
             bufsize=25,
             encoding="utf8",
-            errors="strict"
+            errors="strict",
         )
         setmode.assert_called_once_with("w", 25)
 
@@ -56,7 +56,9 @@ class TestChannelStdinFile(ChannelFileBase):
 
     def test_close_calls_channel_shutdown_write(self):
         chan = MagicMock()
-        cf = ChannelStdinFile(chan, mode="wb", encoding="utf8", errors="strict")
+        cf = ChannelStdinFile(
+            chan, mode="wb", encoding="utf8", errors="strict"
+        )
         cf.flush = MagicMock()
         cf.close()
         # Sanity check that we still call BufferedFile.close()
