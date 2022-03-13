@@ -404,7 +404,9 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
                 filename, mode, u(hexlify(handle), encoding, errors)
             ),
         )
-        return SFTPFile(self, handle, mode, bufsize)
+        return SFTPFile(
+            self, handle, mode, bufsize, encoding=encoding, errors=errors
+        )
 
     # Python continues to vacillate about "open" vs "file"...
     file = open

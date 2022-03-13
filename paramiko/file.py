@@ -47,7 +47,7 @@ class BufferedFile(ClosingContextManager):
     FLAG_LINE_BUFFERED = 0x40
     FLAG_UNIVERSAL_NEWLINE = 0x80
 
-    def __init__(self):
+    def __init__(self, encoding="utf8", errors="strict"):
         self.newlines = None
         self._flags = 0
         self._bufsize = self._DEFAULT_BUFSIZE
@@ -61,6 +61,8 @@ class BufferedFile(ClosingContextManager):
         self._pos = self._realpos = 0
         # size only matters for seekable files
         self._size = 0
+        self.encoding = encoding
+        self.errors = errors
 
     def __del__(self):
         self.close()
@@ -95,7 +97,7 @@ class BufferedFile(ClosingContextManager):
 
     if PY2:
 
-        def next(self, encoding="utf8", errors="strict"):
+        def next(self):
             """
             Returns the next line from the input, or raises
             ``StopIteration`` when EOF is hit.  Unlike Python file
@@ -109,14 +111,14 @@ class BufferedFile(ClosingContextManager):
 
             :returns: a line (`str`) read from the file.
             """
-            line = self.readline(encoding=encoding, errors=errors)
+            line = self.readline(encoding=self.encoding, errors=self.errors)
             if not line:
                 raise StopIteration
             return line
 
     else:
 
-        def __next__(self, encoding="utf8", errors="strict"):
+        def __next__(self):
             """
             Returns the next line from the input, or raises ``StopIteration``
             when EOF is hit.  Unlike python file objects, it's okay to mix
@@ -130,7 +132,7 @@ class BufferedFile(ClosingContextManager):
 
             :returns: a line (`str`) read from the file.
             """
-            line = self.readline(encoding=encoding, errors=errors)
+            line = self.readline(encoding=self.encoding, errors=self.errors)
             if not line:
                 raise StopIteration
             return line
