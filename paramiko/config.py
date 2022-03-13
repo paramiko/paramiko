@@ -27,6 +27,7 @@ import os
 import re
 import shlex
 import socket
+from hashlib import sha1
 from functools import partial
 
 from .py3compat import StringIO
@@ -59,13 +60,13 @@ class SSHConfig(object):
     # TODO: do a full scan of ssh.c & friends to make sure we're fully
     # compatible across the board, e.g. OpenSSH 8.1 added %n to ProxyCommand.
     TOKENS_BY_CONFIG_KEY = {
-        "controlpath": ["%h", "%l", "%L", "%n", "%p", "%r", "%u"],
+        "controlpath": ["%C", "%h", "%l", "%L", "%n", "%p", "%r", "%u"],
         "hostname": ["%h"],
-        "identityfile": ["~", "%d", "%h", "%l", "%u", "%r"],
+        "identityfile": ["%C", "~", "%d", "%h", "%l", "%u", "%r"],
         "proxycommand": ["~", "%h", "%p", "%r"],
         # Doesn't seem worth making this 'special' for now, it will fit well
         # enough (no actual match-exec config key to be confused with).
-        "match-exec": ["%d", "%h", "%L", "%l", "%n", "%p", "%r", "%u"],
+        "match-exec": ["%C", "%d", "%h", "%L", "%l", "%n", "%p", "%r", "%u"],
     }
 
     def __init__(self):
@@ -432,10 +433,11 @@ class SSHConfig(object):
         local_hostname = socket.gethostname().split(".")[0]
         local_fqdn = LazyFqdn(config, local_hostname)
         homedir = os.path.expanduser("~")
+        tohash = local_hostname + target_hostname + repr(port) + remoteuser
         # The actual tokens!
         replacements = {
             # TODO: %%???
-            # TODO: %C?
+            "%C": sha1(tohash.encode()).hexdigest(),
             "%d": homedir,
             "%h": configured_hostname,
             # TODO: %i?

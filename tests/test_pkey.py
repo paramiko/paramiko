@@ -23,6 +23,7 @@ Some unit tests for public/private key objects.
 
 import unittest
 import os
+import stat
 from binascii import hexlify
 from hashlib import md5
 
@@ -36,10 +37,11 @@ from paramiko import (
     SSHException,
 )
 from paramiko.py3compat import StringIO, byte_chr, b, bytes, PY2
+from paramiko.common import o600
 
 from cryptography.exceptions import UnsupportedAlgorithm
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateNumbers
-from mock import patch
+from mock import patch, Mock
 import pytest
 
 from .util import _support, is_low_entropy
@@ -696,3 +698,59 @@ class KeyTest(unittest.TestCase):
             key1.load_certificate,
             _support("test_rsa.key-cert.pub"),
         )
+
+    @patch("paramiko.pkey.os")
+    def _test_keyfile_race(self, os_, exists):
+        # Re: CVE-2022-24302
+        password = "television"
+        newpassword = "radio"
+        source = _support("test_ecdsa_384.key")
+        new = source + ".new"
+        # Mock setup
+        os_.path.exists.return_value = exists
+        # Attach os flag values to mock
+        for attr, value in vars(os).items():
+            if attr.startswith("O_"):
+                setattr(os_, attr, value)
+        # Load fixture key
+        key = ECDSAKey(filename=source, password=password)
+        key._write_private_key = Mock()
+        # Write out in new location
+        key.write_private_key_file(new, password=newpassword)
+        # Expected open via os module
+        os_.open.assert_called_once_with(
+            new, flags=os.O_WRONLY | os.O_CREAT | os.O_TRUNC, mode=o600
+        )
+        os_.fdopen.assert_called_once_with(os_.open.return_value, mode="w")
+        # Old chmod still around for backwards compat
+        os_.chmod.assert_called_once_with(new, o600)
+        assert (
+            key._write_private_key.call_args[0][0]
+            == os_.fdopen.return_value.__enter__.return_value
+        )
+
+    def test_new_keyfiles_avoid_file_descriptor_race_on_chmod(self):
+        self._test_keyfile_race(exists=False)
+
+    def test_existing_keyfiles_still_work_ok(self):
+        self._test_keyfile_race(exists=True)
+
+    def test_new_keyfiles_avoid_descriptor_race_integration(self):
+        # Integration-style version of above
+        password = "television"
+        newpassword = "radio"
+        source = _support("test_ecdsa_384.key")
+        new = source + ".new"
+        # Load fixture key
+        key = ECDSAKey(filename=source, password=password)
+        try:
+            # Write out in new location
+            key.write_private_key_file(new, password=newpassword)
+            # Test mode
+            assert stat.S_IMODE(os.stat(new).st_mode) == o600
+            # Prove can open with new password
+            reloaded = ECDSAKey(filename=new, password=newpassword)
+            assert reloaded == key
+        finally:
+            if os.path.exists(new):
+                os.unlink(new)

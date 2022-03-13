@@ -42,6 +42,7 @@ def socket():
         # Patch out getfqdn to return some real string for when it gets called;
         # some code (eg tokenization) gets mad w/ MagicMocks
         mocket.getfqdn.return_value = "some.fake.fqdn"
+        mocket.gethostname.return_value = "local.fake.fqdn"
         yield mocket
 
 
@@ -206,7 +207,7 @@ Host test
         assert got == expected
 
     @patch("paramiko.config.getpass")
-    def test_controlpath_token_expansion(self, getpass):
+    def test_controlpath_token_expansion(self, getpass, socket):
         getpass.getuser.return_value = "gandalf"
         config = SSHConfig.from_text(
             """
@@ -217,6 +218,9 @@ Host explicit_user
 Host explicit_host
     HostName ohai
     ControlPath remoteuser %r host %h orighost %n
+
+Host hashbrowns
+    ControlPath %C
         """
         )
         result = config.lookup("explicit_user")["controlpath"]
@@ -225,6 +229,9 @@ Host explicit_host
         result = config.lookup("explicit_host")["controlpath"]
         # Remote user falls back to local user; host and orighost may differ
         assert result == "remoteuser gandalf host ohai orighost explicit_host"
+        # Supports %C
+        result = config.lookup("hashbrowns")["controlpath"]
+        assert result == "a438e7dbf5308b923aba9db8fe2ca63447ac8688"
 
     def test_negation(self):
         config = SSHConfig.from_text(
@@ -276,10 +283,11 @@ ProxyCommand foo=bar:%h-%p
 
             assert config.lookup(host) == values
 
-    def test_identityfile(self):
+    @patch("paramiko.config.getpass")
+    def test_identityfile(self, getpass, socket):
+        getpass.getuser.return_value = "gandalf"
         config = SSHConfig.from_text(
             """
-
 IdentityFile id_dsa0
 
 Host *
@@ -290,6 +298,9 @@ IdentityFile id_dsa2
 
 Host dsa2*
 IdentityFile id_dsa22
+
+Host hashbrowns
+IdentityFile %C
 """
         )
         for host, values in {
@@ -302,8 +313,15 @@ IdentityFile id_dsa22
                 "hostname": "dsa22",
                 "identityfile": ["id_dsa0", "id_dsa1", "id_dsa22"],
             },
+            "hashbrowns": {
+                "hostname": "hashbrowns",
+                "identityfile": [
+                    "id_dsa0",
+                    "id_dsa1",
+                    "a438e7dbf5308b923aba9db8fe2ca63447ac8688",
+                ],
+            },
         }.items():
-
             assert config.lookup(host) == values
 
     def test_config_addressfamily_and_lazy_fqdn(self):
@@ -739,10 +757,10 @@ class TestMatchExec(object):
     @patch("paramiko.config.getpass")
     @patch("paramiko.config.invoke.run")
     def test_tokenizes_argument(self, run, getpass, socket):
-        socket.gethostname.return_value = "local.fqdn"
         getpass.getuser.return_value = "gandalf"
-        # Actual exec value is "%d %h %L %l %n %p %r %u"
+        # Actual exec value is "%C %d %h %L %l %n %p %r %u"
         parts = (
+            "bf5ba06778434a9384ee4217e462f64888bd0cd2",
             expanduser("~"),
             "configured",
             "local",

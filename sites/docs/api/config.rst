@@ -99,6 +99,7 @@ properties of the local system).
 Specifically, we are known to support the below, where applicable (e.g. as in
 OpenSSH, ``%L`` works in ``ControlPath`` but not elsewhere):
 
+- ``%C``
 - ``%d``
 - ``%h``
 - ``%l``

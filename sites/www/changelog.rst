@@ -2,6 +2,39 @@
 Changelog
 =========
 
+- :release:`2.10.1 <2022-03-11>`
+- :bug:`-` (`CVE-2022-24302
+  <https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2022-24302>`_) Creation
+  of new private key files using `~paramiko.pkey.PKey` subclasses was subject
+  to a race condition between file creation & mode modification, which could be
+  exploited by an attacker with knowledge of where the Paramiko-using code
+  would write out such files.
+
+  This has been patched by using `os.open` and `os.fdopen` to ensure new files
+  are opened with the correct mode immediately. We've left the subsequent
+  explicit ``chmod`` in place to minimize any possible disruption, though it
+  may get removed in future backwards-incompatible updates.
+
+  Thanks to Jan Schejbal for the report & feedback on the solution, and to
+  Jeremy Katz at Tidelift for coordinating the disclosure.
+- :release:`2.10.0 <2022-03-11>`
+- :feature:`1976` Add support for the ``%C`` token when parsing SSH config
+  files. Foundational PR submitted by ``@jbrand42``.
+- :feature:`1509` (via :issue:`1868`, :issue:`1837`) Add support for OpenSSH's
+  Windows agent as a fallback when Putty/WinPageant isn't available or
+  functional. Reported by ``@benj56`` with patches/PRs from ``@lewgordon`` and
+  Patrick Spendrin.
+- :bug:`892 major` Significantly speed up low-level read/write actions on
+  `~paramiko.sftp_file.SFTPFile` objects by using `bytearray`/`memoryview`.
+  This is unlikely to change anything for users of the higher level methods
+  like `SFTPClient.get <paramiko.sftp_client.SFTPClient.get>` or
+  `SFTPClient.getfo <paramiko.sftp_client.SFTPClient.getfo>`, but users of
+  `SFTPClient.open <paramiko.sftp_client.SFTPClient.open>` will likely see
+  orders of magnitude improvements for files larger than a few megabytes in
+  size.
+
+  Thanks to ``@jkji`` for the original report and to Sevastian Tchernov for the
+  patch.
 - :support:`1985` Add ``six`` explicitly to install-requires; it snuck into
   active use at some point but has only been indicated by transitive dependency
   on ``bcrypt`` until they somewhat-recently dropped it. This will be
