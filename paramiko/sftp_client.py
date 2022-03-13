@@ -97,7 +97,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
     Instances of this class may be used as context managers.
     """
 
-    def __init__(self, sock):
+    def __init__(self, sock, encoding="utf8", errors="strict"):
         """
         Create an SFTP client from an existing `.Channel`.  The channel
         should already have requested the ``"sftp"`` subsystem.
@@ -106,12 +106,19 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         `from_transport`.
 
         :param .Channel sock: an open `.Channel` using the ``"sftp"`` subsystem
+        :param str encoding:
+            encoding for file paths/names (and content if not binary)
+            (default: utf8)
+        :param str errors:
+            python's default encoding error handling mode (default: strict)
 
         :raises:
             `.SSHException` -- if there's an exception while negotiating sftp
         """
         BaseSFTP.__init__(self)
         self.sock = sock
+        self.encoding = encoding
+        self.errors = errors
         self.ultra_debug = False
         self.request_number = 1
         # lock for request_number
@@ -138,7 +145,14 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         )
 
     @classmethod
-    def from_transport(cls, t, window_size=None, max_packet_size=None):
+    def from_transport(
+        cls,
+        t,
+        window_size=None,
+        max_packet_size=None,
+        encoding="utf8",
+        errors="strict",
+    ):
         """
         Create an SFTP client channel from an open `.Transport`.
 
@@ -153,6 +167,11 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
             optional window size for the `.SFTPClient` session.
         :param int max_packet_size:
             optional max packet size for the `.SFTPClient` session..
+        :param str encoding:
+            encoding for file paths/names (and content if not binary)
+            (default: utf8)
+        :param str errors:
+            python's default encoding error handling mode (default: strict)
 
         :return:
             a new `.SFTPClient` object, referring to an sftp session (channel)
@@ -167,7 +186,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         if chan is None:
             return None
         chan.invoke_subsystem("sftp")
-        return cls(chan)
+        return cls(chan, encoding, errors)
 
     def _log(self, level, msg, *args):
         if isinstance(msg, list):
@@ -203,7 +222,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         """
         return self.sock
 
-    def listdir(self, path=".", encoding="utf8", errors="strict"):
+    def listdir(self, path="."):
         """
         Return a list containing the names of the entries in the given
         ``path``.
@@ -214,14 +233,10 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         For a list of full `.SFTPAttributes` objects, see `listdir_attr`.
 
         :param str path: path to list (defaults to ``'.'``)
-        :param str encoding:
-            encoding for paths (default: utf8)
-        :param str errors:
-            python's default encoding error handling mode (default: strict)
         """
-        return [f.filename for f in self.listdir_attr(path, encoding, errors)]
+        return [f.filename for f in self.listdir_attr(path)]
 
-    def listdir_attr(self, path=".", encoding="utf8", errors="strict"):
+    def listdir_attr(self, path="."):
         """
         Return a list containing `.SFTPAttributes` objects corresponding to
         files in the given ``path``.  The list is in arbitrary order.  It does
@@ -234,10 +249,6 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         depend on the SFTP server implementation.
 
         :param str path: path to list (defaults to ``'.'``)
-        :param str encoding:
-            encoding for paths (default: utf8)
-        :param str errors:
-            python's default encoding error handling mode (default: strict)
         :return: list of `.SFTPAttributes` objects
 
         .. versionadded:: 1.2
@@ -245,7 +256,10 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         path = self._adjust_cwd(path)
         self._log(DEBUG, "listdir({!r})".format(path))
         t, msg = self._request(
-            CMD_OPENDIR, path.decode("utf8", errors).encode(encoding, errors)
+            CMD_OPENDIR,
+            path.decode("utf8", self.errors).encode(
+                self.encoding, self.errors
+            ),
         )
         if t != CMD_HANDLE:
             raise SFTPError("Expected handle")
@@ -261,17 +275,15 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
                 raise SFTPError("Expected name response")
             count = msg.get_int()
             for i in range(count):
-                filename = msg.get_text(encoding, errors)
-                longname = msg.get_text(encoding, errors)
+                filename = msg.get_text(self.encoding, self.errors)
+                longname = msg.get_text(self.encoding, self.errors)
                 attr = SFTPAttributes._from_msg(msg, filename, longname)
                 if (filename != ".") and (filename != ".."):
                     filelist.append(attr)
         self._request(CMD_CLOSE, handle)
         return filelist
 
-    def listdir_iter(
-        self, path=".", read_aheads=50, encoding="utf8", errors="strict"
-    ):
+    def listdir_iter(self, path=".", read_aheads=50):
         """
         Generator version of `.listdir_attr`.
 
@@ -288,7 +300,10 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         path = self._adjust_cwd(path)
         self._log(DEBUG, "listdir({!r})".format(path))
         t, msg = self._request(
-            CMD_OPENDIR, path.decode("utf-8", errors).encode(encoding, errors)
+            CMD_OPENDIR,
+            path.decode("utf-8", self.errors).encode(
+                self.encoding, self.errors
+            ),
         )
 
         if t != CMD_HANDLE:
@@ -322,8 +337,8 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
                             self._convert_status(msg)
                     count = msg.get_int()
                     for i in range(count):
-                        filename = msg.get_text(encoding, errors)
-                        longname = msg.get_text(encoding, errors)
+                        filename = msg.get_text(self.encoding, self.errors)
+                        longname = msg.get_text(self.encoding, self.errors)
                         attr = SFTPAttributes._from_msg(
                             msg, filename, longname
                         )
@@ -337,9 +352,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
                 self._request(CMD_CLOSE, handle)
                 return
 
-    def open(
-        self, filename, mode="r", bufsize=-1, encoding="utf8", errors="strict"
-    ):
+    def open(self, filename, mode="r", bufsize=-1):
         """
         Open a file on the remote server.  The arguments are the same as for
         Python's built-in `python:file` (aka `python:open`).  A file-like
@@ -367,10 +380,6 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         :param str filename: name of the file to open
         :param str mode: mode (Python-style) to open in
         :param int bufsize: desired buffering (default: ``-1``)
-        :param str encoding:
-            encoding for file paths/names and content (default: utf8)
-        :param str errors:
-            python's default encoding error handling mode (default: strict)
         :return: an `.SFTPFile` object representing the open file
 
         :raises: ``IOError`` -- if the file could not be opened.
@@ -391,7 +400,9 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         attrblock = SFTPAttributes()
         t, msg = self._request(
             CMD_OPEN,
-            filename.decode("utf-8", errors).encode(encoding, errors),
+            filename.decode("utf-8", self.errors).encode(
+                self.encoding, self.errors
+            ),
             imode,
             attrblock,
         )
@@ -401,38 +412,41 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         self._log(
             DEBUG,
             "open({!r}, {!r}) -> {}".format(
-                filename, mode, u(hexlify(handle), encoding, errors)
+                filename, mode, u(hexlify(handle), self.encoding, self.errors)
             ),
         )
         return SFTPFile(
-            self, handle, mode, bufsize, encoding=encoding, errors=errors
+            self,
+            handle,
+            mode,
+            bufsize,
+            encoding=self.encoding,
+            errors=self.errors,
         )
 
     # Python continues to vacillate about "open" vs "file"...
     file = open
 
-    def remove(self, path, encoding="utf8", errors="strict"):
+    def remove(self, path):
         """
         Remove the file at the given path.  This only works on files; for
         removing folders (directories), use `rmdir`.
 
         :param str path: path (absolute or relative) of the file to remove
-        :param str encoding:
-            encoding for file path (default: utf8)
-        :param str errors:
-            python's default encoding error handling mode (default: strict)
-
         :raises: ``IOError`` -- if the path refers to a folder (directory)
         """
         path = self._adjust_cwd(path)
         self._log(DEBUG, "remove({!r})".format(path))
         self._request(
-            CMD_REMOVE, path.decode("utf-8", errors).encode(encoding, errors)
+            CMD_REMOVE,
+            path.decode("utf-8", self.errors).encode(
+                self.encoding, self.errors
+            ),
         )
 
     unlink = remove
 
-    def rename(self, oldpath, newpath, encoding="utf8", errors="strict"):
+    def rename(self, oldpath, newpath):
         """
         Rename a file or folder from ``oldpath`` to ``newpath``.
 
@@ -445,10 +459,6 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
             existing name of the file or folder
         :param str newpath:
             new name for the file or folder, must not exist already
-        :param str encoding:
-            encoding for file paths/names (default: utf8)
-        :param str errors:
-            python's default encoding error handling mode (default: strict)
 
         :raises:
             ``IOError`` -- if ``newpath`` is a folder, or something else goes
@@ -459,11 +469,15 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         self._log(DEBUG, "rename({!r}, {!r})".format(oldpath, newpath))
         self._request(
             CMD_RENAME,
-            oldpath.decode("utf-8", errors).encode(encoding, errors),
-            newpath.decode("utf-8", errors).encode(encoding, errors),
+            oldpath.decode("utf-8", self.errors).encode(
+                self.encoding, self.errors
+            ),
+            newpath.decode("utf-8", self.errors).encode(
+                self.encoding, self.errors
+            ),
         )
 
-    def posix_rename(self, oldpath, newpath, encoding="utf8", errors="strict"):
+    def posix_rename(self, oldpath, newpath):
         """
         Rename a file or folder from ``oldpath`` to ``newpath``, following
         posix conventions.
@@ -471,10 +485,6 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         :param str oldpath: existing name of the file or folder
         :param str newpath: new name for the file or folder, will be
             overwritten if it already exists
-        :param str encoding:
-            encoding for file paths/names (default: utf8)
-        :param str errors:
-            python's default encoding error handling mode (default: strict)
 
         :raises:
             ``IOError`` -- if ``newpath`` is a folder, posix-rename is not
@@ -488,11 +498,15 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         self._request(
             CMD_EXTENDED,
             "posix-rename@openssh.com",
-            oldpath.decode("utf-8", errors).encode(encoding, errors),
-            newpath.decode("utf-8", errors).encode(encoding, errors),
+            oldpath.decode("utf-8", self.errors).encode(
+                self.encoding, self.errors
+            ),
+            newpath.decode("utf-8", self.errors).encode(
+                self.encoding, self.errors
+            ),
         )
 
-    def mkdir(self, path, mode=o777, encoding="utf8", errors="strict"):
+    def mkdir(self, path, mode=o777):
         """
         Create a folder (directory) named ``path`` with numeric mode ``mode``.
         The default mode is 0777 (octal).  On some systems, mode is ignored.
@@ -500,10 +514,6 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
 
         :param str path: name of the folder to create
         :param int mode: permissions (posix-style) for the newly-created folder
-        :param str encoding:
-            encoding for paths (default: utf8)
-        :param str errors:
-            python's default encoding error handling mode (default: strict)
         """
         path = self._adjust_cwd(path)
         self._log(DEBUG, "mkdir({!r}, {!r})".format(path, mode))
@@ -511,27 +521,28 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         attr.st_mode = mode
         self._request(
             CMD_MKDIR,
-            path.decode("utf-8", errors).encode(encoding, errors),
+            path.decode("utf-8", self.errors).encode(
+                self.encoding, self.errors
+            ),
             attr,
         )
 
-    def rmdir(self, path, encoding="utf8", errors="strict"):
+    def rmdir(self, path):
         """
         Remove the folder named ``path``.
 
         :param str path: name of the folder to remove
-        :param str encoding:
-            encoding for paths (default: utf8)
-        :param str errors:
-            python's default endoding error handling mode (default: strict)
         """
         path = self._adjust_cwd(path)
         self._log(DEBUG, "rmdir({!r})".format(path))
         self._request(
-            CMD_RMDIR, path.decode("utf-8", errors).encode(encoding, errors)
+            CMD_RMDIR,
+            path.decode("utf-8", self.errors).encode(
+                self.encoding, self.errors
+            ),
         )
 
-    def stat(self, path, encoding="utf8", errors="strict"):
+    def stat(self, path):
         """
         Retrieve information about a file on the remote system.  The return
         value is an object whose attributes correspond to the attributes of
@@ -546,10 +557,6 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         ``st_gid``, ``st_atime``, and ``st_mtime``.
 
         :param str path: the filename to stat
-        :param str encoding:
-            encoding for file paths/names and content (default: utf8)
-        :param str errors:
-            python's default encoding error handling mode (default: strict)
         :return:
             an `.SFTPAttributes` object containing attributes about the given
             file
@@ -557,23 +564,22 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         path = self._adjust_cwd(path)
         self._log(DEBUG, "stat({!r})".format(path))
         t, msg = self._request(
-            CMD_STAT, path.decode("utf-8", errors).encode(encoding, errors)
+            CMD_STAT,
+            path.decode("utf-8", self.errors).encode(
+                self.encoding, self.errors
+            ),
         )
         if t != CMD_ATTRS:
             raise SFTPError("Expected attributes")
         return SFTPAttributes._from_msg(msg)
 
-    def lstat(self, path, encoding="utf8", errors="strict"):
+    def lstat(self, path):
         """
         Retrieve information about a file on the remote system, without
         following symbolic links (shortcuts).  This otherwise behaves exactly
         the same as `stat`.
 
         :param str path: the filename to stat
-        :param str encoding:
-            encoding for file paths/names and content (default: utf8)
-        :param str errors:
-            python's default encoding error handling mode (default: strict)
         :return:
             an `.SFTPAttributes` object containing attributes about the given
             file
@@ -581,33 +587,36 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         path = self._adjust_cwd(path)
         self._log(DEBUG, "lstat({!r})".format(path))
         t, msg = self._request(
-            CMD_LSTAT, path.decode("utf8", errors).encode(encoding, errors)
+            CMD_LSTAT,
+            path.decode("utf8", self.errors).encode(
+                self.encoding, self.errors
+            ),
         )
         if t != CMD_ATTRS:
             raise SFTPError("Expected attributes")
         return SFTPAttributes._from_msg(msg)
 
-    def symlink(self, source, dest, encoding="utf8", errors="strict"):
+    def symlink(self, source, dest):
         """
         Create a symbolic link to the ``source`` path at ``destination``.
 
         :param str source: path of the original file
         :param str dest: path of the newly created symlink
-        :param str encoding:
-            encoding for paths/names (default: utf8)
-        :param str errors:
-            python's default encoding error handling mode (default: strict)
         """
         dest = self._adjust_cwd(dest)
         self._log(DEBUG, "symlink({!r}, {!r})".format(source, dest))
         source = b(source)
         self._request(
             CMD_SYMLINK,
-            source.decode("utf-8", errors).encode(encoding, errors),
-            dest.decode("utf-8", errors).encode(encoding, errors),
+            source.decode("utf-8", self.errors).encode(
+                self.encoding, self.errors
+            ),
+            dest.decode("utf-8", self.errors).encode(
+                self.encoding, self.errors
+            ),
         )
 
-    def chmod(self, path, mode, encoding="utf8", errors="strict"):
+    def chmod(self, path, mode):
         """
         Change the mode (permissions) of a file.  The permissions are
         unix-style and identical to those used by Python's `os.chmod`
@@ -615,10 +624,6 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
 
         :param str path: path of the file to change the permissions of
         :param int mode: new permissions
-        :param str encoding:
-            encoding for file paths/names (default: utf8)
-        :param str errors:
-            python's default encoding error handling mode (default: strict)
         """
         path = self._adjust_cwd(path)
         self._log(DEBUG, "chmod({!r}, {!r})".format(path, mode))
@@ -626,11 +631,13 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         attr.st_mode = mode
         self._request(
             CMD_SETSTAT,
-            path.decode("utf-8", errors).encode(encoding, errors),
+            path.decode("utf-8", self.errors).encode(
+                self.encoding, self.errors
+            ),
             attr,
         )
 
-    def chown(self, path, uid, gid, encoding="utf8", errors="strict"):
+    def chown(self, path, uid, gid):
         """
         Change the owner (``uid``) and group (``gid``) of a file.  As with
         Python's `os.chown` function, you must pass both arguments, so if you
@@ -640,10 +647,6 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         :param str path: path of the file to change the owner and group of
         :param int uid: new owner's uid
         :param int gid: new group id
-        :param str encoding:
-            encoding for file paths/names (default: utf8)
-        :param str errors:
-            python's default encoding error handling mode (default: strict)
         """
         path = self._adjust_cwd(path)
         self._log(DEBUG, "chown({!r}, {!r}, {!r})".format(path, uid, gid))
@@ -651,11 +654,13 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         attr.st_uid, attr.st_gid = uid, gid
         self._request(
             CMD_SETSTAT,
-            path.decode("utf-8", errors).encode(encoding, errors),
+            path.decode("utf-8", self.errors).encode(
+                self.encoding, self.errors
+            ),
             attr,
         )
 
-    def utime(self, path, times, encoding="utf8", errors="strict"):
+    def utime(self, path, times):
         """
         Set the access and modified times of the file specified by ``path``.
         If ``times`` is ``None``, then the file's access and modified times
@@ -668,10 +673,6 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         :param tuple times:
             ``None`` or a tuple of (access time, modified time) in standard
             internet epoch time (seconds since 01 January 1970 GMT)
-        :param str encoding:
-            encoding for file paths/names (default: utf8)
-        :param str errors:
-            python's default encoding error handling mode (default: strict)
         """
         path = self._adjust_cwd(path)
         if times is None:
@@ -681,11 +682,13 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         attr.st_atime, attr.st_mtime = times
         self._request(
             CMD_SETSTAT,
-            path.decode("utf-8", errors).encode(encoding, errors),
+            path.decode("utf-8", self.errors).encode(
+                self.encoding, self.errors
+            ),
             attr,
         )
 
-    def truncate(self, path, size, encoding="utf8", errors="strict"):
+    def truncate(self, path, size):
         """
         Change the size of the file specified by ``path``.  This usually
         extends or shrinks the size of the file, just like the `~file.truncate`
@@ -693,10 +696,6 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
 
         :param str path: path of the file to modify
         :param int size: the new size of the file
-        :param str encoding:
-            encoding for file paths/names and content (default: utf8)
-        :param str errors:
-            python's default encoding error handling mode (default: strict)
         """
         path = self._adjust_cwd(path)
         self._log(DEBUG, "truncate({!r}, {!r})".format(path, size))
@@ -704,27 +703,28 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         attr.st_size = size
         self._request(
             CMD_SETSTAT,
-            path.decode("utf-8", errors).encode(encoding, errors),
+            path.decode("utf-8", self.errors).encode(
+                self.encoding, self.errors
+            ),
             attr,
         )
 
-    def readlink(self, path, encoding="utf8", errors="strict"):
+    def readlink(self, path):
         """
         Return the target of a symbolic link (shortcut).  You can use
         `symlink` to create these.  The result may be either an absolute or
         relative pathname.
 
         :param str path: path of the symbolic link file
-        :param str encoding:
-            encoding for file paths/names (default: utf8)
-        :param str errors:
-            python's default encoding error handling mode (default: strict)
         :return: target path, as a `str`
         """
         path = self._adjust_cwd(path)
         self._log(DEBUG, "readlink({!r})".format(path))
         t, msg = self._request(
-            CMD_READLINK, path.decode("utf-8", errors).encode(encoding, errors)
+            CMD_READLINK,
+            path.decode("utf-8", self.errors).encode(
+                self.encoding, self.errors
+            ),
         )
         if t != CMD_NAME:
             raise SFTPError("Expected name response")
@@ -735,7 +735,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
             raise SFTPError("Readlink returned {} results".format(count))
         return _to_unicode(msg.get_string())
 
-    def normalize(self, path, encoding="utf8", errors="strict"):
+    def normalize(self, path):
         """
         Return the normalized path (on the server) of a given path.  This
         can be used to quickly resolve symbolic links or determine what the
@@ -743,10 +743,6 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         as ``path``).
 
         :param str path: path to be normalized
-        :param str encoding:
-            encoding for paths (default: utf8)
-        :param str errors:
-            python's default encoding error handling mode (default: strict)
         :return: normalized form of the given path (as a `str`)
 
         :raises: ``IOError`` -- if the path can't be resolved on the server
@@ -754,16 +750,19 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         path = self._adjust_cwd(path)
         self._log(DEBUG, "normalize({!r})".format(path))
         t, msg = self._request(
-            CMD_REALPATH, path.decode("utf-8", errors).encode(encoding, errors)
+            CMD_REALPATH,
+            path.decode("utf-8", self.errors).encode(
+                self.encoding, self.errors
+            ),
         )
         if t != CMD_NAME:
             raise SFTPError("Expected name response")
         count = msg.get_int()
         if count != 1:
             raise SFTPError("Realpath returned {} results".format(count))
-        return msg.get_text(encoding, errors)
+        return msg.get_text(self.encoding, self.errors)
 
-    def chdir(self, path=None, encoding="utf8", errors="strict"):
+    def chdir(self, path=None):
         """
         Change the "current directory" of this SFTP session.  Since SFTP
         doesn't really have the concept of a current working directory, this is
@@ -773,10 +772,6 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         directory.
 
         :param str path: new current working directory
-        :param str encoding:
-            encoding for paths (default: utf8)
-        :param str errors:
-            python's default encoding error handling mode (default: strict)
 
         :raises:
             ``IOError`` -- if the requested path doesn't exist on the server
@@ -786,26 +781,21 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         if path is None:
             self._cwd = None
             return
-        if not stat.S_ISDIR(self.stat(path, encoding, errors).st_mode):
+        if not stat.S_ISDIR(self.stat(path).st_mode):
             code = errno.ENOTDIR
             raise SFTPError(code, "{}: {}".format(os.strerror(code), path))
-        self._cwd = b(self.normalize(path, encoding, errors))
+        self._cwd = b(self.normalize(path))
 
-    def getcwd(self, encoding="utf8", errors="strict"):
+    def getcwd(self):
         """
         Return the "current working directory" for this SFTP session, as
         emulated by Paramiko.  If no directory has been set with `chdir`,
         this method will return ``None``.
 
-        :param str encoding:
-            encoding for paths (default: utf8)
-        :param str errors:
-            python's default encoding error handling mode (default: strict)
-
         .. versionadded:: 1.4
         """
         # TODO: make class initialize with self._cwd set to self.normalize('.')
-        return self._cwd and u(self._cwd, encoding, errors)
+        return self._cwd and u(self._cwd, self.encoding, self.errors)
 
     def _transfer_with_callback(self, reader, writer, file_size, callback):
         size = 0
@@ -819,16 +809,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
                 callback(size, file_size)
         return size
 
-    def putfo(
-        self,
-        fl,
-        remotepath,
-        file_size=0,
-        callback=None,
-        confirm=True,
-        encoding="utf8",
-        errors="strict",
-    ):
+    def putfo(self, fl, remotepath, file_size=0, callback=None, confirm=True):
         """
         Copy the contents of an open file object (``fl``) to the SFTP server as
         ``remotepath``. Any exception raised by operations will be passed
@@ -848,26 +829,19 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         :param bool confirm:
             whether to do a stat() on the file afterwards to confirm the file
             size (since 1.7.7)
-        :param str encoding:
-            encoding for file paths/names (default: utf8)
-        :param str errors:
-            python's default encoding error handling mode (default: strict)
-
         :return:
             an `.SFTPAttributes` object containing attributes about the given
             file.
 
         .. versionadded:: 1.10
         """
-        with self.file(
-            remotepath, "wb", encoding=encoding, errors=errors
-        ) as fr:
+        with self.file(remotepath, "wb") as fr:
             fr.set_pipelined(True)
             size = self._transfer_with_callback(
                 reader=fl, writer=fr, file_size=file_size, callback=callback
             )
         if confirm:
-            s = self.stat(remotepath, encoding, errors)
+            s = self.stat(remotepath)
             if s.st_size != size:
                 raise IOError(
                     "size mismatch in put!  {} != {}".format(s.st_size, size)
@@ -876,15 +850,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
             s = SFTPAttributes()
         return s
 
-    def put(
-        self,
-        localpath,
-        remotepath,
-        callback=None,
-        confirm=True,
-        encoding="utf8",
-        errors="strict",
-    ):
+    def put(self, localpath, remotepath, callback=None, confirm=True):
         """
         Copy a local file (``localpath``) to the SFTP server as ``remotepath``.
         Any exception raised by operations will be passed through.  This
@@ -902,11 +868,6 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         :param bool confirm:
             whether to do a stat() on the file afterwards to confirm the file
             size
-        :param str encoding:
-            encoding for file paths/names and content (default: utf8)
-        :param str errors:
-            python's default encoding error handling mode (default: strict)
-
         :return: an `.SFTPAttributes` object containing attributes about the
             given file
 
@@ -918,25 +879,9 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         """
         file_size = os.stat(localpath).st_size
         with open(localpath, "rb") as fl:
-            return self.putfo(
-                fl,
-                remotepath,
-                file_size,
-                callback,
-                confirm,
-                encoding=encoding,
-                errors=errors,
-            )
+            return self.putfo(fl, remotepath, file_size, callback, confirm)
 
-    def getfo(
-        self,
-        remotepath,
-        fl,
-        callback=None,
-        prefetch=True,
-        encoding="utf8",
-        errors="strict",
-    ):
+    def getfo(self, remotepath, fl, callback=None, prefetch=True):
         """
         Copy a remote file (``remotepath``) from the SFTP server and write to
         an open file or file-like object, ``fl``.  Any exception raised by
@@ -951,35 +896,21 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
             the bytes transferred so far and the total bytes to be transferred
         :param bool prefetch:
             controls whether prefetching is performed (default: True)
-        :param str encoding:
-            encoding for file paths/names and content (default: utf8)
-        :param str errors:
-            python's default encoding error handling mode (default: strict)
         :return: the `number <int>` of bytes written to the opened file object
 
         .. versionadded:: 1.10
         .. versionchanged:: 2.8
             Added the ``prefetch`` keyword argument.
         """
-        file_size = self.stat(remotepath, encoding, errors).st_size
-        with self.open(
-            remotepath, "rb", encoding=encoding, errors=errors
-        ) as fr:
+        file_size = self.stat(remotepath).st_size
+        with self.open(remotepath, "rb") as fr:
             if prefetch:
                 fr.prefetch(file_size)
             return self._transfer_with_callback(
                 reader=fr, writer=fl, file_size=file_size, callback=callback
             )
 
-    def get(
-        self,
-        remotepath,
-        localpath,
-        callback=None,
-        prefetch=True,
-        encoding="utf8",
-        errors="strict",
-    ):
+    def get(self, remotepath, localpath, callback=None, prefetch=True):
         """
         Copy a remote file (``remotepath``) from the SFTP server to the local
         host as ``localpath``.  Any exception raised by operations will be
@@ -992,10 +923,6 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
             the bytes transferred so far and the total bytes to be transferred
         :param bool prefetch:
             controls whether prefetching is performed (default: True)
-        :param str encoding:
-            encoding for file paths/names and content (default: utf8)
-        :param str errors:
-            python's default encoding error handling mode (default: strict)
 
         .. versionadded:: 1.4
         .. versionchanged:: 1.7.4
@@ -1004,9 +931,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
             Added the ``prefetch`` keyword argument.
         """
         with open(localpath, "wb") as fl:
-            size = self.getfo(
-                remotepath, fl, callback, prefetch, encoding, errors
-            )
+            size = self.getfo(remotepath, fl, callback, prefetch)
         s = os.stat(localpath)
         if s.st_size != size:
             raise IOError(
