@@ -103,15 +103,11 @@ class BufferedFile(ClosingContextManager):
             ``StopIteration`` when EOF is hit.  Unlike Python file
             objects, it's okay to mix calls to `next` and `readline`.
 
-            :param str encoding:
-                encoding for file paths/names and content (default: utf8)
-            :param str errors:
-                python's default encoding error handling mode (default: strict)
             :raises: ``StopIteration`` -- when the end of the file is reached.
 
             :returns: a line (`str`) read from the file.
             """
-            line = self.readline(encoding=self.encoding, errors=self.errors)
+            line = self.readline()
             if not line:
                 raise StopIteration
             return line
@@ -124,15 +120,11 @@ class BufferedFile(ClosingContextManager):
             when EOF is hit.  Unlike python file objects, it's okay to mix
             calls to `.next` and `.readline`.
 
-            :param str encoding:
-                encoding for file paths/names and content (default: utf8)
-            :param str errors:
-                python's default encoding error handling mode (default: strict)
             :raises: ``StopIteration`` -- when the end of the file is reached.
 
             :returns: a line (`str`) read from the file.
             """
-            line = self.readline(encoding=self.encoding, errors=self.errors)
+            line = self.readline()
             if not line:
                 raise StopIteration
             return line
@@ -238,7 +230,7 @@ class BufferedFile(ClosingContextManager):
         self._pos += len(result)
         return result
 
-    def readline(self, size=None, encoding="utf8", errors="strict"):
+    def readline(self, size=None):
         """
         Read one entire line from the file.  A trailing newline character is
         kept in the string (but may be absent when a file ends with an
@@ -252,10 +244,6 @@ class BufferedFile(ClosingContextManager):
             characters (``'\\0'``) if they occurred in the input.
 
         :param int size: maximum length of returned string.
-        :param str encoding:
-            encoding for file paths/names and content (default: utf8)
-        :param str errors:
-            python's default encoding error handling mode (default: strict)
         :returns:
             next line of the file, or an empty string if the end of the
             file has been reached.
@@ -311,7 +299,7 @@ class BufferedFile(ClosingContextManager):
                 return (
                     line
                     if self._flags & self.FLAG_BINARY
-                    else u(line, encoding, errors)
+                    else u(line, self.encoding, self.errors)
                 )
             line += new_data
             self._realpos += len(new_data)
@@ -327,7 +315,7 @@ class BufferedFile(ClosingContextManager):
             return (
                 line
                 if self._flags & self.FLAG_BINARY
-                else u(line, encoding, errors)
+                else u(line, self.encoding, self.errors)
             )
         xpos = pos + 1
         if (
@@ -356,10 +344,10 @@ class BufferedFile(ClosingContextManager):
         return (
             line
             if self._flags & self.FLAG_BINARY
-            else u(line, encoding, errors)
+            else u(line, self.encoding, self.errors)
         )
 
-    def readlines(self, sizehint=None, encoding="utf8", errors="strict"):
+    def readlines(self, sizehint=None):
         """
         Read all remaining lines using `readline` and return them as a list.
         If the optional ``sizehint`` argument is present, instead of reading up
@@ -367,16 +355,12 @@ class BufferedFile(ClosingContextManager):
         after rounding up to an internal buffer size) are read.
 
         :param int sizehint: desired maximum number of bytes to read.
-        :param str encoding:
-            encoding for file paths/names and content (default: utf8)
-        :param str errors:
-            python's default encoding error handling mode (default: strict)
         :returns: list of lines read from the file.
         """
         lines = []
         byte_count = 0
         while True:
-            line = self.readline(sizehint, encoding, errors)
+            line = self.readline(sizehint)
             if len(line) == 0:
                 break
             lines.append(line)
