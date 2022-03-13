@@ -849,7 +849,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
             whether to do a stat() on the file afterwards to confirm the file
             size (since 1.7.7)
         :param str encoding:
-            encoding for file paths/names and content (default: utf8)
+            encoding for file paths/names (default: utf8)
         :param str errors:
             python's default encoding error handling mode (default: strict)
 
