@@ -2,6 +2,14 @@
 Changelog
 =========
 
+- :bug:`2001` Fix Python 2 compatibility breakage introduced in 2.10.1. Spotted
+  by Christian Hammond.
+
+  .. warning::
+      This is almost certainly the last time we will fix Python 2 related
+      errors! Please see `the roadmap
+      <https://bitprophet.org/projects/#roadmap>`_.
+
 - :release:`2.10.1 <2022-03-11>`
 - :bug:`-` (`CVE-2022-24302
   <https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2022-24302>`_) Creation

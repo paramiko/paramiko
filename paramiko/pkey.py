@@ -565,9 +565,10 @@ class PKey(object):
         # existing files, so using all 3 in both cases is fine. Ditto the use
         # of the 'mode' argument; it should be safe to give even for existing
         # files (though it will not act like a chmod in that case).
-        kwargs = dict(flags=os.O_WRONLY | os.O_TRUNC | os.O_CREAT, mode=o600)
+        # TODO 3.0: turn into kwargs again
+        args = [os.O_WRONLY | os.O_TRUNC | os.O_CREAT, o600]
         # NOTE: yea, you still gotta inform the FLO that it is in "write" mode
-        with os.fdopen(os.open(filename, **kwargs), mode="w") as f:
+        with os.fdopen(os.open(filename, *args), "w") as f:
             # TODO 3.0: remove the now redundant chmod
             os.chmod(filename, o600)
             self._write_private_key(f, key, format, password=password)

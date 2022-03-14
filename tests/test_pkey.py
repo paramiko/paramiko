@@ -719,9 +719,9 @@ class KeyTest(unittest.TestCase):
         key.write_private_key_file(new, password=newpassword)
         # Expected open via os module
         os_.open.assert_called_once_with(
-            new, flags=os.O_WRONLY | os.O_CREAT | os.O_TRUNC, mode=o600
+            new, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, o600
         )
-        os_.fdopen.assert_called_once_with(os_.open.return_value, mode="w")
+        os_.fdopen.assert_called_once_with(os_.open.return_value, "w")
         # Old chmod still around for backwards compat
         os_.chmod.assert_called_once_with(new, o600)
         assert (
