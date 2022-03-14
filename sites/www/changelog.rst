@@ -2,6 +2,7 @@
 Changelog
 =========
 
+- :release:`2.10.2 <2022-03-14>`
 - :bug:`2001` Fix Python 2 compatibility breakage introduced in 2.10.1. Spotted
   by Christian Hammond.
 
