@@ -2,6 +2,8 @@
 Changelog
 =========
 
+- :release:`2.10.3 <2022-03-18>`
+- :release:`2.9.3 <2022-03-18>`
 - :bug:`1963` (via :issue:`1977`) Certificate-based pubkey auth was
   inadvertently broken when adding SHA2 support; this has been fixed. Reported
   by Erik Forsberg and fixed by Jun Omae.
