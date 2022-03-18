@@ -2,6 +2,10 @@
 Changelog
 =========
 
+- :bug:`2002` (via :issue:`2003`) Switch from module-global to thread-local
+  storage when recording thread IDs for a logging helper; this should avoid one
+  flavor of memory leak for long-running processes. Catch & patch via Richard
+  Kojedzinszky.
 - :release:`2.10.2 <2022-03-14>`
 - :bug:`2001` Fix Python 2 compatibility breakage introduced in 2.10.1. Spotted
   by Christian Hammond.
