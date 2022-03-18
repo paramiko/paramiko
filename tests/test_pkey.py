@@ -754,3 +754,22 @@ class KeyTest(unittest.TestCase):
         finally:
             if os.path.exists(new):
                 os.unlink(new)
+
+    def test_sign_rsa_with_certificate(self):
+        data = b"ice weasels"
+        key_path = _support(os.path.join("cert_support", "test_rsa.key"))
+        key = RSAKey.from_private_key_file(key_path)
+        msg = key.sign_ssh_data(data, "rsa-sha2-256")
+        msg.rewind()
+        assert "rsa-sha2-256" == msg.get_text()
+        sign = msg.get_binary()
+        cert_path = _support(
+            os.path.join("cert_support", "test_rsa.key-cert.pub")
+        )
+        key.load_certificate(cert_path)
+        msg = key.sign_ssh_data(data, "rsa-sha2-256-cert-v01@openssh.com")
+        msg.rewind()
+        assert "rsa-sha2-256" == msg.get_text()
+        assert sign == msg.get_binary()
+        msg.rewind()
+        assert key.verify_ssh_sig(b"ice weasels", msg)

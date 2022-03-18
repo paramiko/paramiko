@@ -2,6 +2,9 @@
 Changelog
 =========
 
+- :bug:`1963` (via :issue:`1977`) Certificate-based pubkey auth was
+  inadvertently broken when adding SHA2 support; this has been fixed. Reported
+  by Erik Forsberg and fixed by Jun Omae.
 - :bug:`2002` (via :issue:`2003`) Switch from module-global to thread-local
   storage when recording thread IDs for a logging helper; this should avoid one
   flavor of memory leak for long-running processes. Catch & patch via Richard

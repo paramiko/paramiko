@@ -129,7 +129,7 @@ class RSAKey(PKey):
             algorithm=self.HASHES[algorithm](),
         )
         m = Message()
-        m.add_string(algorithm)
+        m.add_string(algorithm.replace("-cert-v01@openssh.com", ""))
         m.add_string(sig)
         return m
 
