@@ -2,6 +2,9 @@
 Changelog
 =========
 
+- :bug:`1963` (via :issue:`1977`) Certificate-based pubkey auth was
+  inadvertently broken when adding SHA2 support; this has been fixed. Reported
+  by Erik Forsberg and fixed by Jun Omae.
 - :support:`1985` Add ``six`` explicitly to install-requires; it snuck into
   active use at some point but has only been indicated by transitive dependency
   on ``bcrypt`` until they somewhat-recently dropped it. This will be
