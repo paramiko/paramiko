@@ -57,7 +57,7 @@ class BER(object):
             while self.idx < len(self.content):
                 t = byte_ord(self.content[self.idx])
                 self.idx += 1
-                ident = (ident << 7) | (t & 0x7f)
+                ident = (ident << 7) | (t & 0x7F)
                 if not (t & 0x80):
                     break
         if self.idx >= len(self.content):
@@ -68,7 +68,7 @@ class BER(object):
         if size & 0x80:
             # more complimicated...
             # FIXME: theoretically should handle indefinite-length (0x80)
-            t = size & 0x7f
+            t = size & 0x7F
             if self.idx + t > len(self.content):
                 return None
             size = util.inflate_long(
@@ -106,7 +106,7 @@ class BER(object):
     def encode_tlv(self, ident, val):
         # no need to support ident > 31 here
         self.content += byte_chr(ident)
-        if len(val) > 0x7f:
+        if len(val) > 0x7F:
             lenstr = util.deflate_long(len(val))
             self.content += byte_chr(0x80 + len(lenstr)) + lenstr
         else:

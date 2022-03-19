@@ -595,9 +595,7 @@ Error Message: {}
                 self._log(INFO, "Auth rejected: public key: {}".format(str(e)))
                 key = None
             except Exception as e:
-                msg = (
-                    "Auth rejected: unsupported or mangled public key ({}: {})"
-                )  # noqa
+                msg = "Auth rejected: unsupported or mangled public key ({}: {})"  # noqa
                 self._log(INFO, msg.format(e.__class__.__name__, e))
                 key = None
             if key is None:

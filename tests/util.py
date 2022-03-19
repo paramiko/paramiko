@@ -74,7 +74,6 @@ if (
         def tearDownClass(cls):
             del cls.realm
 
-
 else:
     try:
         # Try to setup a kerberos environment

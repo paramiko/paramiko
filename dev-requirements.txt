@@ -9,7 +9,7 @@ mock==2.0.0
 # Linting!
 flake8==3.8.3
 # Formatting!
-black==18.6b4
+black~=21.12b0
 # Coverage!
 coverage==4.5.4
 codecov==2.1.11

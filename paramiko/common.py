@@ -180,7 +180,7 @@ CONNECTION_FAILED_CODE = {
 zero_byte = byte_chr(0)
 one_byte = byte_chr(1)
 four_byte = byte_chr(4)
-max_byte = byte_chr(0xff)
+max_byte = byte_chr(0xFF)
 cr_byte = byte_chr(13)
 linefeed_byte = byte_chr(10)
 crlf = cr_byte + linefeed_byte
@@ -214,7 +214,7 @@ def asbytes(s):
             return s
 
 
-xffffffff = long(0xffffffff)
+xffffffff = long(0xFFFFFFFF)
 x80000000 = long(0x80000000)
 o666 = 438
 o660 = 432

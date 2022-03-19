@@ -113,7 +113,6 @@ if PY2:
         _, encoding = locale.getlocale(locale.LC_TIME)
         return time.strftime(format, t).decode(encoding or "ascii")
 
-
 else:
     import collections
     import struct

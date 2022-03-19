@@ -34,7 +34,7 @@ from paramiko.ssh_exception import SSHException
 _MSG_KEXDH_INIT, _MSG_KEXDH_REPLY = range(30, 32)
 c_MSG_KEXDH_INIT, c_MSG_KEXDH_REPLY = [byte_chr(c) for c in range(30, 32)]
 
-b7fffffffffffffff = byte_chr(0x7f) + max_byte * 7
+b7fffffffffffffff = byte_chr(0x7F) + max_byte * 7
 b0000000000000000 = zero_byte * 8
 
 
@@ -87,7 +87,7 @@ class KexGroup1(object):
         # potential x).
         while 1:
             x_bytes = os.urandom(128)
-            x_bytes = byte_mask(x_bytes[0], 0x7f) + x_bytes[1:]
+            x_bytes = byte_mask(x_bytes[0], 0x7F) + x_bytes[1:]
             if (
                 x_bytes[:8] != b7fffffffffffffff
                 and x_bytes[:8] != b0000000000000000
