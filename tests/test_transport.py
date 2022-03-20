@@ -61,7 +61,7 @@ from paramiko.common import (
 from paramiko.py3compat import bytes, byte_chr
 from paramiko.message import Message
 
-from .util import needs_builtin, _support, slow
+from .util import needs_builtin, _support, sha1_signing_unsupported, slow
 from .loop import LoopSocket
 
 
@@ -77,6 +77,9 @@ Note: An SSH banner may eventually appear.
 Maybe.
 """
 
+requires_sha1_signing = unittest.skipIf(
+    sha1_signing_unsupported(), "SHA-1 signing not supported"
+)
 
 class NullServer(ServerInterface):
     paranoid_did_password = False
@@ -1283,6 +1286,7 @@ class TestSHA2SignatureKeyExchange(unittest.TestCase):
     # are new tests in test_pkey.py which use known signature blobs to prove
     # the SHA2 family was in fact used!
 
+    @requires_sha1_signing
     def test_base_case_ssh_rsa_still_used_as_fallback(self):
         # Prove that ssh-rsa is used if either, or both, participants have SHA2
         # algorithms disabled
@@ -1405,6 +1409,7 @@ class TestSHA2SignaturePubkeys(unittest.TestCase):
         ) as (tc, ts, err):
             assert isinstance(err, AuthenticationException)
 
+    @requires_sha1_signing
     def test_ssh_rsa_still_used_when_sha2_disabled(self):
         privkey = RSAKey.from_private_key_file(_support("test_rsa.key"))
         # NOTE: this works because key obj comparison uses public bytes
