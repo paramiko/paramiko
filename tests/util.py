@@ -159,7 +159,7 @@ def sha1_signing_unsupported():
     )
     message = b"Some dummy text"
     try:
-        signature = private_key.sign(
+        private_key.sign(
             message,
             padding.PSS(
                 mgf=padding.MGF1(hashes.SHA1()),
