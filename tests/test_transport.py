@@ -81,6 +81,7 @@ requires_sha1_signing = unittest.skipIf(
     sha1_signing_unsupported(), "SHA-1 signing not supported"
 )
 
+
 class NullServer(ServerInterface):
     paranoid_did_password = False
     paranoid_did_public_key = False

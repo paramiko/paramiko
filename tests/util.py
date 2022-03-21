@@ -155,8 +155,7 @@ def sha1_signing_unsupported():
     not supported by the backend.
     """
     private_key = rsa.generate_private_key(
-        public_exponent=65537,
-        key_size=2048,
+        public_exponent=65537, key_size=2048
     )
     message = b"Some dummy text"
     try:
@@ -164,11 +163,10 @@ def sha1_signing_unsupported():
             message,
             padding.PSS(
                 mgf=padding.MGF1(hashes.SHA1()),
-                salt_length=padding.PSS.MAX_LENGTH
+                salt_length=padding.PSS.MAX_LENGTH,
             ),
-            hashes.SHA1()
+            hashes.SHA1(),
         )
         return False
     except UnsupportedAlgorithm as e:
         return e._reason is _Reasons.UNSUPPORTED_HASH
-
