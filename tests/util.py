@@ -10,6 +10,7 @@ from paramiko.py3compat import builtins, PY2
 from paramiko.ssh_gss import GSS_AUTH_AVAILABLE
 
 from cryptography.exceptions import UnsupportedAlgorithm, _Reasons
+from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import padding, rsa
 
@@ -155,7 +156,7 @@ def sha1_signing_unsupported():
     not supported by the backend.
     """
     private_key = rsa.generate_private_key(
-        public_exponent=65537, key_size=2048
+        public_exponent=65537, key_size=2048, backend=default_backend()
     )
     message = b"Some dummy text"
     try:
