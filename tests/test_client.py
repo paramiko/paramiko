@@ -41,15 +41,11 @@ from paramiko import SSHClient
 from paramiko.pkey import PublicBlob
 from paramiko.ssh_exception import SSHException, AuthenticationException
 
-from .util import _support, sha1_signing_unsupported, slow
+from .util import _support, requires_sha1_signing, slow
 
 
 requires_gss_auth = unittest.skipUnless(
     paramiko.GSS_AUTH_AVAILABLE, "GSS auth not available"
-)
-
-requires_sha1_signing = unittest.skipIf(
-    sha1_signing_unsupported(), "SHA-1 signing not supported"
 )
 
 FINGERPRINTS = {

@@ -171,3 +171,7 @@ def sha1_signing_unsupported():
         return False
     except UnsupportedAlgorithm as e:
         return e._reason is _Reasons.UNSUPPORTED_HASH
+
+requires_sha1_signing = unittest.skipIf(
+    sha1_signing_unsupported(), "SHA-1 signing not supported"
+)

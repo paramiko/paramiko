@@ -61,7 +61,7 @@ from paramiko.common import (
 from paramiko.py3compat import bytes, byte_chr
 from paramiko.message import Message
 
-from .util import needs_builtin, _support, sha1_signing_unsupported, slow
+from .util import needs_builtin, _support, requires_sha1_signing, slow
 from .loop import LoopSocket
 
 
@@ -76,10 +76,6 @@ Note: An SSH banner may eventually appear.
 
 Maybe.
 """
-
-requires_sha1_signing = unittest.skipIf(
-    sha1_signing_unsupported(), "SHA-1 signing not supported"
-)
 
 
 class NullServer(ServerInterface):

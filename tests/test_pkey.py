@@ -44,12 +44,8 @@ from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateNumbers
 from mock import patch, Mock
 import pytest
 
-from .util import _support, is_low_entropy, sha1_signing_unsupported
+from .util import _support, is_low_entropy, requires_sha1_signing
 
-
-requires_sha1_signing = unittest.skipIf(
-    sha1_signing_unsupported(), "SHA-1 signing not supported"
-)
 
 # from openssh's ssh-keygen
 PUB_RSA = "ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAIEA049W6geFpmsljTwfvI1UmKWWJPNFI74+vNKTk4dmzkQY2yAMs6FhlvhlI8ysU4oj71ZsRYMecHbBbxdN79+JRFVYTKaLqjwGENeTd+yv4q+V2PvZv3fLnzApI3l7EJCqhWwJUHJ1jAkZzqDx0tyOL4uoZpww3nmE0kb3y21tH4c="  # noqa
