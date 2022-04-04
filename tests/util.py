@@ -37,7 +37,6 @@ def needs_builtin(name):
     reason = "Test requires a builtin '{}'".format(name)
     return pytest.mark.skipif(not hasattr(builtins, name), reason=reason)
 
-
 slow = pytest.mark.slow
 
 # GSSAPI / Kerberos related tests need a working Kerberos environment.
@@ -171,6 +170,7 @@ def sha1_signing_unsupported():
         return False
     except UnsupportedAlgorithm as e:
         return e._reason is _Reasons.UNSUPPORTED_HASH
+
 
 requires_sha1_signing = unittest.skipIf(
     sha1_signing_unsupported(), "SHA-1 signing not supported"
