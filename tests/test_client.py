@@ -14,7 +14,7 @@
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with Paramiko; if not, write to the Free Software Foundation, Inc.,
-# 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
+# 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
 
 """
 Some unit tests for SSHClient.
@@ -41,7 +41,7 @@ from paramiko import SSHClient
 from paramiko.pkey import PublicBlob
 from paramiko.ssh_exception import SSHException, AuthenticationException
 
-from .util import _support, slow
+from .util import _support, requires_sha1_signing, slow
 
 
 requires_gss_auth = unittest.skipUnless(
@@ -235,33 +235,39 @@ class ClientTest(unittest.TestCase):
 
 
 class SSHClientTest(ClientTest):
+    @requires_sha1_signing
     def test_client(self):
         """
         verify that the SSHClient stuff works too.
         """
         self._test_connection(password="pygmalion")
 
+    @requires_sha1_signing
     def test_client_dsa(self):
         """
         verify that SSHClient works with a DSA key.
         """
         self._test_connection(key_filename=_support("test_dss.key"))
 
+    @requires_sha1_signing
     def test_client_rsa(self):
         """
         verify that SSHClient works with an RSA key.
         """
         self._test_connection(key_filename=_support("test_rsa.key"))
 
+    @requires_sha1_signing
     def test_client_ecdsa(self):
         """
         verify that SSHClient works with an ECDSA key.
         """
         self._test_connection(key_filename=_support("test_ecdsa_256.key"))
 
+    @requires_sha1_signing
     def test_client_ed25519(self):
         self._test_connection(key_filename=_support("test_ed25519.key"))
 
+    @requires_sha1_signing
     def test_multiple_key_files(self):
         """
         verify that SSHClient accepts and tries multiple key files.
@@ -293,6 +299,7 @@ class SSHClientTest(ClientTest):
                 self.tearDown()
                 self.setUp()
 
+    @requires_sha1_signing
     def test_multiple_key_files_failure(self):
         """
         Expect failure when multiple keys in play and none are accepted
@@ -306,6 +313,7 @@ class SSHClientTest(ClientTest):
             allowed_keys=["ecdsa-sha2-nistp256"],
         )
 
+    @requires_sha1_signing
     def test_certs_allowed_as_key_filename_values(self):
         # NOTE: giving cert path here, not key path. (Key path test is below.
         # They're similar except for which path is given; the expected auth and
@@ -319,6 +327,7 @@ class SSHClientTest(ClientTest):
                 public_blob=PublicBlob.from_file(cert_path),
             )
 
+    @requires_sha1_signing
     def test_certs_implicitly_loaded_alongside_key_filename_keys(self):
         # NOTE: a regular test_connection() w/ test_rsa.key would incidentally
         # test this (because test_xxx.key-cert.pub exists) but incidental tests
@@ -469,6 +478,7 @@ class SSHClientTest(ClientTest):
         kwargs = dict(self.connect_kwargs, banner_timeout=0.5)
         self.assertRaises(paramiko.SSHException, self.tc.connect, **kwargs)
 
+    @requires_sha1_signing
     def test_auth_trickledown(self):
         """
         Failed key auth doesn't prevent subsequent pw auth from succeeding
@@ -489,6 +499,7 @@ class SSHClientTest(ClientTest):
         )
         self._test_connection(**kwargs)
 
+    @requires_sha1_signing
     @slow
     def test_auth_timeout(self):
         """
@@ -591,6 +602,7 @@ class SSHClientTest(ClientTest):
         host_key = paramiko.ECDSAKey.generate()
         self._client_host_key_bad(host_key)
 
+    @requires_sha1_signing
     def test_host_key_negotiation_2(self):
         host_key = paramiko.RSAKey.generate(2048)
         self._client_host_key_bad(host_key)
@@ -598,6 +610,7 @@ class SSHClientTest(ClientTest):
     def test_host_key_negotiation_3(self):
         self._client_host_key_good(paramiko.ECDSAKey, "test_ecdsa_256.key")
 
+    @requires_sha1_signing
     def test_host_key_negotiation_4(self):
         self._client_host_key_good(paramiko.RSAKey, "test_rsa.key")
 
@@ -681,6 +694,7 @@ class PasswordPassphraseTests(ClientTest):
     # instead of suffering a real connection cycle.
     # TODO: in that case, move the below to be part of an integration suite?
 
+    @requires_sha1_signing
     def test_password_kwarg_works_for_password_auth(self):
         # Straightforward / duplicate of earlier basic password test.
         self._test_connection(password="pygmalion")
@@ -688,10 +702,12 @@ class PasswordPassphraseTests(ClientTest):
     # TODO: more granular exception pending #387; should be signaling "no auth
     # methods available" because no key and no password
     @raises(SSHException)
+    @requires_sha1_signing
     def test_passphrase_kwarg_not_used_for_password_auth(self):
         # Using the "right" password in the "wrong" field shouldn't work.
         self._test_connection(passphrase="pygmalion")
 
+    @requires_sha1_signing
     def test_passphrase_kwarg_used_for_key_passphrase(self):
         # Straightforward again, with new passphrase kwarg.
         self._test_connection(
@@ -699,6 +715,7 @@ class PasswordPassphraseTests(ClientTest):
             passphrase="television",
         )
 
+    @requires_sha1_signing
     def test_password_kwarg_used_for_passphrase_when_no_passphrase_kwarg_given(
         self
     ):  # noqa
@@ -709,6 +726,7 @@ class PasswordPassphraseTests(ClientTest):
         )
 
     @raises(AuthenticationException)  # TODO: more granular
+    @requires_sha1_signing
     def test_password_kwarg_not_used_for_passphrase_when_passphrase_kwarg_given(  # noqa
         self
     ):

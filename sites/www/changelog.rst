@@ -2,6 +2,28 @@
 Changelog
 =========
 
+- :support:`2004` (via :issue:`2011`) Apply unittest ``skipIf`` to tests
+  currently using SHA1 in their critical path, to avoid failures on systems
+  starting to disable SHA1 outright in their crypto backends (eg RHEL 9).
+  Report & patch via Paul Howarth.
+- :release:`2.10.3 <2022-03-18>`
+- :release:`2.9.3 <2022-03-18>`
+- :bug:`1963` (via :issue:`1977`) Certificate-based pubkey auth was
+  inadvertently broken when adding SHA2 support; this has been fixed. Reported
+  by Erik Forsberg and fixed by Jun Omae.
+- :bug:`2002` (via :issue:`2003`) Switch from module-global to thread-local
+  storage when recording thread IDs for a logging helper; this should avoid one
+  flavor of memory leak for long-running processes. Catch & patch via Richard
+  Kojedzinszky.
+- :release:`2.10.2 <2022-03-14>`
+- :bug:`2001` Fix Python 2 compatibility breakage introduced in 2.10.1. Spotted
+  by Christian Hammond.
+
+  .. warning::
+      This is almost certainly the last time we will fix Python 2 related
+      errors! Please see `the roadmap
+      <https://bitprophet.org/projects/#roadmap>`_.
+
 - :release:`2.10.1 <2022-03-11>`
 - :bug:`-` (`CVE-2022-24302
   <https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2022-24302>`_) Creation

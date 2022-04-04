@@ -14,7 +14,7 @@
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with Paramiko; if not, write to the Free Software Foundation, Inc.,
-# 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
+# 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
 
 """
 `.AuthHandler`
@@ -341,6 +341,8 @@ class AuthHandler(object):
                 DEBUG,
                 "NOTE: you may use the 'disabled_algorithms' SSHClient/Transport init kwarg to disable that or other algorithms if your server does not support them!",  # noqa
             )
+        if key_type.endswith("-cert-v01@openssh.com"):
+            pubkey_algo += "-cert-v01@openssh.com"
         self.transport._agreed_pubkey_algorithm = pubkey_algo
         return pubkey_algo
 

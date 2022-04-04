@@ -14,7 +14,7 @@
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with Paramiko; if not, write to the Free Software Foundation, Inc.,
-# 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
+# 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
 
 """
 RSA keys.
@@ -129,7 +129,7 @@ class RSAKey(PKey):
             algorithm=self.HASHES[algorithm](),
         )
         m = Message()
-        m.add_string(algorithm)
+        m.add_string(algorithm.replace("-cert-v01@openssh.com", ""))
         m.add_string(sig)
         return m
 
