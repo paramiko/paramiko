@@ -113,6 +113,12 @@ if PY2:
         _, encoding = locale.getlocale(locale.LC_TIME)
         return time.strftime(format, t).decode(encoding or "ascii")
 
+    def notify_all(t):
+        return t.notifyAll()
+
+    def set_daemon(t, v):
+        return t.setDaemon(v)
+
 
 else:
     import collections
@@ -183,3 +189,9 @@ else:
     MAXSIZE = sys.maxsize  # NOQA
 
     strftime = time.strftime  # NOQA
+
+    def notify_all(t):
+        return t.notify_all()
+
+    def set_daemon(t, v):
+        t.daemon = v

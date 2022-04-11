@@ -35,6 +35,7 @@ import threading
 from optparse import OptionParser
 
 import paramiko
+from paramiko.py3compat import set_daemon
 
 SSH_PORT = 22
 DEFAULT_PORT = 4000
@@ -80,7 +81,7 @@ def reverse_forward_tunnel(server_port, remote_host, remote_port, transport):
         thr = threading.Thread(
             target=handler, args=(chan, remote_host, remote_port)
         )
-        thr.setDaemon(True)
+        set_daemon(thr, True)
         thr.start()
 
 

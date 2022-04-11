@@ -30,7 +30,7 @@ import time
 from paramiko.common import DEBUG
 
 from paramiko.file import BufferedFile
-from paramiko.py3compat import u, long
+from paramiko.py3compat import u, long, set_daemon
 from paramiko.sftp import (
     CMD_CLOSE,
     CMD_READ,
@@ -527,7 +527,7 @@ class SFTPFile(BufferedFile):
         self._prefetch_done = False
 
         t = threading.Thread(target=self._prefetch_thread, args=(chunks,))
-        t.setDaemon(True)
+        set_daemon(t, True)
         t.start()
 
     def _prefetch_thread(self, chunks):

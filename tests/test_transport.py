@@ -58,7 +58,7 @@ from paramiko.common import (
     cMSG_CHANNEL_WINDOW_ADJUST,
     cMSG_UNIMPLEMENTED,
 )
-from paramiko.py3compat import bytes, byte_chr
+from paramiko.py3compat import bytes, byte_chr, set_daemon
 from paramiko.message import Message
 
 from .util import needs_builtin, _support, requires_sha1_signing, slow
@@ -756,7 +756,7 @@ class TransportTest(unittest.TestCase):
                 threading.Thread.__init__(
                     self, None, None, self.__class__.__name__
                 )
-                self.setDaemon(True)
+                set_daemon(self, True)
                 self.chan = chan
                 self.iterations = iterations
                 self.done_event = done_event
@@ -780,7 +780,7 @@ class TransportTest(unittest.TestCase):
                 threading.Thread.__init__(
                     self, None, None, self.__class__.__name__
                 )
-                self.setDaemon(True)
+                set_daemon(self, True)
                 self.chan = chan
                 self.done_event = done_event
                 self.watchdog_event = threading.Event()

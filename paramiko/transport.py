@@ -113,6 +113,7 @@ from paramiko.ssh_exception import (
     ProxyCommandFailure,
 )
 from paramiko.util import retry_on_signal, ClosingContextManager, clamp_value
+from paramiko.py3compat import set_daemon
 
 
 # for thread cleanup
@@ -450,7 +451,7 @@ class Transport(threading.Thread, ClosingContextManager):
                 )
         # okay, normal socket-ish flow here...
         threading.Thread.__init__(self)
-        self.setDaemon(True)
+        set_daemon(self, True)
         self.sock = sock
         # we set the timeout so we can check self.active periodically to
         # see if we should bail. socket.timeout exception is never propagated.
