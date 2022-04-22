@@ -2,6 +2,10 @@
 Changelog
 =========
 
+- :bug:`2035` Servers offering certificate variants of hostkey algorithms (eg
+  ``ssh-rsa-cert-v01@openssh.com``) could not have their host keys verified by
+  Paramiko clients, as it only ever considered non-cert key types for that part
+  of connection handshaking. This has been fixed.
 - :release:`2.10.3 <2022-03-18>`
 - :release:`2.9.3 <2022-03-18>`
 - :bug:`1963` (via :issue:`1977`) Certificate-based pubkey auth was

@@ -1121,7 +1121,12 @@ class AlgorithmDisablingTests(unittest.TestCase):
         t = Transport(sock=Mock())
         assert t.preferred_ciphers == t._preferred_ciphers
         assert t.preferred_macs == t._preferred_macs
-        assert t.preferred_keys == t._preferred_keys
+        assert t.preferred_keys == tuple(
+            t._preferred_keys
+            + tuple(
+                "{}-cert-v01@openssh.com".format(x) for x in t._preferred_keys
+            )
+        )
         assert t.preferred_kex == t._preferred_kex
 
     def test_preferred_lists_filter_disabled_algorithms(self):
@@ -1140,6 +1145,7 @@ class AlgorithmDisablingTests(unittest.TestCase):
         assert "hmac-md5" not in t.preferred_macs
         assert "ssh-dss" in t._preferred_keys
         assert "ssh-dss" not in t.preferred_keys
+        assert "ssh-dss-cert-v01@openssh.com" not in t.preferred_keys
         assert "diffie-hellman-group14-sha256" in t._preferred_kex
         assert "diffie-hellman-group14-sha256" not in t.preferred_kex
 
