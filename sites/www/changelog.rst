@@ -2,10 +2,20 @@
 Changelog
 =========
 
+- :bug:`1964` (via :issue:`2024` as also reported in :issue:`2023`)
+  `~paramiko.pkey.PKey` instances' ``__eq__`` did not have the usual safety
+  guard in place to ensure they were being compared to another ``PKey`` object,
+  causing occasional spurious ``BadHostKeyException`` (among other things).
+  This has been fixed. Thanks to Shengdun Hua for the original report/patch and
+  to Christopher Papke for the final version of the fix.
 - :support:`2004` (via :issue:`2011`) Apply unittest ``skipIf`` to tests
   currently using SHA1 in their critical path, to avoid failures on systems
   starting to disable SHA1 outright in their crypto backends (eg RHEL 9).
   Report & patch via Paul Howarth.
+- :bug:`2035` Servers offering certificate variants of hostkey algorithms (eg
+  ``ssh-rsa-cert-v01@openssh.com``) could not have their host keys verified by
+  Paramiko clients, as it only ever considered non-cert key types for that part
+  of connection handshaking. This has been fixed.
 - :release:`2.10.3 <2022-03-18>`
 - :release:`2.9.3 <2022-03-18>`
 - :bug:`1963` (via :issue:`1977`) Certificate-based pubkey auth was
