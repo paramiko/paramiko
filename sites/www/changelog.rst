@@ -2,6 +2,7 @@
 Changelog
 =========
 
+- :release:`2.9.4 <2022-04-25>`
 - :support:`1838 backported` (via :issue:`1870`/:issue:`2028`) Update
   ``camelCase`` method calls against the ``threading`` module to be
   ``snake_case``; this and related tweaks should fix some deprecation warnings
