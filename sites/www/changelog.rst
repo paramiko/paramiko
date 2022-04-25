@@ -2,11 +2,12 @@
 Changelog
 =========
 
-- :support:`1838` (via :issue:`1870`/:issue:`2028`) Update ``camelCase`` method
-  calls against the ``threading`` module to be ``snake_case``; this and related
-  tweaks should fix some deprecation warnings under Python 3.10. Thanks to
-  Karthikeyan Singaravelan for the report, ``@Narendra-Neerukonda`` for the
-  patch, and to Thomas Grainger and Jun Omae for patch workshopping.
+- :support:`1838 backported` (via :issue:`1870`/:issue:`2028`) Update
+  ``camelCase`` method calls against the ``threading`` module to be
+  ``snake_case``; this and related tweaks should fix some deprecation warnings
+  under Python 3.10. Thanks to Karthikeyan Singaravelan for the report,
+  ``@Narendra-Neerukonda`` for the patch, and to Thomas Grainger and Jun Omae
+  for patch workshopping.
 - :feature:`1951` Add SSH config token expansion (eg ``%h``, ``%p``) when
   parsing ``ProxyJump`` directives. Patch courtesy of Bruno Inec.
 - :bug:`1964` (via :issue:`2024` as also reported in :issue:`2023`)
