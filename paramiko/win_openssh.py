@@ -1,4 +1,5 @@
-# Copyright (C) 2003-2007  Robey Pointer <robeypointer@gmail.com>
+# Copyright (C) 2021 Lew Gordon <lew.gordon@genesys.com>
+# Copyright (C) 2022 Patrick Spendrin <ps_ml@gmx.de>
 #
 # This file is part of paramiko.
 #
@@ -16,25 +17,24 @@
 # along with Paramiko; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
 
-"""
-Compression implementations for a Transport.
-"""
+import os.path
 
-import zlib
+PIPE_NAME = r"\\.\pipe\openssh-ssh-agent"
 
 
-class ZlibCompressor(object):
+def can_talk_to_agent():
+    return os.path.exists(PIPE_NAME)
+
+
+class OpenSSHAgentConnection:
     def __init__(self):
-        # Use the default level of zlib compression
-        self.z = zlib.compressobj()
+        self._pipe = open(PIPE_NAME, "rb+", buffering=0)
 
-    def __call__(self, data):
-        return self.z.compress(data) + self.z.flush(zlib.Z_FULL_FLUSH)
+    def send(self, data):
+        return self._pipe.write(data)
 
+    def recv(self, n):
+        return self._pipe.read(n)
 
-class ZlibDecompressor(object):
-    def __init__(self):
-        self.z = zlib.decompressobj()
-
-    def __call__(self, data):
-        return self.z.decompress(data)
+    def close(self):
+        return self._pipe.close()

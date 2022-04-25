@@ -14,7 +14,7 @@
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with Paramiko; if not, write to the Free Software Foundation, Inc.,
-# 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
+# 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
 
 """
 ECDSA keys
@@ -211,7 +211,7 @@ class ECDSAKey(PKey):
     def can_sign(self):
         return self.signing_key is not None
 
-    def sign_ssh_data(self, data):
+    def sign_ssh_data(self, data, algorithm=None):
         ecdsa = ec.ECDSA(self.ecdsa_curve.hash_object())
         sig = self.signing_key.sign(data, ecdsa)
         r, s = decode_dss_signature(sig)

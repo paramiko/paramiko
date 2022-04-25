@@ -2,6 +2,170 @@
 Changelog
 =========
 
+- :bug:`1964` (via :issue:`2024` as also reported in :issue:`2023`)
+  `~paramiko.pkey.PKey` instances' ``__eq__`` did not have the usual safety
+  guard in place to ensure they were being compared to another ``PKey`` object,
+  causing occasional spurious ``BadHostKeyException`` (among other things).
+  This has been fixed. Thanks to Shengdun Hua for the original report/patch and
+  to Christopher Papke for the final version of the fix.
+- :support:`2004` (via :issue:`2011`) Apply unittest ``skipIf`` to tests
+  currently using SHA1 in their critical path, to avoid failures on systems
+  starting to disable SHA1 outright in their crypto backends (eg RHEL 9).
+  Report & patch via Paul Howarth.
+- :bug:`2035` Servers offering certificate variants of hostkey algorithms (eg
+  ``ssh-rsa-cert-v01@openssh.com``) could not have their host keys verified by
+  Paramiko clients, as it only ever considered non-cert key types for that part
+  of connection handshaking. This has been fixed.
+- :release:`2.10.3 <2022-03-18>`
+- :release:`2.9.3 <2022-03-18>`
+- :bug:`1963` (via :issue:`1977`) Certificate-based pubkey auth was
+  inadvertently broken when adding SHA2 support; this has been fixed. Reported
+  by Erik Forsberg and fixed by Jun Omae.
+- :bug:`2002` (via :issue:`2003`) Switch from module-global to thread-local
+  storage when recording thread IDs for a logging helper; this should avoid one
+  flavor of memory leak for long-running processes. Catch & patch via Richard
+  Kojedzinszky.
+- :release:`2.10.2 <2022-03-14>`
+- :bug:`2001` Fix Python 2 compatibility breakage introduced in 2.10.1. Spotted
+  by Christian Hammond.
+
+  .. warning::
+      This is almost certainly the last time we will fix Python 2 related
+      errors! Please see `the roadmap
+      <https://bitprophet.org/projects/#roadmap>`_.
+
+- :release:`2.10.1 <2022-03-11>`
+- :bug:`-` (`CVE-2022-24302
+  <https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2022-24302>`_) Creation
+  of new private key files using `~paramiko.pkey.PKey` subclasses was subject
+  to a race condition between file creation & mode modification, which could be
+  exploited by an attacker with knowledge of where the Paramiko-using code
+  would write out such files.
+
+  This has been patched by using `os.open` and `os.fdopen` to ensure new files
+  are opened with the correct mode immediately. We've left the subsequent
+  explicit ``chmod`` in place to minimize any possible disruption, though it
+  may get removed in future backwards-incompatible updates.
+
+  Thanks to Jan Schejbal for the report & feedback on the solution, and to
+  Jeremy Katz at Tidelift for coordinating the disclosure.
+- :release:`2.10.0 <2022-03-11>`
+- :feature:`1976` Add support for the ``%C`` token when parsing SSH config
+  files. Foundational PR submitted by ``@jbrand42``.
+- :feature:`1509` (via :issue:`1868`, :issue:`1837`) Add support for OpenSSH's
+  Windows agent as a fallback when Putty/WinPageant isn't available or
+  functional. Reported by ``@benj56`` with patches/PRs from ``@lewgordon`` and
+  Patrick Spendrin.
+- :bug:`892 major` Significantly speed up low-level read/write actions on
+  `~paramiko.sftp_file.SFTPFile` objects by using `bytearray`/`memoryview`.
+  This is unlikely to change anything for users of the higher level methods
+  like `SFTPClient.get <paramiko.sftp_client.SFTPClient.get>` or
+  `SFTPClient.getfo <paramiko.sftp_client.SFTPClient.getfo>`, but users of
+  `SFTPClient.open <paramiko.sftp_client.SFTPClient.open>` will likely see
+  orders of magnitude improvements for files larger than a few megabytes in
+  size.
+
+  Thanks to ``@jkji`` for the original report and to Sevastian Tchernov for the
+  patch.
+- :support:`1985` Add ``six`` explicitly to install-requires; it snuck into
+  active use at some point but has only been indicated by transitive dependency
+  on ``bcrypt`` until they somewhat-recently dropped it. This will be
+  short-lived until we `drop Python 2
+  support <https://bitprophet.org/projects/#roadmap>`_. Thanks to Sondre
+  Lillebø Gundersen for catch & patch.
+- :release:`2.9.2 <2022-01-08>`
+- :bug:`-` Connecting to servers which support ``server-sig-algs`` but which
+  have no overlap between that list and what a Paramiko client supports, now
+  raise an exception instead of defaulting to ``rsa-sha2-512`` (since the use
+  of ``server-sig-algs`` allows us to know what the server supports).
+- :bug:`-` Enhanced log output when connecting to servers that do not support
+  ``server-sig-algs`` extensions, making the new-as-of-2.9 defaulting to SHA2
+  pubkey algorithms more obvious when it kicks in.
+- :release:`2.9.1 <2021-12-24>`
+- :bug:`1955` Server-side support for ``rsa-sha2-256`` and ``ssh-rsa`` wasn't
+  fully operable after 2.9.0's release (signatures for RSA pubkeys were always
+  run through ``rsa-sha2-512`` instead). Report and early stab at a fix
+  courtesy of Jun Omae.
+- :release:`2.9.0 <2021-12-23>`
+- :feature:`1643` (also :issue:`1925`, :issue:`1644`, :issue:`1326`) Add
+  support for SHA-2 variants of RSA key verification algorithms (as described
+  in :rfc:`8332`) as well as limited SSH extension negotiation (:rfc:`8308`).
+
+  .. warning::
+    This change is slightly backwards incompatible, insofar as action is
+    required if your target systems do not support either RSA2 or the
+    ``server-sig-algs`` protocol extension.
+
+    Specifically, you need to specify ``disabled_algorithms={'keys':
+    ['rsa-sha2-256', 'rsa-sha2-512']}`` in either `SSHClient
+    <paramiko.client.SSHClient.__init__>` or `Transport
+    <paramiko.transport.Transport.__init__>`. See below for details on why.
+
+  How SSH servers/clients decide when and how to use this functionality can be
+  complicated; Paramiko's support is as follows:
+
+  - Client verification of server host key during key exchange will now prefer
+    ``rsa-sha2-512``, ``rsa-sha2-256``, and legacy ``ssh-rsa`` algorithms, in
+    that order, instead of just ``ssh-rsa``.
+
+      - Note that the preference order of other algorithm families such as
+        ``ed25519`` and ``ecdsa`` has not changed; for example, those two
+        groups are still preferred over RSA.
+
+  - Server mode will now offer all 3 RSA algorithms for host key verification
+    during key exchange, similar to client mode, if it has been configured with
+    an RSA host key.
+  - Client mode key exchange now sends the ``ext-info-c`` flag signaling
+    support for ``MSG_EXT_INFO``, and support for parsing the latter
+    (specifically, its ``server-sig-algs`` flag) has been added.
+  - Client mode, when performing public key authentication with an RSA key or
+    cert, will act as follows:
+
+    - In all cases, the list of algorithms to consider is based on the new
+      ``preferred_pubkeys`` list (see below) and ``disabled_algorithms``
+      (specifically, its ``pubkeys`` key); this list, like with host keys,
+      prefers SHA2-512, SHA2-256 and SHA1, in that order.
+    - When the server does not send ``server-sig-algs``, Paramiko will attempt
+      the first algorithm in the above list. Clients connecting to legacy
+      servers should thus use ``disabled_algorithms`` to turn off SHA2.
+    - When the server does send ``server-sig-algs``, the first algorithm
+      supported by both ends is used, or if there is none, it falls back to the
+      previous behavior.
+
+  - SSH agent support grew the ability to specify algorithm flags when
+    requesting private key signatures; this is now used to forward SHA2
+    algorithms when appropriate.
+  - Server mode is now capable of pubkey auth involving SHA-2 signatures from
+    clients, provided one's server implementation actually provides for doing
+    so.
+
+    - This includes basic support for sending ``MSG_EXT_INFO`` (containing
+      ``server-sig-algs`` only) to clients advertising ``ext-info-c`` in their
+      key exchange list.
+
+  In order to implement the above, the following API additions were made:
+
+  - `PKey.sign_ssh_data <paramiko.pkey.PKey>`: Grew an extra, optional
+    ``algorithm`` keyword argument (defaulting to ``None`` for most subclasses,
+    and to ``"ssh-rsa"`` for `~paramiko.rsakey.RSAKey`).
+  - A new `~paramiko.ssh_exception.SSHException` subclass was added,
+    `~paramiko.ssh_exception.IncompatiblePeer`, and is raised in all spots
+    where key exchange aborts due to algorithmic incompatibility.
+
+    - Like all other exceptions in that module, it inherits from
+      ``SSHException``, and as we did not change anything else about the
+      raising (i.e. the attributes and message text are the same) this change
+      is backwards compatible.
+
+  - `~paramiko.transport.Transport` grew a ``_preferred_pubkeys`` attribute and
+    matching ``preferred_pubkeys`` property to match the other, kex-focused,
+    such members. This allows client pubkey authentication to honor the
+    ``disabled_algorithms`` feature.
+
+  Thanks to Krisztián Kovács for the report and an early stab at a patch, as
+  well as the numerous users who submitted feedback on the issue, including but
+  not limited to: Christopher Rabotin, Sam Bull, and Manfred Kaiser.
+
 - :release:`2.8.1 <2021-11-28>`
 - :bug:`985` (via :issue:`992`) Fix listdir failure when server uses a locale.
   Now on Python 2.7 `SFTPAttributes <paramiko.sftp_attr.SFTPAttributes>` will
