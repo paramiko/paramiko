@@ -2,6 +2,12 @@
 Changelog
 =========
 
+- :bug:`1964` (via :issue:`2024` as also reported in :issue:`2023`)
+  `~paramiko.pkey.PKey` instances' ``__eq__`` did not have the usual safety
+  guard in place to ensure they were being compared to another ``PKey`` object,
+  causing occasional spurious ``BadHostKeyException`` (among other things).
+  This has been fixed. Thanks to Shengdun Hua for the original report/patch and
+  to Christopher Papke for the final version of the fix.
 - :release:`2.9.3 <2022-03-18>`
 - :bug:`1963` (via :issue:`1977`) Certificate-based pubkey auth was
   inadvertently broken when adding SHA2 support; this has been fixed. Reported
