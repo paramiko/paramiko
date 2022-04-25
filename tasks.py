@@ -125,7 +125,6 @@ def all_(c, dry_run=False):
     release_coll["prepare"](c, dry_run=dry_run)
     publish_(c, dry_run=dry_run)
     release_coll["push"](c, dry_run=dry_run)
-    release_coll["tidelift"](c, dry_run=dry_run)
 
 
 # TODO: "replace one task with another" needs a better public API, this is
