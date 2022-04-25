@@ -2,6 +2,8 @@
 Changelog
 =========
 
+- :feature:`1951` Add SSH config token expansion (eg ``%h``, ``%p``) when
+  parsing ``ProxyJump`` directives. Patch courtesy of Bruno Inec.
 - :bug:`1964` (via :issue:`2024` as also reported in :issue:`2023`)
   `~paramiko.pkey.PKey` instances' ``__eq__`` did not have the usual safety
   guard in place to ensure they were being compared to another ``PKey`` object,

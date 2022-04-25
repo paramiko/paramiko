@@ -207,6 +207,25 @@ Host test
         assert got == expected
 
     @patch("paramiko.config.getpass")
+    def test_proxyjump_token_expansion(self, getpass):
+        getpass.getuser.return_value = "gandalf"
+        config = SSHConfig.from_text(
+            """
+Host justhost
+    ProxyJump jumpuser@%h
+Host userhost
+    ProxyJump %r@%h:222
+Host allcustom
+    ProxyJump %r@%h:%p
+"""
+        )
+        assert config.lookup("justhost")["proxyjump"] == "jumpuser@justhost"
+        assert config.lookup("userhost")["proxyjump"] == "gandalf@userhost:222"
+        assert (
+            config.lookup("allcustom")["proxyjump"] == "gandalf@allcustom:22"
+        )
+
+    @patch("paramiko.config.getpass")
     def test_controlpath_token_expansion(self, getpass, socket):
         getpass.getuser.return_value = "gandalf"
         config = SSHConfig.from_text(
