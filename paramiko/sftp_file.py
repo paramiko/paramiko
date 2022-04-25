@@ -527,7 +527,7 @@ class SFTPFile(BufferedFile):
         self._prefetch_done = False
 
         t = threading.Thread(target=self._prefetch_thread, args=(chunks,))
-        t.setDaemon(True)
+        t.daemon = True
         t.start()
 
     def _prefetch_thread(self, chunks):
