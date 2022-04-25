@@ -9,7 +9,7 @@ jobs:
   sdist-test-suite:
     executor:
       name: orb/default
-      version: "3.6"
+      version: "3.7"
     steps:
       - orb/setup
       - run: inv release.build --no-wheel --directory .
@@ -25,7 +25,7 @@ jobs:
   kerberos:
     executor:
       name: orb/default
-      version: "3.6"
+      version: "3.7"
     steps:
       - orb/setup
       # Required to actually see all of universe/multiverse :(
@@ -53,39 +53,39 @@ workflows:
           name: Style check
       # Main test run, w/ coverage, and latest-supported cryptography
       - orb/coverage:
-          name: Test 3.6 (w/ coverage, latest crypto)
+          name: Test 3.7 (w/ coverage, latest crypto)
       # Non-coverage runs w/ other crypto versions.
-      # (Phrased as 2-dimensional matrix but 3.6 only for now to save credits)
+      # (Phrased as 2-dimensional matrix but 3.7 only for now to save credits)
       - orb/test:
           name: Test << matrix.version >> w/ << matrix.pip-overrides >>
           matrix:
             parameters:
-              version: ["3.6"]
+              version: ["3.7"]
               # TODO: I don't see a nicer way to do this that doesn't require
               # making the orb know too much about its client code...
               pip-overrides: ["cryptography==2.5", "cryptography==3.4"]
       # Kerberos tests. Currently broken :(
       #- kerberos:
-      #    name: Test 3.6 w/ Kerberos support
+      #    name: Test 3.7 w/ Kerberos support
       #    # No point testing k5 if base tests already fail
-      #    requires: ["Test 3.6 (w/ coverage, latest crypto)"]
+      #    requires: ["Test 3.7 (w/ coverage, latest crypto)"]
       - orb/test-release:
           name: Release test
       # Ensure test suite is included in sdist & functions appropriately
       - sdist-test-suite:
           name: Test within sdist
           requires:
-            - "Test 3.6 (w/ coverage, latest crypto)"
+            - "Test 3.7 (w/ coverage, latest crypto)"
             - "Release test"
       # Test other interpreters if main passed
       - orb/test:
           name: Test << matrix.version >>
-          requires: ["Test 3.6 (w/ coverage, latest crypto)"]
+          requires: ["Test 3.7 (w/ coverage, latest crypto)"]
           matrix:
             parameters:
-              version: ["3.7", "3.8", "3.9"]
+              version: ["3.6", "3.8", "3.9"]
       # Test doc building if main test suite passed (no real reason to spend
       # all those credits if the main tests would also fail...)
       - orb/docs:
           name: "Docs"
-          requires: ["Test 3.6 (w/ coverage, latest crypto)"]
+          requires: ["Test 3.7 (w/ coverage, latest crypto)"]
