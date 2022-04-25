@@ -2,6 +2,11 @@
 Changelog
 =========
 
+- :support:`1838` (via :issue:`1870`/:issue:`2028`) Update ``camelCase`` method
+  calls against the ``threading`` module to be ``snake_case``; this and related
+  tweaks should fix some deprecation warnings under Python 3.10. Thanks to
+  Karthikeyan Singaravelan for the report, ``@Narendra-Neerukonda`` for the
+  patch, and to Thomas Grainger and Jun Omae for patch workshopping.
 - :bug:`1964` (via :issue:`2024` as also reported in :issue:`2023`)
   `~paramiko.pkey.PKey` instances' ``__eq__`` did not have the usual safety
   guard in place to ensure they were being compared to another ``PKey`` object,
