@@ -2,6 +2,12 @@
 Changelog
 =========
 
+- :bug:`1964` (via :issue:`2024` as also reported in :issue:`2023`)
+  `~paramiko.pkey.PKey` instances' ``__eq__`` did not have the usual safety
+  guard in place to ensure they were being compared to another ``PKey`` object,
+  causing occasional spurious ``BadHostKeyException`` (among other things).
+  This has been fixed. Thanks to Shengdun Hua for the original report/patch and
+  to Christopher Papke for the final version of the fix.
 - :bug:`2035` Servers offering certificate variants of hostkey algorithms (eg
   ``ssh-rsa-cert-v01@openssh.com``) could not have their host keys verified by
   Paramiko clients, as it only ever considered non-cert key types for that part

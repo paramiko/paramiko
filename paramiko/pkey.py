@@ -140,7 +140,7 @@ class PKey(object):
         return cmp(self.asbytes(), other.asbytes())  # noqa
 
     def __eq__(self, other):
-        return self._fields == other._fields
+        return isinstance(other, PKey) and self._fields == other._fields
 
     def __hash__(self):
         return hash(self._fields)
