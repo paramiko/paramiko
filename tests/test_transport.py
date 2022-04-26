@@ -196,9 +196,9 @@ class TransportTest(unittest.TestCase):
     def test_security_options(self):
         o = self.tc.get_security_options()
         self.assertEqual(type(o), SecurityOptions)
-        self.assertTrue(("aes256-cbc") != o.ciphers)
-        o.ciphers = ("aes256-cbc")
-        self.assertEqual(("aes256-cbc"), o.ciphers)
+        self.assertTrue(("aes256-cbc", "aes192-cbc") != o.ciphers)
+        o.ciphers = ("aes256-cbc", "aes192-cbc")
+        self.assertEqual(("aes256-cbc", "aes192-cbc"), o.ciphers)
         try:
             o.ciphers = ("aes256-cbc", "made-up-cipher")
             self.assertTrue(False)
