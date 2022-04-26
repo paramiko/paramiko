@@ -7,6 +7,7 @@ from socket import gaierror
 from paramiko.py3compat import string_types
 
 from invoke import Result
+
 try:
     from unittest.mock import patch
 except ImportError:

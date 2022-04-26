@@ -34,6 +34,7 @@ import weakref
 from tempfile import mkstemp
 
 from pytest_relaxed import raises
+
 try:
     from unittest.mock import patch, Mock
 except ImportError:
