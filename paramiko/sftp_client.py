@@ -783,9 +783,13 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         with self.open(remotepath, "rb") as fr:
             if prefetch:
                 fr.prefetch(file_size)
-            return self._transfer_with_callback(
+            size = self._transfer_with_callback(
                 reader=fr, writer=fl, file_size=file_size, callback=callback
             )
+            if file_size != size:
+                raise IOError(
+                    "size mismatch in get!  {} != {}".format(file_size, size)
+                )
 
     def get(self, remotepath, localpath, callback=None, prefetch=True):
         """
@@ -808,12 +812,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
             Added the ``prefetch`` keyword argument.
         """
         with open(localpath, "wb") as fl:
-            size = self.getfo(remotepath, fl, callback, prefetch)
-        s = os.stat(localpath)
-        if s.st_size != size:
-            raise IOError(
-                "size mismatch in get!  {} != {}".format(s.st_size, size)
-            )
+            self.getfo(remotepath, fl, callback, prefetch)
 
     # ...internals...
 
