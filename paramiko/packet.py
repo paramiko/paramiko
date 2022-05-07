@@ -25,7 +25,6 @@ import os
 import socket
 import struct
 import threading
-import time
 from hmac import HMAC
 
 from paramiko import util

@@ -24,7 +24,6 @@ read operations are blocking and can have a timeout set.
 
 import array
 import threading
-import time
 from paramiko.common import timer
 from paramiko.py3compat import PY2, b
 

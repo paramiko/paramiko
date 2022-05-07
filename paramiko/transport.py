@@ -26,7 +26,6 @@ import os
 import socket
 import sys
 import threading
-import time
 import weakref
 from hashlib import md5, sha1, sha256, sha512
 
@@ -706,9 +705,7 @@ class Transport(threading.Thread, ClosingContextManager):
                 if e is not None:
                     raise e
                 raise SSHException("Negotiation failed.")
-            if event.is_set() or (
-                timeout is not None and timer() >= max_time
-            ):
+            if event.is_set() or (timeout is not None and timer() >= max_time):
                 break
 
     def start_server(self, event=None, server=None):

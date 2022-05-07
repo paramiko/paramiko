@@ -21,7 +21,6 @@
 """
 
 import weakref
-import time
 
 from paramiko.common import (
     cMSG_SERVICE_REQUEST,

@@ -23,7 +23,6 @@ Abstraction for an SSH2 channel.
 import binascii
 import os
 import socket
-import time
 import threading
 
 # TODO: switch as much of py3compat.py to 'six' as possible, then use six.wraps
@@ -41,7 +40,7 @@ from paramiko.common import (
     cMSG_CHANNEL_FAILURE,
     cMSG_CHANNEL_EOF,
     cMSG_CHANNEL_CLOSE,
-    timer
+    timer,
 )
 from paramiko.message import Message
 from paramiko.py3compat import bytes_types

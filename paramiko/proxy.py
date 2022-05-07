@@ -22,7 +22,6 @@ import shlex
 import signal
 from select import select
 import socket
-import time
 
 # Try-and-ignore import so platforms w/o subprocess (eg Google App Engine) can
 # still import paramiko.
