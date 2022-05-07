@@ -37,6 +37,7 @@ from paramiko.common import (
     DEBUG,
     xffffffff,
     zero_byte,
+    timer,
 )
 from paramiko.py3compat import u, byte_ord
 from paramiko.ssh_exception import SSHException, ProxyCommandFailure
@@ -119,7 +120,7 @@ class Packetizer(object):
 
         # keepalives:
         self.__keepalive_interval = 0
-        self.__keepalive_last = time.time()
+        self.__keepalive_last = timer()
         self.__keepalive_callback = None
 
         self.__timer = None
@@ -234,7 +235,7 @@ class Packetizer(object):
         """
         self.__keepalive_interval = interval
         self.__keepalive_callback = callback
-        self.__keepalive_last = time.time()
+        self.__keepalive_last = timer()
 
     def read_timer(self):
         self.__timer_expired = True
@@ -328,7 +329,7 @@ class Packetizer(object):
         return out
 
     def write_all(self, out):
-        self.__keepalive_last = time.time()
+        self.__keepalive_last = timer()
         iteration_with_zero_as_return_value = 0
         while len(out) > 0:
             retry_write = False
@@ -595,13 +596,13 @@ class Packetizer(object):
         ):
             # wait till we're encrypting, and not in the middle of rekeying
             return
-        now = time.time()
+        now = timer()
         if now > self.__keepalive_last + self.__keepalive_interval:
             self.__keepalive_callback()
             self.__keepalive_last = now
 
     def _read_timeout(self, timeout):
-        start = time.time()
+        start = timer()
         while True:
             try:
                 x = self.__socket.recv(128)
@@ -617,7 +618,7 @@ class Packetizer(object):
                     raise
             if self.__closed:
                 raise EOFError()
-            now = time.time()
+            now = timer()
             if now - start >= timeout:
                 raise socket.timeout()
         return x

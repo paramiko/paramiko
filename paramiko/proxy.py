@@ -32,6 +32,7 @@ try:
 except ImportError as e:
     subprocess_import_error = e
 
+from paramiko.common import timer
 from paramiko.ssh_exception import ProxyCommandFailure
 from paramiko.util import ClosingContextManager
 
@@ -95,11 +96,11 @@ class ProxyCommand(ClosingContextManager):
         """
         try:
             buffer = b""
-            start = time.time()
+            start = timer()
             while len(buffer) < size:
                 select_timeout = None
                 if self.timeout is not None:
-                    elapsed = time.time() - start
+                    elapsed = timer() - start
                     if elapsed >= self.timeout:
                         raise socket.timeout()
                     select_timeout = self.timeout - elapsed

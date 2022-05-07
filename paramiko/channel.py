@@ -41,6 +41,7 @@ from paramiko.common import (
     cMSG_CHANNEL_FAILURE,
     cMSG_CHANNEL_EOF,
     cMSG_CHANNEL_CLOSE,
+    timer
 )
 from paramiko.message import Message
 from paramiko.py3compat import bytes_types
@@ -1314,10 +1315,10 @@ class Channel(ClosingContextManager):
             while self.out_window_size == 0:
                 if self.closed or self.eof_sent:
                     return 0
-                then = time.time()
+                then = timer()
                 self.out_buffer_cv.wait(timeout)
                 if timeout is not None:
-                    timeout -= time.time() - then
+                    timeout -= timer() - then
                     if timeout <= 0.0:
                         raise socket.timeout()
         # we have some window to squeeze into

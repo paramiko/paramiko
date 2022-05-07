@@ -21,6 +21,7 @@ Common constants and global variables.
 """
 import logging
 from paramiko.py3compat import byte_chr, PY2, long, b
+import time
 
 (
     MSG_DISCONNECT,
@@ -247,3 +248,6 @@ MIN_PACKET_SIZE = 2 ** 12
 
 # Max windows size according to http://www.ietf.org/rfc/rfc4254.txt
 MAX_WINDOW_SIZE = 2 ** 32 - 1
+
+# Monotonic clock for measuring durations and timeouts
+timer = time.time

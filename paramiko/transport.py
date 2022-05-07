@@ -86,6 +86,7 @@ from paramiko.common import (
     MSG_NAMES,
     MSG_EXT_INFO,
     cMSG_EXT_INFO,
+    timer,
 )
 from paramiko.compress import ZlibCompressor, ZlibDecompressor
 from paramiko.dsskey import DSSKey
@@ -697,7 +698,7 @@ class Transport(threading.Thread, ClosingContextManager):
         # synchronous, wait for a result
         self.completion_event = event = threading.Event()
         self.start()
-        max_time = time.time() + timeout if timeout is not None else None
+        max_time = timer() + timeout if timeout is not None else None
         while True:
             event.wait(0.1)
             if not self.active:
@@ -706,7 +707,7 @@ class Transport(threading.Thread, ClosingContextManager):
                     raise e
                 raise SSHException("Negotiation failed.")
             if event.is_set() or (
-                timeout is not None and time.time() >= max_time
+                timeout is not None and timer() >= max_time
             ):
                 break
 
@@ -1048,7 +1049,7 @@ class Transport(threading.Thread, ClosingContextManager):
         finally:
             self.lock.release()
         self._send_user_message(m)
-        start_ts = time.time()
+        start_ts = timer()
         while True:
             event.wait(0.1)
             if not self.active:
@@ -1058,7 +1059,7 @@ class Transport(threading.Thread, ClosingContextManager):
                 raise e
             if event.is_set():
                 break
-            elif start_ts + timeout < time.time():
+            elif start_ts + timeout < timer():
                 raise SSHException("Timeout opening channel.")
         chan = self._channels.get(chanid)
         if chan is not None:
@@ -1905,7 +1906,7 @@ class Transport(threading.Thread, ClosingContextManager):
         send a message, but block if we're in key negotiation.  this is used
         for user-initiated requests.
         """
-        start = time.time()
+        start = timer()
         while True:
             self.clear_to_send.wait(0.1)
             if not self.active:
@@ -1917,7 +1918,7 @@ class Transport(threading.Thread, ClosingContextManager):
             if self.clear_to_send.is_set():
                 break
             self.clear_to_send_lock.release()
-            if time.time() > start + self.clear_to_send_timeout:
+            if timer() > start + self.clear_to_send_timeout:
                 raise SSHException(
                     "Key-exchange timed out waiting for key negotiation"
                 )  # noqa
