@@ -22,6 +22,7 @@ import shlex
 import signal
 from select import select
 import socket
+import time
 
 # Try-and-ignore import so platforms w/o subprocess (eg Google App Engine) can
 # still import paramiko.
@@ -31,7 +32,6 @@ try:
 except ImportError as e:
     subprocess_import_error = e
 
-from paramiko.common import timer
 from paramiko.ssh_exception import ProxyCommandFailure
 from paramiko.util import ClosingContextManager
 
@@ -95,11 +95,11 @@ class ProxyCommand(ClosingContextManager):
         """
         try:
             buffer = b""
-            start = timer()
+            start = time.monotonic()
             while len(buffer) < size:
                 select_timeout = None
                 if self.timeout is not None:
-                    elapsed = timer() - start
+                    elapsed = time.monotonic() - start
                     if elapsed >= self.timeout:
                         raise socket.timeout()
                     select_timeout = self.timeout - elapsed

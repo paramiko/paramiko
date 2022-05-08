@@ -24,7 +24,7 @@ read operations are blocking and can have a timeout set.
 
 import array
 import threading
-from paramiko.common import timer
+import time
 from paramiko.py3compat import PY2, b
 
 
@@ -156,10 +156,10 @@ class BufferedPipe(object):
                 # loop here in case we get woken up but a different thread has
                 # grabbed everything in the buffer.
                 while (len(self._buffer) == 0) and not self._closed:
-                    then = timer()
+                    then = time.monotonic()
                     self._cv.wait(timeout)
                     if timeout is not None:
-                        timeout -= timer() - then
+                        timeout -= time.monotonic() - then
                         if timeout <= 0.0:
                             raise PipeTimeout()
 

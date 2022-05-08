@@ -23,6 +23,7 @@ Abstraction for an SSH2 channel.
 import binascii
 import os
 import socket
+import time
 import threading
 
 # TODO: switch as much of py3compat.py to 'six' as possible, then use six.wraps
@@ -40,7 +41,6 @@ from paramiko.common import (
     cMSG_CHANNEL_FAILURE,
     cMSG_CHANNEL_EOF,
     cMSG_CHANNEL_CLOSE,
-    timer,
 )
 from paramiko.message import Message
 from paramiko.py3compat import bytes_types
@@ -1314,10 +1314,10 @@ class Channel(ClosingContextManager):
             while self.out_window_size == 0:
                 if self.closed or self.eof_sent:
                     return 0
-                then = timer()
+                then = time.monotonic()
                 self.out_buffer_cv.wait(timeout)
                 if timeout is not None:
-                    timeout -= timer() - then
+                    timeout -= time.monotonic() - then
                     if timeout <= 0.0:
                         raise socket.timeout()
         # we have some window to squeeze into

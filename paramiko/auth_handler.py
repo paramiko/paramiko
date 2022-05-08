@@ -21,6 +21,7 @@
 """
 
 import weakref
+import time
 
 from paramiko.common import (
     cMSG_SERVICE_REQUEST,
@@ -58,7 +59,6 @@ from paramiko.common import (
     MSG_USERAUTH_GSSAPI_MIC,
     MSG_NAMES,
     cMSG_USERAUTH_BANNER,
-    timer,
 )
 from paramiko.message import Message
 from paramiko.py3compat import b, u
@@ -234,7 +234,7 @@ class AuthHandler(object):
     def wait_for_response(self, event):
         max_ts = None
         if self.transport.auth_timeout is not None:
-            max_ts = timer() + self.transport.auth_timeout
+            max_ts = time.monotonic() + self.transport.auth_timeout
         while True:
             event.wait(0.1)
             if not self.transport.is_active():
@@ -244,7 +244,7 @@ class AuthHandler(object):
                 raise e
             if event.is_set():
                 break
-            if max_ts is not None and max_ts <= timer():
+            if max_ts is not None and max_ts <= time.monotonic():
                 raise AuthenticationException("Authentication timeout.")
 
         if not self.is_authenticated():
