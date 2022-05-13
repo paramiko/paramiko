@@ -35,6 +35,7 @@ class SFTPAttributes(object):
         - ``st_mode``
         - ``st_atime``
         - ``st_mtime``
+        - ``st_ctime``
 
     Because SFTP allows flags to have other arbitrary named attributes, these
     are stored in a dict named ``attr``.  Occasionally, the filename is also
@@ -58,6 +59,7 @@ class SFTPAttributes(object):
         self.st_mode = None
         self.st_atime = None
         self.st_mtime = None
+        self.st_ctime = None
         self.attr = {}
 
     @classmethod
@@ -77,6 +79,7 @@ class SFTPAttributes(object):
         attr.st_mode = obj.st_mode
         attr.st_atime = obj.st_atime
         attr.st_mtime = obj.st_mtime
+        attr.st_ctime = obj.st_ctime
         if filename is not None:
             attr.filename = filename
         return attr
@@ -107,6 +110,7 @@ class SFTPAttributes(object):
         if self._flags & self.FLAG_AMTIME:
             self.st_atime = msg.get_int()
             self.st_mtime = msg.get_int()
+            self.st_ctime = msg.get_int()
         if self._flags & self.FLAG_EXTENDED:
             count = msg.get_int()
             for i in range(count):
@@ -136,6 +140,7 @@ class SFTPAttributes(object):
             # throw away any fractional seconds
             msg.add_int(long(self.st_atime))
             msg.add_int(long(self.st_mtime))
+            msg.add_int(long(self.st_ctime))
         if self._flags & self.FLAG_EXTENDED:
             msg.add_int(len(self.attr))
             for key, val in self.attr.items():
@@ -153,6 +158,8 @@ class SFTPAttributes(object):
             out += "mode=" + oct(self.st_mode) + " "
         if (self.st_atime is not None) and (self.st_mtime is not None):
             out += "atime={} mtime={} ".format(self.st_atime, self.st_mtime)
+        if (self.st_ctime is not None):
+            out += "ctime={} ".format(self.st_ctime)
         for k, v in self.attr.items():
             out += '"{}"={!r} '.format(str(k), v)
         out += "]"
