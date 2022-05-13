@@ -2,6 +2,11 @@
 Changelog
 =========
 
+- :bug:`2008` (via :issue:`2010`) Windows-native SSH agent support as merged in
+  2.10 could encounter ``Errno 22`` ``OSError`` exceptions in some scenarios
+  (eg server not cleanly closing a relevant named pipe). This has been worked
+  around and should be less problematic. Reported by Danilo Campana Fuchs and
+  patched by Jun Omae.
 - :release:`2.10.4 <2022-04-25>`
 - :release:`2.9.4 <2022-04-25>`
 - :support:`1838 backported` (via :issue:`1870`/:issue:`2028`) Update
