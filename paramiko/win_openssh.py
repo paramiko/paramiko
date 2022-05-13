@@ -18,23 +18,39 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
 
 import os.path
+import time
 
 PIPE_NAME = r"\\.\pipe\openssh-ssh-agent"
 
 
 def can_talk_to_agent():
-    return os.path.exists(PIPE_NAME)
+    # use os.listdir() instead of os.path.exists(), because os.path.exists()
+    # uses CreateFileW() API and the pipe cannot be reopen unless the server
+    # calls DisconnectNamedPipe().
+    dir_, name = os.path.split(PIPE_NAME)
+    name = name.lower()
+    return any(name == n.lower() for n in os.listdir(dir_))
 
 
 class OpenSSHAgentConnection:
     def __init__(self):
-        self._pipe = open(PIPE_NAME, "rb+", buffering=0)
+        while True:
+            try:
+                self._pipe = os.open(PIPE_NAME, os.O_RDWR | os.O_BINARY)
+            except OSError as e:
+                # retry when errno 22 which means that the server has not
+                # called DisconnectNamedPipe() yet.
+                if e.errno != 22:
+                    raise
+            else:
+                break
+            time.sleep(0.1)
 
     def send(self, data):
-        return self._pipe.write(data)
+        return os.write(self._pipe, data)
 
     def recv(self, n):
-        return self._pipe.read(n)
+        return os.read(self._pipe, n)
 
     def close(self):
-        return self._pipe.close()
+        return os.close(self._pipe)
