@@ -2,6 +2,13 @@
 Changelog
 =========
 
+- :bug:`2017` OpenSSH 7.7 and older has a bug preventing it from understanding
+  how to perform SHA2 signature verification for RSA certificates (specifically
+  certs - not keys), so when we added SHA2 support it broke all clients using
+  RSA certificates with these servers. This has been fixed in a manner similar
+  to what OpenSSH's own client does: a version check is performed and the
+  algorithm used is downgraded if needed. Reported by Adarsh Chauhan, with fix
+  suggested by Jun Omae.
 - :release:`2.9.4 <2022-04-25>`
 - :support:`1838 backported` (via :issue:`1870`/:issue:`2028`) Update
   ``camelCase`` method calls against the ``threading`` module to be
