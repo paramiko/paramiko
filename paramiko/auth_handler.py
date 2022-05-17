@@ -22,6 +22,7 @@
 
 import weakref
 import time
+import re
 
 from paramiko.common import (
     cMSG_SERVICE_REQUEST,
@@ -298,6 +299,23 @@ class AuthHandler(object):
                 key_type
             ),
         )
+        # NOTE re #2017: When the key is an RSA cert and the remote server is
+        # OpenSSH 7.7 or earlier, always use ssh-rsa-cert-v01@openssh.com.
+        # Those versions of the server won't support rsa-sha2 family sig algos
+        # for certs specifically, and in tandem with various server bugs
+        # regarding server-sig-algs, it's impossible to fit this into the rest
+        # of the logic here.
+        if key_type.endswith("-cert-v01@openssh.com") and re.search(
+            r"-OpenSSH_(?:[1-6]|7\.[0-7])", self.transport.remote_version
+        ):
+            pubkey_algo = "ssh-rsa-cert-v01@openssh.com"
+            self.transport._agreed_pubkey_algorithm = pubkey_algo
+            self._log(DEBUG, "OpenSSH<7.8 + RSA cert = forcing ssh-rsa!")
+            self._log(
+                DEBUG, "Agreed upon {!r} pubkey algorithm".format(pubkey_algo)
+            )
+            return pubkey_algo
+        # Normal attempts to handshake follow from here.
         # Only consider RSA algos from our list, lest we agree on another!
         my_algos = [x for x in self.transport.preferred_pubkeys if "rsa" in x]
         self._log(DEBUG, "Our pubkey algorithm list: {}".format(my_algos))

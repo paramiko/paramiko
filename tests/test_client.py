@@ -152,7 +152,12 @@ class ClientTest(unittest.TestCase):
             self.sockl.close()
 
     def _run(
-        self, allowed_keys=None, delay=0, public_blob=None, kill_event=None
+        self,
+        allowed_keys=None,
+        delay=0,
+        public_blob=None,
+        kill_event=None,
+        server_name=None,
     ):
         if allowed_keys is None:
             allowed_keys = FINGERPRINTS.keys()
@@ -164,6 +169,8 @@ class ClientTest(unittest.TestCase):
             self.socks.close()
             return
         self.ts = paramiko.Transport(self.socks)
+        if server_name is not None:
+            self.ts.local_version = server_name
         keypath = _support("test_rsa.key")
         host_key = paramiko.RSAKey.from_private_key_file(keypath)
         self.ts.add_server_key(host_key)
@@ -179,11 +186,11 @@ class ClientTest(unittest.TestCase):
         """
         (Most) kwargs get passed directly into SSHClient.connect().
 
-        The exception is ``allowed_keys`` which is stripped and handed to the
-        ``NullServer`` used for testing.
+        The exceptions are ``allowed_keys``/``public_blob``/``server_name``
+        which are stripped and handed to the ``NullServer`` used for testing.
         """
         run_kwargs = {"kill_event": self.kill_event}
-        for key in ("allowed_keys", "public_blob"):
+        for key in ("allowed_keys", "public_blob", "server_name"):
             run_kwargs[key] = kwargs.pop(key, None)
         # Server setup
         threading.Thread(target=self._run, kwargs=run_kwargs).start()
@@ -205,7 +212,9 @@ class ClientTest(unittest.TestCase):
         self.event.wait(1.0)
         self.assertTrue(self.event.is_set())
         self.assertTrue(self.ts.is_active())
-        self.assertEqual("slowdive", self.ts.get_username())
+        self.assertEqual(
+            self.connect_kwargs["username"], self.ts.get_username()
+        )
         self.assertEqual(True, self.ts.is_authenticated())
         self.assertEqual(False, self.tc.get_transport().gss_kex_used)
 
@@ -344,6 +353,29 @@ class SSHClientTest(ClientTest):
                     "{}-cert.pub".format(key_path)
                 ),
             )
+
+    def _cert_algo_test(self, ver, alg):
+        # Issue #2017; see auth_handler.py
+        self.connect_kwargs["username"] = "somecertuser"  # neuter pw auth
+        self._test_connection(
+            # NOTE: SSHClient is able to take either the key or the cert & will
+            # set up its internals as needed
+            key_filename=_support(
+                os.path.join("cert_support", "test_rsa.key-cert.pub")
+            ),
+            server_name="SSH-2.0-OpenSSH_{}".format(ver),
+        )
+        assert (
+            self.tc._transport._agreed_pubkey_algorithm
+            == "{}-cert-v01@openssh.com".format(alg)
+        )
+
+    def test_old_openssh_needs_ssh_rsa_for_certs_not_rsa_sha2(self):
+        self._cert_algo_test(ver="7.7", alg="ssh-rsa")
+
+    def test_newer_openssh_uses_rsa_sha2_for_certs_not_ssh_rsa(self):
+        # NOTE: 512 happens to be first in our list and is thus chosen
+        self._cert_algo_test(ver="7.8", alg="rsa-sha2-512")
 
     def test_default_key_locations_trigger_cert_loads_if_found(self):
         # TODO: what it says on the tin: ~/.ssh/id_rsa tries to load

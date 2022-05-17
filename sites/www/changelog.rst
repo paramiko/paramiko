@@ -2,6 +2,18 @@
 Changelog
 =========
 
+- :bug:`1933` Align signature verification algorithm with OpenSSH re:
+  zero-padding signatures which don't match their nominal size/length. This
+  shouldn't affect most users, but will help Paramiko-implemented SSH servers
+  handle poorly behaved clients such as PuTTY. Thanks to Jun Omae for catch &
+  patch.
+- :bug:`2017` OpenSSH 7.7 and older has a bug preventing it from understanding
+  how to perform SHA2 signature verification for RSA certificates (specifically
+  certs - not keys), so when we added SHA2 support it broke all clients using
+  RSA certificates with these servers. This has been fixed in a manner similar
+  to what OpenSSH's own client does: a version check is performed and the
+  algorithm used is downgraded if needed. Reported by Adarsh Chauhan, with fix
+  suggested by Jun Omae.
 - :support:`2038` (via :issue:`2039`) Recent versions of Cryptography have
   deprecated Blowfish algorithm support; in lieu of an easy method for users to
   remove it from the list of algorithms Paramiko tries to import and use, we've
