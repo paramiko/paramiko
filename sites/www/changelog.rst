@@ -2,6 +2,18 @@
 Changelog
 =========
 
+- :bug:`1933` Align signature verification algorithm with OpenSSH re:
+  zero-padding signatures which don't match their nominal size/length. This
+  shouldn't affect most users, but will help Paramiko-implemented SSH servers
+  handle poorly behaved clients such as PuTTY. Thanks to Jun Omae for catch &
+  patch.
+- :bug:`2017` OpenSSH 7.7 and older has a bug preventing it from understanding
+  how to perform SHA2 signature verification for RSA certificates (specifically
+  certs - not keys), so when we added SHA2 support it broke all clients using
+  RSA certificates with these servers. This has been fixed in a manner similar
+  to what OpenSSH's own client does: a version check is performed and the
+  algorithm used is downgraded if needed. Reported by Adarsh Chauhan, with fix
+  suggested by Jun Omae.
 - :bug:`2008` (via :issue:`2010`) Windows-native SSH agent support as merged in
   2.10 could encounter ``Errno 22`` ``OSError`` exceptions in some scenarios
   (eg server not cleanly closing a relevant named pipe). This has been worked
