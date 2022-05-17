@@ -370,9 +370,11 @@ class SSHClientTest(ClientTest):
             == "{}-cert-v01@openssh.com".format(alg)
         )
 
+    @requires_sha1_signing
     def test_old_openssh_needs_ssh_rsa_for_certs_not_rsa_sha2(self):
         self._cert_algo_test(ver="7.7", alg="ssh-rsa")
 
+    @requires_sha1_signing
     def test_newer_openssh_uses_rsa_sha2_for_certs_not_ssh_rsa(self):
         # NOTE: 512 happens to be first in our list and is thus chosen
         self._cert_algo_test(ver="7.8", alg="rsa-sha2-512")
