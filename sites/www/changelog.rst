@@ -2,6 +2,11 @@
 Changelog
 =========
 
+- :bug:`1933` Align signature verification algorithm with OpenSSH re:
+  zero-padding signatures which don't match their nominal size/length. This
+  shouldn't affect most users, but will help Paramiko-implemented SSH servers
+  handle poorly behaved clients such as PuTTY. Thanks to Jun Omae for catch &
+  patch.
 - :bug:`2017` OpenSSH 7.7 and older has a bug preventing it from understanding
   how to perform SHA2 signature verification for RSA certificates (specifically
   certs - not keys), so when we added SHA2 support it broke all clients using
