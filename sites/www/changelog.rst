@@ -2,6 +2,7 @@
 Changelog
 =========
 
+- :release:`2.9.5 <2022-05-16>`
 - :bug:`1933` Align signature verification algorithm with OpenSSH re:
   zero-padding signatures which don't match their nominal size/length. This
   shouldn't affect most users, but will help Paramiko-implemented SSH servers
