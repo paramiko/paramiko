@@ -150,10 +150,7 @@ class RSAKey(PKey):
 
         try:
             key.verify(
-                sign,
-                data,
-                padding.PKCS1v15(),
-                self.HASHES[sig_algorithm](),
+                sign, data, padding.PKCS1v15(), self.HASHES[sig_algorithm]()
             )
         except InvalidSignature:
             return False
