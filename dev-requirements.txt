@@ -1,6 +1,6 @@
 # Invocations for common project tasks
 invoke==1.6.0
-invocations==2.3.0
+invocations==2.6.0
 pytest==4.4.2
 pytest-relaxed==1.1.5
 # pytest-xdist for test dir watching and the inv guard task
