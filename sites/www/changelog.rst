@@ -2,6 +2,12 @@
 Changelog
 =========
 
+- :feature:`2058` (solves :issue:`1587` and possibly others) Add an explicit
+  ``max_concurrent_prefetch_requests`` argument to `paramiko.client.SSHClient.get`
+  and `paramiko.client.SSHClient.getfo`, allowing users to limit the number
+  of concurrent requests used during prefetch. Patch by ``@kschoelhorn``, with
+  a test by ``@bwinston-sdp``.
+
 - :release:`3.2.0 <2023-05-25>`
 - :bug:`- major` Fixed a very sneaky bug found at the apparently
   rarely-traveled intersection of ``RSA-SHA2`` keys, certificates, SSH agents,
