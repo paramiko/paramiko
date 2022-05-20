@@ -186,6 +186,11 @@ class KeyTest(unittest.TestCase):
                 with pytest.raises(SSHException, match=str(exception)):
                     RSAKey.from_private_key_file(_support("test_rsa.key"))
 
+    def test_loading_empty_keys_errors_usefully(self):
+        # #1599 - raise SSHException instead of IndexError
+        with pytest.raises(SSHException, match="no lines"):
+            RSAKey.from_private_key_file(_support("blank_rsa.key"))
+
     def test_load_rsa_password(self):
         key = RSAKey.from_private_key_file(
             _support("test_rsa_password.key"), "television"
