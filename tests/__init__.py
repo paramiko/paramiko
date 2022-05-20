@@ -46,7 +46,7 @@ def _decorate_with_locale(category, try_locales, test_method):
                 try_locales.pop(0)
             else:
                 try:
-                    return test_method(testself)
+                    return test_method(testself, sftp)
                 finally:
                     locale.setlocale(category, original)
         skipTest = getattr(testself, "skipTest", None)
