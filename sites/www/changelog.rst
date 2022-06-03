@@ -2,6 +2,13 @@
 Changelog
 =========
 
+- :bug:`1822` (via, and relating to, far too many other issues to mention here)
+  Update `~paramiko.client.SSHClient` so it explicitly closes its wrapped
+  socket object upon encountering socket errors at connection time. This should
+  help somewhat with certain classes of memory leaks, resource warnings, and/or
+  errors (though we hasten to remind everyone that Client and Transport have
+  their own ``.close()`` methods for use in non-error situations!). Patch
+  courtesy of ``@YoavCohen``.
 - bug:`1637` (via :issue:`1599`) Raise `SSHException` explicitly when blank
   private key data is loaded, instead of the natural result of ``IndexError``.
   This should help more bits of Paramiko or Paramiko-adjacent codebases to
