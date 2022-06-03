@@ -33,6 +33,7 @@ import warnings
 import weakref
 from tempfile import mkstemp
 
+import pytest
 from pytest_relaxed import raises
 from mock import patch, Mock
 
@@ -472,6 +473,23 @@ class SSHClientTest(ClientTest):
         gc.collect()
 
         assert p() is None
+
+    @patch("paramiko.client.socket.socket")
+    @patch("paramiko.client.socket.getaddrinfo")
+    def test_closes_socket_on_socket_errors(self, getaddrinfo, mocket):
+        getaddrinfo.return_value = (
+            ("irrelevant", None, None, None, "whatever"),
+        )
+
+        class SocksToBeYou(socket.error):
+            pass
+
+        my_socket = mocket.return_value
+        my_socket.connect.side_effect = SocksToBeYou
+        client = SSHClient()
+        with pytest.raises(SocksToBeYou):
+            client.connect(hostname="nope")
+        my_socket.close.assert_called_once_with()
 
     def test_client_can_be_used_as_context_manager(self):
         """
