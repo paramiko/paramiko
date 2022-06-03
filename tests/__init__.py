@@ -49,9 +49,8 @@ def _decorate_with_locale(category, try_locales, test_method):
                     return test_method(testself, *args, **kwargs)
                 finally:
                     locale.setlocale(category, original)
-        skipTest = getattr(testself, "skipTest", None)
-        if skipTest is not None:
-            skipTest("No usable locales installed")
+        # No locales could be used? Just skip the decorated test :(
+        skip("No usable locales installed")
 
     functools.update_wrapper(_test_under_locale, test_method)
     return _test_under_locale
