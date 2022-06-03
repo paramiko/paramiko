@@ -6,7 +6,11 @@ from socket import gaierror
 
 from paramiko.py3compat import string_types
 
-from invoke import Result
+try:
+    from invoke import Result
+except ImportError:
+    Result = None
+
 from mock import patch
 from pytest import raises, mark, fixture
 
@@ -742,6 +746,7 @@ def _expect(success_on):
     return inner
 
 
+@mark.skipif(Result is None, reason="requires invoke package")
 class TestMatchExec(object):
     @patch("paramiko.config.invoke", new=None)
     @patch("paramiko.config.invoke_import_error", new=ImportError("meh"))
