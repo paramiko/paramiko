@@ -2,6 +2,13 @@
 Changelog
 =========
 
+- :bug:`1822` (via, and relating to, far too many other issues to mention here)
+  Update `~paramiko.client.SSHClient` so it explicitly closes its wrapped
+  socket object upon encountering socket errors at connection time. This should
+  help somewhat with certain classes of memory leaks, resource warnings, and/or
+  errors (though we hasten to remind everyone that Client and Transport have
+  their own ``.close()`` methods for use in non-error situations!). Patch
+  courtesy of ``@YoavCohen``.
 - :support:`1985` Add ``six`` explicitly to install-requires; it snuck into
   active use at some point but has only been indicated by transitive dependency
   on ``bcrypt`` until they somewhat-recently dropped it. This will be
