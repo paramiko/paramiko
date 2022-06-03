@@ -53,7 +53,7 @@ workflows:
           name: Style check
       # Main test run, w/ coverage, and latest-supported cryptography
       - orb/coverage:
-          name: Test 3.6 (w/ coverage, latest crypto)
+          name: Test
       # Non-coverage runs w/ other crypto versions.
       # (Phrased as 2-dimensional matrix but 3.6 only for now to save credits)
       - orb/test:
@@ -75,12 +75,12 @@ workflows:
       - sdist-test-suite:
           name: Test within sdist
           requires:
-            - "Test 3.6 (w/ coverage, latest crypto)"
+            - "Test"
             - "Release test"
       # Test other interpreters if main passed
       - orb/test:
           name: Test << matrix.version >>
-          requires: ["Test 3.6 (w/ coverage, latest crypto)"]
+          requires: ["Test"]
           matrix:
             parameters:
               version: ["3.7", "3.8", "3.9"]
@@ -88,4 +88,4 @@ workflows:
       # all those credits if the main tests would also fail...)
       - orb/docs:
           name: "Docs"
-          requires: ["Test 3.6 (w/ coverage, latest crypto)"]
+          requires: ["Test"]
