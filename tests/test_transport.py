@@ -276,6 +276,50 @@ class TransportTest(unittest.TestCase):
         self.assertTrue(event.is_set())
         self.assertTrue(self.ts.is_active())
 
+    def _test_eof_on_client_check_banner(self):
+        """
+        verify that connection closed by server while reading banner in client
+        mode.
+        """
+
+        def close_server_socket():
+            time.sleep(1.0)
+            self.socks.close()
+
+        th = threading.Thread(target=close_server_socket)
+        th.daemon = True
+        th.start()
+        try:
+            self.tc.connect(username="slowdive", password="pygmalion")
+        except SSHException as e:
+            self.assertEqual(
+                "Connection closed by remote host while reading SSH protocol banner",  # noqa
+                str(e),
+            )
+        else:
+            self.fail("expected exception")
+        th.join()
+
+    def test_eof_on_server_check_banner(self):
+        """
+        verify that connection closed by client while reading banner in server
+        mode.
+        """
+        event = threading.Event()
+        server = NullServer()
+        self.assertFalse(event.is_set())
+        self.ts.start_server(event, server)
+        self.assertEqual(None, self.ts.get_exception())
+        self.sockc.close()  # close client socket
+        event.wait(1.0)
+        self.assertTrue(event.is_set())
+        e = self.ts.get_exception()
+        self.assertIsInstance(e, SSHException)
+        self.assertEqual(
+            "Connection closed by remote host while reading SSH protocol banner",  # noqa
+            str(e),
+        )
+
     def test_special(self):
         """
         verify that the client can demand odd handshake settings, and can
