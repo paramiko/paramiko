@@ -20,12 +20,12 @@
 SSH client & key policies
 """
 
-from binascii import hexlify
 import getpass
 import inspect
 import os
 import socket
 import warnings
+from binascii import hexlify
 from errno import ECONNREFUSED, EHOSTUNREACH, ETIMEDOUT
 
 from paramiko.agent import Agent
@@ -38,12 +38,12 @@ from paramiko.hostkeys import HostKeys
 from paramiko.py3compat import string_types
 from paramiko.rsakey import RSAKey
 from paramiko.ssh_exception import (
-    SSHException,
     BadHostKeyException,
     NoValidConnectionsError,
+    SSHException,
 )
 from paramiko.transport import Transport
-from paramiko.util import retry_on_signal, ClosingContextManager
+from paramiko.util import ClosingContextManager, retry_on_signal
 
 
 class SSHClient(ClosingContextManager):
