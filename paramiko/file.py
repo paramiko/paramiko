@@ -58,7 +58,10 @@ class BufferedFile (ClosingContextManager):
         self._size = 0
 
     def __del__(self):
-        self.close()
+        try:
+            self.close()
+        except TypeError:
+            pass
         
     def __iter__(self):
         """
