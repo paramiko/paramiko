@@ -31,6 +31,7 @@ from errno import ECONNREFUSED, EHOSTUNREACH
 from paramiko.agent import Agent
 from paramiko.common import DEBUG
 from paramiko.config import SSH_PORT
+from paramiko.pkey import PKey
 from paramiko.dsskey import DSSKey
 from paramiko.ecdsakey import ECDSAKey
 from paramiko.ed25519key import Ed25519Key
@@ -281,7 +282,8 @@ class SSHClient(ClosingContextManager):
             decryption if ``passphrase`` is not given.
         :param str passphrase:
             Used for decrypting private keys.
-        :param .PKey pkey: an optional private key to use for authentication
+        :param .PKey pkey: an optional private key, or list of private keys, to
+            use for authentication
         :param str key_filename:
             the filename, or list of filenames, of optional private key(s)
             and/or certs to try for authentication
@@ -429,6 +431,13 @@ class SSHClient(ClosingContextManager):
         if username is None:
             username = getpass.getuser()
 
+        if pkey is None:
+            pkeys = []
+        elif isinstance(pkey, PKey):
+            pkeys = [pkey]
+        else:
+            pkeys = pkey
+
         if key_filename is None:
             key_filenames = []
         elif isinstance(key_filename, string_types):
@@ -439,7 +448,7 @@ class SSHClient(ClosingContextManager):
         self._auth(
             username,
             password,
-            pkey,
+            pkeys,
             key_filenames,
             allow_agent,
             look_for_keys,
@@ -607,7 +616,7 @@ class SSHClient(ClosingContextManager):
         self,
         username,
         password,
-        pkey,
+        pkeys,
         key_filenames,
         allow_agent,
         look_for_keys,
@@ -658,7 +667,7 @@ class SSHClient(ClosingContextManager):
             except Exception as e:
                 saved_exception = e
 
-        if pkey is not None:
+        for pkey in pkeys:
             try:
                 self._log(
                     DEBUG,
@@ -672,6 +681,7 @@ class SSHClient(ClosingContextManager):
                 two_factor = allowed_types & two_factor_types
                 if not two_factor:
                     return
+                break
             except SSHException as e:
                 saved_exception = e
 
@@ -681,6 +691,12 @@ class SSHClient(ClosingContextManager):
                     try:
                         key = self._key_from_filepath(
                             key_filename, pkey_class, passphrase
+                        )
+                        self._log(
+                            DEBUG,
+                            "Trying SSH key {} ({})".format(
+                                hexlify(key.get_fingerprint()), key_filename
+                            ),
                         )
                         allowed_types = set(
                             self._transport.auth_publickey(username, key)
