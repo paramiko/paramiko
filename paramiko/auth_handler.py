@@ -305,10 +305,10 @@ class AuthHandler(object):
         # for certs specifically, and in tandem with various server bugs
         # regarding server-sig-algs, it's impossible to fit this into the rest
         # of the logic here.
-        if key_type.endswith("-cert-v01@openssh.com") and re.search(
-            r"-OpenSSH_(?:[1-6]|7\.[0-7])", self.transport.remote_version
-        ):
-            pubkey_algo = "ssh-rsa-cert-v01@openssh.com"
+        if re.search(r"-OpenSSH_(?:[1-6]|7\.[0-7])", self.transport.remote_version):
+            pubkey_algo = "ssh-rsa"
+            if key_type.endswith("-cert-v01@openssh.com"):
+                pubkey_algo += "-cert-v01@openssh.com"
             self.transport._agreed_pubkey_algorithm = pubkey_algo
             self._log(DEBUG, "OpenSSH<7.8 + RSA cert = forcing ssh-rsa!")
             self._log(
