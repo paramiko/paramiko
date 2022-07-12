@@ -2320,12 +2320,12 @@ class Transport(threading.Thread, ClosingContextManager):
             if (self._modulus_pack is None) and (len(kex_mp) > 0):
                 # can't do group-exchange if we don't have a pack of potential
                 # primes
-                pkex = [
+                kex_algos = [
                     k
                     for k in self.get_security_options().kex
                     if not k.startswith(mp_required_prefix)
                 ]
-                self.get_security_options().kex = pkex
+                self.get_security_options().kex = kex_algos
             available_server_keys = list(
                 filter(
                     list(self.server_key_dict.keys()).__contains__,
@@ -2346,13 +2346,13 @@ class Transport(threading.Thread, ClosingContextManager):
             # NOTE: doing this here handily means we don't even consider this
             # value when agreeing on real kex algo to use (which is a common
             # pitfall when adding this apparently).
-            if "ext-info-c" not in self.get_security_options().kex:
-                self.get_security_options().kex + ("ext-info-c",)
+            if "ext-info-c" not in kex_algos:
+                kex_algos.append("ext-info-c")
 
         m = Message()
         m.add_byte(cMSG_KEXINIT)
         m.add_bytes(os.urandom(16))
-        m.add_list(self.get_security_options().kex)
+        m.add_list(kex_algos)
         m.add_list(available_server_keys)
         m.add_list(self.preferred_ciphers)
         m.add_list(self.preferred_ciphers)
