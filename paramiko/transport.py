@@ -2346,12 +2346,13 @@ class Transport(threading.Thread, ClosingContextManager):
             # NOTE: doing this here handily means we don't even consider this
             # value when agreeing on real kex algo to use (which is a common
             # pitfall when adding this apparently).
-            kex_algos.append("ext-info-c")
+            if "ext-info-c" not in self.get_security_options().kex:
+                self.get_security_options().kex + ("ext-info-c",)
 
         m = Message()
         m.add_byte(cMSG_KEXINIT)
         m.add_bytes(os.urandom(16))
-        m.add_list(kex_algos)
+        m.add_list(self.get_security_options().kex)
         m.add_list(available_server_keys)
         m.add_list(self.preferred_ciphers)
         m.add_list(self.preferred_ciphers)
