@@ -140,7 +140,7 @@ class PKey(object):
         return cmp(self.asbytes(), other.asbytes())  # noqa
 
     def __eq__(self, other):
-        return self._fields == other._fields
+        return isinstance(other, PKey) and self._fields == other._fields
 
     def __hash__(self):
         return hash(self._fields)
@@ -324,6 +324,8 @@ class PKey(object):
 
     def _read_private_key(self, tag, f, password=None):
         lines = f.readlines()
+        if not lines:
+            raise SSHException("no lines in {} private key file".format(tag))
 
         # find the BEGIN tag
         start = 0

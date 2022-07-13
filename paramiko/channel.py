@@ -1066,7 +1066,7 @@ class Channel(ClosingContextManager):
             if self.ultra_debug:
                 self._log(DEBUG, "window up {}".format(nbytes))
             self.out_window_size += nbytes
-            self.out_buffer_cv.notifyAll()
+            self.out_buffer_cv.notify_all()
         finally:
             self.lock.release()
 
@@ -1230,7 +1230,7 @@ class Channel(ClosingContextManager):
         self.closed = True
         self.in_buffer.close()
         self.in_stderr_buffer.close()
-        self.out_buffer_cv.notifyAll()
+        self.out_buffer_cv.notify_all()
         # Notify any waiters that we are closed
         self.event.set()
         self.status_event.set()

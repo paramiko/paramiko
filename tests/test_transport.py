@@ -196,9 +196,9 @@ class TransportTest(unittest.TestCase):
     def test_security_options(self):
         o = self.tc.get_security_options()
         self.assertEqual(type(o), SecurityOptions)
-        self.assertTrue(("aes256-cbc", "blowfish-cbc") != o.ciphers)
-        o.ciphers = ("aes256-cbc", "blowfish-cbc")
-        self.assertEqual(("aes256-cbc", "blowfish-cbc"), o.ciphers)
+        self.assertTrue(("aes256-cbc", "aes192-cbc") != o.ciphers)
+        o.ciphers = ("aes256-cbc", "aes192-cbc")
+        self.assertEqual(("aes256-cbc", "aes192-cbc"), o.ciphers)
         try:
             o.ciphers = ("aes256-cbc", "made-up-cipher")
             self.assertTrue(False)
@@ -756,7 +756,7 @@ class TransportTest(unittest.TestCase):
                 threading.Thread.__init__(
                     self, None, None, self.__class__.__name__
                 )
-                self.setDaemon(True)
+                self.daemon = True
                 self.chan = chan
                 self.iterations = iterations
                 self.done_event = done_event
@@ -780,7 +780,7 @@ class TransportTest(unittest.TestCase):
                 threading.Thread.__init__(
                     self, None, None, self.__class__.__name__
                 )
-                self.setDaemon(True)
+                self.daemon = True
                 self.chan = chan
                 self.done_event = done_event
                 self.watchdog_event = threading.Event()
@@ -1121,7 +1121,12 @@ class AlgorithmDisablingTests(unittest.TestCase):
         t = Transport(sock=Mock())
         assert t.preferred_ciphers == t._preferred_ciphers
         assert t.preferred_macs == t._preferred_macs
-        assert t.preferred_keys == t._preferred_keys
+        assert t.preferred_keys == tuple(
+            t._preferred_keys
+            + tuple(
+                "{}-cert-v01@openssh.com".format(x) for x in t._preferred_keys
+            )
+        )
         assert t.preferred_kex == t._preferred_kex
 
     def test_preferred_lists_filter_disabled_algorithms(self):
@@ -1140,6 +1145,7 @@ class AlgorithmDisablingTests(unittest.TestCase):
         assert "hmac-md5" not in t.preferred_macs
         assert "ssh-dss" in t._preferred_keys
         assert "ssh-dss" not in t.preferred_keys
+        assert "ssh-dss-cert-v01@openssh.com" not in t.preferred_keys
         assert "diffie-hellman-group14-sha256" in t._preferred_kex
         assert "diffie-hellman-group14-sha256" not in t.preferred_kex
 

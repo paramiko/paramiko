@@ -141,12 +141,16 @@ class RSAKey(PKey):
         if isinstance(key, rsa.RSAPrivateKey):
             key = key.public_key()
 
+        # NOTE: pad received signature with leading zeros, key.verify()
+        # expects a signature of key size (e.g. PuTTY doesn't pad)
+        sign = msg.get_binary()
+        diff = key.key_size - len(sign) * 8
+        if diff > 0:
+            sign = b"\x00" * ((diff + 7) // 8) + sign
+
         try:
             key.verify(
-                msg.get_binary(),
-                data,
-                padding.PKCS1v15(),
-                self.HASHES[sig_algorithm](),
+                sign, data, padding.PKCS1v15(), self.HASHES[sig_algorithm]()
             )
         except InvalidSignature:
             return False

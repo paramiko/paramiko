@@ -186,6 +186,11 @@ class KeyTest(unittest.TestCase):
                 with pytest.raises(SSHException, match=str(exception)):
                     RSAKey.from_private_key_file(_support("test_rsa.key"))
 
+    def test_loading_empty_keys_errors_usefully(self):
+        # #1599 - raise SSHException instead of IndexError
+        with pytest.raises(SSHException, match="no lines"):
+            RSAKey.from_private_key_file(_support("blank_rsa.key"))
+
     def test_load_rsa_password(self):
         key = RSAKey.from_private_key_file(
             _support("test_rsa_password.key"), "television"
@@ -625,6 +630,11 @@ class KeyTest(unittest.TestCase):
     def test_keys_are_comparable(self):
         for key1, key2 in self.keys():
             assert key1 == key2
+
+    def test_keys_are_not_equal_to_other(self):
+        for value in [None, True, ""]:
+            for key1, _ in self.keys():
+                assert key1 != value
 
     def test_keys_are_hashable(self):
         # NOTE: this isn't a great test due to hashseed randomization under

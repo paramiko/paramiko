@@ -64,6 +64,7 @@ class SSHConfig(object):
         "hostname": ["%h"],
         "identityfile": ["%C", "~", "%d", "%h", "%l", "%u", "%r"],
         "proxycommand": ["~", "%h", "%p", "%r"],
+        "proxyjump": ["%h", "%p", "%r"],
         # Doesn't seem worth making this 'special' for now, it will fit well
         # enough (no actual match-exec config key to be confused with).
         "match-exec": ["%C", "%d", "%h", "%L", "%l", "%n", "%p", "%r", "%u"],

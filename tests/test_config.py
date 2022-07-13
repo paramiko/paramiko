@@ -6,7 +6,11 @@ from socket import gaierror
 
 from paramiko.py3compat import string_types
 
-from invoke import Result
+try:
+    from invoke import Result
+except ImportError:
+    Result = None
+
 from mock import patch
 from pytest import raises, mark, fixture
 
@@ -205,6 +209,25 @@ Host test
         )
         got = config.lookup("test")["proxycommand"]
         assert got == expected
+
+    @patch("paramiko.config.getpass")
+    def test_proxyjump_token_expansion(self, getpass):
+        getpass.getuser.return_value = "gandalf"
+        config = SSHConfig.from_text(
+            """
+Host justhost
+    ProxyJump jumpuser@%h
+Host userhost
+    ProxyJump %r@%h:222
+Host allcustom
+    ProxyJump %r@%h:%p
+"""
+        )
+        assert config.lookup("justhost")["proxyjump"] == "jumpuser@justhost"
+        assert config.lookup("userhost")["proxyjump"] == "gandalf@userhost:222"
+        assert (
+            config.lookup("allcustom")["proxyjump"] == "gandalf@allcustom:22"
+        )
 
     @patch("paramiko.config.getpass")
     def test_controlpath_token_expansion(self, getpass, socket):
@@ -723,6 +746,7 @@ def _expect(success_on):
     return inner
 
 
+@mark.skipif(Result is None, reason="requires invoke package")
 class TestMatchExec(object):
     @patch("paramiko.config.invoke", new=None)
     @patch("paramiko.config.invoke_import_error", new=ImportError("meh"))
