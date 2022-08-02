@@ -14,7 +14,7 @@
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with Paramiko; if not, write to the Free Software Foundation, Inc.,
-# 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
+# 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
 
 """
 SSH client & key policies
@@ -350,6 +350,10 @@ class SSHClient(ClosingContextManager):
                     # Break out of the loop on success
                     break
                 except socket.error as e:
+                    # As mentioned in socket docs it is better
+                    # to close sockets explicitly
+                    if sock:
+                        sock.close()
                     # Raise anything that isn't a straight up connection error
                     # (such as a resolution error)
                     if e.errno not in (ECONNREFUSED, EHOSTUNREACH):
@@ -450,11 +454,13 @@ class SSHClient(ClosingContextManager):
         """
         Close this SSHClient and its underlying `.Transport`.
 
+        This should be called anytime you are done using the client object.
+
         .. warning::
-            Failure to do this may, in some situations, cause your Python
-            interpreter to hang at shutdown (often due to race conditions).
-            It's good practice to `close` your client objects anytime you're
-            done using them, instead of relying on garbage collection.
+            Paramiko registers garbage collection hooks that will try to
+            automatically close connections for you, but this is not presently
+            reliable. Failure to explicitly close your client after use may
+            lead to end-of-process hangs!
         """
         if self._transport is None:
             return

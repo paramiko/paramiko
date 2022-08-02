@@ -12,5 +12,5 @@ Host target
     User intermediate
     HostName configured
 
-Match exec "%d %h %L %l %n %p %r %u"
+Match exec "%C %d %h %L %l %n %p %r %u"
     Port 1337

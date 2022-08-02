@@ -10,3 +10,5 @@ _build
 .coverage
 .cache
 .idea
+coverage.xml
+htmlcov

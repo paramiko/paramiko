@@ -14,7 +14,7 @@
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with Paramiko; if not, write to the Free Software Foundation, Inc.,
-# 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
+# 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
 
 """
 Attempt to generalize the "feeder" part of a `.Channel`: an object which can be
@@ -101,7 +101,7 @@ class BufferedPipe(object):
             if self._event is not None:
                 self._event.set()
             self._buffer_frombytes(b(data))
-            self._cv.notifyAll()
+            self._cv.notify_all()
         finally:
             self._lock.release()
 
@@ -203,7 +203,7 @@ class BufferedPipe(object):
         self._lock.acquire()
         try:
             self._closed = True
-            self._cv.notifyAll()
+            self._cv.notify_all()
             if self._event is not None:
                 self._event.set()
         finally:
