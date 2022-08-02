@@ -210,9 +210,9 @@ def asbytes(s):
         except AttributeError:
             # If object have implemented __bytes__() method, we can use it for
             # conversion. See "Python data model reference".
-            # NOTE: We MUST check method support before calling because bytes(s)
-            # can return a zero-filled bytes object of a length `s` if `s` is
-            # one of integer types (python int() or numpy.uint() e.g.).
+            # NOTE: We MUST check method support before calling because
+            # bytes(s) can return a zero-filled bytes object of a length `s` if
+            # `s` is one of integer types (python int() or numpy.uint() e.g.).
             if hasattr(s, "__bytes__"):
                 return bytes(s)
             # Finally, just do nothing & assume this object is sufficiently
