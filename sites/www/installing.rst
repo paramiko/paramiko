@@ -26,8 +26,7 @@ Paramiko has only a few **direct dependencies**:
 
 - The big one, with its own sub-dependencies, is Cryptography; see :ref:`its
   specific note below <cryptography>` for more details;
-- `bcrypt <https://pypi.org/project/bcrypt/>`_, for Ed25519 key support;
-- `pynacl <https://pypi.org/project/PyNaCl/>`_, also for Ed25519 key support.
+- `bcrypt <https://pypi.org/project/bcrypt/>`_, for Ed25519 key w/ bcrypt-ed;
 
 There are also a number of **optional dependencies** you may install using
 `setuptools 'extras'

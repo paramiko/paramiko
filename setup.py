@@ -40,7 +40,7 @@ extras_require = {
         'gssapi>=1.4.1;platform_system!="Windows"',
         'pywin32>=2.1.8;platform_system=="Windows"',
     ],
-    "ed25519": ["pynacl>=1.0.1", "bcrypt>=3.1.3"],
+    "ed25519": ["bcrypt>=3.1.3"],
     "invoke": ["invoke>=1.3"],
 }
 everything = []
@@ -92,11 +92,6 @@ setup(
     # "full"/"all"? (probably sans gssapi which should remain optional; MAYBE
     # still sans invoke as well, not everyone uses ProxyCommand or Match exec)
     # TODO 3.0: remove six, obviously
-    install_requires=[
-        "bcrypt>=3.1.3",
-        "cryptography>=2.5",
-        "pynacl>=1.0.1",
-        "six",
-    ],
+    install_requires=["bcrypt>=3.1.3", "cryptography>=2.6", "six"],
     extras_require=extras_require,
 )
