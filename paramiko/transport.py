@@ -508,6 +508,8 @@ class Transport(threading.Thread, ClosingContextManager):
         self.completion_event = None
         # how long (seconds) to wait for the SSH banner
         self.banner_timeout = 15
+        # if we should wait longer for subsequent banner lines
+        self.use_banner_timeout_for_other_lines = False
         # how long (seconds) to wait for the handshake to finish after SSH
         # banner sent.
         self.handshake_timeout = 15
@@ -2264,6 +2266,8 @@ class Transport(threading.Thread, ClosingContextManager):
             # give them 15 seconds for the first line, then just 2 seconds
             # each additional line.  (some sites have very high latency.)
             if i == 0:
+                timeout = self.banner_timeout
+            elif self.use_banner_timeout_for_other_lines:
                 timeout = self.banner_timeout
             else:
                 timeout = 2
