@@ -122,6 +122,7 @@ class AgentProxyThread(threading.Thread):
         if sys.platform != "win32":
             return False
         from . import win_pageant
+
         return isinstance(self._agent._conn, win_pageant.PageantConnection)
 
     def run(self):
@@ -133,10 +134,13 @@ class AgentProxyThread(threading.Thread):
             # The address should be an IP address as a string? or None
             self.__addr = addr
             self._agent.connect()
-            if not isinstance(self._agent, int) and (
-                self._agent._conn is None
-                or not hasattr(self._agent._conn, "fileno")) and (
-                not self._agent_is_pageant()
+            if (
+                not isinstance(self._agent, int)
+                and (
+                    self._agent._conn is None
+                    or not hasattr(self._agent._conn, "fileno")
+                )
+                and (not self._agent_is_pageant())
             ):
                 raise AuthenticationException("Unable to connect to SSH agent")
             self._communicate()
@@ -198,6 +202,7 @@ class AgentLocalProxy(AgentProxyThread):
         except:
             raise
 
+
 class AgentRemoteProxy(AgentProxyThread):
     """
     Class to be used when wanting to ask a remote SSH Agent
@@ -214,9 +219,9 @@ class AgentRemoteProxy(AgentProxyThread):
     def _recv_agent_msg(self, chan):
         sizeData = chan.recv(4)
         if len(sizeData) == 0:
-            return b''
+            return b""
         size = struct.unpack(">I", sizeData)[0]
-        return sizeData+chan.recv(size)
+        return sizeData + chan.recv(size)
 
     def _communicate(self):
         while not self._exit:
