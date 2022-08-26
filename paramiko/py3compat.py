@@ -63,7 +63,7 @@ if PY2:
         elif isinstance(s, buffer):  # NOQA
             return s
         else:
-            raise TypeError("Expected unicode or bytes, got {!r}".format(s))
+            raise TypeError("Expected unicode or bytes, got {}".format(type(s)))
 
     def u(s, encoding="utf8"):  # NOQA
         """cast bytes or unicode to unicode"""
@@ -74,7 +74,7 @@ if PY2:
         elif isinstance(s, buffer):  # NOQA
             return s.decode(encoding)
         else:
-            raise TypeError("Expected unicode or bytes, got {!r}".format(s))
+            raise TypeError("Expected unicode or bytes, got {}".format(type(s)))
 
     def b2s(s):
         return s
@@ -153,7 +153,7 @@ else:
         elif isinstance(s, str):
             return s.encode(encoding)
         else:
-            raise TypeError("Expected unicode or bytes, got {!r}".format(s))
+            raise TypeError("Expected unicode or bytes, got {}".format(type(s)))
 
     def u(s, encoding="utf8"):
         """cast bytes or unicode to unicode"""
@@ -162,7 +162,7 @@ else:
         elif isinstance(s, str):
             return s
         else:
-            raise TypeError("Expected unicode or bytes, got {!r}".format(s))
+            raise TypeError("Expected unicode or bytes, got {}".format(type(s)))
 
     def b2s(s):
         return s.decode() if isinstance(s, bytes) else s
