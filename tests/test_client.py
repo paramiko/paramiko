@@ -564,13 +564,10 @@ class SSHClientTest(ClientTest):
             auth_timeout=0.5,
         )
 
-    def _mock_set_remote_channel(self, chainid, init_window, max_packet_size):
-        time.sleep(100)
-
     @patch.object(
         paramiko.Channel,
         "_set_remote_channel",
-        _mock_set_remote_channel
+        lambda *args, **kwargs: time.sleep(100)
     )
     def test_channel_timeout(self):
         """
