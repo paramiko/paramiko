@@ -567,7 +567,7 @@ class SSHClientTest(ClientTest):
     @patch.object(
         paramiko.Channel,
         "_set_remote_channel",
-        lambda *args, **kwargs: time.sleep(100)
+        lambda *args, **kwargs: time.sleep(100),
     )
     def test_channel_timeout(self):
         """
