@@ -567,7 +567,11 @@ class SSHClientTest(ClientTest):
     def _mock_set_remote_channel(self, chainid, init_window, max_packet_size):
         time.sleep(100)
 
-    @patch.object(paramiko.Channel, "_set_remote_channel", _mock_set_remote_channel)
+    @patch.object(
+        paramiko.Channel,
+        "_set_remote_channel",
+        _mock_set_remote_channel
+    )
     def test_channel_timeout(self):
         """
         verify that the SSHClient has a configurable channel timeout
@@ -578,7 +582,11 @@ class SSHClientTest(ClientTest):
         self.tc.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
         # Actual connection
-        self.tc.connect(**dict(self.connect_kwargs, password="pygmalion", channel_timeout=0.5))
+        self.tc.connect(
+            **dict(
+                self.connect_kwargs, password="pygmalion", channel_timeout=0.5
+            )
+        )
         self.event.wait(1.0)
 
         self.assertRaises(paramiko.SSHException, self.tc.open_sftp)
