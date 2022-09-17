@@ -167,12 +167,8 @@ class AuthTest(unittest.TestCase):
         """
         self.start_server()
         self.tc.connect(hostkey=self.public_host_key)
-        try:
+        with self.assertRaises(AuthenticationException):
             self.tc.auth_password(username="slowdive", password="error")
-            self.assertTrue(False)
-        except:
-            etype, evalue, etb = sys.exc_info()
-            self.assertTrue(issubclass(etype, AuthenticationException))
         self.tc.auth_password(username="slowdive", password="pygmalion")
         self.verify_finished()
 
@@ -249,11 +245,8 @@ class AuthTest(unittest.TestCase):
         """
         self.start_server()
         self.tc.connect(hostkey=self.public_host_key)
-        try:
+        with self.assertRaises(AuthenticationException):
             self.tc.auth_password("bad-server", "hello")
-        except:
-            etype, evalue, etb = sys.exc_info()
-            self.assertTrue(issubclass(etype, AuthenticationException))
 
     @slow
     def test_auth_non_responsive(self):
@@ -264,9 +257,5 @@ class AuthTest(unittest.TestCase):
         self.tc.auth_timeout = 1  # 1 second, to speed up test
         self.start_server()
         self.tc.connect()
-        try:
+        with self.assertRaisesRegexp(AuthenticationException, "Authentication timeout"):
             self.tc.auth_password("unresponsive-server", "hello")
-        except:
-            etype, evalue, etb = sys.exc_info()
-            self.assertTrue(issubclass(etype, AuthenticationException))
-            self.assertTrue("Authentication timeout" in str(evalue))

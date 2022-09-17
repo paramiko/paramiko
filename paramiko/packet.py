@@ -581,7 +581,7 @@ class Packetizer(object):
     def _log(self, level, msg):
         if self.__logger is None:
             return
-        if issubclass(type(msg), list):
+        if isinstance(msg, list):
             for m in msg:
                 self.__logger.log(level, m)
         else:
