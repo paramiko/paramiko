@@ -395,6 +395,10 @@ class Transport(threading.Thread, ClosingContextManager):
             Whether to send an extra message to compatible clients, in server
             mode, with a list of supported pubkey algorithms. Default:
             ``True``.
+        :param bool use_banner_timeout_for_other_lines:
+            Whether to use the banner timeout for subsequent lines in the
+            ssh banner read. Default:
+            ``False``.
 
         .. versionchanged:: 1.15
             Added the ``default_window_size`` and ``default_max_packet_size``
