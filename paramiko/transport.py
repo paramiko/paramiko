@@ -100,6 +100,7 @@ from paramiko.kex_gss import KexGSSGex, KexGSSGroup1, KexGSSGroup14
 from paramiko.message import Message
 from paramiko.packet import Packetizer, NeedRekeyException
 from paramiko.primes import ModulusPack
+from paramiko.proxy_protocol import ProxyProtocol
 from paramiko.py3compat import string_types, long, byte_ord, b, input, PY2
 from paramiko.rsakey import RSAKey
 from paramiko.ecdsakey import ECDSAKey
@@ -448,6 +449,10 @@ class Transport(threading.Thread, ClosingContextManager):
         # we set the timeout so we can check self.active periodically to
         # see if we should bail. socket.timeout exception is never propagated.
         self.sock.settimeout(self._active_check_timeout)
+
+        # Proxy protocol parser
+        self.proxy_protocol = False
+        self.proxy_info = None
 
         # negotiated crypto parameters
         self.packetizer = Packetizer(sock)
@@ -2087,6 +2092,8 @@ class Transport(threading.Thread, ClosingContextManager):
         try:
             try:
                 self.packetizer.write_all(b(self.local_version + "\r\n"))
+                if self.proxy_protocol:
+                    self._get_proxy_protocol_info()
                 self._log(
                     DEBUG,
                     "Local version/idstring: {}".format(self.local_version),
@@ -2257,6 +2264,10 @@ class Transport(threading.Thread, ClosingContextManager):
             self._send_kex_init()
         self._parse_kex_init(m)
         self.kex_engine.start_kex()
+
+    def _get_proxy_protocol_info(self):
+        pp = ProxyProtocol()
+        self.proxy_info = pp.parse(self.sock)
 
     def _check_banner(self):
         # this is slow, but we only have to do it once
