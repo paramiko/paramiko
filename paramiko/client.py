@@ -237,6 +237,7 @@ class SSHClient(ClosingContextManager):
         gss_trust_dns=True,
         passphrase=None,
         disabled_algorithms=None,
+        use_banner_timeout_for_other_lines=None,
     ):
         """
         Connect to an SSH server and authenticate to it.  The server's host key
@@ -314,6 +315,9 @@ class SSHClient(ClosingContextManager):
         :param dict disabled_algorithms:
             an optional dict passed directly to `.Transport` and its keyword
             argument of the same name.
+        :param bool use_banner_timeout_for_other_lines:
+            Whether to use the banner timeout for subsequent lines in the
+            ssh banner read. Default: ``False``.
 
         :raises:
             `.BadHostKeyException` -- if the server's host key could not be
@@ -389,6 +393,10 @@ class SSHClient(ClosingContextManager):
             t.set_log_channel(self._log_channel)
         if banner_timeout is not None:
             t.banner_timeout = banner_timeout
+        if use_banner_timeout_for_other_lines is not None:
+            t.use_banner_timeout_for_other_lines = (
+                use_banner_timeout_for_other_lines
+            )
         if auth_timeout is not None:
             t.auth_timeout = auth_timeout
 
