@@ -237,6 +237,7 @@ class SSHClient(ClosingContextManager):
         gss_trust_dns=True,
         passphrase=None,
         disabled_algorithms=None,
+        transport_factory=Transport,
     ):
         """
         Connect to an SSH server and authenticate to it.  The server's host key
@@ -314,6 +315,10 @@ class SSHClient(ClosingContextManager):
         :param dict disabled_algorithms:
             an optional dict passed directly to `.Transport` and its keyword
             argument of the same name.
+        :param transport_factory: an optional callable that takes in a new `socket`
+            `gss_kex`, `gss_deleg_creds`, `disabled_algorithms` and generates a
+            `.Transport` instance to be used by this client. Defaults to
+            `.Transport.__init__`.
 
         :raises:
             `.BadHostKeyException` -- if the server's host key could not be
@@ -371,7 +376,7 @@ class SSHClient(ClosingContextManager):
             if len(errors) == len(to_try):
                 raise NoValidConnectionsError(errors)
 
-        t = self._transport = Transport(
+        t = self._transport = transport_factory(
             sock,
             gss_kex=gss_kex,
             gss_deleg_creds=gss_deleg_creds,
