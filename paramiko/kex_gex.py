@@ -14,7 +14,7 @@
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with Paramiko; if not, write to the Free Software Foundation, Inc.,
-# 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
+# 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
 
 """
 Variant on `KexGroup1 <paramiko.kex_group1.KexGroup1>` where the prime "p" and
@@ -240,7 +240,9 @@ class KexGex(object):
         H = self.hash_algo(hm.asbytes()).digest()
         self.transport._set_K_H(K, H)
         # sign it
-        sig = self.transport.get_server_key().sign_ssh_data(H)
+        sig = self.transport.get_server_key().sign_ssh_data(
+            H, self.transport.host_key_type
+        )
         # send reply
         m = Message()
         m.add_byte(c_MSG_KEXDH_GEX_REPLY)

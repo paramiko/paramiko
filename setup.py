@@ -89,7 +89,14 @@ setup(
     # use of the extras_require ("paramiko[ed2559]") is now required for those
     # TODO 3.0: alternately, given how prevalent ed25519 is now, and how we use
     # invoke for (increasing) subproc stuff, consider making the default flavor
-    # "full" and adding a "minimal" or similar that is just-crypto?
-    install_requires=["bcrypt>=3.1.3", "cryptography>=2.5", "pynacl>=1.0.1"],
+    # "full"/"all"? (probably sans gssapi which should remain optional; MAYBE
+    # still sans invoke as well, not everyone uses ProxyCommand or Match exec)
+    # TODO 3.0: remove six, obviously
+    install_requires=[
+        "bcrypt>=3.1.3",
+        "cryptography>=2.5",
+        "pynacl>=1.0.1",
+        "six",
+    ],
     extras_require=extras_require,
 )

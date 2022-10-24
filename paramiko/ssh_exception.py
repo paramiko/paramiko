@@ -14,7 +14,7 @@
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with Paramiko; if not, write to the Free Software Foundation, Inc.,
-# 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
+# 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
 
 import socket
 
@@ -133,6 +133,21 @@ class BadHostKeyException(SSHException):
             self.key.get_base64(),
             self.expected_key.get_base64(),
         )
+
+
+class IncompatiblePeer(SSHException):
+    """
+    A disagreement arose regarding an algorithm required for key exchange.
+
+    .. versionadded:: 2.9
+    """
+
+    # TODO 3.0: consider making this annotate w/ 1..N 'missing' algorithms,
+    # either just the first one that would halt kex, or even updating the
+    # Transport logic so we record /all/ that /could/ halt kex.
+    # TODO: update docstrings where this may end up raised so they are more
+    # specific.
+    pass
 
 
 class ProxyCommandFailure(SSHException):

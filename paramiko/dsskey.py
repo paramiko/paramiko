@@ -14,7 +14,7 @@
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with Paramiko; if not, write to the Free Software Foundation, Inc.,
-# 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
+# 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
 
 """
 DSS keys.
@@ -92,8 +92,9 @@ class DSSKey(PKey):
     def __str__(self):
         return self.asbytes()
 
-    def __hash__(self):
-        return hash((self.get_name(), self.p, self.q, self.g, self.y))
+    @property
+    def _fields(self):
+        return (self.get_name(), self.p, self.q, self.g, self.y)
 
     def get_name(self):
         return "ssh-dss"
@@ -104,7 +105,7 @@ class DSSKey(PKey):
     def can_sign(self):
         return self.x is not None
 
-    def sign_ssh_data(self, data):
+    def sign_ssh_data(self, data, algorithm=None):
         key = dsa.DSAPrivateNumbers(
             x=self.x,
             public_numbers=dsa.DSAPublicNumbers(

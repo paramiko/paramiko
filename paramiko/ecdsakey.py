@@ -7,20 +7,20 @@
 # Software Foundation; either version 2.1 of the License, or (at your option)
 # any later version.
 #
-# Paramiko is distrubuted in the hope that it will be useful, but WITHOUT ANY
+# Paramiko is distributed in the hope that it will be useful, but WITHOUT ANY
 # WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
 # A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more
 # details.
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with Paramiko; if not, write to the Free Software Foundation, Inc.,
-# 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
+# 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
 
 """
 ECDSA keys
 """
 
-from cryptography.exceptions import InvalidSignature
+from cryptography.exceptions import InvalidSignature, UnsupportedAlgorithm
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import ec
@@ -194,13 +194,12 @@ class ECDSAKey(PKey):
     def __str__(self):
         return self.asbytes()
 
-    def __hash__(self):
-        return hash(
-            (
-                self.get_name(),
-                self.verifying_key.public_numbers().x,
-                self.verifying_key.public_numbers().y,
-            )
+    @property
+    def _fields(self):
+        return (
+            self.get_name(),
+            self.verifying_key.public_numbers().x,
+            self.verifying_key.public_numbers().y,
         )
 
     def get_name(self):
@@ -212,7 +211,7 @@ class ECDSAKey(PKey):
     def can_sign(self):
         return self.signing_key is not None
 
-    def sign_ssh_data(self, data):
+    def sign_ssh_data(self, data, algorithm=None):
         ecdsa = ec.ECDSA(self.ecdsa_curve.hash_object())
         sig = self.signing_key.sign(data, ecdsa)
         r, s = decode_dss_signature(sig)
@@ -289,7 +288,12 @@ class ECDSAKey(PKey):
                 key = serialization.load_der_private_key(
                     data, password=None, backend=default_backend()
                 )
-            except (ValueError, AssertionError) as e:
+            except (
+                ValueError,
+                AssertionError,
+                TypeError,
+                UnsupportedAlgorithm,
+            ) as e:
                 raise SSHException(str(e))
         elif pkformat == self._PRIVATE_KEY_FORMAT_OPENSSH:
             try:

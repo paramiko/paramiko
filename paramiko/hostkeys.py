@@ -14,7 +14,7 @@
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with Paramiko; if not, write to the Free Software Foundation, Inc.,
-# 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
+# 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
 
 
 import binascii
@@ -156,6 +156,7 @@ class HostKeys(MutableMapping):
                 for e in list(self._entries):
                     if e.key.get_name() == key:
                         self._entries.remove(e)
+                        break
                 else:
                     raise KeyError(key)
 

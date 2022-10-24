@@ -14,7 +14,7 @@
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with Paramiko; if not, write to the Free Software Foundation, Inc.,
-# 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
+# 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
 
 """
 Some unit tests for HostKeys.
@@ -130,3 +130,20 @@ class HostKeysTest(unittest.TestCase):
             pass  # Good
         else:
             assert False, "Entry was not deleted from HostKeys on delitem!"
+
+    def test_entry_delitem(self):
+        hostdict = paramiko.HostKeys("hostfile.temp")
+        target = "happy.example.com"
+        entry = hostdict[target]
+        key_type_list = [key_type for key_type in entry]
+        for key_type in key_type_list:
+            del entry[key_type]
+
+        # will KeyError if not present
+        for key_type in key_type_list:
+            try:
+                del entry[key_type]
+            except KeyError:
+                pass  # Good
+            else:
+                assert False, "Key was not deleted from Entry on delitem!"
