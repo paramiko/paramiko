@@ -182,7 +182,7 @@ class SSHConfig(object):
         # Store last 'open' block and we're done
         self._config.append(context)
 
-    def lookup(self, hostname):
+    def lookup(self, hostname, port=None):
         """
         Return a dict (`SSHConfigDict`) of config options for a given hostname.
 
@@ -213,6 +213,7 @@ class SSHConfig(object):
             get to OpenSSH's behavior around that particular option.
 
         :param str hostname: the hostname to lookup
+        :param int port: targeted ssh port on hostname.
 
         .. versionchanged:: 2.5
             Returns `SSHConfigDict` objects instead of dict literals.
@@ -222,7 +223,7 @@ class SSHConfig(object):
             Added ``Match`` support.
         """
         # First pass
-        options = self._lookup(hostname=hostname)
+        options = self._lookup(hostname=hostname, port=port)
         # Inject HostName if it was not set (this used to be done incidentally
         # during tokenization, for some reason).
         if "hostname" not in options:
@@ -237,10 +238,10 @@ class SSHConfig(object):
             hostname = self.canonicalize(hostname, options, domains)
             # Overwrite HostName again here (this is also what OpenSSH does)
             options["hostname"] = hostname
-            options = self._lookup(hostname, options, canonical=True)
+            options = self._lookup(hostname, options, canonical=True, port=port)
         return options
 
-    def _lookup(self, hostname, options=None, canonical=False):
+    def _lookup(self, hostname, options=None, port=None, canonical=False):
         # Init
         if options is None:
             options = SSHConfigDict()
@@ -267,7 +268,7 @@ class SSHConfig(object):
                     )
         # Expand variables in resulting values (besides 'Match exec' which was
         # already handled above)
-        options = self._expand_variables(options, hostname)
+        options = self._expand_variables(options, hostname, port=port)
         # TODO: remove in 3.x re #670
         if "proxycommand" in options and options["proxycommand"] is None:
             del options["proxycommand"]
@@ -400,7 +401,7 @@ class SSHConfig(object):
     def _should_fail(self, would_pass, candidate):
         return would_pass if candidate["negate"] else not would_pass
 
-    def _tokenize(self, config, target_hostname, key, value):
+    def _tokenize(self, config, target_hostname, key, value, port=None):
         """
         Tokenize a string based on current config/hostname data.
 
@@ -408,6 +409,7 @@ class SSHConfig(object):
         :param target_hostname: Original target connection hostname.
         :param key: Config key being tokenized (used to filter token list).
         :param value: Config value being tokenized.
+        :param int port: targeted ssh port on target_hostname.
 
         :returns: The tokenized version of the input ``value`` string.
         """
@@ -422,7 +424,9 @@ class SSHConfig(object):
         if key != "hostname":
             configured_hostname = config.get("hostname", configured_hostname)
         # Ditto the rest of the source values
-        if "port" in config:
+        if not port is None:
+            port = port
+        elif "port" in config:
             port = config["port"]
         else:
             port = SSH_PORT
@@ -473,7 +477,7 @@ class SSHConfig(object):
         """
         return self.TOKENS_BY_CONFIG_KEY.get(key, [])
 
-    def _expand_variables(self, config, target_hostname):
+    def _expand_variables(self, config, target_hostname, port=None):
         """
         Return a dict of config options with expanded substitutions
         for a given original & current target hostname.
@@ -482,11 +486,12 @@ class SSHConfig(object):
 
         :param dict config: the currently parsed config
         :param str hostname: the hostname whose config is being looked up
+        :param int port: targeted ssh port on target_hostname.
         """
         for k in config:
             if config[k] is None:
                 continue
-            tokenizer = partial(self._tokenize, config, target_hostname, k)
+            tokenizer = partial(self._tokenize, config, target_hostname, k, port=port)
             if isinstance(config[k], list):
                 for i, value in enumerate(config[k]):
                     config[k][i] = tokenizer(value)
