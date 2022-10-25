@@ -19,7 +19,6 @@
 
 import os
 import shlex
-import signal
 from select import select
 import socket
 import time
@@ -34,6 +33,42 @@ except ImportError as e:
 
 from paramiko.ssh_exception import ProxyCommandFailure
 from paramiko.util import ClosingContextManager
+
+
+if os.name != "nt":
+
+    def _wait_for(stdout, timeout):
+        r, w, x = select([stdout], [], [], timeout)
+        if r and r[0] == stdout:
+            return True
+        return False
+
+
+else:
+    import ctypes
+    import msvcrt
+
+    WaitForSingleObject = ctypes.windll.kernel32.WaitForSingleObject
+    PeekNamedPipe = ctypes.windll.kernel32.PeekNamedPipe
+    INFINITE = 0xFFFFFFFF
+    WAIT_OBJECT_0 = 0
+    WAIT_FAILED = 0xFFFFFFFF
+
+    def _wait_for(stdout, timeout):
+        if timeout is None:
+            timeout = INFINITE
+        else:
+            timeout = int(timeout * 1000)  # milliseconds
+        h = msvcrt.get_osfhandle(stdout.fileno())
+        result = WaitForSingleObject(h, timeout)
+        if result == WAIT_FAILED:
+            raise ctypes.WinError()
+        if result != WAIT_OBJECT_0:
+            return False
+        avail = ctypes.c_long()
+        if PeekNamedPipe(h, None, 0, None, ctypes.byref(avail), None) == 0:
+            raise ctypes.WinError()
+        return avail.value != 0
 
 
 class ProxyCommand(ClosingContextManager):
@@ -104,8 +139,7 @@ class ProxyCommand(ClosingContextManager):
                         raise socket.timeout()
                     select_timeout = self.timeout - elapsed
 
-                r, w, x = select([self.process.stdout], [], [], select_timeout)
-                if r and r[0] == self.process.stdout:
+                if _wait_for(self.process.stdout, select_timeout):
                     buffer += os.read(
                         self.process.stdout.fileno(), size - len(buffer)
                     )
@@ -119,7 +153,7 @@ class ProxyCommand(ClosingContextManager):
             raise ProxyCommandFailure(" ".join(self.cmd), e.strerror)
 
     def close(self):
-        os.kill(self.process.pid, signal.SIGTERM)
+        self.process.terminate()
 
     @property
     def closed(self):
