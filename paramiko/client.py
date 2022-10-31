@@ -237,6 +237,7 @@ class SSHClient(ClosingContextManager):
         gss_trust_dns=True,
         passphrase=None,
         disabled_algorithms=None,
+        hostkey=None,
     ):
         """
         Connect to an SSH server and authenticate to it.  The server's host key
@@ -266,6 +267,7 @@ class SSHClient(ClosingContextManager):
                 ``id_rsa-cert.pub``) the certificate will be loaded alongside
                 the private key and used for authentication.
 
+            - Host-based authentication using the public key in C{hostkey}
             - Plain username/password auth, if a password was given
 
         If a private key requires a password to unlock it, and a password is
@@ -314,6 +316,8 @@ class SSHClient(ClosingContextManager):
         :param dict disabled_algorithms:
             an optional dict passed directly to `.Transport` and its keyword
             argument of the same name.
+        :param PKey hostkey: the optional public key of the host to use for
+            host-based authentication
 
         :raises:
             `.BadHostKeyException` -- if the server's host key could not be
@@ -448,6 +452,7 @@ class SSHClient(ClosingContextManager):
             gss_deleg_creds,
             t.gss_host,
             passphrase,
+            hostkey,
         )
 
     def close(self):
@@ -616,6 +621,7 @@ class SSHClient(ClosingContextManager):
         gss_deleg_creds,
         gss_host,
         passphrase,
+        hostkey,
     ):
         """
         Try, in order:
@@ -624,6 +630,7 @@ class SSHClient(ClosingContextManager):
             - Any key we can find through an SSH agent (if allowed).
             - Any "id_rsa", "id_dsa" or "id_ecdsa" key discoverable in ~/.ssh/
               (if allowed).
+            - Host-based authentication using the host key, if given.
             - Plain username/password auth, if a password was given.
 
         (The password might be needed to unlock a private key [if 'passphrase'
@@ -751,6 +758,13 @@ class SSHClient(ClosingContextManager):
                     break
                 except (SSHException, IOError) as e:
                     saved_exception = e
+
+        if not two_factor and hostkey is not None:
+            try:
+                self._transport.auth_hostbased(username, hostkey)
+                return
+            except SSHException as e:
+                saved_exception = e
 
         if password is not None:
             try:
