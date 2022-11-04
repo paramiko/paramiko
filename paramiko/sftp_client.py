@@ -808,11 +808,11 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
             Added the ``prefetch`` keyword argument.
         """
         with open(localpath, "wb") as fl:
-            size = self.getfo(remotepath, fl, callback, prefetch)
-        s = os.stat(localpath)
-        if s.st_size != size:
+            size = self.getfo(remotepath, fl, callback)
+            localsize = fl.tell()
+        if localsize != size:
             raise IOError(
-                "size mismatch in get!  {} != {}".format(s.st_size, size)
+                "size mismatch in get!  {} != {}".format(localsize, size)
             )
 
     # ...internals...
