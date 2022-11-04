@@ -2,6 +2,10 @@
 Changelog
 =========
 
+- :feature:`2125` (also re: :issue:`2054`) Add a ``transport_factory`` kwarg to
+  `SSHClient.connect <paramiko.client.SSHClient.connect>` for advanced
+  users to gain more control over early Transport setup and manipulation.
+  Thanks to Noah Pederson for the patch.
 - :bug:`1822` (via, and relating to, far too many other issues to mention here)
   Update `~paramiko.client.SSHClient` so it explicitly closes its wrapped
   socket object upon encountering socket errors at connection time. This should

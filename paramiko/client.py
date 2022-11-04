@@ -315,8 +315,10 @@ class SSHClient(ClosingContextManager):
         :param dict disabled_algorithms:
             an optional dict passed directly to `.Transport` and its keyword
             argument of the same name.
-        :param transport_factory: an optional callable that takes in a new `socket`
-            `gss_kex`, `gss_deleg_creds`, `disabled_algorithms` and generates a
+        :param transport_factory:
+            an optional callable which is handed a subset of the constructor
+            arguments (primarily those related to the socket, GSS
+            functionality, and algorithm selection) and generates a
             `.Transport` instance to be used by this client. Defaults to
             `.Transport.__init__`.
 
@@ -338,6 +340,8 @@ class SSHClient(ClosingContextManager):
             Added the ``passphrase`` argument.
         .. versionchanged:: 2.6
             Added the ``disabled_algorithms`` argument.
+        .. versionchanged:: 2.12
+            Added the ``transport_factory`` argument.
         """
         if not sock:
             errors = {}
