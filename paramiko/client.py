@@ -237,7 +237,7 @@ class SSHClient(ClosingContextManager):
         gss_trust_dns=True,
         passphrase=None,
         disabled_algorithms=None,
-        transport_factory=Transport,
+        transport_factory=None,
     ):
         """
         Connect to an SSH server and authenticate to it.  The server's host key
@@ -376,6 +376,8 @@ class SSHClient(ClosingContextManager):
             if len(errors) == len(to_try):
                 raise NoValidConnectionsError(errors)
 
+        if transport_factory is None:
+            transport_factory = Transport
         t = self._transport = transport_factory(
             sock,
             gss_kex=gss_kex,

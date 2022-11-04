@@ -739,6 +739,40 @@ class SSHClientTest(ClientTest):
         call_arg = Transport.call_args[1]["disabled_algorithms"]
         assert call_arg == {"keys": ["ssh-dss"]}
 
+    @patch("paramiko.client.Transport")
+    def test_transport_factory_defaults_to_Transport(self, Transport):
+        sock, kex, creds, algos = Mock(), Mock(), Mock(), Mock()
+        SSHClient().connect(
+            "host",
+            sock=sock,
+            password="no",
+            gss_kex=kex,
+            gss_deleg_creds=creds,
+            disabled_algorithms=algos,
+        )
+        Transport.assert_called_once_with(
+            sock, gss_kex=kex, gss_deleg_creds=creds, disabled_algorithms=algos
+        )
+
+    @patch("paramiko.client.Transport")
+    def test_transport_factory_may_be_specified(self, Transport):
+        factory = Mock()
+        sock, kex, creds, algos = Mock(), Mock(), Mock(), Mock()
+        SSHClient().connect(
+            "host",
+            sock=sock,
+            password="no",
+            gss_kex=kex,
+            gss_deleg_creds=creds,
+            disabled_algorithms=algos,
+            transport_factory=factory,
+        )
+        factory.assert_called_once_with(
+            sock, gss_kex=kex, gss_deleg_creds=creds, disabled_algorithms=algos
+        )
+        # Safety check
+        assert not Transport.called
+
 
 class PasswordPassphraseTests(ClientTest):
     # TODO: most of these could reasonably be set up to use mocks/assertions
