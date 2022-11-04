@@ -2,6 +2,7 @@
 Changelog
 =========
 
+- :release:`2.12.0 <2022-11-04>`
 - :feature:`2125` (also re: :issue:`2054`) Add a ``transport_factory`` kwarg to
   `SSHClient.connect <paramiko.client.SSHClient.connect>` for advanced
   users to gain more control over early Transport setup and manipulation.
