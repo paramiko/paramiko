@@ -6,6 +6,7 @@ Changelog
   `SSHClient.connect <paramiko.client.SSHClient.connect>` for advanced
   users to gain more control over early Transport setup and manipulation.
   Thanks to Noah Pederson for the patch.
+- :release:`2.11.1 <2022-11-04>`
 - :release:`2.10.6 <2022-11-04>`
 - :bug:`1822` (via, and relating to, far too many other issues to mention here)
   Update `~paramiko.client.SSHClient` so it explicitly closes its wrapped
