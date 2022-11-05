@@ -15,11 +15,11 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
 
 import bcrypt
+from cryptography.exceptions import InvalidSignature
 
 from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives.asymmetric import ed25519
 from cryptography.hazmat.primitives.ciphers import Cipher
-
-import nacl.signing
 
 from paramiko.message import Message
 from paramiko.pkey import PKey, OPENSSH_AUTH_MAGIC, _unpad_openssh
@@ -40,7 +40,13 @@ class Ed25519Key(PKey):
     """
 
     def __init__(
-        self, msg=None, data=None, filename=None, password=None, file_obj=None
+        self,
+        msg=None,
+        data=None,
+        filename=None,
+        password=None,
+        file_obj=None,
+        vals=None,
     ):
         self.public_blob = None
         verifying_key = signing_key = None
@@ -52,7 +58,11 @@ class Ed25519Key(PKey):
                 key_type="ssh-ed25519",
                 cert_type="ssh-ed25519-cert-v01@openssh.com",
             )
-            verifying_key = nacl.signing.VerifyKey(msg.get_binary())
+            verifying_key = ed25519.Ed25519PublicKey.from_public_bytes(
+                msg.get_binary()
+            )
+        elif vals:
+            signing_key, verifying_key = vals
         elif filename is not None:
             with open(filename, "r") as f:
                 pkformat, data = self._read_private_key("OPENSSH", f)
@@ -66,7 +76,7 @@ class Ed25519Key(PKey):
             raise ValueError("need a key")
 
         self._signing_key = signing_key
-        self._verifying_key = verifying_key
+        self._verifying_key = verifying_key or signing_key.public_key()
 
     def _parse_signing_key_data(self, data, password):
         from paramiko.transport import Transport
@@ -148,10 +158,12 @@ class Ed25519Key(PKey):
             key_data = message.get_binary()
             # The second half of the key data is yet another copy of the public
             # key...
-            signing_key = nacl.signing.SigningKey(key_data[:32])
+            signing_key = ed25519.Ed25519PrivateKey.from_private_bytes(
+                key_data[:32]
+            )
             # Verify that all the public keys are the same...
             assert (
-                signing_key.verify_key.encode()
+                signing_key.public_key()._raw_public_bytes()
                 == public
                 == public_keys[i]
                 == key_data[32:]
@@ -164,23 +176,32 @@ class Ed25519Key(PKey):
             raise SSHException("Invalid key")
         return signing_keys[0]
 
+    @classmethod
+    def generate(cls):
+        """
+        Generate a new private Ed25519 key.
+        This factory function can be used to generate
+        a new host key or authentication key.
+
+        :returns: A new private key (`.Ed25519Key`) object
+        """
+        private_key = ed25519.Ed25519PrivateKey.generate()
+        return Ed25519Key(vals=(private_key, private_key.public_key()))
+
     def asbytes(self):
-        if self.can_sign():
-            v = self._signing_key.verify_key
-        else:
-            v = self._verifying_key
+        public_bytes = self._verifying_key._raw_public_bytes()
+
         m = Message()
         m.add_string("ssh-ed25519")
-        m.add_string(v.encode())
+        m.add_string(public_bytes)
         return m.asbytes()
 
     @property
     def _fields(self):
-        if self.can_sign():
-            v = self._signing_key.verify_key
-        else:
-            v = self._verifying_key
-        return (self.get_name(), v)
+        return (
+            self.get_name(),
+            self._verifying_key and self._verifying_key._raw_public_bytes(),
+        )
 
     def get_name(self):
         return "ssh-ed25519"
@@ -194,7 +215,7 @@ class Ed25519Key(PKey):
     def sign_ssh_data(self, data, algorithm=None):
         m = Message()
         m.add_string("ssh-ed25519")
-        m.add_string(self._signing_key.sign(data).signature)
+        m.add_string(self._signing_key.sign(data))
         return m
 
     def verify_ssh_sig(self, data, msg):
@@ -202,8 +223,8 @@ class Ed25519Key(PKey):
             return False
 
         try:
-            self._verifying_key.verify(data, msg.get_binary())
-        except nacl.exceptions.BadSignatureError:
+            self._verifying_key.verify(msg.get_binary(), data)
+        except InvalidSignature:
             return False
         else:
             return True
