@@ -604,10 +604,13 @@ class Packetizer(object):
         start = time.time()
         while True:
             try:
-                x = self.__socket.recv(128)
-                if len(x) == 0:
-                    raise EOFError()
-                break
+                for i in range(2):
+                    time.sleep(i)
+                    x = self.__socket.recv(128)
+                    if len(x) == 0:
+                        continue
+                    else:
+                        break
             except socket.timeout:
                 pass
             except EnvironmentError as e:
