@@ -173,7 +173,7 @@ try:
     chan.get_pty()
     chan.invoke_shell()
     print("*** Here we go!\n")
-    interactive.interactive_shell(chan)
+    interactive.interactive_shell(chan, encoding="utf8")
     chan.close()
     t.close()
 

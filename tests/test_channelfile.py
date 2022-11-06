@@ -6,23 +6,29 @@ from paramiko import Channel, ChannelFile, ChannelStderrFile, ChannelStdinFile
 class ChannelFileBase(object):
     @patch("paramiko.channel.ChannelFile._set_mode")
     def test_defaults_to_unbuffered_reading(self, setmode):
-        self.klass(Channel(None))
+        self.klass(Channel(None), encoding="utf8", errors="strict")
         setmode.assert_called_once_with("r", -1)
 
     @patch("paramiko.channel.ChannelFile._set_mode")
     def test_can_override_mode_and_bufsize(self, setmode):
-        self.klass(Channel(None), mode="w", bufsize=25)
+        self.klass(
+            Channel(None),
+            mode="w",
+            bufsize=25,
+            encoding="utf8",
+            errors="strict",
+        )
         setmode.assert_called_once_with("w", 25)
 
     def test_read_recvs_from_channel(self):
         chan = MagicMock()
-        cf = self.klass(chan)
+        cf = self.klass(chan, encoding="utf8", errors="strict")
         cf.read(100)
         chan.recv.assert_called_once_with(100)
 
     def test_write_calls_channel_sendall(self):
         chan = MagicMock()
-        cf = self.klass(chan, mode="w")
+        cf = self.klass(chan, mode="w", encoding="utf8", errors="strict")
         cf.write("ohai")
         chan.sendall.assert_called_once_with(b"ohai")
 
@@ -50,7 +56,9 @@ class TestChannelStdinFile(ChannelFileBase):
 
     def test_close_calls_channel_shutdown_write(self):
         chan = MagicMock()
-        cf = ChannelStdinFile(chan, mode="wb")
+        cf = ChannelStdinFile(
+            chan, mode="wb", encoding="utf8", errors="strict"
+        )
         cf.flush = MagicMock()
         cf.close()
         # Sanity check that we still call BufferedFile.close()

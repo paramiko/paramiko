@@ -102,7 +102,9 @@ try:
         gss_auth=UseGSSAPI,
         gss_kex=DoGSSAPIKeyExchange,
     )
-    sftp = paramiko.SFTPClient.from_transport(t)
+    sftp = paramiko.SFTPClient.from_transport(
+        t, encoding="utf8", errors="strict"
+    )
 
     # dirlist on remote host
     dirlist = sftp.listdir(".")

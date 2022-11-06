@@ -1346,9 +1346,11 @@ class ChannelFile(BufferedFile):
         flush the buffer.
     """
 
-    def __init__(self, channel, mode="r", bufsize=-1):
+    def __init__(
+        self, channel, mode="r", bufsize=-1, encoding="utf8", errors="strict"
+    ):
         self.channel = channel
-        BufferedFile.__init__(self)
+        BufferedFile.__init__(self, encoding=encoding, errors=errors)
         self._set_mode(mode, bufsize)
 
     def __repr__(self):

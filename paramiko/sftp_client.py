@@ -97,7 +97,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
     Instances of this class may be used as context managers.
     """
 
-    def __init__(self, sock):
+    def __init__(self, sock, encoding="utf8", errors="strict"):
         """
         Create an SFTP client from an existing `.Channel`.  The channel
         should already have requested the ``"sftp"`` subsystem.
@@ -106,12 +106,19 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         `from_transport`.
 
         :param .Channel sock: an open `.Channel` using the ``"sftp"`` subsystem
+        :param str encoding:
+            encoding for file paths/names (and content if not binary)
+            (default: utf8)
+        :param str errors:
+            python's default encoding error handling mode (default: strict)
 
         :raises:
             `.SSHException` -- if there's an exception while negotiating sftp
         """
         BaseSFTP.__init__(self)
         self.sock = sock
+        self.encoding = encoding
+        self.errors = errors
         self.ultra_debug = False
         self.request_number = 1
         # lock for request_number
@@ -138,7 +145,14 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         )
 
     @classmethod
-    def from_transport(cls, t, window_size=None, max_packet_size=None):
+    def from_transport(
+        cls,
+        t,
+        window_size=None,
+        max_packet_size=None,
+        encoding="utf8",
+        errors="strict",
+    ):
         """
         Create an SFTP client channel from an open `.Transport`.
 
@@ -153,6 +167,11 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
             optional window size for the `.SFTPClient` session.
         :param int max_packet_size:
             optional max packet size for the `.SFTPClient` session..
+        :param str encoding:
+            encoding for file paths/names (and content if not binary)
+            (default: utf8)
+        :param str errors:
+            python's default encoding error handling mode (default: strict)
 
         :return:
             a new `.SFTPClient` object, referring to an sftp session (channel)
@@ -167,7 +186,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         if chan is None:
             return None
         chan.invoke_subsystem("sftp")
-        return cls(chan)
+        return cls(chan, encoding, errors)
 
     def _log(self, level, msg, *args):
         if isinstance(msg, list):
@@ -236,7 +255,12 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         """
         path = self._adjust_cwd(path)
         self._log(DEBUG, "listdir({!r})".format(path))
-        t, msg = self._request(CMD_OPENDIR, path)
+        t, msg = self._request(
+            CMD_OPENDIR,
+            path.decode("utf8", self.errors).encode(
+                self.encoding, self.errors
+            ),
+        )
         if t != CMD_HANDLE:
             raise SFTPError("Expected handle")
         handle = msg.get_binary()
@@ -251,8 +275,8 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
                 raise SFTPError("Expected name response")
             count = msg.get_int()
             for i in range(count):
-                filename = msg.get_text()
-                longname = msg.get_text()
+                filename = msg.get_text(self.encoding, self.errors)
+                longname = msg.get_text(self.encoding, self.errors)
                 attr = SFTPAttributes._from_msg(msg, filename, longname)
                 if (filename != ".") and (filename != ".."):
                     filelist.append(attr)
@@ -275,7 +299,12 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         """
         path = self._adjust_cwd(path)
         self._log(DEBUG, "listdir({!r})".format(path))
-        t, msg = self._request(CMD_OPENDIR, path)
+        t, msg = self._request(
+            CMD_OPENDIR,
+            path.decode("utf-8", self.errors).encode(
+                self.encoding, self.errors
+            ),
+        )
 
         if t != CMD_HANDLE:
             raise SFTPError("Expected handle")
@@ -308,8 +337,8 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
                             self._convert_status(msg)
                     count = msg.get_int()
                     for i in range(count):
-                        filename = msg.get_text()
-                        longname = msg.get_text()
+                        filename = msg.get_text(self.encoding, self.errors)
+                        longname = msg.get_text(self.encoding, self.errors)
                         attr = SFTPAttributes._from_msg(
                             msg, filename, longname
                         )
@@ -369,17 +398,31 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         if "x" in mode:
             imode |= SFTP_FLAG_CREATE | SFTP_FLAG_EXCL
         attrblock = SFTPAttributes()
-        t, msg = self._request(CMD_OPEN, filename, imode, attrblock)
+        t, msg = self._request(
+            CMD_OPEN,
+            filename.decode("utf-8", self.errors).encode(
+                self.encoding, self.errors
+            ),
+            imode,
+            attrblock,
+        )
         if t != CMD_HANDLE:
             raise SFTPError("Expected handle")
         handle = msg.get_binary()
         self._log(
             DEBUG,
             "open({!r}, {!r}) -> {}".format(
-                filename, mode, u(hexlify(handle))
+                filename, mode, u(hexlify(handle), self.encoding, self.errors)
             ),
         )
-        return SFTPFile(self, handle, mode, bufsize)
+        return SFTPFile(
+            self,
+            handle,
+            mode,
+            bufsize,
+            encoding=self.encoding,
+            errors=self.errors,
+        )
 
     # Python continues to vacillate about "open" vs "file"...
     file = open
@@ -390,12 +433,16 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         removing folders (directories), use `rmdir`.
 
         :param str path: path (absolute or relative) of the file to remove
-
         :raises: ``IOError`` -- if the path refers to a folder (directory)
         """
         path = self._adjust_cwd(path)
         self._log(DEBUG, "remove({!r})".format(path))
-        self._request(CMD_REMOVE, path)
+        self._request(
+            CMD_REMOVE,
+            path.decode("utf-8", self.errors).encode(
+                self.encoding, self.errors
+            ),
+        )
 
     unlink = remove
 
@@ -420,7 +467,15 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         oldpath = self._adjust_cwd(oldpath)
         newpath = self._adjust_cwd(newpath)
         self._log(DEBUG, "rename({!r}, {!r})".format(oldpath, newpath))
-        self._request(CMD_RENAME, oldpath, newpath)
+        self._request(
+            CMD_RENAME,
+            oldpath.decode("utf-8", self.errors).encode(
+                self.encoding, self.errors
+            ),
+            newpath.decode("utf-8", self.errors).encode(
+                self.encoding, self.errors
+            ),
+        )
 
     def posix_rename(self, oldpath, newpath):
         """
@@ -441,7 +496,14 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         newpath = self._adjust_cwd(newpath)
         self._log(DEBUG, "posix_rename({!r}, {!r})".format(oldpath, newpath))
         self._request(
-            CMD_EXTENDED, "posix-rename@openssh.com", oldpath, newpath
+            CMD_EXTENDED,
+            "posix-rename@openssh.com",
+            oldpath.decode("utf-8", self.errors).encode(
+                self.encoding, self.errors
+            ),
+            newpath.decode("utf-8", self.errors).encode(
+                self.encoding, self.errors
+            ),
         )
 
     def mkdir(self, path, mode=o777):
@@ -457,7 +519,13 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         self._log(DEBUG, "mkdir({!r}, {!r})".format(path, mode))
         attr = SFTPAttributes()
         attr.st_mode = mode
-        self._request(CMD_MKDIR, path, attr)
+        self._request(
+            CMD_MKDIR,
+            path.decode("utf-8", self.errors).encode(
+                self.encoding, self.errors
+            ),
+            attr,
+        )
 
     def rmdir(self, path):
         """
@@ -467,7 +535,12 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         """
         path = self._adjust_cwd(path)
         self._log(DEBUG, "rmdir({!r})".format(path))
-        self._request(CMD_RMDIR, path)
+        self._request(
+            CMD_RMDIR,
+            path.decode("utf-8", self.errors).encode(
+                self.encoding, self.errors
+            ),
+        )
 
     def stat(self, path):
         """
@@ -490,7 +563,12 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         """
         path = self._adjust_cwd(path)
         self._log(DEBUG, "stat({!r})".format(path))
-        t, msg = self._request(CMD_STAT, path)
+        t, msg = self._request(
+            CMD_STAT,
+            path.decode("utf-8", self.errors).encode(
+                self.encoding, self.errors
+            ),
+        )
         if t != CMD_ATTRS:
             raise SFTPError("Expected attributes")
         return SFTPAttributes._from_msg(msg)
@@ -508,7 +586,12 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         """
         path = self._adjust_cwd(path)
         self._log(DEBUG, "lstat({!r})".format(path))
-        t, msg = self._request(CMD_LSTAT, path)
+        t, msg = self._request(
+            CMD_LSTAT,
+            path.decode("utf8", self.errors).encode(
+                self.encoding, self.errors
+            ),
+        )
         if t != CMD_ATTRS:
             raise SFTPError("Expected attributes")
         return SFTPAttributes._from_msg(msg)
@@ -523,7 +606,15 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         dest = self._adjust_cwd(dest)
         self._log(DEBUG, "symlink({!r}, {!r})".format(source, dest))
         source = b(source)
-        self._request(CMD_SYMLINK, source, dest)
+        self._request(
+            CMD_SYMLINK,
+            source.decode("utf-8", self.errors).encode(
+                self.encoding, self.errors
+            ),
+            dest.decode("utf-8", self.errors).encode(
+                self.encoding, self.errors
+            ),
+        )
 
     def chmod(self, path, mode):
         """
@@ -538,7 +629,13 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         self._log(DEBUG, "chmod({!r}, {!r})".format(path, mode))
         attr = SFTPAttributes()
         attr.st_mode = mode
-        self._request(CMD_SETSTAT, path, attr)
+        self._request(
+            CMD_SETSTAT,
+            path.decode("utf-8", self.errors).encode(
+                self.encoding, self.errors
+            ),
+            attr,
+        )
 
     def chown(self, path, uid, gid):
         """
@@ -555,7 +652,13 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         self._log(DEBUG, "chown({!r}, {!r}, {!r})".format(path, uid, gid))
         attr = SFTPAttributes()
         attr.st_uid, attr.st_gid = uid, gid
-        self._request(CMD_SETSTAT, path, attr)
+        self._request(
+            CMD_SETSTAT,
+            path.decode("utf-8", self.errors).encode(
+                self.encoding, self.errors
+            ),
+            attr,
+        )
 
     def utime(self, path, times):
         """
@@ -577,7 +680,13 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         self._log(DEBUG, "utime({!r}, {!r})".format(path, times))
         attr = SFTPAttributes()
         attr.st_atime, attr.st_mtime = times
-        self._request(CMD_SETSTAT, path, attr)
+        self._request(
+            CMD_SETSTAT,
+            path.decode("utf-8", self.errors).encode(
+                self.encoding, self.errors
+            ),
+            attr,
+        )
 
     def truncate(self, path, size):
         """
@@ -592,7 +701,13 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         self._log(DEBUG, "truncate({!r}, {!r})".format(path, size))
         attr = SFTPAttributes()
         attr.st_size = size
-        self._request(CMD_SETSTAT, path, attr)
+        self._request(
+            CMD_SETSTAT,
+            path.decode("utf-8", self.errors).encode(
+                self.encoding, self.errors
+            ),
+            attr,
+        )
 
     def readlink(self, path):
         """
@@ -605,7 +720,12 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         """
         path = self._adjust_cwd(path)
         self._log(DEBUG, "readlink({!r})".format(path))
-        t, msg = self._request(CMD_READLINK, path)
+        t, msg = self._request(
+            CMD_READLINK,
+            path.decode("utf-8", self.errors).encode(
+                self.encoding, self.errors
+            ),
+        )
         if t != CMD_NAME:
             raise SFTPError("Expected name response")
         count = msg.get_int()
@@ -629,13 +749,18 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         """
         path = self._adjust_cwd(path)
         self._log(DEBUG, "normalize({!r})".format(path))
-        t, msg = self._request(CMD_REALPATH, path)
+        t, msg = self._request(
+            CMD_REALPATH,
+            path.decode("utf-8", self.errors).encode(
+                self.encoding, self.errors
+            ),
+        )
         if t != CMD_NAME:
             raise SFTPError("Expected name response")
         count = msg.get_int()
         if count != 1:
             raise SFTPError("Realpath returned {} results".format(count))
-        return msg.get_text()
+        return msg.get_text(self.encoding, self.errors)
 
     def chdir(self, path=None):
         """
@@ -670,7 +795,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         .. versionadded:: 1.4
         """
         # TODO: make class initialize with self._cwd set to self.normalize('.')
-        return self._cwd and u(self._cwd)
+        return self._cwd and u(self._cwd, self.encoding, self.errors)
 
     def _transfer_with_callback(self, reader, writer, file_size, callback):
         size = 0
@@ -704,7 +829,6 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         :param bool confirm:
             whether to do a stat() on the file afterwards to confirm the file
             size (since 1.7.7)
-
         :return:
             an `.SFTPAttributes` object containing attributes about the given
             file.
@@ -744,7 +868,6 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         :param bool confirm:
             whether to do a stat() on the file afterwards to confirm the file
             size
-
         :return: an `.SFTPAttributes` object containing attributes about the
             given file
 

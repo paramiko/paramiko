@@ -58,8 +58,16 @@ class SFTPFile(BufferedFile):
     # this size.
     MAX_REQUEST_SIZE = 32768
 
-    def __init__(self, sftp, handle, mode="r", bufsize=-1):
-        BufferedFile.__init__(self)
+    def __init__(
+        self,
+        sftp,
+        handle,
+        mode="r",
+        bufsize=-1,
+        encoding="utf8",
+        errors="strict",
+    ):
+        BufferedFile.__init__(self, encoding=encoding, errors=errors)
         self.sftp = sftp
         self.handle = handle
         BufferedFile._set_mode(self, mode, bufsize)

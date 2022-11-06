@@ -370,7 +370,7 @@ class Packetizer(object):
             out = out[n:]
         return
 
-    def readline(self, timeout):
+    def readline(self, timeout, encoding="utf8", errors="strict"):
         """
         Read a line from the socket.  We assume no data is pending after the
         line, so it's okay to attempt large reads.
@@ -383,7 +383,7 @@ class Packetizer(object):
         buf = buf[:n]
         if (len(buf) > 0) and (buf[-1] == cr_byte_value):
             buf = buf[:-1]
-        return u(buf)
+        return u(buf, encoding, errors)
 
     def send_message(self, data):
         """

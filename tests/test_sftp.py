@@ -39,6 +39,7 @@ from paramiko.sftp_attr import SFTPAttributes
 
 from .util import needs_builtin
 from .util import slow
+from unittest import TestCase
 
 
 ARTICLE = """
