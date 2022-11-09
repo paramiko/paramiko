@@ -22,6 +22,7 @@ Configuration file (aka ``ssh_config``) support.
 """
 
 import fnmatch
+import glob
 import getpass
 import os
 import re
@@ -164,6 +165,11 @@ class SSHConfig(object):
                 # at the end (for compatibility with issue #415). After 3.x, it
                 # will simply not get stripped, leaving a nice explicit marker.
                 context["config"][key] = None
+            elif key == "include":
+                glob_path = os.path.join(os.path.dirname(file_obj.name),value)
+                for path in glob.glob(glob_path):
+                    with open(path,'r') as _file:
+                        self.parse(_file)
             # All other keywords get stored, directly or via append
             else:
                 if value.startswith('"') and value.endswith('"'):
