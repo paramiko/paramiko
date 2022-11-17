@@ -125,15 +125,21 @@ class SFTPServer(BaseSFTP, SubsystemHandler):
         self.folder_table = {}
         self.server = sftp_si(server, *largs, **kwargs)
 
-    def _log(self, level, msg):
+    def _log(self, level, msg, *args, **kwargs):
         if issubclass(type(msg), list):
             for m in msg:
                 super(SFTPServer, self)._log(
-                    level, "[chan " + self.sock.get_name() + "] " + m
+                    level,
+                    "[chan " + self.sock.get_name() + "] " + m,
+                    *args,
+                    **kwargs
                 )
         else:
             super(SFTPServer, self)._log(
-                level, "[chan " + self.sock.get_name() + "] " + msg
+                level,
+                "[chan " + self.sock.get_name() + "] " + msg,
+                *args,
+                **kwargs
             )
 
     def start_subsystem(self, name, transport, channel):
@@ -147,17 +153,17 @@ class SFTPServer(BaseSFTP, SubsystemHandler):
             except EOFError:
                 self._log(DEBUG, "EOF -- end of session")
                 return
-            except Exception as e:
-                self._log(DEBUG, "Exception on channel: " + str(e))
-                self._log(DEBUG, util.tb_strings())
+            except Exception:
+                self._log(DEBUG, "Exception on channel", exc_info=True)
                 return
             msg = Message(data)
             request_number = msg.get_int()
             try:
                 self._process(t, request_number, msg)
-            except Exception as e:
-                self._log(DEBUG, "Exception in server processing: " + str(e))
-                self._log(DEBUG, util.tb_strings())
+            except Exception:
+                self._log(
+                    DEBUG, "Exception in server processing", exc_info=True
+                )
                 # send some kind of failure message, at least
                 try:
                     self._send_status(request_number, SFTP_FAILURE)

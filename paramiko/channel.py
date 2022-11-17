@@ -1208,8 +1208,10 @@ class Channel(ClosingContextManager):
         self.transport._send_user_message(m)
         return size
 
-    def _log(self, level, msg, *args):
-        self.logger.log(level, "[chan " + self._name + "] " + msg, *args)
+    def _log(self, level, msg, *args, **kwargs):
+        self.logger.log(
+            level, "[chan " + self._name + "] " + msg, *args, **kwargs
+        )
 
     def _event_pending(self):
         self.event.clear()

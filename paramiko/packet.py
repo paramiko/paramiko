@@ -578,14 +578,14 @@ class Packetizer(object):
 
     # ...protected...
 
-    def _log(self, level, msg):
+    def _log(self, level, msg, *args, **kwargs):
         if self.__logger is None:
             return
         if issubclass(type(msg), list):
             for m in msg:
-                self.__logger.log(level, m)
+                self.__logger.log(level, m, *args, **kwargs)
         else:
-            self.__logger.log(level, msg)
+            self.__logger.log(level, msg, *args, **kwargs)
 
     def _check_keepalive(self):
         if (
