@@ -1,4 +1,7 @@
-from mock import patch, MagicMock
+try:
+    from mock import patch, MagicMock
+except ImportError:
+    from unittest.mock import patch, MagicMock
 
 from paramiko import Channel, ChannelFile, ChannelStderrFile, ChannelStdinFile
 

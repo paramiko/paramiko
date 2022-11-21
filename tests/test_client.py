@@ -35,7 +35,10 @@ from tempfile import mkstemp
 
 import pytest
 from pytest_relaxed import raises
-from mock import patch, Mock
+try:
+    from mock import patch, Mock
+except ImportError:
+    from unittest.mock import patch, Mock
 
 import paramiko
 from paramiko import SSHClient

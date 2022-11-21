@@ -11,7 +11,10 @@ try:
 except ImportError:
     Result = None
 
-from mock import patch
+try:
+    from mock import patch
+except ImportError:
+    from unittest.mock import patch
 from pytest import raises, mark, fixture
 
 from paramiko import (

@@ -41,7 +41,10 @@ from paramiko.common import o600
 
 from cryptography.exceptions import UnsupportedAlgorithm
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateNumbers
-from mock import patch, Mock
+try:
+    from mock import patch, Mock
+except ImportError:
+    from unittest.mock import patch, Mock
 import pytest
 
 from .util import _support, is_low_entropy, requires_sha1_signing
