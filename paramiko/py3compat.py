@@ -119,6 +119,11 @@ else:
     import struct
     import builtins
 
+    try:
+        Callable = collections.Callable
+    except AttributeError:
+        Callable = collections.abc.Callable
+
     string_types = str
     text_type = str
     bytes = bytes
@@ -173,7 +178,7 @@ else:
     BytesIO = io.BytesIO  # NOQA
 
     def is_callable(c):
-        return isinstance(c, collections.Callable)
+        return isinstance(c, Callable)
 
     def get_next(c):
         return c.__next__
