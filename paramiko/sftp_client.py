@@ -97,7 +97,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
     Instances of this class may be used as context managers.
     """
 
-    def __init__(self, sock):
+    def __init__(self, sock, encoding="utf8"):
         """
         Create an SFTP client from an existing `.Channel`.  The channel
         should already have requested the ``"sftp"`` subsystem.
@@ -106,12 +106,14 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         `from_transport`.
 
         :param .Channel sock: an open `.Channel` using the ``"sftp"`` subsystem
+        :param str encoding: which text encoding used to process strings
 
         :raises:
             `.SSHException` -- if there's an exception while negotiating sftp
         """
         BaseSFTP.__init__(self)
         self.sock = sock
+        self.text_encoding = encoding
         self.ultra_debug = False
         self.request_number = 1
         # lock for request_number
@@ -138,7 +140,9 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         )
 
     @classmethod
-    def from_transport(cls, t, window_size=None, max_packet_size=None):
+    def from_transport(
+        cls, t, window_size=None, max_packet_size=None, encoding="utf8"
+    ):
         """
         Create an SFTP client channel from an open `.Transport`.
 
@@ -153,6 +157,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
             optional window size for the `.SFTPClient` session.
         :param int max_packet_size:
             optional max packet size for the `.SFTPClient` session..
+        :param str encoding: which text encoding used to process strings
 
         :return:
             a new `.SFTPClient` object, referring to an sftp session (channel)
@@ -167,7 +172,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         if chan is None:
             return None
         chan.invoke_subsystem("sftp")
-        return cls(chan)
+        return cls(chan, encoding=encoding)
 
     def _log(self, level, msg, *args):
         if isinstance(msg, list):
@@ -301,7 +306,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
                 # handle
                 for num in nums:
                     t, pkt_data = self._read_packet()
-                    msg = Message(pkt_data)
+                    msg = Message(pkt_data, encoding=self.text_encoding)
                     new_num = msg.get_int()
                     if num == new_num:
                         if t == CMD_STATUS:
@@ -522,7 +527,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         """
         dest = self._adjust_cwd(dest)
         self._log(DEBUG, "symlink({!r}, {!r})".format(source, dest))
-        source = b(source)
+        source = b(source, self.text_encoding)
         self._request(CMD_SYMLINK, source, dest)
 
     def chmod(self, path, mode):
@@ -659,7 +664,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         if not stat.S_ISDIR(self.stat(path).st_mode):
             code = errno.ENOTDIR
             raise SFTPError(code, "{}: {}".format(os.strerror(code), path))
-        self._cwd = b(self.normalize(path))
+        self._cwd = b(self.normalize(path), self.text_encoding)
 
     def getcwd(self):
         """
@@ -670,7 +675,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         .. versionadded:: 1.4
         """
         # TODO: make class initialize with self._cwd set to self.normalize('.')
-        return self._cwd and u(self._cwd)
+        return self._cwd and u(self._cwd, self.text_encoding)
 
     def _transfer_with_callback(self, reader, writer, file_size, callback):
         size = 0
@@ -825,7 +830,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         # this method may be called from other threads (prefetch)
         self._lock.acquire()
         try:
-            msg = Message()
+            msg = Message(encoding=self.text_encoding)
             msg.add_int(self.request_number)
             for item in arg:
                 if isinstance(item, long):
@@ -852,7 +857,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
                 t, data = self._read_packet()
             except EOFError as e:
                 raise SSHException("Server connection dropped: {}".format(e))
-            msg = Message(data)
+            msg = Message(data, encoding=self.text_encoding)
             num = msg.get_int()
             self._lock.acquire()
             try:
@@ -911,7 +916,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         Return an adjusted path if we're emulating a "current working
         directory" for the server.
         """
-        path = b(path)
+        path = b(path, self.text_encoding)
         if self._cwd is None:
             return path
         if len(path) and path[0:1] == b_slash:

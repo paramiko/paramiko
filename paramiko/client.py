@@ -564,13 +564,15 @@ class SSHClient(ClosingContextManager):
         chan.invoke_shell()
         return chan
 
-    def open_sftp(self):
+    def open_sftp(self, encoding="utf8"):
         """
         Open an SFTP session on the SSH server.
 
+        :param str encoding: which text encoding used to process strings
+
         :return: a new `.SFTPClient` session object
         """
-        return self._transport.open_sftp_client()
+        return self._transport.open_sftp_client(encoding=encoding)
 
     def get_transport(self):
         """
