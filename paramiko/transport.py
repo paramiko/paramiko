@@ -22,6 +22,7 @@ Core protocol implementation
 """
 
 from __future__ import print_function
+
 import os
 import socket
 import sys
@@ -31,89 +32,57 @@ import weakref
 from hashlib import md5, sha1, sha256, sha512
 
 from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives.ciphers import algorithms, Cipher, modes
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 
 import paramiko
 from paramiko import util
 from paramiko.auth_handler import AuthHandler
-from paramiko.ssh_gss import GSSAuth
 from paramiko.channel import Channel
-from paramiko.common import (
-    xffffffff,
-    cMSG_CHANNEL_OPEN,
-    cMSG_IGNORE,
-    cMSG_GLOBAL_REQUEST,
-    DEBUG,
-    MSG_KEXINIT,
-    MSG_IGNORE,
-    MSG_DISCONNECT,
-    MSG_DEBUG,
-    ERROR,
-    WARNING,
-    cMSG_UNIMPLEMENTED,
-    INFO,
-    cMSG_KEXINIT,
-    cMSG_NEWKEYS,
-    MSG_NEWKEYS,
-    cMSG_REQUEST_SUCCESS,
-    cMSG_REQUEST_FAILURE,
-    CONNECTION_FAILED_CODE,
-    OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED,
-    OPEN_SUCCEEDED,
-    cMSG_CHANNEL_OPEN_FAILURE,
-    cMSG_CHANNEL_OPEN_SUCCESS,
-    MSG_GLOBAL_REQUEST,
-    MSG_REQUEST_SUCCESS,
-    MSG_REQUEST_FAILURE,
-    MSG_CHANNEL_OPEN_SUCCESS,
-    MSG_CHANNEL_OPEN_FAILURE,
-    MSG_CHANNEL_OPEN,
-    MSG_CHANNEL_SUCCESS,
-    MSG_CHANNEL_FAILURE,
-    MSG_CHANNEL_DATA,
-    MSG_CHANNEL_EXTENDED_DATA,
-    MSG_CHANNEL_WINDOW_ADJUST,
-    MSG_CHANNEL_REQUEST,
-    MSG_CHANNEL_EOF,
-    MSG_CHANNEL_CLOSE,
-    MIN_WINDOW_SIZE,
-    MIN_PACKET_SIZE,
-    MAX_WINDOW_SIZE,
-    DEFAULT_WINDOW_SIZE,
-    DEFAULT_MAX_PACKET_SIZE,
-    HIGHEST_USERAUTH_MESSAGE_ID,
-    MSG_UNIMPLEMENTED,
-    MSG_NAMES,
-    MSG_EXT_INFO,
-    cMSG_EXT_INFO,
-)
+from paramiko.common import (CONNECTION_FAILED_CODE, DEBUG,
+                             DEFAULT_MAX_PACKET_SIZE, DEFAULT_WINDOW_SIZE,
+                             ERROR, HIGHEST_USERAUTH_MESSAGE_ID, INFO,
+                             MAX_WINDOW_SIZE, MIN_PACKET_SIZE, MIN_WINDOW_SIZE,
+                             MSG_CHANNEL_CLOSE, MSG_CHANNEL_DATA,
+                             MSG_CHANNEL_EOF, MSG_CHANNEL_EXTENDED_DATA,
+                             MSG_CHANNEL_FAILURE, MSG_CHANNEL_OPEN,
+                             MSG_CHANNEL_OPEN_FAILURE,
+                             MSG_CHANNEL_OPEN_SUCCESS, MSG_CHANNEL_REQUEST,
+                             MSG_CHANNEL_SUCCESS, MSG_CHANNEL_WINDOW_ADJUST,
+                             MSG_DEBUG, MSG_DISCONNECT, MSG_EXT_INFO,
+                             MSG_GLOBAL_REQUEST, MSG_IGNORE, MSG_KEXINIT,
+                             MSG_NAMES, MSG_NEWKEYS, MSG_REQUEST_FAILURE,
+                             MSG_REQUEST_SUCCESS, MSG_UNIMPLEMENTED,
+                             OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED,
+                             OPEN_SUCCEEDED, WARNING, cMSG_CHANNEL_OPEN,
+                             cMSG_CHANNEL_OPEN_FAILURE,
+                             cMSG_CHANNEL_OPEN_SUCCESS, cMSG_EXT_INFO,
+                             cMSG_GLOBAL_REQUEST, cMSG_IGNORE, cMSG_KEXINIT,
+                             cMSG_NEWKEYS, cMSG_REQUEST_FAILURE,
+                             cMSG_REQUEST_SUCCESS, cMSG_UNIMPLEMENTED,
+                             xffffffff)
 from paramiko.compress import ZlibCompressor, ZlibDecompressor
 from paramiko.dsskey import DSSKey
+from paramiko.ecdsakey import ECDSAKey
 from paramiko.ed25519key import Ed25519Key
 from paramiko.kex_curve25519 import KexCurve25519
+from paramiko.kex_ecdh_nist import KexNistp256, KexNistp384, KexNistp521
 from paramiko.kex_gex import KexGex, KexGexSHA256
 from paramiko.kex_group1 import KexGroup1
 from paramiko.kex_group14 import KexGroup14, KexGroup14SHA256
 from paramiko.kex_group16 import KexGroup16SHA512
-from paramiko.kex_ecdh_nist import KexNistp256, KexNistp384, KexNistp521
 from paramiko.kex_gss import KexGSSGex, KexGSSGroup1, KexGSSGroup14
 from paramiko.message import Message
-from paramiko.packet import Packetizer, NeedRekeyException
+from paramiko.packet import NeedRekeyException, Packetizer
 from paramiko.primes import ModulusPack
-from paramiko.py3compat import string_types, long, byte_ord, b, input, PY2
+from paramiko.py3compat import PY2, b, byte_ord, input, long, string_types
 from paramiko.rsakey import RSAKey
-from paramiko.ecdsakey import ECDSAKey
 from paramiko.server import ServerInterface
 from paramiko.sftp_client import SFTPClient
-from paramiko.ssh_exception import (
-    SSHException,
-    BadAuthenticationType,
-    ChannelException,
-    IncompatiblePeer,
-    ProxyCommandFailure,
-)
-from paramiko.util import retry_on_signal, ClosingContextManager, clamp_value
-
+from paramiko.ssh_exception import (BadAuthenticationType, ChannelException,
+                                    IncompatiblePeer, ProxyCommandFailure,
+                                    SSHException)
+from paramiko.ssh_gss import GSSAuth
+from paramiko.util import ClosingContextManager, clamp_value, retry_on_signal
 
 # for thread cleanup
 _active_threads = []
@@ -328,6 +297,7 @@ class Transport(threading.Thread, ClosingContextManager):
         gss_kex=False,
         gss_deleg_creds=True,
         disabled_algorithms=None,
+        socket_timeout=None,
         server_sig_algs=True,
     ):
         """
@@ -395,6 +365,8 @@ class Transport(threading.Thread, ClosingContextManager):
             Whether to send an extra message to compatible clients, in server
             mode, with a list of supported pubkey algorithms. Default:
             ``True``.
+        :param float socket_timeout:
+            Sets the socket connection timeout. Default: ``None``.
 
         .. versionchanged:: 1.15
             Added the ``default_window_size`` and ``default_max_packet_size``
@@ -404,7 +376,7 @@ class Transport(threading.Thread, ClosingContextManager):
         .. versionchanged:: 2.6
             Added the ``disabled_algorithms`` kwarg.
         .. versionchanged:: 2.9
-            Added the ``server_sig_algs`` kwarg.
+            Added the ``server_sig_algs`` and ``socket_timeout`` kwargs.
         """
         self.active = False
         self.hostname = None
@@ -429,13 +401,16 @@ class Transport(threading.Thread, ClosingContextManager):
             for family, socktype, proto, canonname, sockaddr in addrinfos:
                 if socktype == socket.SOCK_STREAM:
                     af = family
-                    # addr = sockaddr
                     sock = socket.socket(af, socket.SOCK_STREAM)
+                    if socket_timeout is not None:
+                        sock.settimeout(socket_timeout)
                     try:
                         retry_on_signal(lambda: sock.connect((hostname, port)))
                     except socket.error as e:
                         reason = str(e)
                     else:
+                        if socket_timeout is not None:
+                            sock.settimeout(None)
                         break
             else:
                 raise SSHException(
