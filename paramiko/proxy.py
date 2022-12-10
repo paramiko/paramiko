@@ -20,7 +20,7 @@
 import os
 import shlex
 import signal
-from select import select
+import selectors
 import socket
 import time
 
@@ -96,6 +96,8 @@ class ProxyCommand(ClosingContextManager):
         try:
             buffer = b""
             start = time.time()
+            selector = selectors.DefaultSelector()
+            selector.register(self.process.stdout, selectors.EVENT_READ)
             while len(buffer) < size:
                 select_timeout = None
                 if self.timeout is not None:
@@ -103,12 +105,13 @@ class ProxyCommand(ClosingContextManager):
                     if elapsed >= self.timeout:
                         raise socket.timeout()
                     select_timeout = self.timeout - elapsed
-
-                r, w, x = select([self.process.stdout], [], [], select_timeout)
+                r = [key.fileobj for (key, flags) in selector.select(
+                    select_timeout) if flags & selectors.EVENT_READ]
                 if r and r[0] == self.process.stdout:
                     buffer += os.read(
-                        self.process.stdout.fileno(), size - len(buffer)
-                    )
+                        self.process.stdout.fileno(), size - len(buffer))
+            selector.unregister(self.process.stdout)
+            selector.close()
             return buffer
         except socket.timeout:
             if buffer:
