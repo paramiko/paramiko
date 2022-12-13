@@ -27,8 +27,8 @@ import weakref
 from paramiko import util
 from paramiko.channel import Channel
 from paramiko.message import Message
-from paramiko.common import INFO, DEBUG, o777
-from paramiko.py3compat import b, u, long
+from paramiko.common import asbytes, INFO, DEBUG, o777
+from paramiko.py3compat import u, long
 from paramiko.sftp import (
     BaseSFTP,
     CMD_OPENDIR,
@@ -522,7 +522,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         """
         dest = self._adjust_cwd(dest)
         self._log(DEBUG, "symlink({!r}, {!r})".format(source, dest))
-        source = b(source)
+        source = asbytes(source)
         self._request(CMD_SYMLINK, source, dest)
 
     def chmod(self, path, mode):
@@ -659,7 +659,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         if not stat.S_ISDIR(self.stat(path).st_mode):
             code = errno.ENOTDIR
             raise SFTPError(code, "{}: {}".format(os.strerror(code), path))
-        self._cwd = b(self.normalize(path))
+        self._cwd = asbytes(self.normalize(path))
 
     def getcwd(self):
         """
@@ -911,7 +911,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         Return an adjusted path if we're emulating a "current working
         directory" for the server.
         """
-        path = b(path)
+        path = asbytes(path)
         if self._cwd is None:
             return path
         if len(path) and path[0:1] == b_slash:
