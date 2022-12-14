@@ -31,7 +31,12 @@ import weakref
 from hashlib import md5, sha1, sha256, sha512
 
 from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives.ciphers import algorithms, Cipher, modes, aead
+from cryptography.hazmat.primitives.ciphers import (
+    algorithms,
+    Cipher,
+    modes,
+    aead,
+)
 
 import paramiko
 from paramiko import util
@@ -264,21 +269,20 @@ class Transport(threading.Thread, ClosingContextManager):
             "iv-size": 8,
             "key-size": 24,
         },
-
         # aead cipher
         "aes128-gcm@openssh.com": {
             "class": aead.AESGCM,
             "block-size": 16,
             "iv-size": 12,
             "key-size": 16,
-            "is_aead": True
+            "is_aead": True,
         },
         "aes256-gcm@openssh.com": {
             "class": aead.AESGCM,
             "block-size": 16,
             "iv-size": 12,
             "key-size": 32,
-            "is_aead": True
+            "is_aead": True,
         },
     }
 
@@ -2644,7 +2648,11 @@ class Transport(threading.Thread, ClosingContextManager):
                 "D", self._cipher_info[self.remote_cipher]["key-size"]
             )
 
-        is_aead = True if self._cipher_info[self.remote_cipher].get("is_aead") else False
+        is_aead = (
+            True
+            if self._cipher_info[self.remote_cipher].get("is_aead")
+            else False
+        )
 
         if is_aead:
             engine = self._get_aead_cipher(self.remote_cipher, key_in)
@@ -2664,7 +2672,14 @@ class Transport(threading.Thread, ClosingContextManager):
         if is_aead:
             self._log(DEBUG, "use aead-cipher, so set mac to None")
             self.packetizer.set_inbound_cipher(
-                engine, block_size, None, 16, bytes(), etm=False, aead=is_aead, iv_in=IV_in
+                engine,
+                block_size,
+                None,
+                16,
+                bytes(),
+                etm=False,
+                aead=is_aead,
+                iv_in=IV_in,
             )
         else:
             self.packetizer.set_inbound_cipher(
@@ -2698,7 +2713,13 @@ class Transport(threading.Thread, ClosingContextManager):
             key_out = self._compute_key(
                 "C", self._cipher_info[self.local_cipher]["key-size"]
             )
-        is_aead = True if self._cipher_info[self.local_cipher].get("is_aead") else False
+
+        is_aead = (
+            True
+            if self._cipher_info[self.local_cipher].get("is_aead")
+            else False
+        )
+
         if is_aead:
             engine = self._get_aead_cipher(self.local_cipher, key_out)
         else:
@@ -2717,11 +2738,25 @@ class Transport(threading.Thread, ClosingContextManager):
         sdctr = self.local_cipher.endswith("-ctr")
         if is_aead:
             self.packetizer.set_outbound_cipher(
-                engine, block_size, None, 16, bytes(), sdctr, etm=False, aead=is_aead, iv_out=IV_out
+                engine,
+                block_size,
+                None,
+                16,
+                bytes(),
+                sdctr,
+                etm=False,
+                aead=is_aead,
+                iv_out=IV_out,
             )
         else:
             self.packetizer.set_outbound_cipher(
-                engine, block_size, mac_engine, mac_size, mac_key, sdctr, etm=etm
+                engine,
+                block_size,
+                mac_engine,
+                mac_size,
+                mac_key,
+                sdctr,
+                etm=etm,
             )
         compress_out = self._compression_info[self.local_compression][0]
         if compress_out is not None and (

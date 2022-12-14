@@ -403,11 +403,14 @@ class Packetizer(object):
         # refer https://www.rfc-editor.org/rfc/rfc5647.html#section-7.1
         iv_counter_b = iv[4:]
         iv_counter = int.from_bytes(iv_counter_b, "big")
-        inc_iv_counter = (iv_counter + 1)
+        inc_iv_counter = iv_counter + 1
         inc_iv_counter_b = inc_iv_counter.to_bytes(8, "big")
         new_iv = iv[0:4] + inc_iv_counter_b
-        self._log(DEBUG, "old-iv_count[%s], new-iv_count[%s]"
-                         % (iv_counter, inc_iv_counter))
+        self._log(
+            DEBUG,
+            "old-iv_count[%s], new-iv_count[%s]"
+            % (iv_counter, inc_iv_counter),
+        )
         return new_iv
 
     def send_message(self, data):
@@ -442,8 +445,8 @@ class Packetizer(object):
                 elif self.__aead_out:
                     # packet length is used to associated_data
                     out = packet[0:4] + self.__block_engine_out.encrypt(
-                        self.__iv_out, packet[4:], packet[0:4])
-                    # refer https://www.rfc-editor.org/rfc/rfc5647.html#section-7.1
+                        self.__iv_out, packet[4:], packet[0:4]
+                    )
                     self.__iv_out = self._inc_iv_counter(self.__iv_out)
                 else:
                     out = self.__block_engine_out.update(packet)
@@ -508,15 +511,14 @@ class Packetizer(object):
 
         if self.__aead_in:
             packet_size = struct.unpack(">I", header[:4])[0]
-            self._log(DEBUG, "packet_size[%s], auth_tag_size[%s]" % (packet_size, self.__mac_size_in))
             aad = header[:4]
-            remaining = packet_size - self.__block_size_in + 4 + self.__mac_size_in
+            remaining = (
+                packet_size - self.__block_size_in + 4 + self.__mac_size_in
+            )
             packet = header[4:] + self.read_all(remaining, check_rekey=False)
-            # auth_tag = self.read_all(self.__mac_size_in, check_rekey=False)
             self._log(DEBUG, "len(aad)=%s, aad->%s" % (len(aad), aad.hex()))
             header = self.__block_engine_in.decrypt(self.__iv_in, packet, aad)
 
-            # refer https://www.rfc-editor.org/rfc/rfc5647.html#section-7.1
             self.__iv_in = self._inc_iv_counter(self.__iv_in)
 
         if self.__block_engine_in is not None and not self.__aead_in:
@@ -615,7 +617,6 @@ class Packetizer(object):
             cmd_name = MSG_NAMES[cmd]
         else:
             cmd_name = "${:x}".format(cmd)
-        self._log(DEBUG, "packet cmd_name[%s], len[%s]" % (cmd_name, len(payload)))
         if self.__dump_packets:
             self._log(
                 DEBUG,
