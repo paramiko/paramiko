@@ -682,7 +682,7 @@ class Channel(ClosingContextManager):
         """
         return self.in_buffer.read_ready()
 
-    def recv(self, nbytes):
+    def recv(self, nbytes, flags=0):
         """
         Receive data from the channel.  The return value is a string
         representing the data received.  The maximum amount of data to be
@@ -690,13 +690,16 @@ class Channel(ClosingContextManager):
         length zero is returned, the channel stream has closed.
 
         :param int nbytes: maximum number of bytes to read.
+        :param int flags:
+            socket recv flags (currently only supports socket.MSG_PEEK)
+
         :return: received data, as a ``str``/``bytes``.
 
         :raises socket.timeout:
             if no data is ready before the timeout set by `settimeout`.
         """
         try:
-            out = self.in_buffer.read(nbytes, self.timeout)
+            out = self.in_buffer.read(nbytes, self.timeout, flags=flags)
         except PipeTimeout:
             raise socket.timeout()
 
