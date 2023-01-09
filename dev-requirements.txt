@@ -18,5 +18,5 @@ alabaster==0.7.12
 releases>=2.0
 # Debuggery
 icecream>=2.1
-# Self
--e ".[ed25519,invoke]"
+# Self (sans GSS which is a pain to bother with most of the time)
+-e ".[invoke]"
