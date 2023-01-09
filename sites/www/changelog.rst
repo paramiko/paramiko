@@ -18,6 +18,10 @@ Changelog
     ``python_requires``, so this should not cause breakage unless you're on an
     old installation method that can't read this metadata.
 
+  .. note::
+    As part of this change, our dependencies have been updated; eg we now
+    require Cryptography>=3.3, up from 2.5.
+
 - :release:`2.12.0 <2022-11-04>`
 - :feature:`2125` (also re: :issue:`2054`) Add a ``transport_factory`` kwarg to
   `SSHClient.connect <paramiko.client.SSHClient.connect>` for advanced

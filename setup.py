@@ -87,7 +87,7 @@ setup(
     python_requires=">=3.6",
     install_requires=[
         "bcrypt>=3.1.3",
-        "cryptography>=2.5",
+        "cryptography>=3.3",
         "pynacl>=1.0.1",
     ],
     extras_require=extras_require,

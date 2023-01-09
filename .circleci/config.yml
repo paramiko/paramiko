@@ -63,9 +63,9 @@ workflows:
               version: ["3.6"]
               # TODO: I don't see a nicer way to do this that doesn't require
               # making the orb know too much about its client code...
-              # TODO: the upper end of this needs to move, or grow more cells,
-              # periodically
-              pip-overrides: ["cryptography==2.5", "cryptography==3.4"]
+              # TODO: the upper end of this needs to change and/or grow more
+              # cells, periodically
+              pip-overrides: ["cryptography>=3.3,<3.4", "cryptography>=40,<41"]
       # Kerberos tests. Currently broken :(
       #- kerberos:
       #    name: Test 3.6 w/ Kerberos support
