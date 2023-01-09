@@ -75,15 +75,13 @@ setup(
         "Topic :: Internet",
         "Topic :: Security :: Cryptography",
         "Programming Language :: Python",
-        "Programming Language :: Python :: 2",
-        "Programming Language :: Python :: 2.7",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.4",
-        "Programming Language :: Python :: 3.5",
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
     ],
     # TODO 3.0: remove bcrypt, pynacl and update installation docs noting that
     # use of the extras_require ("paramiko[ed2559]") is now required for those
@@ -92,6 +90,7 @@ setup(
     # "full"/"all"? (probably sans gssapi which should remain optional; MAYBE
     # still sans invoke as well, not everyone uses ProxyCommand or Match exec)
     # TODO 3.0: remove six, obviously
+    python_requires=">=3.6",
     install_requires=[
         "bcrypt>=3.1.3",
         "cryptography>=2.5",
