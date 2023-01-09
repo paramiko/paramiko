@@ -2,7 +2,7 @@ version: 2.1
 
 
 orbs:
-  orb: invocations/orb@1.0.4
+  orb: invocations/orb@1.3.0
 
 
 jobs:
@@ -63,6 +63,8 @@ workflows:
               version: ["3.6"]
               # TODO: I don't see a nicer way to do this that doesn't require
               # making the orb know too much about its client code...
+              # TODO: the upper end of this needs to move, or grow more cells,
+              # periodically
               pip-overrides: ["cryptography==2.5", "cryptography==3.4"]
       # Kerberos tests. Currently broken :(
       #- kerberos:
