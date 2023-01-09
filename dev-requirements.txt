@@ -1,30 +1,22 @@
 # Invocations for common project tasks
-invoke==1.6.0
-invocations==2.6.0
-# Pinning has some disadvantages when testing across multiple Python versions
-# 3.6 specific pins
-pytest==4.4.2;python_version=='3.6'
-pytest-relaxed==1.1.5;python_version=='3.6'
+#invoke>=2.0
+invoke @ git+https://github.com/pyinvoke/invoke@main
+invocations>=3.0
+# Testing!
+pytest-relaxed>=2
 # pytest-xdist for test dir watching and the inv guard task
-pytest-xdist==1.28.0;python_version=='3.6'
-# 3.7+ specific
-pytest==7.2.0;python_version>='3.7'
-pytest-xdist==3.1.0;python_version>='3.7'
-pytest-relaxed==2.0.0;python_version>='3.7'
-
-mock==2.0.0
+pytest-xdist>=3
 # Linting!
-flake8==3.8.3
+flake8>=4,<5
 # Formatting!
-black==18.6b4
+black>=22.8,<22.9
 # Coverage!
-coverage==4.5.4
-codecov==2.1.11
+coverage>=6.2,<7
+codecov==2.1.12
 # Documentation tools
-sphinx>=1.4,<1.7
 alabaster==0.7.12
-releases>=1.5,<2.0
-# Release tools
-semantic_version>=2.4,<2.5
+releases>=2.0
+# Debuggery
+icecream>=2.1
 # Self
 -e ".[ed25519,invoke]"
