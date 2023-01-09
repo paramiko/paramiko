@@ -2,6 +2,20 @@
 Changelog
 =========
 
+- :support:`-` Drop support for Python versions less than 3.6, including Python
+  2. So long and thanks for all the fish!
+
+  .. warning::
+    This change is backwards compatible if you are still on older Python
+    versions. However, our packaging metadata has been updated to include
+    ``python_requires``, so this should not cause breakage unless you're on an
+    old installation method that can't read this metadata.
+
+  .. warning::
+    As part of this change, ``paramiko.py3compat`` has been entirely removed.
+    Any methods you were using from that module should be easily
+    search-and-replaced with their modern Python 3.6+ equivalents as necessary.
+
 - :release:`2.12.0 <2022-11-04>`
 - :feature:`2125` (also re: :issue:`2054`) Add a ``transport_factory`` kwarg to
   `SSHClient.connect <paramiko.client.SSHClient.connect>` for advanced
