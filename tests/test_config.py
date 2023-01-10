@@ -9,7 +9,7 @@ try:
 except ImportError:
     Result = None
 
-from mock import patch
+from unittest.mock import patch
 from pytest import raises, mark, fixture
 
 from paramiko import (

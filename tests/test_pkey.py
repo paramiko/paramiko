@@ -42,7 +42,7 @@ from paramiko.common import o600, byte_chr
 
 from cryptography.exceptions import UnsupportedAlgorithm
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateNumbers
-from mock import patch, Mock
+from unittest.mock import patch, Mock
 import pytest
 
 from .util import _support, is_low_entropy, requires_sha1_signing

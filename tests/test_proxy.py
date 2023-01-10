@@ -1,7 +1,7 @@
 import signal
 import socket
 
-from mock import patch
+from unittest.mock import patch
 from pytest import raises
 
 from paramiko import ProxyCommand, ProxyCommandFailure
