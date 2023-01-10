@@ -28,7 +28,7 @@ from paramiko import util
 from paramiko.channel import Channel
 from paramiko.message import Message
 from paramiko.common import INFO, DEBUG, o777
-from paramiko.py3compat import b, u, long
+from paramiko.py3compat import b, u
 from paramiko.sftp import (
     BaseSFTP,
     CMD_OPENDIR,

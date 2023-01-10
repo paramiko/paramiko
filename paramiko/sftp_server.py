@@ -36,7 +36,7 @@ from paramiko.sftp import (
 from paramiko.sftp_si import SFTPServerInterface
 from paramiko.sftp_attr import SFTPAttributes
 from paramiko.common import DEBUG
-from paramiko.py3compat import long, string_types, bytes_types, b
+from paramiko.py3compat import string_types, bytes_types, b
 from paramiko.server import SubsystemHandler
 
 

@@ -101,7 +101,7 @@ from paramiko.kex_gss import KexGSSGex, KexGSSGroup1, KexGSSGroup14
 from paramiko.message import Message
 from paramiko.packet import Packetizer, NeedRekeyException
 from paramiko.primes import ModulusPack
-from paramiko.py3compat import string_types, long, b, input
+from paramiko.py3compat import string_types, b, input
 from paramiko.rsakey import RSAKey
 from paramiko.ecdsakey import ECDSAKey
 from paramiko.server import ServerInterface
@@ -569,7 +569,7 @@ class Transport(threading.Thread, ClosingContextManager):
         """
         Returns a string representation of this object, for debugging.
         """
-        id_ = hex(long(id(self)) & xffffffff)
+        id_ = hex(id(self) & xffffffff)
         out = "<paramiko.Transport at {}".format(id_)
         if not self.active:
             out += " (unconnected)"
@@ -2074,7 +2074,7 @@ class Transport(threading.Thread, ClosingContextManager):
 
         # active=True occurs before the thread is launched, to avoid a race
         _active_threads.append(self)
-        tid = hex(long(id(self)) & xffffffff)
+        tid = hex(id(self) & xffffffff)
         if self.server_mode:
             self._log(DEBUG, "starting thread (server mode): {}".format(tid))
         else:

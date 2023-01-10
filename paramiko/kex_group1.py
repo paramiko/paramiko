@@ -27,7 +27,6 @@ from hashlib import sha1
 from paramiko import util
 from paramiko.common import max_byte, zero_byte, byte_chr, byte_mask
 from paramiko.message import Message
-from paramiko.py3compat import long
 from paramiko.ssh_exception import SSHException
 
 
@@ -49,9 +48,9 @@ class KexGroup1(object):
 
     def __init__(self, transport):
         self.transport = transport
-        self.x = long(0)
-        self.e = long(0)
-        self.f = long(0)
+        self.x = 0
+        self.e = 0
+        self.f = 0
 
     def start_kex(self):
         self._generate_x()

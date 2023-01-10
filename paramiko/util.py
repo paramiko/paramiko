@@ -36,7 +36,7 @@ from paramiko.config import SSHConfig
 def inflate_long(s, always_positive=False):
     """turns a normalized byte string into a long-int
     (adapted from Crypto.Util.number)"""
-    out = long(0)
+    out = 0
     negative = 0
     if not always_positive and (len(s) > 0) and (byte_ord(s[0]) >= 0x80):
         negative = 1
@@ -50,7 +50,7 @@ def inflate_long(s, always_positive=False):
     for i in range(0, len(s), 4):
         out = (out << 32) + struct.unpack(">I", s[i : i + 4])[0]
     if negative:
-        out -= long(1) << (8 * len(s))
+        out -= 1 << (8 * len(s))
     return out
 
 
@@ -59,7 +59,7 @@ def deflate_long(n, add_sign_padding=True):
     (adapted from Crypto.Util.number)"""
     # after much testing, this algorithm was deemed to be the fastest
     s = bytes()
-    n = long(n)
+    n = int(n)
     while (n != 0) and (n != -1):
         s = struct.pack(">I", n & xffffffff) + s
         n >>= 32

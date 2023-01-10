@@ -25,7 +25,7 @@ from io import BytesIO
 
 from paramiko import util
 from paramiko.common import zero_byte, max_byte, one_byte
-from paramiko.py3compat import long, u
+from paramiko.py3compat import u
 
 
 class Message(object):
@@ -39,7 +39,7 @@ class Message(object):
     paramiko doesn't support yet.
     """
 
-    big_int = long(0xff000000)
+    big_int = 0xff000000
 
     def __init__(self, content=None):
         """
@@ -152,7 +152,7 @@ class Message(object):
         """
         Fetch a 64-bit int from the stream.
 
-        :return: a 64-bit unsigned integer (`long`).
+        :return: a 64-bit unsigned integer (`int`).
         """
         return struct.unpack(">Q", self.get_bytes(8))[0]
 
@@ -160,7 +160,7 @@ class Message(object):
         """
         Fetch a long int (mpint) from the stream.
 
-        :return: an arbitrary-length integer (`long`).
+        :return: an arbitrary-length integer (`int`).
         """
         return util.inflate_long(self.get_binary())
 
