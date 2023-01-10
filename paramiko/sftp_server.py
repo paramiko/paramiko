@@ -36,7 +36,6 @@ from paramiko.sftp import (
 from paramiko.sftp_si import SFTPServerInterface
 from paramiko.sftp_attr import SFTPAttributes
 from paramiko.common import DEBUG
-from paramiko.py3compat import bytes_types
 from paramiko.server import SubsystemHandler
 from paramiko.util import b
 
@@ -233,7 +232,7 @@ class SFTPServer(BaseSFTP, SubsystemHandler):
                 msg.add_int64(item)
             elif isinstance(item, int):
                 msg.add_int(item)
-            elif isinstance(item, (str, bytes_types)):
+            elif isinstance(item, (str, bytes)):
                 msg.add_string(item)
             elif type(item) is SFTPAttributes:
                 item._pack(msg)
@@ -341,7 +340,7 @@ class SFTPServer(BaseSFTP, SubsystemHandler):
             hash_obj = alg()
             while count < blocklen:
                 data = f.read(offset, chunklen)
-                if not isinstance(data, bytes_types):
+                if not isinstance(data, bytes):
                     self._send_status(
                         request_number, data, "Unable to hash file"
                     )
@@ -409,7 +408,7 @@ class SFTPServer(BaseSFTP, SubsystemHandler):
                 )
                 return
             data = self.file_table[handle].read(offset, length)
-            if isinstance(data, (bytes_types, str)):
+            if isinstance(data, (bytes, str)):
                 if len(data) == 0:
                     self._send_status(request_number, SFTP_EOF)
                 else:
@@ -501,7 +500,7 @@ class SFTPServer(BaseSFTP, SubsystemHandler):
         elif t == CMD_READLINK:
             path = msg.get_text()
             resp = self.server.readlink(path)
-            if isinstance(resp, (bytes_types, str)):
+            if isinstance(resp, (bytes, str)):
                 self._response(
                     request_number, CMD_NAME, 1, resp, "", SFTPAttributes()
                 )
