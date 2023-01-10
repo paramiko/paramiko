@@ -1,4 +1,5 @@
 from os.path import dirname, realpath, join
+import builtins
 import os
 import struct
 import sys
@@ -6,7 +7,6 @@ import unittest
 
 import pytest
 
-from paramiko.py3compat import builtins
 from paramiko.ssh_gss import GSS_AUTH_AVAILABLE
 
 from cryptography.exceptions import UnsupportedAlgorithm, _Reasons
