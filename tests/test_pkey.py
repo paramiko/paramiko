@@ -26,6 +26,7 @@ import os
 import stat
 from binascii import hexlify
 from hashlib import md5
+from io import StringIO
 
 from paramiko import (
     RSAKey,
@@ -36,7 +37,7 @@ from paramiko import (
     util,
     SSHException,
 )
-from paramiko.py3compat import StringIO, b, bytes, PY2
+from paramiko.py3compat import b, bytes, PY2
 from paramiko.common import o600, byte_chr
 
 from cryptography.exceptions import UnsupportedAlgorithm

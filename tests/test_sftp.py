@@ -28,11 +28,11 @@ import socket
 import sys
 import warnings
 from binascii import hexlify
+from io import StringIO
 from tempfile import mkstemp
 
 import pytest
 
-from paramiko.py3compat import PY2, b, u, StringIO
 from paramiko.common import o777, o600, o666, o644
 from tests import requireNonAsciiLocale
 from paramiko.sftp_attr import SFTPAttributes

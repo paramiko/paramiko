@@ -28,9 +28,8 @@ import re
 import shlex
 import socket
 from hashlib import sha1
+from io import StringIO
 from functools import partial
-
-from .py3compat import StringIO
 
 invoke, invoke_import_error = None, None
 try:
