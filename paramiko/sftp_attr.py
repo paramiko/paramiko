@@ -19,7 +19,6 @@
 import stat
 import time
 from paramiko.common import x80000000, o700, o70, xffffffff
-from paramiko.py3compat import strftime
 
 
 class SFTPAttributes(object):
@@ -208,9 +207,9 @@ class SFTPAttributes(object):
             time_tuple = time.localtime(self.st_mtime)
             if abs(time.time() - self.st_mtime) > 15552000:
                 # (15552000 = 6 months)
-                datestr = strftime("%d %b %Y", time_tuple)
+                datestr = time.strftime("%d %b %Y", time_tuple)
             else:
-                datestr = strftime("%d %b %H:%M", time_tuple)
+                datestr = time.strftime("%d %b %H:%M", time_tuple)
         filename = getattr(self, "filename", "?")
 
         # not all servers support uid/gid
