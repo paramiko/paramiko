@@ -20,12 +20,12 @@
 Some unit tests for HostKeys.
 """
 
+from base64 import decodebytes
 from binascii import hexlify
 import os
 import unittest
 
 import paramiko
-from paramiko.py3compat import decodebytes
 
 
 test_hosts_file = """\

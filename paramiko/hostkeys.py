@@ -17,6 +17,7 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
 
 
+from base64 import encodebytes, decodebytes
 import binascii
 import os
 import sys
@@ -28,7 +29,6 @@ else:
 from hashlib import sha1
 from hmac import HMAC
 
-from paramiko.py3compat import encodebytes, decodebytes
 
 from paramiko.dsskey import DSSKey
 from paramiko.rsakey import RSAKey
