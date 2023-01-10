@@ -30,7 +30,7 @@ import time
 from paramiko.common import DEBUG
 
 from paramiko.file import BufferedFile
-from paramiko.py3compat import u
+from paramiko.util import u
 from paramiko.sftp import (
     CMD_CLOSE,
     CMD_READ,

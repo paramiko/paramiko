@@ -28,11 +28,11 @@ else:
 from hashlib import sha1
 from hmac import HMAC
 
-from paramiko.py3compat import b, u, encodebytes, decodebytes
+from paramiko.py3compat import encodebytes, decodebytes
 
 from paramiko.dsskey import DSSKey
 from paramiko.rsakey import RSAKey
-from paramiko.util import get_logger, constant_time_bytes_eq
+from paramiko.util import get_logger, constant_time_bytes_eq, b, u
 from paramiko.ecdsakey import ECDSAKey
 from paramiko.ed25519key import Ed25519Key
 from paramiko.ssh_exception import SSHException

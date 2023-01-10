@@ -28,7 +28,6 @@ from paramiko import util
 from paramiko.channel import Channel
 from paramiko.message import Message
 from paramiko.common import INFO, DEBUG, o777
-from paramiko.py3compat import b, u
 from paramiko.sftp import (
     BaseSFTP,
     CMD_OPENDIR,
@@ -66,7 +65,7 @@ from paramiko.sftp import (
 from paramiko.sftp_attr import SFTPAttributes
 from paramiko.ssh_exception import SSHException
 from paramiko.sftp_file import SFTPFile
-from paramiko.util import ClosingContextManager
+from paramiko.util import ClosingContextManager, b, u
 
 
 def _to_unicode(s):

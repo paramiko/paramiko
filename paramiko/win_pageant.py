@@ -26,7 +26,7 @@ import ctypes.wintypes
 import platform
 import struct
 from paramiko.common import zero_byte
-from paramiko.py3compat import b
+from paramiko.util import b
 
 try:
     import _thread as thread  # Python 3.x

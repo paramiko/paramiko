@@ -101,7 +101,7 @@ from paramiko.kex_gss import KexGSSGex, KexGSSGroup1, KexGSSGroup14
 from paramiko.message import Message
 from paramiko.packet import Packetizer, NeedRekeyException
 from paramiko.primes import ModulusPack
-from paramiko.py3compat import string_types, b, input
+from paramiko.py3compat import string_types, input
 from paramiko.rsakey import RSAKey
 from paramiko.ecdsakey import ECDSAKey
 from paramiko.server import ServerInterface
@@ -113,7 +113,7 @@ from paramiko.ssh_exception import (
     IncompatiblePeer,
     ProxyCommandFailure,
 )
-from paramiko.util import retry_on_signal, ClosingContextManager, clamp_value
+from paramiko.util import retry_on_signal, ClosingContextManager, clamp_value, b
 
 
 # for thread cleanup

@@ -36,8 +36,9 @@ from paramiko.sftp import (
 from paramiko.sftp_si import SFTPServerInterface
 from paramiko.sftp_attr import SFTPAttributes
 from paramiko.common import DEBUG
-from paramiko.py3compat import string_types, bytes_types, b
+from paramiko.py3compat import string_types, bytes_types
 from paramiko.server import SubsystemHandler
+from paramiko.util import b
 
 
 # known hash algorithms for the "check-file" extension

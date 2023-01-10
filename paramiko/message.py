@@ -25,7 +25,7 @@ from io import BytesIO
 
 from paramiko import util
 from paramiko.common import zero_byte, max_byte, one_byte
-from paramiko.py3compat import u
+from paramiko.util import u
 
 
 class Message(object):

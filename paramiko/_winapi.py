@@ -9,7 +9,8 @@ in jaraco.windows and asking the author to port the fixes back here.
 import sys
 import ctypes.wintypes
 
-from paramiko.py3compat import u, builtins
+from paramiko.py3compat import builtins
+from paramiko.util import u
 
 
 ######################

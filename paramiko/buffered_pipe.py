@@ -25,7 +25,7 @@ read operations are blocking and can have a timeout set.
 import array
 import threading
 import time
-from paramiko.py3compat import b
+from paramiko.util import b
 
 
 class PipeTimeout(IOError):

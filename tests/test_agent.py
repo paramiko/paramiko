@@ -8,7 +8,7 @@ from paramiko.agent import (
     SSH_AGENT_RSA_SHA2_512,
     AgentKey,
 )
-from paramiko.py3compat import b
+from paramiko.util import b
 
 
 class ChaosAgent:

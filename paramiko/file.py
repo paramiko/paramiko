@@ -24,9 +24,9 @@ from paramiko.common import (
     linefeed_byte,
     cr_byte_value,
 )
-from paramiko.py3compat import u, bytes_types, text_type
+from paramiko.py3compat import bytes_types, text_type
 
-from paramiko.util import ClosingContextManager
+from paramiko.util import ClosingContextManager, u
 
 
 class BufferedFile(ClosingContextManager):

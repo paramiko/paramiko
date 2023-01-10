@@ -318,3 +318,24 @@ def asbytes(s):
             # byte-y or buffer-y that everything will work out (or that callers
             # are capable of handling whatever it is.)
             return s
+
+
+# TODO: clean this up / force callers to assume bytes OR unicode
+def b(s, encoding="utf8"):
+    """cast unicode or bytes to bytes"""
+    if isinstance(s, bytes):
+        return s
+    elif isinstance(s, str):
+        return s.encode(encoding)
+    else:
+        raise TypeError("Expected unicode or bytes, got {!r}".format(s))
+
+# TODO: clean this up / force callers to assume bytes OR unicode
+def u(s, encoding="utf8"):
+    """cast bytes or unicode to unicode"""
+    if isinstance(s, bytes):
+        return s.decode(encoding)
+    elif isinstance(s, str):
+        return s
+    else:
+        raise TypeError("Expected unicode or bytes, got {!r}".format(s))

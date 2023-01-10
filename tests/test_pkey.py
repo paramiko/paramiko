@@ -37,7 +37,8 @@ from paramiko import (
     util,
     SSHException,
 )
-from paramiko.py3compat import b, bytes
+from paramiko.py3compat import bytes
+from paramiko.util import b
 from paramiko.common import o600, byte_chr
 
 from cryptography.exceptions import UnsupportedAlgorithm

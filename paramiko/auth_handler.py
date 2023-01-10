@@ -62,7 +62,7 @@ from paramiko.common import (
     cMSG_USERAUTH_BANNER,
 )
 from paramiko.message import Message
-from paramiko.py3compat import b, u
+from paramiko.util import b, u
 from paramiko.ssh_exception import (
     SSHException,
     AuthenticationException,

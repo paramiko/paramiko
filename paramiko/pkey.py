@@ -35,8 +35,9 @@ from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.ciphers import algorithms, modes, Cipher
 
 from paramiko import util
+from paramiko.util import u, b
 from paramiko.common import o600
-from paramiko.py3compat import u, b, encodebytes, decodebytes, string_types
+from paramiko.py3compat import encodebytes, decodebytes, string_types
 from paramiko.ssh_exception import SSHException, PasswordRequiredException
 from paramiko.message import Message
 
