@@ -29,8 +29,7 @@ import traceback
 import threading
 import logging
 
-from paramiko.common import DEBUG, zero_byte, xffffffff, max_byte
-from paramiko.py3compat import PY2, long, byte_chr, byte_ord, b
+from paramiko.common import DEBUG, zero_byte, xffffffff, max_byte, byte_ord, byte_chr
 from paramiko.config import SSHConfig
 
 
@@ -302,3 +301,24 @@ class ClosingContextManager(object):
 
 def clamp_value(minimum, val, maximum):
     return max(minimum, min(val, maximum))
+
+
+def asbytes(s):
+    """
+    Coerce to bytes if possible or return unchanged.
+    """
+    try:
+        # Attempt to run through our version of b(), which does the Right Thing
+        # for string/unicode/buffer (Py2) or bytes/str (Py3), and raises
+        # TypeError if it's not one of those types.
+        return b(s)
+    except TypeError:
+        try:
+            # If it wasn't a string/byte/buffer type object, try calling an
+            # asbytes() method, which many of our internal classes implement.
+            return s.asbytes()
+        except AttributeError:
+            # Finally, just do nothing & assume this object is sufficiently
+            # byte-y or buffer-y that everything will work out (or that callers
+            # are capable of handling whatever it is.)
+            return s

@@ -36,8 +36,8 @@ from paramiko import (
     util,
     SSHException,
 )
-from paramiko.py3compat import StringIO, byte_chr, b, bytes, PY2
-from paramiko.common import o600
+from paramiko.py3compat import StringIO, b, bytes, PY2
+from paramiko.common import o600, byte_chr
 
 from cryptography.exceptions import UnsupportedAlgorithm
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateNumbers

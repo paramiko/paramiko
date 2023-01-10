@@ -26,9 +26,8 @@ import os
 from hashlib import sha1, sha256
 
 from paramiko import util
-from paramiko.common import DEBUG
+from paramiko.common import DEBUG, byte_chr, byte_ord, byte_mask
 from paramiko.message import Message
-from paramiko.py3compat import byte_chr, byte_ord, byte_mask
 from paramiko.ssh_exception import SSHException
 
 

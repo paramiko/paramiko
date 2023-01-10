@@ -29,7 +29,7 @@ import unittest
 import paramiko
 import paramiko.util
 from paramiko.util import safe_string
-from paramiko.py3compat import byte_ord
+from paramiko.common import byte_ord
 
 
 test_hosts_file = """\

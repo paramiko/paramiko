@@ -57,8 +57,9 @@ from paramiko.common import (
     MSG_USERAUTH_SUCCESS,
     cMSG_CHANNEL_WINDOW_ADJUST,
     cMSG_UNIMPLEMENTED,
+    byte_chr,
 )
-from paramiko.py3compat import bytes, byte_chr
+from paramiko.py3compat import bytes
 from paramiko.message import Message
 
 from .util import needs_builtin, _support, requires_sha1_signing, slow

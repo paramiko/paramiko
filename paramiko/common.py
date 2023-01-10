@@ -20,7 +20,25 @@
 Common constants and global variables.
 """
 import logging
-from paramiko.py3compat import byte_chr, PY2, long, b
+import struct
+
+#
+# Formerly of py3compat.py. May be fully delete'able with a deeper look?
+#
+
+def byte_chr(c):
+    assert isinstance(c, int)
+    return struct.pack("B", c)
+
+def byte_mask(c, mask):
+    assert isinstance(c, int)
+    return struct.pack("B", c & mask)
+
+def byte_ord(c):
+    # In case we're handed a string instead of an int.
+    if not isinstance(c, int):
+        c = ord(c)
+    return c
 
 (
     MSG_DISCONNECT,
@@ -184,38 +202,12 @@ max_byte = byte_chr(0xff)
 cr_byte = byte_chr(13)
 linefeed_byte = byte_chr(10)
 crlf = cr_byte + linefeed_byte
-
-if PY2:
-    cr_byte_value = cr_byte
-    linefeed_byte_value = linefeed_byte
-else:
-    cr_byte_value = 13
-    linefeed_byte_value = 10
+cr_byte_value = 13
+linefeed_byte_value = 10
 
 
-def asbytes(s):
-    """
-    Coerce to bytes if possible or return unchanged.
-    """
-    try:
-        # Attempt to run through our version of b(), which does the Right Thing
-        # for string/unicode/buffer (Py2) or bytes/str (Py3), and raises
-        # TypeError if it's not one of those types.
-        return b(s)
-    except TypeError:
-        try:
-            # If it wasn't a string/byte/buffer type object, try calling an
-            # asbytes() method, which many of our internal classes implement.
-            return s.asbytes()
-        except AttributeError:
-            # Finally, just do nothing & assume this object is sufficiently
-            # byte-y or buffer-y that everything will work out (or that callers
-            # are capable of handling whatever it is.)
-            return s
-
-
-xffffffff = long(0xffffffff)
-x80000000 = long(0x80000000)
+xffffffff = 0xffffffff
+x80000000 = 0x80000000
 o666 = 438
 o660 = 432
 o644 = 420

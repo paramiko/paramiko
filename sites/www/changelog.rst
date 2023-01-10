@@ -2,21 +2,28 @@
 Changelog
 =========
 
+- :support:`-` ``paramiko.common.asbytes`` has been moved to
+  `paramiko.util.asbytes`.
+
+  .. warning::
+    This change is backwards incompatible.
+
 - :support:`-` Remove the now irrelevant ``paramiko.py3compat`` module.
 
   .. warning::
-    This change is backwards incompatible if you were importing anything from
-    this module. Such references should be easily search-and-replaced with
-    their modern Python 3.6+ equivalents.
+    This change is backwards incompatible. Such references should be
+    search-and-replaced with their modern Python 3.6+ equivalents; in some
+    cases, still-useful methods or values have been moved to `paramiko.util`
+    (most) or `paramiko.common` (``byte_*``).
 
 - :support:`-` Drop support for Python versions less than 3.6, including Python
   2. So long and thanks for all the fish!
 
   .. warning::
-    This change is backwards compatible if you are still on older Python
-    versions. However, our packaging metadata has been updated to include
-    ``python_requires``, so this should not cause breakage unless you're on an
-    old installation method that can't read this metadata.
+    This change is backwards compatible. However, our packaging metadata has
+    been updated to include ``python_requires``, so this should not cause
+    breakage unless you're on an old installation method that can't read this
+    metadata.
 
   .. note::
     As part of this change, our dependencies have been updated; eg we now

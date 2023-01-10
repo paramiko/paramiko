@@ -86,6 +86,7 @@ from paramiko.common import (
     MSG_NAMES,
     MSG_EXT_INFO,
     cMSG_EXT_INFO,
+    byte_ord,
 )
 from paramiko.compress import ZlibCompressor, ZlibDecompressor
 from paramiko.dsskey import DSSKey
@@ -100,7 +101,7 @@ from paramiko.kex_gss import KexGSSGex, KexGSSGroup1, KexGSSGroup14
 from paramiko.message import Message
 from paramiko.packet import Packetizer, NeedRekeyException
 from paramiko.primes import ModulusPack
-from paramiko.py3compat import string_types, long, byte_ord, b, input, PY2
+from paramiko.py3compat import string_types, long, b, input, PY2
 from paramiko.rsakey import RSAKey
 from paramiko.ecdsakey import ECDSAKey
 from paramiko.server import ServerInterface

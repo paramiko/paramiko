@@ -32,13 +32,14 @@ from paramiko import util
 from paramiko.common import (
     linefeed_byte,
     cr_byte_value,
-    asbytes,
     MSG_NAMES,
     DEBUG,
     xffffffff,
     zero_byte,
+    byte_ord,
 )
-from paramiko.py3compat import u, byte_ord
+from paramiko.py3compat import u
+from paramiko.util import asbytes
 from paramiko.ssh_exception import SSHException, ProxyCommandFailure
 from paramiko.message import Message
 

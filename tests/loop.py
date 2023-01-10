@@ -19,7 +19,7 @@
 import socket
 import threading
 
-from paramiko.common import asbytes
+from paramiko.util import asbytes
 
 
 class LoopSocket(object):

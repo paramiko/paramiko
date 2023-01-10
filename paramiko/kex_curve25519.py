@@ -9,7 +9,8 @@ from cryptography.hazmat.primitives.asymmetric.x25519 import (
 )
 
 from paramiko.message import Message
-from paramiko.py3compat import byte_chr, long
+from paramiko.common import byte_chr
+from paramiko.py3compat import long
 from paramiko.ssh_exception import SSHException
 
 

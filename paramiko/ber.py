@@ -15,8 +15,8 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with Paramiko; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
-from paramiko.common import max_byte, zero_byte
-from paramiko.py3compat import b, byte_ord, byte_chr, long
+from paramiko.common import max_byte, zero_byte, byte_ord, byte_chr
+from paramiko.py3compat import b, long
 
 import paramiko.util as util
 

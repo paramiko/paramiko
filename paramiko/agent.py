@@ -29,13 +29,12 @@ import time
 import tempfile
 import stat
 from select import select
-from paramiko.common import asbytes, io_sleep
-from paramiko.py3compat import byte_chr
+from paramiko.common import io_sleep, byte_chr
 
 from paramiko.ssh_exception import SSHException, AuthenticationException
 from paramiko.message import Message
 from paramiko.pkey import PKey
-from paramiko.util import retry_on_signal
+from paramiko.util import retry_on_signal, asbytes
 
 cSSH2_AGENTC_REQUEST_IDENTITIES = byte_chr(11)
 SSH2_AGENT_IDENTITIES_ANSWER = 12

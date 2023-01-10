@@ -21,9 +21,8 @@ import socket
 import struct
 
 from paramiko import util
-from paramiko.common import asbytes, DEBUG
+from paramiko.common import DEBUG, byte_chr, byte_ord
 from paramiko.message import Message
-from paramiko.py3compat import byte_chr, byte_ord
 
 
 (
@@ -191,7 +190,7 @@ class BaseSFTP(object):
         return out
 
     def _send_packet(self, t, packet):
-        packet = asbytes(packet)
+        packet = util.asbytes(packet)
         out = struct.pack(">I", len(packet) + 1) + byte_chr(t) + packet
         if self.ultra_debug:
             self._log(DEBUG, util.format_binary(out, "OUT: "))

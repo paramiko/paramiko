@@ -4,8 +4,9 @@ RFC 5656, Section 4
 """
 
 from hashlib import sha256, sha384, sha512
+from paramiko.common import byte_chr
 from paramiko.message import Message
-from paramiko.py3compat import byte_chr, long
+from paramiko.py3compat import long
 from paramiko.ssh_exception import SSHException
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.asymmetric import ec

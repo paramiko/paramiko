@@ -23,7 +23,7 @@ Implementation of an SSH2 "message".
 import struct
 
 from paramiko import util
-from paramiko.common import zero_byte, max_byte, one_byte, asbytes
+from paramiko.common import zero_byte, max_byte, one_byte
 from paramiko.py3compat import long, BytesIO, u, integer_types
 
 
@@ -270,7 +270,7 @@ class Message(object):
 
         :param str s: string to add
         """
-        s = asbytes(s)
+        s = util.asbytes(s)
         self.add_int(len(s))
         self.packet.write(s)
         return self
