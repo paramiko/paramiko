@@ -65,7 +65,9 @@ workflows:
               # making the orb know too much about its client code...
               # TODO: the upper end of this needs to change and/or grow more
               # cells, periodically
-              pip-overrides: ["cryptography>=3.3,<3.4", "cryptography>=40,<41"]
+              # TODO: see if there's a non shite way to use bucketing here,
+              # somewhere between yaml, pip and bash all escapes get fucky
+              pip-overrides: ["cryptography==3.3.2", "cryptography==39.0.0"]
       # Kerberos tests. Currently broken :(
       #- kerberos:
       #    name: Test 3.6 w/ Kerberos support
