@@ -24,7 +24,6 @@ from paramiko.common import (
     linefeed_byte,
     cr_byte_value,
 )
-from paramiko.py3compat import text_type
 
 from paramiko.util import ClosingContextManager, u
 
@@ -377,7 +376,7 @@ class BufferedFile(ClosingContextManager):
 
         :param data: ``str``/``bytes`` data to write
         """
-        if isinstance(data, text_type):
+        if isinstance(data, str):
             # Accept text and encode as utf-8 for compatibility only.
             data = data.encode("utf-8")
         if self._closed:
