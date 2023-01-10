@@ -101,7 +101,6 @@ from paramiko.kex_gss import KexGSSGex, KexGSSGroup1, KexGSSGroup14
 from paramiko.message import Message
 from paramiko.packet import Packetizer, NeedRekeyException
 from paramiko.primes import ModulusPack
-from paramiko.py3compat import input
 from paramiko.rsakey import RSAKey
 from paramiko.ecdsakey import ECDSAKey
 from paramiko.server import ServerInterface
