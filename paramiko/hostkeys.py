@@ -22,10 +22,7 @@ import binascii
 import os
 import sys
 
-if sys.version_info[:2] >= (3, 3):
-    from collections.abc import MutableMapping
-else:
-    from collections import MutableMapping
+from collections.abc import MutableMapping
 from hashlib import sha1
 from hmac import HMAC
 

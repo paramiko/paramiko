@@ -61,10 +61,7 @@ class WindowsError(builtins.WindowsError):
         if value is None:
             value = ctypes.windll.kernel32.GetLastError()
         strerror = format_system_message(value)
-        if sys.version_info > (3, 3):
-            args = 0, strerror, None, value
-        else:
-            args = value, strerror
+        args = 0, strerror, None, value
         super(WindowsError, self).__init__(*args)
 
     @property

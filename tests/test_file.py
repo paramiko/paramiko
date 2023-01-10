@@ -162,15 +162,6 @@ class BufferedFileTest(unittest.TestCase):
         )
         f.close()
 
-    def test_buffering_writes(self):
-        """
-        verify that buffered objects can be written
-        """
-        if sys.version_info[0] == 2:
-            f = LoopbackFile("r+", 16)
-            f.write(buffer(b"Too small."))  # noqa
-            f.close()
-
     def test_readable(self):
         f = LoopbackFile("r")
         self.assertTrue(f.readable())
