@@ -37,7 +37,7 @@ from cryptography.hazmat.primitives.ciphers import algorithms, modes, Cipher
 from paramiko import util
 from paramiko.util import u, b
 from paramiko.common import o600
-from paramiko.py3compat import encodebytes, decodebytes, string_types
+from paramiko.py3compat import encodebytes, decodebytes
 from paramiko.ssh_exception import SSHException, PasswordRequiredException
 from paramiko.message import Message
 
@@ -603,9 +603,9 @@ class PKey(object):
         # but eg ECDSA is a 1:N mapping.
         key_types = key_type
         cert_types = cert_type
-        if isinstance(key_type, string_types):
+        if isinstance(key_type, str):
             key_types = [key_types]
-        if isinstance(cert_types, string_types):
+        if isinstance(cert_types, str):
             cert_types = [cert_types]
         # Can't do much with no message, that should've been handled elsewhere
         if msg is None:

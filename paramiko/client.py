@@ -35,7 +35,6 @@ from paramiko.dsskey import DSSKey
 from paramiko.ecdsakey import ECDSAKey
 from paramiko.ed25519key import Ed25519Key
 from paramiko.hostkeys import HostKeys
-from paramiko.py3compat import string_types
 from paramiko.rsakey import RSAKey
 from paramiko.ssh_exception import (
     SSHException,
@@ -442,7 +441,7 @@ class SSHClient(ClosingContextManager):
 
         if key_filename is None:
             key_filenames = []
-        elif isinstance(key_filename, string_types):
+        elif isinstance(key_filename, str):
             key_filenames = [key_filename]
         else:
             key_filenames = key_filename

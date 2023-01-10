@@ -101,7 +101,7 @@ from paramiko.kex_gss import KexGSSGex, KexGSSGroup1, KexGSSGroup14
 from paramiko.message import Message
 from paramiko.packet import Packetizer, NeedRekeyException
 from paramiko.primes import ModulusPack
-from paramiko.py3compat import string_types, input
+from paramiko.py3compat import input
 from paramiko.rsakey import RSAKey
 from paramiko.ecdsakey import ECDSAKey
 from paramiko.server import ServerInterface
@@ -411,7 +411,7 @@ class Transport(threading.Thread, ClosingContextManager):
         self.hostname = None
         self.server_extensions = {}
 
-        if isinstance(sock, string_types):
+        if isinstance(sock, str):
             # convert "host:port" into (host, port)
             hl = sock.split(":", 1)
             self.hostname = hl[0]

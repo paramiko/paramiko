@@ -29,7 +29,6 @@ from paramiko.common import (
     AUTH_FAILED,
     AUTH_SUCCESSFUL,
 )
-from paramiko.py3compat import string_types
 
 
 class ServerInterface(object):
@@ -615,7 +614,7 @@ class InteractiveQuery(object):
         self.instructions = instructions
         self.prompts = []
         for x in prompts:
-            if isinstance(x, string_types):
+            if isinstance(x, str):
                 self.add_prompt(x)
             else:
                 self.add_prompt(x[0], x[1])

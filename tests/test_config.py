@@ -4,8 +4,6 @@
 from os.path import expanduser
 from socket import gaierror
 
-from paramiko.py3compat import string_types
-
 try:
     from invoke import Result
 except ImportError:
@@ -731,7 +729,7 @@ def _expect(success_on):
         Single string or list of strings, noting commands that should appear to
         succeed.
     """
-    if isinstance(success_on, string_types):
+    if isinstance(success_on, str):
         success_on = [success_on]
 
     def inner(command, *args, **kwargs):
