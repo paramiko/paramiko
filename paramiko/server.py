@@ -355,7 +355,7 @@ class ServerInterface(object):
         If the request was successful and you would like to return contextual
         data to the remote host, return a tuple.  Items in the tuple will be
         sent back with the successful result.  (Note that the items in the
-        tuple can only be strings, ints, longs, or bools.)
+        tuple can only be strings, ints, or bools.)
 
         The default implementation always returns ``False``, indicating that it
         does not support any global requests.

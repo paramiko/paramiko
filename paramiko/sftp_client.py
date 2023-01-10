@@ -827,10 +827,8 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
             msg = Message()
             msg.add_int(self.request_number)
             for item in arg:
-                if isinstance(item, long):
+                if isinstance(item, int):
                     msg.add_int64(item)
-                elif isinstance(item, int):
-                    msg.add_int(item)
                 elif isinstance(item, SFTPAttributes):
                     item._pack(msg)
                 else:
