@@ -37,7 +37,6 @@ from paramiko import (
     util,
     SSHException,
 )
-from paramiko.py3compat import bytes
 from paramiko.util import b
 from paramiko.common import o600, byte_chr
 
@@ -254,7 +253,7 @@ class KeyTest(unittest.TestCase):
         assert isinstance(msg, Message)
         msg.rewind()
         assert msg.get_text() == algorithm
-        expected = bytes().join(
+        expected = b"".join(
             [byte_chr(int(x, 16)) for x in saved_sig.split(":")]
         )
         assert msg.get_binary() == expected

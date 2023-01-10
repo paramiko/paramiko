@@ -59,7 +59,6 @@ from paramiko.common import (
     cMSG_UNIMPLEMENTED,
     byte_chr,
 )
-from paramiko.py3compat import bytes
 from paramiko.message import Message
 
 from .util import needs_builtin, _support, requires_sha1_signing, slow
@@ -468,7 +467,7 @@ class TransportTest(unittest.TestCase):
         self.assertEqual([chan], r)
         self.assertEqual([], w)
         self.assertEqual([], e)
-        self.assertEqual(bytes(), chan.recv(16))
+        self.assertEqual(b"", chan.recv(16))
 
         # make sure the pipe is still open for now...
         p = chan._pipe
