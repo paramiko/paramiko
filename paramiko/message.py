@@ -21,10 +21,11 @@ Implementation of an SSH2 "message".
 """
 
 import struct
+from io import BytesIO
 
 from paramiko import util
 from paramiko.common import zero_byte, max_byte, one_byte
-from paramiko.py3compat import long, BytesIO, u
+from paramiko.py3compat import long, u
 
 
 class Message(object):
