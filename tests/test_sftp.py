@@ -87,7 +87,7 @@ decreased compared with chicken.
 # byte"
 NON_UTF8_DATA = b"\xC3\xC3"
 
-unicode_folder = u"\u00fcnic\u00f8de" if PY2 else "\u00fcnic\u00f8de"
+unicode_folder = "\u00fcnic\u00f8de"
 utf8_folder = b"/\xc3\xbcnic\xc3\xb8\x64\x65"
 
 

@@ -6,7 +6,7 @@ import unittest
 
 import pytest
 
-from paramiko.py3compat import builtins, PY2
+from paramiko.py3compat import builtins
 from paramiko.ssh_gss import GSS_AUTH_AVAILABLE
 
 from cryptography.exceptions import UnsupportedAlgorithm, _Reasons
@@ -142,12 +142,9 @@ def is_low_entropy():
     the hash seed set to zero under Python 3.
     """
     is_32bit = struct.calcsize("P") == 32 / 8
-    if PY2:
-        return is_32bit
-    else:
-        # I don't see a way to tell internally if the hash seed was set this
-        # way, but env should be plenty sufficient, this is only for testing.
-        return is_32bit and os.environ.get("PYTHONHASHSEED", None) == "0"
+    # I don't see a way to tell internally if the hash seed was set this
+    # way, but env should be plenty sufficient, this is only for testing.
+    return is_32bit and os.environ.get("PYTHONHASHSEED", None) == "0"
 
 
 def sha1_signing_unsupported():

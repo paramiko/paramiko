@@ -22,7 +22,7 @@ from paramiko.common import (
     linefeed_byte,
     cr_byte_value,
 )
-from paramiko.py3compat import BytesIO, PY2, u, bytes_types, text_type
+from paramiko.py3compat import BytesIO, u, bytes_types, text_type
 
 from paramiko.util import ClosingContextManager
 
@@ -93,39 +93,20 @@ class BufferedFile(ClosingContextManager):
         self._wbuffer = BytesIO()
         return
 
-    if PY2:
+    def __next__(self):
+        """
+        Returns the next line from the input, or raises ``StopIteration``
+        when EOF is hit.  Unlike python file objects, it's okay to mix
+        calls to `.next` and `.readline`.
 
-        def next(self):
-            """
-            Returns the next line from the input, or raises
-            ``StopIteration`` when EOF is hit.  Unlike Python file
-            objects, it's okay to mix calls to `next` and `readline`.
+        :raises: ``StopIteration`` -- when the end of the file is reached.
 
-            :raises: ``StopIteration`` -- when the end of the file is reached.
-
-            :returns: a line (`str`) read from the file.
-            """
-            line = self.readline()
-            if not line:
-                raise StopIteration
-            return line
-
-    else:
-
-        def __next__(self):
-            """
-            Returns the next line from the input, or raises ``StopIteration``
-            when EOF is hit.  Unlike python file objects, it's okay to mix
-            calls to `.next` and `.readline`.
-
-            :raises: ``StopIteration`` -- when the end of the file is reached.
-
-            :returns: a line (`str`) read from the file.
-            """
-            line = self.readline()
-            if not line:
-                raise StopIteration
-            return line
+        :returns: a line (`str`) read from the file.
+        """
+        line = self.readline()
+        if not line:
+            raise StopIteration
+        return line
 
     def readable(self):
         """

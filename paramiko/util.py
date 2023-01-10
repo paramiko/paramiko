@@ -54,10 +54,6 @@ def inflate_long(s, always_positive=False):
     return out
 
 
-deflate_zero = zero_byte if PY2 else 0
-deflate_ff = max_byte if PY2 else 0xff
-
-
 def deflate_long(n, add_sign_padding=True):
     """turns a long-int into a normalized byte string
     (adapted from Crypto.Util.number)"""
@@ -69,9 +65,9 @@ def deflate_long(n, add_sign_padding=True):
         n >>= 32
     # strip off leading zeros, FFs
     for i in enumerate(s):
-        if (n == 0) and (i[1] != deflate_zero):
+        if (n == 0) and (i[1] != 0):
             break
-        if (n == -1) and (i[1] != deflate_ff):
+        if (n == -1) and (i[1] != 0xff):
             break
     else:
         # degenerate case, n was either 0 or -1
@@ -286,7 +282,7 @@ def constant_time_bytes_eq(a, b):
         return False
     res = 0
     # noinspection PyUnresolvedReferences
-    for i in (xrange if PY2 else range)(len(a)):  # noqa: F821
+    for i in range(len(a)):  # noqa: F821
         res |= byte_ord(a[i]) ^ byte_ord(b[i])
     return res == 0
 
