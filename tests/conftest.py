@@ -10,6 +10,12 @@ from .loop import LoopSocket
 from .stub_sftp import StubServer, StubSFTPServer
 from .util import _support
 
+from icecream import ic, install as install_ic
+
+
+install_ic()
+ic.configureOutput(includeContext=True)
+
 
 # Perform logging by default; pytest will capture and thus hide it normally,
 # presenting it on error/failure. (But also allow turning it off when doing
