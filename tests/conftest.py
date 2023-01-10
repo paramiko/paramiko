@@ -11,10 +11,6 @@ from .stub_sftp import StubServer, StubSFTPServer
 from .util import _support
 
 
-# TODO: not a huge fan of conftest.py files, see if we can move these somewhere
-# 'nicer'.
-
-
 # Perform logging by default; pytest will capture and thus hide it normally,
 # presenting it on error/failure. (But also allow turning it off when doing
 # very pinpoint debugging - e.g. using breakpoints, so you don't want output
