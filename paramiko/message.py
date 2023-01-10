@@ -24,7 +24,7 @@ import struct
 
 from paramiko import util
 from paramiko.common import zero_byte, max_byte, one_byte
-from paramiko.py3compat import long, BytesIO, u, integer_types
+from paramiko.py3compat import long, BytesIO, u
 
 
 class Message(object):
@@ -289,7 +289,7 @@ class Message(object):
     def _add(self, i):
         if type(i) is bool:
             return self.add_boolean(i)
-        elif isinstance(i, integer_types):
+        elif isinstance(i, int):
             return self.add_adaptive_int(i)
         elif type(i) is list:
             return self.add_list(i)
