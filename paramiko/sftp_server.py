@@ -32,6 +32,7 @@ from paramiko.sftp import (
     SFTP_FAILURE,
     SFTP_PERMISSION_DENIED,
     SFTP_NO_SUCH_FILE,
+    int64,
 )
 from paramiko.sftp_si import SFTPServerInterface
 from paramiko.sftp_attr import SFTPAttributes
@@ -228,8 +229,11 @@ class SFTPServer(BaseSFTP, SubsystemHandler):
         msg = Message()
         msg.add_int(request_number)
         for item in arg:
-            if isinstance(item, int):
+            # NOTE: this is a very silly tiny class used for SFTPFile mostly
+            if isinstance(item, int64):
                 msg.add_int64(item)
+            elif isinstance(item, int):
+                msg.add_int(item)
             elif isinstance(item, (str, bytes)):
                 msg.add_string(item)
             elif type(item) is SFTPAttributes:

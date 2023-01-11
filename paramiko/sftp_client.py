@@ -60,6 +60,7 @@ from paramiko.sftp import (
     SFTP_EOF,
     SFTP_NO_SUCH_FILE,
     SFTP_PERMISSION_DENIED,
+    int64,
 )
 
 from paramiko.sftp_attr import SFTPAttributes
@@ -827,8 +828,10 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
             msg = Message()
             msg.add_int(self.request_number)
             for item in arg:
-                if isinstance(item, int):
+                if isinstance(item, int64):
                     msg.add_int64(item)
+                elif isinstance(item, int):
+                    msg.add_int(item)
                 elif isinstance(item, SFTPAttributes):
                     item._pack(msg)
                 else:

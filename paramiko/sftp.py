@@ -116,6 +116,16 @@ CMD_NAMES = {
 }
 
 
+# TODO: rewrite SFTP file/server modules' overly-flexible "make a request with
+# xyz components" so we don't need this very silly method of signaling whether
+# a given Python integer should be 32- or 64-bit.
+# NOTE: this only became an issue when dropping Python 2 support; prior to
+# doing so, we had to support actual-longs, which served as that signal. This
+# is simply recreating that structure in a more tightly scoped fashion.
+class int64(int):
+    pass
+
+
 class SFTPError(Exception):
     pass
 
