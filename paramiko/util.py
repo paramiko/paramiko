@@ -20,7 +20,6 @@
 Useful functions used by the rest of paramiko.
 """
 
-from __future__ import generators
 
 import errno
 import sys
