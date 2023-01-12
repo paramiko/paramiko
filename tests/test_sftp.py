@@ -35,6 +35,7 @@ import pytest
 
 from paramiko.common import o777, o600, o666, o644
 from paramiko.sftp_attr import SFTPAttributes
+from paramiko.util import b, u
 from tests import requireNonAsciiLocale
 
 from .util import needs_builtin
