@@ -655,11 +655,6 @@ class SSHConfigDict(dict):
 
     .. versionadded:: 2.5
     """
-
-    def __init__(self, *args, **kwargs):
-        # Hey, guess what? Python 2's userdict is an old-style class!
-        super(SSHConfigDict, self).__init__(*args, **kwargs)
-
     def as_bool(self, key):
         """
         Express given key's value as a boolean type.
