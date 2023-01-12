@@ -34,8 +34,8 @@ from tempfile import mkstemp
 import pytest
 
 from paramiko.common import o777, o600, o666, o644
-from tests import requireNonAsciiLocale
 from paramiko.sftp_attr import SFTPAttributes
+from tests import requireNonAsciiLocale
 
 from .util import needs_builtin
 from .util import slow
