@@ -2,6 +2,10 @@
 Changelog
 =========
 
+- :bug:`2063` Improve `SSHException` message when a connection is closed by
+  the server during the SSH banner phase, for example due to OpenSSH rejecting
+  connections due to a ``MaxStartups`` setting. This allows distinguishing between
+  connectivity issues and other errors. Patch courtesy of ``@jun66j5``.
 - :release:`2.12.0 <2022-11-04>`
 - :feature:`2125` (also re: :issue:`2054`) Add a ``transport_factory`` kwarg to
   `SSHClient.connect <paramiko.client.SSHClient.connect>` for advanced
