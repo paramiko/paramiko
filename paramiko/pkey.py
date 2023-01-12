@@ -28,7 +28,6 @@ from hashlib import md5
 import re
 import struct
 
-import six
 import bcrypt
 
 from cryptography.hazmat.backends import default_backend
@@ -49,13 +48,13 @@ def _unpad_openssh(data):
     # At the moment, this is only used for unpadding private keys on disk. This
     # really ought to be made constant time (possibly by upstreaming this logic
     # into pyca/cryptography).
-    padding_length = six.indexbytes(data, -1)
+    padding_length = data[-1]
     if 0x20 <= padding_length < 0x7F:
         return data  # no padding, last byte part comment (printable ascii)
     if padding_length > 15:
         raise SSHException("Invalid key")
     for i in range(padding_length):
-        if six.indexbytes(data, i - padding_length) != i + 1:
+        if data[i - padding_length] != i + 1:
             raise SSHException("Invalid key")
     return data[:-padding_length]
 
