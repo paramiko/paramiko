@@ -7,7 +7,6 @@ in jaraco.windows and asking the author to port the fixes back here.
 """
 
 import builtins
-import sys
 import ctypes.wintypes
 
 from paramiko.util import u

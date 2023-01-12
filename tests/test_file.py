@@ -21,7 +21,6 @@ Some unit tests for the BufferedFile abstraction.
 """
 
 import unittest
-import sys
 from io import BytesIO
 
 from paramiko.common import linefeed_byte, crlf, cr_byte

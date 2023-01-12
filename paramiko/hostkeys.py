@@ -20,7 +20,6 @@
 from base64 import encodebytes, decodebytes
 import binascii
 import os
-import sys
 
 from collections.abc import MutableMapping
 from hashlib import sha1

@@ -19,6 +19,7 @@ from paramiko.common import max_byte, zero_byte, byte_ord, byte_chr
 
 import paramiko.util as util
 from paramiko.util import b
+from paramiko.sftp import int64
 
 
 class BERException(Exception):
@@ -119,7 +120,7 @@ class BER(object):
                 self.encode_tlv(1, max_byte)
             else:
                 self.encode_tlv(1, zero_byte)
-        elif (type(x) is int) or (type(x) is long):
+        elif (type(x) is int) or (type(x) is int64):
             self.encode_tlv(2, util.deflate_long(x))
         elif type(x) is str:
             self.encode_tlv(4, x)
