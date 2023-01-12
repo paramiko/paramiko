@@ -627,11 +627,8 @@ class TestSFTP(object):
         sftp.open(sftp.FOLDER + "/unusual.txt", "wx").close()
 
         try:
-            try:
+            with pytest.raises(IOError):
                 sftp.open(sftp.FOLDER + "/unusual.txt", "wx")
-                self.fail("expected exception")
-            except IOError:
-                pass
         finally:
             sftp.unlink(sftp.FOLDER + "/unusual.txt")
 
@@ -641,15 +638,13 @@ class TestSFTP(object):
         """
         with sftp.open(sftp.FOLDER + "/something", "w") as f:
             f.write("okay")
-
         try:
             sftp.rename(
                 sftp.FOLDER + "/something", sftp.FOLDER + "/" + unicode_folder
             )
             sftp.open(b(sftp.FOLDER) + utf8_folder, "r")
-        except Exception as e:
-            self.fail("exception " + str(e))
-        sftp.unlink(b(sftp.FOLDER) + utf8_folder)
+        finally:
+            sftp.unlink(b(sftp.FOLDER) + utf8_folder)
 
     def test_utf8_chdir(self, sftp):
         sftp.mkdir(sftp.FOLDER + "/" + unicode_folder)
