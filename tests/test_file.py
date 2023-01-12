@@ -189,7 +189,7 @@ class BufferedFileTest(unittest.TestCase):
             self.assertRaises(TypeError, f.write, object())
 
     def test_write_unicode_as_binary(self):
-        text = u"\xa7 why is writing text to a binary file allowed?\n"
+        text = "\xa7 why is writing text to a binary file allowed?\n"
         with LoopbackFile("rb+") as f:
             f.write(text)
             self.assertEqual(f.read(), text.encode("utf-8"))

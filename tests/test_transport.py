@@ -686,7 +686,7 @@ class TransportTest(unittest.TestCase):
         self.assertEqual(chan.send_ready(), True)
         total = 0
         K = "*" * 1024
-        limit = 1 + (64 * 2 ** 15)
+        limit = 1 + (64 * 2**15)
         while total < limit:
             chan.send(K)
             total += len(K)
@@ -874,7 +874,7 @@ class TransportTest(unittest.TestCase):
         for val, correct in [
             (4095, MIN_PACKET_SIZE),
             (None, DEFAULT_MAX_PACKET_SIZE),
-            (2 ** 32, MAX_WINDOW_SIZE),
+            (2**32, MAX_WINDOW_SIZE),
         ]:
             self.assertEqual(self.tc._sanitize_packet_size(val), correct)
 
@@ -885,7 +885,7 @@ class TransportTest(unittest.TestCase):
         for val, correct in [
             (32767, MIN_WINDOW_SIZE),
             (None, DEFAULT_WINDOW_SIZE),
-            (2 ** 32, MAX_WINDOW_SIZE),
+            (2**32, MAX_WINDOW_SIZE),
         ]:
             self.assertEqual(self.tc._sanitize_window_size(val), correct)
 
@@ -950,7 +950,7 @@ class TransportTest(unittest.TestCase):
         verify behaviours sending various instances to a channel
         """
         self.setup_test_server()
-        text = u"\xa7 slice me nicely"
+        text = "\xa7 slice me nicely"
         with self.tc.open_session() as chan:
             schan = self.ts.accept(1.0)
             if schan is None:

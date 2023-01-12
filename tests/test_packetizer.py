@@ -34,7 +34,7 @@ from .loop import LoopSocket
 
 
 x55 = byte_chr(0x55)
-x1f = byte_chr(0x1f)
+x1f = byte_chr(0x1F)
 
 
 class PacketizerTest(unittest.TestCase):

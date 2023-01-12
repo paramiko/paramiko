@@ -39,7 +39,7 @@ class Message(object):
     paramiko doesn't support yet.
     """
 
-    big_int = 0xff000000
+    big_int = 0xFF000000
 
     def __init__(self, content=None):
         """

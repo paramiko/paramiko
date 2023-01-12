@@ -29,7 +29,14 @@ import traceback
 import threading
 import logging
 
-from paramiko.common import DEBUG, zero_byte, xffffffff, max_byte, byte_ord, byte_chr
+from paramiko.common import (
+    DEBUG,
+    zero_byte,
+    xffffffff,
+    max_byte,
+    byte_ord,
+    byte_chr,
+)
 from paramiko.config import SSHConfig
 
 
@@ -67,7 +74,7 @@ def deflate_long(n, add_sign_padding=True):
     for i in enumerate(s):
         if (n == 0) and (i[1] != 0):
             break
-        if (n == -1) and (i[1] != 0xff):
+        if (n == -1) and (i[1] != 0xFF):
             break
     else:
         # degenerate case, n was either 0 or -1
@@ -329,6 +336,7 @@ def b(s, encoding="utf8"):
         return s.encode(encoding)
     else:
         raise TypeError("Expected unicode or bytes, got {!r}".format(s))
+
 
 # TODO: clean this up / force callers to assume bytes OR unicode
 def u(s, encoding="utf8"):

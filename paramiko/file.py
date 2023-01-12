@@ -520,9 +520,7 @@ class BufferedFile(ClosingContextManager):
             return
         if self.newlines is None:
             self.newlines = newline
-        elif self.newlines != newline and isinstance(
-            self.newlines, bytes
-        ):
+        elif self.newlines != newline and isinstance(self.newlines, bytes):
             self.newlines = (self.newlines, newline)
         elif newline not in self.newlines:
             self.newlines += (newline,)

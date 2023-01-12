@@ -112,7 +112,12 @@ from paramiko.ssh_exception import (
     IncompatiblePeer,
     ProxyCommandFailure,
 )
-from paramiko.util import retry_on_signal, ClosingContextManager, clamp_value, b
+from paramiko.util import (
+    retry_on_signal,
+    ClosingContextManager,
+    clamp_value,
+    b,
+)
 
 
 # for thread cleanup
@@ -1875,9 +1880,9 @@ class Transport(threading.Thread, ClosingContextManager):
         """you are holding the lock"""
         chanid = self._channel_counter
         while self._channels.get(chanid) is not None:
-            self._channel_counter = (self._channel_counter + 1) & 0xffffff
+            self._channel_counter = (self._channel_counter + 1) & 0xFFFFFF
             chanid = self._channel_counter
-        self._channel_counter = (self._channel_counter + 1) & 0xffffff
+        self._channel_counter = (self._channel_counter + 1) & 0xFFFFFF
         return chanid
 
     def _unlink_channel(self, chanid):
@@ -2592,7 +2597,7 @@ class Transport(threading.Thread, ClosingContextManager):
 
     def _activate_inbound(self):
         """switch on newly negotiated encryption parameters for
-         inbound traffic"""
+        inbound traffic"""
         block_size = self._cipher_info[self.remote_cipher]["block-size"]
         if self.server_mode:
             IV_in = self._compute_key("A", block_size)
@@ -2628,7 +2633,7 @@ class Transport(threading.Thread, ClosingContextManager):
 
     def _activate_outbound(self):
         """switch on newly negotiated encryption parameters for
-         outbound traffic"""
+        outbound traffic"""
         m = Message()
         m.add_byte(cMSG_NEWKEYS)
         self._send_message(m)

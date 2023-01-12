@@ -36,7 +36,7 @@ except ImportError:
 from . import _winapi
 
 
-_AGENT_COPYDATA_ID = 0x804e50ba
+_AGENT_COPYDATA_ID = 0x804E50BA
 _AGENT_MAX_MSGLEN = 8192
 # Note: The WM_COPYDATA value is pulled from win32con, as a workaround
 # so we do not have to import this huge library just for this one variable.

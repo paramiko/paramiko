@@ -803,7 +803,7 @@ class PasswordPassphraseTests(ClientTest):
 
     @requires_sha1_signing
     def test_password_kwarg_used_for_passphrase_when_no_passphrase_kwarg_given(
-        self
+        self,
     ):  # noqa
         # Backwards compatibility: passphrase in the password field.
         self._test_connection(
@@ -814,7 +814,7 @@ class PasswordPassphraseTests(ClientTest):
     @raises(AuthenticationException)  # TODO: more granular
     @requires_sha1_signing
     def test_password_kwarg_not_used_for_passphrase_when_passphrase_kwarg_given(  # noqa
-        self
+        self,
     ):
         # Sanity: if we're given both fields, the password field is NOT used as
         # a passphrase.

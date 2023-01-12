@@ -26,19 +26,23 @@ import struct
 # Formerly of py3compat.py. May be fully delete'able with a deeper look?
 #
 
+
 def byte_chr(c):
     assert isinstance(c, int)
     return struct.pack("B", c)
 
+
 def byte_mask(c, mask):
     assert isinstance(c, int)
     return struct.pack("B", c & mask)
+
 
 def byte_ord(c):
     # In case we're handed a string instead of an int.
     if not isinstance(c, int):
         c = ord(c)
     return c
+
 
 (
     MSG_DISCONNECT,
@@ -198,7 +202,7 @@ CONNECTION_FAILED_CODE = {
 zero_byte = byte_chr(0)
 one_byte = byte_chr(1)
 four_byte = byte_chr(4)
-max_byte = byte_chr(0xff)
+max_byte = byte_chr(0xFF)
 cr_byte = byte_chr(13)
 linefeed_byte = byte_chr(10)
 crlf = cr_byte + linefeed_byte
@@ -206,7 +210,7 @@ cr_byte_value = 13
 linefeed_byte_value = 10
 
 
-xffffffff = 0xffffffff
+xffffffff = 0xFFFFFFFF
 x80000000 = 0x80000000
 o666 = 438
 o660 = 432
@@ -225,17 +229,17 @@ CRITICAL = logging.CRITICAL
 # Common IO/select/etc sleep period, in seconds
 io_sleep = 0.01
 
-DEFAULT_WINDOW_SIZE = 64 * 2 ** 15
-DEFAULT_MAX_PACKET_SIZE = 2 ** 15
+DEFAULT_WINDOW_SIZE = 64 * 2**15
+DEFAULT_MAX_PACKET_SIZE = 2**15
 
 # lower bound on the max packet size we'll accept from the remote host
 # Minimum packet size is 32768 bytes according to
 # http://www.ietf.org/rfc/rfc4254.txt
-MIN_WINDOW_SIZE = 2 ** 15
+MIN_WINDOW_SIZE = 2**15
 
 # However, according to http://www.ietf.org/rfc/rfc4253.txt it is perfectly
 # legal to accept a size much smaller, as OpenSSH client does as size 16384.
-MIN_PACKET_SIZE = 2 ** 12
+MIN_PACKET_SIZE = 2**12
 
 # Max windows size according to http://www.ietf.org/rfc/rfc4254.txt
-MAX_WINDOW_SIZE = 2 ** 32 - 1
+MAX_WINDOW_SIZE = 2**32 - 1

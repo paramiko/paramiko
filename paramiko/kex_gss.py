@@ -41,7 +41,12 @@ import os
 from hashlib import sha1
 
 from paramiko.common import (
-    DEBUG, max_byte, zero_byte, byte_chr, byte_mask, byte_ord,
+    DEBUG,
+    max_byte,
+    zero_byte,
+    byte_chr,
+    byte_mask,
+    byte_ord,
 )
 from paramiko import util
 from paramiko.message import Message
@@ -77,7 +82,7 @@ class KexGSSGroup1(object):
     # draft-ietf-secsh-transport-09.txt, page 17
     P = 0xFFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD129024E088A67CC74020BBEA63B139B22514A08798E3404DDEF9519B3CD3A431B302B0A6DF25F14374FE1356D6D51C245E485B576625E7EC6F44C42E9A637ED6B0BFF5CB6F406B7EDEE386BFB5A899FA5AE9F24117C4B1FE649286651ECE65381FFFFFFFFFFFFFFFF  # noqa
     G = 2
-    b7fffffffffffffff = byte_chr(0x7f) + max_byte * 7  # noqa
+    b7fffffffffffffff = byte_chr(0x7F) + max_byte * 7  # noqa
     b0000000000000000 = zero_byte * 8  # noqa
     NAME = "gss-group1-sha1-toWM5Slw5Ew8Mqkay+al2g=="
 
@@ -147,7 +152,7 @@ class KexGSSGroup1(object):
         """
         while 1:
             x_bytes = os.urandom(128)
-            x_bytes = byte_mask(x_bytes[0], 0x7f) + x_bytes[1:]
+            x_bytes = byte_mask(x_bytes[0], 0x7F) + x_bytes[1:]
             first = x_bytes[:8]
             if first not in (self.b7fffffffffffffff, self.b0000000000000000):
                 break
@@ -402,7 +407,7 @@ class KexGSSGex(object):
         qnorm = util.deflate_long(q, 0)
         qhbyte = byte_ord(qnorm[0])
         byte_count = len(qnorm)
-        qmask = 0xff
+        qmask = 0xFF
         while not (qhbyte & 0x80):
             qhbyte <<= 1
             qmask >>= 1
