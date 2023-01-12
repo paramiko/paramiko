@@ -6,6 +6,13 @@ Changelog
   the server during the SSH banner phase, for example due to OpenSSH rejecting
   connections due to a ``MaxStartups`` setting. This allows distinguishing between
   connectivity issues and other errors. Patch courtesy of ``@jun66j5``.
+- :release:`2.12.0 <2022-11-04>`
+- :feature:`2125` (also re: :issue:`2054`) Add a ``transport_factory`` kwarg to
+  `SSHClient.connect <paramiko.client.SSHClient.connect>` for advanced
+  users to gain more control over early Transport setup and manipulation.
+  Thanks to Noah Pederson for the patch.
+- :release:`2.11.1 <2022-11-04>`
+- :release:`2.10.6 <2022-11-04>`
 - :bug:`1822` (via, and relating to, far too many other issues to mention here)
   Update `~paramiko.client.SSHClient` so it explicitly closes its wrapped
   socket object upon encountering socket errors at connection time. This should
@@ -13,10 +20,11 @@ Changelog
   errors (though we hasten to remind everyone that Client and Transport have
   their own ``.close()`` methods for use in non-error situations!). Patch
   courtesy of ``@YoavCohen``.
-- bug:`1637` (via :issue:`1599`) Raise `SSHException` explicitly when blank
-  private key data is loaded, instead of the natural result of ``IndexError``.
-  This should help more bits of Paramiko or Paramiko-adjacent codebases to
-  correctly handle this class of error. Credit: Nicholas Dietz.
+- bug:`1637` (via :issue:`1599`) Raise `~paramiko.ssh_exception.SSHException`
+  explicitly when blank private key data is loaded, instead of the natural
+  result of ``IndexError``. This should help more bits of Paramiko or
+  Paramiko-adjacent codebases to correctly handle this class of error. Credit:
+  Nicholas Dietz.
 - :release:`2.11.0 <2022-05-16>`
 - :release:`2.10.5 <2022-05-16>`
 - :release:`2.9.5 <2022-05-16>`
@@ -86,7 +94,7 @@ Changelog
       <https://bitprophet.org/projects/#roadmap>`_.
 
 - :release:`2.10.1 <2022-03-11>`
-- :bug:`-` (`CVE-2022-24302
+- :bug:`- (2.10+)` (`CVE-2022-24302
   <https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2022-24302>`_) Creation
   of new private key files using `~paramiko.pkey.PKey` subclasses was subject
   to a race condition between file creation & mode modification, which could be
