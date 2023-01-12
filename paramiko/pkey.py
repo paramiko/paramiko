@@ -201,7 +201,7 @@ class PKey(object):
         Sign a blob of data with this private key, and return a `.Message`
         representing an SSH signature message.
 
-        :param str data:
+        :param bytes data:
             the data to sign.
         :param str algorithm:
             the signature algorithm to use, if different from the key's
@@ -218,7 +218,7 @@ class PKey(object):
         Given a blob of data, and an SSH message representing a signature of
         that data, verify that it was signed with this key.
 
-        :param str data: the data that was signed.
+        :param bytes data: the data that was signed.
         :param .Message msg: an SSH signature message
         :return:
             ``True`` if the signature verifies correctly; ``False`` otherwise.
@@ -311,7 +311,7 @@ class PKey(object):
         :param str password:
             an optional password to use to decrypt the key file, if it's
             encrypted.
-        :return: data blob (`str`) that makes up the private key.
+        :return: the `bytes` that make up the private key.
 
         :raises: ``IOError`` -- if there was an error reading the file.
         :raises: `.PasswordRequiredException` -- if the private key file is
@@ -555,7 +555,7 @@ class PKey(object):
         :param str tag:
             ``"RSA"`` or ``"DSA"``, the tag used to mark the data block.
         :param filename: name of the file to write.
-        :param str data: data blob that makes up the private key.
+        :param bytes data: data blob that makes up the private key.
         :param str password: an optional password to use to encrypt the file.
 
         :raises: ``IOError`` -- if there was an error writing the file.
@@ -691,7 +691,7 @@ class PublicBlob(object):
         Create a new public blob of given type and contents.
 
         :param str type_: Type indicator, eg ``ssh-rsa``.
-        :param blob: The blob bytes themselves.
+        :param bytes blob: The blob bytes themselves.
         :param str comment: A comment, if one was given (e.g. file-based.)
         """
         self.key_type = type_

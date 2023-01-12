@@ -343,7 +343,7 @@ class Transport(threading.Thread, ClosingContextManager):
         If the object is not actually a socket, it must have the following
         methods:
 
-        - ``send(str)``: Writes from 1 to ``len(str)`` bytes, and returns an
+        - ``send(bytes)``: Writes from 1 to ``len(bytes)`` bytes, and returns an
           int representing the number of bytes written.  Returns
           0 or raises ``EOFError`` if the stream has been closed.
         - ``recv(int)``: Reads from 1 to ``int`` bytes and returns them as a

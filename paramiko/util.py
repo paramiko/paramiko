@@ -149,10 +149,10 @@ def generate_key_bytes(hash_alg, salt, key, nbytes):
     :param function hash_alg: A function which creates a new hash object, such
         as ``hashlib.sha256``.
     :param salt: data to salt the hash with.
-    :type salt: byte string
+    :type bytes salt: Hash salt bytes.
     :param str key: human-entered password or passphrase.
     :param int nbytes: number of bytes to generate.
-    :return: Key data `str`
+    :return: Key data, as `bytes`.
     """
     keydata = bytes()
     digest = bytes()
