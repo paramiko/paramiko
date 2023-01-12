@@ -443,7 +443,7 @@ class SSHClientTest(ClientTest):
         verify that when an SSHClient is collected, its transport (and the
         transport's packetizer) is closed.
         """
-        # Skipped on PyPy because it fails on travis for unknown reasons
+        # Skipped on PyPy because it fails on CI for unknown reasons
         if platform.python_implementation() == "PyPy":
             return
 
@@ -465,9 +465,9 @@ class SSHClientTest(ClientTest):
 
         # force a collection to see whether the SSHClient object is deallocated
         # 2 GCs are needed on PyPy, time is needed for Python 3
-        # TODO: this still fails randomly under CircleCI under Python 3.7, 3.8
-        # at the very least. bumped sleep 0.3->1.0s but the underlying
-        # functionality should get reevaluated once we drop Python 2.
+        # TODO 4.0: this still fails randomly under CircleCI under Python 3.7,
+        # 3.8 at the very least. bumped sleep 0.3->1.0s but the underlying
+        # functionality should get reevaluated now we've dropped Python 2.
         time.sleep(1)
         gc.collect()
         gc.collect()

@@ -312,12 +312,12 @@ def asbytes(s):
     """
     try:
         # Attempt to run through our version of b(), which does the Right Thing
-        # for string/unicode/buffer (Py2) or bytes/str (Py3), and raises
-        # TypeError if it's not one of those types.
+        # for unicode strings vs bytestrings, and raises TypeError if it's not
+        # one of those types.
         return b(s)
     except TypeError:
         try:
-            # If it wasn't a string/byte/buffer type object, try calling an
+            # If it wasn't a string/byte/buffer-ish object, try calling an
             # asbytes() method, which many of our internal classes implement.
             return s.asbytes()
         except AttributeError:

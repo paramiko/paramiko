@@ -28,10 +28,7 @@ import struct
 from paramiko.common import zero_byte
 from paramiko.util import b
 
-try:
-    import _thread as thread  # Python 3.x
-except ImportError:
-    import thread  # Python 2.5-2.7
+import _thread as thread
 
 from . import _winapi
 

@@ -137,8 +137,8 @@ def is_low_entropy():
     """
     Attempts to detect whether running interpreter is low-entropy.
 
-    Classified as being in 32-bit mode under Python 2, or 32-bit mode and with
-    the hash seed set to zero under Python 3.
+    "low-entropy" is defined as being in 32-bit mode and with the hash seed set
+    to zero.
     """
     is_32bit = struct.calcsize("P") == 32 / 8
     # I don't see a way to tell internally if the hash seed was set this
