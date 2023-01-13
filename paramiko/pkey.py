@@ -122,24 +122,6 @@ class PKey(object):
     def __bytes__(self):
         return self.asbytes()
 
-    # noinspection PyUnresolvedReferences
-    # TODO: The comparison functions should be removed as per:
-    # https://docs.python.org/3.0/whatsnew/3.0.html#ordering-comparisons
-    def __cmp__(self, other):
-        """
-        Compare this key to another.  Returns 0 if this key is equivalent to
-        the given key, or non-0 if they are different.  Only the public parts
-        of the key are compared, so a public key will compare equal to its
-        corresponding private key.
-
-        :param .PKey other: key to compare to.
-        """
-        hs = hash(self)
-        ho = hash(other)
-        if hs != ho:
-            return cmp(hs, ho)  # noqa
-        return cmp(self.asbytes(), other.asbytes())  # noqa
-
     def __eq__(self, other):
         return isinstance(other, PKey) and self._fields == other._fields
 

@@ -2,6 +2,11 @@
 Changelog
 =========
 
+- :support:`-` ``PKey.__cmp__`` has been removed. Ordering-oriented comparison
+  of key files is unlikely to have ever made sense (the old implementation
+  attempted to order by the hashes of the key material) and so we have not
+  bothered setting up ``__lt__`` and friends at this time. The class continues
+  to have its original ``__eq__`` untouched.
 - :bug:`- major` A handful of lower-level classes (notably
   `paramiko.message.Message` and `paramiko.pkey.PKey`) previously returned
   `bytes` objects from their implementation of ``__str__``, even under Python
