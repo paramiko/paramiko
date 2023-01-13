@@ -14,7 +14,7 @@ black>=22.8,<22.9
 coverage>=6.2,<7
 codecov==2.1.12
 # Documentation tools
-alabaster==0.7.12
+alabaster==0.7.13
 releases>=2.0
 # Debuggery
 icecream>=2.1
