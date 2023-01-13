@@ -105,3 +105,9 @@ class MessageTest(unittest.TestCase):
         self.assertEqual(msg.get_adaptive_int(), 5)
         self.assertEqual(msg.get_so_far(), self.__d[:4])
         self.assertEqual(msg.get_remainder(), self.__d[4:])
+
+    def test_bytes_str_and_repr(self):
+        msg = Message(self.__d)
+        assert str(msg) == f"paramiko.Message({self.__d!r})"
+        assert repr(msg) == str(msg)
+        assert bytes(msg) == msg.asbytes() == self.__d

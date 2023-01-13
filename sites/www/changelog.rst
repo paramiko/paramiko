@@ -2,6 +2,14 @@
 Changelog
 =========
 
+- :bug:`- major` A handful of lower-level classes (notably
+  `paramiko.message.Message` and `paramiko.pkey.PKey`) previously returned
+  `bytes` objects from their implementation of ``__str__``, even under Python
+  3; and there was never any ``__bytes__`` method.
+
+  These issues have been fixed by renaming ``__str__`` to ``__bytes__`` and
+  relying on Python's default "stringification returns the output of
+  ``__repr__``" behavior re: any real attempts to ``str()`` such objects.
 - :support:`-` ``paramiko.common.asbytes`` has been moved to
   `paramiko.util.asbytes`.
 

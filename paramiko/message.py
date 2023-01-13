@@ -54,10 +54,7 @@ class Message(object):
         else:
             self.packet = BytesIO()
 
-    def __str__(self):
-        """
-        Return the byte stream content of this message, as a string/bytes obj.
-        """
+    def __bytes__(self):
         return self.asbytes()
 
     def __repr__(self):

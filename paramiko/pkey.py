@@ -110,6 +110,7 @@ class PKey(object):
         """
         pass
 
+    # TODO 4.0: just merge into __bytes__ (everywhere)
     def asbytes(self):
         """
         Return a string of an SSH `.Message` made up of the public part(s) of
@@ -118,7 +119,7 @@ class PKey(object):
         """
         return bytes()
 
-    def __str__(self):
+    def __bytes__(self):
         return self.asbytes()
 
     # noinspection PyUnresolvedReferences
