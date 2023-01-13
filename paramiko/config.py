@@ -655,6 +655,7 @@ class SSHConfigDict(dict):
 
     .. versionadded:: 2.5
     """
+
     def as_bool(self, key):
         """
         Express given key's value as a boolean type.
