@@ -543,9 +543,13 @@ class _SSH_GSSAPI_NEW(_SSH_GSSAuth):
         if self._gss_srv_ctxt is None:
             self._gss_srv_ctxt = gssapi.SecurityContext(usage="accept")
         token = self._gss_srv_ctxt.step(recv_token)
-        self._username_from_krb5_token = str(self._gss_srv_ctxt.initiator_name).split('@')[0]
+        self._username_from_krb5_token = str(
+            self._gss_srv_ctxt.initiator_name
+        ).split("@")[0]
         if self._username != self._username_from_krb5_token:
-            raise SSHException("Requested username does not match user from krb5 ticket")
+            raise SSHException(
+                "Requested username does not match user from krb5 ticket"
+            )
         self._gss_srv_ctxt_status = self._gss_srv_ctxt.complete
         return token
 
