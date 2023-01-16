@@ -1,6 +1,5 @@
 # Invocations for common project tasks
-#invoke>=2.0
-invoke @ git+https://github.com/pyinvoke/invoke@main
+invoke>=2.0
 invocations>=3.0
 # Testing!
 pytest-relaxed>=2
