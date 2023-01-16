@@ -87,12 +87,12 @@ class UtilTest(unittest.TestCase):
             assert name in paramiko.__all__
 
     def test_generate_key_bytes(self):
-        x = paramiko.util.generate_key_bytes(
+        key_bytes = paramiko.util.generate_key_bytes(
             sha1, b"ABCDEFGH", "This is my secret passphrase.", 64
         )
-        hex = "".join(["%02x" % byte_ord(c) for c in x])
+        hexy = "".join([f"{byte:02x}" for byte in key_bytes])
         hexpected = "9110e2f6793b69363e58173e9436b13a5a4b339005741d5c680e505f57d871347b4239f14fb5c46e857d5e100424873ba849ac699cea98d729e57b3e84378e8b"  # noqa
-        assert hex == hexpected
+        assert hexy == hexpected
 
     def test_host_keys(self):
         with open("hostfile.temp", "w") as f:
