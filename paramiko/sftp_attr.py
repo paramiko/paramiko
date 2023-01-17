@@ -205,8 +205,8 @@ class SFTPAttributes:
             datestr = "(unknown date)"
         else:
             time_tuple = time.localtime(self.st_mtime)
-            if abs(time.time() - self.st_mtime) > 15552000:
-                # (15552000 = 6 months)
+            if abs(time.time() - self.st_mtime) > 15_552_000:
+                # (15,552,000s = 6 months)
                 datestr = time.strftime("%d %b %Y", time_tuple)
             else:
                 datestr = time.strftime("%d %b %H:%M", time_tuple)
