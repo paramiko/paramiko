@@ -116,7 +116,7 @@ def make_tarball(
     mode = "w:" + tarfile_compress_flag.get(compress, "")
 
     mkpath(os.path.dirname(archive_name), dry_run=dry_run)
-    log.info("Creating tar file %s with mode %s" % (archive_name, mode))
+    log.info(f"Creating tar file {archive_name} with mode {mode}")
 
     uid = _get_uid(owner)
     gid = _get_gid(group)

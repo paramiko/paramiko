@@ -775,18 +775,18 @@ class TestSFTP(object):
     def test_non_utf8_data(self, sftp):
         """Test write() and read() of non utf8 data"""
         try:
-            with sftp.open("%s/nonutf8data" % sftp.FOLDER, "w") as f:
+            with sftp.open(f"{sftp.FOLDER}/nonutf8data", "w") as f:
                 f.write(NON_UTF8_DATA)
-            with sftp.open("%s/nonutf8data" % sftp.FOLDER, "r") as f:
+            with sftp.open(f"{sftp.FOLDER}/nonutf8data", "r") as f:
                 data = f.read()
             assert data == NON_UTF8_DATA
-            with sftp.open("%s/nonutf8data" % sftp.FOLDER, "wb") as f:
+            with sftp.open(f"{sftp.FOLDER}/nonutf8data", "wb") as f:
                 f.write(NON_UTF8_DATA)
-            with sftp.open("%s/nonutf8data" % sftp.FOLDER, "rb") as f:
+            with sftp.open(f"{sftp.FOLDER}/nonutf8data", "rb") as f:
                 data = f.read()
             assert data == NON_UTF8_DATA
         finally:
-            sftp.remove("%s/nonutf8data" % sftp.FOLDER)
+            sftp.remove(f"{sftp.FOLDER}/nonutf8data")
 
     @requireNonAsciiLocale("LC_TIME")
     def test_sftp_attributes_locale_time(self, sftp):
@@ -807,26 +807,26 @@ class TestSFTP(object):
         """Test write() using a buffer instance."""
         data = 3 * b"A potentially large block of data to chunk up.\n"
         try:
-            with sftp.open("%s/write_buffer" % sftp.FOLDER, "wb") as f:
+            with sftp.open(f"{sftp.FOLDER}/write_buffer", "wb") as f:
                 for offset in range(0, len(data), 8):
                     f.write(buffer(data, offset, 8))  # noqa
 
-            with sftp.open("%s/write_buffer" % sftp.FOLDER, "rb") as f:
+            with sftp.open(f"{sftp.FOLDER}/write_buffer", "rb") as f:
                 assert f.read() == data
         finally:
-            sftp.remove("%s/write_buffer" % sftp.FOLDER)
+            sftp.remove(f"{sftp.FOLDER}/write_buffer")
 
     @needs_builtin("memoryview")
     def test_write_memoryview(self, sftp):
         """Test write() using a memoryview instance."""
         data = 3 * b"A potentially large block of data to chunk up.\n"
         try:
-            with sftp.open("%s/write_memoryview" % sftp.FOLDER, "wb") as f:
+            with sftp.open(f"{sftp.FOLDER}/write_memoryview", "wb") as f:
                 view = memoryview(data)
                 for offset in range(0, len(data), 8):
                     f.write(view[offset : offset + 8])
 
-            with sftp.open("%s/write_memoryview" % sftp.FOLDER, "rb") as f:
+            with sftp.open(f"{sftp.FOLDER}/write_memoryview", "rb") as f:
                 assert f.read() == data
         finally:
-            sftp.remove("%s/write_memoryview" % sftp.FOLDER)
+            sftp.remove(f"{sftp.FOLDER}/write_memoryview")

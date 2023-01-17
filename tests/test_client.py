@@ -202,7 +202,7 @@ class ClientTest(unittest.TestCase):
         # Client setup
         self.tc = SSHClient()
         self.tc.get_host_keys().add(
-            "[%s]:%d" % (self.addr, self.port), "ssh-rsa", public_host_key
+            f"[{self.addr}]:{self.port}", "ssh-rsa", public_host_key
         )
 
         # Actual connection
@@ -390,7 +390,7 @@ class SSHClientTest(ClientTest):
         verify that SSHClient's AutoAddPolicy works.
         """
         threading.Thread(target=self._run).start()
-        hostname = "[%s]:%d" % (self.addr, self.port)
+        hostname = f"[{self.addr}]:{self.port}"
         key_file = _support("test_ecdsa_256.key")
         public_host_key = paramiko.ECDSAKey.from_private_key_file(key_file)
 
@@ -424,7 +424,7 @@ class SSHClientTest(ClientTest):
         client = SSHClient()
         assert len(client.get_host_keys()) == 0
 
-        host_id = "[%s]:%d" % (self.addr, self.port)
+        host_id = f"[{self.addr}]:{self.port}"
 
         client.get_host_keys().add(host_id, "ssh-rsa", public_host_key)
         assert len(client.get_host_keys()) == 1
@@ -523,7 +523,7 @@ class SSHClientTest(ClientTest):
 
         self.tc = SSHClient()
         self.tc.get_host_keys().add(
-            "[%s]:%d" % (self.addr, self.port), "ssh-rsa", public_host_key
+            f"[{self.addr}]:{self.port}", "ssh-rsa", public_host_key
         )
         # Connect with a half second banner timeout.
         kwargs = dict(self.connect_kwargs, banner_timeout=0.5)
@@ -619,7 +619,7 @@ class SSHClientTest(ClientTest):
 
     def _client_host_key_bad(self, host_key):
         threading.Thread(target=self._run).start()
-        hostname = "[%s]:%d" % (self.addr, self.port)
+        hostname = f"[{self.addr}]:{self.port}"
 
         self.tc = SSHClient()
         self.tc.set_missing_host_key_policy(paramiko.WarningPolicy())
@@ -635,7 +635,7 @@ class SSHClientTest(ClientTest):
 
     def _client_host_key_good(self, ktype, kfile):
         threading.Thread(target=self._run).start()
-        hostname = "[%s]:%d" % (self.addr, self.port)
+        hostname = f"[{self.addr}]:{self.port}"
 
         self.tc = SSHClient()
         self.tc.set_missing_host_key_policy(paramiko.RejectPolicy())

@@ -101,7 +101,7 @@ class GSSKexTest(KerberosTestCase):
 
         self.tc = paramiko.SSHClient()
         self.tc.get_host_keys().add(
-            "[%s]:%d" % (self.hostname, self.port), "ssh-rsa", public_host_key
+            f"[{self.hostname}]:{self.port}", "ssh-rsa", public_host_key
         )
         self.tc.connect(
             self.hostname,

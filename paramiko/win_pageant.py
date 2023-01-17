@@ -84,7 +84,7 @@ def _query_pageant(msg):
         return None
 
     # create a name for the mmap
-    map_name = "PageantRequest%08x" % thread.get_ident()
+    map_name = f"PageantRequest{thread.get_ident():08x}"
 
     pymap = _winapi.MemoryMap(
         map_name, _AGENT_MAX_MSGLEN, _winapi.get_security_attributes_for_user()

@@ -172,7 +172,7 @@ class MemoryMap(object):
         assert isinstance(msg, bytes)
         n = len(msg)
         if self.pos + n >= self.length:  # A little safety.
-            raise ValueError("Refusing to write %d bytes" % n)
+            raise ValueError(f"Refusing to write {n} bytes")
         dest = self.view + self.pos
         length = ctypes.c_size_t(n)
         ctypes.windll.kernel32.RtlMoveMemory(dest, msg, length)
