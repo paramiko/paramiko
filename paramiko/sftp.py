@@ -130,7 +130,7 @@ class SFTPError(Exception):
     pass
 
 
-class BaseSFTP(object):
+class BaseSFTP:
     def __init__(self):
         self.logger = util.get_logger("paramiko.sftp")
         self.sock = None

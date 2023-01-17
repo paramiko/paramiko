@@ -62,7 +62,7 @@ def first_arg(e):
     return arg
 
 
-class Packetizer(object):
+class Packetizer:
     """
     Implementation of the base SSH packet protocol.
     """

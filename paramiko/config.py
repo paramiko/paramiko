@@ -43,7 +43,7 @@ from .ssh_exception import CouldNotCanonicalize, ConfigParseError
 SSH_PORT = 22
 
 
-class SSHConfig(object):
+class SSHConfig:
     """
     Representation of config information as stored in the format used by
     OpenSSH. Queries can be made via `lookup`. The format is described in
@@ -584,7 +584,7 @@ def _addressfamily_host_lookup(hostname, options):
         pass
 
 
-class LazyFqdn(object):
+class LazyFqdn:
     """
     Returns the host's fqdn on request as string.
     """

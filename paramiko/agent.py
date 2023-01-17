@@ -54,7 +54,7 @@ ALGORITHM_FLAG_MAP = {
 }
 
 
-class AgentSSH(object):
+class AgentSSH:
     def __init__(self):
         self._conn = None
         self._keys = ()
@@ -232,7 +232,7 @@ def get_agent_connection():
         return
 
 
-class AgentClientProxy(object):
+class AgentClientProxy:
     """
     Class proxying request as a client:
 
@@ -325,7 +325,7 @@ class AgentServerProxy(AgentSSH):
         return self._file
 
 
-class AgentRequestHandler(object):
+class AgentRequestHandler:
     """
     Primary/default implementation of SSH agent forwarding functionality.
 

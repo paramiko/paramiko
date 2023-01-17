@@ -17,7 +17,7 @@ _MSG_KEXECDH_INIT, _MSG_KEXECDH_REPLY = range(30, 32)
 c_MSG_KEXECDH_INIT, c_MSG_KEXECDH_REPLY = [byte_chr(c) for c in range(30, 32)]
 
 
-class KexCurve25519(object):
+class KexCurve25519:
     hash_algo = hashlib.sha256
 
     def __init__(self, transport):

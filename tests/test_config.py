@@ -52,7 +52,7 @@ def load_config(name):
     return SSHConfig.from_path(_config(name))
 
 
-class TestSSHConfig(object):
+class TestSSHConfig:
     def setup(self):
         self.config = load_config("robey")
 
@@ -511,7 +511,7 @@ Host *
         assert result["hostname"] == "prefix.whatever"
 
 
-class TestSSHConfigDict(object):
+class TestSSHConfigDict:
     def test_SSHConfigDict_construct_empty(self):
         assert not SSHConfigDict()
 
@@ -570,7 +570,7 @@ Host *
         assert config.lookup("anything-else").as_int("port") == 3333
 
 
-class TestHostnameCanonicalization(object):
+class TestHostnameCanonicalization:
     # NOTE: this class uses on-disk configs, and ones with real (at time of
     # writing) DNS names, so that one can easily test OpenSSH's behavior using
     # "ssh -F path/to/file.config -G <target>".
@@ -669,7 +669,7 @@ class TestHostnameCanonicalization(object):
 
 
 @mark.skip
-class TestCanonicalizationOfCNAMEs(object):
+class TestCanonicalizationOfCNAMEs:
     def test_permitted_cnames_may_be_one_to_one_mapping(self):
         # CanonicalizePermittedCNAMEs *.foo.com:*.bar.com
         pass
@@ -695,7 +695,7 @@ class TestCanonicalizationOfCNAMEs(object):
         pass
 
 
-class TestMatchAll(object):
+class TestMatchAll:
     def test_always_matches(self):
         result = load_config("match-all").lookup("general")
         assert result["user"] == "awesome"
@@ -745,7 +745,7 @@ def _expect(success_on):
 
 
 @mark.skipif(Result is None, reason="requires invoke package")
-class TestMatchExec(object):
+class TestMatchExec:
     @patch("paramiko.config.invoke", new=None)
     @patch("paramiko.config.invoke_import_error", new=ImportError("meh"))
     def test_raises_invoke_ImportErrors_at_runtime(self):
@@ -825,7 +825,7 @@ class TestMatchExec(object):
         assert result["hostname"] == "pingable.target"
 
 
-class TestMatchHost(object):
+class TestMatchHost:
     def test_matches_target_name_when_no_hostname(self):
         result = load_config("match-host").lookup("target")
         assert result["user"] == "rand"
@@ -875,7 +875,7 @@ class TestMatchHost(object):
             load_config("match-host-no-arg")
 
 
-class TestMatchOriginalHost(object):
+class TestMatchOriginalHost:
     def test_matches_target_host_not_hostname(self):
         result = load_config("match-orighost").lookup("target")
         assert result["hostname"] == "bogus"
@@ -908,7 +908,7 @@ class TestMatchOriginalHost(object):
             load_config("match-orighost-no-arg")
 
 
-class TestMatchUser(object):
+class TestMatchUser:
     def test_matches_configured_username(self):
         result = load_config("match-user-explicit").lookup("anything")
         assert result["hostname"] == "dumb"
@@ -955,7 +955,7 @@ class TestMatchUser(object):
 
 # NOTE: highly derivative of previous suite due to the former's use of
 # localuser fallback. Doesn't seem worth conflating/refactoring right now.
-class TestMatchLocalUser(object):
+class TestMatchLocalUser:
     @patch("paramiko.config.getpass.getuser")
     def test_matches_local_username(self, getuser):
         getuser.return_value = "gandalf"
@@ -996,7 +996,7 @@ class TestMatchLocalUser(object):
             load_config("match-localuser-no-arg")
 
 
-class TestComplexMatching(object):
+class TestComplexMatching:
     # NOTE: this is still a cherry-pick of a few levels of complexity, there's
     # no point testing literally all possible combinations.
 

@@ -107,7 +107,7 @@ def GSSAuth(auth_method, gss_deleg_creds=True):
         raise ImportError("Unable to import a GSS-API / SSPI module!")
 
 
-class _SSH_GSSAuth(object):
+class _SSH_GSSAuth:
     """
     Contains the shared variables and methods of `._SSH_GSSAPI_OLD`,
     `._SSH_GSSAPI_NEW` and `._SSH_SSPI`.

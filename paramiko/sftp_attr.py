@@ -21,7 +21,7 @@ import time
 from paramiko.common import x80000000, o700, o70, xffffffff
 
 
-class SFTPAttributes(object):
+class SFTPAttributes:
     """
     Representation of the attributes of a file (or proxied file) for SFTP in
     client or server mode.  It attemps to mirror the object returned by

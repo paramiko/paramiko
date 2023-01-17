@@ -130,7 +130,7 @@ ctypes.windll.kernel32.LocalFree.argtypes = (ctypes.wintypes.HLOCAL,)
 # jaraco.windows.mmap
 
 
-class MemoryMap(object):
+class MemoryMap:
     """
     A memory map object which can have security attributes overridden.
     """

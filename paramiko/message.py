@@ -28,7 +28,7 @@ from paramiko.common import zero_byte, max_byte, one_byte
 from paramiko.util import u
 
 
-class Message(object):
+class Message:
     """
     An SSH2 message is a stream of bytes that encodes some combination of
     strings, integers, bools, and infinite-precision integers.  This class

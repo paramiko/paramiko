@@ -26,7 +26,7 @@ class BERException(Exception):
     pass
 
 
-class BER(object):
+class BER:
     """
     Robey's tiny little attempt at a BER decoder.
     """

@@ -3007,7 +3007,7 @@ class Transport(threading.Thread, ClosingContextManager):
 # TODO 3.0: drop this, we barely use it ourselves, it badly replicates the
 # Transport-internal algorithm management, AND does so in a way which doesn't
 # honor newer things like disabled_algorithms!
-class SecurityOptions(object):
+class SecurityOptions:
     """
     Simple object containing the security preferences of an ssh transport.
     These are tuples of acceptable ciphers, digests, key types, and key
@@ -3088,7 +3088,7 @@ class SecurityOptions(object):
         self._set("_preferred_compression", "_compression_info", x)
 
 
-class ChannelMap(object):
+class ChannelMap:
     def __init__(self):
         # (id -> Channel)
         self._map = weakref.WeakValueDictionary()

@@ -93,7 +93,7 @@ utf8_folder = b"/\xc3\xbcnic\xc3\xb8\x64\x65"
 
 
 @slow
-class TestSFTP(object):
+class TestSFTP:
     def test_file(self, sftp):
         """
         verify that we can create a file.

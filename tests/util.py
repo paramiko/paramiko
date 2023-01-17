@@ -61,7 +61,7 @@ if (
 ):  # add other vars as needed
 
     # The environment provides the required information
-    class DummyK5Realm(object):
+    class DummyK5Realm:
         def __init__(self):
             for k in os.environ:
                 if not k.startswith("K5TEST_"):
