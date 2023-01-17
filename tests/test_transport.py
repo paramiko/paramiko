@@ -903,7 +903,7 @@ class TransportTest(unittest.TestCase):
         class SlowPacketizer(Packetizer):
             def read_message(self):
                 time.sleep(1)
-                return super(SlowPacketizer, self).read_message()
+                return super().read_message()
 
         # NOTE: prettttty sure since the replaced .packetizer Packetizer is now
         # no longer doing anything with its copy of the socket...everything'll

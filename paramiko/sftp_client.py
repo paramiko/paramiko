@@ -179,7 +179,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
             # escape '%' in msg (they could come from file or directory names)
             # before logging
             msg = msg.replace("%", "%%")
-            super(SFTPClient, self)._log(
+            super()._log(
                 level,
                 "[chan %s] " + msg,
                 *([self.sock.get_name()] + list(args))

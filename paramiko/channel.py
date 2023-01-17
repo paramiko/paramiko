@@ -1386,5 +1386,5 @@ class ChannelStdinFile(ChannelFile):
     """
 
     def close(self):
-        super(ChannelStdinFile, self).close()
+        super().close()
         self.channel.shutdown_write()

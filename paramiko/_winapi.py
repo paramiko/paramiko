@@ -61,7 +61,7 @@ class WindowsError(builtins.WindowsError):
             value = ctypes.windll.kernel32.GetLastError()
         strerror = format_system_message(value)
         args = 0, strerror, None, value
-        super(WindowsError, self).__init__(*args)
+        super().__init__(*args)
 
     @property
     def message(self):
@@ -322,7 +322,7 @@ class SECURITY_ATTRIBUTES(ctypes.Structure):
     ]
 
     def __init__(self, *args, **kwargs):
-        super(SECURITY_ATTRIBUTES, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.nLength = ctypes.sizeof(SECURITY_ATTRIBUTES)
 
     @property

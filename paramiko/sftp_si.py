@@ -48,7 +48,7 @@ class SFTPServerInterface:
         :param .ServerInterface server:
             the server object associated with this channel and SFTP subsystem
         """
-        super(SFTPServerInterface, self).__init__(*largs, **kwargs)
+        super().__init__(*largs, **kwargs)
 
     def session_started(self):
         """

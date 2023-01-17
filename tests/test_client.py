@@ -62,7 +62,7 @@ class NullServer(paramiko.ServerInterface):
         self.__allowed_keys = kwargs.pop("allowed_keys", [])
         # And allow them to set a (single...meh) expected public blob (cert)
         self.__expected_public_blob = kwargs.pop("public_blob", None)
-        super(NullServer, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def get_allowed_auths(self, username):
         if username == "slowdive":
