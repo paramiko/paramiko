@@ -159,9 +159,8 @@ class SSHConfig:
                     context["matches"] = self._get_matches(value)
             # Special-case for noop ProxyCommands
             elif key == "proxycommand" and value.lower() == "none":
-                # Store 'none' as None; prior to 3.x, it will get stripped out
-                # at the end (for compatibility with issue #415). After 3.x, it
-                # will simply not get stripped, leaving a nice explicit marker.
+                # Store 'none' as None - not as a string implying that the
+                # proxycommand is the literal shell command "none"!
                 context["config"][key] = None
             # All other keywords get stored, directly or via append
             else:
@@ -267,9 +266,6 @@ class SSHConfig:
         # Expand variables in resulting values (besides 'Match exec' which was
         # already handled above)
         options = self._expand_variables(options, hostname)
-        # TODO: remove in 3.x re #670
-        if "proxycommand" in options and options["proxycommand"] is None:
-            del options["proxycommand"]
         return options
 
     def canonicalize(self, hostname, options, domains):

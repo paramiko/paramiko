@@ -2,6 +2,17 @@
 Changelog
 =========
 
+- :support:`732` (also re: :issue:`630`) `~paramiko.config.SSHConfig` used to
+  straight-up delete the ``proxycommand`` key from config lookup results when
+  the source config said ``ProxyCommand none``. This has been altered to
+  preserve the key and give it the Python value ``None``, thus making the
+  Python representation more in line with the source config file.
+
+  .. warning::
+    This change is backwards incompatible if you were relying on the old (1.x,
+    2.x) behavior for some reason (eg assuming all ``proxycommand`` values were
+    valid).
+
 - :support:`-` The behavior of private key classes' (ie anything inheriting
   from `~paramiko.pkey.PKey`)  private key writing methods used to perform a
   manual, extra ``chmod`` call after writing. This hasn't been strictly

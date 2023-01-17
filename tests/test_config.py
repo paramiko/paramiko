@@ -460,7 +460,7 @@ Host param3 parara
         with raises(ConfigParseError):
             load_config("invalid")
 
-    def test_proxycommand_none_issue_418(self):
+    def test_proxycommand_none_issue_415(self):
         config = SSHConfig.from_text(
             """
 Host proxycommand-standard-none
@@ -472,10 +472,12 @@ Host proxycommand-with-equals-none
         )
         for host, values in {
             "proxycommand-standard-none": {
-                "hostname": "proxycommand-standard-none"
+                "hostname": "proxycommand-standard-none",
+                "proxycommand": None,
             },
             "proxycommand-with-equals-none": {
-                "hostname": "proxycommand-with-equals-none"
+                "hostname": "proxycommand-with-equals-none",
+                "proxycommand": None,
             },
         }.items():
 
@@ -495,13 +497,11 @@ Host *
     ProxyCommand default-proxy
 """
         )
-        # When bug is present, the full stripping-out of specific-host's
-        # ProxyCommand means it actually appears to pick up the default
-        # ProxyCommand value instead, due to cascading. It should (for
-        # backwards compatibility reasons in 1.x/2.x) appear completely blank,
-        # as if the host had no ProxyCommand whatsoever.
-        # Threw another unrelated host in there just for sanity reasons.
-        assert "proxycommand" not in config.lookup("specific-host")
+        # In versions <3.0, 'None' ProxyCommands got deleted, and this itself
+        # caused bugs. In 3.0, we more cleanly map "none" to None. This test
+        # has been altered accordingly but left around to ensure no
+        # regressions.
+        assert config.lookup("specific-host")["proxycommand"] is None
         assert config.lookup("other-host")["proxycommand"] == "other-proxy"
         cmd = config.lookup("some-random-host")["proxycommand"]
         assert cmd == "default-proxy"
