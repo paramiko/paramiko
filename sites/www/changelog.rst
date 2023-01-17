@@ -2,6 +2,9 @@
 Changelog
 =========
 
+- :bug:`2165 major` Streamline some redundant (and costly) byte conversion
+  calls in the packetizer and the core SFTP module. This should lead to some
+  SFTP speedups at the very least. Thanks to Alex Gaynor for the patch.
 - :support:`-` ``paramiko.util.retry_on_signal`` (and any internal uses of
   same, and also any internal retries of ``EINTR`` on eg socket operations) has
   been removed. As of Python 3.5, per `PEP 475
