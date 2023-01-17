@@ -149,7 +149,7 @@ class SSHConfig:
                 self._config.append(context)
                 context = {"config": {}}
                 if key == "host":
-                    # TODO 3.0: make these real objects or at least name this
+                    # TODO 4.0: make these real objects or at least name this
                     # "hosts" to acknowledge it's an iterable. (Doing so prior
                     # to 3.0, despite it being a private API, feels bad -
                     # surely such an old codebase has folks actually relying on

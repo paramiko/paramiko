@@ -3004,7 +3004,7 @@ class Transport(threading.Thread, ClosingContextManager):
     }
 
 
-# TODO 3.0: drop this, we barely use it ourselves, it badly replicates the
+# TODO 4.0: drop this, we barely use it ourselves, it badly replicates the
 # Transport-internal algorithm management, AND does so in a way which doesn't
 # honor newer things like disabled_algorithms!
 class SecurityOptions:
