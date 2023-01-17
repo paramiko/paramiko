@@ -114,7 +114,7 @@ class GSSAuthTest(KerberosTestCase):
             username=self.username,
             gss_host=self.hostname,
             gss_auth=True,
-            **kwargs
+            **kwargs,
         )
 
         self.event.wait(1.0)

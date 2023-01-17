@@ -329,9 +329,7 @@ class TestBigSFTP:
         """
         mblob = 1024 * 1024 * "x"
         try:
-            with sftp.open(
-                f"{sftp.FOLDER}/hongry.txt", "w", 128 * 1024
-            ) as f:
+            with sftp.open(f"{sftp.FOLDER}/hongry.txt", "w", 128 * 1024) as f:
                 f.write(mblob)
 
             assert (
@@ -348,9 +346,7 @@ class TestBigSFTP:
         t.packetizer.REKEY_BYTES = 512 * 1024
         k32blob = 32 * 1024 * "x"
         try:
-            with sftp.open(
-                f"{sftp.FOLDER}/hongry.txt", "w", 128 * 1024
-            ) as f:
+            with sftp.open(f"{sftp.FOLDER}/hongry.txt", "w", 128 * 1024) as f:
                 for i in range(32):
                     f.write(k32blob)
 
@@ -360,9 +356,7 @@ class TestBigSFTP:
             assert t.H != t.session_id
 
             # try to read it too.
-            with sftp.open(
-                f"{sftp.FOLDER}/hongry.txt", "r", 128 * 1024
-            ) as f:
+            with sftp.open(f"{sftp.FOLDER}/hongry.txt", "r", 128 * 1024) as f:
                 file_size = f.stat().st_size
                 f.prefetch(file_size)
                 total = 0

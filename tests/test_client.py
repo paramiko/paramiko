@@ -593,7 +593,7 @@ class SSHClientTest(ClientTest):
             paramiko.SSHException,
             self.tc.connect,
             password="pygmalion",
-            **self.connect_kwargs
+            **self.connect_kwargs,
         )
 
     @requires_gss_auth
@@ -614,7 +614,7 @@ class SSHClientTest(ClientTest):
             self.tc.connect,
             password="pygmalion",
             gss_kex=True,
-            **self.connect_kwargs
+            **self.connect_kwargs,
         )
 
     def _client_host_key_bad(self, host_key):
@@ -630,7 +630,7 @@ class SSHClientTest(ClientTest):
             paramiko.BadHostKeyException,
             self.tc.connect,
             password="pygmalion",
-            **self.connect_kwargs
+            **self.connect_kwargs,
         )
 
     def _client_host_key_good(self, ktype, kfile):
