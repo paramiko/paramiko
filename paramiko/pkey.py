@@ -546,14 +546,20 @@ class PKey:
         # Ensure that we create new key files directly with a user-only mode,
         # instead of opening, writing, then chmodding, which leaves us open to
         # CVE-2022-24302.
-        # NOTE: O_TRUNC is a noop on new files, and O_CREAT is a noop on
-        # existing files, so using all 3 in both cases is fine. Ditto the use
-        # of the 'mode' argument; it should be safe to give even for existing
-        # files (though it will not act like a chmod in that case).
-        # TODO 3.0: turn into kwargs again
-        args = [os.O_WRONLY | os.O_TRUNC | os.O_CREAT, o600]
-        # NOTE: yea, you still gotta inform the FLO that it is in "write" mode
-        with os.fdopen(os.open(filename, *args), "w") as f:
+        with os.fdopen(
+            os.open(
+                filename,
+                # NOTE: O_TRUNC is a noop on new files, and O_CREAT is a noop
+                # on existing files, so using all 3 in both cases is fine.
+                flags=os.O_WRONLY | os.O_TRUNC | os.O_CREAT,
+                # Ditto the use of the 'mode' argument; it should be safe to
+                # give even for existing files (though it will not act like a
+                # chmod in that case).
+                mode=o600,
+            ),
+            # Yea, you still gotta inform the FLO that it is in "write" mode.
+            "w",
+        ) as f:
             # TODO 3.0: remove the now redundant chmod
             os.chmod(filename, o600)
             self._write_private_key(f, key, format, password=password)
