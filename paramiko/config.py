@@ -340,10 +340,6 @@ class SSHConfig:
                 match = True
         return match
 
-    # TODO 3.0: remove entirely (is now unused internally)
-    def _allowed(self, hosts, hostname):
-        return self._pattern_matches(hosts, hostname)
-
     def _does_match(self, match_list, target_hostname, canonical, options):
         matched = []
         candidates = match_list[:]
