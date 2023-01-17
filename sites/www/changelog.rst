@@ -2,6 +2,17 @@
 Changelog
 =========
 
+- :support:`-` ``paramiko.util.retry_on_signal`` (and any internal uses of
+  same, and also any internal retries of ``EINTR`` on eg socket operations) has
+  been removed. As of Python 3.5, per `PEP 475
+  <https://peps.python.org/pep-0475/>`_, this functionality (and retrying
+  ``EINTR`` generally) is now part of the standard library.
+
+  .. warning::
+    This change is backwards incompatible if you were explicitly
+    importing/using this particular function. The observable behavior otherwise
+    should not be changing.
+
 - :support:`732` (also re: :issue:`630`) `~paramiko.config.SSHConfig` used to
   straight-up delete the ``proxycommand`` key from config lookup results when
   the source config said ``ProxyCommand none``. This has been altered to

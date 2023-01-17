@@ -42,7 +42,7 @@ from paramiko.ssh_exception import (
     NoValidConnectionsError,
 )
 from paramiko.transport import Transport
-from paramiko.util import retry_on_signal, ClosingContextManager
+from paramiko.util import ClosingContextManager
 
 
 class SSHClient(ClosingContextManager):
@@ -354,7 +354,7 @@ class SSHClient(ClosingContextManager):
                             sock.settimeout(timeout)
                         except:
                             pass
-                    retry_on_signal(lambda: sock.connect(addr))
+                    sock.connect(addr)
                     # Break out of the loop on success
                     break
                 except socket.error as e:

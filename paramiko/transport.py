@@ -112,7 +112,6 @@ from paramiko.ssh_exception import (
     ProxyCommandFailure,
 )
 from paramiko.util import (
-    retry_on_signal,
     ClosingContextManager,
     clamp_value,
     b,
@@ -436,7 +435,7 @@ class Transport(threading.Thread, ClosingContextManager):
                     # addr = sockaddr
                     sock = socket.socket(af, socket.SOCK_STREAM)
                     try:
-                        retry_on_signal(lambda: sock.connect((hostname, port)))
+                        sock.connect((hostname, port))
                     except socket.error as e:
                         reason = str(e)
                     else:

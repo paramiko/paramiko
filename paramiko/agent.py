@@ -34,7 +34,7 @@ from paramiko.common import io_sleep, byte_chr
 from paramiko.ssh_exception import SSHException, AuthenticationException
 from paramiko.message import Message
 from paramiko.pkey import PKey
-from paramiko.util import retry_on_signal, asbytes
+from paramiko.util import asbytes
 
 cSSH2_AGENTC_REQUEST_IDENTITIES = byte_chr(11)
 SSH2_AGENT_IDENTITIES_ANSWER = 12
@@ -213,7 +213,7 @@ def get_agent_connection():
     if ("SSH_AUTH_SOCK" in os.environ) and (sys.platform != "win32"):
         conn = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         try:
-            retry_on_signal(lambda: conn.connect(os.environ["SSH_AUTH_SOCK"]))
+            conn.connect(os.environ["SSH_AUTH_SOCK"])
             return conn
         except:
             # probably a dangling env var: the ssh agent is gone

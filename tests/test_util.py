@@ -21,7 +21,6 @@ Some unit tests for utility functions.
 """
 
 from binascii import hexlify
-import errno
 import os
 from hashlib import sha1
 import unittest
@@ -107,39 +106,6 @@ class UtilTest(unittest.TestCase):
             assert b"E6684DB30E109B67B70FF1DC5C7F1363" == fp
         finally:
             os.unlink("hostfile.temp")
-
-    def test_eintr_retry(self):
-        assert "foo" == paramiko.util.retry_on_signal(lambda: "foo")
-
-        # Variables that are set by raises_intr
-        intr_errors_remaining = [3]
-        call_count = [0]
-
-        def raises_intr():
-            call_count[0] += 1
-            if intr_errors_remaining[0] > 0:
-                intr_errors_remaining[0] -= 1
-                raise IOError(errno.EINTR, "file", "interrupted system call")
-
-        self.assertTrue(paramiko.util.retry_on_signal(raises_intr) is None)
-        assert 0 == intr_errors_remaining[0]
-        assert 4 == call_count[0]
-
-        def raises_ioerror_not_eintr():
-            raise IOError(errno.ENOENT, "file", "file not found")
-
-        self.assertRaises(
-            IOError,
-            lambda: paramiko.util.retry_on_signal(raises_ioerror_not_eintr),
-        )
-
-        def raises_other_exception():
-            raise AssertionError("foo")
-
-        self.assertRaises(
-            AssertionError,
-            lambda: paramiko.util.retry_on_signal(raises_other_exception),
-        )
 
     def test_clamp_value(self):
         assert 32768 == paramiko.util.clamp_value(32767, 32768, 32769)

@@ -312,9 +312,6 @@ class Packetizer:
                 arg = first_arg(e)
                 if arg == errno.EAGAIN:
                     got_timeout = True
-                elif arg == errno.EINTR:
-                    # syscall interrupted; try again
-                    pass
                 elif self.__closed:
                     raise EOFError()
                 else:
@@ -339,9 +336,6 @@ class Packetizer:
             except socket.error as e:
                 arg = first_arg(e)
                 if arg == errno.EAGAIN:
-                    retry_write = True
-                elif arg == errno.EINTR:
-                    # syscall interrupted; try again
                     retry_write = True
                 else:
                     n = -1
@@ -610,11 +604,6 @@ class Packetizer:
                 break
             except socket.timeout:
                 pass
-            except EnvironmentError as e:
-                if first_arg(e) == errno.EINTR:
-                    pass
-                else:
-                    raise
             if self.__closed:
                 raise EOFError()
             now = time.time()

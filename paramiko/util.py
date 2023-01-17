@@ -21,7 +21,6 @@ Useful functions used by the rest of paramiko.
 """
 
 
-import errno
 import sys
 import struct
 import traceback
@@ -271,16 +270,6 @@ def get_logger(name):
     logger = logging.getLogger(name)
     logger.addFilter(_pfilter)
     return logger
-
-
-def retry_on_signal(function):
-    """Retries function until it doesn't raise an EINTR error"""
-    while True:
-        try:
-            return function()
-        except EnvironmentError as e:
-            if e.errno != errno.EINTR:
-                raise
 
 
 def constant_time_bytes_eq(a, b):
