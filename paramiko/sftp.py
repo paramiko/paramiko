@@ -139,7 +139,9 @@ class BaseSFTP:
     # ...internals...
 
     def _send_version(self):
-        self._send_packet(CMD_INIT, struct.pack(">I", _VERSION))
+        m = Message()
+        m.add_int(_VERSION)
+        self._send_packet(CMD_INIT, m)
         t, data = self._read_packet()
         if t != CMD_VERSION:
             raise SFTPError("Incompatible sftp protocol")
@@ -200,7 +202,7 @@ class BaseSFTP:
         return out
 
     def _send_packet(self, t, packet):
-        packet = util.asbytes(packet)
+        packet = packet.asbytes()
         out = struct.pack(">I", len(packet) + 1) + byte_chr(t) + packet
         if self.ultra_debug:
             self._log(DEBUG, util.format_binary(out, "OUT: "))

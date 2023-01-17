@@ -384,7 +384,7 @@ class Packetizer:
         Write a block of data using the current cipher, as an SSH block.
         """
         # encrypt this sucka
-        data = asbytes(data)
+        data = data.asbytes()
         cmd = byte_ord(data[0])
         if cmd in MSG_NAMES:
             cmd_name = MSG_NAMES[cmd]
