@@ -2,6 +2,14 @@
 Changelog
 =========
 
+- :support:`-` The behavior of private key classes' (ie anything inheriting
+  from `~paramiko.pkey.PKey`)  private key writing methods used to perform a
+  manual, extra ``chmod`` call after writing. This hasn't been strictly
+  necessary since the mid 2.x release line (when key writing started giving the
+  ``mode`` argument to `os.open`), and has now been removed entirely.
+
+  This should only be observable if you were mocking Paramiko's system calls
+  during your own testing, or similar.
 - :support:`-` ``PKey.__cmp__`` has been removed. Ordering-oriented comparison
   of key files is unlikely to have ever made sense (the old implementation
   attempted to order by the hashes of the key material) and so we have not
