@@ -323,7 +323,7 @@ def b(s, encoding="utf8"):
     elif isinstance(s, str):
         return s.encode(encoding)
     else:
-        raise TypeError("Expected unicode or bytes, got {!r}".format(s))
+        raise TypeError(f"Expected unicode or bytes, got {type(s)}")
 
 
 # TODO: clean this up / force callers to assume bytes OR unicode
@@ -334,4 +334,4 @@ def u(s, encoding="utf8"):
     elif isinstance(s, str):
         return s
     else:
-        raise TypeError("Expected unicode or bytes, got {!r}".format(s))
+        raise TypeError(f"Expected unicode or bytes, got {type(s)}")

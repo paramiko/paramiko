@@ -2,6 +2,11 @@
 Changelog
 =========
 
+- :bug:`2110 major` Remove some unnecessary ``__repr__`` calls when handling
+  bytes-vs-str conversions. This was apparently doing a lot of unintentional
+  data processing, which adds up in some use cases -- such as SFTP transfers,
+  which may now be significantly faster. Kudos to Shuhua Zhong for catch &
+  patch.
 - :bug:`2165 major` Streamline some redundant (and costly) byte conversion
   calls in the packetizer and the core SFTP module. This should lead to some
   SFTP speedups at the very least. Thanks to Alex Gaynor for the patch.
