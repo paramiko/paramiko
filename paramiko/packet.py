@@ -38,7 +38,7 @@ from paramiko.common import (
     zero_byte,
     byte_ord,
 )
-from paramiko.util import asbytes, u
+from paramiko.util import u
 from paramiko.ssh_exception import SSHException, ProxyCommandFailure
 from paramiko.message import Message
 
