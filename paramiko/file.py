@@ -102,7 +102,9 @@ class BufferedFile(ClosingContextManager):
 
         :raises: ``StopIteration`` -- when the end of the file is reached.
 
-        :returns: a line (`str`) read from the file.
+        :returns:
+            a line (`str`, or `bytes` if the file was opened in binary mode)
+            read from the file.
         """
         line = self.readline()
         if not line:

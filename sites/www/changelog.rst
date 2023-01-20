@@ -71,7 +71,7 @@ Changelog
   2. So long and thanks for all the fish!
 
   .. warning::
-    This change is backwards compatible. However, our packaging metadata has
+    This change is backwards incompatible. However, our packaging metadata has
     been updated to include ``python_requires``, so this should not cause
     breakage unless you're on an old installation method that can't read this
     metadata.

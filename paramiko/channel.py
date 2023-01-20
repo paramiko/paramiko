@@ -828,7 +828,7 @@ class Channel(ClosingContextManager):
         `send`, this method continues to send data from the given string until
         either all data has been sent or an error occurs.  Nothing is returned.
 
-        :param str s: data to send.
+        :param bytes s: data to send.
 
         :raises socket.timeout:
             if sending stalled for longer than the timeout set by `settimeout`.
