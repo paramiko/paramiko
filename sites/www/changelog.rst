@@ -2,6 +2,7 @@
 Changelog
 =========
 
+- :release:`3.0.0 <2023-01-20>`
 - :bug:`2110 major` Remove some unnecessary ``__repr__`` calls when handling
   bytes-vs-str conversions. This was apparently doing a lot of unintentional
   data processing, which adds up in some use cases -- such as SFTP transfers,
