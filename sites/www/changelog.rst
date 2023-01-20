@@ -30,7 +30,7 @@ Changelog
   .. warning::
     This change is backwards incompatible if you were relying on the old (1.x,
     2.x) behavior for some reason (eg assuming all ``proxycommand`` values were
-    valid).
+    valid subcommand strings).
 
 - :support:`-` The behavior of private key classes' (ie anything inheriting
   from `~paramiko.pkey.PKey`)  private key writing methods used to perform a
@@ -45,6 +45,14 @@ Changelog
   attempted to order by the hashes of the key material) and so we have not
   bothered setting up ``__lt__`` and friends at this time. The class continues
   to have its original ``__eq__`` untouched.
+
+  .. warning::
+    This change is backwards incompatible if you were actually trying to sort
+    public key objects (directly or indirectly). Please file bug reports
+    detailing your use case if you have some intractable need for this
+    behavior, and we'll consider adding back the necessary Python 3 magic
+    methods so that it works as before.
+
 - :bug:`- major` A handful of lower-level classes (notably
   `paramiko.message.Message` and `paramiko.pkey.PKey`) previously returned
   `bytes` objects from their implementation of ``__str__``, even under Python
@@ -54,18 +62,19 @@ Changelog
   relying on Python's default "stringification returns the output of
   ``__repr__``" behavior re: any real attempts to ``str()`` such objects.
 - :support:`-` ``paramiko.common.asbytes`` has been moved to
-  `paramiko.util.asbytes`.
+  ``paramiko.util.asbytes``.
 
   .. warning::
-    This change is backwards incompatible.
+    This change is backwards incompatible if you were directly using this
+    function (which is unlikely).
 
 - :support:`-` Remove the now irrelevant ``paramiko.py3compat`` module.
 
   .. warning::
     This change is backwards incompatible. Such references should be
     search-and-replaced with their modern Python 3.6+ equivalents; in some
-    cases, still-useful methods or values have been moved to `paramiko.util`
-    (most) or `paramiko.common` (``byte_*``).
+    cases, still-useful methods or values have been moved to ``paramiko.util``
+    (most) or ``paramiko.common`` (``byte_*``).
 
 - :support:`-` Drop support for Python versions less than 3.6, including Python
   2. So long and thanks for all the fish!
