@@ -10,6 +10,15 @@ Changelog
 - :bug:`2165 major` Streamline some redundant (and costly) byte conversion
   calls in the packetizer and the core SFTP module. This should lead to some
   SFTP speedups at the very least. Thanks to Alex Gaynor for the patch.
+- :support:`1402` ``paramiko.ssh_exception.NoValidConnectionsError`` has been
+  removed. From now on, ``SSHClient.connect`` uses ``socket.create_connection``
+  for establishing and initializing the network connection (if no ``socket``
+  has been passed).
+
+  .. warning::
+    This change is backwards incompatible if you were explicitly
+    importing/using this particular exception class.
+
 - :support:`-` ``paramiko.util.retry_on_signal`` (and any internal uses of
   same, and also any internal retries of ``EINTR`` on eg socket operations) has
   been removed. As of Python 3.5, per `PEP 475
