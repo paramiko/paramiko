@@ -1,7 +1,5 @@
 version: 2
 
-formats: all
-
 build:
   # Specific version of RTD docker image that's new enough to have Rust around
   # (so Cryptography can build from source if needed).
