@@ -321,14 +321,19 @@ class SSHClient(ClosingContextManager):
             `.Transport` instance to be used by this client. Defaults to
             `.Transport.__init__`.
 
-        :raises:
-            `.BadHostKeyException` -- if the server's host key could not be
-            verified
-        :raises: `.AuthenticationException` -- if authentication failed
-        :raises:
-            `.SSHException` -- if there was any other error connecting or
-            establishing an SSH session
-        :raises socket.error: if a socket error occurred while connecting
+        :raises BadHostKeyException:
+            if the server's host key could not be verified.
+        :raises AuthenticationException: if authentication failed.
+        :raises socket.error:
+            if a socket error (other than connection-refused or
+            host-unreachable) occurred while connecting.
+        :raises NoValidConnectionsError:
+            if all valid connection targets for the requested hostname (eg IPv4
+            and IPv6) yielded connection-refused or host-unreachable socket
+            errors.
+        :raises SSHException:
+            if there was any other error connecting or establishing an SSH
+            session.
 
         .. versionchanged:: 1.15
             Added the ``banner_timeout``, ``gss_auth``, ``gss_kex``,
