@@ -337,7 +337,7 @@ class HostKeyEntry:
         :param str line: a line from an OpenSSH known_hosts file
         """
         log = get_logger("paramiko.hostkeys")
-        fields = line.split(" ")
+        fields = line.split()
         if len(fields) < 3:
             # Bad number of fields
             msg = "Not enough fields found in known_hosts in line {} ({!r})"
