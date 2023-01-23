@@ -519,7 +519,7 @@ class SFTPFile(BufferedFile):
     def _get_size(self):
         try:
             return self.stat().st_size
-        except:
+        except Exception:
             return 0
 
     def _start_prefetch(self, chunks):

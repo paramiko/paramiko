@@ -2221,7 +2221,7 @@ class Transport(threading.Thread, ClosingContextManager):
                 finally:
                     self.lock.release()
             self.sock.close()
-        except:
+        except Exception:
             # Don't raise spurious 'NoneType has no attribute X' errors when we
             # wake up during interpreter shutdown. Or rather -- raise
             # everything *if* sys.modules (used as a convenient sentinel)

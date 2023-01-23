@@ -155,7 +155,7 @@ class AuthTest(unittest.TestCase):
                 password="error",
             )
             self.assertTrue(False)
-        except:
+        except Exception:
             etype, evalue, etb = sys.exc_info()
             self.assertEqual(BadAuthenticationType, etype)
             self.assertEqual(["publickey"], evalue.allowed_types)
@@ -170,7 +170,7 @@ class AuthTest(unittest.TestCase):
         try:
             self.tc.auth_password(username="slowdive", password="error")
             self.assertTrue(False)
-        except:
+        except Exception:
             etype, evalue, etb = sys.exc_info()
             self.assertTrue(issubclass(etype, AuthenticationException))
         self.tc.auth_password(username="slowdive", password="pygmalion")
@@ -251,7 +251,7 @@ class AuthTest(unittest.TestCase):
         self.tc.connect(hostkey=self.public_host_key)
         try:
             self.tc.auth_password("bad-server", "hello")
-        except:
+        except Exception:
             etype, evalue, etb = sys.exc_info()
             self.assertTrue(issubclass(etype, AuthenticationException))
 
@@ -266,7 +266,7 @@ class AuthTest(unittest.TestCase):
         self.tc.connect()
         try:
             self.tc.auth_password("unresponsive-server", "hello")
-        except:
+        except Exception:
             etype, evalue, etb = sys.exc_info()
             self.assertTrue(issubclass(etype, AuthenticationException))
             self.assertTrue("Authentication timeout" in str(evalue))

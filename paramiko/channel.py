@@ -136,7 +136,7 @@ class Channel(ClosingContextManager):
     def __del__(self):
         try:
             self.close()
-        except:
+        except Exception:
             pass
 
     def __repr__(self):

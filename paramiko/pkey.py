@@ -373,7 +373,7 @@ class PKey:
             )
         try:
             encryption_type, saltstr = headers["dek-info"].split(",")
-        except:
+        except Exception:
             raise SSHException("Can't parse DEK-info in private key file")
         if encryption_type not in self._CIPHER_TABLE:
             raise SSHException(

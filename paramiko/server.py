@@ -690,7 +690,7 @@ class SubsystemHandler(threading.Thread):
             self.__transport._log(ERROR, util.tb_strings())
         try:
             self.finish_subsystem()
-        except:
+        except Exception:
             pass
 
     def start_subsystem(self, name, transport, channel):

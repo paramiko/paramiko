@@ -56,7 +56,7 @@ class BufferedFileTest(unittest.TestCase):
         try:
             f.write(b"hi")
             self.assertTrue(False, "no exception on write to read-only file")
-        except:
+        except Exception:
             pass
         f.close()
 
@@ -64,7 +64,7 @@ class BufferedFileTest(unittest.TestCase):
         try:
             f.read(1)
             self.assertTrue(False, "no exception to read from write-only file")
-        except:
+        except Exception:
             pass
         f.close()
 

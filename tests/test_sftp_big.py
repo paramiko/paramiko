@@ -59,7 +59,7 @@ class TestBigSFTP:
             for i in range(numfiles):
                 try:
                     sftp.remove(f"{sftp.FOLDER}/file{i}.txt")
-                except:
+                except Exception:
                     pass
 
     def test_big_file(self, sftp):
