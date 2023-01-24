@@ -1278,7 +1278,7 @@ class Transport(threading.Thread, ClosingContextManager):
         gss_kex=False,
         gss_deleg_creds=True,
         gss_trust_dns=True,
-        timeout = None,
+        timeout=None,
     ):
         """
         Negotiate an SSH2 session, and optionally verify the server's host key
