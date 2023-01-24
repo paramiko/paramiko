@@ -165,7 +165,7 @@ v1.7.1 (Amy) 10jun07
   * SFTPClient.listdir_attr() now preserves the 'longname' field [patch from
     wesley augur]
   * SFTPClient.get_channel() API added
-  * SSHClient constuctor takes an optional 'timeout' parameter [patch from
+  * SSHClient constructor takes an optional 'timeout' parameter [patch from
     james bardin]
 
 v1.7 (zubat) 18feb07

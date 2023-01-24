@@ -891,7 +891,7 @@ class TransportTest(unittest.TestCase):
     @slow
     def test_handshake_timeout(self):
         """
-        verify that we can get a hanshake timeout.
+        verify that we can get a handshake timeout.
         """
         # Tweak client Transport instance's Packetizer instance so
         # its read_message() sleeps a bit. This helps prevent race conditions

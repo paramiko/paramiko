@@ -259,7 +259,7 @@ class SFTPServer(BaseSFTP, SubsystemHandler):
                 desc = SFTP_DESC[code]
             except IndexError:
                 desc = "Unknown"
-        # some clients expect a "langauge" tag at the end
+        # some clients expect a "language" tag at the end
         # (but don't mind it being blank)
         self._response(request_number, CMD_STATUS, code, desc, "")
 

@@ -724,7 +724,7 @@ class TestSFTP:
 
     def test_seek_append(self, sftp):
         """
-        verify that seek does't affect writes during append.
+        verify that seek doesn't affect writes during append.
 
         does not work except through paramiko.  :(  openssh fails.
         """

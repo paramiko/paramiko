@@ -334,7 +334,7 @@ Changelog
     This fixes a security flaw! If you are running Paramiko on 32-bit systems
     with low entropy (such as any 32-bit Python 2, or a 32-bit Python 3 which
     is running with ``PYTHONHASHSEED=0``) it is possible for an attacker to
-    craft a new keypair from an exfiltrated public key, which Paramiko would
+    craft a new key pair from an exfiltrated public key, which Paramiko would
     consider equal to the original key.
 
     This could enable attacks such as, but not limited to, the following:
@@ -1130,7 +1130,7 @@ Changelog
   functionality to address hangs from dropped network connections and/or failed
   handshakes. Credit to ``@vazir`` and ``@dacut`` for the original patches and
   to Olle Lundberg for reimplementation.
-- :bug:`490` Skip invalid/unparseable lines in ``known_hosts`` files, instead
+- :bug:`490` Skip invalid/unparsable lines in ``known_hosts`` files, instead
   of raising `~paramiko.ssh_exception.SSHException`. This brings Paramiko's
   behavior more in line with OpenSSH, which silently ignores such input. Catch
   & patch courtesy of Martin Topholm.
