@@ -1415,7 +1415,7 @@ class Transport(threading.Thread, ClosingContextManager):
         finally:
             self.lock.release()
 
-    def set_subsystem_handler(self, name, handler, *larg, **kwarg):
+    def set_subsystem_handler(self, name, handler, *args, **kwargs):
         """
         Set the handler class for a subsystem in server mode.  If a request
         for this subsystem is made on an open ssh channel later, this handler
@@ -1431,7 +1431,7 @@ class Transport(threading.Thread, ClosingContextManager):
         """
         try:
             self.lock.acquire()
-            self.subsystem_table[name] = (handler, larg, kwarg)
+            self.subsystem_table[name] = (handler, args, kwargs)
         finally:
             self.lock.release()
 

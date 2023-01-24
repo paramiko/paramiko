@@ -454,10 +454,10 @@ class ServerInterface:
             subsystem; ``False`` if that subsystem can't or won't be provided.
         """
         transport = channel.get_transport()
-        handler_class, larg, kwarg = transport._get_subsystem_handler(name)
+        handler_class, args, kwargs = transport._get_subsystem_handler(name)
         if handler_class is None:
             return False
-        handler = handler_class(channel, name, self, *larg, **kwarg)
+        handler = handler_class(channel, name, self, *args, **kwargs)
         handler.start()
         return True
 
