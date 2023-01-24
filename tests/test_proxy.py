@@ -44,10 +44,10 @@ class TestProxyCommand:
         select.return_value = [stdout], None, None
         fileno = stdout.fileno.return_value
         # Intentionally returning <5 at a time sometimes
-        os_read.side_effect = [b"was", b"te", b"of ti", b"me"]
+        os_read.side_effect = [b"123", b"45", b"of to", b"me"]
         proxy = ProxyCommand("hi")
         data = proxy.recv(5)
-        assert data == b"waste"
+        assert data == b"12345"
         assert [x[0] for x in os_read.call_args_list] == [
             (fileno, 5),
             (fileno, 2),
