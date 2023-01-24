@@ -37,7 +37,9 @@ class TestProxyCommand:
     @patch("paramiko.proxy.subprocess.Popen")
     @patch("paramiko.proxy.os.read")
     @patch("paramiko.proxy.select")
-    def test_recv_reads_from_process_stdout_returning_bytes(self, select, os_read, Popen):
+    def test_recv_reads_from_process_stdout_returning_bytes(
+        self, select, os_read, Popen
+    ):
         stdout = Popen.return_value.stdout
         select.return_value = [stdout], None, None
         fileno = stdout.fileno.return_value
@@ -54,7 +56,9 @@ class TestProxyCommand:
     @patch("paramiko.proxy.subprocess.Popen")
     @patch("paramiko.proxy.os.read")
     @patch("paramiko.proxy.select")
-    def test_recv_returns_buffer_on_timeout_if_any_read(self, select, os_read, Popen):
+    def test_recv_returns_buffer_on_timeout_if_any_read(
+        self, select, os_read, Popen
+    ):
         stdout = Popen.return_value.stdout
         select.return_value = [stdout], None, None
         fileno = stdout.fileno.return_value
@@ -80,7 +84,9 @@ class TestProxyCommand:
     @patch("paramiko.proxy.subprocess.Popen")
     @patch("paramiko.proxy.os.read")
     @patch("paramiko.proxy.select")
-    def test_recv_raises_ProxyCommandFailure_on_non_timeout_error(self, select, os_read, Popen):
+    def test_recv_raises_ProxyCommandFailure_on_non_timeout_error(
+        self, select, os_read, Popen
+    ):
         select.return_value = [Popen.return_value.stdout], None, None
         os_read.side_effect = IOError(0, "whoops")
         with raises(ProxyCommandFailure) as info:
@@ -102,7 +108,9 @@ class TestProxyCommand:
     @patch("paramiko.proxy.subprocess.Popen")
     @patch("paramiko.proxy.os.read")
     @patch("paramiko.proxy.select")
-    def test_timeout_affects_whether_timeout_is_raised(self, select, os_read, Popen, time):
+    def test_timeout_affects_whether_timeout_is_raised(
+        self, select, os_read, Popen, time
+    ):
         stdout = Popen.return_value.stdout
         select.return_value = [stdout], None, None
         # Base case: None timeout means no timing out
