@@ -19,7 +19,6 @@
 
 import os
 import shlex
-import signal
 from select import select
 import socket
 import time
