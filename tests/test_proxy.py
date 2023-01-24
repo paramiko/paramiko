@@ -1,4 +1,3 @@
-import signal
 import socket
 
 from unittest.mock import patch
