@@ -1,7 +1,7 @@
 [codespell]
 # skip most common present files which might be on the system
 skip = venvs,.venv,.git,build,*.egg-info,*.lock
-# Flage and Constans are the names
+# Flage and Constans are names
 # uite - just truncated word in the test, cannot have
 #  inline annotations yet: https://github.com/codespell-project/codespell/pull/2400
 ignore-words-list = flage,constans,uite
