@@ -2,6 +2,10 @@
 Changelog
 =========
 
+- :support:`2178 backported` Apply ``codespell`` to the codebase, which found a
+  lot of very old minor spelling mistakes in docstrings. Also modernize many
+  instances of ``*largs`` vs ``*args`` and ``**kwarg`` vs ``**kwargs``. Patch
+  courtesy of Yaroslav Halchenko, with review from Brian Skinn.
 - :release:`3.0.0 <2023-01-20>`
 - :bug:`2110 major` Remove some unnecessary ``__repr__`` calls when handling
   bytes-vs-str conversions. This was apparently doing a lot of unintentional
