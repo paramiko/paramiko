@@ -122,7 +122,7 @@ class TestProxyCommand:
         select.return_value = [stdout], None, None
         # Base case: None timeout means no timing out
         os_read.return_value = b"meh"
-        proxy = ProxyCommand("yellow")
+        proxy = ProxyCommand("hello")
         assert proxy.timeout is None
         # Implicit 'no raise' check
         assert proxy.recv(3) == b"meh"
