@@ -72,13 +72,13 @@ class HostKeys(MutableMapping):
                 e.key = key
                 return
         self._entries.append(HostKeyEntry([hostname], key))
-        
+
     def add_host_key_entry(self, hostkeyentry):
         """
         Add a host key entry to the table from a host key entry.
         This will remove any hostnames that overlap with existing hosts
         before adding the entry.
-        
+
         :param HostKeyEntry hostkeyentry: the host key entry to add
         """
         _hostnames = hostkeyentry.hostnames
@@ -86,7 +86,7 @@ class HostKeys(MutableMapping):
             if self.check(h, hostkeyentry.key):
                 hostkeyentry.hostnames.remove(h)
         if len(hostkeyentry.hostnames) > 0:
-           self._entries.append(hostkeyentry)        
+            self._entries.append(hostkeyentry)        
 
     def load(self, filename):
         """
