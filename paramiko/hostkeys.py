@@ -86,7 +86,7 @@ class HostKeys(MutableMapping):
             if self.check(h, hostkeyentry.key):
                 hostkeyentry.hostnames.remove(h)
         if len(hostkeyentry.hostnames) > 0:
-            self._entries.append(hostkeyentry)        
+            self._entries.append(hostkeyentry)
 
     def load(self, filename):
         """
