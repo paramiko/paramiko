@@ -20,7 +20,6 @@
 Some unit tests for the ssh2 protocol in Transport.
 """
 
-from __future__ import with_statement
 
 from binascii import hexlify
 from contextlib import contextmanager
@@ -30,7 +29,7 @@ import time
 import threading
 import random
 import unittest
-from mock import Mock
+from unittest.mock import Mock
 
 from paramiko import (
     AuthHandler,
@@ -57,8 +56,8 @@ from paramiko.common import (
     MSG_USERAUTH_SUCCESS,
     cMSG_CHANNEL_WINDOW_ADJUST,
     cMSG_UNIMPLEMENTED,
+    byte_chr,
 )
-from paramiko.py3compat import bytes, byte_chr
 from paramiko.message import Message
 
 from .util import needs_builtin, _support, requires_sha1_signing, slow
@@ -467,7 +466,7 @@ class TransportTest(unittest.TestCase):
         self.assertEqual([chan], r)
         self.assertEqual([], w)
         self.assertEqual([], e)
-        self.assertEqual(bytes(), chan.recv(16))
+        self.assertEqual(b"", chan.recv(16))
 
         # make sure the pipe is still open for now...
         p = chan._pipe
@@ -686,7 +685,7 @@ class TransportTest(unittest.TestCase):
         self.assertEqual(chan.send_ready(), True)
         total = 0
         K = "*" * 1024
-        limit = 1 + (64 * 2 ** 15)
+        limit = 1 + (64 * 2**15)
         while total < limit:
             chan.send(K)
             total += len(K)
@@ -874,7 +873,7 @@ class TransportTest(unittest.TestCase):
         for val, correct in [
             (4095, MIN_PACKET_SIZE),
             (None, DEFAULT_MAX_PACKET_SIZE),
-            (2 ** 32, MAX_WINDOW_SIZE),
+            (2**32, MAX_WINDOW_SIZE),
         ]:
             self.assertEqual(self.tc._sanitize_packet_size(val), correct)
 
@@ -885,14 +884,14 @@ class TransportTest(unittest.TestCase):
         for val, correct in [
             (32767, MIN_WINDOW_SIZE),
             (None, DEFAULT_WINDOW_SIZE),
-            (2 ** 32, MAX_WINDOW_SIZE),
+            (2**32, MAX_WINDOW_SIZE),
         ]:
             self.assertEqual(self.tc._sanitize_window_size(val), correct)
 
     @slow
     def test_handshake_timeout(self):
         """
-        verify that we can get a hanshake timeout.
+        verify that we can get a handshake timeout.
         """
         # Tweak client Transport instance's Packetizer instance so
         # its read_message() sleeps a bit. This helps prevent race conditions
@@ -904,7 +903,7 @@ class TransportTest(unittest.TestCase):
         class SlowPacketizer(Packetizer):
             def read_message(self):
                 time.sleep(1)
-                return super(SlowPacketizer, self).read_message()
+                return super().read_message()
 
         # NOTE: prettttty sure since the replaced .packetizer Packetizer is now
         # no longer doing anything with its copy of the socket...everything'll
@@ -950,7 +949,7 @@ class TransportTest(unittest.TestCase):
         verify behaviours sending various instances to a channel
         """
         self.setup_test_server()
-        text = u"\xa7 slice me nicely"
+        text = "\xa7 slice me nicely"
         with self.tc.open_session() as chan:
             schan = self.ts.accept(1.0)
             if schan is None:

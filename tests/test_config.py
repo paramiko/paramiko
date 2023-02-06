@@ -4,14 +4,12 @@
 from os.path import expanduser
 from socket import gaierror
 
-from paramiko.py3compat import string_types
-
 try:
     from invoke import Result
 except ImportError:
     Result = None
 
-from mock import patch
+from unittest.mock import patch
 from pytest import raises, mark, fixture
 
 from paramiko import (
@@ -54,7 +52,7 @@ def load_config(name):
     return SSHConfig.from_path(_config(name))
 
 
-class TestSSHConfig(object):
+class TestSSHConfig:
     def setup(self):
         self.config = load_config("robey")
 
@@ -462,7 +460,7 @@ Host param3 parara
         with raises(ConfigParseError):
             load_config("invalid")
 
-    def test_proxycommand_none_issue_418(self):
+    def test_proxycommand_none_issue_415(self):
         config = SSHConfig.from_text(
             """
 Host proxycommand-standard-none
@@ -474,10 +472,12 @@ Host proxycommand-with-equals-none
         )
         for host, values in {
             "proxycommand-standard-none": {
-                "hostname": "proxycommand-standard-none"
+                "hostname": "proxycommand-standard-none",
+                "proxycommand": None,
             },
             "proxycommand-with-equals-none": {
-                "hostname": "proxycommand-with-equals-none"
+                "hostname": "proxycommand-with-equals-none",
+                "proxycommand": None,
             },
         }.items():
 
@@ -497,13 +497,11 @@ Host *
     ProxyCommand default-proxy
 """
         )
-        # When bug is present, the full stripping-out of specific-host's
-        # ProxyCommand means it actually appears to pick up the default
-        # ProxyCommand value instead, due to cascading. It should (for
-        # backwards compatibility reasons in 1.x/2.x) appear completely blank,
-        # as if the host had no ProxyCommand whatsoever.
-        # Threw another unrelated host in there just for sanity reasons.
-        assert "proxycommand" not in config.lookup("specific-host")
+        # In versions <3.0, 'None' ProxyCommands got deleted, and this itself
+        # caused bugs. In 3.0, we more cleanly map "none" to None. This test
+        # has been altered accordingly but left around to ensure no
+        # regressions.
+        assert config.lookup("specific-host")["proxycommand"] is None
         assert config.lookup("other-host")["proxycommand"] == "other-proxy"
         cmd = config.lookup("some-random-host")["proxycommand"]
         assert cmd == "default-proxy"
@@ -513,7 +511,7 @@ Host *
         assert result["hostname"] == "prefix.whatever"
 
 
-class TestSSHConfigDict(object):
+class TestSSHConfigDict:
     def test_SSHConfigDict_construct_empty(self):
         assert not SSHConfigDict()
 
@@ -572,7 +570,7 @@ Host *
         assert config.lookup("anything-else").as_int("port") == 3333
 
 
-class TestHostnameCanonicalization(object):
+class TestHostnameCanonicalization:
     # NOTE: this class uses on-disk configs, and ones with real (at time of
     # writing) DNS names, so that one can easily test OpenSSH's behavior using
     # "ssh -F path/to/file.config -G <target>".
@@ -671,7 +669,7 @@ class TestHostnameCanonicalization(object):
 
 
 @mark.skip
-class TestCanonicalizationOfCNAMEs(object):
+class TestCanonicalizationOfCNAMEs:
     def test_permitted_cnames_may_be_one_to_one_mapping(self):
         # CanonicalizePermittedCNAMEs *.foo.com:*.bar.com
         pass
@@ -697,7 +695,7 @@ class TestCanonicalizationOfCNAMEs(object):
         pass
 
 
-class TestMatchAll(object):
+class TestMatchAll:
     def test_always_matches(self):
         result = load_config("match-all").lookup("general")
         assert result["user"] == "awesome"
@@ -731,7 +729,7 @@ def _expect(success_on):
         Single string or list of strings, noting commands that should appear to
         succeed.
     """
-    if isinstance(success_on, string_types):
+    if isinstance(success_on, str):
         success_on = [success_on]
 
     def inner(command, *args, **kwargs):
@@ -747,7 +745,7 @@ def _expect(success_on):
 
 
 @mark.skipif(Result is None, reason="requires invoke package")
-class TestMatchExec(object):
+class TestMatchExec:
     @patch("paramiko.config.invoke", new=None)
     @patch("paramiko.config.invoke_import_error", new=ImportError("meh"))
     def test_raises_invoke_ImportErrors_at_runtime(self):
@@ -827,7 +825,7 @@ class TestMatchExec(object):
         assert result["hostname"] == "pingable.target"
 
 
-class TestMatchHost(object):
+class TestMatchHost:
     def test_matches_target_name_when_no_hostname(self):
         result = load_config("match-host").lookup("target")
         assert result["user"] == "rand"
@@ -877,7 +875,7 @@ class TestMatchHost(object):
             load_config("match-host-no-arg")
 
 
-class TestMatchOriginalHost(object):
+class TestMatchOriginalHost:
     def test_matches_target_host_not_hostname(self):
         result = load_config("match-orighost").lookup("target")
         assert result["hostname"] == "bogus"
@@ -910,7 +908,7 @@ class TestMatchOriginalHost(object):
             load_config("match-orighost-no-arg")
 
 
-class TestMatchUser(object):
+class TestMatchUser:
     def test_matches_configured_username(self):
         result = load_config("match-user-explicit").lookup("anything")
         assert result["hostname"] == "dumb"
@@ -957,7 +955,7 @@ class TestMatchUser(object):
 
 # NOTE: highly derivative of previous suite due to the former's use of
 # localuser fallback. Doesn't seem worth conflating/refactoring right now.
-class TestMatchLocalUser(object):
+class TestMatchLocalUser:
     @patch("paramiko.config.getpass.getuser")
     def test_matches_local_username(self, getuser):
         getuser.return_value = "gandalf"
@@ -998,7 +996,7 @@ class TestMatchLocalUser(object):
             load_config("match-localuser-no-arg")
 
 
-class TestComplexMatching(object):
+class TestComplexMatching:
     # NOTE: this is still a cherry-pick of a few levels of complexity, there's
     # no point testing literally all possible combinations.
 

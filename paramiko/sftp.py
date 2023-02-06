@@ -21,9 +21,8 @@ import socket
 import struct
 
 from paramiko import util
-from paramiko.common import asbytes, DEBUG
+from paramiko.common import DEBUG, byte_chr, byte_ord
 from paramiko.message import Message
-from paramiko.py3compat import byte_chr, byte_ord
 
 
 (
@@ -117,11 +116,21 @@ CMD_NAMES = {
 }
 
 
+# TODO: rewrite SFTP file/server modules' overly-flexible "make a request with
+# xyz components" so we don't need this very silly method of signaling whether
+# a given Python integer should be 32- or 64-bit.
+# NOTE: this only became an issue when dropping Python 2 support; prior to
+# doing so, we had to support actual-longs, which served as that signal. This
+# is simply recreating that structure in a more tightly scoped fashion.
+class int64(int):
+    pass
+
+
 class SFTPError(Exception):
     pass
 
 
-class BaseSFTP(object):
+class BaseSFTP:
     def __init__(self):
         self.logger = util.get_logger("paramiko.sftp")
         self.sock = None
@@ -130,7 +139,9 @@ class BaseSFTP(object):
     # ...internals...
 
     def _send_version(self):
-        self._send_packet(CMD_INIT, struct.pack(">I", _VERSION))
+        m = Message()
+        m.add_int(_VERSION)
+        self._send_packet(CMD_INIT, m)
         t, data = self._read_packet()
         if t != CMD_VERSION:
             raise SFTPError("Incompatible sftp protocol")
@@ -191,7 +202,7 @@ class BaseSFTP(object):
         return out
 
     def _send_packet(self, t, packet):
-        packet = asbytes(packet)
+        packet = packet.asbytes()
         out = struct.pack(">I", len(packet) + 1) + byte_chr(t) + packet
         if self.ultra_debug:
             self._log(DEBUG, util.format_binary(out, "OUT: "))

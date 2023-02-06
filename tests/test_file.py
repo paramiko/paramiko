@@ -21,11 +21,10 @@ Some unit tests for the BufferedFile abstraction.
 """
 
 import unittest
-import sys
+from io import BytesIO
 
 from paramiko.common import linefeed_byte, crlf, cr_byte
 from paramiko.file import BufferedFile
-from paramiko.py3compat import BytesIO
 
 from .util import needs_builtin
 
@@ -128,8 +127,9 @@ class BufferedFileTest(unittest.TestCase):
         f.write("Not\nquite\n512 bytes.\n")
         self.assertEqual(f.read(1), b"")
         f.flush()
-        self.assertEqual(f.read(5), b"Not\nq")
-        self.assertEqual(f.read(10), b"uite\n512 b")
+        self.assertEqual(f.read(6), b"Not\nqu")
+        self.assertEqual(f.read(4), b"ite\n")
+        self.assertEqual(f.read(5), b"512 b")
         self.assertEqual(f.read(9), b"ytes.\n")
         self.assertEqual(f.read(3), b"")
         f.close()
@@ -162,15 +162,6 @@ class BufferedFileTest(unittest.TestCase):
         )
         f.close()
 
-    def test_buffering_writes(self):
-        """
-        verify that buffered objects can be written
-        """
-        if sys.version_info[0] == 2:
-            f = LoopbackFile("r+", 16)
-            f.write(buffer(b"Too small."))  # noqa
-            f.close()
-
     def test_readable(self):
         f = LoopbackFile("r")
         self.assertTrue(f.readable())
@@ -198,7 +189,7 @@ class BufferedFileTest(unittest.TestCase):
             self.assertRaises(TypeError, f.write, object())
 
     def test_write_unicode_as_binary(self):
-        text = u"\xa7 why is writing text to a binary file allowed?\n"
+        text = "\xa7 why is writing text to a binary file allowed?\n"
         with LoopbackFile("rb+") as f:
             f.write(text)
             self.assertEqual(f.read(), text.encode("utf-8"))

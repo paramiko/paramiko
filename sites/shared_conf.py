@@ -21,12 +21,11 @@ html_sidebars = {
 }
 
 # Everything intersphinx's to Python
-intersphinx_mapping = {"python": ("https://docs.python.org/2.7/", None)}
+intersphinx_mapping = {"python": ("https://docs.python.org/3.6/", None)}
 
 # Regular settings
 project = "Paramiko"
-year = datetime.now().year
-copyright = "{} Jeff Forcier".format(year)
+copyright = f"{datetime.now().year} Jeff Forcier"
 master_doc = "index"
 templates_path = ["_templates"]
 exclude_trees = ["_build"]

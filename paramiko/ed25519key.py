@@ -23,7 +23,7 @@ import nacl.signing
 
 from paramiko.message import Message
 from paramiko.pkey import PKey, OPENSSH_AUTH_MAGIC, _unpad_openssh
-from paramiko.py3compat import b
+from paramiko.util import b
 from paramiko.ssh_exception import SSHException, PasswordRequiredException
 
 

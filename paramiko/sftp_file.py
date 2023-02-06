@@ -20,7 +20,6 @@
 SFTP file object
 """
 
-from __future__ import with_statement
 
 from binascii import hexlify
 from collections import deque
@@ -30,7 +29,7 @@ import time
 from paramiko.common import DEBUG
 
 from paramiko.file import BufferedFile
-from paramiko.py3compat import u, long
+from paramiko.util import u
 from paramiko.sftp import (
     CMD_CLOSE,
     CMD_READ,
@@ -42,6 +41,7 @@ from paramiko.sftp import (
     CMD_ATTRS,
     CMD_FSETSTAT,
     CMD_EXTENDED,
+    int64,
 )
 from paramiko.sftp_attr import SFTPAttributes
 
@@ -183,7 +183,7 @@ class SFTPFile(BufferedFile):
             if data is not None:
                 return data
         t, msg = self.sftp._request(
-            CMD_READ, self.handle, long(self._realpos), int(size)
+            CMD_READ, self.handle, int64(self._realpos), int(size)
         )
         if t != CMD_DATA:
             raise SFTPError("Expected data")
@@ -196,7 +196,7 @@ class SFTPFile(BufferedFile):
             type(None),
             CMD_WRITE,
             self.handle,
-            long(self._realpos),
+            int64(self._realpos),
             data[:chunk],
         )
         self._reqs.append(sftp_async_request)
@@ -406,8 +406,8 @@ class SFTPFile(BufferedFile):
             "check-file",
             self.handle,
             hash_algorithm,
-            long(offset),
-            long(length),
+            int64(offset),
+            int64(length),
             block_size,
         )
         msg.get_text()  # ext
@@ -535,7 +535,7 @@ class SFTPFile(BufferedFile):
         # a lot of them, so it may block.
         for offset, length in chunks:
             num = self.sftp._async_request(
-                self, CMD_READ, self.handle, long(offset), int(length)
+                self, CMD_READ, self.handle, int64(offset), int(length)
             )
             with self._prefetch_lock:
                 self._prefetch_extents[num] = (offset, length)

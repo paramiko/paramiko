@@ -2,6 +2,98 @@
 Changelog
 =========
 
+- :support:`2178 backported` Apply ``codespell`` to the codebase, which found a
+  lot of very old minor spelling mistakes in docstrings. Also modernize many
+  instances of ``*largs`` vs ``*args`` and ``**kwarg`` vs ``**kwargs``. Patch
+  courtesy of Yaroslav Halchenko, with review from Brian Skinn.
+- :release:`3.0.0 <2023-01-20>`
+- :bug:`2110 major` Remove some unnecessary ``__repr__`` calls when handling
+  bytes-vs-str conversions. This was apparently doing a lot of unintentional
+  data processing, which adds up in some use cases -- such as SFTP transfers,
+  which may now be significantly faster. Kudos to Shuhua Zhong for catch &
+  patch.
+- :bug:`2165 major` Streamline some redundant (and costly) byte conversion
+  calls in the packetizer and the core SFTP module. This should lead to some
+  SFTP speedups at the very least. Thanks to Alex Gaynor for the patch.
+- :support:`-` ``paramiko.util.retry_on_signal`` (and any internal uses of
+  same, and also any internal retries of ``EINTR`` on eg socket operations) has
+  been removed. As of Python 3.5, per `PEP 475
+  <https://peps.python.org/pep-0475/>`_, this functionality (and retrying
+  ``EINTR`` generally) is now part of the standard library.
+
+  .. warning::
+    This change is backwards incompatible if you were explicitly
+    importing/using this particular function. The observable behavior otherwise
+    should not be changing.
+
+- :support:`732` (also re: :issue:`630`) `~paramiko.config.SSHConfig` used to
+  straight-up delete the ``proxycommand`` key from config lookup results when
+  the source config said ``ProxyCommand none``. This has been altered to
+  preserve the key and give it the Python value ``None``, thus making the
+  Python representation more in line with the source config file.
+
+  .. warning::
+    This change is backwards incompatible if you were relying on the old (1.x,
+    2.x) behavior for some reason (eg assuming all ``proxycommand`` values were
+    valid subcommand strings).
+
+- :support:`-` The behavior of private key classes' (ie anything inheriting
+  from `~paramiko.pkey.PKey`)  private key writing methods used to perform a
+  manual, extra ``chmod`` call after writing. This hasn't been strictly
+  necessary since the mid 2.x release line (when key writing started giving the
+  ``mode`` argument to `os.open`), and has now been removed entirely.
+
+  This should only be observable if you were mocking Paramiko's system calls
+  during your own testing, or similar.
+- :support:`-` ``PKey.__cmp__`` has been removed. Ordering-oriented comparison
+  of key files is unlikely to have ever made sense (the old implementation
+  attempted to order by the hashes of the key material) and so we have not
+  bothered setting up ``__lt__`` and friends at this time. The class continues
+  to have its original ``__eq__`` untouched.
+
+  .. warning::
+    This change is backwards incompatible if you were actually trying to sort
+    public key objects (directly or indirectly). Please file bug reports
+    detailing your use case if you have some intractable need for this
+    behavior, and we'll consider adding back the necessary Python 3 magic
+    methods so that it works as before.
+
+- :bug:`- major` A handful of lower-level classes (notably
+  `paramiko.message.Message` and `paramiko.pkey.PKey`) previously returned
+  `bytes` objects from their implementation of ``__str__``, even under Python
+  3; and there was never any ``__bytes__`` method.
+
+  These issues have been fixed by renaming ``__str__`` to ``__bytes__`` and
+  relying on Python's default "stringification returns the output of
+  ``__repr__``" behavior re: any real attempts to ``str()`` such objects.
+- :support:`-` ``paramiko.common.asbytes`` has been moved to
+  ``paramiko.util.asbytes``.
+
+  .. warning::
+    This change is backwards incompatible if you were directly using this
+    function (which is unlikely).
+
+- :support:`-` Remove the now irrelevant ``paramiko.py3compat`` module.
+
+  .. warning::
+    This change is backwards incompatible. Such references should be
+    search-and-replaced with their modern Python 3.6+ equivalents; in some
+    cases, still-useful methods or values have been moved to ``paramiko.util``
+    (most) or ``paramiko.common`` (``byte_*``).
+
+- :support:`-` Drop support for Python versions less than 3.6, including Python
+  2. So long and thanks for all the fish!
+
+  .. warning::
+    This change is backwards incompatible. However, our packaging metadata has
+    been updated to include ``python_requires``, so this should not cause
+    breakage unless you're on an old installation method that can't read this
+    metadata.
+
+  .. note::
+    As part of this change, our dependencies have been updated; eg we now
+    require Cryptography>=3.3, up from 2.5.
+
 - :release:`2.12.0 <2022-11-04>`
 - :feature:`2125` (also re: :issue:`2054`) Add a ``transport_factory`` kwarg to
   `SSHClient.connect <paramiko.client.SSHClient.connect>` for advanced
@@ -1042,7 +1134,7 @@ Changelog
   functionality to address hangs from dropped network connections and/or failed
   handshakes. Credit to ``@vazir`` and ``@dacut`` for the original patches and
   to Olle Lundberg for reimplementation.
-- :bug:`490` Skip invalid/unparseable lines in ``known_hosts`` files, instead
+- :bug:`490` Skip invalid/unparsable lines in ``known_hosts`` files, instead
   of raising `~paramiko.ssh_exception.SSHException`. This brings Paramiko's
   behavior more in line with OpenSSH, which silently ignores such input. Catch
   & patch courtesy of Martin Topholm.

@@ -26,17 +26,14 @@ import ctypes.wintypes
 import platform
 import struct
 from paramiko.common import zero_byte
-from paramiko.py3compat import b
+from paramiko.util import b
 
-try:
-    import _thread as thread  # Python 3.x
-except ImportError:
-    import thread  # Python 2.5-2.7
+import _thread as thread
 
 from . import _winapi
 
 
-_AGENT_COPYDATA_ID = 0x804e50ba
+_AGENT_COPYDATA_ID = 0x804E50BA
 _AGENT_MAX_MSGLEN = 8192
 # Note: The WM_COPYDATA value is pulled from win32con, as a workaround
 # so we do not have to import this huge library just for this one variable.
@@ -87,7 +84,7 @@ def _query_pageant(msg):
         return None
 
     # create a name for the mmap
-    map_name = "PageantRequest%08x" % thread.get_ident()
+    map_name = f"PageantRequest{thread.get_ident():08x}"
 
     pymap = _winapi.MemoryMap(
         map_name, _AGENT_MAX_MSGLEN, _winapi.get_security_attributes_for_user()
@@ -114,7 +111,7 @@ def _query_pageant(msg):
         return None
 
 
-class PageantConnection(object):
+class PageantConnection:
     """
     Mock "connection" to an agent which roughly approximates the behavior of
     a unix local-domain socket (as used by Agent).  Requests are sent to the

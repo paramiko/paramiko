@@ -15,6 +15,8 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with Paramiko; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
+from io import BytesIO
+
 from paramiko.common import (
     linefeed_byte_value,
     crlf,
@@ -22,9 +24,8 @@ from paramiko.common import (
     linefeed_byte,
     cr_byte_value,
 )
-from paramiko.py3compat import BytesIO, PY2, u, bytes_types, text_type
 
-from paramiko.util import ClosingContextManager
+from paramiko.util import ClosingContextManager, u
 
 
 class BufferedFile(ClosingContextManager):
@@ -93,39 +94,22 @@ class BufferedFile(ClosingContextManager):
         self._wbuffer = BytesIO()
         return
 
-    if PY2:
+    def __next__(self):
+        """
+        Returns the next line from the input, or raises ``StopIteration``
+        when EOF is hit.  Unlike python file objects, it's okay to mix
+        calls to `.next` and `.readline`.
 
-        def next(self):
-            """
-            Returns the next line from the input, or raises
-            ``StopIteration`` when EOF is hit.  Unlike Python file
-            objects, it's okay to mix calls to `next` and `readline`.
+        :raises: ``StopIteration`` -- when the end of the file is reached.
 
-            :raises: ``StopIteration`` -- when the end of the file is reached.
-
-            :returns: a line (`str`) read from the file.
-            """
-            line = self.readline()
-            if not line:
-                raise StopIteration
-            return line
-
-    else:
-
-        def __next__(self):
-            """
-            Returns the next line from the input, or raises ``StopIteration``
-            when EOF is hit.  Unlike python file objects, it's okay to mix
-            calls to `.next` and `.readline`.
-
-            :raises: ``StopIteration`` -- when the end of the file is reached.
-
-            :returns: a line (`str`) read from the file.
-            """
-            line = self.readline()
-            if not line:
-                raise StopIteration
-            return line
+        :returns:
+            a line (`str`, or `bytes` if the file was opened in binary mode)
+            read from the file.
+        """
+        line = self.readline()
+        if not line:
+            raise StopIteration
+        return line
 
     def readable(self):
         """
@@ -394,7 +378,7 @@ class BufferedFile(ClosingContextManager):
 
         :param data: ``str``/``bytes`` data to write
         """
-        if isinstance(data, text_type):
+        if isinstance(data, str):
             # Accept text and encode as utf-8 for compatibility only.
             data = data.encode("utf-8")
         if self._closed:
@@ -538,9 +522,7 @@ class BufferedFile(ClosingContextManager):
             return
         if self.newlines is None:
             self.newlines = newline
-        elif self.newlines != newline and isinstance(
-            self.newlines, bytes_types
-        ):
+        elif self.newlines != newline and isinstance(self.newlines, bytes):
             self.newlines = (self.newlines, newline)
         elif newline not in self.newlines:
             self.newlines += (newline,)

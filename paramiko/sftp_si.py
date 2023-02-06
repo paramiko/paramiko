@@ -25,7 +25,7 @@ import sys
 from paramiko.sftp import SFTP_OP_UNSUPPORTED
 
 
-class SFTPServerInterface(object):
+class SFTPServerInterface:
     """
     This class defines an interface for controlling the behavior of paramiko
     when using the `.SFTPServer` subsystem to provide an SFTP server.
@@ -40,7 +40,7 @@ class SFTPServerInterface(object):
     clients & servers obey the requirement that paths be encoded in UTF-8.
     """
 
-    def __init__(self, server, *largs, **kwargs):
+    def __init__(self, server, *args, **kwargs):
         """
         Create a new SFTPServerInterface object.  This method does nothing by
         default and is meant to be overridden by subclasses.
@@ -48,7 +48,7 @@ class SFTPServerInterface(object):
         :param .ServerInterface server:
             the server object associated with this channel and SFTP subsystem
         """
-        super(SFTPServerInterface, self).__init__(*largs, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def session_started(self):
         """

@@ -24,7 +24,7 @@ from binascii import hexlify, unhexlify
 import os
 import unittest
 
-from mock import Mock, patch
+from unittest.mock import Mock, patch
 import pytest
 
 from cryptography.hazmat.backends import default_backend
@@ -47,7 +47,7 @@ from paramiko.kex_curve25519 import KexCurve25519
 
 
 def dummy_urandom(n):
-    return byte_chr(0xcc) * n
+    return byte_chr(0xCC) * n
 
 
 def dummy_generate_key_pair(obj):
@@ -69,7 +69,7 @@ def dummy_generate_key_pair(obj):
     )
 
 
-class FakeKey(object):
+class FakeKey:
     def __str__(self):
         return "fake-key"
 
@@ -80,7 +80,7 @@ class FakeKey(object):
         return b"fake-sig"
 
 
-class FakeModulusPack(object):
+class FakeModulusPack:
     P = 0xFFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD129024E088A67CC74020BBEA63B139B22514A08798E3404DDEF9519B3CD3A431B302B0A6DF25F14374FE1356D6D51C245E485B576625E7EC6F44C42E9A637ED6B0BFF5CB6F406B7EDEE386BFB5A899FA5AE9F24117C4B1FE649286651ECE65381FFFFFFFFFFFFFFFF  # noqa
     G = 2
 
@@ -88,7 +88,7 @@ class FakeModulusPack(object):
         return self.G, self.P
 
 
-class FakeTransport(object):
+class FakeTransport:
     local_version = "SSH-2.0-paramiko_1.0"
     remote_version = "SSH-2.0-lame"
     local_kex_init = "local-kex-init"

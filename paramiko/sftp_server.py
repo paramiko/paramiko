@@ -32,12 +32,13 @@ from paramiko.sftp import (
     SFTP_FAILURE,
     SFTP_PERMISSION_DENIED,
     SFTP_NO_SUCH_FILE,
+    int64,
 )
 from paramiko.sftp_si import SFTPServerInterface
 from paramiko.sftp_attr import SFTPAttributes
 from paramiko.common import DEBUG
-from paramiko.py3compat import long, string_types, bytes_types, b
 from paramiko.server import SubsystemHandler
+from paramiko.util import b
 
 
 # known hash algorithms for the "check-file" extension
@@ -97,7 +98,7 @@ class SFTPServer(BaseSFTP, SubsystemHandler):
         name,
         server,
         sftp_si=SFTPServerInterface,
-        *largs,
+        *args,
         **kwargs
     ):
         """
@@ -123,18 +124,14 @@ class SFTPServer(BaseSFTP, SubsystemHandler):
         # map of handle-string to SFTPHandle for files & folders:
         self.file_table = {}
         self.folder_table = {}
-        self.server = sftp_si(server, *largs, **kwargs)
+        self.server = sftp_si(server, *args, **kwargs)
 
     def _log(self, level, msg):
         if issubclass(type(msg), list):
             for m in msg:
-                super(SFTPServer, self)._log(
-                    level, "[chan " + self.sock.get_name() + "] " + m
-                )
+                super()._log(level, "[chan " + self.sock.get_name() + "] " + m)
         else:
-            super(SFTPServer, self)._log(
-                level, "[chan " + self.sock.get_name() + "] " + msg
-            )
+            super()._log(level, "[chan " + self.sock.get_name() + "] " + msg)
 
     def start_subsystem(self, name, transport, channel):
         self.sock = channel
@@ -166,7 +163,7 @@ class SFTPServer(BaseSFTP, SubsystemHandler):
 
     def finish_subsystem(self):
         self.server.session_ended()
-        super(SFTPServer, self).finish_subsystem()
+        super().finish_subsystem()
         # close any file handles that were left open
         # (so we can return them to the OS quickly)
         for f in self.file_table.values():
@@ -224,15 +221,16 @@ class SFTPServer(BaseSFTP, SubsystemHandler):
 
     # ...internals...
 
-    def _response(self, request_number, t, *arg):
+    def _response(self, request_number, t, *args):
         msg = Message()
         msg.add_int(request_number)
-        for item in arg:
-            if isinstance(item, long):
+        for item in args:
+            # NOTE: this is a very silly tiny class used for SFTPFile mostly
+            if isinstance(item, int64):
                 msg.add_int64(item)
             elif isinstance(item, int):
                 msg.add_int(item)
-            elif isinstance(item, (string_types, bytes_types)):
+            elif isinstance(item, (str, bytes)):
                 msg.add_string(item)
             elif type(item) is SFTPAttributes:
                 item._pack(msg)
@@ -261,7 +259,7 @@ class SFTPServer(BaseSFTP, SubsystemHandler):
                 desc = SFTP_DESC[code]
             except IndexError:
                 desc = "Unknown"
-        # some clients expect a "langauge" tag at the end
+        # some clients expect a "language" tag at the end
         # (but don't mind it being blank)
         self._response(request_number, CMD_STATUS, code, desc, "")
 
@@ -340,7 +338,7 @@ class SFTPServer(BaseSFTP, SubsystemHandler):
             hash_obj = alg()
             while count < blocklen:
                 data = f.read(offset, chunklen)
-                if not isinstance(data, bytes_types):
+                if not isinstance(data, bytes):
                     self._send_status(
                         request_number, data, "Unable to hash file"
                     )
@@ -408,7 +406,7 @@ class SFTPServer(BaseSFTP, SubsystemHandler):
                 )
                 return
             data = self.file_table[handle].read(offset, length)
-            if isinstance(data, (bytes_types, string_types)):
+            if isinstance(data, (bytes, str)):
                 if len(data) == 0:
                     self._send_status(request_number, SFTP_EOF)
                 else:
@@ -500,7 +498,7 @@ class SFTPServer(BaseSFTP, SubsystemHandler):
         elif t == CMD_READLINK:
             path = msg.get_text()
             resp = self.server.readlink(path)
-            if isinstance(resp, (bytes_types, string_types)):
+            if isinstance(resp, (bytes, str)):
                 self._response(
                     request_number, CMD_NAME, 1, resp, "", SFTPAttributes()
                 )

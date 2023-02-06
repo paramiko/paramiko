@@ -19,34 +19,26 @@ via `pip <http://pip-installer.org>`_::
 
     $ pip install paramiko
 
-We currently support **Python 2.7, 3.4+, and PyPy**. Users on Python 2.6 or
-older (or 3.3 or older) are urged to upgrade.
+We currently support **Python 3.6+ only**. Users on older interpreter versions
+are urged to upgrade.
 
 Paramiko has only a few **direct dependencies**:
 
 - The big one, with its own sub-dependencies, is Cryptography; see :ref:`its
   specific note below <cryptography>` for more details;
-- `bcrypt <https://pypi.org/project/bcrypt/>`_, for Ed25519 key support;
-- `pynacl <https://pypi.org/project/PyNaCl/>`_, also for Ed25519 key support.
+- `bcrypt <https://pypi.org/project/bcrypt/>`_ and `pynacl
+  <https://pypi.org/project/PyNaCl/>`_ for Ed25519 key support.
 
-There are also a number of **optional dependencies** you may install using
+There are also a handful of **optional dependencies** you may install using
 `setuptools 'extras'
 <https://packaging.python.org/tutorials/installing-packages/#installing-setuptools-extras>`_:
 
-.. TODO 3.0: tweak the invoke line to mention proxycommand too
-.. TODO 3.0: tweak the ed25519 line to remove the caveat
-
 - If you want all optional dependencies at once, use ``paramiko[all]``.
-- For ``Match exec`` config support, use ``paramiko[invoke]`` (which installs
-  `Invoke <https://www.pyinvoke.org>`_).
+- For ``Match exec`` config support and/or ``ProxyCommand`` feature support,
+  use ``paramiko[invoke]`` (which installs `Invoke
+  <https://www.pyinvoke.org>`_).
 - For GSS-API / SSPI support, use ``paramiko[gssapi]``, though also see
   :ref:`the below subsection on it <gssapi>` for details.
-- ``paramiko[ed25519]`` references the dependencies for Ed25519 key support.
-
-    - As of Paramiko 2.x this doesn't technically do anything, as those
-      dependencies are core installation requirements.
-    - However, you should use this for forwards compatibility; 3.0 will drop
-      those dependencies from core, leaving them purely optional.
 
 
 .. _release-lines:

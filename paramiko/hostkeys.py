@@ -17,22 +17,18 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
 
 
+from base64 import encodebytes, decodebytes
 import binascii
 import os
-import sys
 
-if sys.version_info[:2] >= (3, 3):
-    from collections.abc import MutableMapping
-else:
-    from collections import MutableMapping
+from collections.abc import MutableMapping
 from hashlib import sha1
 from hmac import HMAC
 
-from paramiko.py3compat import b, u, encodebytes, decodebytes
 
 from paramiko.dsskey import DSSKey
 from paramiko.rsakey import RSAKey
-from paramiko.util import get_logger, constant_time_bytes_eq
+from paramiko.util import get_logger, constant_time_bytes_eq, b, u
 from paramiko.ecdsakey import ECDSAKey
 from paramiko.ed25519key import Ed25519Key
 from paramiko.ssh_exception import SSHException
@@ -274,7 +270,6 @@ class HostKeys(MutableMapping):
                 self._entries.append(HostKeyEntry([hostname], entry[key_type]))
 
     def keys(self):
-        # Python 2.4 sets would be nice here.
         ret = []
         for e in self._entries:
             for h in e.hostnames:

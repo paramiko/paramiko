@@ -21,13 +21,13 @@ Common API for all public keys.
 """
 
 import base64
+from base64 import encodebytes, decodebytes
 from binascii import unhexlify
 import os
 from hashlib import md5
 import re
 import struct
 
-import six
 import bcrypt
 
 from cryptography.hazmat.backends import default_backend
@@ -35,8 +35,8 @@ from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.ciphers import algorithms, modes, Cipher
 
 from paramiko import util
+from paramiko.util import u, b
 from paramiko.common import o600
-from paramiko.py3compat import u, b, encodebytes, decodebytes, string_types
 from paramiko.ssh_exception import SSHException, PasswordRequiredException
 from paramiko.message import Message
 
@@ -48,18 +48,18 @@ def _unpad_openssh(data):
     # At the moment, this is only used for unpadding private keys on disk. This
     # really ought to be made constant time (possibly by upstreaming this logic
     # into pyca/cryptography).
-    padding_length = six.indexbytes(data, -1)
-    if 0x20 <= padding_length < 0x7f:
+    padding_length = data[-1]
+    if 0x20 <= padding_length < 0x7F:
         return data  # no padding, last byte part comment (printable ascii)
     if padding_length > 15:
         raise SSHException("Invalid key")
     for i in range(padding_length):
-        if six.indexbytes(data, i - padding_length) != i + 1:
+        if data[i - padding_length] != i + 1:
             raise SSHException("Invalid key")
     return data[:-padding_length]
 
 
-class PKey(object):
+class PKey:
     """
     Base class for public keys.
     """
@@ -110,6 +110,7 @@ class PKey(object):
         """
         pass
 
+    # TODO 4.0: just merge into __bytes__ (everywhere)
     def asbytes(self):
         """
         Return a string of an SSH `.Message` made up of the public part(s) of
@@ -118,26 +119,8 @@ class PKey(object):
         """
         return bytes()
 
-    def __str__(self):
+    def __bytes__(self):
         return self.asbytes()
-
-    # noinspection PyUnresolvedReferences
-    # TODO: The comparison functions should be removed as per:
-    # https://docs.python.org/3.0/whatsnew/3.0.html#ordering-comparisons
-    def __cmp__(self, other):
-        """
-        Compare this key to another.  Returns 0 if this key is equivalent to
-        the given key, or non-0 if they are different.  Only the public parts
-        of the key are compared, so a public key will compare equal to its
-        corresponding private key.
-
-        :param .PKey other: key to compare to.
-        """
-        hs = hash(self)
-        ho = hash(other)
-        if hs != ho:
-            return cmp(hs, ho)  # noqa
-        return cmp(self.asbytes(), other.asbytes())  # noqa
 
     def __eq__(self, other):
         return isinstance(other, PKey) and self._fields == other._fields
@@ -201,7 +184,7 @@ class PKey(object):
         Sign a blob of data with this private key, and return a `.Message`
         representing an SSH signature message.
 
-        :param str data:
+        :param bytes data:
             the data to sign.
         :param str algorithm:
             the signature algorithm to use, if different from the key's
@@ -218,7 +201,7 @@ class PKey(object):
         Given a blob of data, and an SSH message representing a signature of
         that data, verify that it was signed with this key.
 
-        :param str data: the data that was signed.
+        :param bytes data: the data that was signed.
         :param .Message msg: an SSH signature message
         :return:
             ``True`` if the signature verifies correctly; ``False`` otherwise.
@@ -311,7 +294,7 @@ class PKey(object):
         :param str password:
             an optional password to use to decrypt the key file, if it's
             encrypted.
-        :return: data blob (`str`) that makes up the private key.
+        :return: the `bytes` that make up the private key.
 
         :raises: ``IOError`` -- if there was an error reading the file.
         :raises: `.PasswordRequiredException` -- if the private key file is
@@ -555,7 +538,7 @@ class PKey(object):
         :param str tag:
             ``"RSA"`` or ``"DSA"``, the tag used to mark the data block.
         :param filename: name of the file to write.
-        :param str data: data blob that makes up the private key.
+        :param bytes data: data blob that makes up the private key.
         :param str password: an optional password to use to encrypt the file.
 
         :raises: ``IOError`` -- if there was an error writing the file.
@@ -563,16 +546,20 @@ class PKey(object):
         # Ensure that we create new key files directly with a user-only mode,
         # instead of opening, writing, then chmodding, which leaves us open to
         # CVE-2022-24302.
-        # NOTE: O_TRUNC is a noop on new files, and O_CREAT is a noop on
-        # existing files, so using all 3 in both cases is fine. Ditto the use
-        # of the 'mode' argument; it should be safe to give even for existing
-        # files (though it will not act like a chmod in that case).
-        # TODO 3.0: turn into kwargs again
-        args = [os.O_WRONLY | os.O_TRUNC | os.O_CREAT, o600]
-        # NOTE: yea, you still gotta inform the FLO that it is in "write" mode
-        with os.fdopen(os.open(filename, *args), "w") as f:
-            # TODO 3.0: remove the now redundant chmod
-            os.chmod(filename, o600)
+        with os.fdopen(
+            os.open(
+                filename,
+                # NOTE: O_TRUNC is a noop on new files, and O_CREAT is a noop
+                # on existing files, so using all 3 in both cases is fine.
+                flags=os.O_WRONLY | os.O_TRUNC | os.O_CREAT,
+                # Ditto the use of the 'mode' argument; it should be safe to
+                # give even for existing files (though it will not act like a
+                # chmod in that case).
+                mode=o600,
+            ),
+            # Yea, you still gotta inform the FLO that it is in "write" mode.
+            "w",
+        ) as f:
             self._write_private_key(f, key, format, password=password)
 
     def _write_private_key(self, f, key, format, password=None):
@@ -602,9 +589,9 @@ class PKey(object):
         # but eg ECDSA is a 1:N mapping.
         key_types = key_type
         cert_types = cert_type
-        if isinstance(key_type, string_types):
+        if isinstance(key_type, str):
             key_types = [key_types]
-        if isinstance(cert_types, string_types):
+        if isinstance(cert_types, str):
             cert_types = [cert_types]
         # Can't do much with no message, that should've been handled elsewhere
         if msg is None:
@@ -672,7 +659,7 @@ class PKey(object):
 # Of little value in the case of standard public keys
 # {ssh-rsa, ssh-dss, ssh-ecdsa, ssh-ed25519}, but should
 # provide rudimentary support for {*-cert.v01}
-class PublicBlob(object):
+class PublicBlob:
     """
     OpenSSH plain public key or OpenSSH signed public key (certificate).
 
@@ -691,7 +678,7 @@ class PublicBlob(object):
         Create a new public blob of given type and contents.
 
         :param str type_: Type indicator, eg ``ssh-rsa``.
-        :param blob: The blob bytes themselves.
+        :param bytes blob: The blob bytes themselves.
         :param str comment: A comment, if one was given (e.g. file-based.)
         """
         self.key_type = type_

@@ -1,9 +1,9 @@
-from mock import patch, MagicMock
+from unittest.mock import patch, MagicMock
 
 from paramiko import Channel, ChannelFile, ChannelStderrFile, ChannelStdinFile
 
 
-class ChannelFileBase(object):
+class ChannelFileBase:
     @patch("paramiko.channel.ChannelFile._set_mode")
     def test_defaults_to_unbuffered_reading(self, setmode):
         self.klass(Channel(None))
@@ -31,7 +31,7 @@ class TestChannelFile(ChannelFileBase):
     klass = ChannelFile
 
 
-class TestChannelStderrFile(object):
+class TestChannelStderrFile:
     def test_read_calls_channel_recv_stderr(self):
         chan = MagicMock()
         cf = ChannelStderrFile(chan)

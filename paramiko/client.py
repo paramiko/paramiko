@@ -35,7 +35,6 @@ from paramiko.dsskey import DSSKey
 from paramiko.ecdsakey import ECDSAKey
 from paramiko.ed25519key import Ed25519Key
 from paramiko.hostkeys import HostKeys
-from paramiko.py3compat import string_types
 from paramiko.rsakey import RSAKey
 from paramiko.ssh_exception import (
     SSHException,
@@ -43,7 +42,7 @@ from paramiko.ssh_exception import (
     NoValidConnectionsError,
 )
 from paramiko.transport import Transport
-from paramiko.util import retry_on_signal, ClosingContextManager
+from paramiko.util import ClosingContextManager
 
 
 class SSHClient(ClosingContextManager):
@@ -322,14 +321,19 @@ class SSHClient(ClosingContextManager):
             `.Transport` instance to be used by this client. Defaults to
             `.Transport.__init__`.
 
-        :raises:
-            `.BadHostKeyException` -- if the server's host key could not be
-            verified
-        :raises: `.AuthenticationException` -- if authentication failed
-        :raises:
-            `.SSHException` -- if there was any other error connecting or
-            establishing an SSH session
-        :raises socket.error: if a socket error occurred while connecting
+        :raises BadHostKeyException:
+            if the server's host key could not be verified.
+        :raises AuthenticationException: if authentication failed.
+        :raises socket.error:
+            if a socket error (other than connection-refused or
+            host-unreachable) occurred while connecting.
+        :raises NoValidConnectionsError:
+            if all valid connection targets for the requested hostname (eg IPv4
+            and IPv6) yielded connection-refused or host-unreachable socket
+            errors.
+        :raises SSHException:
+            if there was any other error connecting or establishing an SSH
+            session.
 
         .. versionchanged:: 1.15
             Added the ``banner_timeout``, ``gss_auth``, ``gss_kex``,
@@ -355,7 +359,7 @@ class SSHClient(ClosingContextManager):
                             sock.settimeout(timeout)
                         except:
                             pass
-                    retry_on_signal(lambda: sock.connect(addr))
+                    sock.connect(addr)
                     # Break out of the loop on success
                     break
                 except socket.error as e:
@@ -442,7 +446,7 @@ class SSHClient(ClosingContextManager):
 
         if key_filename is None:
             key_filenames = []
-        elif isinstance(key_filename, string_types):
+        elif isinstance(key_filename, str):
             key_filenames = [key_filename]
         else:
             key_filenames = key_filename
@@ -785,7 +789,7 @@ class SSHClient(ClosingContextManager):
         self._transport._log(level, msg)
 
 
-class MissingHostKeyPolicy(object):
+class MissingHostKeyPolicy:
     """
     Interface for defining the policy that `.SSHClient` should use when the
     SSH server's hostname is not in either the system host keys or the

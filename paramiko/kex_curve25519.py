@@ -9,7 +9,7 @@ from cryptography.hazmat.primitives.asymmetric.x25519 import (
 )
 
 from paramiko.message import Message
-from paramiko.py3compat import byte_chr, long
+from paramiko.common import byte_chr
 from paramiko.ssh_exception import SSHException
 
 
@@ -17,7 +17,7 @@ _MSG_KEXECDH_INIT, _MSG_KEXECDH_REPLY = range(30, 32)
 c_MSG_KEXECDH_INIT, c_MSG_KEXECDH_REPLY = [byte_chr(c) for c in range(30, 32)]
 
 
-class KexCurve25519(object):
+class KexCurve25519:
     hash_algo = hashlib.sha256
 
     def __init__(self, transport):
@@ -70,7 +70,7 @@ class KexCurve25519(object):
         peer_key_bytes = m.get_string()
         peer_key = X25519PublicKey.from_public_bytes(peer_key_bytes)
         K = self._perform_exchange(peer_key)
-        K = long(binascii.hexlify(K), 16)
+        K = int(binascii.hexlify(K), 16)
         # compute exchange hash
         hm = Message()
         hm.add(
@@ -109,7 +109,7 @@ class KexCurve25519(object):
         peer_key = X25519PublicKey.from_public_bytes(peer_key_bytes)
 
         K = self._perform_exchange(peer_key)
-        K = long(binascii.hexlify(K), 16)
+        K = int(binascii.hexlify(K), 16)
         # compute exchange hash and verify signature
         hm = Message()
         hm.add(

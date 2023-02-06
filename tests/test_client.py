@@ -20,7 +20,6 @@
 Some unit tests for SSHClient.
 """
 
-from __future__ import with_statement, print_function
 
 import gc
 import os
@@ -35,7 +34,7 @@ from tempfile import mkstemp
 
 import pytest
 from pytest_relaxed import raises
-from mock import patch, Mock
+from unittest.mock import patch, Mock
 
 import paramiko
 from paramiko import SSHClient
@@ -63,7 +62,7 @@ class NullServer(paramiko.ServerInterface):
         self.__allowed_keys = kwargs.pop("allowed_keys", [])
         # And allow them to set a (single...meh) expected public blob (cert)
         self.__expected_public_blob = kwargs.pop("public_blob", None)
-        super(NullServer, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def get_allowed_auths(self, username):
         if username == "slowdive":
@@ -203,7 +202,7 @@ class ClientTest(unittest.TestCase):
         # Client setup
         self.tc = SSHClient()
         self.tc.get_host_keys().add(
-            "[%s]:%d" % (self.addr, self.port), "ssh-rsa", public_host_key
+            f"[{self.addr}]:{self.port}", "ssh-rsa", public_host_key
         )
 
         # Actual connection
@@ -391,7 +390,7 @@ class SSHClientTest(ClientTest):
         verify that SSHClient's AutoAddPolicy works.
         """
         threading.Thread(target=self._run).start()
-        hostname = "[%s]:%d" % (self.addr, self.port)
+        hostname = f"[{self.addr}]:{self.port}"
         key_file = _support("test_ecdsa_256.key")
         public_host_key = paramiko.ECDSAKey.from_private_key_file(key_file)
 
@@ -425,7 +424,7 @@ class SSHClientTest(ClientTest):
         client = SSHClient()
         assert len(client.get_host_keys()) == 0
 
-        host_id = "[%s]:%d" % (self.addr, self.port)
+        host_id = f"[{self.addr}]:{self.port}"
 
         client.get_host_keys().add(host_id, "ssh-rsa", public_host_key)
         assert len(client.get_host_keys()) == 1
@@ -443,7 +442,7 @@ class SSHClientTest(ClientTest):
         verify that when an SSHClient is collected, its transport (and the
         transport's packetizer) is closed.
         """
-        # Skipped on PyPy because it fails on travis for unknown reasons
+        # Skipped on PyPy because it fails on CI for unknown reasons
         if platform.python_implementation() == "PyPy":
             return
 
@@ -465,9 +464,9 @@ class SSHClientTest(ClientTest):
 
         # force a collection to see whether the SSHClient object is deallocated
         # 2 GCs are needed on PyPy, time is needed for Python 3
-        # TODO: this still fails randomly under CircleCI under Python 3.7, 3.8
-        # at the very least. bumped sleep 0.3->1.0s but the underlying
-        # functionality should get reevaluated once we drop Python 2.
+        # TODO 4.0: this still fails randomly under CircleCI under Python 3.7,
+        # 3.8 at the very least. bumped sleep 0.3->1.0s but the underlying
+        # functionality should get reevaluated now we've dropped Python 2.
         time.sleep(1)
         gc.collect()
         gc.collect()
@@ -524,7 +523,7 @@ class SSHClientTest(ClientTest):
 
         self.tc = SSHClient()
         self.tc.get_host_keys().add(
-            "[%s]:%d" % (self.addr, self.port), "ssh-rsa", public_host_key
+            f"[{self.addr}]:{self.port}", "ssh-rsa", public_host_key
         )
         # Connect with a half second banner timeout.
         kwargs = dict(self.connect_kwargs, banner_timeout=0.5)
@@ -594,7 +593,7 @@ class SSHClientTest(ClientTest):
             paramiko.SSHException,
             self.tc.connect,
             password="pygmalion",
-            **self.connect_kwargs
+            **self.connect_kwargs,
         )
 
     @requires_gss_auth
@@ -615,12 +614,12 @@ class SSHClientTest(ClientTest):
             self.tc.connect,
             password="pygmalion",
             gss_kex=True,
-            **self.connect_kwargs
+            **self.connect_kwargs,
         )
 
     def _client_host_key_bad(self, host_key):
         threading.Thread(target=self._run).start()
-        hostname = "[%s]:%d" % (self.addr, self.port)
+        hostname = f"[{self.addr}]:{self.port}"
 
         self.tc = SSHClient()
         self.tc.set_missing_host_key_policy(paramiko.WarningPolicy())
@@ -631,12 +630,12 @@ class SSHClientTest(ClientTest):
             paramiko.BadHostKeyException,
             self.tc.connect,
             password="pygmalion",
-            **self.connect_kwargs
+            **self.connect_kwargs,
         )
 
     def _client_host_key_good(self, ktype, kfile):
         threading.Thread(target=self._run).start()
-        hostname = "[%s]:%d" % (self.addr, self.port)
+        hostname = f"[{self.addr}]:{self.port}"
 
         self.tc = SSHClient()
         self.tc.set_missing_host_key_policy(paramiko.RejectPolicy())
@@ -803,7 +802,7 @@ class PasswordPassphraseTests(ClientTest):
 
     @requires_sha1_signing
     def test_password_kwarg_used_for_passphrase_when_no_passphrase_kwarg_given(
-        self
+        self,
     ):  # noqa
         # Backwards compatibility: passphrase in the password field.
         self._test_connection(
@@ -814,7 +813,7 @@ class PasswordPassphraseTests(ClientTest):
     @raises(AuthenticationException)  # TODO: more granular
     @requires_sha1_signing
     def test_password_kwarg_not_used_for_passphrase_when_passphrase_kwarg_given(  # noqa
-        self
+        self,
     ):
         # Sanity: if we're given both fields, the password field is NOT used as
         # a passphrase.

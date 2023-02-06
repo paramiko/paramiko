@@ -28,7 +28,6 @@ from paramiko import util
 from paramiko.channel import Channel
 from paramiko.message import Message
 from paramiko.common import INFO, DEBUG, o777
-from paramiko.py3compat import b, u, long
 from paramiko.sftp import (
     BaseSFTP,
     CMD_OPENDIR,
@@ -61,12 +60,13 @@ from paramiko.sftp import (
     SFTP_EOF,
     SFTP_NO_SUCH_FILE,
     SFTP_PERMISSION_DENIED,
+    int64,
 )
 
 from paramiko.sftp_attr import SFTPAttributes
 from paramiko.ssh_exception import SSHException
 from paramiko.sftp_file import SFTPFile
-from paramiko.util import ClosingContextManager
+from paramiko.util import ClosingContextManager, b, u
 
 
 def _to_unicode(s):
@@ -179,7 +179,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
             # escape '%' in msg (they could come from file or directory names)
             # before logging
             msg = msg.replace("%", "%%")
-            super(SFTPClient, self)._log(
+            super()._log(
                 level,
                 "[chan %s] " + msg,
                 *([self.sock.get_name()] + list(args))
@@ -817,18 +817,18 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
 
     # ...internals...
 
-    def _request(self, t, *arg):
-        num = self._async_request(type(None), t, *arg)
+    def _request(self, t, *args):
+        num = self._async_request(type(None), t, *args)
         return self._read_response(num)
 
-    def _async_request(self, fileobj, t, *arg):
+    def _async_request(self, fileobj, t, *args):
         # this method may be called from other threads (prefetch)
         self._lock.acquire()
         try:
             msg = Message()
             msg.add_int(self.request_number)
-            for item in arg:
-                if isinstance(item, long):
+            for item in args:
+                if isinstance(item, int64):
                     msg.add_int64(item)
                 elif isinstance(item, int):
                     msg.add_int(item)

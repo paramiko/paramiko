@@ -40,8 +40,9 @@ extras_require = {
         'gssapi>=1.4.1;platform_system!="Windows"',
         'pywin32>=2.1.8;platform_system=="Windows"',
     ],
-    "ed25519": ["pynacl>=1.0.1", "bcrypt>=3.1.3"],
-    "invoke": ["invoke>=1.3"],
+    "invoke": ["invoke>=2.0"],
+    # TODO 4.0: remove entrypoint as irrelevant
+    "ed25519": [],
 }
 everything = []
 for subdeps in extras_require.values():
@@ -75,28 +76,20 @@ setup(
         "Topic :: Internet",
         "Topic :: Security :: Cryptography",
         "Programming Language :: Python",
-        "Programming Language :: Python :: 2",
-        "Programming Language :: Python :: 2.7",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.4",
-        "Programming Language :: Python :: 3.5",
+        "Programming Language :: Python :: 3 :: Only",
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
     ],
-    # TODO 3.0: remove bcrypt, pynacl and update installation docs noting that
-    # use of the extras_require ("paramiko[ed2559]") is now required for those
-    # TODO 3.0: alternately, given how prevalent ed25519 is now, and how we use
-    # invoke for (increasing) subproc stuff, consider making the default flavor
-    # "full"/"all"? (probably sans gssapi which should remain optional; MAYBE
-    # still sans invoke as well, not everyone uses ProxyCommand or Match exec)
-    # TODO 3.0: remove six, obviously
+    python_requires=">=3.6",
     install_requires=[
-        "bcrypt>=3.1.3",
-        "cryptography>=2.5",
-        "pynacl>=1.0.1",
-        "six",
+        "bcrypt>=3.2",
+        "cryptography>=3.3",
+        "pynacl>=1.5",
     ],
     extras_require=extras_require,
 )

@@ -28,14 +28,15 @@ import socket
 import sys
 import warnings
 from binascii import hexlify
+from io import StringIO
 from tempfile import mkstemp
 
 import pytest
 
-from paramiko.py3compat import PY2, b, u, StringIO
 from paramiko.common import o777, o600, o666, o644
-from tests import requireNonAsciiLocale
 from paramiko.sftp_attr import SFTPAttributes
+from paramiko.util import b, u
+from tests import requireNonAsciiLocale
 
 from .util import needs_builtin
 from .util import slow
@@ -45,7 +46,7 @@ ARTICLE = """
 Insulin sensitivity and liver insulin receptor structure in ducks from two
 genera
 
-T. Constans, B. Chevalier, M. Derouet and J. Simon
+T. Constantine, B. Chevalier, M. Derouet and J. Simon
 Station de Recherches Avicoles, Institut National de la Recherche Agronomique,
 Nouzilly, France.
 
@@ -87,12 +88,12 @@ decreased compared with chicken.
 # byte"
 NON_UTF8_DATA = b"\xC3\xC3"
 
-unicode_folder = u"\u00fcnic\u00f8de" if PY2 else "\u00fcnic\u00f8de"
+unicode_folder = "\u00fcnic\u00f8de"
 utf8_folder = b"/\xc3\xbcnic\xc3\xb8\x64\x65"
 
 
 @slow
-class TestSFTP(object):
+class TestSFTP:
     def test_file(self, sftp):
         """
         verify that we can create a file.
@@ -128,7 +129,7 @@ class TestSFTP(object):
         try:
             with sftp.open(sftp.FOLDER + "/duck.txt", "w") as f:
                 f.write(ARTICLE)
-            assert sftp.stat(sftp.FOLDER + "/duck.txt").st_size == 1483
+            assert sftp.stat(sftp.FOLDER + "/duck.txt").st_size == 1486
         finally:
             sftp.remove(sftp.FOLDER + "/duck.txt")
 
@@ -139,7 +140,7 @@ class TestSFTP(object):
         try:
             with sftp.open(sftp.FOLDER + "/duck.txt", "w") as f:
                 f.write(ARTICLE)
-            assert sftp.stat(sftp.FOLDER + "/duck.txt").st_size == 1483
+            assert sftp.stat(sftp.FOLDER + "/duck.txt").st_size == 1486
         finally:
             sftp.remove(sftp.FOLDER + "/duck.txt")
 
@@ -627,11 +628,8 @@ class TestSFTP(object):
         sftp.open(sftp.FOLDER + "/unusual.txt", "wx").close()
 
         try:
-            try:
+            with pytest.raises(IOError):
                 sftp.open(sftp.FOLDER + "/unusual.txt", "wx")
-                self.fail("expected exception")
-            except IOError:
-                pass
         finally:
             sftp.unlink(sftp.FOLDER + "/unusual.txt")
 
@@ -641,15 +639,13 @@ class TestSFTP(object):
         """
         with sftp.open(sftp.FOLDER + "/something", "w") as f:
             f.write("okay")
-
         try:
             sftp.rename(
                 sftp.FOLDER + "/something", sftp.FOLDER + "/" + unicode_folder
             )
             sftp.open(b(sftp.FOLDER) + utf8_folder, "r")
-        except Exception as e:
-            self.fail("exception " + str(e))
-        sftp.unlink(b(sftp.FOLDER) + utf8_folder)
+        finally:
+            sftp.unlink(b(sftp.FOLDER) + utf8_folder)
 
     def test_utf8_chdir(self, sftp):
         sftp.mkdir(sftp.FOLDER + "/" + unicode_folder)
@@ -728,7 +724,7 @@ class TestSFTP(object):
 
     def test_seek_append(self, sftp):
         """
-        verify that seek does't affect writes during append.
+        verify that seek doesn't affect writes during append.
 
         does not work except through paramiko.  :(  openssh fails.
         """
@@ -779,18 +775,18 @@ class TestSFTP(object):
     def test_non_utf8_data(self, sftp):
         """Test write() and read() of non utf8 data"""
         try:
-            with sftp.open("%s/nonutf8data" % sftp.FOLDER, "w") as f:
+            with sftp.open(f"{sftp.FOLDER}/nonutf8data", "w") as f:
                 f.write(NON_UTF8_DATA)
-            with sftp.open("%s/nonutf8data" % sftp.FOLDER, "r") as f:
+            with sftp.open(f"{sftp.FOLDER}/nonutf8data", "r") as f:
                 data = f.read()
             assert data == NON_UTF8_DATA
-            with sftp.open("%s/nonutf8data" % sftp.FOLDER, "wb") as f:
+            with sftp.open(f"{sftp.FOLDER}/nonutf8data", "wb") as f:
                 f.write(NON_UTF8_DATA)
-            with sftp.open("%s/nonutf8data" % sftp.FOLDER, "rb") as f:
+            with sftp.open(f"{sftp.FOLDER}/nonutf8data", "rb") as f:
                 data = f.read()
             assert data == NON_UTF8_DATA
         finally:
-            sftp.remove("%s/nonutf8data" % sftp.FOLDER)
+            sftp.remove(f"{sftp.FOLDER}/nonutf8data")
 
     @requireNonAsciiLocale("LC_TIME")
     def test_sftp_attributes_locale_time(self, sftp):
@@ -811,26 +807,26 @@ class TestSFTP(object):
         """Test write() using a buffer instance."""
         data = 3 * b"A potentially large block of data to chunk up.\n"
         try:
-            with sftp.open("%s/write_buffer" % sftp.FOLDER, "wb") as f:
+            with sftp.open(f"{sftp.FOLDER}/write_buffer", "wb") as f:
                 for offset in range(0, len(data), 8):
                     f.write(buffer(data, offset, 8))  # noqa
 
-            with sftp.open("%s/write_buffer" % sftp.FOLDER, "rb") as f:
+            with sftp.open(f"{sftp.FOLDER}/write_buffer", "rb") as f:
                 assert f.read() == data
         finally:
-            sftp.remove("%s/write_buffer" % sftp.FOLDER)
+            sftp.remove(f"{sftp.FOLDER}/write_buffer")
 
     @needs_builtin("memoryview")
     def test_write_memoryview(self, sftp):
         """Test write() using a memoryview instance."""
         data = 3 * b"A potentially large block of data to chunk up.\n"
         try:
-            with sftp.open("%s/write_memoryview" % sftp.FOLDER, "wb") as f:
+            with sftp.open(f"{sftp.FOLDER}/write_memoryview", "wb") as f:
                 view = memoryview(data)
                 for offset in range(0, len(data), 8):
                     f.write(view[offset : offset + 8])
 
-            with sftp.open("%s/write_memoryview" % sftp.FOLDER, "rb") as f:
+            with sftp.open(f"{sftp.FOLDER}/write_memoryview", "rb") as f:
                 assert f.read() == data
         finally:
-            sftp.remove("%s/write_memoryview" % sftp.FOLDER)
+            sftp.remove(f"{sftp.FOLDER}/write_memoryview")

@@ -19,13 +19,12 @@
 import stat
 import time
 from paramiko.common import x80000000, o700, o70, xffffffff
-from paramiko.py3compat import long, PY2, strftime
 
 
-class SFTPAttributes(object):
+class SFTPAttributes:
     """
     Representation of the attributes of a file (or proxied file) for SFTP in
-    client or server mode.  It attemps to mirror the object returned by
+    client or server mode.  It attempts to mirror the object returned by
     `os.stat` as closely as possible, so it may have the following fields,
     with the same meanings as those returned by an `os.stat` object:
 
@@ -134,8 +133,8 @@ class SFTPAttributes(object):
             msg.add_int(self.st_mode)
         if self._flags & self.FLAG_AMTIME:
             # throw away any fractional seconds
-            msg.add_int(long(self.st_atime))
-            msg.add_int(long(self.st_mtime))
+            msg.add_int(int(self.st_atime))
+            msg.add_int(int(self.st_mtime))
         if self._flags & self.FLAG_EXTENDED:
             msg.add_int(len(self.attr))
             for key, val in self.attr.items():
@@ -169,7 +168,7 @@ class SFTPAttributes(object):
             out += "-xSs"[suid + (n & 1)]
         return out
 
-    def _as_text(self):
+    def __str__(self):
         """create a unix-style long description of the file (like ls -l)"""
         if self.st_mode is not None:
             kind = stat.S_IFMT(self.st_mode)
@@ -206,11 +205,11 @@ class SFTPAttributes(object):
             datestr = "(unknown date)"
         else:
             time_tuple = time.localtime(self.st_mtime)
-            if abs(time.time() - self.st_mtime) > 15552000:
-                # (15552000 = 6 months)
-                datestr = strftime("%d %b %Y", time_tuple)
+            if abs(time.time() - self.st_mtime) > 15_552_000:
+                # (15,552,000s = 6 months)
+                datestr = time.strftime("%d %b %Y", time_tuple)
             else:
-                datestr = strftime("%d %b %H:%M", time_tuple)
+                datestr = time.strftime("%d %b %H:%M", time_tuple)
         filename = getattr(self, "filename", "?")
 
         # not all servers support uid/gid
@@ -237,10 +236,4 @@ class SFTPAttributes(object):
         )
 
     def asbytes(self):
-        return self._as_text().encode("utf-8")
-
-    if PY2:
-        __unicode__ = _as_text
-        __str__ = asbytes
-    else:
-        __str__ = _as_text
+        return str(self).encode()

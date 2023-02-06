@@ -106,7 +106,7 @@ class GSSAuthTest(KerberosTestCase):
         self.tc = paramiko.SSHClient()
         self.tc.set_missing_host_key_policy(paramiko.WarningPolicy())
         self.tc.get_host_keys().add(
-            "[%s]:%d" % (self.addr, self.port), "ssh-rsa", public_host_key
+            f"[{self.addr}]:{self.port}", "ssh-rsa", public_host_key
         )
         self.tc.connect(
             hostname=self.addr,
@@ -114,7 +114,7 @@ class GSSAuthTest(KerberosTestCase):
             username=self.username,
             gss_host=self.hostname,
             gss_auth=True,
-            **kwargs
+            **kwargs,
         )
 
         self.event.wait(1.0)

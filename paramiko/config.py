@@ -28,9 +28,8 @@ import re
 import shlex
 import socket
 from hashlib import sha1
+from io import StringIO
 from functools import partial
-
-from .py3compat import StringIO
 
 invoke, invoke_import_error = None, None
 try:
@@ -44,7 +43,7 @@ from .ssh_exception import CouldNotCanonicalize, ConfigParseError
 SSH_PORT = 22
 
 
-class SSHConfig(object):
+class SSHConfig:
     """
     Representation of config information as stored in the format used by
     OpenSSH. Queries can be made via `lookup`. The format is described in
@@ -150,7 +149,7 @@ class SSHConfig(object):
                 self._config.append(context)
                 context = {"config": {}}
                 if key == "host":
-                    # TODO 3.0: make these real objects or at least name this
+                    # TODO 4.0: make these real objects or at least name this
                     # "hosts" to acknowledge it's an iterable. (Doing so prior
                     # to 3.0, despite it being a private API, feels bad -
                     # surely such an old codebase has folks actually relying on
@@ -160,9 +159,8 @@ class SSHConfig(object):
                     context["matches"] = self._get_matches(value)
             # Special-case for noop ProxyCommands
             elif key == "proxycommand" and value.lower() == "none":
-                # Store 'none' as None; prior to 3.x, it will get stripped out
-                # at the end (for compatibility with issue #415). After 3.x, it
-                # will simply not get stripped, leaving a nice explicit marker.
+                # Store 'none' as None - not as a string implying that the
+                # proxycommand is the literal shell command "none"!
                 context["config"][key] = None
             # All other keywords get stored, directly or via append
             else:
@@ -268,9 +266,6 @@ class SSHConfig(object):
         # Expand variables in resulting values (besides 'Match exec' which was
         # already handled above)
         options = self._expand_variables(options, hostname)
-        # TODO: remove in 3.x re #670
-        if "proxycommand" in options and options["proxycommand"] is None:
-            del options["proxycommand"]
         return options
 
     def canonicalize(self, hostname, options, domains):
@@ -340,10 +335,6 @@ class SSHConfig(object):
             elif fnmatch.fnmatch(target, pattern):
                 match = True
         return match
-
-    # TODO 3.0: remove entirely (is now unused internally)
-    def _allowed(self, hosts, hostname):
-        return self._pattern_matches(hosts, hostname)
 
     def _does_match(self, match_list, target_hostname, canonical, options):
         matched = []
@@ -585,7 +576,7 @@ def _addressfamily_host_lookup(hostname, options):
         pass
 
 
-class LazyFqdn(object):
+class LazyFqdn:
     """
     Returns the host's fqdn on request as string.
     """
@@ -656,10 +647,6 @@ class SSHConfigDict(dict):
 
     .. versionadded:: 2.5
     """
-
-    def __init__(self, *args, **kwargs):
-        # Hey, guess what? Python 2's userdict is an old-style class!
-        super(SSHConfigDict, self).__init__(*args, **kwargs)
 
     def as_bool(self, key):
         """

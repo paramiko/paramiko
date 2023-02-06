@@ -1,4 +1,5 @@
 from os.path import dirname, realpath, join
+import builtins
 import os
 import struct
 import sys
@@ -6,7 +7,6 @@ import unittest
 
 import pytest
 
-from paramiko.py3compat import builtins, PY2
 from paramiko.ssh_gss import GSS_AUTH_AVAILABLE
 
 from cryptography.exceptions import UnsupportedAlgorithm, _Reasons
@@ -61,7 +61,7 @@ if (
 ):  # add other vars as needed
 
     # The environment provides the required information
-    class DummyK5Realm(object):
+    class DummyK5Realm:
         def __init__(self):
             for k in os.environ:
                 if not k.startswith("K5TEST_"):
@@ -77,7 +77,6 @@ if (
         @classmethod
         def tearDownClass(cls):
             del cls.realm
-
 
 else:
     try:
@@ -138,16 +137,13 @@ def is_low_entropy():
     """
     Attempts to detect whether running interpreter is low-entropy.
 
-    Classified as being in 32-bit mode under Python 2, or 32-bit mode and with
-    the hash seed set to zero under Python 3.
+    "low-entropy" is defined as being in 32-bit mode and with the hash seed set
+    to zero.
     """
     is_32bit = struct.calcsize("P") == 32 / 8
-    if PY2:
-        return is_32bit
-    else:
-        # I don't see a way to tell internally if the hash seed was set this
-        # way, but env should be plenty sufficient, this is only for testing.
-        return is_32bit and os.environ.get("PYTHONHASHSEED", None) == "0"
+    # I don't see a way to tell internally if the hash seed was set this
+    # way, but env should be plenty sufficient, this is only for testing.
+    return is_32bit and os.environ.get("PYTHONHASHSEED", None) == "0"
 
 
 def sha1_signing_unsupported():

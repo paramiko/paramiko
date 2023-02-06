@@ -19,7 +19,7 @@
 Welcome to Paramiko!
 ====================
 
-Paramiko is a pure-Python [#]_ (2.7, 3.4+) implementation of the SSHv2 protocol
+Paramiko is a pure-Python [#]_ (3.6+) implementation of the SSHv2 protocol
 [#]_, providing both client and server functionality. It provides the
 foundation for the high-level SSH library `Fabric <https://fabfile.org>`_,
 which is what we recommend you use for common client use-cases such as running

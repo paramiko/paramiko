@@ -58,9 +58,9 @@ class BadAuthenticationType(AuthenticationException):
 
     allowed_types = []
 
-    # TODO 3.0: remove explanation kwarg
+    # TODO 4.0: remove explanation kwarg
     def __init__(self, explanation, types):
-        # TODO 3.0: remove this supercall unless it's actually required for
+        # TODO 4.0: remove this supercall unless it's actually required for
         # pickling (after fixing pickling)
         AuthenticationException.__init__(self, explanation, types)
         self.explanation = explanation
@@ -125,9 +125,7 @@ class BadHostKeyException(SSHException):
         self.expected_key = expected_key
 
     def __str__(self):
-        msg = (
-            "Host key for server '{}' does not match: got '{}', expected '{}'"
-        )  # noqa
+        msg = "Host key for server '{}' does not match: got '{}', expected '{}'"  # noqa
         return msg.format(
             self.hostname,
             self.key.get_base64(),
@@ -142,7 +140,7 @@ class IncompatiblePeer(SSHException):
     .. versionadded:: 2.9
     """
 
-    # TODO 3.0: consider making this annotate w/ 1..N 'missing' algorithms,
+    # TODO 4.0: consider making this annotate w/ 1..N 'missing' algorithms,
     # either just the first one that would halt kex, or even updating the
     # Transport logic so we record /all/ that /could/ halt kex.
     # TODO: update docstrings where this may end up raised so they are more
@@ -204,7 +202,7 @@ class NoValidConnectionsError(socket.error):
             msg = "Unable to connect to port {0} on {1} or {2}"
         else:
             msg = "Unable to connect to port {0} on {2}"
-        super(NoValidConnectionsError, self).__init__(
+        super().__init__(
             None, msg.format(addrs[0][1], body, tail)  # stand-in for errno
         )
         self.errors = errors

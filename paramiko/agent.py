@@ -29,13 +29,12 @@ import time
 import tempfile
 import stat
 from select import select
-from paramiko.common import asbytes, io_sleep
-from paramiko.py3compat import byte_chr
+from paramiko.common import io_sleep, byte_chr
 
 from paramiko.ssh_exception import SSHException, AuthenticationException
 from paramiko.message import Message
 from paramiko.pkey import PKey
-from paramiko.util import retry_on_signal
+from paramiko.util import asbytes
 
 cSSH2_AGENTC_REQUEST_IDENTITIES = byte_chr(11)
 SSH2_AGENT_IDENTITIES_ANSWER = 12
@@ -55,7 +54,7 @@ ALGORITHM_FLAG_MAP = {
 }
 
 
-class AgentSSH(object):
+class AgentSSH:
     def __init__(self):
         self._conn = None
         self._keys = ()
@@ -214,7 +213,7 @@ def get_agent_connection():
     if ("SSH_AUTH_SOCK" in os.environ) and (sys.platform != "win32"):
         conn = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         try:
-            retry_on_signal(lambda: conn.connect(os.environ["SSH_AUTH_SOCK"]))
+            conn.connect(os.environ["SSH_AUTH_SOCK"])
             return conn
         except:
             # probably a dangling env var: the ssh agent is gone
@@ -233,7 +232,7 @@ def get_agent_connection():
         return
 
 
-class AgentClientProxy(object):
+class AgentClientProxy:
     """
     Class proxying request as a client:
 
@@ -315,10 +314,10 @@ class AgentServerProxy(AgentSSH):
 
     def get_env(self):
         """
-        Helper for the environnement under unix
+        Helper for the environment under unix
 
         :return:
-            a dict containing the ``SSH_AUTH_SOCK`` environnement variables
+            a dict containing the ``SSH_AUTH_SOCK`` environment variables
         """
         return {"SSH_AUTH_SOCK": self._get_filename()}
 
@@ -326,7 +325,7 @@ class AgentServerProxy(AgentSSH):
         return self._file
 
 
-class AgentRequestHandler(object):
+class AgentRequestHandler:
     """
     Primary/default implementation of SSH agent forwarding functionality.
 

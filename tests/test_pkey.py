@@ -26,6 +26,7 @@ import os
 import stat
 from binascii import hexlify
 from hashlib import md5
+from io import StringIO
 
 from paramiko import (
     RSAKey,
@@ -36,12 +37,12 @@ from paramiko import (
     util,
     SSHException,
 )
-from paramiko.py3compat import StringIO, byte_chr, b, bytes, PY2
-from paramiko.common import o600
+from paramiko.util import b
+from paramiko.common import o600, byte_chr
 
 from cryptography.exceptions import UnsupportedAlgorithm
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateNumbers
-from mock import patch, Mock
+from unittest.mock import patch, Mock
 import pytest
 
 from .util import _support, is_low_entropy, requires_sha1_signing
@@ -133,8 +134,7 @@ L4QLcT5aND0EHZLB2fAUDXiWIb2j4rg1mwPlBMiBXA==
 
 x1234 = b"\x01\x02\x03\x04"
 
-TEST_KEY_BYTESTR_2 = "\x00\x00\x00\x07ssh-rsa\x00\x00\x00\x01#\x00\x00\x00\x81\x00\xd3\x8fV\xea\x07\x85\xa6k%\x8d<\x1f\xbc\x8dT\x98\xa5\x96$\xf3E#\xbe>\xbc\xd2\x93\x93\x87f\xceD\x18\xdb \x0c\xb3\xa1a\x96\xf8e#\xcc\xacS\x8a#\xefVlE\x83\x1epv\xc1o\x17M\xef\xdf\x89DUXL\xa6\x8b\xaa<\x06\x10\xd7\x93w\xec\xaf\xe2\xaf\x95\xd8\xfb\xd9\xbfw\xcb\x9f0)#y{\x10\x90\xaa\x85l\tPru\x8c\t\x19\xce\xa0\xf1\xd2\xdc\x8e/\x8b\xa8f\x9c0\xdey\x84\xd2F\xf7\xcbmm\x1f\x87"  # noqa
-TEST_KEY_BYTESTR_3 = "\x00\x00\x00\x07ssh-rsa\x00\x00\x00\x01#\x00\x00\x00\x00ӏV\x07k%<\x1fT$E#>ғfD\x18 \x0cae#̬S#VlE\x1epvo\x17M߉DUXL<\x06\x10דw\u2bd5ٿw˟0)#y{\x10l\tPru\t\x19Π\u070e/f0yFmm\x1f"  # noqa
+TEST_KEY_BYTESTR = "\x00\x00\x00\x07ssh-rsa\x00\x00\x00\x01#\x00\x00\x00\x00ӏV\x07k%<\x1fT$E#>ғfD\x18 \x0cae#̬S#VlE\x1epvo\x17M߉DUXL<\x06\x10דw\u2bd5ٿw˟0)#y{\x10l\tPru\t\x19Π\u070e/f0yFmm\x1f"  # noqa
 
 
 class KeyTest(unittest.TestCase):
@@ -253,7 +253,7 @@ class KeyTest(unittest.TestCase):
         assert isinstance(msg, Message)
         msg.rewind()
         assert msg.get_text() == algorithm
-        expected = bytes().join(
+        expected = b"".join(
             [byte_chr(int(x, 16)) for x in saved_sig.split(":")]
         )
         assert msg.get_binary() == expected
@@ -570,7 +570,7 @@ class KeyTest(unittest.TestCase):
 
     def test_stringification(self):
         key = RSAKey.from_private_key_file(_support("test_rsa.key"))
-        comparable = TEST_KEY_BYTESTR_2 if PY2 else TEST_KEY_BYTESTR_3
+        comparable = TEST_KEY_BYTESTR
         self.assertEqual(str(key), comparable)
 
     def test_ed25519(self):
@@ -731,11 +731,9 @@ class KeyTest(unittest.TestCase):
         key.write_private_key_file(new, password=newpassword)
         # Expected open via os module
         os_.open.assert_called_once_with(
-            new, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, o600
+            new, flags=os.O_WRONLY | os.O_CREAT | os.O_TRUNC, mode=o600
         )
         os_.fdopen.assert_called_once_with(os_.open.return_value, "w")
-        # Old chmod still around for backwards compat
-        os_.chmod.assert_called_once_with(new, o600)
         assert (
             key._write_private_key.call_args[0][0]
             == os_.fdopen.return_value.__enter__.return_value

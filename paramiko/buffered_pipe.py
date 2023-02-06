@@ -25,7 +25,7 @@ read operations are blocking and can have a timeout set.
 import array
 import threading
 import time
-from paramiko.py3compat import PY2, b
+from paramiko.util import b
 
 
 class PipeTimeout(IOError):
@@ -36,7 +36,7 @@ class PipeTimeout(IOError):
     pass
 
 
-class BufferedPipe(object):
+class BufferedPipe:
     """
     A buffer that obeys normal read (with timeout) & close semantics for a
     file or socket, but is fed data from another thread.  This is used by
@@ -50,21 +50,11 @@ class BufferedPipe(object):
         self._buffer = array.array("B")
         self._closed = False
 
-    if PY2:
+    def _buffer_frombytes(self, data):
+        self._buffer.frombytes(data)
 
-        def _buffer_frombytes(self, data):
-            self._buffer.fromstring(data)
-
-        def _buffer_tobytes(self, limit=None):
-            return self._buffer[:limit].tostring()
-
-    else:
-
-        def _buffer_frombytes(self, data):
-            self._buffer.frombytes(data)
-
-        def _buffer_tobytes(self, limit=None):
-            return self._buffer[:limit].tobytes()
+    def _buffer_tobytes(self, limit=None):
+        return self._buffer[:limit].tobytes()
 
     def set_event(self, event):
         """

@@ -1,13 +1,13 @@
 import signal
 import socket
 
-from mock import patch
+from unittest.mock import patch
 from pytest import raises
 
 from paramiko import ProxyCommand, ProxyCommandFailure
 
 
-class TestProxyCommand(object):
+class TestProxyCommand:
     @patch("paramiko.proxy.subprocess")
     def test_init_takes_command_string(self, subprocess):
         ProxyCommand(command_line="do a thing")
@@ -43,14 +43,20 @@ class TestProxyCommand(object):
         stdout = Popen.return_value.stdout
         select.return_value = [stdout], None, None
         fileno = stdout.fileno.return_value
-        # Intentionally returning <5 at a time sometimes
-        os_read.side_effect = [b"was", b"te", b"of ti", b"me"]
+        # Force os.read to return smaller-than-requested chunks
+        os_read.side_effect = [b"was", b"t", b"e", b"of ti", b"me"]
         proxy = ProxyCommand("hi")
+        # Ask for 5 bytes (ie b"waste")
         data = proxy.recv(5)
+        # Ensure we got "waste" stitched together
         assert data == b"waste"
+        # Ensure the calls happened in the sizes expected (starting with the
+        # initial "I want all 5 bytes", followed by "I want whatever I believe
+        # should be left after what I've already read", until done)
         assert [x[0] for x in os_read.call_args_list] == [
-            (fileno, 5),
-            (fileno, 2),
+            (fileno, 5),  # initial
+            (fileno, 2),  # I got 3, want 2 more
+            (fileno, 1),  # I've now got 4, want 1 more
         ]
 
     @patch("paramiko.proxy.subprocess.Popen")
@@ -122,7 +128,7 @@ class TestProxyCommand(object):
         select.return_value = [stdout], None, None
         # Base case: None timeout means no timing out
         os_read.return_value = b"meh"
-        proxy = ProxyCommand("yello")
+        proxy = ProxyCommand("hello")
         assert proxy.timeout is None
         # Implicit 'no raise' check
         assert proxy.recv(3) == b"meh"

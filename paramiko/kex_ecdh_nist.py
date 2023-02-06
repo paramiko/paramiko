@@ -4,8 +4,8 @@ RFC 5656, Section 4
 """
 
 from hashlib import sha256, sha384, sha512
+from paramiko.common import byte_chr
 from paramiko.message import Message
-from paramiko.py3compat import byte_chr, long
 from paramiko.ssh_exception import SSHException
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.asymmetric import ec
@@ -25,7 +25,7 @@ class KexNistp256:
     def __init__(self, transport):
         self.transport = transport
         # private key, client public and server public keys
-        self.P = long(0)
+        self.P = 0
         self.Q_C = None
         self.Q_S = None
 
@@ -69,7 +69,7 @@ class KexNistp256:
         )
         K_S = self.transport.get_server_key().asbytes()
         K = self.P.exchange(ec.ECDH(), self.Q_C)
-        K = long(hexlify(K), 16)
+        K = int(hexlify(K), 16)
         # compute exchange hash
         hm = Message()
         hm.add(
@@ -87,7 +87,7 @@ class KexNistp256:
                 serialization.PublicFormat.UncompressedPoint,
             )
         )
-        hm.add_mpint(long(K))
+        hm.add_mpint(int(K))
         H = self.hash_algo(hm.asbytes()).digest()
         self.transport._set_K_H(K, H)
         sig = self.transport.get_server_key().sign_ssh_data(
@@ -115,7 +115,7 @@ class KexNistp256:
         )
         sig = m.get_binary()
         K = self.P.exchange(ec.ECDH(), self.Q_S)
-        K = long(hexlify(K), 16)
+        K = int(hexlify(K), 16)
         # compute exchange hash and verify signature
         hm = Message()
         hm.add(
