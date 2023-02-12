@@ -2,6 +2,9 @@
 Changelog
 =========
 
+- :feature:`2173` Accept single tabs as field separators (in addition to
+  single spaces) in `<paramiko.hostkeys.HostKeyEntry.from_line>` for parity
+  with OpenSSH's KnownHosts parser.
 - :release:`3.0.0 <2023-01-20>`
 - :bug:`2110 major` Remove some unnecessary ``__repr__`` calls when handling
   bytes-vs-str conversions. This was apparently doing a lot of unintentional
