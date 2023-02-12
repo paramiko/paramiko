@@ -65,6 +65,7 @@ Ngw3qIch/WgRmMHy4kBq1SsXMjQCte1So6HBMvBPIW5SiMTmjCfZZiw4AYHK+B/JaOwaG9yRg2Ejg\
 1kKBWApqpH1ve9XDQYN8zgxM4b16L21kpoWQnZtXrY3GZ4/it9kUgyB7+NwacIBlXa8cMDL7Q/69o\
 0d54U0X/NeX5QxuYR6OMJlrkQB7oiW/P/1mwjQgE="""
 
+
 class HostKeysTest(unittest.TestCase):
     def setUp(self):
         with open("hostfile.temp", "w") as f:
@@ -158,6 +159,7 @@ class HostKeysTest(unittest.TestCase):
                 pass  # Good
             else:
                 assert False, "Key was not deleted from Entry on delitem!"
+
 
 class HostKeysTabsTest(HostKeysTest):
     def setUp(self):
