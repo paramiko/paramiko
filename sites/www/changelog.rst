@@ -5,6 +5,10 @@ Changelog
 - :feature:`2173` Accept single tabs as field separators (in addition to
   single spaces) in `<paramiko.hostkeys.HostKeyEntry.from_line>` for parity
   with OpenSSH's KnownHosts parser.
+- :support:`2178 backported` Apply ``codespell`` to the codebase, which found a
+  lot of very old minor spelling mistakes in docstrings. Also modernize many
+  instances of ``*largs`` vs ``*args`` and ``**kwarg`` vs ``**kwargs``. Patch
+  courtesy of Yaroslav Halchenko, with review from Brian Skinn.
 - :release:`3.0.0 <2023-01-20>`
 - :bug:`2110 major` Remove some unnecessary ``__repr__`` calls when handling
   bytes-vs-str conversions. This was apparently doing a lot of unintentional
@@ -1133,7 +1137,7 @@ Changelog
   functionality to address hangs from dropped network connections and/or failed
   handshakes. Credit to ``@vazir`` and ``@dacut`` for the original patches and
   to Olle Lundberg for reimplementation.
-- :bug:`490` Skip invalid/unparseable lines in ``known_hosts`` files, instead
+- :bug:`490` Skip invalid/unparsable lines in ``known_hosts`` files, instead
   of raising `~paramiko.ssh_exception.SSHException`. This brings Paramiko's
   behavior more in line with OpenSSH, which silently ignores such input. Catch
   & patch courtesy of Martin Topholm.

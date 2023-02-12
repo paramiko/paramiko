@@ -46,7 +46,7 @@ ARTICLE = """
 Insulin sensitivity and liver insulin receptor structure in ducks from two
 genera
 
-T. Constans, B. Chevalier, M. Derouet and J. Simon
+T. Constantine, B. Chevalier, M. Derouet and J. Simon
 Station de Recherches Avicoles, Institut National de la Recherche Agronomique,
 Nouzilly, France.
 
@@ -129,7 +129,7 @@ class TestSFTP:
         try:
             with sftp.open(sftp.FOLDER + "/duck.txt", "w") as f:
                 f.write(ARTICLE)
-            assert sftp.stat(sftp.FOLDER + "/duck.txt").st_size == 1483
+            assert sftp.stat(sftp.FOLDER + "/duck.txt").st_size == 1486
         finally:
             sftp.remove(sftp.FOLDER + "/duck.txt")
 
@@ -140,7 +140,7 @@ class TestSFTP:
         try:
             with sftp.open(sftp.FOLDER + "/duck.txt", "w") as f:
                 f.write(ARTICLE)
-            assert sftp.stat(sftp.FOLDER + "/duck.txt").st_size == 1483
+            assert sftp.stat(sftp.FOLDER + "/duck.txt").st_size == 1486
         finally:
             sftp.remove(sftp.FOLDER + "/duck.txt")
 
@@ -724,7 +724,7 @@ class TestSFTP:
 
     def test_seek_append(self, sftp):
         """
-        verify that seek does't affect writes during append.
+        verify that seek doesn't affect writes during append.
 
         does not work except through paramiko.  :(  openssh fails.
         """

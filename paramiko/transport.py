@@ -1008,7 +1008,7 @@ class Transport(threading.Thread, ClosingContextManager):
 
         :raises:
             `.SSHException` -- if the request is rejected, the session ends
-            prematurely or there is a timeout openning a channel
+            prematurely or there is a timeout opening a channel
 
         .. versionchanged:: 1.15
             Added the ``window_size`` and ``max_packet_size`` arguments.
@@ -1415,7 +1415,7 @@ class Transport(threading.Thread, ClosingContextManager):
         finally:
             self.lock.release()
 
-    def set_subsystem_handler(self, name, handler, *larg, **kwarg):
+    def set_subsystem_handler(self, name, handler, *args, **kwargs):
         """
         Set the handler class for a subsystem in server mode.  If a request
         for this subsystem is made on an open ssh channel later, this handler
@@ -1431,7 +1431,7 @@ class Transport(threading.Thread, ClosingContextManager):
         """
         try:
             self.lock.acquire()
-            self.subsystem_table[name] = (handler, larg, kwarg)
+            self.subsystem_table[name] = (handler, args, kwargs)
         finally:
             self.lock.release()
 
@@ -1692,7 +1692,7 @@ class Transport(threading.Thread, ClosingContextManager):
 
     def auth_interactive_dumb(self, username, handler=None, submethods=""):
         """
-        Autenticate to the server interactively but dumber.
+        Authenticate to the server interactively but dumber.
         Just print the prompt and / or instructions to stdout and send back
         the response. This is good for situations where partial auth is
         achieved by key and then the user has to enter a 2fac token.
@@ -2058,7 +2058,7 @@ class Transport(threading.Thread, ClosingContextManager):
             reply.add_string("")
             reply.add_string("en")
         # NOTE: Post-open channel messages do not need checking; the above will
-        # reject attemps to open channels, meaning that even if a malicious
+        # reject attempts to open channels, meaning that even if a malicious
         # user tries to send a MSG_CHANNEL_REQUEST, it will simply fall under
         # the logic that handles unknown channel IDs (as the channel list will
         # be empty.)

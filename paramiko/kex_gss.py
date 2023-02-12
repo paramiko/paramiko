@@ -125,7 +125,7 @@ class KexGSSGroup1:
         Parse the next packet.
 
         :param ptype: The (string) type of the incoming packet
-        :param `.Message` m: The paket content
+        :param `.Message` m: The packet content
         """
         if self.transport.server_mode and (ptype == MSG_KEXGSS_INIT):
             return self._parse_kexgss_init(m)
@@ -380,7 +380,7 @@ class KexGSSGex:
         Parse the next packet.
 
         :param ptype: The (string) type of the incoming packet
-        :param `.Message` m: The paket content
+        :param `.Message` m: The packet content
         """
         if ptype == MSG_KEXGSS_GROUPREQ:
             return self._parse_kexgss_groupreq(m)

@@ -1,0 +1,7 @@
+[codespell]
+# Default ignores, plus built docs and static doc sources
+skip = venvs,.venv,.git,build,*.egg-info,*.lock,*.js,*.css,docs
+# Certain words AUTHOR feels strongly about, plus various proper names that are
+# close enough to real words that they anger codespell. (NOTE: for some reason
+# codespell wants the latter listed in all-lowercase...!)
+ignore-words-list = keypair,flage

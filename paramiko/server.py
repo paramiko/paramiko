@@ -255,7 +255,7 @@ class ServerInterface:
                  We don't check if the krb5 principal is allowed to log in on
                  the server, because there is no way to do that in python. So
                  if you develop your own SSH server with paramiko for a cetain
-                 plattform like Linux, you should call C{krb5_kuserok()} in
+                 platform like Linux, you should call C{krb5_kuserok()} in
                  your local kerberos library to make sure that the
                  krb5_principal has an account on the server and is allowed to
                  log in as a user.
@@ -287,7 +287,7 @@ class ServerInterface:
                  We don't check if the krb5 principal is allowed to log in on
                  the server, because there is no way to do that in python. So
                  if you develop your own SSH server with paramiko for a cetain
-                 plattform like Linux, you should call C{krb5_kuserok()} in
+                 platform like Linux, you should call C{krb5_kuserok()} in
                  your local kerberos library to make sure that the
                  krb5_principal has an account on the server and is allowed
                  to log in as a user.
@@ -454,10 +454,10 @@ class ServerInterface:
             subsystem; ``False`` if that subsystem can't or won't be provided.
         """
         transport = channel.get_transport()
-        handler_class, larg, kwarg = transport._get_subsystem_handler(name)
+        handler_class, args, kwargs = transport._get_subsystem_handler(name)
         if handler_class is None:
             return False
-        handler = handler_class(channel, name, self, *larg, **kwarg)
+        handler = handler_class(channel, name, self, *args, **kwargs)
         handler.start()
         return True
 
@@ -634,7 +634,7 @@ class InteractiveQuery:
 
 class SubsystemHandler(threading.Thread):
     """
-    Handler for a subsytem in server mode.  If you create a subclass of this
+    Handler for a subsystem in server mode.  If you create a subclass of this
     class and pass it to `.Transport.set_subsystem_handler`, an object of this
     class will be created for each request for this subsystem.  Each new object
     will be executed within its own new thread by calling `start_subsystem`.
@@ -642,7 +642,7 @@ class SubsystemHandler(threading.Thread):
 
     For example, if you made a subclass ``MP3Handler`` and registered it as the
     handler for subsystem ``"mp3"``, then whenever a client has successfully
-    authenticated and requests subsytem ``"mp3"``, an object of class
+    authenticated and requests subsystem ``"mp3"``, an object of class
     ``MP3Handler`` will be created, and `start_subsystem` will be called on
     it from a new thread.
     """

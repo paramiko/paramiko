@@ -9,6 +9,8 @@ pytest-xdist>=3
 flake8>=4,<5
 # Formatting!
 black>=22.8,<22.9
+# Spelling!
+codespell>=2.2,<2.3
 # Coverage!
 coverage>=6.2,<7
 codecov==2.1.12

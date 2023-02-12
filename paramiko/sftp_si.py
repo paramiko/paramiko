@@ -40,7 +40,7 @@ class SFTPServerInterface:
     clients & servers obey the requirement that paths be encoded in UTF-8.
     """
 
-    def __init__(self, server, *largs, **kwargs):
+    def __init__(self, server, *args, **kwargs):
         """
         Create a new SFTPServerInterface object.  This method does nothing by
         default and is meant to be overridden by subclasses.
@@ -48,7 +48,7 @@ class SFTPServerInterface:
         :param .ServerInterface server:
             the server object associated with this channel and SFTP subsystem
         """
-        super().__init__(*largs, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def session_started(self):
         """

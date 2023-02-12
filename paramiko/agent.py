@@ -314,10 +314,10 @@ class AgentServerProxy(AgentSSH):
 
     def get_env(self):
         """
-        Helper for the environnement under unix
+        Helper for the environment under unix
 
         :return:
-            a dict containing the ``SSH_AUTH_SOCK`` environnement variables
+            a dict containing the ``SSH_AUTH_SOCK`` environment variables
         """
         return {"SSH_AUTH_SOCK": self._get_filename()}
 
