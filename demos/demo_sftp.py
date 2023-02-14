@@ -28,7 +28,6 @@ import sys
 import traceback
 
 import paramiko
-from paramiko.py3compat import input
 
 
 # setup logging
@@ -72,9 +71,7 @@ else:
 hostkeytype = None
 hostkey = None
 try:
-    host_keys = paramiko.util.load_host_keys(
-        os.path.expanduser("~/.ssh/known_hosts")
-    )
+    host_keys = paramiko.util.load_host_keys(os.path.expanduser("~/.ssh/known_hosts"))
 except IOError:
     try:
         # try ~/ssh/ too, because windows can't have a folder named ~/.ssh/

@@ -25,7 +25,6 @@ import os
 import socket
 import sys
 import traceback
-from paramiko.py3compat import input
 
 import paramiko
 
@@ -94,9 +93,7 @@ try:
             )
         except Exception:
             # traceback.print_exc()
-            password = getpass.getpass(
-                "Password for %s@%s: " % (username, hostname)
-            )
+            password = getpass.getpass("Password for %s@%s: " % (username, hostname))
             client.connect(hostname, port, username, password)
 
     chan = client.invoke_shell()

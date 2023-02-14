@@ -163,8 +163,7 @@ def parse_options():
         type="string",
         dest="user",
         default=getpass.getuser(),
-        help="username for SSH authentication (default: %s)"
-        % getpass.getuser(),
+        help="username for SSH authentication (default: %s)" % getpass.getuser(),
     )
     parser.add_option(
         "-K",
@@ -240,14 +239,11 @@ def main():
         sys.exit(1)
 
     verbose(
-        "Now forwarding port %d to %s:%d ..."
-        % (options.port, remote[0], remote[1])
+        "Now forwarding port %d to %s:%d ..." % (options.port, remote[0], remote[1])
     )
 
     try:
-        forward_tunnel(
-            options.port, remote[0], remote[1], client.get_transport()
-        )
+        forward_tunnel(options.port, remote[0], remote[1], client.get_transport())
     except KeyboardInterrupt:
         print("C-c: Port forwarding stopped.")
         sys.exit(0)

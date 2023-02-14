@@ -26,7 +26,6 @@ from optparse import OptionParser
 from paramiko import DSSKey
 from paramiko import RSAKey
 from paramiko.ssh_exception import SSHException
-from paramiko.py3compat import u
 
 usage = """
 %prog [-v] [-b bits] -t type [-N new_passphrase] [-f output_keyfile]"""
@@ -144,9 +143,7 @@ if __name__ == "__main__":
         raise SSHException("DSA Keys must be 1024 bits")
 
     if ktype not in key_dispatch_table:
-        raise SSHException(
-            "Unknown %s algorithm to generate keys pair" % ktype
-        )
+        raise SSHException("Unknown %s algorithm to generate keys pair" % ktype)
 
     # generating private key
     prv = key_dispatch_table[ktype].generate(bits=bits, progress_func=pfunc)
@@ -162,7 +159,7 @@ if __name__ == "__main__":
     if options.verbose:
         print("done.")
 
-    hash = u(hexlify(pub.get_fingerprint()))
+    hash = hexlify(pub.get_fingerprint()).decode()
     print(
         "Fingerprint: %d %s %s.pub (%s)"
         % (
