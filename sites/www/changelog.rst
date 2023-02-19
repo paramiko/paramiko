@@ -2,6 +2,9 @@
 Changelog
 =========
 
+- :feature:`2173` Accept single tabs as field separators (in addition to
+  single spaces) in `<paramiko.hostkeys.HostKeyEntry.from_line>` for parity
+  with OpenSSH's KnownHosts parser. Patched by Alex Chavkin.
 - :support:`2178 backported` Apply ``codespell`` to the codebase, which found a
   lot of very old minor spelling mistakes in docstrings. Also modernize many
   instances of ``*largs`` vs ``*args`` and ``**kwarg`` vs ``**kwargs``. Patch
