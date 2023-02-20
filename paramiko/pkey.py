@@ -24,7 +24,7 @@ import base64
 from base64 import encodebytes, decodebytes
 from binascii import unhexlify
 import os
-from hashlib import md5
+import hashlib
 import re
 import struct
 
@@ -161,13 +161,16 @@ class PKey:
     def get_fingerprint(self):
         """
         Return an MD5 fingerprint of the public part of this key.  Nothing
-        secret is revealed.
+        secret is revealed. FIPS compatible by marking the md5 call as
+        non used for security.
 
         :return:
             a 16-byte `string <str>` (binary) of the MD5 fingerprint, in SSH
             format.
         """
-        return md5(self.asbytes()).digest()
+        return hashlib.new(
+            "md5", self.asbytes(), usedforsecurity=False
+        ).digest()
 
     def get_base64(self):
         """
@@ -387,7 +390,7 @@ class PKey:
         keysize = self._CIPHER_TABLE[encryption_type]["keysize"]
         mode = self._CIPHER_TABLE[encryption_type]["mode"]
         salt = unhexlify(b(saltstr))
-        key = util.generate_key_bytes(md5, salt, password, keysize)
+        key = util.generate_key_bytes(hashlib.md5, salt, password, keysize)
         decryptor = Cipher(
             cipher(key), mode(salt), backend=default_backend()
         ).decryptor()
