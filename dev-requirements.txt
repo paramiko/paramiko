@@ -16,7 +16,7 @@ coverage>=6.2,<7
 codecov==2.1.12
 # Documentation tools
 alabaster==0.7.13
-releases>=2.0
+releases>=2.1
 # Debuggery
 icecream>=2.1
 # Self (sans GSS which is a pain to bother with most of the time)
