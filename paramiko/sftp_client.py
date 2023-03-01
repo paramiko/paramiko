@@ -138,7 +138,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         )
 
     @classmethod
-    def from_transport(cls, t, window_size=None, max_packet_size=None):
+    def from_transport(cls, t, window_size=None, max_packet_size=None, timeout=None):
         """
         Create an SFTP client channel from an open `.Transport`.
 
@@ -153,6 +153,8 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
             optional window size for the `.SFTPClient` session.
         :param int max_packet_size:
             optional max packet size for the `.SFTPClient` session..
+        :param float timeout:
+            optional timeout exposed to `from_transport` method for requesting a new channel in `.Transport`.
 
         :return:
             a new `.SFTPClient` object, referring to an sftp session (channel)
@@ -162,7 +164,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
             Added the ``window_size`` and ``max_packet_size`` arguments.
         """
         chan = t.open_session(
-            window_size=window_size, max_packet_size=max_packet_size
+            window_size=window_size, max_packet_size=max_packet_size, timeout=timeout
         )
         if chan is None:
             return None
