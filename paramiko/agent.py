@@ -65,6 +65,9 @@ class AgentSSH:
         no SSH agent was running (or it couldn't be contacted), an empty list
         will be returned.
 
+        This method performs no IO, just returns the list of keys retreived
+        when the connection was made.
+
         :return:
             a tuple of `.AgentKey` objects representing keys available on the
             SSH agent
@@ -277,6 +280,17 @@ class AgentClientProxy:
 
 class AgentServerProxy(AgentSSH):
     """
+    Allows an SSH server to access a forwarded agent.
+
+    This also creates a unix domain socket on the system to allow external
+    programs to also access the agent. For this reason, you probably only want
+    to create one of these.
+
+    :meth:`connect` must be called before it is usable. This will also load the
+    list of keys the agent contains. You must also call :meth:`close` in
+    order to clean up the unix socket and the thread that maintains it.
+    (:class:`contextlib.closing` might be helpful to you.)
+
     :param .Transport t: Transport used for SSH Agent communication forwarding
 
     :raises: `.SSHException` -- mostly if we lost the agent
