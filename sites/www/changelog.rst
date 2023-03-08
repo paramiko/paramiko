@@ -246,7 +246,7 @@ Changelog
     required if your target systems do not support either RSA2 or the
     ``server-sig-algs`` protocol extension.
 
-    Specifically, you need to specify ``disabled_algorithms={'keys':
+    Specifically, you need to specify ``disabled_algorithms={'pubkeys':
     ['rsa-sha2-256', 'rsa-sha2-512']}`` in either `SSHClient
     <paramiko.client.SSHClient.__init__>` or `Transport
     <paramiko.transport.Transport.__init__>`. See below for details on why.
