@@ -1,22 +1,26 @@
 # Obtain shared config values
-import sys
+from pathlib import Path
 import os
-from os.path import abspath, join, dirname
+import sys
 
-sys.path.append(abspath(join(dirname(__file__), "..")))
+updir = Path(__file__).parent.parent.resolve()
+sys.path.append(str(updir))
 from shared_conf import *
 
 # Releases changelog extension
 extensions.append("releases")
 releases_release_uri = "https://github.com/paramiko/paramiko/tree/%s"
 releases_issue_uri = "https://github.com/paramiko/paramiko/issues/%s"
+releases_development_branch = "main"
+# Don't show unreleased_X.x sections up top for 1.x or 2.x anymore
+releases_supported_versions = [3]
 
 # Default is 'local' building, but reference the public docs site when building
 # under RTD.
-target = join(dirname(__file__), "..", "docs", "_build")
+target = updir / "docs" / "_build"
 if os.environ.get("READTHEDOCS") == "True":
     target = "http://docs.paramiko.org/en/latest/"
-intersphinx_mapping["docs"] = (target, None)
+intersphinx_mapping["docs"] = (str(target), None)
 
 # Sister-site links to API docs
 html_theme_options["extra_nav_links"] = {

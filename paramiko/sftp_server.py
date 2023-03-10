@@ -98,7 +98,7 @@ class SFTPServer(BaseSFTP, SubsystemHandler):
         name,
         server,
         sftp_si=SFTPServerInterface,
-        *largs,
+        *args,
         **kwargs
     ):
         """
@@ -124,7 +124,7 @@ class SFTPServer(BaseSFTP, SubsystemHandler):
         # map of handle-string to SFTPHandle for files & folders:
         self.file_table = {}
         self.folder_table = {}
-        self.server = sftp_si(server, *largs, **kwargs)
+        self.server = sftp_si(server, *args, **kwargs)
 
     def _log(self, level, msg):
         if issubclass(type(msg), list):
@@ -221,10 +221,10 @@ class SFTPServer(BaseSFTP, SubsystemHandler):
 
     # ...internals...
 
-    def _response(self, request_number, t, *arg):
+    def _response(self, request_number, t, *args):
         msg = Message()
         msg.add_int(request_number)
-        for item in arg:
+        for item in args:
             # NOTE: this is a very silly tiny class used for SFTPFile mostly
             if isinstance(item, int64):
                 msg.add_int64(item)
@@ -259,7 +259,7 @@ class SFTPServer(BaseSFTP, SubsystemHandler):
                 desc = SFTP_DESC[code]
             except IndexError:
                 desc = "Unknown"
-        # some clients expect a "langauge" tag at the end
+        # some clients expect a "language" tag at the end
         # (but don't mind it being blank)
         self._response(request_number, CMD_STATUS, code, desc, "")
 

@@ -817,17 +817,17 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
 
     # ...internals...
 
-    def _request(self, t, *arg):
-        num = self._async_request(type(None), t, *arg)
+    def _request(self, t, *args):
+        num = self._async_request(type(None), t, *args)
         return self._read_response(num)
 
-    def _async_request(self, fileobj, t, *arg):
+    def _async_request(self, fileobj, t, *args):
         # this method may be called from other threads (prefetch)
         self._lock.acquire()
         try:
             msg = Message()
             msg.add_int(self.request_number)
-            for item in arg:
+            for item in args:
                 if isinstance(item, int64):
                     msg.add_int64(item)
                 elif isinstance(item, int):
