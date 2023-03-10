@@ -2,6 +2,7 @@
 Changelog
 =========
 
+- :release:`3.1.0 <2023-03-10>`
 - :feature:`2013` (solving :issue:`2009`, plus others) Add an explicit
   ``channel_timeout`` keyword argument to `paramiko.client.SSHClient.connect`,
   allowing users to configure the previously-hardcoded default value of 3600
