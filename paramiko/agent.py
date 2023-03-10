@@ -65,7 +65,7 @@ class AgentSSH:
         no SSH agent was running (or it couldn't be contacted), an empty list
         will be returned.
 
-        This method performs no IO, just returns the list of keys retreived
+        This method performs no IO, just returns the list of keys retrieved
         when the connection was made.
 
         :return:
