@@ -36,6 +36,14 @@ broken.example.com ssh-rsa AAAA
 happy.example.com ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAIEA8bP1ZA7DCZDB9J0s50l31M\
 BGQ3GQ/Fc7SX6gkpXkwcZryoi4kNFhHu5LvHcZPdxXV1D+uTMfGS1eyd2Yz/DoNWXNAl8TI0cAsW\
 5ymME3bQ4J/k1IKxCtz/bAlAqFgKoc+EolMziDYqWIATtW0rYTJvzGAzTmMj80/QpsFH+Pc2M=
+mixed.example.com\t ssh-rsa\t AAAAB3NzaC1yc2EAAAADAQABAAABgQDwlJemtKlEJvcOMcj\
+ewvdLz3bjYiAQEK4OAc+UXgUyDgiMDe+IWkXDUrUZPtnw8hQbGnxE5VUXq8hlQPSku6MYZbczDusz\
+byzoSF48Zhxhc2WNVdepWbK5cjkDBWDnu44ETM95CsiUzhgx3s14hAr9q2WTxEx06+98jNep3dGIQ\
+xfXyrPimxuCselJMRWFUSR48IoZI2zogisQyExCvzjh6Yvmgt1FEPgaghbFuaJjxDgQHRIkCpfmur\
+QtoNx789oSIhlix3ow/lxBmM1PglG7RQaqjg8J9G+EMbT/RnIQzAmpU3O4/wq2sG8KnyAZxYT0P+A\
+m/t6dzlfM2sGc9aBbkKkJh/4PkX3UO5kEdq6D93MT84mLMkIfoUcTG+G73pwVGaTCuz+4xDdTPMpO\
+DZw60QvyY6KfaDeMFLmGnZ3EGSdfyiZOX4A1gOownLvBMoUmugYm1MevWeKpZp1sbprNy3KdQC6FK\
+o3Yu6gxTK8lVA9I5fWv2c0oAxYdVZikDy0=
 """
 
 test_hosts_file_tabs = """\
@@ -76,7 +84,7 @@ class HostKeysTest(unittest.TestCase):
 
     def test_load(self):
         hostdict = paramiko.HostKeys("hostfile.temp")
-        self.assertEqual(2, len(hostdict))
+        self.assertEqual(3, len(hostdict))
         self.assertEqual(1, len(list(hostdict.values())[0]))
         self.assertEqual(1, len(list(hostdict.values())[1]))
         fp = hexlify(
@@ -89,7 +97,7 @@ class HostKeysTest(unittest.TestCase):
         hh = "|1|BMsIC6cUIP2zBuXR3t2LRcJYjzM=|hpkJMysjTk/+zzUUzxQEa2ieq6c="
         key = paramiko.RSAKey(data=decodebytes(keyblob))
         hostdict.add(hh, "ssh-rsa", key)
-        self.assertEqual(3, len(list(hostdict)))
+        self.assertEqual(4, len(list(hostdict)))
         x = hostdict["foo.example.com"]
         fp = hexlify(x["ssh-rsa"].get_fingerprint()).upper()
         self.assertEqual(b"7EC91BB336CB6D810B124B1353C32396", fp)
@@ -108,7 +116,7 @@ class HostKeysTest(unittest.TestCase):
         i = 0
         for key in hostdict:
             i += 1
-        self.assertEqual(2, i)
+        self.assertEqual(3, i)
 
     def test_dict_set(self):
         hostdict = paramiko.HostKeys("hostfile.temp")
@@ -118,7 +126,7 @@ class HostKeysTest(unittest.TestCase):
         hostdict["fake.example.com"] = {}
         hostdict["fake.example.com"]["ssh-rsa"] = key
 
-        self.assertEqual(3, len(hostdict))
+        self.assertEqual(4, len(hostdict))
         self.assertEqual(2, len(list(hostdict.values())[0]))
         self.assertEqual(1, len(list(hostdict.values())[1]))
         self.assertEqual(1, len(list(hostdict.values())[2]))
