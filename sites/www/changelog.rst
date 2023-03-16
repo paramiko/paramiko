@@ -2,6 +2,12 @@
 Changelog
 =========
 
+- :release:`3.1.0 <2023-03-10>`
+- :feature:`2013` (solving :issue:`2009`, plus others) Add an explicit
+  ``channel_timeout`` keyword argument to `paramiko.client.SSHClient.connect`,
+  allowing users to configure the previously-hardcoded default value of 3600
+  seconds. Thanks to ``@VakarisZ`` and ``@ilija-lazoroski`` for the report and
+  patch, with credit to Mike Salvatore for patch review.
 - :feature:`2173` Accept single tabs as field separators (in addition to
   single spaces) in `<paramiko.hostkeys.HostKeyEntry.from_line>` for parity
   with OpenSSH's KnownHosts parser. Patched by Alex Chavkin.

@@ -233,6 +233,7 @@ class SSHClient(ClosingContextManager):
         gss_host=None,
         banner_timeout=None,
         auth_timeout=None,
+        channel_timeout=None,
         gss_trust_dns=True,
         passphrase=None,
         disabled_algorithms=None,
@@ -311,6 +312,8 @@ class SSHClient(ClosingContextManager):
             for the SSH banner to be presented.
         :param float auth_timeout: an optional timeout (in seconds) to wait for
             an authentication response.
+        :param float channel_timeout: an optional timeout (in seconds) to wait
+             for a channel open response.
         :param dict disabled_algorithms:
             an optional dict passed directly to `.Transport` and its keyword
             argument of the same name.
@@ -406,6 +409,8 @@ class SSHClient(ClosingContextManager):
             t.banner_timeout = banner_timeout
         if auth_timeout is not None:
             t.auth_timeout = auth_timeout
+        if channel_timeout is not None:
+            t.channel_timeout = channel_timeout
 
         if port == SSH_PORT:
             server_hostkey_name = hostname

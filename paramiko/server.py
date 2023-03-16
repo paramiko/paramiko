@@ -517,6 +517,9 @@ class ServerInterface:
 
         :param .Channel channel: the `.Channel` the request arrived on
         :return: ``True`` if the AgentForward was loaded; ``False`` if not
+
+        If ``True`` is returned, the server should create an
+        :class:`AgentServerProxy` to access the agent.
         """
         return False
 

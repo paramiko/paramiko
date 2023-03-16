@@ -516,6 +516,8 @@ class Transport(threading.Thread, ClosingContextManager):
         self.handshake_timeout = 15
         # how long (seconds) to wait for the auth response.
         self.auth_timeout = 30
+        # how long (seconds) to wait for opening a channel
+        self.channel_timeout = 60 * 60
         self.disabled_algorithms = disabled_algorithms or {}
         self.server_sig_algs = server_sig_algs
 
@@ -1015,7 +1017,7 @@ class Transport(threading.Thread, ClosingContextManager):
         """
         if not self.active:
             raise SSHException("SSH session not active")
-        timeout = 3600 if timeout is None else timeout
+        timeout = self.channel_timeout if timeout is None else timeout
         self.lock.acquire()
         try:
             window_size = self._sanitize_window_size(window_size)
