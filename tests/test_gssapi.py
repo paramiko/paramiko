@@ -112,7 +112,7 @@ class GSSAPITest(KerberosTestCase):
                 gss_srv_ctxt = gssapi.AcceptContext()
                 s_token = gss_srv_ctxt.step(c_token)
                 gss_ctxt_status = gss_srv_ctxt.established
-                self.assertNotEquals(None, s_token)
+                self.assertNotEqual(None, s_token)
                 self.assertEqual(True, gss_ctxt_status)
                 # Establish the client context
                 c_token = gss_ctxt.step(s_token)
@@ -120,7 +120,7 @@ class GSSAPITest(KerberosTestCase):
             else:
                 while not gss_ctxt.established:
                     c_token = gss_ctxt.step(c_token)
-                self.assertNotEquals(None, c_token)
+                self.assertNotEqual(None, c_token)
             # Build MIC
             mic_token = gss_ctxt.get_mic(mic_msg)
 
@@ -162,7 +162,7 @@ class GSSAPITest(KerberosTestCase):
                 gss_srv_ctxt = gssapi.SecurityContext(usage="accept")
                 s_token = gss_srv_ctxt.step(c_token)
                 gss_ctxt_status = gss_srv_ctxt.complete
-                self.assertNotEquals(None, s_token)
+                self.assertNotEqual(None, s_token)
                 self.assertEqual(True, gss_ctxt_status)
                 # Establish the client context
                 c_token = gss_ctxt.step(s_token)
@@ -170,7 +170,7 @@ class GSSAPITest(KerberosTestCase):
             else:
                 while not gss_ctxt.complete:
                     c_token = gss_ctxt.step(c_token)
-                self.assertNotEquals(None, c_token)
+                self.assertNotEqual(None, c_token)
             # Build MIC
             mic_token = gss_ctxt.get_signature(mic_msg)
 
@@ -209,7 +209,7 @@ class GSSAPITest(KerberosTestCase):
             else:
                 error, token = gss_ctxt.authorize(c_token)
                 c_token = token[0].Buffer
-                self.assertNotEquals(0, error)
+                self.assertNotEqual(0, error)
 
     def test_gssapi_sspi_client(self):
         """
