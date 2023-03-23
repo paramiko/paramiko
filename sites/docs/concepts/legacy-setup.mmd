@@ -1,0 +1,29 @@
+sequenceDiagram
+  participant C as SSHClient
+  participant T as Transport
+
+  %% object creation & bookkeeping, mostly - with basic socket cxn
+  Note over C: create/connect to socket
+  C ->> T: __init__(socket)
+  Note over T: init thread
+  Note over T: bookkeeping
+  T -->> C: Transport instance
+  %% T ->> ChannelMap()
+  Note over C: bookkeeping
+  Note over C: known host key search
+
+  %% Transport real startup
+  C ->> T: start_client()
+  Note over T: NOW THREADING!
+  Note over T: send version
+  T ->> T: check banner
+  Note over T: create, send KEXINIT Message from self.preferred_*
+  Note over T: Handler table(s) loop!
+  Note over T: KEXINIT reply handler kicks off kex, stores hostkey
+  T -->> C: None
+
+  %% At this point, T.host_key is set
+  C ->> T: get_remote_server_key()
+  T -->> C: self.host_key
+  Note over C: verify hostkey
+  C ->> C: _auth()

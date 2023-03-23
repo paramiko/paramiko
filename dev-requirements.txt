@@ -15,6 +15,8 @@ codespell>=2.2,<2.3
 coverage>=6.2,<7
 # Documentation tools
 alabaster==0.7.13
+# NOTE: mermaid requires Python 3.7!
+sphinxcontrib-mermaid==0.8.1
 releases>=2.1
 watchdog<2
 # Debuggery

@@ -7,7 +7,7 @@ sys.path.append(abspath("../.."))
 from shared_conf import *
 
 # Enable autodoc, intersphinx
-extensions.extend(["sphinx.ext.autodoc"])
+extensions.extend(["sphinx.ext.autodoc", "sphinxcontrib.mermaid"])
 
 # Autodoc settings
 autodoc_default_options = {

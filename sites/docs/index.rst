@@ -31,6 +31,12 @@ but send and receive data over the encrypted session.
 For details, please see the following tables of contents (which are organized
 by area of interest.)
 
+Conceptual documentation
+------------------------
+
+.. toctree::
+   concepts/authentication
+
 
 Core SSH protocol classes
 -------------------------

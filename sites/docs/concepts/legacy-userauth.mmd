@@ -1,0 +1,72 @@
+sequenceDiagram
+  participant C as SSHClient
+  participant T as Transport
+  participant A as AuthHandler
+
+  C ->> C: _auth()
+
+  %% pkey used exclusive to anything else besides 2FA (wherein we effectively
+  %% skip all other auth types til we get to password auth)
+  opt pkey given
+    C ->> T: auth_publickey()
+    T ->> A: __init__()
+    T ->> A: auth_publickey()
+    T ->> A: wait_for_response()
+    Note over A, T: threaded handler loop
+    T ->> A: _parse_userauth_xxx
+    A -->> T: allowed_types, empty list, or raise
+    break if SSHException
+      note over C: save exc
+    end
+    C -->> C: return
+  end
+
+  %% key_filenames all tried, if any succeed, we're done
+  %% BUT: this also burns a lot of auth tries and often results
+  %% in server rejection before you get to agent-hosted keys,
+  %% when you have a lot of static keys AND the real key is agent'd
+  opt key_filenames given
+    loop filenames and key classes
+      C ->> T: auth_publickey()
+      Note over C, A: see above, same deal
+    end
+  end
+
+  %% Nothing else worked yet and allow_agent wasn't False? Agent!
+  opt allow_agent True
+    C ->> C: Agent.__init__()
+    C ->> C: agent.get_keys()
+    loop those keys
+      C ->> T: auth_publickey()
+      Note over C, A: see above
+    end
+  end
+
+  %% Still nada? Try the hardcoded default user key paths.
+  %% NOTE: this means even if you gave a password, the keys on disk are tried
+  %% _anyways_!! This can also, uncommonly, lead to sadness.
+  loop key types and ssh dirs
+    C ->> T: auth_publickey()
+    Note over C, A: see above
+  end
+
+  %% None of that happened or worked? password auth!
+  opt password given
+    C ->> T: auth_password()
+    T ->> A: __init__()
+    T ->> A: auth_password()
+    T ->> A: wait_for_response()
+    Note over A, T: threaded handler loop
+    T ->> A: _parse_userauth_xxx
+    opt BadAuthenticationType and keyboard-interactive allowed
+      %% Weird 2nd-attempt-as-interactive logic
+      T ->> T: auth_interactive(password)
+    end
+  end
+
+  %% finally, 2FA, if we fell down into it from the above and a password wasn't
+  %% given
+  opt 2FA
+    C ->> T: auth_interactive_dumb()
+  end
+  
