@@ -4,7 +4,7 @@ from shutil import rmtree, copytree
 
 from invoke import Collection, task
 from invocations.checks import blacken
-from invocations.docs import docs, www, sites
+from invocations.docs import docs, www, sites, watch_docs
 from invocations.packaging.release import ns as release_coll, publish
 from invocations.testing import count_errors
 
@@ -137,6 +137,7 @@ ns = Collection(
     release_coll,
     docs,
     www,
+    watch_docs,
     sites,
     count_errors,
     blacken,
@@ -152,6 +153,7 @@ ns.configure(
             "changelog_file": join(
                 www.configuration()["sphinx"]["source"], "changelog.rst"
             ),
-        }
+        },
+        "docs": {"browse": "remote"},
     }
 )
