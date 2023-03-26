@@ -764,7 +764,7 @@ class SSHClientTest(ClientTest):
 
     @patch("paramiko.client.Transport")
     def test_transport_factory_defaults_to_Transport(self, Transport):
-        sock, kex, creds, algos = Mock(), Mock(), Mock(), Mock()
+        sock, kex, creds, algos, resend = Mock(), Mock(), Mock(), Mock(), Mock()
         SSHClient().connect(
             "host",
             sock=sock,
@@ -772,15 +772,16 @@ class SSHClientTest(ClientTest):
             gss_kex=kex,
             gss_deleg_creds=creds,
             disabled_algorithms=algos,
+            resend_service_requests=resend,
         )
         Transport.assert_called_once_with(
-            sock, gss_kex=kex, gss_deleg_creds=creds, disabled_algorithms=algos
+            sock, gss_kex=kex, gss_deleg_creds=creds, disabled_algorithms=algos, resend_service_requests=resend
         )
 
     @patch("paramiko.client.Transport")
     def test_transport_factory_may_be_specified(self, Transport):
         factory = Mock()
-        sock, kex, creds, algos = Mock(), Mock(), Mock(), Mock()
+        sock, kex, creds, algos, resend = Mock(), Mock(), Mock(), Mock(), Mock()
         SSHClient().connect(
             "host",
             sock=sock,
@@ -789,9 +790,10 @@ class SSHClientTest(ClientTest):
             gss_deleg_creds=creds,
             disabled_algorithms=algos,
             transport_factory=factory,
+            resend_service_requests=resend,
         )
         factory.assert_called_once_with(
-            sock, gss_kex=kex, gss_deleg_creds=creds, disabled_algorithms=algos
+            sock, gss_kex=kex, gss_deleg_creds=creds, disabled_algorithms=algos, resend_service_requests=resend
         )
         # Safety check
         assert not Transport.called
