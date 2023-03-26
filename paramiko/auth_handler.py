@@ -738,7 +738,11 @@ Error Message: {}
             self._log(INFO, "Authentication continues...")
             self._log(DEBUG, "Methods: " + str(authlist))
             self.transport.saved_exception = PartialAuthentication(authlist)
-        elif self.auth_method not in authlist:
+        # 'none' is never listed as supported, not the reason for the failure
+        elif (
+            self.auth_method not in authlist 
+            and self.auth_method is not "none" 
+        ):
             for msg in (
                 "Authentication type ({}) not permitted.".format(
                     self.auth_method
