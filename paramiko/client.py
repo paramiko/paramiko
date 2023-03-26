@@ -238,6 +238,7 @@ class SSHClient(ClosingContextManager):
         passphrase=None,
         disabled_algorithms=None,
         transport_factory=None,
+        resend_service_requests=True,
     ):
         """
         Connect to an SSH server and authenticate to it.  The server's host key
@@ -323,6 +324,10 @@ class SSHClient(ClosingContextManager):
             functionality, and algorithm selection) and generates a
             `.Transport` instance to be used by this client. Defaults to
             `.Transport.__init__`.
+        :param bool resend_service_requests:
+            ``False`` if you want to prevent Paramiko from sending other
+            service requests after the server has already accepted one
+            for this service.
 
         :raises BadHostKeyException:
             if the server's host key could not be verified.
@@ -394,6 +399,7 @@ class SSHClient(ClosingContextManager):
             gss_kex=gss_kex,
             gss_deleg_creds=gss_deleg_creds,
             disabled_algorithms=disabled_algorithms,
+            resend_service_requests=resend_service_requests,
         )
         t.use_compression(compress=compress)
         t.set_gss_host(
