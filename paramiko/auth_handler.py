@@ -184,7 +184,10 @@ class AuthHandler:
     # ...internals...
 
     def _request_service_auth(self):
-        if self.transport.resend_service_requests or "ssh-userauth" not in self.transport.accepted_services:
+        if (
+            self.transport.resend_service_requests
+            or "ssh-userauth" not in self.transport.accepted_services
+        ):
             m = Message()
             m.add_byte(cMSG_SERVICE_REQUEST)
             m.add_string("ssh-userauth")
@@ -304,8 +307,7 @@ Error Message: {}
                     "Received Package: {}".format(MSG_NAMES[ptype])
                 )
         elif (
-            self.auth_method == "gssapi-keyex"
-            and self.transport.gss_kex_used
+            self.auth_method == "gssapi-keyex" and self.transport.gss_kex_used
         ):
             kexgss = self.transport.kexgss_ctxt
             kexgss.set_username(self.username)
@@ -739,10 +741,7 @@ Error Message: {}
             self._log(DEBUG, "Methods: " + str(authlist))
             self.transport.saved_exception = PartialAuthentication(authlist)
         # 'none' is never listed as supported, not the reason for the failure
-        elif (
-            self.auth_method not in authlist 
-            and self.auth_method is not "none" 
-        ):
+        elif self.auth_method not in authlist and self.auth_method != "none":
             for msg in (
                 "Authentication type ({}) not permitted.".format(
                     self.auth_method
