@@ -114,7 +114,7 @@ class AuthHandler:
             self.auth_event = event
             self.auth_method = "none"
             self.username = username
-            self._request_service_auth()
+            self._begin_auth_protocol()
         finally:
             self.transport.lock.release()
 
@@ -125,7 +125,7 @@ class AuthHandler:
             self.auth_method = "publickey"
             self.username = username
             self.private_key = key
-            self._request_service_auth()
+            self._begin_auth_protocol()
         finally:
             self.transport.lock.release()
 
@@ -136,7 +136,7 @@ class AuthHandler:
             self.auth_method = "password"
             self.username = username
             self.password = password
-            self._request_service_auth()
+            self._begin_auth_protocol()
         finally:
             self.transport.lock.release()
 
@@ -151,7 +151,7 @@ class AuthHandler:
             self.username = username
             self.interactive_handler = handler
             self.submethods = submethods
-            self._request_service_auth()
+            self._begin_auth_protocol()
         finally:
             self.transport.lock.release()
 
@@ -163,7 +163,7 @@ class AuthHandler:
             self.username = username
             self.gss_host = gss_host
             self.gss_deleg_creds = gss_deleg_creds
-            self._request_service_auth()
+            self._begin_auth_protocol()
         finally:
             self.transport.lock.release()
 
@@ -173,7 +173,7 @@ class AuthHandler:
             self.auth_event = event
             self.auth_method = "gssapi-keyex"
             self.username = username
-            self._request_service_auth()
+            self._begin_auth_protocol()
         finally:
             self.transport.lock.release()
 
@@ -183,19 +183,36 @@ class AuthHandler:
 
     # ...internals...
 
-    def _request_service_auth(self):
+    def _begin_auth_protocol(self):
+        """
+        Begin or continue the user authentication protocol.
+
+        This means that depending on the transport configuration, if the user
+        authentication protocol is already in progress, the service request
+        might be skipped.
+        """
         if (
             self.transport.resend_service_requests
             or "ssh-userauth" not in self.transport.accepted_services
         ):
-            m = Message()
-            m.add_byte(cMSG_SERVICE_REQUEST)
-            m.add_string("ssh-userauth")
-            self.transport._send_message(m)
+            self._request_service_auth()
         else:
-            self._request_auth()
+            self._request_user_auth()
 
-    def _request_auth(self):
+    def _request_service_auth(self):
+        """
+        Send a service request for the "ssh-userauth" service.
+        """
+        m = Message()
+        m.add_byte(cMSG_SERVICE_REQUEST)
+        m.add_string("ssh-userauth")
+        self.transport._send_message(m)
+
+    def _request_user_auth(self):
+        """
+        Send a user authentication request with the current authentication
+        method and parameters.
+        """
         m = Message()
         m.add_byte(cMSG_USERAUTH_REQUEST)
         m.add_string(self.username)
@@ -504,7 +521,7 @@ Error Message: {}
             # obvious. it always appears to mean "we already authed" but no! it
             # just means "we are allowed to TRY authing!"
             self._log(DEBUG, "userauth is OK")
-            self._request_auth()
+            self._request_user_auth()
         else:
             self._log(
                 DEBUG, 'Service request "{}" accepted (?)'.format(service)
