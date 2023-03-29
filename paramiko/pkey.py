@@ -278,6 +278,7 @@ class PKey:
         :raises: ``IOError`` -- if there was an error writing to the file
         :raises: `.SSHException` -- if the key is invalid
         """
+        # TODO 4.0: NotImplementedError (plus everywhere else in here)
         raise Exception("Not implemented in PKey")
 
     def _read_private_key_file(self, tag, filename, password=None):
