@@ -413,6 +413,8 @@ class Transport(threading.Thread, ClosingContextManager):
         self.hostname = None
         self.server_extensions = {}
 
+        # TODO: these two overrides on sock's type should go away sometime, too
+        # many ways to do it!
         if isinstance(sock, str):
             # convert "host:port" into (host, port)
             hl = sock.split(":", 1)
@@ -1865,6 +1867,8 @@ class Transport(threading.Thread, ClosingContextManager):
 
     # internals...
 
+    # TODO 4.0: make a public alias for this because multiple other classes
+    # already explicitly rely on it...or just rewrite logging :D
     def _log(self, level, msg, *args):
         if issubclass(type(msg), list):
             for m in msg:
@@ -2125,6 +2129,8 @@ class Transport(threading.Thread, ClosingContextManager):
                                 )
                             )  # noqa
                         self._expected_packet = tuple()
+                        # These message IDs indicate key exchange & will differ
+                        # depending on exact exchange algorithm
                         if (ptype >= 30) and (ptype <= 41):
                             self.kex_engine.parse_next(ptype, m)
                             continue
