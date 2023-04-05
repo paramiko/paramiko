@@ -20,6 +20,7 @@
 A stub SFTP server for loopback SFTP testing.
 """
 
+import functools
 import os
 
 from paramiko import (
@@ -45,21 +46,28 @@ class StubServer(ServerInterface):
         return OPEN_SUCCEEDED
 
 
-class StubSFTPHandle(SFTPHandle):
-    def stat(self):
+def return_errno_on_error(func):
+    @functools.wraps(func)
+    def wrapped_func(*args, **kwargs):
         try:
-            return SFTPAttributes.from_stat(os.fstat(self.readfile.fileno()))
+            return func(*args, **kwargs)
         except OSError as e:
             return SFTPServer.convert_errno(e.errno)
 
+    return wrapped_func
+
+
+class StubSFTPHandle(SFTPHandle):
+    @return_errno_on_error
+    def stat(self):
+        return SFTPAttributes.from_stat(os.fstat(self.readfile.fileno()))
+
+    @return_errno_on_error
     def chattr(self, attr):
         # python doesn't have equivalents to fchown or fchmod, so we have to
         # use the stored filename
-        try:
-            SFTPServer.set_file_attr(self.filename, attr)
-            return SFTP_OK
-        except OSError as e:
-            return SFTPServer.convert_errno(e.errno)
+        SFTPServer.set_file_attr(self.filename, attr)
+        return SFTP_OK
 
 
 class StubSFTPServer(SFTPServerInterface):
@@ -71,49 +79,39 @@ class StubSFTPServer(SFTPServerInterface):
     def _realpath(self, path):
         return self.ROOT + self.canonicalize(path)
 
+    @return_errno_on_error
     def list_folder(self, path):
         path = self._realpath(path)
-        try:
-            out = []
-            flist = os.listdir(path)
-            for fname in flist:
-                attr = SFTPAttributes.from_stat(
-                    os.stat(os.path.join(path, fname))
-                )
-                attr.filename = fname
-                out.append(attr)
-            return out
-        except OSError as e:
-            return SFTPServer.convert_errno(e.errno)
+        out = []
+        flist = os.listdir(path)
+        for fname in flist:
+            attr = SFTPAttributes.from_stat(os.stat(os.path.join(path, fname)))
+            attr.filename = fname
+            out.append(attr)
+        return out
 
+    @return_errno_on_error
     def stat(self, path):
         path = self._realpath(path)
-        try:
-            return SFTPAttributes.from_stat(os.stat(path))
-        except OSError as e:
-            return SFTPServer.convert_errno(e.errno)
+        return SFTPAttributes.from_stat(os.stat(path))
 
+    @return_errno_on_error
     def lstat(self, path):
         path = self._realpath(path)
-        try:
-            return SFTPAttributes.from_stat(os.lstat(path))
-        except OSError as e:
-            return SFTPServer.convert_errno(e.errno)
+        return SFTPAttributes.from_stat(os.lstat(path))
 
+    @return_errno_on_error
     def open(self, path, flags, attr):
         path = self._realpath(path)
-        try:
-            binary_flag = getattr(os, "O_BINARY", 0)
-            flags |= binary_flag
-            mode = getattr(attr, "st_mode", None)
-            if mode is not None:
-                fd = os.open(path, flags, mode)
-            else:
-                # os.open() defaults to 0777 which is
-                # an odd default mode for files
-                fd = os.open(path, flags, o666)
-        except OSError as e:
-            return SFTPServer.convert_errno(e.errno)
+        binary_flag = getattr(os, "O_BINARY", 0)
+        flags |= binary_flag
+        mode = getattr(attr, "st_mode", None)
+        if mode is not None:
+            fd = os.open(path, flags, mode)
+        else:
+            # os.open() defaults to 0777 which is
+            # an odd default mode for files
+            fd = os.open(path, flags, o666)
         if (flags & os.O_CREAT) and (attr is not None):
             attr._flags &= ~attr.FLAG_PERMISSIONS
             SFTPServer.set_file_attr(path, attr)
@@ -130,70 +128,56 @@ class StubSFTPServer(SFTPServerInterface):
         else:
             # O_RDONLY (== 0)
             fstr = "rb"
-        try:
-            f = os.fdopen(fd, fstr)
-        except OSError as e:
-            return SFTPServer.convert_errno(e.errno)
+        f = os.fdopen(fd, fstr)
         fobj = StubSFTPHandle(flags)
         fobj.filename = path
         fobj.readfile = f
         fobj.writefile = f
         return fobj
 
+    @return_errno_on_error
     def remove(self, path):
         path = self._realpath(path)
-        try:
-            os.remove(path)
-        except OSError as e:
-            return SFTPServer.convert_errno(e.errno)
+        os.remove(path)
         return SFTP_OK
 
+    @return_errno_on_error
     def rename(self, oldpath, newpath):
         oldpath = self._realpath(oldpath)
         newpath = self._realpath(newpath)
         if os.path.exists(newpath):
             return SFTP_FAILURE
-        try:
-            os.rename(oldpath, newpath)
-        except OSError as e:
-            return SFTPServer.convert_errno(e.errno)
+        os.rename(oldpath, newpath)
         return SFTP_OK
 
+    @return_errno_on_error
     def posix_rename(self, oldpath, newpath):
         oldpath = self._realpath(oldpath)
         newpath = self._realpath(newpath)
-        try:
-            os.rename(oldpath, newpath)
-        except OSError as e:
-            return SFTPServer.convert_errno(e.errno)
+        os.rename(oldpath, newpath)
         return SFTP_OK
 
+    @return_errno_on_error
     def mkdir(self, path, attr):
         path = self._realpath(path)
-        try:
-            os.mkdir(path)
-            if attr is not None:
-                SFTPServer.set_file_attr(path, attr)
-        except OSError as e:
-            return SFTPServer.convert_errno(e.errno)
+        os.mkdir(path)
+        if attr is not None:
+            SFTPServer.set_file_attr(path, attr)
         return SFTP_OK
 
+    @return_errno_on_error
     def rmdir(self, path):
         path = self._realpath(path)
-        try:
-            os.rmdir(path)
-        except OSError as e:
-            return SFTPServer.convert_errno(e.errno)
+        os.rmdir(path)
         return SFTP_OK
 
+    @return_errno_on_error
     def chattr(self, path, attr):
         path = self._realpath(path)
-        try:
-            SFTPServer.set_file_attr(path, attr)
-        except OSError as e:
-            return SFTPServer.convert_errno(e.errno)
+        SFTPServer.set_file_attr(path, attr)
         return SFTP_OK
 
+    @return_errno_on_error
     def symlink(self, target_path, path):
         path = self._realpath(path)
         if (len(target_path) > 0) and (target_path[0] == "/"):
@@ -209,18 +193,13 @@ class StubSFTPServer(SFTPServerInterface):
                 # this symlink isn't going to work anyway -- just break it
                 # immediately
                 target_path = "<error>"
-        try:
-            os.symlink(target_path, path)
-        except OSError as e:
-            return SFTPServer.convert_errno(e.errno)
+        os.symlink(target_path, path)
         return SFTP_OK
 
+    @return_errno_on_error
     def readlink(self, path):
         path = self._realpath(path)
-        try:
-            symlink = os.readlink(path)
-        except OSError as e:
-            return SFTPServer.convert_errno(e.errno)
+        symlink = os.readlink(path)
         # if it's absolute, remove the root
         if os.path.isabs(symlink):
             if symlink[: len(self.ROOT)] == self.ROOT:
