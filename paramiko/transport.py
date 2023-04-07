@@ -207,7 +207,10 @@ class Transport(threading.Thread, ClosingContextManager):
         "diffie-hellman-group1-sha1",
     )
     if KexCurve25519.is_available():
-        _preferred_kex = ("curve25519-sha256@libssh.org", "curve25519-sha256",) + _preferred_kex
+        _preferred_kex = (
+            "curve25519-sha256@libssh.org",
+            "curve25519-sha256",
+        ) + _preferred_kex
     _preferred_gsskex = (
         "gss-gex-sha1-toWM5Slw5Ew8Mqkay+al2g==",
         "gss-group14-sha1-toWM5Slw5Ew8Mqkay+al2g==",
