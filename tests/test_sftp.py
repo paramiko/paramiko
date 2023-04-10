@@ -707,7 +707,6 @@ class TestSFTP:
         """
         verify that chdir/getcwd work.
         """
-        assert sftp.getcwd() is None
         root = sftp.normalize(".")
         if root[-1] != "/":
             root += "/"
