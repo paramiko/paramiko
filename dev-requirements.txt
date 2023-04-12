@@ -13,7 +13,6 @@ black>=22.8,<22.9
 codespell>=2.2,<2.3
 # Coverage!
 coverage>=6.2,<7
-codecov==2.1.12
 # Documentation tools
 alabaster==0.7.13
 releases>=2.1
