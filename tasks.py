@@ -74,15 +74,12 @@ def test(
 
 
 @task
-def coverage(ctx, opts="", codecov=False):
+def coverage(ctx, opts=""):
     """
     Execute all tests (normal and slow) with coverage enabled.
     """
     test(ctx, coverage=True, include_slow=True, opts=opts)
-    # Cribbed from invocations.pytest.coverage for now
-    if codecov:
-        ctx.run("coverage xml")
-        ctx.run("codecov")
+    # NOTE: codecov now handled purely in invocations/orb
 
 
 @task
