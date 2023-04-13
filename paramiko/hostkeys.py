@@ -74,6 +74,21 @@ class HostKeys(MutableMapping):
                 return
         self._entries.append(HostKeyEntry([hostname], key))
 
+    def add_host_key_entry(self, hostkeyentry):
+        """
+        Add a host key entry to the table from a host key entry.
+        This will remove any hostnames that overlap with existing hosts
+        before adding the entry.
+
+        :param HostKeyEntry hostkeyentry: the host key entry to add
+        """
+        _hostnames = hostkeyentry.hostnames
+        for h in _hostnames:
+            if self.check(h, hostkeyentry.key):
+                hostkeyentry.hostnames.remove(h)
+        if len(hostkeyentry.hostnames) > 0:
+            self._entries.append(hostkeyentry)
+
     def load(self, filename):
         """
         Read a file of known SSH host keys, in the format used by OpenSSH.
@@ -99,12 +114,7 @@ class HostKeys(MutableMapping):
                 except SSHException:
                     continue
                 if e is not None:
-                    _hostnames = e.hostnames
-                    for h in _hostnames:
-                        if self.check(h, e.key):
-                            e.hostnames.remove(h)
-                    if len(e.hostnames):
-                        self._entries.append(e)
+                    self.add_host_key_entry(e)
 
     def save(self, filename):
         """
