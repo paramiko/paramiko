@@ -2,6 +2,14 @@
 Changelog
 =========
 
+- :bug:`2205` (solving :issue:`2204`) Fixed known hosts parsing with more than
+  one whitespace between the fields. OpenSSH allows to have more than one
+  whitespace between host and keytype or between keytype and base64-encoded
+  key. Whitespaces may consists of spaces and/or tabs. Reference
+  `authorized_keys file format
+  <https://man.openbsd.org/sshd.8#AUTHORIZED_KEYS_FILE_FORMAT>`_.
+
+
 - :release:`3.1.0 <2023-03-10>`
 - :feature:`2013` (solving :issue:`2009`, plus others) Add an explicit
   ``channel_timeout`` keyword argument to `paramiko.client.SSHClient.connect`,

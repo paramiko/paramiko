@@ -329,8 +329,9 @@ class HostKeyEntry:
         """
         Parses the given line of text to find the names for the host,
         the type of key, and the key data. The line is expected to be in the
-        format used by the OpenSSH known_hosts file. Fields are separated by a
-        single space or tab.
+        format used by the OpenSSH known_hosts file. Fields are separated by
+        spaces or tabs between host and key and a single space or tab between
+        the type of key and the key data.
 
         Lines are expected to not have leading or trailing whitespace.
         We don't bother to check for comments or empty lines.  All of
@@ -339,7 +340,7 @@ class HostKeyEntry:
         :param str line: a line from an OpenSSH known_hosts file
         """
         log = get_logger("paramiko.hostkeys")
-        fields = re.split(" |\t", line)
+        fields = re.split(r"[ \t]+", line)
         if len(fields) < 3:
             # Bad number of fields
             msg = "Not enough fields found in known_hosts in line {} ({!r})"
