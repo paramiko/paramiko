@@ -1280,6 +1280,7 @@ class Transport(threading.Thread, ClosingContextManager):
         gss_kex=False,
         gss_deleg_creds=True,
         gss_trust_dns=True,
+        timeout=None,
     ):
         """
         Negotiate an SSH2 session, and optionally verify the server's host key
@@ -1348,7 +1349,7 @@ class Transport(threading.Thread, ClosingContextManager):
             gssapi_requested=gss_kex or gss_auth,
         )
 
-        self.start_client()
+        self.start_client(timeout=timeout)
 
         # check host key if we were given one
         # If GSS-API Key Exchange was performed, we are not required to check
