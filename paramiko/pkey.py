@@ -142,6 +142,20 @@ class PKey:
         """
         return ""
 
+    @property
+    def algorithm_name(self):
+        """
+        Return the key algorithm identifier for this key.
+
+        Similar to `get_name`, but aimed at pure algorithm name instead of SSH
+        protocol field value.
+        """
+        # TODO in Python 3.9: use .removeprefix()
+        no_prefix = self.get_name().replace("ssh-", "")
+        # Mostly for ECDSA's sake; OpenSSH does basically this too.
+        no_suffix = no_prefix.split("-")[0]
+        return no_suffix.upper()
+
     def get_bits(self):
         """
         Return the number of significant bits in this key.  This is useful

@@ -2,6 +2,11 @@
 Changelog
 =========
 
+- :feature:`-` `~paramiko.pkey.PKey` grew a new ``.algorithm_name`` property
+  which displays the key algorithm; this is typically derived from the value of
+  `~paramiko.pkey.PKey.get_name`. For example, ED25519 keys have a ``get_name``
+  of ``ssh-ed25519`` (the SSH protocol key type field value), and now have a
+  ``algorithm_name`` of ``ED25519``.
 - :feature:`-` `~paramiko.pkey.PKey` grew a new ``.fingerprint`` property which
   emits a fingerprint string matching the SHA256+Base64 values printed by
   various OpenSSH tooling (eg ``ssh-add -l``, ``ssh -v``). This is intended to

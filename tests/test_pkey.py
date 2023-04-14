@@ -653,6 +653,11 @@ class KeyTest(unittest.TestCase):
             "SHA256:J6VESFdD3xSChn8y9PzWzeF+1tl892mOy2TqkMLO4ow",
         ]
 
+    def test_algorithm_property(self):
+        # Assumes the RSA, DSS, ECDSA, Ed25519 order seen in 'def keys'.
+        algorithms = [x.algorithm_name for x, _ in self.keys()]
+        assert algorithms == ["RSA", "DSS", "ECDSA", "ED25519"]
+
     def test_ed25519_nonbytes_password(self):
         # https://github.com/paramiko/paramiko/issues/1039
         Ed25519Key.from_private_key_file(
