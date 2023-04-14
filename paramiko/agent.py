@@ -428,9 +428,6 @@ class AgentKey(PKey):
     def asbytes(self):
         return self.blob
 
-    def __str__(self):
-        return self.asbytes()
-
     def get_name(self):
         return self.name
 

@@ -48,3 +48,10 @@ class AgentTests(unittest.TestCase):
             kwargs=dict(algorithm="rsa-sha2-512"),
             expectation=SSH_AGENT_RSA_SHA2_512,
         )
+
+    def test_agent_key_str_kinda_fixed(self):
+        # Tests for a missed spot in Python 3 upgrades: AgentKey.__str__ was
+        # returning bytes, as if under Python 2. When bug present, this
+        # explodes with "__str__ returned non-string".
+        key = AgentKey(ChaosAgent(), b("secret!!!"))
+        assert str(key) == repr(key)
