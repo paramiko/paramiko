@@ -24,7 +24,7 @@ import base64
 from base64 import encodebytes, decodebytes
 from binascii import unhexlify
 import os
-from hashlib import md5
+from hashlib import md5, sha256
 import re
 import struct
 
@@ -168,6 +168,21 @@ class PKey:
             format.
         """
         return md5(self.asbytes()).digest()
+
+    @property
+    def fingerprint(self):
+        """
+        Modern fingerprint property designed to be comparable to OpenSSH.
+
+        Currently only does SHA256 (the OpenSSH default).
+
+        .. versionadded:: 3.2
+        """
+        hashy = sha256(bytes(self))
+        hash_name = hashy.name.upper()
+        b64ed = encodebytes(hashy.digest())
+        cleaned = u(b64ed).strip().rstrip("=")  # yes, OpenSSH does this too!
+        return f"{hash_name}:{cleaned}"
 
     def get_base64(self):
         """

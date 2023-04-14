@@ -643,6 +643,16 @@ class KeyTest(unittest.TestCase):
         for key1, key2 in self.keys():
             assert hash(key1) == hash(key2)
 
+    def test_new_fingerprint(self):
+        # Assumes the RSA, DSS, ECDSA, Ed25519 order seen in 'def keys'.
+        fingerprints = [x.fingerprint for x, _ in self.keys()]
+        assert fingerprints == [
+            "SHA256:OhNL391d/beeFnxxg18AwWVYTAHww+D4djEE7Co0Yng",
+            "SHA256:uHwwykG099f4M4kfzvFpKCTino0/P03DRbAidpAmPm0",
+            "SHA256:BrQG04oNKUETjKCeL4ifkARASg3yxS/pUHl3wWM26Yg",
+            "SHA256:J6VESFdD3xSChn8y9PzWzeF+1tl892mOy2TqkMLO4ow",
+        ]
+
     def test_ed25519_nonbytes_password(self):
         # https://github.com/paramiko/paramiko/issues/1039
         Ed25519Key.from_private_key_file(

@@ -2,6 +2,11 @@
 Changelog
 =========
 
+- :feature:`-` `~paramiko.pkey.PKey` grew a new ``.fingerprint`` property which
+  emits a fingerprint string matching the SHA256+Base64 values printed by
+  various OpenSSH tooling (eg ``ssh-add -l``, ``ssh -v``). This is intended to
+  help troubleshoot Paramiko-vs-OpenSSH behavior and will eventually replace
+  the venerable ``get_fingerprint`` method.
 - :bug:`-` `~paramiko.agent.AgentKey` had a dangling Python 3 incompatible
   ``__str__`` method returning bytes. This method has been removed, allowing
   the superclass' (`~paramiko.pkey.PKey`) method to run instead.
