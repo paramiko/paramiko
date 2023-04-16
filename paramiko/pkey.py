@@ -101,8 +101,8 @@ class PKey:
 
         :param .Message msg:
             an optional SSH `.Message` containing a public key of this type.
-        :param str data: an optional string containing a public key
-            of this type
+        :param bytes data:
+            optional, the bytes of a public key of this type
 
         :raises: `.SSHException` --
             if a key cannot be created from the ``data`` or ``msg`` given, or
