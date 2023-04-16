@@ -2,6 +2,22 @@
 Changelog
 =========
 
+- :feature:`-` `~paramiko.pkey.PKey` now offers convenience
+  "meta-constructors", static methods that simplify the process of
+  instantiating the correct subclass for a given key type identifier or other
+  properties. For example, certain internals have been refactored to use
+  `PKey.from_type_string <paramiko.pkey.PKey.from_type_string>` instead of
+  iterating key classes or using if/else cascades.
+
+  As part of this change, `~paramiko.pkey.PKey` and friends grew an
+  `~paramiko.pkey.PKey.identifiers` classmethod; this is inspired by the
+  `~paramiko.ecdsakey.ECDSAKey.supported_key_format_identifiers` classmethod
+  (which now refers to the new method.) This also includes adding a ``.name``
+  attribute to most key classes (which will eventually replace ``.get_name()``.
+
+  In addition, there is a new convenience top-level API member,
+  ``paramiko.key_classes``, containing a list of all key classes.
+
 - :feature:`-` `~paramiko.pkey.PKey` grew a new ``.algorithm_name`` property
   which displays the key algorithm; this is typically derived from the value of
   `~paramiko.pkey.PKey.get_name`. For example, ED25519 keys have a ``get_name``

@@ -94,6 +94,10 @@ from paramiko.sftp import (
 from paramiko.common import io_sleep
 
 
+# TODO: I guess a real plugin system might be nice for future expansion...
+key_classes = [DSSKey, RSAKey, Ed25519Key, ECDSAKey]
+
+
 __author__ = "Jeff Forcier <jeff@bitprophet.org>"
 __license__ = "GNU Lesser General Public License (LGPL)"
 

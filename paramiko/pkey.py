@@ -59,9 +59,22 @@ def _unpad_openssh(data):
     return data[:-padding_length]
 
 
+class UnknownKeyType(Exception):
+    """
+    An unknown public/private key algorithm was attempted to be read.
+    """
+
+    def __init__(self, key_type, key_bytes):
+        self.key_type = key_type
+        self.key_bytes = key_bytes
+
+
 class PKey:
     """
     Base class for public keys.
+
+    Also includes some "meta" level convenience constructors such as
+    `.from_type_string`.
     """
 
     # known encryption types for private key files:
@@ -91,6 +104,46 @@ class PKey:
         r"^-{5}BEGIN (RSA|DSA|EC|OPENSSH) PRIVATE KEY-{5}\s*$"
     )
     END_TAG = re.compile(r"^-{5}END (RSA|DSA|EC|OPENSSH) PRIVATE KEY-{5}\s*$")
+
+    @staticmethod
+    def from_type_string(key_type, key_bytes):
+        """
+        Given type `str` & raw `bytes`, return a `PKey` subclass instance.
+
+        For example, ``PKey.from_type_string("ssh-ed25519", <public bytes>)``
+        will (if successful) return a new `.Ed25519Key`.
+
+        :param str key_type:
+            The key type, eg ``"ssh-ed25519"``.
+        :param bytes key_bytes:
+            The raw byte data forming the key material, as expected by
+            subclasses' ``data`` parameter.
+
+        :returns:
+            A `PKey` subclass instance.
+
+        :raises:
+            `UnknownKeyType`, if no registered classes knew about this type.
+
+        .. versionadded:: 3.2
+        """
+        from paramiko import key_classes
+
+        for key_class in key_classes:
+            if key_type in key_class.identifiers():
+                return key_class(data=key_bytes)
+        raise UnknownKeyType(key_type=key_type, key_bytes=key_bytes)
+
+    @classmethod
+    def identifiers(cls):
+        """
+        returns an iterable of key format/name strings this class can handle.
+
+        Most classes only have a single identifier, and thus this default
+        implementation suffices; see `.ECDSAKey` for one example of an
+        override.
+        """
+        return [cls.name]
 
     def __init__(self, msg=None, data=None):
         """
@@ -150,11 +203,17 @@ class PKey:
         Similar to `get_name`, but aimed at pure algorithm name instead of SSH
         protocol field value.
         """
+        # Nuke the leading 'ssh-'
         # TODO in Python 3.9: use .removeprefix()
-        no_prefix = self.get_name().replace("ssh-", "")
-        # Mostly for ECDSA's sake; OpenSSH does basically this too.
-        no_suffix = no_prefix.split("-")[0]
-        return no_suffix.upper()
+        name = self.get_name().replace("ssh-", "")
+        # Trim any cert suffix (but leave the -cert, as OpenSSH does)
+        cert_tail = "-cert-v01@openssh.com"
+        if cert_tail in name:
+            name = name.replace(cert_tail, "-cert")
+        # Nuke any eg ECDSA suffix, OpenSSH does basically this too.
+        else:
+            name = name.split("-")[0]
+        return name.upper()
 
     def get_bits(self):
         """
@@ -163,6 +222,8 @@ class PKey:
 
         :return: bits in the key (as an `int`)
         """
+        # TODO 4.0: raise NotImplementedError, 0 is unlikely to ever be
+        # _correct_ and nothing in the critical path seems to use this.
         return 0
 
     def can_sign(self):

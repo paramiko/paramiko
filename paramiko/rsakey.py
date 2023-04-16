@@ -36,6 +36,7 @@ class RSAKey(PKey):
     data.
     """
 
+    name = "ssh-rsa"
     HASHES = {
         "ssh-rsa": hashes.SHA1,
         "ssh-rsa-cert-v01@openssh.com": hashes.SHA1,
@@ -71,12 +72,16 @@ class RSAKey(PKey):
                 msg=msg,
                 # NOTE: this does NOT change when using rsa2 signatures; it's
                 # purely about key loading, not exchange or verification
-                key_type="ssh-rsa",
+                key_type=self.name,
                 cert_type="ssh-rsa-cert-v01@openssh.com",
             )
             self.key = rsa.RSAPublicNumbers(
                 e=msg.get_mpint(), n=msg.get_mpint()
             ).public_key(default_backend())
+
+    @classmethod
+    def identifiers(cls):
+        return cls.HASHES.keys()
 
     @property
     def size(self):
@@ -91,7 +96,7 @@ class RSAKey(PKey):
 
     def asbytes(self):
         m = Message()
-        m.add_string("ssh-rsa")
+        m.add_string(self.name)
         m.add_mpint(self.public_numbers.e)
         m.add_mpint(self.public_numbers.n)
         return m.asbytes()
@@ -106,7 +111,7 @@ class RSAKey(PKey):
         return (self.get_name(), self.public_numbers.e, self.public_numbers.n)
 
     def get_name(self):
-        return "ssh-rsa"
+        return self.name
 
     def get_bits(self):
         return self.size
@@ -114,7 +119,9 @@ class RSAKey(PKey):
     def can_sign(self):
         return isinstance(self.key, rsa.RSAPrivateKey)
 
-    def sign_ssh_data(self, data, algorithm="ssh-rsa"):
+    def sign_ssh_data(self, data, algorithm=None):
+        if algorithm is None:
+            algorithm = self.name
         sig = self.key.sign(
             data,
             padding=padding.PKCS1v15(),
