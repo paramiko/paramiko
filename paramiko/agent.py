@@ -28,13 +28,14 @@ import threading
 import time
 import tempfile
 import stat
+from logging import DEBUG
 from select import select
 from paramiko.common import io_sleep, byte_chr
 
 from paramiko.ssh_exception import SSHException, AuthenticationException
 from paramiko.message import Message
-from paramiko.pkey import PKey
-from paramiko.util import asbytes
+from paramiko.pkey import PKey, UnknownKeyType
+from paramiko.util import asbytes, get_logger
 
 cSSH2_AGENTC_REQUEST_IDENTITIES = byte_chr(11)
 SSH2_AGENT_IDENTITIES_ANSWER = 12
@@ -81,8 +82,13 @@ class AgentSSH:
             raise SSHException("could not get keys from ssh-agent")
         keys = []
         for i in range(result.get_int()):
-            keys.append(AgentKey(self, result.get_binary()))
-            result.get_string()
+            keys.append(
+                AgentKey(
+                    agent=self,
+                    blob=result.get_binary(),
+                    comment=result.get_text(),
+                )
+            )
         self._keys = tuple(keys)
 
     def _close(self):
@@ -417,19 +423,55 @@ class AgentKey(PKey):
     Private key held in a local SSH agent.  This type of key can be used for
     authenticating to a remote server (signing).  Most other key operations
     work as expected.
+
+    .. versionchanged:: 3.2
+        Added the ``comment`` kwarg and attribute.
+
+    .. versionchanged:: 3.2
+        Added the ``.inner_key`` attribute holding a reference to the 'real'
+        key instance this key is a proxy for, if one was obtainable, else None.
     """
 
-    def __init__(self, agent, blob):
+    def __init__(self, agent, blob, comment=""):
         self.agent = agent
         self.blob = blob
-        self.public_blob = None
-        self.name = Message(blob).get_text()
+        self.comment = comment
+        msg = Message(blob)
+        self.name = msg.get_text()
+        self._logger = get_logger(__file__)
+        self.inner_key = None
+        try:
+            self.inner_key = PKey.from_type_string(
+                key_type=self.name, key_bytes=blob
+            )
+        except UnknownKeyType:
+            # Log, but don't explode, since inner_key is a best-effort thing.
+            err = "Unable to derive inner_key for agent key of type {!r}"
+            self.log(DEBUG, err.format(self.name))
+
+    def log(self, *args, **kwargs):
+        return self._logger.log(*args, **kwargs)
 
     def asbytes(self):
-        return self.blob
+        # Prefer inner_key.asbytes, since that will differ for eg RSA-CERT
+        return self.inner_key.asbytes() if self.inner_key else self.blob
 
     def get_name(self):
         return self.name
+
+    def get_bits(self):
+        # Have to work around PKey's default get_bits being crap
+        if self.inner_key is not None:
+            return self.inner_key.get_bits()
+        return super().get_bits()
+
+    def __getattr__(self, name):
+        """
+        Proxy any un-implemented methods/properties to the inner_key.
+        """
+        if self.inner_key is None:  # nothing to proxy to
+            raise AttributeError(name=name, obj=self)
+        return getattr(self.inner_key, name)
 
     @property
     def _fields(self):

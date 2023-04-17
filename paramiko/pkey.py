@@ -163,6 +163,13 @@ class PKey:
         """
         pass
 
+    def __repr__(self):
+        comment = ""
+        # Works for AgentKey, may work for others?
+        if hasattr(self, "comment"):
+            comment = f", comment={self.comment!r}"
+        return f"{self.__class__.__name__}(alg={self.algorithm_name}, bits={self.get_bits()}, fp={self.fingerprint}{comment})"  # noqa
+
     # TODO 4.0: just merge into __bytes__ (everywhere)
     def asbytes(self):
         """

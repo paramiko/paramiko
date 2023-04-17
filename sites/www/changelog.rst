@@ -2,6 +2,21 @@
 Changelog
 =========
 
+- :feature:`-` Enhanced `~paramiko.agent.AgentKey` with new attributes, such
+  as:
+
+    - Added a ``comment`` attribute (and constructor argument);
+      `Agent.get_keys() <paramiko.agent.Agent.get_keys>` now uses this kwarg to
+      store any comment field sent over by the agent. The original version of
+      the agent feature inexplicably did not store the comment anywhere.
+    - Agent-derived keys now attempt to instantiate a copy of the appropriate
+      key class for access to other algorithm-specific members (eg key size).
+      This is available as the ``.inner_key`` attribute.
+
+  .. note::
+      This functionality is now in use in Fabric's new ``--list-agent-keys``
+      feature, as well as in Paramiko's debug logging.
+
 - :feature:`-` `~paramiko.pkey.PKey` now offers convenience
   "meta-constructors", static methods that simplify the process of
   instantiating the correct subclass for a given key type identifier or other
