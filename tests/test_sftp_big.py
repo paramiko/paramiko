@@ -365,3 +365,46 @@ class TestBigSFTP:
         finally:
             sftp.remove(f"{sftp.FOLDER}/hongry.txt")
             t.packetizer.REKEY_BYTES = pow(2, 30)
+
+    def test_prefetch_limit(self, sftp):
+        """
+        write a 1MB file and prefetch with a limit
+        """
+        kblob = 1024 * b"x"
+        start = time.time()
+        try:
+            with sftp.open(f"{sftp.FOLDER}/hongry.txt", "w") as f:
+                for n in range(1024):
+                    f.write(kblob)
+                    if n % 128 == 0:
+                        sys.stderr.write(".")
+            sys.stderr.write(" ")
+
+            assert (
+                sftp.stat(f"{sftp.FOLDER}/hongry.txt").st_size == 1024 * 1024
+            )
+            end = time.time()
+            sys.stderr.write(f"{round(end - start)}s")
+
+            # read with prefetch, no limit
+            # expecting 32 requests (32k * 32 == 1M)
+            with sftp.open(f"{sftp.FOLDER}/hongry.txt", "rb") as f:
+                file_size = f.stat().st_size
+                f.prefetch(file_size)
+                assert len(f._prefetch_extents) == 32
+
+            # read with prefetch, limiting to 5 simultaneous requests
+            with sftp.open(f"{sftp.FOLDER}/hongry.txt", "rb") as f:
+                file_size = f.stat().st_size
+                f.prefetch(file_size, 5)
+                assert len(f._prefetch_extents) == 5
+                for n in range(1024):
+                    assert len(f._prefetch_extents) <= 5
+                    data = f.read(1024)
+                    assert data == kblob
+
+                    if n % 128 == 0:
+                        sys.stderr.write(".")
+
+        finally:
+            sftp.remove(f"{sftp.FOLDER}/hongry.txt")
