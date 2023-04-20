@@ -7,7 +7,7 @@ import socket
 import struct
 import sys
 import unittest
-from time import sleep
+import time
 import threading
 
 import pytest
@@ -303,7 +303,7 @@ class TestServer(ServerInterface):
         if username == "bad-server":
             raise Exception("Ack!")
         if username == "unresponsive-server":
-            sleep(5)
+            time.sleep(5)
             return AUTH_SUCCESSFUL
         return AUTH_FAILED
 
@@ -439,3 +439,22 @@ def server(
     ts.close()
     socks.close()
     sockc.close()
+
+
+def wait_until(condition, *, timeout=2):
+    """
+    Wait until `condition()` no longer raises an `AssertionError` or until
+    `timeout` seconds have passed, which causes a `TimeoutError` to be raised.
+    """
+    deadline = time.time() + timeout
+
+    while True:
+        try:
+            condition()
+        except AssertionError as e:
+            if time.time() > deadline:
+                timeout_message = f"Condition not reached after {timeout}s"
+                raise TimeoutError(timeout_message) from e
+        else:
+            return
+        time.sleep(0.01)

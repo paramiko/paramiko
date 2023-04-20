@@ -30,7 +30,7 @@ import time
 
 from paramiko.common import o660
 
-from ._util import slow
+from ._util import slow, wait_until
 
 
 @slow
@@ -372,6 +372,11 @@ class TestBigSFTP:
         """
         kblob = 1024 * b"x"
         start = time.time()
+
+        def expect_prefetch_extents(file, expected_extents):
+            with file._prefetch_lock:
+                assert len(file._prefetch_extents) == expected_extents
+
         try:
             with sftp.open(f"{sftp.FOLDER}/hongry.txt", "w") as f:
                 for n in range(1024):
@@ -391,15 +396,16 @@ class TestBigSFTP:
             with sftp.open(f"{sftp.FOLDER}/hongry.txt", "rb") as f:
                 file_size = f.stat().st_size
                 f.prefetch(file_size)
-                assert len(f._prefetch_extents) == 32
+                wait_until(lambda: expect_prefetch_extents(f, 32))
 
             # read with prefetch, limiting to 5 simultaneous requests
             with sftp.open(f"{sftp.FOLDER}/hongry.txt", "rb") as f:
                 file_size = f.stat().st_size
                 f.prefetch(file_size, 5)
-                assert len(f._prefetch_extents) == 5
+                wait_until(lambda: expect_prefetch_extents(f, 5))
                 for n in range(1024):
-                    assert len(f._prefetch_extents) <= 5
+                    with f._prefetch_lock:
+                        assert len(f._prefetch_extents) <= 5
                     data = f.read(1024)
                     assert data == kblob
 
