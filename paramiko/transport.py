@@ -34,7 +34,7 @@ from cryptography.hazmat.primitives.ciphers import algorithms, Cipher, modes
 
 import paramiko
 from paramiko import util
-from paramiko.auth_handler import AuthHandler
+from paramiko.auth_handler import AuthHandler, AuthOnlyHandler
 from paramiko.ssh_gss import GSSAuth
 from paramiko.channel import Channel
 from paramiko.common import (
@@ -64,6 +64,8 @@ from paramiko.common import (
     MSG_GLOBAL_REQUEST,
     MSG_REQUEST_SUCCESS,
     MSG_REQUEST_FAILURE,
+    cMSG_SERVICE_REQUEST,
+    MSG_SERVICE_ACCEPT,
     MSG_CHANNEL_OPEN_SUCCESS,
     MSG_CHANNEL_OPEN_FAILURE,
     MSG_CHANNEL_OPEN,
@@ -530,6 +532,20 @@ class Transport(threading.Thread, ClosingContextManager):
         self.server_accepts = []
         self.server_accept_cv = threading.Condition(self.lock)
         self.subsystem_table = {}
+
+        # Handler table, now set at init time for easier per-instance
+        # manipulation and subclass twiddling.
+        self._handler_table = {
+            MSG_EXT_INFO: self._parse_ext_info,
+            MSG_NEWKEYS: self._parse_newkeys,
+            MSG_GLOBAL_REQUEST: self._parse_global_request,
+            MSG_REQUEST_SUCCESS: self._parse_request_success,
+            MSG_REQUEST_FAILURE: self._parse_request_failure,
+            MSG_CHANNEL_OPEN_SUCCESS: self._parse_channel_open_success,
+            MSG_CHANNEL_OPEN_FAILURE: self._parse_channel_open_failure,
+            MSG_CHANNEL_OPEN: self._parse_channel_open,
+            MSG_KEXINIT: self._negotiate_keys,
+        }
 
     def _filter_algorithm(self, type_):
         default = getattr(self, "_preferred_{}".format(type_))
@@ -2140,7 +2156,7 @@ class Transport(threading.Thread, ClosingContextManager):
                         if error_msg:
                             self._send_message(error_msg)
                         else:
-                            self._handler_table[ptype](self, m)
+                            self._handler_table[ptype](m)
                     elif ptype in self._channel_handler_table:
                         chanid = m.get_int()
                         chan = self._channels.get(chanid)
@@ -2166,7 +2182,7 @@ class Transport(threading.Thread, ClosingContextManager):
                         and ptype in self.auth_handler._handler_table
                     ):
                         handler = self.auth_handler._handler_table[ptype]
-                        handler(self.auth_handler, m)
+                        handler(m)
                         if len(self._expected_packet) > 0:
                             continue
                     else:
@@ -2987,18 +3003,6 @@ class Transport(threading.Thread, ClosingContextManager):
         finally:
             self.lock.release()
 
-    _handler_table = {
-        MSG_EXT_INFO: _parse_ext_info,
-        MSG_NEWKEYS: _parse_newkeys,
-        MSG_GLOBAL_REQUEST: _parse_global_request,
-        MSG_REQUEST_SUCCESS: _parse_request_success,
-        MSG_REQUEST_FAILURE: _parse_request_failure,
-        MSG_CHANNEL_OPEN_SUCCESS: _parse_channel_open_success,
-        MSG_CHANNEL_OPEN_FAILURE: _parse_channel_open_failure,
-        MSG_CHANNEL_OPEN: _parse_channel_open,
-        MSG_KEXINIT: _negotiate_keys,
-    }
-
     _channel_handler_table = {
         MSG_CHANNEL_SUCCESS: Channel._request_success,
         MSG_CHANNEL_FAILURE: Channel._request_failed,
@@ -3138,3 +3142,161 @@ class ChannelMap:
             return len(self._map)
         finally:
             self._lock.release()
+
+
+class ServiceRequestingTransport(Transport):
+    """
+    Transport, but also handling service requests, like it oughtta!
+
+    .. versionadded:: 3.2
+    """
+
+    # NOTE: this purposefully duplicates some of the parent class in order to
+    # modernize, refactor, etc. The intent is that eventually we will collapse
+    # this one onto the parent in a backwards incompatible release.
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._service_userauth_accepted = False
+        self._handler_table[MSG_SERVICE_ACCEPT] = self._parse_service_accept
+
+    def _parse_service_accept(self, m):
+        service = m.get_text()
+        # Short-circuit for any service name not ssh-userauth.
+        # NOTE: it's technically possible for 'service name' in
+        # SERVICE_REQUEST/ACCEPT messages to be "ssh-connection" --
+        # but I don't see evidence of Paramiko ever initiating or expecting to
+        # receive one of these. We /do/ see the 'service name' field in
+        # MSG_USERAUTH_REQUEST/ACCEPT/FAILURE set to this string, but that is a
+        # different set of handlers, so...!
+        if service != "ssh-userauth":
+            # TODO 4.0: consider erroring here (with an ability to opt out?)
+            # instead as it probably means something went Very Wrong.
+            self._log(
+                DEBUG, 'Service request "{}" accepted (?)'.format(service)
+            )
+            return
+        # Record that we saw a service-userauth acceptance, meaning we are free
+        # to submit auth requests.
+        self._service_userauth_accepted = True
+        self._log(DEBUG, "MSG_SERVICE_ACCEPT received; auth may begin")
+
+    def ensure_session(self):
+        # Make sure we're not trying to auth on a not-yet-open or
+        # already-closed transport session; that's our responsibility, not that
+        # of AuthHandler.
+        if (not self.active) or (not self.initial_kex_done):
+            # TODO: better error message? this can happen in many places, eg
+            # user error (authing before connecting) or developer error (some
+            # improperly handled pre/mid auth shutdown didn't become fatal
+            # enough). The latter is much more common & should ideally be fixed
+            # by terminating things harder?
+            raise SSHException("No existing session")
+        # Also make sure we've actually been told we are allowed to auth.
+        if self._service_userauth_accepted:
+            return
+        # Or request to do so, otherwise.
+        m = Message()
+        m.add_byte(cMSG_SERVICE_REQUEST)
+        m.add_string("ssh-userauth")
+        self._log(DEBUG, "Sending MSG_SERVICE_REQUEST: ssh-userauth")
+        self._send_message(m)
+        # Now we wait to hear back; the user is expecting a blocking-style auth
+        # request so there's no point giving control back anywhere.
+        while not self._service_userauth_accepted:
+            # TODO: feels like we're missing an AuthHandler Event like
+            # 'self.auth_event' which is set when AuthHandler shuts down in
+            # ways good AND bad. Transport only seems to have completion_event
+            # which is unclear re: intent, eg it's set by newkeys which always
+            # happens on connection, so it'll always be set by the time we get
+            # here.
+            # NOTE: this copies the timing of event.wait() in
+            # AuthHandler.wait_for_response, re: 1/10 of a second. Could
+            # presumably be smaller, but seems unlikely this period is going to
+            # be "too long" for any code doing ssh networking...
+            time.sleep(0.1)
+        self.auth_handler = self.get_auth_handler()
+
+    def get_auth_handler(self):
+        # NOTE: using new sibling subclass instead of classic AuthHandler
+        return AuthOnlyHandler(self)
+
+    def auth_none(self, username):
+        # TODO 4.0: merge to parent, preserving (most of) docstring
+        self.ensure_session()
+        return self.auth_handler.auth_none(username)
+
+    def auth_password(self, username, password, fallback=True):
+        # TODO 4.0: merge to parent, preserving (most of) docstring
+        self.ensure_session()
+        try:
+            return self.auth_handler.auth_password(username, password)
+        except BadAuthenticationType as e:
+            # if password auth isn't allowed, but keyboard-interactive *is*,
+            # try to fudge it
+            if not fallback or ("keyboard-interactive" not in e.allowed_types):
+                raise
+            try:
+
+                def handler(title, instructions, fields):
+                    if len(fields) > 1:
+                        raise SSHException("Fallback authentication failed.")
+                    if len(fields) == 0:
+                        # for some reason, at least on os x, a 2nd request will
+                        # be made with zero fields requested.  maybe it's just
+                        # to try to fake out automated scripting of the exact
+                        # type we're doing here.  *shrug* :)
+                        return []
+                    return [password]
+
+                return self.auth_interactive(username, handler)
+            except SSHException:
+                # attempt to fudge failed; just raise the original exception
+                raise e
+
+    def auth_publickey(self, username, key):
+        # TODO 4.0: merge to parent, preserving (most of) docstring
+        self.ensure_session()
+        return self.auth_handler.auth_publickey(username, key)
+
+    def auth_interactive(self, username, handler, submethods=""):
+        # TODO 4.0: merge to parent, preserving (most of) docstring
+        self.ensure_session()
+        return self.auth_handler.auth_interactive(
+            username, handler, submethods
+        )
+
+    def auth_interactive_dumb(self, username, handler=None, submethods=""):
+        # TODO 4.0: merge to parent, preserving (most of) docstring
+        # NOTE: legacy impl omitted equiv of ensure_session since it just wraps
+        # another call to an auth method. however we reinstate it for
+        # consistency reasons.
+        self.ensure_session()
+        if not handler:
+
+            def handler(title, instructions, prompt_list):
+                answers = []
+                if title:
+                    print(title.strip())
+                if instructions:
+                    print(instructions.strip())
+                for prompt, show_input in prompt_list:
+                    print(prompt.strip(), end=" ")
+                    answers.append(input())
+                return answers
+
+        return self.auth_interactive(username, handler, submethods)
+
+    def auth_gssapi_with_mic(self, username, gss_host, gss_deleg_creds):
+        # TODO 4.0: merge to parent, preserving (most of) docstring
+        self.ensure_session()
+        self.auth_handler = self.get_auth_handler()
+        return self.auth_handler.auth_gssapi_with_mic(
+            username, gss_host, gss_deleg_creds
+        )
+
+    def auth_gssapi_keyex(self, username):
+        # TODO 4.0: merge to parent, preserving (most of) docstring
+        self.ensure_session()
+        self.auth_handler = self.get_auth_handler()
+        return self.auth_handler.auth_gssapi_keyex(username)

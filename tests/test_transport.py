@@ -1099,7 +1099,8 @@ class TransportTest(unittest.TestCase):
     def test_server_transports_reject_client_message_types(self):
         # TODO: handle Transport's own tables too, not just its inner auth
         # handler's table. See TODOs in auth_handler.py
-        for message_type in AuthHandler._client_handler_table:
+        some_handler = AuthHandler(self.tc)  # kludge to get _some_ AH instance
+        for message_type in some_handler._client_handler_table:
             self._send_client_message(message_type)
             self._expect_unimplemented()
             # Reset for rest of loop

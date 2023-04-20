@@ -2,6 +2,59 @@
 Changelog
 =========
 
+- :bug:`23 major` Since its inception, Paramiko has (for reasons lost to time)
+  implemented authentication as a side effect of handling affirmative replies
+  to ``MSG_SERVICE_REQUEST`` protocol messages. What this means is Paramiko
+  makes one such request before every ``MSG_USERAUTH_REQUEST``, i.e. every auth
+  attempt.
+
+  OpenSSH doesn't care if clients send multiple service requests, but other
+  server implementations are often stricter in what they accept after an
+  initial service request (due to the RFCs not being clear). This can result in
+  odd behavior when a user doesn't authenticate successfully on the very first
+  try (for example, when the right key for a target host is the third in one's
+  ssh-agent).
+
+  This version of Paramiko now contains an opt-in
+  `~paramiko.transport.Transport` subclass,
+  `~paramiko.transport.ServiceRequestingTransport`, which more-correctly
+  implements service request handling in the Transport, and uses an
+  auth-handler subclass internally which has been similarly adapted. Users
+  wanting to try this new experimental code path may hand this class to
+  `SSHClient.connect <paramiko.client.SSHClient.connect>` as its
+  ``transport_factory`` kwarg.
+
+  .. warning::
+      This feature is **EXPERIMENTAL** and its code may be subject to change.
+
+      In addition:
+        - minor backwards incompatible changes exist in the new code paths,
+          most notably the removal of the (inconsistently applied and rarely
+          used) ``event`` arguments to the ``auth_xxx`` methods.
+        - GSSAPI support has only been partially implemented, and is untested.
+
+  .. note::
+      Some minor backwards-_compatible_ changes were made to the **existing**
+      Transport and AuthHandler classes to facilitate the new code. For
+      example, ``Transport._handler_table`` and
+      ``AuthHandler._client_handler_table`` are now propertes instead of raw
+      attributes.
+
+- :feature:`387` Users of `~paramiko.client.SSHClient` can now configure the
+  authentication logic Paramiko uses when connecting to servers; this
+  functionality is intended for advanced users and higher-level libraries such
+  as `Fabric <https://fabfile.org>`_. See :ref:`the conceptual API docs
+  <auth-flow>` for details.
+
+  Fabric's co-temporal release includes a proof-of-concept use of this feature,
+  implementing an auth flow much closer to that of the OpenSSH client (versus
+  Paramiko's legacy behavior). It is **strongly recommended** that if this
+  interests you, investigate replacing any direct use of ``SSHClient`` with
+  Fabric's ``Connection``.
+
+  .. warning::
+      This feature is **EXPERIMENTAL**; please see its docs for details.
+
 - :feature:`-` Enhanced `~paramiko.agent.AgentKey` with new attributes, such
   as:
 

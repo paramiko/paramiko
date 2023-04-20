@@ -19,7 +19,11 @@
 # flake8: noqa
 import sys
 from paramiko._version import __version__, __version_info__
-from paramiko.transport import SecurityOptions, Transport
+from paramiko.transport import (
+    SecurityOptions,
+    Transport,
+    ServiceRequestingTransport,
+)
 from paramiko.client import (
     SSHClient,
     MissingHostKeyPolicy,

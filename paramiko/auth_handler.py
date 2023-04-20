@@ -21,6 +21,7 @@
 """
 
 import weakref
+import threading
 import time
 import re
 
@@ -241,7 +242,9 @@ class AuthHandler:
             if not self.transport.is_active():
                 e = self.transport.get_exception()
                 if (e is None) or issubclass(e.__class__, EOFError):
-                    e = AuthenticationException("Authentication failed.")
+                    e = AuthenticationException(
+                        "Authentication failed: transport shut down or saw EOF"
+                    )
                 raise e
             if event.is_set():
                 break
@@ -254,6 +257,7 @@ class AuthHandler:
                 e = AuthenticationException("Authentication failed.")
             # this is horrible.  Python Exception isn't yet descended from
             # object, so type(e) won't work. :(
+            # TODO 4.0: lol. just lmao.
             if issubclass(e.__class__, PartialAuthentication):
                 return e.allowed_types
             raise e
@@ -367,9 +371,6 @@ class AuthHandler:
     def _parse_service_accept(self, m):
         service = m.get_text()
         if service == "ssh-userauth":
-            # TODO 4.0: this message sucks ass. change it to something more
-            # obvious. it always appears to mean "we already authed" but no! it
-            # just means "we are allowed to TRY authing!"
             self._log(DEBUG, "userauth is OK")
             m = Message()
             m.add_byte(cMSG_USERAUTH_REQUEST)
@@ -725,6 +726,9 @@ Error Message: {}
 
     def _parse_userauth_failure(self, m):
         authlist = m.get_list()
+        # TODO 4.0: we aren't giving callers access to authlist _unless_ it's
+        # partial authentication, so eg authtype=none can't work unless we
+        # tweak this.
         partial = m.get_boolean()
         if partial:
             self._log(INFO, "Authentication continues...")
@@ -805,7 +809,6 @@ Error Message: {}
             self.auth_event.set()
         return
 
-    # TODO: do the same to the other tables, in Transport.
     # TODO 4.0: MAY make sense to make these tables into actual
     # classes/instances that can be fed a mode bool or whatever. Or,
     # alternately (both?) make the message types small classes or enums that
@@ -814,20 +817,27 @@ Error Message: {}
     # TODO: if we do that, also expose 'em publicly.
 
     # Messages which should be handled _by_ servers (sent by clients)
-    _server_handler_table = {
-        MSG_SERVICE_REQUEST: _parse_service_request,
-        MSG_USERAUTH_REQUEST: _parse_userauth_request,
-        MSG_USERAUTH_INFO_RESPONSE: _parse_userauth_info_response,
-    }
+    @property
+    def _server_handler_table(self):
+        return {
+            # TODO 4.0: MSG_SERVICE_REQUEST ought to eventually move into
+            # Transport's server mode like the client side did, just for
+            # consistency.
+            MSG_SERVICE_REQUEST: self._parse_service_request,
+            MSG_USERAUTH_REQUEST: self._parse_userauth_request,
+            MSG_USERAUTH_INFO_RESPONSE: self._parse_userauth_info_response,
+        }
 
     # Messages which should be handled _by_ clients (sent by servers)
-    _client_handler_table = {
-        MSG_SERVICE_ACCEPT: _parse_service_accept,
-        MSG_USERAUTH_SUCCESS: _parse_userauth_success,
-        MSG_USERAUTH_FAILURE: _parse_userauth_failure,
-        MSG_USERAUTH_BANNER: _parse_userauth_banner,
-        MSG_USERAUTH_INFO_REQUEST: _parse_userauth_info_request,
-    }
+    @property
+    def _client_handler_table(self):
+        return {
+            MSG_SERVICE_ACCEPT: self._parse_service_accept,
+            MSG_USERAUTH_SUCCESS: self._parse_userauth_success,
+            MSG_USERAUTH_FAILURE: self._parse_userauth_failure,
+            MSG_USERAUTH_BANNER: self._parse_userauth_banner,
+            MSG_USERAUTH_INFO_REQUEST: self._parse_userauth_info_request,
+        }
 
     # NOTE: prior to the fix for #1283, this was a static dict instead of a
     # property. Should be backwards compatible in most/all cases.
@@ -945,3 +955,115 @@ class GssapiWithMicAuthHandler:
         # TODO: determine if we can cut this up like we did for the primary
         # AuthHandler class.
         return self.__handler_table
+
+
+class AuthOnlyHandler(AuthHandler):
+    """
+    AuthHandler, and just auth, no service requests!
+
+    .. versionadded:: 3.2
+    """
+
+    # NOTE: this purposefully duplicates some of the parent class in order to
+    # modernize, refactor, etc. The intent is that eventually we will collapse
+    # this one onto the parent in a backwards incompatible release.
+
+    @property
+    def _client_handler_table(self):
+        my_table = super()._client_handler_table.copy()
+        del my_table[MSG_SERVICE_ACCEPT]
+        return my_table
+
+    def send_auth_request(self, username, method, finish_message=None):
+        """
+        Submit a userauth request message & wait for response.
+
+        Performs the transport message send call, sets self.auth_event, and
+        will lock-n-block as necessary to both send, and wait for response to,
+        the USERAUTH_REQUEST.
+
+        Most callers will want to supply a callback to ``finish_message``,
+        which accepts a Message ``m`` and may call mutator methods on it to add
+        more fields.
+        """
+        # Store a few things for reference in handlers, including auth failure
+        # handler (which needs to know if we were using a bad method, etc)
+        self.auth_method = method
+        self.username = username
+        # Generic userauth request fields
+        m = Message()
+        m.add_byte(cMSG_USERAUTH_REQUEST)
+        m.add_string(username)
+        m.add_string("ssh-connection")
+        m.add_string(method)
+        # Caller usually has more to say, such as injecting password, key etc
+        finish_message(m)
+        # TODO 4.0: seems odd to have the client handle the lock and not
+        # Transport; that _may_ have been an artifact of allowing user
+        # threading event injection? Regardless, we don't want to move _this_
+        # locking into Transport._send_message now, because lots of other
+        # untouched code also uses that method and we might end up
+        # double-locking (?) but 4.0 would be a good time to revisit.
+        with self.transport.lock:
+            self.transport._send_message(m)
+        # We have cut out the higher level event args, but self.auth_event is
+        # still required for self.wait_for_response to function correctly (it's
+        # the mechanism used by the auth success/failure handlers, the abort
+        # handler, and a few other spots like in gssapi.
+        # TODO: interestingly, wait_for_response itself doesn't actually
+        # enforce that its event argument and self.auth_event are the same...
+        self.auth_event = threading.Event()
+        return self.wait_for_response(self.auth_event)
+
+    def auth_none(self, username):
+        return self.send_auth_request(username, "none")
+
+    def auth_publickey(self, username, key):
+        key_type, bits = self._get_key_type_and_bits(key)
+        algorithm = self._finalize_pubkey_algorithm(key_type)
+        blob = self._get_session_blob(
+            key,
+            "ssh-connection",
+            username,
+            algorithm,
+        )
+
+        def finish(m):
+            # This field doesn't appear to be named, but is False when querying
+            # for permission (ie knowing whether to even prompt a user for
+            # passphrase, etc) or True when just going for it. Paramiko has
+            # never bothered with the former type of message, apparently.
+            m.add_boolean(True)
+            m.add_string(algorithm)
+            m.add_string(bits)
+            m.add_string(key.sign_ssh_data(blob, algorithm))
+
+        return self.send_auth_request(username, "publickey", finish)
+
+    def auth_password(self, username, password):
+        def finish(m):
+            # Unnamed field that equates to "I am changing my password", which
+            # Paramiko clientside never supported and serverside only sort of
+            # supported.
+            m.add_boolean(False)
+            m.add_string(b(password))
+
+        return self.send_auth_request(username, "password", finish)
+
+    def auth_interactive(self, username, handler, submethods=""):
+        """
+        response_list = handler(title, instructions, prompt_list)
+        """
+        # Unlike most siblings, this auth method _does_ require other
+        # superclass handlers (eg userauth info request) to understand
+        # what's going on, so we still set some self attributes.
+        self.auth_method = "keyboard_interactive"
+        self.interactive_handler = handler
+
+        def finish(m):
+            # Empty string for deprecated language tag field, per RFC 4256:
+            # https://www.rfc-editor.org/rfc/rfc4256#section-3.1
+            m.add_string("")
+            m.add_string(submethods)
+
+        return self.send_auth_request(username, "keyboard-interactive", finish)
