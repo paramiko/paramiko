@@ -62,6 +62,9 @@ def _unpad_openssh(data):
 class PKey:
     """
     Base class for public keys.
+    This should be subclassed, not instantiated directly.
+    End users should typically not use this directly,
+    and instead use DSSKey, RSAKey, ECDSAKey etc.
     """
 
     # known encryption types for private key files:
@@ -113,9 +116,9 @@ class PKey:
     # TODO 4.0: just merge into __bytes__ (everywhere)
     def asbytes(self):
         """
-        Return a string of an SSH `.Message` made up of the public part(s) of
-        this key.  This string is suitable for passing to `__init__` to
-        re-create the key object later.
+        Return a byte array of an SSH `.Message` made up of the public part(s) of
+        this key.  This bytes array is suitable for passing to the `data` argument 
+        of `__init__` to re-create the key object later.
         """
         return bytes()
 
@@ -194,7 +197,7 @@ class PKey:
         .. versionchanged:: 2.9
             Added the ``algorithm`` kwarg.
         """
-        return bytes()
+        return Message()
 
     def verify_ssh_sig(self, data, msg):
         """
