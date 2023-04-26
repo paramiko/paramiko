@@ -47,7 +47,7 @@ _pwd = u("\u2022")
 class NullServer(ServerInterface):
     paranoid_did_password = False
     paranoid_did_public_key = False
-    paranoid_key = DSSKey.from_private_key_file(_support("test_dss.key"))
+    paranoid_key = DSSKey.from_private_key_file(_support("dss.key"))
 
     def get_allowed_auths(self, username):
         if username == "slowdive":
@@ -186,7 +186,7 @@ class AuthTest(unittest.TestCase):
             username="paranoid", password="paranoid"
         )
         self.assertEqual(["publickey"], remain)
-        key = DSSKey.from_private_key_file(_support("test_dss.key"))
+        key = DSSKey.from_private_key_file(_support("dss.key"))
         remain = self.tc.auth_publickey(username="paranoid", key=key)
         self.assertEqual([], remain)
         self.verify_finished()

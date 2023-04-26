@@ -203,7 +203,7 @@ class KeyTest(unittest.TestCase):
         self.assertEqual(1024, key.get_bits())
 
     def test_load_dss(self):
-        key = DSSKey.from_private_key_file(_support("test_dss.key"))
+        key = DSSKey.from_private_key_file(_support("dss.key"))
         self.assertEqual("ssh-dss", key.get_name())
         exp_dss = b(FINGER_DSS.split()[1].replace(":", ""))
         my_dss = hexlify(key.get_fingerprint())
@@ -240,7 +240,7 @@ class KeyTest(unittest.TestCase):
 
     def test_compare_dss(self):
         # verify that the private & public keys compare equal
-        key = DSSKey.from_private_key_file(_support("test_dss.key"))
+        key = DSSKey.from_private_key_file(_support("dss.key"))
         self.assertEqual(key, key)
         pub = DSSKey(data=key.asbytes())
         self.assertTrue(key.can_sign())
@@ -273,7 +273,7 @@ class KeyTest(unittest.TestCase):
 
     def test_sign_dss(self):
         # verify that the dss private key can sign and verify
-        key = DSSKey.from_private_key_file(_support("test_dss.key"))
+        key = DSSKey.from_private_key_file(_support("dss.key"))
         msg = key.sign_ssh_data(b"ice weasels")
         self.assertTrue(type(msg) is Message)
         msg.rewind()
@@ -619,7 +619,7 @@ class KeyTest(unittest.TestCase):
     def keys(self):
         for key_class, filename in [
             (RSAKey, "test_rsa.key"),
-            (DSSKey, "test_dss.key"),
+            (DSSKey, "dss.key"),
             (ECDSAKey, "test_ecdsa_256.key"),
             (Ed25519Key, "test_ed25519.key"),
         ]:

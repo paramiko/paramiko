@@ -1,6 +1,7 @@
 from os.path import dirname, realpath, join
 import builtins
 import os
+from pathlib import Path
 import struct
 import sys
 import unittest
@@ -18,7 +19,10 @@ tests_dir = dirname(realpath(__file__))
 
 
 def _support(filename):
-    return join(tests_dir, filename)
+    base = Path(tests_dir)
+    top = base / filename
+    deeper = base / "_support" / filename
+    return str(deeper if deeper.exists() else top)
 
 
 def _config(name):

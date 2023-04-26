@@ -256,7 +256,7 @@ class SSHClientTest(ClientTest):
         """
         verify that SSHClient works with a DSA key.
         """
-        self._test_connection(key_filename=_support("test_dss.key"))
+        self._test_connection(key_filename=_support("dss.key"))
 
     @requires_sha1_signing
     def test_client_rsa(self):

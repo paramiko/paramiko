@@ -80,7 +80,7 @@ Maybe.
 class NullServer(ServerInterface):
     paranoid_did_password = False
     paranoid_did_public_key = False
-    paranoid_key = DSSKey.from_private_key_file(_support("test_dss.key"))
+    paranoid_key = DSSKey.from_private_key_file(_support("dss.key"))
 
     def __init__(self, allowed_keys=None):
         self.allowed_keys = allowed_keys if allowed_keys is not None else []
