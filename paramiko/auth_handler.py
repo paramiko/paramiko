@@ -66,6 +66,7 @@ from paramiko.util import b, u
 from paramiko.ssh_exception import (
     SSHException,
     AuthenticationException,
+    AuthenticationTimeoutException,
     BadAuthenticationType,
     PartialAuthentication,
 )
@@ -246,7 +247,7 @@ class AuthHandler:
             if event.is_set():
                 break
             if max_ts is not None and max_ts <= time.time():
-                raise AuthenticationException("Authentication timeout.")
+                raise AuthenticationTimeoutException("Authentication timeout.")
 
         if not self.is_authenticated():
             e = self.transport.get_exception()

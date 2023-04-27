@@ -37,6 +37,7 @@ from paramiko.channel import (
 )
 from paramiko.ssh_exception import (
     AuthenticationException,
+    AuthenticationTimeoutException,
     BadAuthenticationType,
     BadHostKeyException,
     ChannelException,
