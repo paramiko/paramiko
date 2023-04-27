@@ -30,7 +30,7 @@ import time
 
 from paramiko.common import o660
 
-from .util import slow
+from ._util import slow
 
 
 @slow

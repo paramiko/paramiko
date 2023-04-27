@@ -60,8 +60,8 @@ from paramiko.common import (
 )
 from paramiko.message import Message
 
-from .util import needs_builtin, _support, requires_sha1_signing, slow
-from .loop import LoopSocket
+from ._util import needs_builtin, _support, requires_sha1_signing, slow
+from ._loop import LoopSocket
 
 
 LONG_BANNER = """\
@@ -168,7 +168,7 @@ class TransportTest(unittest.TestCase):
     def setup_test_server(
         self, client_options=None, server_options=None, connect_kwargs=None
     ):
-        host_key = RSAKey.from_private_key_file(_support("test_rsa.key"))
+        host_key = RSAKey.from_private_key_file(_support("rsa.key"))
         public_host_key = RSAKey(data=host_key.asbytes())
         self.ts.add_server_key(host_key)
 
@@ -234,7 +234,7 @@ class TransportTest(unittest.TestCase):
         loopback sockets.  this is hardly "simple" but it's simpler than the
         later tests. :)
         """
-        host_key = RSAKey.from_private_key_file(_support("test_rsa.key"))
+        host_key = RSAKey.from_private_key_file(_support("rsa.key"))
         public_host_key = RSAKey(data=host_key.asbytes())
         self.ts.add_server_key(host_key)
         event = threading.Event()
@@ -260,7 +260,7 @@ class TransportTest(unittest.TestCase):
         """
         verify that a long banner doesn't mess up the handshake.
         """
-        host_key = RSAKey.from_private_key_file(_support("test_rsa.key"))
+        host_key = RSAKey.from_private_key_file(_support("rsa.key"))
         public_host_key = RSAKey(data=host_key.asbytes())
         self.ts.add_server_key(host_key)
         event = threading.Event()
@@ -910,7 +910,7 @@ class TransportTest(unittest.TestCase):
         # be fine. Even tho it's a bit squicky.
         self.tc.packetizer = SlowPacketizer(self.tc.sock)
         # Continue with regular test red tape.
-        host_key = RSAKey.from_private_key_file(_support("test_rsa.key"))
+        host_key = RSAKey.from_private_key_file(_support("rsa.key"))
         public_host_key = RSAKey(data=host_key.asbytes())
         self.ts.add_server_key(host_key)
         event = threading.Event()
@@ -1204,7 +1204,7 @@ def server(
 
     :param hostkey:
         Host key to use for the server; if None, loads
-        ``test_rsa.key``.
+        ``rsa.key``.
     :param init:
         Default `Transport` constructor kwargs to use for both sides.
     :param server_init:
@@ -1234,7 +1234,7 @@ def server(
     ts = Transport(socks, **dict(init, **server_init))
 
     if hostkey is None:
-        hostkey = RSAKey.from_private_key_file(_support("test_rsa.key"))
+        hostkey = RSAKey.from_private_key_file(_support("rsa.key"))
     ts.add_server_key(hostkey)
     event = threading.Event()
     server = NullServer(allowed_keys=pubkeys)
@@ -1344,7 +1344,7 @@ class TestSHA2SignatureKeyExchange(unittest.TestCase):
         # (This is a regression test vs previous implementation which overwrote
         # the entire preferred-hostkeys structure when given an explicit key as
         # a client.)
-        hostkey = RSAKey.from_private_key_file(_support("test_rsa.key"))
+        hostkey = RSAKey.from_private_key_file(_support("rsa.key"))
         with server(hostkey=hostkey, connect=dict(hostkey=hostkey)) as (tc, _):
             assert tc.host_key_type == "rsa-sha2-512"
 
@@ -1359,7 +1359,7 @@ class TestExtInfo(unittest.TestCase):
             }
 
     def test_client_uses_server_sig_algs_for_pubkey_auth(self):
-        privkey = RSAKey.from_private_key_file(_support("test_rsa.key"))
+        privkey = RSAKey.from_private_key_file(_support("rsa.key"))
         with server(
             pubkeys=[privkey],
             connect=dict(pkey=privkey),
@@ -1376,7 +1376,7 @@ class TestExtInfo(unittest.TestCase):
 # with this module anyways...
 class TestSHA2SignaturePubkeys(unittest.TestCase):
     def test_pubkey_auth_honors_disabled_algorithms(self):
-        privkey = RSAKey.from_private_key_file(_support("test_rsa.key"))
+        privkey = RSAKey.from_private_key_file(_support("rsa.key"))
         with server(
             pubkeys=[privkey],
             connect=dict(pkey=privkey),
@@ -1391,7 +1391,7 @@ class TestSHA2SignaturePubkeys(unittest.TestCase):
             assert "no RSA pubkey algorithms" in str(err)
 
     def test_client_sha2_disabled_server_sha1_disabled_no_match(self):
-        privkey = RSAKey.from_private_key_file(_support("test_rsa.key"))
+        privkey = RSAKey.from_private_key_file(_support("rsa.key"))
         with server(
             pubkeys=[privkey],
             connect=dict(pkey=privkey),
@@ -1402,7 +1402,7 @@ class TestSHA2SignaturePubkeys(unittest.TestCase):
             assert isinstance(err, AuthenticationException)
 
     def test_client_sha1_disabled_server_sha2_disabled_no_match(self):
-        privkey = RSAKey.from_private_key_file(_support("test_rsa.key"))
+        privkey = RSAKey.from_private_key_file(_support("rsa.key"))
         with server(
             pubkeys=[privkey],
             connect=dict(pkey=privkey),
@@ -1414,7 +1414,7 @@ class TestSHA2SignaturePubkeys(unittest.TestCase):
 
     @requires_sha1_signing
     def test_ssh_rsa_still_used_when_sha2_disabled(self):
-        privkey = RSAKey.from_private_key_file(_support("test_rsa.key"))
+        privkey = RSAKey.from_private_key_file(_support("rsa.key"))
         # NOTE: this works because key obj comparison uses public bytes
         # TODO: would be nice for PKey to grow a legit "give me another obj of
         # same class but just the public bits" using asbytes()
@@ -1424,7 +1424,7 @@ class TestSHA2SignaturePubkeys(unittest.TestCase):
             assert tc.is_authenticated()
 
     def test_sha2_512(self):
-        privkey = RSAKey.from_private_key_file(_support("test_rsa.key"))
+        privkey = RSAKey.from_private_key_file(_support("rsa.key"))
         with server(
             pubkeys=[privkey],
             connect=dict(pkey=privkey),
@@ -1436,7 +1436,7 @@ class TestSHA2SignaturePubkeys(unittest.TestCase):
             assert tc._agreed_pubkey_algorithm == "rsa-sha2-512"
 
     def test_sha2_256(self):
-        privkey = RSAKey.from_private_key_file(_support("test_rsa.key"))
+        privkey = RSAKey.from_private_key_file(_support("rsa.key"))
         with server(
             pubkeys=[privkey],
             connect=dict(pkey=privkey),
@@ -1448,7 +1448,7 @@ class TestSHA2SignaturePubkeys(unittest.TestCase):
             assert tc._agreed_pubkey_algorithm == "rsa-sha2-256"
 
     def test_sha2_256_when_client_only_enables_256(self):
-        privkey = RSAKey.from_private_key_file(_support("test_rsa.key"))
+        privkey = RSAKey.from_private_key_file(_support("rsa.key"))
         with server(
             pubkeys=[privkey],
             connect=dict(pkey=privkey),

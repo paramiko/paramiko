@@ -45,7 +45,7 @@ from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateNumbers
 from unittest.mock import patch, Mock
 import pytest
 
-from .util import _support, is_low_entropy, requires_sha1_signing
+from ._util import _support, is_low_entropy, requires_sha1_signing
 
 
 # from openssh's ssh-keygen
@@ -161,7 +161,7 @@ class KeyTest(unittest.TestCase):
         self.assertEqual(exp, key)
 
     def test_load_rsa(self):
-        key = RSAKey.from_private_key_file(_support("test_rsa.key"))
+        key = RSAKey.from_private_key_file(_support("rsa.key"))
         self.assertEqual("ssh-rsa", key.get_name())
         exp_rsa = b(FINGER_RSA.split()[1].replace(":", ""))
         my_rsa = hexlify(key.get_fingerprint())
@@ -184,7 +184,7 @@ class KeyTest(unittest.TestCase):
             ) as loader:
                 loader.side_effect = exception
                 with pytest.raises(SSHException, match=str(exception)):
-                    RSAKey.from_private_key_file(_support("test_rsa.key"))
+                    RSAKey.from_private_key_file(_support("rsa.key"))
 
     def test_loading_empty_keys_errors_usefully(self):
         # #1599 - raise SSHException instead of IndexError
@@ -231,7 +231,7 @@ class KeyTest(unittest.TestCase):
 
     def test_compare_rsa(self):
         # verify that the private & public keys compare equal
-        key = RSAKey.from_private_key_file(_support("test_rsa.key"))
+        key = RSAKey.from_private_key_file(_support("rsa.key"))
         self.assertEqual(key, key)
         pub = RSAKey(data=key.asbytes())
         self.assertTrue(key.can_sign())
@@ -248,7 +248,7 @@ class KeyTest(unittest.TestCase):
         self.assertEqual(key, pub)
 
     def _sign_and_verify_rsa(self, algorithm, saved_sig):
-        key = RSAKey.from_private_key_file(_support("test_rsa.key"))
+        key = RSAKey.from_private_key_file(_support("rsa.key"))
         msg = key.sign_ssh_data(b"ice weasels", algorithm)
         assert isinstance(msg, Message)
         msg.rewind()
@@ -329,7 +329,7 @@ class KeyTest(unittest.TestCase):
         self.assertEqual(key.get_name(), "ecdsa-sha2-nistp521")
 
     def test_load_ecdsa_256(self):
-        key = ECDSAKey.from_private_key_file(_support("test_ecdsa_256.key"))
+        key = ECDSAKey.from_private_key_file(_support("ecdsa-256.key"))
         self.assertEqual("ecdsa-sha2-nistp256", key.get_name())
         exp_ecdsa = b(FINGER_ECDSA_256.split()[1].replace(":", ""))
         my_ecdsa = hexlify(key.get_fingerprint())
@@ -357,7 +357,7 @@ class KeyTest(unittest.TestCase):
 
     def test_compare_ecdsa_256(self):
         # verify that the private & public keys compare equal
-        key = ECDSAKey.from_private_key_file(_support("test_ecdsa_256.key"))
+        key = ECDSAKey.from_private_key_file(_support("ecdsa-256.key"))
         self.assertEqual(key, key)
         pub = ECDSAKey(data=key.asbytes())
         self.assertTrue(key.can_sign())
@@ -366,7 +366,7 @@ class KeyTest(unittest.TestCase):
 
     def test_sign_ecdsa_256(self):
         # verify that the rsa private key can sign and verify
-        key = ECDSAKey.from_private_key_file(_support("test_ecdsa_256.key"))
+        key = ECDSAKey.from_private_key_file(_support("ecdsa-256.key"))
         msg = key.sign_ssh_data(b"ice weasels")
         self.assertTrue(type(msg) is Message)
         msg.rewind()
@@ -408,7 +408,7 @@ class KeyTest(unittest.TestCase):
         self.assertEqual(384, key.get_bits())
 
     def test_load_ecdsa_transmutes_crypto_exceptions(self):
-        path = _support("test_ecdsa_256.key")
+        path = _support("ecdsa-256.key")
         # TODO: nix unittest for pytest
         for exception in (TypeError("onoz"), UnsupportedAlgorithm("oops")):
             with patch(
@@ -569,12 +569,12 @@ class KeyTest(unittest.TestCase):
         RSAKey.from_private_key_file(_support("test_rsa_openssh_nopad.key"))
 
     def test_stringification(self):
-        key = RSAKey.from_private_key_file(_support("test_rsa.key"))
+        key = RSAKey.from_private_key_file(_support("rsa.key"))
         comparable = TEST_KEY_BYTESTR
         self.assertEqual(str(key), comparable)
 
     def test_ed25519(self):
-        key1 = Ed25519Key.from_private_key_file(_support("test_ed25519.key"))
+        key1 = Ed25519Key.from_private_key_file(_support("ed25519.key"))
         key2 = Ed25519Key.from_private_key_file(
             _support("test_ed25519_password.key"), b"abc123"
         )
@@ -594,7 +594,7 @@ class KeyTest(unittest.TestCase):
 
     def test_ed25519_compare(self):
         # verify that the private & public keys compare equal
-        key = Ed25519Key.from_private_key_file(_support("test_ed25519.key"))
+        key = Ed25519Key.from_private_key_file(_support("ed25519.key"))
         self.assertEqual(key, key)
         pub = Ed25519Key(data=key.asbytes())
         self.assertTrue(key.can_sign())
@@ -616,12 +616,13 @@ class KeyTest(unittest.TestCase):
         )
         assert original != generated
 
+    # TODO: use keys fixture
     def keys(self):
         for key_class, filename in [
-            (RSAKey, "test_rsa.key"),
+            (RSAKey, "rsa.key"),
             (DSSKey, "dss.key"),
-            (ECDSAKey, "test_ecdsa_256.key"),
-            (Ed25519Key, "test_ed25519.key"),
+            (ECDSAKey, "ecdsa-256.key"),
+            (Ed25519Key, "ed25519.key"),
         ]:
             key1 = key_class.from_private_key_file(_support(filename))
             key2 = key_class.from_private_key_file(_support(filename))
@@ -643,6 +644,7 @@ class KeyTest(unittest.TestCase):
         for key1, key2 in self.keys():
             assert hash(key1) == hash(key2)
 
+    # TODO: use keys fixture
     def test_new_fingerprint(self):
         # Assumes the RSA, DSS, ECDSA, Ed25519 order seen in 'def keys'.
         fingerprints = [x.fingerprint for x, _ in self.keys()]
@@ -653,6 +655,7 @@ class KeyTest(unittest.TestCase):
             "SHA256:J6VESFdD3xSChn8y9PzWzeF+1tl892mOy2TqkMLO4ow",
         ]
 
+    # TODO: use keys fixture
     def test_algorithm_property(self):
         # Assumes the RSA, DSS, ECDSA, Ed25519 order seen in 'def keys'.
         algorithms = [x.algorithm_name for x, _ in self.keys()]
@@ -669,7 +672,7 @@ class KeyTest(unittest.TestCase):
         # No exception -> it's good. Meh.
 
     def test_ed25519_load_from_file_obj(self):
-        with open(_support("test_ed25519.key")) as pkey_fileobj:
+        with open(_support("ed25519.key")) as pkey_fileobj:
             key = Ed25519Key.from_private_key(pkey_fileobj)
         self.assertEqual(key, key)
         self.assertTrue(key.can_sign())

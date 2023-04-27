@@ -41,7 +41,7 @@ from paramiko import SSHClient
 from paramiko.pkey import PublicBlob
 from paramiko.ssh_exception import SSHException, AuthenticationException
 
-from .util import _support, requires_sha1_signing, slow
+from ._util import _support, requires_sha1_signing, slow
 
 
 requires_gss_auth = unittest.skipUnless(
@@ -171,10 +171,10 @@ class ClientTest(unittest.TestCase):
         self.ts = paramiko.Transport(self.socks)
         if server_name is not None:
             self.ts.local_version = server_name
-        keypath = _support("test_rsa.key")
+        keypath = _support("rsa.key")
         host_key = paramiko.RSAKey.from_private_key_file(keypath)
         self.ts.add_server_key(host_key)
-        keypath = _support("test_ecdsa_256.key")
+        keypath = _support("ecdsa-256.key")
         host_key = paramiko.ECDSAKey.from_private_key_file(keypath)
         self.ts.add_server_key(host_key)
         server = NullServer(allowed_keys=allowed_keys, public_blob=public_blob)
@@ -195,7 +195,7 @@ class ClientTest(unittest.TestCase):
         # Server setup
         threading.Thread(target=self._run, kwargs=run_kwargs).start()
         host_key = paramiko.RSAKey.from_private_key_file(
-            _support("test_rsa.key")
+            _support("rsa.key")
         )
         public_host_key = paramiko.RSAKey(data=host_key.asbytes())
 
@@ -263,18 +263,18 @@ class SSHClientTest(ClientTest):
         """
         verify that SSHClient works with an RSA key.
         """
-        self._test_connection(key_filename=_support("test_rsa.key"))
+        self._test_connection(key_filename=_support("rsa.key"))
 
     @requires_sha1_signing
     def test_client_ecdsa(self):
         """
         verify that SSHClient works with an ECDSA key.
         """
-        self._test_connection(key_filename=_support("test_ecdsa_256.key"))
+        self._test_connection(key_filename=_support("ecdsa-256.key"))
 
     @requires_sha1_signing
     def test_client_ed25519(self):
-        self._test_connection(key_filename=_support("test_ed25519.key"))
+        self._test_connection(key_filename=_support("ed25519.key"))
 
     @requires_sha1_signing
     def test_multiple_key_files(self):
@@ -289,16 +289,17 @@ class SSHClientTest(ClientTest):
         }
         # Various combos of attempted & valid keys
         # TODO: try every possible combo using itertools functions
+        # TODO: use new key(s) fixture(s)
         for attempt, accept in (
             (["rsa", "dss"], ["dss"]),  # Original test #3
             (["dss", "rsa"], ["dss"]),  # Ordering matters sometimes, sadly
-            (["dss", "rsa", "ecdsa_256"], ["dss"]),  # Try ECDSA but fail
-            (["rsa", "ecdsa_256"], ["ecdsa"]),  # ECDSA success
+            (["dss", "rsa", "ecdsa-256"], ["dss"]),  # Try ECDSA but fail
+            (["rsa", "ecdsa-256"], ["ecdsa"]),  # ECDSA success
         ):
             try:
                 self._test_connection(
                     key_filename=[
-                        _support("test_{}.key".format(x)) for x in attempt
+                        _support("{}.key".format(x)) for x in attempt
                     ],
                     allowed_keys=[types_[x] for x in accept],
                 )
@@ -318,7 +319,7 @@ class SSHClientTest(ClientTest):
         self.assertRaises(
             SSHException,
             self._test_connection,
-            key_filename=[_support("test_rsa.key")],
+            key_filename=[_support("rsa.key")],
             allowed_keys=["ecdsa-sha2-nistp256"],
         )
 
@@ -338,7 +339,7 @@ class SSHClientTest(ClientTest):
 
     @requires_sha1_signing
     def test_certs_implicitly_loaded_alongside_key_filename_keys(self):
-        # NOTE: a regular test_connection() w/ test_rsa.key would incidentally
+        # NOTE: a regular test_connection() w/ rsa.key would incidentally
         # test this (because test_xxx.key-cert.pub exists) but incidental tests
         # stink, so NullServer and friends were updated to allow assertions
         # about the server-side key object's public blob. Thus, we can prove
@@ -391,7 +392,7 @@ class SSHClientTest(ClientTest):
         """
         threading.Thread(target=self._run).start()
         hostname = f"[{self.addr}]:{self.port}"
-        key_file = _support("test_ecdsa_256.key")
+        key_file = _support("ecdsa-256.key")
         public_host_key = paramiko.ECDSAKey.from_private_key_file(key_file)
 
         self.tc = SSHClient()
@@ -415,7 +416,7 @@ class SSHClientTest(ClientTest):
         warnings.filterwarnings("ignore", "tempnam.*")
 
         host_key = paramiko.RSAKey.from_private_key_file(
-            _support("test_rsa.key")
+            _support("rsa.key")
         )
         public_host_key = paramiko.RSAKey(data=host_key.asbytes())
         fd, localname = mkstemp()
@@ -517,7 +518,7 @@ class SSHClientTest(ClientTest):
         # Start the thread with a 1 second wait.
         threading.Thread(target=self._run, kwargs={"delay": 1}).start()
         host_key = paramiko.RSAKey.from_private_key_file(
-            _support("test_rsa.key")
+            _support("rsa.key")
         )
         public_host_key = paramiko.RSAKey(data=host_key.asbytes())
 
@@ -593,7 +594,7 @@ class SSHClientTest(ClientTest):
         """
         Failed gssapi-keyex doesn't prevent subsequent key from succeeding
         """
-        kwargs = dict(gss_kex=True, key_filename=[_support("test_rsa.key")])
+        kwargs = dict(gss_kex=True, key_filename=[_support("rsa.key")])
         self._test_connection(**kwargs)
 
     @requires_gss_auth
@@ -601,7 +602,7 @@ class SSHClientTest(ClientTest):
         """
         Failed gssapi-with-mic doesn't prevent subsequent key from succeeding
         """
-        kwargs = dict(gss_auth=True, key_filename=[_support("test_rsa.key")])
+        kwargs = dict(gss_auth=True, key_filename=[_support("rsa.key")])
         self._test_connection(**kwargs)
 
     def test_reject_policy(self):
@@ -683,11 +684,11 @@ class SSHClientTest(ClientTest):
         self._client_host_key_bad(host_key)
 
     def test_host_key_negotiation_3(self):
-        self._client_host_key_good(paramiko.ECDSAKey, "test_ecdsa_256.key")
+        self._client_host_key_good(paramiko.ECDSAKey, "ecdsa-256.key")
 
     @requires_sha1_signing
     def test_host_key_negotiation_4(self):
-        self._client_host_key_good(paramiko.RSAKey, "test_rsa.key")
+        self._client_host_key_good(paramiko.RSAKey, "rsa.key")
 
     def _setup_for_env(self):
         threading.Thread(target=self._run).start()

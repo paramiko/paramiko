@@ -19,7 +19,7 @@ from paramiko import (
     ConfigParseError,
 )
 
-from .util import _config
+from ._util import _config
 
 
 @fixture

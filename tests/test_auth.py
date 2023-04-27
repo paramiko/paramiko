@@ -37,8 +37,8 @@ from paramiko import (
 from paramiko import AUTH_FAILED, AUTH_PARTIALLY_SUCCESSFUL, AUTH_SUCCESSFUL
 from paramiko.util import u
 
-from .loop import LoopSocket
-from .util import _support, slow
+from ._loop import LoopSocket
+from ._util import _support, slow
 
 
 _pwd = u("\u2022")
@@ -129,7 +129,7 @@ class AuthTest(unittest.TestCase):
         self.sockc.close()
 
     def start_server(self):
-        host_key = RSAKey.from_private_key_file(_support("test_rsa.key"))
+        host_key = RSAKey.from_private_key_file(_support("rsa.key"))
         self.public_host_key = RSAKey(data=host_key.asbytes())
         self.ts.add_server_key(host_key)
         self.event = threading.Event()

@@ -2,13 +2,24 @@ import logging
 import os
 import shutil
 import threading
+from pathlib import Path
+
+from invoke.vendor.lexicon import Lexicon
 
 import pytest
-from paramiko import RSAKey, SFTPServer, SFTP, Transport
+from paramiko import (
+    SFTPServer,
+    SFTP,
+    Transport,
+    DSSKey,
+    RSAKey,
+    Ed25519Key,
+    ECDSAKey,
+)
 
-from .loop import LoopSocket
-from .stub_sftp import StubServer, StubSFTPServer
-from .util import _support
+from ._loop import LoopSocket
+from ._stub_sftp import StubServer, StubSFTPServer
+from ._util import _support
 
 from icecream import ic, install as install_ic
 
@@ -71,7 +82,7 @@ def sftp_server():
     tc = Transport(sockc)
     ts = Transport(socks)
     # Auth
-    host_key = RSAKey.from_private_key_file(_support("test_rsa.key"))
+    host_key = RSAKey.from_private_key_file(_support("rsa.key"))
     ts.add_server_key(host_key)
     # Server setup
     event = threading.Event()
@@ -103,3 +114,45 @@ def sftp(sftp_server):
     yield client
     # Clean up - as in make_sftp_folder, we assume local-only exec for now.
     shutil.rmtree(client.FOLDER, ignore_errors=True)
+
+
+key_data = [
+    ["ssh-rsa", RSAKey, "SHA256:OhNL391d/beeFnxxg18AwWVYTAHww+D4djEE7Co0Yng"],
+    ["ssh-dss", DSSKey, "SHA256:uHwwykG099f4M4kfzvFpKCTino0/P03DRbAidpAmPm0"],
+    [
+        "ssh-ed25519",
+        Ed25519Key,
+        "SHA256:J6VESFdD3xSChn8y9PzWzeF+1tl892mOy2TqkMLO4ow",
+    ],
+    [
+        "ecdsa-sha2-nistp256",
+        ECDSAKey,
+        "SHA256:BrQG04oNKUETjKCeL4ifkARASg3yxS/pUHl3wWM26Yg",
+    ],
+]
+for datum in key_data:
+    short = datum[0].replace("ssh-", "").replace("sha2-nistp", "")
+    datum.insert(0, short)
+
+
+@pytest.fixture(scope="session", params=key_data, ids=lambda x: x[0])
+def key(request):
+    """
+    Yield an object for each known type of key, with attributes:
+
+    - ``short_type``: short identifier, eg ``rsa`` or ``ecdsa-256``
+    - ``full_type``: the "message style" key identifier, eg ``ssh-rsa``, or
+      ``ecdsa-sha2-nistp256``.
+    - ``path``: a pathlib Path object to the fixture key file
+    - ``pkey``: an instantiated PKey subclass object
+    - ``fingerprint``: the expected fingerprint of said key
+    """
+    short_type, key_type, key_class, fingerprint = request.param
+    bag = Lexicon()
+    bag.short_type = short_type
+    bag.full_type = key_type
+    bag.path = Path(_support(f"{short_type}.key"))
+    with bag.path.open() as fd:
+        bag.pkey = key_class.from_private_key(fd)
+    bag.fingerprint = fingerprint
+    yield bag

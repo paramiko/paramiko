@@ -30,7 +30,7 @@ from cryptography.hazmat.primitives.ciphers import algorithms, Cipher, modes
 from paramiko import Message, Packetizer, util
 from paramiko.common import byte_chr, zero_byte
 
-from .loop import LoopSocket
+from ._loop import LoopSocket
 
 
 x55 = byte_chr(0x55)

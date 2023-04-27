@@ -33,6 +33,7 @@ import bcrypt
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.ciphers import algorithms, modes, Cipher
+from cryptography.hazmat.primitives import asymmetric
 
 from paramiko import util
 from paramiko.util import u, b
@@ -64,9 +65,12 @@ class UnknownKeyType(Exception):
     An unknown public/private key algorithm was attempted to be read.
     """
 
-    def __init__(self, key_type, key_bytes):
+    def __init__(self, key_type=None, key_bytes=None):
         self.key_type = key_type
         self.key_bytes = key_bytes
+
+    def __str__(self):
+        return f"UnknownKeyType(type={self.key_type!r}, bytes=<{len(self.key_bytes)}>)"  # noqa
 
 
 class PKey:
@@ -106,6 +110,53 @@ class PKey:
     END_TAG = re.compile(r"^-{5}END (RSA|DSA|EC|OPENSSH) PRIVATE KEY-{5}\s*$")
 
     @staticmethod
+    def from_path(path, passphrase=None):
+        """
+        Attempt to instantiate appropriate key subclass from given file path.
+
+        :param Path path: The path to load.
+
+        .. versionadded:: 3.2
+        """
+        # TODO: make sure sphinx is reading Path right in param list...
+        from paramiko import DSSKey, RSAKey, Ed25519Key, ECDSAKey
+
+        data = path.read_bytes()
+        # Like OpenSSH, try modern/OpenSSH-specific key load first
+        try:
+            loaded = serialization.load_ssh_private_key(
+                data=data, password=passphrase
+            )
+        # Then fall back to assuming legacy PEM type
+        except ValueError:
+            loaded = serialization.load_pem_private_key(
+                data=data, password=passphrase
+            )
+        # TODO Python 3.10: match statement? (NOTE: we cannot use a dict
+        # because the results from the loader are literal backend, eg openssl,
+        # private classes, so isinstance tests work but exact 'x class is y'
+        # tests will not work)
+        # TODO: leverage already-parsed/mathed obj to avoid duplicate cpu
+        # cycles? seemingly requires most of our key subclasses to be rewritten
+        # to be cryptography-object-forward. this is still likely faster than
+        # the old SSHClient code that just tried instantiating every class!
+        key_class = None
+        if isinstance(loaded, asymmetric.dsa.DSAPrivateKey):
+            key_class = DSSKey
+        elif isinstance(loaded, asymmetric.rsa.RSAPrivateKey):
+            key_class = RSAKey
+        elif isinstance(loaded, asymmetric.ed25519.Ed25519PrivateKey):
+            key_class = Ed25519Key
+        elif isinstance(loaded, asymmetric.ec.EllipticCurvePrivateKey):
+            key_class = ECDSAKey
+        else:
+            raise UnknownKeyType(
+                key_bytes=data, key_type=loaded.__class__.__name__
+            )
+        with path.open() as fd:
+            return key_class.from_private_key(fd, password=passphrase)
+
+    @staticmethod
     def from_type_string(key_type, key_bytes):
         """
         Given type `str` & raw `bytes`, return a `PKey` subclass instance.
@@ -131,6 +182,7 @@ class PKey:
 
         for key_class in key_classes:
             if key_type in key_class.identifiers():
+                # TODO: needs to passthru things like passphrase
                 return key_class(data=key_bytes)
         raise UnknownKeyType(key_type=key_type, key_bytes=key_bytes)
 
