@@ -77,14 +77,15 @@ Changelog
   `PKey.from_type_string <paramiko.pkey.PKey.from_type_string>` instead of
   iterating key classes or using if/else cascades.
 
-  As part of this change, `~paramiko.pkey.PKey` and friends grew an
+  `PKey.from_path <paramiko.pkey.PKey.from_path>` is also new, and offers a way
+  to load a file path without knowing *a priori* what type of key it is (thanks
+  to some handy methods within our cryptography dependency).
+
+  As part of these changes, `~paramiko.pkey.PKey` and friends grew an
   `~paramiko.pkey.PKey.identifiers` classmethod; this is inspired by the
   `~paramiko.ecdsakey.ECDSAKey.supported_key_format_identifiers` classmethod
   (which now refers to the new method.) This also includes adding a ``.name``
   attribute to most key classes (which will eventually replace ``.get_name()``.
-
-  In addition, there is a new convenience top-level API member,
-  ``paramiko.key_classes``, containing a list of all key classes.
 
 - :feature:`-` `~paramiko.pkey.PKey` grew a new ``.algorithm_name`` property
   which displays the key algorithm; this is typically derived from the value of

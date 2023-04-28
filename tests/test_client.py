@@ -194,9 +194,7 @@ class ClientTest(unittest.TestCase):
             run_kwargs[key] = kwargs.pop(key, None)
         # Server setup
         threading.Thread(target=self._run, kwargs=run_kwargs).start()
-        host_key = paramiko.RSAKey.from_private_key_file(
-            _support("rsa.key")
-        )
+        host_key = paramiko.RSAKey.from_private_key_file(_support("rsa.key"))
         public_host_key = paramiko.RSAKey(data=host_key.asbytes())
 
         # Client setup
@@ -415,9 +413,7 @@ class SSHClientTest(ClientTest):
         """
         warnings.filterwarnings("ignore", "tempnam.*")
 
-        host_key = paramiko.RSAKey.from_private_key_file(
-            _support("rsa.key")
-        )
+        host_key = paramiko.RSAKey.from_private_key_file(_support("rsa.key"))
         public_host_key = paramiko.RSAKey(data=host_key.asbytes())
         fd, localname = mkstemp()
         os.close(fd)
@@ -517,9 +513,7 @@ class SSHClientTest(ClientTest):
         """
         # Start the thread with a 1 second wait.
         threading.Thread(target=self._run, kwargs={"delay": 1}).start()
-        host_key = paramiko.RSAKey.from_private_key_file(
-            _support("rsa.key")
-        )
+        host_key = paramiko.RSAKey.from_private_key_file(_support("rsa.key"))
         public_host_key = paramiko.RSAKey(data=host_key.asbytes())
 
         self.tc = SSHClient()

@@ -136,7 +136,7 @@ for datum in key_data:
 
 
 @pytest.fixture(scope="session", params=key_data, ids=lambda x: x[0])
-def key(request):
+def keys(request):
     """
     Yield an object for each known type of key, with attributes:
 

@@ -138,12 +138,6 @@ TEST_KEY_BYTESTR = "\x00\x00\x00\x07ssh-rsa\x00\x00\x00\x01#\x00\x00\x00\x00ӏV\
 
 
 class KeyTest(unittest.TestCase):
-    def setUp(self):
-        pass
-
-    def tearDown(self):
-        pass
-
     def assert_keyfile_is_encrypted(self, keyfile):
         """
         A quick check that filename looks like an encrypted key.

@@ -24,6 +24,7 @@ import base64
 from base64 import encodebytes, decodebytes
 from binascii import unhexlify
 import os
+from pathlib import Path
 from hashlib import md5, sha256
 import re
 import struct
@@ -114,13 +115,21 @@ class PKey:
         """
         Attempt to instantiate appropriate key subclass from given file path.
 
-        :param Path path: The path to load.
+        :param Path path: The path to load (may be a `str`).
+
+        :returns:
+            A `PKey` subclass instance.
+
+        :raises:
+            `UnknownKeyType`, if our crypto backend doesn't know this key type.
 
         .. versionadded:: 3.2
         """
         # TODO: make sure sphinx is reading Path right in param list...
         from paramiko import DSSKey, RSAKey, Ed25519Key, ECDSAKey
 
+        if not isinstance(path, Path):
+            path = Path(path)
         data = path.read_bytes()
         # Like OpenSSH, try modern/OpenSSH-specific key load first
         try:
@@ -136,7 +145,7 @@ class PKey:
         # because the results from the loader are literal backend, eg openssl,
         # private classes, so isinstance tests work but exact 'x class is y'
         # tests will not work)
-        # TODO: leverage already-parsed/mathed obj to avoid duplicate cpu
+        # TODO: leverage already-parsed/math'd obj to avoid duplicate cpu
         # cycles? seemingly requires most of our key subclasses to be rewritten
         # to be cryptography-object-forward. this is still likely faster than
         # the old SSHClient code that just tried instantiating every class!
@@ -150,9 +159,7 @@ class PKey:
         elif isinstance(loaded, asymmetric.ec.EllipticCurvePrivateKey):
             key_class = ECDSAKey
         else:
-            raise UnknownKeyType(
-                key_bytes=data, key_type=loaded.__class__.__name__
-            )
+            raise UnknownKeyType(key_bytes=data, key_type=loaded.__class__)
         with path.open() as fd:
             return key_class.from_private_key(fd, password=passphrase)
 

@@ -67,7 +67,7 @@ from paramiko.message import Message
 from paramiko.packet import Packetizer
 from paramiko.file import BufferedFile
 from paramiko.agent import Agent, AgentKey
-from paramiko.pkey import PKey, PublicBlob
+from paramiko.pkey import PKey, PublicBlob, UnknownKeyType
 from paramiko.hostkeys import HostKeys
 from paramiko.config import SSHConfig, SSHConfigDict
 from paramiko.proxy import ProxyCommand
