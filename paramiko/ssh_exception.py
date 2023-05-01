@@ -233,3 +233,13 @@ class ConfigParseError(SSHException):
     """
 
     pass
+
+
+class AuthenticationTimeoutException(AuthenticationException):
+    """
+    Exception raised when an authentication timeout occurs.
+
+    .. versionadded:: 3.1.1
+    """
+
+    pass

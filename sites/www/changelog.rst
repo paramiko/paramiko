@@ -2,6 +2,12 @@
 Changelog
 =========
 
+- :release:`3.1.1 <2023-xx-xx>`
+- :feature:`2236` Add a new `AuthenticationTimeoutException` to specifically
+  catch authentication timeouts. This exception inherits from
+  `AuthenticationException`, so existing code that handles this error with
+  string matching will function as normal.
+
 - :release:`3.1.0 <2023-03-10>`
 - :feature:`2013` (solving :issue:`2009`, plus others) Add an explicit
   ``channel_timeout`` keyword argument to `paramiko.client.SSHClient.connect`,

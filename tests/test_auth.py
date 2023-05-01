@@ -33,6 +33,7 @@ from paramiko import (
     BadAuthenticationType,
     InteractiveQuery,
     AuthenticationException,
+    AuthenticationTimeoutException,
 )
 from paramiko import AUTH_FAILED, AUTH_PARTIALLY_SUCCESSFUL, AUTH_SUCCESSFUL
 from paramiko.util import u
@@ -268,5 +269,5 @@ class AuthTest(unittest.TestCase):
             self.tc.auth_password("unresponsive-server", "hello")
         except:
             etype, evalue, etb = sys.exc_info()
-            self.assertTrue(issubclass(etype, AuthenticationException))
+            self.assertTrue(issubclass(etype, AuthenticationTimeoutException))
             self.assertTrue("Authentication timeout" in str(evalue))
