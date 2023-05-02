@@ -665,8 +665,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
     def getcwd(self):
         """
         Return the "current working directory" for this SFTP session, as
-        emulated by Paramiko.  If no directory has been set with `chdir`,
-        this method will return ``None``.
+        emulated by Paramiko.
 
         .. versionadded:: 1.4
         """
