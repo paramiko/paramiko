@@ -136,6 +136,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
                 server_version
             ),
         )
+        self._cwd = b(self.normalize("."))
 
     @classmethod
     def from_transport(cls, t, window_size=None, max_packet_size=None):
@@ -664,12 +665,10 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
     def getcwd(self):
         """
         Return the "current working directory" for this SFTP session, as
-        emulated by Paramiko.  If no directory has been set with `chdir`,
-        this method will return ``None``.
+        emulated by Paramiko.
 
         .. versionadded:: 1.4
         """
-        # TODO: make class initialize with self._cwd set to self.normalize('.')
         return self._cwd and u(self._cwd)
 
     def _transfer_with_callback(self, reader, writer, file_size, callback):

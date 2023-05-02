@@ -2,6 +2,10 @@
 Changelog
 =========
 
+- :bug:`2224` (via :issue:`2223`, :issue:`1009`) Initialize the cwd in `SFTPClient.__init__ <paramiko.sftp_client.SFTPClient.__init__>`
+  to the current path to prevent errors from SFTP servers that refuse commands
+  on relative paths.
+
 - :release:`3.1.0 <2023-03-10>`
 - :feature:`2013` (solving :issue:`2009`, plus others) Add an explicit
   ``channel_timeout`` keyword argument to `paramiko.client.SSHClient.connect`,
