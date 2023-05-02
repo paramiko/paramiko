@@ -1368,7 +1368,8 @@ class TestExtInfo(unittest.TestCase):
             ),
         ) as (tc, _):
             assert tc.is_authenticated()
-            # Client settled on 256 despite itself not having 512 disabled
+            # Client settled on 256 despite itself not having 512 disabled (and
+            # otherwise, 512 would have been earlier in the preferred list)
             assert tc._agreed_pubkey_algorithm == "rsa-sha2-256"
 
 

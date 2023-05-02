@@ -24,6 +24,7 @@ from ._util import _support
 from icecream import ic, install as install_ic
 
 
+# Better print() for debugging - use ic()!
 install_ic()
 ic.configureOutput(includeContext=True)
 
