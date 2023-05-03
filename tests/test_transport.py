@@ -23,6 +23,7 @@ Some unit tests for the ssh2 protocol in Transport.
 
 from binascii import hexlify
 from contextlib import contextmanager
+import pytest
 import select
 import socket
 import time
@@ -1423,6 +1424,27 @@ class TestSHA2SignaturePubkeys(unittest.TestCase):
             pubkeys=[privkey], connect=dict(pkey=privkey), init=_disable_sha2
         ) as (tc, _):
             assert tc.is_authenticated()
+
+    @requires_sha1_signing
+    def test_first_client_preferred_algo_used_when_no_server_sig_algs(self):
+        privkey = RSAKey.from_private_key_file(_support("rsa.key"))
+        # Server pretending to be an apparently common setup:
+        # - doesn't support (or have enabled) sha2
+        # - also doesn't support (or have enabled) server-sig-algs/ext-info
+        # This is the scenario in which Paramiko has to guess-the-algo, and
+        # where servers that don't support sha2 or server-sig-algs give us
+        # trouble.
+        server_init = dict(_disable_sha2_pubkey, server_sig_algs=False)
+        with server(
+            pubkeys=[privkey],
+            connect=dict(pkey=privkey),
+            server_init=server_init,
+            catch_error=True,
+        ) as (tc, ts, err):
+            assert not tc.is_authenticated()
+            assert isinstance(err, AuthenticationException)
+            # Oh no! this isn't ssh-rsa, and our server doesn't support sha2!
+            assert tc._agreed_pubkey_algorithm == "rsa-sha2-512"
 
     def test_sha2_512(self):
         privkey = RSAKey.from_private_key_file(_support("rsa.key"))
