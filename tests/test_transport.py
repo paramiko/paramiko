@@ -1199,6 +1199,7 @@ def server(
     connect=None,
     pubkeys=None,
     catch_error=False,
+    transport_factory=None,
 ):
     """
     SSH server contextmanager for testing.
@@ -1219,6 +1220,8 @@ def server(
     :param catch_error:
         Whether to capture connection errors & yield from contextmanager.
         Necessary for connection_time exception testing.
+    :param transport_factory:
+        Like the same-named param in SSHClient: which Transport class to use.
     """
     if init is None:
         init = {}
@@ -1231,8 +1234,10 @@ def server(
     socks = LoopSocket()
     sockc = LoopSocket()
     sockc.link(socks)
-    tc = Transport(sockc, **dict(init, **client_init))
-    ts = Transport(socks, **dict(init, **server_init))
+    if transport_factory is None:
+        transport_factory = Transport
+    tc = transport_factory(sockc, **dict(init, **client_init))
+    ts = transport_factory(socks, **dict(init, **server_init))
 
     if hostkey is None:
         hostkey = RSAKey.from_private_key_file(_support("rsa.key"))
