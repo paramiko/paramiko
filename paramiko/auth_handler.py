@@ -293,6 +293,17 @@ class AuthHandler:
             return None
         return self.transport._key_info[algorithm](Message(keyblob))
 
+    def _choose_fallback_pubkey_algorithm(self, key_type, my_algos):
+        # Fallback: first one in our (possibly tweaked by caller) list
+        pubkey_algo = my_algos[0]
+        msg = "Server did not send a server-sig-algs list; defaulting to our first preferred algo ({!r})"  # noqa
+        self._log(DEBUG, msg.format(pubkey_algo))
+        self._log(
+            DEBUG,
+            "NOTE: you may use the 'disabled_algorithms' SSHClient/Transport init kwarg to disable that or other algorithms if your server does not support them!",  # noqa
+        )
+        return pubkey_algo
+
     def _finalize_pubkey_algorithm(self, key_type):
         # Short-circuit for non-RSA keys
         if "rsa" not in key_type:
@@ -333,6 +344,7 @@ class AuthHandler:
             self.transport.server_extensions.get("server-sig-algs", b(""))
         )
         pubkey_algo = None
+        # Prefer to match against server-sig-algs
         if server_algo_str:
             server_algos = server_algo_str.split(",")
             self._log(
@@ -354,14 +366,10 @@ class AuthHandler:
                 # technically for initial key exchange, not pubkey auth.
                 err = "Unable to agree on a pubkey algorithm for signing a {!r} key!"  # noqa
                 raise AuthenticationException(err.format(key_type))
+        # Fallback to something based purely on the key & our configuration
         else:
-            # Fallback: first one in our (possibly tweaked by caller) list
-            pubkey_algo = my_algos[0]
-            msg = "Server did not send a server-sig-algs list; defaulting to our first preferred algo ({!r})"  # noqa
-            self._log(DEBUG, msg.format(pubkey_algo))
-            self._log(
-                DEBUG,
-                "NOTE: you may use the 'disabled_algorithms' SSHClient/Transport init kwarg to disable that or other algorithms if your server does not support them!",  # noqa
+            pubkey_algo = self._choose_fallback_pubkey_algorithm(
+                key_type, my_algos
             )
         if key_type.endswith("-cert-v01@openssh.com"):
             pubkey_algo += "-cert-v01@openssh.com"
