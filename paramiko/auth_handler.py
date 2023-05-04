@@ -1075,3 +1075,16 @@ class AuthOnlyHandler(AuthHandler):
             m.add_string(submethods)
 
         return self.send_auth_request(username, "keyboard-interactive", finish)
+
+    # NOTE: not strictly 'auth only' related, but allows users to opt-in.
+    def _choose_fallback_pubkey_algorithm(self, key_type, my_algos):
+        msg = "Server did not send a server-sig-algs list; defaulting to something in our preferred algorithms list"  # noqa
+        self._log(DEBUG, msg)
+        if key_type in my_algos:
+            msg = f"Current key type, {key_type!r}, is in our preferred list; using that"  # noqa
+            algo = key_type
+        else:
+            algo = my_algos[0]
+            msg = f"{key_type!r} not in our list - trying first list item instead, {algo!r}"  # noqa
+        self._log(DEBUG, msg)
+        return algo
