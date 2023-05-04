@@ -346,6 +346,8 @@ def server(
     pubkeys=None,
     catch_error=False,
     transport_factory=None,
+    defer=False,
+    skip_verify=False,
 ):
     """
     SSH server contextmanager for testing.
@@ -368,6 +370,13 @@ def server(
         Necessary for connection_time exception testing.
     :param transport_factory:
         Like the same-named param in SSHClient: which Transport class to use.
+    :param bool defer:
+        Whether to defer authentication during connecting.
+
+        This is really just shorthand for ``connect={}`` which would do roughly
+        the same thing. Also: this implies skip_verify=True automatically!
+    :param bool skip_verify:
+        Whether NOT to do the default "make sure auth passed" check.
     """
     if init is None:
         init = {}
@@ -376,7 +385,12 @@ def server(
     if client_init is None:
         client_init = {}
     if connect is None:
-        connect = dict(username="slowdive", password="pygmalion")
+        # No auth at all please
+        if defer:
+            connect = dict()
+        # Default username based auth
+        else:
+            connect = dict(username="slowdive", password="pygmalion")
     socks = LoopSocket()
     sockc = LoopSocket()
     sockc.link(socks)
@@ -416,6 +430,10 @@ def server(
         err = e
 
     yield (tc, ts, err) if catch_error else (tc, ts)
+
+    if not (catch_error or skip_verify):
+        assert ts.is_authenticated()
+        assert tc.is_authenticated()
 
     tc.close()
     ts.close()

@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 from os.path import join
 from shutil import rmtree, copytree
 
@@ -50,8 +51,10 @@ def test(
         opts += " -f"
     modstr = ""
     if module is not None:
-        # NOTE: implicit test_ prefix as we're not on pytest-relaxed yet
-        modstr = " tests/test_{}.py".format(module)
+        base = f"{module}.py"
+        tests = Path("tests")
+        legacy = tests / f"test_{base}"
+        modstr = str(legacy if legacy.exists() else tests / base)
     # Switch runner depending on coverage or no coverage.
     # TODO: get pytest's coverage plugin working, IIRC it has issues?
     runner = "pytest"
