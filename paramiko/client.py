@@ -697,6 +697,8 @@ class SSHClient(ClosingContextManager):
 
         if not two_factor:
             for key_filename in key_filenames:
+                # TODO 4.0: leverage PKey.from_path() if we don't end up just
+                # killing SSHClient entirely
                 for pkey_class in (RSAKey, DSSKey, ECDSAKey, Ed25519Key):
                     try:
                         key = self._key_from_filepath(

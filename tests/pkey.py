@@ -1,7 +1,14 @@
 from pytest import raises
 
 from cryptography.hazmat.primitives.asymmetric.ed448 import Ed448PrivateKey
-from paramiko import PKey, Ed25519Key, RSAKey, UnknownKeyType, Message
+from paramiko import (
+    PKey,
+    Ed25519Key,
+    RSAKey,
+    UnknownKeyType,
+    Message,
+    PublicBlob,
+)
 
 from ._util import _support
 
@@ -37,6 +44,47 @@ class PKey_:
             with raises(ValueError):
                 PKey.from_path(__file__)
 
+        class automatically_loads_certificates:
+            def existing_cert_loaded_when_given_key_path(self):
+                key = PKey.from_path(_support("rsa.key"))
+                # Public blob exists despite no .load_certificate call
+                assert key.public_blob is not None
+                assert (
+                    key.public_blob.key_type == "ssh-rsa-cert-v01@openssh.com"
+                )
+                # And it's definitely the one we expected
+                assert key.public_blob == PublicBlob.from_file(
+                    _support("rsa.key-cert.pub")
+                )
+
+            def can_be_given_cert_path_instead(self):
+                key = PKey.from_path(_support("rsa.key-cert.pub"))
+                # It's still a key, not a PublicBlob
+                assert isinstance(key, RSAKey)
+                # Public blob exists despite no .load_certificate call
+                assert key.public_blob is not None
+                assert (
+                    key.public_blob.key_type == "ssh-rsa-cert-v01@openssh.com"
+                )
+                # And it's definitely the one we expected
+                assert key.public_blob == PublicBlob.from_file(
+                    _support("rsa.key-cert.pub")
+                )
+
+            def no_cert_load_if_no_cert(self):
+                # This key exists (it's a copy of the regular one) but has no
+                # matching -cert.pub
+                key = PKey.from_path(_support("rsa-lonely.key"))
+                assert key.public_blob is None
+
+            def excepts_usefully_if_no_key_only_cert(self):
+                # TODO: is that truly an error condition? the cert is ~the
+                # pubkey and we still require the privkey for signing, yea?
+                # This cert exists (it's a copy of the regular one) but there's
+                # no rsa-missing.key to load.
+                with raises(FileNotFoundError) as info:
+                    PKey.from_path(_support("rsa-missing.key-cert.pub"))
+                assert info.value.filename.endswith("rsa-missing.key")
 
     class load_certificate:
         def rsa_public_cert_blobs(self):

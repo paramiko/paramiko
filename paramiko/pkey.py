@@ -115,7 +115,7 @@ class PKey:
         """
         Attempt to instantiate appropriate key subclass from given file path.
 
-        :param Path path: The path to load (may be a `str`).
+        :param Path path: The path to load (may also be a `str`).
 
         :returns:
             A `PKey` subclass instance.
@@ -126,11 +126,28 @@ class PKey:
         .. versionadded:: 3.2
         """
         # TODO: make sure sphinx is reading Path right in param list...
+
+        # Lazy import to avoid circular import issues
         from paramiko import DSSKey, RSAKey, Ed25519Key, ECDSAKey
 
-        if not isinstance(path, Path):
-            path = Path(path)
-        data = path.read_bytes()
+        # Normalize to string, as cert suffix isn't quite an extension, so
+        # pathlib isn't useful for this.
+        path = str(path)
+
+        # Sort out cert vs key, i.e. it is 'legal' to hand this kind of API
+        # /either/ the key /or/ the cert, when there is a key/cert pair.
+        cert_suffix = "-cert.pub"
+        if str(path).endswith(cert_suffix):
+            key_path = path[: -len(cert_suffix)]
+            cert_path = path
+        else:
+            key_path = path
+            cert_path = path + cert_suffix
+
+        key_path = Path(key_path).expanduser()
+        cert_path = Path(cert_path).expanduser()
+
+        data = key_path.read_bytes()
         # Like OpenSSH, try modern/OpenSSH-specific key load first
         try:
             loaded = serialization.load_ssh_private_key(
@@ -160,8 +177,12 @@ class PKey:
             key_class = ECDSAKey
         else:
             raise UnknownKeyType(key_bytes=data, key_type=loaded.__class__)
-        with path.open() as fd:
-            return key_class.from_private_key(fd, password=passphrase)
+        with key_path.open() as fd:
+            key = key_class.from_private_key(fd, password=passphrase)
+        if cert_path.exists():
+            # load_certificate can take Message, path-str, or value-str
+            key.load_certificate(str(cert_path))
+        return key
 
     @staticmethod
     def from_type_string(key_type, key_bytes):
@@ -204,6 +225,12 @@ class PKey:
         """
         return [cls.name]
 
+    # TODO 4.0: make this and subclasses consistent, some of our own
+    # classmethods even assume kwargs we don't define!
+    # TODO 4.0: prob also raise NotImplementedError instead of pass'ing; the
+    # contract is pretty obviously that you need to handle msg/data/filename
+    # appropriately. (If 'pass' is a concession to testing, see about doing the
+    # work to fix the tests instead)
     def __init__(self, msg=None, data=None):
         """
         Create a new instance of this public key type.  If ``msg`` is given,

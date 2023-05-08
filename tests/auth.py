@@ -9,6 +9,7 @@ from pytest import raises
 from paramiko import (
     RSAKey,
     DSSKey,
+    PKey,
     BadAuthenticationType,
     AuthenticationException,
     SSHException,
@@ -163,6 +164,27 @@ class AuthOnlyHandler_:
                 assert tc.is_authenticated()
                 # Selected ssh-rsa, instead of first-in-the-list (rsa-sha2-512)
                 assert tc._agreed_pubkey_algorithm == "ssh-rsa"
+
+        @requires_sha1_signing
+        def key_type_algo_selection_is_cert_suffix_aware(self):
+            # This key has a cert next to it, which should trigger cert-aware
+            # loading within key classes.
+            privkey = PKey.from_path(_support("rsa.key"))
+            server_init = dict(_disable_sha2_pubkey, server_sig_algs=False)
+            with self._server(
+                pubkeys=[privkey],
+                connect=dict(pkey=privkey),
+                server_init=server_init,
+                catch_error=True,
+            ) as (tc, ts, err):
+                assert not err
+                # Auth did work
+                assert tc.is_authenticated()
+                # Selected expected cert type
+                assert (
+                    tc._agreed_pubkey_algorithm
+                    == "ssh-rsa-cert-v01@openssh.com"
+                )
 
         @requires_sha1_signing
         def uses_first_preferred_algo_if_key_type_not_in_list(self):

@@ -1080,9 +1080,11 @@ class AuthOnlyHandler(AuthHandler):
     def _choose_fallback_pubkey_algorithm(self, key_type, my_algos):
         msg = "Server did not send a server-sig-algs list; defaulting to something in our preferred algorithms list"  # noqa
         self._log(DEBUG, msg)
-        if key_type in my_algos:
-            msg = f"Current key type, {key_type!r}, is in our preferred list; using that"  # noqa
-            algo = key_type
+        noncert_key_type = key_type.replace("-cert-v01@openssh.com", "")
+        if key_type in my_algos or noncert_key_type in my_algos:
+            actual = key_type if key_type in my_algos else noncert_key_type
+            msg = f"Current key type, {actual!r}, is in our preferred list; using that"  # noqa
+            algo = actual
         else:
             algo = my_algos[0]
             msg = f"{key_type!r} not in our list - trying first list item instead, {algo!r}"  # noqa
