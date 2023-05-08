@@ -686,43 +686,6 @@ class KeyTest(unittest.TestCase):
         finally:
             os.remove(newfile)
 
-    def test_certificates(self):
-        # NOTE: we also test 'live' use of cert auth for all key types in
-        # test_client.py; this and nearby cert tests are more about the gritty
-        # details.
-        # PKey.load_certificate
-        key_path = _support(os.path.join("cert_support", "test_rsa.key"))
-        key = RSAKey.from_private_key_file(key_path)
-        self.assertTrue(key.public_blob is None)
-        cert_path = _support(
-            os.path.join("cert_support", "test_rsa.key-cert.pub")
-        )
-        key.load_certificate(cert_path)
-        self.assertTrue(key.public_blob is not None)
-        self.assertEqual(
-            key.public_blob.key_type, "ssh-rsa-cert-v01@openssh.com"
-        )
-        self.assertEqual(key.public_blob.comment, "test_rsa.key.pub")
-        # Delve into blob contents, for test purposes
-        msg = Message(key.public_blob.key_blob)
-        self.assertEqual(msg.get_text(), "ssh-rsa-cert-v01@openssh.com")
-        msg.get_string()
-        e = msg.get_mpint()
-        n = msg.get_mpint()
-        self.assertEqual(e, key.public_numbers.e)
-        self.assertEqual(n, key.public_numbers.n)
-        # Serial number
-        self.assertEqual(msg.get_int64(), 1234)
-
-        # Prevented from loading certificate that doesn't match
-        key_path = _support(os.path.join("cert_support", "test_ed25519.key"))
-        key1 = Ed25519Key.from_private_key_file(key_path)
-        self.assertRaises(
-            ValueError,
-            key1.load_certificate,
-            _support("test_rsa.key-cert.pub"),
-        )
-
     @patch("paramiko.pkey.os")
     def _test_keyfile_race(self, os_, exists):
         # Re: CVE-2022-24302
@@ -776,22 +739,3 @@ class KeyTest(unittest.TestCase):
         finally:
             if os.path.exists(new):
                 os.unlink(new)
-
-    def test_sign_rsa_with_certificate(self):
-        data = b"ice weasels"
-        key_path = _support(os.path.join("cert_support", "test_rsa.key"))
-        key = RSAKey.from_private_key_file(key_path)
-        msg = key.sign_ssh_data(data, "rsa-sha2-256")
-        msg.rewind()
-        assert "rsa-sha2-256" == msg.get_text()
-        sign = msg.get_binary()
-        cert_path = _support(
-            os.path.join("cert_support", "test_rsa.key-cert.pub")
-        )
-        key.load_certificate(cert_path)
-        msg = key.sign_ssh_data(data, "rsa-sha2-256-cert-v01@openssh.com")
-        msg.rewind()
-        assert "rsa-sha2-256" == msg.get_text()
-        assert sign == msg.get_binary()
-        msg.rewind()
-        assert key.verify_ssh_sig(b"ice weasels", msg)

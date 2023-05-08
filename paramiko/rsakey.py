@@ -125,9 +125,12 @@ class RSAKey(PKey):
         sig = self.key.sign(
             data,
             padding=padding.PKCS1v15(),
+            # HASHES being just a map from long identifier to either SHA1 or
+            # SHA256 - cert'ness is not truly relevant.
             algorithm=self.HASHES[algorithm](),
         )
         m = Message()
+        # And here again, cert'ness is irrelevant, so it is stripped out.
         m.add_string(algorithm.replace("-cert-v01@openssh.com", ""))
         m.add_string(sig)
         return m

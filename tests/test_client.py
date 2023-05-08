@@ -328,11 +328,10 @@ class SSHClientTest(ClientTest):
         # server-side behavior is 100% identical.)
         # NOTE: only bothered whipping up one cert per overall class/family.
         for type_ in ("rsa", "dss", "ecdsa_256", "ed25519"):
-            cert_name = "test_{}.key-cert.pub".format(type_)
-            cert_path = _support(os.path.join("cert_support", cert_name))
+            key_path = _support(f"{type_}.key")
             self._test_connection(
-                key_filename=cert_path,
-                public_blob=PublicBlob.from_file(cert_path),
+                key_filename=key_path,
+                public_blob=PublicBlob.from_file(f"{key_path}-cert.pub"),
             )
 
     @requires_sha1_signing
@@ -344,13 +343,10 @@ class SSHClientTest(ClientTest):
         # that a specific cert was found, along with regular authorization
         # succeeding proving that the overall flow works.
         for type_ in ("rsa", "dss", "ecdsa_256", "ed25519"):
-            key_name = "test_{}.key".format(type_)
-            key_path = _support(os.path.join("cert_support", key_name))
+            key_path = _support(f"{type_}.key")
             self._test_connection(
                 key_filename=key_path,
-                public_blob=PublicBlob.from_file(
-                    "{}-cert.pub".format(key_path)
-                ),
+                public_blob=PublicBlob.from_file(f"{key_path}-cert.pub"),
             )
 
     def _cert_algo_test(self, ver, alg):
@@ -359,9 +355,7 @@ class SSHClientTest(ClientTest):
         self._test_connection(
             # NOTE: SSHClient is able to take either the key or the cert & will
             # set up its internals as needed
-            key_filename=_support(
-                os.path.join("cert_support", "test_rsa.key-cert.pub")
-            ),
+            key_filename=_support("rsa.key-cert.pub"),
             server_name="SSH-2.0-OpenSSH_{}".format(ver),
         )
         assert (
