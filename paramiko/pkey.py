@@ -87,10 +87,8 @@ class PKey:
     }
     _PRIVATE_KEY_FORMAT_ORIGINAL = 1
     _PRIVATE_KEY_FORMAT_OPENSSH = 2
-    BEGIN_TAG = re.compile(
-        r"^-{5}BEGIN (RSA|DSA|EC|OPENSSH) PRIVATE KEY-{5}\s*$"
-    )
-    END_TAG = re.compile(r"^-{5}END (RSA|DSA|EC|OPENSSH) PRIVATE KEY-{5}\s*$")
+    BEGIN_TAG = re.compile(r"^-{5}BEGIN ((RSA|ENCRYPTED|DSA|EC|OPENSSH)\s)?PRIVATE KEY-{5}\s*$")
+    END_TAG = re.compile(r"^-{5}END ((RSA|ENCRYPTED|DSA|EC|OPENSSH)\s)?PRIVATE KEY-{5}\s*$")
 
     def __init__(self, msg=None, data=None):
         """
@@ -318,7 +316,10 @@ class PKey:
             start += 1
             m = self.BEGIN_TAG.match(lines[start])
         start += 1
-        keytype = m.group(1) if m else None
+
+        first_group = m.group(1)
+        keytype_in_tag = first_group and first_group.rstrip(" ")  # rm trailing whitespace captured
+        keytype = tag if not keytype_in_tag or keytype_in_tag == "ENCRYPTED" else keytype_in_tag
         if start >= len(lines) or keytype is None:
             raise SSHException("not a valid {} private key file".format(tag))
 
