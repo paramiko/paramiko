@@ -1021,7 +1021,7 @@ class Channel(ClosingContextManager):
         )
 
     def _request_success(self, m):
-        self._log(DEBUG, "Sesch channel {} request ok".format(self.chanid))
+        self._log(DEBUG, "Secsh channel {} request ok".format(self.chanid))
         self.event_ready = True
         self.event.set()
         return
