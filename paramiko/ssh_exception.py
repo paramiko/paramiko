@@ -89,6 +89,11 @@ class PartialAuthentication(AuthenticationException):
         )
 
 
+# TODO 4.0: stop inheriting from SSHException, move to auth.py
+class UnableToAuthenticate(AuthenticationException):
+    pass
+
+
 class ChannelException(SSHException):
     """
     Exception raised when an attempt to open a new `.Channel` fails.

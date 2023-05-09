@@ -32,6 +32,7 @@ from paramiko.client import (
     WarningPolicy,
 )
 from paramiko.auth_handler import AuthHandler
+from paramiko.auth_strategy import AuthStrategy, AuthResult
 from paramiko.ssh_gss import GSSAuth, GSS_AUTH_AVAILABLE, GSS_EXCEPTIONS
 from paramiko.channel import (
     Channel,
