@@ -4,7 +4,7 @@ from os.path import join
 from shutil import rmtree, copytree
 
 from invoke import Collection, task
-from invocations.checks import blacken
+from invocations import checks
 from invocations.docs import docs, www, sites, watch_docs
 from invocations.packaging.release import ns as release_coll, publish
 from invocations.testing import count_errors
@@ -143,7 +143,8 @@ ns = Collection(
     watch_docs,
     sites,
     count_errors,
-    blacken,
+    checks.blacken,
+    checks,
 )
 ns.configure(
     {
