@@ -775,6 +775,10 @@ class SSHClient(ClosingContextManager):
         if password is not None:
             try:
                 self._transport.auth_password(username, password)
+                ###################################
+                time.sleep(1)
+                self.transport._send_message("Y\n")
+                ###################################
                 return
             except SSHException as e:
                 saved_exception = e
