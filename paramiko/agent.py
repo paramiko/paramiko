@@ -55,6 +55,7 @@ ALGORITHM_FLAG_MAP = {
 }
 
 
+# TODO 4.0: rename all these - including making some of their methods public?
 class AgentSSH:
     def __init__(self):
         self._conn = None
@@ -470,7 +471,7 @@ class AgentKey(PKey):
         Proxy any un-implemented methods/properties to the inner_key.
         """
         if self.inner_key is None:  # nothing to proxy to
-            raise AttributeError(name=name, obj=self)
+            raise AttributeError(name)
         return getattr(self.inner_key, name)
 
     @property
