@@ -475,7 +475,8 @@ class AgentKey(PKey):
 
     @property
     def _fields(self):
-        raise NotImplementedError
+        fallback = [self.get_name(), self.blob]
+        return self.inner_key._fields if self.inner_key else fallback
 
     def sign_ssh_data(self, data, algorithm=None):
         msg = Message()

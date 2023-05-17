@@ -2,6 +2,8 @@
 Changelog
 =========
 
+- :feature:`-` Implement ``_fields()`` on `~paramiko.agent.AgentKey` so that it
+  may be compared (via ``==``) with other `~paramiko.pkey.PKey` instances.
 - :bug:`23 major` Since its inception, Paramiko has (for reasons lost to time)
   implemented authentication as a side effect of handling affirmative replies
   to ``MSG_SERVICE_REQUEST`` protocol messages. What this means is Paramiko
