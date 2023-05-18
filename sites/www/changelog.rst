@@ -2,6 +2,18 @@
 Changelog
 =========
 
+- :bug:`2012 major` (also :issue:`1961` and countless others) The
+  ``server-sig-algs`` and ``RSA-SHA2`` features added around Paramiko 2.9 or
+  so, had the annoying side effect of not working with servers that dont'
+  support *either* of those feature sets, requiring use of
+  ``disabled_algorithms`` to forcibly disable the SHA2 algorithms on Paramiko's
+  end.
+
+  The **experimental** `~paramiko.transport.ServiceRequestingTransport` (noted
+  in its own entry in this changelog) includes a fix for this issue,
+  specifically by falling back to the same algorithm as the in-use pubkey if
+  it's in the algorithm list (leaving the "first algorithm in said list" as an
+  absolute final fallback).
 - :feature:`-` Implement ``_fields()`` on `~paramiko.agent.AgentKey` so that it
   may be compared (via ``==``) with other `~paramiko.pkey.PKey` instances.
 - :bug:`23 major` Since its inception, Paramiko has (for reasons lost to time)
