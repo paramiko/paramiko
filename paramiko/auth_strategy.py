@@ -69,6 +69,7 @@ class Password(AuthSource):
 
     def authenticate(self, transport):
         # Lazily get the password, in case it's prompting a user
+        # TODO: be nice to log source _of_ the password?
         password = self.password_getter()
         return transport.auth_password(self.username, password)
 
@@ -139,8 +140,21 @@ class OnDiskPrivateKey(PrivateKey):
         )
 
 
+# TODO re sources: is there anything in an OpenSSH config file that doesn't fit
+# into what Paramiko already had kwargs for?
+
+
 SourceResult = namedtuple("SourceResult", ["source", "result"])
 
+# TODO: tempting to make this an OrderedDict, except the keys essentially want
+# to be rich objects (AuthSources) which do not make for useful user indexing?
+# TODO: members being vanilla tuples is pretty old-school/expedient; they
+# "really" want to be something that's type friendlier (unless the tuple's 2nd
+# member being a Union of two types is "fine"?), which I assume means yet more
+# classes, eg an abstract SourceResult with concrete AuthSuccess and
+# AuthFailure children?
+# TODO: arguably we want __init__ typechecking of the members (or to leverage
+# mypy by classifying this literally as list-of-AuthSource?)
 class AuthResult(list):
     """
     Represents a partial or complete SSH authentication attempt.
@@ -166,6 +180,7 @@ class AuthResult(list):
     def __str__(self):
         # NOTE: meaningfully distinct from __repr__, which still wants to use
         # superclass' implementation.
+        # TODO: go hog wild, use rich.Table? how is that on degraded term's?
         return "\n".join(f"{x.source} -> {x.result}" for x in self)
 
 
@@ -225,13 +240,26 @@ class AuthStrategy:
         """
         succeeded = False
         overall_result = AuthResult(strategy=self)
+        # TODO: arguably we could fit in a "send none auth, record allowed auth
+        # types sent back" thing here as OpenSSH-client does, but that likely
+        # wants to live in fabric.OpenSSHAuthStrategy as not all target servers
+        # will implement it!
+        # TODO: needs better "server told us too many attempts" checking!
         for source in self.get_sources(transport):
             self.log.debug(f"Trying {source}")
             try:  # NOTE: this really wants to _only_ wrap the authenticate()!
                 result = source.authenticate(transport)
                 succeeded = True
+            # TODO: 'except PartialAuthentication' is needed for 2FA and
+            # similar, as per old SSHClient.connect - it is the only way
+            # AuthHandler supplies access to the 'name-list' field from
+            # MSG_USERAUTH_FAILURE, at present.
             except Exception as e:
                 result = e
+                # TODO: look at what this could possibly raise, we don't really
+                # want Exception here, right? just SSHException subclasses? or
+                # do we truly want to capture anything at all with assumption
+                # it's easy enough for users to look afterwards?
                 # NOTE: showing type, not message, for tersity & also most of
                 # the time it's basically just "Authentication failed."
                 source_class = e.__class__.__name__
@@ -247,3 +275,6 @@ class AuthStrategy:
             raise AuthFailure(result=overall_result)
         # Success: give back what was done, in case they care.
         return overall_result
+
+    # TODO: is there anything OpenSSH client does which _can't_ cleanly map to
+    # iterating a generator?
