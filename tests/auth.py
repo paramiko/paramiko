@@ -1,29 +1,29 @@
 """
 Tests focusing primarily on the authentication step.
 
-Thus, they concern AuthHandler, with a side of Transport.
+Thus, they concern AuthHandler and AuthStrategy, with a side of Transport.
 """
 
 from pytest import raises
 
 from paramiko import (
-    RSAKey,
+    AuthenticationException,
+    BadAuthenticationType,
     DSSKey,
     PKey,
-    BadAuthenticationType,
-    AuthenticationException,
+    RSAKey,
     SSHException,
     ServiceRequestingTransport,
 )
 
 from ._util import (
-    _support,
-    server,
-    unicodey,
-    requires_sha1_signing,
+    _disable_sha1_pubkey,
     _disable_sha2,
     _disable_sha2_pubkey,
-    _disable_sha1_pubkey,
+    _support,
+    requires_sha1_signing,
+    server,
+    unicodey,
 )
 
 
