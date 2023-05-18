@@ -15,6 +15,7 @@ from paramiko import (
     RSAKey,
     Ed25519Key,
     ECDSAKey,
+    PKey,
 )
 
 from ._loop import LoopSocket
@@ -132,6 +133,7 @@ key_data = [
     ],
 ]
 for datum in key_data:
+    # Add true first member with human-facing short algo name
     short = datum[0].replace("ssh-", "").replace("sha2-nistp", "")
     datum.insert(0, short)
 
@@ -145,8 +147,8 @@ def keys(request):
     - ``full_type``: the "message style" key identifier, eg ``ssh-rsa``, or
       ``ecdsa-sha2-nistp256``.
     - ``path``: a pathlib Path object to the fixture key file
-    - ``pkey``: an instantiated PKey subclass object
-    - ``fingerprint``: the expected fingerprint of said key
+    - ``pkey``: PKey object, which may or may not also have a cert loaded
+    - ``expected_fp``: the expected fingerprint of said key
     """
     short_type, key_type, key_class, fingerprint = request.param
     bag = Lexicon()
@@ -155,5 +157,11 @@ def keys(request):
     bag.path = Path(_support(f"{short_type}.key"))
     with bag.path.open() as fd:
         bag.pkey = key_class.from_private_key(fd)
-    bag.fingerprint = fingerprint
+    bag.expected_fp = fingerprint
+    # Also tack on the cert-bearing variant for some tests
+    cert = bag.path.with_suffix(".key-cert.pub")
+    if cert.exists():
+        bag.pkey_with_cert = PKey.from_path(cert)
+    # Safety checks
+    assert bag.pkey.fingerprint == fingerprint
     yield bag

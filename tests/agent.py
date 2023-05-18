@@ -76,6 +76,19 @@ class AgentKey_:
             key = AgentKey(agent=None, blob=keys.pkey.asbytes())
             assert key.get_bits() == keys.pkey.get_bits()
 
+    class asbytes:
+        def defaults_to_owned_blob(self):
+            blob = Mock()
+            assert _BareAgentKey(name=None, blob=blob).asbytes() is blob
+
+        def defers_to_inner_key_when_present(self, keys):
+            key = AgentKey(agent=None, blob=keys.pkey_with_cert.asbytes())
+            # Artificially make outer key blob != inner key blob; comment in
+            # AgentKey.asbytes implies this can sometimes really happen but I
+            # no longer recall when that could be?
+            key.blob = b"nope"
+            assert key.asbytes() == key.inner_key.asbytes()
+
     @mark.parametrize(
         "kwargs,expectation",
         [
