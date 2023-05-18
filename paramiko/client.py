@@ -325,12 +325,11 @@ class SSHClient(ClosingContextManager):
             `.Transport` instance to be used by this client. Defaults to
             `.Transport.__init__`.
         :param auth_strategy:
-            an optional instance of `.AuthStrategy`, triggering use of the
-            newer authentication mechanism (see :ref:`auth-flow`). This
-            parameter is **incompatible** with all other authentication-related
-            parameters (such as, but not limited to, ``password``,
-            ``key_filename`` and ``allow_agent``) and will trigger an exception
-            if given alongside them.
+            an optional instance of `.AuthStrategy`, triggering use of this
+            newer authentication mechanism. This parameter is **incompatible**
+            with all other authentication-related parameters (such as, but not
+            limited to, ``password``, ``key_filename`` and ``allow_agent``) and
+            will trigger an exception if given alongside them.
 
         :returns:
             `.AuthResult` if ``auth_strategy`` is non-``None``; otherwise,

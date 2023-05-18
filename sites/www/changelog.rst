@@ -57,8 +57,8 @@ Changelog
 - :feature:`387` Users of `~paramiko.client.SSHClient` can now configure the
   authentication logic Paramiko uses when connecting to servers; this
   functionality is intended for advanced users and higher-level libraries such
-  as `Fabric <https://fabfile.org>`_. See :ref:`the conceptual API docs
-  <auth-flow>` for details.
+  as `Fabric <https://fabfile.org>`_. See `~paramiko.auth_strategy` for
+  details.
 
   Fabric's co-temporal release includes a proof-of-concept use of this feature,
   implementing an auth flow much closer to that of the OpenSSH client (versus
