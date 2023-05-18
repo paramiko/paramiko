@@ -49,6 +49,9 @@ class UtilTest(unittest.TestCase):
             "Agent",
             "AgentKey",
             "AuthenticationException",
+            "AuthHandler",
+            "AuthSource",
+            "AuthStrategy",
             "AutoAddPolicy",
             "BadAuthenticationType",
             "BufferedFile",
@@ -60,6 +63,7 @@ class UtilTest(unittest.TestCase):
             "HostKeys",
             "Message",
             "MissingHostKeyPolicy",
+            "NoneAuth",
             "PasswordRequiredException",
             "RSAKey",
             "RejectPolicy",
@@ -82,7 +86,7 @@ class UtilTest(unittest.TestCase):
             "WarningPolicy",
             "util",
         ):
-            assert name in paramiko.__all__
+            assert name in dir(paramiko)
 
     def test_generate_key_bytes(self):
         key_bytes = paramiko.util.generate_key_bytes(

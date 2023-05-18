@@ -1,3 +1,10 @@
+"""
+Modern, adaptable authentication machinery.
+
+Replaces certain parts of `.SSHClient`. For a concrete implementation, see the
+``OpenSSHAuthStrategy`` class in `Fabric <https://fabfile.org>`_.
+"""
+
 from collections import namedtuple
 
 from .agent import AgentKey
@@ -34,7 +41,7 @@ class AuthSource:
         raise NotImplementedError
 
 
-def NoneAuth(AuthSource):
+class NoneAuth(AuthSource):
     """
     Auth type "none", ie https://www.rfc-editor.org/rfc/rfc4252#section-5.2 .
     """
@@ -54,7 +61,7 @@ class Password(AuthSource):
 
         If you already know the password at instantiation time, you should
         simply use something like ``lambda: "my literal"`` (for a literal, but
-        also, shame on you!) or ``lambda: variable_name (for something stored
+        also, shame on you!) or ``lambda: variable_name`` (for something stored
         in a variable).
     """
 
@@ -169,6 +176,19 @@ class AuthResult(list):
     return value from the relevant `.Transport` method, or an exception
     object).
 
+    .. note::
+        Transport auth method results are always themselves a ``list`` of "next
+        allowable authentication methods".
+
+        In the simple case of "you just authenticated successfully", it's an
+        empty list; if your auth was rejected but you're allowed to try again,
+        it will be a list of string method names like ``pubkey`` or
+        ``password``.
+
+        The ``__str__`` of this class represents the empty-list scenario as the
+        word ``success``, which should make reading the result of an
+        authentication session more obvious to humans.
+
     Instances also have a `strategy` attribute referencing the `AuthStrategy`
     which was attempted.
     """
@@ -181,7 +201,10 @@ class AuthResult(list):
         # NOTE: meaningfully distinct from __repr__, which still wants to use
         # superclass' implementation.
         # TODO: go hog wild, use rich.Table? how is that on degraded term's?
-        return "\n".join(f"{x.source} -> {x.result}" for x in self)
+        # TODO: test this lol
+        return "\n".join(
+            f"{x.source} -> {x.result or 'success'}" for x in self
+        )
 
 
 # TODO 4.0: descend from SSHException or even just Exception

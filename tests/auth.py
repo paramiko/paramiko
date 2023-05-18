@@ -4,12 +4,16 @@ Tests focusing primarily on the authentication step.
 Thus, they concern AuthHandler and AuthStrategy, with a side of Transport.
 """
 
+from unittest.mock import Mock
+
 from pytest import raises
 
 from paramiko import (
     AuthenticationException,
+    AuthSource,
     BadAuthenticationType,
     DSSKey,
+    NoneAuth,
     PKey,
     RSAKey,
     SSHException,
@@ -278,7 +282,6 @@ class SHA2SignaturePubkeys:
         privkey = RSAKey.from_private_key_file(_support("rsa.key"))
         with server(
             pubkeys=[privkey],
-            # TODO: why is this passing without a username?
             connect=dict(pkey=privkey),
             init=dict(
                 disabled_algorithms=dict(pubkeys=["ssh-rsa", "rsa-sha2-256"])
@@ -311,3 +314,40 @@ class SHA2SignaturePubkeys:
         ) as (tc, ts):
             assert tc.is_authenticated()
             assert tc._agreed_pubkey_algorithm == "rsa-sha2-256"
+
+
+class AuthSource_:
+    class base_class:
+        def init_requires_and_saves_username(self):
+            with raises(TypeError):
+                AuthSource()
+            assert AuthSource(username="foo").username == "foo"
+
+        def dunder_repr_delegates_to_helper(self):
+            source = AuthSource("foo")
+            source._repr = Mock(wraps=lambda: "whatever")
+            repr(source)
+            source._repr.assert_called_once_with()
+
+        def repr_helper_prints_basic_kv_pairs(self):
+            assert repr(AuthSource("foo")) == "AuthSource()"
+            assert (
+                AuthSource("foo")._repr(bar="open") == "AuthSource(bar='open')"
+            )
+
+        def authenticate_takes_transport_and_is_abstract(self):
+            # TODO: this test kinda just goes away once we're typed?
+            with raises(TypeError):
+                AuthSource("foo").authenticate()
+            with raises(NotImplementedError):
+                AuthSource("foo").authenticate(None)
+
+    class NoneAuth_:
+        def authenticate_auths_none(self):
+            trans = Mock()
+            NoneAuth("foo").authenticate(trans)
+            trans.auth_none.assert_called_once_with("foo")
+
+
+class AuthStrategy_:
+    pass

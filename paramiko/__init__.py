@@ -32,7 +32,12 @@ from paramiko.client import (
     WarningPolicy,
 )
 from paramiko.auth_handler import AuthHandler
-from paramiko.auth_strategy import AuthStrategy, AuthResult
+from paramiko.auth_strategy import (
+    AuthStrategy,
+    AuthResult,
+    AuthSource,
+    NoneAuth,
+)
 from paramiko.ssh_gss import GSSAuth, GSS_AUTH_AVAILABLE, GSS_EXCEPTIONS
 from paramiko.channel import (
     Channel,
@@ -106,6 +111,7 @@ key_classes = [DSSKey, RSAKey, Ed25519Key, ECDSAKey]
 __author__ = "Jeff Forcier <jeff@bitprophet.org>"
 __license__ = "GNU Lesser General Public License (LGPL)"
 
+# TODO 4.0: remove this, jeez
 __all__ = [
     "Agent",
     "AgentKey",
