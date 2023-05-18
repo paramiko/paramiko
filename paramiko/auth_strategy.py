@@ -81,6 +81,10 @@ class Password(AuthSource):
         return transport.auth_password(self.username, password)
 
 
+# TODO 4.0: twiddle this, or PKey, or both, so they're more obviously distinct.
+# TODO 4.0: the obvious is to make this more wordy (PrivateKeyAuth), the
+# minimalist approch might be to rename PKey to just Key (esp given all the
+# subclasses are WhateverKey and not WhateverPKey)
 class PrivateKey(AuthSource):
     """
     Essentially a mixin for private keys.
@@ -130,13 +134,12 @@ class OnDiskPrivateKey(PrivateKey):
         The `PKey` object this auth source uses/represents.
     """
 
-    # TODO: how to log/note how this path came to our attention (ssh_config,
-    # fabric config, some direct kwarg somewhere, CLI flag, etc)? Different
-    # subclasses for all of those seems like massive overkill, so just some
-    # sort of "via" or "source" string argument?
     def __init__(self, username, source, path, pkey):
         super().__init__(username=username)
         self.source = source
+        allowed = ("ssh-config", "python-config", "implicit-home")
+        if source not in allowed:
+            raise ValueError(f"source argument must be one of: {allowed!r}")
         self.path = path
         # Superclass wants .pkey, other two are mostly for display/debugging.
         self.pkey = pkey

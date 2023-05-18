@@ -9,11 +9,16 @@ from unittest.mock import Mock
 from pytest import raises
 
 from paramiko import (
+    AgentKey,
     AuthenticationException,
     AuthSource,
     BadAuthenticationType,
     DSSKey,
+    InMemoryPrivateKey,
     NoneAuth,
+    OnDiskPrivateKey,
+    Password,
+    PrivateKey,
     PKey,
     RSAKey,
     SSHException,
@@ -345,8 +350,104 @@ class AuthSource_:
     class NoneAuth_:
         def authenticate_auths_none(self):
             trans = Mock()
-            NoneAuth("foo").authenticate(trans)
+            result = NoneAuth("foo").authenticate(trans)
             trans.auth_none.assert_called_once_with("foo")
+            assert result is trans.auth_none.return_value
+
+        def repr_shows_class(self):
+            assert repr(NoneAuth("foo")) == "NoneAuth()"
+
+    class Password_:
+        def init_takes_and_stores_password_getter(self):
+            with raises(TypeError):
+                Password("foo")
+            getter = Mock()
+            pw = Password("foo", password_getter=getter)
+            assert pw.password_getter is getter
+
+        def repr_adds_username(self):
+            pw = Password("foo", password_getter=Mock())
+            assert repr(pw) == "Password(user='foo')"
+
+        def authenticate_gets_and_supplies_password(self):
+            getter = Mock(return_value="bar")
+            trans = Mock()
+            pw = Password("foo", password_getter=getter)
+            result = pw.authenticate(trans)
+            trans.auth_password.assert_called_once_with("foo", "bar")
+            assert result is trans.auth_password.return_value
+
+    class PrivateKey_:
+        def authenticate_calls_publickey_with_pkey(self):
+            source = PrivateKey(username="foo")
+            source.pkey = Mock()  # set by subclasses
+            trans = Mock()
+            result = source.authenticate(trans)
+            trans.auth_publickey.assert_called_once_with("foo", source.pkey)
+            assert result is trans.auth_publickey.return_value
+
+    class InMemoryPrivateKey_:
+        def init_takes_pkey_object(self):
+            with raises(TypeError):
+                InMemoryPrivateKey("foo")
+            pkey = Mock()
+            source = InMemoryPrivateKey(username="foo", pkey=pkey)
+            assert source.pkey is pkey
+
+        def repr_shows_pkey_repr(self):
+            pkey = PKey.from_path(_support("ed25519.key"))
+            source = InMemoryPrivateKey("foo", pkey)
+            assert (
+                repr(source)
+                == "InMemoryPrivateKey(pkey=Ed25519Key(alg=ED25519, bits=256, fp=SHA256:J6VESFdD3xSChn8y9PzWzeF+1tl892mOy2TqkMLO4ow))"  # noqa
+            )
+
+        def repr_appends_agent_flag_when_AgentKey(self):
+            real_key = PKey.from_path(_support("ed25519.key"))
+            pkey = AgentKey(agent=None, blob=bytes(real_key))
+            source = InMemoryPrivateKey("foo", pkey)
+            assert (
+                repr(source)
+                == "InMemoryPrivateKey(pkey=AgentKey(alg=ED25519, bits=256, fp=SHA256:J6VESFdD3xSChn8y9PzWzeF+1tl892mOy2TqkMLO4ow)) [agent]"  # noqa
+            )
+
+    class OnDiskPrivateKey_:
+        def init_takes_source_path_and_pkey(self):
+            with raises(TypeError):
+                OnDiskPrivateKey("foo")
+            with raises(TypeError):
+                OnDiskPrivateKey("foo", "bar")
+            with raises(TypeError):
+                OnDiskPrivateKey("foo", "bar", "biz")
+            source = OnDiskPrivateKey(
+                username="foo",
+                source="ssh-config",
+                path="of-exile",
+                pkey="notreally",
+            )
+            assert source.username == "foo"
+            assert source.source == "ssh-config"
+            assert source.path == "of-exile"
+            assert source.pkey == "notreally"
+
+        def init_requires_specific_value_for_source(self):
+            with raises(
+                ValueError,
+                match=r"source argument must be one of: \('ssh-config', 'python-config', 'implicit-home'\)",  # noqa
+            ):
+                OnDiskPrivateKey("foo", source="what?", path="meh", pkey="no")
+
+        def repr_reflects_source_path_and_pkey(self):
+            source = OnDiskPrivateKey(
+                username="foo",
+                source="ssh-config",
+                path="of-exile",
+                pkey="notreally",
+            )
+            assert (
+                repr(source)
+                == "OnDiskPrivateKey(key='notreally', source='ssh-config', path='of-exile')"  # noqa
+            )
 
 
 class AuthStrategy_:
