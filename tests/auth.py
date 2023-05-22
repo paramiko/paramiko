@@ -4,6 +4,7 @@ Tests focusing primarily on the authentication step.
 Thus, they concern AuthHandler and AuthStrategy, with a side of Transport.
 """
 
+from logging import Logger
 from unittest.mock import Mock
 
 from pytest import raises
@@ -512,4 +513,68 @@ class AuthFailure_:
 
 
 class AuthStrategy_:
-    pass
+    def init_requires_ssh_config_param_and_sets_up_a_logger(self):
+        with raises(TypeError):
+            AuthStrategy()
+        conf = object()
+        strat = AuthStrategy(ssh_config=conf)
+        assert strat.ssh_config is conf
+        assert isinstance(strat.log, Logger)
+        assert strat.log.name == "paramiko.auth_strategy"
+
+    def get_sources_is_abstract(self):
+        with raises(NotImplementedError):
+            AuthStrategy(None).get_sources()
+
+    class authenticate:
+        def setup_method(self):
+            self.strat = AuthStrategy(None)  # ssh_config not used directly
+            self.source, self.transport = NoneAuth(None), Mock()
+            self.source.authenticate = Mock()
+            self.strat.get_sources = Mock(return_value=[self.source])
+
+        def requires_and_uses_transport_with_methods_returning_result(self):
+            with raises(TypeError):
+                self.strat.authenticate()
+            result = self.strat.authenticate(self.transport)
+            self.strat.get_sources.assert_called_once_with(self.transport)
+            self.source.authenticate.assert_called_once_with(self.transport)
+            assert isinstance(result, AuthResult)
+            assert result.strategy is self.strat
+            assert len(result) == 1
+            source_res = result[0]
+            assert isinstance(source_res, SourceResult)
+            assert source_res.source is self.source
+            assert source_res.result is self.source.authenticate.return_value
+
+        def logs_sources_attempted(self):
+            self.strat.log = Mock()
+            self.strat.authenticate(self.transport)
+            self.strat.log.debug.assert_called_once_with("Trying NoneAuth()")
+
+        def raises_AuthFailure_if_no_successes(self):
+            self.strat.log = Mock()
+            oops = Exception("onoz")
+            self.source.authenticate.side_effect = oops
+            with raises(AuthFailure) as info:
+                self.strat.authenticate(self.transport)
+            result = info.value.result
+            assert isinstance(result, AuthResult)
+            assert len(result) == 1
+            source_res = result[0]
+            assert isinstance(source_res, SourceResult)
+            assert source_res.source is self.source
+            assert source_res.result is oops
+            self.strat.log.info.assert_called_once_with(
+                "Authentication via NoneAuth() failed with Exception"
+            )
+
+        def short_circuits_on_successful_auth(self):
+            kaboom = Mock(authenticate=Mock(side_effect=Exception("onoz")))
+            self.strat.get_sources.return_value = [self.source, kaboom]
+            result = self.strat.authenticate(self.transport)
+            # No exception, and it's just a regular ol Result
+            assert isinstance(result, AuthResult)
+            # And it did not capture any attempt to execute the 2nd source
+            assert len(result) == 1
+            assert result[0].source is self.source
