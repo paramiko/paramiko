@@ -11,7 +11,9 @@ from pytest import raises
 from paramiko import (
     AgentKey,
     AuthenticationException,
+    AuthResult,
     AuthSource,
+    AuthStrategy,
     BadAuthenticationType,
     DSSKey,
     InMemoryPrivateKey,
@@ -23,6 +25,7 @@ from paramiko import (
     RSAKey,
     SSHException,
     ServiceRequestingTransport,
+    SourceResult,
 )
 
 from ._util import (
@@ -448,6 +451,45 @@ class AuthSource_:
                 repr(source)
                 == "OnDiskPrivateKey(key='notreally', source='ssh-config', path='of-exile')"  # noqa
             )
+
+
+class AuthResult_:
+    def setup_method(self):
+        self.strat = AuthStrategy(None)
+
+    def acts_like_list_with_strategy_attribute(self):
+        with raises(TypeError):
+            AuthResult()
+        # kwarg works by itself
+        AuthResult(strategy=self.strat)
+        # or can be given as posarg w/ regular list() args after
+        result = AuthResult(self.strat, [1, 2, 3])
+        assert result.strategy is self.strat
+        assert result == [1, 2, 3]
+        assert isinstance(result, list)
+
+    def repr_is_list_repr_untouched(self):
+        result = AuthResult(self.strat, [1, 2, 3])
+        assert repr(result) == "[1, 2, 3]"
+
+    class dunder_str:
+        def is_multiline_display_of_sourceresult_tuples(self):
+            result = AuthResult(self.strat)
+            result.append(SourceResult("foo", "bar"))
+            result.append(SourceResult("biz", "baz"))
+            assert str(result) == "foo -> bar\nbiz -> baz"
+
+        def shows_str_not_repr_of_auth_source_and_result(self):
+            result = AuthResult(self.strat)
+            result.append(
+                SourceResult(NoneAuth("foo"), ["password", "pubkey"])
+            )
+            assert str(result) == "NoneAuth() -> ['password', 'pubkey']"
+
+        def empty_list_result_values_show_success_string(self):
+            result = AuthResult(self.strat)
+            result.append(SourceResult(NoneAuth("foo"), []))
+            assert str(result) == "NoneAuth() -> success"
 
 
 class AuthStrategy_:
