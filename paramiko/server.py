@@ -254,7 +254,7 @@ class ServerInterface:
                  a valid krb5 principal!
                  We don't check if the krb5 principal is allowed to log in on
                  the server, because there is no way to do that in python. So
-                 if you develop your own SSH server with paramiko for a cetain
+                 if you develop your own SSH server with paramiko for a certain
                  platform like Linux, you should call C{krb5_kuserok()} in
                  your local kerberos library to make sure that the
                  krb5_principal has an account on the server and is allowed to
@@ -286,7 +286,7 @@ class ServerInterface:
                  a valid krb5 principal!
                  We don't check if the krb5 principal is allowed to log in on
                  the server, because there is no way to do that in python. So
-                 if you develop your own SSH server with paramiko for a cetain
+                 if you develop your own SSH server with paramiko for a certain
                  platform like Linux, you should call C{krb5_kuserok()} in
                  your local kerberos library to make sure that the
                  krb5_principal has an account on the server and is allowed

@@ -10,7 +10,7 @@ flake8>=4,<5
 # Formatting!
 black>=22.8,<22.9
 # Spelling!
-codespell>=2.2,<2.3
+codespell>=2.2.1,<2.3
 # Coverage!
 coverage>=6.2,<7
 # Documentation tools

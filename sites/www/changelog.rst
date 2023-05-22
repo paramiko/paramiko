@@ -4,7 +4,7 @@ Changelog
 
 - :bug:`2012 major` (also :issue:`1961` and countless others) The
   ``server-sig-algs`` and ``RSA-SHA2`` features added around Paramiko 2.9 or
-  so, had the annoying side effect of not working with servers that dont'
+  so, had the annoying side effect of not working with servers that don't
   support *either* of those feature sets, requiring use of
   ``disabled_algorithms`` to forcibly disable the SHA2 algorithms on Paramiko's
   end.
@@ -51,7 +51,7 @@ Changelog
       Some minor backwards-_compatible_ changes were made to the **existing**
       Transport and AuthHandler classes to facilitate the new code. For
       example, ``Transport._handler_table`` and
-      ``AuthHandler._client_handler_table`` are now propertes instead of raw
+      ``AuthHandler._client_handler_table`` are now properties instead of raw
       attributes.
 
 - :feature:`387` Users of `~paramiko.client.SSHClient` can now configure the

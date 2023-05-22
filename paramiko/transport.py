@@ -1664,7 +1664,7 @@ class Transport(threading.Thread, ClosingContextManager):
         dumb wrapper around PAM.
 
         This method will block until the authentication succeeds or fails,
-        peroidically calling the handler asynchronously to get answers to
+        periodically calling the handler asynchronously to get answers to
         authentication questions.  The handler may be called more than once
         if the server continues to ask questions.
 

@@ -83,7 +83,7 @@ class Password(AuthSource):
 
 # TODO 4.0: twiddle this, or PKey, or both, so they're more obviously distinct.
 # TODO 4.0: the obvious is to make this more wordy (PrivateKeyAuth), the
-# minimalist approch might be to rename PKey to just Key (esp given all the
+# minimalist approach might be to rename PKey to just Key (esp given all the
 # subclasses are WhateverKey and not WhateverPKey)
 class PrivateKey(AuthSource):
     """
