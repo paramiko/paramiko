@@ -10,6 +10,7 @@ flake8>=4,<5
 # Formatting!
 black>=22.8,<22.9
 # Spelling!
+# TODO Python 3.7: newer codespell has upgraded lists
 codespell>=2.2.1,<2.3
 # Coverage!
 coverage>=6.2,<7
