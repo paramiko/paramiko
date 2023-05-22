@@ -33,6 +33,7 @@ from paramiko.client import (
 )
 from paramiko.auth_handler import AuthHandler
 from paramiko.auth_strategy import (
+    AuthFailure,
     AuthStrategy,
     AuthResult,
     AuthSource,

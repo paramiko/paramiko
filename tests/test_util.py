@@ -49,6 +49,7 @@ class UtilTest(unittest.TestCase):
             "Agent",
             "AgentKey",
             "AuthenticationException",
+            "AuthFailure",
             "AuthHandler",
             "AuthResult",
             "AuthSource",

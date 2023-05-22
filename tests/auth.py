@@ -11,6 +11,7 @@ from pytest import raises
 from paramiko import (
     AgentKey,
     AuthenticationException,
+    AuthFailure,
     AuthResult,
     AuthSource,
     AuthStrategy,
@@ -490,6 +491,24 @@ class AuthResult_:
             result = AuthResult(self.strat)
             result.append(SourceResult(NoneAuth("foo"), []))
             assert str(result) == "NoneAuth() -> success"
+
+
+class AuthFailure_:
+    def is_an_AuthenticationException(self):
+        assert isinstance(AuthFailure(None), AuthenticationException)
+
+    def init_requires_result(self):
+        with raises(TypeError):
+            AuthFailure()
+        result = AuthResult(None)
+        fail = AuthFailure(result=result)
+        assert fail.result is result
+
+    def str_is_newline_plus_result_str(self):
+        result = AuthResult(None)
+        result.append(SourceResult(NoneAuth("foo"), Exception("onoz")))
+        fail = AuthFailure(result)
+        assert str(fail) == "\nNoneAuth() -> onoz"
 
 
 class AuthStrategy_:
