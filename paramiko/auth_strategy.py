@@ -271,7 +271,7 @@ class AuthStrategy:
         # wants to live in fabric.OpenSSHAuthStrategy as not all target servers
         # will implement it!
         # TODO: needs better "server told us too many attempts" checking!
-        for source in self.get_sources(transport):
+        for source in self.get_sources():
             self.log.debug(f"Trying {source}")
             try:  # NOTE: this really wants to _only_ wrap the authenticate()!
                 result = source.authenticate(transport)

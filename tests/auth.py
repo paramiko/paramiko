@@ -537,7 +537,7 @@ class AuthStrategy_:
             with raises(TypeError):
                 self.strat.authenticate()
             result = self.strat.authenticate(self.transport)
-            self.strat.get_sources.assert_called_once_with(self.transport)
+            self.strat.get_sources.assert_called_once_with()
             self.source.authenticate.assert_called_once_with(self.transport)
             assert isinstance(result, AuthResult)
             assert result.strategy is self.strat
