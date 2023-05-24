@@ -53,6 +53,8 @@ ALGORITHM_FLAG_MAP = {
     "rsa-sha2-256": SSH_AGENT_RSA_SHA2_256,
     "rsa-sha2-512": SSH_AGENT_RSA_SHA2_512,
 }
+for key, value in list(ALGORITHM_FLAG_MAP.items()):
+    ALGORITHM_FLAG_MAP[f"{key}-cert-v01@openssh.com"] = value
 
 
 # TODO 4.0: rename all these - including making some of their methods public?
@@ -482,7 +484,11 @@ class AgentKey(PKey):
     def sign_ssh_data(self, data, algorithm=None):
         msg = Message()
         msg.add_byte(cSSH2_AGENTC_SIGN_REQUEST)
-        msg.add_string(self.blob)
+        # NOTE: this used to be just self.blob, which is not entirely right for
+        # RSA-CERT 'keys' - those end up always degrading to ssh-rsa type
+        # signatures, for reasons probably internal to OpenSSH's agent code,
+        # even if everything else wants SHA2 (including our flag map).
+        msg.add_string(self.asbytes())
         msg.add_string(data)
         msg.add_int(ALGORITHM_FLAG_MAP.get(algorithm, 0))
         ptype, result = self.agent._send_message(msg)

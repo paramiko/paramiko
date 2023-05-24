@@ -2,6 +2,16 @@
 Changelog
 =========
 
+- :bug:`- major` Fixed a very sneaky bug found at the apparently
+  rarely-traveled intersection of ``RSA-SHA2`` keys, certificates, SSH agents,
+  and stricter-than-OpenSSH server targets. This manifested as yet another
+  "well, if we turn off SHA2 at one end or another, everything works again"
+  problem, for example with version 12 of the Teleport server endpoint.
+
+  This has been fixed; Paramiko tweaked multiple aspects of how it requests
+  agent signatures, and the agent appears to do the right thing now.
+
+  Thanks to Ryan Stoner for the bug report and testing.
 - :bug:`2012 major` (also :issue:`1961` and countless others) The
   ``server-sig-algs`` and ``RSA-SHA2`` features added around Paramiko 2.9 or
   so, had the annoying side effect of not working with servers that don't

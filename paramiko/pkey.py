@@ -797,7 +797,9 @@ class PKey:
             # message; they're *IO objects at heart and their .getvalue()
             # always returns the full value regardless of pointer position.
             self.load_certificate(Message(msg.asbytes()))
-            # Read out nonce as it comes before the public numbers.
+            # Read out nonce as it comes before the public numbers - our caller
+            # is likely going to use the (only borrowed by us, not owned)
+            # 'msg' object for loading those numbers right after this.
             # TODO: usefully interpret it & other non-public-number fields
             # (requires going back into per-type subclasses.)
             msg.get_string()

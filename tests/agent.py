@@ -2,13 +2,15 @@ from unittest.mock import Mock
 
 from pytest import mark, raises
 
-from paramiko import AgentKey, Message
+from paramiko import AgentKey, Message, RSAKey
 from paramiko.agent import (
     SSH2_AGENT_SIGN_RESPONSE,
     SSH_AGENT_RSA_SHA2_256,
     SSH_AGENT_RSA_SHA2_512,
     cSSH2_AGENTC_SIGN_REQUEST,
 )
+
+from ._util import _support
 
 
 # AgentKey with no inner_key
@@ -90,30 +92,60 @@ class AgentKey_:
             assert key.asbytes() == key.inner_key.asbytes()
 
     @mark.parametrize(
-        "kwargs,expectation",
+        "sign_kwargs,expected_flag",
         [
             # No algorithm kwarg: no flags (bitfield -> 0 int)
             (dict(), 0),
             (dict(algorithm="rsa-sha2-256"), SSH_AGENT_RSA_SHA2_256),
             (dict(algorithm="rsa-sha2-512"), SSH_AGENT_RSA_SHA2_512),
+            # TODO: ideally we only send these when key is a cert,
+            # but it doesn't actually break when not; meh. Really just wants
+            # all the parameterization of this test rethought.
+            (
+                dict(algorithm="rsa-sha2-256-cert-v01@openssh.com"),
+                SSH_AGENT_RSA_SHA2_256,
+            ),
+            (
+                dict(algorithm="rsa-sha2-512-cert-v01@openssh.com"),
+                SSH_AGENT_RSA_SHA2_512,
+            ),
         ],
     )
-    def signing_data(self, kwargs, expectation):
+    def signing_data(self, sign_kwargs, expected_flag):
         class FakeAgent:
             def _send_message(self, msg):
+                # The thing we actually care most about, we're not testing
+                # ssh-agent itself here
                 self._sent_message = msg
                 sig = Message()
                 sig.add_string("lol")
                 sig.rewind()
                 return SSH2_AGENT_SIGN_RESPONSE, sig
 
-        agent = FakeAgent()
-        key = AgentKey(agent, b"secret!!!")
-        result = key.sign_ssh_data(b"token", **kwargs)
-        assert result == b"lol"
-        msg = agent._sent_message
-        msg.rewind()
-        assert msg.get_byte() == cSSH2_AGENTC_SIGN_REQUEST
-        assert msg.get_string() == b"secret!!!"
-        assert msg.get_string() == b"token"
-        assert msg.get_int() == expectation
+        for do_cert in (False, True):
+            agent = FakeAgent()
+            # Get key kinda like how a real agent would give it to us - if
+            # cert, it'd be the entire public blob, not just the pubkey. This
+            # ensures the code under test sends _just the pubkey part_ back to
+            # the agent during signature requests (bug was us sending _the
+            # entire cert blob_, which somehow "worked ok" but always got us
+            # SHA1)
+            # NOTE: using lower level loader to avoid auto-cert-load when
+            # testing regular key (agents expose them separately)
+            inner_key = RSAKey.from_private_key_file(_support("rsa.key"))
+            blobby = inner_key.asbytes()
+            # NOTE: expected key blob always wants to be the real key, even
+            # when the "key" is a certificate.
+            expected_request_key_blob = blobby
+            if do_cert:
+                inner_key.load_certificate(_support("rsa.key-cert.pub"))
+                blobby = inner_key.public_blob.key_blob
+            key = AgentKey(agent, blobby)
+            result = key.sign_ssh_data(b"data-to-sign", **sign_kwargs)
+            assert result == b"lol"
+            msg = agent._sent_message
+            msg.rewind()
+            assert msg.get_byte() == cSSH2_AGENTC_SIGN_REQUEST
+            assert msg.get_string() == expected_request_key_blob
+            assert msg.get_string() == b"data-to-sign"
+            assert msg.get_int() == expected_flag
