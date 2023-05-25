@@ -2,6 +2,7 @@
 Changelog
 =========
 
+- :release:`3.2.0 <2023-05-25>`
 - :bug:`- major` Fixed a very sneaky bug found at the apparently
   rarely-traveled intersection of ``RSA-SHA2`` keys, certificates, SSH agents,
   and stricter-than-OpenSSH server targets. This manifested as yet another
