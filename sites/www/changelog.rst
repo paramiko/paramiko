@@ -124,9 +124,10 @@ Changelog
   various OpenSSH tooling (eg ``ssh-add -l``, ``ssh -v``). This is intended to
   help troubleshoot Paramiko-vs-OpenSSH behavior and will eventually replace
   the venerable ``get_fingerprint`` method.
-- :bug:`-` `~paramiko.agent.AgentKey` had a dangling Python 3 incompatible
-  ``__str__`` method returning bytes. This method has been removed, allowing
-  the superclass' (`~paramiko.pkey.PKey`) method to run instead.
+- :bug:`- major` `~paramiko.agent.AgentKey` had a dangling Python 3
+  incompatible ``__str__`` method returning bytes. This method has been
+  removed, allowing the superclass' (`~paramiko.pkey.PKey`) method to run
+  instead.
 - :release:`3.1.0 <2023-03-10>`
 - :feature:`2013` (solving :issue:`2009`, plus others) Add an explicit
   ``channel_timeout`` keyword argument to `paramiko.client.SSHClient.connect`,
