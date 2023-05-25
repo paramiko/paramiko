@@ -81,6 +81,7 @@ def sftp_server():
     socks = LoopSocket()
     sockc = LoopSocket()
     sockc.link(socks)
+    # TODO: reuse with new server fixture if possible
     tc = Transport(sockc)
     ts = Transport(socks)
     # Auth
