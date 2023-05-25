@@ -202,6 +202,7 @@ class PKey_:
             # customize identifiers().
             class MyKey(PKey):
                 name = "it me"
+
             assert MyKey.identifiers() == ["it me"]
 
         def rsa_is_all_combos_of_cert_and_sha_type(self):
