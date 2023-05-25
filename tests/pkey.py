@@ -1,3 +1,6 @@
+from pathlib import Path
+from unittest.mock import patch, call
+
 from pytest import raises
 
 from cryptography.hazmat.primitives.asymmetric.ed448 import Ed448PrivateKey
@@ -27,6 +30,21 @@ class PKey_:
         def loads_from_str(self):
             key = PKey.from_path(str(_support("rsa.key")))
             assert isinstance(key, RSAKey)
+
+        @patch("paramiko.pkey.Path")
+        def expands_user(self, mPath):
+            # real key for guts that want a real key format
+            mykey = Path(_support("rsa.key"))
+            pathy = mPath.return_value.expanduser.return_value
+            # read_bytes for cryptography.io's loaders
+            pathy.read_bytes.return_value = mykey.read_bytes()
+            # open() for our own class loader
+            pathy.open.return_value = mykey.open()
+            # fake out exists() to avoid attempts to load cert
+            pathy.exists.return_value = False
+            PKey.from_path("whatever")  # we're not testing expanduser itself
+            # Both key and cert paths
+            mPath.return_value.expanduser.assert_has_calls([call(), call()])
 
         def raises_UnknownKeyType_for_unknown_types(self):
             # I.e. a real, becomes a useful object via cryptography.io, key
