@@ -38,8 +38,10 @@ from paramiko import (
     SSHException,
     IncompatiblePeer,
     SecurityOptions,
+    ServiceRequestingTransport,
     Transport,
 )
+from paramiko.auth_handler import AuthOnlyHandler
 from paramiko import OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED
 from paramiko.common import (
     DEFAULT_MAX_PACKET_SIZE,
@@ -82,6 +84,10 @@ Maybe.
 
 
 class TransportTest(unittest.TestCase):
+    # TODO: this can get nuked once ServiceRequestingTransport becomes the
+    # only Transport, as it has this baked in.
+    _auth_handler_class = AuthHandler
+
     def setUp(self):
         self.socks = LoopSocket()
         self.sockc = LoopSocket()
@@ -1030,7 +1036,7 @@ class TransportTest(unittest.TestCase):
     def test_server_transports_reject_client_message_types(self):
         # TODO: handle Transport's own tables too, not just its inner auth
         # handler's table. See TODOs in auth_handler.py
-        some_handler = AuthHandler(self.tc)  # kludge to get _some_ AH instance
+        some_handler = self._auth_handler_class(self.tc)
         for message_type in some_handler._client_handler_table:
             self._send_client_message(message_type)
             self._expect_unimplemented()
@@ -1045,6 +1051,21 @@ class TransportTest(unittest.TestCase):
         assert not self.ts.auth_handler.authenticated
         # Real fix's behavior
         self._expect_unimplemented()
+
+
+# TODO: for now this is purely a regression test. It needs actual tests of the
+# intentional new behavior too!
+class ServiceRequestingTransportTest(TransportTest):
+    _auth_handler_class = AuthOnlyHandler
+
+    def setUp(self):
+        # Copypasta (Transport init is load-bearing)
+        self.socks = LoopSocket()
+        self.sockc = LoopSocket()
+        self.sockc.link(self.socks)
+        # New class who dis
+        self.tc = ServiceRequestingTransport(self.sockc)
+        self.ts = ServiceRequestingTransport(self.socks)
 
 
 class AlgorithmDisablingTests(unittest.TestCase):
