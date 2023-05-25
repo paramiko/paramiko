@@ -5,12 +5,14 @@ from pytest import raises
 
 from cryptography.hazmat.primitives.asymmetric.ed448 import Ed448PrivateKey
 from paramiko import (
-    PKey,
+    DSSKey,
+    ECDSAKey,
     Ed25519Key,
+    Message,
+    PKey,
+    PublicBlob,
     RSAKey,
     UnknownKeyType,
-    Message,
-    PublicBlob,
 )
 
 from ._util import _support
@@ -159,3 +161,68 @@ class PKey_:
             err = "PublicBlob type ssh-rsa-cert-v01@openssh.com incompatible with key type ssh-ed25519"  # noqa
             with raises(ValueError, match=err):
                 edkey.load_certificate(_support("rsa.key-cert.pub"))
+
+    def fingerprint(self, keys):
+        # NOTE: Hardcoded fingerprint expectation stored in fixture.
+        assert keys.pkey.fingerprint == keys.expected_fp
+
+    def algorithm_name(self, keys):
+        key = keys.pkey
+        if isinstance(key, RSAKey):
+            assert key.algorithm_name == "RSA"
+        elif isinstance(key, DSSKey):
+            assert key.algorithm_name == "DSS"
+        elif isinstance(key, ECDSAKey):
+            assert key.algorithm_name == "ECDSA"
+        elif isinstance(key, Ed25519Key):
+            assert key.algorithm_name == "ED25519"
+        # TODO: corner case: AgentKey, whose .name can be cert-y (due to the
+        # value of the name field passed via agent protocol) and thus
+        # algorithm_name is eg "RSA-CERT" - keys loaded directly from disk will
+        # never look this way, even if they have a .public_blob attached.
+
+    class equality_and_hashing:
+        def same_key_is_equal_to_itself(self, keys):
+            assert keys.pkey == keys.pkey2
+
+        def same_key_same_hash(self, keys):
+            # NOTE: this isn't a great test due to hashseed randomization under
+            # Python 3 preventing use of static values, but it does still prove
+            # that __hash__ is implemented/doesn't explode & works across
+            # instances
+            assert hash(keys.pkey) == hash(keys.pkey2)
+
+        def keys_are_not_equal_to_other_types(self, keys):
+            for value in [None, True, ""]:
+                assert keys.pkey != value
+
+    class identifiers_classmethods:
+        def default_is_class_name_attribute(self):
+            # NOTE: not all classes _have_ this, only the ones that don't
+            # customize identifiers().
+            class MyKey(PKey):
+                name = "it me"
+            assert MyKey.identifiers() == ["it me"]
+
+        def rsa_is_all_combos_of_cert_and_sha_type(self):
+            assert RSAKey.identifiers() == [
+                "ssh-rsa",
+                "ssh-rsa-cert-v01@openssh.com",
+                "rsa-sha2-256",
+                "rsa-sha2-256-cert-v01@openssh.com",
+                "rsa-sha2-512",
+                "rsa-sha2-512-cert-v01@openssh.com",
+            ]
+
+        def dss_is_protocol_name(self):
+            assert DSSKey.identifiers() == ["ssh-dss"]
+
+        def ed25519_is_protocol_name(self):
+            assert Ed25519Key.identifiers() == ["ssh-ed25519"]
+
+        def ecdsa_is_all_curve_names(self):
+            assert ECDSAKey.identifiers() == [
+                "ecdsa-sha2-nistp256",
+                "ecdsa-sha2-nistp384",
+                "ecdsa-sha2-nistp521",
+            ]

@@ -158,11 +158,13 @@ def keys(request):
     bag.path = Path(_support(f"{short_type}.key"))
     with bag.path.open() as fd:
         bag.pkey = key_class.from_private_key(fd)
+    # Second copy for things like equality-but-not-identity testing
+    with bag.path.open() as fd:
+        bag.pkey2 = key_class.from_private_key(fd)
     bag.expected_fp = fingerprint
     # Also tack on the cert-bearing variant for some tests
     cert = bag.path.with_suffix(".key-cert.pub")
-    if cert.exists():
-        bag.pkey_with_cert = PKey.from_path(cert)
+    bag.pkey_with_cert = PKey.from_path(cert) if cert.exists() else None
     # Safety checks
     assert bag.pkey.fingerprint == fingerprint
     yield bag

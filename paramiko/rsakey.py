@@ -81,7 +81,7 @@ class RSAKey(PKey):
 
     @classmethod
     def identifiers(cls):
-        return cls.HASHES.keys()
+        return list(cls.HASHES.keys())
 
     @property
     def size(self):

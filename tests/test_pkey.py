@@ -610,51 +610,6 @@ class KeyTest(unittest.TestCase):
         )
         assert original != generated
 
-    # TODO: use keys fixture
-    def keys(self):
-        for key_class, filename in [
-            (RSAKey, "rsa.key"),
-            (DSSKey, "dss.key"),
-            (ECDSAKey, "ecdsa-256.key"),
-            (Ed25519Key, "ed25519.key"),
-        ]:
-            key1 = key_class.from_private_key_file(_support(filename))
-            key2 = key_class.from_private_key_file(_support(filename))
-            yield key1, key2
-
-    def test_keys_are_comparable(self):
-        for key1, key2 in self.keys():
-            assert key1 == key2
-
-    def test_keys_are_not_equal_to_other(self):
-        for value in [None, True, ""]:
-            for key1, _ in self.keys():
-                assert key1 != value
-
-    def test_keys_are_hashable(self):
-        # NOTE: this isn't a great test due to hashseed randomization under
-        # Python 3 preventing use of static values, but it does still prove
-        # that __hash__ is implemented/doesn't explode & works across instances
-        for key1, key2 in self.keys():
-            assert hash(key1) == hash(key2)
-
-    # TODO: use keys fixture
-    def test_new_fingerprint(self):
-        # Assumes the RSA, DSS, ECDSA, Ed25519 order seen in 'def keys'.
-        fingerprints = [x.fingerprint for x, _ in self.keys()]
-        assert fingerprints == [
-            "SHA256:OhNL391d/beeFnxxg18AwWVYTAHww+D4djEE7Co0Yng",
-            "SHA256:uHwwykG099f4M4kfzvFpKCTino0/P03DRbAidpAmPm0",
-            "SHA256:BrQG04oNKUETjKCeL4ifkARASg3yxS/pUHl3wWM26Yg",
-            "SHA256:J6VESFdD3xSChn8y9PzWzeF+1tl892mOy2TqkMLO4ow",
-        ]
-
-    # TODO: use keys fixture
-    def test_algorithm_property(self):
-        # Assumes the RSA, DSS, ECDSA, Ed25519 order seen in 'def keys'.
-        algorithms = [x.algorithm_name for x, _ in self.keys()]
-        assert algorithms == ["RSA", "DSS", "ECDSA", "ED25519"]
-
     def test_ed25519_nonbytes_password(self):
         # https://github.com/paramiko/paramiko/issues/1039
         Ed25519Key.from_private_key_file(
