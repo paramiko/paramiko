@@ -58,7 +58,7 @@ Changelog
         - GSSAPI support has only been partially implemented, and is untested.
 
   .. note::
-      Some minor backwards-_compatible_ changes were made to the **existing**
+      Some minor backwards-*compatible* changes were made to the **existing**
       Transport and AuthHandler classes to facilitate the new code. For
       example, ``Transport._handler_table`` and
       ``AuthHandler._client_handler_table`` are now properties instead of raw
@@ -96,14 +96,16 @@ Changelog
 
 - :feature:`-` `~paramiko.pkey.PKey` now offers convenience
   "meta-constructors", static methods that simplify the process of
-  instantiating the correct subclass for a given key type identifier or other
-  properties. For example, certain internals have been refactored to use
-  `PKey.from_type_string <paramiko.pkey.PKey.from_type_string>` instead of
-  iterating key classes or using if/else cascades.
+  instantiating the correct subclass for a given key input.
 
-  `PKey.from_path <paramiko.pkey.PKey.from_path>` is also new, and offers a way
-  to load a file path without knowing *a priori* what type of key it is (thanks
-  to some handy methods within our cryptography dependency).
+  For example, `PKey.from_path <paramiko.pkey.PKey.from_path>` can load a file
+  path without knowing *a priori* what type of key it is (thanks to some handy
+  methods within our cryptography dependency). Going forwards, we expect this
+  to be the primary method of loading keys by user code that runs on "human
+  time" (i.e. where some minor efficiencies are worth the convenience).
+
+  In addition, `PKey.from_type_string <paramiko.pkey.PKey.from_type_string>`
+  now exists, and is being used in some internals to load ssh-agent keys.
 
   As part of these changes, `~paramiko.pkey.PKey` and friends grew an
   `~paramiko.pkey.PKey.identifiers` classmethod; this is inspired by the
