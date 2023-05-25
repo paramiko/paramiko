@@ -17,10 +17,16 @@ from ._util import _support
 
 
 class PKey_:
+    # NOTE: this is incidentally tested by a number of other tests, such as the
+    # agent.py test suite
     class from_type_string:
         def loads_from_type_and_bytes(self, keys):
             obj = PKey.from_type_string(keys.full_type, keys.pkey.asbytes())
             assert obj == keys.pkey
+
+        # TODO: exceptions
+        #
+        # TODO: passphrase? OTOH since this is aimed at the agent...irrelephant
 
     class from_path:
         def loads_from_Path(self, keys):
@@ -61,6 +67,8 @@ class PKey_:
             # a Python file is not a private key!
             with raises(ValueError):
                 PKey.from_path(__file__)
+
+        # TODO: passphrase support tested
 
         class automatically_loads_certificates:
             def existing_cert_loaded_when_given_key_path(self):
