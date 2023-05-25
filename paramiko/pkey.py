@@ -249,12 +249,18 @@ class PKey:
         """
         pass
 
+    # TODO: arguably this might want to be __str__ instead? ehh
+    # TODO: ditto the interplay between showing class name (currently we just
+    # say PKey writ large) and algorithm (usually == class name, but not
+    # always, also sometimes shows certificate-ness)
+    # TODO: if we do change it, we also want to tweak eg AgentKey, as it
+    # currently displays agent-ness with a suffix
     def __repr__(self):
         comment = ""
         # Works for AgentKey, may work for others?
         if hasattr(self, "comment") and self.comment:
             comment = f", comment={self.comment!r}"
-        return f"{self.__class__.__name__}(alg={self.algorithm_name}, bits={self.get_bits()}, fp={self.fingerprint}{comment})"  # noqa
+        return f"PKey(alg={self.algorithm_name}, bits={self.get_bits()}, fp={self.fingerprint}{comment})"  # noqa
 
     # TODO 4.0: just merge into __bytes__ (everywhere)
     def asbytes(self):

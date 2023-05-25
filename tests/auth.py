@@ -404,7 +404,7 @@ class AuthSource_:
             source = InMemoryPrivateKey("foo", pkey)
             assert (
                 repr(source)
-                == "InMemoryPrivateKey(pkey=Ed25519Key(alg=ED25519, bits=256, fp=SHA256:J6VESFdD3xSChn8y9PzWzeF+1tl892mOy2TqkMLO4ow))"  # noqa
+                == "InMemoryPrivateKey(pkey=PKey(alg=ED25519, bits=256, fp=SHA256:J6VESFdD3xSChn8y9PzWzeF+1tl892mOy2TqkMLO4ow))"  # noqa
             )
 
         def repr_appends_agent_flag_when_AgentKey(self):
@@ -413,7 +413,7 @@ class AuthSource_:
             source = InMemoryPrivateKey("foo", pkey)
             assert (
                 repr(source)
-                == "InMemoryPrivateKey(pkey=AgentKey(alg=ED25519, bits=256, fp=SHA256:J6VESFdD3xSChn8y9PzWzeF+1tl892mOy2TqkMLO4ow)) [agent]"  # noqa
+                == "InMemoryPrivateKey(pkey=PKey(alg=ED25519, bits=256, fp=SHA256:J6VESFdD3xSChn8y9PzWzeF+1tl892mOy2TqkMLO4ow)) [agent]"  # noqa
             )
 
     class OnDiskPrivateKey_:
