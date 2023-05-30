@@ -783,7 +783,10 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         :param int max_concurrent_prefetch_requests:
             The maximum number of concurrent read requests to prefetch.
             When this is ``None`` (the default), do not limit the number of
-            concurrent prefetch requests.
+            concurrent prefetch requests. Note: OpenSSH's sftp internally
+            imposes a limit of 64 concurrent requests, while Paramiko imposes
+            no limit by default; consider setting a limit if a file can be
+            successfully received with sftp but hangs with Paramiko.
         :return: the `number <int>` of bytes written to the opened file object
 
         .. versionadded:: 1.10
@@ -821,7 +824,10 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         :param int max_concurrent_prefetch_requests:
             The maximum number of concurrent read requests to prefetch.
             When this is ``None`` (the default), do not limit the number of
-            concurrent prefetch requests.
+            concurrent prefetch requests. Note: OpenSSH's sftp internally
+            imposes a limit of 64 concurrent requests, while Paramiko imposes
+            no limit by default; consider setting a limit if a file can be
+            successfully received with sftp but hangs with Paramiko.
 
         .. versionadded:: 1.4
         .. versionchanged:: 1.7.4
