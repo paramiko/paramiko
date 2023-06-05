@@ -1,5 +1,6 @@
 name: Bug Report
-description: For when paramiko appears to be doing something wrong
+description: >
+  For when you're confident that paramiko is doing something wrong
 title: "[BUG] - <title>"
 labels: ["Bug"]
 
