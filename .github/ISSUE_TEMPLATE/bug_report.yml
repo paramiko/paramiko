@@ -1,5 +1,5 @@
 name: Bug Report
-description: paramiko appears to be doing something wrong
+description: For when paramiko appears to be doing something wrong
 title: "[BUG] - <title>"
 labels: ["Bug"]
 
@@ -35,7 +35,7 @@ body:
   - type: input
     id: paramiko_version
     attributes:
-      label: What version(s) of paramiko are you working with?
+      label: What version(s) of paramiko are you using?
       description: |
         Find out with `$ python -c "import paramiko; print(paramiko.__version__)"`
       placeholder: |
@@ -46,7 +46,7 @@ body:
   - type: input
     id: python_version
     attributes:
-      label: What version(s) of Python are you working with?
+      label: What version(s) of Python are you using?
       description: |
         Find out with `$ python -V`
       placeholder: |
@@ -54,4 +54,44 @@ body:
     validations:
       required: true
 
+  - type: input
+    id: os_info
+    attributes:
+      label: What operating system and version are you using?
+      placeholder: |
+        Example: WSL on Windows 11; or MacOS Mojave; or Ubuntu 22.10
+    validations:
+      required: true
+
+  - type: input
+    id: hardware_info
+    attributes:
+      label: What SSH hardware are you trying to connect to/with?
   
+  - type: textarea
+    id: desired_behavior
+    attributes:
+      label: Please describe what you are trying to do with paramiko.
+      description: |
+        Please include your code and be as detailed as possible.
+    validations:
+      required: true
+  
+  - type: textarea
+    id: actual_behavior
+    attributes:
+      label: Please describe what paramiko is actually doing instead.
+      description: |
+        Please be as detailed as possible.
+    validations:
+      required: true
+  
+  - type: textarea
+    id: repro
+    attributes:
+      label: If possible, please provide a minimal reproducing example of the bug.
+  
+  - type: textarea
+    id: more_info
+    attributes:
+      label: Anything else?
