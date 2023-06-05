@@ -1,0 +1,57 @@
+name: Bug Report
+description: paramiko appears to be doing something wrong
+title: "[BUG] - <title>"
+labels: ["Bug"]
+
+body:
+  - type: dropdown
+    id: usage_posture
+    attributes:
+      label: Are you using paramiko as a client or server?
+      multiple: false
+      options:
+        - Client
+        - Server
+        - Both
+    validations:
+      required: true
+
+  - type: dropdown
+    id: features
+    attributes:
+      label: What features aren't working right?
+      description: Select as many as are relevant
+      multiple: true
+      options:
+        - SSH
+        - SFTP
+        - Keys/auth
+        - known_hosts
+        - sshconfig
+        - Something else
+    validations:
+      required: true
+  
+  - type: input
+    id: paramiko_version
+    attributes:
+      label: What version(s) of paramiko are you working with?
+      description: |
+        Find out with `$ python -c "import paramiko; print(paramiko.__version__)"`
+      placeholder: |
+        Example: 3.1.0
+    validations:
+      required: true
+
+  - type: input
+    id: python_version
+    attributes:
+      label: What version(s) of Python are you working with?
+      description: |
+        Find out with `$ python -V`
+      placeholder: |
+        Example: 3.11.3
+    validations:
+      required: true
+
+  
