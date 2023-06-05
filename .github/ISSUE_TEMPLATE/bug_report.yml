@@ -67,31 +67,37 @@ body:
     id: hardware_info
     attributes:
       label: What SSH hardware are you trying to connect to/with?
+      description: |
+        Leave this blank if you're not sure.
   
   - type: textarea
     id: desired_behavior
     attributes:
-      label: Please describe what you are trying to do with paramiko.
+      label: Expected/desired behavior
       description: |
-        Please include your code and be as detailed as possible.
+        Please describe what you are trying to do with paramiko. Include code snippets and be as detailed as possible.
     validations:
       required: true
   
   - type: textarea
     id: actual_behavior
     attributes:
-      label: Please describe what paramiko is actually doing instead.
+      label: Actual behavior
       description: |
-        Please be as detailed as possible.
+        What is paramiko doing instead?
     validations:
       required: true
   
   - type: textarea
     id: repro
     attributes:
-      label: If possible, please provide a minimal reproducing example of the bug.
+      label: How to reproduce
+      description: |
+        If possible, please provide a minimal code example that reproduces the bug.
   
   - type: textarea
     id: more_info
     attributes:
       label: Anything else?
+      description: |
+        Please provide any additional information that might help us find and fix the bug.
