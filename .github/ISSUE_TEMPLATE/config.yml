@@ -2,4 +2,4 @@ blank_issues_enabled: true
 contact_links:
   - name: "Blank issue template"
     url: https://github.com/paramiko/paramiko/issues/new
-    about: "A last resort, if none of the other issue types fits"
+    about: "Use this as a last resort, if none of the other issue types fit."
