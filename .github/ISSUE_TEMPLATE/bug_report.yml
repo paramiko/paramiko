@@ -1,10 +1,17 @@
 name: Bug Report
-description: >
-  For when you're confident that paramiko is doing something wrong
+description: |
+  Use this template when paramiko appears to be doing something wrong.
+
+  -- 
 title: "[BUG] - <title>"
 labels: ["Bug"]
 
 body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to file a bug report!
+
   - type: dropdown
     id: usage_posture
     attributes:
@@ -20,7 +27,7 @@ body:
   - type: dropdown
     id: features
     attributes:
-      label: What features aren't working right?
+      label: What feature(s) aren't working right?
       description: Select as many as are relevant
       multiple: true
       options:
@@ -65,11 +72,20 @@ body:
       required: true
 
   - type: input
-    id: hardware_info
+    id: server_info
     attributes:
-      label: What SSH hardware are you trying to connect to/with?
+      label: If you're connecting as a client, which SSH server are you connecting to?
       description: |
         Leave this blank if you're not sure.
+      placeholder: |
+        Example: OpenSSH x.y; or Teleport vNN
+
+  - type: input
+    id: integrated_tool
+    attributes:
+      label: If you're using paramiko as part of another tool, which tool/version?
+      placeholder: |
+        Examples: Fabric, Ansible, sftputil
   
   - type: textarea
     id: desired_behavior
