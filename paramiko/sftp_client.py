@@ -789,6 +789,8 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         .. versionadded:: 1.10
         .. versionchanged:: 2.8
             Added the ``prefetch`` keyword argument.
+        .. versionchanged:: 3.3
+            Added ``max_concurrent_prefetch_requests``.
         """
         file_size = self.stat(remotepath).st_size
         with self.open(remotepath, "rb") as fr:
@@ -831,6 +833,8 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
             Added the ``callback`` param
         .. versionchanged:: 2.8
             Added the ``prefetch`` keyword argument.
+        .. versionchanged:: 3.3
+            Added ``max_concurrent_prefetch_requests``.
         """
         with open(localpath, "wb") as fl:
             size = self.getfo(

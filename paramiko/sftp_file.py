@@ -465,6 +465,8 @@ class SFTPFile(BufferedFile):
         .. versionchanged:: 1.16.1
             The ``file_size`` parameter was made optional for backwards
             compatibility.
+        .. versionchanged:: 3.3
+            Added ``max_concurrent_requests``.
         """
         if file_size is None:
             file_size = self.stat().st_size
@@ -496,6 +498,8 @@ class SFTPFile(BufferedFile):
         :return: a list of blocks read, in the same order as in ``chunks``
 
         .. versionadded:: 1.5.4
+        .. versionchanged:: 3.3
+            Added ``max_concurrent_prefetch_requests``.
         """
         self.sftp._log(
             DEBUG, "readv({}, {!r})".format(hexlify(self.handle), chunks)
