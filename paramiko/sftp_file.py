@@ -455,12 +455,9 @@ class SFTPFile(BufferedFile):
             workaround, one may call `stat` explicitly and pass its value in
             via this parameter.
         :param int max_concurrent_requests:
-            The maximum number of concurrent read requests to prefetch.
-            When this is ``None`` (the default), do not limit the number of
-            concurrent prefetch requests. Note: OpenSSH's sftp internally
-            imposes a limit of 64 concurrent requests, while Paramiko imposes
-            no limit by default; consider setting a limit if a file can be
-            successfully received with sftp but hangs with Paramiko.
+            The maximum number of concurrent read requests to prefetch. See
+            `.SFTPClient.get` (its ``max_concurrent_prefetch_requests`` param)
+            for details.
 
         .. versionadded:: 1.5.1
         .. versionchanged:: 1.16.0
@@ -493,12 +490,9 @@ class SFTPFile(BufferedFile):
             a list of ``(offset, length)`` tuples indicating which sections of
             the file to read
         :param int max_concurrent_prefetch_requests:
-            The maximum number of concurrent read requests to prefetch.
-            When this is ``None`` (the default), do not limit the number of
-            concurrent prefetch requests. Note: OpenSSH's sftp internally
-            imposes a limit of 64 concurrent requests, while Paramiko imposes
-            no limit by default; consider setting a limit if a file can be
-            successfully received with sftp but hangs with Paramiko.
+            The maximum number of concurrent read requests to prefetch. See
+            `.SFTPClient.get` (its ``max_concurrent_prefetch_requests`` param)
+            for details.
         :return: a list of blocks read, in the same order as in ``chunks``
 
         .. versionadded:: 1.5.4
