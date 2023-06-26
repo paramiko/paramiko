@@ -23,6 +23,7 @@ import signal
 from select import select
 import socket
 import time
+import logging
 
 # Try-and-ignore import so platforms w/o subprocess (eg Google App Engine) can
 # still import paramiko.
@@ -119,7 +120,22 @@ class ProxyCommand(ClosingContextManager):
             raise ProxyCommandFailure(" ".join(self.cmd), e.strerror)
 
     def close(self):
-        os.kill(self.process.pid, signal.SIGTERM)
+        # Before killing a process, it is necessary to check if it exists
+        # Otherwise, an error will be reported during asynchronous calls
+        if self.process.poll() is None:
+            try:
+                # close resources first
+                self.process.stdin.close()
+                self.process.stdout.close()
+                self.process.stderr.close()
+
+                os.kill(self.process.pid, signal.SIGTERM)
+
+            except ProcessLookupError:
+                # It is possible to trigger an error under high concurrency
+                # The process has already been killed by other means
+                # But it usually doesn't have a bad impact
+                logging.info("[ProxyCommand] The process has already been killed by other means.")
 
     @property
     def closed(self):
