@@ -19,6 +19,8 @@ body:
         - Client
         - Server
         - Both
+        - Exception handling
+        - Not sure
     validations:
       required: true
 
