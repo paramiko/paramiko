@@ -202,7 +202,7 @@ class SSHClient(ClosingContextManager):
         addrinfos = socket.getaddrinfo(
             hostname, port, socket.AF_UNSPEC, socket.SOCK_STREAM
         )
-        for (family, socktype, proto, canonname, sockaddr) in addrinfos:
+        for family, socktype, proto, canonname, sockaddr in addrinfos:
             if socktype == socket.SOCK_STREAM:
                 yield family, sockaddr
                 guess = False
@@ -495,6 +495,7 @@ class SSHClient(ClosingContextManager):
             t.gss_host,
             passphrase,
         )
+        return self
 
     def close(self):
         """

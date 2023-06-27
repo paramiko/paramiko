@@ -378,6 +378,29 @@ class SSHClientTest(ClientTest):
         # code path (!) so we're punting too, sob.
         pass
 
+    @requires_sha1_signing
+    def test_connect_context(self):
+        threading.Thread(target=self._run).start()
+
+        self.tc = SSHClient()
+        self.tc.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        self.assertEqual(0, len(self.tc.get_host_keys()))
+        with self.tc.connect(
+            password="pygmalion", **self.connect_kwargs
+        ) as tc:
+            self.assertTrue(self.ts.is_active())
+            # Authentication successful?
+            self.event.wait(1.0)
+            self.assertTrue(self.event.is_set())
+            self.assertTrue(self.ts.is_active())
+            self.assertEqual(
+                self.connect_kwargs["username"], self.ts.get_username()
+            )
+            self.assertEqual(True, self.ts.is_authenticated())
+            self.assertEqual(False, tc.get_transport().gss_kex_used)
+        self.assertIsNone(self.tc._transport)
+        self.assertIsNone(self.tc._agent)
+
     def test_auto_add_policy(self):
         """
         verify that SSHClient's AutoAddPolicy works.
