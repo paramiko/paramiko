@@ -102,6 +102,8 @@ body:
       label: How are you trying to do it, and what's happening instead?
       description: |
         Include code snippets and a description of the expected output, and be as detailed as possible. If possible, try to reduce your code examples to a minimal example that reproduces the problem/behavior.
+    validations:
+      required: true
 
   - type: textarea
     id: more_info
