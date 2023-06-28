@@ -119,10 +119,8 @@ class ProxyCommand(ClosingContextManager):
             raise ProxyCommandFailure(" ".join(self.cmd), e.strerror)
 
     def close(self):
-        # The subprocess may be killed in other ways (For example, asynchronous)
-        # Before killing this subprocess, you need to determine whether it exists
-        if not self.closed:
-            os.kill(self.process.pid, signal.SIGTERM)
+        # terminate the subprocess if alive.
+        self.process.terminate()
 
     @property
     def closed(self):
