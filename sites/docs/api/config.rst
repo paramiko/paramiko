@@ -61,6 +61,8 @@ Paramiko releases) are included. A keyword by itself means no known departures.
 
 - ``Host``
 - ``HostName``: used in ``%h`` :ref:`token expansion <TOKENS>`
+- ``Include``: absolute paths supported, relative paths are assumed to be in ~/.ssh.
+
 - ``Match``: fully supported, with the following caveats:
 
     - You must have the optional dependency Invoke installed; see :ref:`the

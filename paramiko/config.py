@@ -23,6 +23,7 @@ Configuration file (aka ``ssh_config``) support.
 
 import fnmatch
 import getpass
+import glob
 import os
 import re
 import shlex
@@ -120,7 +121,7 @@ class SSHConfig:
         obj.parse(flo)
         return obj
 
-    def parse(self, file_obj):
+    def parse(self, file_obj, parsed_files=None):
         """
         Read an OpenSSH config from the given file object.
 
@@ -162,6 +163,27 @@ class SSHConfig:
                 # Store 'none' as None - not as a string implying that the
                 # proxycommand is the literal shell command "none"!
                 context["config"][key] = None
+            elif key == 'include':
+                # Support for Include directive in ssh_config
+                path = value
+                # According to SSH documentation if the path is relative,
+                # we look forward in ~/.ssh
+                if (not os.path.isabs(path)) and path[0] != '~':
+                    path = os.path.join("~", ".ssh", path)
+                # Expand the user home path
+                path = os.path.expanduser(path)
+                if parsed_files is None:
+                    parsed_files = []
+
+                # Parse every included file
+                for filename in glob.iglob(path):
+                    if os.path.isfile(filename):
+                        if filename in parsed_files:
+                            raise ValueError("Include loop detected in ssh "
+                                             "config file: %s" % filename)
+                        with open(filename) as fd:
+                            parsed_files.append(filename)
+                            self.parse(fd, parsed_files)
             # All other keywords get stored, directly or via append
             else:
                 if value.startswith('"') and value.endswith('"'):
