@@ -316,7 +316,8 @@ class SSHConfig:
         """
         hosts = set()
         for entry in self._config:
-            hosts.update(entry["host"])
+            if "host" in entry:
+                hosts.update(entry["host"])
         return hosts
 
     def _pattern_matches(self, patterns, target):
@@ -504,7 +505,7 @@ class SSHConfig:
         tokens = shlex.split(match)
         while tokens:
             match = {"type": None, "param": None, "negate": False}
-            type_ = tokens.pop(0)
+            type_ = tokens.pop(0).lower()
             # Handle per-keyword negation
             if type_.startswith("!"):
                 match["negate"] = True
