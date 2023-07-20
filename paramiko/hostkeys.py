@@ -18,6 +18,7 @@
 
 
 from base64 import encodebytes, decodebytes
+from enum import Enum
 import binascii
 import os
 import re
@@ -311,6 +312,11 @@ class InvalidHostKey(Exception):
         self.args = (line, exc)
 
 
+class HostKeyMarkers(str, Enum):
+    CERT_AUTHORITY = "@cert-authority"
+    REVOKED = "@revoked"
+
+
 class HostKeyEntry:
     """
     Representation of a line in an OpenSSH-style "known hosts" file.
@@ -342,7 +348,17 @@ class HostKeyEntry:
             msg = "Not enough fields found in known_hosts in line {} ({!r})"
             log.info(msg.format(lineno, line))
             return None
-        fields = fields[:3]
+
+        try:
+            marker = HostKeyMarkers(fields[0])
+            fields = fields[1:4]
+        except ValueError:
+            marker = None
+            fields = fields[:3]
+
+        if marker is HostKeyMarkers.REVOKED:
+            log.info("Key is marked as revoked")
+            return None
 
         names, key_type, key = fields
         names = names.split(",")
