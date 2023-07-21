@@ -1033,10 +1033,15 @@ class TestComplexMatching:
 
 
 class TestFinalMatching(object):
-    def test_final(self):
+    def test_finally(self):
         result = load_config("match-final").lookup("finally")
         assert result["proxyjump"] == "jump"
         assert result["port"] == "1001"
+
+    def test_default_port(self):
+        result = load_config("match-final").lookup("default-port")
+        assert result["proxyjump"] == "jump"
+        assert result["port"] == "1002"
 
     def test_negated(self):
         result = load_config("match-final").lookup("jump")
