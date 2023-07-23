@@ -46,10 +46,9 @@ class PosixPipe:
         self._closed = False
 
     def close(self):
+        self._closed = True
         os.close(self._rfd)
         os.close(self._wfd)
-        # used for unit tests:
-        self._closed = True
 
     def fileno(self):
         return self._rfd
@@ -64,7 +63,13 @@ class PosixPipe:
         if self._set or self._closed:
             return
         self._set = True
-        os.write(self._wfd, b"*")
+        try:
+            os.write(self._wfd, b"*")
+        except OSError as e:
+            if e.errno == 9 and self._closed:
+                # The pipe was closed, no need to do anythin
+                return
+            raise e
 
     def set_forever(self):
         self._forever = True
