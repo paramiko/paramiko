@@ -67,7 +67,7 @@ class PosixPipe:
             os.write(self._wfd, b"*")
         except OSError as e:
             if e.errno == 9 and self._closed:
-                # The pipe was closed, no need to do anythin
+                # The pipe was closed, no need to do anything
                 return
             raise e
 
