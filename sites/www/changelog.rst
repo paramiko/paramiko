@@ -2,6 +2,9 @@
 Changelog
 =========
 
+- :bug:`-` Cleaned up some very old root level files, mostly just to exercise
+  some of our doc build and release machinery. This changelog entry
+  intentionally left blank! ``nothing-to-see-here-move-along.gif``
 - :release:`3.3.0 <2023-07-28>`
 - :feature:`1907` (solves :issue:`1992`) Add support and tests for ``Match
   final …`` (frequently used in ProxyJump configurations to exclude the jump
