@@ -1,5 +1,5 @@
 Host jump
-    HostName jump.example.orig
+    HostName jump.example.org
     Port 1003
 
 Host finally

@@ -218,6 +218,8 @@ class SSHConfig:
             Added canonicalization support.
         .. versionchanged:: 2.7
             Added ``Match`` support.
+        .. versionchanged:: 3.3
+            Added ``Match final`` support.
         """
         # First pass
         options = self._lookup(hostname=hostname)
