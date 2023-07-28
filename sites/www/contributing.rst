@@ -18,8 +18,7 @@ Please see `this project-agnostic contribution guide
 <http://contribution-guide.org>`_ - we follow it explicitly. Again, our code
 repository and bug tracker is `on Github`_.
 
-Our current changelog is located in ``sites/www/changelog.rst`` - the top
-level files like ``ChangeLog.*`` and ``NEWS`` are historical only.
+Our changelog is located in ``sites/www/changelog.rst``.
 
 
 .. _paramiko/paramiko:
