@@ -2,6 +2,7 @@
 Changelog
 =========
 
+- :release:`3.3.0 <2023-07-28>`
 - :feature:`1907` (solves :issue:`1992`) Add support and tests for ``Match
   final …`` (frequently used in ProxyJump configurations to exclude the jump
   host) to our :ref:`SSH config parser <ssh-config-support>`. Patch by
