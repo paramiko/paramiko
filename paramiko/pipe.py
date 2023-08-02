@@ -47,8 +47,9 @@ class PosixPipe:
 
     def close(self):
         self._closed = True
-        
-        # We cannot do anything about closing errors. It is only a "best effort" approach
+
+        # We cannot do anything about closing errors. It is only a
+        # "best effort" approach
         try:
             os.close(self._rfd)
         except:
@@ -65,10 +66,10 @@ class PosixPipe:
         if not self._set or self._forever:
             return
 
-        # .read() does not need to handle a race condition with .close() because
-        # the pipe is created, cleared and closed from the same "client thread".
-        # the "server thread" sets the pipe and only .set() suffers from a race condition
-        # with .close()
+        # .read() does not need to handle a race condition with .close()
+        # because the pipe is created, cleared and closed from the same
+        # "client thread". The "server thread" sets the pipe and only .set()
+        # suffers from a race condition with .close()
         os.read(self._rfd, 1)
         self._set = False
 
@@ -79,8 +80,9 @@ class PosixPipe:
 
         # This try fixes a race condition with .close()
         # 1. The write/server thread sees ._closed == False and continues
-        # 2. The close/client thread closes the descriptors before the write/server thread writes.
-        # 3. The write/server fails to write() because the FD has been closed.
+        # 2. The close/client thread closes the descriptors before the
+        #    write/server thread writes.
+        # 3. The write/server fails to write() because the FD has been closed
         try:
             os.write(self._wfd, b"*")
         except OSError as e:
