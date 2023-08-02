@@ -78,9 +78,9 @@ class PosixPipe:
         self._set = True
 
         # This try fixes a race condition with .close()
-        # 1. The write thread sees ._closed == False and continues
-        # 2. The close thread closes the descriptors before the write thread writes on line 67
-        # 3. The write fails to write() because the FD has been closed.
+        # 1. The write/server thread sees ._closed == False and continues
+        # 2. The close/client thread closes the descriptors before the write/server thread writes.
+        # 3. The write/server fails to write() because the FD has been closed.
         try:
             os.write(self._wfd, b"*")
         except OSError as e:
