@@ -25,6 +25,7 @@ The pipe acts like an Event, which can be set or cleared. When set, the pipe
 will trigger as readable in `select <select.select>`.
 """
 
+import errno
 import sys
 import os
 import socket
@@ -86,7 +87,7 @@ class PosixPipe:
         try:
             os.write(self._wfd, b"*")
         except OSError as e:
-            if e.errno == 9 and self._closed:
+            if e.errno == errno.EBADF and self._closed:
                 # The pipe was closed, no need to do anything
                 return
             raise e
