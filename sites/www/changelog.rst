@@ -2,6 +2,13 @@
 Changelog
 =========
 
+- :support:`2287` (solves part of :issue:`396`) The switch to use SHA256 hashing
+  via the `PKey.fingerprint` property only partially resolved the FIPS
+  compatibility challenges: some residual usage in debug logging within key
+  logic flows of `PKey.get_fingerprint()`, which still uses MD5, continued to
+  cause problems. These instances of debug logging now use the SHA256-using
+  `PKey.fingerprint`.
+
 - :release:`3.3.1 <2023-07-28>`
 - :bug:`-` Cleaned up some very old root level files, mostly just to exercise
   some of our doc build and release machinery. This changelog entry
