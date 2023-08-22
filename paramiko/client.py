@@ -20,7 +20,6 @@
 SSH client & key policies
 """
 
-from binascii import hexlify
 import getpass
 import inspect
 import os
@@ -640,7 +639,7 @@ class SSHClient(ClosingContextManager):
         # when #387 is released, since this is a critical log message users are
         # likely testing/filtering for (bah.)
         msg = "Trying discovered key {} in {}".format(
-            hexlify(key.fingerprint), key_path
+            key.fingerprint, key_path
         )
         self._log(DEBUG, msg)
         # Attempt to load cert if it exists.
@@ -708,9 +707,7 @@ class SSHClient(ClosingContextManager):
             try:
                 self._log(
                     DEBUG,
-                    "Trying SSH key {}".format(
-                        hexlify(pkey.fingerprint)
-                    ),
+                    "Trying SSH key {}".format(pkey.fingerprint),
                 )
                 allowed_types = set(
                     self._transport.auth_publickey(username, pkey)
@@ -746,7 +743,7 @@ class SSHClient(ClosingContextManager):
 
             for key in self._agent.get_keys():
                 try:
-                    id_ = hexlify(key.fingerprint)
+                    id_ = key.fingerprint
                     self._log(DEBUG, "Trying SSH agent key {}".format(id_))
                     # for 2-factor auth a successfully auth'd key password
                     # will return an allowed 2fac auth method
@@ -856,7 +853,7 @@ class AutoAddPolicy(MissingHostKeyPolicy):
         client._log(
             DEBUG,
             "Adding {} host key for {}: {}".format(
-                key.get_name(), hostname, hexlify(key.fingerprint)
+                key.get_name(), hostname, key.fingerprint
             ),
         )
 
@@ -871,7 +868,7 @@ class RejectPolicy(MissingHostKeyPolicy):
         client._log(
             DEBUG,
             "Rejecting {} host key for {}: {}".format(
-                key.get_name(), hostname, hexlify(key.fingerprint)
+                key.get_name(), hostname, key.fingerprint
             ),
         )
         raise SSHException(
@@ -888,6 +885,6 @@ class WarningPolicy(MissingHostKeyPolicy):
     def missing_host_key(self, client, hostname, key):
         warnings.warn(
             "Unknown {} host key for {}: {}".format(
-                key.get_name(), hostname, hexlify(key.fingerprint)
+                key.get_name(), hostname, key.fingerprint
             )
         )
