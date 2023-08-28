@@ -26,7 +26,6 @@ from collections.abc import MutableMapping
 from hashlib import sha1
 from hmac import HMAC
 
-
 from paramiko.pkey import PKey, UnknownKeyType
 from paramiko.util import get_logger, constant_time_bytes_eq, b, u
 from paramiko.ssh_exception import SSHException
@@ -197,10 +196,10 @@ class HostKeys(MutableMapping):
         """
         for h in entry.hostnames:
             if (
-                h == hostname
-                or h.startswith("|1|")
-                and not hostname.startswith("|1|")
-                and constant_time_bytes_eq(self.hash_host(hostname, h), h)
+                    h == hostname
+                    or h.startswith("|1|")
+                    and not hostname.startswith("|1|")
+                    and constant_time_bytes_eq(self.hash_host(hostname, h), h)
             ):
                 return True
         return False
@@ -342,6 +341,8 @@ class HostKeyEntry:
             msg = "Not enough fields found in known_hosts in line {} ({!r})"
             log.info(msg.format(lineno, line))
             return None
+        if fields[0].startswith("@cert-authority"):
+            fields.pop(0)
         fields = fields[:3]
 
         names, key_type, key = fields
