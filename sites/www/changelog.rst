@@ -1619,6 +1619,6 @@ Changelog
 - :feature:`80` Expose the internal "is closed" property of the file transfer
   class ``BufferedFile`` as ``.closed``, better conforming to Python's file
   interface.  Thanks to ``@smunaut`` and James Hiscock for catch & patch.
-- :issue:`2271` Fixes pipe ``write()`` after ``close()`` race condition in pipe.py.
+- :bug:`2271` Fixes pipe ``write()`` after ``close()`` race condition in pipe.py.
   Ignores ``write()`` exception when the pipe was previously closed.
-  Thanks to Ivan Peon for the patch
+  Thanks to Ivan Peon for the patch.
