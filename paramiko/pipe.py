@@ -57,7 +57,7 @@ class PosixPipe:
             pass
         try:
             os.close(self._wfd)
-        except:
+        except Exception:
             pass
 
     def fileno(self):
