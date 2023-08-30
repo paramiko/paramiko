@@ -53,7 +53,7 @@ class PosixPipe:
         # "best effort" approach
         try:
             os.close(self._rfd)
-        except:
+        except Exception:
             pass
         try:
             os.close(self._wfd)
