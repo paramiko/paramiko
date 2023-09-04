@@ -1,0 +1,113 @@
+name: Support Request
+description: |
+  Use this template when you're having trouble using paramiko.
+title: "[SUPPORT] - <title>"
+labels: ["Support"]
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for using paramiko! We're sorry you're having trouble making it work the way you want. Please provide the information below and describe the problem you're having and we'll do our best to help.
+
+  - type: dropdown
+    id: usage_posture
+    attributes:
+      label: Are you using paramiko as a client or server?
+      multiple: false
+      options:
+        - Client
+        - Server
+        - Both
+        - Not sure
+    validations:
+      required: true
+
+  - type: dropdown
+    id: features
+    attributes:
+      label: What feature(s) aren't working right?
+      description: Select as many as are relevant
+      multiple: true
+      options:
+        - SSH
+        - SFTP
+        - Keys/auth
+        - known_hosts
+        - sshconfig
+        - Exception handling
+        - Something else
+    validations:
+      required: true
+  
+  - type: input
+    id: paramiko_version
+    attributes:
+      label: What version(s) of paramiko are you using?
+      description: |
+        Find out with `$ python -c "import paramiko; print(paramiko.__version__)"`
+      placeholder: |
+        Example: 3.1.0
+    validations:
+      required: true
+
+  - type: input
+    id: python_version
+    attributes:
+      label: What version(s) of Python are you using?
+      description: |
+        Find out with `$ python -V`
+      placeholder: |
+        Example: 3.11.3
+    validations:
+      required: true
+
+  - type: input
+    id: os_info
+    attributes:
+      label: What operating system and version are you using?
+      placeholder: |
+        Example: WSL on Windows 11; or MacOS Mojave; or Ubuntu 22.10
+    validations:
+      required: true
+
+  - type: input
+    id: server_info
+    attributes:
+      label: If you're connecting as a client, which SSH server are you connecting to?
+      description: |
+        Leave this blank if you're not sure.
+      placeholder: |
+        Example: OpenSSH x.y; or Teleport vNN
+
+  - type: input
+    id: integrated_tool
+    attributes:
+      label: If you're using paramiko as part of another tool, which tool/version?
+      placeholder: |
+        Examples: Fabric, Ansible, sftputil
+  
+  - type: textarea
+    id: intended_use
+    attributes:
+      label: What are you trying to do with paramiko?
+      description: |
+        Please describe in words what you are trying to do.
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem_details
+    attributes:
+      label: How are you trying to do it, and what's happening instead?
+      description: |
+        Include code snippets and a description of the expected output, and be as detailed as possible. If possible, try to reduce your code examples to a minimal example that reproduces the problem/behavior.
+    validations:
+      required: true
+
+  - type: textarea
+    id: more_info
+    attributes:
+      label: Anything else?
+      description: |
+        Please provide any additional information that might help us find a solution for you.

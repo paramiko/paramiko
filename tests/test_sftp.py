@@ -38,8 +38,8 @@ from paramiko.sftp_attr import SFTPAttributes
 from paramiko.util import b, u
 from tests import requireNonAsciiLocale
 
-from .util import needs_builtin
-from .util import slow
+from ._util import needs_builtin
+from ._util import slow
 
 
 ARTICLE = """

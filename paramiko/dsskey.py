@@ -43,6 +43,8 @@ class DSSKey(PKey):
     data.
     """
 
+    name = "ssh-dss"
+
     def __init__(
         self,
         msg=None,
@@ -71,8 +73,8 @@ class DSSKey(PKey):
         else:
             self._check_type_and_load_cert(
                 msg=msg,
-                key_type="ssh-dss",
-                cert_type="ssh-dss-cert-v01@openssh.com",
+                key_type=self.name,
+                cert_type=f"{self.name}-cert-v01@openssh.com",
             )
             self.p = msg.get_mpint()
             self.q = msg.get_mpint()
@@ -82,7 +84,7 @@ class DSSKey(PKey):
 
     def asbytes(self):
         m = Message()
-        m.add_string("ssh-dss")
+        m.add_string(self.name)
         m.add_mpint(self.p)
         m.add_mpint(self.q)
         m.add_mpint(self.g)
@@ -96,8 +98,9 @@ class DSSKey(PKey):
     def _fields(self):
         return (self.get_name(), self.p, self.q, self.g, self.y)
 
+    # TODO 4.0: remove
     def get_name(self):
-        return "ssh-dss"
+        return self.name
 
     def get_bits(self):
         return self.size
@@ -119,7 +122,7 @@ class DSSKey(PKey):
         r, s = decode_dss_signature(sig)
 
         m = Message()
-        m.add_string("ssh-dss")
+        m.add_string(self.name)
         # apparently, in rare cases, r or s may be shorter than 20 bytes!
         rstr = util.deflate_long(r, 0)
         sstr = util.deflate_long(s, 0)
@@ -136,7 +139,7 @@ class DSSKey(PKey):
             sig = msg.asbytes()
         else:
             kind = msg.get_text()
-            if kind != "ssh-dss":
+            if kind != self.name:
                 return 0
             sig = msg.get_binary()
 

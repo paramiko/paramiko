@@ -114,6 +114,7 @@ class ECDSAKey(PKey):
         password=None,
         vals=None,
         file_obj=None,
+        # TODO 4.0: remove; it does nothing since porting to cryptography.io
         validate_point=True,
     ):
         self.verifying_key = None
@@ -168,8 +169,13 @@ class ECDSAKey(PKey):
                 raise SSHException("Invalid public key")
 
     @classmethod
-    def supported_key_format_identifiers(cls):
+    def identifiers(cls):
         return cls._ECDSA_CURVES.get_key_format_identifier_list()
+
+    # TODO 4.0: deprecate/remove
+    @classmethod
+    def supported_key_format_identifiers(cls):
+        return cls.identifiers()
 
     def asbytes(self):
         key = self.verifying_key

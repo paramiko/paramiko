@@ -26,7 +26,7 @@ from io import BytesIO
 from paramiko.common import linefeed_byte, crlf, cr_byte
 from paramiko.file import BufferedFile
 
-from .util import needs_builtin
+from ._util import needs_builtin
 
 
 class LoopbackFile(BufferedFile):
