@@ -1,6 +1,9 @@
 =========
 Changelog
 =========
+- :bug:`2258` auth_handler: properly check that public_blob attr exists
+  Fix an issue where an error `AttributeError: public_blob` is raised when
+  a complex connection chain is used.
 
 - :feature:`2058` (solves :issue:`1587` and possibly others) Add an explicit
   ``max_concurrent_prefetch_requests`` argument to `paramiko.client.SSHClient.get`
