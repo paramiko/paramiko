@@ -127,6 +127,7 @@ class Channel(ClosingContextManager):
         self._name = str(chanid)
         self.logger = util.get_logger("paramiko.transport")
         self._pipe = None
+        self._write_pipe = None
         self.event = threading.Event()
         self.event_ready = False
         self.combine_stderr = False
@@ -659,6 +660,10 @@ class Channel(ClosingContextManager):
                 self._pipe.close()
                 self._pipe = None
 
+            if self._write_pipe is not None:
+                self._write_pipe.close()
+                self._write_pipe = None
+
             if not self.active or self.closed:
                 return
             msgs = self._close_internal()
@@ -913,15 +918,40 @@ class Channel(ClosingContextManager):
 
     def fileno(self):
         """
-        Returns an OS-level file descriptor which can be used for polling, but
-        but not for reading or writing.  This is primarily to allow Python's
-        ``select`` module to work.
+        Legacy: calls fileno_read for backwards compatibility. Please use
+        fileno_read and fileno_write, or the fileno methods of the file-like
+        wrappers.
+
+        Returns an OS-level file descriptor which can be used for polling for
+        read availability on this channel, but not for actual reading or
+        writing.  This is primarily to allow Python's ``select`` module to
+        work.
 
         The first time ``fileno`` is called on a channel, a pipe is created to
         simulate real OS-level file descriptor (FD) behavior.  Because of this,
         two OS-level FDs are created, which will use up FDs faster than normal.
         (You won't notice this effect unless you have hundreds of channels
         open at the same time.)
+
+        :return: an OS-level file descriptor (`int`)
+
+        .. warning::
+            This method causes channel reads to be slightly less efficient.
+        """
+        return self.fileno_read()
+
+    def fileno_read(self):
+        """
+        Returns an OS-level file descriptor which can be used for polling for
+        read availability on this channel, but not for actual reading or
+        writing.  This is primarily to allow Python's ``select`` module to
+        work.
+
+        The first time ``fileno_read`` is called on a channel, a pipe is
+        created to simulate real OS-level file descriptor (FD) behavior.
+        Because of this, two OS-level FDs are created, which will use up FDs
+        faster than normal.  (You won't notice this effect unless you have
+        hundreds of channels open at the same time.)
 
         :return: an OS-level file descriptor (`int`)
 
@@ -938,6 +968,38 @@ class Channel(ClosingContextManager):
             self.in_buffer.set_event(p1)
             self.in_stderr_buffer.set_event(p2)
             return self._pipe.fileno()
+        finally:
+            self.lock.release()
+
+    def fileno_write(self):
+        """
+        Returns an OS-level file descriptor which can be used for polling for
+        write availability on this channel, but not for actual reading or
+        writing.  This is primarily to allow Python's ``select`` module to
+        work.
+
+        The first time ``fileno_read`` is called on a channel, a pipe is
+        created to simulate real OS-level file descriptor (FD) behavior.
+        Because of this, two OS-level FDs are created, which will use up FDs
+        faster than normal.  (You won't notice this effect unless you have
+        hundreds of channels open at the same time.)
+
+        :return: an OS-level file descriptor (`int`)
+
+        .. warning::
+            This method causes channel writes to be slightly less efficient.
+        """
+        self.lock.acquire()
+        try:
+            if self._write_pipe is not None:
+                return self._write_pipe.fileno()
+            # create the pipe and feed in any existing data
+            self._write_pipe = pipe.make_write_pipe()
+            if self.out_window_size == 0:
+                self._write_pipe.clear()
+            else:
+                self._write_pipe.set()
+            return self._write_pipe.fileno()
         finally:
             self.lock.release()
 
@@ -1012,6 +1074,11 @@ class Channel(ClosingContextManager):
     def _set_remote_channel(self, chanid, window_size, max_packet_size):
         self.remote_chanid = chanid
         self.out_window_size = window_size
+        if self._write_pipe is not None:
+            if window_size == 0:
+                self._write_pipe.clear()
+            else:
+                self._write_pipe.set()
         self.out_max_packet_size = self.transport._sanitize_packet_size(
             max_packet_size
         )
@@ -1064,6 +1131,8 @@ class Channel(ClosingContextManager):
             if self.ultra_debug:
                 self._log(DEBUG, "window up {}".format(nbytes))
             self.out_window_size += nbytes
+            if self._write_pipe is not None and nbytes > 0:
+                self._write_pipe.set()
             self.out_buffer_cv.notify_all()
         finally:
             self.lock.release()
@@ -1234,6 +1303,8 @@ class Channel(ClosingContextManager):
         self.status_event.set()
         if self._pipe is not None:
             self._pipe.set_forever()
+        if self._write_pipe is not None:
+            self._write_pipe.clear_forever()
 
     def _send_eof(self):
         # you are holding the lock.
@@ -1326,6 +1397,8 @@ class Channel(ClosingContextManager):
         if self.out_max_packet_size - 64 < size:
             size = self.out_max_packet_size - 64
         self.out_window_size -= size
+        if self._write_pipe and self.out_window_size == 0:
+            self._write_pipe.clear()
         if self.ultra_debug:
             self._log(DEBUG, "window down to {}".format(self.out_window_size))
         return size
@@ -1348,6 +1421,9 @@ class ChannelFile(BufferedFile):
         self.channel = channel
         BufferedFile.__init__(self)
         self._set_mode(mode, bufsize)
+
+    def fileno(self):
+        return self.channel.fileno_read()
 
     def __repr__(self):
         """
@@ -1384,6 +1460,9 @@ class ChannelStdinFile(ChannelFile):
 
     See `Channel.makefile_stdin` for details.
     """
+
+    def fileno(self):
+        return self.channel.fileno_write()
 
     def close(self):
         super().close()
