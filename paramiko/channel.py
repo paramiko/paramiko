@@ -118,7 +118,7 @@ class Channel(ClosingContextManager):
         self.lock = threading.Lock()
         self.out_buffer_cv = threading.Condition(self.lock)
         self.in_window_size = 0
-        self.out_window_size = 0
+        self._out_window_size = 0
         self.in_max_packet_size = 0
         self.out_max_packet_size = 0
         self.in_window_threshold = 0
@@ -133,6 +133,19 @@ class Channel(ClosingContextManager):
         self.combine_stderr = False
         self.exit_status = -1
         self.origin_addr = None
+
+    @property
+    def out_window_size(self):
+        return self._out_window_size
+
+    @out_window_size.setter
+    def out_window_size(self, value):
+        self._out_window_size = value
+        if self._write_pipe is not None:
+            if value == 0:
+                self._write_pipe.clear()
+            else:
+                self._write_pipe.set()
 
     def __del__(self):
         try:
@@ -995,10 +1008,8 @@ class Channel(ClosingContextManager):
                 return self._write_pipe.fileno()
             # create the pipe and feed in any existing data
             self._write_pipe = pipe.make_write_pipe()
-            if self.out_window_size == 0:
-                self._write_pipe.clear()
-            else:
-                self._write_pipe.set()
+            # set the pipe status
+            self.out_window_size = self.out_window_size
             return self._write_pipe.fileno()
         finally:
             self.lock.release()
@@ -1074,11 +1085,6 @@ class Channel(ClosingContextManager):
     def _set_remote_channel(self, chanid, window_size, max_packet_size):
         self.remote_chanid = chanid
         self.out_window_size = window_size
-        if self._write_pipe is not None:
-            if window_size == 0:
-                self._write_pipe.clear()
-            else:
-                self._write_pipe.set()
         self.out_max_packet_size = self.transport._sanitize_packet_size(
             max_packet_size
         )
@@ -1131,8 +1137,6 @@ class Channel(ClosingContextManager):
             if self.ultra_debug:
                 self._log(DEBUG, "window up {}".format(nbytes))
             self.out_window_size += nbytes
-            if self._write_pipe is not None and nbytes > 0:
-                self._write_pipe.set()
             self.out_buffer_cv.notify_all()
         finally:
             self.lock.release()
@@ -1397,8 +1401,6 @@ class Channel(ClosingContextManager):
         if self.out_max_packet_size - 64 < size:
             size = self.out_max_packet_size - 64
         self.out_window_size -= size
-        if self._write_pipe and self.out_window_size == 0:
-            self._write_pipe.clear()
         if self.ultra_debug:
             self._log(DEBUG, "window down to {}".format(self.out_window_size))
         return size
