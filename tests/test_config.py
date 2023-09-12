@@ -61,7 +61,8 @@ class TestSSHConfig:
         with raises(TypeError):
             SSHConfig("uh oh!")
         # No args.
-        assert not SSHConfig()._config
+        # TODO: do not peek into implementation details
+        assert not SSHConfig()._config_root
 
     def test_from_text(self):
         config = SSHConfig.from_text("User foo")
@@ -94,7 +95,8 @@ class TestSSHConfig:
                 "config": {"crazy": "something else"},
             },
         ]
-        assert self.config._config == expected
+        # TODO: do not peek into implementation details
+        assert self.config._config_by_file[self.config._config_root] == expected
 
     @mark.parametrize(
         "host,values",
@@ -693,6 +695,14 @@ class TestCanonicalizationOfCNAMEs:
     def test_permitted_cnames_may_be_multiple_complex_mappings(self):
         # Same as prev but with multiple patterns on both ends in both args
         pass
+
+
+class TestSSHConfigInclude:
+    def test_can_include_single_file(self):
+        basic_config_path = _config("basic")
+        config = SSHConfig.from_text(f"Include {basic_config_path}")
+        result = config.lookup("www.paramiko.org")
+        assert result["user"] == "rando"
 
 
 class TestMatchAll:

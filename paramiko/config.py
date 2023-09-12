@@ -89,6 +89,8 @@ class SSHConfig:
             config = SSHConfig.from_text("Host foo\\n\\tUser bar")
         """
         self._config = []
+        self._config_root = None
+        self._config_by_file = {}
 
     @classmethod
     def from_text(cls, text):
@@ -121,11 +123,20 @@ class SSHConfig:
         return obj
 
     def parse(self, file_obj):
+        if 'name' in dir(file_obj):
+            file_path = file_obj.name
+        else:
+            file_path = ''
+        self._config_root = file_path
+        self._parse(file_obj, self._config_root)
+
+    def _parse(self, file_obj, file_path=None):
         """
         Read an OpenSSH config from the given file object.
 
         :param file_obj: a file-like object to read the config file from
         """
+        self._config_by_file[file_path] = []
         # Start out w/ implicit/anonymous global host-like block to hold
         # anything not contained by an explicit one.
         context = {"host": ["*"], "config": {}}
@@ -146,7 +157,7 @@ class SSHConfig:
 
             # Host keyword triggers switch to new block/context
             if key in ("host", "match"):
-                self._config.append(context)
+                self._config_by_file[file_path].append(context)
                 context = {"config": {}}
                 if key == "host":
                     # TODO 4.0: make these real objects or at least name this
@@ -162,6 +173,13 @@ class SSHConfig:
                 # Store 'none' as None - not as a string implying that the
                 # proxycommand is the literal shell command "none"!
                 context["config"][key] = None
+            elif key == "include":
+                path = value
+                if "include" not in context:
+                    context["include"] = []
+                context["include"].append(path)
+                with open(path) as flo:
+                    self._parse(flo, file_path=path)
             # All other keywords get stored, directly or via append
             else:
                 if value.startswith('"') and value.endswith('"'):
@@ -178,7 +196,7 @@ class SSHConfig:
                 elif key not in context["config"]:
                     context["config"][key] = value
         # Store last 'open' block and we're done
-        self._config.append(context)
+        self._config_by_file[file_path].append(context)
 
     def lookup(self, hostname):
         """
@@ -246,13 +264,15 @@ class SSHConfig:
             )
         return options
 
-    def _lookup(self, hostname, options=None, canonical=False, final=False):
+    def _lookup(self, hostname, options=None, *, file_path=None, canonical=False, final=False):
         # Init
         if options is None:
             options = SSHConfigDict()
+        if file_path is None:
+            file_path = self._config_root
         # Iterate all stanzas, applying any that match, in turn (so that things
         # like Match can reference currently understood state)
-        for context in self._config:
+        for context in self._config_by_file[file_path]:
             if not (
                 self._pattern_matches(context.get("host", []), hostname)
                 or self._does_match(
@@ -275,6 +295,9 @@ class SSHConfig:
                     options[key].extend(
                         x for x in value if x not in options[key]
                     )
+            if "include" in context.keys():
+                for include_path in context["include"]:
+                    self._lookup(hostname, options, file_path=include_path, canonical=canonical, final=final)
         if final:
             # Expand variables in resulting values
             # (besides 'Match exec' which was already handled above)
@@ -328,8 +351,9 @@ class SSHConfig:
         explicit hostnames and wildcard entries).
         """
         hosts = set()
-        for entry in self._config:
-            hosts.update(entry["host"])
+        for _config in self._config_by_file.values():
+            for entry in _config:
+                hosts.update(entry["host"])
         return hosts
 
     def _pattern_matches(self, patterns, target):
