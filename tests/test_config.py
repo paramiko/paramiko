@@ -2,6 +2,7 @@
 # repository
 
 from os.path import expanduser
+from pathlib import Path
 from socket import gaierror
 
 try:
@@ -19,7 +20,7 @@ from paramiko import (
     ConfigParseError,
 )
 
-from ._util import _config
+from ._util import _config, tests_dir
 
 
 @fixture
@@ -701,6 +702,19 @@ class TestSSHConfigInclude:
     def test_can_include_single_file(self):
         basic_config_path = _config("basic")
         config = SSHConfig.from_text(f"Include {basic_config_path}")
+        result = config.lookup("www.paramiko.org")
+        assert result["user"] == "rando"
+
+    def test_has_default_config_home(self):
+        assert SSHConfig.config_home == expanduser("~/.ssh")
+        # TODO: also have default for system level: /etc/ssh
+
+    def test_can_include_relative_paths(self):
+        # Set the config home dir
+        test_configs_dir = Path(tests_dir)/"configs"
+        SSHConfig.config_home = str(test_configs_dir)
+        # Try include a test config
+        config = SSHConfig.from_text("Include basic")
         result = config.lookup("www.paramiko.org")
         assert result["user"] == "rando"
 

@@ -30,6 +30,8 @@ import socket
 from hashlib import sha1
 from io import StringIO
 from functools import partial
+# TODO: rewrite os.path.* calls to pathlib
+from pathlib import Path
 
 invoke, invoke_import_error = None, None
 try:
@@ -68,6 +70,13 @@ class SSHConfig:
         # enough (no actual match-exec config key to be confused with).
         "match-exec": ["%C", "%d", "%h", "%L", "%l", "%n", "%p", "%r", "%u"],
     }
+
+    """
+    Base path for relative path includes.
+    TODO: Use /etc/ssh for system level config files
+    TODO: Test out how openssh treats these.
+    """
+    config_home = os.path.expanduser('~/.ssh')
 
     def __init__(self):
         """
@@ -174,7 +183,11 @@ class SSHConfig:
                 # proxycommand is the literal shell command "none"!
                 context["config"][key] = None
             elif key == "include":
-                path = value
+                path = Path(value)
+                # Use config home as a base
+                if not path.is_absolute():
+                    path = self.config_home/path
+                path = str(path)
                 if "include" not in context:
                     context["include"] = []
                 context["include"].append(path)
