@@ -187,6 +187,8 @@ class SSHConfig:
                 # Use config home as a base
                 if not path.is_absolute():
                     path = self.config_home/path
+                if not path.exists() or not path.is_file():
+                    continue
                 path = str(path)
                 if "include" not in context:
                     context["include"] = []

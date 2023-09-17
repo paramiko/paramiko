@@ -718,6 +718,16 @@ class TestSSHConfigInclude:
         result = config.lookup("www.paramiko.org")
         assert result["user"] == "rando"
 
+    def test_include_ignores_invalid_paths(self):
+        missing_file = _config("missing-include-file")
+        config = SSHConfig.from_text(f"""
+        Include {missing_file}
+        Include {tests_dir}
+        User waldo
+        """)
+        result = config.lookup("anything.com")
+        assert result["user"] == "waldo"
+
 
 class TestMatchAll:
     def test_always_matches(self):
