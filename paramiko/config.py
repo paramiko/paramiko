@@ -208,15 +208,16 @@ class SSHConfig:
         self._config_by_file[file_path].append(context)
 
     def _calculate_include_paths(self, value):
-        path = Path(value)
-        # Use config home as a base
-        if not path.is_absolute():
-            path = self.config_home/path
-        # Ignore invalid include paths
-        if not path.exists() or not path.is_file():
-            # TODO: possibly warn the user somehow?
-            return
-        yield str(path)
+        for part in re.split('\\s+', value):
+            path = Path(part)
+            # Use config home as a base
+            if not path.is_absolute():
+                path = self.config_home/path
+            # Ignore invalid include paths
+            if not path.exists() or not path.is_file():
+                # TODO: possibly warn the user somehow?
+                continue
+            yield str(path)
 
     def lookup(self, hostname):
         """

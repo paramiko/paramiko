@@ -728,6 +728,23 @@ class TestSSHConfigInclude:
         result = config.lookup("anything.com")
         assert result["user"] == "waldo"
 
+    @mark.parametrize("include_str", [
+        "include-part-b include-part-a",
+        "include-part-b   include-part-a",
+        "include-part-b\t \tinclude-part-a",
+        "include-part-b missing-file include-part-a"
+    ])
+    # TODO: handle filenames with whitespace:
+    # "include\\ space"
+    # "'include space'"
+    def test_can_include_many_files(self, include_str):
+        test_configs_dir = Path(tests_dir)/"configs"
+        SSHConfig.config_home = str(test_configs_dir)
+        config = SSHConfig.from_text(f"Include {include_str}")
+        result = config.lookup("test.org")
+        assert result["user"] == "banana"
+        assert result["identityfile"] == ["apple-tree"]
+
 
 class TestMatchAll:
     def test_always_matches(self):

@@ -1,0 +1,4 @@
+Host *.org
+	User apple
+	Port 221
+	IdentityFile apple-tree
