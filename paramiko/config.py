@@ -132,6 +132,11 @@ class SSHConfig:
         return obj
 
     def parse(self, file_obj):
+        """
+        Read an OpenSSH config from the given file object.
+
+        :param file_obj: a file-like object to read the config file from
+        """
         if 'name' in dir(file_obj):
             file_path = file_obj.name
         else:
@@ -140,11 +145,6 @@ class SSHConfig:
         self._parse(file_obj, self._config_root)
 
     def _parse(self, file_obj, file_path=None):
-        """
-        Read an OpenSSH config from the given file object.
-
-        :param file_obj: a file-like object to read the config file from
-        """
         self._config_by_file[file_path] = []
         # Start out w/ implicit/anonymous global host-like block to hold
         # anything not contained by an explicit one.
@@ -183,18 +183,12 @@ class SSHConfig:
                 # proxycommand is the literal shell command "none"!
                 context["config"][key] = None
             elif key == "include":
-                path = Path(value)
-                # Use config home as a base
-                if not path.is_absolute():
-                    path = self.config_home/path
-                if not path.exists() or not path.is_file():
-                    continue
-                path = str(path)
-                if "include" not in context:
-                    context["include"] = []
-                context["include"].append(path)
-                with open(path) as flo:
-                    self._parse(flo, file_path=path)
+                for path in self._calculate_include_paths(value):
+                    if "include" not in context:
+                        context["include"] = []
+                    context["include"].append(path)
+                    with open(path) as flo:
+                        self._parse(flo, file_path=path)
             # All other keywords get stored, directly or via append
             else:
                 if value.startswith('"') and value.endswith('"'):
@@ -212,6 +206,17 @@ class SSHConfig:
                     context["config"][key] = value
         # Store last 'open' block and we're done
         self._config_by_file[file_path].append(context)
+
+    def _calculate_include_paths(self, value):
+        path = Path(value)
+        # Use config home as a base
+        if not path.is_absolute():
+            path = self.config_home/path
+        # Ignore invalid include paths
+        if not path.exists() or not path.is_file():
+            # TODO: possibly warn the user somehow?
+            return
+        yield str(path)
 
     def lookup(self, hostname):
         """
