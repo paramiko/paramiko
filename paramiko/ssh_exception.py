@@ -67,9 +67,7 @@ class BadAuthenticationType(AuthenticationException):
         self.allowed_types = types
 
     def __str__(self):
-        return "{}; allowed types: {!r}".format(
-            self.explanation, self.allowed_types
-        )
+        return "{}; allowed types: {!r}".format(self.explanation, self.allowed_types)
 
 
 class PartialAuthentication(AuthenticationException):
@@ -84,9 +82,7 @@ class PartialAuthentication(AuthenticationException):
         self.allowed_types = types
 
     def __str__(self):
-        return "Partial authentication; allowed types: {!r}".format(
-            self.allowed_types
-        )
+        return "Partial authentication; allowed types: {!r}".format(self.allowed_types)
 
 
 # TODO 4.0: stop inheriting from SSHException, move to auth.py
@@ -248,3 +244,16 @@ class MessageOrderError(SSHException):
     """
 
     pass
+
+
+class ConfigIncludeLoopError(ConfigParseError):
+    """
+    An include loop was detected trying to parese the config data.
+    """
+
+    def __init__(self, loop, /):
+        """
+        :param tuple loop
+            The include loop that was detected.
+        """
+        self.loop = loop

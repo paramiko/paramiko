@@ -18,6 +18,7 @@ from paramiko import (
     SSHConfigDict,
     CouldNotCanonicalize,
     ConfigParseError,
+    ConfigIncludeLoopError,
 )
 
 from ._util import _config, tests_dir
@@ -744,6 +745,19 @@ class TestSSHConfigInclude:
         result = config.lookup("test.org")
         assert result["user"] == "banana"
         assert result["identityfile"] == ["apple-tree"]
+
+    @mark.parametrize("config_name, expected_loop", [
+        ("include-loop-a", ("include-loop-a", "include-loop-a")),
+        ("include-loop-b", ("include-loop-b1", "include-loop-b2", "include-loop-b3", "include-loop-b1"))
+    ])
+    def test_include_fails_on_include_loop(self, config_name, expected_loop):
+        # Set the config home dir
+        test_configs_dir = Path(tests_dir)/"configs"
+        SSHConfig.config_home = str(test_configs_dir)
+        with raises(ConfigIncludeLoopError) as e:
+            config = SSHConfig.from_text(f"Include {config_name}")
+            result = config.lookup("test")
+        assert e.value.loop == tuple(map(_config, expected_loop))
 
 
 class TestMatchAll:

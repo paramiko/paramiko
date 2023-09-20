@@ -39,7 +39,11 @@ try:
 except ImportError as e:
     invoke_import_error = e
 
-from .ssh_exception import CouldNotCanonicalize, ConfigParseError
+from .ssh_exception import (
+    CouldNotCanonicalize,
+    ConfigParseError,
+    ConfigIncludeLoopError,
+)
 
 
 SSH_PORT = 22
@@ -76,7 +80,7 @@ class SSHConfig:
     TODO: Use /etc/ssh for system level config files
     TODO: Test out how openssh treats these.
     """
-    config_home = os.path.expanduser('~/.ssh')
+    config_home = os.path.expanduser("~/.ssh")
 
     def __init__(self):
         """
@@ -137,14 +141,14 @@ class SSHConfig:
 
         :param file_obj: a file-like object to read the config file from
         """
-        if 'name' in dir(file_obj):
+        if "name" in dir(file_obj):
             file_path = file_obj.name
         else:
-            file_path = ''
+            file_path = ""
         self._config_root = file_path
-        self._parse(file_obj, self._config_root)
+        self._parse(file_obj, file_path=self._config_root, include_stack=[self._config_root])
 
-    def _parse(self, file_obj, file_path=None):
+    def _parse(self, file_obj, file_path, include_stack):
         self._config_by_file[file_path] = []
         # Start out w/ implicit/anonymous global host-like block to hold
         # anything not contained by an explicit one.
@@ -184,11 +188,15 @@ class SSHConfig:
                 context["config"][key] = None
             elif key == "include":
                 for path in self._calculate_include_paths(value):
+                    if path in include_stack:
+                        i = include_stack.index(path)
+                        include_loop = tuple(include_stack[i:] + [path])
+                        raise ConfigIncludeLoopError(include_loop)
                     if "include" not in context:
                         context["include"] = []
                     context["include"].append(path)
                     with open(path) as flo:
-                        self._parse(flo, file_path=path)
+                        self._parse(flo, file_path=path, include_stack=include_stack+[path])
             # All other keywords get stored, directly or via append
             else:
                 if value.startswith('"') and value.endswith('"'):
@@ -208,11 +216,11 @@ class SSHConfig:
         self._config_by_file[file_path].append(context)
 
     def _calculate_include_paths(self, value):
-        for part in re.split('\\s+', value):
+        for part in re.split("\\s+", value):
             path = Path(part)
             # Use config home as a base
             if not path.is_absolute():
-                path = self.config_home/path
+                path = self.config_home / path
             # Ignore invalid include paths
             if not path.exists() or not path.is_file():
                 # TODO: possibly warn the user somehow?

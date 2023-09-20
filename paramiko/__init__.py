@@ -56,6 +56,7 @@ from paramiko.ssh_exception import (
     BadAuthenticationType,
     BadHostKeyException,
     ChannelException,
+    ConfigIncludeLoopError,
     ConfigParseError,
     CouldNotCanonicalize,
     IncompatiblePeer,
