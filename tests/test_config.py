@@ -20,8 +20,26 @@ from paramiko import (
     ConfigParseError,
     ConfigIncludeLoopError,
 )
+from paramiko.config import stack
 
 from ._util import _config, tests_dir
+
+
+class TestStack:
+    def test_can_be_initialized(self):
+        s = stack('a')
+        assert len(s) == 1
+
+    def test_has_initial_top_item(self):
+        s = stack('a')
+        assert s.top == 'a'
+
+    def test_top_changes_with_append_and_pop(self):
+        s = stack(1)
+        s.append(69)
+        assert s.top == 69
+        s.pop()
+        assert s.top == 1
 
 
 @fixture

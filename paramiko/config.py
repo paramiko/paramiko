@@ -49,6 +49,15 @@ from .ssh_exception import (
 SSH_PORT = 22
 
 
+class stack(list):
+    def __init__(self, root_element):
+        self.append(root_element)
+
+    @property
+    def top(self):
+        return self[-1]
+
+
 class SSHConfig:
     """
     Representation of config information as stored in the format used by
@@ -146,9 +155,10 @@ class SSHConfig:
         else:
             file_path = ""
         self._config_root = file_path
-        self._parse(file_obj, file_path=self._config_root, include_stack=[self._config_root])
+        self._parse(file_obj, include_stack=stack(self._config_root))
 
-    def _parse(self, file_obj, file_path, include_stack):
+    def _parse(self, file_obj, include_stack):
+        file_path = include_stack.top
         self._config_by_file[file_path] = []
         # Start out w/ implicit/anonymous global host-like block to hold
         # anything not contained by an explicit one.
@@ -195,8 +205,10 @@ class SSHConfig:
                     if "include" not in context:
                         context["include"] = []
                     context["include"].append(path)
+                    include_stack.append(path)
                     with open(path) as flo:
-                        self._parse(flo, file_path=path, include_stack=include_stack+[path])
+                        self._parse(flo, include_stack)
+                    include_stack.pop()
             # All other keywords get stored, directly or via append
             else:
                 if value.startswith('"') and value.endswith('"'):
