@@ -32,6 +32,7 @@ from io import StringIO
 from functools import partial
 # TODO: rewrite os.path.* calls to pathlib
 from pathlib import Path
+from glob import glob
 
 invoke, invoke_import_error = None, None
 try:
@@ -228,16 +229,19 @@ class SSHConfig:
         self._config_by_file[file_path].append(context)
 
     def _calculate_include_paths(self, value):
-        for part in shlex.split(value):
-            path = Path(part)
+        for path_expr in shlex.split(value):
+            path_expr = Path(path_expr)
             # Use config home as a base
-            if not path.is_absolute():
-                path = self.config_home / path
-            # Ignore invalid include paths
-            if not path.exists() or not path.is_file():
-                # TODO: possibly warn the user somehow?
-                continue
-            yield str(path)
+            if not path_expr.is_absolute():
+                path_expr = self.config_home / path_expr
+            # TODO: make use of glob(root_dir=self.config_home) for python>=3.10
+            for path in sorted(glob(str(path_expr))):
+                path = Path(path)
+                # Ignore invalid include paths
+                if not path.exists() or not path.is_file():
+                    # TODO: possibly warn the user somehow?
+                    continue
+                yield str(path)
 
     def lookup(self, hostname):
         """

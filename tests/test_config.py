@@ -775,7 +775,18 @@ class TestSSHConfigInclude:
         assert result["port"] == "42"
         assert result["identityfile"] == ["dont-panic"]
 
+    def test_can_include_globs(self):
+        test_configs_dir = Path(tests_dir)/"configs"
+        SSHConfig.config_home = str(test_configs_dir)
+        config = SSHConfig.from_text("Include include-part*")
+        print(config._config_by_file)
+        result = config.lookup("test.org")
+        assert result["user"] == "ford-prefect"
+        assert result["port"] == "42"
+        assert result["identityfile"] == ["dont-panic", "apple-tree", "banana-tree"]
+
     @mark.parametrize("config_name, expected_loop", [
+        ("include-loop-?", ("include-loop-a", "include-loop-a")),
         ("include-loop-a", ("include-loop-a", "include-loop-a")),
         ("include-loop-b", ("include-loop-b1", "include-loop-b2", "include-loop-b3", "include-loop-b1"))
     ])
