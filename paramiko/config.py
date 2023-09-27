@@ -228,7 +228,7 @@ class SSHConfig:
         self._config_by_file[file_path].append(context)
 
     def _calculate_include_paths(self, value):
-        for part in re.split("\\s+", value):
+        for part in shlex.split(value):
             path = Path(part)
             # Use config home as a base
             if not path.is_absolute():

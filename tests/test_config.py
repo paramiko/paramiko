@@ -753,9 +753,6 @@ class TestSSHConfigInclude:
         "include-part-b\t \tinclude-part-a",
         "include-part-b missing-file include-part-a"
     ])
-    # TODO: handle filenames with whitespace:
-    # "include\\ space"
-    # "'include space'"
     def test_can_include_many_files(self, include_str):
         test_configs_dir = Path(tests_dir)/"configs"
         SSHConfig.config_home = str(test_configs_dir)
@@ -763,6 +760,20 @@ class TestSSHConfigInclude:
         result = config.lookup("test.org")
         assert result["user"] == "banana"
         assert result["identityfile"] == ["apple-tree"]
+
+    @mark.parametrize("include_str", [
+        "include-part\\ space",
+        "'include-part space'",
+        '"include-part space"'
+    ])
+    def test_can_include_filenames_with_spaces(self, include_str):
+        test_configs_dir = Path(tests_dir)/"configs"
+        SSHConfig.config_home = str(test_configs_dir)
+        config = SSHConfig.from_text(f"Include {include_str}")
+        result = config.lookup("test.org")
+        assert result["user"] == "ford-prefect"
+        assert result["port"] == "42"
+        assert result["identityfile"] == ["dont-panic"]
 
     @mark.parametrize("config_name, expected_loop", [
         ("include-loop-a", ("include-loop-a", "include-loop-a")),
