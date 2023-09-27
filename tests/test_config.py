@@ -759,7 +759,7 @@ class TestSSHConfigInclude:
         config = SSHConfig.from_text(f"Include {include_str}")
         result = config.lookup("test.org")
         assert result["user"] == "banana"
-        assert result["identityfile"] == ["apple-tree"]
+        assert result["identityfile"] == ["banana-tree", "apple-tree"]
 
     @mark.parametrize("include_str", [
         "include-part\\ space",
