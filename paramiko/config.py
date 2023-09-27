@@ -160,6 +160,9 @@ class SSHConfig:
 
     def _parse(self, file_obj, include_stack):
         file_path = include_stack.top
+        if file_path in self._config_by_file:
+            # File already parsed
+            return
         self._config_by_file[file_path] = []
         # Start out w/ implicit/anonymous global host-like block to hold
         # anything not contained by an explicit one.
