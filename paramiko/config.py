@@ -213,6 +213,10 @@ class SSHConfig:
                     with open(path) as flo:
                         self._parse(flo, include_stack)
                     include_stack.pop()
+                # TODO: Is there a better way to ensure proper ordering,
+                # than splitting the block on includes?
+                self._config_by_file[file_path].append(context)
+                context = self._new_partial(context)
             # All other keywords get stored, directly or via append
             else:
                 if value.startswith('"') and value.endswith('"'):
@@ -245,6 +249,16 @@ class SSHConfig:
                     # TODO: possibly warn the user somehow?
                     continue
                 yield str(path)
+
+    @staticmethod
+    def _new_partial(old_context):
+        new_context = {
+            k: old_context[k]
+            for k in old_context
+            if k in ("host", "matches")
+        }
+        new_context["config"] = {}
+        return new_context
 
     def lookup(self, hostname):
         """

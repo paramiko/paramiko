@@ -799,6 +799,28 @@ class TestSSHConfigInclude:
             result = config.lookup("test")
         assert e.value.loop == tuple(map(_config, expected_loop))
 
+    @mark.parametrize("config_name, expected_order", [
+        ("include-order-1", (
+            "first",
+            "apple-tree",
+            "last"
+        )),
+        ("include-order-2", (
+            "first",
+            "second",
+            "apple-tree",
+            "middle",
+            "banana-tree",
+            "last"
+        ))
+    ])
+    def test_includes_are_loaded_in_order(self, config_name, expected_order):
+        test_configs_dir = Path(tests_dir)/"configs"
+        SSHConfig.config_home = str(test_configs_dir)
+        config = SSHConfig.from_text(f"Include {config_name}")
+        result = config.lookup("www.paramiko.org")
+        assert result["identityfile"] == list(expected_order)
+
 
 class TestMatchAll:
     def test_always_matches(self):
