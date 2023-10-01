@@ -251,7 +251,8 @@ class ConfigIncludeLoopError(ConfigParseError):
     An include loop was detected trying to parese the config data.
     """
 
-    def __init__(self, loop, /):
+    # TODO: Add back 'positional-only' (self, loop, /) after python>=3.8
+    def __init__(self, loop):
         """
         :param tuple loop
             The include loop that was detected.
