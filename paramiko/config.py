@@ -30,6 +30,7 @@ import socket
 from hashlib import sha1
 from io import StringIO
 from functools import partial
+
 # TODO: rewrite os.path.* calls to pathlib
 from pathlib import Path
 from glob import glob
@@ -241,7 +242,7 @@ class SSHConfig:
             # Use config home as a base
             if not path_expr.is_absolute():
                 path_expr = self.config_home / path_expr
-            # TODO: make use of glob(root_dir=self.config_home) for python>=3.10
+            # TODO: use of glob(root_dir=self.config_home) for python>=3.10
             for path in sorted(glob(str(path_expr))):
                 path = Path(path)
                 # Ignore invalid include paths
@@ -253,9 +254,7 @@ class SSHConfig:
     @staticmethod
     def _new_partial(old_context):
         new_context = {
-            k: old_context[k]
-            for k in old_context
-            if k in ("host", "matches")
+            k: old_context[k] for k in old_context if k in ("host", "matches")
         }
         new_context["config"] = {}
         return new_context
@@ -326,7 +325,15 @@ class SSHConfig:
             )
         return options
 
-    def _lookup(self, hostname, options=None, *, file_path=None, canonical=False, final=False):
+    def _lookup(
+        self,
+        hostname,
+        options=None,
+        *,
+        file_path=None,
+        canonical=False,
+        final=False
+    ):
         # Init
         if options is None:
             options = SSHConfigDict()
@@ -359,7 +366,13 @@ class SSHConfig:
                     )
             if "include" in context.keys():
                 for include_path in context["include"]:
-                    self._lookup(hostname, options, file_path=include_path, canonical=canonical, final=final)
+                    self._lookup(
+                        hostname,
+                        options,
+                        file_path=include_path,
+                        canonical=canonical,
+                        final=final,
+                    )
         if final:
             # Expand variables in resulting values
             # (besides 'Match exec' which was already handled above)
