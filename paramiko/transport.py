@@ -3050,7 +3050,8 @@ class SecurityOptions:
         possible = list(getattr(self._transport, orig).keys())
         forbidden = [n for n in x if n not in possible]
         if len(forbidden) > 0:
-            raise ValueError("unknown cipher")
+            name_parsed = name.replace("_preferred_","")
+            raise ValueError("unknown {} name: {}, possible options: {}".format(name_parsed, x, possible))
         setattr(self._transport, name, x)
 
     @property
