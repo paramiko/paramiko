@@ -161,11 +161,18 @@ class TransportTest(unittest.TestCase):
         """
         opts = self.tc.get_security_options()
         # we use mapping to work with legacy attribute names
-        mapping = {'ciphers': 'ciphers', 'digests': 'macs', 'key_types': 'keys', 'kex': 'kex'}
+        mapping = {
+            "ciphers": "ciphers",
+            "digests": "macs",
+            "key_types": "keys",
+            "kex": "kex",
+        }
         for prop in mapping.keys():
             with self.assertRaises(ValueError) as exc:
-                setattr(opts, prop, ['unknown'])
-            assert str(exc.exception).startswith('unknown {} name'.format(mapping[prop]))
+                setattr(opts, prop, ["unknown"])
+            assert str(exc.exception).startswith(
+                "unknown {} name".format(mapping[prop])
+            )
 
     def test_compute_key(self):
         self.tc.K = 123281095979686581523377256114209720774539068973101330872763622971399429481072519713536292772709507296759612401802191955568143056534122385270077606457721553469730659233569339356140085284052436697480759510519672848743794433460113118986816826624865291116513647975790797391795651716378444844877749505443714557929  # noqa
