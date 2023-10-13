@@ -176,7 +176,7 @@ class TransportTest(unittest.TestCase):
         # test the mix of valid and invalid options
         with self.assertRaises(ValueError) as exc:
             valid = opts.ciphers[0]
-            setattr(opts, 'ciphers', ["unknown", valid])
+            setattr(opts, "ciphers", ["unknown", valid])
             assert str(exc.exception).startswith(
                 "unknown ciphers name: ['unknown', '{}'],".format(valid)
             )
