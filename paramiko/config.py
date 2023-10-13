@@ -112,7 +112,6 @@ class SSHConfig:
             # Or if you have arbitrary ssh_config text from some other source:
             config = SSHConfig.from_text("Host foo\\n\\tUser bar")
         """
-        self._config = []
         self._config_root = None
         self._config_by_file = {}
 
@@ -357,7 +356,7 @@ class SSHConfig:
                 if key not in options:
                     # Create a copy of the original value,
                     # else it will reference the original list
-                    # in self._config and update that value too
+                    # in self._config_by_file and update that value too
                     # when the extend() is being called.
                     options[key] = value[:] if value is not None else value
                 elif key == "identityfile":
