@@ -2,6 +2,10 @@
 Changelog
 =========
 
+- :support:`2313` (solves part of :issue:`2310`) Fix debug logging messages
+  for transport security options in case of mismatch/no support,
+  e.g. `SecurityOptions.digests`, `SecurityOptions.ciphers`.
+
 - :release:`3.3.1 <2023-07-28>`
 - :bug:`-` Cleaned up some very old root level files, mostly just to exercise
   some of our doc build and release machinery. This changelog entry
