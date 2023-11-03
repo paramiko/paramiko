@@ -2,6 +2,8 @@
 Changelog
 =========
 
+- :bug:`2322` Fixed premature server connection closure when a client
+  attempts to send an unsupported key. Patch by ``@torkve``.
 - :release:`3.3.1 <2023-07-28>`
 - :bug:`-` Cleaned up some very old root level files, mostly just to exercise
   some of our doc build and release machinery. This changelog entry
