@@ -630,7 +630,8 @@ Error Message: {}
                 # if no key has been decoded, fast fail this auth attempt
                 result = AUTH_FAILED
             else:
-                # first check if this key is okay... if not, we can skip the verify
+                # first check if this key is okay...
+                # if not, we can skip the verify
                 result = self.transport.server_object.check_auth_publickey(
                     username, key
                 )
