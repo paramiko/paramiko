@@ -625,13 +625,16 @@ Error Message: {}
                 msg = "Auth rejected: unsupported or mangled public key ({}: {})"  # noqa
                 self._log(INFO, msg.format(e.__class__.__name__, e))
                 key = None
+
             if key is None:
-                self._disconnect_no_more_auth()
-                return
-            # first check if this key is okay... if not, we can skip the verify
-            result = self.transport.server_object.check_auth_publickey(
-                username, key
-            )
+                # if no key has been decoded, fast fail this auth attempt
+                result = AUTH_FAILED
+            else:
+                # first check if this key is okay...
+                # if not, we can skip the verify
+                result = self.transport.server_object.check_auth_publickey(
+                    username, key
+                )
             if result != AUTH_FAILED:
                 # key is okay, verify it
                 if not sig_attached:
