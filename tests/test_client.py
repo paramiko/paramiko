@@ -678,6 +678,36 @@ class SSHClientTest(ClientTest):
     def test_host_key_negotiation_4(self):
         self._client_host_key_good(paramiko.RSAKey, "rsa.key")
 
+    def test_server_hostkey_name(self):
+        hostname = "a-different.name"
+
+        def _test(**connect_args):
+            threading.Thread(target=self._run).start()
+
+            self.tc = SSHClient()
+            self.tc.set_missing_host_key_policy(paramiko.RejectPolicy())
+            kfile = "ecdsa-256.key"
+            host_key = paramiko.ECDSAKey.from_private_key_file(_support(kfile))
+            known_hosts = self.tc.get_host_keys()
+            known_hosts.add(hostname, host_key.get_name(), host_key)
+
+            self.tc.connect(password="pygmalion", **connect_args)
+
+        # make sure there is no hostname for the default
+        self.assertRaises(
+            paramiko.ssh_exception.SSHException,
+            _test,
+            **self.connect_kwargs,
+        )
+
+        # show that we can connect if we set the explicit name for hostkey
+        # lookup
+        _test(server_hostkey_name=hostname, **self.connect_kwargs)
+        self.event.wait(1.0)
+        self.assertTrue(self.event.is_set())
+        self.assertTrue(self.ts.is_active())
+        self.assertTrue(self.ts.is_authenticated())
+
     def _setup_for_env(self):
         threading.Thread(target=self._run).start()
 

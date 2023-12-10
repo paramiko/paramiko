@@ -239,6 +239,7 @@ class SSHClient(ClosingContextManager):
         disabled_algorithms=None,
         transport_factory=None,
         auth_strategy=None,
+        server_hostkey_name=None,
     ):
         """
         Connect to an SSH server and authenticate to it.  The server's host key
@@ -334,6 +335,10 @@ class SSHClient(ClosingContextManager):
                 authentication-related parameters (such as, but not limited to,
                 ``password``, ``key_filename`` and ``allow_agent``) and will
                 trigger an exception if given alongside them.
+
+        :param str server_hostkey_name:
+            an optional string to be used in the hostkey lookup instead of the
+            hostname or hostname with port
 
         :returns:
             `.AuthResult` if ``auth_strategy`` is non-``None``; otherwise,
@@ -433,10 +438,11 @@ class SSHClient(ClosingContextManager):
         if channel_timeout is not None:
             t.channel_timeout = channel_timeout
 
-        if port == SSH_PORT:
-            server_hostkey_name = hostname
-        else:
-            server_hostkey_name = "[{}]:{}".format(hostname, port)
+        if server_hostkey_name is None:
+            if port == SSH_PORT:
+                server_hostkey_name = hostname
+            else:
+                server_hostkey_name = "[{}]:{}".format(hostname, port)
         our_server_keys = None
 
         our_server_keys = self._system_host_keys.get(server_hostkey_name)

@@ -2,6 +2,11 @@
 Changelog
 =========
 
+- :feature: Add a ``server_hostkey_name`` kwarg to
+  `SSHClient.connect <paramiko.client.SSHClient.connect>` for advanced users.
+  This allows defining the name to look up the hostkey for, replacing the
+  automatically used hostname or hostname:port. It's basically the same as the
+  ``HostKeyAlias`` setting in SSH's config. Patch by ``@MasterofJOKers``.
 - :release:`3.3.1 <2023-07-28>`
 - :bug:`-` Cleaned up some very old root level files, mostly just to exercise
   some of our doc build and release machinery. This changelog entry
