@@ -352,6 +352,9 @@ def server(
     """
     SSH server contextmanager for testing.
 
+    Yields a tuple of ``(tc, ts)`` (client- and server-side `Transport`
+    objects), or ``(tc, ts, err)`` when ``catch_error==True``.
+
     :param hostkey:
         Host key to use for the server; if None, loads
         ``rsa.key``.
