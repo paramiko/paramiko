@@ -18,12 +18,14 @@ Changelog
       OpenSSH >= TK (or equivalent, such as Paramiko in server mode, as of this
       patch version) and configured to use the new "strict kex" mode. Paramiko
       will always attempt to use "strict kex" mode if offered.
-    - Paramiko will raise TK if any protocol messages are received
-      out-of-order during key exchange. Previously, TK.
+    - Paramiko will now raise an `SSHException` subclass (`MessageOrderError`)
+      when protocol messages are received in unexpected order. (This is not
+      *really* a change in behavior, as most such cases already raised vanilla
+      `SSHException` anyways.)
     - Key (re)negotiation -- i.e. ``MSG_NEWKEYS``, whenever it is encountered
       -- now resets packet sequence numbers. (This should be invisible to users
       during normal operation, only causing exceptions if the exploit is
-      encountered.)
+      encountered, which will usually result in, again, `MessageOrderError`.)
 
   Thanks to Fabian Bäumer, Marcus Brinkmann, and Jörg Schwenk for submitting
   details on the CVE prior to release.

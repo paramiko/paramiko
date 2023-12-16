@@ -110,6 +110,7 @@ from paramiko.ssh_exception import (
     BadAuthenticationType,
     ChannelException,
     IncompatiblePeer,
+    MessageOrderError,
     ProxyCommandFailure,
     SSHException,
 )
@@ -2148,7 +2149,10 @@ class Transport(threading.Thread, ClosingContextManager):
                         continue
                     if len(self._expected_packet) > 0:
                         if ptype not in self._expected_packet:
-                            raise SSHException(
+                            exc_class = SSHException
+                            if self.agreed_on_strict_kex:
+                                exc_class = MessageOrderError
+                            raise exc_class(
                                 "Expecting packet from {!r}, got {:d}".format(
                                     self._expected_packet, ptype
                                 )

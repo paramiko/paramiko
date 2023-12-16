@@ -35,6 +35,7 @@ from paramiko import (
     AuthHandler,
     ChannelException,
     IncompatiblePeer,
+    MessageOrderError,
     Packetizer,
     RSAKey,
     SSHException,
@@ -69,7 +70,7 @@ from ._util import (
     TestServer as NullServer,
 )
 from ._loop import LoopSocket
-from pytest import skip, mark
+from pytest import skip, mark, raises
 
 
 LONG_BANNER = """\
@@ -1279,5 +1280,20 @@ class TestStrictKex:
     def test_sequence_numbers_reset_on_newkeys(self):
         skip()
 
-    def test_error_raised_on_out_of_order_handshakes(self):
-        skip()
+    def test_MessageOrderError_raised_on_out_of_order_messages(self):
+        with raises(MessageOrderError):
+            with server() as (tc, _):
+                # A bit artificial as it's outside kexinit/handshake, but much
+                # easier to trigger and still in line with behavior under test
+                tc._expect_packet(MSG_KEXINIT)
+                tc.open_session()
+
+    def test_SSHException_raised_on_out_of_order_messages_when_not_strict(self):
+        # This is kind of dumb (either situation is still fatal!) but whatever,
+        # may as well be strict with our new strict flag...
+        with raises(SSHException) as info:  # would be true either way, but
+            with server(client_init=dict(strict_kex=False),
+    ) as (tc, _):
+                tc._expect_packet(MSG_KEXINIT)
+                tc.open_session()
+        assert info.type is SSHException  # NOT MessageOrderError!
