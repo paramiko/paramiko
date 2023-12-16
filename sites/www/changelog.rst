@@ -2,6 +2,9 @@
 Changelog
 =========
 
+- :bug:`-` Tweak ``ext-info-(c|s)`` detection during KEXINIT protocol phase;
+  the original implementation made assumptions based on an OpenSSH
+  implementation detail.
 - :release:`3.3.1 <2023-07-28>`
 - :bug:`-` Cleaned up some very old root level files, mostly just to exercise
   some of our doc build and release machinery. This changelog entry

@@ -1213,10 +1213,14 @@ class TestSHA2SignatureKeyExchange(unittest.TestCase):
 
 
 class TestExtInfo(unittest.TestCase):
-    def test_ext_info_handshake(self):
+    def test_ext_info_handshake_exposed_in_client_kexinit(self):
         with server() as (tc, _):
+            # NOTE: this is latest KEXINIT /sent by us/ (Transport retains it)
             kex = tc._get_latest_kex_init()
-            assert kex["kex_algo_list"][-1] == "ext-info-c"
+            # flag in KexAlgorithms list
+            assert "ext-info-c" in kex["kex_algo_list"]
+            # data stored on Transport after hearing back from a compatible
+            # server (such as ourselves in server mode)
             assert tc.server_extensions == {
                 "server-sig-algs": b"ssh-ed25519,ecdsa-sha2-nistp256,ecdsa-sha2-nistp384,ecdsa-sha2-nistp521,rsa-sha2-512,rsa-sha2-256,ssh-rsa,ssh-dss"  # noqa
             }
