@@ -334,6 +334,7 @@ class Transport(threading.Thread, ClosingContextManager):
         gss_deleg_creds=True,
         disabled_algorithms=None,
         server_sig_algs=True,
+        strict_kex=True,
     ):
         """
         Create a new SSH session over an existing socket, or socket-like
@@ -400,6 +401,10 @@ class Transport(threading.Thread, ClosingContextManager):
             Whether to send an extra message to compatible clients, in server
             mode, with a list of supported pubkey algorithms. Default:
             ``True``.
+        :param bool strict_kex:
+            Whether to advertise (and implement, if client also advertises
+            support for) a "strict kex" mode for safer handshaking. Default:
+            ``True``.
 
         .. versionchanged:: 1.15
             Added the ``default_window_size`` and ``default_max_packet_size``
@@ -410,10 +415,14 @@ class Transport(threading.Thread, ClosingContextManager):
             Added the ``disabled_algorithms`` kwarg.
         .. versionchanged:: 2.9
             Added the ``server_sig_algs`` kwarg.
+        .. versionchanged:: 3.4
+            Added the ``strict_kex`` kwarg.
         """
         self.active = False
         self.hostname = None
         self.server_extensions = {}
+        self.advertise_strict_kex = strict_kex
+        self.agreed_on_strict_kex = False
 
         # TODO: these two overrides on sock's type should go away sometime, too
         # many ways to do it!
@@ -2363,11 +2372,17 @@ class Transport(threading.Thread, ClosingContextManager):
             )
         else:
             available_server_keys = self.preferred_keys
-            # Signal support for MSG_EXT_INFO.
+            # Signal support for MSG_EXT_INFO so server will send it to us.
             # NOTE: doing this here handily means we don't even consider this
             # value when agreeing on real kex algo to use (which is a common
             # pitfall when adding this apparently).
             kex_algos.append("ext-info-c")
+
+        # Similar to ext-info, but used in both server modes, so done outside
+        # of above if/else.
+        if self.advertise_strict_kex:
+            which = "s" if self.server_mode else "c"
+            kex_algos.append(f"kex-strict-{which}-v00@openssh.com")
 
         m = Message()
         m.add_byte(cMSG_KEXINIT)
@@ -2448,11 +2463,28 @@ class Transport(threading.Thread, ClosingContextManager):
         self._log(DEBUG, "kex follows: {}".format(kex_follows))
         self._log(DEBUG, "=== Key exchange agreements ===")
 
-        # Strip out ext-info "kex algo"
+        # Record, and strip out, ext-info and/or strict-kex non-algorithms
         self._remote_ext_info = None
+        self._remote_strict_kex = None
+        to_pop = []
         for i, algo in enumerate(kex_algo_list):
             if algo.startswith("ext-info-"):
-                self._remote_ext_info = kex_algo_list.pop(i)
+                self._remote_ext_info = algo
+                to_pop.insert(0, i)
+            elif algo.startswith("kex-strict-"):
+                # NOTE: this is what we are expecting from the /remote/ end.
+                which = "c" if self.server_mode else "s"
+                expected = f"kex-strict-{which}-v00@openssh.com"
+                # Set strict mode if agreed.
+                self.agreed_on_strict_kex = (
+                    algo == expected and self.advertise_strict_kex
+                )
+                self._log(
+                    DEBUG, f"Strict kex mode: {self.agreed_on_strict_kex}"
+                )
+                to_pop.insert(0, i)
+        for i in to_pop:
+            kex_algo_list.pop(i)
 
         # as a server, we pick the first item in the client's list that we
         # support.
