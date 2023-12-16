@@ -336,6 +336,7 @@ class Transport(threading.Thread, ClosingContextManager):
         disabled_algorithms=None,
         server_sig_algs=True,
         strict_kex=True,
+        packetizer_class=None,
     ):
         """
         Create a new SSH session over an existing socket, or socket-like
@@ -406,6 +407,9 @@ class Transport(threading.Thread, ClosingContextManager):
             Whether to advertise (and implement, if client also advertises
             support for) a "strict kex" mode for safer handshaking. Default:
             ``True``.
+        :param packetizer_class:
+            Which class to use for instantiating the internal packet handler.
+            Default: ``None`` (i.e.: use `Packetizer` as normal).
 
         .. versionchanged:: 1.15
             Added the ``default_window_size`` and ``default_max_packet_size``
@@ -418,6 +422,8 @@ class Transport(threading.Thread, ClosingContextManager):
             Added the ``server_sig_algs`` kwarg.
         .. versionchanged:: 3.4
             Added the ``strict_kex`` kwarg.
+        .. versionchanged:: 3.4
+            Added the ``packetizer_class`` kwarg.
         """
         self.active = False
         self.hostname = None
@@ -467,7 +473,7 @@ class Transport(threading.Thread, ClosingContextManager):
         self.sock.settimeout(self._active_check_timeout)
 
         # negotiated crypto parameters
-        self.packetizer = Packetizer(sock)
+        self.packetizer = (packetizer_class or Packetizer)(sock)
         self.local_version = "SSH-" + self._PROTO_ID + "-" + self._CLIENT_ID
         self.remote_version = ""
         self.local_cipher = self.remote_cipher = ""
@@ -2428,7 +2434,8 @@ class Transport(threading.Thread, ClosingContextManager):
 
     def _get_latest_kex_init(self):
         return self._really_parse_kex_init(
-            Message(self._latest_kex_init), ignore_first_byte=True
+            Message(self._latest_kex_init),
+            ignore_first_byte=True,
         )
 
     def _parse_kex_init(self, m):
@@ -2489,6 +2496,13 @@ class Transport(threading.Thread, ClosingContextManager):
                 to_pop.insert(0, i)
         for i in to_pop:
             kex_algo_list.pop(i)
+
+        # CVE mitigation: expect zeroed-out seqno anytime we are performing kex
+        # init phase, if strict mode was negotiated.
+        if self.agreed_on_strict_kex and m.seqno != 0:
+            raise MessageOrderError(
+                f"Got nonzero seqno ({m.seqno}) during strict KEXINIT!"
+            )
 
         # as a server, we pick the first item in the client's list that we
         # support.
