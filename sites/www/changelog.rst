@@ -2,6 +2,32 @@
 Changelog
 =========
 
+- :bug:`-` Address `CVE xxx <https://terrapin-attack.com/>`_ (aka the "Terrapin
+  Attack", a vulnerability found in the SSH protocol re: treatment of packet
+  sequence numbers) as follows:
+
+    - The vulnerability only impacts encrypt-then-MAC digest algorithms in
+      tandem with CBC ciphers, and ChaCha20-poly1305; of these, Paramiko
+      currently only implements ``hmac-sha2-(256|512)-etm`` in tandem with
+      ``AES-CBC``. If you are unable to upgrade to Paramiko versions containing
+      the below fixes right away, you may instead use the
+      ``disabled_algorithms`` connection option to disable the ETM MACs and/or
+      the CBC ciphers (this option is present in Paramiko >=2.6).
+    - As the fix for the vulnerability requires both ends of the connection to
+      cooperate, the below changes will only take effect when the remote end is
+      OpenSSH >= TK (or equivalent, such as Paramiko in server mode, as of this
+      patch version) and configured to use the new "strict kex" mode. Paramiko
+      will always attempt to use "strict kex" mode if offered.
+    - Paramiko will raise TK if any protocol messages are received
+      out-of-order during key exchange. Previously, TK.
+    - Key (re)negotiation -- i.e. ``MSG_NEWKEYS``, whenever it is encountered
+      -- now resets packet sequence numbers. (This should be invisible to users
+      during normal operation, only causing exceptions if the exploit is
+      encountered.)
+
+  Thanks to Fabian Bäumer, Marcus Brinkmann, and Jörg Schwenk for submitting
+  details on the CVE prior to release.
+
 - :bug:`-` Tweak ``ext-info-(c|s)`` detection during KEXINIT protocol phase;
   the original implementation made assumptions based on an OpenSSH
   implementation detail.
