@@ -130,6 +130,12 @@ class Packetizer:
     def closed(self):
         return self.__closed
 
+    def reset_seqno_out(self):
+        self.__sequence_number_out = 0
+
+    def reset_seqno_in(self):
+        self.__sequence_number_in = 0
+
     def set_log(self, log):
         """
         Set the Python log object to use for logging.

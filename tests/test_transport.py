@@ -1345,5 +1345,26 @@ class TestStrictKex:
             ):
                 pass  # kexinit happens at connect...
 
-    def test_sequence_numbers_reset_on_newkeys(self):
-        skip()
+    def test_sequence_numbers_reset_on_newkeys_when_strict(self):
+        with server(defer=True) as (tc, ts):
+            # When in strict mode, these should all be zero or close to it
+            # (post-kexinit, pre-auth).
+            # Server->client will be 1 (EXT_INFO got sent after NEWKEYS)
+            assert tc.packetizer._Packetizer__sequence_number_in == 1
+            assert ts.packetizer._Packetizer__sequence_number_out == 1
+            # Client->server will be 0
+            assert tc.packetizer._Packetizer__sequence_number_out == 0
+            assert ts.packetizer._Packetizer__sequence_number_in == 0
+
+    def test_sequence_numbers_not_reset_on_newkeys_when_not_strict(self):
+        with server(defer=True, client_init=dict(strict_kex=False)) as (
+            tc,
+            ts,
+        ):
+            # When not in strict mode, these will all be ~3-4 or so
+            # (post-kexinit, pre-auth). Not encoding exact values as it will
+            # change anytime we mess with the test harness...
+            assert tc.packetizer._Packetizer__sequence_number_in != 0
+            assert tc.packetizer._Packetizer__sequence_number_out != 0
+            assert ts.packetizer._Packetizer__sequence_number_in != 0
+            assert ts.packetizer._Packetizer__sequence_number_out != 0

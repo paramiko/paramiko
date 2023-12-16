@@ -2499,9 +2499,13 @@ class Transport(threading.Thread, ClosingContextManager):
 
         # CVE mitigation: expect zeroed-out seqno anytime we are performing kex
         # init phase, if strict mode was negotiated.
-        if self.agreed_on_strict_kex and m.seqno != 0:
+        if (
+            self.agreed_on_strict_kex
+            and not self.initial_kex_done
+            and m.seqno != 0
+        ):
             raise MessageOrderError(
-                f"Got nonzero seqno ({m.seqno}) during strict KEXINIT!"
+                "In strict-kex mode, but KEXINIT was not the first packet!"
             )
 
         # as a server, we pick the first item in the client's list that we
@@ -2703,6 +2707,13 @@ class Transport(threading.Thread, ClosingContextManager):
         ):
             self._log(DEBUG, "Switching on inbound compression ...")
             self.packetizer.set_inbound_compressor(compress_in())
+        # Reset inbound sequence number if strict mode.
+        if self.agreed_on_strict_kex:
+            self._log(
+                DEBUG,
+                f"Resetting inbound seqno after NEWKEYS due to strict mode",
+            )
+            self.packetizer.reset_seqno_in()
 
     def _activate_outbound(self):
         """switch on newly negotiated encryption parameters for
@@ -2710,6 +2721,13 @@ class Transport(threading.Thread, ClosingContextManager):
         m = Message()
         m.add_byte(cMSG_NEWKEYS)
         self._send_message(m)
+        # Reset outbound sequence number if strict mode.
+        if self.agreed_on_strict_kex:
+            self._log(
+                DEBUG,
+                f"Resetting outbound sequence number after NEWKEYS due to strict mode",
+            )
+            self.packetizer.reset_seqno_out()
         block_size = self._cipher_info[self.local_cipher]["block-size"]
         if self.server_mode:
             IV_out = self._compute_key("B", block_size)
