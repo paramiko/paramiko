@@ -2,6 +2,9 @@
 Changelog
 =========
 
+- :bug:`-` Tweak ``ext-info-(c|s)`` detection during KEXINIT protocol phase;
+  the original implementation made assumptions based on an OpenSSH
+  implementation detail.
 - :release:`3.2.0 <2023-05-25>`
 - :bug:`- major` Fixed a very sneaky bug found at the apparently
   rarely-traveled intersection of ``RSA-SHA2`` keys, certificates, SSH agents,

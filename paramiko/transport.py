@@ -2450,8 +2450,9 @@ class Transport(threading.Thread, ClosingContextManager):
 
         # Strip out ext-info "kex algo"
         self._remote_ext_info = None
-        if kex_algo_list[-1].startswith("ext-info-"):
-            self._remote_ext_info = kex_algo_list.pop()
+        for i, algo in enumerate(kex_algo_list):
+            if algo.startswith("ext-info-"):
+                self._remote_ext_info = kex_algo_list.pop(i)
 
         # as a server, we pick the first item in the client's list that we
         # support.
