@@ -2,9 +2,9 @@
 Changelog
 =========
 
-- :bug:`-` Address `CVE xxx <https://terrapin-attack.com/>`_ (aka the "Terrapin
-  Attack", a vulnerability found in the SSH protocol re: treatment of packet
-  sequence numbers) as follows:
+- :bug:`-` Address `CVE 2023-48795<https://terrapin-attack.com/>`_ (aka the
+  "Terrapin Attack", a vulnerability found in the SSH protocol re: treatment of
+  packet sequence numbers) as follows:
 
     - The vulnerability only impacts encrypt-then-MAC digest algorithms in
       tandem with CBC ciphers, and ChaCha20-poly1305; of these, Paramiko
