@@ -107,11 +107,11 @@ from paramiko.ecdsakey import ECDSAKey
 from paramiko.server import ServerInterface
 from paramiko.sftp_client import SFTPClient
 from paramiko.ssh_exception import (
-    SSHException,
     BadAuthenticationType,
     ChannelException,
     IncompatiblePeer,
     ProxyCommandFailure,
+    SSHException,
 )
 from paramiko.util import (
     ClosingContextManager,

@@ -34,10 +34,10 @@ from unittest.mock import Mock
 from paramiko import (
     AuthHandler,
     ChannelException,
+    IncompatiblePeer,
     Packetizer,
     RSAKey,
     SSHException,
-    IncompatiblePeer,
     SecurityOptions,
     ServiceRequestingTransport,
     Transport,
