@@ -75,7 +75,7 @@ from ._util import (
     TestServer as NullServer,
 )
 from ._loop import LoopSocket
-from pytest import skip, mark, raises
+from pytest import mark, raises
 
 
 LONG_BANNER = """\
@@ -1422,12 +1422,12 @@ class TestStrictKex:
                 # during initial kex.
                 setattr(
                     self.packetizer,
-                    f"_Packetizer__sequence_number_in",
+                    "_Packetizer__sequence_number_in",
                     sys.maxsize,
                 )
                 setattr(
                     self.packetizer,
-                    f"_Packetizer__sequence_number_out",
+                    "_Packetizer__sequence_number_out",
                     sys.maxsize,
                 )
 

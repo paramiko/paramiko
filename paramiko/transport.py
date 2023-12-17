@@ -2727,7 +2727,7 @@ class Transport(threading.Thread, ClosingContextManager):
         if self.agreed_on_strict_kex:
             self._log(
                 DEBUG,
-                f"Resetting inbound seqno after NEWKEYS due to strict mode",
+                "Resetting inbound seqno after NEWKEYS due to strict mode",
             )
             self.packetizer.reset_seqno_in()
 
@@ -2741,7 +2741,7 @@ class Transport(threading.Thread, ClosingContextManager):
         if self.agreed_on_strict_kex:
             self._log(
                 DEBUG,
-                f"Resetting outbound sequence number after NEWKEYS due to strict mode",
+                "Resetting outbound seqno after NEWKEYS due to strict mode",
             )
             self.packetizer.reset_seqno_out()
         block_size = self._cipher_info[self.local_cipher]["block-size"]
