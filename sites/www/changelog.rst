@@ -31,6 +31,8 @@ Changelog
       -- now resets packet sequence numbers. (This should be invisible to users
       during normal operation, only causing exceptions if the exploit is
       encountered, which will usually result in, again, `MessageOrderError`.)
+    - Sequence number rollover will now raise `SSHException` if it occurs
+      during initial key exchange (regardless of strict mode status).
 
   Thanks to Fabian Bäumer, Marcus Brinkmann, and Jörg Schwenk for submitting
   details on the CVE prior to release.

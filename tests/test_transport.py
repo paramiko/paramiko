@@ -28,6 +28,7 @@ import socket
 import time
 import threading
 import random
+import sys
 import unittest
 from unittest.mock import Mock
 
@@ -1368,3 +1369,34 @@ class TestStrictKex:
             assert tc.packetizer._Packetizer__sequence_number_out != 0
             assert ts.packetizer._Packetizer__sequence_number_in != 0
             assert ts.packetizer._Packetizer__sequence_number_out != 0
+
+    def test_sequence_number_rollover_detected(self):
+        class RolloverTransport(Transport):
+            def __init__(self, *args, **kwargs):
+                super().__init__(*args, **kwargs)
+                # Induce an about-to-rollover seqno, such that it rolls over
+                # during initial kex.
+                setattr(
+                    self.packetizer,
+                    f"_Packetizer__sequence_number_in",
+                    sys.maxsize,
+                )
+                setattr(
+                    self.packetizer,
+                    f"_Packetizer__sequence_number_out",
+                    sys.maxsize,
+                )
+
+        with raises(
+            SSHException,
+            match=r"Sequence number rolled over during initial kex!",
+        ):
+            with server(
+                client_init=dict(
+                    # Disable strict kex - this should happen always
+                    strict_kex=False,
+                ),
+                # Transport which tickles its packetizer seqno's
+                transport_factory=RolloverTransport,
+            ):
+                pass  # kexinit happens at connect...

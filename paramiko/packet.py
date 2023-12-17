@@ -86,6 +86,7 @@ class Packetizer:
         self.__need_rekey = False
         self.__init_count = 0
         self.__remainder = bytes()
+        self._initial_kex_done = False
 
         # used for noticing when to re-key:
         self.__sent_bytes = 0
@@ -425,9 +426,12 @@ class Packetizer:
                 out += compute_hmac(
                     self.__mac_key_out, payload, self.__mac_engine_out
                 )[: self.__mac_size_out]
-            self.__sequence_number_out = (
-                self.__sequence_number_out + 1
-            ) & xffffffff
+            next_seq = (self.__sequence_number_out + 1) & xffffffff
+            if next_seq == 0 and not self._initial_kex_done:
+                raise SSHException(
+                    "Sequence number rolled over during initial kex!"
+                )
+            self.__sequence_number_out = next_seq
             self.write_all(out)
 
             self.__sent_bytes += len(out)
@@ -531,7 +535,12 @@ class Packetizer:
 
         msg = Message(payload[1:])
         msg.seqno = self.__sequence_number_in
-        self.__sequence_number_in = (self.__sequence_number_in + 1) & xffffffff
+        next_seq = (self.__sequence_number_in + 1) & xffffffff
+        if next_seq == 0 and not self._initial_kex_done:
+            raise SSHException(
+                "Sequence number rolled over during initial kex!"
+            )
+        self.__sequence_number_in = next_seq
 
         # check for rekey
         raw_packet_size = packet_size + self.__mac_size_in + 4
