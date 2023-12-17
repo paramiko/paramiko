@@ -434,7 +434,7 @@ def server(
 
     yield (tc, ts, err) if catch_error else (tc, ts)
 
-    if not (catch_error or skip_verify):
+    if not (catch_error or skip_verify or defer):
         assert ts.is_authenticated()
         assert tc.is_authenticated()
 
