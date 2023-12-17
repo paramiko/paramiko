@@ -20,7 +20,9 @@ Changelog
       cooperate, the below changes will only take effect when the remote end is
       OpenSSH >= TK (or equivalent, such as Paramiko in server mode, as of this
       patch version) and configured to use the new "strict kex" mode. Paramiko
-      will always attempt to use "strict kex" mode if offered.
+      will always attempt to use "strict kex" mode if offered by the server,
+      unless you override this by specifying ``strict_kex=False`` in
+      `Transport.__init__`.
     - Paramiko will now raise an `SSHException` subclass (`MessageOrderError`)
       when protocol messages are received in unexpected order. (This is not
       *really* a change in behavior, as most such cases already raised vanilla
