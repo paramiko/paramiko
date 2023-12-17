@@ -346,6 +346,7 @@ def server(
     pubkeys=None,
     catch_error=False,
     transport_factory=None,
+    server_transport_factory=None,
     defer=False,
     skip_verify=False,
 ):
@@ -373,6 +374,8 @@ def server(
         Necessary for connection_time exception testing.
     :param transport_factory:
         Like the same-named param in SSHClient: which Transport class to use.
+    :param server_transport_factory:
+        Like ``transport_factory``, but only impacts the server transport.
     :param bool defer:
         Whether to defer authentication during connecting.
 
@@ -399,8 +402,10 @@ def server(
     sockc.link(socks)
     if transport_factory is None:
         transport_factory = Transport
+    if server_transport_factory is None:
+        server_transport_factory = transport_factory
     tc = transport_factory(sockc, **dict(init, **client_init))
-    ts = transport_factory(socks, **dict(init, **server_init))
+    ts = server_transport_factory(socks, **dict(init, **server_init))
 
     if hostkey is None:
         hostkey = RSAKey.from_private_key_file(_support("rsa.key"))

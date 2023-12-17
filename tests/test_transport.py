@@ -52,11 +52,15 @@ from paramiko.common import (
     MAX_WINDOW_SIZE,
     MIN_PACKET_SIZE,
     MIN_WINDOW_SIZE,
+    MSG_CHANNEL_OPEN,
+    MSG_DEBUG,
+    MSG_IGNORE,
     MSG_KEXINIT,
+    MSG_UNIMPLEMENTED,
     MSG_USERAUTH_SUCCESS,
+    byte_chr,
     cMSG_CHANNEL_WINDOW_ADJUST,
     cMSG_UNIMPLEMENTED,
-    byte_chr,
 )
 from paramiko.message import Message
 
@@ -85,6 +89,10 @@ Note: An SSH banner may eventually appear.
 
 Maybe.
 """
+
+# Faux 'packet type' we do not implement and are unlikely ever to (but which is
+# technically "within spec" re RFC 4251
+MSG_FUGGEDABOUTIT = 253
 
 
 class TransportTest(unittest.TestCase):
@@ -1302,13 +1310,49 @@ class TestStrictKex:
                 )
             )
 
-    def test_MessageOrderError_raised_on_out_of_order_messages(self):
+    @mark.parametrize(
+        "ptype",
+        (
+            # "normal" but definitely out-of-order message
+            MSG_CHANNEL_OPEN,
+            # Normally ignored, but not in this case
+            MSG_IGNORE,
+            # Normally triggers debug parsing, but not in this case
+            MSG_DEBUG,
+            # Normally ignored, but...you get the idea
+            MSG_UNIMPLEMENTED,
+            # Not real, so would normally trigger us /sending/
+            # MSG_UNIMPLEMENTED, but...
+            MSG_FUGGEDABOUTIT,
+        ),
+    )
+    def test_MessageOrderError_non_kex_messages_in_initial_kex(self, ptype):
+        class AttackTransport(Transport):
+            # Easiest apparent spot on server side which is:
+            # - late enough for both ends to have handshook on strict mode
+            # - early enough to be in the window of opportunity for Terrapin
+            # attack; essentially during actual kex, when the engine is
+            # waiting for things like MSG_KEXECDH_REPLY (for eg curve25519).
+            def _negotiate_keys(self, m):
+                self.clear_to_send_lock.acquire()
+                try:
+                    self.clear_to_send.clear()
+                finally:
+                    self.clear_to_send_lock.release()
+                if self.local_kex_init is None:
+                    # remote side wants to renegotiate
+                    self._send_kex_init()
+                self._parse_kex_init(m)
+                # Here, we would normally kick over to kex_engine, but instead
+                # we want the server to send the OOO message.
+                m = Message()
+                m.add_byte(byte_chr(ptype))
+                # rest of packet unnecessary...
+                self._send_message(m)
+
         with raises(MessageOrderError):
-            with server() as (tc, _):
-                # A bit artificial as it's outside kexinit/handshake, but much
-                # easier to trigger and still in line with behavior under test
-                tc._expect_packet(MSG_KEXINIT)
-                tc.open_session()
+            with server(server_transport_factory=AttackTransport) as (tc, _):
+                pass  # above should run and except during connect()
 
     def test_SSHException_raised_on_out_of_order_messages_when_not_strict(
         self,

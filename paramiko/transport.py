@@ -2102,6 +2102,20 @@ class Transport(threading.Thread, ClosingContextManager):
         # be empty.)
         return reply
 
+    def _enforce_strict_kex(self, ptype):
+        """
+        Conditionally raise `MessageOrderError` during strict initial kex.
+
+        This method should only be called inside code that handles non-KEXINIT
+        messages; it does not interrogate ``ptype`` besides using it to log
+        more accurately.
+        """
+        if self.agreed_on_strict_kex and not self.initial_kex_done:
+            name = MSG_NAMES.get(ptype, f"msg {ptype}")
+            raise MessageOrderError(
+                f"In strict-kex mode, but was sent {name!r}!"
+            )
+
     def run(self):
         # (use the exposed "run" method, because if we specify a thread target
         # of a private method, threading.Thread will keep a reference to it
@@ -2146,11 +2160,13 @@ class Transport(threading.Thread, ClosingContextManager):
                     except NeedRekeyException:
                         continue
                     if ptype == MSG_IGNORE:
+                        self._enforce_strict_kex(ptype)
                         continue
                     elif ptype == MSG_DISCONNECT:
                         self._parse_disconnect(m)
                         break
                     elif ptype == MSG_DEBUG:
+                        self._enforce_strict_kex(ptype)
                         self._parse_debug(m)
                         continue
                     if len(self._expected_packet) > 0:

@@ -24,9 +24,9 @@ Changelog
       unless you override this by specifying ``strict_kex=False`` in
       `Transport.__init__`.
     - Paramiko will now raise an `SSHException` subclass (`MessageOrderError`)
-      when protocol messages are received in unexpected order. (This is not
-      *really* a change in behavior, as most such cases already raised vanilla
-      `SSHException` anyways.)
+      when protocol messages are received in unexpected order. This includes
+      situations like receiving ``MSG_DEBUG`` or ``MSG_IGNORE`` during initial
+      key exchange, which are no longer allowed during strict mode.
     - Key (re)negotiation -- i.e. ``MSG_NEWKEYS``, whenever it is encountered
       -- now resets packet sequence numbers. (This should be invisible to users
       during normal operation, only causing exceptions if the exploit is
