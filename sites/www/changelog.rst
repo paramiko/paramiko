@@ -2,6 +2,7 @@
 Changelog
 =========
 
+- :release:`3.4.0 <2023-12-18>`
 - :feature:`-` `Transport` grew a new ``packetizer_class`` kwarg for overriding
   the packet-handler class used internally. Mostly for testing, but advanced
   users may find this useful when doing deep hacks.
