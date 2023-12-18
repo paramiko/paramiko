@@ -6,7 +6,7 @@ Changelog
 - :feature:`-` `Transport` grew a new ``packetizer_class`` kwarg for overriding
   the packet-handler class used internally. Mostly for testing, but advanced
   users may find this useful when doing deep hacks.
-- :bug:`-` Address `CVE 2023-48795<https://terrapin-attack.com/>`_ (aka the
+- :bug:`-` Address `CVE 2023-48795 <https://terrapin-attack.com/>`_ (aka the
   "Terrapin Attack", a vulnerability found in the SSH protocol re: treatment of
   packet sequence numbers) as follows:
 
