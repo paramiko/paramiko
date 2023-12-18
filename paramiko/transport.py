@@ -2835,7 +2835,7 @@ class Transport(threading.Thread, ClosingContextManager):
         if not self.initial_kex_done:
             # this was the first key exchange
             # (also signal to packetizer as it sometimes wants to know this
-            # staus as well, eg when seqnos rollover)
+            # status as well, eg when seqnos rollover)
             self.initial_kex_done = self.packetizer._initial_kex_done = True
         # send an event?
         if self.completion_event is not None:

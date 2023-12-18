@@ -18,10 +18,10 @@ Changelog
       the CBC ciphers (this option is present in Paramiko >=2.6).
     - As the fix for the vulnerability requires both ends of the connection to
       cooperate, the below changes will only take effect when the remote end is
-      OpenSSH >= TK (or equivalent, such as Paramiko in server mode, as of this
-      patch version) and configured to use the new "strict kex" mode. Paramiko
-      will always attempt to use "strict kex" mode if offered by the server,
-      unless you override this by specifying ``strict_kex=False`` in
+      OpenSSH >= 9.6 (or equivalent, such as Paramiko in server mode, as of
+      this patch version) and configured to use the new "strict kex" mode.
+      Paramiko will always attempt to use "strict kex" mode if offered by the
+      server, unless you override this by specifying ``strict_kex=False`` in
       `Transport.__init__`.
     - Paramiko will now raise an `SSHException` subclass (`MessageOrderError`)
       when protocol messages are received in unexpected order. This includes
