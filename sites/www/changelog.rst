@@ -6,9 +6,9 @@ Changelog
 - :feature:`-` `Transport` grew a new ``packetizer_class`` kwarg for overriding
   the packet-handler class used internally. Mostly for testing, but advanced
   users may find this useful when doing deep hacks.
-- :bug:`-` Address `CVE 2023-48795 <https://terrapin-attack.com/>`_ (aka the
-  "Terrapin Attack", a vulnerability found in the SSH protocol re: treatment of
-  packet sequence numbers) as follows:
+- :bug:`- major` Address `CVE 2023-48795 <https://terrapin-attack.com/>`_ (aka
+  the "Terrapin Attack", a vulnerability found in the SSH protocol re:
+  treatment of packet sequence numbers) as follows:
 
     - The vulnerability only impacts encrypt-then-MAC digest algorithms in
       tandem with CBC ciphers, and ChaCha20-poly1305; of these, Paramiko
@@ -38,8 +38,8 @@ Changelog
   Thanks to Fabian Bäumer, Marcus Brinkmann, and Jörg Schwenk for submitting
   details on the CVE prior to release.
 
-- :bug:`-` Tweak ``ext-info-(c|s)`` detection during KEXINIT protocol phase;
-  the original implementation made assumptions based on an OpenSSH
+- :bug:`- major` Tweak ``ext-info-(c|s)`` detection during KEXINIT protocol
+  phase; the original implementation made assumptions based on an OpenSSH
   implementation detail.
 - :release:`3.3.1 <2023-07-28>`
 - :bug:`-` Cleaned up some very old root level files, mostly just to exercise
