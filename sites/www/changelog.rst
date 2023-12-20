@@ -2,6 +2,45 @@
 Changelog
 =========
 
+- :release:`3.4.0 <2023-12-18>`
+- :feature:`-` `Transport` grew a new ``packetizer_class`` kwarg for overriding
+  the packet-handler class used internally. Mostly for testing, but advanced
+  users may find this useful when doing deep hacks.
+- :bug:`- major` Address `CVE 2023-48795 <https://terrapin-attack.com/>`_ (aka
+  the "Terrapin Attack", a vulnerability found in the SSH protocol re:
+  treatment of packet sequence numbers) as follows:
+
+    - The vulnerability only impacts encrypt-then-MAC digest algorithms in
+      tandem with CBC ciphers, and ChaCha20-poly1305; of these, Paramiko
+      currently only implements ``hmac-sha2-(256|512)-etm`` in tandem with
+      ``AES-CBC``. If you are unable to upgrade to Paramiko versions containing
+      the below fixes right away, you may instead use the
+      ``disabled_algorithms`` connection option to disable the ETM MACs and/or
+      the CBC ciphers (this option is present in Paramiko >=2.6).
+    - As the fix for the vulnerability requires both ends of the connection to
+      cooperate, the below changes will only take effect when the remote end is
+      OpenSSH >= 9.6 (or equivalent, such as Paramiko in server mode, as of
+      this patch version) and configured to use the new "strict kex" mode.
+      Paramiko will always attempt to use "strict kex" mode if offered by the
+      server, unless you override this by specifying ``strict_kex=False`` in
+      `Transport.__init__`.
+    - Paramiko will now raise an `SSHException` subclass (`MessageOrderError`)
+      when protocol messages are received in unexpected order. This includes
+      situations like receiving ``MSG_DEBUG`` or ``MSG_IGNORE`` during initial
+      key exchange, which are no longer allowed during strict mode.
+    - Key (re)negotiation -- i.e. ``MSG_NEWKEYS``, whenever it is encountered
+      -- now resets packet sequence numbers. (This should be invisible to users
+      during normal operation, only causing exceptions if the exploit is
+      encountered, which will usually result in, again, `MessageOrderError`.)
+    - Sequence number rollover will now raise `SSHException` if it occurs
+      during initial key exchange (regardless of strict mode status).
+
+  Thanks to Fabian Bäumer, Marcus Brinkmann, and Jörg Schwenk for submitting
+  details on the CVE prior to release.
+
+- :bug:`- major` Tweak ``ext-info-(c|s)`` detection during KEXINIT protocol
+  phase; the original implementation made assumptions based on an OpenSSH
+  implementation detail.
 - :release:`3.3.1 <2023-07-28>`
 - :bug:`-` Cleaned up some very old root level files, mostly just to exercise
   some of our doc build and release machinery. This changelog entry

@@ -21,14 +21,14 @@ import sys
 from paramiko._version import __version__, __version_info__
 from paramiko.transport import (
     SecurityOptions,
-    Transport,
     ServiceRequestingTransport,
+    Transport,
 )
 from paramiko.client import (
-    SSHClient,
-    MissingHostKeyPolicy,
     AutoAddPolicy,
+    MissingHostKeyPolicy,
     RejectPolicy,
+    SSHClient,
     WarningPolicy,
 )
 from paramiko.auth_handler import AuthHandler
@@ -59,6 +59,7 @@ from paramiko.ssh_exception import (
     ConfigParseError,
     CouldNotCanonicalize,
     IncompatiblePeer,
+    MessageOrderError,
     PasswordRequiredException,
     ProxyCommandFailure,
     SSHException,
