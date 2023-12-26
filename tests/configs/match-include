@@ -1,0 +1,5 @@
+Host Foo
+   User bar
+
+Match all
+Include ~/.ssh/config.extra
