@@ -43,6 +43,8 @@ from paramiko.ssh_exception import SSHException, AuthenticationException
 
 from ._util import _support, requires_sha1_signing, slow
 
+from cryptography.exceptions import UnsupportedAlgorithm
+
 
 requires_gss_auth = unittest.skipUnless(
     paramiko.GSS_AUTH_AVAILABLE, "GSS auth not available"
@@ -500,6 +502,57 @@ class SSHClientTest(ClientTest):
             self.assertTrue(self.tc._transport is not None)
 
         self.assertTrue(self.tc._transport is None)
+
+    @requires_sha1_signing
+    def test_host_key_verification_with_bad_key(self):
+        """
+        verify that host key verification raises an exception on failure
+        """
+        # Note that _test_connection uses an RSA host key,
+        # so that's what we mock
+        with patch.object(paramiko.RSAKey, "verify_ssh_sig") as verifier:
+            verifier.return_value = False
+            with self.assertRaises(SSHException) as cm:
+                self._test_connection(key_filename=_support("ed25519.key"))
+            self.assertEqual(
+                str(cm.exception), "Signature verification (ssh-rsa) failed."
+            )
+
+    @requires_sha1_signing
+    def test_host_key_verification_with_unsupported_key(self):
+        """
+        verify that host key verification raises an exception on
+        getting a host key with an unsupported algorithm
+        """
+        with patch.object(paramiko.RSAKey, "verify_ssh_sig") as verifier:
+            verifier.side_effect = UnsupportedAlgorithm("oops")
+            with self.assertRaises(UnsupportedAlgorithm) as cm:
+                self._test_connection(key_filename=_support("ed25519.key"))
+            self.assertEqual(str(cm.exception), "oops")
+
+    @requires_sha1_signing
+    def test_skip_host_key_verification_with_bad_key(self):
+        """
+        verify that a bad host key can be ignored
+        """
+        with patch.object(paramiko.RSAKey, "verify_ssh_sig") as verifier:
+            verifier.return_value = False
+            self._test_connection(
+                key_filename=_support("ed25519.key"),
+                skip_host_key_verification=True,
+            )
+
+    @requires_sha1_signing
+    def test_skip_host_key_verification_with_unsupported_key(self):
+        """
+        verify that an unsupported host key can be ignored
+        """
+        with patch.object(paramiko.RSAKey, "verify_ssh_sig") as verifier:
+            verifier.side_effect = UnsupportedAlgorithm("oops")
+            self._test_connection(
+                key_filename=_support("ed25519.key"),
+                skip_host_key_verification=True,
+            )
 
     def test_banner_timeout(self):
         """
