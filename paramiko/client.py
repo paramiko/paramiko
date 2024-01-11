@@ -239,6 +239,7 @@ class SSHClient(ClosingContextManager):
         disabled_algorithms=None,
         transport_factory=None,
         auth_strategy=None,
+        skip_host_key_verification=False,
     ):
         """
         Connect to an SSH server and authenticate to it.  The server's host key
@@ -318,6 +319,9 @@ class SSHClient(ClosingContextManager):
         :param dict disabled_algorithms:
             an optional dict passed directly to `.Transport` and its keyword
             argument of the same name.
+        :param bool skip_host_key_verification:
+            whether or not to skip host key verification (not recommended,
+            default ``False``)
         :param transport_factory:
             an optional callable which is handed a subset of the constructor
             arguments (primarily those related to the socket, GSS
@@ -417,6 +421,7 @@ class SSHClient(ClosingContextManager):
             disabled_algorithms=disabled_algorithms,
         )
         t.use_compression(compress=compress)
+        t.set_skip_host_key_verification(skip_host_key_verification)
         t.set_gss_host(
             # t.hostname may be None, but GSS-API requires a target name.
             # Therefore use hostname as fallback.
