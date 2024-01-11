@@ -513,15 +513,16 @@ class TransportTest(unittest.TestCase):
         chan.exec_command("yes")
         schan = self.ts.accept(1.0)
 
-        bytes = self.tc.packetizer._Packetizer__sent_bytes
+        start_bytes = self.tc.packetizer._Packetizer__sent_bytes
         chan.send("x" * 1024)
-        bytes2 = self.tc.packetizer._Packetizer__sent_bytes
-        block_size = self.tc._cipher_info[self.tc.local_cipher]["block-size"]
-        mac_size = self.tc._mac_info[self.tc.local_mac]["size"]
-        # tests show this is actually compressed to *52 bytes*!  including
-        # packet overhead!  nice!! :)
-        self.assertTrue(bytes2 - bytes < 1024)
-        self.assertEqual(16 + block_size + mac_size, bytes2 - bytes)
+        sent_bytes = self.tc.packetizer._Packetizer__sent_bytes - start_bytes
+        # Normally, this message would be ~1088 bytes; compressed, with a
+        # 16-block cipher / 32-byte MAC, it would be exactly 64 bytes.
+        # For the purposes of being default-cipher-agnostic, and hedging
+        # against various shenanigans such as unexpected additional messages in
+        # background(see eg GH #2342), we simply say: this would be well under
+        # 1024 bytes if compression had worked.
+        assert sent_bytes < 1024
 
         chan.close()
         schan.close()
