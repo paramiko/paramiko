@@ -342,6 +342,7 @@ class Transport(threading.Thread, ClosingContextManager):
 
     _modulus_pack = None
     _active_check_timeout = 0.1
+    _skip_host_key_verification = False
 
     def __init__(
         self,
@@ -646,6 +647,27 @@ class Transport(threading.Thread, ClosingContextManager):
         of preference for them.
         """
         return SecurityOptions(self)
+
+    def set_skip_host_key_verification(self, skip_host_key_verification):
+        """
+        Skipping host key verification might be useful in very rare cases
+        where it is not possible to verify the target's key, for example if
+        it uses a legacy signature algorithm that is no longer supported by
+        the client.
+
+        This option should be avoided if possible because host key
+        verification protects against issues like MITM attacks and replacement
+        of a server by a malicious actor that might perhaps use it to log
+        usernames and passwords with which to access the client system later.
+
+        :param bool skip_host_key_verification:
+            Whether of not to skip host key verification
+            (Defaults to False.)
+        :returns: ``None``.
+
+        .. versionadded:: 5.0.1
+        """
+        self._skip_host_key_verification = skip_host_key_verification
 
     def start_client(self, event=None, timeout=None):
         """
@@ -1852,7 +1874,9 @@ class Transport(threading.Thread, ClosingContextManager):
             raise SSHException("Unknown host key type")
         # TODO: like, here, can a host offer "ssh-rsa" but request SHA2, or are
         # those baked in?
-        if not key.verify_ssh_sig(self.H, Message(sig)):
+        if not self._skip_host_key_verification and not key.verify_ssh_sig(
+            self.H, Message(sig)
+        ):
             raise SSHException(
                 "Signature verification ({}) failed.".format(
                     self.host_key_type
