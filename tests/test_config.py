@@ -53,7 +53,7 @@ def load_config(name):
 
 
 class TestSSHConfig:
-    def setup(self):
+    def setup_method(self):
         self.config = load_config("robey")
 
     def test_init(self):
