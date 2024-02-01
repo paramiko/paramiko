@@ -130,6 +130,7 @@ __all__ = [
     "BufferedFile",
     "Channel",
     "ChannelException",
+    "ConfigIncludeLoopError",
     "ConfigParseError",
     "CouldNotCanonicalize",
     "DSSKey",
