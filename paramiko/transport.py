@@ -2243,7 +2243,6 @@ class Transport(threading.Thread, ClosingContextManager):
                         "server" if self.server_mode else "client", e
                     ),
                 )
-                self._log(ERROR, util.tb_strings())
                 self.saved_exception = e
             except EOFError as e:
                 self._log(DEBUG, "EOF in transport thread")
