@@ -15,17 +15,17 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with Paramiko; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
-
-
 from base64 import encodebytes, decodebytes
 import binascii
 import os
 import re
 
 from collections.abc import MutableMapping
+from collections import defaultdict
 from hashlib import sha1
 from hmac import HMAC
-
+from itertools import chain
+import math
 
 from paramiko.pkey import PKey, UnknownKeyType
 from paramiko.util import get_logger, constant_time_bytes_eq, b, u
@@ -52,9 +52,29 @@ class HostKeys(MutableMapping):
         :param str filename: filename to load host keys from, or ``None``
         """
         # emulate a dict of { hostname: { keytype: PKey } }
-        self._entries = []
+        self._entries = defaultdict(list)
+        self._hashed_entries = []
         if filename is not None:
             self.load(filename)
+
+    @staticmethod
+    def _is_hashed(hostname):
+        """
+        Determine if a hostname is hashed.
+
+        :param str hostname: the hostname to check
+        """
+        return hostname.startswith("|1|")
+
+    def _entries_for_hostname(self, hostname):
+        """
+        Helper function to get the collection a hostname belongs to
+
+        :param str hostname: the hostname
+        """
+        if self._is_hashed(hostname):
+            return self._hashed_entries
+        return self._entries[hostname]
 
     def add(self, hostname, keytype, key):
         """
@@ -65,11 +85,12 @@ class HostKeys(MutableMapping):
         :param str keytype: key type (``"ssh-rsa"`` or ``"ssh-dss"``)
         :param .PKey key: the key to add
         """
-        for e in self._entries:
+        entries = self._entries_for_hostname(hostname)
+        for e in entries:
             if (hostname in e.hostnames) and (e.key.get_name() == keytype):
                 e.key = key
                 return
-        self._entries.append(HostKeyEntry([hostname], key))
+        entries.append(HostKeyEntry([hostname], key))
 
     def load(self, filename):
         """
@@ -101,7 +122,8 @@ class HostKeys(MutableMapping):
                         if self.check(h, entry.key):
                             entry.hostnames.remove(h)
                     if len(entry.hostnames):
-                        self._entries.append(entry)
+                        for hostname in entry.hostnames:
+                            self._entries_for_hostname(hostname).append(entry)
 
     def save(self, filename):
         """
@@ -117,8 +139,13 @@ class HostKeys(MutableMapping):
         .. versionadded:: 1.6.1
         """
         with open(filename, "w") as f:
-            for e in self._entries:
-                line = e.to_line()
+            all_entries = set(chain(*self._entries.values(), self._hashed_entries))
+
+            # Entries without a line number should be appended to the known_hosts
+            # file, since they were added after loading the file, e.g. with add()
+            # or AutoAddPolicy or similar.
+            for entry in sorted(all_entries, key=lambda e: e.lineno or math.inf):
+                line = entry.to_line()
                 if line:
                     f.write(line)
 
@@ -172,17 +199,13 @@ class HostKeys(MutableMapping):
                     # add a new one
                     e = HostKeyEntry([hostname], val)
                     self._entries.append(e)
-                    self._hostkeys._entries.append(e)
+                    self._hostkeys._entries[hostname].append(e)
 
             def keys(self):
-                return [
-                    e.key.get_name()
-                    for e in self._entries
-                    if e.key is not None
-                ]
+                return [e.key.get_name() for e in self._entries if e.key is not None]
 
         entries = []
-        for e in self._entries:
+        for e in chain(self._entries[hostname], self._hashed_entries):
             if self._hostname_matches(hostname, e):
                 entries.append(e)
         if len(entries) == 0:
@@ -198,8 +221,8 @@ class HostKeys(MutableMapping):
         for h in entry.hostnames:
             if (
                 h == hostname
-                or h.startswith("|1|")
-                and not hostname.startswith("|1|")
+                or self._is_hashed(h)
+                and not self._is_hashed(hostname)
                 and constant_time_bytes_eq(self.hash_host(hostname, h), h)
             ):
                 return True
@@ -227,7 +250,8 @@ class HostKeys(MutableMapping):
         """
         Remove all host keys from the dictionary.
         """
-        self._entries = []
+        self._entries = defaultdict(list)
+        self._hashed_entries = []
 
     def __iter__(self):
         for k in self.keys():
@@ -244,36 +268,35 @@ class HostKeys(MutableMapping):
 
     def __delitem__(self, key):
         index = None
-        for i, entry in enumerate(self._entries):
+        entries = self._entries_for_hostname(key)
+        for i, entry in enumerate(entries):
             if self._hostname_matches(key, entry):
                 index = i
                 break
         if index is None:
             raise KeyError(key)
-        self._entries.pop(index)
+        entries.pop(index)
 
     def __setitem__(self, hostname, entry):
         # don't use this please.
+        entries = self._entries_for_hostname(hostname)
         if len(entry) == 0:
-            self._entries.append(HostKeyEntry([hostname], None))
+            entries.append(HostKeyEntry([hostname], None))
             return
         for key_type in entry.keys():
             found = False
-            for e in self._entries:
+            for e in entries:
                 if (hostname in e.hostnames) and e.key.get_name() == key_type:
                     # replace
                     e.key = entry[key_type]
                     found = True
             if not found:
-                self._entries.append(HostKeyEntry([hostname], entry[key_type]))
+                entries.append(HostKeyEntry([hostname], entry[key_type]))
 
     def keys(self):
-        ret = []
-        for e in self._entries:
-            for h in e.hostnames:
-                if h not in ret:
-                    ret.append(h)
-        return ret
+        return [key for key, entries in self._entries.items() if entries] + [
+            hostname for entry in self._hashed_entries for hostname in entry.hostnames
+        ]
 
     def values(self):
         ret = []
@@ -316,10 +339,11 @@ class HostKeyEntry:
     Representation of a line in an OpenSSH-style "known hosts" file.
     """
 
-    def __init__(self, hostnames=None, key=None):
+    def __init__(self, hostnames=None, key=None, lineno=None):
         self.valid = (hostnames is not None) and (key is not None)
         self.hostnames = hostnames
         self.key = key
+        self.lineno = lineno
 
     @classmethod
     def from_line(cls, line, lineno=None):
@@ -359,7 +383,7 @@ class HostKeyEntry:
             raise InvalidHostKey(line, e)
 
         try:
-            return cls(names, PKey.from_type_string(key_type, key_bytes))
+            return cls(names, PKey.from_type_string(key_type, key_bytes), lineno)
         except UnknownKeyType:
             # TODO 4.0: consider changing HostKeys API so this just raises
             # naturally and the exception is muted higher up in the stack?
