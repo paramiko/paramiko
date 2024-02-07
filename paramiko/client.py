@@ -891,3 +891,12 @@ class WarningPolicy(MissingHostKeyPolicy):
                 key.get_name(), hostname, hexlify(key.get_fingerprint())
             )
         )
+
+
+class IgnorePolicy(MissingHostKeyPolicy):
+    """
+    Policy for ignoring missing host key.
+    """
+
+    def missing_host_key(self, client, hostname, key):
+        pass
