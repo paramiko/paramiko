@@ -28,7 +28,6 @@ import socket
 import time
 import threading
 import random
-import sys
 import unittest
 from unittest.mock import Mock
 
