@@ -8,6 +8,6 @@
     installing
     installing-1.x
     contributing
-    contact
+    contact : lich-bot
 
 
