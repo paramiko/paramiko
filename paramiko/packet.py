@@ -114,6 +114,12 @@ class Packetizer(object):
         self.__etm_out = False
         self.__etm_in = False
 
+        # aead cipher use
+        self.__aead_out = False
+        self.__aead_in = False
+        self.__iv_out = None
+        self.__iv_in = None
+
         # lock around outbound writes (packet computation)
         self.__write_lock = threading.RLock()
 
@@ -145,6 +151,8 @@ class Packetizer(object):
         mac_key,
         sdctr=False,
         etm=False,
+        aead=False,
+        iv_out=None,
     ):
         """
         Switch outbound data cipher.
@@ -159,6 +167,8 @@ class Packetizer(object):
         self.__sent_bytes = 0
         self.__sent_packets = 0
         self.__etm_out = etm
+        self.__aead_out = aead
+        self.__iv_out = iv_out
         # wait until the reset happens in both directions before clearing
         # rekey flag
         self.__init_count |= 1
@@ -174,6 +184,8 @@ class Packetizer(object):
         mac_size,
         mac_key,
         etm=False,
+        aead=False,
+        iv_in=None,
     ):
         """
         Switch inbound data cipher.
@@ -189,6 +201,8 @@ class Packetizer(object):
         self.__received_bytes_overflow = 0
         self.__received_packets_overflow = 0
         self.__etm_in = etm
+        self.__aead_in = aead
+        self.__iv_in = iv_in
         # wait until the reset happens in both directions before clearing
         # rekey flag
         self.__init_count |= 2
@@ -385,6 +399,25 @@ class Packetizer(object):
             buf = buf[:-1]
         return u(buf)
 
+    def _inc_iv_counter(self, iv):
+        # refer https://www.rfc-editor.org/rfc/rfc5647.html#section-7.1
+        iv_counter_b = iv[4:]
+        iv_counter = 0
+        for b in iv_counter_b:
+            iv_counter = (iv_counter << 8) | ord(b)
+        inc_iv_counter = iv_counter + 1
+        inc_iv_counter_b = ''
+        while inc_iv_counter > 0:
+            inc_iv_counter_b = chr(inc_iv_counter & 0xFF) + inc_iv_counter_b
+            inc_iv_counter >>= 8
+        new_iv = iv[0:4] + inc_iv_counter_b.rjust(4, '\x00')
+        self._log(
+            DEBUG,
+            "old-iv_count[%s], new-iv_count[%s]"
+            % (iv_counter, inc_iv_counter),
+        )
+        return new_iv
+
     def send_message(self, data):
         """
         Write a block of data using the current cipher, as an SSH block.
@@ -414,12 +447,18 @@ class Packetizer(object):
                     out = packet[0:4] + self.__block_engine_out.update(
                         packet[4:]
                     )
+                elif self.__aead_out:
+                    # packet length is used to associated_data
+                    out = packet[0:4] + self.__block_engine_out.encrypt(
+                        self.__iv_out, packet[4:], packet[0:4]
+                    )
+                    self.__iv_out = self._inc_iv_counter(self.__iv_out)
                 else:
                     out = self.__block_engine_out.update(packet)
             else:
                 out = packet
-            # + mac
-            if self.__block_engine_out is not None:
+            # + mac, aead no need hmac
+            if self.__block_engine_out is not None and not self.__aead_out:
                 packed = struct.pack(">I", self.__sequence_number_out)
                 payload = packed + (out if self.__etm_out else packet)
                 out += compute_hmac(
@@ -456,7 +495,9 @@ class Packetizer(object):
         :raises: `.SSHException` -- if the packet is mangled
         :raises: `.NeedRekeyException` -- if the transport should rekey
         """
+        self._log(DEBUG, "read message from sock")
         header = self.read_all(self.__block_size_in, check_rekey=True)
+        self._log(DEBUG, "raw data length[%s]" % len(header))
         if self.__etm_in:
             packet_size = struct.unpack(">I", header[:4])[0]
             remaining = packet_size - self.__block_size_in + 4
@@ -473,14 +514,26 @@ class Packetizer(object):
                 raise SSHException("Mismatched MAC")
             header = packet
 
-        if self.__block_engine_in is not None:
+        if self.__aead_in:
+            packet_size = struct.unpack(">I", header[:4])[0]
+            aad = header[:4]
+            remaining = (
+                packet_size - self.__block_size_in + 4 + self.__mac_size_in
+            )
+            packet = header[4:] + self.read_all(remaining, check_rekey=False)
+            self._log(DEBUG, "len(aad)=%s, aad->%s" % (len(aad), aad.encode("hex")))
+            header = self.__block_engine_in.decrypt(self.__iv_in, packet, aad)
+
+            self.__iv_in = self._inc_iv_counter(self.__iv_in)
+
+        if self.__block_engine_in is not None and not self.__aead_in:
             header = self.__block_engine_in.update(header)
         if self.__dump_packets:
             self._log(DEBUG, util.format_binary(header, "IN: "))
 
         # When ETM is in play, we've already read the packet size & decrypted
         # everything, so just set the packet back to the header we obtained.
-        if self.__etm_in:
+        if self.__etm_in or self.__aead_in:
             packet = header
         # Otherwise, use the older non-ETM logic
         else:
@@ -504,7 +557,7 @@ class Packetizer(object):
         if self.__dump_packets:
             self._log(DEBUG, util.format_binary(packet, "IN: "))
 
-        if self.__mac_size_in > 0 and not self.__etm_in:
+        if self.__mac_size_in > 0 and not self.__etm_in and not self.__aead_in:
             mac = post_packet[: self.__mac_size_in]
             mac_payload = (
                 struct.pack(">II", self.__sequence_number_in, packet_size)
@@ -627,7 +680,7 @@ class Packetizer(object):
         bsize = self.__block_size_out
         # do not include payload length in computations for padding in EtM mode
         # (payload length won't be encrypted)
-        addlen = 4 if self.__etm_out else 8
+        addlen = 4 if self.__etm_out or self.__aead_out else 8
         padding = 3 + bsize - ((len(payload) + addlen) % bsize)
         packet = struct.pack(">IB", len(payload) + padding + 1, padding)
         packet += payload
