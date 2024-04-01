@@ -84,7 +84,7 @@ class TestSSHConfig:
                 "host": ["*"],
                 "config": {
                     "identityfile": [
-                        os.path.join(os.path.expanduser("~"), "ssh", "id_rsa")
+                        os.path.join("~", ".ssh", "id_rsa")
                     ],
                     "user": "robey"
                 },
