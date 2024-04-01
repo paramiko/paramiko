@@ -82,7 +82,12 @@ class TestSSHConfig:
             {"host": ["*"], "config": {}},
             {
                 "host": ["*"],
-                "config": {"identityfile": [os.path.join(os.path.expanduser("~"), "ssh", "id_rsa")], "user": "robey"},
+                "config": {
+                    "identityfile": [
+                        os.path.join(os.path.expanduser("~"), "ssh", "id_rsa")
+                    ],
+                    "user": "robey"
+                },
             },
             {
                 "host": ["*.example.com"],
@@ -129,7 +134,8 @@ class TestSSHConfig:
     )
     def test_host_config(self, host, values):
         expected = dict(
-            values, hostname=host, identityfile=[os.path.join(os.path.expanduser("~"), "ssh", "id_rsa")]
+            values, hostname=host,
+            identityfile=[os.path.join(os.path.expanduser("~"), ".ssh", "id_rsa")]
         )
         assert self.config.lookup(host) == expected
 

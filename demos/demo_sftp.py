@@ -73,7 +73,7 @@ hostkeytype = None
 hostkey = None
 try:
     host_keys = paramiko.util.load_host_keys(
-        os.path.join(os.path.expanduser("~"), "ssh", "known_hosts")
+        os.path.join(os.path.expanduser("~"), ".ssh", "known_hosts")
     )
 except IOError:
     try:
