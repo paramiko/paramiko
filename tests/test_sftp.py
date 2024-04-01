@@ -223,13 +223,13 @@ class TestSFTP:
         create a temporary folder, verify that we can create a file in it, then
         remove the folder and verify that we can't create a file in it anymore.
         """
-        sftp.mkdir(sftp.FOLDER + "/subfolder")
-        sftp.open(sftp.FOLDER + "/subfolder/test", "w").close()
-        sftp.remove(sftp.FOLDER + "/subfolder/test")
-        sftp.rmdir(sftp.FOLDER + "/subfolder")
+        sftp.mkdir(os.path.join(sftp.FOLDER, "subfolder"))
+        sftp.open(os.path.join(sftp.FOLDER, "subfolder", "test"), "w").close()
+        sftp.remove(os.path.join(sftp.FOLDER, "subfolder", "test"))
+        sftp.rmdir(os.path.join(sftp.FOLDER, "subfolder"))
         # shouldn't be able to create that file if dir removed
         with pytest.raises(IOError, match="No such file"):
-            sftp.open(sftp.FOLDER + "/subfolder/test")
+            sftp.open(os.path.join(sftp.FOLDER, "subfolder", "test"))
 
     def test_listdir(self, sftp):
         """
@@ -515,7 +515,7 @@ class TestSFTP:
             sftp.chdir("..")
             assert ["fish"] == sftp.listdir("beta")
             sftp.chdir("..")
-            assert ["fish"] == sftp.listdir("alpha/beta")
+            assert ["fish"] == sftp.listdir(os.path.join("alpha", "beta"))
         finally:
             sftp.chdir(root)
             try:
