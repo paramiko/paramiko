@@ -216,6 +216,7 @@ class TestServer(ServerInterface):
 
     def __init__(self, allowed_keys=None):
         self.allowed_keys = allowed_keys if allowed_keys is not None else []
+        self._listen = {}
 
     def check_channel_request(self, kind, chanid):
         if kind == "bogus":
@@ -253,14 +254,17 @@ class TestServer(ServerInterface):
         return True
 
     def check_port_forward_request(self, addr, port):
-        self._listen = socket.socket()
-        self._listen.bind(("127.0.0.1", 0))
-        self._listen.listen(1)
-        return self._listen.getsockname()[1]
+        assert (addr, port) not in self._listen
+        listen = socket.socket()
+        listen.bind((addr, port))
+        listen.listen(1)
+        port = listen.getsockname()[1]
+        self._listen[addr, port] = listen
+        return port
 
     def cancel_port_forward_request(self, addr, port):
-        self._listen.close()
-        self._listen = None
+        self._listen[addr, port].close()
+        del self._listen[addr, port]
 
     def check_channel_direct_tcpip_request(self, chanid, origin, destination):
         self._tcpip_dest = destination
