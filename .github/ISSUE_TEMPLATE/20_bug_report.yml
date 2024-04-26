@@ -1,0 +1,120 @@
+name: Bug Report
+description: |
+  Use this template when paramiko appears to be doing something wrong.
+title: "[BUG] - <title>"
+labels: ["Bug"]
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to file a bug report!
+
+  - type: dropdown
+    id: usage_posture
+    attributes:
+      label: Are you using paramiko as a client or server?
+      multiple: false
+      options:
+        - Client
+        - Server
+        - Both
+        - Exception handling
+        - Not sure
+    validations:
+      required: true
+
+  - type: dropdown
+    id: features
+    attributes:
+      label: What feature(s) aren't working right?
+      description: Select as many as are relevant
+      multiple: true
+      options:
+        - SSH
+        - SFTP
+        - Keys/auth
+        - known_hosts
+        - sshconfig
+        - Something else
+    validations:
+      required: true
+  
+  - type: input
+    id: paramiko_version
+    attributes:
+      label: What version(s) of paramiko are you using?
+      description: |
+        Find out with `$ python -c "import paramiko; print(paramiko.__version__)"`
+      placeholder: |
+        Example: 3.1.0
+    validations:
+      required: true
+
+  - type: input
+    id: python_version
+    attributes:
+      label: What version(s) of Python are you using?
+      description: |
+        Find out with `$ python -V`
+      placeholder: |
+        Example: 3.11.3
+    validations:
+      required: true
+
+  - type: input
+    id: os_info
+    attributes:
+      label: What operating system and version are you using?
+      placeholder: |
+        Example: WSL on Windows 11; or MacOS Mojave; or Ubuntu 22.10
+    validations:
+      required: true
+
+  - type: input
+    id: server_info
+    attributes:
+      label: If you're connecting as a client, which SSH server are you connecting to?
+      description: |
+        Leave this blank if you're not sure.
+      placeholder: |
+        Example: OpenSSH x.y; or Teleport vNN
+
+  - type: input
+    id: integrated_tool
+    attributes:
+      label: If you're using paramiko as part of another tool, which tool/version?
+      placeholder: |
+        Examples: Fabric, Ansible, sftputil
+  
+  - type: textarea
+    id: desired_behavior
+    attributes:
+      label: Expected/desired behavior
+      description: |
+        Please describe what you are trying to do with paramiko. Include code snippets and be as detailed as possible.
+    validations:
+      required: true
+  
+  - type: textarea
+    id: actual_behavior
+    attributes:
+      label: Actual behavior
+      description: |
+        What is paramiko doing instead?
+    validations:
+      required: true
+  
+  - type: textarea
+    id: repro
+    attributes:
+      label: How to reproduce
+      description: |
+        If possible, please provide a minimal code example that reproduces the bug.
+  
+  - type: textarea
+    id: more_info
+    attributes:
+      label: Anything else?
+      description: |
+        Please provide any additional information that might help us find and fix the bug.

@@ -1,0 +1,4 @@
+HostName default-host
+
+Match host default-host
+    User silly

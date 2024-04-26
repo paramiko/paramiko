@@ -1,0 +1,2 @@
+Match exec "lol nope" all
+    HostName whatever

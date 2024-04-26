@@ -14,18 +14,19 @@
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with Paramiko; if not, write to the Free Software Foundation, Inc.,
-# 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
-from paramiko.common import max_byte, zero_byte
-from paramiko.py3compat import b, byte_ord, byte_chr, long
+# 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
+from paramiko.common import max_byte, zero_byte, byte_ord, byte_chr
 
 import paramiko.util as util
+from paramiko.util import b
+from paramiko.sftp import int64
 
 
-class BERException (Exception):
+class BERException(Exception):
     pass
 
 
-class BER(object):
+class BER:
     """
     Robey's tiny little attempt at a BER decoder.
     """
@@ -41,7 +42,7 @@ class BER(object):
         return self.asbytes()
 
     def __repr__(self):
-        return 'BER(\'' + repr(self.content) + '\')'
+        return "BER('" + repr(self.content) + "')"
 
     def decode(self):
         return self.decode_next()
@@ -57,7 +58,7 @@ class BER(object):
             while self.idx < len(self.content):
                 t = byte_ord(self.content[self.idx])
                 self.idx += 1
-                ident = (ident << 7) | (t & 0x7f)
+                ident = (ident << 7) | (t & 0x7F)
                 if not (t & 0x80):
                     break
         if self.idx >= len(self.content):
@@ -68,16 +69,17 @@ class BER(object):
         if size & 0x80:
             # more complimicated...
             # FIXME: theoretically should handle indefinite-length (0x80)
-            t = size & 0x7f
+            t = size & 0x7F
             if self.idx + t > len(self.content):
                 return None
             size = util.inflate_long(
-                self.content[self.idx: self.idx + t], True)
+                self.content[self.idx : self.idx + t], True
+            )
             self.idx += t
         if self.idx + size > len(self.content):
             # can't fit
             return None
-        data = self.content[self.idx: self.idx + size]
+        data = self.content[self.idx : self.idx + size]
         self.idx += size
         # now switch on id
         if ident == 0x30:
@@ -88,8 +90,8 @@ class BER(object):
             return util.inflate_long(data)
         else:
             # 1: boolean (00 false, otherwise true)
-            raise BERException(
-                'Unknown ber encoding type %d (robey is lazy)' % ident)
+            msg = "Unknown ber encoding type {:d} (robey is lazy)"
+            raise BERException(msg.format(ident))
 
     @staticmethod
     def decode_sequence(data):
@@ -105,7 +107,7 @@ class BER(object):
     def encode_tlv(self, ident, val):
         # no need to support ident > 31 here
         self.content += byte_chr(ident)
-        if len(val) > 0x7f:
+        if len(val) > 0x7F:
             lenstr = util.deflate_long(len(val))
             self.content += byte_chr(0x80 + len(lenstr)) + lenstr
         else:
@@ -118,14 +120,16 @@ class BER(object):
                 self.encode_tlv(1, max_byte)
             else:
                 self.encode_tlv(1, zero_byte)
-        elif (type(x) is int) or (type(x) is long):
+        elif (type(x) is int) or (type(x) is int64):
             self.encode_tlv(2, util.deflate_long(x))
         elif type(x) is str:
             self.encode_tlv(4, x)
         elif (type(x) is list) or (type(x) is tuple):
             self.encode_tlv(0x30, self.encode_sequence(x))
         else:
-            raise BERException('Unknown type for encoding: %s' % repr(type(x)))
+            raise BERException(
+                "Unknown type for encoding: {!r}".format(type(x))
+            )
 
     @staticmethod
     def encode_sequence(data):

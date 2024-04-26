@@ -14,32 +14,55 @@
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with Paramiko; if not, write to the Free Software Foundation, Inc.,
-# 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
+# 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
 
 # flake8: noqa
 import sys
 from paramiko._version import __version__, __version_info__
-
-if sys.version_info < (2, 6):
-    raise RuntimeError('You need Python 2.6+ for this module.')
-
-
-__author__ = "Jeff Forcier <jeff@bitprophet.org>"
-__license__ = "GNU Lesser General Public License (LGPL)"
-
-
-from paramiko.transport import SecurityOptions, Transport
+from paramiko.transport import (
+    SecurityOptions,
+    ServiceRequestingTransport,
+    Transport,
+)
 from paramiko.client import (
-    SSHClient, MissingHostKeyPolicy, AutoAddPolicy, RejectPolicy, 
+    AutoAddPolicy,
+    MissingHostKeyPolicy,
+    RejectPolicy,
+    SSHClient,
     WarningPolicy,
 )
 from paramiko.auth_handler import AuthHandler
-from paramiko.ssh_gss import GSSAuth, GSS_AUTH_AVAILABLE
-from paramiko.channel import Channel, ChannelFile
+from paramiko.auth_strategy import (
+    AuthFailure,
+    AuthStrategy,
+    AuthResult,
+    AuthSource,
+    InMemoryPrivateKey,
+    NoneAuth,
+    OnDiskPrivateKey,
+    Password,
+    PrivateKey,
+    SourceResult,
+)
+from paramiko.ssh_gss import GSSAuth, GSS_AUTH_AVAILABLE, GSS_EXCEPTIONS
+from paramiko.channel import (
+    Channel,
+    ChannelFile,
+    ChannelStderrFile,
+    ChannelStdinFile,
+)
 from paramiko.ssh_exception import (
-    SSHException, PasswordRequiredException, BadAuthenticationType,
-    ChannelException, BadHostKeyException, AuthenticationException,
+    AuthenticationException,
+    BadAuthenticationType,
+    BadHostKeyException,
+    ChannelException,
+    ConfigParseError,
+    CouldNotCanonicalize,
+    IncompatiblePeer,
+    MessageOrderError,
+    PasswordRequiredException,
     ProxyCommandFailure,
+    SSHException,
 )
 from paramiko.server import ServerInterface, SubsystemHandler, InteractiveQuery
 from paramiko.rsakey import RSAKey
@@ -57,61 +80,86 @@ from paramiko.message import Message
 from paramiko.packet import Packetizer
 from paramiko.file import BufferedFile
 from paramiko.agent import Agent, AgentKey
-from paramiko.pkey import PKey
+from paramiko.pkey import PKey, PublicBlob, UnknownKeyType
 from paramiko.hostkeys import HostKeys
-from paramiko.config import SSHConfig
+from paramiko.config import SSHConfig, SSHConfigDict
 from paramiko.proxy import ProxyCommand
 
 from paramiko.common import (
-    AUTH_SUCCESSFUL, AUTH_PARTIALLY_SUCCESSFUL, AUTH_FAILED, OPEN_SUCCEEDED,
-    OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED, OPEN_FAILED_CONNECT_FAILED,
-    OPEN_FAILED_UNKNOWN_CHANNEL_TYPE, OPEN_FAILED_RESOURCE_SHORTAGE,
+    AUTH_SUCCESSFUL,
+    AUTH_PARTIALLY_SUCCESSFUL,
+    AUTH_FAILED,
+    OPEN_SUCCEEDED,
+    OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED,
+    OPEN_FAILED_CONNECT_FAILED,
+    OPEN_FAILED_UNKNOWN_CHANNEL_TYPE,
+    OPEN_FAILED_RESOURCE_SHORTAGE,
 )
 
 from paramiko.sftp import (
-    SFTP_OK, SFTP_EOF, SFTP_NO_SUCH_FILE, SFTP_PERMISSION_DENIED, SFTP_FAILURE,
-    SFTP_BAD_MESSAGE, SFTP_NO_CONNECTION, SFTP_CONNECTION_LOST,
+    SFTP_OK,
+    SFTP_EOF,
+    SFTP_NO_SUCH_FILE,
+    SFTP_PERMISSION_DENIED,
+    SFTP_FAILURE,
+    SFTP_BAD_MESSAGE,
+    SFTP_NO_CONNECTION,
+    SFTP_CONNECTION_LOST,
     SFTP_OP_UNSUPPORTED,
 )
 
 from paramiko.common import io_sleep
 
+
+# TODO: I guess a real plugin system might be nice for future expansion...
+key_classes = [DSSKey, RSAKey, Ed25519Key, ECDSAKey]
+
+
+__author__ = "Jeff Forcier <jeff@bitprophet.org>"
+__license__ = "GNU Lesser General Public License (LGPL)"
+
+# TODO 4.0: remove this, jeez
 __all__ = [
-    'Transport',
-    'SSHClient',
-    'MissingHostKeyPolicy',
-    'AutoAddPolicy',
-    'RejectPolicy',
-    'WarningPolicy',
-    'SecurityOptions',
-    'SubsystemHandler',
-    'Channel',
-    'PKey',
-    'RSAKey',
-    'DSSKey',
-    'Message',
-    'SSHException',
-    'AuthenticationException',
-    'PasswordRequiredException',
-    'BadAuthenticationType',
-    'ChannelException',
-    'BadHostKeyException',
-    'ProxyCommand',
-    'ProxyCommandFailure',
-    'SFTP',
-    'SFTPFile',
-    'SFTPHandle',
-    'SFTPClient',
-    'SFTPServer',
-    'SFTPError',
-    'SFTPAttributes',
-    'SFTPServerInterface',
-    'ServerInterface',
-    'BufferedFile',
-    'Agent',
-    'AgentKey',
-    'HostKeys',
-    'SSHConfig',
-    'util',
-    'io_sleep',
+    "Agent",
+    "AgentKey",
+    "AuthenticationException",
+    "AutoAddPolicy",
+    "BadAuthenticationType",
+    "BadHostKeyException",
+    "BufferedFile",
+    "Channel",
+    "ChannelException",
+    "ConfigParseError",
+    "CouldNotCanonicalize",
+    "DSSKey",
+    "ECDSAKey",
+    "Ed25519Key",
+    "HostKeys",
+    "Message",
+    "MissingHostKeyPolicy",
+    "PKey",
+    "PasswordRequiredException",
+    "ProxyCommand",
+    "ProxyCommandFailure",
+    "RSAKey",
+    "RejectPolicy",
+    "SFTP",
+    "SFTPAttributes",
+    "SFTPClient",
+    "SFTPError",
+    "SFTPFile",
+    "SFTPHandle",
+    "SFTPServer",
+    "SFTPServerInterface",
+    "SSHClient",
+    "SSHConfig",
+    "SSHConfigDict",
+    "SSHException",
+    "SecurityOptions",
+    "ServerInterface",
+    "SubsystemHandler",
+    "Transport",
+    "WarningPolicy",
+    "io_sleep",
+    "util",
 ]

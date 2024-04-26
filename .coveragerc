@@ -1,0 +1,6 @@
+[run]
+branch = True
+include =
+    paramiko/*
+    tests/*
+omit = paramiko/_winapi.py

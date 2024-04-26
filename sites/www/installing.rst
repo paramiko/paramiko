@@ -19,14 +19,26 @@ via `pip <http://pip-installer.org>`_::
 
     $ pip install paramiko
 
-We currently support **Python 2.6, 2.7, 3.3+, and PyPy**. Users on Python 2.5
-or older (or 3.2 or older) are urged to upgrade.
+We currently support **Python 3.6+ only**. Users on older interpreter versions
+are urged to upgrade.
 
-Paramiko has only one direct hard dependency: the Cryptography library. See
-:ref:`cryptography`.
+Paramiko has only a few **direct dependencies**:
 
-If you need GSS-API / SSPI support, see :ref:`the below subsection on it
-<gssapi>` for details on its optional dependencies.
+- The big one, with its own sub-dependencies, is Cryptography; see :ref:`its
+  specific note below <cryptography>` for more details;
+- `bcrypt <https://pypi.org/project/bcrypt/>`_ and `pynacl
+  <https://pypi.org/project/PyNaCl/>`_ for Ed25519 key support.
+
+There are also a handful of **optional dependencies** you may install using
+`setuptools 'extras'
+<https://packaging.python.org/tutorials/installing-packages/#installing-setuptools-extras>`_:
+
+- If you want all optional dependencies at once, use ``paramiko[all]``.
+- For ``Match exec`` config support and/or ``ProxyCommand`` feature support,
+  use ``paramiko[invoke]`` (which installs `Invoke
+  <https://www.pyinvoke.org>`_).
+- For GSS-API / SSPI support, use ``paramiko[gssapi]``, though also see
+  :ref:`the below subsection on it <gssapi>` for details.
 
 
 .. _release-lines:
@@ -82,8 +94,14 @@ In general, you'll need one of the following setups:
     1.4 and newer - which Paramiko will gladly install or upgrade, if you e.g.
     ``pip install -U`` - drop that support.
 
+* Similarly, Cryptography 3.4 and above require Rust language tooling to
+  install from source; once again see Cryptography's documentation for details
+  here, such as `their Rust install section`_ and `this FAQ entry`_.
+
 .. _installation instructions:
-.. _Cryptography's install docs: https://cryptography.io/en/latest/installation/
+.. _Cryptography's install docs: https://cryptography.io/en/latest/installation.html
+.. _their Rust install section: https://cryptography.io/en/latest/installation.html#rust
+.. _this FAQ entry: https://cryptography.io/en/latest/faq.html#installing-cryptography-fails-with-error-can-not-find-rust-compiler
 
 
 .. _gssapi:
@@ -91,22 +109,44 @@ In general, you'll need one of the following setups:
 Optional dependencies for GSS-API / SSPI / Kerberos
 ===================================================
 
-In order to use GSS-API/Kerberos & related functionality, a couple of
-additional dependencies are required (these are not listed in our ``setup.py``
-due to their infrequent utility & non-platform-agnostic requirements):
-
-* It hopefully goes without saying but **all platforms** need **a working
-  installation of GSS-API itself**, e.g. Heimdal.
-* **Unix** needs `python-gssapi <https://pypi.python.org/pypi/python-gssapi/>`_
-  ``0.6.1`` or better.
-
-  .. note:: This library appears to only function on Python 2.7 and up.
-
-* **Windows** needs `pywin32 <https://pypi.python.org/pypi/pywin32>`_ ``2.1.8``
-  or better.
+In order to use GSS-API/Kerberos & related functionality, additional
+dependencies are required. It hopefully goes without saying but **all
+platforms** need **a working installation of GSS-API itself**, e.g. Heimdal.
 
 .. note::
     If you use Microsoft SSPI for kerberos authentication and credential
     delegation, make sure that the target host is trusted for delegation in the
     active directory configuration. For details see:
     http://technet.microsoft.com/en-us/library/cc738491%28v=ws.10%29.aspx
+
+The ``gssapi`` "extra" install flavor
+-------------------------------------
+
+If you're installing via ``pip`` (recommended), you should be able to get the
+optional Python package requirements by changing your installation to refer to
+``paramiko[gssapi]`` (from simply ``paramiko``), e.g.::
+
+    pip install "paramiko[gssapi]"
+
+(Or update your ``requirements.txt``, or etc.)
+
+
+.. TODO: just axe this once legacy gssapi support is gone, no point reiterating
+
+Manual dependency installation
+------------------------------
+
+If you're not using ``pip`` or your ``pip`` is too old to support the "extras"
+functionality, the optional dependencies are as follows:
+
+* All platforms need `pyasn1 <https://pypi.org/project/pyasn1/>`_ ``0.1.7`` or
+  later.
+* **Unix** needs: `gssapi <https://pypi.org/project/gssapi/>`__ ``1.4.1`` or better.
+
+    * An alternative is the `python-gssapi
+      <https://pypi.org/project/python-gssapi/>`_ library (``0.6.1`` or above),
+      though it is no longer maintained upstream, and Paramiko's support for
+      its API may eventually become deprecated.
+
+* **Windows** needs `pywin32 <https://pypi.python.org/pypi/pywin32>`_ ``2.1.8``
+  or better.

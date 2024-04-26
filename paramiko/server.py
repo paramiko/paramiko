@@ -14,7 +14,7 @@
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with Paramiko; if not, write to the Free Software Foundation, Inc.,
-# 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
+# 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
 
 """
 `.ServerInterface` is an interface to override for server support.
@@ -23,13 +23,15 @@
 import threading
 from paramiko import util
 from paramiko.common import (
-    DEBUG, ERROR, OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED, AUTH_FAILED,
+    DEBUG,
+    ERROR,
+    OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED,
+    AUTH_FAILED,
     AUTH_SUCCESSFUL,
 )
-from paramiko.py3compat import string_types
 
 
-class ServerInterface (object):
+class ServerInterface:
     """
     This class defines an interface for controlling the behavior of Paramiko
     in server mode.
@@ -99,7 +101,7 @@ class ServerInterface (object):
         :param str username: the username requesting authentication.
         :return: a comma-separated `str` of authentication types
         """
-        return 'password'
+        return "password"
 
     def check_auth_none(self, username):
         """
@@ -223,7 +225,7 @@ class ServerInterface (object):
 
         The default implementation always returns ``AUTH_FAILED``.
 
-        :param list responses: list of `str` responses from the client
+        :param responses: list of `str` responses from the client
         :return:
             ``AUTH_FAILED`` if the authentication fails; ``AUTH_SUCCESSFUL`` if
             it succeeds; ``AUTH_PARTIALLY_SUCCESSFUL`` if the interactive auth
@@ -233,9 +235,9 @@ class ServerInterface (object):
         """
         return AUTH_FAILED
 
-    def check_auth_gssapi_with_mic(self, username,
-                                   gss_authenticated=AUTH_FAILED,
-                                   cc_file=None):
+    def check_auth_gssapi_with_mic(
+        self, username, gss_authenticated=AUTH_FAILED, cc_file=None
+    ):
         """
         Authenticate the given user to the server if he is a valid krb5
         principal.
@@ -252,8 +254,8 @@ class ServerInterface (object):
                  a valid krb5 principal!
                  We don't check if the krb5 principal is allowed to log in on
                  the server, because there is no way to do that in python. So
-                 if you develop your own SSH server with paramiko for a cetain
-                 plattform like Linux, you should call C{krb5_kuserok()} in
+                 if you develop your own SSH server with paramiko for a certain
+                 platform like Linux, you should call C{krb5_kuserok()} in
                  your local kerberos library to make sure that the
                  krb5_principal has an account on the server and is allowed to
                  log in as a user.
@@ -263,9 +265,9 @@ class ServerInterface (object):
             return AUTH_SUCCESSFUL
         return AUTH_FAILED
 
-    def check_auth_gssapi_keyex(self, username,
-                                gss_authenticated=AUTH_FAILED,
-                                cc_file=None):
+    def check_auth_gssapi_keyex(
+        self, username, gss_authenticated=AUTH_FAILED, cc_file=None
+    ):
         """
         Authenticate the given user to the server if he is a valid krb5
         principal and GSS-API Key Exchange was performed.
@@ -284,8 +286,8 @@ class ServerInterface (object):
                  a valid krb5 principal!
                  We don't check if the krb5 principal is allowed to log in on
                  the server, because there is no way to do that in python. So
-                 if you develop your own SSH server with paramiko for a cetain
-                 plattform like Linux, you should call C{krb5_kuserok()} in
+                 if you develop your own SSH server with paramiko for a certain
+                 platform like Linux, you should call C{krb5_kuserok()} in
                  your local kerberos library to make sure that the
                  krb5_principal has an account on the server and is allowed
                  to log in as a user.
@@ -353,7 +355,7 @@ class ServerInterface (object):
         If the request was successful and you would like to return contextual
         data to the remote host, return a tuple.  Items in the tuple will be
         sent back with the successful result.  (Note that the items in the
-        tuple can only be strings, ints, longs, or bools.)
+        tuple can only be strings, ints, or bools.)
 
         The default implementation always returns ``False``, indicating that it
         does not support any global requests.
@@ -372,8 +374,8 @@ class ServerInterface (object):
     # ...Channel requests...
 
     def check_channel_pty_request(
-            self, channel, term, width, height, pixelwidth, pixelheight,
-            modes):
+        self, channel, term, width, height, pixelwidth, pixelheight, modes
+    ):
         """
         Determine if a pseudo-terminal of the given dimensions (usually
         requested for shell access) can be provided on the given channel.
@@ -452,15 +454,16 @@ class ServerInterface (object):
             subsystem; ``False`` if that subsystem can't or won't be provided.
         """
         transport = channel.get_transport()
-        handler_class, larg, kwarg = transport._get_subsystem_handler(name)
+        handler_class, args, kwargs = transport._get_subsystem_handler(name)
         if handler_class is None:
             return False
-        handler = handler_class(channel, name, self, *larg, **kwarg)
+        handler = handler_class(channel, name, self, *args, **kwargs)
         handler.start()
         return True
 
     def check_channel_window_change_request(
-            self, channel, width, height, pixelwidth, pixelheight):
+        self, channel, width, height, pixelwidth, pixelheight
+    ):
         """
         Determine if the pseudo-terminal on the given channel can be resized.
         This only makes sense if a pty was previously allocated on it.
@@ -479,8 +482,13 @@ class ServerInterface (object):
         return False
 
     def check_channel_x11_request(
-            self, channel, single_connection, auth_protocol, auth_cookie,
-            screen_number):
+        self,
+        channel,
+        single_connection,
+        auth_protocol,
+        auth_cookie,
+        screen_number,
+    ):
         """
         Determine if the client will be provided with an X11 session.  If this
         method returns ``True``, X11 applications should be routed through new
@@ -509,6 +517,9 @@ class ServerInterface (object):
 
         :param .Channel channel: the `.Channel` the request arrived on
         :return: ``True`` if the AgentForward was loaded; ``False`` if not
+
+        If ``True`` is returned, the server should create an
+        :class:`AgentServerProxy` to access the agent.
         """
         return False
 
@@ -570,13 +581,27 @@ class ServerInterface (object):
         """
         return False
 
+    def get_banner(self):
+        """
+        A pre-login banner to display to the user. The message may span
+        multiple lines separated by crlf pairs. The language should be in
+        rfc3066 style, for example: en-US
 
-class InteractiveQuery (object):
+        The default implementation always returns ``(None, None)``.
+
+        :returns: A tuple containing the banner and language code.
+
+        .. versionadded:: 2.3
+        """
+        return (None, None)
+
+
+class InteractiveQuery:
     """
     A query (set of prompts) for a user during interactive authentication.
     """
 
-    def __init__(self, name='', instructions='', *prompts):
+    def __init__(self, name="", instructions="", *prompts):
         """
         Create a new interactive query to send to the client.  The name and
         instructions are optional, but are generally displayed to the end
@@ -592,7 +617,7 @@ class InteractiveQuery (object):
         self.instructions = instructions
         self.prompts = []
         for x in prompts:
-            if isinstance(x, string_types):
+            if isinstance(x, str):
                 self.add_prompt(x)
             else:
                 self.add_prompt(x[0], x[1])
@@ -610,9 +635,9 @@ class InteractiveQuery (object):
         self.prompts.append((prompt, echo))
 
 
-class SubsystemHandler (threading.Thread):
+class SubsystemHandler(threading.Thread):
     """
-    Handler for a subsytem in server mode.  If you create a subclass of this
+    Handler for a subsystem in server mode.  If you create a subclass of this
     class and pass it to `.Transport.set_subsystem_handler`, an object of this
     class will be created for each request for this subsystem.  Each new object
     will be executed within its own new thread by calling `start_subsystem`.
@@ -620,10 +645,11 @@ class SubsystemHandler (threading.Thread):
 
     For example, if you made a subclass ``MP3Handler`` and registered it as the
     handler for subsystem ``"mp3"``, then whenever a client has successfully
-    authenticated and requests subsytem ``"mp3"``, an object of class
+    authenticated and requests subsystem ``"mp3"``, an object of class
     ``MP3Handler`` will be created, and `start_subsystem` will be called on
     it from a new thread.
     """
+
     def __init__(self, channel, name, server):
         """
         Create a new handler for a channel.  This is used by `.ServerInterface`
@@ -654,14 +680,15 @@ class SubsystemHandler (threading.Thread):
     def _run(self):
         try:
             self.__transport._log(
-                DEBUG, 'Starting handler for subsystem %s' % self.__name)
+                DEBUG, "Starting handler for subsystem {}".format(self.__name)
+            )
             self.start_subsystem(self.__name, self.__transport, self.__channel)
         except Exception as e:
             self.__transport._log(
                 ERROR,
-                'Exception in subsystem handler for "{0}": {1}'.format(
+                'Exception in subsystem handler for "{}": {}'.format(
                     self.__name, e
-                )
+                ),
             )
             self.__transport._log(ERROR, util.tb_strings())
         try:

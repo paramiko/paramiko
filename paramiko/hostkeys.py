@@ -14,27 +14,25 @@
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with Paramiko; if not, write to the Free Software Foundation, Inc.,
-# 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
+# 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
 
 
+from base64 import encodebytes, decodebytes
 import binascii
 import os
+import re
 
-from collections import MutableMapping
+from collections.abc import MutableMapping
 from hashlib import sha1
 from hmac import HMAC
 
-from paramiko.py3compat import b, u, encodebytes, decodebytes
 
-from paramiko.dsskey import DSSKey
-from paramiko.rsakey import RSAKey
-from paramiko.util import get_logger, constant_time_bytes_eq
-from paramiko.ecdsakey import ECDSAKey
-from paramiko.ed25519key import Ed25519Key
+from paramiko.pkey import PKey, UnknownKeyType
+from paramiko.util import get_logger, constant_time_bytes_eq, b, u
 from paramiko.ssh_exception import SSHException
 
 
-class HostKeys (MutableMapping):
+class HostKeys(MutableMapping):
     """
     Representation of an OpenSSH-style "known hosts" file.  Host keys can be
     read from one or more files, and then individual hosts can be looked up to
@@ -88,22 +86,22 @@ class HostKeys (MutableMapping):
 
         :raises: ``IOError`` -- if there was an error reading the file
         """
-        with open(filename, 'r') as f:
+        with open(filename, "r") as f:
             for lineno, line in enumerate(f, 1):
                 line = line.strip()
-                if (len(line) == 0) or (line[0] == '#'):
+                if (len(line) == 0) or (line[0] == "#"):
                     continue
                 try:
-                    e = HostKeyEntry.from_line(line, lineno)
+                    entry = HostKeyEntry.from_line(line, lineno)
                 except SSHException:
                     continue
-                if e is not None:
-                    _hostnames = e.hostnames
+                if entry is not None:
+                    _hostnames = entry.hostnames
                     for h in _hostnames:
-                        if self.check(h, e.key):
-                            e.hostnames.remove(h)
-                    if len(e.hostnames):
-                        self._entries.append(e)
+                        if self.check(h, entry.key):
+                            entry.hostnames.remove(h)
+                    if len(entry.hostnames):
+                        self._entries.append(entry)
 
     def save(self, filename):
         """
@@ -118,7 +116,7 @@ class HostKeys (MutableMapping):
 
         .. versionadded:: 1.6.1
         """
-        with open(filename, 'w') as f:
+        with open(filename, "w") as f:
             for e in self._entries:
                 line = e.to_line()
                 if line:
@@ -134,7 +132,8 @@ class HostKeys (MutableMapping):
         :return: dict of `str` -> `.PKey` keys associated with this host
             (or ``None``)
         """
-        class SubDict (MutableMapping):
+
+        class SubDict(MutableMapping):
             def __init__(self, hostname, entries, hostkeys):
                 self._hostname = hostname
                 self._entries = entries
@@ -151,6 +150,7 @@ class HostKeys (MutableMapping):
                 for e in list(self._entries):
                     if e.key.get_name() == key:
                         self._entries.remove(e)
+                        break
                 else:
                     raise KeyError(key)
 
@@ -176,7 +176,8 @@ class HostKeys (MutableMapping):
 
             def keys(self):
                 return [
-                    e.key.get_name() for e in self._entries
+                    e.key.get_name()
+                    for e in self._entries
                     if e.key is not None
                 ]
 
@@ -196,10 +197,10 @@ class HostKeys (MutableMapping):
         """
         for h in entry.hostnames:
             if (
-                h == hostname or
-                h.startswith('|1|') and
-                not hostname.startswith('|1|') and
-                constant_time_bytes_eq(self.hash_host(hostname, h), h)
+                h == hostname
+                or h.startswith("|1|")
+                and not hostname.startswith("|1|")
+                and constant_time_bytes_eq(self.hash_host(hostname, h), h)
             ):
                 return True
         return False
@@ -267,7 +268,6 @@ class HostKeys (MutableMapping):
                 self._entries.append(HostKeyEntry([hostname], entry[key_type]))
 
     def keys(self):
-        # Python 2.4 sets would be nice here.
         ret = []
         for e in self._entries:
             for h in e.hostnames:
@@ -295,13 +295,13 @@ class HostKeys (MutableMapping):
         if salt is None:
             salt = os.urandom(sha1().digest_size)
         else:
-            if salt.startswith('|1|'):
-                salt = salt.split('|')[2]
+            if salt.startswith("|1|"):
+                salt = salt.split("|")[2]
             salt = decodebytes(b(salt))
         assert len(salt) == sha1().digest_size
         hmac = HMAC(salt, b(hostname), sha1).digest()
-        hostkey = '|1|%s|%s' % (u(encodebytes(salt)), u(encodebytes(hmac)))
-        return hostkey.replace('\n', '')
+        hostkey = "|1|{}|{}".format(u(encodebytes(salt)), u(encodebytes(hmac)))
+        return hostkey.replace("\n", "")
 
 
 class InvalidHostKey(Exception):
@@ -326,7 +326,8 @@ class HostKeyEntry:
         """
         Parses the given line of text to find the names for the host,
         the type of key, and the key data. The line is expected to be in the
-        format used by the OpenSSH known_hosts file.
+        format used by the OpenSSH known_hosts file. Fields are separated by a
+        single space or tab.
 
         Lines are expected to not have leading or trailing whitespace.
         We don't bother to check for comments or empty lines.  All of
@@ -334,38 +335,36 @@ class HostKeyEntry:
 
         :param str line: a line from an OpenSSH known_hosts file
         """
-        log = get_logger('paramiko.hostkeys')
-        fields = line.split(' ')
+        log = get_logger("paramiko.hostkeys")
+        fields = re.split(" |\t", line)
         if len(fields) < 3:
             # Bad number of fields
-            log.info("Not enough fields found in known_hosts in line %s (%r)" %
-                     (lineno, line))
+            msg = "Not enough fields found in known_hosts in line {} ({!r})"
+            log.info(msg.format(lineno, line))
             return None
         fields = fields[:3]
 
-        names, keytype, key = fields
-        names = names.split(',')
+        names, key_type, key = fields
+        names = names.split(",")
 
         # Decide what kind of key we're looking at and create an object
         # to hold it accordingly.
         try:
-            key = b(key)
-            if keytype == 'ssh-rsa':
-                key = RSAKey(data=decodebytes(key))
-            elif keytype == 'ssh-dss':
-                key = DSSKey(data=decodebytes(key))
-            elif keytype in ECDSAKey.supported_key_format_identifiers():
-                key = ECDSAKey(data=decodebytes(key), validate_point=False)
-            elif keytype == 'ssh-ed25519':
-                key = Ed25519Key(data=decodebytes(key))
-            else:
-                log.info("Unable to handle key of type %s" % (keytype,))
-                return None
-
+            # TODO: this grew organically and doesn't seem /wrong/ per se (file
+            # read -> unicode str -> bytes for base64 decode -> decoded bytes);
+            # but in Python 3 forever land, can we simply use
+            # `base64.b64decode(str-from-file)` here?
+            key_bytes = decodebytes(b(key))
         except binascii.Error as e:
             raise InvalidHostKey(line, e)
 
-        return cls(names, key)
+        try:
+            return cls(names, PKey.from_type_string(key_type, key_bytes))
+        except UnknownKeyType:
+            # TODO 4.0: consider changing HostKeys API so this just raises
+            # naturally and the exception is muted higher up in the stack?
+            log.info("Unable to handle key of type {}".format(key_type))
+            return None
 
     def to_line(self):
         """
@@ -374,11 +373,12 @@ class HostKeyEntry:
         included.
         """
         if self.valid:
-            return '%s %s %s\n' % (
-                ','.join(self.hostnames),
+            return "{} {} {}\n".format(
+                ",".join(self.hostnames),
                 self.key.get_name(),
-                self.key.get_base64())
+                self.key.get_base64(),
+            )
         return None
 
     def __repr__(self):
-        return '<HostKeyEntry %r: %r>' % (self.hostnames, self.key)
+        return "<HostKeyEntry {!r}: {!r}>".format(self.hostnames, self.key)

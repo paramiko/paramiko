@@ -14,23 +14,21 @@
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with Paramiko; if not, write to the Free Software Foundation, Inc.,
-# 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
+# 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
 
-"""
-...
-"""
+import socket
+import threading
 
-import threading, socket
-from paramiko.common import asbytes
+from paramiko.util import asbytes
 
 
-class LoopSocket (object):
+class LoopSocket:
     """
     A LoopSocket looks like a normal socket, but all data written to it is
     delivered on the read-end of another LoopSocket, and vice versa.  It's
     like a software "socketpair".
     """
-    
+
     def __init__(self):
         self.__in_buffer = bytes()
         self.__lock = threading.Lock()
@@ -83,10 +81,10 @@ class LoopSocket (object):
         self.__lock.acquire()
         try:
             self.__in_buffer += data
-            self.__cv.notifyAll()
+            self.__cv.notify_all()
         finally:
             self.__lock.release()
-            
+
     def __unlink(self):
         m = None
         self.__lock.acquire()
@@ -98,5 +96,3 @@ class LoopSocket (object):
             self.__lock.release()
         if m is not None:
             m.__unlink()
-
-

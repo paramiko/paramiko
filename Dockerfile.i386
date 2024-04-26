@@ -1,0 +1,9 @@
+# Convenience tool for testing 32-bit issues. This is NOT officially supported;
+# it is purely a maintainer-facing artifact.
+
+FROM --platform=i386 i386/alpine:3.17
+
+RUN apk add openssl-dev python3-dev libffi-dev make cargo bash
+
+RUN python3 -m venv env
+RUN env/bin/pip install -U pip

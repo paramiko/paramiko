@@ -14,7 +14,7 @@
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with Paramiko; if not, write to the Free Software Foundation, Inc.,
-# 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
+# 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
 
 """
 Abstraction for an SSH2 channel.
@@ -25,17 +25,23 @@ import os
 import socket
 import time
 import threading
-# TODO: switch as much of py3compat.py to 'six' as possible, then use six.wraps
+
 from functools import wraps
 
 from paramiko import util
 from paramiko.common import (
-    cMSG_CHANNEL_REQUEST, cMSG_CHANNEL_WINDOW_ADJUST, cMSG_CHANNEL_DATA,
-    cMSG_CHANNEL_EXTENDED_DATA, DEBUG, ERROR, cMSG_CHANNEL_SUCCESS,
-    cMSG_CHANNEL_FAILURE, cMSG_CHANNEL_EOF, cMSG_CHANNEL_CLOSE,
+    cMSG_CHANNEL_REQUEST,
+    cMSG_CHANNEL_WINDOW_ADJUST,
+    cMSG_CHANNEL_DATA,
+    cMSG_CHANNEL_EXTENDED_DATA,
+    DEBUG,
+    ERROR,
+    cMSG_CHANNEL_SUCCESS,
+    cMSG_CHANNEL_FAILURE,
+    cMSG_CHANNEL_EOF,
+    cMSG_CHANNEL_CLOSE,
 )
 from paramiko.message import Message
-from paramiko.py3compat import bytes_types
 from paramiko.ssh_exception import SSHException
 from paramiko.file import BufferedFile
 from paramiko.buffered_pipe import BufferedPipe, PipeTimeout
@@ -51,20 +57,22 @@ def open_only(func):
         `.SSHException` -- If the wrapped method is called on an unopened
         `.Channel`.
     """
+
     @wraps(func)
     def _check(self, *args, **kwds):
         if (
-            self.closed or
-            self.eof_received or
-            self.eof_sent or
-            not self.active
+            self.closed
+            or self.eof_received
+            or self.eof_sent
+            or not self.active
         ):
-            raise SSHException('Channel is not open')
+            raise SSHException("Channel is not open")
         return func(self, *args, **kwds)
+
     return _check
 
 
-class Channel (ClosingContextManager):
+class Channel(ClosingContextManager):
     """
     A secure tunnel across an SSH `.Transport`.  A Channel is meant to behave
     like a socket, and has an API that should be indistinguishable from the
@@ -117,7 +125,7 @@ class Channel (ClosingContextManager):
         self.in_window_sofar = 0
         self.status_event = threading.Event()
         self._name = str(chanid)
-        self.logger = util.get_logger('paramiko.transport')
+        self.logger = util.get_logger("paramiko.transport")
         self._pipe = None
         self.event = threading.Event()
         self.event_ready = False
@@ -135,24 +143,30 @@ class Channel (ClosingContextManager):
         """
         Return a string representation of this object, for debugging.
         """
-        out = '<paramiko.Channel %d' % self.chanid
+        out = "<paramiko.Channel {}".format(self.chanid)
         if self.closed:
-            out += ' (closed)'
+            out += " (closed)"
         elif self.active:
             if self.eof_received:
-                out += ' (EOF received)'
+                out += " (EOF received)"
             if self.eof_sent:
-                out += ' (EOF sent)'
-            out += ' (open) window=%d' % self.out_window_size
+                out += " (EOF sent)"
+            out += " (open) window={}".format(self.out_window_size)
             if len(self.in_buffer) > 0:
-                out += ' in-buffer=%d' % (len(self.in_buffer),)
-        out += ' -> ' + repr(self.transport)
-        out += '>'
+                out += " in-buffer={}".format(len(self.in_buffer))
+        out += " -> " + repr(self.transport)
+        out += ">"
         return out
 
     @open_only
-    def get_pty(self, term='vt100', width=80, height=24, width_pixels=0,
-                height_pixels=0):
+    def get_pty(
+        self,
+        term="vt100",
+        width=80,
+        height=24,
+        width_pixels=0,
+        height_pixels=0,
+    ):
         """
         Request a pseudo-terminal from the server.  This is usually used right
         after creating a client channel, to ask the server to provide some
@@ -174,7 +188,7 @@ class Channel (ClosingContextManager):
         m = Message()
         m.add_byte(cMSG_CHANNEL_REQUEST)
         m.add_int(self.remote_chanid)
-        m.add_string('pty-req')
+        m.add_string("pty-req")
         m.add_boolean(True)
         m.add_string(term)
         m.add_int(width)
@@ -207,7 +221,7 @@ class Channel (ClosingContextManager):
         m = Message()
         m.add_byte(cMSG_CHANNEL_REQUEST)
         m.add_int(self.remote_chanid)
-        m.add_string('shell')
+        m.add_string("shell")
         m.add_boolean(True)
         self._event_pending()
         self.transport._send_user_message(m)
@@ -233,7 +247,7 @@ class Channel (ClosingContextManager):
         m = Message()
         m.add_byte(cMSG_CHANNEL_REQUEST)
         m.add_int(self.remote_chanid)
-        m.add_string('exec')
+        m.add_string("exec")
         m.add_boolean(True)
         m.add_string(command)
         self._event_pending()
@@ -259,7 +273,7 @@ class Channel (ClosingContextManager):
         m = Message()
         m.add_byte(cMSG_CHANNEL_REQUEST)
         m.add_int(self.remote_chanid)
-        m.add_string('subsystem')
+        m.add_string("subsystem")
         m.add_boolean(True)
         m.add_string(subsystem)
         self._event_pending()
@@ -284,7 +298,7 @@ class Channel (ClosingContextManager):
         m = Message()
         m.add_byte(cMSG_CHANNEL_REQUEST)
         m.add_int(self.remote_chanid)
-        m.add_string('window-change')
+        m.add_string("window-change")
         m.add_boolean(False)
         m.add_int(width)
         m.add_int(height)
@@ -315,7 +329,7 @@ class Channel (ClosingContextManager):
             try:
                 self.set_environment_variable(name, value)
             except SSHException as e:
-                err = "Failed to set environment variable \"{0}\"."
+                err = 'Failed to set environment variable "{}".'
                 raise SSHException(err.format(name), e)
 
     @open_only
@@ -339,7 +353,7 @@ class Channel (ClosingContextManager):
         m = Message()
         m.add_byte(cMSG_CHANNEL_REQUEST)
         m.add_int(self.remote_chanid)
-        m.add_string('env')
+        m.add_string("env")
         m.add_boolean(False)
         m.add_string(name)
         m.add_string(value)
@@ -403,19 +417,19 @@ class Channel (ClosingContextManager):
         m = Message()
         m.add_byte(cMSG_CHANNEL_REQUEST)
         m.add_int(self.remote_chanid)
-        m.add_string('exit-status')
+        m.add_string("exit-status")
         m.add_boolean(False)
         m.add_int(status)
         self.transport._send_user_message(m)
 
     @open_only
     def request_x11(
-            self,
-            screen_number=0,
-            auth_protocol=None,
-            auth_cookie=None,
-            single_connection=False,
-            handler=None
+        self,
+        screen_number=0,
+        auth_protocol=None,
+        auth_cookie=None,
+        single_connection=False,
+        handler=None,
     ):
         """
         Request an x11 session on this channel.  If the server allows it,
@@ -456,14 +470,14 @@ class Channel (ClosingContextManager):
         :return: the auth_cookie used
         """
         if auth_protocol is None:
-            auth_protocol = 'MIT-MAGIC-COOKIE-1'
+            auth_protocol = "MIT-MAGIC-COOKIE-1"
         if auth_cookie is None:
             auth_cookie = binascii.hexlify(os.urandom(16))
 
         m = Message()
         m.add_byte(cMSG_CHANNEL_REQUEST)
         m.add_int(self.remote_chanid)
-        m.add_string('x11-req')
+        m.add_string("x11-req")
         m.add_boolean(True)
         m.add_boolean(single_connection)
         m.add_string(auth_protocol)
@@ -493,7 +507,7 @@ class Channel (ClosingContextManager):
         m = Message()
         m.add_byte(cMSG_CHANNEL_REQUEST)
         m.add_int(self.remote_chanid)
-        m.add_string('auth-agent-req@openssh.com')
+        m.add_string("auth-agent-req@openssh.com")
         m.add_boolean(False)
         self.transport._send_user_message(m)
         self.transport._set_forward_agent_handler(handler)
@@ -674,7 +688,7 @@ class Channel (ClosingContextManager):
         length zero is returned, the channel stream has closed.
 
         :param int nbytes: maximum number of bytes to read.
-        :return: received data, as a ``str``/``bytes``.
+        :return: received data, as a `bytes`.
 
         :raises socket.timeout:
             if no data is ready before the timeout set by `settimeout`.
@@ -720,7 +734,7 @@ class Channel (ClosingContextManager):
         channel stream has closed.
 
         :param int nbytes: maximum number of bytes to read.
-        :return: received data as a `str`
+        :return: received data as a `bytes`
 
         :raises socket.timeout: if no data is ready before the timeout set by
             `settimeout`.
@@ -772,7 +786,7 @@ class Channel (ClosingContextManager):
         transmitted, the application needs to attempt delivery of the remaining
         data.
 
-        :param str s: data to send
+        :param bytes s: data to send
         :return: number of bytes actually sent, as an `int`
 
         :raises socket.timeout: if no data could be sent before the timeout set
@@ -793,7 +807,7 @@ class Channel (ClosingContextManager):
         data has been sent: if only some of the data was transmitted, the
         application needs to attempt delivery of the remaining data.
 
-        :param str s: data to send.
+        :param bytes s: data to send.
         :return: number of bytes actually sent, as an `int`.
 
         :raises socket.timeout:
@@ -808,14 +822,13 @@ class Channel (ClosingContextManager):
         m.add_int(1)
         return self._send(s, m)
 
-
     def sendall(self, s):
         """
         Send data to the channel, without allowing partial results.  Unlike
         `send`, this method continues to send data from the given string until
         either all data has been sent or an error occurs.  Nothing is returned.
 
-        :param str s: data to send.
+        :param bytes s: data to send.
 
         :raises socket.timeout:
             if sending stalled for longer than the timeout set by `settimeout`.
@@ -836,10 +849,10 @@ class Channel (ClosingContextManager):
         """
         Send data to the channel's "stderr" stream, without allowing partial
         results.  Unlike `send_stderr`, this method continues to send data
-        from the given string until all data has been sent or an error occurs.
-        Nothing is returned.
+        from the given bytestring until all data has been sent or an error
+        occurs. Nothing is returned.
 
-        :param str s: data to send to the client as "stderr" output.
+        :param bytes s: data to send to the client as "stderr" output.
 
         :raises socket.timeout:
             if sending stalled for longer than the timeout set by `settimeout`.
@@ -874,11 +887,29 @@ class Channel (ClosingContextManager):
         client, it only makes sense to open this file for reading.  For a
         server, it only makes sense to open this file for writing.
 
-        :return: `.ChannelFile` object which can be used for Python file I/O.
+        :returns:
+            `.ChannelStderrFile` object which can be used for Python file I/O.
 
         .. versionadded:: 1.1
         """
         return ChannelStderrFile(*([self] + list(params)))
+
+    def makefile_stdin(self, *params):
+        """
+        Return a file-like object associated with this channel's stdin
+        stream.
+
+        The optional ``mode`` and ``bufsize`` arguments are interpreted the
+        same way as by the built-in ``file()`` function in Python.  For a
+        client, it only makes sense to open this file for writing.  For a
+        server, it only makes sense to open this file for reading.
+
+        :returns:
+            `.ChannelStdinFile` object which can be used for Python file I/O.
+
+        .. versionadded:: 2.6
+        """
+        return ChannelStdinFile(*([self] + list(params)))
 
     def fileno(self):
         """
@@ -976,7 +1007,7 @@ class Channel (ClosingContextManager):
         # a window update
         self.in_window_threshold = window_size // 10
         self.in_window_sofar = 0
-        self._log(DEBUG, 'Max packet in: %d bytes' % max_packet_size)
+        self._log(DEBUG, "Max packet in: {} bytes".format(max_packet_size))
 
     def _set_remote_channel(self, chanid, window_size, max_packet_size):
         self.remote_chanid = chanid
@@ -985,10 +1016,12 @@ class Channel (ClosingContextManager):
             max_packet_size
         )
         self.active = 1
-        self._log(DEBUG, 'Max packet out: %d bytes' % self.out_max_packet_size)
+        self._log(
+            DEBUG, "Max packet out: {} bytes".format(self.out_max_packet_size)
+        )
 
     def _request_success(self, m):
-        self._log(DEBUG, 'Sesch channel %d request ok' % self.chanid)
+        self._log(DEBUG, "Sesch channel {} request ok".format(self.chanid))
         self.event_ready = True
         self.event.set()
         return
@@ -1004,7 +1037,7 @@ class Channel (ClosingContextManager):
                 self.transport._send_user_message(m)
 
     def _feed(self, m):
-        if isinstance(m, bytes_types):
+        if isinstance(m, bytes):
             # passed from _feed_extended
             s = m
         else:
@@ -1016,8 +1049,7 @@ class Channel (ClosingContextManager):
         s = m.get_binary()
         if code != 1:
             self._log(
-                ERROR,
-                'unknown extended_data type %d; discarding' % code
+                ERROR, "unknown extended_data type {}; discarding".format(code)
             )
             return
         if self.combine_stderr:
@@ -1030,9 +1062,9 @@ class Channel (ClosingContextManager):
         self.lock.acquire()
         try:
             if self.ultra_debug:
-                self._log(DEBUG, 'window up %d' % nbytes)
+                self._log(DEBUG, "window up {}".format(nbytes))
             self.out_window_size += nbytes
-            self.out_buffer_cv.notifyAll()
+            self.out_buffer_cv.notify_all()
         finally:
             self.lock.release()
 
@@ -1041,14 +1073,14 @@ class Channel (ClosingContextManager):
         want_reply = m.get_boolean()
         server = self.transport.server_object
         ok = False
-        if key == 'exit-status':
+        if key == "exit-status":
             self.exit_status = m.get_int()
             self.status_event.set()
             ok = True
-        elif key == 'xon-xoff':
+        elif key == "xon-xoff":
             # ignore
             ok = True
-        elif key == 'pty-req':
+        elif key == "pty-req":
             term = m.get_string()
             width = m.get_int()
             height = m.get_int()
@@ -1059,39 +1091,33 @@ class Channel (ClosingContextManager):
                 ok = False
             else:
                 ok = server.check_channel_pty_request(
-                    self,
-                    term,
-                    width,
-                    height,
-                    pixelwidth,
-                    pixelheight,
-                    modes
+                    self, term, width, height, pixelwidth, pixelheight, modes
                 )
-        elif key == 'shell':
+        elif key == "shell":
             if server is None:
                 ok = False
             else:
                 ok = server.check_channel_shell_request(self)
-        elif key == 'env':
+        elif key == "env":
             name = m.get_string()
             value = m.get_string()
             if server is None:
                 ok = False
             else:
                 ok = server.check_channel_env_request(self, name, value)
-        elif key == 'exec':
+        elif key == "exec":
             cmd = m.get_string()
             if server is None:
                 ok = False
             else:
                 ok = server.check_channel_exec_request(self, cmd)
-        elif key == 'subsystem':
+        elif key == "subsystem":
             name = m.get_text()
             if server is None:
                 ok = False
             else:
                 ok = server.check_channel_subsystem_request(self, name)
-        elif key == 'window-change':
+        elif key == "window-change":
             width = m.get_int()
             height = m.get_int()
             pixelwidth = m.get_int()
@@ -1100,8 +1126,9 @@ class Channel (ClosingContextManager):
                 ok = False
             else:
                 ok = server.check_channel_window_change_request(
-                    self, width, height, pixelwidth, pixelheight)
-        elif key == 'x11-req':
+                    self, width, height, pixelwidth, pixelheight
+                )
+        elif key == "x11-req":
             single_connection = m.get_boolean()
             auth_proto = m.get_text()
             auth_cookie = m.get_binary()
@@ -1114,15 +1141,15 @@ class Channel (ClosingContextManager):
                     single_connection,
                     auth_proto,
                     auth_cookie,
-                    screen_number
+                    screen_number,
                 )
-        elif key == 'auth-agent-req@openssh.com':
+        elif key == "auth-agent-req@openssh.com":
             if server is None:
                 ok = False
             else:
                 ok = server.check_channel_forward_agent_request(self)
         else:
-            self._log(DEBUG, 'Unhandled channel request "%s"' % key)
+            self._log(DEBUG, 'Unhandled channel request "{}"'.format(key))
             ok = False
         if want_reply:
             m = Message()
@@ -1144,7 +1171,7 @@ class Channel (ClosingContextManager):
                     self._pipe.set_forever()
         finally:
             self.lock.release()
-        self._log(DEBUG, 'EOF received (%s)', self._name)
+        self._log(DEBUG, "EOF received ({})".format(self._name))
 
     def _handle_close(self, m):
         self.lock.acquire()
@@ -1166,7 +1193,7 @@ class Channel (ClosingContextManager):
             if self.closed:
                 # this doesn't seem useful, but it is the documented behavior
                 # of Socket
-                raise socket.error('Socket is closed')
+                raise socket.error("Socket is closed")
             size = self._wait_for_send_window(size)
             if size == 0:
                 # eof or similar
@@ -1193,7 +1220,7 @@ class Channel (ClosingContextManager):
             return
         e = self.transport.get_exception()
         if e is None:
-            e = SSHException('Channel closed.')
+            e = SSHException("Channel closed.")
         raise e
 
     def _set_closed(self):
@@ -1201,7 +1228,7 @@ class Channel (ClosingContextManager):
         self.closed = True
         self.in_buffer.close()
         self.in_stderr_buffer.close()
-        self.out_buffer_cv.notifyAll()
+        self.out_buffer_cv.notify_all()
         # Notify any waiters that we are closed
         self.event.set()
         self.status_event.set()
@@ -1216,7 +1243,7 @@ class Channel (ClosingContextManager):
         m.add_byte(cMSG_CHANNEL_EOF)
         m.add_int(self.remote_chanid)
         self.eof_sent = True
-        self._log(DEBUG, 'EOF sent (%s)', self._name)
+        self._log(DEBUG, "EOF sent ({})".format(self._name))
         return m
 
     def _close_internal(self):
@@ -1250,12 +1277,14 @@ class Channel (ClosingContextManager):
             if self.closed or self.eof_received or not self.active:
                 return 0
             if self.ultra_debug:
-                self._log(DEBUG, 'addwindow %d' % n)
+                self._log(DEBUG, "addwindow {}".format(n))
             self.in_window_sofar += n
             if self.in_window_sofar <= self.in_window_threshold:
                 return 0
             if self.ultra_debug:
-                self._log(DEBUG, 'addwindow send %d' % self.in_window_sofar)
+                self._log(
+                    DEBUG, "addwindow send {}".format(self.in_window_sofar)
+                )
             out = self.in_window_sofar
             self.in_window_sofar = 0
             return out
@@ -1298,11 +1327,11 @@ class Channel (ClosingContextManager):
             size = self.out_max_packet_size - 64
         self.out_window_size -= size
         if self.ultra_debug:
-            self._log(DEBUG, 'window down to %d' % self.out_window_size)
+            self._log(DEBUG, "window down to {}".format(self.out_window_size))
         return size
 
 
-class ChannelFile (BufferedFile):
+class ChannelFile(BufferedFile):
     """
     A file-like wrapper around `.Channel`.  A ChannelFile is created by calling
     `Channel.makefile`.
@@ -1315,7 +1344,7 @@ class ChannelFile (BufferedFile):
         flush the buffer.
     """
 
-    def __init__(self, channel, mode='r', bufsize=-1):
+    def __init__(self, channel, mode="r", bufsize=-1):
         self.channel = channel
         BufferedFile.__init__(self)
         self._set_mode(mode, bufsize)
@@ -1324,7 +1353,7 @@ class ChannelFile (BufferedFile):
         """
         Returns a string representation of this object, for debugging.
         """
-        return '<paramiko.ChannelFile from ' + repr(self.channel) + '>'
+        return "<paramiko.ChannelFile from " + repr(self.channel) + ">"
 
     def _read(self, size):
         return self.channel.recv(size)
@@ -1334,9 +1363,12 @@ class ChannelFile (BufferedFile):
         return len(data)
 
 
-class ChannelStderrFile (ChannelFile):
-    def __init__(self, channel, mode='r', bufsize=-1):
-        ChannelFile.__init__(self, channel, mode, bufsize)
+class ChannelStderrFile(ChannelFile):
+    """
+    A file-like wrapper around `.Channel` stderr.
+
+    See `Channel.makefile_stderr` for details.
+    """
 
     def _read(self, size):
         return self.channel.recv_stderr(size)
@@ -1346,4 +1378,13 @@ class ChannelStderrFile (ChannelFile):
         return len(data)
 
 
-# vim: set shiftwidth=4 expandtab :
+class ChannelStdinFile(ChannelFile):
+    """
+    A file-like wrapper around `.Channel` stdin.
+
+    See `Channel.makefile_stdin` for details.
+    """
+
+    def close(self):
+        super().close()
+        self.channel.shutdown_write()

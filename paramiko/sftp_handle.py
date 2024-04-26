@@ -14,7 +14,7 @@
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with Paramiko; if not, write to the Free Software Foundation, Inc.,
-# 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
+# 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
 
 """
 Abstraction of an SFTP file handle (for server mode).
@@ -25,7 +25,7 @@ from paramiko.sftp import SFTP_OP_UNSUPPORTED, SFTP_OK
 from paramiko.util import ClosingContextManager
 
 
-class SFTPHandle (ClosingContextManager):
+class SFTPHandle(ClosingContextManager):
     """
     Abstract object representing a handle to an open file (or folder) in an
     SFTP server implementation.  Each handle has a string representation used
@@ -36,6 +36,7 @@ class SFTPHandle (ClosingContextManager):
 
     Instances of this class may be used as context managers.
     """
+
     def __init__(self, flags=0):
         """
         Create a new file handle representing a local file being served over
@@ -63,10 +64,10 @@ class SFTPHandle (ClosingContextManager):
         using the default implementations of `read` and `write`, this
         method's default implementation should be fine also.
         """
-        readfile = getattr(self, 'readfile', None)
+        readfile = getattr(self, "readfile", None)
         if readfile is not None:
             readfile.close()
-        writefile = getattr(self, 'writefile', None)
+        writefile = getattr(self, "writefile", None)
         if writefile is not None:
             writefile.close()
 
@@ -86,9 +87,9 @@ class SFTPHandle (ClosingContextManager):
 
         :param offset: position in the file to start reading from.
         :param int length: number of bytes to attempt to read.
-        :return: data read from the file, or an SFTP error code, as a `str`.
+        :return: the `bytes` read, or an error code `int`.
         """
-        readfile = getattr(self, 'readfile', None)
+        readfile = getattr(self, "readfile", None)
         if readfile is None:
             return SFTP_OP_UNSUPPORTED
         try:
@@ -119,10 +120,10 @@ class SFTPHandle (ClosingContextManager):
         refer to the same file.
 
         :param offset: position in the file to start reading from.
-        :param str data: data to write into the file.
+        :param bytes data: data to write into the file.
         :return: an SFTP error code like ``SFTP_OK``.
         """
-        writefile = getattr(self, 'writefile', None)
+        writefile = getattr(self, "writefile", None)
         if writefile is None:
             return SFTP_OP_UNSUPPORTED
         try:

@@ -6,14 +6,15 @@ If you encounter issues with this module, please consider reporting the issues
 in jaraco.windows and asking the author to port the fixes back here.
 """
 
-import sys
+import builtins
 import ctypes.wintypes
 
-from paramiko.py3compat import u, builtins
+from paramiko.util import u
 
 
 ######################
 # jaraco.windows.error
+
 
 def format_system_message(errno):
     """
@@ -59,11 +60,8 @@ class WindowsError(builtins.WindowsError):
         if value is None:
             value = ctypes.windll.kernel32.GetLastError()
         strerror = format_system_message(value)
-        if sys.version_info > (3, 3):
-            args = 0, strerror, None, value
-        else:
-            args = value, strerror
-        super(WindowsError, self).__init__(*args)
+        args = 0, strerror, None, value
+        super().__init__(*args)
 
     @property
     def message(self):
@@ -77,7 +75,7 @@ class WindowsError(builtins.WindowsError):
         return self.message
 
     def __repr__(self):
-        return '{self.__class__.__name__}({self.winerror})'.format(**vars())
+        return "{self.__class__.__name__}({self.winerror})".format(**vars())
 
 
 def handle_nonzero_success(result):
@@ -95,15 +93,15 @@ GlobalAlloc.argtypes = ctypes.wintypes.UINT, ctypes.c_size_t
 GlobalAlloc.restype = ctypes.wintypes.HANDLE
 
 GlobalLock = ctypes.windll.kernel32.GlobalLock
-GlobalLock.argtypes = ctypes.wintypes.HGLOBAL,
+GlobalLock.argtypes = (ctypes.wintypes.HGLOBAL,)
 GlobalLock.restype = ctypes.wintypes.LPVOID
 
 GlobalUnlock = ctypes.windll.kernel32.GlobalUnlock
-GlobalUnlock.argtypes = ctypes.wintypes.HGLOBAL,
+GlobalUnlock.argtypes = (ctypes.wintypes.HGLOBAL,)
 GlobalUnlock.restype = ctypes.wintypes.BOOL
 
 GlobalSize = ctypes.windll.kernel32.GlobalSize
-GlobalSize.argtypes = ctypes.wintypes.HGLOBAL,
+GlobalSize.argtypes = (ctypes.wintypes.HGLOBAL,)
 GlobalSize.restype = ctypes.c_size_t
 
 CreateFileMapping = ctypes.windll.kernel32.CreateFileMappingW
@@ -121,25 +119,22 @@ MapViewOfFile = ctypes.windll.kernel32.MapViewOfFile
 MapViewOfFile.restype = ctypes.wintypes.HANDLE
 
 UnmapViewOfFile = ctypes.windll.kernel32.UnmapViewOfFile
-UnmapViewOfFile.argtypes = ctypes.wintypes.HANDLE,
+UnmapViewOfFile.argtypes = (ctypes.wintypes.HANDLE,)
 
 RtlMoveMemory = ctypes.windll.kernel32.RtlMoveMemory
-RtlMoveMemory.argtypes = (
-    ctypes.c_void_p,
-    ctypes.c_void_p,
-    ctypes.c_size_t,
-)
+RtlMoveMemory.argtypes = (ctypes.c_void_p, ctypes.c_void_p, ctypes.c_size_t)
 
-ctypes.windll.kernel32.LocalFree.argtypes = ctypes.wintypes.HLOCAL,
+ctypes.windll.kernel32.LocalFree.argtypes = (ctypes.wintypes.HLOCAL,)
 
 #####################
 # jaraco.windows.mmap
 
 
-class MemoryMap(object):
+class MemoryMap:
     """
     A memory map object which can have security attributes overridden.
     """
+
     def __init__(self, name, length, security_attributes=None):
         self.name = name
         self.length = length
@@ -149,14 +144,20 @@ class MemoryMap(object):
     def __enter__(self):
         p_SA = (
             ctypes.byref(self.security_attributes)
-            if self.security_attributes else None
+            if self.security_attributes
+            else None
         )
         INVALID_HANDLE_VALUE = -1
         PAGE_READWRITE = 0x4
         FILE_MAP_WRITE = 0x2
         filemap = ctypes.windll.kernel32.CreateFileMappingW(
-            INVALID_HANDLE_VALUE, p_SA, PAGE_READWRITE, 0, self.length,
-            u(self.name))
+            INVALID_HANDLE_VALUE,
+            p_SA,
+            PAGE_READWRITE,
+            0,
+            self.length,
+            u(self.name),
+        )
         handle_nonzero_success(filemap)
         if filemap == INVALID_HANDLE_VALUE:
             raise Exception("Failed to create file mapping")
@@ -171,7 +172,7 @@ class MemoryMap(object):
         assert isinstance(msg, bytes)
         n = len(msg)
         if self.pos + n >= self.length:  # A little safety.
-            raise ValueError("Refusing to write %d bytes" % n)
+            raise ValueError(f"Refusing to write {n} bytes")
         dest = self.view + self.pos
         length = ctypes.c_size_t(n)
         ctypes.windll.kernel32.RtlMoveMemory(dest, msg, length)
@@ -220,41 +221,45 @@ POLICY_LOOKUP_NAMES = 0x00000800
 POLICY_NOTIFICATION = 0x00001000
 
 POLICY_ALL_ACCESS = (
-    STANDARD_RIGHTS_REQUIRED |
-    POLICY_VIEW_LOCAL_INFORMATION |
-    POLICY_VIEW_AUDIT_INFORMATION |
-    POLICY_GET_PRIVATE_INFORMATION |
-    POLICY_TRUST_ADMIN |
-    POLICY_CREATE_ACCOUNT |
-    POLICY_CREATE_SECRET |
-    POLICY_CREATE_PRIVILEGE |
-    POLICY_SET_DEFAULT_QUOTA_LIMITS |
-    POLICY_SET_AUDIT_REQUIREMENTS |
-    POLICY_AUDIT_LOG_ADMIN |
-    POLICY_SERVER_ADMIN |
-    POLICY_LOOKUP_NAMES)
+    STANDARD_RIGHTS_REQUIRED
+    | POLICY_VIEW_LOCAL_INFORMATION
+    | POLICY_VIEW_AUDIT_INFORMATION
+    | POLICY_GET_PRIVATE_INFORMATION
+    | POLICY_TRUST_ADMIN
+    | POLICY_CREATE_ACCOUNT
+    | POLICY_CREATE_SECRET
+    | POLICY_CREATE_PRIVILEGE
+    | POLICY_SET_DEFAULT_QUOTA_LIMITS
+    | POLICY_SET_AUDIT_REQUIREMENTS
+    | POLICY_AUDIT_LOG_ADMIN
+    | POLICY_SERVER_ADMIN
+    | POLICY_LOOKUP_NAMES
+)
 
 
 POLICY_READ = (
-    STANDARD_RIGHTS_READ |
-    POLICY_VIEW_AUDIT_INFORMATION |
-    POLICY_GET_PRIVATE_INFORMATION)
+    STANDARD_RIGHTS_READ
+    | POLICY_VIEW_AUDIT_INFORMATION
+    | POLICY_GET_PRIVATE_INFORMATION
+)
 
 POLICY_WRITE = (
-    STANDARD_RIGHTS_WRITE |
-    POLICY_TRUST_ADMIN |
-    POLICY_CREATE_ACCOUNT |
-    POLICY_CREATE_SECRET |
-    POLICY_CREATE_PRIVILEGE |
-    POLICY_SET_DEFAULT_QUOTA_LIMITS |
-    POLICY_SET_AUDIT_REQUIREMENTS |
-    POLICY_AUDIT_LOG_ADMIN |
-    POLICY_SERVER_ADMIN)
+    STANDARD_RIGHTS_WRITE
+    | POLICY_TRUST_ADMIN
+    | POLICY_CREATE_ACCOUNT
+    | POLICY_CREATE_SECRET
+    | POLICY_CREATE_PRIVILEGE
+    | POLICY_SET_DEFAULT_QUOTA_LIMITS
+    | POLICY_SET_AUDIT_REQUIREMENTS
+    | POLICY_AUDIT_LOG_ADMIN
+    | POLICY_SERVER_ADMIN
+)
 
 POLICY_EXECUTE = (
-    STANDARD_RIGHTS_EXECUTE |
-    POLICY_VIEW_LOCAL_INFORMATION |
-    POLICY_LOOKUP_NAMES)
+    STANDARD_RIGHTS_EXECUTE
+    | POLICY_VIEW_LOCAL_INFORMATION
+    | POLICY_LOOKUP_NAMES
+)
 
 
 class TokenAccess:
@@ -268,8 +273,8 @@ class TokenInformationClass:
 class TOKEN_USER(ctypes.Structure):
     num = 1
     _fields_ = [
-        ('SID', ctypes.c_void_p),
-        ('ATTRIBUTES', ctypes.wintypes.DWORD),
+        ("SID", ctypes.c_void_p),
+        ("ATTRIBUTES", ctypes.wintypes.DWORD),
     ]
 
 
@@ -286,17 +291,18 @@ class SECURITY_DESCRIPTOR(ctypes.Structure):
         PACL Dacl;
         }   SECURITY_DESCRIPTOR;
     """
+
     SECURITY_DESCRIPTOR_CONTROL = ctypes.wintypes.USHORT
     REVISION = 1
 
     _fields_ = [
-        ('Revision', ctypes.c_ubyte),
-        ('Sbz1', ctypes.c_ubyte),
-        ('Control', SECURITY_DESCRIPTOR_CONTROL),
-        ('Owner', ctypes.c_void_p),
-        ('Group', ctypes.c_void_p),
-        ('Sacl', ctypes.c_void_p),
-        ('Dacl', ctypes.c_void_p),
+        ("Revision", ctypes.c_ubyte),
+        ("Sbz1", ctypes.c_ubyte),
+        ("Control", SECURITY_DESCRIPTOR_CONTROL),
+        ("Owner", ctypes.c_void_p),
+        ("Group", ctypes.c_void_p),
+        ("Sacl", ctypes.c_void_p),
+        ("Dacl", ctypes.c_void_p),
     ]
 
 
@@ -308,14 +314,15 @@ class SECURITY_ATTRIBUTES(ctypes.Structure):
         BOOL   bInheritHandle;
     } SECURITY_ATTRIBUTES;
     """
+
     _fields_ = [
-        ('nLength', ctypes.wintypes.DWORD),
-        ('lpSecurityDescriptor', ctypes.c_void_p),
-        ('bInheritHandle', ctypes.wintypes.BOOL),
+        ("nLength", ctypes.wintypes.DWORD),
+        ("lpSecurityDescriptor", ctypes.c_void_p),
+        ("bInheritHandle", ctypes.wintypes.BOOL),
     ]
 
     def __init__(self, *args, **kwargs):
-        super(SECURITY_ATTRIBUTES, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.nLength = ctypes.sizeof(SECURITY_ATTRIBUTES)
 
     @property
@@ -343,21 +350,30 @@ def GetTokenInformation(token, information_class):
     Given a token, get the token information for it.
     """
     data_size = ctypes.wintypes.DWORD()
-    ctypes.windll.advapi32.GetTokenInformation(token, information_class.num,
-        0, 0, ctypes.byref(data_size))
+    ctypes.windll.advapi32.GetTokenInformation(
+        token, information_class.num, 0, 0, ctypes.byref(data_size)
+    )
     data = ctypes.create_string_buffer(data_size.value)
-    handle_nonzero_success(ctypes.windll.advapi32.GetTokenInformation(token,
-        information_class.num,
-        ctypes.byref(data), ctypes.sizeof(data),
-        ctypes.byref(data_size)))
+    handle_nonzero_success(
+        ctypes.windll.advapi32.GetTokenInformation(
+            token,
+            information_class.num,
+            ctypes.byref(data),
+            ctypes.sizeof(data),
+            ctypes.byref(data_size),
+        )
+    )
     return ctypes.cast(data, ctypes.POINTER(TOKEN_USER)).contents
 
 
 def OpenProcessToken(proc_handle, access):
     result = ctypes.wintypes.HANDLE()
     proc_handle = ctypes.wintypes.HANDLE(proc_handle)
-    handle_nonzero_success(ctypes.windll.advapi32.OpenProcessToken(
-        proc_handle, access, ctypes.byref(result)))
+    handle_nonzero_success(
+        ctypes.windll.advapi32.OpenProcessToken(
+            proc_handle, access, ctypes.byref(result)
+        )
+    )
     return result
 
 
@@ -366,8 +382,7 @@ def get_current_user():
     Return a TOKEN_USER for the owner of this process.
     """
     process = OpenProcessToken(
-        ctypes.windll.kernel32.GetCurrentProcess(),
-        TokenAccess.TOKEN_QUERY,
+        ctypes.windll.kernel32.GetCurrentProcess(), TokenAccess.TOKEN_QUERY
     )
     return GetTokenInformation(process, TOKEN_USER)
 
@@ -389,8 +404,10 @@ def get_security_attributes_for_user(user=None):
     SA.descriptor = SD
     SA.bInheritHandle = 1
 
-    ctypes.windll.advapi32.InitializeSecurityDescriptor(ctypes.byref(SD),
-        SECURITY_DESCRIPTOR.REVISION)
-    ctypes.windll.advapi32.SetSecurityDescriptorOwner(ctypes.byref(SD),
-        user.SID, 0)
+    ctypes.windll.advapi32.InitializeSecurityDescriptor(
+        ctypes.byref(SD), SECURITY_DESCRIPTOR.REVISION
+    )
+    ctypes.windll.advapi32.SetSecurityDescriptorOwner(
+        ctypes.byref(SD), user.SID, 0
+    )
     return SA

@@ -14,7 +14,7 @@
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with Paramiko; if not, write to the Free Software Foundation, Inc.,
-# 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
+# 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
 
 """
 Attempt to generalize the "feeder" part of a `.Channel`: an object which can be
@@ -25,17 +25,18 @@ read operations are blocking and can have a timeout set.
 import array
 import threading
 import time
-from paramiko.py3compat import PY2, b
+from paramiko.util import b
 
 
-class PipeTimeout (IOError):
+class PipeTimeout(IOError):
     """
     Indicates that a timeout was reached on a read from a `.BufferedPipe`.
     """
+
     pass
 
 
-class BufferedPipe (object):
+class BufferedPipe:
     """
     A buffer that obeys normal read (with timeout) & close semantics for a
     file or socket, but is fed data from another thread.  This is used by
@@ -46,21 +47,14 @@ class BufferedPipe (object):
         self._lock = threading.Lock()
         self._cv = threading.Condition(self._lock)
         self._event = None
-        self._buffer = array.array('B')
+        self._buffer = array.array("B")
         self._closed = False
 
-    if PY2:
-        def _buffer_frombytes(self, data):
-            self._buffer.fromstring(data)
+    def _buffer_frombytes(self, data):
+        self._buffer.frombytes(data)
 
-        def _buffer_tobytes(self, limit=None):
-            return self._buffer[:limit].tostring()
-    else:
-        def _buffer_frombytes(self, data):
-            self._buffer.frombytes(data)
-
-        def _buffer_tobytes(self, limit=None):
-            return self._buffer[:limit].tobytes()
+    def _buffer_tobytes(self, limit=None):
+        return self._buffer[:limit].tobytes()
 
     def set_event(self, event):
         """
@@ -97,7 +91,7 @@ class BufferedPipe (object):
             if self._event is not None:
                 self._event.set()
             self._buffer_frombytes(b(data))
-            self._cv.notifyAll()
+            self._cv.notify_all()
         finally:
             self._lock.release()
 
@@ -199,7 +193,7 @@ class BufferedPipe (object):
         self._lock.acquire()
         try:
             self._closed = True
-            self._cv.notifyAll()
+            self._cv.notify_all()
             if self._event is not None:
                 self._event.set()
         finally:

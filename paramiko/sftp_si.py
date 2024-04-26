@@ -14,7 +14,7 @@
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with Paramiko; if not, write to the Free Software Foundation, Inc.,
-# 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
+# 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
 
 """
 An interface to override for SFTP server support.
@@ -25,7 +25,7 @@ import sys
 from paramiko.sftp import SFTP_OP_UNSUPPORTED
 
 
-class SFTPServerInterface (object):
+class SFTPServerInterface:
     """
     This class defines an interface for controlling the behavior of paramiko
     when using the `.SFTPServer` subsystem to provide an SFTP server.
@@ -39,7 +39,8 @@ class SFTPServerInterface (object):
     All paths are in string form instead of unicode because not all SFTP
     clients & servers obey the requirement that paths be encoded in UTF-8.
     """
-    def __init__(self, server, *largs, **kwargs):
+
+    def __init__(self, server, *args, **kwargs):
         """
         Create a new SFTPServerInterface object.  This method does nothing by
         default and is meant to be overridden by subclasses.
@@ -47,7 +48,7 @@ class SFTPServerInterface (object):
         :param .ServerInterface server:
             the server object associated with this channel and SFTP subsystem
         """
-        super(SFTPServerInterface, self).__init__(*largs, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def session_started(self):
         """
@@ -281,10 +282,10 @@ class SFTPServerInterface (object):
         if os.path.isabs(path):
             out = os.path.normpath(path)
         else:
-            out = os.path.normpath('/' + path)
-        if sys.platform == 'win32':
+            out = os.path.normpath("/" + path)
+        if sys.platform == "win32":
             # on windows, normalize backslashes to sftp/posix format
-            out = out.replace('\\', '/')
+            out = out.replace("\\", "/")
         return out
 
     def readlink(self, path):

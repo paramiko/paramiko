@@ -14,16 +14,21 @@
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with Paramiko; if not, write to the Free Software Foundation, Inc.,
-# 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
+# 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
+from io import BytesIO
+
 from paramiko.common import (
-    linefeed_byte_value, crlf, cr_byte, linefeed_byte, cr_byte_value,
+    linefeed_byte_value,
+    crlf,
+    cr_byte,
+    linefeed_byte,
+    cr_byte_value,
 )
-from paramiko.py3compat import BytesIO, PY2, u, bytes_types, text_type
 
-from paramiko.util import ClosingContextManager
+from paramiko.util import ClosingContextManager, u
 
 
-class BufferedFile (ClosingContextManager):
+class BufferedFile(ClosingContextManager):
     """
     Reusable base class to implement Python-style file buffering around a
     simpler stream.
@@ -70,7 +75,7 @@ class BufferedFile (ClosingContextManager):
         :raises: ``ValueError`` -- if the file is closed.
         """
         if self._closed:
-            raise ValueError('I/O operation on closed file')
+            raise ValueError("I/O operation on closed file")
         return self
 
     def close(self):
@@ -89,36 +94,22 @@ class BufferedFile (ClosingContextManager):
         self._wbuffer = BytesIO()
         return
 
-    if PY2:
-        def next(self):
-            """
-            Returns the next line from the input, or raises
-            ``StopIteration`` when EOF is hit.  Unlike Python file
-            objects, it's okay to mix calls to `next` and `readline`.
+    def __next__(self):
+        """
+        Returns the next line from the input, or raises ``StopIteration``
+        when EOF is hit.  Unlike python file objects, it's okay to mix
+        calls to `.next` and `.readline`.
 
-            :raises: ``StopIteration`` -- when the end of the file is reached.
+        :raises: ``StopIteration`` -- when the end of the file is reached.
 
-            :returns: a line (`str`) read from the file.
-            """
-            line = self.readline()
-            if not line:
-                raise StopIteration
-            return line
-    else:
-        def __next__(self):
-            """
-            Returns the next line from the input, or raises ``StopIteration``
-            when EOF is hit.  Unlike python file objects, it's okay to mix
-            calls to `.next` and `.readline`.
-
-            :raises: ``StopIteration`` -- when the end of the file is reached.
-
-            :returns: a line (`str`) read from the file.
-            """
-            line = self.readline()
-            if not line:
-                raise StopIteration
-            return line
+        :returns:
+            a line (`str`, or `bytes` if the file was opened in binary mode)
+            read from the file.
+        """
+        line = self.readline()
+        if not line:
+            raise StopIteration
+        return line
 
     def readable(self):
         """
@@ -159,7 +150,7 @@ class BufferedFile (ClosingContextManager):
             The number of bytes read.
         """
         data = self.read(len(buff))
-        buff[:len(data)] = data
+        buff[: len(data)] = data
         return len(data)
 
     def read(self, size=None):
@@ -180,12 +171,12 @@ class BufferedFile (ClosingContextManager):
             encountered immediately
         """
         if self._closed:
-            raise IOError('File is closed')
+            raise IOError("File is closed")
         if not (self._flags & self.FLAG_READ):
-            raise IOError('File is not open for reading')
+            raise IOError("File is not open for reading")
         if (size is None) or (size < 0):
             # go for broke
-            result = self._rbuffer
+            result = bytearray(self._rbuffer)
             self._rbuffer = bytes()
             self._pos += len(result)
             while True:
@@ -195,10 +186,10 @@ class BufferedFile (ClosingContextManager):
                     new_data = None
                 if (new_data is None) or (len(new_data) == 0):
                     break
-                result += new_data
+                result.extend(new_data)
                 self._realpos += len(new_data)
                 self._pos += len(new_data)
-            return result
+            return bytes(result)
         if size <= len(self._rbuffer):
             result = self._rbuffer[:size]
             self._rbuffer = self._rbuffer[size:]
@@ -245,16 +236,16 @@ class BufferedFile (ClosingContextManager):
         """
         # it's almost silly how complex this function is.
         if self._closed:
-            raise IOError('File is closed')
+            raise IOError("File is closed")
         if not (self._flags & self.FLAG_READ):
-            raise IOError('File not open for reading')
+            raise IOError("File not open for reading")
         line = self._rbuffer
         truncated = False
         while True:
             if (
-                self._at_trailing_cr and
-                self._flags & self.FLAG_UNIVERSAL_NEWLINE and
-                len(line) > 0
+                self._at_trailing_cr
+                and self._flags & self.FLAG_UNIVERSAL_NEWLINE
+                and len(line) > 0
             ):
                 # edge case: the newline may be '\r\n' and we may have read
                 # only the first '\r' last time.
@@ -276,12 +267,8 @@ class BufferedFile (ClosingContextManager):
                 n = size - len(line)
             else:
                 n = self._bufsize
-            if (
-                linefeed_byte in line or
-                (
-                    self._flags & self.FLAG_UNIVERSAL_NEWLINE and
-                    cr_byte in line
-                )
+            if linefeed_byte in line or (
+                self._flags & self.FLAG_UNIVERSAL_NEWLINE and cr_byte in line
             ):
                 break
             try:
@@ -306,9 +293,9 @@ class BufferedFile (ClosingContextManager):
             return line if self._flags & self.FLAG_BINARY else u(line)
         xpos = pos + 1
         if (
-            line[pos] == cr_byte_value and
-            xpos < len(line) and
-            line[xpos] == linefeed_byte_value
+            line[pos] == cr_byte_value
+            and xpos < len(line)
+            and line[xpos] == linefeed_byte_value
         ):
             xpos += 1
         # if the string was truncated, _rbuffer needs to have the string after
@@ -338,7 +325,7 @@ class BufferedFile (ClosingContextManager):
         after rounding up to an internal buffer size) are read.
 
         :param int sizehint: desired maximum number of bytes to read.
-        :returns: `list` of lines read from the file.
+        :returns: list of lines read from the file.
         """
         lines = []
         byte_count = 0
@@ -370,7 +357,7 @@ class BufferedFile (ClosingContextManager):
 
         :raises: ``IOError`` -- if the file doesn't support random access.
         """
-        raise IOError('File does not support seeking.')
+        raise IOError("File does not support seeking.")
 
     def tell(self):
         """
@@ -391,13 +378,13 @@ class BufferedFile (ClosingContextManager):
 
         :param data: ``str``/``bytes`` data to write
         """
-        if isinstance(data, text_type):
+        if isinstance(data, str):
             # Accept text and encode as utf-8 for compatibility only.
-            data = data.encode('utf-8')
+            data = data.encode("utf-8")
         if self._closed:
-            raise IOError('File is closed')
+            raise IOError("File is closed")
         if not (self._flags & self.FLAG_WRITE):
-            raise IOError('File not open for writing')
+            raise IOError("File not open for writing")
         if not (self._flags & self.FLAG_BUFFERED):
             self._write_all(data)
             return
@@ -408,9 +395,9 @@ class BufferedFile (ClosingContextManager):
             if last_newline_pos >= 0:
                 wbuf = self._wbuffer.getvalue()
                 last_newline_pos += len(wbuf) - len(data)
-                self._write_all(wbuf[:last_newline_pos + 1])
+                self._write_all(wbuf[: last_newline_pos + 1])
                 self._wbuffer = BytesIO()
-                self._wbuffer.write(wbuf[last_newline_pos + 1:])
+                self._wbuffer.write(wbuf[last_newline_pos + 1 :])
             return
         # even if we're line buffering, if the buffer has grown past the
         # buffer size, force a flush.
@@ -457,7 +444,7 @@ class BufferedFile (ClosingContextManager):
         (subclass override)
         Write data into the stream.
         """
-        raise IOError('write not implemented')
+        raise IOError("write not implemented")
 
     def _get_size(self):
         """
@@ -472,7 +459,7 @@ class BufferedFile (ClosingContextManager):
 
     # ...internals...
 
-    def _set_mode(self, mode='r', bufsize=-1):
+    def _set_mode(self, mode="r", bufsize=-1):
         """
         Subclasses call this method to initialize the BufferedFile.
         """
@@ -495,26 +482,27 @@ class BufferedFile (ClosingContextManager):
             # unbuffered
             self._flags &= ~(self.FLAG_BUFFERED | self.FLAG_LINE_BUFFERED)
 
-        if ('r' in mode) or ('+' in mode):
+        if ("r" in mode) or ("+" in mode):
             self._flags |= self.FLAG_READ
-        if ('w' in mode) or ('+' in mode):
+        if ("w" in mode) or ("+" in mode):
             self._flags |= self.FLAG_WRITE
-        if 'a' in mode:
+        if "a" in mode:
             self._flags |= self.FLAG_WRITE | self.FLAG_APPEND
             self._size = self._get_size()
             self._pos = self._realpos = self._size
-        if 'b' in mode:
+        if "b" in mode:
             self._flags |= self.FLAG_BINARY
-        if 'U' in mode:
+        if "U" in mode:
             self._flags |= self.FLAG_UNIVERSAL_NEWLINE
             # built-in file objects have this attribute to store which kinds of
             # line terminations they've seen:
             # <http://www.python.org/doc/current/lib/built-in-funcs.html>
             self.newlines = None
 
-    def _write_all(self, data):
+    def _write_all(self, raw_data):
         # the underlying stream may be something that does partial writes (like
         # a socket).
+        data = memoryview(raw_data)
         while len(data) > 0:
             count = self._write(data)
             data = data[count:]
@@ -534,10 +522,7 @@ class BufferedFile (ClosingContextManager):
             return
         if self.newlines is None:
             self.newlines = newline
-        elif (
-            self.newlines != newline and
-            isinstance(self.newlines, bytes_types)
-        ):
+        elif self.newlines != newline and isinstance(self.newlines, bytes):
             self.newlines = (self.newlines, newline)
         elif newline not in self.newlines:
             self.newlines += (newline,)
