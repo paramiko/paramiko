@@ -2,6 +2,8 @@
 Changelog
 =========
 
+- :bug:`2353` Fix a 64-bit-ism in the test suite so the tests don't encounter a
+  false negative on 32-bit systems. Reported by Stanislav Levin.
 - :release:`3.4.0 <2023-12-18>`
 - :feature:`-` `Transport` grew a new ``packetizer_class`` kwarg for overriding
   the packet-handler class used internally. Mostly for testing, but advanced

@@ -28,7 +28,6 @@ import socket
 import time
 import threading
 import random
-import sys
 import unittest
 from unittest.mock import Mock
 
@@ -1419,16 +1418,19 @@ class TestStrictKex:
             def __init__(self, *args, **kwargs):
                 super().__init__(*args, **kwargs)
                 # Induce an about-to-rollover seqno, such that it rolls over
-                # during initial kex.
+                # during initial kex. (Sequence numbers are uint32, so we need
+                # the largest possible 32bit integer such that incrementing it
+                # will roll over to 0.)
+                last_seq = 2**32 - 1
                 setattr(
                     self.packetizer,
                     "_Packetizer__sequence_number_in",
-                    sys.maxsize,
+                    last_seq,
                 )
                 setattr(
                     self.packetizer,
                     "_Packetizer__sequence_number_out",
-                    sys.maxsize,
+                    last_seq,
                 )
 
         with raises(
