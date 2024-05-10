@@ -19,7 +19,7 @@ from paramiko import (
     ConfigParseError,
 )
 
-from .util import _config
+from ._util import _config
 
 
 @fixture
@@ -53,7 +53,7 @@ def load_config(name):
 
 
 class TestSSHConfig:
-    def setup(self):
+    def setup_method(self):
         self.config = load_config("robey")
 
     def test_init(self):
@@ -1030,3 +1030,19 @@ class TestComplexMatching:
         # !canonical in a config that is canonicalized - does NOT match
         result = load_config("match-canonical-yes").lookup("www")
         assert result["user"] == "hidden"
+
+
+class TestFinalMatching(object):
+    def test_finally(self):
+        result = load_config("match-final").lookup("finally")
+        assert result["proxyjump"] == "jump"
+        assert result["port"] == "1001"
+
+    def test_default_port(self):
+        result = load_config("match-final").lookup("default-port")
+        assert result["proxyjump"] == "jump"
+        assert result["port"] == "1002"
+
+    def test_negated(self):
+        result = load_config("match-final").lookup("jump")
+        assert result["port"] == "1003"

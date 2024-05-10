@@ -238,6 +238,7 @@ class SSHClient(ClosingContextManager):
         passphrase=None,
         disabled_algorithms=None,
         transport_factory=None,
+        auth_strategy=None,
     ):
         """
         Connect to an SSH server and authenticate to it.  The server's host key
@@ -323,10 +324,28 @@ class SSHClient(ClosingContextManager):
             functionality, and algorithm selection) and generates a
             `.Transport` instance to be used by this client. Defaults to
             `.Transport.__init__`.
+        :param auth_strategy:
+            an optional instance of `.AuthStrategy`, triggering use of this
+            newer authentication mechanism instead of SSHClient's legacy auth
+            method.
+
+            .. warning::
+                This parameter is **incompatible** with all other
+                authentication-related parameters (such as, but not limited to,
+                ``password``, ``key_filename`` and ``allow_agent``) and will
+                trigger an exception if given alongside them.
+
+        :returns:
+            `.AuthResult` if ``auth_strategy`` is non-``None``; otherwise,
+            returns ``None``.
 
         :raises BadHostKeyException:
             if the server's host key could not be verified.
-        :raises AuthenticationException: if authentication failed.
+        :raises AuthenticationException:
+            if authentication failed.
+        :raises UnableToAuthenticate:
+            if authentication failed (when ``auth_strategy`` is non-``None``;
+            and note that this is a subclass of ``AuthenticationException``).
         :raises socket.error:
             if a socket error (other than connection-refused or
             host-unreachable) occurred while connecting.
@@ -349,6 +368,8 @@ class SSHClient(ClosingContextManager):
             Added the ``disabled_algorithms`` argument.
         .. versionchanged:: 2.12
             Added the ``transport_factory`` argument.
+        .. versionchanged:: 3.2
+            Added the ``auth_strategy`` argument.
         """
         if not sock:
             errors = {}
@@ -449,6 +470,11 @@ class SSHClient(ClosingContextManager):
         if username is None:
             username = getpass.getuser()
 
+        # New auth flow!
+        if auth_strategy is not None:
+            return auth_strategy.authenticate(transport=t)
+
+        # Old auth flow!
         if key_filename is None:
             key_filenames = []
         elif isinstance(key_filename, str):
@@ -697,6 +723,8 @@ class SSHClient(ClosingContextManager):
 
         if not two_factor:
             for key_filename in key_filenames:
+                # TODO 4.0: leverage PKey.from_path() if we don't end up just
+                # killing SSHClient entirely
                 for pkey_class in (RSAKey, DSSKey, ECDSAKey, Ed25519Key):
                     try:
                         key = self._key_from_filepath(

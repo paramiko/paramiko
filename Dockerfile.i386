@@ -1,10 +1,9 @@
-# Convenience tool for testing a 32-bit related security flaw. May be
-# generalized in future to be more useful; until then, it is NOT
-# officially supported but purely a maintainer-facing artifact.
+# Convenience tool for testing 32-bit issues. This is NOT officially supported;
+# it is purely a maintainer-facing artifact.
 
-FROM --platform=i386 i386/alpine:3.15
+FROM --platform=i386 i386/alpine:3.17
 
-RUN apk add openssl-dev python3-dev libffi-dev make cargo
+RUN apk add openssl-dev python3-dev libffi-dev make cargo bash
 
 RUN python3 -m venv env
 RUN env/bin/pip install -U pip

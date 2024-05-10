@@ -28,7 +28,7 @@ import threading
 
 import paramiko
 
-from .util import _support, needs_gssapi, KerberosTestCase, update_env
+from ._util import _support, needs_gssapi, KerberosTestCase, update_env
 from .test_client import FINGERPRINTS
 
 
@@ -89,7 +89,7 @@ class GSSAuthTest(KerberosTestCase):
     def _run(self):
         self.socks, addr = self.sockl.accept()
         self.ts = paramiko.Transport(self.socks)
-        host_key = paramiko.RSAKey.from_private_key_file("tests/test_rsa.key")
+        host_key = paramiko.RSAKey.from_private_key_file(_support("rsa.key"))
         self.ts.add_server_key(host_key)
         server = NullServer()
         self.ts.start_server(self.event, server)
@@ -100,7 +100,7 @@ class GSSAuthTest(KerberosTestCase):
 
         The exception is ... no exception yet
         """
-        host_key = paramiko.RSAKey.from_private_key_file("tests/test_rsa.key")
+        host_key = paramiko.RSAKey.from_private_key_file(_support("rsa.key"))
         public_host_key = paramiko.RSAKey(data=host_key.asbytes())
 
         self.tc = paramiko.SSHClient()
@@ -154,7 +154,7 @@ class GSSAuthTest(KerberosTestCase):
             "this_host_does_not_exists_and_causes_a_GSSAPI-exception"
         )
         self._test_connection(
-            key_filename=[_support("test_rsa.key")],
+            key_filename=[_support("rsa.key")],
             allow_agent=False,
             look_for_keys=False,
         )

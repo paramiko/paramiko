@@ -24,7 +24,7 @@ Test the used APIs for GSS-API / SSPI authentication
 
 import socket
 
-from .util import needs_gssapi, KerberosTestCase, update_env
+from ._util import needs_gssapi, KerberosTestCase, update_env
 
 #
 # NOTE: KerberosTestCase skips all tests if it was unable to import k5test

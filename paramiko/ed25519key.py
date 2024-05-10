@@ -39,6 +39,8 @@ class Ed25519Key(PKey):
         Added a ``file_obj`` parameter to match other key classes.
     """
 
+    name = "ssh-ed25519"
+
     def __init__(
         self, msg=None, data=None, filename=None, password=None, file_obj=None
     ):
@@ -49,7 +51,7 @@ class Ed25519Key(PKey):
         if msg is not None:
             self._check_type_and_load_cert(
                 msg=msg,
-                key_type="ssh-ed25519",
+                key_type=self.name,
                 cert_type="ssh-ed25519-cert-v01@openssh.com",
             )
             verifying_key = nacl.signing.VerifyKey(msg.get_binary())
@@ -108,7 +110,7 @@ class Ed25519Key(PKey):
         public_keys = []
         for _ in range(num_keys):
             pubkey = Message(message.get_binary())
-            if pubkey.get_text() != "ssh-ed25519":
+            if pubkey.get_text() != self.name:
                 raise SSHException("Invalid key")
             public_keys.append(pubkey.get_binary())
 
@@ -141,7 +143,7 @@ class Ed25519Key(PKey):
 
         signing_keys = []
         for i in range(num_keys):
-            if message.get_text() != "ssh-ed25519":
+            if message.get_text() != self.name:
                 raise SSHException("Invalid key")
             # A copy of the public key, again, ignore.
             public = message.get_binary()
@@ -170,7 +172,7 @@ class Ed25519Key(PKey):
         else:
             v = self._verifying_key
         m = Message()
-        m.add_string("ssh-ed25519")
+        m.add_string(self.name)
         m.add_string(v.encode())
         return m.asbytes()
 
@@ -182,8 +184,9 @@ class Ed25519Key(PKey):
             v = self._verifying_key
         return (self.get_name(), v)
 
+    # TODO 4.0: remove
     def get_name(self):
-        return "ssh-ed25519"
+        return self.name
 
     def get_bits(self):
         return 256
@@ -193,12 +196,12 @@ class Ed25519Key(PKey):
 
     def sign_ssh_data(self, data, algorithm=None):
         m = Message()
-        m.add_string("ssh-ed25519")
+        m.add_string(self.name)
         m.add_string(self._signing_key.sign(data).signature)
         return m
 
     def verify_ssh_sig(self, data, msg):
-        if msg.get_text() != "ssh-ed25519":
+        if msg.get_text() != self.name:
             return False
 
         try:

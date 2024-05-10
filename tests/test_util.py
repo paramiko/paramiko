@@ -49,6 +49,11 @@ class UtilTest(unittest.TestCase):
             "Agent",
             "AgentKey",
             "AuthenticationException",
+            "AuthFailure",
+            "AuthHandler",
+            "AuthResult",
+            "AuthSource",
+            "AuthStrategy",
             "AutoAddPolicy",
             "BadAuthenticationType",
             "BufferedFile",
@@ -58,9 +63,14 @@ class UtilTest(unittest.TestCase):
             "CouldNotCanonicalize",
             "DSSKey",
             "HostKeys",
+            "InMemoryPrivateKey",
             "Message",
             "MissingHostKeyPolicy",
+            "NoneAuth",
+            "OnDiskPrivateKey",
+            "Password",
             "PasswordRequiredException",
+            "PrivateKey",
             "RSAKey",
             "RejectPolicy",
             "SFTP",
@@ -77,12 +87,13 @@ class UtilTest(unittest.TestCase):
             "SSHException",
             "SecurityOptions",
             "ServerInterface",
+            "SourceResult",
             "SubsystemHandler",
             "Transport",
             "WarningPolicy",
             "util",
         ):
-            assert name in paramiko.__all__
+            assert name in dir(paramiko)
 
     def test_generate_key_bytes(self):
         key_bytes = paramiko.util.generate_key_bytes(

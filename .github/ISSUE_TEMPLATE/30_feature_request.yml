@@ -1,0 +1,73 @@
+name: Feature Request
+description: |
+  Use this template to request addition of a new paramiko feature.
+title: "[FEAT] - <title>"
+labels: ["Feature"]
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to let us know what you'd like added to paramiko!
+
+  - type: dropdown
+    id: usage_posture
+    attributes:
+      label: Is this feature for paramiko acting as a client or a server?
+      multiple: false
+      options:
+        - Client
+        - Server
+        - Both
+        - Not sure
+    validations:
+      required: true
+
+  - type: dropdown
+    id: features
+    attributes:
+      label: What functionality does this feature request relate to?
+      description: Select as many as are relevant
+      multiple: true
+      options:
+        - SSH
+        - SFTP
+        - Keys/auth
+        - known_hosts
+        - sshconfig
+        - Exception handling
+        - Something else
+    validations:
+      required: true
+
+  - type: input
+    id: server_info
+    attributes:
+      label: For client-side features, does this relate to a specific type of SSH server?
+      description: |
+        Leave this blank if you're not sure, or if you're requesting a server-side feature.
+      placeholder: |
+        Example: OpenSSH x.y; or Teleport vNN
+
+  - type: input
+    id: integrated_tool
+    attributes:
+      label: If you're using paramiko as part of another tool, which tool/version?
+      placeholder: |
+        Examples: Fabric, Ansible, sftputil
+  
+  - type: textarea
+    id: desired_behavior
+    attributes:
+      label: Desired behavior
+      description: |
+        Please describe what you you would like paramiko to be able to do. If possible, include pseudocode or mock code snippets to illustrate the desired behavior, and be as detailed as possible.
+    validations:
+      required: true
+  
+  - type: textarea
+    id: more_info
+    attributes:
+      label: Anything else?
+      description: |
+        Please provide any additional information that would be helpful to provide context for your requested feature.

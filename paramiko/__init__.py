@@ -19,15 +19,31 @@
 # flake8: noqa
 import sys
 from paramiko._version import __version__, __version_info__
-from paramiko.transport import SecurityOptions, Transport
+from paramiko.transport import (
+    SecurityOptions,
+    ServiceRequestingTransport,
+    Transport,
+)
 from paramiko.client import (
-    SSHClient,
-    MissingHostKeyPolicy,
     AutoAddPolicy,
+    MissingHostKeyPolicy,
     RejectPolicy,
+    SSHClient,
     WarningPolicy,
 )
 from paramiko.auth_handler import AuthHandler
+from paramiko.auth_strategy import (
+    AuthFailure,
+    AuthStrategy,
+    AuthResult,
+    AuthSource,
+    InMemoryPrivateKey,
+    NoneAuth,
+    OnDiskPrivateKey,
+    Password,
+    PrivateKey,
+    SourceResult,
+)
 from paramiko.ssh_gss import GSSAuth, GSS_AUTH_AVAILABLE, GSS_EXCEPTIONS
 from paramiko.channel import (
     Channel,
@@ -43,6 +59,7 @@ from paramiko.ssh_exception import (
     ConfigParseError,
     CouldNotCanonicalize,
     IncompatiblePeer,
+    MessageOrderError,
     PasswordRequiredException,
     ProxyCommandFailure,
     SSHException,
@@ -63,7 +80,7 @@ from paramiko.message import Message
 from paramiko.packet import Packetizer
 from paramiko.file import BufferedFile
 from paramiko.agent import Agent, AgentKey
-from paramiko.pkey import PKey, PublicBlob
+from paramiko.pkey import PKey, PublicBlob, UnknownKeyType
 from paramiko.hostkeys import HostKeys
 from paramiko.config import SSHConfig, SSHConfigDict
 from paramiko.proxy import ProxyCommand
@@ -94,9 +111,14 @@ from paramiko.sftp import (
 from paramiko.common import io_sleep
 
 
+# TODO: I guess a real plugin system might be nice for future expansion...
+key_classes = [DSSKey, RSAKey, Ed25519Key, ECDSAKey]
+
+
 __author__ = "Jeff Forcier <jeff@bitprophet.org>"
 __license__ = "GNU Lesser General Public License (LGPL)"
 
+# TODO 4.0: remove this, jeez
 __all__ = [
     "Agent",
     "AgentKey",
