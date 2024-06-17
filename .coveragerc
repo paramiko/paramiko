@@ -4,3 +4,4 @@ include =
     paramiko/*
     tests/*
 omit = paramiko/_winapi.py
+dynamic_context = test_function
