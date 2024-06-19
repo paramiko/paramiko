@@ -134,3 +134,13 @@ class UtilTest(unittest.TestCase):
         assert safe_vanilla == vanilla, msg
         msg = err.format(safe_has_bytes, expected_bytes)
         assert safe_has_bytes == expected_bytes, msg
+
+
+    def test_deflate_long(self): 
+        assert b'\x00' == paramiko.util.deflate_long(0)
+        assert b'\xff' == paramiko.util.deflate_long(-1)
+
+    def test_constant_time_bytes_eq(self): 
+        assert False == paramiko.util.constant_time_bytes_eq(b'2137', b'2137777')
+        
+        
