@@ -18,17 +18,23 @@
 # along with Paramiko; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
 
-import base64
+"""
+Demonstrates implementation of an SSHv2 server with the ServerInterface
+and Transport primitives.
+
+Listens on port 2200. Accepts connection from username "robey" and either
+password "foo" or user_rsa_key.
+"""
+
+from base64 import decodebytes
 from binascii import hexlify
-import os
 import socket
 import sys
 import threading
 import traceback
 
 import paramiko
-from paramiko.py3compat import b, u, decodebytes
-
+from paramiko.util import u
 
 # setup logging
 paramiko.util.log_to_file("demo_server.log")
@@ -113,7 +119,9 @@ class Server(paramiko.ServerInterface):
         return True
 
 
-DoGSSAPIKeyExchange = True
+DoGSSAPIKeyExchange = (
+    paramiko.GSS_AUTH_AVAILABLE
+)  # enable "gssapi-kex" key exchange, if supported by your python installation
 
 # now connect
 try:

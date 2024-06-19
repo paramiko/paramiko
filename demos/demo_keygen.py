@@ -18,6 +18,9 @@
 # along with Paramiko; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
 
+"""
+Demonstrates Paramiko's native keygen capabilities.
+"""
 import sys
 
 from binascii import hexlify
@@ -26,7 +29,7 @@ from optparse import OptionParser
 from paramiko import DSSKey
 from paramiko import RSAKey
 from paramiko.ssh_exception import SSHException
-from paramiko.py3compat import u
+from paramiko.util import u
 
 usage = """
 %prog [-v] [-b bits] -t type [-N new_passphrase] [-f output_keyfile]"""
@@ -167,7 +170,7 @@ if __name__ == "__main__":
         "Fingerprint: %d %s %s.pub (%s)"
         % (
             bits,
-            ":".join([hash[i : 2 + i] for i in range(0, len(hash), 2)]),
+            ":".join([hash[i: 2 + i] for i in range(0, len(hash), 2)]),
             filename,
             ktype.upper(),
         )

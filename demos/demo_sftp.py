@@ -20,7 +20,10 @@
 
 # based on code provided by raymond mosteller (thanks!)
 
-import base64
+"""
+Demonstrates basic SFTP transfer across a connection.
+"""
+
 import getpass
 import os
 import socket
@@ -28,15 +31,16 @@ import sys
 import traceback
 
 import paramiko
-from paramiko.py3compat import input
-
-
 # setup logging
 paramiko.util.log_to_file("demo_sftp.log")
 
 # Paramiko client configuration
-UseGSSAPI = True  # enable GSS-API / SSPI authentication
-DoGSSAPIKeyExchange = True
+UseGSSAPI = (
+    paramiko.GSS_AUTH_AVAILABLE
+)  # enable "gssapi-with-mic" authentication, if supported by your python installation
+DoGSSAPIKeyExchange = (
+    paramiko.GSS_AUTH_AVAILABLE
+)  # enable "gssapi-kex" key exchange, if supported by your python installation
 Port = 22
 
 # get hostname
