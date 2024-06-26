@@ -139,6 +139,7 @@ class UtilTest(unittest.TestCase):
     def test_deflate_long(self): 
         assert b'\x00' == paramiko.util.deflate_long(0)
         assert b'\xff' == paramiko.util.deflate_long(-1)
+        assert b'\xff\x7f' == paramiko.util.deflate_long(-129)
 
     def test_constant_time_bytes_eq(self): 
         assert False == paramiko.util.constant_time_bytes_eq(b'2137', b'2137777')
