@@ -609,6 +609,30 @@ class SSHClientTest(ClientTest):
             **self.connect_kwargs,
         )
 
+    def test_custom_agent_cls(self):
+        """
+        verify that a custom ssh agent can be passed as a connect kwarg
+        """
+        threading.Thread(target=self._run).start()
+
+        class TestAgent(paramiko.Agent):
+            def _connect(self, conn):
+                return
+
+            def get_keys(self):
+                k = paramiko.RSAKey.from_private_key_file(_support("rsa.key"))
+                return [k]
+
+        with SSHClient() as tc:
+            self.tc = tc
+            self.tc.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            self.tc.connect(
+                **dict(
+                    self.connect_kwargs, allow_agent=True, agent_cls=TestAgent
+                )
+            )
+            self.assertIsInstance(self.tc._agent, TestAgent)
+
     @requires_gss_auth
     def test_reject_policy_gsskex(self):
         """

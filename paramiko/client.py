@@ -239,6 +239,7 @@ class SSHClient(ClosingContextManager):
         disabled_algorithms=None,
         transport_factory=None,
         auth_strategy=None,
+        agent_cls=Agent,
     ):
         """
         Connect to an SSH server and authenticate to it.  The server's host key
@@ -334,6 +335,9 @@ class SSHClient(ClosingContextManager):
                 authentication-related parameters (such as, but not limited to,
                 ``password``, ``key_filename`` and ``allow_agent``) and will
                 trigger an exception if given alongside them.
+        :param agent_cls:
+            optional ssh agent implementation used to fetch keys when
+            allow_agent=True. defaults to `.Agent`
 
         :returns:
             `.AuthResult` if ``auth_strategy`` is non-``None``; otherwise,
@@ -370,6 +374,8 @@ class SSHClient(ClosingContextManager):
             Added the ``transport_factory`` argument.
         .. versionchanged:: 3.2
             Added the ``auth_strategy`` argument.
+        .. versionchanged:: 3.5
+            Added the ``agent_cls`` argument.
         """
         if not sock:
             errors = {}
@@ -488,6 +494,7 @@ class SSHClient(ClosingContextManager):
             pkey,
             key_filenames,
             allow_agent,
+            agent_cls,
             look_for_keys,
             gss_auth,
             gss_kex,
@@ -656,6 +663,7 @@ class SSHClient(ClosingContextManager):
         pkey,
         key_filenames,
         allow_agent,
+        agent_cls,
         look_for_keys,
         gss_auth,
         gss_kex,
@@ -742,7 +750,7 @@ class SSHClient(ClosingContextManager):
 
         if not two_factor and allow_agent:
             if self._agent is None:
-                self._agent = Agent()
+                self._agent = agent_cls()
 
             for key in self._agent.get_keys():
                 try:
