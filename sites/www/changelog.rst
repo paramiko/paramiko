@@ -2,6 +2,8 @@
 Changelog
 =========
 
+- :feature:`-` Adds `agent_cls` to `connect_kwargs` to allow specifying a custom
+  `~paramiko.agent.AgentSSH` implementation. Contributed by ``@evindunn``.
 - :bug:`2353` Fix a 64-bit-ism in the test suite so the tests don't encounter a
   false negative on 32-bit systems. Reported by Stanislav Levin.
 - :release:`3.4.0 <2023-12-18>`
