@@ -24,6 +24,8 @@ Configuration file (aka ``ssh_config``) support.
 import fnmatch
 import getpass
 import os
+import os.path
+import glob
 import re
 import shlex
 import socket
@@ -120,15 +122,18 @@ class SSHConfig:
         obj.parse(flo)
         return obj
 
-    def parse(self, file_obj):
+    def parse(self, file_obj, context={"host": ["*"], "config": {}}, level=0):
+        # Start out w/ implicit/anonymous global host-like block to hold
+        # anything not contained by an explicit one.
+
         """
         Read an OpenSSH config from the given file object.
 
         :param file_obj: a file-like object to read the config file from
+        :param context: context from previously readed file
+        :param level: include level
         """
-        # Start out w/ implicit/anonymous global host-like block to hold
-        # anything not contained by an explicit one.
-        context = {"host": ["*"], "config": {}}
+
         for line in file_obj:
             # Strip any leading or trailing whitespace from the line.
             # Refer to https://github.com/paramiko/paramiko/issues/499
@@ -162,6 +167,16 @@ class SSHConfig:
                 # Store 'none' as None - not as a string implying that the
                 # proxycommand is the literal shell command "none"!
                 context["config"][key] = None
+            # handle "Include" keyword
+            elif key == 'include':
+                conf = value
+                if not (os.path.isabs(conf) or conf.startswith('~')):
+                    conf = os.path.join("~", ".ssh", conf)
+                conf = os.path.expanduser(conf)
+                for item in glob.iglob(conf):
+                    if os.path.isfile(item):
+                        with open(item) as cfd:
+                            context = self.parse(cfd, context, level + 1)
             # All other keywords get stored, directly or via append
             else:
                 if value.startswith('"') and value.endswith('"'):
@@ -177,8 +192,12 @@ class SSHConfig:
                         context["config"][key] = [value]
                 elif key not in context["config"]:
                     context["config"][key] = value
-        # Store last 'open' block and we're done
-        self._config.append(context)
+
+        if level > 0:
+            return context
+        else:
+            # Store last 'open' block and we're done
+            self._config.append(context)
 
     def lookup(self, hostname):
         """
