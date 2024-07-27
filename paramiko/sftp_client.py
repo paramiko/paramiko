@@ -169,10 +169,10 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         chan.invoke_subsystem("sftp")
         return cls(chan)
 
-    def _log(self, level, msg, *args):
+    def _log(self, level, msg, *args, stacklevel: int = 1):
         if isinstance(msg, list):
             for m in msg:
-                self._log(level, m, *args)
+                self._log(level, m, *args, stacklevel=stacklevel + 1)
         else:
             # NOTE: these bits MUST continue using %-style format junk because
             # logging.Logger.log() explicitly requires it. Grump.
@@ -182,7 +182,9 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
             super()._log(
                 level,
                 "[chan %s] " + msg,
-                *([self.sock.get_name()] + list(args))
+                self.sock.get_name(),
+                *args,
+                stacklevel=stacklevel + 1
             )
 
     def close(self):

@@ -23,6 +23,7 @@ Abstraction for an SSH2 channel.
 import binascii
 import os
 import socket
+import sys
 import time
 import threading
 
@@ -1206,8 +1207,16 @@ class Channel(ClosingContextManager):
         self.transport._send_user_message(m)
         return size
 
-    def _log(self, level, msg, *args):
-        self.logger.log(level, "[chan " + self._name + "] " + msg, *args)
+    def _log(self, level, msg, *args, stacklevel: int = 1):
+        if sys.version_info >= (3, 8):
+            self.logger.log(
+                level,
+                "[chan " + self._name + "] " + msg,
+                *args,
+                stacklevel=stacklevel + 1,
+            )
+        else:
+            self.logger.log(level, "[chan " + self._name + "] " + msg, *args)
 
     def _event_pending(self):
         self.event.clear()

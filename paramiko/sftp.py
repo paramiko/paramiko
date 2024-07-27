@@ -19,6 +19,7 @@
 import select
 import socket
 import struct
+import sys
 
 from paramiko import util
 from paramiko.common import DEBUG, byte_chr, byte_ord
@@ -165,8 +166,11 @@ class BaseSFTP:
         self._send_packet(CMD_VERSION, msg)
         return version
 
-    def _log(self, level, msg, *args):
-        self.logger.log(level, msg, *args)
+    def _log(self, level, msg, *args, stacklevel: int = 1):
+        if sys.version_info >= (3, 8):
+            self.logger.log(level, msg, *args, stacklevel=stacklevel + 1)
+        else:
+            self.logger.log(level, msg, *args)
 
     def _write_all(self, out):
         while len(out) > 0:
