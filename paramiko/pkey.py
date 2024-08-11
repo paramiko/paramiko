@@ -43,6 +43,20 @@ from paramiko.ssh_exception import SSHException, PasswordRequiredException
 from paramiko.message import Message
 
 
+# TripleDES is moving from `cryptography.hazmat.primitives.ciphers.algorithms`
+# in cryptography>=43.0.0 to `cryptography.hazmat.decrepit.ciphers.algorithms`
+# It will be removed from `cryptography.hazmat.primitives.ciphers.algorithms`
+# in cryptography==48.0.0.
+#
+# Source References:
+# - https://github.com/pyca/cryptography/commit/722a6393e61b3ac
+# - https://github.com/pyca/cryptography/pull/11407/files
+try:
+    from cryptography.hazmat.decrepit.ciphers.algorithms import TripleDES
+except ImportError:
+    from cryptography.hazmat.primitives.ciphers.algorithms import TripleDES
+
+
 OPENSSH_AUTH_MAGIC = b"openssh-key-v1\x00"
 
 
@@ -97,7 +111,7 @@ class PKey:
             "mode": modes.CBC,
         },
         "DES-EDE3-CBC": {
-            "cipher": algorithms.TripleDES,
+            "cipher": TripleDES,
             "keysize": 24,
             "blocksize": 8,
             "mode": modes.CBC,
