@@ -2,6 +2,8 @@
 Changelog
 =========
 
+- :release:`3.4.1 <2024-08-11>`
+- :release:`3.3.2 <2024-08-11>`
 - :bug:`2419` (fixed in :issue:`2421`) Massage our import of the TripleDES
   cipher to support Cryptography >=43; this should prevent
   ``CryptographyDeprecationWarning`` from appearing upon import. Thanks to
