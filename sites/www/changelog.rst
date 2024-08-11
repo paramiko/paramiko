@@ -2,6 +2,8 @@
 Changelog
 =========
 
+- :bug:`2420` Modify a test-harness skiptest check to work with newer versions
+  of Cryptography. Props to Paul Howarth for the patch.
 - :bug:`2353` Fix a 64-bit-ism in the test suite so the tests don't encounter a
   false negative on 32-bit systems. Reported by Stanislav Levin.
 - :release:`3.4.0 <2023-12-18>`
