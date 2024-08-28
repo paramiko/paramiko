@@ -29,12 +29,13 @@ import warnings
 from errno import ECONNREFUSED, EHOSTUNREACH
 
 from paramiko.agent import Agent
-from paramiko.common import DEBUG
+from paramiko.common import DEBUG, DISCONNECT_BY_APPLICATION, cMSG_DISCONNECT
 from paramiko.config import SSH_PORT
 from paramiko.dsskey import DSSKey
 from paramiko.ecdsakey import ECDSAKey
 from paramiko.ed25519key import Ed25519Key
 from paramiko.hostkeys import HostKeys
+from paramiko.message import Message
 from paramiko.rsakey import RSAKey
 from paramiko.ssh_exception import (
     SSHException,
@@ -510,6 +511,15 @@ class SSHClient(ClosingContextManager):
         """
         if self._transport is None:
             return
+
+        if self._transport.active:
+            m = Message()
+            m.add_byte(cMSG_DISCONNECT)
+            m.add_int(DISCONNECT_BY_APPLICATION)
+            m.add_string("disconnected by user")
+            m.add_string("en")
+            self._transport._send_message(m)
+
         self._transport.close()
         self._transport = None
 
