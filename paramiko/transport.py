@@ -30,7 +30,12 @@ import weakref
 from hashlib import md5, sha1, sha256, sha512
 
 from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives.ciphers import algorithms, Cipher, modes, aead
+from cryptography.hazmat.primitives.ciphers import (
+    algorithms,
+    Cipher,
+    modes,
+    aead,
+)
 
 import paramiko
 from paramiko import util
@@ -2876,7 +2881,7 @@ class Transport(threading.Thread, ClosingContextManager):
                 sdctr,
                 etm=etm,
             )
-            
+
         compress_out = self._compression_info[self.local_compression][0]
         if compress_out is not None and (
             self.local_compression != "zlib@openssh.com" or self.authenticated
