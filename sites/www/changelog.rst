@@ -2,6 +2,9 @@
 Changelog
 =========
 
+- :bug:`-` Check for ``None`` transport members inside
+  `~paramiko.channel.Channel` when closing the channel; this likely doesn't
+  come up much in the real world, but was causing warnings in the test suite.
 - :release:`3.3.2 <2024-08-11>`
 - :bug:`2419` (fixed in :issue:`2421`) Massage our import of the TripleDES
   cipher to support Cryptography >=43; this should prevent
