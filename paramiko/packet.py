@@ -115,7 +115,7 @@ class Packetizer:
         self.__etm_out = False
         self.__etm_in = False
 
-        # aead cipher use
+        # AEAD (eg aes128-gcm/aes256-gcm) cipher use
         self.__aead_out = False
         self.__aead_in = False
         self.__iv_out = None
@@ -401,11 +401,13 @@ class Packetizer:
         return u(buf)
 
     def _inc_iv_counter(self, iv):
-        # refer https://www.rfc-editor.org/rfc/rfc5647.html#section-7.1
+        # Per https://www.rfc-editor.org/rfc/rfc5647.html#section-7.1 ,
+        # we increment the last 8 bytes of the 12-byte IV...
         iv_counter_b = iv[4:]
         iv_counter = int.from_bytes(iv_counter_b, "big")
         inc_iv_counter = iv_counter + 1
         inc_iv_counter_b = inc_iv_counter.to_bytes(8, "big")
+        # ...then re-concatenate it with the static first 4 bytes
         new_iv = iv[0:4] + inc_iv_counter_b
         self._log(
             DEBUG,
@@ -444,7 +446,9 @@ class Packetizer:
                         packet[4:]
                     )
                 elif self.__aead_out:
-                    # packet length is used to associated_data
+                    # Packet-length field is used as the 'associated data'
+                    # under AES-GCM, so like EtM, it's not encrypted. See
+                    # https://www.rfc-editor.org/rfc/rfc5647#section-7.3
                     out = packet[0:4] + self.__block_engine_out.encrypt(
                         self.__iv_out, packet[4:], packet[0:4]
                     )
@@ -453,7 +457,7 @@ class Packetizer:
                     out = self.__block_engine_out.update(packet)
             else:
                 out = packet
-            # + mac, aead no need hmac
+            # Append an MAC when needed (eg, not under AES-GCM)
             if self.__block_engine_out is not None and not self.__aead_out:
                 packed = struct.pack(">I", self.__sequence_number_out)
                 payload = packed + (out if self.__etm_out else packet)
@@ -514,6 +518,8 @@ class Packetizer:
             header = packet
 
         if self.__aead_in:
+            # Grab unencrypted (considered 'additional data' under GCM) packet
+            # length.
             packet_size = struct.unpack(">I", header[:4])[0]
             aad = header[:4]
             remaining = (
@@ -530,8 +536,9 @@ class Packetizer:
         if self.__dump_packets:
             self._log(DEBUG, util.format_binary(header, "IN: "))
 
-        # When ETM is in play, we've already read the packet size & decrypted
-        # everything, so just set the packet back to the header we obtained.
+        # When ETM or AEAD (GCM) are in use, we've already read the packet size
+        # & decrypted everything, so just set the packet back to the header we
+        # obtained.
         if self.__etm_in or self.__aead_in:
             packet = header
         # Otherwise, use the older non-ETM logic
