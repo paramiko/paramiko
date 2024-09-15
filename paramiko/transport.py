@@ -244,6 +244,8 @@ class Transport(threading.Thread, ClosingContextManager):
             "class": algorithms.AES,
             "mode": modes.CTR,
             "block-size": 16,
+            # TODO: can we just expect this is sometimes missing when not
+            # required lol, ditto the belows
             "iv-size": 16,
             "key-size": 16,
         },
@@ -289,7 +291,6 @@ class Transport(threading.Thread, ClosingContextManager):
             "iv-size": 8,
             "key-size": 24,
         },
-        # aead cipher
         "aes128-gcm@openssh.com": {
             "class": aead.AESGCM,
             "block-size": 16,
@@ -2069,6 +2070,8 @@ class Transport(threading.Thread, ClosingContextManager):
                 return cipher.decryptor()
 
     def _get_aead_cipher(self, name, key):
+        # TODO: wait why isn't this a Cipher encryptor/decryptor like above?
+        # it's called in the same manner...
         aead_cipher = self._cipher_info[name]["class"](key)
         return aead_cipher
 
@@ -2738,22 +2741,27 @@ class Transport(threading.Thread, ClosingContextManager):
     def _activate_inbound(self):
         """switch on newly negotiated encryption parameters for
         inbound traffic"""
-        block_size = self._cipher_info[self.remote_cipher]["block-size"]
+        info = self._cipher_info[self.remote_cipher]
+        block_size = info["block-size"]
+        # Non-AEAD/GCM type ciphers' IV size is their block size.
+        iv_size = info.get("iv-size", block_size)
         if self.server_mode:
             IV_in = self._compute_key(
-                "A", self._cipher_info[self.remote_cipher]["iv-size"]
+                "A", iv_size
             )
             key_in = self._compute_key(
-                "C", self._cipher_info[self.remote_cipher]["key-size"]
+                "C", iv_size
             )
         else:
             IV_in = self._compute_key(
-                "B", self._cipher_info[self.remote_cipher]["iv-size"]
+                "B", iv_size
             )
             key_in = self._compute_key(
-                "D", self._cipher_info[self.remote_cipher]["key-size"]
+                "D", iv_size
             )
 
+        # TODO: wat. at least just cast to fucking bool
+        # TODO: but also would be nicer to be oop or something?
         is_aead = (
             True
             if self._cipher_info[self.remote_cipher].get("is_aead")
@@ -2777,9 +2785,11 @@ class Transport(threading.Thread, ClosingContextManager):
             mac_key = self._compute_key("F", mac_engine().digest_size)
 
         if is_aead:
+            # TODO: verbose?
             self._log(DEBUG, "use aead-cipher, so set mac to None")
             self.packetizer.set_inbound_cipher(
                 engine,
+                # TODO: use kwargs here jeez
                 block_size,
                 None,
                 16,
@@ -2822,6 +2832,9 @@ class Transport(threading.Thread, ClosingContextManager):
             self.packetizer.reset_seqno_out()
         block_size = self._cipher_info[self.local_cipher]["block-size"]
         if self.server_mode:
+            # TODO: why is this capitalized here lol, rename it
+            # TODO: oh it was like this before apparently? ew
+            # TODO: apply same fixes as in activate_inbound, sigh
             IV_out = self._compute_key(
                 "B", self._cipher_info[self.local_cipher]["iv-size"]
             )
@@ -2836,12 +2849,15 @@ class Transport(threading.Thread, ClosingContextManager):
                 "C", self._cipher_info[self.local_cipher]["key-size"]
             )
 
+        # TODO: make this suck less lmfao
         is_aead = (
             True
             if self._cipher_info[self.local_cipher].get("is_aead")
             else False
         )
 
+        # TODO: as noted up near def, not sure wtf is going on here. may be
+        # smarter to move that logic here, or this logic there.
         if is_aead:
             engine = self._get_aead_cipher(self.local_cipher, key_out)
         else:
@@ -2861,6 +2877,7 @@ class Transport(threading.Thread, ClosingContextManager):
 
         if is_aead:
             self.packetizer.set_outbound_cipher(
+                # TODO: kwargs
                 engine,
                 block_size,
                 None,
