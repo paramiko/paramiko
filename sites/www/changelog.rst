@@ -2,6 +2,7 @@
 Changelog
 =========
 
+- :release:`3.5.0 <2024-09-15>`
 - :feature:`982` (via :issue:`2444`, which was a rebase of :issue:`2157`) Add
   support for AES-GCM encryption ciphers (128 and 256 bit variants). Thanks to
   Alex Gaynor for the report (& for cryptography review), Shen Cheng for the
