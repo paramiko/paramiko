@@ -409,11 +409,6 @@ class Packetizer:
         inc_iv_counter_b = inc_iv_counter.to_bytes(8, "big")
         # ...then re-concatenate it with the static first 4 bytes
         new_iv = iv[0:4] + inc_iv_counter_b
-        self._log(
-            DEBUG,
-            "old-iv_count[%s], new-iv_count[%s]"
-            % (iv_counter, inc_iv_counter),
-        )
         return new_iv
 
     def send_message(self, data):
@@ -498,9 +493,7 @@ class Packetizer:
         :raises: `.SSHException` -- if the packet is mangled
         :raises: `.NeedRekeyException` -- if the transport should rekey
         """
-        self._log(DEBUG, "read message from sock")
         header = self.read_all(self.__block_size_in, check_rekey=True)
-        self._log(DEBUG, "raw data length[%s]" % len(header))
         if self.__etm_in:
             packet_size = struct.unpack(">I", header[:4])[0]
             remaining = packet_size - self.__block_size_in + 4
@@ -526,7 +519,6 @@ class Packetizer:
                 packet_size - self.__block_size_in + 4 + self.__mac_size_in
             )
             packet = header[4:] + self.read_all(remaining, check_rekey=False)
-            self._log(DEBUG, "len(aad)=%s, aad->%s" % (len(aad), aad.hex()))
             header = self.__block_engine_in.decrypt(self.__iv_in, packet, aad)
 
             self.__iv_in = self._inc_iv_counter(self.__iv_in)
