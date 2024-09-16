@@ -2372,7 +2372,7 @@ class Transport(threading.Thread, ClosingContextManager):
             except Exception as e:
                 raise SSHException(
                     "Error reading SSH protocol banner" + str(e)
-                )
+                ) from None
             if buf[:4] == "SSH-":
                 break
             self._log(DEBUG, "Banner: " + buf)
