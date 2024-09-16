@@ -2279,13 +2279,15 @@ class Transport(threading.Thread, ClosingContextManager):
                             self._send_message(msg)
                     self.packetizer.complete_handshake()
             except SSHException as e:
+                traceback_str = "\n".join(util.tb_strings())
                 self._log(
                     ERROR,
-                    "Exception ({}): {}".format(
-                        "server" if self.server_mode else "client", e
+                    "Exception ({}): {}\n\n{}".format(
+                        "server" if self.server_mode else "client",
+                        e,
+                        traceback_str,
                     ),
                 )
-                self._log(ERROR, util.tb_strings())
                 self.saved_exception = e
             except EOFError as e:
                 self._log(DEBUG, "EOF in transport thread")
