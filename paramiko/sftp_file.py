@@ -67,7 +67,11 @@ class SFTPFile(BufferedFile):
         self._prefetching = False
         self._prefetch_done = False
         self._prefetch_data = {}
-        self._prefetch_extents = {}
+
+        # Stores the offset and size of the requested chunk keyed by a unique request ID,
+        # so that we can recover the offset and size for received replies given this ID.
+        self._prefetch_requests = {}
+
         self._prefetch_lock = threading.Lock()
         self._saved_exception = None
         self._reqs = deque()
@@ -112,7 +116,7 @@ class SFTPFile(BufferedFile):
 
     def _data_in_prefetch_requests(self, offset, size):
         k = [
-            x for x in list(self._prefetch_extents.values()) if x[0] <= offset
+            x for x in list(self._prefetch_requests.values()) if x[0] <= offset
         ]
         if len(k) == 0:
             return False
@@ -559,7 +563,7 @@ class SFTPFile(BufferedFile):
             if max_concurrent_requests is not None:
                 while True:
                     with self._prefetch_lock:
-                        pf_len = len(self._prefetch_extents)
+                        pf_len = len(self._prefetch_requests)
                         if pf_len < max_concurrent_requests:
                             break
                     time.sleep(io_sleep)
@@ -568,7 +572,7 @@ class SFTPFile(BufferedFile):
                 self, CMD_READ, self.handle, int64(offset), int(length)
             )
             with self._prefetch_lock:
-                self._prefetch_extents[num] = (offset, length)
+                self._prefetch_requests[num] = (offset, length)
 
     def _async_response(self, t, msg, num):
         if t == CMD_STATUS:
@@ -584,11 +588,11 @@ class SFTPFile(BufferedFile):
         while True:
             with self._prefetch_lock:
                 # spin if in race with _prefetch_thread
-                if num in self._prefetch_extents:
-                    offset, length = self._prefetch_extents[num]
+                if num in self._prefetch_requests:
+                    offset, length = self._prefetch_requests[num]
                     self._prefetch_data[offset] = data
-                    del self._prefetch_extents[num]
-                    if len(self._prefetch_extents) == 0:
+                    del self._prefetch_requests[num]
+                    if len(self._prefetch_requests) == 0:
                         self._prefetch_done = True
                     break
 
