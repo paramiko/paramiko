@@ -71,6 +71,7 @@ class SFTPFile(BufferedFile):
         self._prefetch_lock = threading.Lock()
         self._saved_exception = None
         self._reqs = deque()
+        self._max_concurrent_requests = 128
 
     def __del__(self):
         self._close(async_=True)
@@ -479,8 +480,12 @@ class SFTPFile(BufferedFile):
             chunk = min(self.MAX_REQUEST_SIZE, file_size - n)
             chunks.append((n, chunk))
             n += chunk
+
+        if max_concurrent_requests is not None:
+            self._max_concurrent_requests = max_concurrent_requests
+
         if len(chunks) > 0:
-            self._start_prefetch(chunks, max_concurrent_requests)
+            self._start_prefetch(chunks, self._max_concurrent_requests)
 
     def readv(self, chunks, max_concurrent_prefetch_requests=None):
         """
