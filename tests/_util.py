@@ -188,7 +188,7 @@ def sha1_signing_unsupported():
         )
         return False
     except UnsupportedAlgorithm as e:
-        return e._reason is _Reasons.UNSUPPORTED_HASH
+        return e._reason == _Reasons.UNSUPPORTED_HASH
 
 
 requires_sha1_signing = unittest.skipIf(
@@ -346,11 +346,15 @@ def server(
     pubkeys=None,
     catch_error=False,
     transport_factory=None,
+    server_transport_factory=None,
     defer=False,
     skip_verify=False,
 ):
     """
     SSH server contextmanager for testing.
+
+    Yields a tuple of ``(tc, ts)`` (client- and server-side `Transport`
+    objects), or ``(tc, ts, err)`` when ``catch_error==True``.
 
     :param hostkey:
         Host key to use for the server; if None, loads
@@ -370,6 +374,8 @@ def server(
         Necessary for connection_time exception testing.
     :param transport_factory:
         Like the same-named param in SSHClient: which Transport class to use.
+    :param server_transport_factory:
+        Like ``transport_factory``, but only impacts the server transport.
     :param bool defer:
         Whether to defer authentication during connecting.
 
@@ -396,8 +402,10 @@ def server(
     sockc.link(socks)
     if transport_factory is None:
         transport_factory = Transport
+    if server_transport_factory is None:
+        server_transport_factory = transport_factory
     tc = transport_factory(sockc, **dict(init, **client_init))
-    ts = transport_factory(socks, **dict(init, **server_init))
+    ts = server_transport_factory(socks, **dict(init, **server_init))
 
     if hostkey is None:
         hostkey = RSAKey.from_private_key_file(_support("rsa.key"))
@@ -431,7 +439,7 @@ def server(
 
     yield (tc, ts, err) if catch_error else (tc, ts)
 
-    if not (catch_error or skip_verify):
+    if not (catch_error or skip_verify or defer):
         assert ts.is_authenticated()
         assert tc.is_authenticated()
 

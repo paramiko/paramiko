@@ -8,7 +8,67 @@ Changelog
   logic flows of `PKey.get_fingerprint()`, which still uses MD5, continued to
   cause problems. These instances of debug logging now use the SHA256-using
   `PKey.fingerprint`.
+- :release:`3.5.0 <2024-09-15>`
+- :feature:`982` (via :issue:`2444`, which was a rebase of :issue:`2157`) Add
+  support for AES-GCM encryption ciphers (128 and 256 bit variants). Thanks to
+  Alex Gaynor for the report (& for cryptography review), Shen Cheng for the
+  original PR, and Chris Mason for the updated PR; plus as usual to everyone
+  who tested the patches and reported their results!
 
+  This functionality has been tested in client mode against OpenSSH 9.0, 9.2,
+  and 9.6, as well as against a number of proprietary appliance SSH servers.
+- :bug:`-` Check for ``None`` transport members inside
+  `~paramiko.channel.Channel` when closing the channel; this likely doesn't
+  come up much in the real world, but was causing warnings in the test suite.
+- :release:`3.4.1 <2024-08-11>`
+- :release:`3.3.2 <2024-08-11>`
+- :bug:`2419` (fixed in :issue:`2421`) Massage our import of the TripleDES
+  cipher to support Cryptography >=43; this should prevent
+  ``CryptographyDeprecationWarning`` from appearing upon import. Thanks to
+  Erick Alejo for the report and Bryan Banda for the patch.
+- :bug:`2420` Modify a test-harness skiptest check to work with newer versions
+  of Cryptography. Props to Paul Howarth for the patch.
+- :bug:`2353` Fix a 64-bit-ism in the test suite so the tests don't encounter a
+  false negative on 32-bit systems. Reported by Stanislav Levin.
+- :release:`3.4.0 <2023-12-18>`
+- :feature:`-` `Transport` grew a new ``packetizer_class`` kwarg for overriding
+  the packet-handler class used internally. Mostly for testing, but advanced
+  users may find this useful when doing deep hacks.
+- :bug:`- major` Address `CVE 2023-48795 <https://terrapin-attack.com/>`_ (aka
+  the "Terrapin Attack", a vulnerability found in the SSH protocol re:
+  treatment of packet sequence numbers) as follows:
+
+    - The vulnerability only impacts encrypt-then-MAC digest algorithms in
+      tandem with CBC ciphers, and ChaCha20-poly1305; of these, Paramiko
+      currently only implements ``hmac-sha2-(256|512)-etm`` in tandem with
+      ``AES-CBC``. If you are unable to upgrade to Paramiko versions containing
+      the below fixes right away, you may instead use the
+      ``disabled_algorithms`` connection option to disable the ETM MACs and/or
+      the CBC ciphers (this option is present in Paramiko >=2.6).
+    - As the fix for the vulnerability requires both ends of the connection to
+      cooperate, the below changes will only take effect when the remote end is
+      OpenSSH >= 9.6 (or equivalent, such as Paramiko in server mode, as of
+      this patch version) and configured to use the new "strict kex" mode.
+      Paramiko will always attempt to use "strict kex" mode if offered by the
+      server, unless you override this by specifying ``strict_kex=False`` in
+      `Transport.__init__`.
+    - Paramiko will now raise an `SSHException` subclass (`MessageOrderError`)
+      when protocol messages are received in unexpected order. This includes
+      situations like receiving ``MSG_DEBUG`` or ``MSG_IGNORE`` during initial
+      key exchange, which are no longer allowed during strict mode.
+    - Key (re)negotiation -- i.e. ``MSG_NEWKEYS``, whenever it is encountered
+      -- now resets packet sequence numbers. (This should be invisible to users
+      during normal operation, only causing exceptions if the exploit is
+      encountered, which will usually result in, again, `MessageOrderError`.)
+    - Sequence number rollover will now raise `SSHException` if it occurs
+      during initial key exchange (regardless of strict mode status).
+
+  Thanks to Fabian Bäumer, Marcus Brinkmann, and Jörg Schwenk for submitting
+  details on the CVE prior to release.
+
+- :bug:`- major` Tweak ``ext-info-(c|s)`` detection during KEXINIT protocol
+  phase; the original implementation made assumptions based on an OpenSSH
+  implementation detail.
 - :release:`3.3.1 <2023-07-28>`
 - :bug:`-` Cleaned up some very old root level files, mostly just to exercise
   some of our doc build and release machinery. This changelog entry

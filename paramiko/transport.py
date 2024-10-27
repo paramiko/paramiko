@@ -30,7 +30,12 @@ import weakref
 from hashlib import md5, sha1, sha256, sha512
 
 from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives.ciphers import algorithms, Cipher, modes
+from cryptography.hazmat.primitives.ciphers import (
+    algorithms,
+    Cipher,
+    modes,
+    aead,
+)
 
 import paramiko
 from paramiko import util
@@ -107,17 +112,32 @@ from paramiko.ecdsakey import ECDSAKey
 from paramiko.server import ServerInterface
 from paramiko.sftp_client import SFTPClient
 from paramiko.ssh_exception import (
-    SSHException,
     BadAuthenticationType,
     ChannelException,
     IncompatiblePeer,
+    MessageOrderError,
     ProxyCommandFailure,
+    SSHException,
 )
 from paramiko.util import (
     ClosingContextManager,
     clamp_value,
     b,
 )
+
+
+# TripleDES is moving from `cryptography.hazmat.primitives.ciphers.algorithms`
+# in cryptography>=43.0.0 to `cryptography.hazmat.decrepit.ciphers.algorithms`
+# It will be removed from `cryptography.hazmat.primitives.ciphers.algorithms`
+# in cryptography==48.0.0.
+#
+# Source References:
+# - https://github.com/pyca/cryptography/commit/722a6393e61b3ac
+# - https://github.com/pyca/cryptography/pull/11407/files
+try:
+    from cryptography.hazmat.decrepit.ciphers.algorithms import TripleDES
+except ImportError:
+    from cryptography.hazmat.primitives.ciphers.algorithms import TripleDES
 
 
 # for thread cleanup
@@ -164,6 +184,8 @@ class Transport(threading.Thread, ClosingContextManager):
         "aes192-cbc",
         "aes256-cbc",
         "3des-cbc",
+        "aes128-gcm@openssh.com",
+        "aes256-gcm@openssh.com",
     )
     _preferred_macs = (
         "hmac-sha2-256",
@@ -255,10 +277,24 @@ class Transport(threading.Thread, ClosingContextManager):
             "key-size": 32,
         },
         "3des-cbc": {
-            "class": algorithms.TripleDES,
+            "class": TripleDES,
             "mode": modes.CBC,
             "block-size": 8,
             "key-size": 24,
+        },
+        "aes128-gcm@openssh.com": {
+            "class": aead.AESGCM,
+            "block-size": 16,
+            "iv-size": 12,
+            "key-size": 16,
+            "is_aead": True,
+        },
+        "aes256-gcm@openssh.com": {
+            "class": aead.AESGCM,
+            "block-size": 16,
+            "iv-size": 12,
+            "key-size": 32,
+            "is_aead": True,
         },
     }
 
@@ -334,6 +370,8 @@ class Transport(threading.Thread, ClosingContextManager):
         gss_deleg_creds=True,
         disabled_algorithms=None,
         server_sig_algs=True,
+        strict_kex=True,
+        packetizer_class=None,
     ):
         """
         Create a new SSH session over an existing socket, or socket-like
@@ -400,6 +438,13 @@ class Transport(threading.Thread, ClosingContextManager):
             Whether to send an extra message to compatible clients, in server
             mode, with a list of supported pubkey algorithms. Default:
             ``True``.
+        :param bool strict_kex:
+            Whether to advertise (and implement, if client also advertises
+            support for) a "strict kex" mode for safer handshaking. Default:
+            ``True``.
+        :param packetizer_class:
+            Which class to use for instantiating the internal packet handler.
+            Default: ``None`` (i.e.: use `Packetizer` as normal).
 
         .. versionchanged:: 1.15
             Added the ``default_window_size`` and ``default_max_packet_size``
@@ -410,10 +455,16 @@ class Transport(threading.Thread, ClosingContextManager):
             Added the ``disabled_algorithms`` kwarg.
         .. versionchanged:: 2.9
             Added the ``server_sig_algs`` kwarg.
+        .. versionchanged:: 3.4
+            Added the ``strict_kex`` kwarg.
+        .. versionchanged:: 3.4
+            Added the ``packetizer_class`` kwarg.
         """
         self.active = False
         self.hostname = None
         self.server_extensions = {}
+        self.advertise_strict_kex = strict_kex
+        self.agreed_on_strict_kex = False
 
         # TODO: these two overrides on sock's type should go away sometime, too
         # many ways to do it!
@@ -457,7 +508,7 @@ class Transport(threading.Thread, ClosingContextManager):
         self.sock.settimeout(self._active_check_timeout)
 
         # negotiated crypto parameters
-        self.packetizer = Packetizer(sock)
+        self.packetizer = (packetizer_class or Packetizer)(sock)
         self.local_version = "SSH-" + self._PROTO_ID + "-" + self._CLIENT_ID
         self.remote_version = ""
         self.local_cipher = self.remote_cipher = ""
@@ -1995,19 +2046,26 @@ class Transport(threading.Thread, ClosingContextManager):
             sofar += digest
         return out[:nbytes]
 
-    def _get_cipher(self, name, key, iv, operation):
+    def _get_engine(self, name, key, iv=None, operation=None, aead=False):
         if name not in self._cipher_info:
-            raise SSHException("Unknown client cipher " + name)
+            raise SSHException("Unknown cipher " + name)
+        info = self._cipher_info[name]
+        algorithm = info["class"](key)
+        # AEAD types (eg GCM) use their algorithm class /as/ the encryption
+        # engine (they expose the same encrypt/decrypt API as a CipherContext)
+        if aead:
+            return algorithm
+        # All others go through the Cipher class.
+        cipher = Cipher(
+            algorithm=algorithm,
+            # TODO: why is this getting tickled in aesgcm mode???
+            mode=info["mode"](iv),
+            backend=default_backend(),
+        )
+        if operation is self._ENCRYPT:
+            return cipher.encryptor()
         else:
-            cipher = Cipher(
-                self._cipher_info[name]["class"](key),
-                self._cipher_info[name]["mode"](iv),
-                backend=default_backend(),
-            )
-            if operation is self._ENCRYPT:
-                return cipher.encryptor()
-            else:
-                return cipher.decryptor()
+            return cipher.decryptor()
 
     def _set_forward_agent_handler(self, handler):
         if handler is None:
@@ -2086,6 +2144,20 @@ class Transport(threading.Thread, ClosingContextManager):
         # be empty.)
         return reply
 
+    def _enforce_strict_kex(self, ptype):
+        """
+        Conditionally raise `MessageOrderError` during strict initial kex.
+
+        This method should only be called inside code that handles non-KEXINIT
+        messages; it does not interrogate ``ptype`` besides using it to log
+        more accurately.
+        """
+        if self.agreed_on_strict_kex and not self.initial_kex_done:
+            name = MSG_NAMES.get(ptype, f"msg {ptype}")
+            raise MessageOrderError(
+                f"In strict-kex mode, but was sent {name!r}!"
+            )
+
     def run(self):
         # (use the exposed "run" method, because if we specify a thread target
         # of a private method, threading.Thread will keep a reference to it
@@ -2130,16 +2202,21 @@ class Transport(threading.Thread, ClosingContextManager):
                     except NeedRekeyException:
                         continue
                     if ptype == MSG_IGNORE:
+                        self._enforce_strict_kex(ptype)
                         continue
                     elif ptype == MSG_DISCONNECT:
                         self._parse_disconnect(m)
                         break
                     elif ptype == MSG_DEBUG:
+                        self._enforce_strict_kex(ptype)
                         self._parse_debug(m)
                         continue
                     if len(self._expected_packet) > 0:
                         if ptype not in self._expected_packet:
-                            raise SSHException(
+                            exc_class = SSHException
+                            if self.agreed_on_strict_kex:
+                                exc_class = MessageOrderError
+                            raise exc_class(
                                 "Expecting packet from {!r}, got {:d}".format(
                                     self._expected_packet, ptype
                                 )
@@ -2363,11 +2440,17 @@ class Transport(threading.Thread, ClosingContextManager):
             )
         else:
             available_server_keys = self.preferred_keys
-            # Signal support for MSG_EXT_INFO.
+            # Signal support for MSG_EXT_INFO so server will send it to us.
             # NOTE: doing this here handily means we don't even consider this
             # value when agreeing on real kex algo to use (which is a common
             # pitfall when adding this apparently).
             kex_algos.append("ext-info-c")
+
+        # Similar to ext-info, but used in both server modes, so done outside
+        # of above if/else.
+        if self.advertise_strict_kex:
+            which = "s" if self.server_mode else "c"
+            kex_algos.append(f"kex-strict-{which}-v00@openssh.com")
 
         m = Message()
         m.add_byte(cMSG_KEXINIT)
@@ -2409,7 +2492,8 @@ class Transport(threading.Thread, ClosingContextManager):
 
     def _get_latest_kex_init(self):
         return self._really_parse_kex_init(
-            Message(self._latest_kex_init), ignore_first_byte=True
+            Message(self._latest_kex_init),
+            ignore_first_byte=True,
         )
 
     def _parse_kex_init(self, m):
@@ -2448,10 +2532,39 @@ class Transport(threading.Thread, ClosingContextManager):
         self._log(DEBUG, "kex follows: {}".format(kex_follows))
         self._log(DEBUG, "=== Key exchange agreements ===")
 
-        # Strip out ext-info "kex algo"
+        # Record, and strip out, ext-info and/or strict-kex non-algorithms
         self._remote_ext_info = None
-        if kex_algo_list[-1].startswith("ext-info-"):
-            self._remote_ext_info = kex_algo_list.pop()
+        self._remote_strict_kex = None
+        to_pop = []
+        for i, algo in enumerate(kex_algo_list):
+            if algo.startswith("ext-info-"):
+                self._remote_ext_info = algo
+                to_pop.insert(0, i)
+            elif algo.startswith("kex-strict-"):
+                # NOTE: this is what we are expecting from the /remote/ end.
+                which = "c" if self.server_mode else "s"
+                expected = f"kex-strict-{which}-v00@openssh.com"
+                # Set strict mode if agreed.
+                self.agreed_on_strict_kex = (
+                    algo == expected and self.advertise_strict_kex
+                )
+                self._log(
+                    DEBUG, f"Strict kex mode: {self.agreed_on_strict_kex}"
+                )
+                to_pop.insert(0, i)
+        for i in to_pop:
+            kex_algo_list.pop(i)
+
+        # CVE mitigation: expect zeroed-out seqno anytime we are performing kex
+        # init phase, if strict mode was negotiated.
+        if (
+            self.agreed_on_strict_kex
+            and not self.initial_kex_done
+            and m.seqno != 0
+        ):
+            raise MessageOrderError(
+                "In strict-kex mode, but KEXINIT was not the first packet!"
+            )
 
         # as a server, we pick the first item in the client's list that we
         # support.
@@ -2620,21 +2733,27 @@ class Transport(threading.Thread, ClosingContextManager):
     def _activate_inbound(self):
         """switch on newly negotiated encryption parameters for
         inbound traffic"""
-        block_size = self._cipher_info[self.remote_cipher]["block-size"]
+        info = self._cipher_info[self.remote_cipher]
+        aead = info.get("is_aead", False)
+        block_size = info["block-size"]
+        key_size = info["key-size"]
+        # Non-AEAD/GCM type ciphers' IV size is their block size.
+        iv_size = info.get("iv-size", block_size)
         if self.server_mode:
-            IV_in = self._compute_key("A", block_size)
-            key_in = self._compute_key(
-                "C", self._cipher_info[self.remote_cipher]["key-size"]
-            )
+            iv_in = self._compute_key("A", iv_size)
+            key_in = self._compute_key("C", key_size)
         else:
-            IV_in = self._compute_key("B", block_size)
-            key_in = self._compute_key(
-                "D", self._cipher_info[self.remote_cipher]["key-size"]
-            )
-        engine = self._get_cipher(
-            self.remote_cipher, key_in, IV_in, self._DECRYPT
+            iv_in = self._compute_key("B", iv_size)
+            key_in = self._compute_key("D", key_size)
+
+        engine = self._get_engine(
+            name=self.remote_cipher,
+            key=key_in,
+            iv=iv_in,
+            operation=self._DECRYPT,
+            aead=aead,
         )
-        etm = "etm@openssh.com" in self.remote_mac
+        etm = (not aead) and "etm@openssh.com" in self.remote_mac
         mac_size = self._mac_info[self.remote_mac]["size"]
         mac_engine = self._mac_info[self.remote_mac]["class"]
         # initial mac keys are done in the hash's natural size (not the
@@ -2643,15 +2762,31 @@ class Transport(threading.Thread, ClosingContextManager):
             mac_key = self._compute_key("E", mac_engine().digest_size)
         else:
             mac_key = self._compute_key("F", mac_engine().digest_size)
+
         self.packetizer.set_inbound_cipher(
-            engine, block_size, mac_engine, mac_size, mac_key, etm=etm
+            block_engine=engine,
+            block_size=block_size,
+            mac_engine=None if aead else mac_engine,
+            mac_size=16 if aead else mac_size,
+            mac_key=None if aead else mac_key,
+            etm=etm,
+            aead=aead,
+            iv_in=iv_in if aead else None,
         )
+
         compress_in = self._compression_info[self.remote_compression][1]
         if compress_in is not None and (
             self.remote_compression != "zlib@openssh.com" or self.authenticated
         ):
             self._log(DEBUG, "Switching on inbound compression ...")
             self.packetizer.set_inbound_compressor(compress_in())
+        # Reset inbound sequence number if strict mode.
+        if self.agreed_on_strict_kex:
+            self._log(
+                DEBUG,
+                "Resetting inbound seqno after NEWKEYS due to strict mode",
+            )
+            self.packetizer.reset_seqno_in()
 
     def _activate_outbound(self):
         """switch on newly negotiated encryption parameters for
@@ -2659,21 +2794,34 @@ class Transport(threading.Thread, ClosingContextManager):
         m = Message()
         m.add_byte(cMSG_NEWKEYS)
         self._send_message(m)
-        block_size = self._cipher_info[self.local_cipher]["block-size"]
+        # Reset outbound sequence number if strict mode.
+        if self.agreed_on_strict_kex:
+            self._log(
+                DEBUG,
+                "Resetting outbound seqno after NEWKEYS due to strict mode",
+            )
+            self.packetizer.reset_seqno_out()
+        info = self._cipher_info[self.local_cipher]
+        aead = info.get("is_aead", False)
+        block_size = info["block-size"]
+        key_size = info["key-size"]
+        # Non-AEAD/GCM type ciphers' IV size is their block size.
+        iv_size = info.get("iv-size", block_size)
         if self.server_mode:
-            IV_out = self._compute_key("B", block_size)
-            key_out = self._compute_key(
-                "D", self._cipher_info[self.local_cipher]["key-size"]
-            )
+            iv_out = self._compute_key("B", iv_size)
+            key_out = self._compute_key("D", key_size)
         else:
-            IV_out = self._compute_key("A", block_size)
-            key_out = self._compute_key(
-                "C", self._cipher_info[self.local_cipher]["key-size"]
-            )
-        engine = self._get_cipher(
-            self.local_cipher, key_out, IV_out, self._ENCRYPT
+            iv_out = self._compute_key("A", iv_size)
+            key_out = self._compute_key("C", key_size)
+
+        engine = self._get_engine(
+            name=self.local_cipher,
+            key=key_out,
+            iv=iv_out,
+            operation=self._ENCRYPT,
+            aead=aead,
         )
-        etm = "etm@openssh.com" in self.local_mac
+        etm = (not aead) and "etm@openssh.com" in self.local_mac
         mac_size = self._mac_info[self.local_mac]["size"]
         mac_engine = self._mac_info[self.local_mac]["class"]
         # initial mac keys are done in the hash's natural size (not the
@@ -2683,9 +2831,19 @@ class Transport(threading.Thread, ClosingContextManager):
         else:
             mac_key = self._compute_key("E", mac_engine().digest_size)
         sdctr = self.local_cipher.endswith("-ctr")
+
         self.packetizer.set_outbound_cipher(
-            engine, block_size, mac_engine, mac_size, mac_key, sdctr, etm=etm
+            block_engine=engine,
+            block_size=block_size,
+            mac_engine=None if aead else mac_engine,
+            mac_size=16 if aead else mac_size,
+            mac_key=None if aead else mac_key,
+            sdctr=sdctr,
+            etm=etm,
+            aead=aead,
+            iv_out=iv_out if aead else None,
         )
+
         compress_out = self._compression_info[self.local_compression][0]
         if compress_out is not None and (
             self.local_compression != "zlib@openssh.com" or self.authenticated
@@ -2749,7 +2907,9 @@ class Transport(threading.Thread, ClosingContextManager):
             self.auth_handler = AuthHandler(self)
         if not self.initial_kex_done:
             # this was the first key exchange
-            self.initial_kex_done = True
+            # (also signal to packetizer as it sometimes wants to know this
+            # status as well, eg when seqnos rollover)
+            self.initial_kex_done = self.packetizer._initial_kex_done = True
         # send an event?
         if self.completion_event is not None:
             self.completion_event.set()
