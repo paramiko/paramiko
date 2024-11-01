@@ -2,6 +2,10 @@
 Changelog
 =========
 
+- :feature:`1535` It is now possible to send signals to the processes started via
+  `SSHClient.exec_command <paramiko.client.SSHClient.exec_command>` or
+  `SSHClient.invoke_shell <paramiko.client.SSHClient.invoke_shell>` using the
+  new `Channel.send_signal <paramiko.channel.Channel.send_signal>` method.
 - :release:`3.5.1 <2025-02-03>`
 - :bug:`2490` Private key material is now explicitly 'unpadded' during
   decryption, removing a reliance on some lax OpenSSL behavior & making us
