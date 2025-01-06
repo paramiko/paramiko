@@ -231,13 +231,15 @@ def get_agent_connection():
             # probably a dangling env var: the ssh agent is gone
             return
     elif sys.platform == "win32":
-        from . import win_pageant, win_openssh
+        from . import win_pageant, win_openssh, win_cygwin
 
         conn = None
         if win_pageant.can_talk_to_agent():
             conn = win_pageant.PageantConnection()
         elif win_openssh.can_talk_to_agent():
             conn = win_openssh.OpenSSHAgentConnection()
+        elif win_cygwin.can_talk_to_agent():
+            conn = win_cygwin.OpenCygwinSSHAgentConnection()
         return conn
     else:
         # no agent support
