@@ -65,7 +65,7 @@ class OpenCygwinSSHAgentConnection:
 
             # sends the 4 random numbers GUID to the server
             self._conn.sendall(guid)
-            
+
             client_guid = self._conn.recv(16)
             if client_guid != guid:
                 self._conn.close()
@@ -91,4 +91,3 @@ class OpenCygwinSSHAgentConnection:
 
     def close(self):
         self._conn.close()
-
