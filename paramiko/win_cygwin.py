@@ -31,7 +31,7 @@ def can_talk_to_agent():
 def conv_guid(s):
     parts = s.split("-")
     int_parts = [int(part, 16) for part in parts]
-    return b"".join([struct.pack("<I"), part) for part in int_parts])
+    return b"".join([struct.pack("<I", part) for part in int_parts])
 
 
 # https://stackoverflow.com/questions/23086038/what-mechanism-is-used-by-msys-cygwin-to-emulate-unix-domain-sockets
