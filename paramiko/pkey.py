@@ -32,7 +32,7 @@ import struct
 import bcrypt
 
 from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives import padding, serialization
 from cryptography.hazmat.primitives.ciphers import algorithms, modes, Cipher
 from cryptography.hazmat.primitives import asymmetric
 
@@ -595,7 +595,12 @@ class PKey:
         decryptor = Cipher(
             cipher(key), mode(salt), backend=default_backend()
         ).decryptor()
-        return decryptor.update(data) + decryptor.finalize()
+        decrypted_data = decryptor.update(data) + decryptor.finalize()
+        unpadder = padding.PKCS7(cipher.block_size).unpadder()
+        try:
+            return unpadder.update(decrypted_data) + unpadder.finalize()
+        except ValueError:
+            raise SSHException("Bad password or corrupt private key file")
 
     def _read_private_key_openssh(self, lines, password):
         """
