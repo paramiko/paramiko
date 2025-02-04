@@ -2,6 +2,7 @@
 Changelog
 =========
 
+- :release:`3.5.1 <2025-02-03>`
 - :bug:`2490` Private key material is now explicitly 'unpadded' during
   decryption, removing a reliance on some lax OpenSSL behavior & making us
   compatible with future Cryptography releases. Patch courtesy of Alex Gaynor.
