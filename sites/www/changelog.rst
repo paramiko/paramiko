@@ -2,6 +2,9 @@
 Changelog
 =========
 
+- :bug:`2490` Private key material is now explicitly 'unpadded' during
+  decryption, removing a reliance on some lax OpenSSL behavior & making us
+  compatible with future Cryptography releases. Patch courtesy of Alex Gaynor.
 - :release:`3.5.0 <2024-09-15>`
 - :feature:`982` (via :issue:`2444`, which was a rebase of :issue:`2157`) Add
   support for AES-GCM encryption ciphers (128 and 256 bit variants). Thanks to
