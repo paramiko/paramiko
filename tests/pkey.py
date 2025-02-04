@@ -219,7 +219,10 @@ class PKey_:
             assert DSSKey.identifiers() == ["ssh-dss"]
 
         def ed25519_is_protocol_name(self):
-            assert Ed25519Key.identifiers() == ["ssh-ed25519"]
+            assert Ed25519Key.identifiers() == [
+                "ssh-ed25519",
+                "ssh-ed25519-cert-v01@openssh.com",
+            ]
 
         def ecdsa_is_all_curve_names(self):
             assert ECDSAKey.identifiers() == [
