@@ -459,14 +459,27 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         attr.st_mode = mode
         self._request(CMD_MKDIR, path, attr)
 
-    def rmdir(self, path):
+    def rmdir(self, path, recursive=False):
         """
         Remove the folder named ``path``.
 
         :param str path: name of the folder to remove
+        :param bool recursive:
+            If `False`, an error will be returned if the directory is
+            not empty.
         """
         path = self._adjust_cwd(path)
         self._log(DEBUG, "rmdir({!r})".format(path))
+
+        if recursive:
+            decoded = path.decode()
+            for f in self.listdir(path=path):
+                f = os.path.join(decoded, f)
+                if stat.S_ISDIR(self.stat(f).st_mode):
+                    self.rmdir(path=f, recursive=recursive)
+                else:
+                    self.remove(path=f)
+
         self._request(CMD_RMDIR, path)
 
     def stat(self, path):
