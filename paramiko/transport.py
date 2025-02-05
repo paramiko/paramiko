@@ -102,6 +102,7 @@ from paramiko.kex_gex import KexGex, KexGexSHA256
 from paramiko.kex_group1 import KexGroup1
 from paramiko.kex_group14 import KexGroup14, KexGroup14SHA256
 from paramiko.kex_group16 import KexGroup16SHA512
+from paramiko.kex_group18 import KexGroup18SHA512
 from paramiko.kex_ecdh_nist import KexNistp256, KexNistp384, KexNistp521
 from paramiko.kex_gss import KexGSSGex, KexGSSGroup1, KexGSSGroup14
 from paramiko.message import Message
@@ -223,6 +224,7 @@ class Transport(threading.Thread, ClosingContextManager):
         "ecdh-sha2-nistp256",
         "ecdh-sha2-nistp384",
         "ecdh-sha2-nistp521",
+        "diffie-hellman-group18-sha512",
         "diffie-hellman-group16-sha512",
         "diffie-hellman-group-exchange-sha256",
         "diffie-hellman-group14-sha256",
@@ -339,6 +341,7 @@ class Transport(threading.Thread, ClosingContextManager):
         "diffie-hellman-group-exchange-sha256": KexGexSHA256,
         "diffie-hellman-group14-sha256": KexGroup14SHA256,
         "diffie-hellman-group16-sha512": KexGroup16SHA512,
+        "diffie-hellman-group18-sha512": KexGroup18SHA512,
         "gss-group1-sha1-toWM5Slw5Ew8Mqkay+al2g==": KexGSSGroup1,
         "gss-group14-sha1-toWM5Slw5Ew8Mqkay+al2g==": KexGSSGroup14,
         "gss-gex-sha1-toWM5Slw5Ew8Mqkay+al2g==": KexGSSGex,
