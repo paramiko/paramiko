@@ -233,7 +233,7 @@ class SSHConfig:
         if canon and hostname.count(".") <= maxdots:
             # NOTE: OpenSSH manpage does not explicitly state this, but its
             # implementation for CanonicalDomains is 'split on any whitespace'.
-            domains = options["canonicaldomains"].split()
+            domains = options.get("canonicaldomains", "").split()
             hostname = self.canonicalize(hostname, options, domains)
             # Overwrite HostName again here (this is also what OpenSSH does)
             options["hostname"] = hostname

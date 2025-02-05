@@ -510,6 +510,20 @@ Host *
         result = load_config("hostname-tokenized").lookup("whatever")
         assert result["hostname"] == "prefix.whatever"
 
+    def test_with_canonicaldomains_missing(self):
+        # this config is valid,
+        # don't assume that `CanonicalizeHostname` implies that
+        # `canonicaldomains` is specified.
+        SSHConfig.from_text(
+            """
+CanonicalizeHostname always
+
+Host foo
+    Port 22
+"""
+        ).lookup("foo")
+
+
 
 class TestSSHConfigDict:
     def test_SSHConfigDict_construct_empty(self):
