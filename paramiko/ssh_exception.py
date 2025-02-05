@@ -230,7 +230,7 @@ class ConfigParseError(SSHException):
     """
     A fatal error was encountered trying to parse SSH config data.
 
-    Typically this means a config file violated the ``ssh_config``
+    Typically, this means a config file violated the ``ssh_config``
     specification in a manner that requires exiting immediately, such as not
     matching ``key = value`` syntax or misusing certain ``Match`` keywords.
 
@@ -248,3 +248,17 @@ class MessageOrderError(SSHException):
     """
 
     pass
+
+
+class ConfigIncludeLoopError(ConfigParseError):
+    """
+    An include loop was detected while parsing the config data.
+    """
+
+    # TODO: Add back 'positional-only' (self, loop, /) after python>=3.8
+    def __init__(self, loop):
+        """
+        :param tuple loop
+            The include loop that was detected.
+        """
+        self.loop = loop
