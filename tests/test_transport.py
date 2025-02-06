@@ -23,6 +23,7 @@ Some unit tests for the ssh2 protocol in Transport.
 
 from binascii import hexlify
 import itertools
+import functools
 import select
 import socket
 import time
@@ -529,13 +530,14 @@ class TransportTest(unittest.TestCase):
             self.tc._queue_incoming_channel(c)
 
         port = self.tc.request_port_forward("127.0.0.1", 0, handler)
-        self.assertEqual(port, self.server._listen.getsockname()[1])
+        key = ("127.0.0.1", port)
+        self.assertEqual(port, self.server._listen[key].getsockname()[1])
 
         cs = socket.socket()
         cs.connect(("127.0.0.1", port))
-        ss, _ = self.server._listen.accept()
+        ss, _ = self.server._listen[key].accept()
         sch = self.ts.open_forwarded_tcpip_channel(
-            ss.getsockname(), ss.getpeername()
+            ss.getpeername(), ss.getsockname()
         )
         cch = self.tc.accept()
 
@@ -548,7 +550,74 @@ class TransportTest(unittest.TestCase):
 
         # now cancel it.
         self.tc.cancel_port_forward("127.0.0.1", port)
-        self.assertTrue(self.server._listen is None)
+        self.assertTrue(not self.server._listen)
+
+    def test_reverse_port_forwarding_twice(self):
+        """
+        verify that a client can ask the server to open a reverse port for
+        forwarding.
+        """
+        self.setup_test_server()
+        chan = self.tc.open_session()
+        chan.exec_command("yes")
+        self.ts.accept(1.0)
+
+        requested = []
+
+        def handler(c, origin_addr_port, server_addr_port, mark=None):
+            requested.append(server_addr_port)
+            requested.append(mark)
+            self.tc._queue_incoming_channel(c)
+
+        def process_port(port, check_key=[1]):
+            cs = socket.socket()
+            cs.connect(("127.0.0.1", port))
+            ss, _ = self.server._listen["127.0.0.1", port].accept()
+            sch = self.ts.open_forwarded_tcpip_channel(
+                ss.getpeername(), ss.getsockname()
+            )
+            cch = self.tc.accept()
+
+            check = b"hello%d" % (check_key[0],)
+            check_key[0] += 1
+            sch.send(check)
+            self.assertEqual(check, cch.recv(6))
+            sch.close()
+            cch.close()
+            ss.close()
+            cs.close()
+
+        port1 = self.tc.request_port_forward(
+            "127.0.0.1", 0, functools.partial(handler, mark="port1")
+        )
+        self.assertTrue(("127.0.0.1", port1) in self.server._listen)
+        process_port(port1)
+
+        port2 = self.tc.request_port_forward(
+            "127.0.0.1", 0, functools.partial(handler, mark="port2")
+        )
+        self.assertTrue(("127.0.0.1", port2) in self.server._listen)
+        process_port(port2)
+        process_port(port1)
+
+        # Split checks to see what step was failed
+        self.assertEqual(len(requested), 6)
+        self.assertEqual(
+            requested[:2] + ["assert1"],
+            [("127.0.0.1", port1), "port1", "assert1"],
+        )
+        self.assertEqual(
+            requested[2:4] + ["assert2"],
+            [("127.0.0.1", port2), "port2", "assert2"],
+        )
+        self.assertEqual(
+            requested[4:] + ["assert3"],
+            [("127.0.0.1", port1), "port1", "assert3"],
+        )
+        # now cancel it.
+        self.tc.cancel_port_forward("127.0.0.1", port1)
+        self.tc.cancel_port_forward("127.0.0.1", port2)
+        self.assertTrue(not self.server._listen)
 
     def test_port_forwarding(self):
         """
@@ -1187,7 +1256,10 @@ class TestSHA2SignatureKeyExchange(unittest.TestCase):
         # No 512 -> you get 256
         with server(
             init=dict(disabled_algorithms=dict(keys=["rsa-sha2-512"]))
-        ) as (tc, _):
+        ) as (
+            tc,
+            _,
+        ):
             assert tc.host_key_type == "rsa-sha2-256"
 
     def _incompatible_peers(self, client_init, server_init):

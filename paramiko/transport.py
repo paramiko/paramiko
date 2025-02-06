@@ -550,7 +550,7 @@ class Transport(threading.Thread, ClosingContextManager):
         self.default_window_size = default_window_size
         self._forward_agent_handler = None
         self._x11_handler = None
-        self._tcp_handler = None
+        self._tcp_handlers = {}
 
         self.saved_exception = None
         self.clear_to_send = threading.Event()
@@ -1170,6 +1170,8 @@ class Transport(threading.Thread, ClosingContextManager):
         """
         if not self.active:
             raise SSHException("SSH session not active")
+        if (address, port) in self._tcp_handlers:
+            raise SSHException("TCP forwarding port already used")
         port = int(port)
         response = self.global_request(
             "tcpip-forward", (address, port), wait=True
@@ -1186,7 +1188,7 @@ class Transport(threading.Thread, ClosingContextManager):
                 self._queue_incoming_channel(channel)
 
             handler = default_handler
-        self._tcp_handler = handler
+        self._tcp_handlers[address, port] = handler
         return port
 
     def cancel_port_forward(self, address, port):
@@ -1200,7 +1202,8 @@ class Transport(threading.Thread, ClosingContextManager):
         """
         if not self.active:
             return
-        self._tcp_handler = None
+        if (address, port) in self._tcp_handlers:
+            del self._tcp_handlers[address, port]
         self.global_request("cancel-tcpip-forward", (address, port), wait=True)
 
     def open_sftp_client(self):
@@ -3052,7 +3055,7 @@ class Transport(threading.Thread, ClosingContextManager):
                 my_chanid = self._next_channel()
             finally:
                 self.lock.release()
-        elif (kind == "forwarded-tcpip") and (self._tcp_handler is not None):
+        elif (kind == "forwarded-tcpip") and (len(self._tcp_handlers) > 0):
             server_addr = m.get_text()
             server_port = m.get_int()
             origin_addr = m.get_text()
@@ -3142,7 +3145,7 @@ class Transport(threading.Thread, ClosingContextManager):
             self._x11_handler(chan, (origin_addr, origin_port))
         elif kind == "forwarded-tcpip":
             chan.origin_addr = (origin_addr, origin_port)
-            self._tcp_handler(
+            self._tcp_handlers[server_addr, server_port](
                 chan, (origin_addr, origin_port), (server_addr, server_port)
             )
         else:
