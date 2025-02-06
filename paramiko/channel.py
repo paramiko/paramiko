@@ -118,7 +118,7 @@ class Channel(ClosingContextManager):
         self.lock = threading.Lock()
         self.out_buffer_cv = threading.Condition(self.lock)
         self.in_window_size = 0
-        self.out_window_size = 0
+        self._out_window_size = 0
         self.in_max_packet_size = 0
         self.out_max_packet_size = 0
         self.in_window_threshold = 0
@@ -127,11 +127,25 @@ class Channel(ClosingContextManager):
         self._name = str(chanid)
         self.logger = util.get_logger("paramiko.transport")
         self._pipe = None
+        self._write_pipe = None
         self.event = threading.Event()
         self.event_ready = False
         self.combine_stderr = False
         self.exit_status = -1
         self.origin_addr = None
+
+    @property
+    def out_window_size(self):
+        return self._out_window_size
+
+    @out_window_size.setter
+    def out_window_size(self, value):
+        self._out_window_size = value
+        if self._write_pipe is not None:
+            if value == 0:
+                self._write_pipe.clear()
+            else:
+                self._write_pipe.set()
 
     def __del__(self):
         try:
@@ -659,6 +673,10 @@ class Channel(ClosingContextManager):
                 self._pipe.close()
                 self._pipe = None
 
+            if self._write_pipe is not None:
+                self._write_pipe.close()
+                self._write_pipe = None
+
             if not self.active or self.closed:
                 return
             msgs = self._close_internal()
@@ -913,15 +931,40 @@ class Channel(ClosingContextManager):
 
     def fileno(self):
         """
-        Returns an OS-level file descriptor which can be used for polling, but
-        but not for reading or writing.  This is primarily to allow Python's
-        ``select`` module to work.
+        Legacy: calls fileno_read for backwards compatibility. Please use
+        fileno_read and fileno_write, or the fileno methods of the file-like
+        wrappers.
+
+        Returns an OS-level file descriptor which can be used for polling for
+        read availability on this channel, but not for actual reading or
+        writing.  This is primarily to allow Python's ``select`` module to
+        work.
 
         The first time ``fileno`` is called on a channel, a pipe is created to
         simulate real OS-level file descriptor (FD) behavior.  Because of this,
         two OS-level FDs are created, which will use up FDs faster than normal.
         (You won't notice this effect unless you have hundreds of channels
         open at the same time.)
+
+        :return: an OS-level file descriptor (`int`)
+
+        .. warning::
+            This method causes channel reads to be slightly less efficient.
+        """
+        return self.fileno_read()
+
+    def fileno_read(self):
+        """
+        Returns an OS-level file descriptor which can be used for polling for
+        read availability on this channel, but not for actual reading or
+        writing.  This is primarily to allow Python's ``select`` module to
+        work.
+
+        The first time ``fileno_read`` is called on a channel, a pipe is
+        created to simulate real OS-level file descriptor (FD) behavior.
+        Because of this, two OS-level FDs are created, which will use up FDs
+        faster than normal.  (You won't notice this effect unless you have
+        hundreds of channels open at the same time.)
 
         :return: an OS-level file descriptor (`int`)
 
@@ -938,6 +981,36 @@ class Channel(ClosingContextManager):
             self.in_buffer.set_event(p1)
             self.in_stderr_buffer.set_event(p2)
             return self._pipe.fileno()
+        finally:
+            self.lock.release()
+
+    def fileno_write(self):
+        """
+        Returns an OS-level file descriptor which can be used for polling for
+        write availability on this channel, but not for actual reading or
+        writing.  This is primarily to allow Python's ``select`` module to
+        work.
+
+        The first time ``fileno_read`` is called on a channel, a pipe is
+        created to simulate real OS-level file descriptor (FD) behavior.
+        Because of this, two OS-level FDs are created, which will use up FDs
+        faster than normal.  (You won't notice this effect unless you have
+        hundreds of channels open at the same time.)
+
+        :return: an OS-level file descriptor (`int`)
+
+        .. warning::
+            This method causes channel writes to be slightly less efficient.
+        """
+        self.lock.acquire()
+        try:
+            if self._write_pipe is not None:
+                return self._write_pipe.fileno()
+            # create the pipe and feed in any existing data
+            self._write_pipe = pipe.make_write_pipe()
+            # set the pipe status
+            self.out_window_size = self.out_window_size
+            return self._write_pipe.fileno()
         finally:
             self.lock.release()
 
@@ -1234,6 +1307,8 @@ class Channel(ClosingContextManager):
         self.status_event.set()
         if self._pipe is not None:
             self._pipe.set_forever()
+        if self._write_pipe is not None:
+            self._write_pipe.clear_forever()
 
     def _send_eof(self):
         # you are holding the lock.
@@ -1349,6 +1424,9 @@ class ChannelFile(BufferedFile):
         BufferedFile.__init__(self)
         self._set_mode(mode, bufsize)
 
+    def fileno(self):
+        return self.channel.fileno_read()
+
     def __repr__(self):
         """
         Returns a string representation of this object, for debugging.
@@ -1384,6 +1462,9 @@ class ChannelStdinFile(ChannelFile):
 
     See `Channel.makefile_stdin` for details.
     """
+
+    def fileno(self):
+        return self.channel.fileno_write()
 
     def close(self):
         super().close()
