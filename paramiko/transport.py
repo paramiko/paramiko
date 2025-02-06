@@ -364,6 +364,8 @@ class Transport(threading.Thread, ClosingContextManager):
     def __init__(
         self,
         sock,
+        local_bind_ip=None,
+        local_bind_port=None,
         default_window_size=DEFAULT_WINDOW_SIZE,
         default_max_packet_size=DEFAULT_MAX_PACKET_SIZE,
         gss_kex=False,
@@ -406,6 +408,11 @@ class Transport(threading.Thread, ClosingContextManager):
 
         :param socket sock:
             a socket or socket-like object to create the session over.
+        :param local_bind_ip:
+            Set the default local interface for the connection. (defaults to
+            0.0.0.0)
+        :param local_bind_port:
+            Set the default local port of the interface. (defaults to 0)
         :param int default_window_size:
             sets the default window size on the transport. (defaults to
             2097152)
@@ -489,6 +496,20 @@ class Transport(threading.Thread, ClosingContextManager):
                     af = family
                     # addr = sockaddr
                     sock = socket.socket(af, socket.SOCK_STREAM)
+                    # bind local socket to custom ip and port
+                    if not local_bind_ip or type(local_bind_ip) is not str:
+                        local_bind_ip = "0.0.0.0"
+                    if not local_bind_port:
+                        local_bind_port = 0
+                    if type(local_bind_port) is str:
+                        try:
+                            local_bind_port = int(local_bind_port)
+                        except:
+                            reason = "Incorrect local port type: {reason}"
+                            reason = reason.format(
+                                reason=type(local_bind_port)
+                            )
+                    sock.bind((local_bind_ip, local_bind_port))
                     try:
                         sock.connect((hostname, port))
                     except socket.error as e:
