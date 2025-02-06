@@ -1963,10 +1963,16 @@ class Transport(threading.Thread, ClosingContextManager):
     def _send_message(self, data):
         self.packetizer.send_message(data)
 
-    def _send_user_message(self, data):
+    def _send_user_message(self, data, ignore_rekey_lock=False):
         """
         send a message, but block if we're in key negotiation.  this is used
         for user-initiated requests.
+
+        :param obj data:
+            Message object to send
+        param bool ignore_rekey_lock:
+            Prevent blocking during rekey, used by channel._handle_close to
+            prevent a key negotiation from blocking the channel close message
         """
         start = time.time()
         while True:
@@ -1978,6 +1984,8 @@ class Transport(threading.Thread, ClosingContextManager):
                 return
             self.clear_to_send_lock.acquire()
             if self.clear_to_send.is_set():
+                break
+            if ignore_rekey_lock:
                 break
             self.clear_to_send_lock.release()
             if time.time() > start + self.clear_to_send_timeout:
