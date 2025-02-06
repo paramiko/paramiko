@@ -38,7 +38,11 @@ if not os.environ.get("DISABLE_LOGGING", False):
     logging.basicConfig(
         level=logging.DEBUG,
         # Also make sure to set up timestamping for more sanity when debugging.
-        format="[%(relativeCreated)s]\t%(levelname)s:%(name)s:%(message)s",
+        format=(
+            "[%(relativeCreated)s]\t"
+            "%(levelname)s:%(name)s:%(lineno)d"
+            "\t%(message)s"
+        ),
         datefmt="%H:%M:%S",
     )
 

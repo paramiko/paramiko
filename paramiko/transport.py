@@ -1936,12 +1936,15 @@ class Transport(threading.Thread, ClosingContextManager):
 
     # TODO 4.0: make a public alias for this because multiple other classes
     # already explicitly rely on it...or just rewrite logging :D
-    def _log(self, level, msg, *args):
+    def _log(self, level, msg, *args, stacklevel: int = 1):
         if issubclass(type(msg), list):
             for m in msg:
-                self.logger.log(level, m)
+                self._log(level, m, stacklevel=stacklevel + 1)
+            return
+        if sys.version_info >= (3, 8):
+            self.logger.log(level, msg, *args, stacklevel=stacklevel + 1)
         else:
-            self.logger.log(level, msg, *args)
+            self.logger.log(level, msg)
 
     def _get_modulus_pack(self):
         """used by KexGex to find primes for group exchange"""
@@ -2339,7 +2342,7 @@ class Transport(threading.Thread, ClosingContextManager):
             msg += local
         else:
             msg += "local={}, remote={}".format(local, remote)
-        self._log(DEBUG, msg)
+        self._log(DEBUG, msg, stacklevel=2)
 
     # protocol stages
 

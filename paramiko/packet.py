@@ -24,6 +24,7 @@ import errno
 import os
 import socket
 import struct
+import sys
 import threading
 import time
 from hmac import HMAC
@@ -634,12 +635,16 @@ class Packetizer:
 
     # ...protected...
 
-    def _log(self, level, msg):
+    def _log(self, level, msg, stacklevel: int = 1):
         if self.__logger is None:
             return
         if issubclass(type(msg), list):
             for m in msg:
-                self.__logger.log(level, m)
+                self._log(level, m, stacklevel=stacklevel + 1)
+            return
+
+        if sys.version_info >= (3, 8):
+            self.__logger.log(level, msg, stacklevel=stacklevel + 1)
         else:
             self.__logger.log(level, msg)
 

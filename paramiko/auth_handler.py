@@ -97,8 +97,8 @@ class AuthHandler:
         self.gss_host = None
         self.gss_deleg_creds = True
 
-    def _log(self, *args):
-        return self.transport._log(*args)
+    def _log(self, *args, stacklevel: int = 1):
+        return self.transport._log(*args, stacklevel=stacklevel + 1)
 
     def is_authenticated(self):
         return self.authenticated
