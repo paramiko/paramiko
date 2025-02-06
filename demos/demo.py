@@ -18,17 +18,17 @@
 # along with Paramiko; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
 
+"""
+Demonstrates how to open a shell at an SSH server, including how to support
+SSH agents and different types of keys.
+"""
 
-import base64
 from binascii import hexlify
 import getpass
 import os
-import select
 import socket
 import sys
-import time
 import traceback
-from paramiko.py3compat import input
 
 import paramiko
 
@@ -62,7 +62,8 @@ def agent_auth(transport, username):
 def manual_auth(username, hostname):
     default_auth = "p"
     auth = input(
-        "Auth by (p)assword, (r)sa key, or (d)ss key? [%s] " % default_auth
+        "Auth by (p)assword, (r)sa key, (d)ss key, or (e)25519 key? [%s] "
+        % default_auth
     )
     if len(auth) == 0:
         auth = default_auth
@@ -88,6 +89,17 @@ def manual_auth(username, hostname):
         except paramiko.PasswordRequiredException:
             password = getpass.getpass("DSS key password: ")
             key = paramiko.DSSKey.from_private_key_file(path, password)
+        t.auth_publickey(username, key)
+    elif auth == "e":
+        default_path = os.path.join(os.environ["HOME"], ".ssh", "id_ed25519")
+        path = input("ed25519 key [%s]: " % default_path)
+        if len(path) == 0:
+            path = default_path
+        try:
+            key = paramiko.Ed25519Key.from_private_key_file(path)
+        except paramiko.PasswordRequiredException:
+            password = getpass.getpass("ed25519 key password: ")
+            key = paramiko.Ed25519Key.from_private_key_file(path, password)
         t.auth_publickey(username, key)
     else:
         pw = getpass.getpass("Password for %s@%s: " % (username, hostname))

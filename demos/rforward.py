@@ -27,7 +27,6 @@ connection to a destination reachable from the local machine.
 """
 
 import getpass
-import os
 import socket
 import select
 import sys

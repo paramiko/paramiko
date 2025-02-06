@@ -18,14 +18,14 @@
 # along with Paramiko; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
 
+"""
+Demonstrates how to open a shell at an SSH server, using basic password
+authentication or GSSAPI.
+"""
 
-import base64
 import getpass
-import os
-import socket
 import sys
 import traceback
-from paramiko.py3compat import input
 
 import paramiko
 
@@ -44,8 +44,6 @@ UseGSSAPI = (
 DoGSSAPIKeyExchange = (
     paramiko.GSS_AUTH_AVAILABLE
 )  # enable "gssapi-kex" key exchange, if supported by your python installation
-# UseGSSAPI = False
-# DoGSSAPIKeyExchange = False
 port = 22
 
 # get hostname
@@ -93,7 +91,7 @@ try:
                 gss_kex=DoGSSAPIKeyExchange,
             )
         except Exception:
-            # traceback.print_exc()
+            traceback.print_exc()
             password = getpass.getpass(
                 "Password for %s@%s: " % (username, hostname)
             )

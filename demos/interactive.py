@@ -19,7 +19,7 @@
 
 import socket
 import sys
-from paramiko.py3compat import u
+from paramiko.util import u
 
 # windows does not have termios...
 try:
