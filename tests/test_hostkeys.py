@@ -41,6 +41,14 @@ modern.example.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKHEChAIxsh2hr8Q\
 curvy.example.com ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlz\
 dHAyNTYAAABBBAa+pY7djSpbg5viAcZhPt56AO3U3Sd7h7dnlUp0EjfDgyYHYQxl2QZ4JGgfwR5iv9\
 T9iRZjQzvJd5s+kBAZtpk=
+@cert-authority ca.example.com ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAIEA8bP1ZA7DCZD\
+B9J0s50l31MBGQ3GQ/Fc7SX6gkpXkwcZryoi4kNFhHu5LvHcZPdxXV1D+uTMfGS1eyd2Yz/DoNWXNA\
+l8TI0cAsW5ymME3bQ4J/k1IKxCtz/bAlAqFgKoc+EolMziDYqWIATtW0rYTJvzGAzTmMj80/QpsFH+\
+Pc2M=
+@revoked revoked.example.com ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAIEA8bP1ZA7DCZD\
+B9J0s50l31MBGQ3GQ/Fc7SX6gkpXkwcZryoi4kNFhHu5LvHcZPdxXV1D+uTMfGS1eyd2Yz/DoNWXNA\
+l8TI0cAsW5ymME3bQ4J/k1IKxCtz/bAlAqFgKoc+EolMziDYqWIATtW0rYTJvzGAzTmMj80/QpsFH+\
+Pc2M=
 """
 
 test_hosts_file_tabs = """\
@@ -55,6 +63,14 @@ modern.example.com\tssh-ed25519\tAAAAC3NzaC1lZDI1NTE5AAAAIKHEChAIxsh2hr8Q\
 curvy.example.com\tecdsa-sha2-nistp256\tAAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbml\
 zdHAyNTYAAABBBAa+pY7djSpbg5viAcZhPt56AO3U3Sd7h7dnlUp0EjfDgyYHYQxl2QZ4JGgfwR5iv\
 9T9iRZjQzvJd5s+kBAZtpk=
+@cert-authority\tca.example.com\tssh-rsa\tAAAAB3NzaC1yc2EAAAABIwAAAIEA8bP1ZA7DCZD\
+B9J0s50l31MBGQ3GQ/Fc7SX6gkpXkwcZryoi4kNFhHu5LvHcZPdxXV1D+uTMfGS1eyd2Yz/DoNWXNA\
+l8TI0cAsW5ymME3bQ4J/k1IKxCtz/bAlAqFgKoc+EolMziDYqWIATtW0rYTJvzGAzTmMj80/QpsFH+\
+Pc2M=
+@revoked\trevoked.example.com\tssh-rsa\tAAAAB3NzaC1yc2EAAAABIwAAAIEA8bP1ZA7DCZD\
+B9J0s50l31MBGQ3GQ/Fc7SX6gkpXkwcZryoi4kNFhHu5LvHcZPdxXV1D+uTMfGS1eyd2Yz/DoNWXNA\
+l8TI0cAsW5ymME3bQ4J/k1IKxCtz/bAlAqFgKoc+EolMziDYqWIATtW0rYTJvzGAzTmMj80/QpsFH+\
+Pc2M=
 """
 
 keyblob = b"""\
@@ -83,7 +99,7 @@ class HostKeysTest(unittest.TestCase):
 
     def test_load(self):
         hostdict = paramiko.HostKeys("hostfile.temp")
-        assert len(hostdict) == 4
+        assert len(hostdict) == 5
         self.assertEqual(1, len(list(hostdict.values())[0]))
         self.assertEqual(1, len(list(hostdict.values())[1]))
         fp = hexlify(
@@ -96,7 +112,7 @@ class HostKeysTest(unittest.TestCase):
         hh = "|1|BMsIC6cUIP2zBuXR3t2LRcJYjzM=|hpkJMysjTk/+zzUUzxQEa2ieq6c="
         key = paramiko.RSAKey(data=decodebytes(keyblob))
         hostdict.add(hh, "ssh-rsa", key)
-        assert len(hostdict) == 5
+        assert len(hostdict) == 6
         x = hostdict["foo.example.com"]
         fp = hexlify(x["ssh-rsa"].get_fingerprint()).upper()
         self.assertEqual(b"7EC91BB336CB6D810B124B1353C32396", fp)
@@ -113,7 +129,7 @@ class HostKeysTest(unittest.TestCase):
         fp = hexlify(x["ssh-rsa"].get_fingerprint()).upper()
         self.assertEqual(b"E6684DB30E109B67B70FF1DC5C7F1363", fp)
         assert list(hostdict) == hostdict.keys()
-        assert len(list(hostdict)) == len(hostdict.keys()) == 4
+        assert len(list(hostdict)) == len(hostdict.keys()) == 5
 
     def test_dict_set(self):
         hostdict = paramiko.HostKeys("hostfile.temp")
@@ -123,7 +139,7 @@ class HostKeysTest(unittest.TestCase):
         hostdict["fake.example.com"] = {}
         hostdict["fake.example.com"]["ssh-rsa"] = key
 
-        assert len(hostdict) == 5
+        assert len(hostdict) == 6
         self.assertEqual(2, len(list(hostdict.values())[0]))
         self.assertEqual(1, len(list(hostdict.values())[1]))
         self.assertEqual(1, len(list(hostdict.values())[2]))
