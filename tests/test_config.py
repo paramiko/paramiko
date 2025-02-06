@@ -1,7 +1,7 @@
 # This file is part of Paramiko and subject to the license in /LICENSE in this
 # repository
 
-from os.path import expanduser
+import os.path
 from socket import gaierror
 
 try:
@@ -82,7 +82,12 @@ class TestSSHConfig:
             {"host": ["*"], "config": {}},
             {
                 "host": ["*"],
-                "config": {"identityfile": ["~/.ssh/id_rsa"], "user": "robey"},
+                "config": {
+                    "identityfile": [
+                        os.path.join("~", ".ssh", "id_rsa")
+                    ],
+                    "user": "robey"
+                },
             },
             {
                 "host": ["*.example.com"],
@@ -129,7 +134,10 @@ class TestSSHConfig:
     )
     def test_host_config(self, host, values):
         expected = dict(
-            values, hostname=host, identityfile=[expanduser("~/.ssh/id_rsa")]
+            values, hostname=host,
+            identityfile=[
+                os.path.join(os.path.expanduser("~"), ".ssh", "id_rsa")
+            ]
         )
         assert self.config.lookup(host) == expected
 
@@ -203,7 +211,7 @@ Host test
 """
         )
         expected = "ssh -F {}/.ssh/test_config bastion nc test 22".format(
-            expanduser("~")
+            os.path.expanduser("~")
         )
         got = config.lookup("test")["proxycommand"]
         assert got == expected
@@ -783,7 +791,7 @@ class TestMatchExec:
         # Actual exec value is "%C %d %h %L %l %n %p %r %u"
         parts = (
             "bf5ba06778434a9384ee4217e462f64888bd0cd2",
-            expanduser("~"),
+            os.path.expanduser("~"),
             "configured",
             "local",
             "some.fake.fqdn",
