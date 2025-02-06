@@ -146,10 +146,10 @@ class BufferedPipe:
                 # loop here in case we get woken up but a different thread has
                 # grabbed everything in the buffer.
                 while (len(self._buffer) == 0) and not self._closed:
-                    then = time.time()
+                    then = time.monotonic()
                     self._cv.wait(timeout)
                     if timeout is not None:
-                        timeout -= time.time() - then
+                        timeout -= time.monotonic() - then
                         if timeout <= 0.0:
                             raise PipeTimeout()
 
