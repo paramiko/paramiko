@@ -88,6 +88,7 @@ class AuthHandler:
         self.banner = None
         self.password = None
         self.private_key = None
+        self.msg_pubkey_with_sig = None
         self.interactive_handler = None
         self.submethods = None
         # for server mode:
@@ -403,6 +404,8 @@ class AuthHandler:
                 )
                 sig = self.private_key.sign_ssh_data(blob, algorithm)
                 m.add_string(sig)
+                # save message for possible future resending
+                self.msg_pubkey_with_sig = m
             elif self.auth_method == "keyboard-interactive":
                 m.add_string("")
                 m.add_string(self.submethods)
@@ -727,6 +730,7 @@ Error Message: {}
         self._log(
             INFO, "Authentication ({}) successful!".format(self.auth_method)
         )
+        self.msg_pubkey_with_sig = None
         self.authenticated = True
         self.transport._auth_trigger()
         if self.auth_event is not None:
@@ -759,6 +763,7 @@ Error Message: {}
             )
         self.authenticated = False
         self.username = None
+        self.msg_pubkey_with_sig = None
         if self.auth_event is not None:
             self.auth_event.set()
 
@@ -769,6 +774,15 @@ Error Message: {}
         # who cares.
 
     def _parse_userauth_info_request(self, m):
+        if self.auth_method == "publickey":
+            self._log(
+                INFO, "Bug Cisco: receive SSH_MSG_USERAUTH_PK_OK in ({}) cause switch doesn't consider signature in the first sending. So resending the precedent message.".format(self.auth_method)
+            )
+            if self.msg_pubkey_with_sig is None:
+                raise SSHException("No pubkey signature in cellar")
+            self.transport._send_message(self.msg_pubkey_with_sig)
+            self.msg_pubkey_with_sig = None
+            return
         if self.auth_method != "keyboard-interactive":
             raise SSHException("Illegal info request from server")
         title = m.get_text()
