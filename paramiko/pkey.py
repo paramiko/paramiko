@@ -25,7 +25,15 @@ from base64 import encodebytes, decodebytes
 from binascii import unhexlify
 import os
 from pathlib import Path
-from hashlib import md5, sha256
+from hashlib import sha256
+import hashlib
+import sys
+from functools import partial
+
+if sys.version_info >= (3, 9):
+    md5 = partial(hashlib.md5, usedforsecurity=False)
+else:
+    md5 = hashlib.md5
 import re
 import struct
 
