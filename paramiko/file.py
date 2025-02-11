@@ -201,6 +201,11 @@ class BufferedFile(ClosingContextManager):
                 read_size = max(self._bufsize, read_size)
             try:
                 new_data = self._read(read_size)
+            except TimeoutError:
+                if not self._rbuffer:
+                    raise
+                else:
+                    new_data = b""
             except EOFError:
                 new_data = None
             if (new_data is None) or (len(new_data) == 0):
