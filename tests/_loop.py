@@ -99,10 +99,11 @@ class LoopSocket:
 
 
 class LoopSocketWithOsErrsOnRecv(LoopSocket):
-    """ This Loop Socket variant raises a series of errors every time recv is
+    """This Loop Socket variant raises a series of errors every time recv is
     called.  After the series is complete, recv functionality reverts to the
     parent's implementation.
     """
+
     def __init__(self, num_errs_to_raise=0):
         super().__init__()
         self.num_errs_to_raise = num_errs_to_raise
