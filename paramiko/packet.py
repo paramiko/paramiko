@@ -37,6 +37,7 @@ from paramiko.common import (
     xffffffff,
     zero_byte,
     byte_ord,
+    OS_ERROR_SLEEP,
 )
 from paramiko.util import u
 from paramiko.ssh_exception import SSHException, ProxyCommandFailure
@@ -666,6 +667,11 @@ class Packetizer:
                 break
             except socket.timeout:
                 pass
+            except OSError:
+                time.sleep(OS_ERROR_SLEEP)
+                now = time.time()
+                if now - start >= timeout:
+                    raise
             if self.__closed:
                 raise EOFError()
             now = time.time()

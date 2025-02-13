@@ -96,3 +96,22 @@ class LoopSocket:
             self.__lock.release()
         if m is not None:
             m.__unlink()
+
+
+class LoopSocketWithOsErrsOnRecv(LoopSocket):
+    """This Loop Socket variant raises a series of errors every time recv is
+    called.  After the series is complete, recv functionality reverts to the
+    parent's implementation.
+    """
+
+    def __init__(self, num_errs_to_raise=0):
+        super().__init__()
+        self.num_errs_to_raise = num_errs_to_raise
+        self.err_raise_count = 0
+
+    def recv(self, n):
+        if self.err_raise_count >= self.num_errs_to_raise:
+            return super().recv(n)
+        else:
+            self.err_raise_count += 1
+            raise OSError()
