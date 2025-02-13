@@ -27,10 +27,11 @@ from hashlib import sha1
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.ciphers import algorithms, Cipher, modes
 
+from unittest.mock import patch, call
 from paramiko import Message, Packetizer, util
-from paramiko.common import byte_chr, zero_byte
+from paramiko.common import byte_chr, zero_byte, OS_ERROR_SLEEP
 
-from ._loop import LoopSocket
+from ._loop import LoopSocket, LoopSocketWithOsErrsOnRecv
 
 
 x55 = byte_chr(0x55)
@@ -89,6 +90,43 @@ class PacketizerTest(unittest.TestCase):
         self.assertEqual(100, m.get_int())
         self.assertEqual(1, m.get_int())
         self.assertEqual(900, m.get_int())
+
+    @patch("paramiko.packet.time.sleep")
+    def test_read_with_oserrors_recoverable(self, sleep_mock):
+        rsock = LoopSocketWithOsErrsOnRecv(1)
+        wsock = LoopSocket()
+        rsock.link(wsock)
+        p = Packetizer(rsock)
+        p.set_log(util.get_logger("paramiko.transport"))
+        p.set_hexdump(True)
+        wsock.send(b"Line1")  # noqa
+        raw_msg_rx = p._read_timeout(1)
+        self.assertEqual(b"Line1", raw_msg_rx)
+        sleep_mock.assert_called_once_with(OS_ERROR_SLEEP)
+        self.assertEqual(rsock.err_raise_count, 1)
+
+        sleep_mock.reset_mock()
+        rsock.num_errs_to_raise = 2
+        rsock.err_raise_count = 0
+        wsock.send(b"Line2")  # noqa
+        raw_msg_rx = p._read_timeout(1)
+        self.assertEqual(b"Line2", raw_msg_rx)
+        sleep_mock.assert_has_calls([call(OS_ERROR_SLEEP)]*2)
+        self.assertEqual(rsock.err_raise_count, 2)
+
+    def test_read_with_oserrors_exceed_timeout(self):
+        rsock = LoopSocketWithOsErrsOnRecv(4)
+        wsock = LoopSocket()
+        rsock.link(wsock)
+        p = Packetizer(rsock)
+        p.set_log(util.get_logger("paramiko.transport"))
+        p.set_hexdump(True)
+        wsock.send(b"Line3")  # noqa
+        with self.assertRaises(OSError):
+            p._read_timeout(0.2)
+        self.assertEqual(rsock.err_raise_count, 2)
+
+
 
     def test_closed(self):
         if sys.platform.startswith("win"):  # no SIGALRM on windows

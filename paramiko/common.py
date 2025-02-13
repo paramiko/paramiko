@@ -243,3 +243,7 @@ MIN_PACKET_SIZE = 2**12
 
 # Max windows size according to http://www.ietf.org/rfc/rfc4254.txt
 MAX_WINDOW_SIZE = 2**32 - 1
+
+# When OSError is thrown, wait this long if we want to spin and
+# wait for error conditions to resolve.
+OS_ERROR_SLEEP = 0.1 ;# 100ms
