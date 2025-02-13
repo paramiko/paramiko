@@ -246,4 +246,4 @@ MAX_WINDOW_SIZE = 2**32 - 1
 
 # When OSError is thrown, wait 100ms if we want to spin and
 # wait for error conditions to resolve.
-OS_ERROR_SLEEP = 0.1 
+OS_ERROR_SLEEP = 0.1
