@@ -108,7 +108,7 @@ class LoopSocketWithOsErrsOnRecv(LoopSocket):
         self.num_errs_to_raise = num_errs_to_raise
         self.err_raise_count = 0
 
-    def recv (self, n):
+    def recv(self, n):
         if self.err_raise_count >= self.num_errs_to_raise:
             return super().recv(n)
         else:

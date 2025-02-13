@@ -111,7 +111,7 @@ class PacketizerTest(unittest.TestCase):
         wsock.send(b"Line2")  # noqa
         raw_msg_rx = p._read_timeout(1)
         self.assertEqual(b"Line2", raw_msg_rx)
-        sleep_mock.assert_has_calls([call(OS_ERROR_SLEEP)]*2)
+        sleep_mock.assert_has_calls([call(OS_ERROR_SLEEP)] * 2)
         self.assertEqual(rsock.err_raise_count, 2)
 
     def test_read_with_oserrors_exceed_timeout(self):
@@ -125,8 +125,6 @@ class PacketizerTest(unittest.TestCase):
         with self.assertRaises(OSError):
             p._read_timeout(0.2)
         self.assertEqual(rsock.err_raise_count, 2)
-
-
 
     def test_closed(self):
         if sys.platform.startswith("win"):  # no SIGALRM on windows
