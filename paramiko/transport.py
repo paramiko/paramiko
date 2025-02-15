@@ -145,7 +145,8 @@ _active_threads = []
 
 
 def _join_lingering_threads():
-    for thr in _active_threads:
+    active_threads = [thr for thr in _active_threads]
+    for thr in active_threads:
         thr.stop_thread()
 
 
@@ -1927,8 +1928,6 @@ class Transport(threading.Thread, ClosingContextManager):
         while (
             self.is_alive()
             and self is not threading.current_thread()
-            and not self.sock._closed
-            and not self.packetizer.closed
         ):
             self.join(0.1)
 
