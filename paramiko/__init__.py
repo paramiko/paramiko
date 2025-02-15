@@ -110,6 +110,8 @@ from paramiko.sftp import (
 
 from paramiko.common import io_sleep
 
+from paramiko._version import __version__
+
 
 # TODO: I guess a real plugin system might be nice for future expansion...
 key_classes = [DSSKey, RSAKey, Ed25519Key, ECDSAKey]
@@ -162,4 +164,5 @@ __all__ = [
     "WarningPolicy",
     "io_sleep",
     "util",
+    "__version__"
 ]
