@@ -86,10 +86,14 @@ class SSHClient(ClosingContextManager):
         will be merged with the existing set (new replacing old if there are
         conflicts).
 
-        If ``filename`` is left as ``None``, an attempt will be made to read
-        keys from the user's local "known hosts" file, as used by OpenSSH,
-        and no exception will be raised if the file can't be read.  This is
-        probably only useful on posix.
+        If ``filename`` is left as ``None``, Paramiko will attempt to read
+        keys from the user's local ~/.ssh/known_hosts file (as used by
+        OpenSSH), and no exception will be raised if the file can't be read.
+        This is probably only useful on posix.
+
+        Note that OpenSSH also reads from system-wide files like
+        /etc/ssh/ssh_known_hosts. If you want Paramiko to read those files,
+        call this method with those filenames.
 
         :param str filename: the filename to read, or ``None``
 
