@@ -22,12 +22,16 @@ Some unit tests for utility functions.
 
 from binascii import hexlify
 import os
+import stat
 from hashlib import sha1
 import unittest
 
 import paramiko
 import paramiko.util
 from paramiko.util import safe_string
+from paramiko.sftp_attr import SFTPAttributes
+from paramiko.message import Message
+
 
 
 test_hosts_file = """\
@@ -134,3 +138,61 @@ class UtilTest(unittest.TestCase):
         assert safe_vanilla == vanilla, msg
         msg = err.format(safe_has_bytes, expected_bytes)
         assert safe_has_bytes == expected_bytes, msg
+    
+    def test_debug_print(self):
+        
+        test_obj = SFTPAttributes()
+        test_obj.st_size = 0
+        assert test_obj._debug_str() == "[ size=0 ]"
+        
+        test_obj.st_uid = 1
+        test_obj.st_gid = 2
+        assert test_obj._debug_str() == "[ size=0 uid=1 gid=2 ]"
+         
+        test_obj.st_mode = 10
+        assert test_obj._debug_str() == "[ size=0 uid=1 gid=2 mode=0o12 ]"
+
+        test_obj.st_atime = 3
+        test_obj.st_mtime = 4
+        assert test_obj._debug_str() == "[ size=0 uid=1 gid=2 mode=0o12 atime=3 mtime=4 ]"
+        
+        test_obj.attr["hey"] = "test"
+        assert test_obj._debug_str() == "[ size=0 uid=1 gid=2 mode=0o12 atime=3 mtime=4 \"hey\"='test' ]"
+
+
+    def test_file_long_description(self):
+
+        test_obj = SFTPAttributes()
+
+        test_obj.st_mode =  stat.S_IFDIR | 0o755
+        assert test_obj.__str__() == "drwxr-xr-x   1 0        0               0 (unknown date) ?"
+
+        test_obj.st_mode = stat.S_IFCHR | 0o644
+        assert test_obj.__str__() == "crw-r--r--   1 0        0               0 (unknown date) ?"
+
+        test_obj.st_mode = stat.S_IFIFO | 0o644
+        assert test_obj.__str__() == "prw-r--r--   1 0        0               0 (unknown date) ?"
+        
+        test_obj.st_mode = stat.S_IFBLK | 0o644
+        assert test_obj.__str__() == "brw-r--r--   1 0        0               0 (unknown date) ?"
+
+        test_obj.st_mode = stat.S_IFREG | 0o644
+        assert test_obj.__str__() == "-rw-r--r--   1 0        0               0 (unknown date) ?"
+
+        test_obj.st_mode = stat.S_IFLNK | 0o644
+        assert test_obj.__str__() == "lrw-r--r--   1 0        0               0 (unknown date) ?"
+        
+        test_obj.st_mode = stat.S_IFSOCK | 0o644
+        assert test_obj.__str__() == "srw-r--r--   1 0        0               0 (unknown date) ?"
+    
+        test_obj.st_mode = 1
+        assert test_obj.__str__() == "?--------x   1 0        0               0 (unknown date) ?"
+
+    def test_pack(self):
+        test_obj = SFTPAttributes()
+        test_obj.attr["test1"] = "test_val1"
+        test_obj.attr["test2"] = "test_val2"
+        test_obj._pack(Message())
+        assert test_obj._flags <= test_obj.FLAG_EXTENDED
+
+
