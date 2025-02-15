@@ -399,7 +399,7 @@ class Transport(threading.Thread, ClosingContextManager):
         call may be thrown in this case.
 
         .. note::
-            Modifying the the window and packet sizes might have adverse
+            Modifying the window and packet sizes might have adverse
             effects on your channels created from this transport. The default
             values are the same as in the OpenSSH code base and have been
             battle tested.
@@ -971,7 +971,7 @@ class Transport(threading.Thread, ClosingContextManager):
         just an alias for calling `open_channel` with an argument of
         ``"session"``.
 
-        .. note:: Modifying the the window and packet sizes might have adverse
+        .. note:: Modifying the window and packet sizes might have adverse
             effects on the session created. The default values are the same
             as in the OpenSSH code base and have been battle tested.
 
@@ -1055,7 +1055,7 @@ class Transport(threading.Thread, ClosingContextManager):
         session. You may only request a channel after negotiating encryption
         (using `connect` or `start_client`) and authenticating.
 
-        .. note:: Modifying the the window and packet sizes might have adverse
+        .. note:: Modifying the window and packet sizes might have adverse
             effects on the channel created. The default values are the same
             as in the OpenSSH code base and have been battle tested.
 
