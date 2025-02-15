@@ -66,7 +66,9 @@ class HostKeys(MutableMapping):
         :param .PKey key: the key to add
         """
         for e in self._entries:
-            if (hostname in e.hostnames) and (e.key.get_name() == keytype):
+            if self._hostname_matches(hostname, e) and (
+                e.key.get_name() == keytype
+            ):
                 e.key = key
                 return
         self._entries.append(HostKeyEntry([hostname], key))
