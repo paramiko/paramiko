@@ -1446,6 +1446,17 @@ class Transport(threading.Thread, ClosingContextManager):
                 DEBUG, "Host key verified ({})".format(hostkey.get_name())
             )
 
+        # Attempt auth_none first, so that we can connect to servers that
+        # accept this method as the only correct one.
+        self._log(DEBUG, "Attempting auth-none...")
+        try:
+            self.auth_none(username)
+        except BadAuthenticationType as exc:
+            allowed_types = exc.allowed_types
+            log_msg = ("Auth-none is not allowed, authentication types"
+                       "that can continue: {}".format(allowed_types))
+            self._log(DEBUG, log_msg)
+
         if (pkey is not None) or (password is not None) or gss_auth or gss_kex:
             if gss_auth:
                 self._log(
@@ -1460,11 +1471,9 @@ class Transport(threading.Thread, ClosingContextManager):
             elif pkey is not None:
                 self._log(DEBUG, "Attempting public-key auth...")
                 self.auth_publickey(username, pkey)
-            else:
+            elif password is not None:
                 self._log(DEBUG, "Attempting password auth...")
                 self.auth_password(username, password)
-
-        return
 
     def get_exception(self):
         """
