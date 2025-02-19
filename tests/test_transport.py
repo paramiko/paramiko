@@ -231,13 +231,13 @@ class TransportTest(unittest.TestCase):
 
         def force_algorithms(options):
             options.ciphers = ("aes256-cbc",)
-            options.digests = ("hmac-md5-96",)
+            options.digests = ("hmac-sha1",)
 
         self.setup_test_server(client_options=force_algorithms)
         self.assertEqual("aes256-cbc", self.tc.local_cipher)
         self.assertEqual("aes256-cbc", self.tc.remote_cipher)
-        self.assertEqual(12, self.tc.packetizer.get_mac_size_out())
-        self.assertEqual(12, self.tc.packetizer.get_mac_size_in())
+        self.assertEqual(20, self.tc.packetizer.get_mac_size_out())
+        self.assertEqual(20, self.tc.packetizer.get_mac_size_in())
 
         self.tc.send_ignore(1024)
         self.tc.renegotiate_keys()
@@ -1107,15 +1107,15 @@ class AlgorithmDisablingTests(unittest.TestCase):
             sock=Mock(),
             disabled_algorithms={
                 "ciphers": ["aes128-cbc"],
-                "macs": ["hmac-md5"],
+                "macs": ["hmac-sha1"],
                 "keys": ["ssh-dss"],
                 "kex": ["diffie-hellman-group14-sha256"],
             },
         )
         assert "aes128-cbc" in t._preferred_ciphers
         assert "aes128-cbc" not in t.preferred_ciphers
-        assert "hmac-md5" in t._preferred_macs
-        assert "hmac-md5" not in t.preferred_macs
+        assert "hmac-sha1" in t._preferred_macs
+        assert "hmac-sha1" not in t.preferred_macs
         assert "ssh-dss" in t._preferred_keys
         assert "ssh-dss" not in t.preferred_keys
         assert "ssh-dss-cert-v01@openssh.com" not in t.preferred_keys

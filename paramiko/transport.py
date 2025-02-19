@@ -27,7 +27,7 @@ import sys
 import threading
 import time
 import weakref
-from hashlib import md5, sha1, sha256, sha512
+from hashlib import sha1, sha256, sha512
 
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.ciphers import (
@@ -193,9 +193,6 @@ class Transport(threading.Thread, ClosingContextManager):
         "hmac-sha2-256-etm@openssh.com",
         "hmac-sha2-512-etm@openssh.com",
         "hmac-sha1",
-        "hmac-md5",
-        "hmac-sha1-96",
-        "hmac-md5-96",
     )
     # ~= HostKeyAlgorithms in OpenSSH land
     _preferred_keys = (
@@ -300,13 +297,10 @@ class Transport(threading.Thread, ClosingContextManager):
 
     _mac_info = {
         "hmac-sha1": {"class": sha1, "size": 20},
-        "hmac-sha1-96": {"class": sha1, "size": 12},
         "hmac-sha2-256": {"class": sha256, "size": 32},
         "hmac-sha2-256-etm@openssh.com": {"class": sha256, "size": 32},
         "hmac-sha2-512": {"class": sha512, "size": 64},
         "hmac-sha2-512-etm@openssh.com": {"class": sha512, "size": 64},
-        "hmac-md5": {"class": md5, "size": 16},
-        "hmac-md5-96": {"class": md5, "size": 12},
     }
 
     _key_info = {
