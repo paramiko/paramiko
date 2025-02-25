@@ -42,6 +42,11 @@ cSSH2_AGENTC_REQUEST_IDENTITIES = byte_chr(11)
 SSH2_AGENT_IDENTITIES_ANSWER = 12
 cSSH2_AGENTC_SIGN_REQUEST = byte_chr(13)
 SSH2_AGENT_SIGN_RESPONSE = 14
+cSSH2_AGENTC_ADD_IDENTITY = byte_chr(17)
+cSSH2_AGENTC_ADD_ID_CONSTRAINTED = byte_chr(25)
+SSH2_AGENT_CONSTRAIN_LIFETIME = byte_chr(1)
+SSH2_AGENT_CONSTRAIN_CONFIRM = byte_chr(2)
+SSH2_AGENT_SUCCESS = 6
 SSH_AGENTC_REMOVE_IDENTITY = 18
 SSH_AGENTC_REMOVE_ALL_IDENTITIES = 19
 
@@ -121,6 +126,30 @@ class AgentSSH:
             result += extra
         return result
 
+    def add_key_to_agent(self, key,
+        comment='Added by Paramiko', timeout=None, confirm=False):
+        # Implement "ssh-add" functionality, with support for
+        # optional timeout (-t) and confirmation (-c) args
+        # See: https://tools.ietf.org/html/draft-miller-ssh-agent-02
+        # Requires that the key contain Private as well as Public components
+        m = Message()
+        if timeout or confirm:
+            m.add_byte(cSSH2_AGENTC_ADD_ID_CONSTRAINTED)
+        else:
+            m.add_byte(cSSH2_AGENTC_ADD_IDENTITY)
+        m.add_string(key.get_name())
+        key.append_add_agent_parameters(m)
+        m.add_string(comment)
+        if timeout:
+            m.add_byte(SSH2_AGENT_CONSTRAIN_LIFETIME)
+            m.add_int(timeout)
+        if confirm:
+            m.add_byte(SSH2_AGENT_CONSTRAIN_CONFIRM)
+        # Send the message, expect a response of SSH2_AGENT_SUCCESS
+        resp = self._send_message(m)
+        if resp[0] != SSH2_AGENT_SUCCESS:
+            raise(SSHException('Failed to add key to ssh-agent'))
+
     def _remove_key(self, key):
         msg = Message()
         msg.add_byte(SSH_AGENTC_REMOVE_IDENTITY)
@@ -143,6 +172,7 @@ class AgentSSH:
         if ptype != SSH_AGENT_SUCCESS:
             raise SSHException("Unable to remove key from agent")
         self._connect(self._conn)
+
 
 class AgentProxyThread(threading.Thread):
     """
