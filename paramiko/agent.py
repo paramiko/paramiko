@@ -37,10 +37,13 @@ from paramiko.message import Message
 from paramiko.pkey import PKey, UnknownKeyType
 from paramiko.util import asbytes, get_logger
 
+SSH_AGENT_SUCCESS = byte_chr(6)
 cSSH2_AGENTC_REQUEST_IDENTITIES = byte_chr(11)
 SSH2_AGENT_IDENTITIES_ANSWER = 12
 cSSH2_AGENTC_SIGN_REQUEST = byte_chr(13)
 SSH2_AGENT_SIGN_RESPONSE = 14
+SSH_AGENTC_REMOVE_IDENTITY = 18
+SSH_AGENTC_REMOVE_ALL_IDENTITIES = 19
 
 SSH_AGENT_RSA_SHA2_256 = 2
 SSH_AGENT_RSA_SHA2_512 = 4
@@ -118,6 +121,28 @@ class AgentSSH:
             result += extra
         return result
 
+    def _remove_key(self, key):
+        msg = Message()
+        msg.add_byte(SSH_AGENTC_REMOVE_IDENTITY)
+        msg.add_string(key.as_bytes())
+        ptype, result = self.agent._send_message(msg)
+        if ptype != SSH_AGENT_SUCCESS:
+            raise SSHException("Unable to remove key from agent")
+        key_list = list(self._keys)
+        key_list.remove(key)
+        self._keys = tuple(key_list)
+
+    def remove_keys(self):
+        """
+        Request the SSH agent to remove all keys. Existing key objects will still be valid but throw an error, as soon, as you try to sign something with it.
+        """
+        msg = Message()
+        msg.add_byte(SSH_AGENTC_REMOVE_ALL_IDENTITIES)
+        msg.add_string(key.as_bytes())
+        ptype, result = self.agent._send_message(msg)
+        if ptype != SSH_AGENT_SUCCESS:
+            raise SSHException("Unable to remove key from agent")
+        self._connect(self._conn)
 
 class AgentProxyThread(threading.Thread):
     """
@@ -451,6 +476,12 @@ class AgentKey(PKey):
             # Log, but don't explode, since inner_key is a best-effort thing.
             err = "Unable to derive inner_key for agent key of type {!r}"
             self.log(DEBUG, err.format(self.name))
+
+    def remove(self):
+        """
+        Request the SSH agent to remove this key. This object will still be valid, but fail at the first attempt to sign something.
+        """
+        self.agent._remove_key(self)
 
     def log(self, *args, **kwargs):
         return self._logger.log(*args, **kwargs)
