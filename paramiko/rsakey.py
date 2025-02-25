@@ -94,6 +94,25 @@ class RSAKey(PKey):
         else:
             return self.key.public_numbers()
 
+    @property
+    def d(self):
+        if isinstance(self.key, rsa.RSAPrivateKey):
+            return self.key.private_numbers().d
+    @property
+    def p(self):
+        if isinstance(self.key, rsa.RSAPrivateKey):
+            return self.key.private_numbers().p
+
+    @property
+    def q(self):
+        if isinstance(self.key, rsa.RSAPrivateKey):
+            return self.key.private_numbers().q
+
+    @property
+    def iqmp(self):
+        if isinstance(self.key, rsa.RSAPrivateKey):
+            return self.key.private_numbers().iqmp
+        
     def asbytes(self):
         m = Message()
         m.add_string(self.name)
