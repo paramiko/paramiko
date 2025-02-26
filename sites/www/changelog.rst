@@ -1,6 +1,9 @@
 =========
 Changelog
 =========
+- :bug:`2258` auth_handler: properly check that public_blob attr exists
+  Fix an issue where an error `AttributeError: public_blob` is raised when
+  a complex connection chain is used.
 
 - :release:`3.5.1 <2025-02-03>`
 - :bug:`2490` Private key material is now explicitly 'unpadded' during
