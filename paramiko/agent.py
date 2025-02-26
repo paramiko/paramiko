@@ -37,7 +37,7 @@ from paramiko.message import Message
 from paramiko.pkey import PKey, UnknownKeyType
 from paramiko.util import asbytes, get_logger
 
-SSH_AGENT_SUCCESS = byte_chr(6)
+SSH_AGENT_SUCCESS = 6
 cSSH2_AGENTC_REQUEST_IDENTITIES = byte_chr(11)
 SSH2_AGENT_IDENTITIES_ANSWER = 12
 cSSH2_AGENTC_SIGN_REQUEST = byte_chr(13)
@@ -47,8 +47,8 @@ cSSH2_AGENTC_ADD_ID_CONSTRAINTED = byte_chr(25)
 SSH2_AGENT_CONSTRAIN_LIFETIME = byte_chr(1)
 SSH2_AGENT_CONSTRAIN_CONFIRM = byte_chr(2)
 SSH2_AGENT_SUCCESS = 6
-SSH_AGENTC_REMOVE_IDENTITY = 18
-SSH_AGENTC_REMOVE_ALL_IDENTITIES = 19
+SSH_AGENTC_REMOVE_IDENTITY = byte_chr(18)
+SSH_AGENTC_REMOVE_ALL_IDENTITIES = byte_chr(19)
 
 SSH_AGENT_RSA_SHA2_256 = 2
 SSH_AGENT_RSA_SHA2_512 = 4
@@ -153,8 +153,8 @@ class AgentSSH:
     def _remove_key(self, key):
         msg = Message()
         msg.add_byte(SSH_AGENTC_REMOVE_IDENTITY)
-        msg.add_string(key.as_bytes())
-        ptype, result = self.agent._send_message(msg)
+        msg.add_string(key.asbytes())
+        ptype, result = self._send_message(msg)
         if ptype != SSH_AGENT_SUCCESS:
             raise SSHException("Unable to remove key from agent")
         key_list = list(self._keys)
@@ -167,8 +167,7 @@ class AgentSSH:
         """
         msg = Message()
         msg.add_byte(SSH_AGENTC_REMOVE_ALL_IDENTITIES)
-        msg.add_string(key.as_bytes())
-        ptype, result = self.agent._send_message(msg)
+        ptype, result = self._send_message(msg)
         if ptype != SSH_AGENT_SUCCESS:
             raise SSHException("Unable to remove key from agent")
         self._connect(self._conn)
