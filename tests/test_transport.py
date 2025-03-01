@@ -223,6 +223,17 @@ class TransportTest(unittest.TestCase):
         self.assertTrue(event.is_set())
         self.assertTrue(self.ts.is_active())
 
+    def test_clients_hangs_up_before_banner(self):
+        """
+        verify hanging up before banner
+        """
+        server = NullServer()
+        event = threading.Event()
+        self.ts.start_server(event=event, server=server)
+        self.sockc.close()
+        event.wait(1.0)
+        self.assertFalse(self.ts.is_active())
+
     def test_special(self):
         """
         verify that the client can demand odd handshake settings, and can
