@@ -419,7 +419,6 @@ class PKey:
         """
         raise Exception("Not implemented in PKey")
 
-
     @classmethod
     def from_private_key_file(cls, filename, password=None):
         """
