@@ -163,7 +163,8 @@ class AgentSSH:
 
     def remove_keys(self):
         """
-        Request the SSH agent to remove all keys. Existing key objects will still be valid but throw an error, as soon, as you try to sign something with it.
+        Request the SSH agent to remove all keys.
+        Existing key objects will still be valid but throw an error, as soon, as you try to sign something with it.
         """
         msg = Message()
         msg.add_byte(SSH_AGENTC_REMOVE_ALL_IDENTITIES)
@@ -508,7 +509,8 @@ class AgentKey(PKey):
 
     def remove(self):
         """
-        Request the SSH agent to remove this key. This object will still be valid, but fail at the first attempt to sign something.
+        Request the SSH agent to remove this key.
+        This object will still be valid, but fail at the first attempt to sign something.
         """
         self.agent._remove_key(self)
 
