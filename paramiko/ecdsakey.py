@@ -252,10 +252,10 @@ class ECDSAKey(PKey):
         key_size_bytes = (self.verifying_key.curve.key_size + 7) // 8
 
         x_bytes = deflate_long(numbers.x, add_sign_padding=False)
-        x_bytes = b'\x00' * (key_size_bytes - len(x_bytes)) + x_bytes
+        x_bytes = b"\x00" * (key_size_bytes - len(x_bytes)) + x_bytes
 
         y_bytes = deflate_long(numbers.y, add_sign_padding=False)
-        y_bytes = b'\x00' * (key_size_bytes - len(y_bytes)) + y_bytes
+        y_bytes = b"\x00" * (key_size_bytes - len(y_bytes)) + y_bytes
 
         point_str = four_byte + x_bytes + y_bytes
         m.add_string(point_str)

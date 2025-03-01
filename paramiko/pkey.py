@@ -417,7 +417,7 @@ class PKey:
         Append Message with public/private key info that varies
         based on key (or certificate) type.
         """
-        raise Exception('Not implemented in PKey')
+        raise Exception("Not implemented in PKey")
 
 
     @classmethod

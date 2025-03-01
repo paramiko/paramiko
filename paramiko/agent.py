@@ -127,7 +127,7 @@ class AgentSSH:
         return result
 
     def add_key_to_agent(self, key,
-        comment='Added by Paramiko', timeout=None, confirm=False):
+        comment="Added by Paramiko", timeout=None, confirm=False):
         # Implement "ssh-add" functionality, with support for
         # optional timeout (-t) and confirmation (-c) args
         # See: https://tools.ietf.org/html/draft-miller-ssh-agent-02
@@ -148,7 +148,7 @@ class AgentSSH:
         # Send the message, expect a response of SSH2_AGENT_SUCCESS
         resp = self._send_message(m)
         if resp[0] != SSH2_AGENT_SUCCESS:
-            raise(SSHException('Failed to add key to ssh-agent'))
+            raise(SSHException("Failed to add key to ssh-agent"))
 
     def _remove_key(self, key):
         msg = Message()
