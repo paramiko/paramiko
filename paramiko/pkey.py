@@ -411,6 +411,14 @@ class PKey:
         """
         return False
 
+    def append_add_agent_parameters(self, m):
+        """
+        For use with Agent.add_key_to_agent()
+        Append Message with public/private key info that varies
+        based on key (or certificate) type.
+        """
+        raise Exception("Not implemented in PKey")
+
     @classmethod
     def from_private_key_file(cls, filename, password=None):
         """
