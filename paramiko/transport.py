@@ -2309,7 +2309,10 @@ class Transport(threading.Thread, ClosingContextManager):
                 chan._unlink()
             if self.active:
                 self.active = False
-                self.packetizer.close()
+                try:
+                    self.packetizer.close()
+                except EOFError:
+                    self._log(WARNING, "Connection closed early during packetizer closing.")
                 if self.completion_event is not None:
                     self.completion_event.set()
                 if self.auth_handler is not None:
