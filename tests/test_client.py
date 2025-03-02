@@ -193,7 +193,7 @@ class ClientTest(unittest.TestCase):
         server = NullServer(
             allowed_keys=allowed_keys,
             public_blob=public_blob,
-            slow_session_open=slow_session_open
+            slow_session_open=slow_session_open,
         )
         if delay:
             time.sleep(delay)
@@ -599,8 +599,7 @@ class SSHClientTest(ClientTest):
         verify that invoke_shell has a configurable channel timeout
         """
         threading.Thread(
-            target=self._run,
-            kwargs={'slow_session_open': True}
+            target=self._run, kwargs={'slow_session_open': True}
         ).start()
         # Client setup
         self.tc = SSHClient()
@@ -613,7 +612,7 @@ class SSHClientTest(ClientTest):
         self.assertRaises(
             paramiko.ssh_exception.SSHException,
             self.tc.invoke_shell,
-            channel_timeout=0.5
+            channel_timeout=0.5,
         )
         # Invoke shell with channel_timeout > server's time to open session (should succeed)
         self.tc.invoke_shell(channel_timeout=5)
