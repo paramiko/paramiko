@@ -599,7 +599,7 @@ class SSHClientTest(ClientTest):
         verify that invoke_shell has a configurable channel timeout
         """
         threading.Thread(
-            target=self._run, kwargs={'slow_session_open': True}
+            target=self._run, kwargs={"slow_session_open": True}
         ).start()
         # Client setup
         self.tc = SSHClient()
