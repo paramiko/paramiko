@@ -117,11 +117,14 @@ class NullServer(paramiko.ServerInterface):
         channel.env[name] = value
         return True
 
-    def check_channel_pty_request(self, channel, term, width, height, pixelwidth, pixelheight, modes):
+    def check_channel_pty_request(
+        self, channel, term, width, height, pixelwidth, pixelheight, modes
+    ):
         return True
 
     def check_channel_shell_request(self, channel):
         return True
+
 
 class ClientTest(unittest.TestCase):
     def setUp(self):
@@ -167,7 +170,7 @@ class ClientTest(unittest.TestCase):
         public_blob=None,
         kill_event=None,
         server_name=None,
-        slow_session_open = False
+        slow_session_open=False,
     ):
         if allowed_keys is None:
             allowed_keys = FINGERPRINTS.keys()
@@ -187,7 +190,11 @@ class ClientTest(unittest.TestCase):
         keypath = _support("ecdsa-256.key")
         host_key = paramiko.ECDSAKey.from_private_key_file(keypath)
         self.ts.add_server_key(host_key)
-        server = NullServer(allowed_keys=allowed_keys, public_blob=public_blob, slow_session_open=slow_session_open)
+        server = NullServer(
+            allowed_keys=allowed_keys,
+            public_blob=public_blob,
+            slow_session_open=slow_session_open
+        )
         if delay:
             time.sleep(delay)
         self.ts.start_server(self.event, server)
@@ -591,20 +598,23 @@ class SSHClientTest(ClientTest):
         """
         verify that invoke_shell has a configurable channel timeout
         """
-        threading.Thread(target=self._run, kwargs={'slow_session_open': True}).start()
+        threading.Thread(
+            target=self._run,
+            kwargs={'slow_session_open': True}
+        ).start()
         # Client setup
         self.tc = SSHClient()
         self.tc.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
         # Initiate connection
-        self.tc.connect(
-            **dict(
-                self.connect_kwargs, password="pygmalion"
-            )
-        )
+        self.tc.connect(**dict(self.connect_kwargs, password="pygmalion"))
 
         # Invoke shell with channel_timeout < server's time to open session (should fail)
-        self.assertRaises(paramiko.ssh_exception.SSHException, self.tc.invoke_shell, channel_timeout=0.5)
+        self.assertRaises(
+            paramiko.ssh_exception.SSHException,
+            self.tc.invoke_shell,
+            channel_timeout=0.5
+        )
         # Invoke shell with channel_timeout > server's time to open session (should succeed)
         self.tc.invoke_shell(channel_timeout=5)
 

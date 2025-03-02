@@ -577,7 +577,7 @@ class SSHClient(ClosingContextManager):
         width_pixels=0,
         height_pixels=0,
         environment=None,
-        channel_timeout=None
+        channel_timeout=None,
     ):
         """
         Start an interactive shell session on the SSH server.  A new `.Channel`
