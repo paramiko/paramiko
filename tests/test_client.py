@@ -40,6 +40,7 @@ import paramiko
 from paramiko import SSHClient
 from paramiko.pkey import PublicBlob
 from paramiko.ssh_exception import SSHException, AuthenticationException
+import paramiko.ssh_exception
 
 from ._util import _support, requires_sha1_signing, slow
 
@@ -62,6 +63,7 @@ class NullServer(paramiko.ServerInterface):
         self.__allowed_keys = kwargs.pop("allowed_keys", [])
         # And allow them to set a (single...meh) expected public blob (cert)
         self.__expected_public_blob = kwargs.pop("public_blob", None)
+        self.__slow_session_open = kwargs.pop("slow_session_open")
         super().__init__(*args, **kwargs)
 
     def get_allowed_auths(self, username):
@@ -96,6 +98,8 @@ class NullServer(paramiko.ServerInterface):
         return paramiko.AUTH_SUCCESSFUL if happy else paramiko.AUTH_FAILED
 
     def check_channel_request(self, kind, chanid):
+        if self.__slow_session_open:
+            time.sleep(1)
         return paramiko.OPEN_SUCCEEDED
 
     def check_channel_exec_request(self, channel, command):
@@ -113,6 +117,11 @@ class NullServer(paramiko.ServerInterface):
         channel.env[name] = value
         return True
 
+    def check_channel_pty_request(self, channel, term, width, height, pixelwidth, pixelheight, modes):
+        return True
+
+    def check_channel_shell_request(self, channel):
+        return True
 
 class ClientTest(unittest.TestCase):
     def setUp(self):
@@ -158,6 +167,7 @@ class ClientTest(unittest.TestCase):
         public_blob=None,
         kill_event=None,
         server_name=None,
+        slow_session_open = False
     ):
         if allowed_keys is None:
             allowed_keys = FINGERPRINTS.keys()
@@ -177,7 +187,7 @@ class ClientTest(unittest.TestCase):
         keypath = _support("ecdsa-256.key")
         host_key = paramiko.ECDSAKey.from_private_key_file(keypath)
         self.ts.add_server_key(host_key)
-        server = NullServer(allowed_keys=allowed_keys, public_blob=public_blob)
+        server = NullServer(allowed_keys=allowed_keys, public_blob=public_blob, slow_session_open=slow_session_open)
         if delay:
             time.sleep(delay)
         self.ts.start_server(self.event, server)
@@ -576,6 +586,27 @@ class SSHClientTest(ClientTest):
         self.event.wait(1.0)
 
         self.assertRaises(paramiko.SSHException, self.tc.open_sftp)
+
+    def test_invoke_shell_timeout(self):
+        """
+        verify that invoke_shell has a configurable channel timeout
+        """
+        threading.Thread(target=self._run, kwargs={'slow_session_open': True}).start()
+        # Client setup
+        self.tc = SSHClient()
+        self.tc.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+
+        # Initiate connection
+        self.tc.connect(
+            **dict(
+                self.connect_kwargs, password="pygmalion"
+            )
+        )
+
+        # Invoke shell with channel_timeout < server's time to open session (should fail)
+        self.assertRaises(paramiko.ssh_exception.SSHException, self.tc.invoke_shell, channel_timeout=0.5)
+        # Invoke shell with channel_timeout > server's time to open session (should succeed)
+        self.tc.invoke_shell(channel_timeout=5)
 
     @requires_gss_auth
     def test_auth_trickledown_gsskex(self):
