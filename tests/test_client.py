@@ -608,13 +608,15 @@ class SSHClientTest(ClientTest):
         # Initiate connection
         self.tc.connect(**dict(self.connect_kwargs, password="pygmalion"))
 
-        # Invoke shell with channel_timeout < server's time to open session (should fail)
+        # Invoke shell with channel_timeout < server's time to open session
+        # (should fail)
         self.assertRaises(
             paramiko.ssh_exception.SSHException,
             self.tc.invoke_shell,
             channel_timeout=0.5,
         )
-        # Invoke shell with channel_timeout > server's time to open session (should succeed)
+        # Invoke shell with channel_timeout > server's time to open session
+        # (should succeed)
         self.tc.invoke_shell(channel_timeout=5)
 
     @requires_gss_auth

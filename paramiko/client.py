@@ -591,7 +591,9 @@ class SSHClient(ClosingContextManager):
         :param int width_pixels: the width (in pixels) of the terminal window
         :param int height_pixels: the height (in pixels) of the terminal window
         :param dict environment: the command's environment
-        :param int channel_timeout: set the channel timeout for opening the session. See `.Channel.settimeout`
+        :param int channel_timeout:
+            set the channel timeout for opening the session.
+            See `.Channel.settimeout`
         :return: a new `.Channel` connected to the remote shell
 
         :raises: `.SSHException` -- if the server fails to invoke a shell
