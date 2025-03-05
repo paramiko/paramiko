@@ -2369,6 +2369,8 @@ class Transport(threading.Thread, ClosingContextManager):
                 buf = self.packetizer.readline(timeout)
             except ProxyCommandFailure:
                 raise
+            except ConnectionResetError:
+                raise
             except Exception as e:
                 raise SSHException(
                     "Error reading SSH protocol banner" + str(e)
