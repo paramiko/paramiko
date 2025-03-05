@@ -129,6 +129,13 @@ class AgentProxyThread(threading.Thread):
         self._agent = agent
         self._exit = False
 
+    def _agent_is_pageant(self):
+        if sys.platform != "win32":
+            return False
+        from . import win_pageant
+
+        return isinstance(self._agent._conn, win_pageant.PageantConnection)
+
     def run(self):
         try:
             (r, addr) = self.get_connection()
@@ -138,9 +145,13 @@ class AgentProxyThread(threading.Thread):
             # The address should be an IP address as a string? or None
             self.__addr = addr
             self._agent.connect()
-            if not isinstance(self._agent, int) and (
-                self._agent._conn is None
-                or not hasattr(self._agent._conn, "fileno")
+            if (
+                not isinstance(self._agent, int)
+                and (
+                    self._agent._conn is None
+                    or not hasattr(self._agent._conn, "fileno")
+                )
+                and (not self._agent_is_pageant())
             ):
                 raise AuthenticationException("Unable to connect to SSH agent")
             self._communicate()
@@ -210,10 +221,31 @@ class AgentRemoteProxy(AgentProxyThread):
 
     def __init__(self, agent, chan):
         AgentProxyThread.__init__(self, agent)
+        chan.settimeout(0.5)
         self.__chan = chan
 
     def get_connection(self):
         return self.__chan, None
+
+    def _recv_agent_msg(self, chan):
+        sizeData = chan.recv(4)
+        if len(sizeData) == 0:
+            return b""
+        size = struct.unpack(">I", sizeData)[0]
+        return sizeData + chan.recv(size)
+
+    def _communicate(self):
+        while not self._exit:
+            try:
+                data = self._recv_agent_msg(self.__chan)
+                if len(data) == 0:
+                    self._close()
+                    break
+            except socket.timeout:
+                continue
+            self._agent._conn.send(data)
+            data = self._recv_agent_msg(self._agent._conn)
+            self.__chan.send(data)
 
 
 def get_agent_connection():
