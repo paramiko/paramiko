@@ -403,14 +403,13 @@ class SFTPFile(BufferedFile):
         """
         t, msg = self.sftp._request(
             CMD_EXTENDED,
-            "check-file",
+            "check-file-handle",
             self.handle,
             hash_algorithm,
             int64(offset),
             int64(length),
             block_size,
         )
-        msg.get_text()  # ext
         msg.get_text()  # alg
         data = msg.get_remainder()
         return data
