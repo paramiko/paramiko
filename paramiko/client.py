@@ -535,7 +535,7 @@ class SSHClient(ClosingContextManager):
         :param int bufsize:
             interpreted the same way as by the built-in ``file()`` function in
             Python
-        :param int timeout:
+        :param float timeout:
             set command's channel timeout. See `.Channel.settimeout`
         :param bool get_pty:
             Request a pseudo-terminal from the server (default ``False``).
