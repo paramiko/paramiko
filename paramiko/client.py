@@ -861,17 +861,21 @@ class AutoAddPolicy(MissingHostKeyPolicy):
         )
 
 
-def no_yes(prompt: str) -> bool:
-    """ask a yes/no question, defaulting to no. Return False on no, True on yes"""
+def no_yes_options(prompt: str, options: list[str] = []) -> bool:
     while True:
-        res = input(prompt + "\a [No/yes] ").lower()
-        if res and res not in ("yes", "no"):
-            print("invalid response, must be one of yes or no")
-            continue
-        if not res or res != "yes":
+        res = input(prompt + "\a [No/yes/...] ").lower()
+        if not res:  # default, no
             return False
-        break
-    return True
+        if res == "no":
+            return False
+        if res == "yes":
+            return True
+        if res in options:
+            return True
+        print("invalid response, must be one of yes, no, or %s" % ", ".join(options))
+        continue
+    # not reached, fail closed
+    return False
 
 
 class PromptAddPolicy(MissingHostKeyPolicy):
@@ -882,7 +886,13 @@ class PromptAddPolicy(MissingHostKeyPolicy):
 
     def missing_host_key(self, client, hostname, key):
         WarningPolicy.missing_host_key(self, client, hostname, key)
-        if not no_yes("Are you sure you want to continue connecting?"):
+        options = []
+        for hash_func in (hashlib.md5, hashlib.sha256):
+            # aa:bb:...
+            options.append(hexlify(hash_func(key).digest(), b':', 1).decode('ascii'))
+            # aabb...
+            options.append(hexlify(hash_func(key).digest()).decode('ascii'))
+        if not no_yes_options("Are you sure you want to continue connecting?", options):
             raise SSHException(
                 "Server {!r} not found in known_hosts".format(hostname)
             )
