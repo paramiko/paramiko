@@ -802,7 +802,11 @@ class SSHClient(ClosingContextManager):
 
         if password is not None:
             try:
-                self._transport.auth_password(username, password)
+                # if the linux does not hava any password
+                if password == '':
+                    self._transport.auth_none(username)
+                else:
+                    self._transport.auth_password(username, password)
                 return
             except SSHException as e:
                 saved_exception = e
