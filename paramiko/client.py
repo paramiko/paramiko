@@ -390,6 +390,10 @@ class SSHClient(ClosingContextManager):
                     # As mentioned in socket docs it is better
                     # to close sockets explicitly
                     if sock:
+                        try:
+                            sock.shutdown(socket.SHUT_RDWR)
+                        except OSError:
+                            pass  # Ignore errors if the socket is already closed or not connected
                         sock.close()
                     # Raise anything that isn't a straight up connection error
                     # (such as a resolution error)
