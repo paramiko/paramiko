@@ -65,7 +65,7 @@ setup(
         "CI": "https://app.circleci.com/pipelines/github/paramiko/paramiko",
     },
     packages=["paramiko"],
-    license="LGPL",
+    license="LGPL-2.1-or-later",
     platforms="Posix; MacOS X; Windows",
     classifiers=[
         "Development Status :: 5 - Production/Stable",
