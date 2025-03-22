@@ -812,6 +812,12 @@ class SSHClient(ClosingContextManager):
                 return
             except SSHException as e:
                 saved_exception = e
+        else:
+            try:
+                self._transport.auth_none(username)
+                return
+            except SSHException as e:
+                saved_exception = e
 
         # if we got an auth-failed exception earlier, re-raise it
         if saved_exception is not None:
