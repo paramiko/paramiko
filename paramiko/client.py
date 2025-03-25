@@ -141,14 +141,7 @@ class SSHClient(ClosingContextManager):
         if self._host_keys_filename is not None:
             self.load_host_keys(self._host_keys_filename)
 
-        with open(filename, "w") as f:
-            for hostname, keys in self._host_keys.items():
-                for keytype, key in keys.items():
-                    f.write(
-                        "{} {} {}\n".format(
-                            hostname, keytype, key.get_base64()
-                        )
-                    )
+        self._host_keys.save(filename)
 
     def get_host_keys(self):
         """
