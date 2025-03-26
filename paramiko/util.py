@@ -241,14 +241,21 @@ def get_thread_id():
         return _g_thread_data.id
 
 
-def log_to_file(filename, level=DEBUG):
-    """send paramiko logs to a logfile,
-    if they're not already going somewhere"""
+def log_to_file(filename, level=DEBUG, file_mode="a"):
+    """
+    send paramiko logs to a logfile, if they're not already going somewhere.
+
+    :param file_mode: File mode to open the provided file path with.
+                      Defaults to "a". In some scenarios (e.g. when file mode
+                      is /dev/{stdout,stderr} you may want to use "w" otherwise
+                      "Illegal seek" error will be thrown when trying to open
+                      the file).
+    """
     logger = logging.getLogger("paramiko")
     if len(logger.handlers) > 0:
         return
     logger.setLevel(level)
-    f = open(filename, "a")
+    f = open(filename, file_mode)
     handler = logging.StreamHandler(f)
     frm = "%(levelname)-.3s [%(asctime)s.%(msecs)03d] thr=%(_threadid)-3d"
     frm += " %(name)s: %(message)s"
