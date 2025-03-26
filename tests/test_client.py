@@ -30,6 +30,7 @@ import time
 import unittest
 import warnings
 import weakref
+from shutil import copyfile
 from tempfile import mkstemp
 
 import pytest
@@ -37,7 +38,7 @@ from pytest_relaxed import raises
 from unittest.mock import patch, Mock
 
 import paramiko
-from paramiko import SSHClient
+from paramiko import SSHClient, Ed25519Key, RSAKey
 from paramiko.pkey import PublicBlob
 from paramiko.ssh_exception import SSHException, AuthenticationException
 
@@ -784,6 +785,24 @@ class SSHClientTest(ClientTest):
         )
         # Safety check
         assert not Transport.called
+
+
+@patch("os.path.expanduser")
+def test_discover_keys(expanduser, tmpdir):
+    tmpdir = str(tmpdir)
+
+    expanduser.side_effect = lambda s: s.replace("~/", tmpdir + "/")
+
+    os.mkdir(tmpdir + "/ssh")
+    os.mkdir(tmpdir + "/.ssh")
+    copyfile(_support("test_rsa.key"), tmpdir + "/.ssh/id_rsa")
+    copyfile(_support("test_ed25519.key"), tmpdir + "/ssh/id_ed25519")
+
+    keyfiles = SSHClient()._discover_keys()
+    assert keyfiles == [
+        (RSAKey, tmpdir + "/.ssh/id_rsa"),
+        (Ed25519Key, tmpdir + "/ssh/id_ed25519"),
+    ]
 
 
 class PasswordPassphraseTests(ClientTest):

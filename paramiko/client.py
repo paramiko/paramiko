@@ -760,30 +760,8 @@ class SSHClient(ClosingContextManager):
                 except SSHException as e:
                     saved_exception = e
 
-        if not two_factor:
-            keyfiles = []
-
-            for keytype, name in [
-                (RSAKey, "rsa"),
-                (DSSKey, "dsa"),
-                (ECDSAKey, "ecdsa"),
-                (Ed25519Key, "ed25519"),
-            ]:
-                # ~/ssh/ is for windows
-                for directory in [".ssh", "ssh"]:
-                    full_path = os.path.expanduser(
-                        "~/{}/id_{}".format(directory, name)
-                    )
-                    if os.path.isfile(full_path):
-                        # TODO: only do this append if below did not run
-                        keyfiles.append((keytype, full_path))
-                        if os.path.isfile(full_path + "-cert.pub"):
-                            keyfiles.append((keytype, full_path + "-cert.pub"))
-
-            if not look_for_keys:
-                keyfiles = []
-
-            for pkey_class, filename in keyfiles:
+        if not two_factor and look_for_keys:
+            for pkey_class, filename in self._discover_keys():
                 try:
                     key = self._key_from_filepath(
                         filename, pkey_class, passphrase
@@ -817,6 +795,28 @@ class SSHClient(ClosingContextManager):
         if saved_exception is not None:
             raise saved_exception
         raise SSHException("No authentication methods available")
+
+    def _discover_keys(self):
+        keyfiles = []
+
+        for keytype, name in [
+            (RSAKey, "rsa"),
+            (DSSKey, "dsa"),
+            (ECDSAKey, "ecdsa"),
+            (Ed25519Key, "ed25519"),
+        ]:
+            # ~/ssh/ is for windows
+            for directory in [".ssh", "ssh"]:
+                full_path = os.path.expanduser(
+                    "~/{}/id_{}".format(directory, name)
+                )
+                if os.path.isfile(full_path):
+                    # TODO: only do this append if below did not run
+                    keyfiles.append((keytype, full_path))
+                    if os.path.isfile(full_path + "-cert.pub"):
+                        keyfiles.append((keytype, full_path + "-cert.pub"))
+
+        return keyfiles
 
     def _log(self, level, msg):
         self._transport._log(level, msg)
