@@ -521,7 +521,7 @@ class SSHConfig:
         tokens = shlex.split(match)
         while tokens:
             match = {"type": None, "param": None, "negate": False}
-            type_ = tokens.pop(0)
+            type_ = tokens.pop(0).lower()
             # Handle per-keyword negation
             if type_.startswith("!"):
                 match["negate"] = True
