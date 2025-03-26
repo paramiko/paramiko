@@ -96,6 +96,9 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
 
     Instances of this class may be used as context managers.
     """
+    
+    # Read at most this many bytes for each chunk transferred.
+    MAX_REQUEST_SIZE = 32768
 
     def __init__(self, sock):
         """
@@ -675,7 +678,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
     def _transfer_with_callback(self, reader, writer, file_size, callback):
         size = 0
         while True:
-            data = reader.read(32768)
+            data = reader.read(self.MAX_REQUEST_SIZE)
             writer.write(data)
             size += len(data)
             if len(data) == 0:
