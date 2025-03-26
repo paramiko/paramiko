@@ -391,10 +391,6 @@ class SSHClient(ClosingContextManager):
                     # to close sockets explicitly
                     if sock:
                         sock.close()
-                    # Raise anything that isn't a straight up connection error
-                    # (such as a resolution error)
-                    if e.errno not in (ECONNREFUSED, EHOSTUNREACH):
-                        raise
                     # Capture anything else so we know how the run looks once
                     # iteration is complete. Retain info about which attempt
                     # this was.
