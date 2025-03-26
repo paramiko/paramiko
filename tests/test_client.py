@@ -333,6 +333,8 @@ class SSHClientTest(ClientTest):
                 key_filename=key_path,
                 public_blob=PublicBlob.from_file(f"{key_path}-cert.pub"),
             )
+            # Transport needs to be closed after each iteration.
+            self.tc.close()
 
     @requires_sha1_signing
     def test_certs_implicitly_loaded_alongside_key_filename_keys(self):
@@ -348,6 +350,8 @@ class SSHClientTest(ClientTest):
                 key_filename=key_path,
                 public_blob=PublicBlob.from_file(f"{key_path}-cert.pub"),
             )
+            # Transport needs to be closed after each iteration.
+            self.tc.close()
 
     def _cert_algo_test(self, ver, alg):
         # Issue #2017; see auth_handler.py
