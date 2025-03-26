@@ -231,7 +231,10 @@ class Transport(threading.Thread, ClosingContextManager):
         "diffie-hellman-group1-sha1",
     )
     if KexCurve25519.is_available():
-        _preferred_kex = ("curve25519-sha256@libssh.org",) + _preferred_kex
+        _preferred_kex = (
+            "curve25519-sha256@libssh.org",
+            "curve25519-sha256",
+        ) + _preferred_kex
     _preferred_gsskex = (
         "gss-gex-sha1-toWM5Slw5Ew8Mqkay+al2g==",
         "gss-group14-sha1-toWM5Slw5Ew8Mqkay+al2g==",
@@ -348,6 +351,7 @@ class Transport(threading.Thread, ClosingContextManager):
     }
     if KexCurve25519.is_available():
         _kex_info["curve25519-sha256@libssh.org"] = KexCurve25519
+        _kex_info["curve25519-sha256"] = KexCurve25519
 
     _compression_info = {
         # zlib@openssh.com is just zlib, but only turned on after a successful
