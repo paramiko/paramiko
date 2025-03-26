@@ -689,7 +689,7 @@ class SSHClientTest(ClientTest):
         )
 
         self.event.wait(1.0)
-        self.assertTrue(self.event.isSet())
+        self.assertTrue(self.event.is_set())
         self.assertTrue(self.ts.is_active())
 
     def test_update_environment(self):
