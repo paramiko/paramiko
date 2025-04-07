@@ -393,7 +393,8 @@ class SSHClient(ClosingContextManager):
                         try:
                             sock.shutdown(socket.SHUT_RDWR)
                         except OSError:
-                            pass  # Ignore errors if the socket is already closed or not connected
+                            # Case is already closed or not connected
+                            pass
                         sock.close()
                     # Raise anything that isn't a straight up connection error
                     # (such as a resolution error)
