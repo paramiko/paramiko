@@ -321,7 +321,7 @@ class AuthHandler:
         # regarding server-sig-algs, it's impossible to fit this into the rest
         # of the logic here.
         if key_type.endswith("-cert-v01@openssh.com") and re.search(
-            r"-OpenSSH_(?:[1-6]|7\.[0-7])", self.transport.remote_version
+            r"-OpenSSH_(?:(?:[1-6]|7)\.[0-7])", self.transport.remote_version
         ):
             pubkey_algo = "ssh-rsa-cert-v01@openssh.com"
             self.transport._agreed_pubkey_algorithm = pubkey_algo
