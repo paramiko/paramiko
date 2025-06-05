@@ -341,7 +341,7 @@ class TransportTest(unittest.TestCase):
 
     def test_exit_status(self):
         """
-        verify that get_exit_status() works.
+        verify that recv_exit_status() works.
         """
         self.setup_test_server()
 
