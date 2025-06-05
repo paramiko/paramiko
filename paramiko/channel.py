@@ -255,6 +255,31 @@ class Channel(ClosingContextManager):
         self._wait_for_event()
 
     @open_only
+    def send_signal(self, signal):
+        """
+        Send signal to the process that was opened via exec_command.
+
+        .. note::
+            Support for signal requests was added to OpenSSH in version 7.9.
+            Other SSH servers may not implement this feature.
+
+        See `section 6.9 of RFC 4254 ("The Secure Shell (SSH)
+        Connection Protocol")
+        <https://datatracker.ietf.org/doc/html/rfc4254#section-6.9>`_.
+
+        :param str signal: name of the signal to send. Possible values include:
+            "ABRT", "ALRM", "FPE", "HUP", "ILL", "INT", "KILL", "PIPE", "QUIT",
+            "SEGV", "TERM", "USR1", "USR2".
+        """
+        m = Message()
+        m.add_byte(cMSG_CHANNEL_REQUEST)
+        m.add_int(self.remote_chanid)
+        m.add_string("signal")
+        m.add_boolean(False)
+        m.add_string(signal)
+        self.transport._send_user_message(m)
+
+    @open_only
     def invoke_subsystem(self, subsystem):
         """
         Request a subsystem on the server (for example, ``sftp``).  If the
