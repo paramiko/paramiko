@@ -2,6 +2,9 @@
 Changelog
 =========
 
+- :feature:`2517` Added support for exit-signal messages via new
+  `send_exit_signal` and `recv_exit_signal` methods in
+  `~paramiko.channel.Channel`.
 - :release:`3.5.1 <2025-02-03>`
 - :bug:`2490` Private key material is now explicitly 'unpadded' during
   decryption, removing a reliance on some lax OpenSSL behavior & making us
