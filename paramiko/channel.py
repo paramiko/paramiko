@@ -123,6 +123,7 @@ class Channel(ClosingContextManager):
         self.out_max_packet_size = 0
         self.in_window_threshold = 0
         self.in_window_sofar = 0
+        # Whether exit-status or exit-signal message has been received
         self.status_event = threading.Event()
         self._name = str(chanid)
         self.logger = util.get_logger("paramiko.transport")
@@ -131,6 +132,10 @@ class Channel(ClosingContextManager):
         self.event_ready = False
         self.combine_stderr = False
         self.exit_status = -1
+        self.exit_signal = None
+        self.core_dumped = False
+        self.signal_message = None
+        self.language_tag = None
         self.origin_addr = None
 
     def __del__(self):
@@ -362,9 +367,10 @@ class Channel(ClosingContextManager):
     def exit_status_ready(self):
         """
         Return true if the remote process has exited and returned an exit
-        status. You may use this to poll the process status if you don't
-        want to block in `recv_exit_status`. Note that the server may not
-        return an exit status in some cases (like bad servers).
+        status or an exit signal message. You may use this to poll the process
+        status if you don't want to block in `recv_exit_status` or
+        `recv_exit_signal`. Note that the server may not return an exit status
+        in some cases (like bad servers).
 
         :return:
             ``True`` if `recv_exit_status` will return immediately, else
@@ -379,8 +385,10 @@ class Channel(ClosingContextManager):
         Return the exit status from the process on the server.  This is
         mostly useful for retrieving the results of an `exec_command`.
         If the command hasn't finished yet, this method will wait until
-        it does, or until the channel is closed.  If no exit status is
-        provided by the server, -1 is returned.
+        it does, or until the channel is closed.
+
+        If no exit status is provided by the server, or if the process was
+        terminated by a signal, -1 is returned.
 
         .. warning::
             In some situations, receiving remote output larger than the current
@@ -401,6 +409,38 @@ class Channel(ClosingContextManager):
         assert self.status_event.is_set()
         return self.exit_status
 
+    def recv_exit_signal(self):
+        """
+        Return the exit signal if the remote process was terminated by one.
+
+        If the command hasn't finished yet, this method will wait until
+        it does, or until the channel is closed.
+
+        If the server does not send this information - either because the
+        process has terminated itself, not by a signal; or because the server
+        does not support sending this message - this method returns ``None``.
+
+        Otherwise returns a tuple with 4 items: bytestring with the name of the
+        signal that terminated the remote process, a "core dumped" flag, a
+        bytestring with the error message associated with the termination of
+        the process, and a bytestring with the RFC 3066 language tag associated
+        with that error message.
+
+        Most common implementations of SSH servers do not utilize the error
+        message nor the language tag, and instead send zero-length strings in
+        those fields.
+        """
+        self.status_event.wait()
+        assert self.status_event.is_set()
+        if self.exit_signal is None:
+            return None
+        return (
+            self.exit_signal,
+            self.core_dumped,
+            self.signal_message,
+            self.language_tag,
+        )
+
     def send_exit_status(self, status):
         """
         Send the exit status of an executed command to the client.  (This
@@ -420,6 +460,37 @@ class Channel(ClosingContextManager):
         m.add_string("exit-status")
         m.add_boolean(False)
         m.add_int(status)
+        self.transport._send_user_message(m)
+
+    def send_exit_signal(
+        self,
+        signal_name,
+        core_dumped,
+        error_message="",
+        language_tag="",
+    ):
+        """
+        Send information about the exit signal to the client.
+
+        Use only in server mode. If a process has been terminated due to a
+        signal, the server can indicate that using this channel request.
+
+        :param bytes signal_name: the name of the signal to send
+        :param bool core_dumped: whether the signal resulted in a core dump
+        :param bytes error_message: an optional error message containing a
+            textual explanation about the error
+        :param bytes language_tag: optional RFC 3066 language tag for the error
+            message
+        """
+        m = Message()
+        m.add_byte(cMSG_CHANNEL_REQUEST)
+        m.add_int(self.remote_chanid)
+        m.add_string("exit-signal")
+        m.add_boolean(False)
+        m.add_string(signal_name)
+        m.add_boolean(core_dumped)
+        m.add_string(error_message)
+        m.add_string(language_tag)
         self.transport._send_user_message(m)
 
     @open_only
@@ -1075,6 +1146,13 @@ class Channel(ClosingContextManager):
         ok = False
         if key == "exit-status":
             self.exit_status = m.get_int()
+            self.status_event.set()
+            ok = True
+        elif key == "exit-signal":
+            self.exit_signal = m.get_string()
+            self.core_dumped = m.get_boolean()
+            self.signal_message = m.get_string()
+            self.language_tag = m.get_string()
             self.status_event.set()
             ok = True
         elif key == "xon-xoff":

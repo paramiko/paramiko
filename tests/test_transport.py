@@ -368,6 +368,34 @@ class TransportTest(unittest.TestCase):
         self.assertEqual(23, chan.recv_exit_status())
         chan.close()
 
+    def test_exit_signal(self):
+        """
+        verify that recv_exit_signal() works.
+        """
+        self.setup_test_server()
+
+        chan = self.tc.open_session()
+        schan = self.ts.accept(1.0)
+        chan.exec_command("yes")
+        self.assertTrue(not chan.exit_status_ready())
+        # trigger an EOF
+        schan.shutdown_read()
+        schan.shutdown_write()
+        schan.send_exit_signal(b"Signal", True, b"Error msg", b"Language tag")
+        schan.close()
+
+        count = 0
+        while not chan.exit_status_ready():
+            time.sleep(0.1)
+            count += 1
+            if count > 50:
+                raise Exception("timeout")
+        self.assertEqual(
+            (b"Signal", True, b"Error msg", b"Language tag"),
+            chan.recv_exit_signal(),
+        )
+        chan.close()
+
     def test_select(self):
         """
         verify that select() on a channel works.
