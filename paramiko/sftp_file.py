@@ -65,6 +65,7 @@ class SFTPFile(BufferedFile):
         BufferedFile._set_mode(self, mode, bufsize)
         self.pipelined = False
         self._prefetching = False
+        self._prefetch_all_enqueued = False
         self._prefetch_done = False
         self._prefetch_data = {}
         self._prefetch_extents = {}
@@ -563,6 +564,7 @@ class SFTPFile(BufferedFile):
             )
             with self._prefetch_lock:
                 self._prefetch_extents[num] = (offset, length)
+        self._prefetch_all_enqueued = True
 
     def _async_response(self, t, msg, num):
         if t == CMD_STATUS:
@@ -582,7 +584,10 @@ class SFTPFile(BufferedFile):
                     offset, length = self._prefetch_extents[num]
                     self._prefetch_data[offset] = data
                     del self._prefetch_extents[num]
-                    if len(self._prefetch_extents) == 0:
+                    if (
+                        self._prefetch_all_enqueued
+                        and len(self._prefetch_extents) == 0
+                    ):
                         self._prefetch_done = True
                     break
 
