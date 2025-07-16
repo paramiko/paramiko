@@ -26,11 +26,11 @@ import time
 
 # Try-and-ignore import so platforms w/o subprocess (eg Google App Engine) can
 # still import paramiko.
-subprocess = None
+subprocess, subprocess_import_error_msg = None
 try:
     import subprocess
-except ImportError:
-    pass
+except ImportError as e:
+    subprocess_import_error_msg = e.msg
 
 from paramiko.ssh_exception import ProxyCommandFailure
 from paramiko.util import ClosingContextManager
@@ -57,7 +57,7 @@ class ProxyCommand(ClosingContextManager):
             the command that should be executed and used as the proxy.
         """
         if subprocess is None:
-            raise ImportError("subprocess module is not available")
+            raise ImportError("subprocess module is not available: " + subprocess_import_error_msg)
         self.cmd = shlex.split(command_line)
         self.process = subprocess.Popen(
             self.cmd,

@@ -31,11 +31,11 @@ from hashlib import sha1
 from io import StringIO
 from functools import partial
 
-invoke = None
+invoke, invoke_import_error_msg = None
 try:
     import invoke
 except ImportError as e:
-    pass
+    invoke_import_error_msg = e.msg
 
 from .ssh_exception import CouldNotCanonicalize, ConfigParseError
 
@@ -394,7 +394,7 @@ class SSHConfig:
                 # This is the laziest spot in which we can get mad about an
                 # inability to import Invoke.
                 if invoke is None:
-                    raise ImportError("invoke module is not available")
+                    raise ImportError("invoke module is not available: " + invoke_import_error_msg)
                 # Like OpenSSH, we 'redirect' stdout but let stderr bubble up
                 passed = invoke.run(exec_cmd, hide="stdout", warn=True).ok
             # Tackle any 'passed, but was negated' results from above
