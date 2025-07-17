@@ -26,7 +26,7 @@ import time
 
 # Try-and-ignore import so platforms w/o subprocess (eg Google App Engine) can
 # still import paramiko.
-subprocess, subprocess_import_error_msg = None
+subprocess, subprocess_import_error_msg = None, None
 try:
     import subprocess
 except ImportError as e:

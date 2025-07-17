@@ -31,7 +31,7 @@ from hashlib import sha1
 from io import StringIO
 from functools import partial
 
-invoke, invoke_import_error_msg = None
+invoke, invoke_import_error_msg = None, None
 try:
     import invoke
 except ImportError as e:
