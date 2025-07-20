@@ -119,10 +119,8 @@ class PKey:
     }
     _PRIVATE_KEY_FORMAT_ORIGINAL = 1
     _PRIVATE_KEY_FORMAT_OPENSSH = 2
-    BEGIN_TAG = re.compile(
-        r"^-{5}BEGIN (RSA|DSA|EC|OPENSSH) PRIVATE KEY-{5}\s*$"
-    )
-    END_TAG = re.compile(r"^-{5}END (RSA|DSA|EC|OPENSSH) PRIVATE KEY-{5}\s*$")
+    BEGIN_TAG = re.compile(r"^-{5}BEGIN (RSA|EC|OPENSSH) PRIVATE KEY-{5}\s*$")
+    END_TAG = re.compile(r"^-{5}END (RSA|EC|OPENSSH) PRIVATE KEY-{5}\s*$")
 
     @staticmethod
     def from_path(path, passphrase=None):
@@ -142,7 +140,7 @@ class PKey:
         # TODO: make sure sphinx is reading Path right in param list...
 
         # Lazy import to avoid circular import issues
-        from paramiko import DSSKey, RSAKey, Ed25519Key, ECDSAKey
+        from paramiko import RSAKey, Ed25519Key, ECDSAKey
 
         # Normalize to string, as cert suffix isn't quite an extension, so
         # pathlib isn't useful for this.
@@ -181,9 +179,7 @@ class PKey:
         # to be cryptography-object-forward. this is still likely faster than
         # the old SSHClient code that just tried instantiating every class!
         key_class = None
-        if isinstance(loaded, asymmetric.dsa.DSAPrivateKey):
-            key_class = DSSKey
-        elif isinstance(loaded, asymmetric.rsa.RSAPrivateKey):
+        if isinstance(loaded, asymmetric.rsa.RSAPrivateKey):
             key_class = RSAKey
         elif isinstance(loaded, asymmetric.ed25519.Ed25519PrivateKey):
             key_class = Ed25519Key
@@ -418,7 +414,7 @@ class PKey:
         key is encrypted and ``password`` is not ``None``, the given password
         will be used to decrypt the key (otherwise `.PasswordRequiredException`
         is thrown).  Through the magic of Python, this factory method will
-        exist in all subclasses of PKey (such as `.RSAKey` or `.DSSKey`), but
+        exist in all subclasses of PKey (such as `.RSAKey`), but
         is useless on the abstract PKey class.
 
         :param str filename: name of the file to read
@@ -492,13 +488,15 @@ class PKey:
         ``password`` is not ``None``, the given password will be used to
         decrypt the key (otherwise `.PasswordRequiredException` is thrown).
 
-        :param str tag: ``"RSA"`` or ``"DSA"``, the tag used to mark the
-            data block.
-        :param str filename: name of the file to read.
+        :param str tag:
+            ``"RSA"`` (or etc), the tag used to mark the data block.
+        :param str filename:
+            name of the file to read.
         :param str password:
             an optional password to use to decrypt the key file, if it's
             encrypted.
-        :return: the `bytes` that make up the private key.
+        :return:
+            the `bytes` that make up the private key.
 
         :raises: ``IOError`` -- if there was an error reading the file.
         :raises: `.PasswordRequiredException` -- if the private key file is
@@ -745,7 +743,7 @@ class PKey:
         a password is given, DES-EDE3-CBC is used.
 
         :param str tag:
-            ``"RSA"`` or ``"DSA"``, the tag used to mark the data block.
+            ``"RSA"`` or etc, the tag used to mark the data block.
         :param filename: name of the file to write.
         :param bytes data: data blob that makes up the private key.
         :param str password: an optional password to use to encrypt the file.
@@ -868,7 +866,7 @@ class PKey:
 # readable from a one-line file of the format:
 #     <key-name> <base64-blob> [<comment>]
 # Of little value in the case of standard public keys
-# {ssh-rsa, ssh-dss, ssh-ecdsa, ssh-ed25519}, but should
+# {ssh-rsa, ssh-ecdsa, ssh-ed25519}, but should
 # provide rudimentary support for {*-cert.v01}
 class PublicBlob:
     """

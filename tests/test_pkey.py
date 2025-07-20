@@ -30,7 +30,6 @@ from io import StringIO
 
 from paramiko import (
     RSAKey,
-    DSSKey,
     ECDSAKey,
     Ed25519Key,
     Message,
@@ -50,18 +49,15 @@ from ._util import _support, is_low_entropy, requires_sha1_signing
 
 # from openssh's ssh-keygen
 PUB_RSA = "ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAIEA049W6geFpmsljTwfvI1UmKWWJPNFI74+vNKTk4dmzkQY2yAMs6FhlvhlI8ysU4oj71ZsRYMecHbBbxdN79+JRFVYTKaLqjwGENeTd+yv4q+V2PvZv3fLnzApI3l7EJCqhWwJUHJ1jAkZzqDx0tyOL4uoZpww3nmE0kb3y21tH4c="  # noqa
-PUB_DSS = "ssh-dss AAAAB3NzaC1kc3MAAACBAOeBpgNnfRzr/twmAQRu2XwWAp3CFtrVnug6s6fgwj/oLjYbVtjAy6pl/h0EKCWx2rf1IetyNsTxWrniA9I6HeDj65X1FyDkg6g8tvCnaNB8Xp/UUhuzHuGsMIipRxBxw9LF608EqZcj1E3ytktoW5B5OcjrkEoz3xG7C+rpIjYvAAAAFQDwz4UnmsGiSNu5iqjn3uTzwUpshwAAAIEAkxfFeY8P2wZpDjX0MimZl5wkoFQDL25cPzGBuB4OnB8NoUk/yjAHIIpEShw8V+LzouMK5CTJQo5+Ngw3qIch/WgRmMHy4kBq1SsXMjQCte1So6HBMvBPIW5SiMTmjCfZZiw4AYHK+B/JaOwaG9yRg2Ejg4Ok10+XFDxlqZo8Y+wAAACARmR7CCPjodxASvRbIyzaVpZoJ/Z6x7dAumV+ysrV1BVYd0lYukmnjO1kKBWApqpH1ve9XDQYN8zgxM4b16L21kpoWQnZtXrY3GZ4/it9kUgyB7+NwacIBlXa8cMDL7Q/69o0d54U0X/NeX5QxuYR6OMJlrkQB7oiW/P/1mwjQgE="  # noqa
 PUB_ECDSA_256 = "ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBJSPZm3ZWkvk/Zx8WP+fZRZ5/NBBHnGQwR6uIC6XHGPDIHuWUzIjAwA0bzqkOUffEsbLe+uQgKl5kbc/L8KA/eo="  # noqa
 PUB_ECDSA_384 = "ecdsa-sha2-nistp384 AAAAE2VjZHNhLXNoYTItbmlzdHAzODQAAAAIbmlzdHAzODQAAABhBBbGibQLW9AAZiGN2hEQxWYYoFaWKwN3PKSaDJSMqmIn1Z9sgRUuw8Y/w502OGvXL/wFk0i2z50l3pWZjD7gfMH7gX5TUiCzwrQkS+Hn1U2S9aF5WJp0NcIzYxXw2r4M2A=="  # noqa
 PUB_ECDSA_521 = "ecdsa-sha2-nistp521 AAAAE2VjZHNhLXNoYTItbmlzdHA1MjEAAAAIbmlzdHA1MjEAAACFBACaOaFLZGuxa5AW16qj6VLypFbLrEWrt9AZUloCMefxO8bNLjK/O5g0rAVasar1TnyHE9qj4NwzANZASWjQNbc4MAG8vzqezFwLIn/kNyNTsXNfqEko9OgHZknlj2Z79dwTJcRAL4QLcT5aND0EHZLB2fAUDXiWIb2j4rg1mwPlBMiBXA=="  # noqa
 PUB_RSA_2K_OPENSSH = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDF+Dpr54DX0WdeTDpNAMdkCWEkl3OXtNgf58qlN1gX572OLBqLf0zT4bHstUEpU3piazph/rSWcUMuBoD46tZ6jiH7H9b9Pem2eYQWaELDDkM+v9BMbEy5rMbFRLol5OtEvPFqneyEAanPOgvd8t3yyhSev9QVusakzJ8j8LGgrA8huYZ+Srnw0shEWLG70KUKCh3rG0QIvA8nfhtUOisr2Gp+F0YxMGb5gwBlQYAYE5l6u1SjZ7hNjyNosjK+wRBFgFFBYVpkZKJgWoK9w4ijFyzMZTucnZMqKOKAjIJvHfKBf2/cEfYxSq1EndqTqjYsd9T7/s2vcn1OH5a0wkER"  # noqa
 RSA_2K_OPENSSH_P = 161773687847617758886803946572654778625119997081005961935077336594287351354258259920334554906235187683459069634729972458348855793639393524799865799559575414247668746919721196359908321800753913350455861871582087986355637886875933045224711827701526739934602161222599672381604211130651397331775901258858869418853  # noqa
 RSA_2K_OPENSSH_Q = 154483416325630619558401349033571772244816915504195060221073502923720741119664820208064202825686848103224453777955988437823797692957091438442833606009978046057345917301441832647551208158342812551003395417862260727795454409459089912659057393394458150862012620127030757893820711157099494238156383382454310199869  # noqa
-PUB_DSS_1K_OPENSSH = "ssh-dss AAAAB3NzaC1kc3MAAACBAL8XEx7F9xuwBNles+vWpNF+YcofrBhjX1r5QhpBe0eoYWLHRcroN6lxwCdGYRfgOoRjTncBiixQX/uUxAY96zDh3ir492s2BcJt4ihvNn/AY0I0OTuX/2IwGk9CGzafjaeZNVYxMa8lcVt0hSOTjkPQ7gVuk6bJzMInvie+VWKLAAAAFQDUgYdY+rhR0SkKbC09BS/SIHcB+wAAAIB44+4zpCNcd0CGvZlowH99zyPX8uxQtmTLQFuR2O8O0FgVVuCdDgD0D9W8CLOp32oatpM0jyyN89EdvSWzjHzZJ+L6H1FtZps7uhpDFWHdva1R25vyGecLMUuXjo5t/D7oCDih+HwHoSAxoi0QvsPd8/qqHQVznNJKtR6thUpXEwAAAIAG4DCBjbgTTgpBw0egRkJwBSz0oTt+1IcapNU2jA6N8urMSk9YXHEQHKN68BAF3YJ59q2Ujv3LOXmBqGd1T+kzwUszfMlgzq8MMu19Yfzse6AIK1Agn1Vj6F7YXLsXDN+T4KszX5+FJa7t/Zsp3nALWy6l0f4WKivEF5Y2QpEFcQ=="  # noqa
 PUB_EC_384_OPENSSH = "ecdsa-sha2-nistp384 AAAAE2VjZHNhLXNoYTItbmlzdHAzODQAAAAIbmlzdHAzODQAAABhBIch5LXTq/L/TWsTGG6dIktxD8DIMh7EfvoRmWsks6CuNDTvFvbQNtY4QO1mn5OXegHbS0M5DPIS++wpKGFP3suDEH08O35vZQasLNrL0tO2jyyEnzB2ZEx3PPYci811yg=="  # noqa
 
 FINGER_RSA = "1024 60:73:38:44:cb:51:86:65:7f:de:da:a2:2b:5a:57:d5"
-FINGER_DSS = "1024 44:78:f0:b9:a2:3c:c5:18:20:09:ff:75:5b:c1:d2:6c"
 FINGER_ECDSA_256 = "256 25:19:eb:55:e6:a1:47:ff:4f:38:d2:75:6f:a5:d5:60"
 FINGER_ECDSA_384 = "384 c1:8d:a0:59:09:47:41:8e:a8:a6:07:01:29:23:b4:65"
 FINGER_ECDSA_521 = "521 44:58:22:52:12:33:16:0e:ce:0e:be:2c:7c:7e:cc:1e"
@@ -69,7 +65,6 @@ SIGNED_RSA = "20:d7:8a:31:21:cb:f7:92:12:f2:a4:89:37:f5:78:af:e6:16:b6:25:b9:97:
 SIGNED_RSA_256 = "cc:6:60:e0:0:2c:ac:9e:26:bc:d5:68:64:3f:9f:a7:e5:aa:41:eb:88:4a:25:5:9c:93:84:66:ef:ef:60:f4:34:fb:f4:c8:3d:55:33:6a:77:bd:b2:ee:83:f:71:27:41:7e:f5:7:5:0:a9:4c:7:80:6f:be:76:67:cb:58:35:b9:2b:f3:c2:d3:3c:ee:e1:3f:59:e0:fa:e4:5c:92:ed:ae:74:de:d:d6:27:16:8f:84:a3:86:68:c:94:90:7d:6e:cc:81:12:d8:b6:ad:aa:31:a8:13:3d:63:81:3e:bb:5:b6:38:4d:2:d:1b:5b:70:de:83:cc:3a:cb:31"  # noqa
 SIGNED_RSA_512 = "87:46:8b:75:92:33:78:a0:22:35:32:39:23:c6:ab:e1:6:92:ad:bc:7f:6e:ab:19:32:e4:78:b2:2c:8f:1d:c:65:da:fc:a5:7:ca:b6:55:55:31:83:b1:a0:af:d1:95:c5:2e:af:56:ba:f5:41:64:f:39:9d:af:82:43:22:8f:90:52:9d:89:e7:45:97:df:f3:f2:bc:7b:3a:db:89:e:34:fd:18:62:25:1b:ef:77:aa:c6:6c:99:36:3a:84:d6:9c:2a:34:8c:7f:f4:bb:c9:a5:9a:6c:11:f2:cf:da:51:5e:1e:7f:90:27:34:de:b2:f3:15:4f:db:47:32:6b:a7"  # noqa
 FINGER_RSA_2K_OPENSSH = "2048 68:d1:72:01:bf:c0:0c:66:97:78:df:ce:75:74:46:d6"
-FINGER_DSS_1K_OPENSSH = "1024 cf:1d:eb:d7:61:d3:12:94:c6:c0:c6:54:35:35:b0:82"
 FINGER_EC_384_OPENSSH = "384 72:14:df:c1:9a:c3:e6:0e:11:29:d6:32:18:7b:ea:9b"
 
 RSA_PRIVATE_OUT = """\
@@ -88,21 +83,6 @@ qfpH87Qq5kQhNKdbbwbmd2NxlNabazPijWuphGTdW0VfJdWfklyS2Kr+iqrs/5wV
 HhathJt636Eg7oIjAkA8ht3MQ+XSl9yIJIS8gVpbPxSw5OMfw0PjVE7tBdQruiSc
 nvuQES5C9BMHjF39LZiGH1iLQy7FgdHyoP+eodI7
 -----END RSA PRIVATE KEY-----
-"""
-
-DSS_PRIVATE_OUT = """\
------BEGIN DSA PRIVATE KEY-----
-MIIBuwIBAAKBgQDngaYDZ30c6/7cJgEEbtl8FgKdwhba1Z7oOrOn4MI/6C42G1bY
-wMuqZf4dBCglsdq39SHrcjbE8Vq54gPSOh3g4+uV9Rcg5IOoPLbwp2jQfF6f1FIb
-sx7hrDCIqUcQccPSxetPBKmXI9RN8rZLaFuQeTnI65BKM98Ruwvq6SI2LwIVAPDP
-hSeawaJI27mKqOfe5PPBSmyHAoGBAJMXxXmPD9sGaQ419DIpmZecJKBUAy9uXD8x
-gbgeDpwfDaFJP8owByCKREocPFfi86LjCuQkyUKOfjYMN6iHIf1oEZjB8uJAatUr
-FzI0ArXtUqOhwTLwTyFuUojE5own2WYsOAGByvgfyWjsGhvckYNhI4ODpNdPlxQ8
-ZamaPGPsAoGARmR7CCPjodxASvRbIyzaVpZoJ/Z6x7dAumV+ysrV1BVYd0lYukmn
-jO1kKBWApqpH1ve9XDQYN8zgxM4b16L21kpoWQnZtXrY3GZ4/it9kUgyB7+NwacI
-BlXa8cMDL7Q/69o0d54U0X/NeX5QxuYR6OMJlrkQB7oiW/P/1mwjQgECFGI9QPSc
-h9pT9XHqn+1rZ4bK+QGA
------END DSA PRIVATE KEY-----
 """
 
 ECDSA_PRIVATE_OUT_256 = """\
@@ -196,47 +176,11 @@ class KeyTest(unittest.TestCase):
         self.assertEqual(PUB_RSA.split()[1], key.get_base64())
         self.assertEqual(1024, key.get_bits())
 
-    def test_load_dss(self):
-        key = DSSKey.from_private_key_file(_support("dss.key"))
-        self.assertEqual("ssh-dss", key.get_name())
-        exp_dss = b(FINGER_DSS.split()[1].replace(":", ""))
-        my_dss = hexlify(key.get_fingerprint())
-        self.assertEqual(exp_dss, my_dss)
-        self.assertEqual(PUB_DSS.split()[1], key.get_base64())
-        self.assertEqual(1024, key.get_bits())
-
-        s = StringIO()
-        key.write_private_key(s)
-        self.assertEqual(DSS_PRIVATE_OUT, s.getvalue())
-        s.seek(0)
-        key2 = DSSKey.from_private_key(s)
-        self.assertEqual(key, key2)
-
-    def test_load_dss_password(self):
-        key = DSSKey.from_private_key_file(
-            _support("test_dss_password.key"), "television"
-        )
-        self.assertEqual("ssh-dss", key.get_name())
-        exp_dss = b(FINGER_DSS.split()[1].replace(":", ""))
-        my_dss = hexlify(key.get_fingerprint())
-        self.assertEqual(exp_dss, my_dss)
-        self.assertEqual(PUB_DSS.split()[1], key.get_base64())
-        self.assertEqual(1024, key.get_bits())
-
     def test_compare_rsa(self):
         # verify that the private & public keys compare equal
         key = RSAKey.from_private_key_file(_support("rsa.key"))
         self.assertEqual(key, key)
         pub = RSAKey(data=key.asbytes())
-        self.assertTrue(key.can_sign())
-        self.assertTrue(not pub.can_sign())
-        self.assertEqual(key, pub)
-
-    def test_compare_dss(self):
-        # verify that the private & public keys compare equal
-        key = DSSKey.from_private_key_file(_support("dss.key"))
-        self.assertEqual(key, key)
-        pub = DSSKey(data=key.asbytes())
         self.assertTrue(key.can_sign())
         self.assertTrue(not pub.can_sign())
         self.assertEqual(key, pub)
@@ -265,30 +209,9 @@ class KeyTest(unittest.TestCase):
     def test_sign_and_verify_rsa_sha2_256(self):
         self._sign_and_verify_rsa("rsa-sha2-256", SIGNED_RSA_256)
 
-    def test_sign_dss(self):
-        # verify that the dss private key can sign and verify
-        key = DSSKey.from_private_key_file(_support("dss.key"))
-        msg = key.sign_ssh_data(b"ice weasels")
-        self.assertTrue(type(msg) is Message)
-        msg.rewind()
-        self.assertEqual("ssh-dss", msg.get_text())
-        # can't do the same test as we do for RSA, because DSS signatures
-        # are usually different each time.  but we can test verification
-        # anyway so it's ok.
-        self.assertEqual(40, len(msg.get_binary()))
-        msg.rewind()
-        pub = DSSKey(data=key.asbytes())
-        self.assertTrue(pub.verify_ssh_sig(b"ice weasels", msg))
-
     @requires_sha1_signing
     def test_generate_rsa(self):
         key = RSAKey.generate(1024)
-        msg = key.sign_ssh_data(b"jerri blank")
-        msg.rewind()
-        self.assertTrue(key.verify_ssh_sig(b"jerri blank", msg))
-
-    def test_generate_dss(self):
-        key = DSSKey.generate(1024)
         msg = key.sign_ssh_data(b"jerri blank")
         msg.rewind()
         self.assertTrue(key.verify_ssh_sig(b"jerri blank", msg))
@@ -365,9 +288,8 @@ class KeyTest(unittest.TestCase):
         self.assertTrue(type(msg) is Message)
         msg.rewind()
         self.assertEqual("ecdsa-sha2-nistp256", msg.get_text())
-        # ECDSA signatures, like DSS signatures, tend to be different
-        # each time, so we can't compare against a "known correct"
-        # signature.
+        # ECDSA signatures tend to be different each time, so we can't compare
+        # against a "known correct" signature.
         # Even the length of the signature can change.
 
         msg.rewind()
@@ -428,9 +350,8 @@ class KeyTest(unittest.TestCase):
         self.assertTrue(type(msg) is Message)
         msg.rewind()
         self.assertEqual("ecdsa-sha2-nistp384", msg.get_text())
-        # ECDSA signatures, like DSS signatures, tend to be different
-        # each time, so we can't compare against a "known correct"
-        # signature.
+        # ECDSA signatures tend to be different each time, so we can't compare
+        # against a "known correct" signature.
         # Even the length of the signature can change.
 
         msg.rewind()
@@ -483,9 +404,8 @@ class KeyTest(unittest.TestCase):
         self.assertTrue(type(msg) is Message)
         msg.rewind()
         self.assertEqual("ecdsa-sha2-nistp521", msg.get_text())
-        # ECDSA signatures, like DSS signatures, tend to be different
-        # each time, so we can't compare against a "known correct"
-        # signature.
+        # ECDSA signatures tend to be different each time, so we can't compare
+        # against a "known correct" signature.
         # Even the length of the signature can change.
 
         msg.rewind()
@@ -517,17 +437,6 @@ class KeyTest(unittest.TestCase):
             kwargs = spy.call_args[1]
             assert kwargs["p"] == RSA_2K_OPENSSH_P
             assert kwargs["q"] == RSA_2K_OPENSSH_Q
-
-    def test_load_openssh_format_DSS_key(self):
-        key = DSSKey.from_private_key_file(
-            _support("test_dss_openssh.key"), b"television"
-        )
-        self.assertEqual("ssh-dss", key.get_name())
-        self.assertEqual(PUB_DSS_1K_OPENSSH.split()[1], key.get_base64())
-        self.assertEqual(1024, key.get_bits())
-        exp_rsa = b(FINGER_DSS_1K_OPENSSH.split()[1].replace(":", ""))
-        my_rsa = hexlify(key.get_fingerprint())
-        self.assertEqual(exp_rsa, my_rsa)
 
     def test_load_openssh_format_EC_key(self):
         key = ECDSAKey.from_private_key_file(

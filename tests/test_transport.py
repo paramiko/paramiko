@@ -1108,7 +1108,7 @@ class AlgorithmDisablingTests(unittest.TestCase):
             disabled_algorithms={
                 "ciphers": ["aes128-cbc"],
                 "macs": ["hmac-md5"],
-                "keys": ["ssh-dss"],
+                "keys": ["ssh-rsa"],
                 "kex": ["diffie-hellman-group14-sha256"],
             },
         )
@@ -1116,9 +1116,9 @@ class AlgorithmDisablingTests(unittest.TestCase):
         assert "aes128-cbc" not in t.preferred_ciphers
         assert "hmac-md5" in t._preferred_macs
         assert "hmac-md5" not in t.preferred_macs
-        assert "ssh-dss" in t._preferred_keys
-        assert "ssh-dss" not in t.preferred_keys
-        assert "ssh-dss-cert-v01@openssh.com" not in t.preferred_keys
+        assert "ssh-rsa" in t._preferred_keys
+        assert "ssh-rsa" not in t.preferred_keys
+        assert "ssh-rsa-cert-v01@openssh.com" not in t.preferred_keys
         assert "diffie-hellman-group14-sha256" in t._preferred_kex
         assert "diffie-hellman-group14-sha256" not in t.preferred_kex
 
@@ -1128,7 +1128,7 @@ class AlgorithmDisablingTests(unittest.TestCase):
             disabled_algorithms={
                 "ciphers": ["aes128-cbc"],
                 "macs": ["hmac-md5"],
-                "keys": ["ssh-dss"],
+                "keys": ["ssh-rsa"],
                 "kex": ["diffie-hellman-group14-sha256"],
                 "compression": ["zlib"],
             },
@@ -1157,7 +1157,7 @@ class AlgorithmDisablingTests(unittest.TestCase):
         # included (as this message includes the full lists)
         assert "aes128-cbc" not in ciphers
         assert "hmac-md5" not in macs
-        assert "ssh-dss" not in server_keys
+        assert "ssh-rsa" not in server_keys
         assert "diffie-hellman-group14-sha256" not in kexen
         assert "zlib" not in compressions
 
@@ -1243,7 +1243,7 @@ class TestExtInfo(unittest.TestCase):
             # data stored on Transport after hearing back from a compatible
             # server (such as ourselves in server mode)
             assert tc.server_extensions == {
-                "server-sig-algs": b"ssh-ed25519,ecdsa-sha2-nistp256,ecdsa-sha2-nistp384,ecdsa-sha2-nistp521,rsa-sha2-512,rsa-sha2-256,ssh-rsa,ssh-dss"  # noqa
+                "server-sig-algs": b"ssh-ed25519,ecdsa-sha2-nistp256,ecdsa-sha2-nistp384,ecdsa-sha2-nistp521,rsa-sha2-512,rsa-sha2-256,ssh-rsa"  # noqa
             }
 
     def test_client_uses_server_sig_algs_for_pubkey_auth(self):

@@ -11,7 +11,6 @@ from paramiko import (
     SFTPServer,
     SFTP,
     Transport,
-    DSSKey,
     RSAKey,
     Ed25519Key,
     ECDSAKey,
@@ -121,7 +120,6 @@ def sftp(sftp_server):
 
 key_data = [
     ["ssh-rsa", RSAKey, "SHA256:OhNL391d/beeFnxxg18AwWVYTAHww+D4djEE7Co0Yng"],
-    ["ssh-dss", DSSKey, "SHA256:uHwwykG099f4M4kfzvFpKCTino0/P03DRbAidpAmPm0"],
     [
         "ssh-ed25519",
         Ed25519Key,

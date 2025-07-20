@@ -62,7 +62,7 @@ class HostKeys(MutableMapping):
         ``(hostname, keytype)`` pair will be replaced.
 
         :param str hostname: the hostname (or IP) to add
-        :param str keytype: key type (``"ssh-rsa"`` or ``"ssh-dss"``)
+        :param str keytype: key type (in ``"ssh-<type>"`` format)
         :param .PKey key: the key to add
         """
         for e in self._entries:
@@ -126,7 +126,7 @@ class HostKeys(MutableMapping):
         """
         Find a hostkey entry for a given hostname or IP.  If no entry is found,
         ``None`` is returned.  Otherwise a dictionary of keytype to key is
-        returned.  The keytype will be either ``"ssh-rsa"`` or ``"ssh-dss"``.
+        returned.
 
         :param str hostname: the hostname (or IP) to lookup
         :return: dict of `str` -> `.PKey` keys associated with this host

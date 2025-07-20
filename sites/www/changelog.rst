@@ -2,6 +2,15 @@
 Changelog
 =========
 
+- :support:`973` Removed support for the DSA (aka DSS) key algorithm, as it has
+  been badly outdated and insecure for a decade or more at this point, and was
+  recently completely removed from OpenSSH as well.
+
+  If you were still using DSA out of sheer inertia: we strongly recommend
+  upgrading to Ed25519 (or maybe ECDSA).
+
+  If you were still using DSA because of target hosts you do not control:
+  please continue using Paramiko 3.x.
 - :release:`3.5.1 <2025-02-03>`
 - :bug:`2490` Private key material is now explicitly 'unpadded' during
   decryption, removing a reliance on some lax OpenSSL behavior & making us

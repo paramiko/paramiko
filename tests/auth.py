@@ -7,6 +7,7 @@ Thus, they concern AuthHandler and AuthStrategy, with a side of Transport.
 from logging import Logger
 from unittest.mock import Mock
 
+from paramiko import Ed25519Key
 from pytest import raises
 
 from paramiko import (
@@ -17,7 +18,6 @@ from paramiko import (
     AuthSource,
     AuthStrategy,
     BadAuthenticationType,
-    DSSKey,
     InMemoryPrivateKey,
     NoneAuth,
     OnDiskPrivateKey,
@@ -85,7 +85,7 @@ class AuthHandler_:
             assert tc.auth_password(
                 username="paranoid", password="paranoid"
             ) == ["publickey"]
-            key = DSSKey.from_private_key_file(_support("dss.key"))
+            key = Ed25519Key.from_private_key_file(_support("ed25519.key"))
             assert tc.auth_publickey(username="paranoid", key=key) == []
 
     def interactive_auth(self):

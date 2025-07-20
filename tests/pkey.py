@@ -5,7 +5,6 @@ from pytest import raises
 
 from cryptography.hazmat.primitives.asymmetric.ed448 import Ed448PrivateKey
 from paramiko import (
-    DSSKey,
     ECDSAKey,
     Ed25519Key,
     Message,
@@ -170,8 +169,6 @@ class PKey_:
         key = keys.pkey
         if isinstance(key, RSAKey):
             assert key.algorithm_name == "RSA"
-        elif isinstance(key, DSSKey):
-            assert key.algorithm_name == "DSS"
         elif isinstance(key, ECDSAKey):
             assert key.algorithm_name == "ECDSA"
         elif isinstance(key, Ed25519Key):
@@ -214,9 +211,6 @@ class PKey_:
                 "rsa-sha2-512",
                 "rsa-sha2-512-cert-v01@openssh.com",
             ]
-
-        def dss_is_protocol_name(self):
-            assert DSSKey.identifiers() == ["ssh-dss"]
 
         def ed25519_is_protocol_name(self):
             assert Ed25519Key.identifiers() == ["ssh-ed25519"]

@@ -10,12 +10,12 @@ import unittest
 import time
 import threading
 
+from paramiko import Ed25519Key
 import pytest
 
 from paramiko import (
     ServerInterface,
     RSAKey,
-    DSSKey,
     AUTH_FAILED,
     AUTH_PARTIALLY_SUCCESSFUL,
     AUTH_SUCCESSFUL,
@@ -211,8 +211,7 @@ unicodey = "\u2022"
 class TestServer(ServerInterface):
     paranoid_did_password = False
     paranoid_did_public_key = False
-    # TODO: make this ed25519 or something else modern? (_is_ this used??)
-    paranoid_key = DSSKey.from_private_key_file(_support("dss.key"))
+    paranoid_key = Ed25519Key.from_private_key_file(_support("ed25519.key"))
 
     def __init__(self, allowed_keys=None):
         self.allowed_keys = allowed_keys if allowed_keys is not None else []

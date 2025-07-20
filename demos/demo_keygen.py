@@ -23,7 +23,6 @@ import sys
 from binascii import hexlify
 from optparse import OptionParser
 
-from paramiko import DSSKey
 from paramiko import RSAKey
 from paramiko.ssh_exception import SSHException
 from paramiko.py3compat import u
@@ -32,13 +31,13 @@ usage = """
 %prog [-v] [-b bits] -t type [-N new_passphrase] [-f output_keyfile]"""
 
 default_values = {
-    "ktype": "dsa",
+    "ktype": "rsa",
     "bits": 1024,
     "filename": "output",
     "comment": "",
 }
 
-key_dispatch_table = {"dsa": DSSKey, "rsa": RSAKey}
+key_dispatch_table = {"rsa": RSAKey}
 
 
 def progress(arg=None):
@@ -68,7 +67,7 @@ if __name__ == "__main__":
         "--type",
         type="string",
         dest="ktype",
-        help="Specify type of key to create (dsa or rsa)",
+        help="Specify type of key to create",
         metavar="ktype",
         default=default_values["ktype"],
     )
@@ -139,9 +138,6 @@ if __name__ == "__main__":
             % (ktype, bits, filename, filename)
         )
         sys.stdout.flush()
-
-    if ktype == "dsa" and bits > 1024:
-        raise SSHException("DSA Keys must be 1024 bits")
 
     if ktype not in key_dispatch_table:
         raise SSHException(

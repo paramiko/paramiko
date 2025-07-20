@@ -49,7 +49,6 @@ requires_gss_auth = unittest.skipUnless(
 )
 
 FINGERPRINTS = {
-    "ssh-dss": b"\x44\x78\xf0\xb9\xa2\x3c\xc5\x18\x20\x09\xff\x75\x5b\xc1\xd2\x6c",  # noqa
     "ssh-rsa": b"\x60\x73\x38\x44\xcb\x51\x86\x65\x7f\xde\xda\xa2\x2b\x5a\x57\xd5",  # noqa
     "ecdsa-sha2-nistp256": b"\x25\x19\xeb\x55\xe6\xa1\x47\xff\x4f\x38\xd2\x75\x6f\xa5\xd5\x60",  # noqa
     "ssh-ed25519": b'\xb3\xd5"\xaa\xf9u^\xe8\xcd\x0e\xea\x02\xb9)\xa2\x80',
@@ -250,13 +249,6 @@ class SSHClientTest(ClientTest):
         self._test_connection(password="pygmalion")
 
     @requires_sha1_signing
-    def test_client_dsa(self):
-        """
-        verify that SSHClient works with a DSA key.
-        """
-        self._test_connection(key_filename=_support("dss.key"))
-
-    @requires_sha1_signing
     def test_client_rsa(self):
         """
         verify that SSHClient works with an RSA key.
@@ -282,16 +274,25 @@ class SSHClientTest(ClientTest):
         # This is dumb :(
         types_ = {
             "rsa": "ssh-rsa",
-            "dss": "ssh-dss",
+            "ed25519": "ssh-ed25519",
             "ecdsa": "ecdsa-sha2-nistp256",
         }
         # Various combos of attempted & valid keys
         # TODO: try every possible combo using itertools functions
         # TODO: use new key(s) fixture(s)
         for attempt, accept in (
-            (["rsa", "dss"], ["dss"]),  # Original test #3
-            (["dss", "rsa"], ["dss"]),  # Ordering matters sometimes, sadly
-            (["dss", "rsa", "ecdsa-256"], ["dss"]),  # Try ECDSA but fail
+            (
+                ["rsa", "ed25519"],
+                ["ed25519"],
+            ),  # Original test #3 (but s/DSA/Ed25519/)
+            (
+                ["ed25519", "rsa"],
+                ["ed25519"],
+            ),  # Ordering matters sometimes, sadly
+            (
+                ["ed25519", "rsa", "ecdsa-256"],
+                ["ed25519"],
+            ),  # Try ECDSA but fail
             (["rsa", "ecdsa-256"], ["ecdsa"]),  # ECDSA success
         ):
             try:
@@ -327,7 +328,7 @@ class SSHClientTest(ClientTest):
         # They're similar except for which path is given; the expected auth and
         # server-side behavior is 100% identical.)
         # NOTE: only bothered whipping up one cert per overall class/family.
-        for type_ in ("rsa", "dss", "ecdsa-256", "ed25519"):
+        for type_ in ("rsa", "ecdsa-256", "ed25519"):
             key_path = _support(f"{type_}.key")
             self._test_connection(
                 key_filename=key_path,
@@ -342,7 +343,7 @@ class SSHClientTest(ClientTest):
         # about the server-side key object's public blob. Thus, we can prove
         # that a specific cert was found, along with regular authorization
         # succeeding proving that the overall flow works.
-        for type_ in ("rsa", "dss", "ecdsa-256", "ed25519"):
+        for type_ in ("rsa", "ecdsa-256", "ed25519"):
             key_path = _support(f"{type_}.key")
             self._test_connection(
                 key_filename=key_path,
@@ -746,10 +747,10 @@ class SSHClientTest(ClientTest):
             "host",
             sock=Mock(),
             password="no",
-            disabled_algorithms={"keys": ["ssh-dss"]},
+            disabled_algorithms={"keys": ["ssh-rsa"]},
         )
         call_arg = Transport.call_args[1]["disabled_algorithms"]
-        assert call_arg == {"keys": ["ssh-dss"]}
+        assert call_arg == {"keys": ["ssh-rsa"]}
 
     @patch("paramiko.client.Transport")
     def test_transport_factory_defaults_to_Transport(self, Transport):

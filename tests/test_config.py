@@ -309,36 +309,36 @@ ProxyCommand foo=bar:%h-%p
         getpass.getuser.return_value = "gandalf"
         config = SSHConfig.from_text(
             """
-IdentityFile id_dsa0
+IdentityFile id_rsa0
 
 Host *
-IdentityFile id_dsa1
+IdentityFile id_rsa1
 
-Host dsa2
-IdentityFile id_dsa2
+Host rsa2
+IdentityFile id_rsa2
 
-Host dsa2*
-IdentityFile id_dsa22
+Host rsa2*
+IdentityFile id_rsa22
 
 Host hashbrowns
 IdentityFile %C
 """
         )
         for host, values in {
-            "foo": {"hostname": "foo", "identityfile": ["id_dsa0", "id_dsa1"]},
-            "dsa2": {
-                "hostname": "dsa2",
-                "identityfile": ["id_dsa0", "id_dsa1", "id_dsa2", "id_dsa22"],
+            "foo": {"hostname": "foo", "identityfile": ["id_rsa0", "id_rsa1"]},
+            "rsa2": {
+                "hostname": "rsa2",
+                "identityfile": ["id_rsa0", "id_rsa1", "id_rsa2", "id_rsa22"],
             },
-            "dsa22": {
-                "hostname": "dsa22",
-                "identityfile": ["id_dsa0", "id_dsa1", "id_dsa22"],
+            "rsa22": {
+                "hostname": "rsa22",
+                "identityfile": ["id_rsa0", "id_rsa1", "id_rsa22"],
             },
             "hashbrowns": {
                 "hostname": "hashbrowns",
                 "identityfile": [
-                    "id_dsa0",
-                    "id_dsa1",
+                    "id_rsa0",
+                    "id_rsa1",
                     "a438e7dbf5308b923aba9db8fe2ca63447ac8688",
                 ],
             },

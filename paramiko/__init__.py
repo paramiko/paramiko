@@ -66,7 +66,6 @@ from paramiko.ssh_exception import (
 )
 from paramiko.server import ServerInterface, SubsystemHandler, InteractiveQuery
 from paramiko.rsakey import RSAKey
-from paramiko.dsskey import DSSKey
 from paramiko.ecdsakey import ECDSAKey
 from paramiko.ed25519key import Ed25519Key
 from paramiko.sftp import SFTPError, BaseSFTP
@@ -112,7 +111,7 @@ from paramiko.common import io_sleep
 
 
 # TODO: I guess a real plugin system might be nice for future expansion...
-key_classes = [DSSKey, RSAKey, Ed25519Key, ECDSAKey]
+key_classes = [RSAKey, Ed25519Key, ECDSAKey]
 
 
 __author__ = "Jeff Forcier <jeff@bitprophet.org>"
@@ -131,7 +130,6 @@ __all__ = [
     "ChannelException",
     "ConfigParseError",
     "CouldNotCanonicalize",
-    "DSSKey",
     "ECDSAKey",
     "Ed25519Key",
     "HostKeys",

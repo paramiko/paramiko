@@ -31,7 +31,6 @@ from errno import ECONNREFUSED, EHOSTUNREACH
 from paramiko.agent import Agent
 from paramiko.common import DEBUG
 from paramiko.config import SSH_PORT
-from paramiko.dsskey import DSSKey
 from paramiko.ecdsakey import ECDSAKey
 from paramiko.ed25519key import Ed25519Key
 from paramiko.hostkeys import HostKeys
@@ -260,8 +259,7 @@ class SSHClient(ClosingContextManager):
                 this to occur - *just* the certificate.)
 
             - Any key we can find through an SSH agent
-            - Any "id_rsa", "id_dsa" or "id_ecdsa" key discoverable in
-              ``~/.ssh/``
+            - Any ``id_*`` keys discoverable in ``~/.ssh/``
 
               - When OpenSSH-style public certificates exist that match an
                 existing such private key (so e.g. one has ``id_rsa`` and
@@ -668,8 +666,7 @@ class SSHClient(ClosingContextManager):
 
             - The key(s) passed in, if one was passed in.
             - Any key we can find through an SSH agent (if allowed).
-            - Any "id_rsa", "id_dsa" or "id_ecdsa" key discoverable in ~/.ssh/
-              (if allowed).
+            - Any id_* key discoverable in ~/.ssh/ (if allowed).
             - Plain username/password auth, if a password was given.
 
         (The password might be needed to unlock a private key [if 'passphrase'
@@ -725,7 +722,7 @@ class SSHClient(ClosingContextManager):
             for key_filename in key_filenames:
                 # TODO 4.0: leverage PKey.from_path() if we don't end up just
                 # killing SSHClient entirely
-                for pkey_class in (RSAKey, DSSKey, ECDSAKey, Ed25519Key):
+                for pkey_class in (RSAKey, ECDSAKey, Ed25519Key):
                     try:
                         key = self._key_from_filepath(
                             key_filename, pkey_class, passphrase
@@ -765,7 +762,6 @@ class SSHClient(ClosingContextManager):
 
             for keytype, name in [
                 (RSAKey, "rsa"),
-                (DSSKey, "dsa"),
                 (ECDSAKey, "ecdsa"),
                 (Ed25519Key, "ed25519"),
             ]:

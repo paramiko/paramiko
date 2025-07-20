@@ -95,7 +95,6 @@ from paramiko.common import (
     byte_ord,
 )
 from paramiko.compress import ZlibCompressor, ZlibDecompressor
-from paramiko.dsskey import DSSKey
 from paramiko.ed25519key import Ed25519Key
 from paramiko.kex_curve25519 import KexCurve25519
 from paramiko.kex_gex import KexGex, KexGexSHA256
@@ -206,7 +205,6 @@ class Transport(threading.Thread, ClosingContextManager):
         "rsa-sha2-512",
         "rsa-sha2-256",
         "ssh-rsa",
-        "ssh-dss",
     )
     # ~= PubKeyAcceptedAlgorithms
     _preferred_pubkeys = (
@@ -217,7 +215,6 @@ class Transport(threading.Thread, ClosingContextManager):
         "rsa-sha2-512",
         "rsa-sha2-256",
         "ssh-rsa",
-        "ssh-dss",
     )
     _preferred_kex = (
         "ecdh-sha2-nistp256",
@@ -320,8 +317,6 @@ class Transport(threading.Thread, ClosingContextManager):
         "rsa-sha2-256-cert-v01@openssh.com": RSAKey,
         "rsa-sha2-512": RSAKey,
         "rsa-sha2-512-cert-v01@openssh.com": RSAKey,
-        "ssh-dss": DSSKey,
-        "ssh-dss-cert-v01@openssh.com": DSSKey,
         "ecdsa-sha2-nistp256": ECDSAKey,
         "ecdsa-sha2-nistp256-cert-v01@openssh.com": ECDSAKey,
         "ecdsa-sha2-nistp384": ECDSAKey,
@@ -849,11 +844,10 @@ class Transport(threading.Thread, ClosingContextManager):
         as a server, the host key is used to sign certain packets during the
         SSH2 negotiation, so that the client can trust that we are who we say
         we are.  Because this is used for signing, the key must contain private
-        key info, not just the public half.  Only one key of each type (RSA or
-        DSS) is kept.
+        key info, not just the public half.  Only one key of each type is kept.
 
         :param .PKey key:
-            the host key to add, usually an `.RSAKey` or `.DSSKey`.
+            the host key (instance of some subclass) to add
         """
         self.server_key_dict[key.get_name()] = key
         # Handle SHA-2 extensions for RSA by ensuring that lookups into
@@ -869,10 +863,10 @@ class Transport(threading.Thread, ClosingContextManager):
         client, this method will return the negotiated host key.  If only one
         type of host key was set with `add_server_key`, that's the only key
         that will ever be returned.  But in cases where you have set more than
-        one type of host key (for example, an RSA key and a DSS key), the key
-        type will be negotiated by the client, and this method will return the
-        key of the type agreed on.  If the host key has not been negotiated
-        yet, ``None`` is returned.  In client mode, the behavior is undefined.
+        one type of host key, the key type will be negotiated by the client,
+        and this method will return the key of the type agreed on.  If the host
+        key has not been negotiated yet, ``None`` is returned.  In client mode,
+        the behavior is undefined.
 
         :return:
             host key (`.PKey`) of the type negotiated by the client, or
