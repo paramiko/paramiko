@@ -814,8 +814,10 @@ class SSHClient(ClosingContextManager):
             raise saved_exception
         raise SSHException("No authentication methods available")
 
-    def _log(self, level, msg):
-        self._transport._log(level, msg)
+    def _log(self, level, msg, stacklevel: int = 1):
+        if not self._transport:
+            return
+        self._transport._log(level, msg, stacklevel=stacklevel + 1)
 
 
 class MissingHostKeyPolicy:
