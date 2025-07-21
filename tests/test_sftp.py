@@ -802,6 +802,142 @@ class TestSFTP:
             == "?---------   1 0        0               0 (unknown date) ?"
         )
 
+    def test_exists(self, sftp):
+        filename = "exists.txt"
+        symlink_name = "also_exists.txt"
+
+        file_path = "{}/{}".format(sftp.FOLDER, filename)
+        symlink_path = "{}/{}".format(sftp.FOLDER, symlink_name)
+
+        try:
+            sftp.open(file_path, "w")
+
+            assert sftp.exists(file_path)
+
+            try:
+                sftp.symlink(filename, symlink_path)
+
+                assert sftp.exists(file_path)
+                assert sftp.exists(symlink_path)
+            finally:
+                sftp.remove(symlink_path)
+        finally:
+            sftp.remove(file_path)
+
+        assert not sftp.exists(symlink_path)
+        assert not sftp.exists(file_path)
+
+    def test_lexists(self, sftp):
+        filename = "exists.txt"
+        symlink_name = "also_exists.txt"
+
+        file_path = "{}/{}".format(sftp.FOLDER, filename)
+        symlink_path = "{}/{}".format(sftp.FOLDER, symlink_name)
+
+        try:
+            sftp.open(file_path, "w")
+
+            assert sftp.lexists(file_path)
+
+            try:
+                sftp.symlink(filename, symlink_path)
+
+                assert sftp.lexists(file_path)
+                assert sftp.lexists(symlink_path)
+            finally:
+                sftp.remove(symlink_path)
+        finally:
+            sftp.remove(file_path)
+
+        assert not sftp.lexists(symlink_path)
+        assert not sftp.lexists(file_path)
+
+        try:
+            sftp.symlink(filename, symlink_path)
+
+            assert not sftp.lexists(file_path)
+            assert sftp.lexists(symlink_path)
+        finally:
+            sftp.remove(symlink_path)
+
+        assert not sftp.lexists(symlink_path)
+        assert not sftp.lexists(file_path)
+
+    def test_isfile(self, sftp):
+        filename = "exists.txt"
+        symlink_name = "also_exists.txt"
+
+        file_path = "{}/{}".format(sftp.FOLDER, filename)
+        symlink_path = "{}/{}".format(sftp.FOLDER, symlink_name)
+
+        try:
+            sftp.open(file_path, "w")
+
+            assert sftp.isfile(file_path)
+
+            try:
+                sftp.symlink(filename, symlink_path)
+
+                assert sftp.isfile(file_path)
+                assert sftp.isfile(symlink_path)
+            finally:
+                sftp.remove(symlink_path)
+        finally:
+            sftp.remove(file_path)
+
+        assert not sftp.isfile(symlink_path)
+        assert not sftp.isfile(file_path)
+
+    def test_islink(self, sftp):
+        filename = "exists.txt"
+        symlink_name = "also_exists.txt"
+
+        file_path = "{}/{}".format(sftp.FOLDER, filename)
+        symlink_path = "{}/{}".format(sftp.FOLDER, symlink_name)
+
+        try:
+            sftp.open(file_path, "w")
+
+            assert not sftp.islink(file_path)
+
+            try:
+                sftp.symlink(filename, symlink_path)
+
+                assert not sftp.islink(file_path)
+                assert sftp.islink(symlink_path)
+            finally:
+                sftp.remove(symlink_path)
+        finally:
+            sftp.remove(file_path)
+
+        assert not sftp.islink(symlink_path)
+        assert not sftp.islink(file_path)
+
+    def test_isdir(self, sftp):
+        dirname = "exists"
+        symlink_dirname = "also_exists"
+
+        dir_path = "{}/{}".format(sftp.FOLDER, dirname)
+        symlink_dir_path = "{}/{}".format(sftp.FOLDER, symlink_dirname)
+
+        try:
+            sftp.mkdir(dir_path)
+
+            assert sftp.isdir(dir_path)
+
+            try:
+                sftp.symlink(dirname, symlink_dir_path)
+
+                assert sftp.isdir(dir_path)
+                assert sftp.isdir(symlink_dir_path)
+            finally:
+                sftp.remove(symlink_dir_path)
+        finally:
+            sftp.rmdir(dir_path)
+
+        assert not sftp.isdir(symlink_dir_path)
+        assert not sftp.isdir(dir_path)
+
     @needs_builtin("buffer")
     def test_write_buffer(self, sftp):
         """Test write() using a buffer instance."""
