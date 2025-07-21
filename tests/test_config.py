@@ -2,6 +2,7 @@
 # repository
 
 from os.path import expanduser
+from pathlib import Path
 from socket import gaierror
 
 try:
@@ -17,9 +18,28 @@ from paramiko import (
     SSHConfigDict,
     CouldNotCanonicalize,
     ConfigParseError,
+    ConfigIncludeLoopError,
 )
+from paramiko.config import stack
 
-from ._util import _config
+from ._util import _config, tests_dir
+
+
+class TestStack:
+    def test_can_be_initialized(self):
+        s = stack("a")
+        assert len(s) == 1
+
+    def test_has_initial_top_item(self):
+        s = stack("a")
+        assert s.top == "a"
+
+    def test_top_changes_with_append_and_pop(self):
+        s = stack(1)
+        s.append(69)
+        assert s.top == 69
+        s.pop()
+        assert s.top == 1
 
 
 @fixture
@@ -61,7 +81,8 @@ class TestSSHConfig:
         with raises(TypeError):
             SSHConfig("uh oh!")
         # No args.
-        assert not SSHConfig()._config
+        # TODO: do not peek into implementation details
+        assert not SSHConfig()._config_root
 
     def test_from_text(self):
         config = SSHConfig.from_text("User foo")
@@ -94,7 +115,9 @@ class TestSSHConfig:
                 "config": {"crazy": "something else"},
             },
         ]
-        assert self.config._config == expected
+        # TODO: do not peek into implementation details
+        _config = self.config._config_by_file[self.config._config_root]
+        assert _config == expected
 
     @mark.parametrize(
         "host,values",
@@ -693,6 +716,136 @@ class TestCanonicalizationOfCNAMEs:
     def test_permitted_cnames_may_be_multiple_complex_mappings(self):
         # Same as prev but with multiple patterns on both ends in both args
         pass
+
+
+class TestSSHConfigInclude:
+    def test_can_include_single_file(self):
+        basic_config_path = _config("basic")
+        config = SSHConfig.from_text(f"Include {basic_config_path}")
+        result = config.lookup("www.paramiko.org")
+        assert result["user"] == "rando"
+
+    def test_has_default_config_home(self):
+        assert SSHConfig.config_home == expanduser("~/.ssh")
+        # TODO: also have default for system level: /etc/ssh
+
+    def test_can_include_relative_paths(self):
+        # Set the config home dir
+        test_configs_dir = Path(tests_dir) / "configs"
+        SSHConfig.config_home = str(test_configs_dir)
+        # Try include a test config
+        config = SSHConfig.from_text("Include basic")
+        result = config.lookup("www.paramiko.org")
+        assert result["user"] == "rando"
+
+    def test_include_ignores_invalid_paths(self):
+        missing_file = _config("missing-include-file")
+        config = SSHConfig.from_text(
+            f"""
+        Include {missing_file}
+        Include {tests_dir}
+        User waldo
+        """
+        )
+        result = config.lookup("anything.com")
+        assert result["user"] == "waldo"
+
+    @mark.parametrize(
+        "include_str",
+        [
+            "include-part-b include-part-a",
+            "include-part-b   include-part-a",
+            "include-part-b\t \tinclude-part-a",
+            "include-part-b missing-file include-part-a",
+        ],
+    )
+    def test_can_include_many_files(self, include_str):
+        test_configs_dir = Path(tests_dir) / "configs"
+        SSHConfig.config_home = str(test_configs_dir)
+        config = SSHConfig.from_text(f"Include {include_str}")
+        result = config.lookup("test.org")
+        assert result["user"] == "banana"
+        assert result["identityfile"] == ["banana-tree", "apple-tree"]
+
+    @mark.parametrize(
+        "include_str",
+        [
+            "include-part\\ space",
+            "'include-part space'",
+            '"include-part space"',
+        ],
+    )
+    def test_can_include_filenames_with_spaces(self, include_str):
+        test_configs_dir = Path(tests_dir) / "configs"
+        SSHConfig.config_home = str(test_configs_dir)
+        config = SSHConfig.from_text(f"Include {include_str}")
+        result = config.lookup("test.org")
+        assert result["user"] == "ford-prefect"
+        assert result["port"] == "42"
+        assert result["identityfile"] == ["dont-panic"]
+
+    def test_can_include_globs(self):
+        test_configs_dir = Path(tests_dir) / "configs"
+        SSHConfig.config_home = str(test_configs_dir)
+        config = SSHConfig.from_text("Include include-part*")
+        print(config._config_by_file)
+        result = config.lookup("test.org")
+        assert result["user"] == "ford-prefect"
+        assert result["port"] == "42"
+        assert result["identityfile"] == [
+            "dont-panic",
+            "apple-tree",
+            "banana-tree",
+        ]
+
+    @mark.parametrize(
+        "config_name, expected_loop",
+        [
+            ("include-loop-?", ("include-loop-a", "include-loop-a")),
+            ("include-loop-a", ("include-loop-a", "include-loop-a")),
+            (
+                "include-loop-b",
+                (
+                    "include-loop-b1",
+                    "include-loop-b2",
+                    "include-loop-b3",
+                    "include-loop-b1",
+                ),
+            ),
+        ],
+    )
+    def test_include_fails_on_include_loop(self, config_name, expected_loop):
+        # Set the config home dir
+        test_configs_dir = Path(tests_dir) / "configs"
+        SSHConfig.config_home = str(test_configs_dir)
+        with raises(ConfigIncludeLoopError) as e:
+            config = SSHConfig.from_text(f"Include {config_name}")
+            _ = config.lookup("test")
+        assert e.value.loop == tuple(map(_config, expected_loop))
+
+    @mark.parametrize(
+        "config_name, expected_order",
+        [
+            ("include-order-1", ("first", "apple-tree", "last")),
+            (
+                "include-order-2",
+                (
+                    "first",
+                    "second",
+                    "apple-tree",
+                    "middle",
+                    "banana-tree",
+                    "last",
+                ),
+            ),
+        ],
+    )
+    def test_includes_are_loaded_in_order(self, config_name, expected_order):
+        test_configs_dir = Path(tests_dir) / "configs"
+        SSHConfig.config_home = str(test_configs_dir)
+        config = SSHConfig.from_text(f"Include {config_name}")
+        result = config.lookup("www.paramiko.org")
+        assert result["identityfile"] == list(expected_order)
 
 
 class TestMatchAll:

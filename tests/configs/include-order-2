@@ -1,0 +1,7 @@
+Match Host *.org
+	IdentityFile first
+	IdentityFile second
+	Include include-part-a
+	IdentityFile middle
+	Include include-part-b
+	IdentityFile last
