@@ -1,6 +1,9 @@
 =========
 Changelog
 =========
+- :bug:`2258` auth_handler: properly check that public_blob attr exists
+  Fix an issue where an error `AttributeError: public_blob` is raised when
+  a complex connection chain is used.
 
 - :support:`973` Removed support for the DSA (aka DSS) key algorithm, as it has
   been badly outdated and insecure for a decade or more at this point, and was
