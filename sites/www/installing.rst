@@ -30,10 +30,6 @@ There are also a handful of **optional dependencies** you may install using
 `setuptools 'extras'
 <https://packaging.python.org/tutorials/installing-packages/#installing-setuptools-extras>`_:
 
-- If you want all optional dependencies at once, use ``paramiko[all]``.
-- For ``Match exec`` config support and/or ``ProxyCommand`` feature support,
-  use ``paramiko[invoke]`` (which installs `Invoke
-  <https://www.pyinvoke.org>`_).
 - For GSS-API / SSPI support, use ``paramiko[gssapi]``, though also see
   :ref:`the below subsection on it <gssapi>` for details.
 
