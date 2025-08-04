@@ -19,9 +19,6 @@ via `pip <http://pip-installer.org>`_::
 
     $ pip install paramiko
 
-We currently support **Python 3.6+ only**. Users on older interpreter versions
-are urged to upgrade.
-
 Paramiko has only a few **direct dependencies**:
 
 - The big one, with its own sub-dependencies, is Cryptography; see :ref:`its
