@@ -1,13 +1,14 @@
 version: 2
 
 build:
-  os: "ubuntu-22.04"
+  os: "ubuntu-24.04"
   tools:
-    python: "3.7"
-
-python:
-  install:
-    - requirements: dev-requirements.txt
+    python: "3.9"
+  jobs:
+    install:
+      - pip install pip==25.1
+      - pip install --group dev
+      - pip install -e .
 
 sphinx:
   configuration: sites/www/conf.py
