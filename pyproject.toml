@@ -58,7 +58,7 @@ packages = ["paramiko"]
 dev = [
     # Invocations for common project tasks
     "invoke>=2.0",
-    "invocations>=4.0.1",
+    "invocations>=4.0.2",
     # Testing!
     "pytest-relaxed>=2",
     # pytest-xdist for test dir watching and the inv guard task
