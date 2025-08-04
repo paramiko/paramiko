@@ -2,6 +2,7 @@
 Changelog
 =========
 
+- :release:`4.0.0 <2025-08-03>`
 - :support:`-` Administrivia update:
 
   - dropped support for Python <3.9
