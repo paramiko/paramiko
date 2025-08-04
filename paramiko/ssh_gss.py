@@ -72,7 +72,6 @@ except (ImportError, OSError):
 
 from paramiko.common import MSG_USERAUTH_REQUEST
 from paramiko.ssh_exception import SSHException
-from paramiko._version import __version_info__
 
 
 def GSSAuth(auth_method, gss_deleg_creds=True):
@@ -414,11 +413,6 @@ class _SSH_GSSAPI_OLD(_SSH_GSSAuth):
             supported in server mode
         """
         raise NotImplementedError
-
-
-if __version_info__ < (2, 5):
-    # provide the old name for strict backward compatibility
-    _SSH_GSSAPI = _SSH_GSSAPI_OLD
 
 
 class _SSH_GSSAPI_NEW(_SSH_GSSAuth):
