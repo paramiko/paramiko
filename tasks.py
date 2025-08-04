@@ -158,6 +158,7 @@ ns.configure(
                 www.configuration()["sphinx"]["source"], "changelog.rst"
             ),
         },
+        "blacken": {"find_opts": r"-and -not -path '*.cci_pycache*'"},
         "docs": {"browse": "remote"},
     }
 )

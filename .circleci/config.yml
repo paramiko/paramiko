@@ -2,17 +2,20 @@ version: 2.1
 
 
 orbs:
-  orb: invocations/orb@1.3.1
+  orb: invocations/orb@1.5.1
 
 
 jobs:
+  # Mostly for our downstream packagers, who want ability to unpack the sdist
+  # and run tests that way, instead of git cloning. Thus, we make sure that's
+  # doable.
   sdist-test-suite:
     executor:
       name: orb/default
-      version: "3.6"
+      version: "3.9"
     steps:
       - orb/setup
-      - run: inv release.build --no-wheel --directory .
+      - run: inv release.build --no-wheel --directory dist
       - run: |
           cd dist
           tar xzvf *.tar.gz
@@ -25,7 +28,7 @@ jobs:
   kerberos:
     executor:
       name: orb/default
-      version: "3.6"
+      version: "3.9"
     steps:
       - orb/setup
       # Required to actually see all of universe/multiverse :(
@@ -46,7 +49,7 @@ jobs:
   spellcheck:
     executor:
       name: orb/default
-      version: "3.6"
+      version: "3.9"
     steps:
       - orb/setup
       - run: codespell
@@ -72,13 +75,15 @@ workflows:
           name: Test << matrix.version >> w/ << matrix.pip-overrides >>
           matrix:
             parameters:
-              version: ["3.6"]
+              version: ["3.9"]
               # TODO: I don't see a nicer way to do this that doesn't require
               # making the orb know too much about its client code...
               # TODO: the upper end of this needs to change and/or grow more
               # cells, periodically
               # TODO: see if there's a non shite way to use bucketing here,
               # somewhere between yaml, pip and bash all escapes get fucky
+              # TODO: what is our current oldest/newest cryptography supported
+              # versions? DOES that change from py3.6->3.9?
               pip-overrides: ["cryptography==3.3.2", "cryptography==39.0.0"]
       # Kerberos tests. Currently broken :(
       #- kerberos:
@@ -99,7 +104,7 @@ workflows:
           requires: ["Test"]
           matrix:
             parameters:
-              version: ["3.7", "3.8", "3.9", "3.10", "3.11"]
+              version: ["3.10", "3.11", "3.12", "3.13"]
       # Test doc building if main test suite passed (no real reason to spend
       # all those credits if the main tests would also fail...)
       - orb/docs:

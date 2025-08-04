@@ -1,0 +1,80 @@
+[project]
+name = "paramiko"
+requires-python = ">=3.9"
+version = "4.0.0"
+description = "SSH2 protocol library"
+readme = "README.rst"
+license = "LGPL-2.1"
+license-files = ["LICENSE"]
+authors = [{name = "Jeff Forcier", email = "jeff@bitprophet.org"}]
+
+dependencies = [
+    "bcrypt>=3.2",
+    "cryptography>=3.3",
+    "invoke>=2.0",
+    "pynacl>=1.5",
+]
+optional-dependencies = {gssapi = [
+    "pyasn1>=0.1.7",
+    'gssapi>=1.4.1;platform_system!="Windows"',
+    'pywin32>=2.1.8;platform_system=="Windows"',
+]}
+
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Topic :: Internet",
+    "Topic :: Security :: Cryptography",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+
+
+[project.urls]
+Docs = "https://docs.paramiko.org"
+Source = "https://github.com/paramiko/paramiko"
+Changelog = "https://www.paramiko.org/changelog.html"
+CI = "https://app.circleci.com/pipelines/github/paramiko/paramiko"
+Issues = "https://github.com/paramiko/paramiko/issues"
+
+
+[build-system]
+requires = ["setuptools >= 77"]
+build-backend = "setuptools.build_meta"
+
+
+[tool.setuptools]
+packages = ["paramiko"]
+
+
+[dependency-groups]
+dev = [
+    # Invocations for common project tasks
+    "invoke>=2.0",
+    "invocations>=4.0.1",
+    # Testing!
+    "pytest-relaxed>=2",
+    # pytest-xdist for test dir watching and the inv guard task
+    "pytest-xdist>=3",
+    # Linting!
+    "flake8~=7.3.0",
+    # Formatting!
+    "black==22.12.0",
+    # Spelling!
+    "codespell>=2.4.1",
+    # Coverage!
+    "coverage>=6.2,<7",
+    # Documentation tools
+    "alabaster==0.7.13",
+    "releases>=2.1",
+    "watchdog<2",
+    # Debuggery
+    "icecream>=2.1",
+]

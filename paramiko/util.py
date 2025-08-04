@@ -230,7 +230,7 @@ _g_thread_lock = threading.Lock()
 
 
 def get_thread_id():
-    global _g_thread_data, _g_thread_counter, _g_thread_lock
+    global _g_thread_data, _g_thread_counter, _g_thread_lock  # noqa
     try:
         return _g_thread_data.id
     except AttributeError:

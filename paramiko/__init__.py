@@ -16,9 +16,11 @@
 # along with Paramiko; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
 
+from importlib import metadata
+
+__version__ = metadata.version("paramiko")
+
 # flake8: noqa
-import sys
-from paramiko._version import __version__, __version_info__
 from paramiko.transport import (
     SecurityOptions,
     ServiceRequestingTransport,
@@ -116,48 +118,3 @@ key_classes = [RSAKey, Ed25519Key, ECDSAKey]
 
 __author__ = "Jeff Forcier <jeff@bitprophet.org>"
 __license__ = "GNU Lesser General Public License (LGPL)"
-
-# TODO 4.0: remove this, jeez
-__all__ = [
-    "Agent",
-    "AgentKey",
-    "AuthenticationException",
-    "AutoAddPolicy",
-    "BadAuthenticationType",
-    "BadHostKeyException",
-    "BufferedFile",
-    "Channel",
-    "ChannelException",
-    "ConfigParseError",
-    "CouldNotCanonicalize",
-    "ECDSAKey",
-    "Ed25519Key",
-    "HostKeys",
-    "Message",
-    "MissingHostKeyPolicy",
-    "PKey",
-    "PasswordRequiredException",
-    "ProxyCommand",
-    "ProxyCommandFailure",
-    "RSAKey",
-    "RejectPolicy",
-    "SFTP",
-    "SFTPAttributes",
-    "SFTPClient",
-    "SFTPError",
-    "SFTPFile",
-    "SFTPHandle",
-    "SFTPServer",
-    "SFTPServerInterface",
-    "SSHClient",
-    "SSHConfig",
-    "SSHConfigDict",
-    "SSHException",
-    "SecurityOptions",
-    "ServerInterface",
-    "SubsystemHandler",
-    "Transport",
-    "WarningPolicy",
-    "io_sleep",
-    "util",
-]
