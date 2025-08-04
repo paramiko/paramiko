@@ -2183,7 +2183,7 @@ class Transport(threading.Thread, ClosingContextManager):
                 # in to memory but we can not read from the disk/spawn a new
                 # shell.
                 # Make sure we can specify a timeout for the initial handshake.
-                # Re-use the banner timeout for now.
+                # Reuse the banner timeout for now.
                 self.packetizer.start_handshake(self.handshake_timeout)
                 self._send_kex_init()
                 self._expect_packet(MSG_KEXINIT)

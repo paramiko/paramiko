@@ -761,7 +761,7 @@ class _SSH_SSPI(_SSH_GSSAuth):
     def save_client_creds(self, client_token):
         """
         Save the Client token in a file. This is used by the SSH server
-        to store the client credentails if credentials are delegated
+        to store the client credentials if credentials are delegated
         (server mode).
 
         :param str client_token: The SSPI token received form the client
