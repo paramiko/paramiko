@@ -23,6 +23,7 @@ Configuration file (aka ``ssh_config``) support.
 
 import fnmatch
 import getpass
+import glob
 import os
 import re
 import shlex
@@ -162,6 +163,11 @@ class SSHConfig:
                 # Store 'none' as None - not as a string implying that the
                 # proxycommand is the literal shell command "none"!
                 context["config"][key] = None
+            # Append config for each included file
+            elif key == "include":
+                for inc_file in glob.glob(os.path.expanduser(value)):
+                    inc_file_ssh_config = self.from_path(inc_file)
+                    self._config.extend(inc_file_ssh_config._config)
             # All other keywords get stored, directly or via append
             else:
                 if value.startswith('"') and value.endswith('"'):
@@ -179,6 +185,17 @@ class SSHConfig:
                     context["config"][key] = value
         # Store last 'open' block and we're done
         self._config.append(context)
+        self._set_config_unique()
+
+    def _set_config_unique(self):
+        """
+        Set the self._config list to have only unique values
+        """
+        unique_configs = []
+        for config in self._config:
+            if config not in unique_configs:
+                unique_configs.append(config)
+        self._config = unique_configs
 
     def lookup(self, hostname):
         """
