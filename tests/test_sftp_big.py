@@ -178,6 +178,35 @@ class TestBigSFTP:
         finally:
             sftp.remove(f"{sftp.FOLDER}/hongry.txt")
 
+    def test_prefetch_max_concurrent_requests(self, sftp):
+        kblob = bytes().join([struct.pack(">H", n) for n in range(512)])
+        try:
+            with sftp.open(f"{sftp.FOLDER}/hongry.txt", "wb") as f:
+                f.set_pipelined(True)
+                for n in range(1024):
+                    f.write(kblob)
+                    if n % 128 == 0:
+                        sys.stderr.write(".")
+            sys.stderr.write(" ")
+
+            assert (
+                sftp.stat(f"{sftp.FOLDER}/hongry.txt").st_size == 1024 * 1024
+            )
+
+            start = time.time()
+            chunk = 793
+            for i in range(10):
+                with sftp.open(f"{sftp.FOLDER}/hongry.txt", "rb") as f:
+                    file_size = f.stat().st_size
+                    f.prefetch(file_size, max_concurrent_requests=3)
+                    while f.read(chunk):
+                        pass
+                    assert not f._prefetch_data
+            end = time.time()
+            sys.stderr.write(f"{round(end - start)}s")
+        finally:
+            sftp.remove(f"{sftp.FOLDER}/hongry.txt")
+
     def test_readv_seek(self, sftp):
         kblob = bytes().join([struct.pack(">H", n) for n in range(512)])
         try:
