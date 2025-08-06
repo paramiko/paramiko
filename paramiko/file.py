@@ -354,6 +354,7 @@ class BufferedFile(ClosingContextManager):
         :param int whence:
             type of movement: 0 = absolute; 1 = relative to the current
             position; 2 = relative to the end of the file.
+        :returns: file position (`number <int>` of bytes).
 
         :raises: ``IOError`` -- if the file doesn't support random access.
         """
@@ -377,6 +378,7 @@ class BufferedFile(ClosingContextManager):
         written out.)
 
         :param data: ``str``/``bytes`` data to write
+        :returns: number of bytes written (`number <int>` of bytes).
         """
         if isinstance(data, str):
             # Accept text and encode as utf-8 for compatibility only.
@@ -385,9 +387,11 @@ class BufferedFile(ClosingContextManager):
             raise IOError("File is closed")
         if not (self._flags & self.FLAG_WRITE):
             raise IOError("File not open for writing")
+
+        old_tell = self.tell()
         if not (self._flags & self.FLAG_BUFFERED):
             self._write_all(data)
-            return
+            return self.tell() - old_tell
         self._wbuffer.write(data)
         if self._flags & self.FLAG_LINE_BUFFERED:
             # only scan the new data for linefeed, to avoid wasting time.
@@ -398,12 +402,12 @@ class BufferedFile(ClosingContextManager):
                 self._write_all(wbuf[: last_newline_pos + 1])
                 self._wbuffer = BytesIO()
                 self._wbuffer.write(wbuf[last_newline_pos + 1 :])
-            return
+            return self.tell() - old_tell
         # even if we're line buffering, if the buffer has grown past the
         # buffer size, force a flush.
         if self._wbuffer.tell() >= self._bufsize:
             self.flush()
-        return
+        return self.tell() - old_tell
 
     def writelines(self, sequence):
         """
