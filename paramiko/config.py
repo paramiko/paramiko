@@ -541,16 +541,20 @@ class SSHConfig:
         # better handled here than at lookup time.
         keywords = [x["type"] for x in matches]
         if "all" in keywords:
-            allowable = ("all", "canonical")
+            allowable = ("all", "canonical", "final")
             ok, bad = (
                 list(filter(lambda x: x in allowable, keywords)),
                 list(filter(lambda x: x not in allowable, keywords)),
             )
             err = None
             if any(bad):
-                err = "Match does not allow 'all' mixed with anything but 'canonical'"  # noqa
+                err = "Match does not allow 'all' mixed with anything but 'canonical' or 'final'"  # noqa
+            elif len(ok) > 2:
+                err = "The 'all' Match criteria must appear alone or immediately after 'canonical' or 'final'"  # noqa
             elif "canonical" in ok and ok.index("canonical") > ok.index("all"):
                 err = "Match does not allow 'all' before 'canonical'"
+            elif "final" in ok and ok.index("final") > ok.index("all"):
+                err = "Match does not allow 'all' before 'final'"
             if err is not None:
                 raise ConfigParseError(err)
         return matches
