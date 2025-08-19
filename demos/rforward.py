@@ -60,12 +60,12 @@ def handler(chan, host, port):
             data = sock.recv(1024)
             if len(data) == 0:
                 break
-            chan.send(data)
+            chan.sendall(data)
         if chan in r:
             data = chan.recv(1024)
             if len(data) == 0:
                 break
-            sock.send(data)
+            sock.sendall(data)
     chan.close()
     sock.close()
     verbose("Tunnel closed from %r" % (chan.origin_addr,))
