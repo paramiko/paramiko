@@ -193,7 +193,7 @@ class SFTPServerInterface:
 
         .. note:: You should return an error if a file with the same name as
             ``newpath`` already exists.  (The rename operation should be
-            non-desctructive.)
+            non-destructive.)
 
         .. note::
             This method implements 'standard' SFTP ``RENAME`` behavior; those
