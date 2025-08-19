@@ -41,6 +41,8 @@ cSSH2_AGENTC_REQUEST_IDENTITIES = byte_chr(11)
 SSH2_AGENT_IDENTITIES_ANSWER = 12
 cSSH2_AGENTC_SIGN_REQUEST = byte_chr(13)
 SSH2_AGENT_SIGN_RESPONSE = 14
+cSSH_AGENTC_ADD_IDENTITY = byte_chr(17)
+SSH_AGENT_SUCCESS = 6
 
 SSH_AGENT_RSA_SHA2_256 = 2
 SSH_AGENT_RSA_SHA2_512 = 4
@@ -77,6 +79,25 @@ class AgentSSH:
             SSH agent
         """
         return self._keys
+    
+    def add_key(self, key):
+        header = asbytes(cSSH_AGENTC_ADD_IDENTITY)
+        body = Message()
+        body.add_string("ssh-rsa")
+        body.add_mpint(key.public_numbers.n)
+        body.add_mpint(key.public_numbers.e)
+        body.add_mpint(key.d)
+        body.add_mpint(key.iqmp)
+        body.add_mpint(key.p)
+        body.add_mpint(key.q)
+        body.add_string("")
+        packet_len = len(header) + body.packet.tell()
+        self._conn.send(struct.pack(">I", packet_len) + header + body.packet.getvalue())
+        data = self._read_all(4)
+        msg = Message(self._read_all(struct.unpack(">I", data)[0]))
+        if ord(msg.get_byte()) != SSH_AGENT_SUCCESS:
+            raise SSHException("could not add key to agent")
+        return        
 
     def _connect(self, conn):
         self._conn = conn
