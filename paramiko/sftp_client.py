@@ -457,6 +457,11 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         self._log(DEBUG, "mkdir({!r}, {!r})".format(path, mode))
         attr = SFTPAttributes()
         attr.st_mode = mode
+        # Take care of multi level directory creation
+        p_path = os.path.abspath(os.path.join(path, os.pardir))
+        if not self.exists(p_path):
+            self.mkdir(p_path)
+
         self._request(CMD_MKDIR, path, attr)
 
     def rmdir(self, path):
