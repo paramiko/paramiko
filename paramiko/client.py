@@ -97,7 +97,10 @@ class SSHClient(ClosingContextManager):
         """
         if filename is None:
             # try the user's .ssh key file, and mask exceptions
-            filename = os.path.expanduser("~/.ssh/known_hosts")
+            filename = os.path.join(
+                os.path.expanduser("~"),
+                ".ssh", "known_hosts"
+            )
             try:
                 self._system_host_keys.load(filename)
             except IOError:
@@ -767,8 +770,9 @@ class SSHClient(ClosingContextManager):
             ]:
                 # ~/ssh/ is for windows
                 for directory in [".ssh", "ssh"]:
-                    full_path = os.path.expanduser(
-                        "~/{}/id_{}".format(directory, name)
+                    full_path = os.path.join(
+                        os.path.expanduser("~"),
+                        directory, "id_{}".format(name)
                     )
                     if os.path.isfile(full_path):
                         # TODO: only do this append if below did not run

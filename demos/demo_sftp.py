@@ -73,13 +73,13 @@ hostkeytype = None
 hostkey = None
 try:
     host_keys = paramiko.util.load_host_keys(
-        os.path.expanduser("~/.ssh/known_hosts")
+        os.path.join(os.path.expanduser("~"), ".ssh", "known_hosts")
     )
 except IOError:
     try:
         # try ~/ssh/ too, because windows can't have a folder named ~/.ssh/
         host_keys = paramiko.util.load_host_keys(
-            os.path.expanduser("~/ssh/known_hosts")
+            os.path.join(os.path.expanduser("~"), "ssh", "known_hosts")
         )
     except IOError:
         print("*** Unable to open host keys file")
@@ -113,23 +113,23 @@ try:
         sftp.mkdir("demo_sftp_folder")
     except IOError:
         print("(assuming demo_sftp_folder/ already exists)")
-    with sftp.open("demo_sftp_folder/README", "w") as f:
+    with sftp.open(os.path.join("demo_sftp_folder", "README"), "w") as f:
         f.write("This was created by demo_sftp.py.\n")
     with open("demo_sftp.py", "r") as f:
         data = f.read()
-    sftp.open("demo_sftp_folder/demo_sftp.py", "w").write(data)
+    sftp.open(os.path.join("demo_sftp_folder", "demo_sftp.py"), "w").write(data)
     print("created demo_sftp_folder/ on the server")
 
     # copy the README back here
-    with sftp.open("demo_sftp_folder/README", "r") as f:
+    with sftp.open(os.path.join("demo_sftp_folder", "README"), "r") as f:
         data = f.read()
     with open("README_demo_sftp", "w") as f:
         f.write(data)
     print("copied README back here")
 
     # BETTER: use the get() and put() methods
-    sftp.put("demo_sftp.py", "demo_sftp_folder/demo_sftp.py")
-    sftp.get("demo_sftp_folder/README", "README_demo_sftp")
+    sftp.put("demo_sftp.py", os.path.join("demo_sftp_folder", "demo_sftp.py"))
+    sftp.get(os.path.join("demo_sftp_folder", "README"), "README_demo_sftp")
 
     t.close()
 
