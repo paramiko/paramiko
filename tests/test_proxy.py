@@ -117,12 +117,12 @@ class TestProxyCommand:
         assert proxy.closed is True
         assert proxy._closed is True
 
-    @patch("paramiko.proxy.time.time")
+    @patch("paramiko.proxy.time.monotonic")
     @patch("paramiko.proxy.subprocess.Popen")
     @patch("paramiko.proxy.os.read")
     @patch("paramiko.proxy.select")
     def test_timeout_affects_whether_timeout_is_raised(
-        self, select, os_read, Popen, time
+        self, select, os_read, Popen, monotonic
     ):
         stdout = Popen.return_value.stdout
         select.return_value = [stdout], None, None
@@ -133,7 +133,7 @@ class TestProxyCommand:
         # Implicit 'no raise' check
         assert proxy.recv(3) == b"meh"
         # Use settimeout to set timeout, and it is honored
-        time.side_effect = [0, 10]  # elapsed > 7
+        monotonic.side_effect = [0, 10]  # elapsed > 7
         proxy = ProxyCommand("ohnoz")
         proxy.settimeout(7)
         assert proxy.timeout == 7
