@@ -329,7 +329,12 @@ class SSHConfig:
         """
         hosts = set()
         for entry in self._config:
-            hosts.update(entry["host"])
+            if "host" in entry:
+                hosts.update(entry["host"])
+            elif "matches" in entry:
+                for condition in entry["matches"]:
+                    if condition["type"] == "host":
+                        hosts.update(condition["param"].split(","))
         return hosts
 
     def _pattern_matches(self, patterns, target):
@@ -526,7 +531,7 @@ class SSHConfig:
             if type_.startswith("!"):
                 match["negate"] = True
                 type_ = type_[1:]
-            match["type"] = type_
+            match["type"] = type_.lower()
             # all/canonical have no params (everything else does)
             if type_ in ("all", "canonical", "final"):
                 matches.append(match)
