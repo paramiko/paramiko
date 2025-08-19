@@ -626,7 +626,7 @@ Error Message: {}
                 self._log(INFO, msg.format(e.__class__.__name__, e))
                 key = None
             if key is None:
-                self._disconnect_no_more_auth()
+                self._send_auth_result(username, method, AUTH_FAILED)
                 return
             # first check if this key is okay... if not, we can skip the verify
             result = self.transport.server_object.check_auth_publickey(
