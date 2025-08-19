@@ -113,11 +113,11 @@ class GSSKexTest(KerberosTestCase):
         )
 
         self.event.wait(1.0)
-        self.assert_(self.event.is_set())
-        self.assert_(self.ts.is_active())
-        self.assertEquals(self.username, self.ts.get_username())
-        self.assertEquals(True, self.ts.is_authenticated())
-        self.assertEquals(True, self.tc.get_transport().gss_kex_used)
+        self.assertTrue(self.event.is_set())
+        self.assertTrue(self.ts.is_active())
+        self.assertEqual(self.username, self.ts.get_username())
+        self.assertEqual(True, self.ts.is_authenticated())
+        self.assertEqual(True, self.tc.get_transport().gss_kex_used)
 
         stdin, stdout, stderr = self.tc.exec_command("yes")
         schan = self.ts.accept(1.0)
@@ -128,10 +128,10 @@ class GSSKexTest(KerberosTestCase):
         schan.send_stderr("This is on stderr.\n")
         schan.close()
 
-        self.assertEquals("Hello there.\n", stdout.readline())
-        self.assertEquals("", stdout.readline())
-        self.assertEquals("This is on stderr.\n", stderr.readline())
-        self.assertEquals("", stderr.readline())
+        self.assertEqual("Hello there.\n", stdout.readline())
+        self.assertEqual("", stdout.readline())
+        self.assertEqual("This is on stderr.\n", stderr.readline())
+        self.assertEqual("", stderr.readline())
 
         stdin.close()
         stdout.close()
