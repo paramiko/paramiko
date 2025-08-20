@@ -185,10 +185,19 @@ class AuthHandler:
     # ...internals...
 
     def _request_auth(self):
+        #if MSG_SERVICE_REQUEST already sent, do not send again
+        if hasattr(self.transport, '_SERVICE_REQUEST_SENT'):
+            #triger userauth manually
+            m = Message()
+            m.add_string('ssh-userauth')
+            m.rewind()
+            self._parse_service_accept(m)
+            return
         m = Message()
         m.add_byte(cMSG_SERVICE_REQUEST)
         m.add_string("ssh-userauth")
         self.transport._send_message(m)
+        self.transport._SERVICE_REQUEST_SENT = True
 
     def _disconnect_service_not_available(self):
         m = Message()
