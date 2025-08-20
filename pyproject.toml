@@ -11,14 +11,8 @@ authors = [{name = "Jeff Forcier", email = "jeff@bitprophet.org"}]
 dependencies = [
     "bcrypt>=3.2",
     "cryptography>=3.3",
-    "invoke>=2.0",
     "pynacl>=1.5",
 ]
-optional-dependencies = {gssapi = [
-    "pyasn1>=0.1.7",
-    'gssapi>=1.4.1;platform_system!="Windows"',
-    'pywin32>=2.1.8;platform_system=="Windows"',
-]}
 
 classifiers = [
     "Development Status :: 5 - Production/Stable",
@@ -36,6 +30,14 @@ classifiers = [
     "Programming Language :: Python :: 3.13",
 ]
 
+[project.optional-dependencies]
+gssapi = [
+    "pyasn1>=0.1.7",
+    'gssapi>=1.4.1;platform_system!="Windows"',
+    'pywin32>=2.1.8;platform_system=="Windows"',
+]
+
+invoke = ["invoke>=2.0"]
 
 [project.urls]
 Docs = "https://docs.paramiko.org"

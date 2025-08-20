@@ -3,13 +3,14 @@
 
 from os.path import expanduser
 from socket import gaierror
+import sys
 
 try:
-    from invoke import Result
+    import invoke
 except ImportError:
-    Result = None
+    invoke = None
 
-from unittest.mock import patch
+from unittest.mock import patch, Mock
 from pytest import raises, mark, fixture
 
 from paramiko import (
@@ -739,23 +740,19 @@ def _expect(success_on):
         assert kwargs.get("warn", None) is True
         # Fake exit
         exit = 0 if command in success_on else 1
-        return Result(exited=exit)
+        return invoke.Result(exited=exit)
 
     return inner
 
 
-@mark.skipif(Result is None, reason="requires invoke package")
+@mark.skipif(invoke is None, reason="requires invoke package")
 class TestMatchExec:
-    @patch("paramiko.config.invoke", new=None)
-    @patch("paramiko.config.invoke_import_error", new=ImportError("meh"))
-    def test_raises_invoke_ImportErrors_at_runtime(self):
-        # Not an ideal test, but I don't know of a non-bad way to fake out
-        # module-time ImportErrors. So we mock the symptoms. Meh!
-        with raises(ImportError) as info:
+    def test_raises_invoke_ImportErrors_at_runtime(self, monkeypatch):
+        # Pretend invoke is not importable.
+        monkeypatch.setitem(sys.modules, "invoke", None)
+        with raises(ImportError):
             load_config("match-exec").lookup("oh-noes")
-        assert str(info.value) == "meh"
 
-    @patch("paramiko.config.invoke.run")
     @mark.parametrize(
         "cmd,user",
         [
@@ -764,21 +761,23 @@ class TestMatchExec:
             ("quoted spaced", "neil"),
         ],
     )
-    def test_accepts_single_possibly_quoted_argument(self, run, cmd, user):
-        run.side_effect = _expect(cmd)
+    def test_accepts_single_possibly_quoted_argument(
+        self, cmd, user, monkeypatch
+    ):
+        monkeypatch.setattr(invoke, "run", Mock(side_effect=_expect(cmd)))
         result = load_config("match-exec").lookup("whatever")
         assert result["user"] == user
 
-    @patch("paramiko.config.invoke.run")
-    def test_does_not_match_nonzero_exit_codes(self, run):
+    def test_does_not_match_nonzero_exit_codes(self, monkeypatch):
         # Nothing will succeed -> no User ever gets loaded
-        run.return_value = Result(exited=1)
+        monkeypatch.setattr(
+            invoke, "run", Mock(return_value=invoke.Result(exited=1))
+        )
         result = load_config("match-exec").lookup("whatever")
         assert "user" not in result
 
     @patch("paramiko.config.getpass")
-    @patch("paramiko.config.invoke.run")
-    def test_tokenizes_argument(self, run, getpass, socket):
+    def test_tokenizes_argument(self, getpass, socket, monkeypatch):
         getpass.getuser.return_value = "gandalf"
         # Actual exec value is "%C %d %h %L %l %n %p %r %u"
         parts = (
@@ -792,22 +791,28 @@ class TestMatchExec:
             "intermediate",
             "gandalf",
         )
-        run.side_effect = _expect(" ".join(parts))
+        monkeypatch.setattr(
+            invoke, "run", Mock(side_effect=_expect(" ".join(parts)))
+        )
         result = load_config("match-exec").lookup("target")
         assert result["port"] == "1337"
 
-    @patch("paramiko.config.invoke.run")
-    def test_works_with_canonical(self, run, socket):
+    def test_works_with_canonical(self, monkeypatch, socket):
         # Ensure both stanzas' exec components appear to match
-        run.side_effect = _expect(["uncanonicalized", "canonicalized"])
+        monkeypatch.setattr(
+            invoke,
+            "run",
+            Mock(side_effect=_expect(["uncanonicalized", "canonicalized"])),
+        )
         result = load_config("match-exec-canonical").lookup("who-cares")
         # Prove both config values got loaded up, across the two passes
         assert result["user"] == "defenseless"
         assert result["port"] == "8007"
 
-    @patch("paramiko.config.invoke.run")
-    def test_may_be_negated(self, run):
-        run.side_effect = _expect("this succeeds")
+    def test_may_be_negated(self, monkeypatch):
+        monkeypatch.setattr(
+            invoke, "run", Mock(side_effect=_expect("this succeeds"))
+        )
         result = load_config("match-exec-negation").lookup("so-confusing")
         # If negation did not work, the first of the two Match exec directives
         # would have set User to 'nope' (and/or the second would have NOT set
@@ -818,9 +823,10 @@ class TestMatchExec:
         with raises(ConfigParseError):
             load_config("match-exec-no-arg")
 
-    @patch("paramiko.config.invoke.run")
-    def test_works_with_tokenized_hostname(self, run):
-        run.side_effect = _expect("ping target")
+    def test_works_with_tokenized_hostname(self, monkeypatch):
+        monkeypatch.setattr(
+            invoke, "run", Mock(side_effect=_expect("ping target"))
+        )
         result = load_config("hostname-exec-tokenized").lookup("target")
         assert result["hostname"] == "pingable.target"
 
