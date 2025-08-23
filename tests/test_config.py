@@ -1,14 +1,8 @@
 # This file is part of Paramiko and subject to the license in /LICENSE in this
 # repository
-
+import subprocess
 from os.path import expanduser
 from socket import gaierror
-
-try:
-    from invoke import Result
-except ImportError:
-    Result = None
-
 from unittest.mock import patch
 from pytest import raises, mark, fixture
 
@@ -720,7 +714,7 @@ class TestMatchAll:
 
 def _expect(success_on):
     """
-    Returns a side_effect-friendly Invoke success result for given command(s).
+    Returns a side_effect-friendly subprocess.call result for given command(s).
 
     Ensures that any other commands fail; this is useful for testing 'Match
     exec' because it means all other such clauses under test act like no-ops.
@@ -732,30 +726,18 @@ def _expect(success_on):
     if isinstance(success_on, str):
         success_on = [success_on]
 
-    def inner(command, *args, **kwargs):
-        # Sanity checking - we always expect that invoke.run is called with
-        # these.
-        assert kwargs.get("hide", None) == "stdout"
-        assert kwargs.get("warn", None) is True
+    def inner(command, **kwargs):
+        # Sanity checking - we always expect that call is called with these.
+        assert kwargs.get("stdout", None) == subprocess.DEVNULL
+        assert kwargs.get("stdin", None) == subprocess.DEVNULL
         # Fake exit
-        exit = 0 if command in success_on else 1
-        return Result(exited=exit)
+        return 0 if command in success_on else 1
 
     return inner
 
 
-@mark.skipif(Result is None, reason="requires invoke package")
 class TestMatchExec:
-    @patch("paramiko.config.invoke", new=None)
-    @patch("paramiko.config.invoke_import_error", new=ImportError("meh"))
-    def test_raises_invoke_ImportErrors_at_runtime(self):
-        # Not an ideal test, but I don't know of a non-bad way to fake out
-        # module-time ImportErrors. So we mock the symptoms. Meh!
-        with raises(ImportError) as info:
-            load_config("match-exec").lookup("oh-noes")
-        assert str(info.value) == "meh"
-
-    @patch("paramiko.config.invoke.run")
+    @patch("paramiko.config.subprocess.call")
     @mark.parametrize(
         "cmd,user",
         [
@@ -764,21 +746,21 @@ class TestMatchExec:
             ("quoted spaced", "neil"),
         ],
     )
-    def test_accepts_single_possibly_quoted_argument(self, run, cmd, user):
-        run.side_effect = _expect(cmd)
+    def test_accepts_single_possibly_quoted_argument(self, call, cmd, user):
+        call.side_effect = _expect(cmd)
         result = load_config("match-exec").lookup("whatever")
         assert result["user"] == user
 
-    @patch("paramiko.config.invoke.run")
-    def test_does_not_match_nonzero_exit_codes(self, run):
+    @patch("paramiko.config.subprocess.call")
+    def test_does_not_match_nonzero_exit_codes(self, call):
         # Nothing will succeed -> no User ever gets loaded
-        run.return_value = Result(exited=1)
+        call.return_value = 1
         result = load_config("match-exec").lookup("whatever")
         assert "user" not in result
 
     @patch("paramiko.config.getpass")
-    @patch("paramiko.config.invoke.run")
-    def test_tokenizes_argument(self, run, getpass, socket):
+    @patch("paramiko.config.subprocess.call")
+    def test_tokenizes_argument(self, call, getpass, socket, monkeypatch):
         getpass.getuser.return_value = "gandalf"
         # Actual exec value is "%C %d %h %L %l %n %p %r %u"
         parts = (
@@ -792,22 +774,22 @@ class TestMatchExec:
             "intermediate",
             "gandalf",
         )
-        run.side_effect = _expect(" ".join(parts))
+        call.side_effect = _expect(" ".join(parts))
         result = load_config("match-exec").lookup("target")
         assert result["port"] == "1337"
 
-    @patch("paramiko.config.invoke.run")
-    def test_works_with_canonical(self, run, socket):
+    @patch("paramiko.config.subprocess.call")
+    def test_works_with_canonical(self, call, socket):
         # Ensure both stanzas' exec components appear to match
-        run.side_effect = _expect(["uncanonicalized", "canonicalized"])
+        call.side_effect = _expect(["uncanonicalized", "canonicalized"])
         result = load_config("match-exec-canonical").lookup("who-cares")
         # Prove both config values got loaded up, across the two passes
         assert result["user"] == "defenseless"
         assert result["port"] == "8007"
 
-    @patch("paramiko.config.invoke.run")
-    def test_may_be_negated(self, run):
-        run.side_effect = _expect("this succeeds")
+    @patch("paramiko.config.subprocess.call")
+    def test_may_be_negated(self, call):
+        call.side_effect = _expect("this succeeds")
         result = load_config("match-exec-negation").lookup("so-confusing")
         # If negation did not work, the first of the two Match exec directives
         # would have set User to 'nope' (and/or the second would have NOT set
@@ -818,9 +800,9 @@ class TestMatchExec:
         with raises(ConfigParseError):
             load_config("match-exec-no-arg")
 
-    @patch("paramiko.config.invoke.run")
-    def test_works_with_tokenized_hostname(self, run):
-        run.side_effect = _expect("ping target")
+    @patch("paramiko.config.subprocess.call")
+    def test_works_with_tokenized_hostname(self, call):
+        call.side_effect = _expect("ping target")
         result = load_config("hostname-exec-tokenized").lookup("target")
         assert result["hostname"] == "pingable.target"
 

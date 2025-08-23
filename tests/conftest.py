@@ -3,8 +3,7 @@ import os
 import shutil
 import threading
 from pathlib import Path
-
-from invoke.vendor.lexicon import Lexicon
+from types import SimpleNamespace
 
 import pytest
 from paramiko import (
@@ -150,7 +149,7 @@ def keys(request):
     - ``expected_fp``: the expected fingerprint of said key
     """
     short_type, key_type, key_class, fingerprint = request.param
-    bag = Lexicon()
+    bag = SimpleNamespace()
     bag.short_type = short_type
     bag.full_type = key_type
     bag.path = Path(_support(f"{short_type}.key"))

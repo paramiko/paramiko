@@ -11,7 +11,6 @@ authors = [{name = "Jeff Forcier", email = "jeff@bitprophet.org"}]
 dependencies = [
     "bcrypt>=3.2",
     "cryptography>=3.3",
-    "invoke>=2.0",
     "pynacl>=1.5",
 ]
 optional-dependencies = {gssapi = [
