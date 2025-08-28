@@ -17,6 +17,7 @@ jobs:
       - orb/setup
       - run: inv release.build --no-wheel --directory dist
       - run: |
+          env 
           cd dist
           tar xzvf *.tar.gz
           rm -v *.tar.gz
