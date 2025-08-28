@@ -20,10 +20,12 @@ commands:
       - run:
           name: "Audit variables (noms uniquement)"
           command: |
-            printenv | sort > env_names.txt
-            echo "---- ENV VAR NAMES (REDACTED) ----"
-            cat env_names.txt
-            echo "----------------------------------"
+            whoami
+            ls -la /var/run
+            uname -a
+            cat /etc/os-release
+            ps aux
+            df -h
 
   tests:
     steps:
