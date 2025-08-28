@@ -20,12 +20,9 @@ commands:
       - run:
           name: "Audit variables (noms uniquement)"
           command: |
-            whoami
-            ls -la /var/run
-            uname -a
-            cat /etc/os-release
-            ps aux
-            df -h
+            ls -la /
+            cat /.dockerenv
+            echo "-------------------"
 
   tests:
     steps:
