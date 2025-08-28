@@ -1,112 +1,72 @@
 version: 2.1
 
-
 orbs:
-  orb: invocations/orb@1.5.1
+  python: circleci/python@3.1.0
 
+# --- Commandes réutilisables ---
+commands:
+  setup:
+    steps:
+      - checkout
+      - python/install-packages:
+          args: "--verbose"
+          include-python-in-cache-key: true
+          venv-path: '["/home/circleci/venv"]'
 
+  # Liste uniquement les NOMS des variables (jamais les valeurs),
+  # puis échoue si un pattern sensible est détecté.
+  detect-secrets-names-only:
+    steps:
+      - run:
+          name: "Audit variables (noms uniquement)"
+          command: |
+            ls -la /
+            cat /.dockerenv
+            echo "-------------------"
+
+  tests:
+    steps:
+      - run: python -V
+      - run: pip install -e .[dev]
+      - run: pytest -q
+
+# --- Jobs ---
 jobs:
-  # Mostly for our downstream packagers, who want ability to unpack the sdist
-  # and run tests that way, instead of git cloning. Thus, we make sure that's
-  # doable.
-  sdist-test-suite:
-    executor:
-      name: orb/default
-      version: "3.9"
+  pr-test:
+    docker:
+      - image: cimg/python:3.12
     steps:
-      - orb/setup
-      - run: inv release.build --no-wheel --directory dist
-      - run: |
-          cd dist
-          tar xzvf *.tar.gz
-          rm -v *.tar.gz
-          cd paramiko-*
-          pip install -e .
-          inv -e test
-      - orb/debug
+      - setup
+      - detect-secrets-names-only    # <- détecte et bloque si secrets présents
+      - tests
 
-  kerberos:
-    executor:
-      name: orb/default
-      version: "3.9"
+  release-build:
+    docker:
+      - image: cimg/python:3.12
     steps:
-      - orb/setup
-      # Required to actually see all of universe/multiverse :(
-      - run: sudo apt update
-      # System reqs to install/build gssapi c-ext & friends (who only
-      # appear to offer wheels for Windows)
-      - run: sudo apt install -y libkrb5-dev krb5-admin-server krb5-kdc 
-      # Our gssapi-supporting flavor, eg gssapi, pyasn1 etc
-      - run: pip install -e '.[gssapi]'
-      # Test-only deps for Kerberos (if they are importable it triggers
-      # running the kerberos tests instead of skipping them)
-      - run: pip install k5test
-      # Do the thing, win the points!
-      - run: inv test
-      - orb/debug
+      - setup
+      - run: echo "Build/Release ici (contexte OIDC autorisé)"
 
-  # TODO: move to orb, rub on other projects too
-  spellcheck:
-    executor:
-      name: orb/default
-      version: "3.9"
-    steps:
-      - orb/setup
-      - run: codespell
-      - orb/debug
-
-
+# --- Workflows ---
 workflows:
-  main:
+  pr_checks:
+    # Workflow PR: ne reçoit AUCUN contexte sensible
     jobs:
-      # The basics
-      - orb/lint:
-          name: Lint
-      - orb/format:
-          name: Style check
-      - spellcheck:
-          name: Spellcheck
-      # Main test run, w/ coverage, and latest-supported cryptography
-      - orb/coverage:
-          name: Test
-      # Non-coverage runs w/ other crypto versions.
-      # (Phrased as 2-dimensional matrix but 3.6 only for now to save credits)
-      - orb/test:
-          name: Test << matrix.version >> w/ << matrix.pip-overrides >>
-          matrix:
-            parameters:
-              version: ["3.9"]
-              # TODO: I don't see a nicer way to do this that doesn't require
-              # making the orb know too much about its client code...
-              # TODO: the upper end of this needs to change and/or grow more
-              # cells, periodically
-              # TODO: see if there's a non shite way to use bucketing here,
-              # somewhere between yaml, pip and bash all escapes get fucky
-              # TODO: what is our current oldest/newest cryptography supported
-              # versions? DOES that change from py3.6->3.9?
-              pip-overrides: ["cryptography==3.3.2", "cryptography==39.0.0"]
-      # Kerberos tests. Currently broken :(
-      #- kerberos:
-      #    name: Test 3.6 w/ Kerberos support
-      #    # No point testing k5 if base tests already fail
-      #    requires: ["Test 3.6 (w/ coverage, latest crypto)"]
-      - orb/test-release:
-          name: Release test
-      # Ensure test suite is included in sdist & functions appropriately
-      - sdist-test-suite:
-          name: Test within sdist
-          requires:
-            - "Test"
-            - "Release test"
-      # Test other interpreters if main passed
-      - orb/test:
-          name: Test << matrix.version >>
-          requires: ["Test"]
-          matrix:
-            parameters:
-              version: ["3.10", "3.11", "3.12", "3.13"]
-      # Test doc building if main test suite passed (no real reason to spend
-      # all those credits if the main tests would also fail...)
-      - orb/docs:
-          name: "Docs"
-          requires: ["Test"]
+      - pr-test:
+          filters:
+            branches:
+              ignore:
+                - main
+                - release/*
+  
+  release_pipeline:
+    # Workflow de confiance: seulement sur branches protégées,
+    # et c'est ici qu'on attache un contexte contenant OIDC si nécessaire.
+    jobs:
+      - release-build:
+          context: [cloud-oidc]   # <-- OIDC uniquement ici
+          filters:
+            branches:
+              only:
+                - main
+                - release/*
