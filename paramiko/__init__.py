@@ -16,18 +16,36 @@
 # along with Paramiko; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
 
+from importlib import metadata
+
+__version__ = metadata.version("paramiko")
+
 # flake8: noqa
-import sys
-from paramiko._version import __version__, __version_info__
-from paramiko.transport import SecurityOptions, Transport
+from paramiko.transport import (
+    SecurityOptions,
+    ServiceRequestingTransport,
+    Transport,
+)
 from paramiko.client import (
-    SSHClient,
-    MissingHostKeyPolicy,
     AutoAddPolicy,
+    MissingHostKeyPolicy,
     RejectPolicy,
+    SSHClient,
     WarningPolicy,
 )
 from paramiko.auth_handler import AuthHandler
+from paramiko.auth_strategy import (
+    AuthFailure,
+    AuthStrategy,
+    AuthResult,
+    AuthSource,
+    InMemoryPrivateKey,
+    NoneAuth,
+    OnDiskPrivateKey,
+    Password,
+    PrivateKey,
+    SourceResult,
+)
 from paramiko.ssh_gss import GSSAuth, GSS_AUTH_AVAILABLE, GSS_EXCEPTIONS
 from paramiko.channel import (
     Channel,
@@ -43,13 +61,13 @@ from paramiko.ssh_exception import (
     ConfigParseError,
     CouldNotCanonicalize,
     IncompatiblePeer,
+    MessageOrderError,
     PasswordRequiredException,
     ProxyCommandFailure,
     SSHException,
 )
 from paramiko.server import ServerInterface, SubsystemHandler, InteractiveQuery
 from paramiko.rsakey import RSAKey
-from paramiko.dsskey import DSSKey
 from paramiko.ecdsakey import ECDSAKey
 from paramiko.ed25519key import Ed25519Key
 from paramiko.sftp import SFTPError, BaseSFTP
@@ -63,7 +81,7 @@ from paramiko.message import Message
 from paramiko.packet import Packetizer
 from paramiko.file import BufferedFile
 from paramiko.agent import Agent, AgentKey
-from paramiko.pkey import PKey, PublicBlob
+from paramiko.pkey import PKey, PublicBlob, UnknownKeyType
 from paramiko.hostkeys import HostKeys
 from paramiko.config import SSHConfig, SSHConfigDict
 from paramiko.proxy import ProxyCommand
@@ -94,50 +112,9 @@ from paramiko.sftp import (
 from paramiko.common import io_sleep
 
 
+# TODO: I guess a real plugin system might be nice for future expansion...
+key_classes = [RSAKey, Ed25519Key, ECDSAKey]
+
+
 __author__ = "Jeff Forcier <jeff@bitprophet.org>"
 __license__ = "GNU Lesser General Public License (LGPL)"
-
-__all__ = [
-    "Agent",
-    "AgentKey",
-    "AuthenticationException",
-    "AutoAddPolicy",
-    "BadAuthenticationType",
-    "BadHostKeyException",
-    "BufferedFile",
-    "Channel",
-    "ChannelException",
-    "ConfigParseError",
-    "CouldNotCanonicalize",
-    "DSSKey",
-    "ECDSAKey",
-    "Ed25519Key",
-    "HostKeys",
-    "Message",
-    "MissingHostKeyPolicy",
-    "PKey",
-    "PasswordRequiredException",
-    "ProxyCommand",
-    "ProxyCommandFailure",
-    "RSAKey",
-    "RejectPolicy",
-    "SFTP",
-    "SFTPAttributes",
-    "SFTPClient",
-    "SFTPError",
-    "SFTPFile",
-    "SFTPHandle",
-    "SFTPServer",
-    "SFTPServerInterface",
-    "SSHClient",
-    "SSHConfig",
-    "SSHConfigDict",
-    "SSHException",
-    "SecurityOptions",
-    "ServerInterface",
-    "SubsystemHandler",
-    "Transport",
-    "WarningPolicy",
-    "io_sleep",
-    "util",
-]

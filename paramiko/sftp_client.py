@@ -758,7 +758,14 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         with open(localpath, "rb") as fl:
             return self.putfo(fl, remotepath, file_size, callback, confirm)
 
-    def getfo(self, remotepath, fl, callback=None, prefetch=True):
+    def getfo(
+        self,
+        remotepath,
+        fl,
+        callback=None,
+        prefetch=True,
+        max_concurrent_prefetch_requests=None,
+    ):
         """
         Copy a remote file (``remotepath``) from the SFTP server and write to
         an open file or file-like object, ``fl``.  Any exception raised by
@@ -773,21 +780,34 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
             the bytes transferred so far and the total bytes to be transferred
         :param bool prefetch:
             controls whether prefetching is performed (default: True)
+        :param int max_concurrent_prefetch_requests:
+            The maximum number of concurrent read requests to prefetch. See
+            `.SFTPClient.get` (its ``max_concurrent_prefetch_requests`` param)
+            for details.
         :return: the `number <int>` of bytes written to the opened file object
 
         .. versionadded:: 1.10
         .. versionchanged:: 2.8
             Added the ``prefetch`` keyword argument.
+        .. versionchanged:: 3.3
+            Added ``max_concurrent_prefetch_requests``.
         """
         file_size = self.stat(remotepath).st_size
         with self.open(remotepath, "rb") as fr:
             if prefetch:
-                fr.prefetch(file_size)
+                fr.prefetch(file_size, max_concurrent_prefetch_requests)
             return self._transfer_with_callback(
                 reader=fr, writer=fl, file_size=file_size, callback=callback
             )
 
-    def get(self, remotepath, localpath, callback=None, prefetch=True):
+    def get(
+        self,
+        remotepath,
+        localpath,
+        callback=None,
+        prefetch=True,
+        max_concurrent_prefetch_requests=None,
+    ):
         """
         Copy a remote file (``remotepath``) from the SFTP server to the local
         host as ``localpath``.  Any exception raised by operations will be
@@ -800,15 +820,30 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
             the bytes transferred so far and the total bytes to be transferred
         :param bool prefetch:
             controls whether prefetching is performed (default: True)
+        :param int max_concurrent_prefetch_requests:
+            The maximum number of concurrent read requests to prefetch.
+            When this is ``None`` (the default), do not limit the number of
+            concurrent prefetch requests. Note: OpenSSH's sftp internally
+            imposes a limit of 64 concurrent requests, while Paramiko imposes
+            no limit by default; consider setting a limit if a file can be
+            successfully received with sftp but hangs with Paramiko.
 
         .. versionadded:: 1.4
         .. versionchanged:: 1.7.4
             Added the ``callback`` param
         .. versionchanged:: 2.8
             Added the ``prefetch`` keyword argument.
+        .. versionchanged:: 3.3
+            Added ``max_concurrent_prefetch_requests``.
         """
         with open(localpath, "wb") as fl:
-            size = self.getfo(remotepath, fl, callback, prefetch)
+            size = self.getfo(
+                remotepath,
+                fl,
+                callback,
+                prefetch,
+                max_concurrent_prefetch_requests,
+            )
         s = os.stat(localpath)
         if s.st_size != size:
             raise IOError(

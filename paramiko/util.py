@@ -174,8 +174,7 @@ def load_host_keys(filename):
     """
     Read a file of known SSH host keys, in the format used by openssh, and
     return a compound dict of ``hostname -> keytype ->`` `PKey
-    <paramiko.pkey.PKey>`. The hostname may be an IP address or DNS name.  The
-    keytype will be either ``"ssh-rsa"`` or ``"ssh-dss"``.
+    <paramiko.pkey.PKey>`. The hostname may be an IP address or DNS name.
 
     This type of file unfortunately doesn't exist on Windows, but on posix,
     it will usually be stored in ``os.path.expanduser("~/.ssh/known_hosts")``.
@@ -231,7 +230,7 @@ _g_thread_lock = threading.Lock()
 
 
 def get_thread_id():
-    global _g_thread_data, _g_thread_counter, _g_thread_lock
+    global _g_thread_data, _g_thread_counter, _g_thread_lock  # noqa
     try:
         return _g_thread_data.id
     except AttributeError:

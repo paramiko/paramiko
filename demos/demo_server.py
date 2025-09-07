@@ -34,7 +34,6 @@ from paramiko.py3compat import b, u, decodebytes
 paramiko.util.log_to_file("demo_server.log")
 
 host_key = paramiko.RSAKey(filename="test_rsa.key")
-# host_key = paramiko.DSSKey(filename='test_dss.key')
 
 print("Read key: " + u(hexlify(host_key.get_fingerprint())))
 

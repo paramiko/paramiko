@@ -72,7 +72,6 @@ except (ImportError, OSError):
 
 from paramiko.common import MSG_USERAUTH_REQUEST
 from paramiko.ssh_exception import SSHException
-from paramiko._version import __version_info__
 
 
 def GSSAuth(auth_method, gss_deleg_creds=True):
@@ -414,11 +413,6 @@ class _SSH_GSSAPI_OLD(_SSH_GSSAuth):
             supported in server mode
         """
         raise NotImplementedError
-
-
-if __version_info__ < (2, 5):
-    # provide the old name for strict backward compatibility
-    _SSH_GSSAPI = _SSH_GSSAPI_OLD
 
 
 class _SSH_GSSAPI_NEW(_SSH_GSSAuth):
@@ -767,7 +761,7 @@ class _SSH_SSPI(_SSH_GSSAuth):
     def save_client_creds(self, client_token):
         """
         Save the Client token in a file. This is used by the SSH server
-        to store the client credentails if credentials are delegated
+        to store the client credentials if credentials are delegated
         (server mode).
 
         :param str client_token: The SSPI token received form the client

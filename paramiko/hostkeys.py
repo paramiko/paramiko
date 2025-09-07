@@ -27,11 +27,8 @@ from hashlib import sha1
 from hmac import HMAC
 
 
-from paramiko.dsskey import DSSKey
-from paramiko.rsakey import RSAKey
+from paramiko.pkey import PKey, UnknownKeyType
 from paramiko.util import get_logger, constant_time_bytes_eq, b, u
-from paramiko.ecdsakey import ECDSAKey
-from paramiko.ed25519key import Ed25519Key
 from paramiko.ssh_exception import SSHException
 
 
@@ -65,7 +62,7 @@ class HostKeys(MutableMapping):
         ``(hostname, keytype)`` pair will be replaced.
 
         :param str hostname: the hostname (or IP) to add
-        :param str keytype: key type (``"ssh-rsa"`` or ``"ssh-dss"``)
+        :param str keytype: key type (in ``"ssh-<type>"`` format)
         :param .PKey key: the key to add
         """
         for e in self._entries:
@@ -95,16 +92,16 @@ class HostKeys(MutableMapping):
                 if (len(line) == 0) or (line[0] == "#"):
                     continue
                 try:
-                    e = HostKeyEntry.from_line(line, lineno)
+                    entry = HostKeyEntry.from_line(line, lineno)
                 except SSHException:
                     continue
-                if e is not None:
-                    _hostnames = e.hostnames
+                if entry is not None:
+                    _hostnames = entry.hostnames
                     for h in _hostnames:
-                        if self.check(h, e.key):
-                            e.hostnames.remove(h)
-                    if len(e.hostnames):
-                        self._entries.append(e)
+                        if self.check(h, entry.key):
+                            entry.hostnames.remove(h)
+                    if len(entry.hostnames):
+                        self._entries.append(entry)
 
     def save(self, filename):
         """
@@ -129,7 +126,7 @@ class HostKeys(MutableMapping):
         """
         Find a hostkey entry for a given hostname or IP.  If no entry is found,
         ``None`` is returned.  Otherwise a dictionary of keytype to key is
-        returned.  The keytype will be either ``"ssh-rsa"`` or ``"ssh-dss"``.
+        returned.
 
         :param str hostname: the hostname (or IP) to lookup
         :return: dict of `str` -> `.PKey` keys associated with this host
@@ -347,29 +344,27 @@ class HostKeyEntry:
             return None
         fields = fields[:3]
 
-        names, keytype, key = fields
+        names, key_type, key = fields
         names = names.split(",")
 
         # Decide what kind of key we're looking at and create an object
         # to hold it accordingly.
         try:
-            key = b(key)
-            if keytype == "ssh-rsa":
-                key = RSAKey(data=decodebytes(key))
-            elif keytype == "ssh-dss":
-                key = DSSKey(data=decodebytes(key))
-            elif keytype in ECDSAKey.supported_key_format_identifiers():
-                key = ECDSAKey(data=decodebytes(key), validate_point=False)
-            elif keytype == "ssh-ed25519":
-                key = Ed25519Key(data=decodebytes(key))
-            else:
-                log.info("Unable to handle key of type {}".format(keytype))
-                return None
-
+            # TODO: this grew organically and doesn't seem /wrong/ per se (file
+            # read -> unicode str -> bytes for base64 decode -> decoded bytes);
+            # but in Python 3 forever land, can we simply use
+            # `base64.b64decode(str-from-file)` here?
+            key_bytes = decodebytes(b(key))
         except binascii.Error as e:
             raise InvalidHostKey(line, e)
 
-        return cls(names, key)
+        try:
+            return cls(names, PKey.from_type_string(key_type, key_bytes))
+        except UnknownKeyType:
+            # TODO 4.0: consider changing HostKeys API so this just raises
+            # naturally and the exception is muted higher up in the stack?
+            log.info("Unable to handle key of type {}".format(key_type))
+            return None
 
     def to_line(self):
         """

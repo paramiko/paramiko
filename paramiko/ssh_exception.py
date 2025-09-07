@@ -89,6 +89,11 @@ class PartialAuthentication(AuthenticationException):
         )
 
 
+# TODO 4.0: stop inheriting from SSHException, move to auth.py
+class UnableToAuthenticate(AuthenticationException):
+    pass
+
+
 class ChannelException(SSHException):
     """
     Exception raised when an attempt to open a new `.Channel` fails.
@@ -230,6 +235,16 @@ class ConfigParseError(SSHException):
     matching ``key = value`` syntax or misusing certain ``Match`` keywords.
 
     .. versionadded:: 2.7
+    """
+
+    pass
+
+
+class MessageOrderError(SSHException):
+    """
+    Out-of-order protocol messages were received, violating "strict kex" mode.
+
+    .. versionadded:: 3.4
     """
 
     pass

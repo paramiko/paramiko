@@ -218,6 +218,8 @@ class SSHConfig:
             Added canonicalization support.
         .. versionchanged:: 2.7
             Added ``Match`` support.
+        .. versionchanged:: 3.3
+            Added ``Match final`` support.
         """
         # First pass
         options = self._lookup(hostname=hostname)
@@ -235,10 +237,16 @@ class SSHConfig:
             hostname = self.canonicalize(hostname, options, domains)
             # Overwrite HostName again here (this is also what OpenSSH does)
             options["hostname"] = hostname
-            options = self._lookup(hostname, options, canonical=True)
+            options = self._lookup(
+                hostname, options, canonical=True, final=True
+            )
+        else:
+            options = self._lookup(
+                hostname, options, canonical=False, final=True
+            )
         return options
 
-    def _lookup(self, hostname, options=None, canonical=False):
+    def _lookup(self, hostname, options=None, canonical=False, final=False):
         # Init
         if options is None:
             options = SSHConfigDict()
@@ -248,7 +256,11 @@ class SSHConfig:
             if not (
                 self._pattern_matches(context.get("host", []), hostname)
                 or self._does_match(
-                    context.get("matches", []), hostname, canonical, options
+                    context.get("matches", []),
+                    hostname,
+                    canonical,
+                    final,
+                    options,
                 )
             ):
                 continue
@@ -263,9 +275,10 @@ class SSHConfig:
                     options[key].extend(
                         x for x in value if x not in options[key]
                     )
-        # Expand variables in resulting values (besides 'Match exec' which was
-        # already handled above)
-        options = self._expand_variables(options, hostname)
+        if final:
+            # Expand variables in resulting values
+            # (besides 'Match exec' which was already handled above)
+            options = self._expand_variables(options, hostname)
         return options
 
     def canonicalize(self, hostname, options, domains):
@@ -336,7 +349,9 @@ class SSHConfig:
                 match = True
         return match
 
-    def _does_match(self, match_list, target_hostname, canonical, options):
+    def _does_match(
+        self, match_list, target_hostname, canonical, final, options
+    ):
         matched = []
         candidates = match_list[:]
         local_username = getpass.getuser()
@@ -353,6 +368,8 @@ class SSHConfig:
             if type_ == "canonical":
                 if self._should_fail(canonical, candidate):
                     return False
+            if type_ == "final":
+                passed = final
             # The parse step ensures we only see this by itself or after
             # canonical, so it's also an easy hard pass. (No negation here as
             # that would be uh, pretty weird?)
@@ -511,7 +528,7 @@ class SSHConfig:
                 type_ = type_[1:]
             match["type"] = type_
             # all/canonical have no params (everything else does)
-            if type_ in ("all", "canonical"):
+            if type_ in ("all", "canonical", "final"):
                 matches.append(match)
                 continue
             if not tokens:

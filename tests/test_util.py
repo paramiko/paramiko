@@ -24,6 +24,7 @@ from binascii import hexlify
 import os
 from hashlib import sha1
 import unittest
+from importlib import metadata
 
 import paramiko
 import paramiko.util
@@ -43,12 +44,17 @@ BGQ3GQ/Fc7SX6gkpXkwcZryoi4kNFhHu5LvHcZPdxXV1D+uTMfGS1eyd2Yz/DoNWXNAl8TI0cAsW\
 class UtilTest(unittest.TestCase):
     def test_imports(self):
         """
-        verify that all the classes can be imported from paramiko.
+        Verify that all the classes can be imported from paramiko.
         """
         for name in (
             "Agent",
             "AgentKey",
             "AuthenticationException",
+            "AuthFailure",
+            "AuthHandler",
+            "AuthResult",
+            "AuthSource",
+            "AuthStrategy",
             "AutoAddPolicy",
             "BadAuthenticationType",
             "BufferedFile",
@@ -56,11 +62,17 @@ class UtilTest(unittest.TestCase):
             "ChannelException",
             "ConfigParseError",
             "CouldNotCanonicalize",
-            "DSSKey",
+            "ECDSAKey",
+            "Ed25519Key",
             "HostKeys",
+            "InMemoryPrivateKey",
             "Message",
             "MissingHostKeyPolicy",
+            "NoneAuth",
+            "OnDiskPrivateKey",
+            "Password",
             "PasswordRequiredException",
+            "PrivateKey",
             "RSAKey",
             "RejectPolicy",
             "SFTP",
@@ -77,12 +89,16 @@ class UtilTest(unittest.TestCase):
             "SSHException",
             "SecurityOptions",
             "ServerInterface",
+            "SourceResult",
             "SubsystemHandler",
             "Transport",
             "WarningPolicy",
             "util",
         ):
-            assert name in paramiko.__all__
+            assert name in dir(paramiko)
+
+    def test_version_available_in_main_module(self):
+        assert paramiko.__version__ == metadata.version("paramiko")
 
     def test_generate_key_bytes(self):
         key_bytes = paramiko.util.generate_key_bytes(
