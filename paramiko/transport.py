@@ -367,6 +367,7 @@ class Transport(threading.Thread, ClosingContextManager):
         server_sig_algs=True,
         strict_kex=True,
         packetizer_class=None,
+        resend_service_requests=True,
     ):
         """
         Create a new SSH session over an existing socket, or socket-like
@@ -440,6 +441,10 @@ class Transport(threading.Thread, ClosingContextManager):
         :param packetizer_class:
             Which class to use for instantiating the internal packet handler.
             Default: ``None`` (i.e.: use `Packetizer` as normal).
+        :param bool resend_service_requests:
+            ``False`` if you want to prevent Paramiko from sending other
+            service requests after the server has already accepted one
+            for this service.
 
         .. versionchanged:: 1.15
             Added the ``default_window_size`` and ``default_max_packet_size``
@@ -570,6 +575,9 @@ class Transport(threading.Thread, ClosingContextManager):
         self.channel_timeout = 60 * 60
         self.disabled_algorithms = disabled_algorithms or {}
         self.server_sig_algs = server_sig_algs
+        self.resend_service_requests = resend_service_requests
+        # which services have been accepted by the server
+        self.accepted_services = set()
 
         # server mode:
         self.server_mode = False
