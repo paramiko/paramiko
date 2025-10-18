@@ -8,7 +8,7 @@ build:
     install:
       - pip install pip==25.1
       - pip install --group dev
-      - pip install -e .
 
 sphinx:
   configuration: sites/docs/conf.py
+  fail_on_warning: true
