@@ -57,7 +57,7 @@ packages = ["paramiko"]
 [dependency-groups]
 dev = [
   # Invocations for common project tasks
-  "invoke>=2.0",
+  "invoke>=2.2.1",
   "invocations>=4.0.2",
   # Testing!
   "pytest-relaxed>=2",
