@@ -11,3 +11,4 @@ _build
 .idea
 coverage.xml
 htmlcov
+uv.lock
