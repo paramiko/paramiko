@@ -2,7 +2,7 @@ version: 2.1
 
 
 orbs:
-  orb: invocations/orb@1.5.1
+  orb: invocations/orb@1.6.0
 
 
 jobs:
