@@ -485,7 +485,7 @@ class Transport(threading.Thread, ClosingContextManager):
                     # addr = sockaddr
                     sock = socket.socket(af, socket.SOCK_STREAM)
                     try:
-                        sock.connect((hostname, port))
+                        sock.connect(sockaddr)
                     except socket.error as e:
                         reason = str(e)
                     else:
