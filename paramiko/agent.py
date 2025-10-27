@@ -493,5 +493,7 @@ class AgentKey(PKey):
         msg.add_int(ALGORITHM_FLAG_MAP.get(algorithm, 0))
         ptype, result = self.agent._send_message(msg)
         if ptype != SSH2_AGENT_SIGN_RESPONSE:
-            raise SSHException("key cannot be used for signing")
+            raise SSHException(
+                f"Key {self.fingerprint} cannot be used for signing"
+            )
         return result.get_binary()
