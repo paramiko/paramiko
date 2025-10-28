@@ -857,6 +857,44 @@ class AutoAddPolicy(MissingHostKeyPolicy):
         )
 
 
+def no_yes_options(prompt: str, options: list[str] = []) -> bool:
+    while True:
+        res = input(prompt + "\a [No/yes/...] ").lower()
+        if not res:  # default, no
+            return False
+        if res == "no":
+            return False
+        if res == "yes":
+            return True
+        if res in options:
+            return True
+        print("invalid response, must be one of yes, no, or %s" % ", ".join(options))
+        continue
+    # not reached, fail closed
+    return False
+
+
+class PromptAddPolicy(MissingHostKeyPolicy):
+    """
+    Policy for automatically adding the hostname and new host key to the
+    local `.HostKeys` object, and saving it.  This is used by `.SSHClient`.
+    """
+
+    def missing_host_key(self, client, hostname, key):
+        WarningPolicy.missing_host_key(self, client, hostname, key)
+        options = []
+        for hash_func in (hashlib.md5, hashlib.sha256):
+            # aa:bb:...
+            options.append(hexlify(hash_func(key).digest(), b':', 1).decode('ascii'))
+            # aabb...
+            options.append(hexlify(hash_func(key).digest()).decode('ascii'))
+        if not no_yes_options("Are you sure you want to continue connecting?", options):
+            raise SSHException(
+                "Server {!r} not found in known_hosts".format(hostname)
+            )
+        AutoAddPolicy.missing_host_key(self, client, hostname, key)
+
+
 class RejectPolicy(MissingHostKeyPolicy):
     """
     Policy for automatically rejecting the unknown hostname & key.  This is
