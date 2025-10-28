@@ -575,6 +575,7 @@ class SSHClient(ClosingContextManager):
         width_pixels=0,
         height_pixels=0,
         environment=None,
+        channel_timeout=None,
     ):
         """
         Start an interactive shell session on the SSH server.  A new `.Channel`
@@ -588,11 +589,14 @@ class SSHClient(ClosingContextManager):
         :param int width_pixels: the width (in pixels) of the terminal window
         :param int height_pixels: the height (in pixels) of the terminal window
         :param dict environment: the command's environment
+        :param int channel_timeout:
+            set the channel timeout for opening the session.
+            See `.Channel.settimeout`
         :return: a new `.Channel` connected to the remote shell
 
         :raises: `.SSHException` -- if the server fails to invoke a shell
         """
-        chan = self._transport.open_session()
+        chan = self._transport.open_session(timeout=channel_timeout)
         chan.get_pty(term, width, height, width_pixels, height_pixels)
         chan.invoke_shell()
         return chan
