@@ -111,7 +111,7 @@ class FakeTransport:
     def _activate_outbound(self):
         self._activated = True
 
-    def _log(self, level, s):
+    def _log(self, level, msg, *args, stacklevel=1):
         pass
 
     def get_server_key(self):
