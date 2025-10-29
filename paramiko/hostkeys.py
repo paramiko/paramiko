@@ -18,6 +18,8 @@
 
 
 from base64 import encodebytes, decodebytes
+from enum import Enum
+from typing import Iterable, Optional
 import binascii
 import os
 import re
@@ -311,18 +313,29 @@ class InvalidHostKey(Exception):
         self.args = (line, exc)
 
 
+class HostKeyMarkers(str, Enum):
+    CERT_AUTHORITY = "@cert-authority"
+    REVOKED = "@revoked"
+
+
 class HostKeyEntry:
     """
     Representation of a line in an OpenSSH-style "known hosts" file.
     """
 
-    def __init__(self, hostnames=None, key=None):
+    def __init__(
+        self,
+        hostnames: Optional[Iterable[str]] = None,
+        key: Optional[PKey] = None,
+        marker: Optional[HostKeyMarkers] = None,
+    ):
         self.valid = (hostnames is not None) and (key is not None)
         self.hostnames = hostnames
         self.key = key
+        self._marker = marker
 
     @classmethod
-    def from_line(cls, line, lineno=None):
+    def from_line(cls, line: str, lineno: Optional[int] = None):
         """
         Parses the given line of text to find the names for the host,
         the type of key, and the key data. The line is expected to be in the
@@ -334,6 +347,7 @@ class HostKeyEntry:
         that should be taken care of before sending the line to us.
 
         :param str line: a line from an OpenSSH known_hosts file
+        :param int|None lineno: the line number on which the entry appears
         """
         log = get_logger("paramiko.hostkeys")
         fields = re.split(" |\t", line)
@@ -342,7 +356,17 @@ class HostKeyEntry:
             msg = "Not enough fields found in known_hosts in line {} ({!r})"
             log.info(msg.format(lineno, line))
             return None
-        fields = fields[:3]
+
+        try:
+            marker = HostKeyMarkers(fields[0])
+            fields = fields[1:4]
+        except ValueError:
+            marker = None
+            fields = fields[:3]
+
+        if marker is HostKeyMarkers.REVOKED:
+            log.info("Key is marked as revoked")
+            return None
 
         names, key_type, key = fields
         names = names.split(",")
@@ -359,7 +383,11 @@ class HostKeyEntry:
             raise InvalidHostKey(line, e)
 
         try:
-            return cls(names, PKey.from_type_string(key_type, key_bytes))
+            return cls(
+                names,
+                PKey.from_type_string(key_type, key_bytes),
+                marker=marker,
+            )
         except UnknownKeyType:
             # TODO 4.0: consider changing HostKeys API so this just raises
             # naturally and the exception is muted higher up in the stack?
@@ -373,6 +401,13 @@ class HostKeyEntry:
         included.
         """
         if self.valid:
+            if self._marker:
+                return "{} {} {} {}\n".format(
+                    self._marker.value,
+                    ",".join(self.hostnames),
+                    self.key.get_name(),
+                    self.key.get_base64(),
+                )
             return "{} {} {}\n".format(
                 ",".join(self.hostnames),
                 self.key.get_name(),
