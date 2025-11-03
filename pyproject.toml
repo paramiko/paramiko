@@ -12,7 +12,7 @@ dependencies = [
   "bcrypt>=3.2",
   "cryptography>=3.3",
   "invoke>=2.0",
-  "pynacl>=1.5",
+  "pynacl>=1.6",
 ]
 optional-dependencies = { gssapi = [
   "pyasn1>=0.1.7",
