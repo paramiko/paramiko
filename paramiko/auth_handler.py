@@ -563,7 +563,7 @@ Error Message: {}
         method = m.get_text()
         self._log(
             DEBUG,
-            "Auth request (type={}) service={}, username={}".format(
+            "Auth request (type={!r}) service={!r}, username={!r}".format(
                 method, service, username
             ),
         )
