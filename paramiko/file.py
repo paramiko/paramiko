@@ -354,6 +354,7 @@ class BufferedFile(ClosingContextManager):
         :param int whence:
             type of movement: 0 = absolute; 1 = relative to the current
             position; 2 = relative to the end of the file.
+        :returns: file position (`number <int>` of bytes).
 
         :raises: ``IOError`` -- if the file doesn't support random access.
         """
