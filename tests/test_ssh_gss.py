@@ -120,8 +120,8 @@ class GSSAuthTest(KerberosTestCase):
         self.event.wait(1.0)
         self.assert_(self.event.is_set())
         self.assert_(self.ts.is_active())
-        self.assertEquals(self.username, self.ts.get_username())
-        self.assertEquals(True, self.ts.is_authenticated())
+        self.assertEqual(self.username, self.ts.get_username())
+        self.assertEqual(True, self.ts.is_authenticated())
 
         stdin, stdout, stderr = self.tc.exec_command("yes")
         schan = self.ts.accept(1.0)
@@ -130,10 +130,10 @@ class GSSAuthTest(KerberosTestCase):
         schan.send_stderr("This is on stderr.\n")
         schan.close()
 
-        self.assertEquals("Hello there.\n", stdout.readline())
-        self.assertEquals("", stdout.readline())
-        self.assertEquals("This is on stderr.\n", stderr.readline())
-        self.assertEquals("", stderr.readline())
+        self.assertEqual("Hello there.\n", stdout.readline())
+        self.assertEqual("", stdout.readline())
+        self.assertEqual("This is on stderr.\n", stderr.readline())
+        self.assertEqual("", stderr.readline())
 
         stdin.close()
         stdout.close()
