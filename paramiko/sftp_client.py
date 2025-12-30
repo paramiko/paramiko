@@ -138,9 +138,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         )
         self._log(
             INFO,
-            "Sftp server provides extensions: {}".format(
-                str(extension_pairs)
-            ),
+            "Sftp server provides extensions: {}".format(str(extension_pairs)),
         )
         self.extension_pairs = extension_pairs
 
@@ -209,11 +207,11 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         .. versionadded:: 1.7.1
         """
         return self.sock
-    
+
     def supports_extension(self, ext_name, ext_data):
         """
         Checks whetier extension & version are supported by server.
-        
+
         :param str ext_name: extension name
         :param str ext_data: extension version
         :return: True if supported, False otherwise
