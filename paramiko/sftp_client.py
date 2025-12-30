@@ -127,7 +127,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
             )
             self.ultra_debug = transport.get_hexdump()
         try:
-            server_version = self._send_version()
+            server_version, extension_pairs = self._send_version()
         except EOFError:
             raise SSHException("EOF during negotiation")
         self._log(
@@ -136,6 +136,13 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
                 server_version
             ),
         )
+        self._log(
+            INFO,
+            "Sftp server provides extensions: {}".format(
+                str(extension_pairs)
+            ),
+        )
+        self.extension_pairs = extension_pairs
 
     @classmethod
     def from_transport(cls, t, window_size=None, max_packet_size=None):
@@ -202,6 +209,19 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         .. versionadded:: 1.7.1
         """
         return self.sock
+    
+    def supports_extension(self, ext_name, ext_data):
+        """
+        Checks whetier extension & version are supported by server.
+        
+        :param str ext_name: extension name
+        :param str ext_data: extension version
+        :return: True if supported, False otherwise
+        :rtype: bool
+
+        .. versionadded:: 4.1
+        """
+        return (ext_name, ext_data) in self.extension_pairs
 
     def listdir(self, path="."):
         """
