@@ -488,6 +488,7 @@ class Transport(threading.Thread, ClosingContextManager):
                         sock.connect((hostname, port))
                     except socket.error as e:
                         reason = str(e)
+                        sock.close()
                     else:
                         break
             else:
