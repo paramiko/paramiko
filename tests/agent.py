@@ -160,6 +160,7 @@ class AgentKey_:
         msg.add_bytes(b"some-signature-data")
         fake_blob = bytes(msg)
         key = AgentKey(agent=agent, blob=fake_blob)
-        # Verify our new property works even for types Paramiko can't parse internally
+        # Verify our new property works even for types Paramiko can't
+        # parse internally
         assert key.public_blob.key_type == "unsupported-cert-type@example.com"
         assert key.public_blob.key_blob == fake_blob
