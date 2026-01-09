@@ -153,7 +153,8 @@ class AgentKey_:
     def exposes_public_blob(self):
         agent = Mock()
         # Use a type that Paramiko doesn't have a specific class for.
-        # This prevents it from trying to parse 'some-signature-data' as RSA math.
+        # This prevents it from trying to parse 'some-signature-data' as
+        # RSA math.
         msg = Message()
         msg.add_string("unsupported-cert-type@example.com")
         msg.add_bytes(b"some-signature-data")
