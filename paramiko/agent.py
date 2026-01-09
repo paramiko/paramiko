@@ -29,6 +29,7 @@ import time
 import tempfile
 import stat
 from logging import DEBUG
+from collections import namedtuple
 from select import select
 from paramiko.common import io_sleep, byte_chr
 
@@ -467,6 +468,15 @@ class AgentKey(PKey):
         if self.inner_key is not None:
             return self.inner_key.get_bits()
         return super().get_bits()
+
+    @property
+    def public_blob(self):
+        # If Paramiko managed to parse a real PKey object (RSA/Ed25519), use its blob
+        if self.inner_key is not None and hasattr(self.inner_key, 'public_blob'):
+            return self.inner_key.public_blob
+        # Otherwise, wrap the raw agent blob so AuthHandler can still see
+        # the key_type (self.name) and the raw bytes (self.blob)
+        return namedtuple('BlobWrapper', 'key_type key_blob')(self.name, self.blob)
 
     def __getattr__(self, name):
         """

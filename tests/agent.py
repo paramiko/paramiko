@@ -149,3 +149,15 @@ class AgentKey_:
             assert msg.get_string() == expected_request_key_blob
             assert msg.get_string() == b"data-to-sign"
             assert msg.get_int() == expected_flag
+    def exposes_public_blob(self):
+            agent = Mock()
+            # Use a type that Paramiko doesn't have a specific class for.
+            # This prevents it from trying to parse 'some-signature-data' as RSA math.
+            msg = Message()
+            msg.add_string("unsupported-cert-type@example.com")
+            msg.add_bytes(b"some-signature-data")
+            fake_blob = bytes(msg)
+            key = AgentKey(agent=agent, blob=fake_blob)
+            # Verify our new property works even for types Paramiko can't parse internally
+            assert key.public_blob.key_type == "unsupported-cert-type@example.com"
+            assert key.public_blob.key_blob == fake_blob
