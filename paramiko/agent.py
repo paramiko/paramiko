@@ -472,11 +472,15 @@ class AgentKey(PKey):
     @property
     def public_blob(self):
         # If Paramiko managed to parse a real PKey object (RSA/Ed25519), use its blob
-        if self.inner_key is not None and hasattr(self.inner_key, 'public_blob'):
+        if self.inner_key is not None and hasattr(
+            self.inner_key, 'public_blob'
+        ):
             return self.inner_key.public_blob
         # Otherwise, wrap the raw agent blob so AuthHandler can still see
         # the key_type (self.name) and the raw bytes (self.blob)
-        return namedtuple('BlobWrapper', 'key_type key_blob')(self.name, self.blob)
+        return namedtuple('BlobWrapper', 'key_type key_blob')(
+            self.name, self.blob
+        )
 
     def __getattr__(self, name):
         """
