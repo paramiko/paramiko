@@ -75,8 +75,7 @@ class HostKeys(MutableMapping):
         """
         Read a file of known SSH host keys, in the format used by OpenSSH.
         This type of file unfortunately doesn't exist on Windows, but on
-        posix, it will usually be stored in
-        ``os.path.expanduser("~/.ssh/known_hosts")``.
+        POSIX, it will usually be stored in `~/.ssh/known_hosts`.
 
         If this method is called multiple times, the host keys are merged,
         not cleared.  So multiple calls to `load` will just call `add`,
