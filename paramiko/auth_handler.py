@@ -295,7 +295,7 @@ class AuthHandler:
 
     def _choose_fallback_pubkey_algorithm(self, key_type, my_algos):
         # Fallback: first one in our (possibly tweaked by caller) list
-        pubkey_algo = my_algos[0]
+        pubkey_algo = my_algos[-1]
         msg = "Server did not send a server-sig-algs list; defaulting to our first preferred algo ({!r})"  # noqa
         self._log(DEBUG, msg.format(pubkey_algo))
         self._log(
