@@ -23,6 +23,8 @@ import struct
 from paramiko import util
 from paramiko.common import DEBUG, byte_chr, byte_ord
 from paramiko.message import Message
+from logging import Logger
+from paramiko.channel import Channel
 
 
 (
@@ -62,7 +64,7 @@ SFTP_OK = 0
     SFTP_OP_UNSUPPORTED,
 ) = range(1, 9)
 
-SFTP_DESC = [
+SFTP_DESC: list[str] = [
     "Success",
     "End of file",
     "No such file",
@@ -85,7 +87,7 @@ _VERSION = 3
 
 
 # for debugging
-CMD_NAMES = {
+CMD_NAMES: dict[int, str] = {
     CMD_INIT: "init",
     CMD_VERSION: "version",
     CMD_OPEN: "open",
@@ -131,7 +133,7 @@ class SFTPError(Exception):
 
 
 class BaseSFTP:
-    def __init__(self):
+    def __init__(self) -> None:
         self.logger = util.get_logger("paramiko.sftp")
         self.sock = None
         self.ultra_debug = False

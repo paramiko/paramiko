@@ -39,7 +39,7 @@ GSS_AUTH_AVAILABLE = True
 
 
 #: A tuple of the exception types used by the underlying GSSAPI implementation.
-GSS_EXCEPTIONS = ()
+GSS_EXCEPTIONS: tuple[type[Exception], ...] = ()
 
 
 #: :var str _API: Constraint for the used API

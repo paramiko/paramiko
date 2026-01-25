@@ -41,15 +41,22 @@ from paramiko.common import (
     cMSG_CHANNEL_EOF,
     cMSG_CHANNEL_CLOSE,
 )
-from paramiko.message import Message
+from paramiko.message import _LikeBytes, Message
 from paramiko.ssh_exception import SSHException
 from paramiko.file import BufferedFile
 from paramiko.buffered_pipe import BufferedPipe, PipeTimeout
 from paramiko import pipe
 from paramiko.util import ClosingContextManager
+from _typeshed import SupportsItems
+from collections.abc import Callable
+from logging import Logger
+from paramiko.transport import Transport
+from typing import Any, Literal, TypeVar
+
+_F = TypeVar("_F", bound=Callable[..., Any])
 
 
-def open_only(func):
+def open_only(func: _F) -> Callable[[_F], _F]:
     """
     Decorator for `.Channel` methods which performs an openness check.
 
@@ -89,7 +96,7 @@ class Channel(ClosingContextManager):
     Instances of this class may be used as context managers.
     """
 
-    def __init__(self, chanid):
+    def __init__(self, chanid: int) -> None:
         """
         Create a new channel.  The channel is not associated with any
         particular session or `.Transport` until the Transport attaches it.
@@ -133,7 +140,7 @@ class Channel(ClosingContextManager):
         self.exit_status = -1
         self.origin_addr = None
 
-    def __del__(self):
+    def __del__(self) -> None:
         try:
             self.close()
         except:
@@ -161,12 +168,12 @@ class Channel(ClosingContextManager):
     @open_only
     def get_pty(
         self,
-        term="vt100",
-        width=80,
-        height=24,
-        width_pixels=0,
-        height_pixels=0,
-    ):
+        term: _LikeBytes = "vt100",
+        width: int = 80,
+        height: int = 24,
+        width_pixels: int = 0,
+        height_pixels: int = 0,
+    ) -> None:
         """
         Request a pseudo-terminal from the server.  This is usually used right
         after creating a client channel, to ask the server to provide some
@@ -201,7 +208,7 @@ class Channel(ClosingContextManager):
         self._wait_for_event()
 
     @open_only
-    def invoke_shell(self):
+    def invoke_shell(self) -> None:
         """
         Request an interactive shell session on this channel.  If the server
         allows it, the channel will then be directly connected to the stdin,
@@ -228,7 +235,7 @@ class Channel(ClosingContextManager):
         self._wait_for_event()
 
     @open_only
-    def exec_command(self, command):
+    def exec_command(self, command: _LikeBytes) -> None:
         """
         Execute a command on the server.  If the server allows it, the channel
         will then be directly connected to the stdin, stdout, and stderr of
@@ -255,7 +262,7 @@ class Channel(ClosingContextManager):
         self._wait_for_event()
 
     @open_only
-    def invoke_subsystem(self, subsystem):
+    def invoke_subsystem(self, subsystem: _LikeBytes) -> None:
         """
         Request a subsystem on the server (for example, ``sftp``).  If the
         server allows it, the channel will then be directly connected to the
@@ -281,7 +288,13 @@ class Channel(ClosingContextManager):
         self._wait_for_event()
 
     @open_only
-    def resize_pty(self, width=80, height=24, width_pixels=0, height_pixels=0):
+    def resize_pty(
+        self,
+        width: int = 80,
+        height: int = 24,
+        width_pixels: int = 0,
+        height_pixels: int = 0,
+    ) -> None:
         """
         Resize the pseudo-terminal.  This can be used to change the width and
         height of the terminal emulation created in a previous `get_pty` call.
@@ -307,7 +320,9 @@ class Channel(ClosingContextManager):
         self.transport._send_user_message(m)
 
     @open_only
-    def update_environment(self, environment):
+    def update_environment(
+        self, environment: SupportsItems[_LikeBytes, _LikeBytes]
+    ) -> None:
         """
         Updates this channel's remote shell environment.
 
@@ -333,7 +348,9 @@ class Channel(ClosingContextManager):
                 raise SSHException(err.format(name), e)
 
     @open_only
-    def set_environment_variable(self, name, value):
+    def set_environment_variable(
+        self, name: _LikeBytes, value: _LikeBytes
+    ) -> None:
         """
         Set the value of an environment variable.
 
@@ -359,7 +376,7 @@ class Channel(ClosingContextManager):
         m.add_string(value)
         self.transport._send_user_message(m)
 
-    def exit_status_ready(self):
+    def exit_status_ready(self) -> bool:
         """
         Return true if the remote process has exited and returned an exit
         status. You may use this to poll the process status if you don't
@@ -374,7 +391,7 @@ class Channel(ClosingContextManager):
         """
         return self.closed or self.status_event.is_set()
 
-    def recv_exit_status(self):
+    def recv_exit_status(self) -> int:
         """
         Return the exit status from the process on the server.  This is
         mostly useful for retrieving the results of an `exec_command`.
@@ -401,7 +418,7 @@ class Channel(ClosingContextManager):
         assert self.status_event.is_set()
         return self.exit_status
 
-    def send_exit_status(self, status):
+    def send_exit_status(self, status: int) -> None:
         """
         Send the exit status of an executed command to the client.  (This
         really only makes sense in server mode.)  Many clients expect to
@@ -425,12 +442,12 @@ class Channel(ClosingContextManager):
     @open_only
     def request_x11(
         self,
-        screen_number=0,
-        auth_protocol=None,
-        auth_cookie=None,
-        single_connection=False,
-        handler=None,
-    ):
+        screen_number: int = 0,
+        auth_protocol: _LikeBytes | None = None,
+        auth_cookie: _LikeBytes | None = None,
+        single_connection: bool = False,
+        handler: Callable[[Channel, tuple[str, int]], object] | None = None,
+    ) -> bytes:
         """
         Request an x11 session on this channel.  If the server allows it,
         further x11 requests can be made from the server to the client,
@@ -490,7 +507,9 @@ class Channel(ClosingContextManager):
         return auth_cookie
 
     @open_only
-    def request_forward_agent(self, handler):
+    def request_forward_agent(
+        self, handler: Callable[[Channel], object]
+    ) -> bool:
         """
         Request for a forward SSH Agent on this channel.
         This is only valid for an ssh-agent from OpenSSH !!!
@@ -513,13 +532,13 @@ class Channel(ClosingContextManager):
         self.transport._set_forward_agent_handler(handler)
         return True
 
-    def get_transport(self):
+    def get_transport(self) -> Transport:
         """
         Return the `.Transport` associated with this channel.
         """
         return self.transport
 
-    def set_name(self, name):
+    def set_name(self, name: str) -> None:
         """
         Set a name for this channel.  Currently it's only used to set the name
         of the channel in logfile entries.  The name can be fetched with the
@@ -529,13 +548,13 @@ class Channel(ClosingContextManager):
         """
         self._name = name
 
-    def get_name(self):
+    def get_name(self) -> str:
         """
         Get the name of this channel that was previously set by `set_name`.
         """
         return self._name
 
-    def get_id(self):
+    def get_id(self) -> int:
         """
         Return the `int` ID # for this channel.
 
@@ -546,7 +565,7 @@ class Channel(ClosingContextManager):
         """
         return self.chanid
 
-    def set_combine_stderr(self, combine):
+    def set_combine_stderr(self, combine: bool) -> bool:
         """
         Set whether stderr should be combined into stdout on this channel.
         The default is ``False``, but in some cases it may be convenient to
@@ -583,7 +602,7 @@ class Channel(ClosingContextManager):
 
     # ...socket API...
 
-    def settimeout(self, timeout):
+    def settimeout(self, timeout: float | None) -> None:
         """
         Set a timeout on blocking read/write operations.  The ``timeout``
         argument can be a nonnegative float expressing seconds, or ``None``.
@@ -601,7 +620,7 @@ class Channel(ClosingContextManager):
         """
         self.timeout = timeout
 
-    def gettimeout(self):
+    def gettimeout(self) -> float | None:
         """
         Returns the timeout in seconds (as a float) associated with socket
         operations, or ``None`` if no timeout is set.  This reflects the last
@@ -609,7 +628,7 @@ class Channel(ClosingContextManager):
         """
         return self.timeout
 
-    def setblocking(self, blocking):
+    def setblocking(self, blocking: bool | Literal[0, 1]) -> None:
         """
         Set blocking or non-blocking mode of the channel: if ``blocking`` is 0,
         the channel is set to non-blocking mode; otherwise it's set to blocking
@@ -632,7 +651,7 @@ class Channel(ClosingContextManager):
         else:
             self.settimeout(0.0)
 
-    def getpeername(self):
+    def getpeername(self) -> str:
         """
         Return the address of the remote side of this Channel, if possible.
 
@@ -642,7 +661,7 @@ class Channel(ClosingContextManager):
         """
         return self.transport.getpeername()
 
-    def close(self):
+    def close(self) -> None:
         """
         Close the channel.  All future read/write operations on the channel
         will fail.  The remote end will receive no more data (after queued data
@@ -668,7 +687,7 @@ class Channel(ClosingContextManager):
             if m is not None:
                 self.transport._send_user_message(m)
 
-    def recv_ready(self):
+    def recv_ready(self) -> bool:
         """
         Returns true if data is buffered and ready to be read from this
         channel.  A ``False`` result does not mean that the channel has closed;
@@ -680,7 +699,7 @@ class Channel(ClosingContextManager):
         """
         return self.in_buffer.read_ready()
 
-    def recv(self, nbytes):
+    def recv(self, nbytes: int) -> bytes:
         """
         Receive data from the channel.  The return value is a string
         representing the data received.  The maximum amount of data to be
@@ -709,7 +728,7 @@ class Channel(ClosingContextManager):
 
         return out
 
-    def recv_stderr_ready(self):
+    def recv_stderr_ready(self) -> bool:
         """
         Returns true if data is buffered and ready to be read from this
         channel's stderr stream.  Only channels using `exec_command` or
@@ -724,7 +743,7 @@ class Channel(ClosingContextManager):
         """
         return self.in_stderr_buffer.read_ready()
 
-    def recv_stderr(self, nbytes):
+    def recv_stderr(self, nbytes: int) -> bytes:
         """
         Receive data from the channel's stderr stream.  Only channels using
         `exec_command` or `invoke_shell` without a pty will ever have data
@@ -757,7 +776,7 @@ class Channel(ClosingContextManager):
 
         return out
 
-    def send_ready(self):
+    def send_ready(self) -> bool:
         """
         Returns true if data can be written to this channel without blocking.
         This means the channel is either closed (so any write attempt would
@@ -778,7 +797,7 @@ class Channel(ClosingContextManager):
         finally:
             self.lock.release()
 
-    def send(self, s):
+    def send(self, s: bytes | bytearray) -> int:
         """
         Send data to the channel.  Returns the number of bytes sent, or 0 if
         the channel stream is closed.  Applications are responsible for
@@ -798,7 +817,7 @@ class Channel(ClosingContextManager):
         m.add_int(self.remote_chanid)
         return self._send(s, m)
 
-    def send_stderr(self, s):
+    def send_stderr(self, s: bytes | bytearray) -> int:
         """
         Send data to the channel on the "stderr" stream.  This is normally
         only used by servers to send output from shell commands -- clients
@@ -822,7 +841,7 @@ class Channel(ClosingContextManager):
         m.add_int(1)
         return self._send(s, m)
 
-    def sendall(self, s):
+    def sendall(self, s: bytes | bytearray) -> None:
         """
         Send data to the channel, without allowing partial results.  Unlike
         `send`, this method continues to send data from the given string until
@@ -845,7 +864,7 @@ class Channel(ClosingContextManager):
             s = s[sent:]
         return None
 
-    def sendall_stderr(self, s):
+    def sendall_stderr(self, s: bytes | bytearray) -> None:
         """
         Send data to the channel's "stderr" stream, without allowing partial
         results.  Unlike `send_stderr`, this method continues to send data
@@ -866,7 +885,7 @@ class Channel(ClosingContextManager):
             s = s[sent:]
         return None
 
-    def makefile(self, *params):
+    def makefile(self, *params) -> "ChannelFile":
         """
         Return a file-like object associated with this channel.  The optional
         ``mode`` and ``bufsize`` arguments are interpreted the same way as by
@@ -876,7 +895,7 @@ class Channel(ClosingContextManager):
         """
         return ChannelFile(*([self] + list(params)))
 
-    def makefile_stderr(self, *params):
+    def makefile_stderr(self, *params) -> "ChannelStderrFile":
         """
         Return a file-like object associated with this channel's stderr
         stream.   Only channels using `exec_command` or `invoke_shell`
@@ -894,7 +913,7 @@ class Channel(ClosingContextManager):
         """
         return ChannelStderrFile(*([self] + list(params)))
 
-    def makefile_stdin(self, *params):
+    def makefile_stdin(self, *params) -> "ChannelStdinFile":
         """
         Return a file-like object associated with this channel's stdin
         stream.
@@ -911,7 +930,7 @@ class Channel(ClosingContextManager):
         """
         return ChannelStdinFile(*([self] + list(params)))
 
-    def fileno(self):
+    def fileno(self) -> int:
         """
         Returns an OS-level file descriptor which can be used for polling, but
         but not for reading or writing.  This is primarily to allow Python's
@@ -941,7 +960,7 @@ class Channel(ClosingContextManager):
         finally:
             self.lock.release()
 
-    def shutdown(self, how):
+    def shutdown(self, how: int) -> None:
         """
         Shut down one or both halves of the connection.  If ``how`` is 0,
         further receives are disallowed.  If ``how`` is 1, further sends
@@ -964,7 +983,7 @@ class Channel(ClosingContextManager):
             if m is not None and self.transport is not None:
                 self.transport._send_user_message(m)
 
-    def shutdown_read(self):
+    def shutdown_read(self) -> None:
         """
         Shutdown the receiving side of this socket, closing the stream in
         the incoming direction.  After this call, future reads on this
@@ -976,7 +995,7 @@ class Channel(ClosingContextManager):
         """
         self.shutdown(0)
 
-    def shutdown_write(self):
+    def shutdown_write(self) -> None:
         """
         Shutdown the sending side of this socket, closing the stream in
         the outgoing direction.  After this call, future writes on this
@@ -1344,7 +1363,9 @@ class ChannelFile(BufferedFile):
         flush the buffer.
     """
 
-    def __init__(self, channel, mode="r", bufsize=-1):
+    def __init__(
+        self, channel: Channel, mode: str = "r", bufsize: int = -1
+    ) -> None:
         self.channel = channel
         BufferedFile.__init__(self)
         self._set_mode(mode, bufsize)
@@ -1385,6 +1406,6 @@ class ChannelStdinFile(ChannelFile):
     See `Channel.makefile_stdin` for details.
     """
 
-    def close(self):
+    def close(self) -> None:
         super().close()
         self.channel.shutdown_write()

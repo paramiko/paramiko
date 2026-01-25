@@ -22,7 +22,9 @@ Standard SSH key exchange ("kex" if you wanna sound cool).  Diffie-Hellman of
 """
 
 from paramiko.kex_group1 import KexGroup1
-from hashlib import sha512
+from hashlib import _Hash, sha512
+from _typeshed import ReadableBuffer
+from collections.abc import Callable
 
 
 class KexGroup16SHA512(KexGroup1):
@@ -32,4 +34,4 @@ class KexGroup16SHA512(KexGroup1):
     G = 2
 
     name = "diffie-hellman-group16-sha512"
-    hash_algo = sha512
+    hash_algo: Callable[[ReadableBuffer], _Hash] = sha512

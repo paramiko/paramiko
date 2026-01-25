@@ -17,8 +17,10 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
 
 from importlib import metadata
+from paramiko.pkey import PKey
+from typing import Final
 
-__version__ = metadata.version("paramiko")
+__version__: Final[str] = metadata.version("paramiko")
 
 # flake8: noqa
 from paramiko.transport import (
@@ -113,8 +115,8 @@ from paramiko.common import io_sleep
 
 
 # TODO: I guess a real plugin system might be nice for future expansion...
-key_classes = [RSAKey, Ed25519Key, ECDSAKey]
+key_classes: list[type[PKey]] = [RSAKey, Ed25519Key, ECDSAKey]
 
 
-__author__ = "Jeff Forcier <jeff@bitprophet.org>"
-__license__ = "GNU Lesser General Public License (LGPL)"
+__author__: Final[str] = "Jeff Forcier <jeff@bitprophet.org>"
+__license__: Final[str] = "GNU Lesser General Public License (LGPL)"

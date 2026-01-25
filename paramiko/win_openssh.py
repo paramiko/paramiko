@@ -23,7 +23,7 @@ import time
 PIPE_NAME = r"\\.\pipe\openssh-ssh-agent"
 
 
-def can_talk_to_agent():
+def can_talk_to_agent() -> bool:
     # use os.listdir() instead of os.path.exists(), because os.path.exists()
     # uses CreateFileW() API and the pipe cannot be reopen unless the server
     # calls DisconnectNamedPipe().
@@ -33,7 +33,7 @@ def can_talk_to_agent():
 
 
 class OpenSSHAgentConnection:
-    def __init__(self):
+    def __init__(self) -> None:
         while True:
             try:
                 self._pipe = os.open(PIPE_NAME, os.O_RDWR | os.O_BINARY)
@@ -46,11 +46,11 @@ class OpenSSHAgentConnection:
                 break
             time.sleep(0.1)
 
-    def send(self, data):
+    def send(self, data: bytes) -> int:
         return os.write(self._pipe, data)
 
-    def recv(self, n):
+    def recv(self, n: int) -> bytes:
         return os.read(self._pipe, n)
 
-    def close(self):
+    def close(self) -> None:
         return os.close(self._pipe)

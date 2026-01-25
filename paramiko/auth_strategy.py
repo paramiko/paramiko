@@ -10,6 +10,19 @@ from collections import namedtuple
 from .agent import AgentKey
 from .util import get_logger
 from .ssh_exception import AuthenticationException
+from collections.abc import Callable, Iterator
+from logging import Logger
+from paramiko.config import SSHConfig
+from paramiko.pkey import PKey
+from paramiko.ssh_exception import AuthenticationException
+from paramiko.transport import Transport
+from pathlib import Path
+from typing import NamedTuple
+
+
+class SourceResult(NamedTuple):
+    source: AuthSource
+    result: list[str] | Exception
 
 
 class AuthSource:
@@ -21,7 +34,7 @@ class AuthSource:
     All implementations must accept at least a ``username`` (``str``) kwarg.
     """
 
-    def __init__(self, username):
+    def __init__(self, username: str) -> None:
         self.username = username
 
     def _repr(self, **kwargs):
@@ -34,7 +47,7 @@ class AuthSource:
     def __repr__(self):
         return self._repr()
 
-    def authenticate(self, transport):
+    def authenticate(self, transport: Transport) -> list[str]:
         """
         Perform authentication.
         """
@@ -46,7 +59,7 @@ class NoneAuth(AuthSource):
     Auth type "none", ie https://www.rfc-editor.org/rfc/rfc4252#section-5.2 .
     """
 
-    def authenticate(self, transport):
+    def authenticate(self, transport: Transport) -> list[str]:
         return transport.auth_none(self.username)
 
 
@@ -65,7 +78,9 @@ class Password(AuthSource):
         in a variable).
     """
 
-    def __init__(self, username, password_getter):
+    def __init__(
+        self, username: str, password_getter: Callable[[], str]
+    ) -> None:
         super().__init__(username=username)
         self.password_getter = password_getter
 
@@ -74,7 +89,7 @@ class Password(AuthSource):
         # as well log that info here.
         return super()._repr(user=self.username)
 
-    def authenticate(self, transport):
+    def authenticate(self, transport: Transport) -> list[str]:
         # Lazily get the password, in case it's prompting a user
         # TODO: be nice to log source _of_ the password?
         password = self.password_getter()
@@ -98,7 +113,7 @@ class PrivateKey(AuthSource):
     its `super` call.
     """
 
-    def authenticate(self, transport):
+    def authenticate(self, transport: Transport) -> list[str]:
         return transport.auth_publickey(self.username, self.pkey)
 
 
@@ -107,7 +122,7 @@ class InMemoryPrivateKey(PrivateKey):
     An in-memory, decrypted `.PKey` object.
     """
 
-    def __init__(self, username, pkey):
+    def __init__(self, username: str, pkey: PKey) -> None:
         super().__init__(username=username)
         # No decryption (presumably) necessary!
         self.pkey = pkey
@@ -134,7 +149,9 @@ class OnDiskPrivateKey(PrivateKey):
         The `PKey` object this auth source uses/represents.
     """
 
-    def __init__(self, username, source, path, pkey):
+    def __init__(
+        self, username: str, source: str, path: Path, pkey: PKey
+    ) -> None:
         super().__init__(username=username)
         self.source = source
         allowed = ("ssh-config", "python-config", "implicit-home")
@@ -196,7 +213,7 @@ class AuthResult(list):
     which was attempted.
     """
 
-    def __init__(self, strategy, *args, **kwargs):
+    def __init__(self, strategy: "AuthStrategy", *args, **kwargs) -> None:
         self.strategy = strategy
         super().__init__(*args, **kwargs)
 
@@ -222,7 +239,7 @@ class AuthFailure(AuthenticationException):
     primarily for backwards compatibility reasons.
     """
 
-    def __init__(self, result):
+    def __init__(self, result: AuthResult) -> None:
         self.result = result
 
     def __str__(self):
@@ -240,12 +257,12 @@ class AuthStrategy:
 
     def __init__(
         self,
-        ssh_config,
-    ):
+        ssh_config: SSHConfig,
+    ) -> None:
         self.ssh_config = ssh_config
         self.log = get_logger(__name__)
 
-    def get_sources(self):
+    def get_sources(self) -> Iterator[AuthSource]:
         """
         Generator yielding `AuthSource` instances, in the order to try.
 
@@ -257,7 +274,7 @@ class AuthStrategy:
         """
         raise NotImplementedError
 
-    def authenticate(self, transport):
+    def authenticate(self, transport: Transport) -> list[SourceResult]:
         """
         Handles attempting `AuthSource` instances yielded from `get_sources`.
 

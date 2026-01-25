@@ -19,6 +19,8 @@
 import stat
 import time
 from paramiko.common import x80000000, o700, o70, xffffffff
+from os import stat_result
+from typing_extensions import Self
 
 
 class SFTPAttributes:
@@ -46,7 +48,7 @@ class SFTPAttributes:
     FLAG_AMTIME = 8
     FLAG_EXTENDED = x80000000
 
-    def __init__(self):
+    def __init__(self) -> None:
         """
         Create a new (empty) SFTPAttributes object.  All fields will be empty.
         """
@@ -60,7 +62,7 @@ class SFTPAttributes:
         self.attr = {}
 
     @classmethod
-    def from_stat(cls, obj, filename=None):
+    def from_stat(cls, obj: stat_result, filename: str | None = None) -> Self:
         """
         Create an `.SFTPAttributes` object from an existing ``stat`` object (an
         object returned by `os.stat`).
@@ -235,5 +237,5 @@ class SFTPAttributes:
             filename,
         )
 
-    def asbytes(self):
+    def asbytes(self) -> bytes:
         return str(self).encode()

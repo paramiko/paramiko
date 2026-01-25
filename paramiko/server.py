@@ -29,6 +29,10 @@ from paramiko.common import (
     AUTH_FAILED,
     AUTH_SUCCESSFUL,
 )
+from paramiko.channel import Channel
+from paramiko.message import Message
+from paramiko.pkey import PKey
+from paramiko.transport import Transport
 
 
 class ServerInterface:
@@ -41,7 +45,7 @@ class ServerInterface:
     sleeps.)
     """
 
-    def check_channel_request(self, kind, chanid):
+    def check_channel_request(self, kind: str, chanid: int) -> int:
         """
         Determine if a channel request of a given type will be granted, and
         return ``OPEN_SUCCEEDED`` or an error code.  This method is
@@ -86,7 +90,7 @@ class ServerInterface:
         """
         return OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED
 
-    def get_allowed_auths(self, username):
+    def get_allowed_auths(self, username: str) -> str:
         """
         Return a list of authentication methods supported by the server.
         This list is sent to clients attempting to authenticate, to inform them
@@ -103,7 +107,7 @@ class ServerInterface:
         """
         return "password"
 
-    def check_auth_none(self, username):
+    def check_auth_none(self, username: str) -> int:
         """
         Determine if a client may open channels with no (further)
         authentication.
@@ -122,7 +126,7 @@ class ServerInterface:
         """
         return AUTH_FAILED
 
-    def check_auth_password(self, username, password):
+    def check_auth_password(self, username: str, password: str) -> int:
         """
         Determine if a given username and password supplied by the client is
         acceptable for use in authentication.
@@ -147,7 +151,7 @@ class ServerInterface:
         """
         return AUTH_FAILED
 
-    def check_auth_publickey(self, username, key):
+    def check_auth_publickey(self, username: str, key: PKey) -> int:
         """
         Determine if a given key supplied by the client is acceptable for use
         in authentication.  You should override this method in server mode to
@@ -179,7 +183,9 @@ class ServerInterface:
         """
         return AUTH_FAILED
 
-    def check_auth_interactive(self, username, submethods):
+    def check_auth_interactive(
+        self, username: str, submethods: str
+    ) -> int | InteractiveQuery:
         """
         Begin an interactive authentication challenge, if supported.  You
         should override this method in server mode if you want to support the
@@ -204,7 +210,9 @@ class ServerInterface:
         """
         return AUTH_FAILED
 
-    def check_auth_interactive_response(self, responses):
+    def check_auth_interactive_response(
+        self, responses: list[str]
+    ) -> int | InteractiveQuery:
         """
         Continue or finish an interactive authentication challenge, if
         supported.  You should override this method in server mode if you want
@@ -236,8 +244,11 @@ class ServerInterface:
         return AUTH_FAILED
 
     def check_auth_gssapi_with_mic(
-        self, username, gss_authenticated=AUTH_FAILED, cc_file=None
-    ):
+        self,
+        username: str,
+        gss_authenticated: int = AUTH_FAILED,
+        cc_file: str | None = None,
+    ) -> int:
         """
         Authenticate the given user to the server if he is a valid krb5
         principal.
@@ -266,8 +277,11 @@ class ServerInterface:
         return AUTH_FAILED
 
     def check_auth_gssapi_keyex(
-        self, username, gss_authenticated=AUTH_FAILED, cc_file=None
-    ):
+        self,
+        username: str,
+        gss_authenticated: int = AUTH_FAILED,
+        cc_file: str | None = None,
+    ) -> int:
         """
         Authenticate the given user to the server if he is a valid krb5
         principal and GSS-API Key Exchange was performed.
@@ -297,7 +311,7 @@ class ServerInterface:
             return AUTH_SUCCESSFUL
         return AUTH_FAILED
 
-    def enable_auth_gssapi(self):
+    def enable_auth_gssapi(self) -> bool:
         """
         Overwrite this function in your SSH server to enable GSSAPI
         authentication.
@@ -309,7 +323,7 @@ class ServerInterface:
         UseGSSAPI = False
         return UseGSSAPI
 
-    def check_port_forward_request(self, address, port):
+    def check_port_forward_request(self, address: str, port: int) -> int:
         """
         Handle a request for port forwarding.  The client is asking that
         connections to the given address and port be forwarded back across
@@ -330,7 +344,7 @@ class ServerInterface:
         """
         return False
 
-    def cancel_port_forward_request(self, address, port):
+    def cancel_port_forward_request(self, address: str, port: int) -> None:
         """
         The client would like to cancel a previous port-forwarding request.
         If the given address and port is being forwarded across this ssh
@@ -341,7 +355,9 @@ class ServerInterface:
         """
         pass
 
-    def check_global_request(self, kind, msg):
+    def check_global_request(
+        self, kind: str, msg: Message
+    ) -> bool | tuple[bool | int | str, ...]:
         """
         Handle a global request of the given ``kind``.  This method is called
         in server mode and client mode, whenever the remote host makes a global
@@ -374,8 +390,15 @@ class ServerInterface:
     # ...Channel requests...
 
     def check_channel_pty_request(
-        self, channel, term, width, height, pixelwidth, pixelheight, modes
-    ):
+        self,
+        channel: Channel,
+        term: bytes,
+        width: int,
+        height: int,
+        pixelwidth: int,
+        pixelheight: int,
+        modes: bytes,
+    ) -> bool:
         """
         Determine if a pseudo-terminal of the given dimensions (usually
         requested for shell access) can be provided on the given channel.
@@ -396,7 +419,7 @@ class ServerInterface:
         """
         return False
 
-    def check_channel_shell_request(self, channel):
+    def check_channel_shell_request(self, channel: Channel) -> bool:
         """
         Determine if a shell will be provided to the client on the given
         channel.  If this method returns ``True``, the channel should be
@@ -412,7 +435,9 @@ class ServerInterface:
         """
         return False
 
-    def check_channel_exec_request(self, channel, command):
+    def check_channel_exec_request(
+        self, channel: Channel, command: bytes
+    ) -> bool:
         """
         Determine if a shell command will be executed for the client.  If this
         method returns ``True``, the channel should be connected to the stdin,
@@ -431,7 +456,9 @@ class ServerInterface:
         """
         return False
 
-    def check_channel_subsystem_request(self, channel, name):
+    def check_channel_subsystem_request(
+        self, channel: Channel, name: str
+    ) -> bool:
         """
         Determine if a requested subsystem will be provided to the client on
         the given channel.  If this method returns ``True``, all future I/O
@@ -462,8 +489,13 @@ class ServerInterface:
         return True
 
     def check_channel_window_change_request(
-        self, channel, width, height, pixelwidth, pixelheight
-    ):
+        self,
+        channel: Channel,
+        width: int,
+        height: int,
+        pixelwidth: int,
+        pixelheight: int,
+    ) -> bool:
         """
         Determine if the pseudo-terminal on the given channel can be resized.
         This only makes sense if a pty was previously allocated on it.
@@ -483,12 +515,12 @@ class ServerInterface:
 
     def check_channel_x11_request(
         self,
-        channel,
-        single_connection,
-        auth_protocol,
-        auth_cookie,
-        screen_number,
-    ):
+        channel: Channel,
+        single_connection: bool,
+        auth_protocol: str,
+        auth_cookie: bytes,
+        screen_number: int,
+    ) -> bool:
         """
         Determine if the client will be provided with an X11 session.  If this
         method returns ``True``, X11 applications should be routed through new
@@ -507,7 +539,7 @@ class ServerInterface:
         """
         return False
 
-    def check_channel_forward_agent_request(self, channel):
+    def check_channel_forward_agent_request(self, channel: Channel) -> bool:
         """
         Determine if the client will be provided with an forward agent session.
         If this method returns ``True``, the server will allow SSH Agent
@@ -523,7 +555,12 @@ class ServerInterface:
         """
         return False
 
-    def check_channel_direct_tcpip_request(self, chanid, origin, destination):
+    def check_channel_direct_tcpip_request(
+        self,
+        chanid: int,
+        origin: tuple[str, int],
+        destination: tuple[str, int],
+    ) -> int:
         """
         Determine if a local port forwarding channel will be granted, and
         return ``OPEN_SUCCEEDED`` or an error code.  This method is
@@ -563,7 +600,9 @@ class ServerInterface:
         """
         return OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED
 
-    def check_channel_env_request(self, channel, name, value):
+    def check_channel_env_request(
+        self, channel: Channel, name: bytes, value: bytes
+    ) -> bool:
         """
         Check whether a given environment variable can be specified for the
         given channel.  This method should return ``True`` if the server
@@ -581,7 +620,7 @@ class ServerInterface:
         """
         return False
 
-    def get_banner(self):
+    def get_banner(self) -> tuple[str | None, str | None]:
         """
         A pre-login banner to display to the user. The message may span
         multiple lines separated by crlf pairs. The language should be in
@@ -601,7 +640,9 @@ class InteractiveQuery:
     A query (set of prompts) for a user during interactive authentication.
     """
 
-    def __init__(self, name="", instructions="", *prompts):
+    def __init__(
+        self, name: str = "", instructions: str = "", *prompts
+    ) -> None:
         """
         Create a new interactive query to send to the client.  The name and
         instructions are optional, but are generally displayed to the end
@@ -622,7 +663,7 @@ class InteractiveQuery:
             else:
                 self.add_prompt(x[0], x[1])
 
-    def add_prompt(self, prompt, echo=True):
+    def add_prompt(self, prompt: str, echo: bool = True) -> None:
         """
         Add a prompt to this query.  The prompt should be a (reasonably short)
         string.  Multiple prompts can be added to the same query.
@@ -650,7 +691,9 @@ class SubsystemHandler(threading.Thread):
     it from a new thread.
     """
 
-    def __init__(self, channel, name, server):
+    def __init__(
+        self, channel: Channel, name: str, server: ServerInterface
+    ) -> None:
         """
         Create a new handler for a channel.  This is used by `.ServerInterface`
         to start up a new handler when a channel requests this subsystem.  You
@@ -670,7 +713,7 @@ class SubsystemHandler(threading.Thread):
         self.__name = name
         self.__server = server
 
-    def get_server(self):
+    def get_server(self) -> ServerInterface:
         """
         Return the `.ServerInterface` object associated with this channel and
         subsystem.
@@ -696,7 +739,9 @@ class SubsystemHandler(threading.Thread):
         except:
             pass
 
-    def start_subsystem(self, name, transport, channel):
+    def start_subsystem(
+        self, name: str, transport: Transport, channel: Channel
+    ) -> None:
         """
         Process an ssh subsystem in server mode.  This method is called on a
         new object (and in a new thread) for each subsystem request.  It is
@@ -722,7 +767,7 @@ class SubsystemHandler(threading.Thread):
         """
         pass
 
-    def finish_subsystem(self):
+    def finish_subsystem(self) -> None:
         """
         Perform any cleanup at the end of a subsystem.  The default
         implementation just closes the channel.

@@ -37,7 +37,7 @@ from paramiko.sftp import (
 from paramiko.sftp_si import SFTPServerInterface
 from paramiko.sftp_attr import SFTPAttributes
 from paramiko.common import DEBUG
-from paramiko.server import SubsystemHandler
+from paramiko.server import ServerInterface, SubsystemHandler
 from paramiko.util import b
 
 
@@ -81,6 +81,11 @@ from paramiko.sftp import (
     CMD_EXTENDED,
     SFTP_OP_UNSUPPORTED,
 )
+from _typeshed import FileDescriptorOrPath
+from logging import Logger
+from paramiko.channel import Channel
+from paramiko.sftp_handle import SFTPHandle
+from paramiko.transport import Transport
 
 _hash_class = {"sha1": sha1, "md5": md5}
 
@@ -94,13 +99,13 @@ class SFTPServer(BaseSFTP, SubsystemHandler):
 
     def __init__(
         self,
-        channel,
-        name,
-        server,
-        sftp_si=SFTPServerInterface,
+        channel: Channel,
+        name: str,
+        server: ServerInterface,
+        sftp_si: type[SFTPServerInterface] = SFTPServerInterface,
         *args,
         **kwargs
-    ):
+    ) -> None:
         """
         The constructor for SFTPServer is meant to be called from within the
         `.Transport` as a subsystem handler.  ``server`` and any additional
@@ -133,7 +138,9 @@ class SFTPServer(BaseSFTP, SubsystemHandler):
         else:
             super()._log(level, "[chan " + self.sock.get_name() + "] " + msg)
 
-    def start_subsystem(self, name, transport, channel):
+    def start_subsystem(
+        self, name: str, transport: Transport, channel: Channel
+    ) -> None:
         self.sock = channel
         self._log(DEBUG, "Started sftp server on channel {!r}".format(channel))
         self._send_server_version()
@@ -161,7 +168,7 @@ class SFTPServer(BaseSFTP, SubsystemHandler):
                 except:
                     pass
 
-    def finish_subsystem(self):
+    def finish_subsystem(self) -> None:
         self.server.session_ended()
         super().finish_subsystem()
         # close any file handles that were left open
@@ -174,7 +181,7 @@ class SFTPServer(BaseSFTP, SubsystemHandler):
         self.folder_table = {}
 
     @staticmethod
-    def convert_errno(e):
+    def convert_errno(e: int) -> int:
         """
         Convert an errno value (as from an ``OSError`` or ``IOError``) into a
         standard SFTP result code.  This is a convenience function for trapping
@@ -193,7 +200,9 @@ class SFTPServer(BaseSFTP, SubsystemHandler):
             return SFTP_FAILURE
 
     @staticmethod
-    def set_file_attr(filename, attr):
+    def set_file_attr(
+        filename: FileDescriptorOrPath, attr: SFTPAttributes
+    ) -> None:
         """
         Change a file's attributes on the local filesystem.  The contents of
         ``attr`` are used to change the permissions, owner, group ownership,

@@ -67,6 +67,12 @@ from paramiko.sftp_attr import SFTPAttributes
 from paramiko.ssh_exception import SSHException
 from paramiko.sftp_file import SFTPFile
 from paramiko.util import ClosingContextManager, b, u
+from _typeshed import StrOrBytesPath
+from collections.abc import Iterator
+from logging import Logger
+from paramiko.transport import Transport
+from typing import IO
+from typing_extensions import Self, TypeAlias
 
 
 def _to_unicode(s):
@@ -84,7 +90,7 @@ def _to_unicode(s):
             return s
 
 
-b_slash = b"/"
+b_slash: bytes = b"/"
 
 
 class SFTPClient(BaseSFTP, ClosingContextManager):
@@ -97,7 +103,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
     Instances of this class may be used as context managers.
     """
 
-    def __init__(self, sock):
+    def __init__(self, sock: Channel) -> None:
         """
         Create an SFTP client from an existing `.Channel`.  The channel
         should already have requested the ``"sftp"`` subsystem.
@@ -138,7 +144,12 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         )
 
     @classmethod
-    def from_transport(cls, t, window_size=None, max_packet_size=None):
+    def from_transport(
+        cls,
+        t: Transport,
+        window_size: int | None = None,
+        max_packet_size: int | None = None,
+    ) -> Self | None:
         """
         Create an SFTP client channel from an open `.Transport`.
 
@@ -185,7 +196,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
                 *([self.sock.get_name()] + list(args))
             )
 
-    def close(self):
+    def close(self) -> None:
         """
         Close the SFTP session and its underlying channel.
 
@@ -194,7 +205,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         self._log(INFO, "sftp session closed.")
         self.sock.close()
 
-    def get_channel(self):
+    def get_channel(self) -> Channel | None:
         """
         Return the underlying `.Channel` object for this SFTP session.  This
         might be useful for doing things like setting a timeout on the channel.
@@ -203,7 +214,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         """
         return self.sock
 
-    def listdir(self, path="."):
+    def listdir(self, path: str = ".") -> list[str]:
         """
         Return a list containing the names of the entries in the given
         ``path``.
@@ -217,7 +228,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         """
         return [f.filename for f in self.listdir_attr(path)]
 
-    def listdir_attr(self, path="."):
+    def listdir_attr(self, path: str = ".") -> list[SFTPAttributes]:
         """
         Return a list containing `.SFTPAttributes` objects corresponding to
         files in the given ``path``.  The list is in arbitrary order.  It does
@@ -259,7 +270,9 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         self._request(CMD_CLOSE, handle)
         return filelist
 
-    def listdir_iter(self, path=".", read_aheads=50):
+    def listdir_iter(
+        self, path: bytes | str = ".", read_aheads: int = 50
+    ) -> Iterator[SFTPAttributes]:
         """
         Generator version of `.listdir_attr`.
 
@@ -323,7 +336,9 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
                 self._request(CMD_CLOSE, handle)
                 return
 
-    def open(self, filename, mode="r", bufsize=-1):
+    def open(
+        self, filename: bytes | str, mode: str = "r", bufsize: int = -1
+    ) -> SFTPFile:
         """
         Open a file on the remote server.  The arguments are the same as for
         Python's built-in `python:file` (aka `python:open`).  A file-like
@@ -384,7 +399,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
     # Python continues to vacillate about "open" vs "file"...
     file = open
 
-    def remove(self, path):
+    def remove(self, path: bytes | str) -> None:
         """
         Remove the file at the given path.  This only works on files; for
         removing folders (directories), use `rmdir`.
@@ -399,7 +414,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
 
     unlink = remove
 
-    def rename(self, oldpath, newpath):
+    def rename(self, oldpath: bytes | str, newpath: bytes | str) -> None:
         """
         Rename a file or folder from ``oldpath`` to ``newpath``.
 
@@ -422,7 +437,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         self._log(DEBUG, "rename({!r}, {!r})".format(oldpath, newpath))
         self._request(CMD_RENAME, oldpath, newpath)
 
-    def posix_rename(self, oldpath, newpath):
+    def posix_rename(self, oldpath: bytes | str, newpath: bytes | str) -> None:
         """
         Rename a file or folder from ``oldpath`` to ``newpath``, following
         posix conventions.
@@ -444,7 +459,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
             CMD_EXTENDED, "posix-rename@openssh.com", oldpath, newpath
         )
 
-    def mkdir(self, path, mode=o777):
+    def mkdir(self, path: bytes | str, mode: int = o777) -> None:
         """
         Create a folder (directory) named ``path`` with numeric mode ``mode``.
         The default mode is 0777 (octal).  On some systems, mode is ignored.
@@ -459,7 +474,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         attr.st_mode = mode
         self._request(CMD_MKDIR, path, attr)
 
-    def rmdir(self, path):
+    def rmdir(self, path: bytes | str) -> None:
         """
         Remove the folder named ``path``.
 
@@ -469,7 +484,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         self._log(DEBUG, "rmdir({!r})".format(path))
         self._request(CMD_RMDIR, path)
 
-    def stat(self, path):
+    def stat(self, path: bytes | str) -> SFTPAttributes:
         """
         Retrieve information about a file on the remote system.  The return
         value is an object whose attributes correspond to the attributes of
@@ -495,7 +510,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
             raise SFTPError("Expected attributes")
         return SFTPAttributes._from_msg(msg)
 
-    def lstat(self, path):
+    def lstat(self, path: bytes | str) -> SFTPAttributes:
         """
         Retrieve information about a file on the remote system, without
         following symbolic links (shortcuts).  This otherwise behaves exactly
@@ -513,7 +528,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
             raise SFTPError("Expected attributes")
         return SFTPAttributes._from_msg(msg)
 
-    def symlink(self, source, dest):
+    def symlink(self, source: bytes | str, dest: bytes | str) -> None:
         """
         Create a symbolic link to the ``source`` path at ``destination``.
 
@@ -525,7 +540,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         source = b(source)
         self._request(CMD_SYMLINK, source, dest)
 
-    def chmod(self, path, mode):
+    def chmod(self, path: bytes | str, mode: int) -> None:
         """
         Change the mode (permissions) of a file.  The permissions are
         unix-style and identical to those used by Python's `os.chmod`
@@ -540,7 +555,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         attr.st_mode = mode
         self._request(CMD_SETSTAT, path, attr)
 
-    def chown(self, path, uid, gid):
+    def chown(self, path: bytes | str, uid: int, gid: int) -> None:
         """
         Change the owner (``uid``) and group (``gid``) of a file.  As with
         Python's `os.chown` function, you must pass both arguments, so if you
@@ -557,7 +572,9 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         attr.st_uid, attr.st_gid = uid, gid
         self._request(CMD_SETSTAT, path, attr)
 
-    def utime(self, path, times):
+    def utime(
+        self, path: bytes | str, times: tuple[float, float] | None
+    ) -> None:
         """
         Set the access and modified times of the file specified by ``path``.
         If ``times`` is ``None``, then the file's access and modified times
@@ -579,7 +596,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         attr.st_atime, attr.st_mtime = times
         self._request(CMD_SETSTAT, path, attr)
 
-    def truncate(self, path, size):
+    def truncate(self, path: bytes | str, size: int) -> None:
         """
         Change the size of the file specified by ``path``.  This usually
         extends or shrinks the size of the file, just like the `~file.truncate`
@@ -594,7 +611,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         attr.st_size = size
         self._request(CMD_SETSTAT, path, attr)
 
-    def readlink(self, path):
+    def readlink(self, path: bytes | str) -> str | None:
         """
         Return the target of a symbolic link (shortcut).  You can use
         `symlink` to create these.  The result may be either an absolute or
@@ -615,7 +632,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
             raise SFTPError("Readlink returned {} results".format(count))
         return _to_unicode(msg.get_string())
 
-    def normalize(self, path):
+    def normalize(self, path: bytes | str) -> str:
         """
         Return the normalized path (on the server) of a given path.  This
         can be used to quickly resolve symbolic links or determine what the
@@ -637,7 +654,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
             raise SFTPError("Realpath returned {} results".format(count))
         return msg.get_text()
 
-    def chdir(self, path=None):
+    def chdir(self, path: None | bytes | str = None) -> None:
         """
         Change the "current directory" of this SFTP session.  Since SFTP
         doesn't really have the concept of a current working directory, this is
@@ -661,7 +678,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
             raise SFTPError(code, "{}: {}".format(os.strerror(code), path))
         self._cwd = b(self.normalize(path))
 
-    def getcwd(self):
+    def getcwd(self) -> str | None:
         """
         Return the "current working directory" for this SFTP session, as
         emulated by Paramiko.  If no directory has been set with `chdir`,
@@ -684,7 +701,14 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
                 callback(size, file_size)
         return size
 
-    def putfo(self, fl, remotepath, file_size=0, callback=None, confirm=True):
+    def putfo(
+        self,
+        fl: IO[bytes],
+        remotepath: bytes | str,
+        file_size: int = 0,
+        callback: _Callback | None = None,
+        confirm: bool = True,
+    ) -> SFTPAttributes:
         """
         Copy the contents of an open file object (``fl``) to the SFTP server as
         ``remotepath``. Any exception raised by operations will be passed
@@ -726,7 +750,13 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
             s = SFTPAttributes()
         return s
 
-    def put(self, localpath, remotepath, callback=None, confirm=True):
+    def put(
+        self,
+        localpath: StrOrBytesPath,
+        remotepath: bytes | str,
+        callback: _Callback | None = None,
+        confirm: bool = True,
+    ) -> SFTPAttributes:
         """
         Copy a local file (``localpath``) to the SFTP server as ``remotepath``.
         Any exception raised by operations will be passed through.  This
@@ -760,12 +790,12 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
 
     def getfo(
         self,
-        remotepath,
-        fl,
-        callback=None,
-        prefetch=True,
-        max_concurrent_prefetch_requests=None,
-    ):
+        remotepath: bytes | str,
+        fl: IO[bytes],
+        callback: _Callback | None = None,
+        prefetch: bool = True,
+        max_concurrent_prefetch_requests: int | None = None,
+    ) -> int:
         """
         Copy a remote file (``remotepath``) from the SFTP server and write to
         an open file or file-like object, ``fl``.  Any exception raised by
@@ -802,12 +832,12 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
 
     def get(
         self,
-        remotepath,
-        localpath,
-        callback=None,
-        prefetch=True,
-        max_concurrent_prefetch_requests=None,
-    ):
+        remotepath: bytes | str,
+        localpath: StrOrBytesPath,
+        callback: _Callback | None = None,
+        prefetch: bool = True,
+        max_concurrent_prefetch_requests: int | None = None,
+    ) -> None:
         """
         Copy a remote file (``remotepath``) from the SFTP server to the local
         host as ``localpath``.  Any exception raised by operations will be

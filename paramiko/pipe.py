@@ -28,9 +28,31 @@ will trigger as readable in `select <select.select>`.
 import sys
 import os
 import socket
+from typing import Protocol
 
 
-def make_pipe():
+@type_check_only
+class _BasePipe(Protocol):
+    def clear(self) -> None:
+        ...
+
+    def set(self) -> None:
+        ...
+
+
+@type_check_only
+class _Pipe(_BasePipe, Protocol):
+    def close(self) -> None:
+        ...
+
+    def fileno(self) -> int:
+        ...
+
+    def set_forever(self) -> None:
+        ...
+
+
+def make_pipe() -> _Pipe:
     if sys.platform[:3] != "win":
         p = PosixPipe()
     else:
@@ -39,34 +61,34 @@ def make_pipe():
 
 
 class PosixPipe:
-    def __init__(self):
+    def __init__(self) -> None:
         self._rfd, self._wfd = os.pipe()
         self._set = False
         self._forever = False
         self._closed = False
 
-    def close(self):
+    def close(self) -> None:
         os.close(self._rfd)
         os.close(self._wfd)
         # used for unit tests:
         self._closed = True
 
-    def fileno(self):
+    def fileno(self) -> int:
         return self._rfd
 
-    def clear(self):
+    def clear(self) -> None:
         if not self._set or self._forever:
             return
         os.read(self._rfd, 1)
         self._set = False
 
-    def set(self):
+    def set(self) -> None:
         if self._set or self._closed:
             return
         self._set = True
         os.write(self._wfd, b"*")
 
-    def set_forever(self):
+    def set_forever(self) -> None:
         self._forever = True
         self.set()
 
@@ -77,7 +99,7 @@ class WindowsPipe:
     and writes must be to the actual socket object.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         serv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         serv.bind(("127.0.0.1", 0))
         serv.listen(1)
@@ -92,50 +114,50 @@ class WindowsPipe:
         self._forever = False
         self._closed = False
 
-    def close(self):
+    def close(self) -> None:
         self._rsock.close()
         self._wsock.close()
         # used for unit tests:
         self._closed = True
 
-    def fileno(self):
+    def fileno(self) -> int:
         return self._rsock.fileno()
 
-    def clear(self):
+    def clear(self) -> None:
         if not self._set or self._forever:
             return
         self._rsock.recv(1)
         self._set = False
 
-    def set(self):
+    def set(self) -> None:
         if self._set or self._closed:
             return
         self._set = True
         self._wsock.send(b"*")
 
-    def set_forever(self):
+    def set_forever(self) -> None:
         self._forever = True
         self.set()
 
 
 class OrPipe:
-    def __init__(self, pipe):
+    def __init__(self, pipe: _Pipe) -> None:
         self._set = False
         self._partner = None
         self._pipe = pipe
 
-    def set(self):
+    def set(self) -> None:
         self._set = True
         if not self._partner._set:
             self._pipe.set()
 
-    def clear(self):
+    def clear(self) -> None:
         self._set = False
         if not self._partner._set:
             self._pipe.clear()
 
 
-def make_or_pipe(pipe):
+def make_or_pipe(pipe: _Pipe) -> tuple[OrPipe, OrPipe]:
     """
     wraps a pipe into two pipe-like objects which are "or"d together to
     affect the real pipe. if either returned pipe is set, the wrapped pipe

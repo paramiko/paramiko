@@ -22,19 +22,25 @@ Standard SSH key exchange ("kex" if you wanna sound cool).  Diffie-Hellman of
 """
 
 import os
-from hashlib import sha1
+from hashlib import _Hash, sha1
 
 from paramiko import util
 from paramiko.common import max_byte, zero_byte, byte_chr, byte_mask
 from paramiko.message import Message
 from paramiko.ssh_exception import SSHException
+from _typeshed import ReadableBuffer
+from collections.abc import Callable
+from paramiko.transport import Transport
+
+c_MSG_KEXDH_INIT: bytes
+c_MSG_KEXDH_REPLY: bytes
 
 
 _MSG_KEXDH_INIT, _MSG_KEXDH_REPLY = range(30, 32)
 c_MSG_KEXDH_INIT, c_MSG_KEXDH_REPLY = [byte_chr(c) for c in range(30, 32)]
 
-b7fffffffffffffff = byte_chr(0x7F) + max_byte * 7
-b0000000000000000 = zero_byte * 8
+b7fffffffffffffff: bytes = byte_chr(0x7F) + max_byte * 7
+b0000000000000000: bytes = zero_byte * 8
 
 
 class KexGroup1:
@@ -44,15 +50,15 @@ class KexGroup1:
     G = 2
 
     name = "diffie-hellman-group1-sha1"
-    hash_algo = sha1
+    hash_algo: Callable[[ReadableBuffer], _Hash] = sha1
 
-    def __init__(self, transport):
+    def __init__(self, transport: Transport) -> None:
         self.transport = transport
         self.x = 0
         self.e = 0
         self.f = 0
 
-    def start_kex(self):
+    def start_kex(self) -> None:
         self._generate_x()
         if self.transport.server_mode:
             # compute f = g^x mod p, but don't send it yet
@@ -67,7 +73,7 @@ class KexGroup1:
         self.transport._send_message(m)
         self.transport._expect_packet(_MSG_KEXDH_REPLY)
 
-    def parse_next(self, ptype, m):
+    def parse_next(self, ptype: int, m: Message) -> None:
         if self.transport.server_mode and (ptype == _MSG_KEXDH_INIT):
             return self._parse_kexdh_init(m)
         elif not self.transport.server_mode and (ptype == _MSG_KEXDH_REPLY):

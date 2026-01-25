@@ -10,13 +10,17 @@ import builtins
 import ctypes.wintypes
 
 from paramiko.util import u
+from _typeshed import Incomplete
+from ctypes import Structure
+from types import TracebackType
+from typing_extensions import Self
 
 
 ######################
 # jaraco.windows.error
 
 
-def format_system_message(errno):
+def format_system_message(errno: int) -> str | None:
     """
     Call FormatMessage with a system error number to retrieve
     the descriptive error message.
@@ -56,7 +60,7 @@ class WindowsError(builtins.WindowsError):
     """more info about errors at
     http://msdn.microsoft.com/en-us/library/ms681381(VS.85).aspx"""
 
-    def __init__(self, value=None):
+    def __init__(self, value: int | None = None) -> None:
         if value is None:
             value = ctypes.windll.kernel32.GetLastError()
         strerror = format_system_message(value)
@@ -64,11 +68,11 @@ class WindowsError(builtins.WindowsError):
         super().__init__(*args)
 
     @property
-    def message(self):
+    def message(self) -> str:
         return self.strerror
 
     @property
-    def code(self):
+    def code(self) -> int:
         return self.winerror
 
     def __str__(self):
@@ -78,7 +82,7 @@ class WindowsError(builtins.WindowsError):
         return "{self.__class__.__name__}({self.winerror})".format(**vars())
 
 
-def handle_nonzero_success(result):
+def handle_nonzero_success(result: int) -> None:
     if result == 0:
         raise WindowsError()
 
@@ -88,23 +92,23 @@ def handle_nonzero_success(result):
 
 GMEM_MOVEABLE = 0x2
 
-GlobalAlloc = ctypes.windll.kernel32.GlobalAlloc
+GlobalAlloc: Incomplete = ctypes.windll.kernel32.GlobalAlloc
 GlobalAlloc.argtypes = ctypes.wintypes.UINT, ctypes.c_size_t
 GlobalAlloc.restype = ctypes.wintypes.HANDLE
 
-GlobalLock = ctypes.windll.kernel32.GlobalLock
+GlobalLock: Incomplete = ctypes.windll.kernel32.GlobalLock
 GlobalLock.argtypes = (ctypes.wintypes.HGLOBAL,)
 GlobalLock.restype = ctypes.wintypes.LPVOID
 
-GlobalUnlock = ctypes.windll.kernel32.GlobalUnlock
+GlobalUnlock: Incomplete = ctypes.windll.kernel32.GlobalUnlock
 GlobalUnlock.argtypes = (ctypes.wintypes.HGLOBAL,)
 GlobalUnlock.restype = ctypes.wintypes.BOOL
 
-GlobalSize = ctypes.windll.kernel32.GlobalSize
+GlobalSize: Incomplete = ctypes.windll.kernel32.GlobalSize
 GlobalSize.argtypes = (ctypes.wintypes.HGLOBAL,)
 GlobalSize.restype = ctypes.c_size_t
 
-CreateFileMapping = ctypes.windll.kernel32.CreateFileMappingW
+CreateFileMapping: Incomplete = ctypes.windll.kernel32.CreateFileMappingW
 CreateFileMapping.argtypes = [
     ctypes.wintypes.HANDLE,
     ctypes.c_void_p,
@@ -115,13 +119,13 @@ CreateFileMapping.argtypes = [
 ]
 CreateFileMapping.restype = ctypes.wintypes.HANDLE
 
-MapViewOfFile = ctypes.windll.kernel32.MapViewOfFile
+MapViewOfFile: Incomplete = ctypes.windll.kernel32.MapViewOfFile
 MapViewOfFile.restype = ctypes.wintypes.HANDLE
 
-UnmapViewOfFile = ctypes.windll.kernel32.UnmapViewOfFile
+UnmapViewOfFile: Incomplete = ctypes.windll.kernel32.UnmapViewOfFile
 UnmapViewOfFile.argtypes = (ctypes.wintypes.HANDLE,)
 
-RtlMoveMemory = ctypes.windll.kernel32.RtlMoveMemory
+RtlMoveMemory: Incomplete = ctypes.windll.kernel32.RtlMoveMemory
 RtlMoveMemory.argtypes = (ctypes.c_void_p, ctypes.c_void_p, ctypes.c_size_t)
 
 ctypes.windll.kernel32.LocalFree.argtypes = (ctypes.wintypes.HLOCAL,)
@@ -135,13 +139,15 @@ class MemoryMap:
     A memory map object which can have security attributes overridden.
     """
 
-    def __init__(self, name, length, security_attributes=None):
+    def __init__(
+        self, name: str, length: int, security_attributes=None
+    ) -> None:
         self.name = name
         self.length = length
         self.security_attributes = security_attributes
         self.pos = 0
 
-    def __enter__(self):
+    def __enter__(self) -> Self:
         p_SA = (
             ctypes.byref(self.security_attributes)
             if self.security_attributes
@@ -165,10 +171,10 @@ class MemoryMap:
         self.view = MapViewOfFile(filemap, FILE_MAP_WRITE, 0, 0, 0)
         return self
 
-    def seek(self, pos):
+    def seek(self, pos: int) -> None:
         self.pos = pos
 
-    def write(self, msg):
+    def write(self, msg: bytes) -> None:
         assert isinstance(msg, bytes)
         n = len(msg)
         if self.pos + n >= self.length:  # A little safety.
@@ -178,7 +184,7 @@ class MemoryMap:
         ctypes.windll.kernel32.RtlMoveMemory(dest, msg, length)
         self.pos += n
 
-    def read(self, n):
+    def read(self, n: int) -> bytes:
         """
         Read n bytes from mapped view.
         """
@@ -189,7 +195,12 @@ class MemoryMap:
         self.pos += n
         return out.raw
 
-    def __exit__(self, exc_type, exc_val, tb):
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        tb: TracebackType | None,
+    ) -> None:
         ctypes.windll.kernel32.UnmapViewOfFile(self.view)
         ctypes.windll.kernel32.CloseHandle(self.filemap)
 
@@ -292,7 +303,7 @@ class SECURITY_DESCRIPTOR(ctypes.Structure):
         }   SECURITY_DESCRIPTOR;
     """
 
-    SECURITY_DESCRIPTOR_CONTROL = ctypes.wintypes.USHORT
+    SECURITY_DESCRIPTOR_CONTROL: Incomplete = ctypes.wintypes.USHORT
     REVISION = 1
 
     _fields_ = [
@@ -321,7 +332,7 @@ class SECURITY_ATTRIBUTES(ctypes.Structure):
         ("bInheritHandle", ctypes.wintypes.BOOL),
     ]
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.nLength = ctypes.sizeof(SECURITY_ATTRIBUTES)
 
@@ -330,7 +341,7 @@ class SECURITY_ATTRIBUTES(ctypes.Structure):
         return self._descriptor
 
     @descriptor.setter
-    def descriptor(self, value):
+    def descriptor(self, value) -> None:
         self._descriptor = value
         self.lpSecurityDescriptor = ctypes.addressof(value)
 
@@ -377,7 +388,7 @@ def OpenProcessToken(proc_handle, access):
     return result
 
 
-def get_current_user():
+def get_current_user() -> TOKEN_USER:
     """
     Return a TOKEN_USER for the owner of this process.
     """
@@ -387,7 +398,9 @@ def get_current_user():
     return GetTokenInformation(process, TOKEN_USER)
 
 
-def get_security_attributes_for_user(user=None):
+def get_security_attributes_for_user(
+    user: TOKEN_USER | None = None,
+) -> SECURITY_ATTRIBUTES:
     """
     Return a SECURITY_ATTRIBUTES structure with the SID set to the
     specified user (uses current user if none is specified).

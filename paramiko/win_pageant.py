@@ -31,6 +31,10 @@ from paramiko.util import b
 import _thread as thread
 
 from . import _winapi
+from _typeshed import Incomplete
+from ctypes import Structure
+from typing import Literal
+from typing_extensions import TypeAlias
 
 
 _AGENT_COPYDATA_ID = 0x804E50BA
@@ -44,7 +48,7 @@ def _get_pageant_window_object():
     return ctypes.windll.user32.FindWindowA(b"Pageant", b"Pageant")
 
 
-def can_talk_to_agent():
+def can_talk_to_agent() -> bool:
     """
     Check to see if there is a "Pageant" agent we can talk to.
 
@@ -55,7 +59,7 @@ def can_talk_to_agent():
 
 
 if platform.architecture()[0] == "64bit":
-    ULONG_PTR = ctypes.c_uint64
+    ULONG_PTR: TypeAlias = ctypes.c_uint64
 else:
     ULONG_PTR = ctypes.c_uint32
 

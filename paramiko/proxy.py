@@ -23,6 +23,9 @@ import signal
 from select import select
 import socket
 import time
+from _typeshed import ReadableBuffer
+from paramiko.util import ClosingContextManager
+from typing import Any
 
 # Try-and-ignore import so platforms w/o subprocess (eg Google App Engine) can
 # still import paramiko.
@@ -30,10 +33,12 @@ subprocess, subprocess_import_error = None, None
 try:
     import subprocess
 except ImportError as e:
-    subprocess_import_error = e
+    subprocess_import_error: ImportError | None = e
 
 from paramiko.ssh_exception import ProxyCommandFailure
 from paramiko.util import ClosingContextManager
+
+subprocess_import_error: ImportError | None
 
 
 class ProxyCommand(ClosingContextManager):
@@ -48,7 +53,7 @@ class ProxyCommand(ClosingContextManager):
     Instances of this class may be used as context managers.
     """
 
-    def __init__(self, command_line):
+    def __init__(self, command_line: str) -> None:
         """
         Create a new CommandProxy instance. The instance created by this
         class can be passed as an argument to the `.Transport` class.
@@ -68,7 +73,7 @@ class ProxyCommand(ClosingContextManager):
         )
         self.timeout = None
 
-    def send(self, content):
+    def send(self, content: ReadableBuffer) -> int:
         """
         Write the content received from the SSH client to the standard
         input of the forked command.
@@ -85,7 +90,7 @@ class ProxyCommand(ClosingContextManager):
             raise ProxyCommandFailure(" ".join(self.cmd), e.strerror)
         return len(content)
 
-    def recv(self, size):
+    def recv(self, size: int) -> bytes:
         """
         Read from the standard output of the forked program.
 
@@ -118,11 +123,11 @@ class ProxyCommand(ClosingContextManager):
         except IOError as e:
             raise ProxyCommandFailure(" ".join(self.cmd), e.strerror)
 
-    def close(self):
+    def close(self) -> None:
         os.kill(self.process.pid, signal.SIGTERM)
 
     @property
-    def closed(self):
+    def closed(self) -> bool:
         return self.process.returncode is not None
 
     @property
@@ -130,5 +135,5 @@ class ProxyCommand(ClosingContextManager):
         # Concession to Python 3 socket-like API
         return self.closed
 
-    def settimeout(self, timeout):
+    def settimeout(self, timeout: float) -> None:
         self.timeout = timeout

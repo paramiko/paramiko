@@ -20,6 +20,8 @@ from paramiko.common import max_byte, zero_byte, byte_ord, byte_chr
 import paramiko.util as util
 from paramiko.util import b
 from paramiko.sftp import int64
+from collections.abc import Iterable
+from typing import Any
 
 
 class BERException(Exception):
@@ -31,11 +33,11 @@ class BER:
     Robey's tiny little attempt at a BER decoder.
     """
 
-    def __init__(self, content=bytes()):
+    def __init__(self, content: bytes = bytes()) -> None:
         self.content = b(content)
         self.idx = 0
 
-    def asbytes(self):
+    def asbytes(self) -> bytes:
         return self.content
 
     def __str__(self):
@@ -44,10 +46,10 @@ class BER:
     def __repr__(self):
         return "BER('" + repr(self.content) + "')"
 
-    def decode(self):
+    def decode(self) -> None | int | list[int]:
         return self.decode_next()
 
-    def decode_next(self):
+    def decode_next(self) -> None | int | list[int]:
         if self.idx >= len(self.content):
             return None
         ident = byte_ord(self.content[self.idx])
@@ -94,7 +96,7 @@ class BER:
             raise BERException(msg.format(ident))
 
     @staticmethod
-    def decode_sequence(data):
+    def decode_sequence(data: bytes) -> list[int | list[int]]:
         out = []
         ber = BER(data)
         while True:
@@ -104,7 +106,7 @@ class BER:
             out.append(x)
         return out
 
-    def encode_tlv(self, ident, val):
+    def encode_tlv(self, ident: int, val: bytes) -> None:
         # no need to support ident > 31 here
         self.content += byte_chr(ident)
         if len(val) > 0x7F:
@@ -114,7 +116,7 @@ class BER:
             self.content += byte_chr(len(val))
         self.content += val
 
-    def encode(self, x):
+    def encode(self, x: Any) -> None:
         if type(x) is bool:
             if x:
                 self.encode_tlv(1, max_byte)
@@ -132,7 +134,7 @@ class BER:
             )
 
     @staticmethod
-    def encode_sequence(data):
+    def encode_sequence(data: Iterable[str]) -> bytes:
         ber = BER()
         for item in data:
             ber.encode(item)

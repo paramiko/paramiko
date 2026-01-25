@@ -21,23 +21,71 @@ Common constants and global variables.
 """
 import logging
 import struct
+from typing import Final
+
+MSG_DISCONNECT: Final
+MSG_IGNORE: Final
+MSG_UNIMPLEMENTED: Final
+MSG_DEBUG: Final
+MSG_SERVICE_REQUEST: Final
+MSG_SERVICE_ACCEPT: Final
+MSG_EXT_INFO: Final
+MSG_KEXINIT: Final
+MSG_NEWKEYS: Final
+MSG_USERAUTH_REQUEST: Final
+MSG_USERAUTH_FAILURE: Final
+MSG_USERAUTH_SUCCESS: Final
+MSG_USERAUTH_BANNER: Final
+MSG_USERAUTH_INFO_REQUEST: Final
+MSG_USERAUTH_INFO_RESPONSE: Final
+MSG_USERAUTH_GSSAPI_RESPONSE: Final
+MSG_USERAUTH_GSSAPI_TOKEN: Final
+MSG_USERAUTH_GSSAPI_EXCHANGE_COMPLETE: Final
+MSG_USERAUTH_GSSAPI_ERROR: Final
+MSG_USERAUTH_GSSAPI_ERRTOK: Final
+MSG_USERAUTH_GSSAPI_MIC: Final
+MSG_GLOBAL_REQUEST: Final
+MSG_REQUEST_SUCCESS: Final
+MSG_REQUEST_FAILURE: Final
+MSG_CHANNEL_OPEN: Final
+MSG_CHANNEL_OPEN_SUCCESS: Final
+MSG_CHANNEL_OPEN_FAILURE: Final
+MSG_CHANNEL_WINDOW_ADJUST: Final
+MSG_CHANNEL_DATA: Final
+MSG_CHANNEL_EXTENDED_DATA: Final
+MSG_CHANNEL_EOF: Final
+MSG_CHANNEL_CLOSE: Final
+MSG_CHANNEL_REQUEST: Final
+MSG_CHANNEL_SUCCESS: Final
+MSG_CHANNEL_FAILURE: Final
+AUTH_SUCCESSFUL: Final
+AUTH_PARTIALLY_SUCCESSFUL: Final
+AUTH_FAILED: Final
+OPEN_SUCCEEDED: Final
+OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED: Final
+OPEN_FAILED_CONNECT_FAILED: Final
+OPEN_FAILED_UNKNOWN_CHANNEL_TYPE: Final
+OPEN_FAILED_RESOURCE_SHORTAGE: Final
+DISCONNECT_SERVICE_NOT_AVAILABLE: Final
+DISCONNECT_AUTH_CANCELLED_BY_USER: Final
+DISCONNECT_NO_MORE_AUTH_METHODS_AVAILABLE: Final
 
 #
 # Formerly of py3compat.py. May be fully delete'able with a deeper look?
 #
 
 
-def byte_chr(c):
+def byte_chr(c: int) -> bytes:
     assert isinstance(c, int)
     return struct.pack("B", c)
 
 
-def byte_mask(c, mask):
+def byte_mask(c: int, mask: int) -> bytes:
     assert isinstance(c, int)
     return struct.pack("B", c & mask)
 
 
-def byte_ord(c):
+def byte_ord(c: int | str) -> int:
     # In case we're handed a string instead of an int.
     if not isinstance(c, int):
         c = ord(c)
@@ -60,7 +108,7 @@ def byte_ord(c):
     MSG_USERAUTH_SUCCESS,
     MSG_USERAUTH_BANNER,
 ) = range(50, 54)
-MSG_USERAUTH_PK_OK = 60
+MSG_USERAUTH_PK_OK: Final = 60
 (MSG_USERAUTH_INFO_REQUEST, MSG_USERAUTH_INFO_RESPONSE) = range(60, 62)
 (MSG_USERAUTH_GSSAPI_RESPONSE, MSG_USERAUTH_GSSAPI_TOKEN) = range(60, 62)
 (
@@ -69,7 +117,7 @@ MSG_USERAUTH_PK_OK = 60
     MSG_USERAUTH_GSSAPI_ERRTOK,
     MSG_USERAUTH_GSSAPI_MIC,
 ) = range(63, 67)
-HIGHEST_USERAUTH_MESSAGE_ID = 79
+HIGHEST_USERAUTH_MESSAGE_ID: Final = 79
 (MSG_GLOBAL_REQUEST, MSG_REQUEST_SUCCESS, MSG_REQUEST_FAILURE) = range(80, 83)
 (
     MSG_CHANNEL_OPEN,
@@ -85,47 +133,53 @@ HIGHEST_USERAUTH_MESSAGE_ID = 79
     MSG_CHANNEL_FAILURE,
 ) = range(90, 101)
 
-cMSG_DISCONNECT = byte_chr(MSG_DISCONNECT)
-cMSG_IGNORE = byte_chr(MSG_IGNORE)
-cMSG_UNIMPLEMENTED = byte_chr(MSG_UNIMPLEMENTED)
-cMSG_DEBUG = byte_chr(MSG_DEBUG)
-cMSG_SERVICE_REQUEST = byte_chr(MSG_SERVICE_REQUEST)
-cMSG_SERVICE_ACCEPT = byte_chr(MSG_SERVICE_ACCEPT)
-cMSG_EXT_INFO = byte_chr(MSG_EXT_INFO)
-cMSG_KEXINIT = byte_chr(MSG_KEXINIT)
-cMSG_NEWKEYS = byte_chr(MSG_NEWKEYS)
-cMSG_USERAUTH_REQUEST = byte_chr(MSG_USERAUTH_REQUEST)
-cMSG_USERAUTH_FAILURE = byte_chr(MSG_USERAUTH_FAILURE)
-cMSG_USERAUTH_SUCCESS = byte_chr(MSG_USERAUTH_SUCCESS)
-cMSG_USERAUTH_BANNER = byte_chr(MSG_USERAUTH_BANNER)
-cMSG_USERAUTH_PK_OK = byte_chr(MSG_USERAUTH_PK_OK)
-cMSG_USERAUTH_INFO_REQUEST = byte_chr(MSG_USERAUTH_INFO_REQUEST)
-cMSG_USERAUTH_INFO_RESPONSE = byte_chr(MSG_USERAUTH_INFO_RESPONSE)
-cMSG_USERAUTH_GSSAPI_RESPONSE = byte_chr(MSG_USERAUTH_GSSAPI_RESPONSE)
-cMSG_USERAUTH_GSSAPI_TOKEN = byte_chr(MSG_USERAUTH_GSSAPI_TOKEN)
-cMSG_USERAUTH_GSSAPI_EXCHANGE_COMPLETE = byte_chr(
+cMSG_DISCONNECT: Final[bytes] = byte_chr(MSG_DISCONNECT)
+cMSG_IGNORE: Final[bytes] = byte_chr(MSG_IGNORE)
+cMSG_UNIMPLEMENTED: Final[bytes] = byte_chr(MSG_UNIMPLEMENTED)
+cMSG_DEBUG: Final[bytes] = byte_chr(MSG_DEBUG)
+cMSG_SERVICE_REQUEST: Final[bytes] = byte_chr(MSG_SERVICE_REQUEST)
+cMSG_SERVICE_ACCEPT: Final[bytes] = byte_chr(MSG_SERVICE_ACCEPT)
+cMSG_EXT_INFO: Final[bytes] = byte_chr(MSG_EXT_INFO)
+cMSG_KEXINIT: Final[bytes] = byte_chr(MSG_KEXINIT)
+cMSG_NEWKEYS: Final[bytes] = byte_chr(MSG_NEWKEYS)
+cMSG_USERAUTH_REQUEST: Final[bytes] = byte_chr(MSG_USERAUTH_REQUEST)
+cMSG_USERAUTH_FAILURE: Final[bytes] = byte_chr(MSG_USERAUTH_FAILURE)
+cMSG_USERAUTH_SUCCESS: Final[bytes] = byte_chr(MSG_USERAUTH_SUCCESS)
+cMSG_USERAUTH_BANNER: Final[bytes] = byte_chr(MSG_USERAUTH_BANNER)
+cMSG_USERAUTH_PK_OK: Final[bytes] = byte_chr(MSG_USERAUTH_PK_OK)
+cMSG_USERAUTH_INFO_REQUEST: Final[bytes] = byte_chr(MSG_USERAUTH_INFO_REQUEST)
+cMSG_USERAUTH_INFO_RESPONSE: Final[bytes] = byte_chr(
+    MSG_USERAUTH_INFO_RESPONSE
+)
+cMSG_USERAUTH_GSSAPI_RESPONSE: Final[bytes] = byte_chr(
+    MSG_USERAUTH_GSSAPI_RESPONSE
+)
+cMSG_USERAUTH_GSSAPI_TOKEN: Final[bytes] = byte_chr(MSG_USERAUTH_GSSAPI_TOKEN)
+cMSG_USERAUTH_GSSAPI_EXCHANGE_COMPLETE: Final[bytes] = byte_chr(
     MSG_USERAUTH_GSSAPI_EXCHANGE_COMPLETE
 )
-cMSG_USERAUTH_GSSAPI_ERROR = byte_chr(MSG_USERAUTH_GSSAPI_ERROR)
-cMSG_USERAUTH_GSSAPI_ERRTOK = byte_chr(MSG_USERAUTH_GSSAPI_ERRTOK)
-cMSG_USERAUTH_GSSAPI_MIC = byte_chr(MSG_USERAUTH_GSSAPI_MIC)
-cMSG_GLOBAL_REQUEST = byte_chr(MSG_GLOBAL_REQUEST)
-cMSG_REQUEST_SUCCESS = byte_chr(MSG_REQUEST_SUCCESS)
-cMSG_REQUEST_FAILURE = byte_chr(MSG_REQUEST_FAILURE)
-cMSG_CHANNEL_OPEN = byte_chr(MSG_CHANNEL_OPEN)
-cMSG_CHANNEL_OPEN_SUCCESS = byte_chr(MSG_CHANNEL_OPEN_SUCCESS)
-cMSG_CHANNEL_OPEN_FAILURE = byte_chr(MSG_CHANNEL_OPEN_FAILURE)
-cMSG_CHANNEL_WINDOW_ADJUST = byte_chr(MSG_CHANNEL_WINDOW_ADJUST)
-cMSG_CHANNEL_DATA = byte_chr(MSG_CHANNEL_DATA)
-cMSG_CHANNEL_EXTENDED_DATA = byte_chr(MSG_CHANNEL_EXTENDED_DATA)
-cMSG_CHANNEL_EOF = byte_chr(MSG_CHANNEL_EOF)
-cMSG_CHANNEL_CLOSE = byte_chr(MSG_CHANNEL_CLOSE)
-cMSG_CHANNEL_REQUEST = byte_chr(MSG_CHANNEL_REQUEST)
-cMSG_CHANNEL_SUCCESS = byte_chr(MSG_CHANNEL_SUCCESS)
-cMSG_CHANNEL_FAILURE = byte_chr(MSG_CHANNEL_FAILURE)
+cMSG_USERAUTH_GSSAPI_ERROR: Final[bytes] = byte_chr(MSG_USERAUTH_GSSAPI_ERROR)
+cMSG_USERAUTH_GSSAPI_ERRTOK: Final[bytes] = byte_chr(
+    MSG_USERAUTH_GSSAPI_ERRTOK
+)
+cMSG_USERAUTH_GSSAPI_MIC: Final[bytes] = byte_chr(MSG_USERAUTH_GSSAPI_MIC)
+cMSG_GLOBAL_REQUEST: Final[bytes] = byte_chr(MSG_GLOBAL_REQUEST)
+cMSG_REQUEST_SUCCESS: Final[bytes] = byte_chr(MSG_REQUEST_SUCCESS)
+cMSG_REQUEST_FAILURE: Final[bytes] = byte_chr(MSG_REQUEST_FAILURE)
+cMSG_CHANNEL_OPEN: Final[bytes] = byte_chr(MSG_CHANNEL_OPEN)
+cMSG_CHANNEL_OPEN_SUCCESS: Final[bytes] = byte_chr(MSG_CHANNEL_OPEN_SUCCESS)
+cMSG_CHANNEL_OPEN_FAILURE: Final[bytes] = byte_chr(MSG_CHANNEL_OPEN_FAILURE)
+cMSG_CHANNEL_WINDOW_ADJUST: Final[bytes] = byte_chr(MSG_CHANNEL_WINDOW_ADJUST)
+cMSG_CHANNEL_DATA: Final[bytes] = byte_chr(MSG_CHANNEL_DATA)
+cMSG_CHANNEL_EXTENDED_DATA: Final[bytes] = byte_chr(MSG_CHANNEL_EXTENDED_DATA)
+cMSG_CHANNEL_EOF: Final[bytes] = byte_chr(MSG_CHANNEL_EOF)
+cMSG_CHANNEL_CLOSE: Final[bytes] = byte_chr(MSG_CHANNEL_CLOSE)
+cMSG_CHANNEL_REQUEST: Final[bytes] = byte_chr(MSG_CHANNEL_REQUEST)
+cMSG_CHANNEL_SUCCESS: Final[bytes] = byte_chr(MSG_CHANNEL_SUCCESS)
+cMSG_CHANNEL_FAILURE: Final[bytes] = byte_chr(MSG_CHANNEL_FAILURE)
 
 # for debugging:
-MSG_NAMES = {
+MSG_NAMES: dict[int, str] = {
     MSG_DISCONNECT: "disconnect",
     MSG_IGNORE: "ignore",
     MSG_UNIMPLEMENTED: "unimplemented",
@@ -185,7 +239,7 @@ AUTH_SUCCESSFUL, AUTH_PARTIALLY_SUCCESSFUL, AUTH_FAILED = range(3)
 ) = range(0, 5)
 
 
-CONNECTION_FAILED_CODE = {
+CONNECTION_FAILED_CODE: dict[int, str] = {
     1: "Administratively prohibited",
     2: "Connect failed",
     3: "Unknown channel type",
@@ -199,13 +253,13 @@ CONNECTION_FAILED_CODE = {
     DISCONNECT_NO_MORE_AUTH_METHODS_AVAILABLE,
 ) = (7, 13, 14)
 
-zero_byte = byte_chr(0)
-one_byte = byte_chr(1)
-four_byte = byte_chr(4)
-max_byte = byte_chr(0xFF)
-cr_byte = byte_chr(13)
-linefeed_byte = byte_chr(10)
-crlf = cr_byte + linefeed_byte
+zero_byte: bytes = byte_chr(0)
+one_byte: bytes = byte_chr(1)
+four_byte: bytes = byte_chr(4)
+max_byte: bytes = byte_chr(0xFF)
+cr_byte: bytes = byte_chr(13)
+linefeed_byte: bytes = byte_chr(10)
+crlf: bytes = cr_byte + linefeed_byte
 cr_byte_value = 13
 linefeed_byte_value = 10
 
@@ -229,17 +283,17 @@ CRITICAL = logging.CRITICAL
 # Common IO/select/etc sleep period, in seconds
 io_sleep = 0.01
 
-DEFAULT_WINDOW_SIZE = 64 * 2**15
-DEFAULT_MAX_PACKET_SIZE = 2**15
+DEFAULT_WINDOW_SIZE: Final[int] = 64 * 2**15
+DEFAULT_MAX_PACKET_SIZE: Final[int] = 2**15
 
 # lower bound on the max packet size we'll accept from the remote host
 # Minimum packet size is 32768 bytes according to
 # http://www.ietf.org/rfc/rfc4254.txt
-MIN_WINDOW_SIZE = 2**15
+MIN_WINDOW_SIZE: Final[int] = 2**15
 
 # However, according to http://www.ietf.org/rfc/rfc4253.txt it is perfectly
 # legal to accept a size much smaller, as OpenSSH client does as size 16384.
-MIN_PACKET_SIZE = 2**12
+MIN_PACKET_SIZE: Final[int] = 2**12
 
 # Max windows size according to http://www.ietf.org/rfc/rfc4254.txt
-MAX_WINDOW_SIZE = 2**32 - 1
+MAX_WINDOW_SIZE: Final[int] = 2**32 - 1

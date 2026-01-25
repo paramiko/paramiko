@@ -23,12 +23,21 @@ client side, and a **lot** more on the server side.
 """
 
 import os
-from hashlib import sha1, sha256
+from hashlib import _Hash, sha1, sha256
 
 from paramiko import util
 from paramiko.common import DEBUG, byte_chr, byte_ord, byte_mask
 from paramiko.message import Message
 from paramiko.ssh_exception import SSHException
+from _typeshed import ReadableBuffer
+from collections.abc import Callable
+from paramiko.transport import Transport
+
+c_MSG_KEXDH_GEX_REQUEST_OLD: bytes
+c_MSG_KEXDH_GEX_GROUP: bytes
+c_MSG_KEXDH_GEX_INIT: bytes
+c_MSG_KEXDH_GEX_REPLY: bytes
+c_MSG_KEXDH_GEX_REQUEST: bytes
 
 
 (
@@ -54,9 +63,9 @@ class KexGex:
     min_bits = 1024
     max_bits = 8192
     preferred_bits = 2048
-    hash_algo = sha1
+    hash_algo: Callable[[ReadableBuffer], _Hash] = sha1
 
-    def __init__(self, transport):
+    def __init__(self, transport: Transport) -> None:
         self.transport = transport
         self.p = None
         self.q = None
@@ -66,7 +75,7 @@ class KexGex:
         self.f = None
         self.old_style = False
 
-    def start_kex(self, _test_old_style=False):
+    def start_kex(self, _test_old_style: bool = False) -> None:
         if self.transport.server_mode:
             self.transport._expect_packet(
                 _MSG_KEXDH_GEX_REQUEST, _MSG_KEXDH_GEX_REQUEST_OLD
@@ -89,7 +98,7 @@ class KexGex:
         self.transport._send_message(m)
         self.transport._expect_packet(_MSG_KEXDH_GEX_GROUP)
 
-    def parse_next(self, ptype, m):
+    def parse_next(self, ptype: int, m: Message) -> None:
         if ptype == _MSG_KEXDH_GEX_REQUEST:
             return self._parse_kexdh_gex_request(m)
         elif ptype == _MSG_KEXDH_GEX_GROUP:
@@ -285,4 +294,4 @@ class KexGex:
 
 class KexGexSHA256(KexGex):
     name = "diffie-hellman-group-exchange-sha256"
-    hash_algo = sha256
+    hash_algo: Callable[[ReadableBuffer], _Hash] = sha256

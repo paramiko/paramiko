@@ -17,6 +17,8 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
 
 import socket
+from collections.abc import Mapping
+from paramiko.pkey import PKey
 
 
 class SSHException(Exception):
@@ -56,10 +58,10 @@ class BadAuthenticationType(AuthenticationException):
     .. versionadded:: 1.1
     """
 
-    allowed_types = []
+    allowed_types: list[str] = []
 
     # TODO 4.0: remove explanation kwarg
-    def __init__(self, explanation, types):
+    def __init__(self, explanation: str, types: list[str]) -> None:
         # TODO 4.0: remove this supercall unless it's actually required for
         # pickling (after fixing pickling)
         AuthenticationException.__init__(self, explanation, types)
@@ -77,9 +79,9 @@ class PartialAuthentication(AuthenticationException):
     An internal exception thrown in the case of partial authentication.
     """
 
-    allowed_types = []
+    allowed_types: list[str] = []
 
-    def __init__(self, types):
+    def __init__(self, types: list[str]) -> None:
         AuthenticationException.__init__(self, types)
         self.allowed_types = types
 
@@ -103,7 +105,7 @@ class ChannelException(SSHException):
     .. versionadded:: 1.6
     """
 
-    def __init__(self, code, text):
+    def __init__(self, code: int, text: str) -> None:
         SSHException.__init__(self, code, text)
         self.code = code
         self.text = text
@@ -123,7 +125,9 @@ class BadHostKeyException(SSHException):
     .. versionadded:: 1.6
     """
 
-    def __init__(self, hostname, got_key, expected_key):
+    def __init__(
+        self, hostname: str, got_key: PKey, expected_key: PKey
+    ) -> None:
         SSHException.__init__(self, hostname, got_key, expected_key)
         self.hostname = hostname
         self.key = got_key
@@ -161,7 +165,7 @@ class ProxyCommandFailure(SSHException):
     :param str error: The error captured from the proxy command output.
     """
 
-    def __init__(self, command, error):
+    def __init__(self, command: str, error: str) -> None:
         SSHException.__init__(self, command, error)
         self.command = command
         self.error = error
@@ -195,7 +199,12 @@ class NoValidConnectionsError(socket.error):
     .. versionadded:: 1.16
     """
 
-    def __init__(self, errors):
+    def __init__(
+        self,
+        errors: Mapping[
+            tuple[str, int] | tuple[str, int, int, int], Exception
+        ],
+    ) -> None:
         """
         :param dict errors:
             The errors dict to store, as described by class docstring.
@@ -212,7 +221,12 @@ class NoValidConnectionsError(socket.error):
         )
         self.errors = errors
 
-    def __reduce__(self):
+    def __reduce__(
+        self,
+    ) -> tuple[
+        type,
+        tuple[Mapping[tuple[str, int] | tuple[str, int, int, int], Exception]],
+    ]:
         return (self.__class__, (self.errors,))
 
 

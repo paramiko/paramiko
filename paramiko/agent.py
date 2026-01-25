@@ -33,23 +33,39 @@ from select import select
 from paramiko.common import io_sleep, byte_chr
 
 from paramiko.ssh_exception import SSHException, AuthenticationException
-from paramiko.message import Message
+from paramiko.message import _LikeBytes, Message
 from paramiko.pkey import PKey, UnknownKeyType
 from paramiko.util import asbytes, get_logger
+from .win_openssh import OpenSSHAgentConnection
+from .win_pageant import PageantConnection
+from _typeshed import ReadableBuffer
+from paramiko.channel import Channel
+from paramiko.transport import Transport
+from typing import Final, Protocol
 
-cSSH2_AGENTC_REQUEST_IDENTITIES = byte_chr(11)
-SSH2_AGENT_IDENTITIES_ANSWER = 12
-cSSH2_AGENTC_SIGN_REQUEST = byte_chr(13)
-SSH2_AGENT_SIGN_RESPONSE = 14
 
-SSH_AGENT_RSA_SHA2_256 = 2
-SSH_AGENT_RSA_SHA2_512 = 4
+@type_check_only
+class _AgentProxy(Protocol):
+    def connect(self) -> None:
+        ...
+
+    def close(self) -> None:
+        ...
+
+
+cSSH2_AGENTC_REQUEST_IDENTITIES: Final[bytes] = byte_chr(11)
+SSH2_AGENT_IDENTITIES_ANSWER: Final = 12
+cSSH2_AGENTC_SIGN_REQUEST: Final[bytes] = byte_chr(13)
+SSH2_AGENT_SIGN_RESPONSE: Final = 14
+
+SSH_AGENT_RSA_SHA2_256: Final = 2
+SSH_AGENT_RSA_SHA2_512: Final = 4
 # NOTE: RFC mildly confusing; while these flags are OR'd together, OpenSSH at
 # least really treats them like "AND"s, in the sense that if it finds the
 # SHA256 flag set it won't continue looking at the SHA512 one; it
 # short-circuits right away.
 # Thus, we never want to eg submit 6 to say "either's good".
-ALGORITHM_FLAG_MAP = {
+ALGORITHM_FLAG_MAP: Final[dict[str, int]] = {
     "rsa-sha2-256": SSH_AGENT_RSA_SHA2_256,
     "rsa-sha2-512": SSH_AGENT_RSA_SHA2_512,
 }
@@ -59,11 +75,11 @@ for key, value in list(ALGORITHM_FLAG_MAP.items()):
 
 # TODO 4.0: rename all these - including making some of their methods public?
 class AgentSSH:
-    def __init__(self):
+    def __init__(self) -> None:
         self._conn = None
         self._keys = ()
 
-    def get_keys(self):
+    def get_keys(self) -> tuple[AgentKey, ...]:
         """
         Return the list of keys available through the SSH agent, if any.  If
         no SSH agent was running (or it couldn't be contacted), an empty list
@@ -124,12 +140,12 @@ class AgentProxyThread(threading.Thread):
     Class in charge of communication between two channels.
     """
 
-    def __init__(self, agent):
+    def __init__(self, agent: _AgentProxy) -> None:
         threading.Thread.__init__(self, target=self.run)
         self._agent = agent
         self._exit = False
 
-    def run(self):
+    def run(self) -> None:
         try:
             (r, addr) = self.get_connection()
             # Found that r should be either
@@ -184,10 +200,10 @@ class AgentLocalProxy(AgentProxyThread):
     asked from a remote fake agent (so use a unix socket for ex.)
     """
 
-    def __init__(self, agent):
+    def __init__(self, agent: "AgentServerProxy") -> None:
         AgentProxyThread.__init__(self, agent)
 
-    def get_connection(self):
+    def get_connection(self) -> tuple[socket.socket, socket._RetAddress]:
         """
         Return a pair of socket object and string address.
 
@@ -208,15 +224,15 @@ class AgentRemoteProxy(AgentProxyThread):
     Class to be used when wanting to ask a remote SSH Agent
     """
 
-    def __init__(self, agent, chan):
+    def __init__(self, agent: "AgentClientProxy", chan: Channel) -> None:
         AgentProxyThread.__init__(self, agent)
         self.__chan = chan
 
-    def get_connection(self):
+    def get_connection(self) -> tuple[socket.socket, socket._RetAddress]:
         return self.__chan, None
 
 
-def get_agent_connection():
+def get_agent_connection() -> socket.socket | None:
     """
     Returns some SSH agent object, or None if none were found/supported.
 
@@ -257,16 +273,16 @@ class AgentClientProxy:
     #. Communication occurs ...
     """
 
-    def __init__(self, chanRemote):
+    def __init__(self, chanRemote: Channel) -> None:
         self._conn = None
         self.__chanR = chanRemote
         self.thread = AgentRemoteProxy(self, chanRemote)
         self.thread.start()
 
-    def __del__(self):
+    def __del__(self) -> None:
         self.close()
 
-    def connect(self):
+    def connect(self) -> None:
         """
         Method automatically called by ``AgentProxyThread.run``.
         """
@@ -275,7 +291,7 @@ class AgentClientProxy:
             return
         self._conn = conn
 
-    def close(self):
+    def close(self) -> None:
         """
         Close the current connection and terminate the agent
         Should be called manually
@@ -305,7 +321,7 @@ class AgentServerProxy(AgentSSH):
     :raises: `.SSHException` -- mostly if we lost the agent
     """
 
-    def __init__(self, t):
+    def __init__(self, t: Transport) -> None:
         AgentSSH.__init__(self)
         self.__t = t
         self._dir = tempfile.mkdtemp("sshproxy")
@@ -314,17 +330,17 @@ class AgentServerProxy(AgentSSH):
         self.thread = AgentLocalProxy(self)
         self.thread.start()
 
-    def __del__(self):
+    def __del__(self) -> None:
         self.close()
 
-    def connect(self):
+    def connect(self) -> None:
         conn_sock = self.__t.open_forward_agent_channel()
         if conn_sock is None:
             raise SSHException("lost ssh-agent")
         conn_sock.set_name("auth-agent")
         self._connect(conn_sock)
 
-    def close(self):
+    def close(self) -> None:
         """
         Terminate the agent, clean the files, close connections
         Should be called manually
@@ -335,7 +351,7 @@ class AgentServerProxy(AgentSSH):
         self.thread.join(1000)
         self._close()
 
-    def get_env(self):
+    def get_env(self) -> dict[str, str]:
         """
         Helper for the environment under unix
 
@@ -370,7 +386,7 @@ class AgentRequestHandler:
         session.exec_command("git clone https://my.git.repository/")
     """
 
-    def __init__(self, chanClient):
+    def __init__(self, chanClient: Channel) -> None:
         self._conn = None
         self.__chanC = chanClient
         chanClient.request_forward_agent(self._forward_agent_handler)
@@ -379,10 +395,10 @@ class AgentRequestHandler:
     def _forward_agent_handler(self, chanRemote):
         self.__clientProxys.append(AgentClientProxy(chanRemote))
 
-    def __del__(self):
+    def __del__(self) -> None:
         self.close()
 
-    def close(self):
+    def close(self) -> None:
         for p in self.__clientProxys:
             p.close()
 
@@ -406,7 +422,7 @@ class Agent(AgentSSH):
         putty pageant support)
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         AgentSSH.__init__(self)
 
         conn = get_agent_connection()
@@ -414,7 +430,7 @@ class Agent(AgentSSH):
             return
         self._connect(conn)
 
-    def close(self):
+    def close(self) -> None:
         """
         Close the SSH agent connection.
         """
@@ -435,7 +451,9 @@ class AgentKey(PKey):
         key instance this key is a proxy for, if one was obtainable, else None.
     """
 
-    def __init__(self, agent, blob, comment=""):
+    def __init__(
+        self, agent: AgentSSH, blob: ReadableBuffer, comment: str = ""
+    ) -> None:
         self.agent = agent
         self.blob = blob
         self.comment = comment
@@ -455,11 +473,11 @@ class AgentKey(PKey):
     def log(self, *args, **kwargs):
         return self._logger.log(*args, **kwargs)
 
-    def asbytes(self):
+    def asbytes(self) -> bytes:
         # Prefer inner_key.asbytes, since that will differ for eg RSA-CERT
         return self.inner_key.asbytes() if self.inner_key else self.blob
 
-    def get_name(self):
+    def get_name(self) -> str:
         return self.name
 
     def get_bits(self):
@@ -481,7 +499,9 @@ class AgentKey(PKey):
         fallback = [self.get_name(), self.blob]
         return self.inner_key._fields if self.inner_key else fallback
 
-    def sign_ssh_data(self, data, algorithm=None):
+    def sign_ssh_data(
+        self, data: _LikeBytes, algorithm: str | None = None
+    ) -> Message:
         msg = Message()
         msg.add_byte(cSSH2_AGENTC_SIGN_REQUEST)
         # NOTE: this used to be just self.blob, which is not entirely right for
