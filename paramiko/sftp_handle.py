@@ -20,11 +20,17 @@
 Abstraction of an SFTP file handle (for server mode).
 """
 
+from __future__ import annotations
+
 import os
 from paramiko.sftp import SFTP_OP_UNSUPPORTED, SFTP_OK
 from paramiko.util import ClosingContextManager
-from _typeshed import ReadableBuffer
-from paramiko.sftp_attr import SFTPAttributes
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from _typeshed import ReadableBuffer
+    from paramiko.sftp_attr import SFTPAttributes
+    from paramiko.sftp_server import SFTPServer
 
 
 class SFTPHandle(ClosingContextManager):
@@ -193,6 +199,3 @@ class SFTPHandle(ClosingContextManager):
 
     def _set_name(self, name):
         self.__name = name
-
-
-from paramiko.sftp_server import SFTPServer

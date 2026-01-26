@@ -20,6 +20,8 @@
 SSH client & key policies
 """
 
+from __future__ import annotations
+
 from binascii import hexlify
 import getpass
 import inspect
@@ -40,34 +42,35 @@ from paramiko.ssh_exception import (
     BadHostKeyException,
     NoValidConnectionsError,
 )
-from paramiko.transport import _SocketLike, Transport
+from paramiko.transport import Transport
 from paramiko.util import ClosingContextManager
-from _typeshed import FileDescriptorOrPath
-from collections.abc import Iterable, Mapping
-from paramiko.auth_strategy import AuthStrategy
-from paramiko.channel import (
-    Channel,
-    ChannelFile,
-    ChannelStderrFile,
-    ChannelStdinFile,
-)
-from paramiko.pkey import PKey
-from paramiko.sftp_client import SFTPClient
-from typing import NoReturn, Protocol
+from typing import NoReturn, Protocol, TYPE_CHECKING
 
+if TYPE_CHECKING:
+    from collections.abc import Iterable, Mapping
+    from _typeshed import FileDescriptorOrPath
+    from paramiko.auth_strategy import AuthStrategy
+    from paramiko.channel import (
+        Channel,
+        ChannelFile,
+        ChannelStderrFile,
+        ChannelStdinFile,
+    )
+    from paramiko.pkey import PKey
+    from paramiko.sftp_client import SFTPClient
+    from paramiko.transport import _SocketLike
 
-@type_check_only
-class _TransportFactory(Protocol):
-    def __call__(
-        self,
-        sock: _SocketLike,
-        /,
-        *,
-        gss_kex: bool,
-        gss_deleg_creds: bool,
-        disabled_algorithms: Mapping[str, Iterable[str]] | None,
-    ) -> Transport:
-        ...
+    class _TransportFactory(Protocol):
+        def __call__(
+            self,
+            sock: _SocketLike,
+            /,
+            *,
+            gss_kex: bool,
+            gss_deleg_creds: bool,
+            disabled_algorithms: Mapping[str, Iterable[str]] | None,
+        ) -> Transport:
+            ...
 
 
 class SSHClient(ClosingContextManager):

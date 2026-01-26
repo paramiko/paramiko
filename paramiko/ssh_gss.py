@@ -29,6 +29,8 @@ This module provides GSS-API / SSPI  authentication as defined in :rfc:`4462`.
 .. versionadded:: 1.15
 """
 
+from __future__ import annotations
+
 import struct
 import os
 import sys
@@ -74,7 +76,7 @@ from paramiko.common import MSG_USERAUTH_REQUEST
 from paramiko.ssh_exception import SSHException
 
 
-def GSSAuth(auth_method, gss_deleg_creds=True):
+def GSSAuth(auth_method: str, gss_deleg_creds: bool = True) -> _SSH_GSSAuth:
     """
     Provide SSH2 GSS-API / SSPI authentication.
 

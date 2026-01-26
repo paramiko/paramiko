@@ -25,13 +25,14 @@ The pipe acts like an Event, which can be set or cleared. When set, the pipe
 will trigger as readable in `select <select.select>`.
 """
 
+from __future__ import annotations
+
 import sys
 import os
 import socket
 from typing import Protocol
 
 
-@type_check_only
 class _BasePipe(Protocol):
     def clear(self) -> None:
         ...
@@ -40,7 +41,6 @@ class _BasePipe(Protocol):
         ...
 
 
-@type_check_only
 class _Pipe(_BasePipe, Protocol):
     def close(self) -> None:
         ...

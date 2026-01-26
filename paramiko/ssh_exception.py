@@ -16,9 +16,12 @@
 # along with Paramiko; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
 
+from __future__ import annotations
+
 import socket
 from collections.abc import Mapping
-from paramiko.pkey import PKey
+
+import paramiko.pkey
 
 
 class SSHException(Exception):
@@ -126,7 +129,10 @@ class BadHostKeyException(SSHException):
     """
 
     def __init__(
-        self, hostname: str, got_key: PKey, expected_key: PKey
+        self,
+        hostname: str,
+        got_key: paramiko.pkey.PKey,
+        expected_key: paramiko.pkey.PKey,
     ) -> None:
         SSHException.__init__(self, hostname, got_key, expected_key)
         self.hostname = hostname

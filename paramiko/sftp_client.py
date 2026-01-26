@@ -16,6 +16,7 @@
 # along with Paramiko; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
 
+from __future__ import annotations
 
 from binascii import hexlify
 import errno
@@ -67,12 +68,16 @@ from paramiko.sftp_attr import SFTPAttributes
 from paramiko.ssh_exception import SSHException
 from paramiko.sftp_file import SFTPFile
 from paramiko.util import ClosingContextManager, b, u
-from _typeshed import StrOrBytesPath
-from collections.abc import Iterator
-from logging import Logger
-from paramiko.transport import Transport
-from typing import IO
-from typing_extensions import Self, TypeAlias
+from typing import IO, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Iterator
+    from logging import Logger
+    from _typeshed import StrOrBytesPath
+    from typing_extensions import Self, TypeAlias
+    import paramiko.transport
+
+    _Callback: TypeAlias = Callable[[int, int], object]
 
 
 def _to_unicode(s):
@@ -90,7 +95,7 @@ def _to_unicode(s):
             return s
 
 
-b_slash: bytes = b"/"
+b_slash = b"/"
 
 
 class SFTPClient(BaseSFTP, ClosingContextManager):
@@ -102,6 +107,11 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
 
     Instances of this class may be used as context managers.
     """
+
+    sock: Channel
+    ultra_debug: bool
+    request_number: int
+    logger: Logger
 
     def __init__(self, sock: Channel) -> None:
         """
@@ -146,7 +156,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
     @classmethod
     def from_transport(
         cls,
-        t: Transport,
+        t: paramiko.transport.Transport,
         window_size: int | None = None,
         max_packet_size: int | None = None,
     ) -> Self | None:
@@ -193,7 +203,7 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
             super()._log(
                 level,
                 "[chan %s] " + msg,
-                *([self.sock.get_name()] + list(args))
+                *([self.sock.get_name()] + list(args)),
             )
 
     def close(self) -> None:

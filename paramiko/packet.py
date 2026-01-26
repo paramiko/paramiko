@@ -20,6 +20,8 @@
 Packet handling
 """
 
+from __future__ import annotations
+
 import errno
 import os
 import socket
@@ -41,16 +43,21 @@ from paramiko.common import (
 from paramiko.util import u
 from paramiko.ssh_exception import SSHException, ProxyCommandFailure
 from paramiko.message import Message
-from _typeshed import Incomplete, ReadableBuffer
-from collections.abc import Callable
-from cryptography.hazmat.primitives.ciphers import Cipher
-from hashlib import _Hash
-from logging import Logger
-from paramiko.compress import ZlibCompressor, ZlibDecompressor
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+    import hashlib
+    from logging import Logger
+    from cryptography.hazmat.primitives.ciphers import Cipher
+    from _typeshed import Incomplete, ReadableBuffer
+    from paramiko.compress import ZlibCompressor, ZlibDecompressor
 
 
 def compute_hmac(
-    key: bytes | bytearray, message: ReadableBuffer, digest_class: _Hash
+    key: bytes | bytearray,
+    message: ReadableBuffer,
+    digest_class: hashlib._Hash,
 ) -> bytes:
     return HMAC(key, message, digest_class).digest()
 
@@ -161,7 +168,7 @@ class Packetizer:
         self,
         block_engine: Cipher[Incomplete],
         block_size: int,
-        mac_engine: _Hash,
+        mac_engine: hashlib._Hash,
         mac_size: int,
         mac_key: bytes | bytearray,
         sdctr: bool = False,
@@ -195,7 +202,7 @@ class Packetizer:
         self,
         block_engine: Cipher[Incomplete],
         block_size: int,
-        mac_engine: _Hash,
+        mac_engine: hashlib._Hash,
         mac_size: int,
         mac_key: bytes | bytearray,
         etm: bool = False,

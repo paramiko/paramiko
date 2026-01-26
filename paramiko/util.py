@@ -20,6 +20,7 @@
 Useful functions used by the rest of paramiko.
 """
 
+from __future__ import annotations
 
 import sys
 import struct
@@ -36,18 +37,15 @@ from paramiko.common import (
     byte_chr,
 )
 from paramiko.config import SSHConfigDict, SSHConfig
-from _typeshed import FileDescriptorOrPath, ReadableBuffer
-from collections.abc import Iterable
-from hashlib import _Hash
-from paramiko.hostkeys import HostKeys
-from types import TracebackType
-from typing import AnyStr, IO, Protocol
-from typing_extensions import Self
+from typing import AnyStr, IO, TYPE_CHECKING
 
-
-class SupportsClose(Protocol):
-    def close(self) -> None:
-        ...
+if TYPE_CHECKING:
+    from collections.abc import Iterable
+    import hashlib
+    from types import TracebackType
+    from typing_extensions import Self
+    from _typeshed import FileDescriptorOrPath, ReadableBuffer
+    import paramiko.hostkeys
 
 
 def inflate_long(s: bytes | bytearray, always_positive: bool = False) -> int:
@@ -152,7 +150,10 @@ def tb_strings() -> list[str]:
 
 
 def generate_key_bytes(
-    hash_alg: type[_Hash], salt: ReadableBuffer, key: bytes | str, nbytes: int
+    hash_alg: type[hashlib._Hash],
+    salt: ReadableBuffer,
+    key: bytes | str,
+    nbytes: int,
 ) -> bytes:
     """
     Given a password, passphrase, or other human-source key, scramble it
@@ -184,7 +185,9 @@ def generate_key_bytes(
     return keydata
 
 
-def load_host_keys(filename: FileDescriptorOrPath) -> HostKeys:
+def load_host_keys(
+    filename: FileDescriptorOrPath,
+) -> paramiko.hostkeys.HostKeys:
     """
     Read a file of known SSH host keys, in the format used by openssh, and
     return a compound dict of ``hostname -> keytype ->`` `PKey

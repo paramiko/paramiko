@@ -20,6 +20,8 @@
 Common API for all public keys.
 """
 
+from __future__ import annotations
+
 import base64
 from base64 import encodebytes, decodebytes
 from binascii import unhexlify
@@ -41,11 +43,13 @@ from paramiko.util import u, b
 from paramiko.common import o600
 from paramiko.ssh_exception import SSHException, PasswordRequiredException
 from paramiko.message import Message
-from _typeshed import FileDescriptorOrPath
-from typing import IO, TypeVar
-from typing_extensions import Self
+from typing import IO, TypeVar, TYPE_CHECKING
 
-_BytesT = TypeVar("_BytesT", bound=bytes | bytearray)
+if TYPE_CHECKING:
+    from typing_extensions import Self
+    from _typeshed import FileDescriptorOrPath
+
+    _BytesT = TypeVar("_BytesT", bound=bytes | bytearray)
 
 
 # TripleDES is moving from `cryptography.hazmat.primitives.ciphers.algorithms`
@@ -136,7 +140,7 @@ class PKey:
     )
 
     @staticmethod
-    def from_path(path: Path | str, passphrase: bytes | None = None) -> "PKey":
+    def from_path(path: Path | str, passphrase: bytes | None = None) -> PKey:
         """
         Attempt to instantiate appropriate key subclass from given file path.
 
@@ -208,7 +212,7 @@ class PKey:
         return key
 
     @staticmethod
-    def from_type_string(key_type: str, key_bytes: bytes) -> "PKey":
+    def from_type_string(key_type: str, key_bytes: bytes) -> PKey:
         """
         Given type `str` & raw `bytes`, return a `PKey` subclass instance.
 

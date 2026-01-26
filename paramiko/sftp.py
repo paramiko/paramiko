@@ -16,16 +16,16 @@
 # along with Paramiko; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
 
+from __future__ import annotations
+
 import select
 import socket
 import struct
 
 from paramiko import util
+from paramiko.channel import Channel
 from paramiko.common import DEBUG, byte_chr, byte_ord
 from paramiko.message import Message
-from logging import Logger
-from paramiko.channel import Channel
-
 
 (
     CMD_INIT,
@@ -135,7 +135,7 @@ class SFTPError(Exception):
 class BaseSFTP:
     def __init__(self) -> None:
         self.logger = util.get_logger("paramiko.sftp")
-        self.sock = None
+        self.sock: Channel | None = None
         self.ultra_debug = False
 
     # ...internals...

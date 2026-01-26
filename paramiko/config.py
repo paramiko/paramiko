@@ -21,6 +21,8 @@
 Configuration file (aka ``ssh_config``) support.
 """
 
+from __future__ import annotations
+
 import fnmatch
 import getpass
 import os
@@ -30,20 +32,22 @@ import socket
 from hashlib import sha1
 from io import StringIO
 from functools import partial
-from _typeshed import FileDescriptorOrPath
-from collections.abc import Iterable
-from typing import IO
-from typing_extensions import Self
+from .ssh_exception import CouldNotCanonicalize, ConfigParseError
+from typing import TYPE_CHECKING
 
-invoke, invoke_import_error = None, None
+if TYPE_CHECKING:
+    from _typeshed import FileDescriptorOrPath
+    from collections.abc import Iterable
+    from types import ModuleType
+    from typing import IO
+    from typing_extensions import Self
+
+invoke: ModuleType | None = None
+invoke_import_error: ImportError | None = None
 try:
     import invoke
 except ImportError as e:
-    invoke_import_error: ImportError | None = e
-
-from .ssh_exception import CouldNotCanonicalize, ConfigParseError
-
-invoke_import_error: ImportError | None
+    invoke_import_error = e
 
 
 SSH_PORT = 22
@@ -186,7 +190,7 @@ class SSHConfig:
         # Store last 'open' block and we're done
         self._config.append(context)
 
-    def lookup(self, hostname: str) -> "SSHConfigDict":
+    def lookup(self, hostname: str) -> SSHConfigDict:
         """
         Return a dict (`SSHConfigDict`) of config options for a given hostname.
 
@@ -288,7 +292,7 @@ class SSHConfig:
         return options
 
     def canonicalize(
-        self, hostname: str, options: "SSHConfigDict", domains: Iterable[str]
+        self, hostname: str, options: SSHConfigDict, domains: Iterable[str]
     ) -> str:
         """
         Return canonicalized version of ``hostname``.
@@ -606,9 +610,11 @@ class LazyFqdn:
     Returns the host's fqdn on request as string.
     """
 
-    def __init__(
-        self, config: "SSHConfigDict", host: str | None = None
-    ) -> None:
+    fqdn: str | None
+    config: SSHConfig
+    host: str | None
+
+    def __init__(self, config: SSHConfigDict, host: str | None = None) -> None:
         self.fqdn = None
         self.config = config
         self.host = host

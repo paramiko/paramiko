@@ -20,12 +20,17 @@
 Utility functions for dealing with primes.
 """
 
+from __future__ import annotations
+
 import os
 
 from paramiko import util
 from paramiko.common import byte_mask
 from paramiko.ssh_exception import SSHException
-from _typeshed import FileDescriptorOrPath
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from _typeshed import FileDescriptorOrPath
 
 
 def _roll_random(n):
@@ -58,8 +63,8 @@ class ModulusPack:
 
     def __init__(self) -> None:
         # pack is a hash of: bits -> [ (generator, modulus) ... ]
-        self.pack = {}
-        self.discarded = []
+        self.pack: dict[int, list[tuple[int, int]]] = {}
+        self.discarded: list[tuple[int, str]] = []
 
     def _parse_modulus(self, line):
         (

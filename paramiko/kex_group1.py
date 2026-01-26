@@ -21,19 +21,21 @@ Standard SSH key exchange ("kex" if you wanna sound cool).  Diffie-Hellman of
 1024 bit key halves, using a known "p" prime and "g" generator.
 """
 
+from __future__ import annotations
+
 import os
-from hashlib import _Hash, sha1
+import hashlib
 
 from paramiko import util
 from paramiko.common import max_byte, zero_byte, byte_chr, byte_mask
 from paramiko.message import Message
 from paramiko.ssh_exception import SSHException
-from _typeshed import ReadableBuffer
-from collections.abc import Callable
-from paramiko.transport import Transport
+from typing import TYPE_CHECKING
 
-c_MSG_KEXDH_INIT: bytes
-c_MSG_KEXDH_REPLY: bytes
+if TYPE_CHECKING:
+    from collections.abc import Callable
+    from _typeshed import ReadableBuffer
+    import paramiko.transport
 
 
 _MSG_KEXDH_INIT, _MSG_KEXDH_REPLY = range(30, 32)
@@ -50,9 +52,9 @@ class KexGroup1:
     G = 2
 
     name = "diffie-hellman-group1-sha1"
-    hash_algo: Callable[[ReadableBuffer], _Hash] = sha1
+    hash_algo: Callable[[ReadableBuffer], hashlib._Hash] = hashlib.sha1
 
-    def __init__(self, transport: Transport) -> None:
+    def __init__(self, transport: paramiko.transport.Transport) -> None:
         self.transport = transport
         self.x = 0
         self.e = 0

@@ -20,8 +20,13 @@
 Compression implementations for a Transport.
 """
 
+from __future__ import annotations
+
 import zlib
-from _typeshed import ReadableBuffer
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from _typeshed import ReadableBuffer
 
 
 class ZlibCompressor:

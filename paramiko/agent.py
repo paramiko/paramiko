@@ -19,6 +19,7 @@
 """
 SSH Agent interface
 """
+from __future__ import annotations
 
 import os
 import socket
@@ -30,27 +31,26 @@ import tempfile
 import stat
 from logging import DEBUG
 from select import select
-from paramiko.common import io_sleep, byte_chr
 
+from paramiko.common import io_sleep, byte_chr
+from paramiko.message import Message
 from paramiko.ssh_exception import SSHException, AuthenticationException
-from paramiko.message import _LikeBytes, Message
 from paramiko.pkey import PKey, UnknownKeyType
 from paramiko.util import asbytes, get_logger
-from .win_openssh import OpenSSHAgentConnection
-from .win_pageant import PageantConnection
-from _typeshed import ReadableBuffer
-from paramiko.channel import Channel
-from paramiko.transport import Transport
-from typing import Final, Protocol
+from typing import Final, Protocol, TYPE_CHECKING
 
+if TYPE_CHECKING:
+    from _typeshed import ReadableBuffer
+    from paramiko.message import _LikeBytes
+    from paramiko.channel import Channel
+    from paramiko.transport import Transport
 
-@type_check_only
-class _AgentProxy(Protocol):
-    def connect(self) -> None:
-        ...
+    class _AgentProxy(Protocol):
+        def connect(self) -> None:
+            ...
 
-    def close(self) -> None:
-        ...
+        def close(self) -> None:
+            ...
 
 
 cSSH2_AGENTC_REQUEST_IDENTITIES: Final[bytes] = byte_chr(11)
@@ -200,7 +200,7 @@ class AgentLocalProxy(AgentProxyThread):
     asked from a remote fake agent (so use a unix socket for ex.)
     """
 
-    def __init__(self, agent: "AgentServerProxy") -> None:
+    def __init__(self, agent: AgentServerProxy) -> None:
         AgentProxyThread.__init__(self, agent)
 
     def get_connection(self) -> tuple[socket.socket, socket._RetAddress]:
@@ -224,7 +224,7 @@ class AgentRemoteProxy(AgentProxyThread):
     Class to be used when wanting to ask a remote SSH Agent
     """
 
-    def __init__(self, agent: "AgentClientProxy", chan: Channel) -> None:
+    def __init__(self, agent: AgentClientProxy, chan: Channel) -> None:
         AgentProxyThread.__init__(self, agent)
         self.__chan = chan
 
@@ -272,6 +272,8 @@ class AgentClientProxy:
        the remote fake agent and the local agent
     #. Communication occurs ...
     """
+
+    thread: threading.Thread
 
     def __init__(self, chanRemote: Channel) -> None:
         self._conn = None
@@ -450,6 +452,12 @@ class AgentKey(PKey):
         Added the ``.inner_key`` attribute holding a reference to the 'real'
         key instance this key is a proxy for, if one was obtainable, else None.
     """
+
+    agent: AgentSSH
+    blob: bytes
+    public_blob: None
+    name: str
+    comment: str
 
     def __init__(
         self, agent: AgentSSH, blob: ReadableBuffer, comment: str = ""

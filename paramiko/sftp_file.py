@@ -20,6 +20,7 @@
 SFTP file object
 """
 
+from __future__ import annotations
 
 from binascii import hexlify
 from collections import deque
@@ -44,14 +45,16 @@ from paramiko.sftp import (
     int64,
 )
 from paramiko.sftp_attr import SFTPAttributes
-from collections.abc import Iterator, Sequence
-from paramiko.message import _LikeBytes
-from paramiko.sftp_client import SFTPClient
-from paramiko.sftp_handle import SFTPHandle
-from typing import Any
+from typing import Any, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator, Sequence
+    import paramiko.sftp_client
+    from paramiko.sftp_handle import SFTPHandle
+    from paramiko.message import _LikeBytes
 
 
-class SFTPFile(BufferedFile):
+class SFTPFile(BufferedFile[Any]):
     """
     Proxy object for a file on the remote server, in client mode SFTP.
 
@@ -59,13 +62,18 @@ class SFTPFile(BufferedFile):
     that built-in Python file objects are.
     """
 
+    MAX_REQUEST_SIZE: int
+    sftp: paramiko.sftp_client.SFTPClient
+    handle: SFTPHandle
+    pipelined: bool
+
     # Some sftp servers will choke if you send read/write requests larger than
     # this size.
     MAX_REQUEST_SIZE = 32768
 
     def __init__(
         self,
-        sftp: SFTPClient,
+        sftp: paramiko.sftp_client.SFTPClient,
         handle: _LikeBytes,
         mode: str = "r",
         bufsize: int = -1,

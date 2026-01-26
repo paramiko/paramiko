@@ -20,6 +20,8 @@
 `.AuthHandler`
 """
 
+from __future__ import annotations
+
 import weakref
 import threading
 import time
@@ -70,12 +72,19 @@ from paramiko.ssh_exception import (
     BadAuthenticationType,
     PartialAuthentication,
 )
-from paramiko.server import InteractiveQuery
+import paramiko.server
 from paramiko.ssh_gss import _SSH_GSSAuth, GSSAuth, GSS_EXCEPTIONS
 from collections.abc import Callable
 from paramiko.pkey import PKey
-from paramiko.transport import Transport
-from typing_extensions import TypeAlias
+import paramiko.transport
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing_extensions import TypeAlias
+
+    _InteractiveCallback: TypeAlias = Callable[
+        [str, str, list[tuple[str, bool]]], list[str]
+    ]
 
 
 class AuthHandler:
@@ -83,7 +92,22 @@ class AuthHandler:
     Internal class to handle the mechanics of authentication.
     """
 
-    def __init__(self, transport: Transport) -> None:
+    transport: paramiko.transport.Transport
+    username: str | None
+    authenticated: bool
+    auth_event: threading.Event | None
+    auth_method: str
+    banner: str | None
+    password: str | None
+    private_key: PKey | None
+    interactive_handler: _InteractiveCallback | None
+    submethods: str | None
+    auth_username: str | None
+    auth_fail_count: int
+    gss_host: str | None
+    gss_deleg_creds: bool
+
+    def __init__(self, transport: paramiko.transport.Transport) -> None:
         self.transport = weakref.proxy(transport)
         self.username = None
         self.authenticated = False
@@ -113,7 +137,7 @@ class AuthHandler:
         else:
             return self.username
 
-    def auth_none(self, username: str, event: threading.Event) -> None:
+    def auth_none(self, username: str, event: threading.Event) -> list[str]:
         self.transport.lock.acquire()
         try:
             self.auth_event = event
@@ -125,7 +149,7 @@ class AuthHandler:
 
     def auth_publickey(
         self, username: str, key: PKey, event: threading.Event
-    ) -> None:
+    ) -> list[str]:
         self.transport.lock.acquire()
         try:
             self.auth_event = event
@@ -138,7 +162,7 @@ class AuthHandler:
 
     def auth_password(
         self, username: str, password: str, event: threading.Event
-    ) -> None:
+    ) -> list[str]:
         self.transport.lock.acquire()
         try:
             self.auth_event = event
@@ -155,7 +179,7 @@ class AuthHandler:
         handler: _InteractiveCallback,
         event: threading.Event,
         submethods: str = "",
-    ) -> None:
+    ) -> list[str]:
         """
         response_list = handler(title, instructions, prompt_list)
         """
@@ -675,7 +699,7 @@ Error Message: {}
             result = self.transport.server_object.check_auth_interactive(
                 username, submethods
             )
-            if isinstance(result, InteractiveQuery):
+            if isinstance(result, paramiko.server.InteractiveQuery):
                 # make interactive query instead of response
                 self._interactive_query(result)
                 return
@@ -819,7 +843,7 @@ Error Message: {}
         result = self.transport.server_object.check_auth_interactive_response(
             responses
         )
-        if isinstance(result, InteractiveQuery):
+        if isinstance(result, paramiko.server.InteractiveQuery):
             # make interactive query instead of response
             self._interactive_query(result)
             return
@@ -895,7 +919,7 @@ class GssapiWithMicAuthHandler:
         return self._delegate.abort()
 
     @property
-    def transport(self) -> Transport:
+    def transport(self) -> paramiko.transport.Transport:
         return self._delegate.transport
 
     @property

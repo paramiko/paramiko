@@ -22,6 +22,8 @@ read from and closed, but is reading from a buffer fed by another thread.  The
 read operations are blocking and can have a timeout set.
 """
 
+from __future__ import annotations
+
 import array
 import threading
 import time

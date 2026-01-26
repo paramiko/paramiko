@@ -20,6 +20,8 @@
 `.ServerInterface` is an interface to override for server support.
 """
 
+from __future__ import annotations
+
 import threading
 from paramiko import util
 from paramiko.common import (
@@ -29,10 +31,13 @@ from paramiko.common import (
     AUTH_FAILED,
     AUTH_SUCCESSFUL,
 )
-from paramiko.channel import Channel
-from paramiko.message import Message
-from paramiko.pkey import PKey
-from paramiko.transport import Transport
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from paramiko.channel import Channel
+    from paramiko.message import Message
+    from paramiko.pkey import PKey
+    import paramiko.transport
 
 
 class ServerInterface:
@@ -656,7 +661,7 @@ class InteractiveQuery:
         """
         self.name = name
         self.instructions = instructions
-        self.prompts = []
+        self.prompts: list[tuple[str, bool]] = []
         for x in prompts:
             if isinstance(x, str):
                 self.add_prompt(x)
@@ -740,7 +745,10 @@ class SubsystemHandler(threading.Thread):
             pass
 
     def start_subsystem(
-        self, name: str, transport: Transport, channel: Channel
+        self,
+        name: str,
+        transport: paramiko.transport.Transport,
+        channel: Channel,
     ) -> None:
         """
         Process an ssh subsystem in server mode.  This method is called on a

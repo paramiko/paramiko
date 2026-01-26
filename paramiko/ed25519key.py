@@ -14,6 +14,8 @@
 # along with Paramiko; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
 
+from __future__ import annotations
+
 import bcrypt
 
 from cryptography.hazmat.backends import default_backend
@@ -25,8 +27,10 @@ from paramiko.message import Message
 from paramiko.pkey import PKey, OPENSSH_AUTH_MAGIC, _unpad_openssh
 from paramiko.util import b
 from paramiko.ssh_exception import SSHException, PasswordRequiredException
-from _typeshed import FileDescriptorOrPath, ReadableBuffer
-from typing import IO
+from typing import IO, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from _typeshed import FileDescriptorOrPath, ReadableBuffer
 
 
 class Ed25519Key(PKey):
@@ -42,6 +46,7 @@ class Ed25519Key(PKey):
     """
 
     name = "ssh-ed25519"
+    public_blob: None
 
     def __init__(
         self,

@@ -20,6 +20,8 @@
 Abstraction for an SSH2 channel.
 """
 
+from __future__ import annotations
+
 import binascii
 import os
 import socket
@@ -41,22 +43,26 @@ from paramiko.common import (
     cMSG_CHANNEL_EOF,
     cMSG_CHANNEL_CLOSE,
 )
-from paramiko.message import _LikeBytes, Message
+from paramiko.message import Message
 from paramiko.ssh_exception import SSHException
 from paramiko.file import BufferedFile
 from paramiko.buffered_pipe import BufferedPipe, PipeTimeout
 from paramiko import pipe
 from paramiko.util import ClosingContextManager
-from _typeshed import SupportsItems
 from collections.abc import Callable
-from logging import Logger
-from paramiko.transport import Transport
-from typing import Any, Literal, TypeVar
+from typing import Any, Literal, TypeVar, cast, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from _typeshed import SupportsItems
+    from logging import Logger
+    from paramiko.message import _LikeBytes
+    from paramiko.transport import Transport
+
 
 _F = TypeVar("_F", bound=Callable[..., Any])
 
 
-def open_only(func: _F) -> Callable[[_F], _F]:
+def open_only(func: _F) -> _F:
     """
     Decorator for `.Channel` methods which performs an openness check.
 
@@ -76,7 +82,7 @@ def open_only(func: _F) -> Callable[[_F], _F]:
             raise SSHException("Channel is not open")
         return func(self, *args, **kwds)
 
-    return _check
+    return cast(_F, _check)
 
 
 class Channel(ClosingContextManager):
@@ -95,6 +101,33 @@ class Channel(ClosingContextManager):
 
     Instances of this class may be used as context managers.
     """
+
+    chanid: int
+    remote_chanid: int
+    transport: Transport | None
+    active: bool
+    eof_received: int
+    eof_sent: int
+    in_buffer: BufferedPipe[Any]
+    in_stderr_buffer: BufferedPipe[Any]
+    timeout: float | None
+    closed: bool
+    ultra_debug: bool
+    lock: threading.Lock
+    out_buffer_cv: threading.Condition
+    in_window_size: int
+    out_window_size: int
+    in_max_packet_size: int
+    out_max_packet_size: int
+    in_window_threshold: int
+    in_window_sofar: int
+    status_event: threading.Event
+    logger: Logger
+    event: threading.Event
+    event_ready: bool
+    combine_stderr: bool
+    exit_status: int
+    origin_addr: None
 
     def __init__(self, chanid: int) -> None:
         """
@@ -885,7 +918,7 @@ class Channel(ClosingContextManager):
             s = s[sent:]
         return None
 
-    def makefile(self, *params) -> "ChannelFile":
+    def makefile(self, *params) -> ChannelFile:
         """
         Return a file-like object associated with this channel.  The optional
         ``mode`` and ``bufsize`` arguments are interpreted the same way as by
@@ -895,7 +928,7 @@ class Channel(ClosingContextManager):
         """
         return ChannelFile(*([self] + list(params)))
 
-    def makefile_stderr(self, *params) -> "ChannelStderrFile":
+    def makefile_stderr(self, *params) -> ChannelStderrFile:
         """
         Return a file-like object associated with this channel's stderr
         stream.   Only channels using `exec_command` or `invoke_shell`
@@ -913,7 +946,7 @@ class Channel(ClosingContextManager):
         """
         return ChannelStderrFile(*([self] + list(params)))
 
-    def makefile_stdin(self, *params) -> "ChannelStdinFile":
+    def makefile_stdin(self, *params) -> ChannelStdinFile:
         """
         Return a file-like object associated with this channel's stdin
         stream.
@@ -1362,6 +1395,8 @@ class ChannelFile(BufferedFile):
         independently. Currently, closing the `ChannelFile` does nothing but
         flush the buffer.
     """
+
+    channel: Channel
 
     def __init__(
         self, channel: Channel, mode: str = "r", bufsize: int = -1

@@ -20,22 +20,26 @@
 Implementation of an SSH2 "message".
 """
 
+from __future__ import annotations
+
 import struct
 from io import BytesIO
 
 from paramiko import util
 from paramiko.common import zero_byte, max_byte, one_byte
 from paramiko.util import u
-from _typeshed import ReadableBuffer
 from collections.abc import Iterable
-from typing import Protocol
-from typing_extensions import TypeAlias
+from typing import Protocol, TYPE_CHECKING
 
+if TYPE_CHECKING:
+    from _typeshed import ReadableBuffer
+    from typing_extensions import TypeAlias
 
-@type_check_only
-class _SupportsAsBytes(Protocol):
-    def asbytes(self) -> bytes:
-        ...
+    class _SupportsAsBytes(Protocol):
+        def asbytes(self) -> bytes:
+            ...
+
+    _LikeBytes: TypeAlias = bytes | str | _SupportsAsBytes | ReadableBuffer
 
 
 class Message:
@@ -207,7 +211,7 @@ class Message:
         """
         return self.get_text().split(",")
 
-    def add_bytes(self, b: ReadableBuffer) -> "Message":
+    def add_bytes(self, b: ReadableBuffer) -> Message:
         """
         Write bytes to the stream, without any formatting.
 
@@ -216,7 +220,7 @@ class Message:
         self.packet.write(b)
         return self
 
-    def add_byte(self, b: ReadableBuffer) -> "Message":
+    def add_byte(self, b: ReadableBuffer) -> Message:
         """
         Write a single byte to the stream, without any formatting.
 
@@ -225,7 +229,7 @@ class Message:
         self.packet.write(b)
         return self
 
-    def add_boolean(self, b: bool) -> "Message":
+    def add_boolean(self, b: bool) -> Message:
         """
         Add a boolean value to the stream.
 
@@ -237,7 +241,7 @@ class Message:
             self.packet.write(zero_byte)
         return self
 
-    def add_int(self, n: int) -> "Message":
+    def add_int(self, n: int) -> Message:
         """
         Add an integer to the stream.
 
@@ -246,7 +250,7 @@ class Message:
         self.packet.write(struct.pack(">I", n))
         return self
 
-    def add_adaptive_int(self, n: int) -> "Message":
+    def add_adaptive_int(self, n: int) -> Message:
         """
         Add an integer to the stream.
 
@@ -259,7 +263,7 @@ class Message:
             self.packet.write(struct.pack(">I", n))
         return self
 
-    def add_int64(self, n: int) -> "Message":
+    def add_int64(self, n: int) -> Message:
         """
         Add a 64-bit int to the stream.
 
@@ -268,7 +272,7 @@ class Message:
         self.packet.write(struct.pack(">Q", n))
         return self
 
-    def add_mpint(self, z: int) -> "Message":
+    def add_mpint(self, z: int) -> Message:
         """
         Add a long int to the stream, encoded as an infinite-precision
         integer.  This method only works on positive numbers.
@@ -280,7 +284,7 @@ class Message:
 
     # TODO: see the TODO for get_string/get_text/et al, this should change
     # to match.
-    def add_string(self, s: _LikeBytes) -> "Message":
+    def add_string(self, s: _LikeBytes) -> Message:
         """
         Add a bytestring to the stream.
 
@@ -291,7 +295,7 @@ class Message:
         self.packet.write(s)
         return self
 
-    def add_list(self, l: Iterable[str]) -> "Message":  # noqa: E741
+    def add_list(self, l: Iterable[str]) -> Message:  # noqa: E741
         """
         Add a list of strings to the stream.  They are encoded identically to
         a single string of values separated by commas.  (Yes, really, that's

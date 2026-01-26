@@ -20,6 +20,8 @@
 ECDSA keys
 """
 
+from __future__ import annotations
+
 from cryptography.exceptions import InvalidSignature, UnsupportedAlgorithm
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes, serialization
@@ -34,15 +36,17 @@ from paramiko.message import Message
 from paramiko.pkey import PKey
 from paramiko.ssh_exception import SSHException
 from paramiko.util import deflate_long
-from _typeshed import FileDescriptorOrPath, ReadableBuffer
-from collections.abc import Callable, Sequence
-from cryptography.hazmat.primitives.asymmetric.ec import (
-    EllipticCurve,
-    EllipticCurvePrivateKey,
-    EllipticCurvePublicKey,
-)
-from cryptography.hazmat.primitives.hashes import HashAlgorithm
-from typing import Any, IO
+from typing import Any, IO, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Sequence
+    from cryptography.hazmat.primitives.asymmetric.ec import (
+        EllipticCurve,
+        EllipticCurvePrivateKey,
+        EllipticCurvePublicKey,
+    )
+    from cryptography.hazmat.primitives.hashes import HashAlgorithm
+    from _typeshed import FileDescriptorOrPath, ReadableBuffer
 
 
 class _ECDSACurve:
@@ -53,6 +57,12 @@ class _ECDSACurve:
     the proper hash function. Also grabs the proper curve from the 'ecdsa'
     package.
     """
+
+    nist_name: str
+    key_length: int
+    key_format_identifier: str
+    hash_object: type[HashAlgorithm]
+    curve_class: type[EllipticCurve]
 
     def __init__(
         self, curve_class: type[EllipticCurve], nist_name: str
@@ -80,6 +90,8 @@ class _ECDSACurveSet:
     format identifier. The two ways in which ECDSAKey needs to be able to look
     up curves.
     """
+
+    ecdsa_curves: Sequence[_ECDSACurve]
 
     def __init__(self, ecdsa_curves: Sequence[_ECDSACurve]) -> None:
         self.ecdsa_curves = ecdsa_curves
@@ -110,6 +122,11 @@ class ECDSAKey(PKey):
     Representation of an ECDSA key which can be used to sign and verify SSH2
     data.
     """
+
+    verifying_key: EllipticCurvePublicKey
+    signing_key: EllipticCurvePrivateKey
+    public_blob: None
+    ecdsa_curve: _ECDSACurve | None
 
     _ECDSA_CURVES = _ECDSACurveSet(
         [
@@ -285,7 +302,7 @@ class ECDSAKey(PKey):
         curve: EllipticCurve = ec.SECP256R1(),
         progress_func: Callable[..., object] | None = None,
         bits: int | None = None,
-    ) -> "ECDSAKey":
+    ) -> ECDSAKey:
         """
         Generate a new private ECDSA key.  This factory function can be used to
         generate a new host key or authentication key.

@@ -3,7 +3,9 @@ Ephemeral Elliptic Curve Diffie-Hellman (ECDH) key exchange
 RFC 5656, Section 4
 """
 
-from hashlib import _Hash, sha256, sha384, sha512
+from __future__ import annotations
+
+import hashlib
 from paramiko.common import byte_chr
 from paramiko.message import Message
 from paramiko.ssh_exception import SSHException
@@ -11,17 +13,17 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives import serialization
 from binascii import hexlify
-from _typeshed import ReadableBuffer
-from collections.abc import Callable
-from cryptography.hazmat.primitives.asymmetric.ec import (
-    EllipticCurve,
-    EllipticCurvePrivateKey,
-    EllipticCurvePublicKey,
-)
-from paramiko.transport import Transport
+from typing import TYPE_CHECKING
 
-c_MSG_KEXECDH_INIT: bytes
-c_MSG_KEXECDH_REPLY: bytes
+if TYPE_CHECKING:
+    from collections.abc import Callable
+    from _typeshed import ReadableBuffer
+    from cryptography.hazmat.primitives.asymmetric.ec import (
+        EllipticCurve,
+        EllipticCurvePrivateKey,
+        EllipticCurvePublicKey,
+    )
+    import paramiko.transport
 
 _MSG_KEXECDH_INIT, _MSG_KEXECDH_REPLY = range(30, 32)
 c_MSG_KEXECDH_INIT, c_MSG_KEXECDH_REPLY = [byte_chr(c) for c in range(30, 32)]
@@ -30,10 +32,15 @@ c_MSG_KEXECDH_INIT, c_MSG_KEXECDH_REPLY = [byte_chr(c) for c in range(30, 32)]
 class KexNistp256:
 
     name = "ecdh-sha2-nistp256"
-    hash_algo: Callable[[ReadableBuffer], _Hash] = sha256
+    hash_algo: Callable[[ReadableBuffer], hashlib._Hash] = hashlib.sha256
     curve: EllipticCurve = ec.SECP256R1()
 
-    def __init__(self, transport: Transport) -> None:
+    transport: paramiko.transport.Transport
+    P: int | EllipticCurvePrivateKey
+    Q_C: EllipticCurvePublicKey | None
+    Q_S: EllipticCurvePublicKey | None
+
+    def __init__(self, transport: paramiko.transport.Transport) -> None:
         self.transport = transport
         # private key, client public and server public keys
         self.P = 0
@@ -152,11 +159,11 @@ class KexNistp256:
 
 class KexNistp384(KexNistp256):
     name = "ecdh-sha2-nistp384"
-    hash_algo: Callable[[ReadableBuffer], _Hash] = sha384
+    hash_algo: Callable[[ReadableBuffer], hashlib._Hash] = hashlib.sha384
     curve: EllipticCurve = ec.SECP384R1()
 
 
 class KexNistp521(KexNistp256):
     name = "ecdh-sha2-nistp521"
-    hash_algo: Callable[[ReadableBuffer], _Hash] = sha512
+    hash_algo: Callable[[ReadableBuffer], hashlib._Hash] = hashlib.sha512
     curve: EllipticCurve = ec.SECP521R1()

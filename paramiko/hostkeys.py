@@ -16,6 +16,7 @@
 # along with Paramiko; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
 
+from __future__ import annotations
 
 from base64 import encodebytes, decodebytes
 import binascii
@@ -27,37 +28,18 @@ from hashlib import sha1
 from hmac import HMAC
 
 
-from paramiko.pkey import PKey, UnknownKeyType
-from paramiko.util import get_logger, constant_time_bytes_eq, b, u
+import paramiko.pkey
+import paramiko.util
 from paramiko.ssh_exception import SSHException
-from _typeshed import FileDescriptorOrPath
-from typing_extensions import Self
+from typing import TYPE_CHECKING
 
-# Internal to HostKeys.lookup(). Calls itself "SubDict".
-@type_check_only
-class _SubDict(MutableMapping[str, PKey]):
-    def __init__(
-        self, hostname: str, entries: list[HostKeyEntry], hostkeys: HostKeys
-    ) -> None:
-        ...
+if TYPE_CHECKING:
+    from typing_extensions import Self
+    from _typeshed import FileDescriptorOrPath
 
-    def __iter__(self) -> Iterator[str]:
-        ...
-
-    def __len__(self) -> int:
-        ...
-
-    def __delitem__(self, key: str) -> None:
-        ...
-
-    def __getitem__(self, key: str) -> PKey:
-        ...
-
-    def __setitem__(self, key: str, val: PKey) -> None:
-        ...
-
-    def keys(self) -> list[str]:
-        ...  # type: ignore[override]
+    # Class is internal to HostKeys.lookup(). Calls itself "SubDict".
+    class _SubDict(MutableMapping[str, paramiko.pkey.PKey]):
+        pass
 
 
 class HostKeys(MutableMapping):
@@ -84,7 +66,9 @@ class HostKeys(MutableMapping):
         if filename is not None:
             self.load(filename)
 
-    def add(self, hostname: str, keytype: str, key: PKey) -> None:
+    def add(
+        self, hostname: str, keytype: str, key: paramiko.pkey.PKey
+    ) -> None:
         """
         Add a host key entry to the table.  Any existing entry for a
         ``(hostname, keytype)`` pair will be replaced.
@@ -161,7 +145,7 @@ class HostKeys(MutableMapping):
             (or ``None``)
         """
 
-        class SubDict(MutableMapping):
+        class SubDict(MutableMapping[str, paramiko.pkey.PKey]):
             def __init__(self, hostname, entries, hostkeys):
                 self._hostname = hostname
                 self._entries = entries
@@ -228,12 +212,14 @@ class HostKeys(MutableMapping):
                 h == hostname
                 or h.startswith("|1|")
                 and not hostname.startswith("|1|")
-                and constant_time_bytes_eq(self.hash_host(hostname, h), h)
+                and paramiko.util.constant_time_bytes_eq(
+                    self.hash_host(hostname, h), h
+                )
             ):
                 return True
         return False
 
-    def check(self, hostname: str, key: PKey) -> bool:
+    def check(self, hostname: str, key: paramiko.pkey.PKey) -> bool:
         """
         Return True if the given key is associated with the given hostname
         in this dictionary.
@@ -280,7 +266,9 @@ class HostKeys(MutableMapping):
             raise KeyError(key)
         self._entries.pop(index)
 
-    def __setitem__(self, hostname: str, entry: Mapping[str, PKey]) -> None:
+    def __setitem__(
+        self, hostname: str, entry: Mapping[str, paramiko.pkey.PKey]
+    ) -> None:
         # don't use this please.
         if len(entry) == 0:
             self._entries.append(HostKeyEntry([hostname], None))
@@ -325,10 +313,13 @@ class HostKeys(MutableMapping):
         else:
             if salt.startswith("|1|"):
                 salt = salt.split("|")[2]
-            salt = decodebytes(b(salt))
+            salt = decodebytes(paramiko.util.b(salt))
         assert len(salt) == sha1().digest_size
-        hmac = HMAC(salt, b(hostname), sha1).digest()
-        hostkey = "|1|{}|{}".format(u(encodebytes(salt)), u(encodebytes(hmac)))
+        hmac = HMAC(salt, paramiko.util.b(hostname), sha1).digest()
+        hostkey = "|1|{}|{}".format(
+            paramiko.util.u(encodebytes(salt)),
+            paramiko.util.u(encodebytes(hmac)),
+        )
         return hostkey.replace("\n", "")
 
 
@@ -345,7 +336,9 @@ class HostKeyEntry:
     """
 
     def __init__(
-        self, hostnames: list[str] | None = None, key: PKey | None = None
+        self,
+        hostnames: list[str] | None = None,
+        key: paramiko.pkey.PKey | None = None,
     ) -> None:
         self.valid = (hostnames is not None) and (key is not None)
         self.hostnames = hostnames
@@ -365,7 +358,7 @@ class HostKeyEntry:
 
         :param str line: a line from an OpenSSH known_hosts file
         """
-        log = get_logger("paramiko.hostkeys")
+        log = paramiko.util.get_logger("paramiko.hostkeys")
         fields = re.split(" |\t", line)
         if len(fields) < 3:
             # Bad number of fields
@@ -384,13 +377,15 @@ class HostKeyEntry:
             # read -> unicode str -> bytes for base64 decode -> decoded bytes);
             # but in Python 3 forever land, can we simply use
             # `base64.b64decode(str-from-file)` here?
-            key_bytes = decodebytes(b(key))
+            key_bytes = decodebytes(paramiko.util.b(key))
         except binascii.Error as e:
             raise InvalidHostKey(line, e)
 
         try:
-            return cls(names, PKey.from_type_string(key_type, key_bytes))
-        except UnknownKeyType:
+            return cls(
+                names, paramiko.pkey.PKey.from_type_string(key_type, key_bytes)
+            )
+        except paramiko.pkey.UnknownKeyType:
             # TODO 4.0: consider changing HostKeys API so this just raises
             # naturally and the exception is muted higher up in the stack?
             log.info("Unable to handle key of type {}".format(key_type))

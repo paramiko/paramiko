@@ -15,6 +15,9 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with Paramiko; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
+
+from __future__ import annotations
+
 from paramiko.common import max_byte, zero_byte, byte_ord, byte_chr
 
 import paramiko.util as util
@@ -32,6 +35,9 @@ class BER:
     """
     Robey's tiny little attempt at a BER decoder.
     """
+
+    content: bytes
+    idx: int
 
     def __init__(self, content: bytes = bytes()) -> None:
         self.content = b(content)

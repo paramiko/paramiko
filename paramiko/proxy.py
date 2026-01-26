@@ -16,6 +16,7 @@
 # along with Paramiko; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
 
+from __future__ import annotations
 
 import os
 import shlex
@@ -23,22 +24,23 @@ import signal
 from select import select
 import socket
 import time
-from _typeshed import ReadableBuffer
-from paramiko.util import ClosingContextManager
-from typing import Any
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from types import ModuleType
+    from _typeshed import ReadableBuffer
 
 # Try-and-ignore import so platforms w/o subprocess (eg Google App Engine) can
 # still import paramiko.
-subprocess, subprocess_import_error = None, None
+subprocess: ModuleType | None = None
+subprocess_import_error: ImportError | None = None
 try:
     import subprocess
 except ImportError as e:
-    subprocess_import_error: ImportError | None = e
+    subprocess_import_error = e
 
 from paramiko.ssh_exception import ProxyCommandFailure
 from paramiko.util import ClosingContextManager
-
-subprocess_import_error: ImportError | None
 
 
 class ProxyCommand(ClosingContextManager):
@@ -71,7 +73,7 @@ class ProxyCommand(ClosingContextManager):
             stderr=subprocess.PIPE,
             bufsize=0,
         )
-        self.timeout = None
+        self.timeout: float | None = None
 
     def send(self, content: ReadableBuffer) -> int:
         """

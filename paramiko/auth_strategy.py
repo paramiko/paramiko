@@ -5,24 +5,20 @@ Replaces certain parts of `.SSHClient`. For a concrete implementation, see the
 ``OpenSSHAuthStrategy`` class in `Fabric <https://fabfile.org>`_.
 """
 
-from collections import namedtuple
+from __future__ import annotations
 
 from .agent import AgentKey
 from .util import get_logger
 from .ssh_exception import AuthenticationException
-from collections.abc import Callable, Iterator
-from logging import Logger
-from paramiko.config import SSHConfig
-from paramiko.pkey import PKey
-from paramiko.ssh_exception import AuthenticationException
-from paramiko.transport import Transport
-from pathlib import Path
-from typing import NamedTuple
+from typing import NamedTuple, TYPE_CHECKING
 
-
-class SourceResult(NamedTuple):
-    source: AuthSource
-    result: list[str] | Exception
+if TYPE_CHECKING:
+    from collections.abc import Callable, Iterator
+    from logging import Logger
+    from paramiko.config import SSHConfig
+    from paramiko.pkey import PKey
+    from paramiko.transport import Transport
+    from pathlib import Path
 
 
 class AuthSource:
@@ -33,6 +29,8 @@ class AuthSource:
 
     All implementations must accept at least a ``username`` (``str``) kwarg.
     """
+
+    username: str
 
     def __init__(self, username: str) -> None:
         self.username = username
@@ -78,6 +76,8 @@ class Password(AuthSource):
         in a variable).
     """
 
+    password_getter: Callable[[], str]
+
     def __init__(
         self, username: str, password_getter: Callable[[], str]
     ) -> None:
@@ -122,6 +122,8 @@ class InMemoryPrivateKey(PrivateKey):
     An in-memory, decrypted `.PKey` object.
     """
 
+    pkey: PKey
+
     def __init__(self, username: str, pkey: PKey) -> None:
         super().__init__(username=username)
         # No decryption (presumably) necessary!
@@ -149,6 +151,10 @@ class OnDiskPrivateKey(PrivateKey):
         The `PKey` object this auth source uses/represents.
     """
 
+    source: str
+    path: Path
+    pkey: PKey
+
     def __init__(
         self, username: str, source: str, path: Path, pkey: PKey
     ) -> None:
@@ -171,7 +177,10 @@ class OnDiskPrivateKey(PrivateKey):
 # into what Paramiko already had kwargs for?
 
 
-SourceResult = namedtuple("SourceResult", ["source", "result"])
+class SourceResult(NamedTuple):
+    source: AuthSource
+    result: list[str] | Exception
+
 
 # TODO: tempting to make this an OrderedDict, except the keys essentially want
 # to be rich objects (AuthSources) which do not make for useful user indexing?
@@ -213,7 +222,9 @@ class AuthResult(list):
     which was attempted.
     """
 
-    def __init__(self, strategy: "AuthStrategy", *args, **kwargs) -> None:
+    strategy: AuthStrategy
+
+    def __init__(self, strategy: AuthStrategy, *args, **kwargs) -> None:
         self.strategy = strategy
         super().__init__(*args, **kwargs)
 
@@ -239,6 +250,8 @@ class AuthFailure(AuthenticationException):
     primarily for backwards compatibility reasons.
     """
 
+    result: AuthResult
+
     def __init__(self, result: AuthResult) -> None:
         self.result = result
 
@@ -254,6 +267,9 @@ class AuthStrategy:
     (`.SSHConfig`) keyword argument, but may opt to accept more as needed for
     their particular strategy.
     """
+
+    ssh_config: SSHConfig
+    log: Logger
 
     def __init__(
         self,
@@ -283,6 +299,7 @@ class AuthStrategy:
         """
         succeeded = False
         overall_result = AuthResult(strategy=self)
+        result: list[str] | Exception
         # TODO: arguably we could fit in a "send none auth, record allowed auth
         # types sent back" thing here as OpenSSH-client does, but that likely
         # wants to live in fabric.OpenSSHAuthStrategy as not all target servers

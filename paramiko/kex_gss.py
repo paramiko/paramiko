@@ -37,6 +37,8 @@ This module provides GSS-API / SSPI Key Exchange as defined in :rfc:`4462`.
 .. versionadded:: 1.15
 """
 
+from __future__ import annotations
+
 import os
 from hashlib import sha1
 
@@ -52,16 +54,7 @@ from paramiko import util
 from paramiko.message import Message
 from paramiko.ssh_exception import SSHException
 from paramiko.ssh_gss import _SSH_GSSAuth
-from paramiko.transport import Transport
-
-c_MSG_KEXGSS_INIT: bytes
-c_MSG_KEXGSS_CONTINUE: bytes
-c_MSG_KEXGSS_COMPLETE: bytes
-c_MSG_KEXGSS_HOSTKEY: bytes
-c_MSG_KEXGSS_ERROR: bytes
-c_MSG_KEXGSS_GROUPREQ: bytes
-c_MSG_KEXGSS_GROUP: bytes
-
+import paramiko.transport
 
 (
     MSG_KEXGSS_INIT,
@@ -96,7 +89,14 @@ class KexGSSGroup1:
     b0000000000000000: bytes = zero_byte * 8  # noqa
     NAME = "gss-group1-sha1-toWM5Slw5Ew8Mqkay+al2g=="
 
-    def __init__(self, transport: Transport) -> None:
+    transport: paramiko.transport.Transport
+    kexgss: _SSH_GSSAuth
+    gss_host: str | None
+    x: int
+    e: int
+    f: int
+
+    def __init__(self, transport: paramiko.transport.Transport) -> None:
         self.transport = transport
         self.kexgss = self.transport.kexgss_ctxt
         self.gss_host = None
@@ -354,7 +354,18 @@ class KexGSSGex:
     max_bits = 8192
     preferred_bits = 2048
 
-    def __init__(self, transport: Transport) -> None:
+    transport: paramiko.transport.Transport
+    kexgss: _SSH_GSSAuth
+    gss_host: str | None
+    p: int | None
+    q: int | None
+    g: int | None
+    x: int | None
+    e: int | None
+    f: int | None
+    old_style: bool
+
+    def __init__(self, transport: paramiko.transport.Transport) -> None:
         self.transport = transport
         self.kexgss = self.transport.kexgss_ctxt
         self.gss_host = None

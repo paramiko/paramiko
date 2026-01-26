@@ -6,14 +6,18 @@ If you encounter issues with this module, please consider reporting the issues
 in jaraco.windows and asking the author to port the fixes back here.
 """
 
+from __future__ import annotations
+
 import builtins
 import ctypes.wintypes
 
 from paramiko.util import u
-from _typeshed import Incomplete
-from ctypes import Structure
 from types import TracebackType
-from typing_extensions import Self
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing_extensions import Self
+    from _typeshed import Incomplete
 
 
 ######################
@@ -144,7 +148,7 @@ class MemoryMap:
     ) -> None:
         self.name = name
         self.length = length
-        self.security_attributes = security_attributes
+        self.security_attributes: Incomplete | None = security_attributes
         self.pos = 0
 
     def __enter__(self) -> Self:

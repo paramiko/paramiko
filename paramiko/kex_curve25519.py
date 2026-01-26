@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import binascii
 import hashlib
 
@@ -11,13 +13,12 @@ from cryptography.hazmat.primitives.asymmetric.x25519 import (
 from paramiko.message import Message
 from paramiko.common import byte_chr
 from paramiko.ssh_exception import SSHException
-from _typeshed import ReadableBuffer
-from collections.abc import Callable
-from paramiko.transport import Transport
+from typing import TYPE_CHECKING
 
-c_MSG_KEXECDH_INIT: bytes
-c_MSG_KEXECDH_REPLY: bytes
-
+if TYPE_CHECKING:
+    from collections.abc import Callable
+    from _typeshed import ReadableBuffer
+    import paramiko.transport
 
 _MSG_KEXECDH_INIT, _MSG_KEXECDH_REPLY = range(30, 32)
 c_MSG_KEXECDH_INIT, c_MSG_KEXECDH_REPLY = [byte_chr(c) for c in range(30, 32)]
@@ -25,8 +26,10 @@ c_MSG_KEXECDH_INIT, c_MSG_KEXECDH_REPLY = [byte_chr(c) for c in range(30, 32)]
 
 class KexCurve25519:
     hash_algo: Callable[[ReadableBuffer], hashlib._Hash] = hashlib.sha256
+    transport: paramiko.transport.Transport
+    key: X25519PrivateKey | None
 
-    def __init__(self, transport: Transport) -> None:
+    def __init__(self, transport: paramiko.transport.Transport) -> None:
         self.transport = transport
         self.key = None
 

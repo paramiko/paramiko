@@ -21,6 +21,8 @@
 Core protocol implementation
 """
 
+from __future__ import annotations
+
 import os
 import socket
 import sys
@@ -39,11 +41,7 @@ from cryptography.hazmat.primitives.ciphers import (
 
 import paramiko
 from paramiko import util
-from paramiko.auth_handler import (
-    _InteractiveCallback,
-    AuthHandler,
-    AuthOnlyHandler,
-)
+from paramiko.auth_handler import AuthHandler, AuthOnlyHandler
 from paramiko.ssh_gss import _SSH_GSSAuth, GSSAuth
 from paramiko.channel import Channel
 from paramiko.common import (
@@ -127,22 +125,29 @@ from paramiko.util import (
     clamp_value,
     b,
 )
-from _typeshed import FileDescriptorOrPath
-from collections.abc import Callable, Iterable, Mapping, Sequence
-from logging import Logger
-from paramiko.pkey import PKey
-from types import ModuleType
-from typing import Any, Protocol
-from typing_extensions import TypeAlias
+from typing import Any, Protocol, TYPE_CHECKING
 
+if TYPE_CHECKING:
+    from collections.abc import Callable, Iterable, Mapping, Sequence
+    from logging import Logger
+    from types import ModuleType
+    from _typeshed import FileDescriptorOrPath
+    from typing_extensions import TypeAlias
+    from paramiko.pkey import PKey
+    from paramiko.proxy import ProxyCommand
+    from paramiko.auth_handler import _InteractiveCallback
 
-@type_check_only
-class _KexEngine(Protocol):
-    def start_kex(self) -> None:
-        ...
+    _Addr: TypeAlias = tuple[str, int]
+    _SocketLike: TypeAlias = (
+        str | _Addr | socket.socket | Channel | ProxyCommand
+    )
 
-    def parse_next(self, ptype: int, m: Message) -> None:
-        ...
+    class _KexEngine(Protocol):
+        def start_kex(self) -> None:
+            ...
+
+        def parse_next(self, ptype: int, m: Message) -> None:
+            ...
 
 
 # TripleDES is moving from `cryptography.hazmat.primitives.ciphers.algorithms`
@@ -183,6 +188,60 @@ class Transport(threading.Thread, ClosingContextManager):
 
     Instances of this class may be used as context managers.
     """
+
+    active: bool
+    hostname: str | None
+    server_extensions: dict[str, bytes]
+    advertise_strict_kex: bool
+    agreed_on_strict_kex: bool
+    sock: socket.socket | Channel
+    packetizer: Packetizer
+    local_version: str
+    remote_version: str
+    local_cipher: str
+    local_kex_init: bytes | None
+    local_mac: str | None
+    local_compression: str | None
+    session_id: bytes | None
+    host_key_type: str | None
+    host_key: PKey | None
+    use_gss_kex: bool
+    gss_kex_used: bool
+    kexgss_ctxt: _SSH_GSSAuth | None
+    gss_host: str | None
+    kex_engine: _KexEngine | None
+    H: bytes | None
+    K: int | None
+    initial_kex_done: bool
+    in_kex: bool
+    authenticated: bool
+    lock: threading.Lock
+    channel_events: dict[int, threading.Event]
+    channels_seen: dict[int, bool]
+    default_max_packet_size: int
+    default_window_size: int
+    saved_exception: Exception | None
+    clear_to_send: threading.Event
+    clear_to_send_lock: threading.Lock
+    clear_to_send_timeout: float
+    log_name: str
+    logger: Logger
+    auth_handler: AuthHandler | None
+    global_response: Message | None
+    completion_event: threading.Event | None
+    banner_timeout: float
+    handshake_timeout: float
+    auth_timeout: float
+    disabled_algorithms: Mapping[str, Iterable[str]] | None
+    server_mode: bool
+    server_object: ServerInterface | None
+    server_key_dict: dict[str, PKey]
+    server_accepts: list[Channel]
+    server_accept_cv: threading.Condition
+    subsystem_table: dict[
+        str, tuple[type[SubsystemHandler], tuple[Any, ...], dict[str, Any]]
+    ]
+    sys: ModuleType
 
     _ENCRYPT = object()
     _DECRYPT = object()
@@ -362,7 +421,9 @@ class Transport(threading.Thread, ClosingContextManager):
         "ecdh-sha2-nistp521": KexNistp521,
     }
     if KexCurve25519.is_available():
-        _kex_info["curve25519-sha256@libssh.org"] = KexCurve25519
+        _kex_info[
+            "curve25519-sha256@libssh.org"
+        ] = paramiko.kex_curve25519.KexCurve25519
 
     _compression_info = {
         # zlib@openssh.com is just zlib, but only turned on after a successful
@@ -691,7 +752,7 @@ class Transport(threading.Thread, ClosingContextManager):
         self.sock.close()
         self.close()
 
-    def get_security_options(self) -> "SecurityOptions":
+    def get_security_options(self) -> SecurityOptions:
         """
         Return a `.SecurityOptions` object which can be used to tweak the
         encryption algorithms this transport will permit (for encryption,

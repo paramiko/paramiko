@@ -20,6 +20,8 @@
 RSA keys.
 """
 
+from __future__ import annotations
+
 from cryptography.exceptions import InvalidSignature, UnsupportedAlgorithm
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes, serialization
@@ -28,14 +30,16 @@ from cryptography.hazmat.primitives.asymmetric import rsa, padding
 from paramiko.message import Message
 from paramiko.pkey import PKey
 from paramiko.ssh_exception import SSHException
-from _typeshed import FileDescriptorOrPath, ReadableBuffer
 from collections.abc import Callable
 from cryptography.hazmat.primitives.asymmetric.rsa import (
     RSAPrivateKey,
     RSAPublicKey,
     RSAPublicNumbers,
 )
-from typing import IO
+from typing import IO, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from _typeshed import FileDescriptorOrPath, ReadableBuffer
 
 
 class RSAKey(PKey):
@@ -192,7 +196,7 @@ class RSAKey(PKey):
     @staticmethod
     def generate(
         bits: int, progress_func: Callable[..., object] | None = None
-    ) -> "RSAKey":
+    ) -> RSAKey:
         """
         Generate a new private RSA key.  This factory function can be used to
         generate a new host key or authentication key.
@@ -223,8 +227,8 @@ class RSAKey(PKey):
                 key = serialization.load_der_private_key(
                     data, password=None, backend=default_backend()
                 )
-            except (ValueError, TypeError, UnsupportedAlgorithm) as e:
-                raise SSHException(str(e))
+            except (ValueError, TypeError, UnsupportedAlgorithm) as ex:
+                raise SSHException(str(ex))
         elif pkformat == self._PRIVATE_KEY_FORMAT_OPENSSH:
             n, e, d, iqmp, p, q = self._uint32_cstruct_unpack(data, "iiiiii")
             public_numbers = rsa.RSAPublicNumbers(e=e, n=n)

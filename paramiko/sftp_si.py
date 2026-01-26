@@ -20,12 +20,17 @@
 An interface to override for SFTP server support.
 """
 
+from __future__ import annotations
+
 import os
 import sys
 from paramiko.sftp import SFTP_OP_UNSUPPORTED
-from paramiko.server import ServerInterface
-from paramiko.sftp_attr import SFTPAttributes
-from paramiko.sftp_handle import SFTPHandle
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from paramiko.server import ServerInterface
+    from paramiko.sftp_attr import SFTPAttributes
+    import paramiko.sftp_handle
 
 
 class SFTPServerInterface:
@@ -72,7 +77,7 @@ class SFTPServerInterface:
 
     def open(
         self, path: str, flags: int, attr: SFTPAttributes
-    ) -> SFTPHandle | int:
+    ) -> paramiko.sftp_handle.SFTPHandle | int:
         """
         Open a file on the server and create a handle for future operations
         on that file.  On success, a new object subclassed from `.SFTPHandle`

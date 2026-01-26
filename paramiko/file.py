@@ -15,6 +15,9 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with Paramiko; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
+
+from __future__ import annotations
+
 from io import BytesIO
 
 from paramiko.common import (
@@ -49,6 +52,8 @@ class BufferedFile(ClosingContextManager, Generic[AnyStr]):
     FLAG_BUFFERED = 0x20
     FLAG_LINE_BUFFERED = 0x40
     FLAG_UNIVERSAL_NEWLINE = 0x80
+
+    newlines: None | AnyStr | tuple[AnyStr, ...]
 
     def __init__(self) -> None:
         self.newlines = None
