@@ -40,10 +40,21 @@ from paramiko.util import asbytes, get_logger
 from typing import Final, Protocol, TYPE_CHECKING
 
 if TYPE_CHECKING:
+    from typing_extensions import TypeAlias
     from _typeshed import ReadableBuffer
     from paramiko.message import _LikeBytes
     from paramiko.channel import Channel
     from paramiko.transport import Transport
+
+    if sys.platform == "win32":
+        from paramiko.win_openssh import OpenSSHAgentConnection
+        from paramiko.win_pageant import PageantConnection
+
+        _AgentConnection: TypeAlias = (
+            PageantConnection | OpenSSHAgentConnection
+        )
+    else:
+        _AgentConnection: TypeAlias = socket.socket
 
     class _AgentProxy(Protocol):
         def connect(self) -> None:
@@ -232,7 +243,7 @@ class AgentRemoteProxy(AgentProxyThread):
         return self.__chan, None
 
 
-def get_agent_connection() -> socket.socket | None:
+def get_agent_connection() -> _AgentConnection | None:
     """
     Returns some SSH agent object, or None if none were found/supported.
 
@@ -245,7 +256,7 @@ def get_agent_connection() -> socket.socket | None:
             return conn
         except:
             # probably a dangling env var: the ssh agent is gone
-            return
+            return None
     elif sys.platform == "win32":
         from . import win_pageant, win_openssh
 
@@ -257,7 +268,7 @@ def get_agent_connection() -> socket.socket | None:
         return conn
     else:
         # no agent support
-        return
+        return None
 
 
 class AgentClientProxy:
@@ -276,7 +287,7 @@ class AgentClientProxy:
     thread: threading.Thread
 
     def __init__(self, chanRemote: Channel) -> None:
-        self._conn = None
+        self._conn: _AgentConnection | None = None
         self.__chanR = chanRemote
         self.thread = AgentRemoteProxy(self, chanRemote)
         self.thread.start()
@@ -392,7 +403,7 @@ class AgentRequestHandler:
         self._conn = None
         self.__chanC = chanClient
         chanClient.request_forward_agent(self._forward_agent_handler)
-        self.__clientProxys = []
+        self.__clientProxys: list[AgentClientProxy] = []
 
     def _forward_agent_handler(self, chanRemote):
         self.__clientProxys.append(AgentClientProxy(chanRemote))

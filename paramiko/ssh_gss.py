@@ -45,7 +45,7 @@ GSS_EXCEPTIONS: tuple[type[Exception], ...] = ()
 
 
 #: :var str _API: Constraint for the used API
-_API = None
+_API: str | None = None
 
 try:
     import gssapi

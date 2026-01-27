@@ -85,8 +85,8 @@ class SFTPFile(BufferedFile[Any]):
         self.pipelined = False
         self._prefetching = False
         self._prefetch_done = False
-        self._prefetch_data = {}
-        self._prefetch_extents = {}
+        self._prefetch_data: dict[int, str] = {}
+        self._prefetch_extents: dict[int, tuple[int, int]] = {}
         self._prefetch_lock = threading.Lock()
         self._saved_exception = None
         self._reqs = deque()

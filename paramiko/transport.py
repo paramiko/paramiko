@@ -165,7 +165,7 @@ except ImportError:
 
 
 # for thread cleanup
-_active_threads = []
+_active_threads: list[Transport] = []
 
 
 def _join_lingering_threads():

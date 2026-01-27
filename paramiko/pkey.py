@@ -167,14 +167,14 @@ class PKey:
         # /either/ the key /or/ the cert, when there is a key/cert pair.
         cert_suffix = "-cert.pub"
         if str(path).endswith(cert_suffix):
-            key_path = path[: -len(cert_suffix)]
-            cert_path = path
+            key_path_str = path[: -len(cert_suffix)]
+            cert_path_str = path
         else:
-            key_path = path
-            cert_path = path + cert_suffix
+            key_path_str = path
+            cert_path_str = path + cert_suffix
 
-        key_path = Path(key_path).expanduser()
-        cert_path = Path(cert_path).expanduser()
+        key_path = Path(key_path_str).expanduser()
+        cert_path = Path(cert_path_str).expanduser()
 
         data = key_path.read_bytes()
         # Like OpenSSH, try modern/OpenSSH-specific key load first
@@ -195,7 +195,9 @@ class PKey:
         # cycles? seemingly requires most of our key subclasses to be rewritten
         # to be cryptography-object-forward. this is still likely faster than
         # the old SSHClient code that just tried instantiating every class!
-        key_class = None
+        key_class: type[RSAKey] | type[Ed25519Key] | type[
+            ECDSAKey
+        ] | None = None
         if isinstance(loaded, asymmetric.rsa.RSAPrivateKey):
             key_class = RSAKey
         elif isinstance(loaded, asymmetric.ed25519.Ed25519PrivateKey):

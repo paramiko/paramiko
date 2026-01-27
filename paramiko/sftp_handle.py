@@ -58,7 +58,7 @@ class SFTPHandle(ClosingContextManager):
         self.__name = None
         # only for handles to folders:
         self.__files = {}
-        self.__tell = None
+        self.__tell: int | None = None
 
     def close(self) -> None:
         """

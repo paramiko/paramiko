@@ -166,7 +166,7 @@ class Channel(ClosingContextManager):
         self.status_event = threading.Event()
         self._name = str(chanid)
         self.logger = util.get_logger("paramiko.transport")
-        self._pipe = None
+        self._pipe: pipe._Pipe | None = None
         self.event = threading.Event()
         self.event_ready = False
         self.combine_stderr = False

@@ -101,7 +101,7 @@ class BufferedFile(ClosingContextManager, Generic[AnyStr]):
         self._wbuffer = BytesIO()
         return
 
-    def __next__(self) -> AnyStr:
+    def __next__(self) -> str | bytes:
         """
         Returns the next line from the input, or raises ``StopIteration``
         when EOF is hit.  Unlike python file objects, it's okay to mix
@@ -198,10 +198,10 @@ class BufferedFile(ClosingContextManager, Generic[AnyStr]):
                 self._pos += len(new_data)
             return bytes(result)
         if size <= len(self._rbuffer):
-            result = self._rbuffer[:size]
+            bytes_result = self._rbuffer[:size]
             self._rbuffer = self._rbuffer[size:]
-            self._pos += len(result)
-            return result
+            self._pos += len(bytes_result)
+            return bytes_result
         while len(self._rbuffer) < size:
             read_size = size - len(self._rbuffer)
             if self._flags & self.FLAG_BUFFERED:
@@ -214,12 +214,12 @@ class BufferedFile(ClosingContextManager, Generic[AnyStr]):
                 break
             self._rbuffer += new_data
             self._realpos += len(new_data)
-        result = self._rbuffer[:size]
+        bytes_result = self._rbuffer[:size]
         self._rbuffer = self._rbuffer[size:]
-        self._pos += len(result)
-        return result
+        self._pos += len(bytes_result)
+        return bytes_result
 
-    def readline(self, size: int | None = None) -> AnyStr:
+    def readline(self, size: int | None = None) -> str | bytes:
         """
         Read one entire line from the file.  A trailing newline character is
         kept in the string (but may be absent when a file ends with an
@@ -387,21 +387,23 @@ class BufferedFile(ClosingContextManager, Generic[AnyStr]):
         """
         if isinstance(data, str):
             # Accept text and encode as utf-8 for compatibility only.
-            data = data.encode("utf-8")
+            bytes_data = data.encode("utf-8")
+        else:
+            bytes_data = data
         if self._closed:
             raise IOError("File is closed")
         if not (self._flags & self.FLAG_WRITE):
             raise IOError("File not open for writing")
         if not (self._flags & self.FLAG_BUFFERED):
-            self._write_all(data)
+            self._write_all(bytes_data)
             return
-        self._wbuffer.write(data)
+        self._wbuffer.write(bytes_data)
         if self._flags & self.FLAG_LINE_BUFFERED:
             # only scan the new data for linefeed, to avoid wasting time.
-            last_newline_pos = data.rfind(linefeed_byte)
+            last_newline_pos = bytes_data.rfind(linefeed_byte)
             if last_newline_pos >= 0:
                 wbuf = self._wbuffer.getvalue()
-                last_newline_pos += len(wbuf) - len(data)
+                last_newline_pos += len(wbuf) - len(bytes_data)
                 self._write_all(wbuf[: last_newline_pos + 1])
                 self._wbuffer = BytesIO()
                 self._wbuffer.write(wbuf[last_newline_pos + 1 :])

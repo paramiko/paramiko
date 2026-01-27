@@ -61,8 +61,6 @@ class BadAuthenticationType(AuthenticationException):
     .. versionadded:: 1.1
     """
 
-    allowed_types: list[str] = []
-
     # TODO 4.0: remove explanation kwarg
     def __init__(self, explanation: str, types: list[str]) -> None:
         # TODO 4.0: remove this supercall unless it's actually required for
@@ -81,8 +79,6 @@ class PartialAuthentication(AuthenticationException):
     """
     An internal exception thrown in the case of partial authentication.
     """
-
-    allowed_types: list[str] = []
 
     def __init__(self, types: list[str]) -> None:
         AuthenticationException.__init__(self, types)

@@ -33,14 +33,13 @@ from hashlib import sha1
 from io import StringIO
 from functools import partial
 from .ssh_exception import CouldNotCanonicalize, ConfigParseError
-from typing import TYPE_CHECKING
+from typing import Any, IO, TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from _typeshed import FileDescriptorOrPath
     from collections.abc import Iterable
     from types import ModuleType
-    from typing import IO
     from typing_extensions import Self
+    from _typeshed import FileDescriptorOrPath
 
 invoke: ModuleType | None = None
 invoke_import_error: ImportError | None = None
@@ -98,7 +97,7 @@ class SSHConfig:
             # Or if you have arbitrary ssh_config text from some other source:
             config = SSHConfig.from_text("Host foo\\n\\tUser bar")
         """
-        self._config = []
+        self._config: list[dict[str, Any]] = []
 
     @classmethod
     def from_text(cls, text: str) -> Self:
@@ -138,7 +137,7 @@ class SSHConfig:
         """
         # Start out w/ implicit/anonymous global host-like block to hold
         # anything not contained by an explicit one.
-        context = {"host": ["*"], "config": {}}
+        context: dict[str, Any] = {"host": ["*"], "config": {}}
         for line in file_obj:
             # Strip any leading or trailing whitespace from the line.
             # Refer to https://github.com/paramiko/paramiko/issues/499

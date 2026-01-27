@@ -62,7 +62,7 @@ class HostKeys(MutableMapping):
         :param str filename: filename to load host keys from, or ``None``
         """
         # emulate a dict of { hostname: { keytype: PKey } }
-        self._entries = []
+        self._entries: list[HostKeyEntry] = []
         if filename is not None:
             self.load(filename)
 
@@ -292,7 +292,7 @@ class HostKeys(MutableMapping):
         return ret
 
     def values(self) -> list[_SubDict]:
-        ret = []
+        ret: list[_SubDict] = []
         for k in self.keys():
             ret.append(self.lookup(k))
         return ret

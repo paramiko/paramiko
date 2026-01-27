@@ -53,6 +53,7 @@ class _Pipe(_BasePipe, Protocol):
 
 
 def make_pipe() -> _Pipe:
+    p: PosixPipe | WindowsPipe
     if sys.platform[:3] != "win":
         p = PosixPipe()
     else:
@@ -143,7 +144,7 @@ class WindowsPipe:
 class OrPipe:
     def __init__(self, pipe: _Pipe) -> None:
         self._set = False
-        self._partner = None
+        self._partner: OrPipe | None = None
         self._pipe = pipe
 
     def set(self) -> None:

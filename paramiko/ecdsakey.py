@@ -103,6 +103,7 @@ class _ECDSACurveSet:
         for curve in self.ecdsa_curves:
             if curve.curve_class == curve_class:
                 return curve
+        return None
 
     def get_by_key_format_identifier(
         self, key_format_identifier: str
@@ -110,11 +111,13 @@ class _ECDSACurveSet:
         for curve in self.ecdsa_curves:
             if curve.key_format_identifier == key_format_identifier:
                 return curve
+        return None
 
     def get_by_key_length(self, key_length: int) -> _ECDSACurve | None:
         for curve in self.ecdsa_curves:
             if curve.key_length == key_length:
                 return curve
+        return None
 
 
 class ECDSAKey(PKey):

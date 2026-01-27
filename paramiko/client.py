@@ -99,10 +99,10 @@ class SSHClient(ClosingContextManager):
         """
         self._system_host_keys = HostKeys()
         self._host_keys = HostKeys()
-        self._host_keys_filename = None
-        self._log_channel = None
+        self._host_keys_filename: FileDescriptorOrPath | None = None
+        self._log_channel: str | None = None
         self._policy = RejectPolicy()
-        self._transport = None
+        self._transport: Transport | None = None
         self._agent = None
 
     def load_system_host_keys(

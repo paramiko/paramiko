@@ -28,6 +28,7 @@ import traceback
 import threading
 import logging
 
+import paramiko.hostkeys
 from paramiko.common import (
     DEBUG,
     zero_byte,
@@ -45,7 +46,6 @@ if TYPE_CHECKING:
     from types import TracebackType
     from typing_extensions import Self
     from _typeshed import FileDescriptorOrPath, ReadableBuffer
-    import paramiko.hostkeys
 
 
 def inflate_long(s: bytes | bytearray, always_positive: bool = False) -> int:
@@ -202,9 +202,8 @@ def load_host_keys(
     :return:
         nested dict of `.PKey` objects, indexed by hostname and then keytype
     """
-    from paramiko.hostkeys import HostKeys
 
-    return HostKeys(filename)
+    return paramiko.hostkeys.HostKeys(filename)
 
 
 def parse_ssh_config(file_obj: IO[str]) -> SSHConfig:

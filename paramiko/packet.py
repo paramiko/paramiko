@@ -95,7 +95,7 @@ class Packetizer:
 
     def __init__(self, socket: socket.socket) -> None:
         self.__socket = socket
-        self.__logger = None
+        self.__logger: Logger | None = None
         self.__closed = False
         self.__dump_packets = False
         self.__need_rekey = False
@@ -116,15 +116,15 @@ class Packetizer:
         self.__block_size_in = 8
         self.__mac_size_out = 0
         self.__mac_size_in = 0
-        self.__block_engine_out = None
-        self.__block_engine_in = None
+        self.__block_engine_out: Cipher[Incomplete] | None = None
+        self.__block_engine_in: Cipher[Incomplete] | None = None
         self.__sdctr_out = False
-        self.__mac_engine_out = None
-        self.__mac_engine_in = None
+        self.__mac_engine_out: hashlib._Hash | None = None
+        self.__mac_engine_in: hashlib._Hash | None = None
         self.__mac_key_out = bytes()
         self.__mac_key_in = bytes()
-        self.__compress_engine_out = None
-        self.__compress_engine_in = None
+        self.__compress_engine_out: ZlibCompressor | None = None
+        self.__compress_engine_in: ZlibDecompressor | None = None
         self.__sequence_number_out = 0
         self.__sequence_number_in = 0
         self.__etm_out = False
@@ -133,18 +133,18 @@ class Packetizer:
         # AEAD (eg aes128-gcm/aes256-gcm) cipher use
         self.__aead_out = False
         self.__aead_in = False
-        self.__iv_out = None
-        self.__iv_in = None
+        self.__iv_out: bytes | None = None
+        self.__iv_in: bytes | None = None
 
         # lock around outbound writes (packet computation)
         self.__write_lock = threading.RLock()
 
         # keepalives:
-        self.__keepalive_interval = 0
+        self.__keepalive_interval = 0.0
         self.__keepalive_last = time.time()
-        self.__keepalive_callback = None
+        self.__keepalive_callback: Callable[[], object] | None = None
 
-        self.__timer = None
+        self.__timer: threading.Timer | None = None
         self.__handshake_complete = False
         self.__timer_expired = False
 
@@ -433,18 +433,18 @@ class Packetizer:
         Write a block of data using the current cipher, as an SSH block.
         """
         # encrypt this sucka
-        data = data.asbytes()
-        cmd = byte_ord(data[0])
+        data_bytes = data.asbytes()
+        cmd = byte_ord(data_bytes[0])
         if cmd in MSG_NAMES:
             cmd_name = MSG_NAMES[cmd]
         else:
             cmd_name = "${:x}".format(cmd)
-        orig_len = len(data)
+        orig_len = len(data_bytes)
         self.__write_lock.acquire()
         try:
             if self.__compress_engine_out is not None:
-                data = self.__compress_engine_out(data)
-            packet = self._build_packet(data)
+                data_bytes = self.__compress_engine_out(data_bytes)
+            packet = self._build_packet(data_bytes)
             if self.__dump_packets:
                 self._log(
                     DEBUG,

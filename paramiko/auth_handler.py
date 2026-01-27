@@ -137,7 +137,9 @@ class AuthHandler:
         else:
             return self.username
 
-    def auth_none(self, username: str, event: threading.Event) -> list[str]:
+    def auth_none(
+        self, username: str, event: threading.Event
+    ) -> list[str] | None:
         self.transport.lock.acquire()
         try:
             self.auth_event = event
@@ -146,10 +148,11 @@ class AuthHandler:
             self._request_auth()
         finally:
             self.transport.lock.release()
+        return None
 
     def auth_publickey(
         self, username: str, key: PKey, event: threading.Event
-    ) -> list[str]:
+    ) -> list[str] | None:
         self.transport.lock.acquire()
         try:
             self.auth_event = event
@@ -159,10 +162,11 @@ class AuthHandler:
             self._request_auth()
         finally:
             self.transport.lock.release()
+        return None
 
     def auth_password(
         self, username: str, password: str, event: threading.Event
-    ) -> list[str]:
+    ) -> list[str] | None:
         self.transport.lock.acquire()
         try:
             self.auth_event = event
@@ -172,6 +176,7 @@ class AuthHandler:
             self._request_auth()
         finally:
             self.transport.lock.release()
+        return None
 
     def auth_interactive(
         self,
@@ -179,7 +184,7 @@ class AuthHandler:
         handler: _InteractiveCallback,
         event: threading.Event,
         submethods: str = "",
-    ) -> list[str]:
+    ) -> list[str] | None:
         """
         response_list = handler(title, instructions, prompt_list)
         """
@@ -193,6 +198,7 @@ class AuthHandler:
             self._request_auth()
         finally:
             self.transport.lock.release()
+        return None
 
     def auth_gssapi_with_mic(
         self,
@@ -927,11 +933,11 @@ class GssapiWithMicAuthHandler:
         return self._delegate._send_auth_result
 
     @property
-    def auth_username(self) -> str:
+    def auth_username(self) -> str | None:
         return self._delegate.auth_username
 
     @property
-    def gss_host(self) -> str:
+    def gss_host(self) -> str | None:
         return self._delegate.gss_host
 
     def _restore_delegate_auth_handler(self):
@@ -1072,10 +1078,16 @@ class AuthOnlyHandler(AuthHandler):
         self.auth_event = threading.Event()
         return self.wait_for_response(self.auth_event)
 
-    def auth_none(self, username: str) -> list[str]:
+    def auth_none(
+        self, username: str, event: threading.Event | None = None
+    ) -> list[str]:
+        assert event is None
         return self.send_auth_request(username, "none")
 
-    def auth_publickey(self, username: str, key: PKey) -> list[str]:
+    def auth_publickey(
+        self, username: str, key: PKey, event: threading.Event | None = None
+    ) -> list[str]:
+        assert event is None
         key_type, bits = self._get_key_type_and_bits(key)
         algorithm = self._finalize_pubkey_algorithm(key_type)
         blob = self._get_session_blob(
@@ -1097,7 +1109,12 @@ class AuthOnlyHandler(AuthHandler):
 
         return self.send_auth_request(username, "publickey", finish)
 
-    def auth_password(self, username: str, password: str) -> list[str]:
+    def auth_password(
+        self,
+        username: str,
+        password: str,
+        event: threading.Event | None = None,
+    ) -> list[str]:
         def finish(m):
             # Unnamed field that equates to "I am changing my password", which
             # Paramiko clientside never supported and serverside only sort of
@@ -1105,6 +1122,7 @@ class AuthOnlyHandler(AuthHandler):
             m.add_boolean(False)
             m.add_string(b(password))
 
+        assert event is None
         return self.send_auth_request(username, "password", finish)
 
     def auth_interactive(

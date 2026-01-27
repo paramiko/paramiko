@@ -49,7 +49,7 @@ class BufferedPipe(Generic[AnyStr]):
     def __init__(self) -> None:
         self._lock = threading.Lock()
         self._cv = threading.Condition(self._lock)
-        self._event = None
+        self._event: threading.Event | None = None
         self._buffer = array.array("B")
         self._closed = False
 
