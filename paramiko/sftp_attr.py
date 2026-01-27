@@ -16,9 +16,16 @@
 # along with Paramiko; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
 
+from __future__ import annotations
+
 import stat
 import time
 from paramiko.common import x80000000, o700, o70, xffffffff
+from os import stat_result
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing_extensions import Self
 
 
 class SFTPAttributes:
@@ -46,21 +53,23 @@ class SFTPAttributes:
     FLAG_AMTIME = 8
     FLAG_EXTENDED = x80000000
 
-    def __init__(self):
+    def __init__(self) -> None:
         """
         Create a new (empty) SFTPAttributes object.  All fields will be empty.
         """
         self._flags = 0
-        self.st_size = None
-        self.st_uid = None
-        self.st_gid = None
-        self.st_mode = None
-        self.st_atime = None
-        self.st_mtime = None
-        self.attr = {}
+        self.st_size: int | None = None
+        self.st_uid: int | None = None
+        self.st_gid: int | None = None
+        self.st_mode: int | None = None
+        self.st_atime: float | None = None
+        self.st_mtime: float | None = None
+        self.filename: str  # only when from_stat() is used
+        self.longname: str  # only when from_stat() is used
+        self.attr: dict[str, str] = {}
 
     @classmethod
-    def from_stat(cls, obj, filename=None):
+    def from_stat(cls, obj: stat_result, filename: str | None = None) -> Self:
         """
         Create an `.SFTPAttributes` object from an existing ``stat`` object (an
         object returned by `os.stat`).
@@ -235,5 +244,5 @@ class SFTPAttributes:
             filename,
         )
 
-    def asbytes(self):
+    def asbytes(self) -> bytes:
         return str(self).encode()

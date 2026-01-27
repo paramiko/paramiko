@@ -16,20 +16,30 @@
 # along with Paramiko; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
 
+from __future__ import annotations
 
 from base64 import encodebytes, decodebytes
 import binascii
 import os
 import re
 
-from collections.abc import MutableMapping
+from collections.abc import Iterator, Mapping, MutableMapping
 from hashlib import sha1
 from hmac import HMAC
 
 
-from paramiko.pkey import PKey, UnknownKeyType
-from paramiko.util import get_logger, constant_time_bytes_eq, b, u
+import paramiko.pkey
+import paramiko.util
 from paramiko.ssh_exception import SSHException
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing_extensions import Self
+    from _typeshed import FileDescriptorOrPath
+
+    # Class is internal to HostKeys.lookup(). Calls itself "SubDict".
+    class _SubDict(MutableMapping[str, paramiko.pkey.PKey]):
+        pass
 
 
 class HostKeys(MutableMapping):
@@ -44,7 +54,7 @@ class HostKeys(MutableMapping):
     .. versionadded:: 1.5.3
     """
 
-    def __init__(self, filename=None):
+    def __init__(self, filename: FileDescriptorOrPath | None = None) -> None:
         """
         Create a new HostKeys object, optionally loading keys from an OpenSSH
         style host-key file.
@@ -52,11 +62,13 @@ class HostKeys(MutableMapping):
         :param str filename: filename to load host keys from, or ``None``
         """
         # emulate a dict of { hostname: { keytype: PKey } }
-        self._entries = []
+        self._entries: list[HostKeyEntry] = []
         if filename is not None:
             self.load(filename)
 
-    def add(self, hostname, keytype, key):
+    def add(
+        self, hostname: str, keytype: str, key: paramiko.pkey.PKey
+    ) -> None:
         """
         Add a host key entry to the table.  Any existing entry for a
         ``(hostname, keytype)`` pair will be replaced.
@@ -71,7 +83,7 @@ class HostKeys(MutableMapping):
                 return
         self._entries.append(HostKeyEntry([hostname], key))
 
-    def load(self, filename):
+    def load(self, filename: FileDescriptorOrPath) -> None:
         """
         Read a file of known SSH host keys, in the format used by OpenSSH.
         This type of file unfortunately doesn't exist on Windows, but on
@@ -103,7 +115,7 @@ class HostKeys(MutableMapping):
                     if len(entry.hostnames):
                         self._entries.append(entry)
 
-    def save(self, filename):
+    def save(self, filename: FileDescriptorOrPath) -> None:
         """
         Save host keys into a file, in the format used by OpenSSH.  The order
         of keys in the file will be preserved when possible (if these keys were
@@ -122,7 +134,7 @@ class HostKeys(MutableMapping):
                 if line:
                     f.write(line)
 
-    def lookup(self, hostname):
+    def lookup(self, hostname: str) -> _SubDict | None:
         """
         Find a hostkey entry for a given hostname or IP.  If no entry is found,
         ``None`` is returned.  Otherwise a dictionary of keytype to key is
@@ -133,7 +145,7 @@ class HostKeys(MutableMapping):
             (or ``None``)
         """
 
-        class SubDict(MutableMapping):
+        class SubDict(MutableMapping[str, paramiko.pkey.PKey]):
             def __init__(self, hostname, entries, hostkeys):
                 self._hostname = hostname
                 self._entries = entries
@@ -200,12 +212,14 @@ class HostKeys(MutableMapping):
                 h == hostname
                 or h.startswith("|1|")
                 and not hostname.startswith("|1|")
-                and constant_time_bytes_eq(self.hash_host(hostname, h), h)
+                and paramiko.util.constant_time_bytes_eq(
+                    self.hash_host(hostname, h), h
+                )
             ):
                 return True
         return False
 
-    def check(self, hostname, key):
+    def check(self, hostname: str, key: paramiko.pkey.PKey) -> bool:
         """
         Return True if the given key is associated with the given hostname
         in this dictionary.
@@ -223,26 +237,26 @@ class HostKeys(MutableMapping):
             return False
         return host_key.asbytes() == key.asbytes()
 
-    def clear(self):
+    def clear(self) -> None:
         """
         Remove all host keys from the dictionary.
         """
         self._entries = []
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[str]:
         for k in self.keys():
             yield k
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.keys())
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: str) -> _SubDict:
         ret = self.lookup(key)
         if ret is None:
             raise KeyError(key)
         return ret
 
-    def __delitem__(self, key):
+    def __delitem__(self, key: str) -> None:
         index = None
         for i, entry in enumerate(self._entries):
             if self._hostname_matches(key, entry):
@@ -252,7 +266,9 @@ class HostKeys(MutableMapping):
             raise KeyError(key)
         self._entries.pop(index)
 
-    def __setitem__(self, hostname, entry):
+    def __setitem__(
+        self, hostname: str, entry: Mapping[str, paramiko.pkey.PKey]
+    ) -> None:
         # don't use this please.
         if len(entry) == 0:
             self._entries.append(HostKeyEntry([hostname], None))
@@ -267,7 +283,7 @@ class HostKeys(MutableMapping):
             if not found:
                 self._entries.append(HostKeyEntry([hostname], entry[key_type]))
 
-    def keys(self):
+    def keys(self) -> list[str]:
         ret = []
         for e in self._entries:
             for h in e.hostnames:
@@ -275,14 +291,14 @@ class HostKeys(MutableMapping):
                     ret.append(h)
         return ret
 
-    def values(self):
-        ret = []
+    def values(self) -> list[_SubDict]:
+        ret: list[_SubDict] = []
         for k in self.keys():
             ret.append(self.lookup(k))
         return ret
 
     @staticmethod
-    def hash_host(hostname, salt=None):
+    def hash_host(hostname: str, salt: str | None = None) -> str:
         """
         Return a "hashed" form of the hostname, as used by OpenSSH when storing
         hashed hostnames in the known_hosts file.
@@ -297,15 +313,18 @@ class HostKeys(MutableMapping):
         else:
             if salt.startswith("|1|"):
                 salt = salt.split("|")[2]
-            salt = decodebytes(b(salt))
+            salt = decodebytes(paramiko.util.b(salt))
         assert len(salt) == sha1().digest_size
-        hmac = HMAC(salt, b(hostname), sha1).digest()
-        hostkey = "|1|{}|{}".format(u(encodebytes(salt)), u(encodebytes(hmac)))
+        hmac = HMAC(salt, paramiko.util.b(hostname), sha1).digest()
+        hostkey = "|1|{}|{}".format(
+            paramiko.util.u(encodebytes(salt)),
+            paramiko.util.u(encodebytes(hmac)),
+        )
         return hostkey.replace("\n", "")
 
 
 class InvalidHostKey(Exception):
-    def __init__(self, line, exc):
+    def __init__(self, line: str, exc: Exception) -> None:
         self.line = line
         self.exc = exc
         self.args = (line, exc)
@@ -316,13 +335,17 @@ class HostKeyEntry:
     Representation of a line in an OpenSSH-style "known hosts" file.
     """
 
-    def __init__(self, hostnames=None, key=None):
+    def __init__(
+        self,
+        hostnames: list[str] | None = None,
+        key: paramiko.pkey.PKey | None = None,
+    ) -> None:
         self.valid = (hostnames is not None) and (key is not None)
         self.hostnames = hostnames
         self.key = key
 
     @classmethod
-    def from_line(cls, line, lineno=None):
+    def from_line(cls, line: str, lineno: int | None = None) -> Self | None:
         """
         Parses the given line of text to find the names for the host,
         the type of key, and the key data. The line is expected to be in the
@@ -335,7 +358,7 @@ class HostKeyEntry:
 
         :param str line: a line from an OpenSSH known_hosts file
         """
-        log = get_logger("paramiko.hostkeys")
+        log = paramiko.util.get_logger("paramiko.hostkeys")
         fields = re.split(" |\t", line)
         if len(fields) < 3:
             # Bad number of fields
@@ -354,19 +377,21 @@ class HostKeyEntry:
             # read -> unicode str -> bytes for base64 decode -> decoded bytes);
             # but in Python 3 forever land, can we simply use
             # `base64.b64decode(str-from-file)` here?
-            key_bytes = decodebytes(b(key))
+            key_bytes = decodebytes(paramiko.util.b(key))
         except binascii.Error as e:
             raise InvalidHostKey(line, e)
 
         try:
-            return cls(names, PKey.from_type_string(key_type, key_bytes))
-        except UnknownKeyType:
+            return cls(
+                names, paramiko.pkey.PKey.from_type_string(key_type, key_bytes)
+            )
+        except paramiko.pkey.UnknownKeyType:
             # TODO 4.0: consider changing HostKeys API so this just raises
             # naturally and the exception is muted higher up in the stack?
             log.info("Unable to handle key of type {}".format(key_type))
             return None
 
-    def to_line(self):
+    def to_line(self) -> str | None:
         """
         Returns a string in OpenSSH known_hosts file format, or None if
         the object is not in a valid state.  A trailing newline is

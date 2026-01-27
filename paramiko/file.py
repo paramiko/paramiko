@@ -15,6 +15,9 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with Paramiko; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
+
+from __future__ import annotations
+
 from io import BytesIO
 
 from paramiko.common import (
@@ -26,9 +29,11 @@ from paramiko.common import (
 )
 
 from paramiko.util import ClosingContextManager, u
+from collections.abc import Iterable
+from typing import Any, AnyStr, Generic
 
 
-class BufferedFile(ClosingContextManager):
+class BufferedFile(ClosingContextManager, Generic[AnyStr]):
     """
     Reusable base class to implement Python-style file buffering around a
     simpler stream.
@@ -48,7 +53,9 @@ class BufferedFile(ClosingContextManager):
     FLAG_LINE_BUFFERED = 0x40
     FLAG_UNIVERSAL_NEWLINE = 0x80
 
-    def __init__(self):
+    newlines: None | AnyStr | tuple[AnyStr, ...]
+
+    def __init__(self) -> None:
         self.newlines = None
         self._flags = 0
         self._bufsize = self._DEFAULT_BUFSIZE
@@ -63,10 +70,10 @@ class BufferedFile(ClosingContextManager):
         # size only matters for seekable files
         self._size = 0
 
-    def __del__(self):
+    def __del__(self) -> None:
         self.close()
 
-    def __iter__(self):
+    def __iter__(self) -> BufferedFile[Any]:
         """
         Returns an iterator that can be used to iterate over the lines in this
         file.  This iterator happens to return the file itself, since a file is
@@ -78,14 +85,14 @@ class BufferedFile(ClosingContextManager):
             raise ValueError("I/O operation on closed file")
         return self
 
-    def close(self):
+    def close(self) -> None:
         """
         Close the file.  Future read and write operations will fail.
         """
         self.flush()
         self._closed = True
 
-    def flush(self):
+    def flush(self) -> None:
         """
         Write out any data in the write buffer.  This may do nothing if write
         buffering is not turned on.
@@ -94,7 +101,7 @@ class BufferedFile(ClosingContextManager):
         self._wbuffer = BytesIO()
         return
 
-    def __next__(self):
+    def __next__(self) -> str | bytes:
         """
         Returns the next line from the input, or raises ``StopIteration``
         when EOF is hit.  Unlike python file objects, it's okay to mix
@@ -111,7 +118,7 @@ class BufferedFile(ClosingContextManager):
             raise StopIteration
         return line
 
-    def readable(self):
+    def readable(self) -> bool:
         """
         Check if the file can be read from.
 
@@ -121,7 +128,7 @@ class BufferedFile(ClosingContextManager):
         """
         return (self._flags & self.FLAG_READ) == self.FLAG_READ
 
-    def writable(self):
+    def writable(self) -> bool:
         """
         Check if the file can be written to.
 
@@ -131,7 +138,7 @@ class BufferedFile(ClosingContextManager):
         """
         return (self._flags & self.FLAG_WRITE) == self.FLAG_WRITE
 
-    def seekable(self):
+    def seekable(self) -> bool:
         """
         Check if the file supports random access.
 
@@ -141,7 +148,7 @@ class BufferedFile(ClosingContextManager):
         """
         return False
 
-    def readinto(self, buff):
+    def readinto(self, buff: bytearray) -> int:
         """
         Read up to ``len(buff)`` bytes into ``bytearray`` *buff* and return the
         number of bytes read.
@@ -153,7 +160,7 @@ class BufferedFile(ClosingContextManager):
         buff[: len(data)] = data
         return len(data)
 
-    def read(self, size=None):
+    def read(self, size: int | None = None) -> bytes:
         """
         Read at most ``size`` bytes from the file (less if we hit the end of
         the file first).  If the ``size`` argument is negative or omitted,
@@ -191,10 +198,10 @@ class BufferedFile(ClosingContextManager):
                 self._pos += len(new_data)
             return bytes(result)
         if size <= len(self._rbuffer):
-            result = self._rbuffer[:size]
+            bytes_result = self._rbuffer[:size]
             self._rbuffer = self._rbuffer[size:]
-            self._pos += len(result)
-            return result
+            self._pos += len(bytes_result)
+            return bytes_result
         while len(self._rbuffer) < size:
             read_size = size - len(self._rbuffer)
             if self._flags & self.FLAG_BUFFERED:
@@ -207,12 +214,12 @@ class BufferedFile(ClosingContextManager):
                 break
             self._rbuffer += new_data
             self._realpos += len(new_data)
-        result = self._rbuffer[:size]
+        bytes_result = self._rbuffer[:size]
         self._rbuffer = self._rbuffer[size:]
-        self._pos += len(result)
-        return result
+        self._pos += len(bytes_result)
+        return bytes_result
 
-    def readline(self, size=None):
+    def readline(self, size: int | None = None) -> str | bytes:
         """
         Read one entire line from the file.  A trailing newline character is
         kept in the string (but may be absent when a file ends with an
@@ -317,7 +324,7 @@ class BufferedFile(ClosingContextManager):
         self._pos += len(line)
         return line if self._flags & self.FLAG_BINARY else u(line)
 
-    def readlines(self, sizehint=None):
+    def readlines(self, sizehint: int | None = None) -> list[AnyStr]:
         """
         Read all remaining lines using `readline` and return them as a list.
         If the optional ``sizehint`` argument is present, instead of reading up
@@ -339,7 +346,7 @@ class BufferedFile(ClosingContextManager):
                 break
         return lines
 
-    def seek(self, offset, whence=0):
+    def seek(self, offset: int, whence: int = 0) -> None:
         """
         Set the file's current position, like stdio's ``fseek``.  Not all file
         objects support seeking.
@@ -359,7 +366,7 @@ class BufferedFile(ClosingContextManager):
         """
         raise IOError("File does not support seeking.")
 
-    def tell(self):
+    def tell(self) -> int:
         """
         Return the file's current position.  This may not be accurate or
         useful if the underlying file doesn't support random access, or was
@@ -369,7 +376,7 @@ class BufferedFile(ClosingContextManager):
         """
         return self._pos
 
-    def write(self, data):
+    def write(self, data: AnyStr) -> None:
         """
         Write data to the file.  If write buffering is on (``bufsize`` was
         specified and non-zero), some or all of the data may not actually be
@@ -380,21 +387,23 @@ class BufferedFile(ClosingContextManager):
         """
         if isinstance(data, str):
             # Accept text and encode as utf-8 for compatibility only.
-            data = data.encode("utf-8")
+            bytes_data = data.encode("utf-8")
+        else:
+            bytes_data = data
         if self._closed:
             raise IOError("File is closed")
         if not (self._flags & self.FLAG_WRITE):
             raise IOError("File not open for writing")
         if not (self._flags & self.FLAG_BUFFERED):
-            self._write_all(data)
+            self._write_all(bytes_data)
             return
-        self._wbuffer.write(data)
+        self._wbuffer.write(bytes_data)
         if self._flags & self.FLAG_LINE_BUFFERED:
             # only scan the new data for linefeed, to avoid wasting time.
-            last_newline_pos = data.rfind(linefeed_byte)
+            last_newline_pos = bytes_data.rfind(linefeed_byte)
             if last_newline_pos >= 0:
                 wbuf = self._wbuffer.getvalue()
-                last_newline_pos += len(wbuf) - len(data)
+                last_newline_pos += len(wbuf) - len(bytes_data)
                 self._write_all(wbuf[: last_newline_pos + 1])
                 self._wbuffer = BytesIO()
                 self._wbuffer.write(wbuf[last_newline_pos + 1 :])
@@ -405,7 +414,7 @@ class BufferedFile(ClosingContextManager):
             self.flush()
         return
 
-    def writelines(self, sequence):
+    def writelines(self, sequence: Iterable[AnyStr]) -> None:
         """
         Write a sequence of strings to the file.  The sequence can be any
         iterable object producing strings, typically a list of strings.  (The
@@ -418,7 +427,7 @@ class BufferedFile(ClosingContextManager):
             self.write(line)
         return
 
-    def xreadlines(self):
+    def xreadlines(self) -> BufferedFile[Any]:
         """
         Identical to ``iter(f)``.  This is a deprecated file interface that
         predates Python iterator support.
@@ -426,7 +435,7 @@ class BufferedFile(ClosingContextManager):
         return self
 
     @property
-    def closed(self):
+    def closed(self) -> bool:
         return self._closed
 
     # ...overrides...

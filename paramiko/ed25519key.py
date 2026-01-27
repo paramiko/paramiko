@@ -14,6 +14,8 @@
 # along with Paramiko; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
 
+from __future__ import annotations
+
 import bcrypt
 
 from cryptography.hazmat.backends import default_backend
@@ -25,6 +27,10 @@ from paramiko.message import Message
 from paramiko.pkey import PKey, OPENSSH_AUTH_MAGIC, _unpad_openssh
 from paramiko.util import b
 from paramiko.ssh_exception import SSHException, PasswordRequiredException
+from typing import IO, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from _typeshed import FileDescriptorOrPath, ReadableBuffer
 
 
 class Ed25519Key(PKey):
@@ -40,10 +46,16 @@ class Ed25519Key(PKey):
     """
 
     name = "ssh-ed25519"
+    public_blob: None
 
     def __init__(
-        self, msg=None, data=None, filename=None, password=None, file_obj=None
-    ):
+        self,
+        msg: Message | None = None,
+        data: ReadableBuffer | None = None,
+        filename: FileDescriptorOrPath | None = None,
+        password: str | None = None,
+        file_obj: IO[str] | None = None,
+    ) -> None:
         self.public_blob = None
         verifying_key = signing_key = None
         if msg is None and data is not None:
@@ -166,7 +178,7 @@ class Ed25519Key(PKey):
             raise SSHException("Invalid key")
         return signing_keys[0]
 
-    def asbytes(self):
+    def asbytes(self) -> bytes:
         if self.can_sign():
             v = self._signing_key.verify_key
         else:
@@ -185,22 +197,24 @@ class Ed25519Key(PKey):
         return (self.get_name(), v)
 
     # TODO 4.0: remove
-    def get_name(self):
+    def get_name(self) -> str:
         return self.name
 
-    def get_bits(self):
+    def get_bits(self) -> int:
         return 256
 
-    def can_sign(self):
+    def can_sign(self) -> bool:
         return self._signing_key is not None
 
-    def sign_ssh_data(self, data, algorithm=None):
+    def sign_ssh_data(
+        self, data: bytes, algorithm: str | None = None
+    ) -> Message:
         m = Message()
         m.add_string(self.name)
         m.add_string(self._signing_key.sign(data).signature)
         return m
 
-    def verify_ssh_sig(self, data, msg):
+    def verify_ssh_sig(self, data: bytes, msg: Message) -> bool:
         if msg.get_text() != self.name:
             return False
 

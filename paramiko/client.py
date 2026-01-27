@@ -20,6 +20,8 @@
 SSH client & key policies
 """
 
+from __future__ import annotations
+
 from binascii import hexlify
 import getpass
 import inspect
@@ -42,6 +44,33 @@ from paramiko.ssh_exception import (
 )
 from paramiko.transport import Transport
 from paramiko.util import ClosingContextManager
+from typing import NoReturn, Protocol, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable, Mapping
+    from _typeshed import FileDescriptorOrPath
+    from paramiko.auth_strategy import AuthStrategy
+    from paramiko.channel import (
+        Channel,
+        ChannelFile,
+        ChannelStderrFile,
+        ChannelStdinFile,
+    )
+    from paramiko.pkey import PKey
+    from paramiko.sftp_client import SFTPClient
+    from paramiko.transport import _SocketLike
+
+    class _TransportFactory(Protocol):
+        def __call__(
+            self,
+            sock: _SocketLike,
+            /,
+            *,
+            gss_kex: bool,
+            gss_deleg_creds: bool,
+            disabled_algorithms: Mapping[str, Iterable[str]] | None,
+        ) -> Transport:
+            ...
 
 
 class SSHClient(ClosingContextManager):
@@ -64,19 +93,21 @@ class SSHClient(ClosingContextManager):
     .. versionadded:: 1.6
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """
         Create a new SSHClient.
         """
         self._system_host_keys = HostKeys()
         self._host_keys = HostKeys()
-        self._host_keys_filename = None
-        self._log_channel = None
+        self._host_keys_filename: FileDescriptorOrPath | None = None
+        self._log_channel: str | None = None
         self._policy = RejectPolicy()
-        self._transport = None
+        self._transport: Transport | None = None
         self._agent = None
 
-    def load_system_host_keys(self, filename=None):
+    def load_system_host_keys(
+        self, filename: FileDescriptorOrPath | None = None
+    ) -> None:
         """
         Load host keys from a system (read-only) file.  Host keys read with
         this method will not be saved back by `save_host_keys`.
@@ -105,7 +136,7 @@ class SSHClient(ClosingContextManager):
             return
         self._system_host_keys.load(filename)
 
-    def load_host_keys(self, filename):
+    def load_host_keys(self, filename: FileDescriptorOrPath) -> None:
         """
         Load host keys from a local host-key file.  Host keys read with this
         method will be checked after keys loaded via `load_system_host_keys`,
@@ -124,7 +155,7 @@ class SSHClient(ClosingContextManager):
         self._host_keys_filename = filename
         self._host_keys.load(filename)
 
-    def save_host_keys(self, filename):
+    def save_host_keys(self, filename: FileDescriptorOrPath) -> None:
         """
         Save the host keys back to a file.  Only the host keys loaded with
         `load_host_keys` (plus any added directly) will be saved -- not any
@@ -149,7 +180,7 @@ class SSHClient(ClosingContextManager):
                         )
                     )
 
-    def get_host_keys(self):
+    def get_host_keys(self) -> HostKeys:
         """
         Get the local `.HostKeys` object.  This can be used to examine the
         local host keys or change them.
@@ -158,7 +189,7 @@ class SSHClient(ClosingContextManager):
         """
         return self._host_keys
 
-    def set_log_channel(self, name):
+    def set_log_channel(self, name: str) -> None:
         """
         Set the channel for logging.  The default is ``"paramiko.transport"``
         but it can be set to anything you want.
@@ -167,7 +198,9 @@ class SSHClient(ClosingContextManager):
         """
         self._log_channel = name
 
-    def set_missing_host_key_policy(self, policy):
+    def set_missing_host_key_policy(
+        self, policy: type[MissingHostKeyPolicy] | MissingHostKeyPolicy
+    ) -> None:
         """
         Set policy to use when connecting to servers without a known host key.
 
@@ -215,30 +248,30 @@ class SSHClient(ClosingContextManager):
 
     def connect(
         self,
-        hostname,
-        port=SSH_PORT,
-        username=None,
-        password=None,
-        pkey=None,
-        key_filename=None,
-        timeout=None,
-        allow_agent=True,
-        look_for_keys=True,
-        compress=False,
-        sock=None,
-        gss_auth=False,
-        gss_kex=False,
-        gss_deleg_creds=True,
-        gss_host=None,
-        banner_timeout=None,
-        auth_timeout=None,
-        channel_timeout=None,
-        gss_trust_dns=True,
-        passphrase=None,
-        disabled_algorithms=None,
-        transport_factory=None,
-        auth_strategy=None,
-    ):
+        hostname: str,
+        port: int = SSH_PORT,
+        username: str | None = None,
+        password: str | None = None,
+        pkey: PKey | None = None,
+        key_filename: str | None = None,
+        timeout: float | None = None,
+        allow_agent: bool = True,
+        look_for_keys: bool = True,
+        compress: bool = False,
+        sock: _SocketLike | None = None,
+        gss_auth: bool = False,
+        gss_kex: bool = False,
+        gss_deleg_creds: bool = True,
+        gss_host: str | None = None,
+        banner_timeout: float | None = None,
+        auth_timeout: float | None = None,
+        channel_timeout: float | None = None,
+        gss_trust_dns: bool = True,
+        passphrase: str | None = None,
+        disabled_algorithms: Mapping[str, Iterable[str]] | None = None,
+        transport_factory: _TransportFactory | None = None,
+        auth_strategy: AuthStrategy | None = None,
+    ) -> None:
         """
         Connect to an SSH server and authenticate to it.  The server's host key
         is checked against the system host keys (see `load_system_host_keys`)
@@ -494,7 +527,7 @@ class SSHClient(ClosingContextManager):
             passphrase,
         )
 
-    def close(self):
+    def close(self) -> None:
         """
         Close this SSHClient and its underlying `.Transport`.
 
@@ -517,12 +550,12 @@ class SSHClient(ClosingContextManager):
 
     def exec_command(
         self,
-        command,
-        bufsize=-1,
-        timeout=None,
-        get_pty=False,
-        environment=None,
-    ):
+        command: str,
+        bufsize: int = -1,
+        timeout: float | None = None,
+        get_pty: bool = False,
+        environment: Mapping[str, str] | None = None,
+    ) -> tuple[ChannelStdinFile, ChannelFile, ChannelStderrFile]:
         """
         Execute a command on the SSH server.  A new `.Channel` is opened and
         the requested command is executed.  The command's input and output
@@ -569,13 +602,13 @@ class SSHClient(ClosingContextManager):
 
     def invoke_shell(
         self,
-        term="vt100",
-        width=80,
-        height=24,
-        width_pixels=0,
-        height_pixels=0,
-        environment=None,
-    ):
+        term: str = "vt100",
+        width: int = 80,
+        height: int = 24,
+        width_pixels: int = 0,
+        height_pixels: int = 0,
+        environment: Mapping[str, str] | None = None,
+    ) -> Channel:
         """
         Start an interactive shell session on the SSH server.  A new `.Channel`
         is opened and connected to a pseudo-terminal using the requested
@@ -597,7 +630,7 @@ class SSHClient(ClosingContextManager):
         chan.invoke_shell()
         return chan
 
-    def open_sftp(self):
+    def open_sftp(self) -> SFTPClient:
         """
         Open an SFTP session on the SSH server.
 
@@ -605,7 +638,7 @@ class SSHClient(ClosingContextManager):
         """
         return self._transport.open_sftp_client()
 
-    def get_transport(self):
+    def get_transport(self) -> Transport | None:
         """
         Return the underlying `.Transport` object for this SSH connection.
         This can be used to perform lower-level tasks, like opening specific
@@ -829,7 +862,9 @@ class MissingHostKeyPolicy:
     This function may be used to ask the user to verify the key, for example.
     """
 
-    def missing_host_key(self, client, hostname, key):
+    def missing_host_key(
+        self, client: SSHClient, hostname: str, key: PKey
+    ) -> None:
         """
         Called when an `.SSHClient` receives a server key for a server that
         isn't in either the system or local `.HostKeys` object.  To accept
@@ -845,7 +880,9 @@ class AutoAddPolicy(MissingHostKeyPolicy):
     local `.HostKeys` object, and saving it.  This is used by `.SSHClient`.
     """
 
-    def missing_host_key(self, client, hostname, key):
+    def missing_host_key(
+        self, client: SSHClient, hostname: str, key: PKey
+    ) -> None:
         client._host_keys.add(hostname, key.get_name(), key)
         if client._host_keys_filename is not None:
             client.save_host_keys(client._host_keys_filename)
@@ -863,7 +900,9 @@ class RejectPolicy(MissingHostKeyPolicy):
     used by `.SSHClient`.
     """
 
-    def missing_host_key(self, client, hostname, key):
+    def missing_host_key(
+        self, client: SSHClient, hostname: str, key: PKey
+    ) -> NoReturn:
         client._log(
             DEBUG,
             "Rejecting {} host key for {}: {}".format(
@@ -881,7 +920,9 @@ class WarningPolicy(MissingHostKeyPolicy):
     accepting it. This is used by `.SSHClient`.
     """
 
-    def missing_host_key(self, client, hostname, key):
+    def missing_host_key(
+        self, client: SSHClient, hostname: str, key: PKey
+    ) -> None:
         warnings.warn(
             "Unknown {} host key for {}: {}".format(
                 key.get_name(), hostname, hexlify(key.get_fingerprint())

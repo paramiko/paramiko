@@ -20,6 +20,7 @@
 SFTP file object
 """
 
+from __future__ import annotations
 
 from binascii import hexlify
 from collections import deque
@@ -44,9 +45,16 @@ from paramiko.sftp import (
     int64,
 )
 from paramiko.sftp_attr import SFTPAttributes
+from typing import Any, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator, Sequence
+    import paramiko.sftp_client
+    from paramiko.sftp_handle import SFTPHandle
+    from paramiko.message import _LikeBytes
 
 
-class SFTPFile(BufferedFile):
+class SFTPFile(BufferedFile[Any]):
     """
     Proxy object for a file on the remote server, in client mode SFTP.
 
@@ -54,11 +62,22 @@ class SFTPFile(BufferedFile):
     that built-in Python file objects are.
     """
 
+    MAX_REQUEST_SIZE: int
+    sftp: paramiko.sftp_client.SFTPClient
+    handle: SFTPHandle
+    pipelined: bool
+
     # Some sftp servers will choke if you send read/write requests larger than
     # this size.
     MAX_REQUEST_SIZE = 32768
 
-    def __init__(self, sftp, handle, mode="r", bufsize=-1):
+    def __init__(
+        self,
+        sftp: paramiko.sftp_client.SFTPClient,
+        handle: _LikeBytes,
+        mode: str = "r",
+        bufsize: int = -1,
+    ) -> None:
         BufferedFile.__init__(self)
         self.sftp = sftp
         self.handle = handle
@@ -66,16 +85,16 @@ class SFTPFile(BufferedFile):
         self.pipelined = False
         self._prefetching = False
         self._prefetch_done = False
-        self._prefetch_data = {}
-        self._prefetch_extents = {}
+        self._prefetch_data: dict[int, str] = {}
+        self._prefetch_extents: dict[int, tuple[int, int]] = {}
         self._prefetch_lock = threading.Lock()
         self._saved_exception = None
         self._reqs = deque()
 
-    def __del__(self):
+    def __del__(self) -> None:
         self._close(async_=True)
 
-    def close(self):
+    def close(self) -> None:
         """
         Close the file.
         """
@@ -211,7 +230,7 @@ class SFTPFile(BufferedFile):
                 # convert_status already called
         return chunk
 
-    def settimeout(self, timeout):
+    def settimeout(self, timeout: float) -> None:
         """
         Set a timeout on read/write operations on the underlying socket or
         ssh `.Channel`.
@@ -224,7 +243,7 @@ class SFTPFile(BufferedFile):
         """
         self.sftp.sock.settimeout(timeout)
 
-    def gettimeout(self):
+    def gettimeout(self) -> float:
         """
         Returns the timeout in seconds (as a `float`) associated with the
         socket or ssh `.Channel` used for this file.
@@ -233,7 +252,7 @@ class SFTPFile(BufferedFile):
         """
         return self.sftp.sock.gettimeout()
 
-    def setblocking(self, blocking):
+    def setblocking(self, blocking: bool) -> None:
         """
         Set blocking or non-blocking mode on the underiying socket or ssh
         `.Channel`.
@@ -245,7 +264,7 @@ class SFTPFile(BufferedFile):
         """
         self.sftp.sock.setblocking(blocking)
 
-    def seekable(self):
+    def seekable(self) -> bool:
         """
         Check if the file supports random access.
 
@@ -255,7 +274,7 @@ class SFTPFile(BufferedFile):
         """
         return True
 
-    def seek(self, offset, whence=0):
+    def seek(self, offset: int, whence: int = 0) -> None:
         """
         Set the file's current position.
 
@@ -271,7 +290,7 @@ class SFTPFile(BufferedFile):
             self._realpos = self._pos = self._get_size() + offset
         self._rbuffer = bytes()
 
-    def stat(self):
+    def stat(self) -> SFTPAttributes:
         """
         Retrieve information about this file from the remote system.  This is
         exactly like `.SFTPClient.stat`, except that it operates on an
@@ -285,7 +304,7 @@ class SFTPFile(BufferedFile):
             raise SFTPError("Expected attributes")
         return SFTPAttributes._from_msg(msg)
 
-    def chmod(self, mode):
+    def chmod(self, mode: int) -> None:
         """
         Change the mode (permissions) of this file.  The permissions are
         unix-style and identical to those used by Python's `os.chmod`
@@ -300,7 +319,7 @@ class SFTPFile(BufferedFile):
         attr.st_mode = mode
         self.sftp._request(CMD_FSETSTAT, self.handle, attr)
 
-    def chown(self, uid, gid):
+    def chown(self, uid: int, gid: int) -> None:
         """
         Change the owner (``uid``) and group (``gid``) of this file.  As with
         Python's `os.chown` function, you must pass both arguments, so if you
@@ -318,7 +337,7 @@ class SFTPFile(BufferedFile):
         attr.st_uid, attr.st_gid = uid, gid
         self.sftp._request(CMD_FSETSTAT, self.handle, attr)
 
-    def utime(self, times):
+    def utime(self, times: tuple[float, float] | None) -> None:
         """
         Set the access and modified times of this file.  If
         ``times`` is ``None``, then the file's access and modified times are
@@ -340,7 +359,7 @@ class SFTPFile(BufferedFile):
         attr.st_atime, attr.st_mtime = times
         self.sftp._request(CMD_FSETSTAT, self.handle, attr)
 
-    def truncate(self, size):
+    def truncate(self, size: int) -> None:
         """
         Change the size of this file.  This usually extends
         or shrinks the size of the file, just like the ``truncate()`` method on
@@ -355,7 +374,13 @@ class SFTPFile(BufferedFile):
         attr.st_size = size
         self.sftp._request(CMD_FSETSTAT, self.handle, attr)
 
-    def check(self, hash_algorithm, offset=0, length=0, block_size=0):
+    def check(
+        self,
+        hash_algorithm: str,
+        offset: int = 0,
+        length: int = 0,
+        block_size: int = 0,
+    ) -> bytes:
         """
         Ask the server for a hash of a section of this file.  This can be used
         to verify a successful upload or download, or for various rsync-like
@@ -415,7 +440,7 @@ class SFTPFile(BufferedFile):
         data = msg.get_remainder()
         return data
 
-    def set_pipelined(self, pipelined=True):
+    def set_pipelined(self, pipelined: bool = True) -> None:
         """
         Turn on/off the pipelining of write operations to this file.  When
         pipelining is on, paramiko won't wait for the server response after
@@ -435,7 +460,11 @@ class SFTPFile(BufferedFile):
         """
         self.pipelined = pipelined
 
-    def prefetch(self, file_size=None, max_concurrent_requests=None):
+    def prefetch(
+        self,
+        file_size: int | None = None,
+        max_concurrent_requests: int | None = None,
+    ) -> None:
         """
         Pre-fetch the remaining contents of this file in anticipation of future
         `.read` calls.  If reading the entire file, pre-fetching can
@@ -481,7 +510,11 @@ class SFTPFile(BufferedFile):
         if len(chunks) > 0:
             self._start_prefetch(chunks, max_concurrent_requests)
 
-    def readv(self, chunks, max_concurrent_prefetch_requests=None):
+    def readv(
+        self,
+        chunks: Sequence[tuple[int, int]],
+        max_concurrent_prefetch_requests: int | None = None,
+    ) -> Iterator[bytes]:
         """
         Read a set of blocks from the file by (offset, length).  This is more
         efficient than doing a series of `.seek` and `.read` calls, since the

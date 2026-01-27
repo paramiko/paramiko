@@ -20,6 +20,8 @@
 RSA keys.
 """
 
+from __future__ import annotations
+
 from cryptography.exceptions import InvalidSignature, UnsupportedAlgorithm
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes, serialization
@@ -28,6 +30,16 @@ from cryptography.hazmat.primitives.asymmetric import rsa, padding
 from paramiko.message import Message
 from paramiko.pkey import PKey
 from paramiko.ssh_exception import SSHException
+from collections.abc import Callable
+from cryptography.hazmat.primitives.asymmetric.rsa import (
+    RSAPrivateKey,
+    RSAPublicKey,
+    RSAPublicNumbers,
+)
+from typing import IO, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from _typeshed import FileDescriptorOrPath, ReadableBuffer
 
 
 class RSAKey(PKey):
@@ -48,13 +60,13 @@ class RSAKey(PKey):
 
     def __init__(
         self,
-        msg=None,
-        data=None,
-        filename=None,
-        password=None,
-        key=None,
-        file_obj=None,
-    ):
+        msg: Message | None = None,
+        data: ReadableBuffer | None = None,
+        filename: FileDescriptorOrPath | None = None,
+        password: str | None = None,
+        key: None | RSAPublicKey | RSAPrivateKey = None,
+        file_obj: IO[str] | None = None,
+    ) -> None:
         self.key = None
         self.public_blob = None
         if file_obj is not None:
@@ -84,17 +96,17 @@ class RSAKey(PKey):
         return list(cls.HASHES.keys())
 
     @property
-    def size(self):
+    def size(self) -> int:
         return self.key.key_size
 
     @property
-    def public_numbers(self):
+    def public_numbers(self) -> RSAPublicNumbers:
         if isinstance(self.key, rsa.RSAPrivateKey):
             return self.key.private_numbers().public_numbers
         else:
             return self.key.public_numbers()
 
-    def asbytes(self):
+    def asbytes(self) -> bytes:
         m = Message()
         m.add_string(self.name)
         m.add_mpint(self.public_numbers.e)
@@ -110,16 +122,18 @@ class RSAKey(PKey):
     def _fields(self):
         return (self.get_name(), self.public_numbers.e, self.public_numbers.n)
 
-    def get_name(self):
+    def get_name(self) -> str:
         return self.name
 
-    def get_bits(self):
+    def get_bits(self) -> int:
         return self.size
 
-    def can_sign(self):
+    def can_sign(self) -> bool:
         return isinstance(self.key, rsa.RSAPrivateKey)
 
-    def sign_ssh_data(self, data, algorithm=None):
+    def sign_ssh_data(
+        self, data: bytes, algorithm: str | None = None
+    ) -> Message:
         if algorithm is None:
             algorithm = self.name
         sig = self.key.sign(
@@ -135,7 +149,7 @@ class RSAKey(PKey):
         m.add_string(sig)
         return m
 
-    def verify_ssh_sig(self, data, msg):
+    def verify_ssh_sig(self, data: bytes, msg: Message) -> bool:
         sig_algorithm = msg.get_text()
         if sig_algorithm not in self.HASHES:
             return False
@@ -159,7 +173,9 @@ class RSAKey(PKey):
         else:
             return True
 
-    def write_private_key_file(self, filename, password=None):
+    def write_private_key_file(
+        self, filename: FileDescriptorOrPath, password: str | None = None
+    ) -> None:
         self._write_private_key_file(
             filename,
             self.key,
@@ -167,7 +183,9 @@ class RSAKey(PKey):
             password=password,
         )
 
-    def write_private_key(self, file_obj, password=None):
+    def write_private_key(
+        self, file_obj: IO[str], password: str | None = None
+    ) -> None:
         self._write_private_key(
             file_obj,
             self.key,
@@ -176,7 +194,9 @@ class RSAKey(PKey):
         )
 
     @staticmethod
-    def generate(bits, progress_func=None):
+    def generate(
+        bits: int, progress_func: Callable[..., object] | None = None
+    ) -> RSAKey:
         """
         Generate a new private RSA key.  This factory function can be used to
         generate a new host key or authentication key.
@@ -207,8 +227,8 @@ class RSAKey(PKey):
                 key = serialization.load_der_private_key(
                     data, password=None, backend=default_backend()
                 )
-            except (ValueError, TypeError, UnsupportedAlgorithm) as e:
-                raise SSHException(str(e))
+            except (ValueError, TypeError, UnsupportedAlgorithm) as ex:
+                raise SSHException(str(ex))
         elif pkformat == self._PRIVATE_KEY_FORMAT_OPENSSH:
             n, e, d, iqmp, p, q = self._uint32_cstruct_unpack(data, "iiiiii")
             public_numbers = rsa.RSAPublicNumbers(e=e, n=n)

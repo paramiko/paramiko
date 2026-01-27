@@ -20,6 +20,8 @@
 Packet handling
 """
 
+from __future__ import annotations
+
 import errno
 import os
 import socket
@@ -41,9 +43,22 @@ from paramiko.common import (
 from paramiko.util import u
 from paramiko.ssh_exception import SSHException, ProxyCommandFailure
 from paramiko.message import Message
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+    import hashlib
+    from logging import Logger
+    from cryptography.hazmat.primitives.ciphers import Cipher
+    from _typeshed import Incomplete, ReadableBuffer
+    from paramiko.compress import ZlibCompressor, ZlibDecompressor
 
 
-def compute_hmac(key, message, digest_class):
+def compute_hmac(
+    key: bytes | bytearray,
+    message: ReadableBuffer,
+    digest_class: hashlib._Hash,
+) -> bytes:
     return HMAC(key, message, digest_class).digest()
 
 
@@ -55,7 +70,7 @@ class NeedRekeyException(Exception):
     pass
 
 
-def first_arg(e):
+def first_arg(e: Exception):
     arg = None
     if type(e.args) is tuple and len(e.args) > 0:
         arg = e.args[0]
@@ -78,9 +93,9 @@ class Packetizer:
     # Allow receiving this many bytes after a re-key request before terminating
     REKEY_BYTES_OVERFLOW_MAX = pow(2, 29)
 
-    def __init__(self, socket):
+    def __init__(self, socket: socket.socket) -> None:
         self.__socket = socket
-        self.__logger = None
+        self.__logger: Logger | None = None
         self.__closed = False
         self.__dump_packets = False
         self.__need_rekey = False
@@ -101,15 +116,15 @@ class Packetizer:
         self.__block_size_in = 8
         self.__mac_size_out = 0
         self.__mac_size_in = 0
-        self.__block_engine_out = None
-        self.__block_engine_in = None
+        self.__block_engine_out: Cipher[Incomplete] | None = None
+        self.__block_engine_in: Cipher[Incomplete] | None = None
         self.__sdctr_out = False
-        self.__mac_engine_out = None
-        self.__mac_engine_in = None
+        self.__mac_engine_out: hashlib._Hash | None = None
+        self.__mac_engine_in: hashlib._Hash | None = None
         self.__mac_key_out = bytes()
         self.__mac_key_in = bytes()
-        self.__compress_engine_out = None
-        self.__compress_engine_in = None
+        self.__compress_engine_out: ZlibCompressor | None = None
+        self.__compress_engine_in: ZlibDecompressor | None = None
         self.__sequence_number_out = 0
         self.__sequence_number_in = 0
         self.__etm_out = False
@@ -118,32 +133,32 @@ class Packetizer:
         # AEAD (eg aes128-gcm/aes256-gcm) cipher use
         self.__aead_out = False
         self.__aead_in = False
-        self.__iv_out = None
-        self.__iv_in = None
+        self.__iv_out: bytes | None = None
+        self.__iv_in: bytes | None = None
 
         # lock around outbound writes (packet computation)
         self.__write_lock = threading.RLock()
 
         # keepalives:
-        self.__keepalive_interval = 0
+        self.__keepalive_interval = 0.0
         self.__keepalive_last = time.time()
-        self.__keepalive_callback = None
+        self.__keepalive_callback: Callable[[], object] | None = None
 
-        self.__timer = None
+        self.__timer: threading.Timer | None = None
         self.__handshake_complete = False
         self.__timer_expired = False
 
     @property
-    def closed(self):
+    def closed(self) -> bool:
         return self.__closed
 
-    def reset_seqno_out(self):
+    def reset_seqno_out(self) -> None:
         self.__sequence_number_out = 0
 
-    def reset_seqno_in(self):
+    def reset_seqno_in(self) -> None:
         self.__sequence_number_in = 0
 
-    def set_log(self, log):
+    def set_log(self, log: Logger) -> None:
         """
         Set the Python log object to use for logging.
         """
@@ -151,16 +166,16 @@ class Packetizer:
 
     def set_outbound_cipher(
         self,
-        block_engine,
-        block_size,
-        mac_engine,
-        mac_size,
-        mac_key,
-        sdctr=False,
-        etm=False,
-        aead=False,
-        iv_out=None,
-    ):
+        block_engine: Cipher[Incomplete],
+        block_size: int,
+        mac_engine: hashlib._Hash,
+        mac_size: int,
+        mac_key: bytes | bytearray,
+        sdctr: bool = False,
+        etm: bool = False,
+        aead: bool = False,
+        iv_out: bytes | None = None,
+    ) -> None:
         """
         Switch outbound data cipher.
         :param etm: Set encrypt-then-mac from OpenSSH
@@ -185,15 +200,15 @@ class Packetizer:
 
     def set_inbound_cipher(
         self,
-        block_engine,
-        block_size,
-        mac_engine,
-        mac_size,
-        mac_key,
-        etm=False,
-        aead=False,
-        iv_in=None,
-    ):
+        block_engine: Cipher[Incomplete],
+        block_size: int,
+        mac_engine: hashlib._Hash,
+        mac_size: int,
+        mac_key: bytes | bytearray,
+        etm: bool = False,
+        aead: bool = False,
+        iv_in: bytes | None = None,
+    ) -> None:
         """
         Switch inbound data cipher.
         :param etm: Set encrypt-then-mac from OpenSSH
@@ -217,29 +232,29 @@ class Packetizer:
             self.__init_count = 0
             self.__need_rekey = False
 
-    def set_outbound_compressor(self, compressor):
+    def set_outbound_compressor(self, compressor: ZlibCompressor) -> None:
         self.__compress_engine_out = compressor
 
-    def set_inbound_compressor(self, compressor):
+    def set_inbound_compressor(self, compressor: ZlibDecompressor) -> None:
         self.__compress_engine_in = compressor
 
-    def close(self):
+    def close(self) -> None:
         self.__closed = True
         self.__socket.close()
 
-    def set_hexdump(self, hexdump):
+    def set_hexdump(self, hexdump: bool) -> None:
         self.__dump_packets = hexdump
 
-    def get_hexdump(self):
+    def get_hexdump(self) -> bool:
         return self.__dump_packets
 
-    def get_mac_size_in(self):
+    def get_mac_size_in(self) -> int:
         return self.__mac_size_in
 
-    def get_mac_size_out(self):
+    def get_mac_size_out(self) -> int:
         return self.__mac_size_out
 
-    def need_rekey(self):
+    def need_rekey(self) -> bool:
         """
         Returns ``True`` if a new set of keys needs to be negotiated.  This
         will be triggered during a packet read or write, so it should be
@@ -247,7 +262,9 @@ class Packetizer:
         """
         return self.__need_rekey
 
-    def set_keepalive(self, interval, callback):
+    def set_keepalive(
+        self, interval: float, callback: Callable[[], object]
+    ) -> None:
         """
         Turn on/off the callback keepalive.  If ``interval`` seconds pass with
         no data read from or written to the socket, the callback will be
@@ -257,10 +274,10 @@ class Packetizer:
         self.__keepalive_callback = callback
         self.__keepalive_last = time.time()
 
-    def read_timer(self):
+    def read_timer(self) -> None:
         self.__timer_expired = True
 
-    def start_handshake(self, timeout):
+    def start_handshake(self, timeout: float) -> None:
         """
         Tells `Packetizer` that the handshake process started.
         Starts a book keeping timer that can signal a timeout in the
@@ -272,7 +289,7 @@ class Packetizer:
             self.__timer = threading.Timer(float(timeout), self.read_timer)
             self.__timer.start()
 
-    def handshake_timed_out(self):
+    def handshake_timed_out(self) -> bool:
         """
         Checks if the handshake has timed out.
 
@@ -288,7 +305,7 @@ class Packetizer:
             return False
         return self.__timer_expired
 
-    def complete_handshake(self):
+    def complete_handshake(self) -> None:
         """
         Tells `Packetizer` that the handshake has completed.
         """
@@ -297,7 +314,7 @@ class Packetizer:
             self.__timer_expired = False
             self.__handshake_complete = True
 
-    def read_all(self, n, check_rekey=False):
+    def read_all(self, n: int, check_rekey: bool = False) -> bytes:
         """
         Read as close to N bytes as possible, blocking as long as necessary.
 
@@ -345,7 +362,7 @@ class Packetizer:
                 self._check_keepalive()
         return out
 
-    def write_all(self, out):
+    def write_all(self, out: ReadableBuffer) -> None:
         self.__keepalive_last = time.time()
         iteration_with_zero_as_return_value = 0
         while len(out) > 0:
@@ -385,7 +402,7 @@ class Packetizer:
             out = out[n:]
         return
 
-    def readline(self, timeout):
+    def readline(self, timeout: float) -> str:
         """
         Read a line from the socket.  We assume no data is pending after the
         line, so it's okay to attempt large reads.
@@ -411,23 +428,23 @@ class Packetizer:
         new_iv = iv[0:4] + inc_iv_counter_b
         return new_iv
 
-    def send_message(self, data):
+    def send_message(self, data: Message) -> None:
         """
         Write a block of data using the current cipher, as an SSH block.
         """
         # encrypt this sucka
-        data = data.asbytes()
-        cmd = byte_ord(data[0])
+        data_bytes = data.asbytes()
+        cmd = byte_ord(data_bytes[0])
         if cmd in MSG_NAMES:
             cmd_name = MSG_NAMES[cmd]
         else:
             cmd_name = "${:x}".format(cmd)
-        orig_len = len(data)
+        orig_len = len(data_bytes)
         self.__write_lock.acquire()
         try:
             if self.__compress_engine_out is not None:
-                data = self.__compress_engine_out(data)
-            packet = self._build_packet(data)
+                data_bytes = self.__compress_engine_out(data_bytes)
+            packet = self._build_packet(data_bytes)
             if self.__dump_packets:
                 self._log(
                     DEBUG,
@@ -485,7 +502,7 @@ class Packetizer:
         finally:
             self.__write_lock.release()
 
-    def read_message(self):
+    def read_message(self) -> tuple[int, Message]:
         """
         Only one thread should ever be in this function (no other locking is
         done).

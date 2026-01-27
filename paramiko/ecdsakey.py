@@ -20,6 +20,8 @@
 ECDSA keys
 """
 
+from __future__ import annotations
+
 from cryptography.exceptions import InvalidSignature, UnsupportedAlgorithm
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes, serialization
@@ -34,6 +36,17 @@ from paramiko.message import Message
 from paramiko.pkey import PKey
 from paramiko.ssh_exception import SSHException
 from paramiko.util import deflate_long
+from typing import Any, IO, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Sequence
+    from cryptography.hazmat.primitives.asymmetric.ec import (
+        EllipticCurve,
+        EllipticCurvePrivateKey,
+        EllipticCurvePublicKey,
+    )
+    from cryptography.hazmat.primitives.hashes import HashAlgorithm
+    from _typeshed import FileDescriptorOrPath, ReadableBuffer
 
 
 class _ECDSACurve:
@@ -45,7 +58,15 @@ class _ECDSACurve:
     package.
     """
 
-    def __init__(self, curve_class, nist_name):
+    nist_name: str
+    key_length: int
+    key_format_identifier: str
+    hash_object: type[HashAlgorithm]
+    curve_class: type[EllipticCurve]
+
+    def __init__(
+        self, curve_class: type[EllipticCurve], nist_name: str
+    ) -> None:
         self.nist_name = nist_name
         self.key_length = curve_class.key_size
 
@@ -70,26 +91,33 @@ class _ECDSACurveSet:
     up curves.
     """
 
-    def __init__(self, ecdsa_curves):
+    ecdsa_curves: Sequence[_ECDSACurve]
+
+    def __init__(self, ecdsa_curves: Sequence[_ECDSACurve]) -> None:
         self.ecdsa_curves = ecdsa_curves
 
-    def get_key_format_identifier_list(self):
+    def get_key_format_identifier_list(self) -> list[str]:
         return [curve.key_format_identifier for curve in self.ecdsa_curves]
 
-    def get_by_curve_class(self, curve_class):
+    def get_by_curve_class(self, curve_class: type[Any]) -> _ECDSACurve | None:
         for curve in self.ecdsa_curves:
             if curve.curve_class == curve_class:
                 return curve
+        return None
 
-    def get_by_key_format_identifier(self, key_format_identifier):
+    def get_by_key_format_identifier(
+        self, key_format_identifier: str
+    ) -> _ECDSACurve | None:
         for curve in self.ecdsa_curves:
             if curve.key_format_identifier == key_format_identifier:
                 return curve
+        return None
 
-    def get_by_key_length(self, key_length):
+    def get_by_key_length(self, key_length: int) -> _ECDSACurve | None:
         for curve in self.ecdsa_curves:
             if curve.key_length == key_length:
                 return curve
+        return None
 
 
 class ECDSAKey(PKey):
@@ -97,6 +125,11 @@ class ECDSAKey(PKey):
     Representation of an ECDSA key which can be used to sign and verify SSH2
     data.
     """
+
+    verifying_key: EllipticCurvePublicKey
+    signing_key: EllipticCurvePrivateKey
+    public_blob: None
+    ecdsa_curve: _ECDSACurve | None
 
     _ECDSA_CURVES = _ECDSACurveSet(
         [
@@ -108,15 +141,16 @@ class ECDSAKey(PKey):
 
     def __init__(
         self,
-        msg=None,
-        data=None,
-        filename=None,
-        password=None,
-        vals=None,
-        file_obj=None,
+        msg: Message | None = None,
+        data: ReadableBuffer | None = None,
+        filename: FileDescriptorOrPath | None = None,
+        password: str | None = None,
+        vals: tuple[EllipticCurvePrivateKey, EllipticCurvePublicKey]
+        | None = None,
+        file_obj: IO[str] | None = None,
         # TODO 4.0: remove; it does nothing since porting to cryptography.io
-        validate_point=True,
-    ):
+        validate_point: bool = True,
+    ) -> None:
         self.verifying_key = None
         self.signing_key = None
         self.public_blob = None
@@ -174,10 +208,10 @@ class ECDSAKey(PKey):
 
     # TODO 4.0: deprecate/remove
     @classmethod
-    def supported_key_format_identifiers(cls):
+    def supported_key_format_identifiers(cls: Any) -> list[str]:
         return cls.identifiers()
 
-    def asbytes(self):
+    def asbytes(self) -> bytes:
         key = self.verifying_key
         m = Message()
         m.add_string(self.ecdsa_curve.key_format_identifier)
@@ -208,16 +242,18 @@ class ECDSAKey(PKey):
             self.verifying_key.public_numbers().y,
         )
 
-    def get_name(self):
+    def get_name(self) -> str:
         return self.ecdsa_curve.key_format_identifier
 
-    def get_bits(self):
+    def get_bits(self) -> int:
         return self.ecdsa_curve.key_length
 
-    def can_sign(self):
+    def can_sign(self) -> bool:
         return self.signing_key is not None
 
-    def sign_ssh_data(self, data, algorithm=None):
+    def sign_ssh_data(
+        self, data: bytes, algorithm: str | None = None
+    ) -> Message:
         ecdsa = ec.ECDSA(self.ecdsa_curve.hash_object())
         sig = self.signing_key.sign(data, ecdsa)
         r, s = decode_dss_signature(sig)
@@ -227,7 +263,7 @@ class ECDSAKey(PKey):
         m.add_string(self._sigencode(r, s))
         return m
 
-    def verify_ssh_sig(self, data, msg):
+    def verify_ssh_sig(self, data: bytes, msg: Message) -> bool:
         if msg.get_text() != self.ecdsa_curve.key_format_identifier:
             return False
         sig = msg.get_binary()
@@ -243,7 +279,9 @@ class ECDSAKey(PKey):
         else:
             return True
 
-    def write_private_key_file(self, filename, password=None):
+    def write_private_key_file(
+        self, filename: FileDescriptorOrPath, password: str | None = None
+    ) -> None:
         self._write_private_key_file(
             filename,
             self.signing_key,
@@ -251,7 +289,9 @@ class ECDSAKey(PKey):
             password=password,
         )
 
-    def write_private_key(self, file_obj, password=None):
+    def write_private_key(
+        self, file_obj: IO[str], password: str | None = None
+    ) -> None:
         self._write_private_key(
             file_obj,
             self.signing_key,
@@ -260,7 +300,12 @@ class ECDSAKey(PKey):
         )
 
     @classmethod
-    def generate(cls, curve=ec.SECP256R1(), progress_func=None, bits=None):
+    def generate(
+        cls,
+        curve: EllipticCurve = ec.SECP256R1(),
+        progress_func: Callable[..., object] | None = None,
+        bits: int | None = None,
+    ) -> ECDSAKey:
         """
         Generate a new private ECDSA key.  This factory function can be used to
         generate a new host key or authentication key.

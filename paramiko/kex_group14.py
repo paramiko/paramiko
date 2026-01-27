@@ -21,8 +21,15 @@ Standard SSH key exchange ("kex" if you wanna sound cool).  Diffie-Hellman of
 2048 bit key halves, using a known "p" prime and "g" generator.
 """
 
+from __future__ import annotations
+
 from paramiko.kex_group1 import KexGroup1
-from hashlib import sha1, sha256
+import hashlib
+from collections.abc import Callable
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from _typeshed import ReadableBuffer
 
 
 class KexGroup14(KexGroup1):
@@ -32,9 +39,9 @@ class KexGroup14(KexGroup1):
     G = 2
 
     name = "diffie-hellman-group14-sha1"
-    hash_algo = sha1
+    hash_algo: Callable[[ReadableBuffer], hashlib._Hash] = hashlib.sha1
 
 
 class KexGroup14SHA256(KexGroup14):
     name = "diffie-hellman-group14-sha256"
-    hash_algo = sha256
+    hash_algo: Callable[[ReadableBuffer], hashlib._Hash] = hashlib.sha256

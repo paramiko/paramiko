@@ -21,6 +21,8 @@
 Functions for communicating with Pageant, the basic windows ssh agent program.
 """
 
+from __future__ import annotations
+
 import array
 import ctypes.wintypes
 import platform
@@ -31,6 +33,7 @@ from paramiko.util import b
 import _thread as thread
 
 from . import _winapi
+from typing import Literal
 
 
 _AGENT_COPYDATA_ID = 0x804E50BA
@@ -44,7 +47,7 @@ def _get_pageant_window_object():
     return ctypes.windll.user32.FindWindowA(b"Pageant", b"Pageant")
 
 
-def can_talk_to_agent():
+def can_talk_to_agent() -> bool:
     """
     Check to see if there is a "Pageant" agent we can talk to.
 
@@ -54,6 +57,7 @@ def can_talk_to_agent():
     return bool(_get_pageant_window_object())
 
 
+ULONG_PTR: type[ctypes.c_uint64] | type[ctypes.c_uint32]
 if platform.architecture()[0] == "64bit":
     ULONG_PTR = ctypes.c_uint64
 else:
@@ -122,10 +126,10 @@ class PageantConnection:
     def __init__(self):
         self._response = None
 
-    def send(self, data):
+    def send(self, data: bytes) -> None:
         self._response = _query_pageant(data)
 
-    def recv(self, n):
+    def recv(self, n: int) -> Literal[""] | bytes:
         if self._response is None:
             return ""
         ret = self._response[:n]
@@ -134,5 +138,5 @@ class PageantConnection:
             self._response = None
         return ret
 
-    def close(self):
+    def close(self) -> None:
         pass

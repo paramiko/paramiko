@@ -5,11 +5,20 @@ Replaces certain parts of `.SSHClient`. For a concrete implementation, see the
 ``OpenSSHAuthStrategy`` class in `Fabric <https://fabfile.org>`_.
 """
 
-from collections import namedtuple
+from __future__ import annotations
 
 from .agent import AgentKey
 from .util import get_logger
 from .ssh_exception import AuthenticationException
+from typing import NamedTuple, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Iterator
+    from logging import Logger
+    from paramiko.config import SSHConfig
+    from paramiko.pkey import PKey
+    from paramiko.transport import Transport
+    from pathlib import Path
 
 
 class AuthSource:
@@ -21,7 +30,9 @@ class AuthSource:
     All implementations must accept at least a ``username`` (``str``) kwarg.
     """
 
-    def __init__(self, username):
+    username: str
+
+    def __init__(self, username: str) -> None:
         self.username = username
 
     def _repr(self, **kwargs):
@@ -34,7 +45,7 @@ class AuthSource:
     def __repr__(self):
         return self._repr()
 
-    def authenticate(self, transport):
+    def authenticate(self, transport: Transport) -> list[str]:
         """
         Perform authentication.
         """
@@ -46,7 +57,7 @@ class NoneAuth(AuthSource):
     Auth type "none", ie https://www.rfc-editor.org/rfc/rfc4252#section-5.2 .
     """
 
-    def authenticate(self, transport):
+    def authenticate(self, transport: Transport) -> list[str]:
         return transport.auth_none(self.username)
 
 
@@ -65,7 +76,11 @@ class Password(AuthSource):
         in a variable).
     """
 
-    def __init__(self, username, password_getter):
+    password_getter: Callable[[], str]
+
+    def __init__(
+        self, username: str, password_getter: Callable[[], str]
+    ) -> None:
         super().__init__(username=username)
         self.password_getter = password_getter
 
@@ -74,7 +89,7 @@ class Password(AuthSource):
         # as well log that info here.
         return super()._repr(user=self.username)
 
-    def authenticate(self, transport):
+    def authenticate(self, transport: Transport) -> list[str]:
         # Lazily get the password, in case it's prompting a user
         # TODO: be nice to log source _of_ the password?
         password = self.password_getter()
@@ -98,7 +113,7 @@ class PrivateKey(AuthSource):
     its `super` call.
     """
 
-    def authenticate(self, transport):
+    def authenticate(self, transport: Transport) -> list[str]:
         return transport.auth_publickey(self.username, self.pkey)
 
 
@@ -107,7 +122,9 @@ class InMemoryPrivateKey(PrivateKey):
     An in-memory, decrypted `.PKey` object.
     """
 
-    def __init__(self, username, pkey):
+    pkey: PKey
+
+    def __init__(self, username: str, pkey: PKey) -> None:
         super().__init__(username=username)
         # No decryption (presumably) necessary!
         self.pkey = pkey
@@ -134,7 +151,13 @@ class OnDiskPrivateKey(PrivateKey):
         The `PKey` object this auth source uses/represents.
     """
 
-    def __init__(self, username, source, path, pkey):
+    source: str
+    path: Path
+    pkey: PKey
+
+    def __init__(
+        self, username: str, source: str, path: Path, pkey: PKey
+    ) -> None:
         super().__init__(username=username)
         self.source = source
         allowed = ("ssh-config", "python-config", "implicit-home")
@@ -154,7 +177,10 @@ class OnDiskPrivateKey(PrivateKey):
 # into what Paramiko already had kwargs for?
 
 
-SourceResult = namedtuple("SourceResult", ["source", "result"])
+class SourceResult(NamedTuple):
+    source: AuthSource
+    result: list[str] | Exception
+
 
 # TODO: tempting to make this an OrderedDict, except the keys essentially want
 # to be rich objects (AuthSources) which do not make for useful user indexing?
@@ -196,7 +222,9 @@ class AuthResult(list):
     which was attempted.
     """
 
-    def __init__(self, strategy, *args, **kwargs):
+    strategy: AuthStrategy
+
+    def __init__(self, strategy: AuthStrategy, *args, **kwargs) -> None:
         self.strategy = strategy
         super().__init__(*args, **kwargs)
 
@@ -222,7 +250,9 @@ class AuthFailure(AuthenticationException):
     primarily for backwards compatibility reasons.
     """
 
-    def __init__(self, result):
+    result: AuthResult
+
+    def __init__(self, result: AuthResult) -> None:
         self.result = result
 
     def __str__(self):
@@ -238,14 +268,17 @@ class AuthStrategy:
     their particular strategy.
     """
 
+    ssh_config: SSHConfig
+    log: Logger
+
     def __init__(
         self,
-        ssh_config,
-    ):
+        ssh_config: SSHConfig,
+    ) -> None:
         self.ssh_config = ssh_config
         self.log = get_logger(__name__)
 
-    def get_sources(self):
+    def get_sources(self) -> Iterator[AuthSource]:
         """
         Generator yielding `AuthSource` instances, in the order to try.
 
@@ -257,7 +290,7 @@ class AuthStrategy:
         """
         raise NotImplementedError
 
-    def authenticate(self, transport):
+    def authenticate(self, transport: Transport) -> list[SourceResult]:
         """
         Handles attempting `AuthSource` instances yielded from `get_sources`.
 
@@ -266,6 +299,7 @@ class AuthStrategy:
         """
         succeeded = False
         overall_result = AuthResult(strategy=self)
+        result: list[str] | Exception
         # TODO: arguably we could fit in a "send none auth, record allowed auth
         # types sent back" thing here as OpenSSH-client does, but that likely
         # wants to live in fabric.OpenSSHAuthStrategy as not all target servers

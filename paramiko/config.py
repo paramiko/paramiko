@@ -21,6 +21,8 @@
 Configuration file (aka ``ssh_config``) support.
 """
 
+from __future__ import annotations
+
 import fnmatch
 import getpass
 import os
@@ -30,14 +32,21 @@ import socket
 from hashlib import sha1
 from io import StringIO
 from functools import partial
+from .ssh_exception import CouldNotCanonicalize, ConfigParseError
+from typing import Any, IO, TYPE_CHECKING
 
-invoke, invoke_import_error = None, None
+if TYPE_CHECKING:
+    from collections.abc import Iterable
+    from types import ModuleType
+    from typing_extensions import Self
+    from _typeshed import FileDescriptorOrPath
+
+invoke: ModuleType | None = None
+invoke_import_error: ImportError | None = None
 try:
     import invoke
 except ImportError as e:
     invoke_import_error = e
-
-from .ssh_exception import CouldNotCanonicalize, ConfigParseError
 
 
 SSH_PORT = 22
@@ -54,11 +63,11 @@ class SSHConfig:
     .. versionadded:: 1.6
     """
 
-    SETTINGS_REGEX = re.compile(r"(\w+)(?:\s*=\s*|\s+)(.+)")
+    SETTINGS_REGEX: re.Pattern[str] = re.compile(r"(\w+)(?:\s*=\s*|\s+)(.+)")
 
     # TODO: do a full scan of ssh.c & friends to make sure we're fully
     # compatible across the board, e.g. OpenSSH 8.1 added %n to ProxyCommand.
-    TOKENS_BY_CONFIG_KEY = {
+    TOKENS_BY_CONFIG_KEY: dict[str, list[str]] = {
         "controlpath": ["%C", "%h", "%l", "%L", "%n", "%p", "%r", "%u"],
         "hostname": ["%h"],
         "identityfile": ["%C", "~", "%d", "%h", "%l", "%u", "%r"],
@@ -69,7 +78,7 @@ class SSHConfig:
         "match-exec": ["%C", "%d", "%h", "%L", "%l", "%n", "%p", "%r", "%u"],
     }
 
-    def __init__(self):
+    def __init__(self) -> None:
         """
         Create a new OpenSSH config object.
 
@@ -88,10 +97,10 @@ class SSHConfig:
             # Or if you have arbitrary ssh_config text from some other source:
             config = SSHConfig.from_text("Host foo\\n\\tUser bar")
         """
-        self._config = []
+        self._config: list[dict[str, Any]] = []
 
     @classmethod
-    def from_text(cls, text):
+    def from_text(cls, text: str) -> Self:
         """
         Create a new, parsed `SSHConfig` from ``text`` string.
 
@@ -100,7 +109,7 @@ class SSHConfig:
         return cls.from_file(StringIO(text))
 
     @classmethod
-    def from_path(cls, path):
+    def from_path(cls, path: FileDescriptorOrPath) -> Self:
         """
         Create a new, parsed `SSHConfig` from the file found at ``path``.
 
@@ -110,7 +119,7 @@ class SSHConfig:
             return cls.from_file(flo)
 
     @classmethod
-    def from_file(cls, flo):
+    def from_file(cls, flo: IO[str]) -> Self:
         """
         Create a new, parsed `SSHConfig` from file-like object ``flo``.
 
@@ -120,7 +129,7 @@ class SSHConfig:
         obj.parse(flo)
         return obj
 
-    def parse(self, file_obj):
+    def parse(self, file_obj: IO[str]) -> None:
         """
         Read an OpenSSH config from the given file object.
 
@@ -128,7 +137,7 @@ class SSHConfig:
         """
         # Start out w/ implicit/anonymous global host-like block to hold
         # anything not contained by an explicit one.
-        context = {"host": ["*"], "config": {}}
+        context: dict[str, Any] = {"host": ["*"], "config": {}}
         for line in file_obj:
             # Strip any leading or trailing whitespace from the line.
             # Refer to https://github.com/paramiko/paramiko/issues/499
@@ -180,7 +189,7 @@ class SSHConfig:
         # Store last 'open' block and we're done
         self._config.append(context)
 
-    def lookup(self, hostname):
+    def lookup(self, hostname: str) -> SSHConfigDict:
         """
         Return a dict (`SSHConfigDict`) of config options for a given hostname.
 
@@ -281,7 +290,9 @@ class SSHConfig:
             options = self._expand_variables(options, hostname)
         return options
 
-    def canonicalize(self, hostname, options, domains):
+    def canonicalize(
+        self, hostname: str, options: SSHConfigDict, domains: Iterable[str]
+    ) -> str:
         """
         Return canonicalized version of ``hostname``.
 
@@ -322,7 +333,7 @@ class SSHConfig:
         # need to get mad.
         raise CouldNotCanonicalize(hostname)
 
-    def get_hostnames(self):
+    def get_hostnames(self) -> set[str]:
         """
         Return the set of literal hostnames defined in the SSH config (both
         explicit hostnames and wildcard entries).
@@ -598,7 +609,11 @@ class LazyFqdn:
     Returns the host's fqdn on request as string.
     """
 
-    def __init__(self, config, host=None):
+    fqdn: str | None
+    config: SSHConfig
+    host: str | None
+
+    def __init__(self, config: SSHConfigDict, host: str | None = None) -> None:
         self.fqdn = None
         self.config = config
         self.host = host
@@ -665,7 +680,7 @@ class SSHConfigDict(dict):
     .. versionadded:: 2.5
     """
 
-    def as_bool(self, key):
+    def as_bool(self, key: str) -> bool:
         """
         Express given key's value as a boolean type.
 
@@ -684,7 +699,7 @@ class SSHConfigDict(dict):
             return val
         return val.lower() == "yes"
 
-    def as_int(self, key):
+    def as_int(self, key: str) -> int:
         """
         Express given key's value as an integer, if possible.
 

@@ -22,10 +22,13 @@ read from and closed, but is reading from a buffer fed by another thread.  The
 read operations are blocking and can have a timeout set.
 """
 
+from __future__ import annotations
+
 import array
 import threading
 import time
 from paramiko.util import b
+from typing import AnyStr, Generic
 
 
 class PipeTimeout(IOError):
@@ -36,17 +39,17 @@ class PipeTimeout(IOError):
     pass
 
 
-class BufferedPipe:
+class BufferedPipe(Generic[AnyStr]):
     """
     A buffer that obeys normal read (with timeout) & close semantics for a
     file or socket, but is fed data from another thread.  This is used by
     `.Channel`.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._lock = threading.Lock()
         self._cv = threading.Condition(self._lock)
-        self._event = None
+        self._event: threading.Event | None = None
         self._buffer = array.array("B")
         self._closed = False
 
@@ -56,7 +59,7 @@ class BufferedPipe:
     def _buffer_tobytes(self, limit=None):
         return self._buffer[:limit].tobytes()
 
-    def set_event(self, event):
+    def set_event(self, event: threading.Event) -> None:
         """
         Set an event on this buffer.  When data is ready to be read (or the
         buffer has been closed), the event will be set.  When no data is
@@ -79,7 +82,7 @@ class BufferedPipe:
         finally:
             self._lock.release()
 
-    def feed(self, data):
+    def feed(self, data: AnyStr) -> None:
         """
         Feed new data into this pipe.  This method is assumed to be called
         from a separate thread, so synchronization is done.
@@ -95,7 +98,7 @@ class BufferedPipe:
         finally:
             self._lock.release()
 
-    def read_ready(self):
+    def read_ready(self) -> bool:
         """
         Returns true if data is buffered and ready to be read from this
         feeder.  A ``False`` result does not mean that the feeder has closed;
@@ -113,7 +116,7 @@ class BufferedPipe:
         finally:
             self._lock.release()
 
-    def read(self, nbytes, timeout=None):
+    def read(self, nbytes: int, timeout: float | None = None) -> AnyStr:
         """
         Read data from the pipe.  The return value is a string representing
         the data received.  The maximum amount of data to be received at once
@@ -167,7 +170,7 @@ class BufferedPipe:
 
         return out
 
-    def empty(self):
+    def empty(self) -> AnyStr:
         """
         Clear out the buffer and return all data that was in it.
 
@@ -185,7 +188,7 @@ class BufferedPipe:
         finally:
             self._lock.release()
 
-    def close(self):
+    def close(self) -> None:
         """
         Close this pipe object.  Future calls to `read` after the buffer
         has been emptied will return immediately with an empty string.
@@ -199,7 +202,7 @@ class BufferedPipe:
         finally:
             self._lock.release()
 
-    def __len__(self):
+    def __len__(self) -> int:
         """
         Return the number of bytes buffered.
 

@@ -20,6 +20,8 @@
 Common API for all public keys.
 """
 
+from __future__ import annotations
+
 import base64
 from base64 import encodebytes, decodebytes
 from binascii import unhexlify
@@ -41,6 +43,13 @@ from paramiko.util import u, b
 from paramiko.common import o600
 from paramiko.ssh_exception import SSHException, PasswordRequiredException
 from paramiko.message import Message
+from typing import IO, TypeVar, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing_extensions import Self
+    from _typeshed import FileDescriptorOrPath
+
+    _BytesT = TypeVar("_BytesT", bound=bytes | bytearray)
 
 
 # TripleDES is moving from `cryptography.hazmat.primitives.ciphers.algorithms`
@@ -57,10 +66,10 @@ except ImportError:
     from cryptography.hazmat.primitives.ciphers.algorithms import TripleDES
 
 
-OPENSSH_AUTH_MAGIC = b"openssh-key-v1\x00"
+OPENSSH_AUTH_MAGIC: bytes = b"openssh-key-v1\x00"
 
 
-def _unpad_openssh(data):
+def _unpad_openssh(data: _BytesT) -> _BytesT:
     # At the moment, this is only used for unpadding private keys on disk. This
     # really ought to be made constant time (possibly by upstreaming this logic
     # into pyca/cryptography).
@@ -80,7 +89,11 @@ class UnknownKeyType(Exception):
     An unknown public/private key algorithm was attempted to be read.
     """
 
-    def __init__(self, key_type=None, key_bytes=None):
+    def __init__(
+        self,
+        key_type: str | type | None = None,
+        key_bytes: bytes | None = None,
+    ) -> None:
         self.key_type = key_type
         self.key_bytes = key_bytes
 
@@ -119,11 +132,15 @@ class PKey:
     }
     _PRIVATE_KEY_FORMAT_ORIGINAL = 1
     _PRIVATE_KEY_FORMAT_OPENSSH = 2
-    BEGIN_TAG = re.compile(r"^-{5}BEGIN (RSA|EC|OPENSSH) PRIVATE KEY-{5}\s*$")
-    END_TAG = re.compile(r"^-{5}END (RSA|EC|OPENSSH) PRIVATE KEY-{5}\s*$")
+    BEGIN_TAG: re.Pattern[str] = re.compile(
+        r"^-{5}BEGIN (RSA|EC|OPENSSH) PRIVATE KEY-{5}\s*$"
+    )
+    END_TAG: re.Pattern[str] = re.compile(
+        r"^-{5}END (RSA|EC|OPENSSH) PRIVATE KEY-{5}\s*$"
+    )
 
     @staticmethod
-    def from_path(path, passphrase=None):
+    def from_path(path: Path | str, passphrase: bytes | None = None) -> PKey:
         """
         Attempt to instantiate appropriate key subclass from given file path.
 
@@ -150,14 +167,14 @@ class PKey:
         # /either/ the key /or/ the cert, when there is a key/cert pair.
         cert_suffix = "-cert.pub"
         if str(path).endswith(cert_suffix):
-            key_path = path[: -len(cert_suffix)]
-            cert_path = path
+            key_path_str = path[: -len(cert_suffix)]
+            cert_path_str = path
         else:
-            key_path = path
-            cert_path = path + cert_suffix
+            key_path_str = path
+            cert_path_str = path + cert_suffix
 
-        key_path = Path(key_path).expanduser()
-        cert_path = Path(cert_path).expanduser()
+        key_path = Path(key_path_str).expanduser()
+        cert_path = Path(cert_path_str).expanduser()
 
         data = key_path.read_bytes()
         # Like OpenSSH, try modern/OpenSSH-specific key load first
@@ -178,7 +195,9 @@ class PKey:
         # cycles? seemingly requires most of our key subclasses to be rewritten
         # to be cryptography-object-forward. this is still likely faster than
         # the old SSHClient code that just tried instantiating every class!
-        key_class = None
+        key_class: type[RSAKey] | type[Ed25519Key] | type[
+            ECDSAKey
+        ] | None = None
         if isinstance(loaded, asymmetric.rsa.RSAPrivateKey):
             key_class = RSAKey
         elif isinstance(loaded, asymmetric.ed25519.Ed25519PrivateKey):
@@ -195,7 +214,7 @@ class PKey:
         return key
 
     @staticmethod
-    def from_type_string(key_type, key_bytes):
+    def from_type_string(key_type: str, key_bytes: bytes) -> PKey:
         """
         Given type `str` & raw `bytes`, return a `PKey` subclass instance.
 
@@ -225,7 +244,7 @@ class PKey:
         raise UnknownKeyType(key_type=key_type, key_bytes=key_bytes)
 
     @classmethod
-    def identifiers(cls):
+    def identifiers(cls) -> list[str]:
         """
         returns an iterable of key format/name strings this class can handle.
 
@@ -241,7 +260,9 @@ class PKey:
     # contract is pretty obviously that you need to handle msg/data/filename
     # appropriately. (If 'pass' is a concession to testing, see about doing the
     # work to fix the tests instead)
-    def __init__(self, msg=None, data=None):
+    def __init__(
+        self, msg: Message | None = None, data: str | None = None
+    ) -> None:
         """
         Create a new instance of this public key type.  If ``msg`` is given,
         the key's public part(s) will be filled in from the message.  If
@@ -273,7 +294,7 @@ class PKey:
         return f"PKey(alg={self.algorithm_name}, bits={self.get_bits()}, fp={self.fingerprint}{comment})"  # noqa
 
     # TODO 4.0: just merge into __bytes__ (everywhere)
-    def asbytes(self):
+    def asbytes(self) -> bytes:
         """
         Return a string of an SSH `.Message` made up of the public part(s) of
         this key.  This string is suitable for passing to `__init__` to
@@ -281,20 +302,20 @@ class PKey:
         """
         return bytes()
 
-    def __bytes__(self):
+    def __bytes__(self) -> bytes:
         return self.asbytes()
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
         return isinstance(other, PKey) and self._fields == other._fields
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash(self._fields)
 
     @property
     def _fields(self):
         raise NotImplementedError
 
-    def get_name(self):
+    def get_name(self) -> str:
         """
         Return the name of this private key implementation.
 
@@ -305,7 +326,7 @@ class PKey:
         return ""
 
     @property
-    def algorithm_name(self):
+    def algorithm_name(self) -> str:
         """
         Return the key algorithm identifier for this key.
 
@@ -324,7 +345,7 @@ class PKey:
             name = name.split("-")[0]
         return name.upper()
 
-    def get_bits(self):
+    def get_bits(self) -> int:
         """
         Return the number of significant bits in this key.  This is useful
         for judging the relative security of a key.
@@ -335,14 +356,14 @@ class PKey:
         # _correct_ and nothing in the critical path seems to use this.
         return 0
 
-    def can_sign(self):
+    def can_sign(self) -> bool:
         """
         Return ``True`` if this key has the private part necessary for signing
         data.
         """
         return False
 
-    def get_fingerprint(self):
+    def get_fingerprint(self) -> bytes:
         """
         Return an MD5 fingerprint of the public part of this key.  Nothing
         secret is revealed.
@@ -354,7 +375,7 @@ class PKey:
         return md5(self.asbytes()).digest()
 
     @property
-    def fingerprint(self):
+    def fingerprint(self) -> str:
         """
         Modern fingerprint property designed to be comparable to OpenSSH.
 
@@ -368,7 +389,7 @@ class PKey:
         cleaned = u(b64ed).strip().rstrip("=")  # yes, OpenSSH does this too!
         return f"{hash_name}:{cleaned}"
 
-    def get_base64(self):
+    def get_base64(self) -> str:
         """
         Return a base64 string containing the public part of this key.  Nothing
         secret is revealed.  This format is compatible with that used to store
@@ -378,7 +399,9 @@ class PKey:
         """
         return u(encodebytes(self.asbytes())).replace("\n", "")
 
-    def sign_ssh_data(self, data, algorithm=None):
+    def sign_ssh_data(
+        self, data: bytes, algorithm: str | None = None
+    ) -> Message:
         """
         Sign a blob of data with this private key, and return a `.Message`
         representing an SSH signature message.
@@ -395,7 +418,7 @@ class PKey:
         """
         return bytes()
 
-    def verify_ssh_sig(self, data, msg):
+    def verify_ssh_sig(self, data: bytes, msg: Message) -> bool:
         """
         Given a blob of data, and an SSH message representing a signature of
         that data, verify that it was signed with this key.
@@ -408,7 +431,9 @@ class PKey:
         return False
 
     @classmethod
-    def from_private_key_file(cls, filename, password=None):
+    def from_private_key_file(
+        cls, filename: FileDescriptorOrPath, password: str | None = None
+    ) -> Self:
         """
         Create a key object by reading a private key file.  If the private
         key is encrypted and ``password`` is not ``None``, the given password
@@ -432,7 +457,9 @@ class PKey:
         return key
 
     @classmethod
-    def from_private_key(cls, file_obj, password=None):
+    def from_private_key(
+        cls, file_obj: IO[str], password: str | None = None
+    ) -> Self:
         """
         Create a key object by reading a private key from a file (or file-like)
         object.  If the private key is encrypted and ``password`` is not
@@ -452,7 +479,9 @@ class PKey:
         key = cls(file_obj=file_obj, password=password)
         return key
 
-    def write_private_key_file(self, filename, password=None):
+    def write_private_key_file(
+        self, filename: FileDescriptorOrPath, password: str | None = None
+    ) -> None:
         """
         Write private key contents into a file.  If the password is not
         ``None``, the key is encrypted before writing.
@@ -466,7 +495,9 @@ class PKey:
         """
         raise Exception("Not implemented in PKey")
 
-    def write_private_key(self, file_obj, password=None):
+    def write_private_key(
+        self, file_obj: IO[str], password: str | None = None
+    ) -> None:
         """
         Write private key contents into a file (or file-like) object.  If the
         password is not ``None``, the key is encrypted before writing.
@@ -830,7 +861,7 @@ class PKey:
             err = "Invalid key (class: {}, data type: {}"
             raise SSHException(err.format(self.__class__.__name__, type_))
 
-    def load_certificate(self, value):
+    def load_certificate(self, value: Message | str) -> None:
         """
         Supplement the private key contents with data loaded from an OpenSSH
         public key (``.pub``) or certificate (``-cert.pub``) file, a string
@@ -882,7 +913,9 @@ class PublicBlob:
         basically "I should be using ``attrs`` for this."
     """
 
-    def __init__(self, type_, blob, comment=None):
+    def __init__(
+        self, type_: str, blob: bytes, comment: str | None = None
+    ) -> None:
         """
         Create a new public blob of given type and contents.
 
@@ -895,7 +928,7 @@ class PublicBlob:
         self.comment = comment
 
     @classmethod
-    def from_file(cls, filename):
+    def from_file(cls, filename: FileDescriptorOrPath) -> Self:
         """
         Create a public blob from a ``-cert.pub``-style file on disk.
         """
@@ -904,7 +937,7 @@ class PublicBlob:
         return cls.from_string(string)
 
     @classmethod
-    def from_string(cls, string):
+    def from_string(cls, string: str) -> Self:
         """
         Create a public blob from a ``-cert.pub``-style string.
         """
@@ -931,7 +964,7 @@ class PublicBlob:
         return cls(type_=key_type, blob=key_blob, comment=comment)
 
     @classmethod
-    def from_message(cls, message):
+    def from_message(cls, message: Message) -> Self:
         """
         Create a public blob from a network `.Message`.
 
@@ -947,9 +980,9 @@ class PublicBlob:
             ret += "- {}".format(self.comment)
         return ret
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
         # Just piggyback on Message/BytesIO, since both of these should be one.
         return self and other and self.key_blob == other.key_blob
 
-    def __ne__(self, other):
+    def __ne__(self, other: object) -> bool:
         return not self == other

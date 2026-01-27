@@ -21,6 +21,8 @@
 Core protocol implementation
 """
 
+from __future__ import annotations
+
 import os
 import socket
 import sys
@@ -40,7 +42,7 @@ from cryptography.hazmat.primitives.ciphers import (
 import paramiko
 from paramiko import util
 from paramiko.auth_handler import AuthHandler, AuthOnlyHandler
-from paramiko.ssh_gss import GSSAuth
+from paramiko.ssh_gss import _SSH_GSSAuth, GSSAuth
 from paramiko.channel import Channel
 from paramiko.common import (
     xffffffff,
@@ -108,7 +110,7 @@ from paramiko.packet import Packetizer, NeedRekeyException
 from paramiko.primes import ModulusPack
 from paramiko.rsakey import RSAKey
 from paramiko.ecdsakey import ECDSAKey
-from paramiko.server import ServerInterface
+from paramiko.server import SubsystemHandler, ServerInterface
 from paramiko.sftp_client import SFTPClient
 from paramiko.ssh_exception import (
     BadAuthenticationType,
@@ -123,6 +125,29 @@ from paramiko.util import (
     clamp_value,
     b,
 )
+from typing import Any, Protocol, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Iterable, Mapping, Sequence
+    from logging import Logger
+    from types import ModuleType
+    from _typeshed import FileDescriptorOrPath
+    from typing_extensions import TypeAlias
+    from paramiko.pkey import PKey
+    from paramiko.proxy import ProxyCommand
+    from paramiko.auth_handler import _InteractiveCallback
+
+    _Addr: TypeAlias = tuple[str, int]
+    _SocketLike: TypeAlias = (
+        str | _Addr | socket.socket | Channel | ProxyCommand
+    )
+
+    class _KexEngine(Protocol):
+        def start_kex(self) -> None:
+            ...
+
+        def parse_next(self, ptype: int, m: Message) -> None:
+            ...
 
 
 # TripleDES is moving from `cryptography.hazmat.primitives.ciphers.algorithms`
@@ -140,7 +165,7 @@ except ImportError:
 
 
 # for thread cleanup
-_active_threads = []
+_active_threads: list[Transport] = []
 
 
 def _join_lingering_threads():
@@ -163,6 +188,60 @@ class Transport(threading.Thread, ClosingContextManager):
 
     Instances of this class may be used as context managers.
     """
+
+    active: bool
+    hostname: str | None
+    server_extensions: dict[str, bytes]
+    advertise_strict_kex: bool
+    agreed_on_strict_kex: bool
+    sock: socket.socket | Channel
+    packetizer: Packetizer
+    local_version: str
+    remote_version: str
+    local_cipher: str
+    local_kex_init: bytes | None
+    local_mac: str | None
+    local_compression: str | None
+    session_id: bytes | None
+    host_key_type: str | None
+    host_key: PKey | None
+    use_gss_kex: bool
+    gss_kex_used: bool
+    kexgss_ctxt: _SSH_GSSAuth | None
+    gss_host: str | None
+    kex_engine: _KexEngine | None
+    H: bytes | None
+    K: int | None
+    initial_kex_done: bool
+    in_kex: bool
+    authenticated: bool
+    lock: threading.Lock
+    channel_events: dict[int, threading.Event]
+    channels_seen: dict[int, bool]
+    default_max_packet_size: int
+    default_window_size: int
+    saved_exception: Exception | None
+    clear_to_send: threading.Event
+    clear_to_send_lock: threading.Lock
+    clear_to_send_timeout: float
+    log_name: str
+    logger: Logger
+    auth_handler: AuthHandler | None
+    global_response: Message | None
+    completion_event: threading.Event | None
+    banner_timeout: float
+    handshake_timeout: float
+    auth_timeout: float
+    disabled_algorithms: Mapping[str, Iterable[str]] | None
+    server_mode: bool
+    server_object: ServerInterface | None
+    server_key_dict: dict[str, PKey]
+    server_accepts: list[Channel]
+    server_accept_cv: threading.Condition
+    subsystem_table: dict[
+        str, tuple[type[SubsystemHandler], tuple[Any, ...], dict[str, Any]]
+    ]
+    sys: ModuleType
 
     _ENCRYPT = object()
     _DECRYPT = object()
@@ -342,7 +421,9 @@ class Transport(threading.Thread, ClosingContextManager):
         "ecdh-sha2-nistp521": KexNistp521,
     }
     if KexCurve25519.is_available():
-        _kex_info["curve25519-sha256@libssh.org"] = KexCurve25519
+        _kex_info[
+            "curve25519-sha256@libssh.org"
+        ] = paramiko.kex_curve25519.KexCurve25519
 
     _compression_info = {
         # zlib@openssh.com is just zlib, but only turned on after a successful
@@ -358,16 +439,16 @@ class Transport(threading.Thread, ClosingContextManager):
 
     def __init__(
         self,
-        sock,
-        default_window_size=DEFAULT_WINDOW_SIZE,
-        default_max_packet_size=DEFAULT_MAX_PACKET_SIZE,
-        gss_kex=False,
-        gss_deleg_creds=True,
-        disabled_algorithms=None,
-        server_sig_algs=True,
-        strict_kex=True,
-        packetizer_class=None,
-    ):
+        sock: _SocketLike,
+        default_window_size: int = DEFAULT_WINDOW_SIZE,
+        default_max_packet_size: int = DEFAULT_MAX_PACKET_SIZE,
+        gss_kex: bool = False,
+        gss_deleg_creds: bool = True,
+        disabled_algorithms: Mapping[str, Iterable[str]] | None = None,
+        server_sig_algs: bool = True,
+        strict_kex: bool = True,
+        packetizer_class: type[Packetizer] | None = None,
+    ) -> None:
         """
         Create a new SSH session over an existing socket, or socket-like
         object.  This only creates the `.Transport` object; it doesn't begin
@@ -602,15 +683,15 @@ class Transport(threading.Thread, ClosingContextManager):
         )
 
     @property
-    def preferred_ciphers(self):
+    def preferred_ciphers(self) -> Sequence[str]:
         return self._filter_algorithm("ciphers")
 
     @property
-    def preferred_macs(self):
+    def preferred_macs(self) -> Sequence[str]:
         return self._filter_algorithm("macs")
 
     @property
-    def preferred_keys(self):
+    def preferred_keys(self) -> Sequence[str]:
         # Interleave cert variants here; resistant to various background
         # overwriting of _preferred_keys, and necessary as hostkeys can't use
         # the logic pubkey auth does re: injecting/checking for certs at
@@ -622,15 +703,15 @@ class Transport(threading.Thread, ClosingContextManager):
         )
 
     @property
-    def preferred_pubkeys(self):
+    def preferred_pubkeys(self) -> Sequence[str]:
         return self._filter_algorithm("pubkeys")
 
     @property
-    def preferred_kex(self):
+    def preferred_kex(self) -> Sequence[str]:
         return self._filter_algorithm("kex")
 
     @property
-    def preferred_compression(self):
+    def preferred_compression(self) -> Sequence[str]:
         return self._filter_algorithm("compression")
 
     def __repr__(self):
@@ -658,7 +739,7 @@ class Transport(threading.Thread, ClosingContextManager):
         out += ">"
         return out
 
-    def atfork(self):
+    def atfork(self) -> None:
         """
         Terminate this Transport without closing the session.  On posix
         systems, if a Transport is open during process forking, both parent
@@ -671,7 +752,7 @@ class Transport(threading.Thread, ClosingContextManager):
         self.sock.close()
         self.close()
 
-    def get_security_options(self):
+    def get_security_options(self) -> SecurityOptions:
         """
         Return a `.SecurityOptions` object which can be used to tweak the
         encryption algorithms this transport will permit (for encryption,
@@ -680,7 +761,12 @@ class Transport(threading.Thread, ClosingContextManager):
         """
         return SecurityOptions(self)
 
-    def set_gss_host(self, gss_host, trust_dns=True, gssapi_requested=True):
+    def set_gss_host(
+        self,
+        gss_host: str | None,
+        trust_dns: bool = True,
+        gssapi_requested: bool = True,
+    ) -> None:
         """
         Normalize/canonicalize ``self.gss_host`` depending on various factors.
 
@@ -714,7 +800,11 @@ class Transport(threading.Thread, ClosingContextManager):
         # And set attribute for reference later.
         self.gss_host = gss_host
 
-    def start_client(self, event=None, timeout=None):
+    def start_client(
+        self,
+        event: threading.Event | None = None,
+        timeout: float | None = None,
+    ) -> None:
         """
         Negotiate a new SSH2 session as a client.  This is the first step after
         creating a new `.Transport`.  A separate thread is created for protocol
@@ -772,7 +862,11 @@ class Transport(threading.Thread, ClosingContextManager):
             ):
                 break
 
-    def start_server(self, event=None, server=None):
+    def start_server(
+        self,
+        event: threading.Event | None = None,
+        server: ServerInterface | None = None,
+    ) -> None:
         """
         Negotiate a new SSH2 session as a server.  This is the first step after
         creating a new `.Transport` and setting up your server host key(s).  A
@@ -838,7 +932,7 @@ class Transport(threading.Thread, ClosingContextManager):
             if event.is_set():
                 break
 
-    def add_server_key(self, key):
+    def add_server_key(self, key: PKey) -> None:
         """
         Add a host key to the list of keys used for server mode.  When behaving
         as a server, the host key is used to sign certain packets during the
@@ -857,7 +951,7 @@ class Transport(threading.Thread, ClosingContextManager):
             self.server_key_dict["rsa-sha2-256"] = key
             self.server_key_dict["rsa-sha2-512"] = key
 
-    def get_server_key(self):
+    def get_server_key(self) -> PKey | None:
         """
         Return the active host key, in server mode.  After negotiating with the
         client, this method will return the negotiated host key.  If only one
@@ -879,7 +973,9 @@ class Transport(threading.Thread, ClosingContextManager):
         return None
 
     @staticmethod
-    def load_server_moduli(filename=None):
+    def load_server_moduli(
+        filename: FileDescriptorOrPath | None = None,
+    ) -> bool:
         """
         (optional)
         Load a file of prime moduli for use in doing group-exchange key
@@ -919,7 +1015,7 @@ class Transport(threading.Thread, ClosingContextManager):
         Transport._modulus_pack = None
         return False
 
-    def close(self):
+    def close(self) -> None:
         """
         Close this session, and any open channels that are tied to it.
         """
@@ -930,7 +1026,7 @@ class Transport(threading.Thread, ClosingContextManager):
             chan._unlink()
         self.sock.close()
 
-    def get_remote_server_key(self):
+    def get_remote_server_key(self) -> PKey:
         """
         Return the host key of the server (in client mode).
 
@@ -947,7 +1043,7 @@ class Transport(threading.Thread, ClosingContextManager):
             raise SSHException("No existing session")
         return self.host_key
 
-    def is_active(self):
+    def is_active(self) -> bool:
         """
         Return true if this session is active (open).
 
@@ -958,8 +1054,11 @@ class Transport(threading.Thread, ClosingContextManager):
         return self.active
 
     def open_session(
-        self, window_size=None, max_packet_size=None, timeout=None
-    ):
+        self,
+        window_size: int | None = None,
+        max_packet_size: int | None = None,
+        timeout: float | None = None,
+    ) -> Channel:
         """
         Request a new channel to the server, of type ``"session"``.  This is
         just an alias for calling `open_channel` with an argument of
@@ -992,7 +1091,7 @@ class Transport(threading.Thread, ClosingContextManager):
             timeout=timeout,
         )
 
-    def open_x11_channel(self, src_addr=None):
+    def open_x11_channel(self, src_addr: _Addr | None = None) -> Channel:
         """
         Request a new channel to the client, of type ``"x11"``.  This
         is just an alias for ``open_channel('x11', src_addr=src_addr)``.
@@ -1008,7 +1107,7 @@ class Transport(threading.Thread, ClosingContextManager):
         """
         return self.open_channel("x11", src_addr=src_addr)
 
-    def open_forward_agent_channel(self):
+    def open_forward_agent_channel(self) -> Channel:
         """
         Request a new channel to the client, of type
         ``"auth-agent@openssh.com"``.
@@ -1022,7 +1121,9 @@ class Transport(threading.Thread, ClosingContextManager):
         """
         return self.open_channel("auth-agent@openssh.com")
 
-    def open_forwarded_tcpip_channel(self, src_addr, dest_addr):
+    def open_forwarded_tcpip_channel(
+        self, src_addr: _Addr, dest_addr: _Addr
+    ) -> Channel:
         """
         Request a new channel back to the client, of type ``forwarded-tcpip``.
 
@@ -1036,13 +1137,13 @@ class Transport(threading.Thread, ClosingContextManager):
 
     def open_channel(
         self,
-        kind,
-        dest_addr=None,
-        src_addr=None,
-        window_size=None,
-        max_packet_size=None,
-        timeout=None,
-    ):
+        kind: str,
+        dest_addr: _Addr | None = None,
+        src_addr: _Addr | None = None,
+        window_size: int | None = None,
+        max_packet_size: int | None = None,
+        timeout: float | None = None,
+    ) -> Channel:
         """
         Request a new channel to the server. `Channels <.Channel>` are
         socket-like objects used for the actual transfer of data across the
@@ -1129,7 +1230,12 @@ class Transport(threading.Thread, ClosingContextManager):
             e = SSHException("Unable to open channel.")
         raise e
 
-    def request_port_forward(self, address, port, handler=None):
+    def request_port_forward(
+        self,
+        address: str,
+        port: int,
+        handler: Callable[[Channel, _Addr, _Addr], object] | None = None,
+    ) -> int:
         """
         Ask the server to forward TCP connections from a listening port on
         the server, across this SSH session.
@@ -1183,7 +1289,7 @@ class Transport(threading.Thread, ClosingContextManager):
         self._tcp_handler = handler
         return port
 
-    def cancel_port_forward(self, address, port):
+    def cancel_port_forward(self, address: str, port: int) -> None:
         """
         Ask the server to cancel a previous port-forwarding request.  No more
         connections to the given address & port will be forwarded across this
@@ -1197,7 +1303,7 @@ class Transport(threading.Thread, ClosingContextManager):
         self._tcp_handler = None
         self.global_request("cancel-tcpip-forward", (address, port), wait=True)
 
-    def open_sftp_client(self):
+    def open_sftp_client(self) -> SFTPClient | None:
         """
         Create an SFTP client channel from an open transport.  On success, an
         SFTP session will be opened with the remote host, and a new
@@ -1209,7 +1315,7 @@ class Transport(threading.Thread, ClosingContextManager):
         """
         return SFTPClient.from_transport(self)
 
-    def send_ignore(self, byte_count=None):
+    def send_ignore(self, byte_count: int | None = None) -> None:
         """
         Send a junk packet across the encrypted link.  This is sometimes used
         to add "noise" to a connection to confuse would-be attackers.  It can
@@ -1227,7 +1333,7 @@ class Transport(threading.Thread, ClosingContextManager):
         m.add_bytes(os.urandom(byte_count))
         self._send_user_message(m)
 
-    def renegotiate_keys(self):
+    def renegotiate_keys(self) -> None:
         """
         Force this session to switch to new keys.  Normally this is done
         automatically after the session hits a certain number of packets or
@@ -1253,7 +1359,7 @@ class Transport(threading.Thread, ClosingContextManager):
                 break
         return
 
-    def set_keepalive(self, interval):
+    def set_keepalive(self, interval: float) -> None:
         """
         Turn on/off keepalive packets (default is off).  If this is set, after
         ``interval`` seconds without sending any data over the connection, a
@@ -1270,7 +1376,9 @@ class Transport(threading.Thread, ClosingContextManager):
 
         self.packetizer.set_keepalive(interval, _request)
 
-    def global_request(self, kind, data=None, wait=True):
+    def global_request(
+        self, kind: str, data: Iterable[Any] | None = None, wait: bool = True
+    ) -> Message | None:
         """
         Make a global request to the remote host.  These are normally
         extensions to the SSH2 protocol.
@@ -1307,7 +1415,7 @@ class Transport(threading.Thread, ClosingContextManager):
                 break
         return self.global_response
 
-    def accept(self, timeout=None):
+    def accept(self, timeout: float | None = None) -> Channel | None:
         """
         Return the next channel opened by the client over this transport, in
         server mode.  If no channel is opened before the given timeout,
@@ -1334,16 +1442,16 @@ class Transport(threading.Thread, ClosingContextManager):
 
     def connect(
         self,
-        hostkey=None,
-        username="",
-        password=None,
-        pkey=None,
-        gss_host=None,
-        gss_auth=False,
-        gss_kex=False,
-        gss_deleg_creds=True,
-        gss_trust_dns=True,
-    ):
+        hostkey: PKey | None = None,
+        username: str = "",
+        password: str | None = None,
+        pkey: PKey | None = None,
+        gss_host: str | None = None,
+        gss_auth: bool = False,
+        gss_kex: bool = False,
+        gss_deleg_creds: bool = True,
+        gss_trust_dns: bool = True,
+    ) -> None:
         """
         Negotiate an SSH2 session, and optionally verify the server's host key
         and authenticate using a password or private key.  This is a shortcut
@@ -1460,7 +1568,7 @@ class Transport(threading.Thread, ClosingContextManager):
 
         return
 
-    def get_exception(self):
+    def get_exception(self) -> Exception | None:
         """
         Return any exception that happened during the last server request.
         This can be used to fetch more specific error information after using
@@ -1480,7 +1588,9 @@ class Transport(threading.Thread, ClosingContextManager):
         finally:
             self.lock.release()
 
-    def set_subsystem_handler(self, name, handler, *args, **kwargs):
+    def set_subsystem_handler(
+        self, name: str, handler: type[SubsystemHandler], *args, **kwargs
+    ) -> None:
         """
         Set the handler class for a subsystem in server mode.  If a request
         for this subsystem is made on an open ssh channel later, this handler
@@ -1500,7 +1610,7 @@ class Transport(threading.Thread, ClosingContextManager):
         finally:
             self.lock.release()
 
-    def is_authenticated(self):
+    def is_authenticated(self) -> bool:
         """
         Return true if this session is active and authenticated.
 
@@ -1515,7 +1625,7 @@ class Transport(threading.Thread, ClosingContextManager):
             and self.auth_handler.is_authenticated()
         )
 
-    def get_username(self):
+    def get_username(self) -> str | None:
         """
         Return the username this connection is authenticated for.  If the
         session is not authenticated (or authentication failed), this method
@@ -1527,7 +1637,7 @@ class Transport(threading.Thread, ClosingContextManager):
             return None
         return self.auth_handler.get_username()
 
-    def get_banner(self):
+    def get_banner(self) -> bytes | None:
         """
         Return the banner supplied by the server upon connect. If no banner is
         supplied, this method returns ``None``.
@@ -1540,7 +1650,7 @@ class Transport(threading.Thread, ClosingContextManager):
             return None
         return self.auth_handler.banner
 
-    def auth_none(self, username):
+    def auth_none(self, username: str) -> list[str]:
         """
         Try to authenticate to the server using no authentication at all.
         This will almost always fail.  It may be useful for determining the
@@ -1568,7 +1678,13 @@ class Transport(threading.Thread, ClosingContextManager):
         self.auth_handler.auth_none(username, my_event)
         return self.auth_handler.wait_for_response(my_event)
 
-    def auth_password(self, username, password, event=None, fallback=True):
+    def auth_password(
+        self,
+        username: str,
+        password: str,
+        event: threading.Event | None = None,
+        fallback: bool = True,
+    ) -> list[str]:
         """
         Authenticate to the server using a password.  The username and password
         are sent over an encrypted link.
@@ -1653,7 +1769,9 @@ class Transport(threading.Thread, ClosingContextManager):
                 # attempt failed; just raise the original exception
                 raise e
 
-    def auth_publickey(self, username, key, event=None):
+    def auth_publickey(
+        self, username: str, key: PKey, event: threading.Event | None = None
+    ) -> list[str]:
         """
         Authenticate to the server using a private key.  The key is used to
         sign data from the server, so it must include the private part.
@@ -1702,7 +1820,12 @@ class Transport(threading.Thread, ClosingContextManager):
             return []
         return self.auth_handler.wait_for_response(my_event)
 
-    def auth_interactive(self, username, handler, submethods=""):
+    def auth_interactive(
+        self,
+        username: str,
+        handler: _InteractiveCallback,
+        submethods: str = "",
+    ) -> list[str]:
         """
         Authenticate to the server interactively.  A handler is used to answer
         arbitrary questions from the server.  On many servers, this is just a
@@ -1755,7 +1878,12 @@ class Transport(threading.Thread, ClosingContextManager):
         )
         return self.auth_handler.wait_for_response(my_event)
 
-    def auth_interactive_dumb(self, username, handler=None, submethods=""):
+    def auth_interactive_dumb(
+        self,
+        username: str,
+        handler: _InteractiveCallback | None = None,
+        submethods: str = "",
+    ) -> list[str]:
         """
         Authenticate to the server interactively but dumber.
         Just print the prompt and / or instructions to stdout and send back
@@ -1778,7 +1906,9 @@ class Transport(threading.Thread, ClosingContextManager):
 
         return self.auth_interactive(username, handler, submethods)
 
-    def auth_gssapi_with_mic(self, username, gss_host, gss_deleg_creds):
+    def auth_gssapi_with_mic(
+        self, username: str, gss_host: str, gss_deleg_creds: bool
+    ) -> list[str]:
         """
         Authenticate to the Server using GSS-API / SSPI.
 
@@ -1804,7 +1934,7 @@ class Transport(threading.Thread, ClosingContextManager):
         )
         return self.auth_handler.wait_for_response(my_event)
 
-    def auth_gssapi_keyex(self, username):
+    def auth_gssapi_keyex(self, username: str) -> list[str]:
         """
         Authenticate to the server with GSS-API/SSPI if GSS-API kex is in use.
 
@@ -1827,7 +1957,7 @@ class Transport(threading.Thread, ClosingContextManager):
         self.auth_handler.auth_gssapi_keyex(username, my_event)
         return self.auth_handler.wait_for_response(my_event)
 
-    def set_log_channel(self, name):
+    def set_log_channel(self, name: str) -> None:
         """
         Set the channel for this transport's logging.  The default is
         ``"paramiko.transport"`` but it can be set to anything you want. (See
@@ -1842,7 +1972,7 @@ class Transport(threading.Thread, ClosingContextManager):
         self.logger = util.get_logger(name)
         self.packetizer.set_log(self.logger)
 
-    def get_log_channel(self):
+    def get_log_channel(self) -> str:
         """
         Return the channel name used for this transport's logging.
 
@@ -1852,7 +1982,7 @@ class Transport(threading.Thread, ClosingContextManager):
         """
         return self.log_name
 
-    def set_hexdump(self, hexdump):
+    def set_hexdump(self, hexdump: bool) -> None:
         """
         Turn on/off logging a hex dump of protocol traffic at DEBUG level in
         the logs.  Normally you would want this off (which is the default),
@@ -1864,7 +1994,7 @@ class Transport(threading.Thread, ClosingContextManager):
         """
         self.packetizer.set_hexdump(hexdump)
 
-    def get_hexdump(self):
+    def get_hexdump(self) -> bool:
         """
         Return ``True`` if the transport is currently logging hex dumps of
         protocol traffic.
@@ -1875,7 +2005,7 @@ class Transport(threading.Thread, ClosingContextManager):
         """
         return self.packetizer.get_hexdump()
 
-    def use_compression(self, compress=True):
+    def use_compression(self, compress: bool = True) -> None:
         """
         Turn on/off compression.  This will only have an affect before starting
         the transport (ie before calling `connect`, etc).  By default,
@@ -1892,7 +2022,7 @@ class Transport(threading.Thread, ClosingContextManager):
         else:
             self._preferred_compression = ("none",)
 
-    def getpeername(self):
+    def getpeername(self) -> tuple[str, int]:
         """
         Return the address of the remote side of this Transport, if possible.
 
@@ -1909,7 +2039,7 @@ class Transport(threading.Thread, ClosingContextManager):
             return "unknown", 0
         return gp()
 
-    def stop_thread(self):
+    def stop_thread(self) -> None:
         self.active = False
         self.packetizer.close()
         # Keep trying to join() our main thread, quickly, until:
@@ -2152,7 +2282,7 @@ class Transport(threading.Thread, ClosingContextManager):
                 f"In strict-kex mode, but was sent {name!r}!"
             )
 
-    def run(self):
+    def run(self) -> None:
         # (use the exposed "run" method, because if we specify a thread target
         # of a private method, threading.Thread will keep a reference to it
         # indefinitely, creating a GC cycle and not letting Transport ever be
@@ -3187,7 +3317,7 @@ class SecurityOptions:
 
     __slots__ = "_transport"
 
-    def __init__(self, transport):
+    def __init__(self, transport: Transport) -> None:
         self._transport = transport
 
     def __repr__(self):
@@ -3208,72 +3338,72 @@ class SecurityOptions:
         setattr(self._transport, name, x)
 
     @property
-    def ciphers(self):
+    def ciphers(self) -> Sequence[str]:
         """Symmetric encryption ciphers"""
         return self._transport._preferred_ciphers
 
     @ciphers.setter
-    def ciphers(self, x):
+    def ciphers(self, x: Sequence[str]) -> None:
         self._set("_preferred_ciphers", "_cipher_info", x)
 
     @property
-    def digests(self):
+    def digests(self) -> Sequence[str]:
         """Digest (one-way hash) algorithms"""
         return self._transport._preferred_macs
 
     @digests.setter
-    def digests(self, x):
+    def digests(self, x: Sequence[str]) -> None:
         self._set("_preferred_macs", "_mac_info", x)
 
     @property
-    def key_types(self):
+    def key_types(self) -> Sequence[str]:
         """Public-key algorithms"""
         return self._transport._preferred_keys
 
     @key_types.setter
-    def key_types(self, x):
+    def key_types(self, x: Sequence[str]) -> None:
         self._set("_preferred_keys", "_key_info", x)
 
     @property
-    def kex(self):
+    def kex(self) -> Sequence[str]:
         """Key exchange algorithms"""
         return self._transport._preferred_kex
 
     @kex.setter
-    def kex(self, x):
+    def kex(self, x: Sequence[str]) -> None:
         self._set("_preferred_kex", "_kex_info", x)
 
     @property
-    def compression(self):
+    def compression(self) -> Sequence[str]:
         """Compression algorithms"""
         return self._transport._preferred_compression
 
     @compression.setter
-    def compression(self, x):
+    def compression(self, x: Sequence[str]) -> None:
         self._set("_preferred_compression", "_compression_info", x)
 
 
 class ChannelMap:
-    def __init__(self):
+    def __init__(self) -> None:
         # (id -> Channel)
         self._map = weakref.WeakValueDictionary()
         self._lock = threading.Lock()
 
-    def put(self, chanid, chan):
+    def put(self, chanid: int, chan: Channel) -> None:
         self._lock.acquire()
         try:
             self._map[chanid] = chan
         finally:
             self._lock.release()
 
-    def get(self, chanid):
+    def get(self, chanid: int) -> Channel:
         self._lock.acquire()
         try:
             return self._map.get(chanid, None)
         finally:
             self._lock.release()
 
-    def delete(self, chanid):
+    def delete(self, chanid: int) -> None:
         self._lock.acquire()
         try:
             try:
@@ -3283,14 +3413,14 @@ class ChannelMap:
         finally:
             self._lock.release()
 
-    def values(self):
+    def values(self) -> list[Channel]:
         self._lock.acquire()
         try:
             return list(self._map.values())
         finally:
             self._lock.release()
 
-    def __len__(self):
+    def __len__(self) -> int:
         self._lock.acquire()
         try:
             return len(self._map)
@@ -3335,7 +3465,7 @@ class ServiceRequestingTransport(Transport):
         self._service_userauth_accepted = True
         self._log(DEBUG, "MSG_SERVICE_ACCEPT received; auth may begin")
 
-    def ensure_session(self):
+    def ensure_session(self) -> None:
         # Make sure we're not trying to auth on a not-yet-open or
         # already-closed transport session; that's our responsibility, not that
         # of AuthHandler.
@@ -3371,7 +3501,7 @@ class ServiceRequestingTransport(Transport):
             time.sleep(0.1)
         self.auth_handler = self.get_auth_handler()
 
-    def get_auth_handler(self):
+    def get_auth_handler(self) -> AuthOnlyHandler:
         # NOTE: using new sibling subclass instead of classic AuthHandler
         return AuthOnlyHandler(self)
 
@@ -3380,7 +3510,9 @@ class ServiceRequestingTransport(Transport):
         self.ensure_session()
         return self.auth_handler.auth_none(username)
 
-    def auth_password(self, username, password, fallback=True):
+    def auth_password(
+        self, username: str, password: str, fallback: bool = True
+    ) -> list[str]:
         # TODO 4.0: merge to parent, preserving (most of) docstring
         self.ensure_session()
         try:
@@ -3408,7 +3540,7 @@ class ServiceRequestingTransport(Transport):
                 # attempt to fudge failed; just raise the original exception
                 raise e
 
-    def auth_publickey(self, username, key):
+    def auth_publickey(self, username: str, key: PKey) -> list[str]:
         # TODO 4.0: merge to parent, preserving (most of) docstring
         self.ensure_session()
         return self.auth_handler.auth_publickey(username, key)

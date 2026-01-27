@@ -20,9 +20,17 @@
 Abstraction of an SFTP file handle (for server mode).
 """
 
+from __future__ import annotations
+
 import os
 from paramiko.sftp import SFTP_OP_UNSUPPORTED, SFTP_OK
 from paramiko.util import ClosingContextManager
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from _typeshed import ReadableBuffer
+    from paramiko.sftp_attr import SFTPAttributes
+    from paramiko.sftp_server import SFTPServer
 
 
 class SFTPHandle(ClosingContextManager):
@@ -37,7 +45,7 @@ class SFTPHandle(ClosingContextManager):
     Instances of this class may be used as context managers.
     """
 
-    def __init__(self, flags=0):
+    def __init__(self, flags: int = 0) -> None:
         """
         Create a new file handle representing a local file being served over
         SFTP.  If ``flags`` is passed in, it's used to determine if the file
@@ -50,9 +58,9 @@ class SFTPHandle(ClosingContextManager):
         self.__name = None
         # only for handles to folders:
         self.__files = {}
-        self.__tell = None
+        self.__tell: int | None = None
 
-    def close(self):
+    def close(self) -> None:
         """
         When a client closes a file, this method is called on the handle.
         Normally you would use this method to close the underlying OS level
@@ -71,7 +79,7 @@ class SFTPHandle(ClosingContextManager):
         if writefile is not None:
             writefile.close()
 
-    def read(self, offset, length):
+    def read(self, offset: int, length: int) -> bytes | int:
         """
         Read up to ``length`` bytes from this file, starting at position
         ``offset``.  The offset may be a Python long, since SFTP allows it
@@ -105,7 +113,7 @@ class SFTPHandle(ClosingContextManager):
         self.__tell += len(data)
         return data
 
-    def write(self, offset, data):
+    def write(self, offset: int, data: ReadableBuffer) -> int:
         """
         Write ``data`` into this file at position ``offset``.  Extending the
         file past its original end is expected.  Unlike Python's normal
@@ -143,7 +151,7 @@ class SFTPHandle(ClosingContextManager):
             self.__tell += len(data)
         return SFTP_OK
 
-    def stat(self):
+    def stat(self) -> int | SFTPAttributes:
         """
         Return an `.SFTPAttributes` object referring to this open file, or an
         error code.  This is equivalent to `.SFTPServerInterface.stat`, except
@@ -156,7 +164,7 @@ class SFTPHandle(ClosingContextManager):
         """
         return SFTP_OP_UNSUPPORTED
 
-    def chattr(self, attr):
+    def chattr(self, attr: SFTPAttributes) -> int:
         """
         Change the attributes of this file.  The ``attr`` object will contain
         only those fields provided by the client in its request, so you should
@@ -191,6 +199,3 @@ class SFTPHandle(ClosingContextManager):
 
     def _set_name(self, name):
         self.__name = name
-
-
-from paramiko.sftp_server import SFTPServer

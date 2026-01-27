@@ -20,12 +20,26 @@
 Implementation of an SSH2 "message".
 """
 
+from __future__ import annotations
+
 import struct
 from io import BytesIO
 
 from paramiko import util
 from paramiko.common import zero_byte, max_byte, one_byte
 from paramiko.util import u
+from collections.abc import Iterable
+from typing import Protocol, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from _typeshed import ReadableBuffer
+    from typing_extensions import TypeAlias
+
+    class _SupportsAsBytes(Protocol):
+        def asbytes(self) -> bytes:
+            ...
+
+    _LikeBytes: TypeAlias = bytes | str | _SupportsAsBytes | ReadableBuffer
 
 
 class Message:
@@ -41,7 +55,7 @@ class Message:
 
     big_int = 0xFF000000
 
-    def __init__(self, content=None):
+    def __init__(self, content: ReadableBuffer | None = None) -> None:
         """
         Create a new SSH2 message.
 
@@ -54,7 +68,7 @@ class Message:
         else:
             self.packet = BytesIO()
 
-    def __bytes__(self):
+    def __bytes__(self) -> bytes:
         return self.asbytes()
 
     def __repr__(self):
@@ -64,20 +78,20 @@ class Message:
         return "paramiko.Message(" + repr(self.packet.getvalue()) + ")"
 
     # TODO 4.0: just merge into __bytes__ (everywhere)
-    def asbytes(self):
+    def asbytes(self) -> bytes:
         """
         Return the byte stream content of this Message, as a `bytes`.
         """
         return self.packet.getvalue()
 
-    def rewind(self):
+    def rewind(self) -> None:
         """
         Rewind the message to the beginning as if no items had been parsed
         out of it yet.
         """
         self.packet.seek(0)
 
-    def get_remainder(self):
+    def get_remainder(self) -> bytes:
         """
         Return the `bytes` of this message that haven't already been parsed and
         returned.
@@ -87,7 +101,7 @@ class Message:
         self.packet.seek(position)
         return remainder
 
-    def get_so_far(self):
+    def get_so_far(self) -> bytes:
         """
         Returns the `bytes` of this message that have been parsed and
         returned. The string passed into a message's constructor can be
@@ -97,7 +111,7 @@ class Message:
         self.rewind()
         return self.packet.read(position)
 
-    def get_bytes(self, n):
+    def get_bytes(self, n: int) -> bytes:
         """
         Return the next ``n`` bytes of the message, without decomposing into an
         int, decoded string, etc.  Just the raw bytes are returned. Returns a
@@ -110,7 +124,7 @@ class Message:
             return b + zero_byte * (n - len(b))
         return b
 
-    def get_byte(self):
+    def get_byte(self) -> bytes:
         """
         Return the next byte of the message, without decomposing it.  This
         is equivalent to `get_bytes(1) <get_bytes>`.
@@ -121,14 +135,14 @@ class Message:
         """
         return self.get_bytes(1)
 
-    def get_boolean(self):
+    def get_boolean(self) -> bool:
         """
         Fetch a boolean from the stream.
         """
         b = self.get_bytes(1)
         return b != zero_byte
 
-    def get_adaptive_int(self):
+    def get_adaptive_int(self) -> int:
         """
         Fetch an int from the stream.
 
@@ -140,13 +154,13 @@ class Message:
         byte += self.get_bytes(3)
         return struct.unpack(">I", byte)[0]
 
-    def get_int(self):
+    def get_int(self) -> int:
         """
         Fetch an int from the stream.
         """
         return struct.unpack(">I", self.get_bytes(4))[0]
 
-    def get_int64(self):
+    def get_int64(self) -> int:
         """
         Fetch a 64-bit int from the stream.
 
@@ -154,7 +168,7 @@ class Message:
         """
         return struct.unpack(">Q", self.get_bytes(8))[0]
 
-    def get_mpint(self):
+    def get_mpint(self) -> int:
         """
         Fetch a long int (mpint) from the stream.
 
@@ -164,7 +178,7 @@ class Message:
 
     # TODO 4.0: depending on where this is used internally or downstream, force
     # users to specify get_binary instead and delete this.
-    def get_string(self):
+    def get_string(self) -> bytes:
         """
         Fetch a "string" from the stream.  This will actually be a `bytes`
         object, and may contain unprintable characters.  (It's not unheard of
@@ -174,7 +188,7 @@ class Message:
 
     # TODO 4.0: also consider having this take over the get_string name, and
     # remove this name instead.
-    def get_text(self):
+    def get_text(self) -> str:
         """
         Fetch a Unicode string from the stream.
 
@@ -183,13 +197,13 @@ class Message:
         """
         return u(self.get_string())
 
-    def get_binary(self):
+    def get_binary(self) -> bytes:
         """
         Alias for `get_string` (obtains a bytestring).
         """
         return self.get_bytes(self.get_int())
 
-    def get_list(self):
+    def get_list(self) -> list[str]:
         """
         Fetch a list of `strings <str>` from the stream.
 
@@ -197,7 +211,7 @@ class Message:
         """
         return self.get_text().split(",")
 
-    def add_bytes(self, b):
+    def add_bytes(self, b: ReadableBuffer) -> Message:
         """
         Write bytes to the stream, without any formatting.
 
@@ -206,7 +220,7 @@ class Message:
         self.packet.write(b)
         return self
 
-    def add_byte(self, b):
+    def add_byte(self, b: ReadableBuffer) -> Message:
         """
         Write a single byte to the stream, without any formatting.
 
@@ -215,7 +229,7 @@ class Message:
         self.packet.write(b)
         return self
 
-    def add_boolean(self, b):
+    def add_boolean(self, b: bool) -> Message:
         """
         Add a boolean value to the stream.
 
@@ -227,7 +241,7 @@ class Message:
             self.packet.write(zero_byte)
         return self
 
-    def add_int(self, n):
+    def add_int(self, n: int) -> Message:
         """
         Add an integer to the stream.
 
@@ -236,7 +250,7 @@ class Message:
         self.packet.write(struct.pack(">I", n))
         return self
 
-    def add_adaptive_int(self, n):
+    def add_adaptive_int(self, n: int) -> Message:
         """
         Add an integer to the stream.
 
@@ -249,7 +263,7 @@ class Message:
             self.packet.write(struct.pack(">I", n))
         return self
 
-    def add_int64(self, n):
+    def add_int64(self, n: int) -> Message:
         """
         Add a 64-bit int to the stream.
 
@@ -258,7 +272,7 @@ class Message:
         self.packet.write(struct.pack(">Q", n))
         return self
 
-    def add_mpint(self, z):
+    def add_mpint(self, z: int) -> Message:
         """
         Add a long int to the stream, encoded as an infinite-precision
         integer.  This method only works on positive numbers.
@@ -270,7 +284,7 @@ class Message:
 
     # TODO: see the TODO for get_string/get_text/et al, this should change
     # to match.
-    def add_string(self, s):
+    def add_string(self, s: _LikeBytes) -> Message:
         """
         Add a bytestring to the stream.
 
@@ -281,7 +295,7 @@ class Message:
         self.packet.write(s)
         return self
 
-    def add_list(self, l):  # noqa: E741
+    def add_list(self, l: Iterable[str]) -> Message:  # noqa: E741
         """
         Add a list of strings to the stream.  They are encoded identically to
         a single string of values separated by commas.  (Yes, really, that's
@@ -304,7 +318,7 @@ class Message:
 
     # TODO: this would never have worked for unicode strings under Python 3,
     # guessing nobody/nothing ever used it for that purpose?
-    def add(self, *seq):
+    def add(self, *seq) -> None:
         """
         Add a sequence of items to the stream.  The values are encoded based
         on their type: bytes, str, int, bool, or list.

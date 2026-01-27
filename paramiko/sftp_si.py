@@ -20,9 +20,17 @@
 An interface to override for SFTP server support.
 """
 
+from __future__ import annotations
+
 import os
 import sys
 from paramiko.sftp import SFTP_OP_UNSUPPORTED
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from paramiko.server import ServerInterface
+    from paramiko.sftp_attr import SFTPAttributes
+    import paramiko.sftp_handle
 
 
 class SFTPServerInterface:
@@ -40,7 +48,7 @@ class SFTPServerInterface:
     clients & servers obey the requirement that paths be encoded in UTF-8.
     """
 
-    def __init__(self, server, *args, **kwargs):
+    def __init__(self, server: ServerInterface, *args, **kwargs) -> None:
         """
         Create a new SFTPServerInterface object.  This method does nothing by
         default and is meant to be overridden by subclasses.
@@ -50,7 +58,7 @@ class SFTPServerInterface:
         """
         super().__init__(*args, **kwargs)
 
-    def session_started(self):
+    def session_started(self) -> None:
         """
         The SFTP server session has just started.  This method is meant to be
         overridden to perform any necessary setup before handling callbacks
@@ -58,7 +66,7 @@ class SFTPServerInterface:
         """
         pass
 
-    def session_ended(self):
+    def session_ended(self) -> None:
         """
         The SFTP server session has just ended, either cleanly or via an
         exception.  This method is meant to be overridden to perform any
@@ -67,7 +75,9 @@ class SFTPServerInterface:
         """
         pass
 
-    def open(self, path, flags, attr):
+    def open(
+        self, path: str, flags: int, attr: SFTPAttributes
+    ) -> paramiko.sftp_handle.SFTPHandle | int:
         """
         Open a file on the server and create a handle for future operations
         on that file.  On success, a new object subclassed from `.SFTPHandle`
@@ -107,7 +117,7 @@ class SFTPServerInterface:
         """
         return SFTP_OP_UNSUPPORTED
 
-    def list_folder(self, path):
+    def list_folder(self, path: str) -> list[SFTPAttributes] | int:
         """
         Return a list of files within a given folder.  The ``path`` will use
         posix notation (``"/"`` separates folder names) and may be an absolute
@@ -139,7 +149,7 @@ class SFTPServerInterface:
         """
         return SFTP_OP_UNSUPPORTED
 
-    def stat(self, path):
+    def stat(self, path: str) -> SFTPAttributes | int:
         """
         Return an `.SFTPAttributes` object for a path on the server, or an
         error code.  If your server supports symbolic links (also known as
@@ -155,7 +165,7 @@ class SFTPServerInterface:
         """
         return SFTP_OP_UNSUPPORTED
 
-    def lstat(self, path):
+    def lstat(self, path: str) -> SFTPAttributes | int:
         """
         Return an `.SFTPAttributes` object for a path on the server, or an
         error code.  If your server supports symbolic links (also known as
@@ -173,7 +183,7 @@ class SFTPServerInterface:
         """
         return SFTP_OP_UNSUPPORTED
 
-    def remove(self, path):
+    def remove(self, path: str) -> int:
         """
         Delete a file, if possible.
 
@@ -183,7 +193,7 @@ class SFTPServerInterface:
         """
         return SFTP_OP_UNSUPPORTED
 
-    def rename(self, oldpath, newpath):
+    def rename(self, oldpath: str, newpath: str) -> int:
         """
         Rename (or move) a file.  The SFTP specification implies that this
         method can be used to move an existing file into a different folder,
@@ -207,7 +217,7 @@ class SFTPServerInterface:
         """
         return SFTP_OP_UNSUPPORTED
 
-    def posix_rename(self, oldpath, newpath):
+    def posix_rename(self, oldpath: str, newpath: str) -> int:
         """
         Rename (or move) a file, following posix conventions. If newpath
         already exists, it will be overwritten.
@@ -221,7 +231,7 @@ class SFTPServerInterface:
         """
         return SFTP_OP_UNSUPPORTED
 
-    def mkdir(self, path, attr):
+    def mkdir(self, path: str, attr: SFTPAttributes) -> int:
         """
         Create a new directory with the given attributes.  The ``attr``
         object may be considered a "hint" and ignored.
@@ -238,7 +248,7 @@ class SFTPServerInterface:
         """
         return SFTP_OP_UNSUPPORTED
 
-    def rmdir(self, path):
+    def rmdir(self, path: str) -> int:
         """
         Remove a directory if it exists.  The ``path`` should refer to an
         existing, empty folder -- otherwise this method should return an
@@ -250,7 +260,7 @@ class SFTPServerInterface:
         """
         return SFTP_OP_UNSUPPORTED
 
-    def chattr(self, path, attr):
+    def chattr(self, path: str, attr: SFTPAttributes) -> int:
         """
         Change the attributes of a file.  The ``attr`` object will contain
         only those fields provided by the client in its request, so you
@@ -265,7 +275,7 @@ class SFTPServerInterface:
         """
         return SFTP_OP_UNSUPPORTED
 
-    def canonicalize(self, path):
+    def canonicalize(self, path: str) -> str:
         """
         Return the canonical form of a path on the server.  For example,
         if the server's home folder is ``/home/foo``, the path
@@ -288,7 +298,7 @@ class SFTPServerInterface:
             out = out.replace("\\", "/")
         return out
 
-    def readlink(self, path):
+    def readlink(self, path: str) -> str | int:
         """
         Return the target of a symbolic link (or shortcut) on the server.
         If the specified path doesn't refer to a symbolic link, an error
@@ -301,7 +311,7 @@ class SFTPServerInterface:
         """
         return SFTP_OP_UNSUPPORTED
 
-    def symlink(self, target_path, path):
+    def symlink(self, target_path: str, path: str) -> int:
         """
         Create a symbolic link on the server, as new pathname ``path``,
         with ``target_path`` as the target of the link.

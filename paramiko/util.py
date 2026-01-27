@@ -20,6 +20,7 @@
 Useful functions used by the rest of paramiko.
 """
 
+from __future__ import annotations
 
 import sys
 import struct
@@ -27,6 +28,7 @@ import traceback
 import threading
 import logging
 
+import paramiko.hostkeys
 from paramiko.common import (
     DEBUG,
     zero_byte,
@@ -35,10 +37,18 @@ from paramiko.common import (
     byte_ord,
     byte_chr,
 )
-from paramiko.config import SSHConfig
+from paramiko.config import SSHConfigDict, SSHConfig
+from typing import AnyStr, IO, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
+    import hashlib
+    from types import TracebackType
+    from typing_extensions import Self
+    from _typeshed import FileDescriptorOrPath, ReadableBuffer
 
 
-def inflate_long(s, always_positive=False):
+def inflate_long(s: bytes | bytearray, always_positive: bool = False) -> int:
     """turns a normalized byte string into a long-int
     (adapted from Crypto.Util.number)"""
     out = 0
@@ -59,7 +69,7 @@ def inflate_long(s, always_positive=False):
     return out
 
 
-def deflate_long(n, add_sign_padding=True):
+def deflate_long(n: int, add_sign_padding: bool = True) -> bytes:
     """turns a long-int into a normalized byte string
     (adapted from Crypto.Util.number)"""
     # after much testing, this algorithm was deemed to be the fastest
@@ -90,7 +100,7 @@ def deflate_long(n, add_sign_padding=True):
     return s
 
 
-def format_binary(data, prefix=""):
+def format_binary(data: bytes | bytearray, prefix: str = "") -> list[str]:
     x = 0
     out = []
     while len(data) > x + 16:
@@ -101,7 +111,7 @@ def format_binary(data, prefix=""):
     return [prefix + line for line in out]
 
 
-def format_binary_line(data):
+def format_binary_line(data: bytes | bytearray) -> str:
     left = " ".join(["{:02X}".format(byte_ord(c)) for c in data])
     right = "".join(
         [".{:c}..".format(byte_ord(c))[(byte_ord(c) + 63) // 95] for c in data]
@@ -109,7 +119,7 @@ def format_binary_line(data):
     return "{:50s} {}".format(left, right)
 
 
-def safe_string(s):
+def safe_string(s: Iterable[int | str]) -> bytes:
     out = b""
     for c in s:
         i = byte_ord(c)
@@ -120,7 +130,7 @@ def safe_string(s):
     return out
 
 
-def bit_length(n):
+def bit_length(n: int) -> int:
     try:
         return n.bit_length()
     except AttributeError:
@@ -135,11 +145,16 @@ def bit_length(n):
         return bitlen
 
 
-def tb_strings():
+def tb_strings() -> list[str]:
     return "".join(traceback.format_exception(*sys.exc_info())).split("\n")
 
 
-def generate_key_bytes(hash_alg, salt, key, nbytes):
+def generate_key_bytes(
+    hash_alg: type[hashlib._Hash],
+    salt: ReadableBuffer,
+    key: bytes | str,
+    nbytes: int,
+) -> bytes:
     """
     Given a password, passphrase, or other human-source key, scramble it
     through a secure hash into some keyworthy bytes.  This specific algorithm
@@ -170,7 +185,9 @@ def generate_key_bytes(hash_alg, salt, key, nbytes):
     return keydata
 
 
-def load_host_keys(filename):
+def load_host_keys(
+    filename: FileDescriptorOrPath,
+) -> paramiko.hostkeys.HostKeys:
     """
     Read a file of known SSH host keys, in the format used by openssh, and
     return a compound dict of ``hostname -> keytype ->`` `PKey
@@ -185,12 +202,11 @@ def load_host_keys(filename):
     :return:
         nested dict of `.PKey` objects, indexed by hostname and then keytype
     """
-    from paramiko.hostkeys import HostKeys
 
-    return HostKeys(filename)
+    return paramiko.hostkeys.HostKeys(filename)
 
 
-def parse_ssh_config(file_obj):
+def parse_ssh_config(file_obj: IO[str]) -> SSHConfig:
     """
     Provided only as a backward-compatible wrapper around `.SSHConfig`.
 
@@ -202,14 +218,14 @@ def parse_ssh_config(file_obj):
     return config
 
 
-def lookup_ssh_host_config(hostname, config):
+def lookup_ssh_host_config(hostname: str, config: SSHConfig) -> SSHConfigDict:
     """
     Provided only as a backward-compatible wrapper around `.SSHConfig`.
     """
     return config.lookup(hostname)
 
 
-def mod_inverse(x, m):
+def mod_inverse(x: int, m: int) -> int:
     # it's crazy how small Python can make this function.
     u1, u2, u3 = 1, 0, m
     v1, v2, v3 = 0, 1, x
@@ -229,7 +245,7 @@ _g_thread_counter = 0
 _g_thread_lock = threading.Lock()
 
 
-def get_thread_id():
+def get_thread_id() -> int:
     global _g_thread_data, _g_thread_counter, _g_thread_lock  # noqa
     try:
         return _g_thread_data.id
@@ -240,7 +256,7 @@ def get_thread_id():
         return _g_thread_data.id
 
 
-def log_to_file(filename, level=DEBUG):
+def log_to_file(filename: FileDescriptorOrPath, level: int = DEBUG) -> None:
     """send paramiko logs to a logfile,
     if they're not already going somewhere"""
     logger = logging.getLogger("paramiko")
@@ -257,7 +273,7 @@ def log_to_file(filename, level=DEBUG):
 
 # make only one filter object, so it doesn't get applied more than once
 class PFilter:
-    def filter(self, record):
+    def filter(self, record: logging.LogRecord) -> bool:
         record._threadid = get_thread_id()
         return True
 
@@ -265,13 +281,13 @@ class PFilter:
 _pfilter = PFilter()
 
 
-def get_logger(name):
+def get_logger(name: str) -> logging.Logger:
     logger = logging.getLogger(name)
     logger.addFilter(_pfilter)
     return logger
 
 
-def constant_time_bytes_eq(a, b):
+def constant_time_bytes_eq(a: AnyStr, b: AnyStr) -> bool:
     if len(a) != len(b):
         return False
     res = 0
@@ -282,18 +298,23 @@ def constant_time_bytes_eq(a, b):
 
 
 class ClosingContextManager:
-    def __enter__(self):
+    def __enter__(self) -> Self:
         return self
 
-    def __exit__(self, type, value, traceback):
+    def __exit__(
+        self,
+        type: type[BaseException] | None,
+        value: BaseException | None,
+        traceback: TracebackType | None,
+    ) -> None:
         self.close()
 
 
-def clamp_value(minimum, val, maximum):
+def clamp_value(minimum: int, val: int, maximum: int) -> int:
     return max(minimum, min(val, maximum))
 
 
-def asbytes(s):
+def asbytes(s: object) -> object:
     """
     Coerce to bytes if possible or return unchanged.
     """
@@ -315,7 +336,7 @@ def asbytes(s):
 
 
 # TODO: clean this up / force callers to assume bytes OR unicode
-def b(s, encoding="utf8"):
+def b(s: str | bytes, encoding: str = "utf8") -> bytes:
     """cast unicode or bytes to bytes"""
     if isinstance(s, bytes):
         return s
@@ -326,7 +347,7 @@ def b(s, encoding="utf8"):
 
 
 # TODO: clean this up / force callers to assume bytes OR unicode
-def u(s, encoding="utf8"):
+def u(s: str | bytes, encoding: str = "utf8") -> str:
     """cast bytes or unicode to unicode"""
     if isinstance(s, bytes):
         return s.decode(encoding)

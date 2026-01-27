@@ -20,21 +20,27 @@
 Compression implementations for a Transport.
 """
 
+from __future__ import annotations
+
 import zlib
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from _typeshed import ReadableBuffer
 
 
 class ZlibCompressor:
-    def __init__(self):
+    def __init__(self) -> None:
         # Use the default level of zlib compression
         self.z = zlib.compressobj()
 
-    def __call__(self, data):
+    def __call__(self, data: ReadableBuffer) -> bytes:
         return self.z.compress(data) + self.z.flush(zlib.Z_FULL_FLUSH)
 
 
 class ZlibDecompressor:
-    def __init__(self):
+    def __init__(self) -> None:
         self.z = zlib.decompressobj()
 
-    def __call__(self, data):
+    def __call__(self, data: ReadableBuffer) -> bytes:
         return self.z.decompress(data)

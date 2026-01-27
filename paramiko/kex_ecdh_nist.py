@@ -3,7 +3,9 @@ Ephemeral Elliptic Curve Diffie-Hellman (ECDH) key exchange
 RFC 5656, Section 4
 """
 
-from hashlib import sha256, sha384, sha512
+from __future__ import annotations
+
+import hashlib
 from paramiko.common import byte_chr
 from paramiko.message import Message
 from paramiko.ssh_exception import SSHException
@@ -11,6 +13,17 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives import serialization
 from binascii import hexlify
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+    from _typeshed import ReadableBuffer
+    from cryptography.hazmat.primitives.asymmetric.ec import (
+        EllipticCurve,
+        EllipticCurvePrivateKey,
+        EllipticCurvePublicKey,
+    )
+    import paramiko.transport
 
 _MSG_KEXECDH_INIT, _MSG_KEXECDH_REPLY = range(30, 32)
 c_MSG_KEXECDH_INIT, c_MSG_KEXECDH_REPLY = [byte_chr(c) for c in range(30, 32)]
@@ -19,17 +32,22 @@ c_MSG_KEXECDH_INIT, c_MSG_KEXECDH_REPLY = [byte_chr(c) for c in range(30, 32)]
 class KexNistp256:
 
     name = "ecdh-sha2-nistp256"
-    hash_algo = sha256
-    curve = ec.SECP256R1()
+    hash_algo: Callable[[ReadableBuffer], hashlib._Hash] = hashlib.sha256
+    curve: EllipticCurve = ec.SECP256R1()
 
-    def __init__(self, transport):
+    transport: paramiko.transport.Transport
+    P: int | EllipticCurvePrivateKey
+    Q_C: EllipticCurvePublicKey | None
+    Q_S: EllipticCurvePublicKey | None
+
+    def __init__(self, transport: paramiko.transport.Transport) -> None:
         self.transport = transport
         # private key, client public and server public keys
         self.P = 0
         self.Q_C = None
         self.Q_S = None
 
-    def start_kex(self):
+    def start_kex(self) -> None:
         self._generate_key_pair()
         if self.transport.server_mode:
             self.transport._expect_packet(_MSG_KEXECDH_INIT)
@@ -46,7 +64,7 @@ class KexNistp256:
         self.transport._send_message(m)
         self.transport._expect_packet(_MSG_KEXECDH_REPLY)
 
-    def parse_next(self, ptype, m):
+    def parse_next(self, ptype: int, m: Message) -> None:
         if self.transport.server_mode and (ptype == _MSG_KEXECDH_INIT):
             return self._parse_kexecdh_init(m)
         elif not self.transport.server_mode and (ptype == _MSG_KEXECDH_REPLY):
@@ -141,11 +159,11 @@ class KexNistp256:
 
 class KexNistp384(KexNistp256):
     name = "ecdh-sha2-nistp384"
-    hash_algo = sha384
-    curve = ec.SECP384R1()
+    hash_algo: Callable[[ReadableBuffer], hashlib._Hash] = hashlib.sha384
+    curve: EllipticCurve = ec.SECP384R1()
 
 
 class KexNistp521(KexNistp256):
     name = "ecdh-sha2-nistp521"
-    hash_algo = sha512
-    curve = ec.SECP521R1()
+    hash_algo: Callable[[ReadableBuffer], hashlib._Hash] = hashlib.sha512
+    curve: EllipticCurve = ec.SECP521R1()

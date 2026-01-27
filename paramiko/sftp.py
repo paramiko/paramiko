@@ -16,14 +16,16 @@
 # along with Paramiko; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
 
+from __future__ import annotations
+
 import select
 import socket
 import struct
 
 from paramiko import util
+from paramiko.channel import Channel
 from paramiko.common import DEBUG, byte_chr, byte_ord
 from paramiko.message import Message
-
 
 (
     CMD_INIT,
@@ -62,7 +64,7 @@ SFTP_OK = 0
     SFTP_OP_UNSUPPORTED,
 ) = range(1, 9)
 
-SFTP_DESC = [
+SFTP_DESC: list[str] = [
     "Success",
     "End of file",
     "No such file",
@@ -85,7 +87,7 @@ _VERSION = 3
 
 
 # for debugging
-CMD_NAMES = {
+CMD_NAMES: dict[int, str] = {
     CMD_INIT: "init",
     CMD_VERSION: "version",
     CMD_OPEN: "open",
@@ -131,9 +133,9 @@ class SFTPError(Exception):
 
 
 class BaseSFTP:
-    def __init__(self):
+    def __init__(self) -> None:
         self.logger = util.get_logger("paramiko.sftp")
-        self.sock = None
+        self.sock: Channel | None = None
         self.ultra_debug = False
 
     # ...internals...

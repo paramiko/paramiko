@@ -22,14 +22,21 @@ generator "g" are provided by the server.  A bit more work is required on the
 client side, and a **lot** more on the server side.
 """
 
+from __future__ import annotations
+
 import os
-from hashlib import sha1, sha256
+import hashlib
 
 from paramiko import util
 from paramiko.common import DEBUG, byte_chr, byte_ord, byte_mask
 from paramiko.message import Message
 from paramiko.ssh_exception import SSHException
+from collections.abc import Callable
+import paramiko.transport
+from typing import TYPE_CHECKING
 
+if TYPE_CHECKING:
+    from _typeshed import ReadableBuffer
 
 (
     _MSG_KEXDH_GEX_REQUEST_OLD,
@@ -54,9 +61,17 @@ class KexGex:
     min_bits = 1024
     max_bits = 8192
     preferred_bits = 2048
-    hash_algo = sha1
+    hash_algo: Callable[[ReadableBuffer], hashlib._Hash] = hashlib.sha1
+    transport: paramiko.transport.Transport
+    p: int | None
+    q: int | None
+    g: int | None
+    x: int | None
+    e: int | None
+    f: int | None
+    old_style: bool
 
-    def __init__(self, transport):
+    def __init__(self, transport: paramiko.transport.Transport) -> None:
         self.transport = transport
         self.p = None
         self.q = None
@@ -66,7 +81,7 @@ class KexGex:
         self.f = None
         self.old_style = False
 
-    def start_kex(self, _test_old_style=False):
+    def start_kex(self, _test_old_style: bool = False) -> None:
         if self.transport.server_mode:
             self.transport._expect_packet(
                 _MSG_KEXDH_GEX_REQUEST, _MSG_KEXDH_GEX_REQUEST_OLD
@@ -89,7 +104,7 @@ class KexGex:
         self.transport._send_message(m)
         self.transport._expect_packet(_MSG_KEXDH_GEX_GROUP)
 
-    def parse_next(self, ptype, m):
+    def parse_next(self, ptype: int, m: Message) -> None:
         if ptype == _MSG_KEXDH_GEX_REQUEST:
             return self._parse_kexdh_gex_request(m)
         elif ptype == _MSG_KEXDH_GEX_GROUP:
@@ -285,4 +300,4 @@ class KexGex:
 
 class KexGexSHA256(KexGex):
     name = "diffie-hellman-group-exchange-sha256"
-    hash_algo = sha256
+    hash_algo: Callable[[ReadableBuffer], hashlib._Hash] = hashlib.sha256

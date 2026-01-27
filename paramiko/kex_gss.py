@@ -37,6 +37,8 @@ This module provides GSS-API / SSPI Key Exchange as defined in :rfc:`4462`.
 .. versionadded:: 1.15
 """
 
+from __future__ import annotations
+
 import os
 from hashlib import sha1
 
@@ -51,7 +53,8 @@ from paramiko.common import (
 from paramiko import util
 from paramiko.message import Message
 from paramiko.ssh_exception import SSHException
-
+from paramiko.ssh_gss import _SSH_GSSAuth
+import paramiko.transport
 
 (
     MSG_KEXGSS_INIT,
@@ -82,11 +85,18 @@ class KexGSSGroup1:
     # draft-ietf-secsh-transport-09.txt, page 17
     P = 0xFFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD129024E088A67CC74020BBEA63B139B22514A08798E3404DDEF9519B3CD3A431B302B0A6DF25F14374FE1356D6D51C245E485B576625E7EC6F44C42E9A637ED6B0BFF5CB6F406B7EDEE386BFB5A899FA5AE9F24117C4B1FE649286651ECE65381FFFFFFFFFFFFFFFF  # noqa
     G = 2
-    b7fffffffffffffff = byte_chr(0x7F) + max_byte * 7  # noqa
-    b0000000000000000 = zero_byte * 8  # noqa
+    b7fffffffffffffff: bytes = byte_chr(0x7F) + max_byte * 7  # noqa
+    b0000000000000000: bytes = zero_byte * 8  # noqa
     NAME = "gss-group1-sha1-toWM5Slw5Ew8Mqkay+al2g=="
 
-    def __init__(self, transport):
+    transport: paramiko.transport.Transport
+    kexgss: _SSH_GSSAuth
+    gss_host: str | None
+    x: int
+    e: int
+    f: int
+
+    def __init__(self, transport: paramiko.transport.Transport) -> None:
         self.transport = transport
         self.kexgss = self.transport.kexgss_ctxt
         self.gss_host = None
@@ -94,7 +104,7 @@ class KexGSSGroup1:
         self.e = 0
         self.f = 0
 
-    def start_kex(self):
+    def start_kex(self) -> None:
         """
         Start the GSS-API / SSPI Authenticated Diffie-Hellman Key Exchange.
         """
@@ -120,7 +130,7 @@ class KexGSSGroup1:
             MSG_KEXGSS_ERROR,
         )
 
-    def parse_next(self, ptype, m):
+    def parse_next(self, ptype: int, m: Message) -> None:
         """
         Parse the next packet.
 
@@ -344,7 +354,18 @@ class KexGSSGex:
     max_bits = 8192
     preferred_bits = 2048
 
-    def __init__(self, transport):
+    transport: paramiko.transport.Transport
+    kexgss: _SSH_GSSAuth
+    gss_host: str | None
+    p: int | None
+    q: int | None
+    g: int | None
+    x: int | None
+    e: int | None
+    f: int | None
+    old_style: bool
+
+    def __init__(self, transport: paramiko.transport.Transport) -> None:
         self.transport = transport
         self.kexgss = self.transport.kexgss_ctxt
         self.gss_host = None
@@ -356,7 +377,7 @@ class KexGSSGex:
         self.f = None
         self.old_style = False
 
-    def start_kex(self):
+    def start_kex(self) -> None:
         """
         Start the GSS-API / SSPI Authenticated Diffie-Hellman Group Exchange
         """
@@ -375,7 +396,7 @@ class KexGSSGex:
         self.transport._send_message(m)
         self.transport._expect_packet(MSG_KEXGSS_GROUP)
 
-    def parse_next(self, ptype, m):
+    def parse_next(self, ptype: int, m: Message) -> None:
         """
         Parse the next packet.
 
@@ -676,11 +697,11 @@ class NullHostKey:
     <https://tools.ietf.org/html/rfc4462.html#section-5>`_
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.key = ""
 
     def __str__(self):
         return self.key
 
-    def get_name(self):
+    def get_name(self) -> str:
         return self.key
