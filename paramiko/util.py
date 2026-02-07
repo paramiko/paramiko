@@ -17,7 +17,8 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
 
 """
-Useful functions used by the rest of paramiko.
+The dreaded ``utils.py`` - clearinghouse for commonly used functions or data
+that don't belong anywhere else.
 """
 
 import logging
