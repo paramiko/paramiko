@@ -20,20 +20,19 @@
 Useful functions used by the rest of paramiko.
 """
 
-
-import sys
-import struct
-import traceback
-import threading
 import logging
+import struct
+import sys
+import threading
+import traceback
 
 from paramiko.common import (
     DEBUG,
-    zero_byte,
-    xffffffff,
-    max_byte,
-    byte_ord,
     byte_chr,
+    byte_ord,
+    max_byte,
+    xffffffff,
+    zero_byte,
 )
 from paramiko.config import SSHConfig
 
