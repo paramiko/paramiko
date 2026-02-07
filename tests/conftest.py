@@ -118,51 +118,69 @@ def sftp(sftp_server):
     shutil.rmtree(client.FOLDER, ignore_errors=True)
 
 
+# short type, full type, class, fingerprint, optional passphrase (will imply a
+# 2nd copy of key which is passphrased)
 key_data = [
-    ["ssh-rsa", RSAKey, "SHA256:OhNL391d/beeFnxxg18AwWVYTAHww+D4djEE7Co0Yng"],
     [
+        "rsa",
+        "ssh-rsa",
+        RSAKey,
+        "SHA256:OhNL391d/beeFnxxg18AwWVYTAHww+D4djEE7Co0Yng",
+        None,
+    ],
+    [
+        "ed25519",
         "ssh-ed25519",
         Ed25519Key,
         "SHA256:J6VESFdD3xSChn8y9PzWzeF+1tl892mOy2TqkMLO4ow",
+        None,
     ],
     [
+        "ecdsa-256",
         "ecdsa-sha2-nistp256",
         ECDSAKey,
         "SHA256:BrQG04oNKUETjKCeL4ifkARASg3yxS/pUHl3wWM26Yg",
+        None,
     ],
+    # TODO: moar?
 ]
-for datum in key_data:
-    # Add true first member with human-facing short algo name
-    short = datum[0].replace("ssh-", "").replace("sha2-nistp", "")
-    datum.insert(0, short)
 
 
 @pytest.fixture(scope="session", params=key_data, ids=lambda x: x[0])
 def keys(request):
     """
-    Yield an object for each known type of key, with attributes:
+    Parameterize associated tests with an object for each known type of key,
+    with attributes:
 
     - ``short_type``: short identifier, eg ``rsa`` or ``ecdsa-256``
     - ``full_type``: the "message style" key identifier, eg ``ssh-rsa``, or
       ``ecdsa-sha2-nistp256``.
     - ``path``: a pathlib Path object to the fixture key file
-    - ``pkey``: PKey object, which may or may not also have a cert loaded
+    - ``pkey``: PKey object
+    - ``pkey_with_cert``: PKey object with cert loaded (if applicable)
     - ``expected_fp``: the expected fingerprint of said key
+    - ``passphrase``: if not ``None``, the passphrase this key requires.
     """
-    short_type, key_type, key_class, fingerprint = request.param
+    short_type, full_type, key_class, fingerprint, passphrase = request.param
     bag = Lexicon()
     bag.short_type = short_type
-    bag.full_type = key_type
-    bag.path = Path(_support(f"{short_type}.key"))
+    bag.full_type = full_type
+    filename = short_type
+    if passphrase is not None:
+        filename += "-passphrased"
+    bag.path = Path(_support(f"{filename}.key"))
     with bag.path.open() as fd:
-        bag.pkey = key_class.from_private_key(fd)
+        bag.pkey = key_class.from_private_key(fd, password=passphrase)
     # Second copy for things like equality-but-not-identity testing
     with bag.path.open() as fd:
-        bag.pkey2 = key_class.from_private_key(fd)
+        bag.pkey2 = key_class.from_private_key(fd, password=passphrase)
     bag.expected_fp = fingerprint
     # Also tack on the cert-bearing variant for some tests
     cert = bag.path.with_suffix(".key-cert.pub")
-    bag.pkey_with_cert = PKey.from_path(cert) if cert.exists() else None
+    bag.pkey_with_cert = (
+        PKey.from_path(cert, passphrase=passphrase) if cert.exists() else None
+    )
+    bag.passphrase = passphrase
     # Safety checks
     assert bag.pkey.fingerprint == fingerprint
     yield bag
