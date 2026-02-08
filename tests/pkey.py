@@ -26,13 +26,22 @@ class PKey_:
             obj = PKey.from_type_string(keys.full_type, keys.pkey.asbytes())
             assert obj == keys.pkey
 
-        # TODO: exceptions
-        #
-        # TODO: passphrase? OTOH since this is aimed at the agent...irrelephant
+        def accepts_passphrase(self, keys):
+            obj = PKey.from_type_string(
+                keys.full_type, keys.pkey.asbytes(), passphrase=keys.passphrase
+            )
+            assert obj == keys.pkey
+
+        def raises_UnknownKeyType_for_unknown_type_names(self):
+            key = b"not even a real key, smh"
+            with raises(UnknownKeyType) as exc:
+                PKey.from_type_string("wat", key)
+            assert exc.value.key_type == "wat"
+            assert exc.value.key_bytes == key
 
     class from_path:
         def loads_from_Path(self, keys):
-            obj = PKey.from_path(keys.path)
+            obj = PKey.from_path(keys.path, passphrase=keys.passphrase)
             assert obj == keys.pkey
 
         def loads_from_str(self):
@@ -69,8 +78,6 @@ class PKey_:
             # a Python file is not a private key!
             with raises(ValueError):
                 PKey.from_path(__file__)
-
-        # TODO: passphrase support tested
 
         class automatically_loads_certificates:
             def existing_cert_loaded_when_given_key_path(self):

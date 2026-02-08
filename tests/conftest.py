@@ -128,6 +128,13 @@ key_data = [
         None,
     ],
     [
+        "rsa",
+        "rsa-sha2-512",
+        RSAKey,
+        "SHA256:44W6xS7SyDLHqSar8WCiclOLpjn7OwuGz+vQ9OQ+Eaw",
+        b"secret",
+    ],
+    [
         "ed25519",
         "ssh-ed25519",
         Ed25519Key,
@@ -145,7 +152,7 @@ key_data = [
 ]
 
 
-@pytest.fixture(scope="session", params=key_data, ids=lambda x: x[0])
+@pytest.fixture(scope="session", params=key_data, ids=lambda x: x[1])
 def keys(request):
     """
     Parameterize associated tests with an object for each known type of key,
