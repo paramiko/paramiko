@@ -32,6 +32,51 @@ from paramiko.util import get_logger, constant_time_bytes_eq, b, u
 from paramiko.ssh_exception import SSHException
 
 
+class _SubDict(MutableMapping):
+    def __init__(self, hostname, entries, hostkeys):
+        self._hostname = hostname
+        self._entries = entries
+        self._hostkeys = hostkeys
+
+    def __iter__(self):
+        for k in self.keys():
+            yield k
+
+    def __len__(self):
+        return len(self.keys())
+
+    def __delitem__(self, key):
+        for e in list(self._entries):
+            if e.key.get_name() == key:
+                self._entries.remove(e)
+                break
+        else:
+            raise KeyError(key)
+
+    def __getitem__(self, key):
+        for e in self._entries:
+            if e.key.get_name() == key:
+                return e.key
+        raise KeyError(key)
+
+    def __setitem__(self, key, val):
+        for e in self._entries:
+            if e.key is None:
+                continue
+            if e.key.get_name() == key:
+                # replace
+                e.key = val
+                break
+        else:
+            # add a new one
+            e = HostKeyEntry([self._hostname], val)
+            self._entries.append(e)
+            self._hostkeys._entries.append(e)
+
+    def keys(self):
+        return [e.key.get_name() for e in self._entries if e.key is not None]
+
+
 class HostKeys(MutableMapping):
     """
     Representation of an OpenSSH-style "known hosts" file.  Host keys can be
@@ -132,62 +177,13 @@ class HostKeys(MutableMapping):
         :return: dict of `str` -> `.PKey` keys associated with this host
             (or ``None``)
         """
-
-        class SubDict(MutableMapping):
-            def __init__(self, hostname, entries, hostkeys):
-                self._hostname = hostname
-                self._entries = entries
-                self._hostkeys = hostkeys
-
-            def __iter__(self):
-                for k in self.keys():
-                    yield k
-
-            def __len__(self):
-                return len(self.keys())
-
-            def __delitem__(self, key):
-                for e in list(self._entries):
-                    if e.key.get_name() == key:
-                        self._entries.remove(e)
-                        break
-                else:
-                    raise KeyError(key)
-
-            def __getitem__(self, key):
-                for e in self._entries:
-                    if e.key.get_name() == key:
-                        return e.key
-                raise KeyError(key)
-
-            def __setitem__(self, key, val):
-                for e in self._entries:
-                    if e.key is None:
-                        continue
-                    if e.key.get_name() == key:
-                        # replace
-                        e.key = val
-                        break
-                else:
-                    # add a new one
-                    e = HostKeyEntry([hostname], val)
-                    self._entries.append(e)
-                    self._hostkeys._entries.append(e)
-
-            def keys(self):
-                return [
-                    e.key.get_name()
-                    for e in self._entries
-                    if e.key is not None
-                ]
-
         entries = []
         for e in self._entries:
             if self._hostname_matches(hostname, e):
                 entries.append(e)
         if len(entries) == 0:
             return None
-        return SubDict(hostname, entries, self)
+        return _SubDict(hostname, entries, self)
 
     def _hostname_matches(self, hostname, entry):
         """
