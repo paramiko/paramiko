@@ -595,6 +595,9 @@ class Transport(threading.Thread, ClosingContextManager):
 
     def _filter_algorithm(self, type_):
         default = getattr(self, "_preferred_{}".format(type_))
+        disabled = self.disabled_algorithms.get(type_, [])
+        if not disabled:
+            return default
         return tuple(
             x
             for x in default
@@ -929,6 +932,7 @@ class Transport(threading.Thread, ClosingContextManager):
         for chan in list(self._channels.values()):
             chan._unlink()
         self.sock.close()
+        self.join()
 
     def get_remote_server_key(self):
         """
@@ -1397,13 +1401,13 @@ class Transport(threading.Thread, ClosingContextManager):
             # for its nameS plural, and just use that.
             # TODO: that could be used in a bunch of other spots too
             if isinstance(hostkey, RSAKey):
-                self._preferred_keys = [
+                self._preferred_keys = (
                     "rsa-sha2-512",
                     "rsa-sha2-256",
                     "ssh-rsa",
-                ]
+                )
             else:
-                self._preferred_keys = [hostkey.get_name()]
+                self._preferred_keys = (hostkey.get_name(),)
 
         self.set_gss_host(
             gss_host=gss_host,
@@ -1922,7 +1926,6 @@ class Transport(threading.Thread, ClosingContextManager):
             self.is_alive()
             and self is not threading.current_thread()
             and not self.sock._closed
-            and not self.packetizer.closed
         ):
             self.join(0.1)
 
@@ -2298,6 +2301,7 @@ class Transport(threading.Thread, ClosingContextManager):
                 self._log(ERROR, "Unknown exception: " + str(e))
                 self._log(ERROR, util.tb_strings())
                 self.saved_exception = e
+            self._handler_table.clear()
             _active_threads.remove(self)
             for chan in list(self._channels.values()):
                 chan._unlink()
