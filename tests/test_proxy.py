@@ -1,7 +1,7 @@
 import socket
 import subprocess
 
-from unittest.mock import patch, MagicMock, call
+from unittest.mock import patch
 from pytest import raises
 
 from paramiko import ProxyCommand, ProxyCommandFailure
@@ -152,9 +152,11 @@ class TestProxyCommand:
             except FileNotFoundError:
                 # macOS: use lsof -p
                 import subprocess as sp
+
                 result = sp.run(
                     ["lsof", "-p", str(os.getpid())],
-                    capture_output=True, text=True,
+                    capture_output=True,
+                    text=True,
                 )
                 return len(result.stdout.strip().splitlines()) - 1
 
