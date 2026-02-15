@@ -79,6 +79,9 @@ class RSAKey(PKey):
 
     @classmethod
     def identifiers(cls):
+        # TODO: does this ever want to accept "ssh-rsa"? it's an allowed
+        # identifier when reading the key material itself, just not for the
+        # auth/sig algorithm
         return list(cls.HASHES.keys())
 
     @property

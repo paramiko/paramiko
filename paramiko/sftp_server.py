@@ -79,6 +79,7 @@ from paramiko.sftp_attr import SFTPAttributes
 from paramiko.sftp_si import SFTPServerInterface
 from paramiko.util import b
 
+# TODO: nuke or update w/ newer algs, see below
 _hash_class = {"sha1": sha1, "md5": md5}
 
 
@@ -302,6 +303,9 @@ class SFTPServer(BaseSFTP, SubsystemHandler):
             return
         f = self.file_table[handle]
         for x in alg_list:
+            # TODO: this only contains sha1 and md5 so uh, is this extension
+            # actually supported anymore? do we need to update the map for
+            # newer algos instead? other?
             if x in _hash_class:
                 algname = x
                 alg = _hash_class[x]

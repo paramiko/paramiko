@@ -612,7 +612,13 @@ Error Message: {}
             # NOTE: server never wants to guess a client's algo, they're
             # telling us directly. No need for _finalize_pubkey_algorithm
             # anywhere in this flow.
+            # TODO: ok is this a spot where it can say a SHA2 dealie in some
+            # fields but still ssh-rsa within the pubkey blob part?
+            # TODO: ok so this would be rsa-sha2-256 or w/e, if this field says
+            # ssh-rsa the request can get stuffed.
             algorithm = m.get_text()
+            # TODO: This part would, if deconstructed, still be allowed to have
+            # "ssh-rsa" in its first field.
             keyblob = m.get_binary()
             try:
                 key = self._generate_key_from_request(algorithm, keyblob)

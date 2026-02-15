@@ -445,6 +445,7 @@ class SSHConfig:
         # The actual tokens!
         replacements = {
             # TODO: %%???
+            # TODO: sha1 bad / this is offspec from rfc/openssh
             "%C": sha1(tohash.encode()).hexdigest(),
             "%d": homedir,
             "%h": configured_hostname,

@@ -443,6 +443,12 @@ class SSHClient(ClosingContextManager):
         if our_server_keys is not None:
             keytype = our_server_keys.keys()[0]
             sec_opts = t.get_security_options()
+            # TODO: so this is basically the only spot internal use of
+            # SecurityOptions might be trying to read from
+            # Transport._key_types, and that only by virtue of filtering the
+            # inputs to ensure nothing sets an unknwown key type.
+            # TODO: that said: is there a legit reason to set ssh-rsa server
+            # key name here?
             other_types = [x for x in sec_opts.key_types if x != keytype]
             sec_opts.key_types = [keytype] + other_types
 
