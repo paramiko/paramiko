@@ -105,6 +105,7 @@ from paramiko.kex_group16 import KexGroup16SHA512
 from paramiko.kex_gss import KexGSSGex, KexGSSGroup1, KexGSSGroup14
 from paramiko.message import Message
 from paramiko.packet import NeedRekeyException, Packetizer
+from paramiko.pkey import PKey
 from paramiko.primes import ModulusPack
 from paramiko.rsakey import RSAKey
 from paramiko.server import ServerInterface
@@ -1996,7 +1997,7 @@ class Transport(threading.Thread, ClosingContextManager):
         self._expected_packet = tuple(ptypes)
 
     def _verify_key(self, host_key, sig):
-        key = self._key_info[self.host_key_type](Message(host_key))
+        key: PKey = self._key_info[self.host_key_type](Message(host_key))
         if key is None:
             raise SSHException("Unknown host key type")
         if not key.verify_ssh_sig(self.H, Message(sig)):
