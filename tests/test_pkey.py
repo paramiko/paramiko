@@ -198,18 +198,14 @@ class KeyTest(unittest.TestCase):
         pub = RSAKey(data=key.asbytes())
         self.assertTrue(pub.verify_ssh_sig(b"ice weasels", msg))
 
-    @requires_sha1_signing
-    def test_sign_and_verify_ssh_rsa(self):
-        self._sign_and_verify_rsa("ssh-rsa", SIGNED_RSA)
-
     def test_sign_and_verify_rsa_sha2_512(self):
         self._sign_and_verify_rsa("rsa-sha2-512", SIGNED_RSA_512)
 
     def test_sign_and_verify_rsa_sha2_256(self):
         self._sign_and_verify_rsa("rsa-sha2-256", SIGNED_RSA_256)
 
-    @requires_sha1_signing
     def test_generate_rsa(self):
+        # TODO: this probs needs to be larger number now
         key = RSAKey.generate(1024)
         msg = key.sign_ssh_data(b"jerri blank")
         msg.rewind()

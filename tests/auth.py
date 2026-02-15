@@ -31,11 +31,7 @@ from paramiko import (
 )
 
 from ._util import (
-    _disable_sha1_pubkey,
-    _disable_sha2,
-    _disable_sha2_pubkey,
     _support,
-    requires_sha1_signing,
     server,
     unicodey,
 )
@@ -134,8 +130,9 @@ class AuthHandler_:
         verify that we catch a server disconnecting during auth, and report
         it as an auth failure.
         """
-        with server(defer=True, skip_verify=True) as (tc, ts), raises(
-            AuthenticationException
+        with (
+            server(defer=True, skip_verify=True) as (tc, ts),
+            raises(AuthenticationException),
         ):
             tc.auth_password("bad-server", "hello")
 
@@ -144,9 +141,10 @@ class AuthHandler_:
         verify that authentication times out if server takes to long to
         respond (or never responds).
         """
-        with server(defer=True, skip_verify=True) as (tc, ts), raises(
-            AuthenticationException
-        ) as info:
+        with (
+            server(defer=True, skip_verify=True) as (tc, ts),
+            raises(AuthenticationException) as info,
+        ):
             tc.auth_timeout = 1  # 1 second, to speed up test
             tc.auth_password("unresponsive-server", "hello")
             assert "Authentication timeout" in str(info.value)
@@ -158,7 +156,6 @@ class AuthOnlyHandler_:
         return server(*args, **kwargs)
 
     class fallback_pubkey_algorithm:
-        @requires_sha1_signing
         def key_type_algo_selected_when_no_server_sig_algs(self):
             privkey = RSAKey.from_private_key_file(_support("rsa.key"))
             # Server pretending to be an apparently common setup:
@@ -167,6 +164,10 @@ class AuthOnlyHandler_:
             # This is the scenario in which Paramiko has to guess-the-algo, and
             # where servers that don't support sha2 or server-sig-algs can give
             # us trouble.
+            # TODO: ok maybe I need to reinstate _disable_sha2_pubkey, but it
+            # _might_ make sense to choose some other key type to disable, if
+            # it's more sensible now - surely the modern version of this
+            # scenario would be disabling like, ecdsa or something?
             server_init = dict(_disable_sha2_pubkey, server_sig_algs=False)
             with self._server(
                 pubkeys=[privkey],
@@ -177,9 +178,11 @@ class AuthOnlyHandler_:
                 # Auth did work
                 assert tc.is_authenticated()
                 # Selected ssh-rsa, instead of first-in-the-list (rsa-sha2-512)
+                # TODO: this needs to be selecting some other fallback now,
+                # presumably whatever is now first in one of our attribute
+                # lists
                 assert tc._agreed_pubkey_algorithm == "ssh-rsa"
 
-        @requires_sha1_signing
         def key_type_algo_selection_is_cert_suffix_aware(self):
             # This key has a cert next to it, which should trigger cert-aware
             # loading within key classes.
@@ -197,10 +200,10 @@ class AuthOnlyHandler_:
                 # Selected expected cert type
                 assert (
                     tc._agreed_pubkey_algorithm
+                    # TODO: this needs to be choosing a sha2 or w/e now
                     == "ssh-rsa-cert-v01@openssh.com"
                 )
 
-        @requires_sha1_signing
         def uses_first_preferred_algo_if_key_type_not_in_list(self):
             # This is functionally the same as legacy AuthHandler, just
             # arriving at the same place in a different manner.
@@ -210,6 +213,8 @@ class AuthOnlyHandler_:
                 pubkeys=[privkey],
                 connect=dict(pkey=privkey),
                 server_init=server_init,
+                # TODO: this is outdated now, disable something else, probably
+                # whatever is /now/ first in the list instead of ssh-rsa
                 client_init=_disable_sha1_pubkey,  # no ssh-rsa
                 catch_error=True,
             ) as (tc, ts, err):
@@ -226,7 +231,7 @@ class SHA2SignaturePubkeys:
             connect=dict(pkey=privkey),
             init=dict(
                 disabled_algorithms=dict(
-                    pubkeys=["ssh-rsa", "rsa-sha2-256", "rsa-sha2-512"]
+                    pubkeys=["rsa-sha2-256", "rsa-sha2-512"]
                 )
             ),
             catch_error=True,
@@ -239,6 +244,7 @@ class SHA2SignaturePubkeys:
         with server(
             pubkeys=[privkey],
             connect=dict(pkey=privkey),
+            # TODO: update or maybe just nuke this test now
             client_init=_disable_sha2_pubkey,
             server_init=_disable_sha1_pubkey,
             catch_error=True,
@@ -250,24 +256,27 @@ class SHA2SignaturePubkeys:
         with server(
             pubkeys=[privkey],
             connect=dict(pkey=privkey),
+            # TODO: update or maybe just nuke this test now
             client_init=_disable_sha1_pubkey,
             server_init=_disable_sha2_pubkey,
             catch_error=True,
         ) as (tc, ts, err):
             assert isinstance(err, AuthenticationException)
 
-    @requires_sha1_signing
     def ssh_rsa_still_used_when_sha2_disabled(self):
         privkey = RSAKey.from_private_key_file(_support("rsa.key"))
         # NOTE: this works because key obj comparison uses public bytes
         # TODO: would be nice for PKey to grow a legit "give me another obj of
         # same class but just the public bits" using asbytes()
         with server(
-            pubkeys=[privkey], connect=dict(pkey=privkey), init=_disable_sha2
+            # TODO: update
+            pubkeys=[privkey],
+            connect=dict(pkey=privkey),
+            init=_disable_sha2,
         ) as (tc, _):
             assert tc.is_authenticated()
 
-    @requires_sha1_signing
+    # TODO: isn't this duplicating some of the earlier tests? if not, update it
     def first_client_preferred_algo_used_when_no_server_sig_algs(self):
         privkey = RSAKey.from_private_key_file(_support("rsa.key"))
         # Server pretending to be an apparently common setup:

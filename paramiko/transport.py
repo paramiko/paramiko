@@ -305,12 +305,6 @@ class Transport(threading.Thread, ClosingContextManager):
     }
 
     _key_info = {
-        # TODO: at some point we will want to drop this as it's no longer
-        # considered secure due to using SHA-1 for signatures. OpenSSH 8.8 no
-        # longer supports it. Question becomes at what point do we want to
-        # prevent users with older setups from using this?
-        "ssh-rsa": RSAKey,
-        "ssh-rsa-cert-v01@openssh.com": RSAKey,
         # TODO: do some downstream uses of this need to be able to 'see'
         # ssh-rsa in not-using-SHA1 contexts?
         # TODO: NO!!! good.
@@ -1413,7 +1407,6 @@ class Transport(threading.Thread, ClosingContextManager):
                 self._preferred_keys = [
                     "rsa-sha2-512",
                     "rsa-sha2-256",
-                    "ssh-rsa",
                 ]
             else:
                 self._preferred_keys = [hostkey.get_name()]
@@ -2015,6 +2008,8 @@ class Transport(threading.Thread, ClosingContextManager):
         key: PKey = self._key_info[self.host_key_type](Message(host_key))
         if key is None:
             raise SSHException("Unknown host key type")
+        # TODO: like, here, can a host offer "ssh-rsa" but request SHA2, or are
+        # those baked in?
         if not key.verify_ssh_sig(self.H, Message(sig)):
             raise SSHException(
                 "Signature verification ({}) failed.".format(
@@ -3250,6 +3245,9 @@ class SecurityOptions:
         # Transport._preferred_keys with `x`...
         # TODO: so you can read this pretty simply as "replace
         # transport._preferred_keys with x".
+        # TODO: which is...bad...in cases where SSHClient is trying to simply
+        # load up known_hosts or system known hosts, and use those to determine
+        # which hostkey /algorithms/ it is willing to accept
         self._set("_preferred_keys", "_key_info", x)
 
     @property

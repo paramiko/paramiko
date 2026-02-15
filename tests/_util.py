@@ -167,42 +167,9 @@ def is_low_entropy():
     return is_32bit and os.environ.get("PYTHONHASHSEED", None) == "0"
 
 
-def sha1_signing_unsupported():
-    """
-    This is used to skip tests in environments where SHA-1 signing is
-    not supported by the backend.
-    """
-    private_key = rsa.generate_private_key(
-        public_exponent=65537, key_size=2048, backend=default_backend()
-    )
-    message = b"Some dummy text"
-    try:
-        private_key.sign(
-            message,
-            padding.PSS(
-                mgf=padding.MGF1(hashes.SHA1()),
-                salt_length=padding.PSS.MAX_LENGTH,
-            ),
-            hashes.SHA1(),
-        )
-        return False
-    except UnsupportedAlgorithm as e:
-        return e._reason == _Reasons.UNSUPPORTED_HASH
-
-
-requires_sha1_signing = unittest.skipIf(
-    sha1_signing_unsupported(), "SHA-1 signing not supported"
-)
-
-_disable_sha2 = dict(
-    disabled_algorithms=dict(keys=["rsa-sha2-256", "rsa-sha2-512"])
-)
-_disable_sha1 = dict(disabled_algorithms=dict(keys=["ssh-rsa"]))
-_disable_sha2_pubkey = dict(
-    disabled_algorithms=dict(pubkeys=["rsa-sha2-256", "rsa-sha2-512"])
-)
-_disable_sha1_pubkey = dict(disabled_algorithms=dict(pubkeys=["ssh-rsa"]))
-
+# TODO: doublecheck where _disable_xxx helpers were in use; disabling sha1 no
+# longer makes any sense, and presumably neither does en/dis abling sha2 but
+# that's the question innit
 
 unicodey = "\u2022"
 

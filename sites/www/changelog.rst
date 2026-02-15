@@ -2,6 +2,18 @@
 Changelog
 =========
 
+- :support:`-` Removed support for verifying/signing with RSA keys using SHA-1
+  hashing. Generally, this means most cases where ``"ssh-rsa"`` was used as an
+  algorithm identifier (as opposed to a key material identifier) will no longer
+  accept that string as valid, and the relevant code that actually used eg
+  `hashes.SHA1` no longer does.
+
+  .. warning::
+    This change is backwards incompatible if you are stuck supporting legacy
+    systems with Paramiko that are unable to use SHA2-based signatures with RSA
+    keys (or other workarounds, such as switching from RSA keys to Ed25519
+    ones).
+
 - :bug:`- major` Added a ``password`` kwarg to `PKey.from_type_string
   <paramiko.pkey.PKey.from_type_string>` so it can handle encrypted keys like
   most other PKey constructors already could.

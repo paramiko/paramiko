@@ -439,16 +439,32 @@ class SSHClient(ClosingContextManager):
 
         our_server_keys = self._system_host_keys.get(server_hostkey_name)
         if our_server_keys is None:
+            # TODO: this is getting us the test suite _test_connection host key
+            # setup by virtue of that code doing tc.get_host_keys().add() (that
+            # method wraps self._host_keys)
+            # TODO: it should be analogous to running paramiko w/ a
+            # ~/.ssh/known_hosts file
             our_server_keys = self._host_keys.get(server_hostkey_name)
         if our_server_keys is not None:
+            # TODO: keytype needs to turn into one of the rsa-sha2 keys if it's
+            # an RSAKey.
+            # TODO: where is the equivalent on our server-side? hopefully the
+            # tests exercise that lol
+            # TODO: also, is it just me or does this [0] mean we literally do
+            # not actually implement real HostKeyAlgorithms agreement like
+            # ssh.c does?! eesh
             keytype = our_server_keys.keys()[0]
             sec_opts = t.get_security_options()
-            # TODO: so this is basically the only spot internal use of
-            # SecurityOptions might be trying to read from
-            # Transport._key_types, and that only by virtue of filtering the
-            # inputs to ensure nothing sets an unknwown key type.
-            # TODO: that said: is there a legit reason to set ssh-rsa server
-            # key name here?
+            # TODO: clean this up a bit, but it does help some tests pass!
+            if keytype == "ssh-rsa":
+                if "rsa-sha2-512" in sec_opts.key_types:
+                    keytype = "rsa-sha2-512"
+                elif "rsa-sha2-256" in sec_opts.key_types:
+                    keytype = "rsa-sha2-256"
+                else:
+                    raise Exception(
+                        "TODO: REPLACEME with appropriate exception for 'what even is this key type in your known_hosts files?'"
+                    )
             other_types = [x for x in sec_opts.key_types if x != keytype]
             sec_opts.key_types = [keytype] + other_types
 
@@ -465,6 +481,10 @@ class SSHClient(ClosingContextManager):
                     self, server_hostkey_name, server_key
                 )
             else:
+                # TODO: this should 'just work' but dblcheck (HostKeys will be
+                # offering an ssh-rsa-via-sha2 key as "ssh-rsa" still, and the
+                # key would be RSAKey whose .get_name would still say
+                # "ssh-rsa")
                 our_key = our_server_keys.get(server_key.get_name())
                 if our_key != server_key:
                     if our_key is None:

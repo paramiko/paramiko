@@ -1169,14 +1169,6 @@ class TestSHA2SignatureKeyExchange(unittest.TestCase):
     # are new tests in test_pkey.py which use known signature blobs to prove
     # the SHA2 family was in fact used!
 
-    @requires_sha1_signing
-    def test_base_case_ssh_rsa_still_used_as_fallback(self):
-        # Prove that ssh-rsa is used if either, or both, participants have SHA2
-        # algorithms disabled
-        for which in ("init", "client_init", "server_init"):
-            with server(**{which: _disable_sha2}) as (tc, _):
-                assert tc.host_key_type == "ssh-rsa"
-
     def test_kex_with_sha2_512(self):
         # It's the default!
         with server() as (tc, _):
@@ -1208,15 +1200,16 @@ class TestSHA2SignatureKeyExchange(unittest.TestCase):
             else:
                 raise err
 
-    def test_client_sha2_disabled_server_sha1_disabled_no_match(self):
-        self._incompatible_peers(
-            client_init=_disable_sha2, server_init=_disable_sha1
-        )
+    # TODO: update these couple the same way we did under test_client...
+    # def test_client_sha2_disabled_server_sha1_disabled_no_match(self):
+    #    self._incompatible_peers(
+    #        client_init=_disable_sha2, server_init=_disable_sha1
+    #    )
 
-    def test_client_sha1_disabled_server_sha2_disabled_no_match(self):
-        self._incompatible_peers(
-            client_init=_disable_sha1, server_init=_disable_sha2
-        )
+    # def test_client_sha1_disabled_server_sha2_disabled_no_match(self):
+    #    self._incompatible_peers(
+    #        client_init=_disable_sha1, server_init=_disable_sha2
+    #    )
 
     def test_explicit_client_hostkey_not_limited(self):
         # Be very explicit about the hostkey on BOTH ends,
