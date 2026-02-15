@@ -205,7 +205,7 @@ class Transport(threading.Thread, ClosingContextManager):
         "rsa-sha2-256",
         "ssh-rsa",
     )
-    # ~= PubKeyAcceptedAlgorithms
+    # ~= PubkeyAcceptedAlgorithms
     _preferred_pubkeys = (
         "ssh-ed25519",
         "ecdsa-sha2-nistp256",
