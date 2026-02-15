@@ -1,55 +1,56 @@
-from contextlib import contextmanager
-from os.path import dirname, realpath, join
 import builtins
 import os
-from pathlib import Path
 import socket
 import struct
 import sys
-import unittest
-import time
 import threading
+import time
+import unittest
+from contextlib import contextmanager
+from os.path import dirname, join, realpath
+from pathlib import Path
 
-from paramiko import Ed25519Key
 import pytest
-
-from paramiko import (
-    ServerInterface,
-    RSAKey,
-    AUTH_FAILED,
-    AUTH_PARTIALLY_SUCCESSFUL,
-    AUTH_SUCCESSFUL,
-    OPEN_SUCCEEDED,
-    OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED,
-    InteractiveQuery,
-    Transport,
-)
-from paramiko.ssh_gss import GSS_AUTH_AVAILABLE
-
 from cryptography.exceptions import UnsupportedAlgorithm, _Reasons
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import padding, rsa
+
+from paramiko import (
+    AUTH_FAILED,
+    AUTH_PARTIALLY_SUCCESSFUL,
+    AUTH_SUCCESSFUL,
+    OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED,
+    OPEN_SUCCEEDED,
+    Ed25519Key,
+    InteractiveQuery,
+    RSAKey,
+    ServerInterface,
+    Transport,
+)
+from paramiko.ssh_gss import GSS_AUTH_AVAILABLE
 
 tests_dir = dirname(realpath(__file__))
 
 from ._loop import LoopSocket
 
 
-def _support(filename):
+def _support_path(filename: str) -> Path:
     base = Path(tests_dir)
     top = base / filename
     deeper = base / "_support" / filename
-    return str(deeper if deeper.exists() else top)
+    return deeper if deeper.exists() else top
+
+
+def _support(filename):
+    return str(_support_path(filename))
 
 
 def _config(name):
     return join(tests_dir, "configs", name)
 
 
-needs_gssapi = pytest.mark.skipif(
-    not GSS_AUTH_AVAILABLE, reason="No GSSAPI to test"
-)
+needs_gssapi = pytest.mark.skipif(not GSS_AUTH_AVAILABLE, reason="No GSSAPI to test")
 
 
 def needs_builtin(name):
@@ -81,7 +82,6 @@ if (
     and os.environ.get("K5TEST_HOSTNAME", None)
     and os.environ.get("KRB5_KTNAME", None)
 ):  # add other vars as needed
-
     # The environment provides the required information
     class DummyK5Realm:
         def __init__(self):
@@ -138,9 +138,10 @@ def k5shell(args=None):
     To test a different GSSAPI, simply activate a suitable venv
     within the shell.
     """
-    import k5test
     import atexit
     import subprocess
+
+    import k5test
 
     k5 = k5test.K5Realm()
     atexit.register(k5.stop)
@@ -195,9 +196,7 @@ requires_sha1_signing = unittest.skipIf(
     sha1_signing_unsupported(), "SHA-1 signing not supported"
 )
 
-_disable_sha2 = dict(
-    disabled_algorithms=dict(keys=["rsa-sha2-256", "rsa-sha2-512"])
-)
+_disable_sha2 = dict(disabled_algorithms=dict(keys=["rsa-sha2-256", "rsa-sha2-512"]))
 _disable_sha1 = dict(disabled_algorithms=dict(keys=["ssh-rsa"]))
 _disable_sha2_pubkey = dict(
     disabled_algorithms=dict(pubkeys=["rsa-sha2-256", "rsa-sha2-512"])
@@ -269,10 +268,7 @@ class TestServer(ServerInterface):
         if username == "slowdive":
             return "publickey,password"
         if username == "paranoid":
-            if (
-                not self.paranoid_did_password
-                and not self.paranoid_did_public_key
-            ):
+            if not self.paranoid_did_password and not self.paranoid_did_public_key:
                 return "publickey,password"
             elif self.paranoid_did_password:
                 return "publickey"

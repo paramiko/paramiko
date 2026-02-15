@@ -3,7 +3,7 @@ from unittest.mock import call, patch
 
 from cryptography.hazmat.primitives.asymmetric.ed448 import Ed448PrivateKey
 from invoke.vendor.lexicon import Lexicon
-from pytest import raises
+from pytest import raises, skip
 
 from paramiko import (
     ECDSAKey,
@@ -15,7 +15,7 @@ from paramiko import (
     UnknownKeyType,
 )
 
-from ._util import _support
+from ._util import _support, _support_path
 
 
 class PKey_:
@@ -84,9 +84,7 @@ class PKey_:
                 key = PKey.from_path(_support("rsa.key"))
                 # Public blob exists despite no .load_certificate call
                 assert key.public_blob is not None
-                assert (
-                    key.public_blob.key_type == "ssh-rsa-cert-v01@openssh.com"
-                )
+                assert key.public_blob.key_type == "ssh-rsa-cert-v01@openssh.com"
                 # And it's definitely the one we expected
                 assert key.public_blob == PublicBlob.from_file(
                     _support("rsa.key-cert.pub")
@@ -98,9 +96,7 @@ class PKey_:
                 assert isinstance(key, RSAKey)
                 # Public blob exists despite no .load_certificate call
                 assert key.public_blob is not None
-                assert (
-                    key.public_blob.key_type == "ssh-rsa-cert-v01@openssh.com"
-                )
+                assert key.public_blob.key_type == "ssh-rsa-cert-v01@openssh.com"
                 # And it's definitely the one we expected
                 assert key.public_blob == PublicBlob.from_file(
                     _support("rsa.key-cert.pub")
@@ -120,6 +116,21 @@ class PKey_:
                 with raises(FileNotFoundError) as info:
                     PKey.from_path(_support("rsa-missing.key-cert.pub"))
                 assert info.value.filename.endswith("rsa-missing.key")
+
+    class from_bytes:
+        def accepts_bytes(self):
+            ed_bytes = _support_path("ed25519.key").read_bytes()
+            assert isinstance(Ed25519Key, PKey.from_bytes(ed_bytes))
+
+        def accepts_passphrase(self):
+            skip()
+
+    class class_from_bytes:
+        def accepts_bytes(self):
+            skip()
+
+        def accepts_passphrase(self):
+            skip()
 
     class load_certificate:
         def rsa_public_cert_blobs(self):

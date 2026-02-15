@@ -29,7 +29,7 @@ from binascii import unhexlify
 from hashlib import md5, sha256
 from io import BytesIO
 from pathlib import Path
-from typing import Self, cast
+from typing import Optional, Self, cast
 
 import bcrypt
 from cryptography.hazmat.backends import default_backend
@@ -121,8 +121,38 @@ class PKey:
     BEGIN_TAG = re.compile(r"^-{5}BEGIN (RSA|EC|OPENSSH) PRIVATE KEY-{5}\s*$")
     END_TAG = re.compile(r"^-{5}END (RSA|EC|OPENSSH) PRIVATE KEY-{5}\s*$")
 
+    # Map of type name string (eg, "ssh-ed25519") to class object (eg,
+    # Ed25519Key) - powered by this class tree's .identifiers() classmethod +
+    # subclass hooks.
+    # TODO: add tests around this yo
+    type_to_class: dict[str, type[Self]] = {}
+
+    def __init_subclass__(cls, *args, **kwargs) -> None:
+        """
+        Register subclasses into `PKey.type_to_class` dictionary for lookup.
+        """
+        super().__init_subclass__(*args, **kwargs)
+        # Use identifiers(), which is our API for "what key names do you
+        # implement?", or noop if that AttributeErrors (which implies an odd
+        # subclass, like AgentKey, which has no .name and no .identifiers()
+        # override.)
+        try:
+            for name in cls.identifiers():
+                PKey.type_to_class[name] = cls
+        except AttributeError:
+            pass
+
+    # TODO: leverage where we currently iterate subclasses
+    # TODO: tests
+    @classmethod
+    def subclasses(cls) -> set[type[Self]]:
+        """
+        Set of just-the-classes from the `type_to_class` mapping.
+        """
+        return set(cls.type_to_class.values())
+
     @staticmethod
-    def from_path(path, passphrase=None):
+    def from_path(path, passphrase: str | None = None):
         """
         Attempt to instantiate appropriate key subclass from given file path.
 
@@ -137,9 +167,6 @@ class PKey:
         .. versionadded:: 3.2
         """
         # TODO: make sure sphinx is reading Path right in param list...
-
-        # Lazy import to avoid circular import issues
-        from paramiko import RSAKey, Ed25519Key, ECDSAKey
 
         # Normalize to string, as cert suffix isn't quite an extension, so
         # pathlib isn't useful for this.
@@ -158,16 +185,54 @@ class PKey:
         key_path = Path(key_path).expanduser()
         cert_path = Path(cert_path).expanduser()
 
-        data = key_path.read_bytes()
+        # See TODO within subclass_from_str re: why this looks weird.
+        guessed_class: type[PKey] = PKey.subclass_from_str(
+            key_path.read_bytes(), passphrase=passphrase
+        )
+        with key_path.open() as fd:
+            key = guessed_class.from_private_key(fd, password=passphrase)
+        if cert_path.exists():
+            # load_certificate can take Message, path-str, or value-str
+            key.load_certificate(str(cert_path))
+        return key
+
+    @staticmethod
+    def from_str(key_str: bytes, passphrase: Optional[str] = None) -> Self:
+        """
+        Instantiate a PKey subclass based on given ``key_str``.
+
+        Uses `subclass_from_str` under the hood.
+
+        :param key_str: The public or private key material to use.
+        :raises: `UnknownKeyType`
+        """
+        guessed_class = PKey.subclass_from_str(key_str)
+        return guessed_class(data=key_str, password=passphrase)
+
+    @staticmethod
+    def subclass_from_str(
+        key_str: bytes, passphrase: Optional[str] = None
+    ) -> type[Self]:
+        """
+        Given unknown ``key_str``, try guessing the Paramiko key class it can
+        be instantiated from.
+
+        You *probably* want to be using this method's siblings, `from_bytes`
+        (when all you have is literally the bytes) or `from_path` (when you
+        have a path on-disk; that one also supports certificates).
+        """
+        # Lazy import to avoid circular import issues
+        from paramiko import ECDSAKey, Ed25519Key, RSAKey
+
         # Like OpenSSH, try modern/OpenSSH-specific key load first
         try:
             loaded = serialization.load_ssh_private_key(
-                data=data, password=passphrase
+                data=key_str, password=passphrase
             )
         # Then fall back to assuming legacy PEM type
         except ValueError:
             loaded = serialization.load_pem_private_key(
-                data=data, password=passphrase
+                data=key_str, password=passphrase
             )
         # TODO Python 3.10: match statement? (NOTE: we cannot use a dict
         # because the results from the loader are literal backend, eg openssl,
@@ -176,7 +241,8 @@ class PKey:
         # TODO: leverage already-parsed/math'd obj to avoid duplicate cpu
         # cycles? seemingly requires most of our key subclasses to be rewritten
         # to be cryptography-object-forward. this is still likely faster than
-        # the old SSHClient code that just tried instantiating every class!
+        # the old SSHClient code that just tried instantiating every class in
+        # series!
         key_class = None
         if isinstance(loaded, asymmetric.rsa.RSAPrivateKey):
             key_class = RSAKey
@@ -185,16 +251,15 @@ class PKey:
         elif isinstance(loaded, asymmetric.ec.EllipticCurvePrivateKey):
             key_class = ECDSAKey
         else:
-            raise UnknownKeyType(key_bytes=data, key_type=loaded.__class__)
-        with key_path.open() as fd:
-            key = key_class.from_private_key(fd, password=passphrase)
-        if cert_path.exists():
-            # load_certificate can take Message, path-str, or value-str
-            key.load_certificate(str(cert_path))
-        return key
+            # TODO: well this is just not usable now since it expects a
+            # PKey.asbytes() value, not a string/armored pem...
+            raise UnknownKeyType(key_bytes=key_str, key_type=loaded.__class__)
+        return key_class
 
-    @staticmethod
-    def from_type_string(key_type, key_bytes):
+    @classmethod
+    def from_type_string(
+        cls, key_type: str, key_str: bytes, passphrase: str | None = None
+    ) -> Self:
         """
         Given type `str` & raw `bytes`, return a `PKey` subclass instance.
 
@@ -203,9 +268,11 @@ class PKey:
 
         :param str key_type:
             The key type, eg ``"ssh-ed25519"``.
-        :param bytes key_bytes:
+        :param bytes key_str:
             The raw byte data forming the key material, as expected by
             subclasses' ``data`` parameter.
+        :param passphrase:
+            Optional passphrase to use in private key loading.
 
         :returns:
             A `PKey` subclass instance.
@@ -214,14 +281,14 @@ class PKey:
             `UnknownKeyType`, if no registered classes knew about this type.
 
         .. versionadded:: 3.2
+        .. versionchanged:: 5.0
+            Switched from a staticmethod to a classmethod; added ``passphrase``.
         """
-        from paramiko import key_classes
-
-        for key_class in key_classes:
-            if key_type in key_class.identifiers():
-                # TODO: needs to passthru things like passphrase
-                return key_class(data=key_bytes)
-        raise UnknownKeyType(key_type=key_type, key_bytes=key_bytes)
+        try:
+            named_class = cast(PKey, cls.type_to_class[key_type])
+            return named_class(data=key_str, password=passphrase)
+        except KeyError:
+            raise UnknownKeyType(key_type=key_type, key_str=key_str)
 
     @classmethod
     def identifiers(cls):
@@ -569,9 +636,7 @@ class PKey:
         # encrypted keyfile: will need a password
         proc_type = headers["proc-type"]
         if proc_type != "4,ENCRYPTED":
-            raise SSHException(
-                'Unknown private key structure "{}"'.format(proc_type)
-            )
+            raise SSHException('Unknown private key structure "{}"'.format(proc_type))
         try:
             encryption_type, saltstr = headers["dek-info"].split(",")
         except:
@@ -620,9 +685,7 @@ class PKey:
         cipher, kdfname, kdf_options, num_pubkeys, remainder = cstruct
         # For now, just support 1 key.
         if num_pubkeys > 1:
-            raise SSHException(
-                "unsupported: private keyfile has multiple keys"
-            )
+            raise SSHException("unsupported: private keyfile has multiple keys")
         pubkey, privkey_blob = self._uint32_cstruct_unpack(remainder, "ss")
 
         if kdfname == b("bcrypt"):
@@ -640,9 +703,7 @@ class PKey:
             # If no password was passed in, raise an exception pointing
             # out that we need one
             if password is None:
-                raise PasswordRequiredException(
-                    "private key file is encrypted"
-                )
+                raise PasswordRequiredException("private key file is encrypted")
 
             # Unpack salt and rounds from kdfoptions
             salt, rounds = self._uint32_cstruct_unpack(kdf_options, "su")
@@ -670,18 +731,14 @@ class PKey:
             # Unencrypted private key
             decrypted_privkey = privkey_blob
         else:
-            raise SSHException(
-                "unknown cipher or kdf used in private key file"
-            )
+            raise SSHException("unknown cipher or kdf used in private key file")
 
         # Unpack private key and verify checkints
         cstruct = self._uint32_cstruct_unpack(decrypted_privkey, "uusr")
         checkint1, checkint2, keytype, keydata = cstruct
 
         if checkint1 != checkint2:
-            raise SSHException(
-                "OpenSSH private key file checkints do not match"
-            )
+            raise SSHException("OpenSSH private key file checkints do not match")
 
         return _unpad_openssh(keydata)
 
@@ -775,12 +832,10 @@ class PKey:
             encryption = serialization.BestAvailableEncryption(b(password))
 
         f.write(
-            key.private_bytes(
-                serialization.Encoding.PEM, format, encryption
-            ).decode()
+            key.private_bytes(serialization.Encoding.PEM, format, encryption).decode()
         )
 
-    def _check_type_and_load_cert(self, msg, key_type, cert_type):
+    def _check_type_and_load_cert(self, msg: Message, key_type: str, cert_type: str):
         """
         Perform message type-checking & optional certificate loading.
 
@@ -922,9 +977,7 @@ class PublicBlob:
         m = Message(key_blob)
         blob_type = m.get_text()
         if blob_type != key_type:
-            deets = "key type={!r}, but blob type={!r}".format(
-                key_type, blob_type
-            )
+            deets = "key type={!r}, but blob type={!r}".format(key_type, blob_type)
             raise ValueError("Invalid PublicBlob contents: {}".format(deets))
         # All good? All good.
         return cls(type_=key_type, blob=key_blob, comment=comment)
