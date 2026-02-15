@@ -375,7 +375,7 @@ class SSHClientTest(ClientTest):
         # TODO: what it says on the tin: ~/.ssh/id_rsa tries to load
         # ~/.ssh/id_rsa-cert.pub. Right now no other tests actually test that
         # code path (!) so we're punting too, sob.
-        pass
+        pytest.skip()
 
     def test_auto_add_policy(self):
         """
