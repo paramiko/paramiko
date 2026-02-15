@@ -38,8 +38,6 @@ class RSAKey(PKey):
 
     name = "ssh-rsa"
     HASHES = {
-        "ssh-rsa": hashes.SHA1,
-        "ssh-rsa-cert-v01@openssh.com": hashes.SHA1,
         "rsa-sha2-256": hashes.SHA256,
         "rsa-sha2-256-cert-v01@openssh.com": hashes.SHA256,
         "rsa-sha2-512": hashes.SHA512,
@@ -126,8 +124,8 @@ class RSAKey(PKey):
         sig = self.key.sign(
             data,
             padding=padding.PKCS1v15(),
-            # HASHES being just a map from long identifier to either SHA1 or
-            # SHA256 - cert'ness is not truly relevant.
+            # HASHES being just a map from long identifier to algo; cert'ness
+            # is not truly relevant.
             algorithm=self.HASHES[algorithm](),
         )
         m = Message()
