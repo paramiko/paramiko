@@ -7,7 +7,6 @@ Thus, they concern AuthHandler and AuthStrategy, with a side of Transport.
 from logging import Logger
 from unittest.mock import Mock
 
-from paramiko import Ed25519Key
 from pytest import raises
 
 from paramiko import (
@@ -18,16 +17,17 @@ from paramiko import (
     AuthSource,
     AuthStrategy,
     BadAuthenticationType,
+    Ed25519Key,
     InMemoryPrivateKey,
     NoneAuth,
     OnDiskPrivateKey,
     Password,
-    PrivateKey,
     PKey,
+    PrivateKey,
     RSAKey,
-    SSHException,
     ServiceRequestingTransport,
     SourceResult,
+    SSHException,
 )
 
 from ._util import (

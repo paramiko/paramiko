@@ -21,31 +21,30 @@
 Some unit tests for public/private key objects.
 """
 
-import unittest
 import os
 import stat
+import unittest
 from binascii import hexlify
 from hashlib import md5
 from io import StringIO
+from unittest.mock import Mock, patch
+
+import pytest
+from cryptography.exceptions import UnsupportedAlgorithm
+from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateNumbers
 
 from paramiko import (
-    RSAKey,
     ECDSAKey,
     Ed25519Key,
     Message,
-    util,
+    RSAKey,
     SSHException,
+    util,
 )
+from paramiko.common import byte_chr, o600
 from paramiko.util import b
-from paramiko.common import o600, byte_chr
 
-from cryptography.exceptions import UnsupportedAlgorithm
-from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateNumbers
-from unittest.mock import patch, Mock
-import pytest
-
-from ._util import _support, is_low_entropy, requires_sha1_signing
-
+from ._util import _support, is_low_entropy
 
 # from openssh's ssh-keygen
 PUB_RSA = "ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAIEA049W6geFpmsljTwfvI1UmKWWJPNFI74+vNKTk4dmzkQY2yAMs6FhlvhlI8ysU4oj71ZsRYMecHbBbxdN79+JRFVYTKaLqjwGENeTd+yv4q+V2PvZv3fLnzApI3l7EJCqhWwJUHJ1jAkZzqDx0tyOL4uoZpww3nmE0kb3y21tH4c="  # noqa
@@ -131,7 +130,7 @@ class KeyTest(unittest.TestCase):
 
     def test_generate_key_bytes(self):
         key = util.generate_key_bytes(md5, x1234, "happy birthday", 30)
-        exp = b"\x61\xE1\xF2\x72\xF4\xC1\xC4\x56\x15\x86\xBD\x32\x24\x98\xC0\xE9\x24\x67\x27\x80\xF4\x7B\xB3\x7D\xDA\x7D\x54\x01\x9E\x64"  # noqa
+        exp = b"\x61\xe1\xf2\x72\xf4\xc1\xc4\x56\x15\x86\xbd\x32\x24\x98\xc0\xe9\x24\x67\x27\x80\xf4\x7b\xb3\x7d\xda\x7d\x54\x01\x9e\x64"  # noqa
         self.assertEqual(exp, key)
 
     def test_load_rsa(self):

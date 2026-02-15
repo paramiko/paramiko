@@ -130,7 +130,9 @@ class BadHostKeyException(SSHException):
         self.expected_key = expected_key
 
     def __str__(self):
-        msg = "Host key for server '{}' does not match: got '{}', expected '{}'"  # noqa
+        msg = (
+            "Host key for server '{}' does not match: got '{}', expected '{}'"
+        )
         return msg.format(
             self.hostname,
             self.key.get_base64(),
@@ -209,7 +211,8 @@ class NoValidConnectionsError(socket.error):
         else:
             msg = "Unable to connect to port {0} on {2}"
         super().__init__(
-            None, msg.format(addrs[0][1], body, tail)  # stand-in for errno
+            None,
+            msg.format(addrs[0][1], body, tail),  # stand-in for errno
         )
         self.errors = errors
 

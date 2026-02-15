@@ -4,25 +4,24 @@ import shutil
 import threading
 from pathlib import Path
 
+import pytest
+from icecream import ic
+from icecream import install as install_ic
 from invoke.vendor.lexicon import Lexicon
 
-import pytest
 from paramiko import (
-    SFTPServer,
     SFTP,
-    Transport,
-    RSAKey,
-    Ed25519Key,
     ECDSAKey,
+    Ed25519Key,
     PKey,
+    RSAKey,
+    SFTPServer,
+    Transport,
 )
 
 from ._loop import LoopSocket
 from ._stub_sftp import StubServer, StubSFTPServer
 from ._util import _support
-
-from icecream import ic, install as install_ic
-
 
 # Better print() for debugging - use ic()!
 install_ic()

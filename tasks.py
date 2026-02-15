@@ -1,13 +1,14 @@
 import os
-from pathlib import Path
 from os.path import join
-from shutil import rmtree, copytree
+from pathlib import Path
+from shutil import copytree, rmtree
 
-from invoke import Collection, task
 from invocations import checks
-from invocations.docs import docs, www, sites, watch_docs
-from invocations.packaging.release import ns as release_coll, publish
+from invocations.docs import docs, sites, watch_docs, www
+from invocations.packaging.release import ns as release_coll
+from invocations.packaging.release import publish
 from invocations.testing import count_errors
+from invoke import Collection, task
 
 
 # TODO: this screams out for the invoke missing-feature of "I just wrap task X,

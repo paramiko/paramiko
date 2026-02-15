@@ -17,23 +17,23 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
 
 """
-Useful functions used by the rest of paramiko.
+The dreaded ``utils.py`` - clearinghouse for commonly used functions or data
+that don't belong anywhere else.
 """
 
-
-import sys
-import struct
-import traceback
-import threading
 import logging
+import struct
+import sys
+import threading
+import traceback
 
 from paramiko.common import (
     DEBUG,
-    zero_byte,
-    xffffffff,
-    max_byte,
-    byte_ord,
     byte_chr,
+    byte_ord,
+    max_byte,
+    xffffffff,
+    zero_byte,
 )
 from paramiko.config import SSHConfig
 

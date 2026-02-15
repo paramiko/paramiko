@@ -24,7 +24,7 @@ import struct
 from io import BytesIO
 
 from paramiko import util
-from paramiko.common import zero_byte, max_byte, one_byte
+from paramiko.common import max_byte, one_byte, zero_byte
 from paramiko.util import u
 
 

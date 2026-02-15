@@ -27,9 +27,9 @@ import os
 import re
 import shlex
 import socket
+from functools import partial
 from hashlib import sha1
 from io import StringIO
-from functools import partial
 
 invoke, invoke_import_error = None, None
 try:
@@ -37,8 +37,7 @@ try:
 except ImportError as e:
     invoke_import_error = e
 
-from .ssh_exception import CouldNotCanonicalize, ConfigParseError
-
+from .ssh_exception import ConfigParseError, CouldNotCanonicalize
 
 SSH_PORT = 22
 

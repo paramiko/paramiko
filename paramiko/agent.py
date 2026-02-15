@@ -22,19 +22,19 @@ SSH Agent interface
 
 import os
 import socket
+import stat
 import struct
 import sys
+import tempfile
 import threading
 import time
-import tempfile
-import stat
 from logging import DEBUG
 from select import select
-from paramiko.common import io_sleep, byte_chr
 
-from paramiko.ssh_exception import SSHException, AuthenticationException
+from paramiko.common import byte_chr, io_sleep
 from paramiko.message import Message
 from paramiko.pkey import PKey, UnknownKeyType
+from paramiko.ssh_exception import AuthenticationException, SSHException
 from paramiko.util import asbytes, get_logger
 
 cSSH2_AGENTC_REQUEST_IDENTITIES = byte_chr(11)
@@ -232,7 +232,7 @@ def get_agent_connection():
             # probably a dangling env var: the ssh agent is gone
             return
     elif sys.platform == "win32":
-        from . import win_pageant, win_openssh
+        from . import win_openssh, win_pageant
 
         conn = None
         if win_pageant.can_talk_to_agent():

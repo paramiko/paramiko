@@ -20,12 +20,12 @@
 SSH client & key policies
 """
 
-from binascii import hexlify
 import getpass
 import inspect
 import os
 import socket
 import warnings
+from binascii import hexlify
 from errno import ECONNREFUSED, EHOSTUNREACH
 
 from paramiko.agent import Agent
@@ -36,9 +36,9 @@ from paramiko.ed25519key import Ed25519Key
 from paramiko.hostkeys import HostKeys
 from paramiko.rsakey import RSAKey
 from paramiko.ssh_exception import (
-    SSHException,
     BadHostKeyException,
     NoValidConnectionsError,
+    SSHException,
 )
 from paramiko.transport import Transport
 from paramiko.util import ClosingContextManager
@@ -201,7 +201,7 @@ class SSHClient(ClosingContextManager):
         addrinfos = socket.getaddrinfo(
             hostname, port, socket.AF_UNSPEC, socket.SOCK_STREAM
         )
-        for (family, socktype, proto, canonname, sockaddr) in addrinfos:
+        for family, socktype, proto, canonname, sockaddr in addrinfos:
             if socktype == socket.SOCK_STREAM:
                 yield family, sockaddr
                 guess = False

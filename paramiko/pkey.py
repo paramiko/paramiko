@@ -21,27 +21,25 @@ Common API for all public keys.
 """
 
 import base64
-from base64 import encodebytes, decodebytes
-from binascii import unhexlify
 import os
-from pathlib import Path
-from hashlib import md5, sha256
 import re
 import struct
+from base64 import decodebytes, encodebytes
+from binascii import unhexlify
+from hashlib import md5, sha256
+from pathlib import Path
+from typing import Optional
 
 import bcrypt
-
 from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives import padding, serialization
-from cryptography.hazmat.primitives.ciphers import algorithms, modes, Cipher
-from cryptography.hazmat.primitives import asymmetric
+from cryptography.hazmat.primitives import asymmetric, padding, serialization
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 
 from paramiko import util
-from paramiko.util import u, b
 from paramiko.common import o600
-from paramiko.ssh_exception import SSHException, PasswordRequiredException
 from paramiko.message import Message
-
+from paramiko.ssh_exception import PasswordRequiredException, SSHException
+from paramiko.util import b, u
 
 # TripleDES is moving from `cryptography.hazmat.primitives.ciphers.algorithms`
 # in cryptography>=43.0.0 to `cryptography.hazmat.decrepit.ciphers.algorithms`
@@ -143,7 +141,7 @@ class PKey:
         """
 
         # Lazy import to avoid circular import issues
-        from paramiko import RSAKey, Ed25519Key, ECDSAKey
+        from paramiko import ECDSAKey, Ed25519Key, RSAKey
 
         # Normalize to string, as cert suffix isn't quite an extension, so
         # pathlib isn't useful for this.

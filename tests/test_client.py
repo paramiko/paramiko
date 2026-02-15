@@ -20,7 +20,6 @@
 Some unit tests for SSHClient.
 """
 
-
 import gc
 import os
 import platform
@@ -31,18 +30,17 @@ import unittest
 import warnings
 import weakref
 from tempfile import mkstemp
+from unittest.mock import Mock, patch
 
 import pytest
 from pytest_relaxed import raises
-from unittest.mock import patch, Mock
 
 import paramiko
 from paramiko import SSHClient
 from paramiko.pkey import PublicBlob
-from paramiko.ssh_exception import SSHException, AuthenticationException
+from paramiko.ssh_exception import AuthenticationException, SSHException
 
 from ._util import _support, requires_sha1_signing, slow
-
 
 requires_gss_auth = unittest.skipUnless(
     paramiko.GSS_AUTH_AVAILABLE, "GSS auth not available"

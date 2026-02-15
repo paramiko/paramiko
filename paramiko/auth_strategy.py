@@ -8,8 +8,8 @@ Replaces certain parts of `.SSHClient`. For a concrete implementation, see the
 from collections import namedtuple
 
 from .agent import AgentKey
-from .util import get_logger
 from .ssh_exception import AuthenticationException
+from .util import get_logger
 
 
 class AuthSource:
@@ -156,6 +156,7 @@ class OnDiskPrivateKey(PrivateKey):
 
 
 SourceResult = namedtuple("SourceResult", ["source", "result"])
+
 
 # TODO: tempting to make this an OrderedDict, except the keys essentially want
 # to be rich objects (AuthSources) which do not make for useful user indexing?

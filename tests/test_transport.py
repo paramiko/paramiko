@@ -20,31 +20,32 @@
 Some unit tests for the ssh2 protocol in Transport.
 """
 
-
-from binascii import hexlify
 import itertools
+import random
 import select
 import socket
-import time
 import threading
-import random
+import time
 import unittest
+from binascii import hexlify
 from unittest.mock import Mock
 
+from pytest import mark, raises
+
 from paramiko import (
+    OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED,
     AuthHandler,
     ChannelException,
     IncompatiblePeer,
     MessageOrderError,
     Packetizer,
     RSAKey,
-    SSHException,
     SecurityOptions,
     ServiceRequestingTransport,
+    SSHException,
     Transport,
 )
 from paramiko.auth_handler import AuthOnlyHandler
-from paramiko import OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED
 from paramiko.common import (
     DEFAULT_MAX_PACKET_SIZE,
     DEFAULT_WINDOW_SIZE,
@@ -63,19 +64,16 @@ from paramiko.common import (
 )
 from paramiko.message import Message
 
+from ._loop import LoopSocket
 from ._util import (
-    needs_builtin,
-    _support,
-    requires_sha1_signing,
-    slow,
-    server,
-    _disable_sha2,
-    _disable_sha1,
     TestServer as NullServer,
 )
-from ._loop import LoopSocket
-from pytest import mark, raises
-
+from ._util import (
+    _support,
+    needs_builtin,
+    server,
+    slow,
+)
 
 LONG_BANNER = """\
 Welcome to the super-fun-land BBS, where our MOTD is the primary thing we
@@ -168,7 +166,7 @@ class TransportTest(unittest.TestCase):
 
     def test_compute_key(self):
         self.tc.K = 123281095979686581523377256114209720774539068973101330872763622971399429481072519713536292772709507296759612401802191955568143056534122385270077606457721553469730659233569339356140085284052436697480759510519672848743794433460113118986816826624865291116513647975790797391795651716378444844877749505443714557929  # noqa
-        self.tc.H = b"\x0C\x83\x07\xCD\xE6\x85\x6F\xF3\x0B\xA9\x36\x84\xEB\x0F\x04\xC2\x52\x0E\x9E\xD3"  # noqa
+        self.tc.H = b"\x0c\x83\x07\xcd\xe6\x85\x6f\xf3\x0b\xa9\x36\x84\xeb\x0f\x04\xc2\x52\x0e\x9e\xd3"  # noqa
         self.tc.session_id = self.tc.H
         key = self.tc._compute_key("C", 32)
         self.assertEqual(
@@ -841,6 +839,7 @@ class TransportTest(unittest.TestCase):
         """
         verify that we can get a handshake timeout.
         """
+
         # Tweak client Transport instance's Packetizer instance so
         # its read_message() sleeps a bit. This helps prevent race conditions
         # where the client Transport's timeout timer thread doesn't even have

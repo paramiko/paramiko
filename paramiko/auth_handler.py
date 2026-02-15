@@ -20,58 +20,58 @@
 `.AuthHandler`
 """
 
-import weakref
+import re
 import threading
 import time
-import re
+import weakref
 
 from paramiko.common import (
-    cMSG_SERVICE_REQUEST,
-    cMSG_DISCONNECT,
-    DISCONNECT_SERVICE_NOT_AVAILABLE,
-    DISCONNECT_NO_MORE_AUTH_METHODS_AVAILABLE,
-    cMSG_USERAUTH_REQUEST,
-    cMSG_SERVICE_ACCEPT,
-    DEBUG,
-    AUTH_SUCCESSFUL,
-    INFO,
-    cMSG_USERAUTH_SUCCESS,
-    cMSG_USERAUTH_FAILURE,
-    AUTH_PARTIALLY_SUCCESSFUL,
-    cMSG_USERAUTH_INFO_REQUEST,
-    WARNING,
     AUTH_FAILED,
-    cMSG_USERAUTH_PK_OK,
-    cMSG_USERAUTH_INFO_RESPONSE,
-    MSG_SERVICE_REQUEST,
+    AUTH_PARTIALLY_SUCCESSFUL,
+    AUTH_SUCCESSFUL,
+    DEBUG,
+    DISCONNECT_NO_MORE_AUTH_METHODS_AVAILABLE,
+    DISCONNECT_SERVICE_NOT_AVAILABLE,
+    INFO,
+    MSG_NAMES,
     MSG_SERVICE_ACCEPT,
-    MSG_USERAUTH_REQUEST,
-    MSG_USERAUTH_SUCCESS,
-    MSG_USERAUTH_FAILURE,
+    MSG_SERVICE_REQUEST,
     MSG_USERAUTH_BANNER,
-    MSG_USERAUTH_INFO_REQUEST,
-    MSG_USERAUTH_INFO_RESPONSE,
-    cMSG_USERAUTH_GSSAPI_RESPONSE,
-    cMSG_USERAUTH_GSSAPI_TOKEN,
-    cMSG_USERAUTH_GSSAPI_MIC,
-    MSG_USERAUTH_GSSAPI_RESPONSE,
-    MSG_USERAUTH_GSSAPI_TOKEN,
+    MSG_USERAUTH_FAILURE,
     MSG_USERAUTH_GSSAPI_ERROR,
     MSG_USERAUTH_GSSAPI_ERRTOK,
     MSG_USERAUTH_GSSAPI_MIC,
-    MSG_NAMES,
+    MSG_USERAUTH_GSSAPI_RESPONSE,
+    MSG_USERAUTH_GSSAPI_TOKEN,
+    MSG_USERAUTH_INFO_REQUEST,
+    MSG_USERAUTH_INFO_RESPONSE,
+    MSG_USERAUTH_REQUEST,
+    MSG_USERAUTH_SUCCESS,
+    WARNING,
+    cMSG_DISCONNECT,
+    cMSG_SERVICE_ACCEPT,
+    cMSG_SERVICE_REQUEST,
     cMSG_USERAUTH_BANNER,
+    cMSG_USERAUTH_FAILURE,
+    cMSG_USERAUTH_GSSAPI_MIC,
+    cMSG_USERAUTH_GSSAPI_RESPONSE,
+    cMSG_USERAUTH_GSSAPI_TOKEN,
+    cMSG_USERAUTH_INFO_REQUEST,
+    cMSG_USERAUTH_INFO_RESPONSE,
+    cMSG_USERAUTH_PK_OK,
+    cMSG_USERAUTH_REQUEST,
+    cMSG_USERAUTH_SUCCESS,
 )
 from paramiko.message import Message
-from paramiko.util import b, u
+from paramiko.server import InteractiveQuery
 from paramiko.ssh_exception import (
-    SSHException,
     AuthenticationException,
     BadAuthenticationType,
     PartialAuthentication,
+    SSHException,
 )
-from paramiko.server import InteractiveQuery
-from paramiko.ssh_gss import GSSAuth, GSS_EXCEPTIONS
+from paramiko.ssh_gss import GSS_EXCEPTIONS, GSSAuth
+from paramiko.util import b, u
 
 
 class AuthHandler:
@@ -478,9 +478,7 @@ class AuthHandler:
 Major Status: {}
 Minor Status: {}
 Error Message: {}
-""".format(
-                            maj_status, min_status, err_msg
-                        )
+""".format(maj_status, min_status, err_msg)
                     )
                 elif ptype == MSG_USERAUTH_FAILURE:
                     self._parse_userauth_failure(m)
@@ -622,7 +620,9 @@ Error Message: {}
                 self._log(INFO, "Auth rejected: public key: {}".format(str(e)))
                 key = None
             except Exception as e:
-                msg = "Auth rejected: unsupported or mangled public key ({}: {})"  # noqa
+                msg = (
+                    "Auth rejected: unsupported or mangled public key ({}: {})"  # noqa
+                )
                 self._log(INFO, msg.format(e.__class__.__name__, e))
                 key = None
             if key is None:

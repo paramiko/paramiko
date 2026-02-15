@@ -20,67 +20,64 @@
 Server-mode SFTP support.
 """
 
-import os
 import errno
+import os
 import sys
 from hashlib import md5, sha1
 
 from paramiko import util
-from paramiko.sftp import (
-    BaseSFTP,
-    Message,
-    SFTP_FAILURE,
-    SFTP_PERMISSION_DENIED,
-    SFTP_NO_SUCH_FILE,
-    int64,
-)
-from paramiko.sftp_si import SFTPServerInterface
-from paramiko.sftp_attr import SFTPAttributes
 from paramiko.common import DEBUG
 from paramiko.server import SubsystemHandler
-from paramiko.util import b
-
 
 # known hash algorithms for the "check-file" extension
 from paramiko.sftp import (
-    CMD_HANDLE,
-    SFTP_DESC,
-    CMD_STATUS,
-    SFTP_EOF,
-    CMD_NAME,
-    SFTP_BAD_MESSAGE,
+    CMD_ATTRS,
+    CMD_CLOSE,
+    CMD_DATA,
+    CMD_EXTENDED,
     CMD_EXTENDED_REPLY,
-    SFTP_FLAG_READ,
-    SFTP_FLAG_WRITE,
-    SFTP_FLAG_APPEND,
-    SFTP_FLAG_CREATE,
-    SFTP_FLAG_TRUNC,
-    SFTP_FLAG_EXCL,
+    CMD_FSETSTAT,
+    CMD_FSTAT,
+    CMD_HANDLE,
+    CMD_LSTAT,
+    CMD_MKDIR,
+    CMD_NAME,
     CMD_NAMES,
     CMD_OPEN,
-    CMD_CLOSE,
-    SFTP_OK,
+    CMD_OPENDIR,
     CMD_READ,
-    CMD_DATA,
-    CMD_WRITE,
+    CMD_READDIR,
+    CMD_READLINK,
+    CMD_REALPATH,
     CMD_REMOVE,
     CMD_RENAME,
-    CMD_MKDIR,
     CMD_RMDIR,
-    CMD_OPENDIR,
-    CMD_READDIR,
-    CMD_STAT,
-    CMD_ATTRS,
-    CMD_LSTAT,
-    CMD_FSTAT,
     CMD_SETSTAT,
-    CMD_FSETSTAT,
-    CMD_READLINK,
+    CMD_STAT,
+    CMD_STATUS,
     CMD_SYMLINK,
-    CMD_REALPATH,
-    CMD_EXTENDED,
+    CMD_WRITE,
+    SFTP_BAD_MESSAGE,
+    SFTP_DESC,
+    SFTP_EOF,
+    SFTP_FAILURE,
+    SFTP_FLAG_APPEND,
+    SFTP_FLAG_CREATE,
+    SFTP_FLAG_EXCL,
+    SFTP_FLAG_READ,
+    SFTP_FLAG_TRUNC,
+    SFTP_FLAG_WRITE,
+    SFTP_NO_SUCH_FILE,
+    SFTP_OK,
     SFTP_OP_UNSUPPORTED,
+    SFTP_PERMISSION_DENIED,
+    BaseSFTP,
+    Message,
+    int64,
 )
+from paramiko.sftp_attr import SFTPAttributes
+from paramiko.sftp_si import SFTPServerInterface
+from paramiko.util import b
 
 _hash_class = {"sha1": sha1, "md5": md5}
 
@@ -99,7 +96,7 @@ class SFTPServer(BaseSFTP, SubsystemHandler):
         server,
         sftp_si=SFTPServerInterface,
         *args,
-        **kwargs
+        **kwargs,
     ):
         """
         The constructor for SFTPServer is meant to be called from within the
