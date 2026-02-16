@@ -79,10 +79,14 @@ class RSAKey(PKey):
 
     @classmethod
     def identifiers(cls):
-        # TODO: does this ever want to accept "ssh-rsa"? it's an allowed
-        # identifier when reading the key material itself, just not for the
-        # auth/sig algorithm
-        return list(cls.HASHES.keys())
+        # NOTE: we no longer want to have ssh-rsa+SHA1 in HASHES but we still
+        # need to advertise we can be used to read ssh-rsa keys (w/ assumption
+        # other parts of system will enforce the use of SHA2 signing algos).
+        # Thus, just say so here.
+        return list(cls.HASHES.keys()) + [
+            "ssh-rsa",
+            "ssh-rsa-cert-v01@openssh.com",
+        ]
 
     @property
     def size(self):
