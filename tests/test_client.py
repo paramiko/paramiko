@@ -196,6 +196,7 @@ class ClientTest(unittest.TestCase):
 
         # Client setup
         self.tc = SSHClient()
+        # Pretend we have a known_hosts file or similar
         self.tc.get_host_keys().add(
             f"[{self.addr}]:{self.port}", "ssh-rsa", public_host_key
         )
