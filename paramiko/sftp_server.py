@@ -488,7 +488,7 @@ class SFTPServer(BaseSFTP, SubsystemHandler):
             handle = msg.get_binary()
             attr = SFTPAttributes._from_msg(msg)
             if handle not in self.file_table:
-                self._response(
+                self._send_status(
                     request_number, SFTP_BAD_MESSAGE, "Invalid handle"
                 )
                 return
