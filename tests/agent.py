@@ -94,6 +94,7 @@ class AgentKey_:
             key.blob = b"nope"
             assert key.asbytes() == key.inner_key.asbytes()
 
+    @mark.parametrize("do_cert", [True, False], ids=lambda x: f"cert={x}")
     @mark.parametrize(
         "sign_kwargs,expected_flag",
         [
@@ -113,8 +114,13 @@ class AgentKey_:
                 SSH_AGENT_RSA_SHA2_512,
             ),
         ],
+        ids=lambda x: f"algo={x.get('algorithm', 'default')}"
+        if isinstance(x, dict)
+        else f"flag={x}",
     )
-    def signing_data(self, sign_kwargs, expected_flag):
+    def signing_data(
+        self, sign_kwargs: dict[str, str], expected_flag: int, do_cert: bool
+    ):
         class FakeAgent:
             def _send_message(self, msg):
                 # The thing we actually care most about, we're not testing
@@ -125,30 +131,29 @@ class AgentKey_:
                 sig.rewind()
                 return SSH2_AGENT_SIGN_RESPONSE, sig
 
-        for do_cert in (False, True):
-            agent = FakeAgent()
-            # Get key kinda like how a real agent would give it to us - if
-            # cert, it'd be the entire public blob, not just the pubkey. This
-            # ensures the code under test sends _just the pubkey part_ back to
-            # the agent during signature requests (bug was us sending _the
-            # entire cert blob_, which somehow "worked ok" but always got us
-            # SHA1)
-            # NOTE: using lower level loader to avoid auto-cert-load when
-            # testing regular key (agents expose them separately)
-            inner_key = RSAKey.from_private_key_file(_support("rsa.key"))
-            blobby = inner_key.asbytes()
-            # NOTE: expected key blob always wants to be the real key, even
-            # when the "key" is a certificate.
-            expected_request_key_blob = blobby
-            if do_cert:
-                inner_key.load_certificate(_support("rsa.key-cert.pub"))
-                blobby = inner_key.public_blob.key_blob
-            key = AgentKey(agent, blobby)
-            result = key.sign_ssh_data(b"data-to-sign", **sign_kwargs)
-            assert result == b"lol"
-            msg = agent._sent_message
-            msg.rewind()
-            assert msg.get_byte() == cSSH2_AGENTC_SIGN_REQUEST
-            assert msg.get_string() == expected_request_key_blob
-            assert msg.get_string() == b"data-to-sign"
-            assert msg.get_int() == expected_flag
+        agent = FakeAgent()
+        # Get key kinda like how a real agent would give it to us - if
+        # cert, it'd be the entire public blob, not just the pubkey. This
+        # ensures the code under test sends _just the pubkey part_ back to
+        # the agent during signature requests (bug was us sending _the
+        # entire cert blob_, which somehow "worked ok" but always got us
+        # SHA1)
+        # NOTE: using lower level loader to avoid auto-cert-load when
+        # testing regular key (agents expose them separately)
+        inner_key = RSAKey.from_private_key_file(_support("rsa.key"))
+        blobby = inner_key.asbytes()
+        # NOTE: expected key blob always wants to be the real key, even
+        # when the "key" is a certificate.
+        expected_request_key_blob = blobby
+        if do_cert:
+            inner_key.load_certificate(_support("rsa.key-cert.pub"))
+            blobby = inner_key.public_blob.key_blob
+        key = AgentKey(agent=agent, blob=blobby)
+        result = key.sign_ssh_data(b"data-to-sign", **sign_kwargs)
+        assert result == b"lol"
+        msg = agent._sent_message
+        msg.rewind()
+        assert msg.get_byte() == cSSH2_AGENTC_SIGN_REQUEST
+        assert msg.get_string() == expected_request_key_blob
+        assert msg.get_string() == b"data-to-sign"
+        assert msg.get_int() == expected_flag
