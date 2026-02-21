@@ -436,7 +436,7 @@ class AgentKey(PKey):
         key instance this key is a proxy for, if one was obtainable, else None.
     """
 
-    def __init__(self, agent, blob, comment=""):
+    def __init__(self, agent: Agent, blob: bytes, comment: str = ""):
         self.agent = agent
         self.blob = blob
         self.comment = comment
