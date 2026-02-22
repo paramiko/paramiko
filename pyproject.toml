@@ -1,7 +1,7 @@
 [project]
 name = "paramiko"
 requires-python = ">=3.9"
-version = "4.0.0"
+version = "5.0.0"
 description = "SSH2 protocol library"
 readme = "README.rst"
 license = "LGPL-2.1"
