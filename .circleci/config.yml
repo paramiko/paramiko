@@ -110,3 +110,8 @@ workflows:
       - orb/docs:
           name: "Docs"
           requires: ["Test"]
+
+      # TODO: grab and run Fabric's test suite with ourselves (similar to how
+      # cryptography uses ours)
+      # TODO: integration 'suite' hitting 1 or more versions of OpenSSH as
+      # target server (and hell maybe other way 'round too)
