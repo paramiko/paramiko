@@ -293,21 +293,15 @@ class AuthHandler:
             return None
         return self.transport._key_info[algorithm](Message(keyblob))
 
-    def _choose_fallback_pubkey_algorithm(self, key_type, my_algos):
-        msg = "Server did not send a server-sig-algs list; defaulting to something in our preferred algorithms list"  # noqa
-        self._log(DEBUG, msg)
-        noncert_key_type = key_type.replace("-cert-v01@openssh.com", "")
-        if key_type in my_algos or noncert_key_type in my_algos:
-            actual = key_type if key_type in my_algos else noncert_key_type
-            msg = f"Current key type, {actual!r}, is in our preferred list; using that"  # noqa
-            algo = actual
-        else:
-            algo = my_algos[0]
-            msg = f"{key_type!r} not in our list - trying first list item instead, {algo!r}"  # noqa
-        self._log(DEBUG, msg)
-        return algo
-
     def _finalize_pubkey_algorithm(self, key_type):
+        """
+        Given a key type, decide which pubkey algorithm to use with it.
+
+        In most cases this is simply "that key type, again".
+
+        For RSA, this will be one of the SHA2 algorithms, depending on our
+        (transport's) configured pubkey algorithms list.
+        """
         # Short-circuit for non-RSA keys
         if "rsa" not in key_type:
             return key_type
@@ -317,22 +311,6 @@ class AuthHandler:
                 key_type
             ),
         )
-        # NOTE re #2017: When the key is an RSA cert and the remote server is
-        # OpenSSH 7.7 or earlier, always use ssh-rsa-cert-v01@openssh.com.
-        # Those versions of the server won't support rsa-sha2 family sig algos
-        # for certs specifically, and in tandem with various server bugs
-        # regarding server-sig-algs, it's impossible to fit this into the rest
-        # of the logic here.
-        if key_type.endswith("-cert-v01@openssh.com") and re.search(
-            r"-OpenSSH_(?:[1-6]|7\.[0-7])", self.transport.remote_version
-        ):
-            pubkey_algo = "ssh-rsa-cert-v01@openssh.com"
-            self.transport._agreed_pubkey_algorithm = pubkey_algo
-            self._log(DEBUG, "OpenSSH<7.8 + RSA cert = forcing ssh-rsa!")
-            self._log(
-                DEBUG, "Agreed upon {!r} pubkey algorithm".format(pubkey_algo)
-            )
-            return pubkey_algo
         # Normal attempts to handshake follow from here.
         # Only consider RSA algos from our list, lest we agree on another!
         my_algos = [x for x in self.transport.preferred_pubkeys if "rsa" in x]
@@ -369,11 +347,14 @@ class AuthHandler:
                 # technically for initial key exchange, not pubkey auth.
                 err = "Unable to agree on a pubkey algorithm for signing a {!r} key!"  # noqa
                 raise AuthenticationException(err.format(key_type))
-        # Fallback to something based purely on the key & our configuration
+        # Fallback to first item in our preferred algorithm list (which won't
+        # be empty due to guardrail above)
         else:
-            pubkey_algo = self._choose_fallback_pubkey_algorithm(
-                key_type, my_algos
-            )
+            pubkey_algo = my_algos[0]
+            msg = f"Server did not send a server-sig-algs list; defaulting to first RSA algorithm in our list: {pubkey_algo}"  # noqa
+            self._log(DEBUG, msg)
+        # If we had loaded a cert-type key, tack that on to the algorithm name
+        # to get the final correct result.
         if key_type.endswith("-cert-v01@openssh.com"):
             pubkey_algo += "-cert-v01@openssh.com"
         self.transport._agreed_pubkey_algorithm = pubkey_algo
@@ -1036,6 +1017,8 @@ class AuthOnlyHandler(AuthHandler):
         return self.send_auth_request(username, "none")
 
     def auth_publickey(self, username, key):
+        # NOTE: key_type here may be just key type ("rsa-sha2-256") or may be
+        # the cert form if cert was loaded ("ssh-rsa-cert-v01@openssh.com")
         key_type, bits = self._get_key_type_and_bits(key)
         algorithm = self._finalize_pubkey_algorithm(key_type)
         blob = self._get_session_blob(
