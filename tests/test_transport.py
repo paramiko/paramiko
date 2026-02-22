@@ -1107,7 +1107,7 @@ class AlgorithmDisablingTests(unittest.TestCase):
             disabled_algorithms={
                 "ciphers": ["aes128-cbc"],
                 "macs": ["hmac-md5"],
-                "keys": ["ssh-rsa"],
+                "keys": ["rsa-sha2-512"],
                 "kex": ["diffie-hellman-group14-sha256"],
             },
         )
@@ -1115,9 +1115,10 @@ class AlgorithmDisablingTests(unittest.TestCase):
         assert "aes128-cbc" not in t.preferred_ciphers
         assert "hmac-md5" in t._preferred_macs
         assert "hmac-md5" not in t.preferred_macs
-        assert "ssh-rsa" in t._preferred_keys
-        assert "ssh-rsa" not in t.preferred_keys
-        assert "ssh-rsa-cert-v01@openssh.com" not in t.preferred_keys
+        assert "rsa-sha2-512" in t._preferred_keys
+        assert "rsa-sha2-512" not in t.preferred_keys
+        # Filtering also accounts for cert forms
+        assert "rsa-sha2-512-cert-v01@openssh.com" not in t.preferred_keys
         assert "diffie-hellman-group14-sha256" in t._preferred_kex
         assert "diffie-hellman-group14-sha256" not in t.preferred_kex
 
@@ -1127,7 +1128,7 @@ class AlgorithmDisablingTests(unittest.TestCase):
             disabled_algorithms={
                 "ciphers": ["aes128-cbc"],
                 "macs": ["hmac-md5"],
-                "keys": ["ssh-rsa"],
+                "keys": ["rsa-sha2-256"],
                 "kex": ["diffie-hellman-group14-sha256"],
                 "compression": ["zlib"],
             },
@@ -1156,7 +1157,7 @@ class AlgorithmDisablingTests(unittest.TestCase):
         # included (as this message includes the full lists)
         assert "aes128-cbc" not in ciphers
         assert "hmac-md5" not in macs
-        assert "ssh-rsa" not in server_keys
+        assert "rsa-sha2-256" not in server_keys
         assert "diffie-hellman-group14-sha256" not in kexen
         assert "zlib" not in compressions
 
@@ -1200,17 +1201,6 @@ class TestSHA2SignatureKeyExchange(unittest.TestCase):
             else:
                 raise err
 
-    # TODO: update these couple the same way we did under test_client...
-    # def test_client_sha2_disabled_server_sha1_disabled_no_match(self):
-    #    self._incompatible_peers(
-    #        client_init=_disable_sha2, server_init=_disable_sha1
-    #    )
-
-    # def test_client_sha1_disabled_server_sha2_disabled_no_match(self):
-    #    self._incompatible_peers(
-    #        client_init=_disable_sha1, server_init=_disable_sha2
-    #    )
-
     def test_explicit_client_hostkey_not_limited(self):
         # Be very explicit about the hostkey on BOTH ends,
         # and ensure it still ends up choosing sha2-512.
@@ -1235,7 +1225,7 @@ class TestExtInfo(unittest.TestCase):
             # data stored on Transport after hearing back from a compatible
             # server (such as ourselves in server mode)
             assert tc.server_extensions == {
-                "server-sig-algs": b"ssh-ed25519,ecdsa-sha2-nistp256,ecdsa-sha2-nistp384,ecdsa-sha2-nistp521,rsa-sha2-512,rsa-sha2-256,ssh-rsa"  # noqa
+                "server-sig-algs": b"ssh-ed25519,ecdsa-sha2-nistp256,ecdsa-sha2-nistp384,ecdsa-sha2-nistp521,rsa-sha2-512,rsa-sha2-256"  # noqa
             }
 
     def test_client_uses_server_sig_algs_for_pubkey_auth(self):

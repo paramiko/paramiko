@@ -212,12 +212,14 @@ class PKey_:
 
         def rsa_is_all_combos_of_cert_and_sha_type(self):
             assert RSAKey.identifiers() == [
-                "ssh-rsa",
-                "ssh-rsa-cert-v01@openssh.com",
                 "rsa-sha2-256",
                 "rsa-sha2-256-cert-v01@openssh.com",
                 "rsa-sha2-512",
                 "rsa-sha2-512-cert-v01@openssh.com",
+                # Still required for identifying keys-not-algorithms! But now
+                # they come last.
+                "ssh-rsa",
+                "ssh-rsa-cert-v01@openssh.com",
             ]
 
         def ed25519_is_protocol_name(self):

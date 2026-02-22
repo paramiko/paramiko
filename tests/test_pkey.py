@@ -207,7 +207,7 @@ class KeyTest(unittest.TestCase):
     def test_generate_rsa(self):
         # TODO: this probs needs to be larger number now
         key = RSAKey.generate(1024)
-        msg = key.sign_ssh_data(b"jerri blank")
+        msg = key.sign_ssh_data(b"jerri blank", algorithm="rsa-sha2-256")
         msg.rewind()
         self.assertTrue(key.verify_ssh_sig(b"jerri blank", msg))
 
