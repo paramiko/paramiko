@@ -2,7 +2,6 @@ from pathlib import Path
 from unittest.mock import call, patch
 
 from cryptography.hazmat.primitives.asymmetric.ed448 import Ed448PrivateKey
-from invoke.vendor.lexicon import Lexicon
 from pytest import raises
 
 from paramiko import (

@@ -20,7 +20,6 @@
 `.AuthHandler`
 """
 
-import re
 import threading
 import time
 import weakref
@@ -462,7 +461,9 @@ class AuthHandler:
 Major Status: {}
 Minor Status: {}
 Error Message: {}
-""".format(maj_status, min_status, err_msg)
+""".format(
+                            maj_status, min_status, err_msg
+                        )
                     )
                 elif ptype == MSG_USERAUTH_FAILURE:
                     self._parse_userauth_failure(m)
@@ -610,9 +611,7 @@ Error Message: {}
                 self._log(INFO, "Auth rejected: public key: {}".format(str(e)))
                 key = None
             except Exception as e:
-                msg = (
-                    "Auth rejected: unsupported or mangled public key ({}: {})"  # noqa
-                )
+                msg = "Auth rejected: unsupported or mangled public key ({}: {})"  # noqa
                 self._log(INFO, msg.format(e.__class__.__name__, e))
                 key = None
             if key is None:

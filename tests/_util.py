@@ -11,10 +11,6 @@ from os.path import dirname, join, realpath
 from pathlib import Path
 
 import pytest
-from cryptography.exceptions import UnsupportedAlgorithm, _Reasons
-from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.asymmetric import padding, rsa
 
 from paramiko import (
     AUTH_FAILED,

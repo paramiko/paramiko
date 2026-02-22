@@ -462,8 +462,9 @@ class SSHClient(ClosingContextManager):
                 elif "rsa-sha2-256" in sec_opts.key_types:
                     keytype = "rsa-sha2-256"
                 else:
+                    # TODO: vvv
                     raise Exception(
-                        "TODO: REPLACEME with appropriate exception for 'what even is this key type in your known_hosts files?'"
+                        "TODO: REPLACEME with appropriate exception for 'what even is this key type in your known_hosts files?'"  # noqa
                     )
             other_types = [x for x in sec_opts.key_types if x != keytype]
             sec_opts.key_types = [keytype] + other_types
