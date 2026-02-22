@@ -294,15 +294,18 @@ class AuthHandler:
         return self.transport._key_info[algorithm](Message(keyblob))
 
     def _choose_fallback_pubkey_algorithm(self, key_type, my_algos):
-        # Fallback: first one in our (possibly tweaked by caller) list
-        pubkey_algo = my_algos[0]
-        msg = "Server did not send a server-sig-algs list; defaulting to our first preferred algo ({!r})"  # noqa
-        self._log(DEBUG, msg.format(pubkey_algo))
-        self._log(
-            DEBUG,
-            "NOTE: you may use the 'disabled_algorithms' SSHClient/Transport init kwarg to disable that or other algorithms if your server does not support them!",  # noqa
-        )
-        return pubkey_algo
+        msg = "Server did not send a server-sig-algs list; defaulting to something in our preferred algorithms list"  # noqa
+        self._log(DEBUG, msg)
+        noncert_key_type = key_type.replace("-cert-v01@openssh.com", "")
+        if key_type in my_algos or noncert_key_type in my_algos:
+            actual = key_type if key_type in my_algos else noncert_key_type
+            msg = f"Current key type, {actual!r}, is in our preferred list; using that"  # noqa
+            algo = actual
+        else:
+            algo = my_algos[0]
+            msg = f"{key_type!r} not in our list - trying first list item instead, {algo!r}"  # noqa
+        self._log(DEBUG, msg)
+        return algo
 
     def _finalize_pubkey_algorithm(self, key_type):
         # Short-circuit for non-RSA keys
@@ -1081,18 +1084,3 @@ class AuthOnlyHandler(AuthHandler):
             m.add_string(submethods)
 
         return self.send_auth_request(username, "keyboard-interactive", finish)
-
-    # NOTE: not strictly 'auth only' related, but allows users to opt-in.
-    def _choose_fallback_pubkey_algorithm(self, key_type, my_algos):
-        msg = "Server did not send a server-sig-algs list; defaulting to something in our preferred algorithms list"  # noqa
-        self._log(DEBUG, msg)
-        noncert_key_type = key_type.replace("-cert-v01@openssh.com", "")
-        if key_type in my_algos or noncert_key_type in my_algos:
-            actual = key_type if key_type in my_algos else noncert_key_type
-            msg = f"Current key type, {actual!r}, is in our preferred list; using that"  # noqa
-            algo = actual
-        else:
-            algo = my_algos[0]
-            msg = f"{key_type!r} not in our list - trying first list item instead, {algo!r}"  # noqa
-        self._log(DEBUG, msg)
-        return algo

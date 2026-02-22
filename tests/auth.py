@@ -25,7 +25,6 @@ from paramiko import (
     PKey,
     PrivateKey,
     RSAKey,
-    ServiceRequestingTransport,
     SourceResult,
     SSHException,
 )
@@ -150,79 +149,6 @@ class AuthHandler_:
             assert "Authentication timeout" in str(info.value)
 
 
-class AuthOnlyHandler_:
-    def _server(self, *args, **kwargs):
-        kwargs.setdefault("transport_factory", ServiceRequestingTransport)
-        return server(*args, **kwargs)
-
-    class fallback_pubkey_algorithm:
-        def key_type_algo_selected_when_no_server_sig_algs(self):
-            privkey = RSAKey.from_private_key_file(_support("rsa.key"))
-            # Server pretending to be an apparently common setup:
-            # - doesn't support (or have enabled) sha2
-            # - also doesn't support (or have enabled) server-sig-algs/ext-info
-            # This is the scenario in which Paramiko has to guess-the-algo, and
-            # where servers that don't support sha2 or server-sig-algs can give
-            # us trouble.
-            # TODO: ok maybe I need to reinstate _disable_sha2_pubkey, but it
-            # _might_ make sense to choose some other key type to disable, if
-            # it's more sensible now - surely the modern version of this
-            # scenario would be disabling like, ecdsa or something?
-            server_init = dict(_disable_sha2_pubkey, server_sig_algs=False)
-            with self._server(
-                pubkeys=[privkey],
-                connect=dict(pkey=privkey),
-                server_init=server_init,
-                catch_error=True,
-            ) as (tc, ts, err):
-                # Auth did work
-                assert tc.is_authenticated()
-                # Selected ssh-rsa, instead of first-in-the-list (rsa-sha2-512)
-                # TODO: this needs to be selecting some other fallback now,
-                # presumably whatever is now first in one of our attribute
-                # lists
-                assert tc._agreed_pubkey_algorithm == "ssh-rsa"
-
-        def key_type_algo_selection_is_cert_suffix_aware(self):
-            # This key has a cert next to it, which should trigger cert-aware
-            # loading within key classes.
-            privkey = PKey.from_path(_support("rsa.key"))
-            server_init = dict(_disable_sha2_pubkey, server_sig_algs=False)
-            with self._server(
-                pubkeys=[privkey],
-                connect=dict(pkey=privkey),
-                server_init=server_init,
-                catch_error=True,
-            ) as (tc, ts, err):
-                assert not err
-                # Auth did work
-                assert tc.is_authenticated()
-                # Selected expected cert type
-                assert (
-                    tc._agreed_pubkey_algorithm
-                    # TODO: this needs to be choosing a sha2 or w/e now
-                    == "ssh-rsa-cert-v01@openssh.com"
-                )
-
-        def uses_first_preferred_algo_if_key_type_not_in_list(self):
-            # This is functionally the same as legacy AuthHandler, just
-            # arriving at the same place in a different manner.
-            privkey = RSAKey.from_private_key_file(_support("rsa.key"))
-            server_init = dict(_disable_sha2_pubkey, server_sig_algs=False)
-            with self._server(
-                pubkeys=[privkey],
-                connect=dict(pkey=privkey),
-                server_init=server_init,
-                # TODO: this is outdated now, disable something else, probably
-                # whatever is /now/ first in the list instead of ssh-rsa
-                client_init=_disable_sha1_pubkey,  # no ssh-rsa
-                catch_error=True,
-            ) as (tc, ts, err):
-                assert not tc.is_authenticated()
-                assert isinstance(err, AuthenticationException)
-                assert tc._agreed_pubkey_algorithm == "rsa-sha2-512"
-
-
 class SHA2SignaturePubkeys:
     def pubkey_auth_honors_disabled_algorithms(self):
         privkey = RSAKey.from_private_key_file(_support("rsa.key"))
@@ -276,7 +202,6 @@ class SHA2SignaturePubkeys:
         ) as (tc, _):
             assert tc.is_authenticated()
 
-    # TODO: isn't this duplicating some of the earlier tests? if not, update it
     def first_client_preferred_algo_used_when_no_server_sig_algs(self):
         privkey = RSAKey.from_private_key_file(_support("rsa.key"))
         # Server pretending to be an apparently common setup:
@@ -285,6 +210,10 @@ class SHA2SignaturePubkeys:
         # This is the scenario in which Paramiko has to guess-the-algo, and
         # where servers that don't support sha2 or server-sig-algs give us
         # trouble.
+        # TODO: disabling sha2 _in this case_ might be ok, _as long as_ we
+        # update to account for the client's new first preference being
+        # something besides ssh-rsa (and where the client also has that
+        # disabled?)
         server_init = dict(_disable_sha2_pubkey, server_sig_algs=False)
         with server(
             pubkeys=[privkey],
