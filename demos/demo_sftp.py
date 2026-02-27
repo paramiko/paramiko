@@ -138,6 +138,6 @@ except Exception as e:
     traceback.print_exc()
     try:
         t.close()
-    except:
+    except Exception:
         pass
     sys.exit(1)

@@ -118,7 +118,7 @@ class ModulusPack:
                     continue
                 try:
                     self._parse_modulus(line)
-                except:
+                except Exception:
                     continue
 
     def get_modulus(self, min, prefer, max):

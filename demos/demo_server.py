@@ -140,7 +140,7 @@ try:
     t.set_gss_host(socket.getfqdn(""))
     try:
         t.load_server_moduli()
-    except:
+    except Exception:
         print("(Failed to load moduli -- gex will be unsupported.)")
         raise
     t.add_server_key(host_key)
@@ -179,6 +179,6 @@ except Exception as e:
     traceback.print_exc()
     try:
         t.close()
-    except:
+    except Exception:
         pass
     sys.exit(1)

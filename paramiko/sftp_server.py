@@ -158,7 +158,7 @@ class SFTPServer(BaseSFTP, SubsystemHandler):
                 # send some kind of failure message, at least
                 try:
                     self._send_status(request_number, SFTP_FAILURE)
-                except:
+                except Exception:
                     pass
 
     def finish_subsystem(self):
