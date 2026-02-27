@@ -144,7 +144,7 @@ class AgentProxyThread(threading.Thread):
             ):
                 raise AuthenticationException("Unable to connect to SSH agent")
             self._communicate()
-        except:
+        except Exception:
             # XXX Not sure what to do here ... raise or pass ?
             raise
 
@@ -199,7 +199,7 @@ class AgentLocalProxy(AgentProxyThread):
             conn.listen(1)
             (r, addr) = conn.accept()
             return r, addr
-        except:
+        except Exception:
             raise
 
 
@@ -227,7 +227,7 @@ def get_agent_connection():
         try:
             conn.connect(os.environ["SSH_AUTH_SOCK"])
             return conn
-        except:
+        except Exception:
             # probably a dangling env var: the ssh agent is gone
             return
     elif sys.platform == "win32":

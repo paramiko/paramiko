@@ -85,7 +85,7 @@ class GSSKexTest(KerberosTestCase):
         self.ts.set_gss_host(self.realm.hostname)
         try:
             self.ts.load_server_moduli()
-        except:
+        except Exception:
             print("(Failed to load moduli -- gex will be unsupported.)")
         server = NullServer()
         self.ts.start_server(self.event, server)

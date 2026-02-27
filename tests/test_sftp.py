@@ -182,11 +182,11 @@ class TestSFTP:
             # -f' a-like, jeez
             try:
                 sftp.remove(sftp.FOLDER + "/first.txt")
-            except:
+            except Exception:
                 pass
             try:
                 sftp.remove(sftp.FOLDER + "/second.txt")
-            except:
+            except Exception:
                 pass
 
     def testa_posix_rename(self, sftp):
@@ -211,11 +211,11 @@ class TestSFTP:
         finally:
             try:
                 sftp.remove(sftp.FOLDER + "/a")
-            except:
+            except Exception:
                 pass
             try:
                 sftp.remove(sftp.FOLDER + "/b")
-            except:
+            except Exception:
                 pass
 
     def test_folder(self, sftp):
@@ -442,15 +442,15 @@ class TestSFTP:
         finally:
             try:
                 sftp.remove(sftp.FOLDER + "/link.txt")
-            except:
+            except Exception:
                 pass
             try:
                 sftp.remove(sftp.FOLDER + "/link2.txt")
-            except:
+            except Exception:
                 pass
             try:
                 sftp.remove(sftp.FOLDER + "/original.txt")
-            except:
+            except Exception:
                 pass
 
     def test_flush_seek(self, sftp):
@@ -470,7 +470,7 @@ class TestSFTP:
         finally:
             try:
                 sftp.remove(sftp.FOLDER + "/happy.txt")
-            except:
+            except Exception:
                 pass
 
     def test_realpath(self, sftp):
@@ -520,15 +520,15 @@ class TestSFTP:
             sftp.chdir(root)
             try:
                 sftp.unlink(sftp.FOLDER + "/alpha/beta/fish")
-            except:
+            except Exception:
                 pass
             try:
                 sftp.rmdir(sftp.FOLDER + "/alpha/beta")
-            except:
+            except Exception:
                 pass
             try:
                 sftp.rmdir(sftp.FOLDER + "/alpha")
-            except:
+            except Exception:
                 pass
 
     def test_get_put(self, sftp):
@@ -719,7 +719,7 @@ class TestSFTP:
             sftp.chdir(root)
             try:
                 sftp.rmdir(sftp.FOLDER + "/alpha")
-            except:
+            except Exception:
                 pass
 
     def test_seek_append(self, sftp):
