@@ -2,6 +2,11 @@
 Changelog
 =========
 
+- :support:`-` Removed support for key exchange using SHA-1, meaning the kex
+  methods ``diffie-hellman-group-exchange-sha1``,
+  ``diffie-hellman-group14-sha1``, and ``diffie-hellman-group1-sha1`` are now
+  gone. Implementing classes have been removed/merged/shuffled as required.
+
 - :support:`-` Removed support for verifying/signing with RSA keys using SHA-1
   hashing. Generally, this means most cases where ``"ssh-rsa"`` was used as an
   algorithm identifier (as opposed to a key material identifier) will no longer

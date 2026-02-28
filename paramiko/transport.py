@@ -98,9 +98,8 @@ from paramiko.ecdsakey import ECDSAKey
 from paramiko.ed25519key import Ed25519Key
 from paramiko.kex_curve25519 import KexCurve25519
 from paramiko.kex_ecdh_nist import KexNistp256, KexNistp384, KexNistp521
-from paramiko.kex_gex import KexGex, KexGexSHA256
-from paramiko.kex_group1 import KexGroup1
-from paramiko.kex_group14 import KexGroup14, KexGroup14SHA256
+from paramiko.kex_gex import KexGexSHA256
+from paramiko.kex_group14 import KexGroup14SHA256
 from paramiko.kex_group16 import KexGroup16SHA512
 from paramiko.kex_gss import KexGSSGex, KexGSSGroup1, KexGSSGroup14
 from paramiko.message import Message
@@ -221,9 +220,6 @@ class Transport(threading.Thread, ClosingContextManager):
         "diffie-hellman-group16-sha512",
         "diffie-hellman-group-exchange-sha256",
         "diffie-hellman-group14-sha256",
-        "diffie-hellman-group-exchange-sha1",
-        "diffie-hellman-group14-sha1",
-        "diffie-hellman-group1-sha1",
     )
     if KexCurve25519.is_available():
         _preferred_kex = ("curve25519-sha256@libssh.org",) + _preferred_kex
@@ -332,9 +328,6 @@ class Transport(threading.Thread, ClosingContextManager):
     }
 
     _kex_info = {
-        "diffie-hellman-group1-sha1": KexGroup1,
-        "diffie-hellman-group14-sha1": KexGroup14,
-        "diffie-hellman-group-exchange-sha1": KexGex,
         "diffie-hellman-group-exchange-sha256": KexGexSHA256,
         "diffie-hellman-group14-sha256": KexGroup14SHA256,
         "diffie-hellman-group16-sha512": KexGroup16SHA512,

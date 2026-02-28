@@ -17,19 +17,18 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
 
 """
-Variant on `KexGroup1 <paramiko.kex_group1.KexGroup1>` where the prime "p" and
+Variant on the (now deprecated/removed) ``KexGroup1`` where the prime "p" and
 generator "g" are provided by the server.  A bit more work is required on the
 client side, and a **lot** more on the server side.
 """
 
 import os
-from hashlib import sha1, sha256
+from hashlib import sha256
 
 from paramiko import util
-from paramiko.common import DEBUG, byte_chr, byte_ord, byte_mask
+from paramiko.common import DEBUG, byte_chr, byte_mask, byte_ord
 from paramiko.message import Message
 from paramiko.ssh_exception import SSHException
-
 
 (
     _MSG_KEXDH_GEX_REQUEST_OLD,
@@ -48,13 +47,12 @@ from paramiko.ssh_exception import SSHException
 ) = [byte_chr(c) for c in range(30, 35)]
 
 
-class KexGex:
-
-    name = "diffie-hellman-group-exchange-sha1"
+class KexGexSHA256:
+    name = "diffie-hellman-group-exchange-sha256"
     min_bits = 1024
     max_bits = 8192
     preferred_bits = 2048
-    hash_algo = sha1
+    hash_algo = sha256
 
     def __init__(self, transport):
         self.transport = transport
@@ -281,8 +279,3 @@ class KexGex:
         self.transport._set_K_H(K, self.hash_algo(hm.asbytes()).digest())
         self.transport._verify_key(host_key, sig)
         self.transport._activate_outbound()
-
-
-class KexGexSHA256(KexGex):
-    name = "diffie-hellman-group-exchange-sha256"
-    hash_algo = sha256
