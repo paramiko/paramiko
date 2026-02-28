@@ -11,7 +11,7 @@ Changelog
   hashing. Generally, this means most cases where ``"ssh-rsa"`` was used as an
   algorithm identifier (as opposed to a key material identifier) will no longer
   accept that string as valid, and the relevant code that actually used eg
-  `hashes.SHA1` no longer does.
+  ``hashes.SHA1`` no longer does.
 
   .. warning::
     This change is backwards incompatible if you are stuck supporting legacy
@@ -34,7 +34,7 @@ Changelog
   burden and we've wanted to remove them for years.
 
   Users who enjoyed the client-side demos should look at our wrapper library,
-  `Fabric <https://fabfile.org>`.
+  `Fabric <https://fabfile.org>`_.
 
   We suspect the most-used demo was ``demos/demo-server.py`` and may consider
   adding a variant of it to the actual Python package in future.
@@ -95,9 +95,10 @@ Changelog
 - :bug:`2353` Fix a 64-bit-ism in the test suite so the tests don't encounter a
   false negative on 32-bit systems. Reported by Stanislav Levin.
 - :release:`3.4.0 <2023-12-18>`
-- :feature:`-` `Transport` grew a new ``packetizer_class`` kwarg for overriding
-  the packet-handler class used internally. Mostly for testing, but advanced
-  users may find this useful when doing deep hacks.
+- :feature:`-` `Transport <paramiko.transport.Transport>` grew a new
+  ``packetizer_class`` kwarg for overriding the packet-handler class used
+  internally. Mostly for testing, but advanced users may find this useful when
+  doing deep hacks.
 - :bug:`- major` Address `CVE 2023-48795 <https://terrapin-attack.com/>`_ (aka
   the "Terrapin Attack", a vulnerability found in the SSH protocol re:
   treatment of packet sequence numbers) as follows:
@@ -115,16 +116,17 @@ Changelog
       this patch version) and configured to use the new "strict kex" mode.
       Paramiko will always attempt to use "strict kex" mode if offered by the
       server, unless you override this by specifying ``strict_kex=False`` in
-      `Transport.__init__`.
-    - Paramiko will now raise an `SSHException` subclass (`MessageOrderError`)
-      when protocol messages are received in unexpected order. This includes
-      situations like receiving ``MSG_DEBUG`` or ``MSG_IGNORE`` during initial
-      key exchange, which are no longer allowed during strict mode.
+      ``Transport.__init__``.
+    - Paramiko will now raise an ``SSHException`` subclass
+      (``MessageOrderError``) when protocol messages are received in unexpected
+      order. This includes situations like receiving ``MSG_DEBUG`` or
+      ``MSG_IGNORE`` during initial key exchange, which are no longer allowed
+      during strict mode.
     - Key (re)negotiation -- i.e. ``MSG_NEWKEYS``, whenever it is encountered
       -- now resets packet sequence numbers. (This should be invisible to users
       during normal operation, only causing exceptions if the exploit is
-      encountered, which will usually result in, again, `MessageOrderError`.)
-    - Sequence number rollover will now raise `SSHException` if it occurs
+      encountered, which will usually result in, again, ``MessageOrderError``.)
+    - Sequence number rollover will now raise ``SSHException`` if it occurs
       during initial key exchange (regardless of strict mode status).
 
   Thanks to Fabian Bäumer, Marcus Brinkmann, and Jörg Schwenk for submitting
