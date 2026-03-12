@@ -874,6 +874,27 @@ class TestMatchHost:
         with raises(ConfigParseError):
             load_config("match-host-no-arg")
 
+    def test_equals_syntax(self):
+        """Match host=pattern works like Match host pattern.
+
+        Regression test for https://github.com/paramiko/paramiko/issues/2522
+        """
+        result = load_config("match-host-equals").lookup("target")
+        assert result["user"] == "rand"
+
+    def test_equals_syntax_with_glob(self):
+        result = load_config("match-host-equals-glob").lookup("whatever")
+        assert result["user"] == "matrim"
+
+    def test_equals_syntax_non_match(self):
+        result = load_config("match-host-equals").lookup("other")
+        assert "user" not in result
+
+    def test_equals_syntax_with_negation(self):
+        conf = load_config("match-host-equals-negated")
+        assert conf.lookup("docs")["user"] == "jeff"
+        assert "user" not in conf.lookup("www")
+
 
 class TestMatchOriginalHost:
     def test_matches_target_host_not_hostname(self):

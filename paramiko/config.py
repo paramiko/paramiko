@@ -526,16 +526,25 @@ class SSHConfig:
             if type_.startswith("!"):
                 match["negate"] = True
                 type_ = type_[1:]
+            # Handle key=value syntax (e.g. "host=pattern") in
+            # addition to key value; OpenSSH accepts both forms.
+            if "=" in type_:
+                type_, param = type_.split("=", 1)
+            else:
+                param = None
             match["type"] = type_
             # all/canonical have no params (everything else does)
             if type_ in ("all", "canonical", "final"):
                 matches.append(match)
                 continue
-            if not tokens:
+            if param is not None:
+                match["param"] = param
+            elif tokens:
+                match["param"] = tokens.pop(0)
+            else:
                 raise ConfigParseError(
                     "Missing parameter to Match '{}' keyword".format(type_)
                 )
-            match["param"] = tokens.pop(0)
             matches.append(match)
         # Perform some (easier to do now than in the middle) validation that is
         # better handled here than at lookup time.
