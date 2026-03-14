@@ -836,3 +836,68 @@ class PasswordPassphraseTests(ClientTest):
             password="television",
             passphrase="wat? lol no",
         )
+
+
+class NoneAuthServer(NullServer):
+    """Server that allows 'none' authentication for the test user."""
+
+    def get_allowed_auths(self, username):
+        if username == "slowdive":
+            return "none"
+        return "publickey"
+
+    def check_auth_none(self, username):
+        if username == "slowdive":
+            return paramiko.AUTH_SUCCESSFUL
+        return paramiko.AUTH_FAILED
+
+
+class NoneAuthTest(ClientTest):
+    def _run(self, allowed_keys=None, delay=0, public_blob=None,
+             kill_event=None, server_name=None):
+        if allowed_keys is None:
+            allowed_keys = FINGERPRINTS.keys()
+        self.socks, addr = self.sockl.accept()
+        if kill_event and kill_event.is_set():
+            self.socks.close()
+            return
+        self.ts = paramiko.Transport(self.socks)
+        if server_name is not None:
+            self.ts.local_version = server_name
+        keypath = _support("rsa.key")
+        host_key = paramiko.RSAKey.from_private_key_file(keypath)
+        self.ts.add_server_key(host_key)
+        server = NoneAuthServer(
+            allowed_keys=allowed_keys, public_blob=public_blob
+        )
+        if delay:
+            import time
+            time.sleep(delay)
+        self.ts.start_server(self.event, server)
+
+    def test_auth_none_used_when_password_is_none(self):
+        # Connecting with password=None should fall through to auth_none,
+        # allowing servers with PermitEmptyPasswords yes to authenticate.
+        threading.Thread(
+            target=self._run, kwargs={"kill_event": self.kill_event}
+        ).start()
+        host_key = paramiko.RSAKey.from_private_key_file(_support("rsa.key"))
+        public_host_key = paramiko.RSAKey(data=host_key.asbytes())
+
+        self.tc = SSHClient()
+        self.tc.get_host_keys().add(
+            f"[{self.addr}]:{self.port}", "ssh-rsa", public_host_key
+        )
+        self.tc.connect(
+            hostname=self.addr,
+            port=self.port,
+            username="slowdive",
+            password=None,
+            look_for_keys=False,
+            allow_agent=False,
+        )
+
+        self.event.wait(1.0)
+        self.assertTrue(self.event.is_set())
+        self.assertTrue(self.ts.is_active())
+        self.assertTrue(self.ts.is_authenticated())
