@@ -79,8 +79,8 @@ class HostKeys(MutableMapping):
         ``os.path.expanduser("~/.ssh/known_hosts")``.
 
         If this method is called multiple times, the host keys are merged,
-        not cleared.  So multiple calls to `load` will just call `add`,
-        replacing any existing entries and adding new ones.
+        not cleared.  So multiple calls to `load` will add new entries,
+        skipping any existing entries for the same hostname and key type.
 
         :param str filename: name of the file to read host keys from
 
