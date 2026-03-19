@@ -802,7 +802,13 @@ class SSHClient(ClosingContextManager):
                 return
             except SSHException as e:
                 saved_exception = e
-        elif two_factor:
+        else:
+            try:
+                self._transport.auth_none(username)
+                return
+            except SSHException as e:
+                saved_exception = e
+        if two_factor:
             try:
                 self._transport.auth_interactive_dumb(username)
                 return
