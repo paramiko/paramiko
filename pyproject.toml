@@ -10,7 +10,10 @@ authors = [{ name = "Jeff Forcier", email = "jeff@bitprophet.org" }]
 
 dependencies = [
   "bcrypt>=3.2",
-  "cryptography>=3.3",
+  # Cryptography Windows ARM64 wheels are available only at 46.0.3
+  # See: https://github.com/pyca/cryptography/pull/14216
+  "cryptography>=3.3; platform_system != 'Windows' or platform_machine != 'ARM64'",
+  "cryptography==46.0.3; platform_system == 'Windows' and platform_machine == 'ARM64'",
   "invoke>=2.0",
   "pynacl>=1.5",
 ]
