@@ -19,14 +19,11 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
 
 
-import base64
 from binascii import hexlify
 import getpass
 import os
-import select
 import socket
 import sys
-import time
 import traceback
 from paramiko.py3compat import input
 

@@ -20,7 +20,6 @@
 
 # based on code provided by raymond mosteller (thanks!)
 
-import base64
 import getpass
 import os
 import socket

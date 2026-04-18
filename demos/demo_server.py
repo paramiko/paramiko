@@ -18,16 +18,14 @@
 # along with Paramiko; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
 
-import base64
 from binascii import hexlify
-import os
 import socket
 import sys
 import threading
 import traceback
 
 import paramiko
-from paramiko.py3compat import b, u, decodebytes
+from paramiko.py3compat import u, decodebytes
 
 
 # setup logging
