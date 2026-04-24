@@ -6,7 +6,7 @@
 # terms of the GNU Lesser General Public License as published by the Free
 # Software Foundation; either version 2.1 of the License, or (at your option)
 # any later version.
-#
+
 # Paramiko is distributed in the hope that it will be useful, but WITHOUT ANY
 # WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
 # A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more
@@ -136,7 +136,7 @@ class Channel(ClosingContextManager):
     def __del__(self):
         try:
             self.close()
-        except:
+        except Exception:
             pass
 
     def __repr__(self):
