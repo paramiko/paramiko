@@ -23,6 +23,7 @@ Functions for communicating with Pageant, the basic windows ssh agent program.
 
 import array
 import ctypes.wintypes
+import os
 import platform
 import struct
 from paramiko.common import zero_byte
@@ -84,11 +85,9 @@ def _query_pageant(msg):
         return None
 
     # create a name for the mmap
-    map_name = f"PageantRequest{thread.get_ident():08x}"
+    map_name = f"PageantRequest{os.getpid():08x}{thread.get_ident():08x}"
 
-    pymap = _winapi.MemoryMap(
-        map_name, _AGENT_MAX_MSGLEN, _winapi.get_security_attributes_for_user()
-    )
+    pymap = _winapi.MemoryMap(map_name, _AGENT_MAX_MSGLEN)
     with pymap:
         pymap.write(msg)
         # Create an array buffer containing the mapped filename
