@@ -1,6 +1,6 @@
 # Regression test for paramiko#2600: calling channel-opening methods on a
 # fresh, never-`.connect()`-ed `SSHClient` (or a `.close()`-d one) used to
-# raise a bare `AttributeError: 'NoneType' object has no attribute 'open_session'`
+# raise `AttributeError: 'NoneType' object has no attribute 'open_session'`
 # from `paramiko/client.py`. The fix raises `SSHException` with a useful
 # message instead.
 
