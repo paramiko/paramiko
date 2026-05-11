@@ -505,6 +505,20 @@ class SSHClient(ClosingContextManager):
             self._agent.close()
             self._agent = None
 
+    def _ensure_connected(self):
+        """
+        Raise `.SSHException` if this client has no active transport.
+
+        Guards the channel-opening methods (`.exec_command`, `.invoke_shell`,
+        `.open_sftp`) against being called on a client which hasn't been
+        `.connect`-ed yet or which has been `.close`-d, producing a useful
+        error instead of a bare ``AttributeError`` on ``NoneType``.
+        """
+        if self._transport is None:
+            raise SSHException(
+                "SSHClient is not connected; call .connect() first"
+            )
+
     def exec_command(
         self,
         command,
@@ -545,6 +559,7 @@ class SSHClient(ClosingContextManager):
         .. versionchanged:: 1.10
             Added the ``get_pty`` kwarg.
         """
+        self._ensure_connected()
         chan = self._transport.open_session(timeout=timeout)
         if get_pty:
             chan.get_pty()
@@ -582,6 +597,7 @@ class SSHClient(ClosingContextManager):
 
         :raises: `.SSHException` -- if the server fails to invoke a shell
         """
+        self._ensure_connected()
         chan = self._transport.open_session()
         chan.get_pty(term, width, height, width_pixels, height_pixels)
         chan.invoke_shell()
@@ -593,6 +609,7 @@ class SSHClient(ClosingContextManager):
 
         :return: a new `.SFTPClient` session object
         """
+        self._ensure_connected()
         return self._transport.open_sftp_client()
 
     def get_transport(self):
