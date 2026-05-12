@@ -1,8 +1,4 @@
-# Regression test for paramiko#2600: calling channel-opening methods on a
-# fresh, never-`.connect()`-ed `SSHClient` (or a `.close()`-d one) used to
-# raise `AttributeError: 'NoneType' object has no attribute 'open_session'`
-# from `paramiko/client.py`. The fix raises `SSHException` with a useful
-# message instead.
+# Regression for paramiko#2600.
 
 import pytest
 
@@ -32,7 +28,6 @@ def test_open_sftp_on_unconnected_client_raises_sshexception():
 
 
 def test_unconnected_client_does_not_raise_attribute_error():
-    """Pre-fix shape: AttributeError on NoneType. Ensure we never see that."""
     client = SSHClient()
     for op in (
         lambda: client.exec_command("echo hi"),
@@ -41,6 +36,3 @@ def test_unconnected_client_does_not_raise_attribute_error():
     ):
         with pytest.raises(SSHException):
             op()
-        # If the guard regressed, the above would raise AttributeError and the
-        # pytest.raises(SSHException) would fail the test with that as the
-        # actual exception.
