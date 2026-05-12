@@ -697,6 +697,21 @@ class SSHClientTest(ClientTest):
         )
         assert isinstance(self.tc._transport, MyTransport)
 
+    def test_exec_command_raises_when_not_connected(self):
+        client = SSHClient()
+        with pytest.raises(SSHException, match="not connected"):
+            client.exec_command("ls")
+
+    def test_invoke_shell_raises_when_not_connected(self):
+        client = SSHClient()
+        with pytest.raises(SSHException, match="not connected"):
+            client.invoke_shell()
+
+    def test_open_sftp_raises_when_not_connected(self):
+        client = SSHClient()
+        with pytest.raises(SSHException, match="not connected"):
+            client.open_sftp()
+
 
 class PasswordPassphraseTests(ClientTest):
     # TODO: most of these could reasonably be set up to use mocks/assertions
