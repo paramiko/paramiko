@@ -305,7 +305,8 @@ class Ed25519Key_:
         # been assigned).
         # When fixed, we get a normal looking repr (albeit whose fingerprint
         # will effectively be that of an 'empty' key bytes)
-        assert (
-            repr(info.traceback[1].locals["self"])
-            == "PKey(alg=ED25519, bits=256, fp=SHA256:UsIasxMWEd9VFEwjARWWtGJ08DgHp1eib3gSBLed54U)"
+        expected = (
+            "PKey(alg=ED25519, bits=256, "
+            "fp=SHA256:UsIasxMWEd9VFEwjARWWtGJ08DgHp1eib3gSBLed54U)"
         )
+        assert repr(info.traceback[1].locals["self"]) == expected
