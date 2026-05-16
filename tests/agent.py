@@ -126,10 +126,13 @@ class AgentKey_:
                 # The thing we actually care most about, we're not testing
                 # ssh-agent itself here
                 self._sent_message = msg
-                sig = Message()
-                sig.add_string("lol")
-                sig.rewind()
-                return SSH2_AGENT_SIGN_RESPONSE, sig
+                signature = Message()
+                signature.add_string("ssh-rsa")
+                signature.add_string(b"lol")
+                response = Message()
+                response.add_string(signature)
+                response.rewind()
+                return SSH2_AGENT_SIGN_RESPONSE, response
 
         agent = FakeAgent()
         # Get key kinda like how a real agent would give it to us - if
@@ -150,7 +153,9 @@ class AgentKey_:
             blobby = inner_key.public_blob.key_blob
         key = AgentKey(agent=agent, blob=blobby)
         result = key.sign_ssh_data(b"data-to-sign", **sign_kwargs)
-        assert result == b"lol"
+        assert isinstance(result, Message)
+        assert result.get_text() == "ssh-rsa"
+        assert result.get_string() == b"lol"
         msg = agent._sent_message
         msg.rewind()
         assert msg.get_byte() == cSSH2_AGENTC_SIGN_REQUEST
