@@ -52,6 +52,10 @@ packages = ["paramiko"]
 line-length = 79
 
 
+[tool.black]
+line-length = 79
+
+
 [dependency-groups]
 dev = [
   # Invocations for common project tasks
