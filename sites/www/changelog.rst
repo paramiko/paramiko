@@ -3,6 +3,9 @@ Changelog
 =========
 
 - :release:`5.0.0 <2026-05-09>`
+- :bug:`2539` Normalize `AgentKey <paramiko.agent.AgentKey>` so its
+  ``sign_ssh_data`` implementation returns a `Message <paramiko.message.Message>`
+  like other `PKey <paramiko.pkey.PKey>` subclasses.
 - :bug:`- major` Fix `Ed25519Key <paramiko.ed25519key.Ed25519Key>`'s internals
   such that it no longer throws `AttributeError` during calls to ``__repr__``
   when only partly initialized. This isn't a normal runtime problem (it only

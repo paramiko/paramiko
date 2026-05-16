@@ -495,4 +495,4 @@ class AgentKey(PKey):
         ptype, result = self.agent._send_message(msg)
         if ptype != SSH2_AGENT_SIGN_RESPONSE:
             raise SSHException("key cannot be used for signing")
-        return result.get_binary()
+        return Message(result.get_binary())
