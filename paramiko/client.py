@@ -271,10 +271,10 @@ class SSHClient(ClosingContextManager):
         :param str username:
             the username to authenticate as (defaults to the current local
             username)
-        :param str password:
+        :param str or bytes password:
             Used for password authentication; is also used for private key
             decryption if ``passphrase`` is not given.
-        :param str passphrase:
+        :param str or bytes passphrase:
             Used for decrypting private keys.
         :param .PKey pkey: an optional private key to use for authentication
         :param str key_filename:

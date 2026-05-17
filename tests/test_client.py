@@ -60,12 +60,14 @@ class NullServer(paramiko.ServerInterface):
         super().__init__(*args, **kwargs)
 
     def get_allowed_auths(self, username):
-        if username == "slowdive":
+        if username in ("slowdive", "non-utf8"):
             return "publickey,password"
         return "publickey"
 
     def check_auth_password(self, username, password):
         if (username == "slowdive") and (password == "pygmalion"):
+            return paramiko.AUTH_SUCCESSFUL
+        if (username == "non-utf8") and (password == b"\xff"):
             return paramiko.AUTH_SUCCESSFUL
         if (username == "slowdive") and (password == "unresponsive-server"):
             time.sleep(5)
@@ -189,6 +191,7 @@ class ClientTest(unittest.TestCase):
         run_kwargs = {"kill_event": self.kill_event}
         for key in ("allowed_keys", "public_blob", "server_name"):
             run_kwargs[key] = kwargs.pop(key, None)
+        connect_kwargs = dict(self.connect_kwargs, **kwargs)
         # Server setup
         threading.Thread(target=self._run, kwargs=run_kwargs).start()
 
@@ -206,15 +209,13 @@ class ClientTest(unittest.TestCase):
         )
 
         # Actual connection
-        self.tc.connect(**dict(self.connect_kwargs, **kwargs))
+        self.tc.connect(**connect_kwargs)
 
         # Authentication successful?
         self.event.wait(1.0)
         self.assertTrue(self.event.is_set())
         self.assertTrue(self.ts.is_active())
-        self.assertEqual(
-            self.connect_kwargs["username"], self.ts.get_username()
-        )
+        self.assertEqual(connect_kwargs["username"], self.ts.get_username())
         self.assertEqual(True, self.ts.is_authenticated())
 
         # Command execution functions?
@@ -708,6 +709,12 @@ class PasswordPassphraseTests(ClientTest):
         # Straightforward / duplicate of earlier basic password test.
         self._test_connection(password="pygmalion")
 
+    def test_password_kwarg_accepts_bytes_for_password_auth(self):
+        self._test_connection(password=b"pygmalion")
+
+    def test_password_kwarg_accepts_non_utf8_bytes_for_password_auth(self):
+        self._test_connection(username="non-utf8", password=b"\xff")
+
     # TODO: more granular exception pending #387; should be signaling "no auth
     # methods available" because no key and no password
     @raises(SSHException)
@@ -720,6 +727,12 @@ class PasswordPassphraseTests(ClientTest):
         self._test_connection(
             key_filename=_support("test_rsa_password.key"),
             passphrase="television",
+        )
+
+    def test_passphrase_kwarg_accepts_bytes_for_key_passphrase(self):
+        self._test_connection(
+            key_filename=_support("test_rsa_password.key"),
+            passphrase=b"television",
         )
 
     def test_password_kwarg_used_for_passphrase_when_no_passphrase_kwarg_given(
