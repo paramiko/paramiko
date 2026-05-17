@@ -697,6 +697,19 @@ class SSHClientTest(ClientTest):
         )
         assert isinstance(self.tc._transport, MyTransport)
 
+    def test_session_helpers_require_connection(self):
+        self.tc = SSHClient()
+        cases = (
+            ("exec_command", ("yes",)),
+            ("invoke_shell", ()),
+            ("open_sftp", ()),
+        )
+        for method, args in cases:
+            with self.subTest(method=method):
+                with self.assertRaises(SSHException) as manager:
+                    getattr(self.tc, method)(*args)
+                assert str(manager.exception) == "No existing session"
+
 
 class PasswordPassphraseTests(ClientTest):
     # TODO: most of these could reasonably be set up to use mocks/assertions

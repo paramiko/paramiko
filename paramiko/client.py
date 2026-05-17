@@ -545,7 +545,7 @@ class SSHClient(ClosingContextManager):
         .. versionchanged:: 1.10
             Added the ``get_pty`` kwarg.
         """
-        chan = self._transport.open_session(timeout=timeout)
+        chan = self._transport_or_raise().open_session(timeout=timeout)
         if get_pty:
             chan.get_pty()
         chan.settimeout(timeout)
@@ -582,7 +582,7 @@ class SSHClient(ClosingContextManager):
 
         :raises: `.SSHException` -- if the server fails to invoke a shell
         """
-        chan = self._transport.open_session()
+        chan = self._transport_or_raise().open_session()
         chan.get_pty(term, width, height, width_pixels, height_pixels)
         chan.invoke_shell()
         return chan
@@ -593,7 +593,7 @@ class SSHClient(ClosingContextManager):
 
         :return: a new `.SFTPClient` session object
         """
-        return self._transport.open_sftp_client()
+        return self._transport_or_raise().open_sftp_client()
 
     def get_transport(self):
         """
@@ -603,6 +603,11 @@ class SSHClient(ClosingContextManager):
 
         :return: the `.Transport` for this connection
         """
+        return self._transport
+
+    def _transport_or_raise(self):
+        if self._transport is None:
+            raise SSHException("No existing session")
         return self._transport
 
     def _key_from_filepath(self, filename, klass, password):

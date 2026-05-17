@@ -3,6 +3,12 @@ Changelog
 =========
 
 - :release:`5.0.0 <2026-05-09>`
+- :bug:`2600` `SSHClient.exec_command
+  <paramiko.client.SSHClient.exec_command>`,
+  `~paramiko.client.SSHClient.invoke_shell`, and
+  `~paramiko.client.SSHClient.open_sftp` now raise `.SSHException` with a
+  useful message when called before `.SSHClient.connect`, instead of raising an
+  unhelpful ``AttributeError``.
 - :bug:`- major` Fix `Ed25519Key <paramiko.ed25519key.Ed25519Key>`'s internals
   such that it no longer throws `AttributeError` during calls to ``__repr__``
   when only partly initialized. This isn't a normal runtime problem (it only
