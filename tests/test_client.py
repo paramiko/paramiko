@@ -742,3 +742,10 @@ class PasswordPassphraseTests(ClientTest):
             password="television",
             passphrase="wat? lol no",
         )
+
+
+class TestExecCommandWithoutConnection:
+    def test_exec_command_raises_ssh_exception_when_not_connected(self):
+        client = paramiko.SSHClient()
+        with pytest.raises(paramiko.SSHException):
+            client.exec_command("ls")
