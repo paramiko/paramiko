@@ -774,6 +774,13 @@ class SSHClient(ClosingContextManager):
             except SSHException as e:
                 saved_exception = e
 
+        if password is None and not two_factor:
+            try:
+                self._transport.auth_password(username, "")
+                return
+            except SSHException:
+                pass
+
         # if we got an auth-failed exception earlier, re-raise it
         if saved_exception is not None:
             raise saved_exception
