@@ -2266,7 +2266,7 @@ class Transport(threading.Thread, ClosingContextManager):
                     for k in self.get_security_options().kex
                     if not k.startswith(mp_required_prefix)
                 ]
-                self.get_security_options().kex = pkex
+                kex_algos = pkex
             available_server_keys = list(
                 filter(
                     list(self.server_key_dict.keys()).__contains__,
