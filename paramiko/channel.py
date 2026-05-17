@@ -1213,8 +1213,8 @@ class Channel(ClosingContextManager):
         self.event.clear()
         self.event_ready = False
 
-    def _wait_for_event(self):
-        self.event.wait()
+    def _wait_for_event(self, timeout=None):
+        self.event.wait(timeout=timeout)
         assert self.event.is_set()
         if self.event_ready:
             return
