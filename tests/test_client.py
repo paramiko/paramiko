@@ -742,3 +742,20 @@ class PasswordPassphraseTests(ClientTest):
             password="television",
             passphrase="wat? lol no",
         )
+
+
+class TestKnownHostsWhitespaceParsing:
+    def test_known_hosts_multiple_whitespace(self):
+        from paramiko.hostkeys import HostKeyEntry
+
+        key_b64 = (
+            "AAAAB3NzaC1yc2EAAAABIwAAAIEA1PD6U2/TVxET6lkpKhOk5r"
+            "9q/kAYG6sP9f5zuUYP8i7FOFp/6ncCEbbtg/lB+A3iidyxoSWl"
+            "+9jtoyyDOOVX4UIDV9G11Ml8om3"
+            "D+jrpI9cycZHqilK0HmxDeCuxbwyMuaCygU9gS2qoRvNLWZk70"
+            "OpIKSSpBo0Wl3/XUmz9uhc="
+        )
+        line = "host.example.com    ssh-rsa    {}".format(key_b64)
+        entry = HostKeyEntry.from_line(line)
+        assert entry is not None
+        assert "host.example.com" in entry.hostnames
