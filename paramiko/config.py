@@ -526,6 +526,16 @@ class SSHConfig:
             if type_.startswith("!"):
                 match["negate"] = True
                 type_ = type_[1:]
+            # OpenSSH allows "key=value" syntax for Match keywords (e.g.
+            # "Match host=foo") in addition to the space-separated form
+            # "Match host foo". Split on first '=' if the type token
+            # contains one, and handle it as if it were two tokens.
+            if "=" in type_ and type_ not in ("all", "canonical", "final"):
+                type_, param = type_.split("=", 1)
+                match["type"] = type_
+                match["param"] = param
+                matches.append(match)
+                continue
             match["type"] = type_
             # all/canonical have no params (everything else does)
             if type_ in ("all", "canonical", "final"):
