@@ -21,12 +21,14 @@ Common API for all public keys.
 """
 
 import base64
+import hashlib
 import os
 import re
 import struct
+
 from base64 import decodebytes, encodebytes
 from binascii import unhexlify
-from hashlib import md5, sha256
+from hashlib import sha256
 from io import RawIOBase
 from pathlib import Path
 from typing import NamedTuple, Optional, Union
@@ -387,7 +389,9 @@ class PKey:
             a 16-byte `string <str>` (binary) of the MD5 fingerprint, in SSH
             format.
         """
-        return md5(self.asbytes()).digest()
+        return hashlib.new(
+            "md5", self.asbytes(), usedforsecurity=False
+        ).digest()
 
     @property
     def fingerprint(self):
@@ -650,7 +654,12 @@ class PKey:
         keysize = self._CIPHER_TABLE[encryption_type]["keysize"]
         mode = self._CIPHER_TABLE[encryption_type]["mode"]
         salt = unhexlify(b(saltstr))
-        key = util.generate_key_bytes(md5, salt, password, keysize)
+        key = util.generate_key_bytes(
+            lambda: hashlib.new("md5", usedforsecurity=False),
+            salt,
+            password,
+            keysize,
+        )
         decryptor = Cipher(
             cipher(key), mode(salt), backend=default_backend()
         ).decryptor()
