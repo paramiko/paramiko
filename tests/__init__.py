@@ -28,7 +28,7 @@ _non_ascii_locales.extend([name + ".utf8" for name in _non_ascii_locales])
 def requireNonAsciiLocale(category_name="LC_ALL"):
     """Run decorated test under a non-ascii locale or skip if not possible."""
     if os.name != "posix":
-        return skip("Non-posix OSes don't really use C locales")
+        return skip("Non-posix OSes don't really use C locales", allow_module_level=True)
     cat = getattr(locale, category_name)
     return functools.partial(_decorate_with_locale, cat, _non_ascii_locales)
 

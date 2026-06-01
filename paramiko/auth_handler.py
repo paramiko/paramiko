@@ -207,18 +207,28 @@ class AuthHandler:
                 e = self.transport.get_exception()
                 if (e is None) or issubclass(e.__class__, EOFError):
                     e = AuthenticationException(
-                        "Authentication failed: transport shut down or saw EOF"
+                        "Authentication failed (username: {}): transport shut down or saw EOF".format(
+                            self.get_username()
+                        )
                     )
                 raise e
             if event.is_set():
                 break
             if max_ts is not None and max_ts <= time.time():
-                raise AuthenticationException("Authentication timeout.")
+                raise AuthenticationException(
+                    "Authentication timeout (username: {}).".format(
+                        self.get_username()
+                    )
+                )
 
         if not self.is_authenticated():
             e = self.transport.get_exception()
             if e is None:
-                e = AuthenticationException("Authentication failed.")
+                e = AuthenticationException(
+                    "Authentication failed (username: {}).".format(
+                        self.get_username()
+                    )
+                )
             # this is horrible.  Python Exception isn't yet descended from
             # object, so type(e) won't work. :(
             # TODO (backwards incompat): lol. just lmao.
