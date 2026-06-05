@@ -134,6 +134,17 @@ class RSAKey(PKey):
     def sign_ssh_data(self, data, algorithm=None):
         if algorithm is None:
             algorithm = self.name
+        # The bare "ssh-rsa" (SHA-1) signing algorithm was dropped in 5.0 and
+        # is no longer present in HASHES, so it cannot be used as a hash key.
+        # When asked to sign with the legacy default (e.g. a direct
+        # sign_ssh_data() call that does not specify an algorithm, or a server
+        # kex path that still passes the "ssh-rsa" key type), upgrade to the
+        # strongest SHA-2 variant we offer so the call succeeds and produces a
+        # verifiable signature. Explicit rsa-sha2-* requests are untouched.
+        if algorithm == "ssh-rsa":
+            algorithm = "rsa-sha2-512"
+        elif algorithm == "ssh-rsa-cert-v01@openssh.com":
+            algorithm = "rsa-sha2-512-cert-v01@openssh.com"
         sig = self.key.sign(
             data,
             padding=padding.PKCS1v15(),
