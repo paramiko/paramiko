@@ -167,9 +167,7 @@ class RSAKey(PKey):
             sign = b"\x00" * ((diff + 7) // 8) + sign
 
         try:
-            key.verify(
-                sign, data, padding.PKCS1v15(), self.HASHES[sig_algorithm]()
-            )
+            key.verify(sign, data, padding.PKCS1v15(), self.HASHES[sig_algorithm]())
         except InvalidSignature:
             return False
         else:
