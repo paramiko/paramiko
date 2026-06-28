@@ -204,6 +204,18 @@ class KeyTest(unittest.TestCase):
     def test_sign_and_verify_rsa_sha2_256(self):
         self._sign_and_verify_rsa("rsa-sha2-256", SIGNED_RSA_256)
 
+    def test_sign_ssh_data_default_algorithm_no_longer_raises(self):
+        # Regression test for GH-2628: RSAKey.sign_ssh_data() raised
+        # KeyError: 'ssh-rsa' when called without an explicit algorithm
+        # because the default fell back to self.name ("ssh-rsa") which was
+        # removed from HASHES in paramiko 5.0.  The default should now be
+        # "rsa-sha2-256".
+        key = RSAKey.generate(2048)
+        msg = key.sign_ssh_data(b"test data")
+        assert isinstance(msg, Message)
+        msg.rewind()
+        assert msg.get_text() == "rsa-sha2-256"
+
     def test_generate_rsa(self):
         # TODO: this probs needs to be larger number now
         key = RSAKey.generate(1024)
