@@ -362,8 +362,6 @@ class SSHConfig:
             configured_host = options.get("hostname", None)
             configured_user = options.get("user", None)
             type_, param = candidate["type"], candidate["param"]
-            # Canonical is a hard pass/fail based on whether this is a
-            # canonicalized re-lookup.
             if type_ == "canonical":
                 if self._should_fail(canonical, candidate):
                     return False
@@ -396,6 +394,10 @@ class SSHConfig:
                     raise invoke_import_error
                 # Like OpenSSH, we 'redirect' stdout but let stderr bubble up
                 passed = invoke.run(exec_cmd, hide="stdout", warn=True).ok
+            # Unknown Match keyword (e.g. "localnetwork", "address") —
+            # treat as non-match so its config block is skipped.
+            if passed is None and type_ not in ("canonical",):
+                passed = False
             # Tackle any 'passed, but was negated' results from above
             if passed is not None and self._should_fail(passed, candidate):
                 return False
