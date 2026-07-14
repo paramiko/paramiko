@@ -545,6 +545,8 @@ class SSHClient(ClosingContextManager):
         .. versionchanged:: 1.10
             Added the ``get_pty`` kwarg.
         """
+        if self._transport is None:
+            raise SSHException("SSHClient is not connected. Call connect() first.")
         chan = self._transport.open_session(timeout=timeout)
         if get_pty:
             chan.get_pty()
