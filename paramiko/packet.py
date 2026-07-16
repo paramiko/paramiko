@@ -74,13 +74,17 @@ class Packetizer:
 
     # Maximum size (in bytes) accepted for an incoming BPP (binary packet
     # protocol) packet, prior to decryption/decompression. RFC 4253, Section
-    # 6.1 says implementations should support packets of at least 35000
-    # bytes and may reject larger ones; OpenSSH uses the same value. This
-    # guards against malicious/corrupt peers advertising an absurd packet
-    # length (e.g. via a spoofed/garbled length header) and forcing us to
-    # allocate huge buffers or block for a long time waiting for that many
-    # bytes to arrive.
-    MAX_PACKET_SIZE = 35000
+    # 6.1 only sets a MINIMUM that implementations must be able to accept
+    # (>= 35000 bytes) -- it is not a ceiling, and legitimate channels may
+    # negotiate a max_packet_size well above that (see
+    # `.Transport._sanitize_packet_size`, which allows values up to
+    # `.MAX_WINDOW_SIZE`). OpenSSH's own incoming-packet ceiling,
+    # PACKET_MAX_SIZE in its packet.c, is 256 * 1024 (262144) bytes; we
+    # match that here. This guards against malicious/corrupt peers
+    # advertising an absurd packet length (e.g. via a spoofed/garbled
+    # length header) and forcing us to allocate huge buffers or block for
+    # a long time waiting for that many bytes to arrive.
+    MAX_PACKET_SIZE = 256 * 1024
 
     # Allow receiving this many packets after a re-key request before
     # terminating

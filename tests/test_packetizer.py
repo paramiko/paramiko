@@ -114,6 +114,55 @@ class PacketizerTest(unittest.TestCase):
         wsock.send(header)
         self.assertRaises(SSHException, p.read_message)
 
+    def test_read_rejects_oversized_packet_etm(self):
+        # Same as test_read_rejects_oversized_packet, but for the
+        # encrypt-then-mac code path. The bogus length lives in the first
+        # 4 bytes of the (unencrypted, under EtM) header, and
+        # _check_packet_size() must reject it before read_message() goes
+        # on to read "remaining" bytes and verify a MAC.
+        rsock = LoopSocket()
+        wsock = LoopSocket()
+        rsock.link(wsock)
+        p = Packetizer(rsock)
+        p.set_log(util.get_logger("paramiko.transport"))
+        p.set_inbound_cipher(
+            block_engine=None,
+            block_size=8,
+            mac_engine=sha1,
+            mac_size=12,
+            mac_key=x1f * 20,
+            etm=True,
+        )
+
+        header = struct.pack(">I", 0xFFFFFFFC) + b"\x00" * 4
+        wsock.send(header)
+        self.assertRaises(SSHException, p.read_message)
+
+    def test_read_rejects_oversized_packet_aead(self):
+        # Same as test_read_rejects_oversized_packet, but for the AEAD
+        # (eg AES-GCM) code path. The bogus length lives in the first 4
+        # bytes of the header, which under GCM is unencrypted ("additional
+        # data"); _check_packet_size() must reject it before read_message()
+        # goes on to read "remaining" bytes and attempt to decrypt.
+        rsock = LoopSocket()
+        wsock = LoopSocket()
+        rsock.link(wsock)
+        p = Packetizer(rsock)
+        p.set_log(util.get_logger("paramiko.transport"))
+        p.set_inbound_cipher(
+            block_engine=None,
+            block_size=16,
+            mac_engine=None,
+            mac_size=16,
+            mac_key=bytes(),
+            aead=True,
+            iv_in=x1f * 12,
+        )
+
+        header = struct.pack(">I", 0xFFFFFFFC) + b"\x00" * 12
+        wsock.send(header)
+        self.assertRaises(SSHException, p.read_message)
+
     def test_closed(self):
         if sys.platform.startswith("win"):  # no SIGALRM on windows
             return
