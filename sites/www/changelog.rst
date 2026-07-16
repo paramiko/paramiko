@@ -2,6 +2,11 @@
 Changelog
 =========
 
+- :bug:`2626` Reject incoming BPP (binary packet protocol) packets that
+  claim an implausibly large size, instead of trusting the untrusted
+  length header and blocking on (or allocating for) however many bytes it
+  claims. A malicious or broken server could previously use this to hang a
+  client or exhaust its memory.
 - :release:`5.0.0 <2026-05-09>`
 - :bug:`- major` Fix `Ed25519Key <paramiko.ed25519key.Ed25519Key>`'s internals
   such that it no longer throws `AttributeError` during calls to ``__repr__``

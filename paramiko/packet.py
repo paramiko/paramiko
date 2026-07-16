@@ -72,6 +72,16 @@ class Packetizer:
     REKEY_PACKETS = pow(2, 29)
     REKEY_BYTES = pow(2, 29)
 
+    # Maximum size (in bytes) accepted for an incoming BPP (binary packet
+    # protocol) packet, prior to decryption/decompression. RFC 4253, Section
+    # 6.1 says implementations should support packets of at least 35000
+    # bytes and may reject larger ones; OpenSSH uses the same value. This
+    # guards against malicious/corrupt peers advertising an absurd packet
+    # length (e.g. via a spoofed/garbled length header) and forcing us to
+    # allocate huge buffers or block for a long time waiting for that many
+    # bytes to arrive.
+    MAX_PACKET_SIZE = 35000
+
     # Allow receiving this many packets after a re-key request before
     # terminating
     REKEY_PACKETS_OVERFLOW_MAX = pow(2, 29)
@@ -485,6 +495,19 @@ class Packetizer:
         finally:
             self.__write_lock.release()
 
+    def _check_packet_size(self, packet_size):
+        """
+        Sanity-check a packet length pulled from an incoming BPP header,
+        before using it to size any reads/buffers.
+
+        :raises: `.SSHException` -- if ``packet_size`` is larger than
+            `.MAX_PACKET_SIZE`.
+        """
+        if packet_size > self.MAX_PACKET_SIZE:
+            raise SSHException(
+                "Invalid packet size ({} bytes)".format(packet_size)
+            )
+
     def read_message(self):
         """
         Only one thread should ever be in this function (no other locking is
@@ -496,6 +519,7 @@ class Packetizer:
         header = self.read_all(self.__block_size_in, check_rekey=True)
         if self.__etm_in:
             packet_size = struct.unpack(">I", header[:4])[0]
+            self._check_packet_size(packet_size)
             remaining = packet_size - self.__block_size_in + 4
             packet = header[4:] + self.read_all(remaining, check_rekey=False)
             mac = self.read_all(self.__mac_size_in, check_rekey=False)
@@ -514,6 +538,7 @@ class Packetizer:
             # Grab unencrypted (considered 'additional data' under GCM) packet
             # length.
             packet_size = struct.unpack(">I", header[:4])[0]
+            self._check_packet_size(packet_size)
             aad = header[:4]
             remaining = (
                 packet_size - self.__block_size_in + 4 + self.__mac_size_in
@@ -536,6 +561,7 @@ class Packetizer:
         # Otherwise, use the older non-ETM logic
         else:
             packet_size = struct.unpack(">I", header[:4])[0]
+            self._check_packet_size(packet_size)
 
             # leftover contains decrypted bytes from the first block (after the
             # length field)

@@ -20,6 +20,7 @@
 Some unit tests for the ssh2 protocol in Transport.
 """
 
+import struct
 import sys
 import unittest
 from hashlib import sha1
@@ -29,6 +30,7 @@ from cryptography.hazmat.primitives.ciphers import algorithms, Cipher, modes
 
 from paramiko import Message, Packetizer, util
 from paramiko.common import byte_chr, zero_byte
+from paramiko.ssh_exception import SSHException
 
 from ._loop import LoopSocket
 
@@ -89,6 +91,28 @@ class PacketizerTest(unittest.TestCase):
         self.assertEqual(100, m.get_int())
         self.assertEqual(1, m.get_int())
         self.assertEqual(900, m.get_int())
+
+    def test_read_rejects_oversized_packet(self):
+        # A malicious/corrupt peer could claim an enormous packet_size in
+        # the BPP header to force us to allocate huge buffers or block
+        # for a long time waiting for that many bytes to arrive. Make sure
+        # such a claim is rejected before any of that happens.
+        rsock = LoopSocket()
+        wsock = LoopSocket()
+        rsock.link(wsock)
+        p = Packetizer(rsock)
+        p.set_log(util.get_logger("paramiko.transport"))
+
+        # No cipher has been configured, so block_size_in is the default
+        # (8), and read_message() takes the "older non-ETM" code path.
+        # First 4 bytes are the (bogus, oversized) packet length; the rest
+        # just pad out to a full block. The length is chosen so it passes
+        # the existing block-alignment check and actually exercises the
+        # max-size guard (prior to the fix, this value made Paramiko try
+        # to read ~4GB from the socket and hang/exhaust memory).
+        header = struct.pack(">I", 0xFFFFFFFC) + b"\x00" * 4
+        wsock.send(header)
+        self.assertRaises(SSHException, p.read_message)
 
     def test_closed(self):
         if sys.platform.startswith("win"):  # no SIGALRM on windows
