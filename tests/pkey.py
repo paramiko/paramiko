@@ -307,5 +307,8 @@ class Ed25519Key_:
         # will effectively be that of an 'empty' key bytes)
         assert (
             repr(info.traceback[1].locals["self"])
-            == "PKey(alg=ED25519, bits=256, fp=SHA256:UsIasxMWEd9VFEwjARWWtGJ08DgHp1eib3gSBLed54U)"
+            == (
+                "PKey(alg=ED25519, bits=256, fp=SHA256:"
+                "UsIasxMWEd9VFEwjARWWtGJ08DgHp1eib3gSBLed54U)"
+            )
         )
