@@ -367,7 +367,7 @@ class SSHConfig:
             if type_ == "canonical":
                 if self._should_fail(canonical, candidate):
                     return False
-            if type_ == "final":
+            elif type_ == "final":
                 passed = final
             # The parse step ensures we only see this by itself or after
             # canonical, so it's also an easy hard pass. (No negation here as
@@ -396,6 +396,8 @@ class SSHConfig:
                     raise invoke_import_error
                 # Like OpenSSH, we 'redirect' stdout but let stderr bubble up
                 passed = invoke.run(exec_cmd, hide="stdout", warn=True).ok
+            else:
+                continue
             # Tackle any 'passed, but was negated' results from above
             if passed is not None and self._should_fail(passed, candidate):
                 return False
