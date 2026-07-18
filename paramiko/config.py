@@ -396,6 +396,12 @@ class SSHConfig:
                     raise invoke_import_error
                 # Like OpenSSH, we 'redirect' stdout but let stderr bubble up
                 passed = invoke.run(exec_cmd, hide="stdout", warn=True).ok
+            else:
+                # Unknown Match criteria keyword (e.g. "localnetwork" in
+                # OpenSSH).  Paramo cannot verify whether this Match
+                # condition applies, so fail closed: return False so the
+                # section is not applied.
+                return False
             # Tackle any 'passed, but was negated' results from above
             if passed is not None and self._should_fail(passed, candidate):
                 return False
