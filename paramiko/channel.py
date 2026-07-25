@@ -840,6 +840,7 @@ class Channel(ClosingContextManager):
             sent, there is no way to determine how much data (if any) was sent.
             This is irritating, but identically follows Python's API.
         """
+        s = memoryview(util.asbytes(s))
         while s:
             sent = self.send(s)
             s = s[sent:]
@@ -861,6 +862,7 @@ class Channel(ClosingContextManager):
 
         .. versionadded:: 1.1
         """
+        s = memoryview(util.asbytes(s))
         while s:
             sent = self.send_stderr(s)
             s = s[sent:]
