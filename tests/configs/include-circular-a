@@ -1,0 +1,4 @@
+Host circular-a
+    User user-a
+
+Include include-circular-b
