@@ -2,6 +2,8 @@
 Changelog
 =========
 
+- :bug:`-` Fix O(n²) memory copying in `Channel.sendall` and `Channel.sendall_stderr`
+  that caused high CPU usage and slow writes on small flow-control windows.
 - :release:`5.0.0 <2026-05-09>`
 - :bug:`- major` Fix `Ed25519Key <paramiko.ed25519key.Ed25519Key>`'s internals
   such that it no longer throws `AttributeError` during calls to ``__repr__``
