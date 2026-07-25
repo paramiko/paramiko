@@ -1046,3 +1046,70 @@ class TestFinalMatching(object):
     def test_negated(self):
         result = load_config("match-final").lookup("jump")
         assert result["port"] == "1003"
+
+
+class TestSSHConfigInclude:
+    """Tests for the ``Include`` directive support."""
+
+    def _load_with_include(self, name):
+        """
+        Load a config file using parse() with base_dir set to the test
+        configs directory, so that relative Include paths resolve correctly.
+        """
+        from os.path import dirname
+
+        path = _config(name)
+        base_dir = dirname(path)
+        config = SSHConfig()
+        with open(path) as flo:
+            config.parse(flo, base_dir=base_dir)
+        return config
+
+    def test_include_basic(self):
+        """Single Include pulls in another file's Host blocks."""
+        config = self._load_with_include("include-basic")
+        # Host from the main file
+        result = config.lookup("main-host")
+        assert result["user"] == "main-user"
+        # Host from the included file
+        result = config.lookup("included-host")
+        assert result["user"] == "included-user"
+        assert result["port"] == "2222"
+
+    def test_include_glob(self):
+        """Include with glob pattern loads multiple files."""
+        config = self._load_with_include("include-glob")
+        # Host from main file
+        result = config.lookup("glob-main")
+        assert result["user"] == "glob-user"
+        # Hosts from glob-matched files (sorted alphabetically)
+        result = config.lookup("alpha-host")
+        assert result["user"] == "alpha-user"
+        result = config.lookup("beta-host")
+        assert result["user"] == "beta-user"
+
+    def test_include_recursive(self):
+        """File A includes B which includes C — all hosts available."""
+        config = self._load_with_include("include-recursive-a")
+        result = config.lookup("level-a")
+        assert result["user"] == "user-a"
+        result = config.lookup("level-b")
+        assert result["user"] == "user-b"
+        result = config.lookup("level-c")
+        assert result["user"] == "user-c"
+
+    def test_include_circular_raises(self):
+        """Circular includes raise ConfigParseError."""
+        with raises(ConfigParseError, match="Circular Include detected"):
+            self._load_with_include("include-circular-a")
+
+    def test_include_nonexistent_glob_ignored(self):
+        """Glob that matches no files is silently skipped."""
+        config = self._load_with_include("include-nonexistent")
+        result = config.lookup("main-host")
+        assert result["user"] == "main-user"
+
+    def test_include_without_base_dir_raises(self):
+        """Include in from_text() raises ConfigParseError."""
+        with raises(ConfigParseError, match="Include directive found"):
+            SSHConfig.from_text("Include some-file.conf")

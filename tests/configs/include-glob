@@ -1,0 +1,4 @@
+Host glob-main
+    User glob-user
+
+Include include-subdir/*.conf

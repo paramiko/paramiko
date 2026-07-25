@@ -23,6 +23,7 @@ Configuration file (aka ``ssh_config``) support.
 
 import fnmatch
 import getpass
+import glob
 import os
 import re
 import shlex
@@ -103,10 +104,19 @@ class SSHConfig:
         """
         Create a new, parsed `SSHConfig` from the file found at ``path``.
 
+        ``Include`` directives within the file will be resolved. Relative
+        include paths are resolved against the directory containing the
+        config file.
+
         .. versionadded:: 2.7
+        .. versionchanged:: 5.1
+            Added ``Include`` directive support.
         """
         with open(path) as flo:
-            return cls.from_file(flo)
+            obj = cls()
+            base_dir = os.path.dirname(os.path.realpath(path))
+            obj.parse(flo, base_dir=base_dir)
+            return obj
 
     @classmethod
     def from_file(cls, flo):
@@ -119,12 +129,54 @@ class SSHConfig:
         obj.parse(flo)
         return obj
 
-    def parse(self, file_obj):
+    def parse(self, file_obj, base_dir=None):
         """
         Read an OpenSSH config from the given file object.
 
         :param file_obj: a file-like object to read the config file from
+        :param str base_dir:
+            Optional base directory for resolving ``Include`` directives.
+            Relative include paths are resolved against this directory.
+            If ``None``, any ``Include`` directive will raise
+            `ConfigParseError`. Typically set to ``~/.ssh/``.
+
+        .. versionchanged:: 5.1
+            Added ``base_dir`` parameter and ``Include`` directive support.
         """
+        # Track included files to detect circular includes
+        included_files = set()
+        # Add the root file to prevent self-includes
+        if hasattr(file_obj, "name"):
+            root_path = os.path.normcase(os.path.realpath(file_obj.name))
+            included_files.add(root_path)
+        context = self._parse_file(
+            file_obj,
+            base_dir=base_dir,
+            included_files=included_files
+        )
+        # Store last 'open' block and we're done
+        self._config.append(context)
+
+    def _parse_file(
+        self, file_obj, base_dir=None, included_files=None):
+        """
+        Internal recursive parser that handles ``Include`` directives.
+
+        :param file_obj: a file-like object to read the config file from
+        :param str base_dir:
+            Base directory for resolving relative ``Include`` paths.
+        :param set included_files:
+            Set of already-included absolute file paths (for circular
+            include detection).
+        :returns:
+            The current context dict (the last open Host/Match block).
+
+        .. versionchanged:: 5.1
+            Added ``base_dir`` and ``included_files`` parameters for
+            ``Include`` directive support.
+        """
+        if included_files is None:
+            included_files = set()
         # Start out w/ implicit/anonymous global host-like block to hold
         # anything not contained by an explicit one.
         context = {"host": ["*"], "config": {}}
@@ -143,8 +195,23 @@ class SSHConfig:
             key = match.group(1).lower()
             value = match.group(2)
 
+            # Handle Include directive
+            if key == "include":
+                if base_dir is None:
+                    raise ConfigParseError(
+                        "Include directive found but no base directory "
+                        "is available for resolving paths. Use "
+                        "SSHConfig.from_path() to enable Include support."
+                    )
+                # Save current context before processing includes
+                self._config.append(context)
+                context = self._process_include(
+                    value,
+                    base_dir=base_dir,
+                    included_files=included_files,
+                )
             # Host keyword triggers switch to new block/context
-            if key in ("host", "match"):
+            elif key in ("host", "match"):
                 self._config.append(context)
                 context = {"config": {}}
                 if key == "host":
@@ -176,8 +243,59 @@ class SSHConfig:
                         context["config"][key] = [value]
                 elif key not in context["config"]:
                     context["config"][key] = value
-        # Store last 'open' block and we're done
-        self._config.append(context)
+        return context
+
+    def _process_include(
+        self, value, base_dir, included_files):
+        """
+        Process an ``Include`` directive value.
+
+        Expands tilde and glob patterns, resolves paths relative to
+        ``base_dir``, and recursively parses each matched file.
+
+        :param str value: The raw value from the ``Include`` directive.
+        :param str base_dir:
+            Base directory for resolving relative paths.
+        :param set included_files:
+            Set of already-included absolute paths for circular detection.
+        :returns:
+            The last context dict from the included file(s).
+
+        .. versionadded:: 5.1
+        """
+        # Expand ~ to user's home directory
+        value = os.path.expanduser(value)
+        # Resolve relative paths against base_dir (OpenSSH resolves
+        # relative to ~/.ssh/ for user configs, /etc/ssh/ for system)
+        if not os.path.isabs(value):
+            value = os.path.join(base_dir, value)
+        # Expand glob patterns and sort alphabetically (matching OpenSSH)
+        matched_files = sorted(glob.glob(value))
+        # Last context from included files; start with a fresh global
+        # block in case no files match
+        context = {"host": ["*"], "config": {}}
+        for filepath in matched_files:
+            filepath = os.path.normcase(os.path.realpath(filepath))
+            # Skip non-files (e.g. directories)
+            if not os.path.isfile(filepath):
+                continue
+            # Circular include detection
+            if filepath in included_files:
+                raise ConfigParseError(
+                    "Circular Include detected: '{}' has already "
+                    "been included".format(filepath)
+                )
+            included_files.add(filepath)
+            # Append the previous context (from the prior included file
+            # or the initial empty block) before parsing the next file.
+            self._config.append(context)
+            with open(filepath) as flo:
+                context = self._parse_file(
+                    flo,
+                    base_dir=base_dir,
+                    included_files=included_files,
+                )
+        return context
 
     def lookup(self, hostname):
         """
