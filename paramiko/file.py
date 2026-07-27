@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with Paramiko; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
-from io import BytesIO
+from io import BytesIO, BufferedIOBase, UnsupportedOperation
 
 from paramiko.common import (
     linefeed_byte_value,
@@ -28,7 +28,7 @@ from paramiko.common import (
 from paramiko.util import ClosingContextManager, u
 
 
-class BufferedFile(ClosingContextManager):
+class BufferedFile(ClosingContextManager, BufferedIOBase):
     """
     Reusable base class to implement Python-style file buffering around a
     simpler stream.
@@ -153,6 +153,50 @@ class BufferedFile(ClosingContextManager):
         buff[: len(data)] = data
         return len(data)
 
+    def read1(self, size=None):
+        if self._closed:
+            raise IOError("File is closed")
+        if not (self._flags & self.FLAG_READ):
+            raise IOError("File is not open for reading")
+        if size is None or size < 0:
+            size = self._bufsize
+        if size == 0:
+            return b""
+        if len(self._rbuffer) >= size:
+            result = self._rbuffer[:size]
+            self._rbuffer = self._rbuffer[size:]
+            self._pos += len(result)
+            return result
+        read_size = size - len(self._rbuffer)
+        if self._flags & self.FLAG_BUFFERED:
+            read_size = max(self._bufsize, read_size)
+        try:
+            new_data = self._read(read_size)
+        except EOFError:
+            new_data = None
+        if new_data is not None and len(new_data) > 0:
+            self._rbuffer += new_data
+            self._realpos += len(new_data)
+        result = self._rbuffer[:size]
+        self._rbuffer = self._rbuffer[size:]
+        self._pos += len(result)
+        return result
+
+    def peek(self, n=0):
+        if self._closed:
+            raise IOError("File is closed")
+        if not (self._flags & self.FLAG_READ):
+            raise IOError("File is not open for reading")
+        if not self._rbuffer:
+            try:
+                new_data = self._read(self._bufsize)
+            except EOFError:
+                new_data = None
+            if new_data is not None and len(new_data) > 0:
+                self._rbuffer += new_data
+                self._realpos += len(new_data)
+        return self._rbuffer[:n] if n > 0 else self._rbuffer
+
     def read(self, size=None):
         """
         Read at most ``size`` bytes from the file (less if we hit the end of
@@ -174,43 +218,21 @@ class BufferedFile(ClosingContextManager):
             raise IOError("File is closed")
         if not (self._flags & self.FLAG_READ):
             raise IOError("File is not open for reading")
-        if (size is None) or (size < 0):
-            # go for broke
-            result = bytearray(self._rbuffer)
-            self._rbuffer = bytes()
-            self._pos += len(result)
+        if size is None or size < 0:
+            result = bytearray()
             while True:
-                try:
-                    new_data = self._read(self._DEFAULT_BUFSIZE)
-                except EOFError:
-                    new_data = None
-                if (new_data is None) or (len(new_data) == 0):
+                chunk = self.read1(self._DEFAULT_BUFSIZE)
+                if not chunk:
                     break
-                result.extend(new_data)
-                self._realpos += len(new_data)
-                self._pos += len(new_data)
+                result.extend(chunk)
             return bytes(result)
-        if size <= len(self._rbuffer):
-            result = self._rbuffer[:size]
-            self._rbuffer = self._rbuffer[size:]
-            self._pos += len(result)
-            return result
-        while len(self._rbuffer) < size:
-            read_size = size - len(self._rbuffer)
-            if self._flags & self.FLAG_BUFFERED:
-                read_size = max(self._bufsize, read_size)
-            try:
-                new_data = self._read(read_size)
-            except EOFError:
-                new_data = None
-            if (new_data is None) or (len(new_data) == 0):
+        result = bytearray()
+        while len(result) < size:
+            chunk = self.read1(size - len(result))
+            if not chunk:
                 break
-            self._rbuffer += new_data
-            self._realpos += len(new_data)
-        result = self._rbuffer[:size]
-        self._rbuffer = self._rbuffer[size:]
-        self._pos += len(result)
-        return result
+            result.extend(chunk)
+        return bytes(result)
 
     def readline(self, size=None):
         """
@@ -417,6 +439,15 @@ class BufferedFile(ClosingContextManager):
         for line in sequence:
             self.write(line)
         return
+
+    def truncate(self, size=None):
+        raise UnsupportedOperation("truncate")
+
+    def detach(self):
+        raise UnsupportedOperation("detach")
+
+    def fileno(self):
+        raise OSError("fileno is not supported")
 
     def xreadlines(self):
         """
