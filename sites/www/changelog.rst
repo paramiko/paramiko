@@ -2,6 +2,10 @@
 Changelog
 =========
 
+- :bug:`2602` Documented that the ``password`` and ``passphrase`` parameters
+  of `SSHClient.connect <paramiko.client.SSHClient.connect>` accept both
+  ``str`` and ``bytes`` values.
+
 - :release:`5.0.0 <2026-05-09>`
 - :bug:`- major` Fix `Ed25519Key <paramiko.ed25519key.Ed25519Key>`'s internals
   such that it no longer throws `AttributeError` during calls to ``__repr__``
