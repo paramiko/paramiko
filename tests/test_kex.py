@@ -21,6 +21,7 @@ Some unit tests for the key exchange protocols.
 """
 
 import os
+import threading
 import unittest
 from binascii import hexlify, unhexlify
 from unittest.mock import Mock, patch
@@ -34,14 +35,20 @@ try:
 except ImportError:
     x25519 = None
 
+import paramiko.kex_mlkem
 import paramiko.util
-from paramiko import Message
+from paramiko import Message, RSAKey, Transport
 from paramiko.common import byte_chr
 from paramiko.kex_curve25519 import KexCurve25519
 from paramiko.kex_ecdh_nist import KexNistp256
 from paramiko.kex_gex import KexGexSHA256
 from paramiko.kex_group14 import KexGroup14SHA256
 from paramiko.kex_group16 import KexGroup16SHA512
+from paramiko.kex_mlkem import KexMLKEM768X25519
+from paramiko.ssh_exception import SSHException
+
+from ._loop import LoopSocket
+from ._util import TestServer, _support
 
 
 def dummy_urandom(n):
@@ -479,3 +486,133 @@ class KexTest(unittest.TestCase):
         self.assertEqual(K, transport._K)
         self.assertTrue(transport._activated)
         self.assertEqual(H, hexlify(transport._H).upper())
+
+
+@pytest.mark.skipif("not KexMLKEM768X25519.is_available()")
+class MLKEM768X25519Test(unittest.TestCase):
+    """
+    Tests for the ML-KEM-768 + X25519 hybrid post-quantum key exchange
+    (draft-ietf-sshm-mlkem-hybrid-kex).
+    """
+
+    NAME = "mlkem768x25519-sha256"
+
+    def test_is_registered(self):
+        self.assertIn(self.NAME, Transport._kex_info)
+        self.assertIs(Transport._kex_info[self.NAME], KexMLKEM768X25519)
+        self.assertEqual(Transport._preferred_kex[0], self.NAME)
+
+    def test_round_trip(self):
+        """
+        Drive a real client/server handshake over a loopback and confirm
+        the negotiated kex is the hybrid method, both sides authenticate,
+        and the encrypted channel is usable end-to-end (which exercises
+        the bytes-K key derivation path through Transport._compute_key).
+        """
+        host_key = RSAKey.from_private_key_file(_support("rsa.key"))
+
+        socks = LoopSocket()
+        sockc = LoopSocket()
+        sockc.link(socks)
+        tc = Transport(sockc)
+        ts = Transport(socks)
+        try:
+            for side in (tc, ts):
+                side.get_security_options().kex = (self.NAME,)
+            ts.add_server_key(host_key)
+            event = threading.Event()
+            ts.start_server(event, TestServer())
+            tc.connect(
+                hostkey=RSAKey(data=host_key.asbytes()),
+                username="slowdive",
+                password="pygmalion",
+            )
+            event.wait(1.0)
+            self.assertTrue(event.is_set())
+            self.assertTrue(ts.is_active())
+            self.assertTrue(tc.is_authenticated())
+            # Smoke-test the encrypted channel: if the bytes-K key
+            # derivation path were broken, the two sides would compute
+            # different session keys and the first encrypted packet would
+            # fail to decrypt.
+            chan = tc.open_session()
+            chan.exec_command("yes")
+            chan.close()
+        finally:
+            tc.close()
+            ts.close()
+            socks.close()
+            sockc.close()
+
+    def _server_kex(self):
+        kex = KexMLKEM768X25519(_FakeTransport(server_mode=True))
+        kex.start_kex()
+        return kex
+
+    def _client_kex(self):
+        kex = KexMLKEM768X25519(_FakeTransport(server_mode=False))
+        kex.start_kex()
+        return kex
+
+    def test_rejects_wrong_init_length(self):
+        # Anything other than exactly 1184 + 32 = 1216 bytes must be
+        # rejected with SSHException (no ValueError, IndexError, etc.).
+        bad_sizes = [
+            0,  # empty
+            10,  # too short
+            1184,  # ML-KEM pubkey-sized but no X25519 half
+            32,  # X25519-sized but no ML-KEM half
+            1216 - 1,  # one byte short of the correct total
+            1216 + 1,  # one byte too long
+            1216 * 2,  # two valid-sized payloads concatenated
+        ]
+        for size in bad_sizes:
+            with self.subTest(size=size):
+                bad = Message()
+                bad.add_string(b"\x00" * size)
+                bad.rewind()
+                with pytest.raises(SSHException):
+                    self._server_kex().parse_next(
+                        paramiko.kex_mlkem._MSG_KEX_HYBRID_INIT, bad
+                    )
+
+    def test_rejects_wrong_reply_length(self):
+        # Symmetric coverage on the client side.
+        bad_sizes = [
+            0,  # empty
+            10,  # too short
+            1088,  # ciphertext-sized but no X25519 half
+            32,  # X25519-sized but no ciphertext
+            1120 - 1,  # one byte short of the correct total
+            1120 + 1,  # one byte too long
+        ]
+        for size in bad_sizes:
+            with self.subTest(size=size):
+                bad = Message()
+                bad.add_string(b"fake-host-key")
+                bad.add_string(b"\x00" * size)
+                bad.add_string(b"fake-sig")
+                bad.rewind()
+                with pytest.raises(SSHException):
+                    self._client_kex().parse_next(
+                        paramiko.kex_mlkem._MSG_KEX_HYBRID_REPLY, bad
+                    )
+
+
+class _FakeTransport:
+    """Minimal Transport stub for negative-path tests of KexMLKEM768X25519."""
+
+    local_version = "SSH-2.0-paramiko_test"
+    remote_version = "SSH-2.0-peer"
+    local_kex_init = b"local"
+    remote_kex_init = b"remote"
+    host_key_type = "fake-key"
+
+    def __init__(self, server_mode):
+        self.server_mode = server_mode
+
+    def _send_message(self, m):
+        pass
+
+    def _expect_packet(self, *t):
+        pass
