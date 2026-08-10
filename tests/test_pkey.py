@@ -204,6 +204,19 @@ class KeyTest(unittest.TestCase):
     def test_sign_and_verify_rsa_sha2_256(self):
         self._sign_and_verify_rsa("rsa-sha2-256", SIGNED_RSA_256)
 
+    def test_sign_ssh_data_default_algorithm(self):
+        # Regression test for #2628: calling sign_ssh_data() with no
+        # explicit algorithm used to raise KeyError, because it defaulted
+        # to self.name ("ssh-rsa"), which is not a key in HASHES anymore
+        # (SHA1-based signing was removed).
+        key = RSAKey.from_private_key_file(_support("rsa.key"))
+        msg = key.sign_ssh_data(b"ice weasels")
+        msg.rewind()
+        assert msg.get_text() == "rsa-sha2-256"
+        msg.rewind()
+        pub = RSAKey(data=key.asbytes())
+        assert pub.verify_ssh_sig(b"ice weasels", msg)
+
     def test_generate_rsa(self):
         # TODO: this probs needs to be larger number now
         key = RSAKey.generate(1024)

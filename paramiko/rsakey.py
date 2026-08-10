@@ -133,7 +133,11 @@ class RSAKey(PKey):
 
     def sign_ssh_data(self, data, algorithm=None):
         if algorithm is None:
-            algorithm = self.name
+            # NOTE: self.name (`ssh-rsa`) is no longer a valid key in
+            # HASHES (SHA1-based signing was removed), so it can't be used
+            # as the default algorithm here; fall back to SHA2-256 instead,
+            # matching modern OpenSSH's own default preference.
+            algorithm = "rsa-sha2-256"
         sig = self.key.sign(
             data,
             padding=padding.PKCS1v15(),

@@ -2,6 +2,12 @@
 Changelog
 =========
 
+- :bug:`2628 major` Fix `RSAKey.sign_ssh_data
+  <paramiko.rsakey.RSAKey.sign_ssh_data>` raising ``KeyError`` when called
+  without an explicit ``algorithm`` argument. It previously defaulted to
+  ``self.name`` (``ssh-rsa``), which is no longer a valid key in ``HASHES``
+  now that SHA1-based RSA signing has been removed; it now defaults to
+  ``rsa-sha2-256`` instead.
 - :release:`5.0.0 <2026-05-09>`
 - :bug:`- major` Fix `Ed25519Key <paramiko.ed25519key.Ed25519Key>`'s internals
   such that it no longer throws `AttributeError` during calls to ``__repr__``
