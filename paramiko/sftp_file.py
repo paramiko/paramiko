@@ -268,7 +268,14 @@ class SFTPFile(BufferedFile):
             self._pos += offset
             self._realpos = self._pos
         else:
-            self._realpos = self._pos = self._get_size() + offset
+            # Intentionally use stat() (which propagates errors) instead of
+            # _get_size() (which silently swallows them and returns 0) here.
+            # Silently treating an unknown/unreadable size as 0 would make
+            # SEEK_END seek to position 0 without any indication that
+            # anything went wrong, which can cause silent data loss/
+            # truncation for callers relying on tell() afterwards.
+            # See https://github.com/paramiko/paramiko/issues/2460.
+            self._realpos = self._pos = self.stat().st_size + offset
         self._rbuffer = bytes()
 
     def stat(self):

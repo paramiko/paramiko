@@ -30,6 +30,7 @@ import warnings
 from binascii import hexlify
 from io import StringIO
 from tempfile import mkstemp
+from unittest import mock
 
 import pytest
 
@@ -741,6 +742,37 @@ class TestSFTP:
                 assert f.readline() == "third line\n"
         finally:
             sftp.remove(sftp.FOLDER + "/append.txt")
+
+    def test_seek_end_propagates_stat_errors(self, sftp):
+        """
+        verify that SFTPFile.seek(0, SEEK_END) propagates errors from the
+        server instead of silently treating them as if the file were empty.
+
+        Some servers can fail to respond to CMD_FSTAT on a given file (see
+        https://github.com/paramiko/paramiko/issues/2460); previously,
+        SFTPFile.seek(..., SEEK_END) swallowed such errors and silently
+        reset the file's position to 0, causing tell() to lie about the
+        real size/position and potentially truncating data for callers
+        that trust it (e.g. code that streams the file elsewhere).
+        """
+        data = b"hello there\n"
+        try:
+            with sftp.open(sftp.FOLDER + "/seek_end.txt", "wb") as f:
+                f.write(data)
+
+            with sftp.open(sftp.FOLDER + "/seek_end.txt", "rb") as f:
+                # Sanity check: normal SEEK_END still works.
+                f.seek(0, f.SEEK_END)
+                assert f.tell() == len(data)
+
+                # Simulate a server that can't answer CMD_FSTAT.
+                with mock.patch.object(
+                    f, "stat", side_effect=IOError("stat failed")
+                ):
+                    with pytest.raises(IOError):
+                        f.seek(0, f.SEEK_END)
+        finally:
+            sftp.remove(sftp.FOLDER + "/seek_end.txt")
 
     def test_putfo_empty_file(self, sftp):
         """
