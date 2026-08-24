@@ -120,6 +120,7 @@ from paramiko.util import (
     ClosingContextManager,
     b,
     clamp_value,
+    constant_time_bytes_eq,
 )
 
 # TripleDES is moving from `cryptography.hazmat.primitives.ciphers.algorithms`
@@ -1327,7 +1328,7 @@ class Transport(threading.Thread, ClosingContextManager):
             key = self.get_remote_server_key()
             if (
                 key.get_name() != hostkey.get_name()
-                or key.asbytes() != hostkey.asbytes()
+                or not constant_time_bytes_eq(key.asbytes(), hostkey.asbytes())
             ):
                 self._log(DEBUG, "Bad host key from server")
                 self._log(
