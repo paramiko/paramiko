@@ -1046,3 +1046,34 @@ class TestFinalMatching(object):
     def test_negated(self):
         result = load_config("match-final").lookup("jump")
         assert result["port"] == "1003"
+
+
+class TestUnresolvableLocalUsername:
+    # GH #2279: getpass.getuser() can blow up in minimal environments (no
+    # username env vars, unresolvable UID); config lookups must not crash.
+
+    @mark.parametrize(
+        "error",
+        [KeyError("getpwuid(): uid not found: 1005"), OSError],
+    )
+    def test_lookup_survives_getuser_failure(self, error):
+        with patch("paramiko.config.getpass.getuser", side_effect=error):
+            config = SSHConfig.from_text(
+                """
+Match localuser someone-else
+    Port 1234
+
+Host *
+    User everybody
+"""
+            )
+            result = config.lookup("whatever")
+            assert "port" not in result
+            assert result["user"] == "everybody"
+
+    @mark.parametrize("error", [KeyError("uid not found"), OSError])
+    def test_token_expansion_survives_getuser_failure(self, error):
+        with patch("paramiko.config.getpass.getuser", side_effect=error):
+            config = SSHConfig.from_text("IdentityFile /home/%u/.ssh/id_rsa")
+            result = config.lookup("whatever")
+            assert "identityfile" in result

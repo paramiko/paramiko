@@ -353,7 +353,7 @@ class SSHConfig:
     ):
         matched = []
         candidates = match_list[:]
-        local_username = getpass.getuser()
+        local_username = _get_local_username()
         while candidates:
             candidate = candidates.pop(0)
             passed = None
@@ -433,7 +433,7 @@ class SSHConfig:
             port = config["port"]
         else:
             port = SSH_PORT
-        user = getpass.getuser()
+        user = _get_local_username()
         if "user" in config:
             remoteuser = config["user"]
         else:
@@ -554,6 +554,25 @@ class SSHConfig:
             if err is not None:
                 raise ConfigParseError(err)
         return matches
+
+
+def _get_local_username():
+    """
+    Best-effort lookup of the local username, used for ``Match
+    user/localuser`` and ``%u``/``%r`` token expansion.
+
+    ``getpass.getuser()`` can fail outright in minimal environments (e.g.
+    CI containers whose UID has no passwd entry and no username env vars),
+    which used to crash any ``SSHConfig.lookup()``; degrade to the numeric
+    UID (mirroring OpenSSH) or an empty string instead. See GH #2279.
+    """
+    try:
+        return getpass.getuser()
+    except (ImportError, KeyError, OSError):
+        try:
+            return str(os.getuid())
+        except AttributeError:
+            return ""
 
 
 def _addressfamily_host_lookup(hostname, options):
