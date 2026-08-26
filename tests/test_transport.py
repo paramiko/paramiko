@@ -1265,7 +1265,7 @@ class TestStrictKex:
 
     @mark.parametrize(
         "server_active,client_active",
-        itertools.product([True, False], repeat=2),
+        tuple(itertools.product([True, False], repeat=2)),
     )
     def test_mode_agreement(self, server_active, client_active):
         with server(
