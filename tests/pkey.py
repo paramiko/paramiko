@@ -229,14 +229,21 @@ class PKey_:
             ]
 
         def ed25519_is_protocol_name_plus_certname(self):
-            assert set(Ed25519Key.identifiers()) == set(["ssh-ed25519", "ssh-ed25519-cert-v01@openssh.com"])
+            assert set(Ed25519Key.identifiers()) == set(
+                ["ssh-ed25519", "ssh-ed25519-cert-v01@openssh.com"]
+            )
 
         def ecdsa_is_all_curve_names_plus_certnames(self):
-            assert set(ECDSAKey.identifiers()) == set([
-                "ecdsa-sha2-nistp256", "ecdsa-sha2-nistp256-cert-v01@openssh.com",
-                "ecdsa-sha2-nistp384", "ecdsa-sha2-nistp384-cert-v01@openssh.com",
-                "ecdsa-sha2-nistp521", "ecdsa-sha2-nistp521-cert-v01@openssh.com"
-            ])
+            assert set(ECDSAKey.identifiers()) == set(
+                [
+                    "ecdsa-sha2-nistp256",
+                    "ecdsa-sha2-nistp256-cert-v01@openssh.com",
+                    "ecdsa-sha2-nistp384",
+                    "ecdsa-sha2-nistp384-cert-v01@openssh.com",
+                    "ecdsa-sha2-nistp521",
+                    "ecdsa-sha2-nistp521-cert-v01@openssh.com",
+                ]
+            )
 
     class write_private_key_and_file:
         @mark.parametrize(
