@@ -174,8 +174,14 @@ class ECDSAKey(PKey):
     @classmethod
     def identifiers(cls):
         # include both the base idetifiers and the -cert-v01@openssh.com suffixed ones
-        cert_identifiers = [f"{name}-cert-v01@openssh.com" for name in  cls._ECDSA_CURVES.get_key_format_identifier_list()]
-        return cls._ECDSA_CURVES.get_key_format_identifier_list() + cert_identifiers
+        cert_identifiers = [
+            f"{name}-cert-v01@openssh.com"
+            for name in cls._ECDSA_CURVES.get_key_format_identifier_list()
+        ]
+        return (
+            cls._ECDSA_CURVES.get_key_format_identifier_list()
+            + cert_identifiers
+        )
 
     # TODO (backwards incompat): deprecate/remove
     @classmethod
