@@ -10,6 +10,19 @@ Changelog
   (which requires OpenSSL 3.5+, AWS-LC, or BoringSSL); it is preferred over
   the existing classical methods when available. See
   `paramiko.kex_mlkem.KexMLKEM768X25519`.
+- :support:`2527` Ed25519 key support no longer requires `PyNaCl
+  <https://pypi.org/project/PyNaCl/>`_; it now uses Cryptography, which has
+  supported Ed25519 since its 2.6 release and which Paramiko already depends
+  on for every other public key type. ``pynacl`` has been dropped from our
+  install requirements as a result.
+
+  .. warning::
+    `Ed25519Key.verifying_key <paramiko.ed25519key.Ed25519Key>` now returns a
+    ``cryptography.hazmat.primitives.asymmetric.ed25519.Ed25519PublicKey``
+    instead of a ``nacl.signing.VerifyKey``. Code touching that attribute
+    directly will need updating; the SSH-facing API and the on-the-wire
+    signatures are unchanged.
+
 - :release:`5.0.0 <2026-05-09>`
 - :bug:`- major` Fix `Ed25519Key <paramiko.ed25519key.Ed25519Key>`'s internals
   such that it no longer throws `AttributeError` during calls to ``__repr__``

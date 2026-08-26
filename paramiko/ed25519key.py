@@ -17,14 +17,32 @@
 from typing import Union
 
 import bcrypt
-import nacl.signing
+from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric.ed25519 import (
+    Ed25519PrivateKey,
+    Ed25519PublicKey,
+)
 from cryptography.hazmat.primitives.ciphers import Cipher
 
 from paramiko.message import Message
 from paramiko.pkey import OPENSSH_AUTH_MAGIC, PKey, _unpad_openssh
 from paramiko.ssh_exception import PasswordRequiredException, SSHException
 from paramiko.util import b
+
+
+def _public_bytes(key: Ed25519PublicKey) -> bytes:
+    """
+    Return the 32 raw bytes of ``key``, as used in the SSH ``ssh-ed25519``
+    key blob.
+
+    Cryptography's own ``public_bytes_raw`` is tidier, but only exists as of
+    version 40; this spelling works on every version we support.
+    """
+    return key.public_bytes(
+        serialization.Encoding.Raw, serialization.PublicFormat.Raw
+    )
 
 
 class Ed25519Key(PKey):
@@ -54,7 +72,9 @@ class Ed25519Key(PKey):
                 key_type=self.name,
                 cert_type="ssh-ed25519-cert-v01@openssh.com",
             )
-            self._verifying_key = nacl.signing.VerifyKey(msg.get_binary())
+            self._verifying_key = Ed25519PublicKey.from_public_bytes(
+                msg.get_binary()
+            )
         elif filename is not None:
             with open(filename, "r") as f:
                 pkformat, data = self._read_private_key("OPENSSH", f)
@@ -147,10 +167,10 @@ class Ed25519Key(PKey):
             key_data = message.get_binary()
             # The second half of the key data is yet another copy of the public
             # key...
-            signing_key = nacl.signing.SigningKey(key_data[:32])
+            signing_key = Ed25519PrivateKey.from_private_bytes(key_data[:32])
             # Verify that all the public keys are the same...
             assert (
-                signing_key.verify_key.encode()
+                _public_bytes(signing_key.public_key())
                 == public
                 == public_keys[i]
                 == key_data[32:]
@@ -166,7 +186,7 @@ class Ed25519Key(PKey):
     def asbytes(self):
         v = self.verifying_key
         # Handle not-fully-initialized situations gracefully
-        my_bytes = v.encode() if v is not None else b""
+        my_bytes = _public_bytes(v) if v is not None else b""
         m = Message()
         m.add_string(self.name)
         m.add_string(my_bytes)
@@ -174,7 +194,12 @@ class Ed25519Key(PKey):
 
     @property
     def _fields(self):
-        return (self.get_name(), self.verifying_key)
+        # NOTE: this deliberately uses the key's raw bytes and not the key
+        # object itself. Cryptography's key objects compare by identity on
+        # older versions and are unhashable on newer ones; neither is safe
+        # for the equality/hashing contract PKey relies on here.
+        v = self.verifying_key
+        return (self.get_name(), _public_bytes(v) if v is not None else b"")
 
     # TODO (backwards incompat): remove
     def get_name(self):
@@ -190,9 +215,9 @@ class Ed25519Key(PKey):
         return self._verifying_key is not None
 
     @property
-    def verifying_key(self) -> Union[nacl.signing.VerifyKey, None]:
+    def verifying_key(self) -> Union[Ed25519PublicKey, None]:
         if self.can_sign():
-            return self._signing_key.verify_key
+            return self._signing_key.public_key()
         elif self.can_verify():
             return self._verifying_key
         return None
@@ -200,7 +225,7 @@ class Ed25519Key(PKey):
     def sign_ssh_data(self, data, algorithm=None):
         m = Message()
         m.add_string(self.name)
-        m.add_string(self._signing_key.sign(data).signature)
+        m.add_string(self._signing_key.sign(data))
         return m
 
     def verify_ssh_sig(self, data, msg):
@@ -208,8 +233,8 @@ class Ed25519Key(PKey):
             return False
 
         try:
-            self._verifying_key.verify(data, msg.get_binary())
-        except nacl.exceptions.BadSignatureError:
+            self._verifying_key.verify(msg.get_binary(), data)
+        except InvalidSignature:
             return False
         else:
             return True
