@@ -840,9 +840,13 @@ class Channel(ClosingContextManager):
             sent, there is no way to determine how much data (if any) was sent.
             This is irritating, but identically follows Python's API.
         """
-        while s:
-            sent = self.send(s)
-            s = s[sent:]
+        # Slice a memoryview instead of the bytes object itself: the latter
+        # copies the entire remaining buffer on each pass, which is O(n^2)
+        # when the remote flow-control window is small. See GH #2659.
+        view = memoryview(util.asbytes(s))
+        while len(view):
+            sent = self.send(view)
+            view = view[sent:]
         return None
 
     def sendall_stderr(self, s):
@@ -861,9 +865,11 @@ class Channel(ClosingContextManager):
 
         .. versionadded:: 1.1
         """
-        while s:
-            sent = self.send_stderr(s)
-            s = s[sent:]
+        # Mirror sendall()'s O(1)-slice behavior (see GH #2659).
+        view = memoryview(util.asbytes(s))
+        while len(view):
+            sent = self.send_stderr(view)
+            view = view[sent:]
         return None
 
     def makefile(self, *params):
