@@ -2,6 +2,9 @@
 Changelog
 =========
 
+- :support:`2527` Use Cryptography instead of PyNaCl for Ed25519 keys, and
+  drop the ``pynacl`` dependency. ``Ed25519Key.verifying_key`` is now a
+  Cryptography ``Ed25519PublicKey`` instead of a ``nacl.signing.VerifyKey``.
 - :release:`5.1.0 <2026-10-17>`
 - :release:`5.0.1 <2026-10-17>`
 - :bug:`2462` (w/ earlier fix attempts :issue:`2475` and :issue:`2465`) An API
