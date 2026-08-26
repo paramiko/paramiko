@@ -495,4 +495,8 @@ class AgentKey(PKey):
         ptype, result = self.agent._send_message(msg)
         if ptype != SSH2_AGENT_SIGN_RESPONSE:
             raise SSHException("key cannot be used for signing")
-        return result.get_binary()
+        # The agent's response blob is already an SSH-format signature
+        # (algorithm string + signature). Wrap it in a Message to match the
+        # base-class contract and the other PKey subclasses, which return
+        # Messages rather than raw bytes (GH #2539).
+        return Message(result.get_binary())

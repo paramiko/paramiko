@@ -150,7 +150,9 @@ class AgentKey_:
             blobby = inner_key.public_blob.key_blob
         key = AgentKey(agent=agent, blob=blobby)
         result = key.sign_ssh_data(b"data-to-sign", **sign_kwargs)
-        assert result == b"lol"
+        # GH #2539: signatures are Messages, like the other PKey subclasses
+        assert isinstance(result, Message)
+        assert result.asbytes() == b"lol"
         msg = agent._sent_message
         msg.rewind()
         assert msg.get_byte() == cSSH2_AGENTC_SIGN_REQUEST
