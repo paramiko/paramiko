@@ -10,6 +10,8 @@ ECDH/X25519 key agreement; the final shared secret is the hash of the
 two component secrets concatenated together.
 """
 
+from __future__ import annotations
+
 import hashlib
 from typing import TYPE_CHECKING
 
