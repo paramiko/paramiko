@@ -11,6 +11,7 @@ two component secrets concatenated together.
 """
 
 import hashlib
+from typing import TYPE_CHECKING
 
 from cryptography.exceptions import UnsupportedAlgorithm
 from cryptography.hazmat.primitives import constant_time
@@ -28,6 +29,8 @@ from paramiko.common import byte_chr
 from paramiko.message import Message
 from paramiko.ssh_exception import SSHException
 
+if TYPE_CHECKING:
+    from paramiko.transport import Transport
 
 # Per draft-ietf-sshm-mlkem-hybrid-kex, the hybrid kex reuses message
 # numbers 30 and 31 (named SSH_MSG_KEX_HYBRID_INIT / _REPLY).
@@ -55,7 +58,7 @@ class KexMLKEM768X25519:
     _C_INIT_BYTES = _MLKEM_PUBKEY_BYTES + _X25519_PUBKEY_BYTES
     _S_REPLY_BYTES = _MLKEM_CIPHERTEXT_BYTES + _X25519_PUBKEY_BYTES
 
-    def __init__(self, transport):
+    def __init__(self, transport: Transport):
         self.transport = transport
         # Client-side: our ML-KEM decapsulation key. Server-side: unused.
         self.mlkem_key = None
