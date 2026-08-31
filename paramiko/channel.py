@@ -1312,10 +1312,10 @@ class Channel(ClosingContextManager):
             while self.out_window_size == 0:
                 if self.closed or self.eof_sent:
                     return 0
-                then = time.time()
+                then = time.monotonic()
                 self.out_buffer_cv.wait(timeout)
                 if timeout is not None:
-                    timeout -= time.time() - then
+                    timeout -= time.monotonic() - then
                     if timeout <= 0.0:
                         raise socket.timeout()
         # we have some window to squeeze into
