@@ -1,0 +1,5 @@
+Host www.paramiko.org
+    User rando
+
+Match host www.paramiko.org
+    IdentityFile canonicalized.key
