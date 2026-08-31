@@ -133,7 +133,9 @@ class RSAKey(PKey):
 
     def sign_ssh_data(self, data, algorithm=None):
         if algorithm is None:
-            algorithm = self.name
+            # Default to rsa-sha2-256 (not self.name which is the legacy
+            # "ssh-rsa" identifier removed from HASHES in paramiko 5.0).
+            algorithm = "rsa-sha2-256"
         sig = self.key.sign(
             data,
             padding=padding.PKCS1v15(),
