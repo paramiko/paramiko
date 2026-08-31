@@ -834,6 +834,19 @@ class TransportTest(unittest.TestCase):
         ]:
             self.assertEqual(self.tc._sanitize_window_size(val), correct)
 
+    def test_rejects_non_int_default_window_size(self):
+        """
+        A non-int default_window_size should fail fast in the constructor
+        rather than surface a confusing TypeError from deep inside channel
+        or SFTP setup later on.
+        """
+        with self.assertRaises(TypeError):
+            Transport(LoopSocket(), default_window_size="not-a-size")
+
+    def test_rejects_non_int_default_max_packet_size(self):
+        with self.assertRaises(TypeError):
+            Transport(LoopSocket(), default_max_packet_size="not-a-size")
+
     @slow
     def test_handshake_timeout(self):
         """
