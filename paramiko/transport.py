@@ -513,6 +513,14 @@ class Transport(threading.Thread, ClosingContextManager):
         self.channel_events = {}  # (id -> Event)
         self.channels_seen = {}  # (id -> True)
         self._channel_counter = 0
+        for arg_name, value in (
+            ("default_window_size", default_window_size),
+            ("default_max_packet_size", default_max_packet_size),
+        ):
+            if not isinstance(value, int):
+                raise TypeError(
+                    "{} must be an int, got {!r}".format(arg_name, value)
+                )
         self.default_max_packet_size = default_max_packet_size
         self.default_window_size = default_window_size
         self._forward_agent_handler = None
