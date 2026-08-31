@@ -211,6 +211,30 @@ class KeyTest(unittest.TestCase):
         msg.rewind()
         self.assertTrue(key.verify_ssh_sig(b"jerri blank", msg))
 
+    def test_sign_rsa_with_default_algorithm(self):
+        # Regression for #2628: ssh-rsa (SHA-1) was removed from HASHES in
+        # 5.0, but it is still the default signing algorithm, so signing with
+        # no explicit algorithm raised KeyError: 'ssh-rsa'. The default should
+        # transparently upgrade to a SHA-2 variant and produce a verifiable
+        # signature.
+        key = RSAKey.from_private_key_file(_support("rsa.key"))
+        msg = key.sign_ssh_data(b"jerri blank")
+        assert isinstance(msg, Message)
+        msg.rewind()
+        assert msg.get_text() == "rsa-sha2-512"
+        msg.rewind()
+        self.assertTrue(key.verify_ssh_sig(b"jerri blank", msg))
+
+    def test_sign_rsa_with_explicit_ssh_rsa_algorithm(self):
+        # Passing the legacy "ssh-rsa" name explicitly should also succeed
+        # rather than raising KeyError, upgrading to a SHA-2 signature.
+        key = RSAKey.from_private_key_file(_support("rsa.key"))
+        msg = key.sign_ssh_data(b"jerri blank", algorithm="ssh-rsa")
+        msg.rewind()
+        assert msg.get_text() == "rsa-sha2-512"
+        msg.rewind()
+        self.assertTrue(key.verify_ssh_sig(b"jerri blank", msg))
+
     def test_generate_ecdsa(self):
         key = ECDSAKey.generate()
         msg = key.sign_ssh_data(b"jerri blank")
