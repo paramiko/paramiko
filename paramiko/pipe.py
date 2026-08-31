@@ -28,6 +28,7 @@ will trigger as readable in `select <select.select>`.
 import sys
 import os
 import socket
+import select
 
 
 def make_pipe():
@@ -36,6 +37,51 @@ def make_pipe():
     else:
         p = WindowsPipe()
     return p
+
+
+def make_write_pipe():
+    if sys.platform[:3] != "win":
+        p = PosixWritePipe()
+    else:
+        p = WindowsWritePipe()
+    return p
+
+
+class PosixWritePipe:
+    def __init__(self):
+        self._rsock, self._wsock = socket.socketpair()
+        self._wsock.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, 4096)
+        for i in range(4096):
+            if len(select.select([], [self._wsock], [], 0)[1]) == 0:
+                break
+            self._wsock.send(b"\0")
+        self._set = False
+        self._closed = False
+        self._forever = False
+
+    def close(self):
+        os.close(self._rsock)
+        os.close(self._wsock)
+        self._closed = True
+
+    def fileno(self):
+        return self._wsock.fileno()
+
+    def clear(self):
+        if not self._set or self._closed:
+            return
+        self._wsock.send(b"\0")
+        self._set = False
+
+    def set(self):
+        if self._set or self._closed or self._forever:
+            return
+        self._set = True
+        self._rsock.recv(1)
+
+    def clear_forever(self):
+        self._forever = True
+        self.clear()
 
 
 class PosixPipe:
@@ -69,6 +115,60 @@ class PosixPipe:
     def set_forever(self):
         self._forever = True
         self.set()
+
+
+class WindowsWritePipe:
+    """
+    On Windows, only an OS-level "WinSock" may be used in select(), but reads
+    and writes must be to the actual socket object.
+    """
+
+    def __init__(self):
+        serv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        serv.bind(("127.0.0.1", 0))
+        serv.listen(1)
+
+        # need to save sockets in _rsock/_wsock so they don't get closed
+        self._rsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self._rsock.connect(("127.0.0.1", serv.getsockname()[1]))
+
+        self._wsock, addr = serv.accept()
+        serv.close()
+
+        # Can this be done?
+        self._wsock.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, 4096)
+        for i in range(4096):
+            if len(select.select([], [self._wsock], [], 0)[1]) == 0:
+                break
+            self._wsock.send(b"\0")
+
+        self._set = False
+        self._forever = False
+        self._closed = False
+
+    def close(self):
+        os.close(self._rsock)
+        os.close(self._wsock)
+        self._closed = True
+
+    def fileno(self):
+        return self._wsock.fileno()
+
+    def clear(self):
+        if not self._set or self._closed:
+            return
+        self._wsock.send(b"\0")
+        self._set = False
+
+    def set(self):
+        if self._set or self._closed or self._forever:
+            return
+        self._set = True
+        self._rsock.recv(1)
+
+    def clear_forever(self):
+        self._forever = True
+        self.clear()
 
 
 class WindowsPipe:
