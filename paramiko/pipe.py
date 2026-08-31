@@ -25,6 +25,7 @@ The pipe acts like an Event, which can be set or cleared. When set, the pipe
 will trigger as readable in `select <select.select>`.
 """
 
+import errno
 import sys
 import os
 import socket
@@ -46,10 +47,18 @@ class PosixPipe:
         self._closed = False
 
     def close(self):
-        os.close(self._rfd)
-        os.close(self._wfd)
-        # used for unit tests:
         self._closed = True
+
+        # We cannot do anything about closing errors. It is only a
+        # "best effort" approach
+        try:
+            os.close(self._rfd)
+        except Exception:
+            pass
+        try:
+            os.close(self._wfd)
+        except Exception:
+            pass
 
     def fileno(self):
         return self._rfd
@@ -57,6 +66,11 @@ class PosixPipe:
     def clear(self):
         if not self._set or self._forever:
             return
+
+        # .read() does not need to handle a race condition with .close()
+        # because the pipe is created, cleared and closed from the same
+        # "client thread". The "server thread" sets the pipe and only .set()
+        # suffers from a race condition with .close()
         os.read(self._rfd, 1)
         self._set = False
 
@@ -64,7 +78,19 @@ class PosixPipe:
         if self._set or self._closed:
             return
         self._set = True
-        os.write(self._wfd, b"*")
+
+        # This try fixes a race condition with .close()
+        # 1. The write/server thread sees ._closed == False and continues
+        # 2. The close/client thread closes the descriptors before the
+        #    write/server thread writes.
+        # 3. The write/server fails to write() because the FD has been closed
+        try:
+            os.write(self._wfd, b"*")
+        except OSError as e:
+            if e.errno == errno.EBADF and self._closed:
+                # The pipe was closed, no need to do anything
+                return
+            raise e
 
     def set_forever(self):
         self._forever = True
