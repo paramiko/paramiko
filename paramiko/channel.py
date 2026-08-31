@@ -1182,7 +1182,7 @@ class Channel(ClosingContextManager):
             self.lock.release()
         for m in msgs:
             if m is not None:
-                self.transport._send_user_message(m)
+                self.transport._send_user_message(m, True)
 
     # ...internals...
 
