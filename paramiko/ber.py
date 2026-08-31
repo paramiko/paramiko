@@ -67,7 +67,7 @@ class BER:
         size = byte_ord(self.content[self.idx])
         self.idx += 1
         if size & 0x80:
-            # more complimicated...
+            # more complicated...
             # FIXME: theoretically should handle indefinite-length (0x80)
             t = size & 0x7F
             if self.idx + t > len(self.content):
