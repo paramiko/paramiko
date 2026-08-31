@@ -717,11 +717,27 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
                 reader=fl, writer=fr, file_size=file_size, callback=callback
             )
         if confirm:
-            s = self.stat(remotepath)
-            if s.st_size != size:
-                raise IOError(
-                    "size mismatch in put!  {} != {}".format(s.st_size, size)
-                )
+            try:
+                s = self.stat(remotepath)
+                if s.st_size != size:
+                    raise IOError(
+                        "size mismatch in put!  {} != {}".format(
+                            s.st_size, size
+                        )
+                    )
+            except IOError as e:
+                if e.errno == SFTP_NO_SUCH_FILE:
+                    raise IOError(
+                        SFTP_NO_SUCH_FILE,
+                        "Confirmation STAT failed after successful PUT,\
+                        possibly because the server is deleting or moving the\
+                        file just after receiving it. The STAT after PUT can\
+                        be avoided with confirm=false. Original exception\
+                        message: {}".format(
+                            e
+                        ),
+                    )
+
         else:
             s = SFTPAttributes()
         return s
