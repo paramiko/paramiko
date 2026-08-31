@@ -320,7 +320,7 @@ def b(s, encoding="utf8"):
     if isinstance(s, bytes):
         return s
     elif isinstance(s, str):
-        return s.encode(encoding)
+        return s.encode(encoding, errors="surrogateescape")
     else:
         raise TypeError(f"Expected unicode or bytes, got {type(s)}")
 
@@ -329,7 +329,7 @@ def b(s, encoding="utf8"):
 def u(s, encoding="utf8"):
     """cast bytes or unicode to unicode"""
     if isinstance(s, bytes):
-        return s.decode(encoding)
+        return s.decode(encoding, errors="surrogateescape")
     elif isinstance(s, str):
         return s
     else:
