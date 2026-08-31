@@ -12,11 +12,12 @@ class TestProxyCommand:
     def test_init_takes_command_string(self, subprocess):
         ProxyCommand(command_line="do a thing")
         subprocess.Popen.assert_called_once_with(
-            ["do", "a", "thing"],
+            "do a thing",
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             bufsize=0,
+            shell=True,
         )
 
     @patch("paramiko.proxy.subprocess.Popen")
