@@ -371,6 +371,11 @@ Host abcqwerty\r\nHostName 127.0.0.1\r\n
         expected = {"*", "*.example.com", "spoo.example.com"}
         assert self.config.get_hostnames() == expected
 
+    def test_get_hostnames_with_match(self):
+        config = load_config("match-host-glob-list")
+        expected = {"*", "*ever", "somehost", "someotherhost", "goo*", "!goof"}
+        assert config.get_hostnames() == expected
+
     def test_quoted_host_names(self):
         config = SSHConfig.from_text(
             """

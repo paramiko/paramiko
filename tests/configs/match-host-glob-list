@@ -1,4 +1,4 @@
-Match host *ever
+Match Host *ever
     User matrim
 
 Match host somehost,someotherhost
