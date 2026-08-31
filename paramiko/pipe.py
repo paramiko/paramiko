@@ -28,6 +28,7 @@ will trigger as readable in `select <select.select>`.
 import sys
 import os
 import socket
+from threading import Lock
 
 
 def make_pipe():
@@ -44,12 +45,14 @@ class PosixPipe:
         self._set = False
         self._forever = False
         self._closed = False
+        self._lock = Lock()
 
     def close(self):
-        os.close(self._rfd)
-        os.close(self._wfd)
-        # used for unit tests:
-        self._closed = True
+        with self._lock:
+            os.close(self._rfd)
+            os.close(self._wfd)
+            # used for unit tests:
+            self._closed = True
 
     def fileno(self):
         return self._rfd
@@ -61,10 +64,11 @@ class PosixPipe:
         self._set = False
 
     def set(self):
-        if self._set or self._closed:
-            return
-        self._set = True
-        os.write(self._wfd, b"*")
+        with self._lock:
+            if self._set or self._closed:
+                return
+            self._set = True
+            os.write(self._wfd, b"*")
 
     def set_forever(self):
         self._forever = True
@@ -91,12 +95,14 @@ class WindowsPipe:
         self._set = False
         self._forever = False
         self._closed = False
+        self._lock = Lock()
 
     def close(self):
-        self._rsock.close()
-        self._wsock.close()
-        # used for unit tests:
-        self._closed = True
+        with self._lock:
+            self._rsock.close()
+            self._wsock.close()
+            # used for unit tests:
+            self._closed = True
 
     def fileno(self):
         return self._rsock.fileno()
@@ -108,10 +114,11 @@ class WindowsPipe:
         self._set = False
 
     def set(self):
-        if self._set or self._closed:
-            return
-        self._set = True
-        self._wsock.send(b"*")
+        with self._lock:
+            if self._set or self._closed:
+                return
+            self._set = True
+            self._wsock.send(b"*")
 
     def set_forever(self):
         self._forever = True
