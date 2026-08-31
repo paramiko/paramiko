@@ -91,6 +91,16 @@ def deflate_long(n, add_sign_padding=True):
 
 
 def format_binary(data, prefix=""):
+    """Format binary data as a list of human-readable hex dump lines.
+
+    Splits ``data`` into 16-byte chunks and formats each as a hex dump via
+    :func:`format_binary_line`, optionally prepending ``prefix`` to each line.
+
+    :param bytes data: raw binary data to format.
+    :param str prefix: optional string to prepend to every output line.
+    :return: list of formatted strings, one per 16-byte chunk.
+    :rtype: list
+    """
     x = 0
     out = []
     while len(data) > x + 16:
@@ -102,6 +112,15 @@ def format_binary(data, prefix=""):
 
 
 def format_binary_line(data):
+    """Format a single 16-byte chunk as a hex dump line.
+
+    Produces a string with the hex values on the left (space-separated) and
+    printable ASCII characters on the right (dots for non-printable bytes).
+
+    :param bytes data: up to 16 bytes to format.
+    :return: a single formatted hex dump line.
+    :rtype: str
+    """
     left = " ".join(["{:02X}".format(byte_ord(c)) for c in data])
     right = "".join(
         [".{:c}..".format(byte_ord(c))[(byte_ord(c) + 63) // 95] for c in data]
@@ -110,6 +129,15 @@ def format_binary_line(data):
 
 
 def safe_string(s):
+    """Escape non-printable bytes in a byte string using percent-encoding.
+
+    Bytes in the printable ASCII range (32–127) are kept as-is; all other
+    bytes are replaced with their ``%XX`` hex escape.
+
+    :param bytes s: input byte string to sanitize.
+    :return: sanitized byte string with non-printable bytes escaped.
+    :rtype: bytes
+    """
     out = b""
     for c in s:
         i = byte_ord(c)
@@ -290,6 +318,13 @@ class ClosingContextManager:
 
 
 def clamp_value(minimum, val, maximum):
+    """Clamp ``val`` to the inclusive range ``[minimum, maximum]``.
+
+    :param minimum: lower bound of the allowed range.
+    :param val: value to clamp.
+    :param maximum: upper bound of the allowed range.
+    :return: ``val`` clamped so that ``minimum <= result <= maximum``.
+    """
     return max(minimum, min(val, maximum))
 
 
