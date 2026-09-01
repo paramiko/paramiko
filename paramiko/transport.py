@@ -3173,6 +3173,11 @@ class ServiceRequestingTransport(Transport):
     """
     Transport, but also handling service requests, like it oughtta!
 
+    Opt-in via `SSHClient.connect <paramiko.client.SSHClient.connect>`'s
+    ``transport_factory``. Authentication methods match `.Transport` but
+    always block: ``auth_password`` and ``auth_publickey`` have no ``event``
+    parameter.
+
     .. versionadded:: 3.2
     """
 
@@ -3209,6 +3214,12 @@ class ServiceRequestingTransport(Transport):
         self._log(DEBUG, "MSG_SERVICE_ACCEPT received; auth may begin")
 
     def ensure_session(self):
+        """
+        Block until this transport may send userauth requests.
+
+        Sends ``MSG_SERVICE_REQUEST`` for ``ssh-userauth`` if the server has
+        not yet accepted that service, then assigns `.get_auth_handler`.
+        """
         # Make sure we're not trying to auth on a not-yet-open or
         # already-closed transport session; that's our responsibility, not that
         # of AuthHandler.
@@ -3245,16 +3256,27 @@ class ServiceRequestingTransport(Transport):
         self.auth_handler = self.get_auth_handler()
 
     def get_auth_handler(self):
+        """
+        Return a new `~paramiko.auth_handler.AuthOnlyHandler` bound to this
+        transport.
+        """
         # NOTE: using new sibling subclass instead of classic AuthHandler
         return AuthOnlyHandler(self)
 
     def auth_none(self, username):
+        """See `.Transport.auth_none`."""
         # TODO (backwards incompat): merge to parent, preserving (most of)
         # docstring
         self.ensure_session()
         return self.auth_handler.auth_none(username)
 
     def auth_password(self, username, password, fallback=True):
+        """
+        Authenticate using a password. See `.Transport.auth_password`.
+
+        Always blocks until authentication succeeds or fails. Unlike
+        `.Transport.auth_password`, this method has no ``event`` parameter.
+        """
         # TODO (backwards incompat): merge to parent, preserving (most of)
         # docstring
         self.ensure_session()
@@ -3284,12 +3306,19 @@ class ServiceRequestingTransport(Transport):
                 raise e
 
     def auth_publickey(self, username, key):
+        """
+        Authenticate using a private key. See `.Transport.auth_publickey`.
+
+        Always blocks until authentication succeeds or fails. Unlike
+        `.Transport.auth_publickey`, this method has no ``event`` parameter.
+        """
         # TODO (backwards incompat): merge to parent, preserving (most of)
         # docstring
         self.ensure_session()
         return self.auth_handler.auth_publickey(username, key)
 
     def auth_interactive(self, username, handler, submethods=""):
+        """See `.Transport.auth_interactive`."""
         # TODO (backwards incompat): merge to parent, preserving (most of)
         # docstring
         self.ensure_session()
@@ -3298,6 +3327,7 @@ class ServiceRequestingTransport(Transport):
         )
 
     def auth_interactive_dumb(self, username, handler=None, submethods=""):
+        """See `.Transport.auth_interactive_dumb`."""
         # TODO (backwards incompat): merge to parent, preserving (most of)
         # docstring
         # NOTE: legacy impl omitted equiv of ensure_session since it just wraps

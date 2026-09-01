@@ -2,6 +2,11 @@
 Changelog
 =========
 
+- :bug:`2556` Stop listing `.ServiceRequestingTransport` authentication
+  methods as full copies of `.Transport`'s on the Transport API page (so
+  ``auth_interactive`` / ``auth_interactive_dumb`` no longer appear twice)
+  and give the subclass ``auth_password`` / ``auth_publickey`` docstrings
+  that match their signatures (no ``event`` parameter).
 - :feature:`-` Added support for the ``mlkem768x25519-sha256`` post-quantum
   hybrid key exchange method described in
   ``draft-ietf-sshm-mlkem-hybrid-kex``. It pairs ML-KEM-768 (FIPS 203) with

@@ -20,6 +20,7 @@
 Some unit tests for the ssh2 protocol in Transport.
 """
 
+import inspect
 import itertools
 import random
 import select
@@ -1086,6 +1087,18 @@ class ServiceRequestingTransportTest(TransportTest):
         # New class who dis
         self.tc = ServiceRequestingTransport(self.sockc)
         self.ts = ServiceRequestingTransport(self.socks)
+
+    def test_auth_password_and_publickey_omit_event(self):
+        # Subclass signatures drop Transport's event= kwarg; their docs must
+        # not inherit the parent text that describes that argument.
+        inherited_event_text = "If an ``event`` is passed in"
+        for name in ("auth_password", "auth_publickey"):
+            method = getattr(ServiceRequestingTransport, name)
+            assert "event" not in inspect.signature(method).parameters
+            assert inherited_event_text not in (method.__doc__ or "")
+            assert ":param .threading.Event event" not in (
+                method.__doc__ or ""
+            )
 
 
 class AlgorithmDisablingTests(unittest.TestCase):
