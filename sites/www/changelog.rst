@@ -2,6 +2,14 @@
 Changelog
 =========
 
+- :feature:`-` Added support for the ``mlkem768x25519-sha256`` post-quantum
+  hybrid key exchange method described in
+  ``draft-ietf-sshm-mlkem-hybrid-kex``. It pairs ML-KEM-768 (FIPS 203) with
+  X25519 and is interoperable with OpenSSH 10.0+. The new method is enabled
+  automatically when the installed ``cryptography`` library exposes ML-KEM
+  (which requires OpenSSL 3.5+, AWS-LC, or BoringSSL); it is preferred over
+  the existing classical methods when available. See
+  `paramiko.kex_mlkem.KexMLKEM768X25519`.
 - :release:`5.0.0 <2026-05-09>`
 - :bug:`- major` Fix `Ed25519Key <paramiko.ed25519key.Ed25519Key>`'s internals
   such that it no longer throws `AttributeError` during calls to ``__repr__``
