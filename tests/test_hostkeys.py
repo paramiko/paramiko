@@ -94,6 +94,14 @@ class HostKeysTest(unittest.TestCase):
         self.assertEqual(b"7EC91BB336CB6D810B124B1353C32396", fp)
         self.assertTrue(hostdict.check("foo.example.com", key))
 
+    def test_check_rejects_mismatched_key(self):
+        # check() now compares key bytes via constant_time_bytes_eq rather
+        # than ==; confirm a same-type, different-bytes key is still
+        # correctly rejected, not just "doesn't crash".
+        hostdict = paramiko.HostKeys("hostfile.temp")
+        other_key = paramiko.RSAKey(data=decodebytes(keyblob))
+        self.assertFalse(hostdict.check("secure.example.com", other_key))
+
     def test_dict(self):
         hostdict = paramiko.HostKeys("hostfile.temp")
         self.assertTrue("secure.example.com" in hostdict)
