@@ -1,10 +1,10 @@
-from unittest.mock import MagicMock, call, patch
+from unittest.mock import MagicMock
 
 from paramiko import Channel
 
 
 class TestSendallMemoryview:
-    """sendall() should use memoryview to avoid O(n^2) copying on partial sends."""
+    """sendall() should use memoryview to avoid quadratic copying."""
 
     def _make_channel(self):
         chan = Channel(None)
