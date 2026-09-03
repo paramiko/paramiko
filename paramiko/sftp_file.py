@@ -260,6 +260,10 @@ class SFTPFile(BufferedFile):
         Set the file's current position.
 
         See `file.seek` for details.
+
+        :returns:
+            the new absolute position, in bytes, matching the standard
+            Python file-object convention (as `io.IOBase.seek` does).
         """
         self.flush()
         if whence == self.SEEK_SET:
@@ -270,6 +274,7 @@ class SFTPFile(BufferedFile):
         else:
             self._realpos = self._pos = self._get_size() + offset
         self._rbuffer = bytes()
+        return self._pos
 
     def stat(self):
         """

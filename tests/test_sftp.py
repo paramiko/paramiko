@@ -473,6 +473,41 @@ class TestSFTP:
             except:
                 pass
 
+    def test_seek_returns_new_position(self, sftp):
+        """
+        Regression test for
+        https://github.com/paramiko/paramiko/issues/2218
+
+        seek() should return the new absolute position, matching the
+        standard Python file-object convention (as io.IOBase.seek()
+        does), instead of None.
+        """
+        try:
+            with sftp.open(sftp.FOLDER + "/bunny.txt", "w") as f:
+                f.write("0123456789")
+
+            with sftp.open(sftp.FOLDER + "/bunny.txt", "r+") as f:
+                # SEEK_SET (absolute)
+                assert f.seek(3, f.SEEK_SET) == 3
+                assert f.tell() == 3
+
+                # SEEK_CUR (relative to current position)
+                assert f.seek(2, f.SEEK_CUR) == 5
+                assert f.tell() == 5
+
+                # SEEK_END (relative to end of file, file is 10 bytes)
+                assert f.seek(-4, f.SEEK_END) == 6
+                assert f.tell() == 6
+
+                # default whence (SEEK_SET)
+                assert f.seek(0) == 0
+                assert f.tell() == 0
+        finally:
+            try:
+                sftp.remove(sftp.FOLDER + "/bunny.txt")
+            except:
+                pass
+
     def test_realpath(self, sftp):
         """
         test that realpath is returning something non-empty and not an
