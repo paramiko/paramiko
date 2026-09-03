@@ -457,7 +457,9 @@ class SSHClient(ClosingContextManager):
             if our_key != server_key:
                 if our_key is None:
                     our_key = list(our_server_keys.values())[0]
-                raise BadHostKeyException(hostname, server_key, our_key)
+                raise BadHostKeyException(
+                    server_hostkey_name, server_key, our_key
+                )
 
         if username is None:
             username = getpass.getuser()

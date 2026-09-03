@@ -579,12 +579,20 @@ class SSHClientTest(ClientTest):
         known_hosts = self.tc.get_host_keys()
         known_hosts.add(hostname, host_key.get_name(), host_key)
 
-        self.assertRaises(
-            paramiko.BadHostKeyException,
-            self.tc.connect,
-            password="pygmalion",
-            **self.connect_kwargs,
-        )
+        with self.assertRaises(paramiko.BadHostKeyException) as ctx:
+            self.tc.connect(password="pygmalion", **self.connect_kwargs)
+
+        # Regression test for
+        # https://github.com/paramiko/paramiko/issues/2229
+        #
+        # BadHostKeyException.hostname must include the port (in the
+        # same "[hostname]:port" format HostKeys itself uses) whenever
+        # a non-standard port is in use, matching the format the
+        # exception's own known_hosts lookup key (`hostname` above)
+        # uses -- rather than the bare hostname/address, which
+        # wouldn't match any HostKeys entry and can't identify which
+        # of possibly many ports on that host had the bad key.
+        self.assertEqual(ctx.exception.hostname, hostname)
 
     def _client_host_key_good(self, ktype, kfile):
         threading.Thread(target=self._run).start()
