@@ -677,7 +677,17 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         while True:
             data = reader.read(32768)
             writer.write(data)
-            size += len(data)
+            # writer.write() (see BufferedFile.write) auto-encodes str
+            # data to UTF-8 bytes before actually writing it. Measure
+            # the same encoded bytes here, rather than len(data),
+            # since len() of a str counts characters, not bytes --
+            # for a text-mode reader (e.g. io.StringIO) containing
+            # non-ASCII content, that undercounts the real number of
+            # bytes transferred, throwing off both the progress
+            # reported to `callback` and this method's own return
+            # value. See GH #2170.
+            data_len = len(data) if isinstance(data, bytes) else len(data.encode("utf-8"))
+            size += data_len
             if len(data) == 0:
                 break
             if callback is not None:

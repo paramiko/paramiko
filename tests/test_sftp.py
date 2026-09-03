@@ -755,6 +755,39 @@ class TestSFTP:
         finally:
             sftp.remove(target)
 
+    def test_putfo_non_ascii_size(self, sftp):
+        """
+        Regression test for
+        https://github.com/paramiko/paramiko/issues/2170
+
+        When reading from a text-mode (str-producing) file-like object
+        containing non-ASCII, multi-byte characters, the reported
+        size (both the callback's running total and putfo()'s return
+        value, via the remote file's attrs.st_size) must reflect the
+        actual number of UTF-8 encoded bytes written to the remote
+        file, not the character count of the source text.
+        """
+        text = u("日本語テスト")  # 6 characters, 18 bytes in UTF-8
+        expected_bytes = len(text.encode("utf-8"))
+        target = sftp.FOLDER + "/nonascii.txt"
+        stream = StringIO(text)
+
+        callback_calls = []
+
+        def callback(transferred, total):
+            callback_calls.append(transferred)
+
+        try:
+            attrs = sftp.putfo(stream, target, callback=callback)
+            assert attrs.st_size == expected_bytes
+            assert callback_calls[-1] == expected_bytes
+
+            # Confirm what's actually on the remote server matches too.
+            remote_attrs = sftp.stat(target)
+            assert remote_attrs.st_size == expected_bytes
+        finally:
+            sftp.remove(target)
+
     # TODO: this test doesn't actually fail if the regression (removing '%'
     # expansion to '%%' within sftp.py's def _log()) is removed - stacktraces
     # appear but they're clearly emitted from subthreads that have no error
