@@ -519,7 +519,7 @@ class Transport(threading.Thread, ClosingContextManager):
         ):
             if not isinstance(value, int):
                 raise TypeError(
-                    "{} must be an int, got {!r}".format(arg_name, value)
+                    f"{arg_name} must be an int, got {value!r}"
                 )
         self.default_max_packet_size = default_max_packet_size
         self.default_window_size = default_window_size
