@@ -2,6 +2,10 @@
 Changelog
 =========
 
+- :bug:`2685` Prevent garbage collection of a `ChannelStdinFile
+  <paramiko.channel.ChannelStdinFile>` from self-deadlocking when it runs while
+  the same thread already holds the channel lock. Explicit stdin close and EOF
+  behavior is unchanged.
 - :feature:`-` Added support for the ``mlkem768x25519-sha256`` post-quantum
   hybrid key exchange method described in
   ``draft-ietf-sshm-mlkem-hybrid-kex``. It pairs ML-KEM-768 (FIPS 203) with

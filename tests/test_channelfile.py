@@ -1,3 +1,6 @@
+import gc
+import threading
+
 from unittest.mock import patch, MagicMock
 
 from paramiko import Channel, ChannelFile, ChannelStderrFile, ChannelStdinFile
@@ -58,3 +61,21 @@ class TestChannelStdinFile(ChannelFileBase):
         assert cf._closed is True
         # Actual point of test
         chan.shutdown_write.assert_called_once_with()
+
+    def test_gc_does_not_deadlock_while_channel_lock_is_held(self):
+        completed = threading.Event()
+
+        def collect_stdin_file():
+            chan = Channel(None)
+            stdin = ChannelStdinFile(chan, mode="wb")
+            stdin._cycle = stdin
+
+            with chan.lock:
+                del stdin
+                gc.collect()
+            completed.set()
+
+        thread = threading.Thread(target=collect_stdin_file, daemon=True)
+        thread.start()
+
+        assert completed.wait(1)

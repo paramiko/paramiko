@@ -115,7 +115,7 @@ class Channel(ClosingContextManager):
         #: Whether the connection has been closed
         self.closed = False
         self.ultra_debug = False
-        self.lock = threading.Lock()
+        self.lock = threading.RLock()
         self.out_buffer_cv = threading.Condition(self.lock)
         self.in_window_size = 0
         self.out_window_size = 0
