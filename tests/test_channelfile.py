@@ -1,3 +1,6 @@
+import gc
+import threading
+
 from unittest.mock import patch, MagicMock
 
 from paramiko import Channel, ChannelFile, ChannelStderrFile, ChannelStdinFile
@@ -58,3 +61,37 @@ class TestChannelStdinFile(ChannelFileBase):
         assert cf._closed is True
         # Actual point of test
         chan.shutdown_write.assert_called_once_with()
+
+    def test_gc_does_not_deadlock_while_channel_lock_is_held(self):
+        # ChannelStdinFile.__del__ used to call close() -> shutdown_write()
+        # which blocks on the channel lock. GC can run that finalizer on the
+        # Transport thread while it already holds the lock (e.g. inside
+        # Channel._close_internal handling MSG_CHANNEL_CLOSE). See #2685.
+        completed = threading.Event()
+
+        def collect_stdin_file():
+            chan = Channel(None)
+            stdin = ChannelStdinFile(chan, mode="wb")
+            stdin._cycle = stdin
+
+            chan.lock.acquire()
+            try:
+                del stdin
+                gc.collect()
+                chan._close_internal()
+            finally:
+                chan.lock.release()
+            completed.set()
+
+        thread = threading.Thread(target=collect_stdin_file, daemon=True)
+        thread.start()
+        assert completed.wait(2), "ChannelStdinFile finalizer deadlocked"
+
+    def test_gc_still_shuts_down_write_when_lock_is_free(self):
+        chan = Channel(None)
+        stdin = ChannelStdinFile(chan, mode="wb")
+        stdin._cycle = stdin
+        with patch.object(chan, "shutdown_write") as shutdown_write:
+            del stdin
+            gc.collect()
+            shutdown_write.assert_called_once_with()
