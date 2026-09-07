@@ -1388,3 +1388,19 @@ class ChannelStdinFile(ChannelFile):
     def close(self):
         super().close()
         self.channel.shutdown_write()
+
+    def __del__(self):
+        # BufferedFile.__del__ calls close() -> shutdown_write(), which
+        # acquires the channel lock. GC can run that finalizer on a thread
+        # that already holds the lock (Transport handling MSG_CHANNEL_CLOSE);
+        # a blocking acquire then deadlocks the Transport (#2685).
+        # Skip lock-taking cleanup when the lock is already held. The holder
+        # is typically Channel._close_internal, which sends EOF itself.
+        try:
+            lock = self.channel.lock
+            if not lock.acquire(blocking=False):
+                return
+            lock.release()
+            self.close()
+        except Exception:
+            pass
