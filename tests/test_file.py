@@ -162,6 +162,19 @@ class BufferedFileTest(unittest.TestCase):
         )
         f.close()
 
+    def test_read_small_chunks_keeps_unread_buffer(self):
+        f = LoopbackFile("r", 8192)
+        data = b"x" * 1024
+        f.buffer.write(data)
+
+        for _ in range(101):
+            self.assertEqual(f.read(1), b"x")
+
+        self.assertEqual(len(f._rbuffer), len(data))
+        self.assertEqual(f._rbuffer_pos, 101)
+        self.assertEqual(f.tell(), 101)
+        f.close()
+
     def test_readable(self):
         f = LoopbackFile("r")
         self.assertTrue(f.readable())

@@ -54,6 +54,7 @@ class BufferedFile(ClosingContextManager):
         self._bufsize = self._DEFAULT_BUFSIZE
         self._wbuffer = BytesIO()
         self._rbuffer = bytes()
+        self._rbuffer_pos = 0
         self._at_trailing_cr = False
         self._closed = False
         # pos - position within the file, according to the user
@@ -176,8 +177,9 @@ class BufferedFile(ClosingContextManager):
             raise IOError("File is not open for reading")
         if (size is None) or (size < 0):
             # go for broke
-            result = bytearray(self._rbuffer)
+            result = bytearray(self._rbuffer[self._rbuffer_pos :])
             self._rbuffer = bytes()
+            self._rbuffer_pos = 0
             self._pos += len(result)
             while True:
                 try:
@@ -190,13 +192,18 @@ class BufferedFile(ClosingContextManager):
                 self._realpos += len(new_data)
                 self._pos += len(new_data)
             return bytes(result)
-        if size <= len(self._rbuffer):
-            result = self._rbuffer[:size]
-            self._rbuffer = self._rbuffer[size:]
+        rbuffer_len = len(self._rbuffer) - self._rbuffer_pos
+        if size <= rbuffer_len:
+            start = self._rbuffer_pos
+            result = self._rbuffer[start : start + size]
+            self._rbuffer_pos += len(result)
+            if self._rbuffer_pos == len(self._rbuffer):
+                self._rbuffer = bytes()
+                self._rbuffer_pos = 0
             self._pos += len(result)
             return result
-        while len(self._rbuffer) < size:
-            read_size = size - len(self._rbuffer)
+        while len(self._rbuffer) - self._rbuffer_pos < size:
+            read_size = size - (len(self._rbuffer) - self._rbuffer_pos)
             if self._flags & self.FLAG_BUFFERED:
                 read_size = max(self._bufsize, read_size)
             try:
@@ -205,10 +212,17 @@ class BufferedFile(ClosingContextManager):
                 new_data = None
             if (new_data is None) or (len(new_data) == 0):
                 break
+            if self._rbuffer_pos:
+                self._rbuffer = self._rbuffer[self._rbuffer_pos :]
+                self._rbuffer_pos = 0
             self._rbuffer += new_data
             self._realpos += len(new_data)
-        result = self._rbuffer[:size]
-        self._rbuffer = self._rbuffer[size:]
+        start = self._rbuffer_pos
+        result = self._rbuffer[start : start + size]
+        self._rbuffer_pos += len(result)
+        if self._rbuffer_pos == len(self._rbuffer):
+            self._rbuffer = bytes()
+            self._rbuffer_pos = 0
         self._pos += len(result)
         return result
 
@@ -239,6 +253,9 @@ class BufferedFile(ClosingContextManager):
             raise IOError("File is closed")
         if not (self._flags & self.FLAG_READ):
             raise IOError("File not open for reading")
+        if self._rbuffer_pos:
+            self._rbuffer = self._rbuffer[self._rbuffer_pos :]
+            self._rbuffer_pos = 0
         line = self._rbuffer
         truncated = False
         while True:
@@ -261,6 +278,7 @@ class BufferedFile(ClosingContextManager):
                 if len(line) >= size:
                     # truncate line
                     self._rbuffer = line[size:]
+                    self._rbuffer_pos = 0
                     line = line[:size]
                     truncated = True
                     break
@@ -277,6 +295,7 @@ class BufferedFile(ClosingContextManager):
                 new_data = None
             if (new_data is None) or (len(new_data) == 0):
                 self._rbuffer = bytes()
+                self._rbuffer_pos = 0
                 self._pos += len(line)
                 return line if self._flags & self.FLAG_BINARY else u(line)
             line += new_data
@@ -305,6 +324,7 @@ class BufferedFile(ClosingContextManager):
             self._rbuffer = line[xpos:] + self._rbuffer
         else:
             self._rbuffer = line[xpos:]
+        self._rbuffer_pos = 0
 
         lf = line[pos:xpos]
         line = line[:pos] + linefeed_byte
