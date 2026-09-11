@@ -220,6 +220,32 @@ class BufferedFileTest(unittest.TestCase):
             self.assertEqual(f.read(), data)
 
 
+    def test_read_small_chunks_linear(self):
+        # Regression test for gh-2688: reading 1 byte at a time from a
+        # pre-filled buffer should be O(N) total, not O(N^2).
+        N = 8192
+        data = bytes(range(256)) * (N // 256)
+        f = LoopbackFile("rb")
+        # Pre-fill the internal buffer directly to avoid network I/O
+        f._rbuffer = data
+
+        result = bytearray()
+        for _ in range(N):
+            chunk = f.read(1)
+            if not chunk:
+                break
+            result.extend(chunk)
+
+        self.assertEqual(bytes(result), data)
+        # After consuming everything the internal buffer must be compact
+        # (not a huge partially-consumed bytes object)
+        self.assertLess(
+            len(f._rbuffer),
+            N // 2,
+            "buffer was not compacted; linear-cost fix may have regressed",
+        )
+
+
 if __name__ == "__main__":
     from unittest import main
 
