@@ -200,8 +200,8 @@ class AgentLocalProxy(AgentProxyThread):
             conn.listen(1)
             (r, addr) = conn.accept()
             return r, addr
-        except:
-            raise
+        finally:
+            conn.close()
 
 
 class AgentRemoteProxy(AgentProxyThread):
