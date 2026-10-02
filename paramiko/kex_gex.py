@@ -188,12 +188,14 @@ class KexGexSHA256:
     def _parse_kexdh_gex_group(self, m):
         self.p = m.get_mpint()
         self.g = m.get_mpint()
-        # reject if p's bit length < 1024 or > 8192
+        # reject anything outside the bit range we said we accept
         bitlen = util.bit_length(self.p)
-        if (bitlen < 1024) or (bitlen > 8192):
+        if (bitlen < self.min_bits) or (bitlen > self.max_bits):
             raise SSHException(
                 "Server-generated gex p (don't ask) is out of range "
-                "({} bits)".format(bitlen)
+                "({} bits, wanted {} to {})".format(
+                    bitlen, self.min_bits, self.max_bits
+                )
             )
         self.transport._log(DEBUG, "Got server p ({} bits)".format(bitlen))
         self._generate_x()
