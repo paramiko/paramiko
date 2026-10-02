@@ -2,6 +2,12 @@
 Changelog
 =========
 
+- :bug:`-` A ``diffie-hellman-group-exchange-sha256`` client advertises
+  ``min_bits`` (2048 since 5.0.0) in its group request, but was still
+  validating the group the server sent back against a hardcoded floor of 1024
+  bits, so a server could answer a ``min=2048`` request with a 1024-bit group
+  and the handshake would complete over it. The received modulus is now
+  checked against the ``min_bits``/``max_bits`` values actually requested.
 - :feature:`-` Added support for the ``mlkem768x25519-sha256`` post-quantum
   hybrid key exchange method described in
   ``draft-ietf-sshm-mlkem-hybrid-kex``. It pairs ML-KEM-768 (FIPS 203) with
