@@ -26,6 +26,9 @@ import os
 import unittest
 
 import paramiko
+import pytest
+
+from ._util import _support
 
 
 test_hosts_file = """\
@@ -170,3 +173,57 @@ class HostKeysTabsTest(HostKeysTest):
     def setUp(self):
         with open("hostfile.temp", "w") as f:
             f.write(test_hosts_file_tabs)
+
+
+@pytest.mark.parametrize("hashed", [False, True])
+@pytest.mark.parametrize("alias", [False, True])
+@pytest.mark.parametrize("other_type", [False, True])
+def test_entry_deletion_persists_without_removing_other_hosts(
+    tmp_path, hashed, alias, other_type
+):
+    hostname = "example.com"
+    stored_hostname = (
+        paramiko.HostKeys.hash_host(hostname) if hashed else hostname
+    )
+    hostnames = [stored_hostname]
+    if alias:
+        hostnames.append("other.example.com")
+    key = paramiko.RSAKey(data=decodebytes(keyblob))
+    filename = tmp_path / "known_hosts"
+    filename.write_text(
+        ",".join(hostnames) + " ssh-rsa " + keyblob.decode("ascii") + "\n"
+    )
+    hostkeys = paramiko.HostKeys(filename)
+    if other_type:
+        other_key = paramiko.Ed25519Key.from_private_key_file(
+            _support("ed25519.key")
+        )
+        hostkeys.add(hostname, "ssh-ed25519", other_key)
+
+    del hostkeys[hostname]["ssh-rsa"]
+
+    assert not hostkeys.check(hostname, key)
+    if alias:
+        assert hostkeys.check("other.example.com", key)
+    if other_type:
+        assert hostkeys.check(hostname, other_key)
+    hostkeys.save(filename)
+    reloaded = paramiko.HostKeys(filename)
+    assert not reloaded.check(hostname, key)
+    if alias:
+        assert reloaded.check("other.example.com", key)
+    if other_type:
+        assert reloaded.check(hostname, other_key)
+
+
+def test_entry_deletion_from_multiple_lookups():
+    hostkeys = paramiko.HostKeys()
+    key = paramiko.RSAKey(data=decodebytes(keyblob))
+    hostkeys.add("example.com", "ssh-rsa", key)
+    first = hostkeys["example.com"]
+    second = hostkeys["example.com"]
+
+    del first["ssh-rsa"]
+    del second["ssh-rsa"]
+
+    assert not hostkeys.check("example.com", key)

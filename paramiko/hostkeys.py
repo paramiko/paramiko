@@ -150,6 +150,15 @@ class HostKeys(MutableMapping):
                 for e in list(self._entries):
                     if e.key.get_name() == key:
                         self._entries.remove(e)
+                        e.hostnames = [
+                            h
+                            for h in e.hostnames
+                            if not self._hostkeys._hostname_matches(
+                                self._hostname, HostKeyEntry([h], e.key)
+                            )
+                        ]
+                        if not e.hostnames and e in self._hostkeys._entries:
+                            self._hostkeys._entries.remove(e)
                         break
                 else:
                     raise KeyError(key)
