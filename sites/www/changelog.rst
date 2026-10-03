@@ -2,6 +2,12 @@
 Changelog
 =========
 
+- :bug:`-` Deleting a key type from a `~paramiko.hostkeys.HostKeys` host entry
+  now updates the underlying host-key store, so subsequent lookups and
+  `~paramiko.hostkeys.HostKeys.save` no longer retain the deleted key. Other
+  hostnames sharing the same known-host line and other key types are preserved.
+  Thanks to ``@kokotatan`` for the report and fix.
+
 - :release:`3.5.1 <2025-02-03>`
 - :bug:`2490` Private key material is now explicitly 'unpadded' during
   decryption, removing a reliance on some lax OpenSSL behavior & making us
