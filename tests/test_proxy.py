@@ -1,10 +1,10 @@
 import signal
 import socket
 
-from unittest.mock import patch
-from pytest import raises
+from unittest.mock import call, patch
+from pytest import mark, raises
 
-from paramiko import ProxyCommand, ProxyCommandFailure
+from paramiko import Packetizer, ProxyCommand, ProxyCommandFailure
 
 
 class TestProxyCommand:
@@ -21,10 +21,37 @@ class TestProxyCommand:
 
     @patch("paramiko.proxy.subprocess.Popen")
     def test_send_writes_to_process_stdin_returning_length(self, Popen):
+        Popen.return_value.stdin.write.return_value = len(b"data")
         proxy = ProxyCommand("hi")
         written = proxy.send(b"data")
         Popen.return_value.stdin.write.assert_called_once_with(b"data")
         assert written == len(b"data")
+
+    @mark.parametrize("bytes_written", [0, 1, 3])
+    @patch("paramiko.proxy.subprocess.Popen")
+    def test_send_returns_short_write_count(self, Popen, bytes_written):
+        Popen.return_value.stdin.write.return_value = bytes_written
+        assert ProxyCommand("hi").send(b"data") == bytes_written
+        Popen.return_value.stdin.write.assert_called_once_with(b"data")
+
+    @patch("paramiko.proxy.subprocess.Popen")
+    def test_packetizer_retries_short_proxy_writes(self, Popen):
+        received = bytearray()
+
+        def short_write(content):
+            chunk = content[:2]
+            received.extend(chunk)
+            return len(chunk)
+
+        write = Popen.return_value.stdin.write
+        write.side_effect = short_write
+        Packetizer(ProxyCommand("hi")).write_all(b"data!")
+        assert received == b"data!"
+        assert write.call_args_list == [
+            call(b"data!"),
+            call(b"ta!"),
+            call(b"!"),
+        ]
 
     @patch("paramiko.proxy.subprocess.Popen")
     def test_send_raises_ProxyCommandFailure_on_error(self, Popen):

@@ -2,6 +2,10 @@
 Changelog
 =========
 
+- :bug:`-` Return the actual number of bytes written by
+  `~paramiko.proxy.ProxyCommand.send`, so that short writes to the proxy's
+  unbuffered input pipe do not cause SSH packet data to be dropped. Credit to
+  ``FanWu-ai`` for the fix.
 - :release:`3.5.1 <2025-02-03>`
 - :bug:`2490` Private key material is now explicitly 'unpadded' during
   decryption, removing a reliance on some lax OpenSSL behavior & making us
