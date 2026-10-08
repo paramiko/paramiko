@@ -2,6 +2,10 @@
 Changelog
 =========
 
+- :bug:`-` Preserve the names and values of extended SFTP attributes when
+  decoding file attributes. Previously, names and values were swapped, and
+  attributes sharing the same value could overwrite each other. Credit to
+  ``@FanWu-ai``.
 - :release:`3.5.1 <2025-02-03>`
 - :bug:`2490` Private key material is now explicitly 'unpadded' during
   decryption, removing a reliance on some lax OpenSSL behavior & making us

@@ -35,9 +35,11 @@ import pytest
 
 from paramiko.common import o777, o600, o666, o644
 from paramiko.sftp_attr import SFTPAttributes
+from paramiko.sftp import CMD_SETSTAT, SFTP_OK
 from paramiko.util import b, u
 from tests import requireNonAsciiLocale
 
+from ._stub_sftp import StubSFTPServer
 from ._util import needs_builtin
 from ._util import slow
 
@@ -794,6 +796,40 @@ class TestSFTP:
         some_stat = os.stat(sftp.FOLDER)
         sftp_attributes = SFTPAttributes.from_stat(some_stat, u("a_directory"))
         assert b"a_directory" in sftp_attributes.asbytes()
+
+    def test_stat_extended_attributes(self, sftp, monkeypatch):
+        expected = {
+            b"first@example.com": b"same",
+            b"second@example.com": b"same",
+        }
+
+        def stat(server, path):
+            attributes = SFTPAttributes()
+            attributes.st_size = 123
+            attributes.attr = expected.copy()
+            return attributes
+
+        monkeypatch.setattr(StubSFTPServer, "stat", stat)
+        result = sftp.stat("file")
+        assert result.attr == expected
+        assert result.st_size == 123
+
+    def test_setstat_extended_attributes(self, sftp, monkeypatch):
+        expected = {
+            b"first@example.com": b"same",
+            b"second@example.com": b"same",
+        }
+        received = []
+
+        def chattr(server, path, attributes):
+            received.append(attributes.attr)
+            return SFTP_OK
+
+        monkeypatch.setattr(StubSFTPServer, "chattr", chattr)
+        attributes = SFTPAttributes()
+        attributes.attr = expected.copy()
+        sftp._request(CMD_SETSTAT, "file", attributes)
+        assert received == [expected]
 
     def test_sftp_attributes_empty_str(self, sftp):
         sftp_attributes = SFTPAttributes()
