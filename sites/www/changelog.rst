@@ -2,7 +2,7 @@
 Changelog
 =========
 
-- :bug:`2691` The SHA2 transition left `RSAKey.sign_ssh_data` incorrectly
+- :bug:`2628` The SHA2 transition left `RSAKey.sign_ssh_data` incorrectly
   trying to look up its default signature algorithm via the key type's name
   string, which is still ``"ssh-rsa"``, and thus no longer a valid/implemented
   choice (which would be one of ``"rsa-sha2-256[-cert...]"`` or
