@@ -2,6 +2,18 @@
 Changelog
 =========
 
+- :bug:`2691` The SHA2 transition left `RSAKey.sign_ssh_data` incorrectly
+  trying to look up its default signature algorithm via the key type's name
+  string, which is still ``"ssh-rsa"``, and thus no longer a valid/implemented
+  choice (which would be one of ``"rsa-sha2-256[-cert...]"`` or
+  ``"rsa-sha2-512[-cert...]"``).
+
+  This went unnoticed because most calls to this method have decided on an
+  explicit signature algorithm during a protocol handshake and aren't relying
+  on an implicit default. To restore that ability, this method now defaults to
+  the strongest implemented algorithm, namely ``"rsa-sha2-512"``.
+
+  Thanks to ``@ultraplanet`` on GitHub for the report.
 - :release:`5.0.0 <2026-05-09>`
 - :bug:`- major` Fix `Ed25519Key <paramiko.ed25519key.Ed25519Key>`'s internals
   such that it no longer throws `AttributeError` during calls to ``__repr__``
