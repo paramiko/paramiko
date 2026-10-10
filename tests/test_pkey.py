@@ -205,11 +205,13 @@ class KeyTest(unittest.TestCase):
         self._sign_and_verify_rsa("rsa-sha2-256", SIGNED_RSA_256)
 
     def test_generate_rsa(self):
-        # TODO: this probs needs to be larger number now
-        key = RSAKey.generate(1024)
-        msg = key.sign_ssh_data(b"jerri blank", algorithm="rsa-sha2-256")
+        key = RSAKey.generate(4096)
+        msg = key.sign_ssh_data(b"jerri blank", algorithm=None)
         msg.rewind()
         self.assertTrue(key.verify_ssh_sig(b"jerri blank", msg))
+        # Safety check: confirm algorithm used defaulted to sha2-512
+        msg.rewind()
+        assert msg.get_text() == "rsa-sha2-512"
 
     def test_generate_ecdsa(self):
         key = ECDSAKey.generate()

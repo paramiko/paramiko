@@ -2,6 +2,18 @@
 Changelog
 =========
 
+- :bug:`2691` The SHA2 transition left `RSAKey.sign_ssh_data` incorrectly
+  trying to look up its default signature algorithm via the key type's name
+  string, which is still ``"ssh-rsa"``, and thus no longer a valid/implemented
+  choice (which would be one of ``"rsa-sha2-256[-cert...]"`` or
+  ``"rsa-sha2-512[-cert...]"``).
+
+  This went unnoticed because most calls to this method have decided on an
+  explicit signature algorithm during a protocol handshake and aren't relying
+  on an implicit default. To restore that ability, this method now defaults to
+  the strongest implemented algorithm, namely ``"rsa-sha2-512"``.
+
+  Thanks to ``@ultraplanet`` on GitHub for the report.
 - :feature:`-` Added support for the ``mlkem768x25519-sha256`` post-quantum
   hybrid key exchange method described in
   ``draft-ietf-sshm-mlkem-hybrid-kex``. It pairs ML-KEM-768 (FIPS 203) with
