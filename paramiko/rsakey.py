@@ -132,8 +132,12 @@ class RSAKey(PKey):
         return isinstance(self.key, rsa.RSAPrivateKey)
 
     def sign_ssh_data(self, data, algorithm=None):
+        # Default to strongest implemented algorithm when unspecified. (We used
+        # to have an 'obvious' default prior to the SHA2 era, but that's no
+        # longer the case, but here it's better to guess and default to
+        # best-possible, than to just blow up.
         if algorithm is None:
-            algorithm = self.name
+            algorithm = "rsa-sha2-512"
         sig = self.key.sign(
             data,
             padding=padding.PKCS1v15(),
