@@ -127,6 +127,40 @@ class PKey_:
                     PKey.from_path(_support("rsa-missing.key-cert.pub"))
                 assert info.value.filename.endswith("rsa-missing.key")
 
+    class from_private_key_file:
+        def rejects_rsa_key_loaded_as_ecdsa(self):
+            # A wrong-type OpenSSH key must fail fast with a clear error,
+            # not silently mis-parse into garbage (see #2467).
+            with raises(SSHException) as exc:
+                ECDSAKey.from_private_key_file(
+                    _support("test_rsa_openssh_nopad.key")
+                )
+            assert "encountered ssh-rsa key" in str(exc.value)
+
+        def rejects_ecdsa_key_loaded_as_rsa(self):
+            with raises(SSHException) as exc:
+                RSAKey.from_private_key_file(
+                    _support("test_ecdsa_384_openssh.key"),
+                    password=b"television",
+                )
+            assert "encountered ecdsa-sha2-nistp384 key" in str(exc.value)
+
+        def accepts_correct_type_openssh_keys(self):
+            # Sanity check: right-type keys still load fine.
+            assert isinstance(
+                RSAKey.from_private_key_file(
+                    _support("test_rsa_openssh_nopad.key")
+                ),
+                RSAKey,
+            )
+            assert isinstance(
+                ECDSAKey.from_private_key_file(
+                    _support("test_ecdsa_384_openssh.key"),
+                    password=b"television",
+                ),
+                ECDSAKey,
+            )
+
     class load_certificate:
         def rsa_public_cert_blobs(self):
             # Data to test signing with (arbitrary)
