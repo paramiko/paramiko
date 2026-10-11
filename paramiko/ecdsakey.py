@@ -20,6 +20,8 @@
 ECDSA keys
 """
 
+from typing import Optional
+
 from cryptography.exceptions import InvalidSignature, UnsupportedAlgorithm
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes, serialization
@@ -114,7 +116,8 @@ class ECDSAKey(PKey):
         password=None,
         vals=None,
         file_obj=None,
-        # TODO 4.0: remove; it does nothing since porting to cryptography.io
+        # TODO (backwards incompat): remove; it does nothing since porting to
+        # cryptography.io
         validate_point=True,
     ):
         self.verifying_key = None
@@ -172,7 +175,7 @@ class ECDSAKey(PKey):
     def identifiers(cls):
         return cls._ECDSA_CURVES.get_key_format_identifier_list()
 
-    # TODO 4.0: deprecate/remove
+    # TODO (backwards incompat): deprecate/remove
     @classmethod
     def supported_key_format_identifiers(cls):
         return cls.identifiers()
@@ -243,21 +246,9 @@ class ECDSAKey(PKey):
         else:
             return True
 
-    def write_private_key_file(self, filename, password=None):
-        self._write_private_key_file(
-            filename,
-            self.signing_key,
-            serialization.PrivateFormat.TraditionalOpenSSL,
-            password=password,
-        )
-
-    def write_private_key(self, file_obj, password=None):
-        self._write_private_key(
-            file_obj,
-            self.signing_key,
-            serialization.PrivateFormat.TraditionalOpenSSL,
-            password=password,
-        )
+    @property
+    def private_key(self) -> Optional[ec.EllipticCurvePrivateKey]:
+        return self.signing_key
 
     @classmethod
     def generate(cls, curve=ec.SECP256R1(), progress_func=None, bits=None):

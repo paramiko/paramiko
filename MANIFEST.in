@@ -1,5 +1,4 @@
-include LICENSE setup_helper.py pytest.ini
+include LICENSE pytest.ini pyproject.toml
 recursive-include docs *
 recursive-include tests *.py *.key *.pub
 recursive-include tests/configs *
-recursive-include demos *.py *.key user_rsa_key user_rsa_key.pub

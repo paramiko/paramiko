@@ -3,12 +3,12 @@ build/
 dist/
 .tox/
 paramiko.egg-info/
-docs/
+/docs/
 demos/*.log
-!sites/docs
 _build
 .coverage
 .cache
 .idea
 coverage.xml
 htmlcov
+uv.lock

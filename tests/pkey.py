@@ -1,11 +1,15 @@
+from io import StringIO
 from pathlib import Path
-from unittest.mock import patch, call
+from unittest.mock import call, patch
 
-from pytest import raises
-
+from cryptography.hazmat.primitives.asymmetric.ec import (
+    EllipticCurvePrivateKey,
+)
 from cryptography.hazmat.primitives.asymmetric.ed448 import Ed448PrivateKey
+from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey
+from pytest import mark, raises
+
 from paramiko import (
-    DSSKey,
     ECDSAKey,
     Ed25519Key,
     Message,
@@ -14,6 +18,8 @@ from paramiko import (
     RSAKey,
     UnknownKeyType,
 )
+from paramiko.pkey import OPENSSH, PEM, PrivateKey
+from paramiko.ssh_exception import SSHException
 
 from ._util import _support
 
@@ -26,13 +32,22 @@ class PKey_:
             obj = PKey.from_type_string(keys.full_type, keys.pkey.asbytes())
             assert obj == keys.pkey
 
-        # TODO: exceptions
-        #
-        # TODO: passphrase? OTOH since this is aimed at the agent...irrelephant
+        def accepts_passphrase(self, keys):
+            obj = PKey.from_type_string(
+                keys.full_type, keys.pkey.asbytes(), password=keys.passphrase
+            )
+            assert obj == keys.pkey
+
+        def raises_UnknownKeyType_for_unknown_type_names(self):
+            key = b"not even a real key, smh"
+            with raises(UnknownKeyType) as exc:
+                PKey.from_type_string("wat", key)
+            assert exc.value.key_type == "wat"
+            assert exc.value.key_bytes == key
 
     class from_path:
         def loads_from_Path(self, keys):
-            obj = PKey.from_path(keys.path)
+            obj = PKey.from_path(keys.path, password=keys.passphrase)
             assert obj == keys.pkey
 
         def loads_from_str(self):
@@ -69,8 +84,6 @@ class PKey_:
             # a Python file is not a private key!
             with raises(ValueError):
                 PKey.from_path(__file__)
-
-        # TODO: passphrase support tested
 
         class automatically_loads_certificates:
             def existing_cert_loaded_when_given_key_path(self):
@@ -170,8 +183,6 @@ class PKey_:
         key = keys.pkey
         if isinstance(key, RSAKey):
             assert key.algorithm_name == "RSA"
-        elif isinstance(key, DSSKey):
-            assert key.algorithm_name == "DSS"
         elif isinstance(key, ECDSAKey):
             assert key.algorithm_name == "ECDSA"
         elif isinstance(key, Ed25519Key):
@@ -207,16 +218,15 @@ class PKey_:
 
         def rsa_is_all_combos_of_cert_and_sha_type(self):
             assert RSAKey.identifiers() == [
-                "ssh-rsa",
-                "ssh-rsa-cert-v01@openssh.com",
                 "rsa-sha2-256",
                 "rsa-sha2-256-cert-v01@openssh.com",
                 "rsa-sha2-512",
                 "rsa-sha2-512-cert-v01@openssh.com",
+                # Still required for identifying keys-not-algorithms! But now
+                # they come last.
+                "ssh-rsa",
+                "ssh-rsa-cert-v01@openssh.com",
             ]
-
-        def dss_is_protocol_name(self):
-            assert DSSKey.identifiers() == ["ssh-dss"]
 
         def ed25519_is_protocol_name(self):
             assert Ed25519Key.identifiers() == ["ssh-ed25519"]
@@ -227,3 +237,75 @@ class PKey_:
                 "ecdsa-sha2-nistp384",
                 "ecdsa-sha2-nistp521",
             ]
+
+    class write_private_key_and_file:
+        @mark.parametrize(
+            "key_path, expected_class",
+            [
+                ("rsa.key", RSAPrivateKey),
+                ("ecdsa-256.key", EllipticCurvePrivateKey),
+                # TODO: Ed25519 after we sort it out
+            ],
+        )
+        def uses_private_key_property(
+            self, key_path: str, expected_class: PrivateKey
+        ) -> None:
+            key_obj = PKey.from_path(_support(key_path))
+            assert isinstance(key_obj.private_key, expected_class)
+
+        # TODO: Ed25519 after we sort its writing out
+        @mark.parametrize(
+            "key_class, key_kwargs, key_name",
+            [
+                (RSAKey, dict(bits=4098), "RSA"),
+                (ECDSAKey, dict(bits=384), "EC"),
+            ],
+        )
+        @mark.parametrize("key_format", [PEM, OPENSSH])
+        def can_write_multiple_formats(
+            self,
+            key_class: str,
+            key_kwargs: dict,
+            key_format: PrivateKey,
+            key_name: str,
+            tmp_path: Path,
+        ) -> None:
+            # Roundtrip-as-proof
+            temp_key = tmp_path / "my.key"
+            key = key_class.generate(**key_kwargs)
+            key.write_private_key_file(
+                filename=str(temp_key), file_format=key_format
+            )
+            read_key = PKey.from_path(temp_key)
+            assert read_key == key
+            # Paranoia seasoning
+            if key_format is PEM:
+                assert f"BEGIN {key_name} PRIVATE KEY" in temp_key.read_text()
+            elif key_format is OPENSSH:
+                assert "BEGIN OPENSSH PRIVATE KEY" in temp_key.read_text()
+
+
+class Ed25519Key_:
+    def has_non_excepting_repr_during_load_errors(self) -> None:
+        """
+        Inside baseball: don't throw scary looking AttributeErrors inside
+        repr() shown during other errors (eg "normal" load errors due to common
+        case of trying an unknown key input as each possible type).
+
+        Most PKey subclasses don't have this particular problem, Ed25519Key
+        does due to its original implementation where key material attributes
+        had no default assignment.
+        """
+        with raises(
+            SSHException, match="not a valid OPENSSH private key file"
+        ) as info:
+            Ed25519Key(file_obj=StringIO("ohai! I have lines. Technically."))
+        # When bug under test is not fixed, this will blow up with
+        # AttributeErrors about _signing_key/_verifying_key (as they won't have
+        # been assigned).
+        # When fixed, we get a normal looking repr (albeit whose fingerprint
+        # will effectively be that of an 'empty' key bytes)
+        assert (
+            repr(info.traceback[1].locals["self"])
+            == "PKey(alg=ED25519, bits=256, fp=SHA256:UsIasxMWEd9VFEwjARWWtGJ08DgHp1eib3gSBLed54U)"  # noqa
+        )

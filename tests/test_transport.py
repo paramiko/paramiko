@@ -20,31 +20,32 @@
 Some unit tests for the ssh2 protocol in Transport.
 """
 
-
-from binascii import hexlify
 import itertools
+import random
 import select
 import socket
-import time
 import threading
-import random
+import time
 import unittest
+from binascii import hexlify
 from unittest.mock import Mock
 
+from pytest import mark, raises
+
 from paramiko import (
+    OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED,
     AuthHandler,
     ChannelException,
     IncompatiblePeer,
     MessageOrderError,
     Packetizer,
     RSAKey,
-    SSHException,
     SecurityOptions,
     ServiceRequestingTransport,
+    SSHException,
     Transport,
 )
 from paramiko.auth_handler import AuthOnlyHandler
-from paramiko import OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED
 from paramiko.common import (
     DEFAULT_MAX_PACKET_SIZE,
     DEFAULT_WINDOW_SIZE,
@@ -63,19 +64,16 @@ from paramiko.common import (
 )
 from paramiko.message import Message
 
+from ._loop import LoopSocket
 from ._util import (
-    needs_builtin,
-    _support,
-    requires_sha1_signing,
-    slow,
-    server,
-    _disable_sha2,
-    _disable_sha1,
     TestServer as NullServer,
 )
-from ._loop import LoopSocket
-from pytest import mark, raises
-
+from ._util import (
+    _support,
+    needs_builtin,
+    server,
+    slow,
+)
 
 LONG_BANNER = """\
 Welcome to the super-fun-land BBS, where our MOTD is the primary thing we
@@ -168,7 +166,7 @@ class TransportTest(unittest.TestCase):
 
     def test_compute_key(self):
         self.tc.K = 123281095979686581523377256114209720774539068973101330872763622971399429481072519713536292772709507296759612401802191955568143056534122385270077606457721553469730659233569339356140085284052436697480759510519672848743794433460113118986816826624865291116513647975790797391795651716378444844877749505443714557929  # noqa
-        self.tc.H = b"\x0C\x83\x07\xCD\xE6\x85\x6F\xF3\x0B\xA9\x36\x84\xEB\x0F\x04\xC2\x52\x0E\x9E\xD3"  # noqa
+        self.tc.H = b"\x0c\x83\x07\xcd\xe6\x85\x6f\xf3\x0b\xa9\x36\x84\xeb\x0f\x04\xc2\x52\x0e\x9e\xd3"  # noqa
         self.tc.session_id = self.tc.H
         key = self.tc._compute_key("C", 32)
         self.assertEqual(
@@ -841,6 +839,7 @@ class TransportTest(unittest.TestCase):
         """
         verify that we can get a handshake timeout.
         """
+
         # Tweak client Transport instance's Packetizer instance so
         # its read_message() sleeps a bit. This helps prevent race conditions
         # where the client Transport's timeout timer thread doesn't even have
@@ -1108,7 +1107,7 @@ class AlgorithmDisablingTests(unittest.TestCase):
             disabled_algorithms={
                 "ciphers": ["aes128-cbc"],
                 "macs": ["hmac-md5"],
-                "keys": ["ssh-dss"],
+                "keys": ["rsa-sha2-512"],
                 "kex": ["diffie-hellman-group14-sha256"],
             },
         )
@@ -1116,9 +1115,10 @@ class AlgorithmDisablingTests(unittest.TestCase):
         assert "aes128-cbc" not in t.preferred_ciphers
         assert "hmac-md5" in t._preferred_macs
         assert "hmac-md5" not in t.preferred_macs
-        assert "ssh-dss" in t._preferred_keys
-        assert "ssh-dss" not in t.preferred_keys
-        assert "ssh-dss-cert-v01@openssh.com" not in t.preferred_keys
+        assert "rsa-sha2-512" in t._preferred_keys
+        assert "rsa-sha2-512" not in t.preferred_keys
+        # Filtering also accounts for cert forms
+        assert "rsa-sha2-512-cert-v01@openssh.com" not in t.preferred_keys
         assert "diffie-hellman-group14-sha256" in t._preferred_kex
         assert "diffie-hellman-group14-sha256" not in t.preferred_kex
 
@@ -1128,7 +1128,7 @@ class AlgorithmDisablingTests(unittest.TestCase):
             disabled_algorithms={
                 "ciphers": ["aes128-cbc"],
                 "macs": ["hmac-md5"],
-                "keys": ["ssh-dss"],
+                "keys": ["rsa-sha2-256"],
                 "kex": ["diffie-hellman-group14-sha256"],
                 "compression": ["zlib"],
             },
@@ -1157,7 +1157,7 @@ class AlgorithmDisablingTests(unittest.TestCase):
         # included (as this message includes the full lists)
         assert "aes128-cbc" not in ciphers
         assert "hmac-md5" not in macs
-        assert "ssh-dss" not in server_keys
+        assert "rsa-sha2-256" not in server_keys
         assert "diffie-hellman-group14-sha256" not in kexen
         assert "zlib" not in compressions
 
@@ -1169,14 +1169,6 @@ class TestSHA2SignatureKeyExchange(unittest.TestCase):
     # SHA512 was used, is quite difficult w/o super gross hacks. However, there
     # are new tests in test_pkey.py which use known signature blobs to prove
     # the SHA2 family was in fact used!
-
-    @requires_sha1_signing
-    def test_base_case_ssh_rsa_still_used_as_fallback(self):
-        # Prove that ssh-rsa is used if either, or both, participants have SHA2
-        # algorithms disabled
-        for which in ("init", "client_init", "server_init"):
-            with server(**{which: _disable_sha2}) as (tc, _):
-                assert tc.host_key_type == "ssh-rsa"
 
     def test_kex_with_sha2_512(self):
         # It's the default!
@@ -1209,16 +1201,6 @@ class TestSHA2SignatureKeyExchange(unittest.TestCase):
             else:
                 raise err
 
-    def test_client_sha2_disabled_server_sha1_disabled_no_match(self):
-        self._incompatible_peers(
-            client_init=_disable_sha2, server_init=_disable_sha1
-        )
-
-    def test_client_sha1_disabled_server_sha2_disabled_no_match(self):
-        self._incompatible_peers(
-            client_init=_disable_sha1, server_init=_disable_sha2
-        )
-
     def test_explicit_client_hostkey_not_limited(self):
         # Be very explicit about the hostkey on BOTH ends,
         # and ensure it still ends up choosing sha2-512.
@@ -1243,7 +1225,7 @@ class TestExtInfo(unittest.TestCase):
             # data stored on Transport after hearing back from a compatible
             # server (such as ourselves in server mode)
             assert tc.server_extensions == {
-                "server-sig-algs": b"ssh-ed25519,ecdsa-sha2-nistp256,ecdsa-sha2-nistp384,ecdsa-sha2-nistp521,rsa-sha2-512,rsa-sha2-256,ssh-rsa,ssh-dss"  # noqa
+                "server-sig-algs": b"ssh-ed25519,ecdsa-sha2-nistp256,ecdsa-sha2-nistp384,ecdsa-sha2-nistp521,rsa-sha2-512,rsa-sha2-256"  # noqa
             }
 
     def test_client_uses_server_sig_algs_for_pubkey_auth(self):

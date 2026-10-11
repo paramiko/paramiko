@@ -20,10 +20,12 @@
 RSA keys.
 """
 
+from typing import Optional
+
 from cryptography.exceptions import InvalidSignature, UnsupportedAlgorithm
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes, serialization
-from cryptography.hazmat.primitives.asymmetric import rsa, padding
+from cryptography.hazmat.primitives.asymmetric import padding, rsa
 
 from paramiko.message import Message
 from paramiko.pkey import PKey
@@ -38,8 +40,6 @@ class RSAKey(PKey):
 
     name = "ssh-rsa"
     HASHES = {
-        "ssh-rsa": hashes.SHA1,
-        "ssh-rsa-cert-v01@openssh.com": hashes.SHA1,
         "rsa-sha2-256": hashes.SHA256,
         "rsa-sha2-256-cert-v01@openssh.com": hashes.SHA256,
         "rsa-sha2-512": hashes.SHA512,
@@ -81,11 +81,22 @@ class RSAKey(PKey):
 
     @classmethod
     def identifiers(cls):
-        return list(cls.HASHES.keys())
+        # NOTE: we no longer want to have ssh-rsa+SHA1 in HASHES but we still
+        # need to advertise we can be used to read ssh-rsa keys (w/ assumption
+        # other parts of system will enforce the use of SHA2 signing algos).
+        # Thus, just say so here.
+        return list(cls.HASHES.keys()) + [
+            "ssh-rsa",
+            "ssh-rsa-cert-v01@openssh.com",
+        ]
 
     @property
     def size(self):
         return self.key.key_size
+
+    @property
+    def private_key(self) -> Optional[rsa.RSAPrivateKey]:
+        return self.key if isinstance(self.key, rsa.RSAPrivateKey) else None
 
     @property
     def public_numbers(self):
@@ -103,7 +114,8 @@ class RSAKey(PKey):
 
     def __str__(self):
         # NOTE: see #853 to explain some legacy behavior.
-        # TODO 4.0: replace with a nice clean fingerprint display or something
+        # TODO (backwards incompat): replace with a nice clean fingerprint
+        # display or something
         return self.asbytes().decode("utf8", errors="ignore")
 
     @property
@@ -120,13 +132,17 @@ class RSAKey(PKey):
         return isinstance(self.key, rsa.RSAPrivateKey)
 
     def sign_ssh_data(self, data, algorithm=None):
+        # Default to strongest implemented algorithm when unspecified. (We used
+        # to have an 'obvious' default prior to the SHA2 era, but that's no
+        # longer the case, but here it's better to guess and default to
+        # best-possible, than to just blow up.
         if algorithm is None:
-            algorithm = self.name
+            algorithm = "rsa-sha2-512"
         sig = self.key.sign(
             data,
             padding=padding.PKCS1v15(),
-            # HASHES being just a map from long identifier to either SHA1 or
-            # SHA256 - cert'ness is not truly relevant.
+            # HASHES being just a map from long identifier to algo; cert'ness
+            # is not truly relevant.
             algorithm=self.HASHES[algorithm](),
         )
         m = Message()
@@ -158,22 +174,6 @@ class RSAKey(PKey):
             return False
         else:
             return True
-
-    def write_private_key_file(self, filename, password=None):
-        self._write_private_key_file(
-            filename,
-            self.key,
-            serialization.PrivateFormat.TraditionalOpenSSL,
-            password=password,
-        )
-
-    def write_private_key(self, file_obj, password=None):
-        self._write_private_key(
-            file_obj,
-            self.key,
-            serialization.PrivateFormat.TraditionalOpenSSL,
-            password=password,
-        )
 
     @staticmethod
     def generate(bits, progress_func=None):

@@ -20,58 +20,47 @@
 `.AuthHandler`
 """
 
-import weakref
 import threading
 import time
-import re
+import weakref
 
 from paramiko.common import (
-    cMSG_SERVICE_REQUEST,
-    cMSG_DISCONNECT,
-    DISCONNECT_SERVICE_NOT_AVAILABLE,
-    DISCONNECT_NO_MORE_AUTH_METHODS_AVAILABLE,
-    cMSG_USERAUTH_REQUEST,
-    cMSG_SERVICE_ACCEPT,
-    DEBUG,
-    AUTH_SUCCESSFUL,
-    INFO,
-    cMSG_USERAUTH_SUCCESS,
-    cMSG_USERAUTH_FAILURE,
-    AUTH_PARTIALLY_SUCCESSFUL,
-    cMSG_USERAUTH_INFO_REQUEST,
-    WARNING,
     AUTH_FAILED,
-    cMSG_USERAUTH_PK_OK,
-    cMSG_USERAUTH_INFO_RESPONSE,
-    MSG_SERVICE_REQUEST,
+    AUTH_PARTIALLY_SUCCESSFUL,
+    AUTH_SUCCESSFUL,
+    DEBUG,
+    DISCONNECT_NO_MORE_AUTH_METHODS_AVAILABLE,
+    DISCONNECT_SERVICE_NOT_AVAILABLE,
+    INFO,
     MSG_SERVICE_ACCEPT,
-    MSG_USERAUTH_REQUEST,
-    MSG_USERAUTH_SUCCESS,
-    MSG_USERAUTH_FAILURE,
+    MSG_SERVICE_REQUEST,
     MSG_USERAUTH_BANNER,
+    MSG_USERAUTH_FAILURE,
     MSG_USERAUTH_INFO_REQUEST,
     MSG_USERAUTH_INFO_RESPONSE,
-    cMSG_USERAUTH_GSSAPI_RESPONSE,
-    cMSG_USERAUTH_GSSAPI_TOKEN,
-    cMSG_USERAUTH_GSSAPI_MIC,
-    MSG_USERAUTH_GSSAPI_RESPONSE,
-    MSG_USERAUTH_GSSAPI_TOKEN,
-    MSG_USERAUTH_GSSAPI_ERROR,
-    MSG_USERAUTH_GSSAPI_ERRTOK,
-    MSG_USERAUTH_GSSAPI_MIC,
-    MSG_NAMES,
+    MSG_USERAUTH_REQUEST,
+    MSG_USERAUTH_SUCCESS,
+    WARNING,
+    cMSG_DISCONNECT,
+    cMSG_SERVICE_ACCEPT,
+    cMSG_SERVICE_REQUEST,
     cMSG_USERAUTH_BANNER,
+    cMSG_USERAUTH_FAILURE,
+    cMSG_USERAUTH_INFO_REQUEST,
+    cMSG_USERAUTH_INFO_RESPONSE,
+    cMSG_USERAUTH_PK_OK,
+    cMSG_USERAUTH_REQUEST,
+    cMSG_USERAUTH_SUCCESS,
 )
 from paramiko.message import Message
-from paramiko.util import b, u
+from paramiko.server import InteractiveQuery
 from paramiko.ssh_exception import (
-    SSHException,
     AuthenticationException,
     BadAuthenticationType,
     PartialAuthentication,
+    SSHException,
 )
-from paramiko.server import InteractiveQuery
-from paramiko.ssh_gss import GSSAuth, GSS_EXCEPTIONS
+from paramiko.util import b, u
 
 
 class AuthHandler:
@@ -93,9 +82,6 @@ class AuthHandler:
         # for server mode:
         self.auth_username = None
         self.auth_fail_count = 0
-        # for GSSAPI
-        self.gss_host = None
-        self.gss_deleg_creds = True
 
     def _log(self, *args):
         return self.transport._log(*args)
@@ -152,28 +138,6 @@ class AuthHandler:
             self.username = username
             self.interactive_handler = handler
             self.submethods = submethods
-            self._request_auth()
-        finally:
-            self.transport.lock.release()
-
-    def auth_gssapi_with_mic(self, username, gss_host, gss_deleg_creds, event):
-        self.transport.lock.acquire()
-        try:
-            self.auth_event = event
-            self.auth_method = "gssapi-with-mic"
-            self.username = username
-            self.gss_host = gss_host
-            self.gss_deleg_creds = gss_deleg_creds
-            self._request_auth()
-        finally:
-            self.transport.lock.release()
-
-    def auth_gssapi_keyex(self, username, event):
-        self.transport.lock.acquire()
-        try:
-            self.auth_event = event
-            self.auth_method = "gssapi-keyex"
-            self.username = username
             self._request_auth()
         finally:
             self.transport.lock.release()
@@ -257,7 +221,7 @@ class AuthHandler:
                 e = AuthenticationException("Authentication failed.")
             # this is horrible.  Python Exception isn't yet descended from
             # object, so type(e) won't work. :(
-            # TODO 4.0: lol. just lmao.
+            # TODO (backwards incompat): lol. just lmao.
             if issubclass(e.__class__, PartialAuthentication):
                 return e.allowed_types
             raise e
@@ -293,18 +257,15 @@ class AuthHandler:
             return None
         return self.transport._key_info[algorithm](Message(keyblob))
 
-    def _choose_fallback_pubkey_algorithm(self, key_type, my_algos):
-        # Fallback: first one in our (possibly tweaked by caller) list
-        pubkey_algo = my_algos[0]
-        msg = "Server did not send a server-sig-algs list; defaulting to our first preferred algo ({!r})"  # noqa
-        self._log(DEBUG, msg.format(pubkey_algo))
-        self._log(
-            DEBUG,
-            "NOTE: you may use the 'disabled_algorithms' SSHClient/Transport init kwarg to disable that or other algorithms if your server does not support them!",  # noqa
-        )
-        return pubkey_algo
-
     def _finalize_pubkey_algorithm(self, key_type):
+        """
+        Given a key type, decide which pubkey algorithm to use with it.
+
+        In most cases this is simply "that key type, again".
+
+        For RSA, this will be one of the SHA2 algorithms, depending on our
+        (transport's) configured pubkey algorithms list.
+        """
         # Short-circuit for non-RSA keys
         if "rsa" not in key_type:
             return key_type
@@ -314,22 +275,6 @@ class AuthHandler:
                 key_type
             ),
         )
-        # NOTE re #2017: When the key is an RSA cert and the remote server is
-        # OpenSSH 7.7 or earlier, always use ssh-rsa-cert-v01@openssh.com.
-        # Those versions of the server won't support rsa-sha2 family sig algos
-        # for certs specifically, and in tandem with various server bugs
-        # regarding server-sig-algs, it's impossible to fit this into the rest
-        # of the logic here.
-        if key_type.endswith("-cert-v01@openssh.com") and re.search(
-            r"-OpenSSH_(?:[1-6]|7\.[0-7])", self.transport.remote_version
-        ):
-            pubkey_algo = "ssh-rsa-cert-v01@openssh.com"
-            self.transport._agreed_pubkey_algorithm = pubkey_algo
-            self._log(DEBUG, "OpenSSH<7.8 + RSA cert = forcing ssh-rsa!")
-            self._log(
-                DEBUG, "Agreed upon {!r} pubkey algorithm".format(pubkey_algo)
-            )
-            return pubkey_algo
         # Normal attempts to handshake follow from here.
         # Only consider RSA algos from our list, lest we agree on another!
         my_algos = [x for x in self.transport.preferred_pubkeys if "rsa" in x]
@@ -366,11 +311,14 @@ class AuthHandler:
                 # technically for initial key exchange, not pubkey auth.
                 err = "Unable to agree on a pubkey algorithm for signing a {!r} key!"  # noqa
                 raise AuthenticationException(err.format(key_type))
-        # Fallback to something based purely on the key & our configuration
+        # Fallback to first item in our preferred algorithm list (which won't
+        # be empty due to guardrail above)
         else:
-            pubkey_algo = self._choose_fallback_pubkey_algorithm(
-                key_type, my_algos
-            )
+            pubkey_algo = my_algos[0]
+            msg = f"Server did not send a server-sig-algs list; defaulting to first RSA algorithm in our list: {pubkey_algo}"  # noqa
+            self._log(DEBUG, msg)
+        # If we had loaded a cert-type key, tack that on to the algorithm name
+        # to get the final correct result.
         if key_type.endswith("-cert-v01@openssh.com"):
             pubkey_algo += "-cert-v01@openssh.com"
         self.transport._agreed_pubkey_algorithm = pubkey_algo
@@ -406,97 +354,6 @@ class AuthHandler:
             elif self.auth_method == "keyboard-interactive":
                 m.add_string("")
                 m.add_string(self.submethods)
-            elif self.auth_method == "gssapi-with-mic":
-                sshgss = GSSAuth(self.auth_method, self.gss_deleg_creds)
-                m.add_bytes(sshgss.ssh_gss_oids())
-                # send the supported GSSAPI OIDs to the server
-                self.transport._send_message(m)
-                ptype, m = self.transport.packetizer.read_message()
-                if ptype == MSG_USERAUTH_BANNER:
-                    self._parse_userauth_banner(m)
-                    ptype, m = self.transport.packetizer.read_message()
-                if ptype == MSG_USERAUTH_GSSAPI_RESPONSE:
-                    # Read the mechanism selected by the server. We send just
-                    # the Kerberos V5 OID, so the server can only respond with
-                    # this OID.
-                    mech = m.get_string()
-                    m = Message()
-                    m.add_byte(cMSG_USERAUTH_GSSAPI_TOKEN)
-                    try:
-                        m.add_string(
-                            sshgss.ssh_init_sec_context(
-                                self.gss_host, mech, self.username
-                            )
-                        )
-                    except GSS_EXCEPTIONS as e:
-                        return self._handle_local_gss_failure(e)
-                    self.transport._send_message(m)
-                    while True:
-                        ptype, m = self.transport.packetizer.read_message()
-                        if ptype == MSG_USERAUTH_GSSAPI_TOKEN:
-                            srv_token = m.get_string()
-                            try:
-                                next_token = sshgss.ssh_init_sec_context(
-                                    self.gss_host,
-                                    mech,
-                                    self.username,
-                                    srv_token,
-                                )
-                            except GSS_EXCEPTIONS as e:
-                                return self._handle_local_gss_failure(e)
-                            # After this step the GSSAPI should not return any
-                            # token. If it does, we keep sending the token to
-                            # the server until no more token is returned.
-                            if next_token is None:
-                                break
-                            else:
-                                m = Message()
-                                m.add_byte(cMSG_USERAUTH_GSSAPI_TOKEN)
-                                m.add_string(next_token)
-                                self.transport.send_message(m)
-                    else:
-                        raise SSHException(
-                            "Received Package: {}".format(MSG_NAMES[ptype])
-                        )
-                    m = Message()
-                    m.add_byte(cMSG_USERAUTH_GSSAPI_MIC)
-                    # send the MIC to the server
-                    m.add_string(sshgss.ssh_get_mic(self.transport.session_id))
-                elif ptype == MSG_USERAUTH_GSSAPI_ERRTOK:
-                    # RFC 4462 says we are not required to implement GSS-API
-                    # error messages.
-                    # See RFC 4462 Section 3.8 in
-                    # http://www.ietf.org/rfc/rfc4462.txt
-                    raise SSHException("Server returned an error token")
-                elif ptype == MSG_USERAUTH_GSSAPI_ERROR:
-                    maj_status = m.get_int()
-                    min_status = m.get_int()
-                    err_msg = m.get_string()
-                    m.get_string()  # Lang tag - discarded
-                    raise SSHException(
-                        """GSS-API Error:
-Major Status: {}
-Minor Status: {}
-Error Message: {}
-""".format(
-                            maj_status, min_status, err_msg
-                        )
-                    )
-                elif ptype == MSG_USERAUTH_FAILURE:
-                    self._parse_userauth_failure(m)
-                    return
-                else:
-                    raise SSHException(
-                        "Received Package: {}".format(MSG_NAMES[ptype])
-                    )
-            elif (
-                self.auth_method == "gssapi-keyex"
-                and self.transport.gss_kex_used
-            ):
-                kexgss = self.transport.kexgss_ctxt
-                kexgss.set_username(self.username)
-                mic_token = kexgss.ssh_get_mic(self.transport.session_id)
-                m.add_string(mic_token)
             elif self.auth_method == "none":
                 pass
             else:
@@ -580,8 +437,6 @@ Error Message: {}
             self._disconnect_no_more_auth()
             return
         self.auth_username = username
-        # check if GSS-API authentication is enabled
-        gss_auth = self.transport.server_object.enable_auth_gssapi()
 
         if method == "none":
             result = self.transport.server_object.check_auth_none(username)
@@ -614,7 +469,13 @@ Error Message: {}
             # NOTE: server never wants to guess a client's algo, they're
             # telling us directly. No need for _finalize_pubkey_algorithm
             # anywhere in this flow.
+            # TODO: ok is this a spot where it can say a SHA2 dealie in some
+            # fields but still ssh-rsa within the pubkey blob part?
+            # TODO: ok so this would be rsa-sha2-256 or w/e, if this field says
+            # ssh-rsa the request can get stuffed.
             algorithm = m.get_text()
+            # TODO: This part would, if deconstructed, still be allowed to have
+            # "ssh-rsa" in its first field.
             keyblob = m.get_binary()
             try:
                 key = self._generate_key_from_request(algorithm, keyblob)
@@ -659,65 +520,6 @@ Error Message: {}
                 # make interactive query instead of response
                 self._interactive_query(result)
                 return
-        elif method == "gssapi-with-mic" and gss_auth:
-            sshgss = GSSAuth(method)
-            # Read the number of OID mechanisms supported by the client.
-            # OpenSSH sends just one OID. It's the Kerveros V5 OID and that's
-            # the only OID we support.
-            mechs = m.get_int()
-            # We can't accept more than one OID, so if the SSH client sends
-            # more than one, disconnect.
-            if mechs > 1:
-                self._log(
-                    INFO,
-                    "Disconnect: Received more than one GSS-API OID mechanism",
-                )
-                self._disconnect_no_more_auth()
-            desired_mech = m.get_string()
-            mech_ok = sshgss.ssh_check_mech(desired_mech)
-            # if we don't support the mechanism, disconnect.
-            if not mech_ok:
-                self._log(
-                    INFO,
-                    "Disconnect: Received an invalid GSS-API OID mechanism",
-                )
-                self._disconnect_no_more_auth()
-            # send the Kerberos V5 GSSAPI OID to the client
-            supported_mech = sshgss.ssh_gss_oids("server")
-            # RFC 4462 says we are not required to implement GSS-API error
-            # messages. See section 3.8 in http://www.ietf.org/rfc/rfc4462.txt
-            m = Message()
-            m.add_byte(cMSG_USERAUTH_GSSAPI_RESPONSE)
-            m.add_bytes(supported_mech)
-            self.transport.auth_handler = GssapiWithMicAuthHandler(
-                self, sshgss
-            )
-            self.transport._expected_packet = (
-                MSG_USERAUTH_GSSAPI_TOKEN,
-                MSG_USERAUTH_REQUEST,
-                MSG_SERVICE_REQUEST,
-            )
-            self.transport._send_message(m)
-            return
-        elif method == "gssapi-keyex" and gss_auth:
-            mic_token = m.get_string()
-            sshgss = self.transport.kexgss_ctxt
-            if sshgss is None:
-                # If there is no valid context, we reject the authentication
-                result = AUTH_FAILED
-                self._send_auth_result(username, method, result)
-            try:
-                sshgss.ssh_check_mic(
-                    mic_token, self.transport.session_id, self.auth_username
-                )
-            except Exception:
-                result = AUTH_FAILED
-                self._send_auth_result(username, method, result)
-                raise
-            result = AUTH_SUCCESSFUL
-            self.transport.server_object.check_auth_gssapi_keyex(
-                username, result
-            )
         else:
             result = self.transport.server_object.check_auth_none(username)
         # okay, send result
@@ -734,9 +536,9 @@ Error Message: {}
 
     def _parse_userauth_failure(self, m):
         authlist = m.get_list()
-        # TODO 4.0: we aren't giving callers access to authlist _unless_ it's
-        # partial authentication, so eg authtype=none can't work unless we
-        # tweak this.
+        # TODO (backwards incompat): we aren't giving callers access to
+        # authlist _unless_ it's partial authentication, so eg authtype=none
+        # can't work unless we tweak this.
         partial = m.get_boolean()
         if partial:
             self._log(INFO, "Authentication continues...")
@@ -807,18 +609,8 @@ Error Message: {}
             self.auth_username, "keyboard-interactive", result
         )
 
-    def _handle_local_gss_failure(self, e):
-        self.transport.saved_exception = e
-        self._log(DEBUG, "GSSAPI failure: {}".format(e))
-        self._log(INFO, "Authentication ({}) failed.".format(self.auth_method))
-        self.authenticated = False
-        self.username = None
-        if self.auth_event is not None:
-            self.auth_event.set()
-        return
-
-    # TODO 4.0: MAY make sense to make these tables into actual
-    # classes/instances that can be fed a mode bool or whatever. Or,
+    # TODO (backwards incompat): MAY make sense to make these tables into
+    # actual classes/instances that can be fed a mode bool or whatever. Or,
     # alternately (both?) make the message types small classes or enums that
     # embed this info within themselves (which could also then tidy up the
     # current 'integer -> human readable short string' stuff in common.py).
@@ -828,9 +620,9 @@ Error Message: {}
     @property
     def _server_handler_table(self):
         return {
-            # TODO 4.0: MSG_SERVICE_REQUEST ought to eventually move into
-            # Transport's server mode like the client side did, just for
-            # consistency.
+            # TODO (backwards incompat): MSG_SERVICE_REQUEST ought to
+            # eventually move into Transport's server mode like the client side
+            # did, just for consistency.
             MSG_SERVICE_REQUEST: self._parse_service_request,
             MSG_USERAUTH_REQUEST: self._parse_userauth_request,
             MSG_USERAUTH_INFO_RESPONSE: self._parse_userauth_info_response,
@@ -855,114 +647,6 @@ Error Message: {}
             return self._server_handler_table
         else:
             return self._client_handler_table
-
-
-class GssapiWithMicAuthHandler:
-    """A specialized Auth handler for gssapi-with-mic
-
-    During the GSSAPI token exchange we need a modified dispatch table,
-    because the packet type numbers are not unique.
-    """
-
-    method = "gssapi-with-mic"
-
-    def __init__(self, delegate, sshgss):
-        self._delegate = delegate
-        self.sshgss = sshgss
-
-    def abort(self):
-        self._restore_delegate_auth_handler()
-        return self._delegate.abort()
-
-    @property
-    def transport(self):
-        return self._delegate.transport
-
-    @property
-    def _send_auth_result(self):
-        return self._delegate._send_auth_result
-
-    @property
-    def auth_username(self):
-        return self._delegate.auth_username
-
-    @property
-    def gss_host(self):
-        return self._delegate.gss_host
-
-    def _restore_delegate_auth_handler(self):
-        self.transport.auth_handler = self._delegate
-
-    def _parse_userauth_gssapi_token(self, m):
-        client_token = m.get_string()
-        # use the client token as input to establish a secure
-        # context.
-        sshgss = self.sshgss
-        try:
-            token = sshgss.ssh_accept_sec_context(
-                self.gss_host, client_token, self.auth_username
-            )
-        except Exception as e:
-            self.transport.saved_exception = e
-            result = AUTH_FAILED
-            self._restore_delegate_auth_handler()
-            self._send_auth_result(self.auth_username, self.method, result)
-            raise
-        if token is not None:
-            m = Message()
-            m.add_byte(cMSG_USERAUTH_GSSAPI_TOKEN)
-            m.add_string(token)
-            self.transport._expected_packet = (
-                MSG_USERAUTH_GSSAPI_TOKEN,
-                MSG_USERAUTH_GSSAPI_MIC,
-                MSG_USERAUTH_REQUEST,
-            )
-            self.transport._send_message(m)
-
-    def _parse_userauth_gssapi_mic(self, m):
-        mic_token = m.get_string()
-        sshgss = self.sshgss
-        username = self.auth_username
-        self._restore_delegate_auth_handler()
-        try:
-            sshgss.ssh_check_mic(
-                mic_token, self.transport.session_id, username
-            )
-        except Exception as e:
-            self.transport.saved_exception = e
-            result = AUTH_FAILED
-            self._send_auth_result(username, self.method, result)
-            raise
-        # TODO: Implement client credential saving.
-        # The OpenSSH server is able to create a TGT with the delegated
-        # client credentials, but this is not supported by GSS-API.
-        result = AUTH_SUCCESSFUL
-        self.transport.server_object.check_auth_gssapi_with_mic(
-            username, result
-        )
-        # okay, send result
-        self._send_auth_result(username, self.method, result)
-
-    def _parse_service_request(self, m):
-        self._restore_delegate_auth_handler()
-        return self._delegate._parse_service_request(m)
-
-    def _parse_userauth_request(self, m):
-        self._restore_delegate_auth_handler()
-        return self._delegate._parse_userauth_request(m)
-
-    __handler_table = {
-        MSG_SERVICE_REQUEST: _parse_service_request,
-        MSG_USERAUTH_REQUEST: _parse_userauth_request,
-        MSG_USERAUTH_GSSAPI_TOKEN: _parse_userauth_gssapi_token,
-        MSG_USERAUTH_GSSAPI_MIC: _parse_userauth_gssapi_mic,
-    }
-
-    @property
-    def _handler_table(self):
-        # TODO: determine if we can cut this up like we did for the primary
-        # AuthHandler class.
-        return self.__handler_table
 
 
 class AuthOnlyHandler(AuthHandler):
@@ -1006,18 +690,18 @@ class AuthOnlyHandler(AuthHandler):
         m.add_string(method)
         # Caller usually has more to say, such as injecting password, key etc
         finish_message(m)
-        # TODO 4.0: seems odd to have the client handle the lock and not
-        # Transport; that _may_ have been an artifact of allowing user
-        # threading event injection? Regardless, we don't want to move _this_
-        # locking into Transport._send_message now, because lots of other
-        # untouched code also uses that method and we might end up
+        # TODO (backwards incompat): seems odd to have the client handle the
+        # lock and not Transport; that _may_ have been an artifact of allowing
+        # user threading event injection? Regardless, we don't want to move
+        # _this_ locking into Transport._send_message now, because lots of
+        # other untouched code also uses that method and we might end up
         # double-locking (?) but 4.0 would be a good time to revisit.
         with self.transport.lock:
             self.transport._send_message(m)
         # We have cut out the higher level event args, but self.auth_event is
         # still required for self.wait_for_response to function correctly (it's
         # the mechanism used by the auth success/failure handlers, the abort
-        # handler, and a few other spots like in gssapi.
+        # handler, and a few other spots.
         # TODO: interestingly, wait_for_response itself doesn't actually
         # enforce that its event argument and self.auth_event are the same...
         self.auth_event = threading.Event()
@@ -1027,6 +711,8 @@ class AuthOnlyHandler(AuthHandler):
         return self.send_auth_request(username, "none")
 
     def auth_publickey(self, username, key):
+        # NOTE: key_type here may be just key type ("rsa-sha2-256") or may be
+        # the cert form if cert was loaded ("ssh-rsa-cert-v01@openssh.com")
         key_type, bits = self._get_key_type_and_bits(key)
         algorithm = self._finalize_pubkey_algorithm(key_type)
         blob = self._get_session_blob(
@@ -1075,18 +761,3 @@ class AuthOnlyHandler(AuthHandler):
             m.add_string(submethods)
 
         return self.send_auth_request(username, "keyboard-interactive", finish)
-
-    # NOTE: not strictly 'auth only' related, but allows users to opt-in.
-    def _choose_fallback_pubkey_algorithm(self, key_type, my_algos):
-        msg = "Server did not send a server-sig-algs list; defaulting to something in our preferred algorithms list"  # noqa
-        self._log(DEBUG, msg)
-        noncert_key_type = key_type.replace("-cert-v01@openssh.com", "")
-        if key_type in my_algos or noncert_key_type in my_algos:
-            actual = key_type if key_type in my_algos else noncert_key_type
-            msg = f"Current key type, {actual!r}, is in our preferred list; using that"  # noqa
-            algo = actual
-        else:
-            algo = my_algos[0]
-            msg = f"{key_type!r} not in our list - trying first list item instead, {algo!r}"  # noqa
-        self._log(DEBUG, msg)
-        return algo

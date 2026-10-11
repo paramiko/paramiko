@@ -27,9 +27,9 @@ import os
 import re
 import shlex
 import socket
+from functools import partial
 from hashlib import sha1
 from io import StringIO
-from functools import partial
 
 invoke, invoke_import_error = None, None
 try:
@@ -37,8 +37,7 @@ try:
 except ImportError as e:
     invoke_import_error = e
 
-from .ssh_exception import CouldNotCanonicalize, ConfigParseError
-
+from .ssh_exception import ConfigParseError, CouldNotCanonicalize
 
 SSH_PORT = 22
 
@@ -149,11 +148,11 @@ class SSHConfig:
                 self._config.append(context)
                 context = {"config": {}}
                 if key == "host":
-                    # TODO 4.0: make these real objects or at least name this
-                    # "hosts" to acknowledge it's an iterable. (Doing so prior
-                    # to 3.0, despite it being a private API, feels bad -
-                    # surely such an old codebase has folks actually relying on
-                    # these keys.)
+                    # TODO (backwards incompat): make these real objects or at
+                    # least name this "hosts" to acknowledge it's an iterable.
+                    # (Doing so prior to 3.0, despite it being a private API,
+                    # feels bad - surely such an old codebase has folks
+                    # actually relying on these keys.)
                     context["host"] = self._get_hosts(value)
                 else:
                     context["matches"] = self._get_matches(value)
@@ -446,6 +445,7 @@ class SSHConfig:
         # The actual tokens!
         replacements = {
             # TODO: %%???
+            # TODO: sha1 bad / this is offspec from rfc/openssh
             "%C": sha1(tohash.encode()).hexdigest(),
             "%d": homedir,
             "%h": configured_hostname,

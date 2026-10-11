@@ -21,7 +21,7 @@ html_sidebars = {
 }
 
 # Everything intersphinx's to Python
-intersphinx_mapping = {"python": ("https://docs.python.org/3.6/", None)}
+intersphinx_mapping = {"python": ("https://docs.python.org/3/", None)}
 
 # Regular settings
 project = "Paramiko"

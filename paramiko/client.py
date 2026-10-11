@@ -20,26 +20,25 @@
 SSH client & key policies
 """
 
-from binascii import hexlify
 import getpass
 import inspect
 import os
 import socket
 import warnings
+from binascii import hexlify
 from errno import ECONNREFUSED, EHOSTUNREACH
 
 from paramiko.agent import Agent
 from paramiko.common import DEBUG
 from paramiko.config import SSH_PORT
-from paramiko.dsskey import DSSKey
 from paramiko.ecdsakey import ECDSAKey
 from paramiko.ed25519key import Ed25519Key
 from paramiko.hostkeys import HostKeys
 from paramiko.rsakey import RSAKey
 from paramiko.ssh_exception import (
-    SSHException,
     BadHostKeyException,
     NoValidConnectionsError,
+    SSHException,
 )
 from paramiko.transport import Transport
 from paramiko.util import ClosingContextManager
@@ -202,7 +201,7 @@ class SSHClient(ClosingContextManager):
         addrinfos = socket.getaddrinfo(
             hostname, port, socket.AF_UNSPEC, socket.SOCK_STREAM
         )
-        for (family, socktype, proto, canonname, sockaddr) in addrinfos:
+        for family, socktype, proto, canonname, sockaddr in addrinfos:
             if socktype == socket.SOCK_STREAM:
                 yield family, sockaddr
                 guess = False
@@ -227,14 +226,9 @@ class SSHClient(ClosingContextManager):
         look_for_keys=True,
         compress=False,
         sock=None,
-        gss_auth=False,
-        gss_kex=False,
-        gss_deleg_creds=True,
-        gss_host=None,
         banner_timeout=None,
         auth_timeout=None,
         channel_timeout=None,
-        gss_trust_dns=True,
         passphrase=None,
         disabled_algorithms=None,
         transport_factory=None,
@@ -260,8 +254,7 @@ class SSHClient(ClosingContextManager):
                 this to occur - *just* the certificate.)
 
             - Any key we can find through an SSH agent
-            - Any "id_rsa", "id_dsa" or "id_ecdsa" key discoverable in
-              ``~/.ssh/``
+            - Any ``id_*`` keys discoverable in ``~/.ssh/``
 
               - When OpenSSH-style public certificates exist that match an
                 existing such private key (so e.g. one has ``id_rsa`` and
@@ -298,17 +291,6 @@ class SSHClient(ClosingContextManager):
         :param socket sock:
             an open socket or socket-like object (such as a `.Channel`) to use
             for communication to the target host
-        :param bool gss_auth:
-            ``True`` if you want to use GSS-API authentication
-        :param bool gss_kex:
-            Perform GSS-API Key Exchange and user authentication
-        :param bool gss_deleg_creds: Delegate GSS-API client credentials or not
-        :param str gss_host:
-            The targets name in the kerberos database. default: hostname
-        :param bool gss_trust_dns:
-            Indicates whether or not the DNS is trusted to securely
-            canonicalize the name of the host being connected to (default
-            ``True``).
         :param float banner_timeout: an optional timeout (in seconds) to wait
             for the SSH banner to be presented.
         :param float auth_timeout: an optional timeout (in seconds) to wait for
@@ -320,10 +302,9 @@ class SSHClient(ClosingContextManager):
             argument of the same name.
         :param transport_factory:
             an optional callable which is handed a subset of the constructor
-            arguments (primarily those related to the socket, GSS
-            functionality, and algorithm selection) and generates a
-            `.Transport` instance to be used by this client. Defaults to
-            `.Transport.__init__`.
+            arguments (primarily those related to the socket and algorithm
+            selection) and generates a `.Transport` instance to be used by this
+            client. Defaults to `.Transport.__init__`.
         :param auth_strategy:
             an optional instance of `.AuthStrategy`, triggering use of this
             newer authentication mechanism instead of SSHClient's legacy auth
@@ -358,10 +339,7 @@ class SSHClient(ClosingContextManager):
             session.
 
         .. versionchanged:: 1.15
-            Added the ``banner_timeout``, ``gss_auth``, ``gss_kex``,
-            ``gss_deleg_creds`` and ``gss_host`` arguments.
-        .. versionchanged:: 2.3
-            Added the ``gss_trust_dns`` argument.
+            Added the ``banner_timeout`` argument.
         .. versionchanged:: 2.4
             Added the ``passphrase`` argument.
         .. versionchanged:: 2.6
@@ -412,18 +390,9 @@ class SSHClient(ClosingContextManager):
             transport_factory = Transport
         t = self._transport = transport_factory(
             sock,
-            gss_kex=gss_kex,
-            gss_deleg_creds=gss_deleg_creds,
             disabled_algorithms=disabled_algorithms,
         )
         t.use_compression(compress=compress)
-        t.set_gss_host(
-            # t.hostname may be None, but GSS-API requires a target name.
-            # Therefore use hostname as fallback.
-            gss_host=gss_host or hostname,
-            trust_dns=gss_trust_dns,
-            gssapi_requested=gss_auth or gss_kex,
-        )
         if self._log_channel is not None:
             t.set_log_channel(self._log_channel)
         if banner_timeout is not None:
@@ -441,31 +410,54 @@ class SSHClient(ClosingContextManager):
 
         our_server_keys = self._system_host_keys.get(server_hostkey_name)
         if our_server_keys is None:
+            # TODO: this is getting us the test suite _test_connection host key
+            # setup by virtue of that code doing tc.get_host_keys().add() (that
+            # method wraps self._host_keys)
+            # TODO: it should be analogous to running paramiko w/ a
+            # ~/.ssh/known_hosts file
             our_server_keys = self._host_keys.get(server_hostkey_name)
         if our_server_keys is not None:
+            # TODO: keytype needs to turn into one of the rsa-sha2 keys if it's
+            # an RSAKey.
+            # TODO: where is the equivalent on our server-side? hopefully the
+            # tests exercise that lol
+            # TODO: also, is it just me or does this [0] mean we literally do
+            # not actually implement real HostKeyAlgorithms agreement like
+            # ssh.c does?! eesh
             keytype = our_server_keys.keys()[0]
             sec_opts = t.get_security_options()
+            # TODO: clean this up a bit, but it does help some tests pass!
+            if keytype == "ssh-rsa":
+                if "rsa-sha2-512" in sec_opts.key_types:
+                    keytype = "rsa-sha2-512"
+                elif "rsa-sha2-256" in sec_opts.key_types:
+                    keytype = "rsa-sha2-256"
+                else:
+                    # TODO: vvv
+                    raise Exception(
+                        "TODO: REPLACEME with appropriate exception for 'what even is this key type in your known_hosts files?'"  # noqa
+                    )
             other_types = [x for x in sec_opts.key_types if x != keytype]
             sec_opts.key_types = [keytype] + other_types
 
         t.start_client(timeout=timeout)
 
-        # If GSS-API Key Exchange is performed we are not required to check the
-        # host key, because the host is authenticated via GSS-API / SSPI as
-        # well as our client.
-        if not self._transport.gss_kex_used:
-            server_key = t.get_remote_server_key()
-            if our_server_keys is None:
-                # will raise exception if the key is rejected
-                self._policy.missing_host_key(
-                    self, server_hostkey_name, server_key
-                )
-            else:
-                our_key = our_server_keys.get(server_key.get_name())
-                if our_key != server_key:
-                    if our_key is None:
-                        our_key = list(our_server_keys.values())[0]
-                    raise BadHostKeyException(hostname, server_key, our_key)
+        server_key = t.get_remote_server_key()
+        if our_server_keys is None:
+            # will raise exception if the key is rejected
+            self._policy.missing_host_key(
+                self, server_hostkey_name, server_key
+            )
+        else:
+            # TODO: this should 'just work' but dblcheck (HostKeys will be
+            # offering an ssh-rsa-via-sha2 key as "ssh-rsa" still, and the
+            # key would be RSAKey whose .get_name would still say
+            # "ssh-rsa")
+            our_key = our_server_keys.get(server_key.get_name())
+            if our_key != server_key:
+                if our_key is None:
+                    our_key = list(our_server_keys.values())[0]
+                raise BadHostKeyException(hostname, server_key, our_key)
 
         if username is None:
             username = getpass.getuser()
@@ -489,10 +481,6 @@ class SSHClient(ClosingContextManager):
             key_filenames,
             allow_agent,
             look_for_keys,
-            gss_auth,
-            gss_kex,
-            gss_deleg_creds,
-            t.gss_host,
             passphrase,
         )
 
@@ -657,10 +645,6 @@ class SSHClient(ClosingContextManager):
         key_filenames,
         allow_agent,
         look_for_keys,
-        gss_auth,
-        gss_kex,
-        gss_deleg_creds,
-        gss_host,
         passphrase,
     ):
         """
@@ -668,8 +652,7 @@ class SSHClient(ClosingContextManager):
 
             - The key(s) passed in, if one was passed in.
             - Any key we can find through an SSH agent (if allowed).
-            - Any "id_rsa", "id_dsa" or "id_ecdsa" key discoverable in ~/.ssh/
-              (if allowed).
+            - Any id_* key discoverable in ~/.ssh/ (if allowed).
             - Plain username/password auth, if a password was given.
 
         (The password might be needed to unlock a private key [if 'passphrase'
@@ -682,27 +665,6 @@ class SSHClient(ClosingContextManager):
         two_factor_types = {"keyboard-interactive", "password"}
         if passphrase is None and password is not None:
             passphrase = password
-
-        # If GSS-API support and GSS-PI Key Exchange was performed, we attempt
-        # authentication with gssapi-keyex.
-        if gss_kex and self._transport.gss_kex_used:
-            try:
-                self._transport.auth_gssapi_keyex(username)
-                return
-            except Exception as e:
-                saved_exception = e
-
-        # Try GSS-API authentication (gssapi-with-mic) only if GSS-API Key
-        # Exchange is not performed, because if we use GSS-API for the key
-        # exchange, there is already a fully established GSS-API context, so
-        # why should we do that again?
-        if gss_auth:
-            try:
-                return self._transport.auth_gssapi_with_mic(
-                    username, gss_host, gss_deleg_creds
-                )
-            except Exception as e:
-                saved_exception = e
 
         if pkey is not None:
             try:
@@ -723,9 +685,9 @@ class SSHClient(ClosingContextManager):
 
         if not two_factor:
             for key_filename in key_filenames:
-                # TODO 4.0: leverage PKey.from_path() if we don't end up just
-                # killing SSHClient entirely
-                for pkey_class in (RSAKey, DSSKey, ECDSAKey, Ed25519Key):
+                # TODO (backwards incompat): leverage PKey.from_path() if we
+                # don't end up just killing SSHClient entirely
+                for pkey_class in (RSAKey, ECDSAKey, Ed25519Key):
                     try:
                         key = self._key_from_filepath(
                             key_filename, pkey_class, passphrase
@@ -765,7 +727,6 @@ class SSHClient(ClosingContextManager):
 
             for keytype, name in [
                 (RSAKey, "rsa"),
-                (DSSKey, "dsa"),
                 (ECDSAKey, "ecdsa"),
                 (Ed25519Key, "ed25519"),
             ]:

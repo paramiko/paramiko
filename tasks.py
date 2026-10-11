@@ -1,13 +1,14 @@
 import os
-from pathlib import Path
 from os.path import join
-from shutil import rmtree, copytree
+from pathlib import Path
+from shutil import copytree, rmtree
 
-from invoke import Collection, task
 from invocations import checks
-from invocations.docs import docs, www, sites, watch_docs
-from invocations.packaging.release import ns as release_coll, publish
+from invocations.docs import docs, sites, watch_docs, www
+from invocations.packaging.release import ns as release_coll
+from invocations.packaging.release import publish
 from invocations.testing import count_errors
+from invoke import Collection, task
 
 
 # TODO: this screams out for the invoke missing-feature of "I just wrap task X,
@@ -97,8 +98,8 @@ def guard(ctx, opts=""):
 # Until we stop bundling docs w/ releases. Need to discover use cases first.
 # TODO: would be nice to tie this into our own version of build() too, but
 # still have publish() use that build()...really need to try out classes!
-# TODO 4.0: I'd like to just axe the 'built docs in sdist', none of my other
-# projects do it.
+# TODO (backwards incompat): I'd like to just axe the 'built docs in sdist',
+# none of my other projects do it.
 @task
 def publish_(
     ctx, sdist=True, wheel=True, sign=False, dry_run=False, index=None
@@ -158,6 +159,7 @@ ns.configure(
                 www.configuration()["sphinx"]["source"], "changelog.rst"
             ),
         },
+        "blacken": {"find_opts": r"-and -not -path '*.cci_pycache*'"},
         "docs": {"browse": "remote"},
     }
 )

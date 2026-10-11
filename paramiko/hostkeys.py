@@ -17,19 +17,17 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
 
 
-from base64 import encodebytes, decodebytes
 import binascii
 import os
 import re
-
+from base64 import decodebytes, encodebytes
 from collections.abc import MutableMapping
 from hashlib import sha1
 from hmac import HMAC
 
-
 from paramiko.pkey import PKey, UnknownKeyType
-from paramiko.util import get_logger, constant_time_bytes_eq, b, u
 from paramiko.ssh_exception import SSHException
+from paramiko.util import b, constant_time_bytes_eq, get_logger, u
 
 
 class HostKeys(MutableMapping):
@@ -62,7 +60,7 @@ class HostKeys(MutableMapping):
         ``(hostname, keytype)`` pair will be replaced.
 
         :param str hostname: the hostname (or IP) to add
-        :param str keytype: key type (``"ssh-rsa"`` or ``"ssh-dss"``)
+        :param str keytype: key type (in ``"ssh-<type>"`` format)
         :param .PKey key: the key to add
         """
         for e in self._entries:
@@ -126,7 +124,7 @@ class HostKeys(MutableMapping):
         """
         Find a hostkey entry for a given hostname or IP.  If no entry is found,
         ``None`` is returned.  Otherwise a dictionary of keytype to key is
-        returned.  The keytype will be either ``"ssh-rsa"`` or ``"ssh-dss"``.
+        returned.
 
         :param str hostname: the hostname (or IP) to lookup
         :return: dict of `str` -> `.PKey` keys associated with this host
@@ -361,8 +359,9 @@ class HostKeyEntry:
         try:
             return cls(names, PKey.from_type_string(key_type, key_bytes))
         except UnknownKeyType:
-            # TODO 4.0: consider changing HostKeys API so this just raises
-            # naturally and the exception is muted higher up in the stack?
+            # TODO (backwards incompat): consider changing HostKeys API so this
+            # just raises naturally and the exception is muted higher up in the
+            # stack?
             log.info("Unable to handle key of type {}".format(key_type))
             return None
 

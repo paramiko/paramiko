@@ -8,8 +8,8 @@ Replaces certain parts of `.SSHClient`. For a concrete implementation, see the
 from collections import namedtuple
 
 from .agent import AgentKey
-from .util import get_logger
 from .ssh_exception import AuthenticationException
+from .util import get_logger
 
 
 class AuthSource:
@@ -81,10 +81,11 @@ class Password(AuthSource):
         return transport.auth_password(self.username, password)
 
 
-# TODO 4.0: twiddle this, or PKey, or both, so they're more obviously distinct.
-# TODO 4.0: the obvious is to make this more wordy (PrivateKeyAuth), the
-# minimalist approach might be to rename PKey to just Key (esp given all the
-# subclasses are WhateverKey and not WhateverPKey)
+# TODO (backwards incompat): twiddle this, or PKey, or both, so they're more
+# obviously distinct.
+# TODO (backwards incompat): the obvious is to make this more wordy
+# (PrivateKeyAuth), the minimalist approach might be to rename PKey to just Key
+# (esp given all the subclasses are WhateverKey and not WhateverPKey)
 class PrivateKey(AuthSource):
     """
     Essentially a mixin for private keys.
@@ -156,6 +157,7 @@ class OnDiskPrivateKey(PrivateKey):
 
 SourceResult = namedtuple("SourceResult", ["source", "result"])
 
+
 # TODO: tempting to make this an OrderedDict, except the keys essentially want
 # to be rich objects (AuthSources) which do not make for useful user indexing?
 # TODO: members being vanilla tuples is pretty old-school/expedient; they
@@ -210,7 +212,7 @@ class AuthResult(list):
         )
 
 
-# TODO 4.0: descend from SSHException or even just Exception
+# TODO (backwards incompat): descend from SSHException or even just Exception
 class AuthFailure(AuthenticationException):
     """
     Basic exception wrapping an `AuthResult` indicating overall auth failure.

@@ -14,17 +14,17 @@
 # along with Paramiko; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
 
-import bcrypt
+from typing import Union
 
+import bcrypt
+import nacl.signing
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.ciphers import Cipher
 
-import nacl.signing
-
 from paramiko.message import Message
-from paramiko.pkey import PKey, OPENSSH_AUTH_MAGIC, _unpad_openssh
+from paramiko.pkey import OPENSSH_AUTH_MAGIC, PKey, _unpad_openssh
+from paramiko.ssh_exception import PasswordRequiredException, SSHException
 from paramiko.util import b
-from paramiko.ssh_exception import SSHException, PasswordRequiredException
 
 
 class Ed25519Key(PKey):
@@ -45,7 +45,7 @@ class Ed25519Key(PKey):
         self, msg=None, data=None, filename=None, password=None, file_obj=None
     ):
         self.public_blob = None
-        verifying_key = signing_key = None
+        self._verifying_key, self._signing_key = None, None
         if msg is None and data is not None:
             msg = Message(data)
         if msg is not None:
@@ -54,7 +54,7 @@ class Ed25519Key(PKey):
                 key_type=self.name,
                 cert_type="ssh-ed25519-cert-v01@openssh.com",
             )
-            verifying_key = nacl.signing.VerifyKey(msg.get_binary())
+            self._verifying_key = nacl.signing.VerifyKey(msg.get_binary())
         elif filename is not None:
             with open(filename, "r") as f:
                 pkformat, data = self._read_private_key("OPENSSH", f)
@@ -62,13 +62,10 @@ class Ed25519Key(PKey):
             pkformat, data = self._read_private_key("OPENSSH", file_obj)
 
         if filename or file_obj:
-            signing_key = self._parse_signing_key_data(data, password)
+            self._signing_key = self._parse_signing_key_data(data, password)
 
-        if signing_key is None and verifying_key is None:
+        if self._signing_key is None and self._verifying_key is None:
             raise ValueError("need a key")
-
-        self._signing_key = signing_key
-        self._verifying_key = verifying_key
 
     def _parse_signing_key_data(self, data, password):
         from paramiko.transport import Transport
@@ -167,24 +164,19 @@ class Ed25519Key(PKey):
         return signing_keys[0]
 
     def asbytes(self):
-        if self.can_sign():
-            v = self._signing_key.verify_key
-        else:
-            v = self._verifying_key
+        v = self.verifying_key
+        # Handle not-fully-initialized situations gracefully
+        my_bytes = v.encode() if v is not None else b""
         m = Message()
         m.add_string(self.name)
-        m.add_string(v.encode())
+        m.add_string(my_bytes)
         return m.asbytes()
 
     @property
     def _fields(self):
-        if self.can_sign():
-            v = self._signing_key.verify_key
-        else:
-            v = self._verifying_key
-        return (self.get_name(), v)
+        return (self.get_name(), self.verifying_key)
 
-    # TODO 4.0: remove
+    # TODO (backwards incompat): remove
     def get_name(self):
         return self.name
 
@@ -193,6 +185,17 @@ class Ed25519Key(PKey):
 
     def can_sign(self):
         return self._signing_key is not None
+
+    def can_verify(self):
+        return self._verifying_key is not None
+
+    @property
+    def verifying_key(self) -> Union[nacl.signing.VerifyKey, None]:
+        if self.can_sign():
+            return self._signing_key.verify_key
+        elif self.can_verify():
+            return self._verifying_key
+        return None
 
     def sign_ssh_data(self, data, algorithm=None):
         m = Message()

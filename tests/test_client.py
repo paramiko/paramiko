@@ -20,7 +20,6 @@
 Some unit tests for SSHClient.
 """
 
-
 import gc
 import os
 import platform
@@ -31,25 +30,21 @@ import unittest
 import warnings
 import weakref
 from tempfile import mkstemp
+from unittest.mock import patch
 
 import pytest
 from pytest_relaxed import raises
-from unittest.mock import patch, Mock
 
 import paramiko
 from paramiko import SSHClient
 from paramiko.pkey import PublicBlob
-from paramiko.ssh_exception import SSHException, AuthenticationException
+from paramiko.ssh_exception import AuthenticationException, SSHException
 
-from ._util import _support, requires_sha1_signing, slow
-
-
-requires_gss_auth = unittest.skipUnless(
-    paramiko.GSS_AUTH_AVAILABLE, "GSS auth not available"
-)
+from ._util import _support, slow
 
 FINGERPRINTS = {
-    "ssh-dss": b"\x44\x78\xf0\xb9\xa2\x3c\xc5\x18\x20\x09\xff\x75\x5b\xc1\xd2\x6c",  # noqa
+    # TODO: this should still be ok as it's specifically re: key
+    # type/identity.
     "ssh-rsa": b"\x60\x73\x38\x44\xcb\x51\x86\x65\x7f\xde\xda\xa2\x2b\x5a\x57\xd5",  # noqa
     "ecdsa-sha2-nistp256": b"\x25\x19\xeb\x55\xe6\xa1\x47\xff\x4f\x38\xd2\x75\x6f\xa5\xd5\x60",  # noqa
     "ssh-ed25519": b'\xb3\xd5"\xaa\xf9u^\xe8\xcd\x0e\xea\x02\xb9)\xa2\x80',
@@ -128,6 +123,8 @@ class ClientTest(unittest.TestCase):
         )
         self.event = threading.Event()
         self.kill_event = threading.Event()
+        host_key = paramiko.RSAKey.from_private_key_file(_support("rsa.key"))
+        self.public_host_key = paramiko.RSAKey(data=host_key.asbytes())
 
     def tearDown(self):
         # Shut down client Transport
@@ -194,13 +191,18 @@ class ClientTest(unittest.TestCase):
             run_kwargs[key] = kwargs.pop(key, None)
         # Server setup
         threading.Thread(target=self._run, kwargs=run_kwargs).start()
-        host_key = paramiko.RSAKey.from_private_key_file(_support("rsa.key"))
-        public_host_key = paramiko.RSAKey(data=host_key.asbytes())
 
         # Client setup
         self.tc = SSHClient()
+        # Pretend we have a known_hosts file or similar
         self.tc.get_host_keys().add(
-            f"[{self.addr}]:{self.port}", "ssh-rsa", public_host_key
+            f"[{self.addr}]:{self.port}",
+            # TODO: so, this is 'keytype', which is still allowed to be
+            # ssh-rsa, as it "comes from the key itself" per `man sshd`.
+            # TODO: but q is, is part of our pipeline still conflating keytype
+            # with signature algorithm? seems likely?
+            "ssh-rsa",
+            self.public_host_key,
         )
 
         # Actual connection
@@ -214,7 +216,6 @@ class ClientTest(unittest.TestCase):
             self.connect_kwargs["username"], self.ts.get_username()
         )
         self.assertEqual(True, self.ts.is_authenticated())
-        self.assertEqual(False, self.tc.get_transport().gss_kex_used)
 
         # Command execution functions?
         stdin, stdout, stderr = self.tc.exec_command("yes")
@@ -242,56 +243,54 @@ class ClientTest(unittest.TestCase):
 
 
 class SSHClientTest(ClientTest):
-    @requires_sha1_signing
     def test_client(self):
         """
         verify that the SSHClient stuff works too.
         """
         self._test_connection(password="pygmalion")
 
-    @requires_sha1_signing
-    def test_client_dsa(self):
-        """
-        verify that SSHClient works with a DSA key.
-        """
-        self._test_connection(key_filename=_support("dss.key"))
-
-    @requires_sha1_signing
     def test_client_rsa(self):
         """
         verify that SSHClient works with an RSA key.
         """
         self._test_connection(key_filename=_support("rsa.key"))
 
-    @requires_sha1_signing
     def test_client_ecdsa(self):
         """
         verify that SSHClient works with an ECDSA key.
         """
         self._test_connection(key_filename=_support("ecdsa-256.key"))
 
-    @requires_sha1_signing
     def test_client_ed25519(self):
         self._test_connection(key_filename=_support("ed25519.key"))
 
-    @requires_sha1_signing
     def test_multiple_key_files(self):
         """
         verify that SSHClient accepts and tries multiple key files.
         """
         # This is dumb :(
         types_ = {
+            # TODO: this is just about key identity so should be ok
             "rsa": "ssh-rsa",
-            "dss": "ssh-dss",
+            "ed25519": "ssh-ed25519",
             "ecdsa": "ecdsa-sha2-nistp256",
         }
         # Various combos of attempted & valid keys
         # TODO: try every possible combo using itertools functions
         # TODO: use new key(s) fixture(s)
         for attempt, accept in (
-            (["rsa", "dss"], ["dss"]),  # Original test #3
-            (["dss", "rsa"], ["dss"]),  # Ordering matters sometimes, sadly
-            (["dss", "rsa", "ecdsa-256"], ["dss"]),  # Try ECDSA but fail
+            (
+                ["rsa", "ed25519"],
+                ["ed25519"],
+            ),  # Original test #3 (but s/DSA/Ed25519/)
+            (
+                ["ed25519", "rsa"],
+                ["ed25519"],
+            ),  # Ordering matters sometimes, sadly
+            (
+                ["ed25519", "rsa", "ecdsa-256"],
+                ["ed25519"],
+            ),  # Try ECDSA but fail
             (["rsa", "ecdsa-256"], ["ecdsa"]),  # ECDSA success
         ):
             try:
@@ -307,7 +306,6 @@ class SSHClientTest(ClientTest):
                 self.tearDown()
                 self.setUp()
 
-    @requires_sha1_signing
     def test_multiple_key_files_failure(self):
         """
         Expect failure when multiple keys in play and none are accepted
@@ -321,20 +319,18 @@ class SSHClientTest(ClientTest):
             allowed_keys=["ecdsa-sha2-nistp256"],
         )
 
-    @requires_sha1_signing
     def test_certs_allowed_as_key_filename_values(self):
         # NOTE: giving cert path here, not key path. (Key path test is below.
         # They're similar except for which path is given; the expected auth and
         # server-side behavior is 100% identical.)
         # NOTE: only bothered whipping up one cert per overall class/family.
-        for type_ in ("rsa", "dss", "ecdsa-256", "ed25519"):
+        for type_ in ("rsa", "ecdsa-256", "ed25519"):
             key_path = _support(f"{type_}.key")
             self._test_connection(
                 key_filename=key_path,
                 public_blob=PublicBlob.from_file(f"{key_path}-cert.pub"),
             )
 
-    @requires_sha1_signing
     def test_certs_implicitly_loaded_alongside_key_filename_keys(self):
         # NOTE: a regular test_connection() w/ rsa.key would incidentally
         # test this (because test_xxx.key-cert.pub exists) but incidental tests
@@ -342,41 +338,18 @@ class SSHClientTest(ClientTest):
         # about the server-side key object's public blob. Thus, we can prove
         # that a specific cert was found, along with regular authorization
         # succeeding proving that the overall flow works.
-        for type_ in ("rsa", "dss", "ecdsa-256", "ed25519"):
+        for type_ in ("rsa", "ecdsa-256", "ed25519"):
             key_path = _support(f"{type_}.key")
             self._test_connection(
                 key_filename=key_path,
                 public_blob=PublicBlob.from_file(f"{key_path}-cert.pub"),
             )
 
-    def _cert_algo_test(self, ver, alg):
-        # Issue #2017; see auth_handler.py
-        self.connect_kwargs["username"] = "somecertuser"  # neuter pw auth
-        self._test_connection(
-            # NOTE: SSHClient is able to take either the key or the cert & will
-            # set up its internals as needed
-            key_filename=_support("rsa.key-cert.pub"),
-            server_name="SSH-2.0-OpenSSH_{}".format(ver),
-        )
-        assert (
-            self.tc._transport._agreed_pubkey_algorithm
-            == "{}-cert-v01@openssh.com".format(alg)
-        )
-
-    @requires_sha1_signing
-    def test_old_openssh_needs_ssh_rsa_for_certs_not_rsa_sha2(self):
-        self._cert_algo_test(ver="7.7", alg="ssh-rsa")
-
-    @requires_sha1_signing
-    def test_newer_openssh_uses_rsa_sha2_for_certs_not_ssh_rsa(self):
-        # NOTE: 512 happens to be first in our list and is thus chosen
-        self._cert_algo_test(ver="7.8", alg="rsa-sha2-512")
-
     def test_default_key_locations_trigger_cert_loads_if_found(self):
         # TODO: what it says on the tin: ~/.ssh/id_rsa tries to load
         # ~/.ssh/id_rsa-cert.pub. Right now no other tests actually test that
         # code path (!) so we're punting too, sob.
-        pass
+        pytest.skip()
 
     def test_auto_add_policy(self):
         """
@@ -417,6 +390,8 @@ class SSHClientTest(ClientTest):
 
         host_id = f"[{self.addr}]:{self.port}"
 
+        # TODO: this should still be okay, host keys -> keytype -> is not
+        # directly tied to algo -> but need to see if guts do that
         client.get_host_keys().add(host_id, "ssh-rsa", public_host_key)
         assert len(client.get_host_keys()) == 1
         assert public_host_key == client.get_host_keys()[host_id]["ssh-rsa"]
@@ -455,7 +430,8 @@ class SSHClientTest(ClientTest):
 
         # force a collection to see whether the SSHClient object is deallocated
         # 2 GCs are needed on PyPy, time is needed for Python 3
-        # TODO 4.0: this still fails randomly under CircleCI under Python 3.7,
+        # TODO (backwards incompat): this still fails randomly under CircleCI
+        # under Python 3.7,
         # 3.8 at the very least. bumped sleep 0.3->1.0s but the underlying
         # functionality should get reevaluated now we've dropped Python 2.
         time.sleep(1)
@@ -512,13 +488,15 @@ class SSHClientTest(ClientTest):
 
         self.tc = SSHClient()
         self.tc.get_host_keys().add(
-            f"[{self.addr}]:{self.port}", "ssh-rsa", public_host_key
+            f"[{self.addr}]:{self.port}",
+            # TODO: hostkey keytype == ok-ish
+            "ssh-rsa",
+            public_host_key,
         )
         # Connect with a half second banner timeout.
         kwargs = dict(self.connect_kwargs, banner_timeout=0.5)
         self.assertRaises(paramiko.SSHException, self.tc.connect, **kwargs)
 
-    @requires_sha1_signing
     def test_auth_trickledown(self):
         """
         Failed key auth doesn't prevent subsequent pw auth from succeeding
@@ -539,7 +517,6 @@ class SSHClientTest(ClientTest):
         )
         self._test_connection(**kwargs)
 
-    @requires_sha1_signing
     @slow
     def test_auth_timeout(self):
         """
@@ -577,22 +554,6 @@ class SSHClientTest(ClientTest):
 
         self.assertRaises(paramiko.SSHException, self.tc.open_sftp)
 
-    @requires_gss_auth
-    def test_auth_trickledown_gsskex(self):
-        """
-        Failed gssapi-keyex doesn't prevent subsequent key from succeeding
-        """
-        kwargs = dict(gss_kex=True, key_filename=[_support("rsa.key")])
-        self._test_connection(**kwargs)
-
-    @requires_gss_auth
-    def test_auth_trickledown_gssauth(self):
-        """
-        Failed gssapi-with-mic doesn't prevent subsequent key from succeeding
-        """
-        kwargs = dict(gss_auth=True, key_filename=[_support("rsa.key")])
-        self._test_connection(**kwargs)
-
     def test_reject_policy(self):
         """
         verify that SSHClient's RejectPolicy works.
@@ -606,27 +567,6 @@ class SSHClientTest(ClientTest):
             paramiko.SSHException,
             self.tc.connect,
             password="pygmalion",
-            **self.connect_kwargs,
-        )
-
-    @requires_gss_auth
-    def test_reject_policy_gsskex(self):
-        """
-        verify that SSHClient's RejectPolicy works,
-        even if gssapi-keyex was enabled but not used.
-        """
-        # Test for a bug present in paramiko versions released before
-        # 2017-08-01
-        threading.Thread(target=self._run).start()
-
-        self.tc = SSHClient()
-        self.tc.set_missing_host_key_policy(paramiko.RejectPolicy())
-        self.assertEqual(0, len(self.tc.get_host_keys()))
-        self.assertRaises(
-            paramiko.SSHException,
-            self.tc.connect,
-            password="pygmalion",
-            gss_kex=True,
             **self.connect_kwargs,
         )
 
@@ -666,15 +606,14 @@ class SSHClientTest(ClientTest):
         host_key = paramiko.ECDSAKey.generate()
         self._client_host_key_bad(host_key)
 
-    @requires_sha1_signing
     def test_host_key_negotiation_2(self):
+        # TODO: this may now be too small for audit recco, dlbcheck
         host_key = paramiko.RSAKey.generate(2048)
         self._client_host_key_bad(host_key)
 
     def test_host_key_negotiation_3(self):
         self._client_host_key_good(paramiko.ECDSAKey, "ecdsa-256.key")
 
-    @requires_sha1_signing
     def test_host_key_negotiation_4(self):
         self._client_host_key_good(paramiko.RSAKey, "rsa.key")
 
@@ -689,7 +628,7 @@ class SSHClientTest(ClientTest):
         )
 
         self.event.wait(1.0)
-        self.assertTrue(self.event.isSet())
+        self.assertTrue(self.event.is_set())
         self.assertTrue(self.ts.is_active())
 
     def test_update_environment(self):
@@ -735,55 +674,28 @@ class SSHClientTest(ClientTest):
         client.set_missing_host_key_policy(paramiko.AutoAddPolicy)
         assert isinstance(client._policy, paramiko.AutoAddPolicy)
 
-    @patch("paramiko.client.Transport")
-    def test_disabled_algorithms_defaults_to_None(self, Transport):
-        SSHClient().connect("host", sock=Mock(), password="no")
-        assert Transport.call_args[1]["disabled_algorithms"] is None
+    def test_disabled_algorithms_defaults_to_None(self):
+        self._test_connection(password="pygmalion")
+        assert self.tc._transport.disabled_algorithms == {}
 
-    @patch("paramiko.client.Transport")
-    def test_disabled_algorithms_passed_directly_if_given(self, Transport):
-        SSHClient().connect(
-            "host",
-            sock=Mock(),
-            password="no",
-            disabled_algorithms={"keys": ["ssh-dss"]},
+    def test_disabled_algorithms_passed_directly_if_given(self):
+        self._test_connection(
+            password="pygmalion", disabled_algorithms={"keys": ["ed25519"]}
         )
-        call_arg = Transport.call_args[1]["disabled_algorithms"]
-        assert call_arg == {"keys": ["ssh-dss"]}
+        assert self.tc._transport.disabled_algorithms == {"keys": ["ed25519"]}
 
-    @patch("paramiko.client.Transport")
-    def test_transport_factory_defaults_to_Transport(self, Transport):
-        sock, kex, creds, algos = Mock(), Mock(), Mock(), Mock()
-        SSHClient().connect(
-            "host",
-            sock=sock,
-            password="no",
-            gss_kex=kex,
-            gss_deleg_creds=creds,
-            disabled_algorithms=algos,
-        )
-        Transport.assert_called_once_with(
-            sock, gss_kex=kex, gss_deleg_creds=creds, disabled_algorithms=algos
-        )
+    def test_transport_factory_defaults_to_Transport(self):
+        self._test_connection(password="pygmalion")
+        assert isinstance(self.tc._transport, paramiko.Transport)
 
-    @patch("paramiko.client.Transport")
-    def test_transport_factory_may_be_specified(self, Transport):
-        factory = Mock()
-        sock, kex, creds, algos = Mock(), Mock(), Mock(), Mock()
-        SSHClient().connect(
-            "host",
-            sock=sock,
-            password="no",
-            gss_kex=kex,
-            gss_deleg_creds=creds,
-            disabled_algorithms=algos,
-            transport_factory=factory,
+    def test_transport_factory_may_be_specified(self):
+        class MyTransport(paramiko.Transport):
+            pass
+
+        self._test_connection(
+            password="pygmalion", transport_factory=MyTransport
         )
-        factory.assert_called_once_with(
-            sock, gss_kex=kex, gss_deleg_creds=creds, disabled_algorithms=algos
-        )
-        # Safety check
-        assert not Transport.called
+        assert isinstance(self.tc._transport, MyTransport)
 
 
 class PasswordPassphraseTests(ClientTest):
@@ -792,7 +704,6 @@ class PasswordPassphraseTests(ClientTest):
     # instead of suffering a real connection cycle.
     # TODO: in that case, move the below to be part of an integration suite?
 
-    @requires_sha1_signing
     def test_password_kwarg_works_for_password_auth(self):
         # Straightforward / duplicate of earlier basic password test.
         self._test_connection(password="pygmalion")
@@ -800,12 +711,10 @@ class PasswordPassphraseTests(ClientTest):
     # TODO: more granular exception pending #387; should be signaling "no auth
     # methods available" because no key and no password
     @raises(SSHException)
-    @requires_sha1_signing
     def test_passphrase_kwarg_not_used_for_password_auth(self):
         # Using the "right" password in the "wrong" field shouldn't work.
         self._test_connection(passphrase="pygmalion")
 
-    @requires_sha1_signing
     def test_passphrase_kwarg_used_for_key_passphrase(self):
         # Straightforward again, with new passphrase kwarg.
         self._test_connection(
@@ -813,7 +722,6 @@ class PasswordPassphraseTests(ClientTest):
             passphrase="television",
         )
 
-    @requires_sha1_signing
     def test_password_kwarg_used_for_passphrase_when_no_passphrase_kwarg_given(
         self,
     ):  # noqa
@@ -824,7 +732,6 @@ class PasswordPassphraseTests(ClientTest):
         )
 
     @raises(AuthenticationException)  # TODO: more granular
-    @requires_sha1_signing
     def test_password_kwarg_not_used_for_passphrase_when_passphrase_kwarg_given(  # noqa
         self,
     ):

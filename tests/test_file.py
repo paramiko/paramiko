@@ -80,7 +80,7 @@ class BufferedFileTest(unittest.TestCase):
         self.assertEqual(f.readline(), "Second line.\n")
         # truncated line:
         self.assertEqual(f.readline(7), "Third l")
-        self.assertEqual(f.readline(), "ine.\n")
+        self.assertEqual(f.readline(), "ine.\n")  # codespell:ignore
         # newline should be detected and only the fourth line returned
         self.assertEqual(f.readline(39), "Fourth line.\n")
         self.assertEqual(f.readline(), "Final line non-terminated.")

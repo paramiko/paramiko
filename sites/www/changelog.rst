@@ -2,6 +2,164 @@
 Changelog
 =========
 
+- :bug:`2628` The SHA2 transition left `RSAKey.sign_ssh_data` incorrectly
+  trying to look up its default signature algorithm via the key type's name
+  string, which is still ``"ssh-rsa"``, and thus no longer a valid/implemented
+  choice (which would be one of ``"rsa-sha2-256[-cert...]"`` or
+  ``"rsa-sha2-512[-cert...]"``).
+
+  This went unnoticed because most calls to this method have decided on an
+  explicit signature algorithm during a protocol handshake and aren't relying
+  on an implicit default. To restore that ability, this method now defaults to
+  the strongest implemented algorithm, namely ``"rsa-sha2-512"``.
+
+  Thanks to ``@ultraplanet`` on GitHub for the report.
+- :feature:`-` Added support for the ``mlkem768x25519-sha256`` post-quantum
+  hybrid key exchange method described in
+  ``draft-ietf-sshm-mlkem-hybrid-kex``. It pairs ML-KEM-768 (FIPS 203) with
+  X25519 and is interoperable with OpenSSH 10.0+. The new method is enabled
+  automatically when the installed ``cryptography`` library exposes ML-KEM
+  (which requires OpenSSL 3.5+, AWS-LC, or BoringSSL); it is preferred over
+  the existing classical methods when available. See
+  `paramiko.kex_mlkem.KexMLKEM768X25519`.
+- :release:`5.0.0 <2026-05-09>`
+- :bug:`- major` Fix `Ed25519Key <paramiko.ed25519key.Ed25519Key>`'s internals
+  such that it no longer throws `AttributeError` during calls to ``__repr__``
+  when only partly initialized. This isn't a normal runtime problem (it only
+  happens inside error handling for fatal errors like "not a valid private
+  key") but was perennially complicating test failure diagnosis and similar
+  scenarios.
+- :support:`-` The `PKey <paramiko.pkey.PKey>` class family tree reorganized
+  the ``write_private_key`` and ``write_private_key_file`` methods; with other
+  recent changes, having individual implementations on the child classes made
+  no sense, so key writing is now implemented in `PKey <paramiko.pkey.PKey>`
+  itself and the included child classes such as `ECDSAKey
+  <paramiko.ecdsakey.ECDSAKey>` no longer define their own such methods,
+  instead simply exposing their underlying cryptographic private key objects as
+  ``.private_key``.
+- :feature:`-` Added a new, optional ``file_format`` keyword argument to
+  `PKey.write_private_key <paramiko.pkey.PKey.write_private_key>` and
+  `PKey.write_private_key_file <paramiko.pkey.PKey.write_private_key_file>` to
+  allow writing out OpenSSH-style private key files in addition to the legacy
+  PEM format.
+
+  .. warning::
+    While the default format remains PEM in Paramiko 5, future major releases
+    are likely to change that default to the OpenSSH format. We recommend
+    updating any key-writing code you have to be explicit now, to insulate
+    yourself from such an update.
+
+- :support:`-` Raised the minimum modulus size in
+  ``diffie-hellman-group-exchange-sha256`` key exchange from 1024 (the original
+  spec's minimum) to 2048 (the contemporary minimum according to :rfc:`9142`,
+  and matching a similar change by OpenSSH ten years ago in 7.2 / 2016).
+
+  .. warning::
+    This change may be backwards incompatible if you were targeting servers
+    supporting *only* this kex method and whose own maximum modulus size for
+    group-exchange was lower than 2048.
+
+- :support:`-` Removed GSSAPI support, as the current (buggy, no longer easily
+  testable in CI, poorly understood and not used by the core team)
+  implementation is SHA-1 based and no SHA-256 upgrade appeared to be
+  forthcoming from contributors.
+
+  We don't like removing functionality, but this feature has been on the rocks
+  for years and it makes sense to remove it as an insecure support burden. We
+  will definitely consider merging a SHA256-based replacement in the future if
+  a high-quality one appears.
+
+  Side note: the GSS related constants in ``paramiko/common.py`` have been left
+  in place as they are essentially mapping out known protocol numbers.
+
+  .. warning:: This change is backwards incompatible if you require GSS.
+
+- :support:`-` Removed support for key exchange using SHA-1, meaning the kex
+  methods ``diffie-hellman-group-exchange-sha1``,
+  ``diffie-hellman-group14-sha1``, and ``diffie-hellman-group1-sha1`` are now
+  gone. Implementing classes have been removed/merged/shuffled as required.
+
+  .. warning::
+    This change is backwards incompatible if you were still supporting old
+    systems that don't implement sha256/sha512 DH kex (or ECDH kex).
+
+- :support:`-` Removed support for verifying/signing with RSA keys using SHA-1
+  hashing. Generally, this means most cases where ``"ssh-rsa"`` was used as an
+  algorithm identifier (as opposed to a key material identifier) will no longer
+  accept that string as valid, and the relevant code that actually used eg
+  `hashes.SHA1` no longer does.
+
+  .. warning::
+    This change is backwards incompatible if you are stuck supporting legacy
+    systems with Paramiko that are unable to use SHA2-based signatures with RSA
+    keys (or other workarounds, such as switching from RSA keys to Ed25519
+    ones).
+
+- :bug:`- major` Added a ``password`` kwarg to `PKey.from_type_string
+  <paramiko.pkey.PKey.from_type_string>` so it can handle encrypted keys like
+  most other PKey constructors already could.
+- :support:`-` Renamed `PKey.from_path <paramiko.pkey.PKey.from_path>`'s
+  ``passphrase`` argument to ``password`` so it's consistent with all the other
+  methods of instantiating PKey objects.
+
+    .. warning::
+        This change is backwards incompatible if you were using this relatively
+        new constructor + were doing so to load encrypted keys.
+
+- :support:`-` Removed the ``demos/`` folder; they've become too big a support
+  burden and we've wanted to remove them for years.
+
+  Users who enjoyed the client-side demos should look at our wrapper library,
+  `Fabric <https://fabfile.org>`_.
+
+  We suspect the most-used demo was ``demos/demo-server.py`` and may consider
+  adding a variant of it to the actual Python package in future.
+
+- :release:`4.0.0 <2025-08-03>`
+- :support:`-` Administrivia update:
+
+  - dropped support for Python <3.9
+  - migrated packaging metadata and practices to use ``pyproject.toml``
+  - removed the now-vestigial ``ed25519`` packaging 'extra' (support for this
+    hasn't required additional dependencies in a number of releases now, just
+    the core ones)
+  - moved Invoke requirement to core dependencies, and removed
+    ``paramiko[invoke]`` from extras
+  - with those two changes, ``paramiko[all]`` becomes much less useful, and has
+    itself been axed
+  - removed the very old and wizened ``setup_helper.py`` which was only needed
+    on ancient (for this century) versions of macOS.
+  - removed ``paramiko.__all__``, as it was redundant (guessing it dated back
+    to some *very* old Python versions; anyone using ``import *`` these days -
+    shame! - should still be fine as we never *had* any 'private' members in
+    ``__all__`` and AFAICT that was the only reason ever to use it in the first
+    place (as ``import *`` skips names like ``_private``).
+
+- :support:`973` Removed support for the DSA (aka DSS) key algorithm, as it has
+  been badly outdated and insecure for a decade or more at this point, and was
+  recently completely removed from OpenSSH as well.
+
+  If you were still using DSA out of sheer inertia: we strongly recommend
+  upgrading to Ed25519 (or maybe ECDSA).
+
+  If you were still using DSA because of target hosts you do not control:
+  please continue using Paramiko 3.x.
+- :release:`3.5.1 <2025-02-03>`
+- :bug:`2490` Private key material is now explicitly 'unpadded' during
+  decryption, removing a reliance on some lax OpenSSL behavior & making us
+  compatible with future Cryptography releases. Patch courtesy of Alex Gaynor.
+- :release:`3.5.0 <2024-09-15>`
+- :feature:`982` (via :issue:`2444`, which was a rebase of :issue:`2157`) Add
+  support for AES-GCM encryption ciphers (128 and 256 bit variants). Thanks to
+  Alex Gaynor for the report (& for cryptography review), Shen Cheng for the
+  original PR, and Chris Mason for the updated PR; plus as usual to everyone
+  who tested the patches and reported their results!
+
+  This functionality has been tested in client mode against OpenSSH 9.0, 9.2,
+  and 9.6, as well as against a number of proprietary appliance SSH servers.
+- :bug:`-` Check for ``None`` transport members inside
+  `~paramiko.channel.Channel` when closing the channel; this likely doesn't
+  come up much in the real world, but was causing warnings in the test suite.
 - :release:`3.4.1 <2024-08-11>`
 - :release:`3.3.2 <2024-08-11>`
 - :bug:`2419` (fixed in :issue:`2421`) Massage our import of the TripleDES

@@ -961,7 +961,7 @@ class Channel(ClosingContextManager):
                 m = self._send_eof()
             finally:
                 self.lock.release()
-            if m is not None:
+            if m is not None and self.transport is not None:
                 self.transport._send_user_message(m)
 
     def shutdown_read(self):

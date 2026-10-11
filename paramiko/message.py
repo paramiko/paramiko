@@ -24,7 +24,7 @@ import struct
 from io import BytesIO
 
 from paramiko import util
-from paramiko.common import zero_byte, max_byte, one_byte
+from paramiko.common import max_byte, one_byte, zero_byte
 from paramiko.util import u
 
 
@@ -63,7 +63,7 @@ class Message:
         """
         return "paramiko.Message(" + repr(self.packet.getvalue()) + ")"
 
-    # TODO 4.0: just merge into __bytes__ (everywhere)
+    # TODO (backwards incompat): just merge into __bytes__ (everywhere)
     def asbytes(self):
         """
         Return the byte stream content of this Message, as a `bytes`.
@@ -162,8 +162,8 @@ class Message:
         """
         return util.inflate_long(self.get_binary())
 
-    # TODO 4.0: depending on where this is used internally or downstream, force
-    # users to specify get_binary instead and delete this.
+    # TODO (backwards incompat): depending on where this is used internally or
+    # downstream, force users to specify get_binary instead and delete this.
     def get_string(self):
         """
         Fetch a "string" from the stream.  This will actually be a `bytes`
@@ -172,8 +172,8 @@ class Message:
         """
         return self.get_bytes(self.get_int())
 
-    # TODO 4.0: also consider having this take over the get_string name, and
-    # remove this name instead.
+    # TODO (backwards incompat): also consider having this take over the
+    # get_string name, and remove this name instead.
     def get_text(self):
         """
         Fetch a Unicode string from the stream.

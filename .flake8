@@ -1,5 +1,5 @@
 [flake8]
-exclude = sites,.git,build,dist,demos
+exclude = sites,.git,build,dist,demos,.cci_pycache
 # NOTE: W503, E203 are concessions to black 18.0b5 and could be reinstated
 # later if fixed on that end.
 # NOTE: E722 seems to only have started popping up on move to flake8 3.6.0 from

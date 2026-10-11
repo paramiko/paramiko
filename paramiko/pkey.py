@@ -21,27 +21,31 @@ Common API for all public keys.
 """
 
 import base64
-from base64 import encodebytes, decodebytes
-from binascii import unhexlify
 import os
-from pathlib import Path
-from hashlib import md5, sha256
 import re
 import struct
+from base64 import decodebytes, encodebytes
+from binascii import unhexlify
+from hashlib import md5, sha256
+from io import RawIOBase
+from pathlib import Path
+from typing import NamedTuple, Optional, Union
 
 import bcrypt
-
 from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.primitives.ciphers import algorithms, modes, Cipher
-from cryptography.hazmat.primitives import asymmetric
+from cryptography.hazmat.primitives import asymmetric, padding, serialization
+from cryptography.hazmat.primitives.asymmetric.ec import (
+    EllipticCurvePrivateKey,
+)
+from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 
 from paramiko import util
-from paramiko.util import u, b
 from paramiko.common import o600
-from paramiko.ssh_exception import SSHException, PasswordRequiredException
 from paramiko.message import Message
-
+from paramiko.ssh_exception import PasswordRequiredException, SSHException
+from paramiko.util import b, u
 
 # TripleDES is moving from `cryptography.hazmat.primitives.ciphers.algorithms`
 # in cryptography>=43.0.0 to `cryptography.hazmat.decrepit.ciphers.algorithms`
@@ -88,6 +92,29 @@ class UnknownKeyType(Exception):
         return f"UnknownKeyType(type={self.key_type!r}, bytes=<{len(self.key_bytes)}>)"  # noqa
 
 
+class FileFormat(NamedTuple):
+    format: serialization.PrivateFormat
+    encoding: serialization.Encoding
+
+
+# While these have no apparent interface/protocol within Cryptography, all can
+# be duck typed as eg "having .private_bytes", which we have always relied upon
+# implicitly since the switch to this library.
+PrivateKey = Union[RSAPrivateKey, EllipticCurvePrivateKey, Ed25519PrivateKey]
+
+# NOTE: considered making these part of an Enum but that was a bit
+# annoying/fussy, so this is an okay middle ground?
+PEM = FileFormat(
+    format=serialization.PrivateFormat.TraditionalOpenSSL,
+    encoding=serialization.Encoding.PEM,
+)
+OPENSSH = FileFormat(
+    format=serialization.PrivateFormat.OpenSSH,
+    encoding=serialization.Encoding.PEM,
+)
+# TODO: others as desired?
+
+
 class PKey:
     """
     Base class for public keys.
@@ -119,17 +146,16 @@ class PKey:
     }
     _PRIVATE_KEY_FORMAT_ORIGINAL = 1
     _PRIVATE_KEY_FORMAT_OPENSSH = 2
-    BEGIN_TAG = re.compile(
-        r"^-{5}BEGIN (RSA|DSA|EC|OPENSSH) PRIVATE KEY-{5}\s*$"
-    )
-    END_TAG = re.compile(r"^-{5}END (RSA|DSA|EC|OPENSSH) PRIVATE KEY-{5}\s*$")
+    BEGIN_TAG = re.compile(r"^-{5}BEGIN (RSA|EC|OPENSSH) PRIVATE KEY-{5}\s*$")
+    END_TAG = re.compile(r"^-{5}END (RSA|EC|OPENSSH) PRIVATE KEY-{5}\s*$")
 
     @staticmethod
-    def from_path(path, passphrase=None):
+    def from_path(path, password: Optional[str] = None):
         """
         Attempt to instantiate appropriate key subclass from given file path.
 
-        :param Path path: The path to load (may also be a `str`).
+        :param pathlib.Path path: The path to load (may also be a `str`).
+        :param str password: Optional decryption password.
 
         :returns:
             A `PKey` subclass instance.
@@ -138,11 +164,13 @@ class PKey:
             `UnknownKeyType`, if our crypto backend doesn't know this key type.
 
         .. versionadded:: 3.2
+        .. versionchanged:: 5.0
+            Renamed ``passphrase`` argument to ``password`` for consistency
+            with older methods.
         """
-        # TODO: make sure sphinx is reading Path right in param list...
 
         # Lazy import to avoid circular import issues
-        from paramiko import DSSKey, RSAKey, Ed25519Key, ECDSAKey
+        from paramiko import ECDSAKey, Ed25519Key, RSAKey
 
         # Normalize to string, as cert suffix isn't quite an extension, so
         # pathlib isn't useful for this.
@@ -165,12 +193,12 @@ class PKey:
         # Like OpenSSH, try modern/OpenSSH-specific key load first
         try:
             loaded = serialization.load_ssh_private_key(
-                data=data, password=passphrase
+                data=data, password=password
             )
         # Then fall back to assuming legacy PEM type
         except ValueError:
             loaded = serialization.load_pem_private_key(
-                data=data, password=passphrase
+                data=data, password=password
             )
         # TODO Python 3.10: match statement? (NOTE: we cannot use a dict
         # because the results from the loader are literal backend, eg openssl,
@@ -181,9 +209,7 @@ class PKey:
         # to be cryptography-object-forward. this is still likely faster than
         # the old SSHClient code that just tried instantiating every class!
         key_class = None
-        if isinstance(loaded, asymmetric.dsa.DSAPrivateKey):
-            key_class = DSSKey
-        elif isinstance(loaded, asymmetric.rsa.RSAPrivateKey):
+        if isinstance(loaded, asymmetric.rsa.RSAPrivateKey):
             key_class = RSAKey
         elif isinstance(loaded, asymmetric.ed25519.Ed25519PrivateKey):
             key_class = Ed25519Key
@@ -192,14 +218,16 @@ class PKey:
         else:
             raise UnknownKeyType(key_bytes=data, key_type=loaded.__class__)
         with key_path.open() as fd:
-            key = key_class.from_private_key(fd, password=passphrase)
+            key = key_class.from_private_key(fd, password=password)
         if cert_path.exists():
             # load_certificate can take Message, path-str, or value-str
             key.load_certificate(str(cert_path))
         return key
 
     @staticmethod
-    def from_type_string(key_type, key_bytes):
+    def from_type_string(
+        key_type: str, key_bytes: bytes, password: Optional[str] = None
+    ):
         """
         Given type `str` & raw `bytes`, return a `PKey` subclass instance.
 
@@ -211,6 +239,8 @@ class PKey:
         :param bytes key_bytes:
             The raw byte data forming the key material, as expected by
             subclasses' ``data`` parameter.
+        :param str password:
+            Optional password used to decrypt ``key_bytes``.
 
         :returns:
             A `PKey` subclass instance.
@@ -219,13 +249,14 @@ class PKey:
             `UnknownKeyType`, if no registered classes knew about this type.
 
         .. versionadded:: 3.2
+        .. versionchanged:: 5.0
+            Added the ``password`` kwarg.
         """
         from paramiko import key_classes
 
         for key_class in key_classes:
             if key_type in key_class.identifiers():
-                # TODO: needs to passthru things like passphrase
-                return key_class(data=key_bytes)
+                return key_class(data=key_bytes, password=password)
         raise UnknownKeyType(key_type=key_type, key_bytes=key_bytes)
 
     @classmethod
@@ -239,12 +270,12 @@ class PKey:
         """
         return [cls.name]
 
-    # TODO 4.0: make this and subclasses consistent, some of our own
-    # classmethods even assume kwargs we don't define!
-    # TODO 4.0: prob also raise NotImplementedError instead of pass'ing; the
-    # contract is pretty obviously that you need to handle msg/data/filename
-    # appropriately. (If 'pass' is a concession to testing, see about doing the
-    # work to fix the tests instead)
+    # TODO (backwards incompat): make this and subclasses consistent, some of
+    # our own classmethods even assume kwargs we don't define!
+    # TODO (backwards incompat): prob also raise NotImplementedError instead of
+    # pass'ing; the contract is pretty obviously that you need to handle
+    # msg/data/filename appropriately. (If 'pass' is a concession to testing,
+    # see about doing the work to fix the tests instead)
     def __init__(self, msg=None, data=None):
         """
         Create a new instance of this public key type.  If ``msg`` is given,
@@ -276,7 +307,7 @@ class PKey:
             comment = f", comment={self.comment!r}"
         return f"PKey(alg={self.algorithm_name}, bits={self.get_bits()}, fp={self.fingerprint}{comment})"  # noqa
 
-    # TODO 4.0: just merge into __bytes__ (everywhere)
+    # TODO (backwards incompat): just merge into __bytes__ (everywhere)
     def asbytes(self):
         """
         Return a string of an SSH `.Message` made up of the public part(s) of
@@ -335,8 +366,9 @@ class PKey:
 
         :return: bits in the key (as an `int`)
         """
-        # TODO 4.0: raise NotImplementedError, 0 is unlikely to ever be
-        # _correct_ and nothing in the critical path seems to use this.
+        # TODO (backwards incompat): raise NotImplementedError, 0 is unlikely
+        # to ever be _correct_ and nothing in the critical path seems to use
+        # this.
         return 0
 
     def can_sign(self):
@@ -418,7 +450,7 @@ class PKey:
         key is encrypted and ``password`` is not ``None``, the given password
         will be used to decrypt the key (otherwise `.PasswordRequiredException`
         is thrown).  Through the magic of Python, this factory method will
-        exist in all subclasses of PKey (such as `.RSAKey` or `.DSSKey`), but
+        exist in all subclasses of PKey (such as `.RSAKey`), but
         is useless on the abstract PKey class.
 
         :param str filename: name of the file to read
@@ -456,7 +488,12 @@ class PKey:
         key = cls(file_obj=file_obj, password=password)
         return key
 
-    def write_private_key_file(self, filename, password=None):
+    def write_private_key_file(
+        self,
+        filename: str,
+        password: Optional[str] = None,
+        file_format: FileFormat = PEM,
+    ):
         """
         Write private key contents into a file.  If the password is not
         ``None``, the key is encrypted before writing.
@@ -464,25 +501,45 @@ class PKey:
         :param str filename: name of the file to write
         :param str password:
             an optional password to use to encrypt the key file
+        :param FileFormat file_format:
+            what format+encoding pair to use; defaults to the original
+            behavior, namely PEM.
 
         :raises: ``IOError`` -- if there was an error writing the file
         :raises: `.SSHException` -- if the key is invalid
         """
-        raise Exception("Not implemented in PKey")
+        self._write_private_key_file(
+            filename,
+            self.private_key,
+            file_format=file_format,
+            password=password,
+        )
 
-    def write_private_key(self, file_obj, password=None):
+    def write_private_key(
+        self,
+        file_obj: RawIOBase,
+        password: Optional[str] = None,
+        file_format: FileFormat = PEM,
+    ):
         """
         Write private key contents into a file (or file-like) object.  If the
         password is not ``None``, the key is encrypted before writing.
 
         :param file_obj: the file-like object to write into
         :param str password: an optional password to use to encrypt the key
+        :param FileFormat file_format:
+            what format+encoding pair to use; defaults to the original
+            behavior, namely PEM.
 
         :raises: ``IOError`` -- if there was an error writing to the file
         :raises: `.SSHException` -- if the key is invalid
         """
-        # TODO 4.0: NotImplementedError (plus everywhere else in here)
-        raise Exception("Not implemented in PKey")
+        self._write_private_key(
+            file_obj,
+            self.private_key,
+            file_format=file_format,
+            password=password,
+        )
 
     def _read_private_key_file(self, tag, filename, password=None):
         """
@@ -492,13 +549,15 @@ class PKey:
         ``password`` is not ``None``, the given password will be used to
         decrypt the key (otherwise `.PasswordRequiredException` is thrown).
 
-        :param str tag: ``"RSA"`` or ``"DSA"``, the tag used to mark the
-            data block.
-        :param str filename: name of the file to read.
+        :param str tag:
+            ``"RSA"`` (or etc), the tag used to mark the data block.
+        :param str filename:
+            name of the file to read.
         :param str password:
             an optional password to use to decrypt the key file, if it's
             encrypted.
-        :return: the `bytes` that make up the private key.
+        :return:
+            the `bytes` that make up the private key.
 
         :raises: ``IOError`` -- if there was an error reading the file.
         :raises: `.PasswordRequiredException` -- if the private key file is
@@ -595,7 +654,12 @@ class PKey:
         decryptor = Cipher(
             cipher(key), mode(salt), backend=default_backend()
         ).decryptor()
-        return decryptor.update(data) + decryptor.finalize()
+        decrypted_data = decryptor.update(data) + decryptor.finalize()
+        unpadder = padding.PKCS7(cipher.block_size).unpadder()
+        try:
+            return unpadder.update(decrypted_data) + unpadder.finalize()
+        except ValueError:
+            raise SSHException("Bad password or corrupt private key file")
 
     def _read_private_key_openssh(self, lines, password):
         """
@@ -732,21 +796,13 @@ class PKey:
             raise SSHException(str(e))
         return tuple(arr)
 
-    def _write_private_key_file(self, filename, key, format, password=None):
-        """
-        Write an SSH2-format private key file in a form that can be read by
-        paramiko or openssh.  If no password is given, the key is written in
-        a trivially-encoded format (base64) which is completely insecure.  If
-        a password is given, DES-EDE3-CBC is used.
-
-        :param str tag:
-            ``"RSA"`` or ``"DSA"``, the tag used to mark the data block.
-        :param filename: name of the file to write.
-        :param bytes data: data blob that makes up the private key.
-        :param str password: an optional password to use to encrypt the file.
-
-        :raises: ``IOError`` -- if there was an error writing the file.
-        """
+    def _write_private_key_file(
+        self,
+        filename: str,
+        key: PrivateKey,
+        file_format: FileFormat,
+        password: Optional[str] = None,
+    ):
         # Ensure that we create new key files directly with a user-only mode,
         # instead of opening, writing, then chmodding, which leaves us open to
         # CVE-2022-24302.
@@ -764,9 +820,15 @@ class PKey:
             # Yea, you still gotta inform the FLO that it is in "write" mode.
             "w",
         ) as f:
-            self._write_private_key(f, key, format, password=password)
+            self._write_private_key(f, key, file_format, password=password)
 
-    def _write_private_key(self, f, key, format, password=None):
+    def _write_private_key(
+        self,
+        f: RawIOBase,
+        key: PrivateKey,
+        file_format: FileFormat,
+        password: Optional[str] = None,
+    ):
         if password is None:
             encryption = serialization.NoEncryption()
         else:
@@ -774,7 +836,7 @@ class PKey:
 
         f.write(
             key.private_bytes(
-                serialization.Encoding.PEM, format, encryption
+                file_format.encoding, file_format.format, encryption
             ).decode()
         )
 
@@ -863,7 +925,7 @@ class PKey:
 # readable from a one-line file of the format:
 #     <key-name> <base64-blob> [<comment>]
 # Of little value in the case of standard public keys
-# {ssh-rsa, ssh-dss, ssh-ecdsa, ssh-ed25519}, but should
+# {ssh-rsa, ssh-ecdsa, ssh-ed25519}, but should
 # provide rudimentary support for {*-cert.v01}
 class PublicBlob:
     """

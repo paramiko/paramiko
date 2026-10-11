@@ -30,80 +30,83 @@ import weakref
 from hashlib import md5, sha1, sha256, sha512
 
 from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives.ciphers import algorithms, Cipher, modes
+from cryptography.hazmat.primitives.ciphers import (
+    Cipher,
+    aead,
+    algorithms,
+    modes,
+)
 
 import paramiko
 from paramiko import util
 from paramiko.auth_handler import AuthHandler, AuthOnlyHandler
-from paramiko.ssh_gss import GSSAuth
 from paramiko.channel import Channel
 from paramiko.common import (
-    xffffffff,
-    cMSG_CHANNEL_OPEN,
-    cMSG_IGNORE,
-    cMSG_GLOBAL_REQUEST,
-    DEBUG,
-    MSG_KEXINIT,
-    MSG_IGNORE,
-    MSG_DISCONNECT,
-    MSG_DEBUG,
-    ERROR,
-    WARNING,
-    cMSG_UNIMPLEMENTED,
-    INFO,
-    cMSG_KEXINIT,
-    cMSG_NEWKEYS,
-    MSG_NEWKEYS,
-    cMSG_REQUEST_SUCCESS,
-    cMSG_REQUEST_FAILURE,
     CONNECTION_FAILED_CODE,
+    DEBUG,
+    DEFAULT_MAX_PACKET_SIZE,
+    DEFAULT_WINDOW_SIZE,
+    ERROR,
+    HIGHEST_USERAUTH_MESSAGE_ID,
+    INFO,
+    MAX_WINDOW_SIZE,
+    MIN_PACKET_SIZE,
+    MIN_WINDOW_SIZE,
+    MSG_CHANNEL_CLOSE,
+    MSG_CHANNEL_DATA,
+    MSG_CHANNEL_EOF,
+    MSG_CHANNEL_EXTENDED_DATA,
+    MSG_CHANNEL_FAILURE,
+    MSG_CHANNEL_OPEN,
+    MSG_CHANNEL_OPEN_FAILURE,
+    MSG_CHANNEL_OPEN_SUCCESS,
+    MSG_CHANNEL_REQUEST,
+    MSG_CHANNEL_SUCCESS,
+    MSG_CHANNEL_WINDOW_ADJUST,
+    MSG_DEBUG,
+    MSG_DISCONNECT,
+    MSG_EXT_INFO,
+    MSG_GLOBAL_REQUEST,
+    MSG_IGNORE,
+    MSG_KEXINIT,
+    MSG_NAMES,
+    MSG_NEWKEYS,
+    MSG_REQUEST_FAILURE,
+    MSG_REQUEST_SUCCESS,
+    MSG_SERVICE_ACCEPT,
+    MSG_UNIMPLEMENTED,
     OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED,
     OPEN_SUCCEEDED,
+    WARNING,
+    byte_ord,
+    cMSG_CHANNEL_OPEN,
     cMSG_CHANNEL_OPEN_FAILURE,
     cMSG_CHANNEL_OPEN_SUCCESS,
-    MSG_GLOBAL_REQUEST,
-    MSG_REQUEST_SUCCESS,
-    MSG_REQUEST_FAILURE,
-    cMSG_SERVICE_REQUEST,
-    MSG_SERVICE_ACCEPT,
-    MSG_CHANNEL_OPEN_SUCCESS,
-    MSG_CHANNEL_OPEN_FAILURE,
-    MSG_CHANNEL_OPEN,
-    MSG_CHANNEL_SUCCESS,
-    MSG_CHANNEL_FAILURE,
-    MSG_CHANNEL_DATA,
-    MSG_CHANNEL_EXTENDED_DATA,
-    MSG_CHANNEL_WINDOW_ADJUST,
-    MSG_CHANNEL_REQUEST,
-    MSG_CHANNEL_EOF,
-    MSG_CHANNEL_CLOSE,
-    MIN_WINDOW_SIZE,
-    MIN_PACKET_SIZE,
-    MAX_WINDOW_SIZE,
-    DEFAULT_WINDOW_SIZE,
-    DEFAULT_MAX_PACKET_SIZE,
-    HIGHEST_USERAUTH_MESSAGE_ID,
-    MSG_UNIMPLEMENTED,
-    MSG_NAMES,
-    MSG_EXT_INFO,
     cMSG_EXT_INFO,
-    byte_ord,
+    cMSG_GLOBAL_REQUEST,
+    cMSG_IGNORE,
+    cMSG_KEXINIT,
+    cMSG_NEWKEYS,
+    cMSG_REQUEST_FAILURE,
+    cMSG_REQUEST_SUCCESS,
+    cMSG_SERVICE_REQUEST,
+    cMSG_UNIMPLEMENTED,
+    xffffffff,
 )
 from paramiko.compress import ZlibCompressor, ZlibDecompressor
-from paramiko.dsskey import DSSKey
+from paramiko.ecdsakey import ECDSAKey
 from paramiko.ed25519key import Ed25519Key
 from paramiko.kex_curve25519 import KexCurve25519
-from paramiko.kex_gex import KexGex, KexGexSHA256
-from paramiko.kex_group1 import KexGroup1
-from paramiko.kex_group14 import KexGroup14, KexGroup14SHA256
-from paramiko.kex_group16 import KexGroup16SHA512
 from paramiko.kex_ecdh_nist import KexNistp256, KexNistp384, KexNistp521
-from paramiko.kex_gss import KexGSSGex, KexGSSGroup1, KexGSSGroup14
+from paramiko.kex_gex import KexGexSHA256
+from paramiko.kex_group14 import KexGroup14SHA256
+from paramiko.kex_group16 import KexGroup16SHA512
+from paramiko.kex_mlkem import KexMLKEM768X25519
 from paramiko.message import Message
-from paramiko.packet import Packetizer, NeedRekeyException
+from paramiko.packet import NeedRekeyException, Packetizer
+from paramiko.pkey import PKey
 from paramiko.primes import ModulusPack
 from paramiko.rsakey import RSAKey
-from paramiko.ecdsakey import ECDSAKey
 from paramiko.server import ServerInterface
 from paramiko.sftp_client import SFTPClient
 from paramiko.ssh_exception import (
@@ -116,10 +119,9 @@ from paramiko.ssh_exception import (
 )
 from paramiko.util import (
     ClosingContextManager,
-    clamp_value,
     b,
+    clamp_value,
 )
-
 
 # TripleDES is moving from `cryptography.hazmat.primitives.ciphers.algorithms`
 # in cryptography>=43.0.0 to `cryptography.hazmat.decrepit.ciphers.algorithms`
@@ -179,6 +181,8 @@ class Transport(threading.Thread, ClosingContextManager):
         "aes192-cbc",
         "aes256-cbc",
         "3des-cbc",
+        "aes128-gcm@openssh.com",
+        "aes256-gcm@openssh.com",
     )
     _preferred_macs = (
         "hmac-sha2-256",
@@ -198,10 +202,8 @@ class Transport(threading.Thread, ClosingContextManager):
         "ecdsa-sha2-nistp521",
         "rsa-sha2-512",
         "rsa-sha2-256",
-        "ssh-rsa",
-        "ssh-dss",
     )
-    # ~= PubKeyAcceptedAlgorithms
+    # ~= PubkeyAcceptedAlgorithms
     _preferred_pubkeys = (
         "ssh-ed25519",
         "ecdsa-sha2-nistp256",
@@ -209,8 +211,6 @@ class Transport(threading.Thread, ClosingContextManager):
         "ecdsa-sha2-nistp521",
         "rsa-sha2-512",
         "rsa-sha2-256",
-        "ssh-rsa",
-        "ssh-dss",
     )
     _preferred_kex = (
         "ecdh-sha2-nistp256",
@@ -219,17 +219,11 @@ class Transport(threading.Thread, ClosingContextManager):
         "diffie-hellman-group16-sha512",
         "diffie-hellman-group-exchange-sha256",
         "diffie-hellman-group14-sha256",
-        "diffie-hellman-group-exchange-sha1",
-        "diffie-hellman-group14-sha1",
-        "diffie-hellman-group1-sha1",
     )
     if KexCurve25519.is_available():
         _preferred_kex = ("curve25519-sha256@libssh.org",) + _preferred_kex
-    _preferred_gsskex = (
-        "gss-gex-sha1-toWM5Slw5Ew8Mqkay+al2g==",
-        "gss-group14-sha1-toWM5Slw5Ew8Mqkay+al2g==",
-        "gss-group1-sha1-toWM5Slw5Ew8Mqkay+al2g==",
-    )
+    if KexMLKEM768X25519.is_available():
+        _preferred_kex = ("mlkem768x25519-sha256",) + _preferred_kex
     _preferred_compression = ("none",)
 
     _cipher_info = {
@@ -275,6 +269,20 @@ class Transport(threading.Thread, ClosingContextManager):
             "block-size": 8,
             "key-size": 24,
         },
+        "aes128-gcm@openssh.com": {
+            "class": aead.AESGCM,
+            "block-size": 16,
+            "iv-size": 12,
+            "key-size": 16,
+            "is_aead": True,
+        },
+        "aes256-gcm@openssh.com": {
+            "class": aead.AESGCM,
+            "block-size": 16,
+            "iv-size": 12,
+            "key-size": 32,
+            "is_aead": True,
+        },
     }
 
     _mac_info = {
@@ -289,18 +297,22 @@ class Transport(threading.Thread, ClosingContextManager):
     }
 
     _key_info = {
-        # TODO: at some point we will want to drop this as it's no longer
-        # considered secure due to using SHA-1 for signatures. OpenSSH 8.8 no
-        # longer supports it. Question becomes at what point do we want to
-        # prevent users with older setups from using this?
-        "ssh-rsa": RSAKey,
-        "ssh-rsa-cert-v01@openssh.com": RSAKey,
+        # TODO: do some downstream uses of this need to be able to 'see'
+        # ssh-rsa in not-using-SHA1 contexts?
+        # TODO: NO!!! good.
+        # TODO: it's used in:
+        # - Transport._verify_key - verification - do not want ssh-rsa
+        # - SecurityOptions - only really uses this as a filter for what's
+        # allowed to be overwritten into its .key_types (which ==
+        # transport._preferred_keys), and since the latter doesn't want ssh-rsa
+        # in it, this use case doesn't require that string in here either.
+        # - AuthHandler._generate_key_from_request - server-side auth
+        # support - is looking at the 'algorithm' field in the request when it
+        # references this structure, so yup, do not want ssh-rsa
         "rsa-sha2-256": RSAKey,
         "rsa-sha2-256-cert-v01@openssh.com": RSAKey,
         "rsa-sha2-512": RSAKey,
         "rsa-sha2-512-cert-v01@openssh.com": RSAKey,
-        "ssh-dss": DSSKey,
-        "ssh-dss-cert-v01@openssh.com": DSSKey,
         "ecdsa-sha2-nistp256": ECDSAKey,
         "ecdsa-sha2-nistp256-cert-v01@openssh.com": ECDSAKey,
         "ecdsa-sha2-nistp384": ECDSAKey,
@@ -312,21 +324,17 @@ class Transport(threading.Thread, ClosingContextManager):
     }
 
     _kex_info = {
-        "diffie-hellman-group1-sha1": KexGroup1,
-        "diffie-hellman-group14-sha1": KexGroup14,
-        "diffie-hellman-group-exchange-sha1": KexGex,
         "diffie-hellman-group-exchange-sha256": KexGexSHA256,
         "diffie-hellman-group14-sha256": KexGroup14SHA256,
         "diffie-hellman-group16-sha512": KexGroup16SHA512,
-        "gss-group1-sha1-toWM5Slw5Ew8Mqkay+al2g==": KexGSSGroup1,
-        "gss-group14-sha1-toWM5Slw5Ew8Mqkay+al2g==": KexGSSGroup14,
-        "gss-gex-sha1-toWM5Slw5Ew8Mqkay+al2g==": KexGSSGex,
         "ecdh-sha2-nistp256": KexNistp256,
         "ecdh-sha2-nistp384": KexNistp384,
         "ecdh-sha2-nistp521": KexNistp521,
     }
     if KexCurve25519.is_available():
         _kex_info["curve25519-sha256@libssh.org"] = KexCurve25519
+    if KexMLKEM768X25519.is_available():
+        _kex_info["mlkem768x25519-sha256"] = KexMLKEM768X25519
 
     _compression_info = {
         # zlib@openssh.com is just zlib, but only turned on after a successful
@@ -345,8 +353,6 @@ class Transport(threading.Thread, ClosingContextManager):
         sock,
         default_window_size=DEFAULT_WINDOW_SIZE,
         default_max_packet_size=DEFAULT_MAX_PACKET_SIZE,
-        gss_kex=False,
-        gss_deleg_creds=True,
         disabled_algorithms=None,
         server_sig_algs=True,
         strict_kex=True,
@@ -391,12 +397,6 @@ class Transport(threading.Thread, ClosingContextManager):
         :param int default_max_packet_size:
             sets the default max packet size on the transport. (defaults to
             32768)
-        :param bool gss_kex:
-            Whether to enable GSSAPI key exchange when GSSAPI is in play.
-            Default: ``False``.
-        :param bool gss_deleg_creds:
-            Whether to enable GSSAPI credential delegation when GSSAPI is in
-            play. Default: ``True``.
         :param dict disabled_algorithms:
             If given, must be a dictionary mapping algorithm type to an
             iterable of algorithm identifiers, which will be disabled for the
@@ -428,8 +428,6 @@ class Transport(threading.Thread, ClosingContextManager):
         .. versionchanged:: 1.15
             Added the ``default_window_size`` and ``default_max_packet_size``
             arguments.
-        .. versionchanged:: 1.15
-            Added the ``gss_kex`` and ``gss_deleg_creds`` kwargs.
         .. versionchanged:: 2.6
             Added the ``disabled_algorithms`` kwarg.
         .. versionchanged:: 2.9
@@ -497,16 +495,6 @@ class Transport(threading.Thread, ClosingContextManager):
         self.session_id = None
         self.host_key_type = None
         self.host_key = None
-
-        # GSS-API / SSPI Key Exchange
-        self.use_gss_kex = gss_kex
-        # This will be set to True if GSS-API Key Exchange was performed
-        self.gss_kex_used = False
-        self.kexgss_ctxt = None
-        self.gss_host = None
-        if self.use_gss_kex:
-            self.kexgss_ctxt = GSSAuth("gssapi-keyex", gss_deleg_creds)
-            self._preferred_kex = self._preferred_gsskex + self._preferred_kex
 
         # state used during negotiation
         self.kex_engine = None
@@ -664,40 +652,6 @@ class Transport(threading.Thread, ClosingContextManager):
         """
         return SecurityOptions(self)
 
-    def set_gss_host(self, gss_host, trust_dns=True, gssapi_requested=True):
-        """
-        Normalize/canonicalize ``self.gss_host`` depending on various factors.
-
-        :param str gss_host:
-            The explicitly requested GSS-oriented hostname to connect to (i.e.
-            what the host's name is in the Kerberos database.) Defaults to
-            ``self.hostname`` (which will be the 'real' target hostname and/or
-            host portion of given socket object.)
-        :param bool trust_dns:
-            Indicates whether or not DNS is trusted; if true, DNS will be used
-            to canonicalize the GSS hostname (which again will either be
-            ``gss_host`` or the transport's default hostname.)
-            (Defaults to True due to backwards compatibility.)
-        :param bool gssapi_requested:
-            Whether GSSAPI key exchange or authentication was even requested.
-            If not, this is a no-op and nothing happens
-            (and ``self.gss_host`` is not set.)
-            (Defaults to True due to backwards compatibility.)
-        :returns: ``None``.
-        """
-        # No GSSAPI in play == nothing to do
-        if not gssapi_requested:
-            return
-        # Obtain the correct host first - did user request a GSS-specific name
-        # to use that is distinct from the actual SSH target hostname?
-        if gss_host is None:
-            gss_host = self.hostname
-        # Finally, canonicalize via DNS if DNS is trusted.
-        if trust_dns and gss_host is not None:
-            gss_host = socket.getfqdn(gss_host)
-        # And set attribute for reference later.
-        self.gss_host = gss_host
-
     def start_client(self, event=None, timeout=None):
         """
         Negotiate a new SSH2 session as a client.  This is the first step after
@@ -828,11 +782,10 @@ class Transport(threading.Thread, ClosingContextManager):
         as a server, the host key is used to sign certain packets during the
         SSH2 negotiation, so that the client can trust that we are who we say
         we are.  Because this is used for signing, the key must contain private
-        key info, not just the public half.  Only one key of each type (RSA or
-        DSS) is kept.
+        key info, not just the public half.  Only one key of each type is kept.
 
         :param .PKey key:
-            the host key to add, usually an `.RSAKey` or `.DSSKey`.
+            the host key (instance of some subclass) to add
         """
         self.server_key_dict[key.get_name()] = key
         # Handle SHA-2 extensions for RSA by ensuring that lookups into
@@ -848,10 +801,10 @@ class Transport(threading.Thread, ClosingContextManager):
         client, this method will return the negotiated host key.  If only one
         type of host key was set with `add_server_key`, that's the only key
         that will ever be returned.  But in cases where you have set more than
-        one type of host key (for example, an RSA key and a DSS key), the key
-        type will be negotiated by the client, and this method will return the
-        key of the type agreed on.  If the host key has not been negotiated
-        yet, ``None`` is returned.  In client mode, the behavior is undefined.
+        one type of host key, the key type will be negotiated by the client,
+        and this method will return the key of the type agreed on.  If the host
+        key has not been negotiated yet, ``None`` is returned.  In client mode,
+        the behavior is undefined.
 
         :return:
             host key (`.PKey`) of the type negotiated by the client, or
@@ -1323,11 +1276,6 @@ class Transport(threading.Thread, ClosingContextManager):
         username="",
         password=None,
         pkey=None,
-        gss_host=None,
-        gss_auth=False,
-        gss_kex=False,
-        gss_deleg_creds=True,
-        gss_trust_dns=True,
     ):
         """
         Negotiate an SSH2 session, and optionally verify the server's host key
@@ -1358,50 +1306,29 @@ class Transport(threading.Thread, ClosingContextManager):
         :param .PKey pkey:
             a private key to use for authentication, if you want to use private
             key authentication; otherwise ``None``.
-        :param str gss_host:
-            The target's name in the kerberos database. Default: hostname
-        :param bool gss_auth:
-            ``True`` if you want to use GSS-API authentication.
-        :param bool gss_kex:
-            Perform GSS-API Key Exchange and user authentication.
-        :param bool gss_deleg_creds:
-            Whether to delegate GSS-API client credentials.
-        :param gss_trust_dns:
-            Indicates whether or not the DNS is trusted to securely
-            canonicalize the name of the host being connected to (default
-            ``True``).
 
         :raises: `.SSHException` -- if the SSH2 negotiation fails, the host key
             supplied by the server is incorrect, or authentication fails.
-
-        .. versionchanged:: 2.3
-            Added the ``gss_trust_dns`` argument.
         """
         if hostkey is not None:
             # TODO: a more robust implementation would be to ask each key class
             # for its nameS plural, and just use that.
             # TODO: that could be used in a bunch of other spots too
+            # TODO: don't we have that now, lol
+            # TODO: either way this is ~= like using SecurityOptions.key_types
+            # = xxx, but different, which sucks sigh
             if isinstance(hostkey, RSAKey):
                 self._preferred_keys = [
                     "rsa-sha2-512",
                     "rsa-sha2-256",
-                    "ssh-rsa",
                 ]
             else:
                 self._preferred_keys = [hostkey.get_name()]
 
-        self.set_gss_host(
-            gss_host=gss_host,
-            trust_dns=gss_trust_dns,
-            gssapi_requested=gss_kex or gss_auth,
-        )
-
         self.start_client()
 
         # check host key if we were given one
-        # If GSS-API Key Exchange was performed, we are not required to check
-        # the host key.
-        if (hostkey is not None) and not gss_kex:
+        if hostkey is not None:
             key = self.get_remote_server_key()
             if (
                 key.get_name() != hostkey.get_name()
@@ -1425,18 +1352,8 @@ class Transport(threading.Thread, ClosingContextManager):
                 DEBUG, "Host key verified ({})".format(hostkey.get_name())
             )
 
-        if (pkey is not None) or (password is not None) or gss_auth or gss_kex:
-            if gss_auth:
-                self._log(
-                    DEBUG, "Attempting GSS-API auth... (gssapi-with-mic)"
-                )  # noqa
-                self.auth_gssapi_with_mic(
-                    username, self.gss_host, gss_deleg_creds
-                )
-            elif gss_kex:
-                self._log(DEBUG, "Attempting GSS-API auth... (gssapi-keyex)")
-                self.auth_gssapi_keyex(username)
-            elif pkey is not None:
+        if (pkey is not None) or (password is not None):
+            if pkey is not None:
                 self._log(DEBUG, "Attempting public-key auth...")
                 self.auth_publickey(username, pkey)
             else:
@@ -1763,55 +1680,6 @@ class Transport(threading.Thread, ClosingContextManager):
 
         return self.auth_interactive(username, handler, submethods)
 
-    def auth_gssapi_with_mic(self, username, gss_host, gss_deleg_creds):
-        """
-        Authenticate to the Server using GSS-API / SSPI.
-
-        :param str username: The username to authenticate as
-        :param str gss_host: The target host
-        :param bool gss_deleg_creds: Delegate credentials or not
-        :return: list of auth types permissible for the next stage of
-                 authentication (normally empty)
-        :raises: `.BadAuthenticationType` -- if gssapi-with-mic isn't
-            allowed by the server (and no event was passed in)
-        :raises:
-            `.AuthenticationException` -- if the authentication failed (and no
-            event was passed in)
-        :raises: `.SSHException` -- if there was a network error
-        """
-        if (not self.active) or (not self.initial_kex_done):
-            # we should never try to authenticate unless we're on a secure link
-            raise SSHException("No existing session")
-        my_event = threading.Event()
-        self.auth_handler = AuthHandler(self)
-        self.auth_handler.auth_gssapi_with_mic(
-            username, gss_host, gss_deleg_creds, my_event
-        )
-        return self.auth_handler.wait_for_response(my_event)
-
-    def auth_gssapi_keyex(self, username):
-        """
-        Authenticate to the server with GSS-API/SSPI if GSS-API kex is in use.
-
-        :param str username: The username to authenticate as.
-        :returns:
-            a list of auth types permissible for the next stage of
-            authentication (normally empty)
-        :raises: `.BadAuthenticationType` --
-            if GSS-API Key Exchange was not performed (and no event was passed
-            in)
-        :raises: `.AuthenticationException` --
-            if the authentication failed (and no event was passed in)
-        :raises: `.SSHException` -- if there was a network error
-        """
-        if (not self.active) or (not self.initial_kex_done):
-            # we should never try to authenticate unless we're on a secure link
-            raise SSHException("No existing session")
-        my_event = threading.Event()
-        self.auth_handler = AuthHandler(self)
-        self.auth_handler.auth_gssapi_keyex(username, my_event)
-        return self.auth_handler.wait_for_response(my_event)
-
     def set_log_channel(self, name):
         """
         Set the channel for this transport's logging.  The default is
@@ -1913,8 +1781,8 @@ class Transport(threading.Thread, ClosingContextManager):
 
     # internals...
 
-    # TODO 4.0: make a public alias for this because multiple other classes
-    # already explicitly rely on it...or just rewrite logging :D
+    # TODO (backwards incompat): make a public alias for this because multiple
+    # other classes already explicitly rely on it...or just rewrite logging :D
     def _log(self, level, msg, *args):
         if issubclass(type(msg), list):
             for m in msg:
@@ -1984,9 +1852,11 @@ class Transport(threading.Thread, ClosingContextManager):
         self._expected_packet = tuple(ptypes)
 
     def _verify_key(self, host_key, sig):
-        key = self._key_info[self.host_key_type](Message(host_key))
+        key: PKey = self._key_info[self.host_key_type](Message(host_key))
         if key is None:
             raise SSHException("Unknown host key type")
+        # TODO: like, here, can a host offer "ssh-rsa" but request SHA2, or are
+        # those baked in?
         if not key.verify_ssh_sig(self.H, Message(sig)):
             raise SSHException(
                 "Signature verification ({}) failed.".format(
@@ -1995,10 +1865,19 @@ class Transport(threading.Thread, ClosingContextManager):
             )  # noqa
         self.host_key = key
 
+    def _add_K(self, m):
+        # Hybrid post-quantum kex methods (e.g. mlkem768x25519-sha256)
+        # produce K as a fixed-length hash output, which the draft mandates
+        # be encoded as an SSH string rather than an mpint.
+        if isinstance(self.K, bytes):
+            m.add_string(self.K)
+        else:
+            m.add_mpint(self.K)
+
     def _compute_key(self, id, nbytes):
         """id is 'A' - 'F' for the various keys used by ssh"""
         m = Message()
-        m.add_mpint(self.K)
+        self._add_K(m)
         m.add_bytes(self.H)
         m.add_byte(b(id))
         m.add_bytes(self.session_id)
@@ -2017,7 +1896,7 @@ class Transport(threading.Thread, ClosingContextManager):
         out = sofar = hash_algo(m.asbytes()).digest()
         while len(out) < nbytes:
             m = Message()
-            m.add_mpint(self.K)
+            self._add_K(m)
             m.add_bytes(self.H)
             m.add_bytes(sofar)
             digest = hash_algo(m.asbytes()).digest()
@@ -2025,19 +1904,26 @@ class Transport(threading.Thread, ClosingContextManager):
             sofar += digest
         return out[:nbytes]
 
-    def _get_cipher(self, name, key, iv, operation):
+    def _get_engine(self, name, key, iv=None, operation=None, aead=False):
         if name not in self._cipher_info:
-            raise SSHException("Unknown client cipher " + name)
+            raise SSHException("Unknown cipher " + name)
+        info = self._cipher_info[name]
+        algorithm = info["class"](key)
+        # AEAD types (eg GCM) use their algorithm class /as/ the encryption
+        # engine (they expose the same encrypt/decrypt API as a CipherContext)
+        if aead:
+            return algorithm
+        # All others go through the Cipher class.
+        cipher = Cipher(
+            algorithm=algorithm,
+            # TODO: why is this getting tickled in aesgcm mode???
+            mode=info["mode"](iv),
+            backend=default_backend(),
+        )
+        if operation is self._ENCRYPT:
+            return cipher.encryptor()
         else:
-            cipher = Cipher(
-                self._cipher_info[name]["class"](key),
-                self._cipher_info[name]["mode"](iv),
-                backend=default_backend(),
-            )
-            if operation is self._ENCRYPT:
-                return cipher.encryptor()
-            else:
-                return cipher.decryptor()
+            return cipher.decryptor()
 
     def _set_forward_agent_handler(self, handler):
         if handler is None:
@@ -2161,7 +2047,7 @@ class Transport(threading.Thread, ClosingContextManager):
                 # in to memory but we can not read from the disk/spawn a new
                 # shell.
                 # Make sure we can specify a timeout for the initial handshake.
-                # Re-use the banner timeout for now.
+                # Reuse the banner timeout for now.
                 self.packetizer.start_handshake(self.handshake_timeout)
                 self._send_kex_init()
                 self._expect_packet(MSG_KEXINIT)
@@ -2381,7 +2267,6 @@ class Transport(threading.Thread, ClosingContextManager):
             self.clear_to_send.clear()
         finally:
             self.clear_to_send_lock.release()
-        self.gss_kex_used = False
         self.in_kex = True
         kex_algos = list(self.preferred_kex)
         if self.server_mode:
@@ -2705,21 +2590,27 @@ class Transport(threading.Thread, ClosingContextManager):
     def _activate_inbound(self):
         """switch on newly negotiated encryption parameters for
         inbound traffic"""
-        block_size = self._cipher_info[self.remote_cipher]["block-size"]
+        info = self._cipher_info[self.remote_cipher]
+        aead = info.get("is_aead", False)
+        block_size = info["block-size"]
+        key_size = info["key-size"]
+        # Non-AEAD/GCM type ciphers' IV size is their block size.
+        iv_size = info.get("iv-size", block_size)
         if self.server_mode:
-            IV_in = self._compute_key("A", block_size)
-            key_in = self._compute_key(
-                "C", self._cipher_info[self.remote_cipher]["key-size"]
-            )
+            iv_in = self._compute_key("A", iv_size)
+            key_in = self._compute_key("C", key_size)
         else:
-            IV_in = self._compute_key("B", block_size)
-            key_in = self._compute_key(
-                "D", self._cipher_info[self.remote_cipher]["key-size"]
-            )
-        engine = self._get_cipher(
-            self.remote_cipher, key_in, IV_in, self._DECRYPT
+            iv_in = self._compute_key("B", iv_size)
+            key_in = self._compute_key("D", key_size)
+
+        engine = self._get_engine(
+            name=self.remote_cipher,
+            key=key_in,
+            iv=iv_in,
+            operation=self._DECRYPT,
+            aead=aead,
         )
-        etm = "etm@openssh.com" in self.remote_mac
+        etm = (not aead) and "etm@openssh.com" in self.remote_mac
         mac_size = self._mac_info[self.remote_mac]["size"]
         mac_engine = self._mac_info[self.remote_mac]["class"]
         # initial mac keys are done in the hash's natural size (not the
@@ -2728,9 +2619,18 @@ class Transport(threading.Thread, ClosingContextManager):
             mac_key = self._compute_key("E", mac_engine().digest_size)
         else:
             mac_key = self._compute_key("F", mac_engine().digest_size)
+
         self.packetizer.set_inbound_cipher(
-            engine, block_size, mac_engine, mac_size, mac_key, etm=etm
+            block_engine=engine,
+            block_size=block_size,
+            mac_engine=None if aead else mac_engine,
+            mac_size=16 if aead else mac_size,
+            mac_key=None if aead else mac_key,
+            etm=etm,
+            aead=aead,
+            iv_in=iv_in if aead else None,
         )
+
         compress_in = self._compression_info[self.remote_compression][1]
         if compress_in is not None and (
             self.remote_compression != "zlib@openssh.com" or self.authenticated
@@ -2758,21 +2658,27 @@ class Transport(threading.Thread, ClosingContextManager):
                 "Resetting outbound seqno after NEWKEYS due to strict mode",
             )
             self.packetizer.reset_seqno_out()
-        block_size = self._cipher_info[self.local_cipher]["block-size"]
+        info = self._cipher_info[self.local_cipher]
+        aead = info.get("is_aead", False)
+        block_size = info["block-size"]
+        key_size = info["key-size"]
+        # Non-AEAD/GCM type ciphers' IV size is their block size.
+        iv_size = info.get("iv-size", block_size)
         if self.server_mode:
-            IV_out = self._compute_key("B", block_size)
-            key_out = self._compute_key(
-                "D", self._cipher_info[self.local_cipher]["key-size"]
-            )
+            iv_out = self._compute_key("B", iv_size)
+            key_out = self._compute_key("D", key_size)
         else:
-            IV_out = self._compute_key("A", block_size)
-            key_out = self._compute_key(
-                "C", self._cipher_info[self.local_cipher]["key-size"]
-            )
-        engine = self._get_cipher(
-            self.local_cipher, key_out, IV_out, self._ENCRYPT
+            iv_out = self._compute_key("A", iv_size)
+            key_out = self._compute_key("C", key_size)
+
+        engine = self._get_engine(
+            name=self.local_cipher,
+            key=key_out,
+            iv=iv_out,
+            operation=self._ENCRYPT,
+            aead=aead,
         )
-        etm = "etm@openssh.com" in self.local_mac
+        etm = (not aead) and "etm@openssh.com" in self.local_mac
         mac_size = self._mac_info[self.local_mac]["size"]
         mac_engine = self._mac_info[self.local_mac]["class"]
         # initial mac keys are done in the hash's natural size (not the
@@ -2782,9 +2688,19 @@ class Transport(threading.Thread, ClosingContextManager):
         else:
             mac_key = self._compute_key("E", mac_engine().digest_size)
         sdctr = self.local_cipher.endswith("-ctr")
+
         self.packetizer.set_outbound_cipher(
-            engine, block_size, mac_engine, mac_size, mac_key, sdctr, etm=etm
+            block_engine=engine,
+            block_size=block_size,
+            mac_engine=None if aead else mac_engine,
+            mac_size=16 if aead else mac_size,
+            mac_key=None if aead else mac_key,
+            sdctr=sdctr,
+            etm=etm,
+            aead=aead,
+            iv_out=iv_out if aead else None,
         )
+
         compress_out = self._compression_info[self.local_compression][0]
         if compress_out is not None and (
             self.local_compression != "zlib@openssh.com" or self.authenticated
@@ -3116,9 +3032,9 @@ class Transport(threading.Thread, ClosingContextManager):
     }
 
 
-# TODO 4.0: drop this, we barely use it ourselves, it badly replicates the
-# Transport-internal algorithm management, AND does so in a way which doesn't
-# honor newer things like disabled_algorithms!
+# TODO (backwards incompat): drop this, we barely use it ourselves, it badly
+# replicates the Transport-internal algorithm management, AND does so in a way
+# which doesn't honor newer things like disabled_algorithms!
 class SecurityOptions:
     """
     Simple object containing the security preferences of an ssh transport.
@@ -3179,6 +3095,14 @@ class SecurityOptions:
 
     @key_types.setter
     def key_types(self, x):
+        # TODO: so this reads Transport._key_info.keys(), yells if any values
+        # in `x` /aren't/ in that list, then overwrites
+        # Transport._preferred_keys with `x`...
+        # TODO: so you can read this pretty simply as "replace
+        # transport._preferred_keys with x".
+        # TODO: which is...bad...in cases where SSHClient is trying to simply
+        # load up known_hosts or system known hosts, and use those to determine
+        # which hostkey /algorithms/ it is willing to accept
         self._set("_preferred_keys", "_key_info", x)
 
     @property
@@ -3271,10 +3195,12 @@ class ServiceRequestingTransport(Transport):
         # MSG_USERAUTH_REQUEST/ACCEPT/FAILURE set to this string, but that is a
         # different set of handlers, so...!
         if service != "ssh-userauth":
-            # TODO 4.0: consider erroring here (with an ability to opt out?)
-            # instead as it probably means something went Very Wrong.
             self._log(
-                DEBUG, 'Service request "{}" accepted (?)'.format(service)
+                # TODO (backwards incompat): consider erroring here (with an
+                # ability to opt out?) instead as it probably means something
+                # went Very Wrong.
+                DEBUG,
+                'Service request "{}" accepted (?)'.format(service),
             )
             return
         # Record that we saw a service-userauth acceptance, meaning we are free
@@ -3323,12 +3249,14 @@ class ServiceRequestingTransport(Transport):
         return AuthOnlyHandler(self)
 
     def auth_none(self, username):
-        # TODO 4.0: merge to parent, preserving (most of) docstring
+        # TODO (backwards incompat): merge to parent, preserving (most of)
+        # docstring
         self.ensure_session()
         return self.auth_handler.auth_none(username)
 
     def auth_password(self, username, password, fallback=True):
-        # TODO 4.0: merge to parent, preserving (most of) docstring
+        # TODO (backwards incompat): merge to parent, preserving (most of)
+        # docstring
         self.ensure_session()
         try:
             return self.auth_handler.auth_password(username, password)
@@ -3356,19 +3284,22 @@ class ServiceRequestingTransport(Transport):
                 raise e
 
     def auth_publickey(self, username, key):
-        # TODO 4.0: merge to parent, preserving (most of) docstring
+        # TODO (backwards incompat): merge to parent, preserving (most of)
+        # docstring
         self.ensure_session()
         return self.auth_handler.auth_publickey(username, key)
 
     def auth_interactive(self, username, handler, submethods=""):
-        # TODO 4.0: merge to parent, preserving (most of) docstring
+        # TODO (backwards incompat): merge to parent, preserving (most of)
+        # docstring
         self.ensure_session()
         return self.auth_handler.auth_interactive(
             username, handler, submethods
         )
 
     def auth_interactive_dumb(self, username, handler=None, submethods=""):
-        # TODO 4.0: merge to parent, preserving (most of) docstring
+        # TODO (backwards incompat): merge to parent, preserving (most of)
+        # docstring
         # NOTE: legacy impl omitted equiv of ensure_session since it just wraps
         # another call to an auth method. however we reinstate it for
         # consistency reasons.
@@ -3387,17 +3318,3 @@ class ServiceRequestingTransport(Transport):
                 return answers
 
         return self.auth_interactive(username, handler, submethods)
-
-    def auth_gssapi_with_mic(self, username, gss_host, gss_deleg_creds):
-        # TODO 4.0: merge to parent, preserving (most of) docstring
-        self.ensure_session()
-        self.auth_handler = self.get_auth_handler()
-        return self.auth_handler.auth_gssapi_with_mic(
-            username, gss_host, gss_deleg_creds
-        )
-
-    def auth_gssapi_keyex(self, username):
-        # TODO 4.0: merge to parent, preserving (most of) docstring
-        self.ensure_session()
-        self.auth_handler = self.get_auth_handler()
-        return self.auth_handler.auth_gssapi_keyex(username)
