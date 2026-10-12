@@ -2,6 +2,11 @@
 Changelog
 =========
 
+- :bug:`2368` Preserve existing file contents when
+  `SFTPServer.set_file_attr` changes the file size. Previously, the file was
+  emptied before resizing, so even a same-size request replaced its contents
+  with NUL bytes. Thanks to ``@Mathiasdm`` for the report.
+
 - :release:`3.5.1 <2025-02-03>`
 - :bug:`2490` Private key material is now explicitly 'unpadded' during
   decryption, removing a reliance on some lax OpenSSL behavior & making us

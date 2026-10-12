@@ -359,6 +359,29 @@ class TestSFTP:
         finally:
             sftp.remove(sftp.FOLDER + "/special")
 
+    @pytest.mark.parametrize("size", [0, 3, 6, 9])
+    @pytest.mark.parametrize("use_handle", [False, True])
+    def test_truncate_preserves_content(self, sftp, size, use_handle):
+        path = sftp.FOLDER + "/truncate-content"
+        content = b"\x00\xffab\n\x80"
+        expected = content[:size] + b"\x00" * max(0, size - len(content))
+        try:
+            with sftp.open(path, "wb") as f:
+                f.write(content)
+
+            if use_handle:
+                with sftp.open(path, "r+") as f:
+                    f.truncate(size)
+                    assert f.stat().st_size == size
+                    assert f.read() == expected
+            else:
+                sftp.truncate(path, size)
+                assert sftp.stat(path).st_size == size
+                with sftp.open(path, "rb") as f:
+                    assert f.read() == expected
+        finally:
+            sftp.remove(path)
+
     def test_readline_seek(self, sftp):
         """
         create a text file and write a bunch of text into it.  then count the
