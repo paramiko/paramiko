@@ -20,7 +20,10 @@
 Some unit tests for the BufferedFile abstraction.
 """
 
+import io
+import socket
 import unittest
+import unittest.mock
 from io import BytesIO
 
 from paramiko.common import linefeed_byte, crlf, cr_byte
@@ -182,6 +185,219 @@ class BufferedFileTest(unittest.TestCase):
         f._write(b"hello")
         f.readinto(data)
         self.assertEqual(data, b"hello")
+        f.close()
+
+    def test_read1_returns_bytes(self):
+        f = LoopbackFile("r+")
+        f._write(b"hello world")
+        result = f.read1(5)
+        self.assertIsInstance(result, bytes)
+        self.assertEqual(result, b"hello")
+        f.close()
+
+    def test_read1_uses_existing_buffer(self):
+        f = LoopbackFile("r")
+        f._rbuffer = b"buffered data"
+        result = f.read1(8)
+        self.assertEqual(result, b"buffered")
+        f.close()
+
+    def test_read1_makes_at_most_one_read_call(self):
+        f = LoopbackFile("r+")
+        f._write(b"data")
+        with unittest.mock.patch.object(
+            f, "_read", wraps=f._read
+        ) as mock_read:
+            result = f.read1(1024)
+        self.assertEqual(mock_read.call_count, 1)
+        self.assertEqual(result, b"data")
+        f.close()
+
+    def test_read1_propagates_socket_timeout(self):
+        f = LoopbackFile("r")
+        with unittest.mock.patch.object(
+            f, "_read", side_effect=socket.timeout
+        ):
+            with self.assertRaises(socket.timeout):
+                f.read1(1024)
+        f.close()
+
+    def test_read1_default_bufsize(self):
+        f = LoopbackFile("r+", 16)
+        f._write(b"x" * 100)
+        with unittest.mock.patch.object(f, "_read") as mock_read:
+            mock_read.return_value = b""
+            f.read1()
+        mock_read.assert_called_with(16)
+        f.close()
+
+    def test_read_default_returns_all_data(self):
+        f = LoopbackFile("r+")
+        f._write(b"hello world")
+        result = f.read()
+        self.assertEqual(result, b"hello world")
+        f.close()
+
+    def test_read_uses_existing_buffer(self):
+        f = LoopbackFile("r")
+        f._rbuffer = b"buffered data"
+        result = f.read(8)
+        self.assertEqual(result, b"buffered")
+        self.assertEqual(f._rbuffer, b" data")
+        f.close()
+
+    def test_read_propagates_oserror(self):
+        f = LoopbackFile("r")
+        with unittest.mock.patch.object(f, "_read", side_effect=OSError):
+            with self.assertRaises(OSError):
+                f.read(1024)
+        f.close()
+
+    def test_read_propagates_socket_timeout(self):
+        f = LoopbackFile("r")
+        with unittest.mock.patch.object(
+            f, "_read", side_effect=socket.timeout
+        ):
+            with self.assertRaises(socket.timeout):
+                f.read(1024)
+        f.close()
+
+    def test_read_catches_eoferror(self):
+        f = LoopbackFile("r")
+        with unittest.mock.patch.object(f, "_read", side_effect=EOFError):
+            result = f.read(1024)
+        self.assertEqual(result, b"")
+        f.close()
+
+    def test_read1_zero_returns_empty(self):
+        f = LoopbackFile("r")
+        result = f.read1(0)
+        self.assertEqual(result, b"")
+        f.close()
+
+    def test_read1_combines_buffer_and_new_data(self):
+        f = LoopbackFile("r+")
+        f._rbuffer = b"old"
+        f._write(b" new")
+        result = f.read1(10)
+        self.assertEqual(result, b"old new")
+        f.close()
+
+    def test_read1_propagates_oserror(self):
+        f = LoopbackFile("r")
+        with unittest.mock.patch.object(f, "_read", side_effect=OSError):
+            with self.assertRaises(OSError):
+                f.read1(1024)
+        f.close()
+
+    def test_read1_catches_eoferror(self):
+        f = LoopbackFile("r")
+        with unittest.mock.patch.object(f, "_read", side_effect=EOFError):
+            result = f.read1(1024)
+        self.assertEqual(result, b"")
+        f.close()
+
+    def test_multiple_read1_calls(self):
+        f = LoopbackFile("r+")
+        f._write(b"aaa")
+        f._write(b"bbb")
+        r1 = f.read1(3)
+        r2 = f.read1(3)
+        self.assertEqual(r1, b"aaa")
+        self.assertEqual(r2, b"bbb")
+        f.close()
+
+    def test_read1_on_closed_file(self):
+        f = LoopbackFile("r")
+        f.close()
+        with self.assertRaises(IOError):
+            f.read1(1)
+
+    def test_read1_on_write_only_file(self):
+        f = LoopbackFile("w")
+        with self.assertRaises(IOError):
+            f.read1(1)
+        f.close()
+
+    def test_peek_returns_buffered_data_without_consuming(self):
+        f = LoopbackFile("r")
+        f._rbuffer = b"peeked"
+        result = f.peek()
+        self.assertEqual(result, b"peeked")
+        self.assertEqual(f._rbuffer, b"peeked")
+        f.close()
+
+    def test_peek_reads_when_buffer_empty(self):
+        f = LoopbackFile("r+")
+        f._write(b"data")
+        with unittest.mock.patch.object(
+            f, "_read", wraps=f._read
+        ) as mock_read:
+            result = f.peek()
+        mock_read.assert_called_once()
+        self.assertEqual(result, b"data")
+        self.assertEqual(f.read(), b"data")
+        f.close()
+
+    def test_peek_respects_n(self):
+        f = LoopbackFile("r")
+        f._rbuffer = b"abcdef"
+        result = f.peek(3)
+        self.assertEqual(result, b"abc")
+        self.assertEqual(f._rbuffer, b"abcdef")
+        f.close()
+
+    def test_peek_propagates_oserror(self):
+        f = LoopbackFile("r")
+        with unittest.mock.patch.object(f, "_read", side_effect=OSError):
+            with self.assertRaises(OSError):
+                f.peek()
+        f.close()
+
+    def test_peek_propagates_socket_timeout(self):
+        f = LoopbackFile("r")
+        with unittest.mock.patch.object(
+            f, "_read", side_effect=socket.timeout
+        ):
+            with self.assertRaises(socket.timeout):
+                f.peek()
+        f.close()
+
+    def test_peek_on_closed_file(self):
+        f = LoopbackFile("r")
+        f.close()
+        with self.assertRaises(IOError):
+            f.peek()
+
+    def test_peek_on_write_only_file(self):
+        f = LoopbackFile("w")
+        with self.assertRaises(IOError):
+            f.peek()
+        f.close()
+
+    def test_peek_on_empty_stream(self):
+        f = LoopbackFile("r")
+        with unittest.mock.patch.object(f, "_read", side_effect=EOFError):
+            result = f.peek()
+        self.assertEqual(result, b"")
+        f.close()
+
+    def test_truncate_raises(self):
+        f = LoopbackFile("r")
+        with self.assertRaises(io.UnsupportedOperation):
+            f.truncate()
+        f.close()
+
+    def test_detach_raises(self):
+        f = LoopbackFile("r")
+        with self.assertRaises(io.UnsupportedOperation):
+            f.detach()
+        f.close()
+
+    def test_fileno_raises(self):
+        f = LoopbackFile("r")
+        with self.assertRaises(OSError):
+            f.fileno()
         f.close()
 
     def test_write_bad_type(self):
