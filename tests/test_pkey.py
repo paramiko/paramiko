@@ -532,6 +532,28 @@ class KeyTest(unittest.TestCase):
         self.assertEqual(key, key)
         self.assertTrue(key.can_sign())
 
+    def test_ed25519_write_private_key_roundtrip(self):
+        # Re: #2700 - Ed25519Key lacked private_key, so write crashed.
+        key = Ed25519Key.from_private_key_file(_support("ed25519.key"))
+        s = StringIO()
+        key.write_private_key(s)
+        s.seek(0)
+        key2 = Ed25519Key.from_private_key(s)
+        self.assertEqual(key, key2)
+        self.assertTrue(key2.can_sign())
+
+    def test_ed25519_write_private_key_file(self):
+        key = Ed25519Key.from_private_key_file(_support("ed25519.key"))
+        newfile = _support("ed25519.key") + ".new"
+        try:
+            key.write_private_key_file(newfile)
+            key2 = Ed25519Key.from_private_key_file(newfile)
+            self.assertEqual(key, key2)
+            self.assertTrue(key2.can_sign())
+        finally:
+            if os.path.exists(newfile):
+                os.remove(newfile)
+
     def test_keyfile_is_actually_encrypted(self):
         # Read an existing encrypted private key
         file_ = _support("test_rsa_password.key")
