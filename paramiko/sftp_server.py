@@ -216,8 +216,7 @@ class SFTPServer(BaseSFTP, SubsystemHandler):
         if attr._flags & attr.FLAG_AMTIME:
             os.utime(filename, (attr.st_atime, attr.st_mtime))
         if attr._flags & attr.FLAG_SIZE:
-            with open(filename, "w+") as f:
-                f.truncate(attr.st_size)
+            os.truncate(filename, attr.st_size)
 
     # ...internals...
 
