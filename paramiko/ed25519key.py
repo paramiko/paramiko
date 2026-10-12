@@ -67,6 +67,11 @@ class Ed25519Key(PKey):
         if self._signing_key is None and self._verifying_key is None:
             raise ValueError("need a key")
 
+    @classmethod
+    def identifiers(cls):
+        # Include both plain key name and cert name
+        return [cls.name, f"{cls.name}-cert-v01@openssh.com"]
+
     def _parse_signing_key_data(self, data, password):
         from paramiko.transport import Transport
 
