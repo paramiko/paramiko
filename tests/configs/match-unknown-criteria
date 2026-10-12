@@ -1,0 +1,5 @@
+Match localnetwork 10.0.0.0/8
+    User should_not_apply
+
+Match host "target"
+    User should_apply

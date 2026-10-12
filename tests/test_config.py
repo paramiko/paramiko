@@ -1046,3 +1046,25 @@ class TestFinalMatching(object):
     def test_negated(self):
         result = load_config("match-final").lookup("jump")
         assert result["port"] == "1003"
+
+
+class TestMatchUnknownCriteria:
+    def test_unknown_criteria_skipped(self):
+        """
+        Unknown Match criteria (e.g. 'localnetwork') should be skipped with a
+        warning, and the Match block should be treated as not matching.
+        """
+        result = load_config("match-unknown-criteria").lookup("target")
+        # The block with unknown 'localnetwork' criterion should NOT match,
+        # so 'user' should come from the second block (Match host "target").
+        assert result["user"] == "should_apply"
+
+    def test_unknown_criteria_does_not_pollute_know_hosts(self):
+        """
+        A Match block with an unknown criterion should not affect hosts that
+        don't match other criteria in that block.
+        """
+        result = load_config("match-unknown-criteria").lookup("somehost")
+        # Only the skip block should not match 'somehost', and the host block
+        # only matches 'target'. So no config should apply.
+        assert "user" not in result
