@@ -362,6 +362,17 @@ class SSHConfig:
             configured_host = options.get("hostname", None)
             configured_user = options.get("user", None)
             type_, param = candidate["type"], candidate["param"]
+            # If the Match criteria is unknown (e.g. localnetwork), skip this
+            # block rather than silently applying it (paramiko#2632).
+            if self._unknown_match_criteria(type_):
+                import warnings
+                warnings.warn(
+                    f"Unknown SSH config Match criteria {type_!r}; "
+                    f"skipping block",
+                    UserWarning,
+                    stacklevel=3,
+                )
+                return []
             # Canonical is a hard pass/fail based on whether this is a
             # canonicalized re-lookup.
             if type_ == "canonical":
@@ -403,6 +414,17 @@ class SSHConfig:
             matched.append(candidate)
         # Did anything match? (To be treated as bool, usually.)
         return matched
+
+    @staticmethod
+    def _unknown_match_criteria(type_: str) -> bool:
+        """Return True if *type_* is not a known Match criteria keyword."""
+        known = {
+            "all", "canonical", "final", "host", "originalhost",
+            "user", "localuser", "exec",
+        }
+        return type_ not in known
+
+    # NOTE: _does_match continues below
 
     def _should_fail(self, would_pass, candidate):
         return would_pass if candidate["negate"] else not would_pass
