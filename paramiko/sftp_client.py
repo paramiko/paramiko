@@ -59,6 +59,7 @@ from paramiko.sftp import (
     SFTP_OK,
     SFTP_EOF,
     SFTP_NO_SUCH_FILE,
+    SFTP_OP_UNSUPPORTED,
     SFTP_PERMISSION_DENIED,
     int64,
 )
@@ -938,6 +939,8 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
             raise IOError(errno.ENOENT, text)
         elif code == SFTP_PERMISSION_DENIED:
             raise IOError(errno.EACCES, text)
+        elif code == SFTP_OP_UNSUPPORTED:
+            raise IOError(errno.ENOTSUP, text)
         else:
             raise IOError(text)
 
