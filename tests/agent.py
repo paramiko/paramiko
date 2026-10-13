@@ -1,4 +1,9 @@
-from unittest.mock import Mock
+import os
+import socket
+import tempfile
+import threading
+import time
+from unittest.mock import Mock, patch
 
 from pytest import mark, raises, skip
 
@@ -7,6 +12,7 @@ from paramiko.agent import (
     SSH2_AGENT_SIGN_RESPONSE,
     SSH_AGENT_RSA_SHA2_256,
     SSH_AGENT_RSA_SHA2_512,
+    AgentLocalProxy,
     cSSH2_AGENTC_SIGN_REQUEST,
 )
 
@@ -157,3 +163,75 @@ class AgentKey_:
         assert msg.get_string() == expected_request_key_blob
         assert msg.get_string() == b"data-to-sign"
         assert msg.get_int() == expected_flag
+
+
+class AgentLocalProxy_:
+    def get_connection_closes_the_listening_socket(self):
+        # get_connection() binds+listens on a fresh unix socket, accepts
+        # exactly one connection, and returns that accepted socket - the
+        # listening one it created is done at that point and should not
+        # be left open (used to leak: it was never explicitly closed on
+        # either the success or the exception path).
+        # NOTE: AF_UNIX paths have a short max length, so this can't live
+        # under the (potentially deeply-nested) test support directory.
+        path = os.path.join(
+            tempfile.gettempdir(), f"paramiko-test-agent-{os.getpid()}.sock"
+        )
+        if os.path.exists(path):
+            os.remove(path)
+
+        class FakeSSHAgent:
+            def _get_filename(self):
+                return path
+
+        proxy = AgentLocalProxy.__new__(AgentLocalProxy)
+        proxy._agent = FakeSSHAgent()
+
+        def connect_and_disconnect():
+            # get_connection() binds+listens in the main thread below, but
+            # this thread starts immediately - retry past the window
+            # before that's done instead of a racy fixed sleep.
+            deadline = time.time() + 5
+            while time.time() < deadline:
+                client = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+                try:
+                    client.connect(path)
+                except OSError:
+                    client.close()
+                    time.sleep(0.01)
+                    continue
+                client.close()
+                return
+            raise AssertionError("never managed to connect")
+
+        # Tag whichever socket instance get_connection() calls bind() on -
+        # that's unambiguously the listening one, regardless of how the
+        # concurrently-retrying connector thread's own client sockets
+        # interleave with it (those only ever call connect(), never
+        # bind()). A raw open-fd count would also catch the connector
+        # thread's own transient sockets, racy by nature of that retry
+        # loop; this doesn't.
+        listening_sockets = []
+        real_socket_cls = socket.socket
+
+        class _TrackedSocket(real_socket_cls):
+            def bind(self, address):
+                listening_sockets.append(self)
+                return super().bind(address)
+
+        connector = threading.Thread(target=connect_and_disconnect)
+        connector.start()
+        try:
+            with patch("socket.socket", _TrackedSocket):
+                accepted, _ = proxy.get_connection()
+            try:
+                assert len(listening_sockets) == 1
+                # Closed sockets report -1 from fileno().
+                assert listening_sockets[0].fileno() == -1
+                assert accepted.fileno() != -1
+            finally:
+                accepted.close()
+        finally:
+            connector.join()
+            if os.path.exists(path):
+                os.remove(path)
