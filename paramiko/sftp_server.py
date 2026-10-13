@@ -161,6 +161,7 @@ class SFTPServer(BaseSFTP, SubsystemHandler):
 
     def finish_subsystem(self):
         self.server.session_ended()
+        self.sock.send_exit_status(0)
         super().finish_subsystem()
         # close any file handles that were left open
         # (so we can return them to the OS quickly)
