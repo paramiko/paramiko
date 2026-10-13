@@ -57,6 +57,13 @@ class NullServer(paramiko.ServerInterface):
         self.__allowed_keys = kwargs.pop("allowed_keys", [])
         # And allow them to set a (single...meh) expected public blob (cert)
         self.__expected_public_blob = kwargs.pop("public_blob", None)
+        # Or to refuse certs outright, as a server whose
+        # PubkeyAcceptedAlgorithms omits them (or which doesn't trust the
+        # signing CA) does
+        self.__reject_certs = kwargs.pop("reject_certs", False)
+        # Record, per offer, whether it carried a cert, so tests can assert
+        # on the sequence of identities the client tried
+        self.offered_certs = []
         super().__init__(*args, **kwargs)
 
     def get_allowed_auths(self, username):
@@ -82,6 +89,10 @@ class NullServer(paramiko.ServerInterface):
             key.get_name() in self.__allowed_keys
             and key.get_fingerprint() == expected
         )
+        self.offered_certs.append(key.public_blob is not None)
+        # Reject anything bearing a cert, if the test asked for that
+        if self.__reject_certs and key.public_blob is not None:
+            return paramiko.AUTH_FAILED
         # Secondary check: if test wants assertions about cert data
         if (
             self.__expected_public_blob is not None
@@ -155,6 +166,7 @@ class ClientTest(unittest.TestCase):
         public_blob=None,
         kill_event=None,
         server_name=None,
+        reject_certs=False,
     ):
         if allowed_keys is None:
             allowed_keys = FINGERPRINTS.keys()
@@ -174,7 +186,11 @@ class ClientTest(unittest.TestCase):
         keypath = _support("ecdsa-256.key")
         host_key = paramiko.ECDSAKey.from_private_key_file(keypath)
         self.ts.add_server_key(host_key)
-        server = NullServer(allowed_keys=allowed_keys, public_blob=public_blob)
+        self.server = server = NullServer(
+            allowed_keys=allowed_keys,
+            public_blob=public_blob,
+            reject_certs=reject_certs,
+        )
         if delay:
             time.sleep(delay)
         self.ts.start_server(self.event, server)
@@ -183,12 +199,15 @@ class ClientTest(unittest.TestCase):
         """
         (Most) kwargs get passed directly into SSHClient.connect().
 
-        The exceptions are ``allowed_keys``/``public_blob``/``server_name``
+        The exceptions are
+        ``allowed_keys``/``public_blob``/``server_name``/``reject_certs``
         which are stripped and handed to the ``NullServer`` used for testing.
         """
         run_kwargs = {"kill_event": self.kill_event}
         for key in ("allowed_keys", "public_blob", "server_name"):
             run_kwargs[key] = kwargs.pop(key, None)
+        if "reject_certs" in kwargs:
+            run_kwargs["reject_certs"] = kwargs.pop("reject_certs")
         # Server setup
         threading.Thread(target=self._run, kwargs=run_kwargs).start()
 
@@ -344,6 +363,17 @@ class SSHClientTest(ClientTest):
                 key_filename=key_path,
                 public_blob=PublicBlob.from_file(f"{key_path}-cert.pub"),
             )
+
+    def test_refused_cert_falls_back_to_plain_key(self):
+        # A cert is implicitly loaded alongside the key (see above), so a
+        # server that refuses certs would otherwise never see the plain key
+        # -- even though it is perfectly acceptable to it.
+        for type_ in ("rsa", "ecdsa-256", "ed25519"):
+            self._test_connection(
+                key_filename=_support(f"{type_}.key"),
+                reject_certs=True,
+            )
+            assert self.server.offered_certs == [True, False]
 
     def test_default_key_locations_trigger_cert_loads_if_found(self):
         # TODO: what it says on the tin: ~/.ssh/id_rsa tries to load

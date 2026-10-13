@@ -36,6 +36,7 @@ from paramiko.ed25519key import Ed25519Key
 from paramiko.hostkeys import HostKeys
 from paramiko.rsakey import RSAKey
 from paramiko.ssh_exception import (
+    AuthenticationException,
     BadHostKeyException,
     NoValidConnectionsError,
     SSHException,
@@ -637,6 +638,36 @@ class SSHClient(ClosingContextManager):
             self._log(DEBUG, "Adding public certificate {}".format(cert_path))
         return key
 
+    def _auth_publickey(self, username, key):
+        """
+        Authenticate with ``key``, falling back to it sans certificate.
+
+        OpenSSH treats a certificate and its private key as two separate
+        identities, offering the plain key if the cert is refused -- which
+        happens whenever the server does not trust the signing CA, or does
+        not list any certificate algorithms in ``PubkeyAcceptedAlgorithms``.
+
+        `._key_from_filepath` attaches a sibling certificate whether or not
+        the caller asked for one, so without this fallback such servers
+        reject us outright, even when the plain key is in
+        ``authorized_keys``.
+
+        .. note::
+            ``key`` is mutated on fallback; callers hand us keys they just
+            loaded, not caller-supplied ones.
+        """
+        try:
+            return self._transport.auth_publickey(username, key)
+        except AuthenticationException:
+            if key.public_blob is None:
+                raise
+            self._log(
+                DEBUG,
+                "Certificate was refused; retrying with the plain public key",
+            )
+            key.public_blob = None
+            return self._transport.auth_publickey(username, key)
+
     def _auth(
         self,
         username,
@@ -693,7 +724,7 @@ class SSHClient(ClosingContextManager):
                             key_filename, pkey_class, passphrase
                         )
                         allowed_types = set(
-                            self._transport.auth_publickey(username, key)
+                            self._auth_publickey(username, key)
                         )
                         two_factor = allowed_types & two_factor_types
                         if not two_factor:
@@ -751,9 +782,7 @@ class SSHClient(ClosingContextManager):
                     )
                     # for 2-factor auth a successfully auth'd key will result
                     # in ['password']
-                    allowed_types = set(
-                        self._transport.auth_publickey(username, key)
-                    )
+                    allowed_types = set(self._auth_publickey(username, key))
                     two_factor = allowed_types & two_factor_types
                     if not two_factor:
                         return
