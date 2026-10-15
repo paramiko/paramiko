@@ -26,7 +26,7 @@ import zlib
 class ZlibCompressor:
     def __init__(self):
         # Use the default level of zlib compression
-        self.z = zlib.compressobj()
+        self.z = zlib.compressobj(1, DEFLATED, 15, 8, Z_HUFFMAN_ONLY)
 
     def __call__(self, data):
         return self.z.compress(data) + self.z.flush(zlib.Z_FULL_FLUSH)
