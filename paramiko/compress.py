@@ -27,7 +27,7 @@ class ZlibCompressor:
     def __init__(self):
         # Use the default level of zlib compression
         self.z = zlib.compressobj(level=1, method=zlib.DEFLATED,
-                                  wbits=15, memLevel=8, 
+                                  wbits=15, memLevel=8,
                                   strategy=zlib.Z_HUFFMAN_ONLY)
 
     def __call__(self, data):
