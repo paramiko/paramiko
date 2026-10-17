@@ -830,3 +830,11 @@ class TestSFTP:
                 assert f.read() == data
         finally:
             sftp.remove(f"{sftp.FOLDER}/write_memoryview")
+
+    def test_server_extensions(self, sftp):
+        """
+        test extension_pairs attribute is set correctly
+        """
+        assert sftp.extension_pairs == [("check-file", "md5,sha1")]
+        assert sftp.supports_extension("check-file", "md5,sha1")
+        assert not sftp.supports_extension("foo-bar", "baz")
