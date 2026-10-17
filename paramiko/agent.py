@@ -437,6 +437,7 @@ class AgentKey(PKey):
     """
 
     def __init__(self, agent: Agent, blob: bytes, comment: str = ""):
+        self.public_blob = None  # Match sibling key classes
         self.agent = agent
         self.blob = blob
         self.comment = comment

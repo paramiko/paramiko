@@ -2,6 +2,20 @@
 Changelog
 =========
 
+- :bug:`2462` (w/ earlier fix attempts :issue:`2475` and :issue:`2465`) An API
+  gap between `~paramiko.agent.AgentKey` and the other, 'concrete'
+  `~paramiko.pkey.PKey` subclasses was triggering ``AttributeError`` anytime
+  the agent-hosted key couldn't be loaded internally (an optional behavior that
+  isn't, normally, required for successful auth). This could be due to new key
+  types Paramiko doesn't yet support, or to bugs in loading types we do.
+
+  The issue  has been fixed by making sure `~paramiko.agent.AgentKey`'s
+  initialization behavior w/r/t ``.public_blob`` matches those of its siblings.
+  We've also made a related attribute access in `~paramiko.auth.AuthHandler`
+  more defensive, for good measure.
+
+  Thanks to all the folks who submitted variations on this bug and potential
+  fixes.
 - :bug:`2628` The SHA2 transition left `RSAKey.sign_ssh_data` incorrectly
   trying to look up its default signature algorithm via the key type's name
   string, which is still ``"ssh-rsa"``, and thus no longer a valid/implemented
