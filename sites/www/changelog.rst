@@ -1578,9 +1578,8 @@ Changelog
 - :support:`393` Replace internal use of PyCrypto's ``SHA.new`` with the
   stdlib's ``hashlib.sha1``. Thanks to Alex Gaynor.
 - :feature:`267` (also :issue:`250`, :issue:`241`, :issue:`228`) Add GSS-API /
-  SSPI (e.g. Kerberos) key exchange and authentication support
-  (:ref:`installation docs here <gssapi>`). Mega thanks to Sebastian Deiß, with
-  assist by Torsten Landschoff.
+  SSPI (e.g. Kerberos) key exchange and authentication support. Mega thanks to
+  Sebastian Deiß, with assist by Torsten Landschoff.
 
   .. note::
       Unix users should be aware that the ``python-gssapi`` library (a
