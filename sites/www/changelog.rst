@@ -12,12 +12,12 @@ Changelog
 
   The issue  has been fixed by making sure `~paramiko.agent.AgentKey`'s
   initialization behavior w/r/t ``.public_blob`` matches those of its siblings.
-  We've also made a related attribute access in `~paramiko.auth.AuthHandler`
-  more defensive, for good measure.
+  We've also made a related attribute access in
+  `~paramiko.auth_handler.AuthHandler` more defensive, for good measure.
 
   Thanks to all the folks who submitted variations on this bug and potential
   fixes.
-- :bug:`2628` The SHA2 transition left `RSAKey.sign_ssh_data` incorrectly
+- :bug:`2628` The SHA2 transition left ``RSAKey.sign_ssh_data`` incorrectly
   trying to look up its default signature algorithm via the key type's name
   string, which is still ``"ssh-rsa"``, and thus no longer a valid/implemented
   choice (which would be one of ``"rsa-sha2-256[-cert...]"`` or
