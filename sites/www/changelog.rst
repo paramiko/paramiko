@@ -2,6 +2,7 @@
 Changelog
 =========
 
+- :release:`5.0.1 <2026-10-17>`
 - :bug:`2462` (w/ earlier fix attempts :issue:`2475` and :issue:`2465`) An API
   gap between `~paramiko.agent.AgentKey` and the other, 'concrete'
   `~paramiko.pkey.PKey` subclasses was triggering ``AttributeError`` anytime
