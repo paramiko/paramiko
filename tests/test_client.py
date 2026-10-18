@@ -716,6 +716,30 @@ class SSHClientTest(ClientTest):
         # this would eg explode with AttributeError.
         self._test_connection(pkey=key, allowed_keys=["ssh-ed25519"])
 
+    def test_exec_command_before_connect_raises_sshexception(self):
+        client = SSHClient()
+        try:
+            with pytest.raises(SSHException, match="connect"):
+                client.exec_command("echo hi")
+        finally:
+            client.close()
+
+    def test_invoke_shell_before_connect_raises_sshexception(self):
+        client = SSHClient()
+        try:
+            with pytest.raises(SSHException, match="connect"):
+                client.invoke_shell()
+        finally:
+            client.close()
+
+    def test_open_sftp_before_connect_raises_sshexception(self):
+        client = SSHClient()
+        try:
+            with pytest.raises(SSHException, match="connect"):
+                client.open_sftp()
+        finally:
+            client.close()
+
 
 class PasswordPassphraseTests(ClientTest):
     # TODO: most of these could reasonably be set up to use mocks/assertions
