@@ -157,3 +157,14 @@ class AgentKey_:
         assert msg.get_string() == expected_request_key_blob
         assert msg.get_string() == b"data-to-sign"
         assert msg.get_int() == expected_flag
+
+    def public_blob_is_intialized_like_other_PKeys(self) -> None:
+        # Bug #2462: we were not initializing this attribute, which was causing
+        # AttributeErrors in scenarios where they could've been safely ignored.
+        # See also test_client.py::test_agent_with_unknown_key_type_still_works
+
+        # We don't need a real key blob; anything that doesn't actually look
+        # like a supported key -> inner_key won't get set -> boom
+        key = AgentKey(agent=Mock(), blob=b"irrelephant")
+        assert key.inner_key is None
+        assert key.public_blob is None

@@ -114,8 +114,8 @@ installation of Paramiko via ``pypm``::
 Optional dependencies for GSS-API / SSPI / Kerberos
 ===================================================
 
-First, see the main install doc's notes: :ref:`gssapi` - everything there is
-required for Paramiko 1.x as well.
+First, see the main install doc's notes - everything there is required for
+Paramiko 1.x as well.
 
 Additionally, users of Paramiko 1.x, on all platforms, need a final dependency:
 `pyasn1 <https://pypi.org/project/pyasn1/>`_ ``0.1.7`` or better.

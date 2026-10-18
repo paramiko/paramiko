@@ -30,14 +30,16 @@ import unittest
 import warnings
 import weakref
 from tempfile import mkstemp
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 import pytest
 from pytest_relaxed import raises
 
 import paramiko
 from paramiko import SSHClient
-from paramiko.pkey import PublicBlob
+from paramiko.agent import AgentKey
+from paramiko.ed25519key import Ed25519Key
+from paramiko.pkey import PublicBlob, UnknownKeyType
 from paramiko.ssh_exception import AuthenticationException, SSHException
 
 from ._util import _support, slow
@@ -696,6 +698,23 @@ class SSHClientTest(ClientTest):
             password="pygmalion", transport_factory=MyTransport
         )
         assert isinstance(self.tc._transport, MyTransport)
+
+    # Sidestep method AgentKey uses to decide if it can set self.inner_key,
+    # such that it won't do that.
+    @patch(
+        "paramiko.PKey.from_type_string", new=Mock(side_effect=UnknownKeyType)
+    )
+    def test_agent_with_unknown_key_type_still_works(self):
+        # NOTE: ideally this would live in the AuthHandler or Agent tests, but
+        # neither of those have great fullstack test harnesses, and this one
+        # does.
+        # Set up known key, wrapped in AgentKey, hooked up enough to pass auth
+        wrapped_key = Ed25519Key.from_private_key_file(_support("ed25519.key"))
+        key = AgentKey(agent=Mock(), blob=wrapped_key.asbytes())
+        key.sign_ssh_data = wrapped_key.sign_ssh_data
+        # With either bugfix in place, this will work; with regression around,
+        # this would eg explode with AttributeError.
+        self._test_connection(pkey=key, allowed_keys=["ssh-ed25519"])
 
 
 class PasswordPassphraseTests(ClientTest):

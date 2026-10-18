@@ -2,7 +2,22 @@
 Changelog
 =========
 
-- :bug:`2628` The SHA2 transition left `RSAKey.sign_ssh_data` incorrectly
+- :release:`5.0.1 <2026-10-17>`
+- :bug:`2462` (w/ earlier fix attempts :issue:`2475` and :issue:`2465`) An API
+  gap between `~paramiko.agent.AgentKey` and the other, 'concrete'
+  `~paramiko.pkey.PKey` subclasses was triggering ``AttributeError`` anytime
+  the agent-hosted key couldn't be loaded internally (an optional behavior that
+  isn't, normally, required for successful auth). This could be due to new key
+  types Paramiko doesn't yet support, or to bugs in loading types we do.
+
+  The issue  has been fixed by making sure `~paramiko.agent.AgentKey`'s
+  initialization behavior w/r/t ``.public_blob`` matches those of its siblings.
+  We've also made a related attribute access in
+  `~paramiko.auth_handler.AuthHandler` more defensive, for good measure.
+
+  Thanks to all the folks who submitted variations on this bug and potential
+  fixes.
+- :bug:`2628` The SHA2 transition left ``RSAKey.sign_ssh_data`` incorrectly
   trying to look up its default signature algorithm via the key type's name
   string, which is still ``"ssh-rsa"``, and thus no longer a valid/implemented
   choice (which would be one of ``"rsa-sha2-256[-cert...]"`` or
@@ -1571,9 +1586,8 @@ Changelog
 - :support:`393` Replace internal use of PyCrypto's ``SHA.new`` with the
   stdlib's ``hashlib.sha1``. Thanks to Alex Gaynor.
 - :feature:`267` (also :issue:`250`, :issue:`241`, :issue:`228`) Add GSS-API /
-  SSPI (e.g. Kerberos) key exchange and authentication support
-  (:ref:`installation docs here <gssapi>`). Mega thanks to Sebastian Deiß, with
-  assist by Torsten Landschoff.
+  SSPI (e.g. Kerberos) key exchange and authentication support. Mega thanks to
+  Sebastian Deiß, with assist by Torsten Landschoff.
 
   .. note::
       Unix users should be aware that the ``python-gssapi`` library (a
