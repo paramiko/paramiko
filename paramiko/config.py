@@ -23,10 +23,13 @@ Configuration file (aka ``ssh_config``) support.
 
 import fnmatch
 import getpass
+import logging
 import os
 import re
 import shlex
 import socket
+
+logger = logging.getLogger(__name__)
 from functools import partial
 from hashlib import sha1
 from io import StringIO
@@ -367,7 +370,8 @@ class SSHConfig:
             if type_ == "canonical":
                 if self._should_fail(canonical, candidate):
                     return False
-            if type_ == "final":
+                passed = canonical
+            elif type_ == "final":
                 passed = final
             # The parse step ensures we only see this by itself or after
             # canonical, so it's also an easy hard pass. (No negation here as
@@ -396,6 +400,15 @@ class SSHConfig:
                     raise invoke_import_error
                 # Like OpenSSH, we 'redirect' stdout but let stderr bubble up
                 passed = invoke.run(exec_cmd, hide="stdout", warn=True).ok
+            else:
+                # Unknown Match criterion — log warning and treat as non-matching
+                logger.warning(
+                    "Unknown Match criterion '%s' not supported by paramiko; "
+                    "treating Match block as not matching. "
+                    "If this is a valid OpenSSH keyword, please report a bug.",
+                    type_,
+                )
+                passed = False
             # Tackle any 'passed, but was negated' results from above
             if passed is not None and self._should_fail(passed, candidate):
                 return False
