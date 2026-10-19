@@ -75,7 +75,7 @@ workflows:
           name: Test << matrix.version >> w/ << matrix.pip-overrides >>
           matrix:
             parameters:
-              version: ["3.9"]
+              version: ["3.9", "3.10", "3.11", "3.12", "3.13", "3.13t", "3.14t"]
               # TODO: I don't see a nicer way to do this that doesn't require
               # making the orb know too much about its client code...
               # TODO: the upper end of this needs to change and/or grow more
