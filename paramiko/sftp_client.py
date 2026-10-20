@@ -164,8 +164,6 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         chan = t.open_session(
             window_size=window_size, max_packet_size=max_packet_size
         )
-        if chan is None:
-            return None
         chan.invoke_subsystem("sftp")
         return cls(chan)
 
