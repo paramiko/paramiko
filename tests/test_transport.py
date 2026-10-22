@@ -873,6 +873,30 @@ class TransportTest(unittest.TestCase):
             password="pygmalion",
         )
 
+    def test_failed_handshake_leaves_no_timer_running(self):
+        """
+        verify that a handshake that fails does not leave its timer running.
+        """
+        ours, theirs = socket.socketpair()
+        transport = Transport(ours)
+        try:
+            # The peer sends its banner, then ends its side mid-handshake.
+            theirs.sendall(b"SSH-2.0-OpenSSH_9.9\r\n")
+            theirs.shutdown(socket.SHUT_WR)
+            transport.start_client(event=threading.Event())
+            transport.join(5)
+            assert not transport.is_alive()
+            timer = transport.packetizer._Packetizer__timer
+            assert timer is not None
+            try:
+                assert not timer.is_alive()
+            finally:
+                timer.cancel()
+        finally:
+            transport.close()
+            ours.close()
+            theirs.close()
+
     def test_select_after_close(self):
         """
         verify that select works when a channel is already closed.

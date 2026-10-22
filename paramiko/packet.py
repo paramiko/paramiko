@@ -226,6 +226,11 @@ class Packetizer:
     def close(self):
         self.__closed = True
         self.__socket.close()
+        # A handshake that never completed leaves its timer running until it
+        # expires; stop it, and wait for its thread to end.
+        if self.__timer:
+            self.__timer.cancel()
+            self.__timer.join()
 
     def set_hexdump(self, hexdump):
         self.__dump_packets = hexdump

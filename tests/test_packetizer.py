@@ -90,6 +90,18 @@ class PacketizerTest(unittest.TestCase):
         self.assertEqual(1, m.get_int())
         self.assertEqual(900, m.get_int())
 
+    def test_close_cancels_handshake_timer(self):
+        p = Packetizer(LoopSocket())
+        p.start_handshake(60)
+        timer = p._Packetizer__timer
+        try:
+            assert timer.is_alive()
+            p.close()
+            # The timer thread has ended, not merely been told to.
+            assert not timer.is_alive()
+        finally:
+            timer.cancel()
+
     def test_closed(self):
         if sys.platform.startswith("win"):  # no SIGALRM on windows
             return
