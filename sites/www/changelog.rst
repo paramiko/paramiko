@@ -2,6 +2,14 @@
 Changelog
 =========
 
+- :bug:`2247` The handshake timer thread started by
+  `~paramiko.packet.Packetizer` was only cancelled when a handshake completed:
+  a handshake that failed (e.g. the peer closing the connection mid-kex) left
+  it running until ``handshake_timeout`` expired, and even a cancelled timer
+  could still be alive when `~paramiko.transport.Transport.close` returned.
+  Closing the packetizer now cancels the timer and waits for its thread to
+  end. Thanks to ``@adiroiban`` for the original report and ``@W3Max`` for the
+  patch.
 - :release:`5.0.1 <2026-10-17>`
 - :bug:`2462` (w/ earlier fix attempts :issue:`2475` and :issue:`2465`) An API
   gap between `~paramiko.agent.AgentKey` and the other, 'concrete'
