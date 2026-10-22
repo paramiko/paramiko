@@ -14,15 +14,23 @@
 # along with Paramiko; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
 
-from typing import Union
+from io import RawIOBase
+from typing import Optional, Union
 
 import bcrypt
 import nacl.signing
 from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 from cryptography.hazmat.primitives.ciphers import Cipher
 
 from paramiko.message import Message
-from paramiko.pkey import OPENSSH_AUTH_MAGIC, PKey, _unpad_openssh
+from paramiko.pkey import (
+    OPENSSH,
+    OPENSSH_AUTH_MAGIC,
+    FileFormat,
+    PKey,
+    _unpad_openssh,
+)
 from paramiko.ssh_exception import PasswordRequiredException, SSHException
 from paramiko.util import b
 
@@ -196,6 +204,30 @@ class Ed25519Key(PKey):
         elif self.can_verify():
             return self._verifying_key
         return None
+
+    @property
+    def private_key(self) -> Optional[Ed25519PrivateKey]:
+        if self._signing_key is None:
+            return None
+        return Ed25519PrivateKey.from_private_bytes(self._signing_key.encode())
+
+    def write_private_key_file(
+        self,
+        filename: str,
+        password: Optional[str] = None,
+        file_format: FileFormat = OPENSSH,
+    ):
+        # Traditional OpenSSL PEM cannot represent Ed25519 keys.
+        super().write_private_key_file(filename, password, file_format)
+
+    def write_private_key(
+        self,
+        file_obj: RawIOBase,
+        password: Optional[str] = None,
+        file_format: FileFormat = OPENSSH,
+    ):
+        # Traditional OpenSSL PEM cannot represent Ed25519 keys.
+        super().write_private_key(file_obj, password, file_format)
 
     def sign_ssh_data(self, data, algorithm=None):
         m = Message()
