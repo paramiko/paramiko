@@ -63,7 +63,12 @@ class ProxyCommand(ClosingContextManager):
             self.cmd,
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
+            # Do not pipe stderr: a piped stderr that is never drained will
+            # fill its ~64 KiB OS buffer and permanently block the proxy
+            # process (e.g. `ssh -vvv -W host:port` writes extensive debug
+            # output).  Let stderr inherit the parent's stderr instead,
+            # matching OpenSSH's own ProxyCommand behavior.
+            stderr=None,
             bufsize=0,
         )
         self.timeout = None
@@ -106,9 +111,15 @@ class ProxyCommand(ClosingContextManager):
 
                 r, w, x = select([self.process.stdout], [], [], select_timeout)
                 if r and r[0] == self.process.stdout:
-                    buffer += os.read(
+                    data = os.read(
                         self.process.stdout.fileno(), size - len(buffer)
                     )
+                    if not data:
+                        # EOF: the proxy process has exited or closed stdout.
+                        # Without this break, os.read() returns b"" forever and
+                        # the loop spins at 100% CPU without ever returning.
+                        break
+                    buffer += data
             return buffer
         except socket.timeout:
             if buffer:
