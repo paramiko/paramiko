@@ -106,9 +106,15 @@ class ProxyCommand(ClosingContextManager):
 
                 r, w, x = select([self.process.stdout], [], [], select_timeout)
                 if r and r[0] == self.process.stdout:
-                    buffer += os.read(
+                    data = os.read(
                         self.process.stdout.fileno(), size - len(buffer)
                     )
+                    if not data:
+                        # EOF: the proxy process has exited or closed stdout.
+                        # Without this break, os.read() returns b"" forever and
+                        # the loop spins at 100% CPU without ever returning.
+                        break
+                    buffer += data
             return buffer
         except socket.timeout:
             if buffer:
