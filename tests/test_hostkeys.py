@@ -26,6 +26,9 @@ import os
 import unittest
 
 import paramiko
+import pytest
+
+from paramiko.hostkeys import HostKeyEntry
 
 
 test_hosts_file = """\
@@ -170,3 +173,81 @@ class HostKeysTabsTest(HostKeysTest):
     def setUp(self):
         with open("hostfile.temp", "w") as f:
             f.write(test_hosts_file_tabs)
+
+
+@pytest.mark.parametrize(
+    "hashed, shared", [(False, False), (True, False), (False, True)]
+)
+@pytest.mark.parametrize("key_count", [1, 2])
+def test_delete_host_preserves_other_hosts(
+    tmp_path, hashed, shared, key_count
+):
+    target = "target.example.com"
+    stored_name = paramiko.HostKeys.hash_host(target) if hashed else target
+    keys = [paramiko.RSAKey(data=decodebytes(keyblob))]
+    if key_count == 2:
+        line = next(
+            line
+            for line in test_hosts_file.splitlines()
+            if line.startswith("modern.")
+        )
+        keys.append(HostKeyEntry.from_line(line).key)
+    names = stored_name + ",alias.example.com" if shared else stored_name
+    lines = [
+        "{} {} {}".format(names, key.get_name(), key.get_base64())
+        for key in keys
+    ]
+    lines.append(
+        "other.example.com {} {}".format(
+            keys[0].get_name(), keys[0].get_base64()
+        )
+    )
+    path = tmp_path / "known_hosts"
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    hostkeys = paramiko.HostKeys(str(path))
+
+    del hostkeys[target]
+
+    assert hostkeys.lookup(target) is None
+    assert hostkeys.check("other.example.com", keys[0])
+    if shared:
+        for key in keys:
+            assert hostkeys.check("alias.example.com", key)
+    hostkeys.save(str(path))
+    reloaded = paramiko.HostKeys(str(path))
+    assert reloaded.lookup(target) is None
+    assert reloaded.check("other.example.com", keys[0])
+    if shared:
+        for key in keys:
+            assert reloaded.check("alias.example.com", key)
+
+
+def test_delete_host_removes_repeated_key_types(tmp_path):
+    key = paramiko.RSAKey(data=decodebytes(keyblob))
+    other_key = HostKeyEntry.from_line(test_hosts_file.splitlines()[0]).key
+    line = "target.example.com {} {}\n".format(
+        key.get_name(), key.get_base64()
+    )
+    path = tmp_path / "known_hosts"
+    other_line = "target.example.com {} {}\n".format(
+        other_key.get_name(), other_key.get_base64()
+    )
+    path.write_text(line + other_line, encoding="utf-8")
+    hostkeys = paramiko.HostKeys(str(path))
+
+    del hostkeys["target.example.com"]
+
+    assert list(hostkeys) == []
+    hostkeys.save(str(path))
+    assert path.read_text(encoding="utf-8") == ""
+
+
+def test_delete_missing_host_preserves_entries():
+    hostkeys = paramiko.HostKeys()
+    key = paramiko.RSAKey(data=decodebytes(keyblob))
+    hostkeys.add("other.example.com", key.get_name(), key)
+
+    with pytest.raises(KeyError):
+        del hostkeys["missing.example.com"]
+
+    assert hostkeys.check("other.example.com", key)

@@ -243,14 +243,27 @@ class HostKeys(MutableMapping):
         return ret
 
     def __delitem__(self, key):
-        index = None
-        for i, entry in enumerate(self._entries):
-            if self._hostname_matches(key, entry):
-                index = i
-                break
-        if index is None:
+        """Remove all keys for a host without removing shared aliases."""
+        entries = []
+        found = False
+        for entry in self._entries:
+            if not self._hostname_matches(key, entry):
+                entries.append(entry)
+                continue
+            found = True
+            # Reuse lookup's matching rules for both plain and hashed names.
+            entry.hostnames[:] = [
+                name
+                for name in entry.hostnames
+                if not self._hostname_matches(
+                    key, HostKeyEntry([name], entry.key)
+                )
+            ]
+            if entry.hostnames:
+                entries.append(entry)
+        if not found:
             raise KeyError(key)
-        self._entries.pop(index)
+        self._entries[:] = entries
 
     def __setitem__(self, hostname, entry):
         # don't use this please.

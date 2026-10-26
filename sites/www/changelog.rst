@@ -2,6 +2,11 @@
 Changelog
 =========
 
+- :bug:`-` Deleting a hostname from ``HostKeys`` now removes all of its key
+  entries, including repeated key types and hashed hostnames, while preserving
+  other aliases on shared known-hosts lines. Thanks to Alex0AI for the report
+  and patch.
+
 - :release:`3.5.1 <2025-02-03>`
 - :bug:`2490` Private key material is now explicitly 'unpadded' during
   decryption, removing a reliance on some lax OpenSSL behavior & making us
