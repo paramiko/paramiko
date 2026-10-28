@@ -54,6 +54,7 @@ class BufferedFile(ClosingContextManager):
         self._bufsize = self._DEFAULT_BUFSIZE
         self._wbuffer = BytesIO()
         self._rbuffer = bytes()
+        self._rbuffer_start = 0
         self._at_trailing_cr = False
         self._closed = False
         # pos - position within the file, according to the user
@@ -176,8 +177,9 @@ class BufferedFile(ClosingContextManager):
             raise IOError("File is not open for reading")
         if (size is None) or (size < 0):
             # go for broke
-            result = bytearray(self._rbuffer)
+            result = bytearray(self._rbuffer[self._rbuffer_start:])
             self._rbuffer = bytes()
+            self._rbuffer_start = 0
             self._pos += len(result)
             while True:
                 try:
@@ -190,13 +192,17 @@ class BufferedFile(ClosingContextManager):
                 self._realpos += len(new_data)
                 self._pos += len(new_data)
             return bytes(result)
-        if size <= len(self._rbuffer):
-            result = self._rbuffer[:size]
-            self._rbuffer = self._rbuffer[size:]
-            self._pos += len(result)
+        buffered = len(self._rbuffer) - self._rbuffer_start
+        if size <= buffered:
+            result = self._rbuffer[self._rbuffer_start : self._rbuffer_start + size]
+            self._rbuffer_start += size
+            if self._rbuffer_start > len(self._rbuffer) // 2:
+                self._rbuffer = self._rbuffer[self._rbuffer_start :]
+                self._rbuffer_start = 0
+            self._pos += size
             return result
-        while len(self._rbuffer) < size:
-            read_size = size - len(self._rbuffer)
+        while len(self._rbuffer) - self._rbuffer_start < size:
+            read_size = size - (len(self._rbuffer) - self._rbuffer_start)
             if self._flags & self.FLAG_BUFFERED:
                 read_size = max(self._bufsize, read_size)
             try:
@@ -207,8 +213,11 @@ class BufferedFile(ClosingContextManager):
                 break
             self._rbuffer += new_data
             self._realpos += len(new_data)
-        result = self._rbuffer[:size]
-        self._rbuffer = self._rbuffer[size:]
+        result = self._rbuffer[self._rbuffer_start : self._rbuffer_start + size]
+        self._rbuffer_start += len(result)
+        if self._rbuffer_start > len(self._rbuffer) // 2:
+            self._rbuffer = self._rbuffer[self._rbuffer_start :]
+            self._rbuffer_start = 0
         self._pos += len(result)
         return result
 
@@ -239,6 +248,9 @@ class BufferedFile(ClosingContextManager):
             raise IOError("File is closed")
         if not (self._flags & self.FLAG_READ):
             raise IOError("File not open for reading")
+        if self._rbuffer_start:
+            self._rbuffer = self._rbuffer[self._rbuffer_start:]
+            self._rbuffer_start = 0
         line = self._rbuffer
         truncated = False
         while True:
