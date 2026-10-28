@@ -1,7 +1,7 @@
-import signal
 import socket
+import subprocess
 
-from unittest.mock import patch
+from unittest.mock import call, patch
 from pytest import raises
 
 from paramiko import ProxyCommand, ProxyCommandFailure
@@ -101,11 +101,52 @@ class TestProxyCommand:
         assert info.value.error == "whoops"
 
     @patch("paramiko.proxy.subprocess.Popen")
-    @patch("paramiko.proxy.os.kill")
-    def test_close_kills_subprocess(self, os_kill, Popen):
+    def test_close_terminates_waits_and_closes_pipes(self, Popen):
         proxy = ProxyCommand("hi")
         proxy.close()
-        os_kill.assert_called_once_with(Popen.return_value.pid, signal.SIGTERM)
+        process = Popen.return_value
+        process.terminate.assert_called_once_with()
+        process.wait.assert_called_once_with(timeout=5)
+        process.stdin.close.assert_called_once_with()
+        process.stdout.close.assert_called_once_with()
+        process.stderr.close.assert_called_once_with()
+
+    @patch("paramiko.proxy.subprocess.Popen")
+    def test_close_kills_process_when_wait_times_out(self, Popen):
+        process = Popen.return_value
+        process.wait.side_effect = [subprocess.TimeoutExpired("hi", 5), None]
+        proxy = ProxyCommand("hi")
+        proxy.close()
+        process.terminate.assert_called_once_with()
+        process.kill.assert_called_once_with()
+        assert process.wait.call_args_list == [call(timeout=5), call()]
+
+    @patch("paramiko.proxy.subprocess.Popen")
+    def test_close_handles_missing_process_and_still_closes_pipes(self, Popen):
+        process = Popen.return_value
+        process.terminate.side_effect = ProcessLookupError()
+        proxy = ProxyCommand("hi")
+        proxy.close()
+        process.wait.assert_called_once_with(timeout=5)
+        process.kill.assert_not_called()
+        process.stdin.close.assert_called_once_with()
+        process.stdout.close.assert_called_once_with()
+        process.stderr.close.assert_called_once_with()
+
+    @patch("paramiko.proxy.subprocess.Popen")
+    def test_close_is_idempotent(self, Popen):
+        process = Popen.return_value
+        process.terminate.side_effect = [None, ProcessLookupError()]
+        proxy = ProxyCommand("hi")
+        proxy.close()
+        proxy.close()
+        assert process.wait.call_args_list == [
+            call(timeout=5),
+            call(timeout=5),
+        ]
+        assert process.stdin.close.call_count == 2
+        assert process.stdout.close.call_count == 2
+        assert process.stderr.close.call_count == 2
 
     @patch("paramiko.proxy.subprocess.Popen")
     def test_closed_exposes_whether_subprocess_has_exited(self, Popen):

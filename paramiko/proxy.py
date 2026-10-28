@@ -19,7 +19,6 @@
 
 import os
 import shlex
-import signal
 from select import select
 import socket
 import time
@@ -119,7 +118,32 @@ class ProxyCommand(ClosingContextManager):
             raise ProxyCommandFailure(" ".join(self.cmd), e.strerror)
 
     def close(self):
-        os.kill(self.process.pid, signal.SIGTERM)
+        try:
+            self.process.terminate()
+        except ProcessLookupError:
+            pass
+        try:
+            self.process.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            try:
+                self.process.kill()
+            except ProcessLookupError:
+                pass
+            self.process.wait()
+        except ChildProcessError:
+            pass
+        finally:
+            for pipe in (
+                self.process.stdin,
+                self.process.stdout,
+                self.process.stderr,
+            ):
+                if pipe is None:
+                    continue
+                try:
+                    pipe.close()
+                except OSError:
+                    pass
 
     @property
     def closed(self):
