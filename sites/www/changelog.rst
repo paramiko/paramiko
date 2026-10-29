@@ -2,6 +2,10 @@
 Changelog
 =========
 
+- :bug:`-` Skip starting a prefetch worker when ``SFTPFile.readv`` has no
+  nonempty blocks to request. Empty batches and zero-length blocks could leave
+  subsequent reads waiting for a response that was never requested. Thanks to
+  Dima Mak (``@ub3dqy``) for the fix and regression tests.
 - :release:`4.0.0 <2025-08-03>`
 - :support:`-` Administrivia update:
 

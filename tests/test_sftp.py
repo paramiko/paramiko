@@ -658,6 +658,25 @@ class TestSFTP:
             sftp.chdir()
             sftp.rmdir(sftp.FOLDER + "/" + unicode_folder)
 
+    @pytest.mark.parametrize("chunks, expected", [([], []), ([(0, 0)], [b""])])
+    def test_empty_readv_does_not_block_later_reads(
+        self, sftp, chunks, expected
+    ):
+        path = sftp.FOLDER + "/empty-readv"
+        with sftp.open(path, "w") as f:
+            f.write(b"hello")
+        try:
+            with sftp.open(path, "r") as f:
+                timeout = f.gettimeout()
+                try:
+                    f.settimeout(1)
+                    assert list(f.readv(chunks)) == expected
+                    assert f.read(1) == b"h"
+                finally:
+                    f.settimeout(timeout)
+        finally:
+            sftp.unlink(path)
+
     def test_bad_readv(self, sftp):
         """
         verify that readv at the end of the file doesn't essplode.

@@ -535,6 +535,8 @@ class SFTPFile(BufferedFile):
             return 0
 
     def _start_prefetch(self, chunks, max_concurrent_requests=None):
+        if not chunks:
+            return
         self._prefetching = True
         self._prefetch_done = False
 
