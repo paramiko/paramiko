@@ -2,6 +2,11 @@
 Changelog
 =========
 
+- :support:`2500` Clarify that SFTP prefetching schedules reads for the entire
+  remaining file, and that its concurrency limit does not cap the memory used
+  by unread prefetched data. Document how to disable prefetching for downloads.
+  Reported by ``@davidszotten`` and ``@ddelange``; documentation by Dima Mak
+  (``@ub3dqy``).
 - :release:`5.1.0 <2026-10-17>`
 - :release:`5.0.1 <2026-10-17>`
 - :bug:`2462` (w/ earlier fix attempts :issue:`2475` and :issue:`2465`) An API

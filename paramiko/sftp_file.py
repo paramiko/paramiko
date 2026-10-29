@@ -447,6 +447,14 @@ class SFTPFile(BufferedFile):
         data may be read in a random order (using `.seek`); chunks of the
         buffer that haven't been read will continue to be buffered.
 
+        Prefetching schedules read requests for the entire remaining file,
+        rather than using a fixed-size read-ahead buffer.
+        ``max_concurrent_requests`` limits requests awaiting responses, not
+        the total amount of unread data retained in memory. Unread data can
+        therefore accumulate as responses are processed, even with a
+        concurrency limit. To avoid whole-file prefetching when downloading,
+        pass ``prefetch=False`` to `.SFTPClient.get` or `.SFTPClient.getfo`.
+
         :param int file_size:
             When this is ``None`` (the default), this method calls `stat` to
             determine the remote file size. In some situations, doing so can
@@ -455,7 +463,8 @@ class SFTPFile(BufferedFile):
             workaround, one may call `stat` explicitly and pass its value in
             via this parameter.
         :param int max_concurrent_requests:
-            The maximum number of concurrent read requests to prefetch. See
+            The maximum number of concurrent read requests to prefetch.
+            ``None`` (the default) places no limit on this number. See
             `.SFTPClient.get` (its ``max_concurrent_prefetch_requests`` param)
             for details.
 
