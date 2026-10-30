@@ -794,6 +794,14 @@ class Transport(threading.Thread, ClosingContextManager):
         if isinstance(key, RSAKey):
             self.server_key_dict["rsa-sha2-256"] = key
             self.server_key_dict["rsa-sha2-512"] = key
+            if key.public_blob is not None:
+                cert_type = key.public_blob.key_type
+                self.server_key_dict[cert_type] = key
+                for name in (
+                    "rsa-sha2-256-cert-v01@openssh.com",
+                    "rsa-sha2-512-cert-v01@openssh.com",
+                ):
+                    self.server_key_dict[name] = key
 
     def get_server_key(self):
         """

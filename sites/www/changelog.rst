@@ -2,6 +2,13 @@
 Changelog
 =========
 
+- :release:`5.2.0 <unreleased>`
+- :bug:`771` (also :issue:`2270`) OpenSSH ``@cert-authority`` and ``@revoked``
+  markers in ``known_hosts`` are parsed correctly, preserved on save, and
+  honored during ``SSHClient.connect``. Host keys signed by a trusted CA are
+  accepted when the server presents an OpenSSH host certificate; pinned host
+  keys and revocation entries behave like OpenSSH.
+
 - :release:`5.1.0 <2026-10-17>`
 - :release:`5.0.1 <2026-10-17>`
 - :bug:`2462` (w/ earlier fix attempts :issue:`2475` and :issue:`2465`) An API

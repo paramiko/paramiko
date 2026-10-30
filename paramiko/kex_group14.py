@@ -124,7 +124,7 @@ class KexGroup14SHA256:
         if (self.e < 1) or (self.e > self.P - 1):
             raise SSHException('Client kex "e" is out of range')
         K = pow(self.e, self.x, self.P)
-        key = self.transport.get_server_key().asbytes()
+        key = self.transport.get_server_key().asbytes_for_kex()
         # okay, build up the hash H of
         # (V_C || V_S || I_C || I_S || K_S || e || f || K)
         hm = Message()

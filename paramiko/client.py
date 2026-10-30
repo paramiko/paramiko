@@ -140,14 +140,7 @@ class SSHClient(ClosingContextManager):
         if self._host_keys_filename is not None:
             self.load_host_keys(self._host_keys_filename)
 
-        with open(filename, "w") as f:
-            for hostname, keys in self._host_keys.items():
-                for keytype, key in keys.items():
-                    f.write(
-                        "{} {} {}\n".format(
-                            hostname, keytype, key.get_base64()
-                        )
-                    )
+        self._host_keys.save(filename)
 
     def get_host_keys(self):
         """
@@ -443,21 +436,23 @@ class SSHClient(ClosingContextManager):
         t.start_client(timeout=timeout)
 
         server_key = t.get_remote_server_key()
-        if our_server_keys is None:
-            # will raise exception if the key is rejected
-            self._policy.missing_host_key(
-                self, server_hostkey_name, server_key
-            )
-        else:
-            # TODO: this should 'just work' but dblcheck (HostKeys will be
-            # offering an ssh-rsa-via-sha2 key as "ssh-rsa" still, and the
-            # key would be RSAKey whose .get_name would still say
-            # "ssh-rsa")
-            our_key = our_server_keys.get(server_key.get_name())
-            if our_key != server_key:
-                if our_key is None:
-                    our_key = list(our_server_keys.values())[0]
-                raise BadHostKeyException(hostname, server_key, our_key)
+        trusted = self._system_host_keys.check(
+            server_hostkey_name, server_key
+        ) or self._host_keys.check(server_hostkey_name, server_key)
+        if not trusted:
+            pinned = self._system_host_keys.get(server_hostkey_name)
+            if pinned is None:
+                pinned = self._host_keys.get(server_hostkey_name)
+            if pinned is None:
+                self._policy.missing_host_key(
+                    self, server_hostkey_name, server_key
+                )
+            else:
+                our_key = pinned.get(server_key.get_name())
+                if our_key != server_key:
+                    if our_key is None:
+                        our_key = list(pinned.values())[0]
+                    raise BadHostKeyException(hostname, server_key, our_key)
 
         if username is None:
             username = getpass.getuser()

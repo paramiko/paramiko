@@ -181,6 +181,20 @@ class ClientTest(unittest.TestCase):
             time.sleep(delay)
         self.ts.start_server(self.event, server)
 
+    def _run_host_cert(self, kill_event=None):
+        self.socks, addr = self.sockl.accept()
+        if kill_event and kill_event.is_set():
+            self.socks.close()
+            return
+        self.ts = paramiko.Transport(self.socks)
+        host_key = paramiko.RSAKey.from_private_key_file(
+            _support("host_ca_trust/host_leaf.key")
+        )
+        host_key.load_certificate(_support("host_ca_trust/host_leaf-cert.pub"))
+        self.ts.add_server_key(host_key)
+        server = NullServer(allowed_keys=FINGERPRINTS.keys())
+        self.ts.start_server(self.event, server)
+
     def _test_connection(self, **kwargs):
         """
         (Most) kwargs get passed directly into SSHClient.connect().
@@ -404,6 +418,63 @@ class SSHClientTest(ClientTest):
             assert host_id in fd.read()
 
         os.unlink(localname)
+
+    def test_save_host_keys_preserves_cert_authority(self):
+        ca_parts = (
+            open(_support("host_ca_trust/host_ca.pub")).read().strip().split()
+        )
+        fd, localname = mkstemp()
+        host_id = f"[{self.addr}]:{self.port}"
+        with os.fdopen(fd, "w") as f:
+            f.write(
+                "@cert-authority {} {} {} ca-comment\n".format(
+                    self.addr, ca_parts[0], ca_parts[1]
+                )
+            )
+            f.write(
+                "{} {} {}\n".format(
+                    host_id,
+                    "ssh-rsa",
+                    paramiko.RSAKey(
+                        data=paramiko.RSAKey.from_private_key_file(
+                            _support("rsa.key")
+                        ).asbytes()
+                    ).get_base64(),
+                )
+            )
+        client = SSHClient()
+        client.load_host_keys(localname)
+        client.save_host_keys(localname)
+        with open(localname) as f:
+            body = f.read()
+        self.assertIn("@cert-authority", body)
+        self.assertIn("ca-comment", body)
+        os.unlink(localname)
+
+    def test_connect_trusts_cert_authority_only(self):
+        ca_parts = (
+            open(_support("host_ca_trust/host_ca.pub")).read().strip().split()
+        )
+        fd, kh = mkstemp()
+        host_id = f"[{self.addr}]:{self.port}"
+        with os.fdopen(fd, "w") as f:
+            f.write(
+                "@cert-authority {} {} {} test-ca\n".format(
+                    self.addr, ca_parts[0], ca_parts[1]
+                )
+            )
+        threading.Thread(
+            target=self._run_host_cert,
+            kwargs={"kill_event": self.kill_event},
+        ).start()
+        self.tc = SSHClient()
+        self.tc.load_host_keys(kh)
+        self.tc.connect(**dict(self.connect_kwargs, password="pygmalion"))
+        self.event.wait(1.0)
+        self.assertTrue(self.event.is_set())
+        self.assertTrue(self.ts.is_active())
+        self.assertTrue(self.tc.get_host_keys().lookup(host_id) is None)
+        os.unlink(kh)
 
     def test_cleanup(self):
         """

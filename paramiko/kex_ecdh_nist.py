@@ -67,7 +67,7 @@ class KexNistp256:
         self.Q_C = ec.EllipticCurvePublicKey.from_encoded_point(
             self.curve, Q_C_bytes
         )
-        K_S = self.transport.get_server_key().asbytes()
+        K_S = self.transport.get_server_key().asbytes_for_kex()
         K = self.P.exchange(ec.ECDH(), self.Q_C)
         K = int(hexlify(K), 16)
         # compute exchange hash

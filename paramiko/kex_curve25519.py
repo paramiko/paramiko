@@ -79,7 +79,7 @@ class KexCurve25519:
             self.transport.remote_kex_init,
             self.transport.local_kex_init,
         )
-        server_key_bytes = self.transport.get_server_key().asbytes()
+        server_key_bytes = self.transport.get_server_key().asbytes_for_kex()
         exchange_key_bytes = self.key.public_key().public_bytes(
             serialization.Encoding.Raw, serialization.PublicFormat.Raw
         )

@@ -212,7 +212,7 @@ class KexGexSHA256:
         self._generate_x()
         self.f = pow(self.g, self.x, self.p)
         K = pow(self.e, self.x, self.p)
-        key = self.transport.get_server_key().asbytes()
+        key = self.transport.get_server_key().asbytes_for_kex()
         # okay, build up the hash H of
         # (V_C || V_S || I_C || I_S || K_S || min || n || max || p || g || e || f || K)  # noqa
         hm = Message()

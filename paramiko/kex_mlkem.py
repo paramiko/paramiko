@@ -143,7 +143,7 @@ class KexMLKEM768X25519:
         s_pk1 = self.x25519_key.public_key().public_bytes_raw()
         s_reply = s_ct2 + s_pk1
 
-        K_S = self.transport.get_server_key().asbytes()
+        K_S = self.transport.get_server_key().asbytes_for_kex()
 
         hm = Message()
         hm.add(

@@ -319,6 +319,18 @@ class PKey:
     def __bytes__(self):
         return self.asbytes()
 
+    def asbytes_for_kex(self):
+        """
+        Return the wire-format host key bytes sent during key exchange.
+
+        When an OpenSSH-style certificate is loaded (``.public_blob``), the
+        certificate is sent instead of the plain public key.
+        """
+        blob = getattr(self, "public_blob", None)
+        if blob is not None:
+            return blob.key_blob
+        return self.asbytes()
+
     def __eq__(self, other):
         return isinstance(other, PKey) and self._fields == other._fields
 

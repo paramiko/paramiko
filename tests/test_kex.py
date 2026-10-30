@@ -81,6 +81,9 @@ class FakeKey:
     def asbytes(self):
         return b"fake-key"
 
+    def asbytes_for_kex(self):
+        return self.asbytes()
+
     def sign_ssh_data(self, H, algorithm):
         return b"fake-sig"
 
