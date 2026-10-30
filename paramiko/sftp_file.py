@@ -23,6 +23,7 @@ SFTP file object
 
 from binascii import hexlify
 from collections import deque
+import operator
 import socket
 import threading
 import time
@@ -44,6 +45,15 @@ from paramiko.sftp import (
     int64,
 )
 from paramiko.sftp_attr import SFTPAttributes
+
+
+def _validate_prefetch_requests(limit):
+    if limit is None:
+        return None
+    limit = operator.index(limit)
+    if limit < 1:
+        raise ValueError("prefetch request limit must be at least 1")
+    return limit
 
 
 class SFTPFile(BufferedFile):
@@ -455,7 +465,8 @@ class SFTPFile(BufferedFile):
             workaround, one may call `stat` explicitly and pass its value in
             via this parameter.
         :param int max_concurrent_requests:
-            The maximum number of concurrent read requests to prefetch. See
+            A positive integer limiting concurrent read requests, or ``None``
+            for no limit. See
             `.SFTPClient.get` (its ``max_concurrent_prefetch_requests`` param)
             for details.
 
@@ -468,6 +479,9 @@ class SFTPFile(BufferedFile):
         .. versionchanged:: 3.3
             Added ``max_concurrent_requests``.
         """
+        max_concurrent_requests = _validate_prefetch_requests(
+            max_concurrent_requests
+        )
         if file_size is None:
             file_size = self.stat().st_size
 
@@ -492,7 +506,8 @@ class SFTPFile(BufferedFile):
             a list of ``(offset, length)`` tuples indicating which sections of
             the file to read
         :param int max_concurrent_prefetch_requests:
-            The maximum number of concurrent read requests to prefetch. See
+            A positive integer limiting concurrent read requests, or ``None``
+            for no limit. See
             `.SFTPClient.get` (its ``max_concurrent_prefetch_requests`` param)
             for details.
         :return: a list of blocks read, in the same order as in ``chunks``
@@ -501,6 +516,9 @@ class SFTPFile(BufferedFile):
         .. versionchanged:: 3.3
             Added ``max_concurrent_prefetch_requests``.
         """
+        max_concurrent_prefetch_requests = _validate_prefetch_requests(
+            max_concurrent_prefetch_requests
+        )
         self.sftp._log(
             DEBUG, "readv({}, {!r})".format(hexlify(self.handle), chunks)
         )

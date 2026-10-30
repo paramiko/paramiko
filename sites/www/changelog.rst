@@ -2,6 +2,12 @@
 Changelog
 =========
 
+- :bug:`-` Reject invalid SFTP prefetch request limits before scheduling reads or
+  opening download destinations. Nonpositive limits could leave the background
+  reader waiting without issuing any requests, and invalid types could fail only
+  in the background thread. ``None`` remains unlimited and ``prefetch=False``
+  continues to ignore the unused limit.
+
 - :release:`4.0.0 <2025-08-03>`
 - :support:`-` Administrivia update:
 

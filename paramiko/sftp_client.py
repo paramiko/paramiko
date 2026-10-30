@@ -65,7 +65,7 @@ from paramiko.sftp import (
 
 from paramiko.sftp_attr import SFTPAttributes
 from paramiko.ssh_exception import SSHException
-from paramiko.sftp_file import SFTPFile
+from paramiko.sftp_file import SFTPFile, _validate_prefetch_requests
 from paramiko.util import ClosingContextManager, b, u
 
 
@@ -781,7 +781,8 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         :param bool prefetch:
             controls whether prefetching is performed (default: True)
         :param int max_concurrent_prefetch_requests:
-            The maximum number of concurrent read requests to prefetch. See
+            A positive integer limiting concurrent read requests, or ``None``
+            for no limit. Ignored when ``prefetch=False``. See
             `.SFTPClient.get` (its ``max_concurrent_prefetch_requests`` param)
             for details.
         :return: the `number <int>` of bytes written to the opened file object
@@ -792,6 +793,10 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         .. versionchanged:: 3.3
             Added ``max_concurrent_prefetch_requests``.
         """
+        if prefetch:
+            max_concurrent_prefetch_requests = _validate_prefetch_requests(
+                max_concurrent_prefetch_requests
+            )
         file_size = self.stat(remotepath).st_size
         with self.open(remotepath, "rb") as fr:
             if prefetch:
@@ -822,6 +827,8 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
             controls whether prefetching is performed (default: True)
         :param int max_concurrent_prefetch_requests:
             The maximum number of concurrent read requests to prefetch.
+            Must be a positive integer or ``None``; ignored when
+            ``prefetch=False``.
             When this is ``None`` (the default), do not limit the number of
             concurrent prefetch requests. Note: OpenSSH's sftp internally
             imposes a limit of 64 concurrent requests, while Paramiko imposes
@@ -836,6 +843,10 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         .. versionchanged:: 3.3
             Added ``max_concurrent_prefetch_requests``.
         """
+        if prefetch:
+            max_concurrent_prefetch_requests = _validate_prefetch_requests(
+                max_concurrent_prefetch_requests
+            )
         with open(localpath, "wb") as fl:
             size = self.getfo(
                 remotepath,
