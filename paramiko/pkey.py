@@ -593,7 +593,13 @@ class PKey:
             m = self.END_TAG.match(lines[end])
 
         if keytype == tag:
-            data = self._read_private_key_pem(lines, end, password)
+            # _read_private_key_pem expects lines starting at the BEGIN
+            # line (it skips index 0); preamble lines before BEGIN must
+            # be excluded or they corrupt the base64 decode (see #1641).
+            begin = start - 1
+            data = self._read_private_key_pem(
+                lines[begin:end], end - begin, password
+            )
             pkformat = self._PRIVATE_KEY_FORMAT_ORIGINAL
         elif keytype == "OPENSSH":
             data = self._read_private_key_openssh(lines[start:end], password)

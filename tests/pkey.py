@@ -127,6 +127,16 @@ class PKey_:
                     PKey.from_path(_support("rsa-missing.key-cert.pub"))
                 assert info.value.filename.endswith("rsa-missing.key")
 
+    class from_private_key_file:
+        def loads_pem_with_preamble_lines(self):
+            # Preamble lines before BEGIN must not corrupt loading
+            # (see #1641).
+            with open(_support("rsa.key")) as f:
+                pem = f.read()
+            preamble = "This is a preamble\nAnother: preamble line\n"
+            key = RSAKey.from_private_key(StringIO(preamble + pem))
+            assert isinstance(key, RSAKey)
+
     class load_certificate:
         def rsa_public_cert_blobs(self):
             # Data to test signing with (arbitrary)
