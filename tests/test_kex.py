@@ -27,6 +27,7 @@ from binascii import hexlify, unhexlify
 from unittest.mock import Mock, patch
 
 import pytest
+from cryptography.exceptions import InternalError, UnsupportedAlgorithm
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.asymmetric import ec
 
@@ -588,3 +589,43 @@ class MLKEM768X25519Test(unittest.TestCase):
                     self._client_kex().parse_next(
                         paramiko.kex_mlkem._MSG_KEX_HYBRID_REPLY, bad
                     )
+
+
+class KexAvailabilityTest(unittest.TestCase):
+    def test_mlkem_is_available_handles_internal_error(self):
+        mlkem = paramiko.kex_mlkem.mlkem
+        if mlkem is not None:
+            with patch.object(
+                mlkem.MLKEM768PrivateKey,
+                "generate",
+                side_effect=InternalError("unsupported", []),
+            ):
+                self.assertFalse(KexMLKEM768X25519.is_available())
+
+    def test_mlkem_is_available_handles_unsupported_algorithm(self):
+        mlkem = paramiko.kex_mlkem.mlkem
+        if mlkem is not None:
+            with patch.object(
+                mlkem.MLKEM768PrivateKey,
+                "generate",
+                side_effect=UnsupportedAlgorithm("unsupported"),
+            ):
+                self.assertFalse(KexMLKEM768X25519.is_available())
+
+    def test_curve25519_is_available_handles_internal_error(self):
+        if x25519 is not None:
+            with patch.object(
+                x25519.X25519PrivateKey,
+                "generate",
+                side_effect=InternalError("unsupported", []),
+            ):
+                self.assertFalse(KexCurve25519.is_available())
+
+    def test_curve25519_is_available_handles_unsupported_algorithm(self):
+        if x25519 is not None:
+            with patch.object(
+                x25519.X25519PrivateKey,
+                "generate",
+                side_effect=UnsupportedAlgorithm("unsupported"),
+            ):
+                self.assertFalse(KexCurve25519.is_available())
