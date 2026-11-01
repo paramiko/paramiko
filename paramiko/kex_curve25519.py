@@ -1,7 +1,7 @@
 import binascii
 import hashlib
 
-from cryptography.exceptions import UnsupportedAlgorithm
+from cryptography.exceptions import InternalError, UnsupportedAlgorithm
 from cryptography.hazmat.primitives import constant_time, serialization
 from cryptography.hazmat.primitives.asymmetric.x25519 import (
     X25519PrivateKey,
@@ -28,7 +28,7 @@ class KexCurve25519:
     def is_available(cls):
         try:
             X25519PrivateKey.generate()
-        except UnsupportedAlgorithm:
+        except (UnsupportedAlgorithm, InternalError):
             return False
         else:
             return True

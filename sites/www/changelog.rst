@@ -2,6 +2,13 @@
 Changelog
 =========
 
+- :bug:`2712` In environments where ML-KEM or X25519 is not supported by the
+  underlying OpenSSL provider (such as FIPS mode), ``cryptography`` raises
+  ``InternalError`` instead of ``UnsupportedAlgorithm``.
+  `~paramiko.kex_mlkem.KexMLKEM768X25519.is_available` and
+  `~paramiko.kex_curve25519.KexCurve25519.is_available` now catch
+  ``InternalError`` as well, avoiding an import-time crash when detecting
+  available key exchange algorithms.
 - :release:`5.1.0 <2026-10-17>`
 - :release:`5.0.1 <2026-10-17>`
 - :bug:`2462` (w/ earlier fix attempts :issue:`2475` and :issue:`2465`) An API

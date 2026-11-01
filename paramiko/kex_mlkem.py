@@ -15,7 +15,7 @@ from __future__ import annotations
 import hashlib
 from typing import TYPE_CHECKING
 
-from cryptography.exceptions import UnsupportedAlgorithm
+from cryptography.exceptions import InternalError, UnsupportedAlgorithm
 from cryptography.hazmat.primitives import constant_time
 from cryptography.hazmat.primitives.asymmetric.x25519 import (
     X25519PrivateKey,
@@ -74,7 +74,7 @@ class KexMLKEM768X25519:
         try:
             mlkem.MLKEM768PrivateKey.generate()
             X25519PrivateKey.generate()
-        except UnsupportedAlgorithm:
+        except (UnsupportedAlgorithm, InternalError):
             return False
         return True
 
