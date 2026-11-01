@@ -100,6 +100,12 @@ class ECDSAKey(PKey):
     data.
     """
 
+    _expected_openssh_keytypes = (
+        "ecdsa-sha2-nistp256",
+        "ecdsa-sha2-nistp384",
+        "ecdsa-sha2-nistp521",
+    )
+
     _ECDSA_CURVES = _ECDSACurveSet(
         [
             _ECDSACurve(ec.SECP256R1, "nistp256"),

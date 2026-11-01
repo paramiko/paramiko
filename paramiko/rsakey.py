@@ -39,6 +39,7 @@ class RSAKey(PKey):
     """
 
     name = "ssh-rsa"
+    _expected_openssh_keytypes = ("ssh-rsa",)
     HASHES = {
         "rsa-sha2-256": hashes.SHA256,
         "rsa-sha2-256-cert-v01@openssh.com": hashes.SHA256,
