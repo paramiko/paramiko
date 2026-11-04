@@ -26,6 +26,8 @@ do test file operations in (so no existing files will be harmed).
 import os
 import socket
 import sys
+import threading
+import time
 import warnings
 from binascii import hexlify
 from io import StringIO
@@ -34,6 +36,7 @@ from tempfile import mkstemp
 import pytest
 
 from paramiko.common import o777, o600, o666, o644
+from paramiko.sftp import CMD_READ
 from paramiko.sftp_attr import SFTPAttributes
 from paramiko.util import b, u
 from tests import requireNonAsciiLocale
@@ -657,6 +660,60 @@ class TestSFTP:
         finally:
             sftp.chdir()
             sftp.rmdir(sftp.FOLDER + "/" + unicode_folder)
+
+    def test_prefetch_stops_when_file_closes(self, sftp):
+        """
+        A limited prefetch must not keep issuing reads after close().
+        """
+        path = sftp.FOLDER + "/prefetch-close.bin"
+        payload = b"x" * (128 * 1024)
+        with sftp.open(path, "wb") as writer:
+            writer.write(payload)
+
+        errors = []
+        previous_hook = threading.excepthook
+
+        def record(args):
+            errors.append(args)
+
+        threading.excepthook = record
+        try:
+            with sftp.open(path, "rb") as remote:
+                calls = []
+                real_async = remote.sftp._async_request
+
+                def hold_reads(fileobj, t, *args):
+                    if t == CMD_READ:
+                        calls.append(args)
+                        return 10000 + len(calls)
+                    return real_async(fileobj, t, *args)
+
+                remote.sftp._async_request = hold_reads
+                try:
+                    remote.prefetch(len(payload), max_concurrent_requests=2)
+                    deadline = time.time() + 5
+                    while len(calls) < 2:
+                        assert time.time() < deadline
+                        time.sleep(0.01)
+                    assert any(
+                        thread.is_alive()
+                        for thread in remote._prefetch_threads
+                    )
+                    remote.close()
+                    assert remote._prefetch_threads
+                    assert all(
+                        not thread.is_alive()
+                        for thread in remote._prefetch_threads
+                    )
+                    issued = len(calls)
+                    time.sleep(0.05)
+                    assert len(calls) == issued
+                    assert errors == []
+                finally:
+                    remote.sftp._async_request = real_async
+        finally:
+            threading.excepthook = previous_hook
+            sftp.remove(path)
 
     def test_bad_readv(self, sftp):
         """
