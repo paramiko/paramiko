@@ -23,6 +23,7 @@ Some unit tests for public/private key objects.
 
 import os
 import stat
+import tempfile
 import unittest
 from binascii import hexlify
 from hashlib import md5
@@ -479,6 +480,31 @@ class KeyTest(unittest.TestCase):
             _support("test_ed25519_password.key"), b"abc123"
         )
         self.assertNotEqual(key1.asbytes(), key2.asbytes())
+
+    def test_ed25519_write_private_key_file(self):
+        # Proves #2700: Ed25519Key had no private_key attribute, so writing
+        # the key out raised AttributeError instead of producing a file.
+        key = Ed25519Key.from_private_key_file(_support("ed25519.key"))
+
+        with tempfile.TemporaryDirectory() as tmp:
+            path = os.path.join(tmp, "written_ed25519.key")
+            key.write_private_key_file(path)
+
+            # The file must carry the same key and stay owner-readable only.
+            self.assertEqual(0o600, stat.S_IMODE(os.stat(path).st_mode))
+            reloaded = Ed25519Key.from_private_key_file(path)
+
+        self.assertEqual(key.get_base64(), reloaded.get_base64())
+
+    def test_ed25519_write_private_key_to_buffer(self):
+        key = Ed25519Key.from_private_key_file(_support("ed25519.key"))
+
+        buf = StringIO()
+        key.write_private_key(buf, password="abc123")
+        buf.seek(0)
+        reloaded = Ed25519Key.from_private_key(buf, password="abc123")
+
+        self.assertEqual(key.get_base64(), reloaded.get_base64())
 
     def test_ed25519_funky_padding(self):
         # Proves #1306 by just not exploding with 'Invalid key'.
