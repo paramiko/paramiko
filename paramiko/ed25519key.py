@@ -14,15 +14,16 @@
 # along with Paramiko; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
 
-from typing import Union
+from typing import Optional, Union
 
 import bcrypt
 import nacl.signing
 from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives.asymmetric import ed25519
 from cryptography.hazmat.primitives.ciphers import Cipher
 
 from paramiko.message import Message
-from paramiko.pkey import OPENSSH_AUTH_MAGIC, PKey, _unpad_openssh
+from paramiko.pkey import OPENSSH, OPENSSH_AUTH_MAGIC, PKey, _unpad_openssh
 from paramiko.ssh_exception import PasswordRequiredException, SSHException
 from paramiko.util import b
 
@@ -66,6 +67,43 @@ class Ed25519Key(PKey):
 
         if self._signing_key is None and self._verifying_key is None:
             raise ValueError("need a key")
+
+    @property
+    def private_key(self) -> Optional[ed25519.Ed25519PrivateKey]:
+        """
+        The private key backing this object, in the format the rest of
+        Paramiko expects (a ``cryptography`` key rather than the ``nacl``
+        object we keep internally).  ``None`` for verify-only keys.
+        """
+        if self._signing_key is None:
+            return None
+        return ed25519.Ed25519PrivateKey.from_private_bytes(
+            self._signing_key.encode()
+        )
+
+    def write_private_key_file(
+        self, filename, password=None, file_format=OPENSSH
+    ):
+        """
+        Write private key contents into a file.
+
+        Ed25519 has no TraditionalOpenSSL representation, so the OpenSSH
+        format is used unless another one is asked for explicitly.
+        """
+        super().write_private_key_file(
+            filename, password=password, file_format=file_format
+        )
+
+    def write_private_key(self, file_obj, password=None, file_format=OPENSSH):
+        """
+        Write private key contents into a file (or file-like) object.
+
+        Ed25519 has no TraditionalOpenSSL representation, so the OpenSSH
+        format is used unless another one is asked for explicitly.
+        """
+        super().write_private_key(
+            file_obj, password=password, file_format=file_format
+        )
 
     def _parse_signing_key_data(self, data, password):
         from paramiko.transport import Transport
