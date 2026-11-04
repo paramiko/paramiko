@@ -69,6 +69,7 @@ class SFTPFile(BufferedFile):
         self._prefetch_data = {}
         self._prefetch_extents = {}
         self._prefetch_lock = threading.Lock()
+        self._prefetch_threads = []
         self._saved_exception = None
         self._reqs = deque()
 
@@ -95,6 +96,8 @@ class SFTPFile(BufferedFile):
         if self.pipelined:
             self.sftp._finish_responses(self)
         BufferedFile.close(self)
+        # Join before CMD_CLOSE so the thread cannot write to a closed handle.
+        self._stop_prefetch_threads()
         try:
             if async_:
                 # GC'd file handle could be called from an arbitrary thread
@@ -543,12 +546,27 @@ class SFTPFile(BufferedFile):
             args=(chunks, max_concurrent_requests),
         )
         t.daemon = True
+        with self._prefetch_lock:
+            if self._closed:
+                return
+            self._prefetch_threads.append(t)
         t.start()
+
+    def _stop_prefetch_threads(self):
+        current = threading.current_thread()
+        with self._prefetch_lock:
+            threads = list(self._prefetch_threads)
+        for thread in threads:
+            if thread is current or thread.ident is None:
+                continue
+            thread.join()
 
     def _prefetch_thread(self, chunks, max_concurrent_requests):
         # do these read requests in a temporary thread because there may be
         # a lot of them, so it may block.
         for offset, length in chunks:
+            if self._closed:
+                return
             # Limit the number of concurrent requests in a busy-loop
             if max_concurrent_requests is not None:
                 while True:
@@ -556,7 +574,11 @@ class SFTPFile(BufferedFile):
                         pf_len = len(self._prefetch_extents)
                         if pf_len < max_concurrent_requests:
                             break
+                    if self._closed:
+                        return
                     time.sleep(io_sleep)
+            if self._closed:
+                return
 
             num = self.sftp._async_request(
                 self, CMD_READ, self.handle, int64(offset), int(length)

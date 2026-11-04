@@ -2,6 +2,12 @@
 Changelog
 =========
 
+- :bug:`2717` Closing an SFTP file stopped a prefetch thread that was still
+  issuing reads under ``max_concurrent_requests``. The thread previously kept
+  going after ``close()``, so it could raise ``OSError`` once the channel was
+  gone or wait forever when a failed read left the in-flight count at the
+  limit. The enqueue race described alongside that report is unchanged and is
+  still the subject of :issue:`2519`.
 - :release:`5.1.0 <2026-10-17>`
 - :release:`5.0.1 <2026-10-17>`
 - :bug:`2462` (w/ earlier fix attempts :issue:`2475` and :issue:`2465`) An API

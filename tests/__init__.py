@@ -4,6 +4,7 @@ import functools
 import locale
 import os
 
+import pytest
 from pytest import skip
 
 
@@ -28,7 +29,14 @@ _non_ascii_locales.extend([name + ".utf8" for name in _non_ascii_locales])
 def requireNonAsciiLocale(category_name="LC_ALL"):
     """Run decorated test under a non-ascii locale or skip if not possible."""
     if os.name != "posix":
-        return skip("Non-posix OSes don't really use C locales")
+
+        def _skip_non_posix(test_method):
+            # skip() here would abort collection of the whole module.
+            return pytest.mark.skip(
+                reason="Non-posix OSes don't really use C locales"
+            )(test_method)
+
+        return _skip_non_posix
     cat = getattr(locale, category_name)
     return functools.partial(_decorate_with_locale, cat, _non_ascii_locales)
 
