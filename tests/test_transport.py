@@ -1428,3 +1428,49 @@ class TestStrictKex:
                 transport_factory=RolloverTransport,
             ):
                 pass  # kexinit happens at connect...
+
+
+class TestAEADMacNegotiation:
+    """
+    AEAD ciphers authenticate packets themselves, so peers needn't agree on
+    (or even advertise) any MAC algorithm when one is selected.
+    """
+
+    # Values for ``disabled_algorithms``
+    all_macs = list(Transport._preferred_macs)
+    non_aead_ciphers = [
+        c for c in Transport._preferred_ciphers if "gcm" not in c
+    ]
+    aead_ciphers = [c for c in Transport._preferred_ciphers if "gcm" in c]
+
+    @mark.parametrize("empty_mac_side", ("client", "server", "both"))
+    def test_aead_cipher_needs_no_shared_mac(self, empty_mac_side):
+        # Peer(s) advertise an empty MAC list, like e.g. a server only
+        # offering AES-GCM might. Successful connect()+auth proves traffic
+        # flows properly in both directions after kex.
+        aead_only = dict(ciphers=self.non_aead_ciphers)
+        no_macs = dict(disabled_algorithms=dict(aead_only, macs=self.all_macs))
+        has_macs = dict(disabled_algorithms=aead_only)
+        client_init = has_macs if empty_mac_side == "server" else no_macs
+        server_init = has_macs if empty_mac_side == "client" else no_macs
+        with server(client_init=client_init, server_init=server_init) as (
+            tc,
+            ts,
+        ):
+            for t in (tc, ts):
+                assert "gcm" in t.local_cipher
+                assert "gcm" in t.remote_cipher
+
+    def test_non_aead_cipher_still_requires_shared_mac(self):
+        # Same empty MAC lists but only non-AEAD ciphers on offer: with no
+        # MAC there would be no integrity protection, so this must fail.
+        disabled = dict(ciphers=self.aead_ciphers, macs=self.all_macs)
+        with server(
+            init=dict(disabled_algorithms=disabled), catch_error=True
+        ) as (tc, ts, err):
+            assert err is not None
+            # Server may have blown up first, leaving the client with an EOF
+            if isinstance(err, EOFError):
+                err = ts.saved_exception
+            assert isinstance(err, IncompatiblePeer)
+            assert "macs" in str(err)

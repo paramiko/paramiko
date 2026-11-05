@@ -2,6 +2,13 @@
 Changelog
 =========
 
+- :bug:`2491` Fix key exchange failing with ``Incompatible ssh server (no
+  acceptable macs)`` when the peer selects an AEAD cipher (such as
+  ``aes128-gcm@openssh.com``) but advertises no MAC algorithms in common, or
+  an empty list of them. AEAD ciphers authenticate packets themselves, so per
+  ``draft-miller-sshm-aes-gcm`` (the rules OpenSSH and others use instead of
+  RFC 5647's) MAC negotiation is skipped in this case. Non-AEAD ciphers still
+  require an agreed-upon MAC.
 - :release:`5.1.0 <2026-10-17>`
 - :release:`5.0.1 <2026-10-17>`
 - :bug:`2462` (w/ earlier fix attempts :issue:`2475` and :issue:`2465`) An API

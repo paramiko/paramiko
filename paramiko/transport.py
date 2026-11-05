@@ -2522,14 +2522,28 @@ class Transport(threading.Thread, ClosingContextManager):
             agreed_remote_macs = list(
                 filter(server_mac_algo_list.__contains__, self.preferred_macs)
             )
-        if (len(agreed_local_macs) == 0) or (len(agreed_remote_macs) == 0):
+        # AEAD ciphers authenticate packets themselves, so when one is selected
+        # MAC negotiation is skipped: the MAC lists are ignored and needn't
+        # contain a match (they may even be empty). See
+        # draft-miller-sshm-aes-gcm (which supersedes RFC 5647's negotiation
+        # rules here; OpenSSH's PROTOCOL doc, section 1.6, refers to it).
+        # Only non-AEAD ciphers require an agreed-upon MAC.
+        local_aead = self._cipher_info[self.local_cipher].get("is_aead", False)
+        remote_aead = self._cipher_info[self.remote_cipher].get(
+            "is_aead", False
+        )
+        if (len(agreed_local_macs) == 0 and not local_aead) or (
+            len(agreed_remote_macs) == 0 and not remote_aead
+        ):
             raise IncompatiblePeer(
                 "Incompatible ssh server (no acceptable macs)"
             )
-        self.local_mac = agreed_local_macs[0]
-        self.remote_mac = agreed_remote_macs[0]
+        self.local_mac = agreed_local_macs[0] if agreed_local_macs else None
+        self.remote_mac = agreed_remote_macs[0] if agreed_remote_macs else None
         self._log_agreement(
-            "MAC", local=self.local_mac, remote=self.remote_mac
+            "MAC",
+            local=self.local_mac or "<none, not needed by AEAD cipher>",
+            remote=self.remote_mac or "<none, not needed by AEAD cipher>",
         )
 
         if self.server_mode:
@@ -2610,22 +2624,27 @@ class Transport(threading.Thread, ClosingContextManager):
             operation=self._DECRYPT,
             aead=aead,
         )
-        etm = (not aead) and "etm@openssh.com" in self.remote_mac
-        mac_size = self._mac_info[self.remote_mac]["size"]
-        mac_engine = self._mac_info[self.remote_mac]["class"]
-        # initial mac keys are done in the hash's natural size (not the
-        # potentially truncated transmission size)
-        if self.server_mode:
-            mac_key = self._compute_key("E", mac_engine().digest_size)
-        else:
-            mac_key = self._compute_key("F", mac_engine().digest_size)
+        # AEAD ciphers need no separate MAC (and may have none negotiated)
+        etm = False
+        mac_size = 16
+        mac_engine = mac_key = None
+        if not aead:
+            etm = "etm@openssh.com" in self.remote_mac
+            mac_size = self._mac_info[self.remote_mac]["size"]
+            mac_engine = self._mac_info[self.remote_mac]["class"]
+            # initial mac keys are done in the hash's natural size (not the
+            # potentially truncated transmission size)
+            if self.server_mode:
+                mac_key = self._compute_key("E", mac_engine().digest_size)
+            else:
+                mac_key = self._compute_key("F", mac_engine().digest_size)
 
         self.packetizer.set_inbound_cipher(
             block_engine=engine,
             block_size=block_size,
-            mac_engine=None if aead else mac_engine,
-            mac_size=16 if aead else mac_size,
-            mac_key=None if aead else mac_key,
+            mac_engine=mac_engine,
+            mac_size=mac_size,
+            mac_key=mac_key,
             etm=etm,
             aead=aead,
             iv_in=iv_in if aead else None,
@@ -2678,23 +2697,28 @@ class Transport(threading.Thread, ClosingContextManager):
             operation=self._ENCRYPT,
             aead=aead,
         )
-        etm = (not aead) and "etm@openssh.com" in self.local_mac
-        mac_size = self._mac_info[self.local_mac]["size"]
-        mac_engine = self._mac_info[self.local_mac]["class"]
-        # initial mac keys are done in the hash's natural size (not the
-        # potentially truncated transmission size)
-        if self.server_mode:
-            mac_key = self._compute_key("F", mac_engine().digest_size)
-        else:
-            mac_key = self._compute_key("E", mac_engine().digest_size)
+        # AEAD ciphers need no separate MAC (and may have none negotiated)
+        etm = False
+        mac_size = 16
+        mac_engine = mac_key = None
+        if not aead:
+            etm = "etm@openssh.com" in self.local_mac
+            mac_size = self._mac_info[self.local_mac]["size"]
+            mac_engine = self._mac_info[self.local_mac]["class"]
+            # initial mac keys are done in the hash's natural size (not the
+            # potentially truncated transmission size)
+            if self.server_mode:
+                mac_key = self._compute_key("F", mac_engine().digest_size)
+            else:
+                mac_key = self._compute_key("E", mac_engine().digest_size)
         sdctr = self.local_cipher.endswith("-ctr")
 
         self.packetizer.set_outbound_cipher(
             block_engine=engine,
             block_size=block_size,
-            mac_engine=None if aead else mac_engine,
-            mac_size=16 if aead else mac_size,
-            mac_key=None if aead else mac_key,
+            mac_engine=mac_engine,
+            mac_size=mac_size,
+            mac_key=mac_key,
             sdctr=sdctr,
             etm=etm,
             aead=aead,
