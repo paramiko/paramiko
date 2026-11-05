@@ -38,6 +38,7 @@ from pytest_relaxed import raises
 import paramiko
 from paramiko import SSHClient
 from paramiko.agent import AgentKey
+from paramiko.common import MSG_SERVICE_REQUEST, byte_ord
 from paramiko.ed25519key import Ed25519Key
 from paramiko.pkey import PublicBlob, UnknownKeyType
 from paramiko.ssh_exception import AuthenticationException, SSHException
@@ -307,6 +308,26 @@ class SSHClientTest(ClientTest):
                 # TODO: use nose test generators after nose port
                 self.tearDown()
                 self.setUp()
+
+    def test_multiple_keys_request_the_userauth_service_once(self):
+        """
+        A rejected key must not send a second ssh-userauth service request.
+        """
+        service_requests = []
+
+        class CountingTransport(paramiko.Transport):
+            def _send_message(self, data):
+                raw = data.asbytes()
+                if byte_ord(raw[0]) == MSG_SERVICE_REQUEST:
+                    service_requests.append(raw)
+                super()._send_message(data)
+
+        self._test_connection(
+            key_filename=[_support("rsa.key"), _support("ed25519.key")],
+            allowed_keys=["ssh-ed25519"],
+            transport_factory=CountingTransport,
+        )
+        self.assertEqual(len(service_requests), 1)
 
     def test_multiple_key_files_failure(self):
         """

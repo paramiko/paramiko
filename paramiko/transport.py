@@ -527,6 +527,9 @@ class Transport(threading.Thread, ClosingContextManager):
         self.logger = util.get_logger(self.log_name)
         self.packetizer.set_log(self.logger)
         self.auth_handler = None
+        # One ssh-userauth service for the connection. A later method must
+        # not send MSG_SERVICE_REQUEST again.
+        self._userauth_service_accepted = False
         # response Message from an arbitrary global request
         self.global_response = None
         # user-defined event callbacks

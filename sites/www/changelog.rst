@@ -2,6 +2,14 @@
 Changelog
 =========
 
+- :bug:`2405` Classic `Transport` sent a fresh ``ssh-userauth``
+  ``MSG_SERVICE_REQUEST`` for every authentication attempt. Once the server
+  has accepted that service, a later attempt on the same connection sends
+  ``MSG_USERAUTH_REQUEST`` directly. AsyncSSH 2.14.1 rejects the second
+  service request, and OpenSSH is tightening the same rule.
+
+  Thanks to ``@matthijskooijman`` for the report and to Damien Miller for
+  the protocol note.
 - :release:`5.1.0 <2026-10-17>`
 - :release:`5.0.1 <2026-10-17>`
 - :bug:`2462` (w/ earlier fix attempts :issue:`2475` and :issue:`2465`) An API
