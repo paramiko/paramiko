@@ -396,6 +396,13 @@ class SSHConfig:
                     raise invoke_import_error
                 # Like OpenSSH, we 'redirect' stdout but let stderr bubble up
                 passed = invoke.run(exec_cmd, hide="stdout", warn=True).ok
+            elif type_ != "canonical":
+                # Unsupported Match criteria (e.g. OpenSSH's "tagged") must not
+                # match. Leaving passed as None used to treat them as success,
+                # so a Match tagged block could override later Host settings.
+                # "canonical" is handled as a hard gate above and intentionally
+                # leaves passed as None so evaluation continues.
+                passed = False
             # Tackle any 'passed, but was negated' results from above
             if passed is not None and self._should_fail(passed, candidate):
                 return False

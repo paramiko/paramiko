@@ -996,6 +996,75 @@ class TestMatchLocalUser:
             load_config("match-localuser-no-arg")
 
 
+class TestMatchUnsupported:
+    """Unsupported Match criteria (OpenSSH keywords Paramiko does not implement).
+
+    Historically unknown criteria left ``passed is None`` and were treated as
+    successful matches, so a ``Match tagged`` block before a ``Host`` stanza
+    could incorrectly override host-specific settings (#2715).
+    """
+
+    def test_tagged_does_not_apply_before_host(self):
+        # Repro from #2715: Match tagged before Host must not set User.
+        conf = SSHConfig.from_text(
+            """
+Match tagged foobar
+  User jane
+
+Host example.org
+  User john
+"""
+        )
+        assert conf.lookup("example.org")["user"] == "john"
+
+    def test_tagged_does_not_apply_after_host(self):
+        conf = SSHConfig.from_text(
+            """
+Host example.org
+  User john
+
+Match tagged foobar
+  User jane
+"""
+        )
+        assert conf.lookup("example.org")["user"] == "john"
+
+    def test_tagged_alone_does_not_match(self):
+        conf = SSHConfig.from_text(
+            """
+Match tagged foobar
+  User jane
+"""
+        )
+        assert "user" not in conf.lookup("example.org")
+
+    def test_negated_unsupported_still_matches(self):
+        # !tagged with no tag support means "not tagged" -> True.
+        conf = SSHConfig.from_text(
+            """
+Match !tagged foobar
+  User jane
+
+Host example.org
+  User john
+"""
+        )
+        # First obtained value wins: Match applies first, so jane.
+        assert conf.lookup("example.org")["user"] == "jane"
+
+    def test_supported_match_host_still_works(self):
+        conf = SSHConfig.from_text(
+            """
+Match host example.org
+  User matched
+
+Host example.org
+  User john
+"""
+        )
+        assert conf.lookup("example.org")["user"] == "matched"
+
+
 class TestComplexMatching:
     # NOTE: this is still a cherry-pick of a few levels of complexity, there's
     # no point testing literally all possible combinations.
