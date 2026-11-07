@@ -540,11 +540,14 @@ class SSHClient(ClosingContextManager):
             the stdin, stdout, and stderr of the executing command, as a
             3-tuple
 
-        :raises: `.SSHException` -- if the server fails to execute the command
+        :raises: `.SSHException` -- if the client is not connected, or if the
+            server fails to execute the command
 
         .. versionchanged:: 1.10
             Added the ``get_pty`` kwarg.
         """
+        if self._transport is None:
+            raise SSHException("No existing session")
         chan = self._transport.open_session(timeout=timeout)
         if get_pty:
             chan.get_pty()
@@ -580,8 +583,11 @@ class SSHClient(ClosingContextManager):
         :param dict environment: the command's environment
         :return: a new `.Channel` connected to the remote shell
 
-        :raises: `.SSHException` -- if the server fails to invoke a shell
+        :raises: `.SSHException` -- if the client is not connected, or if the
+            server fails to invoke a shell
         """
+        if self._transport is None:
+            raise SSHException("No existing session")
         chan = self._transport.open_session()
         chan.get_pty(term, width, height, width_pixels, height_pixels)
         chan.invoke_shell()
@@ -592,7 +598,11 @@ class SSHClient(ClosingContextManager):
         Open an SFTP session on the SSH server.
 
         :return: a new `.SFTPClient` session object
+
+        :raises: `.SSHException` -- if the client is not connected
         """
+        if self._transport is None:
+            raise SSHException("No existing session")
         return self._transport.open_sftp_client()
 
     def get_transport(self):

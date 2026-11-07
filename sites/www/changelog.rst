@@ -257,7 +257,7 @@ Changelog
   ``disabled_algorithms`` to forcibly disable the SHA2 algorithms on Paramiko's
   end.
 
-  The **experimental** `~paramiko.transport.ServiceRequestingTransport` (noted
+  The **experimental** ``ServiceRequestingTransport`` (noted
   in its own entry in this changelog) includes a fix for this issue,
   specifically by falling back to the same algorithm as the in-use pubkey if
   it's in the algorithm list (leaving the "first algorithm in said list" as an
@@ -279,7 +279,7 @@ Changelog
 
   This version of Paramiko now contains an opt-in
   `~paramiko.transport.Transport` subclass,
-  `~paramiko.transport.ServiceRequestingTransport`, which more-correctly
+  ``ServiceRequestingTransport``, which more-correctly
   implements service request handling in the Transport, and uses an
   auth-handler subclass internally which has been similarly adapted. Users
   wanting to try this new experimental code path may hand this class to
