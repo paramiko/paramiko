@@ -840,9 +840,12 @@ class Channel(ClosingContextManager):
             sent, there is no way to determine how much data (if any) was sent.
             This is irritating, but identically follows Python's API.
         """
-        while s:
-            sent = self.send(s)
-            s = s[sent:]
+        if isinstance(s, str):
+            s = s.encode("utf-8")
+        view = memoryview(s)
+        while view:
+            sent = self.send(view)
+            view = view[sent:]
         return None
 
     def sendall_stderr(self, s):
@@ -861,9 +864,12 @@ class Channel(ClosingContextManager):
 
         .. versionadded:: 1.1
         """
-        while s:
-            sent = self.send_stderr(s)
-            s = s[sent:]
+        if isinstance(s, str):
+            s = s.encode("utf-8")
+        view = memoryview(s)
+        while view:
+            sent = self.send_stderr(view)
+            view = view[sent:]
         return None
 
     def makefile(self, *params):
