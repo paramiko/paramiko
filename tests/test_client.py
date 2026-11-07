@@ -459,6 +459,18 @@ class SSHClientTest(ClientTest):
             client.connect(hostname="nope")
         my_socket.close.assert_called_once_with()
 
+    def test_methods_raise_sshexception_when_not_connected(self):
+        # https://github.com/paramiko/paramiko/issues/2600
+        # Calling session methods on a client that never connected used to
+        # surface a cryptic AttributeError about NoneType.open_session.
+        client = SSHClient()
+        with pytest.raises(paramiko.SSHException, match="No existing session"):
+            client.exec_command("true")
+        with pytest.raises(paramiko.SSHException, match="No existing session"):
+            client.invoke_shell()
+        with pytest.raises(paramiko.SSHException, match="No existing session"):
+            client.open_sftp()
+
     def test_client_can_be_used_as_context_manager(self):
         """
         verify that an SSHClient can be used a context manager
