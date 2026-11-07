@@ -997,7 +997,7 @@ class TestMatchLocalUser:
 
 
 class TestMatchUnsupported:
-    """Unsupported Match criteria (OpenSSH keywords Paramiko does not implement).
+    """Unsupported Match criteria Paramiko does not implement.
 
     Historically unknown criteria left ``passed is None`` and were treated as
     successful matches, so a ``Match tagged`` block before a ``Host`` stanza
