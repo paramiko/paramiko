@@ -2,6 +2,11 @@
 Changelog
 =========
 
+- :bug:`2715` Unsupported ``Match`` criteria such as OpenSSH's ``tagged``
+  previously always matched (``passed`` stayed ``None`` and was treated as
+  success). A ``Match tagged ...`` block appearing before a ``Host`` stanza
+  could therefore override host-specific settings. Unsupported criteria now
+  never match. Thanks to ``@madduck`` for the report.
 - :release:`5.1.0 <2026-10-17>`
 - :release:`5.0.1 <2026-10-17>`
 - :bug:`2462` (w/ earlier fix attempts :issue:`2475` and :issue:`2465`) An API
