@@ -434,6 +434,54 @@ Host param3 parara
         for host, values in res.items():
             assert config.lookup(host) == values
 
+    @mark.parametrize(
+        "value,expected",
+        (
+            # A trailing comment starts at a token boundary and is dropped.
+            ("admin # backup", "admin"),
+            ("admin #", "admin"),
+            ("admin\t# backup", "admin"),
+            # Quotes protect an embedded '#'; the surrounding quotes are
+            # removed as before, and the trailing comment is dropped.
+            ('"ad # min" # tail', "ad # min"),
+            ('"ad # min"', "ad # min"),
+            # A '#' inside a token is literal, not a comment marker.
+            ("admin#frag", "admin#frag"),
+            ("a#b c#d", "a#b c#d"),
+            # Values that contain no comment are left untouched.
+            ("admin", "admin"),
+            ("foo bar=biz baz", "foo bar=biz baz"),
+            ("~/.ssh/id_rsa", "~/.ssh/id_rsa"),
+        ),
+    )
+    def test_inline_comments_are_not_part_of_values(self, value, expected):
+        config = SSHConfig.from_text(f"Host web\n    User {value}\n")
+        assert config.lookup("web")["user"] == expected
+
+    def test_inline_comment_on_host_line_is_dropped(self):
+        config = SSHConfig.from_text(
+            """
+Host web # staging
+    User deploy
+"""
+        )
+        assert config.lookup("web")["user"] == "deploy"
+        assert config.get_hostnames() == {"*", "web"}
+
+    def test_inline_comment_stripping_keeps_multi_word_and_quoted_values(self):
+        config = SSHConfig.from_text(
+            """
+Host web
+    Crazy something dumb
+    ProxyCommand ssh jump-relay -N # relay
+    IdentityFile "test rsa key" # main key
+"""
+        )
+        result = config.lookup("web")
+        assert result["crazy"] == "something dumb"
+        assert result["proxycommand"] == "ssh jump-relay -N"
+        assert result["identityfile"] == ["test rsa key"]
+
     def test_quoted_host_in_config(self):
         conf = SSHConfig()
         correct_data = {

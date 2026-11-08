@@ -119,6 +119,36 @@ class SSHConfig:
         obj.parse(flo)
         return obj
 
+    @staticmethod
+    def _strip_inline_comment(value):
+        """Remove a trailing inline comment from a config value.
+
+        OpenSSH tokenizes each line with ``argv_split`` and only treats ``#``
+        as a comment marker when it starts a token, i.e. at the beginning of
+        the value or immediately after whitespace, and never inside quotes.
+        A ``#`` within a token (``admin#frag``) is literal. The quotes
+        themselves are left for the existing value handling below.
+        """
+        quote = None
+        escaped = False
+        for index, char in enumerate(value):
+            if escaped:
+                escaped = False
+                continue
+            if char == "\\" and quote is not None:
+                escaped = True
+                continue
+            if quote is not None:
+                if char == quote:
+                    quote = None
+                continue
+            if char in ('"', "'"):
+                quote = char
+                continue
+            if char == "#" and (index == 0 or value[index - 1].isspace()):
+                return value[:index].rstrip()
+        return value
+
     def parse(self, file_obj):
         """
         Read an OpenSSH config from the given file object.
@@ -141,7 +171,7 @@ class SSHConfig:
             if not match:
                 raise ConfigParseError("Unparsable line {}".format(line))
             key = match.group(1).lower()
-            value = match.group(2)
+            value = self._strip_inline_comment(match.group(2))
 
             # Host keyword triggers switch to new block/context
             if key in ("host", "match"):
