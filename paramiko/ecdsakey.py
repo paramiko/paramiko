@@ -173,7 +173,16 @@ class ECDSAKey(PKey):
 
     @classmethod
     def identifiers(cls):
-        return cls._ECDSA_CURVES.get_key_format_identifier_list()
+        # include both the base identifiers as well as
+        # the -cert-v01@openssh.com suffixed ones
+        cert_identifiers = [
+            f"{name}-cert-v01@openssh.com"
+            for name in cls._ECDSA_CURVES.get_key_format_identifier_list()
+        ]
+        return (
+            cls._ECDSA_CURVES.get_key_format_identifier_list()
+            + cert_identifiers
+        )
 
     # TODO (backwards incompat): deprecate/remove
     @classmethod
