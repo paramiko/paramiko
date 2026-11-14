@@ -31,8 +31,8 @@ class ZlibCompressor:
             method=zlib.DEFLATED,
             wbits=15,
             memLevel=8,
-            strategy=zlib.Z_HUFFMAN_ONLY
-            )
+            strategy=zlib.Z_HUFFMAN_ONLY,
+        )
 
     def __call__(self, data):
         return self.z.compress(data) + self.z.flush(zlib.Z_FULL_FLUSH)
