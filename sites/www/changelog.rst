@@ -2,6 +2,10 @@
 Changelog
 =========
 
+- :bug:`2280` Preserve the configured host key algorithm allowlist and its
+  preference order when ``Transport.connect`` receives an explicit ``hostkey``.
+  Pinning a key no longer enables an algorithm excluded through
+  ``SecurityOptions.key_types``. Thanks to ``@micromaomao`` for the report.
 - :release:`5.0.1 <2026-10-17>`
 - :bug:`2462` (w/ earlier fix attempts :issue:`2475` and :issue:`2465`) An API
   gap between `~paramiko.agent.AgentKey` and the other, 'concrete'

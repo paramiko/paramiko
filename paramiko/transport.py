@@ -1306,19 +1306,17 @@ class Transport(threading.Thread, ClosingContextManager):
             supplied by the server is incorrect, or authentication fails.
         """
         if hostkey is not None:
-            # TODO: a more robust implementation would be to ask each key class
-            # for its nameS plural, and just use that.
-            # TODO: that could be used in a bunch of other spots too
-            # TODO: don't we have that now, lol
-            # TODO: either way this is ~= like using SecurityOptions.key_types
-            # = xxx, but different, which sucks sigh
+            # A pinned key restricts the existing allowlist; it must not
+            # enable algorithms excluded through SecurityOptions.
             if isinstance(hostkey, RSAKey):
-                self._preferred_keys = [
-                    "rsa-sha2-512",
-                    "rsa-sha2-256",
-                ]
+                hostkey_algorithms = ("rsa-sha2-512", "rsa-sha2-256")
             else:
-                self._preferred_keys = [hostkey.get_name()]
+                hostkey_algorithms = (hostkey.get_name(),)
+            self._preferred_keys = tuple(
+                algorithm
+                for algorithm in self._preferred_keys
+                if algorithm in hostkey_algorithms
+            )
 
         self.start_client()
 
