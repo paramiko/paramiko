@@ -36,6 +36,7 @@ from paramiko import (
     OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED,
     AuthHandler,
     ChannelException,
+    ECDSAKey,
     IncompatiblePeer,
     MessageOrderError,
     Packetizer,
@@ -1213,6 +1214,98 @@ class TestSHA2SignatureKeyExchange(unittest.TestCase):
         )
         with server(hostkey=hostkey, connect=connect) as (tc, _):
             assert tc.host_key_type == "rsa-sha2-512"
+
+
+class TestExplicitHostKeyPreferences(unittest.TestCase):
+    def _client(self, algorithms):
+        class ConfiguredTransport(Transport):
+            def __init__(self, *args, **kwargs):
+                super().__init__(*args, **kwargs)
+                self.get_security_options().key_types = algorithms
+
+        return ConfiguredTransport
+
+    def _connect(self, algorithms, hostkey=None, **kwargs):
+        if hostkey is None:
+            hostkey = RSAKey.from_private_key_file(_support("rsa.key"))
+        return server(
+            hostkey=hostkey,
+            connect=dict(
+                hostkey=hostkey, username="slowdive", password="pygmalion"
+            ),
+            transport_factory=self._client(algorithms),
+            server_transport_factory=Transport,
+            **kwargs,
+        )
+
+    def test_respects_single_allowed_signature(self):
+        with self._connect(("rsa-sha2-256",)) as (tc, _):
+            assert tc.host_key_type == "rsa-sha2-256"
+
+    def test_preserves_signature_preference_order(self):
+        with self._connect(("rsa-sha2-256", "rsa-sha2-512")) as (tc, _):
+            assert tc.host_key_type == "rsa-sha2-256"
+
+    def test_does_not_enable_excluded_key_type(self):
+        with self._connect(("ssh-ed25519",), catch_error=True) as (
+            tc,
+            ts,
+            err,
+        ):
+            assert err is not None
+            assert isinstance(err, IncompatiblePeer) or (
+                isinstance(err, EOFError)
+                and isinstance(ts.saved_exception, IncompatiblePeer)
+            )
+            assert not tc.is_authenticated()
+
+    def test_does_not_enable_server_only_signature(self):
+        with self._connect(
+            ("rsa-sha2-256",),
+            server_init=dict(disabled_algorithms=dict(keys=["rsa-sha2-256"])),
+            catch_error=True,
+        ) as (tc, ts, err):
+            assert err is not None
+            assert isinstance(err, IncompatiblePeer) or (
+                isinstance(err, EOFError)
+                and isinstance(ts.saved_exception, IncompatiblePeer)
+            )
+            assert not tc.is_authenticated()
+
+    def test_allowed_ecdsa_key(self):
+        hostkey = ECDSAKey.from_private_key_file(
+            _support("test_ecdsa_384.key")
+        )
+        with self._connect(("ecdsa-sha2-nistp384",), hostkey=hostkey) as (
+            tc,
+            _,
+        ):
+            assert tc.host_key_type == "ecdsa-sha2-nistp384"
+
+    def test_excluded_ecdsa_key(self):
+        hostkey = ECDSAKey.from_private_key_file(
+            _support("test_ecdsa_384.key")
+        )
+        with self._connect(
+            ("rsa-sha2-256",), hostkey=hostkey, catch_error=True
+        ) as (
+            tc,
+            ts,
+            err,
+        ):
+            assert err is not None
+            assert isinstance(err, IncompatiblePeer) or (
+                isinstance(err, EOFError)
+                and isinstance(ts.saved_exception, IncompatiblePeer)
+            )
+            assert not tc.is_authenticated()
+
+    def test_disabled_algorithms_still_apply(self):
+        with self._connect(
+            ("rsa-sha2-512", "rsa-sha2-256"),
+            client_init=dict(disabled_algorithms=dict(keys=["rsa-sha2-512"])),
+        ) as (tc, _):
+            assert tc.host_key_type == "rsa-sha2-256"
 
 
 class TestExtInfo(unittest.TestCase):
