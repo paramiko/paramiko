@@ -351,7 +351,6 @@ class SFTPServer(BaseSFTP, SubsystemHandler):
 
         msg = Message()
         msg.add_int(request_number)
-        msg.add_string("check-file")
         msg.add_string(algname)
         msg.add_bytes(sum_out)
         self._send_packet(CMD_EXTENDED_REPLY, msg)
@@ -521,7 +520,7 @@ class SFTPServer(BaseSFTP, SubsystemHandler):
             )
         elif t == CMD_EXTENDED:
             tag = msg.get_text()
-            if tag == "check-file":
+            if tag == "check-file-handle":
                 self._check_file(request_number, msg)
             elif tag == "posix-rename@openssh.com":
                 oldpath = msg.get_text()
