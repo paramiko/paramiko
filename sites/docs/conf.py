@@ -13,6 +13,7 @@ extensions.extend(["sphinx.ext.autodoc"])
 autodoc_default_options = {
     "members": True,
     "special-members": True,
+    "show-inheritance": True,
 }
 
 # Default is 'local' building, but reference the public www site when building
