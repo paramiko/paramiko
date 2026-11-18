@@ -63,7 +63,11 @@ class ProxyCommand(ClosingContextManager):
             self.cmd,
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
+            # Inherit stderr, as OpenSSH does: nothing here ever reads this
+            # stream, so piping it both hides any diagnostics the proxy
+            # emits and deadlocks any proxy that writes more than a pipe
+            # buffer's worth of them.
+            stderr=None,
             bufsize=0,
         )
         self.timeout = None

@@ -15,7 +15,7 @@ class TestProxyCommand:
             ["do", "a", "thing"],
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
+            stderr=None,
             bufsize=0,
         )
 
