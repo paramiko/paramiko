@@ -332,6 +332,8 @@ class SSHClientTest(ClientTest):
                 key_filename=key_path,
                 public_blob=PublicBlob.from_file(f"{key_path}-cert.pub"),
             )
+            # Transport needs to be closed after each iteration.
+            self.tc.close()
 
     def test_certs_implicitly_loaded_alongside_key_filename_keys(self):
         # NOTE: a regular test_connection() w/ rsa.key would incidentally
@@ -346,6 +348,8 @@ class SSHClientTest(ClientTest):
                 key_filename=key_path,
                 public_blob=PublicBlob.from_file(f"{key_path}-cert.pub"),
             )
+            # Transport needs to be closed after each iteration.
+            self.tc.close()
 
     def test_default_key_locations_trigger_cert_loads_if_found(self):
         # TODO: what it says on the tin: ~/.ssh/id_rsa tries to load
