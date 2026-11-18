@@ -25,6 +25,7 @@ import os
 import socket
 import time
 import threading
+import re
 
 from functools import wraps
 
@@ -708,6 +709,111 @@ class Channel(ClosingContextManager):
             self.transport._send_user_message(m)
 
         return out
+
+    def recv_until(self, target, timeout=None):
+        """
+        Receive data from the channel until a target byte sequence is found
+        or a timeout occurs.  The return value is a string representing the
+        data received. If a string of length zero is returned, the sequece
+        was not found during the timeout.
+
+        :param str/bytes target: byte sequence to look for.
+        :param float timeout: maximum seconds to wait for the sequence.
+        :return: received data, as a ``str``/``bytes``.
+
+        """
+        assert len(target) > 0, "Target string must be at least one byte"
+        assert timeout is None or timeout > 0, "Timeout must be positive or None"
+
+        deadline = time.monotonic() + timeout if timeout else None
+
+        buffer = b""
+        keep_looking = (
+            deadline is None or deadline > time.monotonic()
+            and len(target) > 0
+        )
+
+        while keep_looking:
+            try:
+                next_byte = self.in_buffer.read(
+                    1,
+                    self.timeout
+                    if (
+                        deadline is None
+                    ) or (
+                        self.timeout and self.timeout > 0
+                        and self.timeout + time.monotonic() <= deadline
+                    )
+                    else deadline - time.monotonic()
+                )
+            except PipeTimeout:
+                if deadline is None or deadline > time.monotonic():
+                    continue
+                return buffer
+            else:
+                buffer += next_byte
+
+            if len(buffer) >= len(target):
+                last_bytes = buffer[-1 * (len(target)):]
+                keep_looking = last_bytes != target
+
+            keep_looking &= deadline is None or deadline > time.monotonic()
+
+        return buffer
+
+    def expect(self, expressions, timeout=None):
+        """
+        Receive data from the channel until one of multiple regex matches
+        the received data or a timeout occurs.  
+        Return which expression matches, the match and all received data.
+        If the timeout occurs, returns -1, None and the received data.
+
+        :param list expressions: list of regex objects or search expressions
+        :param float timeout: maximum seconds to wait for the sequence.
+        :return: expression_index, match_object, received_data
+
+        """
+        assert len(expressions) > 0, "Expressions list must not be empty"
+        assert timeout is None or timeout > 0, "Timeout must be positive or None"
+
+        deadline = time.monotonic() + timeout if timeout else None
+
+        for i, expression in enumerate(expressions):
+            expressions[i] = expression if (
+                hasattr(expression, "search")) else re.compile(expression)
+
+        buffer = b""
+        keep_looking = deadline is None or deadline > time.monotonic()
+
+        while keep_looking:
+            try:
+                next_byte = self.in_buffer.read(
+                    1,
+                    self.timeout
+                    if (
+                        deadline is None
+                    ) or (
+                        self.timeout and self.timeout > 0
+                        and self.timeout + time.monotonic() <= deadline
+                    )
+                    else deadline - time.monotonic()
+                )
+            except PipeTimeout:
+                if deadline is None or deadline > time.monotonic():
+                    continue
+                break
+            else:
+                buffer += next_byte
+
+            for i, expression in enumerate(expressions):
+                expression_match = expression.search(buffer)
+
+                if expression_match:
+                    return i, expression_match, buffer
+
+            keep_looking = deadline is None or deadline > time.monotonic()
+
+        return -1, None, buffer
 
     def recv_stderr_ready(self):
         """
