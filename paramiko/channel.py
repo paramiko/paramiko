@@ -1214,7 +1214,8 @@ class Channel(ClosingContextManager):
         self.event_ready = False
 
     def _wait_for_event(self):
-        self.event.wait()
+        if not self.event.wait(timeout=self.timeout):
+            raise socket.timeout()
         assert self.event.is_set()
         if self.event_ready:
             return
