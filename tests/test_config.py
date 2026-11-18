@@ -569,6 +569,25 @@ Host *
         )
         assert config.lookup("anything-else").as_int("port") == 3333
 
+    def test_include(self):
+        expected = [
+            {"host": ["*"], "config": {}},
+            {"config": {"user": "rando"}, "host": ["www.paramiko.org"]},
+            {
+                "config": {"identityfile": ["canonicalized.key"]},
+                "matches": [
+                    {
+                        "type": "host",
+                        "param": "www.paramiko.org",
+                        "negate": False,
+                    }
+                ],
+            },
+        ]
+        config = SSHConfig.from_path(_config("include-base"))
+        for context in config._config:
+            assert context in expected
+
 
 class TestHostnameCanonicalization:
     # NOTE: this class uses on-disk configs, and ones with real (at time of
