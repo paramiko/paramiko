@@ -158,11 +158,14 @@ class MemoryMap:
             self.length,
             u(self.name),
         )
-        handle_nonzero_success(filemap)
+        if not filemap:
+            raise WindowsError()
         if filemap == INVALID_HANDLE_VALUE:
-            raise Exception("Failed to create file mapping")
+            raise WindowsError()
         self.filemap = filemap
         self.view = MapViewOfFile(filemap, FILE_MAP_WRITE, 0, 0, 0)
+        if self.view is None:
+            raise WindowsError()
         return self
 
     def seek(self, pos):
