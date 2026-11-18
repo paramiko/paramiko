@@ -166,6 +166,7 @@ class Channel(ClosingContextManager):
         height=24,
         width_pixels=0,
         height_pixels=0,
+        timeout=None,
     ):
         """
         Request a pseudo-terminal from the server.  This is usually used right
@@ -180,6 +181,7 @@ class Channel(ClosingContextManager):
         :param int height: height (in characters) of the terminal screen
         :param int width_pixels: width (in pixels) of the terminal screen
         :param int height_pixels: height (in pixels) of the terminal screen
+        :param float timeout: timeout (in seconds) for the server's response
 
         :raises:
             `.SSHException` -- if the request was rejected or the channel was
@@ -198,10 +200,10 @@ class Channel(ClosingContextManager):
         m.add_string(bytes())
         self._event_pending()
         self.transport._send_user_message(m)
-        self._wait_for_event()
+        self._wait_for_event(timeout=timeout)
 
     @open_only
-    def invoke_shell(self):
+    def invoke_shell(self, timeout=None):
         """
         Request an interactive shell session on this channel.  If the server
         allows it, the channel will then be directly connected to the stdin,
@@ -214,6 +216,8 @@ class Channel(ClosingContextManager):
         When the shell exits, the channel will be closed and can't be reused.
         You must open a new channel if you wish to open another shell.
 
+        :param: float timeout: timeout (in seconds) for server's response
+
         :raises:
             `.SSHException` -- if the request was rejected or the channel was
             closed
@@ -225,10 +229,10 @@ class Channel(ClosingContextManager):
         m.add_boolean(True)
         self._event_pending()
         self.transport._send_user_message(m)
-        self._wait_for_event()
+        self._wait_for_event(timeout=timeout)
 
     @open_only
-    def exec_command(self, command):
+    def exec_command(self, command, timeout=None):
         """
         Execute a command on the server.  If the server allows it, the channel
         will then be directly connected to the stdin, stdout, and stderr of
@@ -239,6 +243,7 @@ class Channel(ClosingContextManager):
         another command.
 
         :param str command: a shell command to execute.
+        :param: float timeout: timeout (in seconds) for server's response
 
         :raises:
             `.SSHException` -- if the request was rejected or the channel was
@@ -252,10 +257,10 @@ class Channel(ClosingContextManager):
         m.add_string(command)
         self._event_pending()
         self.transport._send_user_message(m)
-        self._wait_for_event()
+        self._wait_for_event(timeout=timeout)
 
     @open_only
-    def invoke_subsystem(self, subsystem):
+    def invoke_subsystem(self, subsystem, timeout=None):
         """
         Request a subsystem on the server (for example, ``sftp``).  If the
         server allows it, the channel will then be directly connected to the
@@ -265,6 +270,7 @@ class Channel(ClosingContextManager):
         reused.
 
         :param str subsystem: name of the subsystem being requested.
+        :param: float timeout: timeout (in seconds) for server's response
 
         :raises:
             `.SSHException` -- if the request was rejected or the channel was
@@ -278,7 +284,7 @@ class Channel(ClosingContextManager):
         m.add_string(subsystem)
         self._event_pending()
         self.transport._send_user_message(m)
-        self._wait_for_event()
+        self._wait_for_event(timeout=timeout)
 
     @open_only
     def resize_pty(self, width=80, height=24, width_pixels=0, height_pixels=0):
@@ -374,7 +380,7 @@ class Channel(ClosingContextManager):
         """
         return self.closed or self.status_event.is_set()
 
-    def recv_exit_status(self):
+    def recv_exit_status(self, timeout=None):
         """
         Return the exit status from the process on the server.  This is
         mostly useful for retrieving the results of an `exec_command`.
@@ -393,11 +399,13 @@ class Channel(ClosingContextManager):
             In these cases, ensuring that `.recv_exit_status` is called *after*
             `.Channel.recv` (or, again, using threads) can avoid the hang.
 
+        :param: float timeout: timeout (in seconds) for server's response
+
         :return: the exit code (as an `int`) of the process on the server.
 
         .. versionadded:: 1.2
         """
-        self.status_event.wait()
+        self.status_event.wait(timeout=timeout)
         assert self.status_event.is_set()
         return self.exit_status
 
@@ -1213,8 +1221,8 @@ class Channel(ClosingContextManager):
         self.event.clear()
         self.event_ready = False
 
-    def _wait_for_event(self):
-        self.event.wait()
+    def _wait_for_event(self, timeout=None):
+        self.event.wait(timeout=timeout)
         assert self.event.is_set()
         if self.event_ready:
             return
