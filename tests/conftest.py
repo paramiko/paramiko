@@ -94,9 +94,13 @@ def sftp_server():
     event.wait(1.0)
     # Make & yield connection.
     tc.connect(username="slowdive", password="pygmalion")
-    yield tc
-    # TODO: any need for shutdown? Why didn't old suite do so? Or was that the
-    # point of the "join all threads from threading module" crap in test.py?
+    try:
+        yield tc
+    finally:
+        tc.close()
+        ts.close()
+        socks.close()
+        sockc.close()
 
 
 @pytest.fixture
