@@ -717,6 +717,10 @@ class TestMatchAll:
         result = load_config("match-canonical-no").lookup("a-host")
         assert "user" not in result
 
+    def test_match_include(self):
+        result = load_config("match-include").get_hostnames()
+        assert "Foo" in result
+
 
 def _expect(success_on):
     """
