@@ -218,6 +218,19 @@ class TestSFTP:
             except:
                 pass
 
+    def test_rmdir_recursive(self, sftp):
+        """
+        Create a non-empty directory, and delete it recursively.
+        """
+        sftp.mkdir(sftp.FOLDER + "/subfolder")
+        sftp.mkdir(sftp.FOLDER + "/subfolder/subsubfolder")
+        sftp.open(sftp.FOLDER + "/subfolder/subsubfolder/test", "w+").close()
+
+        with pytest.raises(OSError, match="Failure"):
+            sftp.rmdir(sftp.FOLDER + "/subfolder")
+
+        sftp.rmdir(sftp.FOLDER + "/subfolder", recursive=True)
+
     def test_folder(self, sftp):
         """
         create a temporary folder, verify that we can create a file in it, then
