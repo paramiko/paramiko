@@ -335,7 +335,9 @@ class SFTPClient(BaseSFTP, ClosingContextManager):
         ``'w'`` for writing (truncating an existing file), ``'a'`` for
         appending, ``'r+'`` for reading/writing, ``'w+'`` for reading/writing
         (truncating an existing file), ``'a+'`` for reading/appending.  The
-        Python ``'b'`` flag is ignored, since SSH treats all files as binary.
+        Python ``'b'`` flag has an effect on ``readline`` method only,
+        indicating that the method should return a bytes string, rather than
+        a string decoded with UTF-8 encoding.
         The ``'U'`` flag is supported in a compatible way.
 
         Since 1.5.2, an ``'x'`` flag indicates that the operation should only
