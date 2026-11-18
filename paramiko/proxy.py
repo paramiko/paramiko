@@ -18,7 +18,6 @@
 
 
 import os
-import shlex
 import signal
 from select import select
 import socket
@@ -58,13 +57,14 @@ class ProxyCommand(ClosingContextManager):
         """
         if subprocess is None:
             raise subprocess_import_error
-        self.cmd = shlex.split(command_line)
+        self.cmd = command_line
         self.process = subprocess.Popen(
             self.cmd,
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             bufsize=0,
+            shell=True,
         )
         self.timeout = None
 
@@ -82,7 +82,7 @@ class ProxyCommand(ClosingContextManager):
             # died and we can't proceed. The best option here is to
             # raise an exception informing the user that the informed
             # ProxyCommand is not working.
-            raise ProxyCommandFailure(" ".join(self.cmd), e.strerror)
+            raise ProxyCommandFailure(self.cmd, e.strerror)
         return len(content)
 
     def recv(self, size):
@@ -116,7 +116,7 @@ class ProxyCommand(ClosingContextManager):
                 return buffer
             raise  # socket.timeout is a subclass of IOError
         except IOError as e:
-            raise ProxyCommandFailure(" ".join(self.cmd), e.strerror)
+            raise ProxyCommandFailure(self.cmd, e.strerror)
 
     def close(self):
         os.kill(self.process.pid, signal.SIGTERM)
