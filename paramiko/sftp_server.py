@@ -346,7 +346,7 @@ class SFTPServer(BaseSFTP, SubsystemHandler):
                     return
                 hash_obj.update(data)
                 count += len(data)
-                offset += count
+                offset += len(data)
             sum_out += hash_obj.digest()
 
         msg = Message()
