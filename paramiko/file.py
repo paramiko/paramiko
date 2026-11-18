@@ -64,6 +64,8 @@ class BufferedFile(ClosingContextManager):
         self._size = 0
 
     def __del__(self):
+        if self._closed:
+            return
         self.close()
 
     def __iter__(self):
