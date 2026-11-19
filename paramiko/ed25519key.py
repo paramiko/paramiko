@@ -14,6 +14,7 @@
 # along with Paramiko; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
 
+from io import RawIOBase
 from typing import Optional, Union
 
 import bcrypt
@@ -23,7 +24,13 @@ from cryptography.hazmat.primitives.asymmetric import ed25519
 from cryptography.hazmat.primitives.ciphers import Cipher
 
 from paramiko.message import Message
-from paramiko.pkey import OPENSSH, OPENSSH_AUTH_MAGIC, PKey, _unpad_openssh
+from paramiko.pkey import (
+    OPENSSH,
+    OPENSSH_AUTH_MAGIC,
+    FileFormat,
+    PKey,
+    _unpad_openssh,
+)
 from paramiko.ssh_exception import PasswordRequiredException, SSHException
 from paramiko.util import b
 
@@ -82,7 +89,10 @@ class Ed25519Key(PKey):
         )
 
     def write_private_key_file(
-        self, filename, password=None, file_format=OPENSSH
+        self,
+        filename: str,
+        password: Optional[str] = None,
+        file_format: FileFormat = OPENSSH,
     ):
         """
         Write private key contents into a file.
@@ -94,7 +104,12 @@ class Ed25519Key(PKey):
             filename, password=password, file_format=file_format
         )
 
-    def write_private_key(self, file_obj, password=None, file_format=OPENSSH):
+    def write_private_key(
+        self,
+        file_obj: RawIOBase,
+        password: Optional[str] = None,
+        file_format: FileFormat = OPENSSH,
+    ):
         """
         Write private key contents into a file (or file-like) object.
 
