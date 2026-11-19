@@ -5,6 +5,9 @@ from unittest.mock import call, patch
 from cryptography.hazmat.primitives.asymmetric.ec import (
     EllipticCurvePrivateKey,
 )
+from cryptography.hazmat.primitives.asymmetric.ed25519 import (
+    Ed25519PrivateKey,
+)
 from cryptography.hazmat.primitives.asymmetric.ed448 import Ed448PrivateKey
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey
 from pytest import mark, raises
@@ -244,7 +247,7 @@ class PKey_:
             [
                 ("rsa.key", RSAPrivateKey),
                 ("ecdsa-256.key", EllipticCurvePrivateKey),
-                # TODO: Ed25519 after we sort it out
+                ("ed25519.key", Ed25519PrivateKey),
             ],
         )
         def uses_private_key_property(
